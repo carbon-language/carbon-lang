@@ -126,10 +126,9 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
   if (PCLoc.isInvalid() || Scope.getFilename() == PCLoc.getFilename())
     return;
 
-  if (llvm::DILexicalBlockFile LBF =
-          dyn_cast<llvm::MDLexicalBlockFile>(Scope)) {
+  if (auto *LBF = dyn_cast<llvm::MDLexicalBlockFile>(Scope)) {
     llvm::DIDescriptor D = DBuilder.createLexicalBlockFile(
-        LBF.getContext(), getOrCreateFile(CurLoc));
+        LBF->getScope(), getOrCreateFile(CurLoc));
     llvm::MDNode *N = D;
     LexicalBlockStack.pop_back();
     LexicalBlockStack.emplace_back(N);
@@ -2500,16 +2499,16 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
     }
   }
   if (MI != SPCache.end()) {
-    llvm::DISubprogram SP = dyn_cast_or_null<llvm::MDSubprogram>(MI->second);
-    if (SP && !SP.isDefinition())
+    auto *SP = dyn_cast_or_null<llvm::MDSubprogram>(MI->second);
+    if (SP && !SP->isDefinition())
       return SP;
   }
 
   for (auto NextFD : FD->redecls()) {
     auto MI = SPCache.find(NextFD->getCanonicalDecl());
     if (MI != SPCache.end()) {
-      llvm::DISubprogram SP = dyn_cast_or_null<llvm::MDSubprogram>(MI->second);
-      if (SP && !SP.isDefinition())
+      auto *SP = dyn_cast_or_null<llvm::MDSubprogram>(MI->second);
+      if (SP && !SP->isDefinition())
         return SP;
     }
   }
@@ -2603,8 +2602,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
     // If there is a DISubprogram for this function available then use it.
     auto FI = SPCache.find(FD->getCanonicalDecl());
     if (FI != SPCache.end()) {
-      llvm::DISubprogram SP = dyn_cast_or_null<llvm::MDSubprogram>(FI->second);
-      if (SP && SP.isDefinition()) {
+      auto *SP = dyn_cast_or_null<llvm::MDSubprogram>(FI->second);
+      if (SP && SP->isDefinition()) {
         llvm::MDNode *SPN = SP;
         LexicalBlockStack.emplace_back(SPN);
         RegionMap[D].reset(SP);
