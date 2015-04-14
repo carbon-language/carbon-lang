@@ -2453,9 +2453,11 @@ IRForTarget::BuildRelocation(llvm::Type *type, uint64_t offset)
     offset_array[0] = offset_int;
 
     llvm::ArrayRef<llvm::Constant *> offsets(offset_array, 1);
+    llvm::Type *char_type = llvm::Type::getInt8Ty(m_module->getContext());
+    llvm::Type *char_pointer_type = char_type->getPointerTo();
 
-    llvm::Constant *reloc_placeholder_bitcast = ConstantExpr::getBitCast(m_reloc_placeholder, type->getPointerTo());
-    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(type, reloc_placeholder_bitcast, offsets);
+    llvm::Constant *reloc_placeholder_bitcast = ConstantExpr::getBitCast(m_reloc_placeholder, char_pointer_type);
+    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(char_type, reloc_placeholder_bitcast, offsets);
     llvm::Constant *reloc_bitcast = ConstantExpr::getBitCast(reloc_getelementptr, type);
 
     return reloc_bitcast;
