@@ -59,7 +59,7 @@ private:
 };
 
 class ARMTargetHandler final : public TargetHandler {
-  typedef ELFReader<ARMELFFile<ELF32LE>> ObjReader;
+  typedef ELFReader<ARMELFFile> ObjReader;
   typedef ELFReader<DynamicFile<ELF32LE>> DSOReader;
 
 public:

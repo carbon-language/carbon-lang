@@ -17,24 +17,24 @@ namespace elf {
 
 class ARMLinkingContext;
 
-template <class ELFT, DefinedAtom::CodeModel Model>
-class ARMELFMappingAtom : public ELFDefinedAtom<ELFT> {
+template <DefinedAtom::CodeModel Model>
+class ARMELFMappingAtom : public ELFDefinedAtom<ELF32LE> {
 public:
-  template<typename... T>
-  ARMELFMappingAtom(T&&... args)
-      : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
+  template <typename... T>
+  ARMELFMappingAtom(T &&... args)
+      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
 
   DefinedAtom::CodeModel codeModel() const override { return Model; }
 };
 
-template <class ELFT> class ARMELFDefinedAtom : public ELFDefinedAtom<ELFT> {
+class ARMELFDefinedAtom : public ELFDefinedAtom<ELF32LE> {
 public:
-  template<typename... T>
-  ARMELFDefinedAtom(T&&... args)
-      : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
+  template <typename... T>
+  ARMELFDefinedAtom(T &&... args)
+      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
 
   bool isThumbFunc() const {
-    const auto *symbol = this->_symbol;
+    const auto *symbol = _symbol;
     return symbol->getType() == llvm::ELF::STT_FUNC &&
            (static_cast<uint64_t>(symbol->st_value) & 0x1);
   }
@@ -42,7 +42,7 @@ public:
   /// Correct st_value for symbols addressing Thumb instructions
   /// by removing its zero bit.
   uint64_t getSymbolValue() const override {
-    const auto value = static_cast<uint64_t>(this->_symbol->st_value);
+    const auto value = static_cast<uint64_t>(_symbol->st_value);
     return isThumbFunc() ? value & ~0x1 : value;
   }
 
@@ -51,12 +51,12 @@ public:
   }
 };
 
-template <class ELFT> class ARMELFFile : public ELFFile<ELFT> {
-  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+class ARMELFFile : public ELFFile<ELF32LE> {
+  typedef llvm::object::Elf_Rel_Impl<ELF32LE, false> Elf_Rel;
 
 public:
   ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
-      : ELFFile<ELFT>(std::move(mb), ctx) {}
+      : ELFFile<ELF32LE>(std::move(mb), ctx) {}
 
 protected:
   /// Returns initial addend; for ARM it is 0, because it is read
@@ -67,8 +67,8 @@ protected:
   }
 
 private:
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+  typedef llvm::object::Elf_Sym_Impl<ELF32LE> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELF32LE> Elf_Shdr;
 
   /// Correct st_value for symbols addressing Thumb instructions
   /// by removing its zero bit.
@@ -78,35 +78,31 @@ private:
   }
 
   /// Process the Defined symbol and create an atom for it.
-  ELFDefinedAtom<ELFT> *
-  createDefinedAtom(StringRef symName, StringRef sectionName,
-                    const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
-                    ArrayRef<uint8_t> contentData, unsigned int referenceStart,
-                    unsigned int referenceEnd,
-                    std::vector<ELFReference<ELFT> *> &referenceList) override {
+  ELFDefinedAtom<ELF32LE> *createDefinedAtom(
+      StringRef symName, StringRef sectionName, const Elf_Sym *sym,
+      const Elf_Shdr *sectionHdr, ArrayRef<uint8_t> contentData,
+      unsigned int referenceStart, unsigned int referenceEnd,
+      std::vector<ELFReference<ELF32LE> *> &referenceList) override {
     if (symName.size() >= 2 && symName[0] == '$') {
       switch (symName[1]) {
       case 'a':
-        return new (this->_readerStorage)
-            ARMELFMappingAtom<ELFT, DefinedAtom::codeARM_a>(
-                *this, symName, sectionName, sym, sectionHdr, contentData,
-                referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_a>(
+            *this, symName, sectionName, sym, sectionHdr, contentData,
+            referenceStart, referenceEnd, referenceList);
       case 'd':
-        return new (this->_readerStorage)
-            ARMELFMappingAtom<ELFT, DefinedAtom::codeARM_d>(
-                *this, symName, sectionName, sym, sectionHdr, contentData,
-                referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_d>(
+            *this, symName, sectionName, sym, sectionHdr, contentData,
+            referenceStart, referenceEnd, referenceList);
       case 't':
-        return new (this->_readerStorage)
-            ARMELFMappingAtom<ELFT, DefinedAtom::codeARM_t>(
-                *this, symName, sectionName, sym, sectionHdr, contentData,
-                referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_t>(
+            *this, symName, sectionName, sym, sectionHdr, contentData,
+            referenceStart, referenceEnd, referenceList);
       default:
         // Fall through and create regular defined atom.
         break;
       }
     }
-    return new (this->_readerStorage) ARMELFDefinedAtom<ELFT>(
+    return new (this->_readerStorage) ARMELFDefinedAtom(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
   }
