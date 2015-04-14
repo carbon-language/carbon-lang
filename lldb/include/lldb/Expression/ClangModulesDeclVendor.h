@@ -53,6 +53,14 @@ public:
     virtual bool
     AddModule(std::vector<llvm::StringRef> &path, Stream &error_stream) = 0;
     
+    //------------------------------------------------------------------
+    /// Enumerate all the macros that are currently visible.
+    ///
+    /// @param[in] handler
+    ///     A function that receives the text of each #define macro.
+    ///     If handler returns true, this function returns immediately,
+    ///     without calling handler again.
+    //------------------------------------------------------------------
     virtual void
     ForEachMacro(std::function<bool (const std::string &)> handler) = 0;
 };
