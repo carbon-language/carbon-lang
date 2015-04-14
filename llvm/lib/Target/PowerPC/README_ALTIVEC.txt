@@ -277,7 +277,7 @@ This will generate the following instruction sequence:
 This will almost certainly cause a load-hit-store hazard.  
 Since val is a value parameter, it should not need to be saved onto
 the stack, unless it's being done set up the vector register. Instead,
-it would be better to splat teh value into a vector register, and then
+it would be better to splat the value into a vector register, and then
 remove the (dead) stores to the stack.
 
 //===----------------------------------------------------------------------===//

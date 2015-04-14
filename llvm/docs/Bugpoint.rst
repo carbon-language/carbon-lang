@@ -208,7 +208,7 @@ point---a simple binary search may not be sufficient, as transformations that
 interact may require isolating more than one call.  In TargetLowering, use
 ``return SDNode();`` instead of ``return false;``.
 
-Now that that the number of transformations is down to a manageable number, try
+Now that the number of transformations is down to a manageable number, try
 examining the output to see if you can figure out which transformations are
 being done.  If that can be figured out, then do the usual debugging.  If which
 code corresponds to the transformation being performed isn't obvious, set a

@@ -332,7 +332,7 @@ as a field type:
       }
     };
 
-When reading YAML, if the string found does not match any of the the strings
+When reading YAML, if the string found does not match any of the strings
 specified by enumCase() methods, an error is automatically generated.
 When writing YAML, if the value being written does not match any of the values
 specified by the enumCase() methods, a runtime assertion is triggered.
@@ -767,7 +767,7 @@ add "static const bool flow = true;".  For instance:
   };
 
 With the above, if you used MyList as the data type in your native data 
-structures, then then when converted to YAML, a flow sequence of integers 
+structures, then when converted to YAML, a flow sequence of integers 
 will be used (e.g. [ 10, -3, 4 ]).
 
 

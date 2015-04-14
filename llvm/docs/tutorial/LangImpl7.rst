@@ -632,7 +632,7 @@ own local variables, lets add this next!
 User-defined Local Variables
 ============================
 
-Adding var/in is just like any other other extensions we made to
+Adding var/in is just like any other extension we made to
 Kaleidoscope: we extend the lexer, the parser, the AST and the code
 generator. The first step for adding our new 'var/in' construct is to
 extend the lexer. As before, this is pretty trivial, the code looks like

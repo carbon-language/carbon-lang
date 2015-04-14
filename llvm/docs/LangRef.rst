@@ -3370,7 +3370,7 @@ instructions (loads, stores, memory-accessing calls, etc.) that carry
 ``noalias`` metadata can specifically be specified not to alias with some other
 collection of memory access instructions that carry ``alias.scope`` metadata.
 Each type of metadata specifies a list of scopes where each scope has an id and
-a domain. When evaluating an aliasing query, if for some some domain, the set
+a domain. When evaluating an aliasing query, if for some domain, the set
 of scopes with that domain in one instruction's ``alias.scope`` list is a
 subset of (or equal to) the set of scopes for that domain in another
 instruction's ``noalias`` list, then the two memory accesses are assumed not to
@@ -6577,7 +6577,7 @@ Arguments:
 """"""""""
 
 The '``ptrtoint``' instruction takes a ``value`` to cast, which must be
-a a value of type :ref:`pointer <t_pointer>` or a vector of pointers, and a
+a value of type :ref:`pointer <t_pointer>` or a vector of pointers, and a
 type to cast it to ``ty2``, which must be an :ref:`integer <t_integer>` or
 a vector of integers type.
 

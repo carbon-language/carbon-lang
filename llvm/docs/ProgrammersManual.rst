@@ -940,7 +940,7 @@ There are a variety of ways to pass around and use strings in C and C++, and
 LLVM adds a few new options to choose from.  Pick the first option on this list
 that will do what you need, they are ordered according to their relative cost.
 
-Note that is is generally preferred to *not* pass strings around as ``const
+Note that it is generally preferred to *not* pass strings around as ``const
 char*``'s.  These have a number of problems, including the fact that they
 cannot represent embedded nul ("\0") characters, and do not have a length
 available efficiently.  The general replacement for '``const char*``' is
@@ -2651,7 +2651,7 @@ Important Derived Types
   Subclass of SequentialType for vector types.  A vector type is similar to an
   ArrayType but is distinguished because it is a first class type whereas
   ArrayType is not.  Vector types are used for vector operations and are usually
-  small vectors of of an integer or floating point type.
+  small vectors of an integer or floating point type.
 
 ``StructType``
   Subclass of DerivedTypes for struct types.

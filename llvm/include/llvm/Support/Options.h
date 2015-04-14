@@ -61,7 +61,7 @@ char OptionKey<ValT, Base, Mem>::ID = 0;
 /// The OptionRegistry is responsible for managing lifetimes of the options and
 /// provides interfaces for option registration and reading values from options.
 /// This object is a singleton, only one instance should ever exist so that all
-/// options are registered in teh same place.
+/// options are registered in the same place.
 class OptionRegistry {
 private:
   DenseMap<void *, cl::Option *> Options;
