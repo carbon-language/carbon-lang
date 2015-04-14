@@ -5418,47 +5418,44 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
 /// inclusion of carry set or predication code operands.
 //
 // FIXME: It would be nice to autogen this.
-void ARMAsmParser::
-getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
-                     bool &CanAcceptCarrySet, bool &CanAcceptPredicationCode) {
-  if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+void ARMAsmParser::getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
+                                         bool &CanAcceptCarrySet,
+                                         bool &CanAcceptPredicationCode) {
+  CanAcceptCarrySet =
+      Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
-      Mnemonic == "add" || Mnemonic == "adc" ||
-      Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
-      Mnemonic == "orr" || Mnemonic == "mvn" ||
-      Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
-      Mnemonic == "sbc" || Mnemonic == "eor" || Mnemonic == "neg" ||
-      Mnemonic == "vfm" || Mnemonic == "vfnm" ||
-      (!isThumb() && (Mnemonic == "smull" || Mnemonic == "mov" ||
-                      Mnemonic == "mla" || Mnemonic == "smlal" ||
-                      Mnemonic == "umlal" || Mnemonic == "umull"))) {
-    CanAcceptCarrySet = true;
-  } else
-    CanAcceptCarrySet = false;
+      Mnemonic == "add" || Mnemonic == "adc" || Mnemonic == "mul" ||
+      Mnemonic == "bic" || Mnemonic == "asr" || Mnemonic == "orr" ||
+      Mnemonic == "mvn" || Mnemonic == "rsb" || Mnemonic == "rsc" ||
+      Mnemonic == "orn" || Mnemonic == "sbc" || Mnemonic == "eor" ||
+      Mnemonic == "neg" || Mnemonic == "vfm" || Mnemonic == "vfnm" ||
+      (!isThumb() &&
+       (Mnemonic == "smull" || Mnemonic == "mov" || Mnemonic == "mla" ||
+        Mnemonic == "smlal" || Mnemonic == "umlal" || Mnemonic == "umull"));
 
   if (Mnemonic == "bkpt" || Mnemonic == "cbnz" || Mnemonic == "setend" ||
-      Mnemonic == "cps" ||  Mnemonic == "it" ||  Mnemonic == "cbz" ||
+      Mnemonic == "cps" || Mnemonic == "it" || Mnemonic == "cbz" ||
       Mnemonic == "trap" || Mnemonic == "hlt" || Mnemonic == "udf" ||
       Mnemonic.startswith("crc32") || Mnemonic.startswith("cps") ||
-      Mnemonic.startswith("vsel") ||
-      Mnemonic == "vmaxnm" || Mnemonic == "vminnm" || Mnemonic == "vcvta" ||
-      Mnemonic == "vcvtn" || Mnemonic == "vcvtp" || Mnemonic == "vcvtm" ||
-      Mnemonic == "vrinta" || Mnemonic == "vrintn" || Mnemonic == "vrintp" ||
-      Mnemonic == "vrintm" || Mnemonic.startswith("aes") || Mnemonic == "hvc" ||
+      Mnemonic.startswith("vsel") || Mnemonic == "vmaxnm" ||
+      Mnemonic == "vminnm" || Mnemonic == "vcvta" || Mnemonic == "vcvtn" ||
+      Mnemonic == "vcvtp" || Mnemonic == "vcvtm" || Mnemonic == "vrinta" ||
+      Mnemonic == "vrintn" || Mnemonic == "vrintp" || Mnemonic == "vrintm" ||
+      Mnemonic.startswith("aes") || Mnemonic == "hvc" ||
       Mnemonic.startswith("sha1") || Mnemonic.startswith("sha256") ||
       (FullInst.startswith("vmull") && FullInst.endswith(".p64"))) {
     // These mnemonics are never predicable
     CanAcceptPredicationCode = false;
   } else if (!isThumb()) {
     // Some instructions are only predicable in Thumb mode
-    CanAcceptPredicationCode
-      = Mnemonic != "cdp2" && Mnemonic != "clrex" && Mnemonic != "mcr2" &&
+    CanAcceptPredicationCode =
+        Mnemonic != "cdp2" && Mnemonic != "clrex" && Mnemonic != "mcr2" &&
         Mnemonic != "mcrr2" && Mnemonic != "mrc2" && Mnemonic != "mrrc2" &&
         Mnemonic != "dmb" && Mnemonic != "dsb" && Mnemonic != "isb" &&
         Mnemonic != "pld" && Mnemonic != "pli" && Mnemonic != "pldw" &&
-        Mnemonic != "ldc2" && Mnemonic != "ldc2l" &&
-        Mnemonic != "stc2" && Mnemonic != "stc2l" &&
-        !Mnemonic.startswith("rfe") && !Mnemonic.startswith("srs");
+        Mnemonic != "ldc2" && Mnemonic != "ldc2l" && Mnemonic != "stc2" &&
+        Mnemonic != "stc2l" && !Mnemonic.startswith("rfe") &&
+        !Mnemonic.startswith("srs");
   } else if (isThumbOne()) {
     if (hasV6MOps())
       CanAcceptPredicationCode = Mnemonic != "movs";

@@ -253,7 +253,7 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   switch (IT) {
   case DefaultIT:
-    RestrictIT = hasV8Ops() ? true : false;
+    RestrictIT = hasV8Ops();
     break;
   case RestrictedIT:
     RestrictIT = true;
