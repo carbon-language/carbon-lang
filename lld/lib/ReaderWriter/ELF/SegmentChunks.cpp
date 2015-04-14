@@ -199,18 +199,15 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC) {
       // Align to a page only if the output is not
       // OutputMagic::NMAGIC/OutputMagic::OMAGIC
-      startAddr =
-        llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
+      startAddr = llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
     } else if (!isDataPageAlignedForNMagic && needAlign(*si)) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
       // Data to a page boundary.
-      startAddr =
-        llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
+      startAddr = llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
       isDataPageAlignedForNMagic = true;
     }
     // align the startOffset to the section alignment
-    uint64_t newAddr =
-      llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
+    uint64_t newAddr = llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
     // Handle linker script expressions, which *may update newAddr* if the
     // expression assigns to "."
     if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
@@ -223,7 +220,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     if (auto section = dyn_cast<Section<ELFT>>(*si)) {
       if (section->getSegmentType() == llvm::ELF::PT_TLS) {
         tlsStartAddr =
-          llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
+            llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
         section->assignVirtualAddress(tlsStartAddr);
         tlsStartAddr += (*si)->memSize();
       } else {
@@ -277,13 +274,13 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
          _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
       auto sliceIter =
-        std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
-                     [startSection](SegmentSlice<ELFT> *s) -> bool {
-                       return s->startSection() == startSection;
-                     });
+          std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
+                       [startSection](SegmentSlice<ELFT> *s) -> bool {
+                         return s->startSection() == startSection;
+                       });
       if (sliceIter == _segmentSlices.end()) {
         slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
-          SegmentSlice<ELFT>();
+            SegmentSlice<ELFT>();
         _segmentSlices.push_back(slice);
       } else {
         slice = *sliceIter;
@@ -310,7 +307,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       if (auto section = dyn_cast<Section<ELFT>>(*si)) {
         if (section->getSegmentType() == llvm::ELF::PT_TLS) {
           tlsStartAddr =
-            llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
+              llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
           section->assignVirtualAddress(tlsStartAddr);
           tlsStartAddr += (*si)->memSize();
         } else {
