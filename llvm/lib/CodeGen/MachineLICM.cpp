@@ -100,7 +100,7 @@ namespace {
     SmallSet<unsigned, 32> RegSeen;
     SmallVector<unsigned, 8> RegPressure;
 
-    // Register pressure "limit" per register class. If the pressure
+    // Register pressure "limit" per register pressure set. If the pressure
     // is higher than the limit, then it's considered high.
     SmallVector<unsigned, 8> RegLimit;
 
@@ -251,11 +251,6 @@ namespace {
     /// if there is little to no overhead moving instructions into loops.
     void SinkIntoLoop();
 
-    /// getRegisterClassIDAndCost - For a given register return the ID and cost
-    /// of its representative register class by reference.
-    void getRegisterClassIDAndCost(unsigned Reg, unsigned &RCId,
-                                   unsigned &RCCost) const;
-
     /// InitRegPressure - Find all virtual register references that are liveout
     /// of the preheader to initialize the starting "register pressure". Note
     /// this does not count live through (livein but not used) registers.
@@ -360,13 +355,12 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.
-    unsigned NumRC = TRI->getNumRegClasses();
-    RegPressure.resize(NumRC);
+    unsigned NumRPS = TRI->getNumRegPressureSets();
+    RegPressure.resize(NumRPS);
     std::fill(RegPressure.begin(), RegPressure.end(), 0);
-    RegLimit.resize(NumRC);
-    for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-           E = TRI->regclass_end(); I != E; ++I)
-      RegLimit[(*I)->getID()] = TRI->getRegPressureLimit(*I, MF);
+    RegLimit.resize(NumRPS);
+    for (unsigned i = 0, e = NumRPS; i != e; ++i)
+      RegLimit[i] = TRI->getRegPressureSetLimit(MF, i);
   }
 
   // Get our Loop information...
@@ -842,19 +836,6 @@ static bool isOperandKill(const MachineOperand &MO, MachineRegisterInfo *MRI) {
   return MO.isKill() || MRI->hasOneNonDBGUse(MO.getReg());
 }
 
-void MachineLICM::getRegisterClassIDAndCost(unsigned Reg, unsigned &RCId,
-                                            unsigned &RCCost) const {
-  const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-  MVT VT = *RC->vt_begin();
-  if (VT == MVT::Untyped) {
-    RCId = RC->getID();
-    RCCost = 1;
-  } else {
-    RCId = TLI->getRepRegClassFor(VT)->getID();
-    RCCost = TLI->getRepRegClassCostFor(VT);
-  }
-}
-
 /// InitRegPressure - Find all virtual register references that are liveout of
 /// the preheader to initialize the starting "register pressure". Note this
 /// does not count live through (livein but not used) registers.
@@ -881,12 +862,12 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
 void MachineLICM::UpdateRegPressure(const MachineInstr *MI,
                                     bool ConsiderUnseenAsDef) {
   auto Cost = calcRegisterCost(MI, /*ConsiderSeen=*/true, ConsiderUnseenAsDef);
-  for (const auto &ClassAndCost : Cost) {
-    unsigned Class = ClassAndCost.first;
-    if (static_cast<int>(RegPressure[Class]) < -ClassAndCost.second)
+  for (const auto &RPIdAndCost : Cost) {
+    unsigned Class = RPIdAndCost.first;
+    if (static_cast<int>(RegPressure[Class]) < -RPIdAndCost.second)
       RegPressure[Class] = 0;
     else
-      RegPressure[Class] += ClassAndCost.second;
+      RegPressure[Class] += RPIdAndCost.second;
   }
 }
 
@@ -906,20 +887,28 @@ MachineLICM::calcRegisterCost(const MachineInstr *MI, bool ConsiderSeen,
 
     // FIXME: It seems bad to use RegSeen only for some of these calculations.
     bool isNew = ConsiderSeen ? RegSeen.insert(Reg).second : false;
-    unsigned RCId, RCCost;
-    getRegisterClassIDAndCost(Reg, RCId, RCCost);
-    int PriorCost = 0;
-    if (Cost.find(RCId) != Cost.end())
-      PriorCost = Cost[RCId];
+    const TargetRegisterClass *RC = MRI->getRegClass(Reg);
+
+    RegClassWeight W = TRI->getRegClassWeight(RC);
+    int RCCost = 0;
     if (MO.isDef())
-      Cost[RCId] = PriorCost + RCCost;
+      RCCost = W.RegWeight;
     else {
       bool isKill = isOperandKill(MO, MRI);
       if (isNew && !isKill && ConsiderUnseenAsDef)
         // Haven't seen this, it must be a livein.
-        Cost[RCId] = PriorCost + RCCost;
+        RCCost = W.RegWeight;
       else if (!isNew && isKill)
-        Cost[RCId] = PriorCost - RCCost;
+        RCCost = -W.RegWeight;
+    }
+    if (RCCost == 0)
+      continue;
+    const int *PS = TRI->getRegClassPressureSets(RC);
+    for (; *PS != -1; ++PS) {
+      if (Cost.find(*PS) == Cost.end())
+        Cost[*PS] = RCCost;
+      else
+        Cost[*PS] += RCCost;
     }
   }
   return Cost;
@@ -1116,11 +1105,11 @@ bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
 /// register pressure.
 bool MachineLICM::CanCauseHighRegPressure(const DenseMap<unsigned, int>& Cost,
                                           bool CheapInstr) {
-  for (const auto &ClassAndCost : Cost) {
-    if (ClassAndCost.second <= 0)
+  for (const auto &RPIdAndCost : Cost) {
+    if (RPIdAndCost.second <= 0)
       continue;
 
-    unsigned Class = ClassAndCost.first;
+    unsigned Class = RPIdAndCost.first;
     int Limit = RegLimit[Class];
 
     // Don't hoist cheap instructions if they would increase register pressure,
@@ -1129,7 +1118,7 @@ bool MachineLICM::CanCauseHighRegPressure(const DenseMap<unsigned, int>& Cost,
       return true;
 
     for (const auto &RP : BackTrace)
-      if (static_cast<int>(RP[Class]) + ClassAndCost.second >= Limit)
+      if (static_cast<int>(RP[Class]) + RPIdAndCost.second >= Limit)
         return true;
   }
 
@@ -1147,8 +1136,8 @@ void MachineLICM::UpdateBackTraceRegPressure(const MachineInstr *MI) {
 
   // Update register pressure of blocks from loop header to current block.
   for (auto &RP : BackTrace)
-    for (const auto &ClassAndCost : Cost)
-      RP[ClassAndCost.first] += ClassAndCost.second;
+    for (const auto &RPIdAndCost : Cost)
+      RP[RPIdAndCost.first] += RPIdAndCost.second;
 }
 
 /// IsProfitableToHoist - Return true if it is potentially profitable to hoist
