@@ -1810,12 +1810,23 @@ bool SCEVExpander::isHighCostExpansionHelper(
   if (!Processed.insert(S).second)
     return false;
 
-  // If the backedge-taken count is a UDiv, it's very likely a UDiv that
-  // ScalarEvolution's HowFarToZero or HowManyLessThans produced to compute a
-  // precise expression, rather than a UDiv from the user's code. If we can't
-  // find a UDiv in the code with some simple searching, assume the former and
-  // forego rewriting the loop.
-  if (isa<SCEVUDivExpr>(S)) {
+  if (auto *UDivExpr = dyn_cast<SCEVUDivExpr>(S)) {
+    // If the divisor is a power of two and the SCEV type fits in a native
+    // integer, consider the divison cheap irrespective of whether it occurs in
+    // the user code since it can be lowered into a right shift.
+    if (auto *SC = dyn_cast<SCEVConstant>(UDivExpr->getRHS()))
+      if (SC->getValue()->getValue().isPowerOf2()) {
+        const DataLayout &DL =
+            L->getHeader()->getParent()->getParent()->getDataLayout();
+        unsigned Width = cast<IntegerType>(UDivExpr->getType())->getBitWidth();
+        return DL.isIllegalInteger(Width);
+      }
+
+    // UDivExpr is very likely a UDiv that ScalarEvolution's HowFarToZero or
+    // HowManyLessThans produced to compute a precise expression, rather than a
+    // UDiv from the user's code. If we can't find a UDiv in the code with some
+    // simple searching, assume the former consider UDivExpr expensive to
+    // compute.
     BasicBlock *ExitingBB = L->getExitingBlock();
     if (!ExitingBB)
       return true;
