@@ -12,11 +12,12 @@
 #include "HexagonLinkingContext.h"
 #include "HexagonTargetHandler.h"
 
-using namespace lld;
-using namespace elf;
 using namespace llvm::ELF;
 
 using llvm::makeArrayRef;
+
+namespace lld {
+namespace elf {
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &ctx)
     : _ctx(ctx), _targetLayout(new HexagonTargetLayout(ctx)),
@@ -225,7 +226,7 @@ protected:
 
 class DynamicGOTPLTPass final : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::HexagonLinkingContext &ctx) : GOTPLTPass(ctx) {
+  DynamicGOTPLTPass(const HexagonLinkingContext &ctx) : GOTPLTPass(ctx) {
     _got0 = new (_file._alloc) HexagonGOTPLT0Atom(_file);
 #ifndef NDEBUG
     _got0->_name = "__got0";
@@ -305,8 +306,75 @@ public:
   }
 };
 
-void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
+void HexagonLinkingContext::addPasses(PassManager &pm) {
   if (isDynamic())
     pm.add(llvm::make_unique<DynamicGOTPLTPass>(*this));
   ELFLinkingContext::addPasses(pm);
 }
+
+void SDataSection::doPreFlight() {
+  // sort the atoms on the alignments they have been set
+  std::stable_sort(_atoms.begin(), _atoms.end(), [](const lld::AtomLayout *A,
+                                                    const lld::AtomLayout *B) {
+    const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
+    const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
+    int64_t alignmentA = definedAtomA->alignment().value;
+    int64_t alignmentB = definedAtomB->alignment().value;
+    if (alignmentA == alignmentB) {
+      if (definedAtomA->merge() == DefinedAtom::mergeAsTentative)
+        return false;
+      if (definedAtomB->merge() == DefinedAtom::mergeAsTentative)
+        return true;
+    }
+    return alignmentA < alignmentB;
+  });
+
+  // Set the fileOffset, and the appropriate size of the section
+  for (auto &ai : _atoms) {
+    const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
+    DefinedAtom::Alignment atomAlign = definedAtom->alignment();
+    uint64_t fOffset = alignOffset(fileSize(), atomAlign);
+    uint64_t mOffset = alignOffset(memSize(), atomAlign);
+    ai->_fileOffset = fOffset;
+    _fsize = fOffset + definedAtom->size();
+    _msize = mOffset + definedAtom->size();
+  }
+} // finalize
+
+SDataSection::SDataSection(const HexagonLinkingContext &ctx)
+    : AtomSection<ELF32LE>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
+                           HexagonTargetLayout::ORDER_SDATA) {
+  _type = SHT_PROGBITS;
+  _flags = SHF_ALLOC | SHF_WRITE;
+  _alignment = 4096;
+}
+
+const AtomLayout *SDataSection::appendAtom(const Atom *atom) {
+  const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
+  DefinedAtom::Alignment atomAlign = definedAtom->alignment();
+  uint64_t alignment = atomAlign.value;
+  _atoms.push_back(new (_alloc) lld::AtomLayout(atom, 0, 0));
+  // Set the section alignment to the largest alignment
+  // std::max doesn't support uint64_t
+  if (_alignment < alignment)
+    _alignment = alignment;
+  return _atoms.back();
+}
+
+void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout &layout) {
+  AtomLayout *gotAtom = layout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+  OutputSection<ELF32LE> *gotpltSection = layout.findOutputSection(".got.plt");
+  if (gotpltSection)
+    gotAtom->_virtualAddr = gotpltSection->virtualAddr();
+  else
+    gotAtom->_virtualAddr = 0;
+  AtomLayout *dynamicAtom = layout.findAbsoluteAtom("_DYNAMIC");
+  OutputSection<ELF32LE> *dynamicSection = layout.findOutputSection(".dynamic");
+  if (dynamicSection)
+    dynamicAtom->_virtualAddr = dynamicSection->virtualAddr();
+  else
+    dynamicAtom->_virtualAddr = 0;
+}
+
+} // namespace elf
+} // namespace lld
