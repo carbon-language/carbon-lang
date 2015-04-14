@@ -17,29 +17,19 @@ void basic_finally(void) {
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
-// CHECK: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
-// CHECK: call void @cleanup()
-// CHECK: load i8, i8* %[[abnormal]]
-// CHECK: icmp eq
-// CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
-//
-// CHECK: [[finallycont]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext false, i8* %[[fp]])
 // CHECK-NEXT: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: store i8 1, i8* %[[abnormal]]
-// CHECK: br label %[[finally]]
-//
-// CHECK: [[resumecont]]
-// CHECK: br label %[[ehresume:[^ ]*]]
-//
-// CHECK: [[ehresume]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext true, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
+
+// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: call void @cleanup()
 
 // Mostly check that we don't double emit 'r' which would crash.
 void decl_in_finally(void) {
@@ -67,10 +57,11 @@ l:
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
-// CHECK: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@label_in_finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK: ret void
+
+// CHECK: define internal void @"\01?fin$0@0@label_in_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
 // CHECK: br label %[[l:[^ ]*]]
 //
 // CHECK: [[l]]
@@ -93,31 +84,21 @@ void use_abnormal_termination(void) {
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
-// CHECK: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
-// CHECK: load i8, i8* %[[abnormal]]
-// CHECK: zext i8 %{{.*}} to i32
-// CHECK: store i32 %{{.*}}, i32* @crashed
-// CHECK: load i8, i8* %[[abnormal]]
-// CHECK: icmp eq
-// CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
-//
-// CHECK: [[finallycont]]
-// CHECK-NEXT: ret void
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: store i8 1, i8* %[[abnormal]]
-// CHECK: br label %[[finally]]
-//
-// CHECK: [[resumecont]]
-// CHECK: br label %[[ehresume:[^ ]*]]
-//
-// CHECK: [[ehresume]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"(i1 zeroext true, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
+
+// CHECK: define internal void @"\01?fin$0@0@use_abnormal_termination@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: %[[abnormal_zext:[^ ]*]] = zext i1 %abnormal_termination to i32
+// CHECK: store i32 %[[abnormal_zext]], i32* @crashed
+// CHECK-NEXT: ret void
 
 void noreturn_noop_finally() {
   __try {
@@ -128,12 +109,13 @@ void noreturn_noop_finally() {
 }
 
 // CHECK-LABEL: define void @noreturn_noop_finally()
-// CHECK: store i8 0, i8* %
-// CHECK: br label %[[finally:[^ ]*]]
-// CHECK: [[finally]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@noreturn_noop_finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK: ret void
+
+// CHECK: define internal void @"\01?fin$0@0@noreturn_noop_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
 // CHECK: call void @abort()
-// CHECK-NEXT: unreachable
-// CHECK-NOT: load
+// CHECK: unreachable
 
 void noreturn_finally() {
   __try {
@@ -148,18 +130,20 @@ void noreturn_finally() {
 // CHECK:     to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
-// CHECK: store i8 0, i8* %
-// CHECK: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
-// CHECK: call void @abort()
-// CHECK-NEXT: unreachable
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@noreturn_finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: store i8 1, i8* %
-// CHECK: br label %[[finally]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@noreturn_finally@@"(i1 zeroext true, i8* %[[fp]])
+// CHECK: resume { i8*, i32 }
+
+// CHECK: define internal void @"\01?fin$0@0@noreturn_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: call void @abort()
+// CHECK: unreachable
 
 int finally_with_return() {
   __try {
@@ -168,14 +152,14 @@ int finally_with_return() {
   }
 }
 // CHECK-LABEL: define i32 @finally_with_return()
-// CHECK: store i8 0, i8* %
-// CHECK-NEXT: br label %[[finally:[^ ]*]]
-//
-// CHECK: [[finally]]
-// CHECK-NEXT: br label %[[finallycont:[^ ]*]]
-//
-// CHECK: [[finallycont]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK-NEXT: call void @"\01?fin$0@0@finally_with_return@@"(i1 zeroext false, i8* %[[fp]])
 // CHECK-NEXT: ret i32 42
+
+// CHECK: define internal void @"\01?fin$0@0@finally_with_return@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK-NOT: br i1
+// CHECK-NOT: br label
+// CHECK: ret void
 
 int nested___finally___finally() {
   __try {
@@ -188,38 +172,28 @@ int nested___finally___finally() {
   }
   return 0;
 }
+
 // CHECK-LABEL: define i32 @nested___finally___finally
-// CHECK: store i8 0, i8* %
-// CHECK-NEXT: br label %[[finally:[^ ]*]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: invoke void @"\01?fin$1@0@nested___finally___finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK:          to label %[[outercont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
-// CHECK: [[finally]]
-// CHECK-NEXT: store i32 1, i32* %
-// CHECK-NEXT: store i32 1, i32* %
-// CHECK-NEXT: br label %[[cleanup:[^ ]*]]
+// CHECK: [[outercont]]
+// CHECK-NEXT: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK-NEXT: call void @"\01?fin$0@0@nested___finally___finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK-NEXT: ret i32 0
 //
-// The finally's unreachable continuation block:
-// CHECK: store i32 0, i32* %
-// CHECK-NEXT: br label %[[cleanup]]
-//
-// CHECK: [[cleanup]]
-// CHECK-NEXT: store i8 0, i8* %
-// CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
-//
-// CHECK: [[outerfinally]]
-// CHECK-NEXT: br label %[[finallycont:[^ ]*]]
-//
-// CHECK: [[finallycont]]
-// CHECK-NEXT: %[[dest:[^ ]*]] = load i32, i32* %
-// CHECK-NEXT: switch i32 %[[dest]]
-// CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
-//
-// CHECK: [[cleanupcont]]
-// CHECK-NEXT: store i32 0, i32* %
-// CHECK-NEXT: br label %[[return:[^ ]*]]
-//
-// CHECK: [[return]]
-// CHECK-NEXT: %[[reg:[^ ]*]] = load i32, i32* %
-// CHECK-NEXT: ret i32 %[[reg]]
+// CHECK: [[lpad]]
+// CHECK-NEXT: landingpad
+// CHECK-NEXT: cleanup
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK-NEXT: call void @"\01?fin$0@0@nested___finally___finally@@"(i1 zeroext true, i8* %[[fp]])
+
+// CHECK-LABEL: define internal void @"\01?fin$0@0@nested___finally___finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: ret void
+
+// CHECK-LABEL: define internal void @"\01?fin$1@0@nested___finally___finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: unreachable
 
 int nested___finally___finally_with_eh_edge() {
   __try {
@@ -234,58 +208,35 @@ int nested___finally___finally_with_eh_edge() {
   return 912;
 }
 // CHECK-LABEL: define i32 @nested___finally___finally_with_eh_edge
-// CHECK: invoke void @might_crash() #3
-// CHECK-NEXT: to label %[[invokecont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+// CHECK: invoke void @might_crash()
+// CHECK-NEXT: to label %[[invokecont:[^ ]*]] unwind label %[[lpad1:[^ ]*]]
 //
-// CHECK: [[invokecont]]
-// CHECK-NEXT: store i8 0, i8* %[[abnormal:[^ ]*]]
-// CHECK-NEXT: br label %[[finally:[^ ]*]]
-
-// CHECK: [[finally]]
-// CHECK-NEXT: store i32 899, i32* %
-// CHECK-NEXT: store i32 1, i32* %
-// CHECK-NEXT: br label %[[cleanup:[^ ]*]]
+// [[invokecont]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: invoke void @"\01?fin$1@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK:          to label %[[outercont:[^ ]*]] unwind label %[[lpad2:[^ ]*]]
 //
-// The inner finally's unreachable continuation block:
-// CHECK: store i32 0, i32* %
-// CHECK-NEXT: br label %[[cleanup]]
+// CHECK: [[outercont]]
+// CHECK-NEXT: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK-NEXT: call void @"\01?fin$0@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK-NEXT: ret i32 912
 //
-// CHECK: [[cleanup]]
-// CHECK-NEXT: store i8 0, i8* %
-// CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
-//
-// CHECK: [[outerfinally]]
-// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8, i8* %[[abnormal]]
-// CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
-// CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
-//
-// CHECK: [[finallycont]]
-// CHECK-NEXT: %[[dest:[^ ]*]] = load i32, i32* %
-// CHECK-NEXT: switch i32 %[[dest]]
-// CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
-//
-// CHECK: [[cleanupcont]]
-// CHECK-NEXT: store i32 912, i32* %
-// CHECK-NEXT: br label %[[return:[^ ]*]]
-//
-//
-// CHECK: [[lpad]]
+// CHECK: [[lpad1]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: store i8 1, i8* %[[abnormal]]
-// CHECK: br label %[[finally]]
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: invoke void @"\01?fin$1@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext true, i8* %[[fp]])
+// CHECK:          to label %[[outercont:[^ ]*]] unwind label %[[lpad2]]
 //
-// The inner finally's unreachable resume block:
-// CHECK: store i8 1, i8* %[[abnormal]]
-// CHECK-NEXT: br label %[[outerfinally]]
-//
-// CHECK: [[finallyresume]]
-// CHECK-NEXT: br label %[[ehresume:[^ ]*]]
-//
-// CHECK: [[return]]
-// CHECK-NEXT: %[[reg:[^ ]*]] = load i32, i32* %
-// CHECK-NEXT: ret i32 %[[reg]]
-//
-// The ehresume block, not reachable either.
-// CHECK: [[ehresume]]
+// CHECK: [[lpad2]]
+// CHECK-NEXT: landingpad
+// CHECK-NEXT: cleanup
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext true, i8* %[[fp]])
 // CHECK: resume
+
+// CHECK-LABEL: define internal void @"\01?fin$0@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: ret void
+
+// CHECK-LABEL: define internal void @"\01?fin$1@0@nested___finally___finally_with_eh_edge@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: unreachable
