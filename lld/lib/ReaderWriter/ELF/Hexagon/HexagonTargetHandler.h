@@ -12,7 +12,6 @@
 
 #include "ELFReader.h"
 #include "HexagonELFFile.h"
-#include "HexagonExecutableAtoms.h"
 #include "HexagonRelocationHandler.h"
 #include "TargetLayout.h"
 

@@ -10,7 +10,6 @@
 #define HEXAGON_EXECUTABLE_WRITER_H
 
 #include "ExecutableWriter.h"
-#include "HexagonExecutableAtoms.h"
 #include "HexagonLinkingContext.h"
 #include "HexagonTargetHandler.h"
 
@@ -50,7 +49,8 @@ void HexagonExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELF32LE>::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
-  auto file = llvm::make_unique<HexagonRuntimeFile>(_ctx);
+  auto file =
+      llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "Hexagon runtime file");
   file->addAbsoluteAtom("_SDA_BASE_");
   if (this->_ctx.isDynamic()) {
     file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");

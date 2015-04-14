@@ -10,7 +10,6 @@
 #define HEXAGON_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
-#include "HexagonExecutableAtoms.h"
 #include "HexagonLinkingContext.h"
 
 namespace lld {
@@ -49,7 +48,8 @@ void HexagonDynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter<ELF32LE>::createImplicitFiles(result);
   // Add the default atoms as defined for hexagon
-  auto file = llvm::make_unique<HexagonRuntimeFile>(_ctx);
+  auto file =
+      llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "Hexagon runtime file");
   file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
   file->addAbsoluteAtom("_DYNAMIC");
   result.push_back(std::move(file));
