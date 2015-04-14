@@ -331,7 +331,7 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
   typedef std::error_code E;
   *kind = kindFromReloc(reloc);
   if (*kind == invalid)
-    return make_dynamic_error_code(Twine("unknown type"));
+    return make_dynamic_error_code("unknown type");
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   uint64_t targetAddress;
   switch (*kind) {
@@ -413,7 +413,7 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
                                    Reference::Addend *addend) {
   *kind = kindFromRelocPair(reloc1, reloc2);
   if (*kind == invalid)
-    return make_dynamic_error_code(Twine("unknown pair"));
+    return make_dynamic_error_code("unknown pair");
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   typedef std::error_code E;
   uint64_t targetAddress;
@@ -421,7 +421,7 @@ ArchHandler_x86_64::getPairReferenceInfo(const normalized::Relocation &reloc1,
   if (E ec = atomFromSymbolIndex(reloc1.symbol, &fromTarget))
     return ec;
   if (fromTarget != inAtom)
-    return make_dynamic_error_code(Twine("pointer diff not in base atom"));
+    return make_dynamic_error_code("pointer diff not in base atom");
   switch (*kind) {
   case delta64:
     if (E ec = atomFromSymbolIndex(reloc2.symbol, target))

@@ -69,14 +69,14 @@ std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
   // Check bitness.
   if (_is64Bit != (newClass == ELFCLASS64))
     return make_dynamic_error_code(
-        Twine("Bitness is incompatible with that of the selected target"));
+        "Bitness is incompatible with that of the selected target");
 
   // We support two ABI: O32 and N64. The last one does not have
   // the corresponding ELF flag.
   uint32_t inAbi = newFlags & EF_MIPS_ABI;
   uint32_t supportedAbi = _is64Bit ? 0 : uint32_t(EF_MIPS_ABI_O32);
   if (inAbi != supportedAbi)
-    return make_dynamic_error_code(Twine("Unsupported ABI"));
+    return make_dynamic_error_code("Unsupported ABI");
 
   // ... and reduced set of architectures ...
   uint32_t newArch = newFlags & EF_MIPS_ARCH;
@@ -94,12 +94,12 @@ std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
   case EF_MIPS_ARCH_64R6:
     break;
   default:
-    return make_dynamic_error_code(Twine("Unsupported instruction set"));
+    return make_dynamic_error_code("Unsupported instruction set");
   }
 
   // ... and still do not support MIPS-16 extension.
   if (newFlags & EF_MIPS_ARCH_ASE_M16)
-    return make_dynamic_error_code(Twine("Unsupported extension: MIPS16"));
+    return make_dynamic_error_code("Unsupported extension: MIPS16");
 
   // PIC code is inherently CPIC and may not set CPIC flag explicitly.
   // Ensure that this flag will exist in the linked file.
@@ -129,14 +129,13 @@ std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
   // Check mixing -mnan=2008 / -mnan=legacy modules.
   if ((newFlags & EF_MIPS_NAN2008) != (_flags & EF_MIPS_NAN2008))
     return make_dynamic_error_code(
-        Twine("Linking -mnan=2008 and -mnan=legacy modules"));
+        "Linking -mnan=2008 and -mnan=legacy modules");
 
   // Check ISA compatibility and update the extension flag.
   uint32_t oldArch = _flags & EF_MIPS_ARCH;
   if (!matchMipsISA(newArch, oldArch)) {
     if (!matchMipsISA(oldArch, newArch))
-      return make_dynamic_error_code(
-          Twine("Linking modules with incompatible ISA"));
+      return make_dynamic_error_code("Linking modules with incompatible ISA");
     _flags &= ~EF_MIPS_ARCH;
     _flags |= newArch;
   }

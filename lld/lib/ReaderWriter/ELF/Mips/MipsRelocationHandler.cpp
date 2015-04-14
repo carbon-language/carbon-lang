@@ -350,8 +350,7 @@ static std::error_code adjustJumpOpCode(uint64_t &ins, uint64_t tgt,
   uint32_t opCross = toMicro ? 0x1d : 0x3c;
 
   if ((tgt & 1) != toMicro)
-    return make_dynamic_error_code(
-        Twine("Incorrect bit 0 for the jalx target"));
+    return make_dynamic_error_code("Incorrect bit 0 for the jalx target");
 
   if (tgt & 2)
     return make_dynamic_error_code(Twine("The jalx target 0x") +

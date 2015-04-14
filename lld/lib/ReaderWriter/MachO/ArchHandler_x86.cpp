@@ -334,7 +334,7 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *addend = *(const ulittle32_t *)fixupContent - reloc.value;
     break;
   default:
-    return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
+    return make_dynamic_error_code("unsupported i386 relocation type");
   }
   return std::error_code();
 }
@@ -376,8 +376,8 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
       return ec;
     if (fromTarget != inAtom) {
       if (*target != inAtom)
-        return make_dynamic_error_code(Twine("SECTDIFF relocation where "
-                                             "neither target is in atom"));
+        return make_dynamic_error_code(
+            "SECTDIFF relocation where neither target is in atom");
       *kind = negDelta32;
       *addend = toAddress - value - fromAddress;
       *target = fromTarget;
@@ -400,7 +400,7 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
     return std::error_code();
     break;
   default:
-    return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
+    return make_dynamic_error_code("unsupported i386 relocation type");
   }
 }
 

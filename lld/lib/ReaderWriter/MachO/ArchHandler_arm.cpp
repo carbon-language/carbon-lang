@@ -619,7 +619,7 @@ std::error_code ArchHandler_arm::getReferenceInfo(
     *addend += (clearThumbBit(instruction, *target) - reloc.value);
     return std::error_code();
   default:
-    return make_dynamic_error_code(Twine("unsupported arm relocation type"));
+    return make_dynamic_error_code("unsupported arm relocation type");
   }
   return std::error_code();
 }
@@ -777,7 +777,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
     pointerDiff = true;
     break;
   default:
-    return make_dynamic_error_code(Twine("unsupported arm relocation pair"));
+    return make_dynamic_error_code("unsupported arm relocation pair");
   }
   const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
   std::error_code ec;
@@ -800,8 +800,8 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
     if (ec)
       return ec;
     if (scatterable && (fromTarget != inAtom))
-      return make_dynamic_error_code(Twine("SECTDIFF relocation where "
-                                           "subtrahend label is not in atom"));
+      return make_dynamic_error_code(
+          "SECTDIFF relocation where subtrahend label is not in atom");
     *kind = delta32;
     value = clearThumbBit(instruction, *target);
     *addend = (int32_t)(value - (toAddress - fixupAddress));
@@ -815,29 +815,28 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
     if (ec)
       return ec;
     if (fromTarget != inAtom)
-      return make_dynamic_error_code(
-          Twine("ARM_RELOC_HALF_SECTDIFF relocation "
-                "where subtrahend label is not in atom"));
+      return make_dynamic_error_code("ARM_RELOC_HALF_SECTDIFF relocation "
+                                     "where subtrahend label is not in atom");
     other16 = (reloc2.offset & 0xFFFF);
     if (thumbReloc) {
       if (top) {
         if (!isThumbMovt(instruction))
-          return make_dynamic_error_code(Twine("expected movt instruction"));
+          return make_dynamic_error_code("expected movt instruction");
       }
       else {
         if (!isThumbMovw(instruction))
-          return make_dynamic_error_code(Twine("expected movw instruction"));
+          return make_dynamic_error_code("expected movw instruction");
       }
       instruction16 = getWordFromThumbMov(instruction);
     }
     else {
       if (top) {
         if (!isArmMovt(instruction))
-          return make_dynamic_error_code(Twine("expected movt instruction"));
+          return make_dynamic_error_code("expected movt instruction");
       }
       else {
         if (!isArmMovw(instruction))
-          return make_dynamic_error_code(Twine("expected movw instruction"));
+          return make_dynamic_error_code("expected movw instruction");
       }
       instruction16 = getWordFromArmMov(instruction);
     }
@@ -854,22 +853,22 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
     if (thumbReloc) {
       if (top) {
         if (!isThumbMovt(instruction))
-          return make_dynamic_error_code(Twine("expected movt instruction"));
+          return make_dynamic_error_code("expected movt instruction");
       }
       else {
         if (!isThumbMovw(instruction))
-          return make_dynamic_error_code(Twine("expected movw instruction"));
+          return make_dynamic_error_code("expected movw instruction");
       }
       instruction16 = getWordFromThumbMov(instruction);
     }
     else {
       if (top) {
         if (!isArmMovt(instruction))
-          return make_dynamic_error_code(Twine("expected movt instruction"));
+          return make_dynamic_error_code("expected movt instruction");
       }
       else {
         if (!isArmMovw(instruction))
-          return make_dynamic_error_code(Twine("expected movw instruction"));
+          return make_dynamic_error_code("expected movw instruction");
       }
       instruction16 = getWordFromArmMov(instruction);
     }

@@ -257,7 +257,7 @@ public:
 
     // Check if the total size is valid.
     if (std::size_t(end - buf) != sizeof(COFF::ImportHeader) + dataSize)
-      return make_dynamic_error_code(StringRef("Broken import library"));
+      return make_dynamic_error_code("Broken import library");
 
     uint16_t hint = read16le(buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));

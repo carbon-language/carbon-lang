@@ -107,6 +107,10 @@ private:
 
 static dynamic_error_category categorySingleton;
 
+std::error_code make_dynamic_error_code(const char *msg) {
+  return make_dynamic_error_code(StringRef(msg));
+}
+
 std::error_code make_dynamic_error_code(StringRef msg) {
   return std::error_code(categorySingleton.add(msg), categorySingleton);
 }

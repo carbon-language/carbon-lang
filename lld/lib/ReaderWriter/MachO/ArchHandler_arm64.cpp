@@ -437,7 +437,7 @@ std::error_code ArchHandler_arm64::getReferenceInfo(
     *addend = 0;
     return std::error_code();
   default:
-    return make_dynamic_error_code(Twine("unsupported arm64 relocation type"));
+    return make_dynamic_error_code("unsupported arm64 relocation type");
   }
 }
 
@@ -491,7 +491,7 @@ std::error_code ArchHandler_arm64::getPairReferenceInfo(
     *addend = (int32_t)*(const little32_t *)fixupContent + offsetInAtom;
     return std::error_code();
   default:
-    return make_dynamic_error_code(Twine("unsupported arm64 relocation pair"));
+    return make_dynamic_error_code("unsupported arm64 relocation pair");
   }
 }
 

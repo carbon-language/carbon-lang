@@ -18,15 +18,15 @@ namespace lld {
 namespace elf {
 
 inline std::error_code make_unhandled_reloc_error() {
-  return make_dynamic_error_code(Twine("Unhandled reference type"));
+  return make_dynamic_error_code("Unhandled reference type");
 }
 
 inline std::error_code make_out_of_range_reloc_error() {
-  return make_dynamic_error_code(Twine("Relocation out of range"));
+  return make_dynamic_error_code("Relocation out of range");
 }
 
 inline std::error_code make_unaligned_range_reloc_error() {
-  return make_dynamic_error_code(Twine("Relocation not aligned"));
+  return make_dynamic_error_code("Relocation not aligned");
 }
 
 } // end namespace elf
