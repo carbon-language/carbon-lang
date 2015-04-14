@@ -438,7 +438,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DIObjCProperty Ty) {
 /// addSourceLine - Add location information to specified debug information
 /// entry.
 void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
-  addSourceLine(Die, NS.getLineNumber(), NS.getFilename(), NS.getDirectory());
+  addSourceLine(Die, NS->getLine(), NS->getFilename(), NS->getDirectory());
 }
 
 /// addRegisterOp - Add register operand.
@@ -1145,10 +1145,10 @@ void DwarfUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
   DIE &ParamDIE =
       createAndAddDIE(dwarf::DW_TAG_template_type_parameter, Buffer);
   // Add the type if it exists, it could be void and therefore no type.
-  if (TP.getType())
-    addType(ParamDIE, resolve(TP.getType()));
-  if (!TP.getName().empty())
-    addString(ParamDIE, dwarf::DW_AT_name, TP.getName());
+  if (TP->getType())
+    addType(ParamDIE, resolve(TP->getType()));
+  if (!TP->getName().empty())
+    addString(ParamDIE, dwarf::DW_AT_name, TP->getName());
 }
 
 /// constructTemplateValueParameterDIE - Construct new DIE for the given
@@ -1156,17 +1156,17 @@ void DwarfUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
 void
 DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
                                               DITemplateValueParameter VP) {
-  DIE &ParamDIE = createAndAddDIE(VP.getTag(), Buffer);
+  DIE &ParamDIE = createAndAddDIE(VP->getTag(), Buffer);
 
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
-  if (VP.getTag() == dwarf::DW_TAG_template_value_parameter)
-    addType(ParamDIE, resolve(VP.getType()));
-  if (!VP.getName().empty())
-    addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
-  if (Metadata *Val = VP.getValue()) {
+  if (VP->getTag() == dwarf::DW_TAG_template_value_parameter)
+    addType(ParamDIE, resolve(VP->getType()));
+  if (!VP->getName().empty())
+    addString(ParamDIE, dwarf::DW_AT_name, VP->getName());
+  if (Metadata *Val = VP->getValue()) {
     if (ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(Val))
-      addConstantValue(ParamDIE, CI, resolve(VP.getType()));
+      addConstantValue(ParamDIE, CI, resolve(VP->getType()));
     else if (GlobalValue *GV = mdconst::dyn_extract<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
@@ -1176,11 +1176,11 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
       // parameter, rather than a pointer to it.
       addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
       addBlock(ParamDIE, dwarf::DW_AT_location, Loc);
-    } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_template_param) {
+    } else if (VP->getTag() == dwarf::DW_TAG_GNU_template_template_param) {
       assert(isa<MDString>(Val));
       addString(ParamDIE, dwarf::DW_AT_GNU_template_name,
                 cast<MDString>(Val)->getString());
-    } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_parameter_pack) {
+    } else if (VP->getTag() == dwarf::DW_TAG_GNU_template_parameter_pack) {
       addTemplateParams(ParamDIE, cast<MDTuple>(Val));
     }
   }
@@ -1190,19 +1190,19 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
 DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
-  DIE *ContextDIE = getOrCreateContextDIE(NS.getContext());
+  DIE *ContextDIE = getOrCreateContextDIE(NS->getScope());
 
   if (DIE *NDie = getDIE(NS))
     return NDie;
   DIE &NDie = createAndAddDIE(dwarf::DW_TAG_namespace, *ContextDIE, NS);
 
-  StringRef Name = NS.getName();
+  StringRef Name = NS->getName();
   if (!Name.empty())
-    addString(NDie, dwarf::DW_AT_name, NS.getName());
+    addString(NDie, dwarf::DW_AT_name, NS->getName());
   else
     Name = "(anonymous namespace)";
   DD->addAccelNamespace(Name, NDie);
-  addGlobalName(Name, NDie, NS.getContext());
+  addGlobalName(Name, NDie, NS->getScope());
   addSourceLine(NDie, NS);
   return &NDie;
 }

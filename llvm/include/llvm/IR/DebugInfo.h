@@ -519,58 +519,42 @@ public:
   unsigned getDiscriminator() const { return get()->getDiscriminator(); }
 };
 
-/// \brief A wrapper for a C++ style name space.
-class DINameSpace : public DIScope {
+class DINameSpace {
+  MDNamespace *N;
+
 public:
-  DINameSpace() = default;
-  DINameSpace(const MDNamespace *N) : DIScope(N) {}
+  DINameSpace(const MDNamespace *N = nullptr)
+      : N(const_cast<MDNamespace *>(N)) {}
 
-  MDNamespace *get() const {
-    return cast_or_null<MDNamespace>(DIDescriptor::get());
-  }
-  operator MDNamespace *() const { return get(); }
-  MDNamespace *operator->() const { return get(); }
-  MDNamespace &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  DIScope getContext() const { return DIScope(get()->getScope()); }
+  operator DIDescriptor() const { return N; }
+  operator DIScope() const { return N; }
+  operator MDNamespace *() const { return N; }
+  MDNamespace *operator->() const { return N; }
+  MDNamespace &operator*() const { return *N; }
 };
 
-/// \brief This is a wrapper for template type parameter.
-class DITemplateTypeParameter : public DIDescriptor {
+class DITemplateTypeParameter {
+  MDTemplateTypeParameter *N;
+
 public:
-  DITemplateTypeParameter() = default;
-  DITemplateTypeParameter(const MDTemplateTypeParameter *N) : DIDescriptor(N) {}
+  DITemplateTypeParameter(const MDTemplateTypeParameter *N = nullptr)
+      : N(const_cast<MDTemplateTypeParameter *>(N)) {}
 
-  MDTemplateTypeParameter *get() const {
-    return cast_or_null<MDTemplateTypeParameter>(DIDescriptor::get());
-  }
-  operator MDTemplateTypeParameter *() const { return get(); }
-  MDTemplateTypeParameter *operator->() const { return get(); }
-  MDTemplateTypeParameter &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  DITypeRef getType() const { return get()->getType(); }
+  operator MDTemplateTypeParameter *() const { return N; }
+  MDTemplateTypeParameter *operator->() const { return N; }
+  MDTemplateTypeParameter &operator*() const { return *N; }
 };
 
-/// \brief This is a wrapper for template value parameter.
-class DITemplateValueParameter : public DIDescriptor {
+class DITemplateValueParameter {
+  MDTemplateValueParameter *N;
+
 public:
-  DITemplateValueParameter() = default;
-  DITemplateValueParameter(const MDTemplateValueParameter *N)
-      : DIDescriptor(N) {}
+  DITemplateValueParameter(const MDTemplateValueParameter *N = nullptr)
+      : N(const_cast<MDTemplateValueParameter *>(N)) {}
 
-  MDTemplateValueParameter *get() const {
-    return cast_or_null<MDTemplateValueParameter>(DIDescriptor::get());
-  }
-  operator MDTemplateValueParameter *() const { return get(); }
-  MDTemplateValueParameter *operator->() const { return get(); }
-  MDTemplateValueParameter &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  DITypeRef getType() const { return get()->getType(); }
-  Metadata *getValue() const { return get()->getValue(); }
+  operator MDTemplateValueParameter *() const { return N; }
+  MDTemplateValueParameter *operator->() const { return N; }
+  MDTemplateValueParameter &operator*() const { return *N; }
 };
 
 class DIGlobalVariable {
@@ -597,7 +581,6 @@ public:
   MDLocalVariable *operator->() const { return N; }
   MDLocalVariable &operator*() const { return *N; }
 };
-
 
 class DIExpression {
   MDExpression *N;

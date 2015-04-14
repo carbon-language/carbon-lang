@@ -224,8 +224,8 @@ void DebugInfoFinder::processScope(DIScope Scope) {
     return;
   if (DILexicalBlock LB = dyn_cast<MDLexicalBlockBase>(Scope)) {
     processScope(LB.getContext());
-  } else if (DINameSpace NS = dyn_cast<MDNamespace>(Scope)) {
-    processScope(NS.getContext());
+  } else if (auto *NS = dyn_cast<MDNamespace>(Scope)) {
+    processScope(NS->getScope());
   }
 }
 
@@ -235,12 +235,10 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   processScope(SP.getContext().resolve(TypeIdentifierMap));
   processType(SP.getType());
   for (auto *Element : SP.getTemplateParams()) {
-    if (DITemplateTypeParameter TType =
-            dyn_cast<MDTemplateTypeParameter>(Element)) {
-      processType(TType.getType().resolve(TypeIdentifierMap));
-    } else if (DITemplateValueParameter TVal =
-                   dyn_cast<MDTemplateValueParameter>(Element)) {
-      processType(TVal.getType().resolve(TypeIdentifierMap));
+    if (auto *TType = dyn_cast<MDTemplateTypeParameter>(Element)) {
+      processType(TType->getType().resolve(TypeIdentifierMap));
+    } else if (auto *TVal = dyn_cast<MDTemplateValueParameter>(Element)) {
+      processType(TVal->getType().resolve(TypeIdentifierMap));
     }
   }
 }
