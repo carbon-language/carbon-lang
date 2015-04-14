@@ -198,7 +198,9 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         unsigned Discriminator = FirstDIL.computeNewDiscriminator(Ctx);
         DILexicalBlockFile NewScope =
             Builder.createLexicalBlockFile(Scope, File, Discriminator);
-        DILocation NewDIL = FirstDIL.copyWithNewScope(Ctx, NewScope);
+        DILocation NewDIL =
+            MDLocation::get(Ctx, FirstDIL->getLine(), FirstDIL->getColumn(),
+                            NewScope, FirstDIL->getInlinedAt());
         DebugLoc newDebugLoc = NewDIL.get();
 
         // Attach this new debug location to First and every

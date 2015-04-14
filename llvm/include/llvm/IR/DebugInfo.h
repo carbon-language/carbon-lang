@@ -705,9 +705,6 @@ public:
 
   /// \brief Generate a new discriminator value for this location.
   unsigned computeNewDiscriminator(LLVMContext &Ctx);
-
-  /// \brief Return a copy of this location with a different scope.
-  DILocation copyWithNewScope(LLVMContext &Ctx, DILexicalBlockFile NewScope);
 };
 
 class DIObjCProperty : public DIDescriptor {

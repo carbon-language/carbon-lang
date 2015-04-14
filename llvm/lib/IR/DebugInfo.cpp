@@ -47,15 +47,6 @@ void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
   get()->replaceGlobalVariables(MDGlobalVariableArray(GlobalVariables));
 }
 
-DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
-                                        DILexicalBlockFile NewScope) {
-  assert(NewScope && "Expected valid scope");
-
-  const auto *Old = cast<MDLocation>(DbgNode);
-  return DILocation(MDLocation::get(Ctx, Old->getLine(), Old->getColumn(),
-                                    NewScope, Old->getInlinedAt()));
-}
-
 unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
   std::pair<const char *, unsigned> Key(getFilename().data(), getLineNumber());
   return ++Ctx.pImpl->DiscriminatorTable[Key];
