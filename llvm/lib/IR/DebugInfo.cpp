@@ -182,7 +182,7 @@ void DebugInfoFinder::processType(DIType DT) {
         processType(Ref.resolve(TypeIdentifierMap));
       return;
     }
-    for (Metadata *D : DCT->getElements()->operands()) {
+    for (Metadata *D : DCT->getElements()) {
       if (DIType T = dyn_cast<MDType>(D))
         processType(T);
       else if (DISubprogram SP = dyn_cast<MDSubprogram>(D))
