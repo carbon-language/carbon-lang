@@ -182,7 +182,6 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
 
   startSectionIter = _sections.begin();
   startSection = 0;
-  bool isFirstSection = true;
   bool isDataPageAlignedForNMagic = false;
   uint64_t startAddr = addr;
   SegmentSlice<ELFT> *slice = nullptr;
@@ -190,144 +189,147 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
   bool alignSegments = this->_ctx.alignSegments();
   StringRef prevOutputSectionName = StringRef();
 
-  for (auto si = _sections.begin(); si != _sections.end(); ++si) {
-    // If this is first section in the segment, page align the section start
-    // address. The linker needs to align the data section to a page boundary
-    // only if NMAGIC is set.
-    if (isFirstSection) {
-      isFirstSection = false;
-      if (alignSegments &&
-          _outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
-          _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
-        // Align to a page only if the output is not
-        // OutputMagic::NMAGIC/OutputMagic::OMAGIC
-        startAddr =
-            llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
-      else if (!isDataPageAlignedForNMagic && needAlign(*si)) {
-        // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
-        // Data to a page boundary.
-        startAddr =
-            llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
-        isDataPageAlignedForNMagic = true;
-      }
-      // align the startOffset to the section alignment
-      uint64_t newAddr =
-          llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
-      // Handle linker script expressions, which *may update newAddr* if the
-      // expression assigns to "."
-      if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
-        expr->evalExpr(newAddr);
-      curSliceAddress = newAddr;
-      sliceAlign = (*si)->alignment();
-      (*si)->setVirtualAddr(curSliceAddress);
+  // If this is first section in the segment, page align the section start
+  // address. The linker needs to align the data section to a page boundary
+  // only if NMAGIC is set.
+  auto si = _sections.begin();
+  if (si != _sections.end()) {
+    if (alignSegments &&
+        _outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+        _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC) {
+      // Align to a page only if the output is not
+      // OutputMagic::NMAGIC/OutputMagic::OMAGIC
+      startAddr =
+        llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
+    } else if (!isDataPageAlignedForNMagic && needAlign(*si)) {
+      // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
+      // Data to a page boundary.
+      startAddr =
+        llvm::RoundUpToAlignment(startAddr, this->_ctx.getPageSize());
+      isDataPageAlignedForNMagic = true;
+    }
+    // align the startOffset to the section alignment
+    uint64_t newAddr =
+      llvm::RoundUpToAlignment(startAddr, (*si)->alignment());
+    // Handle linker script expressions, which *may update newAddr* if the
+    // expression assigns to "."
+    if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
+      expr->evalExpr(newAddr);
+    curSliceAddress = newAddr;
+    sliceAlign = (*si)->alignment();
+    (*si)->setVirtualAddr(curSliceAddress);
 
+    // Handle TLS.
+    if (auto section = dyn_cast<Section<ELFT>>(*si)) {
+      if (section->getSegmentType() == llvm::ELF::PT_TLS) {
+        tlsStartAddr =
+          llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
+        section->assignVirtualAddress(tlsStartAddr);
+        tlsStartAddr += (*si)->memSize();
+      } else {
+        section->assignVirtualAddress(newAddr);
+      }
+    }
+    // TBSS section is special in that it doesn't contribute to memory of any
+    // segment. If we see a tbss section, don't add memory size to addr The
+    // fileOffset is automatically taken care of since TBSS section does not
+    // end up using file size
+    if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
+      curSliceSize = (*si)->memSize();
+    ++currSection;
+    ++si;
+  }
+
+  for (auto e = _sections.end(); si != e; ++si) {
+    uint64_t curAddr = curSliceAddress + curSliceSize;
+    if (!isDataPageAlignedForNMagic && needAlign(*si)) {
+      // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
+      // Data
+      // to a page boundary
+      curAddr = llvm::RoundUpToAlignment(curAddr, this->_ctx.getPageSize());
+      isDataPageAlignedForNMagic = true;
+    }
+    uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->alignment());
+    // Handle linker script expressions, which *may update newAddr* if the
+    // expression assigns to "."
+    if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
+      expr->evalExpr(newAddr);
+    Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
+    StringRef curOutputSectionName;
+    if (sec) {
+      curOutputSectionName = sec->outputSectionName();
+    } else {
+      // If this is a linker script expression, propagate the name of the
+      // previous section instead
+      if (isa<ExpressionChunk<ELFT>>(*si))
+        curOutputSectionName = prevOutputSectionName;
+      else
+        curOutputSectionName = (*si)->name();
+    }
+    bool autoCreateSlice = true;
+    if (curOutputSectionName == prevOutputSectionName)
+      autoCreateSlice = false;
+    // If the newAddress computed is more than a page away, let's create
+    // a separate segment, so that memory is not used up while running.
+    // Dont create a slice, if the new section falls in the same output
+    // section as the previous section.
+    if (autoCreateSlice && ((newAddr - curAddr) > this->_ctx.getPageSize()) &&
+        (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+         _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
+      auto sliceIter =
+        std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
+                     [startSection](SegmentSlice<ELFT> *s) -> bool {
+                       return s->startSection() == startSection;
+                     });
+      if (sliceIter == _segmentSlices.end()) {
+        slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
+          SegmentSlice<ELFT>();
+        _segmentSlices.push_back(slice);
+      } else {
+        slice = *sliceIter;
+      }
+      slice->setStart(startSection);
+      slice->setSections(make_range(startSectionIter, si));
+      slice->setMemSize(curSliceSize);
+      slice->setAlign(sliceAlign);
+      slice->setVirtualAddr(curSliceAddress);
+      // Start new slice
+      curSliceAddress = newAddr;
+      (*si)->setVirtualAddr(curSliceAddress);
+      startSectionIter = si;
+      startSection = currSection;
+      if (auto section = dyn_cast<Section<ELFT>>(*si))
+        section->assignVirtualAddress(newAddr);
+      curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
+      sliceAlign = (*si)->alignment();
+    } else {
+      if (sliceAlign < (*si)->alignment())
+        sliceAlign = (*si)->alignment();
+      (*si)->setVirtualAddr(newAddr);
       // Handle TLS.
       if (auto section = dyn_cast<Section<ELFT>>(*si)) {
         if (section->getSegmentType() == llvm::ELF::PT_TLS) {
           tlsStartAddr =
-              llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
+            llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
           section->assignVirtualAddress(tlsStartAddr);
           tlsStartAddr += (*si)->memSize();
         } else {
           section->assignVirtualAddress(newAddr);
         }
       }
-      // TBSS section is special in that it doesn't contribute to memory of any
-      // segment. If we see a tbss section, don't add memory size to addr The
-      // fileOffset is automatically taken care of since TBSS section does not
-      // end up using file size
+      // TBSS section is special in that it doesn't contribute to memory of
+      // any segment. If we see a tbss section, don't add memory size to addr
+      // The fileOffset is automatically taken care of since TBSS section does
+      // not end up using file size.
       if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
-        curSliceSize = (*si)->memSize();
-    } else {
-      uint64_t curAddr = curSliceAddress + curSliceSize;
-      if (!isDataPageAlignedForNMagic && needAlign(*si)) {
-        // If the linker outputmagic is set to OutputMagic::NMAGIC, align the
-        // Data
-        // to a page boundary
-        curAddr = llvm::RoundUpToAlignment(curAddr, this->_ctx.getPageSize());
-        isDataPageAlignedForNMagic = true;
-      }
-      uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->alignment());
-      // Handle linker script expressions, which *may update newAddr* if the
-      // expression assigns to "."
-      if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
-        expr->evalExpr(newAddr);
-      Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
-      StringRef curOutputSectionName;
-      if (sec)
-        curOutputSectionName = sec->outputSectionName();
-      else {
-        // If this is a linker script expression, propagate the name of the
-        // previous section instead
-        if (isa<ExpressionChunk<ELFT>>(*si))
-          curOutputSectionName = prevOutputSectionName;
-        else
-          curOutputSectionName = (*si)->name();
-      }
-      bool autoCreateSlice = true;
-      if (curOutputSectionName == prevOutputSectionName)
-        autoCreateSlice = false;
-      // If the newAddress computed is more than a page away, let's create
-      // a separate segment, so that memory is not used up while running.
-      // Dont create a slice, if the new section falls in the same output
-      // section as the previous section.
-      if (autoCreateSlice && ((newAddr - curAddr) > this->_ctx.getPageSize()) &&
-          (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
-           _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
-        auto sliceIter =
-            std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
-                         [startSection](SegmentSlice<ELFT> *s) -> bool {
-                           return s->startSection() == startSection;
-                         });
-        if (sliceIter == _segmentSlices.end()) {
-          slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
-              SegmentSlice<ELFT>();
-          _segmentSlices.push_back(slice);
-        } else {
-          slice = (*sliceIter);
-        }
-        slice->setStart(startSection);
-        slice->setSections(make_range(startSectionIter, si));
-        slice->setMemSize(curSliceSize);
-        slice->setAlign(sliceAlign);
-        slice->setVirtualAddr(curSliceAddress);
-        // Start new slice
-        curSliceAddress = newAddr;
-        (*si)->setVirtualAddr(curSliceAddress);
-        startSectionIter = si;
-        startSection = currSection;
-        if (auto section = dyn_cast<Section<ELFT>>(*si))
-          section->assignVirtualAddress(newAddr);
         curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
-        sliceAlign = (*si)->alignment();
-      } else {
-        if (sliceAlign < (*si)->alignment())
-          sliceAlign = (*si)->alignment();
-        (*si)->setVirtualAddr(newAddr);
-        // Handle TLS.
-        if (auto section = dyn_cast<Section<ELFT>>(*si)) {
-          if (section->getSegmentType() == llvm::ELF::PT_TLS) {
-            tlsStartAddr =
-                llvm::RoundUpToAlignment(tlsStartAddr, (*si)->alignment());
-            section->assignVirtualAddress(tlsStartAddr);
-            tlsStartAddr += (*si)->memSize();
-          } else {
-            section->assignVirtualAddress(newAddr);
-          }
-        }
-        // TBSS section is special in that it doesn't contribute to memory of
-        // any segment. If we see a tbss section, don't add memory size to addr
-        // The fileOffset is automatically taken care of since TBSS section does
-        // not end up using file size.
-        if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
-          curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
-        else
-          curSliceSize = newAddr - curSliceAddress;
-      }
-      prevOutputSectionName = curOutputSectionName;
+      else
+        curSliceSize = newAddr - curSliceAddress;
     }
-    currSection++;
+    prevOutputSectionName = curOutputSectionName;
+    ++currSection;
   }
+
   auto sliceIter = std::find_if(_segmentSlices.begin(), _segmentSlices.end(),
                                 [startSection](SegmentSlice<ELFT> *s) -> bool {
                                   return s->startSection() == startSection;
@@ -337,8 +339,9 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
         SegmentSlice<ELFT>();
     _segmentSlices.push_back(slice);
   } else {
-    slice = (*sliceIter);
+    slice = *sliceIter;
   }
+
   slice->setStart(startSection);
   slice->setVirtualAddr(curSliceAddress);
   slice->setMemSize(curSliceSize);
