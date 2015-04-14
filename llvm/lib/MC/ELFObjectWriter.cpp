@@ -92,14 +92,11 @@ class ELFObjectWriter : public MCObjectWriter {
     static bool isLocal(const MCSymbolData &Data, bool isUsedInReloc);
     static bool IsELFMetaDataSection(const MCSectionData &SD);
     static uint64_t DataSectionSize(const MCSectionData &SD);
-    static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
-                                       const MCSectionData &SD);
     static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
                                           const MCSectionData &SD);
 
-    void WriteDataSectionData(MCAssembler &Asm,
-                              const MCAsmLayout &Layout,
-                              const MCSectionELF &Section);
+    void writeDataSectionData(MCAssembler &Asm, const MCAsmLayout &Layout,
+                              const MCSectionData &SD);
 
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
@@ -201,7 +198,6 @@ class ELFObjectWriter : public MCObjectWriter {
     }
 
     void WriteHeader(const MCAssembler &Asm,
-                     uint64_t SectionHeaderOffset,
                      unsigned NumberOfSections);
 
     void WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
@@ -409,7 +405,6 @@ ELFObjectWriter::~ELFObjectWriter()
 
 // Emit the ELF header.
 void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
-                                  uint64_t SectionHeaderOffset,
                                   unsigned NumberOfSections) {
   // ELF Header
   // ----------
@@ -443,7 +438,7 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
   Write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
-  WriteWord(SectionHeaderOffset);  // e_shoff = sec hdr table off in bytes
+  WriteWord(0);                     // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
   Write32(Asm.getELFHeaderEFlags());
@@ -1532,13 +1527,6 @@ uint64_t ELFObjectWriter::DataSectionSize(const MCSectionData &SD) {
   return Ret;
 }
 
-uint64_t ELFObjectWriter::GetSectionFileSize(const MCAsmLayout &Layout,
-                                             const MCSectionData &SD) {
-  if (IsELFMetaDataSection(SD))
-    return DataSectionSize(SD);
-  return Layout.getSectionFileSize(&SD);
-}
-
 uint64_t ELFObjectWriter::GetSectionAddressSize(const MCAsmLayout &Layout,
                                                 const MCSectionData &SD) {
   if (IsELFMetaDataSection(SD))
@@ -1546,14 +1534,9 @@ uint64_t ELFObjectWriter::GetSectionAddressSize(const MCAsmLayout &Layout,
   return Layout.getSectionAddressSize(&SD);
 }
 
-void ELFObjectWriter::WriteDataSectionData(MCAssembler &Asm,
+void ELFObjectWriter::writeDataSectionData(MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
-                                           const MCSectionELF &Section) {
-  const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
-
-  uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
-  WriteZeros(Padding);
-
+                                           const MCSectionData &SD) {
   if (IsELFMetaDataSection(SD)) {
     for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
          ++i) {
@@ -1655,45 +1638,49 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                          const_cast<MCAsmLayout&>(Layout),
                          SectionIndexMap);
 
-  uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
-  uint64_t HeaderSize = is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
-                                    sizeof(ELF::Elf32_Ehdr);
-  uint64_t FileOff = HeaderSize;
-
   std::vector<const MCSectionELF*> Sections;
   ComputeSectionOrder(Asm, Sections);
   unsigned NumSections = Sections.size();
   SectionOffsetMapTy SectionOffsetMap;
-  for (unsigned i = 0; i < NumSections; ++i) {
-
-    const MCSectionELF &Section = *Sections[i];
-    const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
-
-    FileOff = RoundUpToAlignment(FileOff, SD.getAlignment());
-
-    // Remember the offset into the file for this section.
-    SectionOffsetMap[&Section] = FileOff;
-
-    // Get the size of the section in the output file (including padding).
-    FileOff += GetSectionFileSize(Layout, SD);
-  }
-
-  FileOff = RoundUpToAlignment(FileOff, NaturalAlignment);
-
-  const unsigned SectionHeaderOffset = FileOff;
 
   // Write out the ELF header ...
-  WriteHeader(Asm, SectionHeaderOffset, NumSections + 1);
+  WriteHeader(Asm, NumSections + 1);
 
   // ... then the sections ...
-  for (unsigned i = 0; i < NumSections; ++i)
-    WriteDataSectionData(Asm, Layout, *Sections[i]);
+  for (unsigned i = 0; i < NumSections; ++i) {
+    const MCSectionELF &Section = *Sections[i];
+    const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
+    uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
+    WriteZeros(Padding);
 
+    // Remember the offset into the file for this section.
+    SectionOffsetMap[&Section] = OS.tell();
+
+    writeDataSectionData(Asm, Layout, SD);
+  }
+
+  uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
   uint64_t Padding = OffsetToAlignment(OS.tell(), NaturalAlignment);
   WriteZeros(Padding);
 
+  const unsigned SectionHeaderOffset = OS.tell();
+
   // ... then the section header table ...
   writeSectionHeader(Asm, GroupMap, Layout, SectionIndexMap, SectionOffsetMap);
+
+  if (is64Bit()) {
+    uint64_t Val = SectionHeaderOffset;
+    if (sys::IsLittleEndianHost != IsLittleEndian)
+      sys::swapByteOrder(Val);
+    OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+              offsetof(ELF::Elf64_Ehdr, e_shoff));
+  } else {
+    uint32_t Val = SectionHeaderOffset;
+    if (sys::IsLittleEndianHost != IsLittleEndian)
+      sys::swapByteOrder(Val);
+    OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+              offsetof(ELF::Elf32_Ehdr, e_shoff));
+  }
 }
 
 bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
