@@ -3063,8 +3063,12 @@ std::error_code BitcodeReader::ParseBitcodeInto(Module *M,
   // We expect a number of well-defined blocks, though we don't necessarily
   // need to understand them all.
   while (1) {
-    if (Stream.AtEndOfStream())
-      return std::error_code();
+    if (Stream.AtEndOfStream()) {
+      if (TheModule)
+        return std::error_code();
+      // We didn't really read a proper Module.
+      return Error("Malformed IR file");
+    }
 
     BitstreamEntry Entry =
       Stream.advance(BitstreamCursor::AF_DontAutoprocessAbbrevs);
