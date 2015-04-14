@@ -1082,21 +1082,6 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         }
 
         virtual bool
-        WindowDelegateUpdateProcess (Window &window)
-        {
-        }
-
-        virtual bool
-        WindowDelegateUpdateThread (Window &window)
-        {
-        }
-
-        virtual bool
-        WindowDelegateUpdateStackFrame (Window &window)
-        {
-        }
-
-        virtual bool
         WindowDelegateDraw (Window &window, bool force)
         {
             return false; // Drawing not handled
