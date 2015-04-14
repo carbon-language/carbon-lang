@@ -1234,7 +1234,7 @@ Function *PrototypeAST::Codegen() {
       CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
       true /* definition */, ScopeLine, DIDescriptor::FlagPrototyped, false, F);
 
-  KSDbgInfo.FnScopeMap[this] = (DIScope)SP;
+  KSDbgInfo.FnScopeMap[this] = SP;
   return F;
 }
 

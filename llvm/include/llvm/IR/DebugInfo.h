@@ -437,6 +437,7 @@ public:
       : N(const_cast<MDSubprogram *>(N)) {}
 
   operator DIDescriptor() const { return N; }
+  operator DIScope() const { return N; }
   operator MDSubprogram *() const { return N; }
   MDSubprogram *operator->() const { return N; }
   MDSubprogram &operator*() const { return *N; }
