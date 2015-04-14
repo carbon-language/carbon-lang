@@ -31,7 +31,7 @@ protected:
 
   std::error_code setELFHeader() override {
     ExecutableWriter<ELF32LE>::setELFHeader();
-    setHexagonELFHeader(*this->_elfHeader);
+    setHexagonELFHeader(*_elfHeader);
     return std::error_code();
   }
 
@@ -52,7 +52,7 @@ void HexagonExecutableWriter::createImplicitFiles(
   auto file =
       llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "Hexagon runtime file");
   file->addAbsoluteAtom("_SDA_BASE_");
-  if (this->_ctx.isDynamic()) {
+  if (_ctx.isDynamic()) {
     file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
     file->addAbsoluteAtom("_DYNAMIC");
   }

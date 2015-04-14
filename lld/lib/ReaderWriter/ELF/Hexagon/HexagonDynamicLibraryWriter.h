@@ -30,7 +30,7 @@ protected:
 
   std::error_code setELFHeader() override {
     DynamicLibraryWriter<ELF32LE>::setELFHeader();
-    setHexagonELFHeader(*this->_elfHeader);
+    setHexagonELFHeader(*_elfHeader);
     return std::error_code();
   }
 

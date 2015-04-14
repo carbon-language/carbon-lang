@@ -94,7 +94,7 @@ public:
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotOnce, [this]() {
-      if (AtomLayout *got = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_"))
+      if (AtomLayout *got = findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_"))
         _gotAddr = got->_virtualAddr;
     });
     return _gotAddr;
@@ -137,9 +137,8 @@ private:
 
 inline void SDataSection::doPreFlight() {
   // sort the atoms on the alignments they have been set
-  std::stable_sort(this->_atoms.begin(), this->_atoms.end(),
-                                             [](const lld::AtomLayout * A,
-                                                const lld::AtomLayout * B) {
+  std::stable_sort(_atoms.begin(), _atoms.end(), [](const lld::AtomLayout *A,
+                                                    const lld::AtomLayout *B) {
     const DefinedAtom *definedAtomA = cast<DefinedAtom>(A->_atom);
     const DefinedAtom *definedAtomB = cast<DefinedAtom>(B->_atom);
     int64_t alignmentA = definedAtomA->alignment().value;
@@ -154,35 +153,35 @@ inline void SDataSection::doPreFlight() {
   });
 
   // Set the fileOffset, and the appropriate size of the section
-  for (auto &ai : this->_atoms) {
+  for (auto &ai : _atoms) {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(ai->_atom);
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
-    uint64_t fOffset = this->alignOffset(this->fileSize(), atomAlign);
-    uint64_t mOffset = this->alignOffset(this->memSize(), atomAlign);
+    uint64_t fOffset = alignOffset(fileSize(), atomAlign);
+    uint64_t mOffset = alignOffset(memSize(), atomAlign);
     ai->_fileOffset = fOffset;
-    this->_fsize = fOffset + definedAtom->size();
-    this->_msize = mOffset + definedAtom->size();
+    _fsize = fOffset + definedAtom->size();
+    _msize = mOffset + definedAtom->size();
   }
 } // finalize
 
 inline SDataSection::SDataSection(const HexagonLinkingContext &ctx)
     : AtomSection<ELF32LE>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
                            HexagonTargetLayout::ORDER_SDATA) {
-  this->_type = SHT_PROGBITS;
-  this->_flags = SHF_ALLOC | SHF_WRITE;
-  this->_alignment = 4096;
+  _type = SHT_PROGBITS;
+  _flags = SHF_ALLOC | SHF_WRITE;
+  _alignment = 4096;
 }
 
 inline const lld::AtomLayout *SDataSection::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
   uint64_t alignment = atomAlign.value;
-  this->_atoms.push_back(new (this->_alloc) lld::AtomLayout(atom, 0, 0));
+  _atoms.push_back(new (_alloc) lld::AtomLayout(atom, 0, 0));
   // Set the section alignment to the largest alignment
   // std::max doesn't support uint64_t
-  if (this->_alignment < alignment)
-    this->_alignment = alignment;
-  return (this->_atoms.back());
+  if (_alignment < alignment)
+    _alignment = alignment;
+  return _atoms.back();
 }
 
 inline void finalizeHexagonRuntimeAtomValues(HexagonTargetLayout &layout) {

@@ -71,8 +71,8 @@ void ARMExecutableWriter::finalizeDefaultAtomValues() {
 }
 
 unique_bump_ptr<SymbolTable<ELF32LE>> ARMExecutableWriter::createSymbolTable() {
-  return unique_bump_ptr<SymbolTable<ELF32LE>>(new (this->_alloc)
-                                                   ARMSymbolTable(this->_ctx));
+  return unique_bump_ptr<SymbolTable<ELF32LE>>(new (_alloc)
+                                                   ARMSymbolTable(_ctx));
 }
 
 void ARMExecutableWriter::processUndefinedSymbol(
@@ -90,8 +90,8 @@ std::error_code ARMExecutableWriter::setELFHeader() {
     return ec;
 
   // Set ARM-specific flags.
-  this->_elfHeader->e_flags(llvm::ELF::EF_ARM_EABI_VER5 |
-                            llvm::ELF::EF_ARM_VFP_FLOAT);
+  _elfHeader->e_flags(llvm::ELF::EF_ARM_EABI_VER5 |
+                      llvm::ELF::EF_ARM_VFP_FLOAT);
 
   StringRef entryName = _ctx.entrySymbolName();
   if (const AtomLayout *al = _armLayout.findAtomLayoutByName(entryName)) {
@@ -105,7 +105,7 @@ std::error_code ARMExecutableWriter::setELFHeader() {
         break;
       case DefinedAtom::codeARMThumb:
         // Fixup entry point for Thumb code.
-        this->_elfHeader->e_entry(al->_virtualAddr | 0x1);
+        _elfHeader->e_entry(al->_virtualAddr | 0x1);
         break;
       default:
         llvm_unreachable("Wrong code model of entry point atom");

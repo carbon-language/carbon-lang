@@ -28,18 +28,18 @@ public:
       : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
 
   DefinedAtom::ContentType contentType() const override {
-    if (this->_contentType != DefinedAtom::typeUnknown)
-      return this->_contentType;
-    if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL) {
-      if (this->_section->sh_type == llvm::ELF::SHT_NOBITS)
-        return (this->_contentType = DefinedAtom::typeZeroFillFast);
-      return (this->_contentType = DefinedAtom::typeDataFast);
+    if (_contentType != DefinedAtom::typeUnknown)
+      return _contentType;
+    if (_section->sh_flags & llvm::ELF::SHF_HEX_GPREL) {
+      if (_section->sh_type == llvm::ELF::SHT_NOBITS)
+        return (_contentType = DefinedAtom::typeZeroFillFast);
+      return (_contentType = DefinedAtom::typeDataFast);
     }
     return ELFDefinedAtom<ELF32LE>::contentType();
   }
 
   DefinedAtom::ContentPermissions permissions() const override {
-    if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
+    if (_section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
       return DefinedAtom::permRW_;
     return ELFDefinedAtom<ELF32LE>::permissions();
   }
@@ -55,7 +55,7 @@ public:
       : ELFCommonAtom<ELF32LE>(file, symbolName, symbol) {}
 
   virtual bool isSmallCommonSymbol() const {
-    switch (this->_symbol->st_shndx) {
+    switch (_symbol->st_shndx) {
     // Common symbols
     case llvm::ELF::SHN_HEXAGON_SCOMMON:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_1:
@@ -71,12 +71,12 @@ public:
 
   uint64_t size() const override {
     if (isSmallCommonSymbol())
-      return this->_symbol->st_size;
+      return _symbol->st_size;
     return ELFCommonAtom<ELF32LE>::size();
   }
 
   DefinedAtom::Merge merge() const override {
-    if (this->_symbol->getBinding() == llvm::ELF::STB_WEAK)
+    if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return DefinedAtom::mergeAsWeak;
     if (isSmallCommonSymbol())
       return DefinedAtom::mergeAsTentative;
@@ -91,7 +91,7 @@ public:
 
   DefinedAtom::Alignment alignment() const override {
     if (isSmallCommonSymbol())
-      return DefinedAtom::Alignment(this->_symbol->st_value);
+      return DefinedAtom::Alignment(_symbol->st_value);
     return 1;
   }
 

@@ -26,7 +26,7 @@ public:
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotSymOnce, [this]() {
-      if (AtomLayout *gotAtom = this->findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_"))
+      if (AtomLayout *gotAtom = findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_"))
         _gotSymAddr = gotAtom->_virtualAddr;
     });
     return _gotSymAddr;
@@ -34,7 +34,7 @@ public:
 
   uint64_t getTPOffset() {
     std::call_once(_tpOffOnce, [this]() {
-      for (const auto &phdr : *this->_programHeader) {
+      for (const auto &phdr : *_programHeader) {
         if (phdr->p_type == llvm::ELF::PT_TLS) {
           _tpOff = llvm::RoundUpToAlignment(TCB_SIZE, phdr->p_align);
           break;
@@ -45,7 +45,7 @@ public:
     return _tpOff;
   }
 
-  bool target1Rel() const { return this->_ctx.armTarget1Rel(); }
+  bool target1Rel() const { return _ctx.armTarget1Rel(); }
 
 private:
   // TCB block size of the TLS.

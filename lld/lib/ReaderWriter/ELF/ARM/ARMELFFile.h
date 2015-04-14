@@ -102,7 +102,7 @@ private:
         break;
       }
     }
-    return new (this->_readerStorage) ARMELFDefinedAtom(
+    return new (_readerStorage) ARMELFDefinedAtom(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
   }
