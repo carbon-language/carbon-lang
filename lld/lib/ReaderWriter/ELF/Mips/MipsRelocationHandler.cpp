@@ -10,6 +10,7 @@
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
 #include "MipsTargetLayout.h"
+#include "llvm/Support/Format.h"
 
 using namespace lld;
 using namespace elf;

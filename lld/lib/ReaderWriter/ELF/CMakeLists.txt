@@ -3,6 +3,7 @@ add_llvm_library(lldELF
   ELFFile.cpp
   ELFLinkingContext.cpp
   FileCommon.cpp
+  HeaderChunks.cpp
   OutputELFWriter.cpp
   Reader.cpp
   SectionChunks.cpp
