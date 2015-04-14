@@ -17,14 +17,16 @@ namespace elf {
 
 class ARMLinkingContext;
 
-template <DefinedAtom::CodeModel Model>
 class ARMELFMappingAtom : public ELFDefinedAtom<ELF32LE> {
 public:
   template <typename... T>
-  ARMELFMappingAtom(T &&... args)
-      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
+  ARMELFMappingAtom(DefinedAtom::CodeModel model, T &&... args)
+      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...), _model(model) {}
 
-  DefinedAtom::CodeModel codeModel() const override { return Model; }
+  DefinedAtom::CodeModel codeModel() const override { return _model; }
+
+private:
+  DefinedAtom::CodeModel _model;
 };
 
 class ARMELFDefinedAtom : public ELFDefinedAtom<ELF32LE> {
@@ -86,17 +88,20 @@ private:
     if (symName.size() >= 2 && symName[0] == '$') {
       switch (symName[1]) {
       case 'a':
-        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_a>(
-            *this, symName, sectionName, sym, sectionHdr, contentData,
-            referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage)
+            ARMELFMappingAtom(DefinedAtom::codeARM_a, *this, symName,
+                              sectionName, sym, sectionHdr, contentData,
+                              referenceStart, referenceEnd, referenceList);
       case 'd':
-        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_d>(
-            *this, symName, sectionName, sym, sectionHdr, contentData,
-            referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage)
+            ARMELFMappingAtom(DefinedAtom::codeARM_d, *this, symName,
+                              sectionName, sym, sectionHdr, contentData,
+                              referenceStart, referenceEnd, referenceList);
       case 't':
-        return new (_readerStorage) ARMELFMappingAtom<DefinedAtom::codeARM_t>(
-            *this, symName, sectionName, sym, sectionHdr, contentData,
-            referenceStart, referenceEnd, referenceList);
+        return new (_readerStorage)
+            ARMELFMappingAtom(DefinedAtom::codeARM_t, *this, symName,
+                              sectionName, sym, sectionHdr, contentData,
+                              referenceStart, referenceEnd, referenceList);
       default:
         // Fall through and create regular defined atom.
         break;
