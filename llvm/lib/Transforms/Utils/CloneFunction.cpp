@@ -157,7 +157,8 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 // Find the MDNode which corresponds to the DISubprogram data that described F.
 static MDNode* FindSubprogram(const Function *F, DebugInfoFinder &Finder) {
   for (DISubprogram Subprogram : Finder.subprograms()) {
-    if (Subprogram.describes(F)) return Subprogram;
+    if (Subprogram->describes(F))
+      return Subprogram;
   }
   return nullptr;
 }

@@ -304,8 +304,9 @@ TEST_F(CloneFunc, Subprogram) {
   Iter++;
   DISubprogram Sub2 = cast<MDSubprogram>(*Iter);
 
-  EXPECT_TRUE((Sub1.getFunction() == OldFunc && Sub2.getFunction() == NewFunc)
-           || (Sub1.getFunction() == NewFunc && Sub2.getFunction() == OldFunc));
+  EXPECT_TRUE(
+      (Sub1->getFunction() == OldFunc && Sub2->getFunction() == NewFunc) ||
+      (Sub1->getFunction() == NewFunc && Sub2->getFunction() == OldFunc));
 }
 
 // Test that the new subprogram entry was not added to the CU which doesn't
@@ -347,10 +348,10 @@ TEST_F(CloneFunc, InstructionOwnership) {
       EXPECT_EQ(OldDL.getCol(), NewDL.getCol());
 
       // But that they belong to different functions
-      DISubprogram OldSubprogram = cast<MDSubprogram>(OldDL.getScope());
-      DISubprogram NewSubprogram = cast<MDSubprogram>(NewDL.getScope());
-      EXPECT_EQ(OldFunc, OldSubprogram.getFunction());
-      EXPECT_EQ(NewFunc, NewSubprogram.getFunction());
+      auto *OldSubprogram = cast<MDSubprogram>(OldDL.getScope());
+      auto *NewSubprogram = cast<MDSubprogram>(NewDL.getScope());
+      EXPECT_EQ(OldFunc, OldSubprogram->getFunction());
+      EXPECT_EQ(NewFunc, NewSubprogram->getFunction());
     }
 
     ++OldIter;
@@ -384,25 +385,25 @@ TEST_F(CloneFunc, DebugIntrinsics) {
                          getParent()->getParent());
 
       // Old variable must belong to the old function
-      EXPECT_EQ(OldFunc, DISubprogram(cast<MDSubprogram>(
-                                          OldIntrin->getVariable()->getScope()))
-                             .getFunction());
+      EXPECT_EQ(OldFunc,
+                cast<MDSubprogram>(OldIntrin->getVariable()->getScope())
+                    ->getFunction());
       // New variable must belong to the New function
-      EXPECT_EQ(NewFunc, DISubprogram(cast<MDSubprogram>(
-                                          NewIntrin->getVariable()->getScope()))
-                             .getFunction());
+      EXPECT_EQ(NewFunc,
+                cast<MDSubprogram>(NewIntrin->getVariable()->getScope())
+                    ->getFunction());
     } else if (DbgValueInst* OldIntrin = dyn_cast<DbgValueInst>(&OldI)) {
       DbgValueInst* NewIntrin = dyn_cast<DbgValueInst>(&NewI);
       EXPECT_TRUE(NewIntrin);
 
       // Old variable must belong to the old function
-      EXPECT_EQ(OldFunc, DISubprogram(cast<MDSubprogram>(
-                                          OldIntrin->getVariable()->getScope()))
-                             .getFunction());
+      EXPECT_EQ(OldFunc,
+                cast<MDSubprogram>(OldIntrin->getVariable()->getScope())
+                    ->getFunction());
       // New variable must belong to the New function
-      EXPECT_EQ(NewFunc, DISubprogram(cast<MDSubprogram>(
-                                          NewIntrin->getVariable()->getScope()))
-                             .getFunction());
+      EXPECT_EQ(NewFunc,
+                cast<MDSubprogram>(NewIntrin->getVariable()->getScope())
+                    ->getFunction());
     }
 
     ++OldIter;

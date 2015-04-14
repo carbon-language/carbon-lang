@@ -788,9 +788,9 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     ++i;
   }
 
-  for (DISubprogram SP : DbgFinder.subprograms()) {
-    StringRef Filename(SP.getFilename());
-    StringRef Dirname(SP.getDirectory());
+  for (MDSubprogram *SP : DbgFinder.subprograms()) {
+    StringRef Filename = SP->getFilename();
+    StringRef Dirname = SP->getDirectory();
     SmallString<128> FullPathName = Dirname;
     if (!Dirname.empty() && !sys::path::is_absolute(Filename)) {
       sys::path::append(FullPathName, Filename);

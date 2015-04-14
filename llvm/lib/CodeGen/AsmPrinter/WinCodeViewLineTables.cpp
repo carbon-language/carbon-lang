@@ -192,7 +192,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   StringRef GVName = GV->getName();
   StringRef FuncName;
   if (DISubprogram SP = getDISubprogram(GV))
-    FuncName = SP.getDisplayName();
+    FuncName = SP->getDisplayName();
 
   // FIXME Clang currently sets DisplayName to "bar" for a C++
   // "namespace_foo::bar" function, see PR21528.  Luckily, dbghelp.dll is trying

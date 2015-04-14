@@ -671,8 +671,8 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   OS << "DEBUG_VALUE: ";
 
   DIVariable V = MI->getDebugVariable();
-  if (DISubprogram SP = dyn_cast<MDSubprogram>(V->getScope())) {
-    StringRef Name = SP.getDisplayName();
+  if (auto *SP = dyn_cast<MDSubprogram>(V->getScope())) {
+    StringRef Name = SP->getDisplayName();
     if (!Name.empty())
       OS << Name << ":";
   }

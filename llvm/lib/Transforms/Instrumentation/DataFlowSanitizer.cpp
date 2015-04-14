@@ -753,7 +753,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
       // Patch the pointer to LLVM function in debug info descriptor.
       auto DI = FunctionDIs.find(&F);
       if (DI != FunctionDIs.end())
-        DI->second.replaceFunction(&F);
+        DI->second->replaceFunction(&F);
 
       UnwrappedFnMap[WrappedFnCst] = &F;
       *i = NewF;

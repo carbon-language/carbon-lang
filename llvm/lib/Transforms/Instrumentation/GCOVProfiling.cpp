@@ -149,10 +149,10 @@ ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
   return new GCOVProfiler(Options);
 }
 
-static StringRef getFunctionName(DISubprogram SP) {
-  if (!SP.getLinkageName().empty())
-    return SP.getLinkageName();
-  return SP.getName();
+static StringRef getFunctionName(MDSubprogram *SP) {
+  if (!SP->getLinkageName().empty())
+    return SP->getLinkageName();
+  return SP->getName();
 }
 
 namespace {
@@ -315,7 +315,7 @@ namespace {
            ReturnBlock(1, os) {
       this->os = os;
 
-      Function *F = SP.getFunction();
+      Function *F = SP->getFunction();
       DEBUG(dbgs() << "Function: " << getFunctionName(SP) << "\n");
 
       uint32_t i = 0;
@@ -330,7 +330,7 @@ namespace {
 
       std::string FunctionNameAndLine;
       raw_string_ostream FNLOS(FunctionNameAndLine);
-      FNLOS << getFunctionName(SP) << SP.getLineNumber();
+      FNLOS << getFunctionName(SP) << SP->getLine();
       FNLOS.flush();
       FuncChecksum = hash_value(FunctionNameAndLine);
     }
@@ -366,7 +366,7 @@ namespace {
     void writeOut() {
       writeBytes(FunctionTag, 4);
       uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(getFunctionName(SP)) +
-          1 + lengthOfGCOVString(SP.getFilename()) + 1;
+                          1 + lengthOfGCOVString(SP->getFilename()) + 1;
       if (UseCfgChecksum)
         ++BlockLen;
       write(BlockLen);
@@ -375,8 +375,8 @@ namespace {
       if (UseCfgChecksum)
         write(CfgChecksum);
       writeGCOVString(getFunctionName(SP));
-      writeGCOVString(SP.getFilename());
-      write(SP.getLineNumber());
+      writeGCOVString(SP->getFilename());
+      write(SP->getLine());
 
       // Emit count of blocks.
       writeBytes(BlockTag, 4);
@@ -493,8 +493,8 @@ void GCOVProfiler::emitProfileNotes() {
     std::string EdgeDestinations;
 
     unsigned FunctionIdent = 0;
-    for (DISubprogram SP : CU->getSubprograms()) {
-      Function *F = SP.getFunction();
+    for (auto *SP : CU->getSubprograms()) {
+      Function *F = SP->getFunction();
       if (!F) continue;
       if (!functionHasLines(F)) continue;
 
@@ -541,7 +541,7 @@ void GCOVProfiler::emitProfileNotes() {
           if (SP != getDISubprogram(Loc.getScope()))
             continue;
 
-          GCOVLines &Lines = Block.getFile(SP.getFilename());
+          GCOVLines &Lines = Block.getFile(SP->getFilename());
           Lines.addLine(Loc.getLine());
         }
       }
@@ -572,8 +572,8 @@ bool GCOVProfiler::emitProfileArcs() {
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
-    for (DISubprogram SP : CU->getSubprograms()) {
-      Function *F = SP.getFunction();
+    for (auto *SP : CU->getSubprograms()) {
+      Function *F = SP->getFunction();
       if (!F) continue;
       if (!functionHasLines(F)) continue;
       if (!Result) Result = true;
@@ -593,7 +593,7 @@ bool GCOVProfiler::emitProfileArcs() {
                            GlobalValue::InternalLinkage,
                            Constant::getNullValue(CounterTy),
                            "__llvm_gcov_ctr");
-      CountersBySP.push_back(std::make_pair(Counters, (MDNode*)SP));
+      CountersBySP.push_back(std::make_pair(Counters, SP));
 
       UniqueVector<BasicBlock *> ComplexEdgePreds;
       UniqueVector<BasicBlock *> ComplexEdgeSuccs;
@@ -854,7 +854,7 @@ Function *GCOVProfiler::insertCounterWriteout(
                           Builder.CreateGlobalStringPtr(ReversedVersion),
                           Builder.getInt32(CfgChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
-        DISubprogram SP = cast_or_null<MDSubprogram>(CountersBySP[j].second);
+        auto *SP = cast_or_null<MDSubprogram>(CountersBySP[j].second);
         uint32_t FuncChecksum = Funcs.empty() ? 0 : Funcs[j]->getFuncChecksum();
         Builder.CreateCall5(
             EmitFunction, Builder.getInt32(j),

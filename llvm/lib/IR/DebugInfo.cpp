@@ -74,7 +74,7 @@ DISubprogram llvm::getDISubprogram(const Function *F) {
     DebugLoc DLoc = Inst->getDebugLoc();
     const MDNode *Scope = DLoc.getInlinedAtScope();
     DISubprogram Subprogram = getDISubprogram(Scope);
-    return Subprogram.describes(F) ? Subprogram : DISubprogram();
+    return Subprogram->describes(F) ? Subprogram : DISubprogram();
   }
 
   return DISubprogram();
@@ -222,8 +222,8 @@ void DebugInfoFinder::processScope(DIScope Scope) {
   }
   if (!addScope(Scope))
     return;
-  if (DILexicalBlock LB = dyn_cast<MDLexicalBlockBase>(Scope)) {
-    processScope(LB.getContext());
+  if (auto *LB = dyn_cast<MDLexicalBlockBase>(Scope)) {
+    processScope(LB->getScope());
   } else if (auto *NS = dyn_cast<MDNamespace>(Scope)) {
     processScope(NS->getScope());
   }
@@ -232,9 +232,9 @@ void DebugInfoFinder::processScope(DIScope Scope) {
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))
     return;
-  processScope(SP.getContext().resolve(TypeIdentifierMap));
-  processType(SP.getType());
-  for (auto *Element : SP.getTemplateParams()) {
+  processScope(SP->getScope().resolve(TypeIdentifierMap));
+  processType(SP->getType());
+  for (auto *Element : SP->getTemplateParams()) {
     if (auto *TType = dyn_cast<MDTemplateTypeParameter>(Element)) {
       processType(TType->getType().resolve(TypeIdentifierMap));
     } else if (auto *TVal = dyn_cast<MDTemplateValueParameter>(Element)) {
@@ -434,7 +434,7 @@ llvm::makeSubprogramMap(const Module &M) {
   for (MDNode *N : CU_Nodes->operands()) {
     DICompileUnit CUNode = cast<MDCompileUnit>(N);
     for (DISubprogram SP : CUNode->getSubprograms()) {
-      if (Function *F = SP.getFunction())
+      if (Function *F = SP->getFunction())
         R.insert(std::make_pair(F, SP));
     }
   }

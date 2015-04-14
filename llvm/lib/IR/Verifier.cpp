@@ -991,7 +991,7 @@ void Verifier::visitMDSubprogram(const MDSubprogram &N) {
         continue;
 
       // FIXME: Once N is canonical, check "SP == &N".
-      Assert(DISubprogram(SP).describes(F),
+      Assert(SP->describes(F),
              "!dbg attachment points at wrong subprogram for function", &N, F,
              &I, DL, Scope, SP);
     }

@@ -317,7 +317,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
         continue;
 
       // If the function referenced by DISP is not null, the function is live.
-      if (DISP.getFunction())
+      if (DISP->getFunction())
         LiveSubprograms.push_back(DISP);
       else
         SubprogramChange = true;

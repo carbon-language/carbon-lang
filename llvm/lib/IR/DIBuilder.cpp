@@ -93,7 +93,7 @@ void DIBuilder::finalize() {
   TempSubprograms->replaceAllUsesWith(SPs.get());
   for (unsigned i = 0, e = SPs.size(); i != e; ++i) {
     DISubprogram SP = cast<MDSubprogram>(SPs[i]);
-    if (MDTuple *Temp = SP.getVariables().get()) {
+    if (MDTuple *Temp = SP->getVariables().get()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
       DIArray AV = getOrCreateArray(Variables);

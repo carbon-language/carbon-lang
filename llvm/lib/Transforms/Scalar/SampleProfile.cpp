@@ -642,8 +642,8 @@ void SampleProfileLoader::propagateWeights(Function &F) {
 /// \returns the line number where \p F is defined. If it returns 0,
 ///          it means that there is no debug information available for \p F.
 unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
-  if (DISubprogram S = getDISubprogram(&F))
-    return S.getLineNumber();
+  if (MDSubprogram *S = getDISubprogram(&F))
+    return S->getLine();
 
   // If could not find the start of \p F, emit a diagnostic to inform the user
   // about the missed opportunity.

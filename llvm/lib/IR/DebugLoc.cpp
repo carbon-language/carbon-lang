@@ -51,7 +51,7 @@ DebugLoc DebugLoc::getFnDebugLoc() const {
   // FIXME: Add a method on \a MDLocation that does this work.
   const MDNode *Scope = getInlinedAtScope();
   if (DISubprogram SP = getDISubprogram(Scope))
-    return DebugLoc::get(SP.getScopeLineNumber(), 0, SP);
+    return DebugLoc::get(SP->getScopeLine(), 0, SP);
 
   return DebugLoc();
 }

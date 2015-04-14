@@ -416,7 +416,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DIGlobalVariable G) {
 void DwarfUnit::addSourceLine(DIE &Die, DISubprogram SP) {
   assert(SP);
 
-  addSourceLine(Die, SP.getLineNumber(), SP.getFilename(), SP.getDirectory());
+  addSourceLine(Die, SP->getLine(), SP->getFilename(), SP->getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -1213,12 +1213,12 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal) {
   // such construction creates the DIE (as is the case for member function
   // declarations).
   DIE *ContextDIE =
-      Minimal ? &getUnitDie() : getOrCreateContextDIE(resolve(SP.getContext()));
+      Minimal ? &getUnitDie() : getOrCreateContextDIE(resolve(SP->getScope()));
 
   if (DIE *SPDie = getDIE(SP))
     return SPDie;
 
-  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+  if (auto *SPDecl = SP->getDeclaration()) {
     if (!Minimal) {
       // Add subprogram definitions to the CU die directly.
       ContextDIE = &getUnitDie();
@@ -1232,7 +1232,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal) {
 
   // Stop here and fill this in later, depending on whether or not this
   // subprogram turns out to have inlined instances or not.
-  if (SP.isDefinition())
+  if (SP->isDefinition())
     return &SPDie;
 
   applySubprogramAttributes(SP, SPDie);
@@ -1243,19 +1243,19 @@ bool DwarfUnit::applySubprogramDefinitionAttributes(DISubprogram SP,
                                                     DIE &SPDie) {
   DIE *DeclDie = nullptr;
   StringRef DeclLinkageName;
-  if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+  if (auto *SPDecl = SP->getDeclaration()) {
     DeclDie = getDIE(SPDecl);
     assert(DeclDie && "This DIE should've already been constructed when the "
                       "definition DIE was created in "
                       "getOrCreateSubprogramDIE");
-    DeclLinkageName = SPDecl.getLinkageName();
+    DeclLinkageName = SPDecl->getLinkageName();
   }
 
   // Add function template parameters.
-  addTemplateParams(SPDie, SP.getTemplateParams());
+  addTemplateParams(SPDie, SP->getTemplateParams());
 
   // Add the linkage name if we have one and it isn't in the Decl.
-  StringRef LinkageName = SP.getLinkageName();
+  StringRef LinkageName = SP->getLinkageName();
   assert(((LinkageName.empty() || DeclLinkageName.empty()) ||
           LinkageName == DeclLinkageName) &&
          "decl has a linkage name and it is different");
@@ -1278,8 +1278,8 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
       return;
 
   // Constructors and operators for anonymous aggregates do not have names.
-  if (!SP.getName().empty())
-    addString(SPDie, dwarf::DW_AT_name, SP.getName());
+  if (!SP->getName().empty())
+    addString(SPDie, dwarf::DW_AT_name, SP->getName());
 
   // Skip the rest of the attributes under -gmlt to save space.
   if (Minimal)
@@ -1290,12 +1290,12 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
   // Add the prototype if we have a prototype and we have a C like
   // language.
   uint16_t Language = getLanguage();
-  if (SP.isPrototyped() &&
+  if (SP->isPrototyped() &&
       (Language == dwarf::DW_LANG_C89 || Language == dwarf::DW_LANG_C99 ||
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  DISubroutineType SPTy = SP.getType();
+  DISubroutineType SPTy = SP->getType();
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
@@ -1306,18 +1306,18 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
     if (auto Ty = resolve(Args[0]))
       addType(SPDie, Ty);
 
-  unsigned VK = SP.getVirtuality();
+  unsigned VK = SP->getVirtuality();
   if (VK) {
     addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_data1, VK);
     DIELoc *Block = getDIELoc();
     addUInt(*Block, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    addUInt(*Block, dwarf::DW_FORM_udata, SP.getVirtualIndex());
+    addUInt(*Block, dwarf::DW_FORM_udata, SP->getVirtualIndex());
     addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, Block);
     ContainingTypeMap.insert(
-        std::make_pair(&SPDie, resolve(SP.getContainingType())));
+        std::make_pair(&SPDie, resolve(SP->getContainingType())));
   }
 
-  if (!SP.isDefinition()) {
+  if (!SP->isDefinition()) {
     addFlag(SPDie, dwarf::DW_AT_declaration);
 
     // Add arguments. Do not add arguments for subprogram definition. They will
@@ -1325,35 +1325,35 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
     constructSubprogramArguments(SPDie, Args);
   }
 
-  if (SP.isArtificial())
+  if (SP->isArtificial())
     addFlag(SPDie, dwarf::DW_AT_artificial);
 
-  if (!SP.isLocalToUnit())
+  if (!SP->isLocalToUnit())
     addFlag(SPDie, dwarf::DW_AT_external);
 
-  if (SP.isOptimized())
+  if (SP->isOptimized())
     addFlag(SPDie, dwarf::DW_AT_APPLE_optimized);
 
   if (unsigned isa = Asm->getISAEncoding())
     addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
 
-  if (SP.isLValueReference())
+  if (SP->isLValueReference())
     addFlag(SPDie, dwarf::DW_AT_reference);
 
-  if (SP.isRValueReference())
+  if (SP->isRValueReference())
     addFlag(SPDie, dwarf::DW_AT_rvalue_reference);
 
-  if (SP.isProtected())
+  if (SP->isProtected())
     addUInt(SPDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_protected);
-  else if (SP.isPrivate())
+  else if (SP->isPrivate())
     addUInt(SPDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_private);
-  else if (SP.isPublic())
+  else if (SP->isPublic())
     addUInt(SPDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
 
-  if (SP.isExplicit())
+  if (SP->isExplicit())
     addFlag(SPDie, dwarf::DW_AT_explicit);
 }
 

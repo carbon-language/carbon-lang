@@ -425,98 +425,43 @@ public:
   unsigned getEmissionKind() const { return get()->getEmissionKind(); }
 };
 
-/// \brief This is a wrapper for a subprogram (e.g. a function).
-class DISubprogram : public DIScope {
+class DISubprogram {
+  MDSubprogram *N;
+
 public:
-  DISubprogram() = default;
-  DISubprogram(const MDSubprogram *N) : DIScope(N) {}
+  DISubprogram(const MDSubprogram *N = nullptr)
+      : N(const_cast<MDSubprogram *>(N)) {}
 
-  MDSubprogram *get() const {
-    return cast_or_null<MDSubprogram>(DIDescriptor::get());
-  }
-  operator MDSubprogram *() const { return get(); }
-  MDSubprogram *operator->() const { return get(); }
-  MDSubprogram &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  StringRef getDisplayName() const { return get()->getDisplayName(); }
-  StringRef getLinkageName() const { return get()->getLinkageName(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-
-  /// \brief Check if this is local (like 'static' in C).
-  unsigned isLocalToUnit() const { return get()->isLocalToUnit(); }
-  unsigned isDefinition() const { return get()->isDefinition(); }
-
-  unsigned getVirtuality() const { return get()->getVirtuality(); }
-  unsigned getVirtualIndex() const { return get()->getVirtualIndex(); }
-
-  unsigned getFlags() const { return get()->getFlags(); }
-
-  unsigned isOptimized() const { return get()->isOptimized(); }
-
-  /// \brief Get the beginning of the scope of the function (not the name).
-  unsigned getScopeLineNumber() const { return get()->getScopeLine(); }
-
-  DIScopeRef getContext() const { return get()->getScope(); }
-  DISubroutineType getType() const { return get()->getType(); }
-
-  DITypeRef getContainingType() const { return get()->getContainingType(); }
-
-  /// \brief Check if this provides debugging information for the function F.
-  bool describes(const Function *F) const { return get()->describes(F); }
-
-  Function *getFunction() const { return get()->getFunction(); }
-
-  void replaceFunction(Function *F) { get()->replaceFunction(F); }
-  DIArray getTemplateParams() const { return get()->getTemplateParams(); }
-  DISubprogram getFunctionDeclaration() const {
-    return get()->getDeclaration();
-  }
-  DIArray getVariables() const { return DIArray(get()->getVariables()); }
-
-  unsigned isArtificial() const { return get()->isArtificial(); }
-  bool isPrivate() const { return get()->isPrivate(); }
-  bool isProtected() const { return get()->isProtected(); }
-  bool isPublic() const { return get()->isPublic(); }
-  bool isExplicit() const { return get()->isExplicit(); }
-  bool isPrototyped() const { return get()->isPrototyped(); }
-  unsigned isLValueReference() const { return get()->isLValueReference(); }
-  unsigned isRValueReference() const { return get()->isRValueReference(); }
+  operator DIDescriptor() const { return N; }
+  operator MDSubprogram *() const { return N; }
+  MDSubprogram *operator->() const { return N; }
+  MDSubprogram &operator*() const { return *N; }
 };
 
-/// \brief This is a wrapper for a lexical block.
-class DILexicalBlock : public DIScope {
+class DILexicalBlock {
+  MDLexicalBlockBase *N;
+
 public:
-  DILexicalBlock() = default;
-  DILexicalBlock(const MDLexicalBlockBase *N) : DIScope(N) {}
+  DILexicalBlock(const MDLexicalBlockBase *N = nullptr)
+      : N(const_cast<MDLexicalBlockBase *>(N)) {}
 
-  MDLexicalBlockBase *get() const {
-    return cast_or_null<MDLexicalBlockBase>(DIDescriptor::get());
-  }
-  operator MDLexicalBlockBase *() const { return get(); }
-  MDLexicalBlockBase *operator->() const { return get(); }
-  MDLexicalBlockBase &operator*() const { return *get(); }
-
-  DIScope getContext() const { return get()->getScope(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  unsigned getColumnNumber() const { return get()->getColumn(); }
+  operator DIDescriptor() const { return N; }
+  operator MDLexicalBlockBase *() const { return N; }
+  MDLexicalBlockBase *operator->() const { return N; }
+  MDLexicalBlockBase &operator*() const { return *N; }
 };
 
-/// \brief This is a wrapper for a lexical block with a filename change.
-class DILexicalBlockFile : public DIScope {
+class DILexicalBlockFile {
+  MDLexicalBlockFile *N;
+
 public:
-  DILexicalBlockFile() = default;
-  DILexicalBlockFile(const MDLexicalBlockFile *N) : DIScope(N) {}
+  DILexicalBlockFile(const MDLexicalBlockFile *N = nullptr)
+      : N(const_cast<MDLexicalBlockFile *>(N)) {}
 
-  MDLexicalBlockFile *get() const {
-    return cast_or_null<MDLexicalBlockFile>(DIDescriptor::get());
-  }
-  operator MDLexicalBlockFile *() const { return get(); }
-  MDLexicalBlockFile *operator->() const { return get(); }
-  MDLexicalBlockFile &operator*() const { return *get(); }
-
-  DIScope getContext() const { return get()->getScope(); }
-  unsigned getDiscriminator() const { return get()->getDiscriminator(); }
+  operator DIDescriptor() const { return N; }
+  operator MDLexicalBlockFile *() const { return N; }
+  MDLexicalBlockFile *operator->() const { return N; }
+  MDLexicalBlockFile &operator*() const { return *N; }
 };
 
 class DINameSpace {

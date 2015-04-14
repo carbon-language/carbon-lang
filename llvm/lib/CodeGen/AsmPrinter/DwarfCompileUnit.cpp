@@ -568,7 +568,7 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   DIE &ScopeDIE = updateSubprogramScopeDIE(Sub);
 
   // If this is a variadic function, add an unspecified parameter.
-  DITypeArray FnArgs = Sub.getType().getTypeArray();
+  DITypeArray FnArgs = Sub->getType()->getTypeArray();
 
   // Collect lexical scope children first.
   // ObjectPointer might be a local (non-argument) local variable if it's a
@@ -613,11 +613,11 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   // the important distinction that the DIDescriptor is not associated with the
   // DIE (since the DIDescriptor will be associated with the concrete DIE, if
   // any). It could be refactored to some common utility function.
-  else if (DISubprogram SPDecl = SP.getFunctionDeclaration()) {
+  else if (auto *SPDecl = SP->getDeclaration()) {
     ContextDIE = &getUnitDie();
     getOrCreateSubprogramDIE(SPDecl);
   } else
-    ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
+    ContextDIE = getOrCreateContextDIE(resolve(SP->getScope()));
 
   // Passing null as the associated DIDescriptor because the abstract definition
   // shouldn't be found by lookup.
@@ -677,7 +677,7 @@ void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
 }
 void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   assert(SP && "CU's subprogram list contains a non-subprogram");
-  assert(SP.isDefinition() &&
+  assert(SP->isDefinition() &&
          "CU's subprogram list contains a subprogram declaration");
   auto Variables = SP->getVariables();
   if (Variables.size() == 0)
@@ -807,10 +807,10 @@ void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
 
 void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
                                                              DIE &SPDie) {
-  DISubprogram SPDecl = SP.getFunctionDeclaration();
-  DIScope Context = resolve(SPDecl ? SPDecl.getContext() : SP.getContext());
+  auto *SPDecl = SP->getDeclaration();
+  DIScope Context = resolve(SPDecl ? SPDecl->getScope() : SP->getScope());
   applySubprogramAttributes(SP, SPDie, includeMinimalInlineScopes());
-  addGlobalName(SP.getName(), SPDie, Context);
+  addGlobalName(SP->getName(), SPDie, Context);
 }
 
 bool DwarfCompileUnit::isDwoUnit() const {

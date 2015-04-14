@@ -304,7 +304,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   auto DI = FunctionDIs.find(&Fn);
   if (DI != FunctionDIs.end()) {
     DISubprogram SP = DI->second;
-    SP.replaceFunction(NF);
+    SP->replaceFunction(NF);
     // Ensure the map is updated so it can be reused on non-varargs argument
     // eliminations of the same function.
     FunctionDIs.erase(DI);
@@ -1092,7 +1092,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // Patch the pointer to LLVM function in debug info descriptor.
   auto DI = FunctionDIs.find(F);
   if (DI != FunctionDIs.end())
-    DI->second.replaceFunction(NF);
+    DI->second->replaceFunction(NF);
 
   // Now that the old function is dead, delete it.
   F->eraseFromParent();

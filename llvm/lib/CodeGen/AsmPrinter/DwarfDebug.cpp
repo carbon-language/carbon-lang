@@ -277,25 +277,25 @@ static StringRef getObjCMethodName(StringRef In) {
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
 void DwarfDebug::addSubprogramNames(DISubprogram SP, DIE &Die) {
-  if (!SP.isDefinition())
+  if (!SP->isDefinition())
     return;
-  addAccelName(SP.getName(), Die);
+  addAccelName(SP->getName(), Die);
 
   // If the linkage name is different than the name, go ahead and output
   // that as well into the name table.
-  if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
-    addAccelName(SP.getLinkageName(), Die);
+  if (SP->getLinkageName() != "" && SP->getName() != SP->getLinkageName())
+    addAccelName(SP->getLinkageName(), Die);
 
   // If this is an Objective-C selector name add it to the ObjC accelerator
   // too.
-  if (isObjCClass(SP.getName())) {
+  if (isObjCClass(SP->getName())) {
     StringRef Class, Category;
-    getObjCClassCategory(SP.getName(), Class, Category);
+    getObjCClassCategory(SP->getName(), Class, Category);
     addAccelObjC(Class, Die);
     if (Category != "")
       addAccelObjC(Category, Die);
     // Also add the base method name to the name table.
-    addAccelName(getObjCMethodName(SP.getName()), Die);
+    addAccelName(getObjCMethodName(SP->getName()), Die);
   }
 }
 
@@ -1129,7 +1129,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     // label, so arguments are visible when breaking at function entry.
     DIVariable DIVar = Ranges.front().first->getDebugVariable();
     if (DIVar->getTag() == dwarf::DW_TAG_arg_variable &&
-        getDISubprogram(DIVar->getScope()).describes(MF->getFunction())) {
+        getDISubprogram(DIVar->getScope())->describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression()->isBitPiece()) {
         // Mark all non-overlapping initial pieces.
@@ -1255,8 +1255,8 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   if (DIScope Scope = cast_or_null<MDScope>(S)) {
     Fn = Scope.getFilename();
     Dir = Scope.getDirectory();
-    if (DILexicalBlockFile LBF = dyn_cast<MDLexicalBlockFile>(Scope))
-      Discriminator = LBF.getDiscriminator();
+    if (auto *LBF = dyn_cast<MDLexicalBlockFile>(Scope))
+      Discriminator = LBF->getDiscriminator();
 
     unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
     Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])

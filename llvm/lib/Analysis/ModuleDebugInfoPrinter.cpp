@@ -82,11 +82,11 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     O << '\n';
   }
 
-  for (DISubprogram S : Finder.subprograms()) {
-    O << "Subprogram: " << S.getName();
-    printFile(O, S.getFilename(), S.getDirectory(), S.getLineNumber());
-    if (!S.getLinkageName().empty())
-      O << " ('" << S.getLinkageName() << "')";
+  for (MDSubprogram *S : Finder.subprograms()) {
+    O << "Subprogram: " << S->getName();
+    printFile(O, S->getFilename(), S->getDirectory(), S->getLine());
+    if (!S->getLinkageName().empty())
+      O << " ('" << S->getLinkageName() << "')";
     O << '\n';
   }
 
