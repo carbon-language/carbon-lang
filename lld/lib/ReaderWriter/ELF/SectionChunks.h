@@ -1408,22 +1408,25 @@ public:
              llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
-    uint32_t bucketChainCounts[2];
+    Elf_Word bucketChainCounts[2];
     bucketChainCounts[0] = _buckets.size();
     bucketChainCounts[1] = _chains.size();
     std::memcpy(dest, bucketChainCounts, sizeof(bucketChainCounts));
     dest += sizeof(bucketChainCounts);
     // write bucket values
-    std::memcpy(dest, _buckets.data(), _buckets.size() * sizeof(uint32_t));
-    dest += _buckets.size() * sizeof(uint32_t);
+    std::memcpy(dest, _buckets.data(), _buckets.size() * sizeof(Elf_Word));
+    dest += _buckets.size() * sizeof(Elf_Word);
     // write chain values
-    std::memcpy(dest, _chains.data(), _chains.size() * sizeof(uint32_t));
+    std::memcpy(dest, _chains.data(), _chains.size() * sizeof(Elf_Word));
   }
 
 private:
+  typedef
+      typename llvm::object::ELFDataTypeTypedefHelper<ELFT>::Elf_Word Elf_Word;
+
   std::vector<SymbolTableEntry> _entries;
-  std::vector<uint32_t> _buckets;
-  std::vector<uint32_t> _chains;
+  std::vector<Elf_Word> _buckets;
+  std::vector<Elf_Word> _chains;
   const DynamicSymbolTable<ELFT> *_symbolTable = nullptr;
 };
 
