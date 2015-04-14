@@ -116,6 +116,13 @@ namespace llvm {
       ChainedPhis.clear();
     }
 
+    /// isHighCostExpansion - Return true for expressions that may incur
+    /// non-trivial cost to evaluate at runtime.
+    bool isHighCostExpansion(const SCEV *Expr, Loop *L) {
+      SmallPtrSet<const SCEV *, 8> Processed;
+      return isHighCostExpansionHelper(Expr, L, Processed);
+    }
+
     /// getOrInsertCanonicalInductionVariable - This method returns the
     /// canonical induction variable of the specified type for the specified
     /// loop (inserting one if there is none).  A canonical induction variable
@@ -191,6 +198,11 @@ namespace llvm {
 
   private:
     LLVMContext &getContext() const { return SE.getContext(); }
+
+    /// isHighCostExpansionHelper - Recursive helper function for
+    /// isHighCostExpansion.
+    bool isHighCostExpansionHelper(const SCEV *S, Loop *L,
+                                   SmallPtrSetImpl<const SCEV *> &Processed);
 
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.

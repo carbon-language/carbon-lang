@@ -1274,55 +1274,6 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
 //  LinearFunctionTestReplace and its kin. Rewrite the loop exit condition.
 //===----------------------------------------------------------------------===//
 
-/// Check for expressions that ScalarEvolution generates to compute
-/// BackedgeTakenInfo. If these expressions have not been reduced, then
-/// expanding them may incur additional cost (albeit in the loop preheader).
-static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
-                                SmallPtrSetImpl<const SCEV*> &Processed,
-                                ScalarEvolution *SE) {
-  if (!Processed.insert(S).second)
-    return false;
-
-  // If the backedge-taken count is a UDiv, it's very likely a UDiv that
-  // ScalarEvolution's HowFarToZero or HowManyLessThans produced to compute a
-  // precise expression, rather than a UDiv from the user's code. If we can't
-  // find a UDiv in the code with some simple searching, assume the former and
-  // forego rewriting the loop.
-  if (isa<SCEVUDivExpr>(S)) {
-    ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
-    if (!OrigCond) return true;
-    const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
-    R = SE->getMinusSCEV(R, SE->getConstant(R->getType(), 1));
-    if (R != S) {
-      const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
-      L = SE->getMinusSCEV(L, SE->getConstant(L->getType(), 1));
-      if (L != S)
-        return true;
-    }
-  }
-
-  // Recurse past add expressions, which commonly occur in the
-  // BackedgeTakenCount. They may already exist in program code, and if not,
-  // they are not too expensive rematerialize.
-  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
-    for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
-         I != E; ++I) {
-      if (isHighCostExpansion(*I, BI, Processed, SE))
-        return true;
-    }
-    return false;
-  }
-
-  // HowManyLessThans uses a Max expression whenever the loop is not guarded by
-  // the exit condition.
-  if (isa<SCEVSMaxExpr>(S) || isa<SCEVUMaxExpr>(S))
-    return true;
-
-  // If we haven't recognized an expensive SCEV pattern, assume it's an
-  // expression produced by program code.
-  return false;
-}
-
 /// canExpandBackedgeTakenCount - Return true if this loop's backedge taken
 /// count expression can be safely and cheaply expanded into an instruction
 /// sequence that can be used by LinearFunctionTestReplace.
@@ -1336,7 +1287,8 @@ static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
 /// used by ABI constrained operation, as opposed to inttoptr/ptrtoint).
 /// However, we don't yet have a strong motivation for converting loop tests
 /// into inequality tests.
-static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
+static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE,
+                                        SCEVExpander &Rewriter) {
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount) ||
       BackedgeTakenCount->isZero())
@@ -1346,12 +1298,10 @@ static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
     return false;
 
   // Can't rewrite non-branch yet.
-  BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
-  if (!BI)
+  if (!isa<BranchInst>(L->getExitingBlock()->getTerminator()))
     return false;
 
-  SmallPtrSet<const SCEV*, 8> Processed;
-  if (isHighCostExpansion(BackedgeTakenCount, BI, Processed, SE))
+  if (Rewriter.isHighCostExpansion(BackedgeTakenCount, L))
     return false;
 
   return true;
@@ -1691,7 +1641,7 @@ LinearFunctionTestReplace(Loop *L,
                           const SCEV *BackedgeTakenCount,
                           PHINode *IndVar,
                           SCEVExpander &Rewriter) {
-  assert(canExpandBackedgeTakenCount(L, SE) && "precondition");
+  assert(canExpandBackedgeTakenCount(L, SE, Rewriter) && "precondition");
 
   // Initialize CmpIndVar and IVCount to their preincremented values.
   Value *CmpIndVar = IndVar;
@@ -1936,7 +1886,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  We can currently only handle loops with a single exit.
-  if (canExpandBackedgeTakenCount(L, SE) && needsLFTR(L, DT)) {
+  if (canExpandBackedgeTakenCount(L, SE, Rewriter) && needsLFTR(L, DT)) {
     PHINode *IndVar = FindLoopCounter(L, BackedgeTakenCount, SE, DT);
     if (IndVar) {
       // Check preconditions for proper SCEVExpander operation. SCEV does not
