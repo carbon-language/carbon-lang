@@ -5,6 +5,7 @@ add_llvm_library(lldELF
   FileCommon.cpp
   OutputELFWriter.cpp
   Reader.cpp
+  SectionChunks.cpp
   TargetLayout.cpp
   Writer.cpp
   LINK_LIBS
