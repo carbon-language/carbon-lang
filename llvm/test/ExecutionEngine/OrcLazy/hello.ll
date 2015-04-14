@@ -1,7 +1,8 @@
-; RUN: lli -jit-kind=orc-lazy %s | FileCheck %s
+; RUN: lli -jit-kind=orc-lazy -orc-lazy-debug=funcs-to-stdout %s | FileCheck %s
 ;
 ; CHECK: Hello
-; CHECK-NEXT: Goodbye
+; CHECK: [ {{.*}}main$orc_body ]
+; CHECK: Goodbye
 
 %class.Foo = type { i8 }
 

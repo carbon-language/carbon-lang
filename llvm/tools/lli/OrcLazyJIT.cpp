@@ -17,7 +17,7 @@ using namespace llvm;
 
 namespace {
 
-  enum class DumpKind { NoDump, DumpFuncsToStdErr, DumpModsToStdErr,
+  enum class DumpKind { NoDump, DumpFuncsToStdOut, DumpModsToStdErr,
                         DumpModsToDisk };
 
   cl::opt<DumpKind> OrcDumpKind("orc-lazy-debug",
@@ -26,9 +26,9 @@ namespace {
                                 cl::values(
                                   clEnumValN(DumpKind::NoDump, "no-dump",
                                              "Don't dump anything."),
-                                  clEnumValN(DumpKind::DumpFuncsToStdErr,
-                                             "funcs-to-stderr",
-                                             "Dump function names to stderr."),
+                                  clEnumValN(DumpKind::DumpFuncsToStdOut,
+                                             "funcs-to-stdout",
+                                             "Dump function names to stdout."),
                                   clEnumValN(DumpKind::DumpModsToStdErr,
                                              "mods-to-stderr",
                                              "Dump modules to stderr."),
@@ -63,21 +63,22 @@ OrcLazyJIT::TransformFtor OrcLazyJIT::createDebugDumper() {
   case DumpKind::NoDump:
     return [](std::unique_ptr<Module> M) { return std::move(M); };
 
-  case DumpKind::DumpFuncsToStdErr:
+  case DumpKind::DumpFuncsToStdOut:
     return [](std::unique_ptr<Module> M) {
-      dbgs() << "[ ";
+      printf("[ ");
 
       for (const auto &F : *M) {
         if (F.isDeclaration())
           continue;
 
-        if (F.hasName())
-          dbgs() << F.getName() << " ";
-        else
-          dbgs() << "<anon> ";
+        if (F.hasName()) {
+          std::string Name(F.getName());
+          printf("%s ", Name.c_str());
+        } else
+          printf("<anon> ");
       }
 
-      dbgs() << "]\n";
+      printf("]\n");
       return std::move(M);
     };
 
