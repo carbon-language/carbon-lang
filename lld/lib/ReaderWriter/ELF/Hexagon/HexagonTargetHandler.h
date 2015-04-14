@@ -132,7 +132,6 @@ public:
 
 private:
   HexagonLinkingContext &_ctx;
-  std::unique_ptr<HexagonRuntimeFile> _runtimeFile;
   std::unique_ptr<HexagonTargetLayout> _targetLayout;
   std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };

@@ -19,8 +19,7 @@ using namespace llvm::ELF;
 using llvm::makeArrayRef;
 
 HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &ctx)
-    : _ctx(ctx), _runtimeFile(new HexagonRuntimeFile(ctx)),
-      _targetLayout(new HexagonTargetLayout(ctx)),
+    : _ctx(ctx), _targetLayout(new HexagonTargetLayout(ctx)),
       _relocationHandler(new HexagonTargetRelocationHandler(*_targetLayout)) {}
 
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
