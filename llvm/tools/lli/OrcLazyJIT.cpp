@@ -103,6 +103,7 @@ OrcLazyJIT::TransformFtor OrcLazyJIT::createDebugDumper() {
              return std::move(M);
            };
   }
+  llvm_unreachable("Unknown DumpKind");
 }
 
 int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
