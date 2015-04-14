@@ -22,9 +22,6 @@ namespace elf {
 
 /// \brief TargetHandler for Mips
 template <class ELFT> class MipsTargetHandler final : public TargetHandler {
-  typedef ELFReader<MipsELFFile<ELFT>> ObjReader;
-  typedef ELFReader<DynamicFile<ELFT>> DSOReader;
-
 public:
   MipsTargetHandler(MipsLinkingContext &ctx)
       : _ctx(ctx), _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
@@ -32,11 +29,11 @@ public:
             createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<ObjReader>(_ctx);
+    return llvm::make_unique<ELFReader<MipsELFFile<ELFT>>>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<DSOReader>(_ctx);
+    return llvm::make_unique<ELFReader<DynamicFile<ELFT>>>(_ctx);
   }
 
   const TargetRelocationHandler &getRelocationHandler() const override {

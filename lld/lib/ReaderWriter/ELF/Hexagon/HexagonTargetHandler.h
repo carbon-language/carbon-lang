@@ -109,9 +109,6 @@ private:
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
-  typedef ELFReader<HexagonELFFile> ObjReader;
-  typedef ELFReader<DynamicFile<ELF32LE>> ELFDSOReader;
-
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
@@ -120,11 +117,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<ObjReader>(_ctx);
+    return llvm::make_unique<ELFReader<HexagonELFFile>>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<ELFDSOReader>(_ctx);
+    return llvm::make_unique<ELFReader<DynamicFile<ELF32LE>>>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;

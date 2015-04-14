@@ -59,9 +59,6 @@ private:
 };
 
 class ARMTargetHandler final : public TargetHandler {
-  typedef ELFReader<ARMELFFile> ObjReader;
-  typedef ELFReader<DynamicFile<ELF32LE>> DSOReader;
-
 public:
   ARMTargetHandler(ARMLinkingContext &ctx);
 
@@ -70,11 +67,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<ObjReader>(_ctx);
+    return llvm::make_unique<ELFReader<ARMELFFile>>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<DSOReader>(_ctx);
+    return llvm::make_unique<ELFReader<DynamicFile<ELF32LE>>>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;

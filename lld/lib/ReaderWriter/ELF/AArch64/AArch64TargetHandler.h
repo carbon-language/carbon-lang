@@ -20,9 +20,6 @@ namespace elf {
 class AArch64LinkingContext;
 
 class AArch64TargetHandler final : public TargetHandler {
-  typedef ELFReader<ELFFile<ELF64LE>> ObjReader;
-  typedef ELFReader<DynamicFile<ELF64LE>> DSOReader;
-
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
 
@@ -31,11 +28,11 @@ public:
   }
 
   std::unique_ptr<Reader> getObjReader() override {
-    return llvm::make_unique<ObjReader>(_ctx);
+    return llvm::make_unique<ELFReader<ELFFile<ELF64LE>>>(_ctx);
   }
 
   std::unique_ptr<Reader> getDSOReader() override {
-    return llvm::make_unique<DSOReader>(_ctx);
+    return llvm::make_unique<ELFReader<DynamicFile<ELF64LE>>>(_ctx);
   }
 
   std::unique_ptr<Writer> getWriter() override;
