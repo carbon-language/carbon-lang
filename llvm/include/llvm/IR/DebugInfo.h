@@ -643,11 +643,6 @@ public:
   /// \brief If this variable is inlined then return inline location.
   MDNode *getInlinedAt() const { return get()->getInlinedAt(); }
 
-  /// \brief Check if this is a "__block" variable (Apple Blocks).
-  bool isBlockByrefVariable(const DITypeIdentifierMap &Map) const {
-    return (getType().resolve(Map)).isBlockByrefStruct();
-  }
-
   void printExtendedName(raw_ostream &OS) const;
 };
 

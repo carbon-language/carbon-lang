@@ -135,14 +135,16 @@ template <typename T> T DbgVariable::resolve(DIRef<T> Ref) const {
 
 bool DbgVariable::isBlockByrefVariable() const {
   assert(Var && "Invalid complex DbgVariable!");
-  return Var.isBlockByrefVariable(DD->getTypeIdentifierMap());
+  return Var->getType()
+      .resolve(DD->getTypeIdentifierMap())
+      ->isBlockByrefStruct();
 }
 
 DIType DbgVariable::getType() const {
   DIType Ty = Var.getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
-  if (Var.isBlockByrefVariable(DD->getTypeIdentifierMap())) {
+  if (Ty->isBlockByrefStruct()) {
     /* Byref variables, in Blocks, are declared by the programmer as
        "SomeType VarName;", but the compiler creates a
        __Block_byref_x_VarName struct, and gives the variable VarName
