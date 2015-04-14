@@ -516,8 +516,8 @@ raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
 /// FD is the file descriptor that this writes to.  If ShouldClose is true, this
 /// closes the file when the stream is destroyed.
 raw_fd_ostream::raw_fd_ostream(int fd, bool shouldClose, bool unbuffered)
-  : raw_ostream(unbuffered), FD(fd),
-    ShouldClose(shouldClose), Error(false), UseAtomicWrites(false) {
+    : raw_pwrite_stream(unbuffered), FD(fd), ShouldClose(shouldClose),
+      Error(false), UseAtomicWrites(false) {
   if (FD < 0 ) {
     ShouldClose = false;
     return;
@@ -628,6 +628,13 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   if (pos != off)
     error_detected();
   return pos;
+}
+
+void raw_fd_ostream::pwrite(const char *Ptr, size_t Size, uint64_t Offset) {
+  uint64_t Pos = tell();
+  seek(Offset);
+  write(Ptr, Size);
+  seek(Pos);
 }
 
 size_t raw_fd_ostream::preferred_buffer_size() const {
@@ -753,7 +760,14 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 // capacity. This allows raw_ostream to write directly into the correct place,
 // and we only need to set the vector size when the data is flushed.
 
+raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O, unsigned)
+    : OS(O) {}
+
 raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+  init();
+}
+
+void raw_svector_ostream::init() {
   // Set up the initial external buffer. We make sure that the buffer has at
   // least 128 bytes free; raw_ostream itself only requires 64, but we want to
   // make sure that we don't grow the buffer unnecessarily on destruction (when
@@ -765,6 +779,17 @@ raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
 raw_svector_ostream::~raw_svector_ostream() {
   // FIXME: Prevent resizing during this flush().
   flush();
+}
+
+void raw_svector_ostream::pwrite(const char *Ptr, size_t Size,
+                                 uint64_t Offset) {
+  flush();
+
+  uint64_t End = Offset + Size;
+  if (End > OS.size())
+    OS.resize(End);
+
+  memcpy(OS.begin() + Offset, Ptr, Size);
 }
 
 /// resync - This is called when the SmallVector we're appending to is changed
@@ -821,3 +846,5 @@ void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
 uint64_t raw_null_ostream::current_pos() const {
   return 0;
 }
+
+void raw_null_ostream::pwrite(const char *Ptr, size_t Size, uint64_t Offset) {}
