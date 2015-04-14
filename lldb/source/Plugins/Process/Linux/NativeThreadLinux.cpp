@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "NativeProcessLinux.h"
+#include "NativeRegisterContextLinux_arm.h"
 #include "NativeRegisterContextLinux_arm64.h"
 #include "NativeRegisterContextLinux_x86_64.h"
 #include "NativeRegisterContextLinux_mips64.h"
@@ -29,6 +30,7 @@
 
 #include "Plugins/Process/POSIX/CrashReason.h"
 
+#include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
@@ -184,6 +186,10 @@ NativeThreadLinux::GetRegisterContext ()
                 assert((HostInfo::GetArchitecture ().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
                 reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
                 break;
+            case llvm::Triple::arm:
+                assert(HostInfo::GetArchitecture ().GetAddressByteSize() == 4);
+                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm(target_arch));
+                break;
             case llvm::Triple::x86:
             case llvm::Triple::x86_64:
                 if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
@@ -240,6 +246,12 @@ NativeThreadLinux::GetRegisterContext ()
         {
             const uint32_t concrete_frame_idx = 0;
             m_reg_context_sp.reset (new NativeRegisterContextLinux_arm64(*this, concrete_frame_idx, reg_interface));
+            break;
+        }
+        case llvm::Triple::arm:
+        {
+            const uint32_t concrete_frame_idx = 0;
+            m_reg_context_sp.reset (new NativeRegisterContextLinux_arm(*this, concrete_frame_idx, reg_interface));
             break;
         }
         case llvm::Triple::x86:

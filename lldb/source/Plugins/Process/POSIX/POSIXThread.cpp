@@ -32,10 +32,12 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Linux/ProcessMonitor.h"
+#include "RegisterContextPOSIXProcessMonitor_arm.h"
 #include "RegisterContextPOSIXProcessMonitor_arm64.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_powerpc.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
@@ -198,6 +200,10 @@ POSIXThread::GetRegisterContext()
                         assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
                         reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
                         break;
+                    case llvm::Triple::arm:
+                        assert(HostInfo::GetArchitecture().GetAddressByteSize() == 4);
+                        reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm(target_arch));
+                        break;
                     case llvm::Triple::x86:
                     case llvm::Triple::x86_64:
                         if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
@@ -228,6 +234,13 @@ POSIXThread::GetRegisterContext()
             case llvm::Triple::aarch64:
                 {
                     RegisterContextPOSIXProcessMonitor_arm64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_arm64(*this, 0, reg_interface);
+                    m_posix_thread = reg_ctx;
+                    m_reg_context_sp.reset(reg_ctx);
+                    break;
+                }
+            case llvm::Triple::arm:
+                {
+                    RegisterContextPOSIXProcessMonitor_arm *reg_ctx = new RegisterContextPOSIXProcessMonitor_arm(*this, 0, reg_interface);
                     m_posix_thread = reg_ctx;
                     m_reg_context_sp.reset(reg_ctx);
                     break;
@@ -644,6 +657,7 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
         break;
 
     case llvm::Triple::aarch64:
+    case llvm::Triple::arm:
     case llvm::Triple::mips64:
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
@@ -677,6 +691,7 @@ POSIXThread::GetRegisterName(unsigned reg)
         break;
 
     case llvm::Triple::aarch64:
+    case llvm::Triple::arm:
     case llvm::Triple::mips64:
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
