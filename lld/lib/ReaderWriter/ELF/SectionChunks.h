@@ -1411,7 +1411,7 @@ public:
     uint32_t bucketChainCounts[2];
     bucketChainCounts[0] = _buckets.size();
     bucketChainCounts[1] = _chains.size();
-    std::memcpy(dest, (char *)bucketChainCounts, sizeof(bucketChainCounts));
+    std::memcpy(dest, bucketChainCounts, sizeof(bucketChainCounts));
     dest += sizeof(bucketChainCounts);
     // write bucket values
     for (auto bi : _buckets) {
