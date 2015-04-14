@@ -19,6 +19,7 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -90,6 +91,11 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Turn on -preserve-bc-uselistorder by default, but let the command-line
+  // override it.
+  setPreserveBitcodeUseListOrder(true);
+
   cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
 
   // Parse the file now...

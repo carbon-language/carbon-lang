@@ -29,6 +29,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/LTO/LTOModule.h"
@@ -603,6 +604,10 @@ void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
 }
 
 void LTOCodeGenerator::parseCodeGenDebugOptions() {
+  // Turn on -preserve-bc-uselistorder by default, but let the command-line
+  // override it.
+  setPreserveBitcodeUseListOrder(true);
+
   // if options were requested, set them
   if (!CodegenOptions.empty())
     cl::ParseCommandLineOptions(CodegenOptions.size(),

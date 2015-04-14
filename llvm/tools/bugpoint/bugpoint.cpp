@@ -18,6 +18,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassNameParser.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/LinkAllIR.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Support/CommandLine.h"
@@ -135,6 +136,10 @@ int main(int argc, char **argv) {
 #ifdef LINK_POLLY_INTO_TOOLS
   polly::initializePollyPasses(Registry);
 #endif
+
+  // Turn on -preserve-bc-uselistorder by default, but let the command-line
+  // override it.
+  setPreserveBitcodeUseListOrder(true);
 
   cl::ParseCommandLineOptions(argc, argv,
                               "LLVM automatic testcase reducer. See\nhttp://"

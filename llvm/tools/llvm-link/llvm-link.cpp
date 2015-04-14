@@ -20,6 +20,7 @@
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
@@ -104,6 +105,11 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Turn on -preserve-bc-uselistorder by default, but let the command-line
+  // override it.
+  setPreserveBitcodeUseListOrder(true);
+
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   auto Composite = make_unique<Module>("llvm-link", Context);
