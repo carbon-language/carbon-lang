@@ -212,10 +212,13 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
           // list of the same call.
           CallSites.count(I->first) ||
 
-          // If the call edge is not from a call or invoke, then the function
-          // pass RAUW'd a call with another value.  This can happen when
-          // constant folding happens of well known functions etc.
-          !CallSite(I->first)) {
+          // If the call edge is not from a call or invoke, or it is a
+          // instrinsic call, then the function pass RAUW'd a call with 
+          // another value. This can happen when constant folding happens
+          // of well known functions etc.
+          !CallSite(I->first) ||
+           (CallSite(I->first).getCalledFunction() &&
+            CallSite(I->first).getCalledFunction()->isIntrinsic())) {
         assert(!CheckingMode &&
                "CallGraphSCCPass did not update the CallGraph correctly!");
         
