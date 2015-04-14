@@ -47,10 +47,9 @@ public:
   TargetLayout<ELF32LE>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
                   int32_t contentPermissions) override {
-    if ((contentType == DefinedAtom::typeDataFast) ||
-       (contentType == DefinedAtom::typeZeroFillFast))
+    if (contentType == DefinedAtom::typeDataFast ||
+        contentType == DefinedAtom::typeZeroFillFast)
       return ORDER_SDATA;
-
     return TargetLayout<ELF32LE>::getSectionOrder(name, contentType,
                                                   contentPermissions);
   }
@@ -72,8 +71,8 @@ public:
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
                 TargetLayout<ELF32LE>::SectionOrder sectionOrder) override {
-    if ((contentType == DefinedAtom::typeDataFast) ||
-       (contentType == DefinedAtom::typeZeroFillFast))
+    if (contentType == DefinedAtom::typeDataFast ||
+        contentType == DefinedAtom::typeZeroFillFast)
       return &_sdataSection;
     return TargetLayout<ELF32LE>::createSection(
         name, contentType, contentPermissions, sectionOrder);
@@ -84,7 +83,6 @@ public:
   getSegmentType(Section<ELF32LE> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
-
     return TargetLayout<ELF32LE>::getSegmentType(section);
   }
 
