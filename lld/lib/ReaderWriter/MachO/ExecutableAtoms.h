@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/MachO/ExecutableAtoms.hpp -------------------------===//
+//===- lib/ReaderWriter/MachO/ExecutableAtoms.h ---------------------------===//
 //
 //                             The LLVM Linker
 //

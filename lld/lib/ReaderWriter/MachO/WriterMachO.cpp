@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExecutableAtoms.hpp"
+#include "ExecutableAtoms.h"
 #include "MachONormalizedFile.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Writer.h"
