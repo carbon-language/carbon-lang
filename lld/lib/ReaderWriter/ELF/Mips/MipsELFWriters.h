@@ -16,6 +16,13 @@ namespace elf {
 
 template <class ELFT> class MipsTargetLayout;
 
+class MipsDynamicAtom : public DynamicAtom {
+public:
+  MipsDynamicAtom(const File &f) : DynamicAtom(f) {}
+
+  ContentPermissions permissions() const override { return permR__; }
+};
+
 template <typename ELFT> class MipsELFWriter {
 public:
   MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout)
@@ -54,6 +61,7 @@ public:
       file->addAbsoluteAtom("_gp");
       file->addAbsoluteAtom("_gp_disp");
       file->addAbsoluteAtom("__gnu_local_gp");
+      file->addAtom(*new (file->allocator()) MipsDynamicAtom(*file));
     }
     return file;
   }
