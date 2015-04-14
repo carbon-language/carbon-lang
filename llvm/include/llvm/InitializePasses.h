@@ -206,6 +206,7 @@ void initializeMergedLoadStoreMotionPass(PassRegistry &);
 void initializeMetaRenamerPass(PassRegistry&);
 void initializeMergeFunctionsPass(PassRegistry&);
 void initializeModuleDebugInfoPrinterPass(PassRegistry&);
+void initializeNaryReassociatePass(PassRegistry&);
 void initializeNoAAPass(PassRegistry&);
 void initializeObjCARCAliasAnalysisPass(PassRegistry&);
 void initializeObjCARCAPElimPass(PassRegistry&);

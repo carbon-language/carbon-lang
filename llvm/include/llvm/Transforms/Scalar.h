@@ -457,6 +457,12 @@ FunctionPass *createRewriteStatepointsForGCPass();
 //
 FunctionPass *createFloat2IntPass();
 
+//===----------------------------------------------------------------------===//
+//
+// NaryReassociate - Simplify n-ary operations by reassociation.
+//
+FunctionPass *createNaryReassociatePass();
+
 } // End llvm namespace
 
 #endif
