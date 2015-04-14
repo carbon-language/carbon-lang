@@ -243,6 +243,8 @@ protected:
     this->Roots.clear();
     Vertex.clear();
     RootNode = nullptr;
+    DFSInfoValid = false;
+    SlowQueries = 0;
   }
 
   // NewBB is split and now it has one successor. Update dominator tree to
@@ -663,6 +665,12 @@ public:
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
   void updateDFSNumbers() const {
+
+    if (DFSInfoValid) {
+      SlowQueries = 0;
+      return;
+    }
+
     unsigned DFSNum = 0;
 
     SmallVector<std::pair<const DomTreeNodeBase<NodeT> *,
