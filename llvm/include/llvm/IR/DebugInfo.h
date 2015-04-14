@@ -701,23 +701,7 @@ public:
   DILocation getOrigLocation() const { return get()->getInlinedAt(); }
   StringRef getFilename() const { return get()->getFilename(); }
   StringRef getDirectory() const { return get()->getDirectory(); }
-
-  /// \brief Get the DWAF discriminator.
-  ///
-  /// DWARF discriminators are used to distinguish identical file locations for
-  /// instructions that are on different basic blocks. If two instructions are
-  /// inside the same lexical block and are in different basic blocks, we
-  /// create a new lexical block with identical location as the original but
-  /// with a different discriminator value
-  /// (lib/Transforms/Util/AddDiscriminators.cpp for details).
-  unsigned getDiscriminator() const {
-    // Since discriminators are associated with lexical blocks, make
-    // sure this location is a lexical block before retrieving its
-    // value.
-    if (auto *F = dyn_cast<MDLexicalBlockFile>(get()->getScope()))
-      return F->getDiscriminator();
-    return 0;
-  }
+  unsigned getDiscriminator() const { return get()->getDiscriminator(); }
 
   /// \brief Generate a new discriminator value for this location.
   unsigned computeNewDiscriminator(LLVMContext &Ctx);

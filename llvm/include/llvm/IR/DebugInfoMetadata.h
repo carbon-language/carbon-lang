@@ -1203,6 +1203,12 @@ public:
     return getFilename() != RHS.getFilename() || getLine() != RHS.getLine();
   }
 
+  /// \brief Get the DWARF discriminator.
+  ///
+  /// DWARF discriminators distinguish identical file locations between
+  /// instructions that are on different basic blocks.
+  inline unsigned getDiscriminator() const;
+
   Metadata *getRawScope() const { return getOperand(0); }
   Metadata *getRawInlinedAt() const {
     if (getNumOperands() == 2)
@@ -1527,6 +1533,12 @@ public:
     return MD->getMetadataID() == MDLexicalBlockFileKind;
   }
 };
+
+unsigned MDLocation::getDiscriminator() const {
+  if (auto *F = dyn_cast<MDLexicalBlockFile>(getScope()))
+    return F->getDiscriminator();
+  return 0;
+}
 
 class MDNamespace : public MDScope {
   friend class LLVMContextImpl;
