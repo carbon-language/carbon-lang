@@ -23,8 +23,8 @@
 # CHECK:   Machine: EM_MIPS (0x8)
 # CHECK:   Version: 1
 # CHECK:   Entry: 0x1200001A0
-# CHECK:   ProgramHeaderOffset: 0x40
-# CHECK:   SectionHeaderOffset: 0x1300
+# CHECK:   ProgramHeaderOffset: 0x{{[0-9A-F]+}}
+# CHECK:   SectionHeaderOffset: 0x{{[0-9A-F]+}}
 # CHECK:   Flags [ (0x60000007)
 # CHECK:     EF_MIPS_ARCH_64 (0x60000000)
 # CHECK:     EF_MIPS_CPIC (0x4)

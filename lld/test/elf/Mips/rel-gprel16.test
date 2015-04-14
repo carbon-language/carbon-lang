@@ -5,7 +5,7 @@
 # RUN: llvm-readobj -symbols %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=SEC %s
 
-# SYM:      Name: L1 (1)
+# SYM:      Name: L1
 # SYM-NEXT: Value: 0x104
 # SYM-NEXT: Size: 4
 # SYM-NEXT: Binding: Local (0x0)
@@ -13,7 +13,7 @@
 # SYM-NEXT: Other: 0
 # SYM-NEXT: Section: .text (0x5)
 
-# SYM:      Name: G1 (4)
+# SYM:      Name: G1
 # SYM-NEXT: Value: 0x108
 # SYM-NEXT: Size: 4
 # SYM-NEXT: Binding: Global (0x1)
@@ -21,7 +21,7 @@
 # SYM-NEXT: Other: 0
 # SYM-NEXT: Section: .text (0x5)
 
-# SYM:      Name: _gp (34)
+# SYM:      Name: _gp
 # SYM-NEXT: Value: 0x8FF0
 # SYM-NEXT: Size: 0
 # SYM-NEXT: Binding: Global (0x1)
