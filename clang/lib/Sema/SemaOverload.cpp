@@ -2954,7 +2954,10 @@ IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, From->getLocStart(), Best, true)) {
+  switch (auto Result = 
+            CandidateSet.BestViableFunction(S, From->getLocStart(), 
+                                            Best, true)) {
+  case OR_Deleted:
   case OR_Success: {
     // Record the standard conversion we used and the conversion function.
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
@@ -2967,13 +2970,11 @@ IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
     User.After.setAsIdentityConversion();
     User.After.setFromType(ThisType->getAs<PointerType>()->getPointeeType());
     User.After.setAllToTypes(ToType);
-    return OR_Success;
+    return Result;
   }
 
   case OR_No_Viable_Function:
     return OR_No_Viable_Function;
-  case OR_Deleted:
-    return OR_Deleted;
   case OR_Ambiguous:
     return OR_Ambiguous;
   }
