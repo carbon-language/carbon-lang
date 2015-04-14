@@ -674,50 +674,29 @@ public:
   MDLocation &operator*() const { return *N; }
 };
 
-class DIObjCProperty : public DIDescriptor {
+class DIObjCProperty {
+  MDObjCProperty *N;
+
 public:
-  DIObjCProperty() = default;
-  DIObjCProperty(const MDObjCProperty *N) : DIDescriptor(N) {}
+  DIObjCProperty(const MDObjCProperty *N = nullptr)
+      : N(const_cast<MDObjCProperty *>(N)) {}
 
-  MDObjCProperty *get() const {
-    return cast_or_null<MDObjCProperty>(DIDescriptor::get());
-  }
-  operator MDObjCProperty *() const { return get(); }
-  MDObjCProperty *operator->() const { return get(); }
-  MDObjCProperty &operator*() const { return *get(); }
-
-  StringRef getObjCPropertyName() const { return get()->getName(); }
-  DIFile getFile() const { return get()->getFile(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-
-  StringRef getObjCPropertyGetterName() const { return get()->getGetterName(); }
-  StringRef getObjCPropertySetterName() const { return get()->getSetterName(); }
-  unsigned getAttributes() const { return get()->getAttributes(); }
-
-  /// \brief Get the type.
-  ///
-  /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
-  /// the type as a DITypeRef here.
-  DIType getType() const { return get()->getType(); }
+  operator MDObjCProperty *() const { return N; }
+  MDObjCProperty *operator->() const { return N; }
+  MDObjCProperty &operator*() const { return *N; }
 };
 
-/// \brief An imported module (C++ using directive or similar).
-class DIImportedEntity : public DIDescriptor {
+class DIImportedEntity {
+  MDImportedEntity *N;
+
 public:
-  DIImportedEntity() = default;
-  DIImportedEntity(const MDImportedEntity *N) : DIDescriptor(N) {}
+  DIImportedEntity(const MDImportedEntity *N = nullptr)
+      : N(const_cast<MDImportedEntity *>(N)) {}
 
-  MDImportedEntity *get() const {
-    return cast_or_null<MDImportedEntity>(DIDescriptor::get());
-  }
-  operator MDImportedEntity *() const { return get(); }
-  MDImportedEntity *operator->() const { return get(); }
-  MDImportedEntity &operator*() const { return *get(); }
-
-  DIScope getContext() const { return get()->getScope(); }
-  DIDescriptorRef getEntity() const { return get()->getEntity(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  StringRef getName() const { return get()->getName(); }
+  operator DIDescriptor() const { return N; }
+  operator MDImportedEntity *() const { return N; }
+  MDImportedEntity *operator->() const { return N; }
+  MDImportedEntity &operator*() const { return *N; }
 };
 
 #define SIMPLIFY_DESCRIPTOR(DESC)                                              \

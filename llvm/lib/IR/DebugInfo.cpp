@@ -163,7 +163,7 @@ void DebugInfoFinder::processModule(const Module &M) {
       for (auto *RT : CU->getRetainedTypes())
         processType(RT);
       for (DIImportedEntity Import : CU->getImportedEntities()) {
-        DIDescriptor Entity = Import.getEntity().resolve(TypeIdentifierMap);
+        auto *Entity = Import->getEntity().resolve(TypeIdentifierMap);
         if (auto *T = dyn_cast<MDType>(Entity))
           processType(T);
         else if (auto *SP = dyn_cast<MDSubprogram>(Entity))

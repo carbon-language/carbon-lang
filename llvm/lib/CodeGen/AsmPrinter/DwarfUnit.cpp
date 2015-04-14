@@ -432,9 +432,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DIType Ty) {
 void DwarfUnit::addSourceLine(DIE &Die, DIObjCProperty Ty) {
   assert(Ty);
 
-  DIFile File = Ty.getFile();
-  addSourceLine(Die, Ty.getLineNumber(), File.getFilename(),
-                File.getDirectory());
+  addSourceLine(Die, Ty->getLine(), Ty->getFilename(), Ty->getDirectory());
 }
 
 /// addSourceLine - Add location information to specified debug information
@@ -1060,19 +1058,19 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           constructMemberDIE(Buffer, DDTy);
         }
       } else if (DIObjCProperty Property = dyn_cast<MDObjCProperty>(Element)) {
-        DIE &ElemDie = createAndAddDIE(Property.getTag(), Buffer);
-        StringRef PropertyName = Property.getObjCPropertyName();
+        DIE &ElemDie = createAndAddDIE(Property->getTag(), Buffer);
+        StringRef PropertyName = Property->getName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
-        if (Property.getType())
-          addType(ElemDie, Property.getType());
+        if (Property->getType())
+          addType(ElemDie, Property->getType());
         addSourceLine(ElemDie, Property);
-        StringRef GetterName = Property.getObjCPropertyGetterName();
+        StringRef GetterName = Property->getGetterName();
         if (!GetterName.empty())
           addString(ElemDie, dwarf::DW_AT_APPLE_property_getter, GetterName);
-        StringRef SetterName = Property.getObjCPropertySetterName();
+        StringRef SetterName = Property->getSetterName();
         if (!SetterName.empty())
           addString(ElemDie, dwarf::DW_AT_APPLE_property_setter, SetterName);
-        if (unsigned PropertyAttributes = Property.getAttributes())
+        if (unsigned PropertyAttributes = Property->getAttributes())
           addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, None,
                   PropertyAttributes);
 

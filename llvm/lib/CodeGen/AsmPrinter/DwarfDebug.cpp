@@ -420,7 +420,7 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
 void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
                                                   const MDNode *N) {
   DIImportedEntity Module = cast<MDImportedEntity>(N);
-  if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
+  if (DIE *D = TheCU.getOrCreateContextDIE(Module->getScope()))
     D->addChild(TheCU.constructImportedEntityDIE(Module));
 }
 

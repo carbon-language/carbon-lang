@@ -2136,6 +2136,11 @@ public:
   MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
   StringRef getGetterName() const { return getStringOperand(2); }
   StringRef getSetterName() const { return getStringOperand(3); }
+
+  /// \brief Get the type.
+  ///
+  /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
+  /// the type as a DITypeRef here.
   MDType *getType() const { return cast_or_null<MDType>(getRawType()); }
 
   StringRef getFilename() const {
@@ -2160,6 +2165,7 @@ public:
   }
 };
 
+/// \brief An imported module (C++ using directive or similar).
 class MDImportedEntity : public DebugNode {
   friend class LLVMContextImpl;
   friend class MDNode;

@@ -177,7 +177,7 @@ createImportedModule(LLVMContext &C, dwarf::Tag Tag, DIScope Context,
                      SmallVectorImpl<TrackingMDNodeRef> &AllImportedModules) {
   DIImportedEntity M =
       MDImportedEntity::get(C, Tag, Context, DebugNodeRef(NS), Line, Name);
-  AllImportedModules.emplace_back(M.get());
+  AllImportedModules.emplace_back(M);
   return M;
 }
 
