@@ -199,7 +199,16 @@ entry:
   %s.i8 = call i8* @llvm.framerecover(i8* bitcast (void (i1)* @"\01?test2@@YAX_N@Z" to i8*), i8* %1, i32 0)
   %s = bitcast i8* %s.i8 to %struct.S*
   call void @"\01??_DS@@QEAA@XZ"(%struct.S* %s) #4
+  invoke void @llvm.donothing()
+          to label %entry.split unwind label %stub
+
+entry.split:                                      ; preds = %entry
   ret void
+
+stub:                                             ; preds = %entry
+  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+          cleanup
+  unreachable
 }
 
 define internal void @"\01?test2@@YAX_N@Z.cleanup1"(i8*, i8*) #7 {
@@ -207,8 +216,19 @@ entry:
   %s1.i8 = call i8* @llvm.framerecover(i8* bitcast (void (i1)* @"\01?test2@@YAX_N@Z" to i8*), i8* %1, i32 1)
   %s1 = bitcast i8* %s1.i8 to %struct.S*
   call void @"\01??_DS@@QEAA@XZ"(%struct.S* %s1) #4
+  invoke void @llvm.donothing()
+          to label %entry.split unwind label %stub
+
+entry.split:                                      ; preds = %entry
   ret void
+
+stub:                                             ; preds = %entry
+  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+          cleanup
+  unreachable
 }
+
+declare void @llvm.donothing()
 
 attributes #0 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" "wineh-parent"="?test1@@YAXXZ" }
 attributes #1 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

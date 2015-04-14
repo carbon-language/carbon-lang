@@ -344,9 +344,11 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   }
 
   // Defer emission until we've visited the parent function and all the catch
-  // handlers.
-  if (ParentF == F || FuncInfo.CatchHandlerMaxState.count(F))
-    ++FuncInfo.NumIPToStateFuncsVisited;
+  // handlers.  Cleanups don't contribute to the ip2state table yet, so don't
+  // count them.
+  if (ParentF != F && !FuncInfo.CatchHandlerMaxState.count(F))
+    return;
+  ++FuncInfo.NumIPToStateFuncsVisited;
   if (FuncInfo.NumIPToStateFuncsVisited != FuncInfo.CatchHandlerMaxState.size())
     return;
 
