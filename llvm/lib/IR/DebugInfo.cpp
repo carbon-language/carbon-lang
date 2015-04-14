@@ -47,11 +47,6 @@ void DICompileUnit::replaceGlobalVariables(DIArray GlobalVariables) {
   get()->replaceGlobalVariables(MDGlobalVariableArray(GlobalVariables));
 }
 
-unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
-  std::pair<const char *, unsigned> Key(getFilename().data(), getLineNumber());
-  return ++Ctx.pImpl->DiscriminatorTable[Key];
-}
-
 DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                        LLVMContext &VMContext) {
   return cast<MDLocalVariable>(DV)

@@ -195,7 +195,13 @@ bool AddDiscriminators::runOnFunction(Function &F) {
         StringRef Filename = FirstDIL.getFilename();
         DIScope Scope = FirstDIL.getScope();
         DIFile File = Builder.createFile(Filename, Scope.getDirectory());
-        unsigned Discriminator = FirstDIL.computeNewDiscriminator(Ctx);
+
+        // FIXME: Calculate the discriminator here, based on local information,
+        // and delete MDLocation::computeNewDiscriminator().  The current
+        // solution gives different results depending on other modules in the
+        // same context.  All we really need is to discriminate between
+        // FirstDIL and LastDIL -- a local map would suffice.
+        unsigned Discriminator = FirstDIL->computeNewDiscriminator();
         DILexicalBlockFile NewScope =
             Builder.createLexicalBlockFile(Scope, File, Discriminator);
         DILocation NewDIL =

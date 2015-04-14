@@ -702,9 +702,6 @@ public:
   StringRef getFilename() const { return get()->getFilename(); }
   StringRef getDirectory() const { return get()->getDirectory(); }
   unsigned getDiscriminator() const { return get()->getDiscriminator(); }
-
-  /// \brief Generate a new discriminator value for this location.
-  unsigned computeNewDiscriminator(LLVMContext &Ctx);
 };
 
 class DIObjCProperty : public DIDescriptor {
