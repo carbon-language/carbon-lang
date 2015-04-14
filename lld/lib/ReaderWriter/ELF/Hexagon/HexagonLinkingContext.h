@@ -63,7 +63,7 @@ public:
   }
 };
 
-template <class ELFT> void setHexagonELFHeader(ELFHeader<ELFT> &elfHeader) {
+inline void setHexagonELFHeader(ELFHeader<ELF32LE> &elfHeader) {
   elfHeader.e_ident(llvm::ELF::EI_VERSION, 1);
   elfHeader.e_ident(llvm::ELF::EI_OSABI, 0);
   elfHeader.e_version(1);

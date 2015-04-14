@@ -109,7 +109,7 @@ private:
 
 /// \brief TargetHandler for Hexagon
 class HexagonTargetHandler final : public TargetHandler {
-  typedef ELFReader<HexagonELFFile<ELF32LE>> ObjReader;
+  typedef ELFReader<HexagonELFFile> ObjReader;
   typedef ELFReader<DynamicFile<ELF32LE>> ELFDSOReader;
 
 public:

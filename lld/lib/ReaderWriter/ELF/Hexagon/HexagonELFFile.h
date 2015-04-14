@@ -16,17 +16,16 @@
 namespace lld {
 namespace elf {
 
-template <class ELFT> class HexagonELFFile;
+class HexagonELFFile;
 
-template <class ELFT>
-class HexagonELFDefinedAtom : public ELFDefinedAtom<ELFT> {
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+class HexagonELFDefinedAtom : public ELFDefinedAtom<ELF32LE> {
+  typedef llvm::object::Elf_Sym_Impl<ELF32LE> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELF32LE> Elf_Shdr;
 
 public:
-  template<typename... T>
-  HexagonELFDefinedAtom(T&&... args)
-      : ELFDefinedAtom<ELFT>(std::forward<T>(args)...) {}
+  template <typename... T>
+  HexagonELFDefinedAtom(T &&... args)
+      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
 
   DefinedAtom::ContentType contentType() const override {
     if (this->_contentType != DefinedAtom::typeUnknown)
@@ -36,24 +35,24 @@ public:
         return (this->_contentType = DefinedAtom::typeZeroFillFast);
       return (this->_contentType = DefinedAtom::typeDataFast);
     }
-    return ELFDefinedAtom<ELFT>::contentType();
+    return ELFDefinedAtom<ELF32LE>::contentType();
   }
 
   DefinedAtom::ContentPermissions permissions() const override {
     if (this->_section->sh_flags & llvm::ELF::SHF_HEX_GPREL)
       return DefinedAtom::permRW_;
-    return ELFDefinedAtom<ELFT>::permissions();
+    return ELFDefinedAtom<ELF32LE>::permissions();
   }
 };
 
-template <class ELFT> class HexagonELFCommonAtom : public ELFCommonAtom<ELFT> {
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+class HexagonELFCommonAtom : public ELFCommonAtom<ELF32LE> {
+  typedef llvm::object::Elf_Sym_Impl<ELF32LE> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELF32LE> Elf_Shdr;
 
 public:
-  HexagonELFCommonAtom(const HexagonELFFile<ELFT> &file, StringRef symbolName,
+  HexagonELFCommonAtom(const ELFFile<ELF32LE> &file, StringRef symbolName,
                        const Elf_Sym *symbol)
-      : ELFCommonAtom<ELFT>(file, symbolName, symbol) {}
+      : ELFCommonAtom<ELF32LE>(file, symbolName, symbol) {}
 
   virtual bool isSmallCommonSymbol() const {
     switch (this->_symbol->st_shndx) {
@@ -73,7 +72,7 @@ public:
   uint64_t size() const override {
     if (isSmallCommonSymbol())
       return this->_symbol->st_size;
-    return ELFCommonAtom<ELFT>::size();
+    return ELFCommonAtom<ELF32LE>::size();
   }
 
   DefinedAtom::Merge merge() const override {
@@ -81,13 +80,13 @@ public:
       return DefinedAtom::mergeAsWeak;
     if (isSmallCommonSymbol())
       return DefinedAtom::mergeAsTentative;
-    return ELFCommonAtom<ELFT>::merge();
+    return ELFCommonAtom<ELF32LE>::merge();
   }
 
   DefinedAtom::ContentType contentType() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::typeZeroFillFast;
-    return ELFCommonAtom<ELFT>::contentType();
+    return ELFCommonAtom<ELF32LE>::contentType();
   }
 
   DefinedAtom::Alignment alignment() const override {
@@ -99,17 +98,17 @@ public:
   DefinedAtom::ContentPermissions permissions() const override {
     if (isSmallCommonSymbol())
       return DefinedAtom::permRW_;
-    return ELFCommonAtom<ELFT>::permissions();
+    return ELFCommonAtom<ELF32LE>::permissions();
   }
 };
 
-template <class ELFT> class HexagonELFFile : public ELFFile<ELFT> {
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+class HexagonELFFile : public ELFFile<ELF32LE> {
+  typedef llvm::object::Elf_Sym_Impl<ELF32LE> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELF32LE> Elf_Shdr;
 
 public:
   HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
-      : ELFFile<ELFT>(std::move(mb), ctx) {}
+      : ELFFile<ELF32LE>(std::move(mb), ctx) {}
 
   bool isCommonSymbol(const Elf_Sym *symbol) const override {
     switch (symbol->st_shndx) {
@@ -123,26 +122,24 @@ public:
     default:
       break;
     }
-    return ELFFile<ELFT>::isCommonSymbol(symbol);
+    return ELFFile<ELF32LE>::isCommonSymbol(symbol);
   }
 
   /// Process the Defined symbol and create an atom for it.
-  ELFDefinedAtom<ELFT> *
-  createDefinedAtom(StringRef symName, StringRef sectionName,
-                    const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
-                    ArrayRef<uint8_t> contentData, unsigned int referenceStart,
-                    unsigned int referenceEnd,
-                    std::vector<ELFReference<ELFT> *> &referenceList) override {
-    return new (this->_readerStorage) HexagonELFDefinedAtom<ELFT>(
+  ELFDefinedAtom<ELF32LE> *createDefinedAtom(
+      StringRef symName, StringRef sectionName, const Elf_Sym *sym,
+      const Elf_Shdr *sectionHdr, ArrayRef<uint8_t> contentData,
+      unsigned int referenceStart, unsigned int referenceEnd,
+      std::vector<ELFReference<ELF32LE> *> &referenceList) override {
+    return new (_readerStorage) HexagonELFDefinedAtom(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
   }
 
   /// Process the Common symbol and create an atom for it.
-  ELFCommonAtom<ELFT> *createCommonAtom(StringRef symName,
-                                        const Elf_Sym *sym) override {
-    return new (this->_readerStorage)
-        HexagonELFCommonAtom<ELFT>(*this, symName, sym);
+  ELFCommonAtom<ELF32LE> *createCommonAtom(StringRef symName,
+                                           const Elf_Sym *sym) override {
+    return new (_readerStorage) HexagonELFCommonAtom(*this, symName, sym);
   }
 };
 
