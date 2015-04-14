@@ -21,9 +21,6 @@ namespace elf {
 
 template <class ELFT> class DynamicFile : public SharedLibraryFile {
 public:
-  static ErrorOr<std::unique_ptr<DynamicFile>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, ELFLinkingContext &ctx);
-
   DynamicFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
 
   static std::error_code isCompatible(const MemoryBuffer &mb,

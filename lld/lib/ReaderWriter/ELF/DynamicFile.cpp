@@ -18,13 +18,6 @@ namespace lld {
 namespace elf {
 
 template <class ELFT>
-ErrorOr<std::unique_ptr<DynamicFile<ELFT>>>
-DynamicFile<ELFT>::create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                          ELFLinkingContext &ctx) {
-  return llvm::make_unique<DynamicFile<ELFT>>(std::move(mb), ctx);
-}
-
-template <class ELFT>
 DynamicFile<ELFT>::DynamicFile(std::unique_ptr<MemoryBuffer> mb,
                                ELFLinkingContext &ctx)
     : SharedLibraryFile(mb->getBufferIdentifier()), _mb(std::move(mb)),
