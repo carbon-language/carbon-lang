@@ -146,6 +146,13 @@ FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
 /// Similarly, TripMultiple divides the number of times that the LatchBlock may
 /// execute without exiting the loop.
 ///
+/// If AllowRuntime is true then UnrollLoop will consider unrolling loops that
+/// have a runtime (i.e. not compile time constant) trip count.  Unrolling these
+/// loops require a unroll "prologue" that runs "RuntimeTripCount % Count"
+/// iterations before branching into the unrolled loop.  UnrollLoop will not
+/// runtime-unroll the loop if computing RuntimeTripCount will be expensive and
+/// AllowExpensiveTripCount is false.
+///
 /// The LoopInfo Analysis that is passed will be kept consistent.
 ///
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
@@ -154,8 +161,9 @@ FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
 /// This utility preserves LoopInfo. If DominatorTree or ScalarEvolution are
 /// available from the Pass it must also preserve those analyses.
 bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
-                      bool AllowRuntime, unsigned TripMultiple, LoopInfo *LI,
-                      Pass *PP, LPPassManager *LPM, AssumptionCache *AC) {
+                      bool AllowRuntime, bool AllowExpensiveTripCount,
+                      unsigned TripMultiple, LoopInfo *LI, Pass *PP,
+                      LPPassManager *LPM, AssumptionCache *AC) {
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
@@ -218,7 +226,8 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   // flag is specified.
   bool RuntimeTripCount = (TripCount == 0 && Count > 0 && AllowRuntime);
 
-  if (RuntimeTripCount && !UnrollRuntimeLoopProlog(L, Count, LI, LPM))
+  if (RuntimeTripCount &&
+      !UnrollRuntimeLoopProlog(L, Count, AllowExpensiveTripCount, LI, LPM))
     return false;
 
   // Notify ScalarEvolution that the loop will be substantially changed,

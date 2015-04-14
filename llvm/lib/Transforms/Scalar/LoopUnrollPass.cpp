@@ -165,6 +165,7 @@ namespace {
       UP.MaxCount = UINT_MAX;
       UP.Partial = CurrentAllowPartial;
       UP.Runtime = CurrentRuntime;
+      UP.AllowExpensiveTripCount = false;
       TTI.getUnrollingPreferences(L, UP);
     }
 
@@ -886,8 +887,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Unroll the loop.
-  if (!UnrollLoop(L, Count, TripCount, AllowRuntime, TripMultiple, LI, this,
-                  &LPM, &AC))
+  if (!UnrollLoop(L, Count, TripCount, AllowRuntime, UP.AllowExpensiveTripCount,
+                  TripMultiple, LI, this, &LPM, &AC))
     return false;
 
   return true;

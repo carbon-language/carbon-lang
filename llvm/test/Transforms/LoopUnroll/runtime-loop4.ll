@@ -20,7 +20,8 @@ loop1:
   br label %loop2.header
 
 loop2.header:
-  br label %loop2
+  %e = icmp uge i32 %iter, 1
+  br i1 %e, label %loop2, label %exit2
 
 loop2:
   %iv2 = phi i32 [ 0, %loop2.header ], [ %inc2, %loop2 ]
