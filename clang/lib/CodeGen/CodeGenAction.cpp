@@ -46,7 +46,7 @@ namespace clang {
     const CodeGenOptions &CodeGenOpts;
     const TargetOptions &TargetOpts;
     const LangOptions &LangOpts;
-    raw_ostream *AsmOutStream;
+    raw_pwrite_stream *AsmOutStream;
     ASTContext *Context;
 
     Timer LLVMIRGeneration;
@@ -61,7 +61,7 @@ namespace clang {
                     const TargetOptions &targetopts,
                     const LangOptions &langopts, bool TimePasses,
                     const std::string &infile, llvm::Module *LinkModule,
-                    raw_ostream *OS, LLVMContext &C,
+                    raw_pwrite_stream *OS, LLVMContext &C,
                     CoverageSourceInfo *CoverageInfo = nullptr)
         : Diags(_Diags), Action(action), CodeGenOpts(compopts),
           TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
@@ -601,9 +601,8 @@ llvm::LLVMContext *CodeGenAction::takeLLVMContext() {
   return VMContext;
 }
 
-static raw_ostream *GetOutputStream(CompilerInstance &CI,
-                                    StringRef InFile,
-                                    BackendAction Action) {
+static raw_pwrite_stream *
+GetOutputStream(CompilerInstance &CI, StringRef InFile, BackendAction Action) {
   switch (Action) {
   case Backend_EmitAssembly:
     return CI.createDefaultOutputFile(false, InFile, "s");
@@ -625,7 +624,7 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
 std::unique_ptr<ASTConsumer>
 CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
-  std::unique_ptr<raw_ostream> OS(GetOutputStream(CI, InFile, BA));
+  std::unique_ptr<raw_pwrite_stream> OS(GetOutputStream(CI, InFile, BA));
   if (BA != Backend_EmitNothing && !OS)
     return nullptr;
 
@@ -678,7 +677,7 @@ void CodeGenAction::ExecuteAction() {
   if (getCurrentFileKind() == IK_LLVM_IR) {
     BackendAction BA = static_cast<BackendAction>(Act);
     CompilerInstance &CI = getCompilerInstance();
-    raw_ostream *OS = GetOutputStream(CI, getCurrentFile(), BA);
+    raw_pwrite_stream *OS = GetOutputStream(CI, getCurrentFile(), BA);
     if (BA != Backend_EmitNothing && !OS)
       return;
 

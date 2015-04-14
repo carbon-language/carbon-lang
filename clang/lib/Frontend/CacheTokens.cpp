@@ -183,7 +183,7 @@ class PTHWriter {
   typedef llvm::StringMap<OffsetOpt, llvm::BumpPtrAllocator> CachedStrsTy;
 
   IDMap IM;
-  llvm::raw_fd_ostream& Out;
+  raw_pwrite_stream &Out;
   Preprocessor& PP;
   uint32_t idcount;
   PTHMap PM;
@@ -236,8 +236,8 @@ class PTHWriter {
   Offset EmitCachedSpellings();
 
 public:
-  PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp)
-    : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
+  PTHWriter(raw_pwrite_stream &out, Preprocessor &pp)
+      : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
 
   PTHMap &getPM() { return PM; }
   void GeneratePTH(const std::string &MainFile);
@@ -468,6 +468,16 @@ Offset PTHWriter::EmitCachedSpellings() {
   return SpellingsOff;
 }
 
+static uint32_t swap32le(uint32_t X) {
+  return llvm::support::endian::byte_swap<uint32_t, llvm::support::little>(X);
+}
+
+static void pwrite32le(raw_pwrite_stream &OS, uint32_t Val, uint64_t &Off) {
+  uint32_t LEVal = swap32le(Val);
+  OS.pwrite(reinterpret_cast<const char *>(&LEVal), 4, Off);
+  Off += 4;
+}
+
 void PTHWriter::GeneratePTH(const std::string &MainFile) {
   // Generate the prologue.
   Out << "cfe-pth" << '\0';
@@ -520,11 +530,11 @@ void PTHWriter::GeneratePTH(const std::string &MainFile) {
   Offset FileTableOff = EmitFileTable();
 
   // Finally, write the prologue.
-  Out.seek(PrologueOffset);
-  Emit32(IdTableOff.first);
-  Emit32(IdTableOff.second);
-  Emit32(FileTableOff);
-  Emit32(SpellingOff);
+  uint64_t Off = PrologueOffset;
+  pwrite32le(Out, IdTableOff.first, Off);
+  pwrite32le(Out, IdTableOff.second, Off);
+  pwrite32le(Out, FileTableOff, Off);
+  pwrite32le(Out, SpellingOff, Off);
 }
 
 namespace {
@@ -559,8 +569,7 @@ public:
 };
 } // end anonymous namespace
 
-
-void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
+void clang::CacheTokens(Preprocessor &PP, raw_pwrite_stream *OS) {
   // Get the name of the main file.
   const SourceManager &SrcMgr = PP.getSourceManager();
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());

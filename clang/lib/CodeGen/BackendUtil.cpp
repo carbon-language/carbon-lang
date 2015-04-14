@@ -96,7 +96,7 @@ private:
 
   void CreatePasses();
 
-  /// CreateTargetMachine - Generates the TargetMachine.
+  /// Generates the TargetMachine.
   /// Returns Null if it is unable to create the target machine.
   /// Some of our clang tests specify triples which are not built
   /// into clang. This is okay because these tests check the generated
@@ -106,10 +106,10 @@ private:
   /// the requested target.
   TargetMachine *CreateTargetMachine(bool MustCreateTM);
 
-  /// AddEmitPasses - Add passes necessary to emit assembly or LLVM IR.
+  /// Add passes necessary to emit assembly or LLVM IR.
   ///
   /// \return True on success.
-  bool AddEmitPasses(BackendAction Action, raw_ostream &OS);
+  bool AddEmitPasses(BackendAction Action, raw_pwrite_stream &OS);
 
 public:
   EmitAssemblyHelper(DiagnosticsEngine &_Diags,
@@ -132,7 +132,7 @@ public:
 
   std::unique_ptr<TargetMachine> TM;
 
-  void EmitAssembly(BackendAction Action, raw_ostream *OS);
+  void EmitAssembly(BackendAction Action, raw_pwrite_stream *OS);
 };
 
 // We need this wrapper to access LangOpts and CGOpts from extension functions
@@ -545,7 +545,8 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   return TM;
 }
 
-bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action, raw_ostream &OS) {
+bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
+                                       raw_pwrite_stream &OS) {
 
   // Create the code generator passes.
   legacy::PassManager *PM = getCodeGenPasses();
@@ -582,7 +583,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action, raw_ostream &OS) {
   return true;
 }
 
-void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
+void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
+                                      raw_pwrite_stream *OS) {
   TimeRegion Region(llvm::TimePassesIsEnabled ? &CodeGenerationTime : nullptr);
 
   bool UsesCodeGen = (Action != Backend_EmitNothing &&
@@ -644,7 +646,7 @@ void clang::EmitBackendOutput(DiagnosticsEngine &Diags,
                               const clang::TargetOptions &TOpts,
                               const LangOptions &LOpts, StringRef TDesc,
                               Module *M, BackendAction Action,
-                              raw_ostream *OS) {
+                              raw_pwrite_stream *OS) {
   EmitAssemblyHelper AsmHelper(Diags, CGOpts, TOpts, LOpts, M);
 
   AsmHelper.EmitAssembly(Action, OS);

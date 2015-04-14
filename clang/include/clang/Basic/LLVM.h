@@ -45,6 +45,7 @@ namespace llvm {
   class RefCountedBaseVPTR;
 
   class raw_ostream;
+  class raw_pwrite_stream;
   // TODO: DenseMap, ...
 }
 
@@ -76,6 +77,7 @@ namespace clang {
   using llvm::RefCountedBaseVPTR;
 
   using llvm::raw_ostream;
+  using llvm::raw_pwrite_stream;
 } // end namespace clang.
 
 #endif

@@ -599,14 +599,9 @@ void DumpTokensAction::ExecuteAction() {
 
 void GeneratePTHAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
-  llvm::raw_fd_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
+  raw_pwrite_stream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
   if (!OS)
     return;
-
-  if (!OS->supportsSeeking()) {
-    // FIXME: Don't fail this way.
-    llvm::report_fatal_error("PTH requires a seekable file for output!");
-  }
 
   CacheTokens(CI.getPreprocessor(), OS);
 }
