@@ -1,4 +1,4 @@
-# Check that mapping symbols are properly generated for PLT entries.
+# Check that mapping symbols are properly generated for IFUNC PLT entries.
 
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t-arm.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-thm.o
@@ -6,9 +6,9 @@
 # RUN: -Bstatic --noinhibit-exec %t-arm.o %t-thm.o -o %t
 # RUN: llvm-readobj -symbols %t | FileCheck %s
 
-# CHECK: Name: {{[$]?[at]?[.]?}}__plt_ifunc_f1
-# CHECK: Name: {{[$]?[at]?[.]?}}__plt_from_thumb_ifunc_f2
-# CHECK: Name: {{[$]?[at]?[.]?}}__plt_ifunc_f2
+# CHECK: Name: {{[$]?[a]?[.]?}}__plt_ifunc_f1
+# CHECK: Name: {{[$]?[t]?[.]?}}__plt_from_thumb_ifunc_f2
+# CHECK: Name: {{[$]?[a]?[.]?}}__plt_ifunc_f2
 
 # arm.o
 ---
