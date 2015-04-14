@@ -40,10 +40,9 @@ public:
     ORDER_SDATA = 205
   };
 
-  HexagonTargetLayout(HexagonLinkingContext &hti)
-      : TargetLayout<ELF32LE>(hti), _sdataSection() {
-    _sdataSection = new (_alloc) SDataSection(hti);
-  }
+  HexagonTargetLayout(HexagonLinkingContext &ctx)
+      : TargetLayout<ELF32LE>(ctx),
+        _sdataSection(new (_alloc) SDataSection(ctx)) {}
 
   /// \brief Return the section order for a input section
   TargetLayout<ELF32LE>::SectionOrder
