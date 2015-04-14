@@ -35,11 +35,11 @@ typedef struct {
 inline uint32_t findv4bitmask(uint8_t *location) {
   uint32_t insn = llvm::support::endian::read32le(location);
   for (int32_t i = 0, e = llvm::array_lengthof(insn_encodings); i < e; i++) {
-    if (((insn & 0xc000) == 0) && !(insn_encodings[i].isDuplex))
+    if ((insn & 0xc000) == 0 && !insn_encodings[i].isDuplex)
       continue;
-    if (((insn & 0xc000) != 0) && (insn_encodings[i].isDuplex))
+    if ((insn & 0xc000) != 0 && insn_encodings[i].isDuplex)
       continue;
-    if (((insn_encodings[i].insnMask) & insn) == insn_encodings[i].insnCmpMask)
+    if ((insn_encodings[i].insnMask & insn) == insn_encodings[i].insnCmpMask)
       return insn_encodings[i].insnBitMask;
   }
   llvm_unreachable("found unknown Hexagon instruction");
