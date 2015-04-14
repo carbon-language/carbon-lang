@@ -21,7 +21,6 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_multiple_threads()
 
-    @expectedFailureGcc("llvm.org/pr20233")
     @dwarf_test
     def test_watchpoint_multiple_threads_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads."""
@@ -37,7 +36,6 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_multiple_threads_wp_set_and_then_delete()
 
-    @skipIfGcc # causes intermittent gcc debian buildbot failures, skip until we can investigate 
     @dwarf_test
     def test_watchpoint_multiple_threads_wp_set_and_then_delete_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads, and after the watchpoint is deleted, the watchpoint event should no longer fires."""
