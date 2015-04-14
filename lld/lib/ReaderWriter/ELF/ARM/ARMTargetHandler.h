@@ -16,12 +16,13 @@
 #include "TargetLayout.h"
 
 namespace lld {
-namespace elf {
-class ARMLinkingContext;
+class ELFLinkingContext;
 
-template <class ELFT> class ARMTargetLayout : public TargetLayout<ELFT> {
+namespace elf {
+
+class ARMTargetLayout : public TargetLayout<ELF32LE> {
 public:
-  ARMTargetLayout(ARMLinkingContext &ctx) : TargetLayout<ELFT>(ctx) {}
+  ARMTargetLayout(ELFLinkingContext &ctx) : TargetLayout<ELF32LE>(ctx) {}
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotSymOnce, [this]() {
@@ -80,7 +81,7 @@ public:
 
 private:
   ARMLinkingContext &_ctx;
-  std::unique_ptr<ARMTargetLayout<ELF32LE>> _targetLayout;
+  std::unique_ptr<ARMTargetLayout> _targetLayout;
   std::unique_ptr<ARMTargetRelocationHandler> _relocationHandler;
 };
 

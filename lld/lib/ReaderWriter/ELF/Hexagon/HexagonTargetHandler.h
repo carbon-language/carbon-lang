@@ -21,7 +21,7 @@ namespace elf {
 class HexagonLinkingContext;
 
 /// \brief Handle Hexagon SData section
-template <class ELFT> class SDataSection : public AtomSection<ELFT> {
+class SDataSection : public AtomSection<ELF32LE> {
 public:
   SDataSection(const HexagonLinkingContext &ctx);
 
@@ -43,7 +43,7 @@ public:
 
   HexagonTargetLayout(HexagonLinkingContext &hti)
       : TargetLayout<ELF32LE>(hti), _sdataSection() {
-    _sdataSection = new (_alloc) SDataSection<ELF32LE>(hti);
+    _sdataSection = new (_alloc) SDataSection(hti);
   }
 
   /// \brief Return the section order for a input section
@@ -103,7 +103,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator _alloc;
-  SDataSection<ELF32LE> *_sdataSection = nullptr;
+  SDataSection *_sdataSection = nullptr;
   uint64_t _gotAddr = 0;
   std::once_flag _gotOnce;
 };
@@ -137,7 +137,7 @@ private:
   std::unique_ptr<HexagonTargetRelocationHandler> _relocationHandler;
 };
 
-template <class ELFT> void SDataSection<ELFT>::doPreFlight() {
+inline void SDataSection::doPreFlight() {
   // sort the atoms on the alignments they have been set
   std::stable_sort(this->_atoms.begin(), this->_atoms.end(),
                                              [](const lld::AtomLayout * A,
@@ -167,17 +167,15 @@ template <class ELFT> void SDataSection<ELFT>::doPreFlight() {
   }
 } // finalize
 
-template <class ELFT>
-SDataSection<ELFT>::SDataSection(const HexagonLinkingContext &ctx)
-    : AtomSection<ELFT>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
-                        HexagonTargetLayout::ORDER_SDATA) {
+inline SDataSection::SDataSection(const HexagonLinkingContext &ctx)
+    : AtomSection<ELF32LE>(ctx, ".sdata", DefinedAtom::typeDataFast, 0,
+                           HexagonTargetLayout::ORDER_SDATA) {
   this->_type = SHT_PROGBITS;
   this->_flags = SHF_ALLOC | SHF_WRITE;
   this->_alignment = 4096;
 }
 
-template <class ELFT>
-const lld::AtomLayout *SDataSection<ELFT>::appendAtom(const Atom *atom) {
+inline const lld::AtomLayout *SDataSection::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
   uint64_t alignment = atomAlign.value;

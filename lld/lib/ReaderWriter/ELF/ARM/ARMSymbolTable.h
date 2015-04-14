@@ -14,10 +14,9 @@ namespace lld {
 namespace elf {
 
 /// \brief The SymbolTable class represents the symbol table in a ELF file
-template<class ELFT>
-class ARMSymbolTable : public SymbolTable<ELFT> {
+class ARMSymbolTable : public SymbolTable<ELF32LE> {
 public:
-  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef llvm::object::Elf_Sym_Impl<ELF32LE> Elf_Sym;
 
   ARMSymbolTable(const ELFLinkingContext &ctx);
 
@@ -25,15 +24,13 @@ public:
                       int64_t addr) override;
 };
 
-template <class ELFT>
-ARMSymbolTable<ELFT>::ARMSymbolTable(const ELFLinkingContext &ctx)
-    : SymbolTable<ELFT>(ctx, ".symtab",
-                        TargetLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
+ARMSymbolTable::ARMSymbolTable(const ELFLinkingContext &ctx)
+    : SymbolTable<ELF32LE>(ctx, ".symtab",
+                           TargetLayout<ELF32LE>::ORDER_SYMBOL_TABLE) {}
 
-template <class ELFT>
-void ARMSymbolTable<ELFT>::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
-                                          int64_t addr) {
-  SymbolTable<ELFT>::addDefinedAtom(sym, da, addr);
+void ARMSymbolTable::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
+                                    int64_t addr) {
+  SymbolTable<ELF32LE>::addDefinedAtom(sym, da, addr);
 
   // Set zero bit to distinguish real symbols addressing Thumb instructions.
   // Don't care about mapping symbols like $t and others.

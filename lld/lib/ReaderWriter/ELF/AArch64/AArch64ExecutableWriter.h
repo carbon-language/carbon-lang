@@ -15,26 +15,23 @@
 namespace lld {
 namespace elf {
 
-template <class ELFT>
-class AArch64ExecutableWriter : public ExecutableWriter<ELFT> {
+class AArch64ExecutableWriter : public ExecutableWriter<ELF64LE> {
 public:
   AArch64ExecutableWriter(AArch64LinkingContext &ctx,
-                          TargetLayout<ELFT> &layout);
+                          TargetLayout<ELF64LE> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 };
 
-template <class ELFT>
-AArch64ExecutableWriter<ELFT>::AArch64ExecutableWriter(
-    AArch64LinkingContext &ctx, TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout) {}
+AArch64ExecutableWriter::AArch64ExecutableWriter(AArch64LinkingContext &ctx,
+                                                 TargetLayout<ELF64LE> &layout)
+    : ExecutableWriter<ELF64LE>(ctx, layout) {}
 
-template <class ELFT>
-void AArch64ExecutableWriter<ELFT>::createImplicitFiles(
+void AArch64ExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELFT>::createImplicitFiles(result);
+  ExecutableWriter<ELF64LE>::createImplicitFiles(result);
   auto gotFile = llvm::make_unique<SimpleFile>("GOTFile");
   gotFile->addAtom(*new (gotFile->allocator()) GlobalOffsetTableAtom(*gotFile));
   if (this->_ctx.isDynamic())
