@@ -3,6 +3,7 @@ add_llvm_library(lldELF
   ELFFile.cpp
   ELFLinkingContext.cpp
   FileCommon.cpp
+  OutputELFWriter.cpp
   Reader.cpp
   TargetLayout.cpp
   Writer.cpp
