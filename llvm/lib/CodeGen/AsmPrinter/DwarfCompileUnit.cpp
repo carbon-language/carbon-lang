@@ -137,6 +137,8 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   if (!GV->isDefinition())
     addFlag(*VariableDIE, dwarf::DW_AT_declaration);
+  else
+    addGlobalName(GV->getName(), *VariableDIE, DeclContext);
 
   // Add location.
   bool addToAccelTable = false;
@@ -202,7 +204,6 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
       DD->addAccelName(GV->getLinkageName(), *VariableDIE);
   }
 
-  addGlobalName(GV->getName(), *VariableDIE, DeclContext);
   return VariableDIE;
 }
 
