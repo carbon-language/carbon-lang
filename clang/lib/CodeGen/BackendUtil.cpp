@@ -24,6 +24,7 @@
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/CommandLine.h"
@@ -601,7 +602,8 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
     break;
 
   case Backend_EmitBC:
-    getPerModulePasses()->add(createBitcodeWriterPass(*OS));
+    getPerModulePasses()->add(
+        createBitcodeWriterPass(*OS, shouldPreserveBitcodeUseListOrder()));
     break;
 
   case Backend_EmitLL:
