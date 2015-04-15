@@ -19,7 +19,6 @@ class RegistersIteratorTestCase(TestBase):
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
 
     @expectedFailureFreeBSD # llvm.org/pr14600 - Exception state registers not supported on FreeBSD
-    @expectedFailureLinux # llvm.org/pr14600 - Exception state registers not supported on Linux
     @python_api_test
     def test_iter_registers(self):
         """Test iterator works correctly for lldbutil.iter_registers()."""
@@ -68,20 +67,28 @@ class RegistersIteratorTestCase(TestBase):
                             print "%s => %s" % (reg.GetName(), reg.GetValue())
 
                     REGs = lldbutil.get_ESRs(frame)
-                    num = len(REGs)
-                    if self.TraceOn():
-                        print "\nNumber of exception state registers: %d" % num
-                    for reg in REGs:
-                        self.assertTrue(reg)
+                    if self.platformIsDarwin():
+                        num = len(REGs)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue())
+                            print "\nNumber of exception state registers: %d" % num
+                        for reg in REGs:
+                            self.assertTrue(reg)
+                            if self.TraceOn():
+                                print "%s => %s" % (reg.GetName(), reg.GetValue())
+                    else:
+                        self.assertIsNone(REGs)
 
                     # And these should also work.
                     for kind in ["General Purpose Registers",
-                                 "Floating Point Registers",
-                                 "Exception State Registers"]:
+                                 "Floating Point Registers"]:
                         REGs = lldbutil.get_registers(frame, kind)
                         self.assertTrue(REGs)
+
+                    REGs = lldbutil.get_registers(frame, "Exception State Registers")
+                    if self.platformIsDarwin():
+                        self.assertIsNotNone(REGs)
+                    else:
+                        self.assertIsNone(REGs)
 
                     # We've finished dumping the registers for frame #0.
                     break
