@@ -51,14 +51,6 @@ public:
     return _gpAddr;
   }
 
-  /// \brief Get '_gp_disp' symbol atom layout.
-  AtomLayout *getGPDisp() {
-    std::call_once(_gpDispOnce, [this]() {
-      _gpDispAtom = this->findAbsoluteAtom("_gp_disp");
-    });
-    return _gpDispAtom;
-  }
-
   /// \brief Return the section order for a input section
   typename TargetLayout<ELFT>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
@@ -81,9 +73,7 @@ private:
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;
   uint64_t _gpAddr = 0;
-  AtomLayout *_gpDispAtom = nullptr;
   std::once_flag _gpOnce;
-  std::once_flag _gpDispOnce;
 };
 
 } // end namespace elf

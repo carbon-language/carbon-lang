@@ -563,9 +563,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
   uint64_t gpAddr = _targetLayout.getGPAddr();
-
-  AtomLayout *gpDispAtom = _targetLayout.getGPDisp();
-  bool isGpDisp = gpDispAtom && ref.target() == gpDispAtom->_atom;
+  bool isGpDisp = ref.target()->name() == "_gp_disp";
 
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();
