@@ -22,7 +22,7 @@
 # CHECK-NEXT:  Type: SharedObject (0x3)
 # CHECK-NEXT:  Machine: EM_MIPS (0x8)
 # CHECK-NEXT:  Version: 1
-# CHECK-NEXT:  Entry: 0x100
+# CHECK-NEXT:  Entry: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:  ProgramHeaderOffset: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:  SectionHeaderOffset: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:  Flags [ (0x72001007)
@@ -35,10 +35,10 @@
 # CHECK-NEXT:  ]
 # CHECK-NEXT:  HeaderSize: 52
 # CHECK-NEXT:  ProgramHeaderEntrySize: 32
-# CHECK-NEXT:  ProgramHeaderCount: 4
+# CHECK-NEXT:  ProgramHeaderCount: {{[0-9]+}}
 # CHECK-NEXT:  SectionHeaderEntrySize: 40
-# CHECK-NEXT:  SectionHeaderCount: 11
-# CHECK-NEXT:  StringTableSectionIndex: 8
+# CHECK-NEXT:  SectionHeaderCount: {{[0-9]+}}
+# CHECK-NEXT:  StringTableSectionIndex: {{[0-9]+}}
 # CHECK-NEXT:}
 
 FileHeader:

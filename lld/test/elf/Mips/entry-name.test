@@ -3,8 +3,8 @@
 # RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t.exe %t.o
 # RUN: llvm-nm %t.exe | FileCheck %s
 
-# CHECK:          U __start
-# CHECK: 00400108 T main
+# CHECK:               U __start
+# CHECK: {{[0-9A-F]+}} T main
 
 FileHeader:
   Class:           ELFCLASS32

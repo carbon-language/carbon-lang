@@ -5,22 +5,22 @@
 # RUN: llvm-objdump -s -t %t.exe | FileCheck %s
 
 # CHECK: Contents of section .text:
-# CHECK-NEXT: 400110 01000000 02000000 03000000 00000000
-#                    ^
-#                    A = 0x10000 - 1 == 0xffff
-#                    V = (T1 + 0xffff - T0) >> 16 =>
-#                    V => 0x1000b >> 16 = 1
-#                             ^
-#                             A = 0x20000 - 1 == 0x1ffff
-#                             V = (T1 + 0x1ffff - T0 - 4) >> 16 =>
-#                             V => 0x20007 >> 16 = 2
-#                                      ^
-#                                      A = 0xffff == -1
-#                                      V = T1 - 1 - T0 - 8 = 3
+# CHECK-NEXT: {{[0-9A-F]+}} 01000000 02000000 03000000 00000000
+#                           ^
+#                           A = 0x10000 - 1 == 0xffff
+#                           V = (T1 + 0xffff - T0) >> 16 =>
+#                           V => 0x1000b >> 16 = 1
+#                                    ^
+#                                    A = 0x20000 - 1 == 0x1ffff
+#                                    V = (T1 + 0x1ffff - T0 - 4) >> 16 =>
+#                                    V => 0x20007 >> 16 = 2
+#                                             ^
+#                                             A = 0xffff == -1
+#                                             V = T1 - 1 - T0 - 8 = 3
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400110 g  F .text  0000000c T0
-# CHECK: 0040011c g  F .text  00000004 T1
+# CHECK: {{[0-9a-f]+}} g  F .text  0000000c T0
+# CHECK: {{[0-9a-f]+}} g  F .text  00000004 T1
 
 FileHeader:
   Class:   ELFCLASS32

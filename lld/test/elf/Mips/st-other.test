@@ -14,7 +14,7 @@
 
 # SO:      Symbol {
 # SO:        Name: S0@ (1)
-# SO-NEXT:   Value: 0xEC
+# SO-NEXT:   Value: 0x{{[0-9A-F]+}}
 # SO-NEXT:   Size: 4
 # SO-NEXT:   Binding: Global (0x1)
 # SO-NEXT:   Type: Function (0x2)
@@ -24,7 +24,7 @@
 
 # SO:      Symbol {
 # SO:        Name: S1@ (4)
-# SO-NEXT:   Value: 0xF1
+# SO-NEXT:   Value: 0x{{[0-9A-F]+}}
 # SO-NEXT:   Size: 4
 # SO-NEXT:   Binding: Global (0x1)
 # SO-NEXT:   Type: Function (0x2)
@@ -34,7 +34,7 @@
 
 # EXE-SYM:      Symbol {
 # EXE-SYM:        Name: S0 (1)
-# EXE-SYM-NEXT:   Value: 0x400108
+# EXE-SYM-NEXT:   Value: 0x{{[0-9A-F]+}}
 # EXE-SYM-NEXT:   Size: 4
 # EXE-SYM-NEXT:   Binding: Global (0x1)
 # EXE-SYM-NEXT:   Type: Function (0x2)
@@ -44,7 +44,7 @@
 
 # EXE-SYM:      Symbol {
 # EXE-SYM:        Name: S1 (4)
-# EXE-SYM-NEXT:   Value: 0x40010D
+# EXE-SYM-NEXT:   Value: 0x{{[0-9A-F]+}}
 # EXE-SYM-NEXT:   Size: 4
 # EXE-SYM-NEXT:   Binding: Global (0x1)
 # EXE-SYM-NEXT:   Type: Function (0x2)

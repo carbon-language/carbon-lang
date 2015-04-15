@@ -4,12 +4,12 @@
 # RUN: llvm-objdump -s -t %t-exe | FileCheck %s
 
 # CHECK: Contents of section .data:
-# CHECK-NEXT: 402000 00000000 05000080 fdffff7f  ............
-#                             ^^ data2 + 0x80000001 - data1
-#                                      ^^ data1 + 0x80000001 - data2
+# CHECK-NEXT: {{[0-9A-F]+}} 00000000 05000080 fdffff7f
+#                                    ^^ data2 + 0x80000001 - data1
+#                                             ^^ data1 + 0x80000001 - data2
 # CHECK: SYMBOL TABLE:
-# CHECK: 00402004 g  .data  00000004 data1
-# CHECK: 00402008 g  .data  00000004 data2
+# CHECK: {{[0-9A-F]+}} g  .data  00000004 data1
+# CHECK: {{[0-9A-F]+}} g  .data  00000004 data2
 
 !ELF
 FileHeader: !FileHeader

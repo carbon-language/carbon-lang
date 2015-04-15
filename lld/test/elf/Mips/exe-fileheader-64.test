@@ -22,7 +22,7 @@
 # CHECK:   Type: Executable (0x2)
 # CHECK:   Machine: EM_MIPS (0x8)
 # CHECK:   Version: 1
-# CHECK:   Entry: 0x1200001A0
+# CHECK:   Entry: 0x{{[0-9A-F]+}}
 # CHECK:   ProgramHeaderOffset: 0x{{[0-9A-F]+}}
 # CHECK:   SectionHeaderOffset: 0x{{[0-9A-F]+}}
 # CHECK:   Flags [ (0x60000007)
@@ -33,10 +33,10 @@
 # CHECK:   ]
 # CHECK:   HeaderSize: 64
 # CHECK:   ProgramHeaderEntrySize: 56
-# CHECK:   ProgramHeaderCount: 5
+# CHECK:   ProgramHeaderCount: {{[0-9]+}}
 # CHECK:   SectionHeaderEntrySize: 64
-# CHECK:   SectionHeaderCount: 11
-# CHECK:   StringTableSectionIndex: 8
+# CHECK:   SectionHeaderCount: {{[0-9]+}}
+# CHECK:   StringTableSectionIndex: {{[0-9]+}}
 # CHECK: }
 
 # o.o

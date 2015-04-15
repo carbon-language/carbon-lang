@@ -40,7 +40,7 @@
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
-# CHECK:      0x00000003 PLTGOT 0x1000
+# CHECK:      0x00000003 PLTGOT 0x{{[0-9A-F]+}}
 # CHECK-NEXT: 0x00000001 NEEDED SharedLibrary (dynsym-table-2.test.tmp-bar.so)
 # CHECK-NEXT: 0x00000000 NULL   0x0
 

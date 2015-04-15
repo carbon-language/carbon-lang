@@ -5,15 +5,15 @@
 # RUN: llvm-objdump -s -t %t.exe | FileCheck %s
 
 # CHECK: Contents of section .text:
-# CHECK-NEXT: 400110 01000000 00000000 00000000
-#                    ^ V
-#                    A = -1 << 2 = -4 =>
-#                    V = (T1 - 4 - T0) >> 2 =>
-#                    V => 4 >> 2 = 1
+# CHECK-NEXT: {{[0-9A-F]+}} 01000000 00000000 00000000
+#                           ^ V
+#                             A = -1 << 2 = -4 =>
+#                             V = (T1 - 4 - T0) >> 2 =>
+#                             V => 4 >> 2 = 1
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400110 g  F .text  00000008 T0
-# CHECK: 00400118 g  F .text  00000004 T1
+# CHECK: {{[0-9A-F]+}} g  F .text  00000008 T0
+# CHECK: {{[0-9A-F]+}} g  F .text  00000004 T1
 
 FileHeader:
   Class:   ELFCLASS32

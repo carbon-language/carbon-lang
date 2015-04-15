@@ -6,20 +6,20 @@
 
 # SHARED: Sections:
 # SHARED: Idx Name      Size     Address          Type
-# SHARED:   5 .dynamic  00000068 00000000000000d4
+# SHARED:   5 .dynamic  00000068 00000000[[ADDR:[0-9a-f]+]]
 
 # SHARED: SYMBOL TABLE:
-# SHARED: 000000d4 g  .dynamic  00000000 _DYNAMIC
+# SHARED: [[ADDR]]  g  .dynamic  00000000 _DYNAMIC
 
 # RUN: lld -flavor gnu -target mipsel -e main -e T0 -o %t.exe %t.o
 # RUN: llvm-objdump -h -t %t.exe | FileCheck -check-prefix=EXE %s
 
 # EXE: Sections:
 # EXE: Idx Name         Size     Address          Type
-# EXE:   6 .dynamic     00000068 0000000000400114
+# EXE:   6 .dynamic     00000068 00000000[[ADDR:[0-9a-f]+]]
 
 # EXE: SYMBOL TABLE:
-# EXE: 00400114 g     .dynamic  00000000 _DYNAMIC
+# EXE: [[ADDR]]  g  .dynamic  00000000 _DYNAMIC
 
 FileHeader:
   Class:    ELFCLASS32

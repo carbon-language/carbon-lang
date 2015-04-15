@@ -24,8 +24,8 @@
 # PLT-NEXT:    Flags [ (0x2)
 # PLT-NEXT:      SHF_ALLOC (0x2)
 # PLT-NEXT:    ]
-# PLT-NEXT:    Address: 0x400190
-# PLT-NEXT:    Offset: 0x190
+# PLT-NEXT:    Address: 0x{{[0-9A-F]+}}
+# PLT-NEXT:    Offset: 0x{{[0-9A-F]+}}
 # PLT-NEXT:    Size: 24
 # PLT-NEXT:    Link: 3
 # PLT-NEXT:    Info: 0
@@ -40,8 +40,8 @@
 # PLT-NEXT:      SHF_ALLOC (0x2)
 # PLT-NEXT:      SHF_EXECINSTR (0x4)
 # PLT-NEXT:    ]
-# PLT-NEXT:    Address: 0x4001B0
-# PLT-NEXT:    Offset: 0x1B0
+# PLT-NEXT:    Address: 0x{{[0-9A-F]+}}
+# PLT-NEXT:    Offset: 0x{{[0-9A-F]+}}
 # PLT-NEXT:    Size: 80
 # PLT-NEXT:    Link: 0
 # PLT-NEXT:    Info: 0
@@ -51,9 +51,9 @@
 
 # PLT:      Relocations [
 # PLT-NEXT:   Section (5) .rel.plt {
-# PLT-NEXT:     0x402008 R_MIPS_JUMP_SLOT T1 0x0
-# PLT-NEXT:     0x40200C R_MIPS_JUMP_SLOT T2 0x0
-# PLT-NEXT:     0x402010 R_MIPS_JUMP_SLOT T3 0x0
+# PLT-NEXT:     {{[0-9A-F]+}} R_MIPS_JUMP_SLOT T1 0x0
+# PLT-NEXT:     {{[0-9A-F]+}} R_MIPS_JUMP_SLOT T2 0x0
+# PLT-NEXT:     {{[0-9A-F]+}} R_MIPS_JUMP_SLOT T3 0x0
 # PLT-NEXT:   }
 # PLT-NEXT: ]
 
@@ -69,7 +69,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T1@ (1)
-# PLT-NEXT:     Value: 0x4001D0
+# PLT-NEXT:     Value: 0x{{[0-9A-F]+}}
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)
@@ -78,7 +78,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T2@ (4)
-# PLT-NEXT:     Value: 0x4001E0
+# PLT-NEXT:     Value: 0x{{[0-9A-F]+}}
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)
@@ -87,7 +87,7 @@
 # PLT-NEXT:   }
 # PLT-NEXT:   Symbol {
 # PLT-NEXT:     Name: T3@ (7)
-# PLT-NEXT:     Value: 0x4001F0
+# PLT-NEXT:     Value: 0x{{[0-9A-F]+}}
 # PLT-NEXT:     Size: 0
 # PLT-NEXT:     Binding: Global (0x1)
 # PLT-NEXT:     Type: Function (0x2)

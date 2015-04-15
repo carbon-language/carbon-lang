@@ -21,8 +21,8 @@
 # SEC-NEXT: EntrySize: 24
 
 # RAW:      Contents of section .reginfo:
-# RAW-NEXT:  00b4 f0000001 e0000002 d0000003 c0000004
-# RAW-NEXT:  00c4 b0000005 f08f0000
+# RAW-NEXT:  {{[0-9a-f]+}} f0000001 e0000002 d0000003 c0000004
+# RAW-NEXT:  {{[0-9a-f]+}} b0000005 f08f0000
 
 # RAW: SYMBOL TABLE:
 # RAW: 00008ff0 g *ABS* 00000000 _gp

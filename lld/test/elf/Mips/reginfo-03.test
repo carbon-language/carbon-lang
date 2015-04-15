@@ -5,8 +5,8 @@
 # RUN: llvm-objdump -s -t %t.so | FileCheck %s
 
 # CHECK:      Contents of section .reginfo:
-# CHECK-NEXT:  00b4 00000000 00000000 00000000 00000000
-# CHECK-NEXT:  00c4 00000000 f08f0000
+# CHECK-NEXT:  {{[0-9a-f]+}} 00000000 00000000 00000000 00000000
+# CHECK-NEXT:  {{[0-9a-f]+}} 00000000 f08f0000
 
 # CHECK: SYMBOL TABLE:
 # CHECK: 00008ff0 g *ABS* 00000000 _gp

@@ -4,7 +4,7 @@
 # RUN: not lld -flavor gnu -target mipsel -e T0 -o %t-exe %t-obj 2>&1 \
 # RUN:       | FileCheck %s
 
-# CHECK: The jalx target 0x400116 is not word-aligned
+# CHECK: The jalx target 0x{{[0-9a-f]+}} is not word-aligned
 
 !ELF
 FileHeader: !FileHeader
