@@ -55,3 +55,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-no-proper-module.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=NO-MODULE %s
 
 NO-MODULE: Malformed IR file
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-VBR-too-big.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=HUGE-VBR %s
+
+HUGE-VBR: Invalid record
