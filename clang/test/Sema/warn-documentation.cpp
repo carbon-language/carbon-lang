@@ -1038,6 +1038,12 @@ int test_nocrash12();
 ///@param x@param y
 int test_nocrash13(int x, int y);
 
+/**
+ * \verbatim
+ * Aaa
+ **/
+int test_nocrash14();
+
 // rdar://12379114
 // expected-warning@+2 {{'@union' command should not be used in a comment attached to a non-union declaration}}
 /*!
