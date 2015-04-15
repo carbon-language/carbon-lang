@@ -2346,19 +2346,33 @@ bool Sema::CollectMultipleMethodsInGlobalPool(
   return Methods.size() > 1;
 }
 
-bool Sema::AreMultipleMethodsInGlobalPool(Selector Sel, bool instance) {
+bool Sema::AreMultipleMethodsInGlobalPool(Selector Sel, ObjCMethodDecl *BestMethod,
+                                          SourceRange R,
+                                          bool receiverIdOrClass) {
   GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
   // Test for no method in the pool which should not trigger any warning by
   // caller.
   if (Pos == MethodPool.end())
     return true;
-  ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
+  ObjCMethodList &MethList =
+    BestMethod->isInstanceMethod() ? Pos->second.first : Pos->second.second;
+  
+  // Diagnose finding more than one method in global pool
+  SmallVector<ObjCMethodDecl *, 4> Methods;
+  Methods.push_back(BestMethod);
+  for (ObjCMethodList *M = &MethList; M; M = M->getNext())
+    if (M->getMethod() && !M->getMethod()->isHidden() &&
+        M->getMethod() != BestMethod)
+      Methods.push_back(M->getMethod());
+  if (Methods.size() > 1)
+    DiagnoseMultipleMethodInGlobalPool(Methods, Sel, R, receiverIdOrClass);
+
   return MethList.hasMoreThanOneDecl();
 }
 
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
                                                bool receiverIdOrClass,
-                                               bool warn, bool instance) {
+                                               bool instance) {
   if (ExternalSource)
     ReadMethodPool(Sel);
     
@@ -2370,31 +2384,23 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
   SmallVector<ObjCMethodDecl *, 4> Methods;
   for (ObjCMethodList *M = &MethList; M; M = M->getNext()) {
-    if (M->getMethod() && !M->getMethod()->isHidden()) {
-      // If we're not supposed to warn about mismatches, we're done.
-      if (!warn)
-        return M->getMethod();
-
-      Methods.push_back(M->getMethod());
-    }
+    if (M->getMethod() && !M->getMethod()->isHidden())
+      return M->getMethod();
   }
+  return nullptr;
+}
 
-  // If there aren't any visible methods, we're done.
-  // FIXME: Recover if there are any known-but-hidden methods?
-  if (Methods.empty())
-    return nullptr;
-
-  if (Methods.size() == 1)
-    return Methods[0];
-
+void Sema::DiagnoseMultipleMethodInGlobalPool(SmallVectorImpl<ObjCMethodDecl*> &Methods,
+                                              Selector Sel, SourceRange R,
+                                              bool receiverIdOrClass) {
   // We found multiple methods, so we may have to complain.
   bool issueDiagnostic = false, issueError = false;
-
+  
   // We support a warning which complains about *any* difference in
   // method signature.
   bool strictSelectorMatch =
-      receiverIdOrClass && warn &&
-      !Diags.isIgnored(diag::warn_strict_multiple_method_decl, R.getBegin());
+  receiverIdOrClass &&
+  !Diags.isIgnored(diag::warn_strict_multiple_method_decl, R.getBegin());
   if (strictSelectorMatch) {
     for (unsigned I = 1, N = Methods.size(); I != N; ++I) {
       if (!MatchTwoMethodDeclarations(Methods[0], Methods[I], MMS_strict)) {
@@ -2403,7 +2409,7 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
       }
     }
   }
-
+  
   // If we didn't see any strict differences, we won't see any loose
   // differences.  In ARC, however, we also need to check for loose
   // mismatches, because most of them are errors.
@@ -2419,7 +2425,7 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
         break;
       }
     }
-
+  
   if (issueDiagnostic) {
     if (issueError)
       Diag(R.getBegin(), diag::err_arc_multiple_method_decl) << Sel << R;
@@ -2427,16 +2433,15 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
       Diag(R.getBegin(), diag::warn_strict_multiple_method_decl) << Sel << R;
     else
       Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
-
+    
     Diag(Methods[0]->getLocStart(),
          issueError ? diag::note_possibility : diag::note_using)
-      << Methods[0]->getSourceRange();
+    << Methods[0]->getSourceRange();
     for (unsigned I = 1, N = Methods.size(); I != N; ++I) {
       Diag(Methods[I]->getLocStart(), diag::note_also_found)
-        << Methods[I]->getSourceRange();
+      << Methods[I]->getSourceRange();
+    }
   }
-  }
-  return Methods[0];
 }
 
 ObjCMethodDecl *Sema::LookupImplementedMethodInGlobalPool(Selector Sel) {

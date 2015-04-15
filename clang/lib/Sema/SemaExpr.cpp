@@ -8175,8 +8175,7 @@ static bool hasIsEqualMethod(Sema &S, const Expr *LHS, const Expr *RHS) {
     if (Type->isObjCIdType()) {
       // For 'id', just check the global pool.
       Method = S.LookupInstanceMethodInGlobalPool(IsEqualSel, SourceRange(),
-                                                  /*receiverId=*/true,
-                                                  /*warn=*/false);
+                                                  /*receiverId=*/true);
     } else {
       // Check protocols.
       Method = S.LookupMethodInQualifiedType(IsEqualSel, Type,
