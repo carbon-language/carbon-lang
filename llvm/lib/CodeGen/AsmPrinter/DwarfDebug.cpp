@@ -719,8 +719,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    DIVariable DV = cast<MDLocalVariable>(VI.Var);
-    assert(DV->isValidLocationForIntrinsic(VI.Loc) &&
+    assert(VI.Var->isValidLocationForIntrinsic(VI.Loc) &&
            "Expected inlined-at fields to agree");
     DIExpression Expr = cast_or_null<MDExpression>(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(Var, Scope->getScopeNode());
