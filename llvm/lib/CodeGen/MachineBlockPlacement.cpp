@@ -715,7 +715,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
       // a frequency higher than the current exit before we consider breaking
       // the layout.
       BranchProbability Bias(100 - ExitBlockBias, 100);
-      if (!ExitingBB || BestExitLoopDepth < SuccLoopDepth ||
+      if (!ExitingBB || SuccLoopDepth > BestExitLoopDepth ||
           ExitEdgeFreq > BestExitEdgeFreq ||
           (MBB->isLayoutSuccessor(Succ) &&
            !(ExitEdgeFreq < BestExitEdgeFreq * Bias))) {
