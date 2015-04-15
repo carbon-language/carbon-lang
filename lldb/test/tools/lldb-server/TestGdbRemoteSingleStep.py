@@ -7,7 +7,6 @@ class TestGdbRemoteSingleStep(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     @dsym_test
-    @skipIfDarwin # https://llvm.org/bugs/show_bug.cgi?id=23181: Some lldb-server tests become zombies
     def test_single_step_only_steps_one_instruction_with_s_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()

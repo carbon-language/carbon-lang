@@ -255,6 +255,7 @@ class _LocalProcess(_BaseProcess):
     def __init__(self, trace_on):
         self._proc = None
         self._trace_on = trace_on
+        self._delayafterterminate = 0.1
 
     @property
     def pid(self):
@@ -267,7 +268,25 @@ class _LocalProcess(_BaseProcess):
 
     def terminate(self):
         if self._proc.poll() == None:
+            # Terminate _proc like it does the pexpect
+            self._proc.send_signal(signal.SIGHUP)
+            time.sleep(self._delayafterterminate)
+            if self._proc.poll() != None:
+                return
+            self._proc.send_signal(signal.SIGCONT)
+            time.sleep(self._delayafterterminate)
+            if self._proc.poll() != None:
+                return
+            self._proc.send_signal(signal.SIGINT)
+            time.sleep(self._delayafterterminate)
+            if self._proc.poll() != None:
+                return
             self._proc.terminate()
+            time.sleep(self._delayafterterminate)
+            if self._proc.poll() != None:
+                return
+            self._proc.kill()
+            time.sleep(self._delayafterterminate)
 
     def poll(self):
         return self._proc.poll()

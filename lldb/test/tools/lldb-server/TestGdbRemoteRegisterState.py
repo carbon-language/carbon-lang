@@ -109,7 +109,6 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     @dsym_test
-    @skipIfDarwin # https://llvm.org/bugs/show_bug.cgi?id=23181: Some lldb-server tests become zombies
     def test_grp_register_save_restore_works_no_suffix_debugserver_dsym(self):
         USE_THREAD_SUFFIX = False
         self.init_debugserver_test()
