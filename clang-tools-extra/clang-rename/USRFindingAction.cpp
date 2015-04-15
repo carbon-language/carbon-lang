@@ -46,7 +46,7 @@ static std::vector<std::string> getAllConstructorUSRs(
   const auto *RecordDecl = Decl->getDefinition();
 
   // Iterate over all the constructors and add their USRs.
-  for (const auto &CtorDecl : RecordDecl->ctors())
+  for (const auto *CtorDecl : RecordDecl->ctors())
     USRs.push_back(getUSRForDecl(CtorDecl));
 
   // Ignore destructors. GetLocationsOfUSR will find the declaration of and
