@@ -62,6 +62,11 @@ Sema::CUDAFunctionTarget Sema::IdentifyCUDATarget(const FunctionDecl *D) {
 
 bool Sema::CheckCUDATarget(const FunctionDecl *Caller,
                            const FunctionDecl *Callee) {
+  // The CUDADisableTargetCallChecks short-circuits this check: we assume all
+  // cross-target calls are valid.
+  if (getLangOpts().CUDADisableTargetCallChecks)
+    return false;
+
   CUDAFunctionTarget CallerTarget = IdentifyCUDATarget(Caller),
                      CalleeTarget = IdentifyCUDATarget(Callee);
 

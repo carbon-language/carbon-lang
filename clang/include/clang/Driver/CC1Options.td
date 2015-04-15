@@ -610,6 +610,9 @@ def fcuda_is_device : Flag<["-"], "fcuda-is-device">,
 def fcuda_allow_host_calls_from_host_device : Flag<["-"],
     "fcuda-allow-host-calls-from-host-device">,
   HelpText<"Allow host device functions to call host functions">;
+def fcuda_disable_target_call_checks : Flag<["-"],
+    "fcuda-disable-target-call-checks">,
+  HelpText<"Disable all cross-target (host, device, etc.) call checks in CUDA">;
 
 } // let Flags = [CC1Option]
 
