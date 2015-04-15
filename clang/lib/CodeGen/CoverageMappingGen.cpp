@@ -748,7 +748,7 @@ struct CounterCoverageMappingBuilder
         size_t Index =
             pushRegion(Counter::getZero(), getStart(CS->body_front()),
                        getEnd(CS->body_back()));
-        for (const auto &Child : CS->children())
+        for (const auto *Child : CS->children())
           Visit(Child);
         popRegions(Index);
       }
