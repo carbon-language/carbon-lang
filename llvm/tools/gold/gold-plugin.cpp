@@ -734,8 +734,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   passes.run(M);
 }
 
-static void saveBCFile(StringRef Path, Module &M,
-                       bool ShouldPreserveUseListOrder) {
+static void saveBCFile(StringRef Path, Module &M) {
   std::error_code EC;
   raw_fd_ostream OS(Path, EC, sys::fs::OpenFlags::F_None);
   if (EC)
