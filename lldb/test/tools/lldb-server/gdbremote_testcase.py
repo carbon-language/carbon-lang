@@ -263,7 +263,7 @@ class GdbRemoteTestCaseBase(TestBase):
                 try:
                     server.terminate()
                 except:
-                    logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
+                    logger.warning("failed to terminate server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
             self.addTearDownHook(shutdown_debug_monitor)
 
             # Schedule debug monitor to be shut down during teardown.
@@ -333,7 +333,14 @@ class GdbRemoteTestCaseBase(TestBase):
         if sleep_seconds:
             args.append("sleep:%d" % sleep_seconds)
 
-        return self.spawnSubprocess(exe_path, args)
+        inferior = self.spawnSubprocess(exe_path, args)
+        def shutdown_process_for_attach():
+            try:
+                inferior.terminate()
+            except:
+                logger.warning("failed to terminate inferior process for attach: {}; ignoring".format(sys.exc_info()[0]))
+        self.addTearDownHook(shutdown_process_for_attach)
+        return inferior
 
     def prep_debug_monitor_and_inferior(self, inferior_args=None, inferior_sleep_seconds=3, inferior_exe_path=None):
         """Prep the debug monitor, the inferior, and the expected packet stream.
