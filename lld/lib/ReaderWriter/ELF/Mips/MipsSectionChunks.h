@@ -155,6 +155,9 @@ public:
   const AtomLayout *appendAtom(const Atom *atom) override {
     const DefinedAtom *da = dyn_cast<DefinedAtom>(atom);
 
+    if (atom->name() == "_GLOBAL_OFFSET_TABLE_")
+      return AtomSection<ELFT>::appendAtom(atom);
+
     for (const auto &r : *da) {
       if (r->kindNamespace() != Reference::KindNamespace::ELF)
         continue;

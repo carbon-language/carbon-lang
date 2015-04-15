@@ -48,7 +48,6 @@ public:
     auto got = gotSection ? gotSection->virtualAddr() : 0;
     auto gp = gotSection ? got + _targetLayout.getGPOffset() : 0;
 
-    setAtomValue("_GLOBAL_OFFSET_TABLE_", got);
     setAtomValue("_gp", gp);
     setAtomValue("_gp_disp", gp);
     setAtomValue("__gnu_local_gp", gp);
@@ -57,7 +56,6 @@ public:
   std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile() {
     auto file = llvm::make_unique<RuntimeFile<ELFT>>(_ctx, "Mips runtime file");
     if (_ctx.isDynamic()) {
-      file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       file->addAbsoluteAtom("_gp");
       file->addAbsoluteAtom("_gp_disp");
       file->addAbsoluteAtom("__gnu_local_gp");

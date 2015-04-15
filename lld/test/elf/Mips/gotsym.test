@@ -8,7 +8,7 @@
 # SHARED: Idx Name          Size      Address          Type
 # SHARED:   6 .got          00000008 0000000000001000 DATA
 # SHARED: SYMBOL TABLE:
-# SHARED: 00001000 g       *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
+# SHARED: 00001000         .got   00000000 _GLOBAL_OFFSET_TABLE_
 # SHARED: 00008ff0 g       *ABS*  00000000 _gp
 # SHARED: 00008ff0 g       *ABS*  00000000 _gp_disp
 
@@ -19,7 +19,7 @@
 # EXE: Idx Name          Size      Address          Type
 # EXE:   7 .got          00000008 0000000000401000 DATA
 # EXE: SYMBOL TABLE:
-# EXE: 00401000 g       *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
+# EXE: 00401000         .got   00000000 _GLOBAL_OFFSET_TABLE_
 # EXE: 00408ff0 g       *ABS*  00000000 _gp
 # EXE: 00408ff0 g       *ABS*  00000000 _gp_disp
 

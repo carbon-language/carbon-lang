@@ -280,6 +280,13 @@ public:
   }
 };
 
+class MipsGlobalOffsetTableAtom : public GlobalOffsetTableAtom {
+public:
+  MipsGlobalOffsetTableAtom(const File &f) : GlobalOffsetTableAtom(f) {}
+
+  StringRef customSectionName() const override { return ".got"; }
+};
+
 class RelocationPassFile : public SimpleFile {
 public:
   RelocationPassFile(const ELFLinkingContext &ctx)
@@ -441,6 +448,13 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
   }
 
   uint64_t ordinal = 0;
+
+  if (!_localGotVector.empty() || !_globalGotVector.empty() ||
+      !_tlsGotVector.empty()) {
+    SimpleDefinedAtom *ga = new (_file._alloc) MipsGlobalOffsetTableAtom(_file);
+    ga->setOrdinal(ordinal++);
+    mf->addAtom(*ga);
+  }
 
   for (auto &got : _localGotVector) {
     got->setOrdinal(ordinal++);
