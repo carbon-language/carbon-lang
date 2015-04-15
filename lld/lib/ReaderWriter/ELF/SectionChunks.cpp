@@ -989,7 +989,7 @@ void EHFrameHeader<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
   template class klass<ELF32LE>;  \
   template class klass<ELF32BE>;  \
   template class klass<ELF64LE>;  \
-  template class klass<ELF64BE>;
+  template class klass<ELF64BE>
 
 INSTANTIATE(AtomSection);
 INSTANTIATE(DynamicSymbolTable);

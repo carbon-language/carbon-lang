@@ -451,7 +451,7 @@ template <class ELFT> void ProgramHeaderSegment<ELFT>::finalize() {
   template class klass<ELF32LE>;  \
   template class klass<ELF32BE>;  \
   template class klass<ELF64LE>;  \
-  template class klass<ELF64BE>;
+  template class klass<ELF64BE>
 
 INSTANTIATE(ExpressionChunk);
 INSTANTIATE(ProgramHeaderSegment);

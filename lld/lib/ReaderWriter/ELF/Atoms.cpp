@@ -281,7 +281,7 @@ SharedLibraryAtom::Type ELFDynamicAtom<ELFT>::type() const {
   template class klass<ELF32LE>;  \
   template class klass<ELF32BE>;  \
   template class klass<ELF64LE>;  \
-  template class klass<ELF64BE>;
+  template class klass<ELF64BE>
 
 INSTANTIATE(ELFAbsoluteAtom);
 INSTANTIATE(ELFDefinedAtom);
