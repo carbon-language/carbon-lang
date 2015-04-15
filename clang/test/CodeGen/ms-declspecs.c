@@ -6,8 +6,10 @@ const __declspec(selectany) int x2 = 2;
 // CHECK: @x2 = weak_odr constant i32 2, comdat, align 4
 
 // selectany turns extern variable declarations into definitions.
-extern __declspec(selectany) int x3;
+__declspec(selectany) int x3;
+extern __declspec(selectany) int x4;
 // CHECK: @x3 = weak_odr global i32 0, comdat, align 4
+// CHECK: @x4 = weak_odr global i32 0, comdat, align 4
 
 struct __declspec(align(16)) S {
   char x;

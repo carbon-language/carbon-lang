@@ -7,7 +7,9 @@ extern "C++" __declspec(selectany) int x3;
 extern "C" {
 __declspec(selectany) int x4;
 }
+__declspec(selectany) int x5;
 // CHECK: @"\01?x1@@3HA" = weak_odr global i32 0, comdat, align 4
 // CHECK: @x2 = weak_odr global i32 0, comdat, align 4
 // CHECK: @"\01?x3@@3HA"  = weak_odr global i32 0, comdat, align 4
 // CHECK: @x4 = weak_odr global i32 0, comdat, align 4
+// CHECK: @"\01?x5@@3HA"  = weak_odr global i32 0, comdat, align 4

@@ -1915,7 +1915,7 @@ VarDecl::isThisDeclarationADefinition(ASTContext &C) const {
   if (hasInit())
     return Definition;
 
-  if (hasAttr<AliasAttr>())
+  if (hasAttr<AliasAttr>() || hasAttr<SelectAnyAttr>())
     return Definition;
 
   // A variable template specialization (other than a static data member
@@ -1925,14 +1925,14 @@ VarDecl::isThisDeclarationADefinition(ASTContext &C) const {
       getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
     return DeclarationOnly;
 
-  if (!hasAttr<SelectAnyAttr>() && hasExternalStorage())
+  if (hasExternalStorage())
     return DeclarationOnly;
 
   // [dcl.link] p7:
   //   A declaration directly contained in a linkage-specification is treated
   //   as if it contains the extern specifier for the purpose of determining
   //   the linkage of the declared name and whether it is a definition.
-  if (!hasAttr<SelectAnyAttr>() && isSingleLineLanguageLinkage(*this))
+  if (isSingleLineLanguageLinkage(*this))
     return DeclarationOnly;
 
   // C99 6.9.2p2:
