@@ -13,7 +13,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_lldbmi_break_insert_function_pending(self):
         """Test that 'lldb-mi --interpreter' works for pending function breakpoints."""
 
@@ -38,7 +37,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_lldbmi_break_insert_function(self):
         """Test that 'lldb-mi --interpreter' works for function breakpoints."""
 
@@ -98,7 +96,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_lldbmi_break_insert_file_line(self):
         """Test that 'lldb-mi --interpreter' works for file:line breakpoints."""
 
