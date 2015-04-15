@@ -26,7 +26,7 @@ entry:
 }
 
 ; CHECK-LABEL: zero_test
-; CHECK: pxor %xmm0, %xmm0
+; CHECK: xorps %xmm0, %xmm0
 ; CHECK: ret
 
 define void @zero_test() {

@@ -52,7 +52,7 @@ forbody:		; preds = %forcond
 ; CHECK-NEXT: psraw $8
 ; CHECK-NEXT: psraw $2
 ; CHECK-NEXT: pshufb
-; CHECK-NEXT: movlpd
+; CHECK-NEXT: movq
 ;
 ; FIXME: We shouldn't require both a movd and an insert.
 ; CHECK-WIDE: %forbody

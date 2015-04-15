@@ -581,7 +581,7 @@ declare <2 x double> @llvm.x86.sse2.sqrt.sd(<2 x double>) nounwind readnone
 define void @test_x86_sse2_storel_dq(i8* %a0, <4 x i32> %a1) {
   ; CHECK: test_x86_sse2_storel_dq
   ; CHECK: movl
-  ; CHECK: movq
+  ; CHECK: movlps
   call void @llvm.x86.sse2.storel.dq(i8* %a0, <4 x i32> %a1)
   ret void
 }

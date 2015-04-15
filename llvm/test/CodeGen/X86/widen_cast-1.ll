@@ -3,12 +3,14 @@
 
 ; CHECK: movl
 ; CHECK: paddw
-; CHECK: movlpd
+; CHECK: movq
+
+; FIXME - if this test cares about scheduling, why isn't it being checked?
 
 ; Scheduler causes produce a different instruction order
 ; ATOM: movl
 ; ATOM: paddw
-; ATOM: movlpd
+; ATOM: movq
 
 ; bitcast a v4i16 to v2i32
 

@@ -9,7 +9,7 @@
 
 define void @test1() {
 ;CHECK-LABEL: @test1
-;CHECK: xorpd
+;CHECK: xorps
   store <1 x i64> zeroinitializer, <1 x i64>* @M1
   store <2 x i32> zeroinitializer, <2 x i32>* @M2
   ret void

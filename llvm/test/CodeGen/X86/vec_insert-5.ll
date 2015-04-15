@@ -9,7 +9,7 @@ define void  @t1(i32 %a, x86_mmx* %P) nounwind {
 ; CHECK-NEXT:    shll $12, %ecx
 ; CHECK-NEXT:    movd %ecx, %xmm0
 ; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,1,1]
-; CHECK-NEXT:    movlpd %xmm0, (%eax)
+; CHECK-NEXT:    movq %xmm0, (%eax)
 ; CHECK-NEXT:    retl
  %tmp12 = shl i32 %a, 12
  %tmp21 = insertelement <2 x i32> undef, i32 %tmp12, i32 1
