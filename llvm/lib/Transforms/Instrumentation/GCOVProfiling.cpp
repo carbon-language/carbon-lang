@@ -437,7 +437,7 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, const char *NewStem) {
     }
   }
 
-  SmallString<128> Filename = CU.getFilename();
+  SmallString<128> Filename = CU->getFilename();
   sys::path::replace_extension(Filename, NewStem);
   StringRef FName = sys::path::filename(Filename);
   SmallString<128> CurPath;

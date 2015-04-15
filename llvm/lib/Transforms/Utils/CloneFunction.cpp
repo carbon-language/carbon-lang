@@ -171,7 +171,7 @@ static void AddOperand(DICompileUnit CU, MDSubprogramArray SPs, Metadata *NewSP)
   for (auto *SP : SPs)
     NewSPs.push_back(SP);
   NewSPs.push_back(NewSP);
-  CU.replaceSubprograms(MDTuple::get(CU->getContext(), NewSPs));
+  CU->replaceSubprograms(MDTuple::get(CU->getContext(), NewSPs));
 }
 
 // Clone the module-level debug info associated with OldFunc. The cloned data

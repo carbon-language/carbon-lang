@@ -72,13 +72,13 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
   // Printing the nodes directly isn't particularly helpful (since they
   // reference other nodes that won't be printed, particularly for the
   // filenames), so just print a few useful things.
-  for (DICompileUnit CU : Finder.compile_units()) {
+  for (MDCompileUnit *CU : Finder.compile_units()) {
     O << "Compile unit: ";
-    if (const char *Lang = LanguageString(CU.getLanguage()))
+    if (const char *Lang = dwarf::LanguageString(CU->getSourceLanguage()))
       O << Lang;
     else
-      O << "unknown-language(" << CU.getLanguage() << ")";
-    printFile(O, CU.getFilename(), CU.getDirectory());
+      O << "unknown-language(" << CU->getSourceLanguage() << ")";
+    printFile(O, CU->getFilename(), CU->getDirectory());
     O << '\n';
   }
 

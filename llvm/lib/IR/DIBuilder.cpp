@@ -679,10 +679,9 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
          "function types should be subroutines");
   auto *Node = MDSubprogram::get(
       VMContext, MDScopeRef::get(DIScope(getNonCompileUnitScope(Context))),
-      Name, LinkageName, File.get(), LineNo,
-      cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit, isDefinition,
-      ScopeLine, nullptr, 0, 0, Flags, isOptimized, Fn,
-      cast_or_null<MDTuple>(TParams), cast_or_null<MDSubprogram>(Decl),
+      Name, LinkageName, File, LineNo, cast_or_null<MDSubroutineType>(Ty.get()),
+      isLocalToUnit, isDefinition, ScopeLine, nullptr, 0, 0, Flags, isOptimized,
+      Fn, cast_or_null<MDTuple>(TParams), cast_or_null<MDSubprogram>(Decl),
       MDTuple::getTemporary(VMContext, None).release());
 
   if (isDefinition)
@@ -702,11 +701,12 @@ DIBuilder::createTempFunctionFwdDecl(DIDescriptor Context, StringRef Name,
   return MDSubprogram::getTemporary(
              VMContext,
              MDScopeRef::get(DIScope(getNonCompileUnitScope(Context))), Name,
-             LinkageName, File.get(), LineNo,
+             LinkageName, File, LineNo,
              cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
              isDefinition, ScopeLine, nullptr, 0, 0, Flags, isOptimized, Fn,
              cast_or_null<MDTuple>(TParams), cast_or_null<MDSubprogram>(Decl),
-             nullptr).release();
+             nullptr)
+      .release();
 }
 
 DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
@@ -724,8 +724,8 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
          "the compile unit.");
   // FIXME: Do we want to use different scope/lines?
   auto *SP = MDSubprogram::get(
-      VMContext, MDScopeRef::get(cast<MDScope>(Context)), Name, LinkageName,
-      F.get(), LineNo, cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
+      VMContext, MDScopeRef::get(cast<MDScope>(Context)), Name, LinkageName, F,
+      LineNo, cast_or_null<MDSubroutineType>(Ty.get()), isLocalToUnit,
       isDefinition, LineNo, MDTypeRef::get(VTableHolder), VK, VIndex, Flags,
       isOptimized, Fn, cast_or_null<MDTuple>(TParam), nullptr, nullptr);
 
@@ -744,8 +744,7 @@ DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
 DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
                                                      DIFile File,
                                                      unsigned Discriminator) {
-  return MDLexicalBlockFile::get(VMContext, Scope, File.getFileNode(),
-                                 Discriminator);
+  return MDLexicalBlockFile::get(VMContext, Scope, File, Discriminator);
 }
 
 DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
@@ -753,7 +752,7 @@ DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
   // Make these distinct, to avoid merging two lexical blocks on the same
   // file/line/column.
   return MDLexicalBlock::getDistinct(VMContext, getNonCompileUnitScope(Scope),
-                                     File.getFileNode(), Line, Col);
+                                     File, Line, Col);
 }
 
 static Value *getDbgIntrinsicValueImpl(LLVMContext &VMContext, Value *V) {

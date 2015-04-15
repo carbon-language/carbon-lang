@@ -374,59 +374,31 @@ public:
   MDTypeRefArray getTypeArray() const { return get()->getTypeArray(); }
 };
 
-/// \brief This is a wrapper for a file.
-class DIFile : public DIScope {
+class DIFile {
+  MDFile *N;
+
 public:
-  DIFile() = default;
-  DIFile(const MDFile *N) : DIScope(N) {}
+  DIFile(const MDFile *N = nullptr) : N(const_cast<MDFile *>(N)) {}
 
-  MDFile *get() const { return cast_or_null<MDFile>(DIDescriptor::get()); }
-  operator MDFile *() const { return get(); }
-  MDFile *operator->() const { return get(); }
-  MDFile &operator*() const { return *get(); }
-
-  /// \brief Retrieve the MDNode for the directory/file pair.
-  MDNode *getFileNode() const { return get(); }
+  operator DIDescriptor() const { return N; }
+  operator DIScope() const { return N; }
+  operator MDFile *() const { return N; }
+  MDFile *operator->() const { return N; }
+  MDFile &operator*() const { return *N; }
 };
 
-/// \brief A wrapper for a compile unit.
-class DICompileUnit : public DIScope {
+class DICompileUnit {
+  MDCompileUnit *N;
+
 public:
-  DICompileUnit() = default;
-  DICompileUnit(const MDCompileUnit *N) : DIScope(N) {}
+  DICompileUnit(const MDCompileUnit *N = nullptr)
+      : N(const_cast<MDCompileUnit *>(N)) {}
 
-  MDCompileUnit *get() const {
-    return cast_or_null<MDCompileUnit>(DIDescriptor::get());
-  }
-  operator MDCompileUnit *() const { return get(); }
-  MDCompileUnit *operator->() const { return get(); }
-  MDCompileUnit &operator*() const { return *get(); }
-
-  dwarf::SourceLanguage getLanguage() const {
-    return static_cast<dwarf::SourceLanguage>(get()->getSourceLanguage());
-  }
-  StringRef getProducer() const { return get()->getProducer(); }
-  bool isOptimized() const { return get()->isOptimized(); }
-  StringRef getFlags() const { return get()->getFlags(); }
-  unsigned getRunTimeVersion() const { return get()->getRuntimeVersion(); }
-
-  DIArray getEnumTypes() const { return get()->getEnumTypes(); }
-  DIArray getRetainedTypes() const { return get()->getRetainedTypes(); }
-  DIArray getSubprograms() const { return get()->getSubprograms(); }
-  DIArray getGlobalVariables() const { return get()->getGlobalVariables(); }
-  DIArray getImportedEntities() const { return get()->getImportedEntities(); }
-
-  void replaceSubprograms(MDSubprogramArray Subprograms) const {
-    get()->replaceSubprograms(Subprograms);
-  }
-  void replaceGlobalVariables(MDGlobalVariableArray GlobalVariables) const {
-    get()->replaceGlobalVariables(GlobalVariables);
-  }
-
-  StringRef getSplitDebugFilename() const {
-    return get()->getSplitDebugFilename();
-  }
-  unsigned getEmissionKind() const { return get()->getEmissionKind(); }
+  operator DIDescriptor() const { return N; }
+  operator DIScope() const { return N; }
+  operator MDCompileUnit *() const { return N; }
+  MDCompileUnit *operator->() const { return N; }
+  MDCompileUnit &operator*() const { return *N; }
 };
 
 class DISubprogram {

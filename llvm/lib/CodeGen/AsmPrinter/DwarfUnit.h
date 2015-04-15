@@ -141,7 +141,7 @@ public:
   // Accessors.
   AsmPrinter* getAsmPrinter() const { return Asm; }
   unsigned getUniqueID() const { return UniqueID; }
-  uint16_t getLanguage() const { return CUNode.getLanguage(); }
+  uint16_t getLanguage() const { return CUNode->getSourceLanguage(); }
   DICompileUnit getCUNode() const { return CUNode; }
   DIE &getUnitDie() { return UnitDie; }
 

@@ -827,13 +827,13 @@ DIType DebugInfo::getDoubleTy() {
 void DebugInfo::emitLocation(ExprAST *AST) {
   if (!AST)
     return Builder.SetCurrentDebugLocation(DebugLoc());
-  DIScope *Scope;
+  MDScope *Scope;
   if (LexicalBlocks.empty())
-    Scope = &TheCU;
+    Scope = TheCU;
   else
-    Scope = LexicalBlocks.back();
+    Scope = *LexicalBlocks.back();
   Builder.SetCurrentDebugLocation(
-      DebugLoc::get(AST->getLine(), AST->getCol(), DIScope(*Scope)));
+      DebugLoc::get(AST->getLine(), AST->getCol(), Scope));
 }
 
 static DICompositeType CreateFunctionType(unsigned NumArgs, DIFile Unit) {
@@ -1224,9 +1224,9 @@ Function *PrototypeAST::Codegen() {
     AI->setName(Args[Idx]);
 
   // Create a subprogram DIE for this function.
-  DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
-                                     KSDbgInfo.TheCU.getDirectory());
-  DIDescriptor FContext(Unit);
+  DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
+                                     KSDbgInfo.TheCU->getDirectory());
+  DIDescriptor FContext = Unit;
   unsigned LineNo = Line;
   unsigned ScopeLine = Line;
   DISubprogram SP = DBuilder->createFunction(
@@ -1248,15 +1248,15 @@ void PrototypeAST::CreateArgumentAllocas(Function *F) {
 
     // Create a debug descriptor for the variable.
     DIScope *Scope = KSDbgInfo.LexicalBlocks.back();
-    DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
-                                       KSDbgInfo.TheCU.getDirectory());
+    DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
+                                       KSDbgInfo.TheCU->getDirectory());
     DIVariable D = DBuilder->createLocalVariable(dwarf::DW_TAG_arg_variable,
                                                  *Scope, Args[Idx], Unit, Line,
                                                  KSDbgInfo.getDoubleTy(), Idx);
 
-    Instruction *Call = DBuilder->insertDeclare(
-        Alloca, D, DBuilder->createExpression(), Builder.GetInsertBlock());
-    Call->setDebugLoc(DebugLoc::get(Line, 0, *Scope));
+    DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
+                            DebugLoc::get(Line, 0, *Scope),
+                            Builder.GetInsertBlock());
 
     // Store the initial value into the alloca.
     Builder.CreateStore(AI, Alloca);
