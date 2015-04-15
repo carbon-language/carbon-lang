@@ -77,7 +77,7 @@ entry:
   %21 = inttoptr i64 %20 to i8*
   %22 = load i8, i8* %21
   %23 = icmp ne i8 %22, 0
-  call void @llvm.dbg.declare(metadata i32* %8, metadata !12, metadata !14)
+  call void @llvm.dbg.declare(metadata i32* %8, metadata !12, metadata !14), !dbg !MDLocation(scope: !4)
   br i1 %23, label %24, label %30
 
 ; <label>:24                                      ; preds = %5

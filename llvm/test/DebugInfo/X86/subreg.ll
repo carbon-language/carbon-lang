@@ -9,7 +9,7 @@
 
 define i16 @f(i16 signext %zzz) nounwind {
 entry:
-  call void @llvm.dbg.value(metadata i16 %zzz, i64 0, metadata !0, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i16 %zzz, i64 0, metadata !0, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
   %conv = sext i16 %zzz to i32, !dbg !7
   %conv1 = trunc i32 %conv to i16
   ret i16 %conv1

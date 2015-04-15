@@ -17,7 +17,7 @@ entry:
 for.body:
   call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
   call void @llvm.lifetime.start(i64 -1, i8* %x.i) nounwind
-  call void @llvm.dbg.declare(metadata i8* %x.i, metadata !22, metadata !MDExpression()) nounwind
+  call void @llvm.dbg.declare(metadata i8* %x.i, metadata !22, metadata !MDExpression()) nounwind, !dbg !MDLocation(scope: !2)
   br label %for.body
 }
 

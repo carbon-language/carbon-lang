@@ -8,7 +8,7 @@
 
 define i32 @"main(tart.core.String[])->int32"(i32 %args) {
 entry:
-  tail call void @llvm.dbg.value(metadata %tart.reflect.ComplexType* @.type.SwitchStmtTest, i64 0, metadata !8, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata %tart.reflect.ComplexType* @.type.SwitchStmtTest, i64 0, metadata !8, metadata !MDExpression()), !dbg !MDLocation(scope: !9)
   tail call void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.ComplexType* @.type.SwitchStmtTest) ; <%tart.core.Object*> [#uses=2]
   ret i32 3
 }

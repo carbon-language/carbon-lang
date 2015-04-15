@@ -4,7 +4,7 @@
 %0 = type { i32, i32 }
 
 define void @t(%0*, i32, i32, i32, i32) nounwind {
-  tail call void @llvm.dbg.value(metadata %0* %0, i64 0, metadata !0, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata %0* %0, i64 0, metadata !0, metadata !MDExpression()), !dbg !MDLocation(scope: !MDSubprogram())
   unreachable
 }
 

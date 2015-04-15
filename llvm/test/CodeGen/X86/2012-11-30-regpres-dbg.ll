@@ -20,7 +20,7 @@ if.then:                                          ; preds = %entry
   unreachable
 
 if.end:                                           ; preds = %entry
-  call void @llvm.dbg.declare(metadata %struct.btCompoundLeafCallback* %callback, metadata !3, metadata !MDExpression())
+  call void @llvm.dbg.declare(metadata %struct.btCompoundLeafCallback* %callback, metadata !3, metadata !MDExpression()), !dbg !MDLocation(scope: !2)
   %m = getelementptr inbounds %struct.btCompoundLeafCallback, %struct.btCompoundLeafCallback* %callback, i64 0, i32 1
   store i32 0, i32* undef, align 8
   %cmp12447 = icmp sgt i32 undef, 0

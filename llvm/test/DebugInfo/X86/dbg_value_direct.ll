@@ -53,7 +53,7 @@ entry:
   %19 = inttoptr i64 %18 to i8*
   %20 = load i8, i8* %19
   %21 = icmp ne i8 %20, 0
-  call void @llvm.dbg.declare(metadata i32* %3, metadata !23, metadata !28)
+  call void @llvm.dbg.declare(metadata i32* %3, metadata !23, metadata !28), !dbg !MDLocation(scope: !4)
   br i1 %21, label %22, label %28
 
 ; <label>:22                                      ; preds = %entry

@@ -32,7 +32,7 @@ sw.bb735:                                         ; preds = %if.end511
   unreachable
 
 if.end41.i2210:                                   ; preds = %if.end511
-  call void @llvm.dbg.value(metadata x86_fp80 %src.sroa.0.0.src.sroa.0.0.2280, i64 0, metadata !20, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata x86_fp80 %src.sroa.0.0.src.sroa.0.0.2280, i64 0, metadata !20, metadata !MDExpression()), !dbg !MDLocation(scope: !4)
   unreachable
 
 sw.bb992:                                         ; preds = %if.end511

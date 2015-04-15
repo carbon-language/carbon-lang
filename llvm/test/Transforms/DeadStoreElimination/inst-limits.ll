@@ -118,7 +118,7 @@ entry:
 
   ; Insert a meaningless dbg.value intrinsic; it should have no
   ; effect on the working of DSE in any way.
-  call void @llvm.dbg.value(metadata i32* undef, i64 0, metadata !10, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32* undef, i64 0, metadata !10, metadata !MDExpression()), !dbg !MDLocation(scope: !4)
 
   ; CHECK:  store i32 -1, i32* @x, align 4
   store i32 -1, i32* @x, align 4

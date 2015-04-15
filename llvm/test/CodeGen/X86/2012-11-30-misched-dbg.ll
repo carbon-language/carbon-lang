@@ -43,7 +43,7 @@ if.then3344:
   br label %if.then4073
 
 if.then4073:                                      ; preds = %if.then3344
-  call void @llvm.dbg.declare(metadata [20 x i8]* %num14075, metadata !4, metadata !MDExpression())
+  call void @llvm.dbg.declare(metadata [20 x i8]* %num14075, metadata !4, metadata !MDExpression()), !dbg !MDLocation(scope: !5)
   %arraydecay4078 = getelementptr inbounds [20 x i8], [20 x i8]* %num14075, i64 0, i64 0
   %0 = load i32, i32* undef, align 4
   %add4093 = add nsw i32 %0, 0
@@ -108,7 +108,7 @@ cond.true:                                        ; preds = %entry
   unreachable
 
 cond.end:                                         ; preds = %entry
-  call void @llvm.dbg.declare(metadata %"class.__gnu_cxx::hash_map"* %X, metadata !31, metadata !MDExpression())
+  call void @llvm.dbg.declare(metadata %"class.__gnu_cxx::hash_map"* %X, metadata !31, metadata !MDExpression()), !dbg !MDLocation(scope: !37)
   %_M_num_elements.i.i.i.i = getelementptr inbounds %"class.__gnu_cxx::hash_map", %"class.__gnu_cxx::hash_map"* %X, i64 0, i32 0, i32 5
   invoke void @_Znwm()
           to label %exit.i unwind label %lpad2.i.i.i.i

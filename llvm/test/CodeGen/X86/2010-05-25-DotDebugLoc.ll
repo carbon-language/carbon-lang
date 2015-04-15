@@ -10,10 +10,10 @@
 
 define hidden %0 @__divsc3(float %a, float %b, float %c, float %d) nounwind readnone {
 entry:
-  tail call void @llvm.dbg.value(metadata float %a, i64 0, metadata !0, metadata !MDExpression())
-  tail call void @llvm.dbg.value(metadata float %b, i64 0, metadata !11, metadata !MDExpression())
-  tail call void @llvm.dbg.value(metadata float %c, i64 0, metadata !12, metadata !MDExpression())
-  tail call void @llvm.dbg.value(metadata float %d, i64 0, metadata !13, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata float %a, i64 0, metadata !0, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
+  tail call void @llvm.dbg.value(metadata float %b, i64 0, metadata !11, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
+  tail call void @llvm.dbg.value(metadata float %c, i64 0, metadata !12, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
+  tail call void @llvm.dbg.value(metadata float %d, i64 0, metadata !13, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
   %0 = tail call float @fabsf(float %c) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %1 = tail call float @fabsf(float %d) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %2 = fcmp olt float %0, %1, !dbg !19            ; <i1> [#uses=1]

@@ -16,7 +16,7 @@ for.body:                                         ; preds = %_ZN8nsTArray9Elemen
   %tmp = bitcast %struct.nsTArrayHeader* %add.ptr.i to %struct.nsTArray*
   %arrayidx = getelementptr inbounds %struct.nsTArray, %struct.nsTArray* %tmp, i32 %i.06
   %add = add nsw i32 %i.06, 1
-  call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !MDExpression()) nounwind
+  call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !MDExpression()) nounwind, !dbg !MDLocation(scope: !MDSubprogram())
   br label %_ZN8nsTArray9ElementAtEi.exit
 
 _ZN8nsTArray9ElementAtEi.exit:                    ; preds = %for.body

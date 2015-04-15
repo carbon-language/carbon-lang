@@ -13,7 +13,7 @@ entry:
 bb:                                               ; preds = %entry
   %tmp = icmp eq i32 undef, 0
   %tmp1 = add i32 0, 11
-  call void @llvm.dbg.value(metadata i32 %tmp1, i64 0, metadata !0, metadata !MDExpression())
+  call void @llvm.dbg.value(metadata i32 %tmp1, i64 0, metadata !0, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
   br i1 undef, label %bb18, label %bb31.preheader
 
 bb31.preheader:                                   ; preds = %bb19, %bb

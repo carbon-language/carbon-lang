@@ -72,7 +72,7 @@ for.body:
 
 for.inc:
   %dec = add i64 %i.0, -1
-  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !MDLocalVariable(tag: DW_TAG_auto_variable, scope: !0), metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !MDLocalVariable(tag: DW_TAG_auto_variable, scope: !0), metadata !MDExpression()), !dbg !MDLocation(scope: !0)
   br label %for.cond
 
 for.end:

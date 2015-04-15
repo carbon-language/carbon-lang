@@ -10,8 +10,8 @@ target triple = "x86_64-apple-darwin10.2"
 define i32 @_ZN3foo3bazEi(%struct.foo* nocapture %this, i32 %x) nounwind readnone optsize noinline ssp align 2 {
 ;CHECK: DEBUG_VALUE: baz:this <- RDI{{$}}
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.foo* %this, i64 0, metadata !15, metadata !MDExpression())
-  tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !16, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata %struct.foo* %this, i64 0, metadata !15, metadata !MDExpression()), !dbg !MDLocation(scope: !8)
+  tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !16, metadata !MDExpression()), !dbg !MDLocation(scope: !8)
   %0 = mul nsw i32 %x, 7, !dbg !29                ; <i32> [#uses=1]
   %1 = add nsw i32 %0, 1, !dbg !29                ; <i32> [#uses=1]
   ret i32 %1, !dbg !29
