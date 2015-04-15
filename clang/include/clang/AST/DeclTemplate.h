@@ -314,7 +314,7 @@ public:
   /// \brief The function template from which this function template
   /// specialization was generated.
   ///
-  /// The two bits are contain the top 4 values of TemplateSpecializationKind.
+  /// The two bits contain the top 4 values of TemplateSpecializationKind.
   llvm::PointerIntPair<FunctionTemplateDecl *, 2> Template;
 
   /// \brief The template arguments used to produce the function template
