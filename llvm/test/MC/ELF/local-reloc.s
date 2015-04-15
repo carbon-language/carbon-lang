@@ -7,7 +7,7 @@
 foo:
 
 // CHECK:      Relocations [
-// CHECK:        Section (2) .rela.text {
+// CHECK:        Section {{.*}} .rela.text {
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32S .text 0x{{[^ ]+}}
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

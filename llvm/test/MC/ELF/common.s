@@ -45,7 +45,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 
 

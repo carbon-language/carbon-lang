@@ -7,7 +7,7 @@ bar = foo + 4
 	.long bar
 
 // ELF:      Relocations [
-// ELF-NEXT:   Section (2) .rela.text {
+// ELF-NEXT:   Section {{.*}} .rela.text {
 // ELF-NEXT:     0x0 R_X86_64_32 foo 0x4
 // ELF-NEXT:   }
 // ELF-NEXT: ]

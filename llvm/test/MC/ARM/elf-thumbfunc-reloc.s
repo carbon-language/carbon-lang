@@ -22,7 +22,7 @@ ptr:
 
 @@ make sure an R_ARM_THM_CALL relocation is generated for the call to g
 @CHECK:      Relocations [
-@CHECK-NEXT:   Section (2) .rel.text {
+@CHECK-NEXT:   Section {{.*}} .rel.text {
 @CHECK-NEXT:     0x4 R_ARM_THM_CALL g 0x0
 @CHECK-NEXT:   }
 

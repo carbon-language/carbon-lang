@@ -131,7 +131,7 @@ bar15:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .data (0x3)
+// CHECK-NEXT:     Section: .data
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: .bss
@@ -140,7 +140,7 @@ bar15:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar10

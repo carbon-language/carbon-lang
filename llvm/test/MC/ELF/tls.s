@@ -19,7 +19,7 @@ foobar:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: TLS
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .zed (0x5)
+// CHECK-NEXT:     Section: .zed
 // CHECK-NEXT:   }
 
 // CHECK:        Symbol {

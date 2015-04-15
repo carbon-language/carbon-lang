@@ -10,7 +10,6 @@
 // Check for the 'ZLIB' file magic at the start of the section only
 // CHECK-NEXT: ZLIB
 // CHECK-NOT: ZLIB
-// CHECK: Contents of
 
 // Don't compress small sections, such as this simple debug_abbrev example
 // CHECK: Contents of section .debug_abbrev:

@@ -13,8 +13,8 @@
 // CHECK-NEXT:   }
 
 // CHECK:        Section {
-// CHECK:          Index: 2
-// CHECK-NEXT:     Name: .rela.text
+// CHECK:          Index:
+// CHECK:          Name: .rela.text
 // CHECK-NEXT:     Type: SHT_RELA
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]

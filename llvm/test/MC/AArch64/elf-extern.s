@@ -27,7 +27,7 @@ check_extern:                           // @check_extern
 
 
 // CHECK: Relocations [
-// CHECK:   Section (2) .rela.text {
+// CHECK:   Section {{.*}} .rela.text {
 // CHECK:     0x{{[0-9,A-F]+}} R_AARCH64_CALL26 memcpy
 // CHECK:   }
 // CHECK: ]

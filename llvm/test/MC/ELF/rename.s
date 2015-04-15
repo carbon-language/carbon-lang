@@ -15,28 +15,9 @@ defined3:
 
         .global defined1
 
-// Section 1 is .text
 // CHECK:        Section {
-// CHECK:          Index: 1
-// CHECK-NEXT:     Name: .text
-// CHECK-NEXT:     Type: SHT_PROGBITS
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:       SHF_ALLOC
-// CHECK-NEXT:       SHF_EXECINSTR
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x40
-// CHECK-NEXT:     Size: 4
-// CHECK-NEXT:     Link: 0
-// CHECK-NEXT:     Info: 0
-// CHECK-NEXT:     AddressAlignment: 4
-// CHECK-NEXT:     EntrySize: 0
-// CHECK-NEXT:     Relocations [
-// CHECK-NEXT:     ]
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Section {
-// CHECK-NEXT:     Index: 2
-// CHECK-NEXT:     Name: .rela.text (1)
+// CHECK:          Index:
+// CHECK:          Name: .rela.text
 // CHECK-NEXT:     Type: SHT_RELA (0x4)
 // CHECK-NEXT:     Flags [ (0x0)
 // CHECK-NEXT:     ]
@@ -50,16 +31,4 @@ defined3:
 // CHECK-NEXT:     Relocations [
 // CHECK-NEXT:       0x0 R_X86_64_32 .text 0x0
 // CHECK-NEXT:     ]
-// CHECK-NEXT:   }
-
-
-// Symbol 2 is section 1
-// CHECK:        Symbol {
-// CHECK:          Name: .text (0)
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Local
-// CHECK-NEXT:     Type: Section
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }

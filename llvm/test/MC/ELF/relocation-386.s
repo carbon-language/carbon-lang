@@ -4,7 +4,7 @@
 // correctly point to the section or the symbol.
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section (2) .rel.text {
+// CHECK-NEXT:   Section {{.*}} .rel.text {
 // CHECK-NEXT:     0x2          R_386_GOTOFF     .Lfoo 0x0
 // CHECK-NEXT:     0x{{[^ ]+}}  R_386_PLT32      bar2 0x0
 // CHECK-NEXT:     0x{{[^ ]+}}  R_386_GOTPC      _GLOBAL_OFFSET_TABLE_ 0x0
@@ -79,7 +79,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: TLS
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: zedsec (0x5)
+// CHECK-NEXT:     Section: zedsec
 // CHECK-NEXT:   }
 // Symbol 7 is section 4
 // CHECK:        Symbol {
@@ -89,7 +89,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 
         .text

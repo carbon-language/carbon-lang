@@ -42,7 +42,7 @@ declare i32 @write(...)
 declare void @exit(i32) noreturn nounwind
 
 ;; OBJ:      Relocations [
-;; OBJ:        Section (2) .rel.text {
+;; OBJ:        Section {{.*}} .rel.text {
 ;; OBJ-NEXT:     0x{{[0-9,A-F]+}} R_ARM_MOVW_ABS_NC .L.str
 ;; OBJ:        }
 ;; OBJ:      ]

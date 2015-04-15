@@ -99,7 +99,7 @@ entry:
 ; v9abs-obj: ]
 
 ; pic-obj: Relocations [
-; pic-obj:  Section (2) .rela.text {
+; pic-obj:  Section {{.*}} .rela.text {
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC22 _GLOBAL_OFFSET_TABLE_ 0x4
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
 ; pic-obj:    0x{{[0-9,A-F]+}} R_SPARC_TLS_LDO_HIX22 local_symbol 0x0

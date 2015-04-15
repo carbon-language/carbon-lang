@@ -22,12 +22,12 @@ entry:
 ; accessing external variable ei.
 ;
 ; MEDIUM:      Relocations [
-; MEDIUM:        Section (2) .rela.text {
+; MEDIUM:        Section {{.*}} .rela.text {
 ; MEDIUM-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM1:[^ ]+]]
 ; MEDIUM-NEXT:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO_DS [[SYM1]]
 ;
 ; LARGE:       Relocations [
-; LARGE:         Section (2) .rela.text {
+; LARGE:         Section {{.*}} .rela.text {
 ; LARGE-NEXT:      0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM1:[^ ]+]]
 ; LARGE-NEXT:      0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO_DS [[SYM1]]
 

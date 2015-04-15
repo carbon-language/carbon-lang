@@ -23,7 +23,7 @@ defined3:
 global1:
 
 @ CHECK: Relocations [
-@ CHECK-NEXT:   Section (2) .rel.text {
+@ CHECK-NEXT:   Section {{.*}} .rel.text {
 @ CHECK-NEXT:     0x0 R_ARM_ABS32 .text 0x0
 @ CHECK-NEXT:     0x4 R_ARM_ABS32 bar2@zed 0x0
 @ CHECK-NEXT:     0x8 R_ARM_ABS32 .text 0x0
@@ -93,7 +93,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: Section (0x3)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .data (0x3)
+@ CHECK-NEXT:     Section: .data
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: .bss (0)
@@ -102,7 +102,7 @@ global1:
 @ CHECK-NEXT:     Binding: Local (0x0)
 @ CHECK-NEXT:     Type: Section (0x3)
 @ CHECK-NEXT:     Other: 0
-@ CHECK-NEXT:     Section: .bss (0x4)
+@ CHECK-NEXT:     Section: .bss
 @ CHECK-NEXT:   }
 @ CHECK-NEXT:   Symbol {
 @ CHECK-NEXT:     Name: g1@@zed

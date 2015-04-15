@@ -35,9 +35,9 @@ barf:                                   @ @barf
 @ OBJ-NEXT:       0000: F00F0FE3 F40F4FE3
 @ OBJ-NEXT:     )
 @ OBJ-NEXT:   }
-@ OBJ-NEXT:   Section {
-@ OBJ-NEXT:     Index: 2
-@ OBJ-NEXT:     Name: .rel.text (1)
+@ OBJ:        Section {
+@ OBJ:          Index:
+@ OBJ:          Name: .rel.text
 @ OBJ-NEXT:     Type: SHT_REL (0x9)
 @ OBJ-NEXT:     Flags [ (0x0)
 @ OBJ-NEXT:     ]

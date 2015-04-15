@@ -6,7 +6,7 @@ mov .rodata, %rsi
 .section .rodata
 
 // CHECK:Relocations [
-// CHECK:  Section (2) .rela.text {
+// CHECK:  Section {{.*}} .rela.text {
 // CHECK:    Relocation {
 // CHECK:      Offset: 0x4
 // CHECK:      Type: R_X86_64_32S (11)

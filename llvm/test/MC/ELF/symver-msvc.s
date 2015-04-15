@@ -11,7 +11,7 @@
 
 
 // CHECK:       Relocations [
-// CHECK-NEXT:    Section (2) .rela.text {
+// CHECK-NEXT:    Section {{.*}} .rela.text {
 // CHECK-NEXT:      0x0 R_X86_64_32 ??_R0?AVexception@std@@@8 0x0
 // CHECK-NEXT:      0x4 R_X86_64_32 @??_R0?AVinvalid_argument@std@@@8 0x0
 // CHECK-NEXT:      0x8 R_X86_64_32 __imp_??_R0?AVlogic_error@std@@@8 0x0

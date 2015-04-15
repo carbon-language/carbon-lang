@@ -21,7 +21,7 @@ zed:
 foo:
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section (2) .rela.text {
+// CHECK-NEXT:   Section {{.*}} .rela.text {
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_PC32    .Lfoo 0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32      .sec1 0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32      .Lfoo 0x{{[^ ]+}}

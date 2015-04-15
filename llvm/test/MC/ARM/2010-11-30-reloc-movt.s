@@ -34,6 +34,7 @@ barf:                                   @ @barf
 // CHECK-NEXT:       0000: 00482DE9 000000E3 000040E3 FEFFFFEB
 // CHECK-NEXT:       0010: 0088BDE8
 // CHECK-NEXT:     )
+// CHECK:          Name: .rel.text
 // CHECK:          Relocations [
 // CHECK-NEXT:       0x4 R_ARM_MOVW_ABS_NC a
 // CHECK-NEXT:       0x8 R_ARM_MOVT_ABS

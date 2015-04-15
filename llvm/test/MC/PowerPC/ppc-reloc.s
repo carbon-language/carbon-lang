@@ -12,7 +12,7 @@ foo:
 	.size foo, . - foo
 
 # CHECK:      Relocations [
-# CHECK-NEXT:   Section (2) .rela.text {
+# CHECK-NEXT:   Section {{.*}} .rela.text {
 # CHECK-NEXT:     0x0 R_PPC_PLTREL24 printf 0x0
 # CHECK-NEXT:     0x4 R_PPC_LOCAL24PC _GLOBAL_OFFSET_TABLE_ 0xFFFFFFFC
 # CHECK-NEXT:   }

@@ -15,11 +15,6 @@
 ; ASM-NEXT:     .type   _MergedGlobals,%object  @ @_MergedGlobals
 
 
-; OBJ:      Sections [
-; OBJ:        Section {
-; OBJ:          Index: 4
-; OBJ-NEXT:     Name: .bss
-
 ; OBJ:      Symbols [
 ; OBJ:        Symbol {
 ; OBJ:          Name: array00
