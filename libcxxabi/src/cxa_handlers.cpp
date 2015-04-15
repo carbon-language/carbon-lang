@@ -102,7 +102,7 @@ terminate() _NOEXCEPT
     __terminate(get_terminate());
 }
 
-new_handler __cxa_new_handler = 0;
+extern "C" new_handler __cxa_new_handler = 0;
 // In the future these will become:
 // std::atomic<std::new_handler>  __cxa_new_handler(0);
 
