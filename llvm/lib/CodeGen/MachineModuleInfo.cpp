@@ -570,10 +570,13 @@ const Function *MachineModuleInfo::getPersonality() const {
 }
 
 EHPersonality MachineModuleInfo::getPersonalityType() {
-  if (PersonalityTypeCache == EHPersonality::Unknown)
-    PersonalityTypeCache = classifyEHPersonality(getPersonality());
+  if (PersonalityTypeCache == EHPersonality::Unknown) {
+    if (const Function *F = getPersonality())
+      PersonalityTypeCache = classifyEHPersonality(F);
+  }
   return PersonalityTypeCache;
 }
+
 /// getPersonalityIndex - Return unique index for current personality
 /// function. NULL/first personality function should always get zero index.
 unsigned MachineModuleInfo::getPersonalityIndex() const {

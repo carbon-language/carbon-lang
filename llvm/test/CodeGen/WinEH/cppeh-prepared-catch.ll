@@ -50,6 +50,8 @@ lpad1:                                            ; preds = %entry
 }
 
 ; CHECK-LABEL: "?f@@YAXXZ.catch":
+; No code should be generated for the indirectbr.
+; CHECK-NOT: jmpq *
 ; CHECK:        .seh_handlerdata
 ; CHECK:        .long   ("$cppxdata$?f@@YAXXZ")@IMGREL
 
@@ -72,6 +74,8 @@ lpad:                                             ; preds = %entry
 }
 
 ; CHECK-LABEL: "?f@@YAXXZ.catch1":
+; No code should be generated for the indirectbr.
+; CHECK-NOT: jmpq *
 ; CHECK: ".L?f@@YAXXZ.catch1$parent_frame_offset" = 16
 ; CHECK:         movq    %rdx, 16(%rsp)
 ; CHECK:        .seh_handlerdata
@@ -112,6 +116,8 @@ try.cont8:                                        ; preds = %lpad2, %try.cont
 }
 
 ; CHECK-LABEL: "?f@@YAXXZ":
+; No code should be generated for the indirectbr.
+; CHECK-NOT: jmpq *
 ; CHECK:             .seh_handlerdata
 ; CHECK-NEXT:        .long   ("$cppxdata$?f@@YAXXZ")@IMGREL
 ; CHECK-NEXT:"$cppxdata$?f@@YAXXZ":
