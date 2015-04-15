@@ -98,4 +98,4 @@ define void @simple_enough(i32 %b, i32 %s) {
   ret void
 }
 
-declare void @foo(i32 %a)
+declare void @foo(i32)
