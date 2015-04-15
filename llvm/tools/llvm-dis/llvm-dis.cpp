@@ -25,7 +25,6 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/UseListOrder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/FileSystem.h"
@@ -54,6 +53,11 @@ DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
 static cl::opt<bool>
 ShowAnnotations("show-annotations",
                 cl::desc("Add informational comments to the .ll file"));
+
+static cl::opt<bool> PreserveAssemblyUseListOrder(
+    "preserve-ll-uselistorder",
+    cl::desc("Preserve use-list order when writing LLVM assembly."),
+    cl::init(false), cl::Hidden);
 
 namespace {
 
@@ -190,7 +194,7 @@ int main(int argc, char **argv) {
 
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
-    M->print(Out->os(), Annotator.get(), shouldPreserveAssemblyUseListOrder());
+    M->print(Out->os(), Annotator.get(), PreserveAssemblyUseListOrder);
 
   // Declare success.
   Out->keep();

@@ -15,7 +15,6 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/UseListOrder.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 

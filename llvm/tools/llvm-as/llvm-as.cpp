@@ -19,7 +19,6 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -52,6 +51,11 @@ static cl::opt<bool>
 DisableVerify("disable-verify", cl::Hidden,
               cl::desc("Do not run verifier on input LLVM (dangerous!)"));
 
+static cl::opt<bool> PreserveBitcodeUseListOrder(
+    "preserve-bc-uselistorder",
+    cl::desc("Preserve use-list order when writing LLVM bitcode."),
+    cl::init(true), cl::Hidden);
+
 static void WriteOutputFile(const Module *M) {
   // Infer the output filename if needed.
   if (OutputFilename.empty()) {
@@ -79,7 +83,7 @@ static void WriteOutputFile(const Module *M) {
   }
 
   if (Force || !CheckBitcodeOutputToConsole(Out->os(), true))
-    WriteBitcodeToFile(M, Out->os(), shouldPreserveBitcodeUseListOrder());
+    WriteBitcodeToFile(M, Out->os(), PreserveBitcodeUseListOrder);
 
   // Declare success.
   Out->keep();
@@ -91,11 +95,6 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  // Turn on -preserve-bc-uselistorder by default, but let the command-line
-  // override it.
-  setPreserveBitcodeUseListOrder(true);
-
   cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
 
   // Parse the file now...

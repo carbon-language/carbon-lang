@@ -20,7 +20,6 @@
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
@@ -59,6 +58,16 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 static cl::opt<bool>
 SuppressWarnings("suppress-warnings", cl::desc("Suppress all linking warnings"),
                  cl::init(false));
+
+static cl::opt<bool> PreserveBitcodeUseListOrder(
+    "preserve-bc-uselistorder",
+    cl::desc("Preserve use-list order when writing LLVM bitcode."),
+    cl::init(true), cl::Hidden);
+
+static cl::opt<bool> PreserveAssemblyUseListOrder(
+    "preserve-ll-uselistorder",
+    cl::desc("Preserve use-list order when writing LLVM assembly."),
+    cl::init(false), cl::Hidden);
 
 // Read the specified bitcode file in and return it. This routine searches the
 // link path for the specified file to try to find it...
@@ -105,11 +114,6 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-  // Turn on -preserve-bc-uselistorder by default, but let the command-line
-  // override it.
-  setPreserveBitcodeUseListOrder(true);
-
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   auto Composite = make_unique<Module>("llvm-link", Context);
@@ -150,10 +154,9 @@ int main(int argc, char **argv) {
 
   if (Verbose) errs() << "Writing bitcode...\n";
   if (OutputAssembly) {
-    Composite->print(Out.os(), nullptr, shouldPreserveAssemblyUseListOrder());
+    Composite->print(Out.os(), nullptr, PreserveAssemblyUseListOrder);
   } else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
-    WriteBitcodeToFile(Composite.get(), Out.os(),
-                       shouldPreserveBitcodeUseListOrder());
+    WriteBitcodeToFile(Composite.get(), Out.os(), PreserveBitcodeUseListOrder);
 
   // Declare success.
   Out.keep();
