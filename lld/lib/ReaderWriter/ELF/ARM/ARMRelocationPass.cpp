@@ -332,14 +332,14 @@ template <class Derived> class ARMRelocationPass : public Pass {
     case R_ARM_MOVT_ABS:
     case R_ARM_THM_MOVW_ABS_NC:
     case R_ARM_THM_MOVT_ABS:
-      static_cast<Derived *>(this)->handlePlain(atom, ref);
+      static_cast<Derived *>(this)->handlePlain(isThumbCode(&atom), ref);
       break;
     case R_ARM_THM_CALL:
     case R_ARM_CALL:
     case R_ARM_JUMP24:
     case R_ARM_THM_JUMP24:
     case R_ARM_THM_JUMP11:
-      static_cast<Derived *>(this)->handlePlain(atom, ref);
+      static_cast<Derived *>(this)->handlePlain(isThumbCode(&atom), ref);
       static_cast<Derived *>(this)->handleVeneer(atom, ref);
       break;
     case R_ARM_TLS_IE32:
@@ -524,11 +524,11 @@ protected:
   ///
   /// This create a PLT and GOT entry for the IFUNC if one does not exist. The
   /// GOT entry and a IRELATIVE relocation to the original target resolver.
-  std::error_code handleIFUNC(const DefinedAtom &atom, const Reference &ref) {
+  std::error_code handleIFUNC(bool fromThumb, const Reference &ref) {
     auto target = dyn_cast<const DefinedAtom>(ref.target());
     if (target && target->contentType() == DefinedAtom::typeResolver) {
       const_cast<Reference &>(ref)
-          .setTarget(getIFUNCPLTEntry(target, isThumbCode(atom.codeModel())));
+          .setTarget(getIFUNCPLTEntry(target, fromThumb));
     }
     return std::error_code();
   }
@@ -727,8 +727,8 @@ public:
       : ARMRelocationPass(ctx) {}
 
   /// \brief Handle ordinary relocation references.
-  std::error_code handlePlain(const DefinedAtom &atom, const Reference &ref) {
-    return handleIFUNC(atom, ref);
+  std::error_code handlePlain(bool fromThumb, const Reference &ref) {
+    return handleIFUNC(fromThumb, ref);
   }
 
   /// \brief Get the veneer for ARM B/BL instructions.
@@ -813,17 +813,16 @@ public:
   }
 
   /// \brief Handle ordinary relocation references.
-  std::error_code handlePlain(const DefinedAtom &atom, const Reference &ref) {
+  std::error_code handlePlain(bool fromThumb, const Reference &ref) {
     if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
       if (sla->type() == SharedLibraryAtom::Type::Data) {
         llvm_unreachable("Handle object entries");
       } else if (sla->type() == SharedLibraryAtom::Type::Code) {
-        const_cast<Reference &>(ref)
-            .setTarget(getPLTEntry(sla, isThumbCode(atom.codeModel())));
+        const_cast<Reference &>(ref).setTarget(getPLTEntry(sla, fromThumb));
       }
       return std::error_code();
     }
-    return handleIFUNC(atom, ref);
+    return handleIFUNC(fromThumb, ref);
   }
 
   /// \brief Get the veneer for ARM B/BL instructions.
