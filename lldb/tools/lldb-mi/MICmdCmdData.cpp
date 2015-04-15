@@ -410,6 +410,10 @@ CMICmdCmdDataDisassemble::Execute(void)
         lldb::SBInstruction instrt = instructions.GetInstructionAtIndex(i);
         const MIchar *pStrMnemonic = instrt.GetMnemonic(sbTarget);
         pStrMnemonic = (pStrMnemonic != nullptr) ? pStrMnemonic : pUnknown;
+        const MIchar *pStrComment = instrt.GetComment(sbTarget);
+        CMIUtilString strComment;
+        if (pStrComment != nullptr && *pStrComment != '\0')
+            strComment = CMIUtilString::Format("; %s", pStrComment);
         lldb::SBAddress address = instrt.GetAddress();
         lldb::addr_t addr = address.GetLoadAddress(sbTarget);
         const MIchar *pFnName = address.GetFunction().GetName();
@@ -432,7 +436,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         const CMICmnMIValueConst miValueConst4(CMIUtilString::Format("%d", instrtSize));
         const CMICmnMIValueResult miValueResult4("size", miValueConst4);
         miValueTuple.Add(miValueResult4);
-        const CMICmnMIValueConst miValueConst5(CMIUtilString::Format("%s %s", pStrMnemonic, pStrOperands));
+        const CMICmnMIValueConst miValueConst5(CMIUtilString::Format("%s %s%s", pStrMnemonic, pStrOperands, strComment.c_str()));
         const CMICmnMIValueResult miValueResult5("inst", miValueConst5);
         miValueTuple.Add(miValueResult5);
 
