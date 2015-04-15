@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
 
   if (Verbose) errs() << "Writing bitcode...\n";
   if (OutputAssembly) {
-    Out.os() << *Composite;
+    Composite->print(Out.os(), nullptr, shouldPreserveAssemblyUseListOrder());
   } else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
     WriteBitcodeToFile(Composite.get(), Out.os(),
                        shouldPreserveBitcodeUseListOrder());

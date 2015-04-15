@@ -144,7 +144,7 @@ bool TempFile::writeAssembly(const Module &M) const {
     return true;
   }
 
-  OS << M;
+  M.print(OS, nullptr, /* ShouldPreserveUseListOrder */ true);
   return false;
 }
 
@@ -540,14 +540,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  outs() << "*** verify-uselistorder ***\n";
-  // Can't verify if order isn't preserved.
-  if (!shouldPreserveAssemblyUseListOrder()) {
-    errs() << "warning: forcing -preserve-ll-uselistorder\n";
-    setPreserveAssemblyUseListOrder(true);
-  }
-
   // Verify the use lists now and after reversing them.
+  outs() << "*** verify-uselistorder ***\n";
   verifyUseListOrder(*M);
   outs() << "reverse\n";
   reverseUseLists(*M);

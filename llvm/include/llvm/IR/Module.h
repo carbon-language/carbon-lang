@@ -642,8 +642,11 @@ public:
 /// @{
 
   /// Print the module to an output stream with an optional
-  /// AssemblyAnnotationWriter.
-  void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const;
+  /// AssemblyAnnotationWriter.  If \c ShouldPreserveUseListOrder, then include
+  /// uselistorder directives so that use-lists can be recreated when reading
+  /// the assembly.
+  void print(raw_ostream &OS, AssemblyAnnotationWriter *AAW,
+             bool ShouldPreserveUseListOrder = false) const;
 
   /// Dump the module to stderr (for debugging).
   void dump() const;

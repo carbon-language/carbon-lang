@@ -25,6 +25,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/FileSystem.h"
@@ -189,7 +190,7 @@ int main(int argc, char **argv) {
 
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint)
-    M->print(Out->os(), Annotator.get());
+    M->print(Out->os(), Annotator.get(), shouldPreserveAssemblyUseListOrder());
 
   // Declare success.
   Out->keep();
