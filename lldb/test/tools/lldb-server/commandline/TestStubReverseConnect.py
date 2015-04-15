@@ -75,6 +75,7 @@ class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.reverse_connect_works()
 
     @llgs_test
+    @skipIfRemote # reverse connect is not a supported use case for now
     def test_reverse_connect_works_llgs(self):
         self.init_llgs_test(use_named_pipe=False)
         self.set_inferior_startup_launch()
