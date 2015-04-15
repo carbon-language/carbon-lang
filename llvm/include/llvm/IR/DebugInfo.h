@@ -275,8 +275,6 @@ public:
   bool isStaticMember() const { return get()->isStaticMember(); }
   bool isLValueReference() const { return get()->isLValueReference(); }
   bool isRValueReference() const { return get()->isRValueReference(); }
-
-  bool isValid() const { return DbgNode && isa<MDType>(*this); }
 };
 
 /// \brief A basic type, like 'int' or 'float'.
@@ -312,19 +310,6 @@ public:
   MDDerivedTypeBase &operator*() const { return *get(); }
 
   DITypeRef getTypeDerivedFrom() const { return get()->getBaseType(); }
-
-  /// \brief Return property node, if this ivar is associated with one.
-  MDObjCProperty *getObjCProperty() const {
-    return cast<MDDerivedType>(get())->getObjCProperty();
-  }
-
-  DITypeRef getClassType() const {
-    return cast<MDDerivedType>(get())->getClassType();
-  }
-
-  Constant *getConstant() const {
-    return cast<MDDerivedType>(get())->getConstant();
-  }
 };
 
 /// \brief Types that refer to multiple other types.

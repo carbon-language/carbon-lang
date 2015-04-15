@@ -817,7 +817,7 @@ static PrototypeAST *ParseExtern() {
 static DIBuilder *DBuilder;
 
 DIType DebugInfo::getDoubleTy() {
-  if (DblTy.isValid())
+  if (DblTy)
     return DblTy;
 
   DblTy = DBuilder->createBasicType("double", 64, 64, dwarf::DW_ATE_float);

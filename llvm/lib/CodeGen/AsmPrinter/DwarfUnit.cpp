@@ -655,7 +655,7 @@ static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
 
   DIType BaseType = DD->resolve(Ty.getTypeDerivedFrom());
 
-  assert(BaseType.isValid() && "Unexpected invalid base type");
+  assert(BaseType && "Unexpected invalid base type");
 
   // If this is a derived type, go ahead and get the base type, unless it's a
   // reference then it's just the size of the field. Pointer types have no need
@@ -971,8 +971,9 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
     addUInt(Buffer, dwarf::DW_AT_byte_size, None, Size);
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
-    addDIEEntry(Buffer, dwarf::DW_AT_containing_type,
-                *getOrCreateTypeDIE(resolve(DTy.getClassType())));
+    addDIEEntry(
+        Buffer, dwarf::DW_AT_containing_type,
+        *getOrCreateTypeDIE(resolve(cast<MDDerivedType>(DTy)->getClassType())));
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
     addSourceLine(Buffer, DTy);
@@ -1454,17 +1455,20 @@ void DwarfUnit::constructContainingTypeDIEs() {
 }
 
 /// constructMemberDIE - Construct member DIE from DIDerivedType.
-void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
-  DIE &MemberDie = createAndAddDIE(DT.getTag(), Buffer);
-  StringRef Name = DT.getName();
+void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT_) {
+  // Downcast to MDDerivedType.
+  const MDDerivedType *DT = cast<MDDerivedType>(DT_);
+
+  DIE &MemberDie = createAndAddDIE(DT->getTag(), Buffer);
+  StringRef Name = DT->getName();
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
 
-  addType(MemberDie, resolve(DT.getTypeDerivedFrom()));
+  addType(MemberDie, resolve(DT->getBaseType()));
 
   addSourceLine(MemberDie, DT);
 
-  if (DT.getTag() == dwarf::DW_TAG_inheritance && DT.isVirtual()) {
+  if (DT->getTag() == dwarf::DW_TAG_inheritance && DT->isVirtual()) {
 
     // For C++, virtual base classes are not at fixed offset. Use following
     // expression to extract appropriate offset from vtable.
@@ -1474,14 +1478,14 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    addUInt(*VBaseLocationDie, dwarf::DW_FORM_udata, DT.getOffsetInBits());
+    addUInt(*VBaseLocationDie, dwarf::DW_FORM_udata, DT->getOffsetInBits());
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_minus);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
 
     addBlock(MemberDie, dwarf::DW_AT_data_member_location, VBaseLocationDie);
   } else {
-    uint64_t Size = DT.getSizeInBits();
+    uint64_t Size = DT->getSizeInBits();
     uint64_t FieldSize = getBaseTypeSize(DD, DT);
     uint64_t OffsetInBytes;
 
@@ -1490,8 +1494,8 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
       addUInt(MemberDie, dwarf::DW_AT_byte_size, None, FieldSize/8);
       addUInt(MemberDie, dwarf::DW_AT_bit_size, None, Size);
 
-      uint64_t Offset = DT.getOffsetInBits();
-      uint64_t AlignMask = ~(DT.getAlignInBits() - 1);
+      uint64_t Offset = DT->getOffsetInBits();
+      uint64_t AlignMask = ~(DT->getAlignInBits() - 1);
       uint64_t HiMark = (Offset + FieldSize) & AlignMask;
       uint64_t FieldOffset = (HiMark - FieldSize);
       Offset -= FieldOffset;
@@ -1506,7 +1510,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
       OffsetInBytes = FieldOffset >> 3;
     } else
       // This is not a bitfield.
-      OffsetInBytes = DT.getOffsetInBits() >> 3;
+      OffsetInBytes = DT->getOffsetInBits() >> 3;
 
     if (DD->getDwarfVersion() <= 2) {
       DIELoc *MemLocationDie = new (DIEValueAllocator) DIELoc();
@@ -1518,49 +1522,50 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
               OffsetInBytes);
   }
 
-  if (DT.isProtected())
+  if (DT->isProtected())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_protected);
-  else if (DT.isPrivate())
+  else if (DT->isPrivate())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_private);
   // Otherwise C++ member and base classes are considered public.
-  else if (DT.isPublic())
+  else if (DT->isPublic())
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
-  if (DT.isVirtual())
+  if (DT->isVirtual())
     addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_data1,
             dwarf::DW_VIRTUALITY_virtual);
 
   // Objective-C properties.
-  if (MDNode *PNode = DT.getObjCProperty())
+  if (MDNode *PNode = DT->getObjCProperty())
     if (DIEEntry *PropertyDie = getDIEEntry(PNode))
       MemberDie.addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4,
                          PropertyDie);
 
-  if (DT.isArtificial())
+  if (DT->isArtificial())
     addFlag(MemberDie, dwarf::DW_AT_artificial);
 }
 
 /// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
-DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
+DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT_) {
+  const MDDerivedType *DT = cast_or_null<MDDerivedType>(DT_);
   if (!DT)
     return nullptr;
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
-  DIE *ContextDIE = getOrCreateContextDIE(resolve(DT.getContext()));
+  DIE *ContextDIE = getOrCreateContextDIE(resolve(DT->getScope()));
   assert(dwarf::isType(ContextDIE->getTag()) &&
          "Static member should belong to a type.");
 
   if (DIE *StaticMemberDIE = getDIE(DT))
     return StaticMemberDIE;
 
-  DIE &StaticMemberDIE = createAndAddDIE(DT.getTag(), *ContextDIE, DT);
+  DIE &StaticMemberDIE = createAndAddDIE(DT->getTag(), *ContextDIE, DT);
 
-  DIType Ty = resolve(DT.getTypeDerivedFrom());
+  DIType Ty = resolve(DT->getBaseType());
 
-  addString(StaticMemberDIE, dwarf::DW_AT_name, DT.getName());
+  addString(StaticMemberDIE, dwarf::DW_AT_name, DT->getName());
   addType(StaticMemberDIE, Ty);
   addSourceLine(StaticMemberDIE, DT);
   addFlag(StaticMemberDIE, dwarf::DW_AT_external);
@@ -1568,19 +1573,19 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
 
   // FIXME: We could omit private if the parent is a class_type, and
   // public if the parent is something else.
-  if (DT.isProtected())
+  if (DT->isProtected())
     addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_protected);
-  else if (DT.isPrivate())
+  else if (DT->isPrivate())
     addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_private);
-  else if (DT.isPublic())
+  else if (DT->isPublic())
     addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
 
-  if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT.getConstant()))
+  if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT->getConstant()))
     addConstantValue(StaticMemberDIE, CI, Ty);
-  if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
+  if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT->getConstant()))
     addConstantFPValue(StaticMemberDIE, CFP);
 
   return &StaticMemberDIE;
