@@ -13,6 +13,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/FileUtilities.h"
 
 #include <assert.h>
 
@@ -116,6 +117,44 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
     m_loaded_modules.insert (std::make_pair (module_spec.GetUUID ().GetAsString (), cached_module_sp));
 
     return Error ();
+}
+
+Error
+ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
+                        const char *hostname,
+                        const ModuleSpec &module_spec,
+                        const Downloader &downloader,
+                        lldb::ModuleSP &cached_module_sp,
+                        bool *did_create_ptr)
+{
+    // Check local cache for a module.
+    auto error = Get (root_dir_spec,
+                      hostname,
+                      module_spec,
+                      cached_module_sp,
+                      did_create_ptr);
+    if (error.Success ())
+        return error;
+
+    FileSpec tmp_download_file_spec;
+    error = downloader (module_spec, tmp_download_file_spec);
+    llvm::FileRemover tmp_file_remover (tmp_download_file_spec.GetPath ().c_str ());
+    if (error.Fail ())
+        return Error("Failed to download module: %s", error.AsCString ());
+
+    // Put downloaded file into local module cache.
+    error = Put (root_dir_spec,
+                 hostname,
+                 module_spec,
+                 tmp_download_file_spec);
+    if (error.Fail ())
+        return Error ("Failed to put module into cache: %s", error.AsCString ());
+
+    return Get (root_dir_spec,
+                hostname,
+                module_spec,
+                cached_module_sp,
+                did_create_ptr);
 }
 
 FileSpec

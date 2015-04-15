@@ -37,7 +37,6 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/Utils.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/FileUtilities.h"
 
 #include "Utility/ModuleCache.h"
 
@@ -1837,67 +1836,35 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
     Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
 
     // Check local cache for a module.
-    auto error = m_module_cache->Get (GetModuleCacheRoot (),
-                                      GetCacheHostname (),
-                                      module_spec,
-                                      module_sp,
-                                      did_create_ptr);
+    auto error = m_module_cache->GetAndPut (
+        GetModuleCacheRoot (),
+        GetCacheHostname (),
+        module_spec,
+        [=](const ModuleSpec &module_spec, FileSpec &tmp_download_file_spec)
+        {
+            // Get temporary file name for a downloaded module.
+            llvm::SmallString<PATH_MAX> tmp_download_file_path;
+            const auto err_code = llvm::sys::fs::createTemporaryFile (
+                "lldb", module_spec.GetUUID ().GetAsString ().c_str (), tmp_download_file_path);
+            if (err_code)
+                return Error ("Failed to create temp file: %s", err_code.message ().c_str ());
+
+            tmp_download_file_spec.SetFile (tmp_download_file_path.c_str (), true);
+            return DownloadModuleSlice (module_spec.GetFileSpec (),
+                                        module_spec.GetObjectOffset (),
+                                        module_spec.GetObjectSize (),
+                                        tmp_download_file_spec);
+
+        },
+        module_sp,
+        did_create_ptr);
     if (error.Success ())
         return true;
 
     if (log)
         log->Printf("Platform::%s - module %s not found in local cache: %s",
                     __FUNCTION__, module_spec.GetUUID ().GetAsString ().c_str (), error.AsCString ());
-
-    // Get temporary file name for a downloaded module.
-    llvm::SmallString<PATH_MAX> tmp_download_file_path;
-    const auto err_code = llvm::sys::fs::createTemporaryFile (
-        "lldb", module_spec.GetUUID ().GetAsString ().c_str (), tmp_download_file_path);
-    if (err_code)
-    {
-        if (log)
-            log->Printf ("Platform::%s - failed to create unique file: %s",
-                         __FUNCTION__, err_code.message ().c_str ());
-        return false;
-    }
-
-    llvm::FileRemover tmp_file_remover (tmp_download_file_path.c_str ());
-
-    const FileSpec tmp_download_file_spec (tmp_download_file_path.c_str (), true);
-    // Download a module file.
-    error = DownloadModuleSlice (module_spec.GetFileSpec (),
-                                 module_spec.GetObjectOffset (),
-                                 module_spec.GetObjectSize (),
-                                 tmp_download_file_spec);
-    if (error.Fail ())
-    {
-        if (log)
-            log->Printf("Platform::%s - failed to download %s to %s: %s",
-                        __FUNCTION__, module_spec.GetFileSpec ().GetPath ().c_str (),
-                        tmp_download_file_path.c_str (), error.AsCString ());
-        return false;
-    }
-
-    // Put downloaded file into local module cache.
-    error = m_module_cache->Put (GetModuleCacheRoot (),
-                                 GetCacheHostname (),
-                                 module_spec,
-                                 tmp_download_file_spec);
-    if (error.Fail ())
-    {
-        if (log)
-            log->Printf("Platform::%s - failed to put module %s into cache: %s",
-                        __FUNCTION__, module_spec.GetUUID ().GetAsString ().c_str (),
-                        error.AsCString ());
-        return false;
-    }
-
-    error = m_module_cache->Get (GetModuleCacheRoot (),
-                                 GetCacheHostname (),
-                                 module_spec,
-                                 module_sp,
-                                 did_create_ptr);
-    return error.Success ();
+    return false;
 }
 
 Error
