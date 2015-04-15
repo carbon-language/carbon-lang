@@ -39,7 +39,8 @@ static cl::opt<bool>
 bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                            TargetMachine *TM, tool_output_file *Out,
                            StringRef PassPipeline, OutputKind OK,
-                           VerifierKind VK) {
+                           VerifierKind VK,
+                           bool ShouldPreserveBitcodeUseListOrder) {
   PassBuilder PB(TM);
 
   FunctionAnalysisManager FAM(DebugPM);
@@ -80,7 +81,8 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
     MPM.addPass(PrintModulePass(Out->os()));
     break;
   case OK_OutputBitcode:
-    MPM.addPass(BitcodeWriterPass(Out->os()));
+    MPM.addPass(
+        BitcodeWriterPass(Out->os(), ShouldPreserveBitcodeUseListOrder));
     break;
   }
 

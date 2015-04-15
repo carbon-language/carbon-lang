@@ -431,7 +431,8 @@ int main(int argc, char **argv) {
     // string. Hand off the rest of the functionality to the new code for that
     // layer.
     return runPassPipeline(argv[0], Context, *M, TM.get(), Out.get(),
-                           PassPipeline, OK, VK)
+                           PassPipeline, OK, VK,
+                           shouldPreserveBitcodeUseListOrder())
                ? 0
                : 1;
   }
@@ -594,7 +595,8 @@ int main(int argc, char **argv) {
     if (OutputAssembly)
       Passes.add(createPrintModulePass(Out->os()));
     else
-      Passes.add(createBitcodeWriterPass(Out->os()));
+      Passes.add(createBitcodeWriterPass(Out->os(),
+                                         shouldPreserveBitcodeUseListOrder()));
   }
 
   // Before executing passes, print the final values of the LLVM options.
