@@ -79,7 +79,7 @@ define i32 @slsr3(i32 %b, i32 %s) {
 
   %b1 = add i32 %b, 2
   %mul1 = mul i32 %b1, %s
-; CHECK: [[BUMP:%[a-zA-Z0-9]+]] = mul i32 %s, 2
+; CHECK: [[BUMP:%[a-zA-Z0-9]+]] = shl i32 %s, 1
 ; CHECK: %mul1 = add i32 %mul0, [[BUMP]]
   %v1 = call i32 @foo(i32 %mul1)
 

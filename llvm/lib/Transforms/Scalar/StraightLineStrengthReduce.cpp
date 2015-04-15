@@ -15,42 +15,46 @@
 //
 // There are many optimizations we can perform in the domain of SLSR. This file
 // for now contains only an initial step. Specifically, we look for strength
-// reduction candidates in two forms:
+// reduction candidates in the following forms:
 //
-// Form 1: (B + i) * S
-// Form 2: &B[i * S]
+// Form 1: B + i * S
+// Form 2: (B + i) * S
+// Form 3: &B[i * S]
 //
 // where S is an integer variable, and i is a constant integer. If we found two
-// candidates
+// candidates S1 and S2 in the same form and S1 dominates S2, we may rewrite S2
+// in a simpler way with respect to S1. For example,
+//
+// S1: X = B + i * S
+// S2: Y = B + i' * S   => X + (i' - i) * S
 //
 // S1: X = (B + i) * S
-// S2: Y = (B + i') * S
-//
-// or
+// S2: Y = (B + i') * S => X + (i' - i) * S
 //
 // S1: X = &B[i * S]
-// S2: Y = &B[i' * S]
+// S2: Y = &B[i' * S]   => &X[(i' - i) * S]
 //
-// and S1 dominates S2, we call S1 a basis of S2, and can replace S2 with
+// Note: (i' - i) * S is folded to the extent possible.
 //
-// Y = X + (i' - i) * S
+// This rewriting is in general a good idea. The code patterns we focus on
+// usually come from loop unrolling, so (i' - i) * S is likely the same
+// across iterations and can be reused. When that happens, the optimized form
+// takes only one add starting from the second iteration.
 //
-// or
-//
-// Y = &X[(i' - i) * S]
-//
-// where (i' - i) * S is folded to the extent possible. When S2 has multiple
-// bases, we pick the one that is closest to S2, or S2's "immediate" basis.
+// When such rewriting is possible, we call S1 a "basis" of S2. When S2 has
+// multiple bases, we choose to rewrite S2 with respect to its "immediate"
+// basis, the basis that is the closest ancestor in the dominator tree.
 //
 // TODO:
-//
-// - Handle candidates in the form of B + i * S
 //
 // - Floating point arithmetics when fast math is enabled.
 //
 // - SLSR may decrease ILP at the architecture level. Targets that are very
 //   sensitive to ILP may want to disable it. Having SLSR to consider ILP is
 //   left as future work.
+//
+// - When (i' - i) is constant but i and i' are not, we could still perform
+//   SLSR.
 #include <vector>
 
 #include "llvm/ADT/DenseSet.h"
@@ -72,13 +76,12 @@ namespace {
 
 class StraightLineStrengthReduce : public FunctionPass {
 public:
-  // SLSR candidate. Such a candidate must be in the form of
-  //   (Base + Index) * Stride
-  // or
-  //   Base[..][Index * Stride][..]
+  // SLSR candidate. Such a candidate must be in one of the forms described in
+  // the header comments.
   struct Candidate : public ilist_node<Candidate> {
     enum Kind {
       Invalid, // reserved for the default constructor
+      Add,     // B + i * S
       Mul,     // (B + i) * S
       GEP,     // &B[..][i * S][..]
     };
@@ -92,14 +95,14 @@ public:
           Basis(nullptr) {}
     Kind CandidateKind;
     const SCEV *Base;
-    // Note that Index and Stride of a GEP candidate may not have the same
-    // integer type. In that case, during rewriting, Stride will be
+    // Note that Index and Stride of a GEP candidate do not necessarily have the
+    // same integer type. In that case, during rewriting, Stride will be
     // sign-extended or truncated to Index's type.
     ConstantInt *Index;
     Value *Stride;
     // The instruction this candidate corresponds to. It helps us to rewrite a
     // candidate with respect to its immediate basis. Note that one instruction
-    // can corresponds to multiple candidates depending on how you associate the
+    // can correspond to multiple candidates depending on how you associate the
     // expression. For instance,
     //
     // (a + 1) * (b + 2)
@@ -143,31 +146,43 @@ private:
   // Returns true if Basis is a basis for C, i.e., Basis dominates C and they
   // share the same base and stride.
   bool isBasisFor(const Candidate &Basis, const Candidate &C);
+  // Returns whether the candidate can be folded into an addressing mode.
+  bool isFoldable(const Candidate &C, TargetTransformInfo *TTI,
+                  const DataLayout *DL);
+  // Returns true if C is already in a simplest form and not worth being
+  // rewritten.
+  bool isSimplestForm(const Candidate &C);
   // Checks whether I is in a candidate form. If so, adds all the matching forms
   // to Candidates, and tries to find the immediate basis for each of them.
-  void allocateCandidateAndFindBasis(Instruction *I);
+  void allocateCandidatesAndFindBasis(Instruction *I);
+  // Allocate candidates and find bases for Add instructions.
+  void allocateCandidatesAndFindBasisForAdd(Instruction *I);
+  // Given I = LHS + RHS, factors RHS into i * S and makes (LHS + i * S) a
+  // candidate.
+  void allocateCandidatesAndFindBasisForAdd(Value *LHS, Value *RHS,
+                                            Instruction *I);
   // Allocate candidates and find bases for Mul instructions.
-  void allocateCandidateAndFindBasisForMul(Instruction *I);
+  void allocateCandidatesAndFindBasisForMul(Instruction *I);
   // Splits LHS into Base + Index and, if succeeds, calls
-  // allocateCandidateAndFindBasis.
-  void allocateCandidateAndFindBasisForMul(Value *LHS, Value *RHS,
-                                           Instruction *I);
+  // allocateCandidatesAndFindBasis.
+  void allocateCandidatesAndFindBasisForMul(Value *LHS, Value *RHS,
+                                            Instruction *I);
   // Allocate candidates and find bases for GetElementPtr instructions.
-  void allocateCandidateAndFindBasisForGEP(GetElementPtrInst *GEP);
+  void allocateCandidatesAndFindBasisForGEP(GetElementPtrInst *GEP);
   // A helper function that scales Idx with ElementSize before invoking
-  // allocateCandidateAndFindBasis.
-  void allocateCandidateAndFindBasisForGEP(const SCEV *B, ConstantInt *Idx,
-                                           Value *S, uint64_t ElementSize,
-                                           Instruction *I);
+  // allocateCandidatesAndFindBasis.
+  void allocateCandidatesAndFindBasisForGEP(const SCEV *B, ConstantInt *Idx,
+                                            Value *S, uint64_t ElementSize,
+                                            Instruction *I);
   // Adds the given form <CT, B, Idx, S> to Candidates, and finds its immediate
   // basis.
-  void allocateCandidateAndFindBasis(Candidate::Kind CT, const SCEV *B,
-                                     ConstantInt *Idx, Value *S,
-                                     Instruction *I);
+  void allocateCandidatesAndFindBasis(Candidate::Kind CT, const SCEV *B,
+                                      ConstantInt *Idx, Value *S,
+                                      Instruction *I);
   // Rewrites candidate C with respect to Basis.
   void rewriteCandidateWithBasis(const Candidate &C, const Candidate &Basis);
   // A helper function that factors ArrayIdx to a product of a stride and a
-  // constant index, and invokes allocateCandidateAndFindBasis with the
+  // constant index, and invokes allocateCandidatesAndFindBasis with the
   // factorings.
   void factorArrayIndex(Value *ArrayIdx, const SCEV *Base, uint64_t ElementSize,
                         GetElementPtrInst *GEP);
@@ -187,7 +202,7 @@ private:
   // Temporarily holds all instructions that are unlinked (but not deleted) by
   // rewriteCandidateWithBasis. These instructions will be actually removed
   // after all rewriting finishes.
-  DenseSet<Instruction *> UnlinkedInstructions;
+  std::vector<Instruction *> UnlinkedInstructions;
 };
 }  // anonymous namespace
 
@@ -215,9 +230,9 @@ bool StraightLineStrengthReduce::isBasisFor(const Candidate &Basis,
           Basis.CandidateKind == C.CandidateKind);
 }
 
-static bool isCompletelyFoldable(GetElementPtrInst *GEP,
-                                 const TargetTransformInfo *TTI,
-                                 const DataLayout *DL) {
+static bool isGEPFoldable(GetElementPtrInst *GEP,
+                          const TargetTransformInfo *TTI,
+                          const DataLayout *DL) {
   GlobalVariable *BaseGV = nullptr;
   int64_t BaseOffset = 0;
   bool HasBaseReg = false;
@@ -252,53 +267,143 @@ static bool isCompletelyFoldable(GetElementPtrInst *GEP,
                                     BaseOffset, HasBaseReg, Scale);
 }
 
-// TODO: We currently implement an algorithm whose time complexity is linear to
-// the number of existing candidates. However, a better algorithm exists. We
-// could depth-first search the dominator tree, and maintain a hash table that
-// contains all candidates that dominate the node being traversed.  This hash
-// table is indexed by the base and the stride of a candidate.  Therefore,
-// finding the immediate basis of a candidate boils down to one hash-table look
-// up.
-void StraightLineStrengthReduce::allocateCandidateAndFindBasis(
+// Returns whether (Base + Index * Stride) can be folded to an addressing mode.
+static bool isAddFoldable(const SCEV *Base, ConstantInt *Index, Value *Stride,
+                          TargetTransformInfo *TTI) {
+  return TTI->isLegalAddressingMode(Base->getType(), nullptr, 0, true,
+                                    Index->getSExtValue());
+}
+
+bool StraightLineStrengthReduce::isFoldable(const Candidate &C,
+                                            TargetTransformInfo *TTI,
+                                            const DataLayout *DL) {
+  if (C.CandidateKind == Candidate::Add)
+    return isAddFoldable(C.Base, C.Index, C.Stride, TTI);
+  if (C.CandidateKind == Candidate::GEP)
+    return isGEPFoldable(cast<GetElementPtrInst>(C.Ins), TTI, DL);
+  return false;
+}
+
+// Returns true if GEP has zero or one non-zero index.
+static bool hasOnlyOneNonZeroIndex(GetElementPtrInst *GEP) {
+  unsigned NumNonZeroIndices = 0;
+  for (auto I = GEP->idx_begin(); I != GEP->idx_end(); ++I) {
+    ConstantInt *ConstIdx = dyn_cast<ConstantInt>(*I);
+    if (ConstIdx == nullptr || !ConstIdx->isZero())
+      ++NumNonZeroIndices;
+  }
+  return NumNonZeroIndices <= 1;
+}
+
+bool StraightLineStrengthReduce::isSimplestForm(const Candidate &C) {
+  if (C.CandidateKind == Candidate::Add) {
+    // B + 1 * S or B + (-1) * S
+    return C.Index->isOne() || C.Index->isMinusOne();
+  }
+  if (C.CandidateKind == Candidate::Mul) {
+    // (B + 0) * S
+    return C.Index->isZero();
+  }
+  if (C.CandidateKind == Candidate::GEP) {
+    // (char*)B + S or (char*)B - S
+    return ((C.Index->isOne() || C.Index->isMinusOne()) &&
+            hasOnlyOneNonZeroIndex(cast<GetElementPtrInst>(C.Ins)));
+  }
+  return false;
+}
+
+// TODO: We currently implement an algorithm whose time complexity is linear in
+// the number of existing candidates. However, we could do better by using
+// ScopedHashTable. Specifically, while traversing the dominator tree, we could
+// maintain all the candidates that dominate the basic block being traversed in
+// a ScopedHashTable. This hash table is indexed by the base and the stride of
+// a candidate. Therefore, finding the immediate basis of a candidate boils down
+// to one hash-table look up.
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasis(
     Candidate::Kind CT, const SCEV *B, ConstantInt *Idx, Value *S,
     Instruction *I) {
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
-    // If &B[Idx * S] fits into an addressing mode, do not turn it into
-    // non-free computation.
-    if (isCompletelyFoldable(GEP, TTI, DL))
-      return;
-  }
-
   Candidate C(CT, B, Idx, S, I);
-  // Try to compute the immediate basis of C.
-  unsigned NumIterations = 0;
-  // Limit the scan radius to avoid running forever.
-  static const unsigned MaxNumIterations = 50;
-  for (auto Basis = Candidates.rbegin();
-       Basis != Candidates.rend() && NumIterations < MaxNumIterations;
-       ++Basis, ++NumIterations) {
-    if (isBasisFor(*Basis, C)) {
-      C.Basis = &(*Basis);
-      break;
+  // SLSR can complicate an instruction in two cases:
+  //
+  // 1. If we can fold I into an addressing mode, computing I is likely free or
+  // takes only one instruction.
+  //
+  // 2. I is already in a simplest form. For example, when
+  //      X = B + 8 * S
+  //      Y = B + S,
+  //    rewriting Y to X - 7 * S is probably a bad idea.
+  //
+  // In the above cases, we still add I to the candidate list so that I can be
+  // the basis of other candidates, but we leave I's basis blank so that I
+  // won't be rewritten.
+  if (!isFoldable(C, TTI, DL) && !isSimplestForm(C)) {
+    // Try to compute the immediate basis of C.
+    unsigned NumIterations = 0;
+    // Limit the scan radius to avoid running in quadratice time.
+    static const unsigned MaxNumIterations = 50;
+    for (auto Basis = Candidates.rbegin();
+         Basis != Candidates.rend() && NumIterations < MaxNumIterations;
+         ++Basis, ++NumIterations) {
+      if (isBasisFor(*Basis, C)) {
+        C.Basis = &(*Basis);
+        break;
+      }
     }
   }
   // Regardless of whether we find a basis for C, we need to push C to the
-  // candidate list.
+  // candidate list so that it can be the basis of other candidates.
   Candidates.push_back(C);
 }
 
-void StraightLineStrengthReduce::allocateCandidateAndFindBasis(Instruction *I) {
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasis(
+    Instruction *I) {
   switch (I->getOpcode()) {
+  case Instruction::Add:
+    allocateCandidatesAndFindBasisForAdd(I);
+    break;
   case Instruction::Mul:
-    allocateCandidateAndFindBasisForMul(I);
+    allocateCandidatesAndFindBasisForMul(I);
     break;
   case Instruction::GetElementPtr:
-    allocateCandidateAndFindBasisForGEP(cast<GetElementPtrInst>(I));
+    allocateCandidatesAndFindBasisForGEP(cast<GetElementPtrInst>(I));
     break;
   }
 }
 
-void StraightLineStrengthReduce::allocateCandidateAndFindBasisForMul(
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForAdd(
+    Instruction *I) {
+  // Try matching B + i * S.
+  if (!isa<IntegerType>(I->getType()))
+    return;
+
+  assert(I->getNumOperands() == 2 && "isn't I an add?");
+  Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
+  allocateCandidatesAndFindBasisForAdd(LHS, RHS, I);
+  if (LHS != RHS)
+    allocateCandidatesAndFindBasisForAdd(RHS, LHS, I);
+}
+
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForAdd(
+    Value *LHS, Value *RHS, Instruction *I) {
+  Value *S = nullptr;
+  ConstantInt *Idx = nullptr;
+  if (match(RHS, m_Mul(m_Value(S), m_ConstantInt(Idx)))) {
+    // I = LHS + RHS = LHS + Idx * S
+    allocateCandidatesAndFindBasis(Candidate::Add, SE->getSCEV(LHS), Idx, S, I);
+  } else if (match(RHS, m_Shl(m_Value(S), m_ConstantInt(Idx)))) {
+    // I = LHS + RHS = LHS + (S << Idx) = LHS + S * (1 << Idx)
+    APInt One(Idx->getBitWidth(), 1);
+    Idx = ConstantInt::get(Idx->getContext(), One << Idx->getValue());
+    allocateCandidatesAndFindBasis(Candidate::Add, SE->getSCEV(LHS), Idx, S, I);
+  } else {
+    // At least, I = LHS + 1 * RHS
+    ConstantInt *One = ConstantInt::get(cast<IntegerType>(I->getType()), 1);
+    allocateCandidatesAndFindBasis(Candidate::Add, SE->getSCEV(LHS), One, RHS,
+                                   I);
+  }
+}
+
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForMul(
     Value *LHS, Value *RHS, Instruction *I) {
   Value *B = nullptr;
   ConstantInt *Idx = nullptr;
@@ -306,31 +411,32 @@ void StraightLineStrengthReduce::allocateCandidateAndFindBasisForMul(
   if (match(LHS, m_Add(m_Value(B), m_ConstantInt(Idx)))) {
     // If LHS is in the form of "Base + Index", then I is in the form of
     // "(Base + Index) * RHS".
-    allocateCandidateAndFindBasis(Candidate::Mul, SE->getSCEV(B), Idx, RHS, I);
+    allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(B), Idx, RHS, I);
   } else {
     // Otherwise, at least try the form (LHS + 0) * RHS.
     ConstantInt *Zero = ConstantInt::get(cast<IntegerType>(I->getType()), 0);
-    allocateCandidateAndFindBasis(Candidate::Mul, SE->getSCEV(LHS), Zero, RHS,
+    allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(LHS), Zero, RHS,
                                   I);
   }
 }
 
-void StraightLineStrengthReduce::allocateCandidateAndFindBasisForMul(
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForMul(
     Instruction *I) {
   // Try matching (B + i) * S.
   // TODO: we could extend SLSR to float and vector types.
   if (!isa<IntegerType>(I->getType()))
     return;
 
+  assert(I->getNumOperands() == 2 && "isn't I a mul?");
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
-  allocateCandidateAndFindBasisForMul(LHS, RHS, I);
+  allocateCandidatesAndFindBasisForMul(LHS, RHS, I);
   if (LHS != RHS) {
     // Symmetrically, try to split RHS to Base + Index.
-    allocateCandidateAndFindBasisForMul(RHS, LHS, I);
+    allocateCandidatesAndFindBasisForMul(RHS, LHS, I);
   }
 }
 
-void StraightLineStrengthReduce::allocateCandidateAndFindBasisForGEP(
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForGEP(
     const SCEV *B, ConstantInt *Idx, Value *S, uint64_t ElementSize,
     Instruction *I) {
   // I = B + sext(Idx *nsw S) * ElementSize
@@ -340,15 +446,15 @@ void StraightLineStrengthReduce::allocateCandidateAndFindBasisForGEP(
   IntegerType *IntPtrTy = cast<IntegerType>(DL->getIntPtrType(I->getType()));
   ConstantInt *ScaledIdx = ConstantInt::get(
       IntPtrTy, Idx->getSExtValue() * (int64_t)ElementSize, true);
-  allocateCandidateAndFindBasis(Candidate::GEP, B, ScaledIdx, S, I);
+  allocateCandidatesAndFindBasis(Candidate::GEP, B, ScaledIdx, S, I);
 }
 
 void StraightLineStrengthReduce::factorArrayIndex(Value *ArrayIdx,
                                                   const SCEV *Base,
                                                   uint64_t ElementSize,
                                                   GetElementPtrInst *GEP) {
-  // At least, ArrayIdx = ArrayIdx *s 1.
-  allocateCandidateAndFindBasisForGEP(
+  // At least, ArrayIdx = ArrayIdx *nsw 1.
+  allocateCandidatesAndFindBasisForGEP(
       Base, ConstantInt::get(cast<IntegerType>(ArrayIdx->getType()), 1),
       ArrayIdx, ElementSize, GEP);
   Value *LHS = nullptr;
@@ -367,18 +473,18 @@ void StraightLineStrengthReduce::factorArrayIndex(Value *ArrayIdx,
   if (match(ArrayIdx, m_NSWMul(m_Value(LHS), m_ConstantInt(RHS)))) {
     // SLSR is currently unsafe if i * S may overflow.
     // GEP = Base + sext(LHS *nsw RHS) * ElementSize
-    allocateCandidateAndFindBasisForGEP(Base, RHS, LHS, ElementSize, GEP);
+    allocateCandidatesAndFindBasisForGEP(Base, RHS, LHS, ElementSize, GEP);
   } else if (match(ArrayIdx, m_NSWShl(m_Value(LHS), m_ConstantInt(RHS)))) {
     // GEP = Base + sext(LHS <<nsw RHS) * ElementSize
     //     = Base + sext(LHS *nsw (1 << RHS)) * ElementSize
     APInt One(RHS->getBitWidth(), 1);
     ConstantInt *PowerOf2 =
         ConstantInt::get(RHS->getContext(), One << RHS->getValue());
-    allocateCandidateAndFindBasisForGEP(Base, PowerOf2, LHS, ElementSize, GEP);
+    allocateCandidatesAndFindBasisForGEP(Base, PowerOf2, LHS, ElementSize, GEP);
   }
 }
 
-void StraightLineStrengthReduce::allocateCandidateAndFindBasisForGEP(
+void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForGEP(
     GetElementPtrInst *GEP) {
   // TODO: handle vector GEPs
   if (GEP->getType()->isVectorTy())
@@ -442,6 +548,7 @@ Value *StraightLineStrengthReduce::emitBump(const Candidate &Basis,
     else
       BumpWithUglyGEP = true;
   }
+
   // Compute Bump = C - Basis = (i' - i) * S.
   // Common case 1: if (i' - i) is 1, Bump = S.
   if (IndexOffset.getSExtValue() == 1)
@@ -449,9 +556,24 @@ Value *StraightLineStrengthReduce::emitBump(const Candidate &Basis,
   // Common case 2: if (i' - i) is -1, Bump = -S.
   if (IndexOffset.getSExtValue() == -1)
     return Builder.CreateNeg(C.Stride);
-  // Otherwise, Bump = (i' - i) * sext/trunc(S).
-  ConstantInt *Delta = ConstantInt::get(Basis.Ins->getContext(), IndexOffset);
-  Value *ExtendedStride = Builder.CreateSExtOrTrunc(C.Stride, Delta->getType());
+
+  // Otherwise, Bump = (i' - i) * sext/trunc(S). Note that (i' - i) and S may
+  // have different bit widths.
+  IntegerType *DeltaType =
+      IntegerType::get(Basis.Ins->getContext(), IndexOffset.getBitWidth());
+  Value *ExtendedStride = Builder.CreateSExtOrTrunc(C.Stride, DeltaType);
+  if (IndexOffset.isPowerOf2()) {
+    // If (i' - i) is a power of 2, Bump = sext/trunc(S) << log(i' - i).
+    ConstantInt *Exponent = ConstantInt::get(DeltaType, IndexOffset.logBase2());
+    return Builder.CreateShl(ExtendedStride, Exponent);
+  }
+  if ((-IndexOffset).isPowerOf2()) {
+    // If (i - i') is a power of 2, Bump = -sext/trunc(S) << log(i' - i).
+    ConstantInt *Exponent =
+        ConstantInt::get(DeltaType, (-IndexOffset).logBase2());
+    return Builder.CreateNeg(Builder.CreateShl(ExtendedStride, Exponent));
+  }
+  Constant *Delta = ConstantInt::get(DeltaType, IndexOffset);
   return Builder.CreateMul(ExtendedStride, Delta);
 }
 
@@ -459,6 +581,9 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
     const Candidate &C, const Candidate &Basis) {
   assert(C.CandidateKind == Basis.CandidateKind && C.Base == Basis.Base &&
          C.Stride == Basis.Stride);
+  // We run rewriteCandidateWithBasis on all candidates in a post-order, so the
+  // basis of a candidate cannot be unlinked before the candidate.
+  assert(Basis.Ins->getParent() != nullptr && "the basis is unlinked");
 
   // An instruction can correspond to multiple candidates. Therefore, instead of
   // simply deleting an instruction when we rewrite it, we mark its parent as
@@ -472,8 +597,14 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
   Value *Bump = emitBump(Basis, C, Builder, DL, BumpWithUglyGEP);
   Value *Reduced = nullptr; // equivalent to but weaker than C.Ins
   switch (C.CandidateKind) {
+  case Candidate::Add:
   case Candidate::Mul:
-    Reduced = Builder.CreateAdd(Basis.Ins, Bump);
+    if (BinaryOperator::isNeg(Bump)) {
+      Reduced =
+          Builder.CreateSub(Basis.Ins, BinaryOperator::getNegArgument(Bump));
+    } else {
+      Reduced = Builder.CreateAdd(Basis.Ins, Bump);
+    }
     break;
   case Candidate::GEP:
     {
@@ -510,7 +641,7 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
   // Unlink C.Ins so that we can skip other candidates also corresponding to
   // C.Ins. The actual deletion is postponed to the end of runOnFunction.
   C.Ins->removeFromParent();
-  UnlinkedInstructions.insert(C.Ins);
+  UnlinkedInstructions.push_back(C.Ins);
 }
 
 bool StraightLineStrengthReduce::runOnFunction(Function &F) {
@@ -525,7 +656,7 @@ bool StraightLineStrengthReduce::runOnFunction(Function &F) {
   for (auto node = GraphTraits<DominatorTree *>::nodes_begin(DT);
        node != GraphTraits<DominatorTree *>::nodes_end(DT); ++node) {
     for (auto &I : *node->getBlock())
-      allocateCandidateAndFindBasis(&I);
+      allocateCandidatesAndFindBasis(&I);
   }
 
   // Rewrite candidates in the reverse depth-first order. This order makes sure
