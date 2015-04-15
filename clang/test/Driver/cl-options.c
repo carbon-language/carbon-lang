@@ -354,6 +354,7 @@
 // RUN:     -fmsc-version=1800 \
 // RUN:     -fno-strict-aliasing \
 // RUN:     -fstrict-aliasing \
+// RUN:     -fsyntax-only \
 // RUN:     -mllvm -disable-llvm-optzns \
 // RUN:     -Wunused-variable \
 // RUN:     -fmacro-backtrace-limit=0 \

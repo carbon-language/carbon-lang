@@ -934,7 +934,8 @@ def fstrict_enums : Flag<["-"], "fstrict-enums">, Group<f_Group>, Flags<[CC1Opti
   HelpText<"Enable optimizations based on the strict definition of an enum's "
            "value range">;
 def fstrict_overflow : Flag<["-"], "fstrict-overflow">, Group<f_Group>;
-def fsyntax_only : Flag<["-"], "fsyntax-only">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
+def fsyntax_only : Flag<["-"], "fsyntax-only">,
+  Flags<[DriverOption,CoreOption,CC1Option]>, Group<Action_Group>;
 def ftabstop_EQ : Joined<["-"], "ftabstop=">, Group<f_Group>;
 def ftemplate_depth_EQ : Joined<["-"], "ftemplate-depth=">, Group<f_Group>;
 def ftemplate_depth_ : Joined<["-"], "ftemplate-depth-">, Group<f_Group>;
