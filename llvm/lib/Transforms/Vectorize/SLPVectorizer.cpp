@@ -3101,9 +3101,7 @@ struct SLPVectorizer : public FunctionPass {
     // delete instructions.
 
     // Scan the blocks in the function in post order.
-    for (po_iterator<BasicBlock*> it = po_begin(&F.getEntryBlock()),
-         e = po_end(&F.getEntryBlock()); it != e; ++it) {
-      BasicBlock *BB = *it;
+    for (auto BB : post_order(&F.getEntryBlock())) {
       // Vectorize trees that end at stores.
       if (unsigned count = collectStores(BB, R)) {
         (void)count;

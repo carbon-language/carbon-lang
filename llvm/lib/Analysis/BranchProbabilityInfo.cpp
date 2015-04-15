@@ -507,25 +507,23 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
 
   // Walk the basic blocks in post-order so that we can build up state about
   // the successors of a block iteratively.
-  for (po_iterator<BasicBlock *> I = po_begin(&F.getEntryBlock()),
-                                 E = po_end(&F.getEntryBlock());
-       I != E; ++I) {
-    DEBUG(dbgs() << "Computing probabilities for " << I->getName() << "\n");
-    if (calcUnreachableHeuristics(*I))
+  for (auto BB : post_order(&F.getEntryBlock())) {
+    DEBUG(dbgs() << "Computing probabilities for " << BB->getName() << "\n");
+    if (calcUnreachableHeuristics(BB))
       continue;
-    if (calcMetadataWeights(*I))
+    if (calcMetadataWeights(BB))
       continue;
-    if (calcColdCallHeuristics(*I))
+    if (calcColdCallHeuristics(BB))
       continue;
-    if (calcLoopBranchHeuristics(*I))
+    if (calcLoopBranchHeuristics(BB))
       continue;
-    if (calcPointerHeuristics(*I))
+    if (calcPointerHeuristics(BB))
       continue;
-    if (calcZeroHeuristics(*I))
+    if (calcZeroHeuristics(BB))
       continue;
-    if (calcFloatingPointHeuristics(*I))
+    if (calcFloatingPointHeuristics(BB))
       continue;
-    calcInvokeHeuristics(*I);
+    calcInvokeHeuristics(BB);
   }
 
   PostDominatedByUnreachable.clear();

@@ -498,10 +498,9 @@ Analyze(DominatorTreeBase<BlockT> &DomTree) {
 
   // Postorder traversal of the dominator tree.
   DomTreeNodeBase<BlockT>* DomRoot = DomTree.getRootNode();
-  for (po_iterator<DomTreeNodeBase<BlockT>*> DomIter = po_begin(DomRoot),
-         DomEnd = po_end(DomRoot); DomIter != DomEnd; ++DomIter) {
+  for (auto DomNode : post_order(DomRoot)) {
 
-    BlockT *Header = DomIter->getBlock();
+    BlockT *Header = DomNode->getBlock();
     SmallVector<BlockT *, 4> Backedges;
 
     // Check each predecessor of the potential loop header.

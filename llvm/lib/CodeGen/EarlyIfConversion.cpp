@@ -797,9 +797,8 @@ bool EarlyIfConverter::runOnMachineFunction(MachineFunction &MF) {
   // if-conversion in a single pass. The tryConvertIf() function may erase
   // blocks, but only blocks dominated by the head block. This makes it safe to
   // update the dominator tree while the post-order iterator is still active.
-  for (po_iterator<MachineDominatorTree*>
-       I = po_begin(DomTree), E = po_end(DomTree); I != E; ++I)
-    if (tryConvertIf(I->getBlock()))
+  for (auto DomNode : post_order(DomTree))
+    if (tryConvertIf(DomNode->getBlock()))
       Changed = true;
 
   return Changed;

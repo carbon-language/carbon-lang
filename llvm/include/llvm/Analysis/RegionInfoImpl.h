@@ -714,10 +714,8 @@ void RegionInfoBase<Tr>::scanForRegions(FuncT &F, BBtoBBMap *ShortCut) {
   // regions from the bottom of the dominance tree.  If the small regions are
   // detected first, detection of bigger regions is faster, as we can jump
   // over the small regions.
-  for (po_iterator<DomTreeNodeT *> FI = po_begin(N), FE = po_end(N); FI != FE;
-       ++FI) {
-    findRegionsWithEntry(FI->getBlock(), ShortCut);
-  }
+  for (auto DomNode : post_order(N))
+    findRegionsWithEntry(DomNode->getBlock(), ShortCut);
 }
 
 template <class Tr>

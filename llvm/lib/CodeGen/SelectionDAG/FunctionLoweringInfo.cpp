@@ -652,8 +652,7 @@ void llvm::ComputeUsesVAFloatArgument(const CallInst &I,
   if (FT->isVarArg() && !MMI->usesVAFloatArgument()) {
     for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
       Type* T = I.getArgOperand(i)->getType();
-      for (po_iterator<Type*> i = po_begin(T), e = po_end(T);
-           i != e; ++i) {
+      for (auto i : post_order(T)) {
         if (i->isFloatingPointTy()) {
           MMI->setUsesVAFloatArgument(true);
           return;

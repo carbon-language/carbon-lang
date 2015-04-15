@@ -463,13 +463,11 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
   // Run an upwards post-order search for the trace start.
   Bounds.Downward = false;
   Bounds.Visited.clear();
-  typedef ipo_ext_iterator<const MachineBasicBlock*, LoopBounds> UpwardPO;
-  for (UpwardPO I = ipo_ext_begin(MBB, Bounds), E = ipo_ext_end(MBB, Bounds);
-       I != E; ++I) {
+  for (auto I : inverse_post_order_ext(MBB, Bounds)) {
     DEBUG(dbgs() << "  pred for BB#" << I->getNumber() << ": ");
     TraceBlockInfo &TBI = BlockInfo[I->getNumber()];
     // All the predecessors have been visited, pick the preferred one.
-    TBI.Pred = pickTracePred(*I);
+    TBI.Pred = pickTracePred(I);
     DEBUG({
       if (TBI.Pred)
         dbgs() << "BB#" << TBI.Pred->getNumber() << '\n';
@@ -477,19 +475,17 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
         dbgs() << "null\n";
     });
     // The trace leading to I is now known, compute the depth resources.
-    computeDepthResources(*I);
+    computeDepthResources(I);
   }
 
   // Run a downwards post-order search for the trace end.
   Bounds.Downward = true;
   Bounds.Visited.clear();
-  typedef po_ext_iterator<const MachineBasicBlock*, LoopBounds> DownwardPO;
-  for (DownwardPO I = po_ext_begin(MBB, Bounds), E = po_ext_end(MBB, Bounds);
-       I != E; ++I) {
+  for (auto I : post_order_ext(MBB, Bounds)) {
     DEBUG(dbgs() << "  succ for BB#" << I->getNumber() << ": ");
     TraceBlockInfo &TBI = BlockInfo[I->getNumber()];
     // All the successors have been visited, pick the preferred one.
-    TBI.Succ = pickTraceSucc(*I);
+    TBI.Succ = pickTraceSucc(I);
     DEBUG({
       if (TBI.Succ)
         dbgs() << "BB#" << TBI.Succ->getNumber() << '\n';
@@ -497,7 +493,7 @@ void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
         dbgs() << "null\n";
     });
     // The trace leaving I is now known, compute the height resources.
-    computeHeightResources(*I);
+    computeHeightResources(I);
   }
 }
 

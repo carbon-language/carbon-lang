@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include <set>
 #include <vector>
 
@@ -178,6 +179,10 @@ po_iterator<T> po_begin(T G) { return po_iterator<T>::begin(G); }
 template <class T>
 po_iterator<T> po_end  (T G) { return po_iterator<T>::end(G); }
 
+template <class T> iterator_range<po_iterator<T>> post_order(T G) {
+  return iterator_range<po_iterator<T>>(po_begin(G), po_end(G));
+}
+
 // Provide global definitions of external postorder iterators...
 template<class T, class SetType=std::set<typename GraphTraits<T>::NodeType*> >
 struct po_ext_iterator : public po_iterator<T, SetType, true> {
@@ -193,6 +198,12 @@ po_ext_iterator<T, SetType> po_ext_begin(T G, SetType &S) {
 template<class T, class SetType>
 po_ext_iterator<T, SetType> po_ext_end(T G, SetType &S) {
   return po_ext_iterator<T, SetType>::end(G, S);
+}
+
+template <class T, class SetType>
+iterator_range<po_ext_iterator<T, SetType>> post_order_ext(T G, SetType &S) {
+  return iterator_range<po_ext_iterator<T, SetType>>(po_ext_begin(G, S),
+                                                     po_ext_end(G, S));
 }
 
 // Provide global definitions of inverse post order iterators...
@@ -214,6 +225,11 @@ ipo_iterator<T> ipo_end(T G){
   return ipo_iterator<T>::end(G);
 }
 
+template <class T>
+iterator_range<ipo_iterator<T>> inverse_post_order(T G, bool Reverse = false) {
+  return iterator_range<ipo_iterator<T>>(ipo_begin(G, Reverse), ipo_end(G));
+}
+
 // Provide global definitions of external inverse postorder iterators...
 template <class T,
           class SetType = std::set<typename GraphTraits<T>::NodeType*> >
@@ -232,6 +248,13 @@ ipo_ext_iterator<T, SetType> ipo_ext_begin(T G, SetType &S) {
 template <class T, class SetType>
 ipo_ext_iterator<T, SetType> ipo_ext_end(T G, SetType &S) {
   return ipo_ext_iterator<T, SetType>::end(G, S);
+}
+
+template <class T, class SetType>
+iterator_range<ipo_ext_iterator<T, SetType>>
+inverse_post_order_ext(T G, SetType &S) {
+  return iterator_range<ipo_ext_iterator<T, SetType>>(ipo_ext_begin(G, S),
+                                                      ipo_ext_end(G, S));
 }
 
 //===--------------------------------------------------------------------===//
