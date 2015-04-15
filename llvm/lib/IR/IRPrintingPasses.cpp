@@ -15,19 +15,20 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/UseListOrder.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 PrintModulePass::PrintModulePass() : OS(dbgs()) {}
-PrintModulePass::PrintModulePass(raw_ostream &OS, const std::string &Banner)
-    : OS(OS), Banner(Banner) {}
+PrintModulePass::PrintModulePass(raw_ostream &OS, const std::string &Banner,
+                                 bool ShouldPreserveUseListOrder)
+    : OS(OS), Banner(Banner),
+      ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {}
 
 PreservedAnalyses PrintModulePass::run(Module &M) {
   OS << Banner;
-  M.print(OS, nullptr, shouldPreserveAssemblyUseListOrder());
+  M.print(OS, nullptr, ShouldPreserveUseListOrder);
   return PreservedAnalyses::all();
 }
 
@@ -48,8 +49,9 @@ class PrintModulePassWrapper : public ModulePass {
 public:
   static char ID;
   PrintModulePassWrapper() : ModulePass(ID) {}
-  PrintModulePassWrapper(raw_ostream &OS, const std::string &Banner)
-      : ModulePass(ID), P(OS, Banner) {}
+  PrintModulePassWrapper(raw_ostream &OS, const std::string &Banner,
+                         bool ShouldPreserveUseListOrder)
+      : ModulePass(ID), P(OS, Banner, ShouldPreserveUseListOrder) {}
 
   bool runOnModule(Module &M) override {
     P.run(M);
@@ -114,8 +116,9 @@ INITIALIZE_PASS(PrintBasicBlockPass, "print-bb", "Print BB to stderr", false,
                 false)
 
 ModulePass *llvm::createPrintModulePass(llvm::raw_ostream &OS,
-                                        const std::string &Banner) {
-  return new PrintModulePassWrapper(OS, Banner);
+                                        const std::string &Banner,
+                                        bool ShouldPreserveUseListOrder) {
+  return new PrintModulePassWrapper(OS, Banner, ShouldPreserveUseListOrder);
 }
 
 FunctionPass *llvm::createPrintFunctionPass(llvm::raw_ostream &OS,

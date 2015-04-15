@@ -34,7 +34,8 @@ class raw_ostream;
 /// \brief Create and return a pass that writes the module to the specified
 /// \c raw_ostream.
 ModulePass *createPrintModulePass(raw_ostream &OS,
-                                  const std::string &Banner = "");
+                                  const std::string &Banner = "",
+                                  bool ShouldPreserveUseListOrder = false);
 
 /// \brief Create and return a pass that prints functions to the specified
 /// \c raw_ostream as they are processed.
@@ -53,10 +54,12 @@ BasicBlockPass *createPrintBasicBlockPass(raw_ostream &OS,
 class PrintModulePass {
   raw_ostream &OS;
   std::string Banner;
+  bool ShouldPreserveUseListOrder;
 
 public:
   PrintModulePass();
-  PrintModulePass(raw_ostream &OS, const std::string &Banner = "");
+  PrintModulePass(raw_ostream &OS, const std::string &Banner = "",
+                  bool ShouldPreserveUseListOrder = false);
 
   PreservedAnalyses run(Module &M);
 

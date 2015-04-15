@@ -432,6 +432,7 @@ int main(int argc, char **argv) {
     // layer.
     return runPassPipeline(argv[0], Context, *M, TM.get(), Out.get(),
                            PassPipeline, OK, VK,
+                           shouldPreserveAssemblyUseListOrder(),
                            shouldPreserveBitcodeUseListOrder())
                ? 0
                : 1;
@@ -556,7 +557,8 @@ int main(int argc, char **argv) {
     }
 
     if (PrintEachXForm)
-      Passes.add(createPrintModulePass(errs()));
+      Passes.add(createPrintModulePass(errs(), "",
+                                       shouldPreserveAssemblyUseListOrder()));
   }
 
   if (StandardLinkOpts) {
@@ -593,7 +595,8 @@ int main(int argc, char **argv) {
   // Write bitcode or assembly to the output as the last step...
   if (!NoOutput && !AnalyzeOnly) {
     if (OutputAssembly)
-      Passes.add(createPrintModulePass(Out->os()));
+      Passes.add(createPrintModulePass(Out->os(), "",
+                                       shouldPreserveAssemblyUseListOrder()));
     else
       Passes.add(createBitcodeWriterPass(Out->os(),
                                          shouldPreserveBitcodeUseListOrder()));

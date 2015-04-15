@@ -52,6 +52,7 @@ bool runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                      TargetMachine *TM, tool_output_file *Out,
                      StringRef PassPipeline, opt_tool::OutputKind OK,
                      opt_tool::VerifierKind VK,
+                     bool ShouldPreserveAssemblyUseListOrder,
                      bool ShouldPreserveBitcodeUseListOrder);
 }
 
