@@ -761,10 +761,19 @@ static Value *getDbgIntrinsicValueImpl(LLVMContext &VMContext, Value *V) {
   return MetadataAsValue::get(VMContext, ValueAsMetadata::get(V));
 }
 
+static Instruction *withDebugLoc(Instruction *I, const MDLocation *DL) {
+  I->setDebugLoc(const_cast<MDLocation *>(DL));
+  return I;
+}
+
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
-                                      DIExpression Expr,
+                                      DIExpression Expr, const MDLocation *DL,
                                       Instruction *InsertBefore) {
   assert(VarInfo && "empty or invalid DIVariable passed to dbg.declare");
+  assert(DL && "Expected debug loc");
+  assert(DL->getScope()->getSubprogram() ==
+             VarInfo->getScope()->getSubprogram() &&
+         "Expected matching subprograms");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -773,13 +782,17 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
   Value *Args[] = {getDbgIntrinsicValueImpl(VMContext, Storage),
                    MetadataAsValue::get(VMContext, VarInfo),
                    MetadataAsValue::get(VMContext, Expr)};
-  return CallInst::Create(DeclareFn, Args, "", InsertBefore);
+  return withDebugLoc(CallInst::Create(DeclareFn, Args, "", InsertBefore), DL);
 }
 
 Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
-                                      DIExpression Expr,
+                                      DIExpression Expr, const MDLocation *DL,
                                       BasicBlock *InsertAtEnd) {
   assert(VarInfo && "empty or invalid DIVariable passed to dbg.declare");
+  assert(DL && "Expected debug loc");
+  assert(DL->getScope()->getSubprogram() ==
+             VarInfo->getScope()->getSubprogram() &&
+         "Expected matching subprograms");
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
@@ -792,17 +805,21 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
   // If this block already has a terminator then insert this intrinsic
   // before the terminator.
   if (TerminatorInst *T = InsertAtEnd->getTerminator())
-    return CallInst::Create(DeclareFn, Args, "", T);
-  else
-    return CallInst::Create(DeclareFn, Args, "", InsertAtEnd);
+    return withDebugLoc(CallInst::Create(DeclareFn, Args, "", T), DL);
+  return withDebugLoc(CallInst::Create(DeclareFn, Args, "", InsertAtEnd), DL);
 }
 
 Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
                                                 DIExpression Expr,
+                                                const MDLocation *DL,
                                                 Instruction *InsertBefore) {
   assert(V && "no value passed to dbg.value");
   assert(VarInfo && "empty or invalid DIVariable passed to dbg.value");
+  assert(DL && "Expected debug loc");
+  assert(DL->getScope()->getSubprogram() ==
+             VarInfo->getScope()->getSubprogram() &&
+         "Expected matching subprograms");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -812,15 +829,20 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                    ConstantInt::get(Type::getInt64Ty(VMContext), Offset),
                    MetadataAsValue::get(VMContext, VarInfo),
                    MetadataAsValue::get(VMContext, Expr)};
-  return CallInst::Create(ValueFn, Args, "", InsertBefore);
+  return withDebugLoc(CallInst::Create(ValueFn, Args, "", InsertBefore), DL);
 }
 
 Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                                                 DIVariable VarInfo,
                                                 DIExpression Expr,
+                                                const MDLocation *DL,
                                                 BasicBlock *InsertAtEnd) {
   assert(V && "no value passed to dbg.value");
   assert(VarInfo && "empty or invalid DIVariable passed to dbg.value");
+  assert(DL && "Expected debug loc");
+  assert(DL->getScope()->getSubprogram() ==
+             VarInfo->getScope()->getSubprogram() &&
+         "Expected matching subprograms");
   if (!ValueFn)
     ValueFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_value);
 
@@ -830,7 +852,8 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
                    ConstantInt::get(Type::getInt64Ty(VMContext), Offset),
                    MetadataAsValue::get(VMContext, VarInfo),
                    MetadataAsValue::get(VMContext, Expr)};
-  return CallInst::Create(ValueFn, Args, "", InsertAtEnd);
+
+  return withDebugLoc(CallInst::Create(ValueFn, Args, "", InsertAtEnd), DL);
 }
 
 void DIBuilder::replaceVTableHolder(DICompositeType &T, DICompositeType VTableHolder) {

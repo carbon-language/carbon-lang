@@ -234,10 +234,14 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,
                                              LLVMMetadataRef VarInfo,
                                              LLVMMetadataRef Expr,
                                              LLVMBasicBlockRef Block) {
+  // Fail immediately here until the llgo folks update their bindings.  The
+  // called function is going to assert out anyway.
+  llvm_unreachable("DIBuilder API change requires a DebugLoc");
+
   DIBuilder *D = unwrap(Dref);
-  Instruction *Instr =
-      D->insertDeclare(unwrap(Storage), unwrap<MDLocalVariable>(VarInfo),
-                       unwrap<MDExpression>(Expr), unwrap(Block));
+  Instruction *Instr = D->insertDeclare(
+      unwrap(Storage), unwrap<MDLocalVariable>(VarInfo),
+      unwrap<MDExpression>(Expr), /* DebugLoc */ nullptr, unwrap(Block));
   return wrap(Instr);
 }
 
@@ -246,9 +250,13 @@ LLVMValueRef LLVMDIBuilderInsertValueAtEnd(LLVMDIBuilderRef Dref,
                                            LLVMMetadataRef VarInfo,
                                            LLVMMetadataRef Expr,
                                            LLVMBasicBlockRef Block) {
+  // Fail immediately here until the llgo folks update their bindings.  The
+  // called function is going to assert out anyway.
+  llvm_unreachable("DIBuilder API change requires a DebugLoc");
+
   DIBuilder *D = unwrap(Dref);
   Instruction *Instr = D->insertDbgValueIntrinsic(
       unwrap(Val), Offset, unwrap<MDLocalVariable>(VarInfo),
-      unwrap<MDExpression>(Expr), unwrap(Block));
+      unwrap<MDExpression>(Expr), /* DebugLoc */ nullptr, unwrap(Block));
   return wrap(Instr);
 }

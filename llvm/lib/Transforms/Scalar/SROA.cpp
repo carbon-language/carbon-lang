@@ -1166,10 +1166,9 @@ public:
       } else {
         continue;
       }
-      Instruction *DbgVal =
-          DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
-                                      DIExpression(DVI->getExpression()), Inst);
-      DbgVal->setDebugLoc(DVI->getDebugLoc());
+      DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
+                                  DIExpression(DVI->getExpression()),
+                                  DVI->getDebugLoc(), Inst);
     }
   }
 };
@@ -4211,8 +4210,8 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
       if (DbgDeclareInst *OldDDI = FindAllocaDbgDeclare(Piece.Alloca))
         OldDDI->eraseFromParent();
 
-      auto *NewDDI = DIB.insertDeclare(Piece.Alloca, Var, PieceExpr, &AI);
-      NewDDI->setDebugLoc(DbgDecl->getDebugLoc());
+      DIB.insertDeclare(Piece.Alloca, Var, PieceExpr, DbgDecl->getDebugLoc(),
+                        &AI);
     }
   }
   return Changed;

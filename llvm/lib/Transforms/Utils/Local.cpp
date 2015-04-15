@@ -1015,11 +1015,11 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
     ExtendedArg = dyn_cast<Argument>(SExt->getOperand(0));
   if (ExtendedArg)
-    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, DIExpr, SI);
+    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, DIExpr,
+                                             DDI->getDebugLoc(), SI);
   else
     DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar,
-                                             DIExpr, SI);
-  DbgVal->setDebugLoc(DDI->getDebugLoc());
+                                             DIExpr, DDI->getDebugLoc(), SI);
   return true;
 }
 
@@ -1035,9 +1035,8 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (LdStHasDebugValue(DIVar, LI))
     return true;
 
-  Instruction *DbgVal =
-      Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0, DIVar, DIExpr, LI);
-  DbgVal->setDebugLoc(DDI->getDebugLoc());
+  Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0, DIVar, DIExpr,
+                                  DDI->getDebugLoc(), LI);
   return true;
 }
 
@@ -1079,10 +1078,9 @@ bool llvm::LowerDbgDeclare(Function &F) {
           // This is a call by-value or some other instruction that
           // takes a pointer to the variable. Insert a *value*
           // intrinsic that describes the alloca.
-          auto DbgVal = DIB.insertDbgValueIntrinsic(
-              AI, 0, DIVariable(DDI->getVariable()),
-              DIExpression(DDI->getExpression()), CI);
-          DbgVal->setDebugLoc(DDI->getDebugLoc());
+          DIB.insertDbgValueIntrinsic(AI, 0, DIVariable(DDI->getVariable()),
+                                      DIExpression(DDI->getExpression()),
+                                      DDI->getDebugLoc(), CI);
         }
       DDI->eraseFromParent();
     }
@@ -1128,8 +1126,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.
   BasicBlock *BB = AI->getParent();
-  Builder.insertDeclare(NewAllocaAddress, DIVar, DIExpr, BB)
-    ->setDebugLoc(Loc);
+  Builder.insertDeclare(NewAllocaAddress, DIVar, DIExpr, Loc, BB);
   DDI->eraseFromParent();
   return true;
 }

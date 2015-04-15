@@ -656,26 +656,32 @@ namespace llvm {
     /// @param Storage     llvm::Value of the variable
     /// @param VarInfo     Variable's debug info descriptor.
     /// @param Expr         A complex location expression.
+    /// @param DL           Debug info location.
     /// @param InsertAtEnd Location for the new intrinsic.
     Instruction *insertDeclare(llvm::Value *Storage, DIVariable VarInfo,
-                               DIExpression Expr, BasicBlock *InsertAtEnd);
+                               DIExpression Expr, const MDLocation *DL,
+                               BasicBlock *InsertAtEnd);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
     /// @param Storage      llvm::Value of the variable
     /// @param VarInfo      Variable's debug info descriptor.
     /// @param Expr         A complex location expression.
+    /// @param DL           Debug info location.
     /// @param InsertBefore Location for the new intrinsic.
     Instruction *insertDeclare(llvm::Value *Storage, DIVariable VarInfo,
-                               DIExpression Expr, Instruction *InsertBefore);
+                               DIExpression Expr, const MDLocation *DL,
+                               Instruction *InsertBefore);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
     /// @param Val          llvm::Value of the variable
     /// @param Offset       Offset
     /// @param VarInfo      Variable's debug info descriptor.
     /// @param Expr         A complex location expression.
+    /// @param DL           Debug info location.
     /// @param InsertAtEnd Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
                                          DIVariable VarInfo, DIExpression Expr,
+                                         const MDLocation *DL,
                                          BasicBlock *InsertAtEnd);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
@@ -683,9 +689,11 @@ namespace llvm {
     /// @param Offset       Offset
     /// @param VarInfo      Variable's debug info descriptor.
     /// @param Expr         A complex location expression.
+    /// @param DL           Debug info location.
     /// @param InsertBefore Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
                                          DIVariable VarInfo, DIExpression Expr,
+                                         const MDLocation *DL,
                                          Instruction *InsertBefore);
 
     /// \brief Replace the vtable holder in the given composite type.
