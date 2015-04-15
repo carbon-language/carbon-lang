@@ -747,6 +747,11 @@ GDBRemoteCommunicationServerLLGS::ProcessStateChanged (NativeProcessProtocol *pr
                 StateAsCString (state));
     }
 
+    // Make sure we get all of the pending stdout/stderr from the inferior
+    // and send it to the lldb host before we send the state change
+    // notification
+    m_stdio_communication.SynchronizeWithReadThread();
+
     switch (state)
     {
     case StateType::eStateExited:
