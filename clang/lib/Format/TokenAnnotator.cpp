@@ -149,6 +149,8 @@ private:
     bool MightBeFunctionType = CurrentToken->is(tok::star);
     bool HasMultipleLines = false;
     bool HasMultipleParametersOnALine = false;
+    bool MightBeObjCForRangeLoop =
+        Left->Previous && Left->Previous->is(tok::kw_for);
     while (CurrentToken) {
       // LookForDecls is set when "if (" has been seen. Check for
       // 'identifier' '*' 'identifier' followed by not '=' -- this
@@ -210,7 +212,8 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_square, tok::r_brace))
         return false;
-      else if (CurrentToken->is(tok::l_brace))
+
+      if (CurrentToken->is(tok::l_brace))
         Left->Type = TT_Unknown; // Not TT_ObjCBlockLParen
       if (CurrentToken->is(tok::comma) && CurrentToken->Next &&
           !CurrentToken->Next->HasUnescapedNewline &&
@@ -219,6 +222,11 @@ private:
       if (CurrentToken->isOneOf(tok::kw_const, tok::kw_auto) ||
           CurrentToken->isSimpleTypeSpecifier())
         Contexts.back().IsExpression = false;
+      if (CurrentToken->isOneOf(tok::semi, tok::colon))
+        MightBeObjCForRangeLoop = false;
+      if (MightBeObjCForRangeLoop && CurrentToken->is(Keywords.kw_in))
+        CurrentToken->Type = TT_ObjCForIn;
+
       FormatToken *Tok = CurrentToken;
       if (!consumeToken())
         return false;
@@ -534,11 +542,6 @@ private:
     case tok::kw_template:
       parseTemplateDeclaration();
       break;
-    case tok::identifier:
-      if (Line.First->is(tok::kw_for) && Tok->is(Keywords.kw_in) &&
-          Tok->Previous->isNot(tok::colon))
-        Tok->Type = TT_ObjCForIn;
-      break;
     case tok::comma:
       if (Contexts.back().FirstStartOfName && Contexts.size() == 1) {
         Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
@@ -728,27 +731,22 @@ private:
     Context(tok::TokenKind ContextKind, unsigned BindingStrength,
             bool IsExpression)
         : ContextKind(ContextKind), BindingStrength(BindingStrength),
-          LongestObjCSelectorName(0), ColonIsForRangeExpr(false),
-          ColonIsDictLiteral(false), ColonIsObjCMethodExpr(false),
-          FirstObjCSelectorName(nullptr), FirstStartOfName(nullptr),
-          IsExpression(IsExpression), CanBeExpression(true),
-          InTemplateArgument(false), InCtorInitializer(false),
-          CaretFound(false), IsForEachMacro(false) {}
+          IsExpression(IsExpression) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
-    unsigned LongestObjCSelectorName;
-    bool ColonIsForRangeExpr;
-    bool ColonIsDictLiteral;
-    bool ColonIsObjCMethodExpr;
-    FormatToken *FirstObjCSelectorName;
-    FormatToken *FirstStartOfName;
     bool IsExpression;
-    bool CanBeExpression;
-    bool InTemplateArgument;
-    bool InCtorInitializer;
-    bool CaretFound;
-    bool IsForEachMacro;
+    unsigned LongestObjCSelectorName = 0;
+    bool ColonIsForRangeExpr = false;
+    bool ColonIsDictLiteral = false;
+    bool ColonIsObjCMethodExpr = false;
+    FormatToken *FirstObjCSelectorName = nullptr;
+    FormatToken *FirstStartOfName = nullptr;
+    bool CanBeExpression = true;
+    bool InTemplateArgument = false;
+    bool InCtorInitializer = false;
+    bool CaretFound = false;
+    bool IsForEachMacro = false;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
