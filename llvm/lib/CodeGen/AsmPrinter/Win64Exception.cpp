@@ -468,7 +468,7 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
         if (HT.CatchObjRecoverIdx >= 0) {
           MCSymbol *FrameAllocOffset =
               Asm->OutContext.getOrCreateFrameAllocSymbol(
-                  GlobalValue::getRealLinkageName(ParentF->getName()),
+                  GlobalValue::getRealLinkageName(F->getName()),
                   HT.CatchObjRecoverIdx);
           FrameAllocOffsetRef = MCSymbolRefExpr::Create(
               FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
