@@ -430,7 +430,7 @@ namespace llvm {
     /// Return the twine contents as a std::string.
     std::string str() const;
 
-    /// Write the concatenated string into the given SmallString or SmallVector.
+    /// Append the concatenated string into the given SmallString or SmallVector.
     void toVector(SmallVectorImpl<char> &Out) const;
 
     /// This returns the twine as a single StringRef.  This method is only valid
