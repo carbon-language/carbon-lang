@@ -13,6 +13,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfGcc #https://llvm.org/bugs/show_bug.cgi?id=23239
     def test_lldbmi_eval(self):
         """Test that 'lldb-mi --interpreter' works for evaluating."""
 
