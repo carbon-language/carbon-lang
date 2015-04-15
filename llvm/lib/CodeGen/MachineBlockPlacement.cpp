@@ -661,7 +661,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
   for (MachineBasicBlock *MBB : L.getBlocks()) {
     BlockChain &Chain = *BlockToChain[MBB];
     // Ensure that this block is at the end of a chain; otherwise it could be
-    // mid-way through an inner loop or a successor of an analyzable branch.
+    // mid-way through an inner loop or a successor of an unanalyzable branch.
     if (MBB != *std::prev(Chain.end()))
       continue;
 
