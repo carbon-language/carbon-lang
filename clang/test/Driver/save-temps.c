@@ -1,7 +1,7 @@
 // RUN: %clang -target x86_64-apple-darwin -save-temps -arch x86_64 %s -### 2>&1 \
 // RUN:   | FileCheck %s
 // CHECK: "-o" "save-temps.i"
-// CHECK: "-preserve-bc-uselistorder"
+// CHECK: "-emit-llvm-uselists"
 // CHECK: "-disable-llvm-optzns"
 // CHECK: "-o" "save-temps.bc"
 // CHECK: "-o" "save-temps.s"
@@ -13,7 +13,7 @@
 // RUN: %clang -target x86_64-apple-darwin -save-temps=cwd -arch x86_64 %s -### 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CWD
 // CWD: "-o" "save-temps.i"
-// CWD: "-preserve-bc-uselistorder"
+// CWD: "-emit-llvm-uselists"
 // CWD: "-disable-llvm-optzns"
 // CWD: "-o" "save-temps.bc"
 // CWD: "-o" "save-temps.s"

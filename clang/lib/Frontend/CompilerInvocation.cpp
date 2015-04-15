@@ -405,6 +405,10 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     // Default Dwarf version is 4 if we are generating debug information.
     Opts.DwarfVersion = 4;
 
+  if (const Arg *A =
+          Args.getLastArg(OPT_emit_llvm_uselists, OPT_no_emit_llvm_uselists))
+    Opts.EmitLLVMUseLists = A->getOption().getID() == OPT_emit_llvm_uselists;
+
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);
   Opts.ForbidGuardVariables = Args.hasArg(OPT_fforbid_guard_variables);

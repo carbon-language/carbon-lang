@@ -603,7 +603,7 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
 
   case Backend_EmitBC:
     getPerModulePasses()->add(
-        createBitcodeWriterPass(*OS, shouldPreserveBitcodeUseListOrder()));
+        createBitcodeWriterPass(*OS, CodeGenOpts.EmitLLVMUseLists));
     break;
 
   case Backend_EmitLL:

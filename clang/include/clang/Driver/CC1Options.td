@@ -403,6 +403,11 @@ def migrate : Flag<["-"], "migrate">,
   HelpText<"Migrate source code">;
 }
 
+def emit_llvm_uselists : Flag<["-"], "emit-llvm-uselists">,
+  HelpText<"Preserve order of LLVM use-lists when serializing">;
+def no_emit_llvm_uselists : Flag<["-"], "no-emit-llvm-uselists">,
+  HelpText<"Don't preserve order of LLVM use-lists when serializing">;
+
 def mt_migrate_directory : Separate<["-"], "mt-migrate-directory">,
   HelpText<"Directory for temporary files produced during ARC or ObjC migration">;
 def arcmt_check : Flag<["-"], "arcmt-check">,
