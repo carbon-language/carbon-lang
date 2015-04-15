@@ -607,7 +607,8 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
     break;
 
   case Backend_EmitLL:
-    getPerModulePasses()->add(createPrintModulePass(*OS));
+    getPerModulePasses()->add(
+        createPrintModulePass(*OS, "", CodeGenOpts.EmitLLVMUseLists));
     break;
 
   default:
