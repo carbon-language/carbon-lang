@@ -250,14 +250,14 @@ StringRef CGDebugInfo::getClassName(const RecordDecl *RD) {
 llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   if (!Loc.isValid())
     // If Location is not valid then use main input file.
-    return DBuilder.createFile(TheCU.getFilename(), TheCU.getDirectory());
+    return DBuilder.createFile(TheCU->getFilename(), TheCU->getDirectory());
 
   SourceManager &SM = CGM.getContext().getSourceManager();
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
 
   if (PLoc.isInvalid() || StringRef(PLoc.getFilename()).empty())
     // If the location is not valid then use main input file.
-    return DBuilder.createFile(TheCU.getFilename(), TheCU.getDirectory());
+    return DBuilder.createFile(TheCU->getFilename(), TheCU->getDirectory());
 
   // Cache the results.
   const char *fname = PLoc.getFilename();
@@ -277,7 +277,7 @@ llvm::DIFile CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
 
 /// getOrCreateMainFile - Get the file info for main compile unit.
 llvm::DIFile CGDebugInfo::getOrCreateMainFile() {
-  return DBuilder.createFile(TheCU.getFilename(), TheCU.getDirectory());
+  return DBuilder.createFile(TheCU->getFilename(), TheCU->getDirectory());
 }
 
 /// getLineNumber - Get line number for the location. If location is invalid
@@ -606,7 +606,7 @@ static SmallString<256> getUniqueTagTypeName(const TagType *Ty,
   // FIXME: ODR should apply to ObjC++ exactly the same wasy it does to C++.
   // For now, only apply ODR with C++.
   const TagDecl *TD = Ty->getDecl();
-  if (TheCU.getLanguage() != llvm::dwarf::DW_LANG_C_plus_plus ||
+  if (TheCU->getSourceLanguage() != llvm::dwarf::DW_LANG_C_plus_plus ||
       !TD->isExternallyVisible())
     return FullName;
   // Microsoft Mangler does not have support for mangleCXXRTTIName yet.
@@ -1667,7 +1667,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(ID->getLocation());
   unsigned Line = getLineNumber(ID->getLocation());
-  llvm::dwarf::SourceLanguage RuntimeLang = TheCU.getLanguage();
+  auto RuntimeLang =
+      static_cast<llvm::dwarf::SourceLanguage>(TheCU->getSourceLanguage());
 
   // If this is just a forward declaration return a special forward-declaration
   // debug type since we won't be able to lay out the entire type.
@@ -1688,7 +1689,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,
   ObjCInterfaceDecl *ID = Ty->getDecl();
   llvm::DIFile DefUnit = getOrCreateFile(ID->getLocation());
   unsigned Line = getLineNumber(ID->getLocation());
-  unsigned RuntimeLang = TheCU.getLanguage();
+  unsigned RuntimeLang = TheCU->getSourceLanguage();
 
   // Bit size, align and offset of the type.
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
@@ -2406,7 +2407,7 @@ CGDebugInfo::getFunctionForwardDeclaration(const FunctionDecl *FD) {
   unsigned Flags = 0;
   SourceLocation Loc = FD->getLocation();
   llvm::DIFile Unit = getOrCreateFile(Loc);
-  llvm::DIDescriptor DContext(Unit);
+  llvm::DIDescriptor DContext = Unit;
   unsigned Line = getLineNumber(Loc);
 
   collectFunctionDeclProps(FD, Unit, Name, LinkageName, DContext,
@@ -2436,7 +2437,7 @@ CGDebugInfo::getGlobalVariableForwardDeclaration(const VarDecl *VD) {
   StringRef Name, LinkageName;
   SourceLocation Loc = VD->getLocation();
   llvm::DIFile Unit = getOrCreateFile(Loc);
-  llvm::DIDescriptor DContext(Unit);
+  llvm::DIDescriptor DContext = Unit;
   unsigned Line = getLineNumber(Loc);
 
   collectVarDeclProps(VD, Unit, Line, T, Name, LinkageName, DContext);
@@ -2593,7 +2594,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
 
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(Loc);
-  llvm::DIDescriptor FDContext(Unit);
+  llvm::DIDescriptor FDContext = Unit;
   llvm::DIArray TParamsArray;
   if (!HasDecl) {
     // Use llvm function name.
