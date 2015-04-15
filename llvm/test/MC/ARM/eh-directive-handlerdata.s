@@ -43,11 +43,14 @@ func1:
 @ We should see a relocation entry to __aeabi_unwind_cpp_pr0, so that the
 @ linker can keep __aeabi_unwind_cpp_pr0.
 @-------------------------------------------------------------------------------
+@ CHECK: Section {
+@ CHECK:  Name: .rel.ARM.exidx.TEST1
 @ CHECK:  Relocations [
 @ CHECK:    0x0 R_ARM_PREL31 .TEST1 0x0
 @ CHECK:    0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
 @ CHECK:    0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
 @ CHECK:  ]
+@ CHECK: }
 
 
 
@@ -100,8 +103,11 @@ func2:
 @ We should see a relocation entry to __aeabi_unwind_cpp_pr0, so that the
 @ linker can keep __aeabi_unwind_cpp_pr0.
 @-------------------------------------------------------------------------------
+@ CHECK: Section {
+@ CHECK:  Name: .rel.ARM.exidx.TEST2
 @ CHECK:  Relocations [
 @ CHECK:    0x0 R_ARM_PREL31 .TEST2 0x0
 @ CHECK:    0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
 @ CHECK:    0x4 R_ARM_PREL31 .ARM.extab.TEST2 0x0
 @ CHECK:  ]
+@ CHECK: }
