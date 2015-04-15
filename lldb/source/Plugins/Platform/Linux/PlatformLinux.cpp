@@ -583,8 +583,7 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
                 addr_class = bp_loc_sp->GetAddress ().GetAddressClass ();
 
             if (addr_class == eAddressClassCodeAlternateISA
-                || (addr_class == eAddressClassUnknown
-                    && bp_loc_sp->GetAddress().GetOffset() & 1))
+                || (addr_class == eAddressClassUnknown && (bp_site->GetLoadAddress() & 1)))
             {
                 trap_opcode = g_thumb_breakpoint_opcode;
                 trap_opcode_size = sizeof(g_thumb_breakpoint_opcode);

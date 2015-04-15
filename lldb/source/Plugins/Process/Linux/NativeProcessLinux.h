@@ -365,7 +365,7 @@ namespace process_linux {
         GetOrCreateThread (lldb::tid_t thread_id, bool &created);
 
         Error
-        GetSoftwareBreakpointSize (NativeRegisterContextSP context_sp, uint32_t &actual_opcode_size);
+        GetSoftwareBreakpointPCOffset (NativeRegisterContextSP context_sp, uint32_t &actual_opcode_size);
 
         Error
         FixupBreakpointPCAsNeeded (NativeThreadProtocolSP &thread_sp);
