@@ -64,9 +64,13 @@ func2:
 @ CHECK:       0000: 00000000 B0B0B000                    |........|
 @ CHECK:     )
 @ CHECK:   }
+
+@ CHECK:   Section {
+@ CHECK:     Name: .rel.ARM.extab.TEST1
 @ CHECK:     Relocations [
 @ CHECK:       0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
 @ CHECK:     ]
+@ CHECK:   }
 
 
 @-------------------------------------------------------------------------------
@@ -89,10 +93,14 @@ func2:
 @ CHECK:       0000: 00000000 00000000                    |........|
 @ CHECK:     )
 @ CHECK:   }
+
+@ CHECK:   Section {
+@ CHECK:     Name: .rel.ARM.exidx.TEST1
 @ CHECK:     Relocations [
 @ CHECK:       0x0 R_ARM_PREL31 .TEST1 0x0
 @ CHECK:       0x4 R_ARM_PREL31 .ARM.extab.TEST1 0x0
 @ CHECK:     ]
+@ CHECK:   }
 
 
 @-------------------------------------------------------------------------------
@@ -115,9 +123,13 @@ func2:
 @ CHECK:       0000: 00000000 B0B0B000                    |........|
 @ CHECK:     )
 @ CHECK:   }
+
+@ CHECK:   Section {
+@ CHECK:     Name: .rel.ARM.extabTEST2
 @ CHECK:     Relocations [
 @ CHECK:       0x0 R_ARM_PREL31 __gxx_personality_v0 0x0
 @ CHECK:     ]
+@ CHECK:   }
 
 
 @-------------------------------------------------------------------------------
@@ -140,11 +152,14 @@ func2:
 @ CHECK:       0000: 00000000 00000000                    |........|
 @ CHECK:     )
 @ CHECK:   }
-@ CHECK: ]
+
+@ CHECK:   Section {
+@ CHECK:     Name: .rel.ARM.exidxTEST2
 @ CHECK:     Relocations [
 @ CHECK:       0x0 R_ARM_PREL31 TEST2 0x0
 @ CHECK:       0x4 R_ARM_PREL31 .ARM.extabTEST2 0x0
 @ CHECK:     ]
+@ CHECK:   }
 
 
 
