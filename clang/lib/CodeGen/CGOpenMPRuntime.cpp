@@ -161,8 +161,9 @@ public:
   const FieldDecl *lookup(const VarDecl *VD) const override {
     if (OuterRegionInfo)
       return OuterRegionInfo->lookup(VD);
-    llvm_unreachable("Trying to reference VarDecl that is neither local nor "
-                     "captured in outer OpenMP region");
+    // If there is no outer outlined region,no need to lookup in a list of
+    // captured variables, we can use the original one.
+    return nullptr;
   }
   FieldDecl *getThisFieldDecl() const override {
     if (OuterRegionInfo)

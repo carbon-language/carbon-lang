@@ -67,7 +67,6 @@ int main() {
     // LAMBDA: [[G_REF_ADDR:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR]]
     // LAMBDA: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
-    // LAMBDA: call i32 @__kmpc_cancel_barrier(
     g = 1;
     // LAMBDA: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
@@ -129,7 +128,6 @@ int main() {
     // BLOCKS: [[G_REF_ADDR:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // BLOCKS: [[G_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[G_REF_ADDR]]
     // BLOCKS: store i{{[0-9]+}} 0, i{{[0-9]+}}* [[G_PRIVATE_ADDR]]
-    // BLOCKS: call i32 @__kmpc_cancel_barrier(
     g = 1;
     // BLOCKS: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}* [[G_PRIVATE_ADDR]],
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -223,10 +221,6 @@ int main() {
 // For min reduction operation initial value of private variable is largest repesentable value.
 // CHECK: store float 0x47EFFFFFE0000000, float* [[T_VAR1_PRIV]],
 
-// CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_ADDR]]
-// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
-// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
-
 // Skip checks for internal operations.
 
 // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};
@@ -246,6 +240,8 @@ int main() {
 
 // res = __kmpc_reduce_nowait(<loc>, <gtid>, <n>, sizeof(RedList), RedList, reduce_func, &<lock>);
 
+// CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_ADDR]]
+// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast [4 x i8*]* [[RED_LIST]] to i8*
 // CHECK: [[RES:%.+]] = call i32 @__kmpc_reduce_nowait(%{{.+}}* [[REDUCTION_LOC]], i32 [[GTID]], i32 4, i64 32, i8* [[BITCAST]], void (i8*, i8*)* [[REDUCTION_FUNC:@.+]], [8 x i32]* [[REDUCTION_LOCK]])
 
@@ -496,10 +492,6 @@ int main() {
 // For min reduction operation initial value of private variable is largest repesentable value.
 // CHECK: store i{{[0-9]+}} 2147483647, i{{[0-9]+}}* [[T_VAR1_PRIV]],
 
-// CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_ADDR]]
-// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
-// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
-
 // Skip checks for internal operations.
 
 // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};
@@ -519,6 +511,8 @@ int main() {
 
 // res = __kmpc_reduce_nowait(<loc>, <gtid>, <n>, sizeof(RedList), RedList, reduce_func, &<lock>);
 
+// CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_ADDR]]
+// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast [4 x i8*]* [[RED_LIST]] to i8*
 // CHECK: [[RES:%.+]] = call i32 @__kmpc_reduce_nowait(%{{.+}}* [[REDUCTION_LOC]], i32 [[GTID]], i32 4, i64 32, i8* [[BITCAST]], void (i8*, i8*)* [[REDUCTION_FUNC:@.+]], [8 x i32]* [[REDUCTION_LOCK]])
 

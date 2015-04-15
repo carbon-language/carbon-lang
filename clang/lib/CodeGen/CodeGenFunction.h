@@ -2064,7 +2064,7 @@ public:
       LValue X, RValue E, BinaryOperatorKind BO, bool IsXLHSInRHSPart,
       llvm::AtomicOrdering AO, SourceLocation Loc,
       const llvm::function_ref<RValue(RValue)> &CommonGen);
-  void EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
+  bool EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
                                  OMPPrivateScope &PrivateScope);
   void EmitOMPPrivateClause(const OMPExecutableDirective &D,
                             OMPPrivateScope &PrivateScope);

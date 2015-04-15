@@ -26,8 +26,8 @@ class S3 {
   S3 &operator=(const S3 &s3);
 
 public:
-  S3() : a(0) {} // expected-note {{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
-  S3(S3 &s3) : a(s3.a) {} // expected-note {{candidate constructor not viable: 1st argument ('const S3') would lose const qualifier}}
+  S3() : a(0) {} // expected-note 2 {{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
+  S3(S3 &s3) : a(s3.a) {} // expected-note 2 {{candidate constructor not viable: 1st argument ('const S3') would lose const qualifier}}
 };
 const S3 c;
 const S3 ca[5];
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}} expected-error {{no matching constructor for initialization of 'const S3'}}
+#pragma omp for firstprivate(a, b, c, d, f) // expected-error {{firstprivate variable with incomplete type 'S1'}} expected-error {{no matching constructor for initialization of 'S3'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for firstprivate(ca) // OK
+#pragma omp for firstprivate(ca) // expected-error {{no matching constructor for initialization of 'S3'}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
