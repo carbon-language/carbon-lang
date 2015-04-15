@@ -123,7 +123,7 @@ struct DOTGraphTraits<RegionInfoPass*> : public DOTGraphTraits<RegionNode*> {
 
     const RegionInfo &RI = *static_cast<const RegionInfo*>(R.getRegionInfo());
 
-    for (const auto &BB : R.blocks())
+    for (auto *BB : R.blocks())
       if (RI.getRegionFor(BB) == &R)
         O.indent(2 * (depth + 1)) << "Node"
           << static_cast<const void*>(RI.getTopLevelRegion()->getBBNode(BB))
