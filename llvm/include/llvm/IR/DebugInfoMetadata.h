@@ -1932,10 +1932,12 @@ public:
 
   /// \brief Check that a location is valid for this variable.
   ///
-  /// Check that \c DL has the same inlined-at location as this variable,
-  /// making them valid for the same \a DbgInfoIntrinsic.
+  /// Check that \c DL exists, is in the same subprogram, and has the same
+  /// inlined-at location as \c this.  (Otherwise, it's not a valid attachemnt
+  /// to a \a DbgInfoIntrinsic.)
   bool isValidLocationForIntrinsic(const MDLocation *DL) const {
-    return getInlinedAt() == (DL ? DL->getInlinedAt() : nullptr);
+    return DL && getInlinedAt() == DL->getInlinedAt() &&
+           getScope()->getSubprogram() == DL->getScope()->getSubprogram();
   }
 
   /// \brief Get an inlined version of this variable.
