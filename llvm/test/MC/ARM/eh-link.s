@@ -52,7 +52,7 @@
 @ CHECK-NEXT:     SHF_GROUP
 @ CHECK-NEXT:   ]
 @ CHECK-NEXT:   Address: 0x0
-@ CHECK-NEXT:   Offset: 0x60
+@ CHECK-NEXT:   Offset:
 @ CHECK-NEXT:   Size: 4
 @ CHECK-NEXT:   Link: 0
 @ CHECK-NEXT:   Info: 0
@@ -69,7 +69,7 @@
 @ CHECK-NEXT:     SHF_LINK_ORDER
 @ CHECK-NEXT:   ]
 @ CHECK-NEXT:   Address: 0x0
-@ CHECK-NEXT:   Offset: 0x64
+@ CHECK-NEXT:   Offset:
 @ CHECK-NEXT:   Size: 8
 @ CHECK-NEXT:   Link: 9
 @ CHECK-NEXT:   Info: 0

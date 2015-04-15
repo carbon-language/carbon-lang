@@ -257,13 +257,11 @@ class ELFObjectWriter : public MCObjectWriter {
     void ExecutePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
 
-    void writeSectionHeader(MCAssembler &Asm, const GroupMapTy &GroupMap,
+    void writeSectionHeader(ArrayRef<const MCSectionELF *> Sections,
+                            MCAssembler &Asm, const GroupMapTy &GroupMap,
                             const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetMapTy &SectionOffsetMap);
-
-    void ComputeSectionOrder(MCAssembler &Asm,
-                             std::vector<const MCSectionELF*> &Sections);
 
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
@@ -1550,28 +1548,20 @@ void ELFObjectWriter::writeDataSectionData(MCAssembler &Asm,
 }
 
 void ELFObjectWriter::writeSectionHeader(
-    MCAssembler &Asm, const GroupMapTy &GroupMap, const MCAsmLayout &Layout,
+    ArrayRef<const MCSectionELF *> Sections, MCAssembler &Asm,
+    const GroupMapTy &GroupMap, const MCAsmLayout &Layout,
     const SectionIndexMapTy &SectionIndexMap,
     const SectionOffsetMapTy &SectionOffsetMap) {
-  const unsigned NumSections = Asm.size() + 1;
-
-  std::vector<const MCSectionELF*> Sections;
-  Sections.resize(NumSections - 1);
-
-  for (SectionIndexMapTy::const_iterator i=
-         SectionIndexMap.begin(), e = SectionIndexMap.end(); i != e; ++i) {
-    const std::pair<const MCSectionELF*, uint32_t> &p = *i;
-    Sections[p.second - 1] = p.first;
-  }
+  const unsigned NumSections = Asm.size();
 
   // Null section first.
   uint64_t FirstSectionSize =
-    NumSections >= ELF::SHN_LORESERVE ? NumSections : 0;
+      (NumSections + 1) >= ELF::SHN_LORESERVE ? NumSections + 1 : 0;
   uint32_t FirstSectionLink =
     ShstrtabIndex >= ELF::SHN_LORESERVE ? ShstrtabIndex : 0;
   WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, FirstSectionLink, 0, 0, 0);
 
-  for (unsigned i = 0; i < NumSections - 1; ++i) {
+  for (unsigned i = 0; i < NumSections; ++i) {
     const MCSectionELF &Section = *Sections[i];
     const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
     uint32_t GroupSymbolIndex;
@@ -1586,36 +1576,6 @@ void ELFObjectWriter::writeSectionHeader(
     writeSection(Asm, SectionIndexMap, GroupSymbolIndex,
                  SectionOffsetMap.lookup(&Section), Size, SD.getAlignment(),
                  Section);
-  }
-}
-
-void ELFObjectWriter::ComputeSectionOrder(MCAssembler &Asm,
-                                  std::vector<const MCSectionELF*> &Sections) {
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(it->getSection());
-    if (Section.getType() == ELF::SHT_GROUP)
-      Sections.push_back(&Section);
-  }
-
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(it->getSection());
-    if (Section.getType() != ELF::SHT_GROUP &&
-        Section.getType() != ELF::SHT_REL &&
-        Section.getType() != ELF::SHT_RELA)
-      Sections.push_back(&Section);
-  }
-
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(it->getSection());
-    if (Section.getType() == ELF::SHT_REL ||
-        Section.getType() == ELF::SHT_RELA)
-      Sections.push_back(&Section);
   }
 }
 
@@ -1638,9 +1598,13 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                          const_cast<MCAsmLayout&>(Layout),
                          SectionIndexMap);
 
+  unsigned NumSections = Asm.size();
   std::vector<const MCSectionELF*> Sections;
-  ComputeSectionOrder(Asm, Sections);
-  unsigned NumSections = Sections.size();
+  Sections.resize(NumSections);
+
+  for (auto &Pair : SectionIndexMap)
+    Sections[Pair.second - 1] = Pair.first;
+
   SectionOffsetMapTy SectionOffsetMap;
 
   // Write out the ELF header ...
@@ -1666,7 +1630,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   const unsigned SectionHeaderOffset = OS.tell();
 
   // ... then the section header table ...
-  writeSectionHeader(Asm, GroupMap, Layout, SectionIndexMap, SectionOffsetMap);
+  writeSectionHeader(Sections, Asm, GroupMap, Layout, SectionIndexMap,
+                     SectionOffsetMap);
 
   if (is64Bit()) {
     uint64_t Val = SectionHeaderOffset;
