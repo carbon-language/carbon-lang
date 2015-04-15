@@ -175,12 +175,12 @@ public:
 // Provide global constructors that automatically figure out correct types...
 //
 template <class T>
-po_iterator<T> po_begin(T G) { return po_iterator<T>::begin(G); }
+po_iterator<T> po_begin(const T &G) { return po_iterator<T>::begin(G); }
 template <class T>
-po_iterator<T> po_end  (T G) { return po_iterator<T>::end(G); }
+po_iterator<T> po_end  (const T &G) { return po_iterator<T>::end(G); }
 
-template <class T> iterator_range<po_iterator<T>> post_order(T G) {
-  return iterator_range<po_iterator<T>>(po_begin(G), po_end(G));
+template <class T> iterator_range<po_iterator<T>> post_order(const T &G) {
+  return make_range(po_begin(G), po_end(G));
 }
 
 // Provide global definitions of external postorder iterators...
@@ -201,9 +201,8 @@ po_ext_iterator<T, SetType> po_ext_end(T G, SetType &S) {
 }
 
 template <class T, class SetType>
-iterator_range<po_ext_iterator<T, SetType>> post_order_ext(T G, SetType &S) {
-  return iterator_range<po_ext_iterator<T, SetType>>(po_ext_begin(G, S),
-                                                     po_ext_end(G, S));
+iterator_range<po_ext_iterator<T, SetType>> post_order_ext(const T &G, SetType &S) {
+  return make_range(po_ext_begin(G, S), po_ext_end(G, S));
 }
 
 // Provide global definitions of inverse post order iterators...
@@ -216,18 +215,18 @@ struct ipo_iterator : public po_iterator<Inverse<T>, SetType, External > {
 };
 
 template <class T>
-ipo_iterator<T> ipo_begin(T G, bool Reverse = false) {
+ipo_iterator<T> ipo_begin(const T &G, bool Reverse = false) {
   return ipo_iterator<T>::begin(G, Reverse);
 }
 
 template <class T>
-ipo_iterator<T> ipo_end(T G){
+ipo_iterator<T> ipo_end(const T &G){
   return ipo_iterator<T>::end(G);
 }
 
 template <class T>
-iterator_range<ipo_iterator<T>> inverse_post_order(T G, bool Reverse = false) {
-  return iterator_range<ipo_iterator<T>>(ipo_begin(G, Reverse), ipo_end(G));
+iterator_range<ipo_iterator<T>> inverse_post_order(const T &G, bool Reverse = false) {
+  return make_range(ipo_begin(G, Reverse), ipo_end(G));
 }
 
 // Provide global definitions of external inverse postorder iterators...
@@ -241,20 +240,19 @@ struct ipo_ext_iterator : public ipo_iterator<T, SetType, true> {
 };
 
 template <class T, class SetType>
-ipo_ext_iterator<T, SetType> ipo_ext_begin(T G, SetType &S) {
+ipo_ext_iterator<T, SetType> ipo_ext_begin(const T &G, SetType &S) {
   return ipo_ext_iterator<T, SetType>::begin(G, S);
 }
 
 template <class T, class SetType>
-ipo_ext_iterator<T, SetType> ipo_ext_end(T G, SetType &S) {
+ipo_ext_iterator<T, SetType> ipo_ext_end(const T &G, SetType &S) {
   return ipo_ext_iterator<T, SetType>::end(G, S);
 }
 
 template <class T, class SetType>
 iterator_range<ipo_ext_iterator<T, SetType>>
-inverse_post_order_ext(T G, SetType &S) {
-  return iterator_range<ipo_ext_iterator<T, SetType>>(ipo_ext_begin(G, S),
-                                                      ipo_ext_end(G, S));
+inverse_post_order_ext(const T &G, SetType &S) {
+  return make_range(ipo_ext_begin(G, S), ipo_ext_end(G, S));
 }
 
 //===--------------------------------------------------------------------===//
