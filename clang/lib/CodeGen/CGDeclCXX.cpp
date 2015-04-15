@@ -298,6 +298,11 @@ void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr,
                                             bool PerformInit) {
+  // Check if we've already initialized this decl.
+  auto I = DelayedCXXInitPosition.find(D);
+  if (I != DelayedCXXInitPosition.end() && I->second == ~0U)
+    return;
+
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
   SmallString<256> FnName;
   {
@@ -327,11 +332,9 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     CXXThreadLocalInitVars.push_back(Addr);
   } else if (PerformInit && ISA) {
     EmitPointerToInitFunc(D, Addr, Fn, ISA);
-    DelayedCXXInitPosition.erase(D);
   } else if (auto *IPA = D->getAttr<InitPriorityAttr>()) {
     OrderGlobalInits Key(IPA->getPriority(), PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
-    DelayedCXXInitPosition.erase(D);
   } else if (isTemplateInstantiation(D->getTemplateSpecializationKind())) {
     // C++ [basic.start.init]p2:
     //   Definitions of explicitly specialized class template static data
@@ -346,24 +349,24 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     // minor startup time optimization.  In the MS C++ ABI, there are no guard
     // variables, so this COMDAT key is required for correctness.
     AddGlobalCtor(Fn, 65535, COMDATKey);
-    DelayedCXXInitPosition.erase(D);
   } else if (D->hasAttr<SelectAnyAttr>()) {
     // SelectAny globals will be comdat-folded. Put the initializer into a
     // COMDAT group associated with the global, so the initializers get folded
     // too.
     AddGlobalCtor(Fn, 65535, COMDATKey);
-    DelayedCXXInitPosition.erase(D);
   } else {
-    llvm::DenseMap<const Decl *, unsigned>::iterator I =
-      DelayedCXXInitPosition.find(D);
+    I = DelayedCXXInitPosition.find(D); // Re-do lookup in case of re-hash.
     if (I == DelayedCXXInitPosition.end()) {
       CXXGlobalInits.push_back(Fn);
-    } else {
-      assert(CXXGlobalInits[I->second] == nullptr);
+    } else if (I->second != ~0U) {
+      assert(I->second < CXXGlobalInits.size() &&
+             CXXGlobalInits[I->second] == nullptr);
       CXXGlobalInits[I->second] = Fn;
-      DelayedCXXInitPosition.erase(I);
     }
   }
+
+  // Remember that we already emitted the initializer for this global.
+  DelayedCXXInitPosition[D] = ~0U;
 }
 
 void CodeGenModule::EmitCXXThreadLocalInitFunc() {

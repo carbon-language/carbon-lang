@@ -3865,17 +3865,6 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
   if (TSK == TSK_ExplicitInstantiationDeclaration)
     return;
 
-  // We may be explicitly instantiating something we've already implicitly
-  // instantiated.
-  VarDecl *InstantiatedDef = Var->getDefinition();
-  if (InstantiatedDef)
-    InstantiatedDef->setTemplateSpecializationKind(TSK, PointOfInstantiation);
-
-  // If we've already instantiated the definition and we're not
-  // re-instantiating it explicitly, we don't need to do anything.
-  if (InstantiatedDef && TSK != TSK_ExplicitInstantiationDefinition)
-    return;
-
   // Make sure to pass the instantiated variable to the consumer at the end.
   struct PassToConsumerRAII {
     ASTConsumer &Consumer;
@@ -3889,10 +3878,14 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
     }
   } PassToConsumerRAII(Consumer, Var);
 
-  // If we already implicitly instantiated this, just let the consumer know that
-  // it needs to handle an explicit instantiation now.
-  if (InstantiatedDef && TSK == TSK_ExplicitInstantiationDefinition)
+  // If we already have a definition, we're done.
+  if (VarDecl *Def = Var->getDefinition()) {
+    // We may be explicitly instantiating something we've already implicitly
+    // instantiated.
+    Def->setTemplateSpecializationKind(Var->getTemplateSpecializationKind(),
+                                       PointOfInstantiation);
     return;
+  }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst.isInvalid())
