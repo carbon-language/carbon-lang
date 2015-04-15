@@ -62,8 +62,6 @@ static uint64_t readAbbreviatedField(BitstreamCursor &Cursor,
   case BitCodeAbbrevOp::Fixed:
     return Cursor.Read((unsigned)Op.getEncodingData());
   case BitCodeAbbrevOp::VBR:
-    if ((unsigned)Op.getEncodingData() > 64)
-      report_fatal_error("Invalid record");
     return Cursor.ReadVBR64((unsigned)Op.getEncodingData());
   case BitCodeAbbrevOp::Char6:
     return BitCodeAbbrevOp::DecodeChar6(Cursor.Read(6));

@@ -395,7 +395,6 @@ public:
   // Read a VBR that may have a value up to 64-bits in size. The chunk size of
   // the VBR must still be <= 32 bits though.
   uint64_t ReadVBR64(unsigned NumBits) {
-    assert(NumBits <= 64 && "VBR can only be up to 64 bits in size.");
     uint32_t Piece = Read(NumBits);
     if ((Piece & (1U << (NumBits-1))) == 0)
       return uint64_t(Piece);
