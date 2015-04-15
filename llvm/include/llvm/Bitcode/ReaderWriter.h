@@ -56,11 +56,16 @@ namespace llvm {
   parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
                    DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
-  /// WriteBitcodeToFile - Write the specified module to the specified
-  /// raw output stream.  For streams where it matters, the given stream
-  /// should be in "binary" mode.
-  void WriteBitcodeToFile(const Module *M, raw_ostream &Out);
-
+  /// \brief Write the specified module to the specified raw output stream.
+  ///
+  /// For streams where it matters, the given stream should be in "binary"
+  /// mode.
+  ///
+  /// If \c ShouldPreserveUseListOrder, encode the use-list order for each \a
+  /// Value in \c M.  These will be reconstructed exactly when \a M is
+  /// deserialized.
+  void WriteBitcodeToFile(const Module *M, raw_ostream &Out,
+                          bool ShouldPreserveUseListOrder = false);
 
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.

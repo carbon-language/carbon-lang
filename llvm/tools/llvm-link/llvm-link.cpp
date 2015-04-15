@@ -152,7 +152,8 @@ int main(int argc, char **argv) {
   if (OutputAssembly) {
     Out.os() << *Composite;
   } else if (Force || !CheckBitcodeOutputToConsole(Out.os(), true))
-    WriteBitcodeToFile(Composite.get(), Out.os());
+    WriteBitcodeToFile(Composite.get(), Out.os(),
+                       shouldPreserveBitcodeUseListOrder());
 
   // Declare success.
   Out.keep();

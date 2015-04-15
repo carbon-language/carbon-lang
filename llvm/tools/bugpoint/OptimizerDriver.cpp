@@ -20,6 +20,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -55,7 +56,7 @@ namespace {
 /// file.  If an error occurs, true is returned.
 ///
 static bool writeProgramToFileAux(tool_output_file &Out, const Module *M) {
-  WriteBitcodeToFile(M, Out.os());
+  WriteBitcodeToFile(M, Out.os(), shouldPreserveBitcodeUseListOrder());
   Out.os().close();
   if (!Out.os().has_error()) {
     Out.keep();
@@ -151,7 +152,7 @@ bool BugDriver::runPasses(Module *Program,
 
   tool_output_file InFile(InputFilename, InputFD);
 
-  WriteBitcodeToFile(Program, InFile.os());
+  WriteBitcodeToFile(Program, InFile.os(), shouldPreserveBitcodeUseListOrder());
   InFile.os().close();
   if (InFile.os().has_error()) {
     errs() << "Error writing bitcode file: " << InputFilename << "\n";

@@ -15,11 +15,12 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
 PreservedAnalyses BitcodeWriterPass::run(Module &M) {
-  WriteBitcodeToFile(&M, OS);
+  WriteBitcodeToFile(&M, OS, shouldPreserveBitcodeUseListOrder());
   return PreservedAnalyses::all();
 }
 
@@ -34,7 +35,7 @@ namespace {
     const char *getPassName() const override { return "Bitcode Writer"; }
 
     bool runOnModule(Module &M) override {
-      WriteBitcodeToFile(&M, OS);
+      WriteBitcodeToFile(&M, OS, shouldPreserveBitcodeUseListOrder());
       return false;
     }
   };

@@ -131,7 +131,7 @@ bool TempFile::writeBitcode(const Module &M) const {
     return true;
   }
 
-  WriteBitcodeToFile(&M, OS);
+  WriteBitcodeToFile(&M, OS, /* ShouldPreserveUseListOrder */ true);
   return false;
 }
 
@@ -542,10 +542,6 @@ int main(int argc, char **argv) {
 
   outs() << "*** verify-uselistorder ***\n";
   // Can't verify if order isn't preserved.
-  if (!shouldPreserveBitcodeUseListOrder()) {
-    errs() << "warning: forcing -preserve-bc-uselistorder\n";
-    setPreserveBitcodeUseListOrder(true);
-  }
   if (!shouldPreserveAssemblyUseListOrder()) {
     errs() << "warning: forcing -preserve-ll-uselistorder\n";
     setPreserveAssemblyUseListOrder(true);
