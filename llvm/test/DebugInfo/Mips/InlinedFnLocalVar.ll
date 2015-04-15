@@ -37,8 +37,8 @@ entry:
 !9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5)
 !10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12)
 
-!59 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5, inlinedAt: !17)
-!60 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12, inlinedAt: !17)
+!59 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5)
+!60 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12)
 
 !11 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !0)
 !12 = !MDCompositeType(tag: DW_TAG_structure_type, name: "X", line: 10, size: 64, align: 32, file: !27, scope: !0, elements: !13)

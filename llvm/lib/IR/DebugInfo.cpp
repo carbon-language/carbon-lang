@@ -35,16 +35,6 @@ using namespace llvm::dwarf;
 
 DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
 
-DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
-                                       LLVMContext &VMContext) {
-  return cast<MDLocalVariable>(DV)
-      ->withInline(cast_or_null<MDLocation>(InlinedScope));
-}
-
-DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
-  return cast<MDLocalVariable>(DV)->withoutInline();
-}
-
 DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   if (auto *LocalScope = dyn_cast_or_null<MDLocalScope>(Scope))
     return LocalScope->getSubprogram();

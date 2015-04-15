@@ -94,6 +94,6 @@ attributes #1 = { nounwind readnone }
 
 ; CHECK: [[FOO:![0-9]+]] = !MDSubprogram(name: "foo",
 ; CHECK: [[BAR:![0-9]+]] = !MDSubprogram(name: "bar",
+; CHECK: [[m23]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1, scope: [[FOO]]
 ; CHECK: [[CALL_SITE:![0-9]+]] = distinct !MDLocation(line: 8, column: 14, scope: [[BAR]])
-; CHECK: [[m23]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1, scope: [[FOO]],{{.*}} inlinedAt: [[CALL_SITE]])
 ; CHECK: [[m24]] = !MDLocation(line: 1, column: 17, scope: [[FOO]], inlinedAt: [[CALL_SITE]])

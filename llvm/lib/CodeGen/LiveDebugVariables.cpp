@@ -378,12 +378,13 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
   CommentOS << " ]";
 }
 
-static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V) {
+static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V,
+                              const MDLocation *DL) {
   const LLVMContext &Ctx = V->getContext();
   StringRef Res = V->getName();
   if (!Res.empty())
     OS << Res << "," << V->getLine();
-  if (auto *InlinedAt = V->getInlinedAt()) {
+  if (auto *InlinedAt = DL->getInlinedAt()) {
     if (DebugLoc InlinedAtDL = InlinedAt) {
       OS << " @[";
       printDebugLoc(InlinedAtDL, OS, Ctx);
@@ -395,7 +396,7 @@ static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V) {
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
   DIVariable DV = cast<MDLocalVariable>(Variable);
   OS << "!\"";
-  printExtendedName(OS, DV);
+  printExtendedName(OS, DV, dl);
 
   OS << "\"\t";
   if (offset)

@@ -622,16 +622,6 @@ DISubprogram getDISubprogram(const Function *F);
 /// \brief Find underlying composite type.
 DICompositeType getDICompositeType(DIType T);
 
-/// \brief Create a new inlined variable based on current variable.
-///
-/// @param DV            Current Variable.
-/// @param InlinedScope  Location at current variable is inlined.
-DIVariable createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
-                                 LLVMContext &VMContext);
-
-/// \brief Remove inlined scope from the variable.
-DIVariable cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext);
-
 /// \brief Generate map by visiting all retained types.
 DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);
 

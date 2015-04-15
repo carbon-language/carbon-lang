@@ -58,7 +58,7 @@ declare void @uuid_LtoB(i8*, i8*)
 !5 = !MDSubroutineType(types: !6)
 !6 = !{null}
 !7 = !MDLocation(line: 810, scope: !1)
-!8 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "data", line: 201, arg: 0, scope: !9, file: !10, type: !11, inlinedAt: !7)
+!8 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "data", line: 201, arg: 0, scope: !9, file: !10, type: !11)
 !9 = !MDSubprogram(name: "_OSSwapInt64", linkageName: "_OSSwapInt64", line: 202, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !10, scope: null, type: !5)
 !10 = !MDFile(filename: "OSByteOrder.h", directory: "/usr/include/libkern/ppc")
 !11 = !MDDerivedType(tag: DW_TAG_typedef, name: "uint64_t", line: 59, file: !36, scope: !3, baseType: !13)

@@ -904,19 +904,6 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
         BI->setDebugLoc(TheCallDL);
       } else {
         BI->setDebugLoc(updateInlinedAtInfo(DL, InlinedAtNode, BI->getContext(), IANodes));
-        if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(BI)) {
-          LLVMContext &Ctx = BI->getContext();
-          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt();
-          DVI->setOperand(2, MetadataAsValue::get(
-                                 Ctx, createInlinedVariable(DVI->getVariable(),
-                                                            InlinedAt, Ctx)));
-        } else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI)) {
-          LLVMContext &Ctx = BI->getContext();
-          MDNode *InlinedAt = BI->getDebugLoc().getInlinedAt();
-          DDI->setOperand(1, MetadataAsValue::get(
-                                 Ctx, createInlinedVariable(DDI->getVariable(),
-                                                            InlinedAt, Ctx)));
-        }
       }
     }
   }

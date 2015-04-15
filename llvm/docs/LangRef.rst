@@ -3235,21 +3235,15 @@ arguments (``DW_TAG_arg_variable``).  In the latter case, the ``arg:`` field
 specifies the argument position, and this variable will be included in the
 ``variables:`` field of its :ref:`MDSubprogram`.
 
-If set, the ``inlinedAt:`` field points at an :ref:`MDLocation`, and the
-variable represents an inlined version of a variable (with all other fields
-duplicated from the non-inlined version).
-
 .. code-block:: llvm
 
     !0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 0,
                           scope: !3, file: !2, line: 7, type: !3,
-                          flags: DIFlagArtificial, inlinedAt: !4)
+                          flags: DIFlagArtificial)
     !1 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1,
-                          scope: !4, file: !2, line: 7, type: !3,
-                          inlinedAt: !6)
+                          scope: !4, file: !2, line: 7, type: !3)
     !1 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y",
-                          scope: !5, file: !2, line: 7, type: !3,
-                          inlinedAt: !6)
+                          scope: !5, file: !2, line: 7, type: !3)
 
 MDExpression
 """"""""""""

@@ -3680,8 +3680,7 @@ bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
 
 /// ParseMDLocalVariable:
 ///   ::= !MDLocalVariable(tag: DW_TAG_arg_variable, scope: !0, name: "foo",
-///                        file: !1, line: 7, type: !2, arg: 2, flags: 7,
-///                        inlinedAt: !3)
+///                        file: !1, line: 7, type: !2, arg: 2, flags: 7)
 bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(tag, DwarfTagField, );                                              \
@@ -3691,14 +3690,13 @@ bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(line, LineField, );                                                 \
   OPTIONAL(type, MDField, );                                                   \
   OPTIONAL(arg, MDUnsignedField, (0, UINT8_MAX));                              \
-  OPTIONAL(flags, DIFlagField, );                                              \
-  OPTIONAL(inlinedAt, MDField, );
+  OPTIONAL(flags, DIFlagField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  Result = GET_OR_DISTINCT(
-      MDLocalVariable, (Context, tag.Val, scope.Val, name.Val, file.Val,
-                        line.Val, type.Val, arg.Val, flags.Val, inlinedAt.Val));
+  Result = GET_OR_DISTINCT(MDLocalVariable,
+                           (Context, tag.Val, scope.Val, name.Val, file.Val,
+                            line.Val, type.Val, arg.Val, flags.Val));
   return false;
 }
 

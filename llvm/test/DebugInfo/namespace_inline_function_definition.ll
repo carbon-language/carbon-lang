@@ -89,7 +89,7 @@ attributes #2 = { nounwind readnone }
 !16 = !MDLocation(line: 5, scope: !4)
 !17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
 
-!117 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8, inlinedAt: !16)
+!117 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
 
 !18 = !MDLocation(line: 6, scope: !9, inlinedAt: !16)
 !19 = !MDLocation(line: 6, scope: !9)

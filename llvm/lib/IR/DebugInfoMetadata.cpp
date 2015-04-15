@@ -450,10 +450,12 @@ MDGlobalVariable::getImpl(LLVMContext &Context, Metadata *Scope, MDString *Name,
                        Ops);
 }
 
-MDLocalVariable *MDLocalVariable::getImpl(
-    LLVMContext &Context, unsigned Tag, Metadata *Scope, MDString *Name,
-    Metadata *File, unsigned Line, Metadata *Type, unsigned Arg, unsigned Flags,
-    Metadata *InlinedAt, StorageType Storage, bool ShouldCreate) {
+MDLocalVariable *MDLocalVariable::getImpl(LLVMContext &Context, unsigned Tag,
+                                          Metadata *Scope, MDString *Name,
+                                          Metadata *File, unsigned Line,
+                                          Metadata *Type, unsigned Arg,
+                                          unsigned Flags, StorageType Storage,
+                                          bool ShouldCreate) {
   // Truncate Arg to 8 bits.
   //
   // FIXME: This is gross (and should be changed to an assert or removed), but
@@ -463,8 +465,8 @@ MDLocalVariable *MDLocalVariable::getImpl(
   assert(Scope && "Expected scope");
   assert(isCanonical(Name) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(MDLocalVariable, (Tag, Scope, getString(Name), File,
-                                          Line, Type, Arg, Flags, InlinedAt));
-  Metadata *Ops[] = {Scope, Name, File, Type, InlinedAt};
+                                          Line, Type, Arg, Flags));
+  Metadata *Ops[] = {Scope, Name, File, Type};
   DEFINE_GETIMPL_STORE(MDLocalVariable, (Tag, Line, Arg, Flags), Ops);
 }
 

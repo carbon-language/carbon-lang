@@ -736,29 +736,24 @@ template <> struct MDNodeKeyImpl<MDLocalVariable> {
   Metadata *Type;
   unsigned Arg;
   unsigned Flags;
-  Metadata *InlinedAt;
 
   MDNodeKeyImpl(unsigned Tag, Metadata *Scope, StringRef Name, Metadata *File,
-                unsigned Line, Metadata *Type, unsigned Arg, unsigned Flags,
-                Metadata *InlinedAt)
+                unsigned Line, Metadata *Type, unsigned Arg, unsigned Flags)
       : Tag(Tag), Scope(Scope), Name(Name), File(File), Line(Line), Type(Type),
-        Arg(Arg), Flags(Flags), InlinedAt(InlinedAt) {}
+        Arg(Arg), Flags(Flags) {}
   MDNodeKeyImpl(const MDLocalVariable *N)
       : Tag(N->getTag()), Scope(N->getRawScope()), Name(N->getName()),
         File(N->getRawFile()), Line(N->getLine()), Type(N->getRawType()),
-        Arg(N->getArg()), Flags(N->getFlags()),
-        InlinedAt(N->getRawInlinedAt()) {}
+        Arg(N->getArg()), Flags(N->getFlags()) {}
 
   bool isKeyOf(const MDLocalVariable *RHS) const {
     return Tag == RHS->getTag() && Scope == RHS->getRawScope() &&
            Name == RHS->getName() && File == RHS->getRawFile() &&
            Line == RHS->getLine() && Type == RHS->getRawType() &&
-           Arg == RHS->getArg() && Flags == RHS->getFlags() &&
-           InlinedAt == RHS->getRawInlinedAt();
+           Arg == RHS->getArg() && Flags == RHS->getFlags();
   }
   unsigned getHashValue() const {
-    return hash_combine(Tag, Scope, Name, File, Line, Type, Arg, Flags,
-                        InlinedAt);
+    return hash_combine(Tag, Scope, Name, File, Line, Type, Arg, Flags);
   }
 };
 

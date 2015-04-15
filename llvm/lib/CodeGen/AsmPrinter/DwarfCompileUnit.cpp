@@ -689,7 +689,7 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
     SPDIE = getDIE(SP);
   assert(SPDIE);
   for (DIVariable DV : Variables) {
-    DbgVariable NewVar(DV, DIExpression(), DD);
+    DbgVariable NewVar(DV, nullptr, DIExpression(), DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);
     SPDIE->addChild(std::move(VariableDie));

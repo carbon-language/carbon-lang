@@ -1712,7 +1712,7 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
     if (!HaveSemi) OS << ";";
     DIVariable DV = cast<MDLocalVariable>(getOperand(e - 2).getMetadata());
     OS << " line no:" <<  DV->getLine();
-    if (auto *InlinedAt = DV->getInlinedAt()) {
+    if (auto *InlinedAt = debugLoc->getInlinedAt()) {
       DebugLoc InlinedAtDL(InlinedAt);
       if (InlinedAtDL && MF) {
         OS << " inlined @[ ";

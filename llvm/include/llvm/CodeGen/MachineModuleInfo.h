@@ -184,12 +184,13 @@ public:
   static char ID; // Pass identification, replacement for typeid
 
   struct VariableDbgInfo {
-    TrackingMDNodeRef Var;
-    TrackingMDNodeRef Expr;
+    const MDLocalVariable *Var;
+    const MDExpression *Expr;
     unsigned Slot;
-    DebugLoc Loc;
+    const MDLocation *Loc;
 
-    VariableDbgInfo(MDNode *Var, MDNode *Expr, unsigned Slot, DebugLoc Loc)
+    VariableDbgInfo(const MDLocalVariable *Var, const MDExpression *Expr,
+                    unsigned Slot, const MDLocation *Loc)
         : Var(Var), Expr(Expr), Slot(Slot), Loc(Loc) {}
   };
   typedef SmallVector<VariableDbgInfo, 4> VariableDbgInfoMapTy;
@@ -437,8 +438,8 @@ public:
 
   /// setVariableDbgInfo - Collect information used to emit debugging
   /// information of a variable.
-  void setVariableDbgInfo(MDNode *Var, MDNode *Expr, unsigned Slot,
-                          DebugLoc Loc) {
+  void setVariableDbgInfo(const MDLocalVariable *Var, const MDExpression *Expr,
+                          unsigned Slot, const MDLocation *Loc) {
     VariableDbgInfos.emplace_back(Var, Expr, Slot, Loc);
   }
 

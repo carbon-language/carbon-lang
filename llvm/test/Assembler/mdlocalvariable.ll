@@ -12,13 +12,13 @@
 !3 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !4 = !MDLocation(scope: !0)
 
-; CHECK: !5 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3, scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
-; CHECK: !6 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
+; CHECK: !5 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3, scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
+; CHECK: !6 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
 !5 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3,
                       scope: !0, file: !2, line: 7, type: !3,
-                      flags: DIFlagArtificial, inlinedAt: !4)
+                      flags: DIFlagArtificial)
 !6 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0,
-                      file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
+                      file: !2, line: 7, type: !3, flags: DIFlagArtificial)
 
 ; CHECK: !7 = !MDLocalVariable(tag: DW_TAG_arg_variable, arg: 0, scope: !0)
 ; CHECK: !8 = !MDLocalVariable(tag: DW_TAG_auto_variable, scope: !0)

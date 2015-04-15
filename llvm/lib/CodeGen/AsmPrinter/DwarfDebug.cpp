@@ -489,7 +489,8 @@ void DwarfDebug::finishVariableDefinitions() {
     // DIE::getUnit isn't simple - it walks parent pointers, etc.
     DwarfCompileUnit *Unit = lookupUnit(VariableDie->getUnit());
     assert(Unit);
-    DbgVariable *AbsVar = getExistingAbstractVariable(Var->getVariable());
+    DbgVariable *AbsVar = getExistingAbstractVariable(
+        InlinedVariable(Var->getVariable(), Var->getInlinedAt()));
     if (AbsVar && AbsVar->getDIE()) {
       Unit->addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin,
                         *AbsVar->getDIE());
@@ -660,48 +661,43 @@ void DwarfDebug::endModule() {
 }
 
 // Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV,
+DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
                                                      DIVariable &Cleansed) {
-  LLVMContext &Ctx = DV->getContext();
   // More then one inlined variable corresponds to one abstract variable.
-  // FIXME: This duplication of variables when inlining should probably be
-  // removed. It's done to allow each DIVariable to describe its location
-  // because the DebugLoc on the dbg.value/declare isn't accurate. We should
-  // make it accurate then remove this duplication/cleansing stuff.
-  Cleansed = cleanseInlinedVariable(DV, Ctx);
+  Cleansed = IV.first;
   auto I = AbstractVariables.find(Cleansed);
   if (I != AbstractVariables.end())
     return I->second.get();
   return nullptr;
 }
 
-DbgVariable *DwarfDebug::getExistingAbstractVariable(const DIVariable &DV) {
+DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV) {
   DIVariable Cleansed;
-  return getExistingAbstractVariable(DV, Cleansed);
+  return getExistingAbstractVariable(IV, Cleansed);
 }
 
 void DwarfDebug::createAbstractVariable(const DIVariable &Var,
                                         LexicalScope *Scope) {
-  auto AbsDbgVariable = make_unique<DbgVariable>(Var, DIExpression(), this);
+  auto AbsDbgVariable =
+      make_unique<DbgVariable>(Var, nullptr, DIExpression(), this);
   InfoHolder.addScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
 
-void DwarfDebug::ensureAbstractVariableIsCreated(const DIVariable &DV,
+void DwarfDebug::ensureAbstractVariableIsCreated(InlinedVariable IV,
                                                  const MDNode *ScopeNode) {
-  DIVariable Cleansed = DV;
-  if (getExistingAbstractVariable(DV, Cleansed))
+  DIVariable Cleansed;
+  if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
   createAbstractVariable(Cleansed, LScopes.getOrCreateAbstractScope(
                                        cast<MDLocalScope>(ScopeNode)));
 }
 
-void
-DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(const DIVariable &DV,
-                                                    const MDNode *ScopeNode) {
-  DIVariable Cleansed = DV;
-  if (getExistingAbstractVariable(DV, Cleansed))
+void DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(
+    InlinedVariable IV, const MDNode *ScopeNode) {
+  DIVariable Cleansed;
+  if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
   if (LexicalScope *Scope =
@@ -711,11 +707,12 @@ DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(const DIVariable &DV,
 
 // Collect variable information from side table maintained by MMI.
 void DwarfDebug::collectVariableInfoFromMMITable(
-    SmallPtrSetImpl<const MDNode *> &Processed) {
+    DenseSet<InlinedVariable> &Processed) {
   for (const auto &VI : MMI->getVariableDbgInfo()) {
     if (!VI.Var)
       continue;
-    Processed.insert(VI.Var);
+    InlinedVariable Var(VI.Var, VI.Loc ? VI.Loc->getInlinedAt() : nullptr);
+    Processed.insert(Var);
     LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
     // If variable scope is not found then skip this variable.
@@ -726,8 +723,9 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     assert(DV->isValidLocationForIntrinsic(VI.Loc) &&
            "Expected inlined-at fields to agree");
     DIExpression Expr = cast_or_null<MDExpression>(VI.Expr);
-    ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
-    auto RegVar = make_unique<DbgVariable>(DV, Expr, this, VI.Slot);
+    ensureAbstractVariableIsCreatedIfScoped(Var, Scope->getScopeNode());
+    auto RegVar =
+        make_unique<DbgVariable>(Var.first, Var.second, Expr, this, VI.Slot);
     if (InfoHolder.addScopeVariable(Scope, RegVar.get()))
       ConcreteVariables.push_back(std::move(RegVar));
   }
@@ -877,35 +875,34 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
 
 // Find variables for each lexical scope.
-void
-DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
-                                SmallPtrSetImpl<const MDNode *> &Processed) {
+void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
+                                     DenseSet<InlinedVariable> &Processed) {
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
 
   for (const auto &I : DbgValues) {
-    DIVariable DV = cast<MDLocalVariable>(I.first);
-    if (Processed.count(DV))
+    InlinedVariable IV = I.first;
+    if (Processed.count(IV))
       continue;
 
-    // Instruction ranges, specifying where DV is accessible.
+    // Instruction ranges, specifying where IV is accessible.
     const auto &Ranges = I.second;
     if (Ranges.empty())
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (MDLocation *IA = DV->getInlinedAt())
-      Scope = LScopes.findInlinedScope(DV->getScope(), IA);
+    if (const MDLocation *IA = IV.second)
+      Scope = LScopes.findInlinedScope(IV.first->getScope(), IA);
     else
-      Scope = LScopes.findLexicalScope(DV->getScope());
+      Scope = LScopes.findLexicalScope(IV.first->getScope());
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
 
-    Processed.insert(DV);
+    Processed.insert(IV);
     const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
-    ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
+    ensureAbstractVariableIsCreatedIfScoped(IV, Scope->getScopeNode());
     ConcreteVariables.push_back(make_unique<DbgVariable>(MInsn, this));
     DbgVariable *RegVar = ConcreteVariables.back().get();
     InfoHolder.addScopeVariable(Scope, RegVar);
@@ -931,12 +928,14 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
 
   // Collect info for variables that were optimized out.
   for (DIVariable DV : SP->getVariables()) {
-    if (!Processed.insert(DV).second)
+    if (!Processed.insert(InlinedVariable(DV, nullptr)).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV->getScope())) {
-      ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
+      ensureAbstractVariableIsCreatedIfScoped(InlinedVariable(DV, nullptr),
+                                              Scope->getScopeNode());
       DIExpression NoExpr;
-      ConcreteVariables.push_back(make_unique<DbgVariable>(DV, NoExpr, this));
+      ConcreteVariables.push_back(
+          make_unique<DbgVariable>(DV, nullptr, NoExpr, this));
       InfoHolder.addScopeVariable(Scope, ConcreteVariables.back().get());
     }
   }
@@ -1188,7 +1187,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DISubprogram SP = cast<MDSubprogram>(FnScope->getScopeNode());
   DwarfCompileUnit &TheCU = *SPMap.lookup(SP);
 
-  SmallPtrSet<const MDNode *, 16> ProcessedVars;
+  DenseSet<InlinedVariable> ProcessedVars;
   collectVariableInfo(TheCU, SP, ProcessedVars);
 
   // Add the range of this function to the list of ranges for the CU.
@@ -1218,9 +1217,10 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     DISubprogram SP = cast<MDSubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
     for (DIVariable DV : SP->getVariables()) {
-      if (!ProcessedVars.insert(DV).second)
+      if (!ProcessedVars.insert(InlinedVariable(DV, nullptr)).second)
         continue;
-      ensureAbstractVariableIsCreated(DV, DV->getScope());
+      ensureAbstractVariableIsCreated(InlinedVariable(DV, nullptr),
+                                      DV->getScope());
       assert(LScopes.getAbstractScopesList().size() == NumAbstractScopes
              && "ensureAbstractVariableIsCreated inserted abstract scopes");
     }

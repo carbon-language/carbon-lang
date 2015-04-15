@@ -1075,9 +1075,6 @@ void Verifier::visitMDLocalVariable(const MDLocalVariable &N) {
          "invalid tag", &N);
   Assert(N.getRawScope() && isa<MDLocalScope>(N.getRawScope()),
          "local variable requires a valid scope", &N, N.getRawScope());
-  if (auto *IA = N.getRawInlinedAt())
-    Assert(isa<MDLocation>(IA), "local variable requires a valid scope", &N,
-           IA);
 }
 
 void Verifier::visitMDExpression(const MDExpression &N) {
@@ -3401,16 +3398,11 @@ void Verifier::visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII) {
   BasicBlock *BB = DII.getParent();
   Function *F = BB ? BB->getParent() : nullptr;
 
-  // The inlined-at attachments for variables and !dbg attachments must agree.
+  // The scopes for variables and !dbg attachments must agree.
   MDLocalVariable *Var = DII.getVariable();
-  MDLocation *VarIA = Var->getInlinedAt();
   MDLocation *Loc = DII.getDebugLoc();
   Assert(Loc, "llvm.dbg." + Kind + " intrinsic requires a !dbg attachment",
          &DII, BB, F);
-
-  MDLocation *LocIA = Loc->getInlinedAt();
-  Assert(VarIA == LocIA, "mismatched variable and !dbg inlined-at", &DII, BB, F,
-         Var, VarIA, Loc, LocIA);
 
   MDSubprogram *VarSP = getSubprogram(Var->getRawScope());
   MDSubprogram *LocSP = getSubprogram(Loc->getRawScope());

@@ -33,7 +33,7 @@ static unsigned isDescribedByReg(const MachineInstr &MI) {
   return MI.getOperand(0).isReg() ? MI.getOperand(0).getReg() : 0;
 }
 
-void DbgValueHistoryMap::startInstrRange(const MDNode *Var,
+void DbgValueHistoryMap::startInstrRange(InlinedVariable Var,
                                          const MachineInstr &MI) {
   // Instruction range should start with a DBG_VALUE instruction for the
   // variable.
@@ -48,7 +48,7 @@ void DbgValueHistoryMap::startInstrRange(const MDNode *Var,
   Ranges.push_back(std::make_pair(&MI, nullptr));
 }
 
-void DbgValueHistoryMap::endInstrRange(const MDNode *Var,
+void DbgValueHistoryMap::endInstrRange(InlinedVariable Var,
                                        const MachineInstr &MI) {
   auto &Ranges = VarInstrRanges[Var];
   // Verify that the current instruction range is not yet closed.
@@ -59,7 +59,7 @@ void DbgValueHistoryMap::endInstrRange(const MDNode *Var,
   Ranges.back().second = &MI;
 }
 
-unsigned DbgValueHistoryMap::getRegisterForVar(const MDNode *Var) const {
+unsigned DbgValueHistoryMap::getRegisterForVar(InlinedVariable Var) const {
   const auto &I = VarInstrRanges.find(Var);
   if (I == VarInstrRanges.end())
     return 0;
@@ -71,12 +71,13 @@ unsigned DbgValueHistoryMap::getRegisterForVar(const MDNode *Var) const {
 
 namespace {
 // Maps physreg numbers to the variables they describe.
-typedef std::map<unsigned, SmallVector<const MDNode *, 1>> RegDescribedVarsMap;
+typedef DbgValueHistoryMap::InlinedVariable InlinedVariable;
+typedef std::map<unsigned, SmallVector<InlinedVariable, 1>> RegDescribedVarsMap;
 }
 
 // \brief Claim that @Var is not described by @RegNo anymore.
-static void dropRegDescribedVar(RegDescribedVarsMap &RegVars,
-                                unsigned RegNo, const MDNode *Var) {
+static void dropRegDescribedVar(RegDescribedVarsMap &RegVars, unsigned RegNo,
+                                InlinedVariable Var) {
   const auto &I = RegVars.find(RegNo);
   assert(RegNo != 0U && I != RegVars.end());
   auto &VarSet = I->second;
@@ -89,8 +90,8 @@ static void dropRegDescribedVar(RegDescribedVarsMap &RegVars,
 }
 
 // \brief Claim that @Var is now described by @RegNo.
-static void addRegDescribedVar(RegDescribedVarsMap &RegVars,
-                               unsigned RegNo, const MDNode *Var) {
+static void addRegDescribedVar(RegDescribedVarsMap &RegVars, unsigned RegNo,
+                               InlinedVariable Var) {
   assert(RegNo != 0U);
   auto &VarSet = RegVars[RegNo];
   assert(std::find(VarSet.begin(), VarSet.end(), Var) == VarSet.end());
@@ -203,9 +204,13 @@ void llvm::calculateDbgValueHistory(const MachineFunction *MF,
       // Use the base variable (without any DW_OP_piece expressions)
       // as index into History. The full variables including the
       // piece expressions are attached to the MI.
-      DIVariable Var = MI.getDebugVariable();
-      assert(Var->isValidLocationForIntrinsic(MI.getDebugLoc()) &&
+      MDLocalVariable *RawVar = MI.getDebugVariable();
+      assert(RawVar->isValidLocationForIntrinsic(MI.getDebugLoc()) &&
              "Expected inlined-at fields to agree");
+      MDLocation *IA = nullptr;
+      if (MDLocation *Loc = MI.getDebugLoc())
+        IA = Loc->getInlinedAt();
+      InlinedVariable Var(RawVar, IA);
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);

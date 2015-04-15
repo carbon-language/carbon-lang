@@ -82,9 +82,9 @@ declare i32 @puts(i8* nocapture) nounwind
 !20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !9, file: !1, type: !7)
 !21 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 3, scope: !9, file: !1, type: !8)
 
-!49 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 4, arg: 1, scope: !9, file: !1, type: !6, inlinedAt: !37)
-!50 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !9, file: !1, type: !7, inlinedAt: !37)
-!51 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 2, scope: !9, file: !1, type: !8, inlinedAt: !37)
+!49 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 4, arg: 1, scope: !9, file: !1, type: !6)
+!50 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !9, file: !1, type: !7)
+!51 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 2, scope: !9, file: !1, type: !8)
 
 !22 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 17, arg: 0, scope: !10, file: !1, type: !5)
 !23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 17, arg: 0, scope: !10, file: !1, type: !13)

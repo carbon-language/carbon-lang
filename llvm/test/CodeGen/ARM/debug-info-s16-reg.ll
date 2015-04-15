@@ -80,9 +80,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 3, scope: !0, file: !1, type: !13)
 !13 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
 
-!58 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 4, arg: 1, scope: !0, file: !1, type: !9, inlinedAt: !40)
-!60 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !0, file: !1, type: !11, inlinedAt: !40)
-!62 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 3, scope: !0, file: !1, type: !13, inlinedAt: !40)
+!58 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 4, arg: 1, scope: !0, file: !1, type: !9)
+!60 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !0, file: !1, type: !11)
+!62 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 3, scope: !0, file: !1, type: !13)
 
 !14 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 11, arg: 1, scope: !6, file: !1, type: !9)
 !15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 11, arg: 2, scope: !6, file: !1, type: !11)

@@ -1813,11 +1813,9 @@ TEST_F(MDLocalVariableTest, get) {
   MDTypeRef Type = getDerivedType();
   unsigned Arg = 6;
   unsigned Flags = 7;
-  MDLocation *InlinedAt =
-      MDLocation::getDistinct(Context, 10, 20, getSubprogram());
 
   auto *N = MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                 Arg, Flags, InlinedAt);
+                                 Arg, Flags);
   EXPECT_EQ(Tag, N->getTag());
   EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
@@ -1826,46 +1824,28 @@ TEST_F(MDLocalVariableTest, get) {
   EXPECT_EQ(Type, N->getType());
   EXPECT_EQ(Arg, N->getArg());
   EXPECT_EQ(Flags, N->getFlags());
-  EXPECT_EQ(InlinedAt, N->getInlinedAt());
   EXPECT_EQ(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg, Flags, InlinedAt));
+                                    Arg, Flags));
 
   EXPECT_NE(N, MDLocalVariable::get(Context, dwarf::DW_TAG_auto_variable, Scope,
-                                    Name, File, Line, Type, Arg, Flags,
-                                    InlinedAt));
+                                    Name, File, Line, Type, Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, getSubprogram(), Name, File,
-                                    Line, Type, Arg, Flags, InlinedAt));
+                                    Line, Type, Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, "other", File, Line,
-                                    Type, Arg, Flags, InlinedAt));
+                                    Type, Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, getFile(), Line,
-                                    Type, Arg, Flags, InlinedAt));
+                                    Type, Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line + 1,
-                                    Type, Arg, Flags, InlinedAt));
+                                    Type, Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line,
-                                    getDerivedType(), Arg, Flags, InlinedAt));
+                                    getDerivedType(), Arg, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg + 1, Flags, InlinedAt));
+                                    Arg + 1, Flags));
   EXPECT_NE(N, MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg, ~Flags, InlinedAt));
-  EXPECT_NE(N, MDLocalVariable::get(
-                   Context, Tag, Scope, Name, File, Line, Type, Arg, Flags,
-                   MDLocation::getDistinct(Context, 10, 20, getSubprogram())));
+                                    Arg, ~Flags));
 
   TempMDLocalVariable Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
-
-  auto *Inlined = N->withoutInline();
-  EXPECT_NE(N, Inlined);
-  EXPECT_EQ(N->getTag(), Inlined->getTag());
-  EXPECT_EQ(N->getScope(), Inlined->getScope());
-  EXPECT_EQ(N->getName(), Inlined->getName());
-  EXPECT_EQ(N->getFile(), Inlined->getFile());
-  EXPECT_EQ(N->getLine(), Inlined->getLine());
-  EXPECT_EQ(N->getType(), Inlined->getType());
-  EXPECT_EQ(N->getArg(), Inlined->getArg());
-  EXPECT_EQ(N->getFlags(), Inlined->getFlags());
-  EXPECT_EQ(nullptr, Inlined->getInlinedAt());
-  EXPECT_EQ(N, Inlined->withInline(cast<MDLocation>(InlinedAt)));
 }
 
 typedef MetadataTest MDExpressionTest;

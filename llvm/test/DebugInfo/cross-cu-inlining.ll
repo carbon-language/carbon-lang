@@ -134,7 +134,7 @@ attributes #3 = { nounwind }
 !19 = !MDLocation(line: 4, scope: !4)
 !20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !12, file: !13, type: !8)
 
-!120 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !12, file: !13, type: !8, inlinedAt: !19)
+!120 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !12, file: !13, type: !8)
 
 !21 = !MDLocation(line: 1, scope: !12, inlinedAt: !19)
 !22 = !MDLocation(line: 2, scope: !12, inlinedAt: !19)

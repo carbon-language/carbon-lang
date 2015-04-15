@@ -45,10 +45,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 ; VARIABLE: {{.*Abbrev.*DW_TAG_variable}}
 ; VARIABLE-NOT: {{.*Abbrev.*DW_TAG_variable}}
 
-!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9, inlinedAt: !19)
+!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9)
 !19 = !MDLocation(line: 11, column: 10, scope: !5)
 !21 = !MDLocation(line: 3, column: 25, scope: !10, inlinedAt: !19)
-!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 4, scope: !10, file: !6, type: !9, inlinedAt: !19)
+!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 4, scope: !10, file: !6, type: !9)
 !23 = !MDLocation(line: 4, column: 16, scope: !10, inlinedAt: !19)
 !24 = !MDLocation(line: 5, column: 3, scope: !10, inlinedAt: !19)
 !25 = !MDLocation(line: 6, column: 3, scope: !10, inlinedAt: !19)
