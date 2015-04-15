@@ -1442,7 +1442,7 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
                                                            CurrStates,
                                                            WarningsHandler);
             
-            if (BlockInfo.allBackEdgesVisited(*SI, CurrBlock))
+            if (BlockInfo.allBackEdgesVisited(CurrBlock, *SI))
               BlockInfo.discardInfo(*SI);
           } else {
             BlockInfo.addInfo(*SI, CurrStates, OwnershipTaken);

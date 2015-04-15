@@ -638,6 +638,18 @@ void testWhileLoop1() {
   *var0; // expected-warning {{invalid invocation of method 'operator*' on object 'var0' while it is in the 'consumed' state}}
 }
 
+// Tests if state information is correctly discarded for certain shapes of CFGs.
+void testSwitchGOTO(void) {
+	int a;
+
+	LABEL0:
+	switch (a)
+	case 0:
+		goto LABEL0;
+
+	goto LABEL0;
+}
+
 typedef const int*& IntegerPointerReference;
 void testIsRValueRefishAndCanonicalType(IntegerPointerReference a) {}
 
