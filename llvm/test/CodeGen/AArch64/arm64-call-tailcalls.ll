@@ -53,9 +53,9 @@ bb:                                               ; preds = %entry
 
 define i32 @t8(i32 %x) nounwind ssp {
 ; CHECK-LABEL: t8:
+; CHECK: b	_c
 ; CHECK: b	_a
 ; CHECK: b	_b
-; CHECK: b	_c
   %and = and i32 %x, 1
   %tobool = icmp eq i32 %and, 0
   br i1 %tobool, label %if.end, label %if.then
