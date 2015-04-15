@@ -1,8 +1,8 @@
 @ RUN: llvm-mc -triple=thumbv6t2--none-eabi -show-encoding < %s | FileCheck %s
 @ RUN: llvm-mc -triple=thumbv7a--none-eabi -show-encoding < %s | FileCheck %s
 @ RUN: llvm-mc -triple=thumbv7r--none-eabi -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbv8a--none-eabi -show-encoding < %s | FileCheck %s
 @ RUN: not llvm-mc -triple=thumbv7m--none-eabi -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=UNDEF
-@ RUN: not llvm-mc -triple=thumbv8a--none-eabi -show-encoding < %s 2>&1 | FileCheck %s --check-prefix=UNDEF
 
         bxj r2
 

@@ -6150,6 +6150,14 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
                    "destination operands can't be identical");
     return false;
   }
+  case ARM::t2BXJ: {
+    const unsigned RmReg = Inst.getOperand(0).getReg();
+    // Rm = SP is no longer unpredictable in v8-A
+    if (RmReg == ARM::SP && !hasV8Ops())
+      return Error(Operands[2]->getStartLoc(),
+                   "r13 (SP) is an unpredictable operand to BXJ");
+    return false;
+  }
   case ARM::STRD: {
     // Rt2 must be Rt + 1.
     unsigned Rt = MRI->getEncodingValue(Inst.getOperand(0).getReg());
