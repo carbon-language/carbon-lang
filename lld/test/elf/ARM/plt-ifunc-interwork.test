@@ -99,6 +99,18 @@
 # Next line shows that .plt section ends.
 # THM-TWO-NEXT: Contents of section .text:
 
+# 9. Thumb code generates PLT without transition veneer when bl->blx is done.
+# RUN: yaml2obj -format=elf -docnum 6 %s > %t-f1-thm-c.o
+# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: -Bstatic --noinhibit-exec %t-f1-thm-c.o -o %t
+# RUN: llvm-objdump -s %t | FileCheck -check-prefix=THM-BL %s
+
+# THM-BL: Contents of section .plt:
+# THM-BL-NEXT: 40007c 00c68fe2 00ca8ce2 7cffbce5
+#                          ^ regular veneer ^
+# Next line shows that .plt section ends.
+# THM-BL-NEXT: Contents of section .text:
+
 # f1-arm.o
 ---
 FileHeader:
@@ -112,7 +124,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         04B02DE500B08DE2003000E3003040E30300A0E100D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEB0030A0E10300A0E10088BDE8
+    Content:         04B02DE500B08DE2003000E3003040E30300A0E100D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEA0030A0E10300A0E10088BDE8
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
@@ -127,7 +139,7 @@ Sections:
         Type:            R_ARM_MOVT_ABS
       - Offset:          0x0000000000000028
         Symbol:          f1
-        Type:            R_ARM_CALL
+        Type:            R_ARM_JUMP24
   - Name:            .data
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -161,7 +173,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         80B400AF40F20003C0F200031846BD465DF8047B704700BF80B500AFFFF7FEFF0346184680BD00BF
+    Content:         80B400AF40F20003C0F200031846BD465DF8047B704700BF80B500AFFFF7FEBF0346184680BD00BF
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
@@ -176,7 +188,7 @@ Sections:
         Type:            R_ARM_THM_MOVT_ABS
       - Offset:          0x000000000000001C
         Symbol:          f1
-        Type:            R_ARM_THM_CALL
+        Type:            R_ARM_THM_JUMP24
   - Name:            .data
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -211,7 +223,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         80B500AFFFF7FEFF0346184680BD00BF
+    Content:         80B500AFFFF7FEBF0346184680BD00BF
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
@@ -220,7 +232,7 @@ Sections:
     Relocations:
       - Offset:          0x0000000000000004
         Symbol:          f1
-        Type:            R_ARM_THM_CALL
+        Type:            R_ARM_THM_JUMP24
   - Name:            .data
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -252,7 +264,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         04B02DE500B08DE2003000E3003040E30300A0E100D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEB0030A0E10300A0E10088BDE8
+    Content:         04B02DE500B08DE2003000E3003040E30300A0E100D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEA0030A0E10300A0E10088BDE8
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
@@ -267,7 +279,7 @@ Sections:
         Type:            R_ARM_MOVT_ABS
       - Offset:          0x0000000000000028
         Symbol:          f2
-        Type:            R_ARM_CALL
+        Type:            R_ARM_JUMP24
   - Name:            .data
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -301,7 +313,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         80B400AF40F20003C0F200031846BD465DF8047B704700BF80B500AFFFF7FEFF0346184680BD00BF
+    Content:         80B400AF40F20003C0F200031846BD465DF8047B704700BF80B500AFFFF7FEBF0346184680BD00BF
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
@@ -316,7 +328,7 @@ Sections:
         Type:            R_ARM_THM_MOVT_ABS
       - Offset:          0x000000000000001C
         Symbol:          f2
-        Type:            R_ARM_THM_CALL
+        Type:            R_ARM_THM_JUMP24
   - Name:            .data
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
@@ -334,6 +346,56 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000001
     - Name:            f
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x0000000000000019
+
+# f1-thm-c.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_ARM
+  Flags:           [ EF_ARM_EABI_VER5 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x0000000000000004
+    Content:         80B400AF40F20003C0F200031846BD465DF8047B704700BF80B500AFFFF7FEFF0346184680BD00BF
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x0000000000000004
+    Info:            .text
+    Relocations:
+      - Offset:          0x0000000000000004
+        Symbol:          main
+        Type:            R_ARM_THM_MOVW_ABS_NC
+      - Offset:          0x0000000000000008
+        Symbol:          main
+        Type:            R_ARM_THM_MOVT_ABS
+      - Offset:          0x000000000000001C
+        Symbol:          f1
+        Type:            R_ARM_THM_CALL
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+Symbols:
+ Global:
+    - Name:            f1
+      Type:            STT_GNU_IFUNC
+      Section:         .text
+      Value:           0x0000000000000001
+    - Name:            main
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000000019
