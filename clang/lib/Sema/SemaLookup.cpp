@@ -3070,7 +3070,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     Result.getSema().ForceDeclarationOfImplicitMembers(Class);
 
   // Enumerate all of the results in this context.
-  for (const auto R : Ctx->lookups()) {
+  for (DeclContextLookupResult R : Ctx->lookups()) {
     for (auto *D : R) {
       if (auto *ND = Result.getAcceptableDecl(D)) {
         Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
