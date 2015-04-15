@@ -80,7 +80,7 @@ public:
 
     this->_entries[_dt_symtabno].d_un.d_val = this->getSymbolTable()->size();
     this->_entries[_dt_gotsym].d_un.d_val =
-       this-> getSymbolTable()->size() - got.getGlobalCount();
+        this->getSymbolTable()->size() - got.getGlobalCount();
     this->_entries[_dt_localgot].d_un.d_val = got.getLocalCount();
     this->_entries[_dt_pltgot].d_un.d_ptr = got.virtualAddr();
   }
