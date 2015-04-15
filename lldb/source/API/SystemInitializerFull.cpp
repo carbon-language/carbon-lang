@@ -22,7 +22,6 @@
 #include "Plugins/ABI/SysV-ppc64/ABISysV_ppc64.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
-#include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
 #include "Plugins/Instruction/MIPS64/EmulateInstructionMIPS64.h"
 #include "Plugins/InstrumentationRuntime/AddressSanitizer/AddressSanitizerRuntime.h"
@@ -251,7 +250,6 @@ SystemInitializerFull::Initialize()
     SymbolFileSymtab::Initialize();
     UnwindAssemblyInstEmulation::Initialize();
     UnwindAssembly_x86::Initialize();
-    EmulateInstructionARM::Initialize();
     EmulateInstructionARM64::Initialize();
     EmulateInstructionMIPS64::Initialize();
     SymbolFileDWARFDebugMap::Initialize();
@@ -355,7 +353,6 @@ SystemInitializerFull::Terminate()
     SymbolFileSymtab::Terminate();
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
-    EmulateInstructionARM::Terminate();
     EmulateInstructionARM64::Terminate();
     EmulateInstructionMIPS64::Terminate();
     SymbolFileDWARFDebugMap::Terminate();

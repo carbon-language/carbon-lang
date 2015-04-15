@@ -192,6 +192,10 @@ namespace process_linux {
         std::unique_ptr<ThreadStateCoordinator> m_coordinator_up;
         HostThread m_coordinator_thread;
 
+        // List of thread ids stepping with a breakpoint with the address of
+        // the relevan breakpoint
+        std::map<lldb::tid_t, lldb::addr_t> m_threads_stepping_with_breakpoint;
+
         struct OperationArgs
         {
             OperationArgs(NativeProcessLinux *monitor);
