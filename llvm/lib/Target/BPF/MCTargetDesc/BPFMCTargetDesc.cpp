@@ -63,7 +63,7 @@ static MCCodeGenInfo *createBPFMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
 static MCStreamer *createBPFMCStreamer(const Triple &T,
                                        MCContext &Ctx, MCAsmBackend &MAB,
-                                       raw_ostream &OS, MCCodeEmitter *Emitter,
+                                       raw_pwrite_stream &OS, MCCodeEmitter *Emitter,
                                        bool RelaxAll) {
   return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 }

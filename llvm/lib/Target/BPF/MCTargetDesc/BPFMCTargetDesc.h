@@ -28,6 +28,7 @@ class MCSubtargetInfo;
 class Target;
 class StringRef;
 class raw_ostream;
+class raw_pwrite_stream;
 
 extern Target TheBPFTarget;
 
@@ -38,7 +39,7 @@ MCCodeEmitter *createBPFMCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createBPFAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU);
 
-MCObjectWriter *createBPFELFObjectWriter(raw_ostream &OS, uint8_t OSABI);
+MCObjectWriter *createBPFELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
 }
 
 // Defines symbolic names for BPF registers.  This defines a mapping from

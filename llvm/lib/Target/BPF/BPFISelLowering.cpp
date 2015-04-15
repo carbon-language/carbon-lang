@@ -64,10 +64,10 @@ public:
     raw_string_ostream OS(Str);
 
     if (DLoc) {
-      DILocation DIL(DLoc.get());
-      StringRef Filename = DIL.getFilename();
-      unsigned Line = DIL.getLineNumber();
-      unsigned Column = DIL.getColumnNumber();
+      auto DIL = DLoc.get();
+      StringRef Filename = DIL->getFilename();
+      unsigned Line = DIL->getLine();
+      unsigned Column = DIL->getColumn();
       OS << Filename << ':' << Line << ':' << Column << ' ';
     }
 
