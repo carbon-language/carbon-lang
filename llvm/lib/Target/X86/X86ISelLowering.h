@@ -1072,6 +1072,9 @@ namespace llvm {
     /// Use rcp* to speed up fdiv calculations.
     SDValue getRecipEstimate(SDValue Operand, DAGCombinerInfo &DCI,
                              unsigned &RefinementSteps) const override;
+
+    /// Reassociate floating point divisions into multiply by reciprocal.
+    bool combineRepeatedFPDivisors(unsigned NumUsers) const override;
   };
 
   namespace X86 {
