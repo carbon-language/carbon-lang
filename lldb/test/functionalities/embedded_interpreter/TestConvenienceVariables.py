@@ -81,10 +81,7 @@ class ConvenienceVariablesCase(TestBase):
         child.expect_exact(python_prompt)
         # Linux outputs decimal tid and 'name' instead of 'queue'
         self.expect(child.before, exe=False,
-            patterns = ['thread #1: tid = (0x[0-9a-f]+|[0-9]+), 0x[0-9a-f]+ ' +
-                        'a\.out`main\(argc=1, argv=0x[0-9a-f]+\) \+ \d+ ' +
-                        'at main\.c:%d, (name|queue) = \'.+\', stop reason =' + 
-                        ' breakpoint 1\.1' % self.line])
+            patterns = ['thread #1: tid = (0x[0-9a-f]+|[0-9]+), 0x[0-9a-f]+ a\.out`main\(argc=1, argv=0x[0-9a-f]+\) \+ \d+ at main\.c:%d, (name|queue) = \'.+\', stop reason = breakpoint 1\.1' % self.line])
 
         child.sendline('print lldb.frame')
         child.expect_exact(python_prompt)
