@@ -355,7 +355,8 @@ static void dumpCXXData(const ObjectFile *Obj) {
     StringRef SymName = VFTableEntry.second;
     outs() << VFTableName << '[' << Offset << "]: " << SymName << '\n';
   }
-  for (const std::pair<StringRef, ArrayRef<little32_t>> &VBTable : VBTables) {
+  for (const std::pair<const StringRef, ArrayRef<little32_t>> &VBTable :
+       VBTables) {
     StringRef VBTableName = VBTable.first;
     uint32_t Idx = 0;
     for (little32_t Offset : VBTable.second) {
@@ -363,7 +364,8 @@ static void dumpCXXData(const ObjectFile *Obj) {
       Idx += sizeof(Offset);
     }
   }
-  for (const std::pair<StringRef, CompleteObjectLocator> &COLPair : COLs) {
+  for (const std::pair<const StringRef, CompleteObjectLocator> &COLPair :
+       COLs) {
     StringRef COLName = COLPair.first;
     const CompleteObjectLocator &COL = COLPair.second;
     outs() << COLName << "[IsImageRelative]: " << COL.Data[0] << '\n';
@@ -373,7 +375,8 @@ static void dumpCXXData(const ObjectFile *Obj) {
     outs() << COLName << "[ClassHierarchyDescriptor]: " << COL.Symbols[1]
            << '\n';
   }
-  for (const std::pair<StringRef, ClassHierarchyDescriptor> &CHDPair : CHDs) {
+  for (const std::pair<const StringRef, ClassHierarchyDescriptor> &CHDPair :
+       CHDs) {
     StringRef CHDName = CHDPair.first;
     const ClassHierarchyDescriptor &CHD = CHDPair.second;
     outs() << CHDName << "[AlwaysZero]: " << CHD.Data[0] << '\n';
@@ -381,14 +384,14 @@ static void dumpCXXData(const ObjectFile *Obj) {
     outs() << CHDName << "[NumClasses]: " << CHD.Data[2] << '\n';
     outs() << CHDName << "[BaseClassArray]: " << CHD.Symbols[0] << '\n';
   }
-  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &BCAEntry :
-       BCAEntries) {
+  for (const std::pair<const std::pair<StringRef, uint64_t>, StringRef>
+           &BCAEntry : BCAEntries) {
     StringRef BCAName = BCAEntry.first.first;
     uint64_t Offset = BCAEntry.first.second;
     StringRef SymName = BCAEntry.second;
     outs() << BCAName << '[' << Offset << "]: " << SymName << '\n';
   }
-  for (const std::pair<StringRef, BaseClassDescriptor> &BCDPair : BCDs) {
+  for (const std::pair<const StringRef, BaseClassDescriptor> &BCDPair : BCDs) {
     StringRef BCDName = BCDPair.first;
     const BaseClassDescriptor &BCD = BCDPair.second;
     outs() << BCDName << "[TypeDescriptor]: " << BCD.Symbols[0] << '\n';
@@ -400,7 +403,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
     outs() << BCDName << "[ClassHierarchyDescriptor]: " << BCD.Symbols[1]
            << '\n';
   }
-  for (const std::pair<StringRef, TypeDescriptor> &TDPair : TDs) {
+  for (const std::pair<const StringRef, TypeDescriptor> &TDPair : TDs) {
     StringRef TDName = TDPair.first;
     const TypeDescriptor &TD = TDPair.second;
     outs() << TDName << "[VFPtr]: " << TD.Symbols[0] << '\n';
@@ -410,7 +413,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
                          /*UseHexEscapes=*/true)
         << '\n';
   }
-  for (const std::pair<StringRef, ThrowInfo> &TIPair : TIs) {
+  for (const std::pair<const StringRef, ThrowInfo> &TIPair : TIs) {
     StringRef TIName = TIPair.first;
     const ThrowInfo &TI = TIPair.second;
     auto dumpThrowInfoFlag = [&](const char *Name, uint32_t Flag) {
@@ -429,7 +432,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
     dumpThrowInfoSymbol("ForwardCompat", 8);
     dumpThrowInfoSymbol("CatchableTypeArray", 12);
   }
-  for (const std::pair<StringRef, CatchableTypeArray> &CTAPair : CTAs) {
+  for (const std::pair<const StringRef, CatchableTypeArray> &CTAPair : CTAs) {
     StringRef CTAName = CTAPair.first;
     const CatchableTypeArray &CTA = CTAPair.second;
 
@@ -441,7 +444,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
          I != E; ++I)
       outs() << CTAName << '[' << Idx++ << "]: " << I->second << '\n';
   }
-  for (const std::pair<StringRef, CatchableType> &CTPair : CTs) {
+  for (const std::pair<const StringRef, CatchableType> &CTPair : CTs) {
     StringRef CTName = CTPair.first;
     const CatchableType &CT = CTPair.second;
     auto dumpCatchableTypeFlag = [&](const char *Name, uint32_t Flag) {
@@ -464,14 +467,14 @@ static void dumpCXXData(const ObjectFile *Obj) {
            << "[CopyCtor]: " << (CT.Symbols[1].empty() ? "null" : CT.Symbols[1])
            << '\n';
   }
-  for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VTTPair :
-       VTTEntries) {
+  for (const std::pair<const std::pair<StringRef, uint64_t>, StringRef>
+           &VTTPair : VTTEntries) {
     StringRef VTTName = VTTPair.first.first;
     uint64_t VTTOffset = VTTPair.first.second;
     StringRef VTTEntry = VTTPair.second;
     outs() << VTTName << '[' << VTTOffset << "]: " << VTTEntry << '\n';
   }
-  for (const std::pair<StringRef, StringRef> &TIPair : TINames) {
+  for (const std::pair<const StringRef, StringRef> &TIPair : TINames) {
     StringRef TIName = TIPair.first;
     outs() << TIName << ": " << TIPair.second << '\n';
   }

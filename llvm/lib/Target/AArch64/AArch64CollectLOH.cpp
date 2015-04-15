@@ -328,7 +328,7 @@ static void initReachingDef(const MachineFunction &MF,
         const uint32_t *PreservedRegs = MO.getRegMask();
 
         // Set generated regs.
-        for (const auto Entry : RegToId) {
+        for (const auto &Entry : RegToId) {
           unsigned Reg = Entry.second;
           // Use the global register ID when querying APIs external to this
           // pass.

@@ -262,7 +262,7 @@ std::error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
   }
   const section_iterator SecEnd = section_end();
   uint64_t AfterAddr = UnknownAddressOrSize;
-  for (const symbol_iterator &SymbI : symbols()) {
+  for (const symbol_iterator SymbI : symbols()) {
     section_iterator SecI = SecEnd;
     if (std::error_code EC = SymbI->getSection(SecI))
       return EC;

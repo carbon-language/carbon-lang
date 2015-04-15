@@ -803,7 +803,7 @@ static void EmitGenDwarfRanges(MCStreamer *MCOS) {
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfRangesSection());
 
-  for (const auto sec : Sections) {
+  for (const auto &sec : Sections) {
 
     MCSymbol *StartSymbol = sec.second.first;
     MCSymbol *EndSymbol = sec.second.second;
