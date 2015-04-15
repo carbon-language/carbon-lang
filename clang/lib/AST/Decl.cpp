@@ -1926,14 +1926,14 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
       getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
     return DeclarationOnly;
 
-  if (hasExternalStorage())
+  if (!hasAttr<SelectAnyAttr>() && hasExternalStorage())
     return DeclarationOnly;
 
   // [dcl.link] p7:
   //   A declaration directly contained in a linkage-specification is treated
   //   as if it contains the extern specifier for the purpose of determining
   //   the linkage of the declared name and whether it is a definition.
-  if (isSingleLineLanguageLinkage(*this))
+  if (!hasAttr<SelectAnyAttr>() && isSingleLineLanguageLinkage(*this))
     return DeclarationOnly;
 
   // C99 6.9.2p2:
