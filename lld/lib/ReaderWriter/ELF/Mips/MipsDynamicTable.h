@@ -82,8 +82,7 @@ public:
     this->_entries[_dt_gotsym].d_un.d_val =
        this-> getSymbolTable()->size() - got.getGlobalCount();
     this->_entries[_dt_localgot].d_un.d_val = got.getLocalCount();
-    this->_entries[_dt_pltgot].d_un.d_ptr =
-        _targetLayout.findOutputSection(".got")->virtualAddr();
+    this->_entries[_dt_pltgot].d_un.d_ptr = got.virtualAddr();
   }
 
   int64_t getGotPltTag() override { return DT_MIPS_PLTGOT; }
