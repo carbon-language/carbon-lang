@@ -3299,7 +3299,7 @@ Decl *Sema::ActOnMethodDeclaration(
       
     case OMF_alloc:
     case OMF_new:
-      InferRelatedResultType = ObjCMethod->isClassMethod();
+        InferRelatedResultType = ObjCMethod->isClassMethod();
       break;
         
     case OMF_init:
@@ -3310,7 +3310,8 @@ Decl *Sema::ActOnMethodDeclaration(
       break;
     }
     
-    if (InferRelatedResultType)
+    if (InferRelatedResultType &&
+        !ObjCMethod->getReturnType()->isObjCIndependentClassType())
       ObjCMethod->SetRelatedResultType();
   }
 
