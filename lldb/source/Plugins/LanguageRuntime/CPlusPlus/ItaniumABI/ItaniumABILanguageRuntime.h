@@ -103,8 +103,6 @@ namespace lldb_private {
         ItaniumABILanguageRuntime(Process *process) : lldb_private::CPPLanguageRuntime(process) { } // Call CreateInstance instead.
         
         lldb::BreakpointSP                              m_cxx_exception_bp_sp;
-
-        static std::map<ConstString, std::vector<ConstString> > s_alternate_mangling_prefixes;
     };
     
 } // namespace lldb_private

@@ -281,6 +281,14 @@ ItaniumABILanguageRuntime::IsVTableName (const char *name)
         return false;
 }
 
+static std::map<ConstString, std::vector<ConstString> >&
+GetAlternateManglingPrefixes()
+{
+    static std::map<ConstString, std::vector<ConstString> > g_alternate_mangling_prefixes;
+    return g_alternate_mangling_prefixes;
+}
+
+
 size_t
 ItaniumABILanguageRuntime::GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates)
 {
@@ -289,8 +297,9 @@ ItaniumABILanguageRuntime::GetAlternateManglings(const ConstString &mangled, std
 
     alternates.clear();
     const char *mangled_cstr = mangled.AsCString();
-    for (std::map<ConstString, std::vector<ConstString> >::iterator it = s_alternate_mangling_prefixes.begin();
-         it != s_alternate_mangling_prefixes.end();
+    std::map<ConstString, std::vector<ConstString> >& alternate_mangling_prefixes = GetAlternateManglingPrefixes();
+    for (std::map<ConstString, std::vector<ConstString> >::iterator it = alternate_mangling_prefixes.begin();
+         it != alternate_mangling_prefixes.end();
          ++it)
     {
         const char *prefix_cstr = it->first.AsCString();
@@ -315,9 +324,6 @@ ItaniumABILanguageRuntime::GetAlternateManglings(const ConstString &mangled, std
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-
-std::map<ConstString, std::vector<ConstString> > ItaniumABILanguageRuntime::s_alternate_mangling_prefixes;
-
 LanguageRuntime *
 ItaniumABILanguageRuntime::CreateInstance (Process *process, lldb::LanguageType language)
 {
@@ -343,9 +349,11 @@ ItaniumABILanguageRuntime::Initialize()
     std::vector<ConstString> basic_string_alternates;
     basic_string_alternates.push_back(ConstString("_ZNSs"));
     basic_string_alternates.push_back(ConstString("_ZNKSs"));
-    s_alternate_mangling_prefixes[ConstString("_ZNSbIcSt17char_traits<char>St15allocator<char>E")] =
+    std::map<ConstString, std::vector<ConstString> >& alternate_mangling_prefixes = GetAlternateManglingPrefixes();
+
+    alternate_mangling_prefixes[ConstString("_ZNSbIcSt17char_traits<char>St15allocator<char>E")] =
         basic_string_alternates;
-    s_alternate_mangling_prefixes[ConstString("_ZNKSbIcSt17char_traits<char>St15allocator<char>E")] =
+    alternate_mangling_prefixes[ConstString("_ZNKSbIcSt17char_traits<char>St15allocator<char>E")] =
         basic_string_alternates;
 }
 
