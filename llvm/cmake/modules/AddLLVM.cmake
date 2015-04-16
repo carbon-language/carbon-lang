@@ -425,22 +425,18 @@ macro(add_llvm_library name)
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
       if(ARG_SHARED OR BUILD_SHARED_LIBS)
         if(WIN32 OR CYGWIN)
-          install(TARGETS ${name}
-            EXPORT LLVMExports
-            RUNTIME DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-            COMPONENT ${name})
+          set(install_type RUNTIME)
         else()
-          install(TARGETS ${name}
-            EXPORT LLVMExports
-            LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-            COMPONENT ${name})
+          set(install_type LIBRARY)
         endif()
       else()
-        install(TARGETS ${name}
-          EXPORT LLVMExports
-          ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-          COMPONENT ${name})
+        set(install_type ARCHIVE)
       endif()
+
+      install(TARGETS ${name}
+            EXPORT LLVMExports
+            ${install_type} DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+            COMPONENT ${name})
 
       if (NOT CMAKE_CONFIGURATION_TYPES)
         add_custom_target(install-${name}
