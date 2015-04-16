@@ -1,5 +1,5 @@
-; RUN: llc -march=x86-64 %s -o - | FileCheck %s
-; RUN: llc -march=x86-64 %s -o - -O0 | FileCheck --check-prefix=NOOPT %s
+; RUN: llc -mtriple=x86_64-linux-gnu %s -o - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux-gnu %s -o - -O0 | FileCheck --check-prefix=NOOPT %s
 
 declare void @g(i32)
 
