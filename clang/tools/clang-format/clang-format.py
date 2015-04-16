@@ -34,6 +34,8 @@ if vim.eval('exists("g:clang_format_path")') == "1":
 # a '.clang-format' or '_clang-format' file to indicate the style that should be
 # used.
 style = 'file'
+if vim.eval('exists("g:clang_format_fallback_style")') == "1":
+  fallback_style = vim.eval('g:clang_format_fallback_style')
 
 def main():
   # Get the current text.
@@ -58,6 +60,8 @@ def main():
 
   # Call formatter.
   command = [binary, '-lines', lines, '-style', style, '-cursor', str(cursor)]
+  if fallback_style:
+    command.extend(['-fallback-style', fallback_style])
   if vim.current.buffer.name:
     command.extend(['-assume-filename', vim.current.buffer.name])
   p = subprocess.Popen(command,
