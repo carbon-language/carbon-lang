@@ -119,6 +119,12 @@ public:
         return false;
     }
 
+    virtual void
+    ModulesDidLoad (const ModuleList &module_list)
+    {
+        return;
+    }
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from LanguageRuntime can see and modify these

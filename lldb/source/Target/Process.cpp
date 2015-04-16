@@ -6469,13 +6469,29 @@ Process::ModulesDidLoad (ModuleList &module_list)
         runtime->ModulesDidLoad(module_list);
     }
 
+    // Let any language runtimes we have already created know
+    // about the modules that loaded.
+    
+    // Iterate over a copy of this language runtime list in case
+    // the language runtime ModulesDidLoad somehow causes the language
+    // riuntime to be unloaded.
+    LanguageRuntimeCollection language_runtimes(m_language_runtimes);
+    for (const auto &pair: language_runtimes)
+    {
+        // We must check language_runtime_sp to make sure it is not
+        // NULL as we might cache the fact that we didn't have a
+        // language runtime for a language.
+        LanguageRuntimeSP language_runtime_sp = pair.second;
+        if (language_runtime_sp)
+            language_runtime_sp->ModulesDidLoad(module_list);
+    }
 }
 
 ThreadCollectionSP
 Process::GetHistoryThreads(lldb::addr_t addr)
 {
     ThreadCollectionSP threads;
-    
+
     const MemoryHistorySP &memory_history = MemoryHistory::FindPlugin(shared_from_this());
     
     if (! memory_history.get()) {

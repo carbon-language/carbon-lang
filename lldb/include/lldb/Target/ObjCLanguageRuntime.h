@@ -313,8 +313,8 @@ public:
     virtual
     ~ObjCLanguageRuntime();
     
-    virtual lldb::LanguageType
-    GetLanguageType () const
+    lldb::LanguageType
+    GetLanguageType () const override
     {
         return lldb::eLanguageTypeObjC;
     }
@@ -515,10 +515,10 @@ public:
         m_negative_complete_class_cache.clear();
     }
     
-    virtual bool
+    bool
     GetTypeBitSize (const ClangASTType& clang_type,
-                    uint64_t &size);
-    
+                    uint64_t &size) override;
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ObjCLanguageRuntime can see and modify these
@@ -644,6 +644,9 @@ protected:
 
     ISAToDescriptorIterator
     GetDescriptorIterator (const ConstString &name);
+
+    void
+    ReadObjCLibraryIfNeeded (const ModuleList &module_list);
 
     DISALLOW_COPY_AND_ASSIGN (ObjCLanguageRuntime);
 };

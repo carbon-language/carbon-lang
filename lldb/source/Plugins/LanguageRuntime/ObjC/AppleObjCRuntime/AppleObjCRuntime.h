@@ -34,37 +34,37 @@ public:
     virtual ~AppleObjCRuntime() { }
     
     // These are generic runtime functions:
-    virtual bool
-    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
+    bool
+    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) override;
     
-    virtual bool
-    GetObjectDescription (Stream &str, ValueObject &object);
+    bool
+    GetObjectDescription (Stream &str, ValueObject &object) override;
     
-    virtual bool
-    CouldHaveDynamicValue (ValueObject &in_value);
+    bool
+    CouldHaveDynamicValue (ValueObject &in_value) override;
     
-    virtual bool
+    bool
     GetDynamicTypeAndAddress (ValueObject &in_value, 
                               lldb::DynamicValueType use_dynamic, 
                               TypeAndOrName &class_type_or_name, 
-                              Address &address);
+                              Address &address) override;
 
     // These are the ObjC specific functions.
     
-    virtual bool
-    IsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
+    bool
+    IsModuleObjCLibrary (const lldb::ModuleSP &module_sp) override;
     
-    virtual bool
-    ReadObjCLibrary (const lldb::ModuleSP &module_sp);
+    bool
+    ReadObjCLibrary (const lldb::ModuleSP &module_sp) override;
 
-    virtual bool
-    HasReadObjCLibrary ()
+    bool
+    HasReadObjCLibrary ()  override
     {
         return m_read_objc_library;
     }
     
-    virtual lldb::ThreadPlanSP
-    GetStepThroughTrampolinePlan (Thread &thread, bool stop_others);
+    lldb::ThreadPlanSP
+    GetStepThroughTrampolinePlan (Thread &thread, bool stop_others) override;
     
     // Get the "libobjc.A.dylib" module from the current target if we can find
     // it, also cache it once it is found to ensure quick lookups.
@@ -76,10 +76,16 @@ public:
     //------------------------------------------------------------------
     // Note there is no CreateInstance, Initialize & Terminate functions here, because
     // you can't make an instance of this generic runtime.
-    
+
+
+    // Sync up with the target
+
+    void
+    ModulesDidLoad (const ModuleList &module_list) override;
+
 protected:
-    virtual bool
-    CalculateHasNewLiteralsAndIndexing();
+    bool
+    CalculateHasNewLiteralsAndIndexing() override;
     
     static bool
     AppleIsModuleObjCLibrary (const lldb::ModuleSP &module_sp);
@@ -87,24 +93,27 @@ protected:
     static enum ObjCRuntimeVersions
     GetObjCVersion (Process *process, lldb::ModuleSP &objc_module_sp);
 
+    void
+    ReadObjCLibraryIfNeeded (const ModuleList &module_list);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
 public:
-    virtual void
-    SetExceptionBreakpoints();
+    void
+    SetExceptionBreakpoints() override;
 
-    virtual void
-    ClearExceptionBreakpoints ();
+    void
+    ClearExceptionBreakpoints () override;
     
-    virtual bool
-    ExceptionBreakpointsAreSet ();
+    bool
+    ExceptionBreakpointsAreSet () override;
     
-    virtual bool
-    ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
+    bool
+    ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason) override;
     
-    virtual lldb::SearchFilterSP
-    CreateExceptionSearchFilter ();
+    lldb::SearchFilterSP
+    CreateExceptionSearchFilter () override;
     
     uint32_t
     GetFoundationVersion ();
@@ -121,14 +130,8 @@ protected:
     
     llvm::Optional<uint32_t> m_Foundation_major;
 
-    AppleObjCRuntime(Process *process) :
-        lldb_private::ObjCLanguageRuntime(process),
-        m_read_objc_library (false),
-        m_objc_trampoline_handler_ap (),
-        m_Foundation_major()
-     {
-         // Call CreateInstance instead.
-     }
+    // Call CreateInstance instead.
+    AppleObjCRuntime(Process *process);
 };
     
 } // namespace lldb_private

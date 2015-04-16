@@ -44,7 +44,6 @@ ObjCLanguageRuntime::ObjCLanguageRuntime (Process *process) :
     m_complete_class_cache(),
     m_negative_complete_class_cache()
 {
-
 }
 
 bool
