@@ -241,6 +241,10 @@ public:
                   const ArchSpec& arch,
                   ModuleSpec &module_spec) override;
 
+    // query remote gdbserver for information
+    bool
+    GetGDBServerInfo ( );
+
 protected:
     friend class ThreadGDBRemote;
     friend class GDBRemoteCommunicationClient;

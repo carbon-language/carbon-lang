@@ -190,6 +190,9 @@ install(DIRECTORY include/
   PATTERN ".svn" EXCLUDE
   )
 
+if (NOT LIBXML2_FOUND)
+  find_package(LibXml2)
+endif()
 
 # Find libraries or frameworks that may be needed
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -200,13 +203,20 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   find_library(SECURITY_LIBRARY Security)
   find_library(DEBUG_SYMBOLS_LIBRARY DebugSymbols PATHS "/System/Library/PrivateFrameworks")
 
-  if (NOT LIBXML2_FOUND)
-    find_package(LibXml2)
-  endif ()
+  add_definitions( -DLIBXML2_DEFINED )
   list(APPEND system_libs xml2 ncurses panel)
   list(APPEND system_libs ${CARBON_LIBRARY} ${FOUNDATION_LIBRARY}
   ${CORE_FOUNDATION_LIBRARY} ${CORE_SERVICES_LIBRARY} ${SECURITY_LIBRARY}
   ${DEBUG_SYMBOLS_LIBRARY})
+
+else()
+
+  if (LIBXML2_FOUND)
+    add_definitions( -DLIBXML2_DEFINED )
+    list(APPEND system_libs ${LIBXML2_LIBRARIES})
+    include_directories(${LIBXML2_INCLUDE_DIR})
+  endif()
+
 endif()
 
 if(LLDB_REQUIRES_EH)

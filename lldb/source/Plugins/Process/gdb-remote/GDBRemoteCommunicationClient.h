@@ -426,6 +426,9 @@ public:
     bool
     GetAugmentedLibrariesSVR4ReadSupported ();
 
+    bool
+    GetQXferFeaturesReadSupported ();
+
     LazyBool
     SupportsAllocDeallocMemory () // const
     {
@@ -533,6 +536,12 @@ public:
                    const ArchSpec& arch_spec,
                    ModuleSpec &module_spec);
 
+    bool
+    ReadExtFeature (const lldb_private::ConstString object,
+                    const lldb_private::ConstString annex,
+                    std::string & out,
+                    lldb_private::Error & err);
+
 protected:
 
     PacketResult
@@ -576,6 +585,7 @@ protected:
     LazyBool m_supports_qXfer_auxv_read;
     LazyBool m_supports_qXfer_libraries_read;
     LazyBool m_supports_qXfer_libraries_svr4_read;
+    LazyBool m_supports_qXfer_features_read;
     LazyBool m_supports_augmented_libraries_svr4_read;
     LazyBool m_supports_jThreadExtendedInfo;
 

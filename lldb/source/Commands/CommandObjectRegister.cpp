@@ -144,7 +144,7 @@ public:
         const RegisterSet * const reg_set = reg_ctx->GetRegisterSet(set_idx);
         if (reg_set)
         {
-            strm.Printf ("%s:\n", reg_set->name);
+            strm.Printf ("%s:\n", (reg_set->name ? reg_set->name : "unknown") );
             strm.IndentMore ();
             const size_t num_registers = reg_set->num_registers;
             for (size_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)

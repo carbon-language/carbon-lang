@@ -27,6 +27,9 @@
 #include <mutex>
 
 // Other libraries and framework includes
+#if defined( LIBXML2_DEFINED )
+#include <libxml/xmlreader.h>
+#endif
 
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Interpreter/Args.h"
@@ -571,6 +574,10 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
 
     if (reg_num == 0)
     {
+        // try to extract information from servers target.xml
+        if ( GetGDBServerInfo( ) )
+            return;
+
         FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
         
         if (target_definition_fspec)
@@ -3428,6 +3435,465 @@ ProcessGDBRemote::GetModuleSpec(const FileSpec& module_file_spec,
 
     return true;
 }
+
+#if defined( LIBXML2_DEFINED )
+namespace {
+
+typedef std::vector<std::string> stringVec;
+typedef std::vector<xmlNodePtr> xmlNodePtrVec;
+
+struct GdbServerRegisterInfo {
+
+    struct {
+        bool m_has_name     : 1;
+        bool m_has_bitSize  : 1;
+        bool m_has_type     : 1;
+        bool m_has_group    : 1;
+        bool m_has_regNum   : 1;
+    }
+    m_flags;
+
+    std::string m_name;
+    std::string m_group;
+    uint32_t    m_bitSize;
+    uint32_t    m_regNum;
+
+    enum RegType {
+        eUnknown   ,
+        eCodePtr   ,
+        eDataPtr   ,
+        eInt32     ,
+        eI387Ext   ,
+    }
+    m_type;
+
+    void clear(  ) {
+        memset( &m_flags, 0, sizeof( m_flags ) );
+    }
+};
+
+typedef std::vector<struct GdbServerRegisterInfo> GDBServerRegisterVec;
+
+struct GdbServerTargetInfo {
+
+    std::string m_arch;
+    std::string m_osabi;
+};
+
+// conversion table between gdb register type and enum
+struct {
+    const char * m_name;
+    GdbServerRegisterInfo::RegType m_type;
+}
+RegTypeTable[] = {
+    { "int32"   , GdbServerRegisterInfo::eInt32    },
+    { "int"     , GdbServerRegisterInfo::eInt32    },
+    { "data_ptr", GdbServerRegisterInfo::eDataPtr  },
+    { "code_ptr", GdbServerRegisterInfo::eCodePtr  },
+    { "i387_ext", GdbServerRegisterInfo::eI387Ext  }, // 80bit fpu
+    { nullptr } // sentinel
+};
+
+// find the first sibling with a matching name
+xmlNodePtr
+xmlExFindSibling (xmlNodePtr node,
+                  const std::string & name) {
+
+    if ( !node ) return nullptr;
+    // iterate through all siblings
+    for ( xmlNodePtr temp = node; temp; temp=temp->next ) {
+        // we are looking for elements
+        if ( temp->type != XML_ELEMENT_NODE )
+            continue;
+        // check element name matches
+        if ( !temp->name ) continue;
+        if ( std::strcmp((const char*)temp->name, name.c_str() ) == 0 )
+            return temp;
+    }
+    // no sibling found
+    return nullptr;
+}
+
+// find an element from a given element path
+xmlNodePtr
+xmlExFindElement (xmlNodePtr node,
+                  const stringVec & path) {
+
+    if ( !node ) return nullptr;
+    xmlNodePtr temp = node;
+    // iterate all elements in path
+    for ( uint32_t i = 0; i < path.size( ); i++ ) {
+
+        // search for a sibling with this name
+        temp = xmlExFindSibling( temp, path[i] );
+        if ( !temp )
+            return nullptr;
+        // enter this node if we still need to search
+        if ( (i+1) < path.size() )
+            // enter the node we have found
+            temp = temp->children;
+    }
+    // note: node may still be nullptr at this step
+    return temp;
+}
+
+// locate a specific attribute in an element
+xmlAttr *
+xmlExFindAttribute (xmlNodePtr node, 
+                    const std::string & name) {
+
+    if ( !node )
+        return nullptr;
+    if ( node->type != XML_ELEMENT_NODE )
+        return nullptr;
+    // iterate over all attributes
+    for ( xmlAttrPtr attr = node->properties; attr != nullptr; attr=attr->next ) {
+        // check if name matches
+        if ( !attr->name ) continue;
+        if ( std::strcmp( (const char*)attr->name, name.c_str( ) ) == 0 )
+            return attr;
+    }
+    return nullptr;
+}
+
+// find all child elements with given name and add them to a vector
+//
+// input:   node = xml element to search
+//          name = name used when matching child elements
+// output:  out  = list of matches
+// return:  number of children added to 'out'
+int
+xmlExFindChildren (xmlNodePtr node, 
+                   const std::string & name, 
+                   xmlNodePtrVec & out) {
+
+    if ( !node ) return 0;
+    int count = 0;
+    // iterate over all children
+    for ( xmlNodePtr child = node->children; child; child = child->next ) {
+        // if name matches
+        if ( !child->name ) continue;
+        if ( std::strcmp( (const char*)child->name, name.c_str( ) ) == 0 ) {
+            // add to output list
+            out.push_back( child );
+            ++count;
+        }
+    }
+    return count;
+}
+
+// get the text content from an attribute
+std::string
+xmlExGetTextContent (xmlAttrPtr attr) {
+
+    if ( !attr )
+        return std::string( );
+    if ( attr->type != XML_ATTRIBUTE_NODE )
+        return std::string( );
+    // check child is a text node
+    xmlNodePtr child = attr->children;
+    if ( child->type != XML_TEXT_NODE )
+        return std::string( );
+    // access the content
+    assert( child->content != nullptr );
+    return std::string( (const char*) child->content );
+}
+
+// get the text content from an node
+std::string
+xmlExGetTextContent (xmlNodePtr node) {
+
+    if ( !node )
+        return std::string( );
+    if ( node->type != XML_ELEMENT_NODE )
+        return std::string( );
+    // check child is a text node
+    xmlNodePtr child = node->children;
+    if ( child->type != XML_TEXT_NODE )
+        return std::string( );
+    // access the content
+    assert( child->content != nullptr );
+    return std::string( (const char*) child->content );
+}
+
+// compile a list of xml includes from the target file
+// input:   doc = target.xml
+// output:  includes = list of .xml names specified in target.xml
+// return:  number of .xml files specified in target.xml and added to includes
+int
+parseTargetIncludes (xmlDocPtr doc, stringVec & includes) {
+
+    if ( !doc ) return 0;
+    int count = 0;
+    xmlNodePtr elm = xmlExFindElement( doc->children, { "target" } );
+    if (! elm ) return 0;
+    xmlNodePtrVec nodes;
+    xmlExFindChildren( elm, "xi:include", nodes );
+    // iterate over all includes
+    for ( uint32_t i = 0; i < nodes.size(); i++ ) {
+        xmlAttrPtr attr = xmlExFindAttribute( nodes[i], "href" );
+        if ( attr != nullptr ) {
+            std::string text = xmlExGetTextContent( attr );
+            includes.push_back( text );
+            ++count;
+        }
+    }
+    return count;
+}
+
+// extract target arch information from the target.xml file
+// input:   doc = target.xml document
+// output:  out = remote target information
+// return:  'true'  on success
+//          'false' on failure
+bool
+parseTargetInfo (xmlDocPtr doc, GdbServerTargetInfo & out) {
+
+    if ( !doc ) return false;
+    xmlNodePtr e1 = xmlExFindElement( doc->children, { "target", "architecture" } );
+    if ( !e1 ) return false;
+    out.m_arch = xmlExGetTextContent( e1 );
+    
+    xmlNodePtr e2 = xmlExFindElement( doc->children, { "target", "osabi" } );
+    if ( !e2 ) return false;
+    out.m_osabi = xmlExGetTextContent( e2 );
+
+    return true;
+}
+
+// extract register information from one of the xml files specified in target.xml
+// input:   doc = xml document
+// output:  regList = list of extracted register info
+// return:  'true'  on success
+//          'false' on failure
+bool
+parseRegisters (xmlDocPtr doc, GDBServerRegisterVec & regList) {
+
+    if ( !doc ) return false;
+    xmlNodePtr elm = xmlExFindElement( doc->children, { "feature" } );
+    if ( !elm ) return false;
+
+    xmlAttrPtr attr = nullptr;
+
+    xmlNodePtrVec regs;
+    xmlExFindChildren( elm, "reg", regs );
+    for ( int i = 0; i < regs.size( ); i++ ) {
+
+        GdbServerRegisterInfo reg;
+        reg.clear( );
+
+        if ( attr = xmlExFindAttribute( regs[i], "name" ) ) {
+            reg.m_name = xmlExGetTextContent( attr ).c_str();
+            reg.m_flags.m_has_name = true;
+        }
+
+        if ( attr = xmlExFindAttribute( regs[i], "bitsize" ) ) {
+            const std::string v = xmlExGetTextContent( attr );
+            reg.m_bitSize = atoi( v.c_str( ) );
+            reg.m_flags.m_has_bitSize = true;
+        }
+
+        if ( attr = xmlExFindAttribute( regs[i], "type" ) ) {
+            const std::string v = xmlExGetTextContent( attr );
+            reg.m_type = GdbServerRegisterInfo::eUnknown;
+
+            // search the type table for a match
+            for ( int j = 0; RegTypeTable[j].m_name !=nullptr ;++j ) {
+                if (RegTypeTable[j].m_name == v) {
+                    reg.m_type = RegTypeTable[j].m_type;
+                    break;
+                }
+            }
+
+            reg.m_flags.m_has_type = (reg.m_type != GdbServerRegisterInfo::eUnknown);
+        }
+
+        if ( attr = xmlExFindAttribute( regs[i], "group" ) ) {
+            reg.m_group = xmlExGetTextContent( attr );
+            reg.m_flags.m_has_group = true;
+        }
+
+        if ( attr = xmlExFindAttribute( regs[i], "regnum" ) ) {
+            const std::string v = xmlExGetTextContent( attr );
+            reg.m_regNum = atoi( v.c_str( ) );
+            reg.m_flags.m_has_regNum = true;
+        }
+
+        regList.push_back( reg );
+    }
+
+    //TODO: there is also a "vector" element to parse
+    //TODO: there is also eflags to parse
+
+    return true;
+}
+
+// build lldb gdb-remote's dynamic register info from a vector of gdb provided registers
+// input:   regList = register information provided by gdbserver
+// output:  regInfo = dynamic register information required by gdb-remote
+void
+BuildRegisters (const GDBServerRegisterVec & regList,
+                GDBRemoteDynamicRegisterInfo & regInfo) {
+
+    using namespace lldb_private;
+
+    const uint32_t defSize    = 32;
+          uint32_t regNum     = 0;
+          uint32_t byteOffset = 0;
+
+    for ( uint32_t i = 0; i < regList.size( ); ++i ) {
+
+        const GdbServerRegisterInfo & gdbReg = regList[i];
+
+        std::string name     = gdbReg.m_flags.m_has_name    ? gdbReg.m_name        : "unknown";
+        std::string group    = gdbReg.m_flags.m_has_group   ? gdbReg.m_group       : "general";
+        uint32_t    byteSize = gdbReg.m_flags.m_has_bitSize ? (gdbReg.m_bitSize/8) : defSize;
+
+        if ( gdbReg.m_flags.m_has_regNum )
+            regNum = gdbReg.m_regNum;
+
+        uint32_t regNumGcc     = LLDB_INVALID_REGNUM;
+        uint32_t regNumDwarf   = LLDB_INVALID_REGNUM;
+        uint32_t regNumGeneric = LLDB_INVALID_REGNUM;
+        uint32_t regNumGdb     = regNum;
+        uint32_t regNumNative  = regNum;
+
+        if ( name == "eip" || name == "pc" ) {
+            regNumGeneric = LLDB_REGNUM_GENERIC_PC;
+        }
+        if ( name == "esp" || name == "sp" ) {
+            regNumGeneric = LLDB_REGNUM_GENERIC_SP;
+        }
+        if ( name == "ebp") {
+            regNumGeneric = LLDB_REGNUM_GENERIC_FP;
+        }
+        if ( name == "lr" ) {
+            regNumGeneric = LLDB_REGNUM_GENERIC_RA;
+        }
+
+        RegisterInfo info = {
+            name.c_str(),
+            nullptr     ,
+            byteSize    ,
+            byteOffset  ,
+            lldb::Encoding::eEncodingUint,
+            lldb::Format::eFormatDefault,
+            { regNumGcc    , 
+              regNumDwarf  , 
+              regNumGeneric,
+              regNumGdb    ,
+              regNumNative },
+            nullptr,
+            nullptr
+        };
+
+        ConstString regName    = ConstString( gdbReg.m_name );
+        ConstString regAltName = ConstString( );
+        ConstString regGroup   = ConstString( group );
+        regInfo.AddRegister( info, regName, regAltName, regGroup );
+
+        // advance register info
+        byteOffset += byteSize;
+        regNum     += 1;
+    }
+
+    regInfo.Finalize ();
+}
+
+} // namespace {}
+
+void XMLCDECL
+libxml2NullErrorFunc (void *ctx, const char *msg, ...)
+{
+    // do nothing currently
+}
+
+// query the target of gdb-remote for extended target information
+// return:  'true'  on success
+//          'false' on failure
+bool
+ProcessGDBRemote::GetGDBServerInfo ()
+{
+
+    // redirect libxml2's error handler since the default prints to stdout
+    xmlGenericErrorFunc func = libxml2NullErrorFunc;
+    initGenericErrorDefaultFunc( &func );
+
+    GDBRemoteCommunicationClient & comm = m_gdb_comm;
+    GDBRemoteDynamicRegisterInfo & regInfo = m_register_info;
+
+    // check that we have extended feature read support
+    if ( !comm.GetQXferFeaturesReadSupported( ) )
+        return false;
+
+    // request the target xml file
+    std::string raw;
+    lldb_private::Error lldberr;
+    if (! comm.ReadExtFeature( ConstString( "features" ),
+                               ConstString( "target.xml" ),
+                               raw, 
+                               lldberr ) ) {
+        return false;
+    }
+
+    // parse the xml file in memory
+    xmlDocPtr doc = xmlReadMemory( raw.c_str( ), raw.size( ), "noname.xml", nullptr, 0 );
+    if ( doc == nullptr )
+        return false;
+
+    // extract target info from target.xml
+    GdbServerTargetInfo gdbInfo;
+    if ( parseTargetInfo( doc, gdbInfo ) ) {
+        // NOTE: We could deduce triple from gdbInfo if lldb doesn't already have one set
+    }
+
+    // collect registers from all of the includes
+    GDBServerRegisterVec regList;
+    stringVec includes;
+    if ( parseTargetIncludes( doc, includes ) > 0 ) {
+
+        for ( uint32_t i = 0; i < includes.size( ); ++i ) {
+
+            // request register file
+            if ( !comm.ReadExtFeature( ConstString( "features" ),
+                                       ConstString( includes[i] ),
+                                       raw,
+                                       lldberr ) )
+                continue;
+
+            // parse register file
+            xmlDocPtr regXml = xmlReadMemory( raw.c_str(), 
+                                              raw.size( ), 
+                                              includes[i].c_str(), 
+                                              nullptr, 
+                                              0 );
+            if ( !regXml )
+                continue;
+
+            // pass registers to lldb
+            parseRegisters( regXml, regList );
+        }
+    }
+
+    // pass all of these registers to lldb
+    BuildRegisters( regList, regInfo );
+
+    return true;
+}
+
+#else // if defined( LIBXML2_DEFINED )
+
+using namespace lldb_private::process_gdb_remote;
+
+bool
+ProcessGDBRemote::GetGDBServerInfo ()
+{
+    // stub (libxml2 not present)
+    return false;
+}
+
+#endif // if defined( LIBXML2_DEFINED )
+
 
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
