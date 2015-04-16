@@ -67,8 +67,7 @@ DICompositeType llvm::getDICompositeType(DIType T) {
     // not generate identifier for types, so using an empty map to resolve
     // DerivedFrom should be fine.
     DITypeIdentifierMap EmptyMap;
-    return getDICompositeType(
-        DIDerivedType(D).getTypeDerivedFrom().resolve(EmptyMap));
+    return getDICompositeType(D->getBaseType().resolve(EmptyMap));
   }
 
   return nullptr;
@@ -83,15 +82,15 @@ llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
     for (unsigned Ti = 0, Te = Retain.size(); Ti != Te; ++Ti) {
       if (!isa<MDCompositeType>(Retain[Ti]))
         continue;
-      DICompositeType Ty = cast<MDCompositeType>(Retain[Ti]);
-      if (MDString *TypeId = Ty.getIdentifier()) {
+      auto *Ty = cast<MDCompositeType>(Retain[Ti]);
+      if (MDString *TypeId = Ty->getRawIdentifier()) {
         // Definition has priority over declaration.
         // Try to insert (TypeId, Ty) to Map.
         std::pair<DITypeIdentifierMap::iterator, bool> P =
             Map.insert(std::make_pair(TypeId, Ty));
         // If TypeId already exists in Map and this is a definition, replace
         // whatever we had (declaration or definition) with the definition.
-        if (!P.second && !Ty.isForwardDecl())
+        if (!P.second && !Ty->isForwardDecl())
           P.first->second = Ty;
       }
     }
@@ -164,22 +163,22 @@ void DebugInfoFinder::processLocation(const Module &M, DILocation Loc) {
 void DebugInfoFinder::processType(DIType DT) {
   if (!addType(DT))
     return;
-  processScope(DT.getContext().resolve(TypeIdentifierMap));
-  if (DICompositeType DCT = dyn_cast<MDCompositeTypeBase>(DT)) {
-    processType(DCT.getTypeDerivedFrom().resolve(TypeIdentifierMap));
-    if (DISubroutineType ST = dyn_cast<MDSubroutineType>(DCT)) {
+  processScope(DT->getScope().resolve(TypeIdentifierMap));
+  if (auto *DCT = dyn_cast<MDCompositeTypeBase>(DT)) {
+    processType(DCT->getBaseType().resolve(TypeIdentifierMap));
+    if (auto *ST = dyn_cast<MDSubroutineType>(DCT)) {
       for (MDTypeRef Ref : ST->getTypeArray())
         processType(Ref.resolve(TypeIdentifierMap));
       return;
     }
     for (Metadata *D : DCT->getElements()) {
-      if (DIType T = dyn_cast<MDType>(D))
+      if (auto *T = dyn_cast<MDType>(D))
         processType(T);
       else if (DISubprogram SP = dyn_cast<MDSubprogram>(D))
         processSubprogram(SP);
     }
-  } else if (DIDerivedType DDT = dyn_cast<MDDerivedTypeBase>(DT)) {
-    processType(DDT.getTypeDerivedFrom().resolve(TypeIdentifierMap));
+  } else if (auto *DDT = dyn_cast<MDDerivedTypeBase>(DT)) {
+    processType(DDT->getBaseType().resolve(TypeIdentifierMap));
   }
 }
 

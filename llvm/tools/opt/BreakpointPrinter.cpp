@@ -36,9 +36,9 @@ struct BreakpointPrinter : public ModulePass {
         N = N + NS->getName().str() + "::";
       }
     } else if (DIType TY = dyn_cast<MDType>(Context)) {
-      if (!TY.getName().empty()) {
-        getContextName(TY.getContext().resolve(TypeIdentifierMap), N);
-        N = N + TY.getName().str() + "::";
+      if (!TY->getName().empty()) {
+        getContextName(TY->getScope().resolve(TypeIdentifierMap), N);
+        N = N + TY->getName().str() + "::";
       }
     }
   }

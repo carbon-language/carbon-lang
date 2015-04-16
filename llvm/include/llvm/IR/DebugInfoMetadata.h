@@ -594,7 +594,7 @@ public:
   }
 };
 
-/// \brief Basic type.
+/// \brief Basic type, like 'int' or 'float'.
 ///
 /// TODO: Split out DW_TAG_unspecified_type.
 /// TODO: Drop unused accessors.

@@ -148,7 +148,7 @@ public:
   bool isArtificial() const {
     if (Var->isArtificial())
       return true;
-    if (getType().isArtificial())
+    if (getType()->isArtificial())
       return true;
     return false;
   }
@@ -156,7 +156,7 @@ public:
   bool isObjectPointer() const {
     if (Var->isObjectPointer())
       return true;
-    if (getType().isObjectPointer())
+    if (getType()->isObjectPointer())
       return true;
     return false;
   }

@@ -141,7 +141,7 @@ bool DbgVariable::isBlockByrefVariable() const {
 }
 
 DIType DbgVariable::getType() const {
-  DIType Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
+  MDType *Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
   if (Ty->isBlockByrefStruct()) {
@@ -169,17 +169,17 @@ DIType DbgVariable::getType() const {
        have a DW_AT_location that tells the debugger how to unwind through
        the pointers and __Block_byref_x_VarName struct to find the actual
        value of the variable.  The function addBlockByrefType does this.  */
-    DIType subType = Ty;
-    uint16_t tag = Ty.getTag();
+    MDType *subType = Ty;
+    uint16_t tag = Ty->getTag();
 
     if (tag == dwarf::DW_TAG_pointer_type)
       subType = resolve(DITypeRef(cast<MDDerivedType>(Ty)->getBaseType()));
 
-    DIArray Elements(cast<MDCompositeTypeBase>(subType)->getElements());
+    auto Elements = cast<MDCompositeTypeBase>(subType)->getElements();
     for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-      DIDerivedType DT = cast<MDDerivedTypeBase>(Elements[i]);
-      if (getName() == DT.getName())
-        return (resolve(DT.getTypeDerivedFrom()));
+      auto *DT = cast<MDDerivedTypeBase>(Elements[i]);
+      if (getName() == DT->getName())
+        return resolve(DITypeRef(DT->getBaseType()));
     }
   }
   return Ty;
@@ -306,8 +306,8 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
     return false;
   if (isa<MDSubprogram>(Context))
     return true;
-  if (DIType T = dyn_cast<MDType>(Context))
-    return isSubprogramContext(resolve(T.getContext()));
+  if (auto *T = dyn_cast<MDType>(Context))
+    return isSubprogramContext(resolve(T->getScope()));
   return false;
 }
 
@@ -461,13 +461,13 @@ void DwarfDebug::beginModule() {
     for (DIType Ty : CUNode->getEnumTypes()) {
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
+      DIType UniqueTy = cast<MDType>(resolve(Ty->getRef()));
       CU.getOrCreateTypeDIE(UniqueTy);
     }
     for (DIType Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy = cast<MDType>(resolve(Ty.getRef()));
+      DIType UniqueTy = cast<MDType>(resolve(Ty->getRef()));
       CU.getOrCreateTypeDIE(UniqueTy);
     }
     // Emit imported_modules last so that the relevant context is already

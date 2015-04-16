@@ -237,126 +237,74 @@ template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
 
 DIScopeRef DIScope::getContext() const { return get()->getScope(); }
 
-/// \brief This is a wrapper for a type.
-///
-/// FIXME: Types should be factored much better so that CV qualifiers and
-/// others do not require a huge and empty descriptor full of zeros.
-class DIType : public DIScope {
+class DIType {
+  MDType *N;
+
 public:
-  DIType() = default;
-  DIType(const MDType *N) : DIScope(N) {}
+  DIType(const MDType *N = nullptr) : N(const_cast<MDType *>(N)) {}
 
-  MDType *get() const { return cast_or_null<MDType>(DIDescriptor::get()); }
-  operator MDType *() const { return get(); }
-  MDType *operator->() const { return get(); }
-  MDType &operator*() const { return *get(); }
-
-  DIScopeRef getContext() const { return get()->getScope(); }
-  StringRef getName() const { return get()->getName(); }
-  unsigned getLineNumber() const { return get()->getLine(); }
-  uint64_t getSizeInBits() const { return get()->getSizeInBits(); }
-  uint64_t getAlignInBits() const { return get()->getAlignInBits(); }
-  // FIXME: Offset is only used for DW_TAG_member nodes.  Making every type
-  // carry this is just plain insane.
-  uint64_t getOffsetInBits() const { return get()->getOffsetInBits(); }
-  unsigned getFlags() const { return get()->getFlags(); }
-
-  bool isPrivate() const { return get()->isPrivate(); }
-  bool isProtected() const { return get()->isProtected(); }
-  bool isPublic() const { return get()->isPublic(); }
-  bool isForwardDecl() const { return get()->isForwardDecl(); }
-  bool isAppleBlockExtension() const { return get()->isAppleBlockExtension(); }
-  bool isBlockByrefStruct() const { return get()->isBlockByrefStruct(); }
-  bool isVirtual() const { return get()->isVirtual(); }
-  bool isArtificial() const { return get()->isArtificial(); }
-  bool isObjectPointer() const { return get()->isObjectPointer(); }
-  bool isObjcClassComplete() const { return get()->isObjcClassComplete(); }
-  bool isVector() const { return get()->isVector(); }
-  bool isStaticMember() const { return get()->isStaticMember(); }
-  bool isLValueReference() const { return get()->isLValueReference(); }
-  bool isRValueReference() const { return get()->isRValueReference(); }
+  operator DIDescriptor() const { return N; }
+  operator DIScope() const { return N; }
+  operator MDType *() const { return N; }
+  MDType *operator->() const { return N; }
+  MDType &operator*() const { return *N; }
 };
 
-/// \brief A basic type, like 'int' or 'float'.
-class DIBasicType : public DIType {
+class DIBasicType {
+  MDBasicType *N;
+
 public:
-  DIBasicType() = default;
-  DIBasicType(const MDBasicType *N) : DIType(N) {}
+  DIBasicType(const MDBasicType *N = nullptr)
+      : N(const_cast<MDBasicType *>(N)) {}
 
-  MDBasicType *get() const {
-    return cast_or_null<MDBasicType>(DIDescriptor::get());
-  }
-  operator MDBasicType *() const { return get(); }
-  MDBasicType *operator->() const { return get(); }
-  MDBasicType &operator*() const { return *get(); }
-
-  unsigned getEncoding() const { return get()->getEncoding(); }
+  operator DIDescriptor() const { return N; }
+  operator DIType() const { return N; }
+  operator MDBasicType *() const { return N; }
+  MDBasicType *operator->() const { return N; }
+  MDBasicType &operator*() const { return *N; }
 };
 
-/// \brief A simple derived type
-///
-/// Like a const qualified type, a typedef, a pointer or reference, et cetera.
-/// Or, a data member of a class/struct/union.
-class DIDerivedType : public DIType {
+class DIDerivedType {
+  MDDerivedTypeBase *N;
+
 public:
-  DIDerivedType() = default;
-  DIDerivedType(const MDDerivedTypeBase *N) : DIType(N) {}
+  DIDerivedType(const MDDerivedTypeBase *N = nullptr)
+      : N(const_cast<MDDerivedTypeBase *>(N)) {}
 
-  MDDerivedTypeBase *get() const {
-    return cast_or_null<MDDerivedTypeBase>(DIDescriptor::get());
-  }
-  operator MDDerivedTypeBase *() const { return get(); }
-  MDDerivedTypeBase *operator->() const { return get(); }
-  MDDerivedTypeBase &operator*() const { return *get(); }
-
-  DITypeRef getTypeDerivedFrom() const { return get()->getBaseType(); }
+  operator DIDescriptor() const { return N; }
+  operator DIType() const { return N; }
+  operator MDDerivedTypeBase *() const { return N; }
+  MDDerivedTypeBase *operator->() const { return N; }
+  MDDerivedTypeBase &operator*() const { return *N; }
 };
 
-/// \brief Types that refer to multiple other types.
-///
-/// This descriptor holds a type that can refer to multiple other types, like a
-/// function or struct.
-///
-/// DICompositeType is derived from DIDerivedType because some
-/// composite types (such as enums) can be derived from basic types
-// FIXME: Make this derive from DIType directly & just store the
-// base type in a single DIType field.
-class DICompositeType : public DIDerivedType {
-  friend class DIBuilder;
+class DICompositeType {
+  MDCompositeTypeBase *N;
 
 public:
-  DICompositeType() = default;
-  DICompositeType(const MDCompositeTypeBase *N) : DIDerivedType(N) {}
+  DICompositeType(const MDCompositeTypeBase *N = nullptr)
+      : N(const_cast<MDCompositeTypeBase *>(N)) {}
 
-  MDCompositeTypeBase *get() const {
-    return cast_or_null<MDCompositeTypeBase>(DIDescriptor::get());
-  }
-  operator MDCompositeTypeBase *() const { return get(); }
-  MDCompositeTypeBase *operator->() const { return get(); }
-  MDCompositeTypeBase &operator*() const { return *get(); }
-
-  DIArray getElements() const { return get()->getElements(); }
-
-  unsigned getRunTimeLang() const { return get()->getRuntimeLang(); }
-  DITypeRef getContainingType() const { return get()->getVTableHolder(); }
-
-  DIArray getTemplateParams() const { return get()->getTemplateParams(); }
-  MDString *getIdentifier() const { return get()->getRawIdentifier(); }
+  operator DIDescriptor() const { return N; }
+  operator DIType() const { return N; }
+  operator MDCompositeTypeBase *() const { return N; }
+  MDCompositeTypeBase *operator->() const { return N; }
+  MDCompositeTypeBase &operator*() const { return *N; }
 };
 
-class DISubroutineType : public DICompositeType {
+class DISubroutineType {
+  MDSubroutineType *N;
+
 public:
-  DISubroutineType() = default;
-  DISubroutineType(const MDSubroutineType *N) : DICompositeType(N) {}
+  DISubroutineType(const MDSubroutineType *N = nullptr)
+      : N(const_cast<MDSubroutineType *>(N)) {}
 
-  MDSubroutineType *get() const {
-    return cast_or_null<MDSubroutineType>(DIDescriptor::get());
-  }
-  operator MDSubroutineType *() const { return get(); }
-  MDSubroutineType *operator->() const { return get(); }
-  MDSubroutineType &operator*() const { return *get(); }
-
-  MDTypeRefArray getTypeArray() const { return get()->getTypeArray(); }
+  operator DIDescriptor() const { return N; }
+  operator DIType() const { return N; }
+  operator DICompositeType() const { return N; }
+  operator MDSubroutineType *() const { return N; }
+  MDSubroutineType *operator->() const { return N; }
+  MDSubroutineType &operator*() const { return *N; }
 };
 
 class DIFile {
