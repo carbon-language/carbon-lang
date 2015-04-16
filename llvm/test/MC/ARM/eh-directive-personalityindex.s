@@ -1,5 +1,7 @@
 @ RUN: llvm-mc -triple armv7-linux-eabi -filetype obj -o - %s \
-@ RUN:   | llvm-readobj -s -sd -sr | FileCheck %s
+@ RUN:   | llvm-readobj -s -sd -sr > %t
+@ RUN: FileCheck %s < %t
+@ RUN: FileCheck --check-prefix=RELOC %s < %t
 
 	.syntax unified
 	.thumb
@@ -23,13 +25,13 @@ pr0:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr0
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr0 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:   ]
-@ CHECK: }
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr0
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr0 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ RELOC:   ]
+@ RELOC: }
 
 	.section .pr0.nontrivial
 
@@ -52,13 +54,13 @@ pr0_nontrivial:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr0.nontrivial
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr0.nontrivial 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
-@ CHECK:   ]
-@ CHECK: }
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr0.nontrivial
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr0.nontrivial 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr0 0x0
+@ RELOC:   ]
+@ RELOC: }
 
 	.section .pr1
 
@@ -85,14 +87,14 @@ pr1:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr1
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr1 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.pr1 0x0
-@ CHECK:   ]
-@ CHECK: }
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr1
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr1 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
+@ RELOC:     0x4 R_ARM_PREL31 .ARM.extab.pr1 0x0
+@ RELOC:   ]
+@ RELOC: }
 
 	.section .pr1.nontrivial
 
@@ -122,14 +124,14 @@ pr1_nontrivial:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr1.nontrivial
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr1.nontrivial 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.pr1.nontrivial 0x0
-@ CHECK:   ]
-@ CHECK: }
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr1.nontrivial
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr1.nontrivial 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr1 0x0
+@ RELOC:     0x4 R_ARM_PREL31 .ARM.extab.pr1.nontrivial 0x0
+@ RELOC:   ]
+@ RELOC: }
 
 	.section .pr2
 
@@ -156,14 +158,14 @@ pr2:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr2
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr2 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr2 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.pr2 0x0
-@ CHECK:   ]
-@ CHECK: }
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr2
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr2 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr2 0x0
+@ RELOC:     0x4 R_ARM_PREL31 .ARM.extab.pr2 0x0
+@ RELOC:   ]
+@ RELOC: }
 
 	.section .pr2.nontrivial
 	.type pr2_nontrivial,%function
@@ -191,12 +193,11 @@ pr2_nontrivial:
 @ CHECK:   )
 @ CHECK: }
 
-@ CHECK: Section {
-@ CHECK:   Name: .rel.ARM.exidx.pr2.nontrivial
-@ CHECK:   Relocations [
-@ CHECK:     0x0 R_ARM_PREL31 .pr2.nontrivial 0x0
-@ CHECK:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr2 0x0
-@ CHECK:     0x4 R_ARM_PREL31 .ARM.extab.pr2.nontrivial 0x0
-@ CHECK:   ]
-@ CHECK: }
-
+@ RELOC: Section {
+@ RELOC:   Name: .rel.ARM.exidx.pr2.nontrivial
+@ RELOC:   Relocations [
+@ RELOC:     0x0 R_ARM_PREL31 .pr2.nontrivial 0x0
+@ RELOC:     0x0 R_ARM_NONE __aeabi_unwind_cpp_pr2 0x0
+@ RELOC:     0x4 R_ARM_PREL31 .ARM.extab.pr2.nontrivial 0x0
+@ RELOC:   ]
+@ RELOC: }
