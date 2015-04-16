@@ -3288,6 +3288,10 @@ class LoadStoreExclusiveSimple<bits<2> sz, bit o2, bit L, bit o1, bit o0,
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0, oops, iops, asm, operands> {
   bits<5> Rt;
   bits<5> Rn;
+  let Inst{20-16} = 0b11111;
+  let Unpredictable{20-16} = 0b11111;
+  let Inst{14-10} = 0b11111;
+  let Unpredictable{14-10} = 0b11111;
   let Inst{9-5} = Rn;
   let Inst{4-0} = Rt;
 

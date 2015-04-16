@@ -1102,6 +1102,12 @@ static DecodeStatus DecodeExclusiveLdStInstruction(llvm::MCInst &Inst,
   case AArch64::STLRW:
   case AArch64::STLRB:
   case AArch64::STLRH:
+  case AArch64::STLLRW:
+  case AArch64::STLLRB:
+  case AArch64::STLLRH:
+  case AArch64::LDLARW:
+  case AArch64::LDLARB:
+  case AArch64::LDLARH:
     DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
     break;
   case AArch64::STLXRX:
@@ -1112,6 +1118,8 @@ static DecodeStatus DecodeExclusiveLdStInstruction(llvm::MCInst &Inst,
   case AArch64::LDAXRX:
   case AArch64::LDXRX:
   case AArch64::STLRX:
+  case AArch64::LDLARX:
+  case AArch64::STLLRX:
     DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
     break;
   case AArch64::STLXPW:

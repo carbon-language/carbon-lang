@@ -765,6 +765,13 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
 
   // v8.1a "Privileged Access Never" extension-specific system registers
   {"pan", PAN, AArch64::HasV8_1aOps},
+
+  // v8.1a "Limited Ordering Regions" extension-specific system registers
+  {"lorsa_el1", LORSA_EL1, AArch64::HasV8_1aOps},
+  {"lorea_el1", LOREA_EL1, AArch64::HasV8_1aOps},
+  {"lorn_el1", LORN_EL1, AArch64::HasV8_1aOps},
+  {"lorc_el1", LORC_EL1, AArch64::HasV8_1aOps},
+  {"lorid_el1", LORID_EL1, AArch64::HasV8_1aOps}, 
 };
 
 uint32_t

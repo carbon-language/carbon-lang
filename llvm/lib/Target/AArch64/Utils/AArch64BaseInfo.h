@@ -1141,6 +1141,13 @@ namespace AArch64SysReg {
     // v8.1a "Privileged Access Never" extension-specific system registers
     PAN               = 0xc213, // 11  000  0100  0010  011
 
+    // v8.1a "Limited Ordering Regions" extension-specific system registers
+    LORSA_EL1         = 0xc520, // 11  000  1010  0100  000
+    LOREA_EL1         = 0xc521, // 11  000  1010  0100  001
+    LORN_EL1          = 0xc522, // 11  000  1010  0100  010
+    LORC_EL1          = 0xc523, // 11  000  1010  0100  011
+    LORID_EL1         = 0xc527, // 11  000  1010  0100  111
+
     // Cyclone specific system registers
     CPM_IOACC_CTL_EL3 = 0xff90,
   };
