@@ -780,7 +780,15 @@ private:
       return false;
 
     FormatToken *EndBacktick = Tokens.back();
-    if (!(EndBacktick->is(tok::unknown) && EndBacktick->TokenText == "`"))
+    // Backticks get lexed as tok:unknown tokens. If a template string contains
+    // a comment start, it gets lexed as a tok::comment, or tok::unknown if
+    // unterminated.
+    if (!EndBacktick->isOneOf(tok::comment, tok::unknown))
+      return false;
+    size_t CommentBacktickPos = EndBacktick->TokenText.find('`');
+    // Unknown token that's not actually a backtick, or a comment that doesn't
+    // contain a backtick.
+    if (CommentBacktickPos == StringRef::npos)
       return false;
 
     unsigned TokenCount = 0;
@@ -812,7 +820,14 @@ private:
 
       Tokens.resize(Tokens.size() - TokenCount);
       Tokens.back()->Type = TT_TemplateString;
-      const char *EndOffset = EndBacktick->TokenText.data() + 1;
+      const char *EndOffset =
+          EndBacktick->TokenText.data() + 1 + CommentBacktickPos;
+      if (CommentBacktickPos != 0) {
+        // If the backtick was not the first character (e.g. in a comment),
+        // re-lex after the backtick position.
+        SourceLocation Loc = EndBacktick->Tok.getLocation();
+        resetLexer(SourceMgr.getFileOffset(Loc) + CommentBacktickPos + 1);
+      }
       Tokens.back()->TokenText =
           StringRef(Tokens.back()->TokenText.data(),
                     EndOffset - Tokens.back()->TokenText.data());

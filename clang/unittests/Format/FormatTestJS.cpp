@@ -648,6 +648,33 @@ TEST_F(FormatTestJS, TemplateStrings) {
 
   // Two template strings.
   verifyFormat("var x = `hello` == `hello`;");
+
+  // Comments in template strings.
+  EXPECT_EQ("var x = `//a`;\n"
+            "var y;",
+            format("var x =\n `//a`;\n"
+                   "var y  ;"));
+  EXPECT_EQ("var x = `/*a`;\n"
+            "var y;",
+            format("var x =\n `/*a`;\n"
+                   "var y;"));
+  // Backticks in a comment - not a template string.
+  EXPECT_EQ("var x = 1  // `/*a`;\n"
+            "    ;",
+            format("var x =\n 1  // `/*a`;\n"
+                   "    ;"));
+  EXPECT_EQ("/* ` */ var x = 1; /* ` */",
+            format("/* ` */ var x\n= 1; /* ` */"));
+  // Comment spans multiple template strings.
+  EXPECT_EQ("var x = `/*a`;\n"
+            "var y = ` */ `;",
+            format("var x =\n `/*a`;\n"
+                   "var y =\n ` */ `;"));
+  // Escaped backtick.
+  EXPECT_EQ("var x = ` \\` a`;\n"
+            "var y;",
+            format("var x = ` \\` a`;\n"
+                   "var y;"));
 }
 
 TEST_F(FormatTestJS, CastSyntax) {
