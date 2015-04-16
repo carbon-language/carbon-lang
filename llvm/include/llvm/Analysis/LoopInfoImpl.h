@@ -409,9 +409,6 @@ class PopulateLoopsDFS {
   typedef typename BlockTraits::ChildIteratorType SuccIterTy;
 
   LoopInfoBase<BlockT, LoopT> *LI;
-  DenseSet<const BlockT *> VisitedBlocks;
-  std::vector<std::pair<BlockT*, SuccIterTy> > DFSStack;
-
 public:
   PopulateLoopsDFS(LoopInfoBase<BlockT, LoopT> *li):
     LI(li) {}
@@ -420,36 +417,13 @@ public:
 
 protected:
   void insertIntoLoop(BlockT *Block);
-
-  BlockT *dfsSource() { return DFSStack.back().first; }
-  SuccIterTy &dfsSucc() { return DFSStack.back().second; }
-  SuccIterTy dfsSuccEnd() { return BlockTraits::child_end(dfsSource()); }
-
-  void pushBlock(BlockT *Block) {
-    DFSStack.push_back(std::make_pair(Block, BlockTraits::child_begin(Block)));
-  }
 };
 
 /// Top-level driver for the forward DFS within the loop.
 template<class BlockT, class LoopT>
 void PopulateLoopsDFS<BlockT, LoopT>::traverse(BlockT *EntryBlock) {
-  pushBlock(EntryBlock);
-  VisitedBlocks.insert(EntryBlock);
-  while (!DFSStack.empty()) {
-    // Traverse the leftmost path as far as possible.
-    while (dfsSucc() != dfsSuccEnd()) {
-      BlockT *BB = *dfsSucc();
-      ++dfsSucc();
-      if (!VisitedBlocks.insert(BB).second)
-        continue;
-
-      // Push the next DFS successor onto the stack.
-      pushBlock(BB);
-    }
-    // Visit the top of the stack in postorder and backtrack.
-    insertIntoLoop(dfsSource());
-    DFSStack.pop_back();
-  }
+  for (BlockT *BB : post_order(EntryBlock))
+    insertIntoLoop(BB);
 }
 
 /// Add a single Block to its ancestor loops in PostOrder. If the block is a
