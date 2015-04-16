@@ -423,16 +423,18 @@ macro(add_llvm_library name)
     set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
   else()
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
-      if(WIN32 OR CYGWIN)
-        install(TARGETS ${name}
-          EXPORT LLVMExports
-          RUNTIME DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-          COMPONENT ${name})
-      elseif(ARG_SHARED OR BUILD_SHARED_LIBS)
-        install(TARGETS ${name}
-          EXPORT LLVMExports
-          LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-          COMPONENT ${name})
+      if(ARG_SHARED OR BUILD_SHARED_LIBS)
+        if(WIN32 OR CYGWIN)
+          install(TARGETS ${name}
+            EXPORT LLVMExports
+            RUNTIME DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+            COMPONENT ${name})
+        else()
+          install(TARGETS ${name}
+            EXPORT LLVMExports
+            LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+            COMPONENT ${name})
+        endif()
       else()
         install(TARGETS ${name}
           EXPORT LLVMExports
