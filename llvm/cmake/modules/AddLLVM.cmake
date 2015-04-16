@@ -423,7 +423,7 @@ macro(add_llvm_library name)
     set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
   else()
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
-      if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+      if(WIN32 OR CYGWIN)
         install(TARGETS ${name}
           EXPORT LLVMExports
           RUNTIME DESTINATION lib${LLVM_LIBDIR_SUFFIX}
