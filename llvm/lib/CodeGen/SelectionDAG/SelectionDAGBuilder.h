@@ -134,64 +134,25 @@ private:
   /// SDNodes we create.
   unsigned SDNodeOrder;
 
-  enum CaseClusterKind {
-    /// A cluster of adjacent case labels with the same destination, or just one
-    /// case.
-    CC_Range,
-    /// A cluster of cases suitable for jump table lowering.
-    CC_JumpTable,
-    /// A cluster of cases suitable for bit test lowering.
-    CC_BitTests
-  };
+  /// Case - A struct to record the Value for a switch case, and the
+  /// case's target basic block.
+  struct Case {
+    const ConstantInt *Low;
+    const ConstantInt *High;
+    MachineBasicBlock* BB;
+    uint32_t ExtraWeight;
 
-  /// A cluster of case labels.
-  struct CaseCluster {
-    CaseClusterKind Kind;
-    const ConstantInt *Low, *High;
-    union {
-      MachineBasicBlock *MBB;
-      unsigned JTCasesIndex;
-      unsigned BTCasesIndex;
-    };
-    uint64_t Weight;
+    Case() : Low(nullptr), High(nullptr), BB(nullptr), ExtraWeight(0) { }
+    Case(const ConstantInt *low, const ConstantInt *high, MachineBasicBlock *bb,
+         uint32_t extraweight) : Low(low), High(high), BB(bb),
+         ExtraWeight(extraweight) { }
 
-    static CaseCluster range(const ConstantInt *Low, const ConstantInt *High,
-                             MachineBasicBlock *MBB, uint32_t Weight) {
-      CaseCluster C;
-      C.Kind = CC_Range;
-      C.Low = Low;
-      C.High = High;
-      C.MBB = MBB;
-      C.Weight = Weight;
-      return C;
-    }
-
-    static CaseCluster jumpTable(const ConstantInt *Low,
-                                 const ConstantInt *High, unsigned JTCasesIndex,
-                                 uint32_t Weight) {
-      CaseCluster C;
-      C.Kind = CC_JumpTable;
-      C.Low = Low;
-      C.High = High;
-      C.JTCasesIndex = JTCasesIndex;
-      C.Weight = Weight;
-      return C;
-    }
-
-    static CaseCluster bitTests(const ConstantInt *Low, const ConstantInt *High,
-                                unsigned BTCasesIndex, uint32_t Weight) {
-      CaseCluster C;
-      C.Kind = CC_BitTests;
-      C.Low = Low;
-      C.High = High;
-      C.BTCasesIndex = BTCasesIndex;
-      C.Weight = Weight;
-      return C;
+    APInt size() const {
+      const APInt &rHigh = High->getValue();
+      const APInt &rLow  = Low->getValue();
+      return (rHigh - rLow + 1ULL);
     }
   };
-
-  typedef std::vector<CaseCluster> CaseClusterVector;
-  typedef CaseClusterVector::iterator CaseClusterIt;
 
   struct CaseBits {
     uint64_t Mask;
@@ -202,14 +163,42 @@ private:
     CaseBits(uint64_t mask, MachineBasicBlock* bb, unsigned bits,
              uint32_t Weight):
       Mask(mask), BB(bb), Bits(bits), ExtraWeight(Weight) { }
-
-    CaseBits() : Mask(0), BB(nullptr), Bits(0), ExtraWeight(0) {}
   };
 
-  typedef std::vector<CaseBits> CaseBitsVector;
+  typedef std::vector<Case>           CaseVector;
+  typedef std::vector<CaseBits>       CaseBitsVector;
+  typedef CaseVector::iterator        CaseItr;
+  typedef std::pair<CaseItr, CaseItr> CaseRange;
 
-  /// Sort Clusters and merge adjacent cases.
-  void sortAndRangeify(CaseClusterVector &Clusters);
+  /// CaseRec - A struct with ctor used in lowering switches to a binary tree
+  /// of conditional branches.
+  struct CaseRec {
+    CaseRec(MachineBasicBlock *bb, const ConstantInt *lt, const ConstantInt *ge,
+            CaseRange r) :
+    CaseBB(bb), LT(lt), GE(ge), Range(r) {}
+
+    /// CaseBB - The MBB in which to emit the compare and branch
+    MachineBasicBlock *CaseBB;
+    /// LT, GE - If nonzero, we know the current case value must be less-than or
+    /// greater-than-or-equal-to these Constants.
+    const ConstantInt *LT;
+    const ConstantInt *GE;
+    /// Range - A pair of iterators representing the range of case values to be
+    /// processed at this point in the binary search tree.
+    CaseRange Range;
+  };
+
+  typedef std::vector<CaseRec> CaseRecVector;
+
+  struct CaseBitsCmp {
+    bool operator()(const CaseBits &C1, const CaseBits &C2) {
+      return C1.Bits > C2.Bits;
+    }
+  };
+
+  /// Populate Cases with the cases in SI, clustering adjacent cases with the
+  /// same destination together.
+  void Clusterify(CaseVector &Cases, const SwitchInst *SI);
 
   /// CaseBlock - This structure is used to communicate between
   /// SelectionDAGBuilder and SDISel for the code generation of additional basic
@@ -298,58 +287,6 @@ private:
     MachineBasicBlock *Default;
     BitTestInfo Cases;
   };
-
-  /// Minimum jump table density, in percent.
-  enum { MinJumpTableDensity = 40 };
-
-  /// Check whether a range of clusters is dense enough for a jump table.
-  bool isDense(const CaseClusterVector &Clusters, unsigned *TotalCases,
-               unsigned First, unsigned Last);
-
-  /// Build a jump table cluster from Clusters[First..Last]. Returns false if it
-  /// decides it's not a good idea.
-  bool buildJumpTable(CaseClusterVector &Clusters, unsigned First,
-                      unsigned Last, const SwitchInst *SI,
-                      MachineBasicBlock *DefaultMBB, CaseCluster &JTCluster);
-
-  /// Find clusters of cases suitable for jump table lowering.
-  void findJumpTables(CaseClusterVector &Clusters, const SwitchInst *SI,
-                      MachineBasicBlock *DefaultMBB);
-
-  /// Check whether the range [Low,High] fits in a machine word.
-  bool rangeFitsInWord(const APInt &Low, const APInt &High);
-
-  /// Check whether these clusters are suitable for lowering with bit tests based
-  /// on the number of destinations, comparison metric, and range.
-  bool isSuitableForBitTests(unsigned NumDests, unsigned NumCmps,
-                             const APInt &Low, const APInt &High);
-
-  /// Build a bit test cluster from Clusters[First..Last]. Returns false if it
-  /// decides it's not a good idea.
-  bool buildBitTests(CaseClusterVector &Clusters, unsigned First, unsigned Last,
-                     const SwitchInst *SI, CaseCluster &BTCluster);
-
-  /// Find clusters of cases suitable for bit test lowering.
-  void findBitTestClusters(CaseClusterVector &Clusters, const SwitchInst *SI);
-
-  struct SwitchWorkListItem {
-    MachineBasicBlock *MBB;
-    CaseClusterIt FirstCluster;
-    CaseClusterIt LastCluster;
-    const ConstantInt *GE;
-    const ConstantInt *LT;
-  };
-  typedef SmallVector<SwitchWorkListItem, 4> SwitchWorkList;
-
-  /// Emit comparison and split W into two subtrees.
-  void splitWorkItem(SwitchWorkList &WorkList, const SwitchWorkListItem &W,
-                     Value *Cond, MachineBasicBlock *SwitchMBB);
-
-  /// Lower W.
-  void lowerWorkItem(SwitchWorkListItem W, Value *Cond,
-                     MachineBasicBlock *SwitchMBB,
-                     MachineBasicBlock *DefaultMBB);
-
 
   /// A class which encapsulates all of the information needed to generate a
   /// stack protector check and signals to isel via its state being initialized
@@ -732,6 +669,29 @@ private:
   void visitSwitch(const SwitchInst &I);
   void visitIndirectBr(const IndirectBrInst &I);
   void visitUnreachable(const UnreachableInst &I);
+
+  // Helpers for visitSwitch
+  bool handleSmallSwitchRange(CaseRec& CR,
+                              CaseRecVector& WorkList,
+                              const Value* SV,
+                              MachineBasicBlock* Default,
+                              MachineBasicBlock *SwitchBB);
+  bool handleJTSwitchCase(CaseRec& CR,
+                          CaseRecVector& WorkList,
+                          const Value* SV,
+                          MachineBasicBlock* Default,
+                          MachineBasicBlock *SwitchBB);
+  bool handleBTSplitSwitchCase(CaseRec& CR,
+                               CaseRecVector& WorkList,
+                               const Value* SV,
+                               MachineBasicBlock *SwitchBB);
+  void splitSwitchCase(CaseRec &CR, CaseItr Pivot, CaseRecVector &WorkList,
+                       const Value *SV, MachineBasicBlock *SwitchBB);
+  bool handleBitTestsSwitchCase(CaseRec& CR,
+                                CaseRecVector& WorkList,
+                                const Value* SV,
+                                MachineBasicBlock* Default,
+                                MachineBasicBlock *SwitchBB);
 
   uint32_t getEdgeWeight(const MachineBasicBlock *Src,
                          const MachineBasicBlock *Dst) const;

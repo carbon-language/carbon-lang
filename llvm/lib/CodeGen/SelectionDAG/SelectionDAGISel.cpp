@@ -1459,15 +1459,21 @@ SelectionDAGISel::FinishBasicBlock() {
                  << FuncInfo->PHINodesToUpdate[i].first
                  << ", " << FuncInfo->PHINodesToUpdate[i].second << ")\n");
 
+  const bool MustUpdatePHINodes = SDB->SwitchCases.empty() &&
+                                  SDB->JTCases.empty() &&
+                                  SDB->BitTestCases.empty();
+
   // Next, now that we know what the last MBB the LLVM BB expanded is, update
   // PHI nodes in successors.
-  for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i) {
-    MachineInstrBuilder PHI(*MF, FuncInfo->PHINodesToUpdate[i].first);
-    assert(PHI->isPHI() &&
-           "This is not a machine PHI node that we are updating!");
-    if (!FuncInfo->MBB->isSuccessor(PHI->getParent()))
-      continue;
-    PHI.addReg(FuncInfo->PHINodesToUpdate[i].second).addMBB(FuncInfo->MBB);
+  if (MustUpdatePHINodes) {
+    for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i) {
+      MachineInstrBuilder PHI(*MF, FuncInfo->PHINodesToUpdate[i].first);
+      assert(PHI->isPHI() &&
+             "This is not a machine PHI node that we are updating!");
+      if (!FuncInfo->MBB->isSuccessor(PHI->getParent()))
+        continue;
+      PHI.addReg(FuncInfo->PHINodesToUpdate[i].second).addMBB(FuncInfo->MBB);
+    }
   }
 
   // Handle stack protector.
@@ -1511,6 +1517,10 @@ SelectionDAGISel::FinishBasicBlock() {
     // Clear the Per-BB State.
     SDB->SPDescriptor.resetPerBBState();
   }
+
+  // If we updated PHI Nodes, return early.
+  if (MustUpdatePHINodes)
+    return;
 
   for (unsigned i = 0, e = SDB->BitTestCases.size(); i != e; ++i) {
     // Lower header first, if it wasn't already lowered
@@ -1624,6 +1634,16 @@ SelectionDAGISel::FinishBasicBlock() {
     }
   }
   SDB->JTCases.clear();
+
+  // If the switch block involved a branch to one of the actual successors, we
+  // need to update PHI nodes in that block.
+  for (unsigned i = 0, e = FuncInfo->PHINodesToUpdate.size(); i != e; ++i) {
+    MachineInstrBuilder PHI(*MF, FuncInfo->PHINodesToUpdate[i].first);
+    assert(PHI->isPHI() &&
+           "This is not a machine PHI node that we are updating!");
+    if (FuncInfo->MBB->isSuccessor(PHI->getParent()))
+      PHI.addReg(FuncInfo->PHINodesToUpdate[i].second).addMBB(FuncInfo->MBB);
+  }
 
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
