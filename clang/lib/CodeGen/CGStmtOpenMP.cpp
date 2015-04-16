@@ -263,6 +263,62 @@ void CodeGenFunction::EmitOMPPrivateClause(
   }
 }
 
+bool CodeGenFunction::EmitOMPCopyinClause(const OMPExecutableDirective &D) {
+  // threadprivate_var1 = master_threadprivate_var1;
+  // operator=(threadprivate_var2, master_threadprivate_var2);
+  // ...
+  // __kmpc_barrier(&loc, global_tid);
+  auto CopyinFilter = [](const OMPClause *C) -> bool {
+    return C->getClauseKind() == OMPC_copyin;
+  };
+  llvm::DenseSet<const VarDecl *> CopiedVars;
+  llvm::BasicBlock *CopyBegin = nullptr, *CopyEnd = nullptr;
+  for (OMPExecutableDirective::filtered_clause_iterator<decltype(CopyinFilter)>
+           I(D.clauses(), CopyinFilter);
+       I; ++I) {
+    auto *C = cast<OMPCopyinClause>(*I);
+    auto IRef = C->varlist_begin();
+    auto ISrcRef = C->source_exprs().begin();
+    auto IDestRef = C->destination_exprs().begin();
+    for (auto *AssignOp : C->assignment_ops()) {
+      auto *VD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      if (CopiedVars.insert(VD->getCanonicalDecl()).second) {
+        // Get the address of the master variable.
+        auto *MasterAddr = VD->isStaticLocal()
+                               ? CGM.getStaticLocalDeclAddress(VD)
+                               : CGM.GetAddrOfGlobal(VD);
+        // Get the address of the threadprivate variable.
+        auto *PrivateAddr = EmitLValue(*IRef).getAddress();
+        if (CopiedVars.size() == 1) {
+          // At first check if current thread is a master thread. If it is, no
+          // need to copy data.
+          CopyBegin = createBasicBlock("copyin.not.master");
+          CopyEnd = createBasicBlock("copyin.not.master.end");
+          Builder.CreateCondBr(
+              Builder.CreateICmpNE(
+                  Builder.CreatePtrToInt(MasterAddr, CGM.IntPtrTy),
+                  Builder.CreatePtrToInt(PrivateAddr, CGM.IntPtrTy)),
+              CopyBegin, CopyEnd);
+          EmitBlock(CopyBegin);
+        }
+        auto *SrcVD = cast<VarDecl>(cast<DeclRefExpr>(*ISrcRef)->getDecl());
+        auto *DestVD = cast<VarDecl>(cast<DeclRefExpr>(*IDestRef)->getDecl());
+        EmitOMPCopy(*this, (*IRef)->getType(), PrivateAddr, MasterAddr, DestVD,
+                    SrcVD, AssignOp);
+      }
+      ++IRef;
+      ++ISrcRef;
+      ++IDestRef;
+    }
+  }
+  if (CopyEnd) {
+    // Exit out of copying procedure for non-master thread.
+    EmitBlock(CopyEnd, /*IsFinished=*/true);
+    return true;
+  }
+  return false;
+}
+
 bool CodeGenFunction::EmitOMPLastprivateClauseInit(
     const OMPExecutableDirective &D, OMPPrivateScope &PrivateScope) {
   auto LastprivateFilter = [](const OMPClause *C) -> bool {
@@ -465,9 +521,13 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
   // Emit parallel region as a standalone region.
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     OMPPrivateScope PrivateScope(CGF);
-    if (CGF.EmitOMPFirstprivateClause(S, PrivateScope)) {
+    bool Copyins = CGF.EmitOMPCopyinClause(S);
+    bool Firstprivates = CGF.EmitOMPFirstprivateClause(S, PrivateScope);
+    if (Copyins || Firstprivates) {
       // Emit implicit barrier to synchronize threads and avoid data races on
-      // initialization of firstprivate variables.
+      // initialization of firstprivate variables or propagation master's thread
+      // values of threadprivate variables to local instances of that variables
+      // of all other implicit threads.
       CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, S.getLocStart(),
                                                  OMPD_unknown);
     }

@@ -22,18 +22,18 @@ public:
   S3() : a(0) {}
   S3 &operator=(S3 &s3) { return *this; }
 };
-class S4 { // expected-note {{'S4' declared here}}
+class S4 {
   int a;
   S4();
-  S4 &operator=(const S4 &s4);
+  S4 &operator=(const S4 &s4); // expected-note {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 { // expected-note {{'S5' declared here}}
+class S5 {
   int a;
   S5() : a(0) {}
-  S5 &operator=(const S5 &s5) { return *this; }
+  S5 &operator=(const S5 &s5) { return *this; } // expected-note {{implicitly declared private here}}
 
 public:
   S5(int v) : a(v) {}
@@ -46,8 +46,8 @@ public:
 
 S2 k;
 S3 h;
-S4 l(3); // expected-note {{'l' defined here}}
-S5 m(4); // expected-note {{'m' defined here}}
+S4 l(3);
+S5 m(4);
 #pragma omp threadprivate(h, k, l, m)
 
 int main(int argc, char **argv) {
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-#pragma omp parallel sections copyin(l) // expected-error {{copyin variable must have an accessible, unambiguous copy assignment operator}}
+#pragma omp parallel sections copyin(l) // expected-error {{'operator=' is a private member of 'S4'}}
   {
     foo();
   }
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-#pragma omp parallel sections copyin(m) // expected-error {{copyin variable must have an accessible, unambiguous copy assignment operator}}
+#pragma omp parallel sections copyin(m) // expected-error {{'operator=' is a private member of 'S5'}}
   {
     foo();
   }

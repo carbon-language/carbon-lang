@@ -395,6 +395,15 @@ void OMPClauseProfiler::VisitOMPAlignedClause(const OMPAlignedClause *C) {
 }
 void OMPClauseProfiler::VisitOMPCopyinClause(const OMPCopyinClause *C) {
   VisitOMPClauseList(C);
+  for (auto *E : C->source_exprs()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->destination_exprs()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->assignment_ops()) {
+    Profiler->VisitStmt(E);
+  }
 }
 void
 OMPClauseProfiler::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {

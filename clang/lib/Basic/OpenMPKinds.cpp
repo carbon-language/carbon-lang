@@ -374,7 +374,6 @@ bool clang::isOpenMPPrivate(OpenMPClauseKind Kind) {
 }
 
 bool clang::isOpenMPThreadPrivate(OpenMPClauseKind Kind) {
-  return Kind == OMPC_threadprivate ||
-         Kind == OMPC_copyin; // TODO add next clauses like 'copyprivate'.
+  return Kind == OMPC_threadprivate || Kind == OMPC_copyin;
 }
 

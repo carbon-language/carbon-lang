@@ -2068,6 +2068,18 @@ public:
                                  OMPPrivateScope &PrivateScope);
   void EmitOMPPrivateClause(const OMPExecutableDirective &D,
                             OMPPrivateScope &PrivateScope);
+  /// \brief Emit code for copyin clause in \a D directive. The next code is
+  /// generated at the start of outlined functions for directives:
+  /// \code
+  /// threadprivate_var1 = master_threadprivate_var1;
+  /// operator=(threadprivate_var2, master_threadprivate_var2);
+  /// ...
+  /// __kmpc_barrier(&loc, global_tid);
+  /// \endcode
+  ///
+  /// \param D OpenMP directive possibly with 'copyin' clause(s).
+  /// \returns true if at least one copyin variable is found, false otherwise.
+  bool EmitOMPCopyinClause(const OMPExecutableDirective &D);
   /// \brief Emit initial code for lastprivate variables. If some variable is
   /// not also firstprivate, then the default initialization is used. Otherwise
   /// initialization of this variable is performed by EmitOMPFirstprivateClause
