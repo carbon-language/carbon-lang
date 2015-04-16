@@ -573,45 +573,43 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
   //  class type, unless the list item is also specified in a firstprivate
   //  clause.
   if (auto D = dyn_cast_or_null<OMPExecutableDirective>(CurDirective)) {
-    for (auto C : D->clauses()) {
-      if (auto Clause = dyn_cast<OMPLastprivateClause>(C)) {
-        for (auto VarRef : Clause->varlists()) {
-          if (VarRef->isValueDependent() || VarRef->isTypeDependent())
+    for (auto *C : D->clauses()) {
+      if (auto *Clause = dyn_cast<OMPLastprivateClause>(C)) {
+        SmallVector<Expr *, 8> PrivateCopies;
+        for (auto *DE : Clause->varlists()) {
+          if (DE->isValueDependent() || DE->isTypeDependent()) {
+            PrivateCopies.push_back(nullptr);
             continue;
-          auto VD = cast<VarDecl>(cast<DeclRefExpr>(VarRef)->getDecl());
+          }
+          auto *VD = cast<VarDecl>(cast<DeclRefExpr>(DE)->getDecl());
           auto DVar = DSAStack->getTopDSA(VD, false);
           if (DVar.CKind == OMPC_lastprivate) {
-            SourceLocation ELoc = VarRef->getExprLoc();
-            auto Type = VarRef->getType();
-            if (Type->isArrayType())
-              Type = QualType(Type->getArrayElementTypeNoTypeQual(), 0);
-            CXXRecordDecl *RD =
-                getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
-            // FIXME This code must be replaced by actual constructing of the
-            // lastprivate variable.
-            if (RD) {
-              CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
-              PartialDiagnostic PD =
-                  PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
-              if (!CD ||
-                  CheckConstructorAccess(
-                      ELoc, CD, InitializedEntity::InitializeTemporary(Type),
-                      CD->getAccess(), PD) == AR_inaccessible ||
-                  CD->isDeleted()) {
-                Diag(ELoc, diag::err_omp_required_method)
-                    << getOpenMPClauseName(OMPC_lastprivate) << 0;
-                bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                              VarDecl::DeclarationOnly;
-                Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl
-                                               : diag::note_defined_here)
-                    << VD;
-                Diag(RD->getLocation(), diag::note_previous_decl) << RD;
-                continue;
-              }
-              MarkFunctionReferenced(ELoc, CD);
-              DiagnoseUseOfDecl(CD, ELoc);
-            }
+            // Generate helper private variable and initialize it with the
+            // default value. The address of the original variable is replaced
+            // by the address of the new private variable in CodeGen. This new
+            // variable is not added to IdResolver, so the code in the OpenMP
+            // region uses original variable for proper diagnostics.
+            auto *VDPrivate = VarDecl::Create(
+                Context, CurContext, DE->getLocStart(), DE->getExprLoc(),
+                VD->getIdentifier(), VD->getType(), VD->getTypeSourceInfo(),
+                SC_Auto);
+            ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
+            if (VDPrivate->isInvalidDecl())
+              continue;
+            CurContext->addDecl(VDPrivate);
+            PrivateCopies.push_back(DeclRefExpr::Create(
+                Context, NestedNameSpecifierLoc(), SourceLocation(), VDPrivate,
+                /*RefersToEnclosingVariableOrCapture=*/false, SourceLocation(),
+                DE->getType(), VK_LValue));
+          } else {
+            // The variable is also a firstprivate, so initialization sequence
+            // for private copy is generated already.
+            PrivateCopies.push_back(nullptr);
           }
+        }
+        // Set initializers to private copies if no errors were found.
+        if (PrivateCopies.size() == Clause->varlist_size()) {
+          Clause->setPrivateCopies(PrivateCopies);
         }
       }
     }
@@ -4971,11 +4969,17 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
                                               SourceLocation LParenLoc,
                                               SourceLocation EndLoc) {
   SmallVector<Expr *, 8> Vars;
+  SmallVector<Expr *, 8> SrcExprs;
+  SmallVector<Expr *, 8> DstExprs;
+  SmallVector<Expr *, 8> AssignmentOps;
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP lastprivate clause.");
     if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
+      SrcExprs.push_back(nullptr);
+      DstExprs.push_back(nullptr);
+      AssignmentOps.push_back(nullptr);
       continue;
     }
 
@@ -4997,6 +5001,9 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
+      SrcExprs.push_back(nullptr);
+      DstExprs.push_back(nullptr);
+      AssignmentOps.push_back(nullptr);
       continue;
     }
 
@@ -5060,65 +5067,39 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     //  A variable of class type (or array thereof) that appears in a
     //  lastprivate clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
-    while (Type.getNonReferenceType()->isArrayType())
-      Type = cast<ArrayType>(Type.getNonReferenceType().getTypePtr())
-                 ->getElementType();
-    CXXRecordDecl *RD = getLangOpts().CPlusPlus
-                            ? Type.getNonReferenceType()->getAsCXXRecordDecl()
-                            : nullptr;
-    // FIXME This code must be replaced by actual copying and destructing of the
-    // lastprivate variable.
-    if (RD) {
-      CXXMethodDecl *MD = LookupCopyingAssignment(RD, 0, false, 0);
-      DeclAccessPair FoundDecl = DeclAccessPair::make(MD, MD->getAccess());
-      if (MD) {
-        if (CheckMemberAccess(ELoc, RD, FoundDecl) == AR_inaccessible ||
-            MD->isDeleted()) {
-          Diag(ELoc, diag::err_omp_required_method)
-              << getOpenMPClauseName(OMPC_lastprivate) << 2;
-          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                        VarDecl::DeclarationOnly;
-          Diag(VD->getLocation(),
-               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-              << VD;
-          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
-          continue;
-        }
-        MarkFunctionReferenced(ELoc, MD);
-        DiagnoseUseOfDecl(MD, ELoc);
-      }
-
-      CXXDestructorDecl *DD = RD->getDestructor();
-      if (DD) {
-        PartialDiagnostic PD =
-            PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
-        if (CheckDestructorAccess(ELoc, DD, PD) == AR_inaccessible ||
-            DD->isDeleted()) {
-          Diag(ELoc, diag::err_omp_required_method)
-              << getOpenMPClauseName(OMPC_lastprivate) << 4;
-          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
-                        VarDecl::DeclarationOnly;
-          Diag(VD->getLocation(),
-               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-              << VD;
-          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
-          continue;
-        }
-        MarkFunctionReferenced(ELoc, DD);
-        DiagnoseUseOfDecl(DD, ELoc);
-      }
-    }
+    Type = Context.getBaseElementType(Type).getNonReferenceType();
+    auto *SrcVD = BuildVarDecl(*this, DE->getLocStart(),
+                               Type.getUnqualifiedType(), ".lastprivate.src");
+    auto *PseudoSrcExpr = BuildDeclRefExpr(SrcVD, Type.getUnqualifiedType(),
+                                           VK_LValue, DE->getExprLoc()).get();
+    auto *DstVD =
+        BuildVarDecl(*this, DE->getLocStart(), Type, ".lastprivate.dst");
+    auto *PseudoDstExpr =
+        BuildDeclRefExpr(DstVD, Type, VK_LValue, DE->getExprLoc()).get();
+    // For arrays generate assignment operation for single element and replace
+    // it by the original array element in CodeGen.
+    auto AssignmentOp = BuildBinOp(/*S=*/nullptr, DE->getExprLoc(), BO_Assign,
+                                   PseudoDstExpr, PseudoSrcExpr);
+    if (AssignmentOp.isInvalid())
+      continue;
+    AssignmentOp = ActOnFinishFullExpr(AssignmentOp.get(), DE->getExprLoc(),
+                                       /*DiscardedValue=*/true);
+    if (AssignmentOp.isInvalid())
+      continue;
 
     if (DVar.CKind != OMPC_firstprivate)
       DSAStack->addDSA(VD, DE, OMPC_lastprivate);
     Vars.push_back(DE);
+    SrcExprs.push_back(PseudoSrcExpr);
+    DstExprs.push_back(PseudoDstExpr);
+    AssignmentOps.push_back(AssignmentOp.get());
   }
 
   if (Vars.empty())
     return nullptr;
 
   return OMPLastprivateClause::Create(Context, StartLoc, LParenLoc, EndLoc,
-                                      Vars);
+                                      Vars, SrcExprs, DstExprs, AssignmentOps);
 }
 
 OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,

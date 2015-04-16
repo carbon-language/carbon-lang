@@ -346,6 +346,15 @@ OMPClauseProfiler::VisitOMPFirstprivateClause(const OMPFirstprivateClause *C) {
 void
 OMPClauseProfiler::VisitOMPLastprivateClause(const OMPLastprivateClause *C) {
   VisitOMPClauseList(C);
+  for (auto *E : C->source_exprs()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->destination_exprs()) {
+    Profiler->VisitStmt(E);
+  }
+  for (auto *E : C->assignment_ops()) {
+    Profiler->VisitStmt(E);
+  }
 }
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);

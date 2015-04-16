@@ -1246,17 +1246,47 @@ OMPFirstprivateClause *OMPFirstprivateClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPFirstprivateClause(N);
 }
 
-OMPLastprivateClause *OMPLastprivateClause::Create(const ASTContext &C,
-                                                   SourceLocation StartLoc,
-                                                   SourceLocation LParenLoc,
-                                                   SourceLocation EndLoc,
-                                                   ArrayRef<Expr *> VL) {
+void OMPLastprivateClause::setPrivateCopies(ArrayRef<Expr *> PrivateCopies) {
+  assert(PrivateCopies.size() == varlist_size() &&
+         "Number of private copies is not the same as the preallocated buffer");
+  std::copy(PrivateCopies.begin(), PrivateCopies.end(), varlist_end());
+}
+
+void OMPLastprivateClause::setSourceExprs(ArrayRef<Expr *> SrcExprs) {
+  assert(SrcExprs.size() == varlist_size() && "Number of source expressions is "
+                                              "not the same as the "
+                                              "preallocated buffer");
+  std::copy(SrcExprs.begin(), SrcExprs.end(), getPrivateCopies().end());
+}
+
+void OMPLastprivateClause::setDestinationExprs(ArrayRef<Expr *> DstExprs) {
+  assert(DstExprs.size() == varlist_size() && "Number of destination "
+                                              "expressions is not the same as "
+                                              "the preallocated buffer");
+  std::copy(DstExprs.begin(), DstExprs.end(), getSourceExprs().end());
+}
+
+void OMPLastprivateClause::setAssignmentOps(ArrayRef<Expr *> AssignmentOps) {
+  assert(AssignmentOps.size() == varlist_size() &&
+         "Number of assignment expressions is not the same as the preallocated "
+         "buffer");
+  std::copy(AssignmentOps.begin(), AssignmentOps.end(),
+            getDestinationExprs().end());
+}
+
+OMPLastprivateClause *OMPLastprivateClause::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+    SourceLocation EndLoc, ArrayRef<Expr *> VL, ArrayRef<Expr *> SrcExprs,
+    ArrayRef<Expr *> DstExprs, ArrayRef<Expr *> AssignmentOps) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPLastprivateClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * VL.size());
+                         5 * sizeof(Expr *) * VL.size());
   OMPLastprivateClause *Clause =
       new (Mem) OMPLastprivateClause(StartLoc, LParenLoc, EndLoc, VL.size());
   Clause->setVarRefs(VL);
+  Clause->setSourceExprs(SrcExprs);
+  Clause->setDestinationExprs(DstExprs);
+  Clause->setAssignmentOps(AssignmentOps);
   return Clause;
 }
 
@@ -1264,7 +1294,7 @@ OMPLastprivateClause *OMPLastprivateClause::CreateEmpty(const ASTContext &C,
                                                         unsigned N) {
   void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPLastprivateClause),
                                                   llvm::alignOf<Expr *>()) +
-                         sizeof(Expr *) * N);
+                         5 * sizeof(Expr *) * N);
   return new (Mem) OMPLastprivateClause(N);
 }
 

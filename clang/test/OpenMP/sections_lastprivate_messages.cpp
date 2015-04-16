@@ -15,15 +15,16 @@ class S2 {
 public:
   S2() : a(0) {}
   S2(S2 &s2) : a(s2.a) {}
+  const S2 &operator=(const S2 &) const;
   static float S2s; // expected-note {{static data member is predetermined as shared}}
   static const float S2sc;
 };
 const float S2::S2sc = 0; // expected-note {{static data member is predetermined as shared}}
 const S2 b;
 const S2 ba[5];
-class S3 { // expected-note 2 {{'S3' declared here}}
+class S3 {
   int a;
-  S3 &operator=(const S3 &s3);
+  S3 &operator=(const S3 &s3); // expected-note 2 {{implicitly declared private here}}
 
 public:
   S3() : a(0) {}
@@ -32,17 +33,17 @@ public:
 const S3 c;         // expected-note {{global variable is predetermined as shared}}
 const S3 ca[5];     // expected-note {{global variable is predetermined as shared}}
 extern const int f; // expected-note {{global variable is predetermined as shared}}
-class S4 {          // expected-note 3 {{'S4' declared here}}
+class S4 {
   int a;
-  S4();
+  S4();          // expected-note 3 {{implicitly declared private here}}
   S4(const S4 &s4);
 
 public:
   S4(int v) : a(v) {}
 };
-class S5 { // expected-note {{'S5' declared here}}
+class S5 {
   int a;
-  S5() : a(0) {}
+  S5() : a(0) {} // expected-note {{implicitly declared private here}}
 
 public:
   S5(const S5 &s5) : a(s5.a) {}
@@ -62,8 +63,8 @@ S3 h;
 
 template <class I, class C>
 int foomain(int argc, char **argv) {
-  I e(4); // expected-note {{'e' defined here}}
-  I g(5); // expected-note {{'g' defined here}}
+  I e(4);
+  I g(5);
   int i;
   int &j = i; // expected-note {{'j' defined here}}
 #pragma omp parallel
@@ -117,7 +118,7 @@ int foomain(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections lastprivate(e, g) // expected-error 2 {{lastprivate variable must have an accessible, unambiguous default constructor}}
+#pragma omp sections lastprivate(e, g) // expected-error 2 {{calling a private constructor of class 'S4'}}
   {
     foo();
   }
@@ -158,9 +159,9 @@ int foomain(int argc, char **argv) {
 int main(int argc, char **argv) {
   const int d = 5;       // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = {0}; // expected-note {{constant variable is predetermined as shared}}
-  S4 e(4);               // expected-note {{'e' defined here}}
-  S5 g(5);               // expected-note {{'g' defined here}}
-  S3 m;                  // expected-note 2 {{'m' defined here}}
+  S4 e(4);
+  S5 g(5);
+  S3 m;
   S6 n(2);
   int i;
   int &j = i; // expected-note {{'j' defined here}}
@@ -256,12 +257,12 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections lastprivate(e, g) // expected-error 2 {{lastprivate variable must have an accessible, unambiguous default constructor}}
+#pragma omp sections lastprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections lastprivate(m) // expected-error {{lastprivate variable must have an accessible, unambiguous copy assignment operator}}
+#pragma omp sections lastprivate(m) // expected-error {{'operator=' is a private member of 'S3'}}
   {
     foo();
   }
@@ -296,7 +297,7 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections firstprivate(m) lastprivate(m) // expected-error {{lastprivate variable must have an accessible, unambiguous copy assignment operator}}
+#pragma omp sections firstprivate(m) lastprivate(m) // expected-error {{'operator=' is a private member of 'S3'}}
   {
     foo();
   }
