@@ -1504,7 +1504,10 @@ static DecodeStatus DecodeSystemPStateInstruction(llvm::MCInst &Inst,
   Inst.addOperand(MCOperand::CreateImm(crm));
 
   bool ValidNamed;
-  (void)AArch64PState::PStateMapper().toString(pstate_field, ValidNamed);
+  const AArch64Disassembler *Dis = 
+      static_cast<const AArch64Disassembler *>(Decoder);
+  (void)AArch64PState::PStateMapper().toString(pstate_field, 
+      Dis->getSubtargetInfo().getFeatureBits(), ValidNamed);
 
   return ValidNamed ? Success : Fail;
 }

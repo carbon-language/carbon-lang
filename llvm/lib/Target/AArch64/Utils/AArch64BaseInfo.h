@@ -280,14 +280,26 @@ struct AArch64NamedImmMapper {
   struct Mapping {
     const char *Name;
     uint32_t Value;
+    uint64_t AvailableForFeatures;
+    // empty AvailableForFeatures means "always-on"
+    bool isNameEqual(std::string Other, uint64_t FeatureBits=~0ULL) const {
+      if (AvailableForFeatures && !(AvailableForFeatures & FeatureBits))
+        return false;
+      return Name == Other;
+    }
+    bool isValueEqual(uint32_t Other, uint64_t FeatureBits=~0ULL) const {
+      if (AvailableForFeatures && !(AvailableForFeatures & FeatureBits))
+        return false;
+      return Value == Other;
+    }
   };
 
   template<int N>
   AArch64NamedImmMapper(const Mapping (&Mappings)[N], uint32_t TooBigImm)
     : Mappings(&Mappings[0]), NumMappings(N), TooBigImm(TooBigImm) {}
 
-  StringRef toString(uint32_t Value, bool &Valid) const;
-  uint32_t fromString(StringRef Name, bool &Valid) const;
+  StringRef toString(uint32_t Value, uint64_t FeatureBits, bool &Valid) const;
+  uint32_t fromString(StringRef Name, uint64_t FeatureBits, bool &Valid) const;
 
   /// Many of the instructions allow an alternative assembly form consisting of
   /// a simple immediate. Currently the only valid forms are ranges [0, N) where

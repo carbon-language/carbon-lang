@@ -18,9 +18,10 @@
 
 using namespace llvm;
 
-StringRef AArch64NamedImmMapper::toString(uint32_t Value, bool &Valid) const {
+StringRef AArch64NamedImmMapper::toString(uint32_t Value, uint64_t FeatureBits,
+                                          bool &Valid) const {
   for (unsigned i = 0; i < NumMappings; ++i) {
-    if (Mappings[i].Value == Value) {
+    if (Mappings[i].isValueEqual(Value, FeatureBits)) {
       Valid = true;
       return Mappings[i].Name;
     }
@@ -30,10 +31,11 @@ StringRef AArch64NamedImmMapper::toString(uint32_t Value, bool &Valid) const {
   return StringRef();
 }
 
-uint32_t AArch64NamedImmMapper::fromString(StringRef Name, bool &Valid) const {
+uint32_t AArch64NamedImmMapper::fromString(StringRef Name, uint64_t FeatureBits,
+                                           bool &Valid) const {
   std::string LowerCaseName = Name.lower();
   for (unsigned i = 0; i < NumMappings; ++i) {
-    if (Mappings[i].Name == LowerCaseName) {
+    if (Mappings[i].isNameEqual(LowerCaseName, FeatureBits)) {
       Valid = true;
       return Mappings[i].Value;
     }
@@ -765,7 +767,7 @@ AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits,
 
   // First search the registers shared by all
   for (unsigned i = 0; i < array_lengthof(SysRegMappings); ++i) {
-    if (SysRegMappings[i].Name == NameLower) {
+    if (SysRegMappings[i].isNameEqual(NameLower, FeatureBits)) {
       Valid = true;
       return SysRegMappings[i].Value;
     }
@@ -784,7 +786,7 @@ AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits,
   // Now try the instruction-specific registers (either read-only or
   // write-only).
   for (unsigned i = 0; i < NumInstMappings; ++i) {
-    if (InstMappings[i].Name == NameLower) {
+    if (InstMappings[i].isNameEqual(NameLower, FeatureBits)) {
       Valid = true;
       return InstMappings[i].Value;
     }
@@ -816,7 +818,7 @@ std::string
 AArch64SysReg::SysRegMapper::toString(uint32_t Bits, uint64_t FeatureBits) const {
   // First search the registers shared by all
   for (unsigned i = 0; i < array_lengthof(SysRegMappings); ++i) {
-    if (SysRegMappings[i].Value == Bits) {
+    if (SysRegMappings[i].isValueEqual(Bits, FeatureBits)) {
       return SysRegMappings[i].Name;
     }
   }
@@ -833,7 +835,7 @@ AArch64SysReg::SysRegMapper::toString(uint32_t Bits, uint64_t FeatureBits) const
   // Now try the instruction-specific registers (either read-only or
   // write-only).
   for (unsigned i = 0; i < NumInstMappings; ++i) {
-    if (InstMappings[i].Value == Bits) {
+    if (InstMappings[i].isValueEqual(Bits, FeatureBits)) {
       return InstMappings[i].Name;
     }
   }

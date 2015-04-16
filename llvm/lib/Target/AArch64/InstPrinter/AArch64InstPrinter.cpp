@@ -1101,7 +1101,8 @@ void AArch64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
                                          raw_ostream &O) {
   unsigned prfop = MI->getOperand(OpNum).getImm();
   bool Valid;
-  StringRef Name = AArch64PRFM::PRFMMapper().toString(prfop, Valid);
+  StringRef Name = 
+      AArch64PRFM::PRFMMapper().toString(prfop, STI.getFeatureBits(), Valid);
   if (Valid)
     O << Name;
   else
@@ -1285,9 +1286,11 @@ void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
   bool Valid;
   StringRef Name;
   if (Opcode == AArch64::ISB)
-    Name = AArch64ISB::ISBMapper().toString(Val, Valid);
+    Name = AArch64ISB::ISBMapper().toString(Val, STI.getFeatureBits(), 
+                                            Valid);
   else
-    Name = AArch64DB::DBarrierMapper().toString(Val, Valid);
+    Name = AArch64DB::DBarrierMapper().toString(Val, STI.getFeatureBits(), 
+                                                Valid);
   if (Valid)
     O << Name;
   else
@@ -1322,7 +1325,8 @@ void AArch64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   bool Valid;
-  StringRef Name = AArch64PState::PStateMapper().toString(Val, Valid);
+  StringRef Name = 
+      AArch64PState::PStateMapper().toString(Val, STI.getFeatureBits(), Valid);
   if (Valid)
     O << StringRef(Name.str()).upper();
   else
