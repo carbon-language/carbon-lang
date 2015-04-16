@@ -1134,11 +1134,9 @@ namespace AArch64SysReg {
     ICH_LR13_EL2      = 0xe66d, // 11  100  1100  1101  101
     ICH_LR14_EL2      = 0xe66e, // 11  100  1100  1101  110
     ICH_LR15_EL2      = 0xe66f, // 11  100  1100  1101  111
-  };
 
-  // Cyclone specific system registers
-  enum CycloneSysRegValues {
-    CPM_IOACC_CTL_EL3 = 0xff90
+    // Cyclone specific system registers
+    CPM_IOACC_CTL_EL3 = 0xff90,
   };
 
   // Note that these do not inherit from AArch64NamedImmMapper. This class is
@@ -1147,7 +1145,6 @@ namespace AArch64SysReg {
   // this one case.
   struct SysRegMapper {
     static const AArch64NamedImmMapper::Mapping SysRegMappings[];
-    static const AArch64NamedImmMapper::Mapping CycloneSysRegMappings[];
 
     const AArch64NamedImmMapper::Mapping *InstMappings;
     size_t NumInstMappings;

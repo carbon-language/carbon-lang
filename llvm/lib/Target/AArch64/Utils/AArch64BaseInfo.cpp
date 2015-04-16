@@ -752,12 +752,10 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
   {"ich_lr12_el2", ICH_LR12_EL2, 0},
   {"ich_lr13_el2", ICH_LR13_EL2, 0},
   {"ich_lr14_el2", ICH_LR14_EL2, 0},
-  {"ich_lr15_el2", ICH_LR15_EL2, 0}
-};
+  {"ich_lr15_el2", ICH_LR15_EL2, 0},
 
-const AArch64NamedImmMapper::Mapping
-AArch64SysReg::SysRegMapper::CycloneSysRegMappings[] = {
-  {"cpm_ioacc_ctl_el3", CPM_IOACC_CTL_EL3, 0}
+  // Cyclone registers
+  {"cpm_ioacc_ctl_el3", CPM_IOACC_CTL_EL3, AArch64::ProcCyclone},
 };
 
 uint32_t
@@ -770,16 +768,6 @@ AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits,
     if (SysRegMappings[i].isNameEqual(NameLower, FeatureBits)) {
       Valid = true;
       return SysRegMappings[i].Value;
-    }
-  }
-
-  // Next search for target specific registers
-  if (FeatureBits & AArch64::ProcCyclone) {
-    for (unsigned i = 0; i < array_lengthof(CycloneSysRegMappings); ++i) {
-      if (CycloneSysRegMappings[i].Name == NameLower) {
-        Valid = true;
-        return CycloneSysRegMappings[i].Value;
-      }
     }
   }
 
@@ -820,15 +808,6 @@ AArch64SysReg::SysRegMapper::toString(uint32_t Bits, uint64_t FeatureBits) const
   for (unsigned i = 0; i < array_lengthof(SysRegMappings); ++i) {
     if (SysRegMappings[i].isValueEqual(Bits, FeatureBits)) {
       return SysRegMappings[i].Name;
-    }
-  }
-
-  // Next search for target specific registers
-  if (FeatureBits & AArch64::ProcCyclone) {
-    for (unsigned i = 0; i < array_lengthof(CycloneSysRegMappings); ++i) {
-      if (CycloneSysRegMappings[i].Value == Bits) {
-        return CycloneSysRegMappings[i].Name;
-      }
     }
   }
 
