@@ -48,7 +48,7 @@ namespace llvm {
     }
 
     /// \brief Construct from an \a MDLocation.
-    DebugLoc(MDLocation *L);
+    DebugLoc(const MDLocation *L);
 
     /// \brief Construct from an \a MDNode.
     ///
@@ -56,7 +56,7 @@ namespace llvm {
     /// accessors will crash.  However, construction from other nodes is
     /// supported in order to handle forward references when reading textual
     /// IR.
-    explicit DebugLoc(MDNode *N);
+    explicit DebugLoc(const MDNode *N);
 
     /// \brief Get the underlying \a MDLocation.
     ///
@@ -87,8 +87,8 @@ namespace llvm {
     /// If \c !Scope, returns a default-constructed \a DebugLoc.
     ///
     /// FIXME: Remove this.  Users should use MDLocation::get().
-    static DebugLoc get(unsigned Line, unsigned Col, MDNode *Scope,
-                        MDNode *InlinedAt = nullptr);
+    static DebugLoc get(unsigned Line, unsigned Col, const MDNode *Scope,
+                        const MDNode *InlinedAt = nullptr);
 
     unsigned getLine() const;
     unsigned getCol() const;
