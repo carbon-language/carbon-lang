@@ -559,7 +559,7 @@ protected:
                     bp = target->CreateExceptionBreakpoint (m_options.m_language,
                                                             m_options.m_catch_bp,
                                                             m_options.m_throw_bp,
-                                                            m_options.m_hardware).get();
+                                                            internal).get();
                 }
                 break;
             default:
