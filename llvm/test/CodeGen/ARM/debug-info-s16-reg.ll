@@ -19,7 +19,7 @@ entry:
   tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !12, metadata !MDExpression()), !dbg !26
   %conv = fpext float %val to double, !dbg !27
   %conv3 = zext i8 %c to i32, !dbg !27
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !27
+  %call = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !27
   ret i32 0, !dbg !29
 }
 
@@ -32,7 +32,7 @@ entry:
   tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !16, metadata !MDExpression()), !dbg !32
   %conv = fpext float %val to double, !dbg !33
   %conv3 = zext i8 %c to i32, !dbg !33
-  %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !33
+  %call = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %conv, i32 %conv3) nounwind optsize, !dbg !33
   ret i32 0, !dbg !35
 }
 
@@ -53,7 +53,7 @@ entry:
   tail call void @llvm.dbg.value(metadata i8 %conv6, i64 0, metadata !62, metadata !MDExpression()) nounwind, !dbg !43
   %conv.i = fpext float %conv1 to double, !dbg !44
   %conv3.i = and i32 %add5, 255, !dbg !44
-  %call.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %add.ptr, double %conv.i, i32 %conv3.i) nounwind optsize, !dbg !44
+  %call.i = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str, i32 0, i32 0), i8* %add.ptr, double %conv.i, i32 %conv3.i) nounwind optsize, !dbg !44
   %call14 = tail call i32 @printer(i8* %add.ptr, float %conv1, i8 zeroext %conv6) optsize, !dbg !45
   ret i32 0, !dbg !46
 }

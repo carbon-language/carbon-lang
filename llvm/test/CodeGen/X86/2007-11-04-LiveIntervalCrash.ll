@@ -30,7 +30,7 @@ bb37:           ; preds = %bb37.loopexit, %entry
         %hash.0.reg2mem.1 = phi i32 [ %phitmp, %bb37.loopexit ], [ 0, %entry ]          ; <i32> [#uses=1]
         store i32 %hash.0.reg2mem.1, i32* null, align 8
         %tmp75 = tail call i32 null( %struct.dentry* %dir, %struct.qstr* %name )                ; <i32> [#uses=0]
-        %tmp84 = tail call i32 (...)* @d_lookup( %struct.dentry* %dir, %struct.qstr* %name )            ; <i32> [#uses=0]
+        %tmp84 = tail call i32 (...) @d_lookup( %struct.dentry* %dir, %struct.qstr* %name )            ; <i32> [#uses=0]
         ret %struct.dentry* null
 }
 

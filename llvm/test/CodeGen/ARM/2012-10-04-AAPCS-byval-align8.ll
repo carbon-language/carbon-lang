@@ -33,7 +33,7 @@ entry:
 ; CHECK: movw r0, #555
 define i32 @main() {
 entry:
-  call void (i32, ...)* @test_byval_8_bytes_alignment(i32 555, %struct_t* byval @static_val)
+  call void (i32, ...) @test_byval_8_bytes_alignment(i32 555, %struct_t* byval @static_val)
   ret i32 0
 }
 
@@ -48,7 +48,7 @@ define void @test_byval_8_bytes_alignment_fixed_arg(i32 %n1, %struct_t* byval %v
 entry:
   %a = getelementptr inbounds %struct_t, %struct_t* %val, i32 0, i32 0
   %0 = load double, double* %a
-  call void (double)* @f(double %0)
+  call void (double) @f(double %0)
   ret void
 }
 
@@ -60,6 +60,6 @@ entry:
 ; CHECK: movw r0, #555
 define i32 @main_fixed_arg() {
 entry:
-  call void (i32, %struct_t*)* @test_byval_8_bytes_alignment_fixed_arg(i32 555, %struct_t* byval @static_val)
+  call void (i32, %struct_t*) @test_byval_8_bytes_alignment_fixed_arg(i32 555, %struct_t* byval @static_val)
   ret i32 0
 }

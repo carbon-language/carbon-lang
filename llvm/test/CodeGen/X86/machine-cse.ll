@@ -62,7 +62,7 @@ if.end34:                                         ; preds = %sw.bb
 ; CHECK: %if.end34
 ; CHECK: leal
 ; CHECK-NOT: imull
-  tail call void (...)* @printf(i32 %test_case, i32 %mul20) nounwind
+  tail call void (...) @printf(i32 %test_case, i32 %mul20) nounwind
   %tmp = mul i32 %scale, %test_case
   %tmp752 = mul i32 %tmp, 3
   %tmp753 = zext i32 %tmp752 to i64

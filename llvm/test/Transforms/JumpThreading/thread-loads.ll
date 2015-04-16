@@ -8,7 +8,7 @@ target triple = "i386-apple-darwin7"
 define i32 @test1(i32* %P) nounwind {
 ; CHECK-LABEL: @test1(
 entry:
-	%0 = tail call i32 (...)* @f1() nounwind		; <i32> [#uses=1]
+	%0 = tail call i32 (...) @f1() nounwind		; <i32> [#uses=1]
 	%1 = icmp eq i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb1, label %bb
 
@@ -26,7 +26,7 @@ bb1:		; preds = %entry, %bb
 	br i1 %3, label %bb3, label %bb2
 
 bb2:		; preds = %bb1
-	%4 = tail call i32 (...)* @f2() nounwind		; <i32> [#uses=0]
+	%4 = tail call i32 (...) @f2() nounwind		; <i32> [#uses=0]
 	ret i32 %res.0
 
 bb3:		; preds = %bb1
@@ -47,7 +47,7 @@ declare i32 @f2(...)
 define i32 @test2(i32* %P) nounwind {
 ; CHECK-LABEL: @test2(
 entry:
-	%0 = tail call i32 (...)* @f1() nounwind		; <i32> [#uses=1]
+	%0 = tail call i32 (...) @f1() nounwind		; <i32> [#uses=1]
 	%1 = icmp eq i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb1, label %bb
 
@@ -65,7 +65,7 @@ bb1:		; preds = %entry, %bb
 	br i1 %3, label %bb3, label %bb2
 
 bb2:		; preds = %bb1
-	%4 = tail call i32 (...)* @f2() nounwind
+	%4 = tail call i32 (...) @f2() nounwind
 	ret i32 %res.0
 
 bb3:		; preds = %bb1

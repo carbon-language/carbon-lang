@@ -62,7 +62,7 @@ if.then37:
 
 if.end41:
   %exit_status.0 = phi i32 [ 2, %if.then29 ], [ 0, %if.then37 ], [ 66, %entry ]
-  call void (...)* @fprintf(i32 %exit_status.0) nounwind
+  call void (...) @fprintf(i32 %exit_status.0) nounwind
   unreachable
 }
 

@@ -18,7 +18,7 @@ entry:
   %tmp2 = bitcast %struct.S* %agg.tmp to i8*
   %tmp3 = bitcast %struct.S* %t to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp2, i8* %tmp3, i64 48, i32 4, i1 false)
-  %call = call i32 (...)* @bazz(%struct.S* byval %agg.tmp)
+  %call = call i32 (...) @bazz(%struct.S* byval %agg.tmp)
   ret void
 }
 

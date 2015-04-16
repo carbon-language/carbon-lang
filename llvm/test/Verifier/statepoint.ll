@@ -10,7 +10,7 @@ declare i32 @"personality_function"()
 define i64 addrspace(1)* @test1(i8 addrspace(1)* %arg) gc "statepoint-example" {
 entry:
   %cast = bitcast i8 addrspace(1)* %arg to i64 addrspace(1)*
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 10, i32 0, i8 addrspace(1)* %arg, i64 addrspace(1)* %cast, i8 addrspace(1)* %arg, i8 addrspace(1)* %arg)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 10, i32 0, i8 addrspace(1)* %arg, i64 addrspace(1)* %cast, i8 addrspace(1)* %arg, i8 addrspace(1)* %arg)
   %reloc = call i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %safepoint_token, i32 9, i32 10)
   ;; It is perfectly legal to relocate the same value multiple times...
   %reloc2 = call i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %safepoint_token, i32 9, i32 10)
@@ -39,7 +39,7 @@ notequal:
   ret void
 
 equal:
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 10, i32 0, i8 addrspace(1)* %arg, i64 addrspace(1)* %cast, i8 addrspace(1)* %arg, i8 addrspace(1)* %arg)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 0, i32 0, i32 10, i32 0, i8 addrspace(1)* %arg, i64 addrspace(1)* %cast, i8 addrspace(1)* %arg, i8 addrspace(1)* %arg)
   %reloc = call i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %safepoint_token, i32 9, i32 10)
   call void undef(i64 addrspace(1)* %reloc)
   ret void

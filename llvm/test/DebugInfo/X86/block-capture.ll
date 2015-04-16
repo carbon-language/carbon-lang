@@ -45,7 +45,7 @@ entry:
   %3 = bitcast %struct.__block_literal_generic* %block.literal to i8*, !dbg !71
   %4 = load i8*, i8** %2, !dbg !71
   %5 = bitcast i8* %4 to void (i8*, ...)*, !dbg !71
-  call void (i8*, ...)* %5(i8* %3), !dbg !71
+  call void (i8*, ...) %5(i8* %3), !dbg !71
   ret void, !dbg !73
 }
 

@@ -31,5 +31,5 @@ lpad:                                             ; preds = %entry
 ;
 ; CHECK: landingpad
 ; CHECK-NEXT: cleanup
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 0, void (i8*, i8*)* @use_finally.cleanup)
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void (i8*, i8*)* @use_finally.cleanup)
 ; CHECK-NEXT: indirectbr i8* %recover, []

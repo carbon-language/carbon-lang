@@ -71,6 +71,6 @@ declare void @llvm.va_start(i8*)
 ; CHECK: , %f2
 define i32 @call_1d() #0 {
 entry:
-  %call = call double (i8*, double, ...)* @varargsfunc(i8* undef, double 1.000000e+00, double 2.000000e+00)
+  %call = call double (i8*, double, ...) @varargsfunc(i8* undef, double 1.000000e+00, double 2.000000e+00)
   ret i32 1
 }

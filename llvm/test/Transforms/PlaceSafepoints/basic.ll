@@ -76,7 +76,7 @@ define i1 @test_call_with_result() gc "statepoint-example" {
 ; CHECK: (i1 (i1)* @i1_return_i1, i32 1, i32 0, i1 false, i32 0)
 ; CHECK: %call12 = call i1 @llvm.experimental.gc.result.i1
 entry:
-  %call1 = tail call i1 (i1)* @i1_return_i1(i1 false)
+  %call1 = tail call i1 (i1) @i1_return_i1(i1 false)
   ret i1 %call1
 }
 

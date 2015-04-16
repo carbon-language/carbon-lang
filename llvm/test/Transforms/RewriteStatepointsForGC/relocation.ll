@@ -9,7 +9,7 @@ entry:
 ; CHECK-LABEL: @test1
 ; CHECK-DAG: %obj.relocated
 ; CHECK-DAG: %obj2.relocated
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %joint
 
 joint:
@@ -61,7 +61,7 @@ loop_x:
   br label %loop.backedge
 
 loop.backedge:
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
   br label %loop
 
 loop_y:
@@ -79,14 +79,14 @@ if_branch:
 ; CHECK-LABEL: if_branch:
 ; CHECK: gc.statepoint
 ; CHECK: gc.relocate
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %join
 
 else_branch:
 ; CHECK-LABEL: else_branch:
 ; CHECK: gc.statepoint
 ; CHECK: gc.relocate
-  %safepoint_token1 = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  %safepoint_token1 = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %join
 
 join:
@@ -96,7 +96,7 @@ join:
 ; CHECK-DAG: [ %arg.relocated, %if_branch ]
 ; CHECK-DAG: [ %arg.relocated4, %else_branch ]
 ; CHECK-NOT: phi
-  call void (i8 addrspace(1)*)* @some_call(i8 addrspace(1)* %arg)
+  call void (i8 addrspace(1)*) @some_call(i8 addrspace(1)* %arg)
   ret void
 }
 
@@ -109,8 +109,8 @@ entry:
 ; CHECK: gc.statepoint
 ; CHECK-NEXT: gc.relocate
 ; CHECK-NEXT: gc.statepoint
-  %safepoint_token = call i32 (void (i64)*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidi64f(void (i64)* undef, i32 1, i32 0, i64 undef, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
-  %safepoint_token1 = call i32 (i32 (i64 addrspace(1)*)*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i32p1i64f(i32 (i64 addrspace(1)*)* undef, i32 1, i32 0, i64 addrspace(1)* %obj, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void (i64)*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidi64f(void (i64)* undef, i32 1, i32 0, i64 undef, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  %safepoint_token1 = call i32 (i32 (i64 addrspace(1)*)*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i32p1i64f(i32 (i64 addrspace(1)*)* undef, i32 1, i32 0, i64 addrspace(1)* %obj, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   ret void
 }
 
@@ -123,10 +123,10 @@ define void @test4() gc "statepoint-example" {
 ; CHECK: gc.statepoint
 ; CHECK: gc.relocate
 ; CHECK: @use(i8 addrspace(1)* %res.relocated)
-  %safepoint_token2 = tail call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  %safepoint_token2 = tail call i32 (i8 addrspace(1)* ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
   %res = call i8 addrspace(1)* @llvm.experimental.gc.result.ptr.p1i8(i32 %safepoint_token2)
-  call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
-  call void (...)* @use(i8 addrspace(1)* %res)
+  call i32 (i8 addrspace(1)* ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  call void (...) @use(i8 addrspace(1)* %res)
   unreachable
 }
 
@@ -135,7 +135,7 @@ define void @test4() gc "statepoint-example" {
 define void @test5(i8 addrspace(1)* %arg) gc "statepoint-example" {
 ; CHECK-LABEL: test5
 entry:
-  call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  call i32 (i8 addrspace(1)* ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
   switch i32 undef, label %kill [
     i32 10, label %merge
     i32 13, label %merge
@@ -151,7 +151,7 @@ merge:
 ; CHECK-DAG: [ %arg.relocated, %entry ]
 ; CHECK-DAG: [ %arg.relocated, %entry ]
   %test = phi i8 addrspace(1)* [ null, %kill ], [ %arg, %entry ], [ %arg, %entry ]
-  call void (...)* @use(i8 addrspace(1)* %test)
+  call void (...) @use(i8 addrspace(1)* %test)
   unreachable
 }
 
@@ -169,7 +169,7 @@ do_safepoint:
 ; CHECK: arg1.relocated = 
 ; CHECK: arg2.relocated = 
 ; CHECK: arg3.relocated = 
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 3, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 3, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
   br label %gc.safepoint_poll.exit2
 
 gc.safepoint_poll.exit2:
@@ -183,7 +183,7 @@ gc.safepoint_poll.exit2:
 ; CHECK: phi i8 addrspace(1)*
 ; CHECK-DAG: [ %arg1, %entry ]
 ; CHECK-DAG:  [ %arg1.relocated, %do_safepoint ]
-  call void (...)* @use(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
+  call void (...) @use(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
   ret void
 }
 
@@ -208,7 +208,7 @@ outer-inc:
 ; CHECK-LABEL: outer-inc:
 ; CHECK: %arg1.relocated
 ; CHECK: %arg2.relocated
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
   br label %outer-loop
 }
 
@@ -237,7 +237,7 @@ inner-loop:
 ; CHECK: gc.statepoint
 ; CHECK: %arg1.relocated
 ; CHECK: %arg2.relocated
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
   br i1 %cmp, label %inner-loop, label %outer-inc
 
 outer-inc:
@@ -257,7 +257,7 @@ branch2:
   br i1 %condition, label %callbb, label %join2
 
 callbb:
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   br label %join
 
 join:

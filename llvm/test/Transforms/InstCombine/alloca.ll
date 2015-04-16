@@ -13,14 +13,14 @@ declare void @use(...)
 ; CHECK-NOT: alloca
 define void @test() {
         %X = alloca [0 x i32]           ; <[0 x i32]*> [#uses=1]
-        call void (...)* @use( [0 x i32]* %X )
+        call void (...) @use( [0 x i32]* %X )
         %Y = alloca i32, i32 0          ; <i32*> [#uses=1]
-        call void (...)* @use( i32* %Y )
+        call void (...) @use( i32* %Y )
         %Z = alloca {  }                ; <{  }*> [#uses=1]
-        call void (...)* @use( {  }* %Z )
+        call void (...) @use( {  }* %Z )
         %size = load i32, i32* @int
         %A = alloca {{}}, i32 %size
-        call void (...)* @use( {{}}* %A )
+        call void (...) @use( {{}}* %A )
         ret void
 }
 
@@ -126,7 +126,7 @@ define void @test8() {
 ; NODL: alloca [100 x i32]
 ; NODL: getelementptr inbounds [100 x i32], [100 x i32]* %x1, i64 0, i64 0
   %x = alloca i32, i32 100
-  call void (...)* @use(i32* %x)
+  call void (...) @use(i32* %x)
   ret void
 }
 
@@ -160,6 +160,6 @@ entry:
   %v32 = alloca i1, align 8
   %v64 = alloca i1, i64 1, align 8
   %v33 = alloca i1, i33 1, align 8
-  call void (...)* @use(i1* %v32, i1* %v64, i1* %v33)
+  call void (...) @use(i1* %v32, i1* %v64, i1* %v33)
   ret void
 }

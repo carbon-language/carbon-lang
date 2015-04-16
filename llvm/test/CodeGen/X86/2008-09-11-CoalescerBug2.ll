@@ -38,7 +38,7 @@ bb12:		; preds = %bb11, %entry
 	%.014.in = phi i8 [ %10, %bb11 ], [ %7, %entry ]		; <i8> [#uses=1]
 	%11 = icmp ne i8 %.014.in, 0		; <i1> [#uses=1]
 	%12 = zext i1 %11 to i32		; <i32> [#uses=1]
-	%13 = tail call i32 (...)* @func_48( i32 %12, i32 %3, i32 0 ) nounwind		; <i32> [#uses=0]
+	%13 = tail call i32 (...) @func_48( i32 %12, i32 %3, i32 0 ) nounwind		; <i32> [#uses=0]
 	ret i32 undef
 }
 

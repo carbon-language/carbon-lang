@@ -64,7 +64,7 @@ fn1.exit:                                         ; preds = %lor.end.i
   store i32 %add.i, i32* getelementptr inbounds (%struct.anon, %struct.anon* @e, i64 0, i32 1), align 4, !tbaa !8
   store i32 0, i32* @h, align 4, !tbaa !7
   %3 = load i32, i32* @b, align 4, !tbaa !7
-  %call1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
+  %call1 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %3) #2
   ret i32 0
 }
 

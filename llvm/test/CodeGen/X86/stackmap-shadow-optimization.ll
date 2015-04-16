@@ -18,7 +18,7 @@ entry:
 ; CHECK:        callq   _bar
 ; CHECK-NOT:    nop
   call void @bar()
-  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 0, i32 8)
+  tail call void (i64, i32, ...) @llvm.experimental.stackmap(i64 0, i32 8)
   call void @bar()
   call void @bar()
   ret void

@@ -7,7 +7,7 @@ target triple = "x86_64-undermydesk-freebsd8.0"
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 entry:
-        %call = tail call i32 (...)* @getpid()          ; <i32> [#uses=1]
+        %call = tail call i32 (...) @getpid()          ; <i32> [#uses=1]
         %conv = trunc i32 %call to i16          ; <i16> [#uses=1]
         %0 = tail call i16 asm "xchgb ${0:h}, ${0:b}","=Q,0,~{dirflag},~{fpsr},~{flags}"(i16 %conv) nounwind           ; <i16> [#uses=0]
         ret i32 undef

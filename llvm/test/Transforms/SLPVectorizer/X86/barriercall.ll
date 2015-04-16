@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: ret
 define i32 @foo(i32* nocapture %A, i32 %n) {
 entry:
-  %call = tail call i32 (...)* @bar() #2
+  %call = tail call i32 (...) @bar() #2
   %mul = mul nsw i32 %n, 5
   %add = add nsw i32 %mul, 9
   store i32 %add, i32* %A, align 4

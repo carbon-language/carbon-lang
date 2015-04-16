@@ -3,7 +3,7 @@
 
 define i32 @main() nounwind {
 entry:
-	%0 = tail call signext i8 (...)* @sin() nounwind
+	%0 = tail call signext i8 (...) @sin() nounwind
 	ret i32 0
 }
 

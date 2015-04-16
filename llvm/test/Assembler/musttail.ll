@@ -7,8 +7,8 @@
 declare i8* @f(i8*, ...)
 
 define i8* @f_thunk(i8* %this, ...) {
-  %rv = musttail call i8* (i8*, ...)* @f(i8* %this, ...)
+  %rv = musttail call i8* (i8*, ...) @f(i8* %this, ...)
   ret i8* %rv
 }
 ; CHECK-LABEL: define i8* @f_thunk(i8* %this, ...)
-; CHECK: %rv = musttail call i8* (i8*, ...)* @f(i8* %this, ...)
+; CHECK: %rv = musttail call i8* (i8*, ...) @f(i8* %this, ...)

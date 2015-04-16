@@ -6,6 +6,6 @@ target triple = "x86_64-apple-darwin8"
 declare void @xscanf(i64) nounwind 
 
 define void @foo() nounwind  {
-	call void (i64)* @xscanf( i64 0 ) nounwind
+	call void (i64) @xscanf( i64 0 ) nounwind
 	unreachable
 }

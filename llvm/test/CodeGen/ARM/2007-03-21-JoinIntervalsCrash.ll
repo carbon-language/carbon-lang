@@ -83,7 +83,7 @@ cond_next881:		; preds = %bb866
 	%tmp884885 = inttoptr i64 %tmp10959 to %struct.tree_identifier*		; <%struct.tree_identifier*> [#uses=1]
 	%tmp887 = getelementptr %struct.tree_identifier, %struct.tree_identifier* %tmp884885, i32 0, i32 1, i32 0		; <i8**> [#uses=1]
 	%tmp888 = load i8*, i8** %tmp887		; <i8*> [#uses=1]
-	tail call void (i32, ...)* @error( i32 undef, i8* %tmp888 )
+	tail call void (i32, ...) @error( i32 undef, i8* %tmp888 )
 	ret void
 
 cond_true918:		; preds = %cond_false841

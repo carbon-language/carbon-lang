@@ -24,11 +24,11 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
@@ -57,11 +57,11 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
@@ -86,11 +86,11 @@ entry:
   br i1 %cmp, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
@@ -116,11 +116,11 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
@@ -145,11 +145,11 @@ entry:
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
@@ -174,11 +174,11 @@ entry:
   br i1 %cmp, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g0() nounwind
+  tail call void (...) @g0() nounwind
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @g1() nounwind
+  tail call void (...) @g1() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then

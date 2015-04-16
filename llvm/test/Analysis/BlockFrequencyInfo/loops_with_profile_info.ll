@@ -124,7 +124,7 @@ for.inc10:                                        ; preds = %for.end9
 
 for.end12:                                        ; preds = %for.cond
   %6 = load i32, i32* @g, align 4
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %6)
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %6)
   store i32 0, i32* @g, align 4
   store i32 0, i32* %i, align 4
   br label %for.cond13
@@ -165,7 +165,7 @@ for.inc22:                                        ; preds = %for.end21
 
 for.end24:                                        ; preds = %for.cond13
   %11 = load i32, i32* @g, align 4
-  %call25 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %11)
+  %call25 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %11)
   store i32 0, i32* @g, align 4
   store i32 0, i32* %i, align 4
   br label %for.cond26
@@ -188,7 +188,7 @@ for.inc29:                                        ; preds = %for.body28
 
 for.end31:                                        ; preds = %for.cond26
   %14 = load i32, i32* @g, align 4
-  %call32 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %14)
+  %call32 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str, i32 0, i32 0), i32 %14)
   store i32 0, i32* @g, align 4
   %15 = load i32, i32* %retval
   ret i32 %15

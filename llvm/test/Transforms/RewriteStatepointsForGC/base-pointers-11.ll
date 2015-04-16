@@ -19,7 +19,7 @@ loop:                                             ; preds = %loop, %entry
 ; CHECK-DAG:  [ %next.relocated, %loop ]
   %current = phi i64 addrspace(1)* [ %obj, %entry ], [ %next, %loop ]
   %next = getelementptr i64, i64 addrspace(1)* %current, i32 1
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   br label %loop
 }
 

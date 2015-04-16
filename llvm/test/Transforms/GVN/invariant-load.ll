@@ -108,7 +108,7 @@ define i32 @test7(i1 %cnd, i32* %p) {
 ; CHECK-NEXT: ret i32 0
 entry:
   %v1 = load i32, i32* %p, !invariant.load !0
-  call i32* (...)* @bar(i32* %p)
+  call i32* (...) @bar(i32* %p)
   %v2 = load i32, i32* %p, !invariant.load !0
   %res = sub i32 %v1, %v2
   ret i32 %res

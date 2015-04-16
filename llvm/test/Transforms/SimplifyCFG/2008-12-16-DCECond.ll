@@ -9,7 +9,7 @@ entry:
 	br i1 %cmp, label %ifthen, label %ifend
 
 ifthen:		; preds = %entry
-	%call = call i32 (...)* @foo()		; <i32> [#uses=0]
+	%call = call i32 (...) @foo()		; <i32> [#uses=0]
 	br label %ifend
 
 ifend:		; preds = %ifthen, %entry
@@ -17,7 +17,7 @@ ifend:		; preds = %ifthen, %entry
 	br i1 %cmp2, label %ifthen3, label %ifend5
 
 ifthen3:		; preds = %ifend
-	%call4 = call i32 (...)* @foo()		; <i32> [#uses=0]
+	%call4 = call i32 (...) @foo()		; <i32> [#uses=0]
 	br label %ifend5
 
 ifend5:		; preds = %ifthen3, %ifend
@@ -25,7 +25,7 @@ ifend5:		; preds = %ifthen3, %ifend
 	br i1 %cmp7, label %ifthen8, label %ifend10
 
 ifthen8:		; preds = %ifend5
-	%call9 = call i32 (...)* @bar()		; <i32> [#uses=0]
+	%call9 = call i32 (...) @bar()		; <i32> [#uses=0]
 	br label %ifend10
 
 ifend10:		; preds = %ifthen8, %ifend5
@@ -33,7 +33,7 @@ ifend10:		; preds = %ifthen8, %ifend5
 	br i1 %cmp12, label %ifthen13, label %ifend15
 
 ifthen13:		; preds = %ifend10
-	%call14 = call i32 (...)* @bar()		; <i32> [#uses=0]
+	%call14 = call i32 (...) @bar()		; <i32> [#uses=0]
 	br label %ifend15
 
 ifend15:		; preds = %ifthen13, %ifend10

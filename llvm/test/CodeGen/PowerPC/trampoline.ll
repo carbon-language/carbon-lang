@@ -106,7 +106,7 @@ entry:
 	%27 = load %struct.objc_selector*, %struct.objc_selector** @"\01L_OBJC_SELECTOR_REFERENCES_1", align 4		; <%struct.objc_selector*> [#uses=1]
 	%__block_holder_tmp_1.03 = bitcast %struct.__block_1* %__block_holder_tmp_1.0 to void (%struct.CGImage*)*		; <void (%struct.CGImage*)*> [#uses=1]
 	%28 = load %struct.objc_object*, %struct.objc_object** %self.1, align 4		; <%struct.objc_object*> [#uses=1]
-	%29 = call %struct.objc_object* (%struct.objc_object*, %struct.objc_selector*, ...)* inttoptr (i64 4294901504 to %struct.objc_object* (%struct.objc_object*, %struct.objc_selector*, ...)*)(%struct.objc_object* %28, %struct.objc_selector* %27, void (%struct.CGImage*)* %__block_holder_tmp_1.03) nounwind		; <%struct.objc_object*> [#uses=0]
+	%29 = call %struct.objc_object* (%struct.objc_object*, %struct.objc_selector*, ...) inttoptr (i64 4294901504 to %struct.objc_object* (%struct.objc_object*, %struct.objc_selector*, ...)*)(%struct.objc_object* %28, %struct.objc_selector* %27, void (%struct.CGImage*)* %__block_holder_tmp_1.03) nounwind		; <%struct.objc_object*> [#uses=0]
 	br label %return
 
 return:		; preds = %entry
@@ -155,7 +155,7 @@ entry:
 	%15 = load %struct.objc_selector*, %struct.objc_selector** @"\01L_OBJC_SELECTOR_REFERENCES_0", align 4		; <%struct.objc_selector*> [#uses=1]
 	%16 = load %struct.objc_super*, %struct.objc_super** %objc_super.5, align 4		; <%struct.objc_super*> [#uses=1]
 	%17 = load %struct.NSZone*, %struct.NSZone** %zone, align 4		; <%struct.NSZone*> [#uses=1]
-	%18 = call %struct.objc_object* (%struct.objc_super*, %struct.objc_selector*, ...)* @objc_msgSendSuper(%struct.objc_super* %16, %struct.objc_selector* %15, %struct.NSZone* %17) nounwind		; <%struct.objc_object*> [#uses=1]
+	%18 = call %struct.objc_object* (%struct.objc_super*, %struct.objc_selector*, ...) @objc_msgSendSuper(%struct.objc_super* %16, %struct.objc_selector* %15, %struct.NSZone* %17) nounwind		; <%struct.objc_object*> [#uses=1]
 	%19 = bitcast %struct.objc_object* %18 to %struct.NSBitmapImageRep*		; <%struct.NSBitmapImageRep*> [#uses=1]
 	%20 = load %struct.NSBitmapImageRep**, %struct.NSBitmapImageRep*** %new, align 4		; <%struct.NSBitmapImageRep**> [#uses=1]
 	store %struct.NSBitmapImageRep* %19, %struct.NSBitmapImageRep** %20, align 4

@@ -66,7 +66,7 @@ entry:
   br i1 %0, label %bb, label %bb1
 
 bb:                                               ; preds = %entry
-  %1 = tail call i32 (...)* @foo(i32 %a) nounwind
+  %1 = tail call i32 (...) @foo(i32 %a) nounwind
   ret i32 %1
 
 bb1:                                              ; preds = %entry

@@ -10,7 +10,7 @@
 define void @bar1(i1 zeroext %v1) nounwind ssp {
 entry:
   %conv = zext i1 %v1 to i32
-  %call = tail call i32 (...)* @foo1(i32 %conv) nounwind
+  %call = tail call i32 (...) @foo1(i32 %conv) nounwind
   ret void
 }
 
@@ -23,7 +23,7 @@ entry:
 define void @bar2(i8 zeroext %v1) nounwind ssp {
 entry:
   %conv = zext i8 %v1 to i32
-  %call = tail call i32 (...)* @foo1(i32 %conv) nounwind
+  %call = tail call i32 (...) @foo1(i32 %conv) nounwind
   ret void
 }
 

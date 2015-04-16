@@ -3,7 +3,7 @@
 
 define i32 @func_77(i8 zeroext %p_79) nounwind {
 entry:
-	%0 = tail call i32 (...)* @func_43(i32 1) nounwind		; <i32> [#uses=1]
+	%0 = tail call i32 (...) @func_43(i32 1) nounwind		; <i32> [#uses=1]
 	%1 = icmp eq i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb3, label %bb
 
@@ -14,7 +14,7 @@ bb3:		; preds = %bb, %entry
 	%p_79_addr.0 = phi i8 [ 0, %bb ], [ %p_79, %entry ]		; <i8> [#uses=1]
 	%2 = zext i8 %p_79_addr.0 to i32		; <i32> [#uses=2]
 	%3 = zext i1 false to i32		; <i32> [#uses=2]
-	%4 = tail call i32 (...)* @rshift_u_s(i32 1) nounwind		; <i32> [#uses=0]
+	%4 = tail call i32 (...) @rshift_u_s(i32 1) nounwind		; <i32> [#uses=0]
 	%5 = lshr i32 %2, %2		; <i32> [#uses=3]
 	%6 = icmp eq i32 0, 0		; <i1> [#uses=1]
 	br i1 %6, label %bb6, label %bb9

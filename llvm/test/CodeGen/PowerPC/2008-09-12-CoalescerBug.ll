@@ -169,19 +169,19 @@ bb2315:		; preds = %bb2295
 
 bb2317:		; preds = %bb2315
 	%115 = load i64, i64* %2, align 16		; <i64> [#uses=1]
-	%116 = call i32 (...)* @_u16a_cm( i64 %115, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
+	%116 = call i32 (...) @_u16a_cm( i64 %115, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
 	%117 = sext i32 %116 to i64		; <i64> [#uses=1]
 	store i64 %117, i64* %2, align 16
 	%118 = load i64, i64* %3, align 8		; <i64> [#uses=1]
-	%119 = call i32 (...)* @_u16a_cm( i64 %118, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
+	%119 = call i32 (...) @_u16a_cm( i64 %118, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
 	%120 = sext i32 %119 to i64		; <i64> [#uses=1]
 	store i64 %120, i64* %3, align 8
 	%121 = load i64, i64* %4, align 16		; <i64> [#uses=1]
-	%122 = call i32 (...)* @_u16a_cm( i64 %121, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
+	%122 = call i32 (...) @_u16a_cm( i64 %121, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=1]
 	%123 = sext i32 %122 to i64		; <i64> [#uses=1]
 	store i64 %123, i64* %4, align 16
 	%124 = load i64, i64* %5, align 8		; <i64> [#uses=1]
-	%125 = call i32 (...)* @_u16a_cm( i64 %124, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=0]
+	%125 = call i32 (...) @_u16a_cm( i64 %124, %struct.xx_t* %159, double 0.000000e+00, double 1.047551e+06 ) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb2318:		; preds = %bb2315
@@ -190,29 +190,29 @@ bb2318:		; preds = %bb2315
 	%128 = load i64, i64* %127, align 8		; <i64> [#uses=1]
 	%129 = trunc i64 %128 to i32		; <i32> [#uses=4]
 	%130 = load i64, i64* %2, align 16		; <i64> [#uses=1]
-	%131 = call i32 (...)* @_u16_ff( i64 %130, i32 %129 ) nounwind		; <i32> [#uses=1]
+	%131 = call i32 (...) @_u16_ff( i64 %130, i32 %129 ) nounwind		; <i32> [#uses=1]
 	%132 = sext i32 %131 to i64		; <i64> [#uses=1]
 	store i64 %132, i64* %2, align 16
 	%133 = load i64, i64* %3, align 8		; <i64> [#uses=1]
-	%134 = call i32 (...)* @_u16_ff( i64 %133, i32 %129 ) nounwind		; <i32> [#uses=1]
+	%134 = call i32 (...) @_u16_ff( i64 %133, i32 %129 ) nounwind		; <i32> [#uses=1]
 	%135 = sext i32 %134 to i64		; <i64> [#uses=1]
 	store i64 %135, i64* %3, align 8
 	%136 = load i64, i64* %4, align 16		; <i64> [#uses=1]
-	%137 = call i32 (...)* @_u16_ff( i64 %136, i32 %129 ) nounwind		; <i32> [#uses=1]
+	%137 = call i32 (...) @_u16_ff( i64 %136, i32 %129 ) nounwind		; <i32> [#uses=1]
 	%138 = sext i32 %137 to i64		; <i64> [#uses=1]
 	store i64 %138, i64* %4, align 16
 	%139 = load i64, i64* %5, align 8		; <i64> [#uses=1]
-	%140 = call i32 (...)* @_u16_ff( i64 %139, i32 %129 ) nounwind		; <i32> [#uses=0]
+	%140 = call i32 (...) @_u16_ff( i64 %139, i32 %129 ) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb2319:		; preds = %bb2326
 	%141 = getelementptr %struct.CGLSI, %struct.CGLSI* %src, i32 %indvar5021, i32 2		; <i8**> [#uses=1]
 	%142 = load i8*, i8** %141, align 4		; <i8*> [#uses=4]
 	%143 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
-	%144 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %143 ) nounwind		; <i32> [#uses=1]
+	%144 = call i32 (...) @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %143 ) nounwind		; <i32> [#uses=1]
 	%145 = sext i32 %144 to i64		; <i64> [#uses=2]
 	%146 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
-	%147 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %146 ) nounwind		; <i32> [#uses=1]
+	%147 = call i32 (...) @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %146 ) nounwind		; <i32> [#uses=1]
 	%148 = sext i32 %147 to i64		; <i64> [#uses=2]
 	%149 = shl i64 %145, 48		; <i64> [#uses=0]
 	%150 = shl i64 %148, 32		; <i64> [#uses=1]
@@ -220,10 +220,10 @@ bb2319:		; preds = %bb2326
 	store i64 %145, i64* %2, align 16
 	store i64 %148, i64* %3, align 8
 	%152 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
-	%153 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %152 ) nounwind		; <i32> [#uses=1]
+	%153 = call i32 (...) @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %152 ) nounwind		; <i32> [#uses=1]
 	%154 = sext i32 %153 to i64		; <i64> [#uses=0]
 	%155 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
-	%156 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %155 ) nounwind		; <i32> [#uses=0]
+	%156 = call i32 (...) @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %155 ) nounwind		; <i32> [#uses=0]
 	unreachable
 
 bb2325:		; preds = %bb2326, %bb2295

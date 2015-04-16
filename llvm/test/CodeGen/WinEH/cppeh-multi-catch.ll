@@ -50,7 +50,7 @@ $"\01??_R0?AVSomeClass@@@8" = comdat any
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass*, align 8
 ; CHECK:   [[LL_PTR:\%.+]] = alloca i64, align 8
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
-; CHECK:   call void (...)* @llvm.frameescape(i32* [[I_PTR]], i64* [[LL_PTR]], %class.SomeClass** [[OBJ_PTR]])
+; CHECK:   call void (...) @llvm.frameescape(i32* [[I_PTR]], i64* [[LL_PTR]], %class.SomeClass** [[OBJ_PTR]])
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
 
@@ -74,7 +74,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry._J
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@"
 ; CHECK-NEXT:           catch i8* null
-; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(
 ; CHECK-SAME:	     i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry.H to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch",
 ; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1",
 ; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2",

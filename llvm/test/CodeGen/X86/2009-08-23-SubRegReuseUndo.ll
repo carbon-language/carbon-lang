@@ -53,7 +53,7 @@ bb5:                                              ; preds = %bb4, %bb3
 bb6.preheader:                                    ; preds = %bb5
   %21 = sext i8 %p_52 to i32                      ; <i32> [#uses=1]
   %22 = load volatile i32, i32* @uint8, align 4        ; <i32> [#uses=0]
-  %23 = tail call i32 (...)* @safefuncts(i32 %21, i32 1) nounwind; <i32> [#uses=0]
+  %23 = tail call i32 (...) @safefuncts(i32 %21, i32 1) nounwind; <i32> [#uses=0]
   unreachable
 
 return:                                           ; preds = %bb5

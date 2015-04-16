@@ -173,15 +173,15 @@ define i32 @main() {
   store i32 10, i32* %n.addr, align 4
   store i32 2, i32* %d.addr, align 4
   %r1 = call i32 @safe_div(i32* %n.addr, i32* %d.addr)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r1)
+  call void (i8*, ...) @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r1)
 
   store i32 10, i32* %n.addr, align 4
   store i32 0, i32* %d.addr, align 4
   %r2 = call i32 @safe_div(i32* %n.addr, i32* %d.addr)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r2)
+  call void (i8*, ...) @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r2)
 
   %r3 = call i32 @safe_div(i32* %n.addr, i32* null)
-  call void (i8*, ...)* @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r3)
+  call void (i8*, ...) @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r3)
   ret i32 0
 }
 

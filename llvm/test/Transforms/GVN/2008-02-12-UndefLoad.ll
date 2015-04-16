@@ -12,7 +12,7 @@ entry:
         %tmp3 = or i32 %tmp2, 11                ; <i32> [#uses=1]
         %tmp4 = and i32 %tmp3, -21              ; <i32> [#uses=1]
         store i32 %tmp4, i32* %tmp1, align 4
-        %call = call i32 (...)* @x( %struct.anon* %c )          ; <i32> [#uses=0]
+        %call = call i32 (...) @x( %struct.anon* %c )          ; <i32> [#uses=0]
         ret i32 undef
 }
 

@@ -4,7 +4,7 @@
 define i32 @bar() {
 entry:
 	%retval = alloca i32, align 4		; <i32*> [#uses=1]
-	%tmp = call i32 (...)* bitcast (i32 (i8*)* @f to i32 (...)*)( double 3.000000e+00 )		; <i32> [#uses=0]
+	%tmp = call i32 (...) bitcast (i32 (i8*)* @f to i32 (...)*)( double 3.000000e+00 )		; <i32> [#uses=0]
 	br label %return
 
 return:		; preds = %entry

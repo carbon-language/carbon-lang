@@ -14,7 +14,7 @@ define void @t3() nounwind  {
 ; X86-64-NEXT:    jmp _pass_v8qi ## TAILCALL
   %tmp3 = load <8 x i8>, <8 x i8>* @g_v8qi, align 8
   %tmp3a = bitcast <8 x i8> %tmp3 to x86_mmx
-  %tmp4 = tail call i32 (...)* @pass_v8qi( x86_mmx %tmp3a ) nounwind
+  %tmp4 = tail call i32 (...) @pass_v8qi( x86_mmx %tmp3a ) nounwind
   ret void
 }
 
@@ -34,7 +34,7 @@ define void @t4(x86_mmx %v1, x86_mmx %v2) nounwind  {
   %v2b = bitcast x86_mmx %v2 to <8 x i8>
   %tmp3 = add <8 x i8> %v1a, %v2b
   %tmp3a = bitcast <8 x i8> %tmp3 to x86_mmx
-  %tmp4 = tail call i32 (...)* @pass_v8qi( x86_mmx %tmp3a ) nounwind
+  %tmp4 = tail call i32 (...) @pass_v8qi( x86_mmx %tmp3a ) nounwind
   ret void
 }
 

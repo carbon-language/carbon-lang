@@ -54,8 +54,8 @@
 ; Function Attrs: nounwind uwtable
 define void @f2() #0 {
 entry:
-  call void (...)* @f1(), !dbg !11
-  call void (...)* @f1(), !dbg !12
+  call void (...) @f1(), !dbg !11
+  call void (...) @f1(), !dbg !12
   ret void, !dbg !13
 }
 

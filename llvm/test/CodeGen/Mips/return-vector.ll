@@ -12,7 +12,7 @@ declare <4 x double> @d4(...)
 
 define i32 @call_i8() {
 entry:
-  %call = call <8 x i32> (...)* @i8()
+  %call = call <8 x i32> (...) @i8()
   %v0 = extractelement <8 x i32> %call, i32 0
   %v1 = extractelement <8 x i32> %call, i32 1
   %v2 = extractelement <8 x i32> %call, i32 2
@@ -46,7 +46,7 @@ entry:
 
 define float @call_f4() {
 entry:
-  %call = call <4 x float> (...)* @f4()
+  %call = call <4 x float> (...) @f4()
   %v0 = extractelement <4 x float> %call, i32 0
   %v1 = extractelement <4 x float> %call, i32 1
   %v2 = extractelement <4 x float> %call, i32 2
@@ -68,7 +68,7 @@ entry:
 
 define double @call_d4() {
 entry:
-  %call = call <4 x double> (...)* @d4()
+  %call = call <4 x double> (...) @d4()
   %v0 = extractelement <4 x double> %call, i32 0
   %v1 = extractelement <4 x double> %call, i32 1
   %v2 = extractelement <4 x double> %call, i32 2
@@ -99,7 +99,7 @@ declare <2 x double> @d2(...)
 
 define i32 @call_i4() {
 entry:
-  %call = call <4 x i32> (...)* @i4()
+  %call = call <4 x i32> (...) @i4()
   %v0 = extractelement <4 x i32> %call, i32 0
   %v1 = extractelement <4 x i32> %call, i32 1
   %v2 = extractelement <4 x i32> %call, i32 2
@@ -120,7 +120,7 @@ entry:
 
 define float @call_f2() {
 entry:
-  %call = call <2 x float> (...)* @f2()
+  %call = call <2 x float> (...) @f2()
   %v0 = extractelement <2 x float> %call, i32 0
   %v1 = extractelement <2 x float> %call, i32 1
   %add1 = fadd float %v0, %v1
@@ -135,7 +135,7 @@ entry:
 
 define double @call_d2() {
 entry:
-  %call = call <2 x double> (...)* @d2()
+  %call = call <2 x double> (...) @d2()
   %v0 = extractelement <2 x double> %call, i32 0
   %v1 = extractelement <2 x double> %call, i32 1
   %add1 = fadd double %v0, %v1

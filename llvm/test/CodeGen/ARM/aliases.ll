@@ -38,7 +38,7 @@ entry:
    %tmp0 = load i32, i32* @bar_i
    %tmp2 = call i32 @foo_f()
    %tmp3 = add i32 %tmp, %tmp2
-   %tmp4 = call %FunTy* @bar_f()
+   %tmp4 = call i32 @bar_f()
    %tmp5 = add i32 %tmp3, %tmp4
    %tmp6 = add i32 %tmp1, %tmp5
    %tmp7 = add i32 %tmp6, %tmp0

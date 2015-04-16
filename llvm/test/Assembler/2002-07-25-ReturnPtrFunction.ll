@@ -7,7 +7,7 @@
 declare void (i32)* @foo()
 
 define void @test() {
-        call void (i32)* ()* @foo( )           ; <%ty*>:1 [#uses=0]
+        call void (i32)* () @foo( )           ; <%ty*>:1 [#uses=0]
         ret void
 }
 

@@ -124,11 +124,11 @@ entry:
 	br i1 %tmp6, label %cond_true, label %cond_false
 
 cond_true:		; preds = %entry
-	%tmp.upgrd.2 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp.upgrd.2 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	ret void
 
 cond_false:		; preds = %entry
-	%tmp7 = tail call i32 (...)* @baz( )		; <i32> [#uses=0]
+	%tmp7 = tail call i32 (...) @baz( )		; <i32> [#uses=0]
 	ret void
 }
 
@@ -147,10 +147,10 @@ entry:
 	br i1 %tmp.upgrd.3, label %cond_true, label %cond_false
 
 cond_true:		; preds = %entry
-	%tmp.upgrd.4 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp.upgrd.4 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	ret void
 
 cond_false:		; preds = %entry
-	%tmp1 = tail call i32 (...)* @baz( )		; <i32> [#uses=0]
+	%tmp1 = tail call i32 (...) @baz( )		; <i32> [#uses=0]
 	ret void
 }

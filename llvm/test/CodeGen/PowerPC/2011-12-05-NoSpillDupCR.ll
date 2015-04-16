@@ -66,7 +66,7 @@ for.end12:                                        ; preds = %for.end.7, %for.end
   %sub14 = sub nsw i64 %call13, %call1
   %conv = sitofp i64 %sub14 to double
   %div = fdiv double %conv, 1.000000e+06
-  %call15 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str152, i64 0, i64 0), double %div) nounwind
+  %call15 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str152, i64 0, i64 0), double %div) nounwind
   tail call void @check(i32 1)
   ret i32 0
 

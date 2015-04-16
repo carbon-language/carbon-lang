@@ -26,8 +26,8 @@ entry:
 	br i1 %toBool, label %cond_true, label %cond_false
 
 cond_true:		; preds = %entry
-	%tmp3 = call i32 (...)* @bar( )		; <i32> [#uses=0]
-	%tmp4 = call i32 (...)* @baz( i32 5, i32 6 )		; <i32> [#uses=0]
+	%tmp3 = call i32 (...) @bar( )		; <i32> [#uses=0]
+	%tmp4 = call i32 (...) @baz( i32 5, i32 6 )		; <i32> [#uses=0]
 	%tmp7 = load i32, i32* %q_addr		; <i32> [#uses=1]
 	%tmp8 = icmp ne i32 %tmp7, 0		; <i1> [#uses=1]
 	%tmp89 = zext i1 %tmp8 to i8		; <i8> [#uses=1]
@@ -35,8 +35,8 @@ cond_true:		; preds = %entry
 	br i1 %toBool10, label %cond_true11, label %cond_false15
 
 cond_false:		; preds = %entry
-	%tmp5 = call i32 (...)* @foo( )		; <i32> [#uses=0]
-	%tmp6 = call i32 (...)* @baz( i32 5, i32 6 )		; <i32> [#uses=0]
+	%tmp5 = call i32 (...) @foo( )		; <i32> [#uses=0]
+	%tmp6 = call i32 (...) @baz( i32 5, i32 6 )		; <i32> [#uses=0]
 	%tmp27 = load i32, i32* %q_addr		; <i32> [#uses=1]
 	%tmp28 = icmp ne i32 %tmp27, 0		; <i1> [#uses=1]
 	%tmp289 = zext i1 %tmp28 to i8		; <i8> [#uses=1]
@@ -44,17 +44,17 @@ cond_false:		; preds = %entry
 	br i1 %toBool210, label %cond_true11, label %cond_false15
 
 cond_true11:		; preds = %cond_next
-	%tmp13 = call i32 (...)* @foo( )		; <i32> [#uses=0]
-	%tmp14 = call i32 (...)* @quux( i32 3, i32 4 )		; <i32> [#uses=0]
+	%tmp13 = call i32 (...) @foo( )		; <i32> [#uses=0]
+	%tmp14 = call i32 (...) @quux( i32 3, i32 4 )		; <i32> [#uses=0]
 	br label %cond_next18
 
 cond_false15:		; preds = %cond_next
-	%tmp16 = call i32 (...)* @bar( )		; <i32> [#uses=0]
-	%tmp17 = call i32 (...)* @quux( i32 3, i32 4 )		; <i32> [#uses=0]
+	%tmp16 = call i32 (...) @bar( )		; <i32> [#uses=0]
+	%tmp17 = call i32 (...) @quux( i32 3, i32 4 )		; <i32> [#uses=0]
 	br label %cond_next18
 
 cond_next18:		; preds = %cond_false15, %cond_true11
-	%tmp19 = call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp19 = call i32 (...) @bar( )		; <i32> [#uses=0]
 	br label %return
 
 return:		; preds = %cond_next18

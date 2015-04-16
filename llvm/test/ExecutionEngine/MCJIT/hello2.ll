@@ -6,7 +6,7 @@
 declare void @printf([13 x i8]*, ...)
 
 define void @bar() {
-	call void ([13 x i8]*, ...)* @printf( [13 x i8]* @msg )
+	call void ([13 x i8]*, ...) @printf( [13 x i8]* @msg )
 	ret void
 }
 

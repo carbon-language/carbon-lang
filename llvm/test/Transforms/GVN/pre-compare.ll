@@ -56,7 +56,7 @@ for.cond:                                         ; preds = %for.cond.backedge, 
   br i1 %cmp3, label %for.cond.backedge, label %if.end5
 
 if.end5:                                          ; preds = %for.cond
-  %call6 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str3, i64 0, i64 0), i32 %x) nounwind
+  %call6 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str3, i64 0, i64 0), i32 %x) nounwind
   br label %for.cond.backedge
 
 for.cond.backedge:                                ; preds = %if.end5, %for.cond

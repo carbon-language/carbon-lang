@@ -90,7 +90,7 @@ next:
   select i1 true, void ()* @f3, void ()* @f4
   store void ()* @f5, void ()** %x
   call void @f6()
-  call void (void ()*, void ()*)* bitcast (void ()* @f7 to void (void ()*, void ()*)*)(void ()* @f8, void ()* @f9)
+  call void (void ()*, void ()*) bitcast (void ()* @f7 to void (void ()*, void ()*)*)(void ()* @f8, void ()* @f9)
   invoke void @f10() to label %exit unwind label %unwind
 
 exit:

@@ -39,7 +39,7 @@ bb226.i:		; preds = %bb73.i
 bb273.i:		; preds = %bb226.i
 	ret %struct.tree_node* null
 bb260:		; preds = %bb226.i
-	tail call void (i8*, i32, ...)* @pedwarn_with_file_and_line( i8* %file.0, i32 %line.0, i8* null ) nounwind 
+	tail call void (i8*, i32, ...) @pedwarn_with_file_and_line( i8* %file.0, i32 %line.0, i8* null ) nounwind 
 	ret %struct.tree_node* null
 bb344:		; preds = %bb174
 	ret %struct.tree_node* null

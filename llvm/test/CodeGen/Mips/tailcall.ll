@@ -136,7 +136,7 @@ entry:
 ; PIC16: jalrc
 ; PIC16: .end caller8_1
 
-  %call = tail call i32 (i32, ...)* @callee8(i32 2, i32 1) nounwind
+  %call = tail call i32 (i32, ...) @callee8(i32 2, i32 1) nounwind
   ret i32 %call
 }
 
@@ -239,7 +239,7 @@ entry:
 ; PIC16: .ent caller13
 ; PIC16: jalrc
 
-  %call = tail call i32 (i32, ...)* @callee13(i32 1, i32 2) nounwind
+  %call = tail call i32 (i32, ...) @callee13(i32 1, i32 2) nounwind
   ret i32 %call
 }
 

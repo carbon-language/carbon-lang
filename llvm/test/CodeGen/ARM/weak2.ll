@@ -8,7 +8,7 @@ entry:
 	br i1 %tmp5, label %UnifiedReturnBlock, label %cond_true8
 
 cond_true8:		; preds = %entry
-	%tmp10 = tail call i32 (...)* %t.0( )		; <i32> [#uses=1]
+	%tmp10 = tail call i32 (...) %t.0( )		; <i32> [#uses=1]
 	ret i32 %tmp10
 
 UnifiedReturnBlock:		; preds = %entry

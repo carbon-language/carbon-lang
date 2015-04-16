@@ -106,7 +106,7 @@ define void @foo_printf() #1 {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* getelementptr inbounds ([9 x i8], [9 x i8]* @foo_printf.fmt, i64 0, i64 0), i64 9, i32 1, i1 false)
 ; CHECK-LABEL: foo_printf:
 ; CHECK: ld_64 r1, 729618802566522216
-  %2 = call i32 (i8*, ...)* @printf(i8* %1) #3
+  %2 = call i32 (i8*, ...) @printf(i8* %1) #3
   ret void
 }
 

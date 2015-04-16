@@ -8,7 +8,7 @@ entry:
 	br i1 %cmp, label %if.end, label %if.then
 
 if.then:		; preds = %entry
-	%call = call i32 (...)* @b()		; <i32> [#uses=0]
+	%call = call i32 (...) @b()		; <i32> [#uses=0]
 	br label %if.end
 
 if.end:		; preds = %if.then, %entry

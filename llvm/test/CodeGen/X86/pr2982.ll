@@ -20,7 +20,7 @@ entry:
         %5 = sext i8 %4 to i32          ; <i32> [#uses=1]
         %6 = add i32 %2, %3             ; <i32> [#uses=1]
         %7 = add i32 %6, %5             ; <i32> [#uses=1]
-        %8 = tail call i32 (...)* @rshift_u_u(i32 %7, i32 0) nounwind          
+        %8 = tail call i32 (...) @rshift_u_u(i32 %7, i32 0) nounwind          
 ; <i32> [#uses=0]
         ret void
 }

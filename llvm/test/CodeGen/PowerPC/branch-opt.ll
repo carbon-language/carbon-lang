@@ -11,7 +11,7 @@ entry:
 	br i1 %tmp1.upgrd.1, label %cond_false, label %bb5
 bb:		; preds = %bb5, %bb
 	%indvar77 = phi i32 [ %indvar.next78, %bb ], [ 0, %bb5 ]		; <i32> [#uses=1]
-	%tmp2 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp2 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	%indvar.next78 = add i32 %indvar77, 1		; <i32> [#uses=2]
 	%exitcond79 = icmp eq i32 %indvar.next78, %X		; <i1> [#uses=1]
 	br i1 %exitcond79, label %cond_next48, label %bb
@@ -24,7 +24,7 @@ cond_false:		; preds = %entry
 	br i1 %tmp10.upgrd.2, label %cond_false20, label %bb16
 bb12:		; preds = %bb16, %bb12
 	%indvar72 = phi i32 [ %indvar.next73, %bb12 ], [ 0, %bb16 ]		; <i32> [#uses=1]
-	%tmp13 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp13 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	%indvar.next73 = add i32 %indvar72, 1		; <i32> [#uses=2]
 	%exitcond74 = icmp eq i32 %indvar.next73, %Y		; <i1> [#uses=1]
 	br i1 %exitcond74, label %cond_next48, label %bb12
@@ -37,7 +37,7 @@ cond_false20:		; preds = %cond_false
 	br i1 %tmp23.upgrd.3, label %cond_false33, label %bb29
 bb25:		; preds = %bb29, %bb25
 	%indvar67 = phi i32 [ %indvar.next68, %bb25 ], [ 0, %bb29 ]		; <i32> [#uses=1]
-	%tmp26 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp26 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	%indvar.next68 = add i32 %indvar67, 1		; <i32> [#uses=2]
 	%exitcond69 = icmp eq i32 %indvar.next68, %Z		; <i1> [#uses=1]
 	br i1 %exitcond69, label %cond_next48, label %bb25
@@ -49,7 +49,7 @@ cond_false33:		; preds = %cond_false20
 	%tmp36.upgrd.4 = icmp eq i32 %tmp36, 0		; <i1> [#uses=1]
 	br i1 %tmp36.upgrd.4, label %cond_next48, label %bb42
 bb38:		; preds = %bb42
-	%tmp39 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp39 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
 	br label %bb42
 bb42:		; preds = %bb38, %cond_false33
@@ -62,7 +62,7 @@ cond_next48:		; preds = %bb42, %cond_false33, %bb29, %bb25, %bb16, %bb12, %bb5, 
 	%tmp50 = icmp eq i32 %W_addr.1, 0		; <i1> [#uses=1]
 	br i1 %tmp50, label %UnifiedReturnBlock, label %cond_true51
 cond_true51:		; preds = %cond_next48
-	%tmp52 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp52 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	ret void
 UnifiedReturnBlock:		; preds = %cond_next48
 	ret void

@@ -5,7 +5,7 @@ declare i32 @safe_sub_func_short_u_u(i16 signext, i16 signext) nounwind
 
 define i32 @func_106(i32 %p_107) nounwind {
 entry:
-        %0 = tail call i32 (...)* @safe_div_(i32 %p_107, i32 1) nounwind       
+        %0 = tail call i32 (...) @safe_div_(i32 %p_107, i32 1) nounwind       
         ; <i32> [#uses=1]
         %1 = lshr i32 %0, -9            ; <i32> [#uses=1]
         %2 = trunc i32 %1 to i16                ; <i16> [#uses=1]

@@ -22,7 +22,7 @@
 ; Function Attrs: uwtable
 define void @_Z2f2v() #0 {
 entry:
-  call void (i32, ...)* @_ZL2f1iz(i32 1), !dbg !15
+  call void (i32, ...) @_ZL2f1iz(i32 1), !dbg !15
   ret void, !dbg !16
 }
 

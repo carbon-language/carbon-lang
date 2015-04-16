@@ -19,7 +19,7 @@ bb54:		; preds = %bb31, %bb5, %bb
 	br i1 false, label %bb64, label %bb
 bb64:		; preds = %bb54
 	%tmp6566 = sext i16 %p_6 to i32		; <i32> [#uses=1]
-	%tmp68 = tail call i32 (...)* @func_18( i32 1, i32 %tmp6566, i32 1 ) nounwind 		; <i32> [#uses=0]
+	%tmp68 = tail call i32 (...) @func_18( i32 1, i32 %tmp6566, i32 1 ) nounwind 		; <i32> [#uses=0]
 	ret i32 undef
 }
 

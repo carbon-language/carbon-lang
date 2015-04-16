@@ -47,8 +47,8 @@ bb:
   br i1 %tmp4, label %bb6, label %bb5
 
 bb5:                                              ; preds = %bb
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2021) nounwind
-  tail call void (...)* @snork(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 1), i32 -2146631418) nounwind
+  tail call void (...) @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2021) nounwind
+  tail call void (...) @snork(i8* getelementptr inbounds (%struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 1), i32 -2146631418) nounwind
   unreachable
 
 bb6:                                              ; preds = %bb
@@ -95,8 +95,8 @@ bb30:                                             ; preds = %bb22
   br i1 %tmp31, label %bb33, label %bb32
 
 bb32:                                             ; preds = %bb30, %bb26, %bb17
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2038) nounwind
-  tail call void (...)* @snork(i8* %tmp11, i32 -2146631418) nounwind
+  tail call void (...) @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2038) nounwind
+  tail call void (...) @snork(i8* %tmp11, i32 -2146631418) nounwind
   unreachable
 
 bb33:                                             ; preds = %bb30
@@ -141,8 +141,8 @@ bb55:                                             ; preds = %bb48
   br i1 %tmp57, label %bb59, label %bb58
 
 bb58:                                             ; preds = %bb55, %bb52, %bb43
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2055) nounwind
-  tail call void (...)* @snork(i8* %tmp38, i32 -2146631418) nounwind
+  tail call void (...) @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2055) nounwind
+  tail call void (...) @snork(i8* %tmp38, i32 -2146631418) nounwind
   br label %bb247
 
 bb59:                                             ; preds = %bb55
@@ -168,7 +168,7 @@ bb68:                                             ; preds = %bb59
   ]
 
 bb69:                                             ; preds = %bb68
-  tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2071) nounwind
+  tail call void (...) @snork(i8* getelementptr inbounds ([52 x i8], [52 x i8]* @global1, i64 0, i64 0), i32 2071) nounwind
   %tmp70 = load i32, i32* getelementptr inbounds (%struct.snork, %struct.snork* @global, i64 0, i32 2), align 4
   unreachable
 

@@ -49,7 +49,7 @@ entry:
   %e = alloca i32, align 4
   %0 = bitcast i32* %tmp.i to i8*
   store i32 42, i32* %tmp.i, align 4, !tbaa !2
-  call void (...)* @llvm.frameescape(i32* %e)
+  call void (...) @llvm.frameescape(i32* %e)
   invoke void @_CxxThrowException(i8* %0, %eh.ThrowInfo* @_TI1H) #6
           to label %.noexc unwind label %lpad1
 
@@ -59,7 +59,7 @@ entry:
 lpad1:                                            ; preds = %entry
   %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
-  %recover = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*), i32 0, i8* (i8*, i8*)* @main.catch)
+  %recover = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*), i32 0, i8* (i8*, i8*)* @main.catch)
   indirectbr i8* %recover, [label %try.cont.split]
 
 try.cont.split:                                   ; preds = %lpad1
@@ -96,7 +96,7 @@ entry:
   %e = bitcast i8* %e.i8 to i32*
   %2 = bitcast i32* %e to i8*
   %3 = load i32, i32* %e, align 4, !tbaa !2
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @"\01??_C@_06PNOAJMHG@e?3?5?$CFd?6?$AA@", i64 0, i64 0), i32 %3)
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @"\01??_C@_06PNOAJMHG@e?3?5?$CFd?6?$AA@", i64 0, i64 0), i32 %3)
   invoke void @llvm.donothing()
           to label %entry.split unwind label %stub
 

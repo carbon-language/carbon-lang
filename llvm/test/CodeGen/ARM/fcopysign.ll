@@ -48,7 +48,7 @@ entry:
 ; SOFT: vmov.i32 [[REG6:(d[0-9]+)]], #0x80000000
 ; SOFT: vshr.u64 [[REG7]], [[REG7]], #32
 ; SOFT: vbsl [[REG6]], [[REG7]], 
-  %0 = tail call double (...)* @bar() nounwind
+  %0 = tail call double (...) @bar() nounwind
   %1 = fptrunc double %0 to float
   %2 = tail call float @copysignf(float 5.000000e-01, float %1) nounwind readnone
   %3 = fadd float %1, %2

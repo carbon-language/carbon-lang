@@ -7,7 +7,7 @@
 declare i8* @f(i8*, ...)
 
 define i8* @f_thunk(i8* %this, ...) {
-  %rv = musttail call i8* (i8*, ...)* @f(i8* %this)
+  %rv = musttail call i8* (i8*, ...) @f(i8* %this)
 ; CHECK: error: expected '...' at end of argument list for musttail call in varargs function
   ret i8* %rv
 }

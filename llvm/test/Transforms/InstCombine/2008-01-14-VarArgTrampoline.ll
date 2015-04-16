@@ -21,6 +21,6 @@ entry:
 	%tmp7 = getelementptr %struct.FRAME.nest, %struct.FRAME.nest* %FRAME.0, i32 0, i32 1		; <i32 (...)**> [#uses=1]
 	%tmp89 = bitcast i8* %tramp to i32 (...)*		; <i32 (...)*> [#uses=2]
 	store i32 (...)* %tmp89, i32 (...)** %tmp7, align 8
-	%tmp2.i = call i32 (...)* %tmp89( i32 zeroext 0 )		; <i32> [#uses=1]
+	%tmp2.i = call i32 (...) %tmp89( i32 zeroext 0 )		; <i32> [#uses=1]
 	ret i32 %tmp2.i
 }

@@ -349,7 +349,7 @@ entry:
 ; X32ABI-LABEL: t17:
 ; X32ABI: xorl %eax, %eax
 ; X32ABI: jmp {{_?}}bar5
-  tail call void (...)* @bar5() nounwind
+  tail call void (...) @bar5() nounwind
   ret void
 }
 
@@ -369,7 +369,7 @@ entry:
 ; X32ABI-LABEL: t18:
 ; X32ABI: xorl %eax, %eax
 ; X32ABI: jmp {{_?}}bar6
-  %0 = tail call double (...)* @bar6() nounwind
+  %0 = tail call double (...) @bar6() nounwind
   ret void
 }
 

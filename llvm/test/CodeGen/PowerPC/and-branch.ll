@@ -7,7 +7,7 @@ entry:
         %tmp4 = and i1 %tmp3, %tmp              ; <i1> [#uses=1]
         br i1 %tmp4, label %cond_true, label %UnifiedReturnBlock
 cond_true:              ; preds = %entry
-        %tmp5 = tail call i32 (...)* @bar( )            ; <i32> [#uses=0]
+        %tmp5 = tail call i32 (...) @bar( )            ; <i32> [#uses=0]
         ret void
 UnifiedReturnBlock:             ; preds = %entry
         ret void

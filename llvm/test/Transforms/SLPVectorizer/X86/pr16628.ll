@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define void @f() {
 entry:
-  %call = tail call i32 (...)* @g()
+  %call = tail call i32 (...) @g()
   %0 = load i32, i32* @c, align 4
   %lnot = icmp eq i32 %0, 0
   %lnot.ext = zext i1 %lnot to i32

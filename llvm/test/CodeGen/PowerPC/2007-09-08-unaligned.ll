@@ -42,7 +42,7 @@ entry:
 	%tmp4 = getelementptr <{ i8, double }>, <{ i8, double }>* @v, i32 0, i32 1		; <double*> [#uses=1]
 	%tmp5 = load double, double* %tmp4, align 1		; <double> [#uses=1]
 	%tmp6 = getelementptr [8 x i8], [8 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
-	%tmp7 = call i32 (i8*, ...)* @printf( i8* %tmp6, double %tmp23, double %tmp5 )		; <i32> [#uses=0]
+	%tmp7 = call i32 (i8*, ...) @printf( i8* %tmp6, double %tmp23, double %tmp5 )		; <i32> [#uses=0]
 	br label %return
 
 return:		; preds = %entry

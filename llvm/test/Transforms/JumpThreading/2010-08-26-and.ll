@@ -147,7 +147,7 @@ _ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134: ; preds = %if.the
   %tmp7.i138 = and i8 %tmp2.i137, 1               ; <i8> [#uses=1]
   %tobool.i139 = icmp eq i8 %tmp7.i138, 0         ; <i1> [#uses=1]
   %retval.0.i = select i1 %tobool.i139, i32 0, i32 %retval.0.i.pre ; <i32> [#uses=1]
-  %call22 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str7, i64 0, i64 0), i32 %retval.0.i) ; <i32> [#uses=0]
+  %call22 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str7, i64 0, i64 0), i32 %retval.0.i) ; <i32> [#uses=0]
   %exitcond = icmp eq i64 %tmp146, %tmp145        ; <i1> [#uses=1]
   br i1 %exitcond, label %for.end, label %land.lhs.true.i
 

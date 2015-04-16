@@ -17,7 +17,7 @@ entry:
 	br i1 %toBool, label %bb, label %bb5
 
 bb:		; preds = %entry
-	%tmp4 = call i32 (...)* @bar( ) nounwind 		; <i32> [#uses=0]
+	%tmp4 = call i32 (...) @bar( ) nounwind 		; <i32> [#uses=0]
 	br label %bb5
 
 bb5:		; preds = %bb, %entry

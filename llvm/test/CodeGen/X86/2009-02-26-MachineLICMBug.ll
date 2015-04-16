@@ -21,9 +21,9 @@ bb4:		; preds = %bb.i, %bb26, %bb4, %entry
 ; CHECK: xorl
 ; CHECK: movq
 
-	%0 = call i32 (...)* @xxGetOffsetForCode(i32 undef) nounwind		; <i32> [#uses=0]
+	%0 = call i32 (...) @xxGetOffsetForCode(i32 undef) nounwind		; <i32> [#uses=0]
 	%ins = or i64 %p, 2097152		; <i64> [#uses=1]
-	%1 = call i32 (...)* @xxCalculateMidType(%struct.Key* %desc, i32 0) nounwind		; <i32> [#uses=1]
+	%1 = call i32 (...) @xxCalculateMidType(%struct.Key* %desc, i32 0) nounwind		; <i32> [#uses=1]
 	%cond = icmp eq i32 %1, 1		; <i1> [#uses=1]
 	br i1 %cond, label %bb26, label %bb4
 

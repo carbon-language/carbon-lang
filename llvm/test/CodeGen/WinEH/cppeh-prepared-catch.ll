@@ -45,7 +45,7 @@ lpad1:                                            ; preds = %entry
   %lp4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           cleanup
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
-  %recover = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
+  %recover = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
   indirectbr i8* %recover, [label %invoke.cont2]
 }
 
@@ -87,7 +87,7 @@ entry:
   %ehselector.slot = alloca i32
   %0 = alloca i32*, align 8
   %1 = alloca double, align 8
-  call void (...)* @llvm.frameescape(i32** %0, double* %1)
+  call void (...) @llvm.frameescape(i32** %0, double* %1)
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad2
 
@@ -98,7 +98,7 @@ lpad2:                                            ; preds = %entry
   %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.8
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
-  %recover = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.8 to i8*), i32 0, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch", i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
+  %recover = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.8 to i8*), i32 0, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch", i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
   indirectbr i8* %recover, [label %try.cont, label %try.cont8]
 
 try.cont:                                         ; preds = %lpad2, %invoke.cont
@@ -108,7 +108,7 @@ try.cont:                                         ; preds = %lpad2, %invoke.cont
 lpad1:
   %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.N.0
-  %recover2 = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
+  %recover2 = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.N.0 to i8*), i32 1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch1")
   indirectbr i8* %recover2, [label %try.cont8]
 
 try.cont8:                                        ; preds = %lpad2, %try.cont

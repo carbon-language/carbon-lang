@@ -53,7 +53,7 @@ entry:
   call void @llvm.dbg.value(metadata i32 3, i64 0, metadata !10, metadata !MDExpression()), !dbg !15
   %call = call i32 @f3(i32 3) #3, !dbg !16
   call void @llvm.dbg.value(metadata i32 7, i64 0, metadata !10, metadata !MDExpression()), !dbg !18
-  %call1 = call i32 (...)* @f1() #3, !dbg !19
+  %call1 = call i32 (...) @f1() #3, !dbg !19
   call void @llvm.dbg.value(metadata i32 %call1, i64 0, metadata !10, metadata !MDExpression()), !dbg !19
   store i32 %call1, i32* %i, align 4, !dbg !19, !tbaa !20
   call void @llvm.dbg.value(metadata i32* %i, i64 0, metadata !10, metadata !MDExpression()), !dbg !24

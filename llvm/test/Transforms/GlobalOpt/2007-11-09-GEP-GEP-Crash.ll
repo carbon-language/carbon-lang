@@ -11,7 +11,7 @@ define i8 @func() {
 entry:
         %tmp10 = getelementptr [2 x i32], [2 x i32]* getelementptr ([6 x [2 x i32]], [6 x [2 x i32]]* @aaui1, i32 0, i32 0), i32 5, i32 1           ; <i32*> [#uses=1]
         %tmp11 = load i32, i32* %tmp10, align 4              ; <i32> [#uses=1]
-        %tmp12 = call i32 (...)* @func3( i32* null, i32 0, i32 %tmp11 )         ; <i32> [#uses=0]
+        %tmp12 = call i32 (...) @func3( i32* null, i32 0, i32 %tmp11 )         ; <i32> [#uses=0]
         ret i8 undef
 }
 

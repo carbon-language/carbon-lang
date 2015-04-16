@@ -436,7 +436,7 @@ declare i64 @receive_fp128(i64 %a, ...)
 ; CHECK:       call receive_fp128
 define i64 @test_fp128_variable_args(i64 %a, fp128 %b) {
 entry:
-  %0 = call i64 (i64, ...)* @receive_fp128(i64 %a, fp128 %b)
+  %0 = call i64 (i64, ...) @receive_fp128(i64 %a, fp128 %b)
   ret i64 %0
 }
 

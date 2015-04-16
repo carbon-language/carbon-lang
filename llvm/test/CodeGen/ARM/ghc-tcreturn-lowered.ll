@@ -16,6 +16,6 @@ define ghccc void @test_indirect_tail() {
 ; CHECK-LABEL: test_indirect_tail:
 ; CHECK: bx {{r[0-9]+}}
   %func = load void()*, void()** @ind_func
-  tail call ghccc void()* %func()
+  tail call ghccc void() %func()
   ret void
 }

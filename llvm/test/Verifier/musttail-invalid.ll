@@ -26,7 +26,7 @@ define void @mismatched_intty(i32) {
 declare void @mismatched_vararg_callee(i8*, ...)
 define void @mismatched_vararg(i8*) {
 ; CHECK: mismatched varargs
-  musttail call void (i8*, ...)* @mismatched_vararg_callee(i8* null)
+  musttail call void (i8*, ...) @mismatched_vararg_callee(i8* null)
   ret void
 }
 

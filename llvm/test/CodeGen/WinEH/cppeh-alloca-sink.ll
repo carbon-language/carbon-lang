@@ -81,7 +81,7 @@ eh.resume:                                        ; preds = %lpad
 }
 
 ; CHECK-LABEL: define void @sink_alloca_to_catch()
-; CHECK: call void (...)* @llvm.frameescape(i32* %only_used_in_catch)
+; CHECK: call void (...) @llvm.frameescape(i32* %only_used_in_catch)
 
 declare void @use_catch_var(i32*) #1
 
@@ -162,7 +162,7 @@ eh.resume:                                        ; preds = %lpad1, %catch.dispa
 }
 
 ; CHECK-LABEL: define void @dont_sink_alloca_to_catch(i32 %n)
-; CHECK: call void (...)* @llvm.frameescape(i32* %live_in_out_catch)
+; CHECK: call void (...) @llvm.frameescape(i32* %live_in_out_catch)
 
 ; CHECK-LABEL: define internal i8* @sink_alloca_to_catch.catch(i8*, i8*)
 ; CHECK: %only_used_in_catch.i8 = call i8* @llvm.framerecover({{.*}}, i32 0)

@@ -7,7 +7,7 @@ declare void @foo(...)
 
 define i8* @f1(i32 %offset, i8* %handler) {
 entry:
-  call void (...)* @foo()
+  call void (...) @foo()
   call void @llvm.eh.return.i32(i32 %offset, i8* %handler)
   unreachable
 

@@ -93,9 +93,9 @@ declare void @varargs(i32, ...)
 
 define void @test11(i32* %P) {
         %c = bitcast i32* %P to i16*            ; <i16*> [#uses=1]
-        call void (i32, ...)* @varargs( i32 5, i16* %c )
+        call void (i32, ...) @varargs( i32 5, i16* %c )
         ret void
-; CHECK: call void (i32, ...)* @varargs(i32 5, i32* %P)
+; CHECK: call void (i32, ...) @varargs(i32 5, i32* %P)
 ; CHECK: ret void
 }
 

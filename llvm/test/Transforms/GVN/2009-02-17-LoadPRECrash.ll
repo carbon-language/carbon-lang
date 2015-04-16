@@ -163,7 +163,7 @@ bb180:		; preds = %bb179, %bb178
 	br label %bb181
 
 bb181:		; preds = %bb180, %bb170
-	%13 = call %struct.rtvec_def* (i32, ...)* @gen_rtvec(i32 1, %struct.rtx_def* null) nounwind		; <%struct.rtvec_def*> [#uses=0]
+	%13 = call %struct.rtvec_def* (i32, ...) @gen_rtvec(i32 1, %struct.rtx_def* null) nounwind		; <%struct.rtvec_def*> [#uses=0]
 	unreachable
 
 bb211:		; preds = %bb168, %bb167

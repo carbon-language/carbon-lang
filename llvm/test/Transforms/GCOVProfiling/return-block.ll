@@ -18,13 +18,13 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind uwtable
 define void @test() #0 {
 entry:
-  tail call void (...)* @f() #2, !dbg !14
+  tail call void (...) @f() #2, !dbg !14
   %0 = load i32, i32* @A, align 4, !dbg !15
   %tobool = icmp eq i32 %0, 0, !dbg !15
   br i1 %tobool, label %if.end, label %if.then, !dbg !15
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @g() #2, !dbg !16
+  tail call void (...) @g() #2, !dbg !16
   br label %if.end, !dbg !16
 
 if.end:                                           ; preds = %entry, %if.then

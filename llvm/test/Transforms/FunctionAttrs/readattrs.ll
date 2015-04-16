@@ -5,7 +5,7 @@ declare void @test1_1(i8* %x1_1, i8* readonly %y1_1, ...)
 
 ; CHECK: define void @test1_2(i8* %x1_2, i8* readonly %y1_2, i8* %z1_2)
 define void @test1_2(i8* %x1_2, i8* %y1_2, i8* %z1_2) {
-  call void (i8*, i8*, ...)* @test1_1(i8* %x1_2, i8* %y1_2, i8* %z1_2)
+  call void (i8*, i8*, ...) @test1_1(i8* %x1_2, i8* %y1_2, i8* %z1_2)
   store i32 0, i32* @x
   ret void
 }

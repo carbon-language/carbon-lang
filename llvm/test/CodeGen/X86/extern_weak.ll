@@ -5,7 +5,7 @@
 declare extern_weak i32 @X(i8*)
 
 define void @bar() {
-        tail call void (...)* @foo( )
+        tail call void (...) @foo( )
         ret void
 }
 

@@ -34,7 +34,7 @@ define i32 @bar(double* nocapture %A, i32 %d) {
   br i1 %6, label %9, label %7
 
 ; <label>:7                                       ; preds = %0
-  %8 = tail call i32 (...)* @foo()
+  %8 = tail call i32 (...) @foo()
   br label %9
 
 ; <label>:9                                       ; preds = %0, %7

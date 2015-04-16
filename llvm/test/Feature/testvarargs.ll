@@ -6,7 +6,7 @@
 declare i32 @printf(i8*, ...)   ;; Prototype for: int __builtin_printf(const char*, ...)
 
 define i32 @testvarar() {
-        call i32 (i8*, ...)* @printf( i8* null, i32 12, i8 42 )         ; <i32>:1 [#uses=1]
+        call i32 (i8*, ...) @printf( i8* null, i32 12, i8 42 )         ; <i32>:1 [#uses=1]
         ret i32 %1
 }
 

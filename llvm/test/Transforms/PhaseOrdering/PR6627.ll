@@ -36,7 +36,7 @@ land.lhs.true17:                                  ; preds = %land.lhs.true9
   br i1 %cmp23, label %if.then, label %if.end
 
 if.then:                                          ; preds = %land.lhs.true17
-  %call25 = call i32 (...)* @doo()
+  %call25 = call i32 (...) @doo()
   br label %if.end
 
 if.end:
@@ -80,7 +80,7 @@ land.lhs.true17:                                  ; preds = %land.lhs.true9
   br i1 %cmp23, label %if.then, label %if.end
 
 if.then:                                          ; preds = %land.lhs.true17
-  %call25 = call i32 (...)* @doo()
+  %call25 = call i32 (...) @doo()
   br label %if.end
 
 if.end:

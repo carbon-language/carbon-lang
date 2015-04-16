@@ -190,7 +190,7 @@ define void @test16() nounwind {
 ; CHECK: movl $1, %edi
 ; CHECK: movb $0, %al
 ; CHECK: callq _test16callee
-  call void (...)* @test16callee(i32 1)
+  call void (...) @test16callee(i32 1)
   br label %block2
 
 block2:
@@ -201,7 +201,7 @@ block2:
 ; AVX: vmovsd LCP{{.*}}_{{.*}}(%rip), %xmm0
 ; AVX: movb $1, %al
 ; AVX: callq _test16callee
-  call void (...)* @test16callee(double 1.000000e+00)
+  call void (...) @test16callee(double 1.000000e+00)
   ret void
 }
 

@@ -18,7 +18,7 @@ entry:
   %1 = ptrtoint i8* %0 to i64                     ; <i64> [#uses=1]
   store i64 %1, i64* %p, align 8
   %2 = load i8*, i8** %ptr, align 8                    ; <i8*> [#uses=1]
-  %3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i64 0, i64 0), i8* %2) nounwind ; <i32> [#uses=0]
+  %3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str, i64 0, i64 0), i8* %2) nounwind ; <i32> [#uses=0]
   %4 = load i64, i64* %p, align 8                      ; <i64> [#uses=1]
   %5 = and i64 %4, 140737488355264                ; <i64> [#uses=1]
   %6 = load i64, i64* %p, align 8                      ; <i64> [#uses=1]

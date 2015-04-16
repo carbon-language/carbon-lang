@@ -23,7 +23,7 @@ merge:
 ; CHECK:  %base_phi = phi i64 addrspace(1)* [ %base_obj_x, %bump ], [ %base_obj_y, %there ]
 ; CHECK-NEXT:  %merged_value = phi i64 addrspace(1)* [ %base_obj_x, %bump ], [ %y, %there ]  
   %merged_value = phi i64 addrspace(1)* [ %base_obj_x, %bump ], [ %y, %there ]
-  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %merged_value
 }
 

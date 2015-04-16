@@ -64,7 +64,7 @@ entry:
 ; A9-NOT: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]!
 ; A9: str [[REG]], [r0, r1, lsl #2]
 ; A9-NOT: str [[REG]], [r0]
-  %0 = tail call i8* (...)* @malloc(i32 undef) nounwind
+  %0 = tail call i8* (...) @malloc(i32 undef) nounwind
   %1 = bitcast i8* %0 to i32*
   %2 = sext i16 %addr to i32
   %3 = getelementptr inbounds i32, i32* %1, i32 %2

@@ -173,8 +173,8 @@ entry:
 ; CHECK-NEXT: %res2 = tail call i32 @test(i32 %x)
   %res2 = tail call i32 @test(i32 %x)
   
-; CHECK-NEXT: %res3 = call i32 (i8*, ...)* @printf(i8* %msg, i32 12, i8 42)
-  %res3 = call i32 (i8*, ...)* @printf(i8* %msg, i32 12, i8 42)
+; CHECK-NEXT: %res3 = call i32 (i8*, ...) @printf(i8* %msg, i32 12, i8 42)
+  %res3 = call i32 (i8*, ...) @printf(i8* %msg, i32 12, i8 42)
   
   ret void
 }

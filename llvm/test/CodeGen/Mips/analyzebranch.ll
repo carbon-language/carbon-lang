@@ -60,7 +60,7 @@ if.then:                                          ; preds = %entry
   unreachable
 
 if.end:                                           ; preds = %entry
-  tail call void (...)* @f2() nounwind
+  tail call void (...) @f2() nounwind
   ret void
 }
 

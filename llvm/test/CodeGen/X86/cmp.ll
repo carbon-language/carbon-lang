@@ -75,7 +75,7 @@ define i32 @test5(double %A) nounwind  {
  br i1 %bothcond, label %bb8, label %bb12
 
  bb8:; preds = %entry
- %tmp9 = tail call i32 (...)* @foo( ) nounwind ; <i32> [#uses=1]
+ %tmp9 = tail call i32 (...) @foo( ) nounwind ; <i32> [#uses=1]
  ret i32 %tmp9
 
  bb12:; preds = %entry

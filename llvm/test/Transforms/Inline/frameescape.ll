@@ -16,7 +16,7 @@ define internal void @foo(i8* %fp) {
 define internal i32 @bar() {
 entry:
   %a = alloca i32
-  call void (...)* @llvm.frameescape(i32* %a)
+  call void (...) @llvm.frameescape(i32* %a)
   %fp = call i8* @llvm.frameaddress(i32 0)
   tail call void @foo(i8* %fp)
   %r = load i32, i32* %a
@@ -27,7 +27,7 @@ entry:
 define internal i32 @bar_alwaysinline() alwaysinline {
 entry:
   %a = alloca i32
-  call void (...)* @llvm.frameescape(i32* %a)
+  call void (...) @llvm.frameescape(i32* %a)
   tail call void @foo(i8* null)
   ret i32 0
 }

@@ -9,11 +9,11 @@ entry:
 	br i1 %tmp, label %cond_true, label %cond_next
 
 cond_true:		; preds = %entry
-	%tmp2 = tail call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp2 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
 	br label %cond_next
 
 cond_next:		; preds = %cond_true, %entry
-	%tmp3 = tail call i32 (...)* @baz( )		; <i32> [#uses=0]
+	%tmp3 = tail call i32 (...) @baz( )		; <i32> [#uses=0]
 	ret i32 undef
 }
 

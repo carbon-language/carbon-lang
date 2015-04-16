@@ -7,7 +7,7 @@ module asm "\09.section\09\22.dtors\22,#alloc,#write"
 
 define void @frame_dummy() nounwind {
 entry:
-	%asmtmp = tail call void (i8*)* (void (i8*)*)* asm "", "=r,0"(void (i8*)* @_Jv_RegisterClasses) nounwind		; <void (i8*)*> [#uses=0]
+	%asmtmp = tail call void (i8*)* (void (i8*)*) asm "", "=r,0"(void (i8*)* @_Jv_RegisterClasses) nounwind		; <void (i8*)*> [#uses=0]
 	unreachable
 }
 

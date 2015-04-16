@@ -439,7 +439,7 @@ entry:
   %conv = uitofp i64 %sub to float
   %div = fmul float %conv, 5.000000e-01
   %conv2 = fpext float %div to double
-  tail call void (...)* @_Z6PrintFz(i8* getelementptr inbounds ({ [1 x i8], [63 x i8] }, { [1 x i8], [63 x i8] }* @.str, i64 0, i32 0, i64 0), double %conv2)
+  tail call void (...) @_Z6PrintFz(i8* getelementptr inbounds ({ [1 x i8], [63 x i8] }, { [1 x i8], [63 x i8] }* @.str, i64 0, i32 0, i64 0), double %conv2)
   ret void
 }
 declare void @_Z6PrintFz(...)
@@ -462,7 +462,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   %cmp = icmp eq i32* undef, %3
   %conv2 = zext i1 %cmp to i32
   %and = and i32 %conv2, %0
-  tail call void (...)* @fn3(i32 %and) nounwind
+  tail call void (...) @fn3(i32 %and) nounwind
   %tobool = icmp eq i32 undef, 0
   br i1 %tobool, label %for.inc, label %if.then
 

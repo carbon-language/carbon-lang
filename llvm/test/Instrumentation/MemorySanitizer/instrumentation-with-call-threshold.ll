@@ -16,7 +16,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @foo() nounwind
+  tail call void (...) @foo() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %entry, %if.then

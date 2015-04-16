@@ -15,7 +15,7 @@ bb:		; preds = %bb.nph, %bb3
 	br i1 %1, label %bb2, label %bb1
 
 bb1:		; preds = %bb
-	%2 = tail call i32 (...)* @b() nounwind		; <i32> [#uses=0]
+	%2 = tail call i32 (...) @b() nounwind		; <i32> [#uses=0]
 	br label %bb2
 
 bb2:		; preds = %bb, %bb1

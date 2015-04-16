@@ -15,7 +15,7 @@ taken:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: %obj.relocated = call coldcc i64 addrspace(1)*
 ; CHECK-NEXT: br label %merge
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %merge
 
 untaken:
@@ -23,7 +23,7 @@ untaken:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: %obj.relocated1 = call coldcc i64 addrspace(1)*
 ; CHECK-NEXT: br label %merge
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %merge
 
 merge:
@@ -40,7 +40,7 @@ entry:
 ; CHECK-LABEL: entry:
 ; CHECK-NEXT:  gc.statepoint
 ; CHECK-NEXT:  br
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br i1 %cmp, label %taken, label %untaken
 
 taken:
@@ -51,7 +51,7 @@ taken:
 ; CHECK-NEXT:  ret i64 addrspace(1)* %obj.relocated
 
   %obj = load i64 addrspace(1)*, i64 addrspace(1)** %loc
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
 
 untaken:
@@ -72,16 +72,16 @@ taken:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: %obj.relocated = call coldcc i64 addrspace(1)*
 ; CHECK-NEXT: br label %merge
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   %obj = load i64 addrspace(1)*, i64 addrspace(1)** %loc
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %merge
 
 untaken:
 ; CHECK-LABEL: taken:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: br label %merge
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %merge
 
 merge:
@@ -106,9 +106,9 @@ entry:
 ; CHECK-NEXT:  ret i64 addrspace(1)* %derived.relocated1
 ; 
   %derived = getelementptr i64, i64 addrspace(1)* %obj, i64 8
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
 
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %derived
 }
 
@@ -127,7 +127,7 @@ taken:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: %obj.relocated = call coldcc i64 addrspace(1)*
 ; CHECK-NEXT: br label %merge
-  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
   br label %merge
 
 untaken:
@@ -142,13 +142,13 @@ merge:
 ; CHECK-NEXT: @consume
 ; CHECK-NEXT: br label %final
   %obj2a = phi i64 addrspace(1)* [ %obj, %taken ], [null, %untaken]
-  call void (...)* @consume(i64 addrspace(1)* %obj2a)
+  call void (...) @consume(i64 addrspace(1)* %obj2a)
   br label %final
 final:
 ; CHECK-LABEL: final:
 ; CHECK-NEXT: @consume
 ; CHECK-NEXT: ret i64 addrspace(1)* %.0
-  call void (...)* @consume(i64 addrspace(1)* %obj2a)
+  call void (...) @consume(i64 addrspace(1)* %obj2a)
   ret i64 addrspace(1)* %obj
 }
 

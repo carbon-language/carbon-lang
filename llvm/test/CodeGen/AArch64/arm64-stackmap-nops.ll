@@ -8,7 +8,7 @@ entry:
 ; CHECK:      nop
 ; CHECK-NEXT: nop
 ; CHECK-NOT:  nop
-  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64  0, i32  16)
+  tail call void (i64, i32, ...) @llvm.experimental.stackmap(i64  0, i32  16)
   ret void
 }
 

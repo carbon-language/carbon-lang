@@ -23,7 +23,7 @@ for.body:                                         ; preds = %if.end40, %entry
 
 if.then:                                          ; preds = %for.body
   %conv18 = sext i8 %tmp6 to i32                  ; <i32> [#uses=1]
-  %call = tail call i32 (...)* @invalid(i32 0, i32 0, i32 %conv18) nounwind ; <i32> [#uses=0]
+  %call = tail call i32 (...) @invalid(i32 0, i32 0, i32 %conv18) nounwind ; <i32> [#uses=0]
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %for.body
@@ -34,7 +34,7 @@ if.end:                                           ; preds = %if.then, %for.body
 
 if.then36:                                        ; preds = %if.end
   %conv38 = sext i8 %tmp24 to i32                 ; <i32> [#uses=1]
-  %call39 = tail call i32 (...)* @invalid(i32 0, i32 0, i32 %conv38) nounwind ; <i32> [#uses=0]
+  %call39 = tail call i32 (...) @invalid(i32 0, i32 0, i32 %conv38) nounwind ; <i32> [#uses=0]
   br label %if.end40
 
 if.end40:                                         ; preds = %if.then36, %if.end

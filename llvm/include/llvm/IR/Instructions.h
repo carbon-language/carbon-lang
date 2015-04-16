@@ -1337,6 +1337,10 @@ public:
 
   ~CallInst() override;
 
+  Type *getFunctionType() const {
+    return cast<PointerType>(getCalledValue()->getType())->getElementType();
+  }
+
   // Note that 'musttail' implies 'tail'.
   enum TailCallKind { TCK_None = 0, TCK_Tail = 1, TCK_MustTail = 2 };
   TailCallKind getTailCallKind() const {

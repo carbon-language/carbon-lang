@@ -73,10 +73,10 @@ bb609.i.i:		; preds = %cond_next602.i.i
 	br label %bb620.i.i
 bb620.i.i:		; preds = %bb620.i.i, %bb609.i.i
 	%indvar166.i465.i = phi i32 [ %indvar.next167.i.i, %bb620.i.i ], [ 0, %bb609.i.i ]		; <i32> [#uses=1]
-	%tmp640.i.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
+	%tmp640.i.i = call i32 (%struct.FILE*, i8*, ...) @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
 	%tmp648.i.i = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp650.i468.i = icmp sgt i32 0, %tmp648.i.i		; <i1> [#uses=1]
-	%tmp624.i469.i = call i32 (%struct.FILE*, i8*, ...)* @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
+	%tmp624.i469.i = call i32 (%struct.FILE*, i8*, ...) @fscanf( %struct.FILE* %tmp61, i8* getelementptr ([5 x i8], [5 x i8]* @.str584, i32 0, i32 0), [1024 x i8]* null )		; <i32> [#uses=0]
 	%indvar.next167.i.i = add i32 %indvar166.i465.i, 1		; <i32> [#uses=1]
 	br i1 %tmp650.i468.i, label %bb653.i.i.loopexit, label %bb620.i.i
 bb653.i.i.loopexit:		; preds = %bb620.i.i

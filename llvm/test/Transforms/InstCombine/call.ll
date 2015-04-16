@@ -61,7 +61,7 @@ define void @test3a(i8, ...) {unreachable }
 define void @test3(i8 %A, i8 %B) {
 ; CHECK-LABEL: @test3(
 ; CHECK: %1 = zext i8 %B to i32
-; CHECK: call void (i8, ...)* @test3a(i8 %A, i32 %1)
+; CHECK: call void (i8, ...) @test3a(i8 %A, i32 %1)
 ; CHECK: ret void
   call void bitcast (void (i8, ...)* @test3a to void (i8, i8)*)( i8 %A, i8 %B)
   ret void

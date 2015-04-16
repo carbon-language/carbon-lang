@@ -9,7 +9,7 @@ define void @f1() {
 	%tmp7 = load i32, i32* %tmp1
 	%tmp14 = lshr i32 %tmp7, 1
 	%tmp1415 = and i32 %tmp14, 1
-	call void (i32, ...)* @printf( i32 undef, i32 0, i32 %tmp1415 )
+	call void (i32, ...) @printf( i32 undef, i32 0, i32 %tmp1415 )
 	ret void
 }
 

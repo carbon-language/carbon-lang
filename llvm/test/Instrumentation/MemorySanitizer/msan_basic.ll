@@ -75,7 +75,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @foo() nounwind
+  tail call void (...) @foo() nounwind
   br label %if.end
 
 if.end:                                           ; preds = %entry, %if.then
@@ -841,7 +841,7 @@ entry:
   %agg.tmp.sroa.2.0.copyload = load i64, i64* %agg.tmp.sroa.2.0..sroa_cast, align 4
   %1 = bitcast %struct.StructByVal* %agg.tmp2 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %0, i64 16, i32 4, i1 false)
-  call void (i32, ...)* @VAArgStructFn(i32 undef, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, %struct.StructByVal* byval align 8 %agg.tmp2)
+  call void (i32, ...) @VAArgStructFn(i32 undef, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, i64 %agg.tmp.sroa.0.0.copyload, i64 %agg.tmp.sroa.2.0.copyload, %struct.StructByVal* byval align 8 %agg.tmp2)
   ret void
 }
 
@@ -862,7 +862,7 @@ entry:
 ; CHECK: bitcast { i32, i32, i32, i32 }* {{.*}}@__msan_va_arg_tls {{.*}}, i64 176
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
 ; CHECK: store i64 16, i64* @__msan_va_arg_overflow_size_tls
-; CHECK: call void (i32, ...)* @VAArgStructFn
+; CHECK: call void (i32, ...) @VAArgStructFn
 ; CHECK: ret void
 
 declare i32 @InnerTailCall(i32 %a)

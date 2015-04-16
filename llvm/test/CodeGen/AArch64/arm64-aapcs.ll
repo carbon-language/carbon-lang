@@ -78,7 +78,7 @@ declare void @variadic(i32 %a, ...)
   ; Under AAPCS variadic functions have the same calling convention as
   ; others. The extra arguments should go in registers rather than on the stack.
 define void @test_variadic() {
-  call void(i32, ...)* @variadic(i32 0, i64 1, double 2.0)
+  call void(i32, ...) @variadic(i32 0, i64 1, double 2.0)
 ; CHECK: fmov d0, #2.0
 ; CHECK: orr w1, wzr, #0x1
 ; CHECK: bl variadic

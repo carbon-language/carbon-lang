@@ -23,13 +23,13 @@ declare void @test0_helper(i8*, i8**)
 ; CHECK-NEXT:   @objc_retain(i8* %y)
 ; CHECK-NEXT:   call void @test0_helper
 ; CHECK-NEXT:   [[VAL1:%.*]] = load i8*, i8** %temp0
-; CHECK-NEXT:   call void (...)* @clang.arc.use(i8* %y)
+; CHECK-NEXT:   call void (...) @clang.arc.use(i8* %y)
 ; CHECK-NEXT:   @objc_retain(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_release(i8* %y)
 ; CHECK-NEXT:   store i8* [[VAL1]], i8** %temp1
 ; CHECK-NEXT:   call void @test0_helper
 ; CHECK-NEXT:   [[VAL2:%.*]] = load i8*, i8** %temp1
-; CHECK-NEXT:   call void (...)* @clang.arc.use(i8* [[VAL1]])
+; CHECK-NEXT:   call void (...) @clang.arc.use(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_retain(i8* [[VAL2]])
 ; CHECK-NEXT:   @objc_release(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_autorelease(i8* %x)
@@ -49,13 +49,13 @@ entry:
   call void @test0_helper(i8* %x, i8** %temp0)
   %val1 = load i8*, i8** %temp0
   %2 = call i8* @objc_retain(i8* %val1) nounwind
-  call void (...)* @clang.arc.use(i8* %y) nounwind
+  call void (...) @clang.arc.use(i8* %y) nounwind
   call void @objc_release(i8* %y) nounwind
   store i8* %val1, i8** %temp1
   call void @test0_helper(i8* %x, i8** %temp1)
   %val2 = load i8*, i8** %temp1
   %3 = call i8* @objc_retain(i8* %val2) nounwind
-  call void (...)* @clang.arc.use(i8* %val1) nounwind
+  call void (...) @clang.arc.use(i8* %val1) nounwind
   call void @objc_release(i8* %val1) nounwind
   %4 = call i8* @objc_retain(i8* %x) nounwind
   %5 = call i8* @objc_autorelease(i8* %x) nounwind
@@ -71,13 +71,13 @@ entry:
 ; CHECK-NEXT:   @objc_retain(i8* %y)
 ; CHECK-NEXT:   call void @test0_helper
 ; CHECK-NEXT:   [[VAL1:%.*]] = load i8*, i8** %temp0
-; CHECK-NEXT:   call void (...)* @clang.arc.use(i8* %y)
+; CHECK-NEXT:   call void (...) @clang.arc.use(i8* %y)
 ; CHECK-NEXT:   @objc_retain(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_release(i8* %y)
 ; CHECK-NEXT:   store i8* [[VAL1]], i8** %temp1
 ; CHECK-NEXT:   call void @test0_helper
 ; CHECK-NEXT:   [[VAL2:%.*]] = load i8*, i8** %temp1
-; CHECK-NEXT:   call void (...)* @clang.arc.use(i8* [[VAL1]])
+; CHECK-NEXT:   call void (...) @clang.arc.use(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_retain(i8* [[VAL2]])
 ; CHECK-NEXT:   @objc_release(i8* [[VAL1]])
 ; CHECK-NEXT:   @objc_autorelease(i8* %x)
@@ -95,13 +95,13 @@ entry:
   call void @test0_helper(i8* %x, i8** %temp0)
   %val1 = load i8*, i8** %temp0
   %2 = call i8* @objc_retain(i8* %val1) nounwind
-  call void (...)* @clang.arc.use(i8* %y) nounwind
+  call void (...) @clang.arc.use(i8* %y) nounwind
   call void @objc_release(i8* %y) nounwind, !clang.imprecise_release !0
   store i8* %val1, i8** %temp1
   call void @test0_helper(i8* %x, i8** %temp1)
   %val2 = load i8*, i8** %temp1
   %3 = call i8* @objc_retain(i8* %val2) nounwind
-  call void (...)* @clang.arc.use(i8* %val1) nounwind
+  call void (...) @clang.arc.use(i8* %val1) nounwind
   call void @objc_release(i8* %val1) nounwind, !clang.imprecise_release !0
   %4 = call i8* @objc_retain(i8* %x) nounwind
   %5 = call i8* @objc_autorelease(i8* %x) nounwind

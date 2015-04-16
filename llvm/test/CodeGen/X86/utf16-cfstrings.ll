@@ -21,7 +21,7 @@ define i32 @main() uwtable ssp {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
-  call void (%0*, ...)* @NSLog(%0* bitcast (%struct.NSConstantString* @_unnamed_cfstring_ to %0*))
+  call void (%0*, ...) @NSLog(%0* bitcast (%struct.NSConstantString* @_unnamed_cfstring_ to %0*))
   ret i32 0
 }
 

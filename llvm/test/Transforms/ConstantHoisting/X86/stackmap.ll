@@ -7,10 +7,10 @@ target triple = "x86_64-apple-macosx10.9.0"
 define i128 @test1(i128 %a) {
 ; CHECK-LABEL:  @test1
 ; CHECK:        %const = bitcast i128 134646182756734033220 to i128
-; CHECK:        tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 1, i32 24, i128 %const)
+; CHECK:        tail call void (i64, i32, ...) @llvm.experimental.stackmap(i64 1, i32 24, i128 %const)
 entry:
   %0 = add i128 %a, 134646182756734033220
-  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 1, i32 24, i128 134646182756734033220)
+  tail call void (i64, i32, ...) @llvm.experimental.stackmap(i64 1, i32 24, i128 134646182756734033220)
   ret i128 %0
 }
 

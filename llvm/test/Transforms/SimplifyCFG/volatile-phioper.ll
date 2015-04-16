@@ -17,12 +17,12 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define void @test(i8** nocapture %PeiServices) #0 {
 entry:
-  %call = tail call i32 (...)* @Trace() #2
+  %call = tail call i32 (...) @Trace() #2
   %tobool = icmp eq i32 %call, 0
   br i1 %tobool, label %while.body, label %if.then
 
 if.then:                                          ; preds = %entry
-  %call1 = tail call i32 (...)* @Trace() #2
+  %call1 = tail call i32 (...) @Trace() #2
   br label %while.body
 
 while.body:                                       ; preds = %entry, %if.then, %while.body

@@ -35,7 +35,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:
-  %call = tail call i32 (...)* @bar()
+  %call = tail call i32 (...) @bar()
   br label %if.end
 
 if.end:

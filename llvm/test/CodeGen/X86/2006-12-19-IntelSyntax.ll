@@ -21,55 +21,55 @@ entry:
 	]
 
 bb:		; preds = %entry
-	call void (...)* @foo1( )
+	call void (...) @foo1( )
 	ret void
 
 bb1:		; preds = %entry
-	call void (...)* @foo2( )
+	call void (...) @foo2( )
 	ret void
 
 bb2:		; preds = %entry
-	call void (...)* @foo6( )
+	call void (...) @foo6( )
 	ret void
 
 bb3:		; preds = %entry
-	call void (...)* @foo3( )
+	call void (...) @foo3( )
 	ret void
 
 bb4:		; preds = %entry
-	call void (...)* @foo4( )
+	call void (...) @foo4( )
 	ret void
 
 bb5:		; preds = %entry
-	call void (...)* @foo5( )
+	call void (...) @foo5( )
 	ret void
 
 bb6:		; preds = %entry
-	call void (...)* @foo1( )
+	call void (...) @foo1( )
 	ret void
 
 bb7:		; preds = %entry
-	call void (...)* @foo2( )
+	call void (...) @foo2( )
 	ret void
 
 bb8:		; preds = %entry
-	call void (...)* @foo6( )
+	call void (...) @foo6( )
 	ret void
 
 bb9:		; preds = %entry
-	call void (...)* @foo3( )
+	call void (...) @foo3( )
 	ret void
 
 bb10:		; preds = %entry
-	call void (...)* @foo4( )
+	call void (...) @foo4( )
 	ret void
 
 bb11:		; preds = %entry
-	call void (...)* @foo5( )
+	call void (...) @foo5( )
 	ret void
 
 bb12:		; preds = %entry
-	call void (...)* @foo6( )
+	call void (...) @foo6( )
 	ret void
 }
 

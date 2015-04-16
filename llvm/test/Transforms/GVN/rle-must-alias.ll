@@ -11,19 +11,19 @@ target triple = "i386-apple-darwin7"
 
 define i32 @test(i32 %i) nounwind {
 entry:
-	%0 = tail call i32 (...)* @foo() nounwind		; <i32> [#uses=1]
+	%0 = tail call i32 (...) @foo() nounwind		; <i32> [#uses=1]
 	%1 = icmp eq i32 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb1, label %bb
 
 bb:		; preds = %entry
-	%2 = tail call i32 (...)* @bar() nounwind		; <i32> [#uses=0]
+	%2 = tail call i32 (...) @bar() nounwind		; <i32> [#uses=0]
 	%3 = getelementptr [100 x i32], [100 x i32]* @H, i32 0, i32 %i		; <i32*> [#uses=1]
 	%4 = load i32, i32* %3, align 4		; <i32> [#uses=1]
 	store i32 %4, i32* @G, align 4
 	br label %bb3
 
 bb1:		; preds = %entry
-	%5 = tail call i32 (...)* @baz() nounwind		; <i32> [#uses=0]
+	%5 = tail call i32 (...) @baz() nounwind		; <i32> [#uses=0]
 	%6 = getelementptr [100 x i32], [100 x i32]* @H, i32 0, i32 %i		; <i32*> [#uses=1]
 	%7 = load i32, i32* %6, align 4		; <i32> [#uses=2]
 	store i32 %7, i32* @G, align 4

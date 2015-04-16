@@ -18,7 +18,7 @@ define i32 @foo(i32 %k, i32 %c1, i32 %c2) {
   br i1 %5, label %8, label %6
 
 ; <label>:6                                       ; preds = %3
-  %7 = tail call i32 (...)* @bar() nounwind
+  %7 = tail call i32 (...) @bar() nounwind
   br label %8
 
 ; <label>:8                                       ; preds = %3, %0, %6
@@ -47,7 +47,7 @@ bb3:                                              ; preds = %bb
   br i1 %tmp6, label %bb9, label %bb7
 
 bb7:                                              ; preds = %bb3
-  %tmp8 = tail call i32 (...)* @bar() #1
+  %tmp8 = tail call i32 (...) @bar() #1
   br label %bb9
 
 bb9:                                              ; preds = %bb7, %bb3, %bb

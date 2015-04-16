@@ -37,7 +37,7 @@ if.then:                                          ; preds = %entry
   ret i32 0
 
 if.end:                                           ; preds = %entry
-  %call = tail call i32 (...)* @_Unwind_ForcedUnwind_Phase2() nounwind
+  %call = tail call i32 (...) @_Unwind_ForcedUnwind_Phase2() nounwind
   store i32 %call, i32* @a, align 4
   %tobool1 = icmp eq i32 %call, 0
   br i1 %tobool1, label %cond.end, label %cond.true

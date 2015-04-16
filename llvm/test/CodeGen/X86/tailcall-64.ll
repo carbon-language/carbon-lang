@@ -215,7 +215,7 @@ entry:
   %idxprom = sext i32 %n to i64
   %arrayidx = getelementptr inbounds [0 x i32 (i8*, ...)*], [0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 %idxprom
   %0 = load i32 (i8*, ...)*, i32 (i8*, ...)** %arrayidx, align 8
-  %call = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
+  %call = tail call i32 (i8*, ...) %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
   ret i32 %call
 }
 

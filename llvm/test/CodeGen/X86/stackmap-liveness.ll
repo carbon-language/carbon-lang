@@ -50,7 +50,7 @@ entry:
 ; PATCH-NEXT:   .byte 16
 ; Align
 ; PATCH-NEXT:   .align  3
-  call anyregcc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 1, i32 12, i8* null, i32 0)
+  call anyregcc void (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.void(i64 1, i32 12, i8* null, i32 0)
   %a2 = call i64 asm sideeffect "", "={r8}"() nounwind
   %a3 = call i8 asm sideeffect "", "={ah}"() nounwind
   %a4 = call <4 x double> asm sideeffect "", "={ymm0}"() nounwind
@@ -97,7 +97,7 @@ entry:
 ; PATCH-NEXT:   .byte 16
 ; Align
 ; PATCH-NEXT:   .align  3
-  call anyregcc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 2, i32 12, i8* null, i32 0)
+  call anyregcc void (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.void(i64 2, i32 12, i8* null, i32 0)
   call void asm sideeffect "", "{r8},{ah},{ymm0},{ymm1}"(i64 %a2, i8 %a3, <4 x double> %a4, <4 x double> %a5) nounwind
 
 ; StackMap 3 (no liveness information available)
@@ -129,7 +129,7 @@ entry:
 ; PATCH-NEXT:   .byte 16
 ; Align
 ; PATCH-NEXT:   .align  3
-  call anyregcc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 3, i32 12, i8* null, i32 0)
+  call anyregcc void (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.void(i64 3, i32 12, i8* null, i32 0)
   call void asm sideeffect "", "{xmm2}"(<2 x double> %a1) nounwind
   ret void
 }
@@ -166,8 +166,8 @@ entry:
 ; PATCH-NEXT:   .byte 16
 ; Align
 ; PATCH-NEXT:   .align  3
-  call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 4, i32 5)
-  call anyregcc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 5, i32 0, i8* null, i32 0)
+  call void (i64, i32, ...) @llvm.experimental.stackmap(i64 4, i32 5)
+  call anyregcc void (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.void(i64 5, i32 0, i8* null, i32 0)
   call void asm sideeffect "", "{xmm2}"(<2 x double> %a1) nounwind
   ret void
 }

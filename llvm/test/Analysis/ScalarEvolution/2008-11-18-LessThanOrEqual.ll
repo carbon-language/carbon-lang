@@ -13,7 +13,7 @@ bb.nph:		; preds = %entry
 bb:		; preds = %bb.nph, %bb1
 	%indvar = phi i32 [ 0, %bb.nph ], [ %indvar.next, %bb1 ]		; <i32> [#uses=2]
 	%argc_addr.04 = add i32 %indvar, %argc		; <i32> [#uses=1]
-	tail call void (...)* @Test() nounwind
+	tail call void (...) @Test() nounwind
 	%1 = add i32 %argc_addr.04, 1		; <i32> [#uses=1]
 	br label %bb1
 

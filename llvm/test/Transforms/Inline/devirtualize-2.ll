@@ -2,7 +2,7 @@
 ; PR4834
 
 define i32 @test1() {
-  %funcall1_ = call fastcc i32 ()* ()* @f1()
+  %funcall1_ = call fastcc i32 ()* () @f1()
   %executecommandptr1_ = call i32 %funcall1_()
   ret i32 %executecommandptr1_
 }

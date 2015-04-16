@@ -4,17 +4,17 @@ define i32 @foo(i32 %i) nounwind ssp {
   call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !6, metadata !MDExpression()), !dbg !7
   call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !9, metadata !MDExpression()), !dbg !11
   %1 = icmp ne i32 %i, 0, !dbg !12
-;CHECK: call i32 (...)* @bar()
+;CHECK: call i32 (...) @bar()
 ;CHECK-NEXT: llvm.dbg.value
   br i1 %1, label %2, label %4, !dbg !12
 
 ; <label>:2                                       ; preds = %0
-  %3 = call i32 (...)* @bar(), !dbg !13
+  %3 = call i32 (...) @bar(), !dbg !13
   call void @llvm.dbg.value(metadata i32 %3, i64 0, metadata !9, metadata !MDExpression()), !dbg !13
   br label %6, !dbg !15
 
 ; <label>:4                                       ; preds = %0
-  %5 = call i32 (...)* @bar(), !dbg !16
+  %5 = call i32 (...) @bar(), !dbg !16
   call void @llvm.dbg.value(metadata i32 %5, i64 0, metadata !9, metadata !MDExpression()), !dbg !16
   br label %6, !dbg !18
 

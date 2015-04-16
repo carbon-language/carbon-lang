@@ -12,7 +12,7 @@ entry:
   ]
 
 if.then:
-  %call = tail call i32 (...)* @bar() nounwind
+  %call = tail call i32 (...) @bar() nounwind
   ret void
 
 if.end:

@@ -9,7 +9,7 @@ entry:
         br i1 %tmp.upgrd.1, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:              ; preds = %entry
-        %tmp.upgrd.2 = tail call i32 (...)* @bar( )             ; <i32> [#uses=0]
+        %tmp.upgrd.2 = tail call i32 (...) @bar( )             ; <i32> [#uses=0]
         ret void
 
 UnifiedReturnBlock:             ; preds = %entry

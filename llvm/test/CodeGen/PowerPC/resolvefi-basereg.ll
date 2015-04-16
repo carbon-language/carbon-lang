@@ -340,7 +340,7 @@ if.end:                                           ; preds = %if.then, %entry
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %65, i8* bitcast (%struct.S1998* getelementptr inbounds ([5 x %struct.S1998], [5 x %struct.S1998]* @a1998, i32 0, i64 2) to i8*), i64 5168, i32 16, i1 false)
   %66 = bitcast %struct.S1998* %agg.tmp115 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %66, i8* bitcast (%struct.S1998* getelementptr inbounds ([5 x %struct.S1998], [5 x %struct.S1998]* @a1998, i32 0, i64 2) to i8*), i64 5168, i32 16, i1 false)
-  call void (i32, ...)* @check1998va(i32 signext 1, double 1.000000e+00, %struct.S1998* byval align 16 %agg.tmp113, i64 2, %struct.S1998* byval align 16 %agg.tmp114, %struct.S1998* byval align 16 %agg.tmp115)
+  call void (i32, ...) @check1998va(i32 signext 1, double 1.000000e+00, %struct.S1998* byval align 16 %agg.tmp113, i64 2, %struct.S1998* byval align 16 %agg.tmp114, %struct.S1998* byval align 16 %agg.tmp115)
   %67 = bitcast %struct.S1998* %agg.tmp116 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %67, i8* bitcast (%struct.S1998* @s1998 to i8*), i64 5168, i32 16, i1 false)
   %68 = bitcast %struct.S1998* %agg.tmp117 to i8*
@@ -349,7 +349,7 @@ if.end:                                           ; preds = %if.then, %entry
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %69, i8* bitcast (%struct.S1998* getelementptr inbounds ([5 x %struct.S1998], [5 x %struct.S1998]* @a1998, i32 0, i64 2) to i8*), i64 5168, i32 16, i1 false)
   %70 = bitcast %struct.S1998* %agg.tmp119 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %70, i8* bitcast (%struct.S1998* @s1998 to i8*), i64 5168, i32 16, i1 false)
-  call void (i32, ...)* @check1998va(i32 signext 2, %struct.S1998* byval align 16 %agg.tmp116, %struct.S1998* byval align 16 %agg.tmp117, ppc_fp128 0xM40000000000000000000000000000000, %struct.S1998* byval align 16 %agg.tmp118, %struct.S1998* byval align 16 %agg.tmp119)
+  call void (i32, ...) @check1998va(i32 signext 2, %struct.S1998* byval align 16 %agg.tmp116, %struct.S1998* byval align 16 %agg.tmp117, ppc_fp128 0xM40000000000000000000000000000000, %struct.S1998* byval align 16 %agg.tmp118, %struct.S1998* byval align 16 %agg.tmp119)
   ret void
 }
 

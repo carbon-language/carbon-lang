@@ -70,12 +70,12 @@ entry:
   store float %call, float* @x, align 4
   %1 = load float, float* @x, align 4
   %conv = fpext float %1 to double
-  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double %conv)
+  %call1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double %conv)
   %2 = load double ()*, double ()** @ptrdv, align 4
   %call2 = call double %2()
   store double %call2, double* @xd, align 8
   %3 = load double, double* @xd, align 8
-  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double %3)
+  %call3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), double %3)
   %4 = load { float, float } ()*, { float, float } ()** @ptrscv, align 4
   %call4 = call { float, float } %4()
   %5 = extractvalue { float, float } %call4, 0
@@ -90,7 +90,7 @@ entry:
   %xy.imag8 = load float, float* getelementptr inbounds ({ float, float }, { float, float }* @xy, i32 0, i32 1)
   %conv9 = fpext float %xy.real7 to double
   %conv10 = fpext float %xy.imag8 to double
-  %call11 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str1, i32 0, i32 0), double %conv5, double %conv10)
+  %call11 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str1, i32 0, i32 0), double %conv5, double %conv10)
   %7 = load { double, double } ()*, { double, double } ()** @ptrdcv, align 4
   %call12 = call { double, double } %7()
   %8 = extractvalue { double, double } %call12, 0
@@ -101,7 +101,7 @@ entry:
   %xyd.imag = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @xyd, i32 0, i32 1)
   %xyd.real13 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @xyd, i32 0, i32 0)
   %xyd.imag14 = load double, double* getelementptr inbounds ({ double, double }, { double, double }* @xyd, i32 0, i32 1)
-  %call15 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str1, i32 0, i32 0), double %xyd.real, double %xyd.imag14)
+  %call15 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @.str1, i32 0, i32 0), double %xyd.real, double %xyd.imag14)
   ret i32 0
 }
 

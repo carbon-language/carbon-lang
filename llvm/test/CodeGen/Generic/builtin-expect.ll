@@ -14,7 +14,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 
@@ -43,7 +43,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 
@@ -71,7 +71,7 @@ entry:
   br i1 %tobool1, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 
@@ -100,7 +100,7 @@ entry:
   br i1 %tobool2, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 
@@ -127,7 +127,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 
@@ -206,7 +206,7 @@ entry:
   br i1 %tobool, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %call = call i32 (...)* @f()
+  %call = call i32 (...) @f()
   store i32 %call, i32* %retval
   br label %return
 

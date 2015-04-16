@@ -122,7 +122,7 @@ entry:
 ; CHECK-NEXT: ldw r0, sp[2]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
-  call void (...)* @foo()
+  call void (...) @foo()
   call void @llvm.eh.return.i32(i32 %offset, i8* %handler)
   unreachable
 }
@@ -144,7 +144,7 @@ entry:
 ; CHECK-NEXT: ldw r0, sp[2]
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
-  call void (...)* @foo()
+  call void (...) @foo()
   %0 = load i32, i32* @offset
   call void @llvm.eh.return.i32(i32 %0, i8* @handler)
   unreachable
@@ -244,7 +244,7 @@ define void @Unwind0() {
 ; CHECK: ldw r4, sp[9]
 ; CHECK: retsp 10
 define void @Unwind1() {
-  call void (...)* @foo()
+  call void (...) @foo()
   call void @llvm.eh.unwind.init()
   ret void
 }

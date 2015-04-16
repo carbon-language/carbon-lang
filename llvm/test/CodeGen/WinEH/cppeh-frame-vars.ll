@@ -58,7 +58,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[TMP:\%.+]] = bitcast %struct.SomeData* [[DATA_PTR]] to i8*
 ; CHECK:   call void @llvm.memset(i8* [[TMP]], i8 0, i64 8, i32 4, i1 false)
 ; CHECK:   store i32 0, i32* [[I_PTR]], align 4
-; CHECK:   call void (...)* @llvm.frameescape(i32* [[E_PTR]], i32* [[NUMEXCEPTIONS_PTR]], [10 x i32]* [[EXCEPTIONVAL_PTR]], i32* [[I_PTR]], %struct.SomeData* [[DATA_PTR]])
+; CHECK:   call void (...) @llvm.frameescape(i32* [[E_PTR]], i32* [[NUMEXCEPTIONS_PTR]], [10 x i32]* [[EXCEPTIONVAL_PTR]], i32* [[I_PTR]], %struct.SomeData* [[DATA_PTR]])
 ; CHECK:   br label %for.cond
 
 ; Function Attrs: uwtable
@@ -101,7 +101,7 @@ invoke.cont:                                      ; preds = %for.body
 ; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %for.body
 ; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
-; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch")
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %try.cont]
 
 lpad:                                             ; preds = %for.body

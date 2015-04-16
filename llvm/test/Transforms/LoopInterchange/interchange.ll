@@ -376,7 +376,7 @@ for.body.lr.ph:
 
 for.body:
   %indvars.iv24 = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next25, %for.inc10 ]
-  tail call void (...)* @foo()
+  tail call void (...) @foo()
   br label %for.body3
 
 for.body3:

@@ -14,7 +14,7 @@ entry:
   br label %lbl_818
 
 lbl_818:                                          ; preds = %for.end, %entry
-  call void (...)* @func_27()
+  call void (...) @func_27()
   store i32 0, i32* @g_814, align 4
   br label %for.cond
 

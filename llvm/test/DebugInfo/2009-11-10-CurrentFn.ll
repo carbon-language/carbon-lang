@@ -2,7 +2,7 @@
 
 define void @bar(i32 %i) nounwind uwtable ssp {
 entry:
-  tail call void (...)* @foo() nounwind, !dbg !14
+  tail call void (...) @foo() nounwind, !dbg !14
   ret void, !dbg !16
 }
 

@@ -265,7 +265,7 @@ define void @test10() optsize {
   store void (i32, i32, i32, i32)* @good, void (i32, i32, i32, i32)** %stack_fptr
   %good_ptr = load volatile void (i32, i32, i32, i32)*, void (i32, i32, i32, i32)** %stack_fptr
   call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di}"()
-  call void (i32, i32, i32, i32)* %good_ptr(i32 1, i32 2, i32 3, i32 4)
+  call void (i32, i32, i32, i32) %good_ptr(i32 1, i32 2, i32 3, i32 4)
   ret void
 }
 

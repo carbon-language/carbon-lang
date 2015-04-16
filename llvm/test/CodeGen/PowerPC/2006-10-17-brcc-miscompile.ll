@@ -10,7 +10,7 @@ entry:
         %tmp = icmp eq i32 %tmp2, 0             ; <i1> [#uses=1]
         br i1 %tmp, label %UnifiedReturnBlock, label %cond_true
 cond_true:              ; preds = %entry
-        tail call i32 (...)* @bar( )            ; <i32>:0 [#uses=0]
+        tail call i32 (...) @bar( )            ; <i32>:0 [#uses=0]
         ret void
 UnifiedReturnBlock:             ; preds = %entry
         ret void

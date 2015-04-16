@@ -15,7 +15,7 @@ define internal i32 @g() {
 ; CHECK-NEXT: ret i32 8
 
 define internal void @outer_mod() {
-  %1 = call i32 ()* ()* @f()                      ; <i32 ()*> [#uses=1]
+  %1 = call i32 ()* () @f()                      ; <i32 ()*> [#uses=1]
   %2 = call i32 %1()                              ; <i32> [#uses=0]
   ret void
 }

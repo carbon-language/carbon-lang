@@ -21,11 +21,11 @@ if.then:                                          ; preds = %entry
   br i1 %cmp2, label %if.then3, label %return
 
 if.then3:                                         ; preds = %if.then
-  tail call void (...)* @bar() #1
+  tail call void (...) @bar() #1
   br label %return
 
 if.else:                                          ; preds = %entry
-  tail call void (...)* @car() #1
+  tail call void (...) @car() #1
   br label %return
 
 return:                                           ; preds = %if.else, %if.then, %if.then3
@@ -43,12 +43,12 @@ entry:
 ; CHECK-LABEL: @test2
 ; CHECK: icmp sgt i32 %a, 5
 ; CHECK: tail call void @llvm.assume
-; CHECK: tail call void (...)* @bar()
+; CHECK: tail call void (...) @bar()
 ; CHECK: ret i32 1
 
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @bar() #1
+  tail call void (...) @bar() #1
   br label %return
 
 return:                                           ; preds = %entry, %if.then

@@ -5,8 +5,8 @@ declare i8* @llvm.framerecover(i8*, i8*, i32)
 
 define internal void @f() {
   %a = alloca i8
-  call void (...)* @llvm.frameescape(i8* %a)
-  call void (...)* @llvm.frameescape(i8* %a)
+  call void (...) @llvm.frameescape(i8* %a)
+  call void (...) @llvm.frameescape(i8* %a)
   ret void
 }
 ; CHECK: multiple calls to llvm.frameescape in one function
@@ -16,7 +16,7 @@ entry:
   %a = alloca i8
   br label %not_entry
 not_entry:
-  call void (...)* @llvm.frameescape(i8* %a)
+  call void (...) @llvm.frameescape(i8* %a)
   ret void
 }
 ; CHECK: llvm.frameescape used outside of entry block
@@ -51,14 +51,14 @@ define internal void @k(i32 %n) {
 
 define internal void @l(i8* %b) {
   %a = alloca i8
-  call void (...)* @llvm.frameescape(i8* %a, i8* %b)
+  call void (...) @llvm.frameescape(i8* %a, i8* %b)
   ret void
 }
 ; CHECK: llvm.frameescape only accepts static allocas
 
 define internal void @m() {
   %a = alloca i8
-  call void (...)* @llvm.frameescape(i8* %a)
+  call void (...) @llvm.frameescape(i8* %a)
   ret void
 }
 

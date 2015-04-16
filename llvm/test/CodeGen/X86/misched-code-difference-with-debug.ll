@@ -34,9 +34,9 @@ entry:
   %c = alloca %class.C, align 1
   %0 = load i8, i8* @argc, align 1
   %conv = sext i8 %0 to i32
-  %call = call i32 (%class.C*, i8, i8, i8, ...)* @test_function(%class.C* %c, i8 signext 0, i8 signext %0, i8 signext 0, i32 %conv)
+  %call = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %0, i8 signext 0, i32 %conv)
   %1 = load i8, i8* @argc, align 1
-  %call2 = call i32 (%class.C*, i8, i8, i8, ...)* @test_function(%class.C* %c, i8 signext 0, i8 signext %1, i8 signext 0, i32 %conv)
+  %call2 = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %1, i8 signext 0, i32 %conv)
   ret void
 }
 
@@ -50,10 +50,10 @@ entry:
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !19, metadata !29), !dbg !MDLocation(scope: !13)
   %conv = sext i8 %0 to i32
   tail call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !MDLocation(scope: !13)
-  %call = call i32 (%class.C*, i8, i8, i8, ...)* @test_function(%class.C* %c, i8 signext 0, i8 signext %0, i8 signext 0, i32 %conv)
+  %call = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %0, i8 signext 0, i32 %conv)
   %1 = load i8, i8* @argc, align 1
   call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !MDLocation(scope: !13)
-  %call2 = call i32 (%class.C*, i8, i8, i8, ...)* @test_function(%class.C* %c, i8 signext 0, i8 signext %1, i8 signext 0, i32 %conv)
+  %call2 = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %1, i8 signext 0, i32 %conv)
   ret void
 }
 

@@ -10,7 +10,7 @@ define i32 @main() {
   %fma = tail call double @llvm.fma.f64(double 3.0, double 3.0, double 3.0) nounwind readnone
 
   %ptr1 = getelementptr [4 x i8], [4 x i8]* @msg_double, i32 0, i32 0
-  call i32 (i8*,...)* @printf(i8* %ptr1, double %fma)
+  call i32 (i8*,...) @printf(i8* %ptr1, double %fma)
 
   ret i32 0
 }

@@ -14,7 +14,7 @@ bb:		; preds = %bb1
 bb1:		; preds = %bb, %entry
 	%indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=3]
 	%i.0 = bitcast i32 %indvar to i32		; <i32> [#uses=2]
-	%tmp = tail call i32 (...)* @bar( )		; <i32> [#uses=1]
+	%tmp = tail call i32 (...) @bar( )		; <i32> [#uses=1]
 	%tmp2 = add i32 %i.0, %tmp		; <i32> [#uses=1]
 	%Ptr_addr.0 = sub i32 %Ptr, %tmp2		; <i32> [#uses=0]
 	%tmp12 = icmp eq i32 %i.0, %Ptr		; <i1> [#uses=1]

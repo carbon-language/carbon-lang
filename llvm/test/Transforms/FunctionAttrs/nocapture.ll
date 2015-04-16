@@ -188,7 +188,7 @@ declare void @test6_1(i8* %x6_1, i8* nocapture %y6_1, ...)
 
 ; CHECK: define void @test6_2(i8* %x6_2, i8* nocapture %y6_2, i8* %z6_2)
 define void @test6_2(i8* %x6_2, i8* %y6_2, i8* %z6_2) {
-  call void (i8*, i8*, ...)* @test6_1(i8* %x6_2, i8* %y6_2, i8* %z6_2)
+  call void (i8*, i8*, ...) @test6_1(i8* %x6_2, i8* %y6_2, i8* %z6_2)
   store i32* null, i32** @g
   ret void
 }

@@ -169,7 +169,7 @@ return:                                           ; preds = %if.then, %entry
 ; CHECK-NOT: clang.arc.use
 ; CHECK: }
 define void @test9(i8* %a, i8* %b) {
-  call void (...)* @clang.arc.use(i8* %a, i8* %b) nounwind
+  call void (...) @clang.arc.use(i8* %a, i8* %b) nounwind
   ret void
 }
 

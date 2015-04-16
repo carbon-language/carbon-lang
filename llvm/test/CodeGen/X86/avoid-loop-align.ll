@@ -11,7 +11,7 @@
 
 define i8* @test(i8* %Q, i32* %L) nounwind {
 entry:
-	%tmp = tail call i32 (...)* @foo() nounwind		; <i32> [#uses=2]
+	%tmp = tail call i32 (...) @foo() nounwind		; <i32> [#uses=2]
 	%tmp1 = inttoptr i32 %tmp to i8*		; <i8*> [#uses=1]
 	br label %bb1
 

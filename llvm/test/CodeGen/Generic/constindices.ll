@@ -39,6 +39,6 @@ define i32 @main() {
         %dpi = fpext float %pi to double                ; <double> [#uses=1]
         %dfive = fpext float %five to double            ; <double> [#uses=1]
         %castFmt = getelementptr [44 x i8], [44 x i8]* @fmtArg, i64 0, i64 0               ; <i8*> [#uses=1]
-        call i32 (i8*, ...)* @printf( i8* %castFmt, double %dsqrtTwo, double %dexp, double %dpi, double %dfive )     ; <i32>:1 [#uses=0]
+        call i32 (i8*, ...) @printf( i8* %castFmt, double %dsqrtTwo, double %dexp, double %dpi, double %dfive )     ; <i32>:1 [#uses=0]
         ret i32 0
 }

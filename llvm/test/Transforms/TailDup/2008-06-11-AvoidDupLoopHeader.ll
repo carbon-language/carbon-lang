@@ -11,7 +11,7 @@ bb:		; preds = %entry
 	br label %bb9
 
 bb5:		; preds = %bb9
-	%tmp7 = call i32 (...)* @bar( i32 %x.0 ) nounwind 		; <i32> [#uses=1]
+	%tmp7 = call i32 (...) @bar( i32 %x.0 ) nounwind 		; <i32> [#uses=1]
 	br label %bb9
 
 bb9:		; preds = %bb5, %bb, %entry

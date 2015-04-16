@@ -17,7 +17,7 @@ entry:
   %or = or i32 %cond13, %bf.clear10
   %shl = shl nuw i32 %or, 2
   %add = add i32 0, %shl
-  tail call void (i8*, i32, i32, i8*, ...)* @__sprintf_chk(i8* getelementptr inbounds ([50 x i8], [50 x i8]* @operands, i32 0, i32 0), i32 0, i32 50, i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str86, i32 0, i32 0), i32 undef, i32 undef, i32 %add)
+  tail call void (i8*, i32, i32, i8*, ...) @__sprintf_chk(i8* getelementptr inbounds ([50 x i8], [50 x i8]* @operands, i32 0, i32 0), i32 0, i32 50, i8* getelementptr inbounds ([13 x i8], [13 x i8]* @.str86, i32 0, i32 0), i32 undef, i32 undef, i32 %add)
   ret void
 }
 

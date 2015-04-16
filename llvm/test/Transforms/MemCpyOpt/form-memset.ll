@@ -46,7 +46,7 @@ entry:
 	store i8 %c, i8* %tmp69, align 1
 	%tmp73 = getelementptr [19 x i8], [19 x i8]* %x, i32 0, i32 18		; <i8*> [#uses=1]
 	store i8 %c, i8* %tmp73, align 1
-	%tmp76 = call i32 (...)* @bar( [19 x i8]* %x ) nounwind
+	%tmp76 = call i32 (...) @bar( [19 x i8]* %x ) nounwind
 	ret void
 ; CHECK-LABEL: @test1(
 ; CHECK-NOT: store

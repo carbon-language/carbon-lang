@@ -19,7 +19,7 @@ cond_true109:		; preds = %entry
 
 cond_next164:		; preds = %cond_true109
 	%tmp176 = call signext i16 @GetParamDesc( %struct.XDesc* null, i32 1701999219, i32 1413830740, %struct.XDesc* null ) 
-	call void (i64, i8*, ...)* @r_raise( i64 0, i8* null )
+	call void (i64, i8*, ...) @r_raise( i64 0, i8* null )
 	unreachable
 
 cond_true239:		; preds = %cond_true109

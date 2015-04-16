@@ -18,7 +18,7 @@ define i32 @f2() nounwind optsize {
 ; DARWIN-LABEL: f2:
 ; DARWIN: mov	r3, #128
 entry:
-  %0 = tail call i32 (i32, ...)* @g2(i32 5, double 1.600000e+01, i32 128) nounwind optsize ; <i32> [#uses=1]
+  %0 = tail call i32 (i32, ...) @g2(i32 5, double 1.600000e+01, i32 128) nounwind optsize ; <i32> [#uses=1]
   %not. = icmp ne i32 %0, 128                     ; <i1> [#uses=1]
   %.0 = zext i1 %not. to i32                      ; <i32> [#uses=1]
   ret i32 %.0

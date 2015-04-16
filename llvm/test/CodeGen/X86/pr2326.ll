@@ -17,7 +17,7 @@ entry:
 	%tmp25 = and i1 %toBool23, %toBool24		; <i1> [#uses=1]
 	%tmp2526 = zext i1 %tmp25 to i8		; <i8> [#uses=1]
 	%tmp252627 = zext i8 %tmp2526 to i32		; <i32> [#uses=1]
-	%tmp29 = call i32 (...)* @func_15( i32 %tmp252627, i32 0 ) nounwind 		; <i32> [#uses=0]
+	%tmp29 = call i32 (...) @func_15( i32 %tmp252627, i32 0 ) nounwind 		; <i32> [#uses=0]
 	unreachable
 }
 

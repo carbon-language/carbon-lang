@@ -47,7 +47,7 @@ entry:
   store i8* %bp, i8** %bp_addr
   %0 = load i8*, i8** %in_addr, align 4                ; <i8*> [#uses=1]
   store i8* %0, i8** %out, align 4
-  %1 = call  i32 (...)* @foo() nounwind ; <i32> [#uses=1]
+  %1 = call  i32 (...) @foo() nounwind ; <i32> [#uses=1]
   store i32 %1, i32* %i, align 4
   %2 = load i32, i32* %three_by_three_addr, align 4    ; <i32> [#uses=1]
   %3 = icmp eq i32 %2, 0                          ; <i1> [#uses=1]

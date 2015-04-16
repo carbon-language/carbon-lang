@@ -42,7 +42,7 @@ entry:
 
 for.body.i:
   %indvars.iv37.i = phi i64 [ %indvars.iv.next38.i, %for.body.i ], [ 0, %entry ]
-  %call.i = call i8* (...)* @a() nounwind
+  %call.i = call i8* (...) @a() nounwind
   %arrayidx.i = getelementptr inbounds i8*, i8** %vla.i, i64 %indvars.iv37.i
   store i8* %call.i, i8** %arrayidx.i, align 8
   %indvars.iv.next38.i = add i64 %indvars.iv37.i, 1
@@ -51,6 +51,6 @@ for.body.i:
 
 g.exit:
   call void @llvm.stackrestore(i8* %savedstack) nounwind
-  %call1 = call i8* (...)* @a(i8** %vla) nounwind
+  %call1 = call i8* (...) @a(i8** %vla) nounwind
   ret void
 }

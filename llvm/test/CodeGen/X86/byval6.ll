@@ -6,8 +6,8 @@
 
 define i32 @main() nounwind  {
 entry:
-	tail call void (i32, ...)* @bar( i32 3, %struct.W* byval  @.cpx ) nounwind 
-	tail call void (i32, ...)* @baz( i32 3, %struct.W* byval  @B ) nounwind 
+	tail call void (i32, ...) @bar( i32 3, %struct.W* byval  @.cpx ) nounwind 
+	tail call void (i32, ...) @baz( i32 3, %struct.W* byval  @B ) nounwind 
 	ret i32 undef
 }
 

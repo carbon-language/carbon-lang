@@ -101,12 +101,12 @@ eh.resume:                                        ; preds = %ehcleanup
 ;
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 0, void (i1, i8*)* @"\01?fin$1@0@main@@", i32 0, void (i1, i8*)* @"\01?fin$0@0@main@@")
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void (i1, i8*)* @"\01?fin$1@0@main@@", i32 0, void (i1, i8*)* @"\01?fin$0@0@main@@")
 ; CHECK-NEXT: indirectbr
 ;
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions(i32 0, void (i1, i8*)* @"\01?fin$0@0@main@@")
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void (i1, i8*)* @"\01?fin$0@0@main@@")
 ; CHECK-NEXT: indirectbr
 
 ; There should not be any *new* cleanup helpers, just the existing ones.
@@ -124,7 +124,7 @@ entry:
   %frombool = zext i1 %abnormal_termination to i8
   store i8 %frombool, i8* %abnormal_termination.addr, align 1
   %0 = zext i1 %abnormal_termination to i32
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @str_outer_finally, i32 0, i32 0), i32 %0)
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @str_outer_finally, i32 0, i32 0), i32 %0)
   ret void
 }
 
@@ -138,7 +138,7 @@ entry:
   %frombool = zext i1 %abnormal_termination to i8
   store i8 %frombool, i8* %abnormal_termination.addr, align 1
   %0 = zext i1 %abnormal_termination to i32
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @str_inner_finally, i32 0, i32 0), i32 %0)
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @str_inner_finally, i32 0, i32 0), i32 %0)
   call void @may_crash()
   ret void
 }

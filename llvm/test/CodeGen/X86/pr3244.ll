@@ -10,7 +10,7 @@ entry:
         %1 = load i32, i32* @g_487, align 4          ; <i32> [#uses=1]
         %2 = trunc i16 %0 to i8         ; <i8> [#uses=1]
         %3 = trunc i32 %1 to i8         ; <i8> [#uses=1]
-        %4 = tail call i32 (...)* @func_7(i64 -4455561449541442965, i32 1)
+        %4 = tail call i32 (...) @func_7(i64 -4455561449541442965, i32 1)
 nounwind             ; <i32> [#uses=1]
         %5 = trunc i32 %4 to i8         ; <i8> [#uses=1]
         %6 = mul i8 %3, %2              ; <i8> [#uses=1]

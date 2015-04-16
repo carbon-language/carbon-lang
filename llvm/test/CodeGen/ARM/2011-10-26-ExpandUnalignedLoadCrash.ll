@@ -4,7 +4,7 @@ target triple = "armv6-none-linux-gnueabi"
 
 define void @sample_test(i8* %.T0348, i16* nocapture %sourceA, i16* nocapture %destValues) {
 L.entry:
-  %0 = call i32 (...)* @get_index(i8* %.T0348, i32 0)
+  %0 = call i32 (...) @get_index(i8* %.T0348, i32 0)
   %1 = bitcast i16* %destValues to i8*
   %2 = mul i32 %0, 6
   %3 = getelementptr i8, i8* %1, i32 %2

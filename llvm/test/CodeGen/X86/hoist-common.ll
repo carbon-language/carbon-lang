@@ -26,7 +26,7 @@ entry:
 
 if.then:
 ; CHECK: callq
-  %call = tail call zeroext i1 (...)* @foo() nounwind
+  %call = tail call zeroext i1 (...) @foo() nounwind
   br label %return
 
 return:

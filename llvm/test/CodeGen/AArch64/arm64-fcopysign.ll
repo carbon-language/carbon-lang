@@ -39,7 +39,7 @@ entry:
 ; CHECK: fcvt s0, d0
 ; CHECK: movi.4s v[[CONST:[0-9]+]], #0x80, lsl #24
 ; CHECK: bit.16b v{{[0-9]+}}, v0, v[[CONST]]
-  %0 = tail call double (...)* @bar() nounwind
+  %0 = tail call double (...) @bar() nounwind
   %1 = fptrunc double %0 to float
   %2 = tail call float @copysignf(float 5.000000e-01, float %1) nounwind readnone
   %3 = fadd float %1, %2

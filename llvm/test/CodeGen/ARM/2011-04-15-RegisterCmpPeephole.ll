@@ -12,7 +12,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @h(i32 %a, i32 %b) nounwind
+  tail call void (...) @h(i32 %a, i32 %b) nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
@@ -31,7 +31,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  tail call void (...)* @h(i32 %a, i32 %b) nounwind
+  tail call void (...) @h(i32 %a, i32 %b) nounwind
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry

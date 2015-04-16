@@ -64,7 +64,7 @@ define void @test_varargs_stackalign() {
 ; CHECK-LABEL: test_varargs_stackalign:
 ; CHECK-DARWINPCS: stp {{w[0-9]+}}, {{w[0-9]+}}, [sp, #16]
 
-  call void(...)* @callee([3 x float] undef, [2 x float] [float 1.0, float 2.0])
+  call void(...) @callee([3 x float] undef, [2 x float] [float 1.0, float 2.0])
   ret void
 }
 

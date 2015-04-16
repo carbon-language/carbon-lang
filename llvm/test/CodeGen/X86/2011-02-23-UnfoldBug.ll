@@ -22,7 +22,7 @@ for.body33.lr.ph:                                 ; preds = %for.body
 for.end:                                          ; preds = %for.body
   %vecins.i94 = insertelement <2 x double> undef, double 0.000000e+00, i32 0
   %cmpsd.i = tail call <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double> %vecins.i94, <2 x double> <double 0x3FE984B204153B34, double 0x3FE984B204153B34>, i8 2) nounwind
-  tail call void (...)* @_mm_movemask_pd(<2 x double> %cmpsd.i) nounwind
+  tail call void (...) @_mm_movemask_pd(<2 x double> %cmpsd.i) nounwind
   br i1 undef, label %if.then67, label %if.end71
 
 if.then67:                                        ; preds = %for.end

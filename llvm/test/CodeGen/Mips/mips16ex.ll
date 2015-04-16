@@ -16,7 +16,7 @@ entry:
   %ehselector.slot = alloca i32
   %e = alloca i32, align 4
   store i32 0, i32* %retval
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0))
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i32 0, i32 0))
   %exception = call i8* @__cxa_allocate_exception(i32 4) nounwind
   %0 = bitcast i8* %exception to i32*
   store i32 20, i32* %0

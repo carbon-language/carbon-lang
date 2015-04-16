@@ -13,7 +13,7 @@ bb5.outer:		; preds = %bb5.outer.loopexit, %entry
 	br label %bb5
 
 bb5:		; preds = %bb5, %bb5.outer
-	%tmp6 = tail call i32 (...)* @foo( ) nounwind 		; <i32> [#uses=1]
+	%tmp6 = tail call i32 (...) @foo( ) nounwind 		; <i32> [#uses=1]
 	switch i32 %tmp6, label %bb13 [
 		 i32 -1, label %bb10
 		 i32 102, label %bb5
@@ -21,7 +21,7 @@ bb5:		; preds = %bb5, %bb5.outer
 	]
 
 bb10:		; preds = %bb5
-	%tmp12 = tail call i32 (...)* @bar( i32 %undo.0.ph ) nounwind 		; <i32> [#uses=0]
+	%tmp12 = tail call i32 (...) @bar( i32 %undo.0.ph ) nounwind 		; <i32> [#uses=0]
 	br label %UnifiedReturnBlock
 
 bb13:		; preds = %bb5

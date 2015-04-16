@@ -58,7 +58,7 @@ ifend.i:		; preds = %lor_rhs.i
 safe_mod_int16_t_s_s.exit:		; preds = %ifend.i, %lor_rhs.i, %func_106.exit27
 	%call31 = phi i16 [ %conv8.i, %ifend.i ], [ %conv, %func_106.exit27 ], [ %conv, %lor_rhs.i ]		; <i16> [#uses=1]
 	%conv4 = sext i16 %call31 to i32		; <i32> [#uses=1]
-	%call5 = tail call i32 (...)* @func_104( i32 %conv4 )		; <i32> [#uses=0]
+	%call5 = tail call i32 (...) @func_104( i32 %conv4 )		; <i32> [#uses=0]
 	ret i32 undef
 }
 

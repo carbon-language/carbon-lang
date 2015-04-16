@@ -16,7 +16,7 @@ entry:
         %tmp1 = load i8*, i8** %a            ; <i8*> [#uses=1]
         %tmp2 = ptrtoint i8* %tmp1 to i32               ; <i32> [#uses=1]
         %tmp3 = zext i32 %tmp2 to i64           ; <i64> [#uses=1]
-        %tmp.upgrd.1 = call i32 (i8*, ...)* @printf( i8* %tmp, i64 %tmp3 )              ; <i32> [#uses=0]
+        %tmp.upgrd.1 = call i32 (i8*, ...) @printf( i8* %tmp, i64 %tmp3 )              ; <i32> [#uses=0]
         ret i32 0
 }
 

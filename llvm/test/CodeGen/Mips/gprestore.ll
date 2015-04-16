@@ -17,7 +17,7 @@ entry:
 ; CHECK: jalr
 ; CHECK-NOT: got({{.*}})($gp)
 ; CHECK: lw $gp
-  tail call void (...)* @f1() nounwind
+  tail call void (...) @f1() nounwind
   %tmp = load i32, i32* @p, align 4
   tail call void @f2(i32 %tmp) nounwind
   %tmp1 = load i32, i32* @q, align 4

@@ -10,7 +10,7 @@ entry:
 	br i1 %tmp7, label %cond_true, label %UnifiedReturnBlock
 
 cond_true:		; preds = %entry
-	%tmp10 = call i32 (...)* @bar( )		; <i32> [#uses=0]
+	%tmp10 = call i32 (...) @bar( )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %entry

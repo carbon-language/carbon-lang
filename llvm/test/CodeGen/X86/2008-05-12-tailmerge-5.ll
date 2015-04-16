@@ -64,7 +64,7 @@ entry:
 	br i1 %toBool, label %bb, label %bb27
 
 bb:		; preds = %entry
-	call void (...)* @abort( ) noreturn nounwind 
+	call void (...) @abort( ) noreturn nounwind 
 	unreachable
 
 bb27:		; preds = %entry
@@ -77,7 +77,7 @@ bb27:		; preds = %entry
 	br i1 %toBool33, label %bb34, label %bb35
 
 bb34:		; preds = %bb27
-	call void (...)* @abort( ) noreturn nounwind 
+	call void (...) @abort( ) noreturn nounwind 
 	unreachable
 
 bb35:		; preds = %bb27
@@ -98,7 +98,7 @@ bb35:		; preds = %bb27
 	br i1 %toBool49, label %bb50, label %bb51
 
 bb50:		; preds = %bb35
-	call void (...)* @abort( ) noreturn nounwind 
+	call void (...) @abort( ) noreturn nounwind 
 	unreachable
 
 bb51:		; preds = %bb35
@@ -119,7 +119,7 @@ bb51:		; preds = %bb35
 	br i1 %toBool65, label %bb66, label %bb67
 
 bb66:		; preds = %bb51
-	call void (...)* @abort( ) noreturn nounwind 
+	call void (...) @abort( ) noreturn nounwind 
 	unreachable
 
 bb67:		; preds = %bb51
@@ -132,7 +132,7 @@ bb67:		; preds = %bb51
 	br i1 %toBool73, label %bb74, label %bb75
 
 bb74:		; preds = %bb67
-	call void (...)* @abort( ) noreturn nounwind 
+	call void (...) @abort( ) noreturn nounwind 
 	unreachable
 
 bb75:		; preds = %bb67

@@ -21,7 +21,7 @@ entry:
 	%tmp24.i = extractelement <1 x i64> %tmp10.i, i32 0		; <i64> [#uses=1]
 	%tmp10 = bitcast i64 %tmp24.i to <1 x i64>		; <<1 x i64>> [#uses=1]
 	%tmp7 = extractelement <1 x i64> %tmp10, i32 0		; <i64> [#uses=1]
-	%call6 = tail call i32 (...)* @store8888(i64 %tmp7)		; <i32> [#uses=1]
+	%call6 = tail call i32 (...) @store8888(i64 %tmp7)		; <i32> [#uses=1]
 	store i32 %call6, i32* %src
 	ret void
 }

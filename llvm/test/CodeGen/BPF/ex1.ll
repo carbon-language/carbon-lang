@@ -26,7 +26,7 @@ define i32 @bpf_prog1(%struct.bpf_context* nocapture %ctx) #0 section "events/ne
 ; <label>:10                                      ; preds = %0
   %11 = getelementptr inbounds [15 x i8], [15 x i8]* %fmt, i64 0, i64 0
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %11, i8* getelementptr inbounds ([15 x i8], [15 x i8]* @bpf_prog1.fmt, i64 0, i64 0), i64 15, i32 1, i1 false)
-  %12 = call i32 (i8*, i32, ...)* inttoptr (i64 11 to i32 (i8*, i32, ...)*)(i8* %11, i32 15, %struct.sk_buff* %4, i8* %7) #1
+  %12 = call i32 (i8*, i32, ...) inttoptr (i64 11 to i32 (i8*, i32, ...)*)(i8* %11, i32 15, %struct.sk_buff* %4, i8* %7) #1
 ; CHECK-LABEL: bpf_prog1:
 ; CHECK: call 4
 ; CHECK: call 9

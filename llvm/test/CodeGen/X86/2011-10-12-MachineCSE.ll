@@ -102,7 +102,7 @@ if.end:                                           ; preds = %lor.lhs.false23
   %arrayidx38 = getelementptr inbounds [0 x %struct.insn_data], [0 x %struct.insn_data]* @insn_data, i32 0, i64 %idxprom37
   %genfun = getelementptr inbounds %struct.insn_data, %struct.insn_data* %arrayidx38, i32 0, i32 2
   %23 = load %struct.rtx_def* (%struct.rtx_def*, ...)*, %struct.rtx_def* (%struct.rtx_def*, ...)** %genfun, align 8
-  %call39 = tail call %struct.rtx_def* (%struct.rtx_def*, ...)* %23(%struct.rtx_def* %r0, %struct.rtx_def* %r1, %struct.rtx_def* %c)
+  %call39 = tail call %struct.rtx_def* (%struct.rtx_def*, ...) %23(%struct.rtx_def* %r0, %struct.rtx_def* %r1, %struct.rtx_def* %c)
   br label %return
 
 return:                                           ; preds = %if.end, %if.then

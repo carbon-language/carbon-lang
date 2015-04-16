@@ -18,7 +18,7 @@ bb.i:		; preds = %cond_next.i, %entry
 	br i1 false, label %cond_true.i31, label %cond_next.i
 
 cond_true.i31:		; preds = %bb.i
-	call void (i32, ...)* @fprintf( i32 0, i8* %tmp11, i8* null )
+	call void (i32, ...) @fprintf( i32 0, i8* %tmp11, i8* null )
 	ret void
 
 cond_next.i:		; preds = %bb.i

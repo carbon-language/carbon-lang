@@ -63,7 +63,7 @@ define i32 @foo() noreturn {
 ; CHECK: Load from block address
   %lb = load i32, i32* bitcast (i8* blockaddress(@foo, %next) to i32*)
 ; CHECK: Call to block address
-  call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
+  call void() bitcast (i8* blockaddress(@foo, %next) to void()*)()
 ; CHECK: Undefined behavior: Null pointer dereference
   call void @llvm.stackrestore(i8* null)
 ; CHECK: Undefined behavior: Null pointer dereference
@@ -71,11 +71,11 @@ define i32 @foo() noreturn {
 ; CHECK: Unusual: noalias argument aliases another argument
   call void @has_noaliases(i32* @CG, i32* @CG)
 ; CHECK: Call argument count mismatches callee argument count
-  call void (i32, i32)* bitcast (void (i32)* @one_arg to void (i32, i32)*)(i32 0, i32 0)
+  call void (i32, i32) bitcast (void (i32)* @one_arg to void (i32, i32)*)(i32 0, i32 0)
 ; CHECK: Call argument count mismatches callee argument count
-  call void ()* bitcast (void (i32)* @one_arg to void ()*)()
+  call void () bitcast (void (i32)* @one_arg to void ()*)()
 ; CHECK: Call argument type mismatches callee parameter type
-  call void (float)* bitcast (void (i32)* @one_arg to void (float)*)(float 0.0)
+  call void (float) bitcast (void (i32)* @one_arg to void (float)*)(float 0.0)
 
 ; CHECK: Write to read-only memory
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* bitcast (i32* @CG to i8*), i8* bitcast (i32* @CG to i8*), i64 1, i32 1, i1 0)

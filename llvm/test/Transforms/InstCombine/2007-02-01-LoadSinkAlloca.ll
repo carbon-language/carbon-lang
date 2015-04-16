@@ -10,7 +10,7 @@ define i32 @test2(i32 %C) {
 entry:
 	%A = alloca i32
 	%B = alloca i32
-	%tmp = call i32 (...)* @bar( i32* %A )		; <i32> [#uses=0]
+	%tmp = call i32 (...) @bar( i32* %A )		; <i32> [#uses=0]
 	%T = load i32, i32* %A		; <i32> [#uses=1]
 	%tmp2 = icmp eq i32 %C, 0		; <i1> [#uses=1]
 	br i1 %tmp2, label %cond_next, label %cond_true
@@ -23,20 +23,20 @@ cond_true:		; preds = %entry
 
 cond_next:		; preds = %cond_true, %entry
 	%tmp1.0 = phi i32 [ %T1, %cond_true ], [ %T, %entry ]		; <i32> [#uses=1]
-	%tmp7 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp8 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp9 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp10 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp11 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp12 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp13 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp14 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp15 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp16 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp17 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp18 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp19 = call i32 (...)* @baq( )		; <i32> [#uses=0]
-	%tmp20 = call i32 (...)* @baq( )		; <i32> [#uses=0]
+	%tmp7 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp8 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp9 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp10 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp11 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp12 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp13 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp14 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp15 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp16 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp17 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp18 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp19 = call i32 (...) @baq( )		; <i32> [#uses=0]
+	%tmp20 = call i32 (...) @baq( )		; <i32> [#uses=0]
 	ret i32 %tmp1.0
 }
 

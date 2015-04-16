@@ -12,7 +12,7 @@ entry:
         br i1 %tmp.1, label %then, label %UnifiedExitNode
 
 then:           ; preds = %entry
-        %tmp.4 = call i32 (...)* @bitmap_clear( i32* %live_head )               ; <i32> [#uses=0]
+        %tmp.4 = call i32 (...) @bitmap_clear( i32* %live_head )               ; <i32> [#uses=0]
         br label %UnifiedExitNode
 
 UnifiedExitNode:                ; preds = %then, %entry

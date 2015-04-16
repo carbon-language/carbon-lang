@@ -43,7 +43,7 @@ entry:
   %14 = and i32 %13, -129
   %15 = or i32 %14, %12
   store i32 %15, i32* %10, align 4
-  %call = call i32 (...)* @iequals(i32 1841, i32 %bf.value, i32 0)
+  %call = call i32 (...) @iequals(i32 1841, i32 %bf.value, i32 0)
   %16 = load i32, i32* %retval
   ret i32 %16
 }

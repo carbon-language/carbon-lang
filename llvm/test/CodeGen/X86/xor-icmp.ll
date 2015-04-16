@@ -24,11 +24,11 @@ entry:
   br i1 %4, label %bb1, label %bb
 
 bb:                                               ; preds = %entry
-  %5 = tail call i32 (...)* @foo() nounwind       ; <i32> [#uses=1]
+  %5 = tail call i32 (...) @foo() nounwind       ; <i32> [#uses=1]
   ret i32 %5
 
 bb1:                                              ; preds = %entry
-  %6 = tail call i32 (...)* @bar() nounwind       ; <i32> [#uses=1]
+  %6 = tail call i32 (...) @bar() nounwind       ; <i32> [#uses=1]
   ret i32 %6
 }
 
@@ -59,7 +59,7 @@ entry:
   br i1 %2, label %bb, label %return
 
 bb:                                               ; preds = %entry
-  %3 = tail call i32 (...)* @foo() nounwind       ; <i32> [#uses=0]
+  %3 = tail call i32 (...) @foo() nounwind       ; <i32> [#uses=0]
   ret i32 undef
 
 return:                                           ; preds = %entry

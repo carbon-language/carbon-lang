@@ -31,7 +31,7 @@ define internal void @_ZN1AD1Ev(%struct.A* nocapture %this) nounwind ssp align 2
 entry:
   %tmp.i = getelementptr inbounds %struct.A, %struct.A* %this, i32 0, i32 0 ; <i32*> [#uses=1]
   %tmp2.i = load i32, i32* %tmp.i                      ; <i32> [#uses=1]
-  %call.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str4, i32 0, i32 0), i32 %tmp2.i) nounwind ; <i32> [#uses=0]
+  %call.i = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str4, i32 0, i32 0), i32 %tmp2.i) nounwind ; <i32> [#uses=0]
   %tmp3.i = load i32, i32* @d                          ; <i32> [#uses=1]
   %inc.i = add nsw i32 %tmp3.i, 1                 ; <i32> [#uses=1]
   store i32 %inc.i, i32* @d
@@ -46,7 +46,7 @@ entry:
   %exception.i = tail call i8* @__cxa_allocate_exception(i32 4) nounwind ; <i8*> [#uses=2]
   %tmp2.i.i.i = bitcast i8* %exception.i to i32*  ; <i32*> [#uses=1]
   store i32 1, i32* %tmp2.i.i.i
-  %call.i.i.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str5, i32 0, i32 0), i32 1) nounwind ; <i32> [#uses=0]
+  %call.i.i.i = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str5, i32 0, i32 0), i32 1) nounwind ; <i32> [#uses=0]
   invoke void @__cxa_throw(i8* %exception.i, i8* bitcast (%0* @_ZTI1A to i8*), i8* bitcast (void (%struct.A*)* @_ZN1AD1Ev to i8*)) noreturn
           to label %.noexc unwind label %lpad
 
@@ -55,16 +55,16 @@ entry:
 
 try.cont:                                         ; preds = %lpad
   %0 = tail call i8* @__cxa_get_exception_ptr(i8* %exn) nounwind ; <i8*> [#uses=0]
-  %call.i.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.str3, i32 0, i32 0), i32 2) nounwind ; <i32> [#uses=0]
+  %call.i.i = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.str3, i32 0, i32 0), i32 2) nounwind ; <i32> [#uses=0]
   %1 = tail call i8* @__cxa_begin_catch(i8* %exn) nounwind ; <i8*> [#uses=0]
   %puts = tail call i32 @puts(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @str1, i32 0, i32 0)) ; <i32> [#uses=0]
-  %call.i.i3 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str4, i32 0, i32 0), i32 2) nounwind ; <i32> [#uses=0]
+  %call.i.i3 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str4, i32 0, i32 0), i32 2) nounwind ; <i32> [#uses=0]
   %tmp3.i.i = load i32, i32* @d                        ; <i32> [#uses=1]
   %inc.i.i4 = add nsw i32 %tmp3.i.i, 1            ; <i32> [#uses=1]
   store i32 %inc.i.i4, i32* @d
   tail call void @__cxa_end_catch()
   %tmp13 = load i32, i32* @d                           ; <i32> [#uses=1]
-  %call14 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @.str2, i32 0, i32 0), i32 2, i32 %tmp13) ; <i32> [#uses=0]
+  %call14 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([18 x i8], [18 x i8]* @.str2, i32 0, i32 0), i32 2, i32 %tmp13) ; <i32> [#uses=0]
   %tmp16 = load i32, i32* @d                           ; <i32> [#uses=1]
   %cmp = icmp ne i32 %tmp16, 2                    ; <i1> [#uses=1]
   %conv = zext i1 %cmp to i32                     ; <i32> [#uses=1]

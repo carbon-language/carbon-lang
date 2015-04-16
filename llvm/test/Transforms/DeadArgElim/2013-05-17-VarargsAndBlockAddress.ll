@@ -19,7 +19,7 @@ l2:
 ; CHECK: define internal i32 @varargs_func(i8* %addr) {
 
 define i32 @caller(i8* %addr) {
-  %r = call i32 (i8*, ...)* @varargs_func(i8* %addr)
+  %r = call i32 (i8*, ...) @varargs_func(i8* %addr)
   ret i32 %r
 }
 ; CHECK: %r = call i32 @varargs_func(i8* %addr)

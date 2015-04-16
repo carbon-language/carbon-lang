@@ -44,7 +44,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:   %inner = alloca %class.Inner, align 1
 ; CHECK:   %i = alloca i32, align 4
 ; CHECK:   %f = alloca float, align 4
-; CHECK:   call void (...)* @llvm.frameescape(float* %f, i32* %i, %class.Outer* %outer, %class.Inner* %inner)
+; CHECK:   call void (...) @llvm.frameescape(float* %f, i32* %i, %class.Outer* %outer, %class.Inner* %inner)
 ; CHECK:   invoke void @_ZN5OuterC1Ev(%class.Outer* %outer)
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -93,7 +93,7 @@ invoke.cont5:                                     ; preds = %invoke.cont4
 ; CHECK: [[LPAD_LABEL]]:
 ; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
-; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...)* @llvm.eh.actions(i32 1, i8* bitcast (i8** @_ZTIf to i8*), i32 0, i8* (i8*, i8*)* @_Z4testv.catch)
+; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (i8** @_ZTIf to i8*), i32 0, i8* (i8*, i8*)* @_Z4testv.catch)
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %try.cont19]
 
 lpad:                                             ; preds = %try.cont, %entry
@@ -110,7 +110,7 @@ lpad:                                             ; preds = %try.cont, %entry
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
-; CHECK-NEXT:   [[RECOVER1:\%.+]] = call i8* (...)* @llvm.eh.actions(
+; CHECK-NEXT:   [[RECOVER1:\%.+]] = call i8* (...) @llvm.eh.actions(
 ; CHECK-SAME:       i32 1, i8* bitcast (i8** @_ZTIi to i8*), i32 1, i8* (i8*, i8*)* @_Z4testv.catch1,
 ; CHECK-SAME:       i32 0, void (i8*, i8*)* @_Z4testv.cleanup,
 ; CHECK-SAME:       i32 1, i8* bitcast (i8** @_ZTIf to i8*), i32 0, i8* (i8*, i8*)* @_Z4testv.catch)
@@ -132,7 +132,7 @@ lpad1:                                            ; preds = %invoke.cont4, %invo
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
-; CHECK-NEXT:   [[RECOVER3:\%.+]] = call i8* (...)* @llvm.eh.actions(
+; CHECK-NEXT:   [[RECOVER3:\%.+]] = call i8* (...) @llvm.eh.actions(
 ; CHECK-SAME:       i32 0, void (i8*, i8*)* @_Z4testv.cleanup2,
 ; CHECK-SAME:       i32 1, i8* bitcast (i8** @_ZTIi to i8*), i32 1, i8* (i8*, i8*)* @_Z4testv.catch1,
 ; CHECK-SAME:       i32 0, void (i8*, i8*)* @_Z4testv.cleanup,

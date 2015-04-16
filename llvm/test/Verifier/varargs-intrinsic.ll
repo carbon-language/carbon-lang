@@ -10,7 +10,7 @@ define void @foo1() {
 }
 
 define void @foo2() {
-  call void (...)* @llvm.donothing(i64 0, i64 1)
+  call void (...) @llvm.donothing(i64 0, i64 1)
 ; CHECK: Intrinsic was not defined with variable arguments!
   ret void
 }

@@ -44,7 +44,7 @@ entry:
   %add19 = fadd float undef, %mul18
   %conv = fpext float %add19 to double
   %call34 = call double @sqrt(double %conv) readnone
-  %call36 = call i32 (double)* @foo(double %call34) nounwind
+  %call36 = call i32 (double) @foo(double %call34) nounwind
   %conv38 = fptrunc double %call34 to float
   ret float %conv38
 }
