@@ -1059,7 +1059,7 @@ def ObjCNSObject : InheritableAttr {
 }
 
 def ObjCIndependentClass : InheritableAttr {
-  let Spellings = [GNU<"IndependentClass">];
+  let Spellings = [GNU<"objc_independent_class">];
   let Documentation = [Undocumented];
 }
 

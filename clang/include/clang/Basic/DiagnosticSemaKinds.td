@@ -2201,11 +2201,11 @@ def warn_nsobject_attribute : Warning<
   "'NSObject' attribute may be put on a typedef only; attribute is ignored">,
   InGroup<NSobjectAttribute>;
 def warn_independentclass_attribute : Warning<
-  "'IndependentClass' attribute may be put on a typedef only; "
+  "'objc_independent_class' attribute may be put on a typedef only; "
   "attribute is ignored">,
   InGroup<IndependentClassAttribute>;
 def warn_ptr_independentclass_attribute : Warning<
-  "'IndependentClass' attribute may be put on Objective-C object "
+  "'objc_independent_class' attribute may be put on Objective-C object "
   "pointer type only; attribute is ignored">,
   InGroup<IndependentClassAttribute>;
 def warn_attribute_weak_on_local : Warning<
