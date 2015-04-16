@@ -245,6 +245,12 @@ define void @f41(i8* align 32, double* align 64) {
         ret void
 }
 
+; CHECK: define dereferenceable_or_null(8) i8* @f42(i8* dereferenceable_or_null(8) %foo)
+define dereferenceable_or_null(8) i8* @f42(i8* dereferenceable_or_null(8) %foo) {
+ entry:
+  ret i8* %foo
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

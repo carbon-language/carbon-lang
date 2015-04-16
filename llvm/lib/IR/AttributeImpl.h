@@ -115,10 +115,10 @@ class IntAttributeImpl : public EnumAttributeImpl {
 public:
   IntAttributeImpl(Attribute::AttrKind Kind, uint64_t Val)
       : EnumAttributeImpl(IntAttrEntry, Kind), Val(Val) {
-    assert(
-        (Kind == Attribute::Alignment || Kind == Attribute::StackAlignment ||
-         Kind == Attribute::Dereferenceable) &&
-        "Wrong kind for int attribute!");
+    assert((Kind == Attribute::Alignment || Kind == Attribute::StackAlignment ||
+            Kind == Attribute::Dereferenceable ||
+            Kind == Attribute::DereferenceableOrNull) &&
+           "Wrong kind for int attribute!");
   }
 
   uint64_t getValue() const { return Val; }

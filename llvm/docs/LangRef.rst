@@ -1012,6 +1012,19 @@ Currently, only the following parameter attributes are defined:
     array), however ``dereferenceable(<n>)`` does imply ``nonnull`` in
     ``addrspace(0)`` (which is the default address space).
 
+``dereferenceable_or_null(<n>)``
+    This indicates that the parameter or return value isn't both
+    non-null and non-dereferenceable (up to ``<n>`` bytes) at the same
+    time.  All non-null pointers tagged with
+    ``dereferenceable_or_null(<n>)`` are ``dereferenceable(<n>)``.
+    For address space 0 ``dereferenceable_or_null(<n>)`` implies that
+    a pointer is exactly one of ``dereferenceable(<n>)`` or ``null``,
+    and in other address spaces ``dereferenceable_or_null(<n>)``
+    implies that a pointer is at least one of ``dereferenceable(<n>)``
+    or ``null`` (i.e. it may be both ``null`` and
+    ``dereferenceable(<n>)``).  This attribute may only be applied to
+    pointer typed parameters.
+
 .. _gc:
 
 Garbage Collector Strategy Names

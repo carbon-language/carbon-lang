@@ -106,6 +106,7 @@ namespace lltok {
     kw_inalloca,
     kw_cold,
     kw_dereferenceable,
+    kw_dereferenceable_or_null,
     kw_inlinehint,
     kw_inreg,
     kw_jumptable,
