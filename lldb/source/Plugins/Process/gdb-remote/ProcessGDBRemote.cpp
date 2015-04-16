@@ -3491,7 +3491,7 @@ RegTypeTable[] = {
     { "data_ptr", GdbServerRegisterInfo::eDataPtr  },
     { "code_ptr", GdbServerRegisterInfo::eCodePtr  },
     { "i387_ext", GdbServerRegisterInfo::eI387Ext  }, // 80bit fpu
-    { nullptr } // sentinel
+    { nullptr   , GdbServerRegisterInfo::eUnknown  }  // sentinel
 };
 
 // find the first sibling with a matching name

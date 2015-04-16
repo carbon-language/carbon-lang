@@ -9,8 +9,11 @@
 
 #include "SymbolVendorMacOSX.h"
 
+#if defined( LIBXML2_DEFINED )
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#endif // #if defined( LIBXML2_DEFINED )
+
 #include <string.h>
 
 #include "lldb/Core/Module.h"
@@ -174,6 +177,7 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
             dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp, dsym_file_data_offset);
             if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get(), feedback_strm))
             {
+#if defined( LIBXML2_DEFINED )
                 char dsym_path[PATH_MAX];
                 if (module_sp->GetSourceMappingList().IsEmpty() && dsym_fspec.GetPath(dsym_path, sizeof(dsym_path)))
                 {
@@ -277,6 +281,7 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                         }
                     }
                 }
+#endif // #if defined( LIBXML2_DEFINED )
 
                 symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
                 return symbol_vendor;

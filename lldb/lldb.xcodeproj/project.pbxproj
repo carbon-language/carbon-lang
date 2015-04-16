@@ -208,6 +208,10 @@
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
 		265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A413D3E3F700132FE2 /* RegisterContextKDP_i386.cpp */; };
 		265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A613D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp */; };
+		2656BBC31AE0739C00441749 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
+		2656BBC41AE073A800441749 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
+		2656BBC51AE073AD00441749 /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
+		2656BBC61AE073B500441749 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; settings = {COMPILER_FLAGS = "-Dregister="; }; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
@@ -773,10 +777,6 @@
 		94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94094C69163B6CD90083A547 /* ValueObjectCast.cpp */; };
 		940B02F619DC96E700AD0F52 /* SBExecutionContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */; };
 		940B04D91A8984FF0045D5F7 /* argdumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 940B04D81A8984FF0045D5F7 /* argdumper.cpp */; };
-		940B04DB1A8985F70045D5F7 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 940B04DA1A8985F70045D5F7 /* libz.dylib */; };
-		940B04DD1A8985FF0045D5F7 /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 940B04DC1A8985FF0045D5F7 /* libpanel.dylib */; };
-		940B04DF1A8986070045D5F7 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 940B04DE1A8986070045D5F7 /* libncurses.dylib */; };
-		940B04E11A89860E0045D5F7 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 940B04E01A89860E0045D5F7 /* libedit.dylib */; };
 		940B04E41A8987680045D5F7 /* argdumper in CopyFiles */ = {isa = PBXBuildFile; fileRef = 942829C01A89835300521B30 /* argdumper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		94145431175E63B500284436 /* lldb-versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = 94145430175D7FDE00284436 /* lldb-versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9418EBCD1AA910910058B02E /* VectorType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9418EBCC1AA910910058B02E /* VectorType.cpp */; };
@@ -2438,10 +2438,6 @@
 		940B02F519DC96E700AD0F52 /* SBExecutionContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBExecutionContext.cpp; path = source/API/SBExecutionContext.cpp; sourceTree = "<group>"; };
 		940B02F719DC970900AD0F52 /* SBExecutionContext.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBExecutionContext.i; sourceTree = "<group>"; };
 		940B04D81A8984FF0045D5F7 /* argdumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = argdumper.cpp; path = tools/argdumper/argdumper.cpp; sourceTree = "<group>"; };
-		940B04DA1A8985F70045D5F7 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libz.dylib; sourceTree = DEVELOPER_DIR; };
-		940B04DC1A8985FF0045D5F7 /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libpanel.dylib; sourceTree = DEVELOPER_DIR; };
-		940B04DE1A8986070045D5F7 /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libncurses.dylib; sourceTree = DEVELOPER_DIR; };
-		940B04E01A89860E0045D5F7 /* libedit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libedit.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libedit.dylib; sourceTree = DEVELOPER_DIR; };
 		94145430175D7FDE00284436 /* lldb-versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-versioning.h"; path = "include/lldb/lldb-versioning.h"; sourceTree = "<group>"; };
 		9418EBCB1AA9108B0058B02E /* VectorType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VectorType.h; path = include/lldb/DataFormatters/VectorType.h; sourceTree = "<group>"; };
 		9418EBCC1AA910910058B02E /* VectorType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VectorType.cpp; path = source/DataFormatters/VectorType.cpp; sourceTree = "<group>"; };
@@ -2800,10 +2796,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				940B04E11A89860E0045D5F7 /* libedit.dylib in Frameworks */,
-				940B04DF1A8986070045D5F7 /* libncurses.dylib in Frameworks */,
-				940B04DD1A8985FF0045D5F7 /* libpanel.dylib in Frameworks */,
-				940B04DB1A8985F70045D5F7 /* libz.dylib in Frameworks */,
+				2656BBC31AE0739C00441749 /* libedit.dylib in Frameworks */,
+				2656BBC61AE073B500441749 /* libz.dylib in Frameworks */,
+				2656BBC51AE073AD00441749 /* libpanel.dylib in Frameworks */,
+				2656BBC41AE073A800441749 /* libncurses.dylib in Frameworks */,
 				942829CC1A89839300521B30 /* liblldb-core.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2829,10 +2825,6 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				940B04E01A89860E0045D5F7 /* libedit.dylib */,
-				940B04DE1A8986070045D5F7 /* libncurses.dylib */,
-				940B04DC1A8985FF0045D5F7 /* libpanel.dylib */,
-				940B04DA1A8985F70045D5F7 /* libz.dylib */,
 				26709E311964A34000B94724 /* LaunchServices.framework */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				264E8576159BE51A00E9D7A2 /* Resources */,
@@ -7256,12 +7248,14 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				OTHER_LDFLAGS = "";
 				PATH = /opt/local/bin;
@@ -7293,12 +7287,14 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				OTHER_LDFLAGS = "";
 				PATH = /opt/local/bin;
@@ -7330,12 +7326,14 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				OTHER_LDFLAGS = "";
 				PATH = /opt/local/bin;
@@ -8258,12 +8256,14 @@
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*]" = (
 					"-fno-rtti",
 					"-Wglobal-constructors",
 					"$(OTHER_CFLAGS)",
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
+					"-DLIBXML2_DEFINED",
 				);
 				OTHER_LDFLAGS = "";
 				PATH = /opt/local/bin;
