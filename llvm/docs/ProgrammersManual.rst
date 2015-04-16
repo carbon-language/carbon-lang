@@ -1687,8 +1687,8 @@ they will automatically convert to a ptr-to-instance type whenever they need to.
 Instead of derferencing the iterator and then taking the address of the result,
 you can simply assign the iterator to the proper pointer type and you get the
 dereference and address-of operation as a result of the assignment (behind the
-scenes, this is a result of overloading casting mechanisms).  Thus the last line
-of the last example,
+scenes, this is a result of overloading casting mechanisms).  Thus the second
+line of the last example,
 
 .. code-block:: c++
 
@@ -2582,8 +2582,9 @@ doxygen info: `Type Clases <http://llvm.org/doxygen/classllvm_1_1Type.html>`_
 
 The Core LLVM classes are the primary means of representing the program being
 inspected or transformed.  The core LLVM classes are defined in header files in
-the ``include/llvm/`` directory, and implemented in the ``lib/VMCore``
-directory.
+the ``include/llvm/IR`` directory, and implemented in the ``lib/IR``
+directory. It's worth noting that, for historical reasons, this library is
+called ``libLLVMCore.so``, not ``libLLVMIR.so`` as you might expect.
 
 .. _Type:
 
