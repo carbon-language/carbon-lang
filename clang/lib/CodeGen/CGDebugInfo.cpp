@@ -1467,11 +1467,10 @@ void CGDebugInfo::completeType(const EnumDecl *ED) {
   QualType Ty = CGM.getContext().getEnumType(ED);
   void *TyPtr = Ty.getAsOpaquePtr();
   auto I = TypeCache.find(TyPtr);
-  if (I == TypeCache.end() ||
-      !llvm::DIType(cast<llvm::MDType>(I->second)).isForwardDecl())
+  if (I == TypeCache.end() || !cast<llvm::MDType>(I->second)->isForwardDecl())
     return;
   llvm::DIType Res = CreateTypeDefinition(Ty->castAs<EnumType>());
-  assert(!Res.isForwardDecl());
+  assert(!Res->isForwardDecl());
   TypeCache[TyPtr].reset(Res);
 }
 
@@ -1491,7 +1490,7 @@ void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
 
   QualType Ty = CGM.getContext().getRecordType(RD);
   llvm::DIType T = getTypeOrNull(Ty);
-  if (T && T.isForwardDecl())
+  if (T && T->isForwardDecl())
     completeClassData(RD);
 }
 
@@ -1501,11 +1500,10 @@ void CGDebugInfo::completeClassData(const RecordDecl *RD) {
   QualType Ty = CGM.getContext().getRecordType(RD);
   void *TyPtr = Ty.getAsOpaquePtr();
   auto I = TypeCache.find(TyPtr);
-  if (I != TypeCache.end() &&
-      !llvm::DIType(cast<llvm::MDType>(I->second)).isForwardDecl())
+  if (I != TypeCache.end() && !cast<llvm::MDType>(I->second)->isForwardDecl())
     return;
   llvm::DIType Res = CreateTypeDefinition(Ty->castAs<RecordType>());
-  assert(!Res.isForwardDecl());
+  assert(!Res->isForwardDecl());
   TypeCache[TyPtr].reset(Res);
 }
 
@@ -1620,7 +1618,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
 
   if (FwdDecl->isTemporary())
     FwdDecl = llvm::MDNode::replaceWithPermanent(
-        llvm::TempMDCompositeTypeBase(FwdDecl.get()));
+        llvm::TempMDCompositeTypeBase(FwdDecl));
 
   RegionMap[Ty->getDecl()].reset(FwdDecl);
   return FwdDecl;
@@ -2219,13 +2217,12 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
                                                  llvm::DIFile Unit) {
   QualType QTy(Ty, 0);
 
-  llvm::DICompositeType T =
-      cast_or_null<llvm::MDCompositeTypeBase>(getTypeOrNull(QTy));
+  auto *T = cast_or_null<llvm::MDCompositeTypeBase>(getTypeOrNull(QTy));
 
   // We may have cached a forward decl when we could have created
   // a non-forward decl. Go ahead and create a non-forward decl
   // now.
-  if (T && !T.isForwardDecl())
+  if (T && !T->isForwardDecl())
     return T;
 
   // Otherwise create the type.
@@ -2234,7 +2231,7 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
   // Propagate members from the declaration to the definition
   // CreateType(const RecordType*) will overwrite this with the members in the
   // correct order if the full type is needed.
-  DBuilder.replaceArrays(Res, T ? T.getElements() : llvm::DIArray());
+  DBuilder.replaceArrays(Res, T ? T->getElements() : llvm::DIArray());
 
   // And update the type cache.
   TypeCache[QTy.getAsOpaquePtr()].reset(Res);
@@ -2255,9 +2252,9 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
 
   // If we ended up creating the type during the context chain construction,
   // just return that.
-  llvm::DICompositeType T = cast_or_null<llvm::MDCompositeTypeBase>(
+  auto *T = cast_or_null<llvm::MDCompositeTypeBase>(
       getTypeOrNull(CGM.getContext().getRecordType(RD)));
-  if (T && (!T.isForwardDecl() || !RD->getDefinition()))
+  if (T && (!T->isForwardDecl() || !RD->getDefinition()))
     return T;
 
   // If this is just a forward or incomplete declaration, construct an
@@ -3277,7 +3274,7 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
     Ty = getOrCreateType(QualType(ED->getTypeForDecl(), 0), Unit);
   }
   // Do not use DIGlobalVariable for enums.
-  if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
+  if (Ty->getTag() == llvm::dwarf::DW_TAG_enumeration_type)
     return;
   // Do not emit separate definitions for function local const/statics.
   if (isa<FunctionDecl>(VD->getDeclContext()))
@@ -3390,8 +3387,8 @@ void CGDebugInfo::finalize() {
 
   for (auto p : ReplaceMap) {
     assert(p.second);
-    llvm::DIType Ty = cast<llvm::MDType>(p.second);
-    assert(Ty.isForwardDecl());
+    auto *Ty = cast<llvm::MDType>(p.second);
+    assert(Ty->isForwardDecl());
 
     auto it = TypeCache.find(p.first);
     assert(it != TypeCache.end());
