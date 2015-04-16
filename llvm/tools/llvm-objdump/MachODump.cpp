@@ -1025,6 +1025,8 @@ static void DumpRawSectionContents(MachOObjectFile *O, const char *sect,
 
 static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
                              StringRef DisSegName, StringRef DisSectName);
+static void DumpProtocolSection(MachOObjectFile *O, const char *sect,
+                                uint32_t size, uint32_t addr);
 
 static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
                                 bool verbose) {
@@ -1085,6 +1087,10 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
           }
           if (SegName == "__TEXT" && SectName == "__info_plist") {
             outs() << sect;
+            continue;
+          }
+          if (SegName == "__OBJC" && SectName == "__protocol") {
+            DumpProtocolSection(O, sect, sect_size, sect_addr);
             continue;
           }
           switch (section_type) {
@@ -5543,6 +5549,52 @@ static bool printObjc1_32bit_MetaData(MachOObjectFile *O, bool verbose) {
     print_image_info(II, &info);
 
   return true;
+}
+
+static void DumpProtocolSection(MachOObjectFile *O, const char *sect,
+                                uint32_t size, uint32_t addr) {
+  SymbolAddressMap AddrMap;
+  CreateSymbolAddressMap(O, &AddrMap);
+
+  std::vector<SectionRef> Sections;
+  for (const SectionRef &Section : O->sections()) {
+    StringRef SectName;
+    Section.getName(SectName);
+    Sections.push_back(Section);
+  }
+
+  struct DisassembleInfo info;
+  // Set up the block of info used by the Symbolizer call backs.
+  info.verbose = true;
+  info.O = O;
+  info.AddrMap = &AddrMap;
+  info.Sections = &Sections;
+  info.class_name = nullptr;
+  info.selector_name = nullptr;
+  info.method = nullptr;
+  info.demangled_name = nullptr;
+  info.bindtable = nullptr;
+  info.adrp_addr = 0;
+  info.adrp_inst = 0;
+
+  const char *p;
+  struct objc_protocol_t protocol;
+  uint32_t left, paddr;
+  for (p = sect; p < sect + size; p += sizeof(struct objc_protocol_t)) {
+    memset(&protocol, '\0', sizeof(struct objc_protocol_t));
+    left = size - (p - sect);
+    if (left < sizeof(struct objc_protocol_t)) {
+      outs() << "Protocol extends past end of __protocol section\n";
+      memcpy(&protocol, p, left);
+    } else
+      memcpy(&protocol, p, sizeof(struct objc_protocol_t));
+    if (O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(protocol);
+    paddr = addr + (p - sect);
+    outs() << "Protocol " << format("0x%" PRIx32, paddr);
+    if (print_protocol(paddr, 0, &info))
+      outs() << "(not in an __OBJC section)\n";
+  }
 }
 
 static void printObjcMetaData(MachOObjectFile *O, bool verbose) {

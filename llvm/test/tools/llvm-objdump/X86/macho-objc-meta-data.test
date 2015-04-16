@@ -4,6 +4,7 @@
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.32bit.obj.macho-i386 | FileCheck %s -check-prefix=OBJC2_32BIT_OBJ
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc1.32bit.exe.macho-i386 | FileCheck %s -check-prefix=OBJC1_32BIT_EXE
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc1.32bit.obj.macho-i386 | FileCheck %s -check-prefix=OBJC1_32BIT_OBJ
+# RUN: llvm-objdump -m -section __OBJC,__protocol %p/Inputs/Objc1.32bit.exe.macho-i386 | FileCheck %s -check-prefix=PROTOCOL
 
 OBJC2_64BIT_EXE: Contents of (__DATA,__objc_classlist) section
 OBJC2_64BIT_EXE: 0000000100002028 0x1000029f0
@@ -898,3 +899,141 @@ OBJC1_32BIT_OBJ: 		protocols 0x00000000 (not in an __OBJC section)
 OBJC1_32BIT_OBJ: Contents of (__OBJC,__image_info) section
 OBJC1_32BIT_OBJ:   version 0
 OBJC1_32BIT_OBJ:     flags 0x0 RR
+
+PROTOCOL: Contents of (__OBJC,__protocol) section
+PROTOCOL: Protocol 0x437c
+PROTOCOL:               isa 0x00003120
+PROTOCOL:     protocol_name 0x000025af NSObject
+PROTOCOL:     protocol_list 0x00000000 (not in an __OBJC section)
+PROTOCOL:  instance_methods 0x00004290
+PROTOCOL:         count 19
+PROTOCOL:         list[0]
+PROTOCOL:              name 0x00002de9 isEqual:
+PROTOCOL:             types 0x000026e7 c12@0:4@8
+PROTOCOL:         list[1]
+PROTOCOL:              name 0x00002df2 class
+PROTOCOL:             types 0x00002df8 #8@0:4
+PROTOCOL:         list[2]
+PROTOCOL:              name 0x00002dff self
+PROTOCOL:             types 0x00002e04 @8@0:4
+PROTOCOL:         list[3]
+PROTOCOL:              name 0x00002e0b performSelector:
+PROTOCOL:             types 0x00002e1c @12@0:4:8
+PROTOCOL:         list[4]
+PROTOCOL:              name 0x00002e26 performSelector:withObject:
+PROTOCOL:             types 0x00002e42 @16@0:4:8@12
+PROTOCOL:         list[5]
+PROTOCOL:              name 0x00002e4f performSelector:withObject:withObject:
+PROTOCOL:             types 0x00002e76 @20@0:4:8@12@16
+PROTOCOL:         list[6]
+PROTOCOL:              name 0x00002e86 isProxy
+PROTOCOL:             types 0x00002e8e c8@0:4
+PROTOCOL:         list[7]
+PROTOCOL:              name 0x00002e95 isKindOfClass:
+PROTOCOL:             types 0x00002ea4 c12@0:4#8
+PROTOCOL:         list[8]
+PROTOCOL:              name 0x00002eae isMemberOfClass:
+PROTOCOL:             types 0x00002ea4 c12@0:4#8
+PROTOCOL:         list[9]
+PROTOCOL:              name 0x00002ebf conformsToProtocol:
+PROTOCOL:             types 0x000026e7 c12@0:4@8
+PROTOCOL:         list[10]
+PROTOCOL:              name 0x00002ee7 respondsToSelector:
+PROTOCOL:             types 0x00002efb c12@0:4:8
+PROTOCOL:         list[11]
+PROTOCOL:              name 0x00002f05 retain
+PROTOCOL:             types 0x00002e04 @8@0:4
+PROTOCOL:         list[12]
+PROTOCOL:              name 0x00002f0c release
+PROTOCOL:             types 0x00002f14 Vv8@0:4
+PROTOCOL:         list[13]
+PROTOCOL:              name 0x00002f1c autorelease
+PROTOCOL:             types 0x00002e04 @8@0:4
+PROTOCOL:         list[14]
+PROTOCOL:              name 0x00002f28 retainCount
+PROTOCOL:             types 0x00002f34 I8@0:4
+PROTOCOL:         list[15]
+PROTOCOL:              name 0x00002f3b zone
+PROTOCOL:             types 0x00002f40 ^{_NSZone=}8@0:4
+PROTOCOL:         list[16]
+PROTOCOL:              name 0x00002f51 hash
+PROTOCOL:             types 0x00002f34 I8@0:4
+PROTOCOL:         list[17]
+PROTOCOL:              name 0x00002f56 superclass
+PROTOCOL:             types 0x00002df8 #8@0:4
+PROTOCOL:         list[18]
+PROTOCOL:              name 0x00002f61 description
+PROTOCOL:             types 0x00002e04 @8@0:4
+PROTOCOL:     class_methods 0x00000000 (not in an __OBJC section)
+PROTOCOL: Protocol 0x4390
+PROTOCOL:               isa 0x000030b0
+PROTOCOL:     protocol_name 0x00002dd3 NSApplicationDelegate
+PROTOCOL:     protocol_list 0x000043a4
+PROTOCOL:              next 0x00000000
+PROTOCOL:             count 1
+PROTOCOL:           list[0] 0x0000437c
+PROTOCOL:                   isa 0x00003120
+PROTOCOL:         protocol_name 0x000025af NSObject
+PROTOCOL:         protocol_list 0x00000000 (not in an __OBJC section)
+PROTOCOL:      instance_methods 0x00004290
+PROTOCOL:             count 19
+PROTOCOL:             list[0]
+PROTOCOL:                  name 0x00002de9 isEqual:
+PROTOCOL:                 types 0x000026e7 c12@0:4@8
+PROTOCOL:             list[1]
+PROTOCOL:                  name 0x00002df2 class
+PROTOCOL:                 types 0x00002df8 #8@0:4
+PROTOCOL:             list[2]
+PROTOCOL:                  name 0x00002dff self
+PROTOCOL:                 types 0x00002e04 @8@0:4
+PROTOCOL:             list[3]
+PROTOCOL:                  name 0x00002e0b performSelector:
+PROTOCOL:                 types 0x00002e1c @12@0:4:8
+PROTOCOL:             list[4]
+PROTOCOL:                  name 0x00002e26 performSelector:withObject:
+PROTOCOL:                 types 0x00002e42 @16@0:4:8@12
+PROTOCOL:             list[5]
+PROTOCOL:                  name 0x00002e4f performSelector:withObject:withObject:
+PROTOCOL:                 types 0x00002e76 @20@0:4:8@12@16
+PROTOCOL:             list[6]
+PROTOCOL:                  name 0x00002e86 isProxy
+PROTOCOL:                 types 0x00002e8e c8@0:4
+PROTOCOL:             list[7]
+PROTOCOL:                  name 0x00002e95 isKindOfClass:
+PROTOCOL:                 types 0x00002ea4 c12@0:4#8
+PROTOCOL:             list[8]
+PROTOCOL:                  name 0x00002eae isMemberOfClass:
+PROTOCOL:                 types 0x00002ea4 c12@0:4#8
+PROTOCOL:             list[9]
+PROTOCOL:                  name 0x00002ebf conformsToProtocol:
+PROTOCOL:                 types 0x000026e7 c12@0:4@8
+PROTOCOL:             list[10]
+PROTOCOL:                  name 0x00002ee7 respondsToSelector:
+PROTOCOL:                 types 0x00002efb c12@0:4:8
+PROTOCOL:             list[11]
+PROTOCOL:                  name 0x00002f05 retain
+PROTOCOL:                 types 0x00002e04 @8@0:4
+PROTOCOL:             list[12]
+PROTOCOL:                  name 0x00002f0c release
+PROTOCOL:                 types 0x00002f14 Vv8@0:4
+PROTOCOL:             list[13]
+PROTOCOL:                  name 0x00002f1c autorelease
+PROTOCOL:                 types 0x00002e04 @8@0:4
+PROTOCOL:             list[14]
+PROTOCOL:                  name 0x00002f28 retainCount
+PROTOCOL:                 types 0x00002f34 I8@0:4
+PROTOCOL:             list[15]
+PROTOCOL:                  name 0x00002f3b zone
+PROTOCOL:                 types 0x00002f40 ^{_NSZone=}8@0:4
+PROTOCOL:             list[16]
+PROTOCOL:                  name 0x00002f51 hash
+PROTOCOL:                 types 0x00002f34 I8@0:4
+PROTOCOL:             list[17]
+PROTOCOL:                  name 0x00002f56 superclass
+PROTOCOL:                 types 0x00002df8 #8@0:4
+PROTOCOL:             list[18]
+PROTOCOL:                  name 0x00002f61 description
+PROTOCOL:                 types 0x00002e04 @8@0:4
+PROTOCOL:         class_methods 0x00000000 (not in an __OBJC section)
+PROTOCOL:  instance_methods 0x00000000 (not in an __OBJC section)
+PROTOCOL:     class_methods 0x00000000 (not in an __OBJC section)
