@@ -55,13 +55,15 @@ entry:
 	]
 
 bb:		; preds = %entry, %entry, %entry, %entry, %entry, %entry, %entry, %entry, %entry, %entry
+	call void @_Z3bari( i32 0 )
 	br label %bb1
 
 bb1:		; preds = %bb, %entry
+	call void @_Z3bari( i32 1 )
 	br label %bb2
 
 bb2:		; preds = %bb1, %entry
-	call void @_Z3bari( i32 1 )
+	call void @_Z3bari( i32 2 )
 	br label %bb11
 
 bb3:		; preds = %entry
