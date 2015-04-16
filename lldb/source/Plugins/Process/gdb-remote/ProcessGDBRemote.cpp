@@ -3682,18 +3682,18 @@ parseRegisters (xmlDocPtr doc, GDBServerRegisterVec & regList) {
         GdbServerRegisterInfo reg;
         reg.clear( );
 
-        if ( attr = xmlExFindAttribute( regs[i], "name" ) ) {
+        if ( ( attr = xmlExFindAttribute( regs[i], "name" ) ) ) {
             reg.m_name = xmlExGetTextContent( attr ).c_str();
             reg.m_flags.m_has_name = true;
         }
 
-        if ( attr = xmlExFindAttribute( regs[i], "bitsize" ) ) {
+        if ( ( attr = xmlExFindAttribute( regs[i], "bitsize" ) ) ) {
             const std::string v = xmlExGetTextContent( attr );
             reg.m_bitSize = atoi( v.c_str( ) );
             reg.m_flags.m_has_bitSize = true;
         }
 
-        if ( attr = xmlExFindAttribute( regs[i], "type" ) ) {
+        if ( ( attr = xmlExFindAttribute( regs[i], "type" ) ) ) {
             const std::string v = xmlExGetTextContent( attr );
             reg.m_type = GdbServerRegisterInfo::eUnknown;
 
@@ -3708,12 +3708,12 @@ parseRegisters (xmlDocPtr doc, GDBServerRegisterVec & regList) {
             reg.m_flags.m_has_type = (reg.m_type != GdbServerRegisterInfo::eUnknown);
         }
 
-        if ( attr = xmlExFindAttribute( regs[i], "group" ) ) {
+        if ( ( attr = xmlExFindAttribute( regs[i], "group" ) ) ) {
             reg.m_group = xmlExGetTextContent( attr );
             reg.m_flags.m_has_group = true;
         }
 
-        if ( attr = xmlExFindAttribute( regs[i], "regnum" ) ) {
+        if ( ( attr = xmlExFindAttribute( regs[i], "regnum" ) ) ) {
             const std::string v = xmlExGetTextContent( attr );
             reg.m_regNum = atoi( v.c_str( ) );
             reg.m_flags.m_has_regNum = true;
