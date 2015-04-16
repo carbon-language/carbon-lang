@@ -55,37 +55,37 @@ if(NOT DEFINED LLVM_DYLIB_EXPORTED_SYMBOL_FILE)
 
   set(LLVM_EXPORTED_SYMBOL_FILE ${CMAKE_BINARY_DIR}/libllvm.exports)
 
-  foreach (lib ${LIB_NAMES})
-    
-    set(LIB_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
-    set(LIB_NAME ${LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${lib})
-    set(LIB_PATH ${LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX})
-    set(LIB_EXPORTS_PATH ${LIB_NAME}.exports)
+  if (NOT LLVM_DYLIB_EXPORT_ALL)
+    foreach (lib ${LIB_NAMES})
+      set(LIB_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
+      set(LIB_NAME ${LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${lib})
+      set(LIB_PATH ${LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX})
+      set(LIB_EXPORTS_PATH ${LIB_NAME}.exports)
+      list(APPEND LLVM_DYLIB_REQUIRED_EXPORTS ${LIB_EXPORTS_PATH})
 
-    list(APPEND LLVM_DYLIB_REQUIRED_EXPORTS ${LIB_EXPORTS_PATH})
-
-    if (LLVM_DYLIB_EXPORT_ALL)
-      add_custom_command(OUTPUT ${LIB_EXPORTS_PATH}
-        COMMAND nm ${LIB_PATH} | awk "/T / { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_EXPORTS_PATH}
-        WORKING_DIRECTORY ${LIB_DIR}
-        DEPENDS ${lib}
-        COMMENT "Generating Export list for ${lib}..."
-        VERBATIM )
-    else()
+      
       add_custom_command(OUTPUT ${LIB_EXPORTS_PATH}
         COMMAND nm ${LIB_PATH} | awk "/T _LLVM/ || /T LLVM/ { print $3 }" | sort -u | sed -e "s/^_//g" > ${LIB_EXPORTS_PATH}
         WORKING_DIRECTORY ${LIB_DIR}
         DEPENDS ${lib}
         COMMENT "Generating Export list for ${lib}..."
         VERBATIM )
-    endif()
-  endforeach ()
+    endforeach ()
+  endif()
 
-  add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
-    COMMAND cat ${LLVM_DYLIB_REQUIRED_EXPORTS} > ${LLVM_EXPORTED_SYMBOL_FILE}
-    WORKING_DIRECTORY ${LIB_DIR}
-    DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
-    COMMENT "Generating combined export list...")
+  if (LLVM_DYLIB_EXPORT_ALL)
+    add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
+      COMMAND echo "LLVM*" > ${LLVM_EXPORTED_SYMBOL_FILE} && echo "_ZN4llvm*" >> ${LLVM_EXPORTED_SYMBOL_FILE}
+      WORKING_DIRECTORY ${LIB_DIR}
+      DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
+      COMMENT "Generating combined export list...")
+  else()
+    add_custom_command(OUTPUT ${LLVM_EXPORTED_SYMBOL_FILE}
+      COMMAND cat ${LLVM_DYLIB_REQUIRED_EXPORTS} > ${LLVM_EXPORTED_SYMBOL_FILE}
+      WORKING_DIRECTORY ${LIB_DIR}
+      DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
+      COMMENT "Generating combined export list...")
+  endif()
 
   add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
 else()
@@ -95,10 +95,12 @@ endif()
 
 add_llvm_library(LLVM SHARED ${SOURCES})
 
+list(REMOVE_DUPLICATES LIB_NAMES)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") # FIXME: It should be "GNU ld for elf"
   # GNU ld doesn't resolve symbols in the version script.
-  list(REMOVE_DUPLICATES LIB_NAMES)
   set(LIB_NAMES -Wl,--whole-archive ${LIB_NAMES} -Wl,--no-whole-archive)
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+  set(LIB_NAMES -Wl,-all_load ${LIB_NAMES})
 endif()
 
 target_link_libraries(LLVM PRIVATE ${LIB_NAMES})
