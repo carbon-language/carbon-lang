@@ -98,13 +98,10 @@ public:
   /// AbstractVar may be NULL.
   DbgVariable(const MachineInstr *DbgValue, DwarfDebug *DD)
       : Var(DbgValue->getDebugVariable()),
-        IA(DbgValue->getDebugLoc() ? DbgValue->getDebugLoc()->getInlinedAt()
-                                   : nullptr),
+        IA(DbgValue->getDebugLoc()->getInlinedAt()),
         Expr(1, DbgValue->getDebugExpression()), TheDIE(nullptr),
         DotDebugLocOffset(~0U), MInsn(DbgValue), DD(DD) {
     FrameIndex.push_back(~0);
-    if (MDLocation *Loc = DbgValue->getDebugLoc())
-      IA = Loc->getInlinedAt();
   }
 
   // Accessors.

@@ -207,10 +207,7 @@ void llvm::calculateDbgValueHistory(const MachineFunction *MF,
       MDLocalVariable *RawVar = MI.getDebugVariable();
       assert(RawVar->isValidLocationForIntrinsic(MI.getDebugLoc()) &&
              "Expected inlined-at fields to agree");
-      MDLocation *IA = nullptr;
-      if (MDLocation *Loc = MI.getDebugLoc())
-        IA = Loc->getInlinedAt();
-      InlinedVariable Var(RawVar, IA);
+      InlinedVariable Var(RawVar, MI.getDebugLoc()->getInlinedAt());
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);

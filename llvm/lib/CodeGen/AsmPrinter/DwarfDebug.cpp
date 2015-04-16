@@ -711,7 +711,10 @@ void DwarfDebug::collectVariableInfoFromMMITable(
   for (const auto &VI : MMI->getVariableDbgInfo()) {
     if (!VI.Var)
       continue;
-    InlinedVariable Var(VI.Var, VI.Loc ? VI.Loc->getInlinedAt() : nullptr);
+    assert(VI.Var->isValidLocationForIntrinsic(VI.Loc) &&
+           "Expected inlined-at fields to agree");
+
+    InlinedVariable Var(VI.Var, VI.Loc->getInlinedAt());
     Processed.insert(Var);
     LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
@@ -719,8 +722,6 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    assert(VI.Var->isValidLocationForIntrinsic(VI.Loc) &&
-           "Expected inlined-at fields to agree");
     DIExpression Expr = cast_or_null<MDExpression>(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(Var, Scope->getScopeNode());
     auto RegVar =
