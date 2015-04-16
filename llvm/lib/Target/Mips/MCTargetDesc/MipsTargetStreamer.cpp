@@ -513,9 +513,8 @@ void MipsTargetELFStreamer::emitAssignment(MCSymbol *Symbol,
   const MCSymbol &RhsSym =
       static_cast<const MCSymbolRefExpr *>(Value)->getSymbol();
   MCSymbolData &Data = getStreamer().getOrCreateSymbolData(&RhsSym);
-  uint8_t Type = MCELF::GetType(Data);
-  if ((Type != ELF::STT_FUNC) ||
-      !(MCELF::getOther(Data) & (ELF::STO_MIPS_MICROMIPS >> 2)))
+
+  if (!(MCELF::getOther(Data) & (ELF::STO_MIPS_MICROMIPS >> 2)))
     return;
 
   MCSymbolData &SymbolData = getStreamer().getOrCreateSymbolData(Symbol);
