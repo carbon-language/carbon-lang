@@ -120,10 +120,10 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     return;
 
   SourceManager &SM = CGM.getContext().getSourceManager();
-  llvm::DIScope Scope = cast<llvm::MDScope>(LexicalBlockStack.back());
+  auto *Scope = cast<llvm::MDScope>(LexicalBlockStack.back());
   PresumedLoc PCLoc = SM.getPresumedLoc(CurLoc);
 
-  if (PCLoc.isInvalid() || Scope.getFilename() == PCLoc.getFilename())
+  if (PCLoc.isInvalid() || Scope->getFilename() == PCLoc.getFilename())
     return;
 
   if (auto *LBF = dyn_cast<llvm::MDLexicalBlockFile>(Scope)) {
