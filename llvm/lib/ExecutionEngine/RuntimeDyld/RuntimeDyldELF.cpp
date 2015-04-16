@@ -460,7 +460,7 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
     else if (Type == ELF::R_ARM_MOVT_ABS)
       Value = (Value >> 16) & 0xFFFF;
     *TargetPtr &= ~0x000F0FFF;
-    *TargetPtr = Value & 0xFFF;
+    *TargetPtr |= Value & 0xFFF;
     *TargetPtr |= ((Value >> 12) & 0xF) << 16;
     break;
     // Write 24 bit relative value to the branch instruction.
@@ -1052,6 +1052,8 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
         Value.Addend += ((*Placeholder) & 0x0000ffff) << 16;
       else if (RelType == ELF::R_MIPS_LO16)
         Value.Addend += ((*Placeholder) & 0x0000ffff);
+      else if (RelType == ELF::R_MIPS_32)
+        Value.Addend += *Placeholder;
       processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
