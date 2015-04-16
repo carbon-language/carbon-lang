@@ -1724,7 +1724,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   // initializers.
   if (GenerationType != GenFunction) {
     nl(Out) << "// Global Variable Definitions"; nl(Out);
-    for (const auto &GV : gvs) {
+    for (auto *GV : gvs) {
       if (GlobalVariable *Var = dyn_cast<GlobalVariable>(GV))
         printVariableBody(Var);
     }

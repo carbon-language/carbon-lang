@@ -487,7 +487,7 @@ void RegionBase<Tr>::print(raw_ostream &OS, bool print_tree, unsigned level,
     OS.indent(level * 2 + 2);
 
     if (Style == PrintBB) {
-      for (const auto &BB : blocks())
+      for (const auto *BB : blocks())
         OS << BB->getName() << ", "; // TODO: remove the last ","
     } else if (Style == PrintRN) {
       for (const_element_iterator I = element_begin(), E = element_end();
