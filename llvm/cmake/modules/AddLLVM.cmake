@@ -407,6 +407,11 @@ function(llvm_add_library name)
 endfunction()
 
 macro(add_llvm_library name)
+  cmake_parse_arguments(ARG
+    "SHARED"
+    ""
+    ""
+    ${ARGN})
   if( BUILD_SHARED_LIBS )
     llvm_add_library(${name} SHARED ${ARGN})
   else()
@@ -418,12 +423,17 @@ macro(add_llvm_library name)
     set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
   else()
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
-      install(TARGETS ${name}
-        EXPORT LLVMExports
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-        ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-        COMPONENT ${name})
+      if(ARG_SHARED OR BUILD_SHARED_LIBS)
+        install(TARGETS ${name}
+          EXPORT LLVMExports
+          LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+          COMPONENT ${name})
+      else()
+        install(TARGETS ${name}
+          EXPORT LLVMExports
+          ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+          COMPONENT ${name})
+      endif()
 
       if (NOT CMAKE_CONFIGURATION_TYPES)
         add_custom_target(install-${name}
