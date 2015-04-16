@@ -1148,6 +1148,35 @@ namespace AArch64SysReg {
     LORC_EL1          = 0xc523, // 11  000  1010  0100  011
     LORID_EL1         = 0xc527, // 11  000  1010  0100  111
 
+    // v8.1a "Virtualization host extensions" system registers
+    TTBR1_EL2         = 0xe101, // 11  100  0010  0000  001
+    CONTEXTIDR_EL2    = 0xe681, // 11  100  1101  0000  001
+    CNTHV_TVAL_EL2    = 0xe718, // 11  100  1110  0011  000
+    CNTHV_CVAL_EL2    = 0xe71a, // 11  100  1110  0011  010
+    CNTHV_CTL_EL2     = 0xe719, // 11  100  1110  0011  001
+    SCTLR_EL12        = 0xe880, // 11  101  0001  0000  000
+    CPACR_EL12        = 0xe882, // 11  101  0001  0000  010
+    TTBR0_EL12        = 0xe900, // 11  101  0010  0000  000
+    TTBR1_EL12        = 0xe901, // 11  101  0010  0000  001
+    TCR_EL12          = 0xe902, // 11  101  0010  0000  010
+    AFSR0_EL12        = 0xea88, // 11  101  0101  0001  000
+    AFSR1_EL12        = 0xea89, // 11  101  0101  0001  001
+    ESR_EL12          = 0xea90, // 11  101  0101  0010  000
+    FAR_EL12          = 0xeb00, // 11  101  0110  0000  000
+    MAIR_EL12         = 0xed10, // 11  101  1010  0010  000
+    AMAIR_EL12        = 0xed18, // 11  101  1010  0011  000
+    VBAR_EL12         = 0xee00, // 11  101  1100  0000  000
+    CONTEXTIDR_EL12   = 0xee81, // 11  101  1101  0000  001
+    CNTKCTL_EL12      = 0xef08, // 11  101  1110  0001  000
+    CNTP_TVAL_EL02    = 0xef10, // 11  101  1110  0010  000
+    CNTP_CTL_EL02     = 0xef11, // 11  101  1110  0010  001
+    CNTP_CVAL_EL02    = 0xef12, // 11  101  1110  0010  010
+    CNTV_TVAL_EL02    = 0xef18, // 11  101  1110  0011  000
+    CNTV_CTL_EL02     = 0xef19, // 11  101  1110  0011  001
+    CNTV_CVAL_EL02    = 0xef1a, // 11  101  1110  0011  010
+    SPSR_EL12         = 0xea00, // 11  101  0100  0000  000
+    ELR_EL12          = 0xea01, // 11  101  0100  0000  001
+
     // Cyclone specific system registers
     CPM_IOACC_CTL_EL3 = 0xff90,
   };
