@@ -3025,14 +3025,14 @@ inline void swapStruct(struct objc_module_t &module) {
   sys::swapByteOrder(module.size);
   sys::swapByteOrder(module.name);
   sys::swapByteOrder(module.symtab);
-};
+}
 
 inline void swapStruct(struct objc_symtab_t &symtab) {
   sys::swapByteOrder(symtab.sel_ref_cnt);
   sys::swapByteOrder(symtab.refs);
   sys::swapByteOrder(symtab.cls_def_cnt);
   sys::swapByteOrder(symtab.cat_def_cnt);
-};
+}
 
 inline void swapStruct(struct objc_class_t &objc_class) {
   sys::swapByteOrder(objc_class.isa);
@@ -3045,7 +3045,7 @@ inline void swapStruct(struct objc_class_t &objc_class) {
   sys::swapByteOrder(objc_class.methodLists);
   sys::swapByteOrder(objc_class.cache);
   sys::swapByteOrder(objc_class.protocols);
-};
+}
 
 inline void swapStruct(struct objc_category_t &objc_category) {
   sys::swapByteOrder(objc_category.category_name);
@@ -3063,7 +3063,7 @@ inline void swapStruct(struct objc_ivar_t &objc_ivar) {
   sys::swapByteOrder(objc_ivar.ivar_name);
   sys::swapByteOrder(objc_ivar.ivar_type);
   sys::swapByteOrder(objc_ivar.ivar_offset);
-};
+}
 
 inline void swapStruct(struct objc_method_list_t &method_list) {
   sys::swapByteOrder(method_list.obsolete);
