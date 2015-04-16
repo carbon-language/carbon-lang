@@ -469,7 +469,7 @@ NativeThreadLinux::SetCrashedWithException (const siginfo_t& info)
     m_stop_info.details.signal.signo = info.si_signo;
 
     const auto reason = GetCrashReason (info);
-    m_stop_description = GetCrashReasonString (reason, reinterpret_cast<lldb::addr_t> (info.si_addr));
+    m_stop_description = GetCrashReasonString (reason, reinterpret_cast<uintptr_t>(info.si_addr));
 }
 
 void
