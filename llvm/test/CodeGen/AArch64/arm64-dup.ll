@@ -321,3 +321,40 @@ entry:
   %sub = sub <4 x i16> %a, %mul
   ret <4 x i16> %sub
 }
+
+; Also test the DUP path in the PerfectShuffle generator.
+
+; CHECK-LABEL: test_perfectshuffle_dupext_v4i16:
+; CHECK-NEXT: dup.4h v0, v0[0]
+; CHECK-NEXT: ext.8b v0, v0, v1, #4
+define <4 x i16> @test_perfectshuffle_dupext_v4i16(<4 x i16> %a, <4 x i16> %b) nounwind {
+  %r = shufflevector <4 x i16> %a, <4 x i16> %b, <4 x i32> <i32 0, i32 0, i32 4, i32 5>
+  ret <4 x i16> %r
+}
+
+; CHECK-LABEL: test_perfectshuffle_dupext_v4f16:
+; CHECK-NEXT: dup.4h v0, v0[0]
+; CHECK-NEXT: ext.8b v0, v0, v1, #4
+; CHECK-NEXT: ret
+define <4 x half> @test_perfectshuffle_dupext_v4f16(<4 x half> %a, <4 x half> %b) nounwind {
+  %r = shufflevector <4 x half> %a, <4 x half> %b, <4 x i32> <i32 0, i32 0, i32 4, i32 5>
+  ret <4 x half> %r
+}
+
+; CHECK-LABEL: test_perfectshuffle_dupext_v4i32:
+; CHECK-NEXT: dup.4s v0, v0[0]
+; CHECK-NEXT: ext.16b v0, v0, v1, #8
+; CHECK-NEXT: ret
+define <4 x i32> @test_perfectshuffle_dupext_v4i32(<4 x i32> %a, <4 x i32> %b) nounwind {
+  %r = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 0, i32 4, i32 5>
+  ret <4 x i32> %r
+}
+
+; CHECK-LABEL: test_perfectshuffle_dupext_v4f32:
+; CHECK-NEXT: dup.4s v0, v0[0]
+; CHECK-NEXT: ext.16b v0, v0, v1, #8
+; CHECK-NEXT: ret
+define <4 x float> @test_perfectshuffle_dupext_v4f32(<4 x float> %a, <4 x float> %b) nounwind {
+  %r = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 0, i32 4, i32 5>
+  ret <4 x float> %r
+}
