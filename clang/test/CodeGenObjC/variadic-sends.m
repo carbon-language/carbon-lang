@@ -20,8 +20,8 @@ void f1(A *a) {
 }
 
 void f2(A *a) {
-  // CHECK-X86-32: call void (i8*, i8*, i32, ...)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32, ...)*)
-  // CHECK-X86-64: call void (i8*, i8*, i32, ...)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32, ...)*)
+  // CHECK-X86-32: call void (i8*, i8*, i32, ...) bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32, ...)*)
+  // CHECK-X86-64: call void (i8*, i8*, i32, ...) bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i32, ...)*)
   [a im2: 1, 2];
 }
 
@@ -33,8 +33,8 @@ void f2(A *a) {
   [super im1: 1];
 }
 -(void) bar {
-  // CHECK-X86-32: call void (%struct._objc_super*, i8*, i32, ...)* bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper to void (%struct._objc_super*, i8*, i32, ...)*)
-  // CHECK-X86-64: call void (%struct._objc_super*, i8*, i32, ...)* bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper to void (%struct._objc_super*, i8*, i32, ...)*)
+  // CHECK-X86-32: call void (%struct._objc_super*, i8*, i32, ...) bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper to void (%struct._objc_super*, i8*, i32, ...)*)
+  // CHECK-X86-64: call void (%struct._objc_super*, i8*, i32, ...) bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper to void (%struct._objc_super*, i8*, i32, ...)*)
   [super im2: 1, 2];
 }
 

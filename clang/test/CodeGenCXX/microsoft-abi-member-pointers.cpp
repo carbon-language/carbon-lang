@@ -623,7 +623,7 @@ void (C::*getmp())() {
 // CHECK:  load void (%"struct.Test4::C"*, ...)**, void (%"struct.Test4::C"*, ...)*** %{{.*}}
 // CHECK:  getelementptr inbounds void (%"struct.Test4::C"*, ...)*, void (%"struct.Test4::C"*, ...)** %{{.*}}, i64 0
 // CHECK-NOT:  getelementptr
-// CHECK:  musttail call x86_thiscallcc void (%"struct.Test4::C"*, ...)* %
+// CHECK:  musttail call x86_thiscallcc void (%"struct.Test4::C"*, ...) %
 
 }
 

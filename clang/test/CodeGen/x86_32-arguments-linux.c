@@ -10,7 +10,7 @@
 // CHECK: <8 x i32> %a10, %struct.s56_5* byval align 4,
 // CHECK: <4 x double> %a12, %struct.s56_6* byval align 4)
 
-// CHECK: call void (i32, ...)* @f56_0(i32 1,
+// CHECK: call void (i32, ...) @f56_0(i32 1,
 // CHECK: i32 %{{.*}}, %struct.s56_0* byval align 4 %{{[^ ]*}},
 // CHECK: i64 %{{[^ ]*}}, %struct.s56_1* byval align 4 %{{[^ ]*}},
 // CHECK: <1 x double> %{{[^ ]*}}, %struct.s56_2* byval align 4 %{{[^ ]*}},

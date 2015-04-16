@@ -404,7 +404,7 @@ void test49(double d, double e) {
 // CHECK-LABEL:    define void @test49(
 // CHECK:      [[T0:%.*]] = load double, double*
 // CHECK-NEXT: [[T1:%.*]] = load double, double*
-// CHECK-NEXT: call void (double, ...)* @test49_helper(double [[T0]], double [[T1]])
+// CHECK-NEXT: call void (double, ...) @test49_helper(double [[T0]], double [[T1]])
 
 void test50_helper();
 void test50(double d, double e) {
@@ -413,7 +413,7 @@ void test50(double d, double e) {
 // CHECK-LABEL:    define void @test50(
 // CHECK:      [[T0:%.*]] = load double, double*
 // CHECK-NEXT: [[T1:%.*]] = load double, double*
-// CHECK-NEXT: call void (double, double, ...)* bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
+// CHECK-NEXT: call void (double, double, ...) bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
 
 struct test51_s { __uint128_t intval; };
 void test51(struct test51_s *s, __builtin_va_list argList) {

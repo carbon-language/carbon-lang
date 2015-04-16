@@ -99,7 +99,7 @@ void test4(Test4 *t) {
   extern int test4_printf(const char *, ...);
   // CHECK: [[TMP:%.*]] = call float {{.*}} @objc_msgSend
   // CHECK-NEXT: [[EXT:%.*]] = fpext float [[TMP]] to double
-  // CHECK-NEXT: call i32 (i8*, ...)* @test4_printf(i8* {{.*}}, double [[EXT]])
+  // CHECK-NEXT: call i32 (i8*, ...) @test4_printf(i8* {{.*}}, double [[EXT]])
   // CHECK-NEXT: ret void
   test4_printf("%.2f", t.f);
 }

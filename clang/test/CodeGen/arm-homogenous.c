@@ -184,7 +184,7 @@ extern void takes_struct_of_four_doubles_variadic(double a, struct_of_four_doubl
 
 void test_struct_of_four_doubles_variadic(void) {
 // CHECK: test_struct_of_four_doubles_variadic
-// CHECK: call arm_aapcs_vfpcc void (double, [4 x i64], [4 x i64], double, ...)* @takes_struct_of_four_doubles_variadic(double {{.*}}, [4 x i64] {{.*}}, [4 x i64] {{.*}}, double {{.*}})
+// CHECK: call arm_aapcs_vfpcc void (double, [4 x i64], [4 x i64], double, ...) @takes_struct_of_four_doubles_variadic(double {{.*}}, [4 x i64] {{.*}}, [4 x i64] {{.*}}, double {{.*}})
   takes_struct_of_four_doubles_variadic(3.0, g_s4d, g_s4d, 4.0);
 }
 

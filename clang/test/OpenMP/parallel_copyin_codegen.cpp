@@ -59,7 +59,7 @@ int main() {
   // LAMBDA: call{{( x86_thiscallcc)?}} void [[OUTER_LAMBDA:@.+]](
   [&]() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
-  // LAMBDA: call void {{.+}}* @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8*
+  // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8*
 #pragma omp parallel copyin(g)
   {
     // LAMBDA: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
@@ -89,10 +89,10 @@ int main() {
 #elif defined(BLOCKS)
   // BLOCKS: [[G:@.+]] = global i{{[0-9]+}} 1212,
   // BLOCKS-LABEL: @main
-  // BLOCKS: call void {{%.+}}(i8*
+  // BLOCKS: call void {{%.+}}(i8
   ^{
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
-  // BLOCKS: call void {{.+}}* @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8*
+  // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8*
 #pragma omp parallel copyin(g)
   {
     // BLOCKS: define{{.*}} internal{{.*}} void [[OMP_REGION]](i32* %{{.+}}, i32* %{{.+}}, %{{.+}}* [[ARG:%.+]])
@@ -111,7 +111,7 @@ int main() {
     g = 1;
     // BLOCKS: store volatile i{{[0-9]+}} 1, i{{[0-9]+}}*
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
-    // BLOCKS: call void {{%.+}}(i8*
+    // BLOCKS: call void {{%.+}}(i8
     ^{
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
@@ -146,8 +146,8 @@ int main() {
 // CHECK-LABEL: @main
 // CHECK: [[TEST:%.+]] = alloca [[S_FLOAT_TY]],
 // CHECK: call {{.*}} [[S_FLOAT_TY_COPY_ASSIGN:@.+]]([[S_FLOAT_TY]]* [[TEST]], [[S_FLOAT_TY]]*
-// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...)* @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[MAIN_MICROTASK:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
-// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...)* @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[MAIN_MICROTASK1:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[MAIN_MICROTASK:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[MAIN_MICROTASK1:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
 // CHECK: = call {{.*}}i{{.+}} [[TMAIN_INT:@.+]]()
 // CHECK: call {{.*}} [[S_FLOAT_TY_DESTR:@.+]]([[S_FLOAT_TY]]*
 // CHECK: ret
@@ -209,8 +209,8 @@ int main() {
 // CHECK: define {{.*}} i{{[0-9]+}} [[TMAIN_INT]]()
 // CHECK: [[TEST:%.+]] = alloca [[S_INT_TY]],
 // CHECK: call {{.*}} [[S_INT_TY_COPY_ASSIGN:@.+]]([[S_INT_TY]]* [[TEST]], [[S_INT_TY]]*
-// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...)* @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[TMAIN_MICROTASK:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
-// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...)* @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[TMAIN_MICROTASK1:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[TMAIN_MICROTASK:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, {{%.+}}*)* [[TMAIN_MICROTASK1:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
 // CHECK: call {{.*}} [[S_INT_TY_DESTR:@.+]]([[S_INT_TY]]*
 // CHECK: ret
 //

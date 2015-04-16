@@ -875,7 +875,7 @@ void test33(Test33 *ptr) {
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[A_T]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[A_T]]*
-  // CHECK-NEXT: call void (...)* @clang.arc.use([[A_T]]* [[W0]]) [[NUW]]
+  // CHECK-NEXT: call void (...) @clang.arc.use([[A_T]]* [[W0]]) [[NUW]]
   // CHECK-NEXT: [[T4:%.*]] = load [[A_T]]*, [[A_T]]** [[A]]
   // CHECK-NEXT: store [[A_T]]* [[T3]], [[A_T]]** [[A]]
   // CHECK-NEXT: [[T5:%.*]] = bitcast [[A_T]]* [[T4]] to i8*
@@ -891,7 +891,7 @@ void test33(Test33 *ptr) {
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[A_T]]* [[T0]] to i8*
   // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[A_T]]*
-  // CHECK-NEXT: call void (...)* @clang.arc.use([[A_T]]* [[W0]]) [[NUW]]
+  // CHECK-NEXT: call void (...) @clang.arc.use([[A_T]]* [[W0]]) [[NUW]]
   // CHECK-NEXT: [[T4:%.*]] = load [[A_T]]*, [[A_T]]** [[A]]
   // CHECK-NEXT: store [[A_T]]* [[T3]], [[A_T]]** [[A]]
   // CHECK-NEXT: [[T5:%.*]] = bitcast [[A_T]]* [[T4]] to i8*
@@ -974,7 +974,7 @@ void test37(void) {
   // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST37]]* [[T1]] to i8*
   // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retain(i8* [[T2]])
   // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to [[TEST37]]*
-  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[W1]]) [[NUW]]
+  // CHECK-NEXT: call void (...) @clang.arc.use(i8* [[W1]]) [[NUW]]
   // CHECK-NEXT: [[T5:%.*]] = load [[TEST37]]*, [[TEST37]]** [[VAR]]
   // CHECK-NEXT: store [[TEST37]]* [[T4]], [[TEST37]]** [[VAR]]
   // CHECK-NEXT: [[T6:%.*]] = bitcast [[TEST37]]* [[T5]] to i8*

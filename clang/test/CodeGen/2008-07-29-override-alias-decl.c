@@ -14,6 +14,6 @@ int h() {
   return f();
 }
 
-// CHECK:  [[call:%.*]] = call i32 (...)* @f()
+// CHECK:  [[call:%.*]] = call i32 (...) @f()
 // CHECK:  ret i32 [[call]]
 

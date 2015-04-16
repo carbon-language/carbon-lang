@@ -380,7 +380,7 @@ void call_nonnull_variadic(int a, int *b) {
   // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
   // CHECK-UBSAN-NOT: __ubsan_handle_nonnull_arg
 
-  // CHECK-COMMON: call void (i32, ...)* @nonnull_variadic
+  // CHECK-COMMON: call void (i32, ...) @nonnull_variadic
   nonnull_variadic(a, b);
 }
 

@@ -28,7 +28,7 @@ extern "C" void test_freefunc(int p1) {
 // CHECK: %[[s1:[^ ]*]] = load i32, i32* @"\01?s1@?1??test_freefunc@@9@4HA", align 4
 // CHECK: %[[l1:[^ ]*]] = load i32, i32* %[[l1_ptr]]
 // CHECK: %[[p1:[^ ]*]] = load i32, i32* %[[p1_ptr]]
-// CHECK: call i32 (i32, ...)* @basic_filter(i32 %[[p1]], i32 %[[l1]], i32 %[[s1]])
+// CHECK: call i32 (i32, ...) @basic_filter(i32 %[[p1]], i32 %[[l1]], i32 %[[s1]])
 
 struct S {
   int m1;
@@ -53,7 +53,7 @@ void S::test_method() {
 // CHECK: %[[l1_i8:[^ ]*]] = call i8* @llvm.framerecover(i8* bitcast (void (%struct.S*)* @"\01?test_method@S@@QEAAXXZ" to i8*), i8* %frame_pointer, i32 0)
 // CHECK: %[[l1_ptr:[^ ]*]] = bitcast i8* %[[l1_i8]] to i32*
 // CHECK: %[[l1:[^ ]*]] = load i32, i32* %[[l1_ptr]]
-// CHECK: call i32 (i32, ...)* @basic_filter(i32 %[[l1]])
+// CHECK: call i32 (i32, ...) @basic_filter(i32 %[[l1]])
 
 void test_lambda() {
   int l1 = 13;
@@ -77,4 +77,4 @@ void test_lambda() {
 // CHECK: %[[l2_i8:[^ ]*]] = call i8* @llvm.framerecover(i8* bitcast (void (%class.anon*)* @"\01??R<lambda_0>@?test_lambda@@YAXXZ@QEBAXXZ" to i8*), i8* %frame_pointer, i32 0)
 // CHECK: %[[l2_ptr:[^ ]*]] = bitcast i8* %[[l2_i8]] to i32*
 // CHECK: %[[l2:[^ ]*]] = load i32, i32* %[[l2_ptr]]
-// CHECK: call i32 (i32, ...)* @basic_filter(i32 %[[l2]])
+// CHECK: call i32 (i32, ...) @basic_filter(i32 %[[l2]])

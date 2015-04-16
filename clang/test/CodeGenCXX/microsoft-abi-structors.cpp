@@ -420,7 +420,7 @@ void construct_b() {
 // CHECK-LABEL: define void @"\01?construct_b@test1@@YAXXZ"()
 // CHECK: call x86_thiscallcc %"struct.test1::B"* @"\01??0B@test1@@QAE@PAH@Z"
 // CHECK:               (%"struct.test1::B"* {{.*}}, i32* {{.*}}, i32 1)
-// CHECK: call %"struct.test1::B"* (%"struct.test1::B"*, i32, i8*, ...)* @"\01??0B@test1@@QAA@PBDZZ"
+// CHECK: call %"struct.test1::B"* (%"struct.test1::B"*, i32, i8*, ...) @"\01??0B@test1@@QAA@PBDZZ"
 // CHECK:               (%"struct.test1::B"* {{.*}}, i32 1, i8* {{.*}}, i32 1, i32 2)
 }
 

@@ -24,15 +24,15 @@ int test1() {
 
 extern "C" __unknown_anytype test2_any(...);
 float test2() {
-  // X86_64: call float (double, ...)* @test2_any(double {{[^,]+}})
-  // I386: call float (double, ...)* @test2_any(double {{[^,]+}})
+  // X86_64: call float (double, ...) @test2_any(double {{[^,]+}})
+  // I386: call float (double, ...) @test2_any(double {{[^,]+}})
   return (float) test2_any(0.5f);
 }
 
 extern "C" __unknown_anytype test2a_any(...);
 float test2a() {
-  // X86_64: call float (float, ...)* @test2a_any(float {{[^,]+}})
-  // I386: call float (float, ...)* @test2a_any(float {{[^,]+}})
+  // X86_64: call float (float, ...) @test2a_any(float {{[^,]+}})
+  // I386: call float (float, ...) @test2a_any(float {{[^,]+}})
   return (float) test2a_any((float) 0.5f);
 }
 
@@ -119,7 +119,7 @@ void test10() {
 extern "C" __unknown_anytype malloc(...);
 void test11() {
   void *s = (void*)malloc(12);
-  // COMMON: call i8* (i32, ...)* @malloc(i32 12)
+  // COMMON: call i8* (i32, ...) @malloc(i32 12)
   void *d = (void*)malloc(435);
-  // COMMON: call i8* (i32, ...)* @malloc(i32 435)
+  // COMMON: call i8* (i32, ...) @malloc(i32 435)
 }

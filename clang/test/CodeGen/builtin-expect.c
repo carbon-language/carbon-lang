@@ -23,9 +23,9 @@ int main() {
 
 // CHECK-LABEL: define i32 @main()
 // CHECK: call void @isigprocmask()
-// CHECK: [[C:%.*]] = call i64 (...)* @bar()
+// CHECK: [[C:%.*]] = call i64 (...) @bar()
 // CHECK_O0: call void @isigprocmask()
-// CHECK_O0: [[C:%.*]] = call i64 (...)* @bar()
+// CHECK_O0: [[C:%.*]] = call i64 (...) @bar()
 // CHECK_O0-NOT: call i64 @llvm.expect
 
 

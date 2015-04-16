@@ -38,5 +38,5 @@ int main()
  return 0;
 }
 
-// CHECK: call i32 (i32)* (%struct.A*)* @_ZN1AcvPFiiEEv
-// CHECK: call i32 (i32)* (%struct.B*)* @_ZN1BcvRFiiEEv
+// CHECK: call i32 (i32)* @_ZN1AcvPFiiEEv
+// CHECK: call i32 (i32)* @_ZN1BcvRFiiEEv

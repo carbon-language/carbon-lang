@@ -641,7 +641,7 @@ float test_hfa(int n, ...) {
 
 float test_hfa_call(struct HFA *a) {
 // CHECK-LABEL: define float @test_hfa_call(%struct.HFA* %a)
-// CHECK: call float (i32, ...)* @test_hfa(i32 1, [4 x float] {{.*}})
+// CHECK: call float (i32, ...) @test_hfa(i32 1, [4 x float] {{.*}})
   test_hfa(1, *a);
 }
 

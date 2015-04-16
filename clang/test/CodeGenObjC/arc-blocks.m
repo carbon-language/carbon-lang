@@ -87,7 +87,7 @@ void test3(void (^sink)(id*)) {
   // CHECK-NEXT: call void [[F1]](i8* [[BLOCK]], i8** [[TEMP]])
   // CHECK-NEXT: [[T0:%.*]] = load i8*, i8** [[TEMP]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
-  // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[V]]) [[NUW]]
+  // CHECK-NEXT: call void (...) @clang.arc.use(i8* [[V]]) [[NUW]]
   // CHECK-NEXT: [[T2:%.*]] = load i8*, i8** [[STRONG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[STRONG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])

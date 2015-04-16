@@ -24,7 +24,7 @@ void f(C *c) {
 // CHECK: call x86_thiscallcc void bitcast (void (%"struct.num_params::C"*, ...)* @"\01??_9C@num_params@@$BA@AE" to void (%"struct.num_params::C"*, i32, i32)*)(%"struct.num_params::C"* %{{.*}}, i32 0, i32 0)
 
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@num_params@@$BA@AE"(%"struct.num_params::C"* %this, ...) {{.*}} comdat
-// CHECK: musttail call x86_thiscallcc void (%"struct.num_params::C"*, ...)* %{{.*}}(%"struct.num_params::C"* %{{.*}}, ...)
+// CHECK: musttail call x86_thiscallcc void (%"struct.num_params::C"*, ...) %{{.*}}(%"struct.num_params::C"* %{{.*}}, ...)
 // CHECK-NEXT: ret void
 
 namespace i64_return {
@@ -46,7 +46,7 @@ long long f(C *c) {
 // CHECK: call x86_thiscallcc i64 bitcast (void (%"struct.i64_return::C"*, ...)* @"\01??_9C@i64_return@@$BA@AE" to i64 (%"struct.i64_return::C"*)*)(%"struct.i64_return::C"* %{{.*}})
 
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@i64_return@@$BA@AE"(%"struct.i64_return::C"* %this, ...) {{.*}} comdat
-// CHECK: musttail call x86_thiscallcc void (%"struct.i64_return::C"*, ...)* %{{.*}}(%"struct.i64_return::C"* %{{.*}}, ...)
+// CHECK: musttail call x86_thiscallcc void (%"struct.i64_return::C"*, ...) %{{.*}}(%"struct.i64_return::C"* %{{.*}}, ...)
 // CHECK-NEXT: ret void
 
 namespace sret {
@@ -68,7 +68,7 @@ void f(C *c) {
 // CHECK: call x86_thiscallcc void bitcast (void (%"struct.sret::C"*, ...)* @"\01??_9C@sret@@$BA@AE" to void (%"struct.sret::C"*, %"struct.sret::Big"*)*)(%"struct.sret::C"* %{{.*}}, %"struct.sret::Big"* sret %{{.*}})
 
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@sret@@$BA@AE"(%"struct.sret::C"* %this, ...) {{.*}} comdat
-// CHECK: musttail call x86_thiscallcc void (%"struct.sret::C"*, ...)* %{{.*}}(%"struct.sret::C"* %{{.*}}, ...)
+// CHECK: musttail call x86_thiscallcc void (%"struct.sret::C"*, ...) %{{.*}}(%"struct.sret::C"* %{{.*}}, ...)
 // CHECK-NEXT: ret void
 
 namespace cdecl_inalloca {
@@ -97,5 +97,5 @@ void f(C *c) {
 // CHECK: call void bitcast (void (%"struct.cdecl_inalloca::C"*, ...)* @"\01??_9C@cdecl_inalloca@@$BA@AA" to void (<{ %"struct.cdecl_inalloca::C"*, %"struct.cdecl_inalloca::Big" }>*)*)(<{ %"struct.cdecl_inalloca::C"*, %"struct.cdecl_inalloca::Big" }>* inalloca %{{.*}})
 
 // CHECK-LABEL: define linkonce_odr void @"\01??_9C@cdecl_inalloca@@$BA@AA"(%"struct.cdecl_inalloca::C"* %this, ...) {{.*}} comdat
-// CHECK: musttail call void (%"struct.cdecl_inalloca::C"*, ...)* %{{.*}}(%"struct.cdecl_inalloca::C"* %{{.*}}, ...)
+// CHECK: musttail call void (%"struct.cdecl_inalloca::C"*, ...) %{{.*}}(%"struct.cdecl_inalloca::C"* %{{.*}}, ...)
 // CHECK-NEXT: ret void

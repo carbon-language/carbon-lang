@@ -22,7 +22,7 @@ T tmain() {
 
 // CHECK-LABEL: @main
 int main() {
-// CHECK: call void (%{{.+}}*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%{{.+}}* @{{.+}}, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %{{.+}}*)* [[OMP_PARALLEL_FUNC:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
+// CHECK: call void (%{{.+}}*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %{{.+}}*)* [[OMP_PARALLEL_FUNC:@.+]] to void (i32*, i32*, ...)*), i8* %{{.+}})
 // CHECK-LABEL: }
 // CHECK: define internal void [[OMP_PARALLEL_FUNC]](i32* [[GTID_PARAM_ADDR:%.+]], i32* %{{.+}}, %{{.+}}* %{{.+}})
 // CHECK: store i32* [[GTID_PARAM_ADDR]], i32** [[GTID_REF_ADDR:%.+]],

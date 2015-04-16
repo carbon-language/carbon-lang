@@ -42,7 +42,7 @@ void call_vararg_method() {
   C instance;
   instance.vararg_method("Hello");
 // Make sure that the call uses the right calling convention:
-// CHECK: call void (%class.C*, i8*, ...)* @"\01?vararg_method@C@@QAAXPBDZZ"
+// CHECK: call void (%class.C*, i8*, ...) @"\01?vararg_method@C@@QAAXPBDZZ"
 // CHECK: ret
 
 // Make sure that the definition uses the right calling convention:
