@@ -74,7 +74,6 @@ public:
     const ConstantFP *getConstantFP() const { return Constant.CFP; }
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
-    const MDNode *getVariableNode() const { return Variable; }
     DIVariable getVariable() const { return cast<MDLocalVariable>(Variable); }
     bool isBitPiece() const { return getExpression()->isBitPiece(); }
     DIExpression getExpression() const {
