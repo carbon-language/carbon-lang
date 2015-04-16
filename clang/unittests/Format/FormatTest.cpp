@@ -6751,7 +6751,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyGoogleFormat("@interface Foo (HackStuff) <MyProtocol>\n"
+  verifyGoogleFormat("@interface Foo (HackStuff)<MyProtocol>\n"
                      "+ (id)init;\n"
                      "@end");
 
@@ -6793,7 +6793,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
 
   FormatStyle OnePerLine = getGoogleStyle();
   OnePerLine.BinPackParameters = false;
-  verifyFormat("@interface aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa () <\n"
+  verifyFormat("@interface aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ()<\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"

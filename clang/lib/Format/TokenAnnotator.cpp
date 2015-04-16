@@ -1664,7 +1664,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.isOneOf(tok::semi, tok::comma))
     return false;
   if (Right.is(tok::less) &&
-      (Left.isOneOf(tok::kw_template, tok::r_paren) ||
+      (Left.is(tok::kw_template) ||
        (Line.Type == LT_ObjCDecl && Style.ObjCSpaceBeforeProtocolList)))
     return true;
   if (Left.isOneOf(tok::exclaim, tok::tilde))
