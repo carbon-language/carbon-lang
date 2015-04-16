@@ -147,9 +147,14 @@ public:
   // If the key is already in the map, it returns false and doesn't update the
   // value.
   std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
-    std::pair<typename MapT::iterator, bool> map_result=
-      Map.insert(std::make_pair(Wrap(KV.first), KV.second));
-    return std::make_pair(iterator(map_result.first), map_result.second);
+    auto MapResult = Map.insert(std::make_pair(Wrap(KV.first), KV.second));
+    return std::make_pair(iterator(MapResult.first), MapResult.second);
+  }
+
+  std::pair<iterator, bool> insert(std::pair<KeyT, ValueT> &&KV) {
+    auto MapResult =
+        Map.insert(std::make_pair(Wrap(KV.first), std::move(KV.second)));
+    return std::make_pair(iterator(MapResult.first), MapResult.second);
   }
 
   /// insert - Range insertion of pairs.
@@ -256,9 +261,9 @@ public:
       // I could == Copy.Map->Map.end() if the onRAUW callback already
       // removed the old mapping.
       if (I != Copy.Map->Map.end()) {
-        ValueT Target(I->second);
+        ValueT Target(std::move(I->second));
         Copy.Map->Map.erase(I);  // Definitely destroys *this.
-        Copy.Map->insert(std::make_pair(typed_new_key, Target));
+        Copy.Map->insert(std::make_pair(typed_new_key, std::move(Target)));
       }
     }
   }

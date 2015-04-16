@@ -144,8 +144,9 @@ private:
   int MoveF64ViaSpillFI;
 
   /// MipsCallEntry maps.
-  StringMap<const MipsCallEntry *> ExternalCallEntries;
-  ValueMap<const GlobalValue *, const MipsCallEntry *> GlobalCallEntries;
+  StringMap<std::unique_ptr<const MipsCallEntry>> ExternalCallEntries;
+  ValueMap<const GlobalValue *, std::unique_ptr<const MipsCallEntry>>
+      GlobalCallEntries;
 };
 
 } // end of namespace llvm
