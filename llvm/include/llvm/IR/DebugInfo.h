@@ -58,51 +58,15 @@ class DIObjCProperty;
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 
-/// \brief A thin wraper around MDNode to access encoded debug info.
-///
-/// This should not be stored in a container, because the underlying MDNode may
-/// change in certain situations.
 class DIDescriptor {
-public:
-  /// \brief Duplicated debug info flags.
-  ///
-  /// \see DebugNode::DIFlags.
-  enum {
-#define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = DebugNode::Flag##NAME,
-#include "llvm/IR/DebugInfoFlags.def"
-    FlagAccessibility = DebugNode::FlagAccessibility
-  };
-
-protected:
-  const MDNode *DbgNode;
+  MDNode *N;
 
 public:
-  explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
-  DIDescriptor(const DebugNode *N) : DbgNode(N) {}
+  DIDescriptor(const MDNode *N = nullptr) : N(const_cast<MDNode *>(N)) {}
 
-  MDNode *get() const { return const_cast<MDNode *>(DbgNode); }
-  operator MDNode *() const { return get(); }
-  MDNode *operator->() const { return get(); }
-  MDNode &operator*() const { return *get(); }
-
-  // An explicit operator bool so that we can do testing of DI values
-  // easily.
-  // FIXME: This operator bool isn't actually protecting anything at the
-  // moment due to the conversion operator above making DIDescriptor nodes
-  // implicitly convertable to bool.
-  explicit operator bool() const { return DbgNode != nullptr; }
-
-  bool operator==(DIDescriptor Other) const { return DbgNode == Other.DbgNode; }
-  bool operator!=(DIDescriptor Other) const { return !operator==(Other); }
-
-  uint16_t getTag() const {
-    if (auto *N = dyn_cast_or_null<DebugNode>(get()))
-      return N->getTag();
-    return 0;
-  }
-
-  void print(raw_ostream &OS) const;
-  void dump() const;
+  operator MDNode *() const { return N; }
+  MDNode *operator->() const { return N; }
+  MDNode &operator*() const { return *N; }
 };
 
 #define DECLARE_SIMPLIFY_DESCRIPTOR(DESC)                                      \

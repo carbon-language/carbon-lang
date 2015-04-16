@@ -428,7 +428,7 @@ namespace llvm {
     DICompositeType createReplaceableCompositeType(
         unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F,
         unsigned Line, unsigned RuntimeLang = 0, uint64_t SizeInBits = 0,
-        uint64_t AlignInBits = 0, unsigned Flags = DIDescriptor::FlagFwdDecl,
+        uint64_t AlignInBits = 0, unsigned Flags = DebugNode::FlagFwdDecl,
         StringRef UniqueIdentifier = StringRef());
 
     /// retainType - Retain DIType in a module even if it is not referenced

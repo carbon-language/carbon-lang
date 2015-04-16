@@ -1232,7 +1232,7 @@ Function *PrototypeAST::Codegen() {
   DISubprogram SP = DBuilder->createFunction(
       FContext, Name, StringRef(), Unit, LineNo,
       CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
-      true /* definition */, ScopeLine, DIDescriptor::FlagPrototyped, false, F);
+      true /* definition */, ScopeLine, DebugNode::FlagPrototyped, false, F);
 
   KSDbgInfo.FnScopeMap[this] = SP;
   return F;

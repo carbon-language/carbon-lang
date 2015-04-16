@@ -1405,9 +1405,10 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   // Add subranges to array type.
   DIArray Elements = CTy->getElements();
   for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-    DIDescriptor Element = Elements[i];
-    if (Element.getTag() == dwarf::DW_TAG_subrange_type)
-      constructSubrangeDIE(Buffer, cast<MDSubrange>(Element), IdxTy);
+    // FIXME: Should this really be such a loose cast?
+    if (auto *Element = dyn_cast_or_null<DebugNode>(Elements[i]))
+      if (Element->getTag() == dwarf::DW_TAG_subrange_type)
+        constructSubrangeDIE(Buffer, cast<MDSubrange>(Element), IdxTy);
   }
 }
 

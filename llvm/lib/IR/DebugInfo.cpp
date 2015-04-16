@@ -307,21 +307,6 @@ bool DebugInfoFinder::addScope(DIScope Scope) {
   return true;
 }
 
-//===----------------------------------------------------------------------===//
-// DIDescriptor: dump routines for all descriptors.
-//===----------------------------------------------------------------------===//
-
-void DIDescriptor::dump() const {
-  print(dbgs());
-  dbgs() << '\n';
-}
-
-void DIDescriptor::print(raw_ostream &OS) const {
-  if (!get())
-    return;
-  get()->print(OS);
-}
-
 template <>
 DIDescriptor
 DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const {

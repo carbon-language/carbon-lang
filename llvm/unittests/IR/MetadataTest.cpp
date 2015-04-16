@@ -947,15 +947,15 @@ TEST_F(MDTypeTest, setFlags) {
 
   MDType *D = MDSubroutineType::getDistinct(Context, 0u, Types);
   EXPECT_EQ(0u, D->getFlags());
-  D->setFlags(DIDescriptor::FlagRValueReference);
-  EXPECT_EQ(DIDescriptor::FlagRValueReference, D->getFlags());
+  D->setFlags(DebugNode::FlagRValueReference);
+  EXPECT_EQ(DebugNode::FlagRValueReference, D->getFlags());
   D->setFlags(0u);
   EXPECT_EQ(0u, D->getFlags());
 
   TempMDType T = MDSubroutineType::getTemporary(Context, 0u, Types);
   EXPECT_EQ(0u, T->getFlags());
-  T->setFlags(DIDescriptor::FlagRValueReference);
-  EXPECT_EQ(DIDescriptor::FlagRValueReference, T->getFlags());
+  T->setFlags(DebugNode::FlagRValueReference);
+  EXPECT_EQ(DebugNode::FlagRValueReference, T->getFlags());
   T->setFlags(0u);
   EXPECT_EQ(0u, T->getFlags());
 }

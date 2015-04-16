@@ -203,7 +203,7 @@ DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
   // types that have one.
   return ::createImportedModule(
       VMContext, dwarf::DW_TAG_imported_declaration, Context,
-      DebugNodeRef::get(cast_or_null<DebugNode>(Decl.get())), Line, Name,
+      DebugNodeRef::get(cast_or_null<DebugNode>(Decl)), Line, Name,
       AllImportedModules);
 }
 
@@ -318,7 +318,7 @@ DIDerivedType DIBuilder::createStaticMemberType(DIDescriptor Scope,
                                                 unsigned Flags,
                                                 llvm::Constant *Val) {
   // TAG_member is encoded in DIDerivedType format.
-  Flags |= DIDescriptor::FlagStaticMember;
+  Flags |= DebugNode::FlagStaticMember;
   return MDDerivedType::get(
       VMContext, dwarf::DW_TAG_member, Name, File, LineNumber,
       MDScopeRef::get(DIScope(getNonCompileUnitScope(Scope))),
@@ -529,8 +529,8 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
   DICompositeType RetTy = MDCompositeType::get(
       VMContext, Tag, Name, F, Line,
       MDScopeRef::get(DIScope(getNonCompileUnitScope(Scope))), nullptr,
-      SizeInBits, AlignInBits, 0, DIDescriptor::FlagFwdDecl, nullptr,
-      RuntimeLang, nullptr, nullptr, UniqueIdentifier);
+      SizeInBits, AlignInBits, 0, DebugNode::FlagFwdDecl, nullptr, RuntimeLang,
+      nullptr, nullptr, UniqueIdentifier);
   if (!UniqueIdentifier.empty())
     retainType(RetTy);
   trackIfUnresolved(RetTy);
