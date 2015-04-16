@@ -1006,7 +1006,6 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (LdStHasDebugValue(DIVar, SI))
     return true;
 
-  Instruction *DbgVal = nullptr;
   // If an argument is zero extended then use argument directly. The ZExt
   // may be zapped by an optimization pass in future.
   Argument *ExtendedArg = nullptr;
@@ -1015,11 +1014,11 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
     ExtendedArg = dyn_cast<Argument>(SExt->getOperand(0));
   if (ExtendedArg)
-    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, DIExpr,
-                                             DDI->getDebugLoc(), SI);
+    Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, DIExpr,
+                                    DDI->getDebugLoc(), SI);
   else
-    DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar,
-                                             DIExpr, DDI->getDebugLoc(), SI);
+    Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar, DIExpr,
+                                    DDI->getDebugLoc(), SI);
   return true;
 }
 
