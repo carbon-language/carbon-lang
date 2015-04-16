@@ -1,4 +1,4 @@
-; RUN: opt < %s -nary-reassociate -S | FileCheck %s
+; RUN: opt < %s -nary-reassociate -dce -S | FileCheck %s
 
 target datalayout = "e-i64:64-v16:16-v32:32-n16:32:64"
 
@@ -102,6 +102,57 @@ then3:
   br label %return
 
 return:
+  ret void
+}
+
+; This test involves more conditional reassociation candidates. It exercises
+; the stack optimization in tryReassociatedAdd that pops the candidates that
+; do not dominate the current instruction.
+;
+;       def1
+;      cond1
+;      /  \
+;     /    \
+;   cond2  use2
+;   /  \
+;  /    \
+; def2  def3
+;      cond3
+;       /  \
+;      /    \
+;    def4   use1
+;
+; NaryReassociate should match use1 with def3, and use2 with def1.
+define void @conditional2(i32 %a, i32 %b, i32 %c, i1 %cond1, i1 %cond2, i1 %cond3) {
+entry:
+  %def1 = add i32 %a, %b
+  br i1 %cond1, label %bb1, label %bb6
+bb1:
+  br i1 %cond2, label %bb2, label %bb3
+bb2:
+  %def2 = add i32 %a, %b
+  call void @foo(i32 %def2)
+  ret void
+bb3:
+  %def3 = add i32 %a, %b
+  br i1 %cond3, label %bb4, label %bb5
+bb4:
+  %def4 = add i32 %a, %b
+  call void @foo(i32 %def4)
+  ret void
+bb5:
+  %0 = add i32 %a, %c
+  %1 = add i32 %0, %b
+; CHECK: [[t1:%[0-9]+]] = add i32 %def3, %c
+  call void @foo(i32 %1) ; foo((a + c) + b);
+; CHECK-NEXT: call void @foo(i32 [[t1]])
+  ret void
+bb6:
+  %2 = add i32 %a, %c
+  %3 = add i32 %2, %b
+; CHECK: [[t2:%[0-9]+]] = add i32 %def1, %c
+  call void @foo(i32 %3) ; foo((a + c) + b);
+; CHECK-NEXT: call void @foo(i32 [[t2]])
   ret void
 }
 

@@ -105,7 +105,9 @@ private:
   ScalarEvolution *SE;
   // A lookup table quickly telling which instructions compute the given SCEV.
   // Note that there can be multiple instructions at different locations
-  // computing to the same SCEV.  For example,
+  // computing to the same SCEV, so we map a SCEV to an instruction list.  For
+  // example,
+  //
   //   if (p1)
   //     foo(a + b);
   //   if (p2)
@@ -190,17 +192,21 @@ Instruction *NaryReassociate::tryReassociatedAdd(const SCEV *LHSExpr,
     return nullptr;
 
   auto &LHSCandidates = Pos->second;
-  unsigned NumIterations = 0;
-  // Search at most 10 items to avoid running quadratically.
-  static const unsigned MaxNumIterations = 10;
-  for (auto LHS = LHSCandidates.rbegin();
-       LHS != LHSCandidates.rend() && NumIterations < MaxNumIterations;
-       ++LHS, ++NumIterations) {
-    if (DT->dominates(*LHS, I)) {
-      Instruction *NewI = BinaryOperator::CreateAdd(*LHS, RHS, "", I);
+  // Look for the closest dominator LHS of I that computes LHSExpr, and replace
+  // I with LHS + RHS.
+  //
+  // Because we traverse the dominator tree in the pre-order, a
+  // candidate that doesn't dominate the current instruction won't dominate any
+  // future instruction either. Therefore, we pop it out of the stack. This
+  // optimization makes the algorithm O(n).
+  while (!LHSCandidates.empty()) {
+    Instruction *LHS = LHSCandidates.back();
+    if (DT->dominates(LHS, I)) {
+      Instruction *NewI = BinaryOperator::CreateAdd(LHS, RHS, "", I);
       NewI->takeName(I);
       return NewI;
     }
+    LHSCandidates.pop_back();
   }
   return nullptr;
 }
