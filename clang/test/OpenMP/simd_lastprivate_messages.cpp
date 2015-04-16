@@ -53,6 +53,14 @@ public:
 S3 h;
 #pragma omp threadprivate(h) // expected-note 2 {{defined as threadprivate or thread local}}
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 template <class I, class C>
 int foomain(I argc, C **argv) {
   I e(4);
@@ -92,7 +100,7 @@ int foomain(I argc, C **argv) {
 #pragma omp simd lastprivate(e, g)
   for (int k = 0; k < argc; ++k)
     ++k;
-#pragma omp simd lastprivate(h) // expected-error {{threadprivate or thread local variable cannot be lastprivate}}
+#pragma omp simd lastprivate(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be lastprivate}}
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp simd firstprivate(i) // expected-error {{unexpected OpenMP clause 'firstprivate' in directive '#pragma omp simd'}}

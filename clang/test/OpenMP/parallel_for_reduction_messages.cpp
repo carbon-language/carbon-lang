@@ -177,6 +177,14 @@ T tmain(T argc) {
   return T();
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;       // expected-note 2 {{'d' defined here}}
   const int da[5] = {0}; // expected-note {{'da' defined here}}
@@ -258,7 +266,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for reduction(& : e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{invalid operands to binary expression ('S4' and 'S4')}} expected-error {{calling a private constructor of class 'S5'}} expected-error {{invalid operands to binary expression ('S5' and 'S5')}}
   for (int i = 0; i < 10; ++i)
     foo();
-#pragma omp parallel for reduction(+ : h, k) // expected-error {{threadprivate or thread local variable cannot be reduction}}
+#pragma omp parallel for reduction(+ : h, k, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be reduction}}
   for (int i = 0; i < 10; ++i)
     foo();
 #pragma omp parallel for reduction(+ : o) // expected-error {{no viable overloaded '='}}

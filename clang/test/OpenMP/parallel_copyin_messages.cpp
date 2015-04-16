@@ -40,6 +40,13 @@ public:
   static T s;
 };
 
+namespace A {
+double x;
+#pragma omp threadprivate(x)
+}
+namespace B {
+using A::x;
+}
 
 S2 k;
 S3 h;
@@ -61,6 +68,7 @@ int main(int argc, char **argv) {
   #pragma omp parallel copyin(i) // expected-error {{copyin variable must be threadprivate}}
   #pragma omp parallel copyin(m) // expected-error {{'operator=' is a private member of 'S5'}}
   #pragma omp parallel copyin(ST<int>::s) // expected-error {{copyin variable must be threadprivate}}
+  #pragma omp parallel copyin(B::x)
   foo();
 
   return 0;

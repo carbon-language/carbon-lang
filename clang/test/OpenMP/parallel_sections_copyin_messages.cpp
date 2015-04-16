@@ -50,6 +50,14 @@ S4 l(3);
 S5 m(4);
 #pragma omp threadprivate(h, k, l, m)
 
+namespace A {
+double x;
+#pragma omp threadprivate(x)
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   int i;
 #pragma omp parallel sections copyin // expected-error {{expected '(' after 'copyin'}}
@@ -96,7 +104,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-#pragma omp parallel sections copyin(ST < int > ::s) // expected-error {{copyin variable must be threadprivate}}
+#pragma omp parallel sections copyin(ST < int > ::s, B::x) // expected-error {{copyin variable must be threadprivate}}
   {
     foo();
   }

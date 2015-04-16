@@ -238,6 +238,7 @@ bool isParallelOrTaskRegion(OpenMPDirectiveKind DKind) {
 
 DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
                                           VarDecl *D) {
+  D = D->getCanonicalDecl();
   DSAVarData DVar;
   if (Iter == std::prev(Stack.rend())) {
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
@@ -342,6 +343,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
 
 DeclRefExpr *DSAStackTy::addUniqueAligned(VarDecl *D, DeclRefExpr *NewDE) {
   assert(Stack.size() > 1 && "Data sharing attributes stack is empty");
+  D = D->getCanonicalDecl();
   auto It = Stack.back().AlignedMap.find(D);
   if (It == Stack.back().AlignedMap.end()) {
     assert(NewDE && "Unexpected nullptr expr to be added into aligned map");
@@ -355,6 +357,7 @@ DeclRefExpr *DSAStackTy::addUniqueAligned(VarDecl *D, DeclRefExpr *NewDE) {
 }
 
 void DSAStackTy::addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A) {
+  D = D->getCanonicalDecl();
   if (A == OMPC_threadprivate) {
     Stack[0].SharingMap[D].Attributes = A;
     Stack[0].SharingMap[D].RefExpr = E;
@@ -366,6 +369,7 @@ void DSAStackTy::addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A) {
 }
 
 bool DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
+  D = D->getCanonicalDecl();
   if (Stack.size() > 2) {
     reverse_iterator I = Iter, E = std::prev(Stack.rend());
     Scope *TopScope = nullptr;
@@ -385,6 +389,7 @@ bool DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
 }
 
 DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
+  D = D->getCanonicalDecl();
   DSAVarData DVar;
 
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
@@ -477,6 +482,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
 }
 
 DSAStackTy::DSAVarData DSAStackTy::getImplicitDSA(VarDecl *D, bool FromParent) {
+  D = D->getCanonicalDecl();
   auto StartI = Stack.rbegin();
   auto EndI = std::prev(Stack.rend());
   if (FromParent && StartI != EndI) {
@@ -489,6 +495,7 @@ template <class ClausesPredicate, class DirectivesPredicate>
 DSAStackTy::DSAVarData DSAStackTy::hasDSA(VarDecl *D, ClausesPredicate CPred,
                                           DirectivesPredicate DPred,
                                           bool FromParent) {
+  D = D->getCanonicalDecl();
   auto StartI = std::next(Stack.rbegin());
   auto EndI = std::prev(Stack.rend());
   if (FromParent && StartI != EndI) {
@@ -508,6 +515,7 @@ template <class ClausesPredicate, class DirectivesPredicate>
 DSAStackTy::DSAVarData
 DSAStackTy::hasInnermostDSA(VarDecl *D, ClausesPredicate CPred,
                             DirectivesPredicate DPred, bool FromParent) {
+  D = D->getCanonicalDecl();
   auto StartI = std::next(Stack.rbegin());
   auto EndI = std::prev(Stack.rend());
   if (FromParent && StartI != EndI) {
@@ -546,6 +554,7 @@ void Sema::InitDataSharingAttributesStack() {
 
 bool Sema::IsOpenMPCapturedVar(VarDecl *VD) {
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
+  VD = VD->getCanonicalDecl();
   if (DSAStack->getCurrentDirective() != OMPD_unknown) {
     auto DVarPrivate = DSAStack->getTopDSA(VD, /*FromParent=*/false);
     if (DVarPrivate.CKind != OMPC_unknown && isOpenMPPrivate(DVarPrivate.CKind))
@@ -757,7 +766,7 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
   // OpenMP [2.9.2, Restrictions, C/C++, p.2-6]
   //   A threadprivate directive must lexically precede all references to any
   //   of the variables in its list.
-  if (VD->isUsed() && !DSAStack->isThreadPrivate(CanonicalVD)) {
+  if (VD->isUsed() && !DSAStack->isThreadPrivate(VD)) {
     Diag(Id.getLoc(), diag::err_omp_var_used)
         << getOpenMPDirectiveName(OMPD_threadprivate) << VD;
     return ExprError();

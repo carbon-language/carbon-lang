@@ -235,6 +235,14 @@ T tmain(T argc) {
   return T();
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;       // expected-note 2 {{'d' defined here}}
   const int da[5] = {0}; // expected-note {{'da' defined here}}
@@ -363,7 +371,7 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections reduction(+ : h, k) // expected-error {{threadprivate or thread local variable cannot be reduction}}
+#pragma omp sections reduction(+ : h, k, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be reduction}}
   {
     foo();
   }

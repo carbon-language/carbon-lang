@@ -85,6 +85,14 @@ template<class I, class C> int foomain(I argc, C **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
@@ -112,7 +120,7 @@ int main(int argc, char **argv) {
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   for (int k = 0; k < argc; ++k) ++k;
-  #pragma omp simd private(h) // expected-error {{threadprivate or thread local variable cannot be private}}
+  #pragma omp simd private(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd shared(i) // expected-error {{unexpected OpenMP clause 'shared' in directive '#pragma omp simd'}}
   for (int k = 0; k < argc; ++k) ++k;

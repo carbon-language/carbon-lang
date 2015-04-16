@@ -50,6 +50,14 @@ S4 l(3);
 S5 m(4);
 #pragma omp threadprivate(h, k, l, m)
 
+namespace A {
+double x;
+#pragma omp threadprivate(x)
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   int i;
 #pragma omp parallel for simd copyin // expected-error {{expected '(' after 'copyin'}}
@@ -85,7 +93,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for simd copyin(m) // expected-error {{'operator=' is a private member of 'S5'}}
   for (i = 0; i < argc; ++i)
     foo();
-#pragma omp parallel for simd copyin(ST < int > ::s) // expected-error {{copyin variable must be threadprivate}}
+#pragma omp parallel for simd copyin(ST < int > ::s, B::x) // expected-error {{copyin variable must be threadprivate}}
   for (i = 0; i < argc; ++i)
     foo();
 

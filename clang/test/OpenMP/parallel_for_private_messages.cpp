@@ -108,6 +108,14 @@ int foomain(I argc, C **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
@@ -146,7 +154,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   for (int k = 0; k < argc; ++k)
     ++k;
-#pragma omp parallel for private(h) // expected-error {{threadprivate or thread local variable cannot be private}}
+#pragma omp parallel for private(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for nowait // expected-error {{unexpected OpenMP clause 'nowait' in directive '#pragma omp parallel for'}}

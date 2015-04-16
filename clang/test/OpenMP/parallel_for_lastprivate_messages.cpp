@@ -128,6 +128,14 @@ int foomain(int argc, char **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;       // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = {0}; // expected-note {{constant variable is predetermined as shared}}
@@ -198,7 +206,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for lastprivate(m) // expected-error {{'operator=' is a private member of 'S3'}}
   for (i = 0; i < argc; ++i)
     foo();
-#pragma omp parallel for lastprivate(h) // expected-error {{threadprivate or thread local variable cannot be lastprivate}}
+#pragma omp parallel for lastprivate(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be lastprivate}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel for private(xa), lastprivate(xa) // expected-error {{private variable cannot be lastprivate}} expected-note {{defined as private}}

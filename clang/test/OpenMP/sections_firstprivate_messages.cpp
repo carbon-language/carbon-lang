@@ -170,6 +170,14 @@ int foomain(int argc, char **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
@@ -281,7 +289,7 @@ int main(int argc, char **argv) {
     foo();
   }
 #pragma omp parallel
-#pragma omp sections firstprivate(h) // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
+#pragma omp sections firstprivate(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be firstprivate}}
   {
     foo();
   }

@@ -142,6 +142,14 @@ int foomain(int argc, char **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;       // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = {0}; // expected-note {{constant variable is predetermined as shared}}
@@ -234,6 +242,10 @@ int main(int argc, char **argv) {
     foo();
 #pragma omp parallel
 #pragma omp for lastprivate(h) // expected-error {{threadprivate or thread local variable cannot be lastprivate}}
+  for (i = 0; i < argc; ++i)
+    foo();
+#pragma omp parallel
+#pragma omp for lastprivate(B::x) // expected-error {{threadprivate or thread local variable cannot be lastprivate}}
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel

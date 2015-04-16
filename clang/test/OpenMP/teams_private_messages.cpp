@@ -41,6 +41,14 @@ public:
 int threadvar;
 #pragma omp threadprivate(threadvar) // expected-note {{defined as threadprivate or thread local}}
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5; // expected-note {{constant variable is predetermined as shared}}
   const int da[5] = { 0 }; // expected-note {{constant variable is predetermined as shared}}
@@ -94,7 +102,7 @@ int main(int argc, char **argv) {
   #pragma omp teams private(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   foo();
   #pragma omp target
-  #pragma omp teams private(threadvar) // expected-error {{threadprivate or thread local variable cannot be private}}
+  #pragma omp teams private(threadvar, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be private}}
   foo();
   #pragma omp target
   #pragma omp teams shared(i), private(i) // expected-error {{shared variable cannot be private}} expected-note {{defined as shared}}

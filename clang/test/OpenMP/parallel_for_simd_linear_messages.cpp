@@ -148,6 +148,14 @@ template<class I, class C> int foomain(I argc, C **argv) {
   return 0;
 }
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace C {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   double darr[100];
   // expected-note@+1 {{in instantiation of function template specialization 'test_template<-4, double, int>' requested here}}
@@ -185,7 +193,7 @@ int main(int argc, char **argv) {
   // expected-error@+1 {{argument of a linear clause should be of integral or pointer type, not 'S5'}}
   #pragma omp parallel for simd linear(e, g)
   for (int k = 0; k < argc; ++k) ++k;
-  #pragma omp parallel for simd linear(h) // expected-error {{threadprivate or thread local variable cannot be linear}}
+  #pragma omp parallel for simd linear(h, C::x) // expected-error 2 {{threadprivate or thread local variable cannot be linear}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp parallel
   {

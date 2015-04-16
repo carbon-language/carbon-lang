@@ -44,6 +44,14 @@ public:
 S3 h;
 #pragma omp threadprivate(h) // expected-note {{defined as threadprivate or thread local}}
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = { 0 };
@@ -65,7 +73,7 @@ int main(int argc, char **argv) {
   #pragma omp parallel shared(ca)
   #pragma omp parallel shared(da)
   #pragma omp parallel shared(e, g)
-  #pragma omp parallel shared(h) // expected-error {{threadprivate or thread local variable cannot be shared}}
+  #pragma omp parallel shared(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be shared}}
   #pragma omp parallel private(i), shared(i) // expected-error {{private variable cannot be shared}} expected-note {{defined as private}}
   foo();
   #pragma omp parallel firstprivate(i), shared(i) // expected-error {{firstprivate variable cannot be shared}} expected-note {{defined as firstprivate}}

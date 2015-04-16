@@ -49,6 +49,14 @@ public:
 S3 h;
 #pragma omp threadprivate(h) // expected-note {{defined as threadprivate or thread local}}
 
+namespace A {
+double x;
+#pragma omp threadprivate(x) // expected-note {{defined as threadprivate or thread local}}
+}
+namespace B {
+using A::x;
+}
+
 int main(int argc, char **argv) {
   const int d = 5;
   const int da[5] = {0};
@@ -105,7 +113,7 @@ int main(int argc, char **argv) {
 #pragma omp teams firstprivate(e, g) // expected-error {{calling a private constructor of class 'S4'}} expected-error {{calling a private constructor of class 'S5'}}
   foo();
 #pragma omp target
-#pragma omp teams firstprivate(h) // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
+#pragma omp teams firstprivate(h, B::x) // expected-error 2 {{threadprivate or thread local variable cannot be firstprivate}}
   foo();
 #pragma omp target
 #pragma omp teams private(i), firstprivate(i) // expected-error {{private variable cannot be firstprivate}} expected-note{{defined as private}}
