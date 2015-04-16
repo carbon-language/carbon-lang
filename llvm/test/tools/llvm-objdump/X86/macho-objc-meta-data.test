@@ -2,6 +2,8 @@
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.64bit.obj.macho-x86_64 | FileCheck %s -check-prefix=OBJC2_64BIT_OBJ
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.32bit.exe.macho-i386 | FileCheck %s -check-prefix=OBJC2_32BIT_EXE
 # RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc2.32bit.obj.macho-i386 | FileCheck %s -check-prefix=OBJC2_32BIT_OBJ
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc1.32bit.exe.macho-i386 | FileCheck %s -check-prefix=OBJC1_32BIT_EXE
+# RUN: llvm-objdump -m -objc-meta-data %p/Inputs/Objc1.32bit.obj.macho-i386 | FileCheck %s -check-prefix=OBJC1_32BIT_OBJ
 
 OBJC2_64BIT_EXE: Contents of (__DATA,__objc_classlist) section
 OBJC2_64BIT_EXE: 0000000100002028 0x1000029f0
@@ -613,3 +615,286 @@ OBJC2_32BIT_OBJ: 0000393c 0x3914 _OBJC_CLASS_$_DetailViewController
 OBJC2_32BIT_OBJ: Contents of (__DATA,__objc_imageinfo) section
 OBJC2_32BIT_OBJ:   version 0
 OBJC2_32BIT_OBJ:     flags 0x20
+
+OBJC1_32BIT_EXE: Objective-C segment
+OBJC1_32BIT_EXE: Module 0x4128
+OBJC1_32BIT_EXE:     version 7
+OBJC1_32BIT_EXE:        size 16
+OBJC1_32BIT_EXE:        name 
+OBJC1_32BIT_EXE:      symtab 0x00004108
+OBJC1_32BIT_EXE: 	sel_ref_cnt 0
+OBJC1_32BIT_EXE: 	refs 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 	cls_def_cnt 1
+OBJC1_32BIT_EXE: 	cat_def_cnt 0
+OBJC1_32BIT_EXE: 	Class Definitions
+OBJC1_32BIT_EXE: 	defs[0] 0x00004000
+OBJC1_32BIT_EXE: 		      isa 0x00004068
+OBJC1_32BIT_EXE: 	      super_class 0x000025b8 NSViewController
+OBJC1_32BIT_EXE: 		     name 0x000025c9 ViewController
+OBJC1_32BIT_EXE: 		  version 0x00000000
+OBJC1_32BIT_EXE: 		     info 0x00000001 CLS_CLASS
+OBJC1_32BIT_EXE: 	    instance_size 0x00000034
+OBJC1_32BIT_EXE: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		  methods 0x000040c8
+OBJC1_32BIT_EXE: 		         obsolete 0x00000000
+OBJC1_32BIT_EXE: 		     method_count 2
+OBJC1_32BIT_EXE: 		      method_name 0x0000257c viewDidLoad
+OBJC1_32BIT_EXE: 		     method_types 0x0000259e v8@0:4
+OBJC1_32BIT_EXE: 		       method_imp 0x00002430 
+OBJC1_32BIT_EXE: 		      method_name 0x00002588 setRepresentedObject:
+OBJC1_32BIT_EXE: 		     method_types 0x000025a5 v12@0:4@8
+OBJC1_32BIT_EXE: 		       method_imp 0x00002480 
+OBJC1_32BIT_EXE: 		    cache 0x00000000
+OBJC1_32BIT_EXE: 		protocols 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 	Meta Class
+OBJC1_32BIT_EXE: 		      isa 0x000025af NSObject
+OBJC1_32BIT_EXE: 	      super_class 0x000025b8 NSViewController
+OBJC1_32BIT_EXE: 		     name 0x000025c9 ViewController
+OBJC1_32BIT_EXE: 		  version 0x00000000
+OBJC1_32BIT_EXE: 		     info 0x00000002 CLS_META
+OBJC1_32BIT_EXE: 	    instance_size 0x00000030
+OBJC1_32BIT_EXE: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		  methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		    cache 0x00000000
+OBJC1_32BIT_EXE: 		protocols 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: Module 0x4138
+OBJC1_32BIT_EXE:     version 7
+OBJC1_32BIT_EXE:        size 16
+OBJC1_32BIT_EXE:        name 
+OBJC1_32BIT_EXE:      symtab 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: Module 0x4148
+OBJC1_32BIT_EXE:     version 7
+OBJC1_32BIT_EXE:        size 16
+OBJC1_32BIT_EXE:        name 
+OBJC1_32BIT_EXE:      symtab 0x00004118
+OBJC1_32BIT_EXE: 	sel_ref_cnt 0
+OBJC1_32BIT_EXE: 	refs 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 	cls_def_cnt 1
+OBJC1_32BIT_EXE: 	cat_def_cnt 0
+OBJC1_32BIT_EXE: 	Class Definitions
+OBJC1_32BIT_EXE: 	defs[0] 0x00004030
+OBJC1_32BIT_EXE: 		      isa 0x00004098
+OBJC1_32BIT_EXE: 	      super_class 0x000025af NSObject
+OBJC1_32BIT_EXE: 		     name 0x00002faa AppDelegate
+OBJC1_32BIT_EXE: 		  version 0x00000000
+OBJC1_32BIT_EXE: 		     info 0x00000001 CLS_CLASS
+OBJC1_32BIT_EXE: 	    instance_size 0x00000004
+OBJC1_32BIT_EXE: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		  methods 0x000040e8
+OBJC1_32BIT_EXE: 		         obsolete 0x00000000
+OBJC1_32BIT_EXE: 		     method_count 2
+OBJC1_32BIT_EXE: 		      method_name 0x00002c5b applicationDidFinishLaunching:
+OBJC1_32BIT_EXE: 		     method_types 0x000025a5 v12@0:4@8
+OBJC1_32BIT_EXE: 		       method_imp 0x00002510 
+OBJC1_32BIT_EXE: 		      method_name 0x00002d6f applicationWillTerminate:
+OBJC1_32BIT_EXE: 		     method_types 0x000025a5 v12@0:4@8
+OBJC1_32BIT_EXE: 		       method_imp 0x00002530 
+OBJC1_32BIT_EXE: 		    cache 0x00000000
+OBJC1_32BIT_EXE: 		protocols 0x000043b4
+OBJC1_32BIT_EXE: 		         next 0x00000000
+OBJC1_32BIT_EXE: 		        count 1
+OBJC1_32BIT_EXE: 		      list[0] 0x00004390
+OBJC1_32BIT_EXE: 		              isa 0x000030b0
+OBJC1_32BIT_EXE: 		    protocol_name 0x00002dd3 NSApplicationDelegate
+OBJC1_32BIT_EXE: 		    protocol_list 0x000043a4
+OBJC1_32BIT_EXE: 		             next 0x00000000
+OBJC1_32BIT_EXE: 		            count 1
+OBJC1_32BIT_EXE: 		          list[0] 0x0000437c
+OBJC1_32BIT_EXE: 		                  isa 0x00003120
+OBJC1_32BIT_EXE: 		        protocol_name 0x000025af NSObject
+OBJC1_32BIT_EXE: 		        protocol_list 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		     instance_methods 0x00004290
+OBJC1_32BIT_EXE: 		            count 19
+OBJC1_32BIT_EXE: 		            list[0]
+OBJC1_32BIT_EXE: 		                 name 0x00002de9 isEqual:
+OBJC1_32BIT_EXE: 		                types 0x000026e7 c12@0:4@8
+OBJC1_32BIT_EXE: 		            list[1]
+OBJC1_32BIT_EXE: 		                 name 0x00002df2 class
+OBJC1_32BIT_EXE: 		                types 0x00002df8 #8@0:4
+OBJC1_32BIT_EXE: 		            list[2]
+OBJC1_32BIT_EXE: 		                 name 0x00002dff self
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[3]
+OBJC1_32BIT_EXE: 		                 name 0x00002e0b performSelector:
+OBJC1_32BIT_EXE: 		                types 0x00002e1c @12@0:4:8
+OBJC1_32BIT_EXE: 		            list[4]
+OBJC1_32BIT_EXE: 		                 name 0x00002e26 performSelector:withObject:
+OBJC1_32BIT_EXE: 		                types 0x00002e42 @16@0:4:8@12
+OBJC1_32BIT_EXE: 		            list[5]
+OBJC1_32BIT_EXE: 		                 name 0x00002e4f performSelector:withObject:withObject:
+OBJC1_32BIT_EXE: 		                types 0x00002e76 @20@0:4:8@12@16
+OBJC1_32BIT_EXE: 		            list[6]
+OBJC1_32BIT_EXE: 		                 name 0x00002e86 isProxy
+OBJC1_32BIT_EXE: 		                types 0x00002e8e c8@0:4
+OBJC1_32BIT_EXE: 		            list[7]
+OBJC1_32BIT_EXE: 		                 name 0x00002e95 isKindOfClass:
+OBJC1_32BIT_EXE: 		                types 0x00002ea4 c12@0:4#8
+OBJC1_32BIT_EXE: 		            list[8]
+OBJC1_32BIT_EXE: 		                 name 0x00002eae isMemberOfClass:
+OBJC1_32BIT_EXE: 		                types 0x00002ea4 c12@0:4#8
+OBJC1_32BIT_EXE: 		            list[9]
+OBJC1_32BIT_EXE: 		                 name 0x00002ebf conformsToProtocol:
+OBJC1_32BIT_EXE: 		                types 0x000026e7 c12@0:4@8
+OBJC1_32BIT_EXE: 		            list[10]
+OBJC1_32BIT_EXE: 		                 name 0x00002ee7 respondsToSelector:
+OBJC1_32BIT_EXE: 		                types 0x00002efb c12@0:4:8
+OBJC1_32BIT_EXE: 		            list[11]
+OBJC1_32BIT_EXE: 		                 name 0x00002f05 retain
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[12]
+OBJC1_32BIT_EXE: 		                 name 0x00002f0c release
+OBJC1_32BIT_EXE: 		                types 0x00002f14 Vv8@0:4
+OBJC1_32BIT_EXE: 		            list[13]
+OBJC1_32BIT_EXE: 		                 name 0x00002f1c autorelease
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[14]
+OBJC1_32BIT_EXE: 		                 name 0x00002f28 retainCount
+OBJC1_32BIT_EXE: 		                types 0x00002f34 I8@0:4
+OBJC1_32BIT_EXE: 		            list[15]
+OBJC1_32BIT_EXE: 		                 name 0x00002f3b zone
+OBJC1_32BIT_EXE: 		                types 0x00002f40 ^{_NSZone=}8@0:4
+OBJC1_32BIT_EXE: 		            list[16]
+OBJC1_32BIT_EXE: 		                 name 0x00002f51 hash
+OBJC1_32BIT_EXE: 		                types 0x00002f34 I8@0:4
+OBJC1_32BIT_EXE: 		            list[17]
+OBJC1_32BIT_EXE: 		                 name 0x00002f56 superclass
+OBJC1_32BIT_EXE: 		                types 0x00002df8 #8@0:4
+OBJC1_32BIT_EXE: 		            list[18]
+OBJC1_32BIT_EXE: 		                 name 0x00002f61 description
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		        class_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		 instance_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		    class_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 	Meta Class
+OBJC1_32BIT_EXE: 		      isa 0x000025af NSObject
+OBJC1_32BIT_EXE: 	      super_class 0x000025af NSObject
+OBJC1_32BIT_EXE: 		     name 0x00002faa AppDelegate
+OBJC1_32BIT_EXE: 		  version 0x00000000
+OBJC1_32BIT_EXE: 		     info 0x00000002 CLS_META
+OBJC1_32BIT_EXE: 	    instance_size 0x00000030
+OBJC1_32BIT_EXE: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		  methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		    cache 0x00000000
+OBJC1_32BIT_EXE: 		protocols 0x000043b4
+OBJC1_32BIT_EXE: 		         next 0x00000000
+OBJC1_32BIT_EXE: 		        count 1
+OBJC1_32BIT_EXE: 		      list[0] 0x00004390
+OBJC1_32BIT_EXE: 		              isa 0x000030b0
+OBJC1_32BIT_EXE: 		    protocol_name 0x00002dd3 NSApplicationDelegate
+OBJC1_32BIT_EXE: 		    protocol_list 0x000043a4
+OBJC1_32BIT_EXE: 		             next 0x00000000
+OBJC1_32BIT_EXE: 		            count 1
+OBJC1_32BIT_EXE: 		          list[0] 0x0000437c
+OBJC1_32BIT_EXE: 		                  isa 0x00003120
+OBJC1_32BIT_EXE: 		        protocol_name 0x000025af NSObject
+OBJC1_32BIT_EXE: 		        protocol_list 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		     instance_methods 0x00004290
+OBJC1_32BIT_EXE: 		            count 19
+OBJC1_32BIT_EXE: 		            list[0]
+OBJC1_32BIT_EXE: 		                 name 0x00002de9 isEqual:
+OBJC1_32BIT_EXE: 		                types 0x000026e7 c12@0:4@8
+OBJC1_32BIT_EXE: 		            list[1]
+OBJC1_32BIT_EXE: 		                 name 0x00002df2 class
+OBJC1_32BIT_EXE: 		                types 0x00002df8 #8@0:4
+OBJC1_32BIT_EXE: 		            list[2]
+OBJC1_32BIT_EXE: 		                 name 0x00002dff self
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[3]
+OBJC1_32BIT_EXE: 		                 name 0x00002e0b performSelector:
+OBJC1_32BIT_EXE: 		                types 0x00002e1c @12@0:4:8
+OBJC1_32BIT_EXE: 		            list[4]
+OBJC1_32BIT_EXE: 		                 name 0x00002e26 performSelector:withObject:
+OBJC1_32BIT_EXE: 		                types 0x00002e42 @16@0:4:8@12
+OBJC1_32BIT_EXE: 		            list[5]
+OBJC1_32BIT_EXE: 		                 name 0x00002e4f performSelector:withObject:withObject:
+OBJC1_32BIT_EXE: 		                types 0x00002e76 @20@0:4:8@12@16
+OBJC1_32BIT_EXE: 		            list[6]
+OBJC1_32BIT_EXE: 		                 name 0x00002e86 isProxy
+OBJC1_32BIT_EXE: 		                types 0x00002e8e c8@0:4
+OBJC1_32BIT_EXE: 		            list[7]
+OBJC1_32BIT_EXE: 		                 name 0x00002e95 isKindOfClass:
+OBJC1_32BIT_EXE: 		                types 0x00002ea4 c12@0:4#8
+OBJC1_32BIT_EXE: 		            list[8]
+OBJC1_32BIT_EXE: 		                 name 0x00002eae isMemberOfClass:
+OBJC1_32BIT_EXE: 		                types 0x00002ea4 c12@0:4#8
+OBJC1_32BIT_EXE: 		            list[9]
+OBJC1_32BIT_EXE: 		                 name 0x00002ebf conformsToProtocol:
+OBJC1_32BIT_EXE: 		                types 0x000026e7 c12@0:4@8
+OBJC1_32BIT_EXE: 		            list[10]
+OBJC1_32BIT_EXE: 		                 name 0x00002ee7 respondsToSelector:
+OBJC1_32BIT_EXE: 		                types 0x00002efb c12@0:4:8
+OBJC1_32BIT_EXE: 		            list[11]
+OBJC1_32BIT_EXE: 		                 name 0x00002f05 retain
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[12]
+OBJC1_32BIT_EXE: 		                 name 0x00002f0c release
+OBJC1_32BIT_EXE: 		                types 0x00002f14 Vv8@0:4
+OBJC1_32BIT_EXE: 		            list[13]
+OBJC1_32BIT_EXE: 		                 name 0x00002f1c autorelease
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		            list[14]
+OBJC1_32BIT_EXE: 		                 name 0x00002f28 retainCount
+OBJC1_32BIT_EXE: 		                types 0x00002f34 I8@0:4
+OBJC1_32BIT_EXE: 		            list[15]
+OBJC1_32BIT_EXE: 		                 name 0x00002f3b zone
+OBJC1_32BIT_EXE: 		                types 0x00002f40 ^{_NSZone=}8@0:4
+OBJC1_32BIT_EXE: 		            list[16]
+OBJC1_32BIT_EXE: 		                 name 0x00002f51 hash
+OBJC1_32BIT_EXE: 		                types 0x00002f34 I8@0:4
+OBJC1_32BIT_EXE: 		            list[17]
+OBJC1_32BIT_EXE: 		                 name 0x00002f56 superclass
+OBJC1_32BIT_EXE: 		                types 0x00002df8 #8@0:4
+OBJC1_32BIT_EXE: 		            list[18]
+OBJC1_32BIT_EXE: 		                 name 0x00002f61 description
+OBJC1_32BIT_EXE: 		                types 0x00002e04 @8@0:4
+OBJC1_32BIT_EXE: 		        class_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		 instance_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: 		    class_methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_EXE: Contents of (__OBJC,__image_info) section
+OBJC1_32BIT_EXE:   version 0
+OBJC1_32BIT_EXE:     flags 0x0 RR
+
+OBJC1_32BIT_OBJ: Objective-C segment
+OBJC1_32BIT_OBJ: Module 0xb344
+OBJC1_32BIT_OBJ:     version 7
+OBJC1_32BIT_OBJ:        size 16
+OBJC1_32BIT_OBJ:        name 
+OBJC1_32BIT_OBJ:      symtab 0x0000b334
+OBJC1_32BIT_OBJ: 	sel_ref_cnt 0
+OBJC1_32BIT_OBJ: 	refs 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: 	cls_def_cnt 1
+OBJC1_32BIT_OBJ: 	cat_def_cnt 0
+OBJC1_32BIT_OBJ: 	Class Definitions
+OBJC1_32BIT_OBJ: 	defs[0] 0x0000b24c
+OBJC1_32BIT_OBJ: 		      isa 0x0000b2e4
+OBJC1_32BIT_OBJ: 	      super_class 0x0000b2b8 NSViewController
+OBJC1_32BIT_OBJ: 		     name 0x0000b2c9 ViewController
+OBJC1_32BIT_OBJ: 		  version 0x00000000
+OBJC1_32BIT_OBJ: 		     info 0x00000001 CLS_CLASS
+OBJC1_32BIT_OBJ: 	    instance_size 0x00000034
+OBJC1_32BIT_OBJ: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: 		  methods 0x0000b314
+OBJC1_32BIT_OBJ: 		         obsolete 0x00000000
+OBJC1_32BIT_OBJ: 		     method_count 2
+OBJC1_32BIT_OBJ: 		      method_name 0x0000b27c viewDidLoad
+OBJC1_32BIT_OBJ: 		     method_types 0x0000b29e v8@0:4
+OBJC1_32BIT_OBJ: 		       method_imp 0x00000000 -[ViewController viewDidLoad]
+OBJC1_32BIT_OBJ: 		      method_name 0x0000b288 setRepresentedObject:
+OBJC1_32BIT_OBJ: 		     method_types 0x0000b2a5 v12@0:4@8
+OBJC1_32BIT_OBJ: 		       method_imp 0x00000050 -[ViewController setRepresentedObject:]
+OBJC1_32BIT_OBJ: 		    cache 0x00000000
+OBJC1_32BIT_OBJ: 		protocols 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: 	Meta Class
+OBJC1_32BIT_OBJ: 		      isa 0x0000b2af NSObject
+OBJC1_32BIT_OBJ: 	      super_class 0x0000b2b8 NSViewController
+OBJC1_32BIT_OBJ: 		     name 0x0000b2c9 ViewController
+OBJC1_32BIT_OBJ: 		  version 0x00000000
+OBJC1_32BIT_OBJ: 		     info 0x00000002 CLS_META
+OBJC1_32BIT_OBJ: 	    instance_size 0x00000030
+OBJC1_32BIT_OBJ: 		    ivars 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: 		  methods 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: 		    cache 0x00000000
+OBJC1_32BIT_OBJ: 		protocols 0x00000000 (not in an __OBJC section)
+OBJC1_32BIT_OBJ: Contents of (__OBJC,__image_info) section
+OBJC1_32BIT_OBJ:   version 0
+OBJC1_32BIT_OBJ:     flags 0x0 RR

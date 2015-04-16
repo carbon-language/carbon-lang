@@ -612,7 +612,8 @@ static void CreateSymbolAddressMap(MachOObjectFile *O,
       Symbol.getAddress(Address);
       StringRef SymName;
       Symbol.getName(SymName);
-      (*AddrMap)[Address] = SymName;
+      if (!SymName.startswith(".objc"))
+        (*AddrMap)[Address] = SymName;
     }
   }
 }
@@ -2404,13 +2405,22 @@ static uint64_t GuessPointerPointer(uint64_t ReferenceValue,
 // section nullptr is returned.
 static const char *get_pointer_64(uint64_t Address, uint32_t &offset,
                                   uint32_t &left, SectionRef &S,
-                                  DisassembleInfo *info) {
+                                  DisassembleInfo *info,
+                                  bool objc_only = false) {
   offset = 0;
   left = 0;
   S = SectionRef();
   for (unsigned SectIdx = 0; SectIdx != info->Sections->size(); SectIdx++) {
     uint64_t SectAddress = ((*(info->Sections))[SectIdx]).getAddress();
     uint64_t SectSize = ((*(info->Sections))[SectIdx]).getSize();
+    if (objc_only) {
+      StringRef SectName;
+      ((*(info->Sections))[SectIdx]).getName(SectName);
+      DataRefImpl Ref = ((*(info->Sections))[SectIdx]).getRawDataRefImpl();
+      StringRef SegName = info->O->getSectionFinalSegmentName(Ref);
+      if (SegName != "__OBJC" && SectName != "__cstring")
+        continue;
+    }
     if (Address >= SectAddress && Address < SectAddress + SectSize) {
       S = (*(info->Sections))[SectIdx];
       offset = Address - SectAddress;
@@ -2425,8 +2435,9 @@ static const char *get_pointer_64(uint64_t Address, uint32_t &offset,
 
 static const char *get_pointer_32(uint32_t Address, uint32_t &offset,
                                   uint32_t &left, SectionRef &S,
-                                  DisassembleInfo *info) {
-  return get_pointer_64(Address, offset, left, S, info);
+                                  DisassembleInfo *info,
+                                  bool objc_only = false) {
+  return get_pointer_64(Address, offset, left, S, info, objc_only);
 }
 
 // get_symbol_64() returns the name of a symbol (or nullptr) and the address of
@@ -2705,6 +2716,10 @@ struct objc_image_info32 {
   uint32_t version;
   uint32_t flags;
 };
+struct imageInfo_t {
+  uint32_t version;
+  uint32_t flags;
+};
 /* masks for objc_image_info.flags */
 #define OBJC_IMAGE_IS_REPLACEMENT (1 << 0)
 #define OBJC_IMAGE_SUPPORTS_GC (1 << 1)
@@ -2717,6 +2732,101 @@ struct message_ref64 {
 struct message_ref32 {
   uint32_t imp; /* IMP (32-bit pointer) */
   uint32_t sel; /* SEL (32-bit pointer) */
+};
+
+// Objective-C 1 (32-bit only) meta data structs.
+
+struct objc_module_t {
+  uint32_t version;
+  uint32_t size;
+  uint32_t name;   /* char * (32-bit pointer) */
+  uint32_t symtab; /* struct objc_symtab * (32-bit pointer) */
+};
+
+struct objc_symtab_t {
+  uint32_t sel_ref_cnt;
+  uint32_t refs; /* SEL * (32-bit pointer) */
+  uint16_t cls_def_cnt;
+  uint16_t cat_def_cnt;
+  // uint32_t defs[1];        /* void * (32-bit pointer) variable size */
+};
+
+struct objc_class_t {
+  uint32_t isa;         /* struct objc_class * (32-bit pointer) */
+  uint32_t super_class; /* struct objc_class * (32-bit pointer) */
+  uint32_t name;        /* const char * (32-bit pointer) */
+  int32_t version;
+  int32_t info;
+  int32_t instance_size;
+  uint32_t ivars;       /* struct objc_ivar_list * (32-bit pointer) */
+  uint32_t methodLists; /* struct objc_method_list ** (32-bit pointer) */
+  uint32_t cache;       /* struct objc_cache * (32-bit pointer) */
+  uint32_t protocols;   /* struct objc_protocol_list * (32-bit pointer) */
+};
+
+#define CLS_GETINFO(cls, infomask) ((cls)->info & (infomask))
+// class is not a metaclass
+#define CLS_CLASS 0x1
+// class is a metaclass
+#define CLS_META 0x2
+
+struct objc_category_t {
+  uint32_t category_name;    /* char * (32-bit pointer) */
+  uint32_t class_name;       /* char * (32-bit pointer) */
+  uint32_t instance_methods; /* struct objc_method_list * (32-bit pointer) */
+  uint32_t class_methods;    /* struct objc_method_list * (32-bit pointer) */
+  uint32_t protocols;        /* struct objc_protocol_list * (32-bit ptr) */
+};
+
+struct objc_ivar_t {
+  uint32_t ivar_name; /* char * (32-bit pointer) */
+  uint32_t ivar_type; /* char * (32-bit pointer) */
+  int32_t ivar_offset;
+};
+
+struct objc_ivar_list_t {
+  int32_t ivar_count;
+  // struct objc_ivar_t ivar_list[1];          /* variable length structure */
+};
+
+struct objc_method_list_t {
+  uint32_t obsolete; /* struct objc_method_list * (32-bit pointer) */
+  int32_t method_count;
+  // struct objc_method_t method_list[1];      /* variable length structure */
+};
+
+struct objc_method_t {
+  uint32_t method_name;  /* SEL, aka struct objc_selector * (32-bit pointer) */
+  uint32_t method_types; /* char * (32-bit pointer) */
+  uint32_t method_imp;   /* IMP, aka function pointer, (*IMP)(id, SEL, ...)
+                            (32-bit pointer) */
+};
+
+struct objc_protocol_list_t {
+  uint32_t next; /* struct objc_protocol_list * (32-bit pointer) */
+  int32_t count;
+  // uint32_t list[1];   /* Protocol *, aka struct objc_protocol_t *
+  //                        (32-bit pointer) */
+};
+
+struct objc_protocol_t {
+  uint32_t isa;              /* struct objc_class * (32-bit pointer) */
+  uint32_t protocol_name;    /* char * (32-bit pointer) */
+  uint32_t protocol_list;    /* struct objc_protocol_list * (32-bit pointer) */
+  uint32_t instance_methods; /* struct objc_method_description_list *
+                                (32-bit pointer) */
+  uint32_t class_methods;    /* struct objc_method_description_list *
+                                (32-bit pointer) */
+};
+
+struct objc_method_description_list_t {
+  int32_t count;
+  // struct objc_method_description_t list[1];
+};
+
+struct objc_method_description_t {
+  uint32_t name;  /* SEL, aka struct objc_selector * (32-bit pointer) */
+  uint32_t types; /* char * (32-bit pointer) */
 };
 
 inline void swapStruct(struct cfstring64_t &cfs) {
@@ -2895,6 +3005,11 @@ inline void swapStruct(struct objc_image_info32 &o) {
   sys::swapByteOrder(o.flags);
 }
 
+inline void swapStruct(struct imageInfo_t &o) {
+  sys::swapByteOrder(o.version);
+  sys::swapByteOrder(o.flags);
+}
+
 inline void swapStruct(struct message_ref64 &mr) {
   sys::swapByteOrder(mr.imp);
   sys::swapByteOrder(mr.sel);
@@ -2903,6 +3018,84 @@ inline void swapStruct(struct message_ref64 &mr) {
 inline void swapStruct(struct message_ref32 &mr) {
   sys::swapByteOrder(mr.imp);
   sys::swapByteOrder(mr.sel);
+}
+
+inline void swapStruct(struct objc_module_t &module) {
+  sys::swapByteOrder(module.version);
+  sys::swapByteOrder(module.size);
+  sys::swapByteOrder(module.name);
+  sys::swapByteOrder(module.symtab);
+};
+
+inline void swapStruct(struct objc_symtab_t &symtab) {
+  sys::swapByteOrder(symtab.sel_ref_cnt);
+  sys::swapByteOrder(symtab.refs);
+  sys::swapByteOrder(symtab.cls_def_cnt);
+  sys::swapByteOrder(symtab.cat_def_cnt);
+};
+
+inline void swapStruct(struct objc_class_t &objc_class) {
+  sys::swapByteOrder(objc_class.isa);
+  sys::swapByteOrder(objc_class.super_class);
+  sys::swapByteOrder(objc_class.name);
+  sys::swapByteOrder(objc_class.version);
+  sys::swapByteOrder(objc_class.info);
+  sys::swapByteOrder(objc_class.instance_size);
+  sys::swapByteOrder(objc_class.ivars);
+  sys::swapByteOrder(objc_class.methodLists);
+  sys::swapByteOrder(objc_class.cache);
+  sys::swapByteOrder(objc_class.protocols);
+};
+
+inline void swapStruct(struct objc_category_t &objc_category) {
+  sys::swapByteOrder(objc_category.category_name);
+  sys::swapByteOrder(objc_category.class_name);
+  sys::swapByteOrder(objc_category.instance_methods);
+  sys::swapByteOrder(objc_category.class_methods);
+  sys::swapByteOrder(objc_category.protocols);
+}
+
+inline void swapStruct(struct objc_ivar_list_t &objc_ivar_list) {
+  sys::swapByteOrder(objc_ivar_list.ivar_count);
+}
+
+inline void swapStruct(struct objc_ivar_t &objc_ivar) {
+  sys::swapByteOrder(objc_ivar.ivar_name);
+  sys::swapByteOrder(objc_ivar.ivar_type);
+  sys::swapByteOrder(objc_ivar.ivar_offset);
+};
+
+inline void swapStruct(struct objc_method_list_t &method_list) {
+  sys::swapByteOrder(method_list.obsolete);
+  sys::swapByteOrder(method_list.method_count);
+}
+
+inline void swapStruct(struct objc_method_t &method) {
+  sys::swapByteOrder(method.method_name);
+  sys::swapByteOrder(method.method_types);
+  sys::swapByteOrder(method.method_imp);
+}
+
+inline void swapStruct(struct objc_protocol_list_t &protocol_list) {
+  sys::swapByteOrder(protocol_list.next);
+  sys::swapByteOrder(protocol_list.count);
+}
+
+inline void swapStruct(struct objc_protocol_t &protocol) {
+  sys::swapByteOrder(protocol.isa);
+  sys::swapByteOrder(protocol.protocol_name);
+  sys::swapByteOrder(protocol.protocol_list);
+  sys::swapByteOrder(protocol.instance_methods);
+  sys::swapByteOrder(protocol.class_methods);
+}
+
+inline void swapStruct(struct objc_method_description_list_t &mdl) {
+  sys::swapByteOrder(mdl.count);
+}
+
+inline void swapStruct(struct objc_method_description_t &md) {
+  sys::swapByteOrder(md.name);
+  sys::swapByteOrder(md.types);
 }
 
 static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
@@ -3248,10 +3441,9 @@ static void print_method_list32_t(uint64_t p, struct DisassembleInfo *info,
                                   const char *indent) {
   struct method_list32_t ml;
   struct method32_t m;
-  const char *r;
+  const char *r, *name;
   uint32_t offset, xoffset, left, i;
   SectionRef S, xS;
-  const char *name;
 
   r = get_pointer_32(p, offset, left, S, info);
   if (r == nullptr)
@@ -3304,6 +3496,78 @@ static void print_method_list32_t(uint64_t p, struct DisassembleInfo *info,
     p += sizeof(struct method32_t);
     offset += sizeof(struct method32_t);
   }
+}
+
+static bool print_method_list(uint32_t p, struct DisassembleInfo *info) {
+  uint32_t offset, left, xleft;
+  SectionRef S;
+  struct objc_method_list_t method_list;
+  struct objc_method_t method;
+  const char *r, *methods, *name, *SymbolName;
+  int32_t i;
+
+  r = get_pointer_32(p, offset, left, S, info, true);
+  if (r == nullptr)
+    return true;
+
+  outs() << "\n";
+  if (left > sizeof(struct objc_method_list_t)) {
+    memcpy(&method_list, r, sizeof(struct objc_method_list_t));
+  } else {
+    outs() << "\t\t objc_method_list extends past end of the section\n";
+    memset(&method_list, '\0', sizeof(struct objc_method_list_t));
+    memcpy(&method_list, r, left);
+  }
+  if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+    swapStruct(method_list);
+
+  outs() << "\t\t         obsolete "
+         << format("0x%08" PRIx32, method_list.obsolete) << "\n";
+  outs() << "\t\t     method_count " << method_list.method_count << "\n";
+
+  methods = r + sizeof(struct objc_method_list_t);
+  for (i = 0; i < method_list.method_count; i++) {
+    if ((i + 1) * sizeof(struct objc_method_t) > left) {
+      outs() << "\t\t remaining method's extend past the of the section\n";
+      break;
+    }
+    memcpy(&method, methods + i * sizeof(struct objc_method_t),
+           sizeof(struct objc_method_t));
+    if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(method);
+
+    outs() << "\t\t      method_name "
+           << format("0x%08" PRIx32, method.method_name);
+    if (info->verbose) {
+      name = get_pointer_32(method.method_name, offset, xleft, S, info, true);
+      if (name != nullptr)
+        outs() << format(" %.*s", xleft, name);
+      else
+        outs() << " (not in an __OBJC section)";
+    }
+    outs() << "\n";
+
+    outs() << "\t\t     method_types "
+           << format("0x%08" PRIx32, method.method_types);
+    if (info->verbose) {
+      name = get_pointer_32(method.method_types, offset, xleft, S, info, true);
+      if (name != nullptr)
+        outs() << format(" %.*s", xleft, name);
+      else
+        outs() << " (not in an __OBJC section)";
+    }
+    outs() << "\n";
+
+    outs() << "\t\t       method_imp "
+           << format("0x%08" PRIx32, method.method_imp) << " ";
+    if (info->verbose) {
+      SymbolName = GuessSymbolName(method.method_imp, info->AddrMap);
+      if (SymbolName != nullptr)
+        outs() << SymbolName;
+    }
+    outs() << "\n";
+  }
+  return false;
 }
 
 static void print_protocol_list64_t(uint64_t p, struct DisassembleInfo *info) {
@@ -3509,6 +3773,196 @@ static void print_protocol_list32_t(uint32_t p, struct DisassembleInfo *info) {
     p += sizeof(uint32_t);
     offset += sizeof(uint32_t);
   }
+}
+
+static void print_indent(uint32_t indent) {
+  for (uint32_t i = 0; i < indent;) {
+    if (indent - i >= 8) {
+      outs() << "\t";
+      i += 8;
+    } else {
+      for (uint32_t j = i; j < indent; j++)
+        outs() << " ";
+      return;
+    }
+  }
+}
+
+static bool print_method_description_list(uint32_t p, uint32_t indent,
+                                          struct DisassembleInfo *info) {
+  uint32_t offset, left, xleft;
+  SectionRef S;
+  struct objc_method_description_list_t mdl;
+  struct objc_method_description_t md;
+  const char *r, *list, *name;
+  int32_t i;
+
+  r = get_pointer_32(p, offset, left, S, info, true);
+  if (r == nullptr)
+    return true;
+
+  outs() << "\n";
+  if (left > sizeof(struct objc_method_description_list_t)) {
+    memcpy(&mdl, r, sizeof(struct objc_method_description_list_t));
+  } else {
+    print_indent(indent);
+    outs() << " objc_method_description_list extends past end of the section\n";
+    memset(&mdl, '\0', sizeof(struct objc_method_description_list_t));
+    memcpy(&mdl, r, left);
+  }
+  if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+    swapStruct(mdl);
+
+  print_indent(indent);
+  outs() << "        count " << mdl.count << "\n";
+
+  list = r + sizeof(struct objc_method_description_list_t);
+  for (i = 0; i < mdl.count; i++) {
+    if ((i + 1) * sizeof(struct objc_method_description_t) > left) {
+      print_indent(indent);
+      outs() << " remaining list entries extend past the of the section\n";
+      break;
+    }
+    print_indent(indent);
+    outs() << "        list[" << i << "]\n";
+    memcpy(&md, list + i * sizeof(struct objc_method_description_t),
+           sizeof(struct objc_method_description_t));
+    if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(md);
+
+    print_indent(indent);
+    outs() << "             name " << format("0x%08" PRIx32, md.name);
+    if (info->verbose) {
+      name = get_pointer_32(md.name, offset, xleft, S, info, true);
+      if (name != nullptr)
+        outs() << format(" %.*s", xleft, name);
+      else
+        outs() << " (not in an __OBJC section)";
+    }
+    outs() << "\n";
+
+    print_indent(indent);
+    outs() << "            types " << format("0x%08" PRIx32, md.types);
+    if (info->verbose) {
+      name = get_pointer_32(md.types, offset, xleft, S, info, true);
+      if (name != nullptr)
+        outs() << format(" %.*s", xleft, name);
+      else
+        outs() << " (not in an __OBJC section)";
+    }
+    outs() << "\n";
+  }
+  return false;
+}
+
+static bool print_protocol_list(uint32_t p, uint32_t indent,
+                                struct DisassembleInfo *info);
+
+static bool print_protocol(uint32_t p, uint32_t indent,
+                           struct DisassembleInfo *info) {
+  uint32_t offset, left;
+  SectionRef S;
+  struct objc_protocol_t protocol;
+  const char *r, *name;
+
+  r = get_pointer_32(p, offset, left, S, info, true);
+  if (r == nullptr)
+    return true;
+
+  outs() << "\n";
+  if (left >= sizeof(struct objc_protocol_t)) {
+    memcpy(&protocol, r, sizeof(struct objc_protocol_t));
+  } else {
+    print_indent(indent);
+    outs() << "            Protocol extends past end of the section\n";
+    memset(&protocol, '\0', sizeof(struct objc_protocol_t));
+    memcpy(&protocol, r, left);
+  }
+  if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+    swapStruct(protocol);
+
+  print_indent(indent);
+  outs() << "              isa " << format("0x%08" PRIx32, protocol.isa)
+         << "\n";
+
+  print_indent(indent);
+  outs() << "    protocol_name "
+         << format("0x%08" PRIx32, protocol.protocol_name);
+  if (info->verbose) {
+    name = get_pointer_32(protocol.protocol_name, offset, left, S, info, true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  print_indent(indent);
+  outs() << "    protocol_list "
+         << format("0x%08" PRIx32, protocol.protocol_list);
+  if (print_protocol_list(protocol.protocol_list, indent + 4, info))
+    outs() << " (not in an __OBJC section)\n";
+
+  print_indent(indent);
+  outs() << " instance_methods "
+         << format("0x%08" PRIx32, protocol.instance_methods);
+  if (print_method_description_list(protocol.instance_methods, indent, info))
+    outs() << " (not in an __OBJC section)\n";
+
+  print_indent(indent);
+  outs() << "    class_methods "
+         << format("0x%08" PRIx32, protocol.class_methods);
+  if (print_method_description_list(protocol.class_methods, indent, info))
+    outs() << " (not in an __OBJC section)\n";
+
+  return false;
+}
+
+static bool print_protocol_list(uint32_t p, uint32_t indent,
+                                struct DisassembleInfo *info) {
+  uint32_t offset, left, l;
+  SectionRef S;
+  struct objc_protocol_list_t protocol_list;
+  const char *r, *list;
+  int32_t i;
+
+  r = get_pointer_32(p, offset, left, S, info, true);
+  if (r == nullptr)
+    return true;
+
+  outs() << "\n";
+  if (left > sizeof(struct objc_protocol_list_t)) {
+    memcpy(&protocol_list, r, sizeof(struct objc_protocol_list_t));
+  } else {
+    outs() << "\t\t objc_protocol_list_t extends past end of the section\n";
+    memset(&protocol_list, '\0', sizeof(struct objc_protocol_list_t));
+    memcpy(&protocol_list, r, left);
+  }
+  if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+    swapStruct(protocol_list);
+
+  print_indent(indent);
+  outs() << "         next " << format("0x%08" PRIx32, protocol_list.next)
+         << "\n";
+  print_indent(indent);
+  outs() << "        count " << protocol_list.count << "\n";
+
+  list = r + sizeof(struct objc_protocol_list_t);
+  for (i = 0; i < protocol_list.count; i++) {
+    if ((i + 1) * sizeof(uint32_t) > left) {
+      outs() << "\t\t remaining list entries extend past the of the section\n";
+      break;
+    }
+    memcpy(&l, list + i * sizeof(uint32_t), sizeof(uint32_t));
+    if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+      sys::swapByteOrder(l);
+
+    print_indent(indent);
+    outs() << "      list[" << i << "] " << format("0x%08" PRIx32, l);
+    if (print_protocol(l, indent, info))
+      outs() << "(not in an __OBJC section)\n";
+  }
+  return false;
 }
 
 static void print_ivar_list64_t(uint64_t p, struct DisassembleInfo *info) {
@@ -4155,6 +4609,166 @@ static void print_class32_t(uint32_t p, struct DisassembleInfo *info) {
   }
 }
 
+static void print_objc_class_t(struct objc_class_t *objc_class,
+                               struct DisassembleInfo *info) {
+  uint32_t offset, left, xleft;
+  const char *name, *p, *ivar_list;
+  SectionRef S;
+  int32_t i;
+  struct objc_ivar_list_t objc_ivar_list;
+  struct objc_ivar_t ivar;
+
+  outs() << "\t\t      isa " << format("0x%08" PRIx32, objc_class->isa);
+  if (info->verbose && CLS_GETINFO(objc_class, CLS_META)) {
+    name = get_pointer_32(objc_class->isa, offset, left, S, info, true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  outs() << "\t      super_class "
+         << format("0x%08" PRIx32, objc_class->super_class);
+  if (info->verbose) {
+    name = get_pointer_32(objc_class->super_class, offset, left, S, info, true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  outs() << "\t\t     name " << format("0x%08" PRIx32, objc_class->name);
+  if (info->verbose) {
+    name = get_pointer_32(objc_class->name, offset, left, S, info, true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  outs() << "\t\t  version " << format("0x%08" PRIx32, objc_class->version)
+         << "\n";
+
+  outs() << "\t\t     info " << format("0x%08" PRIx32, objc_class->info);
+  if (info->verbose) {
+    if (CLS_GETINFO(objc_class, CLS_CLASS))
+      outs() << " CLS_CLASS";
+    else if (CLS_GETINFO(objc_class, CLS_META))
+      outs() << " CLS_META";
+  }
+  outs() << "\n";
+
+  outs() << "\t    instance_size "
+         << format("0x%08" PRIx32, objc_class->instance_size) << "\n";
+
+  p = get_pointer_32(objc_class->ivars, offset, left, S, info, true);
+  outs() << "\t\t    ivars " << format("0x%08" PRIx32, objc_class->ivars);
+  if (p != nullptr) {
+    if (left > sizeof(struct objc_ivar_list_t)) {
+      outs() << "\n";
+      memcpy(&objc_ivar_list, p, sizeof(struct objc_ivar_list_t));
+    } else {
+      outs() << " (entends past the end of the section)\n";
+      memset(&objc_ivar_list, '\0', sizeof(struct objc_ivar_list_t));
+      memcpy(&objc_ivar_list, p, left);
+    }
+    if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(objc_ivar_list);
+    outs() << "\t\t       ivar_count " << objc_ivar_list.ivar_count << "\n";
+    ivar_list = p + sizeof(struct objc_ivar_list_t);
+    for (i = 0; i < objc_ivar_list.ivar_count; i++) {
+      if ((i + 1) * sizeof(struct objc_ivar_t) > left) {
+        outs() << "\t\t remaining ivar's extend past the of the section\n";
+        break;
+      }
+      memcpy(&ivar, ivar_list + i * sizeof(struct objc_ivar_t),
+             sizeof(struct objc_ivar_t));
+      if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+        swapStruct(ivar);
+
+      outs() << "\t\t\tivar_name " << format("0x%08" PRIx32, ivar.ivar_name);
+      if (info->verbose) {
+        name = get_pointer_32(ivar.ivar_name, offset, xleft, S, info, true);
+        if (name != nullptr)
+          outs() << format(" %.*s", xleft, name);
+        else
+          outs() << " (not in an __OBJC section)";
+      }
+      outs() << "\n";
+
+      outs() << "\t\t\tivar_type " << format("0x%08" PRIx32, ivar.ivar_type);
+      if (info->verbose) {
+        name = get_pointer_32(ivar.ivar_type, offset, xleft, S, info, true);
+        if (name != nullptr)
+          outs() << format(" %.*s", xleft, name);
+        else
+          outs() << " (not in an __OBJC section)";
+      }
+      outs() << "\n";
+
+      outs() << "\t\t      ivar_offset "
+             << format("0x%08" PRIx32, ivar.ivar_offset) << "\n";
+    }
+  } else {
+    outs() << " (not in an __OBJC section)\n";
+  }
+
+  outs() << "\t\t  methods " << format("0x%08" PRIx32, objc_class->methodLists);
+  if (print_method_list(objc_class->methodLists, info))
+    outs() << " (not in an __OBJC section)\n";
+
+  outs() << "\t\t    cache " << format("0x%08" PRIx32, objc_class->cache)
+         << "\n";
+
+  outs() << "\t\tprotocols " << format("0x%08" PRIx32, objc_class->protocols);
+  if (print_protocol_list(objc_class->protocols, 16, info))
+    outs() << " (not in an __OBJC section)\n";
+}
+
+static void print_objc_objc_category_t(struct objc_category_t *objc_category,
+                                       struct DisassembleInfo *info) {
+  uint32_t offset, left;
+  const char *name;
+  SectionRef S;
+
+  outs() << "\t       category name "
+         << format("0x%08" PRIx32, objc_category->category_name);
+  if (info->verbose) {
+    name = get_pointer_32(objc_category->category_name, offset, left, S, info,
+                          true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  outs() << "\t\t  class name "
+         << format("0x%08" PRIx32, objc_category->class_name);
+  if (info->verbose) {
+    name =
+        get_pointer_32(objc_category->class_name, offset, left, S, info, true);
+    if (name != nullptr)
+      outs() << format(" %.*s", left, name);
+    else
+      outs() << " (not in an __OBJC section)";
+  }
+  outs() << "\n";
+
+  outs() << "\t    instance methods "
+         << format("0x%08" PRIx32, objc_category->instance_methods);
+  if (print_method_list(objc_category->instance_methods, info))
+    outs() << " (not in an __OBJC section)\n";
+
+  outs() << "\t       class methods "
+         << format("0x%08" PRIx32, objc_category->class_methods);
+  if (print_method_list(objc_category->class_methods, info))
+    outs() << " (not in an __OBJC section)\n";
+}
+
 static void print_category64_t(uint64_t p, struct DisassembleInfo *info) {
   struct category64_t c;
   const char *r;
@@ -4513,6 +5127,41 @@ static void print_image_info32(SectionRef S, struct DisassembleInfo *info) {
   outs() << "\n";
 }
 
+static void print_image_info(SectionRef S, struct DisassembleInfo *info) {
+  uint32_t left, offset, p;
+  struct imageInfo_t o;
+  const char *r;
+
+  StringRef SectName;
+  S.getName(SectName);
+  DataRefImpl Ref = S.getRawDataRefImpl();
+  StringRef SegName = info->O->getSectionFinalSegmentName(Ref);
+  outs() << "Contents of (" << SegName << "," << SectName << ") section\n";
+  p = S.getAddress();
+  r = get_pointer_32(p, offset, left, S, info);
+  if (r == nullptr)
+    return;
+  memset(&o, '\0', sizeof(struct imageInfo_t));
+  if (left < sizeof(struct imageInfo_t)) {
+    memcpy(&o, r, left);
+    outs() << " (imageInfo entends past the end of the section)\n";
+  } else
+    memcpy(&o, r, sizeof(struct imageInfo_t));
+  if (info->O->isLittleEndian() != sys::IsLittleEndianHost)
+    swapStruct(o);
+  outs() << "  version " << o.version << "\n";
+  outs() << "    flags " << format("0x%" PRIx32, o.flags);
+  if (o.flags & 0x1)
+    outs() << "  F&C";
+  if (o.flags & 0x2)
+    outs() << " GC";
+  if (o.flags & 0x4)
+    outs() << " GC-only";
+  else
+    outs() << " RR";
+  outs() << "\n";
+}
+
 static void printObjc2_64bit_MetaData(MachOObjectFile *O, bool verbose) {
   SymbolAddressMap AddrMap;
   if (verbose)
@@ -4711,13 +5360,189 @@ static void printObjc2_32bit_MetaData(MachOObjectFile *O, bool verbose) {
 }
 
 static bool printObjc1_32bit_MetaData(MachOObjectFile *O, bool verbose) {
+  uint32_t i, j, p, offset, xoffset, left, defs_left, def;
+  const char *r, *name, *defs;
+  struct objc_module_t module;
+  SectionRef S, xS;
+  struct objc_symtab_t symtab;
+  struct objc_class_t objc_class;
+  struct objc_category_t objc_category;
+
   outs() << "Objective-C segment\n";
-  const SectionRef S = get_section(O, "__OBJC", "__module_info");
-  if (S != SectionRef()) {
-    outs() << "Printing Objc1 32-bit MetaData not yet supported\n";
-    return true;
+  S = get_section(O, "__OBJC", "__module_info");
+  if (S == SectionRef())
+    return false;
+
+  SymbolAddressMap AddrMap;
+  if (verbose)
+    CreateSymbolAddressMap(O, &AddrMap);
+
+  std::vector<SectionRef> Sections;
+  for (const SectionRef &Section : O->sections()) {
+    StringRef SectName;
+    Section.getName(SectName);
+    Sections.push_back(Section);
   }
-  return false;
+
+  struct DisassembleInfo info;
+  // Set up the block of info used by the Symbolizer call backs.
+  info.verbose = verbose;
+  info.O = O;
+  info.AddrMap = &AddrMap;
+  info.Sections = &Sections;
+  info.class_name = nullptr;
+  info.selector_name = nullptr;
+  info.method = nullptr;
+  info.demangled_name = nullptr;
+  info.bindtable = nullptr;
+  info.adrp_addr = 0;
+  info.adrp_inst = 0;
+
+  for (i = 0; i < S.getSize(); i += sizeof(struct objc_module_t)) {
+    p = S.getAddress() + i;
+    r = get_pointer_32(p, offset, left, S, &info, true);
+    if (r == nullptr)
+      return true;
+    memset(&module, '\0', sizeof(struct objc_module_t));
+    if (left < sizeof(struct objc_module_t)) {
+      memcpy(&module, r, left);
+      outs() << "   (module extends past end of __module_info section)\n";
+    } else
+      memcpy(&module, r, sizeof(struct objc_module_t));
+    if (O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(module);
+
+    outs() << "Module " << format("0x%" PRIx32, p) << "\n";
+    outs() << "    version " << module.version << "\n";
+    outs() << "       size " << module.size << "\n";
+    outs() << "       name ";
+    name = get_pointer_32(module.name, xoffset, left, xS, &info, true);
+    if (name != nullptr)
+      outs() << format("%.*s", left, name);
+    else
+      outs() << format("0x%08" PRIx32, module.name)
+             << "(not in an __OBJC section)";
+    outs() << "\n";
+
+    r = get_pointer_32(module.symtab, xoffset, left, xS, &info, true);
+    if (module.symtab == 0 || r == nullptr) {
+      outs() << "     symtab " << format("0x%08" PRIx32, module.symtab)
+             << " (not in an __OBJC section)\n";
+      continue;
+    }
+    outs() << "     symtab " << format("0x%08" PRIx32, module.symtab) << "\n";
+    memset(&symtab, '\0', sizeof(struct objc_symtab_t));
+    defs_left = 0;
+    defs = nullptr;
+    if (left < sizeof(struct objc_symtab_t)) {
+      memcpy(&symtab, r, left);
+      outs() << "\tsymtab extends past end of an __OBJC section)\n";
+    } else {
+      memcpy(&symtab, r, sizeof(struct objc_symtab_t));
+      if (left > sizeof(struct objc_symtab_t)) {
+        defs_left = left - sizeof(struct objc_symtab_t);
+        defs = r + sizeof(struct objc_symtab_t);
+      }
+    }
+    if (O->isLittleEndian() != sys::IsLittleEndianHost)
+      swapStruct(symtab);
+
+    outs() << "\tsel_ref_cnt " << symtab.sel_ref_cnt << "\n";
+    r = get_pointer_32(symtab.refs, xoffset, left, xS, &info, true);
+    outs() << "\trefs " << format("0x%08" PRIx32, symtab.refs);
+    if (r == nullptr)
+      outs() << " (not in an __OBJC section)";
+    outs() << "\n";
+    outs() << "\tcls_def_cnt " << symtab.cls_def_cnt << "\n";
+    outs() << "\tcat_def_cnt " << symtab.cat_def_cnt << "\n";
+    if (symtab.cls_def_cnt > 0)
+      outs() << "\tClass Definitions\n";
+    for (j = 0; j < symtab.cls_def_cnt; j++) {
+      if ((j + 1) * sizeof(uint32_t) > defs_left) {
+        outs() << "\t(remaining class defs entries entends past the end of the "
+               << "section)\n";
+        break;
+      }
+      memcpy(&def, defs + j * sizeof(uint32_t), sizeof(uint32_t));
+      if (O->isLittleEndian() != sys::IsLittleEndianHost)
+        sys::swapByteOrder(def);
+
+      r = get_pointer_32(def, xoffset, left, xS, &info, true);
+      outs() << "\tdefs[" << j << "] " << format("0x%08" PRIx32, def);
+      if (r != nullptr) {
+        if (left > sizeof(struct objc_class_t)) {
+          outs() << "\n";
+          memcpy(&objc_class, r, sizeof(struct objc_class_t));
+        } else {
+          outs() << " (entends past the end of the section)\n";
+          memset(&objc_class, '\0', sizeof(struct objc_class_t));
+          memcpy(&objc_class, r, left);
+        }
+        if (O->isLittleEndian() != sys::IsLittleEndianHost)
+          swapStruct(objc_class);
+        print_objc_class_t(&objc_class, &info);
+      } else {
+        outs() << "(not in an __OBJC section)\n";
+      }
+
+      if (CLS_GETINFO(&objc_class, CLS_CLASS)) {
+        outs() << "\tMeta Class";
+        r = get_pointer_32(objc_class.isa, xoffset, left, xS, &info, true);
+        if (r != nullptr) {
+          if (left > sizeof(struct objc_class_t)) {
+            outs() << "\n";
+            memcpy(&objc_class, r, sizeof(struct objc_class_t));
+          } else {
+            outs() << " (entends past the end of the section)\n";
+            memset(&objc_class, '\0', sizeof(struct objc_class_t));
+            memcpy(&objc_class, r, left);
+          }
+          if (O->isLittleEndian() != sys::IsLittleEndianHost)
+            swapStruct(objc_class);
+          print_objc_class_t(&objc_class, &info);
+        } else {
+          outs() << "(not in an __OBJC section)\n";
+        }
+      }
+    }
+    if (symtab.cat_def_cnt > 0)
+      outs() << "\tCategory Definitions\n";
+    for (j = 0; j < symtab.cat_def_cnt; j++) {
+      if ((j + symtab.cls_def_cnt + 1) * sizeof(uint32_t) > defs_left) {
+        outs() << "\t(remaining category defs entries entends past the end of "
+               << "the section)\n";
+        break;
+      }
+      memcpy(&def, defs + (j + symtab.cls_def_cnt) * sizeof(uint32_t),
+             sizeof(uint32_t));
+      if (O->isLittleEndian() != sys::IsLittleEndianHost)
+        sys::swapByteOrder(def);
+
+      r = get_pointer_32(def, xoffset, left, xS, &info, true);
+      outs() << "\tdefs[" << j + symtab.cls_def_cnt << "] "
+             << format("0x%08" PRIx32, def);
+      if (r != nullptr) {
+        if (left > sizeof(struct objc_category_t)) {
+          outs() << "\n";
+          memcpy(&objc_category, r, sizeof(struct objc_category_t));
+        } else {
+          outs() << " (entends past the end of the section)\n";
+          memset(&objc_category, '\0', sizeof(struct objc_category_t));
+          memcpy(&objc_category, r, left);
+        }
+        if (O->isLittleEndian() != sys::IsLittleEndianHost)
+          swapStruct(objc_category);
+        print_objc_objc_category_t(&objc_category, &info);
+      } else {
+        outs() << "(not in an __OBJC section)\n";
+      }
+    }
+  }
+  const SectionRef II = get_section(O, "__OBJC", "__image_info");
+  if (II != SectionRef())
+    print_image_info(II, &info);
+
+  return true;
 }
 
 static void printObjcMetaData(MachOObjectFile *O, bool verbose) {
