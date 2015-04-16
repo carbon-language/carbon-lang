@@ -7,7 +7,7 @@ target triple = "x86_64-linux-gnu"
 
 define void @f(i32* nocapture %a, i32* nocapture %b) nounwind {
 bb.nph:
-  %0 = tail call i32 (...)* @rnd() nounwind       ; <i32> [#uses=1]
+  %0 = tail call i32 (...) @rnd() nounwind       ; <i32> [#uses=1]
   %1 = icmp eq i32 %0, 0                          ; <i1> [#uses=1]
   %iftmp.0.0 = select i1 %1, i32* %b, i32* %a     ; <i32*> [#uses=2]
   br label %bb3

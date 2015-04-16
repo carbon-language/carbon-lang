@@ -26,7 +26,7 @@ for.cond:                                         ; preds = %for.inc13, %entry
   br i1 %cmp, label %for.body, label %for.end15
 
 for.body:                                         ; preds = %for.cond
-  call void (...)* @bar() #2
+  call void (...) @bar() #2
   br label %for.cond1
 
 for.cond1:                                        ; preds = %for.inc, %for.body

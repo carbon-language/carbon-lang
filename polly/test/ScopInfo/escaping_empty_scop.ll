@@ -49,7 +49,7 @@ bb3:                                              ; preds = %bb2
   br i1 %exitcond, label %bb1, label %bb5
 
 bb5:                                              ; preds = %bb1
-  call void (...)* @g() #2
+  call void (...) @g() #2
   %add = add i32 %a.0, %a.1
   %add2 = add i32 %add, %a.2
   ret i32 %add2
