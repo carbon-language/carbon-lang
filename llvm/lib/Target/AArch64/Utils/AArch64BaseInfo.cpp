@@ -142,7 +142,10 @@ AArch64PRFM::PRFMMapper::PRFMMapper()
 const AArch64NamedImmMapper::Mapping AArch64PState::PStateMapper::PStateMappings[] = {
   {"spsel", SPSel, 0},
   {"daifset", DAIFSet, 0},
-  {"daifclr", DAIFClr, 0}
+  {"daifclr", DAIFClr, 0},
+
+  // v8.1a "Privileged Access Never" extension-specific PStates
+  {"pan", PAN, AArch64::HasV8_1aOps},
 };
 
 AArch64PState::PStateMapper::PStateMapper()
@@ -267,7 +270,10 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MSRMapper::MSRMappings[] = {
   {"icc_dir_el1", ICC_DIR_EL1, 0},
   {"icc_sgi1r_el1", ICC_SGI1R_EL1, 0},
   {"icc_asgi1r_el1", ICC_ASGI1R_EL1, 0},
-  {"icc_sgi0r_el1", ICC_SGI0R_EL1, 0}
+  {"icc_sgi0r_el1", ICC_SGI0R_EL1, 0},
+
+  // v8.1a "Privileged Access Never" extension-specific system registers
+  {"pan", PAN, AArch64::HasV8_1aOps},
 };
 
 AArch64SysReg::MSRMapper::MSRMapper() {
@@ -756,6 +762,9 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
 
   // Cyclone registers
   {"cpm_ioacc_ctl_el3", CPM_IOACC_CTL_EL3, AArch64::ProcCyclone},
+
+  // v8.1a "Privileged Access Never" extension-specific system registers
+  {"pan", PAN, AArch64::HasV8_1aOps},
 };
 
 uint32_t

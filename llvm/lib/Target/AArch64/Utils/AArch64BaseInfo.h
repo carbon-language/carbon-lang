@@ -447,7 +447,10 @@ namespace AArch64PState {
     Invalid = -1,
     SPSel = 0x05,
     DAIFSet = 0x1e,
-    DAIFClr = 0x1f
+    DAIFClr = 0x1f,
+
+    // v8.1a "Privileged Access Never" extension-specific PStates
+    PAN = 0x04,
   };
 
   struct PStateMapper : AArch64NamedImmMapper {
@@ -1134,6 +1137,9 @@ namespace AArch64SysReg {
     ICH_LR13_EL2      = 0xe66d, // 11  100  1100  1101  101
     ICH_LR14_EL2      = 0xe66e, // 11  100  1100  1101  110
     ICH_LR15_EL2      = 0xe66f, // 11  100  1100  1101  111
+
+    // v8.1a "Privileged Access Never" extension-specific system registers
+    PAN               = 0xc213, // 11  000  0100  0010  011
 
     // Cyclone specific system registers
     CPM_IOACC_CTL_EL3 = 0xff90,
