@@ -3230,7 +3230,7 @@ GDBRemoteCommunicationClient::OpenFile (const lldb_private::FileSpec& file_spec,
 {
     lldb_private::StreamString stream;
     stream.PutCString("vFile:open:");
-    std::string path (file_spec.GetPath());
+    std::string path (file_spec.GetPath(false));
     if (path.empty())
         return UINT64_MAX;
     stream.PutCStringAsRawHex8(path.c_str());
@@ -3711,7 +3711,7 @@ GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
                                              const lldb_private::ArchSpec& arch_spec,
                                              ModuleSpec &module_spec)
 {
-    std::string module_path = module_file_spec.GetPath ();
+    std::string module_path = module_file_spec.GetPath (false);
     if (module_path.empty ())
         return false;
 

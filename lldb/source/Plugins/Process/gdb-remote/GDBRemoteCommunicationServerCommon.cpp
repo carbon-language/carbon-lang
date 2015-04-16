@@ -576,7 +576,8 @@ GDBRemoteCommunicationServerCommon::Handle_vFile_Open (StringExtractorGDBRemote 
             {
                 mode_t mode = packet.GetHexMaxU32(false, 0600);
                 Error error;
-                int fd = ::open (path.c_str(), flags, mode);
+                const FileSpec path_spec(path.c_str(), true);
+                int fd = ::open (path_spec.GetPath().c_str(), flags, mode);
                 const int save_errno = fd == -1 ? errno : 0;
                 StreamString response;
                 response.PutChar('F');
@@ -1162,7 +1163,8 @@ GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote
     packet.GetHexByteString(triple);
     ArchSpec arch(triple.c_str());
 
-    const FileSpec module_path_spec = FindModuleFile(module_path, arch);
+    const FileSpec req_module_path_spec(module_path.c_str(), true);
+    const FileSpec module_path_spec = FindModuleFile(req_module_path_spec.GetPath(), arch);
     const ModuleSpec module_spec(module_path_spec, arch);
 
     ModuleSpecList module_specs;

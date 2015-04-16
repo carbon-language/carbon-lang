@@ -206,7 +206,7 @@ PlatformRemoteGDBServer::GetModuleSpec (const FileSpec& module_file_spec,
 {
     Log *log = GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PLATFORM);
 
-    const auto module_path = module_file_spec.GetPath ();
+    const auto module_path = module_file_spec.GetPath (false);
 
     if (!m_gdb_client.GetModuleInfo (module_file_spec, arch, module_spec))
     {
