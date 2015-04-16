@@ -3677,7 +3677,7 @@ parseRegisters (xmlDocPtr doc, GDBServerRegisterVec & regList) {
 
     xmlNodePtrVec regs;
     xmlExFindChildren( elm, "reg", regs );
-    for ( int i = 0; i < regs.size( ); i++ ) {
+    for ( unsigned long i = 0; i < regs.size( ); i++ ) {
 
         GdbServerRegisterInfo reg;
         reg.clear( );
