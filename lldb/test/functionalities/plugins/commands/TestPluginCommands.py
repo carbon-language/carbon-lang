@@ -21,7 +21,6 @@ class PluginCommandTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr17430')
     @skipIfi386 # This test links against liblldb.so. Thus, the test requires a 32-bit liblldb.so.
-    @skipIfGcc # llvm.org/pr23221
     @skipIfNoSBHeaders
     def test_load_plugin(self):
         """Test that plugins that load commands work correctly."""
