@@ -433,6 +433,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
       Invoke->setUnwindDest(NewLPadBB);
     }
 
+    // If anyone is still using the old landingpad value, just give them undef
+    // instead. The eh pointer and selector values are not real.
+    LPad->replaceAllUsesWith(UndefValue::get(LPad->getType()));
+
     // Replace the mapping of any nested landing pad that previously mapped
     // to this landing pad with a referenced to the cloned version.
     for (auto &LPadPair : NestedLPtoOriginalLP) {
@@ -636,6 +640,11 @@ void WinEHPrepare::promoteLandingPadValues(LandingPadInst *LPad) {
     PromoteMemToReg(EHAllocas, *DT);
     EHAllocas.clear();
   }
+
+  // After promotion, some extracts may be trivially dead. Remove them.
+  SmallVector<Value *, 4> Users(LPad->user_begin(), LPad->user_end());
+  for (auto *U : Users)
+    RecursivelyDeleteTriviallyDeadInstructions(U);
 }
 
 void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
