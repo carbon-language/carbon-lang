@@ -2851,13 +2851,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         // FIXME: Entirely reasonable to perform folding of other unary
         // operations here as the need arises.
         break;
+      case ISD::TRUNCATE:
+        // Constant build vector truncation can be done with the original scalar
+        // operands but with a new build vector with the truncated value type.
+        return getNode(ISD::BUILD_VECTOR, DL, VT, BV->ops());
       case ISD::FNEG:
       case ISD::FABS:
       case ISD::FCEIL:
       case ISD::FTRUNC:
       case ISD::FFLOOR:
       case ISD::FP_EXTEND:
-      case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP: {
         // Let the above scalar folding handle the folding of each element.
