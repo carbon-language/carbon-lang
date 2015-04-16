@@ -3035,6 +3035,11 @@ bool AArch64FastISel::finishCall(CallLoweringInfo &CLI, MVT RetVT,
 
     // Copy all of the result registers out of their specified physreg.
     MVT CopyVT = RVLocs[0].getValVT();
+
+    // TODO: Handle big-endian results
+    if (CopyVT.isVector() && !Subtarget->isLittleEndian())
+      return false;
+
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(CopyVT));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(TargetOpcode::COPY), ResultReg)
