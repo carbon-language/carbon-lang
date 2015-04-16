@@ -1802,8 +1802,17 @@ getAArch64ArchFeaturesFromMarch(const Driver &D, StringRef March,
                                 const ArgList &Args,
                                 std::vector<const char *> &Features) {
   std::pair<StringRef, StringRef> Split = March.split("+");
-  if (Split.first != "armv8-a")
+
+  if (Split.first == "armv8-a" ||
+      Split.first == "armv8a") {
+    // ok, no additional features.
+  } else if (
+      Split.first == "armv8.1-a" ||
+      Split.first == "armv8.1a" ) {
+    Features.push_back("+v8.1a");
+  } else {
     return false;
+  }
 
   if (Split.second.size() && !DecodeAArch64Features(D, Split.second, Features))
     return false;
