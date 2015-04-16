@@ -65,6 +65,9 @@ public:
 
   /// Emits all the option records stored up until the point it's called.
   void EmitMipsOptionRecords();
+
+  /// Mark labels as microMIPS, if necessary for the subtarget.
+  void createPendingLabelRelocs();
 };
 
 MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &MAB,

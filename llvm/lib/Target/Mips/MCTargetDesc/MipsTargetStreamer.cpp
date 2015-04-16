@@ -54,6 +54,7 @@ void MipsTargetStreamer::emitDirectiveNaN2008() {}
 void MipsTargetStreamer::emitDirectiveNaNLegacy() {}
 void MipsTargetStreamer::emitDirectiveOptionPic0() {}
 void MipsTargetStreamer::emitDirectiveOptionPic2() {}
+void MipsTargetStreamer::emitDirectiveInsn() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
                                    unsigned ReturnReg) {}
 void MipsTargetStreamer::emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) {}
@@ -187,6 +188,11 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
 
 void MipsTargetAsmStreamer::emitDirectiveOptionPic2() {
   OS << "\t.option\tpic2\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveInsn() {
+  MipsTargetStreamer::emitDirectiveInsn();
+  OS << "\t.insn\n";
 }
 
 void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
@@ -635,6 +641,12 @@ void MipsTargetELFStreamer::emitDirectiveOptionPic2() {
   // EF_MIPS_CPIC to be mutually exclusive.
   Flags |= ELF::EF_MIPS_PIC | ELF::EF_MIPS_CPIC;
   MCA.setELFHeaderEFlags(Flags);
+}
+
+void MipsTargetELFStreamer::emitDirectiveInsn() {
+  MipsTargetStreamer::emitDirectiveInsn();
+  MipsELFStreamer &MEF = static_cast<MipsELFStreamer &>(Streamer);
+  MEF.createPendingLabelRelocs();
 }
 
 void MipsTargetELFStreamer::emitFrame(unsigned StackReg, unsigned StackSize,

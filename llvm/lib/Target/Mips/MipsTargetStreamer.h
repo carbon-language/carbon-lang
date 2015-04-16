@@ -45,6 +45,7 @@ public:
   virtual void emitDirectiveNaNLegacy();
   virtual void emitDirectiveOptionPic0();
   virtual void emitDirectiveOptionPic2();
+  virtual void emitDirectiveInsn();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg);
   virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
@@ -160,6 +161,7 @@ public:
   void emitDirectiveNaNLegacy() override;
   void emitDirectiveOptionPic0() override;
   void emitDirectiveOptionPic2() override;
+  void emitDirectiveInsn() override;
   void emitFrame(unsigned StackReg, unsigned StackSize,
                  unsigned ReturnReg) override;
   void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) override;
@@ -227,6 +229,7 @@ public:
   void emitDirectiveNaNLegacy() override;
   void emitDirectiveOptionPic0() override;
   void emitDirectiveOptionPic2() override;
+  void emitDirectiveInsn() override;
   void emitFrame(unsigned StackReg, unsigned StackSize,
                  unsigned ReturnReg) override;
   void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) override;

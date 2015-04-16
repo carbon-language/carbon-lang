@@ -220,6 +220,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseDirectiveNaN();
   bool parseDirectiveSet();
   bool parseDirectiveOption();
+  bool parseInsnDirective();
 
   bool parseSetAtDirective();
   bool parseSetNoAtDirective();
@@ -4045,6 +4046,23 @@ bool MipsAsmParser::parseDirectiveOption() {
   return false;
 }
 
+/// parseInsnDirective
+///  ::= .insn
+bool MipsAsmParser::parseInsnDirective() {
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  // The actual label marking happens in
+  // MipsELFStreamer::createPendingLabelRelocs().
+  getTargetStreamer().emitDirectiveInsn();
+
+  getParser().Lex(); // Eat EndOfStatement token.
+  return false;
+}
+
 /// parseDirectiveModule
 ///  ::= .module oddspreg
 ///  ::= .module nooddspreg
@@ -4437,6 +4455,9 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   if (IDVal == ".llvm_internal_mips_reallow_module_directive")
     return parseInternalDirectiveReallowModule();
+
+  if (IDVal == ".insn")
+    return parseInsnDirective();
 
   return true;
 }
