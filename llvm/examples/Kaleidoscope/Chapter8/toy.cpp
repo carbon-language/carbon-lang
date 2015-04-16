@@ -836,7 +836,7 @@ void DebugInfo::emitLocation(ExprAST *AST) {
       DebugLoc::get(AST->getLine(), AST->getCol(), Scope));
 }
 
-static DICompositeType CreateFunctionType(unsigned NumArgs, DIFile Unit) {
+static MDSubroutineType *CreateFunctionType(unsigned NumArgs, DIFile Unit) {
   SmallVector<Metadata *, 8> EltTys;
   DIType DblTy = KSDbgInfo.getDoubleTy();
 
@@ -1226,7 +1226,7 @@ Function *PrototypeAST::Codegen() {
   // Create a subprogram DIE for this function.
   DIFile Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
                                      KSDbgInfo.TheCU->getDirectory());
-  DIDescriptor FContext = Unit;
+  MDScope *FContext = Unit;
   unsigned LineNo = Line;
   unsigned ScopeLine = Line;
   DISubprogram SP = DBuilder->createFunction(

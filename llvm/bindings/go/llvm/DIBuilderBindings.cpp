@@ -58,9 +58,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
                                                 unsigned Line,
                                                 unsigned Column) {
   DIBuilder *D = unwrap(Dref);
-  DILexicalBlock LB =
-      D->createLexicalBlock(DIDescriptor(unwrap<MDLocalScope>(Scope)),
-                            unwrap<MDFile>(File), Line, Column);
+  auto *LB = D->createLexicalBlock(unwrap<MDLocalScope>(Scope),
+                                   unwrap<MDFile>(File), Line, Column);
   return wrap(LB);
 }
 
@@ -69,9 +68,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Dref,
                                                     LLVMMetadataRef File,
                                                     unsigned Discriminator) {
   DIBuilder *D = unwrap(Dref);
-  DILexicalBlockFile LBF =
-      D->createLexicalBlockFile(DIDescriptor(unwrap<MDLocalScope>(Scope)),
-                                unwrap<MDFile>(File), Discriminator);
+  DILexicalBlockFile LBF = D->createLexicalBlockFile(
+      unwrap<MDLocalScope>(Scope), unwrap<MDFile>(File), Discriminator);
   return wrap(LBF);
 }
 
@@ -82,9 +80,9 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     unsigned ScopeLine, unsigned Flags, int IsOptimized, LLVMValueRef Func) {
   DIBuilder *D = unwrap(Dref);
   DISubprogram SP = D->createFunction(
-      DIDescriptor(unwrap<MDScope>(Scope)), Name, LinkageName,
+      unwrap<MDScope>(Scope), Name, LinkageName,
       File ? unwrap<MDFile>(File) : nullptr, Line,
-      unwrap<MDCompositeTypeBase>(CompositeType), IsLocalToUnit, IsDefinition,
+      unwrap<MDSubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
       ScopeLine, Flags, IsOptimized, unwrap<Function>(Func));
   return wrap(SP);
 }
@@ -95,8 +93,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(
     int AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
   DIBuilder *D = unwrap(Dref);
   DIVariable V = D->createLocalVariable(
-      Tag, DIDescriptor(unwrap<MDScope>(Scope)), Name, unwrap<MDFile>(File),
-      Line, unwrap<MDType>(Ty), AlwaysPreserve, Flags, ArgNo);
+      Tag, unwrap<MDScope>(Scope), Name, unwrap<MDFile>(File), Line,
+      unwrap<MDType>(Ty), AlwaysPreserve, Flags, ArgNo);
   return wrap(V);
 }
 
@@ -138,9 +136,9 @@ LLVMMetadataRef LLVMDIBuilderCreateStructType(
     LLVMMetadataRef ElementTypes) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createStructType(
-      DIDescriptor(unwrap<MDScope>(Scope)), Name,
-      File ? unwrap<MDFile>(File) : nullptr, Line, SizeInBits, AlignInBits,
-      Flags, DerivedFrom ? unwrap<MDType>(DerivedFrom) : nullptr,
+      unwrap<MDScope>(Scope), Name, File ? unwrap<MDFile>(File) : nullptr, Line,
+      SizeInBits, AlignInBits, Flags,
+      DerivedFrom ? unwrap<MDType>(DerivedFrom) : nullptr,
       ElementTypes ? DIArray(unwrap<MDTuple>(ElementTypes)) : nullptr);
   return wrap(CT);
 }
@@ -152,9 +150,8 @@ LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(
     unsigned Flags) {
   DIBuilder *D = unwrap(Dref);
   DICompositeType CT = D->createReplaceableCompositeType(
-      Tag, Name, DIDescriptor(unwrap<MDScope>(Scope)),
-      File ? unwrap<MDFile>(File) : nullptr, Line, RuntimeLang, SizeInBits,
-      AlignInBits, Flags);
+      Tag, Name, unwrap<MDScope>(Scope), File ? unwrap<MDFile>(File) : nullptr,
+      Line, RuntimeLang, SizeInBits, AlignInBits, Flags);
   return wrap(CT);
 }
 
@@ -166,9 +163,8 @@ LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef Dref, LLVMMetadataRef Scope,
                               unsigned Flags, LLVMMetadataRef Ty) {
   DIBuilder *D = unwrap(Dref);
   DIDerivedType DT = D->createMemberType(
-      DIDescriptor(unwrap<MDScope>(Scope)), Name,
-      File ? unwrap<MDFile>(File) : nullptr, Line, SizeInBits, AlignInBits,
-      OffsetInBits, Flags, unwrap<MDType>(Ty));
+      unwrap<MDScope>(Scope), Name, File ? unwrap<MDFile>(File) : nullptr, Line,
+      SizeInBits, AlignInBits, OffsetInBits, Flags, unwrap<MDType>(Ty));
   return wrap(DT);
 }
 
@@ -191,7 +187,7 @@ LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   DIDerivedType DT = D->createTypedef(
       unwrap<MDType>(Ty), Name, File ? unwrap<MDFile>(File) : nullptr, Line,
-      Context ? DIDescriptor(unwrap<MDScope>(Context)) : DIDescriptor());
+      Context ? unwrap<MDScope>(Context) : nullptr);
   return wrap(DT);
 }
 
