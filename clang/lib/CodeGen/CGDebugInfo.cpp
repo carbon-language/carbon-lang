@@ -660,7 +660,7 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
   llvm::DICompositeType RetTy = DBuilder.createReplaceableCompositeType(
       getTagForRecord(RD), RDName, Ctx, DefUnit, Line, 0, Size, Align,
-      llvm::DIDescriptor::FlagFwdDecl, FullName);
+      llvm::DebugNode::FlagFwdDecl, FullName);
   ReplaceMap.emplace_back(
       std::piecewise_construct, std::make_tuple(Ty),
       std::make_tuple(static_cast<llvm::Metadata *>(RetTy)));
@@ -718,7 +718,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   Elements = DBuilder.getOrCreateArray(EltTys);
   EltTys.clear();
 
-  unsigned Flags = llvm::DIDescriptor::FlagAppleBlock;
+  unsigned Flags = llvm::DebugNode::FlagAppleBlock;
   unsigned LineNo = getLineNumber(CurLoc);
 
   EltTy = DBuilder.createStructType(Unit, "__block_descriptor", Unit, LineNo,
@@ -841,11 +841,11 @@ static unsigned getAccessFlag(AccessSpecifier Access, const RecordDecl *RD) {
 
   switch (Access) {
   case clang::AS_private:
-    return llvm::DIDescriptor::FlagPrivate;
+    return llvm::DebugNode::FlagPrivate;
   case clang::AS_protected:
-    return llvm::DIDescriptor::FlagProtected;
+    return llvm::DebugNode::FlagProtected;
   case clang::AS_public:
-    return llvm::DIDescriptor::FlagPublic;
+    return llvm::DebugNode::FlagPublic;
   case clang::AS_none:
     return 0;
   }
@@ -1078,9 +1078,9 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
 
   unsigned Flags = 0;
   if (Func->getExtProtoInfo().RefQualifier == RQ_LValue)
-    Flags |= llvm::DIDescriptor::FlagLValueReference;
+    Flags |= llvm::DebugNode::FlagLValueReference;
   if (Func->getExtProtoInfo().RefQualifier == RQ_RValue)
-    Flags |= llvm::DIDescriptor::FlagRValueReference;
+    Flags |= llvm::DebugNode::FlagRValueReference;
 
   return DBuilder.createSubroutineType(Unit, EltTypeArray, Flags);
 }
@@ -1144,22 +1144,22 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
 
   unsigned Flags = 0;
   if (Method->isImplicit())
-    Flags |= llvm::DIDescriptor::FlagArtificial;
+    Flags |= llvm::DebugNode::FlagArtificial;
   Flags |= getAccessFlag(Method->getAccess(), Method->getParent());
   if (const CXXConstructorDecl *CXXC = dyn_cast<CXXConstructorDecl>(Method)) {
     if (CXXC->isExplicit())
-      Flags |= llvm::DIDescriptor::FlagExplicit;
+      Flags |= llvm::DebugNode::FlagExplicit;
   } else if (const CXXConversionDecl *CXXC =
                  dyn_cast<CXXConversionDecl>(Method)) {
     if (CXXC->isExplicit())
-      Flags |= llvm::DIDescriptor::FlagExplicit;
+      Flags |= llvm::DebugNode::FlagExplicit;
   }
   if (Method->hasPrototype())
-    Flags |= llvm::DIDescriptor::FlagPrototyped;
+    Flags |= llvm::DebugNode::FlagPrototyped;
   if (Method->getRefQualifier() == RQ_LValue)
-    Flags |= llvm::DIDescriptor::FlagLValueReference;
+    Flags |= llvm::DebugNode::FlagLValueReference;
   if (Method->getRefQualifier() == RQ_RValue)
-    Flags |= llvm::DIDescriptor::FlagRValueReference;
+    Flags |= llvm::DebugNode::FlagRValueReference;
 
   llvm::DIArray TParamsArray = CollectFunctionTemplateParams(Method, Unit);
   llvm::DISubprogram SP = DBuilder.createMethod(
@@ -1241,7 +1241,7 @@ void CGDebugInfo::CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
         BaseOffset =
             4 * CGM.getMicrosoftVTableContext().getVBTableIndex(RD, Base);
       }
-      BFlags = llvm::DIDescriptor::FlagVirtual;
+      BFlags = llvm::DebugNode::FlagVirtual;
     } else
       BaseOffset = CGM.getContext().toBits(RL.getBaseClassOffset(Base));
     // FIXME: Inconsistent units for BaseOffset. It is in bytes when
@@ -1439,7 +1439,7 @@ void CGDebugInfo::CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
   unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
   llvm::DIType VPTR = DBuilder.createMemberType(
       Unit, getVTableName(RD), Unit, 0, Size, 0, 0,
-      llvm::DIDescriptor::FlagArtificial, getOrCreateVTablePtrType(Unit));
+      llvm::DebugNode::FlagArtificial, getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
 }
 
@@ -1695,7 +1695,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,
 
   unsigned Flags = 0;
   if (ID->getImplementation())
-    Flags |= llvm::DIDescriptor::FlagObjcClassComplete;
+    Flags |= llvm::DebugNode::FlagObjcClassComplete;
 
   llvm::DICompositeType RealDecl = DBuilder.createStructType(
       Unit, ID->getName(), DefUnit, Line, Size, Align, Flags, llvm::DIType(),
@@ -1787,11 +1787,11 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,
 
     unsigned Flags = 0;
     if (Field->getAccessControl() == ObjCIvarDecl::Protected)
-      Flags = llvm::DIDescriptor::FlagProtected;
+      Flags = llvm::DebugNode::FlagProtected;
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
-      Flags = llvm::DIDescriptor::FlagPrivate;
+      Flags = llvm::DebugNode::FlagPrivate;
     else if (Field->getAccessControl() == ObjCIvarDecl::Public)
-      Flags = llvm::DIDescriptor::FlagPublic;
+      Flags = llvm::DebugNode::FlagPublic;
 
     llvm::MDNode *PropertyNode = nullptr;
     if (ObjCImplementationDecl *ImpD = ID->getImplementation()) {
@@ -1954,7 +1954,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     StringRef EDName = ED->getName();
     llvm::DIType RetTy = DBuilder.createReplaceableCompositeType(
         llvm::dwarf::DW_TAG_enumeration_type, EDName, EDContext, DefUnit, Line,
-        0, Size, Align, llvm::DIDescriptor::FlagFwdDecl, FullName);
+        0, Size, Align, llvm::DebugNode::FlagFwdDecl, FullName);
     ReplaceMap.emplace_back(
         std::piecewise_construct, std::make_tuple(Ty),
         std::make_tuple(static_cast<llvm::Metadata *>(RetTy)));
@@ -2329,7 +2329,7 @@ void CGDebugInfo::collectFunctionDeclProps(GlobalDecl GD,
   // Use mangled name as linkage name for C/C++ functions.
   if (FD->hasPrototype()) {
     LinkageName = CGM.getMangledName(GD);
-    Flags |= llvm::DIDescriptor::FlagPrototyped;
+    Flags |= llvm::DebugNode::FlagPrototyped;
   }
   // No need to replicate the linkage name if it isn't different from the
   // subprogram name, no need to have it at all unless coverage is enabled or
@@ -2612,17 +2612,17 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
                              TParamsArray, Flags);
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {
     Name = getObjCMethodName(OMD);
-    Flags |= llvm::DIDescriptor::FlagPrototyped;
+    Flags |= llvm::DebugNode::FlagPrototyped;
   } else {
     // Use llvm function name.
     Name = Fn->getName();
-    Flags |= llvm::DIDescriptor::FlagPrototyped;
+    Flags |= llvm::DebugNode::FlagPrototyped;
   }
   if (!Name.empty() && Name[0] == '\01')
     Name = Name.substr(1);
 
   if (!HasDecl || D->isImplicit()) {
-    Flags |= llvm::DIDescriptor::FlagArtificial;
+    Flags |= llvm::DebugNode::FlagArtificial;
     // Artificial functions without a location should not silently reuse CurLoc.
     if (Loc.isInvalid())
       CurLoc = SourceLocation();
@@ -2799,7 +2799,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
 
-  unsigned Flags = llvm::DIDescriptor::FlagBlockByrefStruct;
+  unsigned Flags = llvm::DebugNode::FlagBlockByrefStruct;
 
   return DBuilder.createStructType(Unit, "", Unit, 0, FieldOffset, 0, Flags,
                                    llvm::DIType(), Elements);
@@ -2840,14 +2840,14 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
   SmallVector<int64_t, 9> Expr;
   unsigned Flags = 0;
   if (VD->isImplicit())
-    Flags |= llvm::DIDescriptor::FlagArtificial;
+    Flags |= llvm::DebugNode::FlagArtificial;
   // If this is the first argument and it is implicit then
   // give it an object pointer flag.
   // FIXME: There has to be a better way to do this, but for static
   // functions there won't be an implicit param at arg1 and
   // otherwise it is 'self' or 'this'.
   if (isa<ImplicitParamDecl>(VD) && ArgNo == 1)
-    Flags |= llvm::DIDescriptor::FlagObjectPointer;
+    Flags |= llvm::DebugNode::FlagObjectPointer;
   if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
     if (Arg->getType()->isPointerTy() && !Arg->hasByValAttr() &&
         !VD->getType()->isPointerType())
@@ -3154,7 +3154,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   type = DBuilder.createPointerType(type, CGM.PointerWidthInBits);
 
   // Get overall information about the block.
-  unsigned flags = llvm::DIDescriptor::FlagArtificial;
+  unsigned flags = llvm::DebugNode::FlagArtificial;
   llvm::MDNode *scope = LexicalBlockStack.back();
 
   // Create the descriptor for the parameter.
