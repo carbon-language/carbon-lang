@@ -14,7 +14,7 @@ software contained in this directory tree is included below.
 University of Illinois/NCSA
 Open Source License
 
-Copyright (c) 1997-2014 Intel Corporation
+Copyright (c) 1997-2015 Intel Corporation
 
 All rights reserved.
 
