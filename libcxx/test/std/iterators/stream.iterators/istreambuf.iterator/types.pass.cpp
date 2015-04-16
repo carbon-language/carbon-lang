@@ -22,6 +22,9 @@
 //     typedef basic_streambuf<charT,traits> streambuf_type;
 //     typedef basic_istream<charT,traits>   istream_type;
 //     ...
+//
+// All specializations of istreambuf_iterator shall have a trivial copy constructor, 
+//    a constexpr default constructor and a trivial destructor.
 
 #include <iterator>
 #include <string>
@@ -38,6 +41,9 @@ int main()
     static_assert((std::is_same<I1::int_type, I1::traits_type::int_type>::value), "");
     static_assert((std::is_same<I1::streambuf_type, std::streambuf>::value), "");
     static_assert((std::is_same<I1::istream_type, std::istream>::value), "");
+    static_assert((std::is_nothrow_default_constructible<I1>::value), "" );
+    static_assert((std::is_trivially_copy_constructible<I1>::value), "" );
+    static_assert((std::is_trivially_destructible<I1>::value), "" );
 
     typedef std::istreambuf_iterator<wchar_t> I2;
     static_assert((std::is_convertible<I2,
@@ -48,4 +54,7 @@ int main()
     static_assert((std::is_same<I2::int_type, I2::traits_type::int_type>::value), "");
     static_assert((std::is_same<I2::streambuf_type, std::wstreambuf>::value), "");
     static_assert((std::is_same<I2::istream_type, std::wistream>::value), "");
+    static_assert((std::is_nothrow_default_constructible<I2>::value), "" );
+    static_assert((std::is_trivially_copy_constructible<I2>::value), "" );
+    static_assert((std::is_trivially_destructible<I2>::value), "" );
 }

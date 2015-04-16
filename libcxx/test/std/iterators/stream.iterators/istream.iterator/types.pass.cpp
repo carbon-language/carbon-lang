@@ -19,9 +19,14 @@
 //     typedef traits traits_type;
 //     typedef basic_istream<charT,traits> istream_type;
 //     ...
+//
+//   If T is a literal type, then the default constructor shall be a constexpr constructor.
+//   If T is a literal type, then this constructor shall be a trivial copy constructor.
+//   If T is a literal type, then this destructor shall be a trivial destructor.
 
 #include <iterator>
 #include <type_traits>
+#include <string>
 
 int main()
 {
@@ -32,6 +37,9 @@ int main()
     static_assert((std::is_same<I1::char_type, char>::value), "");
     static_assert((std::is_same<I1::traits_type, std::char_traits<char> >::value), "");
     static_assert((std::is_same<I1::istream_type, std::istream>::value), "");
+    static_assert( std::is_trivially_copy_constructible<I1>::value, "");
+    static_assert( std::is_trivially_destructible<I1>::value, "");
+
     typedef std::istream_iterator<unsigned, wchar_t> I2;
     static_assert((std::is_convertible<I2,
         std::iterator<std::input_iterator_tag, unsigned, std::ptrdiff_t,
@@ -39,4 +47,10 @@ int main()
     static_assert((std::is_same<I2::char_type, wchar_t>::value), "");
     static_assert((std::is_same<I2::traits_type, std::char_traits<wchar_t> >::value), "");
     static_assert((std::is_same<I2::istream_type, std::wistream>::value), "");
+    static_assert( std::is_trivially_copy_constructible<I2>::value, "");
+    static_assert( std::is_trivially_destructible<I2>::value, "");
+
+    typedef std::istream_iterator<std::string> I3;
+    static_assert(!std::is_trivially_copy_constructible<I3>::value, "");
+    static_assert(!std::is_trivially_destructible<I3>::value, "");
 }

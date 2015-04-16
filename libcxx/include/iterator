@@ -214,7 +214,7 @@ public:
     typedef traits traits_type;
     typedef basic_istream<charT,traits> istream_type;
 
-    istream_iterator();
+    constexpr istream_iterator();
     istream_iterator(istream_type& s);
     istream_iterator(const istream_iterator& x);
     ~istream_iterator();
@@ -765,7 +765,7 @@ private:
     istream_type* __in_stream_;
     _Tp __value_;
 public:
-    _LIBCPP_INLINE_VISIBILITY istream_iterator() : __in_stream_(0) {}
+    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR istream_iterator() : __in_stream_(0), __value_() {}
     _LIBCPP_INLINE_VISIBILITY istream_iterator(istream_type& __s) : __in_stream_(&__s)
         {
             if (!(*__in_stream_ >> __value_))

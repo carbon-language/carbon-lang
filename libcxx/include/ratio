@@ -21,8 +21,8 @@ template <intmax_t N, intmax_t D = 1>
 class ratio
 {
 public:
-    static const intmax_t num;
-    static const intmax_t den;
+    static constexpr intmax_t num;
+    static constexpr intmax_t den;
     typedef ratio<num, den> type;
 };
 
@@ -236,13 +236,13 @@ class _LIBCPP_TYPE_VIS_ONLY ratio
     static_assert(__static_abs<_Num>::value >= 0, "ratio numerator is out of range");
     static_assert(_Den != 0, "ratio divide by 0");
     static_assert(__static_abs<_Den>::value >  0, "ratio denominator is out of range");
-    static const intmax_t __na = __static_abs<_Num>::value;
-    static const intmax_t __da = __static_abs<_Den>::value;
-    static const intmax_t __s = __static_sign<_Num>::value * __static_sign<_Den>::value;
-    static const intmax_t __gcd = __static_gcd<__na, __da>::value;
+    static _LIBCPP_CONSTEXPR const intmax_t __na = __static_abs<_Num>::value;
+    static _LIBCPP_CONSTEXPR const intmax_t __da = __static_abs<_Den>::value;
+    static _LIBCPP_CONSTEXPR const intmax_t __s = __static_sign<_Num>::value * __static_sign<_Den>::value;
+    static _LIBCPP_CONSTEXPR const intmax_t __gcd = __static_gcd<__na, __da>::value;
 public:
-    static const intmax_t num = __s * __na / __gcd;
-    static const intmax_t den = __da / __gcd;
+    static _LIBCPP_CONSTEXPR const intmax_t num = __s * __na / __gcd;
+    static _LIBCPP_CONSTEXPR const intmax_t den = __da / __gcd;
 
     typedef ratio<num, den> type;
 };

@@ -16,15 +16,15 @@
 #include <iterator>
 #include <cassert>
 
+struct S { S(); }; // not constexpr 
+
 int main()
 {
-    {
-    typedef std::istream_iterator<int> T;
-    T it;
-    assert(it == T());
 #if __cplusplus >= 201103L
-    constexpr T it2;
-#endif
+    {
+    constexpr std::istream_iterator<S> it;
     }
-    
+#else
+#error "C++11 only test"
+#endif
 }
