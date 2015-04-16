@@ -1582,11 +1582,10 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
       InsertValueInst *Insert1 = nullptr;
       InsertValueInst *Insert2 = nullptr;
       Value *ResumeVal = Resume->getOperand(0);
-      // If there is only one landingpad, we may use the lpad directly with no
-      // insertions.
-      if (isa<LandingPadInst>(ResumeVal))
-        return;
-      if (!isa<PHINode>(ResumeVal)) {
+      // If the resume value isn't a phi or landingpad value, it should be a
+      // series of insertions. Identify them so we can avoid them when scanning
+      // for cleanups.
+      if (!isa<PHINode>(ResumeVal) && !isa<LandingPadInst>(ResumeVal)) {
         Insert2 = dyn_cast<InsertValueInst>(ResumeVal);
         if (!Insert2)
           return createCleanupHandler(Actions, CleanupHandlerMap, BB);
@@ -1702,7 +1701,6 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
       return;
     BB = Branch->getSuccessor(0);
   }
-  return;
 }
 
 // This is a public function, declared in WinEHFuncInfo.h and is also
