@@ -423,7 +423,12 @@ macro(add_llvm_library name)
     set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
   else()
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "LTO")
-      if(ARG_SHARED OR BUILD_SHARED_LIBS)
+      if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        install(TARGETS ${name}
+          EXPORT LLVMExports
+          RUNTIME DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+          COMPONENT ${name})
+      elseif(ARG_SHARED OR BUILD_SHARED_LIBS)
         install(TARGETS ${name}
           EXPORT LLVMExports
           LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
