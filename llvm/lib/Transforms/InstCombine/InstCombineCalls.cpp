@@ -197,12 +197,51 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   return nullptr;
 }
 
+static Value *SimplifyX86insertps(const IntrinsicInst &II,
+                                  InstCombiner::BuilderTy &Builder) {
+  if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
+    VectorType *VecTy = cast<VectorType>(II.getType());
+    ConstantAggregateZero *ZeroVector = ConstantAggregateZero::get(VecTy);
+    
+    // The immediate permute control byte looks like this:
+    //    [3:0] - zero mask for each 32-bit lane
+    //    [5:4] - select one 32-bit destination lane
+    //    [7:6] - select one 32-bit source lane
+
+    uint8_t Imm = CInt->getZExtValue();
+    uint8_t ZMask = Imm & 0xf;
+    uint8_t DestLane = (Imm >> 4) & 0x3;
+    uint8_t SourceLane = (Imm >> 6) & 0x3;
+
+    // If all zero mask bits are set, this was just a weird way to
+    // generate a zero vector.
+    if (ZMask == 0xf)
+      return ZeroVector;
+    
+    // TODO: Model this case as two shuffles or a 'logical and' plus shuffle?
+    if (ZMask)
+      return nullptr;
+
+    assert(VecTy->getNumElements() == 4 && "insertps with wrong vector type");
+
+    // If we're not zeroing anything, this is a single shuffle.
+    // Replace the selected destination lane with the selected source lane.
+    // For all other lanes, pass the first source bits through.
+    int ShuffleMask[4] = { 0, 1, 2, 3 };
+    ShuffleMask[DestLane] = SourceLane + 4;
+    
+    return Builder.CreateShuffleVector(II.getArgOperand(0), II.getArgOperand(1),
+                                       ShuffleMask);
+  }
+  return nullptr;
+}
+
 /// The shuffle mask for a perm2*128 selects any two halves of two 256-bit
 /// source vectors, unless a zero bit is set. If a zero bit is set,
 /// then ignore that half of the mask and clear that half of the vector.
 static Value *SimplifyX86vperm2(const IntrinsicInst &II,
                                 InstCombiner::BuilderTy &Builder) {
-  if (auto CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
+  if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
     VectorType *VecTy = cast<VectorType>(II.getType());
     ConstantAggregateZero *ZeroVector = ConstantAggregateZero::get(VecTy);
 
@@ -730,7 +769,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
   }
-
+  case Intrinsic::x86_sse41_insertps:
+    if (Value *V = SimplifyX86insertps(*II, *Builder))
+      return ReplaceInstUsesWith(*II, V);
+    break;
+    
   case Intrinsic::x86_sse4a_insertqi: {
     // insertqi x, y, 64, 0 can just copy y's lower bits and leave the top
     // ones undef
