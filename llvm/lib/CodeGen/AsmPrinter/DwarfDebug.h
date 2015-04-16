@@ -173,7 +173,7 @@ public:
 private:
   /// resolve - Look in the DwarfDebug map for the MDNode that
   /// corresponds to the reference.
-  template <typename T> T resolve(DIRef<T> Ref) const;
+  template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const;
 };
 
 
@@ -577,9 +577,6 @@ public:
   void emitDebugLocEntryLocation(const DebugLocEntry &Entry);
 
   /// Find the MDNode for the given reference.
-  template <typename T> T resolve(DIRef<T> Ref) const {
-    return Ref.resolve(TypeIdentifierMap);
-  }
   template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
   }

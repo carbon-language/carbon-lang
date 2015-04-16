@@ -100,6 +100,9 @@ DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 
 typedef DebugNodeArray DIArray;
 typedef MDTypeRefArray DITypeArray;
+typedef DebugNodeRef DIDescriptorRef;
+typedef MDScopeRef DIScopeRef;
+typedef MDTypeRef DITypeRef;
 
 class DISubrange {
   MDSubrange *N;
@@ -124,11 +127,6 @@ public:
   MDEnumerator &operator*() const { return *N; }
 };
 
-template <typename T> class DIRef;
-typedef DIRef<DIDescriptor> DIDescriptorRef;
-typedef DIRef<DIScope> DIScopeRef;
-typedef DIRef<DIType> DITypeRef;
-
 class DIScope {
   MDScope *N;
 
@@ -140,32 +138,6 @@ public:
   MDScope *operator->() const { return N; }
   MDScope &operator*() const { return *N; }
 };
-
-/// \brief Represents reference to a DIDescriptor.
-///
-/// Abstracts over direct and identifier-based metadata references.
-template <typename T> class DIRef {
-  /// \brief Val can be either a MDNode or a MDString.
-  ///
-  /// In the latter, MDString specifies the type identifier.
-  const Metadata *Val;
-
-public:
-  template <class U>
-  DIRef(const TypedDebugNodeRef<U> &Ref,
-        typename std::enable_if<std::is_convertible<U *, T>::value>::type * =
-            nullptr)
-      : Val(Ref) {}
-
-  T resolve(const DITypeIdentifierMap &Map) const;
-  operator Metadata *() const { return const_cast<Metadata *>(Val); }
-};
-
-template <>
-DIDescriptor DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const;
-template <>
-DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const;
-template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
 
 class DIType {
   MDType *N;

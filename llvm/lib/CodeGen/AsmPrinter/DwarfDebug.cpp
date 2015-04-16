@@ -129,7 +129,7 @@ bool DebugLocDwarfExpression::isFrameRegister(unsigned MachineReg) {
 
 /// resolve - Look in the DwarfDebug map for the MDNode that
 /// corresponds to the reference.
-template <typename T> T DbgVariable::resolve(DIRef<T> Ref) const {
+template <typename T> T *DbgVariable::resolve(TypedDebugNodeRef<T> Ref) const {
   return DD->resolve(Ref);
 }
 
