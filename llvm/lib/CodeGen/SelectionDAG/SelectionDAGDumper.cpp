@@ -527,8 +527,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
   if (!L)
     return;
 
-  if (DIScope Scope = L->getScope())
-    OS << Scope.getFilename();
+  if (auto *Scope = L->getScope())
+    OS << Scope->getFilename();
   else
     OS << "<unknown>";
   OS << ':' << L->getLine();

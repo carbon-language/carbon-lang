@@ -129,12 +129,12 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   if (!curLoc)
     return;
 
-  DIScope Scope = cast_or_null<MDScope>(curLoc.getScope());
+  auto *Scope = cast_or_null<MDScope>(curLoc.getScope());
   if (!Scope)
      return;
 
-  StringRef fileName(Scope.getFilename());
-  StringRef dirName(Scope.getDirectory());
+  StringRef fileName(Scope->getFilename());
+  StringRef dirName(Scope->getDirectory());
   SmallString<128> FullPathName = dirName;
   if (!dirName.empty() && !sys::path::is_absolute(fileName)) {
     sys::path::append(FullPathName, fileName);

@@ -1251,9 +1251,9 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   StringRef Dir;
   unsigned Src = 1;
   unsigned Discriminator = 0;
-  if (DIScope Scope = cast_or_null<MDScope>(S)) {
-    Fn = Scope.getFilename();
-    Dir = Scope.getDirectory();
+  if (auto *Scope = cast_or_null<MDScope>(S)) {
+    Fn = Scope->getFilename();
+    Dir = Scope->getDirectory();
     if (auto *LBF = dyn_cast<MDLexicalBlockFile>(Scope))
       Discriminator = LBF->getDiscriminator();
 

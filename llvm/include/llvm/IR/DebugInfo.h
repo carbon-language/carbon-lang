@@ -137,41 +137,27 @@ DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 typedef DebugNodeArray DIArray;
 typedef MDTypeRefArray DITypeArray;
 
-/// \brief This is used to represent ranges, for array bounds.
-class DISubrange : public DIDescriptor {
+class DISubrange {
+  MDSubrange *N;
+
 public:
-  DISubrange() = default;
-  DISubrange(const MDSubrange *N) : DIDescriptor(N) {}
+  DISubrange(const MDSubrange *N = nullptr) : N(const_cast<MDSubrange *>(N)) {}
 
-  MDSubrange *get() const {
-    return cast_or_null<MDSubrange>(DIDescriptor::get());
-  }
-  operator MDSubrange *() const { return get(); }
-  MDSubrange *operator->() const { return get(); }
-  MDSubrange &operator*() const { return *get(); }
-
-  int64_t getLo() const { return get()->getLowerBound(); }
-  int64_t getCount() const { return get()->getCount(); }
+  operator MDSubrange *() const { return N; }
+  MDSubrange *operator->() const { return N; }
+  MDSubrange &operator*() const { return *N; }
 };
 
-/// \brief A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
-///
-/// FIXME: it seems strange that this doesn't have either a reference to the
-/// type/precision or a file/line pair for location info.
-class DIEnumerator : public DIDescriptor {
+class DIEnumerator {
+  MDEnumerator *N;
+
 public:
-  DIEnumerator() = default;
-  DIEnumerator(const MDEnumerator *N) : DIDescriptor(N) {}
+  DIEnumerator(const MDEnumerator *N = nullptr)
+      : N(const_cast<MDEnumerator *>(N)) {}
 
-  MDEnumerator *get() const {
-    return cast_or_null<MDEnumerator>(DIDescriptor::get());
-  }
-  operator MDEnumerator *() const { return get(); }
-  MDEnumerator *operator->() const { return get(); }
-  MDEnumerator &operator*() const { return *get(); }
-
-  StringRef getName() const { return get()->getName(); }
-  int64_t getEnumValue() const { return get()->getValue(); }
+  operator MDEnumerator *() const { return N; }
+  MDEnumerator *operator->() const { return N; }
+  MDEnumerator &operator*() const { return *N; }
 };
 
 template <typename T> class DIRef;
@@ -179,34 +165,16 @@ typedef DIRef<DIDescriptor> DIDescriptorRef;
 typedef DIRef<DIScope> DIScopeRef;
 typedef DIRef<DIType> DITypeRef;
 
-/// \brief A base class for various scopes.
-///
-/// Although, implementation-wise, DIScope is the parent class of most
-/// other DIxxx classes, including DIType and its descendants, most of
-/// DIScope's descendants are not a substitutable subtype of
-/// DIScope. The DIDescriptor::isScope() method only is true for
-/// DIScopes that are scopes in the strict lexical scope sense
-/// (DICompileUnit, DISubprogram, etc.), but not for, e.g., a DIType.
-class DIScope : public DIDescriptor {
+class DIScope {
+  MDScope *N;
+
 public:
-  DIScope() = default;
-  DIScope(const MDScope *N) : DIDescriptor(N) {}
+  DIScope(const MDScope *N = nullptr) : N(const_cast<MDScope *>(N)) {}
 
-  MDScope *get() const { return cast_or_null<MDScope>(DIDescriptor::get()); }
-  operator MDScope *() const { return get(); }
-  MDScope *operator->() const { return get(); }
-  MDScope &operator*() const { return *get(); }
-
-  inline DIScopeRef getContext() const;
-  StringRef getName() const { return get()->getName(); }
-  StringRef getFilename() const { return get()->getFilename(); }
-  StringRef getDirectory() const { return get()->getDirectory(); }
-
-  /// \brief Generate a reference to this DIScope.
-  ///
-  /// Uses the type identifier instead of the actual MDNode if possible, to
-  /// help type uniquing.
-  DIScopeRef getRef() const;
+  operator DIDescriptor() const { return N; }
+  operator MDScope *() const { return N; }
+  MDScope *operator->() const { return N; }
+  MDScope &operator*() const { return *N; }
 };
 
 /// \brief Represents reference to a DIDescriptor.
@@ -234,8 +202,6 @@ DIDescriptor DIRef<DIDescriptor>::resolve(const DITypeIdentifierMap &Map) const;
 template <>
 DIScope DIRef<DIScope>::resolve(const DITypeIdentifierMap &Map) const;
 template <> DIType DIRef<DIType>::resolve(const DITypeIdentifierMap &Map) const;
-
-DIScopeRef DIScope::getContext() const { return get()->getScope(); }
 
 class DIType {
   MDType *N;

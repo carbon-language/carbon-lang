@@ -33,8 +33,6 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-DIScopeRef DIScope::getRef() const { return MDScopeRef::get(get()); }
-
 DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   if (auto *LocalScope = dyn_cast_or_null<MDLocalScope>(Scope))
     return LocalScope->getSubprogram();

@@ -24,9 +24,9 @@ StringRef WinCodeViewLineTables::getFullFilepath(const MDNode *S) {
           isa<MDLexicalBlockBase>(S)) &&
          "Unexpected scope info");
 
-  DIScope Scope = cast<MDScope>(S);
-  StringRef Dir = Scope.getDirectory(),
-            Filename = Scope.getFilename();
+  auto *Scope = cast<MDScope>(S);
+  StringRef Dir = Scope->getDirectory(),
+            Filename = Scope->getFilename();
   char *&Result = DirAndFilenameToFilepathMap[std::make_pair(Dir, Filename)];
   if (Result)
     return Result;

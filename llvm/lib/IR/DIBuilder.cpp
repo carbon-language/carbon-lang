@@ -348,8 +348,7 @@ DIBuilder::createObjCProperty(StringRef Name, DIFile File, unsigned LineNumber,
 DITemplateTypeParameter
 DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
                                        DIType Ty) {
-  assert((!Context || isa<MDCompileUnit>(Context.get())) &&
-         "Expected compile unit");
+  assert((!Context || isa<MDCompileUnit>(Context)) && "Expected compile unit");
   return MDTemplateTypeParameter::get(VMContext, Name, MDTypeRef::get(Ty));
 }
 
@@ -357,8 +356,7 @@ static DITemplateValueParameter
 createTemplateValueParameterHelper(LLVMContext &VMContext, unsigned Tag,
                                    DIDescriptor Context, StringRef Name,
                                    DIType Ty, Metadata *MD) {
-  assert((!Context || isa<MDCompileUnit>(Context.get())) &&
-         "Expected compile unit");
+  assert((!Context || isa<MDCompileUnit>(Context)) && "Expected compile unit");
   return MDTemplateValueParameter::get(VMContext, Tag, Name, MDTypeRef::get(Ty),
                                        MD);
 }
@@ -590,10 +588,10 @@ DIGlobalVariable DIBuilder::createGlobalVariable(
     MDNode *Decl) {
   checkGlobalVariableScope(Context);
 
-  auto *N = MDGlobalVariable::get(
-      VMContext, cast_or_null<MDScope>(Context.get()), Name, LinkageName, F,
-      LineNumber, MDTypeRef::get(Ty), isLocalToUnit, true, Val,
-      cast_or_null<MDDerivedType>(Decl));
+  auto *N = MDGlobalVariable::get(VMContext, cast_or_null<MDScope>(Context),
+                                  Name, LinkageName, F, LineNumber,
+                                  MDTypeRef::get(Ty), isLocalToUnit, true, Val,
+                                  cast_or_null<MDDerivedType>(Decl));
   AllGVs.push_back(N);
   return N;
 }
@@ -605,9 +603,10 @@ DIGlobalVariable DIBuilder::createTempGlobalVariableFwdDecl(
   checkGlobalVariableScope(Context);
 
   return MDGlobalVariable::getTemporary(
-             VMContext, cast_or_null<MDScope>(Context.get()), Name, LinkageName,
-             F, LineNumber, MDTypeRef::get(Ty), isLocalToUnit, false, Val,
-             cast_or_null<MDDerivedType>(Decl)).release();
+             VMContext, cast_or_null<MDScope>(Context), Name, LinkageName, F,
+             LineNumber, MDTypeRef::get(Ty), isLocalToUnit, false, Val,
+             cast_or_null<MDDerivedType>(Decl))
+      .release();
 }
 
 DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
@@ -622,8 +621,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
   DIScope Context = getNonCompileUnitScope(Scope);
 
   auto *Node = MDLocalVariable::get(
-      VMContext, Tag, cast_or_null<MDLocalScope>(Context.get()), Name, File,
-      LineNo, MDTypeRef::get(Ty), ArgNo, Flags);
+      VMContext, Tag, cast_or_null<MDLocalScope>(Context), Name, File, LineNo,
+      MDTypeRef::get(Ty), ArgNo, Flags);
   if (AlwaysPreserve) {
     // The optimizer may remove local variable. If there is an interest
     // to preserve variable info in such situation then stash it in a

@@ -903,8 +903,8 @@ std::string DwarfUnit::getParentContextString(DIScope Context) const {
   SmallVector<DIScope, 1> Parents;
   while (!isa<MDCompileUnit>(Context)) {
     Parents.push_back(Context);
-    if (Context.getContext())
-      Context = resolve(Context.getContext());
+    if (Context->getScope())
+      Context = resolve(Context->getScope());
     else
       // Structure, etc types will have a NULL context if they're at the top
       // level.
@@ -916,8 +916,8 @@ std::string DwarfUnit::getParentContextString(DIScope Context) const {
   for (SmallVectorImpl<DIScope>::reverse_iterator I = Parents.rbegin(),
                                                   E = Parents.rend();
        I != E; ++I) {
-    DIScope Ctx = *I;
-    StringRef Name = Ctx.getName();
+    const MDScope *Ctx = *I;
+    StringRef Name = Ctx->getName();
     if (Name.empty() && isa<MDNamespace>(Ctx))
       Name = "(anonymous namespace)";
     if (!Name.empty()) {
@@ -1364,9 +1364,9 @@ void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
   // C/C++. The Count value is the number of elements.  Values are 64 bit. If
   // Count == -1 then the array is unbounded and we do not emit
   // DW_AT_lower_bound and DW_AT_count attributes.
-  int64_t LowerBound = SR.getLo();
+  int64_t LowerBound = SR->getLowerBound();
   int64_t DefaultLowerBound = getDefaultLowerBound();
-  int64_t Count = SR.getCount();
+  int64_t Count = SR->getCount();
 
   if (DefaultLowerBound == -1 || LowerBound != DefaultLowerBound)
     addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, None, LowerBound);
@@ -1417,12 +1417,12 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
   // Add enumerators to enumeration type.
   for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-    DIEnumerator Enum = dyn_cast_or_null<MDEnumerator>(Elements[i]);
+    auto *Enum = dyn_cast_or_null<MDEnumerator>(Elements[i]);
     if (Enum) {
       DIE &Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
-      StringRef Name = Enum.getName();
+      StringRef Name = Enum->getName();
       addString(Enumerator, dwarf::DW_AT_name, Name);
-      int64_t Value = Enum.getEnumValue();
+      int64_t Value = Enum->getValue();
       addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
               Value);
     }

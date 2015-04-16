@@ -362,9 +362,9 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
   if (!DL)
     return;
 
-  DIScope Scope = cast<MDScope>(DL.getScope());
+  auto *Scope = cast<MDScope>(DL.getScope());
   // Omit the directory, because it's likely to be long and uninteresting.
-  CommentOS << Scope.getFilename();
+  CommentOS << Scope->getFilename();
   CommentOS << ':' << DL.getLine();
   if (DL.getCol() != 0)
     CommentOS << ':' << DL.getCol();
