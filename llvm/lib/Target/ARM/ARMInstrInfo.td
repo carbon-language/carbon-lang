@@ -1420,7 +1420,8 @@ multiclass AsI1_rbin_s_is<InstrItinClass iii, InstrItinClass iir,
 let isCompare = 1, Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                       PatFrag opnode, bit Commutable = 0> {
+                       PatFrag opnode, bit Commutable = 0,
+                       string rrDecoderMethod = ""> {
   def ri : AI1<opcod, (outs), (ins GPR:$Rn, mod_imm:$imm), DPFrm, iii,
                opc, "\t$Rn, $imm",
                [(opnode GPR:$Rn, mod_imm:$imm)]>,
@@ -1448,6 +1449,7 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{15-12} = 0b0000;
     let Inst{11-4} = 0b00000000;
     let Inst{3-0} = Rm;
+    let DecoderMethod = rrDecoderMethod;
 
     let Unpredictable{15-12} = 0b1111;
   }
@@ -4266,6 +4268,30 @@ def CRC32W  : AI_crc32<0, 0b10, "w", int_arm_crc32w>;
 def CRC32CW : AI_crc32<1, 0b10, "cw", int_arm_crc32cw>;
 
 //===----------------------------------------------------------------------===//
+// ARMv8.1a Privilege Access Never extension
+//
+// SETPAN #imm1
+
+def SETPAN : AInoP<(outs), (ins imm0_1:$imm), MiscFrm, NoItinerary, "setpan",
+                "\t$imm", []>, Requires<[IsARM, HasV8, HasV8_1a]> {
+  bits<1> imm;
+
+  let Inst{31-28} = 0b1111;
+  let Inst{27-20} = 0b00010001;
+  let Inst{19-16} = 0b0000;
+  let Inst{15-10} = 0b000000;
+  let Inst{9} = imm;
+  let Inst{8} = 0b0;
+  let Inst{7-4} = 0b0000;
+  let Inst{3-0} = 0b0000;
+
+  let Unpredictable{19-16} = 0b1111;
+  let Unpredictable{15-10} = 0b111111;
+  let Unpredictable{8} = 0b1;
+  let Unpredictable{3-0} = 0b1111;
+}
+
+//===----------------------------------------------------------------------===//
 //  Comparison Instructions...
 //
 
@@ -4369,7 +4395,8 @@ def : ARMPat<(ARMcmpZ GPR:$src, mod_imm_neg:$imm),
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
                         IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
-                      BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>, 1>;
+                      BinOpFrag<(ARMcmpZ (and_su node:$LHS, node:$RHS), 0)>, 1,
+                      "DecodeTSTInstruction">;
 defm TEQ  : AI1_cmp_irs<0b1001, "teq",
                         IIC_iTSTi, IIC_iTSTr, IIC_iTSTsr,
                       BinOpFrag<(ARMcmpZ (xor_su node:$LHS, node:$RHS), 0)>, 1>;

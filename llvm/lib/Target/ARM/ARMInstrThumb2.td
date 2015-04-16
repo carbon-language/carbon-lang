@@ -4281,6 +4281,23 @@ def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 
 
 //===----------------------------------------------------------------------===//
+// ARMv8.1 Privilege Access Never extension
+//
+// SETPAN #imm1
+
+def t2SETPAN : T1I<(outs), (ins imm0_1:$imm), NoItinerary, "setpan\t$imm", []>,
+               T1Misc<0b0110000>, Requires<[IsThumb2, HasV8, HasV8_1a]> {
+  bits<1> imm;
+
+  let Inst{4} = 0b1;
+  let Inst{3} = imm;
+  let Inst{2-0} = 0b000;
+
+  let Unpredictable{4} = 0b1;
+  let Unpredictable{2-0} = 0b111;
+}
+
+//===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
 

@@ -96,3 +96,15 @@
 # CHECK-V8: warning: invalid instruction encoding
 # CHECK-V8: [0xa2,0xff,0x42,0x0f]
 # CHECK-V8: ^
+
+[0x10,0xb6]
+# CHECK-V81a: setpan #0
+# CHECK-V8: warning: invalid instruction encoding
+# CHECK-V8: [0x10,0xb6]
+# CHECK-V8: ^
+
+[0x18,0xb6]
+# CHECK-V81a: setpan #1
+# CHECK-V8: warning: invalid instruction encoding
+# CHECK-V8: [0x18,0xb6]
+# CHECK-V8: ^
