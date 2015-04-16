@@ -1526,7 +1526,7 @@ void AArch64InstrInfo::copyPhysRegTuple(
   }
 
   for (; SubReg != End; SubReg += Incr) {
-    const MachineInstrBuilder &MIB = BuildMI(MBB, I, DL, get(Opcode));
+    const MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opcode));
     AddSubReg(MIB, DestReg, Indices[SubReg], RegState::Define, TRI);
     AddSubReg(MIB, SrcReg, Indices[SubReg], 0, TRI);
     AddSubReg(MIB, SrcReg, Indices[SubReg], getKillRegState(KillSrc), TRI);
@@ -1904,7 +1904,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
   }
   assert(Opc && "Unknown register class");
 
-  const MachineInstrBuilder &MI = BuildMI(MBB, MBBI, DL, get(Opc))
+  const MachineInstrBuilder MI = BuildMI(MBB, MBBI, DL, get(Opc))
                                       .addReg(SrcReg, getKillRegState(isKill))
                                       .addFrameIndex(FI);
 
@@ -2002,7 +2002,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
   }
   assert(Opc && "Unknown register class");
 
-  const MachineInstrBuilder &MI = BuildMI(MBB, MBBI, DL, get(Opc))
+  const MachineInstrBuilder MI = BuildMI(MBB, MBBI, DL, get(Opc))
                                       .addReg(DestReg, getDefRegState(true))
                                       .addFrameIndex(FI);
   if (Offset)
