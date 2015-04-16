@@ -37,9 +37,10 @@ public:
 
   /// state management
   void reset() override {
+    SeenIdent = false;
     LocalCommons.clear();
     BindingExplicitlySet.clear();
-    SeenIdent = false;
+    BundleGroups.clear();
     MCObjectStreamer::reset();
   }
 
