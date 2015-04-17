@@ -369,6 +369,15 @@ LanguageRuntime::GetNameForLanguageType (LanguageType language)
         return language_names[eLanguageTypeUnknown].name;
 }
 
+void
+LanguageRuntime::PrintAllLanguages (Stream &s, const char *prefix, const char *suffix)
+{
+    for (uint32_t i = 1; i < num_languages; i++)
+    {
+        s.Printf("%s%s%s", prefix, language_names[i].name, suffix);
+    }
+}
+
 bool
 LanguageRuntime::LanguageIsCPlusPlus (LanguageType language)
 {

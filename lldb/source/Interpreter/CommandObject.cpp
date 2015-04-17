@@ -850,12 +850,9 @@ LanguageTypeHelpTextCallback ()
     
     StreamString sstr;
     sstr << "One of the following languages:\n";
-    
-    for (unsigned int l = eLanguageTypeUnknown; l < eNumLanguageTypes; ++l)
-    {
-        sstr << "  " << LanguageRuntime::GetNameForLanguageType(static_cast<LanguageType>(l)) << "\n";
-    }
-    
+
+    LanguageRuntime::PrintAllLanguages(sstr, "  ", "\n");
+
     sstr.Flush();
     
     std::string data = sstr.GetString();
