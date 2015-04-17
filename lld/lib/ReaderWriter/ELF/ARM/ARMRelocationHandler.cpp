@@ -89,6 +89,7 @@ static Reference::Addend readAddend(const uint8_t *location,
   case R_ARM_BASE_PREL:
   case R_ARM_TLS_IE32:
   case R_ARM_TLS_LE32:
+  case R_ARM_TLS_TPOFF32:
     return (int32_t)read32le(location);
   case R_ARM_PREL31:
     return (int32_t)(read32le(location) & 0x7FFFFFFF);
@@ -427,6 +428,19 @@ static void relocR_ARM_TLS_LE32(uint8_t *location, uint64_t P, uint64_t S,
   applyArmReloc(location, result);
 }
 
+/// \brief R_ARM_TLS_TPOFF32 - S + A - tp => S + A (offset within TLS block)
+static void relocR_ARM_TLS_TPOFF32(uint8_t *location, uint64_t P, uint64_t S,
+                                   int64_t A) {
+  uint32_t result = (uint32_t)(S + A);
+
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+        llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+        llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+        llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+  applyArmReloc(location, result);
+}
+
 template <uint32_t lshift>
 static void relocR_ARM_ALU_PC_GN_NC(uint8_t *location, uint32_t result) {
   static_assert(lshift < 32 && lshift % 2 == 0,
@@ -570,6 +584,9 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
     break;
   case R_ARM_TLS_LE32:
     relocR_ARM_TLS_LE32(loc, reloc, target, addend, _armLayout.getTPOffset());
+    break;
+  case R_ARM_TLS_TPOFF32:
+    relocR_ARM_TLS_TPOFF32(loc, reloc, target, addend);
     break;
   case R_ARM_GOT_BREL:
     relocR_ARM_GOT_BREL(loc, reloc, target, addend, _armLayout.getGOTSymAddr());

@@ -33,6 +33,18 @@ public:
     return _baseAddress;
   }
 
+  bool isDynamicRelocation(const Reference &r) const override {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::ARM);
+    switch (r.kindValue()) {
+    case llvm::ELF::R_ARM_TLS_TPOFF32:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   bool isPLTRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;

@@ -870,7 +870,7 @@ public:
 
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
   const GOTAtom *getTLSTPOFF32(const DefinedAtom *da) {
-    llvm_unreachable("Handle TLS TPOFF32");
+    return getGOTTLSEntry<R_ARM_TLS_TPOFF32>(da);
   }
 
   const PLT0Atom *getPLT0() {
