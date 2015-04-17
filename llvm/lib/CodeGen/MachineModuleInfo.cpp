@@ -461,23 +461,12 @@ void MachineModuleInfo::addCleanup(MachineBasicBlock *LandingPad) {
   LP.TypeIds.push_back(0);
 }
 
-void MachineModuleInfo::addSEHCatchHandler(MachineBasicBlock *LandingPad,
-                                           const Function *Filter,
-                                           const BlockAddress *RecoverBA) {
+MCSymbol *
+MachineModuleInfo::addClauseForLandingPad(MachineBasicBlock *LandingPad) {
+  MCSymbol *ClauseLabel = Context.CreateTempSymbol();
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  SEHHandler Handler;
-  Handler.FilterOrFinally = Filter;
-  Handler.RecoverBA = RecoverBA;
-  LP.SEHHandlers.push_back(Handler);
-}
-
-void MachineModuleInfo::addSEHCleanupHandler(MachineBasicBlock *LandingPad,
-                                             const Function *Cleanup) {
-  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  SEHHandler Handler;
-  Handler.FilterOrFinally = Cleanup;
-  Handler.RecoverBA = nullptr;
-  LP.SEHHandlers.push_back(Handler);
+  LP.ClauseLabels.push_back(ClauseLabel);
+  return ClauseLabel;
 }
 
 /// TidyLandingPads - Remap landing pad labels and remove any deleted landing

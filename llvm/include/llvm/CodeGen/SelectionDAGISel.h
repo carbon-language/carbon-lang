@@ -260,10 +260,7 @@ private:
   SDNode *MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTs,
                     ArrayRef<SDValue> Ops, unsigned EmitNodeInfo);
 
-  /// Prepares the landing pad to take incoming values or do other EH
-  /// personality specific tasks. Returns true if the block should be
-  /// instruction selected, false if no code should be emitted for it.
-  bool PrepareEHLandingPad();
+  void PrepareEHLandingPad();
 
   /// \brief Perform instruction selection on all basic blocks in the function.
   void SelectAllBasicBlocks(const Function &Fn);
