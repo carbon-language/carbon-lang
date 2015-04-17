@@ -2451,8 +2451,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   Assert(isa<PointerType>(TargetTy),
          "GEP base pointer is not a vector or a vector of pointers", &GEP);
-  Assert(cast<PointerType>(TargetTy)->getElementType()->isSized(),
-         "GEP into unsized type!", &GEP);
+  Assert(GEP.getSourceElementType()->isSized(), "GEP into unsized type!", &GEP);
   Assert(GEP.getPointerOperandType()->isVectorTy() ==
              GEP.getType()->isVectorTy(),
          "Vector GEP must return a vector value", &GEP);
