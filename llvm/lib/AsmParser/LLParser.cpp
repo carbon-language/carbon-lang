@@ -5542,13 +5542,10 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   }
 
   SmallPtrSet<const Type*, 4> Visited;
-  if (!Indices.empty() &&
-      !BasePointerType->getElementType()->isSized(&Visited))
+  if (!Indices.empty() && !Ty->isSized(&Visited))
     return Error(Loc, "base element of getelementptr must be sized");
 
-  if (!GetElementPtrInst::getIndexedType(
-          cast<PointerType>(BaseType->getScalarType())->getElementType(),
-          Indices))
+  if (!GetElementPtrInst::getIndexedType(Ty, Indices))
     return Error(Loc, "invalid getelementptr indices");
   Inst = GetElementPtrInst::Create(Ty, Ptr, Indices);
   if (InBounds)
