@@ -669,13 +669,9 @@ void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   BindIndirectSymbols(Asm);
 }
 
-bool MachObjectWriter::
-IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                       const MCSymbolData &DataA,
-                                       const MCSymbolData *DataB,
-                                       const MCFragment &FB,
-                                       bool InSet,
-                                       bool IsPCRel) const {
+bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+    const MCAssembler &Asm, const MCSymbolData &DataA, const MCFragment &FB,
+    bool InSet, bool IsPCRel) const {
   if (InSet)
     return true;
 

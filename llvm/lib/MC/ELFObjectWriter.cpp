@@ -275,7 +275,6 @@ class ELFObjectWriter : public MCObjectWriter {
     bool
     IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                            const MCSymbolData &DataA,
-                                           const MCSymbolData *DataB,
                                            const MCFragment &FB,
                                            bool InSet,
                                            bool IsPCRel) const override;
@@ -1669,13 +1668,15 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 }
 
 bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-    const MCAssembler &Asm, const MCSymbolData &DataA,
-    const MCSymbolData *DataB, const MCFragment &FB, bool InSet,
-    bool IsPCRel) const {
-  if (!InSet && (::isWeak(DataA) || (DataB && ::isWeak(*DataB))))
-    return false;
-  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-      Asm, DataA, DataB, FB, InSet, IsPCRel);
+    const MCAssembler &Asm, const MCSymbolData &DataA, const MCFragment &FB,
+    bool InSet, bool IsPCRel) const {
+  if (IsPCRel) {
+    assert(!InSet);
+    if (::isWeak(DataA))
+      return false;
+  }
+  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, DataA, FB,
+                                                                InSet, IsPCRel);
 }
 
 bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {

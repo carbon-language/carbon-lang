@@ -36,13 +36,12 @@ bool MCObjectWriter::IsSymbolRefDifferenceFullyResolved(
     return false;
 
   return IsSymbolRefDifferenceFullyResolvedImpl(
-      Asm, DataA, &DataB, *DataB.getFragment(), InSet, false);
+      Asm, DataA, *DataB.getFragment(), InSet, false);
 }
 
 bool MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-    const MCAssembler &Asm, const MCSymbolData &DataA,
-    const MCSymbolData *DataB, const MCFragment &FB, bool InSet,
-    bool IsPCRel) const {
+    const MCAssembler &Asm, const MCSymbolData &DataA, const MCFragment &FB,
+    bool InSet, bool IsPCRel) const {
   const MCSection &SecA = DataA.getSymbol().getSection();
   const MCSection &SecB = FB.getParent()->getSection();
   // On ELF and COFF  A - B is absolute if A and B are in the same section.

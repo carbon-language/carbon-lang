@@ -94,7 +94,6 @@ public:
 
   virtual bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCSymbolData &DataA,
-                                                      const MCSymbolData *DataB,
                                                       const MCFragment &FB,
                                                       bool InSet,
                                                       bool IsPCRel) const;

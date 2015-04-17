@@ -1,6 +1,10 @@
-// RUN: not llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t 2>&1 | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu < %s | llvm-readobj -r | FileCheck %s
 
-// CHECK: error: Cannot represent a subtraction with a weak symbol
+// CHECK:      Relocations [
+// CHECK-NEXT:   Section ({{.*}}) .rela.text {
+// CHECK-NEXT:     0x1D R_X86_64_PC32 f2 0xFFFFFFFFFFFFFFFC
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
 
 .weak f
 .weak g
@@ -10,3 +14,13 @@ g:
     nop
 
 .quad g - f
+
+
+.weak f2
+f2:
+    nop
+g2:
+    nop
+.quad g2 - f2
+.quad f2 - g2
+call f2
