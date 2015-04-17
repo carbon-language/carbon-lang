@@ -2935,10 +2935,9 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
       Type *Ty = getTypeByID(Record[0]);
       if (!Ty)
         return Error("Invalid record");
-      if (!Ty->isPointerTy())
-        return Error("Invalid type for value");
-      FunctionType *FTy =
-        dyn_cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
+      if (auto *PTy = dyn_cast<PointerType>(Ty))
+        Ty = PTy->getElementType();
+      auto *FTy = dyn_cast<FunctionType>(Ty);
       if (!FTy)
         return Error("Invalid type for value");
 

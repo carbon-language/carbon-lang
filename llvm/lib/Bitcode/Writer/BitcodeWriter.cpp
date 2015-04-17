@@ -690,7 +690,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
     //             section, visibility, gc, unnamed_addr, prologuedata,
     //             dllstorageclass, comdat, prefixdata]
-    Vals.push_back(VE.getTypeID(F.getType()));
+    Vals.push_back(VE.getTypeID(F.getFunctionType()));
     Vals.push_back(F.getCallingConv());
     Vals.push_back(F.isDeclaration());
     Vals.push_back(getEncodedLinkage(F));
