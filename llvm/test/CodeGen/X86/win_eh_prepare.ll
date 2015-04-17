@@ -46,7 +46,7 @@ define internal i32 @filt_g(i8*, i8*) {
 ; CHECK: landingpad
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: catch
-; CHECK-NEXT: call i8* (...)* @llvm.eh.actions({{.*}})
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions({{.*}})
 
 
 ; A MinGW64-ish EH style. It could happen if a binary uses both MSVC CRT and
