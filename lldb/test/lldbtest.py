@@ -626,7 +626,7 @@ def expectedFailureWindows(bugnumber=None, compilers=None):
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
         # llgs local is only an option on Linux targets
-        if not self.platformIsLinux():
+        if self.getPlatform() != 'linux':
             return False
         self.runCmd('settings show platform.plugin.linux.use-llgs-for-local')
         return 'true' in self.res.GetOutput() and self.expectedCompiler(compilers)
@@ -703,10 +703,15 @@ def skipUnlessDarwin(func):
     return skipUnlessPlatform(getDarwinOSTriples())(func)
 
 def getPlatform():
+    """Returns the target platform the test suite is running on."""
     platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
     if platform.startswith('freebsd'):
         platform = 'freebsd'
     return platform
+
+def platformIsDarwin():
+    """Returns true if the OS triple for the selected platform is any valid apple OS"""
+    return getPlatform() in getDarwinOSTriples()
 
 def skipIfPlatform(oslist):
     """Decorate the item to skip tests if running on one of the listed platforms."""
@@ -868,9 +873,9 @@ class Base(unittest2.TestCase):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
 
         # Set platform context.
-        if sys.platform.startswith('darwin'):
+        if platformIsDarwin():
             cls.platformContext = _PlatformContext('DYLD_LIBRARY_PATH', 'lib', 'dylib')
-        elif sys.platform.startswith('linux') or sys.platform.startswith('freebsd'):
+        elif getPlatform() == "linux" or getPlatform() == "freebsd":
             cls.platformContext = _PlatformContext('LD_LIBRARY_PATH', 'lib', 'so')
         else:
             cls.platformContext = None
@@ -1402,16 +1407,10 @@ class Base(unittest2.TestCase):
 
     def platformIsDarwin(self):
         """Returns true if the OS triple for the selected platform is any valid apple OS"""
-        platform_name = self.getPlatform()
-        return platform_name in getDarwinOSTriples()
-
-    def platformIsLinux(self):
-        """Returns true if the OS triple for the selected platform is any valid apple OS"""
-        platform_name = self.getPlatform()
-        return platform_name == "linux"
+        return platformIsDarwin()
 
     def getPlatform(self):
-        """Returns the platform the test suite is running on."""
+        """Returns the target platform the test suite is running on."""
         return getPlatform()
 
     def isIntelCompiler(self):

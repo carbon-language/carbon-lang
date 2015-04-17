@@ -205,7 +205,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.check_stop_reason()
 
         expected_state = 'exited' # Provide the exit code.
-        if self.platformIsDarwin() or self.platformIsLinux():
+        if self.platformIsDarwin() or self.getPlatform() == "linux":
             expected_state = 'stopped' # TODO: Determine why 'next' and 'continue' have no effect after a crash.
 
         self.expect("next",
