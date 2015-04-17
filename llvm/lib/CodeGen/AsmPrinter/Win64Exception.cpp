@@ -239,11 +239,6 @@ void Win64Exception::emitCSpecificHandlerTable() {
       End = createImageRel32(EHFuncEndSym);
     }
 
-    // These aren't really type info globals, they are actually pointers to
-    // filter functions ordered by selector. The zero selector is used for
-    // cleanups, so slot zero corresponds to selector 1.
-    const std::vector<const GlobalValue *> &SelectorToFilter = MMI->getTypeInfos();
-
     // Emit an entry for each action.
     for (SEHHandler Handler : LPad->SEHHandlers) {
       Asm->OutStreamer.EmitValue(Begin, 4);
