@@ -6193,3 +6193,25 @@ define <4 x float> @test_v4f32_post_reg_ld1lane_dep_vec_on_load(float* %bar, flo
   store float* %tmp3, float** %ptr
   ret <4 x float> %tmp2
 }
+
+; Make sure that we test the narrow V64 code path.
+; The tests above don't, because there, 64-bit insert_vector_elt nodes will be
+; widened to 128-bit before the LD1LANEpost combine has the chance to run,
+; making it avoid narrow vector types.
+; One way to trick that combine into running early is to force the vector ops
+; legalizer to run.  We achieve that using the ctpop.
+; PR23265
+define <4 x i16> @test_v4i16_post_reg_ld1lane_forced_narrow(i16* %bar, i16** %ptr, i64 %inc, <4 x i16> %A, <2 x i32>* %d) {
+; CHECK-LABEL: test_v4i16_post_reg_ld1lane_forced_narrow:
+; CHECK: ld1.h  { v0 }[1], [x0], x{{[0-9]+}}
+  %tmp1 = load i16, i16* %bar
+  %tmp2 = insertelement <4 x i16> %A, i16 %tmp1, i32 1
+  %tmp3 = getelementptr i16, i16* %bar, i64 %inc
+  store i16* %tmp3, i16** %ptr
+  %dl =  load <2 x i32>,  <2 x i32>* %d
+  %dr = call <2 x i32> @llvm.ctpop.v2i32(<2 x i32> %dl)
+  store <2 x i32> %dr, <2 x i32>* %d
+  ret <4 x i16> %tmp2
+}
+
+declare <2 x i32> @llvm.ctpop.v2i32(<2 x i32>)

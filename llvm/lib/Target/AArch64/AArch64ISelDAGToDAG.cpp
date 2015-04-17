@@ -1234,7 +1234,7 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
   SDValue RegSeq = createQTuple(Regs);
 
   const EVT ResTys[] = {MVT::i64, // Type of the write back register
-                        MVT::Untyped, MVT::Other};
+                        RegSeq->getValueType(0), MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
