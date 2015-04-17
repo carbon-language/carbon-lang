@@ -836,7 +836,7 @@ Process::Finalize()
         case eStateStepping:
         case eStateCrashed:
         case eStateSuspended:
-            Destroy();
+            Destroy(false);
             break;
             
         case eStateInvalid:
@@ -3160,7 +3160,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                         // catch the initial stop.
                         error.SetErrorString ("failed to catch stop after launch");
                         SetExitStatus (0, "failed to catch stop after launch");
-                        Destroy();
+                        Destroy(false);
                     }
                     else if (state == eStateStopped || state == eStateCrashed)
                     {
@@ -3787,7 +3787,7 @@ Process::Halt (bool clear_thread_plans)
                 RestorePrivateProcessEvents();
                 restored_process_events = true;
                 SetExitStatus(SIGKILL, "Cancelled async attach.");
-                Destroy ();
+                Destroy (false);
             }
             else
             {
@@ -3961,12 +3961,15 @@ Process::Detach (bool keep_stopped)
 }
 
 Error
-Process::Destroy ()
+Process::Destroy (bool force_kill)
 {
     
     // Tell ourselves we are in the process of destroying the process, so that we don't do any unnecessary work
     // that might hinder the destruction.  Remember to set this back to false when we are done.  That way if the attempt
     // failed and the process stays around for some reason it won't be in a confused state.
+
+    if (force_kill)
+        m_should_detach = false;
     
     if (GetShouldDetach())
     {

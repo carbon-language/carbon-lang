@@ -189,7 +189,7 @@ Target::DeleteCurrentProcess ()
     {
         m_section_load_history.Clear();
         if (m_process_sp->IsAlive())
-            m_process_sp->Destroy();
+            m_process_sp->Destroy(false);
         
         m_process_sp->Finalize();
 
@@ -2753,7 +2753,7 @@ Target::Attach (ProcessAttachInfo &attach_info, Stream *stream)
                 error.SetErrorStringWithFormat ("attach failed: %s", exit_desc);
             else
                 error.SetErrorString ("attach failed: process did not stop (no such process or permission problem?)");
-            process_sp->Destroy ();
+            process_sp->Destroy (false);
         }
     }
     return error;

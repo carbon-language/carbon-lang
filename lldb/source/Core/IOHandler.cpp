@@ -4433,7 +4433,7 @@ public:
                     {
                         Process *process = exe_ctx.GetProcessPtr();
                         if (process && process->IsAlive())
-                            process->Destroy();
+                            process->Destroy(false);
                     }
                 }
                 return MenuActionResult::Handled;
@@ -5392,7 +5392,7 @@ public:
                 {
                     ExecutionContext exe_ctx = m_debugger.GetCommandInterpreter().GetExecutionContext();
                     if (exe_ctx.HasProcessScope())
-                        exe_ctx.GetProcessRef().Destroy();
+                        exe_ctx.GetProcessRef().Destroy(false);
                 }
                 return eKeyHandled;
 

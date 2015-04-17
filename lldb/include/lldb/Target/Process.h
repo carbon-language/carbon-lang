@@ -1343,11 +1343,19 @@ public:
     /// This function is not meant to be overridden by Process
     /// subclasses.
     ///
+    /// @param[in] force_kill
+    ///     Whether lldb should force a kill (instead of a detach) from
+    ///     the inferior process.  Normally if lldb launched a binary and
+    ///     Destory is called, lldb kills it.  If lldb attached to a 
+    ///     running process and Destory is called, lldb detaches.  If 
+    ///     this behavior needs to be over-ridden, this is the bool that
+    ///     can be used.
+    ///
     /// @return
     ///     Returns an error object.
     //------------------------------------------------------------------
     Error
-    Destroy();
+    Destroy(bool force_kill);
 
     //------------------------------------------------------------------
     /// Sends a process a UNIX signal \a signal.

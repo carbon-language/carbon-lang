@@ -2166,7 +2166,7 @@ ProcessGDBRemote::DoDestroy ()
                         }
                     }
                     Resume ();
-                    return Destroy();
+                    return Destroy(false);
                 }
             }
         }

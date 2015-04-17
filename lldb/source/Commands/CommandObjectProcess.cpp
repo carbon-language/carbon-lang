@@ -93,7 +93,7 @@ protected:
                     }
                     else
                     {
-                        Error destroy_error (process->Destroy());
+                        Error destroy_error (process->Destroy(false));
                         if (destroy_error.Success())
                         {
                             result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -1466,7 +1466,7 @@ protected:
 
         if (command.GetArgumentCount() == 0)
         {
-            Error error (process->Destroy());
+            Error error (process->Destroy(false));
             if (error.Success())
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);

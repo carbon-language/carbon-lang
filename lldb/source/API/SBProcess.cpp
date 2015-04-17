@@ -768,7 +768,7 @@ SBProcess::Destroy ()
     if (process_sp)
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError(process_sp->Destroy());
+        sb_error.SetError(process_sp->Destroy(false));
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
@@ -821,7 +821,7 @@ SBProcess::Kill ()
     if (process_sp)
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (process_sp->Destroy());
+        sb_error.SetError (process_sp->Destroy(true));
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
