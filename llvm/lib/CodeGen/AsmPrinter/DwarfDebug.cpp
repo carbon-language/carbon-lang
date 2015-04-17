@@ -734,7 +734,6 @@ void DwarfDebug::collectVariableInfoFromMMITable(
 // Get .debug_loc entry for the instruction range starting at MI.
 static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
   const MDNode *Expr = MI->getDebugExpression();
-  const MDNode *Var = MI->getDebugVariable();
 
   assert(MI->getNumOperands() == 4);
   if (MI->getOperand(0).isReg()) {
@@ -745,14 +744,14 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
       MLoc.set(MI->getOperand(0).getReg());
     else
       MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
-    return DebugLocEntry::Value(Var, Expr, MLoc);
+    return DebugLocEntry::Value(Expr, MLoc);
   }
   if (MI->getOperand(0).isImm())
-    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getImm());
+    return DebugLocEntry::Value(Expr, MI->getOperand(0).getImm());
   if (MI->getOperand(0).isFPImm())
-    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getFPImm());
+    return DebugLocEntry::Value(Expr, MI->getOperand(0).getFPImm());
   if (MI->getOperand(0).isCImm())
-    return DebugLocEntry::Value(Var, Expr, MI->getOperand(0).getCImm());
+    return DebugLocEntry::Value(Expr, MI->getOperand(0).getCImm());
 
   llvm_unreachable("Unexpected 4-operand DBG_VALUE instruction!");
 }
@@ -865,7 +864,6 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     DEBUG({
       dbgs() << CurEntry->getValues().size() << " Values:\n";
       for (auto Value : CurEntry->getValues()) {
-        Value.getVariable()->dump();
         Value.getExpression()->dump();
       }
       dbgs() << "-----\n";
