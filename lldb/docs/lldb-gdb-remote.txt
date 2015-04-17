@@ -53,7 +53,7 @@ send packet: +
 //----------------------------------------------------------------------
 
 We have added support for the "set program arguments" packet where we can
-startup a connection to a remote server and then later supply the path to the
+start a connection to a remote server and then later supply the path to the
 executable and the arguments to use when executing:
 
 GDB remote docs for this:
