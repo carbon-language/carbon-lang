@@ -1924,7 +1924,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 
   // Make sure each function sets its own description.
   // (But don't bother in a release build.)
-  assert(!(CurrentFunctionDescription = nullptr));
+  assert(!(CurrentFunctionDescription == nullptr));
 
   // Check and evaluate the call.
   (this->*evalFunction)(C, CE);
