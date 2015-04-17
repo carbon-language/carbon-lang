@@ -285,8 +285,8 @@ void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue *> &Values) {
 void DIEHash::hashLocList(const DIELocList &LocList) {
   HashingByteStreamer Streamer(*this);
   DwarfDebug &DD = *AP->getDwarfDebug();
-  for (const auto &Entry :
-       DD.getDebugLocEntries()[LocList.getValue()].List)
+  const DebugLocStream &Locs = DD.getDebugLocs();
+  for (const auto &Entry : Locs.getEntries(Locs.getList(LocList.getValue())))
     DD.emitDebugLocEntry(Streamer, Entry);
 }
 

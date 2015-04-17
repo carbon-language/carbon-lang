@@ -17,6 +17,7 @@
 
 namespace llvm {
 class AsmPrinter;
+class DebugLocStream;
 
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
@@ -80,8 +81,6 @@ private:
   /// A nonempty list of locations/constants belonging to this entry,
   /// sorted by offset.
   SmallVector<Value, 1> Values;
-  SmallString<8> DWARFBytes;
-  SmallVector<std::string, 1> Comments;
 
 public:
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, Value Val)
@@ -144,12 +143,8 @@ public:
   }
 
   /// \brief Lower this entry into a DWARF expression.
-  void finalize(const AsmPrinter &AP, const MDBasicType *TypeIdentifierMap);
-
-  /// \brief Return the lowered DWARF expression.
-  StringRef getDWARFBytes() const { return DWARFBytes; }
-  /// \brief Return the assembler comments for the lowered DWARF expression.
-  const SmallVectorImpl<std::string> &getComments() const { return Comments; }
+  void finalize(const AsmPrinter &AP, DebugLocStream &Locs,
+                const MDBasicType *BT);
 };
 
 /// \brief Compare two Values for equality.

@@ -1,6 +1,7 @@
 #include "DwarfCompileUnit.h"
 #include "DwarfExpression.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -480,7 +481,7 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
 
   // Add variable address.
 
-  unsigned Offset = DV.getDotDebugLocOffset();
+  unsigned Offset = DV.getDebugLocListIndex();
   if (Offset != ~0U) {
     addLocationList(*VariableDie, dwarf::DW_AT_location, Offset);
     return VariableDie;

@@ -16,8 +16,7 @@
 
 #include "AsmPrinterHandler.h"
 #include "DbgValueHistoryCalculator.h"
-#include "DebugLocEntry.h"
-#include "DebugLocList.h"
+#include "DebugLocStream.h"
 #include "DwarfAccelTable.h"
 #include "DwarfFile.h"
 #include "llvm/ADT/DenseMap.h"
@@ -42,6 +41,7 @@ class AsmPrinter;
 class ByteStreamer;
 class ConstantInt;
 class ConstantFP;
+class DebugLocEntry;
 class DwarfCompileUnit;
 class DwarfDebug;
 class DwarfTypeUnit;
@@ -69,7 +69,7 @@ public:
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to track local variable information.
 ///
-/// - Variables whose location changes over time have a DotDebugLocOffset and
+/// - Variables whose location changes over time have a DebugLocListIndex and
 ///   the other fields are not used.
 ///
 /// - Variables that are described by multiple MMI table entries have multiple
@@ -79,7 +79,7 @@ class DbgVariable {
   DILocation IA;                     /// Inlined at location.
   SmallVector<DIExpression, 1> Expr; /// Complex address location expression.
   DIE *TheDIE;                /// Variable DIE.
-  unsigned DotDebugLocOffset; /// Offset in DotDebugLocEntries.
+  unsigned DebugLocListIndex;        /// Offset in DebugLocs.
   const MachineInstr *MInsn;  /// DBG_VALUE instruction of the variable.
   SmallVector<int, 1> FrameIndex; /// Frame index of the variable.
   DwarfDebug *DD;
@@ -88,7 +88,7 @@ public:
   /// Construct a DbgVariable from a DIVariable.
   DbgVariable(DIVariable V, DILocation IA, DIExpression E, DwarfDebug *DD,
               int FI = ~0)
-      : Var(V), IA(IA), Expr(1, E), TheDIE(nullptr), DotDebugLocOffset(~0U),
+      : Var(V), IA(IA), Expr(1, E), TheDIE(nullptr), DebugLocListIndex(~0U),
         MInsn(nullptr), DD(DD) {
     FrameIndex.push_back(FI);
     assert(!E || E->isValid());
@@ -100,7 +100,7 @@ public:
       : Var(DbgValue->getDebugVariable()),
         IA(DbgValue->getDebugLoc()->getInlinedAt()),
         Expr(1, DbgValue->getDebugExpression()), TheDIE(nullptr),
-        DotDebugLocOffset(~0U), MInsn(DbgValue), DD(DD) {
+        DebugLocListIndex(~0U), MInsn(DbgValue), DD(DD) {
     FrameIndex.push_back(~0);
   }
 
@@ -110,15 +110,15 @@ public:
   const ArrayRef<DIExpression> getExpression() const { return Expr; }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
-  void setDotDebugLocOffset(unsigned O) { DotDebugLocOffset = O; }
-  unsigned getDotDebugLocOffset() const { return DotDebugLocOffset; }
+  void setDebugLocListIndex(unsigned O) { DebugLocListIndex = O; }
+  unsigned getDebugLocListIndex() const { return DebugLocListIndex; }
   StringRef getName() const { return Var->getName(); }
   const MachineInstr *getMInsn() const { return MInsn; }
   const ArrayRef<int> getFrameIndex() const { return FrameIndex; }
 
   void addMMIEntry(const DbgVariable &V) {
-    assert(  DotDebugLocOffset == ~0U &&   !MInsn && "not an MMI entry");
-    assert(V.DotDebugLocOffset == ~0U && !V.MInsn && "not an MMI entry");
+    assert(DebugLocListIndex == ~0U && !MInsn && "not an MMI entry");
+    assert(V.DebugLocListIndex == ~0U && !V.MInsn && "not an MMI entry");
     assert(V.Var == Var && "conflicting DIVariable");
     assert(V.IA == IA && "conflicting inlined-at location");
 
@@ -215,7 +215,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   // Collection of DebugLocEntry. Stored in a linked list so that DIELocLists
   // can refer to them in spite of insertions into this list.
-  SmallVector<DebugLocList, 4> DotDebugLocEntries;
+  DebugLocStream DebugLocs;
 
   // This is a collection of subprogram MDNodes that are processed to
   // create DIEs.
@@ -552,18 +552,15 @@ public:
   void setPrevCU(const DwarfCompileUnit *PrevCU) { this->PrevCU = PrevCU; }
 
   /// Returns the entries for the .debug_loc section.
-  const SmallVectorImpl<DebugLocList> &
-  getDebugLocEntries() const {
-    return DotDebugLocEntries;
-  }
+  const DebugLocStream &getDebugLocs() const { return DebugLocs; }
 
   /// \brief Emit an entry for the debug loc section. This can be used to
   /// handle an entry that's going to be emitted into the debug loc section.
   void emitDebugLocEntry(ByteStreamer &Streamer,
-                         const DebugLocEntry &Entry);
+                         const DebugLocStream::Entry &Entry);
 
   /// Emit the location for a debug loc entry, including the size header.
-  void emitDebugLocEntryLocation(const DebugLocEntry &Entry);
+  void emitDebugLocEntryLocation(const DebugLocStream::Entry &Entry);
 
   /// Find the MDNode for the given reference.
   template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const {
