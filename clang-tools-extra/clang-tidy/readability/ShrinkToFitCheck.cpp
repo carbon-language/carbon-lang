@@ -12,22 +12,18 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
 
 using namespace clang::ast_matchers;
 
-namespace {
-bool isShrinkableContainer(llvm::StringRef ClassName) {
-  static const llvm::StringSet<> Shrinkables = [] {
-    llvm::StringSet<> RetVal;
-    RetVal.insert("std::deque");
-    RetVal.insert("std::basic_string");
-    RetVal.insert("std::vector");
-    return RetVal;
-  }();
-  return Shrinkables.find(ClassName) != Shrinkables.end();
+static bool isShrinkableContainer(llvm::StringRef ClassName) {
+  static const char *Shrinkables[] = {
+    "std::basic_string",
+    "std::deque",
+    "std::vector"
+  };
+  return std::binary_search(std::begin(Shrinkables), std::end(Shrinkables),
+                            ClassName);
 }
-} // namespace
 
 namespace clang {
 namespace ast_matchers {

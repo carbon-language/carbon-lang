@@ -11,35 +11,31 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
 
 using namespace clang::ast_matchers;
 
-namespace {
-bool isContainer(llvm::StringRef ClassName) {
-  static const llvm::StringSet<> ContainerNames = [] {
-    llvm::StringSet<> RetVal;
-    RetVal.insert("std::vector");
-    RetVal.insert("std::list");
-    RetVal.insert("std::array");
-    RetVal.insert("std::deque");
-    RetVal.insert("std::forward_list");
-    RetVal.insert("std::set");
-    RetVal.insert("std::map");
-    RetVal.insert("std::multiset");
-    RetVal.insert("std::multimap");
-    RetVal.insert("std::unordered_set");
-    RetVal.insert("std::unordered_map");
-    RetVal.insert("std::unordered_multiset");
-    RetVal.insert("std::unordered_multimap");
-    RetVal.insert("std::stack");
-    RetVal.insert("std::queue");
-    RetVal.insert("std::priority_queue");
-    return RetVal;
-  }();
-  return ContainerNames.find(ClassName) != ContainerNames.end();
+static bool isContainer(llvm::StringRef ClassName) {
+  static const char *ContainerNames[] = {
+    "std::array",
+    "std::deque",
+    "std::forward_list",
+    "std::list",
+    "std::map",
+    "std::multimap",
+    "std::multiset",
+    "std::priority_queue",
+    "std::queue",
+    "std::set",
+    "std::stack",
+    "std::unordered_map",
+    "std::unordered_multimap",
+    "std::unordered_multiset",
+    "std::unordered_set",
+    "std::vector"
+  };
+  return std::binary_search(std::begin(ContainerNames),
+                            std::end(ContainerNames), ClassName);
 }
-} // namespace
 
 namespace clang {
 namespace ast_matchers {
