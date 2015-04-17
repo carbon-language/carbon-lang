@@ -1878,23 +1878,26 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                     // These are reserved for the specification (e.g.: mapping
                     // symbols). We don't want to add them to the symbol table.
 
-                    llvm::StringRef symbol_name_ref(symbol_name);
-                    if (symbol_name_ref == "$a" || symbol_name_ref.startswith("$a."))
+                    if (symbol_type == eSymbolTypeCode)
                     {
-                        // $a[.<any>]* - marks an ARM instruction sequence
-                        m_address_class_map[symbol.st_value] = eAddressClassCode;
-                    }
-                    else if (symbol_name_ref == "$b" || symbol_name_ref.startswith("$b.") ||
-                             symbol_name_ref == "$t" || symbol_name_ref.startswith("$t."))
-                    {
-                        // $b[.<any>]* - marks a THUMB BL instruction sequence
-                        // $t[.<any>]* - marks a THUMB instruction sequence
-                        m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
-                    }
-                    else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
-                    {
-                        // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
-                        m_address_class_map[symbol.st_value] = eAddressClassData;
+                        llvm::StringRef symbol_name_ref(symbol_name);
+                        if (symbol_name_ref == "$a" || symbol_name_ref.startswith("$a."))
+                        {
+                            // $a[.<any>]* - marks an ARM instruction sequence
+                            m_address_class_map[symbol.st_value] = eAddressClassCode;
+                        }
+                        else if (symbol_name_ref == "$b" || symbol_name_ref.startswith("$b.") ||
+                                 symbol_name_ref == "$t" || symbol_name_ref.startswith("$t."))
+                        {
+                            // $b[.<any>]* - marks a THUMB BL instruction sequence
+                            // $t[.<any>]* - marks a THUMB instruction sequence
+                            m_address_class_map[symbol.st_value] = eAddressClassCodeAlternateISA;
+                        }
+                        else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
+                        {
+                            // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                            m_address_class_map[symbol.st_value] = eAddressClassData;
+                        }
                     }
 
                     continue;
@@ -1907,16 +1910,19 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                     // These are reserved for the specification (e.g.: mapping
                     // symbols). We don't want to add them to the symbol table.
 
-                    llvm::StringRef symbol_name_ref(symbol_name);
-                    if (symbol_name_ref == "$x" || symbol_name_ref.startswith("$x."))
+                    if (symbol_type == eSymbolTypeCode)
                     {
-                        // $x[.<any>]* - marks an A64 instruction sequence
-                        m_address_class_map[symbol.st_value] = eAddressClassCode;
-                    }
-                    else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
-                    {
-                        // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
-                        m_address_class_map[symbol.st_value] = eAddressClassData;
+                        llvm::StringRef symbol_name_ref(symbol_name);
+                        if (symbol_name_ref == "$x" || symbol_name_ref.startswith("$x."))
+                        {
+                            // $x[.<any>]* - marks an A64 instruction sequence
+                            m_address_class_map[symbol.st_value] = eAddressClassCode;
+                        }
+                        else if (symbol_name_ref == "$d" || symbol_name_ref.startswith("$d."))
+                        {
+                            // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
+                            m_address_class_map[symbol.st_value] = eAddressClassData;
+                        }
                     }
 
                     continue;
