@@ -137,17 +137,17 @@ void basic_finally(void) {
 //
 // CHECK: [[cont]]
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext false, i8* %[[fp]])
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i8 0, i8* %[[fp]])
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK-NEXT: cleanup
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i1 zeroext true, i8* %[[fp]])
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"(i8 1, i8* %[[fp]])
 // CHECK: resume
 
-// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"(i1 zeroext %abnormal_termination, i8* %frame_pointer)
+// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"(i8 %abnormal_termination, i8* %frame_pointer)
 // CHECK:   load i32, i32* @g, align 4
 // CHECK:   add i32 %{{.*}}, -1
 // CHECK:   store i32 %{{.*}}, i32* @g, align 4
