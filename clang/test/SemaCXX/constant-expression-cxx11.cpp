@@ -1179,7 +1179,7 @@ namespace ExternConstexpr {
   void f() {
     extern constexpr int i; // expected-error {{constexpr variable declaration must be a definition}}
     constexpr int j = 0;
-    constexpr int k; // expected-error {{default initialization of an object of const type}} expected-note{{add an explicit initializer to initialize 'k'}}
+    constexpr int k; // expected-error {{default initialization of an object of const type}}
   }
 }
 

@@ -3101,6 +3101,28 @@ void InitializationSequence::SetOverloadFailure(FailureKind Failure,
 // Attempt initialization
 //===----------------------------------------------------------------------===//
 
+/// Tries to add a zero initializer. Returns true if that worked.
+static bool
+maybeRecoverWithZeroInitialization(Sema &S, InitializationSequence &Sequence,
+                                   const InitializedEntity &Entity) {
+  if (Entity.getKind() != InitializedEntity::EK_Variable)
+    return false;
+
+  VarDecl *VD = cast<VarDecl>(Entity.getDecl());
+  if (VD->getInit() || VD->getLocEnd().isMacroID())
+    return false;
+
+  QualType VariableTy = VD->getType().getCanonicalType();
+  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
+  std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
+  if (!Init.empty()) {
+    Sequence.AddZeroInitializationStep(Entity.getType());
+    Sequence.SetZeroInitializationFixit(Init, Loc);
+    return true;
+  }
+  return false;
+}
+
 static void MaybeProduceObjCObject(Sema &S,
                                    InitializationSequence &Sequence,
                                    const InitializedEntity &Entity) {
@@ -3339,7 +3361,8 @@ static void TryConstructorInitialization(Sema &S,
   if (Kind.getKind() == InitializationKind::IK_Default &&
       Entity.getType().isConstQualified() &&
       !cast<CXXConstructorDecl>(Best->Function)->isUserProvided()) {
-    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
+    if (!maybeRecoverWithZeroInitialization(S, Sequence, Entity))
+      Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
     return;
   }
 
@@ -4231,7 +4254,8 @@ static void TryDefaultInitialization(Sema &S,
   //   a const-qualified type T, T shall be a class type with a user-provided
   //   default constructor.
   if (DestType.isConstQualified() && S.getLangOpts().CPlusPlus) {
-    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
+    if (!maybeRecoverWithZeroInitialization(S, Sequence, Entity))
+      Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
     return;
   }
 
@@ -5749,6 +5773,21 @@ InitializationSequence::Perform(Sema &S,
     Diagnose(S, Entity, Kind, Args);
     return ExprError();
   }
+  if (!ZeroInitializationFixit.empty()) {
+    unsigned DiagID = diag::err_default_init_const;
+    if (Decl *D = Entity.getDecl())
+      if (S.getLangOpts().MSVCCompat && D->hasAttr<SelectAnyAttr>())
+        DiagID = diag::ext_default_init_const;
+
+    // The initialization would have succeeded with this fixit. Since the fixit
+    // is on the error, we need to build a valid AST in this case, so this isn't
+    // handled in the Failed() branch above.
+    QualType DestType = Entity.getType();
+    S.Diag(Kind.getLocation(), DiagID)
+        << DestType << (bool)DestType->getAs<RecordType>()
+        << FixItHint::CreateInsertion(ZeroInitializationFixitLoc,
+                                      ZeroInitializationFixit);
+  }
 
   if (getKind() == DependentSequence) {
     // If the declaration is a non-dependent, incomplete array type
@@ -6549,26 +6588,6 @@ static void diagnoseListInit(Sema &S, const InitializedEntity &Entity,
          "Inconsistent init list check result.");
 }
 
-/// Prints a fixit for adding a null initializer for |Entity|. Call this only
-/// right after emitting a diagnostic.
-static void maybeEmitZeroInitializationFixit(Sema &S,
-                                             InitializationSequence &Sequence,
-                                             const InitializedEntity &Entity) {
-  if (Entity.getKind() != InitializedEntity::EK_Variable)
-    return;
-
-  VarDecl *VD = cast<VarDecl>(Entity.getDecl());
-  if (VD->getInit() || VD->getLocEnd().isMacroID())
-    return;
-
-  QualType VariableTy = VD->getType().getCanonicalType();
-  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
-  std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
-
-  S.Diag(Loc, diag::note_add_initializer)
-      << VD << FixItHint::CreateInsertion(Loc, Init);
-}
-
 bool InitializationSequence::Diagnose(Sema &S,
                                       const InitializedEntity &Entity,
                                       const InitializationKind &Kind,
@@ -6900,7 +6919,6 @@ bool InitializationSequence::Diagnose(Sema &S,
     } else {
       S.Diag(Kind.getLocation(), diag::err_default_init_const)
           << DestType << (bool)DestType->getAs<RecordType>();
-      maybeEmitZeroInitializationFixit(S, *this, Entity);
     }
     break;
 

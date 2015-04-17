@@ -844,6 +844,21 @@ private:
 
   /// \brief The incomplete type that caused a failure.
   QualType FailedIncompleteType;
+
+  /// \brief The fixit that needs to be applied to make this initialization
+  /// succeed.
+  std::string ZeroInitializationFixit;
+  SourceLocation ZeroInitializationFixitLoc;
+
+public:
+  /// \brief Call for initializations are invalid but that would be valid
+  /// zero initialzations if Fixit was applied.
+  void SetZeroInitializationFixit(const std::string& Fixit, SourceLocation L) {
+    ZeroInitializationFixit = Fixit;
+    ZeroInitializationFixitLoc = L;
+  }
+
+private:
   
   /// \brief Prints a follow-up note that highlights the location of
   /// the initialized entity, if it's remote.

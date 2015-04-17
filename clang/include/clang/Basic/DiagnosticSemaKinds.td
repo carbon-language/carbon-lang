@@ -5470,8 +5470,11 @@ def err_address_space_qualified_delete : Error<
 def err_default_init_const : Error<
   "default initialization of an object of const type %0"
   "%select{| without a user-provided default constructor}1">;
-def note_add_initializer : Note<
-  "add an explicit initializer to initialize %0">;
+def ext_default_init_const : ExtWarn<
+  "default initialization of an object of const type %0"
+  "%select{| without a user-provided default constructor}1 "
+  "is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_delete_operand : Error<"cannot delete expression of type %0">;
 def ext_delete_void_ptr_operand : ExtWarn<
   "cannot delete expression with pointer-to-'void' type %0">,

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fms-compatibility -fms-extensions -fsyntax-only -verify -std=c++11 %s
 // MSVC produces similar diagnostics.
 
 __declspec(selectany) void foo() { } // expected-error{{'selectany' can only be applied to data items with external linkage}}
@@ -34,3 +34,13 @@ __declspec(selectany) X x(1);
 
 namespace { class Internal {}; }
 __declspec(selectany) auto x8 = Internal(); // expected-error {{'selectany' can only be applied to data items with external linkage}}
+
+
+// The D3D11 headers do something like this.  MSVC doesn't error on this at
+// all, even without the __declspec(selectany), in violation of the standard.
+// We fall back to a warning for selectany to accept headers.
+struct SomeStruct {};
+extern const __declspec(selectany) SomeStruct some_struct; // expected-warning {{default initialization of an object of const type 'const SomeStruct' without a user-provided default constructor is a Microsoft extension}}
+
+// Without selectany, this should stay an error.
+const SomeStruct some_struct2; // expected-error {{default initialization of an object of const type 'const SomeStruct' without a user-provided default constructor}}

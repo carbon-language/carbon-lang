@@ -25,7 +25,7 @@ void fn1 () {
   non_const_copy ncc2 = ncc;
   ncc = ncc2;
   const non_const_copy cncc{};
-  const non_const_copy cncc1; // expected-error {{default initialization of an object of const type 'const non_const_copy' without a user-provided default constructor}} expected-note {{add an explicit initializer to initialize 'cncc1'}}
+  const non_const_copy cncc1; // expected-error {{default initialization of an object of const type 'const non_const_copy' without a user-provided default constructor}}
   non_const_copy ncc3 = cncc; // expected-error {{no matching}}
   ncc = cncc; // expected-error {{no viable overloaded}}
 };
