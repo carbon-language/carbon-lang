@@ -219,7 +219,8 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Assign value to variable
         self.runCmd("-var-assign var_reg \"6\"")
-        self.expect("\^done,value=\"0x0000000000000006\"")
+        #FIXME: the output has different format for 32bit and 64bit values
+        self.expect("\^done,value=\"0x0*?6\"")
 
         # Assert register 0 updated
         self.runCmd("-data-list-register-values d 0")
