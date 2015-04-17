@@ -123,6 +123,8 @@ public:
                    bool IsLittleEndian)
       : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW) {}
 
+  const MCSymbol &findAliasedSymbol(const MCSymbol &Sym) const;
+
   /// @name Lifetime management Methods
   /// @{
 

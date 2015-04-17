@@ -321,11 +321,23 @@ MachObjectWriter::findSymbolData(const MCSymbol &Sym) {
   return nullptr;
 }
 
+const MCSymbol &MachObjectWriter::findAliasedSymbol(const MCSymbol &Sym) const {
+  const MCSymbol *S = &Sym;
+  while (S->isVariable()) {
+    const MCExpr *Value = S->getVariableValue();
+    const auto *Ref = dyn_cast<MCSymbolRefExpr>(Value);
+    if (!Ref)
+      return *S;
+    S = &Ref->getSymbol();
+  }
+  return *S;
+}
+
 void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &Data = *MSD.SymbolData;
   const MCSymbol *Symbol = &Data.getSymbol();
-  const MCSymbol *AliasedSymbol = &Symbol->AliasedSymbol();
+  const MCSymbol *AliasedSymbol = &findAliasedSymbol(*Symbol);
   uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
   uint16_t Flags = Data.getFlags();
@@ -674,7 +686,7 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
   //  addr(atom(A)) - addr(atom(B)) == 0.
   const MCSymbolData *A_Base = nullptr, *B_Base = nullptr;
 
-  const MCSymbol &SA = DataA.getSymbol().AliasedSymbol();
+  const MCSymbol &SA = findAliasedSymbol(DataA.getSymbol());
   const MCSection &SecA = SA.getSection();
   const MCSection &SecB = FB.getParent()->getSection();
 

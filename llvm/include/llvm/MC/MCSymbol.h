@@ -164,11 +164,6 @@ namespace llvm {
       return Value;
     }
 
-    // AliasedSymbol() - If this is an alias (a = b), return the symbol
-    // we ultimately point to. For a non-alias, this just returns the symbol
-    // itself.
-    const MCSymbol &AliasedSymbol() const;
-
     void setVariableValue(const MCExpr *Value);
 
     /// @}
