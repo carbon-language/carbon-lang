@@ -32,11 +32,17 @@ terminate.lpad:                                   ; preds = %lpad
   unreachable
 }
 
-; CHECK: main:
-
-; FIXME: No handlers yet!
+; CHECK-LABEL: main:
 ; CHECK: .seh_handlerdata
+; CHECK-NEXT: .long 1
+; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long .Ltmp1@IMGREL
+; CHECK-NEXT: .long main.cleanup@IMGREL
 ; CHECK-NEXT: .long 0
+
+; CHECK-LABEL: main.cleanup:
+; CHECK: callq puts
+; CHECK: retq
 
 declare i32 @__C_specific_handler(...)
 

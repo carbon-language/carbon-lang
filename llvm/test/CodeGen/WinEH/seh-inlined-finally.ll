@@ -1,4 +1,4 @@
-; RUN: opt -S -winehprepare -sehprepare < %s | FileCheck %s
+; RUN: opt -S -winehprepare < %s | FileCheck %s
 
 ; Check that things work when the mid-level optimizer inlines the finally
 ; block.

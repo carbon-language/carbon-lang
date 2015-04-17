@@ -1,4 +1,4 @@
-; RUN: opt -S -winehprepare -sehprepare -mtriple=x86_64-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-windows-msvc < %s | FileCheck %s
 
 ; Test case based on this code:
 ;

@@ -71,46 +71,34 @@ __try.cont:
 ; CHECK: leaq [[rloc:.*\(%rsp\)]], %rcx
 ; CHECK: callq try_body
 ; CHECK-NEXT: .Ltmp1
-; CHECK: .LBB0_7:
+; CHECK: [[cont_bb:\.LBB0_[0-9]+]]:
 ; CHECK: movl [[rloc]], %eax
 ; CHECK: retq
 
 ; Landing pad code
 
-; CHECK: .Ltmp3:
-; CHECK: movl $1, %[[sel:[a-z]+]]
-; CHECK: .Ltmp4
-; CHECK: movl $2, %[[sel]]
-; CHECK: .L{{.*}}:
-; CHECK: cmpl $1, %[[sel]]
-
+; CHECK: [[handler0:\.Ltmp[0-9]+]]: # Block address taken
 ; CHECK: # %handler0
 ; CHECK: callq puts
 ; CHECK: movl $-1, [[rloc]]
-; CHECK: jmp .LBB0_7
+; CHECK: jmp [[cont_bb]]
 
-; CHECK: cmpl $2, %[[sel]]
-
+; CHECK: [[handler1:\.Ltmp[0-9]+]]: # Block address taken
 ; CHECK: # %handler1
 ; CHECK: callq puts
 ; CHECK: movl $-2, [[rloc]]
-; CHECK: jmp .LBB0_7
-
-; FIXME: EH preparation should eliminate the 'resume' instr and we should not do
-; the previous 'cmp;jeq'.
-; CHECK-NOT: _Unwind_Resume
-; CHECK: ud2
+; CHECK: jmp [[cont_bb]]
 
 ; CHECK: .seh_handlerdata
-; CHECK: .long 2
-; CHECK: .long .Ltmp0@IMGREL
-; CHECK: .long .Ltmp1@IMGREL+1
-; CHECK: .long safe_div_filt0@IMGREL
-; CHECK: .long .Ltmp3@IMGREL
-; CHECK: .long .Ltmp0@IMGREL
-; CHECK: .long .Ltmp1@IMGREL+1
-; CHECK: .long safe_div_filt1@IMGREL
-; CHECK: .long .Ltmp4@IMGREL
+; CHECK-NEXT: .long 2
+; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long .Ltmp1@IMGREL+1
+; CHECK-NEXT: .long safe_div_filt0@IMGREL
+; CHECK-NEXT: .long [[handler0]]@IMGREL
+; CHECK-NEXT: .long .Ltmp0@IMGREL
+; CHECK-NEXT: .long .Ltmp1@IMGREL+1
+; CHECK-NEXT: .long safe_div_filt1@IMGREL
+; CHECK-NEXT: .long [[handler1]]@IMGREL
 ; CHECK: .text
 ; CHECK: .seh_endproc
 
@@ -183,11 +171,6 @@ define i32 @main() {
   %r3 = call i32 @safe_div(i32* %n.addr, i32* null)
   call void (i8*, ...) @printf(i8* getelementptr ([21 x i8], [21 x i8]* @str_result, i32 0, i32 0), i32 %r3)
   ret i32 0
-}
-
-define void @_Unwind_Resume() {
-  call void @abort()
-  unreachable
 }
 
 declare i32 @__C_specific_handler(...)
