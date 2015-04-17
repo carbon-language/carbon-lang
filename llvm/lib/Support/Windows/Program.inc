@@ -423,7 +423,6 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
         return WaitResult;
       }
       WaitForSingleObject(PI.ProcessHandle, INFINITE);
-      CloseHandle(PI.ProcessHandle);
     } else {
       // Non-blocking wait.
       return ProcessInfo();
