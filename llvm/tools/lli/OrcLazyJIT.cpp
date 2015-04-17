@@ -11,6 +11,7 @@
 #include "llvm/ExecutionEngine/Orc/OrcTargetSupport.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include <cstdio>
 #include <system_error>
 
 using namespace llvm;
