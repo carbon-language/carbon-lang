@@ -561,14 +561,6 @@ public:
   /// handle an entry that's going to be emitted into the debug loc section.
   void emitDebugLocEntry(ByteStreamer &Streamer,
                          const DebugLocEntry &Entry);
-  /// \brief emit a single value for the debug loc section.
-  void emitDebugLocValue(ByteStreamer &Streamer,
-                         const DebugLocEntry::Value &Value,
-                         unsigned PieceOffsetInBits = 0);
-  /// Emits an optimal (=sorted) sequence of DW_OP_pieces.
-  void emitLocPieces(ByteStreamer &Streamer,
-                     const DITypeIdentifierMap &Map,
-                     ArrayRef<DebugLocEntry::Value> Values);
 
   /// Emit the location for a debug loc entry, including the size header.
   void emitDebugLocEntryLocation(const DebugLocEntry &Entry);
