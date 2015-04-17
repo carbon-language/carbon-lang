@@ -115,8 +115,7 @@ const MCFixupKindInfo &AMDGPUAsmBackend::getFixupKindInfo(
 }
 
 bool AMDGPUAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
-  for (unsigned i = 0; i < Count; ++i)
-    OW->Write8(0);
+  OW->WriteZeros(Count);
 
   return true;
 }

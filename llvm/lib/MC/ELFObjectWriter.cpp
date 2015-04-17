@@ -412,10 +412,7 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
   // emitWord method behaves differently for ELF32 and ELF64, writing
   // 4 bytes in the former and 8 in the latter.
 
-  Write8(0x7f); // e_ident[EI_MAG0]
-  Write8('E');  // e_ident[EI_MAG1]
-  Write8('L');  // e_ident[EI_MAG2]
-  Write8('F');  // e_ident[EI_MAG3]
+  WriteBytes(ELF::ElfMagic); // e_ident[EI_MAG0] to e_ident[EI_MAG3]
 
   Write8(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
 

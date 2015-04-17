@@ -530,8 +530,7 @@ void WinCOFFObjectWriter::WriteFileHeader(const COFF::header &Header) {
     WriteLE16(COFF::BigObjHeader::MinBigObjectVersion);
     WriteLE16(Header.Machine);
     WriteLE32(Header.TimeDateStamp);
-    for (uint8_t MagicChar : COFF::BigObjMagic)
-      Write8(MagicChar);
+    WriteBytes(StringRef(COFF::BigObjMagic, sizeof(COFF::BigObjMagic)));
     WriteLE32(0);
     WriteLE32(0);
     WriteLE32(0);

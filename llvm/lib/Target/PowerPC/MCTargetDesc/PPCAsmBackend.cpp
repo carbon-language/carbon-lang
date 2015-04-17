@@ -178,12 +178,7 @@ public:
     for (uint64_t i = 0; i != NumNops; ++i)
       OW->Write32(0x60000000);
 
-    switch (Count % 4) {
-    default: break; // No leftover bytes to write
-    case 1: OW->Write8(0); break;
-    case 2: OW->Write16(0); break;
-    case 3: OW->Write16(0); OW->Write8(0); break;
-    }
+    OW->WriteZeros(Count % 4);
 
     return true;
   }

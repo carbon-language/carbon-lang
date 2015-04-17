@@ -915,8 +915,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     Asm.writeSectionData(it, Layout);
 
     uint64_t Pad = getPaddingSize(it, Layout);
-    for (unsigned int i = 0; i < Pad; ++i)
-      Write8(0);
+    WriteZeros(Pad);
   }
 
   // Write the extra padding.
