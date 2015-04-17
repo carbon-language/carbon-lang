@@ -1626,9 +1626,8 @@ SDValue DAGTypeLegalizer::PromoteFloatOp_BITCAST(SDNode *N, unsigned OpNo) {
   SDValue Op = N->getOperand(0);
   EVT OpVT = Op->getValueType(0);
 
-  EVT VT = N->getValueType(0);
   EVT IVT = EVT::getIntegerVT(*DAG.getContext(), OpVT.getSizeInBits());
-  assert (IVT == VT && "Bitcast to type of different size");
+  assert (IVT == N->getValueType(0) && "Bitcast to type of different size");
 
   SDValue Promoted = GetPromotedFloat(N->getOperand(0));
   EVT PromotedVT = Promoted->getValueType(0);

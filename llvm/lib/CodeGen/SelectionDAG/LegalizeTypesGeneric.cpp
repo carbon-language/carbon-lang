@@ -50,6 +50,9 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
     case TargetLowering::TypeLegal:
     case TargetLowering::TypePromoteInteger:
       break;
+    case TargetLowering::TypePromoteFloat:
+      llvm_unreachable("Bitcast of a promotion-needing float should never need"
+                       "expansion");
     case TargetLowering::TypeSoftenFloat:
       // Convert the integer operand instead.
       SplitInteger(GetSoftenedFloat(InOp), Lo, Hi);
