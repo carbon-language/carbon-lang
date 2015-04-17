@@ -1296,7 +1296,6 @@ CloningDirector::CloningAction WinEHCleanupDirector::handleResume(
 CloningDirector::CloningAction
 WinEHCleanupDirector::handleCompare(ValueToValueMapTy &VMap,
                                     const CmpInst *Compare, BasicBlock *NewBB) {
-  const IntrinsicInst *IntrinCall = nullptr;
   if (match(Compare->getOperand(0), m_Intrinsic<Intrinsic::eh_typeid_for>()) ||
       match(Compare->getOperand(1), m_Intrinsic<Intrinsic::eh_typeid_for>())) {
     VMap[Compare] = ConstantInt::get(SelectorIDType, 1);
