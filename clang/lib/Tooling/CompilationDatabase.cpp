@@ -283,11 +283,9 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
   return true;
 }
 
-FixedCompilationDatabase *
-FixedCompilationDatabase::loadFromCommandLine(int &Argc,
-                                              const char **Argv,
-                                              Twine Directory) {
-  const char **DoubleDash = std::find(Argv, Argv + Argc, StringRef("--"));
+FixedCompilationDatabase *FixedCompilationDatabase::loadFromCommandLine(
+    int &Argc, const char *const *Argv, Twine Directory) {
+  const char *const *DoubleDash = std::find(Argv, Argv + Argc, StringRef("--"));
   if (DoubleDash == Argv + Argc)
     return nullptr;
   std::vector<const char *> CommandLine(DoubleDash + 1, Argv + Argc);

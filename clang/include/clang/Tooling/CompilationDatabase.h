@@ -178,7 +178,7 @@ public:
   /// \param Argv Points to the command line arguments.
   /// \param Directory The base directory used in the FixedCompilationDatabase.
   static FixedCompilationDatabase *loadFromCommandLine(int &Argc,
-                                                       const char **Argv,
+                                                       const char *const *Argv,
                                                        Twine Directory = ".");
 
   /// \brief Constructs a compilation data base from a specified directory
