@@ -50,8 +50,8 @@ unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 const TargetRegisterClass *
 MipsRegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                      unsigned Kind) const {
-  const MipsSubtarget &Subtarget = MF.getSubtarget<MipsSubtarget>();
-  return Subtarget.isABI_N64() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+  MipsABIInfo ABI = MF.getSubtarget<MipsSubtarget>().getABI();
+  return ABI.ArePtrs64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 }
 
 unsigned

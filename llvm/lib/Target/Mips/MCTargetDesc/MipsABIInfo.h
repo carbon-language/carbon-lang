@@ -19,6 +19,7 @@ namespace llvm {
 
 class MCTargetOptions;
 class StringRef;
+class TargetRegisterClass;
 
 class MipsABIInfo {
 public:
@@ -61,6 +62,15 @@ public:
   bool operator<(const MipsABIInfo Other) const {
     return ThisABI < Other.GetEnumValue();
   }
+
+  unsigned GetStackPtr() const;
+  unsigned GetFramePtr() const;
+  unsigned GetNullPtr() const;
+  unsigned GetPtrAdduOp() const;
+  unsigned GetPtrAddiuOp() const;
+  inline bool ArePtrs64bit() const { return IsN64(); }
+
+  unsigned GetEhDataReg(unsigned I) const;
 };
 }
 

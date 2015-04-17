@@ -359,10 +359,10 @@ unsigned MipsSEInstrInfo::getOppositeBranchOpc(unsigned Opc) const {
 void MipsSEInstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const {
-  const MipsSubtarget &STI = Subtarget;
+  MipsABIInfo ABI = Subtarget.getABI();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
-  unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
+  unsigned ADDu = ABI.GetPtrAdduOp();
+  unsigned ADDiu = ABI.GetPtrAddiuOp();
 
   if (Amount == 0)
     return;
@@ -610,7 +610,8 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
   // This pseudo instruction is generated as part of the lowering of
   // ISD::EH_RETURN. We convert it to a stack increment by OffsetReg, and
   // indirect jump to TargetReg
-  unsigned ADDU = Subtarget.isABI_N64() ? Mips::DADDu : Mips::ADDu;
+  MipsABIInfo ABI = Subtarget.getABI();
+  unsigned ADDU = ABI.GetPtrAdduOp();
   unsigned SP = Subtarget.isGP64bit() ? Mips::SP_64 : Mips::SP;
   unsigned RA = Subtarget.isGP64bit() ? Mips::RA_64 : Mips::RA;
   unsigned T9 = Subtarget.isGP64bit() ? Mips::T9_64 : Mips::T9;
