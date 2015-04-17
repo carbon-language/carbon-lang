@@ -127,7 +127,7 @@ namespace {
     // As the code generation for module is finished (and DIBuilder is
     // finalized) we assume that subprogram descriptors won't be changed, and
     // they are stored in map for short duration anyway.
-    DenseMap<const Function *, DISubprogram> FunctionDIs;
+    DenseMap<const Function *, MDSubprogram *> FunctionDIs;
 
   protected:
     // DAH uses this to specify a different ID.

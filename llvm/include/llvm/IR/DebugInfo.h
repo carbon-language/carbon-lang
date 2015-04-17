@@ -419,15 +419,15 @@ SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 #undef SIMPLIFY_DESCRIPTOR
 
 /// \brief Find subprogram that is enclosing this scope.
-DISubprogram getDISubprogram(const MDNode *Scope);
+MDSubprogram *getDISubprogram(const MDNode *Scope);
 
 /// \brief Find debug info for a given function.
 /// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
 /// DISubprogram.
-DISubprogram getDISubprogram(const Function *F);
+MDSubprogram *getDISubprogram(const Function *F);
 
 /// \brief Find underlying composite type.
-DICompositeType getDICompositeType(DIType T);
+MDCompositeTypeBase *getDICompositeType(MDType *T);
 
 /// \brief Generate map by visiting all retained types.
 DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);
@@ -463,7 +463,7 @@ public:
   /// \brief Process DbgValueInst.
   void processValue(const Module &M, const DbgValueInst *DVI);
   /// \brief Process DILocation.
-  void processLocation(const Module &M, DILocation Loc);
+  void processLocation(const Module &M, const MDLocation *Loc);
 
   /// \brief Clear all lists.
   void reset();
@@ -471,22 +471,23 @@ public:
 private:
   void InitializeTypeMap(const Module &M);
 
-  void processType(DIType DT);
-  void processSubprogram(DISubprogram SP);
-  void processScope(DIScope Scope);
-  bool addCompileUnit(DICompileUnit CU);
-  bool addGlobalVariable(DIGlobalVariable DIG);
-  bool addSubprogram(DISubprogram SP);
-  bool addType(DIType DT);
-  bool addScope(DIScope Scope);
+  void processType(MDType *DT);
+  void processSubprogram(MDSubprogram *SP);
+  void processScope(MDScope *Scope);
+  bool addCompileUnit(MDCompileUnit *CU);
+  bool addGlobalVariable(MDGlobalVariable *DIG);
+  bool addSubprogram(MDSubprogram *SP);
+  bool addType(MDType *DT);
+  bool addScope(MDScope *Scope);
 
 public:
-  typedef SmallVectorImpl<DICompileUnit>::const_iterator compile_unit_iterator;
-  typedef SmallVectorImpl<DISubprogram>::const_iterator subprogram_iterator;
-  typedef SmallVectorImpl<DIGlobalVariable>::const_iterator
+  typedef SmallVectorImpl<MDCompileUnit *>::const_iterator
+      compile_unit_iterator;
+  typedef SmallVectorImpl<MDSubprogram *>::const_iterator subprogram_iterator;
+  typedef SmallVectorImpl<MDGlobalVariable *>::const_iterator
       global_variable_iterator;
-  typedef SmallVectorImpl<DIType>::const_iterator type_iterator;
-  typedef SmallVectorImpl<DIScope>::const_iterator scope_iterator;
+  typedef SmallVectorImpl<MDType *>::const_iterator type_iterator;
+  typedef SmallVectorImpl<MDScope *>::const_iterator scope_iterator;
 
   iterator_range<compile_unit_iterator> compile_units() const {
     return iterator_range<compile_unit_iterator>(CUs.begin(), CUs.end());
@@ -515,19 +516,19 @@ public:
   unsigned scope_count() const { return Scopes.size(); }
 
 private:
-  SmallVector<DICompileUnit, 8> CUs;
-  SmallVector<DISubprogram, 8> SPs;
-  SmallVector<DIGlobalVariable, 8> GVs;
-  SmallVector<DIType, 8> TYs;
-  SmallVector<DIScope, 8> Scopes;
-  SmallPtrSet<MDNode *, 64> NodesSeen;
+  SmallVector<MDCompileUnit *, 8> CUs;
+  SmallVector<MDSubprogram *, 8> SPs;
+  SmallVector<MDGlobalVariable *, 8> GVs;
+  SmallVector<MDType *, 8> TYs;
+  SmallVector<MDScope *, 8> Scopes;
+  SmallPtrSet<const MDNode *, 64> NodesSeen;
   DITypeIdentifierMap TypeIdentifierMap;
 
   /// \brief Specify if TypeIdentifierMap is initialized.
   bool TypeMapInitialized;
 };
 
-DenseMap<const Function *, DISubprogram> makeSubprogramMap(const Module &M);
+DenseMap<const Function *, MDSubprogram *> makeSubprogramMap(const Module &M);
 
 } // end namespace llvm
 

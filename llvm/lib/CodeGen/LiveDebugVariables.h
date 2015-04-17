@@ -33,7 +33,8 @@ class VirtRegMap;
 
 class LiveDebugVariables : public MachineFunctionPass {
   void *pImpl;
-  DenseMap<const Function*, DISubprogram> FunctionDIs;
+  DenseMap<const Function *, MDSubprogram *> FunctionDIs;
+
 public:
   static char ID; // Pass identification, replacement for typeid
 
