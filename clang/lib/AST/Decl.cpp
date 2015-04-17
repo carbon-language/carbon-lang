@@ -1915,7 +1915,8 @@ VarDecl::isThisDeclarationADefinition(ASTContext &C) const {
   if (hasInit())
     return Definition;
 
-  if (hasAttr<AliasAttr>() || hasAttr<SelectAnyAttr>())
+  if (hasAttr<AliasAttr>() ||
+      (hasAttr<SelectAnyAttr>() && !getAttr<SelectAnyAttr>()->isInherited()))
     return Definition;
 
   // A variable template specialization (other than a static data member

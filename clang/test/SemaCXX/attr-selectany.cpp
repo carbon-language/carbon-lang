@@ -42,5 +42,9 @@ __declspec(selectany) auto x8 = Internal(); // expected-error {{'selectany' can 
 struct SomeStruct {};
 extern const __declspec(selectany) SomeStruct some_struct; // expected-warning {{default initialization of an object of const type 'const SomeStruct' without a user-provided default constructor is a Microsoft extension}}
 
+// It should be possible to redeclare variables that were defined
+// __declspec(selectany) previously.
+extern const SomeStruct some_struct;
+
 // Without selectany, this should stay an error.
 const SomeStruct some_struct2; // expected-error {{default initialization of an object of const type 'const SomeStruct' without a user-provided default constructor}}
