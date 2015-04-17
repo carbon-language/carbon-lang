@@ -52,7 +52,7 @@ func1:
 @ The second, third, and fourth word should correspond to the section index
 @ of .TEST1, .ARM.extab.TEST1, and .ARM.exidx.TEST1.
 @-------------------------------------------------------------------------------
-@ CHECK:       0000: 01000000 05000000 06000000 08000000  |................|
+@ CHECK:       0000: 01000000 05000000 06000000 07000000  |................|
 @ CHECK:     )
 @ CHECK:   }
 
@@ -96,7 +96,7 @@ func1:
 @ Check the .ARM.exidx.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 8
+@ CHECK:     Index: 7
 @ CHECK:     Name: .ARM.exidx.TEST1
 @ CHECK:     Type: SHT_ARM_EXIDX (0x70000001)
 @-------------------------------------------------------------------------------

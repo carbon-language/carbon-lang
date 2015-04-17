@@ -16,9 +16,9 @@ world:
 // CHECK:  Name: .group
 // CHECK-NOT: SectionData
 // CHECK: SectionData
-// CHECK-NEXT: 0000: 01000000 06000000 07000000
+// CHECK-NEXT: 0000: 01000000 05000000 07000000
 
-// CHECK: Index: 6
+// CHECK: Index: 5
 // CHECK-NEXT: Name: .text.world
 // CHECK-NOT: Section {
 // CHECK: SHF_GROUP

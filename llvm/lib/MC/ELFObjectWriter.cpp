@@ -943,6 +943,8 @@ void ELFObjectWriter::computeIndexMap(MCAssembler &Asm,
     SectionIndexMap[&Section] = Index++;
   }
 
+  std::vector<const MCSectionELF *> RelSections;
+
   for (MCAssembler::iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionData &SD = *it;
@@ -956,9 +958,14 @@ void ELFObjectWriter::computeIndexMap(MCAssembler &Asm,
     if (MCSectionData *RelSD = createRelocationSection(Asm, SD)) {
       const MCSectionELF *RelSection =
           static_cast<const MCSectionELF *>(&RelSD->getSection());
-      SectionIndexMap[RelSection] = Index++;
+      RelSections.push_back(RelSection);
     }
   }
+
+  // Put relocation sections close together. The linker reads them
+  // first, so this improves cache locality.
+  for (const MCSectionELF * Sec: RelSections)
+    SectionIndexMap[Sec] = Index++;
 }
 
 void ELFObjectWriter::computeSymbolTable(
