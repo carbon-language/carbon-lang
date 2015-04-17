@@ -153,8 +153,7 @@ public:
   }
 
   /// \brief Lower this entry into a DWARF expression.
-  void finalize(const AsmPrinter &AP,
-                const DITypeIdentifierMap &TypeIdentifierMap);
+  void finalize(const AsmPrinter &AP, const MDBasicType *TypeIdentifierMap);
 
   /// \brief Return the lowered DWARF expression.
   StringRef getDWARFBytes() const { return DWARFBytes; }

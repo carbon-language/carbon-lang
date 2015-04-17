@@ -921,9 +921,16 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
 
     // Build the location list for this variable.
     buildLocationList(LocList.List, Ranges);
+
+    // If the variable has an MDBasicType, extract it.  Basic types cannot have
+    // unique identifiers, so don't bother resolving the type with the
+    // identifier map.
+    const MDBasicType *BT = dyn_cast<MDBasicType>(
+        static_cast<const Metadata *>(IV.first->getType()));
+
     // Finalize the entry by lowering it into a DWARF bytestream.
     for (auto &Entry : LocList.List)
-      Entry.finalize(*Asm, TypeIdentifierMap);
+      Entry.finalize(*Asm, BT);
   }
 
   // Collect info for variables that were optimized out.
@@ -1469,21 +1476,17 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
     Streamer.EmitInt8(Byte, Comment != End ? *(Comment++) : "");
 }
 
-static void emitDebugLocValue(const AsmPrinter &AP,
-                              const DITypeIdentifierMap &TypeIdentifierMap,
+static void emitDebugLocValue(const AsmPrinter &AP, const MDBasicType *BT,
                               ByteStreamer &Streamer,
                               const DebugLocEntry::Value &Value,
                               unsigned PieceOffsetInBits) {
-  DIVariable DV = Value.getVariable();
   DebugLocDwarfExpression DwarfExpr(*AP.MF->getSubtarget().getRegisterInfo(),
                                     AP.getDwarfDebug()->getDwarfVersion(),
                                     Streamer);
   // Regular entry.
   if (Value.isInt()) {
-    MDType *T = DV->getType().resolve(TypeIdentifierMap);
-    auto *B = dyn_cast<MDBasicType>(T);
-    if (B && (B->getEncoding() == dwarf::DW_ATE_signed ||
-              B->getEncoding() == dwarf::DW_ATE_signed_char))
+    if (BT && (BT->getEncoding() == dwarf::DW_ATE_signed ||
+               BT->getEncoding() == dwarf::DW_ATE_signed_char))
       DwarfExpr.AddSignedConstant(Value.getInt());
     else
       DwarfExpr.AddUnsignedConstant(Value.getInt());
@@ -1509,9 +1512,7 @@ static void emitDebugLocValue(const AsmPrinter &AP,
   // FIXME: ^
 }
 
-
-void DebugLocEntry::finalize(const AsmPrinter &AP,
-                             const DITypeIdentifierMap &TypeIdentifierMap) {
+void DebugLocEntry::finalize(const AsmPrinter &AP, const MDBasicType *BT) {
   BufferByteStreamer Streamer(DWARFBytes, Comments);
   const DebugLocEntry::Value Value = Values[0];
   if (Value.isBitPiece()) {
@@ -1538,11 +1539,11 @@ void DebugLocEntry::finalize(const AsmPrinter &AP,
       }
       Offset += PieceSize;
 
-      emitDebugLocValue(AP, TypeIdentifierMap, Streamer, Piece, PieceOffset);
+      emitDebugLocValue(AP, BT, Streamer, Piece, PieceOffset);
     }
   } else {
     assert(Values.size() == 1 && "only pieces may have >1 value");
-    emitDebugLocValue(AP, TypeIdentifierMap, Streamer, Value, 0);
+    emitDebugLocValue(AP, BT, Streamer, Value, 0);
   }
 }
 
