@@ -437,7 +437,7 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
             std::max(CatchHigh, FuncInfo.CatchHandlerMaxState[HT.Handler]);
 
       assert(TBME.TryLow <= TBME.TryHigh);
-      assert(CatchHigh > TBME.TryHigh);
+      assert(CatchHigh >= TBME.TryHigh);
       OS.EmitIntValue(TBME.TryLow, 4);                    // TryLow
       OS.EmitIntValue(TBME.TryHigh, 4);                   // TryHigh
       OS.EmitIntValue(CatchHigh, 4);                      // CatchHigh
