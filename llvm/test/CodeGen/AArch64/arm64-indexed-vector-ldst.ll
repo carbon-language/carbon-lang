@@ -6176,15 +6176,15 @@ define <2 x double> @test_v2f64_post_reg_ld1lane(double* %bar, double** %ptr, i6
 ; Check for dependencies between the vector and the scalar load.
 define <4 x float> @test_v4f32_post_reg_ld1lane_dep_vec_on_load(float* %bar, float** %ptr, i64 %inc, <4 x float>* %dep_ptr_1, <4 x float>* %dep_ptr_2) {
 ; CHECK-LABEL: test_v4f32_post_reg_ld1lane_dep_vec_on_load:
-; CHECk: BB#0:
-; CHECk-NEXT: ldr s[[LD:[0-9]+]], [x0]
-; CHECk-NEXT: movi.2d v0, #0000000000000000
-; CHECk-NEXT: str q0, [x3]
-; CHECk-NEXT: ldr q0, [x4]
-; CHECk-NEXT: ins.s v0[1], v[[LD]][0]
-; CHECk-NEXT: add [[POST:x[0-9]]], x0, x2, lsl #2
-; CHECk-NEXT: str [[POST]], [x1]
-; CHECk-NEXT: ret
+; CHECK: BB#0:
+; CHECK-NEXT: ldr s[[LD:[0-9]+]], [x0]
+; CHECK-NEXT: movi.2d v0, #0000000000000000
+; CHECK-NEXT: str q0, [x3]
+; CHECK-NEXT: ldr q0, [x4]
+; CHECK-NEXT: ins.s v0[1], v[[LD]][0]
+; CHECK-NEXT: add [[POST:x[0-9]]], x0, x2, lsl #2
+; CHECK-NEXT: str [[POST]], [x1]
+; CHECK-NEXT: ret
   %tmp1 = load float, float* %bar
   store <4 x float> zeroinitializer, <4 x float>* %dep_ptr_1, align 16
   %A = load <4 x float>, <4 x float>* %dep_ptr_2, align 16
