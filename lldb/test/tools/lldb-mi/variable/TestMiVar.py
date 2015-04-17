@@ -186,5 +186,41 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-update --all-values var_complx_array")
         self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\[2\]\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
 
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_var_create_register(self):
+        """Test that 'lldb-mi --interpreter' works for -var-create $regname."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Find name of register 0
+        self.runCmd("-data-list-register-names 0")
+        self.expect("\^done,register-names=\[\".+?\"\]")
+        register_name = self.child.after.split("\"")[1]
+
+        # Create variable for register 0
+        self.runCmd("-var-create var_reg * $%s" % register_name)
+        self.expect("\^done,name=\"var_reg\",numchild=\"0\",value=\"0x[0-9a-f]+\",type=\"unsigned long\",thread-id=\"1\",has_more=\"0\"")
+
+        # Assign value to variable
+        self.runCmd("-var-assign var_reg \"6\"")
+        self.expect("\^done,value=\"0x0000000000000006\"")
+
+        # Assert register 0 updated
+        self.runCmd("-data-list-register-values d 0")
+        self.expect("\^done,register-values=\[{number=\"0\",value=\"6\"")
+
 if __name__ == '__main__':
     unittest2.main()

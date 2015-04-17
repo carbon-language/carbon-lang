@@ -177,13 +177,23 @@ CMICmdCmdVarCreate::Execute(void)
     lldb::SBThread thread = (nThreadId != UINT64_MAX) ? sbProcess.GetThreadByIndexID(nThreadId) : sbProcess.GetSelectedThread();
     m_nThreadId = thread.GetIndexID();
     lldb::SBFrame frame = bCurrentFrame ? thread.GetSelectedFrame() : thread.GetFrameAtIndex(nFrame);
+    lldb::SBValue value;
 
-    const bool bArgs = true;
-    const bool bLocals = true;
-    const bool bStatics = true;
-    const bool bInScopeOnly = false;
-    const lldb::SBValueList valueList = frame.GetVariables(bArgs, bLocals, bStatics, bInScopeOnly);
-    lldb::SBValue value = valueList.GetFirstValueByName(rStrExpression.c_str());
+    if (rStrExpression[0] == '$')
+    {
+        const CMIUtilString rStrRegister(rStrExpression.substr(1).c_str());
+        value = frame.FindRegister(rStrRegister.c_str());
+    }
+    else
+    {
+        const bool bArgs = true;
+        const bool bLocals = true;
+        const bool bStatics = true;
+        const bool bInScopeOnly = false;
+        const lldb::SBValueList valueList = frame.GetVariables(bArgs, bLocals, bStatics, bInScopeOnly);
+        value = valueList.GetFirstValueByName(rStrExpression.c_str());
+    }
+
     if (!value.IsValid())
         value = frame.EvaluateExpression(rStrExpression.c_str());
 
