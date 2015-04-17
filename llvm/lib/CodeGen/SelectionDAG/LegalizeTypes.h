@@ -593,7 +593,7 @@ private:
   bool SplitVectorOperand(SDNode *N, unsigned OpNo);
   SDValue SplitVecOp_VSELECT(SDNode *N, unsigned OpNo);
   SDValue SplitVecOp_UnaryOp(SDNode *N);
-  SDValue SplitVecOp_TruncateHelper(SDNode *N, unsigned TruncateOp);
+  SDValue SplitVecOp_TruncateHelper(SDNode *N);
 
   SDValue SplitVecOp_BITCAST(SDNode *N);
   SDValue SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);
