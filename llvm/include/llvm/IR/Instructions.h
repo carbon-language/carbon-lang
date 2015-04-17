@@ -1337,8 +1337,9 @@ public:
 
   ~CallInst() override;
 
-  Type *getFunctionType() const {
-    return cast<PointerType>(getCalledValue()->getType())->getElementType();
+  FunctionType *getFunctionType() const {
+    return cast<FunctionType>(
+        cast<PointerType>(getCalledValue()->getType())->getElementType());
   }
 
   // Note that 'musttail' implies 'tail'.
