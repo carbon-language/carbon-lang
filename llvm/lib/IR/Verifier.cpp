@@ -2462,8 +2462,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Assert(ElTy, "Invalid indices for GEP pointer type!", &GEP);
 
   Assert(GEP.getType()->getScalarType()->isPointerTy() &&
-             cast<PointerType>(GEP.getType()->getScalarType())
-                     ->getElementType() == ElTy,
+             GEP.getResultElementType() == ElTy,
          "GEP is not of right type for indices!", &GEP, ElTy);
 
   if (GEP.getPointerOperandType()->isVectorTy()) {

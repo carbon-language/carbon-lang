@@ -876,7 +876,9 @@ public:
         ->getElementType();
   }
 
-  Type *getResultElementType() const { return getType()->getElementType(); }
+  Type *getResultElementType() const {
+    return cast<PointerType>(getType()->getScalarType())->getElementType();
+  }
 
   /// \brief Returns the address space of this instruction's pointer type.
   unsigned getAddressSpace() const {
