@@ -1935,14 +1935,14 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Call: {
     const CallInst &CI = cast<CallInst>(I);
-    PointerType *PTy = cast<PointerType>(CI.getCalledValue()->getType());
-    FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    FunctionType *FTy = CI.getFunctionType();
 
     Code = bitc::FUNC_CODE_INST_CALL;
 
     Vals.push_back(VE.getAttributeID(CI.getAttributes()));
     Vals.push_back((CI.getCallingConv() << 1) | unsigned(CI.isTailCall()) |
-                   unsigned(CI.isMustTailCall()) << 14);
+                   unsigned(CI.isMustTailCall()) << 14 | 1 << 15);
+    Vals.push_back(VE.getTypeID(FTy));
     PushValueAndType(CI.getCalledValue(), InstID, Vals, VE);  // Callee
 
     // Emit value #'s for the fixed parameters.
