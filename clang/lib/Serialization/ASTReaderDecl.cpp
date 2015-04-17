@@ -3364,7 +3364,7 @@ namespace {
         searchForID(M, SearchDecls[I]);
       // FIXME: If none of the SearchDecls had local IDs in this module, can
       // we avoid searching any ancestor module files?
-      return Deserialized.empty();
+      return false;
     }
     
     ArrayRef<Decl *> getChain() const {
