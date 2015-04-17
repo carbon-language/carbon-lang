@@ -36,9 +36,9 @@
 // NaryReassociate works as follows. For every instruction in the form of (a +
 // b) + c, it checks whether a + c or b + c is already computed by a dominating
 // instruction. If so, it then reassociates (a + b) + c into (a + c) + b or (b +
-// c) + a respectively. To efficiently look up whether an expression is
-// computed before, we store each instruction seen and its SCEV into an
-// SCEV-to-instruction map.
+// c) + a and removes the redundancy accordingly. To efficiently look up whether
+// an expression is computed before, we store each instruction seen and its SCEV
+// into an SCEV-to-instruction map.
 //
 // Although the algorithm pattern-matches only ternary additions, it
 // automatically handles many >3-ary expressions by walking through the function
@@ -49,6 +49,25 @@
 //
 // NaryReassociate first rewrites (a + b) + c to (a + c) + b, and then rewrites
 // ((a + c) + b) + d into ((a + c) + d) + b.
+//
+// Finally, the above dominator-based algorithm may need to be run multiple
+// iterations before emitting optimal code. One source of this need is that we
+// only split an operand when it is used only once. The above algorithm can
+// eliminate an instruction and decrease the usage count of its operands. As a
+// result, an instruction that previously had multiple uses may become a
+// single-use instruction and thus eligible for split consideration. For
+// example,
+//
+//   ac = a + c
+//   ab = a + b
+//   abc = ab + c
+//   ab2 = ab + b
+//   ab2c = ab2 + c
+//
+// In the first iteration, we cannot reassociate abc to ac+b because ab is used
+// twice. However, we can reassociate ab2c to abc+b in the first iteration. As a
+// result, ab2 becomes dead and ab will be used only once in the second
+// iteration.
 //
 // Limitations and TODO items:
 //
@@ -65,10 +84,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -87,13 +108,18 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addPreserved<DominatorTreeWrapperPass>();
+    AU.addPreserved<ScalarEvolution>();
+    AU.addPreserved<TargetLibraryInfoWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
-    // TODO: can we preserve ScalarEvolution?
     AU.addRequired<ScalarEvolution>();
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.setPreservesCFG();
   }
 
 private:
+  // Runs only one iteration of the dominator-based algorithm. See the header
+  // comments for why we need multiple iterations.
+  bool doOneIteration(Function &F);
   // Reasssociates I to a better form.
   Instruction *tryReassociateAdd(Instruction *I);
   // A helper function for tryReassociateAdd. LHS and RHS are explicitly passed.
@@ -103,6 +129,7 @@ private:
 
   DominatorTree *DT;
   ScalarEvolution *SE;
+  TargetLibraryInfo *TLI;
   // A lookup table quickly telling which instructions compute the given SCEV.
   // Note that there can be multiple instructions at different locations
   // computing to the same SCEV, so we map a SCEV to an instruction list.  For
@@ -121,6 +148,7 @@ INITIALIZE_PASS_BEGIN(NaryReassociate, "nary-reassociate", "Nary reassociation",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(NaryReassociate, "nary-reassociate", "Nary reassociation",
                     false, false)
 
@@ -134,19 +162,31 @@ bool NaryReassociate::runOnFunction(Function &F) {
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
-  // Traverse the dominator tree in the depth-first order. This order makes sure
-  // all bases of a candidate are in Candidates when we process it.
+  bool Changed = false, ChangedInThisIteration;
+  do {
+    ChangedInThisIteration = doOneIteration(F);
+    Changed |= ChangedInThisIteration;
+  } while (ChangedInThisIteration);
+  return Changed;
+}
+
+bool NaryReassociate::doOneIteration(Function &F) {
   bool Changed = false;
   SeenExprs.clear();
+  // Traverse the dominator tree in the depth-first order. This order makes sure
+  // all bases of a candidate are in Candidates when we process it.
   for (auto Node = GraphTraits<DominatorTree *>::nodes_begin(DT);
        Node != GraphTraits<DominatorTree *>::nodes_end(DT); ++Node) {
     BasicBlock *BB = Node->getBlock();
     for (auto I = BB->begin(); I != BB->end(); ++I) {
       if (I->getOpcode() == Instruction::Add) {
         if (Instruction *NewI = tryReassociateAdd(I)) {
+          Changed = true;
+          SE->forgetValue(I);
           I->replaceAllUsesWith(NewI);
-          I->eraseFromParent();
+          RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
           I = NewI;
         }
         // We should add the rewritten instruction because tryReassociateAdd may

@@ -1,8 +1,8 @@
-; RUN: opt < %s -nary-reassociate -dce -S | FileCheck %s
+; RUN: opt < %s -nary-reassociate -S | FileCheck %s
 
 target datalayout = "e-i64:64-v16:16-v32:32-n16:32:64"
 
-declare void @foo(i32 %a)
+declare void @foo(i32)
 
 ; foo(a + c);
 ; foo((a + (b + c));
@@ -174,5 +174,25 @@ define void @quaternary(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK: [[TMP2:%[a-zA-Z0-9]]] = add i32 [[TMP1]], %d
   call void @foo(i32 %5)
 ; CHECK: call void @foo(i32 [[TMP2]]
+  ret void
+}
+
+define void @iterative(i32 %a, i32 %b, i32 %c) {
+  %ab = add i32 %a, %b
+  %abc = add i32 %ab, %c
+  call void @foo(i32 %abc)
+
+  %ab2 = add i32 %ab, %b
+  %ab2c = add i32 %ab2, %c
+; CHECK: %ab2c = add i32 %abc, %b
+  call void @foo(i32 %ab2c)
+; CHECK-NEXT: call void @foo(i32 %ab2c)
+
+  %ab3 = add i32 %ab2, %b
+  %ab3c = add i32 %ab3, %c
+; CHECK-NEXT: %ab3c = add i32 %ab2c, %b
+  call void @foo(i32 %ab3c)
+; CHECK-NEXT: call void @foo(i32 %ab3c)
+
   ret void
 }
