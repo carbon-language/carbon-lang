@@ -311,7 +311,7 @@ endif()
 # -msse3 flag is not valid for Mips therefore clang gives a warning
 # message with -msse3. But check_c_compiler_flags() checks only for
 # compiler error messages. Therefore COMPILER_RT_HAS_MSSE3_FLAG turns out to be
-# true on Mips. So we make it false here.
+# true on Mips, so we make it false here.
 if("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
   set(COMPILER_RT_HAS_MSSE3_FLAG FALSE)
 endif()
