@@ -924,12 +924,14 @@ public:
   /// GetGEPReturnType - Returns the pointer type returned by the GEP
   /// instruction, which may be a vector of pointers.
   static Type *getGEPReturnType(Value *Ptr, ArrayRef<Value *> IdxList) {
-    Type *PtrTy =
-        PointerType::get(checkGEPType(getIndexedType(
-                             cast<PointerType>(Ptr->getType()->getScalarType())
-                                 ->getElementType(),
-                             IdxList)),
-                         Ptr->getType()->getPointerAddressSpace());
+    return getGEPReturnType(
+        cast<PointerType>(Ptr->getType()->getScalarType())->getElementType(),
+        Ptr, IdxList);
+  }
+  static Type *getGEPReturnType(Type *ElTy, Value *Ptr,
+                                ArrayRef<Value *> IdxList) {
+    Type *PtrTy = PointerType::get(checkGEPType(getIndexedType(ElTy, IdxList)),
+                                   Ptr->getType()->getPointerAddressSpace());
     // Vector GEP
     if (Ptr->getType()->isVectorTy()) {
       unsigned NumElem = cast<VectorType>(Ptr->getType())->getNumElements();
@@ -993,7 +995,9 @@ GetElementPtrInst::GetElementPtrInst(Type *PointeeType, Value *Ptr,
                                      ArrayRef<Value *> IdxList, unsigned Values,
                                      const Twine &NameStr,
                                      Instruction *InsertBefore)
-    : Instruction(getGEPReturnType(Ptr, IdxList), GetElementPtr,
+    : Instruction(PointeeType ? getGEPReturnType(PointeeType, Ptr, IdxList)
+                              : getGEPReturnType(Ptr, IdxList),
+                  GetElementPtr,
                   OperandTraits<GetElementPtrInst>::op_end(this) - Values,
                   Values, InsertBefore) {
   init(Ptr, IdxList, NameStr);
