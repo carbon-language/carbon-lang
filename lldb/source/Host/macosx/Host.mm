@@ -1352,18 +1352,13 @@ Host::ShellExpandArguments (ProcessLaunchInfo &launch_info)
             error.SetErrorString("could not find argdumper tool");
             return error;
         }
-        
-        std::string quoted_cmd_string;
-        launch_info.GetArguments().GetQuotedCommandString(quoted_cmd_string);
-        StreamString expand_command;
-        
-        expand_command.Printf("%s %s",
-                              expand_tool_spec.GetPath().c_str(),
-                              quoted_cmd_string.c_str());
+
+        Args expand_command(expand_tool_spec.GetPath().c_str());
+        expand_command.AppendArguments (launch_info.GetArguments());
         
         int status;
         std::string output;
-        RunShellCommand(expand_command.GetData(), launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
+        RunShellCommand(expand_command, launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
         
         if (status != 0)
         {

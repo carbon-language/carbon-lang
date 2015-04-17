@@ -552,6 +552,18 @@ Host::RunShellCommand (const char *command,
                        uint32_t timeout_sec,
                        bool run_in_default_shell)
 {
+    return RunShellCommand(Args(command), working_dir, status_ptr, signo_ptr, command_output_ptr, timeout_sec, run_in_default_shell);
+}
+
+Error
+Host::RunShellCommand (const Args &args,
+                       const char *working_dir,
+                       int *status_ptr,
+                       int *signo_ptr,
+                       std::string *command_output_ptr,
+                       uint32_t timeout_sec,
+                       bool run_in_default_shell)
+{
     Error error;
     ProcessLaunchInfo launch_info;
     launch_info.SetArchitecture(HostInfo::GetArchitecture());
@@ -559,10 +571,10 @@ Host::RunShellCommand (const char *command,
     {
         // Run the command in a shell
         launch_info.SetShell(HostInfo::GetDefaultShell());
-        launch_info.GetArguments().AppendArgument(command);
+        launch_info.GetArguments().AppendArguments(args);
         const bool localhost = true;
         const bool will_debug = false;
-        const bool first_arg_is_full_shell_command = true;
+        const bool first_arg_is_full_shell_command = false;
         launch_info.ConvertArgumentsForLaunchingInShell (error,
                                                          localhost,
                                                          will_debug,
@@ -572,7 +584,6 @@ Host::RunShellCommand (const char *command,
     else
     {
         // No shell, just run it
-        Args args (command);
         const bool first_arg_is_executable = true;
         launch_info.SetArguments(args, first_arg_is_executable);
     }
@@ -580,7 +591,7 @@ Host::RunShellCommand (const char *command,
     if (working_dir)
         launch_info.SetWorkingDirectory(working_dir);
     llvm::SmallString<PATH_MAX> output_file_path;
-
+    
     if (command_output_ptr)
     {
         // Create a temporary file to get the stdout/stderr and redirect the
@@ -618,10 +629,10 @@ Host::RunShellCommand (const char *command,
     
     error = LaunchProcess (launch_info);
     const lldb::pid_t pid = launch_info.GetProcessID();
-
+    
     if (error.Success() && pid == LLDB_INVALID_PROCESS_ID)
         error.SetErrorString("failed to get process ID");
-
+    
     if (error.Success())
     {
         // The process successfully launched, so we can defer ownership of
@@ -640,7 +651,7 @@ Host::RunShellCommand (const char *command,
         if (timed_out)
         {
             error.SetErrorString("timed out waiting for shell command to complete");
-
+            
             // Kill the process since it didn't complete within the timeout specified
             Kill (pid, SIGKILL);
             // Wait for the monitor callback to get the message
@@ -653,10 +664,10 @@ Host::RunShellCommand (const char *command,
         {
             if (status_ptr)
                 *status_ptr = shell_info->status;
-
+            
             if (signo_ptr)
                 *signo_ptr = shell_info->signo;
-
+            
             if (command_output_ptr)
             {
                 command_output_ptr->clear();
@@ -678,7 +689,7 @@ Host::RunShellCommand (const char *command,
         }
         shell_info->can_delete.SetValue(true, eBroadcastAlways);
     }
-
+    
     FileSpec output_file_spec(output_file_path.c_str(), false);
     if (FileSystem::GetFileExists(output_file_spec))
         FileSystem::Unlink(output_file_path.c_str());
@@ -687,7 +698,6 @@ Host::RunShellCommand (const char *command,
     // the process...
     return error;
 }
-
 
 // LaunchProcessPosixSpawn for Apple, Linux, FreeBSD and other GLIBC
 // systems
