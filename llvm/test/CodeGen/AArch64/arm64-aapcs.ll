@@ -2,6 +2,7 @@
 
 @var = global i32 0, align 4
 
+; CHECK-LABEL: @test_i128_align
 define i128 @test_i128_align(i32, i128 %arg, i32 %after) {
   store i32 %after, i32* @var, align 4
 ; CHECK: str w4, [{{x[0-9]+}}, :lo12:var]
@@ -9,6 +10,16 @@ define i128 @test_i128_align(i32, i128 %arg, i32 %after) {
   ret i128 %arg
 ; CHECK: mov x0, x2
 ; CHECK: mov x1, x3
+}
+
+; CHECK-LABEL: @test_i64x2_align
+define [2 x i64] @test_i64x2_align(i32, [2 x i64] %arg, i32 %after) {
+  store i32 %after, i32* @var, align 4
+; CHECK: str w3, [{{x[0-9]+}}, :lo12:var]
+
+  ret [2 x i64] %arg
+; CHECK: mov x0, x1
+; CHECK: mov x1, x2
 }
 
 @var64 = global i64 0, align 8
