@@ -33,9 +33,7 @@ namespace lld {
 class AliasAtom : public SimpleDefinedAtom {
 public:
   AliasAtom(const File &file, StringRef name)
-      : SimpleDefinedAtom(file), _target(nullptr), _name(name),
-        _merge(DefinedAtom::mergeNo), _deadStrip(DefinedAtom::deadStripNormal) {
-  }
+      : SimpleDefinedAtom(file), _name(name) {}
 
   StringRef name() const override { return _name; }
   uint64_t size() const override { return 0; }
@@ -91,10 +89,10 @@ private:
     }
   }
 
-  mutable const DefinedAtom *_target;
   std::string _name;
-  llvm::Optional<Merge> _merge;
-  DeadStripKind _deadStrip;
+  mutable const DefinedAtom *_target = nullptr;
+  llvm::Optional<Merge> _merge = DefinedAtom::mergeNo;
+  DeadStripKind _deadStrip = DefinedAtom::deadStripNormal;
 };
 
 } // end namespace lld
