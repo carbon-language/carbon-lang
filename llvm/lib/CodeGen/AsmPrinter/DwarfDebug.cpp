@@ -733,7 +733,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
 
 // Get .debug_loc entry for the instruction range starting at MI.
 static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
-  const MDNode *Expr = MI->getDebugExpression();
+  const MDExpression *Expr = MI->getDebugExpression();
 
   assert(MI->getNumOperands() == 4);
   if (MI->getOperand(0).isReg()) {

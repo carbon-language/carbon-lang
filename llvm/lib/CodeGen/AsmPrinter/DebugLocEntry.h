@@ -17,7 +17,7 @@
 
 namespace llvm {
 class AsmPrinter;
-class MDNode;
+
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
 class DebugLocEntry {
@@ -28,25 +28,25 @@ class DebugLocEntry {
 public:
   /// \brief A single location or constant.
   struct Value {
-    Value(const MDNode *Expr, int64_t i)
+    Value(const MDExpression *Expr, int64_t i)
         : Expression(Expr), EntryKind(E_Integer) {
       Constant.Int = i;
     }
-    Value(const MDNode *Expr, const ConstantFP *CFP)
+    Value(const MDExpression *Expr, const ConstantFP *CFP)
         : Expression(Expr), EntryKind(E_ConstantFP) {
       Constant.CFP = CFP;
     }
-    Value(const MDNode *Expr, const ConstantInt *CIP)
+    Value(const MDExpression *Expr, const ConstantInt *CIP)
         : Expression(Expr), EntryKind(E_ConstantInt) {
       Constant.CIP = CIP;
     }
-    Value(const MDNode *Expr, MachineLocation Loc)
+    Value(const MDExpression *Expr, MachineLocation Loc)
         : Expression(Expr), EntryKind(E_Location), Loc(Loc) {
       assert(cast<MDExpression>(Expr)->isValid());
     }
 
     /// Any complex address location expression for this Value.
-    const MDNode *Expression;
+    const MDExpression *Expression;
 
     /// Type of entry that this represents.
     enum EntryType { E_Location, E_Integer, E_ConstantFP, E_ConstantInt };
@@ -71,9 +71,7 @@ public:
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
     bool isBitPiece() const { return getExpression()->isBitPiece(); }
-    DIExpression getExpression() const {
-      return cast_or_null<MDExpression>(Expression);
-    }
+    DIExpression getExpression() const { return Expression; }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
