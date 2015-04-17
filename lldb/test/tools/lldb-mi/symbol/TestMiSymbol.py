@@ -41,11 +41,11 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -symbol-list-lines fails when file doesn't exist
         self.runCmd("-symbol-list-lines unknown_file")
-        self.expect("\^error,message=\"warning: No source filenames matched 'unknown_file'. error: no source filenames matched any command arguments \"")
+        self.expect("\^error,message=\"warning: No source filenames matched 'unknown_file'\. error: no source filenames matched any command arguments \"")
 
         # Test that -symbol-list-lines fails when file is specified using relative path
         self.runCmd("-symbol-list-lines ./main.cpp")
-        self.expect("\^error,message=\"warning: No source filenames matched './main.cpp'. error: no source filenames matched any command arguments \"")
+        self.expect("\^error,message=\"warning: No source filenames matched '\./main\.cpp'\. error: no source filenames matched any command arguments \"")
 
         # Test that -symbol-list-lines works when file is specified using absolute path
         import os
@@ -55,7 +55,7 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -symbol-list-lines fails when file doesn't exist
         self.runCmd("-symbol-list-lines unknown_dir/main.cpp")
-        self.expect("\^error,message=\"warning: No source filenames matched 'unknown_dir/main.cpp'. error: no source filenames matched any command arguments \"")
+        self.expect("\^error,message=\"warning: No source filenames matched 'unknown_dir/main\.cpp'\. error: no source filenames matched any command arguments \"")
 
 if __name__ == '__main__':
     unittest2.main()

@@ -49,7 +49,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that the executable isn't loaded when unknown file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % path)
-        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'. Target binary '%s' is invalid. error: unable to find executable for '%s'\"" % (path, path))
+        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'\. Target binary '%s' is invalid\. error: unable to find executable for '%s'\"" % (path, path))
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
@@ -123,7 +123,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that the executable isn't loaded when file was specified using unknown path
         self.expect("-file-exec-and-symbols \"%s\"" % path)
-        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'. Target binary '%s' is invalid. error: unable to find executable for '%s'\"" % (path, path))
+        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'\. Target binary '%s' is invalid\. error: unable to find executable for '%s'\"" % (path, path))
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)

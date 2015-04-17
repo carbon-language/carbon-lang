@@ -36,7 +36,7 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -data-disassemble: try to disassemble some address
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
-        self.expect("\^done,asm_insns=\[{address=\"0x0*%x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+\"}," % addr)
+        self.expect("\^done,asm_insns=\[{address=\"0x0*%x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+?\"}," % addr)
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -99,11 +99,11 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -data-list-register-names: try to get all registers
         self.runCmd("-data-list-register-names")
-        self.expect("\^done,register-names=\[\".+\",")
+        self.expect("\^done,register-names=\[\".+?\",")
 
         # Test -data-list-register-names: try to get specified registers
         self.runCmd("-data-list-register-names 0")
-        self.expect("\^done,register-names=\[\".+\"\]")
+        self.expect("\^done,register-names=\[\".+?\"\]")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

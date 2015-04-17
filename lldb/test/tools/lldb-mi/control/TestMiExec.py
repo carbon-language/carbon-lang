@@ -20,7 +20,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -exec-abort fails on invalid process
         self.runCmd("-exec-abort")
-        self.expect("\^error,msg=\"Command 'exec-abort'. Invalid process during debug session\"")
+        self.expect("\^error,msg=\"Command 'exec-abort'\. Invalid process during debug session\"")
 
         # Load executable
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
@@ -156,22 +156,22 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test -exec-next
         self.runCmd("-exec-next --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"29\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"29\"")
 
         # Test that --thread is optional
         self.runCmd("-exec-next --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"30\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"30\"")
 
         # Test that --frame is optional
         self.runCmd("-exec-next --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"31\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"31\"")
 
         # Test that both --thread and --frame are optional
         self.runCmd("-exec-next")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"32\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"32\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-next --thread 0")
@@ -210,23 +210,23 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test -exec-next-instruction
         self.runCmd("-exec-next-instruction --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"28\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"28\"")
 
         # Test that --thread is optional
         self.runCmd("-exec-next-instruction --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"28\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"28\"")
 
         # Test that --frame is optional
         self.runCmd("-exec-next-instruction --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"29\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"29\"")
 
         # Test that both --thread and --frame are optional
         self.runCmd("-exec-next-instruction")
         self.expect("\^running")
         # Depending on compiler, it can stop at different line
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"(29|30)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"(29|30)\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-next-instruction --thread 0")
@@ -266,36 +266,36 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr="0x[0-9a-f]+\",func=\"__printf\",args=[{name=\"format\",value=\"0x[0-9a-f]+\"}],file=\"printf.c\",fullname=\".+printf.c\",line="\d+"},thread-id=\"1\",stopped-threads=\"all\"
         self.runCmd("-exec-step --thread 1 --frame 0")
         self.expect("\^running")
-        it = self.expect([ "\*stopped,reason=\"end-stepping-range\".+func=\"main\"",
-                           "\*stopped,reason=\"end-stepping-range\".+func=\"((?!main).)+\"" ])
+        it = self.expect([ "\*stopped,reason=\"end-stepping-range\".+?func=\"main\"",
+                           "\*stopped,reason=\"end-stepping-range\".+?func=\"(?!main).+?\"" ])
         # Exit from printf if needed
         if it == 1:
             self.runCmd("-exec-finish")
             self.expect("\^running")
-            self.expect("\*stopped,reason=\"end-stepping-range\".+func=\"main\"")
+            self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
         # Test that -exec-step steps into g_MyFunction and back out
         # (and that --thread is optional)
         self.runCmd("-exec-step --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"g_MyFunction.*?\"")
         # Use -exec-finish here to make sure that control reaches the caller.
         # -exec-step can keep us in the g_MyFunction for gcc
         self.runCmd("-exec-finish --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"30\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"30\"")
 
         # Test that -exec-step steps into s_MyFunction
         # (and that --frame is optional)
         self.runCmd("-exec-step --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\".*s_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\".*?s_MyFunction.*?\"")
 
         # Test that -exec-step steps into g_MyFunction from inside
         # s_MyFunction (and that both --thread and --frame are optional)
         self.runCmd("-exec-step")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"g_MyFunction.*?\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-step --thread 0")
@@ -333,31 +333,31 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that -exec-next steps over printf
         self.runCmd("-exec-next --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"29\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"29\"")
 
         # Test that -exec-step-instruction steps over non branching
         # instruction
         self.runCmd("-exec-step-instruction --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\"")
 
         # Test that -exec-step-instruction steps into g_MyFunction
         # instruction (and that --thread is optional)
         self.runCmd("-exec-step-instruction --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"g_MyFunction.*?\"")
 
         # Test that -exec-step-instruction steps over non branching
         # (and that --frame is optional)
         self.runCmd("-exec-step-instruction --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"g_MyFunction.*?\"")
 
         # Test that -exec-step-instruction steps into g_MyFunction
         # (and that both --thread and --frame are optional)
         self.runCmd("-exec-step-instruction")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"g_MyFunction.*?\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-step-instruction --thread 0")
@@ -392,7 +392,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that -exec-finish returns from g_MyFunction
         self.runCmd("-exec-finish --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"main\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
         # Run to BP inside s_MyFunction call
         self.runCmd("-break-insert s_MyFunction")
@@ -411,13 +411,13 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # s_MyFunction (and that --frame is optional)
         self.runCmd("-exec-finish --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\".*s_MyFunction.*\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\".*?s_MyFunction.*?\"")
 
         # Test that -exec-finish returns from s_MyFunction
         # (and that both --thread and --frame are optional)
         self.runCmd("-exec-finish")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"main\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-finish --thread 0")
@@ -440,7 +440,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         ## Test that -exec-finish returns from printf
         self.runCmd("-exec-finish --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"main\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
 if __name__ == '__main__':
     unittest2.main()

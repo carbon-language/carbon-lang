@@ -147,9 +147,9 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-interpreter-exec console \"thread step-in\"")
         self.expect("\^done")
         it = self.expect([ "~\"argc=1\\\\r\\\\n\"",
-                           "\*stopped,reason=\"end-stepping-range\".+func=\"((?!main).)+\"" ])
+                           "\*stopped,reason=\"end-stepping-range\".+?func=\"(?!main).+?\"" ])
         if it == 0:
-            self.expect("\*stopped,reason=\"end-stepping-range\".+func=\"main\"")
+            self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

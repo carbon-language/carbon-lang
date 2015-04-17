@@ -37,7 +37,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -exec-interrupt can interrupt an execution
         self.runCmd("-exec-interrupt")
-        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
+        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.+?thread-id=\"1\",stopped-threads=\"all\"")
 
         # Continue (to loop forever)
         self.runCmd("-exec-continue")
@@ -111,7 +111,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
+        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.+?thread-id=\"1\",stopped-threads=\"all\"")
 
         # Exit
         self.runCmd("-gdb-exit")

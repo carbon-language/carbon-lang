@@ -31,7 +31,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.runCmd("-exec-run")
         self.expect("\^running")
-        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"\?\?\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",pending=\[\"printf\"\],times=\"0\",original-location=\"printf\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"\?\?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",pending=\[\"printf\"\],times=\"0\",original-location=\"printf\"}")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
@@ -47,26 +47,27 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.runCmd("-break-insert -f main")
         #FIXME main wasn't resolved
-        #self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main.cpp\",fullname=\".+main.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
-        self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main.cpp\",fullname=\".+main.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        #self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
         #FIXME main wasn't resolved, =breakpoint-created is treated as =breakpoint-modified
-        #self.expect("=breakpoint-created,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main.cpp\",fullname=\".+main.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
-        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main.cpp\",fullname=\".+main.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        #self.expect("=breakpoint-created,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
 
         self.runCmd("-exec-run")
         self.expect("\^running")
-        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main.cpp\",fullname=\".+main.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"15\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
         self.runCmd("-break-insert printf")
         #FIXME function name is unknown on Darwin
-        #self.expect("\^done,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
-        self.expect("\^done,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        #self.expect("\^done,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        self.expect("\^done,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
         #FIXME function name is unknown on Darwin, =breakpoint-created is treated as =breakpoint-modified
-        #self.expect("=breakpoint-created,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
-        self.expect("=breakpoint-modified,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
-        # FIXME function name is unknown on Darwin, duplicated messages are skipped in pexpect
-        #self.expect("=breakpoint-modified,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        #self.expect("=breakpoint-created,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        # FIXME function name is unknown on Darwin
+        #self.expect("=breakpoint-modified,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"printf\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",times=\"0\",original-location=\"printf\"}")
 
         self.runCmd("-exec-continue")
         self.expect("\^running")
