@@ -20,11 +20,20 @@
 
 using namespace llvm;
 
-PDB_ErrorCode llvm::createPDBReader(PDB_ReaderType Type, StringRef Path,
-                                    std::unique_ptr<IPDBSession> &Session) {
+PDB_ErrorCode llvm::loadDataForPDB(PDB_ReaderType Type, StringRef Path,
+                                   std::unique_ptr<IPDBSession> &Session) {
   // Create the correct concrete instance type based on the value of Type.
 #if HAVE_DIA_SDK
   return DIASession::createFromPdb(Path, Session);
+#endif
+  return PDB_ErrorCode::NoPdbImpl;
+}
+
+PDB_ErrorCode llvm::loadDataForEXE(PDB_ReaderType Type, StringRef Path,
+                                   std::unique_ptr<IPDBSession> &Session) {
+// Create the correct concrete instance type based on the value of Type.
+#if HAVE_DIA_SDK
+  return DIASession::createFromExe(Path, Session);
 #endif
   return PDB_ErrorCode::NoPdbImpl;
 }

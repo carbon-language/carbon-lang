@@ -21,6 +21,7 @@ class PDBSymbol;
 
 class IPDBDataStream;
 template <class T> class IPDBEnumChildren;
+class IPDBLineNumber;
 class IPDBRawSymbol;
 class IPDBSession;
 class IPDBSourceFile;
@@ -28,6 +29,7 @@ class IPDBSourceFile;
 typedef IPDBEnumChildren<PDBSymbol> IPDBEnumSymbols;
 typedef IPDBEnumChildren<IPDBSourceFile> IPDBEnumSourceFiles;
 typedef IPDBEnumChildren<IPDBDataStream> IPDBEnumDataStreams;
+typedef IPDBEnumChildren<IPDBLineNumber> IPDBEnumLineNumbers;
 
 class PDBSymbolExe;
 class PDBSymbolCompiland;
@@ -426,7 +428,8 @@ enum class PDB_ErrorCode {
   InvalidParameter,
   AlreadyLoaded,
   UnknownError,
-  NoMemory
+  NoMemory,
+  DebugInfoMismatch
 };
 
 struct VersionInfo {

@@ -101,7 +101,7 @@ cl::opt<bool> NoEnumDefs("no-enum-definitions",
 static void dumpInput(StringRef Path) {
   std::unique_ptr<IPDBSession> Session;
   PDB_ErrorCode Error =
-      llvm::createPDBReader(PDB_ReaderType::DIA, Path, Session);
+      llvm::loadDataForPDB(PDB_ReaderType::DIA, Path, Session);
   switch (Error) {
   case PDB_ErrorCode::Success:
     break;

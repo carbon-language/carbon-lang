@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
+#include "llvm/DebugInfo/PDB/DIA/DIAEnumLineNumbers.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumSourceFiles.h"
 #include "llvm/DebugInfo/PDB/DIA/DIARawSymbol.h"
 #include "llvm/DebugInfo/PDB/DIA/DIASession.h"
@@ -64,6 +65,50 @@ PDB_ErrorCode DIASession::createFromPdb(StringRef Path,
   return PDB_ErrorCode::Success;
 }
 
+PDB_ErrorCode DIASession::createFromExe(StringRef Path,
+                                        std::unique_ptr<IPDBSession> &Session) {
+  CComPtr<IDiaDataSource> DiaDataSource;
+  CComPtr<IDiaSession> DiaSession;
+
+  // We assume that CoInitializeEx has already been called by the executable.
+  HRESULT Result = ::CoCreateInstance(
+      CLSID_DiaSource, nullptr, CLSCTX_INPROC_SERVER, IID_IDiaDataSource,
+      reinterpret_cast<LPVOID *>(&DiaDataSource));
+  if (FAILED(Result))
+    return PDB_ErrorCode::NoPdbImpl;
+
+  llvm::SmallVector<UTF16, 128> Path16;
+  if (!llvm::convertUTF8ToUTF16String(Path, Path16))
+    return PDB_ErrorCode::InvalidPath;
+
+  const wchar_t *Path16Str = reinterpret_cast<const wchar_t *>(Path16.data());
+  if (FAILED(Result =
+                 DiaDataSource->loadDataForExe(Path16Str, nullptr, nullptr))) {
+    if (Result == E_PDB_NOT_FOUND)
+      return PDB_ErrorCode::InvalidPath;
+    else if (Result == E_PDB_FORMAT)
+      return PDB_ErrorCode::InvalidFileFormat;
+    else if (Result == E_PDB_INVALID_SIG || Result == E_PDB_INVALID_AGE)
+      return PDB_ErrorCode::DebugInfoMismatch;
+    else if (Result == E_INVALIDARG)
+      return PDB_ErrorCode::InvalidParameter;
+    else if (Result == E_UNEXPECTED)
+      return PDB_ErrorCode::AlreadyLoaded;
+    else
+      return PDB_ErrorCode::UnknownError;
+  }
+
+  if (FAILED(Result = DiaDataSource->openSession(&DiaSession))) {
+    if (Result == E_OUTOFMEMORY)
+      return PDB_ErrorCode::NoMemory;
+    else
+      return PDB_ErrorCode::UnknownError;
+  }
+
+  Session.reset(new DIASession(DiaSession));
+  return PDB_ErrorCode::Success;
+}
+
 uint64_t DIASession::getLoadAddress() const {
   uint64_t LoadAddress;
   bool success = (S_OK == Session->get_loadAddress(&LoadAddress));
@@ -93,6 +138,24 @@ std::unique_ptr<PDBSymbol> DIASession::getSymbolById(uint32_t SymbolId) const {
 
   auto RawSymbol = llvm::make_unique<DIARawSymbol>(*this, LocatedSymbol);
   return PDBSymbol::create(*this, std::move(RawSymbol));
+}
+
+std::unique_ptr<PDBSymbol>
+DIASession::findSymbolByAddress(uint64_t Address) const {
+  CComPtr<IDiaSymbol> Symbol;
+  if (S_OK != Session->findSymbolByVA(Address, SymTagNull, &Symbol))
+    return nullptr;
+  auto RawSymbol = llvm::make_unique<DIARawSymbol>(*this, Symbol);
+  return PDBSymbol::create(*this, std::move(RawSymbol));
+}
+
+std::unique_ptr<IPDBEnumLineNumbers>
+DIASession::findLineNumbersByAddress(uint64_t Address, uint32_t Length) const {
+  CComPtr<IDiaEnumLineNumbers> LineNumbers;
+  if (S_OK != Session->findLinesByVA(Address, Length, &LineNumbers))
+    return nullptr;
+
+  return llvm::make_unique<DIAEnumLineNumbers>(LineNumbers);
 }
 
 std::unique_ptr<IPDBEnumSourceFiles> DIASession::getAllSourceFiles() const {

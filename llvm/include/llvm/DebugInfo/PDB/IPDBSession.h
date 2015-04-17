@@ -43,6 +43,11 @@ public:
     return std::unique_ptr<T>(ConcreteSymbol);
   }
 
+  virtual std::unique_ptr<PDBSymbol>
+  findSymbolByAddress(uint64_t Address) const = 0;
+  virtual std::unique_ptr<IPDBEnumLineNumbers>
+  findLineNumbersByAddress(uint64_t Address, uint32_t Length) const = 0;
+
   virtual std::unique_ptr<IPDBEnumSourceFiles> getAllSourceFiles() const = 0;
   virtual std::unique_ptr<IPDBEnumSourceFiles>
   getSourceFilesForCompiland(const PDBSymbolCompiland &Compiland) const = 0;
