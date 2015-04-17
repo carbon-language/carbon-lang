@@ -31,7 +31,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.runCmd("-exec-run")
         self.expect("\^running")
-        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"\?\?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",pending=\[\"printf\"\],times=\"0\",original-location=\"printf\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\".+?\",file=\".+?\",fullname=\".+?\",line=\"(-1|\d+)\",pending=\[\"printf\"\],times=\"0\",original-location=\"printf\"}")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
