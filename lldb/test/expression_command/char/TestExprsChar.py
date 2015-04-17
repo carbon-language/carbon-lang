@@ -52,7 +52,8 @@ class ExprCharTestCase(TestBase):
     def test_default_char(self):
         self.do_test()
 
-    
+    @expectedFailureArch("arm", "llvm.org/pr23069")
+    @expectedFailureArch("aarch64", "llvm.org/pr23069")
     def test_signed_char(self):
         self.do_test(dictionary={'CFLAGS_EXTRAS': '-fsigned-char'})
 

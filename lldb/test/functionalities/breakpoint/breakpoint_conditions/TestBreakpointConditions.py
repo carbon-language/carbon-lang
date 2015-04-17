@@ -128,8 +128,10 @@ class BreakpointConditionsTestCase(TestBase):
             self.runCmd("breakpoint modify -c ($eax&&i)")
         elif self.getArchitecture() in ['aarch64']:
             self.runCmd("breakpoint modify -c ($x1&&i)")
+        elif self.getArchitecture() in ['arm']:
+            self.runCmd("breakpoint modify -c ($r0&&i)")
         self.runCmd("run")
-        
+
         self.expect("process status", PROCESS_STOPPED,
             patterns = ['Process .* stopped'])
 
