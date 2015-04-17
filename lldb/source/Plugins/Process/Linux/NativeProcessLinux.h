@@ -171,10 +171,12 @@ namespace process_linux {
 
     private:
 
+        class Monitor;
+
         ArchSpec m_arch;
 
+        std::unique_ptr<Monitor> m_monitor_up;
         HostThread m_operation_thread;
-        HostThread m_monitor_thread;
 
         // current operation which must be executed on the priviliged thread
         void *m_operation;
@@ -270,6 +272,9 @@ namespace process_linux {
         AttachToInferior (lldb::pid_t pid, Error &error);
 
         void
+        StartMonitorThread(Error &error);
+
+        void
         StartLaunchOpThread(LaunchArgs *args, Error &error);
 
         static void *
@@ -296,9 +301,11 @@ namespace process_linux {
         static bool
         DupDescriptor(const char *path, int fd, int flags);
 
-        static bool
-        MonitorCallback(void *callback_baton,
-                lldb::pid_t pid, bool exited, int signal, int status);
+        static void *
+        MonitorThread(void *baton);
+
+        void
+        MonitorCallback(lldb::pid_t pid, bool exited, int signal, int status);
 
         void
         MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid);
@@ -331,10 +338,6 @@ namespace process_linux {
 
         void
         DoOperation(void *op);
-
-        /// Stops the child monitor thread.
-        void
-        StopMonitorThread();
 
         /// Stops the operation thread used to attach/launch a process.
         void

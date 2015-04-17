@@ -57,6 +57,7 @@
 #include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <sys/socket.h>
+#include <sys/signalfd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -1071,7 +1072,262 @@ namespace
         PTRACE(PTRACE_DETACH, m_tid, nullptr, 0, 0, m_error);
     }
 
+} // end of anonymous namespace
+
+class NativeProcessLinux::Monitor {
+private:
+    ::pid_t             m_child_pid;
+    NativeProcessLinux *m_native_process;
+
+    enum { READ, WRITE };
+    int        m_pipefd[2] = {-1, -1};
+    int        m_signal_fd = -1;
+    HostThread m_thread;
+
+    void
+    HandleSignals();
+
+    void
+    HandleWait();
+
+    // Returns true if the thread should exit.
+    bool
+    HandleCommands();
+
+    void
+    MainLoop();
+
+    static void *
+    RunMonitor(void *arg);
+
+public:
+    // Takes ownership of command_fd.
+    Monitor(::pid_t child_pid, NativeProcessLinux *native_process)
+        : m_child_pid(-getpgid(child_pid)), m_native_process(native_process)
+    {}
+
+    ~Monitor();
+
+    Error
+    Initialize();
+};
+
+Error
+NativeProcessLinux::Monitor::Initialize()
+{
+    Error error;
+
+    // We get a SIGCHLD every time something interesting happens with the inferior. We shall be
+    // listening for these signals over a signalfd file descriptors. This allows us to wait for
+    // multiple kinds of events with select.
+    sigset_t signals;
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGCHLD);
+    m_signal_fd = signalfd(-1, &signals, SFD_NONBLOCK | SFD_CLOEXEC);
+    if (m_signal_fd < 0)
+    {
+        return Error("NativeProcessLinux::Monitor::%s failed due to signalfd failure. Monitoring the inferior will be impossible: %s",
+                    __FUNCTION__, strerror(errno));
+
+    }
+
+    if (pipe2(m_pipefd, O_CLOEXEC) == -1)
+    {
+        error.SetErrorToErrno();
+        return error;
+    }
+
+    m_thread = ThreadLauncher::LaunchThread("monitor", Monitor::RunMonitor, this, nullptr);
+    if (!m_thread.IsJoinable())
+        return Error("Failed to create monitor thread for NativeProcessLinux.");
+
+    return error;
 }
+
+NativeProcessLinux::Monitor::~Monitor()
+{
+    if (m_pipefd[WRITE] >= 0)
+        close(m_pipefd[WRITE]);
+    if (m_thread.IsJoinable())
+        m_thread.Join(nullptr);
+    if (m_pipefd[READ] >= 0)
+        close(m_pipefd[READ]);
+    if (m_signal_fd >= 0)
+        close(m_signal_fd);
+}
+
+void
+NativeProcessLinux::Monitor::HandleSignals()
+{
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    // We don't really care about the content of the SIGCHLD siginfo structure, as we will get
+    // all the information from waitpid(). We just need to read all the signals so that we can
+    // sleep next time we reach select().
+    while (true)
+    {
+        signalfd_siginfo info;
+        ssize_t size = read(m_signal_fd, &info, sizeof info);
+        if (size == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break; // We are done.
+            if (errno == EINTR)
+                continue;
+            if (log)
+                log->Printf("NativeProcessLinux::Monitor::%s reading from signalfd file descriptor failed: %s",
+                        __FUNCTION__, strerror(errno));
+            break;
+        }
+        if (size != sizeof info)
+        {
+            // We got incomplete information structure. This should not happen, let's just log
+            // that.
+            if (log)
+                log->Printf("NativeProcessLinux::Monitor::%s reading from signalfd file descriptor returned incomplete data: "
+                        "structure size is %zd, read returned %zd bytes",
+                        __FUNCTION__, sizeof info, size);
+            break;
+        }
+        if (log)
+            log->Printf("NativeProcessLinux::Monitor::%s received signal %s(%d).", __FUNCTION__,
+                Host::GetSignalAsCString(info.ssi_signo), info.ssi_signo);
+    }
+}
+
+void
+NativeProcessLinux::Monitor::HandleWait()
+{
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    // Process all pending waitpid notifications.
+    while (true)
+    {
+        int status = -1;
+        ::pid_t wait_pid = waitpid(m_child_pid, &status, __WALL | WNOHANG);
+
+        if (wait_pid == 0)
+            break; // We are done.
+
+        if (wait_pid == -1)
+        {
+            if (errno == EINTR)
+                continue;
+
+            if (log)
+              log->Printf("NativeProcessLinux::Monitor::%s waitpid (pid = %" PRIi32 ", &status, __WALL | WNOHANG) failed: %s",
+                      __FUNCTION__, m_child_pid, strerror(errno));
+            break;
+        }
+
+        bool exited = false;
+        int signal = 0;
+        int exit_status = 0;
+        const char *status_cstr = NULL;
+        if (WIFSTOPPED(status))
+        {
+            signal = WSTOPSIG(status);
+            status_cstr = "STOPPED";
+        }
+        else if (WIFEXITED(status))
+        {
+            exit_status = WEXITSTATUS(status);
+            status_cstr = "EXITED";
+            exited = true;
+        }
+        else if (WIFSIGNALED(status))
+        {
+            signal = WTERMSIG(status);
+            status_cstr = "SIGNALED";
+            if (wait_pid == abs(m_child_pid)) {
+                exited = true;
+                exit_status = -1;
+            }
+        }
+        else
+            status_cstr = "(\?\?\?)";
+
+        if (log)
+            log->Printf("NativeProcessLinux::Monitor::%s: waitpid (pid = %" PRIi32 ", &status, __WALL | WNOHANG)"
+                "=> pid = %" PRIi32 ", status = 0x%8.8x (%s), signal = %i, exit_state = %i",
+                __FUNCTION__, m_child_pid, wait_pid, status, status_cstr, signal, exit_status);
+
+        m_native_process->MonitorCallback (wait_pid, exited, signal, exit_status);
+    }
+}
+
+bool
+NativeProcessLinux::Monitor::HandleCommands()
+{
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    while (true)
+    {
+        char command = 0;
+        ssize_t size = read(m_pipefd[READ], &command, sizeof command);
+        if (size == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                return false;
+            if (errno == EINTR)
+                continue;
+            if (log)
+                log->Printf("NativeProcessLinux::Monitor::%s exiting because read from command file descriptor failed: %s", __FUNCTION__, strerror(errno));
+            return true;
+        }
+        if (size == 0) // end of file - write end closed
+        {
+            if (log)
+                log->Printf("NativeProcessLinux::Monitor::%s exit command received, exiting...", __FUNCTION__);
+            return true; // We are done.
+        }
+        if (log)
+            log->Printf("NativeProcessLinux::Monitor::%s received unknown command '%c'",
+                    __FUNCTION__, command);
+    }
+}
+
+void
+NativeProcessLinux::Monitor::MainLoop()
+{
+    while (true)
+    {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(m_signal_fd, &fds);
+        FD_SET(m_pipefd[READ], &fds);
+
+        int max_fd = std::max(m_signal_fd, m_pipefd[READ]) + 1;
+        int r = select(max_fd, &fds, nullptr, nullptr, nullptr);
+        if (r < 0)
+        {
+            Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+            if (log)
+                log->Printf("NativeProcessLinux::Monitor::%s exiting because select failed: %s",
+                        __FUNCTION__, strerror(errno));
+            return;
+        }
+
+        if (FD_ISSET(m_pipefd[READ], &fds))
+        {
+            if (HandleCommands())
+                return;
+        }
+
+        if (FD_ISSET(m_signal_fd, &fds))
+        {
+            HandleSignals();
+            HandleWait();
+        }
+    }
+}
+
+void *
+NativeProcessLinux::Monitor::RunMonitor(void *arg)
+{
+    static_cast<Monitor *>(arg)->MainLoop();
+    return nullptr;
+}
+
 
 // Simple helper function to ensure flags are enabled on the given file
 // descriptor.
@@ -1291,7 +1547,6 @@ NativeProcessLinux::NativeProcessLinux () :
     NativeProcessProtocol (LLDB_INVALID_PROCESS_ID),
     m_arch (),
     m_operation_thread (),
-    m_monitor_thread (),
     m_operation (nullptr),
     m_operation_mutex (),
     m_operation_pending (),
@@ -1373,14 +1628,7 @@ WAIT_AGAIN:
     }
 
     // Finally, start monitoring the child process for change in state.
-    m_monitor_thread = Host::StartMonitoringChildProcess(
-        NativeProcessLinux::MonitorCallback, this, GetID(), true);
-    if (!m_monitor_thread.IsJoinable())
-    {
-        error.SetErrorToGenericError();
-        error.SetErrorString ("Process attach failed to create monitor thread for NativeProcessLinux::MonitorCallback.");
-        return;
-    }
+    StartMonitorThread(error);
 }
 
 void
@@ -1463,14 +1711,7 @@ WAIT_AGAIN:
     }
 
     // Finally, start monitoring the child process for change in state.
-    m_monitor_thread = Host::StartMonitoringChildProcess (
-        NativeProcessLinux::MonitorCallback, this, GetID (), true);
-    if (!m_monitor_thread.IsJoinable())
-    {
-        error.SetErrorToGenericError ();
-        error.SetErrorString ("Process attach failed to create monitor thread for NativeProcessLinux::MonitorCallback.");
-        return;
-    }
+    StartMonitorThread(error);
 }
 
 void
@@ -1945,30 +2186,17 @@ static int convert_pid_status_to_return_code (int status)
     }
 }
 
-// Main process monitoring waitpid-loop handler.
-bool
-NativeProcessLinux::MonitorCallback(void *callback_baton,
-                                    lldb::pid_t pid,
+// Handles all waitpid events from the inferior process.
+void
+NativeProcessLinux::MonitorCallback(lldb::pid_t pid,
                                     bool exited,
                                     int signal,
                                     int status)
 {
     Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
 
-    NativeProcessLinux *const process = static_cast<NativeProcessLinux*>(callback_baton);
-    assert (process && "process is null");
-    if (!process)
-    {
-        if (log)
-            log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " callback_baton was null, can't determine process to use", __FUNCTION__, pid);
-        return true;
-    }
-
     // Certain activities differ based on whether the pid is the tid of the main thread.
-    const bool is_main_thread = (pid == process->GetID ());
-
-    // Assume we keep monitoring by default.
-    bool stop_monitoring = false;
+    const bool is_main_thread = (pid == GetID ());
 
     // Handle when the thread exits.
     if (exited)
@@ -1977,33 +2205,32 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
             log->Printf ("NativeProcessLinux::%s() got exit signal(%d) , tid = %"  PRIu64 " (%s main thread)", __FUNCTION__, signal, pid, is_main_thread ? "is" : "is not");
 
         // This is a thread that exited.  Ensure we're not tracking it anymore.
-        const bool thread_found = process->StopTrackingThread (pid);
+        const bool thread_found = StopTrackingThread (pid);
 
         // Make sure the thread state coordinator knows about this.
-        process->NotifyThreadDeath (pid);
+        NotifyThreadDeath (pid);
 
         if (is_main_thread)
         {
             // We only set the exit status and notify the delegate if we haven't already set the process
             // state to an exited state.  We normally should have received a SIGTRAP | (PTRACE_EVENT_EXIT << 8)
             // for the main thread.
-            const bool already_notified = (process->GetState() == StateType::eStateExited) || (process->GetState () == StateType::eStateCrashed);
+            const bool already_notified = (GetState() == StateType::eStateExited) || (GetState () == StateType::eStateCrashed);
             if (!already_notified)
             {
                 if (log)
-                    log->Printf ("NativeProcessLinux::%s() tid = %"  PRIu64 " handling main thread exit (%s), expected exit state already set but state was %s instead, setting exit state now", __FUNCTION__, pid, thread_found ? "stopped tracking thread metadata" : "thread metadata not found", StateAsCString (process->GetState ()));
+                    log->Printf ("NativeProcessLinux::%s() tid = %"  PRIu64 " handling main thread exit (%s), expected exit state already set but state was %s instead, setting exit state now", __FUNCTION__, pid, thread_found ? "stopped tracking thread metadata" : "thread metadata not found", StateAsCString (GetState ()));
                 // The main thread exited.  We're done monitoring.  Report to delegate.
-                process->SetExitStatus (convert_pid_status_to_exit_type (status), convert_pid_status_to_return_code (status), nullptr, true);
+                SetExitStatus (convert_pid_status_to_exit_type (status), convert_pid_status_to_return_code (status), nullptr, true);
 
                 // Notify delegate that our process has exited.
-                process->SetState (StateType::eStateExited, true);
+                SetState (StateType::eStateExited, true);
             }
             else
             {
                 if (log)
                     log->Printf ("NativeProcessLinux::%s() tid = %"  PRIu64 " main thread now exited (%s)", __FUNCTION__, pid, thread_found ? "stopped tracking thread metadata" : "thread metadata not found");
             }
-            return true;
         }
         else
         {
@@ -2012,24 +2239,20 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
             // and we would have done an all-stop then.
             if (log)
                 log->Printf ("NativeProcessLinux::%s() tid = %"  PRIu64 " handling non-main thread exit (%s)", __FUNCTION__, pid, thread_found ? "stopped tracking thread metadata" : "thread metadata not found");
-
-            // Not the main thread, we keep going.
-            return false;
         }
+        return;
     }
 
     // Get details on the signal raised.
     siginfo_t info;
-    const auto err = process->GetSignalInfo(pid, &info);
+    const auto err = GetSignalInfo(pid, &info);
     if (err.Success())
     {
         // We have retrieved the signal info.  Dispatch appropriately.
         if (info.si_signo == SIGTRAP)
-            process->MonitorSIGTRAP(&info, pid);
+            MonitorSIGTRAP(&info, pid);
         else
-            process->MonitorSignal(&info, pid, exited);
-
-        stop_monitoring = false;
+            MonitorSignal(&info, pid, exited);
     }
     else
     {
@@ -2037,8 +2260,8 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
         {
             // This is a group stop reception for this tid.
             if (log)
-                log->Printf ("NativeThreadLinux::%s received a group stop for pid %" PRIu64 " tid %" PRIu64, __FUNCTION__, process->GetID (), pid);
-            process->NotifyThreadStop (pid);
+                log->Printf ("NativeThreadLinux::%s received a group stop for pid %" PRIu64 " tid %" PRIu64, __FUNCTION__, GetID (), pid);
+            NotifyThreadStop (pid);
         }
         else
         {
@@ -2048,14 +2271,11 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
             // so it was killed somehow outside of our control.  Either way, we can't do anything
             // with it anymore.
 
-            // We stop monitoring if it was the main thread.
-            stop_monitoring = is_main_thread;
-
             // Stop tracking the metadata for the thread since it's entirely off the system now.
-            const bool thread_found = process->StopTrackingThread (pid);
+            const bool thread_found = StopTrackingThread (pid);
 
             // Make sure the thread state coordinator knows about this.
-            process->NotifyThreadDeath (pid);
+            NotifyThreadDeath (pid);
 
             if (log)
                 log->Printf ("NativeProcessLinux::%s GetSignalInfo failed: %s, tid = %" PRIu64 ", signal = %d, status = %d (%s, %s, %s)",
@@ -2065,19 +2285,17 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
             {
                 // Notify the delegate - our process is not available but appears to have been killed outside
                 // our control.  Is eStateExited the right exit state in this case?
-                process->SetExitStatus (convert_pid_status_to_exit_type (status), convert_pid_status_to_return_code (status), nullptr, true);
-                process->SetState (StateType::eStateExited, true);
+                SetExitStatus (convert_pid_status_to_exit_type (status), convert_pid_status_to_return_code (status), nullptr, true);
+                SetState (StateType::eStateExited, true);
             }
             else
             {
                 // This thread was pulled out from underneath us.  Anything to do here? Do we want to do an all stop?
                 if (log)
-                    log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " tid %" PRIu64 " non-main thread exit occurred, didn't tell delegate anything since thread disappeared out from underneath us", __FUNCTION__, process->GetID (), pid);
+                    log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " tid %" PRIu64 " non-main thread exit occurred, didn't tell delegate anything since thread disappeared out from underneath us", __FUNCTION__, GetID (), pid);
             }
         }
     }
-
-    return stop_monitoring;
 }
 
 void
@@ -3801,19 +4019,19 @@ NativeProcessLinux::DupDescriptor(const char *path, int fd, int flags)
 }
 
 void
-NativeProcessLinux::StopMonitorThread()
+NativeProcessLinux::StartMonitorThread(Error &error)
 {
-    if (m_monitor_thread.IsJoinable())
-    {
-        ::pthread_kill(m_monitor_thread.GetNativeThread().GetSystemHandle(), SIGUSR1);
-        m_monitor_thread.Join(nullptr);
+    m_monitor_up.reset(new Monitor(GetID(), this));
+    error = m_monitor_up->Initialize();
+    if (error.Fail()) {
+        m_monitor_up.reset();
     }
 }
 
 void
 NativeProcessLinux::StopMonitor()
 {
-    StopMonitorThread();
+    m_monitor_up.reset();
     StopCoordinatorThread ();
     StopOpThread();
     sem_destroy(&m_operation_pending);
