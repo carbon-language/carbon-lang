@@ -321,6 +321,11 @@ public:
     return Type::getInt64Ty(Context);
   }
 
+  /// \brief Fetch the type representing a 128-bit integer.
+  IntegerType *getInt128Ty() {
+    return Type::getInt128Ty(Context);
+  }
+  
   /// \brief Fetch the type representing an N-bit integer.
   IntegerType *getIntNTy(unsigned N) {
     return Type::getIntNTy(Context, N);

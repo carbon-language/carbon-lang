@@ -395,7 +395,8 @@ public:
   static IntegerType *getInt16Ty(LLVMContext &C);
   static IntegerType *getInt32Ty(LLVMContext &C);
   static IntegerType *getInt64Ty(LLVMContext &C);
-
+  static IntegerType *getInt128Ty(LLVMContext &C);
+  
   //===--------------------------------------------------------------------===//
   // Convenience methods for getting pointer types with one of the above builtin
   // types as pointee.

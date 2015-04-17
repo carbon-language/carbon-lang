@@ -310,6 +310,9 @@ LLVMTypeRef LLVMInt32TypeInContext(LLVMContextRef C) {
 LLVMTypeRef LLVMInt64TypeInContext(LLVMContextRef C) {
   return (LLVMTypeRef) Type::getInt64Ty(*unwrap(C));
 }
+LLVMTypeRef LLVMInt128TypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getInt128Ty(*unwrap(C));
+}
 LLVMTypeRef LLVMIntTypeInContext(LLVMContextRef C, unsigned NumBits) {
   return wrap(IntegerType::get(*unwrap(C), NumBits));
 }
@@ -328,6 +331,9 @@ LLVMTypeRef LLVMInt32Type(void) {
 }
 LLVMTypeRef LLVMInt64Type(void) {
   return LLVMInt64TypeInContext(LLVMGetGlobalContext());
+}
+LLVMTypeRef LLVMInt128Type(void) {
+  return LLVMInt128TypeInContext(LLVMGetGlobalContext());
 }
 LLVMTypeRef LLVMIntType(unsigned NumBits) {
   return LLVMIntTypeInContext(LLVMGetGlobalContext(), NumBits);
