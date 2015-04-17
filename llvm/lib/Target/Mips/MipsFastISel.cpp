@@ -187,6 +187,7 @@ public:
     UnsupportedFPMode = Subtarget->isFP64bit();
   }
 
+  unsigned fastMaterializeAlloca(const AllocaInst *AI) override;
   unsigned fastMaterializeConstant(const Constant *C) override;
   bool fastSelectInstruction(const Instruction *I) override;
 
@@ -251,6 +252,25 @@ unsigned MipsFastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
 
   emitInst(Opc, ResultReg).addReg(LHSReg).addReg(RHSReg);
   return ResultReg;
+}
+
+unsigned MipsFastISel::fastMaterializeAlloca(const AllocaInst *AI) {
+  assert(TLI.getValueType(AI->getType(), true) == MVT::i32 &&
+         "Alloca should always return a pointer.");
+
+  DenseMap<const AllocaInst *, int>::iterator SI =
+      FuncInfo.StaticAllocaMap.find(AI);
+
+  if (SI != FuncInfo.StaticAllocaMap.end()) {
+    unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::LEA_ADDiu),
+            ResultReg)
+        .addFrameIndex(SI->second)
+        .addImm(0);
+    return ResultReg;
+  }
+
+  return 0;
 }
 
 unsigned MipsFastISel::materializeInt(const Constant *C, MVT VT) {
