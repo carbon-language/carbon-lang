@@ -5060,7 +5060,7 @@ Semantics:
 
 The value produced is ``op1`` \* 2\ :sup:`op2` mod 2\ :sup:`n`,
 where ``n`` is the width of the result. If ``op2`` is (statically or
-dynamically) negative or equal to or larger than the number of bits in
+dynamically) equal to or larger than the number of bits in
 ``op1``, the result is undefined. If the arguments are vectors, each
 vector element of ``op1`` is shifted by the corresponding shift amount
 in ``op2``.
