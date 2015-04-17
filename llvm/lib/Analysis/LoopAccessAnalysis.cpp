@@ -890,14 +890,20 @@ void MemoryDepChecker::Dependence::print(
 }
 
 bool LoopAccessInfo::canAnalyzeLoop() {
+  // We need to have a loop header.
+  DEBUG(dbgs() << "LAA: Found a loop: " <<
+        TheLoop->getHeader()->getName() << '\n');
+
     // We can only analyze innermost loops.
   if (!TheLoop->empty()) {
+    DEBUG(dbgs() << "LAA: loop is not the innermost loop\n");
     emitAnalysis(LoopAccessReport() << "loop is not the innermost loop");
     return false;
   }
 
   // We must have a single backedge.
   if (TheLoop->getNumBackEdges() != 1) {
+    DEBUG(dbgs() << "LAA: loop control flow is not understood by analyzer\n");
     emitAnalysis(
         LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
@@ -906,6 +912,7 @@ bool LoopAccessInfo::canAnalyzeLoop() {
 
   // We must have a single exiting block.
   if (!TheLoop->getExitingBlock()) {
+    DEBUG(dbgs() << "LAA: loop control flow is not understood by analyzer\n");
     emitAnalysis(
         LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
@@ -916,15 +923,12 @@ bool LoopAccessInfo::canAnalyzeLoop() {
   // checked at the end of each iteration. With that we can assume that all
   // instructions in the loop are executed the same number of times.
   if (TheLoop->getExitingBlock() != TheLoop->getLoopLatch()) {
+    DEBUG(dbgs() << "LAA: loop control flow is not understood by analyzer\n");
     emitAnalysis(
         LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
     return false;
   }
-
-  // We need to have a loop header.
-  DEBUG(dbgs() << "LAA: Found a loop: " <<
-        TheLoop->getHeader()->getName() << '\n');
 
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = SE->getBackedgeTakenCount(TheLoop);
