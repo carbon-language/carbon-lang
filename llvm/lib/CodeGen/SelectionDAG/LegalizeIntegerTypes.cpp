@@ -251,6 +251,16 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
   case TargetLowering::TypeSoftenFloat:
     // Promote the integer operand by hand.
     return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, GetSoftenedFloat(InOp));
+  case TargetLowering::TypePromoteFloat: {
+    // Convert the promoted float by hand.
+    if (NOutVT.bitsEq(NInVT)) {
+      SDValue PromotedOp = GetPromotedFloat(InOp);
+      SDValue Trunc = DAG.getNode(ISD::FP_TO_FP16, dl, NOutVT, PromotedOp);
+      return DAG.getNode(ISD::AssertZext, dl, NOutVT, Trunc,
+                         DAG.getValueType(OutVT));
+    }
+    break;
+  }
   case TargetLowering::TypeExpandInteger:
   case TargetLowering::TypeExpandFloat:
     break;
@@ -1845,7 +1855,11 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_SINT(SDNode *N, SDValue &Lo,
                                                SDValue &Hi) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
+
   SDValue Op = N->getOperand(0);
+  if (getTypeAction(Op.getValueType()) == TargetLowering::TypePromoteFloat)
+    Op = GetPromotedFloat(Op);
+
   RTLIB::Libcall LC = RTLIB::getFPTOSINT(Op.getValueType(), VT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-sint conversion!");
   SplitInteger(TLI.makeLibCall(DAG, LC, VT, &Op, 1, true/*irrelevant*/,
@@ -1857,7 +1871,11 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_UINT(SDNode *N, SDValue &Lo,
                                                SDValue &Hi) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
+
   SDValue Op = N->getOperand(0);
+  if (getTypeAction(Op.getValueType()) == TargetLowering::TypePromoteFloat)
+    Op = GetPromotedFloat(Op);
+
   RTLIB::Libcall LC = RTLIB::getFPTOUINT(Op.getValueType(), VT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-uint conversion!");
   SplitInteger(TLI.makeLibCall(DAG, LC, VT, &Op, 1, false/*irrelevant*/,

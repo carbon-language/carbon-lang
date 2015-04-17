@@ -259,6 +259,10 @@ bool DAGTypeLegalizer::run() {
         WidenVectorResult(N, i);
         Changed = true;
         goto NodeDone;
+      case TargetLowering::TypePromoteFloat:
+        PromoteFloatResult(N, i);
+        Changed = true;
+        goto NodeDone;
       }
     }
 
@@ -306,6 +310,10 @@ ScanOperands:
         break;
       case TargetLowering::TypeWidenVector:
         NeedsReanalyzing = WidenVectorOperand(N, i);
+        Changed = true;
+        break;
+      case TargetLowering::TypePromoteFloat:
+        NeedsReanalyzing = PromoteFloatOperand(N, i);
         Changed = true;
         break;
       }
@@ -750,6 +758,17 @@ void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
 
   SDValue &OpEntry = SoftenedFloats[Op];
   assert(!OpEntry.getNode() && "Node is already converted to integer!");
+  OpEntry = Result;
+}
+
+void DAGTypeLegalizer::SetPromotedFloat(SDValue Op, SDValue Result) {
+  assert(Result.getValueType() ==
+         TLI.getTypeToTransformTo(*DAG.getContext(), Op.getValueType()) &&
+         "Invalid type for promoted float");
+  AnalyzeNewValue(Result);
+
+  SDValue &OpEntry = PromotedFloats[Op];
+  assert(!OpEntry.getNode() && "Node is already promoted!");
   OpEntry = Result;
 }
 

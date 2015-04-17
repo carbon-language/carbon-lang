@@ -93,6 +93,11 @@ private:
   /// the same size, this map indicates the converted value to use.
   SmallDenseMap<SDValue, SDValue, 8> SoftenedFloats;
 
+  /// PromotedFloats - For floating point nodes that have a smaller precision
+  /// than the smallest supported precision, this map indicates what promoted
+  /// value to use.
+  SmallDenseMap<SDValue, SDValue, 8> PromotedFloats;
+
   /// ExpandedFloats - For float nodes that need to be expanded this map
   /// indicates which operands are the expanded version of the input.
   SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> ExpandedFloats;
@@ -498,6 +503,44 @@ private:
 
   void FloatExpandSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
                                 ISD::CondCode &CCCode, SDLoc dl);
+
+
+  //===--------------------------------------------------------------------===//
+  // Float promotion support: LegalizeFloatTypes.cpp
+  //===--------------------------------------------------------------------===//
+
+  SDValue GetPromotedFloat(SDValue Op) {
+    SDValue &PromotedOp = PromotedFloats[Op];
+    RemapValue(PromotedOp);
+    assert(PromotedOp.getNode() && "Operand wasn't promoted?");
+    return PromotedOp;
+  }
+  void SetPromotedFloat(SDValue Op, SDValue Result);
+
+  void PromoteFloatResult(SDNode *N, unsigned ResNo);
+  SDValue PromoteFloatRes_BITCAST(SDNode *N);
+  SDValue PromoteFloatRes_BinOp(SDNode *N);
+  SDValue PromoteFloatRes_ConstantFP(SDNode *N);
+  SDValue PromoteFloatRes_EXTRACT_VECTOR_ELT(SDNode *N);
+  SDValue PromoteFloatRes_FCOPYSIGN(SDNode *N);
+  SDValue PromoteFloatRes_FMAD(SDNode *N);
+  SDValue PromoteFloatRes_FPOWI(SDNode *N);
+  SDValue PromoteFloatRes_FP_ROUND(SDNode *N);
+  SDValue PromoteFloatRes_LOAD(SDNode *N);
+  SDValue PromoteFloatRes_SELECT(SDNode *N);
+  SDValue PromoteFloatRes_SELECT_CC(SDNode *N);
+  SDValue PromoteFloatRes_UnaryOp(SDNode *N);
+  SDValue PromoteFloatRes_UNDEF(SDNode *N);
+  SDValue PromoteFloatRes_XINT_TO_FP(SDNode *N);
+
+  bool PromoteFloatOperand(SDNode *N, unsigned ResNo);
+  SDValue PromoteFloatOp_BITCAST(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_FCOPYSIGN(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_FP_EXTEND(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_FP_TO_XINT(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_STORE(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_SELECT_CC(SDNode *N, unsigned OpNo);
+  SDValue PromoteFloatOp_SETCC(SDNode *N, unsigned OpNo);
 
   //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeVectorTypes.cpp

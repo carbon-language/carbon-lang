@@ -1256,10 +1256,19 @@ void TargetLoweringBase::computeRegisterProperties(
   }
 
   if (!isTypeLegal(MVT::f16)) {
-    NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::i16];
-    RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::i16];
-    TransformToType[MVT::f16] = MVT::i16;
-    ValueTypeActions.setTypeAction(MVT::f16, TypeSoftenFloat);
+    // If the target has native f32 support, promote f16 operations to f32.  If
+    // f32 is not supported, generate soft float library calls.
+    if (isTypeLegal(MVT::f32)) {
+      NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::f32];
+      RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::f32];
+      TransformToType[MVT::f16] = MVT::f32;
+      ValueTypeActions.setTypeAction(MVT::f16, TypePromoteFloat);
+    } else {
+      NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::i16];
+      RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::i16];
+      TransformToType[MVT::f16] = MVT::i16;
+      ValueTypeActions.setTypeAction(MVT::f16, TypeSoftenFloat);
+    }
   }
 
   // Loop over all of the vector value types to see which need transformations.
