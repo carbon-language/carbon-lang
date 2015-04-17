@@ -765,6 +765,9 @@ static const MCSymbol *getWeakRef(const MCSymbolRefExpr &Ref) {
   return nullptr;
 }
 
+// True if the assembler knows nothing about the final value of the symbol.
+// This doesn't cover the comdat issues, since in those cases the assembler
+// can at least know that all symbols in the section will move together.
 static bool isWeak(const MCSymbolData &D) {
   if (MCELF::GetType(D) == ELF::STT_GNU_IFUNC)
     return true;
@@ -775,27 +778,11 @@ static bool isWeak(const MCSymbolData &D) {
   case ELF::STB_LOCAL:
     return false;
   case ELF::STB_GLOBAL:
-    break;
+    return false;
   case ELF::STB_WEAK:
   case ELF::STB_GNU_UNIQUE:
     return true;
   }
-
-  const MCSymbol &Sym = D.getSymbol();
-  if (!Sym.isInSection())
-    return false;
-
-  const auto &Sec = cast<MCSectionELF>(Sym.getSection());
-  if (!Sec.getGroup())
-    return false;
-
-  // It is invalid to replace a reference to a global in a comdat
-  // with a reference to a local since out of comdat references
-  // to a local are forbidden.
-  // We could try to return false for more cases, like the reference
-  // being in the same comdat or Sym being an alias to another global,
-  // but it is not clear if it is worth the effort.
-  return true;
 }
 
 void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
@@ -1692,7 +1679,25 @@ bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
 }
 
 bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {
-  return ::isWeak(SD);
+  if (::isWeak(SD))
+    return true;
+
+  const MCSymbol &Sym = SD.getSymbol();
+  if (!Sym.isInSection())
+    return false;
+
+  const auto &Sec = cast<MCSectionELF>(Sym.getSection());
+  if (!Sec.getGroup())
+    return false;
+
+  // It is invalid to replace a reference to a global in a comdat
+  // with a reference to a local since out of comdat references
+  // to a local are forbidden.
+  // We could try to return false for more cases, like the reference
+  // being in the same comdat or Sym being an alias to another global,
+  // but it is not clear if it is worth the effort.
+  return true;
+
 }
 
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,

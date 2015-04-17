@@ -2,6 +2,13 @@
 
 // Test that we produce the correct relocation.
 
+
+        .section	.pr23272,"aGw",@progbits,pr23272,comdat
+	.globl pr23272
+pr23272:
+pr23272_2:
+
+        .text
 bar:
         movl	$bar, %edx        # R_X86_64_32
         movq	$bar, %rdx        # R_X86_64_32S
@@ -43,6 +50,8 @@ bar:
 
         .long   foo@gotpcrel
         .long foo@plt
+
+        .quad	pr23272_2 - pr23272
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -89,5 +98,5 @@ bar:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
