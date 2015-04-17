@@ -769,7 +769,36 @@ static const MCSymbol *getWeakRef(const MCSymbolRefExpr &Ref) {
 }
 
 static bool isWeak(const MCSymbolData &D) {
-  return D.getFlags() & ELF_STB_Weak || MCELF::GetType(D) == ELF::STT_GNU_IFUNC;
+  if (MCELF::GetType(D) == ELF::STT_GNU_IFUNC)
+    return true;
+
+  switch (MCELF::GetBinding(D)) {
+  default:
+    llvm_unreachable("Unknown binding");
+  case ELF::STB_LOCAL:
+    return false;
+  case ELF::STB_GLOBAL:
+    break;
+  case ELF::STB_WEAK:
+  case ELF::STB_GNU_UNIQUE:
+    return true;
+  }
+
+  const MCSymbol &Sym = D.getSymbol();
+  if (!Sym.isInSection())
+    return false;
+
+  const auto &Sec = cast<MCSectionELF>(Sym.getSection());
+  if (!Sec.getGroup())
+    return false;
+
+  // It is invalid to replace a reference to a global in a comdat
+  // with a reference to a local since out of comdat references
+  // to a local are forbidden.
+  // We could try to return false for more cases, like the reference
+  // being in the same comdat or Sym being an alias to another global,
+  // but it is not clear if it is worth the effort.
+  return true;
 }
 
 void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
