@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 13
+#define LTO_API_VERSION 14
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -547,6 +547,16 @@ lto_codegen_debug_options(lto_code_gen_t cg, const char *);
  */
 extern void
 lto_initialize_disassembler(void);
+
+/**
+ * Sets if we should run internalize pass during optimization and code
+ * generation.
+ *
+ * \since prior to LTO_API_VERSION=14
+ */
+extern void
+lto_codegen_set_should_internalize(lto_code_gen_t cg,
+                                   lto_bool_t ShouldInternalize);
 
 #ifdef __cplusplus
 }

@@ -82,6 +82,7 @@ void LTOCodeGenerator::initialize() {
   DiagHandler = nullptr;
   DiagContext = nullptr;
   OwnedModule = nullptr;
+  ShouldInternalize = true;
 
   initializeLTOPasses();
 }
@@ -464,7 +465,7 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
 }
 
 void LTOCodeGenerator::applyScopeRestrictions() {
-  if (ScopeRestrictionsDone)
+  if (ScopeRestrictionsDone || !ShouldInternalize)
     return;
   Module *mergedModule = IRLinker.getModule();
 

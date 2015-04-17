@@ -79,6 +79,8 @@ struct LTOCodeGenerator {
   void setAttr(const char *mAttr) { MAttr = mAttr; }
   void setOptLevel(unsigned optLevel) { OptLevel = optLevel; }
 
+  void setShouldInternalize(bool Value) { ShouldInternalize = Value; }
+
   void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
   // To pass options to the driver and optimization passes. These options are
@@ -174,6 +176,7 @@ private:
   lto_diagnostic_handler_t DiagHandler;
   void *DiagContext;
   LTOModule *OwnedModule;
+  bool ShouldInternalize;
 };
 }
 #endif

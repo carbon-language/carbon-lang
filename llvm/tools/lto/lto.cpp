@@ -333,3 +333,8 @@ void lto_codegen_debug_options(lto_code_gen_t cg, const char *opt) {
 }
 
 unsigned int lto_api_version() { return LTO_API_VERSION; }
+
+void lto_codegen_set_should_internalize(lto_code_gen_t cg,
+                                        bool ShouldInternalize) {
+  unwrap(cg)->setShouldInternalize(ShouldInternalize);
+}
