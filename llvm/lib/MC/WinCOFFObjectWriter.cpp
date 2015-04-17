@@ -663,9 +663,21 @@ bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
 }
 
 bool WinCOFFObjectWriter::isWeak(const MCSymbolData &SD) const {
-  // FIXME: this is for PR23025. Write a good description on
-  // why this is needed.
-  return SD.isExternal();
+  if (!SD.isExternal())
+    return false;
+
+  const MCSymbol &Sym = SD.getSymbol();
+  if (!Sym.isInSection())
+    return false;
+
+  const auto &Sec = cast<MCSectionCOFF>(Sym.getSection());
+  if (!Sec.getCOMDATSymbol())
+    return false;
+
+  // It looks like for COFF it is invalid to replace a reference to a global
+  // in a comdat with a reference to a local.
+  // FIXME: Add a specification reference if available.
+  return true;
 }
 
 void WinCOFFObjectWriter::RecordRelocation(
@@ -674,7 +686,7 @@ void WinCOFFObjectWriter::RecordRelocation(
   assert(Target.getSymA() && "Relocation must reference a symbol!");
 
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-  const MCSymbol &A = Symbol.AliasedSymbol();
+  const MCSymbol &A = Symbol;
   if (!Asm.hasSymbolData(A))
     Asm.getContext().FatalError(
         Fixup.getLoc(),
