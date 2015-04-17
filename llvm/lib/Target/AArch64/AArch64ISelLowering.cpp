@@ -8116,6 +8116,13 @@ static SDValue performPostLD1Combine(SDNode *N,
       Inc = DAG.getRegister(AArch64::XZR, MVT::i64);
     }
 
+    // Finally, check that the vector doesn't depend on the load.
+    // Again, this would create a cycle.
+    // The load depending on the vector is fine, as that's the case for the
+    // LD1*post we'll eventually generate anyway.
+    if (LoadSDN->isPredecessorOf(Vector.getNode()))
+      continue;
+
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(LD->getOperand(0));  // Chain
     if (IsLaneOp) {
