@@ -28,7 +28,7 @@
 ; Swap Imm and Real.
 ; STRESS-NEXT: vinsertps $16, [[RES_Imm]], [[RES_Real]], [[RES_Vec:%xmm[0-9]+]]
 ; Put the results back into out[out_start].
-; STRESS-NEXT: vmovq [[RES_Vec]], ([[BASE]])
+; STRESS-NEXT: vmovlps [[RES_Vec]], ([[BASE]])
 ;
 ; Same for REGULAR, we eliminate register bank copy with each slices.
 ; REGULAR-LABEL: t1:
@@ -43,7 +43,7 @@
 ; Swap Imm and Real.
 ; REGULAR-NEXT: vinsertps $16, [[RES_Imm]], [[RES_Real]], [[RES_Vec:%xmm[0-9]+]]
 ; Put the results back into out[out_start].
-; REGULAR-NEXT: vmovq [[RES_Vec]], ([[BASE]])
+; REGULAR-NEXT: vmovlps [[RES_Vec]], ([[BASE]])
 define void @t1(%class.Complex* nocapture %out, i64 %out_start) {
 entry:
   %arrayidx = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %out_start

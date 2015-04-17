@@ -19,12 +19,7 @@ define void @store_floats(<4 x float> %x, i64* %p) {
 ; AVX-LABEL: store_floats:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vaddps %xmm0, %xmm0, %xmm0
-
-
-; !!! FIXME - the AVX version is not handled correctly.
-; AVX-NEXT:    vmovq %xmm0, (%rdi)
-
-
+; AVX-NEXT:    vmovlps %xmm0, (%rdi)
 ; AVX-NEXT:    retq
   %a = fadd <4 x float> %x, %x
   %b = shufflevector <4 x float> %a, <4 x float> undef, <2 x i32> <i32 0, i32 1>
