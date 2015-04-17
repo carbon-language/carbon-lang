@@ -211,8 +211,11 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         register_name = self.child.after.split("\"")[1]
 
         # Create variable for register 0
+        # Note that message is different in Darwin and Linux:
+        # Darwin: "^done,name=\"var_reg\",numchild=\"0\",value=\"0x[0-9a-f]+\",type=\"unsigned long\",thread-id=\"1\",has_more=\"0\"
+        # Linux:  "^done,name=\"var_reg\",numchild=\"0\",value=\"0x[0-9a-f]+\",type=\"unsigned int\",thread-id=\"1\",has_more=\"0\"
         self.runCmd("-var-create var_reg * $%s" % register_name)
-        self.expect("\^done,name=\"var_reg\",numchild=\"0\",value=\"0x[0-9a-f]+\",type=\"unsigned long\",thread-id=\"1\",has_more=\"0\"")
+        self.expect("\^done,name=\"var_reg\",numchild=\"0\",value=\"0x[0-9a-f]+\",type=\"unsigned (long|int)\",thread-id=\"1\",has_more=\"0\"")
 
         # Assign value to variable
         self.runCmd("-var-assign var_reg \"6\"")
