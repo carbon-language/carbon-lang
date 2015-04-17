@@ -521,6 +521,13 @@ bool TokenLexer::Lex(Token &Tok) {
 /// are more ## after it, chomp them iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
+  // MSVC: If previous token was pasted, this must be a recovery from an invalid
+  // paste operation. Ignore spaces before this token to mimic MSVC output.
+  // Required for generating valid UUID strings in some MS headers.
+  if (PP.getLangOpts().MicrosoftExt && (CurToken >= 2) &&
+      Tokens[CurToken - 2].is(tok::hashhash))
+    Tok.clearFlag(Token::LeadingSpace);
+  
   SmallString<128> Buffer;
   const char *ResultTokStrPtr = nullptr;
   SourceLocation StartLoc = Tok.getLocation();
