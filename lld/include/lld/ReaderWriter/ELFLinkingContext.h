@@ -310,6 +310,10 @@ public:
   bool getEnableNewDtags() const { return _enableNewDtags; }
   void setEnableNewDtags(bool e) { _enableNewDtags = e; }
 
+  /// \brief Discard local symbols.
+  bool discardLocals() const { return _discardLocals; }
+  void setDiscardLocals(bool d) { _discardLocals = d; }
+
   /// \brief Strip symbols.
   bool stripSymbols() const { return _stripSymbols; }
   void setStripSymbols(bool strip) { _stripSymbols = strip; }
@@ -366,6 +370,7 @@ protected:
   bool _noAllowDynamicLibraries = false;
   bool _mergeRODataToTextSegment = true;
   bool _demangle = true;
+  bool _discardLocals = false;
   bool _stripSymbols = false;
   bool _alignSegments = true;
   bool _enableNewDtags = false;

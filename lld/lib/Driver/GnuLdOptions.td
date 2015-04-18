@@ -255,6 +255,11 @@ def grp_symbolopts : OptionGroup<"opts">,
 def demangle : Flag<["--"], "demangle">,
      HelpText<"Demangle C++ symbols">,
      Group<grp_symbolopts>;
+def discard_loc : Flag<["--"], "discard-all">,
+     HelpText<"Discard all local symbols">,
+     Group<grp_symbolopts>;
+def alias_discard_loc: Flag<["-"], "x">,
+     Alias<discard_loc>;
 def no_demangle : Flag<["--"], "no-demangle">,
      HelpText<"Dont demangle C++ symbols">,
      Group<grp_symbolopts>;
