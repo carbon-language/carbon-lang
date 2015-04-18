@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -O3 | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -arm-global-merge -global-merge-group-by-use=false | FileCheck %s
 ; Test the GlobalMerge pass. Check that the pass does not crash when using
 ; multiple address spaces.
 
