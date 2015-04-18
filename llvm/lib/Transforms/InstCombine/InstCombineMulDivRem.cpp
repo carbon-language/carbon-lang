@@ -217,12 +217,16 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         NewCst = getLogBase2Vector(CV);
 
       if (NewCst) {
+        unsigned Width = NewCst->getType()->getPrimitiveSizeInBits();
         BinaryOperator *Shl = BinaryOperator::CreateShl(NewOp, NewCst);
 
         if (I.hasNoUnsignedWrap())
           Shl->setHasNoUnsignedWrap();
-        if (I.hasNoSignedWrap() && NewCst->isNotMinSignedValue())
-          Shl->setHasNoSignedWrap();
+        if (I.hasNoSignedWrap()) {
+          uint64_t V;
+          if (match(NewCst, m_ConstantInt(V)) && V != Width - 1)
+            Shl->setHasNoSignedWrap();
+        }
 
         return Shl;
       }

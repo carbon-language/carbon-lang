@@ -288,3 +288,19 @@ define i32 @test31(i32 %V) {
 ; CHECK:      %[[mul:.*]] = shl i32 %V, zext (i1 icmp ne (i32* inttoptr (i64 1 to i32*), i32* @PR22087) to i32)
 ; CHECK-NEXT: ret i32 %[[mul]]
 }
+
+define i32 @test32(i32 %X) {
+; CHECK-LABEL: @test32
+  %mul = mul nsw i32 %X, -2147483648
+  ret i32 %mul
+; CHECK:      %[[shl:.*]] = shl i32 %X, 31
+; CHECK-NEXT: ret i32 %[[shl]]
+}
+
+define i32 @test33(i32 %X) {
+; CHECK-LABEL: @test33
+  %mul = mul nsw i32 %X, 1073741824
+; CHECK:      %[[shl:.*]] = shl nsw i32 %X, 30
+; CHECK-NEXT: ret i32 %[[shl]]
+  ret i32 %mul
+}
