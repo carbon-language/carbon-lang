@@ -328,9 +328,6 @@ private:
   llvm::MDCompositeType *getOrCreateRecordFwdDecl(const RecordType *,
                                                   llvm::MDScope *);
 
-  /// \brief Create a set of decls for the context chain.
-  llvm::DIDescriptor createContextChain(const Decl *Decl);
-
   /// \brief Return current directory name.
   StringRef getCurrentDirname();
 
