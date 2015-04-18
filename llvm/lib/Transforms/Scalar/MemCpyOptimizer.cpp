@@ -876,10 +876,13 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
 
   IRBuilder<> Builder(MemCpy->getNextNode());
 
-  // If the sizes have different types (i32 vs i64), promote both to i64.
+  // If the sizes have different types, zext the smaller one.
   if (DestSize->getType() != SrcSize->getType()) {
-    DestSize = Builder.CreateZExt(DestSize, Builder.getInt64Ty());
-    SrcSize = Builder.CreateZExt(SrcSize, Builder.getInt64Ty());
+    if (DestSize->getType()->getIntegerBitWidth() >
+        SrcSize->getType()->getIntegerBitWidth())
+      SrcSize = Builder.CreateZExt(SrcSize, DestSize->getType());
+    else
+      DestSize = Builder.CreateZExt(DestSize, SrcSize->getType());
   }
 
   Value *MemsetLen =
