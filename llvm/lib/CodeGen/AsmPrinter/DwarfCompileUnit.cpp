@@ -612,8 +612,8 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   if (includeMinimalInlineScopes())
     ContextDIE = &getUnitDie();
   // Some of this is duplicated from DwarfUnit::getOrCreateSubprogramDIE, with
-  // the important distinction that the DIDescriptor is not associated with the
-  // DIE (since the DIDescriptor will be associated with the concrete DIE, if
+  // the important distinction that the debug node is not associated with the
+  // DIE (since the debug node will be associated with the concrete DIE, if
   // any). It could be refactored to some common utility function.
   else if (auto *SPDecl = SP->getDeclaration()) {
     ContextDIE = &getUnitDie();
@@ -621,10 +621,9 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   } else
     ContextDIE = getOrCreateContextDIE(resolve(SP->getScope()));
 
-  // Passing null as the associated DIDescriptor because the abstract definition
+  // Passing null as the associated node because the abstract definition
   // shouldn't be found by lookup.
-  AbsDef =
-      &createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, DIDescriptor());
+  AbsDef = &createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, nullptr);
   applySubprogramAttributesToDefinition(SP, *AbsDef);
 
   if (!includeMinimalInlineScopes())

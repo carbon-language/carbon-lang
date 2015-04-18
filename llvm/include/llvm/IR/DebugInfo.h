@@ -58,22 +58,10 @@ class DIObjCProperty;
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 
-class DIDescriptor {
-  MDNode *N;
-
-public:
-  DIDescriptor(const MDNode *N = nullptr) : N(const_cast<MDNode *>(N)) {}
-
-  operator MDNode *() const { return N; }
-  MDNode *operator->() const { return N; }
-  MDNode &operator*() const { return *N; }
-};
-
 #define DECLARE_SIMPLIFY_DESCRIPTOR(DESC)                                      \
   class DESC;                                                                  \
   template <> struct simplify_type<const DESC>;                                \
   template <> struct simplify_type<DESC>;
-DECLARE_SIMPLIFY_DESCRIPTOR(DIDescriptor)
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIScope)
@@ -133,7 +121,6 @@ class DIScope {
 public:
   DIScope(const MDScope *N = nullptr) : N(const_cast<MDScope *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator MDScope *() const { return N; }
   MDScope *operator->() const { return N; }
   MDScope &operator*() const { return *N; }
@@ -145,7 +132,6 @@ class DIType {
 public:
   DIType(const MDType *N = nullptr) : N(const_cast<MDType *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIScope() const { return N; }
   operator MDType *() const { return N; }
   MDType *operator->() const { return N; }
@@ -159,7 +145,6 @@ public:
   DIBasicType(const MDBasicType *N = nullptr)
       : N(const_cast<MDBasicType *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIType() const { return N; }
   operator MDBasicType *() const { return N; }
   MDBasicType *operator->() const { return N; }
@@ -173,7 +158,6 @@ public:
   DIDerivedType(const MDDerivedTypeBase *N = nullptr)
       : N(const_cast<MDDerivedTypeBase *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIType() const { return N; }
   operator MDDerivedTypeBase *() const { return N; }
   MDDerivedTypeBase *operator->() const { return N; }
@@ -187,7 +171,6 @@ public:
   DICompositeType(const MDCompositeTypeBase *N = nullptr)
       : N(const_cast<MDCompositeTypeBase *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIType() const { return N; }
   operator MDCompositeTypeBase *() const { return N; }
   MDCompositeTypeBase *operator->() const { return N; }
@@ -201,7 +184,6 @@ public:
   DISubroutineType(const MDSubroutineType *N = nullptr)
       : N(const_cast<MDSubroutineType *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIType() const { return N; }
   operator DICompositeType() const { return N; }
   operator MDSubroutineType *() const { return N; }
@@ -215,7 +197,6 @@ class DIFile {
 public:
   DIFile(const MDFile *N = nullptr) : N(const_cast<MDFile *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIScope() const { return N; }
   operator MDFile *() const { return N; }
   MDFile *operator->() const { return N; }
@@ -229,7 +210,6 @@ public:
   DICompileUnit(const MDCompileUnit *N = nullptr)
       : N(const_cast<MDCompileUnit *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIScope() const { return N; }
   operator MDCompileUnit *() const { return N; }
   MDCompileUnit *operator->() const { return N; }
@@ -243,7 +223,6 @@ public:
   DISubprogram(const MDSubprogram *N = nullptr)
       : N(const_cast<MDSubprogram *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIScope() const { return N; }
   operator MDSubprogram *() const { return N; }
   MDSubprogram *operator->() const { return N; }
@@ -257,7 +236,6 @@ public:
   DILexicalBlock(const MDLexicalBlockBase *N = nullptr)
       : N(const_cast<MDLexicalBlockBase *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator MDLexicalBlockBase *() const { return N; }
   MDLexicalBlockBase *operator->() const { return N; }
   MDLexicalBlockBase &operator*() const { return *N; }
@@ -270,7 +248,6 @@ public:
   DILexicalBlockFile(const MDLexicalBlockFile *N = nullptr)
       : N(const_cast<MDLexicalBlockFile *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator MDLexicalBlockFile *() const { return N; }
   MDLexicalBlockFile *operator->() const { return N; }
   MDLexicalBlockFile &operator*() const { return *N; }
@@ -283,7 +260,6 @@ public:
   DINameSpace(const MDNamespace *N = nullptr)
       : N(const_cast<MDNamespace *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator DIScope() const { return N; }
   operator MDNamespace *() const { return N; }
   MDNamespace *operator->() const { return N; }
@@ -321,7 +297,6 @@ public:
   DIGlobalVariable(const MDGlobalVariable *N = nullptr)
       : N(const_cast<MDGlobalVariable *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator MDGlobalVariable *() const { return N; }
   MDGlobalVariable *operator->() const { return N; }
   MDGlobalVariable &operator*() const { return *N; }
@@ -381,7 +356,6 @@ public:
   DIImportedEntity(const MDImportedEntity *N = nullptr)
       : N(const_cast<MDImportedEntity *>(N)) {}
 
-  operator DIDescriptor() const { return N; }
   operator MDImportedEntity *() const { return N; }
   MDImportedEntity *operator->() const { return N; }
   MDImportedEntity &operator*() const { return *N; }
@@ -393,7 +367,6 @@ public:
     static SimpleType getSimplifiedValue(const DESC &DI) { return DI; }        \
   };                                                                           \
   template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
-SIMPLIFY_DESCRIPTOR(DIDescriptor)
 SIMPLIFY_DESCRIPTOR(DISubrange)
 SIMPLIFY_DESCRIPTOR(DIEnumerator)
 SIMPLIFY_DESCRIPTOR(DIScope)

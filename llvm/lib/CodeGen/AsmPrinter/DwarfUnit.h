@@ -106,7 +106,7 @@ protected:
   /// ContainingTypeMap - This map is used to keep track of subprogram DIEs that
   /// need DW_AT_containing_type attribute. This attribute points to a DIE that
   /// corresponds to the MDNode mapped with the subprogram DIE.
-  DenseMap<DIE *, const MDNode *> ContainingTypeMap;
+  DenseMap<DIE *, const DebugNode *> ContainingTypeMap;
 
   // DIEValueAllocator - All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
@@ -169,7 +169,7 @@ public:
   /// when the MDNode can be part of the type system, since DIEs for
   /// the type system can be shared across CUs and the mappings are
   /// kept in DwarfDebug.
-  DIE *getDIE(DIDescriptor D) const;
+  DIE *getDIE(const DebugNode *D) const;
 
   /// getDIELoc - Returns a fresh newly allocated DIELoc.
   DIELoc *getDIELoc() { return new (DIEValueAllocator) DIELoc(); }
@@ -178,7 +178,7 @@ public:
   /// when the MDNode can be part of the type system, since DIEs for
   /// the type system can be shared across CUs and the mappings are
   /// kept in DwarfDebug.
-  void insertDIE(DIDescriptor Desc, DIE *D);
+  void insertDIE(const DebugNode *Desc, DIE *D);
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE &Die, dwarf::Attribute Attribute);
@@ -313,8 +313,7 @@ public:
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
-  DIE &createAndAddDIE(unsigned Tag, DIE &Parent,
-                       DIDescriptor N = DIDescriptor());
+  DIE &createAndAddDIE(unsigned Tag, DIE &Parent, const DebugNode *N = nullptr);
 
   /// Compute the size of a header for this unit, not including the initial
   /// length field.

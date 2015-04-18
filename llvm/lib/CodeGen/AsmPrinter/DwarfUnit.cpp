@@ -167,7 +167,7 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
 }
 
 /// Check whether the DIE for this MDNode can be shared across CUs.
-static bool isShareableAcrossCUs(DIDescriptor D) {
+static bool isShareableAcrossCUs(const DebugNode *D) {
   // When the MDNode can be part of the type system, the DIE can be shared
   // across CUs.
   // Combining type units and cross-CU DIE sharing is lower value (since
@@ -184,7 +184,7 @@ static bool isShareableAcrossCUs(DIDescriptor D) {
 /// specified debug variable. We delegate the request to DwarfDebug
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
-DIE *DwarfUnit::getDIE(DIDescriptor D) const {
+DIE *DwarfUnit::getDIE(const DebugNode *D) const {
   if (isShareableAcrossCUs(D))
     return DU->getDIE(D);
   return MDNodeToDieMap.lookup(D);
@@ -193,7 +193,7 @@ DIE *DwarfUnit::getDIE(DIDescriptor D) const {
 /// insertDIE - Insert DIE into the map. We delegate the request to DwarfDebug
 /// when the DIE for this MDNode can be shared across CUs. The mappings
 /// will be kept in DwarfDebug for shareable DIEs.
-void DwarfUnit::insertDIE(DIDescriptor Desc, DIE *D) {
+void DwarfUnit::insertDIE(const DebugNode *Desc, DIE *D) {
   if (isShareableAcrossCUs(Desc)) {
     DU->insertDIE(Desc, D);
     return;
@@ -356,7 +356,7 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 
 /// Create a DIE with the given Tag, add the DIE to its parent, and
 /// call insertDIE if MD is not null.
-DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
+DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DebugNode *N) {
   assert(Tag != dwarf::DW_TAG_auto_variable &&
          Tag != dwarf::DW_TAG_arg_variable);
   Parent.addChild(make_unique<DIE>((dwarf::Tag)Tag));
@@ -763,8 +763,7 @@ void DwarfUnit::addLinkageName(DIE &Die, StringRef LinkageName) {
 /// addTemplateParams - Add template parameters into buffer.
 void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   // Add template parameters.
-  for (unsigned i = 0, e = TParams.size(); i != e; ++i) {
-    DIDescriptor Element = TParams[i];
+  for (const auto *Element : TParams) {
     if (auto *TTP = dyn_cast<MDTemplateTypeParameter>(Element))
       constructTemplateTypeParameterDIE(Buffer, TTP);
     else if (auto *TVP = dyn_cast<MDTemplateValueParameter>(Element))
@@ -1040,8 +1039,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_class_type: {
     // Add elements to structure type.
     DIArray Elements = CTy->getElements();
-    for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-      DIDescriptor Element = Elements[i];
+    for (const auto *Element : Elements) {
       if (!Element)
         continue;
       if (auto *SP = dyn_cast<MDSubprogram>(Element))
@@ -1438,11 +1436,10 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
 /// constructContainingTypeDIEs - Construct DIEs for types that contain
 /// vtables.
 void DwarfUnit::constructContainingTypeDIEs() {
-  for (DenseMap<DIE *, const MDNode *>::iterator CI = ContainingTypeMap.begin(),
-                                                 CE = ContainingTypeMap.end();
+  for (auto CI = ContainingTypeMap.begin(), CE = ContainingTypeMap.end();
        CI != CE; ++CI) {
     DIE &SPDie = *CI->first;
-    DIDescriptor D(CI->second);
+    const DebugNode *D = CI->second;
     if (!D)
       continue;
     DIE *NDie = getDIE(D);

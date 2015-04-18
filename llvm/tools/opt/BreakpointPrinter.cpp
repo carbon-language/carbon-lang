@@ -29,13 +29,13 @@ struct BreakpointPrinter : public ModulePass {
 
   BreakpointPrinter(raw_ostream &out) : ModulePass(ID), Out(out) {}
 
-  void getContextName(DIDescriptor Context, std::string &N) {
+  void getContextName(const MDScope *Context, std::string &N) {
     if (auto *NS = dyn_cast<MDNamespace>(Context)) {
       if (!NS->getName().empty()) {
         getContextName(NS->getScope(), N);
         N = N + NS->getName().str() + "::";
       }
-    } else if (DIType TY = dyn_cast<MDType>(Context)) {
+    } else if (auto *TY = dyn_cast<MDType>(Context)) {
       if (!TY->getName().empty()) {
         getContextName(TY->getScope().resolve(TypeIdentifierMap), N);
         N = N + TY->getName().str() + "::";
