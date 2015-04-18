@@ -93,7 +93,7 @@ class CGDebugInfo {
       FwdDeclReplaceMap;
 
   // LexicalBlockStack - Keep track of our current nested lexical block.
-  std::vector<llvm::TrackingMDNodeRef> LexicalBlockStack;
+  std::vector<llvm::TypedTrackingMDRef<llvm::MDScope>> LexicalBlockStack;
   llvm::DenseMap<const Decl *, llvm::TrackingMDRef> RegionMap;
   // FnBeginRegionCount - Keep track of LexicalBlockStack counter at the
   // beginning of a function. This is used to pop unbalanced regions at

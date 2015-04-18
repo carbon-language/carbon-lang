@@ -75,8 +75,8 @@ void ApplyDebugLocation::init(SourceLocation TemporaryLocation,
       else {
         // Construct a location that has a valid scope, but no line info.
         assert(!DI->LexicalBlockStack.empty());
-        llvm::DIDescriptor Scope(DI->LexicalBlockStack.back());
-        CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
+        CGF.Builder.SetCurrentDebugLocation(
+            llvm::DebugLoc::get(0, 0, DI->LexicalBlockStack.back()));
       }
     } else
       DI->EmitLocation(CGF.Builder, TemporaryLocation);
@@ -127,18 +127,14 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     return;
 
   if (auto *LBF = dyn_cast<llvm::MDLexicalBlockFile>(Scope)) {
-    llvm::DIDescriptor D = DBuilder.createLexicalBlockFile(
-        LBF->getScope(), getOrCreateFile(CurLoc));
-    llvm::MDNode *N = D;
     LexicalBlockStack.pop_back();
-    LexicalBlockStack.emplace_back(N);
+    LexicalBlockStack.emplace_back(DBuilder.createLexicalBlockFile(
+        LBF->getScope(), getOrCreateFile(CurLoc)));
   } else if (isa<llvm::MDLexicalBlock>(Scope) ||
              isa<llvm::MDSubprogram>(Scope)) {
-    llvm::DIDescriptor D =
-        DBuilder.createLexicalBlockFile(Scope, getOrCreateFile(CurLoc));
-    llvm::MDNode *N = D;
     LexicalBlockStack.pop_back();
-    LexicalBlockStack.emplace_back(N);
+    LexicalBlockStack.emplace_back(
+        DBuilder.createLexicalBlockFile(Scope, getOrCreateFile(CurLoc)));
   }
 }
 
@@ -816,7 +812,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   return DBuilder.createSubroutineType(Unit, EltTypeArray);
 }
 
-/// Convert an AccessSpecifier into the corresponding DIDescriptor flag.
+/// Convert an AccessSpecifier into the corresponding DebugNode flag.
 /// As an optimization, return 0 if the access specifier equals the
 /// default for the containing type.
 static unsigned getAccessFlag(AccessSpecifier Access, const RecordDecl *RD) {
@@ -2589,8 +2585,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
     if (FI != SPCache.end()) {
       auto *SP = dyn_cast_or_null<llvm::MDSubprogram>(FI->second);
       if (SP && SP->isDefinition()) {
-        llvm::MDNode *SPN = SP;
-        LexicalBlockStack.emplace_back(SPN);
+        LexicalBlockStack.emplace_back(SP);
         RegionMap[D].reset(SP);
         return;
       }
@@ -2634,8 +2629,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, SourceLocation Loc,
     DeclCache[D->getCanonicalDecl()].reset(static_cast<llvm::Metadata *>(SP));
 
   // Push the function onto the lexical block stack.
-  llvm::MDNode *SPN = SP;
-  LexicalBlockStack.emplace_back(SPN);
+  LexicalBlockStack.emplace_back(SP);
 
   if (HasDecl)
     RegionMap[D].reset(SP);
@@ -2662,11 +2656,9 @@ void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
   llvm::MDNode *Back = nullptr;
   if (!LexicalBlockStack.empty())
     Back = LexicalBlockStack.back().get();
-  llvm::DIDescriptor D = DBuilder.createLexicalBlock(
+  LexicalBlockStack.emplace_back(DBuilder.createLexicalBlock(
       cast<llvm::MDScope>(Back), getOrCreateFile(CurLoc), getLineNumber(CurLoc),
-      getColumnNumber(CurLoc));
-  llvm::MDNode *DN = D;
-  LexicalBlockStack.emplace_back(DN);
+      getColumnNumber(CurLoc)));
 }
 
 /// EmitLexicalBlockStart - Constructs the debug code for entering a declarative
@@ -3384,7 +3376,7 @@ void CGDebugInfo::finalize() {
 
   for (const auto &p : FwdDeclReplaceMap) {
     assert(p.second);
-    llvm::DIDescriptor FwdDecl(cast<llvm::MDNode>(p.second));
+    llvm::TempMDNode FwdDecl(cast<llvm::MDNode>(p.second));
     llvm::Metadata *Repl;
 
     auto it = DeclCache.find(p.first);
@@ -3396,8 +3388,7 @@ void CGDebugInfo::finalize() {
     else
       Repl = it->second;
 
-    DBuilder.replaceTemporary(llvm::TempMDNode(FwdDecl),
-                              cast<llvm::MDNode>(Repl));
+    DBuilder.replaceTemporary(std::move(FwdDecl), cast<llvm::MDNode>(Repl));
   }
 
   // We keep our own list of retained types, because we need to look
