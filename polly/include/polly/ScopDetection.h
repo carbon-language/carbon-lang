@@ -181,7 +181,7 @@ private:
     /// @brief The set of non-affine subregions in the region we analyze.
     NonAffineSubRegionSetTy &NonAffineSubRegionSet;
 
-    /// @brief The sef of loops contained in non-affine regions.
+    /// @brief The set of loops contained in non-affine regions.
     BoxedLoopsSetTy &BoxedLoopsSet;
 
     DetectionContext(Region &R, AliasAnalysis &AA,
