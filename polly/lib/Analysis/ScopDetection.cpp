@@ -1084,6 +1084,7 @@ void ScopDetection::releaseMemory() {
   ValidRegions.clear();
   RejectLogs.clear();
   NonAffineSubRegionMap.clear();
+  InsnToMemAcc.clear();
 
   // Do not clear the invalid function set.
 }
