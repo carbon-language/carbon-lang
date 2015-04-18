@@ -29,8 +29,6 @@ using namespace llvm;
 
 namespace polly {
 
-extern bool PollyDelinearize;
-
 //===---------------------------------------------------------------------===//
 /// @brief A memory access described by a SCEV expression and the access type.
 class IRAccess {
