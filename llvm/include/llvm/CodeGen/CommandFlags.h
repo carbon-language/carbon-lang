@@ -231,19 +231,6 @@ FCFI("fcfi",
      cl::desc("Apply forward-edge control-flow integrity"),
      cl::init(false));
 
-cl::opt<llvm::CFIntegrity>
-CFIType("cfi-type",
-        cl::desc("Choose the type of Control-Flow Integrity check to add"),
-        cl::init(CFIntegrity::Sub),
-        cl::values(
-            clEnumValN(CFIntegrity::Sub, "sub",
-                       "Subtract the pointer from the table base, then mask."),
-            clEnumValN(CFIntegrity::Ror, "ror",
-                       "Use rotate to check the offset from a table base."),
-            clEnumValN(CFIntegrity::Add, "add",
-                       "Mask out the high bits and add to an aligned base."),
-            clEnumValEnd));
-
 cl::opt<bool>
 CFIEnforcing("cfi-enforcing",
              cl::desc("Enforce CFI or pass the violation to a function."),
@@ -293,7 +280,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
   Options.FCFI = FCFI;
-  Options.CFIType = CFIType;
   Options.CFIEnforcing = CFIEnforcing;
   Options.CFIFuncName = CFIFuncName;
 
