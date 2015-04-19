@@ -2073,10 +2073,11 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
   // Sort the set of macro definitions that need to be serialized by the
   // name of the macro, to provide a stable ordering.
-  llvm::array_pod_sort(MacroDirectives.begin(), MacroDirectives.end(),
-                       [](const MacroChain *A, const MacroChain *B) -> int {
-    return A->first->getName().compare(B->first->getName());
-  });
+  int (*Cmp)(const MacroChain*, const MacroChain*) =
+    [](const MacroChain *A, const MacroChain *B) -> int {
+      return A->first->getName().compare(B->first->getName());
+    };
+  llvm::array_pod_sort(MacroDirectives.begin(), MacroDirectives.end(), Cmp);
 
   // Emit the macro directives as a list and associate the offset with the
   // identifier they belong to.
