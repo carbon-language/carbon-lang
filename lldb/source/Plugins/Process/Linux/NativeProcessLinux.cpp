@@ -3956,7 +3956,7 @@ NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
     if (error.Fail())
         return error;
 
-    m_threads_stepping_with_breakpoint.emplace(tid, next_pc);
+    m_threads_stepping_with_breakpoint.insert({tid, next_pc});
 
     error = Resume(tid, signo);
     if (error.Fail())
