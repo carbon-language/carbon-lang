@@ -6918,8 +6918,13 @@ static SDValue getScalarValueForVectorElement(SDValue V, int Idx,
     return SDValue();
 
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
-      (Idx == 0 && V.getOpcode() == ISD::SCALAR_TO_VECTOR))
-    return DAG.getNode(ISD::BITCAST, SDLoc(V), EltVT, V.getOperand(Idx));
+      (Idx == 0 && V.getOpcode() == ISD::SCALAR_TO_VECTOR)) {
+    // Ensure the scalar operand is the same size as the destination.
+    // FIXME: Add support for scalar truncation where possible.
+    SDValue S = V.getOperand(Idx);
+    if (EltVT.getSizeInBits() == S.getSimpleValueType().getSizeInBits())
+      return DAG.getNode(ISD::BITCAST, SDLoc(V), EltVT, S);
+  }
 
   return SDValue();
 }
