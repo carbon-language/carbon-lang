@@ -37,6 +37,7 @@ static void CommonInit() {
 static void CommonStandaloneInit() {
   SanitizerToolName = "UndefinedBehaviorSanitizer";
   InitializeFlags();
+  __sanitizer_set_report_path(common_flags()->log_path);
   InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
   CommonInit();
   ubsan_mode = UBSAN_MODE_STANDALONE;
