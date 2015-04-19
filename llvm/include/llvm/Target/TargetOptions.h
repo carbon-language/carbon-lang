@@ -73,8 +73,7 @@ namespace llvm {
           DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
           TrapFuncName(), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
-          FCFI(false), ThreadModel(ThreadModel::POSIX),
-          CFIFuncName() {}
+          FCFI(false), ThreadModel(ThreadModel::POSIX) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
     /// option is specified on the command line, and should enable debugging
@@ -230,12 +229,6 @@ namespace llvm {
     /// for things like atomics
     ThreadModel::Model ThreadModel;
 
-    /// getCFIFuncName - If this returns a non-empty string, then this is the
-    /// name of the function that will be called for each CFI violation in
-    /// non-enforcing mode.
-    std::string CFIFuncName;
-    StringRef getCFIFuncName() const;
-
     /// Machine level options.
     MCTargetOptions MCOptions;
   };
@@ -266,7 +259,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(JTType) &&
     ARE_EQUAL(FCFI) &&
     ARE_EQUAL(ThreadModel) &&
-    ARE_EQUAL(CFIFuncName) &&
     ARE_EQUAL(MCOptions);
 #undef ARE_EQUAL
 }
