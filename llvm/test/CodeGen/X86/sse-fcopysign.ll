@@ -1,16 +1,134 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep test
+; RUN: llc < %s -mtriple=i686-unknown -mattr=+sse2 | FileCheck %s --check-prefix=ALL --check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+sse2 | FileCheck %s --check-prefix=ALL --check-prefix=X64
+
+;
+; Library Functions
+;
 
 define float @tst1(float %a, float %b) {
-	%tmp = tail call float @copysignf( float %b, float %a )
-	ret float %tmp
+; X32-LABEL: @tst1
+; X32:       movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32-NEXT:  movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X32-NEXT:  movss %xmm1, 4(%esp)
+; X32-NEXT:  movss %xmm0, (%esp)
+; X32-NEXT:  calll copysignf
+; X32-NEXT:  addl $8, %esp
+; X32-NEXT:  retl
+;
+; X64-LABEL: @tst1
+; X64:       movaps  %xmm0, %xmm2
+; X64-NEXT:  movaps  %xmm1, %xmm0
+; X64-NEXT:  movaps  %xmm2, %xmm1
+; X64-NEXT:  jmp copysignf
+  %tmp = tail call float @copysignf( float %b, float %a )
+  ret float %tmp
 }
 
 define double @tst2(double %a, float %b, float %c) {
-	%tmp1 = fadd float %b, %c
-	%tmp2 = fpext float %tmp1 to double
-	%tmp = tail call double @copysign( double %a, double %tmp2 )
-	ret double %tmp
+; X32-LABEL: @tst2
+; X32:       movsd {{.*#+}} xmm0 = mem[0],zero
+; X32-NEXT:  movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X32-NEXT:  addss 32(%esp), %xmm1
+; X32-NEXT:  cvtss2sd %xmm1, %xmm1
+; X32-NEXT:  movsd %xmm0, (%esp)
+; X32-NEXT:  movsd %xmm1, 8(%esp)
+; X32-NEXT:  calll copysign
+; X32-NEXT:  addl $16, %esp
+; X32-NEXT:  retl
+;
+; X64-LABEL: @tst2
+; X64:       addss   %xmm2, %xmm1
+; X64-NEXT:  cvtss2sd        %xmm1, %xmm1
+; X64-NEXT:  jmp copysign
+  %tmp1 = fadd float %b, %c
+  %tmp2 = fpext float %tmp1 to double
+  %tmp = tail call double @copysign( double %a, double %tmp2 )
+  ret double %tmp
 }
 
 declare float @copysignf(float, float)
 declare double @copysign(double, double)
+
+;
+; LLVM Intrinsic
+;
+
+define float @int1(float %a, float %b) {
+; X32-LABEL: @int1
+; X32:       movss 12(%esp), %xmm0 {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32-NEXT:  movss  8(%esp), %xmm1 {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X32-NEXT:  andps .LCPI2_0, %xmm1
+; X32-NEXT:  andps .LCPI2_1, %xmm0
+; X32-NEXT:  orps  %xmm1, %xmm0
+; X32-NEXT:  movss %xmm0, (%esp)
+; X32-NEXT:  flds  (%esp)
+; X32-NEXT:  popl %eax
+; X32-NEXT:  retl
+;
+; X64-LABEL: @int1
+; X64:       andps .LCPI2_0(%rip), %xmm0
+; X64-NEXT:  andps .LCPI2_1(%rip), %xmm1
+; X64-NEXT:  orps  %xmm1, %xmm0
+; X64-NEXT:  retq
+  %tmp = tail call float @llvm.copysign.f32( float %b, float %a )
+  ret float %tmp
+}
+
+define double @int2(double %a, float %b, float %c) {
+; X32-LABEL: @int2
+; X32:       movsd  8(%ebp), %xmm0 {{.*#+}} xmm0 = mem[0],zero
+; X32-NEXT:  movss 16(%ebp), %xmm1 {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X32-NEXT:  addss 20(%ebp), %xmm1
+; X32-NEXT:  andpd .LCPI3_0, %xmm0
+; X32-NEXT:  cvtss2sd %xmm1, %xmm1
+; X32-NEXT:  andpd .LCPI3_1, %xmm1
+; X32-NEXT:  orpd  %xmm0, %xmm1
+; X32-NEXT:  movsd %xmm1, (%esp)
+; X32-NEXT:  fldl  (%esp)
+; X32-NEXT:  movl %ebp, %esp
+; X32-NEXT:  popl %ebp
+; X32-NEXT:  retl
+;
+; X64-LABEL: @int2
+; X64:       addss %xmm2, %xmm1
+; X64-NEXT:  andpd .LCPI3_0(%rip), %xmm0
+; X64-NEXT:  cvtss2sd %xmm1, %xmm1
+; X64-NEXT:  andpd .LCPI3_1(%rip), %xmm1
+; X64-NEXT:  orpd %xmm1, %xmm0
+; X64-NEXT:  retq
+  %tmp1 = fadd float %b, %c
+  %tmp2 = fpext float %tmp1 to double
+  %tmp = tail call double @llvm.copysign.f64( double %a, double %tmp2 )
+  ret double %tmp
+}
+
+define float @cst1() {
+; X32-LABEL: @cst1
+; X32:       fld1
+; X32-NEXT:  fchs
+; X32-NEXT:  retl
+;
+; X64-LABEL: @cst1
+; X64:       movss .LCPI4_0(%rip), %xmm0 {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64-NEXT:  retq
+  %tmp = tail call float @llvm.copysign.f32( float 1.0, float -2.0 )
+  ret float %tmp
+}
+
+define double @cst2() {
+; X32-LABEL: @cst2
+; X32:       fldz
+; X32-NEXT:  fchs
+; X32-NEXT:  retl
+;
+; X64-LABEL: @cst2
+; X64:       movsd .LCPI5_0(%rip), %xmm0 {{.*#+}} xmm0 = mem[0],zero
+; X64-NEXT:  retq
+  %tmp1 = fadd float -1.0, -1.0
+  %tmp2 = fpext float %tmp1 to double
+  %tmp = tail call double @llvm.copysign.f64( double 0.0, double %tmp2 )
+  ret double %tmp
+}
+
+declare float     @llvm.copysign.f32(float  %Mag, float  %Sgn)
+declare double    @llvm.copysign.f64(double %Mag, double %Sgn)
