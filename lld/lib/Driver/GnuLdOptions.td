@@ -151,7 +151,7 @@ def grp_dynlibexec : OptionGroup<"opts">,
 def dynamic_linker : Joined<["--"], "dynamic-linker=">,
     HelpText<"Set the path to the dynamic linker">, Group<grp_dynlibexec>;
 // Executable options - compatibility aliases
-def dynamic_linker_alias : Separate<["-"], "dynamic-linker">,
+def dynamic_linker_alias : Separate<["-", "--"], "dynamic-linker">,
     Alias<dynamic_linker>;
 defm rpath : dashEq<"rpath", "rpath",
      "Add a directory to the runtime library search path">,
