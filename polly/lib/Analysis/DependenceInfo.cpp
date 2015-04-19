@@ -42,7 +42,7 @@ using namespace llvm;
 static cl::opt<int> OptComputeOut(
     "polly-dependences-computeout",
     cl::desc("Bound the dependence analysis by a maximal amount of "
-             "computational steps"),
+             "computational steps (0 means no bound)"),
     cl::Hidden, cl::init(250000), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> LegalityCheckDisabled(
@@ -232,7 +232,8 @@ void Dependences::calculateDependences(Scop &S) {
   MayWrite = isl_union_map_coalesce(MayWrite);
 
   long MaxOpsOld = isl_ctx_get_max_operations(S.getIslCtx());
-  isl_ctx_set_max_operations(S.getIslCtx(), OptComputeOut);
+  if (OptComputeOut)
+    isl_ctx_set_max_operations(S.getIslCtx(), OptComputeOut);
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
 
   DEBUG(dbgs() << "Read: " << Read << "\n";
