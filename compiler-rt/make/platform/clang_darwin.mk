@@ -395,6 +395,7 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	modsi3 \
 	muldf3 \
 	mulsf3 \
+	mulodi4 \
 	negdf2 \
 	negsf2 \
 	subdf3 \
