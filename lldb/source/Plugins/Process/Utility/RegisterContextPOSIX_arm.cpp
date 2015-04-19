@@ -229,7 +229,7 @@ RegisterContextPOSIX_arm::GetRegisterSet(size_t set)
     {
         switch (m_register_info_ap->m_target_arch.GetMachine())
         {
-            case llvm::Triple::aarch64:
+            case llvm::Triple::arm:
                 return &g_reg_sets_arm[set];
             default:
                 assert(false && "Unhandled target architecture.");
