@@ -67,3 +67,34 @@ Foo *g_foo = 0; // expected-error {{'Foo' is unavailable}}
 Foo * f_func() { // expected-error {{'Foo' is unavailable}}
   return 0; 
 }
+
+#define UNAVAILABLE __attribute__((unavailable("not available")))
+
+UNAVAILABLE
+@interface Base // expected-note {{unavailable here}}
+@end
+
+UNAVAILABLE
+@protocol SomeProto // expected-note 4 {{unavailable here}}
+@end
+
+@interface Sub : Base<SomeProto> // expected-error 2 {{unavailable}}
+@end
+@interface IP<SomeProto> // expected-error {{unavailable}}
+@end
+@protocol SubProt<SomeProto> // expected-error {{unavailable}}
+@end
+@interface Sub(cat)<SomeProto> // expected-error {{unavailable}}
+@end
+
+UNAVAILABLE
+@interface UnavailSub : Base<SomeProto> // no error
+@end
+UNAVAILABLE
+@interface UnavailIP<SomeProto> // no error
+@end
+UNAVAILABLE
+@protocol UnavailProt<SomeProto> // no error
+@end
+@interface UnavailSub(cat)<SomeProto> // no error
+@end

@@ -240,7 +240,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     SmallVector<Decl *, 8> ProtocolRefs;
     SmallVector<SourceLocation, 8> ProtocolLocs;
     if (Tok.is(tok::less) &&
-        ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
+        ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true, true,
                                     LAngleLoc, EndProtoLoc))
       return nullptr;
 
@@ -286,7 +286,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
   SmallVector<SourceLocation, 8> ProtocolLocs;
   SourceLocation LAngleLoc, EndProtoLoc;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
+      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true, true,
                                   LAngleLoc, EndProtoLoc))
     return nullptr;
 
@@ -1151,7 +1151,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 bool Parser::
 ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
                             SmallVectorImpl<SourceLocation> &ProtocolLocs,
-                            bool WarnOnDeclarations,
+                            bool WarnOnDeclarations, bool ForObjCContainer,
                             SourceLocation &LAngleLoc, SourceLocation &EndLoc) {
   assert(Tok.is(tok::less) && "expected <");
 
@@ -1186,7 +1186,7 @@ ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
     return true;
 
   // Convert the list of protocols identifiers into a list of protocol decls.
-  Actions.FindProtocolDeclaration(WarnOnDeclarations,
+  Actions.FindProtocolDeclaration(WarnOnDeclarations, ForObjCContainer,
                                   &ProtocolIdents[0], ProtocolIdents.size(),
                                   Protocols);
   return false;
@@ -1201,6 +1201,7 @@ bool Parser::ParseObjCProtocolQualifiers(DeclSpec &DS) {
   SmallVector<Decl *, 8> ProtocolDecl;
   SmallVector<SourceLocation, 8> ProtocolLocs;
   bool Result = ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                                            false,
                                             LAngleLoc, EndProtoLoc);
   DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
                            ProtocolLocs.data(), LAngleLoc);
@@ -1416,7 +1417,7 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
   SmallVector<Decl *, 8> ProtocolRefs;
   SmallVector<SourceLocation, 8> ProtocolLocs;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, false,
+      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, false, true,
                                   LAngleLoc, EndProtoLoc))
     return DeclGroupPtrTy();
 
