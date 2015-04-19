@@ -231,11 +231,6 @@ FCFI("fcfi",
      cl::desc("Apply forward-edge control-flow integrity"),
      cl::init(false));
 
-cl::opt<bool>
-CFIEnforcing("cfi-enforcing",
-             cl::desc("Enforce CFI or pass the violation to a function."),
-             cl::init(false));
-
 // Note that this option is linked to the cfi-enforcing option above: if
 // cfi-enforcing is set, then the cfi-func-name option is entirely ignored. If
 // cfi-enforcing is false and no cfi-func-name is set, then a default function
@@ -280,8 +275,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
   Options.FCFI = FCFI;
-  Options.CFIEnforcing = CFIEnforcing;
-  Options.CFIFuncName = CFIFuncName;
 
   Options.ThreadModel = TMModel;
 

@@ -53,8 +53,7 @@ StringRef TargetOptions::getTrapFunctionName() const {
 }
 
 /// getCFIFuncName - If this returns a non-empty string, then it is the name of
-/// the function that gets called on CFI violations in CFI non-enforcing mode
-/// (!TargetOptions::CFIEnforcing).
+/// the function that gets called on CFI violations in CFI non-enforcing mode.
 StringRef TargetOptions::getCFIFuncName() const {
   return CFIFuncName;
 }
