@@ -32,6 +32,8 @@ namespace ex = std::experimental;
 
 int main()
 {
+// TODO(ericwf): Re-enable constexpr support
+/*
     {
         constexpr func_obj f;
         constexpr std::tuple<> tp;
@@ -39,6 +41,7 @@ int main()
         static_assert(1 == ex::apply(static_cast<func_obj const &>(f), tp), "");
         static_assert(2 == ex::apply(static_cast<func_obj const &&>(f), tp), "");
     }
+*/
     {
         func_obj f;
         std::tuple<> tp;

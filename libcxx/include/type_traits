@@ -3448,7 +3448,7 @@ template <class _Fp, class _A0, class ..._Args,
                            typename remove_reference<_A0>::type>::value
             >::type
          >
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype((_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...));
@@ -3461,7 +3461,7 @@ template <class _Fp, class _A0, class ..._Args,
                            typename remove_reference<_A0>::type>::value
             >::type
          >
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype(((*_VSTD::forward<_A0>(__a0)).*__f)(_VSTD::forward<_Args>(__args)...));
@@ -3476,7 +3476,7 @@ template <class _Fp, class _A0,
                            typename remove_reference<_A0>::type>::value
             >::type
          >
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)
     -> decltype(_VSTD::forward<_A0>(__a0).*__f);
@@ -3489,7 +3489,7 @@ template <class _Fp, class _A0,
                            typename remove_reference<_A0>::type>::value
             >::type
          >
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _A0&& __a0)
     -> decltype((*_VSTD::forward<_A0>(__a0)).*__f);
@@ -3497,7 +3497,7 @@ __invoke(_Fp&& __f, _A0&& __a0)
 // bullet 5
 
 template <class _Fp, class ..._Args>
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY
 auto
 __invoke(_Fp&& __f, _Args&& ...__args)
     -> decltype(_VSTD::forward<_Fp>(__f)(_VSTD::forward<_Args>(__args)...));
