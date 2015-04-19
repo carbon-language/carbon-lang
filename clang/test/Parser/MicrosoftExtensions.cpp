@@ -391,3 +391,12 @@ constexpr A<int> h() {
 }
 static_assert(h().g() == false, "");
 }
+
+namespace {
+__declspec(align(16)) struct align_before_key1 {};
+__declspec(align(16)) struct align_before_key2 {} align_before_key2_var;
+__declspec(align(16)) struct align_before_key3 {} *align_before_key3_var;
+static_assert(__alignof(struct align_before_key1) == 16, "");
+static_assert(__alignof(struct align_before_key2) == 16, "");
+static_assert(__alignof(struct align_before_key3) == 16, "");
+}

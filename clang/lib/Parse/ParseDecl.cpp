@@ -1360,6 +1360,46 @@ void Parser::ProhibitCXX11Attributes(ParsedAttributesWithRange &attrs) {
   }
 }
 
+// As an exception to the rule, __declspec(align(...)) before the
+// class-key affects the type instead of the variable.
+void Parser::handleDeclspecAlignBeforeClassKey(ParsedAttributesWithRange &Attrs,
+                                               DeclSpec &DS,
+                                               Sema::TagUseKind TUK) {
+  if (TUK == Sema::TUK_Reference)
+    return;
+
+  ParsedAttributes &PA = DS.getAttributes();
+  AttributeList *AL = PA.getList();
+  AttributeList *Prev = nullptr;
+  while (AL) {
+    AttributeList *Next = AL->getNext();
+
+    // We only consider attributes using the appropriate '__declspec' spelling,
+    // this behavior doesn't extend to any other spellings.
+    if (AL->getKind() == AttributeList::AT_Aligned &&
+        AL->isDeclspecAttribute()) {
+      // Stitch the attribute into the tag's attribute list.
+      AL->setNext(nullptr);
+      Attrs.add(AL);
+
+      // Remove the attribute from the variable's attribute list.
+      if (Prev) {
+        // Set the last variable attribute's next attribute to be the attribute
+        // after the current one.
+        Prev->setNext(Next);
+      } else {
+        // Removing the head of the list requires us to reset the head to the
+        // next attribute.
+        PA.set(Next);
+      }
+    } else {
+      Prev = AL;
+    }
+
+    AL = Next;
+  }
+}
+
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.  This returns the
@@ -3850,6 +3890,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     SkipUntil(tok::comma, StopAtSemi);
     return;
   }
+
+  handleDeclspecAlignBeforeClassKey(attrs, DS, TUK);
 
   bool Owned = false;
   bool IsDependent = false;
