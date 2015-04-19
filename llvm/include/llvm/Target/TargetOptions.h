@@ -73,7 +73,7 @@ namespace llvm {
           DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
           TrapFuncName(), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
-          FCFI(false), ThreadModel(ThreadModel::POSIX) {}
+          ThreadModel(ThreadModel::POSIX) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
     /// option is specified on the command line, and should enable debugging
@@ -221,10 +221,6 @@ namespace llvm {
     /// create for functions that have the jumptable attribute.
     JumpTable::JumpTableType JTType;
 
-    /// FCFI - This flags controls whether or not forward-edge control-flow
-    /// integrity is applied.
-    bool FCFI;
-
     /// ThreadModel - This flag specifies the type of threading model to assume
     /// for things like atomics
     ThreadModel::Model ThreadModel;
@@ -257,7 +253,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
     ARE_EQUAL(JTType) &&
-    ARE_EQUAL(FCFI) &&
     ARE_EQUAL(ThreadModel) &&
     ARE_EQUAL(MCOptions);
 #undef ARE_EQUAL

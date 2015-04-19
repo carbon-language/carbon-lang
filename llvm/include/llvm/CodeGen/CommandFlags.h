@@ -226,11 +226,6 @@ JTableType("jump-table-type",
                          "Create one table per unique function type."),
               clEnumValEnd));
 
-cl::opt<bool>
-FCFI("fcfi",
-     cl::desc("Apply forward-edge control-flow integrity"),
-     cl::init(false));
-
 // Common utility function tightly tied to the options listed here. Initializes
 // a TargetOptions object with CodeGen flags and returns it.
 static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
@@ -259,7 +254,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
-  Options.FCFI = FCFI;
 
   Options.ThreadModel = TMModel;
 
