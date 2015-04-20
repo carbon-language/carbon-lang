@@ -89,6 +89,10 @@ N: Lang Hames
 E: lhames@gmail.com
 D: MCJIT, RuntimeDyld and JIT event listeners
 
+N: David Majnemer
+E: david.majnemer@gmail.com
+D: IR Constant Folder
+
 N: Galina Kistanova
 E: gkistanova@gmail.com
 D: LLVM Buildbot
