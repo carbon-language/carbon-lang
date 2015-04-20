@@ -66,6 +66,8 @@ public:
   bool isReduction() { return IsReduction; }
 
   MinMaxReductionKind getMinMaxKind() { return MinMaxKind; }
+ 
+  Instruction *getPatternInst() { return PatternLastInst; }
 
 private:
   // Is this instruction a reduction candidate.
