@@ -831,7 +831,7 @@ void DebugInfo::emitLocation(ExprAST *AST) {
   if (LexicalBlocks.empty())
     Scope = TheCU;
   else
-    Scope = *LexicalBlocks.back();
+    Scope = LexicalBlocks.back();
   Builder.SetCurrentDebugLocation(
       DebugLoc::get(AST->getLine(), AST->getCol(), Scope));
 }
@@ -1274,7 +1274,7 @@ Function *FunctionAST::Codegen() {
     return 0;
 
   // Push the current scope.
-  KSDbgInfo.LexicalBlocks.push_back(&KSDbgInfo.FnScopeMap[Proto]);
+  KSDbgInfo.LexicalBlocks.push_back(KSDbgInfo.FnScopeMap[Proto]);
 
   // Unset the location for the prologue emission (leading instructions with no
   // location in a function are considered part of the prologue and the debugger
