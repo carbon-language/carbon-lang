@@ -335,7 +335,7 @@ public:
 
   virtual DwarfCompileUnit &getCU() = 0;
 
-  void constructTypeDIE(DIE &Buffer, DICompositeType CTy);
+  void constructTypeDIE(DIE &Buffer, const MDCompositeType *CTy);
 
 protected:
   /// \brief Create new static data member DIE.
@@ -354,6 +354,7 @@ protected:
 private:
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
   void constructTypeDIE(DIE &Buffer, DIDerivedType DTy);
+  void constructTypeDIE(DIE &Buffer, const MDSubroutineType *DTy);
   void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
   void constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy);
   void constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy);

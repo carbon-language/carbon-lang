@@ -727,7 +727,7 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
   // Create new type.
   DIE &TyDIE = createAndAddDIE(Ty->getTag(), *ContextDIE, Ty);
 
-  constructTypeDIE(TyDIE, Ty);
+  constructTypeDIE(TyDIE, cast<MDCompositeType>(Ty));
 
   updateAcceleratorTables(Context, Ty, TyDIE);
   return &TyDIE;
@@ -762,7 +762,9 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   if (auto *BT = dyn_cast<MDBasicType>(Ty))
     constructTypeDIE(TyDIE, BT);
-  else if (DICompositeType CTy = dyn_cast<MDCompositeTypeBase>(Ty)) {
+  else if (auto *STy = dyn_cast<MDSubroutineType>(Ty))
+    constructTypeDIE(TyDIE, STy);
+  else if (auto *CTy = dyn_cast<MDCompositeType>(Ty)) {
     if (GenerateDwarfTypeUnits && !Ty->isForwardDecl())
       if (MDString *TypeId = CTy->getRawIdentifier()) {
         DD->addDwarfTypeUnitType(getCU(), TypeId->getString(), TyDIE, CTy);
@@ -913,7 +915,35 @@ void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
   }
 }
 
-void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
+void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDSubroutineType *CTy) {
+  // Add return type.  A void return won't have a type.
+  auto Elements = cast<MDSubroutineType>(CTy)->getTypeArray();
+  if (Elements.size())
+    if (auto RTy = resolve(Elements[0]))
+      addType(Buffer, RTy);
+
+  bool isPrototyped = true;
+  if (Elements.size() == 2 && !Elements[1])
+    isPrototyped = false;
+
+  constructSubprogramArguments(Buffer, Elements);
+
+  // Add prototype flag if we're dealing with a C language and the function has
+  // been prototyped.
+  uint16_t Language = getLanguage();
+  if (isPrototyped &&
+      (Language == dwarf::DW_LANG_C89 || Language == dwarf::DW_LANG_C99 ||
+       Language == dwarf::DW_LANG_ObjC))
+    addFlag(Buffer, dwarf::DW_AT_prototyped);
+
+  if (CTy->isLValueReference())
+    addFlag(Buffer, dwarf::DW_AT_reference);
+
+  if (CTy->isRValueReference())
+    addFlag(Buffer, dwarf::DW_AT_rvalue_reference);
+}
+
+void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
   // Add name if not anonymous or intermediate type.
   StringRef Name = CTy->getName();
 
@@ -927,33 +957,6 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_enumeration_type:
     constructEnumTypeDIE(Buffer, CTy);
     break;
-  case dwarf::DW_TAG_subroutine_type: {
-    // Add return type. A void return won't have a type.
-    auto Elements = cast<MDSubroutineType>(CTy)->getTypeArray();
-    if (Elements.size())
-      if (auto RTy = resolve(Elements[0]))
-        addType(Buffer, RTy);
-
-    bool isPrototyped = true;
-    if (Elements.size() == 2 && !Elements[1])
-      isPrototyped = false;
-
-    constructSubprogramArguments(Buffer, Elements);
-
-    // Add prototype flag if we're dealing with a C language and the
-    // function has been prototyped.
-    uint16_t Language = getLanguage();
-    if (isPrototyped &&
-        (Language == dwarf::DW_LANG_C89 || Language == dwarf::DW_LANG_C99 ||
-         Language == dwarf::DW_LANG_ObjC))
-      addFlag(Buffer, dwarf::DW_AT_prototyped);
-
-    if (CTy->isLValueReference())
-      addFlag(Buffer, dwarf::DW_AT_reference);
-
-    if (CTy->isRValueReference())
-      addFlag(Buffer, dwarf::DW_AT_rvalue_reference);
-  } break;
   case dwarf::DW_TAG_structure_type:
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_class_type: {
