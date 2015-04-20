@@ -56,12 +56,12 @@ void OrcX86_64::insertResolverBlock(
 
   // Start the resolver function.
   AsmStream << ResolverBlockName << ":\n"
-            << "  pushq   %rbp\n"
-            << "  movq    %rsp, %rbp\n";
+            << "  pushq     %rbp\n"
+            << "  movq      %rsp, %rbp\n";
 
   // Store the GPRs.
   for (const auto &GPR : GPRs)
-    AsmStream << "  pushq   %" << GPR << "\n";
+    AsmStream << "  pushq     %" << GPR << "\n";
 
   // Store floating-point state with FXSAVE.
   // Note: We need to keep the stack 16-byte aligned, so if we've emitted an odd
@@ -69,30 +69,30 @@ void OrcX86_64::insertResolverBlock(
   //       an extra 64 bits of padding to the FXSave area.
   unsigned Padding = (GPRs.size() + 1) % 2 ? 8 : 0;
   unsigned FXSaveSize = 512 + Padding;
-  AsmStream << "  subq    $" << FXSaveSize << ", %rsp\n"
-            << "  fxsave  (%rsp)\n"
+  AsmStream << "  subq      $" << FXSaveSize << ", %rsp\n"
+            << "  fxsave64  (%rsp)\n"
 
   // Load callback manager address, compute trampoline address, call JIT.
-            << "  lea     jit_callback_manager_addr(%rip), %rdi\n"
-            << "  movq    (%rdi), %rdi\n"
-            << "  movq    0x8(%rbp), %rsi\n"
-            << "  subq    $" << X86_64_TrampolineLength << ", %rsi\n"
-            << "  movabsq $" << CallbackAddr << ", %rax\n"
-            << "  callq   *%rax\n"
+            << "  lea       jit_callback_manager_addr(%rip), %rdi\n"
+            << "  movq      (%rdi), %rdi\n"
+            << "  movq      0x8(%rbp), %rsi\n"
+            << "  subq      $" << X86_64_TrampolineLength << ", %rsi\n"
+            << "  movabsq   $" << CallbackAddr << ", %rax\n"
+            << "  callq     *%rax\n"
 
   // Replace the return to the trampoline with the return address of the
   // compiled function body.
-            << "  movq    %rax, 0x8(%rbp)\n"
+            << "  movq      %rax, 0x8(%rbp)\n"
 
   // Restore the floating point state.
-            << "  fxrstor (%rsp)\n"
-            << "  addq    $" << FXSaveSize << ", %rsp\n";
+            << "  fxrstor64 (%rsp)\n"
+            << "  addq      $" << FXSaveSize << ", %rsp\n";
 
   for (const auto &GPR : make_range(GPRs.rbegin(), GPRs.rend()))
-    AsmStream << "  popq    %" << GPR << "\n";
+    AsmStream << "  popq      %" << GPR << "\n";
 
   // Restore original RBP and return to compiled function body.
-  AsmStream << "  popq    %rbp\n"
+  AsmStream << "  popq      %rbp\n"
             << "  retq\n";
 
   M.appendModuleInlineAsm(AsmStream.str());
