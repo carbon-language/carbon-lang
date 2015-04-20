@@ -268,7 +268,8 @@ class DwarfDebug : public AsmPrinterHandler {
   // them.
   DenseMap<const MDNode *, const DwarfTypeUnit *> DwarfTypeUnits;
 
-  SmallVector<std::pair<std::unique_ptr<DwarfTypeUnit>, DICompositeType>, 1>
+  SmallVector<
+      std::pair<std::unique_ptr<DwarfTypeUnit>, const MDCompositeType *>, 1>
       TypeUnitsUnderConstruction;
 
   // Whether to emit the pubnames/pubtypes sections.
@@ -519,7 +520,7 @@ public:
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
   void addDwarfTypeUnitType(DwarfCompileUnit &CU, StringRef Identifier,
-                            DIE &Die, DICompositeType CTy);
+                            DIE &Die, const MDCompositeType *CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }

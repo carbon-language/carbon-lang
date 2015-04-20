@@ -307,7 +307,7 @@ public:
   DIE *getOrCreateTypeDIE(const MDNode *N);
 
   /// \brief Get context owner's DIE.
-  DIE *createTypeDIE(DICompositeType Ty);
+  DIE *createTypeDIE(const MDCompositeType *Ty);
 
   /// \brief Get context owner's DIE.
   DIE *getOrCreateContextDIE(const MDScope *Context);
@@ -339,7 +339,7 @@ public:
 
 protected:
   /// \brief Create new static data member DIE.
-  DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
+  DIE *getOrCreateStaticMemberDIE(const MDDerivedType *DT);
 
   /// Look up the source ID with the given directory and source file names. If
   /// none currently exists, create a new ID and insert it in the line table.
@@ -352,13 +352,13 @@ protected:
   }
 
 private:
-  void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
-  void constructTypeDIE(DIE &Buffer, DIDerivedType DTy);
+  void constructTypeDIE(DIE &Buffer, const MDBasicType *BTy);
+  void constructTypeDIE(DIE &Buffer, const MDDerivedType *DTy);
   void constructTypeDIE(DIE &Buffer, const MDSubroutineType *DTy);
   void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
-  void constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy);
-  void constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy);
-  void constructMemberDIE(DIE &Buffer, DIDerivedType DT);
+  void constructArrayTypeDIE(DIE &Buffer, const MDCompositeType *CTy);
+  void constructEnumTypeDIE(DIE &Buffer, const MDCompositeType *CTy);
+  void constructMemberDIE(DIE &Buffer, const MDDerivedType *DT);
   void constructTemplateTypeParameterDIE(DIE &Buffer,
                                          DITemplateTypeParameter TP);
   void constructTemplateValueParameterDIE(DIE &Buffer,

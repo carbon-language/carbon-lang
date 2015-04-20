@@ -62,10 +62,6 @@ typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
   template <> struct simplify_type<DESC>;
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIBasicType)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIDerivedType)
-DECLARE_SIMPLIFY_DESCRIPTOR(DICompositeType)
-DECLARE_SIMPLIFY_DESCRIPTOR(DISubroutineType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIFile)
 DECLARE_SIMPLIFY_DESCRIPTOR(DICompileUnit)
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubprogram)
@@ -106,55 +102,6 @@ public:
   operator MDEnumerator *() const { return N; }
   MDEnumerator *operator->() const { return N; }
   MDEnumerator &operator*() const { return *N; }
-};
-
-class DIBasicType {
-  MDBasicType *N;
-
-public:
-  DIBasicType(const MDBasicType *N = nullptr)
-      : N(const_cast<MDBasicType *>(N)) {}
-
-  operator MDBasicType *() const { return N; }
-  MDBasicType *operator->() const { return N; }
-  MDBasicType &operator*() const { return *N; }
-};
-
-class DIDerivedType {
-  MDDerivedTypeBase *N;
-
-public:
-  DIDerivedType(const MDDerivedTypeBase *N = nullptr)
-      : N(const_cast<MDDerivedTypeBase *>(N)) {}
-
-  operator MDDerivedTypeBase *() const { return N; }
-  MDDerivedTypeBase *operator->() const { return N; }
-  MDDerivedTypeBase &operator*() const { return *N; }
-};
-
-class DICompositeType {
-  MDCompositeTypeBase *N;
-
-public:
-  DICompositeType(const MDCompositeTypeBase *N = nullptr)
-      : N(const_cast<MDCompositeTypeBase *>(N)) {}
-
-  operator MDCompositeTypeBase *() const { return N; }
-  MDCompositeTypeBase *operator->() const { return N; }
-  MDCompositeTypeBase &operator*() const { return *N; }
-};
-
-class DISubroutineType {
-  MDSubroutineType *N;
-
-public:
-  DISubroutineType(const MDSubroutineType *N = nullptr)
-      : N(const_cast<MDSubroutineType *>(N)) {}
-
-  operator DICompositeType() const { return N; }
-  operator MDSubroutineType *() const { return N; }
-  MDSubroutineType *operator->() const { return N; }
-  MDSubroutineType &operator*() const { return *N; }
 };
 
 class DIFile {
@@ -331,10 +278,6 @@ public:
   template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
 SIMPLIFY_DESCRIPTOR(DISubrange)
 SIMPLIFY_DESCRIPTOR(DIEnumerator)
-SIMPLIFY_DESCRIPTOR(DIBasicType)
-SIMPLIFY_DESCRIPTOR(DIDerivedType)
-SIMPLIFY_DESCRIPTOR(DICompositeType)
-SIMPLIFY_DESCRIPTOR(DISubroutineType)
 SIMPLIFY_DESCRIPTOR(DIFile)
 SIMPLIFY_DESCRIPTOR(DICompileUnit)
 SIMPLIFY_DESCRIPTOR(DISubprogram)

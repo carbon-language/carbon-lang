@@ -467,7 +467,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   StringRef varName = DV.getName();
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
-    DIDerivedType DTy = cast<MDDerivedType>(Ty);
+    auto *DTy = cast<MDDerivedType>(Ty);
     TmpTy = resolve(DTy->getBaseType());
     isPointer = true;
   }
@@ -475,11 +475,11 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
   DIArray Fields = cast<MDCompositeTypeBase>(TmpTy)->getElements();
-  DIDerivedType varField;
-  DIDerivedType forwardingField;
+  const MDDerivedType *varField = nullptr;
+  const MDDerivedType *forwardingField = nullptr;
 
   for (unsigned i = 0, N = Fields.size(); i < N; ++i) {
-    DIDerivedType DT = cast<MDDerivedTypeBase>(Fields[i]);
+    auto *DT = cast<MDDerivedType>(Fields[i]);
     StringRef fieldName = DT->getName();
     if (fieldName == "__forwarding")
       forwardingField = DT;
@@ -535,7 +535,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
 /// Return true if type encoding is unsigned.
 static bool isUnsignedDIType(DwarfDebug *DD, const MDType *Ty) {
-  if (DIDerivedType DTy = dyn_cast<MDDerivedTypeBase>(Ty)) {
+  if (auto *DTy = dyn_cast<MDDerivedTypeBase>(Ty)) {
     dwarf::Tag T = (dwarf::Tag)Ty->getTag();
     // Encode pointer constants as unsigned bytes. This is used at least for
     // null pointer constant emission.
@@ -565,7 +565,7 @@ static bool isUnsignedDIType(DwarfDebug *DD, const MDType *Ty) {
     return false;
   }
 
-  DIBasicType BTy = cast<MDBasicType>(Ty);
+  auto *BTy = cast<MDBasicType>(Ty);
   unsigned Encoding = BTy->getEncoding();
   assert((Encoding == dwarf::DW_ATE_unsigned ||
           Encoding == dwarf::DW_ATE_unsigned_char ||
@@ -583,7 +583,7 @@ static bool isUnsignedDIType(DwarfDebug *DD, const MDType *Ty) {
 }
 
 /// If this type is derived from a base type then return base type size.
-static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
+static uint64_t getBaseTypeSize(DwarfDebug *DD, const MDDerivedType *Ty) {
   unsigned Tag = Ty->getTag();
 
   if (Tag != dwarf::DW_TAG_member && Tag != dwarf::DW_TAG_typedef &&
@@ -602,7 +602,7 @@ static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
       BaseType->getTag() == dwarf::DW_TAG_rvalue_reference_type)
     return Ty->getSizeInBits();
 
-  if (auto *DT = dyn_cast<MDDerivedTypeBase>(BaseType))
+  if (auto *DT = dyn_cast<MDDerivedType>(BaseType))
     return getBaseTypeSize(DD, DT);
 
   return BaseType->getSizeInBits();
@@ -717,7 +717,7 @@ DIE *DwarfUnit::getOrCreateContextDIE(const MDScope *Context) {
   return getDIE(Context);
 }
 
-DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
+DIE *DwarfUnit::createTypeDIE(const MDCompositeType *Ty) {
   auto *Context = resolve(Ty->getScope());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
 
@@ -853,7 +853,7 @@ std::string DwarfUnit::getParentContextString(const MDScope *Context) const {
   return CS;
 }
 
-void DwarfUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
+void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDBasicType *BTy) {
   // Get core information.
   StringRef Name = BTy->getName();
   // Add name if not anonymous or intermediate type.
@@ -871,7 +871,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
   addUInt(Buffer, dwarf::DW_AT_byte_size, None, Size);
 }
 
-void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
+void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDDerivedType *DTy) {
   // Get core information.
   StringRef Name = DTy->getName();
   uint64_t Size = DTy->getSizeInBits() >> 3;
@@ -967,7 +967,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
         continue;
       if (auto *SP = dyn_cast<MDSubprogram>(Element))
         getOrCreateSubprogramDIE(SP);
-      else if (DIDerivedType DDTy = dyn_cast<MDDerivedTypeBase>(Element)) {
+      else if (auto *DDTy = dyn_cast<MDDerivedType>(Element)) {
         if (DDTy->getTag() == dwarf::DW_TAG_friend) {
           DIE &ElemDie = createAndAddDIE(dwarf::DW_TAG_friend, Buffer);
           addType(ElemDie, resolve(DDTy->getBaseType()), dwarf::DW_AT_friend);
@@ -1006,7 +1006,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
 
     // This is outside the DWARF spec, but GDB expects a DW_AT_containing_type
     // inside C++ composite types to point to the base class with the vtable.
-    if (DICompositeType ContainingType =
+    if (auto *ContainingType =
             dyn_cast_or_null<MDCompositeType>(resolve(CTy->getVTableHolder())))
       addDIEEntry(Buffer, dwarf::DW_AT_containing_type,
                   *getOrCreateTypeDIE(ContainingType));
@@ -1208,7 +1208,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  DISubroutineType SPTy = SP->getType();
+  const MDSubroutineType *SPTy = SP->getType();
   assert(SPTy->getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
@@ -1303,7 +1303,7 @@ DIE *DwarfUnit::getIndexTyDie() {
   return IndexTyDie;
 }
 
-void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
+void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
   if (CTy->isVector())
     addFlag(Buffer, dwarf::DW_AT_GNU_vector);
 
@@ -1325,7 +1325,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
 }
 
-void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
+void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
   DIArray Elements = CTy->getElements();
 
   // Add enumerators to enumeration type.
@@ -1361,10 +1361,7 @@ void DwarfUnit::constructContainingTypeDIEs() {
   }
 }
 
-void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT_) {
-  // Downcast to MDDerivedType.
-  const MDDerivedType *DT = cast<MDDerivedType>(DT_);
-
+void DwarfUnit::constructMemberDIE(DIE &Buffer, const MDDerivedType *DT) {
   DIE &MemberDie = createAndAddDIE(DT->getTag(), Buffer);
   StringRef Name = DT->getName();
   if (!Name.empty())
@@ -1452,8 +1449,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT_) {
     addFlag(MemberDie, dwarf::DW_AT_artificial);
 }
 
-DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT_) {
-  const MDDerivedType *DT = cast_or_null<MDDerivedType>(DT_);
+DIE *DwarfUnit::getOrCreateStaticMemberDIE(const MDDerivedType *DT) {
   if (!DT)
     return nullptr;
 

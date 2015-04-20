@@ -1902,7 +1902,7 @@ static uint64_t makeTypeSignature(StringRef Identifier) {
 
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                       StringRef Identifier, DIE &RefDie,
-                                      DICompositeType CTy) {
+                                      const MDCompositeType *CTy) {
   // Fast path if we're building some type units and one has already used the
   // address pool we know we're going to throw away all this work anyway, so
   // don't bother building dependent types.
