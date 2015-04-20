@@ -1683,22 +1683,21 @@ bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {
   if (::isWeak(SD))
     return true;
 
-  const MCSymbol &Sym = SD.getSymbol();
-  if (!Sym.isInSection())
-    return false;
-
-  const auto &Sec = cast<MCSectionELF>(Sym.getSection());
-  if (!Sec.getGroup())
-    return false;
-
   // It is invalid to replace a reference to a global in a comdat
   // with a reference to a local since out of comdat references
   // to a local are forbidden.
   // We could try to return false for more cases, like the reference
   // being in the same comdat or Sym being an alias to another global,
   // but it is not clear if it is worth the effort.
-  return true;
+  if (MCELF::GetBinding(SD) != ELF::STB_GLOBAL)
+    return false;
 
+  const MCSymbol &Sym = SD.getSymbol();
+  if (!Sym.isInSection())
+    return false;
+
+  const auto &Sec = cast<MCSectionELF>(Sym.getSection());
+  return Sec.getGroup();
 }
 
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,

@@ -7,6 +7,7 @@
 	.globl pr23272
 pr23272:
 pr23272_2:
+pr23272_3 = pr23272_2
 
         .text
 bar:
@@ -52,6 +53,7 @@ bar:
         .long foo@plt
 
         .quad	pr23272_2 - pr23272
+        .quad	pr23272_3 - pr23272
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
