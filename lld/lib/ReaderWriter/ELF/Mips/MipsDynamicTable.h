@@ -66,6 +66,17 @@ public:
     _dt_pltgot = this->addEntry(dyn);
   }
 
+  void doPreFlight() override {
+    DynamicTable<ELFT>::doPreFlight();
+
+    if (_targetLayout.findOutputSection(".MIPS.options")) {
+      typename DynamicTable<ELFT>::Elf_Dyn dyn;
+      dyn.d_un.d_val = 0;
+      dyn.d_tag = DT_MIPS_OPTIONS;
+      _dt_options = this->addEntry(dyn);
+    }
+  }
+
   void updateDynamicTable() override {
     DynamicTable<ELFT>::updateDynamicTable();
 
@@ -83,6 +94,9 @@ public:
         this->getSymbolTable()->size() - got.getGlobalCount();
     this->_entries[_dt_localgot].d_un.d_val = got.getLocalCount();
     this->_entries[_dt_pltgot].d_un.d_ptr = got.virtualAddr();
+
+    if (const auto *sec = _targetLayout.findOutputSection(".MIPS.options"))
+      this->_entries[_dt_options].d_un.d_ptr = sec->virtualAddr();
   }
 
   int64_t getGotPltTag() override { return DT_MIPS_PLTGOT; }
@@ -103,6 +117,7 @@ private:
   std::size_t _dt_gotsym;
   std::size_t _dt_pltgot;
   std::size_t _dt_baseaddr;
+  std::size_t _dt_options;
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 

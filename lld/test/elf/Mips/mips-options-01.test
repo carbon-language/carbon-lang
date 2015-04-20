@@ -3,9 +3,13 @@
 
 # RUN: yaml2obj -format=elf %s > %t.o
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
-# RUN: llvm-readobj -s %t.so | FileCheck %s
+# RUN: llvm-readobj -s -dynamic-table %t.so | FileCheck %s
 
-# CHECK-NOT: Name: .MIPS.options
+# CHECK:     Sections [
+# CHECK-NOT:   Name: .MIPS.options
+
+# CHECK:     DynamicSection [
+# CHECK-NOT:   0x{{[0-9A-F]+}} MIPS_OPTIONS
 
 FileHeader:
   Class:   ELFCLASS64
