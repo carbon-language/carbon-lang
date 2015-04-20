@@ -52,7 +52,7 @@ class CGDebugInfo {
   CodeGenModule &CGM;
   const CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
-  llvm::DICompileUnit TheCU;
+  llvm::MDCompileUnit *TheCU = nullptr;
   SourceLocation CurLoc;
   llvm::MDType *VTablePtrType = nullptr;
   llvm::MDType *ClassTy = nullptr;
@@ -122,52 +122,52 @@ class CGDebugInfo {
   unsigned Checksum(const ObjCInterfaceDecl *InterfaceDecl);
   llvm::MDType *CreateType(const BuiltinType *Ty);
   llvm::MDType *CreateType(const ComplexType *Ty);
-  llvm::MDType *CreateQualifiedType(QualType Ty, llvm::DIFile Fg);
-  llvm::MDType *CreateType(const TypedefType *Ty, llvm::DIFile Fg);
+  llvm::MDType *CreateQualifiedType(QualType Ty, llvm::MDFile *Fg);
+  llvm::MDType *CreateType(const TypedefType *Ty, llvm::MDFile *Fg);
   llvm::MDType *CreateType(const TemplateSpecializationType *Ty,
-                           llvm::DIFile Fg);
-  llvm::MDType *CreateType(const ObjCObjectPointerType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const PointerType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const BlockPointerType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const FunctionType *Ty, llvm::DIFile F);
+                           llvm::MDFile *Fg);
+  llvm::MDType *CreateType(const ObjCObjectPointerType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const PointerType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const BlockPointerType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const FunctionType *Ty, llvm::MDFile *F);
   llvm::MDType *CreateType(const RecordType *Tyg);
   llvm::MDType *CreateTypeDefinition(const RecordType *Ty);
   llvm::MDCompositeType *CreateLimitedType(const RecordType *Ty);
   void CollectContainingType(const CXXRecordDecl *RD,
                              llvm::MDCompositeType *CT);
-  llvm::MDType *CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
+  llvm::MDType *CreateType(const ObjCInterfaceType *Ty, llvm::MDFile *F);
   llvm::MDType *CreateTypeDefinition(const ObjCInterfaceType *Ty,
-                                     llvm::DIFile F);
-  llvm::MDType *CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const VectorType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const ArrayType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const LValueReferenceType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const RValueReferenceType *Ty, llvm::DIFile Unit);
-  llvm::MDType *CreateType(const MemberPointerType *Ty, llvm::DIFile F);
-  llvm::MDType *CreateType(const AtomicType *Ty, llvm::DIFile F);
+                                     llvm::MDFile *F);
+  llvm::MDType *CreateType(const ObjCObjectType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const VectorType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const ArrayType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const LValueReferenceType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const RValueReferenceType *Ty, llvm::MDFile *Unit);
+  llvm::MDType *CreateType(const MemberPointerType *Ty, llvm::MDFile *F);
+  llvm::MDType *CreateType(const AtomicType *Ty, llvm::MDFile *F);
   llvm::MDType *CreateEnumType(const EnumType *Ty);
   llvm::MDType *CreateTypeDefinition(const EnumType *Ty);
   llvm::MDType *CreateSelfType(const QualType &QualTy, llvm::MDType *Ty);
   llvm::MDType *getTypeOrNull(const QualType);
   llvm::MDSubroutineType *getOrCreateMethodType(const CXXMethodDecl *Method,
-                                                llvm::DIFile F);
+                                                llvm::MDFile *F);
   llvm::MDSubroutineType *
   getOrCreateInstanceMethodType(QualType ThisPtr, const FunctionProtoType *Func,
-                                llvm::DIFile Unit);
+                                llvm::MDFile *Unit);
   llvm::MDSubroutineType *
-  getOrCreateFunctionType(const Decl *D, QualType FnType, llvm::DIFile F);
-  llvm::MDType *getOrCreateVTablePtrType(llvm::DIFile F);
-  llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N);
-  llvm::MDType *getOrCreateTypeDeclaration(QualType PointeeTy, llvm::DIFile F);
+  getOrCreateFunctionType(const Decl *D, QualType FnType, llvm::MDFile *F);
+  llvm::MDType *getOrCreateVTablePtrType(llvm::MDFile *F);
+  llvm::MDNamespace *getOrCreateNameSpace(const NamespaceDecl *N);
+  llvm::MDType *getOrCreateTypeDeclaration(QualType PointeeTy, llvm::MDFile *F);
   llvm::MDType *CreatePointerLikeType(llvm::dwarf::Tag Tag, const Type *Ty,
-                                      QualType PointeeTy, llvm::DIFile F);
+                                      QualType PointeeTy, llvm::MDFile *F);
 
   llvm::Value *getCachedInterfaceTypeOrNull(const QualType Ty);
   llvm::MDType *getOrCreateStructPtrType(StringRef Name, llvm::MDType *&Cache);
 
-  llvm::DISubprogram CreateCXXMemberFunction(const CXXMethodDecl *Method,
-                                             llvm::MDFile *F,
-                                             llvm::MDType *RecordTy);
+  llvm::MDSubprogram *CreateCXXMemberFunction(const CXXMethodDecl *Method,
+                                              llvm::MDFile *F,
+                                              llvm::MDType *RecordTy);
 
   void CollectCXXMemberFunctions(const CXXRecordDecl *Decl, llvm::MDFile *F,
                                  SmallVectorImpl<llvm::Metadata *> &E,
@@ -177,15 +177,14 @@ class CGDebugInfo {
                        SmallVectorImpl<llvm::Metadata *> &EltTys,
                        llvm::MDType *RecordTy);
 
-  llvm::DIArray
-  CollectTemplateParams(const TemplateParameterList *TPList,
-                        ArrayRef<TemplateArgument> TAList,
-                        llvm::DIFile Unit);
-  llvm::DIArray
-  CollectFunctionTemplateParams(const FunctionDecl *FD, llvm::DIFile Unit);
+  llvm::DIArray CollectTemplateParams(const TemplateParameterList *TPList,
+                                      ArrayRef<TemplateArgument> TAList,
+                                      llvm::MDFile *Unit);
+  llvm::DIArray CollectFunctionTemplateParams(const FunctionDecl *FD,
+                                              llvm::MDFile *Unit);
   llvm::DIArray
   CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TS,
-                           llvm::DIFile F);
+                           llvm::MDFile *F);
 
   llvm::MDType *createFieldType(StringRef name, QualType type,
                                 uint64_t sizeInBitsOverride, SourceLocation loc,
@@ -201,14 +200,14 @@ class CGDebugInfo {
                                                llvm::MDType *RecordTy,
                                                const RecordDecl *RD);
   void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
-                                llvm::DIFile F,
+                                llvm::MDFile *F,
                                 SmallVectorImpl<llvm::Metadata *> &E,
                                 llvm::MDType *RecordTy, const RecordDecl *RD);
-  void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
+  void CollectRecordFields(const RecordDecl *Decl, llvm::MDFile *F,
                            SmallVectorImpl<llvm::Metadata *> &E,
                            llvm::MDCompositeType *RecordTy);
 
-  void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::DIFile F,
+  void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::MDFile *F,
                          SmallVectorImpl<llvm::Metadata *> &EltTys);
 
   // CreateLexicalBlock - Create a new lexical block node and push it on
@@ -336,28 +335,28 @@ private:
 
   /// \brief Get the file debug info descriptor for the input
   /// location.
-  llvm::DIFile getOrCreateFile(SourceLocation Loc);
+  llvm::MDFile *getOrCreateFile(SourceLocation Loc);
 
   /// \brief Get the file info for main compile unit.
-  llvm::DIFile getOrCreateMainFile();
+  llvm::MDFile *getOrCreateMainFile();
 
   /// \brief Get the type from the cache or create a new type if
   /// necessary.
-  llvm::MDType *getOrCreateType(QualType Ty, llvm::DIFile Fg);
+  llvm::MDType *getOrCreateType(QualType Ty, llvm::MDFile *Fg);
 
   /// \brief Get the type from the cache or create a new
   /// partial type if necessary.
-  llvm::MDType *getOrCreateLimitedType(const RecordType *Ty, llvm::DIFile F);
+  llvm::MDType *getOrCreateLimitedType(const RecordType *Ty, llvm::MDFile *F);
 
   /// \brief Create type metadata for a source language type.
-  llvm::MDType *CreateTypeNode(QualType Ty, llvm::DIFile Fg);
+  llvm::MDType *CreateTypeNode(QualType Ty, llvm::MDFile *Fg);
 
   /// \brief return the underlying ObjCInterfaceDecl
   /// if Ty is an ObjCInterface or a pointer to one.
   ObjCInterfaceDecl* getObjCInterfaceDecl(QualType Ty);
 
   /// \brief Create new member and increase Offset by FType's size.
-  llvm::MDType *CreateMemberType(llvm::DIFile Unit, QualType FType,
+  llvm::MDType *CreateMemberType(llvm::MDFile *Unit, QualType FType,
                                  StringRef Name, uint64_t *Offset);
 
   /// \brief Retrieve the DIDescriptor, if any, for the canonical form of this
@@ -366,16 +365,16 @@ private:
 
   /// \brief Return debug info descriptor to describe method
   /// declaration for the given method definition.
-  llvm::DISubprogram getFunctionDeclaration(const Decl *D);
+  llvm::MDSubprogram *getFunctionDeclaration(const Decl *D);
 
   /// Return debug info descriptor to describe in-class static data member
   /// declaration for the given out-of-class definition.
   llvm::MDDerivedType *
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
 
-  /// \brief Create a DISubprogram describing the forward
+  /// \brief Create a subprogram describing the forward
   /// decalration represented in the given FunctionDecl.
-  llvm::DISubprogram getFunctionForwardDeclaration(const FunctionDecl *FD);
+  llvm::MDSubprogram *getFunctionForwardDeclaration(const FunctionDecl *FD);
 
   /// \brief Create a DIGlobalVariable describing the forward
   /// decalration represented in the given VarDecl.
@@ -384,7 +383,7 @@ private:
   /// Return a global variable that represents one of the collection of
   /// global variables created for an anonmyous union.
   llvm::DIGlobalVariable
-  CollectAnonRecordDecls(const RecordDecl *RD, llvm::DIFile Unit,
+  CollectAnonRecordDecls(const RecordDecl *RD, llvm::MDFile *Unit,
                          unsigned LineNo, StringRef LinkageName,
                          llvm::GlobalVariable *Var, llvm::MDScope *DContext);
 
@@ -418,13 +417,13 @@ private:
 
   /// \brief Collect various properties of a FunctionDecl.
   /// \param GD  A GlobalDecl whose getDecl() must return a FunctionDecl.
-  void collectFunctionDeclProps(GlobalDecl GD, llvm::DIFile Unit,
+  void collectFunctionDeclProps(GlobalDecl GD, llvm::MDFile *Unit,
                                 StringRef &Name, StringRef &LinkageName,
                                 llvm::MDScope *&FDContext,
                                 llvm::DIArray &TParamsArray, unsigned &Flags);
 
   /// \brief Collect various properties of a VarDecl.
-  void collectVarDeclProps(const VarDecl *VD, llvm::DIFile &Unit,
+  void collectVarDeclProps(const VarDecl *VD, llvm::MDFile *&Unit,
                            unsigned &LineNo, QualType &T, StringRef &Name,
                            StringRef &LinkageName, llvm::MDScope *&VDContext);
 
