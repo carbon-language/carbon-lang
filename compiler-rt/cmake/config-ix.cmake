@@ -177,13 +177,18 @@ else()
       test_target_arch(powerpc64le "" "-m64")
     endif()
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
+    # Gcc doesn't accept -m32/-m64 so we do the next best thing and use
+    # -mips32r2/-mips64r2. We don't use -mips1/-mips3 because we want to match
+    # clang's default CPU's. In the 64-bit case, we must also specify the ABI
+    # since the default ABI differs between gcc and clang.
+    # FIXME: Ideally, we would build the N32 library too.
     if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
       # regex for mipsel, mips64el
-      test_target_arch(mipsel "" "-m32")
-      test_target_arch(mips64el "" "-m64")
+      test_target_arch(mipsel "" "-mips32r2")
+      test_target_arch(mips64el "" "-mips64r2 -mabi=n64")
     else()
-      test_target_arch(mips "" "-m32")
-      test_target_arch(mips64 "" "-m64")
+      test_target_arch(mips "" "-mips32r2")
+      test_target_arch(mips64 "" "-mips64r2 -mabi=n64")
     endif()
   elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm")
     test_target_arch(arm "" "-march=armv7-a")
