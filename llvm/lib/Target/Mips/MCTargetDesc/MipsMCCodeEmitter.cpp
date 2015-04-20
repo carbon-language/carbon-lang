@@ -115,6 +115,10 @@ bool MipsMCCodeEmitter::isMicroMips(const MCSubtargetInfo &STI) const {
   return STI.getFeatureBits() & Mips::FeatureMicroMips;
 }
 
+bool MipsMCCodeEmitter::isMips32r6(const MCSubtargetInfo &STI) const {
+  return STI.getFeatureBits() & Mips::FeatureMips32r6;
+}
+
 void MipsMCCodeEmitter::EmitByte(unsigned char C, raw_ostream &OS) const {
   OS << (char)C;
 }

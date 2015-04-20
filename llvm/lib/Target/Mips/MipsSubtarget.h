@@ -225,6 +225,7 @@ public:
     return inMips16Mode() && InMips16HardFloat;
   }
   bool inMicroMipsMode() const { return InMicroMipsMode; }
+  bool inMicroMips32r6Mode() const { return InMicroMipsMode && hasMips32r6(); }
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
   bool hasMSA() const { return HasMSA; }

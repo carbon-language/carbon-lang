@@ -38,6 +38,7 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   bool IsLittleEndian;
 
   bool isMicroMips(const MCSubtargetInfo &STI) const;
+  bool isMips32r6(const MCSubtargetInfo &STI) const;
 
 public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_, bool IsLittle)
