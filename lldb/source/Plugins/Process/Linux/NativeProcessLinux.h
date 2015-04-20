@@ -176,16 +176,6 @@ namespace process_linux {
         ArchSpec m_arch;
 
         std::unique_ptr<Monitor> m_monitor_up;
-        HostThread m_operation_thread;
-
-        // current operation which must be executed on the priviliged thread
-        void *m_operation;
-        Mutex m_operation_mutex;
-
-        // semaphores notified when Operation is ready to be processed and when
-        // the operation is complete.
-        sem_t m_operation_pending;
-        sem_t m_operation_done;
 
         LazyBool m_supports_mem_region;
         std::vector<MemoryRegionInfo> m_mem_region_cache;
@@ -198,25 +188,13 @@ namespace process_linux {
         // the relevan breakpoint
         std::map<lldb::tid_t, lldb::addr_t> m_threads_stepping_with_breakpoint;
 
-        struct OperationArgs
-        {
-            OperationArgs(NativeProcessLinux *monitor);
-
-            ~OperationArgs();
-
-            NativeProcessLinux *m_monitor;      // The monitor performing the attach.
-            sem_t m_semaphore;              // Posted to once operation complete.
-            Error m_error;    // Set if process operation failed.
-        };
-
         /// @class LauchArgs
         ///
         /// @brief Simple structure to pass data to the thread responsible for
         /// launching a child process.
-        struct LaunchArgs : OperationArgs
+        struct LaunchArgs
         {
-            LaunchArgs(NativeProcessLinux *monitor,
-                    Module *module,
+            LaunchArgs(Module *module,
                     char const **argv,
                     char const **envp,
                     const std::string &stdin_path,
@@ -237,15 +215,7 @@ namespace process_linux {
             const ProcessLaunchInfo &m_launch_info;
         };
 
-        struct AttachArgs : OperationArgs
-        {
-            AttachArgs(NativeProcessLinux *monitor,
-                       lldb::pid_t pid);
-
-            ~AttachArgs();
-
-            lldb::pid_t m_pid;              // pid of the process to be attached.
-        };
+        typedef std::function<::pid_t(Error &)> InitialOperation;
 
         // ---------------------------------------------------------------------
         // Private Instance Methods
@@ -272,31 +242,16 @@ namespace process_linux {
         AttachToInferior (lldb::pid_t pid, Error &error);
 
         void
-        StartMonitorThread(Error &error);
+        StartMonitorThread(const InitialOperation &operation, Error &error);
 
-        void
-        StartLaunchOpThread(LaunchArgs *args, Error &error);
+        ::pid_t
+        Launch(LaunchArgs *args, Error &error);
 
-        static void *
-        LaunchOpThread(void *arg);
-
-        static bool
-        Launch(LaunchArgs *args);
-
-        void
-        StartAttachOpThread(AttachArgs *args, Error &error);
-
-        static void *
-        AttachOpThread(void *args);
-
-        static bool
-        Attach(AttachArgs *args);
+        ::pid_t
+        Attach(lldb::pid_t pid, Error &error);
 
         static Error
         SetDefaultPtraceOpts(const lldb::pid_t);
-
-        static void
-        ServeOperation(OperationArgs *args);
 
         static bool
         DupDescriptor(const char *path, int fd, int flags);
@@ -335,13 +290,6 @@ namespace process_linux {
         static ::ProcessMessage::CrashReason
         GetCrashReasonForSIGBUS(const siginfo_t *info);
 #endif
-
-        void
-        DoOperation(void *op);
-
-        /// Stops the operation thread used to attach/launch a process.
-        void
-        StopOpThread();
 
         Error
         StartCoordinatorThread ();
