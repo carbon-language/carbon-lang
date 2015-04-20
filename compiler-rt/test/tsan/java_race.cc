@@ -2,11 +2,13 @@
 #include "java.h"
 
 void *Thread(void *p) {
+  barrier_wait(&barrier);
   *(int*)p = 42;
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   int const kHeapSize = 1024 * 1024;
   jptr jheap = (jptr)malloc(kHeapSize + 8) + 8;
   __tsan_java_init(jheap, kHeapSize);
@@ -15,6 +17,7 @@ int main() {
   pthread_t th;
   pthread_create(&th, 0, Thread, (void*)jheap);
   *(int*)jheap = 43;
+  barrier_wait(&barrier);
   pthread_join(th, 0);
   __tsan_java_free(jheap, kBlockSize);
   fprintf(stderr, "DONE\n");
