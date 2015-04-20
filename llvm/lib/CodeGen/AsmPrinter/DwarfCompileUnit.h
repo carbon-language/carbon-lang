@@ -66,7 +66,7 @@ class DwarfCompileUnit : public DwarfUnit {
   bool includeMinimalInlineScopes() const;
 
 public:
-  DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
+  DwarfCompileUnit(unsigned UID, const MDCompileUnit *Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
 
   DwarfCompileUnit *getSkeleton() const {
@@ -113,7 +113,7 @@ public:
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
   /// variables in this scope then create and insert DIEs for these
   /// variables.
-  DIE &updateSubprogramScopeDIE(DISubprogram SP);
+  DIE &updateSubprogramScopeDIE(const MDSubprogram *SP);
 
   void constructScopeDIE(LexicalScope *Scope,
                          SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren);
@@ -158,9 +158,9 @@ public:
   std::unique_ptr<DIE>
   constructImportedEntityDIE(const DIImportedEntity &Module);
 
-  void finishSubprogramDefinition(DISubprogram SP);
+  void finishSubprogramDefinition(const MDSubprogram *SP);
 
-  void collectDeadVariables(DISubprogram SP);
+  void collectDeadVariables(const MDSubprogram *SP);
 
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
@@ -215,7 +215,8 @@ public:
   /// Add a Dwarf expression attribute data and value.
   void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
 
-  void applySubprogramAttributesToDefinition(DISubprogram SP, DIE &SPDie);
+  void applySubprogramAttributesToDefinition(const MDSubprogram *SP,
+                                             DIE &SPDie);
 
   /// getRangeLists - Get the vector of range lists.
   const SmallVectorImpl<RangeSpanList> &getRangeLists() const {

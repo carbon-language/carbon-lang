@@ -191,7 +191,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
 
   StringRef GVName = GV->getName();
   StringRef FuncName;
-  if (DISubprogram SP = getDISubprogram(GV))
+  if (auto *SP = getDISubprogram(GV))
     FuncName = SP->getDisplayName();
 
   // FIXME Clang currently sets DisplayName to "bar" for a C++

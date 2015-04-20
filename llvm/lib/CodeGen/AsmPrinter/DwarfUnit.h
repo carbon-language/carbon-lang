@@ -71,7 +71,7 @@ protected:
   unsigned UniqueID;
 
   /// MDNode for the compile unit.
-  DICompileUnit CUNode;
+  const MDCompileUnit *CUNode;
 
   /// Unit debug information entry.
   DIE UnitDie;
@@ -117,7 +117,7 @@ protected:
   /// The section this unit will be emitted in.
   const MCSection *Section;
 
-  DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
+  DwarfUnit(unsigned UID, dwarf::Tag, const MDCompileUnit *CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
   /// \brief Add a string attribute data and value.
@@ -127,7 +127,7 @@ protected:
 
   void addIndexedString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
-  bool applySubprogramDefinitionAttributes(DISubprogram SP, DIE &SPDie);
+  bool applySubprogramDefinitionAttributes(const MDSubprogram *SP, DIE &SPDie);
 
 public:
   virtual ~DwarfUnit();
@@ -143,7 +143,7 @@ public:
   AsmPrinter* getAsmPrinter() const { return Asm; }
   unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return CUNode->getSourceLanguage(); }
-  DICompileUnit getCUNode() const { return CUNode; }
+  const MDCompileUnit *getCUNode() const { return CUNode; }
   DIE &getUnitDie() { return UnitDie; }
 
   unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
@@ -248,9 +248,9 @@ public:
                      StringRef Directory);
   void addSourceLine(DIE &Die, DIVariable V);
   void addSourceLine(DIE &Die, DIGlobalVariable G);
-  void addSourceLine(DIE &Die, DISubprogram SP);
+  void addSourceLine(DIE &Die, const MDSubprogram *SP);
   void addSourceLine(DIE &Die, const MDType *Ty);
-  void addSourceLine(DIE &Die, DINameSpace NS);
+  void addSourceLine(DIE &Die, const MDNamespace *NS);
   void addSourceLine(DIE &Die, DIObjCProperty Ty);
 
   /// \brief Add constant value entry in variable DIE.
@@ -297,10 +297,10 @@ public:
   void addType(DIE &Entity, const MDType *Ty,
                dwarf::Attribute Attribute = dwarf::DW_AT_type);
 
-  DIE *getOrCreateNameSpace(DINameSpace NS);
-  DIE *getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal = false);
+  DIE *getOrCreateNameSpace(const MDNamespace *NS);
+  DIE *getOrCreateSubprogramDIE(const MDSubprogram *SP, bool Minimal = false);
 
-  void applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
+  void applySubprogramAttributes(const MDSubprogram *SP, DIE &SPDie,
                                  bool Minimal = false);
 
   /// \brief Find existing DIE or create new DIE for the given type.

@@ -63,9 +63,9 @@ bool DIEDwarfExpression::isFrameRegister(unsigned MachineReg) {
   return MachineReg == TRI.getFrameRegister(*AP.MF);
 }
 
-
-DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag, DICompileUnit Node,
-                     AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
+DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag,
+                     const MDCompileUnit *Node, AsmPrinter *A, DwarfDebug *DW,
+                     DwarfFile *DWU)
     : UniqueID(UID), CUNode(Node), UnitDie(UnitTag), DebugInfoOffset(0), Asm(A),
       DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr) {
   assert(UnitTag == dwarf::DW_TAG_compile_unit ||
@@ -367,7 +367,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DIGlobalVariable G) {
   addSourceLine(Die, G->getLine(), G->getFilename(), G->getDirectory());
 }
 
-void DwarfUnit::addSourceLine(DIE &Die, DISubprogram SP) {
+void DwarfUnit::addSourceLine(DIE &Die, const MDSubprogram *SP) {
   assert(SP);
 
   addSourceLine(Die, SP->getLine(), SP->getFilename(), SP->getDirectory());
@@ -385,7 +385,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DIObjCProperty Ty) {
   addSourceLine(Die, Ty->getLine(), Ty->getFilename(), Ty->getDirectory());
 }
 
-void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
+void DwarfUnit::addSourceLine(DIE &Die, const MDNamespace *NS) {
   addSourceLine(Die, NS->getLine(), NS->getFilename(), NS->getDirectory());
 }
 
@@ -1101,7 +1101,7 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
   }
 }
 
-DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
+DIE *DwarfUnit::getOrCreateNameSpace(const MDNamespace *NS) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   DIE *ContextDIE = getOrCreateContextDIE(NS->getScope());
@@ -1121,7 +1121,7 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
   return &NDie;
 }
 
-DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal) {
+DIE *DwarfUnit::getOrCreateSubprogramDIE(const MDSubprogram *SP, bool Minimal) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function
   // declarations).
@@ -1152,7 +1152,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP, bool Minimal) {
   return &SPDie;
 }
 
-bool DwarfUnit::applySubprogramDefinitionAttributes(DISubprogram SP,
+bool DwarfUnit::applySubprogramDefinitionAttributes(const MDSubprogram *SP,
                                                     DIE &SPDie) {
   DIE *DeclDie = nullptr;
   StringRef DeclLinkageName;
@@ -1184,7 +1184,7 @@ bool DwarfUnit::applySubprogramDefinitionAttributes(DISubprogram SP,
   return true;
 }
 
-void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie,
+void DwarfUnit::applySubprogramAttributes(const MDSubprogram *SP, DIE &SPDie,
                                           bool Minimal) {
   if (!Minimal)
     if (applySubprogramDefinitionAttributes(SP, SPDie))

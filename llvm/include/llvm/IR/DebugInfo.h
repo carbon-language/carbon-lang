@@ -46,10 +46,6 @@ class NamedMDNode;
 class LLVMContext;
 class raw_ostream;
 
-class DIFile;
-class DISubprogram;
-class DILexicalBlock;
-class DILexicalBlockFile;
 class DIVariable;
 class DIObjCProperty;
 
@@ -62,12 +58,6 @@ typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
   template <> struct simplify_type<DESC>;
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIFile)
-DECLARE_SIMPLIFY_DESCRIPTOR(DICompileUnit)
-DECLARE_SIMPLIFY_DESCRIPTOR(DISubprogram)
-DECLARE_SIMPLIFY_DESCRIPTOR(DILexicalBlock)
-DECLARE_SIMPLIFY_DESCRIPTOR(DILexicalBlockFile)
-DECLARE_SIMPLIFY_DESCRIPTOR(DINameSpace)
 DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
 DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
@@ -102,77 +92,6 @@ public:
   operator MDEnumerator *() const { return N; }
   MDEnumerator *operator->() const { return N; }
   MDEnumerator &operator*() const { return *N; }
-};
-
-class DIFile {
-  MDFile *N;
-
-public:
-  DIFile(const MDFile *N = nullptr) : N(const_cast<MDFile *>(N)) {}
-
-  operator MDFile *() const { return N; }
-  MDFile *operator->() const { return N; }
-  MDFile &operator*() const { return *N; }
-};
-
-class DICompileUnit {
-  MDCompileUnit *N;
-
-public:
-  DICompileUnit(const MDCompileUnit *N = nullptr)
-      : N(const_cast<MDCompileUnit *>(N)) {}
-
-  operator MDCompileUnit *() const { return N; }
-  MDCompileUnit *operator->() const { return N; }
-  MDCompileUnit &operator*() const { return *N; }
-};
-
-class DISubprogram {
-  MDSubprogram *N;
-
-public:
-  DISubprogram(const MDSubprogram *N = nullptr)
-      : N(const_cast<MDSubprogram *>(N)) {}
-
-  operator MDSubprogram *() const { return N; }
-  MDSubprogram *operator->() const { return N; }
-  MDSubprogram &operator*() const { return *N; }
-};
-
-class DILexicalBlock {
-  MDLexicalBlockBase *N;
-
-public:
-  DILexicalBlock(const MDLexicalBlockBase *N = nullptr)
-      : N(const_cast<MDLexicalBlockBase *>(N)) {}
-
-  operator MDLexicalBlockBase *() const { return N; }
-  MDLexicalBlockBase *operator->() const { return N; }
-  MDLexicalBlockBase &operator*() const { return *N; }
-};
-
-class DILexicalBlockFile {
-  MDLexicalBlockFile *N;
-
-public:
-  DILexicalBlockFile(const MDLexicalBlockFile *N = nullptr)
-      : N(const_cast<MDLexicalBlockFile *>(N)) {}
-
-  operator MDLexicalBlockFile *() const { return N; }
-  MDLexicalBlockFile *operator->() const { return N; }
-  MDLexicalBlockFile &operator*() const { return *N; }
-};
-
-class DINameSpace {
-  MDNamespace *N;
-
-public:
-  DINameSpace(const MDNamespace *N = nullptr)
-      : N(const_cast<MDNamespace *>(N)) {}
-
-  operator MDNamespace *() const { return N; }
-  MDNamespace *operator->() const { return N; }
-  MDNamespace &operator*() const { return *N; }
 };
 
 class DITemplateTypeParameter {
@@ -278,12 +197,6 @@ public:
   template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
 SIMPLIFY_DESCRIPTOR(DISubrange)
 SIMPLIFY_DESCRIPTOR(DIEnumerator)
-SIMPLIFY_DESCRIPTOR(DIFile)
-SIMPLIFY_DESCRIPTOR(DICompileUnit)
-SIMPLIFY_DESCRIPTOR(DISubprogram)
-SIMPLIFY_DESCRIPTOR(DILexicalBlock)
-SIMPLIFY_DESCRIPTOR(DILexicalBlockFile)
-SIMPLIFY_DESCRIPTOR(DINameSpace)
 SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
 SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
 SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
@@ -298,8 +211,8 @@ SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 MDSubprogram *getDISubprogram(const MDNode *Scope);
 
 /// \brief Find debug info for a given function.
-/// \returns a valid DISubprogram, if found. Otherwise, it returns an empty
-/// DISubprogram.
+///
+/// \returns a valid subprogram, if found. Otherwise, return \c nullptr.
 MDSubprogram *getDISubprogram(const Function *F);
 
 /// \brief Find underlying composite type.

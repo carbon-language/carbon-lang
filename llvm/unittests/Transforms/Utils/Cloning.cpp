@@ -228,15 +228,16 @@ protected:
     IRBuilder<> IBuilder(C);
 
     // Function DI
-    DIFile File = DBuilder.createFile("filename.c", "/file/dir/");
+    auto *File = DBuilder.createFile("filename.c", "/file/dir/");
     DITypeArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
     MDSubroutineType *FuncType =
         DBuilder.createSubroutineType(File, ParamTypes);
-    DICompileUnit CU = DBuilder.createCompileUnit(dwarf::DW_LANG_C99,
-        "filename.c", "/file/dir", "CloneFunc", false, "", 0);
+    auto *CU =
+        DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
+                                   "/file/dir", "CloneFunc", false, "", 0);
 
-    DISubprogram Subprogram = DBuilder.createFunction(CU, "f", "f", File, 4,
-        FuncType, true, true, 3, 0, false, OldFunc);
+    auto *Subprogram = DBuilder.createFunction(
+        CU, "f", "f", File, 4, FuncType, true, true, 3, 0, false, OldFunc);
 
     // Function body
     BasicBlock* Entry = BasicBlock::Create(C, "", OldFunc);
@@ -303,9 +304,9 @@ TEST_F(CloneFunc, Subprogram) {
   EXPECT_EQ(2U, SubprogramCount);
 
   auto Iter = Finder->subprograms().begin();
-  DISubprogram Sub1 = cast<MDSubprogram>(*Iter);
+  auto *Sub1 = cast<MDSubprogram>(*Iter);
   Iter++;
-  DISubprogram Sub2 = cast<MDSubprogram>(*Iter);
+  auto *Sub2 = cast<MDSubprogram>(*Iter);
 
   EXPECT_TRUE(
       (Sub1->getFunction() == OldFunc && Sub2->getFunction() == NewFunc) ||
@@ -320,9 +321,9 @@ TEST_F(CloneFunc, SubprogramInRightCU) {
   EXPECT_EQ(2U, Finder->compile_unit_count());
 
   auto Iter = Finder->compile_units().begin();
-  DICompileUnit CU1 = cast<MDCompileUnit>(*Iter);
+  auto *CU1 = cast<MDCompileUnit>(*Iter);
   Iter++;
-  DICompileUnit CU2 = cast<MDCompileUnit>(*Iter);
+  auto *CU2 = cast<MDCompileUnit>(*Iter);
   EXPECT_TRUE(CU1->getSubprograms().size() == 0 ||
               CU2->getSubprograms().size() == 0);
 }

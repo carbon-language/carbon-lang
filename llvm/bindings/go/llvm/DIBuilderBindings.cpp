@@ -40,16 +40,14 @@ LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef Dref,
                                                int Optimized, const char *Flags,
                                                unsigned RuntimeVersion) {
   DIBuilder *D = unwrap(Dref);
-  DICompileUnit CU = D->createCompileUnit(Lang, File, Dir, Producer, Optimized,
-                                          Flags, RuntimeVersion);
-  return wrap(CU);
+  return wrap(D->createCompileUnit(Lang, File, Dir, Producer, Optimized, Flags,
+                                   RuntimeVersion));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef Dref, const char *File,
                                         const char *Dir) {
   DIBuilder *D = unwrap(Dref);
-  DIFile F = D->createFile(File, Dir);
-  return wrap(F);
+  return wrap(D->createFile(File, Dir));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef Dref,
@@ -68,9 +66,8 @@ LLVMMetadataRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef Dref,
                                                     LLVMMetadataRef File,
                                                     unsigned Discriminator) {
   DIBuilder *D = unwrap(Dref);
-  DILexicalBlockFile LBF = D->createLexicalBlockFile(
-      unwrap<MDLocalScope>(Scope), unwrap<MDFile>(File), Discriminator);
-  return wrap(LBF);
+  return wrap(D->createLexicalBlockFile(unwrap<MDLocalScope>(Scope),
+                                        unwrap<MDFile>(File), Discriminator));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateFunction(
@@ -79,12 +76,11 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
     LLVMMetadataRef CompositeType, int IsLocalToUnit, int IsDefinition,
     unsigned ScopeLine, unsigned Flags, int IsOptimized, LLVMValueRef Func) {
   DIBuilder *D = unwrap(Dref);
-  DISubprogram SP = D->createFunction(
-      unwrap<MDScope>(Scope), Name, LinkageName,
-      File ? unwrap<MDFile>(File) : nullptr, Line,
-      unwrap<MDSubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
-      ScopeLine, Flags, IsOptimized, unwrap<Function>(Func));
-  return wrap(SP);
+  return wrap(D->createFunction(unwrap<MDScope>(Scope), Name, LinkageName,
+                                File ? unwrap<MDFile>(File) : nullptr, Line,
+                                unwrap<MDSubroutineType>(CompositeType),
+                                IsLocalToUnit, IsDefinition, ScopeLine, Flags,
+                                IsOptimized, unwrap<Function>(Func)));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(

@@ -705,7 +705,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // Patch the pointer to LLVM function in debug info descriptor.
   auto DI = FunctionDIs.find(F);
   if (DI != FunctionDIs.end()) {
-    DISubprogram SP = DI->second;
+    MDSubprogram *SP = DI->second;
     SP->replaceFunction(NF);
     // Ensure the map is updated so it can be reused on subsequent argument
     // promotions of the same function.

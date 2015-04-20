@@ -28,7 +28,6 @@ class DwarfUnit;
 class DIEAbbrev;
 class MCSymbol;
 class DIE;
-class DISubprogram;
 class LexicalScope;
 class StringRef;
 class DwarfDebug;

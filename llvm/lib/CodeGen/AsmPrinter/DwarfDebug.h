@@ -451,7 +451,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  DwarfCompileUnit &constructDwarfCompileUnit(DICompileUnit DIUnit);
+  DwarfCompileUnit &constructDwarfCompileUnit(const MDCompileUnit *DIUnit);
 
   /// \brief Construct imported_module or imported_declaration DIE.
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
@@ -468,7 +468,7 @@ class DwarfDebug : public AsmPrinterHandler {
   void identifyScopeMarkers();
 
   /// \brief Populate LexicalScope entries with variables' info.
-  void collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
+  void collectVariableInfo(DwarfCompileUnit &TheCU, const MDSubprogram *SP,
                            DenseSet<InlinedVariable> &ProcessedVars);
 
   /// \brief Build the location list for all DBG_VALUEs in the
@@ -581,7 +581,7 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
-  void addSubprogramNames(DISubprogram SP, DIE &Die);
+  void addSubprogramNames(const MDSubprogram *SP, DIE &Die);
 
   AddressPool &getAddressPool() { return AddrPool; }
 

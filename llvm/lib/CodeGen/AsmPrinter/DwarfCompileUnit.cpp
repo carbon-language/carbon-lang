@@ -16,7 +16,7 @@
 
 namespace llvm {
 
-DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DICompileUnit Node,
+DwarfCompileUnit::DwarfCompileUnit(unsigned UID, const MDCompileUnit *Node,
                                    AsmPrinter *A, DwarfDebug *DW,
                                    DwarfFile *DWU)
     : DwarfUnit(UID, dwarf::DW_TAG_compile_unit, Node, A, DW, DWU),
@@ -276,7 +276,7 @@ void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
 // Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
 // and DW_AT_high_pc attributes. If there are global variables in this
 // scope then create and insert DIEs for these variables.
-DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
+DIE &DwarfCompileUnit::updateSubprogramScopeDIE(const MDSubprogram *SP) {
   DIE *SPDie = getOrCreateSubprogramDIE(SP, includeMinimalInlineScopes());
 
   attachLowHighPC(*SPDie, Asm->getFunctionBegin(), Asm->getFunctionEnd());
@@ -562,7 +562,7 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
   assert(!Scope->getInlinedAt());
   assert(!Scope->isAbstractScope());
-  DISubprogram Sub = cast<MDSubprogram>(Scope->getScopeNode());
+  auto *Sub = cast<MDSubprogram>(Scope->getScopeNode());
 
   DD->getProcessedSPNodes().insert(Sub);
 
@@ -604,7 +604,7 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
   if (AbsDef)
     return;
 
-  DISubprogram SP = cast<MDSubprogram>(Scope->getScopeNode());
+  auto *SP = cast<MDSubprogram>(Scope->getScopeNode());
 
   DIE *ContextDIE;
 
@@ -658,7 +658,7 @@ DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
   return IMDie;
 }
 
-void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
+void DwarfCompileUnit::finishSubprogramDefinition(const MDSubprogram *SP) {
   DIE *D = getDIE(SP);
   if (DIE *AbsSPDIE = DU->getAbstractSPDies().lookup(SP)) {
     if (D)
@@ -675,7 +675,7 @@ void DwarfCompileUnit::finishSubprogramDefinition(DISubprogram SP) {
       applySubprogramAttributesToDefinition(SP, *D);
   }
 }
-void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
+void DwarfCompileUnit::collectDeadVariables(const MDSubprogram *SP) {
   assert(SP && "CU's subprogram list contains a non-subprogram");
   assert(SP->isDefinition() &&
          "CU's subprogram list contains a subprogram declaration");
@@ -805,8 +805,8 @@ void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
   Die.addValue((dwarf::Attribute)0, Form, Value);
 }
 
-void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
-                                                             DIE &SPDie) {
+void DwarfCompileUnit::applySubprogramAttributesToDefinition(
+    const MDSubprogram *SP, DIE &SPDie) {
   auto *SPDecl = SP->getDeclaration();
   auto *Context = resolve(SPDecl ? SPDecl->getScope() : SP->getScope());
   applySubprogramAttributes(SP, SPDie, includeMinimalInlineScopes());

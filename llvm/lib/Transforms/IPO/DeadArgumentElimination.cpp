@@ -303,7 +303,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Patch the pointer to LLVM function in debug info descriptor.
   auto DI = FunctionDIs.find(&Fn);
   if (DI != FunctionDIs.end()) {
-    DISubprogram SP = DI->second;
+    MDSubprogram *SP = DI->second;
     SP->replaceFunction(NF);
     // Ensure the map is updated so it can be reused on non-varargs argument
     // eliminations of the same function.

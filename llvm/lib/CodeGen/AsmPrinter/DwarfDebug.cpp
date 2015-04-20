@@ -277,7 +277,7 @@ static StringRef getObjCMethodName(StringRef In) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-void DwarfDebug::addSubprogramNames(DISubprogram SP, DIE &Die) {
+void DwarfDebug::addSubprogramNames(const MDSubprogram *SP, DIE &Die) {
   if (!SP->isDefinition())
     return;
   addAccelName(SP->getName(), Die);
@@ -363,7 +363,8 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
 
 // Create new DwarfCompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
-DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
+DwarfCompileUnit &
+DwarfDebug::constructDwarfCompileUnit(const MDCompileUnit *DIUnit) {
   StringRef FN = DIUnit->getFilename();
   CompilationDir = DIUnit->getDirectory();
 
@@ -446,7 +447,7 @@ void DwarfDebug::beginModule() {
   SingleCU = CU_Nodes->getNumOperands() == 1;
 
   for (MDNode *N : CU_Nodes->operands()) {
-    DICompileUnit CUNode = cast<MDCompileUnit>(N);
+    auto *CUNode = cast<MDCompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     for (auto *IE : CUNode->getImportedEntities())
       ScopesWithImportedEntities.push_back(std::make_pair(IE->getScope(), IE));
@@ -512,7 +513,7 @@ void DwarfDebug::collectDeadVariables() {
 
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
     for (MDNode *N : CU_Nodes->operands()) {
-      DICompileUnit TheCU = cast<MDCompileUnit>(N);
+      auto *TheCU = cast<MDCompileUnit>(N);
       // Construct subprogram DIE and add variables DIEs.
       DwarfCompileUnit *SPCU =
           static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
@@ -872,7 +873,8 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
 
 // Find variables for each lexical scope.
-void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
+void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
+                                     const MDSubprogram *SP,
                                      DenseSet<InlinedVariable> &Processed) {
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
@@ -1185,7 +1187,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  DISubprogram SP = cast<MDSubprogram>(FnScope->getScopeNode());
+  auto *SP = cast<MDSubprogram>(FnScope->getScopeNode());
   DwarfCompileUnit &TheCU = *SPMap.lookup(SP);
 
   DenseSet<InlinedVariable> ProcessedVars;
@@ -1215,7 +1217,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 #endif
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
-    DISubprogram SP = cast<MDSubprogram>(AScope->getScopeNode());
+    auto *SP = cast<MDSubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
     for (DIVariable DV : SP->getVariables()) {
       if (!ProcessedVars.insert(InlinedVariable(DV, nullptr)).second)
