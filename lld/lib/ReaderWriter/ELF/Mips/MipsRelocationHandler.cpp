@@ -114,6 +114,14 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
     return {4, 0x3ff, 1, false};
   case R_MICROMIPS_PC23_S2:
     return {4, 0x7fffff, 2, true};
+  case R_MICROMIPS_PC18_S3:
+    return {4, 0x3ffff, 3, true};
+  case R_MICROMIPS_PC19_S2:
+    return {4, 0x7ffff, 2, true};
+  case R_MICROMIPS_PC21_S2:
+    return {4, 0x1fffff, 2, true};
+  case R_MICROMIPS_PC26_S2:
+    return {4, 0x3ffffff, 2, true};
   case R_MIPS_CALL16:
   case R_MIPS_TLS_GD:
   case R_MIPS_TLS_LDM:
@@ -269,7 +277,7 @@ static uint64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
   return A + S - GP;
 }
 
-/// \brief R_MIPS_PC18_S3
+/// \brief R_MIPS_PC18_S3, R_MICROMIPS_PC18_S3
 /// local/external: (S + A - P) >> 3 (P with cleared 3 less significant bits)
 static uint32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
@@ -278,7 +286,7 @@ static uint32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
   return result >> 3;
 }
 
-/// \brief R_MIPS_PC19_S2
+/// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
 /// local/external: (S + A - P) >> 2
 static uint32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
@@ -287,7 +295,7 @@ static uint32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
   return result >> 2;
 }
 
-/// \brief R_MIPS_PC21_S2
+/// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
 /// local/external: (S + A - P) >> 2
 static uint32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<23>(A);
@@ -296,7 +304,7 @@ static uint32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
   return result >> 2;
 }
 
-/// \brief R_MIPS_PC26_S2
+/// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
 /// local/external: (S + A - P) >> 2
 static uint32_t relocPc26(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<28>(A);
@@ -457,12 +465,16 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
   case R_MICROMIPS_GOT_OFST:
     return relocGOTOfst(tgtAddr, addend);
   case R_MIPS_PC18_S3:
+  case R_MICROMIPS_PC18_S3:
     return relocPc18(relAddr, tgtAddr, addend);
   case R_MIPS_PC19_S2:
+  case R_MICROMIPS_PC19_S2:
     return relocPc19(relAddr, tgtAddr, addend);
   case R_MIPS_PC21_S2:
+  case R_MICROMIPS_PC21_S2:
     return relocPc21(relAddr, tgtAddr, addend);
   case R_MIPS_PC26_S2:
+  case R_MICROMIPS_PC26_S2:
     return relocPc26(relAddr, tgtAddr, addend);
   case R_MICROMIPS_PC7_S1:
     return relocPc7(relAddr, tgtAddr, addend);
