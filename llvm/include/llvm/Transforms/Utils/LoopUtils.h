@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Dominators.h"
+#include "llvm/IR/IRBuilder.h"
 
 namespace llvm {
 class AliasAnalysis;
@@ -40,6 +41,132 @@ struct LICMSafetyInfo {
   bool HeaderMayThrow;     // Same as previous, but specific to loop header
   LICMSafetyInfo() : MayThrow(false), HeaderMayThrow(false)
   {}
+};
+
+/// This POD struct holds information about a potential reduction operation.
+class ReductionInstDesc {
+
+public:
+  // This enum represents the kind of minmax reduction.
+  enum MinMaxReductionKind {
+    MRK_Invalid,
+    MRK_UIntMin,
+    MRK_UIntMax,
+    MRK_SIntMin,
+    MRK_SIntMax,
+    MRK_FloatMin,
+    MRK_FloatMax
+  };
+  ReductionInstDesc(bool IsRedux, Instruction *I)
+      : IsReduction(IsRedux), PatternLastInst(I), MinMaxKind(MRK_Invalid) {}
+
+  ReductionInstDesc(Instruction *I, MinMaxReductionKind K)
+      : IsReduction(true), PatternLastInst(I), MinMaxKind(K) {}
+
+  bool isReduction() { return IsReduction; }
+
+  MinMaxReductionKind getMinMaxKind() { return MinMaxKind; }
+
+private:
+  // Is this instruction a reduction candidate.
+  bool IsReduction;
+  // The last instruction in a min/max pattern (select of the select(icmp())
+  // pattern), or the current reduction instruction otherwise.
+  Instruction *PatternLastInst;
+  // If this is a min/max pattern the comparison predicate.
+  MinMaxReductionKind MinMaxKind;
+};
+
+/// This struct holds information about reduction variables.
+class ReductionDescriptor {
+
+public:
+  /// This enum represents the kinds of reductions that we support.
+  enum ReductionKind {
+    RK_NoReduction,   ///< Not a reduction.
+    RK_IntegerAdd,    ///< Sum of integers.
+    RK_IntegerMult,   ///< Product of integers.
+    RK_IntegerOr,     ///< Bitwise or logical OR of numbers.
+    RK_IntegerAnd,    ///< Bitwise or logical AND of numbers.
+    RK_IntegerXor,    ///< Bitwise or logical XOR of numbers.
+    RK_IntegerMinMax, ///< Min/max implemented in terms of select(cmp()).
+    RK_FloatAdd,      ///< Sum of floats.
+    RK_FloatMult,     ///< Product of floats.
+    RK_FloatMinMax    ///< Min/max implemented in terms of select(cmp()).
+  };
+
+  ReductionDescriptor()
+      : StartValue(nullptr), LoopExitInstr(nullptr), Kind(RK_NoReduction),
+        MinMaxKind(ReductionInstDesc::MRK_Invalid) {}
+
+  ReductionDescriptor(Value *Start, Instruction *Exit, ReductionKind K,
+                      ReductionInstDesc::MinMaxReductionKind MK)
+      : StartValue(Start), LoopExitInstr(Exit), Kind(K), MinMaxKind(MK) {}
+
+  /// Returns a struct describing if the instruction 'I' can be a reduction
+  /// variable of type 'Kind'. If the reduction is a min/max pattern of
+  /// select(icmp()) this function advances the instruction pointer 'I' from the
+  /// compare instruction to the select instruction and stores this pointer in
+  /// 'PatternLastInst' member of the returned struct.
+  static ReductionInstDesc isReductionInstr(Instruction *I, ReductionKind Kind,
+                                            ReductionInstDesc &Prev,
+                                            bool HasFunNoNaNAttr);
+
+  /// Returns true if instuction I has multiple uses in Insts
+  static bool hasMultipleUsesOf(Instruction *I,
+                                SmallPtrSetImpl<Instruction *> &Insts);
+
+  /// Returns true if all uses of the instruction I is within the Set.
+  static bool areAllUsesIn(Instruction *I, SmallPtrSetImpl<Instruction *> &Set);
+
+  /// Returns a struct describing if the instruction if the instruction is a
+  /// Select(ICmp(X, Y), X, Y) instruction pattern corresponding to a min(X, Y)
+  /// or max(X, Y).
+  static ReductionInstDesc isMinMaxSelectCmpPattern(Instruction *I,
+                                                    ReductionInstDesc &Prev);
+
+  /// Returns identity corresponding to the ReductionKind.
+  static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
+
+  /// Returns the opcode of binary operation corresponding to the ReductionKind.
+  static unsigned getReductionBinOp(ReductionKind Kind);
+
+  /// Returns a Min/Max operation corresponding to MinMaxReductionKind.
+  static Value *createMinMaxOp(IRBuilder<> &Builder,
+                               ReductionInstDesc::MinMaxReductionKind RK,
+                               Value *Left, Value *Right);
+
+  /// Returns true if Phi is a reduction of type Kind and adds it to the
+  /// ReductionDescriptor.
+  static bool AddReductionVar(PHINode *Phi, ReductionKind Kind, Loop *TheLoop,
+                              bool HasFunNoNaNAttr,
+                              ReductionDescriptor &RedDes);
+
+  /// Returns true if Phi is a reduction in TheLoop. The ReductionDescriptor is
+  /// returned in RedDes.
+  static bool isReductionPHI(PHINode *Phi, Loop *TheLoop,
+                             ReductionDescriptor &RedDes);
+
+  ReductionKind getReductionKind() { return Kind; }
+
+  ReductionInstDesc::MinMaxReductionKind getMinMaxReductionKind() {
+    return MinMaxKind;
+  }
+
+  TrackingVH<Value> getReductionStartValue() { return StartValue; }
+
+  Instruction *getLoopExitInstr() { return LoopExitInstr; }
+
+private:
+  // The starting value of the reduction.
+  // It does not have to be zero!
+  TrackingVH<Value> StartValue;
+  // The instruction who's value is used outside the loop.
+  Instruction *LoopExitInstr;
+  // The kind of the reduction.
+  ReductionKind Kind;
+  // If this a min/max reduction the kind of reduction.
+  ReductionInstDesc::MinMaxReductionKind MinMaxKind;
 };
 
 BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);
