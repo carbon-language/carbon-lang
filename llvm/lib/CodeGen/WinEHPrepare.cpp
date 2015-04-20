@@ -770,6 +770,15 @@ static bool isSelectorDispatch(BasicBlock *BB, BasicBlock *&CatchHandler,
   return false;
 }
 
+static bool isCatchBlock(BasicBlock *BB) {
+  for (BasicBlock::iterator II = BB->getFirstNonPHIOrDbg(), IE = BB->end();
+       II != IE; ++II) {
+    if (match(cast<Value>(II), m_Intrinsic<Intrinsic::eh_begincatch>()))
+      return true;
+  }
+  return false;
+}
+
 static BasicBlock *createStubLandingPad(Function *Handler,
                                         Value *PersonalityFn) {
   // FIXME: Finish this!
@@ -1447,10 +1456,10 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
     }
 
     CatchHandler *CatchAction = findCatchHandler(BB, NextBB, VisitedBlocks);
+    assert(CatchAction);
+
     // See if there is any interesting code executed before the dispatch.
     findCleanupHandlers(Actions, BB, CatchAction->getStartBlock());
-
-    assert(CatchAction);
 
     // When the source program contains multiple nested try blocks the catch
     // handlers can get strung together in such a way that we can encounter
@@ -1463,6 +1472,21 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
                    << CatchAction->getStartBlock()->getName() << "\n");
       Actions.insertCatchHandler(CatchAction);
     } else {
+      // Under some circumstances optimized IR will flow unconditionally into a
+      // handler block without checking the selector.  This can only happen if
+      // the landing pad has a catch-all handler and the handler for the
+      // preceeding catch clause is identical to the catch-call handler
+      // (typically an empty catch).  In this case, the handler must be shared
+      // by all remaining clauses.
+      if (isa<ConstantPointerNull>(
+              CatchAction->getSelector()->stripPointerCasts())) {
+        DEBUG(dbgs() << "  Applying early catch-all handler in block "
+                     << CatchAction->getStartBlock()->getName()
+                     << "  to all remaining clauses.\n");
+        Actions.insertCatchHandler(CatchAction);
+        return;
+      }
+
       DEBUG(dbgs() << "  Found extra catch dispatch in block "
                    << CatchAction->getStartBlock()->getName() << "\n");
     }
@@ -1514,6 +1538,18 @@ CatchHandler *WinEHPrepare::findCatchHandler(BasicBlock *BB,
   if (!CatchHandlerMap.count(BB)) {
     if (isSelectorDispatch(BB, CatchBlock, Selector, NextBB)) {
       CatchHandler *Action = new CatchHandler(BB, Selector, NextBB);
+      CatchHandlerMap[BB] = Action;
+      return Action;
+    }
+    // If we encounter a block containing an llvm.eh.begincatch before we
+    // find a selector dispatch block, the handler is assumed to be
+    // reached unconditionally.  This happens for catch-all blocks, but
+    // it can also happen for other catch handlers that have been combined
+    // with the catch-all handler during optimization.
+    if (isCatchBlock(BB)) {
+      PointerType *Int8PtrTy = Type::getInt8PtrTy(BB->getContext());
+      Constant *NullSelector = ConstantPointerNull::get(Int8PtrTy);
+      CatchHandler *Action = new CatchHandler(BB, NullSelector, nullptr);
       CatchHandlerMap[BB] = Action;
       return Action;
     }
