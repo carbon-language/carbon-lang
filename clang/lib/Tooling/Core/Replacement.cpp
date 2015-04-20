@@ -77,11 +77,11 @@ bool Replacement::apply(Rewriter &Rewrite) const {
 }
 
 std::string Replacement::toString() const {
-  std::string result;
-  llvm::raw_string_ostream stream(result);
-  stream << FilePath << ": " << ReplacementRange.getOffset() << ":+"
+  std::string Result;
+  llvm::raw_string_ostream Stream(Result);
+  Stream << FilePath << ": " << ReplacementRange.getOffset() << ":+"
          << ReplacementRange.getLength() << ":\"" << ReplacementText << "\"";
-  return result;
+  return Stream.str();
 }
 
 bool operator<(const Replacement &LHS, const Replacement &RHS) {
