@@ -1398,6 +1398,12 @@ TEST(Callee, MatchesDeclarations) {
 
   EXPECT_TRUE(matches("class Y { void x() { x(); } };", CallMethodX));
   EXPECT_TRUE(notMatches("class Y { void x() {} };", CallMethodX));
+
+  CallMethodX = callExpr(callee(conversionDecl()));
+  EXPECT_TRUE(
+      matches("struct Y { operator int() const; }; int i = Y();", CallMethodX));
+  EXPECT_TRUE(notMatches("struct Y { operator int() const; }; Y y = Y();",
+                         CallMethodX));
 }
 
 TEST(Callee, MatchesMemberExpressions) {

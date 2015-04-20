@@ -128,6 +128,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(constructorDecl);
   REGISTER_MATCHER(containsDeclaration);
   REGISTER_MATCHER(continueStmt);
+  REGISTER_MATCHER(conversionDecl);
   REGISTER_MATCHER(cStyleCastExpr);
   REGISTER_MATCHER(ctorInitializer);
   REGISTER_MATCHER(CUDAKernelCallExpr);

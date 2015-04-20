@@ -757,6 +757,15 @@ const internal::VariadicDynCastAllOfMatcher<
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Decl, CXXMethodDecl> methodDecl;
 
+/// \brief Matches conversion operator declarations.
+///
+/// Example matches the operator.
+/// \code
+///   class X { operator int() const; };
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Decl, CXXConversionDecl>
+    conversionDecl;
+
 /// \brief Matches variable declarations.
 ///
 /// Note: this does not match declarations of member variables, which are
