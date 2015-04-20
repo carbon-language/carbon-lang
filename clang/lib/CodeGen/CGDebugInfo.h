@@ -197,16 +197,16 @@ class CGDebugInfo {
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
                                  SmallVectorImpl<llvm::Metadata *> &E,
                                  llvm::MDType *RecordTy);
-  llvm::DIDerivedType CreateRecordStaticField(const VarDecl *Var,
-                                              llvm::MDType *RecordTy,
-                                              const RecordDecl *RD);
+  llvm::MDDerivedType *CreateRecordStaticField(const VarDecl *Var,
+                                               llvm::MDType *RecordTy,
+                                               const RecordDecl *RD);
   void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
                                 llvm::DIFile F,
                                 SmallVectorImpl<llvm::Metadata *> &E,
                                 llvm::MDType *RecordTy, const RecordDecl *RD);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            SmallVectorImpl<llvm::Metadata *> &E,
-                           llvm::DICompositeType RecordTy);
+                           llvm::MDCompositeType *RecordTy);
 
   void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::DIFile F,
                          SmallVectorImpl<llvm::Metadata *> &EltTys);
@@ -370,7 +370,7 @@ private:
 
   /// Return debug info descriptor to describe in-class static data member
   /// declaration for the given out-of-class definition.
-  llvm::DIDerivedType
+  llvm::MDDerivedType *
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
 
   /// \brief Create a DISubprogram describing the forward

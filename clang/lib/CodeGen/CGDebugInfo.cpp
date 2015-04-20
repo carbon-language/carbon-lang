@@ -901,9 +901,9 @@ void CGDebugInfo::CollectRecordLambdaFields(
 }
 
 /// Helper for CollectRecordFields.
-llvm::DIDerivedType CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
-                                                         llvm::MDType *RecordTy,
-                                                         const RecordDecl *RD) {
+llvm::MDDerivedType *
+CGDebugInfo::CreateRecordStaticField(const VarDecl *Var, llvm::MDType *RecordTy,
+                                     const RecordDecl *RD) {
   // Create the descriptor for the static variable, with or without
   // constant initializers.
   Var = Var->getCanonicalDecl();
@@ -924,7 +924,7 @@ llvm::DIDerivedType CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
   }
 
   unsigned Flags = getAccessFlag(Var->getAccess(), RD);
-  llvm::DIDerivedType GV = DBuilder.createStaticMemberType(
+  llvm::MDDerivedType *GV = DBuilder.createStaticMemberType(
       RecordTy, VName, VUnit, LineNumber, VTy, Flags, C);
   StaticDataMemberCache[Var->getCanonicalDecl()].reset(GV);
   return GV;
@@ -960,7 +960,7 @@ void CGDebugInfo::CollectRecordNormalField(
 void CGDebugInfo::CollectRecordFields(
     const RecordDecl *record, llvm::DIFile tunit,
     SmallVectorImpl<llvm::Metadata *> &elements,
-    llvm::DICompositeType RecordTy) {
+    llvm::MDCompositeType *RecordTy) {
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
 
   if (CXXDecl && CXXDecl->isLambda())
@@ -2460,10 +2460,8 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
   if (MI == SPCache.end()) {
     if (const CXXMethodDecl *MD =
             dyn_cast<CXXMethodDecl>(FD->getCanonicalDecl())) {
-      llvm::DICompositeType T = cast<llvm::MDCompositeType>(S);
-      llvm::DISubprogram SP =
-          CreateCXXMemberFunction(MD, getOrCreateFile(MD->getLocation()), T);
-      return SP;
+      return CreateCXXMemberFunction(MD, getOrCreateFile(MD->getLocation()),
+                                     cast<llvm::MDCompositeType>(S));
     }
   }
   if (MI != SPCache.end()) {
@@ -3141,21 +3139,21 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 
 /// If D is an out-of-class definition of a static data member of a class, find
 /// its corresponding in-class declaration.
-llvm::DIDerivedType
+llvm::MDDerivedType *
 CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
   if (!D->isStaticDataMember())
-    return llvm::DIDerivedType();
+    return nullptr;
 
   auto MI = StaticDataMemberCache.find(D->getCanonicalDecl());
   if (MI != StaticDataMemberCache.end()) {
     assert(MI->second && "Static data member declaration should still exist");
-    return cast<llvm::MDDerivedTypeBase>(MI->second);
+    return cast<llvm::MDDerivedType>(MI->second);
   }
 
   // If the member wasn't found in the cache, lazily construct and add it to the
   // type (used when a limited form of the type is emitted).
   auto DC = D->getDeclContext();
-  llvm::DICompositeType Ctxt =
+  auto *Ctxt =
       cast<llvm::MDCompositeType>(getContextDescriptor(cast<Decl>(DC)));
   return CreateRecordStaticField(D, Ctxt, cast<RecordDecl>(DC));
 }
@@ -3181,9 +3179,9 @@ llvm::DIGlobalVariable CGDebugInfo::CollectAnonRecordDecls(
       continue;
     }
     // Use VarDecl's Tag, Scope and Line number.
-    GV = DBuilder.createGlobalVariable(
-        DContext, FieldName, LinkageName, Unit, LineNo, FieldTy,
-        Var->hasInternalLinkage(), Var, llvm::DIDerivedType());
+    GV = DBuilder.createGlobalVariable(DContext, FieldName, LinkageName, Unit,
+                                       LineNo, FieldTy,
+                                       Var->hasInternalLinkage(), Var, nullptr);
   }
   return GV;
 }
