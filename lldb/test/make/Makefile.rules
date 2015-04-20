@@ -14,9 +14,10 @@
 #
 # Also might be of interest:
 # FRAMEWORK_INCLUDES (Darwin only) :=
-# CFLAGS_EXTRAS +=
+# CFLAGS_EXTRAS :=
 # LD_EXTRAS :=
 # SPLIT_DEBUG_SYMBOLS := YES
+# CROSS_COMPILE :=
 #
 # And test/functionalities/archives/Makefile:
 # MAKE_DSYM := NO
@@ -84,9 +85,10 @@ ifeq "$(OS)" "Darwin"
 	DS := $(shell xcrun -find -toolchain default dsymutil)
 	DSFLAGS =
 	DSYM = $(EXE).dSYM
-	AR := libtool
+	AR := $(CROSS_COMPILE)libtool
 	ARFLAGS := -static -o
 else
+	AR := $(CROSS_COMPILE)ar
 	# On non-Apple platforms, -arch becomes -m
 	ARCHFLAG := -m
 
@@ -188,7 +190,7 @@ cxx_linker_notdir = $(if $(findstring clang,$(1)), \
                                         $(subst cc,c++,$(1))))))
 cxx_linker = $(if $(findstring /,$(1)),$(join $(dir $(1)), $(call cxx_linker_notdir,$(notdir $(1)))),$(call cxx_linker_notdir,$(1)))
 
-OBJCOPY = objcopy
+OBJCOPY := $(CROSS_COMPILE)objcopy
 
 #----------------------------------------------------------------------
 # Windows specific options
