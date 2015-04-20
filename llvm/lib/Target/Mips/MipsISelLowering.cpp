@@ -221,9 +221,23 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1,  Promote);
   }
 
-  // MIPS doesn't have extending float->double load/store
-  for (MVT VT : MVT::fp_valuetypes())
+  // MIPS doesn't have extending float->double load/store.  Set LoadExtAction
+  // for f32, f16
+  for (MVT VT : MVT::fp_valuetypes()) {
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f16, Expand);
+  }
+
+  // Set LoadExtAction for f16 vectors to Expand
+  for (MVT VT : MVT::fp_vector_valuetypes()) {
+    MVT F16VT = MVT::getVectorVT(MVT::f16, VT.getVectorNumElements());
+    if (F16VT.isValid())
+      setLoadExtAction(ISD::EXTLOAD, VT, F16VT, Expand);
+  }
+
+  setTruncStoreAction(MVT::f32, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f16, Expand);
+
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
   // Used by legalize types to correctly generate the setcc result.
@@ -338,6 +352,12 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
   setOperationAction(ISD::FMA,               MVT::f64,   Expand);
   setOperationAction(ISD::FREM,              MVT::f32,   Expand);
   setOperationAction(ISD::FREM,              MVT::f64,   Expand);
+
+  // Lower f16 conversion operations into library calls
+  setOperationAction(ISD::FP16_TO_FP,        MVT::f32,   Expand);
+  setOperationAction(ISD::FP_TO_FP16,        MVT::f32,   Expand);
+  setOperationAction(ISD::FP16_TO_FP,        MVT::f64,   Expand);
+  setOperationAction(ISD::FP_TO_FP16,        MVT::f64,   Expand);
 
   setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
 
