@@ -65,6 +65,9 @@ public:
 
     virtual bool
     ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files);
+    
+    virtual bool
+    ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules);
 
     virtual size_t
     ParseFunctionBlocks (const lldb_private::SymbolContext& sc);

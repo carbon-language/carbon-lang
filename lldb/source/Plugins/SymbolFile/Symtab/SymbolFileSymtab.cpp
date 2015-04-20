@@ -266,6 +266,12 @@ SymbolFileSymtab::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpe
     return false;
 }
 
+bool
+SymbolFileSymtab::ParseImportedModules (const SymbolContext &sc, std::vector<ConstString> &imported_modules)
+{
+    return false;
+}
+
 size_t
 SymbolFileSymtab::ParseFunctionBlocks (const SymbolContext &sc)
 {

@@ -11,6 +11,8 @@
 #define liblldb_ClangPersistentVariables_h_
 
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/ClangModulesDeclVendor.h"
+
 #include "llvm/ADT/DenseMap.h"
 
 namespace lldb_private
@@ -63,11 +65,25 @@ public:
     clang::TypeDecl *
     GetPersistentType (const ConstString &name);
     
+    void
+    AddHandLoadedClangModule(ClangModulesDeclVendor::ModuleID module)
+    {
+        m_hand_loaded_clang_modules.push_back(module);
+    }
+    
+    const ClangModulesDeclVendor::ModuleVector &GetHandLoadedClangModules()
+    {
+        return m_hand_loaded_clang_modules;
+    }
+    
 private:
     uint32_t                                                m_next_persistent_variable_id;  ///< The counter used by GetNextResultName().
     
     typedef llvm::DenseMap<const char *, clang::TypeDecl *> PersistentTypeMap;
     PersistentTypeMap                                       m_persistent_types;             ///< The persistent types declared by the user.
+    
+    ClangModulesDeclVendor::ModuleVector                    m_hand_loaded_clang_modules;    ///< These are Clang modules we hand-loaded; these are the highest-
+                                                                                            ///< priority source for macros.
 };
 
 }

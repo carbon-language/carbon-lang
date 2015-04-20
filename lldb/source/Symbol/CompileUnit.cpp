@@ -436,6 +436,23 @@ CompileUnit::SetVariableList(VariableListSP &variables)
     m_variables = variables;
 }
 
+const std::vector<ConstString> &
+CompileUnit::GetImportedModules ()
+{
+    if (m_imported_modules.empty() &&
+        m_flags.IsClear(flagsParsedImportedModules))
+    {
+        m_flags.Set(flagsParsedImportedModules);
+        if (SymbolVendor *symbol_vendor = GetModule()->GetSymbolVendor())
+        {
+            SymbolContext sc;
+            CalculateSymbolContext(&sc);
+            symbol_vendor->ParseImportedModules(sc, m_imported_modules);
+        }
+    }
+    return m_imported_modules;
+}
+
 FileSpecList&
 CompileUnit::GetSupportFiles ()
 {

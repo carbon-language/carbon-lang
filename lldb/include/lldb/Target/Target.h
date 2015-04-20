@@ -128,6 +128,9 @@ public:
     GetClangModuleSearchPaths ();
     
     bool
+    GetEnableAutoImportClangModules () const;
+    
+    bool
     GetEnableSyntheticValue () const;
     
     uint32_t

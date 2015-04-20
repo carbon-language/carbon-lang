@@ -2927,6 +2927,7 @@ g_properties[] =
     { "exec-search-paths"                  , OptionValue::eTypeFileSpecList, false, 0                       , NULL, NULL, "Executable search paths to use when locating executable files whose paths don't match the local file system." },
     { "debug-file-search-paths"            , OptionValue::eTypeFileSpecList, false, 0                       , NULL, NULL, "List of directories to be searched when locating debug symbol files." },
     { "clang-module-search-paths"          , OptionValue::eTypeFileSpecList, false, 0                       , NULL, NULL, "List of directories to be searched when locating modules for Clang." },
+    { "auto-import-clang-modules"          , OptionValue::eTypeBoolean   , false, false                     , NULL, NULL, "Automatically load Clang modules referred to by the program." },
     { "max-children-count"                 , OptionValue::eTypeSInt64    , false, 256                       , NULL, NULL, "Maximum number of children to expand in any level of depth." },
     { "max-string-summary-length"          , OptionValue::eTypeSInt64    , false, 1024                      , NULL, NULL, "Maximum number of characters to show when using %s in summary strings." },
     { "max-memory-read-size"               , OptionValue::eTypeSInt64    , false, 1024                      , NULL, NULL, "Maximum number of bytes that 'memory read' will fetch before --force must be specified." },
@@ -2978,6 +2979,7 @@ enum
     ePropertyExecutableSearchPaths,
     ePropertyDebugFileSearchPaths,
     ePropertyClangModuleSearchPaths,
+    ePropertyAutoImportClangModules,
     ePropertyMaxChildrenCount,
     ePropertyMaxSummaryLength,
     ePropertyMaxMemReadSize,
@@ -3329,6 +3331,13 @@ TargetProperties::GetClangModuleSearchPaths ()
     OptionValueFileSpecList *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpecList (NULL, false, idx);
     assert(option_value);
     return option_value->GetCurrentValue();
+}
+
+bool
+TargetProperties::GetEnableAutoImportClangModules() const
+{
+    const uint32_t idx = ePropertyAutoImportClangModules;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 bool

@@ -24,6 +24,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangModulesDeclVendor.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRInterpreter.h"
@@ -96,12 +97,15 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 
 class ClangExpressionParser::LLDBPreprocessorCallbacks : public PPCallbacks
 {
-    ClangModulesDeclVendor  &m_decl_vendor;
-    StreamString             m_error_stream;
-    bool                     m_has_errors = false;
+    ClangModulesDeclVendor     &m_decl_vendor;
+    ClangPersistentVariables   &m_persistent_vars;
+    StreamString                m_error_stream;
+    bool                        m_has_errors = false;
 public:
-    LLDBPreprocessorCallbacks(ClangModulesDeclVendor &decl_vendor) :
-        m_decl_vendor(decl_vendor)
+    LLDBPreprocessorCallbacks(ClangModulesDeclVendor &decl_vendor,
+                              ClangPersistentVariables &persistent_vars) :
+        m_decl_vendor(decl_vendor),
+        m_persistent_vars(persistent_vars)
     {
     }
     
@@ -109,18 +113,25 @@ public:
                               ModuleIdPath path,
                               const clang::Module * /*null*/)
     {
-        std::vector<llvm::StringRef> string_path;
+        std::vector<ConstString> string_path;
         
         for (const std::pair<IdentifierInfo *, SourceLocation> &component : path)
         {
-            string_path.push_back(component.first->getName());
+            string_path.push_back(ConstString(component.first->getName()));
         }
      
         StreamString error_stream;
         
-        if (!m_decl_vendor.AddModule(string_path, m_error_stream))
+        ClangModulesDeclVendor::ModuleVector exported_modules;
+        
+        if (!m_decl_vendor.AddModule(string_path, &exported_modules, m_error_stream))
         {
             m_has_errors = true;
+        }
+        
+        for (ClangModulesDeclVendor::ModuleID module : exported_modules)
+        {
+            m_persistent_vars.AddHandLoadedClangModule(module);
         }
     }
     
@@ -298,7 +309,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     if (ClangModulesDeclVendor *decl_vendor = target_sp->GetClangModulesDeclVendor())
     {
-        std::unique_ptr<PPCallbacks> pp_callbacks(new LLDBPreprocessorCallbacks(*decl_vendor));
+        std::unique_ptr<PPCallbacks> pp_callbacks(new LLDBPreprocessorCallbacks(*decl_vendor, target_sp->GetPersistentVariables()));
         m_pp_callbacks = static_cast<LLDBPreprocessorCallbacks*>(pp_callbacks.get());
         m_compiler->getPreprocessor().addPPCallbacks(std::move(pp_callbacks));
     }
@@ -309,10 +320,10 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_builtin_context.reset(new Builtin::Context());
 
     std::unique_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
-                                                                 m_compiler->getSourceManager(),
-                                                                 m_compiler->getPreprocessor().getIdentifierTable(),
-                                                                 *m_selector_table.get(),
-                                                                 *m_builtin_context.get()));
+                                                                  m_compiler->getSourceManager(),
+                                                                  m_compiler->getPreprocessor().getIdentifierTable(),
+                                                                  *m_selector_table.get(),
+                                                                  *m_builtin_context.get()));
     
     ast_context->InitBuiltinTypes(m_compiler->getTarget());
 

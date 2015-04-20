@@ -103,6 +103,7 @@ public:
     virtual size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList& support_files);
+    virtual bool            ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules);
     virtual size_t          ParseFunctionBlocks (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseTypes (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
@@ -547,6 +548,13 @@ protected:
     FixupAddress (lldb_private::Address &addr);
 
     typedef std::set<lldb_private::Type *> TypeSet;
+    
+    typedef struct {
+        lldb_private::ConstString   m_name;
+        lldb::ModuleSP              m_module_sp;
+    } ClangModuleInfo;
+    
+    typedef std::map<uint64_t, ClangModuleInfo> ExternalTypeModuleMap;
 
     void
     GetTypes (DWARFCompileUnit* dwarf_cu,
@@ -560,6 +568,9 @@ protected:
 
     GlobalVariableMap &
     GetGlobalAranges();
+    
+    void
+    UpdateExternalModuleListIfNeeded();
 
     lldb::ModuleWP                        m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *             m_debug_map_symfile;
@@ -589,6 +600,7 @@ protected:
     std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_namespaces_ap;
     std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_objc_ap;
     std::unique_ptr<GlobalVariableMap>  m_global_aranges_ap;
+    ExternalTypeModuleMap               m_external_type_modules;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
@@ -599,7 +611,8 @@ protected:
     NameToDIE                           m_namespace_index;          // All type DIE offsets
     bool                                m_indexed:1,
                                         m_is_external_ast_source:1,
-                                        m_using_apple_tables:1;
+                                        m_using_apple_tables:1,
+                                        m_fetched_external_modules:1;
     lldb_private::LazyBool              m_supports_DW_AT_APPLE_objc_complete_type;
 
     std::unique_ptr<DWARFDebugRanges>     m_ranges;

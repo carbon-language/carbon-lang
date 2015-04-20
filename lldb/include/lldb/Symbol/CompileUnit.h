@@ -256,6 +256,18 @@ public:
     //------------------------------------------------------------------
     FileSpecList&
     GetSupportFiles ();
+    
+    //------------------------------------------------------------------
+    /// Get the compile unit's imported module list.
+    ///
+    /// This reports all the imports that the compile unit made,
+    /// including the current module.
+    ///
+    /// @return
+    ///     A list of imported module names.
+    //------------------------------------------------------------------
+    const std::vector<ConstString> &
+    GetImportedModules ();
 
     //------------------------------------------------------------------
     /// Get the SymbolFile plug-in user data.
@@ -400,6 +412,8 @@ protected:
     Flags m_flags; ///< Compile unit flags that help with partial parsing.
     std::vector<lldb::FunctionSP> m_functions; ///< The sparsely populated list of shared pointers to functions
                                          ///< that gets populated as functions get partially parsed.
+    std::vector<ConstString> m_imported_modules; ///< All modules, including the current module, imported by this
+                                                 ///< compile unit.
     FileSpecList m_support_files; ///< Files associated with this compile unit's line table and declarations.
     std::unique_ptr<LineTable> m_line_table_ap; ///< Line table that will get parsed on demand.
     lldb::VariableListSP m_variables; ///< Global and static variable list that will get parsed on demand.
@@ -407,11 +421,12 @@ protected:
 private:
     enum
     {
-        flagsParsedAllFunctions = (1u << 0), ///< Have we already parsed all our functions
-        flagsParsedVariables    = (1u << 1), ///< Have we already parsed globals and statics?
-        flagsParsedSupportFiles = (1u << 2), ///< Have we already parsed the support files for this compile unit?
-        flagsParsedLineTable    = (1u << 3),  ///< Have we parsed the line table already?
-        flagsParsedLanguage     = (1u << 4)   ///< Have we parsed the line table already?
+        flagsParsedAllFunctions     = (1u << 0), ///< Have we already parsed all our functions
+        flagsParsedVariables        = (1u << 1), ///< Have we already parsed globals and statics?
+        flagsParsedSupportFiles     = (1u << 2), ///< Have we already parsed the support files for this compile unit?
+        flagsParsedLineTable        = (1u << 3), ///< Have we parsed the line table already?
+        flagsParsedLanguage         = (1u << 4), ///< Have we parsed the line table already?
+        flagsParsedImportedModules  = (1u << 5)  ///< Have we parsed the imported modules already?
     };
 
     DISALLOW_COPY_AND_ASSIGN (CompileUnit);

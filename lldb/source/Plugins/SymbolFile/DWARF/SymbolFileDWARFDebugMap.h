@@ -70,6 +70,7 @@ public:
     virtual size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
     virtual bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files);
+    virtual bool            ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules) override;
     virtual size_t          ParseFunctionBlocks (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseTypes (const lldb_private::SymbolContext& sc);
     virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);

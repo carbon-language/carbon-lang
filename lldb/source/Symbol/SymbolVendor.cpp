@@ -198,6 +198,21 @@ SymbolVendor::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpecLis
     return false;
 }
 
+bool
+SymbolVendor::ParseImportedModules (const SymbolContext &sc,
+                                    std::vector<ConstString> &imported_modules)
+{
+    ModuleSP module_sp(GetModule());
+    if (module_sp)
+    {
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+        if (m_sym_file_ap.get())
+            return m_sym_file_ap->ParseImportedModules(sc, imported_modules);
+    }
+    return false;
+    
+}
+
 size_t
 SymbolVendor::ParseFunctionBlocks (const SymbolContext &sc)
 {

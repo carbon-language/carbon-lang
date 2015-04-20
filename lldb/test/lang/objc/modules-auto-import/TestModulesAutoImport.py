@@ -1,4 +1,4 @@
-"""Test that DWARF types are trusted over module types"""
+"""Test that importing modules in Objective-C works as expected."""
 
 import os, time
 import unittest2
@@ -10,13 +10,13 @@ from distutils.version import StrictVersion
 
 from lldbtest import *
 
-class IncompleteModulesTestCase(TestBase):
+class ObjCModulesAutoImportTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
     @dsym_test
-    @unittest2.expectedFailure("rdar://20416388")
+    @unittest2.expectedFailure("rdar://problem/19991953")
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
@@ -24,7 +24,6 @@ class IncompleteModulesTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @skipIfLinux
-    @unittest2.expectedFailure("rdar://20416388")
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
@@ -67,19 +66,10 @@ class IncompleteModulesTestCase(TestBase):
 
         self.common_setup()
 
-        self.runCmd("settings set target.clang-module-search-paths \"" + os.getcwd() + "\"")
+        self.runCmd("settings set target.auto-import-clang-modules true")
 
-        self.expect("expr @import myModule; 3", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["int", "3"])
-
-        self.expect("expr [myObject privateMethod]", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["int", "5"])
-
-        self.expect("expr MIN(2,3)", "#defined macro was found",
-            substrs = ["int", "2"])
-
-        self.expect("expr MAX(2,3)", "#undefd macro was correcltly not found",
-            error=True)
+        self.expect("p getpid()", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["pid_t"])
 
 if __name__ == '__main__':
     import atexit

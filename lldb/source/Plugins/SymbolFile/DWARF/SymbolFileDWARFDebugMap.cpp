@@ -227,18 +227,11 @@ public:
                     
                     if (exe_objfile && exe_sym_vendor)
                     {
-                        if (oso_symfile->GetNumCompileUnits() == 1)
-                        {
-                            oso_symfile->SetDebugMapModule(exe_module_sp);
-                            // Set the ID of the symbol file DWARF to the index of the OSO
-                            // shifted left by 32 bits to provide a unique prefix for any
-                            // UserID's that get created in the symbol file.
-                            oso_symfile->SetID (((uint64_t)m_cu_idx + 1ull) << 32ull);
-                        }
-                        else
-                        {
-                            oso_symfile->SetID (UINT64_MAX);
-                        }
+                        oso_symfile->SetDebugMapModule(exe_module_sp);
+                        // Set the ID of the symbol file DWARF to the index of the OSO
+                        // shifted left by 32 bits to provide a unique prefix for any
+                        // UserID's that get created in the symbol file.
+                        oso_symfile->SetID (((uint64_t)m_cu_idx + 1ull) << 32ull);
                     }
                     return symbol_vendor;
                 }
@@ -743,6 +736,14 @@ SymbolFileDWARFDebugMap::ParseCompileUnitSupportFiles (const SymbolContext& sc, 
     return false;
 }
 
+bool
+SymbolFileDWARFDebugMap::ParseImportedModules (const SymbolContext &sc, std::vector<ConstString> &imported_modules)
+{
+    SymbolFileDWARF *oso_dwarf = GetSymbolFile (sc);
+    if (oso_dwarf)
+        return oso_dwarf->ParseImportedModules(sc, imported_modules);
+    return false;
+}
 
 size_t
 SymbolFileDWARFDebugMap::ParseFunctionBlocks (const SymbolContext& sc)

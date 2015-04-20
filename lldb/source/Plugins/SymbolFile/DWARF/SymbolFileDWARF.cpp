@@ -27,6 +27,8 @@
 #include "llvm/Support/Casting.h"
 
 #include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleList.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Scalar.h"
@@ -35,6 +37,8 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
+
+#include "lldb/Expression/ClangModulesDeclVendor.h"
 
 #include "lldb/Host/Host.h"
 
@@ -515,6 +519,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_indexed (false),
     m_is_external_ast_source (false),
     m_using_apple_tables (false),
+    m_fetched_external_modules (false),
     m_supports_DW_AT_APPLE_objc_complete_type (eLazyBoolCalculate),
     m_ranges(),
     m_unique_ast_type_map ()
@@ -1258,6 +1263,25 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
             support_files.Append (*sc.comp_unit);
 
             return DWARFDebugLine::ParseSupportFiles(sc.comp_unit->GetModule(), get_debug_line_data(), cu_comp_dir, stmt_list, support_files);
+        }
+    }
+    return false;
+}
+
+bool
+SymbolFileDWARF::ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules)
+{
+    assert (sc.comp_unit);
+    DWARFCompileUnit* dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
+    if (dwarf_cu)
+    {
+        if (ClangModulesDeclVendor::LanguageSupportsClangModules(sc.comp_unit->GetLanguage()))
+        {
+            UpdateExternalModuleListIfNeeded();
+            for (const std::pair<uint64_t, const ClangModuleInfo> &external_type_module : m_external_type_modules)
+            {
+                imported_modules.push_back(external_type_module.second.m_name);
+            }
         }
     }
     return false;
@@ -2845,7 +2869,60 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEn
     return false;
 }
 
-
+void
+SymbolFileDWARF::UpdateExternalModuleListIfNeeded()
+{
+    if (m_fetched_external_modules)
+        return;
+    m_fetched_external_modules = true;
+    
+    DWARFDebugInfo * debug_info = DebugInfo();
+    debug_info->GetNumCompileUnits();
+    
+    const uint32_t num_compile_units = GetNumCompileUnits();
+    for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
+    {
+        DWARFCompileUnit* dwarf_cu = debug_info->GetCompileUnitAtIndex(cu_idx);
+        
+        const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
+        if (die && die->HasChildren() == false)
+        {
+            const uint64_t name_strp = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_name, UINT64_MAX);
+            const uint64_t dwo_path_strp = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_GNU_dwo_name, UINT64_MAX);
+            
+            if (name_strp != UINT64_MAX)
+            {
+                if (m_external_type_modules.find(dwo_path_strp) == m_external_type_modules.end())
+                {
+                    const char *name = get_debug_str_data().PeekCStr(name_strp);
+                    const char *dwo_path = get_debug_str_data().PeekCStr(dwo_path_strp);
+                    if (name || dwo_path)
+                    {
+                        ModuleSP module_sp;
+                        if (dwo_path)
+                        {
+                            ModuleSpec dwo_module_spec;
+                            dwo_module_spec.GetFileSpec().SetFile(dwo_path, false);
+                            dwo_module_spec.GetArchitecture() = m_obj_file->GetModule()->GetArchitecture();
+                            //printf ("Loading dwo = '%s'\n", dwo_path);
+                            Error error = ModuleList::GetSharedModule (dwo_module_spec, module_sp, NULL, NULL, NULL);
+                        }
+                        
+                        if (dwo_path_strp != LLDB_INVALID_UID)
+                        {
+                            m_external_type_modules[dwo_path_strp] = ClangModuleInfo { ConstString(name), module_sp };
+                        }
+                        else
+                        {
+                            // This hack should be removed promptly once clang emits both.
+                            m_external_type_modules[name_strp] = ClangModuleInfo { ConstString(name), module_sp };
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 SymbolFileDWARF::GlobalVariableMap &
 SymbolFileDWARF::GetGlobalAranges()

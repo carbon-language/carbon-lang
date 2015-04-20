@@ -16,6 +16,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/Target.h"
 
 #include "clang/Basic/TargetInfo.h"
@@ -61,8 +62,14 @@ namespace {
                                    std::unique_ptr<clang::Parser> &&parser);
         
         virtual bool
-        AddModule(std::vector<llvm::StringRef> &path,
+        AddModule(ModulePath &path,
+                  ModuleVector *exported_modules,
                   Stream &error_stream) override;
+        
+        virtual bool
+        AddModulesForCompileUnit(CompileUnit &cu,
+                                 ModuleVector &exported_modules,
+                                 Stream &error_stream) override;
         
         virtual uint32_t
         FindDecls (const ConstString &name,
@@ -71,19 +78,36 @@ namespace {
                    std::vector <clang::NamedDecl*> &decls) override;
         
         virtual void
-        ForEachMacro(std::function<bool (const std::string &)> handler) override;
+        ForEachMacro(const ModuleVector &modules,
+                     std::function<bool (const std::string &)> handler) override;
         
         ~ClangModulesDeclVendorImpl();
         
     private:
+        void
+        ReportModuleExportsHelper (std::set<ClangModulesDeclVendor::ModuleID> &exports,
+                                   clang::Module *module);
+
+        void
+        ReportModuleExports (ModuleVector &exports,
+                             clang::Module *module);
+
         clang::ModuleLoadResult
         DoGetModule(clang::ModuleIdPath path, bool make_visible);
+        
+        bool                                                m_enabled = false;
         
         llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine>  m_diagnostics_engine;
         llvm::IntrusiveRefCntPtr<clang::CompilerInvocation> m_compiler_invocation;
         std::unique_ptr<clang::CompilerInstance>            m_compiler_instance;
         std::unique_ptr<clang::Parser>                      m_parser;
         size_t                                              m_source_location_index = 0; // used to give name components fake SourceLocations
+
+        typedef std::vector<ConstString>                    ImportedModule;
+        typedef std::map<ImportedModule, clang::Module *>   ImportedModuleMap;
+        typedef std::set<ModuleID>                          ImportedModuleSet;
+        ImportedModuleMap                                   m_imported_modules;
+        ImportedModuleSet                                   m_user_imported_modules;
     };
 }
 
@@ -156,12 +180,47 @@ ClangModulesDeclVendorImpl::ClangModulesDeclVendorImpl(llvm::IntrusiveRefCntPtr<
     m_diagnostics_engine(diagnostics_engine),
     m_compiler_invocation(compiler_invocation),
     m_compiler_instance(std::move(compiler_instance)),
-    m_parser(std::move(parser))
+    m_parser(std::move(parser)),
+    m_imported_modules()
 {
 }
 
+void
+ClangModulesDeclVendorImpl::ReportModuleExportsHelper (std::set<ClangModulesDeclVendor::ModuleID> &exports,
+                                                       clang::Module *module)
+{
+    if (exports.count(reinterpret_cast<ClangModulesDeclVendor::ModuleID>(module)))
+        return;
+    
+    exports.insert(reinterpret_cast<ClangModulesDeclVendor::ModuleID>(module));
+    
+    llvm::SmallVector<clang::Module*, 2> sub_exports;
+    
+    module->getExportedModules(sub_exports);
+
+    for (clang::Module *module : sub_exports)
+    {
+        ReportModuleExportsHelper(exports, module);
+    }
+}
+
+void
+ClangModulesDeclVendorImpl::ReportModuleExports (ClangModulesDeclVendor::ModuleVector &exports,
+                                                 clang::Module *module)
+{
+    std::set<ClangModulesDeclVendor::ModuleID> exports_set;
+    
+    ReportModuleExportsHelper(exports_set, module);
+    
+    for (ModuleID module : exports_set)
+    {
+        exports.push_back(module);
+    }
+}
+
 bool
-ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
+ClangModulesDeclVendorImpl::AddModule(ModulePath &path,
+                                      ModuleVector *exported_modules,
                                       Stream &error_stream)
 {
     // Fail early.
@@ -172,9 +231,31 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
         return false;
     }
     
-    if (!m_compiler_instance->getPreprocessor().getHeaderSearchInfo().lookupModule(path[0]))
+    // Check if we've already imported this module.
+    
+    std::vector<ConstString> imported_module;
+    
+    for (ConstString path_component : path)
     {
-        error_stream.Printf("error: Header search couldn't locate module %s\n", path[0].str().c_str());
+        imported_module.push_back(path_component);
+    }
+    
+    {
+        ImportedModuleMap::iterator mi = m_imported_modules.find(imported_module);
+        
+        if (mi != m_imported_modules.end())
+        {
+            if (exported_modules)
+            {
+                ReportModuleExports(*exported_modules, mi->second);
+            }
+            return true;
+        }
+    }
+    
+    if (!m_compiler_instance->getPreprocessor().getHeaderSearchInfo().lookupModule(path[0].GetStringRef()))
+    {
+        error_stream.Printf("error: Header search couldn't locate module %s\n", path[0].AsCString());
         return false;
     }
     
@@ -183,9 +264,9 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
     {
         clang::SourceManager &source_manager = m_compiler_instance->getASTContext().getSourceManager();
         
-        for (llvm::StringRef &component : path)
+        for (ConstString path_component : path)
         {
-            clang_path.push_back(std::make_pair(&m_compiler_instance->getASTContext().Idents.get(component),
+            clang_path.push_back(std::make_pair(&m_compiler_instance->getASTContext().Idents.get(path_component.GetStringRef()),
                                                 source_manager.getLocForStartOfFile(source_manager.getMainFileID()).getLocWithOffset(m_source_location_index++)));
         }
     }
@@ -199,7 +280,7 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
     if (!top_level_module)
     {
         diagnostic_consumer->DumpDiagnostics(error_stream);
-        error_stream.Printf("error: Couldn't load top-level module %s\n", path[0].str().c_str());
+        error_stream.Printf("error: Couldn't load top-level module %s\n", path[0].AsCString());
         return false;
     }
     
@@ -207,7 +288,7 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
     
     for (size_t ci = 1; ci < path.size(); ++ci)
     {
-        llvm::StringRef &component = path[ci];
+        llvm::StringRef component = path[ci].GetStringRef();
         submodule = submodule->findSubmodule(component.str());
         if (!submodule)
         {
@@ -219,7 +300,66 @@ ClangModulesDeclVendorImpl::AddModule(std::vector<llvm::StringRef> &path,
     
     clang::Module *requested_module = DoGetModule(clang_path, true);
     
-    return (requested_module != nullptr);
+    if (requested_module != nullptr)
+    {
+        if (exported_modules)
+        {
+            ReportModuleExports(*exported_modules, requested_module);
+        }
+
+        m_imported_modules[imported_module] = requested_module;
+        
+        m_enabled = true;
+        
+        return true;
+    }
+    
+    return false;
+}
+
+
+bool
+ClangModulesDeclVendor::LanguageSupportsClangModules (lldb::LanguageType language)
+{
+    switch (language)
+    {
+    default:
+        return false;
+    // C++ and friends to be added
+    case lldb::LanguageType::eLanguageTypeC:
+    case lldb::LanguageType::eLanguageTypeC11:
+    case lldb::LanguageType::eLanguageTypeC89:
+    case lldb::LanguageType::eLanguageTypeC99:
+    case lldb::LanguageType::eLanguageTypeObjC:
+        return true;
+    }
+}
+
+bool
+ClangModulesDeclVendorImpl::AddModulesForCompileUnit(CompileUnit &cu,
+                                                     ClangModulesDeclVendor::ModuleVector &exported_modules,
+                                                     Stream &error_stream)
+{
+    if (LanguageSupportsClangModules(cu.GetLanguage()))
+    {
+        std::vector<ConstString> imported_modules = cu.GetImportedModules();
+        
+        for (ConstString imported_module : imported_modules)
+        {
+            std::vector<ConstString> path;
+            
+            path.push_back(imported_module);
+            
+            if (!AddModule(path, &exported_modules, error_stream))
+            {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    return true;
 }
 
 // ClangImporter::lookupValue
@@ -230,6 +370,11 @@ ClangModulesDeclVendorImpl::FindDecls (const ConstString &name,
                                        uint32_t max_matches,
                                        std::vector <clang::NamedDecl*> &decls)
 {
+    if (!m_enabled)
+    {
+        return 0;
+    }
+
     if (!append)
         decls.clear();
     
@@ -257,14 +402,90 @@ ClangModulesDeclVendorImpl::FindDecls (const ConstString &name,
 }
 
 void
-ClangModulesDeclVendorImpl::ForEachMacro(std::function<bool (const std::string &)> handler)
+ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVector &modules,
+                                         std::function<bool (const std::string &)> handler)
 {
+    if (!m_enabled)
+    {
+        return;
+    }
+    
+    typedef std::map<ModuleID, ssize_t> ModulePriorityMap;
+    ModulePriorityMap module_priorities;
+    
+    ssize_t priority = 0;
+    
+    for (ModuleID module : modules)
+    {
+        module_priorities[module] = priority++;
+    }
+    
+    if (m_compiler_instance->getPreprocessor().getExternalSource())
+    {
+        m_compiler_instance->getPreprocessor().getExternalSource()->ReadDefinedMacros();
+    }
     
     for (clang::Preprocessor::macro_iterator mi = m_compiler_instance->getPreprocessor().macro_begin(),
                                              me = m_compiler_instance->getPreprocessor().macro_end();
          mi != me;
          ++mi)
     {
+        const clang::IdentifierInfo *ii = nullptr;
+        
+        {
+            if (clang::IdentifierInfoLookup *lookup = m_compiler_instance->getPreprocessor().getIdentifierTable().getExternalIdentifierLookup())
+            {
+                lookup->get(mi->first->getName());
+            }
+            if (!ii)
+            {
+                ii = mi->first;
+            }
+        }
+        
+        ssize_t found_priority = -1;
+        clang::MacroInfo *info = nullptr;
+        
+        for (clang::MacroDirective *directive = m_compiler_instance->getPreprocessor().getMacroDirectiveHistory(ii);
+             directive != nullptr;
+             directive = directive->getPrevious())
+        {
+            unsigned module_id = directive->getOwningModuleID();
+            
+            if (!module_id)
+                continue;
+            
+            clang::Module *module = m_compiler_instance->getModuleManager()->getModule(module_id);
+            
+            {
+                ModulePriorityMap::iterator pi = module_priorities.find(reinterpret_cast<ModuleID>(module));
+                
+                if (pi != module_priorities.end() && pi->second > found_priority)
+                {
+                    info = directive->getMacroInfo();
+                    found_priority = pi->second;
+                }
+            }
+            
+            clang::Module *top_level_module = module->getTopLevelModule();
+            
+            if (top_level_module != module)
+            {
+                ModulePriorityMap::iterator pi = module_priorities.find(reinterpret_cast<ModuleID>(top_level_module));
+
+                if ((pi != module_priorities.end()) && pi->second > found_priority)
+                {
+                    info = directive->getMacroInfo();
+                    found_priority = pi->second;
+                }
+            }
+        }
+        
+        if (!info)
+        {
+            continue;
+        }
+        
         if (mi->second->getKind() == clang::MacroDirective::MD_Define)
         {            
             std::string macro_expansion = "#define ";

@@ -124,6 +124,7 @@ public:
     virtual size_t          ParseCompileUnitFunctions (const SymbolContext& sc) = 0;
     virtual bool            ParseCompileUnitLineTable (const SymbolContext& sc) = 0;
     virtual bool            ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpecList& support_files) = 0;
+    virtual bool            ParseImportedModules (const SymbolContext &sc, std::vector<ConstString> &imported_modules) = 0;
     virtual size_t          ParseFunctionBlocks (const SymbolContext& sc) = 0;
     virtual size_t          ParseTypes (const SymbolContext& sc) = 0;
     virtual size_t          ParseVariablesForContext (const SymbolContext& sc) = 0;
