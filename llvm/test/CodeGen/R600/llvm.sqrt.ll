@@ -50,6 +50,56 @@ entry:
   ret void
 }
 
+; SI-LABEL: {{^}}elim_redun_check:
+; SI: v_sqrt_f32_e32
+; SI-NOT: v_cndmask
+define void @elim_redun_check(float addrspace(1)* %out, float %in) {
+entry:
+  %sqrt = call float @llvm.sqrt.f32(float %in)
+  %cmp = fcmp olt float %in, -0.000000e+00
+  %res = select i1 %cmp, float 0x7FF8000000000000, float %sqrt
+  store float %res, float addrspace(1)* %out
+  ret void
+}
+
+; SI-LABEL: {{^}}elim_redun_check_ult:
+; SI: v_sqrt_f32_e32
+; SI-NOT: v_cndmask
+define void @elim_redun_check_ult(float addrspace(1)* %out, float %in) {
+entry:
+  %sqrt = call float @llvm.sqrt.f32(float %in)
+  %cmp = fcmp ult float %in, -0.000000e+00
+  %res = select i1 %cmp, float 0x7FF8000000000000, float %sqrt
+  store float %res, float addrspace(1)* %out
+  ret void
+}
+
+; SI-LABEL: {{^}}elim_redun_check_v2:
+; SI: v_sqrt_f32_e32
+; SI: v_sqrt_f32_e32
+; SI-NOT: v_cndmask
+define void @elim_redun_check_v2(<2 x float> addrspace(1)* %out, <2 x float> %in) {
+entry:
+  %sqrt = call <2 x float> @llvm.sqrt.v2f32(<2 x float> %in)
+  %cmp = fcmp olt <2 x float> %in, <float -0.000000e+00, float -0.000000e+00>
+  %res = select <2 x i1> %cmp, <2 x float> <float 0x7FF8000000000000, float 0x7FF8000000000000>, <2 x float> %sqrt
+  store <2 x float> %res, <2 x float> addrspace(1)* %out
+  ret void
+}
+
+; SI-LABEL: {{^}}elim_redun_check_v2_ult
+; SI: v_sqrt_f32_e32
+; SI: v_sqrt_f32_e32
+; SI-NOT: v_cndmask
+define void @elim_redun_check_v2_ult(<2 x float> addrspace(1)* %out, <2 x float> %in) {
+entry:
+  %sqrt = call <2 x float> @llvm.sqrt.v2f32(<2 x float> %in)
+  %cmp = fcmp ult <2 x float> %in, <float -0.000000e+00, float -0.000000e+00>
+  %res = select <2 x i1> %cmp, <2 x float> <float 0x7FF8000000000000, float 0x7FF8000000000000>, <2 x float> %sqrt
+  store <2 x float> %res, <2 x float> addrspace(1)* %out
+  ret void
+}
+
 declare float @llvm.sqrt.f32(float %in)
 declare <2 x float> @llvm.sqrt.v2f32(<2 x float> %in)
 declare <4 x float> @llvm.sqrt.v4f32(<4 x float> %in)
