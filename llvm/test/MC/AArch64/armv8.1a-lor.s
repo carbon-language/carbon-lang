@@ -1,4 +1,5 @@
-// RUN: llvm-mc -triple aarch64-none-linux-gnu -show-encoding -mattr=+v8.1a < %s | FileCheck %s
+// RUN: not llvm-mc -triple aarch64-none-linux-gnu -show-encoding -mattr=+v8.1a < %s 2>%t | FileCheck %s
+// RUN: FileCheck --check-prefix=CHECK-ERROR %s <%t
 
 
 //------------------------------------------------------------------------------
@@ -31,3 +32,48 @@
 // CHECK:   msr    LORN_EL1, x0  // encoding: [0x40,0xa4,0x18,0xd5]
 // CHECK:   msr    LORC_EL1, x0  // encoding: [0x60,0xa4,0x18,0xd5]
 // CHECK:   mrs    x0, LORID_EL1 // encoding: [0xe0,0xa4,0x38,0xd5]
+
+        ldlarb w0,[w1]
+        ldlarh x0,[x1]
+        stllrb w0,[w1]
+        stllrh x0,[x1]
+        stllr  w0,[w1]
+        msr    LORSA_EL1, #0
+        msr    LOREA_EL1, #0
+        msr    LORN_EL1, #0
+        msr    LORC_EL1, #0
+        msr    LORID_EL1, x0
+        mrs    LORID_EL1, #0
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ldlarb w0,[w1]
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         ldlarh x0,[x1]
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         stllrb w0,[w1]
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         stllrh x0,[x1]
+// CHECK-ERROR:                ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         stllr  w0,[w1]
+// CHECK-ERROR:                    ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         msr     LORSA_EL1, #0
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         msr     LOREA_EL1, #0
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         msr     LORN_EL1, #0
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         msr     LORC_EL1, #0
+// CHECK-ERROR:                           ^
+// CHECK-ERROR: error: expected writable system register or pstate
+// CHECK-ERROR:         msr     LORID_EL1, x0
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         mrs     LORID_EL1, #0
+// CHECK-ERROR:                 ^

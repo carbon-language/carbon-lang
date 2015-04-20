@@ -247,7 +247,10 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MRSMapper::MRSMappings[] = {
   {"icc_rpr_el1", ICC_RPR_EL1, 0},
   {"ich_vtr_el2", ICH_VTR_EL2, 0},
   {"ich_eisr_el2", ICH_EISR_EL2, 0},
-  {"ich_elsr_el2", ICH_ELSR_EL2, 0}
+  {"ich_elsr_el2", ICH_ELSR_EL2, 0},
+
+  // v8.1a "Limited Ordering Regions" extension-specific system registers
+  {"lorid_el1", LORID_EL1, AArch64::HasV8_1aOps},
 };
 
 AArch64SysReg::MRSMapper::MRSMapper() {
@@ -771,7 +774,6 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
   {"lorea_el1", LOREA_EL1, AArch64::HasV8_1aOps},
   {"lorn_el1", LORN_EL1, AArch64::HasV8_1aOps},
   {"lorc_el1", LORC_EL1, AArch64::HasV8_1aOps},
-  {"lorid_el1", LORID_EL1, AArch64::HasV8_1aOps},
 
   // v8.1a "Virtualization host extensions" system registers
   {"ttbr1_el2", TTBR1_EL2, AArch64::HasV8_1aOps},
@@ -804,7 +806,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::SysRegMapper::SysRegMappings
 };
 
 uint32_t
-AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits, 
+AArch64SysReg::SysRegMapper::fromString(StringRef Name, uint64_t FeatureBits,
                                         bool &Valid) const {
   std::string NameLower = Name.lower();
 
