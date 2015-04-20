@@ -316,14 +316,28 @@ a single target type.  This should probably be addressed in the PPCISelDAGToDAG 
 
 //===----------------------------------------------------------------------===//
 
-Currently EXTRACT_VECTOR_ELT and INSERT_VECTOR_ELT are type-legal only for v2f64 with VSX available.  We should create custom lowering support for the other vector types.  Without this support, we generate sequences with load-hit-store hazards.
+Currently EXTRACT_VECTOR_ELT and INSERT_VECTOR_ELT are type-legal only
+for v2f64 with VSX available.  We should create custom lowering
+support for the other vector types.  Without this support, we generate
+sequences with load-hit-store hazards.
 
-v4f32 can be supported with VSX by shifting the correct element into big-endian lane 0, using xscvspdpn to produce a double-precision representation of the single-precision value in big-endian double-precision lane 0, and reinterpreting lane 0 as an FPR or vector-scalar register.
+v4f32 can be supported with VSX by shifting the correct element into
+big-endian lane 0, using xscvspdpn to produce a double-precision
+representation of the single-precision value in big-endian
+double-precision lane 0, and reinterpreting lane 0 as an FPR or
+vector-scalar register.
 
-v2i64 can be supported with VSX and P8Vector in the same manner as v2f64, followed by a direct move to a GPR.
+v2i64 can be supported with VSX and P8Vector in the same manner as
+v2f64, followed by a direct move to a GPR.
 
-v4i32 can be supported with VSX and P8Vector by shifting the correct element into big-endian lane 1, using a direct move to a GPR, and sign-extending the 32-bit result to 64 bits.
+v4i32 can be supported with VSX and P8Vector by shifting the correct
+element into big-endian lane 1, using a direct move to a GPR, and
+sign-extending the 32-bit result to 64 bits.
 
-v8i16 can be supported with VSX and P8Vector by shifting the correct element into big-endian lane 3, using a direct move to a GPR, and sign-extending the 16-bit result to 64 bits.
+v8i16 can be supported with VSX and P8Vector by shifting the correct
+element into big-endian lane 3, using a direct move to a GPR, and
+sign-extending the 16-bit result to 64 bits.
 
-v16i8 can be supported with VSX and P8Vector by shifting the correct element into big-endian lane 7, using a direct move to a GPR, and sign-extending the 8-bit result to 64 bits.
+v16i8 can be supported with VSX and P8Vector by shifting the correct
+element into big-endian lane 7, using a direct move to a GPR, and
+sign-extending the 8-bit result to 64 bits.
