@@ -1,0 +1,7 @@
+# RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips32r6 -mattr=micromips | FileCheck %s
+
+# CHECK: balc 14572256
+0xb4 0x37 0x96 0xb8
+
+# CHECK: bc 14572256
+0x94 0x37 0x96 0xb8

@@ -46,5 +46,7 @@ class BC_MMR6_DESC : BC_MMR6_DESC_BASE<"bc", brtarget26>;
 //
 //===----------------------------------------------------------------------===//
 
+let DecoderNamespace = "MicroMips32r6" in {
 def BALC_MMR6 : R6MMR6Rel, BALC_MMR6_ENC, BALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BC_MMR6 : R6MMR6Rel, BC_MMR6_ENC, BC_MMR6_DESC, ISA_MICROMIPS32R6;
+}
