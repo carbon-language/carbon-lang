@@ -543,12 +543,12 @@ private:
       parseTemplateDeclaration();
       break;
     case tok::comma:
-      if (Contexts.back().FirstStartOfName && Contexts.size() == 1) {
+      if (Contexts.back().InCtorInitializer)
+        Tok->Type = TT_CtorInitializerComma;
+      else if (Contexts.back().FirstStartOfName && Contexts.size() == 1) {
         Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
         Line.IsMultiVariableDeclStmt = true;
       }
-      if (Contexts.back().InCtorInitializer)
-        Tok->Type = TT_CtorInitializerComma;
       if (Contexts.back().IsForEachMacro)
         Contexts.back().IsExpression = true;
       break;
