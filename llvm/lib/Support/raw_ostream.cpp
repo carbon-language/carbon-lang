@@ -630,7 +630,8 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   return pos;
 }
 
-void raw_fd_ostream::pwrite(const char *Ptr, size_t Size, uint64_t Offset) {
+void raw_fd_ostream::pwrite_impl(const char *Ptr, size_t Size,
+                                 uint64_t Offset) {
   uint64_t Pos = tell();
   seek(Offset);
   write(Ptr, Size);
@@ -781,14 +782,9 @@ raw_svector_ostream::~raw_svector_ostream() {
   flush();
 }
 
-void raw_svector_ostream::pwrite(const char *Ptr, size_t Size,
-                                 uint64_t Offset) {
+void raw_svector_ostream::pwrite_impl(const char *Ptr, size_t Size,
+                                      uint64_t Offset) {
   flush();
-
-  uint64_t End = Offset + Size;
-  if (End > OS.size())
-    OS.resize(End);
-
   memcpy(OS.begin() + Offset, Ptr, Size);
 }
 
@@ -847,4 +843,5 @@ uint64_t raw_null_ostream::current_pos() const {
   return 0;
 }
 
-void raw_null_ostream::pwrite(const char *Ptr, size_t Size, uint64_t Offset) {}
+void raw_null_ostream::pwrite_impl(const char *Ptr, size_t Size,
+                                   uint64_t Offset) {}

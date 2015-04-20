@@ -317,10 +317,15 @@ private:
 /// pwrite operation. This is usefull for code that can mostly stream out data,
 /// but needs to patch in a header that needs to know the output size.
 class raw_pwrite_stream : public raw_ostream {
+  virtual void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) = 0;
+
 public:
   explicit raw_pwrite_stream(bool Unbuffered = false)
       : raw_ostream(Unbuffered) {}
-  virtual void pwrite(const char *Ptr, size_t Size, uint64_t Offset) = 0;
+  void pwrite(const char *Ptr, size_t Size, uint64_t Offset) {
+    assert(Size + Offset <= tell() && "We don't support extending the stream");
+    pwrite_impl(Ptr, Size, Offset);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -347,6 +352,8 @@ class raw_fd_ostream : public raw_pwrite_stream {
 
   /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
+
+  void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) override;
 
   /// Return the current position within the stream, not counting the bytes
   /// currently in the buffer.
@@ -387,8 +394,6 @@ public:
   /// Flushes the stream and repositions the underlying file descriptor position
   /// to the offset specified from the beginning of the file.
   uint64_t seek(uint64_t off);
-
-  void pwrite(const char *Ptr, size_t Size, uint64_t Offset) override;
 
   /// Set the stream to attempt to use atomic writes for individual output
   /// routines where possible.
@@ -478,6 +483,8 @@ class raw_svector_ostream : public raw_pwrite_stream {
   /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t Size) override;
 
+  void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) override;
+
   /// Return the current position within the stream, not counting the bytes
   /// currently in the buffer.
   uint64_t current_pos() const override;
@@ -495,7 +502,6 @@ public:
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream() override;
 
-  void pwrite(const char *Ptr, size_t Size, uint64_t Offset) override;
 
   /// This is called when the SmallVector we're appending to is changed outside
   /// of the raw_svector_ostream's control.  It is only safe to do this if the
@@ -511,6 +517,7 @@ public:
 class raw_null_ostream : public raw_pwrite_stream {
   /// See raw_ostream::write_impl.
   void write_impl(const char *Ptr, size_t size) override;
+  void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) override;
 
   /// Return the current position within the stream, not counting the bytes
   /// currently in the buffer.
@@ -519,7 +526,6 @@ class raw_null_ostream : public raw_pwrite_stream {
 public:
   explicit raw_null_ostream() {}
   ~raw_null_ostream() override;
-  void pwrite(const char *Ptr, size_t Size, uint64_t Offset) override;
 };
 
 class buffer_ostream : public raw_svector_ostream {
