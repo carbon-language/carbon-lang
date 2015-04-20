@@ -184,7 +184,8 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
 
             if (event_type & eBroadcastBitReadThreadDidExit)
             {
-                Disconnect (NULL);
+                if (GetCloseOnEOF ())
+                    Disconnect (NULL);
                 break;
             }
         }
@@ -379,9 +380,8 @@ Communication::ReadThread (lldb::thread_arg_t p)
             break;
 
         case eConnectionStatusEndOfFile:
-            if (comm->GetCloseOnEOF())
-                 done = true;
-             break;
+            done = true;
+            break;
         case eConnectionStatusError:            // Check GetError() for details
             if (error.GetType() == eErrorTypePOSIX && error.GetError() == EIO)
             {
