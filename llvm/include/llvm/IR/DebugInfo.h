@@ -52,7 +52,6 @@ class DILexicalBlock;
 class DILexicalBlockFile;
 class DIVariable;
 class DIType;
-class DIScope;
 class DIObjCProperty;
 
 /// \brief Maps from type identifier to the actual MDNode.
@@ -64,7 +63,6 @@ typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
   template <> struct simplify_type<DESC>;
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIScope)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIBasicType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIDerivedType)
@@ -112,24 +110,12 @@ public:
   MDEnumerator &operator*() const { return *N; }
 };
 
-class DIScope {
-  MDScope *N;
-
-public:
-  DIScope(const MDScope *N = nullptr) : N(const_cast<MDScope *>(N)) {}
-
-  operator MDScope *() const { return N; }
-  MDScope *operator->() const { return N; }
-  MDScope &operator*() const { return *N; }
-};
-
 class DIType {
   MDType *N;
 
 public:
   DIType(const MDType *N = nullptr) : N(const_cast<MDType *>(N)) {}
 
-  operator DIScope() const { return N; }
   operator MDType *() const { return N; }
   MDType *operator->() const { return N; }
   MDType &operator*() const { return *N; }
@@ -194,7 +180,6 @@ class DIFile {
 public:
   DIFile(const MDFile *N = nullptr) : N(const_cast<MDFile *>(N)) {}
 
-  operator DIScope() const { return N; }
   operator MDFile *() const { return N; }
   MDFile *operator->() const { return N; }
   MDFile &operator*() const { return *N; }
@@ -207,7 +192,6 @@ public:
   DICompileUnit(const MDCompileUnit *N = nullptr)
       : N(const_cast<MDCompileUnit *>(N)) {}
 
-  operator DIScope() const { return N; }
   operator MDCompileUnit *() const { return N; }
   MDCompileUnit *operator->() const { return N; }
   MDCompileUnit &operator*() const { return *N; }
@@ -220,7 +204,6 @@ public:
   DISubprogram(const MDSubprogram *N = nullptr)
       : N(const_cast<MDSubprogram *>(N)) {}
 
-  operator DIScope() const { return N; }
   operator MDSubprogram *() const { return N; }
   MDSubprogram *operator->() const { return N; }
   MDSubprogram &operator*() const { return *N; }
@@ -257,7 +240,6 @@ public:
   DINameSpace(const MDNamespace *N = nullptr)
       : N(const_cast<MDNamespace *>(N)) {}
 
-  operator DIScope() const { return N; }
   operator MDNamespace *() const { return N; }
   MDNamespace *operator->() const { return N; }
   MDNamespace &operator*() const { return *N; }
@@ -366,7 +348,6 @@ public:
   template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
 SIMPLIFY_DESCRIPTOR(DISubrange)
 SIMPLIFY_DESCRIPTOR(DIEnumerator)
-SIMPLIFY_DESCRIPTOR(DIScope)
 SIMPLIFY_DESCRIPTOR(DIType)
 SIMPLIFY_DESCRIPTOR(DIBasicType)
 SIMPLIFY_DESCRIPTOR(DIDerivedType)

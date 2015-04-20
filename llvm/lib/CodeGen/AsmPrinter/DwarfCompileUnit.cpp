@@ -104,8 +104,8 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   assert(GV);
 
-  DIScope GVContext = GV->getScope();
-  DIType GTy = DD->resolve(GV->getType());
+  auto *GVContext = GV->getScope();
+  auto *GTy = DD->resolve(GV->getType());
 
   // Construct the context before querying for the existence of the DIE in
   // case such construction creates the DIE.
@@ -113,8 +113,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
 
   // Add to map.
   DIE *VariableDIE = &createAndAddDIE(GV->getTag(), *ContextDIE, GV);
-  DIScope DeclContext;
-
+  MDScope *DeclContext;
   if (auto *SDMDecl = GV->getStaticDataMemberDeclaration()) {
     DeclContext = resolve(SDMDecl->getScope());
     assert(SDMDecl->isStaticMember() && "Expected static member decl");
@@ -306,7 +305,7 @@ void DwarfCompileUnit::constructScopeDIE(
   if (!Scope || !Scope->getScopeNode())
     return;
 
-  DIScope DS(Scope->getScopeNode());
+  auto *DS = Scope->getScopeNode();
 
   assert((Scope->getInlinedAt() || !isa<MDSubprogram>(DS)) &&
          "Only handle inlined subprograms here, use "
@@ -419,8 +418,8 @@ void DwarfCompileUnit::attachRangesOrLowHighPC(
 std::unique_ptr<DIE>
 DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   assert(Scope->getScopeNode());
-  DIScope DS(Scope->getScopeNode());
-  DISubprogram InlinedSP = getDISubprogram(DS);
+  auto *DS = Scope->getScopeNode();
+  auto *InlinedSP = getDISubprogram(DS);
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
   DIE *OriginDIE = DU->getAbstractSPDies()[InlinedSP];
@@ -708,7 +707,7 @@ void DwarfCompileUnit::emitHeader(bool UseOffsets) {
 
 /// addGlobalName - Add a new global name to the compile unit.
 void DwarfCompileUnit::addGlobalName(StringRef Name, DIE &Die,
-                                     DIScope Context) {
+                                     const MDScope *Context) {
   if (includeMinimalInlineScopes())
     return;
   std::string FullName = getParentContextString(Context) + Name.str();
@@ -716,8 +715,8 @@ void DwarfCompileUnit::addGlobalName(StringRef Name, DIE &Die,
 }
 
 /// Add a new global type to the unit.
-void DwarfCompileUnit::addGlobalType(DIType Ty, const DIE &Die,
-                                     DIScope Context) {
+void DwarfCompileUnit::addGlobalType(const MDType *Ty, const DIE &Die,
+                                     const MDScope *Context) {
   if (includeMinimalInlineScopes())
     return;
   std::string FullName = getParentContextString(Context) + Ty->getName().str();
@@ -809,7 +808,7 @@ void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
 void DwarfCompileUnit::applySubprogramAttributesToDefinition(DISubprogram SP,
                                                              DIE &SPDie) {
   auto *SPDecl = SP->getDeclaration();
-  DIScope Context = resolve(SPDecl ? SPDecl->getScope() : SP->getScope());
+  auto *Context = resolve(SPDecl ? SPDecl->getScope() : SP->getScope());
   applySubprogramAttributes(SP, SPDie, includeMinimalInlineScopes());
   addGlobalName(SP->getName(), SPDie, Context);
 }

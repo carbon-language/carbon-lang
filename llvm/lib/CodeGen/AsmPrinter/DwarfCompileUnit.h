@@ -183,10 +183,11 @@ public:
   }
 
   /// Add a new global name to the compile unit.
-  void addGlobalName(StringRef Name, DIE &Die, DIScope Context) override;
+  void addGlobalName(StringRef Name, DIE &Die, const MDScope *Context) override;
 
   /// Add a new global type to the compile unit.
-  void addGlobalType(DIType Ty, const DIE &Die, DIScope Context) override;
+  void addGlobalType(const MDType *Ty, const DIE &Die,
+                     const MDScope *Context) override;
 
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }

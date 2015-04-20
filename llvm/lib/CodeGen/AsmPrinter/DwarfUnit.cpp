@@ -772,7 +772,7 @@ void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
 }
 
 /// getOrCreateContextDIE - Get context owner's DIE.
-DIE *DwarfUnit::getOrCreateContextDIE(DIScope Context) {
+DIE *DwarfUnit::getOrCreateContextDIE(const MDScope *Context) {
   if (!Context || isa<MDFile>(Context))
     return &getUnitDie();
   if (auto *T = dyn_cast<MDType>(Context))
@@ -785,7 +785,7 @@ DIE *DwarfUnit::getOrCreateContextDIE(DIScope Context) {
 }
 
 DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
-  DIScope Context = resolve(Ty->getScope());
+  auto *Context = resolve(Ty->getScope());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
 
   if (DIE *TyDIE = getDIE(Ty))
@@ -817,7 +817,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
-  DIScope Context = resolve(Ty->getScope());
+  auto *Context = resolve(Ty->getScope());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
   assert(ContextDIE);
 
@@ -846,8 +846,8 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   return &TyDIE;
 }
 
-void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
-                                        const DIE &TyDIE) {
+void DwarfUnit::updateAcceleratorTables(const MDScope *Context,
+                                        const MDType *Ty, const DIE &TyDIE) {
   if (!Ty->getName().empty() && !Ty->isForwardDecl()) {
     bool IsImplementation = 0;
     if (auto *CT = dyn_cast<MDCompositeTypeBase>(Ty)) {
@@ -890,7 +890,7 @@ void DwarfUnit::addType(DIE &Entity, DIType Ty, dwarf::Attribute Attribute) {
 /// it as a string. This is done at the metadata level because DIEs may
 /// not currently have been added to the parent context and walking the
 /// DIEs looking for names is more expensive than walking the metadata.
-std::string DwarfUnit::getParentContextString(DIScope Context) const {
+std::string DwarfUnit::getParentContextString(const MDScope *Context) const {
   if (!Context)
     return "";
 
@@ -899,7 +899,7 @@ std::string DwarfUnit::getParentContextString(DIScope Context) const {
     return "";
 
   std::string CS;
-  SmallVector<DIScope, 1> Parents;
+  SmallVector<const MDScope *, 1> Parents;
   while (!isa<MDCompileUnit>(Context)) {
     Parents.push_back(Context);
     if (Context->getScope())
@@ -912,9 +912,7 @@ std::string DwarfUnit::getParentContextString(DIScope Context) const {
 
   // Reverse iterate over our list to go from the outermost construct to the
   // innermost.
-  for (SmallVectorImpl<DIScope>::reverse_iterator I = Parents.rbegin(),
-                                                  E = Parents.rend();
-       I != E; ++I) {
+  for (auto I = Parents.rbegin(), E = Parents.rend(); I != E; ++I) {
     const MDScope *Ctx = *I;
     StringRef Name = Ctx->getName();
     if (Name.empty() && isa<MDNamespace>(Ctx))

@@ -153,13 +153,15 @@ public:
 
   /// getParentContextString - Get a string containing the language specific
   /// context for a global name.
-  std::string getParentContextString(DIScope Context) const;
+  std::string getParentContextString(const MDScope *Context) const;
 
   /// Add a new global name to the compile unit.
-  virtual void addGlobalName(StringRef Name, DIE &Die, DIScope Context) {}
+  virtual void addGlobalName(StringRef Name, DIE &Die, const MDScope *Context) {
+  }
 
   /// Add a new global type to the compile unit.
-  virtual void addGlobalType(DIType Ty, const DIE &Die, DIScope Context) {}
+  virtual void addGlobalType(const MDType *Ty, const DIE &Die,
+                             const MDScope *Context) {}
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE &Die);
@@ -302,7 +304,7 @@ public:
   DIE *createTypeDIE(DICompositeType Ty);
 
   /// getOrCreateContextDIE - Get context owner's DIE.
-  DIE *getOrCreateContextDIE(DIScope Context);
+  DIE *getOrCreateContextDIE(const MDScope *Context);
 
   /// constructContainingTypeDIEs - Construct DIEs for types that contain
   /// vtables.
@@ -402,7 +404,8 @@ private:
 
   /// If this is a named finished type then include it in the list of types for
   /// the accelerator tables.
-  void updateAcceleratorTables(DIScope Context, DIType Ty, const DIE &TyDIE);
+  void updateAcceleratorTables(const MDScope *Context, const MDType *Ty,
+                               const DIE &TyDIE);
 
   virtual bool isDwoUnit() const = 0;
 };
