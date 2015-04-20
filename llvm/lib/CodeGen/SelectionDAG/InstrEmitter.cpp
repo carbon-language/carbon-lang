@@ -953,6 +953,9 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     // Remember to operand index of the group flags.
     SmallVector<unsigned, 8> GroupIdx;
 
+    // Remember registers that are part of early-clobber defs.
+    SmallVector<unsigned, 8> ECRegs;
+
     // Add all of the operand registers to the instruction.
     for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
       unsigned Flags =
@@ -981,6 +984,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MIB.addReg(Reg, RegState::Define | RegState::EarlyClobber |
                   getImplRegState(TargetRegisterInfo::isPhysicalRegister(Reg)));
+          ECRegs.push_back(Reg);
         }
         break;
       case InlineAsm::Kind_RegUse:  // Use of register.
@@ -1003,6 +1007,19 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
           }
         }
         break;
+      }
+    }
+
+    // GCC inline assembly allows input operands to also be early-clobber
+    // output operands (so long as the operand is written only after it's
+    // used), but this does not match the semantics of our early-clobber flag.
+    // If an early-clobber operand register is also an input operand register,
+    // then remove the early-clobber flag.
+    for (unsigned Reg : ECRegs) {
+      if (MIB->readsRegister(Reg, TRI)) {
+        MachineOperand *MO = MIB->findRegisterDefOperand(Reg, false, TRI);
+        assert(MO && "No def operand for clobbered register?");
+        MO->setIsEarlyClobber(false);
       }
     }
 
