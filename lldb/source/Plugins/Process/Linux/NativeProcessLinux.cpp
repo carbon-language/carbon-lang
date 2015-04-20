@@ -3894,14 +3894,23 @@ WriteRegisterCallback (EmulateInstruction *instruction,
     return true;
 }
 
-static size_t WriteMemoryCallback (EmulateInstruction *instruction,
-                                   void *baton,
-                                   const EmulateInstruction::Context &context, 
-                                   lldb::addr_t addr, 
-                                   const void *dst,
-                                   size_t length)
+static size_t
+WriteMemoryCallback (EmulateInstruction *instruction,
+                     void *baton,
+                     const EmulateInstruction::Context &context, 
+                     lldb::addr_t addr, 
+                     const void *dst,
+                     size_t length)
 {
     return length;
+}
+
+static lldb::addr_t
+ReadCpsr (NativeRegisterContext* regsiter_context)
+{
+    const RegisterInfo* cpsr_info = regsiter_context->GetRegisterInfo(
+            eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
+    return regsiter_context->ReadRegisterAsUnsigned(cpsr_info, LLDB_INVALID_ADDRESS);
 }
 
 Error
@@ -3914,7 +3923,7 @@ NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
         EmulateInstruction::FindPlugin(m_arch, eInstructionTypePCModifying, nullptr));
 
     if (emulator_ap == nullptr)
-        return Error("Instrunction emulator not found!");
+        return Error("Instruction emulator not found!");
 
     EmulatorBaton baton(this, register_context_sp.get());
     emulator_ap->SetBaton(&baton);
@@ -3926,20 +3935,31 @@ NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
     if (!emulator_ap->ReadInstruction())
         return Error("Read instruction failed!");
 
-    if (!emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC))
-        return Error("Evaluate instrcution failed!");
-
-    lldb::addr_t next_pc = baton.m_pc.GetAsUInt32();
-    lldb::addr_t next_cpsr = 0;
-    if (baton.m_cpsr.GetType() != RegisterValue::eTypeInvalid)
+    lldb::addr_t next_pc;
+    lldb::addr_t next_cpsr;
+    if (emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC))
     {
-        next_cpsr = baton.m_cpsr.GetAsUInt32();
+        next_pc = baton.m_pc.GetAsUInt32();
+        if (baton.m_cpsr.GetType() != RegisterValue::eTypeInvalid)
+            next_cpsr = baton.m_cpsr.GetAsUInt32();
+        else
+            next_cpsr = ReadCpsr (register_context_sp.get());
+    }
+    else if (baton.m_pc.GetType() == RegisterValue::eTypeInvalid)
+    {
+        // Emulate instruction failed and it haven't changed PC. Advance PC
+        // with the size of the current opcode because the emulation of all
+        // PC modifying instruction should be successful. The failure most
+        // likely caused by a not supported instruction which don't modify PC.
+        next_pc = register_context_sp->GetPC() + emulator_ap->GetOpcode().GetByteSize();
+        next_cpsr = ReadCpsr (register_context_sp.get());
     }
     else
     {
-        const RegisterInfo* cpsr_info = register_context_sp->GetRegisterInfo(
-            eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
-        next_cpsr = register_context_sp->ReadRegisterAsUnsigned(cpsr_info, LLDB_INVALID_ADDRESS);
+        // The instruction emulation failed after it modified the PC. It is an
+        // unknown error where we can't continue because the next instruction is
+        // modifying the PC but we don't  know how.
+        return Error ("Instruction emulation failed unexpectedly.");
     }
 
     if (next_cpsr & 0x20)
