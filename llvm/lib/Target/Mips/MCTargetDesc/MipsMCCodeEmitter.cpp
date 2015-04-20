@@ -179,8 +179,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       (Opcode != Mips::SLL_MM) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
-  if (STI.getFeatureBits() & Mips::FeatureMicroMips) {
-    int NewOpcode = Mips::Std2MicroMips (Opcode, Mips::Arch_micromips);
+  if (isMicroMips(STI)) {
+    int NewOpcode = isMips32r6(STI) ?
+                    Mips::MipsR62MicroMipsR6(Opcode, Mips::Arch_micromipsr6) :
+                    Mips::Std2MicroMips(Opcode, Mips::Arch_micromips);
     if (NewOpcode != -1) {
       if (Fixups.size() > N)
         Fixups.pop_back();
