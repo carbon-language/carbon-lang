@@ -186,11 +186,9 @@ class CGDebugInfo {
 
   llvm::DIType createFieldType(StringRef name, QualType type,
                                uint64_t sizeInBitsOverride, SourceLocation loc,
-                               AccessSpecifier AS,
-                               uint64_t offsetInBits,
-                               llvm::DIFile tunit,
-                               llvm::DIScope scope,
-                               const RecordDecl* RD = nullptr);
+                               AccessSpecifier AS, uint64_t offsetInBits,
+                               llvm::MDFile *tunit, llvm::MDScope *scope,
+                               const RecordDecl *RD = nullptr);
 
   // Helpers for collecting fields of a record.
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
@@ -320,9 +318,9 @@ private:
                                             uint64_t *OffSet);
 
   /// \brief Get context info for the decl.
-  llvm::DIScope getContextDescriptor(const Decl *Decl);
+  llvm::MDScope *getContextDescriptor(const Decl *Decl);
 
-  llvm::DIScope getCurrentContextDescriptor(const Decl *Decl);
+  llvm::MDScope *getCurrentContextDescriptor(const Decl *Decl);
 
   /// \brief Create a forward decl for a RecordType in a given context.
   llvm::MDCompositeType *getOrCreateRecordFwdDecl(const RecordType *,

@@ -139,7 +139,7 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
 }
 
 /// getContextDescriptor - Get context info for the decl.
-llvm::DIScope CGDebugInfo::getContextDescriptor(const Decl *Context) {
+llvm::MDScope *CGDebugInfo::getContextDescriptor(const Decl *Context) {
   if (!Context)
     return TheCU;
 
@@ -841,11 +841,11 @@ static unsigned getAccessFlag(AccessSpecifier Access, const RecordDecl *RD) {
 llvm::DIType CGDebugInfo::createFieldType(
     StringRef name, QualType type, uint64_t sizeInBitsOverride,
     SourceLocation loc, AccessSpecifier AS, uint64_t offsetInBits,
-    llvm::DIFile tunit, llvm::DIScope scope, const RecordDecl *RD) {
-  llvm::DIType debugType = getOrCreateType(type, tunit);
+    llvm::MDFile *tunit, llvm::MDScope *scope, const RecordDecl *RD) {
+  llvm::MDType *debugType = getOrCreateType(type, tunit);
 
   // Get the location for the field.
-  llvm::DIFile file = getOrCreateFile(loc);
+  llvm::MDFile *file = getOrCreateFile(loc);
   unsigned line = getLineNumber(loc);
 
   uint64_t SizeInBits = 0;
@@ -2467,7 +2467,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
     return llvm::DISubprogram();
 
   // Setup context.
-  llvm::DIScope S = getContextDescriptor(cast<Decl>(D->getDeclContext()));
+  auto *S = getContextDescriptor(cast<Decl>(D->getDeclContext()));
 
   auto MI = SPCache.find(FD->getCanonicalDecl());
   if (MI == SPCache.end()) {
@@ -3277,9 +3277,9 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
       true, Init, getOrCreateStaticDataMemberDeclarationOrNull(VarD)));
 }
 
-llvm::DIScope CGDebugInfo::getCurrentContextDescriptor(const Decl *D) {
+llvm::MDScope *CGDebugInfo::getCurrentContextDescriptor(const Decl *D) {
   if (!LexicalBlockStack.empty())
-    return cast<llvm::MDScope>(LexicalBlockStack.back());
+    return LexicalBlockStack.back();
   return getContextDescriptor(D);
 }
 
