@@ -685,8 +685,10 @@ ConnectionFileDescriptor::BytesAvailable(uint32_t timeout_usec, Error *error_ptr
                     return eConnectionStatusSuccess;
                 if (have_pipe_fd && FD_ISSET(pipe_fd, FD_SET_DATA(read_fds)))
                 {
-                    // We got a command to exit.  Read the data from that pipe:
-                    char buffer[16];
+                    // There is an interrupt or exit command in the command pipe
+                    // Read the data from that pipe:
+                    char buffer[1];
+
                     ssize_t bytes_read;
 
                     do
@@ -698,8 +700,9 @@ ConnectionFileDescriptor::BytesAvailable(uint32_t timeout_usec, Error *error_ptr
                     {
                         case 'q':
                             if (log)
-                                log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
-                                            static_cast<void *>(this), static_cast<int>(bytes_read), buffer);
+                                log->Printf("%p ConnectionFileDescriptor::BytesAvailable() "
+                                            "got data: %c from the command channel.",
+                                            static_cast<void *>(this), buffer[0]);
                             return eConnectionStatusEndOfFile;
                         case 'i':
                             // Interrupt the current read
