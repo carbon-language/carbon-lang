@@ -522,7 +522,7 @@ namespace llvm {
     /// FIXME: this is added for dragonegg. Once we update dragonegg
     /// to call resolve function, this will be removed.
     MDSubprogram *
-    createFunction(DIScopeRef Scope, StringRef Name, StringRef LinkageName,
+    createFunction(MDScopeRef Scope, StringRef Name, StringRef LinkageName,
                    MDFile *File, unsigned LineNo, MDSubroutineType *Ty,
                    bool isLocalToUnit, bool isDefinition, unsigned ScopeLine,
                    unsigned Flags = 0, bool isOptimized = false,

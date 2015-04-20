@@ -174,13 +174,13 @@ DIType DbgVariable::getType() const {
     uint16_t tag = Ty->getTag();
 
     if (tag == dwarf::DW_TAG_pointer_type)
-      subType = resolve(DITypeRef(cast<MDDerivedType>(Ty)->getBaseType()));
+      subType = resolve(cast<MDDerivedType>(Ty)->getBaseType());
 
     auto Elements = cast<MDCompositeTypeBase>(subType)->getElements();
     for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
       auto *DT = cast<MDDerivedTypeBase>(Elements[i]);
       if (getName() == DT->getName())
-        return resolve(DITypeRef(DT->getBaseType()));
+        return resolve(DT->getBaseType());
     }
   }
   return Ty;

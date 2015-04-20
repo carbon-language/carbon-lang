@@ -2141,7 +2141,7 @@ public:
   /// \brief Get the type.
   ///
   /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
-  /// the type as a DITypeRef here.
+  /// a type ref here.
   MDType *getType() const { return cast_or_null<MDType>(getRawType()); }
 
   StringRef getFilename() const {

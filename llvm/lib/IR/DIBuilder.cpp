@@ -622,13 +622,13 @@ MDExpression* DIBuilder::createBitPieceExpression(unsigned OffsetInBytes,
   return MDExpression::get(VMContext, Addr);
 }
 
-MDSubprogram* DIBuilder::createFunction(DIScopeRef Context, StringRef Name,
-                                       StringRef LinkageName, MDFile* File,
-                                       unsigned LineNo, MDSubroutineType* Ty,
-                                       bool isLocalToUnit, bool isDefinition,
-                                       unsigned ScopeLine, unsigned Flags,
-                                       bool isOptimized, Function *Fn,
-                                       MDNode *TParams, MDNode *Decl) {
+MDSubprogram *DIBuilder::createFunction(MDScopeRef Context, StringRef Name,
+                                        StringRef LinkageName, MDFile *File,
+                                        unsigned LineNo, MDSubroutineType *Ty,
+                                        bool isLocalToUnit, bool isDefinition,
+                                        unsigned ScopeLine, unsigned Flags,
+                                        bool isOptimized, Function *Fn,
+                                        MDNode *TParams, MDNode *Decl) {
   // dragonegg does not generate identifier for types, so using an empty map
   // to resolve the context should be fine.
   DITypeIdentifierMap EmptyMap;

@@ -88,9 +88,6 @@ DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
 
 typedef DebugNodeArray DIArray;
 typedef MDTypeRefArray DITypeArray;
-typedef DebugNodeRef DIDescriptorRef;
-typedef MDScopeRef DIScopeRef;
-typedef MDTypeRef DITypeRef;
 
 class DISubrange {
   MDSubrange *N;

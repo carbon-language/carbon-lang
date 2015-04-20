@@ -617,7 +617,7 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
            T == dwarf::DW_TAG_volatile_type ||
            T == dwarf::DW_TAG_restrict_type ||
            T == dwarf::DW_TAG_enumeration_type);
-    if (DITypeRef Deriv = DTy->getBaseType())
+    if (MDTypeRef Deriv = DTy->getBaseType())
       return isUnsignedDIType(DD, DD->resolve(Deriv));
     // FIXME: Enums without a fixed underlying type have unknown signedness
     // here, leading to incorrectly emitted constants.
@@ -813,7 +813,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   // DW_TAG_restrict_type is not supported in DWARF2
   if (Ty->getTag() == dwarf::DW_TAG_restrict_type && DD->getDwarfVersion() <= 2)
     return getOrCreateTypeDIE(
-        resolve(DITypeRef(cast<MDDerivedType>(Ty)->getBaseType())));
+        resolve(cast<MDDerivedType>(Ty)->getBaseType()));
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
