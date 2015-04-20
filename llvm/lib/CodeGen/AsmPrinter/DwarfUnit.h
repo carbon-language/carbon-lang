@@ -239,14 +239,14 @@ public:
   void addSourceLine(DIE &Die, DIVariable V);
   void addSourceLine(DIE &Die, DIGlobalVariable G);
   void addSourceLine(DIE &Die, DISubprogram SP);
-  void addSourceLine(DIE &Die, DIType Ty);
+  void addSourceLine(DIE &Die, const MDType *Ty);
   void addSourceLine(DIE &Die, DINameSpace NS);
   void addSourceLine(DIE &Die, DIObjCProperty Ty);
 
   /// addConstantValue - Add constant value entry in variable DIE.
-  void addConstantValue(DIE &Die, const MachineOperand &MO, DIType Ty);
-  void addConstantValue(DIE &Die, const ConstantInt *CI, DIType Ty);
-  void addConstantValue(DIE &Die, const APInt &Val, DIType Ty);
+  void addConstantValue(DIE &Die, const MachineOperand &MO, const MDType *Ty);
+  void addConstantValue(DIE &Die, const ConstantInt *CI, const MDType *Ty);
+  void addConstantValue(DIE &Die, const APInt &Val, const MDType *Ty);
   void addConstantValue(DIE &Die, const APInt &Val, bool Unsigned);
   void addConstantValue(DIE &Die, bool Unsigned, uint64_t Val);
 
@@ -284,7 +284,7 @@ public:
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
   /// type references.
-  void addType(DIE &Entity, DIType Ty,
+  void addType(DIE &Entity, const MDType *Ty,
                dwarf::Attribute Attribute = dwarf::DW_AT_type);
 
   /// getOrCreateNameSpace - Create a DIE for DINameSpace.
@@ -297,7 +297,7 @@ public:
                                  bool Minimal = false);
 
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
-  /// given DIType.
+  /// given type.
   DIE *getOrCreateTypeDIE(const MDNode *N);
 
   /// getOrCreateContextDIE - Get context owner's DIE.

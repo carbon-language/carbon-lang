@@ -141,7 +141,7 @@ bool DbgVariable::isBlockByrefVariable() const {
       ->isBlockByrefStruct();
 }
 
-DIType DbgVariable::getType() const {
+const MDType *DbgVariable::getType() const {
   MDType *Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
@@ -459,17 +459,15 @@ void DwarfDebug::beginModule() {
       CU.getOrCreateGlobalVariableDIE(GV);
     for (auto *SP : CUNode->getSubprograms())
       SPMap.insert(std::make_pair(SP, &CU));
-    for (DIType Ty : CUNode->getEnumTypes()) {
+    for (auto *Ty : CUNode->getEnumTypes()) {
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy = cast<MDType>(resolve(Ty->getRef()));
-      CU.getOrCreateTypeDIE(UniqueTy);
+      CU.getOrCreateTypeDIE(cast<MDType>(resolve(Ty->getRef())));
     }
-    for (DIType Ty : CUNode->getRetainedTypes()) {
+    for (auto *Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType UniqueTy = cast<MDType>(resolve(Ty->getRef()));
-      CU.getOrCreateTypeDIE(UniqueTy);
+      CU.getOrCreateTypeDIE(cast<MDType>(resolve(Ty->getRef())));
     }
     // Emit imported_modules last so that the relevant context is already
     // available.

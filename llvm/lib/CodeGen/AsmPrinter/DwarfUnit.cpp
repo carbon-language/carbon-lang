@@ -421,7 +421,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DISubprogram SP) {
 
 /// addSourceLine - Add location information to specified debug information
 /// entry.
-void DwarfUnit::addSourceLine(DIE &Die, DIType Ty) {
+void DwarfUnit::addSourceLine(DIE &Die, const MDType *Ty) {
   assert(Ty);
 
   addSourceLine(Die, Ty->getLine(), Ty->getFilename(), Ty->getDirectory());
@@ -519,8 +519,8 @@ bool DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
 void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
                                      dwarf::Attribute Attribute,
                                      const MachineLocation &Location) {
-  DIType Ty = DV.getType();
-  DIType TmpTy = Ty;
+  const MDType *Ty = DV.getType();
+  const MDType *TmpTy = Ty;
   uint16_t Tag = Ty->getTag();
   bool isPointer = false;
 
@@ -594,7 +594,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 }
 
 /// Return true if type encoding is unsigned.
-static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
+static bool isUnsignedDIType(DwarfDebug *DD, const MDType *Ty) {
   if (DIDerivedType DTy = dyn_cast<MDDerivedTypeBase>(Ty)) {
     dwarf::Tag T = (dwarf::Tag)Ty->getTag();
     // Encode pointer constants as unsigned bytes. This is used at least for
@@ -698,13 +698,14 @@ void DwarfUnit::addConstantFPValue(DIE &Die, const ConstantFP *CFP) {
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-void DwarfUnit::addConstantValue(DIE &Die, const ConstantInt *CI, DIType Ty) {
+void DwarfUnit::addConstantValue(DIE &Die, const ConstantInt *CI,
+                                 const MDType *Ty) {
   addConstantValue(Die, CI->getValue(), Ty);
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
 void DwarfUnit::addConstantValue(DIE &Die, const MachineOperand &MO,
-                                 DIType Ty) {
+                                 const MDType *Ty) {
   assert(MO.isImm() && "Invalid machine operand!");
 
   addConstantValue(Die, isUnsignedDIType(DD, Ty), MO.getImm());
@@ -717,7 +718,7 @@ void DwarfUnit::addConstantValue(DIE &Die, bool Unsigned, uint64_t Val) {
           Unsigned ? dwarf::DW_FORM_udata : dwarf::DW_FORM_sdata, Val);
 }
 
-void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, DIType Ty) {
+void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, const MDType *Ty) {
   addConstantValue(Die, Val, isUnsignedDIType(DD, Ty));
 }
 
@@ -801,7 +802,7 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
-/// given DIType.
+/// given type.
 DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   if (!TyNode)
     return nullptr;
@@ -865,7 +866,8 @@ void DwarfUnit::updateAcceleratorTables(const MDScope *Context,
 }
 
 /// addType - Add a new type attribute to the specified entity.
-void DwarfUnit::addType(DIE &Entity, DIType Ty, dwarf::Attribute Attribute) {
+void DwarfUnit::addType(DIE &Entity, const MDType *Ty,
+                        dwarf::Attribute Attribute) {
   assert(Ty && "Trying to add a type that doesn't exist?");
 
   // Check for pre-existence.
@@ -952,7 +954,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   uint16_t Tag = Buffer.getTag();
 
   // Map to main type, void will not have a type.
-  DIType FromTy = resolve(DTy->getBaseType());
+  const MDType *FromTy = resolve(DTy->getBaseType());
   if (FromTy)
     addType(Buffer, FromTy);
 
@@ -977,7 +979,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 /// constructSubprogramArguments - Construct function argument DIEs.
 void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
   for (unsigned i = 1, N = Args.size(); i < N; ++i) {
-    DIType Ty = resolve(Args[i]);
+    const MDType *Ty = resolve(Args[i]);
     if (!Ty) {
       assert(i == N-1 && "Unspecified parameter must be the last argument");
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
@@ -1424,7 +1426,7 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
               Value);
     }
   }
-  DIType DTy = resolve(CTy->getBaseType());
+  const MDType *DTy = resolve(CTy->getBaseType());
   if (DTy) {
     addType(Buffer, DTy);
     addFlag(Buffer, dwarf::DW_AT_enum_class);
@@ -1556,7 +1558,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT_) {
 
   DIE &StaticMemberDIE = createAndAddDIE(DT->getTag(), *ContextDIE, DT);
 
-  DIType Ty = resolve(DT->getBaseType());
+  const MDType *Ty = resolve(DT->getBaseType());
 
   addString(StaticMemberDIE, dwarf::DW_AT_name, DT->getName());
   addType(StaticMemberDIE, Ty);

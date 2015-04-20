@@ -165,7 +165,7 @@ public:
     return Expr.back()->getNumElements() > 0;
   }
   bool isBlockByrefVariable() const;
-  DIType getType() const;
+  const MDType *getType() const;
 
 private:
   /// resolve - Look in the DwarfDebug map for the MDNode that

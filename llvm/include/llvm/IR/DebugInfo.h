@@ -51,7 +51,6 @@ class DISubprogram;
 class DILexicalBlock;
 class DILexicalBlockFile;
 class DIVariable;
-class DIType;
 class DIObjCProperty;
 
 /// \brief Maps from type identifier to the actual MDNode.
@@ -63,7 +62,6 @@ typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
   template <> struct simplify_type<DESC>;
 DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIBasicType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DIDerivedType)
 DECLARE_SIMPLIFY_DESCRIPTOR(DICompositeType)
@@ -110,17 +108,6 @@ public:
   MDEnumerator &operator*() const { return *N; }
 };
 
-class DIType {
-  MDType *N;
-
-public:
-  DIType(const MDType *N = nullptr) : N(const_cast<MDType *>(N)) {}
-
-  operator MDType *() const { return N; }
-  MDType *operator->() const { return N; }
-  MDType &operator*() const { return *N; }
-};
-
 class DIBasicType {
   MDBasicType *N;
 
@@ -128,7 +115,6 @@ public:
   DIBasicType(const MDBasicType *N = nullptr)
       : N(const_cast<MDBasicType *>(N)) {}
 
-  operator DIType() const { return N; }
   operator MDBasicType *() const { return N; }
   MDBasicType *operator->() const { return N; }
   MDBasicType &operator*() const { return *N; }
@@ -141,7 +127,6 @@ public:
   DIDerivedType(const MDDerivedTypeBase *N = nullptr)
       : N(const_cast<MDDerivedTypeBase *>(N)) {}
 
-  operator DIType() const { return N; }
   operator MDDerivedTypeBase *() const { return N; }
   MDDerivedTypeBase *operator->() const { return N; }
   MDDerivedTypeBase &operator*() const { return *N; }
@@ -154,7 +139,6 @@ public:
   DICompositeType(const MDCompositeTypeBase *N = nullptr)
       : N(const_cast<MDCompositeTypeBase *>(N)) {}
 
-  operator DIType() const { return N; }
   operator MDCompositeTypeBase *() const { return N; }
   MDCompositeTypeBase *operator->() const { return N; }
   MDCompositeTypeBase &operator*() const { return *N; }
@@ -167,7 +151,6 @@ public:
   DISubroutineType(const MDSubroutineType *N = nullptr)
       : N(const_cast<MDSubroutineType *>(N)) {}
 
-  operator DIType() const { return N; }
   operator DICompositeType() const { return N; }
   operator MDSubroutineType *() const { return N; }
   MDSubroutineType *operator->() const { return N; }
@@ -348,7 +331,6 @@ public:
   template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
 SIMPLIFY_DESCRIPTOR(DISubrange)
 SIMPLIFY_DESCRIPTOR(DIEnumerator)
-SIMPLIFY_DESCRIPTOR(DIType)
 SIMPLIFY_DESCRIPTOR(DIBasicType)
 SIMPLIFY_DESCRIPTOR(DIDerivedType)
 SIMPLIFY_DESCRIPTOR(DICompositeType)

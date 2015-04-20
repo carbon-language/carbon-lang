@@ -251,8 +251,8 @@ protected:
     Instruction* Terminator = IBuilder.CreateRetVoid();
 
     // Create a local variable around the alloca
-    DIType IntType = DBuilder.createBasicType("int", 32, 0,
-        dwarf::DW_ATE_signed);
+    auto *IntType =
+        DBuilder.createBasicType("int", 32, 0, dwarf::DW_ATE_signed);
     DIExpression E = DBuilder.createExpression();
     DIVariable Variable = DBuilder.createLocalVariable(
       dwarf::DW_TAG_auto_variable, Subprogram, "x", File, 5, IntType, true);
