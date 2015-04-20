@@ -34,6 +34,8 @@ p.add_option('--pkgconfigdir', metavar='PATH',
              help='install clc.pc to given dir')
 p.add_option('-g', metavar='GENERATOR', default='make',
              help='use given generator (default: make)')
+p.add_option('--enable-runtime-subnormal', action="store_true", default=False,
+             help='Allow runtimes to choose subnormal support')
 (options, args) = p.parse_args()
 
 llvm_config_exe = options.with_llvm_config or "llvm-config"
@@ -133,6 +135,16 @@ manifest_deps = set([sys.argv[0], os.path.join(srcdir, 'build', 'metabuild.py'),
 install_files_bc = []
 install_deps = []
 
+# Create rules for subnormal helper objects
+for src in ['subnormal_disable.ll', 'subnormal_use_default.ll']:
+  obj_name = src[:-2] + 'bc'
+  obj = os.path.join('generic--', 'lib', obj_name)
+  src_file = os.path.join('generic', 'lib', src)
+  b.build(obj, 'LLVM_AS', src_file)
+  b.default(obj)
+  install_files_bc.append((obj, obj))
+  install_deps.append(obj)
+
 # Create libclc.pc
 clc = open('libclc.pc', 'w')
 clc.write('includedir=%(inc)s\nlibexecdir=%(lib)s\n\nName: libclc\nDescription: Library requirements of the OpenCL C programming language\nVersion: %(maj)s.%(min)s.%(pat)s\nCflags: -I${includedir}\nLibs: -L${libexecdir}' %
@@ -208,6 +220,10 @@ for target in targets:
             b.build(obj, 'LLVM_AS', src_file)
           else:
             b.build(obj, clang_bc_rule, src_file)
+
+    obj = os.path.join('generic--', 'lib', 'subnormal_use_default.bc')
+    if  not options.enable_runtime_subnormal:
+      objects.append(obj)
 
     builtins_link_bc = os.path.join(target, 'lib', 'builtins.link' + obj_suffix + '.bc')
     builtins_opt_bc = os.path.join(target, 'lib', 'builtins.opt' + obj_suffix + '.bc')
