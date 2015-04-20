@@ -1425,11 +1425,18 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
         findCleanupHandlers(Actions, BB, BB);
 
       // Add the catch handler to the action list.
-      // Since this is a catch-all handler, the selector won't actually appear
-      // in the code anywhere.  ExpectedSelector here is the constant null ptr
-      // that we got from the landing pad instruction.
-      CatchHandler *Action = new CatchHandler(BB, ExpectedSelector, nullptr);
-      CatchHandlerMap[BB] = Action;
+      CatchHandler *Action = nullptr;
+      if (CatchHandlerMap.count(BB) && CatchHandlerMap[BB] != nullptr) {
+        // If the CatchHandlerMap already has an entry for this BB, re-use it.
+        Action = CatchHandlerMap[BB];
+        assert(Action->getSelector() == ExpectedSelector);
+      } else {
+        // Since this is a catch-all handler, the selector won't actually appear
+        // in the code anywhere.  ExpectedSelector here is the constant null ptr
+        // that we got from the landing pad instruction.
+        Action = new CatchHandler(BB, ExpectedSelector, nullptr);
+        CatchHandlerMap[BB] = Action;
+      }
       Actions.insertCatchHandler(Action);
       DEBUG(dbgs() << "  Catch all handler at block " << BB->getName() << "\n");
       ++HandlersFound;
