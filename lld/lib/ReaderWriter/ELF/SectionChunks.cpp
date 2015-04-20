@@ -484,7 +484,7 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
   else
     addUndefinedAtom(symbol, dyn_cast<UndefinedAtom>(atom));
 
-  // If --discard-local is on, don't add to the symbol table
+  // If --discard-all is on, don't add to the symbol table
   // symbols with local binding.
   if (this->_ctx.discardLocals() && symbol.getBinding() == llvm::ELF::STB_LOCAL)
     return;
