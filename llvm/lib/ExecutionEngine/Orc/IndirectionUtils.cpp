@@ -49,6 +49,7 @@ void makeStub(Function &F, GlobalVariable &ImplPointer) {
     CallArgs.push_back(&A);
   CallInst *Call = Builder.CreateCall(ImplAddr, CallArgs);
   Call->setTailCall();
+  Call->setAttributes(F.getAttributes());
   Builder.CreateRet(Call);
 }
 
