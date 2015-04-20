@@ -401,7 +401,8 @@ class JR_HB_R6_DESC : JR_HB_DESC_BASE<"jr.hb", GPR32Opnd> {
   bit isBarrier=1;
 }
 
-class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class BITSWAP_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
+    : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rt");
@@ -664,7 +665,7 @@ def BGEZALC : BGEZALC_ENC, BGEZALC_DESC, ISA_MIPS32R6;
 def BGEZC : BGEZC_ENC, BGEZC_DESC, ISA_MIPS32R6;
 def BGTZALC : BGTZALC_ENC, BGTZALC_DESC, ISA_MIPS32R6;
 def BGTZC : BGTZC_ENC, BGTZC_DESC, ISA_MIPS32R6;
-def BITSWAP : BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
+def BITSWAP : R6MMR6Rel, BITSWAP_ENC, BITSWAP_DESC, ISA_MIPS32R6;
 def BLEZALC : BLEZALC_ENC, BLEZALC_DESC, ISA_MIPS32R6;
 def BLEZC : BLEZC_ENC, BLEZC_DESC, ISA_MIPS32R6;
 def BLTC : BLTC_ENC, BLTC_DESC, ISA_MIPS32R6;
