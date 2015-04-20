@@ -935,8 +935,8 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
     ThreadIgnoreEnd(thr, 0);
     while ((tid = atomic_load(&p->tid, memory_order_acquire)) == 0)
       pthread_yield();
-    atomic_store(&p->tid, 0, memory_order_release);
     ThreadStart(thr, tid, GetTid());
+    atomic_store(&p->tid, 0, memory_order_release);
   }
   void *res = callback(param);
   // Prevent the callback from being tail called,
@@ -984,6 +984,13 @@ TSAN_INTERCEPTOR(int, pthread_create,
   if (res == 0) {
     int tid = ThreadCreate(thr, pc, *(uptr*)th, detached);
     CHECK_NE(tid, 0);
+    // Synchronization on p.tid serves two purposes:
+    // 1. ThreadCreate must finish before the new thread starts.
+    //    Otherwise the new thread can call pthread_detach, but the pthread_t
+    //    identifier is not yet registered in ThreadRegistry by ThreadCreate.
+    // 2. ThreadStart must finish before this thread continues.
+    //    Otherwise, this thread can call pthread_detach and reset thr->sync
+    //    before the new thread got a chance to acquire from it in ThreadStart.
     atomic_store(&p.tid, tid, memory_order_release);
     while (atomic_load(&p.tid, memory_order_acquire) != 0)
       pthread_yield();
