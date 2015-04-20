@@ -251,6 +251,7 @@ public:
   static Constant *get(Type* Ty, double V);
   static Constant *get(Type* Ty, StringRef Str);
   static ConstantFP *get(LLVMContext &Context, const APFloat &V);
+  static Constant *getNaN(Type *Ty, bool Negative = false, unsigned type = 0);
   static Constant *getNegativeZero(Type *Ty);
   static Constant *getInfinity(Type *Ty, bool Negative = false);
 

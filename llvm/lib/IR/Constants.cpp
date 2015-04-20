@@ -663,6 +663,17 @@ Constant *ConstantFP::get(Type *Ty, StringRef Str) {
   return C; 
 }
 
+Constant *ConstantFP::getNaN(Type *Ty, bool Negative, unsigned Type) {
+  const fltSemantics &Semantics = *TypeToFloatSemantics(Ty->getScalarType());
+  APFloat NaN = APFloat::getNaN(Semantics, Negative, Type);
+  Constant *C = get(Ty->getContext(), NaN);
+
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return ConstantVector::getSplat(VTy->getNumElements(), C);
+
+  return C;
+}
+
 Constant *ConstantFP::getNegativeZero(Type *Ty) {
   const fltSemantics &Semantics = *TypeToFloatSemantics(Ty->getScalarType());
   APFloat NegZero = APFloat::getZero(Semantics, /*Negative=*/true);
