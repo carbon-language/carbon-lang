@@ -1167,7 +1167,11 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
         Type *AllocaType = AI->getAllocatedType();
         uint64_t AllocaTypeSize = DL.getTypeAllocSize(AllocaType);
         uint64_t AllocaArraySize = AIArraySize->getLimitedValue();
-        assert(AllocaArraySize > 0 && "array size of AllocaInst is zero");
+
+        // Don't add markers for zero-sized allocas.
+        if (AllocaArraySize == 0)
+          continue;
+
         // Check that array size doesn't saturate uint64_t and doesn't
         // overflow when it's multiplied by type size.
         if (AllocaArraySize != ~0ULL &&
