@@ -555,9 +555,12 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MICROMIPS_CALL_LO16:
   case R_MIPS_GOT_DISP:
   case R_MIPS_GOT_PAGE:
+  case R_MICROMIPS_GOT_DISP:
+  case R_MICROMIPS_GOT_PAGE:
     handleGOT(ref);
     break;
   case R_MIPS_GOT_OFST:
+  case R_MICROMIPS_GOT_OFST:
     // Nothing to do. We create GOT page entry in the R_MIPS_GOT_PAGE handler.
     break;
   case R_MIPS_GPREL16:
@@ -819,13 +822,15 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
     return;
   }
 
-  if (ref.kindValue() == R_MIPS_GOT_PAGE)
+  if (ref.kindValue() == R_MIPS_GOT_PAGE ||
+      ref.kindValue() == R_MICROMIPS_GOT_PAGE)
     ref.setTarget(getLocalGOTPageEntry(ref));
   else if (ref.kindValue() == R_MIPS_GOT_DISP ||
            ref.kindValue() == R_MIPS_GOT_HI16 ||
            ref.kindValue() == R_MIPS_GOT_LO16 ||
            ref.kindValue() == R_MIPS_CALL_HI16 ||
            ref.kindValue() == R_MIPS_CALL_LO16 ||
+           ref.kindValue() == R_MICROMIPS_GOT_DISP ||
            ref.kindValue() == R_MICROMIPS_GOT_HI16 ||
            ref.kindValue() == R_MICROMIPS_GOT_LO16 ||
            ref.kindValue() == R_MICROMIPS_CALL_HI16 ||

@@ -123,6 +123,9 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MICROMIPS_TLS_GD:
   case R_MICROMIPS_TLS_LDM:
   case R_MICROMIPS_TLS_GOTTPREL:
+  case R_MICROMIPS_GOT_DISP:
+  case R_MICROMIPS_GOT_PAGE:
+  case R_MICROMIPS_GOT_OFST:
   case R_MICROMIPS_GOT_HI16:
   case R_MICROMIPS_GOT_LO16:
   case R_MICROMIPS_CALL_HI16:
@@ -244,7 +247,7 @@ static uint64_t relocGOTHi16(uint64_t S, uint64_t GP) {
   return (S - GP + 0x8000) >> 16;
 }
 
-/// R_MIPS_GOT_OFST
+/// R_MIPS_GOT_OFST, R_MICROMIPS_GOT_OFST
 /// rel16 offset of (S+A) from the page pointer (verify)
 static uint32_t relocGOTOfst(uint64_t S, int64_t A) {
   uint64_t page = (S + A + 0x8000) & ~0xffff;
@@ -439,6 +442,8 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
   case R_MIPS_CALL16:
   case R_MIPS_GOT_DISP:
   case R_MIPS_GOT_PAGE:
+  case R_MICROMIPS_GOT_DISP:
+  case R_MICROMIPS_GOT_PAGE:
   case R_MICROMIPS_GOT16:
   case R_MICROMIPS_CALL16:
   case R_MIPS_TLS_GD:
@@ -449,6 +454,7 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
   case R_MICROMIPS_TLS_GOTTPREL:
     return relocGOT(tgtAddr, gpAddr);
   case R_MIPS_GOT_OFST:
+  case R_MICROMIPS_GOT_OFST:
     return relocGOTOfst(tgtAddr, addend);
   case R_MIPS_PC18_S3:
     return relocPc18(relAddr, tgtAddr, addend);
