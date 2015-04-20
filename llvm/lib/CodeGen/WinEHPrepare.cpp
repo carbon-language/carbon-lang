@@ -904,6 +904,10 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     ++II;
   }
 
+  // The landing pad value may be used by PHI nodes.  It will ultimately be
+  // eliminated, but we need it in the map for intermediate handling.
+  VMap[LPad] = UndefValue::get(LPad->getType());
+
   // Skip over PHIs and, if applicable, landingpad instructions.
   II = StartBB->getFirstInsertionPt();
 
