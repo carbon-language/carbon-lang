@@ -2106,6 +2106,17 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     if (!getCurScope()->getFnParent() && !getCurScope()->getBlockParent()) {
       Result = ExprError(Diag(OpenLoc, diag::err_stmtexpr_file_scope));
     } else {
+      // Find the nearest non-record decl context. Variables declared in a
+      // statement expression behave as if they were declared in the enclosing
+      // function, block, or other code construct.
+      DeclContext *CodeDC = Actions.CurContext;
+      while (CodeDC->isRecord() || isa<EnumDecl>(CodeDC)) {
+        CodeDC = CodeDC->getParent();
+        assert(CodeDC && !CodeDC->isFileContext() &&
+               "statement expr not in code context");
+      }
+      Sema::ContextRAII SavedContext(Actions, CodeDC, /*NewThisContext=*/false);
+
       Actions.ActOnStartStmtExpr();
 
       StmtResult Stmt(ParseCompoundStatement(true));

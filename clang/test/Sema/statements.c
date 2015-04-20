@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify  -triple x86_64-pc-linux-gnu
+// RUN: %clang_cc1 %s -fsyntax-only -verify  -triple x86_64-pc-linux-gnu -Wno-unevaluated-expression
 
 typedef unsigned __uint32_t;
 
@@ -97,3 +97,16 @@ int test_pr8880() {
   return 1;
 }
 
+// In PR22849, we considered __ptr to be a static data member of the anonymous
+// union. Now we declare it in the parent DeclContext.
+void test_pr22849() {
+  struct Bug {
+    typeof(({ unsigned long __ptr; (int *)(0); })) __val;
+    union Nested {
+      typeof(({ unsigned long __ptr; (int *)(0); })) __val;
+    } n;
+  };
+  enum E {
+    SIZE = sizeof(({unsigned long __ptr; __ptr;}))
+  };
+}
