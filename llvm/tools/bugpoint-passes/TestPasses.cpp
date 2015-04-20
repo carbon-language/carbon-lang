@@ -68,8 +68,32 @@ namespace {
     }
   };
 }
- 
+
 char DeleteCalls::ID = 0;
 static RegisterPass<DeleteCalls>
   Y("bugpoint-deletecalls",
     "BugPoint Test Pass - Intentionally 'misoptimize' CallInsts");
+
+namespace {
+  /// CrashOnDeclFunc - This pass is used to test bugpoint.  It intentionally
+  /// crash if the module has an undefined function (ie a function that is
+  /// defined in an external module).
+  class CrashOnDeclFunc : public ModulePass {
+  public:
+    static char ID; // Pass ID, replacement for typeid
+    CrashOnDeclFunc() : ModulePass(ID) {}
+  private:
+    bool runOnModule(Module &M) override {
+      for (auto &F : M.functions()) {
+        if (F.isDeclaration())
+          abort();
+      }
+      return false;
+    }
+  };
+}
+
+char CrashOnDeclFunc::ID = 0;
+static RegisterPass<CrashOnDeclFunc>
+  Z("bugpoint-crash-decl-funcs",
+    "BugPoint Test Pass - Intentionally crash on declared functions");

@@ -40,6 +40,15 @@ namespace {
   NoGlobalRM ("disable-global-remove",
          cl::desc("Do not remove global variables"),
          cl::init(false));
+
+  cl::opt<bool>
+  ReplaceFuncsWithNull("replace-funcs-with-null",
+         cl::desc("When stubbing functions, replace all uses will null"),
+         cl::init(false));
+  cl::opt<bool>
+  DontReducePassList("disable-pass-list-reduction",
+                     cl::desc("Skip pass list reduction steps"),
+                     cl::init(false));
 }
 
 namespace llvm {
@@ -194,6 +203,29 @@ namespace {
   };
 }
 
+static void RemoveFunctionReferences(Module *M, const char* Name) {
+  auto *UsedVar = M->getGlobalVariable(Name, true);
+  if (!UsedVar || !UsedVar->hasInitializer()) return;
+  if (isa<ConstantAggregateZero>(UsedVar->getInitializer())) {
+    assert(UsedVar->use_empty());
+    UsedVar->eraseFromParent();
+    return;
+  }
+  auto *OldUsedVal = cast<ConstantArray>(UsedVar->getInitializer());
+  std::vector<Constant*> Used;
+  for(Value *V : OldUsedVal->operand_values()) {
+    Constant *Op = cast<Constant>(V->stripPointerCasts());
+    if(!Op->isNullValue()) {
+      Used.push_back(cast<Constant>(V));
+    }
+  }
+  auto *NewValElemTy = OldUsedVal->getType()->getElementType();
+  auto *NewValTy = ArrayType::get(NewValElemTy, Used.size());
+  auto *NewUsedVal = ConstantArray::get(NewValTy, Used);
+  UsedVar->mutateType(NewUsedVal->getType()->getPointerTo());
+  UsedVar->setInitializer(NewUsedVal);
+}
+
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // If main isn't present, claim there is no problem.
   if (KeepMain && std::find(Funcs.begin(), Funcs.end(),
@@ -218,13 +250,53 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   outs() << "Checking for crash with only these functions: ";
   PrintFunctionList(Funcs);
   outs() << ": ";
+  if (!ReplaceFuncsWithNull) {
+    // Loop over and delete any functions which we aren't supposed to be playing
+    // with...
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+      if (!I->isDeclaration() && !Functions.count(I))
+        DeleteFunctionBody(I);
+  } else {
+    std::vector<GlobalValue*> ToRemove;
+    // First, remove aliases to functions we're about to purge.
+    for (GlobalAlias &Alias : M->aliases()) {
+      Constant *Root = Alias.getAliasee()->stripPointerCasts();
+      Function *F = dyn_cast<Function>(Root);
+      if (F) {
+        if (Functions.count(F))
+          // We're keeping this function.
+          continue;
+      } else if (Root->isNullValue()) {
+        // This referenced a globalalias that we've already replaced,
+        // so we still need to replace this alias.
+      } else if (!F) {
+        // Not a function, therefore not something we mess with.
+        continue;
+      }
 
-  // Loop over and delete any functions which we aren't supposed to be playing
-  // with...
-  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isDeclaration() && !Functions.count(I))
-      DeleteFunctionBody(I);
+      PointerType *Ty = cast<PointerType>(Alias.getType());
+      Constant *Replacement = ConstantPointerNull::get(Ty);
+      Alias.replaceAllUsesWith(Replacement);
+      ToRemove.push_back(&Alias);
+    }
 
+    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+      if (!I->isDeclaration() && !Functions.count(I)) {
+        PointerType *Ty = cast<PointerType>(I->getType());
+        Constant *Replacement = ConstantPointerNull::get(Ty);
+        I->replaceAllUsesWith(Replacement);
+        ToRemove.push_back(I);
+      }
+    }
+
+    for (auto *F : ToRemove) {
+      F->eraseFromParent();
+    }
+
+    // Finally, remove any null members from any global intrinsic.
+    RemoveFunctionReferences(M, "llvm.used");
+    RemoveFunctionReferences(M, "llvm.compiler.used");
+  }
   // Try running the hacked up program...
   if (TestFn(BD, M)) {
     BD.setNewProgram(M);        // It crashed, keep the trimmed version...
@@ -296,7 +368,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
           (*SI)->removePredecessor(BB);
 
         TerminatorInst *BBTerm = BB->getTerminator();
-        
+
         if (!BB->getTerminator()->getType()->isVoidTy())
           BBTerm->replaceAllUsesWith(Constant::getNullValue(BBTerm->getType()));
 
@@ -629,7 +701,7 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
 
   std::string Error;
   // Reduce the list of passes which causes the optimizer to crash...
-  if (!BugpointIsInterrupted)
+  if (!BugpointIsInterrupted && !DontReducePassList)
     ReducePassList(*this).reduceList(PassesToRun, Error);
   assert(Error.empty());
 
