@@ -1913,3 +1913,7 @@ include "MipsMSAInstrInfo.td"
 include "MicroMipsInstrFormats.td"
 include "MicroMipsInstrInfo.td"
 include "MicroMipsInstrFPU.td"
+
+// Micromips r6
+include "MicroMips32r6InstrFormats.td"
+include "MicroMips32r6InstrInfo.td"
