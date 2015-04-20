@@ -489,6 +489,11 @@ void SymbolTable<ELFT>::addSymbol(const Atom *atom, int32_t sectionIndex,
   if (this->_ctx.discardLocals() && symbol.getBinding() == llvm::ELF::STB_LOCAL)
     return;
 
+  // Temporary locals are all the symbols which name starts with .L.
+  // This is defined by the ELF standard.
+  if (this->_ctx.discardTempLocals() && atom->name().startswith(".L"))
+    return;
+
   _symbolTable.push_back(SymbolEntry(atom, symbol, atomLayout));
   this->_fsize += sizeof(Elf_Sym);
   if (this->_flags & SHF_ALLOC)

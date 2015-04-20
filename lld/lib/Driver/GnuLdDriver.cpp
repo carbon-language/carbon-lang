@@ -478,6 +478,9 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->hasArg(OPT_discard_loc))
     ctx->setDiscardLocals(true);
 
+  if (parsedArgs->hasArg(OPT_discard_temp_loc))
+    ctx->setDiscardTempLocals(true);
+
   if (parsedArgs->hasArg(OPT_strip_all))
     ctx->setStripSymbols(true);
 

@@ -260,6 +260,11 @@ def discard_loc : Flag<["--"], "discard-all">,
      Group<grp_symbolopts>;
 def alias_discard_loc: Flag<["-"], "x">,
      Alias<discard_loc>;
+def discard_temp_loc : Flag<["--"], "discard-locals">,
+     HelpText<"Discard temporary local symbols">,
+     Group<grp_symbolopts>;
+def alias_discard_temp_loc : Flag<["-"], "X">,
+     Alias<discard_temp_loc>;
 def no_demangle : Flag<["--"], "no-demangle">,
      HelpText<"Dont demangle C++ symbols">,
      Group<grp_symbolopts>;
