@@ -13,6 +13,7 @@ set(files
   bmi2intrin.h
   bmiintrin.h
   cpuid.h
+  cuda/cuda_builtin_vars.h
   emmintrin.h
   f16cintrin.h
   float.h
