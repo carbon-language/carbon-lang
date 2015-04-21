@@ -177,8 +177,7 @@ public:
              const DefinedAtom *da);
 
   /// \brief Gets the segment for a output section
-  virtual typename TargetLayout<ELFT>::SegmentType
-  getSegmentType(Section<ELFT> *section) const;
+  virtual SegmentType getSegmentType(Section<ELFT> *section) const;
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
