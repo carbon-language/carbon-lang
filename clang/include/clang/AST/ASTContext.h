@@ -1691,6 +1691,10 @@ public:
   /// beneficial for performance to overalign a data type.
   unsigned getPreferredTypeAlign(const Type *T) const;
 
+  /// \brief Return the default alignment for __attribute__((aligned)) on
+  /// this target, to be used if no alignment value is specified.
+  unsigned getTargetDefaultAlignForAttributeAligned(void) const;
+
   /// \brief Return the alignment in bits that should be given to a
   /// global variable with type \p T.
   unsigned getAlignOfGlobalVar(QualType T) const;

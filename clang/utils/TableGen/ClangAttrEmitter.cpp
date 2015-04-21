@@ -413,15 +413,14 @@ namespace {
       // FIXME: Do not do the calculation here
       // FIXME: Handle types correctly
       // A null pointer means maximum alignment
-      // FIXME: Load the platform-specific maximum alignment, rather than
-      //        16, the x86 max.
       OS << "unsigned " << getAttrName() << "Attr::get" << getUpperName()
          << "(ASTContext &Ctx) const {\n";
       OS << "  assert(!is" << getUpperName() << "Dependent());\n";
       OS << "  if (is" << getLowerName() << "Expr)\n";
-      OS << "    return (" << getLowerName() << "Expr ? " << getLowerName()
-         << "Expr->EvaluateKnownConstInt(Ctx).getZExtValue() : 16)"
-         << "* Ctx.getCharWidth();\n";
+      OS << "    return " << getLowerName() << "Expr ? " << getLowerName()
+         << "Expr->EvaluateKnownConstInt(Ctx).getZExtValue()"
+         << " * Ctx.getCharWidth() : "
+         << "Ctx.getTargetDefaultAlignForAttributeAligned();\n";
       OS << "  else\n";
       OS << "    return 0; // FIXME\n";
       OS << "}\n";

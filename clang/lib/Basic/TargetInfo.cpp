@@ -36,6 +36,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
   SuitableAlign = 64;
+  DefaultAlignForAttributeAligned = 128;
   MinGlobalAlign = 0;
   HalfWidth = 16;
   HalfAlign = 16;

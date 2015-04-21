@@ -5521,6 +5521,7 @@ public:
     LongDoubleWidth = 128;
     LongDoubleAlign = 64;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
+    DefaultAlignForAttributeAligned = 64;
     MinGlobalAlign = 16;
     DescriptionString = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64";
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;

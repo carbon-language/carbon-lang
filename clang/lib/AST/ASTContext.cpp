@@ -1817,6 +1817,13 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   return ABIAlign;
 }
 
+/// getTargetDefaultAlignForAttributeAligned - Return the default alignment
+/// for __attribute__((aligned)) on this target, to be used if no alignment
+/// value is specified.
+unsigned ASTContext::getTargetDefaultAlignForAttributeAligned(void) const {
+  return getTargetInfo().getDefaultAlignForAttributeAligned();
+}
+
 /// getAlignOfGlobalVar - Return the alignment in bits that should be given
 /// to a global variable of the specified type.
 unsigned ASTContext::getAlignOfGlobalVar(QualType T) const {
