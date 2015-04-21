@@ -1,7 +1,6 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -basicaa -polly-codegen-isl -verify-loop-info < %s -S | FileCheck %s
 
 target datalayout = "e-p:32:32:32-i64:64:64-i32:32:32-i16:16:16-i1:32:32-f64:64:64-f32:32:32-a0:0-n32"
-target triple = "hexagon-unknown-linux-gnu"
 
 ; This test case used to fail, because we did not add the newly generated basic
 ; block %polly.start as a basic block to the surrounding loop.

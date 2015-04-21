@@ -16,7 +16,6 @@
 ;
 ; ModuleID = 'test/Isl/CodeGen/lifetime_intrinsics.ll'
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
 
 @A = common global [1024 x i32] zeroinitializer, align 16
 

@@ -13,7 +13,6 @@
 ; CHECK: remark: ReportVariantBasePtr01.c:7:5: The base address of this array is not invariant inside the loop
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
 
 %struct.b = type { double** }
 

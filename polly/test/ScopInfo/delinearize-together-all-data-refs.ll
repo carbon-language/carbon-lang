@@ -13,7 +13,6 @@
 ; CHECK: [n, m, o] -> { Stmt_for_body6[i0, i1, i2] -> MemRef_A[i0, 0, i2] };
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind uwtable
 define void @foo(i64 %n, i64 %m, i64 %o, double* nocapture %A) {

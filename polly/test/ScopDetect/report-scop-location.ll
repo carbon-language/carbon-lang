@@ -1,6 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-report -disable-output < %s  2>&1 | FileCheck %s
 target datalayout = "e-i64:64-f80:128-s:64-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind uwtable
 define void @foo(float* %A) #0 {
