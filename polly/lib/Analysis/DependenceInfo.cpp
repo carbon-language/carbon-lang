@@ -105,7 +105,8 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
         //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> [0, i0, 2, i1, 0]
         isl_map *Schedule = Stmt->getSchedule();
         Schedule = isl_map_apply_domain(
-            Schedule, isl_map_reverse(isl_map_domain_map(isl_map_copy(accdom))));
+            Schedule,
+            isl_map_reverse(isl_map_domain_map(isl_map_copy(accdom))));
         accdom = isl_map_range_map(accdom);
         *AccessSchedule = isl_union_map_add_map(*AccessSchedule, Schedule);
       }
@@ -464,7 +465,7 @@ void Dependences::calculateDependences(Scop &S) {
 }
 
 bool Dependences::isValidSchedule(Scop &S,
-                                    StatementToIslMapTy *NewSchedule) const {
+                                  StatementToIslMapTy *NewSchedule) const {
   if (LegalityCheckDisabled)
     return true;
 

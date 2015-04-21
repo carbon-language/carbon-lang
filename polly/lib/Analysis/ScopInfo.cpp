@@ -841,12 +841,11 @@ void ScopStmt::buildSchedule(SmallVectorImpl<unsigned> &ScheduleVec) {
   isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, NbScheduleDims);
 
   Schedule = isl_map_from_domain_and_range(isl_set_universe(getDomainSpace()),
-                                             isl_set_universe(Space));
+                                           isl_set_universe(Space));
 
   // Loop dimensions.
   for (unsigned i = 0; i < NbIterators; ++i)
-    Schedule =
-        isl_map_equate(Schedule, isl_dim_out, 2 * i + 1, isl_dim_in, i);
+    Schedule = isl_map_equate(Schedule, isl_dim_out, 2 * i + 1, isl_dim_in, i);
 
   // Constant dimensions
   for (unsigned i = 0; i < NbIterators + 1; ++i)
@@ -1981,7 +1980,8 @@ void Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
   ScopStmt *Stmt;
 
   if (BB) {
-    Stmt = new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, ScheduleVec);
+    Stmt =
+        new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, ScheduleVec);
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either a basic block or a region is needed to "
@@ -2019,7 +2019,8 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
                                       E = CurRegion.element_end();
        I != E; ++I)
     if (I->isSubRegion()) {
-      buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, ScheduleVec, LI, SD);
+      buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, ScheduleVec, LI,
+                SD);
     } else {
       BasicBlock *BB = I->getNodeAs<BasicBlock>();
 
