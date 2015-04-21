@@ -33,6 +33,7 @@
 #include <isl/map.h>
 #include <isl/options.h>
 #include <isl/set.h>
+#include <isl/schedule.h>
 
 using namespace polly;
 using namespace llvm;
@@ -218,13 +219,13 @@ void Dependences::addPrivatizationDependences() {
 
 void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule,
-      *Schedule;
+      *ScheduleMap;
 
   DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
   collectInfo(S, &Read, &Write, &MayWrite, &AccessSchedule, &StmtSchedule);
 
-  Schedule =
+  ScheduleMap =
       isl_union_map_union(AccessSchedule, isl_union_map_copy(StmtSchedule));
 
   Read = isl_union_map_coalesce(Read);
@@ -239,9 +240,14 @@ void Dependences::calculateDependences(Scop &S) {
   DEBUG(dbgs() << "Read: " << Read << "\n";
         dbgs() << "Write: " << Write << "\n";
         dbgs() << "MayWrite: " << MayWrite << "\n";
-        dbgs() << "Schedule: " << Schedule << "\n");
+        dbgs() << "Schedule: " << ScheduleMap << "\n");
 
   RAW = WAW = WAR = RED = nullptr;
+
+  auto *Schedule = isl_schedule_from_domain(
+      isl_union_map_domain(isl_union_map_copy(ScheduleMap)));
+  Schedule = isl_schedule_insert_partial_schedule(
+      Schedule, isl_multi_union_pw_aff_from_union_map(ScheduleMap));
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_access_info *AI;
@@ -250,8 +256,7 @@ void Dependences::calculateDependences(Scop &S) {
     AI = isl_union_access_info_from_sink(isl_union_map_copy(Read));
     AI = isl_union_access_info_set_must_source(AI, isl_union_map_copy(Write));
     AI = isl_union_access_info_set_may_source(AI, isl_union_map_copy(MayWrite));
-    AI = isl_union_access_info_set_schedule_map(AI,
-                                                isl_union_map_copy(Schedule));
+    AI = isl_union_access_info_set_schedule(AI, isl_schedule_copy(Schedule));
     Flow = isl_union_access_info_compute_flow(AI);
 
     RAW = isl_union_flow_get_must_dependence(Flow);
@@ -260,8 +265,7 @@ void Dependences::calculateDependences(Scop &S) {
     AI = isl_union_access_info_from_sink(isl_union_map_copy(Write));
     AI = isl_union_access_info_set_must_source(AI, isl_union_map_copy(Write));
     AI = isl_union_access_info_set_may_source(AI, isl_union_map_copy(Read));
-    AI = isl_union_access_info_set_schedule_map(AI,
-                                                isl_union_map_copy(Schedule));
+    AI = isl_union_access_info_set_schedule(AI, Schedule);
     Flow = isl_union_access_info_compute_flow(AI);
 
     WAW = isl_union_flow_get_must_dependence(Flow);
@@ -282,8 +286,7 @@ void Dependences::calculateDependences(Scop &S) {
 
     AI = isl_union_access_info_from_sink(isl_union_map_copy(Read));
     AI = isl_union_access_info_set_may_source(AI, isl_union_map_copy(Write));
-    AI = isl_union_access_info_set_schedule_map(AI,
-                                                isl_union_map_copy(Schedule));
+    AI = isl_union_access_info_set_schedule(AI, isl_schedule_copy(Schedule));
     Flow = isl_union_access_info_compute_flow(AI);
 
     RAW = isl_union_flow_get_may_dependence(Flow);
@@ -291,8 +294,7 @@ void Dependences::calculateDependences(Scop &S) {
 
     AI = isl_union_access_info_from_sink(isl_union_map_copy(Write));
     AI = isl_union_access_info_set_may_source(AI, isl_union_map_copy(Read));
-    AI = isl_union_access_info_set_schedule_map(AI,
-                                                isl_union_map_copy(Schedule));
+    AI = isl_union_access_info_set_schedule(AI, isl_schedule_copy(Schedule));
     Flow = isl_union_access_info_compute_flow(AI);
 
     WAR = isl_union_flow_get_may_dependence(Flow);
@@ -300,8 +302,7 @@ void Dependences::calculateDependences(Scop &S) {
 
     AI = isl_union_access_info_from_sink(isl_union_map_copy(Write));
     AI = isl_union_access_info_set_may_source(AI, isl_union_map_copy(Write));
-    AI = isl_union_access_info_set_schedule_map(AI,
-                                                isl_union_map_copy(Schedule));
+    AI = isl_union_access_info_set_schedule(AI, Schedule);
     Flow = isl_union_access_info_compute_flow(AI);
 
     WAW = isl_union_flow_get_may_dependence(Flow);
@@ -311,7 +312,6 @@ void Dependences::calculateDependences(Scop &S) {
   isl_union_map_free(MayWrite);
   isl_union_map_free(Write);
   isl_union_map_free(Read);
-  isl_union_map_free(Schedule);
 
   RAW = isl_union_map_coalesce(RAW);
   WAW = isl_union_map_coalesce(WAW);
