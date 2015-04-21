@@ -60,6 +60,7 @@ def BITPOS32 : SDNodeXForm<imm, [{
    return XformMskToBitPosU5Imm(imm);
 }]>;
 
+
 // Hexagon V4 Architecture spec defines 8 instruction classes:
 // LD ST ALU32 XTYPE J JR MEMOP NV CR SYSTEM(system is not implemented in the
 // compiler)
