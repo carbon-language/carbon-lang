@@ -860,7 +860,8 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
   if (MemSet->getDest() != MemCpy->getDest())
     return false;
 
-  Value *Dest = MemSet->getDest();
+  // Use the same i8* dest as the memcpy, killing the memset dest if different.
+  Value *Dest = MemCpy->getRawDest();
   Value *DestSize = MemSet->getLength();
   Value *SrcSize = MemCpy->getLength();
 

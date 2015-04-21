@@ -100,6 +100,22 @@ define void @test_align_memcpy(i8* %src, i8* %dst, i64 %dst_size) {
   ret void
 }
 
+; CHECK-LABEL: define void @test_non_i8_dst_type
+; CHECK-NEXT: %dst = bitcast i64* %dst_pi64 to i8*
+; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %src, i64 %src_size, i32 1, i1 false)
+; CHECK-DAG: [[DST:%[0-9]+]] = getelementptr i8, i8* %dst, i64 %src_size
+; CHECK-DAG: [[ULE:%[0-9]+]] = icmp ule i64 %dst_size, %src_size
+; CHECK-DAG: [[SIZEDIFF:%[0-9]+]] = sub i64 %dst_size, %src_size
+; CHECK-DAG: [[SIZE:%[0-9]+]] = select i1 [[ULE]], i64 0, i64 [[SIZEDIFF]]
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[DST]], i8 %c, i64 [[SIZE]], i32 1, i1 false)
+; CHECK-NEXT: ret void
+define void @test_non_i8_dst_type(i8* %src, i64 %src_size, i64* %dst_pi64, i64 %dst_size, i8 %c) {
+  %dst = bitcast i64* %dst_pi64 to i8*
+  call void @llvm.memset.p0i8.i64(i8* %dst, i8 %c, i64 %dst_size, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %src, i64 %src_size, i32 1, i1 false)
+  ret void
+}
+
 ; CHECK-LABEL: define void @test_different_dst
 ; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %dst, i8 0, i64 %dst_size, i32 1, i1 false)
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst2, i8* %src, i64 %src_size, i32 1, i1 false)
