@@ -1547,6 +1547,9 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
   SDValue AmtLack = DAG.getNode(ISD::SUB, dl, ShTy, NVBitsNode, Amt);
   SDValue isShort = DAG.getSetCC(dl, getSetCCResultType(ShTy),
                                  Amt, NVBitsNode, ISD::SETULT);
+  SDValue isZero = DAG.getSetCC(dl, getSetCCResultType(ShTy),
+                                Amt, DAG.getConstant(0, ShTy),
+                                ISD::SETEQ);
 
   SDValue LoS, HiS, LoL, HiL;
   switch (N->getOpcode()) {
@@ -1556,8 +1559,6 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     LoS = DAG.getNode(ISD::SHL, dl, NVT, InL, Amt);
     HiS = DAG.getNode(ISD::OR, dl, NVT,
                       DAG.getNode(ISD::SHL, dl, NVT, InH, Amt),
-    // FIXME: If Amt is zero, the following shift generates an undefined result
-    // on some architectures.
                       DAG.getNode(ISD::SRL, dl, NVT, InL, AmtLack));
 
     // Long: ShAmt >= NVTBits
@@ -1565,7 +1566,8 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     HiL = DAG.getNode(ISD::SHL, dl, NVT, InL, AmtExcess); // Hi from Lo part.
 
     Lo = DAG.getSelect(dl, NVT, isShort, LoS, LoL);
-    Hi = DAG.getSelect(dl, NVT, isShort, HiS, HiL);
+    Hi = DAG.getSelect(dl, NVT, isZero, InH,
+                       DAG.getSelect(dl, NVT, isShort, HiS, HiL));
     return true;
   case ISD::SRL:
     // Short: ShAmt < NVTBits
@@ -1580,7 +1582,8 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     HiL = DAG.getConstant(0, NVT);                        // Hi part is zero.
     LoL = DAG.getNode(ISD::SRL, dl, NVT, InH, AmtExcess); // Lo from Hi part.
 
-    Lo = DAG.getSelect(dl, NVT, isShort, LoS, LoL);
+    Lo = DAG.getSelect(dl, NVT, isZero, InL,
+                       DAG.getSelect(dl, NVT, isShort, LoS, LoL));
     Hi = DAG.getSelect(dl, NVT, isShort, HiS, HiL);
     return true;
   case ISD::SRA:
@@ -1588,8 +1591,6 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     HiS = DAG.getNode(ISD::SRA, dl, NVT, InH, Amt);
     LoS = DAG.getNode(ISD::OR, dl, NVT,
                       DAG.getNode(ISD::SRL, dl, NVT, InL, Amt),
-    // FIXME: If Amt is zero, the following shift generates an undefined result
-    // on some architectures.
                       DAG.getNode(ISD::SHL, dl, NVT, InH, AmtLack));
 
     // Long: ShAmt >= NVTBits
@@ -1597,7 +1598,8 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                       DAG.getConstant(NVTBits-1, ShTy));
     LoL = DAG.getNode(ISD::SRA, dl, NVT, InH, AmtExcess); // Lo from Hi part.
 
-    Lo = DAG.getSelect(dl, NVT, isShort, LoS, LoL);
+    Lo = DAG.getSelect(dl, NVT, isZero, InL,
+                       DAG.getSelect(dl, NVT, isShort, LoS, LoL));
     Hi = DAG.getSelect(dl, NVT, isShort, HiS, HiL);
     return true;
   }
