@@ -283,3 +283,18 @@ define <4 x double> @vhsubpd1(<4 x double> %x, <4 x double> %y) {
   %r = fsub <4 x double> %a, %b
   ret <4 x double> %r
 }
+
+; CHECK-LABEL: haddps_v2f32
+; CHECK: haddps %xmm{{[0-9]+}}, %xmm0
+; CHECK-NEXT: retq
+define <2 x float> @haddps_v2f32(<4 x float> %v0) {
+  %v0.0 = extractelement <4 x float> %v0, i32 0
+  %v0.1 = extractelement <4 x float> %v0, i32 1
+  %v0.2 = extractelement <4 x float> %v0, i32 2
+  %v0.3 = extractelement <4 x float> %v0, i32 3
+  %op0 = fadd float %v0.0, %v0.1
+  %op1 = fadd float %v0.2, %v0.3
+  %res0 = insertelement <2 x float> undef, float %op0, i32 0
+  %res1 = insertelement <2 x float> %res0, float %op1, i32 1
+  ret <2 x float> %res1
+}
