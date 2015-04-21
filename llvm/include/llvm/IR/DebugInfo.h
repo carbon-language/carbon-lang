@@ -29,22 +29,9 @@
 #include <iterator>
 
 namespace llvm {
-class BasicBlock;
-class Constant;
-class Function;
-class GlobalVariable;
 class Module;
-class Type;
-class Value;
 class DbgDeclareInst;
 class DbgValueInst;
-class Instruction;
-class Metadata;
-class MDNode;
-class MDString;
-class NamedMDNode;
-class LLVMContext;
-class raw_ostream;
 
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
