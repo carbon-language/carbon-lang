@@ -362,7 +362,7 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
       section->setSegmentType(segmentType);
       StringRef segmentName = section->segmentKindToStr();
 
-      int64_t lookupSectionFlag = osi->flags();
+      uint64_t lookupSectionFlag = osi->flags();
       if ((!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) &&
           (_ctx.mergeRODataToTextSegment()))
         lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;

@@ -259,7 +259,7 @@ public:
   uint64_t fileSize() const { return _size; }
   int64_t entsize() const { return _entSize; }
   uint64_t fileOffset() const { return _fileOffset; }
-  int64_t flags() const { return _flags; }
+  uint64_t flags() const { return _flags; }
   uint64_t memSize() { return _memSize; }
 
 private:
