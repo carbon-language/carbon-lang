@@ -176,7 +176,7 @@ public:
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
     assert((MI->isDebugValue() ? static_cast<bool>(MI->getDebugVariable())
                                : true) &&
-           "first MDNode argument of a DBG_VALUE not a DIVariable");
+           "first MDNode argument of a DBG_VALUE not a variable");
     return *this;
   }
 
@@ -356,8 +356,8 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(isa<MDLocalVariable>(Variable) && "not a DIVariable");
-  assert(cast<MDExpression>(Expr)->isValid() && "not a DIExpression");
+  assert(isa<MDLocalVariable>(Variable) && "not a variable");
+  assert(cast<MDExpression>(Expr)->isValid() && "not an expression");
   assert(cast<MDLocalVariable>(Variable)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
   if (IsIndirect)
@@ -385,8 +385,8 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(isa<MDLocalVariable>(Variable) && "not a DIVariable");
-  assert(cast<MDExpression>(Expr)->isValid() && "not a DIExpression");
+  assert(isa<MDLocalVariable>(Variable) && "not a variable");
+  assert(cast<MDExpression>(Expr)->isValid() && "not an expression");
   MachineFunction &MF = *BB.getParent();
   MachineInstr *MI =
       BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, Variable, Expr);

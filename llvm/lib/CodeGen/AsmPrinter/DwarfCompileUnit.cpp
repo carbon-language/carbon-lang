@@ -97,7 +97,8 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
 }
 
 /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
-DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
+DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(
+    const MDGlobalVariable *GV) {
   // Check for pre-existence.
   if (DIE *Die = getDIE(GV))
     return Die;
@@ -632,7 +633,7 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
 }
 
 std::unique_ptr<DIE>
-DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity &Module) {
+DwarfCompileUnit::constructImportedEntityDIE(const MDImportedEntity *Module) {
   std::unique_ptr<DIE> IMDie = make_unique<DIE>((dwarf::Tag)Module->getTag());
   insertDIE(Module, IMDie.get());
   DIE *EntityDie;
@@ -687,8 +688,8 @@ void DwarfCompileUnit::collectDeadVariables(const MDSubprogram *SP) {
   if (!SPDIE)
     SPDIE = getDIE(SP);
   assert(SPDIE);
-  for (DIVariable DV : Variables) {
-    DbgVariable NewVar(DV, nullptr, DIExpression(), DD);
+  for (const MDLocalVariable *DV : Variables) {
+    DbgVariable NewVar(DV, /* IA */ nullptr, /* Expr */ nullptr, DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);
     SPDIE->addChild(std::move(VariableDie));
@@ -763,7 +764,7 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
   assert(DV.getExpression().size() == 1);
-  DIExpression Expr = DV.getExpression().back();
+  const MDExpression *Expr = DV.getExpression().back();
   bool ValidReg;
   if (Location.getOffset()) {
     ValidReg = DwarfExpr.AddMachineRegIndirect(Location.getReg(),

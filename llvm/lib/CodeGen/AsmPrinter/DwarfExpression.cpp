@@ -192,7 +192,7 @@ static unsigned getOffsetOrZero(unsigned OffsetInBits,
   return OffsetInBits;
 }
 
-bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
+bool DwarfExpression::AddMachineRegExpression(const MDExpression *Expr,
                                               unsigned MachineReg,
                                               unsigned PieceOffsetInBits) {
   auto I = Expr->expr_op_begin();
@@ -259,7 +259,7 @@ void DwarfExpression::AddExpression(MDExpression::expr_op_iterator I,
       EmitOp(dwarf::DW_OP_deref);
       break;
     default:
-      llvm_unreachable("unhandled opcode found in DIExpression");
+      llvm_unreachable("unhandled opcode found in expression");
     }
   }
 }

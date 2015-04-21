@@ -72,7 +72,7 @@ public:
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
     bool isBitPiece() const { return getExpression()->isBitPiece(); }
-    DIExpression getExpression() const { return Expression; }
+    const MDExpression *getExpression() const { return Expression; }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
@@ -94,9 +94,8 @@ public:
   /// Return true if the merge was successful.
   bool MergeValues(const DebugLocEntry &Next) {
     if (Begin == Next.Begin) {
-      DIExpression Expr = cast_or_null<MDExpression>(Values[0].Expression);
-      DIExpression NextExpr =
-          cast_or_null<MDExpression>(Next.Values[0].Expression);
+      auto *Expr = cast_or_null<MDExpression>(Values[0].Expression);
+      auto *NextExpr = cast_or_null<MDExpression>(Next.Values[0].Expression);
       if (Expr->isBitPiece() && NextExpr->isBitPiece()) {
         addValues(Next.Values);
         End = Next.End;

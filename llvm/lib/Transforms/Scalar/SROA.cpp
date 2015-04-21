@@ -1166,9 +1166,9 @@ public:
       } else {
         continue;
       }
-      DIB.insertDbgValueIntrinsic(Arg, 0, DIVariable(DVI->getVariable()),
-                                  DIExpression(DVI->getExpression()),
-                                  DVI->getDebugLoc(), Inst);
+      DIB.insertDbgValueIntrinsic(Arg, 0, DVI->getVariable(),
+                                  DVI->getExpression(), DVI->getDebugLoc(),
+                                  Inst);
     }
   }
 };
@@ -4181,15 +4181,15 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
   // Migrate debug information from the old alloca to the new alloca(s)
   // and the individial partitions.
   if (DbgDeclareInst *DbgDecl = FindAllocaDbgDeclare(&AI)) {
-    DIVariable Var(DbgDecl->getVariable());
-    DIExpression Expr(DbgDecl->getExpression());
+    auto *Var = DbgDecl->getVariable();
+    auto *Expr = DbgDecl->getExpression();
     DIBuilder DIB(*AI.getParent()->getParent()->getParent(),
                   /*AllowUnresolved*/ false);
     bool IsSplit = Pieces.size() > 1;
     for (auto Piece : Pieces) {
       // Create a piece expression describing the new partition or reuse AI's
       // expression if there is only one partition.
-      DIExpression PieceExpr = Expr;
+      auto *PieceExpr = Expr;
       if (IsSplit || Expr->isBitPiece()) {
         // If this alloca is already a scalar replacement of a larger aggregate,
         // Piece.Offset describes the offset inside the scalar.

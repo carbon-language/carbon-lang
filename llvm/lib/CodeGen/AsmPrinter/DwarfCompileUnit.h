@@ -79,7 +79,7 @@ public:
   void applyStmtList(DIE &D);
 
   /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
-  DIE *getOrCreateGlobalVariableDIE(DIGlobalVariable GV);
+  DIE *getOrCreateGlobalVariableDIE(const MDGlobalVariable *GV);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
@@ -156,7 +156,7 @@ public:
 
   /// \brief Construct import_module DIE.
   std::unique_ptr<DIE>
-  constructImportedEntityDIE(const DIImportedEntity &Module);
+  constructImportedEntityDIE(const MDImportedEntity *Module);
 
   void finishSubprogramDefinition(const MDSubprogram *SP);
 

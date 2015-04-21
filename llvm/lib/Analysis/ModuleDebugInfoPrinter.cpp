@@ -90,7 +90,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     O << '\n';
   }
 
-  for (DIGlobalVariable GV : Finder.global_variables()) {
+  for (const MDGlobalVariable *GV : Finder.global_variables()) {
     O << "Global variable: " << GV->getName();
     printFile(O, GV->getFilename(), GV->getDirectory(), GV->getLine());
     if (!GV->getLinkageName().empty())

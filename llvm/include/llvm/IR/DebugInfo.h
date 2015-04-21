@@ -46,166 +46,11 @@ class NamedMDNode;
 class LLVMContext;
 class raw_ostream;
 
-class DIVariable;
-class DIObjCProperty;
-
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 
-#define DECLARE_SIMPLIFY_DESCRIPTOR(DESC)                                      \
-  class DESC;                                                                  \
-  template <> struct simplify_type<const DESC>;                                \
-  template <> struct simplify_type<DESC>;
-DECLARE_SIMPLIFY_DESCRIPTOR(DISubrange)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIEnumerator)
-DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
-DECLARE_SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIVariable)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIExpression)
-DECLARE_SIMPLIFY_DESCRIPTOR(DILocation)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIObjCProperty)
-DECLARE_SIMPLIFY_DESCRIPTOR(DIImportedEntity)
-#undef DECLARE_SIMPLIFY_DESCRIPTOR
-
 typedef DebugNodeArray DIArray;
 typedef MDTypeRefArray DITypeArray;
-
-class DISubrange {
-  MDSubrange *N;
-
-public:
-  DISubrange(const MDSubrange *N = nullptr) : N(const_cast<MDSubrange *>(N)) {}
-
-  operator MDSubrange *() const { return N; }
-  MDSubrange *operator->() const { return N; }
-  MDSubrange &operator*() const { return *N; }
-};
-
-class DIEnumerator {
-  MDEnumerator *N;
-
-public:
-  DIEnumerator(const MDEnumerator *N = nullptr)
-      : N(const_cast<MDEnumerator *>(N)) {}
-
-  operator MDEnumerator *() const { return N; }
-  MDEnumerator *operator->() const { return N; }
-  MDEnumerator &operator*() const { return *N; }
-};
-
-class DITemplateTypeParameter {
-  MDTemplateTypeParameter *N;
-
-public:
-  DITemplateTypeParameter(const MDTemplateTypeParameter *N = nullptr)
-      : N(const_cast<MDTemplateTypeParameter *>(N)) {}
-
-  operator MDTemplateTypeParameter *() const { return N; }
-  MDTemplateTypeParameter *operator->() const { return N; }
-  MDTemplateTypeParameter &operator*() const { return *N; }
-};
-
-class DITemplateValueParameter {
-  MDTemplateValueParameter *N;
-
-public:
-  DITemplateValueParameter(const MDTemplateValueParameter *N = nullptr)
-      : N(const_cast<MDTemplateValueParameter *>(N)) {}
-
-  operator MDTemplateValueParameter *() const { return N; }
-  MDTemplateValueParameter *operator->() const { return N; }
-  MDTemplateValueParameter &operator*() const { return *N; }
-};
-
-class DIGlobalVariable {
-  MDGlobalVariable *N;
-
-public:
-  DIGlobalVariable(const MDGlobalVariable *N = nullptr)
-      : N(const_cast<MDGlobalVariable *>(N)) {}
-
-  operator MDGlobalVariable *() const { return N; }
-  MDGlobalVariable *operator->() const { return N; }
-  MDGlobalVariable &operator*() const { return *N; }
-};
-
-class DIVariable {
-  MDLocalVariable *N;
-
-public:
-  DIVariable(const MDLocalVariable *N = nullptr)
-      : N(const_cast<MDLocalVariable *>(N)) {}
-
-  operator MDLocalVariable *() const { return N; }
-  MDLocalVariable *operator->() const { return N; }
-  MDLocalVariable &operator*() const { return *N; }
-};
-
-class DIExpression {
-  MDExpression *N;
-
-public:
-  DIExpression(const MDExpression *N = nullptr)
-      : N(const_cast<MDExpression *>(N)) {}
-
-  operator MDExpression *() const { return N; }
-  MDExpression *operator->() const { return N; }
-  MDExpression &operator*() const { return *N; }
-};
-
-class DILocation {
-  MDLocation *N;
-
-public:
-  DILocation(const MDLocation *N = nullptr) : N(const_cast<MDLocation *>(N)) {}
-
-  operator MDLocation *() const { return N; }
-  MDLocation *operator->() const { return N; }
-  MDLocation &operator*() const { return *N; }
-};
-
-class DIObjCProperty {
-  MDObjCProperty *N;
-
-public:
-  DIObjCProperty(const MDObjCProperty *N = nullptr)
-      : N(const_cast<MDObjCProperty *>(N)) {}
-
-  operator MDObjCProperty *() const { return N; }
-  MDObjCProperty *operator->() const { return N; }
-  MDObjCProperty &operator*() const { return *N; }
-};
-
-class DIImportedEntity {
-  MDImportedEntity *N;
-
-public:
-  DIImportedEntity(const MDImportedEntity *N = nullptr)
-      : N(const_cast<MDImportedEntity *>(N)) {}
-
-  operator MDImportedEntity *() const { return N; }
-  MDImportedEntity *operator->() const { return N; }
-  MDImportedEntity &operator*() const { return *N; }
-};
-
-#define SIMPLIFY_DESCRIPTOR(DESC)                                              \
-  template <> struct simplify_type<const DESC> {                               \
-    typedef Metadata *SimpleType;                                              \
-    static SimpleType getSimplifiedValue(const DESC &DI) { return DI; }        \
-  };                                                                           \
-  template <> struct simplify_type<DESC> : simplify_type<const DESC> {};
-SIMPLIFY_DESCRIPTOR(DISubrange)
-SIMPLIFY_DESCRIPTOR(DIEnumerator)
-SIMPLIFY_DESCRIPTOR(DITemplateTypeParameter)
-SIMPLIFY_DESCRIPTOR(DITemplateValueParameter)
-SIMPLIFY_DESCRIPTOR(DIGlobalVariable)
-SIMPLIFY_DESCRIPTOR(DIVariable)
-SIMPLIFY_DESCRIPTOR(DIExpression)
-SIMPLIFY_DESCRIPTOR(DILocation)
-SIMPLIFY_DESCRIPTOR(DIObjCProperty)
-SIMPLIFY_DESCRIPTOR(DIImportedEntity)
-#undef SIMPLIFY_DESCRIPTOR
 
 /// \brief Find subprogram that is enclosing this scope.
 MDSubprogram *getDISubprogram(const MDNode *Scope);
@@ -251,7 +96,7 @@ public:
   void processDeclare(const Module &M, const DbgDeclareInst *DDI);
   /// \brief Process DbgValueInst.
   void processValue(const Module &M, const DbgValueInst *DVI);
-  /// \brief Process DILocation.
+  /// \brief Process debug info location.
   void processLocation(const Module &M, const MDLocation *Loc);
 
   /// \brief Clear all lists.

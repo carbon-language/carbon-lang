@@ -94,20 +94,18 @@ public:
         OS << "]";
       }
       if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
-        DIVariable Var(DDI->getVariable());
         if (!Padded) {
           OS.PadToColumn(50);
           OS << ";";
         }
-        OS << " [debug variable = " << Var->getName() << "]";
+        OS << " [debug variable = " << DDI->getVariable()->getName() << "]";
       }
       else if (const DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
-        DIVariable Var(DVI->getVariable());
         if (!Padded) {
           OS.PadToColumn(50);
           OS << ";";
         }
-        OS << " [debug variable = " << Var->getName() << "]";
+        OS << " [debug variable = " << DVI->getVariable()->getName() << "]";
       }
     }
   }

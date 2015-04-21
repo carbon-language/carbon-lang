@@ -224,7 +224,7 @@ unsigned SampleProfileLoader::getInstWeight(Instruction &Inst) {
   if (Lineno < HeaderLineno)
     return 0;
 
-  DILocation DIL = DLoc.get();
+  const MDLocation *DIL = DLoc;
   int LOffset = Lineno - HeaderLineno;
   unsigned Discriminator = DIL->getDiscriminator();
   unsigned Weight = Samples->samplesAt(LOffset, Discriminator);

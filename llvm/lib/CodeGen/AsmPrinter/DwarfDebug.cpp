@@ -422,10 +422,9 @@ DwarfDebug::constructDwarfCompileUnit(const MDCompileUnit *DIUnit) {
 }
 
 void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                                  const MDNode *N) {
-  DIImportedEntity Module = cast<MDImportedEntity>(N);
-  if (DIE *D = TheCU.getOrCreateContextDIE(Module->getScope()))
-    D->addChild(TheCU.constructImportedEntityDIE(Module));
+                                                  const MDImportedEntity *N) {
+  if (DIE *D = TheCU.getOrCreateContextDIE(N->getScope()))
+    D->addChild(TheCU.constructImportedEntityDIE(N));
 }
 
 // Emit all Dwarf sections that should come prior to the content. Create
@@ -661,8 +660,9 @@ void DwarfDebug::endModule() {
 }
 
 // Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
-                                                     DIVariable &Cleansed) {
+DbgVariable *
+DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
+                                        const MDLocalVariable *&Cleansed) {
   // More then one inlined variable corresponds to one abstract variable.
   Cleansed = IV.first;
   auto I = AbstractVariables.find(Cleansed);
@@ -672,21 +672,21 @@ DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
 }
 
 DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV) {
-  DIVariable Cleansed;
+  const MDLocalVariable *Cleansed;
   return getExistingAbstractVariable(IV, Cleansed);
 }
 
-void DwarfDebug::createAbstractVariable(const DIVariable &Var,
+void DwarfDebug::createAbstractVariable(const MDLocalVariable *Var,
                                         LexicalScope *Scope) {
   auto AbsDbgVariable =
-      make_unique<DbgVariable>(Var, nullptr, DIExpression(), this);
+      make_unique<DbgVariable>(Var, /* IA */ nullptr, /* Expr */ nullptr, this);
   InfoHolder.addScopeVariable(Scope, AbsDbgVariable.get());
   AbstractVariables[Var] = std::move(AbsDbgVariable);
 }
 
 void DwarfDebug::ensureAbstractVariableIsCreated(InlinedVariable IV,
                                                  const MDNode *ScopeNode) {
-  DIVariable Cleansed;
+  const MDLocalVariable *Cleansed = nullptr;
   if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
@@ -696,7 +696,7 @@ void DwarfDebug::ensureAbstractVariableIsCreated(InlinedVariable IV,
 
 void DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(
     InlinedVariable IV, const MDNode *ScopeNode) {
-  DIVariable Cleansed;
+  const MDLocalVariable *Cleansed = nullptr;
   if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
@@ -722,7 +722,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    DIExpression Expr = cast_or_null<MDExpression>(VI.Expr);
+    const MDExpression *Expr = cast_or_null<MDExpression>(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(Var, Scope->getScopeNode());
     auto RegVar =
         make_unique<DbgVariable>(Var.first, Var.second, Expr, this, VI.Slot);
@@ -757,7 +757,7 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
 }
 
 /// Determine whether two variable pieces overlap.
-static bool piecesOverlap(DIExpression P1, DIExpression P2) {
+static bool piecesOverlap(const MDExpression *P1, const MDExpression *P2) {
   if (!P1->isBitPiece() || !P2->isBitPiece())
     return true;
   unsigned l1 = P1->getBitPieceOffset();
@@ -809,7 +809,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     }
 
     // If this piece overlaps with any open ranges, truncate them.
-    DIExpression DIExpr = Begin->getDebugExpression();
+    const MDExpression *DIExpr = Begin->getDebugExpression();
     auto Last = std::remove_if(OpenRanges.begin(), OpenRanges.end(),
                                [&](DebugLocEntry::Value R) {
       return piecesOverlap(DIExpr, R.getExpression());
@@ -930,15 +930,14 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
   }
 
   // Collect info for variables that were optimized out.
-  for (DIVariable DV : SP->getVariables()) {
+  for (const MDLocalVariable *DV : SP->getVariables()) {
     if (!Processed.insert(InlinedVariable(DV, nullptr)).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV->getScope())) {
       ensureAbstractVariableIsCreatedIfScoped(InlinedVariable(DV, nullptr),
                                               Scope->getScopeNode());
-      DIExpression NoExpr;
-      ConcreteVariables.push_back(
-          make_unique<DbgVariable>(DV, nullptr, NoExpr, this));
+      ConcreteVariables.push_back(make_unique<DbgVariable>(
+          DV, /* IA */ nullptr, /* Expr */ nullptr, this));
       InfoHolder.addScopeVariable(Scope, ConcreteVariables.back().get());
     }
   }
@@ -1129,14 +1128,14 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
     // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
-    DIVariable DIVar = Ranges.front().first->getDebugVariable();
+    const MDLocalVariable *DIVar = Ranges.front().first->getDebugVariable();
     if (DIVar->getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar->getScope())->describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression()->isBitPiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
-          DIExpression Piece = I->first->getDebugExpression();
+          const MDExpression *Piece = I->first->getDebugExpression();
           if (std::all_of(Ranges.begin(), I,
                           [&](DbgValueHistoryMap::InstrRange Pred) {
                 return !piecesOverlap(Piece, Pred.first->getDebugExpression());
@@ -1219,7 +1218,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     auto *SP = cast<MDSubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
-    for (DIVariable DV : SP->getVariables()) {
+    for (const MDLocalVariable *DV : SP->getVariables()) {
       if (!ProcessedVars.insert(InlinedVariable(DV, nullptr)).second)
         continue;
       ensureAbstractVariableIsCreated(InlinedVariable(DV, nullptr),
@@ -1488,7 +1487,7 @@ static void emitDebugLocValue(const AsmPrinter &AP, const MDBasicType *BT,
       DwarfExpr.AddUnsignedConstant(Value.getInt());
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
-    DIExpression Expr = Value.getExpression();
+    const MDExpression *Expr = Value.getExpression();
     if (!Expr || !Expr->getNumElements())
       // Regular entry.
       AP.EmitDwarfRegOp(Streamer, Loc);
@@ -1523,7 +1522,7 @@ void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
    
     unsigned Offset = 0;
     for (auto Piece : Values) {
-      DIExpression Expr = Piece.getExpression();
+      const MDExpression *Expr = Piece.getExpression();
       unsigned PieceOffset = Expr->getBitPieceOffset();
       unsigned PieceSize = Expr->getBitPieceSize();
       assert(Offset <= PieceOffset && "overlapping or duplicate pieces");

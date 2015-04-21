@@ -137,7 +137,7 @@ void DwarfFile::emitStrings(const MCSection *StrSection,
 
 bool DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
   SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
-  DIVariable DV = Var->getVariable();
+  const MDLocalVariable *DV = Var->getVariable();
   // Variables with positive arg numbers are parameters.
   if (unsigned ArgNum = DV->getArg()) {
     // Keep all parameters in order at the start of the variable list to ensure

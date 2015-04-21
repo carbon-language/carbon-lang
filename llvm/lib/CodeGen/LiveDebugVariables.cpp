@@ -394,7 +394,7 @@ static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V,
 }
 
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
-  DIVariable DV = cast<MDLocalVariable>(Variable);
+  auto *DV = cast<MDLocalVariable>(Variable);
   OS << "!\"";
   printExtendedName(OS, DV, dl);
 

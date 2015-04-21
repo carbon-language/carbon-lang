@@ -88,10 +88,9 @@ LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(
     const char *Name, LLVMMetadataRef File, unsigned Line, LLVMMetadataRef Ty,
     int AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
   DIBuilder *D = unwrap(Dref);
-  DIVariable V = D->createLocalVariable(
+  return wrap(D->createLocalVariable(
       Tag, unwrap<MDScope>(Scope), Name, unwrap<MDFile>(File), Line,
-      unwrap<MDType>(Ty), AlwaysPreserve, Flags, ArgNo);
-  return wrap(V);
+      unwrap<MDType>(Ty), AlwaysPreserve, Flags, ArgNo));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Dref,
@@ -182,8 +181,7 @@ LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref,
 LLVMMetadataRef LLVMDIBuilderGetOrCreateSubrange(LLVMDIBuilderRef Dref,
                                                  int64_t Lo, int64_t Count) {
   DIBuilder *D = unwrap(Dref);
-  DISubrange S = D->getOrCreateSubrange(Lo, Count);
-  return wrap(S);
+  return wrap(D->getOrCreateSubrange(Lo, Count));
 }
 
 LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Dref,
@@ -209,8 +207,7 @@ LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Dref,
 LLVMMetadataRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef Dref,
                                               int64_t *Addr, size_t Length) {
   DIBuilder *D = unwrap(Dref);
-  DIExpression Expr = D->createExpression(ArrayRef<int64_t>(Addr, Length));
-  return wrap(Expr);
+  return wrap(D->createExpression(ArrayRef<int64_t>(Addr, Length)));
 }
 
 LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(LLVMDIBuilderRef Dref,

@@ -75,9 +75,10 @@ public:
 /// - Variables that are described by multiple MMI table entries have multiple
 ///   expressions and frame indices.
 class DbgVariable {
-  DIVariable Var;                    /// Variable Descriptor.
-  DILocation IA;                     /// Inlined at location.
-  SmallVector<DIExpression, 1> Expr; /// Complex address location expression.
+  const MDLocalVariable *Var; /// Variable Descriptor.
+  const MDLocation *IA;       /// Inlined at location.
+  SmallVector<const MDExpression *, 1>
+      Expr;                          /// Complex address location expression.
   DIE *TheDIE;                /// Variable DIE.
   unsigned DebugLocListIndex;        /// Offset in DebugLocs.
   const MachineInstr *MInsn;  /// DBG_VALUE instruction of the variable.
@@ -85,9 +86,9 @@ class DbgVariable {
   DwarfDebug *DD;
 
 public:
-  /// Construct a DbgVariable from a DIVariable.
-  DbgVariable(DIVariable V, DILocation IA, DIExpression E, DwarfDebug *DD,
-              int FI = ~0)
+  /// Construct a DbgVariable from a variable.
+  DbgVariable(const MDLocalVariable *V, const MDLocation *IA,
+              const MDExpression *E, DwarfDebug *DD, int FI = ~0)
       : Var(V), IA(IA), Expr(1, E), TheDIE(nullptr), DebugLocListIndex(~0U),
         MInsn(nullptr), DD(DD) {
     FrameIndex.push_back(FI);
@@ -105,9 +106,9 @@ public:
   }
 
   // Accessors.
-  DIVariable getVariable() const { return Var; }
-  DILocation getInlinedAt() const { return IA; }
-  const ArrayRef<DIExpression> getExpression() const { return Expr; }
+  const MDLocalVariable *getVariable() const { return Var; }
+  const MDLocation *getInlinedAt() const { return IA; }
+  const ArrayRef<const MDExpression *> getExpression() const { return Expr; }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
   void setDebugLocListIndex(unsigned O) { DebugLocListIndex = O; }
@@ -119,7 +120,7 @@ public:
   void addMMIEntry(const DbgVariable &V) {
     assert(DebugLocListIndex == ~0U && !MInsn && "not an MMI entry");
     assert(V.DebugLocListIndex == ~0U && !V.MInsn && "not an MMI entry");
-    assert(V.Var == Var && "conflicting DIVariable");
+    assert(V.Var == Var && "conflicting variable");
     assert(V.IA == IA && "conflicting inlined-at location");
 
     if (V.getFrameIndex().back() != ~0) {
@@ -128,10 +129,11 @@ public:
       Expr.append(E.begin(), E.end());
       FrameIndex.append(FI.begin(), FI.end());
     }
-    assert(Expr.size() > 1
-               ? std::all_of(Expr.begin(), Expr.end(),
-                             [](DIExpression &E) { return E->isBitPiece(); })
-               : (true && "conflicting locations for variable"));
+    assert(Expr.size() > 1 ? std::all_of(Expr.begin(), Expr.end(),
+                                         [](const MDExpression *E) {
+                                           return E->isBitPiece();
+                                         })
+                           : (true && "conflicting locations for variable"));
   }
 
   // Translate tag to proper Dwarf tag.
@@ -334,9 +336,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Find abstract variable associated with Var.
   DbgVariable *getExistingAbstractVariable(InlinedVariable IV,
-                                           DIVariable &Cleansed);
+                                           const MDLocalVariable *&Cleansed);
   DbgVariable *getExistingAbstractVariable(InlinedVariable IV);
-  void createAbstractVariable(const DIVariable &DV, LexicalScope *Scope);
+  void createAbstractVariable(const MDLocalVariable *DV, LexicalScope *Scope);
   void ensureAbstractVariableIsCreated(InlinedVariable Var,
                                        const MDNode *Scope);
   void ensureAbstractVariableIsCreatedIfScoped(InlinedVariable Var,
@@ -455,7 +457,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Construct imported_module or imported_declaration DIE.
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                        const MDNode *N);
+                                        const MDImportedEntity *N);
 
   /// \brief Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the

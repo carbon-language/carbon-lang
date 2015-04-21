@@ -174,14 +174,14 @@ bool AddDiscriminators::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *B = I;
     TerminatorInst *Last = B->getTerminator();
-    DILocation LastDIL = Last->getDebugLoc().get();
+    const MDLocation *LastDIL = Last->getDebugLoc();
     if (!LastDIL)
       continue;
 
     for (unsigned I = 0; I < Last->getNumSuccessors(); ++I) {
       BasicBlock *Succ = Last->getSuccessor(I);
       Instruction *First = Succ->getFirstNonPHIOrDbgOrLifetime();
-      DILocation FirstDIL = First->getDebugLoc().get();
+      const MDLocation *FirstDIL = First->getDebugLoc();
       if (!FirstDIL)
         continue;
 

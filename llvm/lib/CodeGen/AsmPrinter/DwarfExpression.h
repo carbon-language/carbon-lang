@@ -88,11 +88,12 @@ public:
   /// Emit an unsigned constant.
   void AddUnsignedConstant(unsigned Value);
 
-  /// Emit an entire DIExpression on top of a machine register location.
+  /// \brief Emit an entire expression on top of a machine register location.
+  ///
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
   /// \return false if no DWARF register exists for MachineReg.
-  bool AddMachineRegExpression(DIExpression Expr, unsigned MachineReg,
+  bool AddMachineRegExpression(const MDExpression *Expr, unsigned MachineReg,
                                unsigned PieceOffsetInBits = 0);
   /// Emit a the operations remaining the DIExpressionIterator I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented

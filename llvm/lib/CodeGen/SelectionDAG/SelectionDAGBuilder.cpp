@@ -4463,8 +4463,7 @@ bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
   // Ignore inlined function arguments here.
   //
   // FIXME: Should we be checking DL->inlinedAt() to determine this?
-  DIVariable DV(Variable);
-  if (!DV->getScope()->getSubprogram()->describes(MF.getFunction()))
+  if (!Variable->getScope()->getSubprogram()->describes(MF.getFunction()))
     return false;
 
   Optional<MachineOperand> Op;
@@ -4672,9 +4671,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
         Address = BCI->getOperand(0);
       // Parameters are handled specially.
-      bool isParameter =
-        (DIVariable(Variable)->getTag() == dwarf::DW_TAG_arg_variable ||
-         isa<Argument>(Address));
+      bool isParameter = Variable->getTag() == dwarf::DW_TAG_arg_variable ||
+                         isa<Argument>(Address);
 
       const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
 

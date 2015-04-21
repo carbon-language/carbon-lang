@@ -1619,7 +1619,7 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
     }
     if (isDebugValue() && MO.isMetadata()) {
       // Pretty print DBG_VALUE instructions.
-      DIVariable DIV = dyn_cast<MDLocalVariable>(MO.getMetadata());
+      auto *DIV = dyn_cast<MDLocalVariable>(MO.getMetadata());
       if (DIV && !DIV->getName().empty())
         OS << "!\"" << DIV->getName() << '\"';
       else
@@ -1710,7 +1710,7 @@ void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
   // Print debug location information.
   if (isDebugValue() && getOperand(e - 2).isMetadata()) {
     if (!HaveSemi) OS << ";";
-    DIVariable DV = cast<MDLocalVariable>(getOperand(e - 2).getMetadata());
+    auto *DV = cast<MDLocalVariable>(getOperand(e - 2).getMetadata());
     OS << " line no:" <<  DV->getLine();
     if (auto *InlinedAt = debugLoc->getInlinedAt()) {
       DebugLoc InlinedAtDL(InlinedAt);
