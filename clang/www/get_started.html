@@ -42,6 +42,9 @@ follows:</p>
     <li>Note also that Python is needed for running the test suite.
       Get it at: <a href="http://www.python.org/download">
       http://www.python.org/download</a></li>
+    <li>Standard build process uses CMake. Get it at:
+      <a href="http://www.cmake.org/download">
+      http://www.cmake.org/download</a></li>
   </ul>
 
   <li>Checkout LLVM:
@@ -75,17 +78,21 @@ follows:</p>
   </li>
   <li>Build LLVM and Clang:
   <ul>
-    <li><tt>mkdir build</tt> (for building without polluting the source dir)
-    </li>
+    <li><tt>mkdir build</tt> (in-tree build is not supported)</li>
     <li><tt>cd build</tt></li>
-    <li><tt>../llvm/configure</tt></li>
+    <li><tt>cmake -G "Unix Makefiles" ../llvm</tt></li>
     <li><tt>make</tt></li>
     <li>This builds both LLVM and Clang for debug mode.</li>
-    <li>Note: For subsequent Clang development, you can just do make at the
-    clang directory level.</li>
-    <li>It is also possible to use CMake instead of the makefiles. With CMake
-    it is possible to generate project files for several IDEs: Xcode, Eclipse
-    CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.</li>
+    <li>Note: For subsequent Clang development, you can just run
+        <tt>make clang</tt>.</li>
+    <li>CMake allows you to generate project files for several IDEs: Xcode,
+        Eclipse CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator),
+        KDevelop3. For more details see
+        <a href="http://llvm.org/docs/CMake.html">Building LLVM with CMake</a>
+        page.</li>
+      <li>You can also build Clang with
+        <a href="http://llvm.org/docs/BuildingLLVMWithAutotools.html">
+        autotools</a>, but some features may be unavailable there.</li>
   </ul>
   </li>
 
