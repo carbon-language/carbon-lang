@@ -20,6 +20,10 @@ class MipsLinkingContext;
 /// \brief TargetLayout for Mips
 template <class ELFT> class MipsTargetLayout final : public TargetLayout<ELFT> {
 public:
+  enum MipsSectionOrder {
+    ORDER_MIPS_REGINFO = TargetLayout<ELFT>::ORDER_RO_NOTE + 1
+  };
+
   MipsTargetLayout(MipsLinkingContext &ctx)
       : TargetLayout<ELFT>(ctx),
         _gotSection(new (this->_allocator) MipsGOTSection<ELFT>(ctx)),
@@ -37,6 +41,16 @@ public:
     if (type == DefinedAtom::typeStub && name == ".plt")
       return _pltSection;
     return TargetLayout<ELFT>::createSection(name, type, permissions, order);
+  }
+
+  typename TargetLayout<ELFT>::SegmentType
+  getSegmentType(Section<ELFT> *section) const override {
+    switch (section->order()) {
+    case ORDER_MIPS_REGINFO:
+      return llvm::ELF::PT_MIPS_REGINFO;
+    default:
+      return TargetLayout<ELFT>::getSegmentType(section);
+    }
   }
 
   /// \brief GP offset relative to .got section.

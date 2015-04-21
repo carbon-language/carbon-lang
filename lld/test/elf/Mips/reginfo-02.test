@@ -3,7 +3,7 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t1.o %t2.o
-# RUN: llvm-readobj -s %t.so | FileCheck -check-prefix=SEC %s
+# RUN: llvm-readobj -program-headers -s %t.so | FileCheck -check-prefix=SEC %s
 # RUN: llvm-objdump -s -t %t.so | FileCheck -check-prefix=RAW %s
 
 # SEC:      Index: 1
@@ -19,6 +19,19 @@
 # SEC-NEXT: Info: 0
 # SEC-NEXT: AddressAlignment: 4
 # SEC-NEXT: EntrySize: 24
+
+# SEC:      ProgramHeader {
+# SEC:        Type: PT_MIPS_REGINFO (0x70000000)
+# SEC-NEXT:   Offset: 0x{{[0-9A-F]+}}
+# SEC-NEXT:   VirtualAddress: 0x{{[0-9A-F]+}}
+# SEC-NEXT:   PhysicalAddress: 0x{{[0-9A-F]+}}
+# SEC-NEXT:   FileSize: 24
+# SEC-NEXT:   MemSize: 24
+# SEC-NEXT:   Flags [ (0x4)
+# SEC-NEXT:     PF_R (0x4)
+# SEC-NEXT:   ]
+# SEC-NEXT:   Alignment: 4
+# SEC-NEXT: }
 
 # RAW:      Contents of section .reginfo:
 # RAW-NEXT:  {{[0-9a-f]+}} f0000001 e0000002 d0000003 c0000004

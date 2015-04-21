@@ -73,7 +73,7 @@ public:
 
   /// \brief convert the segment type to a String for diagnostics and printing
   /// purposes
-  StringRef segmentKindToStr() const;
+  virtual StringRef segmentKindToStr() const;
 
   /// \brief Records the segmentType, that this section belongs to
   void
