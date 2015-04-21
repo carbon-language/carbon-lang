@@ -2996,7 +2996,7 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, OpndItins itins,
                         OpcodeStr,
                         "${src2}"##_Dst.BroadcastStr##", $src1",
                          "$src1, ${src2}"##_Dst.BroadcastStr,
-                        (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bc_v16i32 
+                        (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bitconvert 
                                      (_Dst.VT (X86VBroadcast 
                                               (_Dst.ScalarLdFrag addr:$src2)))))),
                         "", itins.rm>,
@@ -3015,13 +3015,27 @@ defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmull", mul,
 defm VPMULLQ : avx512_binop_rm_vl_q<0x40, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasDQI, 1>, T8PD;
 
-defm VPMULDQZ : avx512_binop_rm2<0x28, "vpmuldq", SSE_INTALU_ITINS_P,
-                   X86pmuldq, v16i32_info, v8i64_info, 1>, 
-                   T8PD, EVEX_V512, EVEX_CD8<64, CD8VF>, VEX_W;
+                                   
+multiclass avx512_binop_all<bits<8> opc, string OpcodeStr, OpndItins itins,
+                            SDNode OpNode, bit IsCommutable = 0> {
 
-defm VPMULUDQZ : avx512_binop_rm2<0xF4, "vpmuludq", SSE_INTMUL_ITINS_P,
-                   X86pmuludq, v16i32_info, v8i64_info, 1>, 
-                   EVEX_V512, EVEX_CD8<64, CD8VF>, VEX_W;
+  defm NAME#Z : avx512_binop_rm2<opc, OpcodeStr, itins, OpNode,
+                                 v16i32_info, v8i64_info, IsCommutable>,
+                                EVEX_V512, EVEX_CD8<64, CD8VF>, VEX_W;
+  let Predicates = [HasVLX] in {
+    defm NAME#Z256 : avx512_binop_rm2<opc, OpcodeStr, itins, OpNode,
+                                      v8i32x_info, v4i64x_info, IsCommutable>,
+                                     EVEX_V256, EVEX_CD8<64, CD8VF>, VEX_W;
+    defm NAME#Z128 : avx512_binop_rm2<opc, OpcodeStr, itins, OpNode,
+                                      v4i32x_info, v2i64x_info, IsCommutable>,
+                                     EVEX_V128, EVEX_CD8<64, CD8VF>, VEX_W;
+  }
+}                            
+
+defm VPMULDQ : avx512_binop_all<0x28, "vpmuldq", SSE_INTALU_ITINS_P,
+                   X86pmuldq, 1>,T8PD;
+defm VPMULUDQ : avx512_binop_all<0xF4, "vpmuludq", SSE_INTMUL_ITINS_P,
+                   X86pmuludq, 1>;
 
 defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxs", X86smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
@@ -3340,7 +3354,12 @@ defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv>,
             avx512_fp_binop_p_round<0x5E, "vdiv", X86fdivRnd>;
 defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, 1>;
 defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, 1>;
-
+let Predicates = [HasDQI] in {
+  defm VAND  : avx512_fp_binop_p<0x54, "vand", X86fand, 1>;
+  defm VANDN : avx512_fp_binop_p<0x55, "vandn", X86fandn, 0>;
+  defm VOR   : avx512_fp_binop_p<0x56, "vor", X86for, 1>;
+  defm VXOR  : avx512_fp_binop_p<0x57, "vxor", X86fxor, 1>;
+}
 def : Pat<(v16f32 (int_x86_avx512_mask_max_ps_512 (v16f32 VR512:$src1),
                    (v16f32 VR512:$src2), (bc_v16f32 (v16i32 immAllZerosV)),
                    (i16 -1), FROUND_CURRENT)),
