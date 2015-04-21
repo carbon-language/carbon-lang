@@ -68,6 +68,7 @@
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 
 using namespace llvm;
 using namespace PatternMatch;
@@ -599,9 +600,14 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
   switch (C.CandidateKind) {
   case Candidate::Add:
   case Candidate::Mul:
+    // C = Basis + Bump
     if (BinaryOperator::isNeg(Bump)) {
+      // If Bump is a neg instruction, emit C = Basis - (-Bump).
       Reduced =
           Builder.CreateSub(Basis.Ins, BinaryOperator::getNegArgument(Bump));
+      // We only use the negative argument of Bump, and Bump itself may be
+      // trivially dead.
+      RecursivelyDeleteTriviallyDeadInstructions(Bump);
     } else {
       Reduced = Builder.CreateAdd(Basis.Ins, Bump);
     }
@@ -637,7 +643,6 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
   };
   Reduced->takeName(C.Ins);
   C.Ins->replaceAllUsesWith(Reduced);
-  C.Ins->dropAllReferences();
   // Unlink C.Ins so that we can skip other candidates also corresponding to
   // C.Ins. The actual deletion is postponed to the end of runOnFunction.
   C.Ins->removeFromParent();
@@ -670,8 +675,13 @@ bool StraightLineStrengthReduce::runOnFunction(Function &F) {
   }
 
   // Delete all unlink instructions.
-  for (auto I : UnlinkedInstructions) {
-    delete I;
+  for (auto *UnlinkedInst : UnlinkedInstructions) {
+    for (unsigned I = 0, E = UnlinkedInst->getNumOperands(); I != E; ++I) {
+      Value *Op = UnlinkedInst->getOperand(I);
+      UnlinkedInst->setOperand(I, nullptr);
+      RecursivelyDeleteTriviallyDeadInstructions(Op);
+    }
+    delete UnlinkedInst;
   }
   bool Ret = !UnlinkedInstructions.empty();
   UnlinkedInstructions.clear();
