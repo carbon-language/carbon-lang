@@ -513,28 +513,6 @@ def BC1T : MMRel, BC1F_FT<"bc1t", brtarget, IIBranch, MIPS_BRANCH_T>,
 def BC1TL : MMRel, BC1F_FT<"bc1tl", brtarget, IIBranch, MIPS_BRANCH_T, 0>,
             BC1F_FM<1, 1>, ISA_MIPS2_NOT_32R6_64R6;
 
-//===----------------------------------------------------------------------===//
-// Floating Point Flag Conditions
-//===----------------------------------------------------------------------===//
-// Mips condition codes. They must correspond to condcode in MipsInstrInfo.h.
-// They must be kept in synch.
-def MIPS_FCOND_F    : PatLeaf<(i32 0)>;
-def MIPS_FCOND_UN   : PatLeaf<(i32 1)>;
-def MIPS_FCOND_OEQ  : PatLeaf<(i32 2)>;
-def MIPS_FCOND_UEQ  : PatLeaf<(i32 3)>;
-def MIPS_FCOND_OLT  : PatLeaf<(i32 4)>;
-def MIPS_FCOND_ULT  : PatLeaf<(i32 5)>;
-def MIPS_FCOND_OLE  : PatLeaf<(i32 6)>;
-def MIPS_FCOND_ULE  : PatLeaf<(i32 7)>;
-def MIPS_FCOND_SF   : PatLeaf<(i32 8)>;
-def MIPS_FCOND_NGLE : PatLeaf<(i32 9)>;
-def MIPS_FCOND_SEQ  : PatLeaf<(i32 10)>;
-def MIPS_FCOND_NGL  : PatLeaf<(i32 11)>;
-def MIPS_FCOND_LT   : PatLeaf<(i32 12)>;
-def MIPS_FCOND_NGE  : PatLeaf<(i32 13)>;
-def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
-def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
-
 /// Floating Point Compare
 def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>, CEQS_FM<16>,
                ISA_MIPS1_NOT_32R6_64R6;
