@@ -1383,9 +1383,6 @@ static bool isAMCompletelyFolded(const TargetTransformInfo &TTI,
   case LSRUse::Address:
     return TTI.isLegalAddressingMode(AccessTy, BaseGV, BaseOffset, HasBaseReg, Scale);
 
-    // Otherwise, just guess that reg+reg addressing is legal.
-    //return ;
-
   case LSRUse::ICmpZero:
     // There's not even a target hook for querying whether it would be legal to
     // fold a GV into an ICmp.
