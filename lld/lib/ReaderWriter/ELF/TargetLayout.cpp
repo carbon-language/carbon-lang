@@ -323,7 +323,7 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
       _outputSections.push_back(outputSection);
       outputSectionInsert.first->second = outputSection;
     }
-    outputSection->appendSection(si);
+    outputSection->appendSection(section);
   }
 }
 
@@ -349,83 +349,80 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
     ++ordinal;
   }
   for (auto osi : _outputSections) {
-    for (auto ai : osi->sections()) {
-      if (auto section = dyn_cast<Section<ELFT>>(ai)) {
-        if (!hasOutputSegment(section))
-          continue;
+    for (auto section : osi->sections()) {
+      if (!hasOutputSegment(section))
+        continue;
 
-        osi->setLoadableSection(section->isLoadableSection());
+      osi->setLoadableSection(section->isLoadableSection());
 
-        // Get the segment type for the section
-        int64_t segmentType = getSegmentType(section);
+      // Get the segment type for the section
+      int64_t segmentType = getSegmentType(section);
 
-        osi->setHasSegment();
-        section->setSegmentType(segmentType);
-        StringRef segmentName = section->segmentKindToStr();
+      osi->setHasSegment();
+      section->setSegmentType(segmentType);
+      StringRef segmentName = section->segmentKindToStr();
 
-        int64_t lookupSectionFlag = osi->flags();
-        if ((!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) &&
-            (_ctx.mergeRODataToTextSegment()))
-          lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
+      int64_t lookupSectionFlag = osi->flags();
+      if ((!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) &&
+          (_ctx.mergeRODataToTextSegment()))
+        lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
 
-        // Merge string sections into Data segment itself
-        lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
+      // Merge string sections into Data segment itself
+      lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
 
-        // Merge the TLS section into the DATA segment itself
-        lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
+      // Merge the TLS section into the DATA segment itself
+      lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
 
-        Segment<ELFT> *segment;
-        // We need a separate segment for sections that don't have
-        // the segment type to be PT_LOAD
-        if (segmentType != llvm::ELF::PT_LOAD) {
-          const AdditionalSegmentKey key(segmentType, lookupSectionFlag);
-          const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
-              additionalSegment(key, nullptr);
-          std::pair<typename AdditionalSegmentMapT::iterator, bool>
-              additionalSegmentInsert(
-                  _additionalSegmentMap.insert(additionalSegment));
-          if (!additionalSegmentInsert.second) {
-            segment = additionalSegmentInsert.first->second;
-          } else {
-            segment =
-                new (_allocator) Segment<ELFT>(_ctx, segmentName, segmentType);
-            additionalSegmentInsert.first->second = segment;
-            _segments.push_back(segment);
-          }
-          segment->append(section);
-        }
-        if (segmentType == llvm::ELF::PT_NULL)
-          continue;
-
-        // If the output magic is set to OutputMagic::NMAGIC or
-        // OutputMagic::OMAGIC, Place the data alongside text in one single
-        // segment
-        if (outputMagic == ELFLinkingContext::OutputMagic::NMAGIC ||
-            outputMagic == ELFLinkingContext::OutputMagic::OMAGIC)
-          lookupSectionFlag = llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC |
-                              llvm::ELF::SHF_WRITE;
-
-        // Use the flags of the merged Section for the segment
-        const SegmentKey key("PT_LOAD", lookupSectionFlag);
-        const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
-                                                                    nullptr);
-        std::pair<typename SegmentMapT::iterator, bool> segmentInsert(
-            _segmentMap.insert(currentSegment));
-        if (!segmentInsert.second) {
-          segment = segmentInsert.first->second;
+      Segment<ELFT> *segment;
+      // We need a separate segment for sections that don't have
+      // the segment type to be PT_LOAD
+      if (segmentType != llvm::ELF::PT_LOAD) {
+        const AdditionalSegmentKey key(segmentType, lookupSectionFlag);
+        const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
+            additionalSegment(key, nullptr);
+        std::pair<typename AdditionalSegmentMapT::iterator, bool>
+            additionalSegmentInsert(
+                _additionalSegmentMap.insert(additionalSegment));
+        if (!additionalSegmentInsert.second) {
+          segment = additionalSegmentInsert.first->second;
         } else {
-          segment = new (_allocator)
-              Segment<ELFT>(_ctx, "PT_LOAD", llvm::ELF::PT_LOAD);
-          segmentInsert.first->second = segment;
+          segment =
+              new (_allocator) Segment<ELFT>(_ctx, segmentName, segmentType);
+          additionalSegmentInsert.first->second = segment;
           _segments.push_back(segment);
         }
-        // Insert chunks with linker script expressions that occur at this
-        // point, just before appending a new input section
-        addExtraChunksToSegment(segment, section->archivePath(),
-                                section->memberPath(),
-                                section->inputSectionName());
         segment->append(section);
       }
+      if (segmentType == llvm::ELF::PT_NULL)
+        continue;
+
+      // If the output magic is set to OutputMagic::NMAGIC or
+      // OutputMagic::OMAGIC, Place the data alongside text in one single
+      // segment
+      if (outputMagic == ELFLinkingContext::OutputMagic::NMAGIC ||
+          outputMagic == ELFLinkingContext::OutputMagic::OMAGIC)
+        lookupSectionFlag = llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC |
+                            llvm::ELF::SHF_WRITE;
+
+      // Use the flags of the merged Section for the segment
+      const SegmentKey key("PT_LOAD", lookupSectionFlag);
+      const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key, nullptr);
+      std::pair<typename SegmentMapT::iterator, bool> segmentInsert(
+          _segmentMap.insert(currentSegment));
+      if (!segmentInsert.second) {
+        segment = segmentInsert.first->second;
+      } else {
+        segment =
+            new (_allocator) Segment<ELFT>(_ctx, "PT_LOAD", llvm::ELF::PT_LOAD);
+        segmentInsert.first->second = segment;
+        _segments.push_back(segment);
+      }
+      // Insert chunks with linker script expressions that occur at this
+      // point, just before appending a new input section
+      addExtraChunksToSegment(segment, section->archivePath(),
+                              section->memberPath(),
+                              section->inputSectionName());
+      segment->append(section);
     }
   }
   if (_ctx.isDynamic() && !_ctx.isDynamicLibrary()) {

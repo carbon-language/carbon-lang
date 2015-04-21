@@ -277,21 +277,20 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
     llvm::report_fatal_error("relocating output");
 }
 
-template <class ELFT> void OutputSection<ELFT>::appendSection(Chunk<ELFT> *c) {
-  if (c->alignment() > _alignment)
-    _alignment = c->alignment();
-  if (const auto section = dyn_cast<Section<ELFT>>(c)) {
-    assert(!_link && "Section already has a link!");
-    _link = section->getLink();
-    _shInfo = section->getInfo();
-    _entSize = section->getEntSize();
-    _type = section->getType();
-    if (_flags < section->getFlags())
-      _flags = section->getFlags();
-    section->setOutputSection(this, (_sections.size() == 0));
-  }
-  _kind = c->kind();
-  _sections.push_back(c);
+template <class ELFT>
+void OutputSection<ELFT>::appendSection(Section<ELFT> *section) {
+  if (section->alignment() > _alignment)
+    _alignment = section->alignment();
+  assert(!_link && "Section already has a link!");
+  _link = section->getLink();
+  _shInfo = section->getInfo();
+  _entSize = section->getEntSize();
+  _type = section->getType();
+  if (_flags < section->getFlags())
+    _flags = section->getFlags();
+  section->setOutputSection(this, (_sections.size() == 0));
+  _kind = section->kind();
+  _sections.push_back(section);
 }
 
 template <class ELFT>

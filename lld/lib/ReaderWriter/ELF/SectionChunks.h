@@ -205,13 +205,13 @@ protected:
 template <class ELFT> class OutputSection {
 public:
   // Iterators
-  typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
+  typedef typename std::vector<Section<ELFT> *>::iterator SectionIter;
 
   OutputSection(StringRef name) : _name(name) {}
 
   // Appends a section into the list of sections that are part of this Output
   // Section
-  void appendSection(Chunk<ELFT> *c);
+  void appendSection(Section<ELFT> *c);
 
   // Set the OutputSection is associated with a segment
   void setHasSegment() { _hasSegment = true; }
@@ -244,7 +244,7 @@ public:
   void setInfo(uint64_t info) { _shInfo = info; }
   void setFlag(uint64_t flags) { _flags = flags; }
   void setType(int64_t type) { _type = type; }
-  range<ChunkIter> sections() { return _sections; }
+  range<SectionIter> sections() { return _sections; }
 
   // The below functions returns the properties of the OutputSection.
   bool hasSegment() const { return _hasSegment; }
@@ -278,7 +278,7 @@ private:
   int64_t _kind = 0;
   int64_t _type = 0;
   bool _isLoadableSection = false;
-  std::vector<Chunk<ELFT> *> _sections;
+  std::vector<Section<ELFT> *> _sections;
 };
 
 /// \brief The class represents the ELF String Table
