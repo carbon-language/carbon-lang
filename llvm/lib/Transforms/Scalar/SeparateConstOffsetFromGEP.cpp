@@ -167,6 +167,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/IR/IRBuilder.h"
@@ -177,6 +178,13 @@ static cl::opt<bool> DisableSeparateConstOffsetFromGEP(
     "disable-separate-const-offset-from-gep", cl::init(false),
     cl::desc("Do not separate the constant offset from a GEP instruction"),
     cl::Hidden);
+// Setting this flag may emit false positives when the input module already
+// contains dead instructions. Therefore, we set it only in unit tests that are
+// free of dead code.
+static cl::opt<bool>
+    VerifyNoDeadCode("reassociate-geps-verify-no-dead-code", cl::init(false),
+                     cl::desc("Verify this pass produces no dead code"),
+                     cl::Hidden);
 
 namespace {
 
@@ -198,9 +206,12 @@ class ConstantOffsetExtractor {
   /// Extracts a constant offset from the given GEP index. It returns the
   /// new index representing the remainder (equal to the original index minus
   /// the constant offset), or nullptr if we cannot extract a constant offset.
-  /// \p Idx    The given GEP index
-  /// \p GEP    The given GEP
-   static Value *Extract(Value *Idx, GetElementPtrInst *GEP);
+  /// \p Idx The given GEP index
+  /// \p GEP The given GEP
+  /// \p UserChainTail Outputs the tail of UserChain so that we can
+  ///                  garbage-collect unused instructions in UserChain.
+   static Value *Extract(Value *Idx, GetElementPtrInst *GEP,
+                         User *&UserChainTail);
   /// Looks for a constant offset from the given GEP index without extracting
   /// it. It returns the numeric value of the extracted constant offset (0 if
   /// failed). The meaning of the arguments are the same as Extract.
@@ -357,6 +368,8 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   ///
   /// Verified in @i32_add in split-gep.ll
   bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
+  /// Verify F is free of dead code.
+  void verifyNoDeadCode(Function &F);
 
   const TargetMachine *TM;
   /// Whether to lower a GEP with multiple indices into arithmetic operations or
@@ -582,6 +595,11 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
   }
 
   BinaryOperator *BO = cast<BinaryOperator>(UserChain[ChainIndex]);
+  assert(BO->getNumUses() <= 1 &&
+         "distributeExtsAndCloneChain clones each BinaryOperator in "
+         "UserChain, so no one should be used more than "
+         "once");
+
   unsigned OpNo = (BO->getOperand(0) == UserChain[ChainIndex - 1] ? 0 : 1);
   assert(BO->getOperand(OpNo) == UserChain[ChainIndex - 1]);
   Value *NextInChain = removeConstOffset(ChainIndex - 1);
@@ -594,6 +612,7 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
       return TheOther;
   }
 
+  BinaryOperator::BinaryOps NewOp = BO->getOpcode();
   if (BO->getOpcode() == Instruction::Or) {
     // Rebuild "or" as "add", because "or" may be invalid for the new
     // epxression.
@@ -608,39 +627,34 @@ Value *ConstantOffsetExtractor::removeConstOffset(unsigned ChainIndex) {
     //
     // Replacing the "or" with "add" is fine, because
     //   a | (b + 5) = a + (b + 5) = (a + b) + 5
-    if (OpNo == 0) {
-      return BinaryOperator::CreateAdd(NextInChain, TheOther, BO->getName(),
-                                       IP);
-    } else {
-      return BinaryOperator::CreateAdd(TheOther, NextInChain, BO->getName(),
-                                       IP);
-    }
+    NewOp = Instruction::Add;
   }
 
-  // We can reuse BO in this case, because the new expression shares the same
-  // instruction type and BO is used at most once.
-  assert(BO->getNumUses() <= 1 &&
-         "distributeExtsAndCloneChain clones each BinaryOperator in "
-         "UserChain, so no one should be used more than "
-         "once");
-  BO->setOperand(OpNo, NextInChain);
-  BO->setHasNoSignedWrap(false);
-  BO->setHasNoUnsignedWrap(false);
-  // Make sure it appears after all instructions we've inserted so far.
-  BO->moveBefore(IP);
-  return BO;
+  BinaryOperator *NewBO;
+  if (OpNo == 0) {
+    NewBO = BinaryOperator::Create(NewOp, NextInChain, TheOther, "", IP);
+  } else {
+    NewBO = BinaryOperator::Create(NewOp, TheOther, NextInChain, "", IP);
+  }
+  NewBO->takeName(BO);
+  return NewBO;
 }
 
-Value *ConstantOffsetExtractor::Extract(Value *Idx, GetElementPtrInst *GEP) {
+Value *ConstantOffsetExtractor::Extract(Value *Idx, GetElementPtrInst *GEP,
+                                        User *&UserChainTail) {
   ConstantOffsetExtractor Extractor(GEP);
   // Find a non-zero constant offset first.
   APInt ConstantOffset =
       Extractor.find(Idx, /* SignExtended */ false, /* ZeroExtended */ false,
                      GEP->isInBounds());
-  if (ConstantOffset == 0)
+  if (ConstantOffset == 0) {
+    UserChainTail = nullptr;
     return nullptr;
+  }
   // Separates the constant offset from the GEP index.
-  return Extractor.rebuildWithoutConstOffset();
+  Value *IdxWithoutConstOffset = Extractor.rebuildWithoutConstOffset();
+  UserChainTail = Extractor.UserChain.back();
+  return IdxWithoutConstOffset;
 }
 
 int64_t ConstantOffsetExtractor::Find(Value *Idx, GetElementPtrInst *GEP) {
@@ -869,9 +883,17 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     if (isa<SequentialType>(*GTI)) {
       // Splits this GEP index into a variadic part and a constant offset, and
       // uses the variadic part as the new index.
-      Value *NewIdx = ConstantOffsetExtractor::Extract(GEP->getOperand(I), GEP);
+      Value *OldIdx = GEP->getOperand(I);
+      User *UserChainTail;
+      Value *NewIdx =
+          ConstantOffsetExtractor::Extract(OldIdx, GEP, UserChainTail);
       if (NewIdx != nullptr) {
+        // Switches to the index with the constant offset removed.
         GEP->setOperand(I, NewIdx);
+        // After switching to the new index, we can garbage-collect UserChain
+        // and the old index if they are not used.
+        RecursivelyDeleteTriviallyDeadInstructions(UserChainTail);
+        RecursivelyDeleteTriviallyDeadInstructions(OldIdx);
       }
     }
   }
@@ -1006,5 +1028,22 @@ bool SeparateConstOffsetFromGEP::runOnFunction(Function &F) {
       // already.
     }
   }
+
+  if (VerifyNoDeadCode)
+    verifyNoDeadCode(F);
+
   return Changed;
+}
+
+void SeparateConstOffsetFromGEP::verifyNoDeadCode(Function &F) {
+  for (auto &B : F) {
+    for (auto &I : B) {
+      if (isInstructionTriviallyDead(&I)) {
+        std::string ErrMessage;
+        raw_string_ostream RSO(ErrMessage);
+        RSO << "Dead instruction detected!\n" << I << "\n";
+        llvm_unreachable(RSO.str().c_str());
+      }
+    }
+  }
 }

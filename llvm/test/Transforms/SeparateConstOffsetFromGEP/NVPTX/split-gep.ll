@@ -1,4 +1,4 @@
-; RUN: opt < %s -separate-const-offset-from-gep -dce -S | FileCheck %s
+; RUN: opt < %s -separate-const-offset-from-gep -reassociate-geps-verify-no-dead-code -S | FileCheck %s
 
 ; Several unit tests for -separate-const-offset-from-gep. The transformation
 ; heavily relies on TargetTransformInfo, so we put these tests under
