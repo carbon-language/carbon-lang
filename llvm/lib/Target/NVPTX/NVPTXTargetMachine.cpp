@@ -164,6 +164,10 @@ void NVPTXPassConfig::addIRPasses() {
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
   addPass(createNVPTXFavorNonGenericAddrSpacesPass());
+  // FavorNonGenericAddrSpaces shortcuts unnecessary addrspacecasts, and leave
+  // them unused. We could remove dead code in an ad-hoc manner, but that
+  // requires manual work and might be error-prone.
+  addPass(createDeadCodeEliminationPass());
   addPass(createStraightLineStrengthReducePass());
   addPass(createSeparateConstOffsetFromGEPPass());
   // The SeparateConstOffsetFromGEP pass creates variadic bases that can be used
@@ -173,16 +177,6 @@ void NVPTXPassConfig::addIRPasses() {
     addPass(createGVNPass());
   else
     addPass(createEarlyCSEPass());
-  // Both FavorNonGenericAddrSpaces and SeparateConstOffsetFromGEP may leave
-  // some dead code.  We could remove dead code in an ad-hoc manner, but that
-  // requires manual work and might be error-prone.
-  //
-  // The FavorNonGenericAddrSpaces pass shortcuts unnecessary addrspacecasts,
-  // and leave them unused.
-  //
-  // SeparateConstOffsetFromGEP rebuilds a new index from the old index, and the
-  // old index and some of its intermediate results may become unused.
-  addPass(createDeadCodeEliminationPass());
 }
 
 bool NVPTXPassConfig::addInstSelector() {
