@@ -2120,6 +2120,9 @@ def note_objc_literal_comparison_isequal : Note<
   "use 'isEqual:' instead">;
 def err_attribute_argument_is_zero : Error<
   "%0 attribute must be greater than 0">;
+def warn_attribute_argument_n_negative : Warning<
+  "%0 attribute parameter %1 is negative and will be ignored">,
+  InGroup<CudaCompat>;
 def err_property_function_in_objc_container : Error<
   "use of Objective-C property in function nested in Objective-C "
   "container not supported, move function outside its container">;

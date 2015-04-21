@@ -3488,20 +3488,63 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
   return false;
 }
 
-static void handleLaunchBoundsAttr(Sema &S, Decl *D,
-                                   const AttributeList &Attr) {
-  uint32_t MaxThreads, MinBlocks = 0;
-  if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1))
-    return;
-  if (Attr.getNumArgs() > 1 && !checkUInt32Argument(S, Attr,
-                                                    Attr.getArgAsExpr(1),
-                                                    MinBlocks, 2))
+// Checks whether an argument of launch_bounds attribute is acceptable
+// May output an error.
+static bool checkLaunchBoundsArgument(Sema &S, Expr *E,
+                                      const CUDALaunchBoundsAttr &Attr,
+                                      const unsigned Idx) {
+
+  if (S.DiagnoseUnexpandedParameterPack(E))
+    return false;
+
+  // Accept template arguments for now as they depend on something else.
+  // We'll get to check them when they eventually get instantiated.
+  if (E->isValueDependent())
+    return true;
+
+  llvm::APSInt I(64);
+  if (!E->isIntegerConstantExpr(I, S.Context)) {
+    S.Diag(E->getExprLoc(), diag::err_attribute_argument_n_type)
+        << &Attr << Idx << AANT_ArgumentIntegerConstant << E->getSourceRange();
+    return false;
+  }
+  // Make sure we can fit it in 32 bits.
+  if (!I.isIntN(32)) {
+    S.Diag(E->getExprLoc(), diag::err_ice_too_large) << I.toString(10, false)
+                                                     << 32 << /* Unsigned */ 1;
+    return false;
+  }
+  if (I < 0)
+    S.Diag(E->getExprLoc(), diag::warn_attribute_argument_n_negative)
+        << &Attr << Idx << E->getSourceRange();
+
+  return true;
+}
+
+void Sema::AddLaunchBoundsAttr(SourceRange AttrRange, Decl *D, Expr *MaxThreads,
+                               Expr *MinBlocks, unsigned SpellingListIndex) {
+  CUDALaunchBoundsAttr TmpAttr(AttrRange, Context, MaxThreads, MinBlocks,
+                               SpellingListIndex);
+
+  if (!checkLaunchBoundsArgument(*this, MaxThreads, TmpAttr, 0))
     return;
 
-  D->addAttr(::new (S.Context)
-              CUDALaunchBoundsAttr(Attr.getRange(), S.Context,
-                                  MaxThreads, MinBlocks,
-                                  Attr.getAttributeSpellingListIndex()));
+  if (MinBlocks && !checkLaunchBoundsArgument(*this, MinBlocks, TmpAttr, 1))
+    return;
+
+  D->addAttr(::new (Context) CUDALaunchBoundsAttr(
+      AttrRange, Context, MaxThreads, MinBlocks, SpellingListIndex));
+}
+
+static void handleLaunchBoundsAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1) ||
+      !checkAttributeAtMostNumArgs(S, Attr, 2))
+    return;
+
+  S.AddLaunchBoundsAttr(Attr.getRange(), D, Attr.getArgAsExpr(0),
+                        Attr.getNumArgs() > 1 ? Attr.getArgAsExpr(1) : nullptr,
+                        Attr.getAttributeSpellingListIndex());
 }
 
 static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
