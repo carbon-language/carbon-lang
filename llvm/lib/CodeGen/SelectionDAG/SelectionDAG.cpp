@@ -3198,6 +3198,18 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       SmallVector<SDValue, 16> Elts(N1.getNode()->op_begin(),
                                     N1.getNode()->op_end());
       Elts.append(N2.getNode()->op_begin(), N2.getNode()->op_end());
+
+      // BUILD_VECTOR requires all inputs to be of the same type, find the
+      // maximum type and extend them all.
+      EVT SVT = VT.getScalarType();
+      for (SDValue Op : Elts)
+        SVT = (SVT.bitsLT(Op.getValueType()) ? Op.getValueType() : SVT);
+      if (SVT.bitsGT(VT.getScalarType()))
+        for (SDValue &Op : Elts)
+          Op = TLI->isZExtFree(Op.getValueType(), SVT)
+             ? getZExtOrTrunc(Op, DL, SVT)
+             : getSExtOrTrunc(Op, DL, SVT);
+
       return getNode(ISD::BUILD_VECTOR, DL, VT, Elts);
     }
     break;
