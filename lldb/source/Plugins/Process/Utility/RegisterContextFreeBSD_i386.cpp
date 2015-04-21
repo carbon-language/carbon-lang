@@ -45,6 +45,13 @@ struct dbreg {
                          /* Index 7: debug control */
 };
 
+using FPR_i386 = FXSAVE;
+
+struct UserArea
+{
+    GPR gpr;
+    FPR_i386 i387;
+};
 
 #define DR_SIZE sizeof(uint32_t)
 #define DR_OFFSET(reg_index) \
