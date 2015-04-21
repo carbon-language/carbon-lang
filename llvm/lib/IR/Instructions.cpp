@@ -2118,7 +2118,7 @@ unsigned CastInst::isEliminableCastPair(
     // N  X  X  U  S  F  F  N  X  N  2  V  V   |
     // C  T  T  I  I  P  P  C  T  T  P  T  T  -+
     {  1, 0, 0,99,99, 0, 0,99,99,99, 0, 3, 0}, // Trunc         -+
-    {  8, 1, 9,99,99, 2, 0,99,99,99, 2, 3, 0}, // ZExt           |
+    {  8, 1, 9,99,99, 2,17,99,99,99, 2, 3, 0}, // ZExt           |
     {  8, 0, 1,99,99, 0, 2,99,99,99, 0, 3, 0}, // SExt           |
     {  0, 0, 0,99,99, 0, 0,99,99,99, 0, 3, 0}, // FPToUI         |
     {  0, 0, 0,99,99, 0, 0,99,99,99, 0, 3, 0}, // FPToSI         |
@@ -2285,6 +2285,9 @@ unsigned CastInst::isEliminableCastPair(
         "Illegal bitcast, ptrtoint sequence!");
       // Allowed, use second cast's opcode
       return secondOp;
+    case 17:
+      // (sitofp (zext x)) -> (uitofp x)
+      return Instruction::UIToFP;
     case 99: 
       // Cast combination can't happen (error in input). This is for all cases
       // where the MidTy is not the same for the two cast instructions.

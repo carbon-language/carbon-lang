@@ -1104,3 +1104,12 @@ define i32 @PR21388(i32* %v) {
 ; CHECK-NEXT: %[[sext:.*]] = sext i1 %[[icmp]] to i32
 ; CHECK-NEXT: ret i32 %[[sext]]
 }
+
+define float @sitofp_zext(i16 %a) {
+; CHECK-LABEL: @sitofp_zext(
+; CHECK-NEXT: %[[sitofp:.*]] = uitofp i16 %a to float
+; CHECK-NEXT: ret float %[[sitofp]]
+  %zext = zext i16 %a to i32
+  %sitofp = sitofp i32 %zext to float
+  ret float %sitofp
+}
