@@ -177,12 +177,12 @@ class CGDebugInfo {
                        SmallVectorImpl<llvm::Metadata *> &EltTys,
                        llvm::MDType *RecordTy);
 
-  llvm::DIArray CollectTemplateParams(const TemplateParameterList *TPList,
-                                      ArrayRef<TemplateArgument> TAList,
-                                      llvm::MDFile *Unit);
-  llvm::DIArray CollectFunctionTemplateParams(const FunctionDecl *FD,
-                                              llvm::MDFile *Unit);
-  llvm::DIArray
+  llvm::DebugNodeArray
+  CollectTemplateParams(const TemplateParameterList *TPList,
+                        ArrayRef<TemplateArgument> TAList, llvm::MDFile *Unit);
+  llvm::DebugNodeArray CollectFunctionTemplateParams(const FunctionDecl *FD,
+                                                     llvm::MDFile *Unit);
+  llvm::DebugNodeArray
   CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TS,
                            llvm::MDFile *F);
 
@@ -421,7 +421,8 @@ private:
   void collectFunctionDeclProps(GlobalDecl GD, llvm::MDFile *Unit,
                                 StringRef &Name, StringRef &LinkageName,
                                 llvm::MDScope *&FDContext,
-                                llvm::DIArray &TParamsArray, unsigned &Flags);
+                                llvm::DebugNodeArray &TParamsArray,
+                                unsigned &Flags);
 
   /// \brief Collect various properties of a VarDecl.
   void collectVarDeclProps(const VarDecl *VD, llvm::MDFile *&Unit,
