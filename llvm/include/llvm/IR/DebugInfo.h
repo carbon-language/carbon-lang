@@ -34,7 +34,7 @@ class DbgDeclareInst;
 class DbgValueInst;
 
 /// \brief Maps from type identifier to the actual MDNode.
-typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
+typedef DenseMap<const MDString *, MDType *> DITypeIdentifierMap;
 
 typedef DebugNodeArray DIArray;
 typedef MDTypeRefArray DITypeArray;
