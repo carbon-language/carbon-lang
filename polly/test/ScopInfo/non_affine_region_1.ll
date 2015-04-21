@@ -31,7 +31,7 @@
 ; CHECK:       Stmt_(bb10 => bb18)
 ; CHECK-NEXT:        Domain :=
 ; CHECK-NEXT:            [b] -> { Stmt_(bb10 => bb18)[i0] : i0 >= 0 and i0 <= 1023 };
-; CHECK-NEXT:        Scattering :=
+; CHECK-NEXT:        Schedule :=
 ; CHECK-NEXT:            [b] -> { Stmt_(bb10 => bb18)[i0] -> [i0, 3] };
 ; CHECK-NEXT:        ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK-NEXT:            [b] -> { Stmt_(bb10 => bb18)[i0] -> MemRef_x_1[] }

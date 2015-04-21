@@ -17,7 +17,7 @@
 ; CHECK:      Stmt_bb2
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_bb2[i0] : i0 >= 0 and N >= 1 and i0 <= N; Stmt_bb2[0] : N <= 0 };
-; CHECK:            Scattering :=
+; CHECK:            Schedule :=
 ; CHECK:                [N] -> { Stmt_bb2[i0] -> [i0, 0] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb2[i0] -> MemRef_j_0[] };
@@ -26,7 +26,7 @@
 ; CHECK:      Stmt_(bb4 => bb18)
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_(bb4 => bb18)[i0] : i0 >= 0 and N >= 1 and i0 <= -1 + N };
-; CHECK:            Scattering :=
+; CHECK:            Schedule :=
 ; CHECK:                [N] -> { Stmt_(bb4 => bb18)[i0] -> [i0, 1] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                [N] -> { Stmt_(bb4 => bb18)[i0] -> MemRef_A[i0] };
@@ -45,7 +45,7 @@
 ; CHECK:      Stmt_bb18
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_bb18[i0] : i0 >= 0 and N >= 1 and i0 <= -1 + N };
-; CHECK:            Scattering :=
+; CHECK:            Schedule :=
 ; CHECK:                [N] -> { Stmt_bb18[i0] -> [i0, 2] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb18[i0] -> MemRef_j_2[] };
@@ -58,7 +58,7 @@
 ; CHECK:      Stmt_bb23
 ; CHECK:            Domain :=
 ; CHECK:                [N] -> { Stmt_bb23[i0] : i0 >= 0 and N >= 1 and i0 <= -1 + N };
-; CHECK:            Scattering :=
+; CHECK:            Schedule :=
 ; CHECK:                [N] -> { Stmt_bb23[i0] -> [i0, 3] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb23[i0] -> MemRef_j_2[] };

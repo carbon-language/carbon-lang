@@ -15,7 +15,7 @@
 ; INNERMOST:      Stmt_bb12
 ; INNERMOST:            Domain :=
 ; INNERMOST:                [p_0] -> { Stmt_bb12[i0] : i0 >= 0 and p_0 >= 1 and i0 <= -1 + p_0 };
-; INNERMOST:            Scattering :=
+; INNERMOST:            Schedule :=
 ; INNERMOST:                [p_0] -> { Stmt_bb12[i0] -> [i0] };
 ; INNERMOST:            ReadAccess := [Reduction Type: +] [Scalar: 0]
 ; INNERMOST:                [p_0] -> { Stmt_bb12[i0] -> MemRef_A[i0] };
@@ -36,7 +36,7 @@
 ; ALL:      Stmt_(bb4 => bb18)
 ; ALL:            Domain :=
 ; ALL:                { Stmt_(bb4 => bb18)[i0] : i0 >= 0 and i0 <= 1023 };
-; ALL:            Scattering :=
+; ALL:            Schedule :=
 ; ALL:                { Stmt_(bb4 => bb18)[i0] -> [i0] };
 ; ALL:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; ALL:                { Stmt_(bb4 => bb18)[i0] -> MemRef_A[i0] };

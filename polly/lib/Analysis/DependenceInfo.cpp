@@ -91,23 +91,23 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
       accdom = isl_map_intersect_domain(accdom, domcp);
 
       if (ReductionBaseValues.count(MA->getBaseAddr())) {
-        // Wrap the access domain and adjust the scattering accordingly.
+        // Wrap the access domain and adjust the schedule accordingly.
         //
         // An access domain like
         //   Stmt[i0, i1] -> MemAcc_A[i0 + i1]
         // will be transformed into
         //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> MemAcc_A[i0 + i1]
         //
-        // The original scattering looks like
+        // The original schedule looks like
         //   Stmt[i0, i1] -> [0, i0, 2, i1, 0]
-        // but as we transformed the access domain we need the scattering
+        // but as we transformed the access domain we need the schedule
         // to match the new access domains, thus we need
         //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> [0, i0, 2, i1, 0]
-        isl_map *Scatter = Stmt->getScattering();
-        Scatter = isl_map_apply_domain(
-            Scatter, isl_map_reverse(isl_map_domain_map(isl_map_copy(accdom))));
+        isl_map *Schedule = Stmt->getSchedule();
+        Schedule = isl_map_apply_domain(
+            Schedule, isl_map_reverse(isl_map_domain_map(isl_map_copy(accdom))));
         accdom = isl_map_range_map(accdom);
-        *AccessSchedule = isl_union_map_add_map(*AccessSchedule, Scatter);
+        *AccessSchedule = isl_union_map_add_map(*AccessSchedule, Schedule);
       }
 
       if (MA->isRead())
@@ -115,7 +115,7 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
       else
         *Write = isl_union_map_add_map(*Write, accdom);
     }
-    *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt->getScattering());
+    *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt->getSchedule());
   }
 
   *StmtSchedule =
@@ -463,41 +463,41 @@ void Dependences::calculateDependences(Scop &S) {
   DEBUG(dump());
 }
 
-bool Dependences::isValidScattering(Scop &S,
-                                    StatementToIslMapTy *NewScattering) const {
+bool Dependences::isValidSchedule(Scop &S,
+                                    StatementToIslMapTy *NewSchedule) const {
   if (LegalityCheckDisabled)
     return true;
 
   isl_union_map *Dependences = getDependences(TYPE_RAW | TYPE_WAW | TYPE_WAR);
   isl_space *Space = S.getParamSpace();
-  isl_union_map *Scattering = isl_union_map_empty(Space);
+  isl_union_map *Schedule = isl_union_map_empty(Space);
 
-  isl_space *ScatteringSpace = nullptr;
+  isl_space *ScheduleSpace = nullptr;
 
   for (ScopStmt *Stmt : S) {
     isl_map *StmtScat;
 
-    if (NewScattering->find(Stmt) == NewScattering->end())
-      StmtScat = Stmt->getScattering();
+    if (NewSchedule->find(Stmt) == NewSchedule->end())
+      StmtScat = Stmt->getSchedule();
     else
-      StmtScat = isl_map_copy((*NewScattering)[Stmt]);
+      StmtScat = isl_map_copy((*NewSchedule)[Stmt]);
 
-    if (!ScatteringSpace)
-      ScatteringSpace = isl_space_range(isl_map_get_space(StmtScat));
+    if (!ScheduleSpace)
+      ScheduleSpace = isl_space_range(isl_map_get_space(StmtScat));
 
-    Scattering = isl_union_map_add_map(Scattering, StmtScat);
+    Schedule = isl_union_map_add_map(Schedule, StmtScat);
   }
 
   Dependences =
-      isl_union_map_apply_domain(Dependences, isl_union_map_copy(Scattering));
-  Dependences = isl_union_map_apply_range(Dependences, Scattering);
+      isl_union_map_apply_domain(Dependences, isl_union_map_copy(Schedule));
+  Dependences = isl_union_map_apply_range(Dependences, Schedule);
 
-  isl_set *Zero = isl_set_universe(isl_space_copy(ScatteringSpace));
+  isl_set *Zero = isl_set_universe(isl_space_copy(ScheduleSpace));
   for (unsigned i = 0; i < isl_set_dim(Zero, isl_dim_set); i++)
     Zero = isl_set_fix_si(Zero, isl_dim_set, i, 0);
 
   isl_union_set *UDeltas = isl_union_map_deltas(Dependences);
-  isl_set *Deltas = isl_union_set_extract_set(UDeltas, ScatteringSpace);
+  isl_set *Deltas = isl_union_set_extract_set(UDeltas, ScheduleSpace);
   isl_union_set_free(UDeltas);
 
   isl_map *NonPositive = isl_set_lex_le_set(Deltas, Zero);

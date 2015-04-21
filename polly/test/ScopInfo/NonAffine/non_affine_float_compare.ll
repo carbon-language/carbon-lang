@@ -13,7 +13,7 @@
 ; CHECK:      Stmt_(bb2 => bb12)
 ; CHECK:            Domain :=
 ; CHECK:                { Stmt_(bb2 => bb12)[i0] : i0 >= 0 and i0 <= 1023 };
-; CHECK:            Scattering :=
+; CHECK:            Schedule :=
 ; CHECK:                { Stmt_(bb2 => bb12)[i0] -> [i0] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                { Stmt_(bb2 => bb12)[i0] -> MemRef_A[i0] };

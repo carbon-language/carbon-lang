@@ -818,45 +818,45 @@ void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
 
 //===----------------------------------------------------------------------===//
 
-isl_map *ScopStmt::getScattering() const { return isl_map_copy(Scattering); }
+isl_map *ScopStmt::getSchedule() const { return isl_map_copy(Schedule); }
 
 void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
   assert(isl_set_is_subset(NewDomain, Domain) &&
          "New domain is not a subset of old domain!");
   isl_set_free(Domain);
   Domain = NewDomain;
-  Scattering = isl_map_intersect_domain(Scattering, isl_set_copy(Domain));
+  Schedule = isl_map_intersect_domain(Schedule, isl_set_copy(Domain));
 }
 
-void ScopStmt::setScattering(__isl_take isl_map *NewScattering) {
-  assert(NewScattering && "New scattering is nullptr");
-  isl_map_free(Scattering);
-  Scattering = NewScattering;
+void ScopStmt::setSchedule(__isl_take isl_map *NewSchedule) {
+  assert(NewSchedule && "New schedule is nullptr");
+  isl_map_free(Schedule);
+  Schedule = NewSchedule;
 }
 
-void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
+void ScopStmt::buildSchedule(SmallVectorImpl<unsigned> &ScheduleVec) {
   unsigned NbIterators = getNumIterators();
-  unsigned NbScatteringDims = Parent.getMaxLoopDepth() * 2 + 1;
+  unsigned NbScheduleDims = Parent.getMaxLoopDepth() * 2 + 1;
 
-  isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, NbScatteringDims);
+  isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, NbScheduleDims);
 
-  Scattering = isl_map_from_domain_and_range(isl_set_universe(getDomainSpace()),
+  Schedule = isl_map_from_domain_and_range(isl_set_universe(getDomainSpace()),
                                              isl_set_universe(Space));
 
   // Loop dimensions.
   for (unsigned i = 0; i < NbIterators; ++i)
-    Scattering =
-        isl_map_equate(Scattering, isl_dim_out, 2 * i + 1, isl_dim_in, i);
+    Schedule =
+        isl_map_equate(Schedule, isl_dim_out, 2 * i + 1, isl_dim_in, i);
 
   // Constant dimensions
   for (unsigned i = 0; i < NbIterators + 1; ++i)
-    Scattering = isl_map_fix_si(Scattering, isl_dim_out, 2 * i, Scatter[i]);
+    Schedule = isl_map_fix_si(Schedule, isl_dim_out, 2 * i, ScheduleVec[i]);
 
-  // Fill scattering dimensions.
-  for (unsigned i = 2 * NbIterators + 1; i < NbScatteringDims; ++i)
-    Scattering = isl_map_fix_si(Scattering, isl_dim_out, i, 0);
+  // Fill schedule dimensions.
+  for (unsigned i = 2 * NbIterators + 1; i < NbScheduleDims; ++i)
+    Schedule = isl_map_fix_si(Schedule, isl_dim_out, i, 0);
 
-  Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
+  Schedule = isl_map_align_params(Schedule, Parent.getParamSpace());
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
@@ -896,7 +896,7 @@ void ScopStmt::realignParams() {
     MA->realignParams();
 
   Domain = isl_set_align_params(Domain, Parent.getParamSpace());
-  Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
+  Schedule = isl_map_align_params(Schedule, Parent.getParamSpace());
 }
 
 __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
@@ -1056,7 +1056,7 @@ void ScopStmt::deriveAssumptions(BasicBlock *Block) {
 
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    Region &R, SmallVectorImpl<Loop *> &Nest,
-                   SmallVectorImpl<unsigned> &Scatter)
+                   SmallVectorImpl<unsigned> &ScheduleVec)
     : Parent(parent), BB(nullptr), R(&R), Build(nullptr),
       NestLoops(Nest.size()) {
   // Setup the induction variables.
@@ -1066,7 +1066,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   BaseName = getIslCompatibleName("Stmt_(", R.getNameStr(), ")");
 
   Domain = buildDomain(tempScop, CurRegion);
-  buildScattering(Scatter);
+  buildSchedule(ScheduleVec);
 
   BasicBlock *EntryBB = R.getEntry();
   for (BasicBlock *Block : R.blocks()) {
@@ -1078,7 +1078,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
-                   SmallVectorImpl<unsigned> &Scatter)
+                   SmallVectorImpl<unsigned> &ScheduleVec)
     : Parent(parent), BB(&bb), R(nullptr), Build(nullptr),
       NestLoops(Nest.size()) {
   // Setup the induction variables.
@@ -1088,7 +1088,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
   Domain = buildDomain(tempScop, CurRegion);
-  buildScattering(Scatter);
+  buildSchedule(ScheduleVec);
   buildAccesses(tempScop, BB);
   deriveAssumptions(BB);
   checkForReductions();
@@ -1225,16 +1225,16 @@ void ScopStmt::checkForReductions() {
 
 std::string ScopStmt::getDomainStr() const { return stringFromIslObj(Domain); }
 
-std::string ScopStmt::getScatteringStr() const {
-  return stringFromIslObj(Scattering);
+std::string ScopStmt::getScheduleStr() const {
+  return stringFromIslObj(Schedule);
 }
 
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
 unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
 
-unsigned ScopStmt::getNumScattering() const {
-  return isl_map_dim(Scattering, isl_dim_out);
+unsigned ScopStmt::getNumSchedule() const {
+  return isl_map_dim(Schedule, isl_dim_out);
 }
 
 const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
@@ -1262,7 +1262,7 @@ ScopStmt::~ScopStmt() {
   }
 
   isl_set_free(Domain);
-  isl_map_free(Scattering);
+  isl_map_free(Schedule);
 }
 
 void ScopStmt::print(raw_ostream &OS) const {
@@ -1274,10 +1274,10 @@ void ScopStmt::print(raw_ostream &OS) const {
   } else
     OS.indent(16) << "n/a\n";
 
-  OS.indent(12) << "Scattering :=\n";
+  OS.indent(12) << "Schedule :=\n";
 
   if (Domain) {
-    OS.indent(16) << getScatteringStr() << ";\n";
+    OS.indent(16) << getScheduleStr() << ";\n";
   } else
     OS.indent(16) << "n/a\n";
 
@@ -1680,9 +1680,9 @@ void Scop::dropConstantScheduleDims() {
   }
 
   for (auto *S : *this) {
-    isl_map *Schedule = S->getScattering();
+    isl_map *Schedule = S->getSchedule();
     Schedule = isl_map_apply_range(Schedule, isl_map_copy(DropDimMap));
-    S->setScattering(Schedule);
+    S->setSchedule(Schedule);
   }
   isl_set_free(ScheduleSpace);
   isl_map_free(DropDimMap);
@@ -1697,13 +1697,13 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   buildContext();
 
   SmallVector<Loop *, 8> NestLoops;
-  SmallVector<unsigned, 8> Scatter;
+  SmallVector<unsigned, 8> Schedule;
 
-  Scatter.assign(MaxLoopDepth + 1, 0);
+  Schedule.assign(MaxLoopDepth + 1, 0);
 
-  // Build the iteration domain, access functions and scattering functions
+  // Build the iteration domain, access functions and schedule functions
   // traversing the region tree.
-  buildScop(tempScop, getRegion(), NestLoops, Scatter, LI, SD);
+  buildScop(tempScop, getRegion(), NestLoops, Schedule, LI, SD);
 
   realignParams();
   addParameterBounds();
@@ -1932,7 +1932,7 @@ __isl_give isl_union_map *Scop::getSchedule() {
   isl_union_map *Schedule = isl_union_map_empty(getParamSpace());
 
   for (ScopStmt *Stmt : *this)
-    Schedule = isl_union_map_add_map(Schedule, Stmt->getScattering());
+    Schedule = isl_union_map_add_map(Schedule, Stmt->getSchedule());
 
   return isl_union_map_coalesce(Schedule);
 }
@@ -1977,16 +1977,16 @@ bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
 void Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
                        const Region &CurRegion,
                        SmallVectorImpl<Loop *> &NestLoops,
-                       SmallVectorImpl<unsigned> &Scatter) {
+                       SmallVectorImpl<unsigned> &ScheduleVec) {
   ScopStmt *Stmt;
 
   if (BB) {
-    Stmt = new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, Scatter);
+    Stmt = new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, ScheduleVec);
     StmtMap[BB] = Stmt;
   } else {
     assert(R && "Either a basic block or a region is needed to "
                 "create a new SCoP stmt.");
-    Stmt = new ScopStmt(*this, tempScop, CurRegion, *R, NestLoops, Scatter);
+    Stmt = new ScopStmt(*this, tempScop, CurRegion, *R, NestLoops, ScheduleVec);
     for (BasicBlock *BB : R->blocks())
       StmtMap[BB] = Stmt;
   }
@@ -1994,18 +1994,18 @@ void Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
   // Insert all statements into the statement map and the statement vector.
   Stmts.push_back(Stmt);
 
-  // Increasing the Scattering function is OK for the moment, because
+  // Increasing the Schedule function is OK for the moment, because
   // we are using a depth first iterator and the program is well structured.
-  ++Scatter[NestLoops.size()];
+  ++ScheduleVec[NestLoops.size()];
 }
 
 void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
                      SmallVectorImpl<Loop *> &NestLoops,
-                     SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI,
+                     SmallVectorImpl<unsigned> &ScheduleVec, LoopInfo &LI,
                      ScopDetection &SD) {
   if (SD.isNonAffineSubRegion(&CurRegion, &getRegion()))
     return addScopStmt(nullptr, const_cast<Region *>(&CurRegion), tempScop,
-                       CurRegion, NestLoops, Scatter);
+                       CurRegion, NestLoops, ScheduleVec);
 
   Loop *L = castToLoop(CurRegion, LI);
 
@@ -2013,29 +2013,29 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
     NestLoops.push_back(L);
 
   unsigned loopDepth = NestLoops.size();
-  assert(Scatter.size() > loopDepth && "Scatter not big enough!");
+  assert(ScheduleVec.size() > loopDepth && "Schedule not big enough!");
 
   for (Region::const_element_iterator I = CurRegion.element_begin(),
                                       E = CurRegion.element_end();
        I != E; ++I)
     if (I->isSubRegion()) {
-      buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, Scatter, LI, SD);
+      buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, ScheduleVec, LI, SD);
     } else {
       BasicBlock *BB = I->getNodeAs<BasicBlock>();
 
       if (isTrivialBB(BB, tempScop))
         continue;
 
-      addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops, Scatter);
+      addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops, ScheduleVec);
     }
 
   if (!L)
     return;
 
   // Exiting a loop region.
-  Scatter[loopDepth] = 0;
+  ScheduleVec[loopDepth] = 0;
   NestLoops.pop_back();
-  ++Scatter[loopDepth - 1];
+  ++ScheduleVec[loopDepth - 1];
 }
 
 ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {

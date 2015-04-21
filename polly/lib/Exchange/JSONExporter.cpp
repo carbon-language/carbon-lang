@@ -102,7 +102,7 @@ Json::Value JSONExporter::getJSON(Scop &S) const {
 
     statement["name"] = Stmt->getBaseName();
     statement["domain"] = Stmt->getDomainStr();
-    statement["schedule"] = Stmt->getScatteringStr();
+    statement["schedule"] = Stmt->getScheduleStr();
     statement["accesses"];
 
     for (MemoryAccess *MA : *Stmt) {
@@ -223,7 +223,7 @@ bool JSONImporter::runOnScop(Scop &S) {
   isl_set_free(OldContext);
   S.setContext(NewContext);
 
-  StatementToIslMapTy NewScattering;
+  StatementToIslMapTy NewSchedule;
 
   int index = 0;
 
@@ -233,19 +233,19 @@ bool JSONImporter::runOnScop(Scop &S) {
     isl_space *Space = (*SI)->getDomainSpace();
 
     // Copy the old tuple id. This is necessary to retain the user pointer,
-    // that stores the reference to the ScopStmt this scattering belongs to.
+    // that stores the reference to the ScopStmt this schedule belongs to.
     m = isl_map_set_tuple_id(m, isl_dim_in,
                              isl_space_get_tuple_id(Space, isl_dim_set));
     isl_space_free(Space);
-    NewScattering[*SI] = m;
+    NewSchedule[*SI] = m;
     index++;
   }
 
-  if (!D.isValidScattering(S, &NewScattering)) {
-    errs() << "JScop file contains a scattering that changes the "
+  if (!D.isValidSchedule(S, &NewSchedule)) {
+    errs() << "JScop file contains a schedule that changes the "
            << "dependences. Use -disable-polly-legality to continue anyways\n";
-    for (StatementToIslMapTy::iterator SI = NewScattering.begin(),
-                                       SE = NewScattering.end();
+    for (StatementToIslMapTy::iterator SI = NewSchedule.begin(),
+                                       SE = NewSchedule.end();
          SI != SE; ++SI)
       isl_map_free(SI->second);
     return false;
@@ -254,8 +254,8 @@ bool JSONImporter::runOnScop(Scop &S) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
 
-    if (NewScattering.find(Stmt) != NewScattering.end())
-      Stmt->setScattering(NewScattering[Stmt]);
+    if (NewSchedule.find(Stmt) != NewSchedule.end())
+      Stmt->setSchedule(NewSchedule[Stmt]);
   }
 
   int statementIdx = 0;

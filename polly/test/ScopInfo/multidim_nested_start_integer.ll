@@ -17,7 +17,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-NOT: p3
 ; CHECK: Domain
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -4 + n and i1 >= 0 and i1 <= -5 + m and i2 >= 0 and i2 <= -8 + o };
-; CHECK: Scattering
+; CHECK: Schedule
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
 ; CHECK: MustWriteAccess
 ; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[3 + i0, i1, 7 + i2] };

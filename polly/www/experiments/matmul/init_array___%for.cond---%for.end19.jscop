@@ -15,7 +15,7 @@
          ],
          "domain" : "{ Stmt_for_body3[i0, i1] : i0 >= 0 and i0 <= 1535 and i1 >= 0 and i1 <= 1535 }",
          "name" : "Stmt_for_body3",
-         "schedule" : "{ Stmt_for_body3[i0, i1] -> scattering[0, i0, 0, i1, 0] }"
+         "schedule" : "{ Stmt_for_body3[i0, i1] -> schedule[0, i0, 0, i1, 0] }"
       }
    ]
 }

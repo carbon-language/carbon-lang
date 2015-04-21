@@ -29,7 +29,7 @@ for.end:
 
 ; CHECK: Domain
 ; CHECK:   [n] -> { Stmt_for_body[i0] : i0 >= 0 and i0 <= -1 + n };
-; CHECK: Scattering
+; CHECK: Schedule
 ; CHECK:   [n] -> { Stmt_for_body[i0] -> [i0] };
 ; CHECK: ReadAccess
 ; CHECK:   [n] -> { Stmt_for_body[i0] -> MemRef_INDEX[i0] };

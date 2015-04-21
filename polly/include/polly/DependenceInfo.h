@@ -105,7 +105,7 @@ struct Dependences {
 
   /// @brief Check if a partial schedule is parallel wrt to @p Deps.
   ///
-  /// @param Schedule       The subset of the scattering space that we want to
+  /// @param Schedule       The subset of the schedule space that we want to
   ///                       check.
   /// @param Deps           The dependences @p Schedule needs to respect.
   /// @param MinDistancePtr If not nullptr, the minimal dependence distance will
@@ -117,14 +117,14 @@ struct Dependences {
                   __isl_take isl_union_map *Deps,
                   __isl_give isl_pw_aff **MinDistancePtr = nullptr) const;
 
-  /// @brief Check if a new scattering is valid.
+  /// @brief Check if a new schedule is valid.
   ///
   /// @param S             The current SCoP.
-  /// @param NewScattering The new scatterings
+  /// @param NewSchedules  The new schedules
   ///
-  /// @return bool True if the new scattering is valid, false it it reverses
+  /// @return bool True if the new schedule is valid, false it it reverses
   ///              dependences.
-  bool isValidScattering(Scop &S, StatementToIslMapTy *NewScatterings) const;
+  bool isValidSchedule(Scop &S, StatementToIslMapTy *NewSchedules) const;
 
   /// @brief Print the dependence information stored.
   void print(llvm::raw_ostream &OS) const;

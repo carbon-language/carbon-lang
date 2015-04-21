@@ -486,7 +486,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
       StmtSchedule = isl_map_from_union_map(StmtBand);
     }
 
-    Stmt->setScattering(StmtSchedule);
+    Stmt->setSchedule(StmtSchedule);
   }
 
   isl_schedule_free(Schedule);

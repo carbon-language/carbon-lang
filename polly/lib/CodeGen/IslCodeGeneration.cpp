@@ -15,7 +15,7 @@
 // in the Scop. ISL is used to generate an abstract syntax tree that reflects
 // the updated execution order. This clast is used to create new LLVM-IR that is
 // computationally equivalent to the original control flow region, but executes
-// its code in the new execution order defined by the changed scattering.
+// its code in the new execution order defined by the changed schedule.
 //
 //===----------------------------------------------------------------------===//
 #include "polly/Config/config.h"

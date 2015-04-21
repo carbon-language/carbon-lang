@@ -116,8 +116,8 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
    	Stmt_5
            Domain&nbsp;:=
                { Stmt_5[i0, i1]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 };
-           Scattering&nbsp;:=
-               { Stmt_5[i0, i1] -&gt; scattering[0, i0, 0, i1, 0] };
+           Schedule&nbsp;:=
+               { Stmt_5[i0, i1] -&gt; schedule[0, i0, 0, i1, 0] };
            WriteAccess&nbsp;:=
                { Stmt_5[i0, i1] -&gt; MemRef_A[1037i0 + i1] };
            WriteAccess&nbsp;:=
@@ -125,8 +125,8 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
    	FinalRead
            Domain&nbsp;:=
                { FinalRead[0] };
-           Scattering&nbsp;:=
-               { FinalRead[i0] -&gt; scattering[200000000, o1, o2, o3, o4] };
+           Schedule&nbsp;:=
+               { FinalRead[i0] -&gt; schedule[200000000, o1, o2, o3, o4] };
            ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_A[o0] };
            ReadAccess&nbsp;:=
@@ -141,15 +141,15 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
    	Stmt_4
            Domain&nbsp;:=
                { Stmt_4[i0, i1]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 };
-           Scattering&nbsp;:=
-               { Stmt_4[i0, i1] -&gt; scattering[0, i0, 0, i1, 0, 0, 0] };
+           Schedule&nbsp;:=
+               { Stmt_4[i0, i1] -&gt; schedule[0, i0, 0, i1, 0, 0, 0] };
            WriteAccess&nbsp;:=
                { Stmt_4[i0, i1] -&gt; MemRef_C[1067i0 + i1] };
    	Stmt_6
            Domain&nbsp;:=
                { Stmt_6[i0, i1, i2]&nbsp;: i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023 and i2 &gt;= 0 and i2 &lt;= 1023 };
-           Scattering&nbsp;:=
-               { Stmt_6[i0, i1, i2] -&gt; scattering[0, i0, 0, i1, 1, i2, 0] };
+           Schedule&nbsp;:=
+               { Stmt_6[i0, i1, i2] -&gt; schedule[0, i0, 0, i1, 1, i2, 0] };
            ReadAccess&nbsp;:=
                { Stmt_6[i0, i1, i2] -&gt; MemRef_C[1067i0 + i1] };
            ReadAccess&nbsp;:=
@@ -161,8 +161,8 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region:
    	FinalRead
            Domain&nbsp;:=
                { FinalRead[0] };
-           Scattering&nbsp;:=
-               { FinalRead[i0] -&gt; scattering[200000000, o1, o2, o3, o4, o5, o6] };
+           Schedule&nbsp;:=
+               { FinalRead[i0] -&gt; schedule[200000000, o1, o2, o3, o4, o5, o6] };
            ReadAccess&nbsp;:=
                { FinalRead[i0] -&gt; MemRef_C[o0] };
            ReadAccess&nbsp;:=

@@ -44,7 +44,7 @@ c # language is C
 # --------------------- SCATTERING --------------------
 %s
 
-0 # We do not want to set manually the scattering dimension names
+0 # We do not want to set manually the schedule dimension names
 """
 
   context = scop['context']

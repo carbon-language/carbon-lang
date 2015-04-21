@@ -33,7 +33,7 @@ return:
 ; CHECK: Stmt_S1
 ; CHECK:       Domain :=
 ; CHECK:           [N] -> { Stmt_S1[i0] : i0 >= 0 and i0 <= -1 + N };
-; CHECK:       Scattering :=
+; CHECK:       Schedule :=
 ; CHECK:           [N] -> { Stmt_S1[i0] -> [i0, 0] };
 ; CHECK:       ReadAccess :=
 ; CHECK:           [N] -> { Stmt_S1[i0] -> MemRef_a[i0] };
@@ -42,7 +42,7 @@ return:
 ; CHECK: Stmt_S2
 ; CHECK:       Domain :=
 ; CHECK:           [N] -> { Stmt_S2[i0] : i0 >= 0 and i0 <= -1 + N };
-; CHECK:       Scattering :=
+; CHECK:       Schedule :=
 ; CHECK:           [N] -> { Stmt_S2[i0] -> [i0, 1] };
 ; CHECK:       ReadAccess :=
 ; CHECK:           [N] -> { Stmt_S2[i0] -> MemRef_val[] };

@@ -110,11 +110,11 @@ for(i = 0; i &lt; 128; i++)
    tiled code.</p>
 The "schedule" part of the pre-optimization jscop file is as the following:
 <pre>
-"schedule" : "{ Stmt_for_body3[i0, i1] -&gt; scattering[0, i0, 0, i1, 0] }"
+"schedule" : "{ Stmt_for_body3[i0, i1] -&gt; schedule[0, i0, 0, i1, 0] }"
 </pre>
 The jscop file describing the tiling transformation is:
 <pre>
-"schedule" : "{ Stmt_for_body3[i0, i1] -&gt; scattering[0, o0, o1, o2, o3]:
+"schedule" : "{ Stmt_for_body3[i0, i1] -&gt; schedule[0, o0, o1, o2, o3]:
               o0 &gt;= 0 and o0 &lt;= 7 and o1 &gt;= 0 and o1 &lt;= 15 and
               o2 &gt;= 0 and o2 &lt;= 7 and o3 &gt;= 0 and o3 &lt;= 15 and
               i0 = 16o0 + o1 and i1 = 16o2 + o3 }"

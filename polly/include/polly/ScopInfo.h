@@ -422,35 +422,35 @@ class ScopStmt {
   /// instance.
   isl_set *Domain;
 
-  /// The scattering map describes the execution order of the statement
+  /// The schedule map describes the execution order of the statement
   /// instances.
   ///
   /// A statement and its iteration domain do not give any information about the
   /// order in time in which the different statement instances are executed.
-  /// This information is provided by the scattering.
+  /// This information is provided by the schedule.
   ///
-  /// The scattering maps every instance of each statement into a multi
-  /// dimensional scattering space. This space can be seen as a multi
+  /// The schedule maps every instance of each statement into a multi
+  /// dimensional schedule space. This space can be seen as a multi
   /// dimensional clock.
   ///
   /// Example:
   ///
-  /// <S,(5,4)>  may be mapped to (5,4) by this scattering:
+  /// <S,(5,4)>  may be mapped to (5,4) by this schedule:
   ///
   /// s0 = i (Year of execution)
   /// s1 = j (Day of execution)
   ///
-  /// or to (9, 20) by this scattering:
+  /// or to (9, 20) by this schedule:
   ///
   /// s0 = i + j (Year of execution)
   /// s1 = 20 (Day of execution)
   ///
   /// The order statement instances are executed is defined by the
-  /// scattering vectors they are mapped to. A statement instance
+  /// schedule vectors they are mapped to. A statement instance
   /// <A, (i, j, ..)> is executed before a statement instance <B, (i', ..)>, if
-  /// the scattering vector of A is lexicographic smaller than the scattering
+  /// the schedule vector of A is lexicographic smaller than the schedule
   /// vector of B.
-  isl_map *Scattering;
+  isl_map *Schedule;
 
   /// The memory accesses of this statement.
   ///
@@ -492,7 +492,7 @@ class ScopStmt {
   __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
                                             TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
-  void buildScattering(SmallVectorImpl<unsigned> &Scatter);
+  void buildSchedule(SmallVectorImpl<unsigned> &ScheduleVec);
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
@@ -549,12 +549,12 @@ class ScopStmt {
   /// Create the ScopStmt from a BasicBlock.
   ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
            BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &Scatter);
+           SmallVectorImpl<unsigned> &ScheduleVec);
 
   /// Create an overapproximating ScopStmt for the region @p R.
   ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
            SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &Scatter);
+           SmallVectorImpl<unsigned> &ScheduleVec);
 
   friend class Scop;
 
@@ -582,14 +582,14 @@ public:
   /// @brief Get an isl string representing this domain.
   std::string getDomainStr() const;
 
-  /// @brief Get the scattering function of this ScopStmt.
+  /// @brief Get the schedule function of this ScopStmt.
   ///
-  /// @return The scattering function of this ScopStmt.
-  __isl_give isl_map *getScattering() const;
-  void setScattering(__isl_take isl_map *scattering);
+  /// @return The schedule function of this ScopStmt.
+  __isl_give isl_map *getSchedule() const;
+  void setSchedule(__isl_take isl_map *Schedule);
 
-  /// @brief Get an isl string representing this scattering.
-  std::string getScatteringStr() const;
+  /// @brief Get an isl string representing this schedule.
+  std::string getScheduleStr() const;
 
   /// @brief Get the BasicBlock represented by this ScopStmt (if any).
   ///
@@ -638,7 +638,7 @@ public:
 
   unsigned getNumParams() const;
   unsigned getNumIterators() const;
-  unsigned getNumScattering() const;
+  unsigned getNumSchedule() const;
 
   Scop *getParent() { return &Parent; }
   const Scop *getParent() const { return &Parent; }
@@ -807,17 +807,17 @@ private:
   /// @param tempScop   The temp SCoP we use as model.
   /// @param CurRegion  The SCoP region.
   /// @param NestLoops  A vector of all surrounding loops.
-  /// @param Scatter    The position of the new statement as scattering.
+  /// @param Schedule   The position of the new statement as schedule.
   void addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
                    const Region &CurRegion, SmallVectorImpl<Loop *> &NestLoops,
-                   SmallVectorImpl<unsigned> &Scatter);
+                   SmallVectorImpl<unsigned> &Schedule);
 
   /// Build the Scop and Statement with precalculated scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
                  // Loops in Scop containing CurRegion
                  SmallVectorImpl<Loop *> &NestLoops,
-                 // The scattering numbers
-                 SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI,
+                 // The schedule numbers
+                 SmallVectorImpl<unsigned> &Schedule, LoopInfo &LI,
                  ScopDetection &SD);
 
   /// @name Helper function for printing the Scop.
@@ -881,16 +881,16 @@ public:
   /// @return The maximum depth of the loop.
   inline unsigned getMaxLoopDepth() const { return MaxLoopDepth; }
 
-  /// @brief Get the scattering dimension number of this Scop.
+  /// @brief Get the schedule dimension number of this Scop.
   ///
-  /// @return The scattering dimension number of this Scop.
-  inline unsigned getScatterDim() const {
-    unsigned maxScatterDim = 0;
+  /// @return The schedule dimension number of this Scop.
+  inline unsigned getScheduleDim() const {
+    unsigned maxScheduleDim = 0;
 
     for (const_iterator SI = begin(), SE = end(); SI != SE; ++SI)
-      maxScatterDim = std::max(maxScatterDim, (*SI)->getNumScattering());
+      maxScheduleDim = std::max(maxScheduleDim, (*SI)->getNumSchedule());
 
-    return maxScatterDim;
+    return maxScheduleDim;
   }
 
   /// @brief Mark the SCoP as optimized by the scheduler.
@@ -937,7 +937,7 @@ public:
   ///
   ///  Schedule dimensions that are constant accross the scop do not carry
   ///  any information, but would cost compile time due to the increased number
-  ///  of scheduling dimensions. To not pay this cost, we remove them.
+  ///  of schedule dimensions. To not pay this cost, we remove them.
   void dropConstantScheduleDims();
 
   /// @brief Return all alias groups for this SCoP.

@@ -3,7 +3,7 @@
 ; FIXME: We cannot detect this SCoP yet but as soon as we can we should check
 ;        that the reduction is detected!
 ;
-; CHECK-NOT: Scattering
+; CHECK-NOT: Schedule
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)

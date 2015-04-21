@@ -11,7 +11,7 @@
          ],
          "domain" : "{ Stmt_4[i0, i1] : i0 >= 0 and i0 <= 1023 and i1 >= 0 and i1 <= 1023 }",
          "name" : "Stmt_4",
-         "schedule" : "{ Stmt_4[i0, i1] -> scattering[0, i0, 0, i1, 0, 0, 0] }"
+         "schedule" : "{ Stmt_4[i0, i1] -> schedule[0, i0, 0, i1, 0, 0, 0] }"
       },
       {
          "accesses" : [
@@ -34,7 +34,7 @@
          ],
          "domain" : "{ Stmt_6[i0, i1, i2] : i0 >= 0 and i0 <= 1023 and i1 >= 0 and i1 <= 1023 and i2 >= 0 and i2 <= 1023 }",
          "name" : "Stmt_6",
-         "schedule" : "{ Stmt_6[i0, i1, i2] -> scattering[1, o0, o1, o2, i0, i2, i1]: o0 <= i0 < o0 + 64 and o1 <= i1 < o1 + 64 and o2 <= i2 < o2 + 64 and o0 % 64 = 0 and o1 % 64 = 0 and o2 % 64 = 0 }"
+         "schedule" : "{ Stmt_6[i0, i1, i2] -> schedule[1, o0, o1, o2, i0, i2, i1]: o0 <= i0 < o0 + 64 and o1 <= i1 < o1 + 64 and o2 <= i2 < o2 + 64 and o0 % 64 = 0 and o1 % 64 = 0 and o2 % 64 = 0 }"
       }
    ]
 }
