@@ -349,6 +349,8 @@ public:
                                           sti.getCPU(), Options)) {
     MCAsmParserExtension::Initialize(parser);
 
+    parser.addAliasForDirective(".asciiz", ".asciz");
+
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
     

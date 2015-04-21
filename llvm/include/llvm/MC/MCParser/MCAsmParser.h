@@ -84,6 +84,8 @@ public:
   virtual void addDirectiveHandler(StringRef Directive,
                                    ExtensionDirectiveHandler Handler) = 0;
 
+  virtual void addAliasForDirective(StringRef Directive, StringRef Alias) = 0;
+
   virtual SourceMgr &getSourceManager() = 0;
 
   virtual MCAsmLexer &getLexer() = 0;

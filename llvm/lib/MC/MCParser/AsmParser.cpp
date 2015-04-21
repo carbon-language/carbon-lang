@@ -184,6 +184,10 @@ public:
     ExtensionDirectiveMap[Directive] = Handler;
   }
 
+  void addAliasForDirective(StringRef Directive, StringRef Alias) override {
+    DirectiveKindMap[Directive] = DirectiveKindMap[Alias];
+  }
+
 public:
   /// @name MCAsmParser Interface
   /// {
