@@ -54,6 +54,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing_step()
 
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_inferior_crashing_step_dwarf(self):
         """Test that stepping after a crash behaves correctly."""
         self.buildDwarf()
@@ -78,6 +79,7 @@ class CrashingInferiorTestCase(TestBase):
         self.inferior_crashing_expr_step_expr()
 
     @expectedFailureFreeBSD('llvm.org/pr15989') # Couldn't allocate space for the stack frame
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_inferior_crashing_expr_step_and_expr_dwarf(self):
         """Test that lldb expressions work before and after stepping after a crash."""
         self.buildDwarf()

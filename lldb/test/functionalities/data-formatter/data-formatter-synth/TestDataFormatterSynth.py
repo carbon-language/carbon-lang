@@ -20,6 +20,7 @@ class SynthDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64","i386"])
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()

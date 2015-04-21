@@ -22,7 +22,7 @@ class VectorTypesFormattingTestCase(TestBase):
 
     # rdar://problem/14035604
     @dwarf_test
-    @skipIfGcc # gcc don't have ext_vector_type extension
+    @skipIf(compiler='gcc') # gcc don't have ext_vector_type extension
     def test_with_dwarf_and_run_command(self):
         """Check that vector types format properly"""
         self.buildDwarf()

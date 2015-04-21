@@ -21,6 +21,7 @@ class MemoryReadTestCase(TestBase):
         self.memory_read_command()
 
     @dwarf_test
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_memory_read_with_dwarf(self):
         """Test the 'memory read' command with plain and vector formats."""
         self.buildDwarf()
