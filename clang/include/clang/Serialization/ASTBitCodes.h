@@ -600,7 +600,11 @@ namespace clang {
       PP_TOKEN = 3,
 
       /// \brief The macro directives history for a particular identifier.
-      PP_MACRO_DIRECTIVE_HISTORY = 4
+      PP_MACRO_DIRECTIVE_HISTORY = 4,
+
+      /// \brief A macro directive exported by a module.
+      /// [PP_MODULE_MACRO, SubmoduleID, MacroID, (Overridden SubmoduleID)*]
+      PP_MODULE_MACRO = 5,
     };
 
     /// \brief Record types used within a preprocessor detail block.
