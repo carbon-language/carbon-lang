@@ -5269,11 +5269,17 @@ static bool isHorizontalBinOp(const BuildVectorSDNode *N, unsigned Opcode,
     unsigned I1 = cast<ConstantSDNode>(Op1.getOperand(1))->getZExtValue();
 
     if (i * 2 < NumElts) {
-      if (V0.getOpcode() == ISD::UNDEF)
+      if (V0.getOpcode() == ISD::UNDEF) {
         V0 = Op0.getOperand(0);
+        if (V0.getValueType() != VT)
+          return false;
+      }
     } else {
-      if (V1.getOpcode() == ISD::UNDEF)
+      if (V1.getOpcode() == ISD::UNDEF) {
         V1 = Op0.getOperand(0);
+        if (V1.getValueType() != VT)
+          return false;
+      }
       if (i * 2 == NumElts)
         ExpectedVExtractIdx = BaseIdx;
     }
@@ -5423,10 +5429,16 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
       SubFound = true;
 
     // Update InVec0 and InVec1.
-    if (InVec0.getOpcode() == ISD::UNDEF)
+    if (InVec0.getOpcode() == ISD::UNDEF) {
       InVec0 = Op0.getOperand(0);
-    if (InVec1.getOpcode() == ISD::UNDEF)
+      if (InVec0.getValueType() != VT)
+        return SDValue();
+    }
+    if (InVec1.getOpcode() == ISD::UNDEF) {
       InVec1 = Op1.getOperand(0);
+      if (InVec1.getValueType() != VT)
+        return SDValue();
+    }
 
     // Make sure that operands in input to each add/sub node always
     // come from a same pair of vectors.

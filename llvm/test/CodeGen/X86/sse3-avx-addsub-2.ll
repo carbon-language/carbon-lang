@@ -315,4 +315,17 @@ define <4 x float> @test16(<4 x float> %A, <4 x float> %B) {
 ; CHECK-NOT: addsubps
 ; CHECK: ret
 
-
+define <2 x float> @test_v2f32(<2 x float> %v0, <2 x float> %v1) {
+  %v2 = extractelement <2 x float> %v0, i32 0
+  %v3 = extractelement <2 x float> %v1, i32 0
+  %v4 = extractelement <2 x float> %v0, i32 1
+  %v5 = extractelement <2 x float> %v1, i32 1
+  %sub = fsub float %v2, %v3
+  %add = fadd float %v5, %v4
+  %res0 = insertelement <2 x float> undef, float %sub, i32 0
+  %res1 = insertelement <2 x float> %res0, float %add, i32 1
+  ret <2 x float> %res1
+}
+; CHECK-LABEL: test_v2f32
+; CHECK: addsubps %xmm1, %xmm0
+; CHECK-NEXT: retq
