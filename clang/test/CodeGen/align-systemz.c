@@ -12,3 +12,16 @@ char c;
 struct test s;
 // CHECK-DAG: @s = common global %struct.test zeroinitializer, align 2
 
+extern char ec;
+// CHECK-DAG: @ec = external global i8, align 2
+
+extern struct test es;
+// CHECK-DAG: @es = external global %struct.test, align 2
+
+// Dummy function to make sure external symbols are used.
+void func (void)
+{
+  c = ec;
+  s = es;
+}
+
