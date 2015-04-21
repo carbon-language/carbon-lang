@@ -93,7 +93,7 @@ void DIBuilder::finalize() {
     if (MDTuple *Temp = SP->getVariables().get()) {
       const auto &PV = PreservedVariables.lookup(SP);
       SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
-      DIArray AV = getOrCreateArray(Variables);
+      DebugNodeArray AV = getOrCreateArray(Variables);
       TempMDTuple(Temp)->replaceAllUsesWith(AV.get());
     }
   }
@@ -364,7 +364,7 @@ DIBuilder::createTemplateTemplateParameter(MDScope *Context, StringRef Name,
 
 MDTemplateValueParameter *
 DIBuilder::createTemplateParameterPack(MDScope *Context, StringRef Name,
-                                       MDType *Ty, DIArray Val) {
+                                       MDType *Ty, DebugNodeArray Val) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_GNU_template_parameter_pack, Context, Name, Ty,
       Val.get());
@@ -373,8 +373,8 @@ DIBuilder::createTemplateParameterPack(MDScope *Context, StringRef Name,
 MDCompositeType *DIBuilder::createClassType(
     MDScope *Context, StringRef Name, MDFile *File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-    unsigned Flags, MDType *DerivedFrom, DIArray Elements, MDType *VTableHolder,
-    MDNode *TemplateParams, StringRef UniqueIdentifier) {
+    unsigned Flags, MDType *DerivedFrom, DebugNodeArray Elements,
+    MDType *VTableHolder, MDNode *TemplateParams, StringRef UniqueIdentifier) {
   assert((!Context || isa<MDScope>(Context)) &&
          "createClassType should be called with a valid Context");
 
@@ -393,7 +393,7 @@ MDCompositeType *DIBuilder::createClassType(
 MDCompositeType *DIBuilder::createStructType(
     MDScope *Context, StringRef Name, MDFile *File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
-    MDType *DerivedFrom, DIArray Elements, unsigned RunTimeLang,
+    MDType *DerivedFrom, DebugNodeArray Elements, unsigned RunTimeLang,
     MDType *VTableHolder, StringRef UniqueIdentifier) {
   auto *R = MDCompositeType::get(
       VMContext, dwarf::DW_TAG_structure_type, Name, File, LineNumber,
@@ -406,13 +406,10 @@ MDCompositeType *DIBuilder::createStructType(
   return R;
 }
 
-MDCompositeType* DIBuilder::createUnionType(MDScope * Scope, StringRef Name,
-                                           MDFile* File, unsigned LineNumber,
-                                           uint64_t SizeInBits,
-                                           uint64_t AlignInBits, unsigned Flags,
-                                           DIArray Elements,
-                                           unsigned RunTimeLang,
-                                           StringRef UniqueIdentifier) {
+MDCompositeType *DIBuilder::createUnionType(
+    MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
+    uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
+    DebugNodeArray Elements, unsigned RunTimeLang, StringRef UniqueIdentifier) {
   auto *R = MDCompositeType::get(
       VMContext, dwarf::DW_TAG_union_type, Name, File, LineNumber,
       MDScopeRef::get(getNonCompileUnitScope(Scope)), nullptr, SizeInBits,
@@ -425,14 +422,14 @@ MDCompositeType* DIBuilder::createUnionType(MDScope * Scope, StringRef Name,
 }
 
 MDSubroutineType *DIBuilder::createSubroutineType(MDFile *File,
-                                                  DITypeArray ParameterTypes,
+                                                  MDTypeRefArray ParameterTypes,
                                                   unsigned Flags) {
   return MDSubroutineType::get(VMContext, Flags, ParameterTypes);
 }
 
 MDCompositeType *DIBuilder::createEnumerationType(
     MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
-    uint64_t SizeInBits, uint64_t AlignInBits, DIArray Elements,
+    uint64_t SizeInBits, uint64_t AlignInBits, DebugNodeArray Elements,
     MDType *UnderlyingType, StringRef UniqueIdentifier) {
   auto *CTy = MDCompositeType::get(
       VMContext, dwarf::DW_TAG_enumeration_type, Name, File, LineNumber,
@@ -447,7 +444,8 @@ MDCompositeType *DIBuilder::createEnumerationType(
 }
 
 MDCompositeType *DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
-                                            MDType *Ty, DIArray Subscripts) {
+                                            MDType *Ty,
+                                            DebugNodeArray Subscripts) {
   auto *R = MDCompositeType::get(VMContext, dwarf::DW_TAG_array_type, "",
                                  nullptr, 0, nullptr, MDTypeRef::get(Ty), Size,
                                  AlignInBits, 0, 0, Subscripts, 0, nullptr);
@@ -457,7 +455,7 @@ MDCompositeType *DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
 
 MDCompositeType *DIBuilder::createVectorType(uint64_t Size,
                                              uint64_t AlignInBits, MDType *Ty,
-                                             DIArray Subscripts) {
+                                             DebugNodeArray Subscripts) {
   auto *R =
       MDCompositeType::get(VMContext, dwarf::DW_TAG_array_type, "", nullptr, 0,
                            nullptr, MDTypeRef::get(Ty), Size, AlignInBits, 0,
@@ -528,11 +526,11 @@ MDCompositeType* DIBuilder::createReplaceableCompositeType(
   return RetTy;
 }
 
-DIArray DIBuilder::getOrCreateArray(ArrayRef<Metadata *> Elements) {
+DebugNodeArray DIBuilder::getOrCreateArray(ArrayRef<Metadata *> Elements) {
   return MDTuple::get(VMContext, Elements);
 }
 
-DITypeArray DIBuilder::getOrCreateTypeArray(ArrayRef<Metadata *> Elements) {
+MDTypeRefArray DIBuilder::getOrCreateTypeArray(ArrayRef<Metadata *> Elements) {
   SmallVector<llvm::Metadata *, 16> Elts;
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     if (Elements[i] && isa<MDNode>(Elements[i]))
@@ -540,7 +538,7 @@ DITypeArray DIBuilder::getOrCreateTypeArray(ArrayRef<Metadata *> Elements) {
     else
       Elts.push_back(Elements[i]);
   }
-  return DITypeArray(MDNode::get(VMContext, Elts));
+  return MDTypeRefArray(MDNode::get(VMContext, Elts));
 }
 
 MDSubrange *DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
@@ -838,8 +836,8 @@ void DIBuilder::replaceVTableHolder(MDCompositeType* &T, MDCompositeType* VTable
         trackIfUnresolved(N);
 }
 
-void DIBuilder::replaceArrays(MDCompositeType* &T, DIArray Elements,
-                              DIArray TParams) {
+void DIBuilder::replaceArrays(MDCompositeType *&T, DebugNodeArray Elements,
+                              DebugNodeArray TParams) {
   {
     TypedTrackingMDRef<MDCompositeType> N(T);
     if (Elements)

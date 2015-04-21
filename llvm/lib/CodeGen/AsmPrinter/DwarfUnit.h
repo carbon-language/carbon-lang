@@ -268,7 +268,7 @@ public:
   void addLinkageName(DIE &Die, StringRef LinkageName);
 
   /// \brief Add template parameters in buffer.
-  void addTemplateParams(DIE &Buffer, DIArray TParams);
+  void addTemplateParams(DIE &Buffer, DebugNodeArray TParams);
 
   /// \brief Add register operand.
   /// \returns false if the register does not exist, e.g., because it was never
@@ -316,7 +316,7 @@ public:
   void constructContainingTypeDIEs();
 
   /// \brief Construct function argument DIEs.
-  void constructSubprogramArguments(DIE &Buffer, DITypeArray Args);
+  void constructSubprogramArguments(DIE &Buffer, MDTypeRefArray Args);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.

@@ -76,7 +76,7 @@ llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   DITypeIdentifierMap Map;
   for (unsigned CUi = 0, CUe = CU_Nodes->getNumOperands(); CUi != CUe; ++CUi) {
     auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(CUi));
-    DIArray Retain = CU->getRetainedTypes();
+    DebugNodeArray Retain = CU->getRetainedTypes();
     for (unsigned Ti = 0, Te = Retain.size(); Ti != Te; ++Ti) {
       if (!isa<MDCompositeType>(Retain[Ti]))
         continue;

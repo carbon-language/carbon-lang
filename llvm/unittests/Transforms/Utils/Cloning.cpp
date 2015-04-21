@@ -229,7 +229,7 @@ protected:
 
     // Function DI
     auto *File = DBuilder.createFile("filename.c", "/file/dir/");
-    DITypeArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
+    MDTypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
     MDSubroutineType *FuncType =
         DBuilder.createSubroutineType(File, ParamTypes);
     auto *CU =

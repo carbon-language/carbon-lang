@@ -36,9 +36,6 @@ class DbgValueInst;
 /// \brief Maps from type identifier to the actual MDNode.
 typedef DenseMap<const MDString *, MDType *> DITypeIdentifierMap;
 
-typedef DebugNodeArray DIArray;
-typedef MDTypeRefArray DITypeArray;
-
 /// \brief Find subprogram that is enclosing this scope.
 MDSubprogram *getDISubprogram(const MDNode *Scope);
 

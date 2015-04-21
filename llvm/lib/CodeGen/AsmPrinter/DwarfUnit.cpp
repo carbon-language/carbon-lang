@@ -474,7 +474,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
-  DIArray Fields = cast<MDCompositeTypeBase>(TmpTy)->getElements();
+  DebugNodeArray Fields = cast<MDCompositeTypeBase>(TmpTy)->getElements();
   const MDDerivedType *varField = nullptr;
   const MDDerivedType *forwardingField = nullptr;
 
@@ -695,7 +695,7 @@ void DwarfUnit::addLinkageName(DIE &Die, StringRef LinkageName) {
               GlobalValue::getRealLinkageName(LinkageName));
 }
 
-void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
+void DwarfUnit::addTemplateParams(DIE &Buffer, DebugNodeArray TParams) {
   // Add template parameters.
   for (const auto *Element : TParams) {
     if (auto *TTP = dyn_cast<MDTemplateTypeParameter>(Element))
@@ -900,7 +900,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDDerivedType *DTy) {
     addSourceLine(Buffer, DTy);
 }
 
-void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
+void DwarfUnit::constructSubprogramArguments(DIE &Buffer, MDTypeRefArray Args) {
   for (unsigned i = 1, N = Args.size(); i < N; ++i) {
     const MDType *Ty = resolve(Args[i]);
     if (!Ty) {
@@ -961,7 +961,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_class_type: {
     // Add elements to structure type.
-    DIArray Elements = CTy->getElements();
+    DebugNodeArray Elements = CTy->getElements();
     for (const auto *Element : Elements) {
       if (!Element)
         continue;
@@ -1316,7 +1316,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
   DIE *IdxTy = getIndexTyDie();
 
   // Add subranges to array type.
-  DIArray Elements = CTy->getElements();
+  DebugNodeArray Elements = CTy->getElements();
   for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
     // FIXME: Should this really be such a loose cast?
     if (auto *Element = dyn_cast_or_null<DebugNode>(Elements[i]))
@@ -1326,7 +1326,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
 }
 
 void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, const MDCompositeType *CTy) {
-  DIArray Elements = CTy->getElements();
+  DebugNodeArray Elements = CTy->getElements();
 
   // Add enumerators to enumeration type.
   for (unsigned i = 0, N = Elements.size(); i < N; ++i) {

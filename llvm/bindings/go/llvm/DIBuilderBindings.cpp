@@ -118,7 +118,7 @@ LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Dref, LLVMMetadataRef File,
   DIBuilder *D = unwrap(Dref);
   return wrap(
       D->createSubroutineType(File ? unwrap<MDFile>(File) : nullptr,
-                              DITypeArray(unwrap<MDTuple>(ParameterTypes))));
+                              MDTypeRefArray(unwrap<MDTuple>(ParameterTypes))));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateStructType(
@@ -131,7 +131,7 @@ LLVMMetadataRef LLVMDIBuilderCreateStructType(
       unwrap<MDScope>(Scope), Name, File ? unwrap<MDFile>(File) : nullptr, Line,
       SizeInBits, AlignInBits, Flags,
       DerivedFrom ? unwrap<MDType>(DerivedFrom) : nullptr,
-      ElementTypes ? DIArray(unwrap<MDTuple>(ElementTypes)) : nullptr));
+      ElementTypes ? DebugNodeArray(unwrap<MDTuple>(ElementTypes)) : nullptr));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(
@@ -165,7 +165,7 @@ LLVMMetadataRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   return wrap(D->createArrayType(SizeInBits, AlignInBits,
                                  unwrap<MDType>(ElementType),
-                                 DIArray(unwrap<MDTuple>(Subscripts))));
+                                 DebugNodeArray(unwrap<MDTuple>(Subscripts))));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Dref,
@@ -190,7 +190,7 @@ LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   Metadata **DataValue = unwrap(Data);
   ArrayRef<Metadata *> Elements(DataValue, Length);
-  DIArray A = D->getOrCreateArray(Elements);
+  DebugNodeArray A = D->getOrCreateArray(Elements);
   return wrap(A.get());
 }
 
@@ -200,7 +200,7 @@ LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Dref,
   DIBuilder *D = unwrap(Dref);
   Metadata **DataValue = unwrap(Data);
   ArrayRef<Metadata *> Elements(DataValue, Length);
-  DITypeArray A = D->getOrCreateTypeArray(Elements);
+  MDTypeRefArray A = D->getOrCreateTypeArray(Elements);
   return wrap(A.get());
 }
 

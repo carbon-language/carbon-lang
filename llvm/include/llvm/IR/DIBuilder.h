@@ -260,14 +260,12 @@ namespace llvm {
     ///                     for more info.
     /// @param TemplateParms Template type parameters.
     /// @param UniqueIdentifier A unique identifier for the class.
-    MDCompositeType *createClassType(MDScope *Scope, StringRef Name,
-                                     MDFile *File, unsigned LineNumber,
-                                     uint64_t SizeInBits, uint64_t AlignInBits,
-                                     uint64_t OffsetInBits, unsigned Flags,
-                                     MDType *DerivedFrom, DIArray Elements,
-                                     MDType *VTableHolder = nullptr,
-                                     MDNode *TemplateParms = nullptr,
-                                     StringRef UniqueIdentifier = "");
+    MDCompositeType *createClassType(
+        MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
+        uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
+        unsigned Flags, MDType *DerivedFrom, DebugNodeArray Elements,
+        MDType *VTableHolder = nullptr, MDNode *TemplateParms = nullptr,
+        StringRef UniqueIdentifier = "");
 
     /// createStructType - Create debugging information entry for a struct.
     /// @param Scope        Scope in which this struct is defined.
@@ -283,7 +281,7 @@ namespace llvm {
     MDCompositeType *createStructType(
         MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
         uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
-        MDType *DerivedFrom, DIArray Elements, unsigned RunTimeLang = 0,
+        MDType *DerivedFrom, DebugNodeArray Elements, unsigned RunTimeLang = 0,
         MDType *VTableHolder = nullptr, StringRef UniqueIdentifier = "");
 
     /// createUnionType - Create debugging information entry for an union.
@@ -300,7 +298,7 @@ namespace llvm {
     MDCompositeType *createUnionType(MDScope *Scope, StringRef Name,
                                      MDFile *File, unsigned LineNumber,
                                      uint64_t SizeInBits, uint64_t AlignInBits,
-                                     unsigned Flags, DIArray Elements,
+                                     unsigned Flags, DebugNodeArray Elements,
                                      unsigned RunTimeLang = 0,
                                      StringRef UniqueIdentifier = "");
 
@@ -341,7 +339,7 @@ namespace llvm {
     MDTemplateValueParameter *createTemplateParameterPack(MDScope *Scope,
                                                           StringRef Name,
                                                           MDType *Ty,
-                                                          DIArray Val);
+                                                          DebugNodeArray Val);
 
     /// createArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.
@@ -349,7 +347,7 @@ namespace llvm {
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
     MDCompositeType *createArrayType(uint64_t Size, uint64_t AlignInBits,
-                                     MDType *Ty, DIArray Subscripts);
+                                     MDType *Ty, DebugNodeArray Subscripts);
 
     /// createVectorType - Create debugging information entry for a vector type.
     /// @param Size         Array size.
@@ -357,7 +355,7 @@ namespace llvm {
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
     MDCompositeType *createVectorType(uint64_t Size, uint64_t AlignInBits,
-                                      MDType *Ty, DIArray Subscripts);
+                                      MDType *Ty, DebugNodeArray Subscripts);
 
     /// createEnumerationType - Create debugging information entry for an
     /// enumeration.
@@ -372,7 +370,7 @@ namespace llvm {
     /// @param UniqueIdentifier A unique identifier for the enum.
     MDCompositeType *createEnumerationType(
         MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
-        uint64_t SizeInBits, uint64_t AlignInBits, DIArray Elements,
+        uint64_t SizeInBits, uint64_t AlignInBits, DebugNodeArray Elements,
         MDType *UnderlyingType, StringRef UniqueIdentifier = "");
 
     /// createSubroutineType - Create subroutine type.
@@ -382,7 +380,7 @@ namespace llvm {
     /// @param Flags           E.g.: LValueReference.
     ///                        These flags are used to emit dwarf attributes.
     MDSubroutineType *createSubroutineType(MDFile *File,
-                                           DITypeArray ParameterTypes,
+                                           MDTypeRefArray ParameterTypes,
                                            unsigned Flags = 0);
 
     /// createArtificialType - Create a new MDType* with "artificial" flag set.
@@ -415,11 +413,11 @@ namespace llvm {
     /// for a subroutine type.
     MDBasicType *createUnspecifiedParameter();
 
-    /// getOrCreateArray - Get a DIArray, create one if required.
-    DIArray getOrCreateArray(ArrayRef<Metadata *> Elements);
+    /// getOrCreateArray - Get a DebugNodeArray, create one if required.
+    DebugNodeArray getOrCreateArray(ArrayRef<Metadata *> Elements);
 
-    /// getOrCreateTypeArray - Get a DITypeArray, create one if required.
-    DITypeArray getOrCreateTypeArray(ArrayRef<Metadata *> Elements);
+    /// getOrCreateTypeArray - Get a MDTypeRefArray, create one if required.
+    MDTypeRefArray getOrCreateTypeArray(ArrayRef<Metadata *> Elements);
 
     /// getOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.
@@ -664,8 +662,8 @@ namespace llvm {
     /// If \c T is resolved, but the arrays aren't -- which can happen if \c T
     /// has a self-reference -- \a DIBuilder needs to track the array to
     /// resolve cycles.
-    void replaceArrays(MDCompositeType *&T, DIArray Elements,
-                       DIArray TParems = DIArray());
+    void replaceArrays(MDCompositeType *&T, DebugNodeArray Elements,
+                       DebugNodeArray TParems = DebugNodeArray());
 
     /// \brief Replace a temporary node.
     ///

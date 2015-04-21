@@ -570,7 +570,7 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   DIE &ScopeDIE = updateSubprogramScopeDIE(Sub);
 
   // If this is a variadic function, add an unspecified parameter.
-  DITypeArray FnArgs = Sub->getType()->getTypeArray();
+  MDTypeRefArray FnArgs = Sub->getType()->getTypeArray();
 
   // Collect lexical scope children first.
   // ObjectPointer might be a local (non-argument) local variable if it's a
