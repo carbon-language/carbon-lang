@@ -13,9 +13,11 @@
   .section text1, "x"
   imull $17, %ebx, %ebp
 # CHECK-LABEL: Name: text1
+# CHECK-NOT: Name
 # CHECK: AddressAlignment: 32
 
   .section text2, "x"
   imull $17, %ebx, %ebp
 # CHECK-LABEL: Name: text2
+# CHECK-NOT: Name
 # CHECK: AddressAlignment: 32
