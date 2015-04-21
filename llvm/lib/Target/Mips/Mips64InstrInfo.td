@@ -502,6 +502,16 @@ def : MipsPat<(i32 (trunc (or GPR64:$lhs, GPR64:$rhs))),
 def : MipsPat<(i32 (trunc (xor GPR64:$lhs, GPR64:$rhs))),
               (EXTRACT_SUBREG (XOR64 GPR64:$lhs, GPR64:$rhs), sub_32)>;
 
+// variable shift instructions patterns
+def : MipsPat<(shl GPR64:$rt, (i32 (trunc GPR64:$rs))),
+              (DSLLV GPR64:$rt, (EXTRACT_SUBREG GPR64:$rs, sub_32))>;
+def : MipsPat<(srl GPR64:$rt, (i32 (trunc GPR64:$rs))),
+              (DSRLV GPR64:$rt, (EXTRACT_SUBREG GPR64:$rs, sub_32))>;
+def : MipsPat<(sra GPR64:$rt, (i32 (trunc GPR64:$rs))),
+              (DSRAV GPR64:$rt, (EXTRACT_SUBREG GPR64:$rs, sub_32))>;
+def : MipsPat<(rotr GPR64:$rt, (i32 (trunc GPR64:$rs))),
+              (DROTRV GPR64:$rt, (EXTRACT_SUBREG GPR64:$rs, sub_32))>;
+
 // 32-to-64-bit extension
 def : MipsPat<(i64 (anyext GPR32:$src)), (SLL64_32 GPR32:$src)>;
 def : MipsPat<(i64 (zext GPR32:$src)), (DSRL (DSLL64_32 GPR32:$src), 32)>;
