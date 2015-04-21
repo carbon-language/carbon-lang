@@ -704,10 +704,10 @@ namespace {
             // We need to create an LCSSA PHI node for the incoming value and
             // store that.
             PHINode *PN = PHINode::Create(
-                I->getType(), PredCache.GetNumPreds(BB),
+                I->getType(), PredCache.size(BB),
                 I->getName() + ".lcssa", BB->begin());
-            for (BasicBlock **PI = PredCache.GetPreds(BB); *PI; ++PI)
-              PN->addIncoming(I, *PI);
+            for (BasicBlock *Pred : PredCache.get(BB))
+              PN->addIncoming(I, Pred);
             return PN;
           }
       return V;

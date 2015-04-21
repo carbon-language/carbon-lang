@@ -65,7 +65,7 @@ INITIALIZE_PASS_END(MemoryDependenceAnalysis, "memdep",
                       "Memory Dependence Analysis", false, true)
 
 MemoryDependenceAnalysis::MemoryDependenceAnalysis()
-    : FunctionPass(ID), PredCache() {
+    : FunctionPass(ID) {
   initializeMemoryDependenceAnalysisPass(*PassRegistry::getPassRegistry());
 }
 MemoryDependenceAnalysis::~MemoryDependenceAnalysis() {
@@ -79,7 +79,7 @@ void MemoryDependenceAnalysis::releaseMemory() {
   ReverseLocalDeps.clear();
   ReverseNonLocalDeps.clear();
   ReverseNonLocalPtrDeps.clear();
-  PredCache->clear();
+  PredCache.clear();
 }
 
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
@@ -96,8 +96,6 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &F) {
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  if (!PredCache)
-    PredCache.reset(new PredIteratorCache());
   return false;
 }
 
@@ -770,8 +768,8 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
   } else {
     // Seed DirtyBlocks with each of the preds of QueryInst's block.
     BasicBlock *QueryBB = QueryCS.getInstruction()->getParent();
-    for (BasicBlock **PI = PredCache->GetPreds(QueryBB); *PI; ++PI)
-      DirtyBlocks.push_back(*PI);
+    for (BasicBlock *Pred : PredCache.get(QueryBB))
+      DirtyBlocks.push_back(Pred);
     ++NumUncacheNonLocal;
   }
 
@@ -856,8 +854,8 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
 
       // If the block *is* completely transparent to the load, we need to check
       // the predecessors of this block.  Add them to our worklist.
-      for (BasicBlock **PI = PredCache->GetPreds(DirtyBB); *PI; ++PI)
-        DirtyBlocks.push_back(*PI);
+      for (BasicBlock *Pred : PredCache.get(DirtyBB))
+        DirtyBlocks.push_back(Pred);
     }
   }
 
@@ -1232,13 +1230,13 @@ getNonLocalPointerDepFromBB(Instruction *QueryInst,
     if (!Pointer.NeedsPHITranslationFromBlock(BB)) {
       SkipFirstBlock = false;
       SmallVector<BasicBlock*, 16> NewBlocks;
-      for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
+      for (BasicBlock *Pred : PredCache.get(BB)) {
         // Verify that we haven't looked at this block yet.
         std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
-          InsertRes = Visited.insert(std::make_pair(*PI, Pointer.getAddr()));
+          InsertRes = Visited.insert(std::make_pair(Pred, Pointer.getAddr()));
         if (InsertRes.second) {
           // First time we've looked at *PI.
-          NewBlocks.push_back(*PI);
+          NewBlocks.push_back(Pred);
           continue;
         }
 
@@ -1274,8 +1272,7 @@ getNonLocalPointerDepFromBB(Instruction *QueryInst,
     Cache = nullptr;
 
     PredList.clear();
-    for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
-      BasicBlock *Pred = *PI;
+    for (BasicBlock *Pred : PredCache.get(BB)) {
       PredList.push_back(std::make_pair(Pred, Pointer));
 
       // Get the PHI translated pointer in this predecessor.  This can fail if
@@ -1465,7 +1462,7 @@ void MemoryDependenceAnalysis::invalidateCachedPointerInfo(Value *Ptr) {
 /// This needs to be done when the CFG changes, e.g., due to splitting
 /// critical edges.
 void MemoryDependenceAnalysis::invalidateCachedPredecessors() {
-  PredCache->clear();
+  PredCache.clear();
 }
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
