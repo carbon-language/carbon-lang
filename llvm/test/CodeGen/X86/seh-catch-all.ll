@@ -1,3 +1,4 @@
+; RUN: llc -sehprepare -mtriple=x86_64-windows-msvc < %s | FileCheck %s
 ; RUN: llc -mtriple=x86_64-windows-msvc < %s | FileCheck %s
 
 @str = internal unnamed_addr constant [10 x i8] c"recovered\00", align 1

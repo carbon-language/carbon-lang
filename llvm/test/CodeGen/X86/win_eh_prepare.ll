@@ -1,4 +1,4 @@
-; RUN: opt -S -winehprepare -dwarfehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -sehprepare -dwarfehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
 
 ; FIXME: Add and test outlining here.
 
@@ -43,8 +43,10 @@ define internal i32 @filt_g(i8*, i8*) {
 ; CHECK-LABEL: define i32 @use_seh()
 ; CHECK: invoke void @maybe_throw()
 ; CHECK-NEXT: to label %cont unwind label %lpad
-; CHECK: eh.resume:
-; CHECK-NEXT: unreachable
+; CHECK: landingpad
+; CHECK-NEXT: cleanup
+; CHECK-NEXT: catch
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions({{.*}})
 
 
 ; A MinGW64-ish EH style. It could happen if a binary uses both MSVC CRT and

@@ -911,7 +911,7 @@ void SelectionDAGISel::DoInstructionSelection() {
 
 /// PrepareEHLandingPad - Emit an EH_LABEL, set up live-in registers, and
 /// do other setup for EH landing-pad blocks.
-void SelectionDAGISel::PrepareEHLandingPad() {
+bool SelectionDAGISel::PrepareEHLandingPad() {
   MachineBasicBlock *MBB = FuncInfo->MBB;
 
   const TargetRegisterClass *PtrRC = TLI->getRegClassFor(TLI->getPointerTy());
@@ -937,12 +937,12 @@ void SelectionDAGISel::PrepareEHLandingPad() {
 
   if (isMSVCEHPersonality(Personality)) {
     SmallVector<MachineBasicBlock *, 4> ClauseBBs;
-    const IntrinsicInst *Actions =
+    const IntrinsicInst *ActionsCall =
         dyn_cast<IntrinsicInst>(LLVMBB->getFirstInsertionPt());
     // Get all invoke BBs that unwind to this landingpad.
     SmallVector<MachineBasicBlock *, 4> InvokeBBs(MBB->pred_begin(),
                                                   MBB->pred_end());
-    if (Actions && Actions->getIntrinsicID() == Intrinsic::eh_actions) {
+    if (ActionsCall && ActionsCall->getIntrinsicID() == Intrinsic::eh_actions) {
       // If this is a call to llvm.eh.actions followed by indirectbr, then we've
       // run WinEHPrepare, and we should remove this block from the machine CFG.
       // Mark the targets of the indirectbr as landingpads instead.
@@ -951,11 +951,15 @@ void SelectionDAGISel::PrepareEHLandingPad() {
         // Add the edge from the invoke to the clause.
         for (MachineBasicBlock *InvokeBB : InvokeBBs)
           InvokeBB->addSuccessor(ClauseBB);
+
+        // Mark the clause as a landing pad or MI passes will delete it.
+        ClauseBB->setIsLandingPad();
       }
     } else {
       // Otherwise, we haven't done the preparation, and we need to invent some
       // clause basic blocks that branch into the landingpad.
       // FIXME: Remove this code once SEH preparation works.
+      ActionsCall = nullptr;
 
       // Make virtual registers and a series of labels that fill in values for
       // the clauses.
@@ -1017,7 +1021,10 @@ void SelectionDAGISel::PrepareEHLandingPad() {
       WinEHFuncInfo &FI = MF->getMMI().getWinEHFuncInfo(MF->getFunction());
       MF->getMMI().addWinEHState(MBB, FI.LandingPadStateMap[LPadInst]);
     }
-    return;
+
+    // Select instructions for the landingpad if there was no llvm.eh.actions
+    // call.
+    return ActionsCall == nullptr;
   }
 
   // Mark exception register as live in.
@@ -1027,6 +1034,8 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   // Mark exception selector register as live in.
   if (unsigned Reg = TLI->getExceptionSelectorRegister())
     FuncInfo->ExceptionSelectorVirtReg = MBB->addLiveIn(Reg, PtrRC);
+
+  return true;
 }
 
 /// isFoldedOrDeadInstruction - Return true if the specified instruction is
@@ -1197,7 +1206,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     FuncInfo->ExceptionPointerVirtReg = 0;
     FuncInfo->ExceptionSelectorVirtReg = 0;
     if (LLVMBB->isLandingPad())
-      PrepareEHLandingPad();
+      if (!PrepareEHLandingPad())
+        continue;
 
     // Before doing SelectionDAG ISel, see if FastISel has been requested.
     if (FastIS) {

@@ -212,8 +212,13 @@ void Win64Exception::emitCSpecificHandlerTable() {
       if (isCatchEHSelector(Selector))
         ++NumEntries;
     }
+    NumEntries += CSE.LPad->SEHHandlers.size();
   }
   Asm->OutStreamer.EmitIntValue(NumEntries, 4);
+
+  // If there are no actions, we don't need to iterate again.
+  if (NumEntries == 0)
+    return;
 
   // Emit the four-label records for each call site entry. The table has to be
   // sorted in layout order, and the call sites should already be sorted.
@@ -239,6 +244,31 @@ void Win64Exception::emitCSpecificHandlerTable() {
     } else {
       End = createImageRel32(EHFuncEndSym);
     }
+
+    // Emit an entry for each action.
+    for (SEHHandler Handler : LPad->SEHHandlers) {
+      Asm->OutStreamer.EmitValue(Begin, 4);
+      Asm->OutStreamer.EmitValue(End, 4);
+
+      // Emit the filter or finally function pointer, if present. Otherwise,
+      // emit '1' to indicate a catch-all.
+      const Function *F = Handler.FilterOrFinally;
+      if (F)
+        Asm->OutStreamer.EmitValue(createImageRel32(Asm->getSymbol(F)), 4);
+      else
+        Asm->OutStreamer.EmitIntValue(1, 4);
+
+      // Emit the recovery address, if present. Otherwise, this must be a
+      // finally.
+      const BlockAddress *BA = Handler.RecoverBA;
+      if (BA)
+        Asm->OutStreamer.EmitValue(
+            createImageRel32(Asm->GetBlockAddressSymbol(BA)), 4);
+      else
+        Asm->OutStreamer.EmitIntValue(0, 4);
+    }
+    if (!LPad->SEHHandlers.empty())
+      continue;
 
     // These aren't really type info globals, they are actually pointers to
     // filter functions ordered by selector. The zero selector is used for
