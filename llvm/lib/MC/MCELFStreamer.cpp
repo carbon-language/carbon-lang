@@ -131,6 +131,16 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   llvm_unreachable("invalid assembler flag!");
 }
 
+// If bundle aligment is used and there are any instructions in the section, it
+// needs to be aligned to at least the bundle size.
+static void setSectionAlignmentForBundling(
+    const MCAssembler &Assembler, MCSectionData *Section) {
+  if (Assembler.isBundlingEnabled() && Section &&
+      Section->hasInstructions() &&
+      Section->getAlignment() < Assembler.getBundleAlignSize())
+    Section->setAlignment(Assembler.getBundleAlignSize());
+}
+
 void MCELFStreamer::ChangeSection(const MCSection *Section,
                                   const MCExpr *Subsection) {
   MCSectionData *CurSection = getCurrentSectionData();
@@ -138,6 +148,8 @@ void MCELFStreamer::ChangeSection(const MCSection *Section,
     report_fatal_error("Unterminated .bundle_lock when changing a section");
 
   MCAssembler &Asm = getAssembler();
+  // Ensure the previous section gets aligned if necessary.
+  setSectionAlignmentForBundling(Asm, CurSection);
   auto *SectionELF = static_cast<const MCSectionELF *>(Section);
   const MCSymbol *Grp = SectionELF->getGroup();
   if (Grp)
@@ -639,6 +651,9 @@ void MCELFStreamer::Flush() {
 }
 
 void MCELFStreamer::FinishImpl() {
+  // Ensure the last section gets aligned if necessary.
+  setSectionAlignmentForBundling(getAssembler(), getCurrentSectionData());
+
   EmitFrames(nullptr);
 
   Flush();
