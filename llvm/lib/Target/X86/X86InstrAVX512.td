@@ -5544,7 +5544,7 @@ def : Pat<(truncstorei1 GR8:$src, addr:$dst),
           (MOV8mr addr:$dst, GR8:$src)>;
 
 multiclass cvt_by_vec_width<bits<8> opc, X86VectorVTInfo Vec, string OpcodeStr > {
-def rr : AVX512XS8I<opc, MRMDestReg, (outs Vec.RC:$dst), (ins Vec.KRC:$src),
+def rr : AVX512XS8I<opc, MRMSrcReg, (outs Vec.RC:$dst), (ins Vec.KRC:$src),
                   !strconcat(OpcodeStr##Vec.Suffix, "\t{$src, $dst|$dst, $src}"),
                   [(set Vec.RC:$dst, (Vec.VT (X86vsext Vec.KRC:$src)))]>, EVEX;
 }
@@ -5572,6 +5572,35 @@ multiclass avx512_convert_mask_to_vector<string OpcodeStr> {
 }
 
 defm VPMOVM2 : avx512_convert_mask_to_vector<"vpmovm2">;
+
+multiclass convert_vector_to_mask_common<bits<8> opc, X86VectorVTInfo _, string OpcodeStr > {
+def rr : AVX512XS8I<opc, MRMSrcReg, (outs _.KRC:$dst), (ins _.RC:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  [(set _.KRC:$dst, (trunc (_.VT _.RC:$src)))]>, EVEX;
+}
+
+multiclass avx512_convert_vector_to_mask<bits<8> opc, string OpcodeStr,
+                        AVX512VLVectorVTInfo VTInfo, Predicate prd> {
+let Predicates = [prd] in
+  defm Z : convert_vector_to_mask_common <opc, VTInfo.info512, OpcodeStr>,
+   EVEX_V512;
+
+  let Predicates = [prd, HasVLX] in {
+    defm Z256 : convert_vector_to_mask_common<opc, VTInfo.info256, OpcodeStr>,
+     EVEX_V256;
+    defm Z128 : convert_vector_to_mask_common<opc, VTInfo.info128, OpcodeStr>,
+     EVEX_V128;
+  }
+}
+
+defm VPMOVB2M : avx512_convert_vector_to_mask<0x29, "vpmovb2m",
+                                              avx512vl_i8_info, HasBWI>;
+defm VPMOVW2M : avx512_convert_vector_to_mask<0x29, "vpmovw2m",
+                                              avx512vl_i16_info, HasBWI>, VEX_W;
+defm VPMOVD2M : avx512_convert_vector_to_mask<0x39, "vpmovd2m",
+                                              avx512vl_i32_info, HasDQI>;
+defm VPMOVQ2M : avx512_convert_vector_to_mask<0x39, "vpmovq2m",
+                                              avx512vl_i64_info, HasDQI>, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - COMPRESS and EXPAND
