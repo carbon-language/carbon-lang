@@ -29,3 +29,16 @@ class POOL32A_BITSWAP_FM_MMR6<bits<6> funct> : MipsR6Inst {
   let Inst{11-6} = funct;
   let Inst{5-0} = 0b111100;
 }
+
+class CACHE_PREF_FM_MMR6<bits<6> opgroup, bits<4> funct> : MipsR6Inst {
+  bits<21> addr;
+  bits<5> hint;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = opgroup;
+  let Inst{25-21} = hint;
+  let Inst{20-16} = addr{20-16};
+  let Inst{15-12} = funct;
+  let Inst{11-0}  = addr{11-0};
+}

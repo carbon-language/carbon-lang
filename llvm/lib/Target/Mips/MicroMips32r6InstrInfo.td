@@ -20,6 +20,8 @@
 class BALC_MMR6_ENC  : BRANCH_OFF26_FM<0b101101>;
 class BC_MMR6_ENC : BRANCH_OFF26_FM<0b100101>;
 class BITSWAP_MMR6_ENC : POOL32A_BITSWAP_FM_MMR6<0b101100>;
+class CACHE_MMR6_ENC : CACHE_PREF_FM_MMR6<0b001000, 0b0110>;
+class PREF_MMR6_ENC : CACHE_PREF_FM_MMR6<0b011000, 0b0010>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -51,6 +53,18 @@ class BITSWAP_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
 
 class BITSWAP_MMR6_DESC : BITSWAP_MMR6_DESC_BASE<"bitswap", GPR32Opnd>;
 
+class CACHE_HINT_MMR6_DESC<string instr_asm, Operand MemOpnd,
+                           RegisterOperand GPROpnd> : MMR6Arch<instr_asm> {
+  dag OutOperandList = (outs);
+  dag InOperandList = (ins MemOpnd:$addr, uimm5:$hint);
+  string AsmString = !strconcat(instr_asm, "\t$hint, $addr");
+  list<dag> Pattern = [];
+  string DecoderMethod = "DecodeCacheOpMM";
+}
+
+class CACHE_MMR6_DESC : CACHE_HINT_MMR6_DESC<"cache", mem_mm_12, GPR32Opnd>;
+class PREF_MMR6_DESC : CACHE_HINT_MMR6_DESC<"pref", mem_mm_12, GPR32Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -62,4 +76,6 @@ def BALC_MMR6 : R6MMR6Rel, BALC_MMR6_ENC, BALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BC_MMR6 : R6MMR6Rel, BC_MMR6_ENC, BC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BITSWAP_MMR6 : R6MMR6Rel, BITSWAP_MMR6_ENC, BITSWAP_MMR6_DESC,
                    ISA_MICROMIPS32R6;
+def CACHE_MMR6 : R6MMR6Rel, CACHE_MMR6_ENC, CACHE_MMR6_DESC, ISA_MICROMIPS32R6;
+def PREF_MMR6 : R6MMR6Rel, PREF_MMR6_ENC, PREF_MMR6_DESC, ISA_MICROMIPS32R6;
 }
