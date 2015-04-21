@@ -4184,12 +4184,11 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       PointerType *OpTy = dyn_cast<PointerType>(Callee->getType());
       if (!OpTy)
         return Error("Callee is not a pointer type");
-      FunctionType *PFTy = dyn_cast<FunctionType>(OpTy->getElementType());
-      if (!PFTy)
-        return Error("Callee is not of pointer to function type");
-      if (!FTy)
-        FTy = PFTy;
-      if (PFTy != FTy)
+      if (!FTy) {
+        FTy = dyn_cast<FunctionType>(OpTy->getElementType());
+        if (!FTy)
+          return Error("Callee is not of pointer to function type");
+      } else if (OpTy->getElementType() != FTy)
         return Error("Explicit call type does not match pointee type of "
                      "callee operand");
       if (Record.size() < FTy->getNumParams() + OpNum)
@@ -4220,7 +4219,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         }
       }
 
-      I = CallInst::Create(Callee, Args);
+      I = CallInst::Create(FTy, Callee, Args);
       InstructionList.push_back(I);
       cast<CallInst>(I)->setCallingConv(
           static_cast<CallingConv::ID>((~(1U << 14) & CCInfo) >> 1));

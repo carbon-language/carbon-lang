@@ -194,6 +194,14 @@ public:
     CALLSITE_DELEGATE_SETTER(setCallingConv(CC));
   }
 
+  FunctionType *getFunctionType() const {
+    CALLSITE_DELEGATE_GETTER(getFunctionType());
+  }
+
+  void mutateFunctionType(FunctionType *Ty) const {
+    CALLSITE_DELEGATE_SETTER(mutateFunctionType(Ty));
+  }
+
   /// getAttributes/setAttributes - get or set the parameter attributes of
   /// the call.
   const AttributeSet &getAttributes() const {

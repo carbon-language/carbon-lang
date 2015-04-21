@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InlineAsm.h"
@@ -384,6 +385,16 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
   }
   
   // If the instruction's type is being remapped, do so now.
-  if (TypeMapper)
+  if (auto CS = CallSite(I)) {
+    SmallVector<Type *, 3> Tys;
+    FunctionType *Old = CS.getFunctionType();
+    unsigned NumOld = Old->getNumParams();
+    assert(NumOld <= CS.arg_size());
+    for (unsigned i = 0; i != NumOld; ++i)
+      Tys.push_back(CS.getArgument(i)->getType());
+    CS.mutateFunctionType(FunctionType::get(
+        TypeMapper ? TypeMapper->remapType(I->getType()) : I->getType(), Tys,
+        Old->isVarArg()));
+  } else if (TypeMapper)
     I->mutateType(TypeMapper->remapType(I->getType()));
 }
