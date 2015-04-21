@@ -175,7 +175,7 @@ The :program:`llvm-cov show` command shows line by line coverage of a binary
 *BIN* using the profile data *PROFILE*. It can optionally be filtered to only
 show the coverage for the files listed in *SOURCES*.
 
-To use :program:`llvm-cov show`, you need a program that's compiled with
+To use :program:`llvm-cov show`, you need a program that is compiled with
 instrumentation to emit profile and coverage data. To build such a program with
 ``clang`` use the ``-fprofile-instr-generate`` and ``-fcoverage-mapping``
 flags. If linking with the ``clang`` driver, pass ``-fprofile-instr-generate``
@@ -223,10 +223,10 @@ OPTIONS
 
 .. option:: -arch=<name>
 
- If the covered binary is a universal binary, select the architecture to use
- when looking up the coverage map. Errors out if the supplied architecture is
- not found in the universal binary, or if used on a non-universal binary of
- a different architecture.
+ If the covered binary is a universal binary, select the architecture to use.
+ It is an error to specify an architecture that is not included in the
+ universal binary or to use an architecture that does not match a
+ non-universal binary.
 
 .. option:: -name=<NAME>
 
@@ -291,7 +291,7 @@ OPTIONS
 
 .. option:: -arch=<name>
 
- If the covered binary is a universal binary, select the architecture to use
- when looking up the coverage map. Errors out if the supplied architecture is
- not found in the universal binary, or if used on a non-universal binary of
- a different architecture.
+ If the covered binary is a universal binary, select the architecture to use.
+ It is an error to specify an architecture that is not included in the
+ universal binary or to use an architecture that does not match a
+ non-universal binary.
