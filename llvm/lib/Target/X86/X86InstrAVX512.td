@@ -287,6 +287,54 @@ multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [], "",
                           "$src0 = $dst">;
 
+
+// Instruction with mask that puts result in mask register,
+// like "compare" and "vptest"
+multiclass AVX512_maskable_custom_cmp<bits<8> O, Format F,
+                                  dag Outs,
+                                  dag Ins, dag MaskingIns,
+                                  string OpcodeStr,
+                                  string AttSrcAsm, string IntelSrcAsm,
+                                  list<dag> Pattern,
+                                  list<dag> MaskingPattern,
+                                  string Round = "",
+                                  InstrItinClass itin = NoItinerary> {
+    def NAME: AVX512<O, F, Outs, Ins,
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst "#Round#"|"#
+                                     "$dst "#Round#", "#IntelSrcAsm#"}",
+                       Pattern, itin>;
+
+    def NAME#k: AVX512<O, F, Outs, MaskingIns,
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}"#Round#"|"#
+                                     "$dst {${mask}}"#Round#", "#IntelSrcAsm#"}",
+                       MaskingPattern, itin>, EVEX_K;
+}
+
+multiclass AVX512_maskable_common_cmp<bits<8> O, Format F, X86VectorVTInfo _,
+                                  dag Outs,
+                                  dag Ins, dag MaskingIns,
+                                  string OpcodeStr,
+                                  string AttSrcAsm, string IntelSrcAsm,
+                                  dag RHS, dag MaskingRHS,
+                                  string Round = "",
+                                  InstrItinClass itin = NoItinerary> :
+  AVX512_maskable_custom_cmp<O, F, Outs, Ins, MaskingIns, OpcodeStr,
+                         AttSrcAsm, IntelSrcAsm,
+                         [(set _.KRC:$dst, RHS)],
+                         [(set _.KRC:$dst, MaskingRHS)],
+                         Round, NoItinerary>;
+
+multiclass AVX512_maskable_cmp<bits<8> O, Format F, X86VectorVTInfo _,
+                           dag Outs, dag Ins, string OpcodeStr,
+                           string AttSrcAsm, string IntelSrcAsm,
+                           dag RHS, string Round = "",
+                           InstrItinClass itin = NoItinerary> :
+   AVX512_maskable_common_cmp<O, F, _, Outs, Ins,
+                          !con((ins _.KRCWM:$mask), Ins),
+                          OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
+                          (and _.KRCWM:$mask, RHS),
+                          Round, itin>;
+
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
 let Predicates = [HasAVX512] in {
@@ -3383,36 +3431,83 @@ def : Pat<(v8f64 (int_x86_avx512_mask_min_pd_512 (v8f64 VR512:$src1),
 // AVX-512  VPTESTM instructions
 //===----------------------------------------------------------------------===//
 
-multiclass avx512_vptest<bits<8> opc, string OpcodeStr, RegisterClass KRC,
-              RegisterClass RC, X86MemOperand x86memop, PatFrag memop_frag,
-              SDNode OpNode, ValueType vt> {
-  def rr : AVX512PI<opc, MRMSrcReg,
-             (outs KRC:$dst), (ins RC:$src1, RC:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set KRC:$dst, (OpNode (vt RC:$src1), (vt RC:$src2)))],
-             SSEPackedInt>, EVEX_4V;
-  def rm : AVX512PI<opc, MRMSrcMem,
-             (outs KRC:$dst), (ins RC:$src1, x86memop:$src2),
-             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set KRC:$dst, (OpNode (vt RC:$src1),
-              (bitconvert (memop_frag addr:$src2))))], SSEPackedInt>, EVEX_4V;
+multiclass avx512_vptest<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                            X86VectorVTInfo _> {
+  defm rr : AVX512_maskable_cmp<opc, MRMSrcReg, _, (outs _.KRC:$dst),
+                   (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
+                      "$src2, $src1", "$src1, $src2",
+                   (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2))>,
+                    EVEX_4V;
+  let mayLoad = 1 in
+  defm rm : AVX512_maskable_cmp<opc, MRMSrcMem, _, (outs _.KRC:$dst),
+                   (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
+                       "$src2, $src1", "$src1, $src2",
+                   (OpNode (_.VT _.RC:$src1), 
+                    (_.VT (bitconvert (_.LdFrag addr:$src2))))>,
+                    EVEX_4V,
+                   EVEX_CD8<_.EltSize, CD8VF>;
 }
 
-defm VPTESTMDZ  : avx512_vptest<0x27, "vptestmd", VK16, VR512,  f512mem,
-                              loadv16i32, X86testm, v16i32>, T8PD, EVEX_V512,
-                              EVEX_CD8<32, CD8VF>;
-defm VPTESTMQZ  : avx512_vptest<0x27, "vptestmq", VK8, VR512,  f512mem,
-                              loadv8i64, X86testm, v8i64>, T8PD, EVEX_V512, VEX_W,
-                              EVEX_CD8<64, CD8VF>;
-
-let Predicates = [HasCDI] in {
-defm VPTESTNMDZ  : avx512_vptest<0x27, "vptestnmd", VK16, VR512,  f512mem,
-                              loadv16i32, X86testnm, v16i32>, T8XS, EVEX_V512,
-                              EVEX_CD8<32, CD8VF>;
-defm VPTESTNMQZ  : avx512_vptest<0x27, "vptestnmq", VK8, VR512,  f512mem,
-                              loadv8i64, X86testnm, v8i64>, T8XS, EVEX_V512, VEX_W,
-                              EVEX_CD8<64, CD8VF>;
+multiclass avx512_vptest_mb<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                            X86VectorVTInfo _> {
+  let mayLoad = 1 in
+  defm rmb : AVX512_maskable_cmp<opc, MRMSrcMem, _, (outs _.KRC:$dst),
+                    (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr,
+                    "${src2}"##_.BroadcastStr##", $src1",
+                    "$src1, ${src2}"##_.BroadcastStr,
+                    (OpNode (_.VT _.RC:$src1), (_.VT (X86VBroadcast
+                                                (_.ScalarLdFrag addr:$src2))))>,
+                    EVEX_B, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>;
 }
+multiclass avx512_vptest_dq_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                  AVX512VLVectorVTInfo _> {
+  let Predicates  = [HasAVX512] in
+  defm Z : avx512_vptest<opc, OpcodeStr, OpNode, _.info512>,
+           avx512_vptest_mb<opc, OpcodeStr, OpNode, _.info512>, EVEX_V512;
+
+  let Predicates = [HasAVX512, HasVLX] in {
+  defm Z256 : avx512_vptest<opc, OpcodeStr, OpNode, _.info256>,
+              avx512_vptest_mb<opc, OpcodeStr, OpNode, _.info256>, EVEX_V256;
+  defm Z128 : avx512_vptest<opc, OpcodeStr, OpNode, _.info128>,
+              avx512_vptest_mb<opc, OpcodeStr, OpNode, _.info128>, EVEX_V128;
+  }
+}
+
+multiclass avx512_vptest_dq<bits<8> opc, string OpcodeStr, SDNode OpNode> {
+  defm D : avx512_vptest_dq_sizes<opc, OpcodeStr#"d", OpNode,
+                                 avx512vl_i32_info>;
+  defm Q : avx512_vptest_dq_sizes<opc, OpcodeStr#"q", OpNode,
+                                 avx512vl_i64_info>, VEX_W;
+}
+
+multiclass avx512_vptest_wb<bits<8> opc, string OpcodeStr,
+                                 SDNode OpNode> {
+  let Predicates = [HasBWI] in {
+  defm WZ:    avx512_vptest<opc, OpcodeStr#"w", OpNode, v32i16_info>,
+              EVEX_V512, VEX_W;
+  defm BZ:    avx512_vptest<opc, OpcodeStr#"b", OpNode, v64i8_info>,
+              EVEX_V512;
+  }
+  let Predicates = [HasVLX, HasBWI] in {
+
+  defm WZ256: avx512_vptest<opc, OpcodeStr#"w", OpNode, v16i16x_info>,
+              EVEX_V256, VEX_W;
+  defm WZ128: avx512_vptest<opc, OpcodeStr#"w", OpNode, v8i16x_info>,
+              EVEX_V128, VEX_W;
+  defm BZ256: avx512_vptest<opc, OpcodeStr#"b", OpNode, v32i8x_info>,
+              EVEX_V256;
+  defm BZ128: avx512_vptest<opc, OpcodeStr#"b", OpNode, v16i8x_info>,
+              EVEX_V128;
+  }
+}
+
+multiclass avx512_vptest_all_forms<bits<8> opc_wb, bits<8> opc_dq, string OpcodeStr,
+                                   SDNode OpNode> :
+  avx512_vptest_wb <opc_wb, OpcodeStr, OpNode>,
+  avx512_vptest_dq<opc_dq, OpcodeStr, OpNode>;
+
+defm VPTESTM   : avx512_vptest_all_forms<0x26, 0x27, "vptestm", X86testm>, T8PD;
+defm VPTESTNM  : avx512_vptest_all_forms<0x26, 0x27, "vptestnm", X86testnm>, T8XS;
 
 def : Pat <(i16 (int_x86_avx512_mask_ptestm_d_512 (v16i32 VR512:$src1),
                  (v16i32 VR512:$src2), (i16 -1))),

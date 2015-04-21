@@ -447,3 +447,415 @@
 // CHECK: vpblendmq -1032(%rdx){1to4}, %ymm23, %ymm21
 // CHECK:  encoding: [0x62,0xe2,0xc5,0x30,0x64,0xaa,0xf8,0xfb,0xff,0xff]
           vpblendmq -1032(%rdx){1to4}, %ymm23, %ymm21
+
+// CHECK: vptestmd %xmm20, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x00,0x27,0xd4]
+          vptestmd %xmm20, %xmm20, %k2
+
+// CHECK: vptestmd %xmm20, %xmm20, %k2 {%k7}
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x07,0x27,0xd4]
+          vptestmd %xmm20, %xmm20, %k2 {%k7}
+
+// CHECK: vptestmd (%rcx), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x00,0x27,0x11]
+          vptestmd (%rcx), %xmm20, %k2
+
+// CHECK: vptestmd 291(%rax,%r14,8), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x00,0x27,0x94,0xf0,0x23,0x01,0x00,0x00]
+          vptestmd 291(%rax,%r14,8), %xmm20, %k2
+
+// CHECK: vptestmd (%rcx){1to4}, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x10,0x27,0x11]
+          vptestmd (%rcx){1to4}, %xmm20, %k2
+
+// CHECK: vptestmd 2032(%rdx), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x00,0x27,0x52,0x7f]
+          vptestmd 2032(%rdx), %xmm20, %k2
+
+// CHECK: vptestmd 2048(%rdx), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x00,0x27,0x92,0x00,0x08,0x00,0x00]
+          vptestmd 2048(%rdx), %xmm20, %k2
+
+// CHECK: vptestmd -2048(%rdx), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x00,0x27,0x52,0x80]
+          vptestmd -2048(%rdx), %xmm20, %k2
+
+// CHECK: vptestmd -2064(%rdx), %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x00,0x27,0x92,0xf0,0xf7,0xff,0xff]
+          vptestmd -2064(%rdx), %xmm20, %k2
+
+// CHECK: vptestmd 508(%rdx){1to4}, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x10,0x27,0x52,0x7f]
+          vptestmd 508(%rdx){1to4}, %xmm20, %k2
+
+// CHECK: vptestmd 512(%rdx){1to4}, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x10,0x27,0x92,0x00,0x02,0x00,0x00]
+          vptestmd 512(%rdx){1to4}, %xmm20, %k2
+
+// CHECK: vptestmd -512(%rdx){1to4}, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x10,0x27,0x52,0x80]
+          vptestmd -512(%rdx){1to4}, %xmm20, %k2
+
+// CHECK: vptestmd -516(%rdx){1to4}, %xmm20, %k2
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x10,0x27,0x92,0xfc,0xfd,0xff,0xff]
+          vptestmd -516(%rdx){1to4}, %xmm20, %k2
+
+// CHECK: vptestmd %ymm17, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x20,0x27,0xd9]
+          vptestmd %ymm17, %ymm20, %k3
+
+// CHECK: vptestmd %ymm17, %ymm20, %k3 {%k5}
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x25,0x27,0xd9]
+          vptestmd %ymm17, %ymm20, %k3 {%k5}
+
+// CHECK: vptestmd (%rcx), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x20,0x27,0x19]
+          vptestmd (%rcx), %ymm20, %k3
+
+// CHECK: vptestmd 291(%rax,%r14,8), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xb2,0x5d,0x20,0x27,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vptestmd 291(%rax,%r14,8), %ymm20, %k3
+
+// CHECK: vptestmd (%rcx){1to8}, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x30,0x27,0x19]
+          vptestmd (%rcx){1to8}, %ymm20, %k3
+
+// CHECK: vptestmd 4064(%rdx), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x20,0x27,0x5a,0x7f]
+          vptestmd 4064(%rdx), %ymm20, %k3
+
+// CHECK: vptestmd 4096(%rdx), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x20,0x27,0x9a,0x00,0x10,0x00,0x00]
+          vptestmd 4096(%rdx), %ymm20, %k3
+
+// CHECK: vptestmd -4096(%rdx), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x20,0x27,0x5a,0x80]
+          vptestmd -4096(%rdx), %ymm20, %k3
+
+// CHECK: vptestmd -4128(%rdx), %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x20,0x27,0x9a,0xe0,0xef,0xff,0xff]
+          vptestmd -4128(%rdx), %ymm20, %k3
+
+// CHECK: vptestmd 508(%rdx){1to8}, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x30,0x27,0x5a,0x7f]
+          vptestmd 508(%rdx){1to8}, %ymm20, %k3
+
+// CHECK: vptestmd 512(%rdx){1to8}, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x30,0x27,0x9a,0x00,0x02,0x00,0x00]
+          vptestmd 512(%rdx){1to8}, %ymm20, %k3
+
+// CHECK: vptestmd -512(%rdx){1to8}, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x30,0x27,0x5a,0x80]
+          vptestmd -512(%rdx){1to8}, %ymm20, %k3
+
+// CHECK: vptestmd -516(%rdx){1to8}, %ymm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5d,0x30,0x27,0x9a,0xfc,0xfd,0xff,0xff]
+          vptestmd -516(%rdx){1to8}, %ymm20, %k3
+
+// CHECK: vptestmq %xmm28, %xmm22, %k4
+// CHECK:  encoding: [0x62,0x92,0xcd,0x00,0x27,0xe4]
+          vptestmq %xmm28, %xmm22, %k4
+
+// CHECK: vptestmq %xmm28, %xmm22, %k4 {%k3}
+// CHECK:  encoding: [0x62,0x92,0xcd,0x03,0x27,0xe4]
+          vptestmq %xmm28, %xmm22, %k4 {%k3}
+
+// CHECK: vptestmq (%rcx), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x00,0x27,0x21]
+          vptestmq (%rcx), %xmm22, %k4
+
+// CHECK: vptestmq 291(%rax,%r14,8), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xb2,0xcd,0x00,0x27,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          vptestmq 291(%rax,%r14,8), %xmm22, %k4
+
+// CHECK: vptestmq (%rcx){1to2}, %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x10,0x27,0x21]
+          vptestmq (%rcx){1to2}, %xmm22, %k4
+
+// CHECK: vptestmq 2032(%rdx), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x00,0x27,0x62,0x7f]
+          vptestmq 2032(%rdx), %xmm22, %k4
+
+// CHECK: vptestmq 2048(%rdx), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x00,0x27,0xa2,0x00,0x08,0x00,0x00]
+          vptestmq 2048(%rdx), %xmm22, %k4
+
+// CHECK: vptestmq -2048(%rdx), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x00,0x27,0x62,0x80]
+          vptestmq -2048(%rdx), %xmm22, %k4
+
+// CHECK: vptestmq -2064(%rdx), %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x00,0x27,0xa2,0xf0,0xf7,0xff,0xff]
+          vptestmq -2064(%rdx), %xmm22, %k4
+
+// CHECK: vptestmq 1016(%rdx){1to2}, %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x10,0x27,0x62,0x7f]
+          vptestmq 1016(%rdx){1to2}, %xmm22, %k4
+
+// CHECK: vptestmq 1024(%rdx){1to2}, %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x10,0x27,0xa2,0x00,0x04,0x00,0x00]
+          vptestmq 1024(%rdx){1to2}, %xmm22, %k4
+
+// CHECK: vptestmq -1024(%rdx){1to2}, %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x10,0x27,0x62,0x80]
+          vptestmq -1024(%rdx){1to2}, %xmm22, %k4
+
+// CHECK: vptestmq -1032(%rdx){1to2}, %xmm22, %k4
+// CHECK:  encoding: [0x62,0xf2,0xcd,0x10,0x27,0xa2,0xf8,0xfb,0xff,0xff]
+          vptestmq -1032(%rdx){1to2}, %xmm22, %k4
+
+// CHECK: vptestmq %ymm20, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xb2,0xd5,0x20,0x27,0xdc]
+          vptestmq %ymm20, %ymm21, %k3
+
+// CHECK: vptestmq %ymm20, %ymm21, %k3 {%k7}
+// CHECK:  encoding: [0x62,0xb2,0xd5,0x27,0x27,0xdc]
+          vptestmq %ymm20, %ymm21, %k3 {%k7}
+
+// CHECK: vptestmq (%rcx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x20,0x27,0x19]
+          vptestmq (%rcx), %ymm21, %k3
+
+// CHECK: vptestmq 291(%rax,%r14,8), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xb2,0xd5,0x20,0x27,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vptestmq 291(%rax,%r14,8), %ymm21, %k3
+
+// CHECK: vptestmq (%rcx){1to4}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x30,0x27,0x19]
+          vptestmq (%rcx){1to4}, %ymm21, %k3
+
+// CHECK: vptestmq 4064(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x20,0x27,0x5a,0x7f]
+          vptestmq 4064(%rdx), %ymm21, %k3
+
+// CHECK: vptestmq 4096(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x20,0x27,0x9a,0x00,0x10,0x00,0x00]
+          vptestmq 4096(%rdx), %ymm21, %k3
+
+// CHECK: vptestmq -4096(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x20,0x27,0x5a,0x80]
+          vptestmq -4096(%rdx), %ymm21, %k3
+
+// CHECK: vptestmq -4128(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x20,0x27,0x9a,0xe0,0xef,0xff,0xff]
+          vptestmq -4128(%rdx), %ymm21, %k3
+
+// CHECK: vptestmq 1016(%rdx){1to4}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x30,0x27,0x5a,0x7f]
+          vptestmq 1016(%rdx){1to4}, %ymm21, %k3
+
+// CHECK: vptestmq 1024(%rdx){1to4}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x30,0x27,0x9a,0x00,0x04,0x00,0x00]
+          vptestmq 1024(%rdx){1to4}, %ymm21, %k3
+
+// CHECK: vptestmq -1024(%rdx){1to4}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0xd5,0x30,0x27,0x5a,0x80]
+          vptestmq -1024(%rdx){1to4}, %ymm21, %k3
+
+// CHECK: vptestnmd %xmm22, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xb2,0x5e,0x00,0x27,0xde]
+          vptestnmd %xmm22, %xmm20, %k3
+
+// CHECK: vptestnmd %xmm22, %xmm20, %k3 {%k7}
+// CHECK:  encoding: [0x62,0xb2,0x5e,0x07,0x27,0xde]
+          vptestnmd %xmm22, %xmm20, %k3 {%k7}
+
+// CHECK: vptestnmd (%rcx), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x00,0x27,0x19]
+          vptestnmd (%rcx), %xmm20, %k3
+
+// CHECK: vptestnmd 291(%rax,%r14,8), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xb2,0x5e,0x00,0x27,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vptestnmd 291(%rax,%r14,8), %xmm20, %k3
+
+// CHECK: vptestnmd (%rcx){1to4}, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x10,0x27,0x19]
+          vptestnmd (%rcx){1to4}, %xmm20, %k3
+
+// CHECK: vptestnmd 2032(%rdx), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x00,0x27,0x5a,0x7f]
+          vptestnmd 2032(%rdx), %xmm20, %k3
+
+// CHECK: vptestnmd 2048(%rdx), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x00,0x27,0x9a,0x00,0x08,0x00,0x00]
+          vptestnmd 2048(%rdx), %xmm20, %k3
+
+// CHECK: vptestnmd -2048(%rdx), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x00,0x27,0x5a,0x80]
+          vptestnmd -2048(%rdx), %xmm20, %k3
+
+// CHECK: vptestnmd -2064(%rdx), %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x00,0x27,0x9a,0xf0,0xf7,0xff,0xff]
+          vptestnmd -2064(%rdx), %xmm20, %k3
+
+// CHECK: vptestnmd 508(%rdx){1to4}, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x10,0x27,0x5a,0x7f]
+          vptestnmd 508(%rdx){1to4}, %xmm20, %k3
+
+// CHECK: vptestnmd 512(%rdx){1to4}, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x10,0x27,0x9a,0x00,0x02,0x00,0x00]
+          vptestnmd 512(%rdx){1to4}, %xmm20, %k3
+
+// CHECK: vptestnmd -512(%rdx){1to4}, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x10,0x27,0x5a,0x80]
+          vptestnmd -512(%rdx){1to4}, %xmm20, %k3
+
+// CHECK: vptestnmd -516(%rdx){1to4}, %xmm20, %k3
+// CHECK:  encoding: [0x62,0xf2,0x5e,0x10,0x27,0x9a,0xfc,0xfd,0xff,0xff]
+          vptestnmd -516(%rdx){1to4}, %xmm20, %k3
+
+// CHECK: vptestnmd %ymm23, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xb2,0x56,0x20,0x27,0xdf]
+          vptestnmd %ymm23, %ymm21, %k3
+
+// CHECK: vptestnmd %ymm23, %ymm21, %k3 {%k7}
+// CHECK:  encoding: [0x62,0xb2,0x56,0x27,0x27,0xdf]
+          vptestnmd %ymm23, %ymm21, %k3 {%k7}
+
+// CHECK: vptestnmd (%rcx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x20,0x27,0x19]
+          vptestnmd (%rcx), %ymm21, %k3
+
+// CHECK: vptestnmd 291(%rax,%r14,8), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xb2,0x56,0x20,0x27,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vptestnmd 291(%rax,%r14,8), %ymm21, %k3
+
+// CHECK: vptestnmd (%rcx){1to8}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x30,0x27,0x19]
+          vptestnmd (%rcx){1to8}, %ymm21, %k3
+
+// CHECK: vptestnmd 4064(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x20,0x27,0x5a,0x7f]
+          vptestnmd 4064(%rdx), %ymm21, %k3
+
+// CHECK: vptestnmd 4096(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x20,0x27,0x9a,0x00,0x10,0x00,0x00]
+          vptestnmd 4096(%rdx), %ymm21, %k3
+
+// CHECK: vptestnmd -4096(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x20,0x27,0x5a,0x80]
+          vptestnmd -4096(%rdx), %ymm21, %k3
+
+// CHECK: vptestnmd -4128(%rdx), %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x20,0x27,0x9a,0xe0,0xef,0xff,0xff]
+          vptestnmd -4128(%rdx), %ymm21, %k3
+
+// CHECK: vptestnmd 508(%rdx){1to8}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x30,0x27,0x5a,0x7f]
+          vptestnmd 508(%rdx){1to8}, %ymm21, %k3
+
+// CHECK: vptestnmd 512(%rdx){1to8}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x30,0x27,0x9a,0x00,0x02,0x00,0x00]
+          vptestnmd 512(%rdx){1to8}, %ymm21, %k3
+
+// CHECK: vptestnmd -512(%rdx){1to8}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x30,0x27,0x5a,0x80]
+          vptestnmd -512(%rdx){1to8}, %ymm21, %k3
+
+// CHECK: vptestnmd -516(%rdx){1to8}, %ymm21, %k3
+// CHECK:  encoding: [0x62,0xf2,0x56,0x30,0x27,0x9a,0xfc,0xfd,0xff,0xff]
+          vptestnmd -516(%rdx){1to8}, %ymm21, %k3
+
+// CHECK: vptestnmq %xmm21, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xb2,0xde,0x00,0x27,0xed]
+          vptestnmq %xmm21, %xmm20, %k5
+
+// CHECK: vptestnmq %xmm21, %xmm20, %k5 {%k5}
+// CHECK:  encoding: [0x62,0xb2,0xde,0x05,0x27,0xed]
+          vptestnmq %xmm21, %xmm20, %k5 {%k5}
+
+// CHECK: vptestnmq (%rcx), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x00,0x27,0x29]
+          vptestnmq (%rcx), %xmm20, %k5
+
+// CHECK: vptestnmq 291(%rax,%r14,8), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xb2,0xde,0x00,0x27,0xac,0xf0,0x23,0x01,0x00,0x00]
+          vptestnmq 291(%rax,%r14,8), %xmm20, %k5
+
+// CHECK: vptestnmq (%rcx){1to2}, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x10,0x27,0x29]
+          vptestnmq (%rcx){1to2}, %xmm20, %k5
+
+// CHECK: vptestnmq 2032(%rdx), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x00,0x27,0x6a,0x7f]
+          vptestnmq 2032(%rdx), %xmm20, %k5
+
+// CHECK: vptestnmq 2048(%rdx), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x00,0x27,0xaa,0x00,0x08,0x00,0x00]
+          vptestnmq 2048(%rdx), %xmm20, %k5
+
+// CHECK: vptestnmq -2048(%rdx), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x00,0x27,0x6a,0x80]
+          vptestnmq -2048(%rdx), %xmm20, %k5
+
+// CHECK: vptestnmq -2064(%rdx), %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x00,0x27,0xaa,0xf0,0xf7,0xff,0xff]
+          vptestnmq -2064(%rdx), %xmm20, %k5
+
+// CHECK: vptestnmq 1016(%rdx){1to2}, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x10,0x27,0x6a,0x7f]
+          vptestnmq 1016(%rdx){1to2}, %xmm20, %k5
+
+// CHECK: vptestnmq 1024(%rdx){1to2}, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x10,0x27,0xaa,0x00,0x04,0x00,0x00]
+          vptestnmq 1024(%rdx){1to2}, %xmm20, %k5
+
+// CHECK: vptestnmq -1024(%rdx){1to2}, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x10,0x27,0x6a,0x80]
+          vptestnmq -1024(%rdx){1to2}, %xmm20, %k5
+
+// CHECK: vptestnmq -1032(%rdx){1to2}, %xmm20, %k5
+// CHECK:  encoding: [0x62,0xf2,0xde,0x10,0x27,0xaa,0xf8,0xfb,0xff,0xff]
+          vptestnmq -1032(%rdx){1to2}, %xmm20, %k5
+
+// CHECK: vptestnmq %ymm21, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xb2,0xbe,0x20,0x27,0xe5]
+          vptestnmq %ymm21, %ymm24, %k4
+
+// CHECK: vptestnmq %ymm21, %ymm24, %k4 {%k3}
+// CHECK:  encoding: [0x62,0xb2,0xbe,0x23,0x27,0xe5]
+          vptestnmq %ymm21, %ymm24, %k4 {%k3}
+
+// CHECK: vptestnmq (%rcx), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x20,0x27,0x21]
+          vptestnmq (%rcx), %ymm24, %k4
+
+// CHECK: vptestnmq 291(%rax,%r14,8), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xb2,0xbe,0x20,0x27,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          vptestnmq 291(%rax,%r14,8), %ymm24, %k4
+
+// CHECK: vptestnmq (%rcx){1to4}, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x30,0x27,0x21]
+          vptestnmq (%rcx){1to4}, %ymm24, %k4
+
+// CHECK: vptestnmq 4064(%rdx), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x20,0x27,0x62,0x7f]
+          vptestnmq 4064(%rdx), %ymm24, %k4
+
+// CHECK: vptestnmq 4096(%rdx), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x20,0x27,0xa2,0x00,0x10,0x00,0x00]
+          vptestnmq 4096(%rdx), %ymm24, %k4
+
+// CHECK: vptestnmq -4096(%rdx), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x20,0x27,0x62,0x80]
+          vptestnmq -4096(%rdx), %ymm24, %k4
+
+// CHECK: vptestnmq -4128(%rdx), %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x20,0x27,0xa2,0xe0,0xef,0xff,0xff]
+          vptestnmq -4128(%rdx), %ymm24, %k4
+
+// CHECK: vptestnmq 1016(%rdx){1to4}, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x30,0x27,0x62,0x7f]
+          vptestnmq 1016(%rdx){1to4}, %ymm24, %k4
+
+// CHECK: vptestnmq 1024(%rdx){1to4}, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x30,0x27,0xa2,0x00,0x04,0x00,0x00]
+          vptestnmq 1024(%rdx){1to4}, %ymm24, %k4
+
+// CHECK: vptestnmq -1024(%rdx){1to4}, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x30,0x27,0x62,0x80]
+          vptestnmq -1024(%rdx){1to4}, %ymm24, %k4
+
+// CHECK: vptestnmq -1032(%rdx){1to4}, %ymm24, %k4
+// CHECK:  encoding: [0x62,0xf2,0xbe,0x30,0x27,0xa2,0xf8,0xfb,0xff,0xff]
+          vptestnmq -1032(%rdx){1to4}, %ymm24, %k4
