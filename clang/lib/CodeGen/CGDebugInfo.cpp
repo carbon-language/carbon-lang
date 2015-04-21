@@ -1245,17 +1245,14 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
     switch (TA.getKind()) {
     case TemplateArgument::Type: {
       llvm::MDType *TTy = getOrCreateType(TA.getAsType(), Unit);
-      llvm::DITemplateTypeParameter TTP =
-          DBuilder.createTemplateTypeParameter(TheCU, Name, TTy);
-      TemplateParams.push_back(TTP);
+      TemplateParams.push_back(
+          DBuilder.createTemplateTypeParameter(TheCU, Name, TTy));
     } break;
     case TemplateArgument::Integral: {
       llvm::MDType *TTy = getOrCreateType(TA.getIntegralType(), Unit);
-      llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(
-              TheCU, Name, TTy,
-              llvm::ConstantInt::get(CGM.getLLVMContext(), TA.getAsIntegral()));
-      TemplateParams.push_back(TVP);
+      TemplateParams.push_back(DBuilder.createTemplateValueParameter(
+          TheCU, Name, TTy,
+          llvm::ConstantInt::get(CGM.getLLVMContext(), TA.getAsIntegral())));
     } break;
     case TemplateArgument::Declaration: {
       const ValueDecl *D = TA.getAsDecl();
@@ -1284,11 +1281,9 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
             CGM.getContext().toCharUnitsFromBits((int64_t)fieldOffset);
         V = CGM.getCXXABI().EmitMemberDataPointer(MPT, chars);
       }
-      llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(
-              TheCU, Name, TTy,
-              cast_or_null<llvm::Constant>(V->stripPointerCasts()));
-      TemplateParams.push_back(TVP);
+      TemplateParams.push_back(DBuilder.createTemplateValueParameter(
+          TheCU, Name, TTy,
+          cast_or_null<llvm::Constant>(V->stripPointerCasts())));
     } break;
     case TemplateArgument::NullPtr: {
       QualType T = TA.getNullPtrType();
@@ -1307,25 +1302,19 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
           V = CGM.getCXXABI().EmitNullMemberPointer(MPT);
       if (!V)
         V = llvm::ConstantInt::get(CGM.Int8Ty, 0);
-      llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(TheCU, Name, TTy,
-                                                cast<llvm::Constant>(V));
-      TemplateParams.push_back(TVP);
+      TemplateParams.push_back(DBuilder.createTemplateValueParameter(
+          TheCU, Name, TTy, cast<llvm::Constant>(V)));
     } break;
-    case TemplateArgument::Template: {
-      llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateTemplateParameter(
-              TheCU, Name, nullptr, TA.getAsTemplate()
-                                        .getAsTemplateDecl()
-                                        ->getQualifiedNameAsString());
-      TemplateParams.push_back(TVP);
-    } break;
-    case TemplateArgument::Pack: {
-      llvm::DITemplateValueParameter TVP = DBuilder.createTemplateParameterPack(
+    case TemplateArgument::Template:
+      TemplateParams.push_back(DBuilder.createTemplateTemplateParameter(
           TheCU, Name, nullptr,
-          CollectTemplateParams(nullptr, TA.getPackAsArray(), Unit));
-      TemplateParams.push_back(TVP);
-    } break;
+          TA.getAsTemplate().getAsTemplateDecl()->getQualifiedNameAsString()));
+      break;
+    case TemplateArgument::Pack:
+      TemplateParams.push_back(DBuilder.createTemplateParameterPack(
+          TheCU, Name, nullptr,
+          CollectTemplateParams(nullptr, TA.getPackAsArray(), Unit)));
+      break;
     case TemplateArgument::Expression: {
       const Expr *E = TA.getAsExpr();
       QualType T = E->getType();
@@ -1334,10 +1323,8 @@ CGDebugInfo::CollectTemplateParams(const TemplateParameterList *TPList,
       llvm::Constant *V = CGM.EmitConstantExpr(E, T);
       assert(V && "Expression in template argument isn't constant");
       llvm::MDType *TTy = getOrCreateType(T, Unit);
-      llvm::DITemplateValueParameter TVP =
-          DBuilder.createTemplateValueParameter(
-              TheCU, Name, TTy, cast<llvm::Constant>(V->stripPointerCasts()));
-      TemplateParams.push_back(TVP);
+      TemplateParams.push_back(DBuilder.createTemplateValueParameter(
+          TheCU, Name, TTy, cast<llvm::Constant>(V->stripPointerCasts())));
     } break;
     // And the following should never occur:
     case TemplateArgument::TemplateExpansion:
@@ -1953,7 +1940,7 @@ llvm::MDType *CGDebugInfo::CreateTypeDefinition(const EnumType *Ty) {
 
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
 
-  // Create DIEnumerator elements for each enumerator.
+  // Create elements for each enumerator.
   SmallVector<llvm::Metadata *, 16> Enumerators;
   ED = ED->getDefinition();
   for (const auto *Enum : ED->enumerators()) {
@@ -2401,7 +2388,7 @@ CGDebugInfo::getFunctionForwardDeclaration(const FunctionDecl *FD) {
   return SP;
 }
 
-llvm::DIGlobalVariable
+llvm::MDGlobalVariable *
 CGDebugInfo::getGlobalVariableForwardDeclaration(const VarDecl *VD) {
   QualType T;
   StringRef Name, LinkageName;
@@ -2411,11 +2398,9 @@ CGDebugInfo::getGlobalVariableForwardDeclaration(const VarDecl *VD) {
   unsigned Line = getLineNumber(Loc);
 
   collectVarDeclProps(VD, Unit, Line, T, Name, LinkageName, DContext);
-  llvm::DIGlobalVariable GV =
-    DBuilder.createTempGlobalVariableFwdDecl(DContext, Name, LinkageName, Unit,
-                                             Line, getOrCreateType(T, Unit),
-                                             !VD->isExternallyVisible(),
-                                             nullptr, nullptr);
+  auto *GV = DBuilder.createTempGlobalVariableFwdDecl(
+      DContext, Name, LinkageName, Unit, Line, getOrCreateType(T, Unit),
+      !VD->isExternallyVisible(), nullptr, nullptr);
   FwdDeclReplaceMap.emplace_back(
       std::piecewise_construct,
       std::make_tuple(cast<VarDecl>(VD->getCanonicalDecl())),
@@ -2835,8 +2820,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
       Expr.push_back(offset.getQuantity());
 
       // Create the descriptor for the variable.
-      llvm::DIVariable D = DBuilder.createLocalVariable(
-          Tag, Scope, VD->getName(), Unit, Line, Ty, ArgNo);
+      auto *D = DBuilder.createLocalVariable(Tag, Scope, VD->getName(), Unit,
+                                             Line, Ty, ArgNo);
 
       // Insert an llvm.dbg.declare into the current block.
       DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
@@ -2859,7 +2844,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
           continue;
 
         // Use VarDecl's Tag, Scope and Line number.
-        llvm::DIVariable D = DBuilder.createLocalVariable(
+        auto *D = DBuilder.createLocalVariable(
             Tag, Scope, FieldName, Unit, Line, FieldTy,
             CGM.getLangOpts().Optimize, Flags, ArgNo);
 
@@ -2873,7 +2858,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
   }
 
   // Create the descriptor for the variable.
-  llvm::DIVariable D =
+  auto *D =
       DBuilder.createLocalVariable(Tag, Scope, Name, Unit, Line, Ty,
                                    CGM.getLangOpts().Optimize, Flags, ArgNo);
 
@@ -2958,7 +2943,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
   }
 
   // Create the descriptor for the variable.
-  llvm::DIVariable D = DBuilder.createLocalVariable(
+  auto *D = DBuilder.createLocalVariable(
       llvm::dwarf::DW_TAG_auto_variable,
       cast<llvm::MDLocalScope>(LexicalBlockStack.back()), VD->getName(), Unit,
       Line, Ty);
@@ -3121,7 +3106,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   auto *scope = cast<llvm::MDLocalScope>(LexicalBlockStack.back());
 
   // Create the descriptor for the parameter.
-  llvm::DIVariable debugVar = DBuilder.createLocalVariable(
+  auto *debugVar = DBuilder.createLocalVariable(
       llvm::dwarf::DW_TAG_arg_variable, scope, Arg->getName(), tunit, line,
       type, CGM.getLangOpts().Optimize, flags, ArgNo);
 
@@ -3162,10 +3147,10 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
 /// Recursively collect all of the member fields of a global anonymous decl and
 /// create static variables for them. The first time this is called it needs
 /// to be on a union and then from there we can have additional unnamed fields.
-llvm::DIGlobalVariable CGDebugInfo::CollectAnonRecordDecls(
+llvm::MDGlobalVariable *CGDebugInfo::CollectAnonRecordDecls(
     const RecordDecl *RD, llvm::MDFile *Unit, unsigned LineNo,
     StringRef LinkageName, llvm::GlobalVariable *Var, llvm::MDScope *DContext) {
-  llvm::DIGlobalVariable GV;
+  llvm::MDGlobalVariable *GV = nullptr;
 
   for (const auto *Field : RD->fields()) {
     llvm::MDType *FieldTy = getOrCreateType(Field->getType(), Unit);
@@ -3201,7 +3186,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
 
   // Attempt to store one global variable for the declaration - even if we
   // emit a lot of fields.
-  llvm::DIGlobalVariable GV;
+  llvm::MDGlobalVariable *GV = nullptr;
 
   // If this is an anonymous union then we'll want to emit a global
   // variable for each member of the anonymous union so that it's possible
@@ -3233,7 +3218,9 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
     assert(isa<EnumType>(ED->getTypeForDecl()) && "Enum without EnumType?");
     Ty = getOrCreateType(QualType(ED->getTypeForDecl(), 0), Unit);
   }
-  // Do not use DIGlobalVariable for enums.
+  // Do not use global variables for enums.
+  //
+  // FIXME: why not?
   if (Ty->getTag() == llvm::dwarf::DW_TAG_enumeration_type)
     return;
   // Do not emit separate definitions for function local const/statics.
@@ -3291,14 +3278,14 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
         getLineNumber(USD.getLocation()));
 }
 
-llvm::DIImportedEntity
+llvm::MDImportedEntity *
 CGDebugInfo::EmitNamespaceAlias(const NamespaceAliasDecl &NA) {
   if (CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
-    return llvm::DIImportedEntity();
+    return nullptr;
   auto &VH = NamespaceAliasCache[&NA];
   if (VH)
     return cast<llvm::MDImportedEntity>(VH);
-  llvm::DIImportedEntity R;
+  llvm::MDImportedEntity *R;
   if (const NamespaceAliasDecl *Underlying =
           dyn_cast<NamespaceAliasDecl>(NA.getAliasedNamespace()))
     // This could cache & dedup here rather than relying on metadata deduping.
