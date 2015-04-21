@@ -67,6 +67,7 @@ static void ParseSymbolizePCOutput(const char *str, SymbolizedStack *res) {
     CHECK(function_name);
     if (function_name[0] == '\0') {
       // There are no more frames.
+      InternalFree(function_name);
       break;
     }
     SymbolizedStack *cur;
