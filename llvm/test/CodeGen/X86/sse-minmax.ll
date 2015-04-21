@@ -805,7 +805,7 @@ define double @ule_inverse_y(double %x) nounwind {
 ; CHECK-LABEL: clampTo3k_a:
 ; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
 ; CHECK-NEXT: minsd %xmm0, %xmm1
-; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: movapd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_a:
 ; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
@@ -813,7 +813,7 @@ define double @ule_inverse_y(double %x) nounwind {
 ; FINITE-LABEL: clampTo3k_a:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_a(double %x) nounwind readnone {
 entry:
@@ -831,7 +831,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_b:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_b(double %x) nounwind readnone {
 entry:
@@ -843,7 +843,7 @@ entry:
 ; CHECK-LABEL: clampTo3k_c:
 ; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
 ; CHECK-NEXT: maxsd %xmm0, %xmm1
-; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: movapd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_c:
 ; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
@@ -851,7 +851,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_c:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_c(double %x) nounwind readnone {
 entry:
@@ -869,7 +869,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_d:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_d(double %x) nounwind readnone {
 entry:
@@ -881,7 +881,7 @@ entry:
 ; CHECK-LABEL: clampTo3k_e:
 ; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
 ; CHECK-NEXT: maxsd %xmm0, %xmm1
-; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: movapd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_e:
 ; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
@@ -889,7 +889,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_e:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_e(double %x) nounwind readnone {
 entry:
@@ -907,7 +907,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_f:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: maxsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_f(double %x) nounwind readnone {
 entry:
@@ -919,7 +919,7 @@ entry:
 ; CHECK-LABEL: clampTo3k_g:
 ; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
 ; CHECK-NEXT: minsd %xmm0, %xmm1
-; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: movapd %xmm1, %xmm0
 ; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_g:
 ; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
@@ -927,7 +927,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_g:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_g(double %x) nounwind readnone {
 entry:
@@ -945,7 +945,7 @@ entry:
 ; FINITE-LABEL: clampTo3k_h:
 ; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
 ; FINITE-NEXT: minsd %xmm0, %xmm1
-; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: movapd %xmm1, %xmm0
 ; FINITE-NEXT: ret
 define double @clampTo3k_h(double %x) nounwind readnone {
 entry:

@@ -76,6 +76,31 @@ define <4 x float> @test_div_ss(<4 x float> %a, <4 x float> %b) {
   ret <4 x float> %3
 }
 
+define <4 x float> @test_sqrt_ss(<4 x float> %a) {
+; SSE2-LABEL: test_sqrt_ss:
+; SSE2:       # BB#0:
+; SSE2-NEXT:   sqrtss %xmm0, %xmm1
+; SSE2-NEXT:   movss %xmm1, %xmm0
+; SSE2-NEXT:   retq
+;
+; SSE41-LABEL: test_sqrt_ss:
+; SSE41:       # BB#0:
+; SSE41-NEXT:  sqrtss %xmm0, %xmm1
+; SSE41-NEXT:  blendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; SSE41-NEXT:  retq
+;
+; AVX-LABEL: test_sqrt_ss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm1
+; AVX-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; AVX-NEXT:    retq
+  %1 = extractelement <4 x float> %a, i32 0
+  %2 = call float @llvm.sqrt.f32(float %1)
+  %3 = insertelement <4 x float> %a, float %2, i32 0
+  ret <4 x float> %3
+}
+declare float @llvm.sqrt.f32(float)
+
 define <2 x double> @test_add_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: test_add_sd:
 ; SSE:       # BB#0:
@@ -143,6 +168,25 @@ define <2 x double> @test_div_sd(<2 x double> %a, <2 x double> %b) {
   %3 = insertelement <2 x double> %a, double %div, i32 0
   ret <2 x double> %3
 }
+
+define <2 x double> @test_sqrt_sd(<2 x double> %a) {
+; SSE-LABEL: test_sqrt_sd:
+; SSE:       # BB#0:
+; SSE-NEXT:    sqrtsd %xmm0, %xmm1
+; SSE-NEXT:    movsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_sqrt_sd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm1
+; AVX-NEXT:    vmovsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %1 = extractelement <2 x double> %a, i32 0
+  %2 = call double @llvm.sqrt.f64(double %1)
+  %3 = insertelement <2 x double> %a, double %2, i32 0
+  ret <2 x double> %3
+}
+declare double @llvm.sqrt.f64(double)
 
 define <4 x float> @test2_add_ss(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: test2_add_ss:
@@ -220,7 +264,7 @@ define <2 x double> @test2_add_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: test2_add_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    addsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test2_add_sd:
@@ -238,7 +282,7 @@ define <2 x double> @test2_sub_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: test2_sub_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    subsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test2_sub_sd:
@@ -256,7 +300,7 @@ define <2 x double> @test2_mul_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: test2_mul_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    mulsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test2_mul_sd:
@@ -274,7 +318,7 @@ define <2 x double> @test2_div_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: test2_div_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    divsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test2_div_sd:
@@ -371,7 +415,7 @@ define <4 x float> @test_multiple_div_ss(<4 x float> %a, <4 x float> %b) {
 }
 
 ; With SSE4.1 or greater, the shuffles in the following tests may
-; be lowered to X86Blendi nodes. 
+; be lowered to X86Blendi nodes.
 
 define <4 x float> @blend_add_ss(<4 x float> %a, float %b) {
 ; SSE-LABEL: blend_add_ss:
@@ -708,7 +752,7 @@ define <2 x double> @insert_test2_add_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test2_add_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    addsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test2_add_sd:
@@ -724,7 +768,7 @@ define <2 x double> @insert_test2_sub_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test2_sub_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    subsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test2_sub_sd:
@@ -740,7 +784,7 @@ define <2 x double> @insert_test2_mul_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test2_mul_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    mulsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test2_mul_sd:
@@ -756,7 +800,7 @@ define <2 x double> @insert_test2_div_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test2_div_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    divsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test2_div_sd:
@@ -956,7 +1000,7 @@ define <2 x double> @insert_test4_add_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test4_add_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    addsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test4_add_sd:
@@ -972,7 +1016,7 @@ define <2 x double> @insert_test4_sub_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test4_sub_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    subsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test4_sub_sd:
@@ -988,7 +1032,7 @@ define <2 x double> @insert_test4_mul_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test4_mul_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    mulsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test4_mul_sd:
@@ -1004,7 +1048,7 @@ define <2 x double> @insert_test4_div_sd(<2 x double> %a, <2 x double> %b) {
 ; SSE-LABEL: insert_test4_div_sd:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    divsd %xmm0, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_test4_div_sd:
