@@ -202,8 +202,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       // during the initial isel pass through the IR so that it is done
       // in a predictable order.
       if (const DbgDeclareInst *DI = dyn_cast<DbgDeclareInst>(I)) {
-        DIVariable DIVar = DI->getVariable();
-        if (MMI.hasDebugInfo() && DIVar && DI->getDebugLoc()) {
+        assert(DI->getVariable() && "Missing variable");
+        assert(DI->getDebugLoc() && "Missing location");
+        if (MMI.hasDebugInfo()) {
           // Don't handle byval struct arguments or VLAs, for example.
           // Non-byval arguments are handled here (they refer to the stack
           // temporary alloca at this point).

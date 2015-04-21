@@ -1000,8 +1000,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            StoreInst *SI, DIBuilder &Builder) {
   DIVariable DIVar = DDI->getVariable();
   DIExpression DIExpr = DDI->getExpression();
-  if (!DIVar)
-    return false;
+  assert(DIVar && "Missing variable");
 
   if (LdStHasDebugValue(DIVar, SI))
     return true;
@@ -1028,8 +1027,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                            LoadInst *LI, DIBuilder &Builder) {
   DIVariable DIVar = DDI->getVariable();
   DIExpression DIExpr = DDI->getExpression();
-  if (!DIVar)
-    return false;
+  assert(DIVar && "Missing variable");
 
   if (LdStHasDebugValue(DIVar, LI))
     return true;
@@ -1107,8 +1105,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   DebugLoc Loc = DDI->getDebugLoc();
   DIVariable DIVar = DDI->getVariable();
   DIExpression DIExpr = DDI->getExpression();
-  if (!DIVar)
-    return false;
+  assert(DIVar && "Missing variable");
 
   if (Deref) {
     // Create a copy of the original DIDescriptor for user variable, prepending

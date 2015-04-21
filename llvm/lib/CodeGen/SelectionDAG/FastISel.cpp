@@ -1088,8 +1088,8 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(II);
-    DIVariable DIVar = DI->getVariable();
-    if (!DIVar || !FuncInfo.MF->getMMI().hasDebugInfo()) {
+    assert(DI->getVariable() && "Missing variable");
+    if (!FuncInfo.MF->getMMI().hasDebugInfo()) {
       DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;
     }
