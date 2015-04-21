@@ -34,6 +34,8 @@ namespace llvm {
 /// you'll need to specialize it.  For example, say you want to call a
 /// function defined externally as:
 ///
+/// \code{.cpp}
+///
 ///   struct MyType {
 ///     int32 a;
 ///     int32 *b;
@@ -41,11 +43,15 @@ namespace llvm {
 ///   };
 ///   int8 AFunction(struct MyType *value);
 ///
+/// \endcode
+///
 /// You'll want to use
 ///   Function::Create(TypeBuilder<types::i<8>(MyType*), true>::get(), ...)
 /// to declare the function, but when you first try this, your compiler will
 /// complain that TypeBuilder<MyType, true>::get() doesn't exist. To fix this,
 /// write:
+///
+/// \code{.cpp}
 ///
 ///   namespace llvm {
 ///   template<bool xcompile> class TypeBuilder<MyType, xcompile> {
@@ -57,7 +63,7 @@ namespace llvm {
 ///         TypeBuilder<types::i<32>, xcompile>::get(Context),
 ///         TypeBuilder<types::i<32>*, xcompile>::get(Context),
 ///         TypeBuilder<types::i<8>*[], xcompile>::get(Context),
-///         NULL);
+///         nullptr);
 ///     }
 ///
 ///     // You may find this a convenient place to put some constants
@@ -70,6 +76,8 @@ namespace llvm {
 ///     };
 ///   }
 ///   }  // namespace llvm
+///
+/// \endcode
 ///
 /// TypeBuilder cannot handle recursive types or types you only know at runtime.
 /// If you try to give it a recursive type, it will deadlock, infinitely
