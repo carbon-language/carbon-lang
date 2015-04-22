@@ -220,7 +220,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   }
 
   // An UnsetInit represents a named node without any constraints.
-  if (N->getLeafValue() == UnsetInit::get()) {
+  if (isa<UnsetInit>(N->getLeafValue())) {
     assert(N->hasName() && "Unnamed ? leaf");
     return;
   }

@@ -517,7 +517,7 @@ std::string BitsInit::getAsString() const {
 // bits initializer will resolve into VarBitInit to keep the field name and bit
 // number used in targets with fixed insn length.
 static Init *fixBitInit(const RecordVal *RV, Init *Before, Init *After) {
-  if (RV || After != UnsetInit::get())
+  if (RV || !isa<UnsetInit>(After))
     return After;
   return Before;
 }
@@ -1961,7 +1961,7 @@ bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
     PrintFatalError(getLoc(), "Record `" + getName() +
       "' does not have a field named `" + FieldName.str() + "'!\n");
 
-  if (R->getValue() == UnsetInit::get()) {
+  if (isa<UnsetInit>(R->getValue())) {
     Unset = true;
     return false;
   }
