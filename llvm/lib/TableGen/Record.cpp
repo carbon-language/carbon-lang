@@ -385,7 +385,7 @@ bool RecordRecTy::baseClassOf(const RecTy *RHS) const{
 }
 
 /// resolveTypes - Find a common type that T1 and T2 convert to.
-/// Return nullptr if no such type exists.
+/// Return null if no such type exists.
 ///
 RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
   if (T1->typeIsConvertibleTo(T2))
