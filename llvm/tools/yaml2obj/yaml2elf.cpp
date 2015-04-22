@@ -357,12 +357,11 @@ ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
   auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
 
   for (const auto &Rel : Section.Relocations) {
-    unsigned SymIdx;
-    if (SymN2I.lookup(Rel.Symbol, SymIdx)) {
-      errs() << "error: Unknown symbol referenced: '" << Rel.Symbol
-             << "' at YAML relocation.\n";
-      return false;
-    }
+    unsigned SymIdx = 0;
+    // Some special relocation, R_ARM_v4BX for instance, does not have
+    // an external reference.  So it ignores the return value of lookup()
+    // here.
+    SymN2I.lookup(Rel.Symbol, SymIdx);
 
     if (IsRela) {
       Elf_Rela REntry;
