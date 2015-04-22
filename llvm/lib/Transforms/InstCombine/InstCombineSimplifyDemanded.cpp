@@ -88,13 +88,6 @@ bool InstCombiner::SimplifyDemandedBits(Use &U, APInt DemandedMask,
                                           KnownOne, Depth, UserI);
   if (!NewVal) return false;
   U = NewVal;
-
-  // Shrinking a constant might cause a nsw/nuw violation to occur in
-  // instructions which are themselves demanded.
-  if (auto *UserOBO = dyn_cast<OverflowingBinaryOperator>(UserI)) {
-    cast<BinaryOperator>(UserOBO)->setHasNoSignedWrap(false);
-    cast<BinaryOperator>(UserOBO)->setHasNoUnsignedWrap(false);
-  }
   return true;
 }
 
@@ -607,8 +600,11 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         if (SimplifyDemandedBits(I->getOperandUse(0), DemandedFromOps,
                                  LHSKnownZero, LHSKnownOne, Depth + 1) ||
             SimplifyDemandedBits(I->getOperandUse(1), DemandedFromOps,
-                                 LHSKnownZero, LHSKnownOne, Depth + 1))
+                                 LHSKnownZero, LHSKnownOne, Depth + 1)) {
+          cast<BinaryOperator>(I)->setHasNoSignedWrap(false);
+          cast<BinaryOperator>(I)->setHasNoUnsignedWrap(false);
           return I;
+        }
       }
     }
     break;
@@ -624,8 +620,11 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       if (SimplifyDemandedBits(I->getOperandUse(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth + 1) ||
           SimplifyDemandedBits(I->getOperandUse(1), DemandedFromOps,
-                               LHSKnownZero, LHSKnownOne, Depth + 1))
+                               LHSKnownZero, LHSKnownOne, Depth + 1)) {
+        cast<BinaryOperator>(I)->setHasNoSignedWrap(false);
+        cast<BinaryOperator>(I)->setHasNoUnsignedWrap(false);
         return I;
+      }
     }
 
     // Otherwise just hand the sub off to computeKnownBits to fill in
