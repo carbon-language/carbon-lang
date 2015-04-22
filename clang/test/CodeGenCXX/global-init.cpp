@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm -fexceptions %s -o - |FileCheck %s
 // RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm %s -o - |FileCheck -check-prefix CHECK-NOEXC %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm \
+// RUN:     -momit-leaf-frame-pointer -mdisable-fp-elim %s -o - \
+// RUN:   | FileCheck -check-prefix CHECK-FP %s
 
 struct A {
   A();
@@ -195,11 +198,15 @@ namespace test7 {
 // CHECK-NEXT:   sub
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
-// CHECK: define internal void @_GLOBAL__sub_I_global_init.cpp() section "__TEXT,__StaticInit,regular,pure_instructions" {
+// CHECK: define internal void @_GLOBAL__sub_I_global_init.cpp() #{{[0-9]+}} section "__TEXT,__StaticInit,regular,pure_instructions" {
 // CHECK:   call void [[TEST1_Y_INIT]]
 // CHECK:   call void [[TEST1_Z_INIT]]
 
 // rdar://problem/8090834: this should be nounwind
 // CHECK-NOEXC: define internal void @_GLOBAL__sub_I_global_init.cpp() [[NUW:#[0-9]+]] section "__TEXT,__StaticInit,regular,pure_instructions" {
 
-// CHECK-NOEXC: attributes [[NUW]] = { nounwind }
+// CHECK-NOEXC: attributes [[NUW]] = { nounwind{{.*}} }
+
+// PR21811: attach the appropriate attribute to the global init function
+// CHECK-FP: define internal void @_GLOBAL__sub_I_global_init.cpp() [[NUX:#[0-9]+]] section "__TEXT,__StaticInit,regular,pure_instructions" {
+// CHECK-FP: attributes [[NUX]] = { nounwind {{.*}}"no-frame-pointer-elim-non-leaf"{{.*}} }
