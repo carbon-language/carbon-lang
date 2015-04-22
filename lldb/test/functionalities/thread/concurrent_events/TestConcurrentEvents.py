@@ -124,6 +124,7 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
+    @expectedFailureAll("llvm.org/pr16714", oslist=["linux"], archs=["i386"])
     def test_signal_delay_watch_dwarf(self):
         """Test a (1 second delay) watchpoint and a signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
