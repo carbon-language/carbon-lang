@@ -680,6 +680,38 @@ static void EmitPrivateLoopCounters(CodeGenFunction &CGF,
   }
 }
 
+static void emitPreCond(CodeGenFunction &CGF, const OMPLoopDirective &S,
+                        const Expr *Cond, llvm::BasicBlock *TrueBlock,
+                        llvm::BasicBlock *FalseBlock, uint64_t TrueCount) {
+  CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
+  EmitPrivateLoopCounters(CGF, PreCondScope, S.counters());
+  const VarDecl *IVDecl =
+      cast<VarDecl>(cast<DeclRefExpr>(S.getIterationVariable())->getDecl());
+  bool IsRegistered = PreCondScope.addPrivate(IVDecl, [&]() -> llvm::Value *{
+    // Emit var without initialization.
+    auto VarEmission = CGF.EmitAutoVarAlloca(*IVDecl);
+    CGF.EmitAutoVarCleanups(VarEmission);
+    return VarEmission.getAllocatedAddress();
+  });
+  assert(IsRegistered && "counter already registered as private");
+  // Silence the warning about unused variable.
+  (void)IsRegistered;
+  (void)PreCondScope.Privatize();
+  // Initialize internal counter to 0 to calculate initial values of real
+  // counters.
+  LValue IV = CGF.EmitLValue(S.getIterationVariable());
+  CGF.EmitStoreOfScalar(
+      llvm::ConstantInt::getNullValue(
+          IV.getAddress()->getType()->getPointerElementType()),
+      CGF.EmitLValue(S.getIterationVariable()), /*isInit=*/true);
+  // Get initial values of real counters.
+  for (auto I : S.updates()) {
+    CGF.EmitIgnoredExpr(I);
+  }
+  // Check that loop is executed at least one time.
+  CGF.EmitBranchOnBoolExpr(Cond, TrueBlock, FalseBlock, TrueCount);
+}
+
 static void
 EmitPrivateLinearVars(CodeGenFunction &CGF, const OMPExecutableDirective &D,
                       CodeGenFunction::OMPPrivateScope &PrivateScope) {
@@ -704,7 +736,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     // Pragma 'simd' code depends on presence of 'lastprivate'.
     // If present, we have to separate last iteration of the loop:
     //
-    // if (LastIteration != 0) {
+    // if (PreCond) {
     //   for (IV in 0..LastIteration-1) BODY;
     //   BODY with updates of lastprivate vars;
     //   <Final counter/linear vars updates>;
@@ -712,10 +744,28 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     //
     // otherwise (when there's no lastprivate):
     //
+    // if (PreCond) {
     //   for (IV in 0..LastIteration) BODY;
     //   <Final counter/linear vars updates>;
+    // }
     //
 
+    // Emit: if (PreCond) - begin.
+    // If the condition constant folds and can be elided, avoid emitting the
+    // whole loop.
+    bool CondConstant;
+    llvm::BasicBlock *ContBlock = nullptr;
+    if (CGF.ConstantFoldsToSimpleInteger(S.getPreCond(), CondConstant)) {
+      if (!CondConstant)
+        return;
+    } else {
+      RegionCounter Cnt = CGF.getPGORegionCounter(&S);
+      auto *ThenBlock = CGF.createBasicBlock("simd.if.then");
+      ContBlock = CGF.createBasicBlock("simd.if.end");
+      emitPreCond(CGF, S, S.getPreCond(), ThenBlock, ContBlock, Cnt.getCount());
+      CGF.EmitBlock(ThenBlock);
+      Cnt.beginRegion(CGF.Builder);
+    }
     // Walk clauses and process safelen/lastprivate.
     bool SeparateIter = false;
     CGF.LoopStack.setParallel();
@@ -780,51 +830,28 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
         }
     }
 
-    if (SeparateIter) {
-      // Emit: if (LastIteration > 0) - begin.
-      RegionCounter Cnt = CGF.getPGORegionCounter(&S);
-      auto ThenBlock = CGF.createBasicBlock("simd.if.then");
-      auto ContBlock = CGF.createBasicBlock("simd.if.end");
-      CGF.EmitBranchOnBoolExpr(S.getPreCond(), ThenBlock, ContBlock,
-                               Cnt.getCount());
-      CGF.EmitBlock(ThenBlock);
-      Cnt.beginRegion(CGF.Builder);
-      // Emit 'then' code.
-      {
-        OMPPrivateScope LoopScope(CGF);
-        EmitPrivateLoopCounters(CGF, LoopScope, S.counters());
-        EmitPrivateLinearVars(CGF, S, LoopScope);
-        CGF.EmitOMPPrivateClause(S, LoopScope);
-        (void)LoopScope.Privatize();
-        CGF.EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
-                             S.getCond(/*SeparateIter=*/true), S.getInc(),
-                             [&S](CodeGenFunction &CGF) {
-                               CGF.EmitOMPLoopBody(S);
-                               CGF.EmitStopPoint(&S);
-                             },
-                             [](CodeGenFunction &) {});
-        CGF.EmitOMPLoopBody(S, /* SeparateIter */ true);
+    {
+      OMPPrivateScope LoopScope(CGF);
+      EmitPrivateLoopCounters(CGF, LoopScope, S.counters());
+      EmitPrivateLinearVars(CGF, S, LoopScope);
+      CGF.EmitOMPPrivateClause(S, LoopScope);
+      (void)LoopScope.Privatize();
+      CGF.EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
+                           S.getCond(SeparateIter), S.getInc(),
+                           [&S](CodeGenFunction &CGF) {
+                             CGF.EmitOMPLoopBody(S);
+                             CGF.EmitStopPoint(&S);
+                           },
+                           [](CodeGenFunction &) {});
+      if (SeparateIter) {
+        CGF.EmitOMPLoopBody(S, /*SeparateIter=*/true);
       }
-      CGF.EmitOMPSimdFinal(S);
-      // Emit: if (LastIteration != 0) - end.
+    }
+    CGF.EmitOMPSimdFinal(S);
+    // Emit: if (PreCond) - end.
+    if (ContBlock) {
       CGF.EmitBranch(ContBlock);
       CGF.EmitBlock(ContBlock, true);
-    } else {
-      {
-        OMPPrivateScope LoopScope(CGF);
-        EmitPrivateLoopCounters(CGF, LoopScope, S.counters());
-        EmitPrivateLinearVars(CGF, S, LoopScope);
-        CGF.EmitOMPPrivateClause(S, LoopScope);
-        (void)LoopScope.Privatize();
-        CGF.EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
-                             S.getCond(/*SeparateIter=*/false), S.getInc(),
-                             [&S](CodeGenFunction &CGF) {
-                               CGF.EmitOMPLoopBody(S);
-                               CGF.EmitStopPoint(&S);
-                             },
-                             [](CodeGenFunction &) {});
-      }
-      CGF.EmitOMPSimdFinal(S);
     }
   };
   CGM.getOpenMPRuntime().emitInlinedDirective(*this, CodeGen);
@@ -1010,12 +1037,22 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
   // Check pre-condition.
   {
     // Skip the entire loop if we don't meet the precondition.
-    RegionCounter Cnt = getPGORegionCounter(&S);
-    auto ThenBlock = createBasicBlock("omp.precond.then");
-    auto ContBlock = createBasicBlock("omp.precond.end");
-    EmitBranchOnBoolExpr(S.getPreCond(), ThenBlock, ContBlock, Cnt.getCount());
-    EmitBlock(ThenBlock);
-    Cnt.beginRegion(Builder);
+    // If the condition constant folds and can be elided, avoid emitting the
+    // whole loop.
+    bool CondConstant;
+    llvm::BasicBlock *ContBlock = nullptr;
+    if (ConstantFoldsToSimpleInteger(S.getPreCond(), CondConstant)) {
+      if (!CondConstant)
+        return false;
+    } else {
+      RegionCounter Cnt = getPGORegionCounter(&S);
+      auto *ThenBlock = createBasicBlock("omp.precond.then");
+      ContBlock = createBasicBlock("omp.precond.end");
+      emitPreCond(*this, S, S.getPreCond(), ThenBlock, ContBlock,
+                  Cnt.getCount());
+      EmitBlock(ThenBlock);
+      Cnt.beginRegion(Builder);
+    }
     // Emit 'then' code.
     {
       // Emit helper vars inits.
@@ -1090,8 +1127,10 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
             S, Builder.CreateIsNotNull(EmitLoadOfScalar(IL, S.getLocStart())));
     }
     // We're now done with the loop, so jump to the continuation block.
-    EmitBranch(ContBlock);
-    EmitBlock(ContBlock, true);
+    if (ContBlock) {
+      EmitBranch(ContBlock);
+      EmitBlock(ContBlock, true);
+    }
   }
   return HasLastprivateClause;
 }

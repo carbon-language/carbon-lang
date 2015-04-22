@@ -40,7 +40,7 @@ T tmain() {
   S<T> var(3);
 #pragma omp parallel
 #pragma omp for firstprivate(t_var, vec, s_arr, var)
-  for (int i = 0; i < 0; ++i) {
+  for (int i = 0; i < 2; ++i) {
     vec[i] = t_var;
     s_arr[i] = var;
   }
@@ -146,7 +146,7 @@ int main() {
   return 0;
 #else
 #pragma omp for firstprivate(t_var, vec, s_arr, var)
-  for (int i = 0; i < 0; ++i) {
+  for (int i = 0; i < 2; ++i) {
     vec[i] = t_var;
     s_arr[i] = var;
   }

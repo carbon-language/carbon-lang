@@ -1977,6 +1977,8 @@ public:
   bool ShouldSubtractStep() const { return SubtractStep; }
   /// \brief Build the expression to calculate the number of iterations.
   Expr *BuildNumIterations(Scope *S, const bool LimitedType) const;
+  /// \brief Build the precondition expression for the loops.
+  Expr *BuildPreCond(Scope *S, Expr *Cond) const;
   /// \brief Build reference expression to the counter be used for codegen.
   Expr *BuildCounterVar() const;
   /// \brief Build initization of the counter be used for codegen.
@@ -2380,6 +2382,19 @@ OpenMPIterationSpaceChecker::BuildNumIterations(Scope *S,
   return Diff.get();
 }
 
+Expr *OpenMPIterationSpaceChecker::BuildPreCond(Scope *S, Expr *Cond) const {
+  // Try to build LB <op> UB, where <op> is <, >, <=, or >=.
+  bool Suppress = SemaRef.getDiagnostics().getSuppressAllDiagnostics();
+  SemaRef.getDiagnostics().setSuppressAllDiagnostics(/*Val=*/true);
+  auto CondExpr = SemaRef.BuildBinOp(
+      S, DefaultLoc, TestIsLessOp ? (TestIsStrictOp ? BO_LT : BO_LE)
+                                  : (TestIsStrictOp ? BO_GT : BO_GE),
+      LB, UB);
+  SemaRef.getDiagnostics().setSuppressAllDiagnostics(Suppress);
+  // Otherwise use original loop conditon and evaluate it in runtime.
+  return CondExpr.isUsable() ? CondExpr.get() : Cond;
+}
+
 /// \brief Build reference expression to the counter be used for codegen.
 Expr *OpenMPIterationSpaceChecker::BuildCounterVar() const {
   return DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
@@ -2395,6 +2410,8 @@ Expr *OpenMPIterationSpaceChecker::BuildCounterStep() const { return Step; }
 
 /// \brief Iteration space of a single for loop.
 struct LoopIterationSpace {
+  /// \brief Condition of the loop.
+  Expr *PreCond;
   /// \brief This expression calculates the number of iterations in the loop.
   /// It is always possible to calculate it before starting the loop.
   Expr *NumIterations;
@@ -2535,6 +2552,7 @@ static bool CheckOpenMPIterationSpace(
     return HasErrors;
 
   // Build the loop's iteration space representation.
+  ResultIterSpace.PreCond = ISC.BuildPreCond(DSA.getCurScope(), For->getCond());
   ResultIterSpace.NumIterations = ISC.BuildNumIterations(
       DSA.getCurScope(), /* LimitedType */ isOpenMPWorksharingDirective(DKind));
   ResultIterSpace.CounterVar = ISC.BuildCounterVar();
@@ -2545,7 +2563,8 @@ static bool CheckOpenMPIterationSpace(
   ResultIterSpace.IncSrcRange = ISC.GetIncrementSrcRange();
   ResultIterSpace.Subtract = ISC.ShouldSubtractStep();
 
-  HasErrors |= (ResultIterSpace.NumIterations == nullptr ||
+  HasErrors |= (ResultIterSpace.PreCond == nullptr ||
+                ResultIterSpace.NumIterations == nullptr ||
                 ResultIterSpace.CounterVar == nullptr ||
                 ResultIterSpace.CounterInit == nullptr ||
                 ResultIterSpace.CounterStep == nullptr);
@@ -2690,6 +2709,9 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *NestedLoopCountExpr,
 
   // Last iteration number is (I1 * I2 * ... In) - 1, where I1, I2 ... In are
   // the iteration counts of the collapsed for loops.
+  // Precondition tests if there is at least one iteration (all conditions are
+  // true).
+  auto PreCond = ExprResult(IterSpaces[0].PreCond);
   auto N0 = IterSpaces[0].NumIterations;
   ExprResult LastIteration32 = WidenIterationCount(32 /* Bits */, N0, SemaRef);
   ExprResult LastIteration64 = WidenIterationCount(64 /* Bits */, N0, SemaRef);
@@ -2702,6 +2724,10 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *NestedLoopCountExpr,
 
   Scope *CurScope = DSA.getCurScope();
   for (unsigned Cnt = 1; Cnt < NestedLoopCount; ++Cnt) {
+    if (PreCond.isUsable()) {
+      PreCond = SemaRef.BuildBinOp(CurScope, SourceLocation(), BO_LAnd,
+                                   PreCond.get(), IterSpaces[Cnt].PreCond);
+    }
     auto N = IterSpaces[Cnt].NumIterations;
     AllCountsNeedLessThan32Bits &= C.getTypeSize(N->getType()) < 32;
     if (LastIteration32.isUsable())
@@ -2762,11 +2788,6 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *NestedLoopCountExpr,
   }
 
   SourceLocation InitLoc = IterSpaces[0].InitSrcRange.getBegin();
-
-  // Precondition tests if there is at least one iteration (LastIteration > 0).
-  ExprResult PreCond = SemaRef.BuildBinOp(
-      CurScope, InitLoc, BO_GT, LastIteration.get(),
-      SemaRef.ActOnIntegerConstant(SourceLocation(), 0).get());
 
   QualType VType = LastIteration.get()->getType();
   // Build variables passed into runtime, nesessary for worksharing directives.

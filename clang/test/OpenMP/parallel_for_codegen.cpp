@@ -47,11 +47,7 @@ void without_schedule_clause(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: br label %{{.+}}
   }
 // CHECK: [[LOOP1_END]]
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
@@ -95,11 +91,7 @@ void static_not_chunked(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: br label %{{.+}}
   }
 // CHECK: [[LOOP1_END]]
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
@@ -162,11 +154,7 @@ void static_chunked(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: store i32 [[ADD_UB]], i32* [[OMP_UB]]
 
 // CHECK: [[O_LOOP1_END]]
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
@@ -181,8 +169,6 @@ void dynamic1(float *a, float *b, float *c, float *d) {
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_dispatch_init_8u([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 35, i64 0, i64 16908287, i64 1, i64 1)
 //
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: [[HASWORK:%.+]] = call i32 @__kmpc_dispatch_next_8u([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32* [[OMP_ISLAST:%[^,]+]], i64* [[OMP_LB:%[^,]+]], i64* [[OMP_UB:%[^,]+]], i64* [[OMP_ST:%[^,]+]])
 // CHECK-NEXT: [[O_CMP:%.+]] = icmp ne i32 [[HASWORK]], 0
 // CHECK-NEXT: br i1 [[O_CMP]], label %[[O_LOOP1_BODY:[^,]+]], label %[[O_LOOP1_END:[^,]+]]
@@ -214,8 +200,6 @@ void dynamic1(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
@@ -230,8 +214,6 @@ void guided7(float *a, float *b, float *c, float *d) {
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_dispatch_init_8u([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 36, i64 0, i64 16908287, i64 1, i64 7)
 //
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: [[HASWORK:%.+]] = call i32 @__kmpc_dispatch_next_8u([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32* [[OMP_ISLAST:%[^,]+]], i64* [[OMP_LB:%[^,]+]], i64* [[OMP_UB:%[^,]+]], i64* [[OMP_ST:%[^,]+]])
 // CHECK-NEXT: [[O_CMP:%.+]] = icmp ne i32 [[HASWORK]], 0
 // CHECK-NEXT: br i1 [[O_CMP]], label %[[O_LOOP1_BODY:[^,]+]], label %[[O_LOOP1_END:[^,]+]]
@@ -263,8 +245,6 @@ void guided7(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
@@ -332,8 +312,6 @@ void runtime(float *a, float *b, float *c, float *d) {
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: call void @__kmpc_dispatch_init_4([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 37, i32 0, i32 199, i32 1, i32 1)
 //
-// CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
-// CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
 // CHECK: [[HASWORK:%.+]] = call i32 @__kmpc_dispatch_next_4([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32* [[OMP_ISLAST:%[^,]+]], i32* [[OMP_LB:%[^,]+]], i32* [[OMP_UB:%[^,]+]], i32* [[OMP_ST:%[^,]+]])
 // CHECK-NEXT: [[O_CMP:%.+]] = icmp ne i32 [[HASWORK]], 0
 // CHECK-NEXT: br i1 [[O_CMP]], label %[[O_LOOP1_BODY:[^,]+]], label %[[O_LOOP1_END:[^,]+]]

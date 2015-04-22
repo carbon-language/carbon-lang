@@ -315,6 +315,31 @@ void runtime(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
+// CHECK-LABEL: test_precond
+void test_precond() {
+  // CHECK: [[A_ADDR:%.+]] = alloca i8,
+  // CHECK: [[I_ADDR:%.+]] = alloca i8,
+  char a = 0;
+  // CHECK: store i32 0, i32* [[IV_ADDR:%.+]],
+  // CHECK: [[A:%.+]] = load i8, i8* [[A_ADDR]],
+  // CHECK: [[CONV:%.+]] = sext i8 [[A]] to i32
+  // CHECK: [[IV:%.+]] = load i32, i32* [[IV_ADDR]],
+  // CHECK: [[MUL:%.+]] = mul nsw i32 [[IV]], 1
+  // CHECK: [[ADD:%.+]] = add nsw i32 [[CONV]], [[MUL]]
+  // CHECK: [[CONV:%.+]] = trunc i32 [[ADD]] to i8
+  // CHECK: store i8 [[CONV]], i8* [[I_ADDR]],
+  // CHECK: [[A:%.+]] = load i8, i8* [[A_ADDR]],
+  // CHECK: [[CONV:%.+]] = sext i8 [[A]] to i32
+  // CHECK: [[CMP:%.+]] = icmp slt i32 [[CONV]], 10
+  // CHECK: br i1 [[CMP]], label %[[PRECOND_THEN:[^,]+]], label %[[PRECOND_END:[^,]+]]
+  // CHECK: [[PRECOND_THEN]]
+  // CHECK: call void @__kmpc_for_static_init_4
+#pragma omp for
+  for(char i = a; i < 10; ++i);
+  // CHECK: call void @__kmpc_for_static_fini
+  // CHECK: [[PRECOND_END]]
+}
+
 // TERM_DEBUG-LABEL: foo
 int foo() {return 0;};
 
