@@ -582,11 +582,14 @@ private:
 
   void parsePragma() {
     next(); // Consume "pragma".
-    if (CurrentToken && CurrentToken->TokenText == "mark") {
+    if (CurrentToken &&
+        CurrentToken->isOneOf(Keywords.kw_mark, Keywords.kw_option)) {
+      bool IsMark = CurrentToken->is(Keywords.kw_mark);
       next(); // Consume "mark".
       next(); // Consume first token (so we fix leading whitespace).
       while (CurrentToken) {
-        CurrentToken->Type = TT_ImplicitStringLiteral;
+        if (IsMark || CurrentToken->Previous->is(TT_BinaryOperator))
+          CurrentToken->Type = TT_ImplicitStringLiteral;
         next();
       }
     }

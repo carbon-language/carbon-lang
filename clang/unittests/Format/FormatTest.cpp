@@ -8795,6 +8795,12 @@ TEST_F(FormatTest, UnderstandsPragmas) {
                    "(including parentheses)."));
 }
 
+TEST_F(FormatTest, UnderstandPragmaOption) {
+  verifyFormat("#pragma option -C -A");
+
+  EXPECT_EQ("#pragma option -C -A", format("#pragma    option   -C   -A"));
+}
+
 #define EXPECT_ALL_STYLES_EQUAL(Styles)                                        \
   for (size_t i = 1; i < Styles.size(); ++i)                                   \
     EXPECT_EQ(Styles[0], Styles[i]) << "Style #" << i << " of "                \
