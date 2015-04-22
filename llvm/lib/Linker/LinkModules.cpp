@@ -424,12 +424,17 @@ class ModuleLinker {
 
   DiagnosticHandlerFunction DiagnosticHandler;
 
+  /// For symbol clashes, prefer those from Src.
+  bool OverrideFromSrc;
+
 public:
   ModuleLinker(Module *dstM, Linker::IdentifiedStructTypeSet &Set, Module *srcM,
-               DiagnosticHandlerFunction DiagnosticHandler)
+               DiagnosticHandlerFunction DiagnosticHandler,
+               bool OverrideFromSrc)
       : DstM(dstM), SrcM(srcM), TypeMap(Set),
         ValMaterializer(TypeMap, DstM, LazilyLinkGlobalValues),
-        DiagnosticHandler(DiagnosticHandler) {}
+        DiagnosticHandler(DiagnosticHandler), OverrideFromSrc(OverrideFromSrc) {
+  }
 
   bool run();
 
@@ -725,6 +730,12 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
 bool ModuleLinker::shouldLinkFromSource(bool &LinkFromSrc,
                                         const GlobalValue &Dest,
                                         const GlobalValue &Src) {
+  // Should we unconditionally use the Src?
+  if (OverrideFromSrc) {
+    LinkFromSrc = true;
+    return false;
+  }
+
   // We always have to add Src if it has appending linkage.
   if (Src.hasAppendingLinkage()) {
     LinkFromSrc = true;
@@ -1071,8 +1082,9 @@ bool ModuleLinker::linkGlobalValueProto(GlobalValue *SGV) {
   } else {
     // If the GV is to be lazily linked, don't create it just yet.
     // The ValueMaterializerTy will deal with creating it if it's used.
-    if (!DGV && (SGV->hasLocalLinkage() || SGV->hasLinkOnceLinkage() ||
-                 SGV->hasAvailableExternallyLinkage())) {
+    if (!DGV && !OverrideFromSrc &&
+        (SGV->hasLocalLinkage() || SGV->hasLinkOnceLinkage() ||
+         SGV->hasAvailableExternallyLinkage())) {
       DoNotLinkFromSource.insert(SGV);
       return false;
     }
@@ -1738,9 +1750,9 @@ void Linker::deleteModule() {
   Composite = nullptr;
 }
 
-bool Linker::linkInModule(Module *Src) {
+bool Linker::linkInModule(Module *Src, bool OverrideSymbols) {
   ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
-                         DiagnosticHandler);
+                         DiagnosticHandler, OverrideSymbols);
   bool RetCode = TheLinker.run();
   Composite->dropTriviallyDeadConstantArrays();
   return RetCode;

@@ -68,8 +68,10 @@ public:
   void deleteModule();
 
   /// \brief Link \p Src into the composite. The source is destroyed.
+  /// Passing OverrideSymbols as true will have symbols from Src
+  /// shadow those in the Dest.
   /// Returns true on error.
-  bool linkInModule(Module *Src);
+  bool linkInModule(Module *Src, bool OverrideSymbols = false);
 
   /// \brief Set the composite to the passed-in module.
   void setModule(Module *Dst);
