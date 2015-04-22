@@ -404,12 +404,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
         ++i) {
       RecordRecTy *SuperRecTy1 = RecordRecTy::get(*i);
       RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
-      if (NewType1) {
-        if (NewType1 != SuperRecTy1) {
-          delete SuperRecTy1;
-        }
+      if (NewType1)
         return NewType1;
-      }
     }
   }
   if (RecordRecTy *RecTy2 = dyn_cast<RecordRecTy>(T2)) {
@@ -422,12 +418,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
         ++i) {
       RecordRecTy *SuperRecTy2 = RecordRecTy::get(*i);
       RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
-      if (NewType2) {
-        if (NewType2 != SuperRecTy2) {
-          delete SuperRecTy2;
-        }
+      if (NewType2)
         return NewType2;
-      }
     }
   }
   return nullptr;
