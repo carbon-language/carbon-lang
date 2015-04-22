@@ -710,6 +710,28 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
         CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_end_reduce_nowait");
     break;
   }
+  case OMPRTL__kmpc_omp_task_begin_if0: {
+    // Build void __kmpc_omp_task(ident_t *, kmp_int32 gtid, kmp_task_t
+    // *new_task);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                CGM.VoidPtrTy};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn =
+        CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_omp_task_begin_if0");
+    break;
+  }
+  case OMPRTL__kmpc_omp_task_complete_if0: {
+    // Build void __kmpc_omp_task(ident_t *, kmp_int32 gtid, kmp_task_t
+    // *new_task);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty,
+                                CGM.VoidPtrTy};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy,
+                                      /*Name=*/"__kmpc_omp_task_complete_if0");
+    break;
+  }
   case OMPRTL__kmpc_ordered: {
     // Build void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
     llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
@@ -967,43 +989,112 @@ llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
   return nullptr;
 }
 
-void CGOpenMPRuntime::emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                       llvm::Value *OutlinedFn,
-                                       llvm::Value *CapturedStruct) {
-  // Build call __kmpc_fork_call(loc, 1, microtask, captured_struct/*context*/)
-  llvm::Value *Args[] = {
-      emitUpdateLocation(CGF, Loc),
-      CGF.Builder.getInt32(1), // Number of arguments after 'microtask' argument
-      // (there is only one additional argument - 'context')
-      CGF.Builder.CreateBitCast(OutlinedFn, getKmpc_MicroPointerTy()),
-      CGF.EmitCastToVoidPtr(CapturedStruct)};
-  auto RTLFn = createRuntimeFunction(OMPRTL__kmpc_fork_call);
-  CGF.EmitRuntimeCall(RTLFn, Args);
+/// \brief Emits code for OpenMP 'if' clause using specified \a CodeGen
+/// function. Here is the logic:
+/// if (Cond) {
+///   ThenGen();
+/// } else {
+///   ElseGen();
+/// }
+static void emitOMPIfClause(CodeGenFunction &CGF, const Expr *Cond,
+                            const RegionCodeGenTy &ThenGen,
+                            const RegionCodeGenTy &ElseGen) {
+  CodeGenFunction::LexicalScope ConditionScope(CGF, Cond->getSourceRange());
+
+  // If the condition constant folds and can be elided, try to avoid emitting
+  // the condition and the dead arm of the if/else.
+  bool CondConstant;
+  if (CGF.ConstantFoldsToSimpleInteger(Cond, CondConstant)) {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    if (CondConstant) {
+      ThenGen(CGF);
+    } else {
+      ElseGen(CGF);
+    }
+    return;
+  }
+
+  // Otherwise, the condition did not fold, or we couldn't elide it.  Just
+  // emit the conditional branch.
+  auto ThenBlock = CGF.createBasicBlock("omp_if.then");
+  auto ElseBlock = CGF.createBasicBlock("omp_if.else");
+  auto ContBlock = CGF.createBasicBlock("omp_if.end");
+  CGF.EmitBranchOnBoolExpr(Cond, ThenBlock, ElseBlock, /*TrueCount=*/0);
+
+  // Emit the 'then' code.
+  CGF.EmitBlock(ThenBlock);
+  {
+    CodeGenFunction::RunCleanupsScope ThenScope(CGF);
+    ThenGen(CGF);
+  }
+  CGF.EmitBranch(ContBlock);
+  // Emit the 'else' code if present.
+  {
+    // There is no need to emit line number for unconditional branch.
+    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
+    CGF.EmitBlock(ElseBlock);
+  }
+  {
+    CodeGenFunction::RunCleanupsScope ThenScope(CGF);
+    ElseGen(CGF);
+  }
+  {
+    // There is no need to emit line number for unconditional branch.
+    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
+    CGF.EmitBranch(ContBlock);
+  }
+  // Emit the continuation block for code after the if.
+  CGF.EmitBlock(ContBlock, /*IsFinished=*/true);
 }
 
-void CGOpenMPRuntime::emitSerialCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                     llvm::Value *OutlinedFn,
-                                     llvm::Value *CapturedStruct) {
-  auto ThreadID = getThreadID(CGF, Loc);
-  // Build calls:
-  // __kmpc_serialized_parallel(&Loc, GTid);
-  llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), ThreadID};
-  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_serialized_parallel),
-                      Args);
+void CGOpenMPRuntime::emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                       llvm::Value *OutlinedFn,
+                                       llvm::Value *CapturedStruct,
+                                       const Expr *IfCond) {
+  auto *RTLoc = emitUpdateLocation(CGF, Loc);
+  auto &&ThenGen =
+      [this, OutlinedFn, CapturedStruct, RTLoc](CodeGenFunction &CGF) {
+        // Build call __kmpc_fork_call(loc, 1, microtask,
+        // captured_struct/*context*/)
+        llvm::Value *Args[] = {
+            RTLoc,
+            CGF.Builder.getInt32(
+                1), // Number of arguments after 'microtask' argument
+            // (there is only one additional argument - 'context')
+            CGF.Builder.CreateBitCast(OutlinedFn, getKmpc_MicroPointerTy()),
+            CGF.EmitCastToVoidPtr(CapturedStruct)};
+        auto RTLFn = createRuntimeFunction(OMPRTL__kmpc_fork_call);
+        CGF.EmitRuntimeCall(RTLFn, Args);
+      };
+  auto &&ElseGen = [this, OutlinedFn, CapturedStruct, RTLoc, Loc](
+      CodeGenFunction &CGF) {
+    auto ThreadID = getThreadID(CGF, Loc);
+    // Build calls:
+    // __kmpc_serialized_parallel(&Loc, GTid);
+    llvm::Value *Args[] = {RTLoc, ThreadID};
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_serialized_parallel),
+                        Args);
 
-  // OutlinedFn(&GTid, &zero, CapturedStruct);
-  auto ThreadIDAddr = emitThreadIDAddress(CGF, Loc);
-  auto Int32Ty =
-      CGF.getContext().getIntTypeForBitwidth(/*DestWidth*/ 32, /*Signed*/ true);
-  auto ZeroAddr = CGF.CreateMemTemp(Int32Ty, /*Name*/ ".zero.addr");
-  CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
-  llvm::Value *OutlinedFnArgs[] = {ThreadIDAddr, ZeroAddr, CapturedStruct};
-  CGF.EmitCallOrInvoke(OutlinedFn, OutlinedFnArgs);
+    // OutlinedFn(&GTid, &zero, CapturedStruct);
+    auto ThreadIDAddr = emitThreadIDAddress(CGF, Loc);
+    auto Int32Ty = CGF.getContext().getIntTypeForBitwidth(/*DestWidth*/ 32,
+                                                          /*Signed*/ true);
+    auto ZeroAddr = CGF.CreateMemTemp(Int32Ty, /*Name*/ ".zero.addr");
+    CGF.InitTempAlloca(ZeroAddr, CGF.Builder.getInt32(/*C*/ 0));
+    llvm::Value *OutlinedFnArgs[] = {ThreadIDAddr, ZeroAddr, CapturedStruct};
+    CGF.EmitCallOrInvoke(OutlinedFn, OutlinedFnArgs);
 
-  // __kmpc_end_serialized_parallel(&Loc, GTid);
-  llvm::Value *EndArgs[] = {emitUpdateLocation(CGF, Loc), ThreadID};
-  CGF.EmitRuntimeCall(
-      createRuntimeFunction(OMPRTL__kmpc_end_serialized_parallel), EndArgs);
+    // __kmpc_end_serialized_parallel(&Loc, GTid);
+    llvm::Value *EndArgs[] = {emitUpdateLocation(CGF, Loc), ThreadID};
+    CGF.EmitRuntimeCall(
+        createRuntimeFunction(OMPRTL__kmpc_end_serialized_parallel), EndArgs);
+  };
+  if (IfCond) {
+    emitOMPIfClause(CGF, IfCond, ThenGen, ElseGen);
+  } else {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    ThenGen(CGF);
+  }
 }
 
 // If we're inside an (outlined) parallel region, use the region info's
@@ -1613,7 +1704,8 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
 void CGOpenMPRuntime::emitTaskCall(
     CodeGenFunction &CGF, SourceLocation Loc, bool Tied,
     llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
-    llvm::Value *TaskFunction, QualType SharedsTy, llvm::Value *Shareds) {
+    llvm::Value *TaskFunction, QualType SharedsTy, llvm::Value *Shareds,
+    const Expr *IfCond) {
   auto &C = CGM.getContext();
   auto KmpInt32Ty = C.getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1);
   // Build type kmp_routine_entry_t (if not built yet).
@@ -1676,15 +1768,39 @@ void CGOpenMPRuntime::emitTaskCall(
       CGF.Builder.CreateStructGEP(KmpTaskTTy, NewTaskNewTaskTTy,
                                   /*Idx=*/KmpTaskTDestructors),
       CGM.PointerAlignInBytes);
-
   // NOTE: routine and part_id fields are intialized by __kmpc_omp_task_alloc()
   // libcall.
   // Build kmp_int32 __kmpc_omp_task(ident_t *, kmp_int32 gtid, kmp_task_t
   // *new_task);
-  llvm::Value *TaskArgs[] = {emitUpdateLocation(CGF, Loc),
-                             getThreadID(CGF, Loc), NewTask};
-  // TODO: add check for untied tasks.
-  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_task), TaskArgs);
+  auto *ThreadID = getThreadID(CGF, Loc);
+  llvm::Value *TaskArgs[] = {emitUpdateLocation(CGF, Loc), ThreadID, NewTask};
+  auto &&ThenCodeGen = [this, &TaskArgs](CodeGenFunction &CGF) {
+    // TODO: add check for untied tasks.
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_task), TaskArgs);
+  };
+  auto &&ElseCodeGen =
+      [this, &TaskArgs, ThreadID, NewTaskNewTaskTTy, TaskEntry](
+          CodeGenFunction &CGF) {
+        CodeGenFunction::RunCleanupsScope LocalScope(CGF);
+        CGF.EmitRuntimeCall(
+            createRuntimeFunction(OMPRTL__kmpc_omp_task_begin_if0), TaskArgs);
+        // Build void __kmpc_omp_task_complete_if0(ident_t *, kmp_int32 gtid,
+        // kmp_task_t *new_task);
+        CGF.EHStack.pushCleanup<CallEndCleanup>(
+            NormalAndEHCleanup,
+            createRuntimeFunction(OMPRTL__kmpc_omp_task_complete_if0),
+            llvm::makeArrayRef(TaskArgs));
+
+        // Call proxy_task_entry(gtid, new_task);
+        llvm::Value *OutlinedFnArgs[] = {ThreadID, NewTaskNewTaskTTy};
+        CGF.EmitCallOrInvoke(TaskEntry, OutlinedFnArgs);
+      };
+  if (IfCond) {
+    emitOMPIfClause(CGF, IfCond, ThenCodeGen, ElseCodeGen);
+  } else {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    ThenCodeGen(CGF);
+  }
 }
 
 static llvm::Value *emitReductionFunction(CodeGenModule &CGM,

@@ -23,52 +23,6 @@ using namespace CodeGen;
 //===----------------------------------------------------------------------===//
 //                              OpenMP Directive Emission
 //===----------------------------------------------------------------------===//
-/// \brief Emits code for OpenMP 'if' clause using specified \a CodeGen
-/// function. Here is the logic:
-/// if (Cond) {
-///   CodeGen(true);
-/// } else {
-///   CodeGen(false);
-/// }
-static void EmitOMPIfClause(CodeGenFunction &CGF, const Expr *Cond,
-                            const std::function<void(bool)> &CodeGen) {
-  CodeGenFunction::LexicalScope ConditionScope(CGF, Cond->getSourceRange());
-
-  // If the condition constant folds and can be elided, try to avoid emitting
-  // the condition and the dead arm of the if/else.
-  bool CondConstant;
-  if (CGF.ConstantFoldsToSimpleInteger(Cond, CondConstant)) {
-    CodeGen(CondConstant);
-    return;
-  }
-
-  // Otherwise, the condition did not fold, or we couldn't elide it.  Just
-  // emit the conditional branch.
-  auto ThenBlock = CGF.createBasicBlock(/*name*/ "omp_if.then");
-  auto ElseBlock = CGF.createBasicBlock(/*name*/ "omp_if.else");
-  auto ContBlock = CGF.createBasicBlock(/*name*/ "omp_if.end");
-  CGF.EmitBranchOnBoolExpr(Cond, ThenBlock, ElseBlock, /*TrueCount*/ 0);
-
-  // Emit the 'then' code.
-  CGF.EmitBlock(ThenBlock);
-  CodeGen(/*ThenBlock*/ true);
-  CGF.EmitBranch(ContBlock);
-  // Emit the 'else' code if present.
-  {
-    // There is no need to emit line number for unconditional branch.
-    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
-    CGF.EmitBlock(ElseBlock);
-  }
-  CodeGen(/*ThenBlock*/ false);
-  {
-    // There is no need to emit line number for unconditional branch.
-    auto NL = ApplyDebugLocation::CreateEmpty(CGF);
-    CGF.EmitBranch(ContBlock);
-  }
-  // Emit the continuation block for code after the if.
-  CGF.EmitBlock(ContBlock, /*IsFinished*/ true);
-}
-
 void CodeGenFunction::EmitOMPAggregateAssign(
     llvm::Value *DestAddr, llvm::Value *SrcAddr, QualType OriginalType,
     const llvm::function_ref<void(llvm::Value *, llvm::Value *)> &CopyGen) {
@@ -483,23 +437,6 @@ void CodeGenFunction::EmitOMPReductionClauseFinal(
   }
 }
 
-/// \brief Emits code for OpenMP parallel directive in the parallel region.
-static void emitOMPParallelCall(CodeGenFunction &CGF,
-                                const OMPExecutableDirective &S,
-                                llvm::Value *OutlinedFn,
-                                llvm::Value *CapturedStruct) {
-  if (auto C = S.getSingleClause(/*K*/ OMPC_num_threads)) {
-    CodeGenFunction::RunCleanupsScope NumThreadsScope(CGF);
-    auto NumThreadsClause = cast<OMPNumThreadsClause>(C);
-    auto NumThreads = CGF.EmitScalarExpr(NumThreadsClause->getNumThreads(),
-                                         /*IgnoreResultAssign*/ true);
-    CGF.CGM.getOpenMPRuntime().emitNumThreadsClause(
-        CGF, NumThreads, NumThreadsClause->getLocStart());
-  }
-  CGF.CGM.getOpenMPRuntime().emitParallelCall(CGF, S.getLocStart(), OutlinedFn,
-                                              CapturedStruct);
-}
-
 static void emitCommonOMPParallelDirective(CodeGenFunction &CGF,
                                            const OMPExecutableDirective &S,
                                            const RegionCodeGenTy &CodeGen) {
@@ -507,17 +444,20 @@ static void emitCommonOMPParallelDirective(CodeGenFunction &CGF,
   auto CapturedStruct = CGF.GenerateCapturedStmtArgument(*CS);
   auto OutlinedFn = CGF.CGM.getOpenMPRuntime().emitParallelOutlinedFunction(
       S, *CS->getCapturedDecl()->param_begin(), CodeGen);
-  if (auto C = S.getSingleClause(/*K*/ OMPC_if)) {
-    auto Cond = cast<OMPIfClause>(C)->getCondition();
-    EmitOMPIfClause(CGF, Cond, [&](bool ThenBlock) {
-      if (ThenBlock)
-        emitOMPParallelCall(CGF, S, OutlinedFn, CapturedStruct);
-      else
-        CGF.CGM.getOpenMPRuntime().emitSerialCall(CGF, S.getLocStart(),
-                                                  OutlinedFn, CapturedStruct);
-    });
-  } else
-    emitOMPParallelCall(CGF, S, OutlinedFn, CapturedStruct);
+  if (auto C = S.getSingleClause(OMPC_num_threads)) {
+    CodeGenFunction::RunCleanupsScope NumThreadsScope(CGF);
+    auto NumThreadsClause = cast<OMPNumThreadsClause>(C);
+    auto NumThreads = CGF.EmitScalarExpr(NumThreadsClause->getNumThreads(),
+                                         /*IgnoreResultAssign*/ true);
+    CGF.CGM.getOpenMPRuntime().emitNumThreadsClause(
+        CGF, NumThreads, NumThreadsClause->getLocStart());
+  }
+  const Expr *IfCond = nullptr;
+  if (auto C = S.getSingleClause(OMPC_if)) {
+    IfCond = cast<OMPIfClause>(C)->getCondition();
+  }
+  CGF.CGM.getOpenMPRuntime().emitParallelCall(CGF, S.getLocStart(), OutlinedFn,
+                                              CapturedStruct, IfCond);
 }
 
 void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
@@ -1406,8 +1346,13 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
     Final.setInt(/*IntVal=*/false);
   }
   auto SharedsTy = getContext().getRecordType(CS->getCapturedRecordDecl());
+  const Expr *IfCond = nullptr;
+  if (auto C = S.getSingleClause(OMPC_if)) {
+    IfCond = cast<OMPIfClause>(C)->getCondition();
+  }
   CGM.getOpenMPRuntime().emitTaskCall(*this, S.getLocStart(), Tied, Final,
-                                      OutlinedFn, SharedsTy, CapturedStruct);
+                                      OutlinedFn, SharedsTy, CapturedStruct,
+                                      IfCond);
 }
 
 void CodeGenFunction::EmitOMPTaskyieldDirective(

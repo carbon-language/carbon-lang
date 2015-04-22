@@ -118,6 +118,12 @@ private:
     // Call to void __kmpc_end_reduce_nowait(ident_t *loc, kmp_int32 global_tid,
     // kmp_critical_name *lck);
     OMPRTL__kmpc_end_reduce_nowait,
+    // Call to void __kmpc_omp_task_begin_if0(ident_t *, kmp_int32 gtid,
+    // kmp_task_t * new_task);
+    OMPRTL__kmpc_omp_task_begin_if0,
+    // Call to void __kmpc_omp_task_complete_if0(ident_t *, kmp_int32 gtid,
+    // kmp_task_t * new_task);
+    OMPRTL__kmpc_omp_task_complete_if0,
     // Call to void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
     OMPRTL__kmpc_ordered,
     // Call to void __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid);
@@ -336,26 +342,20 @@ public:
   ///
   void functionFinished(CodeGenFunction &CGF);
 
-  /// \brief Emits code for parallel call of the \a OutlinedFn with variables
-  /// captured in a record which address is stored in \a CapturedStruct.
+  /// \brief Emits code for parallel or serial call of the \a OutlinedFn with
+  /// variables captured in a record which address is stored in \a
+  /// CapturedStruct.
   /// \param OutlinedFn Outlined function to be run in parallel threads. Type of
   /// this function is void(*)(kmp_int32 *, kmp_int32, struct context_vars*).
   /// \param CapturedStruct A pointer to the record with the references to
   /// variables used in \a OutlinedFn function.
+  /// \param IfCond Condition in the associated 'if' clause, if it was
+  /// specified, nullptr otherwise.
   ///
   virtual void emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
                                 llvm::Value *OutlinedFn,
-                                llvm::Value *CapturedStruct);
-
-  /// \brief Emits code for serial call of the \a OutlinedFn with variables
-  /// captured in a record which address is stored in \a CapturedStruct.
-  /// \param OutlinedFn Outlined function to be run in serial mode.
-  /// \param CapturedStruct A pointer to the record with the references to
-  /// variables used in \a OutlinedFn function.
-  ///
-  virtual void emitSerialCall(CodeGenFunction &CGF, SourceLocation Loc,
-                              llvm::Value *OutlinedFn,
-                              llvm::Value *CapturedStruct);
+                                llvm::Value *CapturedStruct,
+                                const Expr *IfCond);
 
   /// \brief Emits a critical region.
   /// \param CriticalName Name of the critical region.
@@ -548,10 +548,12 @@ public:
   /// \param SharedsTy A type which contains references the shared variables.
   /// \param Shareds Context with the list of shared variables from the \a
   /// TaskFunction.
+  /// \param IfCond Not a nullptr if 'if' clause was specified, nullptr
+  /// otherwise.
   virtual void emitTaskCall(CodeGenFunction &CGF, SourceLocation Loc, bool Tied,
                             llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
                             llvm::Value *TaskFunction, QualType SharedsTy,
-                            llvm::Value *Shareds);
+                            llvm::Value *Shareds, const Expr *IfCond);
 
   /// \brief Emit code for the directive that does not require outlining.
   ///
