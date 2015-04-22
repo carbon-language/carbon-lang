@@ -672,7 +672,7 @@ Value *BinaryExprAST::Codegen() {
     // For now, I'm building without RTTI because LLVM builds that way by
     // default and so we need to build that way to use the command line supprt.
     // If you build LLVM with RTTI this can be changed back to a dynamic_cast.
-    VariableExprAST *LHSE = reinterpret_cast<VariableExprAST*>(LHS);
+    VariableExprAST *LHSE = static_cast<VariableExprAST*>(LHS);
     if (!LHSE)
       return ErrorV("destination of '=' must be a variable");
     // Codegen the RHS.
