@@ -409,6 +409,19 @@ TEST(APIntTest, divrem_big5) {
   EXPECT_EQ(r, c);
 }
 
+TEST(APIntTest, divrem_big7) {
+  // Yet another test for KnuthDiv rare step D6.
+  APInt a{224, "800000008000000200000005", 16};
+  APInt b{224, "fffffffd", 16};
+  APInt c{224, "80000000800000010000000f", 16};
+
+  auto p = a * b + c;
+  auto q = p.udiv(a);
+  auto r = p.urem(a);
+  EXPECT_EQ(q, b);
+  EXPECT_EQ(r, c);
+}
+
 TEST(APIntTest, fromString) {
   EXPECT_EQ(APInt(32, 0), APInt(32,   "0", 2));
   EXPECT_EQ(APInt(32, 1), APInt(32,   "1", 2));
