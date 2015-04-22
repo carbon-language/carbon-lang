@@ -814,7 +814,7 @@ void MicrosoftCXXABI::emitBeginCatch(CodeGenFunction &CGF,
   if (!CatchParam || !CatchParam->getDeclName()) {
     llvm::Value *Args[2] = {Exn, llvm::Constant::getNullValue(CGF.Int8PtrTy)};
     CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
-    CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalAndEHCleanup);
+    CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalCleanup);
     return;
   }
 
@@ -823,8 +823,7 @@ void MicrosoftCXXABI::emitBeginCatch(CodeGenFunction &CGF,
       CGF.Builder.CreateBitCast(var.getObjectAddress(CGF), CGF.Int8PtrTy);
   llvm::Value *Args[2] = {Exn, ParamAddr};
   CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
-  // FIXME: Do we really need exceptional endcatch cleanups?
-  CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalAndEHCleanup);
+  CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalCleanup);
   CGF.EmitAutoVarCleanups(var);
 }
 

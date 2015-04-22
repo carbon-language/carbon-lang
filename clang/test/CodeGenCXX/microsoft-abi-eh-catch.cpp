@@ -116,3 +116,39 @@ extern "C" void fn_with_exc_spec() throw(int) {
 // WIN64-LABEL: define void @fn_with_exc_spec()
 // WIN64: call void @might_throw()
 // WIN64-NEXT: ret void
+
+extern "C" void catch_nested() {
+  try {
+    might_throw();
+  } catch (int) {
+    try {
+      might_throw();
+    } catch (int) {
+      might_throw();
+    }
+  }
+}
+
+// WIN64-LABEL: define void @catch_nested()
+// WIN64: invoke void @might_throw()
+// WIN64-NEXT: to label %[[cont1:[^ ]*]] unwind label %[[lp1:[^ ]*]]
+// WIN64: [[cont1]]
+//
+// WIN64: [[lp1]]
+// WIN64: landingpad { i8*, i32 }
+// WIN64: call void @llvm.eh.begincatch(i8* %{{.*}}, i8* null)
+// WIN64: invoke void @might_throw()
+// WIN64-NEXT: to label %[[cont2:[^ ]*]] unwind label %[[lp2:[^ ]*]]
+//
+// WIN64: [[cont2]]
+// WIN64-NEXT: br label %[[trycont:[^ ]*]]
+//
+// WIN64: [[lp2]]
+// WIN64: landingpad { i8*, i32 }
+// WIN64: call void @llvm.eh.begincatch(i8* %{{.*}}, i8* null)
+// WIN64-NEXT: call void @might_throw()
+// WIN64-NEXT: call void @llvm.eh.endcatch()
+// WIN64-NEXT: br label %[[trycont]]
+//
+// WIN64: [[trycont]]
+// WIN64: call void @llvm.eh.endcatch()
