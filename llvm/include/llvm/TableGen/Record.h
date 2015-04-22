@@ -159,9 +159,9 @@ public:
   Init *convertValue(VarBitInit *VB) override { return (Init*)VB; }
   Init *convertValue(   DefInit *DI) override { return nullptr; }
   Init *convertValue(   DagInit *DI) override { return nullptr; }
-  Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
+  Init *convertValue(  UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
-  Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
+  Init *convertValue(TernOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TypedInit *TI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
   Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
@@ -237,7 +237,7 @@ public:
   Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *UI)  override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
-  Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
+  Init *convertValue(TernOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TypedInit *TI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
   Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
@@ -270,9 +270,9 @@ public:
   Init *convertValue(   IntInit *II) override { return nullptr; }
   Init *convertValue(StringInit *SI) override { return (Init*)SI; }
   Init *convertValue(  ListInit *LI) override { return nullptr; }
-  Init *convertValue( UnOpInit *BO) override;
+  Init *convertValue(  UnOpInit *BO) override;
   Init *convertValue( BinOpInit *BO) override;
-  Init *convertValue( TernOpInit *BO) override {return RecTy::convertValue(BO);}
+  Init *convertValue(TernOpInit *BO) override { return RecTy::convertValue(BO);}
 
   Init *convertValue(VarBitInit *VB) override { return nullptr; }
   Init *convertValue(   DefInit *DI) override { return nullptr; }
@@ -350,9 +350,9 @@ public:
   Init *convertValue(  ListInit *LI) override { return nullptr; }
   Init *convertValue(VarBitInit *VB) override { return nullptr; }
   Init *convertValue(   DefInit *DI) override { return nullptr; }
-  Init *convertValue( UnOpInit *BO) override;
+  Init *convertValue(  UnOpInit *BO) override;
   Init *convertValue( BinOpInit *BO) override;
-  Init *convertValue( TernOpInit *BO) override {return RecTy::convertValue(BO);}
+  Init *convertValue(TernOpInit *BO) override { return RecTy::convertValue(BO);}
   Init *convertValue(   DagInit *CI) override { return (Init*)CI; }
   Init *convertValue( TypedInit *TI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
@@ -389,9 +389,9 @@ public:
   Init *convertValue(StringInit *SI) override { return nullptr; }
   Init *convertValue(  ListInit *LI) override { return nullptr; }
   Init *convertValue(VarBitInit *VB) override { return nullptr; }
-  Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
+  Init *convertValue(  UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
-  Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
+  Init *convertValue(TernOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue(   DefInit *DI) override;
   Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( TypedInit *VI) override;
