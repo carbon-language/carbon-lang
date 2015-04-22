@@ -570,27 +570,12 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return const_cast<BitsInit *>(this);
 }
 
-namespace {
-  template<typename T>
-  class Pool : public T {
-  public:
-    ~Pool();
-  };
-  template<typename T>
-  Pool<T>::~Pool() {
-    for (typename T::iterator I = this->begin(), E = this->end(); I != E; ++I) {
-      typename T::value_type &Item = *I;
-      delete Item.second;
-    }
-  }
-}
-
 IntInit *IntInit::get(int64_t V) {
-  static Pool<DenseMap<int64_t, IntInit *> > ThePool;
+  static DenseMap<int64_t, std::unique_ptr<IntInit>> ThePool;
 
-  IntInit *&I = ThePool[V];
-  if (!I) I = new IntInit(V);
-  return I;
+  std::unique_ptr<IntInit> &I = ThePool[V];
+  if (!I) I.reset(new IntInit(V));
+  return I.get();
 }
 
 std::string IntInit::getAsString() const {
@@ -613,11 +598,11 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
 void StringInit::anchor() { }
 
 StringInit *StringInit::get(StringRef V) {
-  static Pool<StringMap<StringInit *> > ThePool;
+  static StringMap<std::unique_ptr<StringInit>> ThePool;
 
-  StringInit *&I = ThePool[V];
-  if (!I) I = new StringInit(V);
-  return I;
+  std::unique_ptr<StringInit> &I = ThePool[V];
+  if (!I) I.reset(new StringInit(V));
+  return I.get();
 }
 
 static void ProfileListInit(FoldingSetNodeID &ID,
@@ -752,13 +737,13 @@ Init *OpInit::getBit(unsigned Bit) const {
 
 UnOpInit *UnOpInit::get(UnaryOp opc, Init *lhs, RecTy *Type) {
   typedef std::pair<std::pair<unsigned, Init *>, RecTy *> Key;
-  static Pool<DenseMap<Key, UnOpInit *> > ThePool;
+  static DenseMap<Key, std::unique_ptr<UnOpInit>> ThePool;
 
   Key TheKey(std::make_pair(std::make_pair(opc, lhs), Type));
 
-  UnOpInit *&I = ThePool[TheKey];
-  if (!I) I = new UnOpInit(opc, lhs, Type);
-  return I;
+  std::unique_ptr<UnOpInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new UnOpInit(opc, lhs, Type));
+  return I.get();
 }
 
 Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
@@ -891,14 +876,14 @@ BinOpInit *BinOpInit::get(BinaryOp opc, Init *lhs,
     RecTy *
     > Key;
 
-  static Pool<DenseMap<Key, BinOpInit *> > ThePool;
+  static DenseMap<Key, std::unique_ptr<BinOpInit>> ThePool;
 
   Key TheKey(std::make_pair(std::make_pair(std::make_pair(opc, lhs), rhs),
                             Type));
 
-  BinOpInit *&I = ThePool[TheKey];
-  if (!I) I = new BinOpInit(opc, lhs, rhs, Type);
-  return I;
+  std::unique_ptr<BinOpInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new BinOpInit(opc, lhs, rhs, Type));
+  return I.get();
 }
 
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
@@ -1326,13 +1311,13 @@ VarInit *VarInit::get(const std::string &VN, RecTy *T) {
 
 VarInit *VarInit::get(Init *VN, RecTy *T) {
   typedef std::pair<RecTy *, Init *> Key;
-  static Pool<DenseMap<Key, VarInit *> > ThePool;
+  static DenseMap<Key, std::unique_ptr<VarInit>> ThePool;
 
   Key TheKey(std::make_pair(T, VN));
 
-  VarInit *&I = ThePool[TheKey];
-  if (!I) I = new VarInit(VN, T);
-  return I;
+  std::unique_ptr<VarInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new VarInit(VN, T));
+  return I.get();
 }
 
 const std::string &VarInit::getName() const {
@@ -1411,15 +1396,13 @@ Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) const {
 
 VarBitInit *VarBitInit::get(TypedInit *T, unsigned B) {
   typedef std::pair<TypedInit *, unsigned> Key;
-  typedef DenseMap<Key, VarBitInit *> Pool;
-
-  static Pool ThePool;
+  static DenseMap<Key, std::unique_ptr<VarBitInit>> ThePool;
 
   Key TheKey(std::make_pair(T, B));
 
-  VarBitInit *&I = ThePool[TheKey];
-  if (!I) I = new VarBitInit(T, B);
-  return I;
+  std::unique_ptr<VarBitInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new VarBitInit(T, B));
+  return I.get();
 }
 
 std::string VarBitInit::getAsString() const {
