@@ -91,9 +91,19 @@ static void ReportGlobal(const Global &g, const char *prefix) {
   }
 }
 
-// Returns the number of globals close to the provided address and copies
-// them to "globals" array.
-int GetGlobalsForAddress(uptr addr, Global *globals, int max_globals) {
+static u32 FindRegistrationSite(const Global *g) {
+  mu_for_globals.CheckLocked();
+  CHECK(global_registration_site_vector);
+  for (uptr i = 0, n = global_registration_site_vector->size(); i < n; i++) {
+    GlobalRegistrationSite &grs = (*global_registration_site_vector)[i];
+    if (g >= grs.g_first && g <= grs.g_last)
+      return grs.stack_id;
+  }
+  return 0;
+}
+
+int GetGlobalsForAddress(uptr addr, Global *globals, u32 *reg_sites,
+                         int max_globals) {
   if (!flags()->report_globals) return 0;
   BlockingMutexLock lock(&mu_for_globals);
   int res = 0;
@@ -102,7 +112,10 @@ int GetGlobalsForAddress(uptr addr, Global *globals, int max_globals) {
     if (flags()->report_globals >= 2)
       ReportGlobal(g, "Search");
     if (IsAddressNearGlobal(addr, g)) {
-      globals[res++] = g;
+      globals[res] = g;
+      if (reg_sites)
+        reg_sites[res] = FindRegistrationSite(&g);
+      res++;
       if (res == max_globals) break;
     }
   }
@@ -111,7 +124,7 @@ int GetGlobalsForAddress(uptr addr, Global *globals, int max_globals) {
 
 bool GetInfoForAddressIfGlobal(uptr addr, AddressDescription *descr) {
   Global g = {};
-  if (GetGlobalsForAddress(addr, &g, 1)) {
+  if (GetGlobalsForAddress(addr, &g, nullptr, 1)) {
     internal_strncpy(descr->name, g.name, descr->name_size);
     descr->region_address = g.beg;
     descr->region_size = g.size;
@@ -119,16 +132,6 @@ bool GetInfoForAddressIfGlobal(uptr addr, AddressDescription *descr) {
     return true;
   }
   return false;
-}
-
-u32 FindRegistrationSite(const Global *g) {
-  CHECK(global_registration_site_vector);
-  for (uptr i = 0, n = global_registration_site_vector->size(); i < n; i++) {
-    GlobalRegistrationSite &grs = (*global_registration_site_vector)[i];
-    if (g >= grs.g_first && g <= grs.g_last)
-      return grs.stack_id;
-  }
-  return 0;
 }
 
 // Register a global variable.
