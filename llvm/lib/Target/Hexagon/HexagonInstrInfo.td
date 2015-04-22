@@ -4191,12 +4191,27 @@ def S2_clb     : T_COUNT_LEADING_32<"clb",     0b000, 0b100>;
 def S2_clbp    : T_COUNT_LEADING_64<"clb",     0b010, 0b000>;
 def S2_clbnorm : T_COUNT_LEADING_32<"normamt", 0b000, 0b111>;
 
-def: Pat<(i32 (ctlz I32:$Rs)),                (S2_cl0 I32:$Rs)>;
-def: Pat<(i32 (ctlz (not I32:$Rs))),          (S2_cl1 I32:$Rs)>;
-def: Pat<(i32 (cttz I32:$Rs)),                (S2_ct0 I32:$Rs)>;
-def: Pat<(i32 (cttz (not I32:$Rs))),          (S2_ct1 I32:$Rs)>;
-def: Pat<(i32 (trunc (ctlz I64:$Rss))),       (S2_cl0p I64:$Rss)>;
+// Count leading zeros.
+def: Pat<(i32 (ctlz I32:$Rs)), (S2_cl0 I32:$Rs)>;
+def: Pat<(i32 (trunc (ctlz I64:$Rss))), (S2_cl0p I64:$Rss)>;
+def: Pat<(i32 (ctlz_zero_undef I32:$Rs)), (S2_cl0 I32:$Rs)>;
+def: Pat<(i32 (trunc (ctlz_zero_undef I64:$Rss))), (S2_cl0p I64:$Rss)>;
+
+// Count trailing zeros: 32-bit.
+def: Pat<(i32 (cttz I32:$Rs)), (S2_ct0 I32:$Rs)>;
+def: Pat<(i32 (cttz_zero_undef I32:$Rs)), (S2_ct0 I32:$Rs)>;
+
+// Count leading ones.
+def: Pat<(i32 (ctlz (not I32:$Rs))), (S2_cl1 I32:$Rs)>;
 def: Pat<(i32 (trunc (ctlz (not I64:$Rss)))), (S2_cl1p I64:$Rss)>;
+def: Pat<(i32 (ctlz_zero_undef (not I32:$Rs))), (S2_cl1 I32:$Rs)>;
+def: Pat<(i32 (trunc (ctlz_zero_undef (not I64:$Rss)))), (S2_cl1p I64:$Rss)>;
+
+// Count trailing ones: 32-bit.
+def: Pat<(i32 (cttz (not I32:$Rs))), (S2_ct1 I32:$Rs)>;
+def: Pat<(i32 (cttz_zero_undef (not I32:$Rs))), (S2_ct1 I32:$Rs)>;
+
+// The 64-bit counts leading/trailing are defined in HexagonInstrInfoV4.td.
 
 // Bit set/clear/toggle
 
@@ -4831,11 +4846,6 @@ def CONST32_Int_Real : CONSTLDInst<(outs IntRegs:$dst), (ins i32imm:$global),
 // Map TLS addressses to a CONST32 instruction
 def: Pat<(HexagonCONST32 tglobaltlsaddr:$addr), (A2_tfrsi s16Ext:$addr)>;
 def: Pat<(HexagonCONST32 bbl:$label),           (A2_tfrsi s16Ext:$label)>;
-
-let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
-                    "$dst = CONST32($label)",
-                    [(set (i32 IntRegs:$dst), (HexagonCONST32 bbl:$label))]>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST64_Int_Real : CONSTLDInst<(outs DoubleRegs:$dst), (ins i64imm:$global),
@@ -5578,40 +5588,33 @@ def S2_insertp_rp : T_S3op_insert<"insert", DoubleRegs>;
 def S2_insertp    : T_S2op_insert <0b0011, DoubleRegs, u6Imm>;
 
 
-def SDTHexagonINSERT_ri : SDTypeProfile<1, 4, [SDTCisVT<0, i32>,
-                                               SDTCisVT<1, i32>,
-                                               SDTCisVT<2, i32>,
-                                               SDTCisVT<3, i32>,
-                                               SDTCisVT<4, i32>]>;
-def SDTHexagonINSERT_rd : SDTypeProfile<1, 4, [SDTCisVT<0, i64>,
-                                               SDTCisVT<1, i64>,
-                                               SDTCisVT<2, i64>,
-                                               SDTCisVT<3, i32>,
-                                               SDTCisVT<4, i32>]>;
-def SDTHexagonINSERT_riv : SDTypeProfile<1, 3, [SDTCisVT<0, i32>,
-                                                SDTCisVT<1, i32>,
-                                                SDTCisVT<2, i32>,
-                                                SDTCisVT<3, i64>]>;
-def SDTHexagonINSERT_rdv : SDTypeProfile<1, 3, [SDTCisVT<0, i64>,
-                                                SDTCisVT<1, i64>,
-                                                SDTCisVT<2, i64>,
-                                                SDTCisVT<3, i64>]>;
-def HexagonINSERT_ri : SDNode<"HexagonISD::INSERT_ri",  SDTHexagonINSERT_ri>;
-def HexagonINSERT_rd : SDNode<"HexagonISD::INSERT_rd",  SDTHexagonINSERT_rd>;
-def HexagonINSERT_riv: SDNode<"HexagonISD::INSERT_riv", SDTHexagonINSERT_riv>;
-def HexagonINSERT_rdv: SDNode<"HexagonISD::INSERT_rdv", SDTHexagonINSERT_rdv>;
+def SDTHexagonINSERT:
+  SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                       SDTCisInt<0>, SDTCisVT<3, i32>, SDTCisVT<4, i32>]>;
+def SDTHexagonINSERTRP:
+  SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                       SDTCisInt<0>, SDTCisVT<3, i64>]>;
 
-def: Pat<(HexagonINSERT_ri I32:$Rs, I32:$Rt, u5ImmPred:$u1, u5ImmPred:$u2),
+def HexagonINSERT   : SDNode<"HexagonISD::INSERT",   SDTHexagonINSERT>;
+def HexagonINSERTRP : SDNode<"HexagonISD::INSERTRP", SDTHexagonINSERTRP>;
+
+def: Pat<(HexagonINSERT I32:$Rs, I32:$Rt, u5ImmPred:$u1, u5ImmPred:$u2),
          (S2_insert I32:$Rs, I32:$Rt, u5ImmPred:$u1, u5ImmPred:$u2)>;
-
-def: Pat<(HexagonINSERT_rd I64:$Rs, I64:$Rt, u6ImmPred:$u1, u6ImmPred:$u2),
+def: Pat<(HexagonINSERT I64:$Rs, I64:$Rt, u6ImmPred:$u1, u6ImmPred:$u2),
          (S2_insertp I64:$Rs, I64:$Rt, u6ImmPred:$u1, u6ImmPred:$u2)>;
-
-def: Pat<(HexagonINSERT_riv I32:$Rs, I32:$Rt, I64:$Ru),
+def: Pat<(HexagonINSERTRP I32:$Rs, I32:$Rt, I64:$Ru),
          (S2_insert_rp I32:$Rs, I32:$Rt, I64:$Ru)>;
-
-def: Pat<(HexagonINSERT_rdv I64:$Rs, I64:$Rt, I64:$Ru),
+def: Pat<(HexagonINSERTRP I64:$Rs, I64:$Rt, I64:$Ru),
          (S2_insertp_rp I64:$Rs, I64:$Rt, I64:$Ru)>;
+
+let AddedComplexity = 100 in
+def: Pat<(or (or (shl (HexagonINSERT (i32 (zextloadi8 (add I32:$b, 2))),
+                                     (i32 (extloadi8  (add I32:$b, 3))),
+                                     24, 8),
+                      (i32 16)),
+                 (shl (i32 (zextloadi8 (add I32:$b, 1))), (i32 8))),
+             (zextloadi8 I32:$b)),
+         (A2_swiz (L2_loadri_io I32:$b, 0))>;
 
 
 //===----------------------------------------------------------------------===//
@@ -5680,35 +5683,23 @@ let hasNewValue = 1 in {
   def S2_extractu    : T_S2op_extract <"extractu", 0b1101, IntRegs, u5Imm>;
 }
 
-def SDTHexagonEXTRACTU_ri : SDTypeProfile<1, 3, [SDTCisVT<0, i32>,
-                                                 SDTCisVT<1, i32>,
-                                                 SDTCisVT<2, i32>,
-                                                 SDTCisVT<3, i32>]>;
-def SDTHexagonEXTRACTU_rd : SDTypeProfile<1, 3, [SDTCisVT<0, i64>,
-                                                 SDTCisVT<1, i64>,
-                                                 SDTCisVT<2, i32>,
-                                                 SDTCisVT<3, i32>]>;
-def SDTHexagonEXTRACTU_riv : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
-                                                  SDTCisVT<1, i32>,
-                                                  SDTCisVT<2, i64>]>;
-def SDTHexagonEXTRACTU_rdv : SDTypeProfile<1, 2, [SDTCisVT<0, i64>,
-                                                  SDTCisVT<1, i64>,
-                                                  SDTCisVT<2, i64>]>;
-def HexagonEXTRACTU_ri : SDNode<"HexagonISD::EXTRACTU_ri",  SDTHexagonEXTRACTU_ri>;
-def HexagonEXTRACTU_rd : SDNode<"HexagonISD::EXTRACTU_rd",  SDTHexagonEXTRACTU_rd>;
-def HexagonEXTRACTU_riv: SDNode<"HexagonISD::EXTRACTU_riv", SDTHexagonEXTRACTU_riv>;
-def HexagonEXTRACTU_rdv: SDNode<"HexagonISD::EXTRACTU_rdv", SDTHexagonEXTRACTU_rdv>;
+def SDTHexagonEXTRACTU:
+  SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisInt<1>,
+                       SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
+def SDTHexagonEXTRACTURP:
+  SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisInt<1>,
+                       SDTCisVT<2, i64>]>;
 
-def: Pat<(HexagonEXTRACTU_ri I32:$src1, u5ImmPred:$src2, u5ImmPred:$src3),
+def HexagonEXTRACTU   : SDNode<"HexagonISD::EXTRACTU",   SDTHexagonEXTRACTU>;
+def HexagonEXTRACTURP : SDNode<"HexagonISD::EXTRACTURP", SDTHexagonEXTRACTURP>;
+
+def: Pat<(HexagonEXTRACTU I32:$src1, u5ImmPred:$src2, u5ImmPred:$src3),
          (S2_extractu I32:$src1, u5ImmPred:$src2, u5ImmPred:$src3)>;
-
-def: Pat<(HexagonEXTRACTU_rd I64:$src1, u6ImmPred:$src2, u6ImmPred:$src3),
+def: Pat<(HexagonEXTRACTU I64:$src1, u6ImmPred:$src2, u6ImmPred:$src3),
          (S2_extractup I64:$src1, u6ImmPred:$src2, u6ImmPred:$src3)>;
-
-def: Pat<(HexagonEXTRACTU_riv I32:$src1, I64:$src2),
+def: Pat<(HexagonEXTRACTURP I32:$src1, I64:$src2),
          (S2_extractu_rp I32:$src1, I64:$src2)>;
-
-def: Pat<(HexagonEXTRACTU_rdv I64:$src1, I64:$src2),
+def: Pat<(HexagonEXTRACTURP I64:$src1, I64:$src2),
          (S2_extractup_rp I64:$src1, I64:$src2)>;
 
 // Change the sign of the immediate for Rd=-mpyi(Rs,#u8)

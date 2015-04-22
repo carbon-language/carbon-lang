@@ -1,7 +1,7 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4  < %s | FileCheck %s
 ; Check that we generate integer multiply accumulate.
 
-; CHECK: r{{[0-9]+}} += mpyi(r{{[0-9]+}}, r{{[0-9]+}})
+; CHECK: r{{[0-9]+}} {{\+|\-}}= mpyi(r{{[0-9]+}},
 
 define i32 @main(i32* %a, i32* %b) nounwind {
   entry:

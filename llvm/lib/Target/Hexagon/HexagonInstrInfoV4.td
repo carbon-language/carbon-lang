@@ -2325,10 +2325,24 @@ def S2_ct0p : T_COUNT_LEADING_64<"ct0", 0b111, 0b010>;
 def S2_ct1p : T_COUNT_LEADING_64<"ct1", 0b111, 0b100>;
 def S4_clbpnorm : T_COUNT_LEADING_64<"normamt", 0b011, 0b000>;
 
-def: Pat<(i32 (trunc (cttz (i64 DoubleRegs:$Rss)))),
-         (S2_ct0p (i64 DoubleRegs:$Rss))>;
-def: Pat<(i32 (trunc (cttz (not (i64 DoubleRegs:$Rss))))),
-         (S2_ct1p (i64 DoubleRegs:$Rss))>;
+// Count trailing zeros: 64-bit.
+def: Pat<(i32 (trunc (cttz I64:$Rss))), (S2_ct0p I64:$Rss)>;
+def: Pat<(i32 (trunc (cttz_zero_undef I64:$Rss))), (S2_ct0p I64:$Rss)>;
+
+// Count trailing ones: 64-bit.
+def: Pat<(i32 (trunc (cttz (not I64:$Rss)))), (S2_ct1p I64:$Rss)>;
+def: Pat<(i32 (trunc (cttz_zero_undef (not I64:$Rss)))), (S2_ct1p I64:$Rss)>;
+
+// Define leading/trailing patterns that require zero-extensions to 64 bits.
+def: Pat<(i64 (ctlz I64:$Rss)), (Zext64 (S2_cl0p I64:$Rss))>;
+def: Pat<(i64 (ctlz_zero_undef I64:$Rss)), (Zext64 (S2_cl0p I64:$Rss))>;
+def: Pat<(i64 (cttz I64:$Rss)), (Zext64 (S2_ct0p I64:$Rss))>;
+def: Pat<(i64 (cttz_zero_undef I64:$Rss)), (Zext64 (S2_ct0p I64:$Rss))>;
+def: Pat<(i64 (ctlz (not I64:$Rss))), (Zext64 (S2_cl1p I64:$Rss))>;
+def: Pat<(i64 (ctlz_zero_undef (not I64:$Rss))), (Zext64 (S2_cl1p I64:$Rss))>;
+def: Pat<(i64 (cttz (not I64:$Rss))), (Zext64 (S2_ct1p I64:$Rss))>;
+def: Pat<(i64 (cttz_zero_undef (not I64:$Rss))), (Zext64 (S2_ct1p I64:$Rss))>;
+
 
 let hasSideEffects = 0, hasNewValue = 1 in
 def S4_clbaddi : SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s6Imm:$s6),
@@ -3783,9 +3797,6 @@ let AddedComplexity = 100 in {
 def: Pat<(HexagonCONST32 tglobaladdr:$Rs),      (A2_tfrsi s16Ext:$Rs)>;
 def: Pat<(HexagonCONST32_GP tblockaddress:$Rs), (A2_tfrsi s16Ext:$Rs)>;
 def: Pat<(HexagonCONST32_GP tglobaladdr:$Rs),   (A2_tfrsi s16Ext:$Rs)>;
-
-def: Pat<(i64 (ctlz I64:$src1)), (Zext64 (S2_cl0p I64:$src1))>;
-def: Pat<(i64 (cttz I64:$src1)), (Zext64 (S2_ct0p I64:$src1))>;
 
 let AddedComplexity  = 30 in {
   def: Storea_pat<truncstorei8,  I32, u32ImmPred, S2_storerbabs>;

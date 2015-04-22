@@ -178,7 +178,7 @@ void HexagonFixupHwLoops::convertLoopInstr(MachineFunction &MF,
       .addReg(Scratch);
   }
   // Then, set the SA0 with the loop start address.
-  BuildMI(*MBB, MII, DL, TII->get(Hexagon::CONST32_Label), Scratch)
+  BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrsi), Scratch)
     .addMBB(MII->getOperand(0).getMBB());
   BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::SA0)
     .addReg(Scratch);

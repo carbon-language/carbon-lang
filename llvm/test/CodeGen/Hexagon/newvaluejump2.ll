@@ -1,17 +1,16 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv5 -disable-hexagon-misched < %s \
+; RUN:    | FileCheck %s
 ; Check that we generate new value jump, both registers, with one 
 ; of the registers as new.
 
-@Reg = common global i8 0, align 1
+@Reg = common global i32 0, align 4
 define i32 @main() nounwind {
 entry:
-; CHECK: if (cmp.gt(r{{[0-9]+}}.new, r{{[0-9]+}})) jump:{{[t|nt]}} .LBB{{[0-9]+}}_{{[0-9]+}}
-  %Reg2 = alloca i8, align 1
-  %0 = load i8, i8* %Reg2, align 1
-  %conv0 = zext i8 %0 to i32
-  %1 = load i8, i8* @Reg, align 1
-  %conv1 = zext i8 %1 to i32
-  %tobool = icmp sle i32 %conv0, %conv1
+; CHECK: if (cmp.gt(r{{[0-9]+}}, r{{[0-9]+}}.new)) jump:{{[t|nt]}} .LBB{{[0-9]+}}_{{[0-9]+}}
+  %Reg2 = alloca i32, align 4
+  %0 = load i32, i32* %Reg2, align 4
+  %1 = load i32, i32* @Reg, align 4
+  %tobool = icmp sle i32 %0, %1
   br i1 %tobool, label %if.then, label %if.else
 
 if.then:

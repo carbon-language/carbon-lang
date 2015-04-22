@@ -27,31 +27,17 @@ bool isPositiveHalfWord(SDNode *N);
 
   namespace HexagonISD {
     enum {
-      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+      OP_BEGIN = ISD::BUILTIN_OP_END,
 
-      CONST32,
+      CONST32 = OP_BEGIN,
       CONST32_GP,  // For marking data present in GP.
-      CONST32_Int_Real,
       FCONST32,
-      SETCC,
       ALLOCA,
       ARGEXTEND,
 
       PIC_ADD,
       AT_GOT,
       AT_PCREL,
-
-      CMPICC,      // Compare two GPR operands, set icc.
-      CMPFCC,      // Compare two FP operands, set fcc.
-      BRICC,       // Branch to dest on icc condition
-      BRFCC,       // Branch to dest on fcc condition
-      SELECT_ICC,  // Select between two values using the current ICC flags.
-      SELECT_FCC,  // Select between two values using the current FCC flags.
-
-      Hi, Lo,      // Hi/Lo operations, typically on a global address.
-
-      FTOI,        // FP to Int within a FP register.
-      ITOF,        // Int to FP within a FP register.
 
       CALLv3,      // A V3+ call instruction.
       CALLv3nr,    // A V3+ call instruction that doesn't return.
@@ -62,6 +48,7 @@ bool isPositiveHalfWord(SDNode *N);
       BARRIER,     // Memory barrier.
       JT,          // Jump table.
       CP,          // Constant pool.
+
       POPCOUNT,
       COMBINE,
       PACKHL,
@@ -88,17 +75,16 @@ bool isPositiveHalfWord(SDNode *N);
       VCMPWEQ,
       VCMPWGT,
       VCMPWGTU,
-      INSERT_ri,
-      INSERT_rd,
-      INSERT_riv,
-      INSERT_rdv,
-      EXTRACTU_ri,
-      EXTRACTU_rd,
-      EXTRACTU_riv,
-      EXTRACTU_rdv,
+
+      INSERT,
+      INSERTRP,
+      EXTRACTU,
+      EXTRACTURP,
       TC_RETURN,
       EH_RETURN,
-      DCFETCH
+      DCFETCH,
+
+      OP_END
     };
   }
 
@@ -107,30 +93,24 @@ bool isPositiveHalfWord(SDNode *N);
   class HexagonTargetLowering : public TargetLowering {
     int VarArgsFrameOffset;   // Frame offset to start of varargs area.
 
-    bool CanReturnSmallStruct(const Function* CalleeFn,
-                              unsigned& RetSize) const;
-
+    bool CanReturnSmallStruct(const Function* CalleeFn, unsigned& RetSize)
+        const;
     void promoteLdStType(EVT VT, EVT PromotedLdStVT);
+    const HexagonTargetMachine &HTM;
+    const HexagonSubtarget &Subtarget;
 
   public:
-    const HexagonSubtarget *Subtarget;
     explicit HexagonTargetLowering(const TargetMachine &TM,
-                                   const HexagonSubtarget &Subtarget);
+                                   const HexagonSubtarget &ST);
 
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
     /// optimization should implement this function.
-    bool
-    IsEligibleForTailCallOptimization(SDValue Callee,
-                                      CallingConv::ID CalleeCC,
-                                      bool isVarArg,
-                                      bool isCalleeStructRet,
-                                      bool isCallerStructRet,
-                                      const
-                                      SmallVectorImpl<ISD::OutputArg> &Outs,
-                                      const SmallVectorImpl<SDValue> &OutVals,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      SelectionDAG& DAG) const;
+    bool IsEligibleForTailCallOptimization(SDValue Callee,
+        CallingConv::ID CalleeCC, bool isVarArg, bool isCalleeStructRet,
+        bool isCallerStructRet, const SmallVectorImpl<ISD::OutputArg> &Outs,
+        const SmallVectorImpl<SDValue> &OutVals,
+        const SmallVectorImpl<ISD::InputArg> &Ins, SelectionDAG& DAG) const;
 
     bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
     bool isTruncateFree(EVT VT1, EVT VT2) const override;
@@ -139,7 +119,7 @@ bool isPositiveHalfWord(SDNode *N);
 
     // Should we expand the build vector with shuffles?
     bool shouldExpandBuildVectorWithShuffles(EVT VT,
-                                        unsigned DefinedValues) const override;
+        unsigned DefinedValues) const override;
 
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
     const char *getTargetNodeName(unsigned Opcode) const override;
@@ -152,24 +132,19 @@ bool isPositiveHalfWord(SDNode *N);
     SDValue LowerINLINEASM(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEH_LABEL(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerFormalArguments(SDValue Chain,
-                                 CallingConv::ID CallConv, bool isVarArg,
-                                 const SmallVectorImpl<ISD::InputArg> &Ins,
-                                 SDLoc dl, SelectionDAG &DAG,
-                                 SmallVectorImpl<SDValue> &InVals) const override;
+    SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+        bool isVarArg, const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl,
+        SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const override;
     SDValue LowerGLOBALADDRESS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerCall(TargetLowering::CallLoweringInfo &CLI,
-                      SmallVectorImpl<SDValue> &InVals) const override;
-
+        SmallVectorImpl<SDValue> &InVals) const override;
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
-                            CallingConv::ID CallConv, bool isVarArg,
-                            const SmallVectorImpl<ISD::InputArg> &Ins,
-                            SDLoc dl, SelectionDAG &DAG,
-                            SmallVectorImpl<SDValue> &InVals,
-                            const SmallVectorImpl<SDValue> &OutVals,
-                            SDValue Callee) const;
+        CallingConv::ID CallConv, bool isVarArg,
+        const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl,
+        SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals,
+        const SmallVectorImpl<SDValue> &OutVals, SDValue Callee) const;
 
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVSELECT(SDValue Op, SelectionDAG &DAG) const;
@@ -179,18 +154,17 @@ bool isPositiveHalfWord(SDNode *N);
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
 
-    SDValue LowerReturn(SDValue Chain,
-                        CallingConv::ID CallConv, bool isVarArg,
-                        const SmallVectorImpl<ISD::OutputArg> &Outs,
-                        const SmallVectorImpl<SDValue> &OutVals,
-                        SDLoc dl, SelectionDAG &DAG) const override;
+    SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+        bool isVarArg, const SmallVectorImpl<ISD::OutputArg> &Outs,
+        const SmallVectorImpl<SDValue> &OutVals, SDLoc dl,
+        SelectionDAG &DAG) const override;
 
-    MachineBasicBlock *
-    EmitInstrWithCustomInserter(MachineInstr *MI,
-                                MachineBasicBlock *BB) const override;
+    bool mayBeEmittedAsTailCall(CallInst *CI) const override;
+    MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
+        MachineBasicBlock *BB) const override;
 
-    SDValue  LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
-    SDValue  LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     EVT getSetCCResultType(LLVMContext &C, EVT VT) const override {
       if (!VT.isVector())
         return MVT::i1;
@@ -232,6 +206,9 @@ bool isPositiveHalfWord(SDNode *N);
     /// compare a register against the immediate without having to materialize
     /// the immediate into a register.
     bool isLegalICmpImmediate(int64_t Imm) const override;
+
+  private:
+    void setHexLibcallName(RTLIB::Libcall Call, Twine Name);
   };
 } // end namespace llvm
 
