@@ -263,13 +263,14 @@ void LandingPadInst::addClause(Constant *Val) {
 CallInst::~CallInst() {
 }
 
-void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
-                    const Twine &NameStr) {
-  this->FTy = FTy;
+void CallInst::init(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr) {
   assert(NumOperands == Args.size() + 1 && "NumOperands not set up?");
   Op<-1>() = Func;
 
 #ifndef NDEBUG
+  FunctionType *FTy =
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
   assert((Args.size() == FTy->getNumParams() ||
           (FTy->isVarArg() && Args.size() > FTy->getNumParams())) &&
          "Calling a function with bad signature!");
@@ -285,12 +286,15 @@ void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
 }
 
 void CallInst::init(Value *Func, const Twine &NameStr) {
-  FTy =
-      cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
   assert(NumOperands == 1 && "NumOperands not set up?");
   Op<-1>() = Func;
 
+#ifndef NDEBUG
+  FunctionType *FTy =
+    cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+
   assert(FTy->getNumParams() == 0 && "Calling a function with bad signature");
+#endif
 
   setName(NameStr);
 }
@@ -316,10 +320,10 @@ CallInst::CallInst(Value *Func, const Twine &Name,
 }
 
 CallInst::CallInst(const CallInst &CI)
-    : Instruction(CI.getType(), Instruction::Call,
-                  OperandTraits<CallInst>::op_end(this) - CI.getNumOperands(),
-                  CI.getNumOperands()),
-      AttributeList(CI.AttributeList), FTy(CI.FTy) {
+  : Instruction(CI.getType(), Instruction::Call,
+                OperandTraits<CallInst>::op_end(this) - CI.getNumOperands(),
+                CI.getNumOperands()) {
+  setAttributes(CI.getAttributes());
   setTailCallKind(CI.getTailCallKind());
   setCallingConv(CI.getCallingConv());
     
@@ -539,14 +543,15 @@ Instruction* CallInst::CreateFree(Value* Source, BasicBlock *InsertAtEnd) {
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
                       ArrayRef<Value *> Args, const Twine &NameStr) {
-  FTy = cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
-
   assert(NumOperands == 3 + Args.size() && "NumOperands not set up?");
   Op<-3>() = Fn;
   Op<-2>() = IfNormal;
   Op<-1>() = IfException;
 
 #ifndef NDEBUG
+  FunctionType *FTy =
+    cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
+
   assert(((Args.size() == FTy->getNumParams()) ||
           (FTy->isVarArg() && Args.size() > FTy->getNumParams())) &&
          "Invoking a function with bad signature");
@@ -562,11 +567,11 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 }
 
 InvokeInst::InvokeInst(const InvokeInst &II)
-    : TerminatorInst(II.getType(), Instruction::Invoke,
-                     OperandTraits<InvokeInst>::op_end(this) -
-                         II.getNumOperands(),
-                     II.getNumOperands()),
-      AttributeList(II.AttributeList), FTy(II.FTy) {
+  : TerminatorInst(II.getType(), Instruction::Invoke,
+                   OperandTraits<InvokeInst>::op_end(this)
+                   - II.getNumOperands(),
+                   II.getNumOperands()) {
+  setAttributes(II.getAttributes());
   setCallingConv(II.getCallingConv());
   std::copy(II.op_begin(), II.op_end(), op_begin());
   SubclassOptionalData = II.SubclassOptionalData;

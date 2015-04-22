@@ -2120,11 +2120,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
   Assert(FPTy->getElementType()->isFunctionTy(),
          "Called function is not pointer to function type!", I);
-
-  Assert(FPTy->getElementType() == CS.getFunctionType(),
-         "Called function is not the same type as the call!", I);
-
-  FunctionType *FTy = CS.getFunctionType();
+  FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
 
   // Verify that the correct number of arguments are being passed
   if (FTy->isVarArg())
