@@ -85,7 +85,7 @@ EnableA53Fix835769("aarch64-fix-cortex-a53-835769", cl::Hidden,
 static cl::opt<bool>
 EnableGEPOpt("aarch64-gep-opt", cl::Hidden,
              cl::desc("Enable optimizations on complex GEPs"),
-             cl::init(true));
+             cl::init(false));
 
 // FIXME: Unify control over GlobalMerge.
 static cl::opt<cl::boolOrDefault>
