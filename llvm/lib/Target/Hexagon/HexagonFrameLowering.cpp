@@ -928,7 +928,7 @@ void HexagonFrameLowering::processFunctionBeforeCalleeSavedScan(
 bool HexagonFrameLowering::assignCalleeSavedSpillSlots(MachineFunction &MF,
       const TargetRegisterInfo *TRI, std::vector<CalleeSavedInfo> &CSI) const {
   const Function &F = *MF.getFunction();
-  DEBUG(dbgs() << __func__ << " on " << F.getName() << '\n');
+  DEBUG(dbgs() << LLVM_FUNCTION_NAME << " on " << F.getName() << '\n');
   MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned NR = TRI->getNumRegs();
   BitVector SRegs(NR);

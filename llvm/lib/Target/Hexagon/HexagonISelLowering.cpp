@@ -802,7 +802,7 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     A = HFI.getStackAlignment();
 
   DEBUG({
-    dbgs () << __func__ << " Align: " << A << " Size: ";
+    dbgs () << LLVM_FUNCTION_NAME << " Align: " << A << " Size: ";
     Size.getNode()->dump(&DAG);
     dbgs() << "\n";
   });
