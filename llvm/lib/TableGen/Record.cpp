@@ -396,13 +396,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
   // If one is a Record type, check superclasses
   if (RecordRecTy *RecTy1 = dyn_cast<RecordRecTy>(T1)) {
     // See if T2 inherits from a type T1 also inherits from
-    const std::vector<Record *> &T1SuperClasses =
-      RecTy1->getRecord()->getSuperClasses();
-    for(std::vector<Record *>::const_iterator i = T1SuperClasses.begin(),
-          iend = T1SuperClasses.end();
-        i != iend;
-        ++i) {
-      RecordRecTy *SuperRecTy1 = RecordRecTy::get(*i);
+    for (Record *SuperRec1 : RecTy1->getRecord()->getSuperClasses()) {
+      RecordRecTy *SuperRecTy1 = RecordRecTy::get(SuperRec1);
       RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
       if (NewType1)
         return NewType1;
@@ -410,13 +405,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
   }
   if (RecordRecTy *RecTy2 = dyn_cast<RecordRecTy>(T2)) {
     // See if T1 inherits from a type T2 also inherits from
-    const std::vector<Record *> &T2SuperClasses =
-      RecTy2->getRecord()->getSuperClasses();
-    for (std::vector<Record *>::const_iterator i = T2SuperClasses.begin(),
-          iend = T2SuperClasses.end();
-        i != iend;
-        ++i) {
-      RecordRecTy *SuperRecTy2 = RecordRecTy::get(*i);
+    for (Record *SuperRec2 : RecTy2->getRecord()->getSuperClasses()) {
+      RecordRecTy *SuperRecTy2 = RecordRecTy::get(SuperRec2);
       RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
       if (NewType2)
         return NewType2;
