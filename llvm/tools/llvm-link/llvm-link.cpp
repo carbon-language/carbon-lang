@@ -107,6 +107,30 @@ static void diagnosticHandler(const DiagnosticInfo &DI) {
   errs() << '\n';
 }
 
+static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
+                      const cl::list<std::string> &Files) {
+  for (const auto &File : Files) {
+    std::unique_ptr<Module> M = loadFile(argv0, File, Context);
+    if (!M.get()) {
+      errs() << argv0 << ": error loading file '" << File << "'\n";
+      return false;
+    }
+
+    if (verifyModule(*M, &errs())) {
+      errs() << argv0 << ": " << File << ": error: input module is broken!\n";
+      return false;
+    }
+
+    if (Verbose)
+      errs() << "Linking in '" << File << "'\n";
+
+    if (L.linkInModule(M.get()))
+      return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -119,24 +143,8 @@ int main(int argc, char **argv) {
   auto Composite = make_unique<Module>("llvm-link", Context);
   Linker L(Composite.get(), diagnosticHandler);
 
-  for (unsigned i = 0; i < InputFilenames.size(); ++i) {
-    std::unique_ptr<Module> M = loadFile(argv[0], InputFilenames[i], Context);
-    if (!M.get()) {
-      errs() << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
-      return 1;
-    }
-
-    if (verifyModule(*M, &errs())) {
-      errs() << argv[0] << ": " << InputFilenames[i]
-             << ": error: input module is broken!\n";
-      return 1;
-    }
-
-    if (Verbose) errs() << "Linking in '" << InputFilenames[i] << "'\n";
-
-    if (L.linkInModule(M.get()))
-      return 1;
-  }
+  if (!linkFiles(argv[0], Context, L, InputFilenames))
+    return 1;
 
   if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
 
