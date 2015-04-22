@@ -1,6 +1,4 @@
 ; RUN: llc -O0 %s -o /dev/null
-; XFAIL: hexagon
-; PR 8235
 
 define void @CGRectStandardize(i32* sret %agg.result, i32* byval %rect) nounwind ssp {
 entry:
