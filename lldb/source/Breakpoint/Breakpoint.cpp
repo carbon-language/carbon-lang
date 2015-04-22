@@ -949,6 +949,34 @@ Breakpoint::GetFilterDescription (Stream *s)
     m_filter_sp->GetDescription (s);
 }
 
+bool
+Breakpoint::EvaluatePrecondition (StoppointCallbackContext &context)
+{
+    if (!m_precondition_sp)
+        return true;
+
+    return m_precondition_sp->EvaluatePrecondition(context);
+}
+
+bool
+Breakpoint::BreakpointPrecondition::EvaluatePrecondition(StoppointCallbackContext &context)
+{
+    return true;
+}
+
+void
+Breakpoint::BreakpointPrecondition::DescribePrecondition(Stream &stream, lldb::DescriptionLevel level)
+{
+}
+
+Error
+Breakpoint::BreakpointPrecondition::ConfigurePrecondition(Args &options)
+{
+    Error error;
+    error.SetErrorString("Base breakpoint precondition has no options.");
+    return error;
+}
+
 void
 Breakpoint::SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind)
 {

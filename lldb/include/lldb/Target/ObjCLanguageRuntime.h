@@ -289,6 +289,24 @@ public:
     protected:
         std::unique_ptr<ClangASTContext> m_scratch_ast_ctx_ap;
     };
+
+    class ObjCExceptionPrecondition : public Breakpoint::BreakpointPrecondition
+    {
+    public:
+        ObjCExceptionPrecondition();
+
+        virtual ~ObjCExceptionPrecondition() {}
+
+        bool EvaluatePrecondition(StoppointCallbackContext &context) override;
+        void DescribePrecondition(Stream &stream, lldb::DescriptionLevel level) override;
+        Error ConfigurePrecondition(Args &args) override;
+
+    protected:
+        void AddClassName(const char *class_name);
+
+    private:
+        std::unordered_set<std::string> m_class_names;
+    };
     
     typedef std::shared_ptr<EncodingToType> EncodingToTypeSP;
     

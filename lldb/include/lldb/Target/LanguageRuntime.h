@@ -80,11 +80,16 @@ public:
     
     static lldb::BreakpointSP
     CreateExceptionBreakpoint (Target &target,
-                               lldb::LanguageType language, 
+                               lldb::LanguageType language,
                                bool catch_bp, 
                                bool throw_bp, 
                                bool is_internal = false);
-                            
+
+    static Breakpoint::BreakpointPreconditionSP
+    CreateExceptionPrecondition (lldb::LanguageType language,
+                                 bool catch_bp,
+                                 bool throw_bp);
+
     static lldb::LanguageType
     GetLanguageTypeFromString (const char *string);
     

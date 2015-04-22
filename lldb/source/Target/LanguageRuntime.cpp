@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/SearchFilter.h"
@@ -277,6 +278,23 @@ LanguageRuntime::~LanguageRuntime()
 {
 }
 
+Breakpoint::BreakpointPreconditionSP
+LanguageRuntime::CreateExceptionPrecondition (lldb::LanguageType language,
+                                              bool catch_bp,
+                                              bool throw_bp)
+{
+    switch (language)
+    {
+    case eLanguageTypeObjC:
+        if (throw_bp)
+            return Breakpoint::BreakpointPreconditionSP(new ObjCLanguageRuntime::ObjCExceptionPrecondition ());
+        break;
+    default:
+        break;
+    }
+    return Breakpoint::BreakpointPreconditionSP();
+}
+
 BreakpointSP
 LanguageRuntime::CreateExceptionBreakpoint (Target &target,
                                             lldb::LanguageType language,
@@ -289,8 +307,15 @@ LanguageRuntime::CreateExceptionBreakpoint (Target &target,
     bool hardware = false;
     bool resolve_indirect_functions = false;
     BreakpointSP exc_breakpt_sp (target.CreateBreakpoint (filter_sp, resolver_sp, is_internal, hardware, resolve_indirect_functions));
-    if (is_internal)
-        exc_breakpt_sp->SetBreakpointKind("exception");
+    if (exc_breakpt_sp)
+    {
+        Breakpoint::BreakpointPreconditionSP precondition_sp = CreateExceptionPrecondition(language, catch_bp, throw_bp);
+        if (precondition_sp)
+            exc_breakpt_sp->SetPrecondition(precondition_sp);
+
+        if (is_internal)
+            exc_breakpt_sp->SetBreakpointKind("exception");
+    }
     
     return exc_breakpt_sp;
 }

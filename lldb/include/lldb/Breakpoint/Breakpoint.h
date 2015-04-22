@@ -155,6 +155,23 @@ public:
     };
 
 
+    class BreakpointPrecondition
+    {
+    public:
+        virtual ~BreakpointPrecondition() {}
+
+        virtual bool
+        EvaluatePrecondition(StoppointCallbackContext &context);
+
+        virtual Error
+        ConfigurePrecondition(Args &options);
+
+        virtual void
+        DescribePrecondition(Stream &stream, lldb::DescriptionLevel level);
+    };
+
+    typedef std::shared_ptr<BreakpointPrecondition> BreakpointPreconditionSP;
+
     //------------------------------------------------------------------
     /// Destructor.
     ///
@@ -665,6 +682,31 @@ public:
         }
     }
 
+    //------------------------------------------------------------------
+    /// Set a pre-condition filter that overrides all user provided filters/callbacks etc.
+    ///
+    /// Used to define fancy breakpoints that can do dynamic hit detection without taking up the condition slot -
+    /// which really belongs to the user anyway...
+    ///
+    /// The Precondition should not continue the target, it should return true if the condition says to stop and
+    /// false otherwise.
+    ///
+    //------------------------------------------------------------------
+    void
+    SetPrecondition(BreakpointPreconditionSP precondition_sp)
+    {
+        m_precondition_sp = precondition_sp;
+    }
+
+    bool
+    EvaluatePrecondition (StoppointCallbackContext &context);
+
+    BreakpointPreconditionSP
+    GetPrecondition()
+    {
+        return m_precondition_sp;
+    }
+
 protected:
     friend class Target;
     //------------------------------------------------------------------
@@ -737,13 +779,17 @@ private:
     // For Breakpoint only
     //------------------------------------------------------------------
     bool m_being_created;
-    bool m_hardware;                          // If this breakpoint is required to use a hardware breakpoint
-    Target &m_target;                         // The target that holds this breakpoint.
+    bool m_hardware;                             // If this breakpoint is required to use a hardware breakpoint
+    Target &m_target;                            // The target that holds this breakpoint.
     std::unordered_set<std::string> m_name_list; // If not empty, this is the name of this breakpoint (many breakpoints can share the same name.)
-    lldb::SearchFilterSP m_filter_sp;         // The filter that constrains the breakpoint's domain.
-    lldb::BreakpointResolverSP m_resolver_sp; // The resolver that defines this breakpoint.
-    BreakpointOptions m_options;              // Settable breakpoint options
-    BreakpointLocationList m_locations;       // The list of locations currently found for this breakpoint.
+    lldb::SearchFilterSP m_filter_sp;            // The filter that constrains the breakpoint's domain.
+    lldb::BreakpointResolverSP m_resolver_sp;    // The resolver that defines this breakpoint.
+    BreakpointPreconditionSP m_precondition_sp;  // The precondition is a breakpoint-level hit filter that can be used
+                                                 // to skip certain breakpoint hits.  For instance, exception breakpoints
+                                                 // use this to limit the stop to certain exception classes, while leaving
+                                                 // the condition & callback free for user specification.
+    BreakpointOptions m_options;                 // Settable breakpoint options
+    BreakpointLocationList m_locations;          // The list of locations currently found for this breakpoint.
     std::string m_kind_description;
     bool m_resolve_indirect_symbols;
     uint32_t    m_hit_count;                   // Number of times this breakpoint/watchpoint has been hit.  This is kept

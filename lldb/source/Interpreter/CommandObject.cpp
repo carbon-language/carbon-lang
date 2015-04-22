@@ -1193,6 +1193,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, { nullptr, false }, "Thread ID number." },
     { eArgTypeThreadIndex, "thread-index", CommandCompletions::eNoCompletion, { nullptr, false }, "Index into the process' list of threads." },
     { eArgTypeThreadName, "thread-name", CommandCompletions::eNoCompletion, { nullptr, false }, "The thread's name." },
+    { eArgTypeTypeName, "type-name", CommandCompletions::eNoCompletion, { nullptr, false }, "A type name." },
     { eArgTypeUnsignedInteger, "unsigned-integer", CommandCompletions::eNoCompletion, { nullptr, false }, "An unsigned integer." },
     { eArgTypeUnixSignal, "unix-signal", CommandCompletions::eNoCompletion, { nullptr, false }, "A valid Unix signal name or number (e.g. SIGKILL, KILL or 9)." },
     { eArgTypeVarName, "variable-name", CommandCompletions::eNoCompletion, { nullptr, false }, "The name of a variable in your program." },

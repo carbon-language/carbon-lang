@@ -89,6 +89,9 @@ public:
     //    callback.
     // Asynchronous callbacks get run as part of the "ShouldStop" logic in the thread plan.  The logic there is:
     //   a) If the breakpoint is thread specific and not for this thread, continue w/o running the callback.
+    //      NB. This is actually enforced underneath the breakpoint system, the Process plugin is expected to
+    //      call BreakpointSite::IsValidForThread, and set the thread's StopInfo to "no reason".  That way,
+    //      thread displays won't show stops for breakpoints not for that thread...
     //   b) If the ignore count says we shouldn't stop, then ditto.
     //   c) If the condition says we shouldn't stop, then ditto.
     //   d) Otherwise, the callback will get run, and if it returns true we will stop, and if false we won't.

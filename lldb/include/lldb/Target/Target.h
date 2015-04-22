@@ -741,7 +741,12 @@ public:
                       bool request_hardware);
                       
     lldb::BreakpointSP
-    CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_bp, bool throw_bp, bool internal);
+    CreateExceptionBreakpoint (enum lldb::LanguageType language,
+                               bool catch_bp,
+                               bool throw_bp,
+                               bool internal,
+                               Args *additional_args = nullptr,
+                               Error *additional_args_error = nullptr);
     
     // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
     // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names

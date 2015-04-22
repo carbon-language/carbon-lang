@@ -670,3 +670,36 @@ ObjCLanguageRuntime::GetTypeBitSize (const ClangASTType& clang_type,
     
     return found;
 }
+
+//------------------------------------------------------------------
+// Exception breakpoint Precondition class for ObjC:
+//------------------------------------------------------------------
+void
+ObjCLanguageRuntime::ObjCExceptionPrecondition::AddClassName(const char *class_name)
+{
+    m_class_names.insert(class_name);
+}
+
+ObjCLanguageRuntime::ObjCExceptionPrecondition::ObjCExceptionPrecondition()
+{
+}
+
+bool
+ObjCLanguageRuntime::ObjCExceptionPrecondition::EvaluatePrecondition(StoppointCallbackContext &context)
+{
+    return true;
+}
+
+void
+ObjCLanguageRuntime::ObjCExceptionPrecondition::DescribePrecondition(Stream &stream, lldb::DescriptionLevel level)
+{
+}
+
+Error
+ObjCLanguageRuntime::ObjCExceptionPrecondition::ConfigurePrecondition(Args &args)
+{
+    Error error;
+    if (args.GetArgumentCount() > 0)
+        error.SetErrorString("The ObjC Exception breakpoint doesn't support extra options.");
+    return error;
+}

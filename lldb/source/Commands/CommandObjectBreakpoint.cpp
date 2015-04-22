@@ -112,7 +112,7 @@ public:
             m_catch_bp (false),
             m_throw_bp (true),
             m_hardware (false),
-            m_language (eLanguageTypeUnknown),
+            m_exception_language (eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate),
             m_one_shot (false),
             m_all_files (false)
@@ -173,16 +173,16 @@ public:
                         case eLanguageTypeC:
                         case eLanguageTypeC99:
                         case eLanguageTypeC11:
-                            m_language = eLanguageTypeC;
+                            m_exception_language = eLanguageTypeC;
                             break;
                         case eLanguageTypeC_plus_plus:
                         case eLanguageTypeC_plus_plus_03:
                         case eLanguageTypeC_plus_plus_11:
                         case eLanguageTypeC_plus_plus_14:
-                            m_language = eLanguageTypeC_plus_plus;
+                            m_exception_language = eLanguageTypeC_plus_plus;
                             break;
                         case eLanguageTypeObjC:
-                            m_language = eLanguageTypeObjC;
+                            m_exception_language = eLanguageTypeObjC;
                             break;
                         case eLanguageTypeObjC_plus_plus:
                             error.SetErrorStringWithFormat ("Set exception breakpoints separately for c++ and objective-c");
@@ -268,6 +268,11 @@ public:
                     m_one_shot = true;
                     break;
 
+                case 'O':
+                    m_exception_extra_args.AppendArgument ("-O");
+                    m_exception_extra_args.AppendArgument (option_arg);
+                    break;
+
                 case 'p':
                     m_source_text_regexp.assign (option_arg);
                     break;
@@ -349,12 +354,13 @@ public:
             m_catch_bp = false;
             m_throw_bp = true;
             m_hardware = false;
-            m_language = eLanguageTypeUnknown;
+            m_exception_language = eLanguageTypeUnknown;
             m_skip_prologue = eLazyBoolCalculate;
             m_one_shot = false;
             m_use_dummy = false;
             m_breakpoint_names.clear();
             m_all_files = false;
+            m_exception_extra_args.Clear();
         }
     
         const OptionDefinition*
@@ -388,11 +394,12 @@ public:
         bool m_catch_bp;
         bool m_throw_bp;
         bool m_hardware; // Request to use hardware breakpoints
-        lldb::LanguageType m_language;
+        lldb::LanguageType m_exception_language;
         LazyBool m_skip_prologue;
         bool m_one_shot;
         bool m_use_dummy;
         bool m_all_files;
+        Args m_exception_extra_args;
 
     };
 
@@ -430,7 +437,7 @@ protected:
             break_type = eSetTypeFunctionRegexp;
         else if (!m_options.m_source_text_regexp.empty())
             break_type = eSetTypeSourceRegexp;
-        else if (m_options.m_language != eLanguageTypeUnknown)
+        else if (m_options.m_exception_language != eLanguageTypeUnknown)
             break_type = eSetTypeException;
 
         Breakpoint *bp = NULL;
@@ -556,10 +563,21 @@ protected:
                 break;
             case eSetTypeException:
                 {
-                    bp = target->CreateExceptionBreakpoint (m_options.m_language,
+                    Error precond_error;
+                    bp = target->CreateExceptionBreakpoint (m_options.m_exception_language,
                                                             m_options.m_catch_bp,
                                                             m_options.m_throw_bp,
-                                                            internal).get();
+                                                            internal,
+                                                            &m_options.m_exception_extra_args,
+                                                            &precond_error).get();
+                    if (precond_error.Fail())
+                    {
+                        result.AppendErrorWithFormat("Error setting extra exception arguments: %s",
+                                                     precond_error.AsCString());
+                        target->RemoveBreakpointByID(bp->GetID());
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    }
                 }
                 break;
             default:
@@ -757,6 +775,10 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_10, false, "on-catch", 'h', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
         "Set the breakpoint on exception catcH." },
+
+//  Don't add this option till it actually does something useful...
+//    { LLDB_OPT_SET_10, false, "exception-typename", 'O', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeTypeName,
+//        "The breakpoint will only stop if an exception Object of this type is thrown.  Can be repeated multiple times to stop for multiple object types" },
 
     { LLDB_OPT_SKIP_PROLOGUE, false, "skip-prologue", 'K', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
         "sKip the prologue if the breakpoint is at the beginning of a function.  If not set the target.skip-prologue setting is used." },
