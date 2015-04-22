@@ -57,14 +57,16 @@ define <4 x float> @test_vec_fpext_float(<4 x half>* %p) #0 {
   ret <4 x float> %b
 }
 
+; This test is not robust against variations in instruction scheduling.
+; See the discussion in http://reviews.llvm.org/D8804
 ; CHECK-LIBCALL-LABEL: test_vec_fpext_double:
-; CHECK-LIBCALL-DAG: %call16(__gnu_h2f_ieee)
-; CHECK-LIBCALL-DAG: %call16(__gnu_h2f_ieee)
-; CHECK-LIBCALL-DAG: %call16(__gnu_h2f_ieee)
-; CHECK-LIBCALL-DAG: %call16(__gnu_h2f_ieee)
-; CHECK-LIBCALL-DAG: cvt.d.s
-; CHECK-LIBCALL-DAG: cvt.d.s
-; CHECK-LIBCALL-DAG: cvt.d.s
+; CHECK-LIBCALL: %call16(__gnu_h2f_ieee)
+; CHECK-LIBCALL: %call16(__gnu_h2f_ieee)
+; CHECK-LIBCALL: %call16(__gnu_h2f_ieee)
+; CHECK-LIBCALL: cvt.d.s
+; CHECK-LIBCALL: cvt.d.s
+; CHECK-LIBCALL: cvt.d.s
+; CHECK-LIBCALL: %call16(__gnu_h2f_ieee)
 ; CHECK-LIBCALL: cvt.d.s
 define <4 x double> @test_vec_fpext_double(<4 x half>* %p) #0 {
   %a = load <4 x half>, <4 x half>* %p, align 8
