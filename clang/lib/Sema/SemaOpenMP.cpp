@@ -4716,10 +4716,10 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     // the new private variable in CodeGen. This new variable is not added to
     // IdResolver, so the code in the OpenMP region uses original variable for
     // proper diagnostics.
-    auto VDPrivate =
-        VarDecl::Create(Context, CurContext, DE->getLocStart(),
-                        DE->getExprLoc(), VD->getIdentifier(), VD->getType(),
-                        VD->getTypeSourceInfo(), /*S*/ SC_Auto);
+    auto VDPrivate = VarDecl::Create(Context, CurContext, DE->getLocStart(),
+                                     DE->getExprLoc(), VD->getIdentifier(),
+                                     VD->getType().getUnqualifiedType(),
+                                     VD->getTypeSourceInfo(), /*S*/ SC_Auto);
     ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto*/ false);
     if (VDPrivate->isInvalidDecl())
       continue;

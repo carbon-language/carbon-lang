@@ -242,22 +242,26 @@ void CodeGenFunction::EmitOMPPrivateClause(
   auto PrivateFilter = [](const OMPClause *C) -> bool {
     return C->getClauseKind() == OMPC_private;
   };
+  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
   for (OMPExecutableDirective::filtered_clause_iterator<decltype(PrivateFilter)>
-           I(D.clauses(), PrivateFilter); I; ++I) {
+           I(D.clauses(), PrivateFilter);
+       I; ++I) {
     auto *C = cast<OMPPrivateClause>(*I);
     auto IRef = C->varlist_begin();
     for (auto IInit : C->private_copies()) {
       auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
-      auto VD = cast<VarDecl>(cast<DeclRefExpr>(IInit)->getDecl());
-      bool IsRegistered =
-          PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value * {
-            // Emit private VarDecl with copy init.
-            EmitDecl(*VD);
-            return GetAddrOfLocalVar(VD);
-          });
-      assert(IsRegistered && "private var already registered as private");
-      // Silence the warning about unused variable.
-      (void)IsRegistered;
+      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
+        auto VD = cast<VarDecl>(cast<DeclRefExpr>(IInit)->getDecl());
+        bool IsRegistered =
+            PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value *{
+              // Emit private VarDecl with copy init.
+              EmitDecl(*VD);
+              return GetAddrOfLocalVar(VD);
+            });
+        assert(IsRegistered && "private var already registered as private");
+        // Silence the warning about unused variable.
+        (void)IsRegistered;
+      }
       ++IRef;
     }
   }
@@ -1072,6 +1076,7 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
         CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(),
                                                OMPD_unknown);
       }
+      EmitOMPPrivateClause(S, LoopScope);
       HasLastprivateClause = EmitOMPLastprivateClauseInit(S, LoopScope);
       EmitPrivateLoopCounters(*this, LoopScope, S.counters());
       (void)LoopScope.Privatize();
