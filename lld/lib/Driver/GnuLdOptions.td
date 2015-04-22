@@ -333,10 +333,16 @@ def alias_output_filetype: Joined<["--"], "output-filetype=">,
 //===----------------------------------------------------------------------===//
 def grp_targetopts : OptionGroup<"opts">,
      HelpText<"ARCH SPECIFIC OPTIONS">;
-def arm_target1_rel : Flag<["--"], "arm-target1-rel">,
-     Group<grp_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_REL32">;
-def arm_target1_abs : Flag<["--"], "arm-target1-abs">,
-     Group<grp_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32">;
+
+//===----------------------------------------------------------------------===//
+/// ARM Target Specific Options
+//===----------------------------------------------------------------------===//
+def grp_arm_targetopts : OptionGroup<"ARM SPECIFIC OPTIONS">,
+     Group<grp_targetopts>;
+def target1_rel : Flag<["--"], "target1-rel">,
+     Group<grp_arm_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_REL32">;
+def target1_abs : Flag<["--"], "target1-abs">,
+     Group<grp_arm_targetopts>, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32">;
 
 //===----------------------------------------------------------------------===//
 /// MIPS Target Specific Options

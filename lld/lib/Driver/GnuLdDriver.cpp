@@ -545,22 +545,21 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     ctx->setOutputFileType(arg->getValue());
 
   // Process ELF/ARM specific options
-  bool hasArmTarget1Rel = parsedArgs->hasArg(OPT_arm_target1_rel);
-  bool hasArmTarget1Abs = parsedArgs->hasArg(OPT_arm_target1_abs);
+  bool hasArmTarget1Rel = parsedArgs->hasArg(OPT_target1_rel);
+  bool hasArmTarget1Abs = parsedArgs->hasArg(OPT_target1_abs);
   if (triple.getArch() == llvm::Triple::arm) {
     if (hasArmTarget1Rel && hasArmTarget1Abs) {
-      diag << "error: options --arm-target1-rel and --arm-target1-abs"
+      diag << "error: options --target1-rel and --target1-abs"
               " can't be used together.\n";
       return false;
     } else if (hasArmTarget1Rel || hasArmTarget1Abs) {
       ctx->setArmTarget1Rel(hasArmTarget1Rel && !hasArmTarget1Abs);
     }
-  } else if (hasArmTarget1Rel) {
-    diag << "warning: ignoring unsupported ARM/ELF specific argument: "
-         << "--arm-target1-rel\n";
-  } else if (hasArmTarget1Abs) {
-    diag << "warning: ignoring unsupported ARM/ELF specific argument: "
-         << "--arm-target1-abs\n";
+  } else {
+    for (const auto *arg : parsedArgs->filtered(OPT_grp_arm_targetopts)) {
+      diag << "warning: ignoring unsupported ARM/ELF specific argument: "
+           << arg->getSpelling() << "\n";
+    }
   }
 
   // Process MIPS specific options.
