@@ -76,7 +76,7 @@ public:
                      const MipsReginfo &reginfo)
       : Section<ELFT>(ctx, ".MIPS.options", "MipsOptions"),
         _targetLayout(targetLayout) {
-    this->setOrder(MipsTargetLayout<ELFT>::ORDER_RO_NOTE);
+    this->setOrder(MipsTargetLayout<ELFT>::ORDER_MIPS_OPTIONS);
     this->_entSize = 1;
     this->_alignment = 8;
     this->_fsize = llvm::RoundUpToAlignment(
@@ -97,6 +97,8 @@ public:
     _reginfo.ri_cprmask[2] = reginfo._cpRegMask[2];
     _reginfo.ri_cprmask[3] = reginfo._cpRegMask[3];
   }
+
+  bool hasOutputSegment() const override { return true; }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer) override {

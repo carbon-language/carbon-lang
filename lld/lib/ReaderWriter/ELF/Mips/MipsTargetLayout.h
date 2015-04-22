@@ -21,7 +21,8 @@ class MipsLinkingContext;
 template <class ELFT> class MipsTargetLayout final : public TargetLayout<ELFT> {
 public:
   enum MipsSectionOrder {
-    ORDER_MIPS_REGINFO = TargetLayout<ELFT>::ORDER_RO_NOTE + 1
+    ORDER_MIPS_REGINFO = TargetLayout<ELFT>::ORDER_RO_NOTE + 1,
+    ORDER_MIPS_OPTIONS
   };
 
   MipsTargetLayout(MipsLinkingContext &ctx)
@@ -48,6 +49,8 @@ public:
     switch (section->order()) {
     case ORDER_MIPS_REGINFO:
       return llvm::ELF::PT_MIPS_REGINFO;
+    case ORDER_MIPS_OPTIONS:
+      return llvm::ELF::PT_LOAD;
     default:
       return TargetLayout<ELFT>::getSegmentType(section);
     }

@@ -39,7 +39,6 @@
 # PHDR:      Type: PT_LOAD
 # PHDR-NOT:  Type: PT_LOAD
 # PHDR:      Type: PT_DYNAMIC
-# PHDR:      Type: PT_NOTE
 
 # t1.o
 ---
