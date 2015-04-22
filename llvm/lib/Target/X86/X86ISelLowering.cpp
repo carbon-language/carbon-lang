@@ -22948,6 +22948,27 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                 MinAlign(St->getAlignment(), 4));
     return DAG.getNode(ISD::TokenFactor, StDL, MVT::Other, LoSt, HiSt);
   }
+
+  // This is similar to the above case, but here we handle a scalar 64-bit
+  // integer store that is extracted from a vector on a 32-bit target.
+  // If we have SSE2, then we can treat it like a floating-point double
+  // to get past legalization. The execution dependencies fixup pass will
+  // choose the optimal machine instruction for the store if this really is
+  // an integer or v2f32 rather than an f64.
+  if (VT == MVT::i64 && F64IsLegal && !Subtarget->is64Bit() &&
+      St->getOperand(1).getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+    SDValue OldExtract = St->getOperand(1);
+    SDValue ExtOp0 = OldExtract.getOperand(0);
+    unsigned VecSize = ExtOp0.getValueSizeInBits();
+    MVT VecVT = MVT::getVectorVT(MVT::f64, VecSize / 64);
+    SDValue BitCast = DAG.getNode(ISD::BITCAST, dl, VecVT, ExtOp0);
+    SDValue NewExtract = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
+                                     BitCast, OldExtract.getOperand(1));
+    return DAG.getStore(St->getChain(), dl, NewExtract, St->getBasePtr(),
+                        St->getPointerInfo(), St->isVolatile(),
+                        St->isNonTemporal(), St->getAlignment());
+  }
+
   return SDValue();
 }
 
