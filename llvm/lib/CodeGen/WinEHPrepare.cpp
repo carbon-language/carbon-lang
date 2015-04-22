@@ -175,7 +175,11 @@ public:
       : Materializer(HandlerFn, VarInfo),
         SelectorIDType(Type::getInt32Ty(HandlerFn->getContext())),
         Int8PtrType(Type::getInt8PtrTy(HandlerFn->getContext())),
-        LPadMap(LPadMap) {}
+        LPadMap(LPadMap) {
+    auto AI = HandlerFn->getArgumentList().begin();
+    ++AI;
+    EstablisherFrame = AI;
+  }
 
   CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                   const Instruction *Inst,
@@ -210,6 +214,9 @@ protected:
   Type *SelectorIDType;
   Type *Int8PtrType;
   LandingPadMap &LPadMap;
+
+  /// The value representing the parent frame pointer.
+  Value *EstablisherFrame;
 };
 
 class WinEHCatchDirector : public WinEHCloningDirectorBase {
@@ -520,12 +527,24 @@ bool WinEHPrepare::prepareExceptionHandlers(
       Intrinsic::getDeclaration(M, Intrinsic::frameescape);
   Function *RecoverFrameFn =
       Intrinsic::getDeclaration(M, Intrinsic::framerecover);
+  SmallVector<Value *, 8> AllocasToEscape;
+
+  // Scan the entry block for an existing call to llvm.frameescape. We need to
+  // keep escaping those objects.
+  for (Instruction &I : F.front()) {
+    auto *II = dyn_cast<IntrinsicInst>(&I);
+    if (II && II->getIntrinsicID() == Intrinsic::frameescape) {
+      auto Args = II->arg_operands();
+      AllocasToEscape.append(Args.begin(), Args.end());
+      II->eraseFromParent();
+      break;
+    }
+  }
 
   // Finally, replace all of the temporary allocas for frame variables used in
   // the outlined handlers with calls to llvm.framerecover.
   BasicBlock::iterator II = Entry->getFirstInsertionPt();
   Instruction *AllocaInsertPt = II;
-  SmallVector<Value *, 8> AllocasToEscape;
   for (auto &VarInfoEntry : FrameVarInfo) {
     Value *ParentVal = VarInfoEntry.first;
     TinyPtrVector<AllocaInst *> &Allocas = VarInfoEntry.second;
@@ -1051,6 +1070,11 @@ void LandingPadMap::remapEHValues(ValueToValueMapTy &VMap, Value *EHPtrValue,
     VMap[Extract] = SelectorValue;
 }
 
+static bool isFrameAddressCall(const Value *V) {
+  return match(const_cast<Value *>(V),
+               m_Intrinsic<Intrinsic::frameaddress>(m_SpecificInt(0)));
+}
+
 CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
     ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
   // If this is one of the boilerplate landing pad instructions, skip it.
@@ -1082,6 +1106,13 @@ CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
     return handleEndCatch(VMap, Inst, NewBB);
   if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>()))
     return handleTypeIdFor(VMap, Inst, NewBB);
+
+  // When outlining llvm.frameaddress(i32 0), remap that to the second argument,
+  // which is the FP of the parent.
+  if (isFrameAddressCall(Inst)) {
+    VMap[Inst] = EstablisherFrame;
+    return CloningDirector::SkipInstruction;
+  }
 
   // Continue with the default cloning behavior.
   return CloningDirector::CloneInstruction;
@@ -1582,10 +1613,6 @@ static void createCleanupHandler(LandingPadActions &Actions,
   Actions.insertCleanupHandler(Action);
   DEBUG(dbgs() << "  Found cleanup code in block "
                << Action->getStartBlock()->getName() << "\n");
-}
-
-static bool isFrameAddressCall(Value *V) {
-  return match(V, m_Intrinsic<Intrinsic::frameaddress>(m_SpecificInt(0)));
 }
 
 static CallSite matchOutlinedFinallyCall(BasicBlock *BB,
