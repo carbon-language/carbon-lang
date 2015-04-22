@@ -73,8 +73,8 @@ StringRef HexagonInstPrinter::getOpcodeName(unsigned Opcode) const {
   return MII.getName(Opcode);
 }
 
-StringRef HexagonInstPrinter::getRegName(unsigned RegNo) const {
-  return getRegisterName(RegNo);
+void HexagonInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
+  OS << getRegisterName(RegNo);
 }
 
 void HexagonInstPrinter::printInst(MCInst const *MI, raw_ostream &O,
@@ -126,7 +126,7 @@ void HexagonInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand& MO = MI->getOperand(OpNo);
 
   if (MO.isReg()) {
-    O << getRegisterName(MO.getReg());
+    printRegName(O, MO.getReg());
   } else if(MO.isExpr()) {
     O << *MO.getExpr();
   } else if(MO.isImm()) {
@@ -188,7 +188,7 @@ void HexagonInstPrinter::printMEMriOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand& MO0 = MI->getOperand(OpNo);
   const MCOperand& MO1 = MI->getOperand(OpNo + 1);
 
-  O << getRegisterName(MO0.getReg());
+  printRegName(O, MO0.getReg());
   O << " + #" << MO1.getImm();
 }
 
@@ -197,7 +197,8 @@ void HexagonInstPrinter::printFrameIndexOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand& MO0 = MI->getOperand(OpNo);
   const MCOperand& MO1 = MI->getOperand(OpNo + 1);
 
-  O << getRegisterName(MO0.getReg()) << ", #" << MO1.getImm();
+  printRegName(O, MO0.getReg());
+  O << ", #" << MO1.getImm();
 }
 
 void HexagonInstPrinter::printGlobalOperand(const MCInst *MI, unsigned OpNo,
