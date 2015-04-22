@@ -2849,8 +2849,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       }
 
       SmallPtrSet<const Type*, 4> Visited;
-      if (!Indices.empty() &&
-          !BasePointerType->getElementType()->isSized(&Visited))
+      if (!Indices.empty() && !Ty->isSized(&Visited))
         return Error(ID.Loc, "base element of getelementptr must be sized");
 
       if (!GetElementPtrInst::getIndexedType(Ty, Indices))
