@@ -4526,10 +4526,18 @@ def Y2_barrier : SYSInst<(outs), (ins),
 // SYSTEM/SUPER -
 //===----------------------------------------------------------------------===//
 
-// Generate frameindex addresses.
+// Generate frameindex addresses. The main reason for the offset operand is
+// that every instruction that is allowed to have frame index as an operand
+// will then have that operand followed by an immediate operand (the offset).
+// This simplifies the frame-index elimination code.
+//
 let isMoveImm = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
-    isPseudo = 1, isCodeGenOnly = 1, hasSideEffects = 0 in
-def TFR_FI: ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$fi, s32Imm:$Off), "">;
+    isPseudo = 1, isCodeGenOnly = 1, hasSideEffects = 0 in {
+  def TFR_FI  : ALU32_ri<(outs IntRegs:$Rd),
+                         (ins IntRegs:$fi, s32Imm:$off), "">;
+  def TFR_FIA : ALU32_ri<(outs IntRegs:$Rd),
+                         (ins IntRegs:$Rs, IntRegs:$fi, s32Imm:$off), "">;
+}
 
 //===----------------------------------------------------------------------===//
 // CRUSER - Type.
@@ -5105,21 +5113,25 @@ def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
 )>;
 
 // Hexagon specific ISD nodes.
-def SDTHexagonADJDYNALLOC : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
-                                                 SDTCisVT<1, i32>]>;
-def SDTHexagonARGEXTEND   : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+def SDTHexagonALLOCA : SDTypeProfile<1, 2,
+      [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def HexagonALLOCA : SDNode<"HexagonISD::ALLOCA", SDTHexagonALLOCA,
+      [SDNPHasChain]>;
 
-def Hexagon_ADJDYNALLOC : SDNode<"HexagonISD::ADJDYNALLOC",
-                                  SDTHexagonADJDYNALLOC>;
-def Hexagon_ARGEXTEND   : SDNode<"HexagonISD::ARGEXTEND", SDTHexagonARGEXTEND>;
+// The reason for the custom inserter is to record all ALLOCA instructions
+// in MachineFunctionInfo.
+let Defs = [R29], isCodeGenOnly = 1, isPseudo = 1, hasSideEffects = 1,
+    usesCustomInserter = 1 in
+def ALLOCA: ALU32Inst<(outs IntRegs:$Rd),
+      (ins IntRegs:$Rs, u32Imm:$A), "",
+      [(set (i32 IntRegs:$Rd),
+            (HexagonALLOCA (i32 IntRegs:$Rs), (i32 imm:$A)))]>;
 
-// Needed to tag these instructions for stack layout.
-let isCodeGenOnly = 1, usesCustomInserter = 1 in
-def ADJDYNALLOC : T_Addri<s6Imm>;
+let isCodeGenOnly = 1, isPseudo = 1, Uses = [R30], hasSideEffects = 0 in
+def ALIGNA : ALU32Inst<(outs IntRegs:$Rd), (ins u32Imm:$A), "", []>;
 
-def: Pat<(Hexagon_ADJDYNALLOC I32:$Rs, s16ImmPred:$s16),
-         (ADJDYNALLOC I32:$Rs, imm:$s16)>;
-
+def SDTHexagonARGEXTEND : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+def Hexagon_ARGEXTEND : SDNode<"HexagonISD::ARGEXTEND", SDTHexagonARGEXTEND>;
 let isCodeGenOnly = 1 in
 def ARGEXTEND : ALU32_rr <(outs IntRegs:$dst), (ins IntRegs:$src1),
                 "$dst = $src1",

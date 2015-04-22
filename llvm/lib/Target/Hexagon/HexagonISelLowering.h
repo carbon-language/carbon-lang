@@ -34,7 +34,7 @@ bool isPositiveHalfWord(SDNode *N);
       CONST32_Int_Real,
       FCONST32,
       SETCC,
-      ADJDYNALLOC,
+      ALLOCA,
       ARGEXTEND,
 
       PIC_ADD,

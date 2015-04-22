@@ -43,24 +43,28 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   /// Code Generation virtual methods...
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
 
-  const TargetRegisterClass* const*
-  getCalleeSavedRegClasses(const MachineFunction *MF = nullptr) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = nullptr) const override;
+  void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
+        unsigned FIOperandNum, RegScavenger *RS = nullptr) const override;
 
-  /// determineFrameLayout - Determine the size of the frame and maximum call
-  /// frame size.
-  void determineFrameLayout(MachineFunction &MF) const;
-
-  /// requiresRegisterScavenging - returns true since we may need scavenging for
-  /// a temporary register when generating hardware loop instructions.
+  /// Returns true since we may need scavenging for a temporary register
+  /// when generating hardware loop instructions.
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;
   }
+
+  /// Returns true. Spill code for predicate registers might need an extra
+  /// register.
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const override {
+    return true;
+  }
+
+  bool needsStackRealignment(const MachineFunction &MF) const override;
+
+  /// Returns true if the frame pointer is valid.
+  bool useFPForScavengingIndex(const MachineFunction &MF) const override;
 
   bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override {
     return true;
@@ -71,6 +75,12 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   unsigned getFrameRegister(const MachineFunction &MF) const override;
   unsigned getFrameRegister() const;
   unsigned getStackRegister() const;
+
+  const uint16_t *getCallerSavedRegs(const MachineFunction *MF) const;
+  unsigned getFirstCallerSavedNonParamReg() const;
+
+  bool isEHReturnCalleeSaveReg(unsigned Reg) const;
+  bool isCalleeSaveReg(unsigned Reg) const;
 };
 
 } // end namespace llvm

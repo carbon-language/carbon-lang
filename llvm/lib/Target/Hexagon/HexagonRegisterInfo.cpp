@@ -30,7 +30,9 @@
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -39,6 +41,37 @@ using namespace llvm;
 
 HexagonRegisterInfo::HexagonRegisterInfo()
     : HexagonGenRegisterInfo(Hexagon::R31) {}
+
+
+bool HexagonRegisterInfo::isEHReturnCalleeSaveReg(unsigned R) const {
+  return R == Hexagon::R0 || R == Hexagon::R1 || R == Hexagon::R2 ||
+         R == Hexagon::R3 || R == Hexagon::D0 || R == Hexagon::D1;
+}
+
+bool HexagonRegisterInfo::isCalleeSaveReg(unsigned Reg) const {
+  return Hexagon::R16 <= Reg && Reg <= Hexagon::R27;
+}
+
+
+const MCPhysReg *
+HexagonRegisterInfo::getCallerSavedRegs(const MachineFunction *MF) const {
+  static const MCPhysReg CallerSavedRegsV4[] = {
+    Hexagon::R0, Hexagon::R1, Hexagon::R2, Hexagon::R3, Hexagon::R4,
+    Hexagon::R5, Hexagon::R6, Hexagon::R7, Hexagon::R8, Hexagon::R9,
+    Hexagon::R10, Hexagon::R11, Hexagon::R12, Hexagon::R13, Hexagon::R14,
+    Hexagon::R15, 0
+  };
+
+  auto &HST = static_cast<const HexagonSubtarget&>(MF->getSubtarget());
+  switch (HST.getHexagonArchVersion()) {
+  case HexagonSubtarget::V4:
+  case HexagonSubtarget::V5:
+    return CallerSavedRegsV4;
+  }
+  llvm_unreachable(
+    "Callee saved registers requested for unknown archtecture version");
+}
+
 
 const MCPhysReg *
 HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -75,173 +108,153 @@ BitVector HexagonRegisterInfo::getReservedRegs(const MachineFunction &MF)
 }
 
 
-const TargetRegisterClass* const*
-HexagonRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass * const CalleeSavedRegClassesV3[] = {
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-    &Hexagon::IntRegsRegClass,     &Hexagon::IntRegsRegClass,
-  };
-
-  switch (MF->getSubtarget<HexagonSubtarget>().getHexagonArchVersion()) {
-  case HexagonSubtarget::V4:
-  case HexagonSubtarget::V5:
-    return CalleeSavedRegClassesV3;
-  }
-  llvm_unreachable("Callee saved register classes requested for unknown "
-                   "architecture version");
-}
-
 void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                              int SPAdj, unsigned FIOperandNum,
+                                              int SPAdj, unsigned FIOp,
                                               RegScavenger *RS) const {
   //
   // Hexagon_TODO: Do we need to enforce this for Hexagon?
   assert(SPAdj == 0 && "Unexpected");
 
   MachineInstr &MI = *II;
-  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
-  // Addressable stack objects are accessed using neg. offsets from %fp.
-  MachineFunction &MF = *MI.getParent()->getParent();
-  const HexagonInstrInfo &TII =
-      *static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+  MachineBasicBlock &MB = *MI.getParent();
+  MachineFunction &MF = *MB.getParent();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
+  auto &HST = static_cast<const HexagonSubtarget&>(MF.getSubtarget());
+  auto &HII = *HST.getInstrInfo();
+  auto &HFI = *HST.getFrameLowering();
 
-  unsigned FrameReg = getFrameRegister(MF);
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
-  if (!TFI->hasFP(MF)) {
+  int FI = MI.getOperand(FIOp).getIndex();
+  int Offset = MFI.getObjectOffset(FI) + MI.getOperand(FIOp+1).getImm();
+  bool HasAlloca = MFI.hasVarSizedObjects();
+  bool HasAlign = needsStackRealignment(MF);
+
+  // XXX: Fixed objects cannot be accessed through SP if there are aligned
+  // objects in the local frame, or if there are dynamically allocated objects.
+  // In such cases, there has to be FP available.
+  if (!HFI.hasFP(MF)) {
+    assert(!HasAlloca && !HasAlign && "This function must have frame pointer");
     // We will not reserve space on the stack for the lr and fp registers.
-    Offset -= 2 * Hexagon_WordSize;
+    Offset -= 8;
   }
 
+  unsigned SP = getStackRegister(), FP = getFrameRegister();
+  unsigned AP = 0;
+  if (MachineInstr *AI = HFI.getAlignaInstr(MF))
+    AP = AI->getOperand(0).getReg();
   unsigned FrameSize = MFI.getStackSize();
-  if (MI.getOpcode() == Hexagon::TFR_FI)
-    MI.setDesc(TII.get(Hexagon::A2_addi));
 
-  if (!MFI.hasVarSizedObjects() &&
-      TII.isValidOffset(MI.getOpcode(), (FrameSize+Offset)) &&
-      !TII.isSpillPredRegOp(&MI)) {
-    // Replace frame index with a stack pointer reference.
-    MI.getOperand(FIOperandNum).ChangeToRegister(getStackRegister(), false,
-                                                 false, true);
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(FrameSize+Offset);
+  // Special handling of dbg_value instructions and INLINEASM.
+  if (MI.isDebugValue() || MI.isInlineAsm()) {
+    MI.getOperand(FIOp).ChangeToRegister(SP, false /*isDef*/);
+    MI.getOperand(FIOp+1).ChangeToImmediate(Offset+FrameSize);
+    return;
+  }
+
+  bool UseFP = false, UseAP = false;  // Default: use SP.
+  if (MFI.isFixedObjectIndex(FI) || MFI.isObjectPreAllocated(FI)) {
+    UseFP = HasAlloca || HasAlign;
   } else {
-    // Replace frame index with a frame pointer reference.
-    if (!TII.isValidOffset(MI.getOpcode(), Offset)) {
-
-      // If the offset overflows, then correct it.
-      //
-      // For loads, we do not need a reserved register
-      // r0 = memw(r30 + #10000) to:
-      //
-      // r0 = add(r30, #10000)
-      // r0 = memw(r0)
-      if ( (MI.getOpcode() == Hexagon::L2_loadri_io)  ||
-           (MI.getOpcode() == Hexagon::L2_loadrd_io)   ||
-           (MI.getOpcode() == Hexagon::L2_loadrh_io) ||
-           (MI.getOpcode() == Hexagon::L2_loadruh_io) ||
-           (MI.getOpcode() == Hexagon::L2_loadrb_io) ||
-           (MI.getOpcode() == Hexagon::L2_loadrub_io)) {
-        unsigned dstReg = (MI.getOpcode() == Hexagon::L2_loadrd_io) ?
-          getSubReg(MI.getOperand(0).getReg(), Hexagon::subreg_loreg) :
-          MI.getOperand(0).getReg();
-
-        // Check if offset can fit in addi.
-        if (!TII.isValidOffset(Hexagon::A2_addi, Offset)) {
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::CONST32_Int_Real), dstReg).addImm(Offset);
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::A2_add),
-                  dstReg).addReg(FrameReg).addReg(dstReg);
-        } else {
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::A2_addi),
-                  dstReg).addReg(FrameReg).addImm(Offset);
-        }
-
-        MI.getOperand(FIOperandNum).ChangeToRegister(dstReg, false, false,true);
-        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
-      } else if ((MI.getOpcode() == Hexagon::S2_storeri_io) ||
-                 (MI.getOpcode() == Hexagon::S2_storerd_io) ||
-                 (MI.getOpcode() == Hexagon::S2_storerh_io) ||
-                 (MI.getOpcode() == Hexagon::S2_storerb_io)) {
-        // For stores, we need a reserved register. Change
-        // memw(r30 + #10000) = r0 to:
-        //
-        // rs = add(r30, #10000);
-        // memw(rs) = r0
-        unsigned resReg = HEXAGON_RESERVED_REG_1;
-
-        // Check if offset can fit in addi.
-        if (!TII.isValidOffset(Hexagon::A2_addi, Offset)) {
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::CONST32_Int_Real), resReg).addImm(Offset);
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::A2_add),
-                  resReg).addReg(FrameReg).addReg(resReg);
-        } else {
-          BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                  TII.get(Hexagon::A2_addi),
-                  resReg).addReg(FrameReg).addImm(Offset);
-        }
-        MI.getOperand(FIOperandNum).ChangeToRegister(resReg, false, false,true);
-        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
-      } else if (TII.isMemOp(&MI)) {
-        // use the constant extender if the instruction provides it
-        if (TII.isConstExtended(&MI)) {
-          MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false);
-          MI.getOperand(FIOperandNum+1).ChangeToImmediate(Offset);
-          TII.immediateExtend(&MI);
-        } else {
-          llvm_unreachable("Need to implement for memops");
-        }
-      } else {
-        unsigned dstReg = MI.getOperand(0).getReg();
-        BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                TII.get(Hexagon::CONST32_Int_Real), dstReg).addImm(Offset);
-        BuildMI(*MI.getParent(), II, MI.getDebugLoc(),
-                TII.get(Hexagon::A2_add),
-                dstReg).addReg(FrameReg).addReg(dstReg);
-        // Can we delete MI??? r2 = add (r2, #0).
-        MI.getOperand(FIOperandNum).ChangeToRegister(dstReg, false, false,true);
-        MI.getOperand(FIOperandNum+1).ChangeToImmediate(0);
-      }
-    } else {
-      // If the offset is small enough to fit in the immediate field, directly
-      // encode it.
-      MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false);
-      MI.getOperand(FIOperandNum+1).ChangeToImmediate(Offset);
+    if (HasAlloca) {
+      if (HasAlign)
+        UseAP = true;
+      else
+        UseFP = true;
     }
   }
 
+  unsigned Opc = MI.getOpcode();
+  bool ValidSP = HII.isValidOffset(Opc, FrameSize+Offset);
+  bool ValidFP = HII.isValidOffset(Opc, Offset);
+
+  // Calculate the actual offset in the instruction.
+  int64_t RealOffset = Offset;
+  if (!UseFP && !UseAP)
+    RealOffset = FrameSize+Offset;
+
+  switch (Opc) {
+    case Hexagon::TFR_FIA:
+      MI.setDesc(HII.get(Hexagon::A2_addi));
+      MI.getOperand(FIOp).ChangeToImmediate(RealOffset);
+      MI.RemoveOperand(FIOp+1);
+      return;
+    case Hexagon::TFR_FI:
+      // Set up the instruction for updating below.
+      MI.setDesc(HII.get(Hexagon::A2_addi));
+      break;
+  }
+
+  unsigned BP = 0;
+  bool Valid = false;
+  if (UseFP) {
+    BP = FP;
+    Valid = ValidFP;
+  } else if (UseAP) {
+    BP = AP;
+    Valid = ValidFP;
+  } else {
+    BP = SP;
+    Valid = ValidSP;
+  }
+
+  if (Valid) {
+    MI.getOperand(FIOp).ChangeToRegister(BP, false);
+    MI.getOperand(FIOp+1).ChangeToImmediate(RealOffset);
+    return;
+  }
+
+#ifndef NDEBUG
+  const Function *F = MF.getFunction();
+  dbgs() << "In function ";
+  if (F) dbgs() << F->getName();
+  else   dbgs() << "<?>";
+  dbgs() << ", BB#" << MB.getNumber() << "\n" << MI;
+#endif
+  llvm_unreachable("Unhandled instruction");
 }
+
 
 unsigned HexagonRegisterInfo::getRARegister() const {
   return Hexagon::R31;
 }
 
+
 unsigned HexagonRegisterInfo::getFrameRegister(const MachineFunction
                                                &MF) const {
   const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
-  if (TFI->hasFP(MF)) {
+  if (TFI->hasFP(MF))
     return Hexagon::R30;
-  }
-
   return Hexagon::R29;
 }
+
 
 unsigned HexagonRegisterInfo::getFrameRegister() const {
   return Hexagon::R30;
 }
 
+
 unsigned HexagonRegisterInfo::getStackRegister() const {
   return Hexagon::R29;
 }
+
+
+bool
+HexagonRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
+  return MF.getSubtarget().getFrameLowering()->hasFP(MF);
+}
+
+
+bool
+HexagonRegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  return MFI->getMaxAlignment() > 8;
+}
+
+
+unsigned HexagonRegisterInfo::getFirstCallerSavedNonParamReg() const {
+  return Hexagon::R6;
+}
+
 
 #define GET_REGINFO_TARGET_DESC
 #include "HexagonGenRegisterInfo.inc"

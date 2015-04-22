@@ -13,8 +13,11 @@
 
 #include "Hexagon.h"
 #include "HexagonISelLowering.h"
+#include "HexagonMachineFunctionInfo.h"
 #include "HexagonTargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/FunctionLoweringInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
@@ -62,6 +65,7 @@ public:
   }
 
   virtual void PreprocessISelDAG() override;
+  virtual void EmitFunctionEntryCode() override;
 
   SDNode *Select(SDNode *N) override;
 
@@ -1216,12 +1220,30 @@ SDNode *HexagonDAGToDAGISel::SelectBitOp(SDNode *N) {
 
 
 SDNode *HexagonDAGToDAGISel::SelectFrameIndex(SDNode *N) {
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  const HexagonFrameLowering *HFI = HST->getFrameLowering();
   int FX = cast<FrameIndexSDNode>(N)->getIndex();
+  unsigned StkA = HFI->getStackAlignment();
+  unsigned MaxA = MFI->getMaxAlignment();
   SDValue FI = CurDAG->getTargetFrameIndex(FX, MVT::i32);
   SDValue Zero = CurDAG->getTargetConstant(0, MVT::i32);
   SDLoc DL(N);
+  SDNode *R = 0;
 
-  SDNode *R = CurDAG->getMachineNode(Hexagon::TFR_FI, DL, MVT::i32, FI, Zero);
+  // Use TFR_FI when:
+  // - the object is fixed, or
+  // - there are no objects with higher-than-default alignment, or
+  // - there are no dynamically allocated objects.
+  // Otherwise, use TFR_FIA.
+  if (FX < 0 || MaxA <= StkA || !MFI->hasVarSizedObjects()) {
+    R = CurDAG->getMachineNode(Hexagon::TFR_FI, DL, MVT::i32, FI, Zero);
+  } else {
+    auto &HMFI = *MF->getInfo<HexagonMachineFunctionInfo>();
+    unsigned AR = HMFI.getStackAlignBaseVReg();
+    SDValue CH = CurDAG->getEntryNode();
+    SDValue Ops[] = { CurDAG->getCopyFromReg(CH, DL, AR, MVT::i32), FI, Zero };
+    R = CurDAG->getMachineNode(Hexagon::TFR_FIA, DL, MVT::i32, Ops);
+  }
 
   if (N->getHasDebugValue())
     CurDAG->TransferDbgValues(SDValue(N, 0), SDValue(R, 0));
@@ -1279,7 +1301,6 @@ SDNode *HexagonDAGToDAGISel::Select(SDNode *N) {
 
   return SelectCode(N);
 }
-
 
 bool HexagonDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
@@ -1352,12 +1373,32 @@ void HexagonDAGToDAGISel::PreprocessISelDAG() {
   }
 }
 
+void HexagonDAGToDAGISel::EmitFunctionEntryCode() {
+  auto &HST = static_cast<const HexagonSubtarget&>(MF->getSubtarget());
+  auto &HFI = *HST.getFrameLowering();
+  if (!HFI.needsAligna(*MF))
+    return;
 
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  MachineBasicBlock *EntryBB = MF->begin();
+  unsigned AR = FuncInfo->CreateReg(MVT::i32);
+  unsigned MaxA = MFI->getMaxAlignment();
+  auto &HII = *HST.getInstrInfo();
+  BuildMI(EntryBB, DebugLoc(), HII.get(Hexagon::ALIGNA), AR)
+      .addImm(MaxA);
+  MF->getInfo<HexagonMachineFunctionInfo>()->setStackAlignBaseVReg(AR);
+}
+
+// Match a frame index that can be used in an addressing mode.
 bool HexagonDAGToDAGISel::SelectAddrFI(SDValue& N, SDValue &R) {
   if (N.getOpcode() != ISD::FrameIndex)
     return false;
-  FrameIndexSDNode *FX = cast<FrameIndexSDNode>(N);
-  R = CurDAG->getTargetFrameIndex(FX->getIndex(), MVT::i32);
+  auto &HFI = *HST->getFrameLowering();
+  MachineFrameInfo *MFI = MF->getFrameInfo();
+  int FX = cast<FrameIndexSDNode>(N)->getIndex();
+  if (!MFI->isFixedObjectIndex(FX) && HFI.needsAligna(*MF))
+    return false;
+  R = CurDAG->getTargetFrameIndex(FX, MVT::i32);
   return true;
 }
 

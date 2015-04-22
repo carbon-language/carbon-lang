@@ -573,6 +573,12 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   unsigned Opc = MI->getOpcode();
 
   switch (Opc) {
+    case Hexagon::ALIGNA:
+      BuildMI(MBB, MI, DL, get(Hexagon::A2_andir), MI->getOperand(0).getReg())
+          .addReg(TRI.getFrameRegister())
+          .addImm(-MI->getOperand(1).getImm());
+      MBB.erase(MI);
+      return true;
     case Hexagon::TFR_PdTrue: {
       unsigned Reg = MI->getOperand(0).getReg();
       BuildMI(MBB, MI, DL, get(Hexagon::C2_orn), Reg)

@@ -420,6 +420,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool doesNotReturn                    = CLI.DoesNotReturn;
 
   bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
+  MachineFunction &MF = DAG.getMachineFunction();
 
   // Check for varargs.
   int NumNamedVarArgParams = -1;
@@ -444,41 +445,40 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   HexagonCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
                         *DAG.getContext(), NumNamedVarArgParams);
 
-  if (NumNamedVarArgParams > 0)
+  if (isVarArg)
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon_VarArg);
   else
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon);
 
+  if (DAG.getTarget().Options.DisableTailCalls)
+    isTailCall = false;
 
-  if(isTailCall) {
-    bool StructAttrFlag =
-      DAG.getMachineFunction().getFunction()->hasStructRetAttr();
+  if (isTailCall) {
+    bool StructAttrFlag = MF.getFunction()->hasStructRetAttr();
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
                                                    isVarArg, IsStructRet,
                                                    StructAttrFlag,
                                                    Outs, OutVals, Ins, DAG);
-    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i){
+    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
       CCValAssign &VA = ArgLocs[i];
       if (VA.isMemLoc()) {
         isTailCall = false;
         break;
       }
     }
-    if (isTailCall) {
-      DEBUG(dbgs () << "Eligible for Tail Call\n");
-    } else {
-      DEBUG(dbgs () <<
-            "Argument must be passed on stack. Not eligible for Tail Call\n");
-    }
+    DEBUG(dbgs() << (isTailCall ? "Eligible for Tail Call\n"
+                                : "Argument must be passed on stack. "
+                                  "Not eligible for Tail Call\n"));
   }
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
-  const HexagonRegisterInfo *QRI = Subtarget->getRegisterInfo();
-  SDValue StackPtr =
-      DAG.getCopyFromReg(Chain, dl, QRI->getStackRegister(), getPointerTy());
+  auto &HRI =
+      static_cast<const HexagonRegisterInfo&>(*Subtarget->getRegisterInfo());
+  SDValue StackPtr = DAG.getCopyFromReg(Chain, dl, HRI.getStackRegister(),
+                                        getPointerTy());
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -491,6 +491,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       default:
         // Loc info must be one of Full, SExt, ZExt, or AExt.
         llvm_unreachable("Unknown loc info!");
+      case CCValAssign::BCvt:
       case CCValAssign::Full:
         break;
       case CCValAssign::SExt:
@@ -506,41 +507,37 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     if (VA.isMemLoc()) {
       unsigned LocMemOffset = VA.getLocMemOffset();
-      SDValue PtrOff = DAG.getConstant(LocMemOffset, StackPtr.getValueType());
-      PtrOff = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, PtrOff);
-
+      SDValue MemAddr = DAG.getConstant(LocMemOffset, StackPtr.getValueType());
+      MemAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, MemAddr);
       if (Flags.isByVal()) {
         // The argument is a struct passed by value. According to LLVM, "Arg"
         // is is pointer.
-        MemOpChains.push_back(CreateCopyOfByValArgument(Arg, PtrOff, Chain,
+        MemOpChains.push_back(CreateCopyOfByValArgument(Arg, MemAddr, Chain,
                                                         Flags, DAG, dl));
       } else {
-        // The argument is not passed by value. "Arg" is a buildin type. It is
-        // not a pointer.
-        MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                           MachinePointerInfo(),false, false,
-                                           0));
+        MachinePointerInfo LocPI = MachinePointerInfo::getStack(LocMemOffset);
+        SDValue S = DAG.getStore(Chain, dl, Arg, MemAddr, LocPI, false,
+                                 false, 0);
+        MemOpChains.push_back(S);
       }
       continue;
     }
 
     // Arguments that can be passed on register must be kept at RegsToPass
     // vector.
-    if (VA.isRegLoc()) {
+    if (VA.isRegLoc())
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    }
   }
 
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
-  if (!MemOpChains.empty()) {
+  if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
-  }
 
-  if (!isTailCall)
-    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes,
-                                                        getPointerTy(), true),
-                                 dl);
+  if (!isTailCall) {
+    SDValue C = DAG.getConstant(NumBytes, getPointerTy(), true);
+    Chain = DAG.getCALLSEQ_START(Chain, C, dl);
+  }
 
   // Build a sequence of copy-to-reg nodes chained together with token
   // chain and flag operands which copy the outgoing args into registers.
@@ -553,10 +550,9 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
-  }
-
-  // For tail calls lower the arguments to the 'real' stack slot.
-  if (isTailCall) {
+  } else {
+    // For tail calls lower the arguments to the 'real' stack slot.
+    //
     // Force all the incoming stack arguments to be loaded from the stack
     // before any new outgoing arguments are stored to the stack, because the
     // outgoing stack slots may alias the incoming argument stack slots, and
@@ -571,7 +567,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                RegsToPass[i].second, InFlag);
       InFlag = Chain.getValue(1);
     }
-    InFlag =SDValue();
+    InFlag = SDValue();
   }
 
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
@@ -580,8 +576,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (flag_aligned_memcpy) {
     const char *MemcpyName =
       "__hexagon_memcpy_likely_aligned_min32bytes_mult8bytes";
-    Callee =
-      DAG.getTargetExternalSymbol(MemcpyName, getPointerTy());
+    Callee = DAG.getTargetExternalSymbol(MemcpyName, getPointerTy());
     flag_aligned_memcpy = false;
   } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy());
@@ -603,9 +598,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
   }
 
-  if (InFlag.getNode()) {
+  if (InFlag.getNode())
     Ops.push_back(InFlag);
-  }
 
   if (isTailCall)
     return DAG.getNode(HexagonISD::TC_RETURN, dl, NodeTys, Ops);
@@ -630,7 +624,7 @@ static bool getIndexedAddressParts(SDNode *Ptr, EVT VT,
                                    SDValue &Offset, bool &isInc,
                                    SelectionDAG &DAG) {
   if (Ptr->getOpcode() != ISD::ADD)
-  return false;
+    return false;
 
   if (VT == MVT::i64 || VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8) {
     isInc = (Ptr->getOpcode() == ISD::ADD);
@@ -702,8 +696,7 @@ SDValue HexagonTargetLowering::LowerINLINEASM(SDValue Op,
                                               SelectionDAG &DAG) const {
   SDNode *Node = Op.getNode();
   MachineFunction &MF = DAG.getMachineFunction();
-  HexagonMachineFunctionInfo *FuncInfo =
-    MF.getInfo<HexagonMachineFunctionInfo>();
+  auto &FuncInfo = *MF.getInfo<HexagonMachineFunctionInfo>();
   switch (Node->getOpcode()) {
     case ISD::INLINEASM: {
       unsigned NumOps = Node->getNumOperands();
@@ -711,7 +704,7 @@ SDValue HexagonTargetLowering::LowerINLINEASM(SDValue Op,
         --NumOps;  // Ignore the flag operand.
 
       for (unsigned i = InlineAsm::Op_FirstOperand; i != NumOps;) {
-        if (FuncInfo->hasClobberLR())
+        if (FuncInfo.hasClobberLR())
           break;
         unsigned Flags =
           cast<ConstantSDNode>(Node->getOperand(i))->getZExtValue();
@@ -736,7 +729,7 @@ SDValue HexagonTargetLowering::LowerINLINEASM(SDValue Op,
               // Check it to be lr
               const HexagonRegisterInfo *QRI = Subtarget->getRegisterInfo();
               if (Reg == QRI->getRARegister()) {
-                FuncInfo->setHasClobberLR(true);
+                FuncInfo.setHasClobberLR(true);
                 break;
               }
             }
@@ -795,43 +788,28 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDValue Chain = Op.getOperand(0);
   SDValue Size = Op.getOperand(1);
+  SDValue Align = Op.getOperand(2);
   SDLoc dl(Op);
 
-  unsigned SPReg = getStackPointerRegisterToSaveRestore();
+  ConstantSDNode *AlignConst = dyn_cast<ConstantSDNode>(Align);
+  assert(AlignConst && "Non-constant Align in LowerDYNAMIC_STACKALLOC");
 
-  // Get a reference to the stack pointer.
-  SDValue StackPointer = DAG.getCopyFromReg(Chain, dl, SPReg, MVT::i32);
+  unsigned A = AlignConst->getSExtValue();
+  auto &HST = static_cast<const HexagonSubtarget&>(DAG.getSubtarget());
+  auto &HFI = *HST.getFrameLowering();
+  // "Zero" means natural stack alignment.
+  if (A == 0)
+    A = HFI.getStackAlignment();
 
-  // Subtract the dynamic size from the actual stack size to
-  // obtain the new stack size.
-  SDValue Sub = DAG.getNode(ISD::SUB, dl, MVT::i32, StackPointer, Size);
+  DEBUG({
+    dbgs () << __func__ << " Align: " << A << " Size: ";
+    Size.getNode()->dump(&DAG);
+    dbgs() << "\n";
+  });
 
-  //
-  // For Hexagon, the outgoing memory arguments area should be on top of the
-  // alloca area on the stack i.e., the outgoing memory arguments should be
-  // at a lower address than the alloca area. Move the alloca area down the
-  // stack by adding back the space reserved for outgoing arguments to SP
-  // here.
-  //
-  // We do not know what the size of the outgoing args is at this point.
-  // So, we add a pseudo instruction ADJDYNALLOC that will adjust the
-  // stack pointer. We patch this instruction with the correct, known
-  // offset in emitPrologue().
-  //
-  // Use a placeholder immediate (zero) for now. This will be patched up
-  // by emitPrologue().
-  SDValue ArgAdjust = DAG.getNode(HexagonISD::ADJDYNALLOC, dl,
-                                  MVT::i32,
-                                  Sub,
-                                  DAG.getConstant(0, MVT::i32));
-
-  // The Sub result contains the new stack start address, so it
-  // must be placed in the stack pointer register.
-  const HexagonRegisterInfo *QRI = Subtarget->getRegisterInfo();
-  SDValue CopyChain = DAG.getCopyToReg(Chain, dl, QRI->getStackRegister(), Sub);
-
-  SDValue Ops[2] = { ArgAdjust, CopyChain };
-  return DAG.getMergeValues(Ops, dl);
+  SDValue AC = DAG.getConstant(A, MVT::i32);
+  SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
+  return DAG.getNode(HexagonISD::ALLOCA, dl, VTs, Chain, Size, AC);
 }
 
 SDValue
@@ -847,9 +825,7 @@ const {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  HexagonMachineFunctionInfo *FuncInfo =
-    MF.getInfo<HexagonMachineFunctionInfo>();
-
+  auto &FuncInfo = *MF.getInfo<HexagonMachineFunctionInfo>();
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -938,7 +914,7 @@ const {
                                             HEXAGON_LRFP_SIZE +
                                             CCInfo.getNextStackOffset(),
                                             true);
-    FuncInfo->setVarArgsFrameIndex(FrameIndex);
+    FuncInfo.setVarArgsFrameIndex(FrameIndex);
   }
 
   return Chain;
@@ -1795,7 +1771,7 @@ HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case HexagonISD::CONST32:     return "HexagonISD::CONST32";
   case HexagonISD::CONST32_GP: return "HexagonISD::CONST32_GP";
   case HexagonISD::CONST32_Int_Real: return "HexagonISD::CONST32_Int_Real";
-  case HexagonISD::ADJDYNALLOC: return "HexagonISD::ADJDYNALLOC";
+  case HexagonISD::ALLOCA:      return "HexagonISD::ALLOCA";
   case HexagonISD::CMPICC:      return "HexagonISD::CMPICC";
   case HexagonISD::CMPFCC:      return "HexagonISD::CMPFCC";
   case HexagonISD::BRICC:       return "HexagonISD::BRICC";
@@ -2419,20 +2395,14 @@ HexagonTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 }
 
-
-
-//===----------------------------------------------------------------------===//
-//                           Hexagon Scheduler Hooks
-//===----------------------------------------------------------------------===//
 MachineBasicBlock *
 HexagonTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB)
-const {
+      const {
   switch (MI->getOpcode()) {
-    case Hexagon::ADJDYNALLOC: {
+    case Hexagon::ALLOCA: {
       MachineFunction *MF = BB->getParent();
-      HexagonMachineFunctionInfo *FuncInfo =
-        MF->getInfo<HexagonMachineFunctionInfo>();
+      auto *FuncInfo = MF->getInfo<HexagonMachineFunctionInfo>();
       FuncInfo->addAllocaAdjustInst(MI);
       return BB;
     }
