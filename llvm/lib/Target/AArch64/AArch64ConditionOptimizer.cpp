@@ -67,6 +67,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -86,6 +87,7 @@ namespace {
 class AArch64ConditionOptimizer : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   MachineDominatorTree *DomTree;
+  const MachineRegisterInfo *MRI;
 
 public:
   // Stores immediate, compare instruction opcode and branch condition (in this
@@ -116,7 +118,6 @@ void initializeAArch64ConditionOptimizerPass(PassRegistry &);
 INITIALIZE_PASS_BEGIN(AArch64ConditionOptimizer, "aarch64-condopt",
                       "AArch64 CondOpt Pass", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
-INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_END(AArch64ConditionOptimizer, "aarch64-condopt",
                     "AArch64 CondOpt Pass", false, false)
 
@@ -127,8 +128,6 @@ FunctionPass *llvm::createAArch64ConditionOptimizerPass() {
 void AArch64ConditionOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineDominatorTree>();
   AU.addPreserved<MachineDominatorTree>();
-  AU.addRequired<LiveIntervals>();
-  AU.addPreserved<LiveIntervals>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -155,7 +154,7 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     // cmn is an alias for adds with a dead destination register.
     case AArch64::ADDSWri:
     case AArch64::ADDSXri:
-      if (I->getOperand(0).isDead())
+      if (MRI->use_empty(I->getOperand(0).getReg()))
         return I;
 
       DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
@@ -306,6 +305,7 @@ bool AArch64ConditionOptimizer::runOnMachineFunction(MachineFunction &MF) {
                << "********** Function: " << MF.getName() << '\n');
   TII = MF.getSubtarget().getInstrInfo();
   DomTree = &getAnalysis<MachineDominatorTree>();
+  MRI = &MF.getRegInfo();
 
   bool Changed = false;
 
