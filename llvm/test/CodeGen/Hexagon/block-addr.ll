@@ -1,7 +1,8 @@
 ; RUN: llc -march=hexagon < %s | FileCheck %s
 
-; CHECK: r{{[0-9]+}} = CONST32(#.LJTI{{[0-9]+_[0-9]+}})
-; CHECK: r{{[0-9]+}} = memw(r{{[0-9]+}} + r{{[0-9]+<<#[0-9]+}})
+; Allow combine(..##JTI..):
+; CHECK: r{{[0-9]+}}{{.*}} = {{.*}}#.LJTI
+; CHECK: r{{[0-9]+}} = memw(r{{[0-9]+}}{{ *}}+{{ *}}r{{[0-9]+<<#[0-9]+}})
 ; CHECK: jumpr r{{[0-9]+}}
 
 define void @main() #0 {

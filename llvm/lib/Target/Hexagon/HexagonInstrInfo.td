@@ -4823,12 +4823,6 @@ def CONST32 : CONSTLDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
               [(set (i32 IntRegs:$dst),
                     (load (HexagonCONST32 tglobaltlsaddr:$global)))]>;
 
-let isReMaterializable = 1, isMoveImm = 1 in
-def CONST32_set_jt : CONSTLDInst<(outs IntRegs:$dst), (ins jumptablebase:$jt),
-                     "$dst = CONST32(#$jt)",
-                     [(set (i32 IntRegs:$dst),
-                           (HexagonCONST32 tjumptable:$jt))]>;
-
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Int_Real : CONSTLDInst<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
@@ -4836,7 +4830,7 @@ def CONST32_Int_Real : CONSTLDInst<(outs IntRegs:$dst), (ins i32imm:$global),
 
 // Map TLS addressses to a CONST32 instruction
 def: Pat<(HexagonCONST32 tglobaltlsaddr:$addr), (A2_tfrsi s16Ext:$addr)>;
-def: Pat<(HexagonCONST32 bbl:$label), (A2_tfrsi s16Ext:$label)>;
+def: Pat<(HexagonCONST32 bbl:$label),           (A2_tfrsi s16Ext:$label)>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
@@ -5145,10 +5139,8 @@ def: Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
 def HexagonJT:     SDNode<"HexagonISD::JT", SDTIntUnaryOp>;
 def HexagonCP:     SDNode<"HexagonISD::CP", SDTIntUnaryOp>;
 
-def: Pat<(HexagonJT tjumptable:$dst),
-         (CONST32_set_jt tjumptable:$dst)>;
-def: Pat<(HexagonCP tconstpool :$dst),
-         (CONST32_set_jt tconstpool:$dst)>;
+def: Pat<(HexagonJT tjumptable:$dst), (A2_tfrsi s16Ext:$dst)>;
+def: Pat<(HexagonCP tconstpool:$dst), (A2_tfrsi s16Ext:$dst)>;
 
 // XTYPE/SHIFT
 //

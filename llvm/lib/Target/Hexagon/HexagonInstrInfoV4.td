@@ -499,10 +499,23 @@ multiclass T_LoadAbsReg_Pat <PatFrag ldOp, InstHexagon MI, ValueType VT = i32> {
   def  : Pat <(VT (ldOp (add (shl IntRegs:$src1, u2ImmPred:$src2),
                              (HexagonCONST32 tglobaladdr:$src3)))),
               (MI IntRegs:$src1, u2ImmPred:$src2, tglobaladdr:$src3)>;
-
   def  : Pat <(VT (ldOp (add IntRegs:$src1,
                              (HexagonCONST32 tglobaladdr:$src2)))),
               (MI IntRegs:$src1, 0, tglobaladdr:$src2)>;
+
+  def  : Pat <(VT (ldOp (add (shl IntRegs:$src1, u2ImmPred:$src2),
+                             (HexagonCONST32 tconstpool:$src3)))),
+              (MI IntRegs:$src1, u2ImmPred:$src2, tconstpool:$src3)>;
+  def  : Pat <(VT (ldOp (add IntRegs:$src1,
+                             (HexagonCONST32 tconstpool:$src2)))),
+              (MI IntRegs:$src1, 0, tconstpool:$src2)>;
+
+  def  : Pat <(VT (ldOp (add (shl IntRegs:$src1, u2ImmPred:$src2),
+                             (HexagonCONST32 tjumptable:$src3)))),
+              (MI IntRegs:$src1, u2ImmPred:$src2, tjumptable:$src3)>;
+  def  : Pat <(VT (ldOp (add IntRegs:$src1,
+                             (HexagonCONST32 tjumptable:$src2)))),
+              (MI IntRegs:$src1, 0, tjumptable:$src2)>;
 }
 
 let AddedComplexity  = 60 in {

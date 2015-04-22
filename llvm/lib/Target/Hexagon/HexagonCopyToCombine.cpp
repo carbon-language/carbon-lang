@@ -116,12 +116,14 @@ static bool isCombinableInstType(MachineInstr *MI,
   switch(MI->getOpcode()) {
   case Hexagon::A2_tfr: {
     // A COPY instruction can be combined if its arguments are IntRegs (32bit).
-    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isReg());
+    const MachineOperand &Op0 = MI->getOperand(0);
+    const MachineOperand &Op1 = MI->getOperand(1);
+    assert(Op0.isReg() && Op1.isReg());
 
-    unsigned DestReg = MI->getOperand(0).getReg();
-    unsigned SrcReg = MI->getOperand(1).getReg();
+    unsigned DestReg = Op0.getReg();
+    unsigned SrcReg = Op1.getReg();
     return Hexagon::IntRegsRegClass.contains(DestReg) &&
-      Hexagon::IntRegsRegClass.contains(SrcReg);
+           Hexagon::IntRegsRegClass.contains(SrcReg);
   }
 
   case Hexagon::A2_tfrsi: {
@@ -144,21 +146,6 @@ static bool isCombinableInstType(MachineInstr *MI,
            (ShouldCombineAggressively || NotExt);
   }
 
-  case Hexagon::TFRI_V4: {
-    if (!ShouldCombineAggressively)
-      return false;
-    assert(MI->getOperand(0).isReg() && MI->getOperand(1).isGlobal());
-
-    // Ensure that TargetFlags are MO_NO_FLAG for a global. This is a
-    // workaround for an ABI bug that prevents GOT relocations on combine
-    // instructions
-    if (MI->getOperand(1).getTargetFlags() != HexagonII::MO_NO_FLAG)
-      return false;
-
-    unsigned DestReg = MI->getOperand(0).getReg();
-    return Hexagon::IntRegsRegClass.contains(DestReg);
-  }
-
   default:
     break;
   }
@@ -166,13 +153,14 @@ static bool isCombinableInstType(MachineInstr *MI,
   return false;
 }
 
-static bool isGreaterThan8BitTFRI(MachineInstr *I) {
-  return I->getOpcode() == Hexagon::A2_tfrsi &&
-    !isInt<8>(I->getOperand(1).getImm());
-}
-static bool isGreaterThan6BitTFRI(MachineInstr *I) {
-  return I->getOpcode() == Hexagon::A2_tfrsi &&
-    !isUInt<6>(I->getOperand(1).getImm());
+template <unsigned N>
+static bool isGreaterThanNBitTFRI(const MachineInstr *I) {
+  if (I->getOpcode() == Hexagon::TFRI64_V4 ||
+      I->getOpcode() == Hexagon::A2_tfrsi) {
+    const MachineOperand &Op = I->getOperand(1);
+    return !Op.isImm() || !isInt<N>(Op.getImm());
+  }
+  return false;
 }
 
 /// areCombinableOperations - Returns true if the two instruction can be merge
@@ -180,19 +168,15 @@ static bool isGreaterThan6BitTFRI(MachineInstr *I) {
 static bool areCombinableOperations(const TargetRegisterInfo *TRI,
                                     MachineInstr *HighRegInst,
                                     MachineInstr *LowRegInst) {
-  assert((HighRegInst->getOpcode() == Hexagon::A2_tfr ||
-          HighRegInst->getOpcode() == Hexagon::A2_tfrsi ||
-          HighRegInst->getOpcode() == Hexagon::TFRI_V4) &&
-         (LowRegInst->getOpcode() == Hexagon::A2_tfr ||
-          LowRegInst->getOpcode() == Hexagon::A2_tfrsi ||
-          LowRegInst->getOpcode() == Hexagon::TFRI_V4) &&
+  unsigned HiOpc = HighRegInst->getOpcode();
+  unsigned LoOpc = LowRegInst->getOpcode();
+  assert((HiOpc == Hexagon::A2_tfr || HiOpc == Hexagon::A2_tfrsi) &&
+         (LoOpc == Hexagon::A2_tfr || LoOpc == Hexagon::A2_tfrsi) &&
          "Assume individual instructions are of a combinable type");
 
   // There is no combine of two constant extended values.
-  if ((HighRegInst->getOpcode() == Hexagon::TFRI_V4 ||
-       isGreaterThan8BitTFRI(HighRegInst)) &&
-      (LowRegInst->getOpcode() == Hexagon::TFRI_V4 ||
-       isGreaterThan6BitTFRI(LowRegInst)))
+  if (isGreaterThanNBitTFRI<8>(HighRegInst) &&
+      isGreaterThanNBitTFRI<6>(LowRegInst))
     return false;
 
   return true;
@@ -219,10 +203,14 @@ static bool isUnsafeToMoveAcross(MachineInstr *I, unsigned UseReg,
                                   unsigned DestReg,
                                   const TargetRegisterInfo *TRI) {
   return (UseReg && (I->modifiesRegister(UseReg, TRI))) ||
-          I->modifiesRegister(DestReg, TRI) ||
-          I->readsRegister(DestReg, TRI) ||
-          I->hasUnmodeledSideEffects() ||
-          I->isInlineAsm() || I->isDebugValue();
+         I->modifiesRegister(DestReg, TRI) ||
+         I->readsRegister(DestReg, TRI) ||
+         I->hasUnmodeledSideEffects() ||
+         I->isInlineAsm() || I->isDebugValue();
+}
+
+static unsigned UseReg(const MachineOperand& MO) {
+  return MO.isReg() ? MO.getReg() : 0;
 }
 
 /// isSafeToMoveTogether - Returns true if it is safe to move I1 next to I2 such
@@ -232,9 +220,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
                                                 unsigned I1DestReg,
                                                 unsigned I2DestReg,
                                                 bool &DoInsertAtI1) {
-
-  bool IsImmUseReg = I2->getOperand(1).isImm() || I2->getOperand(1).isGlobal();
-  unsigned I2UseReg = IsImmUseReg ? 0 : I2->getOperand(1).getReg();
+  unsigned I2UseReg = UseReg(I2->getOperand(1));
 
   // It is not safe to move I1 and I2 into one combine if I2 has a true
   // dependence on I1.
@@ -298,8 +284,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
     // At O3 we got better results (dhrystone) by being more conservative here.
     if (!ShouldCombineAggressively)
       End = std::next(MachineBasicBlock::iterator(I2));
-    IsImmUseReg = I1->getOperand(1).isImm() || I1->getOperand(1).isGlobal();
-    unsigned I1UseReg = IsImmUseReg ? 0 : I1->getOperand(1).getReg();
+    unsigned I1UseReg = UseReg(I1->getOperand(1));
     // Track killed operands. If we move across an instruction that kills our
     // operand, we need to update the kill information on the moved I1. It kills
     // the operand now.
@@ -558,7 +543,7 @@ void HexagonCopyToCombine::emitCombineII(MachineBasicBlock::iterator &InsertPt,
   DebugLoc DL = InsertPt->getDebugLoc();
   MachineBasicBlock *BB = InsertPt->getParent();
 
-  // Handle  globals.
+  // Handle globals.
   if (HiOperand.isGlobal()) {
     BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A2_combineii), DoubleDestReg)
       .addGlobalAddress(HiOperand.getGlobal(), HiOperand.getOffset(),
@@ -574,17 +559,64 @@ void HexagonCopyToCombine::emitCombineII(MachineBasicBlock::iterator &InsertPt,
     return;
   }
 
-  // Handle constant extended immediates.
-  if (!isInt<8>(HiOperand.getImm())) {
-    assert(isInt<8>(LoOperand.getImm()));
+  // Handle block addresses.
+  if (HiOperand.isBlockAddress()) {
     BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A2_combineii), DoubleDestReg)
-      .addImm(HiOperand.getImm())
+      .addBlockAddress(HiOperand.getBlockAddress(), HiOperand.getOffset(),
+                       HiOperand.getTargetFlags())
       .addImm(LoOperand.getImm());
     return;
   }
+  if (LoOperand.isBlockAddress()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
+      .addImm(HiOperand.getImm())
+      .addBlockAddress(LoOperand.getBlockAddress(), LoOperand.getOffset(),
+                       LoOperand.getTargetFlags());
+    return;
+  }
 
-  if (!isUInt<6>(LoOperand.getImm())) {
-    assert(isInt<8>(HiOperand.getImm()));
+  // Handle jump tables.
+  if (HiOperand.isJTI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A2_combineii), DoubleDestReg)
+      .addJumpTableIndex(HiOperand.getIndex(), HiOperand.getTargetFlags())
+      .addImm(LoOperand.getImm());
+    return;
+  }
+  if (LoOperand.isJTI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
+      .addImm(HiOperand.getImm())
+      .addJumpTableIndex(LoOperand.getIndex(), LoOperand.getTargetFlags());
+    return;
+  }
+
+  // Handle constant pools.
+  if (HiOperand.isCPI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A2_combineii), DoubleDestReg)
+      .addConstantPoolIndex(HiOperand.getIndex(), HiOperand.getOffset(),
+                            HiOperand.getTargetFlags())
+      .addImm(LoOperand.getImm());
+    return;
+  }
+  if (LoOperand.isCPI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
+      .addImm(HiOperand.getImm())
+      .addConstantPoolIndex(LoOperand.getIndex(), LoOperand.getOffset(),
+                            LoOperand.getTargetFlags());
+    return;
+  }
+
+  // First preference should be given to Hexagon::A2_combineii instruction
+  // as it can include U6 (in Hexagon::A4_combineii) as well.
+  // In this instruction, HiOperand is const extended, if required.
+  if (isInt<8>(LoOperand.getImm())) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A2_combineii), DoubleDestReg)
+      .addImm(HiOperand.getImm())
+      .addImm(LoOperand.getImm());
+      return;
+  }
+
+  // In this instruction, LoOperand is const extended, if required.
+  if (isInt<8>(HiOperand.getImm())) {
     BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
       .addImm(HiOperand.getImm())
       .addImm(LoOperand.getImm());
@@ -608,11 +640,34 @@ void HexagonCopyToCombine::emitCombineIR(MachineBasicBlock::iterator &InsertPt,
   DebugLoc DL = InsertPt->getDebugLoc();
   MachineBasicBlock *BB = InsertPt->getParent();
 
-  // Handle global.
+  // Handle globals.
   if (HiOperand.isGlobal()) {
     BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
       .addGlobalAddress(HiOperand.getGlobal(), HiOperand.getOffset(),
                         HiOperand.getTargetFlags())
+      .addReg(LoReg, LoRegKillFlag);
+    return;
+  }
+  // Handle block addresses.
+  if (HiOperand.isBlockAddress()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
+      .addBlockAddress(HiOperand.getBlockAddress(), HiOperand.getOffset(),
+                       HiOperand.getTargetFlags())
+      .addReg(LoReg, LoRegKillFlag);
+    return;
+  }
+  // Handle jump tables.
+  if (HiOperand.isJTI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
+      .addJumpTableIndex(HiOperand.getIndex(), HiOperand.getTargetFlags())
+      .addReg(LoReg, LoRegKillFlag);
+    return;
+  }
+  // Handle constant pools.
+  if (HiOperand.isCPI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
+      .addConstantPoolIndex(HiOperand.getIndex(), HiOperand.getOffset(),
+                            HiOperand.getTargetFlags())
       .addReg(LoReg, LoRegKillFlag);
     return;
   }
@@ -639,6 +694,29 @@ void HexagonCopyToCombine::emitCombineRI(MachineBasicBlock::iterator &InsertPt,
       .addReg(HiReg, HiRegKillFlag)
       .addGlobalAddress(LoOperand.getGlobal(), LoOperand.getOffset(),
                         LoOperand.getTargetFlags());
+    return;
+  }
+  // Handle block addresses.
+  if (LoOperand.isBlockAddress()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineri), DoubleDestReg)
+      .addReg(HiReg, HiRegKillFlag)
+      .addBlockAddress(LoOperand.getBlockAddress(), LoOperand.getOffset(),
+                       LoOperand.getTargetFlags());
+    return;
+  }
+  // Handle jump tables.
+  if (LoOperand.isJTI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineri), DoubleDestReg)
+      .addReg(HiOperand.getReg(), HiRegKillFlag)
+      .addJumpTableIndex(LoOperand.getIndex(), LoOperand.getTargetFlags());
+    return;
+  }
+  // Handle constant pools.
+  if (LoOperand.isCPI()) {
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineri), DoubleDestReg)
+      .addReg(HiOperand.getReg(), HiRegKillFlag)
+      .addConstantPoolIndex(LoOperand.getIndex(), LoOperand.getOffset(),
+                            LoOperand.getTargetFlags());
     return;
   }
 

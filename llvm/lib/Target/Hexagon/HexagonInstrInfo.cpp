@@ -1770,7 +1770,8 @@ bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
   // We currently only handle isGlobal() because it is the only kind of
   // object we are going to end up with here for now.
   // In the future we probably should add isSymbol(), etc.
-  if (MO.isGlobal() || MO.isSymbol() || MO.isBlockAddress())
+  if (MO.isGlobal() || MO.isSymbol() || MO.isBlockAddress() ||
+      MO.isJTI() || MO.isCPI())
     return true;
 
   // If the extendable operand is not 'Immediate' type, the instruction should
