@@ -345,7 +345,7 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
 }
 
 RecordRecTy *RecordRecTy::get(Record *R) {
-  return cast<RecordRecTy>(R->getDefInit()->getType());
+  return dyn_cast<RecordRecTy>(R->getDefInit()->getType());
 }
 
 std::string RecordRecTy::getAsString() const {
