@@ -873,13 +873,19 @@ public:
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    llvm_unreachable("Handle ARM veneer");
+    if (_ctx.getOutputELFType() == llvm::ELF::ET_EXEC) {
+      return getVeneer_ARM_B_BL_Abs(da, secName);
+    }
+    llvm_unreachable("Handle ARM veneer for DSOs");
   }
 
   /// \brief Get the veneer for Thumb B/BL instructions.
   const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    llvm_unreachable("Handle Thumb veneer");
+    if (_ctx.getOutputELFType() == llvm::ELF::ET_EXEC) {
+      return getVeneer_THM_B_BL_Abs(da, secName);
+    }
+    llvm_unreachable("Handle Thumb veneer for DSOs");
   }
 
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
