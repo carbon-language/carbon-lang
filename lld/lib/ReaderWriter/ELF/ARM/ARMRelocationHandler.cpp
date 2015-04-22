@@ -510,6 +510,32 @@ static void relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P, uint64_t S,
   applyArmReloc(location, (uint32_t)result & mask, mask);
 }
 
+/// \brief Fixup unresolved weak reference with NOP instruction
+static bool fixupUnresolvedWeakCall(uint8_t *location,
+                                    Reference::KindValue kindValue) {
+  //TODO: workaround for archs without NOP instruction
+  switch (kindValue) {
+  case R_ARM_THM_CALL:
+  case R_ARM_THM_JUMP24:
+    // Thumb32 NOP.W
+    write32le(location, 0x8000F3AF);
+    break;
+  case R_ARM_THM_JUMP11:
+    // Thumb16 NOP
+    write16le(location, 0xBF00);
+    break;
+  case R_ARM_CALL:
+  case R_ARM_JUMP24:
+    // A1 NOP<c>, save condition bits
+    applyArmReloc(location, 0x320F000, 0xFFFFFFF);
+    break;
+  default:
+    return false;
+  }
+
+  return true;
+}
+
 std::error_code ARMTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
@@ -521,6 +547,19 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::ARM);
+
+  // Fixup unresolved weak references
+  if (!target) {
+    bool isCallFixed = fixupUnresolvedWeakCall(loc, ref.kindValue());
+
+    if (isCallFixed) {
+      DEBUG(llvm::dbgs() << "\t\tFixup unresolved weak reference '";
+            llvm::dbgs() << ref.target()->name() << "'";
+            llvm::dbgs() << " at address: 0x" << Twine::utohexstr(reloc);
+            llvm::dbgs() << (isCallFixed ? "\n" : " isn't possible\n"));
+      return std::error_code();
+    }
+  }
 
   // Calculate proper initial addend for the relocation
   const Reference::Addend addend =
