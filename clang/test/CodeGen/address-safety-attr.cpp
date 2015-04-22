@@ -27,14 +27,14 @@ int DefinedInDifferentFile(int *a);
 
 // Check that functions generated for global in different source file are
 // not blacklisted.
-// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR_NO_TF:#[0-9]+]]
-// WITHOUT: @__cxx_global_array_dtor{{.*}}[[NOATTR_NO_TF]]
-// BLFILE: @__cxx_global_var_init{{.*}}[[WITH_NO_TF:#[0-9]+]]
-// BLFILE: @__cxx_global_array_dtor{{.*}}[[WITH_NO_TF]]
-// BLFUNC: @__cxx_global_var_init{{.*}}[[WITH_NO_TF:#[0-9]+]]
-// BLFUNC: @__cxx_global_array_dtor{{.*}}[[WITH_NO_TF]]
-// ASAN: @__cxx_global_var_init{{.*}}[[WITH_NO_TF:#[0-9]+]]
-// ASAN: @__cxx_global_array_dtor{{.*}}[[WITH_NO_TF]]
+// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR:#[0-9]+]]
+// WITHOUT: @__cxx_global_array_dtor{{.*}}[[NOATTR]]
+// BLFILE: @__cxx_global_var_init{{.*}}[[WITH:#[0-9]+]]
+// BLFILE: @__cxx_global_array_dtor{{.*}}[[WITH]]
+// BLFUNC: @__cxx_global_var_init{{.*}}[[WITH:#[0-9]+]]
+// BLFUNC: @__cxx_global_array_dtor{{.*}}[[WITH]]
+// ASAN: @__cxx_global_var_init{{.*}}[[WITH:#[0-9]+]]
+// ASAN: @__cxx_global_array_dtor{{.*}}[[WITH]]
 
 
 // WITHOUT:  NoAddressSafety1{{.*}}) [[NOATTR]]
@@ -100,23 +100,18 @@ int force_instance = TemplateAddressSafetyOk<42>()
 // Check that __cxx_global_var_init* get the sanitize_address attribute.
 int global1 = 0;
 int global2 = *(int*)((char*)&global1+1);
-// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR_NO_TF]]
-// BLFILE: @__cxx_global_var_init{{.*}}[[NOATTR_NO_TF:#[0-9]+]]
-// BLFUNC: @__cxx_global_var_init{{.*}}[[WITH_NO_TF]]
-// ASAN: @__cxx_global_var_init{{.*}}[[WITH_NO_TF]]
+// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR]]
+// BLFILE: @__cxx_global_var_init{{.*}}[[NOATTR:#[0-9]+]]
+// BLFUNC: @__cxx_global_var_init{{.*}}[[WITH]]
+// ASAN: @__cxx_global_var_init{{.*}}[[WITH]]
 
 // WITHOUT: attributes [[NOATTR]] = { nounwind{{.*}} }
-// WITHOUT: attributes [[NOATTR_NO_TF]] = { nounwind }
 
 // BLFILE: attributes [[WITH]] = { nounwind sanitize_address{{.*}} }
-// BLFILE: attributes [[WITH_NO_TF]] = { nounwind sanitize_address }
-// BLFILE: attributes [[NOATTR_NO_TF]] = { nounwind }
 // BLFILE: attributes [[NOATTR]] = { nounwind{{.*}} }
 
 // BLFUNC: attributes [[WITH]] = { nounwind sanitize_address{{.*}} }
-// BLFUNC: attributes [[WITH_NO_TF]] = { nounwind sanitize_address }
 // BLFUNC: attributes [[NOATTR]] = { nounwind{{.*}} }
 
 // ASAN: attributes [[WITH]] = { nounwind sanitize_address{{.*}} }
-// ASAN: attributes [[WITH_NO_TF]] = { nounwind sanitize_address }
 // ASAN: attributes [[NOATTR]] = { nounwind{{.*}} }
