@@ -9,7 +9,6 @@
 LEVEL = ../../..
 TOOLNAME = Kaleidoscope-Ch7
 EXAMPLE_TOOL = 1
-REQUIRES_RTTI := 1
 
 LINK_COMPONENTS := core mcjit native
 
