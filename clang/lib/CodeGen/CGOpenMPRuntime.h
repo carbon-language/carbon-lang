@@ -118,6 +118,10 @@ private:
     // Call to void __kmpc_end_reduce_nowait(ident_t *loc, kmp_int32 global_tid,
     // kmp_critical_name *lck);
     OMPRTL__kmpc_end_reduce_nowait,
+    // Call to void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
+    OMPRTL__kmpc_ordered,
+    // Call to void __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid);
+    OMPRTL__kmpc_end_ordered,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -252,6 +256,10 @@ private:
   /// size \a IVSize and sign \a IVSigned.
   llvm::Constant *createDispatchNextFunction(unsigned IVSize, bool IVSigned);
 
+  /// \brief Returns __kmpc_dispatch_fini_* runtime function for the specified
+  /// size \a IVSize and sign \a IVSigned.
+  llvm::Constant *createDispatchFiniFunction(unsigned IVSize, bool IVSigned);
+
   /// \brief If the specified mangled name is not in the module, create and
   /// return threadprivate cache object. This object is a pointer's worth of
   /// storage that's reserved for use by the OpenMP runtime.
@@ -378,6 +386,13 @@ public:
                                 ArrayRef<const Expr *> SrcExprs,
                                 ArrayRef<const Expr *> AssignmentOps);
 
+  /// \brief Emit an ordered region.
+  /// \param OrderedOpGen Generator for the statement associated with the given
+  /// critical region.
+  virtual void emitOrderedRegion(CodeGenFunction &CGF,
+                                 const RegionCodeGenTy &OrderedOpGen,
+                                 SourceLocation Loc);
+
   /// \brief Emit an implicit/explicit barrier for OpenMP threads.
   /// \param Kind Directive for which this implicit barrier call must be
   /// generated. Must be OMPD_barrier for explicit barrier generation.
@@ -429,14 +444,25 @@ public:
                            llvm::Value *Chunk = nullptr);
 
   /// \brief Call the appropriate runtime routine to notify that we finished
+  /// iteration of the ordered loop with the dynamic scheduling.
+  ///
+  /// \param CGF Reference to current CodeGenFunction.
+  /// \param Loc Clang source location.
+  /// \param IVSize Size of the iteration variable in bits.
+  /// \param IVSigned Sign of the interation variable.
+  ///
+  virtual void emitForOrderedDynamicIterationEnd(CodeGenFunction &CGF,
+                                                 SourceLocation Loc,
+                                                 unsigned IVSize,
+                                                 bool IVSigned);
+
+  /// \brief Call the appropriate runtime routine to notify that we finished
   /// all the work with current loop.
   ///
   /// \param CGF Reference to current CodeGenFunction.
   /// \param Loc Clang source location.
-  /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
   ///
-  virtual void emitForFinish(CodeGenFunction &CGF, SourceLocation Loc,
-                             OpenMPScheduleClauseKind ScheduleKind);
+  virtual void emitForStaticFinish(CodeGenFunction &CGF, SourceLocation Loc);
 
   /// Call __kmpc_dispatch_next(
   ///          ident_t *loc, kmp_int32 tid, kmp_int32 *p_lastiter,

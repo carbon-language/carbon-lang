@@ -710,6 +710,22 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
         CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_end_reduce_nowait");
     break;
   }
+  case OMPRTL__kmpc_ordered: {
+    // Build void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_ordered");
+    break;
+  }
+  case OMPRTL__kmpc_end_ordered: {
+    // Build void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_ordered");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -759,6 +775,23 @@ llvm::Constant *CGOpenMPRuntime::createDispatchInitFunction(unsigned IVSize,
   };
   llvm::FunctionType *FnTy =
       llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+  return CGM.CreateRuntimeFunction(FnTy, Name);
+}
+
+llvm::Constant *CGOpenMPRuntime::createDispatchFiniFunction(unsigned IVSize,
+                                                            bool IVSigned) {
+  assert((IVSize == 32 || IVSize == 64) &&
+         "IV size is not compatible with the omp runtime");
+  auto Name =
+      IVSize == 32
+          ? (IVSigned ? "__kmpc_dispatch_fini_4" : "__kmpc_dispatch_fini_4u")
+          : (IVSigned ? "__kmpc_dispatch_fini_8" : "__kmpc_dispatch_fini_8u");
+  llvm::Type *TypeParams[] = {
+      getIdentTyPointerTy(), // loc
+      CGM.Int32Ty,           // tid
+  };
+  llvm::FunctionType *FnTy =
+      llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
   return CGM.CreateRuntimeFunction(FnTy, Name);
 }
 
@@ -1246,6 +1279,25 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
   }
 }
 
+void CGOpenMPRuntime::emitOrderedRegion(CodeGenFunction &CGF,
+                                        const RegionCodeGenTy &OrderedOpGen,
+                                        SourceLocation Loc) {
+  // __kmpc_ordered(ident_t *, gtid);
+  // OrderedOpGen();
+  // __kmpc_end_ordered(ident_t *, gtid);
+  // Prepare arguments and build a call to __kmpc_ordered
+  {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_ordered), Args);
+    // Build a call to __kmpc_end_ordered
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
+        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_ordered),
+        llvm::makeArrayRef(Args));
+    emitInlinedDirective(CGF, OrderedOpGen);
+  }
+}
+
 void CGOpenMPRuntime::emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
                                       OpenMPDirectiveKind Kind) {
   // Build call __kmpc_cancel_barrier(loc, thread_id);
@@ -1378,17 +1430,23 @@ void CGOpenMPRuntime::emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
   }
 }
 
-void CGOpenMPRuntime::emitForFinish(CodeGenFunction &CGF, SourceLocation Loc,
-                                    OpenMPScheduleClauseKind ScheduleKind) {
-  assert((ScheduleKind == OMPC_SCHEDULE_static ||
-          ScheduleKind == OMPC_SCHEDULE_unknown) &&
-         "Non-static schedule kinds are not yet implemented");
-  (void)ScheduleKind;
+void CGOpenMPRuntime::emitForStaticFinish(CodeGenFunction &CGF,
+                                          SourceLocation Loc) {
   // Call __kmpc_for_static_fini(ident_t *loc, kmp_int32 tid);
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc, OMP_IDENT_KMPC),
                          getThreadID(CGF, Loc)};
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_for_static_fini),
                       Args);
+}
+
+void CGOpenMPRuntime::emitForOrderedDynamicIterationEnd(CodeGenFunction &CGF,
+                                                        SourceLocation Loc,
+                                                        unsigned IVSize,
+                                                        bool IVSigned) {
+  // Call __kmpc_for_dynamic_fini_(4|8)[u](ident_t *loc, kmp_int32 tid);
+  llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc, OMP_IDENT_KMPC),
+                         getThreadID(CGF, Loc)};
+  CGF.EmitRuntimeCall(createDispatchFiniFunction(IVSize, IVSigned), Args);
 }
 
 llvm::Value *CGOpenMPRuntime::emitForNext(CodeGenFunction &CGF,

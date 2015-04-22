@@ -576,7 +576,8 @@ void CodeGenFunction::EmitOMPLoopBody(const OMPLoopDirective &S,
 void CodeGenFunction::EmitOMPInnerLoop(
     const Stmt &S, bool RequiresCleanup, const Expr *LoopCond,
     const Expr *IncExpr,
-    const llvm::function_ref<void(CodeGenFunction &)> &BodyGen) {
+    const llvm::function_ref<void(CodeGenFunction &)> &BodyGen,
+    const llvm::function_ref<void(CodeGenFunction &)> &PostIncGen) {
   auto LoopExit = getJumpDestInCurrentScope("omp.inner.for.end");
   auto Cnt = getPGORegionCounter(&S);
 
@@ -612,6 +613,7 @@ void CodeGenFunction::EmitOMPInnerLoop(
   // Emit "IV = IV + 1" and a back-edge to the condition block.
   EmitBlock(Continue.getBlock());
   EmitIgnoredExpr(IncExpr);
+  PostIncGen(*this);
   BreakContinueStack.pop_back();
   EmitBranch(CondBlock);
   LoopStack.pop();
@@ -799,7 +801,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
                              [&S](CodeGenFunction &CGF) {
                                CGF.EmitOMPLoopBody(S);
                                CGF.EmitStopPoint(&S);
-                             });
+                             },
+                             [](CodeGenFunction &) {});
         CGF.EmitOMPLoopBody(S, /* SeparateIter */ true);
       }
       CGF.EmitOMPSimdFinal(S);
@@ -818,7 +821,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
                              [&S](CodeGenFunction &CGF) {
                                CGF.EmitOMPLoopBody(S);
                                CGF.EmitStopPoint(&S);
-                             });
+                             },
+                             [](CodeGenFunction &) {});
       }
       CGF.EmitOMPSimdFinal(S);
     }
@@ -873,7 +877,9 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   //
   // while(__kmpc_dispatch_next(&LB, &UB)) {
   //   idx = LB;
-  //   while (idx <= UB) { BODY; ++idx; } // inner loop
+  //   while (idx <= UB) { BODY; ++idx;
+  //   __kmpc_dispatch_fini_(4|8)[u](); // For ordered loops only.
+  //   } // inner loop
   // }
   //
   // OpenMP [2.7.1, Loop Construct, Description, table 2-1]
@@ -940,12 +946,22 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   auto Continue = getJumpDestInCurrentScope("omp.dispatch.inc");
   BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
 
-  EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
-                   S.getCond(/*SeparateIter=*/false), S.getInc(),
-                   [&S](CodeGenFunction &CGF) {
-                     CGF.EmitOMPLoopBody(S);
-                     CGF.EmitStopPoint(&S);
-                   });
+  bool DynamicWithOrderedClause =
+      Dynamic && S.getSingleClause(OMPC_ordered) != nullptr;
+  SourceLocation Loc = S.getLocStart();
+  EmitOMPInnerLoop(
+      S, LoopScope.requiresCleanups(), S.getCond(/*SeparateIter=*/false),
+      S.getInc(),
+      [&S](CodeGenFunction &CGF) {
+        CGF.EmitOMPLoopBody(S);
+        CGF.EmitStopPoint(&S);
+      },
+      [DynamicWithOrderedClause, IVSize, IVSigned, Loc](CodeGenFunction &CGF) {
+        if (DynamicWithOrderedClause) {
+          CGF.CGM.getOpenMPRuntime().emitForOrderedDynamicIterationEnd(
+              CGF, Loc, IVSize, IVSigned);
+        }
+      });
 
   EmitBlock(Continue.getBlock());
   BreakContinueStack.pop_back();
@@ -961,9 +977,8 @@ void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
   EmitBlock(LoopExit.getBlock());
 
   // Tell the runtime we are done.
-  // FIXME: Also call fini for ordered loops with dynamic scheduling.
   if (!Dynamic)
-    RT.emitForFinish(*this, S.getLocStart(), ScheduleKind);
+    RT.emitForStaticFinish(*this, S.getLocEnd());
 }
 
 /// \brief Emit a helper variable and return corresponding lvalue.
@@ -1058,9 +1073,10 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
                          [&S](CodeGenFunction &CGF) {
                            CGF.EmitOMPLoopBody(S);
                            CGF.EmitStopPoint(&S);
-                         });
+                         },
+                         [](CodeGenFunction &) {});
         // Tell the runtime we are done.
-        RT.emitForFinish(*this, S.getLocStart(), ScheduleKind);
+        RT.emitForStaticFinish(*this, S.getLocStart());
       } else {
         // Emit the outer loop, which requests its work chunk [LB..UB] from
         // runtime and runs the inner loop to process it.
@@ -1177,10 +1193,10 @@ static OpenMPDirectiveKind emitSections(CodeGenFunction &CGF,
       // IV = LB;
       CGF.EmitStoreOfScalar(CGF.EmitLoadOfScalar(LB, S.getLocStart()), IV);
       // while (idx <= UB) { BODY; ++idx; }
-      CGF.EmitOMPInnerLoop(S, /*RequiresCleanup=*/false, &Cond, &Inc, BodyGen);
+      CGF.EmitOMPInnerLoop(S, /*RequiresCleanup=*/false, &Cond, &Inc, BodyGen,
+                           [](CodeGenFunction &) {});
       // Tell the runtime we are done.
-      CGF.CGM.getOpenMPRuntime().emitForFinish(CGF, S.getLocStart(),
-                                               OMPC_SCHEDULE_static);
+      CGF.CGM.getOpenMPRuntime().emitForStaticFinish(CGF, S.getLocStart());
     };
 
     CGF.CGM.getOpenMPRuntime().emitInlinedDirective(CGF, CodeGen);
@@ -1372,8 +1388,13 @@ void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &S) {
   }(), S.getLocStart());
 }
 
-void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &) {
-  llvm_unreachable("CodeGen for 'omp ordered' is not supported yet.");
+void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &S) {
+  LexicalScope Scope(*this, S.getSourceRange());
+  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+    CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    CGF.EnsureInsertPoint();
+  };
+  CGM.getOpenMPRuntime().emitOrderedRegion(*this, CodeGen, S.getLocStart());
 }
 
 static llvm::Value *convertToScalarValue(CodeGenFunction &CGF, RValue Val,
