@@ -253,7 +253,7 @@ Init *StringRecTy::convertValue(UnOpInit *BO) {
     Init *L = BO->getOperand()->convertInitializerTo(this);
     if (!L) return nullptr;
     if (L != BO->getOperand())
-      return UnOpInit::get(UnOpInit::CAST, L, new StringRecTy);
+      return UnOpInit::get(UnOpInit::CAST, L, StringRecTy::get());
     return BO;
   }
 
@@ -266,7 +266,7 @@ Init *StringRecTy::convertValue(BinOpInit *BO) {
     Init *R = BO->getRHS()->convertInitializerTo(this);
     if (!L || !R) return nullptr;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::get(BinOpInit::STRCONCAT, L, R, new StringRecTy);
+      return BinOpInit::get(BinOpInit::STRCONCAT, L, R, StringRecTy::get());
     return BO;
   }
 
