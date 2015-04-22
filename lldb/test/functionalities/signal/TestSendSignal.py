@@ -18,6 +18,7 @@ class SendSignalTestCase(TestBase):
         self.buildDsym()
         self.send_signal()
 
+    @expectedFailureFreeBSD("llvm.org/pr23318: does not report running state")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that lldb command 'process signal SIGUSR1' sends a signal to the inferior process."""
