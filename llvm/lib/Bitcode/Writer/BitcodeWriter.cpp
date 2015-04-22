@@ -1895,7 +1895,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     else
       Code = bitc::FUNC_CODE_INST_STORE;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
-    pushValue(I.getOperand(0), InstID, Vals, VE);         // val.
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // valty + val
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
     if (cast<StoreInst>(I).isAtomic()) {

@@ -4048,13 +4048,17 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_STORE: { // STORE2:[ptrty, ptr, val, align, vol]
+    case bitc::FUNC_CODE_INST_STORE:
+    case bitc::FUNC_CODE_INST_STORE_OLD: { // STORE2:[ptrty, ptr, val, align, vol]
       unsigned OpNum = 0;
       Value *Val, *Ptr;
       if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
-          popValue(Record, OpNum, NextValueNo,
-                    cast<PointerType>(Ptr->getType())->getElementType(), Val) ||
-          OpNum+2 != Record.size())
+          (BitCode == bitc::FUNC_CODE_INST_STORE
+               ? getValueTypePair(Record, OpNum, NextValueNo, Val)
+               : popValue(Record, OpNum, NextValueNo,
+                          cast<PointerType>(Ptr->getType())->getElementType(),
+                          Val)) ||
+          OpNum + 2 != Record.size())
         return Error("Invalid record");
       unsigned Align;
       if (std::error_code EC = parseAlignmentValue(Record[OpNum], Align))
