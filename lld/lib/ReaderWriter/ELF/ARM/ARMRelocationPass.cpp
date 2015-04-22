@@ -438,6 +438,56 @@ protected:
     return std::error_code();
   }
 
+  /// \brief Get the veneer for ARM B/BL instructions
+  /// in absolute code.
+  const VeneerAtom *getVeneer_ARM_B_BL_Abs(const DefinedAtom *da,
+                                           StringRef secName) {
+    auto veneer = _veneerAtoms.lookup(da);
+    if (!veneer.empty())
+      return veneer._veneer;
+
+    std::string name = "__";
+    name += da->name();
+    name += "_from_arm";
+    // Create parts of veneer with mapping symbols.
+    auto v_a =
+        new (_file._alloc) Veneer_ARM_B_BL_Abs_a_Atom(_file, secName, name);
+    addVeneerWithMapping<DefinedAtom::codeARM_a>(da, v_a, name);
+    auto v_d = new (_file._alloc) Veneer_ARM_B_BL_Abs_d_Atom(_file, secName);
+    addVeneerWithMapping<DefinedAtom::codeARM_d>(v_a, v_d, name);
+
+    // Fake reference to show connection between parts of veneer.
+    v_a->addReferenceELF_ARM(R_ARM_NONE, 0, v_d, 0);
+    // Real reference to fixup.
+    v_d->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
+    return v_a;
+  }
+
+  /// \brief Get the veneer for Thumb B/BL instructions
+  /// in absolute code.
+  const VeneerAtom *getVeneer_THM_B_BL_Abs(const DefinedAtom *da,
+                                           StringRef secName) {
+    auto veneer = _veneerAtoms.lookup(da);
+    if (!veneer.empty())
+      return veneer._veneer;
+
+    std::string name = "__";
+    name += da->name();
+    name += "_from_thumb";
+    // Create parts of veneer with mapping symbols.
+    auto v_t =
+        new (_file._alloc) Veneer_THM_B_BL_Abs_t_Atom(_file, secName, name);
+    addVeneerWithMapping<DefinedAtom::codeARM_t>(da, v_t, name);
+    auto v_a = new (_file._alloc) Veneer_THM_B_BL_Abs_a_Atom(_file, secName);
+    addVeneerWithMapping<DefinedAtom::codeARM_a>(v_t, v_a, name);
+
+    // Fake reference to show connection between parts of veneer.
+    v_t->addReferenceELF_ARM(R_ARM_NONE, 0, v_a, 0);
+    // Real reference to fixup.
+    v_a->addReferenceELF_ARM(R_ARM_JUMP24, 0, da, 0);
+    return v_t;
+  }
+
   std::error_code handleTLSIE32(const Reference &ref) {
     if (const auto *target = dyn_cast<DefinedAtom>(ref.target())) {
       const_cast<Reference &>(ref)
@@ -765,49 +815,13 @@ public:
   /// \brief Get the veneer for ARM B/BL instructions.
   const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    auto veneer = _veneerAtoms.lookup(da);
-    if (!veneer.empty())
-      return veneer._veneer;
-
-    std::string name = "__";
-    name += da->name();
-    name += "_from_arm";
-    // Create parts of veneer with mapping symbols.
-    auto v_a =
-        new (_file._alloc) Veneer_ARM_B_BL_Abs_a_Atom(_file, secName, name);
-    addVeneerWithMapping<DefinedAtom::codeARM_a>(da, v_a, name);
-    auto v_d = new (_file._alloc) Veneer_ARM_B_BL_Abs_d_Atom(_file, secName);
-    addVeneerWithMapping<DefinedAtom::codeARM_d>(v_a, v_d, name);
-
-    // Fake reference to show connection between parts of veneer.
-    v_a->addReferenceELF_ARM(R_ARM_NONE, 0, v_d, 0);
-    // Real reference to fixup.
-    v_d->addReferenceELF_ARM(R_ARM_ABS32, 0, da, 0);
-    return v_a;
+    return getVeneer_ARM_B_BL_Abs(da, secName);
   }
 
   /// \brief Get the veneer for Thumb B/BL instructions.
   const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
                                        StringRef secName) {
-    auto veneer = _veneerAtoms.lookup(da);
-    if (!veneer.empty())
-      return veneer._veneer;
-
-    std::string name = "__";
-    name += da->name();
-    name += "_from_thumb";
-    // Create parts of veneer with mapping symbols.
-    auto v_t =
-        new (_file._alloc) Veneer_THM_B_BL_Abs_t_Atom(_file, secName, name);
-    addVeneerWithMapping<DefinedAtom::codeARM_t>(da, v_t, name);
-    auto v_a = new (_file._alloc) Veneer_THM_B_BL_Abs_a_Atom(_file, secName);
-    addVeneerWithMapping<DefinedAtom::codeARM_a>(v_t, v_a, name);
-
-    // Fake reference to show connection between parts of veneer.
-    v_t->addReferenceELF_ARM(R_ARM_NONE, 0, v_a, 0);
-    // Real reference to fixup.
-    v_a->addReferenceELF_ARM(R_ARM_JUMP24, 0, da, 0);
-    return v_t;
+    return getVeneer_THM_B_BL_Abs(da, secName);
   }
 
   /// \brief Create a GOT entry for R_ARM_TLS_TPOFF32 reloc.
