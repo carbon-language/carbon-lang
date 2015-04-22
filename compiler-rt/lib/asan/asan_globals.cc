@@ -74,7 +74,7 @@ ALWAYS_INLINE void PoisonRedZones(const Global &g) {
 
 const uptr kMinimalDistanceFromAnotherGlobal = 64;
 
-bool IsAddressNearGlobal(uptr addr, const __asan_global &g) {
+static bool IsAddressNearGlobal(uptr addr, const __asan_global &g) {
   if (addr <= g.beg - kMinimalDistanceFromAnotherGlobal) return false;
   if (addr >= g.beg + g.size_with_redzone) return false;
   return true;
@@ -91,36 +91,27 @@ static void ReportGlobal(const Global &g, const char *prefix) {
   }
 }
 
-static bool DescribeOrGetInfoIfGlobal(uptr addr, uptr size, bool print,
-                                      Global *output_global) {
-  if (!flags()->report_globals) return false;
+// Returns the number of globals close to the provided address and copies
+// them to "globals" array.
+int GetGlobalsForAddress(uptr addr, Global *globals, int max_globals) {
+  if (!flags()->report_globals) return 0;
   BlockingMutexLock lock(&mu_for_globals);
-  bool res = false;
+  int res = 0;
   for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
     const Global &g = *l->g;
-    if (print) {
-      if (flags()->report_globals >= 2)
-        ReportGlobal(g, "Search");
-      res |= DescribeAddressRelativeToGlobal(addr, size, g);
-    } else {
-      if (IsAddressNearGlobal(addr, g)) {
-        CHECK(output_global);
-        *output_global = g;
-        return true;
-      }
+    if (flags()->report_globals >= 2)
+      ReportGlobal(g, "Search");
+    if (IsAddressNearGlobal(addr, g)) {
+      globals[res++] = g;
+      if (res == max_globals) break;
     }
   }
   return res;
 }
 
-bool DescribeAddressIfGlobal(uptr addr, uptr size) {
-  return DescribeOrGetInfoIfGlobal(addr, size, /* print */ true,
-                                   /* output_global */ nullptr);
-}
-
 bool GetInfoForAddressIfGlobal(uptr addr, AddressDescription *descr) {
   Global g = {};
-  if (DescribeOrGetInfoIfGlobal(addr, /* size */ 1, /* print */ false, &g)) {
+  if (GetGlobalsForAddress(addr, &g, 1)) {
     internal_strncpy(descr->name, g.name, descr->name_size);
     descr->region_address = g.beg;
     descr->region_size = g.size;

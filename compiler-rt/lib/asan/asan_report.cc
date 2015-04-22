@@ -281,9 +281,8 @@ static void PrintGlobalLocation(InternalScopedString *str,
     str->append(":%d", g.location->column_no);
 }
 
-bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
-                                     const __asan_global &g) {
-  if (!IsAddressNearGlobal(addr, g)) return false;
+static void DescribeAddressRelativeToGlobal(uptr addr, uptr size,
+                                            const __asan_global &g) {
   InternalScopedString str(4096);
   Decorator d;
   str.append("%s", d.Location());
@@ -306,6 +305,17 @@ bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
   str.append("%s", d.EndLocation());
   PrintGlobalNameIfASCII(&str, g);
   Printf("%s", str.data());
+}
+
+static bool DescribeAddressIfGlobal(uptr addr, uptr size) {
+  // Assume address is close to at most four globals.
+  const int kMaxGlobalsInReport = 4;
+  __asan_global globals[kMaxGlobalsInReport];
+  int globals_num = GetGlobalsForAddress(addr, globals, ARRAY_SIZE(globals));
+  if (globals_num == 0)
+    return false;
+  for (int i = 0; i < globals_num; i++)
+    DescribeAddressRelativeToGlobal(addr, size, globals[i]);
   return true;
 }
 
