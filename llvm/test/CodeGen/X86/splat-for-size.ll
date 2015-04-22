@@ -138,4 +138,18 @@ define <32 x i8> @splat_v32i8(<32 x i8> %x) #0 {
 ; CHECK: retq
 }
 
+; PR23259: Verify that ISel doesn't crash with a 'fatal error in backend'
+; due to a missing AVX pattern to select a v2i64 X86ISD::BROADCAST of a
+; loadi16 with multiple uses.
+
+@A = common global <3 x i64> zeroinitializer, align 32
+
+define <8 x i64> @pr23259() #0 {
+entry:
+  %0 = load <4 x i64>, <4 x i64>* bitcast (<3 x i64>* @A to <4 x i64>*), align 32
+  %1 = shufflevector <4 x i64> %0, <4 x i64> undef, <3 x i32> <i32 undef, i32 undef, i32 2>
+  %shuffle = shufflevector <3 x i64> <i64 1, i64 undef, i64 undef>, <3 x i64> %1, <8 x i32> <i32 5, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i64> %shuffle
+}
+
 attributes #0 = { optsize }

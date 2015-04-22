@@ -5223,9 +5223,9 @@ let Predicates = [HasAVX] in {
 
 let Predicates = [UseAVX, OptForSize] in {
   def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
-  (VMOVDDUPrm addr:$src)>;
+            (VMOVDDUPrm addr:$src)>;
   def : Pat<(v2i64 (X86VBroadcast (loadi64 addr:$src))),
-  (VMOVDDUPrm addr:$src)>;
+            (VMOVDDUPrm addr:$src)>;
 }
 
 let Predicates = [UseSSE3] in {
@@ -8478,6 +8478,8 @@ let Predicates = [HasAVX] in {
 
   def : Pat<(v2f64 (X86VBroadcast f64:$src)),
             (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128))>;
+  def : Pat<(v2i64 (X86VBroadcast i64:$src)),
+            (VMOVDDUPrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
 }
 
 //===----------------------------------------------------------------------===//
