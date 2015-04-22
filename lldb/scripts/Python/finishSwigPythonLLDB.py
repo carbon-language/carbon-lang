@@ -73,6 +73,9 @@ strErrMsgMkLinkExecute = "Command mklink failed: %s";
 strErrMsgMakeSymlink = "creating symbolic link";
 strErrMsgUnexpected = "Unexpected error: %s";
 
+def is_debug_interpreter():
+    return hasattr(sys, 'gettotalrefcount')
+
 #++---------------------------------------------------------------------------
 # Details:  Copy files needed by lldb/macosx/heap.py to build libheap.dylib.
 # Args:     vDictArgs               - (R) Program input parameters.
@@ -348,7 +351,7 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
         # When importing an extension module using a debug version of python, you
         # write, for example, "import foo", but the interpreter searches for
         # "foo_d.pyd"
-        if vDictArgs["--buildConfig"].lower() == "debug":
+        if is_debug_interpreter():
             strTarget += "_d";
         strTarget += ".pyd";
     else:
@@ -640,7 +643,6 @@ def get_framework_python_dir( vDictArgs ):
             -m (optional)   Specify called from Makefile system. If given locate
                             the LLDBWrapPython.cpp in --srcRoot/source folder
                             else in the --targetDir folder.
-            --buildConfig   The LLDB build configuration (e.g. debug/release).
             --srcRoot       The root of the lldb source tree.
             --targetDir     Where the lldb framework/shared library gets put.
             --cfgBlddir     Where the buildSwigPythonLLDB.py program will
