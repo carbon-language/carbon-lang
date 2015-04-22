@@ -950,6 +950,9 @@ bool HexagonPacketizerList::ignorePseudoInstruction(MachineInstr *MI,
   if (MI->isDebugValue())
     return true;
 
+  if (MI->isCFIInstruction())
+    return false;
+
   // We must print out inline assembly
   if (MI->isInlineAsm())
     return false;
@@ -967,11 +970,10 @@ bool HexagonPacketizerList::ignorePseudoInstruction(MachineInstr *MI,
 // isSoloInstruction: - Returns true for instructions that must be
 // scheduled in their own packet.
 bool HexagonPacketizerList::isSoloInstruction(MachineInstr *MI) {
-
-  if (MI->isInlineAsm())
+  if (MI->isEHLabel() || MI->isCFIInstruction())
     return true;
 
-  if (MI->isEHLabel())
+  if (MI->isInlineAsm())
     return true;
 
   // From Hexagon V4 Programmer's Reference Manual 3.4.4 Grouping constraints:
