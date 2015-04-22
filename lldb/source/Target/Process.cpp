@@ -1003,7 +1003,8 @@ Process::WaitForProcessToStop (const TimeValue *timeout,
 
     if (!wait_always &&
         StateIsStoppedState(state, true) &&
-        StateIsStoppedState(GetPrivateState(), true)) {
+        StateIsStoppedState(GetPrivateState(), true))
+    {
         if (log)
             log->Printf("Process::%s returning without waiting for events; process private and public states are already 'stopped'.",
                         __FUNCTION__);
