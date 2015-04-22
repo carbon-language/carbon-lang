@@ -691,6 +691,15 @@ extern template struct ExplicitInstantiationDeclExportedTemplate<int>;
 USEMEMFUNC(ExplicitInstantiationDeclExportedTemplate<int>, f);
 // M32-DAG: {{declare|define available_externally}} x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedTemplate@H@@QAEXXZ"
 
+namespace { struct InternalLinkageType {}; }
+struct __declspec(dllexport) PR23308 {
+  void f(InternalLinkageType*);
+};
+void PR23308::f(InternalLinkageType*) {}
+long use(PR23308* p) { p->f(nullptr); }
+// M32-DAG: define internal x86_thiscallcc void @"\01?f@PR23308@@QAEXPAUInternalLinkageType@?A@@@Z"
+
+
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes

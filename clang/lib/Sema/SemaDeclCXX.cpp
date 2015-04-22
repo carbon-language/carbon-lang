@@ -4804,6 +4804,9 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
       }
     }
 
+    if (!cast<NamedDecl>(Member)->isExternallyVisible())
+      continue;
+
     if (!getDLLAttr(Member)) {
       auto *NewAttr =
           cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
