@@ -83,11 +83,18 @@ bool InstCombiner::SimplifyDemandedInstructionBits(Instruction &Inst) {
 bool InstCombiner::SimplifyDemandedBits(Use &U, APInt DemandedMask,
                                         APInt &KnownZero, APInt &KnownOne,
                                         unsigned Depth) {
-  Value *NewVal =
-      SimplifyDemandedUseBits(U.get(), DemandedMask, KnownZero, KnownOne, Depth,
-                              dyn_cast<Instruction>(U.getUser()));
+  auto *UserI = dyn_cast<Instruction>(U.getUser());
+  Value *NewVal = SimplifyDemandedUseBits(U.get(), DemandedMask, KnownZero,
+                                          KnownOne, Depth, UserI);
   if (!NewVal) return false;
   U = NewVal;
+
+  // Shrinking a constant might cause a nsw/nuw violation to occur in
+  // instructions which are themselves demanded.
+  if (auto *UserOBO = dyn_cast<OverflowingBinaryOperator>(UserI)) {
+    cast<BinaryOperator>(UserOBO)->setHasNoSignedWrap(false);
+    cast<BinaryOperator>(UserOBO)->setHasNoUnsignedWrap(false);
+  }
   return true;
 }
 
