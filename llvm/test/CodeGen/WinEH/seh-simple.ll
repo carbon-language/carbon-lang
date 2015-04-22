@@ -94,11 +94,60 @@ eh.resume:
 ; CHECK-LABEL: define i32 @except_phi()
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: catch i32 ()* @filt
-; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@except_phi, %return))
-; CHECK-NEXT: indirectbr {{.*}} [label %return]
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@except_phi, %lpad.return_crit_edge))
+; CHECK-NEXT: indirectbr {{.*}} [label %lpad.return_crit_edge]
+;
+; CHECK: lpad.return_crit_edge:
+; CHECK: br label %return
 ;
 ; CHECK: return:
-; CHECK-NEXT: %r = phi i32 [ 0, %entry ], [ 1, %lpad1 ]
+; CHECK-NEXT: %r = phi i32 [ 0, %entry ], [ 1, %lpad.return_crit_edge ]
+; CHECK-NEXT: ret i32 %r
+
+define i32 @lpad_phi() {
+entry:
+  invoke void @might_crash()
+          to label %cont unwind label %lpad
+
+cont:
+  invoke void @might_crash()
+          to label %return unwind label %lpad
+
+lpad:
+  %ncalls.1 = phi i32 [ 0, %entry ], [ 1, %cont ]
+  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+          catch i32 ()* @filt
+  %sel = extractvalue { i8*, i32 } %ehvals, 1
+  %filt_sel = tail call i32 @llvm.eh.typeid.for(i8* bitcast (i32 ()* @filt to i8*))
+  %matches = icmp eq i32 %sel, %filt_sel
+  br i1 %matches, label %return, label %eh.resume
+
+return:
+  %r = phi i32 [2, %cont], [%ncalls.1, %lpad]
+  ret i32 %r
+
+eh.resume:
+  resume { i8*, i32 } %ehvals
+}
+
+; CHECK-LABEL: define i32 @lpad_phi()
+; CHECK: alloca i32
+; CHECK: store i32 0, i32*
+; CHECK: invoke void @might_crash()
+; CHECK: store i32 1, i32*
+; CHECK: invoke void @might_crash()
+; CHECK: landingpad { i8*, i32 }
+; CHECK-NEXT: cleanup
+; CHECK-NEXT: catch i32 ()* @filt
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void (i8*, i8*)* @lpad_phi.cleanup, i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@lpad_phi, %lpad.return_crit_edge))
+; CHECK-NEXT: indirectbr {{.*}} [label %lpad.return_crit_edge]
+;
+; CHECK: lpad.return_crit_edge:
+; CHECK: load i32, i32*
+; CHECK: br label %return
+;
+; CHECK: return:
+; CHECK-NEXT: %r = phi i32 [ 2, %cont ], [ %{{.*}}, %lpad.return_crit_edge ]
 ; CHECK-NEXT: ret i32 %r
 
 define i32 @cleanup_and_except() {
@@ -130,9 +179,17 @@ eh.resume:
 ; CHECK-NEXT: catch i32 ()* @filt
 ; CHECK-NEXT: call i8* (...) @llvm.eh.actions(
 ; CHECK: i32 0, void (i8*, i8*)* @cleanup_and_except.cleanup,
-; CHECK: i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@cleanup_and_except, %return))
-; CHECK-NEXT: indirectbr {{.*}} [label %return]
+; CHECK: i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@cleanup_and_except, %lpad.return_crit_edge))
+; CHECK-NEXT: indirectbr {{.*}} [label %lpad.return_crit_edge]
+;
+; CHECK: lpad.return_crit_edge:
+; CHECK: br label %return
 ;
 ; CHECK: return:
-; CHECK-NEXT: %r = phi i32 [ 0, %entry ], [ 1, %lpad1 ]
+; CHECK-NEXT: %r = phi i32 [ 0, %entry ], [ 1, %lpad.return_crit_edge ]
 ; CHECK-NEXT: ret i32 %r
+
+; FIXME: This cleanup is an artifact of bad demotion.
+; CHECK-LABEL: define internal void @lpad_phi.cleanup(i8*, i8*)
+; CHECK: load i32
+; CHECK: store i32 %{{.*}}, i32*

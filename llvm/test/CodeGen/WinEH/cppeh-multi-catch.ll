@@ -79,7 +79,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1",
 ; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2",
 ; CHECK-SAME:        i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch3")
-; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %catch14.split, label %catch10.split, label %catch6.split, label %catch.split]
+; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %ret]
 
 lpad:                                             ; preds = %entry
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
@@ -100,8 +100,11 @@ catch.dispatch:                                   ; preds = %lpad
   %matches = icmp eq i32 %sel, %3
   br i1 %matches, label %catch14, label %catch.fallthrough
 
+ret:
+  ret void
+
 ; CHECK-NOT: catch14:
-; CHECK: catch14.split:
+; CHECK: ret:
 ; CHECK-NEXT:   ret void
 catch14:                                          ; preds = %catch.dispatch
   %exn15 = load i8*, i8** %exn.slot
@@ -110,10 +113,10 @@ catch14:                                          ; preds = %catch.dispatch
   %5 = load i32, i32* %i, align 4
   call void @"\01?handle_int@@YAXH@Z"(i32 %5)
   call void @llvm.eh.endcatch() #3
-  ret void
+  br label %ret
 
 try.cont:                                         ; preds = %invoke.cont
-  ret void
+  br label %ret
 
 ; CHECK-NOT: catch.fallthrough:
 catch.fallthrough:                                ; preds = %catch.dispatch
@@ -122,8 +125,6 @@ catch.fallthrough:                                ; preds = %catch.dispatch
   br i1 %matches1, label %catch10, label %catch.fallthrough2
 
 ; CHECK-NOT: catch10:
-; CHECK: catch10.split:
-; CHECK-NEXT:   ret void
 catch10:                                          ; preds = %catch.fallthrough
   %exn11 = load i8*, i8** %exn.slot
   %7 = bitcast i64* %ll to i8*
@@ -131,7 +132,7 @@ catch10:                                          ; preds = %catch.fallthrough
   %8 = load i64, i64* %ll, align 8
   call void @"\01?handle_long_long@@YAX_J@Z"(i64 %8)
   call void @llvm.eh.endcatch() #3
-  ret void
+  br label %ret
 
 ; CHECK-NOT: catch.fallthrough2:
 catch.fallthrough2:                               ; preds = %catch.fallthrough
@@ -140,8 +141,6 @@ catch.fallthrough2:                               ; preds = %catch.fallthrough
   br i1 %matches3, label %catch6, label %catch
 
 ; CHECK-NOT: catch6:
-; CHECK: catch6.split:
-; CHECK-NEXT:   ret void
 catch6:                                           ; preds = %catch.fallthrough2
   %exn7 = load i8*, i8** %exn.slot
   %10 = bitcast %class.SomeClass** %obj to i8*
@@ -149,16 +148,14 @@ catch6:                                           ; preds = %catch.fallthrough2
   %11 = load %class.SomeClass*, %class.SomeClass** %obj, align 8
   call void @"\01?handle_obj@@YAXPEAVSomeClass@@@Z"(%class.SomeClass* %11)
   call void @llvm.eh.endcatch() #3
-  ret void
+  br label %ret
 
 ; CHECK-NOT: catch:
-; CHECK: catch.split:
-; CHECK-NEXT:   ret void
 catch:                                            ; preds = %catch.fallthrough2
   %exn = load i8*, i8** %exn.slot
   call void @llvm.eh.begincatch(i8* %exn, i8* null) #3
   call void @"\01?handle_exception@@YAXXZ"()  call void @llvm.eh.endcatch() #3
-  ret void
+  br label %ret
 ; CHECK: }
 }
 
@@ -168,7 +165,7 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
 ; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[I_PTR]], align 4
 ; CHECK:   call void @"\01?handle_int@@YAXH@Z"(i32 [[TMP1]])
-; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %catch14.split)
+; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
@@ -177,7 +174,7 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   [[LL_PTR:\%.+]] = bitcast i8* [[RECOVER_LL]] to i64*
 ; CHECK:   [[TMP2:\%.+]] = load i64, i64* [[LL_PTR]], align 8
 ; CHECK:   call void @"\01?handle_long_long@@YAX_J@Z"(i64 [[TMP2]])
-; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %catch10.split)
+; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*)
@@ -186,13 +183,13 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   [[OBJ_PTR:\%.+]] = bitcast i8* [[RECOVER_OBJ]] to %class.SomeClass**
 ; CHECK:   [[TMP3:\%.+]] = load %class.SomeClass*, %class.SomeClass** [[OBJ_PTR]], align 8
 ; CHECK:   call void @"\01?handle_obj@@YAXPEAVSomeClass@@@Z"(%class.SomeClass* [[TMP3]])
-; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %catch6.split)
+; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch3"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   call void @"\01?handle_exception@@YAXXZ"()
-; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %catch.split)
+; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
 

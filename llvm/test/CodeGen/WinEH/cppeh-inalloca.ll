@@ -39,8 +39,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK: define i32 @"\01?test@@YAHUA@@@Z"(<{ %struct.A }>* inalloca)
 ; CHECK: entry:
 ; CHECK:   [[TMP_REGMEM:\%.+]] = alloca <{ %struct.A }>*
-; CHECK:   [[TMP:\%.+]] = select i1 true, <{ %struct.A }>* %0, <{ %struct.A }>* undef
-; CHECK:   store <{ %struct.A }>* [[TMP]], <{ %struct.A }>** [[TMP_REGMEM]]
+; CHECK:   store <{ %struct.A }>* %0, <{ %struct.A }>** [[TMP_REGMEM]]
 ; CHECK:   [[RETVAL:\%.+]] = alloca i32, align 4
 ; CHECK:   [[E_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   [[CLEANUP_SLOT:\%.+]] = alloca i32
@@ -109,10 +108,8 @@ try.cont:                                         ; preds = %invoke.cont
 
 ; The cleanup block should be re-written like this.
 ; CHECK: cleanup:{{[ ]+}}; preds = %[[LPAD_LABEL]], %try.cont
-; CHECK-NOT:  %a2 = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %0, i32 0, i32 0
-; CHECK:   [[TMP_RELOAD:\%.+]] = load volatile <{ %struct.A }>*, <{ %struct.A }>** [[TMP_REGMEM]]
-; CHECK:   [[A2:\%.+]] = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* [[TMP_RELOAD]], i32 0, i32 0
-; CHECK:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* [[A2]])
+; CHECK:   %a2 = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %0, i32 0, i32 0
+; CHECK:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %a2)
 ; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[RETVAL]]
 ; CHECK:   ret i32 [[TMP1]]
 
@@ -148,12 +145,12 @@ eh.resume:                                        ; preds = %ehcleanup
 ; CHECK:   [[E_PTR:\%.+]] = bitcast i8* [[RECOVER_E]] to i32*
 ; CHECK:   [[RECOVER_EH_TEMP:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
 ; CHECK:   [[EH_TEMP:\%.+]] = bitcast i8* [[RECOVER_EH_TEMP]] to <{ %struct.A }>**
-; CHECK:   [[TMP_RELOAD:\%.+]] = load <{ %struct.A }>*, <{ %struct.A }>** [[EH_TEMP]]
 ; CHECK:   [[RECOVER_RETVAL:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 2)
 ; CHECK:   [[RETVAL1:\%.+]] = bitcast i8* [[RECOVER_RETVAL]] to i32*
 ; CHECK:   [[RECOVER_CLEANUPSLOT:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 3)
 ; CHECK:   [[CLEANUPSLOT1:\%.+]] = bitcast i8* [[RECOVER_CLEANUPSLOT]] to i32*
 ; CHECK:   [[E_I8PTR:\%.+]] = bitcast i32* [[E_PTR]] to i8*
+; CHECK:   [[TMP_RELOAD:\%.+]] = load <{ %struct.A }>*, <{ %struct.A }>** [[EH_TEMP]]
 ; CHECK:   [[RECOVER_A:\%.+]] = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* [[TMP_RELOAD]], i32 0, i32 0
 ; CHECK:   [[A1:\%.+]] = getelementptr inbounds %struct.A, %struct.A* [[RECOVER_A]], i32 0, i32 0
 ; CHECK:   [[TMP2:\%.+]] = load i32, i32* [[A1]], align 4
