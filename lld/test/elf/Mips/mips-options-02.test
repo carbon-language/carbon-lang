@@ -5,6 +5,7 @@
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t1.o %t2.o
 # RUN: llvm-readobj -s -dynamic-table %t.so | FileCheck -check-prefix=SEC %s
 # RUN: llvm-objdump -s -t %t.so | FileCheck -check-prefix=RAW %s
+# RUN: llvm-readobj -program-headers %t.so | FileCheck -check-prefix=PHDR %s
 
 # SEC:      Index: 1
 # SEC-NEXT: Name: .MIPS.options (1)
@@ -25,12 +26,20 @@
 # SEC:   0x{{[0-9A-F]+}} MIPS_OPTIONS 0x[[OPT_ADDR]]
 
 # RAW:      Contents of section .MIPS.options:
-# RAW-NEXT:  1000 01280000 00000000 f0000001 00000000
-# RAW-NEXT:  1010 e0000002 d0000003 b0000004 c0000005
-# RAW-NEXT:  1020 f09f0000 00000000
+# RAW-NEXT:  {{[0-9a-f]+}} 01280000 00000000 f0000001 00000000
+# RAW-NEXT:  {{[0-9a-f]+}} e0000002 d0000003 b0000004 c0000005
+# RAW-NEXT:  {{[0-9a-f]+}} f08f0000 00000000
 
 # RAW: SYMBOL TABLE:
-# RAW: 0000000000009ff0 g *ABS* 00000000 _gp
+# RAW: 0000000000008ff0 g *ABS* 00000000 _gp
+
+# Check that %t.so contains only two PT_LOAD segments
+# PHDR:    ProgramHeaders
+# PHDR:      Type: PT_LOAD
+# PHDR:      Type: PT_LOAD
+# PHDR-NOT:  Type: PT_LOAD
+# PHDR:      Type: PT_DYNAMIC
+# PHDR:      Type: PT_NOTE
 
 # t1.o
 ---

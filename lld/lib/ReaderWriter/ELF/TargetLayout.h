@@ -300,6 +300,8 @@ protected:
         new (_allocator) RelocationTable<ELFT>(_ctx, name, order));
   }
 
+  virtual uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const;
+
 protected:
   llvm::BumpPtrAllocator _allocator;
   SectionMapT _sectionMap;

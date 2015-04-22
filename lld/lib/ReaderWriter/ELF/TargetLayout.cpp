@@ -327,6 +327,21 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
   }
 }
 
+template <class ELFT>
+uint64_t
+TargetLayout<ELFT>::getLookupSectionFlags(const OutputSection<ELFT> *os) const {
+  uint64_t flags = os->flags();
+  if (!(flags & llvm::ELF::SHF_WRITE) && _ctx.mergeRODataToTextSegment())
+    flags &= ~llvm::ELF::SHF_EXECINSTR;
+
+  // Merge string sections into Data segment itself
+  flags &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
+
+  // Merge the TLS section into the DATA segment itself
+  flags &= ~(llvm::ELF::SHF_TLS);
+  return flags;
+}
+
 template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
   ELFLinkingContext::OutputMagic outputMagic = _ctx.getOutputMagic();
@@ -362,16 +377,7 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
       section->setSegmentType(segmentType);
       StringRef segmentName = section->segmentKindToStr();
 
-      uint64_t lookupSectionFlag = osi->flags();
-      if ((!(lookupSectionFlag & llvm::ELF::SHF_WRITE)) &&
-          (_ctx.mergeRODataToTextSegment()))
-        lookupSectionFlag &= ~llvm::ELF::SHF_EXECINSTR;
-
-      // Merge string sections into Data segment itself
-      lookupSectionFlag &= ~(llvm::ELF::SHF_STRINGS | llvm::ELF::SHF_MERGE);
-
-      // Merge the TLS section into the DATA segment itself
-      lookupSectionFlag &= ~(llvm::ELF::SHF_TLS);
+      uint64_t lookupSectionFlag = getLookupSectionFlags(osi);
 
       Segment<ELFT> *segment;
       // We need a separate segment for sections that don't have

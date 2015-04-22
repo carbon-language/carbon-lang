@@ -83,6 +83,11 @@ protected:
         this->_allocator) MipsRelocationTable<ELFT>(this->_ctx, name, order));
   }
 
+  uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const override {
+    uint64_t flags = TargetLayout<ELFT>::getLookupSectionFlags(os);
+    return flags & ~llvm::ELF::SHF_MIPS_NOSTRIP;
+  }
+
 private:
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;
