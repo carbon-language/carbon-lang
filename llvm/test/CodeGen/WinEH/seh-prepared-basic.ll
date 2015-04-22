@@ -1,4 +1,4 @@
-; RUN: llc -sehprepare < %s | FileCheck %s
+; RUN: llc < %s | FileCheck %s
 
 ; Test case based on this code:
 ; extern "C" unsigned long _exception_code();

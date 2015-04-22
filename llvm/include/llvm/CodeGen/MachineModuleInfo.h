@@ -77,7 +77,6 @@ struct LandingPadInfo {
   MachineBasicBlock *LandingPadBlock;      // Landing pad block.
   SmallVector<MCSymbol *, 1> BeginLabels;  // Labels prior to invoke.
   SmallVector<MCSymbol *, 1> EndLabels;    // Labels after invoke.
-  SmallVector<MCSymbol *, 1> ClauseLabels; // Labels for each clause.
   SmallVector<SEHHandler, 1> SEHHandlers;  // SEH handlers active at this lpad.
   MCSymbol *LandingPadLabel;               // Label at beginning of landing pad.
   const Function *Personality;             // Personality function.
@@ -360,11 +359,6 @@ public:
   /// addCleanup - Add a cleanup action for a landing pad.
   ///
   void addCleanup(MachineBasicBlock *LandingPad);
-
-  /// Add a clause for a landing pad. Returns a new label for the clause. This
-  /// is used by EH schemes that have more than one landing pad. In this case,
-  /// each clause gets its own basic block.
-  MCSymbol *addClauseForLandingPad(MachineBasicBlock *LandingPad);
 
   void addSEHCatchHandler(MachineBasicBlock *LandingPad, const Function *Filter,
                           const BlockAddress *RecoverLabel);

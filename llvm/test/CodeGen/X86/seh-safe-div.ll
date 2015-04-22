@@ -1,4 +1,4 @@
-; RUN: llc -sehprepare -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: llc -mtriple x86_64-pc-windows-msvc < %s | FileCheck %s
 
 ; This test case is also intended to be run manually as a complete functional
 ; test. It should link, print something, and exit zero rather than crashing.
