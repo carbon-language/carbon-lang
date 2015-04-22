@@ -194,7 +194,7 @@ lor.lhs.false459:                                 ; preds = %if.end454
   %18 = load i32, i32* %mb_type, align 4
   switch i32 %18, label %for.inc503 [
     i32 9, label %if.then475
-    i32 10, label %if.then475
+    i32 11, label %if.then475
     i32 13, label %if.then475
     i32 14, label %if.then475
   ]

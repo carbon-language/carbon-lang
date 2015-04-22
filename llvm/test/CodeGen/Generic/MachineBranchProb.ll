@@ -17,9 +17,9 @@ entry:
 ; CHECK: BB#0: derived from LLVM BB %entry
 ; CHECK: Successors according to CFG: BB#2(64) BB#4(14)
 ; CHECK: BB#4: derived from LLVM BB %entry
-; CHECK: Successors according to CFG: BB#1(10) BB#5(4)
+; CHECK: Successors according to CFG: BB#1(4) BB#5(10)
 ; CHECK: BB#5: derived from LLVM BB %entry
-; CHECK: Successors according to CFG: BB#1(4) BB#3(7)
+; CHECK: Successors according to CFG: BB#1(10) BB#3(7)
 
 sw.bb:
   br label %return
