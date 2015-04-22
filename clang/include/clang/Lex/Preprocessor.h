@@ -31,6 +31,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Allocator.h"
 #include <memory>
 #include <vector>
@@ -368,7 +369,15 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// the reverse order (the latest one is in the head of the list).
   llvm::DenseMap<const IdentifierInfo*, MacroDirective*> Macros;
   friend class ASTReader;
-  
+
+  /// The set of known macros exported from modules.
+  llvm::FoldingSet<ModuleMacro> ModuleMacros;
+
+  /// The list of module macros, for each identifier, that are not overridden by
+  /// any other module macro.
+  llvm::DenseMap<const IdentifierInfo *, llvm::TinyPtrVector<ModuleMacro*>>
+      LeafModuleMacros;
+
   /// \brief Macros that we want to warn because they are not used at the end
   /// of the translation unit.
   ///
@@ -427,7 +436,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \c createPreprocessingRecord() prior to preprocessing.
   PreprocessingRecord *Record;
 
-private:  // Cached tokens state.
+  /// Cached tokens state.
   typedef SmallVector<Token, 1> CachedTokensTy;
 
   /// \brief Cached tokens are stored here when we do backtracking or
@@ -645,6 +654,11 @@ public:
   }
   /// \brief Set a MacroDirective that was loaded from a PCH file.
   void setLoadedMacroDirective(IdentifierInfo *II, MacroDirective *MD);
+
+  /// \brief Register an exported macro for a module and identifier.
+  ModuleMacro *addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
+                              MacroInfo *Macro,
+                              ArrayRef<ModuleMacro *> Overrides, bool &IsNew);
 
   /// \{
   /// Iterators for the macro history table. Currently defined macros have

@@ -1850,7 +1850,7 @@ public:
 
   void resolvePendingMacro(IdentifierInfo *II, const PendingMacroInfo &PMInfo);
 
-  void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
+  void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo &MMI,
                             Module *Owner);
 
   typedef llvm::TinyPtrVector<DefMacroDirective *> AmbiguousMacros;

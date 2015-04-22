@@ -72,6 +72,46 @@ void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
     II->setHasMacroDefinition(false);
 }
 
+ModuleMacro *Preprocessor::addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
+                                          MacroInfo *Macro,
+                                          ArrayRef<ModuleMacro *> Overrides,
+                                          bool &New) {
+  llvm::FoldingSetNodeID ID;
+  ModuleMacro::Profile(ID, ModuleID, II);
+
+  void *InsertPos;
+  if (auto *MM = ModuleMacros.FindNodeOrInsertPos(ID, InsertPos)) {
+    New = false;
+    return MM;
+  }
+
+  auto *MM = ModuleMacro::create(*this, ModuleID, II, Macro, Overrides);
+  ModuleMacros.InsertNode(MM, InsertPos);
+
+  // Each overridden macro is now overridden by one more macro.
+  bool HidAny = false;
+  for (auto *O : Overrides) {
+    HidAny |= (O->NumOverriddenBy == 0);
+    ++O->NumOverriddenBy;
+  }
+
+  // If we were the first overrider for any macro, it's no longer a leaf.
+  auto &LeafMacros = LeafModuleMacros[II];
+  if (HidAny) {
+    LeafMacros.erase(std::remove_if(LeafMacros.begin(), LeafMacros.end(),
+                                    [](ModuleMacro *MM) {
+                                      return MM->NumOverriddenBy != 0;
+                                    }),
+                     LeafMacros.end());
+  }
+
+  // The new macro is always a leaf macro.
+  LeafMacros.push_back(MM);
+
+  New = true;
+  return MM;
+}
+
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){
