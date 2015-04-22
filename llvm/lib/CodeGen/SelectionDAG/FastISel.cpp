@@ -711,7 +711,7 @@ bool FastISel::selectPatchpoint(const CallInst *I) {
   CallingConv::ID CC = I->getCallingConv();
   bool IsAnyRegCC = CC == CallingConv::AnyReg;
   bool HasDef = !I->getType()->isVoidTy();
-  Value *Callee = I->getOperand(PatchPointOpers::TargetPos);
+  Value *Callee = I->getOperand(PatchPointOpers::TargetPos)->stripPointerCasts();
 
   // Get the real number of arguments participating in the call <numArgs>
   assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::NArgPos)) &&
@@ -757,22 +757,24 @@ bool FastISel::selectPatchpoint(const CallInst *I) {
       cast<ConstantInt>(I->getOperand(PatchPointOpers::NBytesPos));
   Ops.push_back(MachineOperand::CreateImm(NumBytes->getZExtValue()));
 
-  // Assume that the callee is a constant address or null pointer.
-  // FIXME: handle function symbols in the future.
-  uint64_t CalleeAddr;
-  if (const auto *C = dyn_cast<IntToPtrInst>(Callee))
-    CalleeAddr = cast<ConstantInt>(C->getOperand(0))->getZExtValue();
-  else if (const auto *C = dyn_cast<ConstantExpr>(Callee)) {
-    if (C->getOpcode() == Instruction::IntToPtr)
-      CalleeAddr = cast<ConstantInt>(C->getOperand(0))->getZExtValue();
-    else
+  // Add the call target.
+  if (const auto *C = dyn_cast<IntToPtrInst>(Callee)) {
+    uint64_t CalleeConstAddr =
+      cast<ConstantInt>(C->getOperand(0))->getZExtValue();
+    Ops.push_back(MachineOperand::CreateImm(CalleeConstAddr));
+  } else if (const auto *C = dyn_cast<ConstantExpr>(Callee)) {
+    if (C->getOpcode() == Instruction::IntToPtr) {
+      uint64_t CalleeConstAddr =
+        cast<ConstantInt>(C->getOperand(0))->getZExtValue();
+      Ops.push_back(MachineOperand::CreateImm(CalleeConstAddr));
+    } else
       llvm_unreachable("Unsupported ConstantExpr.");
+  } else if (const auto *GV = dyn_cast<GlobalValue>(Callee)) {
+    Ops.push_back(MachineOperand::CreateGA(GV, 0));
   } else if (isa<ConstantPointerNull>(Callee))
-    CalleeAddr = 0;
+    Ops.push_back(MachineOperand::CreateImm(0));
   else
     llvm_unreachable("Unsupported callee address.");
-
-  Ops.push_back(MachineOperand::CreateImm(CalleeAddr));
 
   // Adjust <numArgs> to account for any arguments that have been passed on
   // the stack instead.

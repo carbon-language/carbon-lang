@@ -58,6 +58,12 @@ public:
     return *this;
   }
 
+  /// \brief Add an operand.
+  MCInstBuilder &addOperand(const MCOperand &Op) {
+    Inst.addOperand(Op);
+    return *this;
+  }
+
   operator MCInst&() {
     return Inst;
   }

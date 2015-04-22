@@ -21,6 +21,22 @@ entry:
   ret i64 %result
 }
 
+; Trivial symbolic patchpoint codegen.
+;
+
+declare i64 @foo(i64 %p1, i64 %p2)
+define i64 @trivial_symbolic_patchpoint_codegen(i64 %p1, i64 %p2) {
+entry:
+; CHECK-LABEL: trivial_symbolic_patchpoint_codegen:
+; CHECK:       movabsq $_foo, %r11
+; CHECK-NEXT:  callq   *%r11
+; CHECK-NEXT:  xchgw   %ax, %ax
+; CHECK:       retq
+  %result = tail call i64 (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.i64(i64 9, i32 15, i8* bitcast (i64 (i64, i64)* @foo to i8*), i32 2, i64 %p1, i64 %p2)
+  ret i64 %result
+}
+
+
 ; Caller frame metadata with stackmaps. This should not be optimized
 ; as a leaf function.
 ;

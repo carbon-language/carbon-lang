@@ -7001,7 +7001,16 @@ void SelectionDAGBuilder::visitPatchpoint(ImmutableCallSite CS,
   CallingConv::ID CC = CS.getCallingConv();
   bool IsAnyRegCC = CC == CallingConv::AnyReg;
   bool HasDef = !CS->getType()->isVoidTy();
-  SDValue Callee = getValue(CS->getOperand(2)); // <target>
+  SDValue Callee = getValue(CS->getOperand(PatchPointOpers::TargetPos));
+
+  // Handle immediate and symbolic callees.
+  if (auto* ConstCallee = dyn_cast<ConstantSDNode>(Callee))
+    Callee = DAG.getIntPtrConstant(ConstCallee->getZExtValue(),
+                                   /*isTarget=*/true);
+  else if (auto* SymbolicCallee = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee =  DAG.getTargetGlobalAddress(SymbolicCallee->getGlobal(),
+                                         SDLoc(SymbolicCallee),
+                                         SymbolicCallee->getValueType(0));
 
   // Get the real number of arguments participating in the call <numArgs>
   SDValue NArgVal = getValue(CS.getArgument(PatchPointOpers::NArgPos));
@@ -7041,11 +7050,8 @@ void SelectionDAGBuilder::visitPatchpoint(ImmutableCallSite CS,
   Ops.push_back(DAG.getTargetConstant(
                   cast<ConstantSDNode>(NBytesVal)->getZExtValue(), MVT::i32));
 
-  // Assume that the Callee is a constant address.
-  // FIXME: handle function symbols in the future.
-  Ops.push_back(
-    DAG.getIntPtrConstant(cast<ConstantSDNode>(Callee)->getZExtValue(),
-                          /*isTarget=*/true));
+  // Add the callee.
+  Ops.push_back(Callee);
 
   // Adjust <numArgs> to account for any arguments that have been passed on the
   // stack instead.

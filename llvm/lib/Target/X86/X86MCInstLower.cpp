@@ -867,7 +867,8 @@ void X86AsmPrinter::LowerSTACKMAP(const MachineInstr &MI) {
 
 // Lower a patchpoint of the form:
 // [<def>], <id>, <numBytes>, <target>, <numArgs>, <cc>, ...
-void X86AsmPrinter::LowerPATCHPOINT(const MachineInstr &MI) {
+void X86AsmPrinter::LowerPATCHPOINT(const MachineInstr &MI,
+                                    X86MCInstLower &MCIL) {
   assert(Subtarget->is64Bit() && "Patchpoint currently only supports X86-64");
 
   SMShadowTracker.emitShadowPadding(OutStreamer, getSubtargetInfo());
@@ -877,8 +878,29 @@ void X86AsmPrinter::LowerPATCHPOINT(const MachineInstr &MI) {
   PatchPointOpers opers(&MI);
   unsigned ScratchIdx = opers.getNextScratchIdx();
   unsigned EncodedBytes = 0;
-  int64_t CallTarget = opers.getMetaOper(PatchPointOpers::TargetPos).getImm();
-  if (CallTarget) {
+  const MachineOperand &CalleeMO =
+    opers.getMetaOper(PatchPointOpers::TargetPos);
+
+  // Check for null target. If target is non-null (i.e. is non-zero or is
+  // symbolic) then emit a call.
+  if (!(CalleeMO.isImm() && !CalleeMO.getImm())) {
+    MCOperand CalleeMCOp;
+    switch (CalleeMO.getType()) {
+    default:
+      /// FIXME: Add a verifier check for bad callee types.
+      llvm_unreachable("Unrecognized callee operand type.");
+    case MachineOperand::MO_Immediate:
+      if (CalleeMO.getImm())
+        CalleeMCOp = MCOperand::CreateImm(CalleeMO.getImm());
+      break;
+    case MachineOperand::MO_ExternalSymbol:
+    case MachineOperand::MO_GlobalAddress:
+      CalleeMCOp =
+        MCIL.LowerSymbolOperand(CalleeMO,
+                                MCIL.GetSymbolFromOperand(CalleeMO));
+      break;
+    }
+
     // Emit MOV to materialize the target address and the CALL to target.
     // This is encoded with 12-13 bytes, depending on which register is used.
     unsigned ScratchReg = MI.getOperand(ScratchIdx).getReg();
@@ -886,10 +908,12 @@ void X86AsmPrinter::LowerPATCHPOINT(const MachineInstr &MI) {
       EncodedBytes = 13;
     else
       EncodedBytes = 12;
-    EmitAndCountInstruction(MCInstBuilder(X86::MOV64ri).addReg(ScratchReg)
-                                                       .addImm(CallTarget));
+
+    EmitAndCountInstruction(
+        MCInstBuilder(X86::MOV64ri).addReg(ScratchReg).addOperand(CalleeMCOp));
     EmitAndCountInstruction(MCInstBuilder(X86::CALL64r).addReg(ScratchReg));
   }
+
   // Emit padding.
   unsigned NumBytes = opers.getMetaOper(PatchPointOpers::NBytesPos).getImm();
   assert(NumBytes >= EncodedBytes &&
@@ -1091,7 +1115,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return LowerSTACKMAP(*MI);
 
   case TargetOpcode::PATCHPOINT:
-    return LowerPATCHPOINT(*MI);
+    return LowerPATCHPOINT(*MI, MCInstLowering);
 
   case X86::MORESTACK_RET:
     EmitAndCountInstruction(MCInstBuilder(getRetOpcode(*Subtarget)));
