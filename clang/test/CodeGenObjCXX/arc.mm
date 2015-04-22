@@ -64,7 +64,11 @@ void test34(int cond) {
   // CHECK-NEXT: [[CONDCLEANUPSAVE:%.*]] = alloca i8*
   // CHECK-NEXT: [[CONDCLEANUP:%.*]] = alloca i1
   // CHECK-NEXT: store i32
+  // CHECK-NEXT: [[STRONGP:%.*]] = bitcast i8** [[STRONG]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[STRONGP]])
   // CHECK-NEXT: store i8* null, i8** [[STRONG]]
+  // CHECK-NEXT: [[WEAKP:%.*]] = bitcast i8** [[WEAK]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[WEAKP]])
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAK]], i8* null)
 
   // CHECK-NEXT: [[T0:%.*]] = load i32, i32* [[COND]]
@@ -120,56 +124,77 @@ struct Test35_Helper {
 
 // CHECK-LABEL: define void @_Z6test3513Test35_HelperPS_
 void test35(Test35_Helper x0, Test35_Helper *x0p) {
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject1Ev
   // CHECK-NOT: call i8* @objc_retain
   id obj1 = Test35_Helper::makeObject1();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject2Ev
   // CHECK-NOT: call i8* @objc_retain
   id obj2 = x0.makeObject2();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject2Ev
   // CHECK-NOT: call i8* @objc_retain
   id obj3 = x0p->makeObject2();
   id (Test35_Helper::*pmf)() __attribute__((ns_returns_retained))
     = &Test35_Helper::makeObject2;
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* %
   // CHECK-NOT: call i8* @objc_retain
   id obj4 = (x0.*pmf)();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* %
   // CHECK-NOT: call i8* @objc_retain
   id obj5 = (x0p->*pmf)();
 
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
 // CHECK-LABEL: define void @_Z7test35b13Test35_HelperPS_
 void test35b(Test35_Helper x0, Test35_Helper *x0p) {
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject3Ev
   // CHECK: call i8* @objc_retain
   id obj1 = Test35_Helper::makeObject3();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject4Ev
   // CHECK: call i8* @objc_retain
   id obj2 = x0.makeObject4();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* @_ZN13Test35_Helper11makeObject4Ev
   // CHECK: call i8* @objc_retain
   id obj3 = x0p->makeObject4();
   id (Test35_Helper::*pmf)() = &Test35_Helper::makeObject4;
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* %
   // CHECK: call i8* @objc_retain
   id obj4 = (x0.*pmf)();
+  // CHECK: call void @llvm.lifetime.start
   // CHECK: call i8* %
   // CHECK: call i8* @objc_retain
   id obj5 = (x0p->*pmf)();
 
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK: call void @objc_release
+  // CHECK: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
@@ -290,6 +315,8 @@ template void test40_helper<int>();
 // CHECK-LABEL:    define weak_odr void @_Z13test40_helperIiEvv()
 // CHECK:      [[X:%.*]] = alloca i8*
 // CHECK-NEXT: [[TEMP:%.*]] = alloca i8*
+// CHECK-NEXT: [[XP:%.*]] = bitcast i8** [[X]] to i8*
+// CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[XP]])
 // CHECK-NEXT: store i8* null, i8** [[X]]
 // CHECK:      [[T0:%.*]] = load i8*, i8** [[X]]
 // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP]]

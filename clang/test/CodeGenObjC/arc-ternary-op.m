@@ -10,6 +10,8 @@ void test0(_Bool cond) {
   // CHECK-NEXT: [[RELCOND:%.*]] = alloca i1
   // CHECK-NEXT: zext
   // CHECK-NEXT: store
+  // CHECK-NEXT: [[XPTR1:%.*]] = bitcast i8** [[X]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[XPTR1]])
   // CHECK-NEXT: [[T0:%.*]] = load i8, i8* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = trunc i8 [[T0]] to i1
   // CHECK-NEXT: store i1 false, i1* [[RELCOND]]
@@ -29,6 +31,8 @@ void test0(_Bool cond) {
   // CHECK-NEXT: br label
   // CHECK:      [[T0:%.*]] = load i8*, i8** [[X]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
+  // CHECK-NEXT: [[XPTR2:%.*]] = bitcast i8** [[X]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.end(i64 8, i8* [[XPTR2]])
   // CHECK-NEXT: ret void
   id x = (cond ? 0 : test0_helper());
 }
@@ -49,7 +53,11 @@ void test1(int cond) {
   // CHECK-NEXT: [[CONDCLEANUPSAVE:%.*]] = alloca i8*
   // CHECK-NEXT: [[CONDCLEANUP:%.*]] = alloca i1
   // CHECK-NEXT: store i32
+  // CHECK-NEXT: [[STRONGPTR1:%.*]] = bitcast i8** [[STRONG]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[STRONGPTR1]])
   // CHECK-NEXT: store i8* null, i8** [[STRONG]]
+  // CHECK-NEXT: [[WEAKPTR1:%.*]] = bitcast i8** [[WEAK]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 8, i8* [[WEAKPTR1]])
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAK]], i8* null)
 
   // CHECK-NEXT: [[T0:%.*]] = load i32, i32* [[COND]]
@@ -93,6 +101,10 @@ void test1(int cond) {
   // CHECK-NEXT: br label
 
   // CHECK:      call void @objc_destroyWeak(i8** [[WEAK]])
+  // CHECK:      [[WEAKPTR2:%.*]] = bitcast i8** [[WEAK]] to i8*
+  // CHECK:      call void @llvm.lifetime.end(i64 8, i8* [[WEAKPTR2]])
+  // CHECK:      [[STRONGPTR2:%.*]] = bitcast i8** [[STRONG]] to i8*
+  // CHECK:      call void @llvm.lifetime.end(i64 8, i8* [[STRONGPTR2]])
   // CHECK:      ret void
 }
 

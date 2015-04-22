@@ -54,16 +54,22 @@ X test2(bool B) {
   return x;
 
   // CHECK: call {{.*}} @_ZN1XC1Ev
+  // CHECK-NEXT: {{.*}} getelementptr inbounds %class.X, %class.X* %y, i32 0, i32 0
+  // CHECK-NEXT: call void @llvm.lifetime.start
   // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev
   // CHECK: call {{.*}} @_ZN1XC1ERKS_
   // CHECK: call {{.*}} @_ZN1XC1ERKS_
   // CHECK: call {{.*}} @_ZN1XD1Ev
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK: call {{.*}} @_ZN1XD1Ev
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK: ret void
 
   // The block ordering in the -fexceptions IR is unfortunate.
 
-  // CHECK-EH:      call {{.*}} @_ZN1XC1Ev
+  // CHECK-EH:      call void @llvm.lifetime.start
+  // CHECK-EH-NEXT: call {{.*}} @_ZN1XC1Ev
+  // CHECK-EH:      call void @llvm.lifetime.start
   // CHECK-EH-NEXT: invoke {{.*}} @_ZN1XC1Ev
   // -> %invoke.cont, %lpad
 
@@ -96,7 +102,9 @@ X test2(bool B) {
   // -> %invoke.cont11, %lpad
 
   // %invoke.cont11: normal cleanup for 'x'
-  // CHECK-EH:      call {{.*}} @_ZN1XD1Ev
+  // CHECK-EH:      call void @llvm.lifetime.end
+  // CHECK-EH-NEXT: call {{.*}} @_ZN1XD1Ev
+  // CHECK-EH-NEXT: call void @llvm.lifetime.end
   // CHECK-EH-NEXT: ret void
 
   // %eh.cleanup:  EH cleanup for 'x'
@@ -168,9 +176,12 @@ X test6() {
   X a __attribute__((aligned(8)));
   return a;
   // CHECK:      [[A:%.*]] = alloca [[X:%.*]], align 8
+  // CHECK-NEXT: [[PTR:%.*]] = getelementptr inbounds %class.X, %class.X* [[A]], i32 0, i32 0
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 1, i8* [[PTR]])
   // CHECK-NEXT: call {{.*}} @_ZN1XC1Ev([[X]]* [[A]])
   // CHECK-NEXT: call {{.*}} @_ZN1XC1ERKS_([[X]]* {{%.*}}, [[X]]* dereferenceable({{[0-9]+}}) [[A]])
   // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* [[A]])
+  // CHECK-NEXT: call void @llvm.lifetime.end(i64 1, i8* [[PTR]])
   // CHECK-NEXT: ret void
 }
 

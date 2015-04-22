@@ -38,11 +38,14 @@ typedef __strong id strong_id;
 
 //CHECK: define void @_Z5test3v
 void test3() {
+  // CHECK: [[REF:%.*]] = alloca i8**, align 8
   // CHECK: call i8* @objc_initWeak
   // CHECK-NEXT: store i8**
   const __weak id &ref = strong_id();
   // CHECK-NEXT: call void @_Z6calleev()
   callee();
+  // CHECK-NEXT: [[PTR:%.*]] = bitcast i8*** [[REF]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.end(i64 8, i8* [[PTR]])
   // CHECK-NEXT: call void @objc_destroyWeak
   // CHECK-NEXT: ret void
 }
@@ -62,6 +65,7 @@ void sink(__strong A* &&);
 // CHECK-LABEL: define void @_Z5test5RU8__strongP11objc_object
 void test5(__strong id &x) {
   // CHECK:      [[REFTMP:%.*]] = alloca {{%.*}}*, align 8
+  // CHECK:      [[I:%.*]] = alloca i32, align 4
   // CHECK:      [[OBJ_ID:%.*]] = call i8* @objc_retain(
   // CHECK-NEXT: [[OBJ_A:%.*]] = bitcast i8* [[OBJ_ID]] to [[A:%[a-zA-Z0-9]+]]*
   // CHECK-NEXT: store [[A]]* [[OBJ_A]], [[A]]** [[REFTMP:%[a-zA-Z0-9]+]]
@@ -70,8 +74,12 @@ void test5(__strong id &x) {
   // CHECK-NEXT: [[OBJ_A:%[a-zA-Z0-9]+]] = load [[A]]*, [[A]]** [[REFTMP]]
   // CHECK-NEXT: [[OBJ_ID:%[a-zA-Z0-9]+]] = bitcast [[A]]* [[OBJ_A]] to i8*
   // CHECK-NEXT: call void @objc_release
+  // CHECK-NEXT: [[IPTR1:%.*]] = bitcast i32* [[I]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.start(i64 4, i8* [[IPTR1]])
   // CHECK-NEXT: store i32 17, i32
   int i = 17;
+  // CHECK-NEXT: [[IPTR2:%.*]] = bitcast i32* [[I]] to i8*
+  // CHECK-NEXT: call void @llvm.lifetime.end(i64 4, i8* [[IPTR2]])
   // CHECK-NEXT: ret void
 }
 

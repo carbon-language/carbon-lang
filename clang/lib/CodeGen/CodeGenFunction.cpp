@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGCleanup.h"
 #include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
@@ -243,12 +244,13 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   // parameters.  Do this in whatever block we're currently in; it's
   // important to do this before we enter the return block or return
   // edges will be *really* confused.
-  bool EmitRetDbgLoc = true;
-  if (EHStack.stable_begin() != PrologueCleanupDepth) {
+  bool HasCleanups = EHStack.stable_begin() != PrologueCleanupDepth;
+  bool HasOnlyLifetimeMarkers =
+      HasCleanups && EHStack.containsOnlyLifetimeMarkers(PrologueCleanupDepth);
+  bool EmitRetDbgLoc = !HasCleanups || HasOnlyLifetimeMarkers;
+  if (HasCleanups) {
     // Make sure the line table doesn't jump back into the body for
     // the ret after it's been at EndLoc.
-    EmitRetDbgLoc = false;
-
     if (CGDebugInfo *DI = getDebugInfo())
       if (OnlySimpleReturnStmts)
         DI->EmitLocation(Builder, EndLoc);

@@ -31,6 +31,8 @@ void bridge_transfer_from_cf(int *i) {
   // CHECK: store i32 17
   *i = 17;
   // CHECK: call void @objc_release
+  // CHECK-NEXT: bitcast
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
@@ -50,6 +52,8 @@ void bridge_from_cf(int *i) {
   // CHECK: store i32 17
   *i = 17;
   // CHECK: call void @objc_release
+  // CHECK-NEXT: bitcast
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
@@ -67,6 +71,8 @@ void bridge_retained_of_cf(int *i) {
   // CHECK: store i32 13
   // CHECK: store i32 17
   *i = 17;
+  // CHECK-NEXT: bitcast
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
@@ -74,7 +80,8 @@ void bridge_retained_of_cf(int *i) {
 void bridge_of_cf(int *i) {
   // CHECK: store i32 7
   *i = 7;
-  // CHECK: call i8* @CreateSomething()
+  // CHECK: call void @llvm.lifetime.start
+  // CHECK-NEXT: call i8* @CreateSomething()
   CFTypeRef cf1 = (__bridge CFTypeRef)CreateSomething();
   // CHECK-NOT: retain
   // CHECK: store i32 11
@@ -85,6 +92,8 @@ void bridge_of_cf(int *i) {
   // CHECK-NOT: release
   // CHECK: store i32 17
   *i = 17;
+  // CHECK-NEXT: bitcast
+  // CHECK-NEXT: call void @llvm.lifetime.end
   // CHECK-NEXT: ret void
 }
 
