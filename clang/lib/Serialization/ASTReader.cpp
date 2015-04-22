@@ -1804,19 +1804,17 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
   // Module macros are listed in reverse dependency order.
   {
     std::reverse(ModuleMacros.begin(), ModuleMacros.end());
-    llvm::SmallDenseMap<unsigned, ModuleMacro*> Macros;
     llvm::SmallVector<ModuleMacro*, 8> Overrides;
     for (auto &MMI : ModuleMacros) {
       Overrides.clear();
       for (unsigned ModID : MMI.Overrides) {
-        auto *Macro = Macros.lookup(ModID);
+        auto *Macro = PP.getModuleMacro(ModID, II);
         assert(Macro && "missing definition for overridden macro");
-        Overrides.push_back(Macros.lookup(ModID));
+        Overrides.push_back(Macro);
       }
 
       bool Inserted = false;
-      Macros[MMI.SubModID] =
-          PP.addModuleMacro(MMI.SubModID, II, MMI.MI, Overrides, Inserted);
+      PP.addModuleMacro(MMI.SubModID, II, MMI.MI, Overrides, Inserted);
       if (!Inserted)
         continue;
 
@@ -1825,7 +1823,7 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
         // Macros in the owning module are hidden. Just remember this macro to
         // install if we make this module visible.
         HiddenNamesMap[Owner].HiddenMacros.insert(
-            std::make_pair(II, new ModuleMacroInfo(MMI)));
+            std::make_pair(II, new (Context) ModuleMacroInfo(MMI)));
       } else {
         installImportedMacro(II, MMI, Owner);
       }

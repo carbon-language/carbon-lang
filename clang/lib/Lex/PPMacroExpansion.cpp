@@ -112,6 +112,15 @@ ModuleMacro *Preprocessor::addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
   return MM;
 }
 
+ModuleMacro *Preprocessor::getModuleMacro(unsigned ModuleID,
+                                          IdentifierInfo *II) {
+  llvm::FoldingSetNodeID ID;
+  ModuleMacro::Profile(ID, ModuleID, II);
+
+  void *InsertPos;
+  return ModuleMacros.FindNodeOrInsertPos(ID, InsertPos);
+}
+
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){

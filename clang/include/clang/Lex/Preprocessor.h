@@ -659,6 +659,7 @@ public:
   ModuleMacro *addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
                               MacroInfo *Macro,
                               ArrayRef<ModuleMacro *> Overrides, bool &IsNew);
+  ModuleMacro *getModuleMacro(unsigned ModuleID, IdentifierInfo *II);
 
   /// \{
   /// Iterators for the macro history table. Currently defined macros have
