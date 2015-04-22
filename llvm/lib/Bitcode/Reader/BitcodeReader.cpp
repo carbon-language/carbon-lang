@@ -4067,14 +4067,18 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_STOREATOMIC: {
+    case bitc::FUNC_CODE_INST_STOREATOMIC:
+    case bitc::FUNC_CODE_INST_STOREATOMIC_OLD: {
       // STOREATOMIC: [ptrty, ptr, val, align, vol, ordering, synchscope]
       unsigned OpNum = 0;
       Value *Val, *Ptr;
       if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
-          popValue(Record, OpNum, NextValueNo,
-                    cast<PointerType>(Ptr->getType())->getElementType(), Val) ||
-          OpNum+4 != Record.size())
+          (BitCode == bitc::FUNC_CODE_INST_STOREATOMIC
+               ? getValueTypePair(Record, OpNum, NextValueNo, Val)
+               : popValue(Record, OpNum, NextValueNo,
+                          cast<PointerType>(Ptr->getType())->getElementType(),
+                          Val)) ||
+          OpNum + 4 != Record.size())
         return Error("Invalid record");
 
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
