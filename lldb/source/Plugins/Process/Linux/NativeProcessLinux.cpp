@@ -2782,6 +2782,178 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                                  });
 }
 
+namespace {
+
+struct EmulatorBaton
+{
+    NativeProcessLinux* m_process;
+    NativeRegisterContext* m_reg_context;
+    RegisterValue m_pc;
+    RegisterValue m_flags;
+
+    EmulatorBaton(NativeProcessLinux* process, NativeRegisterContext* reg_context) : 
+            m_process(process), m_reg_context(reg_context) {}
+};
+
+} // anonymous namespace
+
+static size_t
+ReadMemoryCallback (EmulateInstruction *instruction,
+                    void *baton,
+                    const EmulateInstruction::Context &context, 
+                    lldb::addr_t addr, 
+                    void *dst,
+                    size_t length)
+{
+    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
+
+    lldb::addr_t bytes_read;
+    emulator_baton->m_process->ReadMemory(addr, dst, length, bytes_read);
+    return bytes_read;
+}
+
+static bool
+ReadRegisterCallback (EmulateInstruction *instruction,
+                      void *baton,
+                      const RegisterInfo *reg_info,
+                      RegisterValue &reg_value)
+{
+    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
+
+    // The emulator only fill in the dwarf regsiter numbers (and in some case
+    // the generic register numbers). Get the full register info from the
+    // register context based on the dwarf register numbers.
+    const RegisterInfo* full_reg_info = emulator_baton->m_reg_context->GetRegisterInfo(
+            eRegisterKindDWARF, reg_info->kinds[eRegisterKindDWARF]);
+
+    Error error = emulator_baton->m_reg_context->ReadRegister(full_reg_info, reg_value);
+    return error.Success();
+}
+
+static bool
+WriteRegisterCallback (EmulateInstruction *instruction,
+                       void *baton,
+                       const EmulateInstruction::Context &context,
+                       const RegisterInfo *reg_info,
+                       const RegisterValue &reg_value)
+{
+    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
+
+    switch (reg_info->kinds[eRegisterKindGeneric])
+    {
+    case LLDB_REGNUM_GENERIC_PC:
+        emulator_baton->m_pc = reg_value;
+        break;
+    case LLDB_REGNUM_GENERIC_FLAGS:
+        emulator_baton->m_flags = reg_value;
+        break;
+    }
+
+    return true;
+}
+
+static size_t
+WriteMemoryCallback (EmulateInstruction *instruction,
+                     void *baton,
+                     const EmulateInstruction::Context &context, 
+                     lldb::addr_t addr, 
+                     const void *dst,
+                     size_t length)
+{
+    return length;
+}
+
+static lldb::addr_t
+ReadFlags (NativeRegisterContext* regsiter_context)
+{
+    const RegisterInfo* flags_info = regsiter_context->GetRegisterInfo(
+            eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
+    return regsiter_context->ReadRegisterAsUnsigned(flags_info, LLDB_INVALID_ADDRESS);
+}
+
+Error
+NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp)
+{
+    Error error;
+    NativeRegisterContextSP register_context_sp = thread_sp->GetRegisterContext();
+
+    std::unique_ptr<EmulateInstruction> emulator_ap(
+        EmulateInstruction::FindPlugin(m_arch, eInstructionTypePCModifying, nullptr));
+
+    if (emulator_ap == nullptr)
+        return Error("Instruction emulator not found!");
+
+    EmulatorBaton baton(this, register_context_sp.get());
+    emulator_ap->SetBaton(&baton);
+    emulator_ap->SetReadMemCallback(&ReadMemoryCallback);
+    emulator_ap->SetReadRegCallback(&ReadRegisterCallback);
+    emulator_ap->SetWriteMemCallback(&WriteMemoryCallback);
+    emulator_ap->SetWriteRegCallback(&WriteRegisterCallback);
+
+    if (!emulator_ap->ReadInstruction())
+        return Error("Read instruction failed!");
+
+    lldb::addr_t next_pc;
+    lldb::addr_t next_flags;
+    if (emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC))
+    {
+        next_pc = baton.m_pc.GetAsUInt64();
+        if (baton.m_flags.GetType() != RegisterValue::eTypeInvalid)
+            next_flags = baton.m_flags.GetAsUInt32();
+        else
+            next_flags = ReadFlags (register_context_sp.get());
+    }
+    else if (baton.m_pc.GetType() == RegisterValue::eTypeInvalid)
+    {
+        // Emulate instruction failed and it haven't changed PC. Advance PC
+        // with the size of the current opcode because the emulation of all
+        // PC modifying instruction should be successful. The failure most
+        // likely caused by a not supported instruction which don't modify PC.
+        next_pc = register_context_sp->GetPC() + emulator_ap->GetOpcode().GetByteSize();
+        next_flags = ReadFlags (register_context_sp.get());
+    }
+    else
+    {
+        // The instruction emulation failed after it modified the PC. It is an
+        // unknown error where we can't continue because the next instruction is
+        // modifying the PC but we don't  know how.
+        return Error ("Instruction emulation failed unexpectedly.");
+    }
+
+    if (m_arch.GetMachine() == llvm::Triple::arm)
+    {
+        if (next_flags & 0x20)
+        {
+            // Thumb mode
+            error = SetSoftwareBreakpoint(next_pc, 2);
+        }
+        else
+        {
+            // Arm mode
+            error = SetSoftwareBreakpoint(next_pc, 4);
+        }
+    }
+    else
+    {
+        // No size hint is given for the next breakpoint
+        error = SetSoftwareBreakpoint(next_pc, 0);
+    }
+
+
+    if (error.Fail())
+        return error;
+
+    m_threads_stepping_with_breakpoint.insert({thread_sp->GetID(), next_pc});
+
+    return Error();
+}
+
+bool
+NativeProcessLinux::SupportHardwareSingleStepping() const
+{
+    return m_arch.GetMachine() != llvm::Triple::arm;
+}
+
 Error
 NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
 {
@@ -2794,8 +2966,28 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     int deferred_signo = 0;
     NativeThreadProtocolSP deferred_signal_thread_sp;
     bool stepping = false;
+    bool software_single_step = !SupportHardwareSingleStepping();
 
     Mutex::Locker locker (m_threads_mutex);
+
+    if (software_single_step)
+    {
+        for (auto thread_sp : m_threads)
+        {
+            assert (thread_sp && "thread list should not contain NULL threads");
+
+            const ResumeAction *const action = resume_actions.GetActionForThread (thread_sp->GetID (), true);
+            if (action == nullptr)
+                continue;
+
+            if (action->state == eStateStepping)
+            {
+                Error error = SetupSoftwareSingleStepping(thread_sp);
+                if (error.Fail())
+                    return error;
+            }
+        }
+    }
 
     for (auto thread_sp : m_threads)
     {
@@ -2845,7 +3037,13 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                                                    [=](lldb::tid_t tid_to_step, bool supress_signal)
                                                    {
                                                        std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStepping ();
-                                                       const auto step_result = SingleStep (tid_to_step,(signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+
+                                                       Error step_result;
+                                                       if (software_single_step)
+                                                           step_result = Resume (tid_to_step, (signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                       else
+                                                           step_result = SingleStep (tid_to_step,(signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+
                                                        assert (step_result.Success() && "SingleStep() failed");
                                                        if (step_result.Success())
                                                            SetState(eStateStepping, true);
@@ -3700,171 +3898,6 @@ NativeProcessLinux::Resume (lldb::tid_t tid, uint32_t signo)
     return op.GetError();
 }
 
-#if defined(__arm__)
-
-namespace {
-
-struct EmulatorBaton
-{
-    NativeProcessLinux* m_process;
-    NativeRegisterContext* m_reg_context;
-    RegisterValue m_pc;
-    RegisterValue m_cpsr;
-
-    EmulatorBaton(NativeProcessLinux* process, NativeRegisterContext* reg_context) : 
-            m_process(process), m_reg_context(reg_context) {}
-};
-
-} // anonymous namespace
-
-static size_t
-ReadMemoryCallback (EmulateInstruction *instruction,
-                    void *baton,
-                    const EmulateInstruction::Context &context, 
-                    lldb::addr_t addr, 
-                    void *dst,
-                    size_t length)
-{
-    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
-
-    lldb::addr_t bytes_read;
-    emulator_baton->m_process->ReadMemory(addr, dst, length, bytes_read);
-    return bytes_read;
-}
-
-static bool
-ReadRegisterCallback (EmulateInstruction *instruction,
-                      void *baton,
-                      const RegisterInfo *reg_info,
-                      RegisterValue &reg_value)
-{
-    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
-
-    // The emulator only fill in the dwarf regsiter numbers (and in some case
-    // the generic register numbers). Get the full register info from the
-    // register context based on the dwarf register numbers.
-    const RegisterInfo* full_reg_info = emulator_baton->m_reg_context->GetRegisterInfo(
-            eRegisterKindDWARF, reg_info->kinds[eRegisterKindDWARF]);
-
-    Error error = emulator_baton->m_reg_context->ReadRegister(full_reg_info, reg_value);
-    return error.Success();
-}
-
-static bool
-WriteRegisterCallback (EmulateInstruction *instruction,
-                       void *baton,
-                       const EmulateInstruction::Context &context,
-                       const RegisterInfo *reg_info,
-                       const RegisterValue &reg_value)
-{
-    EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
-
-    switch (reg_info->kinds[eRegisterKindGeneric])
-    {
-    case LLDB_REGNUM_GENERIC_PC:
-        emulator_baton->m_pc = reg_value;
-        break;
-    case LLDB_REGNUM_GENERIC_FLAGS:
-        emulator_baton->m_cpsr = reg_value;
-        break;
-    }
-
-    return true;
-}
-
-static size_t
-WriteMemoryCallback (EmulateInstruction *instruction,
-                     void *baton,
-                     const EmulateInstruction::Context &context, 
-                     lldb::addr_t addr, 
-                     const void *dst,
-                     size_t length)
-{
-    return length;
-}
-
-static lldb::addr_t
-ReadCpsr (NativeRegisterContext* regsiter_context)
-{
-    const RegisterInfo* cpsr_info = regsiter_context->GetRegisterInfo(
-            eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
-    return regsiter_context->ReadRegisterAsUnsigned(cpsr_info, LLDB_INVALID_ADDRESS);
-}
-
-Error
-NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
-{
-    Error error;
-    NativeRegisterContextSP register_context_sp = GetThreadByID(tid)->GetRegisterContext();
-
-    std::unique_ptr<EmulateInstruction> emulator_ap(
-        EmulateInstruction::FindPlugin(m_arch, eInstructionTypePCModifying, nullptr));
-
-    if (emulator_ap == nullptr)
-        return Error("Instruction emulator not found!");
-
-    EmulatorBaton baton(this, register_context_sp.get());
-    emulator_ap->SetBaton(&baton);
-    emulator_ap->SetReadMemCallback(&ReadMemoryCallback);
-    emulator_ap->SetReadRegCallback(&ReadRegisterCallback);
-    emulator_ap->SetWriteMemCallback(&WriteMemoryCallback);
-    emulator_ap->SetWriteRegCallback(&WriteRegisterCallback);
-
-    if (!emulator_ap->ReadInstruction())
-        return Error("Read instruction failed!");
-
-    lldb::addr_t next_pc;
-    lldb::addr_t next_cpsr;
-    if (emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC))
-    {
-        next_pc = baton.m_pc.GetAsUInt32();
-        if (baton.m_cpsr.GetType() != RegisterValue::eTypeInvalid)
-            next_cpsr = baton.m_cpsr.GetAsUInt32();
-        else
-            next_cpsr = ReadCpsr (register_context_sp.get());
-    }
-    else if (baton.m_pc.GetType() == RegisterValue::eTypeInvalid)
-    {
-        // Emulate instruction failed and it haven't changed PC. Advance PC
-        // with the size of the current opcode because the emulation of all
-        // PC modifying instruction should be successful. The failure most
-        // likely caused by a not supported instruction which don't modify PC.
-        next_pc = register_context_sp->GetPC() + emulator_ap->GetOpcode().GetByteSize();
-        next_cpsr = ReadCpsr (register_context_sp.get());
-    }
-    else
-    {
-        // The instruction emulation failed after it modified the PC. It is an
-        // unknown error where we can't continue because the next instruction is
-        // modifying the PC but we don't  know how.
-        return Error ("Instruction emulation failed unexpectedly.");
-    }
-
-    if (next_cpsr & 0x20)
-    {
-        // Thumb mode
-        error = SetBreakpoint(next_pc, 2, false);
-    }
-    else
-    {
-        // Arm mode
-        error = SetBreakpoint(next_pc, 4, false);
-    }
-
-    if (error.Fail())
-        return error;
-
-    m_threads_stepping_with_breakpoint.insert({tid, next_pc});
-
-    error = Resume(tid, signo);
-    if (error.Fail())
-        return error;
-
-    return Error();
-}
-
-#else // defined(__arm__)
-
 Error
 NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
 {
@@ -3872,8 +3905,6 @@ NativeProcessLinux::SingleStep(lldb::tid_t tid, uint32_t signo)
     m_monitor_up->DoOperation(&op);
     return op.GetError();
 }
-
-#endif // defined(__arm__)
 
 Error
 NativeProcessLinux::GetSignalInfo(lldb::tid_t tid, void *siginfo)
