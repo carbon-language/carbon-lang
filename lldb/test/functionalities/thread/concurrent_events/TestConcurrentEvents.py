@@ -38,7 +38,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=100)
 
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
-    @expectedFailureLinux('llvm.org/pr16714')
     @dwarf_test
     def test_many_watchpoints_dwarf(self):
         """Test 100 watchpoints from 100 threads."""
@@ -87,7 +86,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_watch_break_dwarf(self):
         """Test watchpoint and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -95,7 +93,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_delay_watch_break_dwarf(self):
         """Test (1-second delay) watchpoint and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -103,7 +100,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_watch_break_dwarf_delay(self):
         """Test watchpoint and a (1 second delay) breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -114,7 +110,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_signal_watch_dwarf(self):
         """Test a watchpoint and a signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -122,7 +117,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_delay_signal_watch_dwarf(self):
         """Test a watchpoint and a (1 second delay) signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -130,7 +124,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_signal_delay_watch_dwarf(self):
         """Test a (1 second delay) watchpoint and a signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -175,7 +168,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_two_breakpoints_one_watchpoint_dwarf(self):
         """Test two threads that trigger a breakpoint and one watchpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -183,7 +175,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_breakpoints_delayed_breakpoint_one_watchpoint_dwarf(self):
         """Test a breakpoint, a delayed breakpoint, and one watchpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -196,7 +187,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_two_watchpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -204,7 +194,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_watchpoint_with_delay_watchpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint where one thread has a 1 second delay. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -213,7 +202,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_two_watchpoints_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one breakpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -221,7 +209,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_two_watchpoints_one_delay_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one (1 second delay) breakpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -229,7 +216,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_watchpoint_delay_watchpoint_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint (one with a 1 second delay) and one breakpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -239,7 +225,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_two_watchpoints_one_signal_dwarf(self):
         """Test two threads that trigger a watchpoint and one signal thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
@@ -268,7 +253,6 @@ class ConcurrentEventsTestCase(TestBase):
 
     @dwarf_test
     @skipIfRemoteDueToDeadlock
-    @expectedFailureLinux('llvm.org/pr16714')
     def test_signal_watch_break_dwarf(self):
         """Test with 5 watchpoint and breakpoint threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
