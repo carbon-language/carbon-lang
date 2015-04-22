@@ -46,16 +46,13 @@ int force_instance = TemplateTSANOk<42>()
 // Check that __cxx_global_var_init* get the sanitize_thread attribute.
 int global1 = 0;
 int global2 = *(int*)((char*)&global1+1);
-// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR_NO_TF:#[0-9]+]]
-// BL: @__cxx_global_var_init{{.*}}[[NOATTR_NO_TF:#[0-9]+]]
-// TSAN: @__cxx_global_var_init{{.*}}[[WITH_NO_TF:#[0-9]+]]
+// WITHOUT: @__cxx_global_var_init{{.*}}[[NOATTR:#[0-9]+]]
+// BL: @__cxx_global_var_init{{.*}}[[NOATTR:#[0-9]+]]
+// TSAN: @__cxx_global_var_init{{.*}}[[WITH:#[0-9]+]]
 
 // WITHOUT: attributes [[NOATTR]] = { nounwind{{.*}} }
-// WITHOUT: attributes [[NOATTR_NO_TF]] = { nounwind }
 
 // BL: attributes [[NOATTR]] = { nounwind{{.*}} }
-// BL: attributes [[NOATTR_NO_TF]] = { nounwind{{.*}} }
 
 // TSAN: attributes [[NOATTR]] = { nounwind{{.*}} }
 // TSAN: attributes [[WITH]] = { nounwind sanitize_thread{{.*}} }
-// TSAN: attributes [[WITH_NO_TF]] = { nounwind sanitize_thread }
