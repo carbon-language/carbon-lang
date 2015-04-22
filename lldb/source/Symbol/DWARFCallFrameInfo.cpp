@@ -287,6 +287,19 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
                 cie_sp->initial_row.GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
                 continue;
             }
+            if (extended_opcode == DW_CFA_def_cfa_sf)
+            {
+                // The DW_CFA_def_cfa_sf instruction takes two operands: an unsigned LEB128 value
+                // representing a register number and a signed LEB128 factored offset. This
+                // instruction is identical to DW_CFA_def_cfa except that the second operand is
+                // signed and factored.
+                // The resulting offset is factored_offset * data_alignment_factor.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset);
+                cie_sp->initial_row.GetCFAValue().SetIsRegisterPlusOffset (
+                        reg_num, op_offset * cie_sp->data_align);
+                continue;
+            }
             if (primary_opcode == DW_CFA_offset)
             {   
                 // 0x80 - high 2 bits are 0x2, lower 6 bits are register.
