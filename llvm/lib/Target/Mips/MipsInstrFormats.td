@@ -50,6 +50,20 @@ def Std2MicroMips : InstrMapping {
   let ValueCols = [["se"], ["micromips"]];
 }
 
+class StdMMR6Rel;
+
+def Std2MicroMipsR6 : InstrMapping {
+  let FilterClass = "StdMMR6Rel";
+  // Instructions with the same BaseOpcode and isNVStore values form a row.
+  let RowFields = ["BaseOpcode"];
+  // Instructions with the same predicate sense form a column.
+  let ColFields = ["Arch"];
+  // The key column is the unpredicated instructions.
+  let KeyCol = ["se"];
+  // Value columns are PredSense=true and PredSense=false
+  let ValueCols = [["se"], ["micromipsr6"]];
+}
+
 class StdArch {
   string Arch = "se";
 }

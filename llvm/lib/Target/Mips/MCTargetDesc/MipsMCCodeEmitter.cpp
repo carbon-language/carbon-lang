@@ -179,13 +179,20 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       (Opcode != Mips::SLL_MM) && !Binary)
     llvm_unreachable("unimplemented opcode in EncodeInstruction()");
 
+  int NewOpcode = -1;
   if (isMicroMips(STI)) {
-    int NewOpcode = isMips32r6(STI) ?
-                    Mips::MipsR62MicroMipsR6(Opcode, Mips::Arch_micromipsr6) :
-                    Mips::Std2MicroMips(Opcode, Mips::Arch_micromips);
+    if (isMips32r6(STI)) {
+      NewOpcode = Mips::MipsR62MicroMipsR6(Opcode, Mips::Arch_micromipsr6);
+      if (NewOpcode == -1)
+        NewOpcode = Mips::Std2MicroMipsR6(Opcode, Mips::Arch_micromipsr6);
+    }
+    else
+      NewOpcode = Mips::Std2MicroMips(Opcode, Mips::Arch_micromips);
+
     if (NewOpcode != -1) {
       if (Fixups.size() > N)
         Fixups.pop_back();
+
       Opcode = NewOpcode;
       TmpInst.setOpcode (NewOpcode);
       Binary = getBinaryCodeForInstr(TmpInst, Fixups, STI);
