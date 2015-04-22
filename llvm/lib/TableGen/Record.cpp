@@ -133,7 +133,7 @@ Init *BitRecTy::convertValue(TypedInit *VI) {
 }
 
 bool BitRecTy::baseClassOf(const RecTy *RHS) const{
-  if(RecTy::baseClassOf(RHS) || getRecTyKind() == IntRecTyKind)
+  if(RecTy::baseClassOf(RHS) || RHS->getRecTyKind() == IntRecTyKind)
     return true;
   if(const BitsRecTy *BitsTy = dyn_cast<BitsRecTy>(RHS))
     return BitsTy->getNumBits() == 1;
