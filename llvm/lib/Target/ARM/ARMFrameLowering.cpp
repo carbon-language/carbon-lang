@@ -1688,8 +1688,8 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
         for (unsigned i = 0, e = UnspilledCS1GPRs.size(); i != e; ++i) {
           unsigned Reg = UnspilledCS1GPRs[i];
-          // Don't spill high register if the function is thumb1
-          if (!AFI->isThumb1OnlyFunction() ||
+          // Don't spill high register if the function is thumb
+          if (!AFI->isThumbFunction() ||
               isARMLowRegister(Reg) || Reg == ARM::LR) {
             MRI.setPhysRegUsed(Reg);
             if (!MRI.isReserved(Reg))

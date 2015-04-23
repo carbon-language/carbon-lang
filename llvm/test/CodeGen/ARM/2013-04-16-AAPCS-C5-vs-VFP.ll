@@ -33,7 +33,7 @@ define void @foo2(double %p0, ; --> D0
                   %struct_t* byval %p10) ; --> Stack+8
 {
 entry:
-;CHECK:     push.w {r11, lr}
+;CHECK:     push {r7, lr}
 ;CHECK-NOT: stm
 ;CHECK:     add r0, sp, #16
 ;CHECK:     bl fooUseStruct

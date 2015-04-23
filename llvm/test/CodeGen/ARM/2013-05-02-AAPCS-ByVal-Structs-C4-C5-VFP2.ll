@@ -19,7 +19,7 @@ define void @foo(double %vfp0,     ; --> D0,              NSAA=SP
 		 i32 %p2) #0 {     ; --> SP+24,           NSAA=SP+24 
                  
 entry:
-  ;CHECK:  push.w {r11, lr}
+  ;CHECK:  push {r7, lr}
   ;CHECK:  ldr    r0, [sp, #32]
   ;CHECK:  bl     fooUseI32
   call void @fooUseI32(i32 %p2)

@@ -35,7 +35,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
   ; Normal AAPCS function (r0-r3 pushed onto stack by hardware, lr set to
   ; appropriate sentinel so no special return needed).
 ; CHECK-M-LABEL: irq_fn:
-; CHECK-M: push.w {r4, r10, r11, lr}
+; CHECK-M: push.w {r4, r7, r11, lr}
 ; CHECK-M: add.w r11, sp, #8
 ; CHECK-M: mov r4, sp
 ; CHECK-M: bfc r4, #0, #3
@@ -43,7 +43,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 ; CHECK-M: bl _bar
 ; CHECK-M: sub.w r4, r11, #8
 ; CHECK-M: mov sp, r4
-; CHECK-M: pop.w {r4, r10, r11, pc}
+; CHECK-M: pop.w {r4, r7, r11, pc}
 
   call arm_aapcscc void @bar()
   ret void

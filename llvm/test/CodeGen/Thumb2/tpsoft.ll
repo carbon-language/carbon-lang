@@ -32,13 +32,13 @@ bb:                                               ; preds = %entry
 ; ELFOBJ:        Section {
 ; ELFOBJ:          Name: .text
 ; ELFOBJ-LE:          SectionData (
-;;;                  BL __aeabi_read_tp is ---------+
-;;;                                                 V
-; ELFOBJ-LE-NEXT:     0000: 2DE90048 0E487844 0168FFF7 FEFF4058
+;;;                  BL __aeabi_read_tp is ---+
+;;;                                           V
+; ELFOBJ-LE-NEXT:     0000: 80B50E48 78440168 FFF7FEFF 40580D28
 ; ELFOBJ-BE:          SectionData (
-;;;                  BL __aeabi_read_tp is ---------+
-;;;                                                 V
-; ELFOBJ-BE-NEXT:     0000: E92D4800 480E4478 6801F7FF FFFE5840
+;;;                  BL __aeabi_read_tp is ---+
+;;;                                           V
+; ELFOBJ-BE-NEXT:     0000: B580480E 44786801 F7FFFFFE 5840280D
 
 
 bb1:                                              ; preds = %entry
