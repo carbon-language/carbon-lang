@@ -1037,6 +1037,7 @@ static BasicBlock *createStubLandingPad(Function *Handler,
 void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
                                                   Value *PersonalityFn) {
   ReturnInst *Ret = nullptr;
+  UnreachableInst *Unreached = nullptr;
   for (BasicBlock &BB : *Handler) {
     TerminatorInst *Terminator = BB.getTerminator();
     // If we find an invoke, there is nothing to be done.
@@ -1044,18 +1045,24 @@ void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
     if (II)
       return;
     // If we've already recorded a return instruction, keep looking for invokes.
-    if (Ret)
-      continue;
-    // If we haven't recorded a return instruction yet, try this terminator.
-    Ret = dyn_cast<ReturnInst>(Terminator);
+    if (!Ret)
+      Ret = dyn_cast<ReturnInst>(Terminator);
+    // If we haven't recorded an unreachable instruction, try this terminator.
+    if (!Unreached)
+      Unreached = dyn_cast<UnreachableInst>(Terminator);
   }
 
   // If we got this far, the handler contains no invokes.  We should have seen
-  // at least one return.  We'll insert an invoke of llvm.donothing ahead of
-  // that return.
-  assert(Ret);
-  BasicBlock *OldRetBB = Ret->getParent();
-  BasicBlock *NewRetBB = SplitBlock(OldRetBB, Ret);
+  // at least one return or unreachable instruction.  We'll insert an invoke of
+  // llvm.donothing ahead of that instruction.
+  assert(Ret || Unreached);
+  TerminatorInst *Term;
+  if (Ret)
+    Term = Ret;
+  else
+    Term = Unreached;
+  BasicBlock *OldRetBB = Term->getParent();
+  BasicBlock *NewRetBB = SplitBlock(OldRetBB, Term);
   // SplitBlock adds an unconditional branch instruction at the end of the
   // parent block.  We want to replace that with an invoke call, so we can
   // erase it now.
