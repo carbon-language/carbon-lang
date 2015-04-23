@@ -201,6 +201,9 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
       // Get the element encoding.
       assert(i+2 == e && "array op not second to last?");
       const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+      if (EltEnc.getEncoding() == BitCodeAbbrevOp::Array ||
+          EltEnc.getEncoding() == BitCodeAbbrevOp::Blob)
+        report_fatal_error("Array element type can't be an Array or a Blob");
 
       // Read all the elements.
       for (; NumElts; --NumElts)

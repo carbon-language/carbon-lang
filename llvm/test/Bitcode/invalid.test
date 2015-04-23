@@ -73,3 +73,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-abbrev-fixed-size-too-big.bc
 RUN:   FileCheck --check-prefix=HUGE-ABBREV-OP %s
 
 HUGE-ABBREV-OP: Fixed or VBR abbrev record with size > MaxChunkData
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-type.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=ARRAY-TYPE %s
+
+ARRAY-TYPE: Array element type can't be an Array or a Blob
