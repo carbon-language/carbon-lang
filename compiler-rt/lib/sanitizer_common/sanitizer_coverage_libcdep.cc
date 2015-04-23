@@ -571,9 +571,11 @@ static fd_t CovOpenFile(InternalScopedString *path, bool packed,
     else
       path->append("%s/%s.%s.packed", coverage_dir, name, extension);
   }
-  fd_t fd = OpenFile(path->data(), WrOnly);
+  error_t err;
+  fd_t fd = OpenFile(path->data(), WrOnly, &err);
   if (fd == kInvalidFd)
-    Report("SanitizerCoverage: failed to open %s for writing\n", path->data());
+    Report("SanitizerCoverage: failed to open %s for writing (reason: %d)\n",
+           path->data(), err);
   return fd;
 }
 
