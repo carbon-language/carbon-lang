@@ -2860,7 +2860,6 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   }
 
   OpaqueValueMapping binding(*this, expr);
-  RegionCounter Cnt = getPGORegionCounter(expr);
 
   const Expr *condExpr = expr->getCond();
   bool CondExprBool;
@@ -2871,7 +2870,7 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
     if (!ContainsLabel(dead)) {
       // If the true case is live, we need to track its region.
       if (CondExprBool)
-        Cnt.beginRegion(Builder);
+        incrementProfileCounter(expr);
       return EmitLValue(live);
     }
   }
@@ -2881,11 +2880,11 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   llvm::BasicBlock *contBlock = createBasicBlock("cond.end");
 
   ConditionalEvaluation eval(*this);
-  EmitBranchOnBoolExpr(condExpr, lhsBlock, rhsBlock, Cnt.getCount());
+  EmitBranchOnBoolExpr(condExpr, lhsBlock, rhsBlock, getProfileCount(expr));
 
   // Any temporaries created here are conditional.
   EmitBlock(lhsBlock);
-  Cnt.beginRegion(Builder);
+  incrementProfileCounter(expr);
   eval.begin(*this);
   Optional<LValue> lhs =
       EmitLValueOrThrowExpression(*this, expr->getTrueExpr());

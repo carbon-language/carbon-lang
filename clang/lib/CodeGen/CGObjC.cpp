@@ -497,8 +497,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   StartObjCMethod(OMD, OMD->getClassInterface());
   PGO.assignRegionCounters(OMD, CurFn);
   assert(isa<CompoundStmt>(OMD->getBody()));
-  RegionCounter Cnt = getPGORegionCounter(OMD->getBody());
-  Cnt.beginRegion(Builder);
+  incrementProfileCounter(OMD->getBody());
   EmitCompoundStmtWithoutScope(*cast<CompoundStmt>(OMD->getBody()));
   FinishFunction(OMD->getBodyRBrace());
 }
@@ -1503,11 +1502,11 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // If the limit pointer was zero to begin with, the collection is
   // empty; skip all this. Set the branch weight assuming this has the same
   // probability of exiting the loop as any other loop exit.
-  uint64_t EntryCount = PGO.getCurrentRegionCount();
-  RegionCounter Cnt = getPGORegionCounter(&S);
-  Builder.CreateCondBr(Builder.CreateICmpEQ(initialBufferLimit, zero, "iszero"),
-                       EmptyBB, LoopInitBB,
-                       PGO.createBranchWeights(EntryCount, Cnt.getCount()));
+  uint64_t EntryCount = getCurrentProfileCount();
+  Builder.CreateCondBr(
+      Builder.CreateICmpEQ(initialBufferLimit, zero, "iszero"), EmptyBB,
+      LoopInitBB,
+      PGO.createBranchWeights(EntryCount, getProfileCount(S.getBody())));
 
   // Otherwise, initialize the loop.
   EmitBlock(LoopInitBB);
@@ -1536,7 +1535,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::PHINode *count = Builder.CreatePHI(UnsignedLongLTy, 3, "forcoll.count");
   count->addIncoming(initialBufferLimit, LoopInitBB);
 
-  Cnt.beginRegion(Builder);
+  incrementProfileCounter(&S);
 
   // Check whether the mutations value has changed from where it was
   // at start.  StateMutationsPtr should actually be invariant between
@@ -1648,9 +1647,9 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // Set the branch weights based on the simplifying assumption that this is
   // like a while-loop, i.e., ignoring that the false branch fetches more
   // elements and then returns to the loop.
-  Builder.CreateCondBr(Builder.CreateICmpULT(indexPlusOne, count),
-                       LoopBodyBB, FetchMoreBB,
-                       PGO.createBranchWeights(Cnt.getCount(), EntryCount));
+  Builder.CreateCondBr(
+      Builder.CreateICmpULT(indexPlusOne, count), LoopBodyBB, FetchMoreBB,
+      PGO.createBranchWeights(getProfileCount(S.getBody()), EntryCount));
 
   index->addIncoming(indexPlusOne, AfterBody.getBlock());
   count->addIncoming(count, AfterBody.getBlock());

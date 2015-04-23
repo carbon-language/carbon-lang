@@ -523,7 +523,6 @@ void CodeGenFunction::EmitOMPInnerLoop(
     const llvm::function_ref<void(CodeGenFunction &)> &BodyGen,
     const llvm::function_ref<void(CodeGenFunction &)> &PostIncGen) {
   auto LoopExit = getJumpDestInCurrentScope("omp.inner.for.end");
-  auto Cnt = getPGORegionCounter(&S);
 
   // Start the loop with a block that tests the condition.
   auto CondBlock = createBasicBlock("omp.inner.for.cond");
@@ -539,14 +538,14 @@ void CodeGenFunction::EmitOMPInnerLoop(
   auto LoopBody = createBasicBlock("omp.inner.for.body");
 
   // Emit condition.
-  EmitBranchOnBoolExpr(LoopCond, LoopBody, ExitBlock, Cnt.getCount());
+  EmitBranchOnBoolExpr(LoopCond, LoopBody, ExitBlock, getProfileCount(&S));
   if (ExitBlock != LoopExit.getBlock()) {
     EmitBlock(ExitBlock);
     EmitBranchThroughCleanup(LoopExit);
   }
 
   EmitBlock(LoopBody);
-  Cnt.beginRegion(Builder);
+  incrementProfileCounter(&S);
 
   // Create a block for the increment.
   auto Continue = getJumpDestInCurrentScope("omp.inner.for.inc");
@@ -703,12 +702,12 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
       if (!CondConstant)
         return;
     } else {
-      RegionCounter Cnt = CGF.getPGORegionCounter(&S);
       auto *ThenBlock = CGF.createBasicBlock("simd.if.then");
       ContBlock = CGF.createBasicBlock("simd.if.end");
-      emitPreCond(CGF, S, S.getPreCond(), ThenBlock, ContBlock, Cnt.getCount());
+      emitPreCond(CGF, S, S.getPreCond(), ThenBlock, ContBlock,
+                  CGF.getProfileCount(&S));
       CGF.EmitBlock(ThenBlock);
-      Cnt.beginRegion(CGF.Builder);
+      CGF.incrementProfileCounter(&S);
     }
     // Walk clauses and process safelen/lastprivate.
     bool SeparateIter = false;
@@ -989,13 +988,12 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
       if (!CondConstant)
         return false;
     } else {
-      RegionCounter Cnt = getPGORegionCounter(&S);
       auto *ThenBlock = createBasicBlock("omp.precond.then");
       ContBlock = createBasicBlock("omp.precond.end");
       emitPreCond(*this, S, S.getPreCond(), ThenBlock, ContBlock,
-                  Cnt.getCount());
+                  getProfileCount(&S));
       EmitBlock(ThenBlock);
-      Cnt.beginRegion(Builder);
+      incrementProfileCounter(&S);
     }
     // Emit 'then' code.
     {
@@ -1825,4 +1823,3 @@ void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &) {
 void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &) {
   llvm_unreachable("CodeGen for 'omp teams' is not supported yet.");
 }
-

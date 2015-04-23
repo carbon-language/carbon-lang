@@ -210,8 +210,7 @@ public:
 
     /// \brief Emit the captured statement body.
     virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) {
-      RegionCounter Cnt = CGF.getPGORegionCounter(S);
-      Cnt.beginRegion(CGF.Builder);
+      CGF.incrementProfileCounter(S);
       CGF.EmitStmt(S);
     }
 
@@ -891,11 +890,32 @@ private:
   CodeGenPGO PGO;
 
 public:
-  /// Get a counter for instrumentation of the region associated with the given
-  /// statement.
-  RegionCounter getPGORegionCounter(const Stmt *S) {
-    return RegionCounter(PGO, S);
+  /// Increment the profiler's counter for the given statement.
+  void incrementProfileCounter(const Stmt *S) {
+    if (CGM.getCodeGenOpts().ProfileInstrGenerate)
+      PGO.emitCounterIncrement(Builder, S);
+    PGO.setCurrentStmt(S);
   }
+
+  /// Get the profiler's count for the given statement.
+  uint64_t getProfileCount(const Stmt *S) {
+    Optional<uint64_t> Count = PGO.getStmtCount(S);
+    if (!Count.hasValue())
+      return 0;
+    return *Count;
+  }
+
+  /// Set the profiler's current count.
+  void setCurrentProfileCount(uint64_t Count) {
+    PGO.setCurrentRegionCount(Count);
+  }
+
+  /// Get the profiler's current count. This is generally the count for the most
+  /// recently incremented counter.
+  uint64_t getCurrentProfileCount() {
+    return PGO.getCurrentRegionCount();
+  }
+
 private:
 
   /// SwitchInsn - This is nearest current switch instruction. It is null if
@@ -1221,7 +1241,7 @@ public:
   void EmitDestructorBody(FunctionArgList &Args);
   void emitImplicitAssignmentOperatorBody(FunctionArgList &Args);
   void EmitFunctionBody(FunctionArgList &Args, const Stmt *Body);
-  void EmitBlockWithFallThrough(llvm::BasicBlock *BB, RegionCounter &Cnt);
+  void EmitBlockWithFallThrough(llvm::BasicBlock *BB, const Stmt *S);
 
   void EmitForwardingCallToLambda(const CXXMethodDecl *LambdaCallOperator,
                                   CallArgList &CallArgs);

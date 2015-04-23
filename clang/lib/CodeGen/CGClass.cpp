@@ -797,8 +797,7 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
   if (IsTryBody)
     EnterCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
-  RegionCounter Cnt = getPGORegionCounter(Body);
-  Cnt.beginRegion(Builder);
+  incrementProfileCounter(Body);
 
   RunCleanupsScope RunCleanups(*this);
 
@@ -1404,8 +1403,7 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   case Dtor_Base:
     assert(Body);
 
-    RegionCounter Cnt = getPGORegionCounter(Body);
-    Cnt.beginRegion(Builder);
+    incrementProfileCounter(Body);
 
     // Enter the cleanup scopes for fields and non-virtual bases.
     EnterDtorCleanups(Dtor, Dtor_Base);

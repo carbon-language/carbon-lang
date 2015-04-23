@@ -24,10 +24,8 @@
 
 namespace clang {
 namespace CodeGen {
-class RegionCounter;
 
-/// Per-function PGO state. This class should generally not be used directly,
-/// but instead through the CodeGenFunction and RegionCounter types.
+/// Per-function PGO state.
 class CodeGenPGO {
 private:
   CodeGenModule &CGM;
@@ -88,7 +86,7 @@ public:
   /// Calculate branch weights appropriate for PGO data
   llvm::MDNode *createBranchWeights(uint64_t TrueCount, uint64_t FalseCount);
   llvm::MDNode *createBranchWeights(ArrayRef<uint64_t> Weights);
-  llvm::MDNode *createLoopWeights(const Stmt *Cond, RegionCounter &Cnt);
+  llvm::MDNode *createLoopWeights(const Stmt *Cond, uint64_t LoopCount);
 
   /// Check if we need to emit coverage mapping for a given declaration
   void checkGlobalDecl(GlobalDecl GD);
@@ -114,45 +112,31 @@ private:
   void emitCounterVariables();
   void emitCounterRegionMapping(const Decl *D);
 
-  /// Emit code to increment the counter at the given index
-  void emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter);
-
-  /// Return the region counter for the given statement. This should only be
-  /// called on statements that have a dedicated counter.
-  unsigned getRegionCounter(const Stmt *S) {
-    if (!RegionCounterMap)
-      return 0;
-    return (*RegionCounterMap)[S];
-  }
+public:
+  void emitCounterIncrement(CGBuilderTy &Builder, const Stmt *S);
 
   /// Return the region count for the counter at the given index.
-  uint64_t getRegionCount(unsigned Counter) {
+  uint64_t getRegionCount(const Stmt *S) {
+    if (!RegionCounterMap)
+      return 0;
     if (!haveRegionCounts())
       return 0;
-    return RegionCounts[Counter];
+    return RegionCounts[(*RegionCounterMap)[S]];
   }
-
-  friend class RegionCounter;
 };
 
 /// A counter for a particular region. This is the primary interface through
 /// which clients manage PGO counters and their values.
 class RegionCounter {
   CodeGenPGO *PGO;
-  unsigned Counter;
   uint64_t Count;
   uint64_t ParentCount;
   uint64_t RegionCount;
   int64_t Adjust;
 
-  RegionCounter(CodeGenPGO &PGO, unsigned CounterIndex)
-    : PGO(&PGO), Counter(CounterIndex), Count(PGO.getRegionCount(Counter)),
-      ParentCount(PGO.getCurrentRegionCount()), Adjust(0) {}
-
 public:
   RegionCounter(CodeGenPGO &PGO, const Stmt *S)
-    : PGO(&PGO), Counter(PGO.getRegionCounter(S)),
-      Count(PGO.getRegionCount(Counter)),
+    : PGO(&PGO), Count(PGO.getRegionCount(S)),
       ParentCount(PGO.getCurrentRegionCount()), Adjust(0) {}
 
   /// Get the value of the counter. In most cases this is the number of times
@@ -175,13 +159,6 @@ public:
   /// or the normal exits of a loop.
   uint64_t getParentCount() const { return ParentCount; }
 
-  /// Activate the counter by emitting an increment and starting to track
-  /// adjustments. If AddIncomingFallThrough is true, the current region count
-  /// will be added to the counter for the purposes of tracking the region.
-  void beginRegion(CGBuilderTy &Builder, bool AddIncomingFallThrough=false) {
-    beginRegion(AddIncomingFallThrough);
-    PGO->emitCounterIncrement(Builder, Counter);
-  }
   void beginRegion(bool AddIncomingFallThrough=false) {
     RegionCount = Count;
     if (AddIncomingFallThrough)
