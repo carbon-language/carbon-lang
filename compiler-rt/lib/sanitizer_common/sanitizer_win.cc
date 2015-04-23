@@ -267,8 +267,9 @@ void ReExec() {
 }
 
 void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
-  (void)args;
-  // Nothing here for now.
+#if !SANITIZER_GO
+  CovPrepareForSandboxing(args);
+#endif
 }
 
 bool StackSizeIsUnlimited() {
