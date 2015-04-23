@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=aarch64-none-eabi | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -mtriple=aarch64-none-eabi | FileCheck %s
 
 define <8 x half> @add_h(<8 x half> %a, <8 x half> %b) {
 entry:
@@ -253,3 +253,109 @@ define <8 x i16> @bitcast_h_to_i(float, <8 x half> %a) {
   ret <8 x i16> %2
 }
 
+
+define <8 x half> @sitofp_i8(<8 x i8> %a) #0 {
+; CHECK-LABEL: sitofp_i8:
+; CHECK-NEXT: sshll v[[REG1:[0-9]+]].8h, v0.8b, #0
+; CHECK-NEXT: sshll2 [[LO:v[0-9]+\.4s]], v[[REG1]].8h, #0
+; CHECK-NEXT: sshll  [[HI:v[0-9]+\.4s]], v[[REG1]].4h, #0
+; CHECK-DAG: scvtf [[HIF:v[0-9]+\.4s]], [[HI]]
+; CHECK-DAG: scvtf [[LOF:v[0-9]+\.4s]], [[LO]]
+; CHECK-DAG: fcvtn v[[LOREG:[0-9]+]].4h, [[LOF]]
+; CHECK-DAG: fcvtn v0.4h, [[HIF]]
+; CHECK: ins v0.d[1], v[[LOREG]].d[0]
+  %1 = sitofp <8 x i8> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @sitofp_i16(<8 x i16> %a) #0 {
+; CHECK-LABEL: sitofp_i16:
+; CHECK-NEXT: sshll2 [[LO:v[0-9]+\.4s]], v0.8h, #0
+; CHECK-NEXT: sshll  [[HI:v[0-9]+\.4s]], v0.4h, #0
+; CHECK-DAG: scvtf [[HIF:v[0-9]+\.4s]], [[HI]]
+; CHECK-DAG: scvtf [[LOF:v[0-9]+\.4s]], [[LO]]
+; CHECK-DAG: fcvtn v[[LOREG:[0-9]+]].4h, [[LOF]]
+; CHECK-DAG: fcvtn v0.4h, [[HIF]]
+; CHECK: ins v0.d[1], v[[LOREG]].d[0]
+  %1 = sitofp <8 x i16> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @sitofp_i32(<8 x i32> %a) #0 {
+; CHECK-LABEL: sitofp_i32:
+; CHECK-DAG: scvtf [[OP1:v[0-9]+\.4s]], v0.4s
+; CHECK-DAG: scvtf [[OP2:v[0-9]+\.4s]], v1.4s
+; CHECK-DAG: fcvtn v[[REG:[0-9]+]].4h, [[OP2]]
+; CHECK-DAG: fcvtn v0.4h, [[OP1]]
+; CHECK: ins v0.d[1], v[[REG]].d[0]
+  %1 = sitofp <8 x i32> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @sitofp_i64(<8 x i64> %a) #0 {
+; CHECK-LABEL: sitofp_i64:
+; CHECK-DAG: scvtf [[OP1:v[0-9]+\.2d]], v0.2d
+; CHECK-DAG: scvtf [[OP2:v[0-9]+\.2d]], v1.2d
+; CHECK-DAG: fcvtn [[OP3:v[0-9]+]].2s, [[OP1]]
+; CHECK-DAG: fcvtn2 [[OP3]].4s, [[OP2]]
+; CHECK: fcvtn v0.4h, [[OP3]].4s
+  %1 = sitofp <8 x i64> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+define <8 x half> @uitofp_i8(<8 x i8> %a) #0 {
+; CHECK-LABEL: uitofp_i8:
+; CHECK-NEXT: ushll v[[REG1:[0-9]+]].8h, v0.8b, #0
+; CHECK-NEXT: ushll2 [[LO:v[0-9]+\.4s]], v[[REG1]].8h, #0
+; CHECK-NEXT: ushll  [[HI:v[0-9]+\.4s]], v[[REG1]].4h, #0
+; CHECK-DAG: ucvtf [[HIF:v[0-9]+\.4s]], [[HI]]
+; CHECK-DAG: ucvtf [[LOF:v[0-9]+\.4s]], [[LO]]
+; CHECK-DAG: fcvtn v[[LOREG:[0-9]+]].4h, [[LOF]]
+; CHECK-DAG: fcvtn v0.4h, [[HIF]]
+; CHECK: ins v0.d[1], v[[LOREG]].d[0]
+  %1 = uitofp <8 x i8> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @uitofp_i16(<8 x i16> %a) #0 {
+; CHECK-LABEL: uitofp_i16:
+; CHECK-NEXT: ushll2 [[LO:v[0-9]+\.4s]], v0.8h, #0
+; CHECK-NEXT: ushll  [[HI:v[0-9]+\.4s]], v0.4h, #0
+; CHECK-DAG: ucvtf [[HIF:v[0-9]+\.4s]], [[HI]]
+; CHECK-DAG: ucvtf [[LOF:v[0-9]+\.4s]], [[LO]]
+; CHECK-DAG: fcvtn v[[LOREG:[0-9]+]].4h, [[LOF]]
+; CHECK-DAG: fcvtn v0.4h, [[HIF]]
+; CHECK: ins v0.d[1], v[[LOREG]].d[0]
+  %1 = uitofp <8 x i16> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @uitofp_i32(<8 x i32> %a) #0 {
+; CHECK-LABEL: uitofp_i32:
+; CHECK-DAG: ucvtf [[OP1:v[0-9]+\.4s]], v0.4s
+; CHECK-DAG: ucvtf [[OP2:v[0-9]+\.4s]], v1.4s
+; CHECK-DAG: fcvtn v[[REG:[0-9]+]].4h, [[OP2]]
+; CHECK-DAG: fcvtn v0.4h, [[OP1]]
+; CHECK: ins v0.d[1], v[[REG]].d[0]
+  %1 = uitofp <8 x i32> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+
+define <8 x half> @uitofp_i64(<8 x i64> %a) #0 {
+; CHECK-LABEL: uitofp_i64:
+; CHECK-DAG: ucvtf [[OP1:v[0-9]+\.2d]], v0.2d
+; CHECK-DAG: ucvtf [[OP2:v[0-9]+\.2d]], v1.2d
+; CHECK-DAG: fcvtn [[OP3:v[0-9]+]].2s, [[OP1]]
+; CHECK-DAG: fcvtn2 [[OP3]].4s, [[OP2]]
+; CHECK: fcvtn v0.4h, [[OP3]].4s
+  %1 = uitofp <8 x i64> %a to <8 x half>
+  ret <8 x half> %1
+}
+
+attributes #0 = { nounwind }

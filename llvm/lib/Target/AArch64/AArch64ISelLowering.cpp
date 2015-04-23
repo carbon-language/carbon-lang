@@ -557,11 +557,21 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::SINT_TO_FP, MVT::v4i8, Promote);
     setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Promote);
     setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Promote);
+    // i8 and i16 vector elements also need promotion to i32 for v8i8 or v8i16
+    // -> v8f16 conversions.
+    setOperationAction(ISD::SINT_TO_FP, MVT::v8i8, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v8i8, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v8i16, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v8i16, Promote);
     // Similarly, there is no direct i32 -> f64 vector conversion instruction.
     setOperationAction(ISD::SINT_TO_FP, MVT::v2i32, Custom);
     setOperationAction(ISD::UINT_TO_FP, MVT::v2i32, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Custom);
     setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Custom);
+    // Or, direct i32 -> f16 vector conversion.  Set it so custom, so the
+    // conversion happens in two steps: v4i32 -> v4f32 -> v4f16
+    setOperationAction(ISD::SINT_TO_FP, MVT::v4i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v4i32, Custom);
 
     // AArch64 doesn't have MUL.2d:
     setOperationAction(ISD::MUL, MVT::v2i64, Expand);

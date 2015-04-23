@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=aarch64-none-eabi | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -mtriple=aarch64-none-eabi | FileCheck %s
 
 define <4 x half> @add_h(<4 x half> %a, <4 x half> %b) {
 entry:
@@ -129,3 +129,93 @@ define <4 x i16> @bitcast_h_to_i(float, <4 x half> %a) {
   %2 = bitcast <4 x half> %a to <4 x i16>
   ret <4 x i16> %2
 }
+
+
+define <4 x half> @sitofp_i8(<4 x i8> %a) #0 {
+; CHECK-LABEL: sitofp_i8:
+; CHECK-NEXT: shl [[OP1:v[0-9]+\.4h]], v0.4h, #8
+; CHECK-NEXT: sshr [[OP2:v[0-9]+\.4h]], [[OP1]], #8
+; CHECK-NEXT: sshll [[OP3:v[0-9]+\.4s]], [[OP2]], #0
+; CHECK-NEXT: scvtf [[OP4:v[0-9]+\.4s]], [[OP3]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP4]]
+; CHECK-NEXT: ret
+  %1 = sitofp <4 x i8> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @sitofp_i16(<4 x i16> %a) #0 {
+; CHECK-LABEL: sitofp_i16:
+; CHECK-NEXT: sshll [[OP1:v[0-9]+\.4s]], v0.4h, #0
+; CHECK-NEXT: scvtf [[OP2:v[0-9]+\.4s]], [[OP1]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP2]]
+; CHECK-NEXT: ret
+  %1 = sitofp <4 x i16> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @sitofp_i32(<4 x i32> %a) #0 {
+; CHECK-LABEL: sitofp_i32:
+; CHECK-NEXT: scvtf [[OP1:v[0-9]+\.4s]], v0.4s
+; CHECK-NEXT: fcvtn v0.4h, [[OP1]]
+  %1 = sitofp <4 x i32> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @sitofp_i64(<4 x i64> %a) #0 {
+; CHECK-LABEL: sitofp_i64:
+; CHECK-DAG: scvtf [[OP1:v[0-9]+\.2d]], v0.2d
+; CHECK-DAG: scvtf [[OP2:v[0-9]+\.2d]], v1.2d
+; CHECK-DAG: fcvtn [[OP3:v[0-9]+]].2s, [[OP1]]
+; CHECK-NEXT: fcvtn2 [[OP3]].4s, [[OP2]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP3]].4s
+  %1 = sitofp <4 x i64> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+define <4 x half> @uitofp_i8(<4 x i8> %a) #0 {
+; CHECK-LABEL: uitofp_i8:
+; CHECK-NEXT: bic v0.4h, #0xff, lsl #8
+; CHECK-NEXT: ushll [[OP1:v[0-9]+\.4s]], v0.4h, #0
+; CHECK-NEXT: ucvtf [[OP2:v[0-9]+\.4s]], [[OP1]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP2]]
+; CHECK-NEXT: ret
+  %1 = uitofp <4 x i8> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @uitofp_i16(<4 x i16> %a) #0 {
+; CHECK-LABEL: uitofp_i16:
+; CHECK-NEXT: ushll [[OP1:v[0-9]+\.4s]], v0.4h, #0
+; CHECK-NEXT: ucvtf [[OP2:v[0-9]+\.4s]], [[OP1]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP2]]
+; CHECK-NEXT: ret
+  %1 = uitofp <4 x i16> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @uitofp_i32(<4 x i32> %a) #0 {
+; CHECK-LABEL: uitofp_i32:
+; CHECK-NEXT: ucvtf [[OP1:v[0-9]+\.4s]], v0.4s
+; CHECK-NEXT: fcvtn v0.4h, [[OP1]]
+  %1 = uitofp <4 x i32> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+
+define <4 x half> @uitofp_i64(<4 x i64> %a) #0 {
+; CHECK-LABEL: uitofp_i64:
+; CHECK-DAG: ucvtf [[OP1:v[0-9]+\.2d]], v0.2d
+; CHECK-DAG: ucvtf [[OP2:v[0-9]+\.2d]], v1.2d
+; CHECK-DAG: fcvtn [[OP3:v[0-9]+]].2s, [[OP1]]
+; CHECK-NEXT: fcvtn2 [[OP3]].4s, [[OP2]]
+; CHECK-NEXT: fcvtn v0.4h, [[OP3]].4s
+  %1 = uitofp <4 x i64> %a to <4 x half>
+  ret <4 x half> %1
+}
+
+attributes #0 = { nounwind }
