@@ -637,9 +637,8 @@ private:
 
 public:
   LineType parseLine() {
-    if (CurrentToken->is(tok::hash)) {
+    if (CurrentToken->is(tok::hash))
       return parsePreprocessorDirective();
-    }
 
     // Directly allow to 'import <string-literal>' to support protocol buffer
     // definitions (code.google.com/p/protobuf) or missing "#" (either way we
@@ -661,6 +660,15 @@ public:
     if (CurrentToken->is(tok::less) && Line.Last->is(tok::greater)) {
       parseIncludeDirective();
       return LT_ImportStatement;
+    }
+
+    // In .proto files, top-level options are very similar to import statements
+    // and should not be line-wrapped.
+    if (Style.Language == FormatStyle::LK_Proto && Line.Level == 0 &&
+        CurrentToken->is(Keywords.kw_option)) {
+      next();
+      if (CurrentToken && CurrentToken->is(tok::identifier))
+        return LT_ImportStatement;
     }
 
     bool KeywordVirtualFound = false;

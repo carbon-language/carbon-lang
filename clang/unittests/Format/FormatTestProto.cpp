@@ -105,6 +105,14 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
                "}];");
 }
 
+TEST_F(FormatTestProto, DoesntWrapFileOptions) {
+  EXPECT_EQ(
+      "option java_package = "
+      "\"some.really.long.package.that.exceeds.the.column.limit\";",
+      format("option    java_package   =    "
+             "\"some.really.long.package.that.exceeds.the.column.limit\";"));
+}
+
 TEST_F(FormatTestProto, FormatsOptions) {
   verifyFormat("option (MyProto.options) = {\n"
                "  field_a: OK\n"
