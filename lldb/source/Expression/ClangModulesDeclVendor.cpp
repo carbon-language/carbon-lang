@@ -486,12 +486,12 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
             continue;
         }
         
-        if (mi->second->getKind() == clang::MacroDirective::MD_Define)
+        if (mi->second.getLatest()->getKind() == clang::MacroDirective::MD_Define)
         {            
             std::string macro_expansion = "#define ";
             macro_expansion.append(mi->first->getName().str().c_str());
                 
-            if (clang::MacroInfo *macro_info = mi->second->getMacroInfo())
+            if (clang::MacroInfo *macro_info = mi->second.getLatest()->getMacroInfo())
             {
                 if (macro_info->isFunctionLike())
                 {
