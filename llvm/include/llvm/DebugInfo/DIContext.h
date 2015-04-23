@@ -113,25 +113,16 @@ enum DIDumpType {
   DIDT_AppleObjC
 };
 
-// In place of applying the relocations to the data we've read from disk we use
-// a separate mapping table to the side and checking that at locations in the
-// dwarf where we expect relocated values. This adds a bit of complexity to the
-// dwarf parsing/extraction at the benefit of not allocating memory for the
-// entire size of the debug info sections.
-typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
-
 class DIContext {
 public:
   enum DIContextKind {
-    CK_DWARF
+    CK_DWARF,
+    CK_PDB
   };
   DIContextKind getKind() const { return Kind; }
 
   DIContext(DIContextKind K) : Kind(K) {}
-  virtual ~DIContext();
-
-  /// getDWARFContext - get a context for binary DWARF data.
-  static DIContext *getDWARFContext(const object::ObjectFile &Obj);
+  virtual ~DIContext() {}
 
   virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) = 0;
 

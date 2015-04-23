@@ -13,7 +13,8 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/DebugInfo/DWARF/DIContext.h"
+#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/RelocVisitor.h"
 #include "llvm/Support/CommandLine.h"
@@ -86,7 +87,7 @@ static void DumpInput(StringRef Filename) {
   }
   ObjectFile &Obj = *ObjOrErr.get();
 
-  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(Obj));
+  std::unique_ptr<DIContext> DICtx(new DWARFContextInMemory(Obj));
 
   outs() << Filename
          << ":\tfile format " << Obj.getFileFormatName() << "\n\n";

@@ -256,7 +256,7 @@ DWARFUnit::DWOHolder::DWOHolder(StringRef DWOPath)
     return;
   DWOFile = std::move(Obj.get());
   DWOContext.reset(
-      cast<DWARFContext>(DIContext::getDWARFContext(*DWOFile.getBinary())));
+      cast<DWARFContext>(new DWARFContextInMemory(*DWOFile.getBinary())));
   if (DWOContext->getNumDWOCompileUnits() > 0)
     DWOU = DWOContext->getDWOCompileUnitAtIndex(0);
 }

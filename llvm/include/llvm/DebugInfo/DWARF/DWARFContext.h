@@ -12,7 +12,7 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/DWARF/DIContext.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugAranges.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
@@ -24,6 +24,13 @@
 #include <vector>
 
 namespace llvm {
+
+// In place of applying the relocations to the data we've read from disk we use
+// a separate mapping table to the side and checking that at locations in the
+// dwarf where we expect relocated values. This adds a bit of complexity to the
+// dwarf parsing/extraction at the benefit of not allocating memory for the
+// entire size of the debug info sections.
+typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
 
 /// DWARFContext
 /// This data structure is the top level entity that deals with dwarf debug

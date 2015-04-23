@@ -14,6 +14,7 @@
 #include "LLVMSymbolize.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
@@ -460,7 +461,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     Modules.insert(make_pair(ModuleName, (ModuleInfo *)nullptr));
     return nullptr;
   }
-  DIContext *Context = DIContext::getDWARFContext(*Objects.second);
+  DIContext *Context = new DWARFContextInMemory(*Objects.second);
   assert(Context);
   ModuleInfo *Info = new ModuleInfo(Objects.first, Context);
   Modules.insert(make_pair(ModuleName, Info));

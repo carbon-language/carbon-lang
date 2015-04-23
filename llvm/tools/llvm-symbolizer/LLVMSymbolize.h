@@ -14,7 +14,7 @@
 #define LLVM_TOOLS_LLVM_SYMBOLIZER_LLVMSYMBOLIZE_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/DWARF/DIContext.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/DataExtractor.h"
