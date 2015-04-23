@@ -303,7 +303,9 @@ private:
 
 class NoColumnLimitFormatter {
 public:
-  NoColumnLimitFormatter(ContinuationIndenter *Indenter) : Indenter(Indenter) {}
+  NoColumnLimitFormatter(ContinuationIndenter *Indenter,
+                         UnwrappedLineFormatter *Formatter)
+      : Indenter(Indenter), Formatter(Formatter) {}
 
   /// \brief Formats the line starting at \p State, simply keeping all of the
   /// input's line breaking decisions.
@@ -314,12 +316,15 @@ public:
       bool Newline =
           Indenter->mustBreak(State) ||
           (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
+      unsigned Penalty = 0;
+      Formatter->formatChildren(State, Newline, /*DryRun=*/false, Penalty);
       Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
     }
   }
 
 private:
   ContinuationIndenter *Indenter;
+  UnwrappedLineFormatter *Formatter;
 };
 
 
@@ -426,8 +431,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
           Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
         }
       } else if (Style.ColumnLimit == 0) {
-        // FIXME: Implement nested blocks for ColumnLimit = 0.
-        NoColumnLimitFormatter Formatter(Indenter);
+        NoColumnLimitFormatter Formatter(Indenter, this);
         if (!DryRun)
           Formatter.format(Indent, &TheLine);
       } else {

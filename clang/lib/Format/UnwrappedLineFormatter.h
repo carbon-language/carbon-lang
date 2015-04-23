@@ -40,6 +40,30 @@ public:
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0, bool FixBadIndentation = false);
 
+
+  /// \brief If the \p State's next token is an r_brace closing a nested block,
+  /// format the nested block before it.
+  ///
+  /// Returns \c true if all children could be placed successfully and adapts
+  /// \p Penalty as well as \p State. If \p DryRun is false, also directly
+  /// creates changes using \c Whitespaces.
+  ///
+  /// The crucial idea here is that children always get formatted upon
+  /// encountering the closing brace right after the nested block. Now, if we
+  /// are currently trying to keep the "}" on the same line (i.e. \p NewLine is
+  /// \c false), the entire block has to be kept on the same line (which is only
+  /// possible if it fits on the line, only contains a single statement, etc.
+  ///
+  /// If \p NewLine is true, we format the nested block on separate lines, i.e.
+  /// break after the "{", format all lines with correct indentation and the put
+  /// the closing "}" on yet another new line.
+  ///
+  /// This enables us to keep the simple structure of the
+  /// \c UnwrappedLineFormatter, where we only have two options for each token:
+  /// break or don't break.
+  bool formatChildren(LineState &State, bool NewLine, bool DryRun,
+                      unsigned &Penalty);
+
 private:
   /// \brief Formats an \c AnnotatedLine and returns the penalty.
   ///
@@ -130,29 +154,6 @@ private:
   /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
   void addNextStateToQueue(unsigned Penalty, StateNode *PreviousNode,
                            bool NewLine, unsigned *Count, QueueType *Queue);
-
-  /// \brief If the \p State's next token is an r_brace closing a nested block,
-  /// format the nested block before it.
-  ///
-  /// Returns \c true if all children could be placed successfully and adapts
-  /// \p Penalty as well as \p State. If \p DryRun is false, also directly
-  /// creates changes using \c Whitespaces.
-  ///
-  /// The crucial idea here is that children always get formatted upon
-  /// encountering the closing brace right after the nested block. Now, if we
-  /// are currently trying to keep the "}" on the same line (i.e. \p NewLine is
-  /// \c false), the entire block has to be kept on the same line (which is only
-  /// possible if it fits on the line, only contains a single statement, etc.
-  ///
-  /// If \p NewLine is true, we format the nested block on separate lines, i.e.
-  /// break after the "{", format all lines with correct indentation and the put
-  /// the closing "}" on yet another new line.
-  ///
-  /// This enables us to keep the simple structure of the
-  /// \c UnwrappedLineFormatter, where we only have two options for each token:
-  /// break or don't break.
-  bool formatChildren(LineState &State, bool NewLine, bool DryRun,
-                      unsigned &Penalty);
 
   ContinuationIndenter *Indenter;
   WhitespaceManager *Whitespaces;

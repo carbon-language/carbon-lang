@@ -839,12 +839,26 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
          (Current.PackingKind == PPK_OnePerLine ||
           (!BinPackInconclusiveFunctions &&
            Current.PackingKind == PPK_Inconclusive)));
-    // If this '[' opens an ObjC call, determine whether all parameters fit
-    // into one line and put one per line if they don't.
-    if (Current.is(TT_ObjCMethodExpr) && Style.ColumnLimit != 0 &&
-        getLengthToMatchingParen(Current) + State.Column >
+    if (Current.is(TT_ObjCMethodExpr) && Current.MatchingParen) {
+      if (Style.ColumnLimit) {
+        // If this '[' opens an ObjC call, determine whether all parameters fit
+        // into one line and put one per line if they don't.
+        if (getLengthToMatchingParen(Current) + State.Column >
             getColumnLimit(State))
-      BreakBeforeParameter = true;
+          BreakBeforeParameter = true;
+      } else {
+        // For ColumnLimit = 0, we have to figure out whether there is or has to
+        // be a line break within this call.
+        for (const FormatToken *Tok = &Current;
+             Tok && Tok != Current.MatchingParen; Tok = Tok->Next) {
+          if (Tok->MustBreakBefore || 
+              (Tok->CanBreakBefore && Tok->NewlinesBefore > 0)) {
+            BreakBeforeParameter = true;
+            break;
+          }
+        }
+      }
+    }
   }
   bool NoLineBreak = State.Stack.back().NoLineBreak ||
                      (Current.is(TT_TemplateOpener) &&
