@@ -53,11 +53,6 @@ static cl::opt<bool>
 AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
-// FIXME: This option should be removed once it has received sufficient testing.
-static cl::opt<bool>
-AlignConstantIslands("arm-align-constant-islands", cl::Hidden, cl::init(true),
-          cl::desc("Align constant islands in code"));
-
 /// UnknownPadding - Return the worst case padding that could result from
 /// unknown offset bits.  This does not include alignment padding caused by
 /// known offset bits.
@@ -412,13 +407,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
     MF->RenumberBlocks();
   }
 
-  // Thumb1 functions containing constant pools get 4-byte alignment.
-  // This is so we can keep exact track of where the alignment padding goes.
-
-  // ARM and Thumb2 functions need to be 4-byte aligned.
-  if (!isThumb1)
-    MF->ensureAlignment(2);  // 2 = log2(4)
-
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
   std::vector<MachineInstr*> CPEMIs;
@@ -513,8 +501,7 @@ ARMConstantIslands::doInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
   unsigned MaxAlign = Log2_32(MCP->getConstantPoolAlignment());
 
   // Mark the basic block as required by the const-pool.
-  // If AlignConstantIslands isn't set, use 4-byte alignment for everything.
-  BB->setAlignment(AlignConstantIslands ? MaxAlign : 2);
+  BB->setAlignment(MaxAlign);
 
   // The function needs to be as aligned as the basic blocks. The linker may
   // move functions around based on their alignment.
@@ -603,10 +590,6 @@ ARMConstantIslands::CPEntry
 /// represented by CPEMI.  Alignment is measured in log2(bytes) units.
 unsigned ARMConstantIslands::getCPELogAlign(const MachineInstr *CPEMI) {
   assert(CPEMI && CPEMI->getOpcode() == ARM::CONSTPOOL_ENTRY);
-
-  // Everything is 4-byte aligned unless AlignConstantIslands is set.
-  if (!AlignConstantIslands)
-    return 2;
 
   unsigned CPI = CPEMI->getOperand(1).getIndex();
   assert(CPI < MCP->getConstants().size() && "Invalid constant pool index.");
