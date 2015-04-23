@@ -3,8 +3,7 @@
 ; CHECK: it	ne
 ; CHECK-NEXT: cmpne
 ; CHECK-NEXT: bne [[JUMPTARGET:.LBB[0-9]+_[0-9]+]]
-; CHECK: cmp
-; CHECK-NEXT: beq
+; CHECK: cbz
 ; CHECK-NEXT: %if.else163
 ; CHECK-NEXT: mov.w
 ; CHECK-NEXT: b

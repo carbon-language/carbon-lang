@@ -79,7 +79,7 @@ declare void @terminatev()
 ; CHECK: str r0, [sp, [[OFFSET:#[0-9]+]]]
 ; CHECK: ldr [[R0:r[0-9]+]], [sp, [[OFFSET]]]
 ; CHECK: {{.*}}@ %do.body.i.i.i
-; CHECK: cmp [[R0]], #0
+; CHECK: cbz [[R0]]
 
 %"class.std::__1::basic_string" = type { %"class.std::__1::__compressed_pair" }
 %"class.std::__1::__compressed_pair" = type { %"class.std::__1::__libcpp_compressed_pair_imp" }

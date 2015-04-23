@@ -410,6 +410,8 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "ARM branch conditions have two components!");
 
+  // For conditional branches, we use addOperand to preserve CPSR flags.
+
   if (!FBB) {
     if (Cond.empty()) { // Unconditional branch?
       if (isThumb)
@@ -418,13 +420,13 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
     } else
       BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
-        .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
+        .addImm(Cond[0].getImm()).addOperand(Cond[1]);
     return 1;
   }
 
   // Two-way conditional branch.
   BuildMI(&MBB, DL, get(BccOpc)).addMBB(TBB)
-    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
+    .addImm(Cond[0].getImm()).addOperand(Cond[1]);
   if (isThumb)
     BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB).addImm(ARMCC::AL).addReg(0);
   else
