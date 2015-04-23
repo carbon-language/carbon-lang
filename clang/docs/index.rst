@@ -26,6 +26,7 @@ Using Clang as a Compiler
    MemorySanitizer
    DataFlowSanitizer
    LeakSanitizer
+   SanitizerCoverage
    SanitizerSpecialCaseList
    ControlFlowIntegrity
    Modules
