@@ -1796,6 +1796,12 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
             if (!DupDescriptor(args->m_stderr_path.c_str (), STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                 exit(eDupStderrFailed);
 
+        // Close everything besides stdin, stdout, and stderr that has no file
+        // action to avoid leaking
+        for (int fd = 3; fd < sysconf(_SC_OPEN_MAX); ++fd)
+            if (!args->m_launch_info.GetFileActionForFD(fd))
+                close(fd);
+
         // Change working directory
         if (working_dir != NULL && working_dir[0])
           if (0 != ::chdir(working_dir))
