@@ -198,6 +198,8 @@ class BitstreamCursor {
 
 
 public:
+  static const size_t MaxChunkSize = sizeof(word_t) * 8;
+
   BitstreamCursor() { init(nullptr); }
 
   explicit BitstreamCursor(BitstreamReader &R) { init(&R); }
@@ -335,7 +337,7 @@ public:
   }
 
   word_t Read(unsigned NumBits) {
-    static const unsigned BitsInWord = sizeof(word_t) * 8;
+    static const unsigned BitsInWord = MaxChunkSize;
 
     assert(NumBits && NumBits <= BitsInWord &&
            "Cannot return zero or more than BitsInWord bits!");

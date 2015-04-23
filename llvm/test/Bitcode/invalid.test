@@ -66,3 +66,10 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-fp-shift.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=FP-SHIFT %s
 
 FP-SHIFT: Invalid record
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-abbrev-vbr-size-too-big.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=HUGE-ABBREV-OP %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-abbrev-fixed-size-too-big.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=HUGE-ABBREV-OP %s
+
+HUGE-ABBREV-OP: Fixed or VBR abbrev record with size > MaxChunkData
