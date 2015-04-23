@@ -1400,7 +1400,8 @@ static bool isFunctionDeclarationName(const FormatToken &Current) {
     if (Tok->is(tok::kw_const) || Tok->isSimpleTypeSpecifier() ||
         Tok->isOneOf(TT_PointerOrReference, TT_StartOfName))
       return true;
-    if (Tok->isOneOf(tok::l_brace, tok::string_literal) || Tok->Tok.isLiteral())
+    if (Tok->isOneOf(tok::l_brace, tok::string_literal, TT_ObjCMethodExpr) ||
+        Tok->Tok.isLiteral())
       return false;
   }
   return false;

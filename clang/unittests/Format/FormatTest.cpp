@@ -5698,6 +5698,8 @@ TEST_F(FormatTest, BreaksLongVariableDeclarations) {
                "    LoooooooooooooooooooooooooooooooooooooooongVariable(a);");
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
                "    LoooooooooooooooooooooooooooooooooooooooongVariable({});");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
+               "    LoooooooooooooooooooooooooooooooooooooongVariable([A a]);");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
