@@ -24,14 +24,14 @@ entry:
   %tmp = load i32, i32* @G, align 4
   %tmp1 = call i32 @bar(i32 0, i32 0, i32 %tmp) nounwind
   switch i32 %tmp1, label %bb8 [
-    i32 0, label %bb
+    i32 1, label %bb
     i32 536870913, label %bb4
     i32 536870914, label %bb6
   ]
 
 bb:
   %tmp2 = load i32, i32* @G, align 4
-  %tmp4 = icmp eq i32 %tmp2, 0
+  %tmp4 = icmp eq i32 %tmp2, 1
   br i1 %tmp4, label %bb1, label %bb8
 
 bb1:
