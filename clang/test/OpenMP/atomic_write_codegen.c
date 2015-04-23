@@ -261,9 +261,9 @@ int main() {
 // CHECK: store atomic i64
 #pragma omp atomic write
   llx = cdv;
-// CHECK: [[IDX:%.+]] = load i16, i16* @{{.+}}
-// CHECK: load i8, i8*
-// CHECK: [[VEC_ITEM_VAL:%.+]] = zext i1 %{{.+}} to i32
+// CHECK-DAG: [[IDX:%.+]] = load i16, i16* @{{.+}}
+// CHECK-DAG: load i8, i8*
+// CHECK-DAG: [[VEC_ITEM_VAL:%.+]] = zext i1 %{{.+}} to i32
 // CHECK: [[I128VAL:%.+]] = load atomic i128, i128* bitcast (<4 x i32>* [[DEST:@.+]] to i128*) monotonic
 // CHECK: [[LD:%.+]] = bitcast i128 [[I128VAL]] to <4 x i32>
 // CHECK: br label %[[CONT:.+]]

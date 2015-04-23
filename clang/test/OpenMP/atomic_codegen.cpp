@@ -22,9 +22,9 @@ void parallel_atomic_ewc() {
       // CHECK: invoke void @_ZN2StD1Ev(%struct.St* [[TEMP_ST_ADDR]])
 #pragma omp atomic read
       b = St().get();
-      // CHECK: invoke void @_ZN2StC1Ev(%struct.St* [[TEMP_ST_ADDR:%.+]])
-      // CHECK: [[SCALAR_ADDR:%.+]] = invoke dereferenceable(4) i32* @_ZN2St3getEv(%struct.St* [[TEMP_ST_ADDR]])
-      // CHECK: [[B_VAL:%.+]] = load i32, i32* @b
+      // CHECK-DAG: invoke void @_ZN2StC1Ev(%struct.St* [[TEMP_ST_ADDR:%.+]])
+      // CHECK-DAG: [[SCALAR_ADDR:%.+]] = invoke dereferenceable(4) i32* @_ZN2St3getEv(%struct.St* [[TEMP_ST_ADDR]])
+      // CHECK-DAG: [[B_VAL:%.+]] = load i32, i32* @b
       // CHECK: store atomic i32 [[B_VAL]], i32* [[SCALAR_ADDR]] monotonic
       // CHECK: invoke void @_ZN2StD1Ev(%struct.St* [[TEMP_ST_ADDR]])
 #pragma omp atomic write
