@@ -6934,6 +6934,51 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       return CombineLD;
   }
 
+  // Remove double bitcasts from shuffles - this is often a legacy of
+  // XformToShuffleWithZero being used to combine bitmaskings (of
+  // float vectors bitcast to integer vectors) into shuffles.
+  // bitcast(shuffle(bitcast(s0),bitcast(s1))) -> shuffle(s0,s1)
+  if (Level < AfterLegalizeDAG && TLI.isTypeLegal(VT) && VT.isVector() &&
+      N0->getOpcode() == ISD::VECTOR_SHUFFLE &&
+      VT.getVectorNumElements() >= N0.getValueType().getVectorNumElements() &&
+      !(VT.getVectorNumElements() % N0.getValueType().getVectorNumElements())) {
+    ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N0);
+
+    // If operands are a bitcast, peek through if it casts the original VT.
+    // If operands are a UNDEF or constant, just bitcast back to original VT.
+    auto PeekThroughBitcast = [&](SDValue Op) {
+      if (Op.getOpcode() == ISD::BITCAST &&
+          Op.getOperand(0)->getValueType(0) == VT)
+        return SDValue(Op.getOperand(0));
+      if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode()) ||
+          ISD::isBuildVectorOfConstantFPSDNodes(Op.getNode()))
+        return DAG.getNode(ISD::BITCAST, SDLoc(N), VT, Op);
+      return SDValue();
+    };
+
+    SDValue SV0 = PeekThroughBitcast(N0->getOperand(0));
+    SDValue SV1 = PeekThroughBitcast(N0->getOperand(1));
+    if (!(SV0 && SV1))
+      return SDValue();
+
+    int MaskScale =
+        VT.getVectorNumElements() / N0.getValueType().getVectorNumElements();
+    SmallVector<int, 8> NewMask;
+    for (int M : SVN->getMask())
+      for (int i = 0; i != MaskScale; ++i)
+        NewMask.push_back(M < 0 ? -1 : M * MaskScale + i);
+
+    bool LegalMask = TLI.isShuffleMaskLegal(NewMask, VT);
+    if (!LegalMask) {
+      std::swap(SV0, SV1);
+      ShuffleVectorSDNode::commuteMask(NewMask);
+      LegalMask = TLI.isShuffleMaskLegal(NewMask, VT);
+    }
+
+    if (LegalMask)
+      return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, NewMask);
+  }
+
   return SDValue();
 }
 
