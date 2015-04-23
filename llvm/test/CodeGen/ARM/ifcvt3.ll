@@ -4,8 +4,8 @@
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK-LABEL: t1:
-; CHECK: cmp r2, #1
-; CHECK: cmpne r2, #7
+; CHECK: cmp r2, #7
+; CHECK: cmpne r2, #1
 	switch i32 %c, label %cond_next [
 		 i32 1, label %cond_true
 		 i32 7, label %cond_true

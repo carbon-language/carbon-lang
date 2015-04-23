@@ -151,12 +151,13 @@ protected:
       if (Changed && !ReturnMBB.hasAddressTaken()) {
         // We now might be able to merge this blr-only block into its
         // by-layout predecessor.
-        if (ReturnMBB.pred_size() == 1 &&
-            (*ReturnMBB.pred_begin())->isLayoutSuccessor(&ReturnMBB)) {
-          // Move the blr into the preceding block.
+        if (ReturnMBB.pred_size() == 1) {
           MachineBasicBlock &PrevMBB = **ReturnMBB.pred_begin();
-          PrevMBB.splice(PrevMBB.end(), &ReturnMBB, I);
-          PrevMBB.removeSuccessor(&ReturnMBB);
+          if (PrevMBB.isLayoutSuccessor(&ReturnMBB) && PrevMBB.canFallThrough()) {
+            // Move the blr into the preceding block.
+            PrevMBB.splice(PrevMBB.end(), &ReturnMBB, I);
+            PrevMBB.removeSuccessor(&ReturnMBB);
+          }
         }
 
         if (ReturnMBB.pred_empty())
