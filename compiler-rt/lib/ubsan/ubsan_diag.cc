@@ -46,8 +46,7 @@ static void MaybePrintStackTrace(uptr pc, uptr bp) {
 static void MaybeReportErrorSummary(Location Loc) {
   if (!common_flags()->print_summary)
     return;
-  // Don't try to unwind the stack trace in UBSan summaries: just use the
-  // provided location.
+  const char *ErrorType = "undefined-behavior";
   if (Loc.isSourceLocation()) {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (!SLoc.isInvalid()) {
@@ -56,12 +55,16 @@ static void MaybeReportErrorSummary(Location Loc) {
       AI.line = SLoc.getLine();
       AI.column = SLoc.getColumn();
       AI.function = internal_strdup("");  // Avoid printing ?? as function name.
-      ReportErrorSummary("undefined-behavior", AI);
+      ReportErrorSummary(ErrorType, AI);
       AI.Clear();
       return;
     }
+  } else if (Loc.isSymbolizedStack()) {
+    const AddressInfo &AI = Loc.getSymbolizedStack()->info;
+    ReportErrorSummary(ErrorType, AI);
+    return;
   }
-  ReportErrorSummary("undefined-behavior");
+  ReportErrorSummary(ErrorType);
 }
 
 namespace {
