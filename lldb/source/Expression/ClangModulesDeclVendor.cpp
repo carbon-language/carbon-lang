@@ -450,7 +450,7 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
              directive != nullptr;
              directive = directive->getPrevious())
         {
-            unsigned module_id = directive->getOwningModuleID();
+            unsigned module_id = directive->getMacroInfo()->getOwningModuleID();
             
             if (!module_id)
                 continue;
