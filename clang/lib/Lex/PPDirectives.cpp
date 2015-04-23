@@ -577,16 +577,16 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
   }
 }
 
-Module *Preprocessor::getModuleForLocation(SourceLocation FilenameLoc) {
+Module *Preprocessor::getModuleForLocation(SourceLocation Loc) {
   ModuleMap &ModMap = HeaderInfo.getModuleMap();
-  if (SourceMgr.isInMainFile(FilenameLoc)) {
+  if (SourceMgr.isInMainFile(Loc)) {
     if (Module *CurMod = getCurrentModule())
       return CurMod;                               // Compiling a module.
     return HeaderInfo.getModuleMap().SourceModule; // Compiling a source.
   }
   // Try to determine the module of the include directive.
   // FIXME: Look into directly passing the FileEntry from LookupFile instead.
-  FileID IDOfIncl = SourceMgr.getFileID(SourceMgr.getExpansionLoc(FilenameLoc));
+  FileID IDOfIncl = SourceMgr.getFileID(SourceMgr.getExpansionLoc(Loc));
   if (const FileEntry *EntryOfIncl = SourceMgr.getFileEntryForID(IDOfIncl)) {
     // The include comes from a file.
     return ModMap.findModuleForHeader(EntryOfIncl).getModule();
@@ -595,6 +595,11 @@ Module *Preprocessor::getModuleForLocation(SourceLocation FilenameLoc) {
     // so it is probably a module compilation.
     return getCurrentModule();
   }
+}
+
+Module *Preprocessor::getModuleContainingLocation(SourceLocation Loc) {
+  return HeaderInfo.getModuleMap().inferModuleFromLocation(
+      FullSourceLoc(Loc, SourceMgr));
 }
 
 const FileEntry *Preprocessor::LookupFile(

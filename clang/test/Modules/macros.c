@@ -28,6 +28,10 @@
 #  error MODULE macro should not be visible
 #endif
 
+#ifndef INDIRECTLY_IN_MACROS
+#  error INDIRECTLY_IN_MACROS should be visible
+#endif
+
 // CHECK-PREPROCESSED: double d
 double d;
 DOUBLE *dp = &d;

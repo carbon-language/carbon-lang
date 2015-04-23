@@ -633,7 +633,7 @@ void Preprocessor::LeaveSubmodule() {
     for (auto *MD = Macro.second.getLatest(); MD != State.getLatest();
          MD = MD->getPrevious()) {
       // Skip macros defined in other submodules we #included along the way.
-      Module *Mod = getModuleForLocation(MD->getLocation());
+      Module *Mod = getModuleContainingLocation(MD->getLocation());
       if (Mod != Info.M)
         continue;
 

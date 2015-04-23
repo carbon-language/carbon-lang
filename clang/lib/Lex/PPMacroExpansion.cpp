@@ -60,12 +60,12 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
 
   // Accumulate any overridden imported macros.
   if (!MD->isImported() && getCurrentModule()) {
-    Module *OwningMod = getModuleForLocation(MD->getLocation());
+    Module *OwningMod = getModuleContainingLocation(MD->getLocation());
     if (!OwningMod)
       return;
 
     for (auto *PrevMD = OldMD; PrevMD; PrevMD = PrevMD->getPrevious()) {
-      Module *DirectiveMod = getModuleForLocation(PrevMD->getLocation());
+      Module *DirectiveMod = getModuleContainingLocation(PrevMD->getLocation());
       if (ModuleMacro *PrevMM = PrevMD->getOwningModuleMacro())
         StoredMD.addOverriddenMacro(*this, PrevMM);
       else if (ModuleMacro *PrevMM = getModuleMacro(DirectiveMod, II))

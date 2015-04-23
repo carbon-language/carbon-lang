@@ -1669,9 +1669,14 @@ private:
   void HandleMicrosoftImportDirective(Token &Tok);
 
   // Module inclusion testing.
-  /// \brief Find the module for the source or header file that \p FilenameLoc
-  /// points to.
-  Module *getModuleForLocation(SourceLocation FilenameLoc);
+  /// \brief Find the module that owns the source or header file that
+  /// \p Loc points to. If the location is in a file that was included
+  /// into a module, or is outside any module, returns nullptr.
+  Module *getModuleForLocation(SourceLocation Loc);
+
+  /// \brief Find the module that contains the specified location, either
+  /// directly or indirectly.
+  Module *getModuleContainingLocation(SourceLocation Loc);
 
   // Macro handling.
   void HandleDefineDirective(Token &Tok, bool ImmediatelyAfterTopLevelIfndef);
