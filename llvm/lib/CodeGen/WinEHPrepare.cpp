@@ -716,8 +716,6 @@ bool WinEHPrepare::prepareExceptionHandlers(
         continue;
       assert(E->getNumIndices() == 1 &&
              "Unexpected operation: extracting both landing pad values");
-      unsigned Idx = E->getIndices()[0];
-      assert(Idx == 0 || Idx == 1);
       Extracts.push_back(E);
     }
     for (Instruction *E : Extracts) {
