@@ -273,12 +273,10 @@
 # CHECK: xvminsp 7, 63, 27
 0xf0 0xff 0xde 0x44
 
-# FIXME: decode as xvmovdp 7, 63
-# CHECK:  xvcpsgndp 7, 63, 63
+# CHECK: xvmovdp 7, 63
 0xf0 0xff 0xff 0x86
 
-# FIXME: decode as xvmovsp 7, 63
-# CHECK:  xvcpsgnsp 7, 63, 63
+# CHECK: xvmovsp 7, 63
 0xf0 0xff 0xfe 0x86
 
 # CHECK: xvmsubadp 7, 63, 27
@@ -425,15 +423,13 @@
 # CHECK: xxlxor 7, 63, 27
 0xf0 0xff 0xdc 0xd4
 
-# FIXME: decode as xxmrghd 7, 63, 27
-# CHECK: xxpermdi 7, 63, 27, 0
+# CHECK: xxmrghd 7, 63, 27
 0xf0 0xff 0xd8 0x54
 
 # CHECK: xxmrghw 7, 63, 27
 0xf0 0xff 0xd8 0x94
 
-# FIXME: decode as xxmrgld 7, 63, 27
-# CHECK:  xxpermdi 7, 63, 27, 3
+# CHECK: xxmrgld 7, 63, 27
 0xf0 0xff 0xdb 0x54
 
 # CHECK: xxmrglw 7, 63, 27
@@ -448,15 +444,13 @@
 # CHECK: xxsldwi 7, 63, 27, 1
 0xf0 0xff 0xd9 0x14
 
-# FIXME: decode as xxspltd 7, 63, 1
-# CHECK: xxpermdi 7, 63, 63, 3
+# CHECK: xxspltd 7, 63, 1
 0xf0 0xff 0xfb 0x56
 
 # CHECK: xxspltw 7, 27, 3
 0xf0 0xe3 0xda 0x90
 
-# FIXME: decode as xxswapd 7, 63
-# CHECK: xxpermdi 7, 63, 63, 2
+# CHECK: xxswapd 7, 63
 0xf0 0xff 0xfa 0x56
 
 # CHECK: mfvsrd 3, 0

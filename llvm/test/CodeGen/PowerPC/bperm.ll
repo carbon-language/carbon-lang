@@ -22,15 +22,15 @@ entry:
   ret i64 %0
 
 ; CHECK-LABEL: @bs8
-; CHECK-DAG: rldicl [[REG1:[0-9]+]], 3, 16, 0
-; CHECK-DAG: rldicl [[REG2:[0-9]+]], 3, 8, 0
-; CHECK-DAG: rldicl [[REG3:[0-9]+]], 3, 24, 0
+; CHECK-DAG: rotldi [[REG1:[0-9]+]], 3, 16
+; CHECK-DAG: rotldi [[REG2:[0-9]+]], 3, 8
+; CHECK-DAG: rotldi [[REG3:[0-9]+]], 3, 24
 ; CHECK-DAG: rldimi [[REG2]], [[REG1]], 8, 48
-; CHECK-DAG: rldicl [[REG4:[0-9]+]], 3, 32, 0
+; CHECK-DAG: rotldi [[REG4:[0-9]+]], 3, 32
 ; CHECK-DAG: rldimi [[REG2]], [[REG3]], 16, 40
-; CHECK-DAG: rldicl [[REG5:[0-9]+]], 3, 48, 0
+; CHECK-DAG: rotldi [[REG5:[0-9]+]], 3, 48
 ; CHECK-DAG: rldimi [[REG2]], [[REG4]], 24, 32
-; CHECK-DAG: rldicl [[REG6:[0-9]+]], 3, 56, 0
+; CHECK-DAG: rotldi [[REG6:[0-9]+]], 3, 56
 ; CHECK-DAG: rldimi [[REG2]], [[REG5]], 40, 16
 ; CHECK-DAG: rldimi [[REG2]], [[REG6]], 48, 8
 ; CHECK-DAG: rldimi [[REG2]], 3, 56, 0
@@ -46,7 +46,7 @@ entry:
 
 ; CHECK-LABEL: @test1
 ; CHECK-DAG: li [[REG1:[0-9]+]], 11375
-; CHECK-DAG: rldicl [[REG3:[0-9]+]], 4, 56, 0
+; CHECK-DAG: rotldi [[REG3:[0-9]+]], 4, 56
 ; CHECK-DAG: sldi [[REG2:[0-9]+]], [[REG1]], 19
 ; CHECK: and 3, [[REG3]], [[REG2]]
 ; CHECK: blr
@@ -60,7 +60,7 @@ entry:
 
 ; CHECK-LABEL: @test2
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 474
-; CHECK-DAG: rldicl [[REG5:[0-9]+]], 4, 58, 0
+; CHECK-DAG: rotldi [[REG5:[0-9]+]], 4, 58
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 3648
 ; CHECK-DAG: sldi [[REG3:[0-9]+]], [[REG2]], 32
 ; CHECK-DAG: oris [[REG4:[0-9]+]], [[REG3]], 25464
@@ -76,7 +76,7 @@ entry:
 
 ; CHECK-LABEL: @test3
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 170
-; CHECK-DAG: rldicl [[REG4:[0-9]+]], 3, 34, 0
+; CHECK-DAG: rotldi [[REG4:[0-9]+]], 3, 34
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 22861
 ; CHECK-DAG: sldi [[REG3:[0-9]+]], [[REG2]], 34
 ; CHECK: and 3, [[REG4]], [[REG3]]
@@ -90,7 +90,7 @@ entry:
   ret i64 %and
 
 ; CHECK-LABEL: @test4
-; CHECK: rldicl [[REG1:[0-9]+]], 4, 49, 0
+; CHECK: rotldi [[REG1:[0-9]+]], 4, 49
 ; CHECK: andis. 3, [[REG1]], 888
 ; CHECK: blr
 }
@@ -103,7 +103,7 @@ entry:
 
 ; CHECK-LABEL: @test5
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 3703
-; CHECK-DAG: rldicl [[REG4:[0-9]+]], 4, 12, 0
+; CHECK-DAG: rotldi [[REG4:[0-9]+]], 4, 12
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 35951
 ; CHECK-DAG: sldi [[REG3:[0-9]+]], [[REG2]], 19
 ; CHECK: and 3, [[REG4]], [[REG3]]
@@ -148,7 +148,7 @@ entry:
 
 ; CHECK-LABEL: @test8
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 4
-; CHECK-DAG: rldicl [[REG4:[0-9]+]], 3, 63, 0
+; CHECK-DAG: rotldi [[REG4:[0-9]+]], 3, 63
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 60527
 ; CHECK-DAG: sldi [[REG3:[0-9]+]], [[REG2]], 19
 ; CHECK: and 3, [[REG4]], [[REG3]]
@@ -166,8 +166,8 @@ entry:
 
 ; CHECK-LABEL: @test9
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 1440
-; CHECK-DAG: rldicl [[REG5:[0-9]+]], 4, 62, 0
-; CHECK-DAG: rldicl [[REG6:[0-9]+]], 4, 50, 0
+; CHECK-DAG: rotldi [[REG5:[0-9]+]], 4, 62
+; CHECK-DAG: rotldi [[REG6:[0-9]+]], 4, 50
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 4
 ; CHECK-DAG: rldimi [[REG6]], [[REG5]], 53, 0
 ; CHECK-DAG: sldi [[REG3:[0-9]+]], [[REG2]], 32
@@ -187,8 +187,8 @@ entry:
 
 ; CHECK-LABEL: @test10
 ; CHECK-DAG: lis [[REG1:[0-9]+]], 1
-; CHECK-DAG: rldicl [[REG6:[0-9]+]], 3, 25, 0
-; CHECK-DAG: rldicl [[REG7:[0-9]+]], 3, 37, 0
+; CHECK-DAG: rotldi [[REG6:[0-9]+]], 3, 25
+; CHECK-DAG: rotldi [[REG7:[0-9]+]], 3, 37
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 8183
 ; CHECK-DAG: ori [[REG3:[0-9]+]], [[REG1]], 50017
 ; CHECK-DAG: sldi [[REG4:[0-9]+]], [[REG2]], 25

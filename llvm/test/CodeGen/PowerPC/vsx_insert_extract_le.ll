@@ -9,8 +9,8 @@ define <2 x double> @testi0(<2 x double>* %p1, double* %p2) {
 ; CHECK-LABEL: testi0
 ; CHECK: lxvd2x 0, 0, 3
 ; CHECK: lxsdx 34, 0, 4
-; CHECK: xxpermdi 0, 0, 0, 2
-; CHECK: xxpermdi 1, 34, 34, 0
+; CHECK: xxswapd 0, 0
+; CHECK: xxspltd 1, 34, 0
 ; CHECK: xxpermdi 34, 0, 1, 1
 }
 
@@ -23,9 +23,9 @@ define <2 x double> @testi1(<2 x double>* %p1, double* %p2) {
 ; CHECK-LABEL: testi1
 ; CHECK: lxvd2x 0, 0, 3
 ; CHECK: lxsdx 34, 0, 4
-; CHECK: xxpermdi 0, 0, 0, 2
-; CHECK: xxpermdi 1, 34, 34, 0
-; CHECK: xxpermdi 34, 1, 0, 3
+; CHECK: xxswapd 0, 0
+; CHECK: xxspltd 1, 34, 0
+; CHECK: xxmrgld 34, 1, 0
 }
 
 define double @teste0(<2 x double>* %p1) {
@@ -37,8 +37,8 @@ define double @teste0(<2 x double>* %p1) {
 
 ; CHECK-LABEL: teste0
 ; CHECK: lxvd2x 0, 0, 3
-; CHECK: xxpermdi 0, 0, 0, 2
-; CHECK: xxpermdi 1, 0, 0, 2
+; CHECK: xxswapd 0, 0
+; CHECK: xxswapd 1, 0
 }
 
 define double @teste1(<2 x double>* %p1) {
@@ -48,5 +48,5 @@ define double @teste1(<2 x double>* %p1) {
 
 ; CHECK-LABEL: teste1
 ; CHECK: lxvd2x 0, 0, 3
-; CHECK: xxpermdi 1, 0, 0, 2
+; CHECK: xxswapd 1, 0
 }

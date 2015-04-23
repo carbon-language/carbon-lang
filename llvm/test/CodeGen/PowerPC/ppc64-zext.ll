@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-linux"
 
 define i64 @fun(i32 %arg32) nounwind {
 entry:
-; CHECK: rldicl {{[0-9]+}}, {{[0-9]+}}, 0, 32
+; CHECK: clrldi {{[0-9]+}}, {{[0-9]+}}, 32
   %o = zext i32 %arg32 to i64
   ret i64 %o
 }

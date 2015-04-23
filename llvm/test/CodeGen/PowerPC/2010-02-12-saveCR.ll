@@ -9,13 +9,13 @@ entry:
 ; CHECK: mfcr [[T1:r[0-9]+]]                         ; cr2
 ; CHECK: lis [[T2:r[0-9]+]], 1
 ; CHECK: addi r3, r1, 72
-; CHECK: rlwinm [[T1]], [[T1]], 8, 0, 31
+; CHECK: rotlwi [[T1]], [[T1]], 8
 ; CHECK: ori [[T2]], [[T2]], 34540
 ; CHECK: stwx [[T1]], r1, [[T2]]
 ; CHECK: lis [[T3:r[0-9]+]], 1
 ; CHECK: mfcr [[T4:r[0-9]+]]                         ; cr3
 ; CHECK: ori [[T3]], [[T3]], 34536
-; CHECK: rlwinm [[T4]], [[T4]], 12, 0, 31
+; CHECK: rotlwi [[T4]], [[T4]], 12
 ; CHECK: stwx [[T4]], r1, [[T3]]
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -28,12 +28,12 @@ return:                                           ; preds = %entry
 ; CHECK: lis [[T1:r[0-9]+]], 1
 ; CHECK: ori [[T1]], [[T1]], 34536
 ; CHECK: lwzx [[T1]], r1, [[T1]]
-; CHECK: rlwinm [[T1]], [[T1]], 20, 0, 31
+; CHECK: rotlwi [[T1]], [[T1]], 20
 ; CHECK: mtcrf 16, [[T1]]
 ; CHECK: lis [[T1]], 1
 ; CHECK: ori [[T1]], [[T1]], 34540
 ; CHECK: lwzx [[T1]], r1, [[T1]]
-; CHECK: rlwinm [[T1]], [[T1]], 24, 0, 31
+; CHECK: rotlwi [[T1]], [[T1]], 24
 ; CHECK: mtcrf 32, [[T1]]
   ret void
 }

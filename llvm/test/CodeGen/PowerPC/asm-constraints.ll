@@ -31,7 +31,7 @@ entry:
 
 ; CHECK-LABEL: @foo
 ; CHECK: ld [[REG:[0-9]+]], 0(4)
-; CHECK: cmpw 0, [[REG]], [[REG]]
+; CHECK: cmpw [[REG]], [[REG]]
 ; CHECK: bne- 0, .Ltmp[[TMP:[0-9]+]]
 ; CHECK: .Ltmp[[TMP]]:
 ; CHECK: isync

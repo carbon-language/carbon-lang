@@ -14,7 +14,7 @@ entry:
 
 ; CHECK: sradi [[REG1:[0-9]+]], 3, 53
 ; CHECK: addi [[REG2:[0-9]+]], [[REG1]], 1
-; CHECK: cmpldi 0, [[REG2]], 1
+; CHECK: cmpldi [[REG2]], 1
 ; CHECK: isel [[REG3:[0-9]+]], {{[0-9]+}}, 3, 1
 ; CHECK: std [[REG3]], -{{[0-9]+}}(1)
 

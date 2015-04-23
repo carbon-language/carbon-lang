@@ -43,19 +43,19 @@
 # CHECK-LE: stdcx. 2, 3, 4                  # encoding: [0xad,0x21,0x43,0x7c]
             stdcx. 2, 3, 4
 
-# CHECK-BE: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
-# CHECK-LE: sync 2                          # encoding: [0xac,0x04,0x40,0x7c]
+# CHECK-BE: ptesync                         # encoding: [0x7c,0x40,0x04,0xac]
+# CHECK-LE: ptesync                         # encoding: [0xac,0x04,0x40,0x7c]
             sync 2
 # CHECK-BE: eieio                           # encoding: [0x7c,0x00,0x06,0xac]
 # CHECK-LE: eieio                           # encoding: [0xac,0x06,0x00,0x7c]
             eieio
-# CHECK-BE: wait 2                          # encoding: [0x7c,0x40,0x00,0x7c]
-# CHECK-LE: wait 2                          # encoding: [0x7c,0x00,0x40,0x7c]
+# CHECK-BE: waitimpl                        # encoding: [0x7c,0x40,0x00,0x7c]
+# CHECK-LE: waitimpl                        # encoding: [0x7c,0x00,0x40,0x7c]
             wait 2
 # CHECK-BE: mbar 1                          # encoding: [0x7c,0x20,0x06,0xac]
 # CHECK-LE: mbar 1                          # encoding: [0xac,0x06,0x20,0x7c]
             mbar 1
-# CHECK-BE: mbar 0
+# CHECK-BE: mbar                            # encoding: [0x7c,0x00,0x06,0xac]
             mbar
 
 # Extended mnemonics
@@ -103,21 +103,21 @@
 # CHECK-BE: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
 # CHECK-LE: sync 0                          # encoding: [0xac,0x04,0x00,0x7c]
             msync
-# CHECK-BE: sync 1                          # encoding: [0x7c,0x20,0x04,0xac]
-# CHECK-LE: sync 1                          # encoding: [0xac,0x04,0x20,0x7c]
+# CHECK-BE: lwsync                          # encoding: [0x7c,0x20,0x04,0xac]
+# CHECK-LE: lwsync                          # encoding: [0xac,0x04,0x20,0x7c]
             lwsync
-# CHECK-BE: sync 2                          # encoding: [0x7c,0x40,0x04,0xac]
-# CHECK-LE: sync 2                          # encoding: [0xac,0x04,0x40,0x7c]
+# CHECK-BE: ptesync                         # encoding: [0x7c,0x40,0x04,0xac]
+# CHECK-LE: ptesync                         # encoding: [0xac,0x04,0x40,0x7c]
             ptesync
 
-# CHECK-BE: wait 0                          # encoding: [0x7c,0x00,0x00,0x7c]
-# CHECK-LE: wait 0                          # encoding: [0x7c,0x00,0x00,0x7c]
+# CHECK-BE: wait                            # encoding: [0x7c,0x00,0x00,0x7c]
+# CHECK-LE: wait                            # encoding: [0x7c,0x00,0x00,0x7c]
             wait
-# CHECK-BE: wait 1                          # encoding: [0x7c,0x20,0x00,0x7c]
-# CHECK-LE: wait 1                          # encoding: [0x7c,0x00,0x20,0x7c]
+# CHECK-BE: waitrsv                         # encoding: [0x7c,0x20,0x00,0x7c]
+# CHECK-LE: waitrsv                         # encoding: [0x7c,0x00,0x20,0x7c]
             waitrsv
-# CHECK-BE: wait 2                          # encoding: [0x7c,0x40,0x00,0x7c]
-# CHECK-LE: wait 2                          # encoding: [0x7c,0x00,0x40,0x7c]
+# CHECK-BE: waitimpl                        # encoding: [0x7c,0x40,0x00,0x7c]
+# CHECK-LE: waitimpl                        # encoding: [0x7c,0x00,0x40,0x7c]
             waitimpl
 
 # Time base instructions
@@ -131,13 +131,13 @@
 # CHECK-BE: mftb 2, 268                     # encoding: [0x7c,0x4c,0x42,0xe6]
 # CHECK-LE: mftb 2, 268                     # encoding: [0xe6,0x42,0x4c,0x7c]
             mftbl 2
-# CHECK-BE: mftb 2, 269                     # encoding: [0x7c,0x4d,0x42,0xe6]
-# CHECK-LE: mftb 2, 269                     # encoding: [0xe6,0x42,0x4d,0x7c]
+# CHECK-BE: mftbu 2                         # encoding: [0x7c,0x4d,0x42,0xe6]
+# CHECK-LE: mftbu 2                         # encoding: [0xe6,0x42,0x4d,0x7c]
             mftbu 2
 
-# CHECK-BE: mtspr 284, 3                    # encoding: [0x7c,0x7c,0x43,0xa6]
-# CHECK-LE: mtspr 284, 3                    # encoding: [0xa6,0x43,0x7c,0x7c]
+# CHECK-BE: mttbl 3                         # encoding: [0x7c,0x7c,0x43,0xa6]
+# CHECK-LE: mttbl 3                         # encoding: [0xa6,0x43,0x7c,0x7c]
             mttbl 3
-# CHECK-BE: mtspr 285, 3                    # encoding: [0x7c,0x7d,0x43,0xa6]
-# CHECK-LE: mtspr 285, 3                    # encoding: [0xa6,0x43,0x7d,0x7c]
+# CHECK-BE: mttbu 3                         # encoding: [0x7c,0x7d,0x43,0xa6]
+# CHECK-LE: mttbu 3                         # encoding: [0xa6,0x43,0x7d,0x7c]
             mttbu 3

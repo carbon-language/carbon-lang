@@ -19,25 +19,25 @@
 # CHECK: bclr 4, 10, 3                   
 0x4c 0x8a 0x18 0x20
 
-# CHECK: bclr 4, 10, 0                   
+# CHECK: bclr 4, 10
 0x4c 0x8a 0x00 0x20
 
 # CHECK: bclrl 4, 10, 3                  
 0x4c 0x8a 0x18 0x21
 
-# CHECK: bclrl 4, 10, 0                  
+# CHECK: bclrl 4, 10
 0x4c 0x8a 0x00 0x21
 
 # CHECK: bcctr 4, 10, 3                  
 0x4c 0x8a 0x1c 0x20
 
-# CHECK: bcctr 4, 10, 0                  
+# CHECK: bcctr 4, 10
 0x4c 0x8a 0x04 0x20
 
 # CHECK: bcctrl 4, 10, 3                 
 0x4c 0x8a 0x1c 0x21
 
-# CHECK: bcctrl 4, 10, 0                 
+# CHECK: bcctrl 4, 10
 0x4c 0x8a 0x04 0x21
 
 # CHECK: crand 2, 3, 4                   
@@ -70,7 +70,7 @@
 # CHECK: sc 1                            
 0x44 0x00 0x00 0x22
 
-# CHECK: sc 0                            
+# CHECK: sc
 0x44 0x00 0x00 0x02
 
 # CHECK: lbz 2, 128(4)                   
@@ -406,16 +406,16 @@
 # CHECK: cmplw 2, 3, 4                   
 0x7d 0x03 0x20 0x40
 
-# CHECK: twi 2, 3, 4                     
+# CHECK: twllti 3, 4
 0x0c 0x43 0x00 0x04
 
-# CHECK: tw 2, 3, 4                      
+# CHECK: twllt 3, 4
 0x7c 0x43 0x20 0x08
 
-# CHECK: tdi 2, 3, 4                     
+# CHECK: tdllti 3, 4
 0x08 0x43 0x00 0x04
 
-# CHECK: td 2, 3, 4                      
+# CHECK: tdllt 3, 4
 0x7c 0x43 0x20 0x88
 
 # CHECK: isel 2, 3, 4, 5                 
@@ -499,10 +499,10 @@
 # CHECK: extsh. 2, 3                     
 0x7c 0x62 0x07 0x35
 
-# CHECK: cntlzw 2, 3                     
+# CHECK: cntlz 2, 3
 0x7c 0x62 0x00 0x34
 
-# CHECK: cntlzw. 2, 3                    
+# CHECK: cntlz. 2, 3
 0x7c 0x62 0x00 0x35
 
 # CHECK: popcntw 2, 3                    

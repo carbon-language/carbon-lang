@@ -85,10 +85,10 @@
 0x48 0x00 0x04 0x02
 
 # FIXME: decode as beq 0, .+1024
-# CHECK: bc 12, 2, .+1024
+# CHECK: bt 2, .+1024
 0x41 0x82 0x04 0x00
 
 # FIXME: decode as beqa 0, 1024
-# CHECK: bca 12, 2, 1024
+# CHECK: bta 2, 1024
 0x41 0x82 0x04 0x02
 

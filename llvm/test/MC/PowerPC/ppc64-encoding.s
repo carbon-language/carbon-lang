@@ -27,23 +27,23 @@
 # CHECK-LE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24abs
             bla target
 
-# CHECK-BE: bc 4, 10, target                # encoding: [0x40,0x8a,A,0bAAAAAA00]
-# CHECK-LE: bc 4, 10, target                # encoding: [0bAAAAAA00,A,0x8a,0x40]
+# CHECK-BE: bf 10, target                   # encoding: [0x40,0x8a,A,0bAAAAAA00]
+# CHECK-LE: bf 10, target                   # encoding: [0bAAAAAA00,A,0x8a,0x40]
 # CHECK-BE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
 # CHECK-LE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
             bc 4, 10, target
-# CHECK-BE: bca 4, 10, target               # encoding: [0x40,0x8a,A,0bAAAAAA10]
-# CHECK-LE: bca 4, 10, target               # encoding: [0bAAAAAA10,A,0x8a,0x40]
+# CHECK-BE: bfa 10, target                  # encoding: [0x40,0x8a,A,0bAAAAAA10]
+# CHECK-LE: bfa 10, target                  # encoding: [0bAAAAAA10,A,0x8a,0x40]
 # CHECK-BE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
 # CHECK-LE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
             bca 4, 10, target
-# CHECK-BE: bcl 4, 10, target               # encoding: [0x40,0x8a,A,0bAAAAAA01]
-# CHECK-LE: bcl 4, 10, target               # encoding: [0bAAAAAA01,A,0x8a,0x40]
+# CHECK-BE: bfl 10, target                  # encoding: [0x40,0x8a,A,0bAAAAAA01]
+# CHECK-LE: bfl 10, target                  # encoding: [0bAAAAAA01,A,0x8a,0x40]
 # CHECK-BE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
 # CHECK-LE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14
             bcl 4, 10, target
-# CHECK-BE: bcla 4, 10, target              # encoding: [0x40,0x8a,A,0bAAAAAA11]
-# CHECK-LE: bcla 4, 10, target              # encoding: [0bAAAAAA11,A,0x8a,0x40]
+# CHECK-BE: bfla 10, target                 # encoding: [0x40,0x8a,A,0bAAAAAA11]
+# CHECK-LE: bfla 10, target                 # encoding: [0bAAAAAA11,A,0x8a,0x40]
 # CHECK-BE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
 # CHECK-LE-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_brcond14abs
             bcla 4, 10, target
@@ -51,26 +51,26 @@
 # CHECK-BE: bclr 4, 10, 3                   # encoding: [0x4c,0x8a,0x18,0x20]
 # CHECK-LE: bclr 4, 10, 3                   # encoding: [0x20,0x18,0x8a,0x4c]
             bclr 4, 10, 3
-# CHECK-BE: bclr 4, 10, 0                   # encoding: [0x4c,0x8a,0x00,0x20]
-# CHECK-LE: bclr 4, 10, 0                   # encoding: [0x20,0x00,0x8a,0x4c]
+# CHECK-BE: bclr 4, 10                      # encoding: [0x4c,0x8a,0x00,0x20]
+# CHECK-LE: bclr 4, 10                      # encoding: [0x20,0x00,0x8a,0x4c]
             bclr 4, 10
 # CHECK-BE: bclrl 4, 10, 3                  # encoding: [0x4c,0x8a,0x18,0x21]
 # CHECK-LE: bclrl 4, 10, 3                  # encoding: [0x21,0x18,0x8a,0x4c]
             bclrl 4, 10, 3
-# CHECK-BE: bclrl 4, 10, 0                  # encoding: [0x4c,0x8a,0x00,0x21]
-# CHECK-LE: bclrl 4, 10, 0                  # encoding: [0x21,0x00,0x8a,0x4c]
+# CHECK-BE: bclrl 4, 10                     # encoding: [0x4c,0x8a,0x00,0x21]
+# CHECK-LE: bclrl 4, 10                     # encoding: [0x21,0x00,0x8a,0x4c]
             bclrl 4, 10
 # CHECK-BE: bcctr 4, 10, 3                  # encoding: [0x4c,0x8a,0x1c,0x20]
 # CHECK-LE: bcctr 4, 10, 3                  # encoding: [0x20,0x1c,0x8a,0x4c]
             bcctr 4, 10, 3
-# CHECK-BE: bcctr 4, 10, 0                  # encoding: [0x4c,0x8a,0x04,0x20]
-# CHECK-LE: bcctr 4, 10, 0                  # encoding: [0x20,0x04,0x8a,0x4c]
+# CHECK-BE: bcctr 4, 10                     # encoding: [0x4c,0x8a,0x04,0x20]
+# CHECK-LE: bcctr 4, 10                     # encoding: [0x20,0x04,0x8a,0x4c]
             bcctr 4, 10
 # CHECK-BE: bcctrl 4, 10, 3                 # encoding: [0x4c,0x8a,0x1c,0x21]
 # CHECK-LE: bcctrl 4, 10, 3                 # encoding: [0x21,0x1c,0x8a,0x4c]
             bcctrl 4, 10, 3
-# CHECK-BE: bcctrl 4, 10, 0                 # encoding: [0x4c,0x8a,0x04,0x21]
-# CHECK-LE: bcctrl 4, 10, 0                 # encoding: [0x21,0x04,0x8a,0x4c]
+# CHECK-BE: bcctrl 4, 10                    # encoding: [0x4c,0x8a,0x04,0x21]
+# CHECK-LE: bcctrl 4, 10                    # encoding: [0x21,0x04,0x8a,0x4c]
             bcctrl 4, 10
 
 # Condition register instructions
@@ -108,8 +108,8 @@
 # CHECK-BE: sc 1                            # encoding: [0x44,0x00,0x00,0x22]
 # CHECK-LE: sc 1                            # encoding: [0x22,0x00,0x00,0x44]
             sc 1
-# CHECK-BE: sc 0                            # encoding: [0x44,0x00,0x00,0x02]
-# CHECK-LE: sc 0                            # encoding: [0x02,0x00,0x00,0x44]
+# CHECK-BE: sc                              # encoding: [0x44,0x00,0x00,0x02]
+# CHECK-LE: sc                              # encoding: [0x02,0x00,0x00,0x44]
             sc
 
 # Fixed-point facility
@@ -521,17 +521,17 @@
 
 # Fixed-point trap instructions
 
-# CHECK-BE: twi 2, 3, 4                     # encoding: [0x0c,0x43,0x00,0x04]
-# CHECK-LE: twi 2, 3, 4                     # encoding: [0x04,0x00,0x43,0x0c]
+# CHECK-BE: twllti 3, 4                     # encoding: [0x0c,0x43,0x00,0x04]
+# CHECK-LE: twllti 3, 4                     # encoding: [0x04,0x00,0x43,0x0c]
             twi 2, 3, 4
-# CHECK-BE: tw 2, 3, 4                      # encoding: [0x7c,0x43,0x20,0x08]
-# CHECK-LE: tw 2, 3, 4                      # encoding: [0x08,0x20,0x43,0x7c]
+# CHECK-BE: twllt 3, 4                      # encoding: [0x7c,0x43,0x20,0x08]
+# CHECK-LE: twllt 3, 4                      # encoding: [0x08,0x20,0x43,0x7c]
             tw 2, 3, 4
-# CHECK-BE: tdi 2, 3, 4                     # encoding: [0x08,0x43,0x00,0x04]
-# CHECK-LE: tdi 2, 3, 4                     # encoding: [0x04,0x00,0x43,0x08]
+# CHECK-BE: tdllti 3, 4                     # encoding: [0x08,0x43,0x00,0x04]
+# CHECK-LE: tdllti 3, 4                     # encoding: [0x04,0x00,0x43,0x08]
             tdi 2, 3, 4
-# CHECK-BE: td 2, 3, 4                      # encoding: [0x7c,0x43,0x20,0x88]
-# CHECK-LE: td 2, 3, 4                      # encoding: [0x88,0x20,0x43,0x7c]
+# CHECK-BE: tdllt 3, 4                      # encoding: [0x7c,0x43,0x20,0x88]
+# CHECK-LE: tdllt 3, 4                      # encoding: [0x88,0x20,0x43,0x7c]
             td 2, 3, 4
 
 # Fixed-point select
@@ -622,17 +622,17 @@
 # CHECK-LE: extsh. 2, 3                     # encoding: [0x35,0x07,0x62,0x7c]
             extsh. 2, 3
 
-# CHECK-BE: cntlzw 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
-# CHECK-LE: cntlzw 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
+# CHECK-BE: cntlz 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
+# CHECK-LE: cntlz 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
             cntlzw 2, 3
-# CHECK-BE: cntlzw. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
-# CHECK-LE: cntlzw. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
+# CHECK-BE: cntlz. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
+# CHECK-LE: cntlz. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
             cntlzw. 2, 3
-# CHECK-BE: cntlzw 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
-# CHECK-LE: cntlzw 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
+# CHECK-BE: cntlz 2, 3                     # encoding: [0x7c,0x62,0x00,0x34]
+# CHECK-LE: cntlz 2, 3                     # encoding: [0x34,0x00,0x62,0x7c]
             cntlz  2, 3
-# CHECK-BE: cntlzw. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
-# CHECK-LE: cntlzw. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
+# CHECK-BE: cntlz. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
+# CHECK-LE: cntlz. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
             cntlz.  2, 3
             cmpb 7, 21, 4
 # CHECK-BE: cmpb 7, 21, 4                   # encoding: [0x7e,0xa7,0x23,0xf8]

@@ -201,7 +201,7 @@ define void @t12(i8 %a) uwtable ssp {
 entry:
 ; ELF64: t12
   %cmp = icmp ugt i8 %a, -113
-; ELF64: rlwinm
+; ELF64: clrlwi
 ; ELF64: cmplwi
   br i1 %cmp, label %if.then, label %if.end
 

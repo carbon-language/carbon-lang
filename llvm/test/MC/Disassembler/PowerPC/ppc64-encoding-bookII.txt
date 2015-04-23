@@ -27,13 +27,13 @@
 # CHECK: stdcx. 2, 3, 4                  
 0x7c 0x43 0x21 0xad
 
-# CHECK: sync 2                          
+# CHECK: ptesync
 0x7c 0x40 0x04 0xac
 
 # CHECK: eieio                           
 0x7c 0x00 0x06 0xac
 
-# CHECK: wait 2                          
+# CHECK: waitimpl
 0x7c 0x40 0x00 0x7c
 
 # CHECK: mbar 1
@@ -72,19 +72,19 @@
 # CHECK: sync 0                          
 0x7c 0x00 0x04 0xac
 
-# CHECK: sync 1                          
+# CHECK: lwsync
 0x7c 0x20 0x04 0xac
 
-# CHECK: sync 2                          
+# CHECK: ptesync
 0x7c 0x40 0x04 0xac
 
-# CHECK: wait 0                          
+# CHECK: wait
 0x7c 0x00 0x00 0x7c
 
-# CHECK: wait 1                          
+# CHECK: waitrsv
 0x7c 0x20 0x00 0x7c
 
-# CHECK: wait 2                          
+# CHECK: waitimpl
 0x7c 0x40 0x00 0x7c
 
 # CHECK: mftb 2, 123                     
@@ -93,6 +93,6 @@
 # CHECK: mftb 2, 268                     
 0x7c 0x4c 0x42 0xe6
 
-# CHECK: mftb 2, 269                     
+# CHECK: mftbu 2
 0x7c 0x4d 0x42 0xe6
 

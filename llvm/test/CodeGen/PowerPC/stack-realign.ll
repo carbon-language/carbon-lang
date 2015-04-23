@@ -30,7 +30,7 @@ entry:
 ; CHECK-LABEL: @goo
 
 ; CHECK-DAG: mflr 0
-; CHECK-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
+; CHECK-DAG: clrldi [[REG:[0-9]+]], 1, 59
 ; CHECK-DAG: std 30, -16(1)
 ; CHECK-DAG: mr 30, 1
 ; CHECK-DAG: std 0, 16(1)
@@ -52,7 +52,7 @@ entry:
 ; CHECK-FP-LABEL: @goo
 
 ; CHECK-FP-DAG: mflr 0
-; CHECK-FP-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
+; CHECK-FP-DAG: clrldi [[REG:[0-9]+]], 1, 59
 ; CHECK-FP-DAG: std 31, -8(1)
 ; CHECK-FP-DAG: std 30, -16(1)
 ; CHECK-FP-DAG: mr 30, 1
@@ -78,7 +78,7 @@ entry:
 
 ; CHECK-32-LABEL: @goo
 ; CHECK-32-DAG: mflr 0
-; CHECK-32-DAG: rlwinm [[REG:[0-9]+]], 1, 0, 27, 31
+; CHECK-32-DAG: clrlwi [[REG:[0-9]+]], 1, 27
 ; CHECK-32-DAG: stw 30, -8(1)
 ; CHECK-32-DAG: mr 30, 1
 ; CHECK-32-DAG: stw 0, 4(1)
@@ -87,7 +87,7 @@ entry:
 
 ; CHECK-32-PIC-LABEL: @goo
 ; CHECK-32-PIC-DAG: mflr 0
-; CHECK-32-PIC-DAG: rlwinm [[REG:[0-9]+]], 1, 0, 27, 31
+; CHECK-32-PIC-DAG: clrlwi [[REG:[0-9]+]], 1, 27
 ; CHECK-32-PIC-DAG: stw 29, -12(1)
 ; CHECK-32-PIC-DAG: mr 29, 1
 ; CHECK-32-PIC-DAG: stw 0, 4(1)
@@ -113,7 +113,7 @@ entry:
 ; CHECK-LABEL: @hoo
 
 ; CHECK-DAG: lis [[REG1:[0-9]+]], -13
-; CHECK-DAG: rldicl [[REG3:[0-9]+]], 1, 0, 59
+; CHECK-DAG: clrldi [[REG3:[0-9]+]], 1, 59
 ; CHECK-DAG: mflr 0
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 51808
 ; CHECK-DAG: std 30, -16(1)
@@ -129,7 +129,7 @@ entry:
 ; CHECK-32-LABEL: @hoo
 
 ; CHECK-32-DAG: lis [[REG1:[0-9]+]], -13
-; CHECK-32-DAG: rlwinm [[REG3:[0-9]+]], 1, 0, 27, 31
+; CHECK-32-DAG: clrlwi [[REG3:[0-9]+]], 1, 27
 ; CHECK-32-DAG: mflr 0
 ; CHECK-32-DAG: ori [[REG2:[0-9]+]], [[REG1]], 51904
 ; CHECK-32-DAG: stw 30, -8(1)
@@ -143,7 +143,7 @@ entry:
 ; CHECK-32-PIC-LABEL: @hoo
 
 ; CHECK-32-PIC-DAG: lis [[REG1:[0-9]+]], -13
-; CHECK-32-PIC-DAG: rlwinm [[REG3:[0-9]+]], 1, 0, 27, 31
+; CHECK-32-PIC-DAG: clrlwi [[REG3:[0-9]+]], 1, 27
 ; CHECK-32-PIC-DAG: mflr 0
 ; CHECK-32-PIC-DAG: ori [[REG2:[0-9]+]], [[REG1]], 51904
 ; CHECK-32-PIC-DAG: stw 29, -12(1)
@@ -175,7 +175,7 @@ entry:
 ; CHECK-LABEL: @loo
 
 ; CHECK-DAG: mflr 0
-; CHECK-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
+; CHECK-DAG: clrldi [[REG:[0-9]+]], 1, 59
 ; CHECK-DAG: std 30, -32(1)
 ; CHECK-DAG: mr 30, 1
 ; CHECK-DAG: std 0, 16(1)
@@ -191,7 +191,7 @@ entry:
 ; CHECK-FP-LABEL: @loo
 
 ; CHECK-FP-DAG: mflr 0
-; CHECK-FP-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
+; CHECK-FP-DAG: clrldi [[REG:[0-9]+]], 1, 59
 ; CHECK-FP-DAG: std 31, -24(1)
 ; CHECK-FP-DAG: std 30, -32(1)
 ; CHECK-FP-DAG: mr 30, 1

@@ -371,11 +371,11 @@
 # CHECK-BE: mtfsfi. 5, 2, 1                 # encoding: [0xfe,0x81,0x21,0x0d]
 # CHECK-LE: mtfsfi. 5, 2, 1                 # encoding: [0x0d,0x21,0x81,0xfe]
             mtfsfi. 5, 2, 1
-# CHECK-BE: mtfsfi 6, 2, 0                  # encoding: [0xff,0x00,0x21,0x0c]
-# CHECK-LE: mtfsfi 6, 2, 0                  # encoding: [0x0c,0x21,0x00,0xff]
+# CHECK-BE: mtfsfi 6, 2                     # encoding: [0xff,0x00,0x21,0x0c]
+# CHECK-LE: mtfsfi 6, 2                     # encoding: [0x0c,0x21,0x00,0xff]
             mtfsfi 6, 2
-# CHECK-BE: mtfsfi. 6, 2, 0                 # encoding: [0xff,0x00,0x21,0x0d]
-# CHECK-LE: mtfsfi. 6, 2, 0                 # encoding: [0x0d,0x21,0x00,0xff]
+# CHECK-BE: mtfsfi. 6, 2                    # encoding: [0xff,0x00,0x21,0x0d]
+# CHECK-LE: mtfsfi. 6, 2                    # encoding: [0x0d,0x21,0x00,0xff]
             mtfsfi. 6, 2
 # CHECK-BE: mtfsf 127, 8, 1, 1              # encoding: [0xfe,0xff,0x45,0x8e]
 # CHECK-LE: mtfsf 127, 8, 1, 1              # encoding: [0x8e,0x45,0xff,0xfe]
@@ -383,11 +383,11 @@
 # CHECK-BE: mtfsf. 125, 8, 1, 1             # encoding: [0xfe,0xfb,0x45,0x8f]
 # CHECK-LE: mtfsf. 125, 8, 1, 1             # encoding: [0x8f,0x45,0xfb,0xfe]
             mtfsf. 125, 8, 1, 1
-# CHECK-BE: mtfsf 127, 6, 0, 0              # encoding: [0xfc,0xfe,0x35,0x8e]
-# CHECK-LE: mtfsf 127, 6, 0, 0              # encoding: [0x8e,0x35,0xfe,0xfc]
+# CHECK-BE: mtfsf 127, 6                    # encoding: [0xfc,0xfe,0x35,0x8e]
+# CHECK-LE: mtfsf 127, 6                    # encoding: [0x8e,0x35,0xfe,0xfc]
             mtfsf 127, 6
-# CHECK-BE: mtfsf. 125, 6, 0, 0             # encoding: [0xfc,0xfa,0x35,0x8f]
-# CHECK-LE: mtfsf. 125, 6, 0, 0             # encoding: [0x8f,0x35,0xfa,0xfc]
+# CHECK-BE: mtfsf. 125, 6                   # encoding: [0xfc,0xfa,0x35,0x8f]
+# CHECK-LE: mtfsf. 125, 6                   # encoding: [0x8f,0x35,0xfa,0xfc]
             mtfsf. 125, 6
 # CHECK-BE: mtfsb0 31                       # encoding: [0xff,0xe0,0x00,0x8c]
 # CHECK-LE: mtfsb0 31                       # encoding: [0x8c,0x00,0xe0,0xff]

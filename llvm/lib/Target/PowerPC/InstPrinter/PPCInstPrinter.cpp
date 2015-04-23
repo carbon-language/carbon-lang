@@ -31,6 +31,7 @@ static cl::opt<bool>
 FullRegNames("ppc-asm-full-reg-names", cl::Hidden, cl::init(false),
              cl::desc("Use full register names when printing assembly"));
 
+#define PRINT_ALIAS_INSTR
 #include "PPCGenAsmWriter.inc"
 
 void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
@@ -111,8 +112,9 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   // precision).  FIXME: Is there a better solution?
   if (MI->getOpcode() == TargetOpcode::COPY_TO_REGCLASS)
     return;
-  
-  printInstruction(MI, O);
+
+  if (!printAliasInstr(MI, O))
+    printInstruction(MI, O);
   printAnnotation(O, Annot);
 }
 

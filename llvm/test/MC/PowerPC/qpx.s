@@ -8,9 +8,9 @@
          qvfadd 3, 4, 5
 # CHECK: qvfadds 3, 4, 5                 # encoding: [0x00,0x64,0x28,0x2a]
          qvfadds 3, 4, 5
-# CHECK: qvflogical 3, 4, 5, 4           # encoding: [0x10,0x64,0x2a,0x08]
+# CHECK: qvfandc 3, 4, 5                 # encoding: [0x10,0x64,0x2a,0x08]
          qvfandc 3, 4, 5
-# CHECK: qvflogical 3, 4, 5, 1           # encoding: [0x10,0x64,0x28,0x88]
+# CHECK: qvfand 3, 4, 5                  # encoding: [0x10,0x64,0x28,0x88]
          qvfand 3, 4, 5
 # CHECK: qvfcfid 3, 5                    # encoding: [0x10,0x60,0x2e,0x9c]
          qvfcfid 3, 5
@@ -20,11 +20,11 @@
          qvfcfidu 3, 5
 # CHECK: qvfcfidus 3, 5                  # encoding: [0x00,0x60,0x2f,0x9c]
          qvfcfidus 3, 5
-# CHECK: qvflogical 3, 3, 3, 0           # encoding: [0x10,0x63,0x18,0x08]
+# CHECK: qvfclr 3                        # encoding: [0x10,0x63,0x18,0x08]
          qvfclr 3
 # CHECK: qvfcpsgn 3, 4, 5                # encoding: [0x10,0x64,0x28,0x10]
          qvfcpsgn 3, 4, 5
-# CHECK: qvflogical 3, 4, 4, 5           # encoding: [0x10,0x64,0x22,0x88]
+# CHECK: qvfctfb 3, 4                    # encoding: [0x10,0x64,0x22,0x88]
          qvfctfb 3, 4
 # CHECK: qvfctid 3, 5                    # encoding: [0x10,0x60,0x2e,0x5c]
          qvfctid 3, 5
@@ -42,7 +42,7 @@
          qvfctiwuz 3, 5
 # CHECK: qvfctiwz 3, 5                   # encoding: [0x10,0x60,0x28,0x1e]
          qvfctiwz 3, 5
-# CHECK: qvflogical 3, 4, 5, 9           # encoding: [0x10,0x64,0x2c,0x88]
+# CHECK: qvfequ 3, 4, 5                  # encoding: [0x10,0x64,0x2c,0x88]
          qvfequ 3, 4, 5
 # CHECK: qvflogical 3, 4, 5, 12          # encoding: [0x10,0x64,0x2e,0x08]
          qvflogical 3, 4, 5, 12
@@ -62,7 +62,7 @@
          qvfmuls 3, 4, 6
 # CHECK: qvfnabs 3, 5                    # encoding: [0x10,0x60,0x29,0x10]
          qvfnabs 3, 5
-# CHECK: qvflogical 3, 4, 5, 14          # encoding: [0x10,0x64,0x2f,0x08]
+# CHECK: qvfnand 3, 4, 5                 # encoding: [0x10,0x64,0x2f,0x08]
          qvfnand 3, 4, 5
 # CHECK: qvfneg 3, 5                     # encoding: [0x10,0x60,0x28,0x50]
          qvfneg 3, 5
@@ -74,13 +74,13 @@
          qvfnmsub 3, 4, 6, 5
 # CHECK: qvfnmsubs 3, 4, 6, 5            # encoding: [0x00,0x64,0x29,0xbc]
          qvfnmsubs 3, 4, 6, 5
-# CHECK: qvflogical 3, 4, 5, 8           # encoding: [0x10,0x64,0x2c,0x08]
+# CHECK: qvfnor 3, 4, 5                  # encoding: [0x10,0x64,0x2c,0x08]
          qvfnor 3, 4, 5
-# CHECK: qvflogical 3, 4, 4, 10          # encoding: [0x10,0x64,0x25,0x08]
+# CHECK: qvfnot 3, 4                     # encoding: [0x10,0x64,0x25,0x08]
          qvfnot 3, 4
-# CHECK: qvflogical 3, 4, 5, 13          # encoding: [0x10,0x64,0x2e,0x88]
+# CHECK: qvforc 3, 4, 5                  # encoding: [0x10,0x64,0x2e,0x88]
          qvforc 3, 4, 5
-# CHECK: qvflogical 3, 4, 5, 7           # encoding: [0x10,0x64,0x2b,0x88]
+# CHECK: qvfor 3, 4, 5                   # encoding: [0x10,0x64,0x2b,0x88]
          qvfor 3, 4, 5
 # CHECK: qvfperm 3, 4, 5, 6              # encoding: [0x10,0x64,0x29,0x8c]
          qvfperm 3, 4, 5, 6
@@ -104,7 +104,7 @@
          qvfrsqrtes 3, 5
 # CHECK: qvfsel 3, 4, 6, 5               # encoding: [0x10,0x64,0x29,0xae]
          qvfsel 3, 4, 6, 5
-# CHECK: qvflogical 3, 3, 3, 15          # encoding: [0x10,0x63,0x1f,0x88]
+# CHECK: qvfset 3                        # encoding: [0x10,0x63,0x1f,0x88]
          qvfset 3
 # CHECK: qvfsub 3, 4, 5                  # encoding: [0x10,0x64,0x28,0x28]
          qvfsub 3, 4, 5
@@ -118,7 +118,7 @@
          qvfxmul 3, 4, 6
 # CHECK: qvfxmuls 3, 4, 6                # encoding: [0x00,0x64,0x01,0xa2]
          qvfxmuls 3, 4, 6
-# CHECK: qvflogical 3, 4, 5, 6           # encoding: [0x10,0x64,0x2b,0x08]
+# CHECK: qvfxor 3, 4, 5                  # encoding: [0x10,0x64,0x2b,0x08]
          qvfxor 3, 4, 5
 # CHECK: qvfxxcpnmadd 3, 4, 6, 5         # encoding: [0x10,0x64,0x29,0x86]
          qvfxxcpnmadd 3, 4, 6, 5

@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=ppc32 | grep rlwnm | count 2
-; RUN: llc < %s -march=ppc32 | grep rlwinm | count 2
+; RUN: llc < %s -march=ppc32 | grep rotrw: | count 1
+; RUN: llc < %s -march=ppc32 | grep rotlw: | count 1
+; RUN: llc < %s -march=ppc32 | grep rotlwi: | count 1
+; RUN: llc < %s -march=ppc32 | grep rotrwi: | count 1
 
 define i32 @rotlw(i32 %x, i32 %sh) {
 entry:

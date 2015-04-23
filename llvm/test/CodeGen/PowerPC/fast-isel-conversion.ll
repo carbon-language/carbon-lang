@@ -253,7 +253,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidus
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 16, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 16
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -277,7 +277,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidus
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 24, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 24
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -342,7 +342,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidu
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 16, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 16
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid
@@ -365,7 +365,7 @@ entry:
 ; ELF64LE: std
 ; ELF64LE: lfd
 ; ELF64LE: fcfidu
-; PPC970: rlwinm {{[0-9]+}}, {{[0-9]+}}, 0, 24, 31
+; PPC970: clrlwi {{[0-9]+}}, {{[0-9]+}}, 24
 ; PPC970: std
 ; PPC970: lfd
 ; PPC970: fcfid

@@ -17,7 +17,7 @@ entry:
 
 ; CHECK-LABEL: @test16
 ; CHECK: cmpb [[REG1:[0-9]+]], 4, 3
-; CHECK: rldicl 3, [[REG1]], 0, 48
+; CHECK: clrldi 3, [[REG1]], 48
 ; CHECK: blr
 }
 
@@ -73,7 +73,7 @@ entry:
 
 ; CHECK-LABEL: @test16p3
 ; CHECK: cmpb [[REG1:[0-9]+]], 4, 3
-; CHECK: rldicl [[REG2:[0-9]+]], [[REG1]], 0, 55
+; CHECK: clrldi [[REG2:[0-9]+]], [[REG1]], 55
 ; CHECK: xori 3, [[REG2]], 1280
 ; CHECK: blr
 }
@@ -99,7 +99,7 @@ entry:
 
 ; CHECK-LABEL: @test32
 ; CHECK: cmpb [[REG1:[0-9]+]], 4, 3
-; CHECK: rldicl 3, [[REG1]], 0, 32
+; CHECK: clrldi 3, [[REG1]], 32
 ; CHECK: blr
 }
 

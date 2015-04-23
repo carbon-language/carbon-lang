@@ -12,7 +12,7 @@ entry:
 ; CHECK-LABEL: @testi1
 ; CHECK-DAG: andi. {{[0-9]+}}, 3, 1
 ; CHECK-DAG: li [[REG1:[0-9]+]], 0
-; CHECK-DAG: cror [[REG2:[0-9]+]], 1, 1
+; CHECK-DAG: crmove [[REG2:[0-9]+]], 1
 ; CHECK-DAG: andi. {{[0-9]+}}, 4, 1
 ; CHECK-DAG: crand [[REG3:[0-9]+]], [[REG2]], 1
 ; CHECK-DAG: li [[REG4:[0-9]+]], 1
@@ -31,7 +31,7 @@ entry:
 ; CHECK-LABEL: @testi32
 ; CHECK-DAG: andi. {{[0-9]+}}, 3, 1
 ; CHECK-DAG: li [[REG1:[0-9]+]], 0
-; CHECK-DAG: cror [[REG2:[0-9]+]], 1, 1
+; CHECK-DAG: crmove [[REG2:[0-9]+]], 1
 ; CHECK-DAG: andi. {{[0-9]+}}, 4, 1
 ; CHECK-DAG: crand [[REG3:[0-9]+]], [[REG2]], 1
 ; CHECK-DAG: li [[REG4:[0-9]+]], -1
@@ -47,7 +47,7 @@ entry:
 ; CHECK-LABEL: @testi8
 ; CHECK-DAG: andi. {{[0-9]+}}, 3, 1
 ; CHECK-DAG: li [[REG1:[0-9]+]], 0
-; CHECK-DAG: cror [[REG2:[0-9]+]], 1, 1
+; CHECK-DAG: crmove [[REG2:[0-9]+]], 1
 ; CHECK-DAG: andi. {{[0-9]+}}, 4, 1
 ; CHECK-DAG: crand [[REG3:[0-9]+]], [[REG2]], 1
 ; CHECK-DAG: li [[REG4:[0-9]+]], 1

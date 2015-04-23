@@ -1,6 +1,6 @@
 # RUN: llvm-mc --disassemble %s -triple powerpc64-unknown-unknown -mcpu=pwr7 | FileCheck %s
 
-# CHECK: mtmsr 4, 0                       
+# CHECK: mtmsr 4
 0x7c 0x80 0x01 0x24
 
 # CHECK: mtmsr 4, 1                       
@@ -9,7 +9,7 @@
 # CHECK: mfmsr 4                         
 0x7c 0x80 0x00 0xa6
 
-# CHECK: mtmsrd 4, 0                     
+# CHECK: mtmsrd 4
 0x7c 0x80 0x01 0x64
 
 # CHECK: mtmsrd 4, 1                     
@@ -60,7 +60,7 @@
 # CHECK: mtspr 22, 4                     
 0x7c 0x96 0x03 0xa6
 
-# CHECK: mfspr 4, 287                    
+# CHECK: mfpvr 4
 0x7c 0x9f 0x42 0xa6
 
 # CHECK: mfspr 4, 25                     
@@ -99,10 +99,10 @@
 # CHECK: tlbiel 4                        
 0x7c 0x00 0x22 0x24
 
-# CHECK: tlbie 4,0                       
+# CHECK: tlbie 4
 0x7c 0x00 0x22 0x64
 
-# CHECK: tlbie 4,0                       
+# CHECK: tlbie 4
 0x7c 0x00 0x22 0x64
 
 # CHECK: rfi

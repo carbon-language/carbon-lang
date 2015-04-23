@@ -29,7 +29,7 @@ codeRepl17:                                       ; preds = %codeRepl4
   unreachable
 
 ; CHECK: @test
-; CHECK: rlwinm [[R1:[0-9]+]], {{[0-9]+}}, 0, 31, 31
+; CHECK: clrlwi [[R1:[0-9]+]], {{[0-9]+}}, 31
 ; CHECK: rlwimi [[R1]], {{[0-9]+}}, 8, 23, 23
 
 codeRepl29:                                       ; preds = %codeRepl1

@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | \
-; RUN:    grep cntlzw
+; RUN:    grep cntlz
 
 define i32 @foo() nounwind {
 entry:

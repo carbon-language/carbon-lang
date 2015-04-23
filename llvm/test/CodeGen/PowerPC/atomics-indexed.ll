@@ -11,7 +11,7 @@ define i8 @load_x_i8_seq_cst([100000 x i8]* %mem) {
 ; CHECK-LABEL: load_x_i8_seq_cst
 ; CHECK: sync 0
 ; CHECK: lbzx
-; CHECK: sync 1
+; CHECK: lwsync
   %ptr = getelementptr inbounds [100000 x i8], [100000 x i8]* %mem, i64 0, i64 90000
   %val = load atomic i8, i8* %ptr seq_cst, align 1
   ret i8 %val
@@ -19,7 +19,7 @@ define i8 @load_x_i8_seq_cst([100000 x i8]* %mem) {
 define i16 @load_x_i16_acquire([100000 x i16]* %mem) {
 ; CHECK-LABEL: load_x_i16_acquire
 ; CHECK: lhzx
-; CHECK: sync 1
+; CHECK: lwsync
   %ptr = getelementptr inbounds [100000 x i16], [100000 x i16]* %mem, i64 0, i64 90000
   %val = load atomic i16, i16* %ptr acquire, align 2
   ret i16 %val
@@ -54,7 +54,7 @@ define void @store_x_i8_seq_cst([100000 x i8]* %mem) {
 }
 define void @store_x_i16_release([100000 x i16]* %mem) {
 ; CHECK-LABEL: store_x_i16_release
-; CHECK: sync 1
+; CHECK: lwsync
 ; CHECK: sthx
   %ptr = getelementptr inbounds [100000 x i16], [100000 x i16]* %mem, i64 0, i64 90000
   store atomic i16 42, i16* %ptr release, align 2
@@ -71,7 +71,7 @@ define void @store_x_i32_monotonic([100000 x i32]* %mem) {
 define void @store_x_i64_unordered([100000 x i64]* %mem) {
 ; CHECK-LABEL: store_x_i64_unordered
 ; CHECK-NOT: sync 0
-; CHECK-NOT: sync 1
+; CHECK-NOT: lwsync
 ; PPC32: __sync_
 ; PPC64-NOT: __sync_
 ; PPC64: stdx

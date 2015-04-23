@@ -27,7 +27,7 @@ define i32 @load_i32_acquire(i32* %mem) {
 ; CHECK-LABEL: load_i32_acquire
 ; CHECK: lwz
   %val = load atomic i32, i32* %mem acquire, align 4
-; CHECK: sync 1
+; CHECK: lwsync
   ret i32 %val
 }
 define i64 @load_i64_seq_cst(i64* %mem) {
@@ -37,7 +37,7 @@ define i64 @load_i64_seq_cst(i64* %mem) {
 ; PPC64-NOT: __sync_
 ; PPC64: ld
   %val = load atomic i64, i64* %mem seq_cst, align 8
-; CHECK: sync 1
+; CHECK: lwsync
   ret i64 %val
 }
 
@@ -58,7 +58,7 @@ define void @store_i16_monotonic(i16* %mem) {
 }
 define void @store_i32_release(i32* %mem) {
 ; CHECK-LABEL: store_i32_release
-; CHECK: sync 1
+; CHECK: lwsync
 ; CHECK: stw
   store atomic i32 42, i32* %mem release, align 4
   ret void
@@ -78,7 +78,7 @@ define i8 @cas_strong_i8_sc_sc(i8* %mem) {
 ; CHECK-LABEL: cas_strong_i8_sc_sc
 ; CHECK: sync 0
   %val = cmpxchg i8* %mem, i8 0, i8 1 seq_cst seq_cst
-; CHECK: sync 1
+; CHECK: lwsync
   %loaded = extractvalue { i8, i1} %val, 0
   ret i8 %loaded
 }
@@ -86,21 +86,21 @@ define i16 @cas_weak_i16_acquire_acquire(i16* %mem) {
 ; CHECK-LABEL: cas_weak_i16_acquire_acquire
 ;CHECK-NOT: sync
   %val = cmpxchg weak i16* %mem, i16 0, i16 1 acquire acquire
-; CHECK: sync 1
+; CHECK: lwsync
   %loaded = extractvalue { i16, i1} %val, 0
   ret i16 %loaded
 }
 define i32 @cas_strong_i32_acqrel_acquire(i32* %mem) {
 ; CHECK-LABEL: cas_strong_i32_acqrel_acquire
-; CHECK: sync 1
+; CHECK: lwsync
   %val = cmpxchg i32* %mem, i32 0, i32 1 acq_rel acquire
-; CHECK: sync 1
+; CHECK: lwsync
   %loaded = extractvalue { i32, i1} %val, 0
   ret i32 %loaded
 }
 define i64 @cas_weak_i64_release_monotonic(i64* %mem) {
 ; CHECK-LABEL: cas_weak_i64_release_monotonic
-; CHECK: sync 1
+; CHECK: lwsync
   %val = cmpxchg weak i64* %mem, i64 0, i64 1 release monotonic
 ; CHECK-NOT: [sync ]
   %loaded = extractvalue { i64, i1} %val, 0
@@ -118,19 +118,19 @@ define i16 @xor_i16_seq_cst(i16* %mem, i16 %operand) {
 ; CHECK-LABEL: xor_i16_seq_cst
 ; CHECK: sync 0
   %val = atomicrmw xor i16* %mem, i16 %operand seq_cst
-; CHECK: sync 1
+; CHECK: lwsync
   ret i16 %val
 }
 define i32 @xchg_i32_acq_rel(i32* %mem, i32 %operand) {
 ; CHECK-LABEL: xchg_i32_acq_rel
-; CHECK: sync 1
+; CHECK: lwsync
   %val = atomicrmw xchg i32* %mem, i32 %operand acq_rel
-; CHECK: sync 1
+; CHECK: lwsync
   ret i32 %val
 }
 define i64 @and_i64_release(i64* %mem, i64 %operand) {
 ; CHECK-LABEL: and_i64_release
-; CHECK: sync 1
+; CHECK: lwsync
   %val = atomicrmw and i64* %mem, i64 %operand release
 ; CHECK-NOT: [sync ]
   ret i64 %val

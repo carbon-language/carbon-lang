@@ -160,7 +160,7 @@ while.end418:                                     ; preds = %wait_on_buffer.exit
 
 ; CHECK-LABEL: @jbd2_journal_commit_transaction
 ; CHECK: andi.
-; CHECK: cror [[REG:[0-9]+]], 1, 1
+; CHECK: crmove [[REG:[0-9]+]], 1
 ; CHECK: stdcx.
 ; CHECK: isel {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}, [[REG]]
 

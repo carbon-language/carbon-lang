@@ -1,5 +1,6 @@
-; RUN: llc < %s -march=ppc32  | grep rlwinm | count 4
-; RUN: llc < %s -march=ppc32  | grep rlwnm | count 2
+; RUN: llc < %s -march=ppc32  | grep rotlwi | count 2
+; RUN: llc < %s -march=ppc32  | grep clrlwi | count 2
+; RUN: llc < %s -march=ppc32  | grep rotlw | count 4
 ; RUN: llc < %s -march=ppc32  | not grep or
 
 define i32 @rotl32(i32 %A, i8 %Amt) nounwind {

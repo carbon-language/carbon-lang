@@ -5,16 +5,16 @@
 ; Fences
 define void @fence_acquire() {
 ; CHECK-LABEL: fence_acquire
-; CHECK: sync 1
-; PPC440-NOT: sync 1
+; CHECK: lwsync
+; PPC440-NOT: lwsync
 ; PPC440: msync
   fence acquire
   ret void
 }
 define void @fence_release() {
 ; CHECK-LABEL: fence_release
-; CHECK: sync 1
-; PPC440-NOT: sync 1
+; CHECK: lwsync
+; PPC440-NOT: lwsync
 ; PPC440: msync
   fence release
   ret void

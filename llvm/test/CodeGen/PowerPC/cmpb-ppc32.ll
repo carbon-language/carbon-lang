@@ -17,7 +17,7 @@ entry:
 
 ; CHECK-LABEL: @test16
 ; CHECK: cmpb [[REG1:[0-9]+]], 4, 3
-; CHECK: rlwinm 3, [[REG1]], 0, 16, 31
+; CHECK: clrlwi 3, [[REG1]], 16
 ; CHECK: blr
 }
 
