@@ -29,3 +29,5 @@ _Noreturn int main() {
   return 0;
 }
 
+// expected-warning@+1 {{'main' is not allowed to be declared variadic}}
+int main(int argc, char**argv, ...) { return 0; }

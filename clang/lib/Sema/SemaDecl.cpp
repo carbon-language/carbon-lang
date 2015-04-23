@@ -8252,6 +8252,12 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
 
   bool HasExtraParameters = (nparams > 3);
 
+  if (FTP->isVariadic()) {
+    Diag(FD->getLocation(), diag::ext_variadic_main);
+    // FIXME: if we had information about the location of the ellipsis, we
+    // could add a FixIt hint to remove it as a parameter.
+  }
+
   // Darwin passes an undocumented fourth argument of type char**.  If
   // other platforms start sprouting these, the logic below will start
   // getting shifty.
