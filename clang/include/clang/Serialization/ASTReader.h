@@ -1366,8 +1366,7 @@ public:
                          bool Complain);
 
   /// \brief Make the names within this set of hidden names visible.
-  void makeNamesVisible(const HiddenNames &Names, Module *Owner,
-                        bool FromFinalization);
+  void makeNamesVisible(const HiddenNames &Names, Module *Owner);
 
   /// \brief Take the AST callbacks listener.
   std::unique_ptr<ASTReaderListener> takeListener() {

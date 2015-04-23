@@ -507,8 +507,7 @@ public:
 class UndefMacroDirective : public MacroDirective  {
   UndefMacroDirective(SourceLocation UndefLoc, ModuleMacro *ImportedFrom)
       : MacroDirective(MD_Undefine, UndefLoc, ImportedFrom) {
-    // FIXME: We should have a valid UndefLoc even for an imported macro.
-    assert((UndefLoc.isValid() || ImportedFrom) && "Invalid UndefLoc!");
+    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
   }
 
 public:

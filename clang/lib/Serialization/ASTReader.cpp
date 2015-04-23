@@ -1965,14 +1965,6 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo &MMI,
   assert(II && Owner);
 
   SourceLocation ImportLoc = Owner->MacroVisibilityLoc;
-  if (ImportLoc.isInvalid()) {
-    // FIXME: If we made macros from this module visible but didn't provide a
-    // source location for the import, we don't have a location for the macro.
-    // Use the location at which the containing module file was first imported
-    // for now.
-    ImportLoc = MMI.F->DirectImportLoc;
-    assert(ImportLoc.isValid() && "no import location for a visible macro?");
-  }
 
   AmbiguousMacros *Prev =
       removeOverriddenMacros(II, ImportLoc, MMI.getOverriddenMacros());
@@ -3426,8 +3418,10 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
   }
 }
 
-void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
-                                 bool FromFinalization) {
+void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner) {
+  assert(Owner->NameVisibility >= Module::MacrosVisible &&
+         "nothing to make visible?");
+
   // FIXME: Only do this if Owner->NameVisibility == AllVisible.
   for (Decl *D : Names.HiddenDecls) {
     bool wasHidden = D->Hidden;
@@ -3440,15 +3434,8 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
     }
   }
 
-  assert((FromFinalization || Owner->NameVisibility >= Module::MacrosVisible) &&
-         "nothing to make visible?");
-  for (const auto &Macro : Names.HiddenMacros) {
-    if (FromFinalization)
-      PP.appendMacroDirective(Macro.first,
-                              Macro.second->import(PP, SourceLocation()));
-    else
-      installImportedMacro(Macro.first, *Macro.second, Owner);
-  }
+  for (const auto &Macro : Names.HiddenMacros)
+    installImportedMacro(Macro.first, *Macro.second, Owner);
 }
 
 void ASTReader::makeModuleVisible(Module *Mod,
@@ -3484,8 +3471,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
     if (Hidden != HiddenNamesMap.end()) {
       auto HiddenNames = std::move(*Hidden);
       HiddenNamesMap.erase(Hidden);
-      makeNamesVisible(HiddenNames.second, HiddenNames.first,
-                       /*FromFinalization*/false);
+      makeNamesVisible(HiddenNames.second, HiddenNames.first);
       assert(HiddenNamesMap.find(Mod) == HiddenNamesMap.end() &&
              "making names visible added hidden names");
     }
@@ -4018,12 +4004,7 @@ void ASTReader::InitializeContext() {
 }
 
 void ASTReader::finalizeForWriting() {
-  while (!HiddenNamesMap.empty()) {
-    auto HiddenNames = std::move(*HiddenNamesMap.begin());
-    HiddenNamesMap.erase(HiddenNamesMap.begin());
-    makeNamesVisible(HiddenNames.second, HiddenNames.first,
-                     /*FromFinalization*/true);
-  }
+  // Nothing to do for now.
 }
 
 /// \brief Given a cursor at the start of an AST file, scan ahead and drop the
