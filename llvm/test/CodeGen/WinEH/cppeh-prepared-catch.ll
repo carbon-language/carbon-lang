@@ -70,6 +70,7 @@ done:
 lpad:                                             ; preds = %entry
   %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           cleanup
+  %recover = call i8* (...) @llvm.eh.actions()
   unreachable
 }
 

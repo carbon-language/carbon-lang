@@ -637,12 +637,6 @@ bool WinEHPrepare::prepareExceptionHandlers(
         LPadHasActionList = true;
         break;
       }
-      // FIXME: This is here to help with the development of nested landing pad
-      //        outlining.  It should be removed when that is finished.
-      if (isa<UnreachableInst>(Inst)) {
-        LPadHasActionList = true;
-        break;
-      }
     }
 
     // If we've already outlined the handlers for this landingpad,
@@ -1011,6 +1005,10 @@ static BasicBlock *createStubLandingPad(Function *Handler,
       llvm::StructType::get(Type::getInt8PtrTy(Context),
                             Type::getInt32Ty(Context), nullptr),
       PersonalityFn, 0);
+  // Insert a call to llvm.eh.actions so that we don't try to outline this lpad.
+  Function *ActionIntrin = Intrinsic::getDeclaration(Handler->getParent(),
+                                                     Intrinsic::eh_actions);
+  Builder.CreateCall(ActionIntrin, "recover");
   LPad->setCleanup(true);
   Builder.CreateUnreachable();
   return StubBB;
