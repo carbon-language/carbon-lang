@@ -1735,9 +1735,7 @@ struct ASTReader::ModuleMacroInfo {
   }
 
   MacroDirective *import(Preprocessor &PP, SourceLocation ImportLoc) const {
-    if (auto *MI = MM->getMacroInfo())
-      return PP.AllocateDefMacroDirective(MI, ImportLoc, MM);
-    return PP.AllocateUndefMacroDirective(ImportLoc, MM);
+    return PP.AllocateImportedMacroDirective(MM, ImportLoc);
   }
 };
 
@@ -1843,16 +1841,17 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
       ModuleMacro *MM = nullptr;
       if (SubmoduleID ImportedFrom = getGlobalSubmoduleID(M, Record[Idx++]))
         MM = PP.getModuleMacro(getSubmodule(ImportedFrom), II);
-      DefMacroDirective *DefMD = PP.AllocateDefMacroDirective(MI, Loc, MM);
-      DefMD->setAmbiguous(IsAmbiguous);
-      MD = DefMD;
+      MD = MM ? PP.AllocateImportedMacroDirective(MM, Loc)
+              : PP.AllocateDefMacroDirective(MI, Loc);
+      cast<DefMacroDirective>(MD)->setAmbiguous(IsAmbiguous);
       break;
     }
     case MacroDirective::MD_Undefine: {
       ModuleMacro *MM = nullptr;
       if (SubmoduleID ImportedFrom = getGlobalSubmoduleID(M, Record[Idx++]))
         MM = PP.getModuleMacro(getSubmodule(ImportedFrom), II);
-      MD = PP.AllocateUndefMacroDirective(Loc, MM);
+      MD = MM ? PP.AllocateImportedMacroDirective(MM, Loc)
+              : PP.AllocateUndefMacroDirective(Loc);
       break;
     }
     case MacroDirective::MD_Visibility:

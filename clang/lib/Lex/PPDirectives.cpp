@@ -62,17 +62,13 @@ MacroInfo *Preprocessor::AllocateDeserializedMacroInfo(SourceLocation L,
   return MI;
 }
 
-DefMacroDirective *
-Preprocessor::AllocateDefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-    ModuleMacro *MM) {
-  if (MM) return DefMacroDirective::createImported(*this, MI, Loc, MM);
+DefMacroDirective *Preprocessor::AllocateDefMacroDirective(MacroInfo *MI,
+                                                           SourceLocation Loc) {
   return new (BP) DefMacroDirective(MI, Loc);
 }
 
 UndefMacroDirective *
-Preprocessor::AllocateUndefMacroDirective(SourceLocation UndefLoc,
-                                          ModuleMacro *MM) {
-  if (MM) return UndefMacroDirective::createImported(*this, UndefLoc, MM);
+Preprocessor::AllocateUndefMacroDirective(SourceLocation UndefLoc) {
   return new (BP) UndefMacroDirective(UndefLoc);
 }
 
@@ -80,6 +76,15 @@ VisibilityMacroDirective *
 Preprocessor::AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                bool isPublic) {
   return new (BP) VisibilityMacroDirective(Loc, isPublic);
+}
+
+MacroDirective *
+Preprocessor::AllocateImportedMacroDirective(ModuleMacro *MM,
+                                             SourceLocation Loc) {
+  if (auto *MI = MM->getMacroInfo())
+    return DefMacroDirective::createImported(*this, MI, Loc, MM);
+  else
+    return UndefMacroDirective::createImported(*this, Loc, MM);
 }
 
 /// \brief Read and discard all tokens remaining on the current line until
@@ -1784,7 +1789,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     assert(!CurSubmodule && "should not have marked this as a module yet");
     CurSubmodule = BuildingModule.getModule();
 
-    EnterSubmodule(CurSubmodule);
+    EnterSubmodule(CurSubmodule, HashLoc);
 
     EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_begin,
                          CurSubmodule);

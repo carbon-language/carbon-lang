@@ -428,11 +428,14 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   /// \brief Information about a submodule that we're currently building.
   struct BuildingSubmoduleInfo {
-    BuildingSubmoduleInfo(Module *M) : M(M) {}
+    BuildingSubmoduleInfo(Module *M, SourceLocation ImportLoc)
+        : M(M), ImportLoc(ImportLoc) {}
 
-    // The module that we are building.
+    /// The module that we are building.
     Module *M;
-    // The macros that were visible before we entered the module.
+    /// The location at which the module was included.
+    SourceLocation ImportLoc;
+    /// The macros that were visible before we entered the module.
     MacroMap Macros;
 
     // FIXME: VisibleModules?
@@ -441,7 +444,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   };
   SmallVector<BuildingSubmoduleInfo, 8> BuildingSubmoduleStack;
 
-  void EnterSubmodule(Module *M);
+  void EnterSubmodule(Module *M, SourceLocation ImportLoc);
   void LeaveSubmodule();
 
   /// The set of known macros exported from modules.
@@ -715,9 +718,8 @@ public:
   /// \brief Add a directive to the macro directive history for this identifier.
   void appendMacroDirective(IdentifierInfo *II, MacroDirective *MD);
   DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI,
-                                             SourceLocation Loc,
-                                             ModuleMacro *MM = nullptr) {
-    DefMacroDirective *MD = AllocateDefMacroDirective(MI, Loc, MM);
+                                             SourceLocation Loc) {
+    DefMacroDirective *MD = AllocateDefMacroDirective(MI, Loc);
     appendMacroDirective(II, MD);
     return MD;
   }
@@ -1509,12 +1511,13 @@ private:
   MacroInfo *AllocateMacroInfo();
 
   DefMacroDirective *AllocateDefMacroDirective(MacroInfo *MI,
-                                               SourceLocation Loc,
-                                               ModuleMacro *MM = nullptr);
-  UndefMacroDirective *AllocateUndefMacroDirective(SourceLocation UndefLoc,
-                                                   ModuleMacro *MM = nullptr);
+                                               SourceLocation Loc);
+  UndefMacroDirective *AllocateUndefMacroDirective(SourceLocation UndefLoc);
   VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                              bool isPublic);
+
+  MacroDirective *AllocateImportedMacroDirective(ModuleMacro *MM,
+                                                 SourceLocation Loc);
 
   /// \brief Lex and validate a macro name, which occurs after a
   /// \#define or \#undef.
