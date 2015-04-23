@@ -37,11 +37,13 @@
 #define HEXAGON_RESERVED_REG_2 Hexagon::R11
 
 namespace llvm {
-struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
+class HexagonRegisterInfo : public HexagonGenRegisterInfo {
+public:
   HexagonRegisterInfo();
 
   /// Code Generation virtual methods...
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF)
+        const override;
 
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
@@ -76,7 +78,8 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   unsigned getFrameRegister() const;
   unsigned getStackRegister() const;
 
-  const uint16_t *getCallerSavedRegs(const MachineFunction *MF) const;
+  const MCPhysReg *getCallerSavedRegs(const MachineFunction *MF) const;
+
   unsigned getFirstCallerSavedNonParamReg() const;
 
   bool isEHReturnCalleeSaveReg(unsigned Reg) const;
