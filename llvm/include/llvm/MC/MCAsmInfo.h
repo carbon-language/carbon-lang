@@ -155,6 +155,9 @@ protected:
   /// Defaults to false.
   bool AllowAtInName;
 
+  /// If this is true, symbol names will not attempt to be quoted when printed.
+  bool NoSymbolNameQuoting;
+
   /// This is true if data region markers should be printed as
   /// ".data_region/.end_data_region" directives. If false, use "$d/$a" labels
   /// instead.
@@ -452,6 +455,7 @@ public:
   const char *getCode64Directive() const { return Code64Directive; }
   unsigned getAssemblerDialect() const { return AssemblerDialect; }
   bool doesAllowAtInName() const { return AllowAtInName; }
+  bool noSymbolNameQuoting() const { return NoSymbolNameQuoting; }
   bool doesSupportDataRegionDirectives() const {
     return UseDataRegionDirectives;
   }

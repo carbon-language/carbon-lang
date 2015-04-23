@@ -51,7 +51,7 @@ void MCSymbol::print(raw_ostream &OS) const {
   // some targets support quoting names with funny characters.  If the name
   // contains a funny character, then print it quoted.
   StringRef Name = getName();
-  if (!NameNeedsQuoting(Name)) {
+  if (NoQuoting || !NameNeedsQuoting(Name)) {
     OS << Name;
     return;
   }
