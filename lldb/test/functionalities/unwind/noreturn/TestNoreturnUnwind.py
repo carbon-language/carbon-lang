@@ -45,9 +45,8 @@ class NoreturnUnwind(TestBase):
         thread = process.GetThreadAtIndex(0)
         abort_frame_number = 0
         for f in thread.frames:
-            # We use endswith() to look for abort() since some C libraries mangle the symbol into
-            # __GI_abort or similar.
-            if f.GetFunctionName().endswith("abort"):
+            # Some C libraries mangle the abort symbol into __GI_abort.
+            if f.GetFunctionName() in ["abort", "__GI_abort"]:
                 break
             abort_frame_number = abort_frame_number + 1
 
