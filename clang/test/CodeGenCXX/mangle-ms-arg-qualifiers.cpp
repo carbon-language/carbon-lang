@@ -263,3 +263,7 @@ struct S {};
 void pr23325(const S[1], const S[]) {}
 // CHECK: "\01?pr23325@@YAXQBUS@@0@Z"
 // X64:   "\01?pr23325@@YAXQEBUS@@0@Z"
+
+void vla_arg(int i, int a[][i]) {}
+// CHECK: "\01?vla_arg@@YAXHQAY0A@H@Z"
+// X64:   "\01?vla_arg@@YAXHQEAY0A@H@Z"
