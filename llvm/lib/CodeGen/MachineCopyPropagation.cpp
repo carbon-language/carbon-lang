@@ -252,7 +252,11 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         report_fatal_error("MachineCopyPropagation should be run after"
                            " register allocation!");
 
-      if (MO.isDef()) {
+      // Treat undef use like defs.
+      // The backends are allowed to do whatever they want with undef value
+      // and we cannot be sure this register will not be rewritten to break
+      // some false dependencies for the hardware for instance.
+      if (MO.isDef() || MO.isUndef()) {
         Defs.push_back(Reg);
         continue;
       }
