@@ -131,11 +131,11 @@
 # CHECK-LE: ldarx 2, 3, 4, 1                # encoding: [0xa9,0x20,0x43,0x7c]
             ldarx 2, 3, 4, 1
 
-# CHECK-BE: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
-# CHECK-LE: sync 0                          # encoding: [0xac,0x04,0x00,0x7c]
+# CHECK-BE: sync                            # encoding: [0x7c,0x00,0x04,0xac]
+# CHECK-LE: sync                            # encoding: [0xac,0x04,0x00,0x7c]
             sync
-# CHECK-BE: sync 0                          # encoding: [0x7c,0x00,0x04,0xac]
-# CHECK-LE: sync 0                          # encoding: [0xac,0x04,0x00,0x7c]
+# CHECK-BE: sync                            # encoding: [0x7c,0x00,0x04,0xac]
+# CHECK-LE: sync                            # encoding: [0xac,0x04,0x00,0x7c]
             msync
 # CHECK-BE: lwsync                          # encoding: [0x7c,0x20,0x04,0xac]
 # CHECK-LE: lwsync                          # encoding: [0xac,0x04,0x20,0x7c]

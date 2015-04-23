@@ -72,10 +72,10 @@
 # CHECK: ldarx 2, 3, 4, 1
 0x7c 0x43 0x20 0xa9
 
-# CHECK: sync 0                          
+# CHECK: sync
 0x7c 0x00 0x04 0xac
 
-# CHECK: sync 0                          
+# CHECK: sync
 0x7c 0x00 0x04 0xac
 
 # CHECK: lwsync

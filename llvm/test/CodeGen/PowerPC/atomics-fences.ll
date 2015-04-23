@@ -21,8 +21,7 @@ define void @fence_release() {
 }
 define void @fence_seq_cst() {
 ; CHECK-LABEL: fence_seq_cst
-; CHECK: sync 0
-; PPC440-NOT: sync 0
+; CHECK: sync
 ; PPC440: msync
   fence seq_cst
   ret void

@@ -9,7 +9,7 @@
 ; Indexed version of loads
 define i8 @load_x_i8_seq_cst([100000 x i8]* %mem) {
 ; CHECK-LABEL: load_x_i8_seq_cst
-; CHECK: sync 0
+; CHECK: sync
 ; CHECK: lbzx
 ; CHECK: lwsync
   %ptr = getelementptr inbounds [100000 x i8], [100000 x i8]* %mem, i64 0, i64 90000
@@ -46,7 +46,7 @@ define i64 @load_x_i64_unordered([100000 x i64]* %mem) {
 ; Indexed version of stores
 define void @store_x_i8_seq_cst([100000 x i8]* %mem) {
 ; CHECK-LABEL: store_x_i8_seq_cst
-; CHECK: sync 0
+; CHECK: sync
 ; CHECK: stbx
   %ptr = getelementptr inbounds [100000 x i8], [100000 x i8]* %mem, i64 0, i64 90000
   store atomic i8 42, i8* %ptr seq_cst, align 1
@@ -70,8 +70,7 @@ define void @store_x_i32_monotonic([100000 x i32]* %mem) {
 }
 define void @store_x_i64_unordered([100000 x i64]* %mem) {
 ; CHECK-LABEL: store_x_i64_unordered
-; CHECK-NOT: sync 0
-; CHECK-NOT: lwsync
+; CHECK-NOT: sync
 ; PPC32: __sync_
 ; PPC64-NOT: __sync_
 ; PPC64: stdx

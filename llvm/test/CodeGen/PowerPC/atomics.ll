@@ -32,7 +32,7 @@ define i32 @load_i32_acquire(i32* %mem) {
 }
 define i64 @load_i64_seq_cst(i64* %mem) {
 ; CHECK-LABEL: load_i64_seq_cst
-; CHECK: sync 0
+; CHECK: sync
 ; PPC32: __sync_
 ; PPC64-NOT: __sync_
 ; PPC64: ld
@@ -65,7 +65,7 @@ define void @store_i32_release(i32* %mem) {
 }
 define void @store_i64_seq_cst(i64* %mem) {
 ; CHECK-LABEL: store_i64_seq_cst
-; CHECK: sync 0
+; CHECK: sync
 ; PPC32: __sync_
 ; PPC64-NOT: __sync_
 ; PPC64: std
@@ -76,7 +76,7 @@ define void @store_i64_seq_cst(i64* %mem) {
 ; Atomic CmpXchg
 define i8 @cas_strong_i8_sc_sc(i8* %mem) {
 ; CHECK-LABEL: cas_strong_i8_sc_sc
-; CHECK: sync 0
+; CHECK: sync
   %val = cmpxchg i8* %mem, i8 0, i8 1 seq_cst seq_cst
 ; CHECK: lwsync
   %loaded = extractvalue { i8, i1} %val, 0
@@ -116,7 +116,7 @@ define i8 @add_i8_monotonic(i8* %mem, i8 %operand) {
 }
 define i16 @xor_i16_seq_cst(i16* %mem, i16 %operand) {
 ; CHECK-LABEL: xor_i16_seq_cst
-; CHECK: sync 0
+; CHECK: sync
   %val = atomicrmw xor i16* %mem, i16 %operand seq_cst
 ; CHECK: lwsync
   ret i16 %val
