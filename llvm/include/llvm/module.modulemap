@@ -46,6 +46,11 @@ module LLVM_Backend {
 module LLVM_Bitcode { requires cplusplus umbrella "Bitcode" module * { export * } }
 module LLVM_Config { requires cplusplus umbrella "Config" module * { export * } }
 
+module LLVM_DebugInfo {
+  requires cplusplus
+  module DIContext { header "DebugInfo/DIContext.h" export * }
+}
+
 module LLVM_DebugInfo_DWARF {
   requires cplusplus
 
