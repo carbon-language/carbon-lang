@@ -533,7 +533,7 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       Out.EmitInstruction(Inst, STI);
       return false;
     case Match_MissingFeature:
-      return Error(IDLoc, "missing feature");
+      return Error(IDLoc, "instruction not supported on this GPU");
 
     case Match_MnemonicFail:
       return Error(IDLoc, "unrecognized instruction mnemonic");
