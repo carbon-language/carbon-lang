@@ -246,9 +246,10 @@ void PassManagerBuilder::populateModulePassManager(
   MPM.add(createIndVarSimplifyPass());        // Canonicalize indvars
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
   MPM.add(createLoopDeletionPass());          // Delete dead loops
-  if (EnableLoopInterchange)
+  if (EnableLoopInterchange) {
     MPM.add(createLoopInterchangePass()); // Interchange loops
-
+    MPM.add(createCFGSimplificationPass());
+  }
   if (!DisableUnrollLoops)
     MPM.add(createSimpleLoopUnrollPass());    // Unroll small loops
   addExtensionsToPM(EP_LoopOptimizerEnd, MPM);
