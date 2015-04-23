@@ -140,17 +140,19 @@ sw.epilog:
 
 ; The balanced binary switch here would start with a comparison against 39, but
 ; it is currently starting with 29 because of the density-sum heuristic.
-; CHECK: cmpl $39
+; CHECK: cmpl $29
 ; CHECK: jg
 ; CHECK: cmpl $10
-; CHECK: je
+; CHECK: jne
+; CHECK: cmpl $49
+; CHECK: jg
+; CHECK: cmpl $30
+; CHECK: jne
 ; CHECK: cmpl $20
 ; CHECK: jne
-; CHECK: cmpl $40
-; CHECK: je
 ; CHECK: cmpl $50
 ; CHECK: jne
-; CHECK: cmpl $30
+; CHECK: cmpl $40
 ; CHECK: jne
 ; CHECK: cmpl $60
 ; CHECK: jne
