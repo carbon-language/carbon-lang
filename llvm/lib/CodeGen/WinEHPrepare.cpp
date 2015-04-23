@@ -696,10 +696,6 @@ bool WinEHPrepare::prepareExceptionHandlers(
       Invoke->setUnwindDest(NewLPadBB);
     }
 
-    // If anyone is still using the old landingpad value, just give them undef
-    // instead. The eh pointer and selector values are not real.
-    LPad->replaceAllUsesWith(UndefValue::get(LPad->getType()));
-
     // Replace the mapping of any nested landing pad that previously mapped
     // to this landing pad with a referenced to the cloned version.
     for (auto &LPadPair : NestedLPtoOriginalLP) {
@@ -709,11 +705,26 @@ bool WinEHPrepare::prepareExceptionHandlers(
       }
     }
 
-    // Replace uses of the old lpad in phis with this block and delete the old
-    // block.
-    LPadBB->replaceSuccessorsPhiUsesWith(NewLPadBB);
-    LPadBB->getTerminator()->eraseFromParent();
-    new UnreachableInst(LPadBB->getContext(), LPadBB);
+    // Replace all extracted values with undef and ultimately replace the
+    // landingpad with undef.
+    // FIXME: This doesn't handle SEH GetExceptionCode(). For now, we just give
+    // out undef until we figure out the codegen support.
+    SmallVector<Instruction *, 4> Extracts;
+    for (User *U : LPad->users()) {
+      auto *E = dyn_cast<ExtractValueInst>(U);
+      if (!E)
+        continue;
+      assert(E->getNumIndices() == 1 &&
+             "Unexpected operation: extracting both landing pad values");
+      unsigned Idx = E->getIndices()[0];
+      assert(Idx == 0 || Idx == 1);
+      Extracts.push_back(E);
+    }
+    for (Instruction *E : Extracts) {
+      E->replaceAllUsesWith(UndefValue::get(E->getType()));
+      E->eraseFromParent();
+    }
+    LPad->replaceAllUsesWith(UndefValue::get(LPad->getType()));
 
     // Add a call to describe the actions for this landing pad.
     std::vector<Value *> ActionArgs;
