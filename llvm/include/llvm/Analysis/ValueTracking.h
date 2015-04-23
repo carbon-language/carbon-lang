@@ -186,6 +186,13 @@ namespace llvm {
   /// are lifetime markers.
   bool onlyUsedByLifetimeMarkers(const Value *V);
 
+  /// isDereferenceablePointer - Return true if this is always a dereferenceable 
+  /// pointer.
+  ///
+  /// Test if this value is always a pointer to allocated and suitably aligned
+  /// memory for a simple load or store.
+  bool isDereferenceablePointer(const Value *V, const DataLayout &DL);
+  
   /// isSafeToSpeculativelyExecute - Return true if the instruction does not
   /// have any effects besides calculating the result and does not have
   /// undefined behavior.

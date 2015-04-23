@@ -10,6 +10,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InstIterator.h"
@@ -53,7 +54,7 @@ bool MemDerefPrinter::runOnFunction(Function &F) {
   for (auto &I: inst_range(F)) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *PO = LI->getPointerOperand();
-      if (PO->isDereferenceablePointer(DL))
+      if (isDereferenceablePointer(PO, DL))
         Vec.push_back(PO);
     }
   }

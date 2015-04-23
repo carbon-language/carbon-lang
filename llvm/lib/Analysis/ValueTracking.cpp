@@ -31,6 +31,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/Statepoint.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
@@ -2807,6 +2808,145 @@ bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
   return true;
 }
 
+static bool isDereferenceableFromAttribute(const Value *BV, APInt Offset,
+                                           Type *Ty, const DataLayout &DL) {
+  assert(Offset.isNonNegative() && "offset can't be negative");
+  assert(Ty->isSized() && "must be sized");
+  
+  APInt DerefBytes(Offset.getBitWidth(), 0);
+  if (const Argument *A = dyn_cast<Argument>(BV)) {
+    DerefBytes = A->getDereferenceableBytes();
+  } else if (auto CS = ImmutableCallSite(BV)) {
+    DerefBytes = CS.getDereferenceableBytes(0);
+  }
+  
+  if (DerefBytes.getBoolValue())
+    if (DerefBytes.uge(Offset + DL.getTypeStoreSize(Ty)))
+      return true;
+  
+  return false;
+}
+
+static bool isDereferenceableFromAttribute(const Value *V, 
+                                           const DataLayout &DL) {
+  Type *VTy = V->getType();
+  Type *Ty = VTy->getPointerElementType();
+  if (!Ty->isSized())
+    return false;
+  
+  APInt Offset(DL.getTypeStoreSizeInBits(VTy), 0);
+  return isDereferenceableFromAttribute(V, Offset, Ty, DL);
+}
+
+/// Return true if Value is always a dereferenceable pointer.
+///
+/// Test if V is always a pointer to allocated and suitably aligned memory for
+/// a simple load or store.
+static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
+                                     SmallPtrSetImpl<const Value *> &Visited) {
+  // Note that it is not safe to speculate into a malloc'd region because
+  // malloc may return null.
+
+  // These are obviously ok.
+  if (isa<AllocaInst>(V)) return true;
+
+  // It's not always safe to follow a bitcast, for example:
+  //   bitcast i8* (alloca i8) to i32*
+  // would result in a 4-byte load from a 1-byte alloca. However,
+  // if we're casting from a pointer from a type of larger size
+  // to a type of smaller size (or the same size), and the alignment
+  // is at least as large as for the resulting pointer type, then
+  // we can look through the bitcast.
+  if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
+    Type *STy = BC->getSrcTy()->getPointerElementType(),
+         *DTy = BC->getDestTy()->getPointerElementType();
+    if (STy->isSized() && DTy->isSized() &&
+        (DL.getTypeStoreSize(STy) >= DL.getTypeStoreSize(DTy)) &&
+        (DL.getABITypeAlignment(STy) >= DL.getABITypeAlignment(DTy)))
+      return isDereferenceablePointer(BC->getOperand(0), DL, Visited);
+  }
+
+  // Global variables which can't collapse to null are ok.
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    return !GV->hasExternalWeakLinkage();
+
+  // byval arguments are okay.
+  if (const Argument *A = dyn_cast<Argument>(V))
+    if (A->hasByValAttr())
+      return true;
+    
+  if (isDereferenceableFromAttribute(V, DL))
+    return true;
+
+  // For GEPs, determine if the indexing lands within the allocated object.
+  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+    // Conservatively require that the base pointer be fully dereferenceable.
+    if (!Visited.insert(GEP->getOperand(0)).second)
+      return false;
+    if (!isDereferenceablePointer(GEP->getOperand(0), DL, Visited))
+      return false;
+    // Check the indices.
+    gep_type_iterator GTI = gep_type_begin(GEP);
+    for (User::const_op_iterator I = GEP->op_begin()+1,
+         E = GEP->op_end(); I != E; ++I) {
+      Value *Index = *I;
+      Type *Ty = *GTI++;
+      // Struct indices can't be out of bounds.
+      if (isa<StructType>(Ty))
+        continue;
+      ConstantInt *CI = dyn_cast<ConstantInt>(Index);
+      if (!CI)
+        return false;
+      // Zero is always ok.
+      if (CI->isZero())
+        continue;
+      // Check to see that it's within the bounds of an array.
+      ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+      if (!ATy)
+        return false;
+      if (CI->getValue().getActiveBits() > 64)
+        return false;
+      if (CI->getZExtValue() >= ATy->getNumElements())
+        return false;
+    }
+    // Indices check out; this is dereferenceable.
+    return true;
+  }
+
+  // For gc.relocate, look through relocations
+  if (const IntrinsicInst *I = dyn_cast<IntrinsicInst>(V))
+    if (I->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
+      GCRelocateOperands RelocateInst(I);
+      return isDereferenceablePointer(RelocateInst.derivedPtr(), DL, Visited);
+    }
+
+  if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
+    return isDereferenceablePointer(ASC->getOperand(0), DL, Visited);
+
+  // If we don't know, assume the worst.
+  return false;
+}
+
+bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL) {
+  // When dereferenceability information is provided by a dereferenceable
+  // attribute, we know exactly how many bytes are dereferenceable. If we can
+  // determine the exact offset to the attributed variable, we can use that
+  // information here.
+  Type *VTy = V->getType();
+  Type *Ty = VTy->getPointerElementType();
+  if (Ty->isSized()) {
+    APInt Offset(DL.getTypeStoreSizeInBits(VTy), 0);
+    const Value *BV = V->stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
+    
+    if (Offset.isNonNegative())
+      if (isDereferenceableFromAttribute(BV, Offset, Ty, DL))
+        return true;
+  }
+
+  SmallPtrSet<const Value *, 32> Visited;
+  return ::isDereferenceablePointer(V, DL, Visited);
+}
+
 bool llvm::isSafeToSpeculativelyExecute(const Value *V) {
   const Operator *Inst = dyn_cast<Operator>(V);
   if (!Inst)
@@ -2854,7 +2994,7 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V) {
         LI->getParent()->getParent()->hasFnAttribute(Attribute::SanitizeThread))
       return false;
     const DataLayout &DL = LI->getModule()->getDataLayout();
-    return LI->getPointerOperand()->isDereferenceablePointer(DL);
+    return isDereferenceablePointer(LI->getPointerOperand(), DL);
   }
   case Instruction::Call: {
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
