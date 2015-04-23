@@ -370,7 +370,8 @@ public:
 
   LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout &DL,
                  const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                 DominatorTree *DT, const ValueToValueMap &Strides);
+                 DominatorTree *DT, LoopInfo *LI,
+                 const ValueToValueMap &Strides);
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.
@@ -467,6 +468,7 @@ private:
   const TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   DominatorTree *DT;
+  LoopInfo *LI;
 
   unsigned NumLoads;
   unsigned NumStores;
@@ -541,6 +543,7 @@ private:
   const TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   DominatorTree *DT;
+  LoopInfo *LI;
 };
 } // End llvm namespace
 

@@ -17,6 +17,7 @@
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
@@ -2737,6 +2738,32 @@ uint64_t llvm::GetStringLength(Value *V) {
   return Len == ~0ULL ? 1 : Len;
 }
 
+/// \brief \p PN defines a loop-variant pointer to an object.  Check if the
+/// previous iteration of the loop was referring to the same object as \p PN.
+static bool isSameUnderlyingObjectInLoop(PHINode *PN, LoopInfo *LI) {
+  // Find the loop-defined value.
+  Loop *L = LI->getLoopFor(PN->getParent());
+  if (PN->getNumIncomingValues() != 2)
+    return true;
+
+  // Find the value from previous iteration.
+  auto *PrevValue = dyn_cast<Instruction>(PN->getIncomingValue(0));
+  if (!PrevValue || LI->getLoopFor(PrevValue->getParent()) != L)
+    PrevValue = dyn_cast<Instruction>(PN->getIncomingValue(1));
+  if (!PrevValue || LI->getLoopFor(PrevValue->getParent()) != L)
+    return true;
+
+  // If a new pointer is loaded in the loop, the pointer references a different
+  // object in every iteration.  E.g.:
+  //    for (i)
+  //       int *p = a[i];
+  //       ...
+  if (auto *Load = dyn_cast<LoadInst>(PrevValue))
+    if (!L->isLoopInvariant(Load->getPointerOperand()))
+      return false;
+  return true;
+}
+
 Value *llvm::GetUnderlyingObject(Value *V, const DataLayout &DL,
                                  unsigned MaxLookup) {
   if (!V->getType()->isPointerTy())
@@ -2768,7 +2795,8 @@ Value *llvm::GetUnderlyingObject(Value *V, const DataLayout &DL,
 }
 
 void llvm::GetUnderlyingObjects(Value *V, SmallVectorImpl<Value *> &Objects,
-                                const DataLayout &DL, unsigned MaxLookup) {
+                                const DataLayout &DL, LoopInfo *LI,
+                                unsigned MaxLookup) {
   SmallPtrSet<Value *, 4> Visited;
   SmallVector<Value *, 4> Worklist;
   Worklist.push_back(V);
@@ -2786,8 +2814,20 @@ void llvm::GetUnderlyingObjects(Value *V, SmallVectorImpl<Value *> &Objects,
     }
 
     if (PHINode *PN = dyn_cast<PHINode>(P)) {
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        Worklist.push_back(PN->getIncomingValue(i));
+      // If this PHI changes the underlying object in every iteration of the
+      // loop, don't look through it.  Consider:
+      //   int **A;
+      //   for (i) {
+      //     Prev = Curr;     // Prev = PHI (Prev_0, Curr)
+      //     Curr = A[i];
+      //     *Prev, *Curr;
+      //
+      // Prev is tracking Curr one iteration behind so they refer to different
+      // underlying objects.
+      if (!LI || !LI->isLoopHeader(PN->getParent()) ||
+          isSameUnderlyingObjectInLoop(PN, LI))
+        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+          Worklist.push_back(PN->getIncomingValue(i));
       continue;
     }
 

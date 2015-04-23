@@ -28,6 +28,7 @@ namespace llvm {
   class AssumptionCache;
   class DominatorTree;
   class TargetLibraryInfo;
+  class LoopInfo;
 
   /// Determine which bits of V are known to be either zero or one and return
   /// them in the KnownZero/KnownOne bit sets.
@@ -176,11 +177,37 @@ namespace llvm {
     return GetUnderlyingObject(const_cast<Value *>(V), DL, MaxLookup);
   }
 
-  /// GetUnderlyingObjects - This method is similar to GetUnderlyingObject
-  /// except that it can look through phi and select instructions and return
-  /// multiple objects.
+  /// \brief This method is similar to GetUnderlyingObject except that it can
+  /// look through phi and select instructions and return multiple objects.
+  ///
+  /// If LoopInfo is passed, loop phis are further analyzed.  If a pointer
+  /// accesses different objects in each iteration, we don't look through the
+  /// phi node. E.g. consider this loop nest:
+  ///
+  ///   int **A;
+  ///   for (i)
+  ///     for (j) {
+  ///        A[i][j] = A[i-1][j] * B[j]
+  ///     }
+  ///
+  /// This is transformed by Load-PRE to stash away A[i] for the next iteration
+  /// of the outer loop:
+  ///
+  ///   Curr = A[0];          // Prev_0
+  ///   for (i: 1..N) {
+  ///     Prev = Curr;        // Prev = PHI (Prev_0, Curr)
+  ///     Curr = A[i];
+  ///     for (j: 0..N) {
+  ///        Curr[j] = Prev[j] * B[j]
+  ///     }
+  ///   }
+  ///
+  /// Since A[i] and A[i-1] are independent pointers, getUnderlyingObjects
+  /// should not assume that Curr and Prev share the same underlying object thus
+  /// it shouldn't look through the phi above.
   void GetUnderlyingObjects(Value *V, SmallVectorImpl<Value *> &Objects,
-                            const DataLayout &DL, unsigned MaxLookup = 6);
+                            const DataLayout &DL, LoopInfo *LI = nullptr,
+                            unsigned MaxLookup = 6);
 
   /// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
   /// are lifetime markers.

@@ -199,9 +199,9 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA,
+  AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA, LoopInfo *LI,
                  MemoryDepChecker::DepCandidates &DA)
-      : DL(Dl), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
+      : DL(Dl), AST(*AA), LI(LI), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
   void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
@@ -260,6 +260,8 @@ private:
   /// An alias set tracker to partition the access set by underlying object and
   //intrinsic property (such as TBAA metadata).
   AliasSetTracker AST;
+
+  LoopInfo *LI;
 
   /// Sets of potentially dependent accesses - members of one set share an
   /// underlying pointer. The set "CheckDeps" identfies which sets really need a
@@ -477,7 +479,9 @@ void AccessAnalysis::processMemAccesses() {
           // underlying object.
           typedef SmallVector<Value *, 16> ValueVector;
           ValueVector TempObjects;
-          GetUnderlyingObjects(Ptr, TempObjects, DL);
+
+          GetUnderlyingObjects(Ptr, TempObjects, DL, LI);
+          DEBUG(dbgs() << "Underlying objects for pointer " << *Ptr << "\n");
           for (Value *UnderlyingObj : TempObjects) {
             UnderlyingObjToAccessMap::iterator Prev =
                 ObjToLastAccess.find(UnderlyingObj);
@@ -485,6 +489,7 @@ void AccessAnalysis::processMemAccesses() {
               DepCands.unionSets(Access, Prev->second);
 
             ObjToLastAccess[UnderlyingObj] = Access;
+            DEBUG(dbgs() << "  " << *UnderlyingObj << "\n");
           }
         }
       }
@@ -1035,7 +1040,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
   MemoryDepChecker::DepCandidates DependentAccesses;
   AccessAnalysis Accesses(TheLoop->getHeader()->getModule()->getDataLayout(),
-                          AA, DependentAccesses);
+                          AA, LI, DependentAccesses);
 
   // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
   // multiple times on the same object. If the ptr is accessed twice, once
@@ -1306,10 +1311,10 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const DataLayout &DL,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                               DominatorTree *DT,
+                               DominatorTree *DT, LoopInfo *LI,
                                const ValueToValueMap &Strides)
     : DepChecker(SE, L), NumComparisons(0), TheLoop(L), SE(SE), DL(DL),
-      TLI(TLI), AA(AA), DT(DT), NumLoads(0), NumStores(0),
+      TLI(TLI), AA(AA), DT(DT), LI(LI), NumLoads(0), NumStores(0),
       MaxSafeDepDistBytes(-1U), CanVecMem(false),
       StoreToLoopInvariantAddress(false) {
   if (canAnalyzeLoop())
@@ -1356,7 +1361,8 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
 
   if (!LAI) {
     const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
-    LAI = llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, Strides);
+    LAI = llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, LI,
+                                            Strides);
 #ifndef NDEBUG
     LAI->NumSymbolicStrides = Strides.size();
 #endif
@@ -1367,7 +1373,6 @@ LoopAccessAnalysis::getInfo(Loop *L, const ValueToValueMap &Strides) {
 void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
   LoopAccessAnalysis &LAA = *const_cast<LoopAccessAnalysis *>(this);
 
-  LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   ValueToValueMap NoSymbolicStrides;
 
   for (Loop *TopLevelLoop : *LI)
@@ -1384,6 +1389,7 @@ bool LoopAccessAnalysis::runOnFunction(Function &F) {
   TLI = TLIP ? &TLIP->getTLI() : nullptr;
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
   return false;
 }
