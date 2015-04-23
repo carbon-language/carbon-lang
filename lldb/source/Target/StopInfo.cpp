@@ -349,6 +349,7 @@ protected:
             }
 
             BreakpointSiteSP bp_site_sp (thread_sp->GetProcess()->GetBreakpointSiteList().FindByID (m_value));
+            std::unordered_set<break_id_t> precondition_breakpoints;
 
             if (bp_site_sp)
             {
@@ -360,7 +361,9 @@ protected:
                 }
                 else
                 {
-                    // We go through each location, and test first its condition.  If the condition says to stop,
+                    // We go through each location, and test first its precondition - this overrides everything.  Note,
+                    // we only do this once per breakpoint - not once per location...
+                    // Then check the condition.  If the condition says to stop,
                     // then we run the callback for that location.  If that callback says to stop as well, then 
                     // we set m_should_stop to true; we are going to stop.
                     // But we still want to give all the breakpoints whose conditions say we are going to stop a
@@ -456,7 +459,19 @@ protected:
                             }
                             continue;
                         }
-                        // First run the condition for the breakpoint.  If that says we should stop, then we'll run
+
+                        // First run the precondition, but since the precondition is per breakpoint, only run it once
+                        // per breakpoint.
+                        std::pair<std::unordered_set<break_id_t>::iterator, bool> result
+                                = precondition_breakpoints.insert(bp_loc_sp->GetBreakpoint().GetID());
+                        if (!result.second)
+                            continue;
+
+                        bool precondition_result = bp_loc_sp->GetBreakpoint().EvaluatePrecondition(context);
+                        if (!precondition_result)
+                            continue;
+
+                        // Next run the condition for the breakpoint.  If that says we should stop, then we'll run
                         // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.                    
 
                         if (bp_loc_sp->GetConditionText() != NULL)
