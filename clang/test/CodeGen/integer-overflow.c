@@ -52,8 +52,8 @@ void test1() {
   
   // DEFAULT: add nsw i32 {{.*}}, -1
   // WRAPV: add i32 {{.*}}, -1
-  // TRAPV: llvm.sadd.with.overflow.i32({{.*}}, i32 -1)
-  // CATCH_UB: llvm.sadd.with.overflow.i32({{.*}}, i32 -1)
+  // TRAPV: llvm.ssub.with.overflow.i32({{.*}}, i32 1)
+  // CATCH_UB: llvm.ssub.with.overflow.i32({{.*}}, i32 1)
   // TRAPV_HANDLER: foo(
   --a;
   
