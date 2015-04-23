@@ -322,9 +322,6 @@ namespace process_linux {
         NativeThreadProtocolSP
         AddThread (lldb::tid_t thread_id);
 
-        NativeThreadProtocolSP
-        GetOrCreateThread (lldb::tid_t thread_id, bool &created);
-
         Error
         GetSoftwareBreakpointPCOffset (NativeRegisterContextSP context_sp, uint32_t &actual_opcode_size);
 

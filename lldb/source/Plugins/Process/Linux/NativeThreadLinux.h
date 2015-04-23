@@ -54,9 +54,6 @@ namespace process_linux {
         // Interface for friend classes
         // ---------------------------------------------------------------------
         void
-        SetLaunching ();
-
-        void
         SetRunning ();
 
         void

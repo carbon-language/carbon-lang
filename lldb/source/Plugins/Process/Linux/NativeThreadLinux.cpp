@@ -300,20 +300,6 @@ NativeThreadLinux::RemoveWatchpoint (lldb::addr_t addr)
 }
 
 void
-NativeThreadLinux::SetLaunching ()
-{
-    const StateType new_state = StateType::eStateLaunching;
-    MaybeLogStateChange (new_state);
-    m_state = new_state;
-
-    // Also mark it as stopped since launching temporarily stops the newly created thread
-    // in the ptrace machinery.
-    m_stop_info.reason = StopReason::eStopReasonSignal;
-    m_stop_info.details.signal.signo = SIGSTOP;
-}
-
-
-void
 NativeThreadLinux::SetRunning ()
 {
     const StateType new_state = StateType::eStateRunning;
