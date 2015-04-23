@@ -55,10 +55,6 @@ namespace llvm {
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
 
-    /// True if the name should be quoted if "unacceptable" characters are used
-    /// in the name.
-    unsigned NoQuoting : 1;
-
     /// \brief True if this symbol can be redefined.
     unsigned IsRedefinable : 1;
 
@@ -68,10 +64,9 @@ namespace llvm {
   private:  // MCContext creates and uniques these.
     friend class MCExpr;
     friend class MCContext;
-    MCSymbol(StringRef name, bool isTemporary, bool noQuoting)
+    MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(nullptr), Value(nullptr),
-        IsTemporary(isTemporary), NoQuoting(noQuoting),
-        IsRedefinable(false), IsUsed(false) {}
+        IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false) {}
 
     MCSymbol(const MCSymbol&) = delete;
     void operator=(const MCSymbol&) = delete;
