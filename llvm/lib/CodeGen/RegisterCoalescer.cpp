@@ -194,7 +194,7 @@ namespace {
 
     /// If the source of a copy is defined by a
     /// trivial computation, replace the copy by rematerialize the definition.
-    bool reMaterializeTrivialDef(CoalescerPair &CP, MachineInstr *CopyMI,
+    bool reMaterializeTrivialDef(const CoalescerPair &CP, MachineInstr *CopyMI,
                                  bool &IsDefCopy);
 
     /// Return true if a copy involving a physreg should be joined.
@@ -851,7 +851,7 @@ static bool definesFullReg(const MachineInstr &MI, unsigned Reg) {
   return false;
 }
 
-bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
+bool RegisterCoalescer::reMaterializeTrivialDef(const CoalescerPair &CP,
                                                 MachineInstr *CopyMI,
                                                 bool &IsDefCopy) {
   IsDefCopy = false;
@@ -929,6 +929,29 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   TII->reMaterialize(*MBB, MII, DstReg, SrcIdx, DefMI, *TRI);
   MachineInstr *NewMI = std::prev(MII);
 
+  // A situation like the following:
+  //     %vreg0:subX = instr           ; DefMI
+  //     %vregY      = copy %vreg:subX ; CopyMI
+  // does not need subregisters/regclass widening after rematerialization, just
+  // do:
+  //     %vregY = instr
+  const TargetRegisterClass *NewRC = CP.getNewRC();
+  if (DstIdx != 0) {
+    MachineOperand &DefMO = NewMI->getOperand(0);
+    if (DefMO.getSubReg() == DstIdx) {
+      assert(SrcIdx == 0 && CP.isFlipped()
+             && "Shouldn't have SrcIdx+DstIdx at this point");
+      const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
+      const TargetRegisterClass *CommonRC =
+        TRI->getCommonSubClass(DefRC, DstRC);
+      if (CommonRC != nullptr) {
+        NewRC = CommonRC;
+        DstIdx = 0;
+        DefMO.setSubReg(0);
+      }
+    }
+  }
+
   LIS->ReplaceMachineInstrInMaps(CopyMI, NewMI);
   CopyMI->eraseFromParent();
   ErasedInstrs.insert(CopyMI);
@@ -948,7 +971,6 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   }
 
   if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    const TargetRegisterClass *NewRC = CP.getNewRC();
     unsigned NewIdx = NewMI->getOperand(0).getSubReg();
 
     if (DefRC != nullptr) {
