@@ -17,6 +17,7 @@
 // In-house headers:
 #include "MIUtilSystemWindows.h"
 #include "MICmnResources.h"
+#include "MIUtilFileStd.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMIUtilSystemWindows constructor.
@@ -133,7 +134,8 @@ CMIUtilSystemWindows::GetExecutablesPath(CMIUtilString &vrwFileNamePath) const
 bool
 CMIUtilSystemWindows::GetLogFilesPath(CMIUtilString &vrwFileNamePath) const
 {
-    return GetExecutablesPath(vrwFileNamePath);
+    vrwFileNamePath = CMIUtilString(".");
+    return MIstatus::success;
 }
 
 #endif // #if defined( _MSC_VER )

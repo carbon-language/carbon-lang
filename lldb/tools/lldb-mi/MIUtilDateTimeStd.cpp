@@ -71,3 +71,21 @@ CMIUtilDateTimeStd::GetTime(void)
 
     return strTime;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve system local current date and time in yyyy-MM-dd--HH-mm-ss format for log file names.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - Text description.
+// Throws:  None.
+//--
+CMIUtilString
+CMIUtilDateTimeStd::GetDateTimeLogFilename(void)
+{
+    std::time(&m_rawTime);
+    const std::tm *pTi = std::localtime(&m_rawTime);
+    const CMIUtilString strTime(CMIUtilString::Format("%d%02d%02d%02d%02d%02d", pTi->tm_year + 1900, pTi->tm_mon,
+                                                      pTi->tm_mday, pTi->tm_hour, pTi->tm_min, pTi->tm_sec));
+
+    return strTime;
+}

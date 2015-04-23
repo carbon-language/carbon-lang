@@ -427,6 +427,7 @@ CMIDriverMgr::DriverGetTheDebugger(void)
 //              --versionLong
 //              --log
 //              --executable
+//              --log-dir
 //          The above arguments are not handled by any driver object except for --executable.
 //          The options --interpreter and --executable in code act very similar. The
 //          --executable is necessary to differentiate whither the MI Driver is being using
@@ -436,7 +437,8 @@ CMIDriverMgr::DriverGetTheDebugger(void)
 //          Driver is being called the command line and that the executable argument is indeed
 //          a specified executable an so actions commands to set up the executable for a
 //          debug session. Using --interpreter on the commnd line does not action additional
-//          commands to initialise a debug session and so be able to launch the process.
+//          commands to initialise a debug session and so be able to launch the process. The directory
+//          where the log file is created is specified using --log-dir.
 // Type:    Method.
 // Args:    argc        - (R)   An integer that contains the count of arguments that follow in
 //                              argv. The argc parameter is always greater than or equal to 1.
@@ -483,7 +485,9 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
     bool bHaveArgVersion = false;
     bool bHaveArgVersionLong = false;
     bool bHaveArgLog = false;
+    bool bHaveArgLogDir = false;
     bool bHaveArgHelp = false;
+    CMIUtilString strLogDir;
 
     bHaveArgInterpret = true;
     if (bHaveArgs)
@@ -512,6 +516,11 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
             {
                 bHaveArgLog = true;
             }
+            if (0 == strArg.compare(0,10,"--log-dir="))
+            {
+                strLogDir = strArg.substr(10,CMIUtilString::npos);
+                bHaveArgLogDir = true;
+            }
             if ((0 == strArg.compare("--help")) || (0 == strArg.compare("-h")))
             {
                 bHaveArgHelp = true;
@@ -522,6 +531,11 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
     if (bHaveArgLog)
     {
         CMICmnLog::Instance().SetEnabled(true);
+    }
+
+    if (bHaveArgLogDir)
+    {
+        bOk = bOk && CMICmnLogMediumFile::Instance().SetDirectory(strLogDir);
     }
 
     // Todo: Remove this output when MI is finished. It is temporary to persuade Ecllipse plugin to work.
@@ -614,6 +628,7 @@ CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
         MIRSRC(IDE_MI_APP_ARG_INTERPRETER),
         MIRSRC(IDE_MI_APP_ARG_EXECUTEABLE),
         CMIUtilString::Format(MIRSRC(IDE_MI_APP_ARG_APP_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()),
+        MIRSRC(IDE_MI_APP_ARG_APP_LOG_DIR),
         MIRSRC(IDE_MI_APP_ARG_EXECUTABLE),
         MIRSRC(IDS_CMD_QUIT_HELP),
         MIRSRC(IDE_MI_APP_ARG_EXAMPLE)};

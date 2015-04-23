@@ -27,7 +27,9 @@
 //--
 CMICmnLogMediumFile::CMICmnLogMediumFile(void)
     : m_constThisMediumName(MIRSRC(IDS_MEDIUMFILE_NAME))
-    , m_constMediumFileName("lldb-mi-log.txt")
+    , m_constMediumFileNameFormat("lldb-mi-%s.log")
+    , m_strMediumFileName(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
+    , m_strMediumFileDirectory(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
     , m_fileNamePath(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
     , m_eVerbosityType(CMICmnLog::eLogVerbosity_Log)
     , m_strDate(CMIUtilDateTimeStd().GetDate())
@@ -72,7 +74,8 @@ CMICmnLogMediumFile::Instance(void)
 bool
 CMICmnLogMediumFile::Initialize(void)
 {
-    m_bInitialized = FileFormFileNamePath();
+    m_bInitialized = CMIUtilSystem().GetLogFilesPath(m_strMediumFileDirectory);
+    m_bInitialized &= FileFormFileNamePath();
 
     return m_bInitialized;
 }
@@ -213,21 +216,15 @@ CMICmnLogMediumFile::FileFormFileNamePath(void)
 
     m_fileNamePath = MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH);
 
-    CMIUtilString strPathName;
-    if (CMIUtilSystem().GetLogFilesPath(strPathName))
+    if (m_strMediumFileDirectory.compare(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH)) != 0)
     {
-        const CMIUtilString strPath = CMIUtilFileStd::StripOffFileName(strPathName);
+        CMIUtilDateTimeStd date;
+        m_strMediumFileName = CMIUtilString::Format(m_constMediumFileNameFormat.c_str(), date.GetDateTimeLogFilename().c_str());
 
-// ToDo: Review this LINUX log file quick fix so not hidden
-// AD:
-//      Linux was creating a log file here called '.\log.txt'.  The '.' on linux
-//      signifies that this file is 'hidden' and not normally visible.  A quick fix
-//      is to remove the path component all together.  Linux also normally uses '/'
-//      as directory separators, again leading to the problem of the hidden log.
 #if defined(_MSC_VER)
-        m_fileNamePath = CMIUtilString::Format("%s\\%s", strPath.c_str(), m_constMediumFileName.c_str());
+        m_fileNamePath = CMIUtilString::Format("%s\\%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
 #else
-        m_fileNamePath = CMIUtilString::Format("%s", m_constMediumFileName.c_str());
+        m_fileNamePath = CMIUtilString::Format("%s/%s", m_strMediumFileDirectory.c_str(), m_strMediumFileName.c_str());
 #endif // defined ( _MSC_VER )
 
         return MIstatus::success;
@@ -261,7 +258,7 @@ CMICmnLogMediumFile::GetFileNamePath(void) const
 const CMIUtilString &
 CMICmnLogMediumFile::GetFileName(void) const
 {
-    return m_constMediumFileName;
+    return m_strMediumFileName;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -425,4 +422,20 @@ const CMIUtilString &
 CMICmnLogMediumFile::GetLineReturn(void) const
 {
     return m_file.GetLineReturn();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Set the diretory to place the log file.
+// Type:    Method.
+// Args:    vPath   - (R) Path to log.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLogMediumFile::SetDirectory(const CMIUtilString &vPath)
+{
+    m_strMediumFileDirectory = vPath;
+
+    return FileFormFileNamePath();
 }

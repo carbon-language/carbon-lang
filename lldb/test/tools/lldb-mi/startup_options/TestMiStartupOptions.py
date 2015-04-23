@@ -127,6 +127,79 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
+    
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_log_option(self):
+        """Test that 'lldb-mi --log' creates a log file in the current directory."""
+    
+        logDirectory = "."
+        self.spawnLldbMi(args = "%s --log" % self.myexe)
 
+        # Test that lldb-mi is ready after startup
+        self.expect(self.child_prompt, exactly = True)
+
+        # Test that the executable is loaded when file was specified
+        self.expect("-file-exec-and-symbols \"%s\"" % self.myexe)
+        self.expect("\^done")
+
+        # Test that lldb-mi is ready when executable was loaded
+        self.expect(self.child_prompt, exactly = True)
+
+        # Run
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"exited-normally\"")
+
+        # Check log file is created
+        import glob,os
+        logFile = glob.glob(logDirectory + "/lldb-mi-*.log")
+
+        if not logFile:
+            self.fail("log file not found")
+
+        # Delete log
+        for f in logFile:
+            os.remove(f)
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_log_directory_option(self):
+        """Test that 'lldb-mi --log --log-dir' creates a log file in the directory specified by --log-dir."""
+    
+        # Create log in temp directory
+        import tempfile
+        logDirectory = tempfile.gettempdir()
+
+        self.spawnLldbMi(args = "%s --log --log-dir=%s" % (self.myexe,logDirectory))
+
+        # Test that lldb-mi is ready after startup
+        self.expect(self.child_prompt, exactly = True)
+
+        # Test that the executable is loaded when file was specified
+        self.expect("-file-exec-and-symbols \"%s\"" % self.myexe)
+        self.expect("\^done")
+
+        # Test that lldb-mi is ready when executable was loaded
+        self.expect(self.child_prompt, exactly = True)
+
+        # Run
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"exited-normally\"")
+
+        # Check log file is created
+        import glob,os
+        logFile = glob.glob(logDirectory + "/lldb-mi-*.log")
+
+        if not logFile:
+            self.fail("log file not found")             
+   
+        # Delete log
+        for f in logFile:
+            os.remove(f)
+       
 if __name__ == '__main__':
     unittest2.main()

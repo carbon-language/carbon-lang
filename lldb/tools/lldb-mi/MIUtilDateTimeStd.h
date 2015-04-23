@@ -30,6 +30,7 @@ class CMIUtilDateTimeStd
 
     CMIUtilString GetDate(void);
     CMIUtilString GetTime(void);
+    CMIUtilString GetDateTimeLogFilename(void);
 
     // Overrideable:
   public:
