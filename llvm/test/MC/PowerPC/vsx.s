@@ -1,6 +1,10 @@
 # RUN: llvm-mc -triple powerpc64-unknown-linux-gnu --show-encoding %s | FileCheck -check-prefix=CHECK-BE %s
 # RUN: llvm-mc -triple powerpc64le-unknown-linux-gnu --show-encoding %s | FileCheck -check-prefix=CHECK-LE %s
 
+# CHECK-BE: xxswapd 7, 63                      # encoding: [0xf0,0xff,0xfa,0x56]
+# CHECK-LE: xxswapd 7, 63                      # encoding: [0x56,0xfa,0xff,0xf0]
+            xxswapd %vs7, %vs63
+
 # CHECK-BE: lxsdx 39, 5, 31                     # encoding: [0x7c,0xe5,0xfc,0x99]
 # CHECK-LE: lxsdx 39, 5, 31                     # encoding: [0x99,0xfc,0xe5,0x7c]
             lxsdx 39, 5, 31

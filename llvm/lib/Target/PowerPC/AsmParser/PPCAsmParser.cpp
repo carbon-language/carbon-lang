@@ -1219,9 +1219,17 @@ MatchRegisterName(const AsmToken &Tok, unsigned &RegNo, int64_t &IntVal) {
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = FRegs[IntVal];
       return false;
+    } else if (Name.startswith_lower("vs") &&
+               !Name.substr(2).getAsInteger(10, IntVal) && IntVal < 64) {
+      RegNo = VSRegs[IntVal];
+      return false;
     } else if (Name.startswith_lower("v") &&
                !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
       RegNo = VRegs[IntVal];
+      return false;
+    } else if (Name.startswith_lower("q") &&
+               !Name.substr(1).getAsInteger(10, IntVal) && IntVal < 32) {
+      RegNo = QFRegs[IntVal];
       return false;
     } else if (Name.startswith_lower("cr") &&
                !Name.substr(2).getAsInteger(10, IntVal) && IntVal < 8) {
