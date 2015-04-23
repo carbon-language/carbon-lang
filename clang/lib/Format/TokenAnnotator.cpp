@@ -2063,7 +2063,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.isOneOf(TT_TemplateCloser, TT_UnaryOperator) ||
       Left.is(tok::kw_operator))
     return false;
-  if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
+  if (Left.is(tok::equal) && !Right.isOneOf(tok::kw_default, tok::kw_delete) &&
+      Line.Type == LT_VirtualFunctionDecl)
     return false;
   if (Left.is(tok::l_paren) && Left.is(TT_AttributeParen))
     return false;
