@@ -236,6 +236,10 @@ bool JSONImporter::runOnScop(Scop &S) {
     // that stores the reference to the ScopStmt this schedule belongs to.
     m = isl_map_set_tuple_id(m, isl_dim_in,
                              isl_space_get_tuple_id(Space, isl_dim_set));
+    for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
+      isl_id *id = isl_space_get_dim_id(Space, isl_dim_param, i);
+      m = isl_map_set_dim_id(m, isl_dim_param, i, id);
+    }
     isl_space_free(Space);
     NewSchedule[*SI] = m;
     index++;
