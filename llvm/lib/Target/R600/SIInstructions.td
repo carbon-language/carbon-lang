@@ -1272,7 +1272,6 @@ defm V_CVT_U32_F32 : VOP1Inst <vop1<0x7>, "v_cvt_u32_f32",
 defm V_CVT_I32_F32 : VOP1Inst <vop1<0x8>, "v_cvt_i32_f32",
   VOP_I32_F32, fp_to_sint
 >;
-defm V_MOV_FED_B32 : VOP1Inst <vop1<0x9>, "v_mov_fed_b32", VOP_I32_I32>;
 defm V_CVT_F16_F32 : VOP1Inst <vop1<0xa>, "v_cvt_f16_f32",
   VOP_I32_F32, fp_to_f16
 >;
@@ -1408,6 +1407,7 @@ let SubtargetPredicate = isSICI in {
 
 let SchedRW = [WriteQuarterRate32] in {
 
+defm V_MOV_FED_B32 : VOP1InstSI <vop1<0x9>, "v_mov_fed_b32", VOP_I32_I32>;
 defm V_LOG_CLAMP_F32 : VOP1InstSI <vop1<0x26>, "v_log_clamp_f32", VOP_F32_F32>;
 defm V_RCP_CLAMP_F32 : VOP1InstSI <vop1<0x28>, "v_rcp_clamp_f32", VOP_F32_F32>;
 defm V_RCP_LEGACY_F32 : VOP1InstSI <vop1<0x29>, "v_rcp_legacy_f32", VOP_F32_F32>;
