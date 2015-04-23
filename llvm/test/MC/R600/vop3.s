@@ -1,5 +1,5 @@
 // RUN: llvm-mc -arch=amdgcn -show-encoding %s | FileCheck %s
-// RUN: llvm-mc -arch=amdgcn -show-encoding %s | FileCheck %s
+// RUN: llvm-mc -arch=amdgcn -mcpu=SI -show-encoding %s | FileCheck %s
 
 //===----------------------------------------------------------------------===//
 // VOPC Instructions
