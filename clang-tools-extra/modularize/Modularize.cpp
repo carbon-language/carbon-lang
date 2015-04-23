@@ -644,7 +644,7 @@ public:
     for (Preprocessor::macro_iterator M = PP.macro_begin(),
                                       MEnd = PP.macro_end();
          M != MEnd; ++M) {
-      Location Loc(SM, M->second->getLocation());
+      Location Loc(SM, M->second.getLatest()->getLocation());
       if (!Loc)
         continue;
 
