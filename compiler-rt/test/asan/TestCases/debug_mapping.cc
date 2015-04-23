@@ -8,7 +8,7 @@
 
 // printed because of verbosity=1
 // CHECK: SHADOW_SCALE: [[SCALE:[0-9]+]]
-// CHECK: SHADOW_OFFSET: [[OFFSET:[0-9]+]]
+// CHECK: SHADOW_OFFSET: [[OFFSET:[0-9a-f]+]]
 
 int main() {
   size_t scale, offset;
