@@ -580,6 +580,7 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
   // Handle EH_RETURN.
   if (RetOpc == Hexagon::EH_RETURN_JMPR) {
     MachineOperand &OffsetReg  = RetI->getOperand(0);
+    (void)OffsetReg; // Silence compiler warning.
     assert(OffsetReg.isReg() && "Offset should be in register!");
     BuildMI(MBB, InsertPt, DL, HII.get(Hexagon::L2_deallocframe));
     BuildMI(MBB, InsertPt, DL, HII.get(Hexagon::A2_add), SP)
@@ -818,6 +819,7 @@ void HexagonFrameLowering::eliminateCallFramePseudoInstr(MachineFunction &MF,
       MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const {
   MachineInstr &MI = *I;
   unsigned Opc = MI.getOpcode();
+  (void)Opc; // Silence compiler warning.
   assert((Opc == Hexagon::ADJCALLSTACKDOWN || Opc == Hexagon::ADJCALLSTACKUP) &&
          "Cannot handle this call frame pseudo instruction");
   MBB.erase(I);
@@ -993,7 +995,7 @@ void HexagonFrameLowering::processFunctionBeforeCalleeSavedScan(
 
 
 #ifndef NDEBUG
-void dump_registers(BitVector &Regs, const TargetRegisterInfo &TRI) {
+static void dump_registers(BitVector &Regs, const TargetRegisterInfo &TRI) {
   dbgs() << '{';
   for (int x = Regs.find_first(); x >= 0; x = Regs.find_next(x)) {
     unsigned R = x;
@@ -1007,6 +1009,7 @@ void dump_registers(BitVector &Regs, const TargetRegisterInfo &TRI) {
 bool HexagonFrameLowering::assignCalleeSavedSpillSlots(MachineFunction &MF,
       const TargetRegisterInfo *TRI, std::vector<CalleeSavedInfo> &CSI) const {
   const Function &F = *MF.getFunction();
+  (void)F; // Silence compiler warning.
   DEBUG(dbgs() << LLVM_FUNCTION_NAME << " on " << F.getName() << '\n');
   MachineFrameInfo *MFI = MF.getFrameInfo();
   BitVector SRegs(Hexagon::NUM_TARGET_REGS);

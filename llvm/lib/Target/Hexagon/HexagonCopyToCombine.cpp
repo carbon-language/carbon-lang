@@ -170,6 +170,8 @@ static bool areCombinableOperations(const TargetRegisterInfo *TRI,
                                     MachineInstr *LowRegInst) {
   unsigned HiOpc = HighRegInst->getOpcode();
   unsigned LoOpc = LowRegInst->getOpcode();
+  (void)HiOpc; // Fix compiler warning
+  (void)LoOpc; // Fix compiler warning
   assert((HiOpc == Hexagon::A2_tfr || HiOpc == Hexagon::A2_tfrsi) &&
          (LoOpc == Hexagon::A2_tfr || LoOpc == Hexagon::A2_tfrsi) &&
          "Assume individual instructions are of a combinable type");
