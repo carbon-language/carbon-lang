@@ -1377,17 +1377,27 @@ void MicrosoftCXXNameMangler::mangleArgumentType(QualType T,
   // e.g.
   // void (*x)(void) will not form a backreference with void x(void)
   void *TypePtr;
-  if (const DecayedType *DT = T->getAs<DecayedType>()) {
-    TypePtr = DT->getOriginalType().getCanonicalType().getAsOpaquePtr();
+  if (const auto *DT = T->getAs<DecayedType>()) {
+    QualType OriginalType = DT->getOriginalType();
+    // Decayed ConstantArrayType should be treated identically to decayed
+    // IncompleteArrayType.
+    if (const auto *CAT =
+            getASTContext().getAsConstantArrayType(OriginalType))
+      OriginalType = getASTContext().getIncompleteArrayType(
+          CAT->getElementType(), CAT->getSizeModifier(),
+          CAT->getIndexTypeCVRQualifiers());
+
+    TypePtr = OriginalType.getCanonicalType().getAsOpaquePtr();
     // If the original parameter was textually written as an array,
     // instead treat the decayed parameter like it's const.
     //
     // e.g.
     // int [] -> int * const
-    if (DT->getOriginalType()->isArrayType())
+    if (OriginalType->isArrayType())
       T = T.withConst();
-  } else
+  } else {
     TypePtr = T.getCanonicalType().getAsOpaquePtr();
+  }
 
   ArgBackRefMap::iterator Found = TypeBackReferences.find(TypePtr);
 

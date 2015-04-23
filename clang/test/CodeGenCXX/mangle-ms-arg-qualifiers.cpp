@@ -258,3 +258,8 @@ void mangle_yes_backref3(ptr_to_fun_type *const, void (**const)(void)) {}
 void mangle_yes_backref4(int *const __restrict, int *const __restrict) {}
 // CHECK: "\01?mangle_yes_backref4@@YAXQIAH0@Z"
 // X64:   "\01?mangle_yes_backref4@@YAXQEIAH0@Z"
+
+struct S {};
+void pr23325(const S[1], const S[]) {}
+// CHECK: "\01?pr23325@@YAXQBUS@@0@Z"
+// X64:   "\01?pr23325@@YAXQEBUS@@0@Z"
