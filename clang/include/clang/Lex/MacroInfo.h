@@ -24,6 +24,7 @@
 
 namespace clang {
 class Module;
+class ModuleMacro;
 class Preprocessor;
 
 /// \brief Encapsulates the data about a macro definition (e.g. its tokens).
@@ -350,29 +351,20 @@ protected:
   /// \brief True if this macro was imported from a module.
   bool IsImported : 1;
 
-  /// \brief For an imported directive, the number of modules whose macros are
-  /// overridden by this directive. Only used if IsImported.
-  unsigned NumOverrides : 26;
-
-  unsigned *getModuleDataStart();
-  const unsigned *getModuleDataStart() const {
-    return const_cast<MacroDirective*>(this)->getModuleDataStart();
+  struct ImportData {
+    ModuleMacro *ImportedFrom;
+  };
+  ImportData *getImportData();
+  const ImportData *getImportData() const {
+    return const_cast<MacroDirective*>(this)->getImportData();
   }
 
   MacroDirective(Kind K, SourceLocation Loc,
-                 unsigned ImportedFromModuleID = 0,
-                 ArrayRef<unsigned> Overrides = None)
+                 ModuleMacro *ImportedFrom = nullptr)
       : Previous(nullptr), Loc(Loc), MDKind(K), IsFromPCH(false),
-        IsAmbiguous(false), IsPublic(true), IsImported(ImportedFromModuleID),
-        NumOverrides(Overrides.size()) {
-    assert(NumOverrides == Overrides.size() && "too many overrides");
-    assert((IsImported || !NumOverrides) && "overrides for non-module macro");
-
-    if (IsImported) {
-      unsigned *Extra = getModuleDataStart();
-      *Extra++ = ImportedFromModuleID;
-      std::copy(Overrides.begin(), Overrides.end(), Extra);
-    }
+        IsAmbiguous(false), IsPublic(true), IsImported(ImportedFrom) {
+    if (IsImported)
+      getImportData()->ImportedFrom = ImportedFrom;
   }
 
 public:
@@ -400,21 +392,12 @@ public:
   /// Note that this is never the case for a VisibilityMacroDirective.
   bool isImported() const { return IsImported; }
 
-  /// \brief If this directive was imported from a module, get the submodule
-  /// whose directive this is. Note that this may be different from the module
-  /// that owns the MacroInfo for a DefMacroDirective due to #pragma pop_macro
-  /// and similar effects.
-  unsigned getOwningModuleID() const {
+  /// \brief If this directive was imported from a module, get the module
+  /// macro from which this directive was created.
+  ModuleMacro *getOwningModuleMacro() const {
     if (isImported())
-      return *getModuleDataStart();
+      return getImportData()->ImportedFrom;
     return 0;
-  }
-
-  /// \brief Get the module IDs of modules whose macros are overridden by this
-  /// directive. Only valid if this is an imported directive.
-  ArrayRef<unsigned> getOverriddenModules() const {
-    assert(IsImported && "can only get overridden modules for imported macro");
-    return llvm::makeArrayRef(getModuleDataStart() + 1, NumOverrides);
   }
 
   class DefInfo {
@@ -488,19 +471,20 @@ public:
 class DefMacroDirective : public MacroDirective {
   MacroInfo *Info;
 
-public:
-  explicit DefMacroDirective(MacroInfo *MI)
-      : MacroDirective(MD_Define, MI->getDefinitionLoc()), Info(MI) {
+  DefMacroDirective(MacroInfo *MI, SourceLocation Loc,
+                    ModuleMacro *ImportedFrom)
+      : MacroDirective(MD_Define, Loc, ImportedFrom), Info(MI) {
     assert(MI && "MacroInfo is null");
   }
 
-  DefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                    unsigned ImportedFromModuleID = 0,
-                    ArrayRef<unsigned> Overrides = None)
-      : MacroDirective(MD_Define, Loc, ImportedFromModuleID, Overrides),
-        Info(MI) {
-    assert(MI && "MacroInfo is null");
-  }
+public:
+  DefMacroDirective(MacroInfo *MI, SourceLocation Loc)
+      : DefMacroDirective(MI, Loc, nullptr) {}
+  explicit DefMacroDirective(MacroInfo *MI)
+      : DefMacroDirective(MI, MI->getDefinitionLoc()) {}
+  static DefMacroDirective *createImported(Preprocessor &PP, MacroInfo *MI,
+                                           SourceLocation Loc,
+                                           ModuleMacro *ImportedFrom);
 
   /// \brief The data for the macro definition.
   const MacroInfo *getInfo() const { return Info; }
@@ -521,13 +505,18 @@ public:
 
 /// \brief A directive for an undefined macro.
 class UndefMacroDirective : public MacroDirective  {
-public:
-  explicit UndefMacroDirective(SourceLocation UndefLoc,
-                               unsigned ImportedFromModuleID = 0,
-                               ArrayRef<unsigned> Overrides = None)
-      : MacroDirective(MD_Undefine, UndefLoc, ImportedFromModuleID, Overrides) {
-    assert((UndefLoc.isValid() || ImportedFromModuleID) && "Invalid UndefLoc!");
+  UndefMacroDirective(SourceLocation UndefLoc, ModuleMacro *ImportedFrom)
+      : MacroDirective(MD_Undefine, UndefLoc, ImportedFrom) {
+    // FIXME: We should have a valid UndefLoc even for an imported macro.
+    assert((UndefLoc.isValid() || ImportedFrom) && "Invalid UndefLoc!");
   }
+
+public:
+  explicit UndefMacroDirective(SourceLocation UndefLoc)
+      : UndefMacroDirective(UndefLoc, nullptr) {}
+  static UndefMacroDirective *createImported(Preprocessor &PP,
+                                             SourceLocation UndefLoc,
+                                             ModuleMacro *ImportedFrom);
 
   static bool classof(const MacroDirective *MD) {
     return MD->getKind() == MD_Undefine;
@@ -539,7 +528,7 @@ public:
 class VisibilityMacroDirective : public MacroDirective  {
 public:
   explicit VisibilityMacroDirective(SourceLocation Loc, bool Public)
-    : MacroDirective(MD_Visibility, Loc) {
+      : MacroDirective(MD_Visibility, Loc) {
     IsPublic = Public;
   }
 
@@ -553,11 +542,12 @@ public:
   static bool classof(const VisibilityMacroDirective *) { return true; }
 };
 
-inline unsigned *MacroDirective::getModuleDataStart() {
+inline MacroDirective::ImportData *MacroDirective::getImportData() {
+  assert(IsImported && "only an imported macro has import data");
   if (auto *Def = dyn_cast<DefMacroDirective>(this))
-    return reinterpret_cast<unsigned*>(Def + 1);
+    return reinterpret_cast<ImportData*>(Def + 1);
   else
-    return reinterpret_cast<unsigned*>(cast<UndefMacroDirective>(this) + 1);
+    return reinterpret_cast<ImportData*>(cast<UndefMacroDirective>(this) + 1);
 }
 
 inline SourceLocation MacroDirective::DefInfo::getLocation() const {
@@ -639,8 +629,8 @@ public:
   overrides_iterator overrides_end() const {
     return overrides_begin() + NumOverrides;
   }
-  llvm::iterator_range<overrides_iterator> overrides() const {
-    return llvm::make_range(overrides_begin(), overrides_end());
+  ArrayRef<ModuleMacro *> overrides() const {
+    return llvm::makeArrayRef(overrides_begin(), overrides_end());
   }
   /// \}
 

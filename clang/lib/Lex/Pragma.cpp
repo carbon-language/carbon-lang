@@ -600,11 +600,9 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
     // Get the MacroInfo we want to reinstall.
     MacroInfo *MacroToReInstall = iter->second.back();
 
-    if (MacroToReInstall) {
+    if (MacroToReInstall)
       // Reinstall the previously pushed macro.
-      appendDefMacroDirective(IdentInfo, MacroToReInstall, MessageLoc,
-                              /*isImported=*/false, /*Overrides*/None);
-    }
+      appendDefMacroDirective(IdentInfo, MacroToReInstall, MessageLoc);
 
     // Pop PragmaPushMacroInfo stack.
     iter->second.pop_back();

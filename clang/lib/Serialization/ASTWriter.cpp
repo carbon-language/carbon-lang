@@ -2068,20 +2068,17 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
       if (auto *DefMD = dyn_cast<DefMacroDirective>(MD)) {
         MacroID InfoID = getMacroRef(DefMD->getInfo(), Name);
         Record.push_back(InfoID);
-        Record.push_back(DefMD->getOwningModuleID());
         Record.push_back(DefMD->isAmbiguous());
-      } else if (auto *UndefMD = dyn_cast<UndefMacroDirective>(MD)) {
-        Record.push_back(UndefMD->getOwningModuleID());
-      } else {
-        auto *VisMD = cast<VisibilityMacroDirective>(MD);
+      } else if (auto *VisMD = dyn_cast<VisibilityMacroDirective>(MD)) {
         Record.push_back(VisMD->isPublic());
+        // No owning module macro.
+        continue;
       }
 
-      if (MD->isImported()) {
-        auto Overrides = MD->getOverriddenModules();
-        Record.push_back(Overrides.size());
-        Record.append(Overrides.begin(), Overrides.end());
-      }
+      if (auto *MM = MD->getOwningModuleMacro())
+        Record.push_back(getSubmoduleID(MM->getOwningModule()));
+      else
+        Record.push_back(0);
     }
 
     // Write out any exported module macros.

@@ -64,24 +64,16 @@ MacroInfo *Preprocessor::AllocateDeserializedMacroInfo(SourceLocation L,
 
 DefMacroDirective *
 Preprocessor::AllocateDefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                                        unsigned ImportedFromModuleID,
-                                        ArrayRef<unsigned> Overrides) {
-  unsigned NumExtra = (ImportedFromModuleID ? 1 : 0) + Overrides.size();
-  return new (BP.Allocate(sizeof(DefMacroDirective) +
-                              sizeof(unsigned) * NumExtra,
-                          llvm::alignOf<DefMacroDirective>()))
-      DefMacroDirective(MI, Loc, ImportedFromModuleID, Overrides);
+    ModuleMacro *MM) {
+  if (MM) return DefMacroDirective::createImported(*this, MI, Loc, MM);
+  return new (BP) DefMacroDirective(MI, Loc);
 }
 
 UndefMacroDirective *
 Preprocessor::AllocateUndefMacroDirective(SourceLocation UndefLoc,
-                                          unsigned ImportedFromModuleID,
-                                          ArrayRef<unsigned> Overrides) {
-  unsigned NumExtra = (ImportedFromModuleID ? 1 : 0) + Overrides.size();
-  return new (BP.Allocate(sizeof(UndefMacroDirective) +
-                              sizeof(unsigned) * NumExtra,
-                          llvm::alignOf<UndefMacroDirective>()))
-      UndefMacroDirective(UndefLoc, ImportedFromModuleID, Overrides);
+                                          ModuleMacro *MM) {
+  if (MM) return UndefMacroDirective::createImported(*this, UndefLoc, MM);
+  return new (BP) UndefMacroDirective(UndefLoc);
 }
 
 VisibilityMacroDirective *

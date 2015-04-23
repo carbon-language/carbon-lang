@@ -73,6 +73,7 @@ class GlobalModuleIndex;
 class GotoStmt;
 class MacroDefinition;
 class MacroDirective;
+class ModuleMacro;
 class NamedDecl;
 class OpaqueValueExpr;
 class Preprocessor;
@@ -1856,14 +1857,13 @@ public:
   typedef llvm::TinyPtrVector<DefMacroDirective *> AmbiguousMacros;
   llvm::DenseMap<IdentifierInfo*, AmbiguousMacros> AmbiguousMacroDefs;
 
-  void
-  removeOverriddenMacros(IdentifierInfo *II, SourceLocation Loc,
-                         AmbiguousMacros &Ambig,
-                         ArrayRef<serialization::SubmoduleID> Overrides);
+  void removeOverriddenMacros(IdentifierInfo *II, SourceLocation Loc,
+                              AmbiguousMacros &Ambig,
+                              ArrayRef<ModuleMacro *> Overrides);
 
-  AmbiguousMacros *
-  removeOverriddenMacros(IdentifierInfo *II, SourceLocation Loc,
-                         ArrayRef<serialization::SubmoduleID> Overrides);
+  AmbiguousMacros *removeOverriddenMacros(IdentifierInfo *II,
+                                          SourceLocation Loc,
+                                          ArrayRef<ModuleMacro *> Overrides);
 
   /// \brief Retrieve the macro with the given ID.
   MacroInfo *getMacro(serialization::MacroID ID);

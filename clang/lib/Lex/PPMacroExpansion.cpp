@@ -65,21 +65,18 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
       return;
 
     for (auto *PrevMD = OldMD; PrevMD; PrevMD = PrevMD->getPrevious()) {
-      // FIXME: Store a ModuleMacro * on an imported directive.
       Module *DirectiveMod = getModuleForLocation(PrevMD->getLocation());
-      Module *PrevOwningMod =
-          PrevMD->isImported()
-              ? getExternalSource()->getModule(PrevMD->getOwningModuleID())
-              : DirectiveMod;
-      auto *MM = getModuleMacro(PrevOwningMod, II);
-      if (!MM) {
+      if (ModuleMacro *PrevMM = PrevMD->getOwningModuleMacro())
+        StoredMD.addOverriddenMacro(*this, PrevMM);
+      else if (ModuleMacro *PrevMM = getModuleMacro(DirectiveMod, II))
+        // The previous macro was from another submodule that we #included.
+        // FIXME: Create an import directive when importing a macro from a local
+        // submodule.
+        StoredMD.addOverriddenMacro(*this, PrevMM);
+      else
         // We're still within the module defining the previous macro. We don't
         // override it.
-        assert(!PrevMD->isImported() &&
-               "imported macro with no corresponding ModuleMacro");
         break;
-      }
-      StoredMD.addOverriddenMacro(*this, MM);
 
       // Stop once we leave the original macro's submodule.
       //

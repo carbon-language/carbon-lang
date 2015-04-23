@@ -716,15 +716,14 @@ public:
   void appendMacroDirective(IdentifierInfo *II, MacroDirective *MD);
   DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI,
                                              SourceLocation Loc,
-                                             unsigned ImportedFromModuleID,
-                                             ArrayRef<unsigned> Overrides) {
-    DefMacroDirective *MD =
-        AllocateDefMacroDirective(MI, Loc, ImportedFromModuleID, Overrides);
+                                             ModuleMacro *MM = nullptr) {
+    DefMacroDirective *MD = AllocateDefMacroDirective(MI, Loc, MM);
     appendMacroDirective(II, MD);
     return MD;
   }
-  DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI){
-    return appendDefMacroDirective(II, MI, MI->getDefinitionLoc(), 0, None);
+  DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II,
+                                             MacroInfo *MI) {
+    return appendDefMacroDirective(II, MI, MI->getDefinitionLoc());
   }
   /// \brief Set a MacroDirective that was loaded from a PCH file.
   void setLoadedMacroDirective(IdentifierInfo *II, MacroDirective *MD);
@@ -1509,14 +1508,11 @@ private:
   /// \brief Allocate a new MacroInfo object.
   MacroInfo *AllocateMacroInfo();
 
-  DefMacroDirective *
-  AllocateDefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                            unsigned ImportedFromModuleID = 0,
-                            ArrayRef<unsigned> Overrides = None);
-  UndefMacroDirective *
-  AllocateUndefMacroDirective(SourceLocation UndefLoc,
-                              unsigned ImportedFromModuleID = 0,
-                              ArrayRef<unsigned> Overrides = None);
+  DefMacroDirective *AllocateDefMacroDirective(MacroInfo *MI,
+                                               SourceLocation Loc,
+                                               ModuleMacro *MM = nullptr);
+  UndefMacroDirective *AllocateUndefMacroDirective(SourceLocation UndefLoc,
+                                                   ModuleMacro *MM = nullptr);
   VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                              bool isPublic);
 
