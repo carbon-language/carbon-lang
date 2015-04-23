@@ -74,6 +74,20 @@ static bool nodesHaveSameOperandValue(SDNode *N0, SDNode* N1, unsigned OpName) {
   return N0->getOperand(Op0Idx) == N1->getOperand(Op1Idx);
 }
 
+bool SIInstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
+                                                    AliasAnalysis *AA) const {
+  // TODO: The generic check fails for VALU instructions that should be
+  // rematerializable due to implicit reads of exec. We really want all of the
+  // generic logic for this except for this.
+  switch (MI->getOpcode()) {
+  case AMDGPU::V_MOV_B32_e32:
+  case AMDGPU::V_MOV_B32_e64:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
                                           int64_t &Offset0,
                                           int64_t &Offset1) const {
