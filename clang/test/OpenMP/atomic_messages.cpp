@@ -672,7 +672,6 @@ int capture() {
 #pragma omp atomic capture capture
   b = a /= b;
 
-  // expected-note@+1 {{in instantiation of function template specialization 'capture<int>' requested here}}
   return capture<int>();
 }
 

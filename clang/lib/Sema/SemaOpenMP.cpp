@@ -3456,7 +3456,7 @@ bool OpenMPAtomicUpdateChecker::checkBinaryOperation(
     return true;
   } else if (SemaRef.CurContext->isDependentContext())
     E = X = UpdateExpr = nullptr;
-  return false;
+  return ErrorFound != NoError;
 }
 
 bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
@@ -3528,7 +3528,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
     return true;
   } else if (SemaRef.CurContext->isDependentContext())
     E = X = UpdateExpr = nullptr;
-  if (E && X) {
+  if (ErrorFound == NoError && E && X) {
     // Build an update expression of form 'OpaqueValueExpr(x) binop
     // OpaqueValueExpr(expr)' or 'OpaqueValueExpr(expr) binop
     // OpaqueValueExpr(x)' and then cast it to the type of the 'x' expression.
@@ -3547,7 +3547,7 @@ bool OpenMPAtomicUpdateChecker::checkStatement(Stmt *S, unsigned DiagId,
       return true;
     UpdateExpr = Update.get();
   }
-  return false;
+  return ErrorFound != NoError;
 }
 
 StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
@@ -3861,7 +3861,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
               E = Checker.getExpr();
               UE = Checker.getUpdateExpr();
               IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
-              IsPostfixUpdate = Checker.isPostfixUpdate();
+              IsPostfixUpdate = true;
             }
           }
           if (!IsUpdateExprFound) {
@@ -3891,7 +3891,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
                 E = Checker.getExpr();
                 UE = Checker.getUpdateExpr();
                 IsXLHSInRHSPart = Checker.isXLHSInRHSPart();
-                IsPostfixUpdate = Checker.isPostfixUpdate();
+                IsPostfixUpdate = false;
               }
             }
           }
