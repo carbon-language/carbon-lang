@@ -32,6 +32,23 @@ struct CoreDefinition;
 class ArchSpec
 {
 public:
+    enum MIPSSubType
+    {
+        eMIPSSubType_unknown,
+        eMIPSSubType_mips32,
+        eMIPSSubType_mips32r2,
+        eMIPSSubType_mips32r6,
+        eMIPSSubType_mips32el,
+        eMIPSSubType_mips32r2el,
+        eMIPSSubType_mips32r6el,
+        eMIPSSubType_mips64,
+        eMIPSSubType_mips64r2,
+        eMIPSSubType_mips64r6,
+        eMIPSSubType_mips64el,
+        eMIPSSubType_mips64r2el,
+        eMIPSSubType_mips64r6el,
+    };
+    
     enum Core
     {
         eCore_arm_generic,
@@ -66,8 +83,26 @@ public:
         eCore_arm_armv8,
         eCore_arm_aarch64,
 
+        eCore_mips32,
+        eCore_mips32r2,
+        eCore_mips32r3,
+        eCore_mips32r5,
+        eCore_mips32r6,
+        eCore_mips32el,
+        eCore_mips32r2el,
+        eCore_mips32r3el,
+        eCore_mips32r5el,
+        eCore_mips32r6el,
         eCore_mips64,
+        eCore_mips64r2,
+        eCore_mips64r3,
+        eCore_mips64r5,
+        eCore_mips64r6,
         eCore_mips64el,
+        eCore_mips64r2el,
+        eCore_mips64r3el,
+        eCore_mips64r5el,
+        eCore_mips64r6el,
 
         eCore_ppc_generic,
         eCore_ppc_ppc601,

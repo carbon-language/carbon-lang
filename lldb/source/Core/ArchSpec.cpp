@@ -89,8 +89,29 @@ static const CoreDefinition g_core_definitions[] =
     { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_armv8       , "armv8"     },
     { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_aarch64     , "aarch64"   },
 
-    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64 , ArchSpec::eCore_mips64          , "mips64"    },
-    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64el       , "mips64el"  },
+    // mips32, mips32r2, mips32r3, mips32r5, mips32r6
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32         , "mips32"      },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r2       , "mips32r2"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r3       , "mips32r3"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r5       , "mips32r5"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r6       , "mips32r6"    },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32el       , "mips32el"    },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r2el     , "mips32r2el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r3el     , "mips32r3el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r5el     , "mips32r5el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r6el     , "mips32r6el"  },
+    
+    // mips64, mips64r2, mips64r3, mips64r5, mips64r6
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64         , "mips64"      },
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64r2       , "mips64r2"    },
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64r3       , "mips64r3"    },
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64r5       , "mips64r5"    },
+    { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64r6       , "mips64r6"    },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64el       , "mips64el"    },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64r2el     , "mips64r2el"  },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64r3el     , "mips64r3el"  },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64r5el     , "mips64r5el"  },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::mips64el, ArchSpec::eCore_mips64r6el     , "mips64r6el"  },
     
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_generic     , "powerpc"   },
     { eByteOrderBig   , 4, 4, 4, llvm::Triple::ppc    , ArchSpec::eCore_ppc_ppc601      , "ppc601"    },
@@ -269,8 +290,18 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
     { ArchSpec::eCore_arm_aarch64     , llvm::ELF::EM_AARCH64, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARM64
     { ArchSpec::eCore_sparc9_generic  , llvm::ELF::EM_SPARCV9, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // SPARC V9
     { ArchSpec::eCore_x86_64_x86_64   , llvm::ELF::EM_X86_64 , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // AMD64
-    { ArchSpec::eCore_mips64          , llvm::ELF::EM_MIPS   , llvm::Triple::mips64,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64
-    { ArchSpec::eCore_mips64el        , llvm::ELF::EM_MIPS   , llvm::Triple::mips64el, 0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64el
+    { ArchSpec::eCore_mips32          , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32,     0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32
+    { ArchSpec::eCore_mips32r2        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32r2,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32r2
+    { ArchSpec::eCore_mips32r6        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32r6,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32r6
+    { ArchSpec::eCore_mips32el        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32el,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32el
+    { ArchSpec::eCore_mips32r2el      , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32r2el, 0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32r2el
+    { ArchSpec::eCore_mips32r6el      , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips32r6el, 0xFFFFFFFFu, 0xFFFFFFFFu }, // mips32r6el
+    { ArchSpec::eCore_mips64          , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64,     0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64
+    { ArchSpec::eCore_mips64r2        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64r2,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64r2
+    { ArchSpec::eCore_mips64r6        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64r6,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64r6
+    { ArchSpec::eCore_mips64el        , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64el,   0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64el
+    { ArchSpec::eCore_mips64r2el      , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64r2el, 0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64r2el
+    { ArchSpec::eCore_mips64r6el      , llvm::ELF::EM_MIPS   , ArchSpec::eMIPSSubType_mips64r6el, 0xFFFFFFFFu, 0xFFFFFFFFu }, // mips64r6el
     { ArchSpec::eCore_hexagon_generic , llvm::ELF::EM_HEXAGON, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // HEXAGON
     { ArchSpec::eCore_kalimba3 ,        llvm::ELF::EM_CSR_KALIMBA, llvm::Triple::KalimbaSubArch_v3, 0xFFFFFFFFu, 0xFFFFFFFFu },  // KALIMBA
     { ArchSpec::eCore_kalimba4 ,        llvm::ELF::EM_CSR_KALIMBA, llvm::Triple::KalimbaSubArch_v4, 0xFFFFFFFFu, 0xFFFFFFFFu },  // KALIMBA

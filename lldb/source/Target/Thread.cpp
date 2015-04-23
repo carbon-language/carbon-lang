@@ -2321,6 +2321,7 @@ Thread::GetUnwinder ()
             case llvm::Triple::aarch64:
             case llvm::Triple::thumb:
             case llvm::Triple::mips64:
+            case llvm::Triple::mips64el:
             case llvm::Triple::ppc:
             case llvm::Triple::ppc64:
             case llvm::Triple::hexagon:

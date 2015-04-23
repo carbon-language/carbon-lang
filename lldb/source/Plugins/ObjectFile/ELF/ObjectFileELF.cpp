@@ -286,17 +286,22 @@ static uint32_t
 mipsVariantFromElfFlags(const elf::elf_word e_flags, uint32_t endian)
 {
     const uint32_t mips_arch = e_flags & llvm::ELF::EF_MIPS_ARCH;
-    uint32_t arch_variant = LLDB_INVALID_CPUTYPE;
+    uint32_t arch_variant = ArchSpec::eMIPSSubType_unknown;
 
     switch (mips_arch)
     {
+        case llvm::ELF::EF_MIPS_ARCH_32:
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips32el : ArchSpec::eMIPSSubType_mips32;
+        case llvm::ELF::EF_MIPS_ARCH_32R2:
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips32r2el : ArchSpec::eMIPSSubType_mips32r2;
+        case llvm::ELF::EF_MIPS_ARCH_32R6:
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips32r6el : ArchSpec::eMIPSSubType_mips32r6;
         case llvm::ELF::EF_MIPS_ARCH_64:
-            if (endian == ELFDATA2LSB)
-                arch_variant = llvm::Triple::mips64el;
-            else
-                arch_variant = llvm::Triple::mips64;
-            break;
-
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips64el : ArchSpec::eMIPSSubType_mips64;
+        case llvm::ELF::EF_MIPS_ARCH_64R2:
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips64r2el : ArchSpec::eMIPSSubType_mips64r2;
+        case llvm::ELF::EF_MIPS_ARCH_64R6:
+            return (endian == ELFDATA2LSB) ? ArchSpec::eMIPSSubType_mips64r6el : ArchSpec::eMIPSSubType_mips64r6;
         default:
             break;
     }

@@ -3559,6 +3559,7 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
     // set per architecture.  Need ARM, MIPS support here.
     static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
+    static const uint8_t g_mips64_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
 
     switch (m_arch.GetMachine ())
     {
@@ -3575,6 +3576,11 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
             actual_opcode_size = static_cast<uint32_t> (sizeof(g_i386_opcode));
             return Error ();
 
+        case llvm::Triple::mips64:
+        case llvm::Triple::mips64el:
+            actual_opcode_size = static_cast<uint32_t> (sizeof(g_mips64_opcode));
+            return Error ();
+        
         default:
             assert(false && "CPU type not supported!");
             return Error ("CPU type not supported");

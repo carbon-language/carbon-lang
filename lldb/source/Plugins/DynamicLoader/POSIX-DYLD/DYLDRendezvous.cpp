@@ -382,10 +382,11 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
     // FreeBSD and NetBSD (need to validate other OSes).
     // http://svnweb.freebsd.org/base/head/sys/sys/link_elf.h?revision=217153&view=markup#l57
     const ArchSpec &arch = m_process->GetTarget().GetArchitecture();
-    if (arch.GetCore() == ArchSpec::eCore_mips64)
+    if ((arch.GetTriple().getOS() == llvm::Triple::FreeBSD 
+        || arch.GetTriple().getOS() == llvm::Triple::NetBSD) && 
+        (arch.GetMachine() == llvm::Triple::mips || arch.GetMachine() == llvm::Triple::mipsel
+        || arch.GetMachine() == llvm::Triple::mips64 || arch.GetMachine() == llvm::Triple::mips64el))
     {
-        assert (arch.GetTriple().getOS() == llvm::Triple::FreeBSD ||
-                arch.GetTriple().getOS() == llvm::Triple::NetBSD);
         addr_t mips_l_offs;
         if (!(addr = ReadPointer(addr, &mips_l_offs)))
             return false;

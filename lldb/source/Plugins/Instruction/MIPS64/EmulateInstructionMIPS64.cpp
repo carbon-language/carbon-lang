@@ -76,7 +76,8 @@ EmulateInstructionMIPS64::CreateInstance (const ArchSpec &arch, InstructionType 
 {
     if (EmulateInstructionMIPS64::SupportsEmulatingInstructionsOfTypeStatic(inst_type))
     {
-        if (arch.GetTriple().getArch() == llvm::Triple::mips64)
+        if (arch.GetTriple().getArch() == llvm::Triple::mips64 
+            || arch.GetTriple().getArch() == llvm::Triple::mips64el)
         {
             std::auto_ptr<EmulateInstructionMIPS64> emulate_insn_ap (new EmulateInstructionMIPS64 (arch));
             if (emulate_insn_ap.get())
@@ -90,7 +91,8 @@ EmulateInstructionMIPS64::CreateInstance (const ArchSpec &arch, InstructionType 
 bool
 EmulateInstructionMIPS64::SetTargetTriple (const ArchSpec &arch)
 {
-    if (arch.GetTriple().getArch () == llvm::Triple::mips64)
+    if (arch.GetTriple().getArch () == llvm::Triple::mips64
+        || arch.GetTriple().getArch () == llvm::Triple::mips64el)
         return true;
     return false;
 }
