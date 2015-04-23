@@ -628,6 +628,9 @@ public:
     void
     SetPromptOnQuit (bool b);
 
+    void
+    ResolveCommand(const char *command_line, CommandReturnObject &result);
+
     bool
     GetStopCmdSourceOnError () const;
 
@@ -687,6 +690,13 @@ private:
     
     Error
     PreprocessCommand (std::string &command);
+
+    // Completely resolves aliases and abbreviations, returning a pointer to the
+    // final command object and updating command_line to the fully substituted
+    // and translated command.
+    CommandObject *
+    ResolveCommandImpl(std::string &command_line, CommandReturnObject &result);
+
 
     Debugger &m_debugger;                       // The debugger session that this interpreter is associated with
     ExecutionContextRef m_exe_ctx_ref;          // The current execution context to use when handling commands

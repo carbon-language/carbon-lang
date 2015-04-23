@@ -462,6 +462,22 @@ SBCommandInterpreter::SetPromptOnQuit (bool b)
         m_opaque_ptr->SetPromptOnQuit(b);
 }
 
+void
+SBCommandInterpreter::ResolveCommand(const char *command_line, SBCommandReturnObject &result)
+{
+    result.Clear();
+    if (command_line && m_opaque_ptr)
+    {
+        m_opaque_ptr->ResolveCommand(command_line, result.ref());
+    }
+    else
+    {
+        result->AppendError("SBCommandInterpreter or the command line is not valid");
+        result->SetStatus(eReturnStatusFailed);
+    }
+}
+
+
 CommandInterpreter *
 SBCommandInterpreter::get ()
 {

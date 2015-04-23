@@ -155,6 +155,9 @@ public:
     void
     SetPromptOnQuit(bool b);
 
+    void
+    ResolveCommand(const char *command_line, SBCommandReturnObject &result);
+
     bool
     CommandExists (const char *cmd);
 

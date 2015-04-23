@@ -153,7 +153,7 @@ CommandObjectMultiword::Execute(const char *args_string, CommandReturnObject &re
                     error_msg.append (GetCommandName());
                     error_msg.append (" ");
                     error_msg.append (sub_command);
-                    error_msg.append ("'");
+                    error_msg.append ("'.");
 
                     if (num_subcmd_matches > 0)
                     {
