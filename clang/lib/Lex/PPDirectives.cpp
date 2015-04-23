@@ -1787,6 +1787,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     assert(!CurSubmodule && "should not have marked this as a module yet");
     CurSubmodule = BuildingModule.getModule();
 
+    EnterSubmodule(CurSubmodule);
+
     EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_begin,
                          CurSubmodule);
   }

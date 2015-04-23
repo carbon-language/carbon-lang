@@ -1807,17 +1807,18 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
     for (auto &MMI : ModuleMacros) {
       Overrides.clear();
       for (unsigned ModID : MMI.Overrides) {
-        auto *Macro = PP.getModuleMacro(ModID, II);
+        Module *Mod = getSubmodule(ModID);
+        auto *Macro = PP.getModuleMacro(Mod, II);
         assert(Macro && "missing definition for overridden macro");
         Overrides.push_back(Macro);
       }
 
       bool Inserted = false;
-      PP.addModuleMacro(MMI.SubModID, II, MMI.MI, Overrides, Inserted);
+      Module *Owner = getSubmodule(MMI.getSubmoduleID());
+      PP.addModuleMacro(Owner, II, MMI.MI, Overrides, Inserted);
       if (!Inserted)
         continue;
 
-      Module *Owner = getSubmodule(MMI.getSubmoduleID());
       if (Owner->NameVisibility == Module::Hidden) {
         // Macros in the owning module are hidden. Just remember this macro to
         // install if we make this module visible.

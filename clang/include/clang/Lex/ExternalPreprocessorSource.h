@@ -32,6 +32,9 @@ public:
   
   /// \brief Update an out-of-date identifier.
   virtual void updateOutOfDateIdentifier(IdentifierInfo &II) = 0;
+
+  /// \brief Map a module ID to a module.
+  virtual Module *getModule(unsigned ModuleID) = 0;
 };
   
 }

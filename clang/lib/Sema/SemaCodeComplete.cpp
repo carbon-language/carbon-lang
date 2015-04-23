@@ -3037,7 +3037,7 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
                                  MEnd = PP.macro_end();
        M != MEnd; ++M) {
     if (IncludeUndefined || M->first->hasMacroDefinition()) {
-      if (MacroInfo *MI = M->second->getMacroInfo())
+      if (MacroInfo *MI = M->second.getLatest()->getMacroInfo())
         if (MI->isUsedForHeaderGuard())
           continue;
 

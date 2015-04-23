@@ -322,7 +322,7 @@ StringRef Preprocessor::getLastMacroWithSpelling(
   for (Preprocessor::macro_iterator I = macro_begin(), E = macro_end();
        I != E; ++I) {
     const MacroDirective::DefInfo
-      Def = I->second->findDirectiveAtLoc(Loc, SourceMgr);
+      Def = I->second.findDirectiveAtLoc(Loc, SourceMgr);
     if (!Def || !Def.getMacroInfo())
       continue;
     if (!Def.getMacroInfo()->isObjectLike())

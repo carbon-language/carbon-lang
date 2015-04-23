@@ -37,33 +37,73 @@ MacroDirective *
 Preprocessor::getMacroDirectiveHistory(const IdentifierInfo *II) const {
   assert(II->hadMacroDefinition() && "Identifier has not been not a macro!");
 
-  macro_iterator Pos = Macros.find(II);
+  auto Pos = Macros.find(II);
   assert(Pos != Macros.end() && "Identifier macro info is missing!");
-  return Pos->second;
+  return Pos->second.getLatest();
 }
 
 void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   assert(MD && "MacroDirective should be non-zero!");
   assert(!MD->getPrevious() && "Already attached to a MacroDirective history.");
 
-  MacroDirective *&StoredMD = Macros[II];
-  MD->setPrevious(StoredMD);
-  StoredMD = MD;
-  // Setup the identifier as having associated macro history.
+  MacroState &StoredMD = Macros[II];
+  auto *OldMD = StoredMD.getLatest();
+  MD->setPrevious(OldMD);
+  StoredMD.setLatest(MD);
+
+  // Set up the identifier as having associated macro history.
   II->setHasMacroDefinition(true);
   if (!MD->isDefined())
     II->setHasMacroDefinition(false);
-  bool isImportedMacro = isa<DefMacroDirective>(MD) &&
-                         cast<DefMacroDirective>(MD)->isImported();
-  if (II->isFromAST() && !isImportedMacro)
+  if (II->isFromAST() && !MD->isImported())
     II->setChangedSinceDeserialization();
+
+  // Accumulate any overridden imported macros.
+  if (!MD->isImported() && getCurrentModule()) {
+    Module *OwningMod = getModuleForLocation(MD->getLocation());
+    if (!OwningMod)
+      return;
+
+    for (auto *PrevMD = OldMD; PrevMD; PrevMD = PrevMD->getPrevious()) {
+      // FIXME: Store a ModuleMacro * on an imported directive.
+      Module *DirectiveMod = getModuleForLocation(PrevMD->getLocation());
+      Module *PrevOwningMod =
+          PrevMD->isImported()
+              ? getExternalSource()->getModule(PrevMD->getOwningModuleID())
+              : DirectiveMod;
+      auto *MM = getModuleMacro(PrevOwningMod, II);
+      if (!MM) {
+        // We're still within the module defining the previous macro. We don't
+        // override it.
+        assert(!PrevMD->isImported() &&
+               "imported macro with no corresponding ModuleMacro");
+        break;
+      }
+      StoredMD.addOverriddenMacro(*this, MM);
+
+      // Stop once we leave the original macro's submodule.
+      //
+      // Either this submodule #included another submodule of the same
+      // module or it just happened to be built after the other module.
+      // In the former case, we override the submodule's macro.
+      //
+      // FIXME: In the latter case, we shouldn't do so, but we can't tell
+      // these cases apart.
+      //
+      // FIXME: We can leave this submodule and re-enter it if it #includes a
+      // header within a different submodule of the same module. In such cases
+      // the overrides list will be incomplete.
+      if (DirectiveMod != OwningMod || !PrevMD->isImported())
+        break;
+    }
+  }
 }
 
 void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
                                            MacroDirective *MD) {
   assert(II && MD);
-  MacroDirective *&StoredMD = Macros[II];
-  assert(!StoredMD &&
+  MacroState &StoredMD = Macros[II];
+  assert(!StoredMD.getLatest() &&
          "the macro history was modified before initializing it from a pch");
   StoredMD = MD;
   // Setup the identifier as having associated macro history.
@@ -72,12 +112,12 @@ void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
     II->setHasMacroDefinition(false);
 }
 
-ModuleMacro *Preprocessor::addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
+ModuleMacro *Preprocessor::addModuleMacro(Module *Mod, IdentifierInfo *II,
                                           MacroInfo *Macro,
                                           ArrayRef<ModuleMacro *> Overrides,
                                           bool &New) {
   llvm::FoldingSetNodeID ID;
-  ModuleMacro::Profile(ID, ModuleID, II);
+  ModuleMacro::Profile(ID, Mod, II);
 
   void *InsertPos;
   if (auto *MM = ModuleMacros.FindNodeOrInsertPos(ID, InsertPos)) {
@@ -85,7 +125,7 @@ ModuleMacro *Preprocessor::addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
     return MM;
   }
 
-  auto *MM = ModuleMacro::create(*this, ModuleID, II, Macro, Overrides);
+  auto *MM = ModuleMacro::create(*this, Mod, II, Macro, Overrides);
   ModuleMacros.InsertNode(MM, InsertPos);
 
   // Each overridden macro is now overridden by one more macro.
@@ -112,10 +152,9 @@ ModuleMacro *Preprocessor::addModuleMacro(unsigned ModuleID, IdentifierInfo *II,
   return MM;
 }
 
-ModuleMacro *Preprocessor::getModuleMacro(unsigned ModuleID,
-                                          IdentifierInfo *II) {
+ModuleMacro *Preprocessor::getModuleMacro(Module *Mod, IdentifierInfo *II) {
   llvm::FoldingSetNodeID ID;
-  ModuleMacro::Profile(ID, ModuleID, II);
+  ModuleMacro::Profile(ID, Mod, II);
 
   void *InsertPos;
   return ModuleMacros.FindNodeOrInsertPos(ID, InsertPos);

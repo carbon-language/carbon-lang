@@ -23,6 +23,7 @@
 #include <cassert>
 
 namespace clang {
+class Module;
 class Preprocessor;
 
 /// \brief Encapsulates the data about a macro definition (e.g. its tokens).
@@ -590,8 +591,8 @@ class ModuleMacro : public llvm::FoldingSetNode {
   IdentifierInfo *II;
   /// The body of the #define, or nullptr if this is a #undef.
   MacroInfo *Macro;
-  /// The ID of the module that exports this macro.
-  unsigned OwningModuleID;
+  /// The module that exports this macro.
+  Module *OwningModule;
   /// The number of module macros that override this one.
   unsigned NumOverriddenBy;
   /// The number of modules whose macros are directly overridden by this one.
@@ -600,30 +601,30 @@ class ModuleMacro : public llvm::FoldingSetNode {
 
   friend class Preprocessor;
 
-  ModuleMacro(unsigned OwningModuleID, IdentifierInfo *II, MacroInfo *Macro,
+  ModuleMacro(Module *OwningModule, IdentifierInfo *II, MacroInfo *Macro,
               ArrayRef<ModuleMacro *> Overrides)
-      : II(II), Macro(Macro), OwningModuleID(OwningModuleID),
+      : II(II), Macro(Macro), OwningModule(OwningModule),
         NumOverriddenBy(0), NumOverrides(Overrides.size()) {
     std::copy(Overrides.begin(), Overrides.end(),
               reinterpret_cast<ModuleMacro **>(this + 1));
   }
 
 public:
-  static ModuleMacro *create(Preprocessor &PP, unsigned OwningModuleID,
+  static ModuleMacro *create(Preprocessor &PP, Module *OwningModule,
                              IdentifierInfo *II, MacroInfo *Macro,
                              ArrayRef<ModuleMacro *> Overrides);
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    return Profile(ID, OwningModuleID, II);
+    return Profile(ID, OwningModule, II);
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, unsigned OwningModuleID,
+  static void Profile(llvm::FoldingSetNodeID &ID, Module *OwningModule,
                       IdentifierInfo *II) {
-    ID.AddInteger(OwningModuleID);
+    ID.AddPointer(OwningModule);
     ID.AddPointer(II);
   }
 
   /// Get the ID of the module that exports this macro.
-  unsigned getOwningModuleID() const { return OwningModuleID; }
+  Module *getOwningModule() const { return OwningModule; }
 
   /// Get definition for this exported #define, or nullptr if this
   /// represents a #undef.
@@ -642,6 +643,10 @@ public:
     return llvm::make_range(overrides_begin(), overrides_end());
   }
   /// \}
+
+  /// Get the number of macros that override this one.
+  unsigned getNumOverridingMacros() const { return NumOverriddenBy; }
+
 };
 
 }  // end namespace clang

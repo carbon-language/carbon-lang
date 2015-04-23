@@ -400,6 +400,9 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       CurLexer->FormTokenWithChars(Result, EndPos, tok::annot_module_end);
       Result.setAnnotationEndLoc(Result.getLocation());
       Result.setAnnotationValue(CurSubmodule);
+
+      // We're done with this submodule.
+      LeaveSubmodule();
     }
 
     // We're done with the #included file.
@@ -604,4 +607,64 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   // active (an active lexer would return EOD at EOF if there was no \n in
   // preprocessor directive mode), so just return EOF as our token.
   assert(!FoundLexer && "Lexer should return EOD before EOF in PP mode");
+}
+
+void Preprocessor::EnterSubmodule(Module *M) {
+  // Save the current state for future imports.
+  BuildingSubmoduleStack.push_back(BuildingSubmoduleInfo(M));
+
+  auto &Info = BuildingSubmoduleStack.back();
+  // Copy across our macros and start the submodule with the current state.
+  // FIXME: We should start each submodule with just the predefined macros.
+  Info.Macros = Macros;
+}
+
+void Preprocessor::LeaveSubmodule() {
+  auto &Info = BuildingSubmoduleStack.back();
+
+  // Create ModuleMacros for any macros defined in this submodule.
+  for (auto &Macro : Macros) {
+    auto *II = const_cast<IdentifierInfo*>(Macro.first);
+    MacroState State = Info.Macros.lookup(II);
+
+    // This module may have exported a new macro. If so, create a ModuleMacro
+    // representing that fact.
+    bool ExplicitlyPublic = false;
+    for (auto *MD = Macro.second.getLatest(); MD != State.getLatest();
+         MD = MD->getPrevious()) {
+      // Skip macros defined in other submodules we #included along the way.
+      Module *Mod = getModuleForLocation(MD->getLocation());
+      if (Mod != Info.M)
+        continue;
+
+      if (auto *VisMD = dyn_cast<VisibilityMacroDirective>(MD)) {
+        // The latest visibility directive for a name in a submodule affects
+        // all the directives that come before it.
+        if (VisMD->isPublic())
+          ExplicitlyPublic = true;
+        else if (!ExplicitlyPublic)
+          // Private with no following public directive: not exported.
+          break;
+      } else {
+        MacroInfo *Def = nullptr;
+        if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
+          Def = DefMD->getInfo();
+
+        // FIXME: Issue a warning if multiple headers for the same submodule
+        // define a macro, rather than silently ignoring all but the first.
+        bool IsNew;
+        addModuleMacro(Info.M, II, Def, Macro.second.getOverriddenMacros(),
+                       IsNew);
+        break;
+      }
+    }
+
+    // Update the macro to refer to the latest directive in the chain.
+    State.setLatest(Macro.second.getLatest());
+
+    // Restore the old macro state.
+    Macro.second = State;
+  }
+
+  BuildingSubmoduleStack.pop_back();
 }
