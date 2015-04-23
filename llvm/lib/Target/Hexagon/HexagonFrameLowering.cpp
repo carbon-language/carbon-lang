@@ -579,9 +579,6 @@ void HexagonFrameLowering::insertEpilogueInBlock(MachineBasicBlock &MBB) const {
 
   // Handle EH_RETURN.
   if (RetOpc == Hexagon::EH_RETURN_JMPR) {
-    MachineOperand &OffsetReg  = RetI->getOperand(0);
-    (void)OffsetReg; // Silence compiler warning.
-    assert(OffsetReg.isReg() && "Offset should be in register!");
     BuildMI(MBB, InsertPt, DL, HII.get(Hexagon::L2_deallocframe));
     BuildMI(MBB, InsertPt, DL, HII.get(Hexagon::A2_add), SP)
         .addReg(SP)
@@ -1008,9 +1005,8 @@ static void dump_registers(BitVector &Regs, const TargetRegisterInfo &TRI) {
 
 bool HexagonFrameLowering::assignCalleeSavedSpillSlots(MachineFunction &MF,
       const TargetRegisterInfo *TRI, std::vector<CalleeSavedInfo> &CSI) const {
-  const Function &F = *MF.getFunction();
-  (void)F; // Silence compiler warning.
-  DEBUG(dbgs() << LLVM_FUNCTION_NAME << " on " << F.getName() << '\n');
+  DEBUG(dbgs() << LLVM_FUNCTION_NAME << " on "
+               << MF.getFunction().getName() << '\n');
   MachineFrameInfo *MFI = MF.getFrameInfo();
   BitVector SRegs(Hexagon::NUM_TARGET_REGS);
 
