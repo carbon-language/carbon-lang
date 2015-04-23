@@ -729,7 +729,7 @@ void CodeGenPGO::emitCounterRegionMapping(const Decl *D) {
 }
 
 void
-CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
+CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef Name,
                                     llvm::GlobalValue::LinkageTypes Linkage) {
   if (SkipCoverageMapping)
     return;
@@ -749,7 +749,7 @@ CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
   if (CoverageMapping.empty())
     return;
 
-  setFuncName(FuncName, Linkage);
+  setFuncName(Name, Linkage);
   CGM.getCoverageMapping()->addFunctionMappingRecord(
       FuncNameVar, FuncName, FunctionHash, CoverageMapping);
 }
