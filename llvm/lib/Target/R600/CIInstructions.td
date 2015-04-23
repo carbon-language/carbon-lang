@@ -13,7 +13,7 @@
 def isCIVI : Predicate <
   "Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS || "
   "Subtarget->getGeneration() == AMDGPUSubtarget::VOLCANIC_ISLANDS"
->;
+>, AssemblerPredicate<"FeatureCIInsts">;
 
 //===----------------------------------------------------------------------===//
 // VOP1 Instructions
