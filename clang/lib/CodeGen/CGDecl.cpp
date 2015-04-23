@@ -856,6 +856,11 @@ llvm::Value *CodeGenFunction::EmitLifetimeStart(uint64_t Size,
   if (CGM.getCodeGenOpts().OptimizationLevel == 0)
     return nullptr;
 
+  // Disable lifetime markers in msan builds.
+  // FIXME: Remove this when msan works with lifetime markers.
+  if (getLangOpts().Sanitize.has(SanitizerKind::Memory))
+    return nullptr;
+
   llvm::Value *SizeV = llvm::ConstantInt::get(Int64Ty, Size);
   llvm::Value *Args[] = {
       SizeV,
