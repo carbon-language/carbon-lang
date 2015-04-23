@@ -5,6 +5,11 @@
 // VOPC Instructions
 //===----------------------------------------------------------------------===//
 
+// Test forced e64 encoding
+
+v_cmp_lt_f32_e64 s[2:3], v4, -v6
+// CHECK: v_cmp_lt_f32_e64 s[2:3], v4, -v6 ; encoding: [0x02,0x00,0x02,0xd0,0x04,0x0d,0x02,0x40]
+
 //
 // Modifier tests:
 //
@@ -94,6 +99,12 @@ v_fract_f32 v1, v2, div:2 clamp
 ///===---------------------------------------------------------------------===//
 // VOP2 Instructions
 ///===---------------------------------------------------------------------===//
+
+// Test forced e64 encoding with e32 operands
+
+v_ldexp_f32_e64 v1, v3, v5
+// CHECK: v_ldexp_f32_e64 v1, v3, v5 ; encoding: [0x01,0x00,0x56,0xd2,0x03,0x0b,0x02,0x00]
+
 
 // TODO: Modifier tests
 
