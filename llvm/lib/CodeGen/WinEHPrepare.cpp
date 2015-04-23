@@ -1666,6 +1666,12 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
   while (HandlersFound != NumClauses) {
     BasicBlock *NextBB = nullptr;
 
+    // Skip over filter clauses.
+    if (LPad->isFilter(HandlersFound)) {
+      ++HandlersFound;
+      continue;
+    }
+
     // See if the clause we're looking for is a catch-all.
     // If so, the catch begins immediately.
     Constant *ExpectedSelector = LPad->getClause(HandlersFound)->stripPointerCasts();
