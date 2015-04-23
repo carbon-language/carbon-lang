@@ -24,7 +24,8 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
   def int_ppc_dcbst : Intrinsic<[], [llvm_ptr_ty], []>;
   def int_ppc_dcbt  : Intrinsic<[], [llvm_ptr_ty],
     [IntrReadWriteArgMem, NoCapture<0>]>;
-  def int_ppc_dcbtst: Intrinsic<[], [llvm_ptr_ty], []>;
+  def int_ppc_dcbtst: Intrinsic<[], [llvm_ptr_ty],
+    [IntrReadWriteArgMem, NoCapture<0>]>;
   def int_ppc_dcbz  : Intrinsic<[], [llvm_ptr_ty], []>;
   def int_ppc_dcbzl : Intrinsic<[], [llvm_ptr_ty], []>;
 

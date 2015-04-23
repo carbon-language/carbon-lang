@@ -101,6 +101,38 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       return;
     }
   }
+
+  // dcbt[st] is printed manually here because:
+  //  1. The assembly syntax is different between embedded and server targets
+  //  2. We must print the short mnemonics for TH == 0 because the
+  //     embedded/server syntax default will not be stable across assemblers
+  //  The syntax for dcbt is:
+  //    dcbt ra, rb, th [server]
+  //    dcbt th, ra, rb [embedded]
+  //  where th can be omitted when it is 0. dcbtst is the same.
+  if (MI->getOpcode() == PPC::DCBT || MI->getOpcode() == PPC::DCBTST) {
+    unsigned char TH = MI->getOperand(0).getImm();
+    O << "\tdcbt";
+    if (MI->getOpcode() == PPC::DCBTST)
+      O << "st";
+    if (TH == 16)
+      O << "t";
+    O << " ";
+
+    bool IsBookE = (STI.getFeatureBits() & PPC::FeatureBookE) != 0;
+    if (IsBookE && TH != 0 && TH != 16)
+      O << (unsigned int) TH << ", ";
+
+    printOperand(MI, 1, O);
+    O << ", ";
+    printOperand(MI, 2, O);
+
+    if (!IsBookE && TH != 0 && TH != 16)
+      O << ", " << (unsigned int) TH;
+
+    printAnnotation(O, Annot);
+    return;
+  }
   
   // For fast-isel, a COPY_TO_REGCLASS may survive this long.  This is
   // used when converting a 32-bit float to a 64-bit float as part of

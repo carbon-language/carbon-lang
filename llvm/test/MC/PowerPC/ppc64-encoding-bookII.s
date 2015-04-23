@@ -12,14 +12,48 @@
 # CHECK-LE: icbt 0, 5, 31                   # encoding: [0x2c,0xf8,0x05,0x7c]
             icbt 0, 5, 31
 
-# FIXME:    dcbt 2, 3, 10
+# CHECK-BE: dcbt 2, 3, 10                   # encoding: [0x7d,0x42,0x1a,0x2c]
+# CHECK-LE: dcbt 2, 3, 10                   # encoding: [0x2c,0x1a,0x42,0x7d]
+            dcbt 2, 3, 10
+# CHECK-BE: dcbt 2, 3, 10                   # encoding: [0x7d,0x42,0x1a,0x2c]
+# CHECK-LE: dcbt 2, 3, 10                   # encoding: [0x2c,0x1a,0x42,0x7d]
+            dcbtct 2, 3, 10
+# CHECK-BE: dcbt 2, 3, 10                   # encoding: [0x7d,0x42,0x1a,0x2c]
+# CHECK-LE: dcbt 2, 3, 10                   # encoding: [0x2c,0x1a,0x42,0x7d]
+            dcbtds 2, 3, 10
 # CHECK-BE: dcbt 2, 3                       # encoding: [0x7c,0x02,0x1a,0x2c]
 # CHECK-LE: dcbt 2, 3                       # encoding: [0x2c,0x1a,0x02,0x7c]
             dcbt 2, 3
-# FIXME:    dcbtst 2, 3, 10
+# CHECK-BE: dcbt 2, 3                       # encoding: [0x7c,0x02,0x1a,0x2c]
+# CHECK-LE: dcbt 2, 3                       # encoding: [0x2c,0x1a,0x02,0x7c]
+            dcbt 2, 3, 0
+# CHECK-BE: dcbtt 2, 3                      # encoding: [0x7e,0x02,0x1a,0x2c]
+# CHECK-LE: dcbtt 2, 3                      # encoding: [0x2c,0x1a,0x02,0x7e]
+            dcbtt 2, 3
+# CHECK-BE: dcbtt 2, 3                      # encoding: [0x7e,0x02,0x1a,0x2c]
+# CHECK-LE: dcbtt 2, 3                      # encoding: [0x2c,0x1a,0x02,0x7e]
+            dcbt 2, 3, 16
+# CHECK-BE: dcbtst 2, 3, 10                 # encoding: [0x7d,0x42,0x19,0xec]
+# CHECK-LE: dcbtst 2, 3, 10                 # encoding: [0xec,0x19,0x42,0x7d]
+            dcbtst 2, 3, 10
+# CHECK-BE: dcbtst 2, 3, 10                 # encoding: [0x7d,0x42,0x19,0xec]
+# CHECK-LE: dcbtst 2, 3, 10                 # encoding: [0xec,0x19,0x42,0x7d]
+            dcbtstct 2, 3, 10
+# CHECK-BE: dcbtst 2, 3, 10                 # encoding: [0x7d,0x42,0x19,0xec]
+# CHECK-LE: dcbtst 2, 3, 10                 # encoding: [0xec,0x19,0x42,0x7d]
+            dcbtstds 2, 3, 10
 # CHECK-BE: dcbtst 2, 3                     # encoding: [0x7c,0x02,0x19,0xec]
 # CHECK-LE: dcbtst 2, 3                     # encoding: [0xec,0x19,0x02,0x7c]
             dcbtst 2, 3
+# CHECK-BE: dcbtst 2, 3                     # encoding: [0x7c,0x02,0x19,0xec]
+# CHECK-LE: dcbtst 2, 3                     # encoding: [0xec,0x19,0x02,0x7c]
+            dcbtst 2, 3, 0
+# CHECK-BE: dcbtstt 2, 3                    # encoding: [0x7e,0x02,0x19,0xec]
+# CHECK-LE: dcbtstt 2, 3                    # encoding: [0xec,0x19,0x02,0x7e]
+            dcbtstt 2, 3
+# CHECK-BE: dcbtstt 2, 3                    # encoding: [0x7e,0x02,0x19,0xec]
+# CHECK-LE: dcbtstt 2, 3                    # encoding: [0xec,0x19,0x02,0x7e]
+            dcbtst 2, 3, 16
 # CHECK-BE: dcbz 2, 3                       # encoding: [0x7c,0x02,0x1f,0xec]
 # CHECK-LE: dcbz 2, 3                       # encoding: [0xec,0x1f,0x02,0x7c]
             dcbz 2, 3

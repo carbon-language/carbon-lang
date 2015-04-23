@@ -801,6 +801,40 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
                                       const OperandVector &Operands) {
   int Opcode = Inst.getOpcode();
   switch (Opcode) {
+  case PPC::DCBTx:
+  case PPC::DCBTT:
+  case PPC::DCBTSTx:
+  case PPC::DCBTSTT: {
+    MCInst TmpInst;
+    TmpInst.setOpcode((Opcode == PPC::DCBTx || Opcode == PPC::DCBTT) ?
+                      PPC::DCBT : PPC::DCBTST);
+    TmpInst.addOperand(MCOperand::CreateImm(
+      (Opcode == PPC::DCBTx || Opcode == PPC::DCBTSTx) ? 0 : 16));
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::DCBTCT:
+  case PPC::DCBTDS: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(PPC::DCBT);
+    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    Inst = TmpInst;
+    break;
+  }
+  case PPC::DCBTSTCT:
+  case PPC::DCBTSTDS: {
+    MCInst TmpInst;
+    TmpInst.setOpcode(PPC::DCBTST);
+    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(1));
+    Inst = TmpInst;
+    break;
+  }
   case PPC::LAx: {
     MCInst TmpInst;
     TmpInst.setOpcode(PPC::LA);
@@ -1604,6 +1638,21 @@ bool PPCAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     // Parse the next operand
     if (ParseOperand(Operands))
       return true;
+  }
+
+  // We'll now deal with an unfortunate special case: the syntax for the dcbt
+  // and dcbtst instructions differs for server vs. embedded cores.
+  //  The syntax for dcbt is:
+  //    dcbt ra, rb, th [server]
+  //    dcbt th, ra, rb [embedded]
+  //  where th can be omitted when it is 0. dcbtst is the same. We take the
+  //  server form to be the default, so swap the operands if we're parsing for
+  //  an embedded core (they'll be swapped again upon printing).
+  if ((STI.getFeatureBits() & PPC::FeatureBookE) != 0 &&
+      Operands.size() == 4 &&
+      (Name == "dcbt" || Name == "dcbtst")) {
+    std::swap(Operands[1], Operands[3]);
+    std::swap(Operands[2], Operands[1]);
   }
 
   return false;
