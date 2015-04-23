@@ -408,6 +408,8 @@ fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *last_error) {
                         FILE_ATTRIBUTE_NORMAL, nullptr);
   CHECK(res != kStdoutFd || kStdoutFd == kInvalidFd);
   CHECK(res != kStderrFd || kStderrFd == kInvalidFd);
+  if (res == kInvalidFd && last_error)
+    *last_error = GetLastError();
   return res;
 }
 
