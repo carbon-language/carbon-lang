@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -sehprepare < %s | FileCheck %s
 
 ; Test case based on this source:
 ; int puts(const char*);

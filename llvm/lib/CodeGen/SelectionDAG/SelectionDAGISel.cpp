@@ -955,11 +955,66 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
         // Mark the clause as a landing pad or MI passes will delete it.
         ClauseBB->setIsLandingPad();
       }
+    } else {
+      // Otherwise, we haven't done the preparation, and we need to invent some
+      // clause basic blocks that branch into the landingpad.
+      // FIXME: Remove this code once SEH preparation works.
+      ActionsCall = nullptr;
+
+      // Make virtual registers and a series of labels that fill in values for
+      // the clauses.
+      auto &RI = MF->getRegInfo();
+      FuncInfo->ExceptionSelectorVirtReg = RI.createVirtualRegister(PtrRC);
+
+      // Emit separate machine basic blocks with separate labels for each clause
+      // before the main landing pad block.
+      MachineInstrBuilder SelectorPHI = BuildMI(
+          *MBB, MBB->begin(), SDB->getCurDebugLoc(),
+          TII->get(TargetOpcode::PHI), FuncInfo->ExceptionSelectorVirtReg);
+      for (unsigned I = 0, E = LPadInst->getNumClauses(); I != E; ++I) {
+        // Skip filter clauses, we can't implement them.
+        if (LPadInst->isFilter(I))
+          continue;
+
+        MachineBasicBlock *ClauseBB = MF->CreateMachineBasicBlock(LLVMBB);
+        MF->insert(MBB, ClauseBB);
+
+        // Add the edge from the invoke to the clause.
+        for (MachineBasicBlock *InvokeBB : InvokeBBs)
+          InvokeBB->addSuccessor(ClauseBB);
+
+        // Mark the clause as a landing pad or MI passes will delete it.
+        ClauseBB->setIsLandingPad();
+
+        GlobalValue *ClauseGV = ExtractTypeInfo(LPadInst->getClause(I));
+
+        // Start the BB with a label.
+        MCSymbol *ClauseLabel = MF->getMMI().addClauseForLandingPad(MBB);
+        BuildMI(*ClauseBB, ClauseBB->begin(), SDB->getCurDebugLoc(), II)
+            .addSym(ClauseLabel);
+
+        // Construct a simple BB that defines a register with the typeid
+        // constant.
+        FuncInfo->MBB = ClauseBB;
+        FuncInfo->InsertPt = ClauseBB->end();
+        unsigned VReg = SDB->visitLandingPadClauseBB(ClauseGV, MBB);
+        CurDAG->setRoot(SDB->getRoot());
+        SDB->clear();
+        CodeGenAndEmitDAG();
+
+        // Add the typeid virtual register to the phi in the main landing pad.
+        SelectorPHI.addReg(VReg).addMBB(ClauseBB);
+      }
     }
 
     // Remove the edge from the invoke to the lpad.
     for (MachineBasicBlock *InvokeBB : InvokeBBs)
       InvokeBB->removeSuccessor(MBB);
+
+    // Restore FuncInfo back to its previous state and select the main landing
+    // pad block.
+    FuncInfo->MBB = MBB;
+    FuncInfo->InsertPt = MBB->end();
 
     // Transfer EH state number assigned to the IR block to the MBB.
     if (Personality == EHPersonality::MSVC_CXX) {
@@ -967,8 +1022,9 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
       MF->getMMI().addWinEHState(MBB, FI.LandingPadStateMap[LPadInst]);
     }
 
-    // Don't select instructions for the landingpad.
-    return false;
+    // Select instructions for the landingpad if there was no llvm.eh.actions
+    // call.
+    return ActionsCall == nullptr;
   }
 
   // Mark exception register as live in.

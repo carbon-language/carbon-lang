@@ -323,6 +323,11 @@ FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
   return new WinEHPrepare(TM);
 }
 
+// FIXME: Remove this once the backend can handle the prepared IR.
+static cl::opt<bool>
+    SEHPrepare("sehprepare", cl::Hidden,
+               cl::desc("Prepare functions with SEH personalities"));
+
 bool WinEHPrepare::runOnFunction(Function &Fn) {
   // No need to prepare outlined handlers.
   if (Fn.hasFnAttribute("wineh-parent"))
@@ -349,6 +354,16 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  if (isAsynchronousEHPersonality(Personality) && !SEHPrepare) {
+    // Replace all resume instructions with unreachable.
+    // FIXME: Remove this once the backend can handle the prepared IR.
+    for (ResumeInst *Resume : Resumes) {
+      IRBuilder<>(Resume).CreateUnreachable();
+      Resume->eraseFromParent();
+    }
+    return true;
+  }
 
   // If there were any landing pads, prepareExceptionHandlers will make changes.
   prepareExceptionHandlers(Fn, LPads);
