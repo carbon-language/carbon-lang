@@ -276,7 +276,8 @@ class ConstantOffsetExtractor {
   /// returns "sext i32 (zext i16 V to i32) to i64".
   Value *applyExts(Value *V);
 
-  /// Returns true if LHS and RHS have no bits in common, i.e., LHS | RHS == 0.
+  /// Returns true if LHS and RHS have no bits in common, i.e., for every n
+  /// the n-th bit of either LHS, or RHS is 0.
   bool NoCommonBits(Value *LHS, Value *RHS) const;
   /// Computes which bits are known to be one or zero.
   /// \p KnownOne Mask of all bits that are known to be one.
