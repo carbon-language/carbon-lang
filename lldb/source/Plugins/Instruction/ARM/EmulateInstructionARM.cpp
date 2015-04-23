@@ -1496,6 +1496,7 @@ EmulateInstructionARM::EmulateBLXImmediate (const uint32_t opcode, const ARMEnco
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = pc + imm32;
+            SelectInstrSet (eModeThumb);
             context.SetISAAndImmediateSigned (eModeThumb, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
@@ -1514,6 +1515,7 @@ EmulateInstructionARM::EmulateBLXImmediate (const uint32_t opcode, const ARMEnco
             uint32_t imm25 = (S << 24) | (I1 << 23) | (I2 << 22) | (imm10H << 12) | (imm10L << 2);
             imm32 = llvm::SignExtend32<25>(imm25);
             target = Align(pc, 4) + imm32;
+            SelectInstrSet (eModeARM);
             context.SetISAAndImmediateSigned (eModeARM, 4 + imm32);
             if (InITBlock() && !LastInITBlock())
                 return false;
@@ -1523,12 +1525,14 @@ EmulateInstructionARM::EmulateBLXImmediate (const uint32_t opcode, const ARMEnco
             lr = pc - 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
             target = Align(pc, 4) + imm32;
+            SelectInstrSet (eModeARM);
             context.SetISAAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         case eEncodingA2:
             lr = pc - 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
             target = pc + imm32;
+            SelectInstrSet (eModeThumb);
             context.SetISAAndImmediateSigned (eModeThumb, 8 + imm32);
             break;
         default:
@@ -1538,6 +1542,9 @@ EmulateInstructionARM::EmulateBLXImmediate (const uint32_t opcode, const ARMEnco
             return false;
         if (!BranchWritePC(context, target))
             return false;
+        if (m_opcode_cpsr != m_new_inst_cpsr)
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
+                return false;
     }
     return true;
 }
