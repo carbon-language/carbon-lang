@@ -237,7 +237,9 @@ void MacroDirective::dump() const {
 
 ModuleMacro *ModuleMacro::create(Preprocessor &PP, unsigned OwningModuleID,
                                  IdentifierInfo *II, MacroInfo *Macro,
-                                 ArrayRef<ModuleMacro*> Overrides) {
-  return new (PP.getPreprocessorAllocator())
-      ModuleMacro(OwningModuleID, II, Macro, Overrides);
+                                 ArrayRef<ModuleMacro *> Overrides) {
+  void *Mem = PP.getPreprocessorAllocator().Allocate(
+      sizeof(ModuleMacro) + sizeof(ModuleMacro *) * Overrides.size(),
+      llvm::alignOf<ModuleMacro>());
+  return new (Mem) ModuleMacro(OwningModuleID, II, Macro, Overrides);
 }
