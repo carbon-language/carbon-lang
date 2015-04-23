@@ -133,3 +133,18 @@ namespace Templates {
   }
 }
 
+namespace implicit_this_tests {
+struct t {
+    void func1(const char *, ...) __attribute__((__format__(printf, 1, 2))); // expected-error {{format attribute cannot specify the implicit this argument as the format string}}
+    void (*func2)(const char *, ...) __attribute__((__format__(printf, 1, 2)));
+    static void (*func3)(const char *, ...) __attribute__((__format__(printf, 1, 2)));
+    static void func4(const char *, ...) __attribute__((__format__(printf, 1, 2)));
+};
+
+void f() {
+  t t1;
+  t1.func2("Hello %s"); // expected-warning {{more '%' conversions than data arguments}}
+  t::func3("Hello %s"); // expected-warning {{more '%' conversions than data arguments}}
+  t::func4("Hello %s"); // expected-warning {{more '%' conversions than data arguments}}
+}
+}
