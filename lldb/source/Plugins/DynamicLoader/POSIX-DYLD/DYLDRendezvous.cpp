@@ -147,7 +147,7 @@ DYLDRendezvous::Resolve()
     address_size = m_process->GetAddressByteSize();
     padding = address_size - word_size;
     if (log)
-        log->Printf ("DYLDRendezvous::%s address size: %zu, padding %zu", __FUNCTION__, address_size, padding);
+        log->Printf ("DYLDRendezvous::%s address size: %" PRIu64 ", padding %" PRIu64, __FUNCTION__, uint64_t(address_size), uint64_t(padding));
 
     if (m_rendezvous_addr == LLDB_INVALID_ADDRESS)
         cursor = info_addr = ResolveRendezvousAddress(m_process);
