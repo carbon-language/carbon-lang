@@ -1234,7 +1234,6 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
 /// target.
 void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
                                           BasicBlock *StartBB) {
-  LLVMContext &Context = StartBB->getContext();
   BasicBlock *HandlerBB;
   BasicBlock *NextBB;
   Constant *Selector;
