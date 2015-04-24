@@ -1723,7 +1723,8 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
       // exceptions but code called from catches can. For SEH, it isn't
       // important if some finally code before a catch-all is executed out of
       // line or after recovering from the exception.
-      if (Personality == EHPersonality::MSVC_CXX)
+      if (Personality == EHPersonality::MSVC_CXX && LPad->isCleanup() && 
+          !Actions->includesCleanup())
         findCleanupHandlers(Actions, BB, BB);
 
       // Add the catch handler to the action list.
