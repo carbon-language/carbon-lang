@@ -319,7 +319,8 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     State.Stack.back().Indent = State.Column + Spaces;
   if (State.Stack.back().AvoidBinPacking && startsNextParameter(Current, Style))
     State.Stack.back().NoLineBreak = true;
-  if (startsSegmentOfBuilderTypeCall(Current))
+  if (startsSegmentOfBuilderTypeCall(Current) &&
+      State.Column > getNewLineColumn(State))
     State.Stack.back().ContainsUnwrappedBuilder = true;
 
   if (Current.is(TT_LambdaArrow))

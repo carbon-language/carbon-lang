@@ -4154,6 +4154,18 @@ TEST_F(FormatTest, FormatsBuilderPattern) {
                "    ->aaaaaaaaaaaaaae(0)\n"
                "    ->aaaaaaaaaaaaaaa();");
 
+  // Don't linewrap after very short segments.
+  verifyFormat("a().aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
+  verifyFormat("aa().aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
+  verifyFormat("aaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
+               "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
+
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaa()\n"
                "    .aaaaaaaaaaaaaaaaaaaaaaaaaa()\n"
                "    .has<bbbbbbbbbbbbbbbbbbbbb>();");
