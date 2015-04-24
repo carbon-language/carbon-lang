@@ -404,7 +404,8 @@ extern "C" VOID WINAPI RtlCaptureContext(PCONTEXT ContextRecord);
 void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 
   STACKFRAME64 StackFrame = {};
-  CONTEXT Context = {0};
+  CONTEXT Context;
+  memset(&Context, 0, sizeof(Context));
   ::RtlCaptureContext(&Context);
 #if defined(_M_X64)
   StackFrame.AddrPC.Offset = Context.Rip;
