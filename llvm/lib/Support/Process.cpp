@@ -29,6 +29,7 @@ using namespace sys;
 Optional<std::string> Process::FindInEnvPath(const std::string& EnvName,
                                              const std::string& FileName)
 {
+  assert(!path::is_absolute(FileName));
   Optional<std::string> FoundPath;
   Optional<std::string> OptPath = Process::GetEnv(EnvName);
   if (!OptPath.hasValue())
