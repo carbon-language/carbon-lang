@@ -970,8 +970,11 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
       unsigned Src2SubReg = Src2->getSubReg();
       Src0->setReg(Src1Reg);
       Src0->setSubReg(Src1SubReg);
+      Src0->setIsKill(Src1->isKill());
+
       Src1->setReg(Src2Reg);
       Src1->setSubReg(Src2SubReg);
+      Src1->setIsKill(Src2->isKill());
 
       Src2->ChangeToImmediate(Imm);
 
