@@ -67,9 +67,11 @@ public:
                                          const TargetRegisterInfo *TRI,
                                          const MachineFunction &MF) const;
 
-  /// isTriviallyReMaterializable - Return true if the instruction is trivially
-  /// rematerializable, meaning it has no side effects and requires no operands
-  /// that aren't always available.
+  /// Return true if the instruction is trivially rematerializable, meaning it
+  /// has no side effects and requires no operands that aren't always available.
+  /// This means the only allowed uses are constants and unallocatable physical
+  /// registers so that the instructions result is independent of the place
+  /// in the function.
   bool isTriviallyReMaterializable(const MachineInstr *MI,
                                    AliasAnalysis *AA = nullptr) const {
     return MI->getOpcode() == TargetOpcode::IMPLICIT_DEF ||
@@ -79,12 +81,13 @@ public:
   }
 
 protected:
-  /// isReallyTriviallyReMaterializable - For instructions with opcodes for
-  /// which the M_REMATERIALIZABLE flag is set, this hook lets the target
-  /// specify whether the instruction is actually trivially rematerializable,
-  /// taking into consideration its operands. This predicate must return false
-  /// if the instruction has any side effects other than producing a value, or
-  /// if it requres any address registers that are not always available.
+  /// For instructions with opcodes for which the M_REMATERIALIZABLE flag is
+  /// set, this hook lets the target specify whether the instruction is actually
+  /// trivially rematerializable, taking into consideration its operands. This
+  /// predicate must return false if the instruction has any side effects other
+  /// than producing a value, or if it requres any address registers that are
+  /// not always available.
+  /// Requirements must be check as stated in isTriviallyReMaterializable() .
   virtual bool isReallyTriviallyReMaterializable(const MachineInstr *MI,
                                                  AliasAnalysis *AA) const {
     return false;
