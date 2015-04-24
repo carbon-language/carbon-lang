@@ -300,13 +300,14 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCXXABI_C_FLAGS}")
 #===============================================================================
 
 include_directories(include)
+include_directories(../libunwind/include)
 
 # Add source code. This also contains all of the logic for deciding linker flags
 # soname, etc...
 add_subdirectory(src)
 
 if (LIBCXXABI_USE_LLVM_UNWINDER)
-  add_subdirectory(src/Unwind)
+  add_subdirectory(../libunwind/src "${CMAKE_CURRENT_BINARY_DIR}/libunwind")
 endif()
 
 if(NOT LIBCXXABI_ENABLE_SHARED)
