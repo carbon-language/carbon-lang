@@ -1266,17 +1266,25 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   }
   LexicalScope Scope(*this, S.getSourceRange());
   // Emit code for 'single' region along with 'copyprivate' clauses
-  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+  bool HasFirstprivates;
+  auto &&CodeGen = [&S, &HasFirstprivates](CodeGenFunction &CGF) {
+    CodeGenFunction::OMPPrivateScope SingleScope(CGF);
+    HasFirstprivates = CGF.EmitOMPFirstprivateClause(S, SingleScope);
+    (void)SingleScope.Privatize();
+
     CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
     CGF.EnsureInsertPoint();
   };
   CGM.getOpenMPRuntime().emitSingleRegion(*this, CodeGen, S.getLocStart(),
                                           CopyprivateVars, DestExprs, SrcExprs,
                                           AssignmentOps);
-  // Emit an implicit barrier at the end (if no 'nowait' clause and no
-  // 'copyprivate' clause).
-  if (!S.getSingleClause(OMPC_nowait) && CopyprivateVars.empty()) {
-    CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_single);
+  // Emit an implicit barrier at the end (to avoid data race on firstprivate
+  // init or if no 'nowait' clause was specified and no 'copyprivate' clause).
+  if ((!S.getSingleClause(OMPC_nowait) || HasFirstprivates) &&
+      CopyprivateVars.empty()) {
+    CGM.getOpenMPRuntime().emitBarrierCall(
+        *this, S.getLocStart(),
+        S.getSingleClause(OMPC_nowait) ? OMPD_unknown : OMPD_single);
   }
 }
 
