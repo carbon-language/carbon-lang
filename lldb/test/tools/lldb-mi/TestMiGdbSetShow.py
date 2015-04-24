@@ -82,8 +82,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         unexpected = [ "\*running" ] # "\*running" is async notification
         it = self.expect(unexpected + [ "@\"argc=1\\\\r\\\\n" ])
         if it < len(unexpected):
-            # generate error if it's not "@\"argc=1\\\\r\\\\n"
-            self.expect("$UNEXPECTED FOUND: %s\.^" % unexpected[it], timeout = 0)
+            self.fail("unexpected found: %s" % unexpected[it])
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
