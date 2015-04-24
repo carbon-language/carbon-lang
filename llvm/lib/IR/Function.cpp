@@ -206,10 +206,12 @@ void Argument::removeAttr(AttributeSet AS) {
 //===----------------------------------------------------------------------===//
 
 bool Function::isMaterializable() const {
-  return getGlobalObjectSubClassData();
+  return getGlobalObjectSubClassData() & IsMaterializableBit;
 }
 
-void Function::setIsMaterializable(bool V) { setGlobalObjectSubClassData(V); }
+void Function::setIsMaterializable(bool V) {
+  setGlobalObjectBit(IsMaterializableBit, V);
+}
 
 LLVMContext &Function::getContext() const {
   return getType()->getContext();
@@ -244,7 +246,7 @@ Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
       Ty(Ty) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
-  setIsMaterializable(false);
+  setGlobalObjectSubClassData(0);
   SymTab = new ValueSymbolTable();
 
   // If the function has arguments, mark them as lazily built.

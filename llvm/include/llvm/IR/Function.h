@@ -77,6 +77,16 @@ private:
    * bit 3-6: CallingConvention
    */
 
+  /// Bits from GlobalObject::GlobalObjectSubclassData.
+  enum {
+    /// Whether this function is materializable.
+    IsMaterializableBit = 1 << 0
+  };
+  void setGlobalObjectBit(unsigned Mask, bool Value) {
+    setGlobalObjectSubClassData((~Mask & getGlobalObjectSubClassData()) |
+                                (Value ? Mask : 0u));
+  }
+
   friend class SymbolTableListTraits<Function, Module>;
 
   void setParent(Module *parent);
