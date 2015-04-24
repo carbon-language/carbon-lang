@@ -975,6 +975,50 @@ StringRef NamedMDNode::getName() const {
 //===----------------------------------------------------------------------===//
 // Instruction Metadata method implementations.
 //
+void MDAttachmentMap::set(unsigned ID, MDNode &MD) {
+  for (auto &I : Attachments)
+    if (I.first == ID) {
+      I.second.reset(&MD);
+      return;
+    }
+  Attachments.emplace_back(std::piecewise_construct, std::make_tuple(ID),
+                           std::make_tuple(&MD));
+}
+
+void MDAttachmentMap::erase(unsigned ID) {
+  if (empty())
+    return;
+
+  // Common case is one/last value.
+  if (Attachments.back().first == ID) {
+    Attachments.pop_back();
+    return;
+  }
+
+  for (auto I = Attachments.begin(), E = std::prev(Attachments.end()); I != E;
+       ++I)
+    if (I->first == ID) {
+      *I = std::move(Attachments.back());
+      Attachments.pop_back();
+      return;
+    }
+}
+
+MDNode *MDAttachmentMap::lookup(unsigned ID) const {
+  for (const auto &I : Attachments)
+    if (I.first == ID)
+      return I.second;
+  return nullptr;
+}
+
+void MDAttachmentMap::getAll(
+    SmallVectorImpl<std::pair<unsigned, MDNode *>> &Result) const {
+  Result.append(Attachments.begin(), Attachments.end());
+
+  // Sort the resulting array so it is stable.
+  if (Result.size() > 1)
+    array_pod_sort(Result.begin(), Result.end());
+}
 
 void Instruction::setMetadata(StringRef Kind, MDNode *Node) {
   if (!Node && !hasMetadata())
@@ -1007,12 +1051,9 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   }
 
   auto &Info = InstructionMetadata[this];
-  Info.erase(std::remove_if(
-                 Info.begin(), Info.end(),
-                 [&KnownSet](const std::pair<unsigned, TrackingMDNodeRef> &I) {
-                   return !KnownSet.count(I.first);
-                 }),
-             Info.end());
+  Info.remove_if([&KnownSet](const std::pair<unsigned, TrackingMDNodeRef> &I) {
+    return !KnownSet.count(I.first);
+  });
 
   if (Info.empty()) {
     // Drop our entry at the store.
@@ -1039,20 +1080,9 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
     auto &Info = getContext().pImpl->InstructionMetadata[this];
     assert(!Info.empty() == hasMetadataHashEntry() &&
            "HasMetadata bit is wonked");
-    if (Info.empty()) {
+    if (Info.empty())
       setHasMetadataHashEntry(true);
-    } else {
-      // Handle replacement of an existing value.
-      for (auto &P : Info)
-        if (P.first == KindID) {
-          P.second.reset(Node);
-          return;
-        }
-    }
-
-    // No replacement, just add it to the list.
-    Info.emplace_back(std::piecewise_construct, std::make_tuple(KindID),
-                      std::make_tuple(Node));
+    Info.set(KindID, *Node);
     return;
   }
 
@@ -1064,22 +1094,14 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
     return;  // Nothing to remove!
   auto &Info = getContext().pImpl->InstructionMetadata[this];
 
-  // Common case is removing the only entry.
-  if (Info.size() == 1 && Info[0].first == KindID) {
-    getContext().pImpl->InstructionMetadata.erase(this);
-    setHasMetadataHashEntry(false);
-    return;
-  }
-
   // Handle removal of an existing value.
-  for (unsigned i = 0, e = Info.size(); i != e; ++i)
-    if (Info[i].first == KindID) {
-      Info[i] = std::move(Info.back());
-      Info.pop_back();
-      assert(!Info.empty() && "Removing last entry should be handled above");
-      return;
-    }
-  // Otherwise, removing an entry that doesn't exist on the instruction.
+  Info.erase(KindID);
+
+  if (!Info.empty())
+    return;
+
+  getContext().pImpl->InstructionMetadata.erase(this);
+  setHasMetadataHashEntry(false);
 }
 
 void Instruction::setAAMetadata(const AAMDNodes &N) {
@@ -1093,15 +1115,12 @@ MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
   if (KindID == LLVMContext::MD_dbg)
     return DbgLoc.getAsMDNode();
 
-  if (!hasMetadataHashEntry()) return nullptr;
-
+  if (!hasMetadataHashEntry())
+    return nullptr;
   auto &Info = getContext().pImpl->InstructionMetadata[this];
   assert(!Info.empty() && "bit out of sync with hash table");
 
-  for (const auto &I : Info)
-    if (I.first == KindID)
-      return I.second;
-  return nullptr;
+  return Info.lookup(KindID);
 }
 
 void Instruction::getAllMetadataImpl(
@@ -1120,14 +1139,7 @@ void Instruction::getAllMetadataImpl(
          "Shouldn't have called this");
   const auto &Info = getContext().pImpl->InstructionMetadata.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
-
-  Result.reserve(Result.size() + Info.size());
-  for (auto &I : Info)
-    Result.push_back(std::make_pair(I.first, cast<MDNode>(I.second.get())));
-
-  // Sort the resulting array so it is stable.
-  if (Result.size() > 1)
-    array_pod_sort(Result.begin(), Result.end());
+  Info.getAll(Result);
 }
 
 void Instruction::getAllMetadataOtherThanDebugLocImpl(
@@ -1138,13 +1150,7 @@ void Instruction::getAllMetadataOtherThanDebugLocImpl(
          "Shouldn't have called this");
   const auto &Info = getContext().pImpl->InstructionMetadata.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
-  Result.reserve(Result.size() + Info.size());
-  for (auto &I : Info)
-    Result.push_back(std::make_pair(I.first, cast<MDNode>(I.second.get())));
-
-  // Sort the resulting array so it is stable.
-  if (Result.size() > 1)
-    array_pod_sort(Result.begin(), Result.end());
+  Info.getAll(Result);
 }
 
 /// clearMetadataHashEntries - Clear all hashtable-based metadata from

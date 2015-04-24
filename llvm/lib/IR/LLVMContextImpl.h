@@ -852,6 +852,44 @@ template <class NodeTy> struct MDNodeInfo {
 #define HANDLE_MDNODE_LEAF(CLASS) typedef MDNodeInfo<CLASS> CLASS##Info;
 #include "llvm/IR/Metadata.def"
 
+/// \brief Map-like storage for metadata attachments.
+class MDAttachmentMap {
+  SmallVector<std::pair<unsigned, TrackingMDNodeRef>, 2> Attachments;
+
+public:
+  bool empty() const { return Attachments.empty(); }
+  size_t size() const { return Attachments.size(); }
+
+  /// \brief Get a particular attachment (if any).
+  MDNode *lookup(unsigned ID) const;
+
+  /// \brief Set an attachment to a particular node.
+  ///
+  /// Set the \c ID attachment to \c MD, replacing the current attachment at \c
+  /// ID (if anyway).
+  void set(unsigned ID, MDNode &MD);
+
+  /// \brief Remove an attachment.
+  ///
+  /// Remove the attachment at \c ID, if any.
+  void erase(unsigned ID);
+
+  /// \brief Copy out all the attachments.
+  ///
+  /// Copies all the current attachments into \c Result, sorting by attachment
+  /// ID.  This function does \em not clear \c Result.
+  void getAll(SmallVectorImpl<std::pair<unsigned, MDNode *>> &Result) const;
+
+  /// \brief Erase matching attachments.
+  ///
+  /// Erases all attachments matching the \c shouldRemove predicate.
+  template <class PredTy> void remove_if(PredTy shouldRemove) {
+    Attachments.erase(
+        std::remove_if(Attachments.begin(), Attachments.end(), shouldRemove),
+        Attachments.end());
+  }
+};
+
 class LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
@@ -952,9 +990,7 @@ public:
   StringMap<unsigned> CustomMDKindNames;
 
   /// Collection of per-instruction metadata used in this context.
-  DenseMap<const Instruction *,
-           SmallVector<std::pair<unsigned, TrackingMDNodeRef>, 2>>
-      InstructionMetadata;
+  DenseMap<const Instruction *, MDAttachmentMap> InstructionMetadata;
 
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
