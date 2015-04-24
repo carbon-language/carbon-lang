@@ -1504,8 +1504,7 @@ bool LLParser::ParseMetadataAttachment(unsigned &Kind, MDNode *&MD) {
 
 /// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
-bool LLParser::ParseInstructionMetadata(Instruction *Inst,
-                                        PerFunctionState *PFS) {
+bool LLParser::ParseInstructionMetadata(Instruction &Inst) {
   do {
     if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected metadata after comma");
@@ -1515,9 +1514,9 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     if (ParseMetadataAttachment(MDK, N))
       return true;
 
-    Inst->setMetadata(MDK, N);
+    Inst.setMetadata(MDK, N);
     if (MDK == LLVMContext::MD_tbaa)
-      InstsWithTBAATag.push_back(Inst);
+      InstsWithTBAATag.push_back(&Inst);
 
     // If this is the end of the list, we're done.
   } while (EatIfPresent(lltok::comma));
@@ -4396,7 +4395,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       // With a normal result, we check to see if the instruction is followed by
       // a comma and metadata.
       if (EatIfPresent(lltok::comma))
-        if (ParseInstructionMetadata(Inst, &PFS))
+        if (ParseInstructionMetadata(*Inst))
           return true;
       break;
     case InstExtraComma:
@@ -4404,7 +4403,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
 
       // If the instruction parser ate an extra comma at the end of it, it
       // *must* be followed by metadata.
-      if (ParseInstructionMetadata(Inst, &PFS))
+      if (ParseInstructionMetadata(*Inst))
         return true;
       break;
     }
