@@ -1179,10 +1179,19 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
                             /*ModuleLevelChanges=*/false, Returns, "",
                             &OutlinedFunctionInfo, Director.get());
 
-  // Move all the instructions in the first cloned block into our entry block.
-  BasicBlock *FirstClonedBB = std::next(Function::iterator(Entry));
-  Entry->getInstList().splice(Entry->end(), FirstClonedBB->getInstList());
-  FirstClonedBB->eraseFromParent();
+  // Move all the instructions in the cloned "entry" block into our entry block.
+  // Depending on how the parent function was laid out, the block that will
+  // correspond to the outlined entry block may not be the first block in the
+  // list.  We can recognize it, however, as the cloned block which has no
+  // predecessors.  Any other block wouldn't have been cloned if it didn't
+  // have a predecessor which was also cloned.
+  Function::iterator  ClonedIt = std::next(Function::iterator(Entry));
+  while (!pred_empty(ClonedIt))
+    ++ClonedIt;
+  BasicBlock *ClonedEntryBB = ClonedIt;
+  assert(ClonedEntryBB);
+  Entry->getInstList().splice(Entry->end(), ClonedEntryBB->getInstList());
+  ClonedEntryBB->eraseFromParent();
 
   // Make sure we can identify the handler's personality later.
   addStubInvokeToHandlerIfNeeded(Handler, LPad->getPersonalityFn());
