@@ -84,7 +84,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 ; CHECK: for.body:
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 for.body:                                         ; preds = %for.cond
   invoke void @"\01?may_throw@@YAXXZ"()

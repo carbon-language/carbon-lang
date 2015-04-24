@@ -38,7 +38,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[TMP1:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...) @llvm.frameescape(i32* [[TMP1]], %class.SomeClass* [[OBJ_PTR]], i32* [[TMP0]])
 ; CHECK:   %call = invoke %class.SomeClass* @"\01??0SomeClass@@QEAA@XZ"(%class.SomeClass* %obj)
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
 define void @"\01?test@@YAXXZ"() #0 {
@@ -51,7 +51,7 @@ entry:
 
 ; CHECK: invoke.cont:
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
-; CHECK:           to label %invoke.cont2 unwind label %[[LPAD1_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont2 unwind label %[[LPAD1_LABEL:lpad[0-9]*]]
 
 invoke.cont:                                      ; preds = %entry
   invoke void @"\01?may_throw@@YAXXZ"()
@@ -59,7 +59,7 @@ invoke.cont:                                      ; preds = %entry
 
 ; CHECK: invoke.cont2:
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
-; CHECK:           to label %try.cont unwind label %[[LPAD3_LABEL:lpad[0-9]+]]
+; CHECK:           to label %try.cont unwind label %[[LPAD3_LABEL:lpad[0-9]*]]
 
 invoke.cont2:                                     ; preds = %invoke.cont
   invoke void @"\01?may_throw@@YAXXZ"()

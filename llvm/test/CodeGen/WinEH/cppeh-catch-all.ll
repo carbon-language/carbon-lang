@@ -22,7 +22,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK: define void @_Z4testv()
 ; CHECK: entry:
 ; CHECK:   invoke void @_Z9may_throwv()
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {

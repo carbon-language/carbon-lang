@@ -52,7 +52,7 @@ $"\01??_R0?AVSomeClass@@@8" = comdat any
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...) @llvm.frameescape(i32* [[I_PTR]], i64* [[LL_PTR]], %class.SomeClass** [[OBJ_PTR]])
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
 define void @"\01?test@@YAXXZ"() #0 {

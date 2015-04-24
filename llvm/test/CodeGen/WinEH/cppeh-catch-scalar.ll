@@ -26,7 +26,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   call void (...) @llvm.frameescape(i32* [[I_PTR]])
 ; CHECK:   invoke void @_Z9may_throwv()
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {

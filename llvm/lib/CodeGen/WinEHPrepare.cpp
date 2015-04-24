@@ -670,25 +670,13 @@ bool WinEHPrepare::prepareExceptionHandlers(
       outlineHandler(Action, &F, LPad, StartBB, FrameVarInfo);
     }
 
-    // Replace the landing pad with a new llvm.eh.action based landing pad.
-    BasicBlock *NewLPadBB = BasicBlock::Create(Context, "lpad", &F, LPadBB);
-    assert(!isa<PHINode>(LPadBB->begin()));
-    auto *NewLPad = cast<LandingPadInst>(LPad->clone());
-    NewLPadBB->getInstList().push_back(NewLPad);
-    while (!pred_empty(LPadBB)) {
-      auto *pred = *pred_begin(LPadBB);
-      InvokeInst *Invoke = cast<InvokeInst>(pred->getTerminator());
-      Invoke->setUnwindDest(NewLPadBB);
-    }
-
-    // Replace the mapping of any nested landing pad that previously mapped
-    // to this landing pad with a referenced to the cloned version.
-    for (auto &LPadPair : NestedLPtoOriginalLP) {
-      const LandingPadInst *OriginalLPad = LPadPair.second;
-      if (OriginalLPad == LPad) {
-        LPadPair.second = NewLPad;
-      }
-    }
+    // Split the block after the landingpad instruction so that it is just a
+    // call to llvm.eh.actions followed by indirectbr.
+    assert(!isa<PHINode>(LPadBB->begin()) && "lpad phi not removed");
+    LPadBB->splitBasicBlock(LPad->getNextNode(),
+                            LPadBB->getName() + ".prepsplit");
+    // Erase the branch inserted by the split so we can insert indirectbr.
+    LPadBB->getTerminator()->eraseFromParent();
 
     // Replace all extracted values with undef and ultimately replace the
     // landingpad with undef.
@@ -733,7 +721,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
       ActionArgs.push_back(Action->getHandlerBlockOrFunc());
     }
     CallInst *Recover =
-        CallInst::Create(ActionIntrin, ActionArgs, "recover", NewLPadBB);
+        CallInst::Create(ActionIntrin, ActionArgs, "recover", LPadBB);
 
     // Add an indirect branch listing possible successors of the catch handlers.
     SetVector<BasicBlock *> ReturnTargets;
@@ -744,7 +732,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
       }
     }
     IndirectBrInst *Branch =
-        IndirectBrInst::Create(Recover, ReturnTargets.size(), NewLPadBB);
+        IndirectBrInst::Create(Recover, ReturnTargets.size(), LPadBB);
     for (BasicBlock *Target : ReturnTargets)
       Branch->addDestination(Target);
   } // End for each landingpad

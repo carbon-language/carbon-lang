@@ -27,7 +27,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:   call void @_ZN9SomeClassC1Ev(%class.SomeClass* [[OBJ_PTR]])
 ; CHECK:   call void (...) @llvm.frameescape(%class.SomeClass* [[OBJ_PTR]])
 ; CHECK:   invoke void @_Z9may_throwv()
-; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]+]]
+; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
