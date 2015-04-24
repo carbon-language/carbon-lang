@@ -961,12 +961,6 @@ bool SelectionDAGISel::PrepareEHLandingPad() {
     for (MachineBasicBlock *InvokeBB : InvokeBBs)
       InvokeBB->removeSuccessor(MBB);
 
-    // Transfer EH state number assigned to the IR block to the MBB.
-    if (Personality == EHPersonality::MSVC_CXX) {
-      WinEHFuncInfo &FI = MF->getMMI().getWinEHFuncInfo(MF->getFunction());
-      MF->getMMI().addWinEHState(MBB, FI.LandingPadStateMap[LPadInst]);
-    }
-
     // Don't select instructions for the landingpad.
     return false;
   }

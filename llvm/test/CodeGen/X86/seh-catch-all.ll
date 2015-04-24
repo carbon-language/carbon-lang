@@ -1,10 +1,10 @@
 ; RUN: llc -mtriple=x86_64-windows-msvc < %s | FileCheck %s
 
-@str = internal unnamed_addr constant [10 x i8] c"recovered\00", align 1
+@str = linkonce_odr unnamed_addr constant [27 x i8] c"GetExceptionCode(): 0x%lx\0A\00", align 1
 
 declare i32 @__C_specific_handler(...)
 declare void @crash()
-declare i32 @puts(i8*)
+declare i32 @printf(i8* nocapture readonly, ...) nounwind
 
 define i32 @main() {
 entry:
@@ -14,7 +14,10 @@ entry:
 lpad:
   %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
           catch i8* null
-  call i32 @puts(i8* getelementptr inbounds ([10 x i8], [10 x i8]* @str, i64 0, i64 0))
+  %1 = extractvalue { i8*, i32 } %0, 0
+  %2 = ptrtoint i8* %1 to i64
+  %3 = trunc i64 %2 to i32
+  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([27 x i8], [27 x i8]* @str, i64 0, i64 0), i32 %3)
   br label %__try.cont
 
 __try.cont:
@@ -24,7 +27,15 @@ eh.resume:
   resume { i8*, i32 } %0
 }
 
+; Check that we can get the exception code from eax to the printf.
+
 ; CHECK-LABEL: main:
+; CHECK: retq
+; CHECK: # Block address taken
+; CHECK: leaq str(%rip), %rcx
+; CHECK: movl %eax, %edx
+; CHECK: callq printf
+
 ; CHECK: .seh_handlerdata
 ; CHECK-NEXT: .long 1
 ; CHECK-NEXT: .Ltmp{{[0-9]+}}@IMGREL

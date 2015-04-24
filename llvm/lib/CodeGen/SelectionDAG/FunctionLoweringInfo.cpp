@@ -271,40 +271,49 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   }
 
   // Mark landing pad blocks.
-  const LandingPadInst *LP = nullptr;
+  SmallVector<const LandingPadInst *, 4> LPads;
   for (BB = Fn->begin(); BB != EB; ++BB) {
     if (const auto *Invoke = dyn_cast<InvokeInst>(BB->getTerminator()))
       MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
     if (BB->isLandingPad())
-      LP = BB->getLandingPadInst();
+      LPads.push_back(BB->getLandingPadInst());
   }
 
-  // Calculate EH numbers for MSVC C++ EH and save SEH handlers if necessary.
+  // If this is an MSVC EH personality, we need to do a bit more work.
   EHPersonality Personality = EHPersonality::Unknown;
-  if (LP)
-    Personality = classifyEHPersonality(LP->getPersonalityFn());
+  if (!LPads.empty())
+    Personality = classifyEHPersonality(LPads.back()->getPersonalityFn());
+  if (!isMSVCEHPersonality(Personality))
+    return;
+
+  WinEHFuncInfo *EHInfo = nullptr;
   if (Personality == EHPersonality::MSVC_Win64SEH) {
-    addSEHHandlersForLPads();
+    addSEHHandlersForLPads(LPads);
   } else if (Personality == EHPersonality::MSVC_CXX) {
     const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
-    WinEHFuncInfo &FI = MMI.getWinEHFuncInfo(WinEHParentFn);
-    if (FI.LandingPadStateMap.empty()) {
-      WinEHNumbering Num(FI);
+    EHInfo = &MMI.getWinEHFuncInfo(WinEHParentFn);
+    if (EHInfo->LandingPadStateMap.empty()) {
+      WinEHNumbering Num(*EHInfo);
       Num.calculateStateNumbers(*WinEHParentFn);
       // Pop everything on the handler stack.
       Num.processCallSite(None, ImmutableCallSite());
     }
+
+    // Copy the state numbers to LandingPadInfo for the current function, which
+    // could be a handler or the parent.
+    for (const LandingPadInst *LP : LPads) {
+      MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
+      MMI.addWinEHState(LPadMBB, EHInfo->LandingPadStateMap[LP]);
+    }
   }
 }
 
-void FunctionLoweringInfo::addSEHHandlersForLPads() {
+void FunctionLoweringInfo::addSEHHandlersForLPads(
+    ArrayRef<const LandingPadInst *> LPads) {
   MachineModuleInfo &MMI = MF->getMMI();
 
   // Iterate over all landing pads with llvm.eh.actions calls.
-  for (const BasicBlock &BB : *Fn) {
-    const LandingPadInst *LP = BB.getLandingPadInst();
-    if (!LP)
-      continue;
+  for (const LandingPadInst *LP : LPads) {
     const IntrinsicInst *ActionsCall =
         dyn_cast<IntrinsicInst>(LP->getNextNode());
     if (!ActionsCall ||

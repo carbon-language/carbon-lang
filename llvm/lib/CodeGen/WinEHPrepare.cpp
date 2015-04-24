@@ -71,7 +71,7 @@ class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), DT(nullptr) {}
+      : FunctionPass(ID), DT(nullptr), SEHExceptionCodeSlot(nullptr) {}
 
   bool runOnFunction(Function &Fn) override;
 
@@ -133,6 +133,8 @@ private:
   // outlined into a handler.  This is done after all handlers have been
   // outlined but before the outlined code is pruned from the parent function.
   DenseMap<const BasicBlock *, BasicBlock *> LPadTargetBlocks;
+
+  AllocaInst *SEHExceptionCodeSlot;
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -628,6 +630,13 @@ bool WinEHPrepare::prepareExceptionHandlers(
   Type *Int32Type = Type::getInt32Ty(Context);
   Function *ActionIntrin = Intrinsic::getDeclaration(M, Intrinsic::eh_actions);
 
+  if (isAsynchronousEHPersonality(Personality)) {
+    // FIXME: Switch the ehptr type to i32 and then switch this.
+    SEHExceptionCodeSlot =
+        new AllocaInst(Int8PtrType, nullptr, "seh_exception_code",
+                       F.getEntryBlock().getFirstInsertionPt());
+  }
+
   for (LandingPadInst *LPad : LPads) {
     // Look for evidence that this landingpad has already been processed.
     bool LPadHasActionList = false;
@@ -680,22 +689,47 @@ bool WinEHPrepare::prepareExceptionHandlers(
 
     // Replace all extracted values with undef and ultimately replace the
     // landingpad with undef.
-    // FIXME: This doesn't handle SEH GetExceptionCode(). For now, we just give
-    // out undef until we figure out the codegen support.
-    SmallVector<Instruction *, 4> Extracts;
+    SmallVector<Instruction *, 4> SEHCodeUses;
+    SmallVector<Instruction *, 4> EHUndefs;
     for (User *U : LPad->users()) {
       auto *E = dyn_cast<ExtractValueInst>(U);
       if (!E)
         continue;
       assert(E->getNumIndices() == 1 &&
              "Unexpected operation: extracting both landing pad values");
-      Extracts.push_back(E);
+      unsigned Idx = *E->idx_begin();
+      assert((Idx == 0 || Idx == 1) && "unexpected index");
+      if (Idx == 0 && isAsynchronousEHPersonality(Personality))
+        SEHCodeUses.push_back(E);
+      else
+        EHUndefs.push_back(E);
     }
-    for (Instruction *E : Extracts) {
+    for (Instruction *E : EHUndefs) {
       E->replaceAllUsesWith(UndefValue::get(E->getType()));
       E->eraseFromParent();
     }
     LPad->replaceAllUsesWith(UndefValue::get(LPad->getType()));
+
+    // Rewrite uses of the exception pointer to loads of an alloca.
+    for (Instruction *E : SEHCodeUses) {
+      SmallVector<Use *, 4> Uses;
+      for (Use &U : E->uses())
+        Uses.push_back(&U);
+      for (Use *U : Uses) {
+        auto *I = cast<Instruction>(U->getUser());
+        if (isa<ResumeInst>(I))
+          continue;
+        LoadInst *LI;
+        if (auto *Phi = dyn_cast<PHINode>(I))
+          LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false,
+                            Phi->getIncomingBlock(*U));
+        else
+          LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false, I);
+        U->set(LI);
+      }
+      E->replaceAllUsesWith(UndefValue::get(E->getType()));
+      E->eraseFromParent();
+    }
 
     // Add a call to describe the actions for this landing pad.
     std::vector<Value *> ActionArgs;
@@ -819,6 +853,13 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // block.
   Builder.SetInsertPoint(&F.getEntryBlock().back());
   Builder.CreateCall(FrameEscapeFn, AllocasToEscape);
+
+  if (SEHExceptionCodeSlot) {
+    if (SEHExceptionCodeSlot->hasNUses(0))
+      SEHExceptionCodeSlot->eraseFromParent();
+    else
+      PromoteMemToReg(SEHExceptionCodeSlot, *DT);
+  }
 
   // Clean up the handler action maps we created for this function
   DeleteContainerSeconds(CatchHandlerMap);
@@ -1193,6 +1234,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
 /// target.
 void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
                                           BasicBlock *StartBB) {
+  LLVMContext &Context = StartBB->getContext();
   BasicBlock *HandlerBB;
   BasicBlock *NextBB;
   Constant *Selector;
@@ -1210,6 +1252,12 @@ void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
     HandlerBB =
         StartBB->splitBasicBlock(StartBB->getFirstInsertionPt(), "catch.all");
   }
+  IRBuilder<> Builder(HandlerBB->getFirstInsertionPt());
+  Function *EHCodeFn = Intrinsic::getDeclaration(
+      StartBB->getParent()->getParent(), Intrinsic::eh_exceptioncode);
+  Value *Code = Builder.CreateCall(EHCodeFn, "sehcode");
+  Code = Builder.CreateIntToPtr(Code, SEHExceptionCodeSlot->getAllocatedType());
+  Builder.CreateStore(Code, SEHExceptionCodeSlot);
   CatchAction->setHandlerBlockOrFunc(BlockAddress::get(HandlerBB));
   TinyPtrVector<BasicBlock *> Targets(HandlerBB);
   CatchAction->setReturnTargets(Targets);
