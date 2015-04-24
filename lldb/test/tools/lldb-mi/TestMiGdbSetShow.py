@@ -57,7 +57,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that program is executed in async mode
         self.runCmd("-exec-run")
         self.expect("\*running")
-        self.expect("~\"argc=1")
+        self.expect("@\"argc=1")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -80,9 +80,9 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that program is executed in async mode
         self.runCmd("-exec-run")
         unexpected = [ "\*running" ] # "\*running" is async notification
-        it = self.expect(unexpected + [ "~\"argc=1\\\\r\\\\n" ])
+        it = self.expect(unexpected + [ "@\"argc=1\\\\r\\\\n" ])
         if it < len(unexpected):
-            # generate error if it's not "~\"argc=1\\\\r\\\\n"
+            # generate error if it's not "@\"argc=1\\\\r\\\\n"
             self.expect("$UNEXPECTED FOUND: %s\.^" % unexpected[it], timeout = 0)
 
     @lldbmi_test

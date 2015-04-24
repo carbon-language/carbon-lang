@@ -74,7 +74,7 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # Test that arguments were passed properly
-        self.expect("~\"argc=5\\\\r\\\\n\"")
+        self.expect("@\"argc=5\\\\r\\\\n\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -99,7 +99,7 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # Test that arguments were passed properly
-        self.expect("~\"argc=5\\\\r\\\\n\"")
+        self.expect("@\"argc=5\\\\r\\\\n\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -151,7 +151,7 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr="0x[0-9a-f]+\",func=\"__printf\",args=[{name=\"format\",value=\"0x[0-9a-f]+\"}],file=\"printf.c\",fullname=\".+printf.c\",line="\d+"},thread-id=\"1\",stopped-threads=\"all\"
         self.runCmd("thread step-in")
         self.expect("\^done")
-        it = self.expect([ "~\"argc=1\\\\r\\\\n\"",
+        it = self.expect([ "@\"argc=1\\\\r\\\\n\"",
                            "\*stopped,reason=\"end-stepping-range\".+?func=\"(?!main).+?\"" ])
         if it == 0:
             self.expect("\*stopped,reason=\"end-stepping-range\".+?func=\"main\"")
@@ -179,7 +179,7 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that "thread step-over" steps over
         self.runCmd("thread step-over")
         self.expect("\^done")
-        self.expect("~\"argc=1\\\\r\\\\n\"")
+        self.expect("@\"argc=1\\\\r\\\\n\"")
         self.expect("\*stopped,reason=\"end-stepping-range\"")
 
     @lldbmi_test
@@ -205,7 +205,7 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that "thread continue" continues execution
         self.runCmd("thread continue")
         self.expect("\^done")
-        self.expect("~\"argc=1\\\\r\\\\n")
+        self.expect("@\"argc=1\\\\r\\\\n")
         self.expect("\*stopped,reason=\"exited-normally\"")
 
 if __name__ == '__main__':
