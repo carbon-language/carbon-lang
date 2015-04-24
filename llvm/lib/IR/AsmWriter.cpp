@@ -1943,6 +1943,7 @@ class AssemblyWriter {
   SetVector<const Comdat *> Comdats;
   bool ShouldPreserveUseListOrder;
   UseListOrderStack UseListOrders;
+  SmallVector<StringRef, 8> MDNames;
 
 public:
   /// Construct an AssemblyWriter with an external SlotTracker
@@ -2967,8 +2968,9 @@ void AssemblyWriter::printMetadataAttachments(
   if (MDs.empty())
     return;
 
-  SmallVector<StringRef, 8> MDNames;
-  TheModule->getMDKindNames(MDNames);
+  if (MDNames.empty())
+    TheModule->getMDKindNames(MDNames);
+
   for (const auto &I : MDs) {
     unsigned Kind = I.first;
     if (Kind < MDNames.size()) {
