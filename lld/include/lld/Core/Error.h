@@ -22,7 +22,6 @@ namespace lld {
 const std::error_category &YamlReaderCategory();
 
 enum class YamlReaderError {
-  success = 0,
   unknown_keyword,
   illegal_value
 };

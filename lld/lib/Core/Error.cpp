@@ -24,8 +24,6 @@ public:
 
   std::string message(int ev) const override {
     switch (static_cast<YamlReaderError>(ev)) {
-    case YamlReaderError::success:
-      return "Success";
     case YamlReaderError::unknown_keyword:
       return "Unknown keyword found in yaml file";
     case YamlReaderError::illegal_value:
