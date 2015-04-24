@@ -51,8 +51,19 @@ int main() {
 // CHECK-NEXT:  call void @__kmpc_end_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // CHECK-NEXT:  br label {{%?}}[[EXIT]]
 // CHECK:       [[EXIT]]
-// CHECK-NOT:   __kmpc_cancel_barrier
+// CHECK-NOT:   call {{.+}} @__kmpc_cancel_barrier
 #pragma omp single nowait
+  a = 2;
+// CHECK:       [[RES:%.+]] = call i32 @__kmpc_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK-NEXT:  [[IS_SINGLE:%.+]] = icmp ne i32 [[RES]], 0
+// CHECK-NEXT:  br i1 [[IS_SINGLE]], label {{%?}}[[THEN:.+]], label {{%?}}[[EXIT:.+]]
+// CHECK:       [[THEN]]
+// CHECK-NEXT:  store i8 2, i8* [[A_ADDR]]
+// CHECK-NEXT:  call void @__kmpc_end_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK-NEXT:  br label {{%?}}[[EXIT]]
+// CHECK:       [[EXIT]]
+// CHECK:       call{{.*}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_SINGLE_LOC]], i32 [[GTID]])
+#pragma omp single
   a = 2;
 // CHECK:       [[RES:%.+]] = call i32 @__kmpc_single([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // CHECK-NEXT:  [[IS_SINGLE:%.+]] = icmp ne i32 [[RES]], 0
@@ -86,7 +97,7 @@ int main() {
 // CHECK:       [[COPY_LIST_VOID_PTR:%.+]] = bitcast [5 x i8*]* [[COPY_LIST]] to i8*
 // CHECK:       [[DID_IT_VAL:%.+]] = load i32, i32* [[DID_IT]],
 // CHECK:       call void @__kmpc_copyprivate([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], i32 40, i8* [[COPY_LIST_VOID_PTR]], void (i8*, i8*)* [[COPY_FUNC:@.+]], i32 [[DID_IT_VAL]])
-// CHECK:       call{{.*}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[IMPLICIT_BARRIER_SINGLE_LOC]], i32 [[GTID]])
+// CHECK-NOT:   call {{.+}} @__kmpc_cancel_barrier
 #pragma omp single copyprivate(a, c, tc, a2, tc2)
   foo();
 // CHECK-NOT:   call i32 @__kmpc_single

@@ -1273,8 +1273,9 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   CGM.getOpenMPRuntime().emitSingleRegion(*this, CodeGen, S.getLocStart(),
                                           CopyprivateVars, DestExprs, SrcExprs,
                                           AssignmentOps);
-  // Emit an implicit barrier at the end.
-  if (!S.getSingleClause(OMPC_nowait)) {
+  // Emit an implicit barrier at the end (if no 'nowait' clause and no
+  // 'copyprivate' clause).
+  if (!S.getSingleClause(OMPC_nowait) && CopyprivateVars.empty()) {
     CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_single);
   }
 }
