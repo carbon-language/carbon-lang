@@ -1357,7 +1357,11 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
         addr_t addr = sp + sp_offset; // the adjusted stack pointer value
         
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        if (d == 13)
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
+
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
         context.SetRegisterPlusOffset (sp_reg, sp_offset);
