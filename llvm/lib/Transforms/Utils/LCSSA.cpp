@@ -299,9 +299,6 @@ struct LCSSA : public FunctionPass {
     AU.addPreserved<AliasAnalysis>();
     AU.addPreserved<ScalarEvolution>();
   }
-
-private:
-  void verifyAnalysis() const override;
 };
 }
 
@@ -329,18 +326,3 @@ bool LCSSA::runOnFunction(Function &F) {
   return Changed;
 }
 
-static void verifyLoop(Loop &L, DominatorTree &DT) {
-  // Recurse depth-first through inner loops.
-  for (Loop::iterator LI = L.begin(), LE = L.end(); LI != LE; ++LI)
-    verifyLoop(**LI, DT);
-
-  // Check the special guarantees that LCSSA makes.
-  //assert(L.isLCSSAForm(DT) && "LCSSA form not preserved!");
-}
-
-void LCSSA::verifyAnalysis() const {
-  // Verify each loop nest in the function, assuming LI still points at that
-  // function's loop info.
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    verifyLoop(**I, *DT);
-}
