@@ -179,8 +179,6 @@ void NVPTXPassConfig::addIRPasses() {
     addPass(createGVNPass());
   else
     addPass(createEarlyCSEPass());
-  // Run NaryReassociate after EarlyCSE/GVN to be more effective.
-  addPass(createNaryReassociatePass());
 }
 
 bool NVPTXPassConfig::addInstSelector() {
