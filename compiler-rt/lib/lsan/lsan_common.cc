@@ -702,6 +702,7 @@ void __lsan_do_leak_check() {
 #endif  // CAN_SANITIZE_LEAKS
 }
 
+SANITIZER_INTERFACE_ATTRIBUTE
 int __lsan_do_recoverable_leak_check() {
 #if CAN_SANITIZE_LEAKS
   if (common_flags()->detect_leaks)
