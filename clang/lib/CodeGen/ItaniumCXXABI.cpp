@@ -865,7 +865,7 @@ bool ItaniumCXXABI::classifyReturnType(CGFunctionInfo &FI) const {
 /// The Itanium ABI requires non-zero initialization only for data
 /// member pointers, for which '0' is a valid offset.
 bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
-  return MPT->getPointeeType()->isFunctionType();
+  return MPT->isMemberFunctionPointer();
 }
 
 /// The Itanium ABI always places an offset to the complete object

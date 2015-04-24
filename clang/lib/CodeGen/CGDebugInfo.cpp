@@ -1879,7 +1879,7 @@ llvm::MDType *CGDebugInfo::CreateType(const RValueReferenceType *Ty,
 llvm::MDType *CGDebugInfo::CreateType(const MemberPointerType *Ty,
                                       llvm::MDFile *U) {
   llvm::MDType *ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
-  if (!Ty->getPointeeType()->isFunctionType())
+  if (Ty->isMemberDataPointerType())
     return DBuilder.createMemberPointerType(
       getOrCreateType(Ty->getPointeeType(), U), ClassType,
       CGM.getContext().getTypeSize(Ty));

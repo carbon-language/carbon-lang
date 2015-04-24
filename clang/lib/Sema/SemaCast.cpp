@@ -1817,8 +1817,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     //   can be explicitly converted to an rvalue of type "pointer to member
     //   of Y of type T2" if T1 and T2 are both function types or both object
     //   types.
-    if (DestMemPtr->getPointeeType()->isFunctionType() !=
-        SrcMemPtr->getPointeeType()->isFunctionType())
+    if (DestMemPtr->isMemberFunctionPointer() !=
+        SrcMemPtr->isMemberFunctionPointer())
       return TC_NotApplicable;
 
     // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away
