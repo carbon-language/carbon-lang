@@ -36,15 +36,13 @@ FileVector makeErrorFile(StringRef path, std::error_code ec) {
   return result;
 }
 
-FileVector parseMemberFiles(FileVector &files) {
+FileVector parseMemberFiles(std::unique_ptr<File> file) {
   std::vector<std::unique_ptr<File>> members;
-  for (std::unique_ptr<File> &file : files) {
-    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file.get())) {
-      if (std::error_code ec = archive->parseAllMembers(members))
-        return makeErrorFile(file->path(), ec);
-    } else {
-      members.push_back(std::move(file));
-    }
+  if (auto *archive = dyn_cast<ArchiveLibraryFile>(file.get())) {
+    if (std::error_code ec = archive->parseAllMembers(members))
+      return makeErrorFile(file->path(), ec);
+  } else {
+    members.push_back(std::move(file));
   }
   return members;
 }
@@ -58,10 +56,11 @@ FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
       ctx.registry().loadFile(std::move(mb.get()));
   if (std::error_code ec = fileOrErr.getError())
     return makeErrorFile(path, ec);
-  std::vector<std::unique_ptr<File>> files;
-  files.push_back(std::move(fileOrErr.get()));
+  std::unique_ptr<File> &file = fileOrErr.get();
   if (wholeArchive)
-    return parseMemberFiles(files);
+    return parseMemberFiles(std::move(file));
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::move(file));
   return files;
 }
 

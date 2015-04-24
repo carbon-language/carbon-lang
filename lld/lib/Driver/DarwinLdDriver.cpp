@@ -93,10 +93,10 @@ loadFile(MachOLinkingContext &ctx, StringRef path,
     ctx.registerDylib(reinterpret_cast<mach_o::MachODylibFile *>(shl),
                       upwardDylib);
   }
+  if (wholeArchive)
+    return parseMemberFiles(std::move(file));
   std::vector<std::unique_ptr<File>> files;
   files.push_back(std::move(file));
-  if (wholeArchive)
-    return parseMemberFiles(files);
   return files;
 }
 
