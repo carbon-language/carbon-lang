@@ -304,6 +304,14 @@ public:
   Alignment alignment() const override { return 4; }
 };
 
+/// \brief Atom which represents an object for which a COPY relocation will
+/// be generated.
+class ARMObjectAtom : public ObjectAtom {
+public:
+  ARMObjectAtom(const File &f) : ObjectAtom(f) {}
+  Alignment alignment() const override { return 4; }
+};
+
 class ELFPassFile : public SimpleFile {
 public:
   ELFPassFile(const ELFLinkingContext &eti) : SimpleFile("ELFPassFile") {
@@ -732,6 +740,11 @@ public:
       got->setOrdinal(ordinal++);
       mf->addAtom(*got);
     }
+    for (auto &objectKV : _objectAtoms) {
+      auto &obj = objectKV.second;
+      obj->setOrdinal(ordinal++);
+      mf->addAtom(*obj);
+    }
     for (auto &veneerKV : _veneerAtoms) {
       auto &veneer = veneerKV.second;
       auto *m = veneer._mapping;
@@ -750,6 +763,9 @@ protected:
 
   /// \brief Map Atoms to their GOT entries.
   llvm::MapVector<const Atom *, GOTAtom *> _gotAtoms;
+
+  /// \brief Map Atoms to their Object entries.
+  llvm::MapVector<const Atom *, ObjectAtom *> _objectAtoms;
 
   /// \brief Map Atoms to their PLT entries depending on the code model.
   struct PLTWithVeneer {
@@ -857,11 +873,26 @@ public:
     return g;
   }
 
+  const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a) {
+    if (auto obj = _objectAtoms.lookup(a))
+      return obj;
+
+    auto oa = new (_file._alloc) ARMObjectAtom(_file);
+    oa->addReferenceELF_ARM(R_ARM_COPY, 0, oa, 0);
+
+    oa->_name = a->name();
+    oa->_size = a->size();
+
+    _objectAtoms[a] = oa;
+    return oa;
+  }
+
   /// \brief Handle ordinary relocation references.
   std::error_code handlePlain(bool fromThumb, const Reference &ref) {
     if (auto sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
-      if (sla->type() == SharedLibraryAtom::Type::Data) {
-        llvm_unreachable("Handle object entries");
+      if (sla->type() == SharedLibraryAtom::Type::Data &&
+          _ctx.getOutputELFType() == llvm::ELF::ET_EXEC) {
+        const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
       } else if (sla->type() == SharedLibraryAtom::Type::Code) {
         const_cast<Reference &>(ref).setTarget(getPLTEntry(sla, fromThumb));
       }

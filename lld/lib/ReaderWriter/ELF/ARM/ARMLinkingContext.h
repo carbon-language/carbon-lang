@@ -39,10 +39,18 @@ public:
     assert(r.kindArch() == Reference::KindArch::ARM);
     switch (r.kindValue()) {
     case llvm::ELF::R_ARM_TLS_TPOFF32:
+    case llvm::ELF::R_ARM_COPY:
       return true;
     default:
       return false;
     }
+  }
+
+  bool isCopyRelocation(const Reference &r) const override {
+    if (r.kindNamespace() != Reference::KindNamespace::ELF)
+      return false;
+    assert(r.kindArch() == Reference::KindArch::ARM);
+    return r.kindValue() == llvm::ELF::R_ARM_COPY;
   }
 
   bool isPLTRelocation(const Reference &r) const override {
