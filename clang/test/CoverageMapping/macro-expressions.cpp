@@ -44,9 +44,20 @@ void foo(int i) {
   // CHECK-NEXT: File 0, [[@LINE+1]]:42 -> [[@LINE+1]]:44 = #7
   for (DECL(int, j) : ARR(int, 1, 2, 3)) {}
 
-  // CHECK-NEXT: Expansion,File 0, [[@LINE+2]]:14 -> [[@LINE+2]]:20 = #8
+  // CHECK-NEXT: Expansion,File 0, [[@LINE+2]]:14 -> [[@LINE+2]]:20 = #0
   // CHECK-NEXT: Expansion,File 0, [[@LINE+1]]:23 -> [[@LINE+1]]:29 = #0
   (void)(i ? PRIo64 : PRIu64);
+
+  // CHECK-NEXT: File 0, [[@LINE+5]]:14 -> [[@LINE+5]]:15 = #9
+  // CHECK-NEXT: Expansion,File 0, [[@LINE+4]]:18 -> [[@LINE+4]]:22 = (#0 - #9)
+  // CHECK-NEXT: File 0, [[@LINE+3]]:22 -> [[@LINE+3]]:33 = (#0 - #9)
+  // CHECK-NEXT: File 0, [[@LINE+2]]:28 -> [[@LINE+2]]:29 = #10
+  // CHECK-NEXT: File 0, [[@LINE+1]]:32 -> [[@LINE+1]]:33 = ((#0 - #9) - #10)
+  (void)(i ? i : EXPR(i) ? i : 0);
+  // CHECK-NEXT: Expansion,File 0, [[@LINE+3]]:15 -> [[@LINE+3]]:19 = (#0 - #11)
+  // CHECK-NEXT: File 0, [[@LINE+2]]:19 -> [[@LINE+2]]:27 = (#0 - #11)
+  // CHECK-NEXT: File 0, [[@LINE+1]]:26 -> [[@LINE+1]]:27 = ((#0 - #11) - #12)
+  (void)(i ?: EXPR(i) ?: 0);
 }
 
 // CHECK-NEXT: File {{[0-9]+}}, 3:17 -> 3:20 = #0
@@ -60,11 +71,14 @@ void foo(int i) {
 // CHECK-NEXT: File {{[0-9]+}}, 4:18 -> 4:22 = (#0 + #6)
 // CHECK-NEXT: File {{[0-9]+}}, 5:20 -> 5:23 = #0
 // CHECK-NEXT: File {{[0-9]+}}, 9:25 -> 9:40 = #0
+// CHECK-NEXT: File {{[0-9]+}}, 12:16 -> 12:42 = #0
 // CHECK-NEXT: Expansion,File {{[0-9]+}}, 12:16 -> 12:38 = #8
 // CHECK-NEXT: File {{[0-9]+}}, 12:38 -> 12:42 = #8
 // CHECK-NEXT: File {{[0-9]+}}, 13:16 -> 13:42 = #0
 // CHECK-NEXT: Expansion,File {{[0-9]+}}, 13:16 -> 13:38 = (#0 - #8)
 // CHECK-NEXT: File {{[0-9]+}}, 13:38 -> 13:42 = (#0 - #8)
+// CHECK-NEXT: File {{[0-9]+}}, 3:17 -> 3:20 = (#0 - #9)
+// CHECK-NEXT: File {{[0-9]+}}, 3:17 -> 3:20 = (#0 - #11)
 // CHECK-NEXT: File {{[0-9]+}}, 11:32 -> 11:36 = #8
 // CHECK-NEXT: File {{[0-9]+}}, 11:32 -> 11:36 = (#0 - #8)
 

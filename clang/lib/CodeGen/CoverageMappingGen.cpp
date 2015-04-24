@@ -830,7 +830,13 @@ struct CounterCoverageMappingBuilder
     Counter ParentCount = getRegion().getCounter();
     Counter TrueCount = getRegionCounter(E);
 
-    propagateCounts(TrueCount, E->getTrueExpr());
+    Visit(E->getCond());
+
+    if (!isa<BinaryConditionalOperator>(E)) {
+      extendRegion(E->getTrueExpr());
+      propagateCounts(TrueCount, E->getTrueExpr());
+    }
+    extendRegion(E->getFalseExpr());
     propagateCounts(subtractCounters(ParentCount, TrueCount),
                     E->getFalseExpr());
   }
