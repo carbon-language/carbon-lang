@@ -11,8 +11,22 @@ define void @test() {
   ret void, !foo !0, !bar !1
 }
 
+; CHECK: define void @test2() !foo !2 !baz !3
+define void @test2() !foo !2 !baz !3 {
+  unreachable
+}
+
+; CHECK: define void @test3() !bar !3
+; CHECK: unreachable, !bar !4
+define void @test3() !bar !3 {
+  unreachable, !bar !4
+}
+
 !0 = !MDLocation(line: 662302, column: 26, scope: !1)
 !1 = !MDSubprogram(name: "foo")
+!2 = distinct !{}
+!3 = distinct !{}
+!4 = distinct !{}
 
 declare void @llvm.dbg.func.start(metadata) nounwind readnone
 

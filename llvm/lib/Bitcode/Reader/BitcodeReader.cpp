@@ -370,7 +370,7 @@ private:
   std::error_code GlobalCleanup();
   std::error_code ResolveGlobalAndAliasInits();
   std::error_code ParseMetadata();
-  std::error_code ParseMetadataAttachment();
+  std::error_code ParseMetadataAttachment(Function &F);
   ErrorOr<std::string> parseModuleTriple();
   std::error_code ParseUseLists();
   std::error_code InitStream();
@@ -3215,7 +3215,7 @@ ErrorOr<std::string> BitcodeReader::parseTriple() {
 }
 
 /// ParseMetadataAttachment - Parse metadata attachments.
-std::error_code BitcodeReader::ParseMetadataAttachment() {
+std::error_code BitcodeReader::ParseMetadataAttachment(Function &F) {
   if (Stream.EnterSubBlock(bitc::METADATA_ATTACHMENT_ID))
     return Error("Invalid record");
 
@@ -3241,8 +3241,21 @@ std::error_code BitcodeReader::ParseMetadataAttachment() {
       break;
     case bitc::METADATA_ATTACHMENT: {
       unsigned RecordLength = Record.size();
-      if (Record.empty() || (RecordLength - 1) % 2 == 1)
+      if (Record.empty())
         return Error("Invalid record");
+      if (RecordLength % 2 == 0) {
+        // A function attachment.
+        for (unsigned I = 0; I != RecordLength; I += 2) {
+          auto K = MDKindMap.find(Record[I]);
+          if (K == MDKindMap.end())
+            return Error("Invalid ID");
+          Metadata *MD = MDValueList.getValueFwdRef(Record[I + 1]);
+          F.setMetadata(K->second, cast<MDNode>(MD));
+        }
+        continue;
+      }
+
+      // An instruction attachment.
       Instruction *Inst = InstructionList[Record[0]];
       for (unsigned i = 1; i != RecordLength; i = i+2) {
         unsigned Kind = Record[i];
@@ -3319,7 +3332,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
           return EC;
         break;
       case bitc::METADATA_ATTACHMENT_ID:
-        if (std::error_code EC = ParseMetadataAttachment())
+        if (std::error_code EC = ParseMetadataAttachment(*F))
           return EC;
         break;
       case bitc::METADATA_BLOCK_ID:

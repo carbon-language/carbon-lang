@@ -348,6 +348,11 @@ ValueEnumerator::ValueEnumerator(const Module &M,
     for (const Argument &A : F.args())
       EnumerateType(A.getType());
 
+    // Enumerate metadata attached to this function.
+    F.getAllMetadata(MDs);
+    for (const auto &I : MDs)
+      EnumerateMetadata(I.second);
+
     for (const BasicBlock &BB : F)
       for (const Instruction &I : BB) {
         for (const Use &Op : I.operands()) {

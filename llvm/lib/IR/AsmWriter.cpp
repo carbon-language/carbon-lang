@@ -776,11 +776,11 @@ void SlotTracker::processFunction() {
     if (!BB.hasName())
       CreateFunctionSlot(&BB);
 
+    processFunctionMetadata(*TheFunction);
+
     for (auto &I : BB) {
       if (!I.getType()->isVoidTy() && !I.hasName())
         CreateFunctionSlot(&I);
-
-      processInstructionMetadata(I);
 
       // We allow direct calls to any llvm.foo function here, because the
       // target may not be linked into the optimizer.
@@ -804,9 +804,15 @@ void SlotTracker::processFunction() {
 }
 
 void SlotTracker::processFunctionMetadata(const Function &F) {
-  for (auto &BB : F)
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  for (auto &BB : F) {
+    F.getAllMetadata(MDs);
+    for (auto &MD : MDs)
+      CreateMetadataSlot(MD.second);
+
     for (auto &I : BB)
       processInstructionMetadata(I);
+  }
 }
 
 void SlotTracker::processInstructionMetadata(const Instruction &I) {
@@ -2540,6 +2546,10 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << " prologue ";
     writeOperand(F->getPrologueData(), true);
   }
+
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  F->getAllMetadata(MDs);
+  printMetadataAttachments(MDs, " ");
 
   if (F->isDeclaration()) {
     Out << '\n';

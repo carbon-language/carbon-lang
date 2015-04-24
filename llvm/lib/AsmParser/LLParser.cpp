@@ -360,13 +360,14 @@ bool LLParser::ParseDeclare() {
 }
 
 /// toplevelentity
-///   ::= 'define' FunctionHeader '{' ...
+///   ::= 'define' FunctionHeader (!dbg !56)* '{' ...
 bool LLParser::ParseDefine() {
   assert(Lex.getKind() == lltok::kw_define);
   Lex.Lex();
 
   Function *F;
   return ParseFunctionHeader(F, true) ||
+         ParseOptionalFunctionMetadata(*F) ||
          ParseFunctionBody(*F);
 }
 
@@ -1520,6 +1521,20 @@ bool LLParser::ParseInstructionMetadata(Instruction &Inst) {
 
     // If this is the end of the list, we're done.
   } while (EatIfPresent(lltok::comma));
+  return false;
+}
+
+/// ParseOptionalFunctionMetadata
+///   ::= (!dbg !57)*
+bool LLParser::ParseOptionalFunctionMetadata(Function &F) {
+  while (Lex.getKind() == lltok::MetadataVar) {
+    unsigned MDK;
+    MDNode *N;
+    if (ParseMetadataAttachment(MDK, N))
+      return true;
+
+    F.setMetadata(MDK, N);
+  }
   return false;
 }
 
