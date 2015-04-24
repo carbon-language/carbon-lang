@@ -280,12 +280,12 @@ protected:
   /// originated from one scalar instruction.
   typedef SmallVector<Value*, 2> VectorParts;
 
-  // When we if-convert we need create edge masks. We have to cache values so
-  // that we don't end up with exponential recursion/IR.
+  // When we if-convert we need to create edge masks. We have to cache values
+  // so that we don't end up with exponential recursion/IR.
   typedef DenseMap<std::pair<BasicBlock*, BasicBlock*>,
                    VectorParts> EdgeMaskCache;
 
-  /// \brief Add checks for strides that where assumed to be 1.
+  /// \brief Add checks for strides that were assumed to be 1.
   ///
   /// Returns the last check instruction and the first check instruction in the
   /// pair as (first, last).
