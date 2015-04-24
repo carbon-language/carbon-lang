@@ -789,11 +789,10 @@ Constant *llvm::ConstantFoldExtractElementInstruction(Constant *Val,
     return UndefValue::get(Val->getType()->getVectorElementType());
 
   if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
-    uint64_t Index = CIdx->getZExtValue();
     // ee({w,x,y,z}, wrong_value) -> undef
-    if (Index >= Val->getType()->getVectorNumElements())
+    if (CIdx->uge(Val->getType()->getVectorNumElements()))
       return UndefValue::get(Val->getType()->getVectorElementType());
-    return Val->getAggregateElement(Index);
+    return Val->getAggregateElement(CIdx->getZExtValue());
   }
   return nullptr;
 }

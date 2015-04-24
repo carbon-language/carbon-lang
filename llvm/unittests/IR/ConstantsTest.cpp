@@ -187,6 +187,10 @@ TEST(ConstantsTest, AsInstructionsTest) {
   Constant *P6 = ConstantExpr::getBitCast(P4, VectorType::get(Int16Ty, 2));
 
   Constant *One = ConstantInt::get(Int32Ty, 1);
+  Constant *Two = ConstantInt::get(Int64Ty, 2);
+  Constant *Big = ConstantInt::get(getGlobalContext(),
+                                   APInt{256, uint64_t(-1), true});
+  Constant *Undef = UndefValue::get(Int64Ty);
 
   #define P0STR "ptrtoint (i32** @dummy to i32)"
   #define P1STR "uitofp (i32 ptrtoint (i32** @dummy to i32) to float)"
@@ -255,6 +259,10 @@ TEST(ConstantsTest, AsInstructionsTest) {
 
   CHECK(ConstantExpr::getExtractElement(P6, One), "extractelement <2 x i16> "
         P6STR ", i32 1");
+
+  EXPECT_TRUE(isa<UndefValue>(ConstantExpr::getExtractElement(P6, Two)));
+  EXPECT_TRUE(isa<UndefValue>(ConstantExpr::getExtractElement(P6, Big)));
+  EXPECT_TRUE(isa<UndefValue>(ConstantExpr::getExtractElement(P6, Undef)));
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
