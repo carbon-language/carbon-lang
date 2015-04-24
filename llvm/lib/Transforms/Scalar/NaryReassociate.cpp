@@ -181,7 +181,8 @@ bool NaryReassociate::doOneIteration(Function &F) {
        Node != GraphTraits<DominatorTree *>::nodes_end(DT); ++Node) {
     BasicBlock *BB = Node->getBlock();
     for (auto I = BB->begin(); I != BB->end(); ++I) {
-      if (I->getOpcode() == Instruction::Add) {
+      // Skip vector types which are not SCEVable.
+      if (I->getOpcode() == Instruction::Add && !I->getType()->isVectorTy()) {
         if (Instruction *NewI = tryReassociateAdd(I)) {
           Changed = true;
           SE->forgetValue(I);
