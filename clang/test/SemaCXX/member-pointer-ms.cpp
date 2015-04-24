@@ -93,15 +93,15 @@ static_assert(sizeof(void (IncSingle::*)())   == kSingleFunctionSize, "");
 static_assert(sizeof(void (IncMultiple::*)()) == kMultipleFunctionSize, "");
 static_assert(sizeof(void (IncVirtual::*)())  == kVirtualFunctionSize, "");
 
-static_assert(__alignof(int IncSingle::*)        == kSingleDataAlign, "");
-static_assert(__alignof(int IncMultiple::*)      == kMultipleDataAlign, "");
-static_assert(__alignof(int IncVirtual::*)       == kVirtualDataAlign, "");
-static_assert(__alignof(void (IncSingle::*)())   == kSingleFunctionAlign, "");
-static_assert(__alignof(void (IncMultiple::*)()) == kMultipleFunctionAlign, "");
-static_assert(__alignof(void (IncVirtual::*)())  == kVirtualFunctionAlign, "");
+static_assert(__alignof(int IncSingle::*)        == __alignof(void *), "");
+static_assert(__alignof(int IncMultiple::*)      == __alignof(void *), "");
+static_assert(__alignof(int IncVirtual::*)       == __alignof(void *), "");
+static_assert(__alignof(void (IncSingle::*)())   == __alignof(void *), "");
+static_assert(__alignof(void (IncMultiple::*)()) == __alignof(void *), "");
+static_assert(__alignof(void (IncVirtual::*)())  == __alignof(void *), "");
 
 // An incomplete type with an unspecified inheritance model seems to take one
-// more slot than virtual.  It's not clear what it's used for yet.
+// more slot than virtual.
 class IncUnspecified;
 static_assert(sizeof(int IncUnspecified::*) == kUnspecifiedDataSize, "");
 static_assert(sizeof(void (IncUnspecified::*)()) == kUnspecifiedFunctionSize, "");

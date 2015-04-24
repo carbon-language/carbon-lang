@@ -1813,8 +1813,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         ArgVals.push_back(ValueAndIsPtr(V, HavePointer));
       } else {
         // Load scalar value from indirect argument.
-        CharUnits Alignment = getContext().getTypeAlignInChars(Ty);
-        V = EmitLoadOfScalar(V, false, Alignment.getQuantity(), Ty,
+        V = EmitLoadOfScalar(V, false, ArgI.getIndirectAlign(), Ty,
                              Arg->getLocStart());
 
         if (isPromoted)

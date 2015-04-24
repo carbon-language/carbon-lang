@@ -1797,11 +1797,16 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   TypeInfo TI = getTypeInfo(T);
   unsigned ABIAlign = TI.Align;
 
+  T = T->getBaseElementTypeUnsafe();
+
+  // The preferred alignment of member pointers is that of a pointer.
+  if (T->isMemberPointerType())
+    return getPreferredTypeAlign(getPointerDiffType().getTypePtr());
+
   if (Target->getTriple().getArch() == llvm::Triple::xcore)
     return ABIAlign;  // Never overalign on XCore.
 
   // Double and long long should be naturally aligned if possible.
-  T = T->getBaseElementTypeUnsafe();
   if (const ComplexType *CT = T->getAs<ComplexType>())
     T = CT->getElementType().getTypePtr();
   if (const EnumType *ET = T->getAs<EnumType>())
