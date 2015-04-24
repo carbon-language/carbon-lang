@@ -213,29 +213,28 @@ getMSMemberPointerSlots(const MemberPointerType *MPT) {
 
 std::pair<uint64_t, unsigned> MicrosoftCXXABI::getMemberPointerWidthAndAlign(
     const MemberPointerType *MPT) const {
-  const TargetInfo &Target = Context.getTargetInfo();
-  assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
-         Target.getTriple().getArch() == llvm::Triple::x86_64);
-  unsigned Ptrs, Ints;
-  std::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
   // The nominal struct is laid out with pointers followed by ints and aligned
   // to a pointer width if any are present and an int width otherwise.
+  const TargetInfo &Target = Context.getTargetInfo();
   unsigned PtrSize = Target.getPointerWidth(0);
   unsigned IntSize = Target.getIntWidth();
+
+  unsigned Ptrs, Ints;
+  std::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
   uint64_t Width = Ptrs * PtrSize + Ints * IntSize;
   unsigned Align;
 
   // When MSVC does x86_32 record layout, it aligns aggregate member pointers to
   // 8 bytes.  However, __alignof usually returns 4 for data memptrs and 8 for
   // function memptrs.
-  if (Ptrs + Ints > 1 && Target.getTriple().getArch() == llvm::Triple::x86)
-    Align = 8 * 8;
+  if (Ptrs + Ints > 1 && Target.getTriple().isArch32Bit())
+    Align = 64;
   else if (Ptrs)
     Align = Target.getPointerAlign(0);
   else
     Align = Target.getIntAlign();
 
-  if (Target.getTriple().getArch() == llvm::Triple::x86_64)
+  if (Target.getTriple().isArch64Bit())
     Width = llvm::RoundUpToAlignment(Width, Align);
   return std::make_pair(Width, Align);
 }
