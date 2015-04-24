@@ -954,10 +954,9 @@ public:
   typedef std::pair<unsigned, TrackingMDNodeRef> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
 
-  /// MetadataStore - Collection of per-instruction metadata used in this
-  /// context.
-  DenseMap<const Instruction *, MDMapTy> MetadataStore;
-  
+  /// Collection of per-instruction metadata used in this context.
+  DenseMap<const Instruction *, MDMapTy> InstructionMetadata;
+
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
   /// instructions in different blocks at the same location.
