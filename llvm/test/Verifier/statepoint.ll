@@ -57,7 +57,7 @@ define i8 addrspace(1)* @test3(i8 addrspace(1)* %obj, i8 addrspace(1)* %obj1) gc
 entry:
   ; CHECK-LABEL: entry
   ; CHECK: statepoint
-  %0 = invoke i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj, i8 addrspace(1)* %obj1)
+  %0 = invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* undef, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj, i8 addrspace(1)* %obj1)
           to label %normal_dest unwind label %exceptional_return
 
 normal_dest:

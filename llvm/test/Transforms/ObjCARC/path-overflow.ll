@@ -881,7 +881,7 @@ land.rhs:                                         ; preds = %invoke.cont4
           to label %land.end unwind label %lpad3
 
 land.end:                                         ; preds = %land.rhs, %invoke.cont4
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i unwind label %lpad.i
 
 invoke.cont.i:                                    ; preds = %land.end
@@ -896,7 +896,7 @@ lpad.i:                                           ; preds = %land.end
   unreachable
 
 invoke.cont8:                                     ; preds = %if.then.i, %invoke.cont.i
-  %call18 = invoke i8* (i8*, i8*, i8*, ...)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8*, ...)*)(i8* undef, i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef)
+  %call18 = invoke i8* (i8*, i8*, i8*, ...) bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8*, ...)*)(i8* undef, i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef)
           to label %invoke.cont17 unwind label %lpad16
 
 invoke.cont17:                                    ; preds = %invoke.cont8
@@ -904,7 +904,7 @@ invoke.cont17:                                    ; preds = %invoke.cont8
           to label %invoke.cont21 unwind label %lpad20
 
 invoke.cont21:                                    ; preds = %invoke.cont17
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i1980 unwind label %lpad.i1982
 
 invoke.cont.i1980:                                ; preds = %invoke.cont21
@@ -930,7 +930,7 @@ land.rhs39:                                       ; preds = %invoke.cont36
           to label %land.end43 unwind label %lpad35
 
 land.end43:                                       ; preds = %land.rhs39, %invoke.cont36
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i1986 unwind label %lpad.i1988
 
 invoke.cont.i1986:                                ; preds = %land.end43
@@ -960,7 +960,7 @@ invoke.cont62:                                    ; preds = %land.rhs58
           to label %land.end70 unwind label %lpad66.body.thread
 
 land.end70:                                       ; preds = %invoke.cont62, %invoke.cont52
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i1992 unwind label %lpad66.body
 
 invoke.cont.i1992:                                ; preds = %land.end70
@@ -970,7 +970,7 @@ if.then.i1993:                                    ; preds = %invoke.cont.i1992
   br label %invoke.cont71
 
 invoke.cont71:                                    ; preds = %if.then.i1993, %invoke.cont.i1992
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i1998 unwind label %lpad.i2000
 
 invoke.cont.i1998:                                ; preds = %invoke.cont71
@@ -993,7 +993,7 @@ invoke.cont95:                                    ; preds = %invoke.cont91
           to label %invoke.cont97 unwind label %lpad94
 
 invoke.cont97:                                    ; preds = %invoke.cont95
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2004 unwind label %lpad.i2006
 
 invoke.cont.i2004:                                ; preds = %invoke.cont97
@@ -1012,7 +1012,7 @@ invoke.cont100:                                   ; preds = %if.then.i2005, %inv
           to label %invoke.cont110 unwind label %lpad109
 
 invoke.cont110:                                   ; preds = %invoke.cont100
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2010 unwind label %lpad.i2012
 
 invoke.cont.i2010:                                ; preds = %invoke.cont110
@@ -1027,7 +1027,7 @@ lpad.i2012:                                       ; preds = %invoke.cont110
   unreachable
 
 invoke.cont117:                                   ; preds = %if.then.i2011, %invoke.cont.i2010
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2022 unwind label %lpad156.body
 
 lpad:                                             ; preds = %entry
@@ -1101,7 +1101,7 @@ if.then.i2023:                                    ; preds = %invoke.cont.i2022
   br label %invoke.cont157
 
 invoke.cont157:                                   ; preds = %if.then.i2023, %invoke.cont.i2022
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2028 unwind label %lpad164.body
 
 invoke.cont.i2028:                                ; preds = %invoke.cont157
@@ -1119,7 +1119,7 @@ invoke.cont184:                                   ; preds = %invoke.cont165
           to label %invoke.cont185 unwind label %lpad183
 
 invoke.cont185:                                   ; preds = %invoke.cont184
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2034 unwind label %lpad.i2036
 
 invoke.cont.i2034:                                ; preds = %invoke.cont185
@@ -1146,7 +1146,7 @@ invoke.cont201:                                   ; preds = %invoke.cont197
           to label %invoke.cont204 unwind label %lpad203
 
 invoke.cont204:                                   ; preds = %invoke.cont201
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2040 unwind label %lpad.i2042
 
 invoke.cont.i2040:                                ; preds = %invoke.cont204
@@ -1165,7 +1165,7 @@ invoke.cont207:                                   ; preds = %if.then.i2041, %inv
           to label %invoke.cont208 unwind label %lpad203
 
 invoke.cont208:                                   ; preds = %invoke.cont207
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2046 unwind label %lpad212.body
 
 invoke.cont.i2046:                                ; preds = %invoke.cont208
@@ -1183,7 +1183,7 @@ invoke.cont221:                                   ; preds = %invoke.cont213
           to label %invoke.cont228 unwind label %lpad227
 
 invoke.cont228:                                   ; preds = %invoke.cont221
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2052 unwind label %lpad.i2054
 
 invoke.cont.i2052:                                ; preds = %invoke.cont228
@@ -1202,7 +1202,7 @@ invoke.cont231:                                   ; preds = %if.then.i2053, %inv
           to label %invoke.cont232 unwind label %lpad227
 
 invoke.cont232:                                   ; preds = %invoke.cont231
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2058 unwind label %lpad236.body
 
 invoke.cont.i2058:                                ; preds = %invoke.cont232
@@ -1248,7 +1248,7 @@ invoke.cont274:                                   ; preds = %invoke.cont266
           to label %invoke.cont278 unwind label %lpad277
 
 invoke.cont278:                                   ; preds = %invoke.cont274
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2064 unwind label %lpad.i2066
 
 invoke.cont.i2064:                                ; preds = %invoke.cont278
@@ -1294,7 +1294,7 @@ land.rhs335:                                      ; preds = %invoke.cont321
           to label %land.end344 unwind label %lpad340.body.thread
 
 land.end344:                                      ; preds = %land.rhs335, %invoke.cont321
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2070 unwind label %lpad340.body
 
 invoke.cont.i2070:                                ; preds = %land.end344
@@ -1316,7 +1316,7 @@ invoke.cont364:                                   ; preds = %invoke.cont361
           to label %invoke.cont370 unwind label %lpad369
 
 invoke.cont370:                                   ; preds = %invoke.cont364
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2076 unwind label %lpad.i2078
 
 invoke.cont.i2076:                                ; preds = %invoke.cont370
@@ -1343,7 +1343,7 @@ invoke.cont382:                                   ; preds = %invoke.cont376
           to label %invoke.cont383 unwind label %lpad381
 
 invoke.cont383:                                   ; preds = %invoke.cont382
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2082 unwind label %lpad.i2084
 
 invoke.cont.i2082:                                ; preds = %invoke.cont383
@@ -1374,7 +1374,7 @@ invoke.cont399:                                   ; preds = %invoke.cont396
           to label %invoke.cont402 unwind label %lpad401
 
 invoke.cont402:                                   ; preds = %invoke.cont399
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2088 unwind label %lpad.i2090
 
 invoke.cont.i2088:                                ; preds = %invoke.cont402
@@ -1401,7 +1401,7 @@ invoke.cont409:                                   ; preds = %invoke.cont408
           to label %invoke.cont412 unwind label %lpad411
 
 invoke.cont412:                                   ; preds = %invoke.cont409
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2094 unwind label %lpad.i2096
 
 invoke.cont.i2094:                                ; preds = %invoke.cont412
@@ -1432,7 +1432,7 @@ invoke.cont426:                                   ; preds = %invoke.cont423
           to label %invoke.cont429 unwind label %lpad428
 
 invoke.cont429:                                   ; preds = %invoke.cont426
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2100 unwind label %lpad.i2102
 
 invoke.cont.i2100:                                ; preds = %invoke.cont429
@@ -1451,7 +1451,7 @@ invoke.cont432:                                   ; preds = %if.then.i2101, %inv
           to label %invoke.cont435 unwind label %lpad381
 
 invoke.cont435:                                   ; preds = %invoke.cont432
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2106 unwind label %lpad.i2108
 
 invoke.cont.i2106:                                ; preds = %invoke.cont435
@@ -1464,7 +1464,7 @@ lpad.i2108:                                       ; preds = %invoke.cont435
   unreachable
 
 invoke.cont443:                                   ; preds = %invoke.cont.i2106
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2112 unwind label %lpad.i2114
 
 invoke.cont.i2112:                                ; preds = %invoke.cont443
@@ -1487,7 +1487,7 @@ invoke.cont452:                                   ; preds = %invoke.cont449
           to label %invoke.cont455 unwind label %lpad454
 
 invoke.cont455:                                   ; preds = %invoke.cont452
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2118 unwind label %lpad.i2120
 
 invoke.cont.i2118:                                ; preds = %invoke.cont455
@@ -1506,7 +1506,7 @@ invoke.cont458:                                   ; preds = %if.then.i2119, %inv
           to label %invoke.cont460 unwind label %lpad381
 
 invoke.cont460:                                   ; preds = %invoke.cont458
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2124 unwind label %lpad.i2126
 
 invoke.cont.i2124:                                ; preds = %invoke.cont460
@@ -1525,7 +1525,7 @@ invoke.cont466:                                   ; preds = %if.then.i2125, %inv
           to label %invoke.cont469 unwind label %lpad381
 
 invoke.cont469:                                   ; preds = %invoke.cont466
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2130 unwind label %lpad.i2132
 
 invoke.cont.i2130:                                ; preds = %invoke.cont469
@@ -1574,7 +1574,7 @@ msgSend.null-receiver:                            ; preds = %invoke.cont512
   br label %msgSend.cont
 
 msgSend.cont:                                     ; preds = %msgSend.null-receiver, %msgSend.call
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2136 unwind label %lpad.i2138
 
 invoke.cont.i2136:                                ; preds = %msgSend.cont
@@ -1601,7 +1601,7 @@ invoke.cont531:                                   ; preds = %invoke.cont528
           to label %invoke.cont534 unwind label %lpad533
 
 invoke.cont534:                                   ; preds = %invoke.cont531
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* undef, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2142 unwind label %lpad.i2144
 
 invoke.cont.i2142:                                ; preds = %invoke.cont534
@@ -1633,7 +1633,7 @@ invoke.cont548:                                   ; preds = %invoke.cont546
 
 invoke.cont554:                                   ; preds = %invoke.cont548
   %tmp499 = call i8* @objc_retain(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*)) #3
-  invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* %tmp499, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
+  invoke void (i8*, ...) @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*), i8* %tmp499, i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring to i8*))
           to label %invoke.cont.i2148 unwind label %lpad.i2150
 
 invoke.cont.i2148:                                ; preds = %invoke.cont554

@@ -25487,11 +25487,11 @@ bb25332:                                          ; preds = %bb25330, %bb25305
   br i1 undef, label %bb25333, label %bb25357
 
 bb25333:                                          ; preds = %bb25332
-  invoke void (...)* @printf()
+  invoke void (...) @printf()
           to label %bb25334 unwind label %bb25324
 
 bb25334:                                          ; preds = %bb25333
-  invoke void (...)* @printf(i32 undef)
+  invoke void (...) @printf(i32 undef)
           to label %bb25335 unwind label %bb25324
 
 bb25335:                                          ; preds = %bb25334
@@ -25501,7 +25501,7 @@ bb25336:                                          ; preds = %bb25338, %bb25335
   br i1 undef, label %bb25337, label %bb25339
 
 bb25337:                                          ; preds = %bb25336
-  invoke void (...)* @printf(i32 undef, double undef)
+  invoke void (...) @printf(i32 undef, double undef)
           to label %bb25338 unwind label %bb25324
 
 bb25338:                                          ; preds = %bb25337
@@ -25517,11 +25517,11 @@ bb25341:                                          ; preds = %bb25340
   br label %bb25340
 
 bb25342:                                          ; preds = %bb25340
-  invoke void (...)* @printf()
+  invoke void (...) @printf()
           to label %bb25343 unwind label %bb25324
 
 bb25343:                                          ; preds = %bb25342
-  invoke void (...)* @printf(double undef, double undef)
+  invoke void (...) @printf(double undef, double undef)
           to label %bb25344 unwind label %bb25324
 
 bb25344:                                          ; preds = %bb25343
@@ -25547,15 +25547,15 @@ bb25350:                                          ; preds = %bb25349
   br label %bb25349
 
 bb25351:                                          ; preds = %bb25349
-  invoke void (...)* @printf()
+  invoke void (...) @printf()
           to label %bb25352 unwind label %bb25355
 
 bb25352:                                          ; preds = %bb25351
-  invoke void (...)* @printf(double undef)
+  invoke void (...) @printf(double undef)
           to label %bb25353 unwind label %bb25355
 
 bb25353:                                          ; preds = %bb25352
-  invoke void (...)* @printf()
+  invoke void (...) @printf()
           to label %bb25354 unwind label %bb25355
 
 bb25354:                                          ; preds = %bb25353
@@ -25567,7 +25567,7 @@ bb25355:                                          ; preds = %bb25353, %bb25352, 
   br label %bb25359
 
 bb25357:                                          ; preds = %bb25332
-  invoke void (...)* @printf()
+  invoke void (...) @printf()
           to label %bb25358 unwind label %bb25324
 
 bb25358:                                          ; preds = %bb25357, %bb25354

@@ -132,7 +132,7 @@ catch:                                            ; preds = %catch.dispatch
   call void @llvm.eh.begincatch(i8* %exn, i8* %c) #2
   %4 = load i8, i8* %c, align 1
   %conv = sext i8 %4 to i32
-  %call = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv)
+  %call = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv)
           to label %invoke.cont unwind label %lpad2
 
 invoke.cont:                                      ; preds = %catch
@@ -177,7 +177,7 @@ catch13:                                          ; preds = %catch.dispatch5
   %13 = bitcast i32* %x to i8*
   call void @llvm.eh.begincatch(i8* %exn14, i8* %13) #2
   %14 = load i32, i32* %x, align 4
-  %call18 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@", i32 0, i32 0), i32 %14)
+  %call18 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@", i32 0, i32 0), i32 %14)
           to label %invoke.cont17 unwind label %lpad16
 
 invoke.cont17:                                    ; preds = %catch13
@@ -192,7 +192,7 @@ try.cont19:                                       ; preds = %invoke.cont17, %inv
 catch8:                                           ; preds = %catch.dispatch5
   %exn9 = load i8*, i8** %exn.slot
   call void @llvm.eh.begincatch(i8* %exn9, i8* null) #2
-  %call12 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01??_C@_04MPPNMCOK@?4?4?4?6?$AA@", i32 0, i32 0))
+  %call12 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01??_C@_04MPPNMCOK@?4?4?4?6?$AA@", i32 0, i32 0))
           to label %invoke.cont11 unwind label %lpad10
 
 invoke.cont11:                                    ; preds = %catch8
@@ -241,7 +241,7 @@ catch25:                                          ; preds = %catch.dispatch22
   call void @llvm.eh.begincatch(i8* %exn26, i8* %c28) #2
   %25 = load i8, i8* %c28, align 1
   %conv29 = sext i8 %25 to i32
-  %call32 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv29)
+  %call32 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv29)
           to label %invoke.cont31 unwind label %lpad30
 
 invoke.cont31:                                    ; preds = %catch25
@@ -288,7 +288,7 @@ catch53:                                          ; preds = %catch.dispatch36
   %34 = bitcast i32* %x56 to i8*
   call void @llvm.eh.begincatch(i8* %exn54, i8* %34) #2
   %35 = load i32, i32* %x56, align 4
-  %call59 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@", i32 0, i32 0), i32 %35)
+  %call59 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@", i32 0, i32 0), i32 %35)
           to label %invoke.cont58 unwind label %lpad57
 
 invoke.cont58:                                    ; preds = %catch53
@@ -308,7 +308,7 @@ catch45:                                          ; preds = %catch.fallthrough
   call void @llvm.eh.begincatch(i8* %exn46, i8* %c48) #2
   %37 = load i8, i8* %c48, align 1
   %conv49 = sext i8 %37 to i32
-  %call52 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv49)
+  %call52 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01??_C@_03PJCJOCBM@?$CFc?6?$AA@", i32 0, i32 0), i32 %conv49)
           to label %invoke.cont51 unwind label %lpad50
 
 invoke.cont51:                                    ; preds = %catch45
@@ -318,7 +318,7 @@ invoke.cont51:                                    ; preds = %catch45
 catch40:                                          ; preds = %catch.fallthrough
   %exn41 = load i8*, i8** %exn.slot
   call void @llvm.eh.begincatch(i8* %exn41, i8* null) #2
-  %call44 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01??_C@_04MPPNMCOK@?4?4?4?6?$AA@", i32 0, i32 0))
+  %call44 = invoke i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @"\01??_C@_04MPPNMCOK@?4?4?4?6?$AA@", i32 0, i32 0))
           to label %invoke.cont43 unwind label %lpad42
 
 invoke.cont43:                                    ; preds = %catch40

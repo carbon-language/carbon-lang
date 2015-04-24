@@ -104,7 +104,7 @@ define void @test_invoke_vararg_cast(i32* %a, i32* %b) {
 entry:
   %0 = bitcast i32* %b to i8*
   %1 = bitcast i32* %a to i64*
-  invoke void (i32, ...)* @varargs(i32 1, i8* %0, i64* %1)
+  invoke void (i32, ...) @varargs(i32 1, i8* %0, i64* %1)
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:                                      ; preds = %entry
@@ -116,7 +116,7 @@ lpad:                                             ; preds = %entry
   ret void
 ; CHECK-LABEL: test_invoke_vararg_cast
 ; CHECK-LABEL: entry:
-; CHECK: invoke void (i32, ...)* @varargs(i32 1, i32* %b, i32* %a)
+; CHECK: invoke void (i32, ...) @varargs(i32 1, i32* %b, i32* %a)
 }
 
 define i8* @test13(i64 %A) {

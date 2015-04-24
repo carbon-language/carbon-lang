@@ -117,13 +117,13 @@ bb448.i8694:		; preds = %bb440.i8663, %bb278.i8617
 invcont5814:		; preds = %bb448.i8694, %bb265.i8606
 	%tmp812.0.0 = phi i16 [ %tmp477478.i8670, %bb448.i8694 ], [ %tmp273274.i8595, %bb265.i8606 ]		; <i16> [#uses=1]
 	%tmp58165817 = zext i16 %tmp812.0.0 to i32		; <i32> [#uses=1]
-	invoke void (%struct.wxString*, i32*, ...)* @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 %tmp58165817 )
+	invoke void (%struct.wxString*, i32*, ...) @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 %tmp58165817 )
 			to label %invcont5831 unwind label %lpad
 invcont5831:		; preds = %invcont5814
 	%tmp5862 = invoke zeroext  i8 @_ZN12wxStringBase10ConcatSelfEmPKwm( %struct.wxStringBase* null, i32 0, i32* null, i32 0 ) 
 			to label %bb7834 unwind label %lpad8185		; <i8> [#uses=0]
 bb5968:		; preds = %bb3314
-	invoke void (%struct.wxString*, i32*, ...)* @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 0 )
+	invoke void (%struct.wxString*, i32*, ...) @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 0 )
 			to label %invcont5981 unwind label %lpad
 invcont5981:		; preds = %bb5968
 	ret void

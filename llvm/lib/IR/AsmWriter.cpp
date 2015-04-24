@@ -2815,8 +2815,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << " #" << Machine.getAttributeGroupSlot(PAL.getFnAttributes());
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     Operand = II->getCalledValue();
-    PointerType *PTy = cast<PointerType>(Operand->getType());
-    FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    FunctionType *FTy = cast<FunctionType>(II->getFunctionType());
     Type *RetTy = FTy->getReturnType();
     const AttributeSet &PAL = II->getAttributes();
 
@@ -2834,15 +2833,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // and if the return type is not a pointer to a function.
     //
     Out << ' ';
-    if (!FTy->isVarArg() &&
-        (!RetTy->isPointerTy() ||
-         !cast<PointerType>(RetTy)->getElementType()->isFunctionTy())) {
-      TypePrinter.print(RetTy, Out);
-      Out << ' ';
-      writeOperand(Operand, false);
-    } else {
-      writeOperand(Operand, true);
-    }
+    TypePrinter.print(FTy->isVarArg() ? FTy : RetTy, Out);
+    Out << ' ';
+    writeOperand(Operand, false);
     Out << '(';
     for (unsigned op = 0, Eop = II->getNumArgOperands(); op < Eop; ++op) {
       if (op)

@@ -45,7 +45,7 @@ define void @test8() gc "statepoint-example" {
   ret void
 
 unreached:
-  invoke i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
           to label %normal_return unwind label %exceptional_return
 
 normal_return:                                    ; preds = %entry

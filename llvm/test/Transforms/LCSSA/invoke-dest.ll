@@ -54,7 +54,7 @@ invcont11:		; preds = %invcont10
 	br i1 undef, label %bb12, label %bb18
 
 bb12:		; preds = %invcont11
-	invoke void (i8*, i8*, ...)* @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8], [3 x i8]* @.str12, i32 0, i32 0), i32 undef)
+	invoke void (i8*, i8*, ...) @_ZN6cEnvir6printfEPKcz(i8* null, i8* getelementptr ([3 x i8], [3 x i8]* @.str12, i32 0, i32 0), i32 undef)
 			to label %bb.i.i159 unwind label %lpad119
 
 bb.i.i159:		; preds = %bb12
@@ -77,7 +77,7 @@ invcont35:		; preds = %bb34
 	br i1 undef, label %bb49, label %bb61
 
 bb49:		; preds = %invcont35
-	invoke void (i8*, i8*, ...)* @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8], [92 x i8]* @.str32190, i32 0, i32 0))
+	invoke void (i8*, i8*, ...) @_ZNK13cSimpleModule5errorEPKcz(i8* undef, i8* getelementptr ([92 x i8], [92 x i8]* @.str32190, i32 0, i32 0))
 			to label %bb51 unwind label %lpad119
 
 bb51:		; preds = %bb49

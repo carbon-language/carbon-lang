@@ -18,7 +18,7 @@ entry:
 ; CHECK-NEXT: [[PP_END:.L.*]]:
 ; CHECK:      ret
   %resolveCall = inttoptr i64 -559038736 to i8*
-  %result = invoke i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 2, i32 15, i8* %resolveCall, i32 1, i64 %p1, i64 %p2)
+  %result = invoke i64 (i64, i32, i8*, i32, ...) @llvm.experimental.patchpoint.i64(i64 2, i32 15, i8* %resolveCall, i32 1, i64 %p1, i64 %p2)
             to label %success unwind label %threw
 
 success:

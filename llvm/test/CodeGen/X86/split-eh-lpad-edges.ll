@@ -16,7 +16,7 @@ entry:
 			to label %invcont unwind label %lpad		; <%struct.NSObject*> [#uses=1]
 
 invcont:		; preds = %entry
-	%1 = invoke %struct.NSObject* (%struct.NSObject*, %struct.objc_selector*, ...)* @objc_msgSend(%struct.NSObject* %0, %struct.objc_selector* null)
+	%1 = invoke %struct.NSObject* (%struct.NSObject*, %struct.objc_selector*, ...) @objc_msgSend(%struct.NSObject* %0, %struct.objc_selector* null)
 			to label %invcont26 unwind label %lpad		; <%struct.NSObject*> [#uses=0]
 
 invcont26:		; preds = %invcont
