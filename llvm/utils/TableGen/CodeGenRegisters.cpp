@@ -924,7 +924,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   // Configure register Sets to understand register classes and tuples.
   Sets.addFieldExpander("RegisterClass", "MemberList");
   Sets.addFieldExpander("CalleeSavedRegs", "SaveList");
-  Sets.addExpander("RegisterTuples", new TupleExpander());
+  Sets.addExpander("RegisterTuples", llvm::make_unique<TupleExpander>());
 
   // Read in the user-defined (named) sub-register indices.
   // More indices will be synthesized later.
