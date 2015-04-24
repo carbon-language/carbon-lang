@@ -1900,6 +1900,10 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
                "signals:\n"
                "  void g();\n"
                "};");
+
+  // Don't interpret 'signals' the wrong way.
+  verifyFormat("signals.set();");
+  verifyFormat("for (Signals signals : f()) {\n}");
 }
 
 TEST_F(FormatTest, SeparatesLogicalBlocks) {

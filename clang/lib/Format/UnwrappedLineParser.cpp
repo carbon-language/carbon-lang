@@ -754,7 +754,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     }
     if (FormatTok->is(Keywords.kw_signals)) {
-      parseAccessSpecifier();
+      nextToken();
+      if (FormatTok->is(tok::colon)) {
+        nextToken();
+        addUnwrappedLine();
+      }
       return;
     }
     // In all other cases, parse the declaration.
