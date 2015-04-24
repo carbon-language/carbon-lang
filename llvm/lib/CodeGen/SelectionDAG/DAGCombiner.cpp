@@ -8804,11 +8804,11 @@ static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
   if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(Use)) {
     if (LD->isIndexed() || LD->getBasePtr().getNode() != N)
       return false;
-    VT = Use->getValueType(0);
+    VT = LD->getMemoryVT();
   } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(Use)) {
     if (ST->isIndexed() || ST->getBasePtr().getNode() != N)
       return false;
-    VT = ST->getValue().getValueType();
+    VT = ST->getMemoryVT();
   } else
     return false;
 
