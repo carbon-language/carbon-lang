@@ -7236,7 +7236,8 @@ bool SelectionDAGBuilder::buildJumpTable(CaseClusterVector &Clusters,
       for (uint64_t J = 0; J < Gap; J++)
         Table.push_back(DefaultMBB);
     }
-    for (APInt X = Low; X.sle(High); ++X)
+    uint64_t ClusterSize = (High - Low).getLimitedValue() + 1;
+    for (uint64_t J = 0; J < ClusterSize; ++J)
       Table.push_back(Clusters[I].MBB);
     JTWeights[Clusters[I].MBB] += Clusters[I].Weight;
   }
