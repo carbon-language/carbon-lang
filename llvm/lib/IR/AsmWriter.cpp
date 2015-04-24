@@ -1987,6 +1987,10 @@ public:
 private:
   void init();
 
+  /// \brief Print out metadata attachments.
+  void printMetadataAttachments(
+      const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs);
+
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
   void printInfoComment(const Value &V);
@@ -2952,22 +2956,29 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print Metadata info.
   SmallVector<std::pair<unsigned, MDNode *>, 4> InstMD;
   I.getAllMetadata(InstMD);
-  if (!InstMD.empty()) {
-    SmallVector<StringRef, 8> MDNames;
-    I.getType()->getContext().getMDKindNames(MDNames);
-    for (unsigned i = 0, e = InstMD.size(); i != e; ++i) {
-      unsigned Kind = InstMD[i].first;
-       if (Kind < MDNames.size()) {
-         Out << ", !" << MDNames[Kind];
-       } else {
-         Out << ", !<unknown kind #" << Kind << ">";
-       }
-      Out << ' ';
-      WriteAsOperandInternal(Out, InstMD[i].second, &TypePrinter, &Machine,
-                             TheModule);
-    }
-  }
+  printMetadataAttachments(InstMD);
+
+  // Print a nice comment.
   printInfoComment(I);
+}
+
+void AssemblyWriter::printMetadataAttachments(
+    const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) {
+  if (MDs.empty())
+    return;
+
+  SmallVector<StringRef, 8> MDNames;
+  TheModule->getMDKindNames(MDNames);
+  for (const auto &I : MDs) {
+    unsigned Kind = I.first;
+    if (Kind < MDNames.size()) {
+      Out << ", !" << MDNames[Kind];
+    } else {
+      Out << ", !<unknown kind #" << Kind << ">";
+    }
+    Out << ' ';
+    WriteAsOperandInternal(Out, I.second, &TypePrinter, &Machine, TheModule);
+  }
 }
 
 void AssemblyWriter::writeMDNode(unsigned Slot, const MDNode *Node) {
