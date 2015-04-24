@@ -627,13 +627,11 @@ MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
       registry().loadFile(std::move(mbOrErr.get()));
   if (!fileOrErr)
     return nullptr;
-  std::vector<std::unique_ptr<File>> files;
-  files.push_back(std::move(fileOrErr.get()));
-  assert(files.size() == 1 && "expected one file in dylib");
-  files[0]->parse();
-  MachODylibFile* result = reinterpret_cast<MachODylibFile*>(files[0].get());
+  std::unique_ptr<File> &file = fileOrErr.get();
+  file->parse();
+  MachODylibFile *result = reinterpret_cast<MachODylibFile *>(file.get());
   // Node object now owned by _indirectDylibs vector.
-  _indirectDylibs.push_back(std::move(files[0]));
+  _indirectDylibs.push_back(std::move(file));
   return result;
 }
 

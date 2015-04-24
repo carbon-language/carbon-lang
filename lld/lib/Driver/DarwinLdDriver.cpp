@@ -84,17 +84,17 @@ loadFile(MachOLinkingContext &ctx, StringRef path,
       ctx.registry().loadFile(std::move(mbOrErr.get()));
   if (std::error_code ec = fileOrErr.getError())
     return makeErrorFile(path, ec);
-  std::vector<std::unique_ptr<File>> files;
-  files.push_back(std::move(fileOrErr.get()));
-  for (std::unique_ptr<File> &pf : files) {
-    // If file is a dylib, inform LinkingContext about it.
-    if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(pf.get())) {
-      if (std::error_code ec = shl->parse())
-        return makeErrorFile(path, ec);
-      ctx.registerDylib(reinterpret_cast<mach_o::MachODylibFile*>(shl),
-                        upwardDylib);
-    }
+  std::unique_ptr<File> &file = fileOrErr.get();
+
+  // If file is a dylib, inform LinkingContext about it.
+  if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(file.get())) {
+    if (std::error_code ec = shl->parse())
+      return makeErrorFile(path, ec);
+    ctx.registerDylib(reinterpret_cast<mach_o::MachODylibFile *>(shl),
+                      upwardDylib);
   }
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::move(file));
   if (wholeArchive)
     return parseMemberFiles(files);
   return files;
