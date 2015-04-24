@@ -13036,8 +13036,7 @@ EmulateInstructionARM::ConditionPassed (const uint32_t opcode, bool *is_conditio
         // opcodes different meanings, but always means execution happens.
         if (is_conditional)
             *is_conditional = false;
-        result = true; 
-        break;
+        return true;
     }
 
     if (cond & 1)
