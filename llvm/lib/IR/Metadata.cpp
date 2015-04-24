@@ -997,8 +997,7 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   if (!hasMetadataHashEntry())
     return; // Nothing to remove!
 
-  DenseMap<const Instruction *, LLVMContextImpl::MDMapTy> &InstructionMetadata =
-      getContext().pImpl->InstructionMetadata;
+  auto &InstructionMetadata = getContext().pImpl->InstructionMetadata;
 
   if (KnownSet.empty()) {
     // Just drop our entry at the store.
@@ -1007,7 +1006,7 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
     return;
   }
 
-  LLVMContextImpl::MDMapTy &Info = InstructionMetadata[this];
+  auto &Info = InstructionMetadata[this];
   unsigned I;
   unsigned E;
   // Walk the array and drop any metadata we don't know.
@@ -1045,8 +1044,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   
   // Handle the case when we're adding/updating metadata on an instruction.
   if (Node) {
-    LLVMContextImpl::MDMapTy &Info =
-        getContext().pImpl->InstructionMetadata[this];
+    auto &Info = getContext().pImpl->InstructionMetadata[this];
     assert(!Info.empty() == hasMetadataHashEntry() &&
            "HasMetadata bit is wonked");
     if (Info.empty()) {
@@ -1072,8 +1070,7 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
          "HasMetadata bit out of date!");
   if (!hasMetadataHashEntry())
     return;  // Nothing to remove!
-  LLVMContextImpl::MDMapTy &Info =
-      getContext().pImpl->InstructionMetadata[this];
+  auto &Info = getContext().pImpl->InstructionMetadata[this];
 
   // Common case is removing the only entry.
   if (Info.size() == 1 && Info[0].first == KindID) {
@@ -1106,8 +1103,7 @@ MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
 
   if (!hasMetadataHashEntry()) return nullptr;
 
-  LLVMContextImpl::MDMapTy &Info =
-      getContext().pImpl->InstructionMetadata[this];
+  auto &Info = getContext().pImpl->InstructionMetadata[this];
   assert(!Info.empty() && "bit out of sync with hash table");
 
   for (const auto &I : Info)
@@ -1130,8 +1126,7 @@ void Instruction::getAllMetadataImpl(
   assert(hasMetadataHashEntry() &&
          getContext().pImpl->InstructionMetadata.count(this) &&
          "Shouldn't have called this");
-  const LLVMContextImpl::MDMapTy &Info =
-      getContext().pImpl->InstructionMetadata.find(this)->second;
+  const auto &Info = getContext().pImpl->InstructionMetadata.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
 
   Result.reserve(Result.size() + Info.size());
@@ -1149,8 +1144,7 @@ void Instruction::getAllMetadataOtherThanDebugLocImpl(
   assert(hasMetadataHashEntry() &&
          getContext().pImpl->InstructionMetadata.count(this) &&
          "Shouldn't have called this");
-  const LLVMContextImpl::MDMapTy &Info =
-      getContext().pImpl->InstructionMetadata.find(this)->second;
+  const auto &Info = getContext().pImpl->InstructionMetadata.find(this)->second;
   assert(!Info.empty() && "Shouldn't have called this");
   Result.reserve(Result.size() + Info.size());
   for (auto &I : Info)

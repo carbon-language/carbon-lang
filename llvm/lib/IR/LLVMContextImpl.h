@@ -951,11 +951,10 @@ public:
   /// CustomMDKindNames - Map to hold the metadata string to ID mapping.
   StringMap<unsigned> CustomMDKindNames;
 
-  typedef std::pair<unsigned, TrackingMDNodeRef> MDPairTy;
-  typedef SmallVector<MDPairTy, 2> MDMapTy;
-
   /// Collection of per-instruction metadata used in this context.
-  DenseMap<const Instruction *, MDMapTy> InstructionMetadata;
+  DenseMap<const Instruction *,
+           SmallVector<std::pair<unsigned, TrackingMDNodeRef>, 2>>
+      InstructionMetadata;
 
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
