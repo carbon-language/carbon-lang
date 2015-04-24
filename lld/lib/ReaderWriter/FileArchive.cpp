@@ -267,13 +267,12 @@ public:
     return magic == llvm::sys::fs::file_magic::archive;
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                           const Registry &reg,
-                           std::unique_ptr<File> &result) const override {
+  ErrorOr<std::unique_ptr<File>> loadFile(std::unique_ptr<MemoryBuffer> mb,
+                                          const Registry &reg) const override {
     StringRef path = mb->getBufferIdentifier();
-    result =
+    std::unique_ptr<File> ret =
         llvm::make_unique<FileArchive>(std::move(mb), reg, path, _logLoading);
-    return std::error_code();
+    return std::move(ret);
   }
 
 private:

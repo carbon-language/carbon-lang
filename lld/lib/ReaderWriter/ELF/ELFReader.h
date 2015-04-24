@@ -28,13 +28,13 @@ public:
     return FileT::canParse(magic);
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                           const class Registry &,
-                           std::unique_ptr<File> &result) const override {
+  ErrorOr<std::unique_ptr<File>>
+  loadFile(std::unique_ptr<MemoryBuffer> mb,
+           const class Registry &) const override {
     if (std::error_code ec = FileT::isCompatible(*mb, _ctx))
       return ec;
-    result = llvm::make_unique<FileT>(std::move(mb), _ctx);
-    return std::error_code();
+    std::unique_ptr<File> ret = llvm::make_unique<FileT>(std::move(mb), _ctx);
+    return std::move(ret);
   }
 
 private:

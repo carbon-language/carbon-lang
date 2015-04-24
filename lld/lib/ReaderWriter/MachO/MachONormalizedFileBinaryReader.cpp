@@ -522,11 +522,12 @@ public:
             mb.getBufferSize() > 32);
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                           const Registry &registry,
-                           std::unique_ptr<File> &result) const override {
-    result = llvm::make_unique<MachOFile>(std::move(mb), &_ctx);
-    return std::error_code();
+  ErrorOr<std::unique_ptr<File>>
+  loadFile(std::unique_ptr<MemoryBuffer> mb,
+           const Registry &registry) const override {
+    std::unique_ptr<File> ret =
+        llvm::make_unique<MachOFile>(std::move(mb), &_ctx);
+    return std::move(ret);
   }
 
 private:
@@ -547,11 +548,12 @@ public:
     }
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                           const Registry &registry,
-                           std::unique_ptr<File> &result) const override {
-    result = llvm::make_unique<MachODylibFile>(std::move(mb), &_ctx);
-    return std::error_code();
+  ErrorOr<std::unique_ptr<File>>
+  loadFile(std::unique_ptr<MemoryBuffer> mb,
+           const Registry &registry) const override {
+    std::unique_ptr<File> ret =
+        llvm::make_unique<MachODylibFile>(std::move(mb), &_ctx);
+    return std::move(ret);
   }
 
 private:

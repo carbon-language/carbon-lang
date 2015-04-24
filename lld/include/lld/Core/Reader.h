@@ -51,9 +51,8 @@ public:
   /// \brief Parse a supplied buffer (already filled with the contents of a
   /// file) and create a File object.
   /// The resulting File object takes ownership of the MemoryBuffer.
-  virtual std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                                   const class Registry &,
-                                   std::unique_ptr<File> &result) const = 0;
+  virtual ErrorOr<std::unique_ptr<File>>
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &) const = 0;
 };
 
 

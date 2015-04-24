@@ -1294,9 +1294,9 @@ public:
     return ext.equals(".objtxt") || ext.equals(".yaml");
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
-                           const class Registry &,
-                           std::unique_ptr<File> &result) const override {
+  ErrorOr<std::unique_ptr<File>>
+  loadFile(std::unique_ptr<MemoryBuffer> mb,
+           const class Registry &) const override {
     // Create YAML Input Reader.
     YamlContext yamlContext;
     yamlContext._registry = &_registry;
@@ -1318,8 +1318,7 @@ public:
     File *f = const_cast<File *>(file);
     f->setLastError(std::error_code());
     f->setSharedMemoryBuffer(smb);
-    result = std::unique_ptr<File>(f);
-    return make_error_code(lld::YamlReaderError::success);
+    return std::unique_ptr<File>(f);
   }
 
 private:

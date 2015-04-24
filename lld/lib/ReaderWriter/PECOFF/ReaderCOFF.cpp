@@ -1052,11 +1052,12 @@ public:
     return magic == llvm::sys::fs::file_magic::coff_object;
   }
 
-  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &,
-                           std::unique_ptr<File> &result) const override {
+  ErrorOr<std::unique_ptr<File>> loadFile(std::unique_ptr<MemoryBuffer> mb,
+                                          const Registry &) const override {
     // Parse the memory buffer as PECOFF file.
-    result = llvm::make_unique<FileCOFF>(std::move(mb), _ctx);
-    return std::error_code();
+    std::unique_ptr<File> ret =
+        llvm::make_unique<FileCOFF>(std::move(mb), _ctx);
+    return std::move(ret);
   }
 
 private:

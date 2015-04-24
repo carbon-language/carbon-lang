@@ -38,8 +38,11 @@ std::error_code Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
   for (const std::unique_ptr<Reader> &reader : _readers) {
     if (!reader->canParse(fileType, *mb))
       continue;
-    if (std::error_code ec = reader->loadFile(std::move(mb), *this, result))
+    ErrorOr<std::unique_ptr<File>> fileOrErr =
+        reader->loadFile(std::move(mb), *this);
+    if (std::error_code ec = fileOrErr.getError())
       return ec;
+    result = std::move(fileOrErr.get());
     return std::error_code();
   }
 
