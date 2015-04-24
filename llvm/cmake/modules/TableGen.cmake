@@ -32,7 +32,7 @@ function(tablegen project ofn)
     # The file in LLVM_TARGET_DEFINITIONS may be not in the current
     # directory and local_tds may not contain it, so we must
     # explicitly list it here:
-    DEPENDS ${${project}_TABLEGEN_EXE} ${local_tds} ${global_tds}
+    DEPENDS ${${project}_TABLEGEN_TARGET} ${local_tds} ${global_tds}
     ${LLVM_TARGET_DEFINITIONS_ABSOLUTE}
     COMMENT "Building ${ofn}..."
     )
@@ -90,6 +90,7 @@ macro(add_tablegen target project)
 
   # Effective tblgen executable to be used:
   set(${project}_TABLEGEN_EXE ${${project}_TABLEGEN} PARENT_SCOPE)
+  set(${project}_TABLEGEN_TARGET ${${project}_TABLEGEN} PARENT_SCOPE)
 
   if(LLVM_USE_HOST_TOOLS)
     if( ${${project}_TABLEGEN} STREQUAL "${target}" )
@@ -101,8 +102,8 @@ macro(add_tablegen target project)
         DEPENDS CONFIGURE_LLVM_NATIVE ${target}
         WORKING_DIRECTORY ${LLVM_NATIVE_BUILD}
         COMMENT "Building native TableGen...")
-      add_custom_target(${project}NativeTableGen DEPENDS ${${project}_TABLEGEN_EXE})
-      add_dependencies(${project}NativeTableGen CONFIGURE_LLVM_NATIVE)
+      add_custom_target(${project}-tablegen-host DEPENDS ${${project}_TABLEGEN_EXE})
+      set(${project}_TABLEGEN_TARGET ${project}-tablegen-host PARENT_SCOPE)
     endif()
   endif()
 
