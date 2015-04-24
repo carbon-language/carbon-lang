@@ -1273,3 +1273,32 @@ end:
 ; CHECK-LABEL: @pr20210
 ; CHECK: switch i8 %x
 }
+
+; Make sure we do not crash due to trying to generate an unguarded
+; lookup (since i3 can only hold values in the range of explicit
+; values) and simultaneously trying to generate a branch to deal with
+; the fact that we have holes in the range.
+define i32 @covered_switch_with_bit_tests(i3) {
+entry:
+  switch i3 %0, label %l6 [
+    i3 -3, label %l5
+    i3 -4, label %l5
+    i3 3, label %l1
+    i3 2, label %l1
+  ]
+
+l1: br label %l2
+
+l2:
+  %x = phi i32 [ 1, %l1 ], [ 2, %l5 ]
+  br label %l6
+
+l5: br label %l2
+
+l6:
+  %r = phi i32 [ %x, %l2 ], [ 0, %entry ]
+  ret i32 %r
+; CHECK-LABEL: @covered_switch_with_bit_tests
+; CHECK: entry
+; CHECK-NEXT: switch
+}
