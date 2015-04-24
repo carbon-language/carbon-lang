@@ -38,7 +38,7 @@ void DwarfStringPool::emit(AsmPrinter &Asm, const MCSection *StrSection,
     return;
 
   // Start the dwarf str section.
-  Asm.OutStreamer.SwitchSection(StrSection);
+  Asm.OutStreamer->SwitchSection(StrSection);
 
   // Get all of the string pool entries and put them in an array by their ID so
   // we can sort them.
@@ -50,20 +50,20 @@ void DwarfStringPool::emit(AsmPrinter &Asm, const MCSection *StrSection,
 
   for (const auto &Entry : Entries) {
     // Emit a label for reference from debug information entries.
-    Asm.OutStreamer.EmitLabel(Entry->getValue().first);
+    Asm.OutStreamer->EmitLabel(Entry->getValue().first);
 
     // Emit the string itself with a terminating null byte.
-    Asm.OutStreamer.EmitBytes(
+    Asm.OutStreamer->EmitBytes(
         StringRef(Entry->getKeyData(), Entry->getKeyLength() + 1));
   }
 
   // If we've got an offset section go ahead and emit that now as well.
   if (OffsetSection) {
-    Asm.OutStreamer.SwitchSection(OffsetSection);
+    Asm.OutStreamer->SwitchSection(OffsetSection);
     unsigned offset = 0;
     unsigned size = 4; // FIXME: DWARF64 is 8.
     for (const auto &Entry : Entries) {
-      Asm.OutStreamer.EmitIntValue(offset, size);
+      Asm.OutStreamer->EmitIntValue(offset, size);
       offset += Entry->getKeyLength() + 1;
     }
   }

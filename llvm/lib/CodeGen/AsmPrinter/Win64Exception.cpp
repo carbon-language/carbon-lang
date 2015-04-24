@@ -83,7 +83,7 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
               GlobalValue::getRealLinkageName(F->getName()));
 
       // Emit a symbol assignment.
-      Asm->OutStreamer.EmitAssignment(
+      Asm->OutStreamer->EmitAssignment(
           HandlerTypeParentFrameOffset,
           MCConstantExpr::Create(I->second, Asm->OutContext));
     }
@@ -92,14 +92,14 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
-  Asm->OutStreamer.EmitWinCFIStartProc(Asm->CurrentFnSym);
+  Asm->OutStreamer->EmitWinCFIStartProc(Asm->CurrentFnSym);
 
   if (!shouldEmitPersonality)
     return;
 
   const MCSymbol *PersHandlerSym =
       TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
-  Asm->OutStreamer.EmitWinEHHandler(PersHandlerSym, true, true);
+  Asm->OutStreamer->EmitWinEHHandler(PersHandlerSym, true, true);
 }
 
 /// endFunction - Gather and emit post-function exception information.
@@ -117,10 +117,10 @@ void Win64Exception::endFunction(const MachineFunction *MF) {
     MMI->TidyLandingPads();
 
   if (shouldEmitPersonality) {
-    Asm->OutStreamer.PushSection();
+    Asm->OutStreamer->PushSection();
 
     // Emit an UNWIND_INFO struct describing the prologue.
-    Asm->OutStreamer.EmitWinEHHandlerData();
+    Asm->OutStreamer->EmitWinEHHandlerData();
 
     // Emit the tables appropriate to the personality function in use. If we
     // don't recognize the personality, assume it uses an Itanium-style LSDA.
@@ -131,9 +131,9 @@ void Win64Exception::endFunction(const MachineFunction *MF) {
     else
       emitExceptionTable();
 
-    Asm->OutStreamer.PopSection();
+    Asm->OutStreamer->PopSection();
   }
-  Asm->OutStreamer.EmitWinCFIEndProc();
+  Asm->OutStreamer->EmitWinCFIEndProc();
 }
 
 const MCExpr *Win64Exception::createImageRel32(const MCSymbol *Value) {
@@ -208,7 +208,7 @@ void Win64Exception::emitCSpecificHandlerTable() {
       continue; // Ignore gaps.
     NumEntries += CSE.LPad->SEHHandlers.size();
   }
-  Asm->OutStreamer.EmitIntValue(NumEntries, 4);
+  Asm->OutStreamer->EmitIntValue(NumEntries, 4);
 
   // If there are no actions, we don't need to iterate again.
   if (NumEntries == 0)
@@ -241,25 +241,25 @@ void Win64Exception::emitCSpecificHandlerTable() {
 
     // Emit an entry for each action.
     for (SEHHandler Handler : LPad->SEHHandlers) {
-      Asm->OutStreamer.EmitValue(Begin, 4);
-      Asm->OutStreamer.EmitValue(End, 4);
+      Asm->OutStreamer->EmitValue(Begin, 4);
+      Asm->OutStreamer->EmitValue(End, 4);
 
       // Emit the filter or finally function pointer, if present. Otherwise,
       // emit '1' to indicate a catch-all.
       const Function *F = Handler.FilterOrFinally;
       if (F)
-        Asm->OutStreamer.EmitValue(createImageRel32(Asm->getSymbol(F)), 4);
+        Asm->OutStreamer->EmitValue(createImageRel32(Asm->getSymbol(F)), 4);
       else
-        Asm->OutStreamer.EmitIntValue(1, 4);
+        Asm->OutStreamer->EmitIntValue(1, 4);
 
       // Emit the recovery address, if present. Otherwise, this must be a
       // finally.
       const BlockAddress *BA = Handler.RecoverBA;
       if (BA)
-        Asm->OutStreamer.EmitValue(
+        Asm->OutStreamer->EmitValue(
             createImageRel32(Asm->GetBlockAddressSymbol(BA)), 4);
       else
-        Asm->OutStreamer.EmitIntValue(0, 4);
+        Asm->OutStreamer->EmitIntValue(0, 4);
     }
   }
 }
@@ -267,7 +267,7 @@ void Win64Exception::emitCSpecificHandlerTable() {
 void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
   const Function *ParentF = MMI->getWinEHParent(F);
-  auto &OS = Asm->OutStreamer;
+  auto &OS = *Asm->OutStreamer;
   WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(ParentF);
 
   StringRef ParentLinkageName =

@@ -584,10 +584,10 @@ void DwarfStreamer::emitDIE(DIE &Die) {
 
 /// \brief Emit the debug_str section stored in \p Pool.
 void DwarfStreamer::emitStrings(const NonRelocatableStringpool &Pool) {
-  Asm->OutStreamer.SwitchSection(MOFI->getDwarfStrSection());
+  Asm->OutStreamer->SwitchSection(MOFI->getDwarfStrSection());
   for (auto *Entry = Pool.getFirstEntry(); Entry;
        Entry = Pool.getNextEntry(Entry))
-    Asm->OutStreamer.EmitBytes(
+    Asm->OutStreamer->EmitBytes(
         StringRef(Entry->getKey().data(), Entry->getKey().size() + 1));
 }
 
@@ -668,13 +668,13 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
     unsigned Padding = OffsetToAlignment(HeaderSize, TupleSize);
 
     Asm->EmitLabelDifference(EndLabel, BeginLabel, 4); // Arange length
-    Asm->OutStreamer.EmitLabel(BeginLabel);
+    Asm->OutStreamer->EmitLabel(BeginLabel);
     Asm->EmitInt16(dwarf::DW_ARANGES_VERSION); // Version number
     Asm->EmitInt32(Unit.getStartOffset());     // Corresponding unit's offset
     Asm->EmitInt8(AddressSize);                // Address size
     Asm->EmitInt8(0);                          // Segment size
 
-    Asm->OutStreamer.EmitFill(Padding, 0x0);
+    Asm->OutStreamer->EmitFill(Padding, 0x0);
 
     for (auto Range = Ranges.begin(), End = Ranges.end(); Range != End;
          ++Range) {
@@ -686,9 +686,9 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
     }
 
     // Emit terminator
-    Asm->OutStreamer.EmitIntValue(0, AddressSize);
-    Asm->OutStreamer.EmitIntValue(0, AddressSize);
-    Asm->OutStreamer.EmitLabel(EndLabel);
+    Asm->OutStreamer->EmitIntValue(0, AddressSize);
+    Asm->OutStreamer->EmitIntValue(0, AddressSize);
+    Asm->OutStreamer->EmitLabel(EndLabel);
   }
 
   if (!DoDebugRanges)
@@ -746,16 +746,16 @@ void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
       uint64_t High = Data.getUnsigned(&Offset, AddressSize);
       LocSectionSize += 2 * AddressSize;
       if (Low == 0 && High == 0) {
-        Asm->OutStreamer.EmitIntValue(0, AddressSize);
-        Asm->OutStreamer.EmitIntValue(0, AddressSize);
+        Asm->OutStreamer->EmitIntValue(0, AddressSize);
+        Asm->OutStreamer->EmitIntValue(0, AddressSize);
         break;
       }
-      Asm->OutStreamer.EmitIntValue(Low + LocPcOffset, AddressSize);
-      Asm->OutStreamer.EmitIntValue(High + LocPcOffset, AddressSize);
+      Asm->OutStreamer->EmitIntValue(Low + LocPcOffset, AddressSize);
+      Asm->OutStreamer->EmitIntValue(High + LocPcOffset, AddressSize);
       uint64_t Length = Data.getU16(&Offset);
-      Asm->OutStreamer.EmitIntValue(Length, 2);
+      Asm->OutStreamer->EmitIntValue(Length, 2);
       // Just copy the bytes over.
-      Asm->OutStreamer.EmitBytes(
+      Asm->OutStreamer->EmitBytes(
           StringRef(InputSec.Data.substr(Offset, Length)));
       Offset += Length;
       LocSectionSize += Length + 2;
@@ -775,7 +775,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
   Asm->EmitLabelDifference(LineEndSym, LineStartSym, 4);
-  Asm->OutStreamer.EmitLabel(LineStartSym);
+  Asm->OutStreamer->EmitLabel(LineStartSym);
   // Copy Prologue.
   MS->EmitBytes(PrologueBytes);
   LineSectionSize += PrologueBytes.size() + 4;
@@ -918,7 +918,7 @@ void DwarfStreamer::emitPubSectionForUnit(
     return;
 
   // Start the dwarf pubnames section.
-  Asm->OutStreamer.SwitchSection(Sec);
+  Asm->OutStreamer->SwitchSection(Sec);
   MCSymbol *BeginLabel = Asm->createTempSymbol("pub" + SecName + "_begin");
   MCSymbol *EndLabel = Asm->createTempSymbol("pub" + SecName + "_end");
 
@@ -931,21 +931,21 @@ void DwarfStreamer::emitPubSectionForUnit(
     if (!HeaderEmitted) {
       // Emit the header.
       Asm->EmitLabelDifference(EndLabel, BeginLabel, 4); // Length
-      Asm->OutStreamer.EmitLabel(BeginLabel);
+      Asm->OutStreamer->EmitLabel(BeginLabel);
       Asm->EmitInt16(dwarf::DW_PUBNAMES_VERSION); // Version
       Asm->EmitInt32(Unit.getStartOffset()); // Unit offset
       Asm->EmitInt32(Unit.getNextUnitOffset() - Unit.getStartOffset()); // Size
       HeaderEmitted = true;
     }
     Asm->EmitInt32(Name.Die->getOffset());
-    Asm->OutStreamer.EmitBytes(
+    Asm->OutStreamer->EmitBytes(
         StringRef(Name.Name.data(), Name.Name.size() + 1));
   }
 
   if (!HeaderEmitted)
     return;
   Asm->EmitInt32(0); // End marker.
-  Asm->OutStreamer.EmitLabel(EndLabel);
+  Asm->OutStreamer->EmitLabel(EndLabel);
 }
 
 /// \brief Emit .debug_pubnames for \p Unit.

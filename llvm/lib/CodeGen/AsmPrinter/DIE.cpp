@@ -211,7 +211,7 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_flag_present:
     // Emit something to keep the lines and comments in sync.
     // FIXME: Is there a better way to do this?
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer->AddBlankLine();
     return;
   case dwarf::DW_FORM_flag:  // Fall thru
   case dwarf::DW_FORM_ref1:  // Fall thru
@@ -236,7 +236,7 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
     break;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
-  Asm->OutStreamer.EmitIntValue(Integer, Size);
+  Asm->OutStreamer->EmitIntValue(Integer, Size);
 }
 
 /// SizeOf - Determine size of integer value in bytes.
@@ -262,7 +262,7 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_sdata: return getSLEB128Size(Integer);
   case dwarf::DW_FORM_addr:  return AP->getDataLayout().getPointerSize();
   case dwarf::DW_FORM_ref_addr:
-    if (AP->OutStreamer.getContext().getDwarfVersion() == 2)
+    if (AP->OutStreamer->getContext().getDwarfVersion() == 2)
       return AP->getDataLayout().getPointerSize();
     return sizeof(int32_t);
   default: llvm_unreachable("DIE Value form not supported yet");
@@ -283,7 +283,7 @@ void DIEInteger::print(raw_ostream &O) const {
 /// EmitValue - Emit expression value.
 ///
 void DIEExpr::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
-  AP->OutStreamer.EmitValue(Expr, SizeOf(AP, Form));
+  AP->OutStreamer->EmitValue(Expr, SizeOf(AP, Form));
 }
 
 /// SizeOf - Determine size of expression value in bytes.
@@ -400,7 +400,7 @@ void DIEEntry::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
       AP->EmitLabelPlusOffset(CU->getSectionSym(), Addr,
                               DIEEntry::getRefAddrSize(AP));
     else
-      AP->OutStreamer.EmitIntValue(Addr, DIEEntry::getRefAddrSize(AP));
+      AP->OutStreamer->EmitIntValue(Addr, DIEEntry::getRefAddrSize(AP));
   } else
     AP->EmitInt32(Entry.getOffset());
 }
@@ -428,7 +428,7 @@ void DIEEntry::print(raw_ostream &O) const {
 //===----------------------------------------------------------------------===//
 void DIETypeSignature::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   assert(Form == dwarf::DW_FORM_ref_sig8);
-  Asm->OutStreamer.EmitIntValue(Unit.getTypeSignature(), 8);
+  Asm->OutStreamer->EmitIntValue(Unit.getTypeSignature(), 8);
 }
 
 #ifndef NDEBUG

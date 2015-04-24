@@ -41,7 +41,7 @@ ARMException::ARMException(AsmPrinter *A) : DwarfCFIExceptionBase(A) {}
 ARMException::~ARMException() {}
 
 ARMTargetStreamer &ARMException::getTargetStreamer() {
-  MCTargetStreamer &TS = *Asm->OutStreamer.getTargetStreamer();
+  MCTargetStreamer &TS = *Asm->OutStreamer->getTargetStreamer();
   return static_cast<ARMTargetStreamer &>(TS);
 }
 
@@ -49,7 +49,7 @@ ARMTargetStreamer &ARMException::getTargetStreamer() {
 /// content.
 void ARMException::endModule() {
   if (shouldEmitCFI)
-    Asm->OutStreamer.EmitCFISections(false, true);
+    Asm->OutStreamer->EmitCFISections(false, true);
 }
 
 void ARMException::beginFunction(const MachineFunction *MF) {
@@ -61,7 +61,7 @@ void ARMException::beginFunction(const MachineFunction *MF) {
          "non-EH CFI not yet supported in prologue with EHABI lowering");
   if (MoveType == AsmPrinter::CFI_M_Debug) {
     shouldEmitCFI = true;
-    Asm->OutStreamer.EmitCFIStartProc(false);
+    Asm->OutStreamer->EmitCFIStartProc(false);
   }
 }
 
@@ -77,7 +77,7 @@ void ARMException::endFunction(const MachineFunction *MF) {
       // Emit references to personality.
       if (const Function *Personality = MMI->getPersonality()) {
         MCSymbol *PerSym = Asm->getSymbol(Personality);
-        Asm->OutStreamer.EmitSymbolAttribute(PerSym, MCSA_Global);
+        Asm->OutStreamer->EmitSymbolAttribute(PerSym, MCSA_Global);
         ATS.emitPersonality(PerSym);
       }
 
@@ -97,13 +97,13 @@ void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
   const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
-  bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
+  bool VerboseAsm = Asm->OutStreamer->isVerboseAsm();
 
   int Entry = 0;
   // Emit the Catch TypeInfos.
   if (VerboseAsm && !TypeInfos.empty()) {
-    Asm->OutStreamer.AddComment(">> Catch TypeInfos <<");
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer->AddComment(">> Catch TypeInfos <<");
+    Asm->OutStreamer->AddBlankLine();
     Entry = TypeInfos.size();
   }
 
@@ -111,14 +111,14 @@ void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalValue *GV = *I;
     if (VerboseAsm)
-      Asm->OutStreamer.AddComment("TypeInfo " + Twine(Entry--));
+      Asm->OutStreamer->AddComment("TypeInfo " + Twine(Entry--));
     Asm->EmitTTypeReference(GV, TTypeEncoding);
   }
 
   // Emit the Exception Specifications.
   if (VerboseAsm && !FilterIds.empty()) {
-    Asm->OutStreamer.AddComment(">> Filter TypeInfos <<");
-    Asm->OutStreamer.AddBlankLine();
+    Asm->OutStreamer->AddComment(">> Filter TypeInfos <<");
+    Asm->OutStreamer->AddBlankLine();
     Entry = 0;
   }
   for (std::vector<unsigned>::const_iterator
@@ -127,7 +127,7 @@ void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
     if (VerboseAsm) {
       --Entry;
       if (TypeID != 0)
-        Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
+        Asm->OutStreamer->AddComment("FilterInfo " + Twine(Entry));
     }
 
     Asm->EmitTTypeReference((TypeID == 0 ? nullptr : TypeInfos[TypeID - 1]),

@@ -234,7 +234,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   // Everybody else uses GNU's.
   UseGNUTLSOpcode = !(IsDarwin || IsPS4) || DwarfVersion < 3;
 
-  Asm->OutStreamer.getContext().setDwarfVersion(DwarfVersion);
+  Asm->OutStreamer->getContext().setDwarfVersion(DwarfVersion);
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -380,8 +380,8 @@ DwarfDebug::constructDwarfCompileUnit(const MDCompileUnit *DIUnit) {
   // To avoid the compilation directory being ambiguous, let the line table
   // explicitly describe the directory of all files, never relying on the
   // compilation directory.
-  if (!Asm->OutStreamer.hasRawTextSupport() || SingleCU)
-    Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
+  if (!Asm->OutStreamer->hasRawTextSupport() || SingleCU)
+    Asm->OutStreamer->getContext().setMCLineTableCompilationDir(
         NewCU.getUniqueID(), CompilationDir);
 
   NewCU.addString(Die, dwarf::DW_AT_producer, DIUnit->getProducer());
@@ -972,7 +972,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
           Flags |= DWARF2_FLAG_IS_STMT;
         }
         if (DL.getLine() !=
-            Asm->OutStreamer.getContext().getCurrentDwarfLoc().getLine())
+            Asm->OutStreamer->getContext().getCurrentDwarfLoc().getLine())
           Flags |= DWARF2_FLAG_IS_STMT;
 
         const MDNode *Scope = DL.getScope();
@@ -998,7 +998,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
 
   if (!PrevLabel) {
     PrevLabel = MMI->getContext().CreateTempSymbol();
-    Asm->OutStreamer.EmitLabel(PrevLabel);
+    Asm->OutStreamer->EmitLabel(PrevLabel);
   }
   I->second = PrevLabel;
 }
@@ -1026,7 +1026,7 @@ void DwarfDebug::endInstruction() {
   // We need a label after this instruction.
   if (!PrevLabel) {
     PrevLabel = MMI->getContext().CreateTempSymbol();
-    Asm->OutStreamer.EmitLabel(PrevLabel);
+    Asm->OutStreamer->EmitLabel(PrevLabel);
   }
   I->second = PrevLabel;
 }
@@ -1110,11 +1110,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // is absolute (such as an <> lookup header)))
   DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
-  if (Asm->OutStreamer.hasRawTextSupport())
+  if (Asm->OutStreamer->hasRawTextSupport())
     // Use a single line table if we are generating assembly.
-    Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
+    Asm->OutStreamer->getContext().setDwarfCompileUnitID(0);
   else
-    Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
+    Asm->OutStreamer->getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
 
   // Calculate history for local variables.
   calculateDbgValueHistory(MF, Asm->MF->getSubtarget().getRegisterInfo(),
@@ -1183,7 +1183,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   }
 
   // Set DwarfDwarfCompileUnitID in MCContext to default value.
-  Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
+  Asm->OutStreamer->getContext().setDwarfCompileUnitID(0);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   auto *SP = cast<MDSubprogram>(FnScope->getScopeNode());
@@ -1260,12 +1260,12 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
     if (auto *LBF = dyn_cast<MDLexicalBlockFile>(Scope))
       Discriminator = LBF->getDiscriminator();
 
-    unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
+    unsigned CUID = Asm->OutStreamer->getContext().getDwarfCompileUnitID();
     Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])
               .getOrCreateSourceID(Fn, Dir);
   }
-  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0,
-                                         Discriminator, Fn);
+  Asm->OutStreamer->EmitDwarfLocDirective(Src, Line, Col, Flags, 0,
+                                          Discriminator, Fn);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1288,7 +1288,7 @@ void DwarfDebug::emitAbbreviations() {
 void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
                            StringRef TableName) {
   Accel.FinalizeTable(Asm, TableName);
-  Asm->OutStreamer.SwitchSection(Section);
+  Asm->OutStreamer->SwitchSection(Section);
 
   // Emit the full data.
   Accel.emit(Asm, Section->getBeginSymbol(), this);
@@ -1402,23 +1402,23 @@ void DwarfDebug::emitDebugPubSection(
       TheU = Skeleton;
 
     // Start the dwarf pubnames section.
-    Asm->OutStreamer.SwitchSection(PSec);
+    Asm->OutStreamer->SwitchSection(PSec);
 
     // Emit the header.
-    Asm->OutStreamer.AddComment("Length of Public " + Name + " Info");
+    Asm->OutStreamer->AddComment("Length of Public " + Name + " Info");
     MCSymbol *BeginLabel = Asm->createTempSymbol("pub" + Name + "_begin");
     MCSymbol *EndLabel = Asm->createTempSymbol("pub" + Name + "_end");
     Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
-    Asm->OutStreamer.EmitLabel(BeginLabel);
+    Asm->OutStreamer->EmitLabel(BeginLabel);
 
-    Asm->OutStreamer.AddComment("DWARF Version");
+    Asm->OutStreamer->AddComment("DWARF Version");
     Asm->EmitInt16(dwarf::DW_PUBNAMES_VERSION);
 
-    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
+    Asm->OutStreamer->AddComment("Offset of Compilation Unit Info");
     Asm->emitSectionOffset(TheU->getLabelBegin());
 
-    Asm->OutStreamer.AddComment("Compilation Unit Length");
+    Asm->OutStreamer->AddComment("Compilation Unit Length");
     Asm->EmitInt32(TheU->getLength());
 
     // Emit the pubnames for this compilation unit.
@@ -1426,24 +1426,24 @@ void DwarfDebug::emitDebugPubSection(
       const char *Name = GI.getKeyData();
       const DIE *Entity = GI.second;
 
-      Asm->OutStreamer.AddComment("DIE offset");
+      Asm->OutStreamer->AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());
 
       if (GnuStyle) {
         dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheU, Entity);
-        Asm->OutStreamer.AddComment(
+        Asm->OutStreamer->AddComment(
             Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
             dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
         Asm->EmitInt8(Desc.toBits());
       }
 
-      Asm->OutStreamer.AddComment("External Name");
-      Asm->OutStreamer.EmitBytes(StringRef(Name, GI.getKeyLength() + 1));
+      Asm->OutStreamer->AddComment("External Name");
+      Asm->OutStreamer->EmitBytes(StringRef(Name, GI.getKeyLength() + 1));
     }
 
-    Asm->OutStreamer.AddComment("End Mark");
+    Asm->OutStreamer->AddComment("End Mark");
     Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(EndLabel);
+    Asm->OutStreamer->EmitLabel(EndLabel);
   }
 }
 
@@ -1545,26 +1545,26 @@ void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
 }
 
 void DwarfDebug::emitDebugLocEntryLocation(const DebugLocStream::Entry &Entry) {
-  Asm->OutStreamer.AddComment("Loc expr size");
-  MCSymbol *begin = Asm->OutStreamer.getContext().CreateTempSymbol();
-  MCSymbol *end = Asm->OutStreamer.getContext().CreateTempSymbol();
+  Asm->OutStreamer->AddComment("Loc expr size");
+  MCSymbol *begin = Asm->OutStreamer->getContext().CreateTempSymbol();
+  MCSymbol *end = Asm->OutStreamer->getContext().CreateTempSymbol();
   Asm->EmitLabelDifference(end, begin, 2);
-  Asm->OutStreamer.EmitLabel(begin);
+  Asm->OutStreamer->EmitLabel(begin);
   // Emit the entry.
   APByteStreamer Streamer(*Asm);
   emitDebugLocEntry(Streamer, Entry);
   // Close the range.
-  Asm->OutStreamer.EmitLabel(end);
+  Asm->OutStreamer->EmitLabel(end);
 }
 
 // Emit locations into the debug loc section.
 void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   for (const auto &List : DebugLocs.getLists()) {
-    Asm->OutStreamer.EmitLabel(List.Label);
+    Asm->OutStreamer->EmitLabel(List.Label);
     const DwarfCompileUnit *CU = List.CU;
     for (const auto &Entry : DebugLocs.getEntries(List)) {
       // Set up the range. This range is relative to the entry point of the
@@ -1574,22 +1574,22 @@ void DwarfDebug::emitDebugLoc() {
         Asm->EmitLabelDifference(Entry.BeginSym, Base, Size);
         Asm->EmitLabelDifference(Entry.EndSym, Base, Size);
       } else {
-        Asm->OutStreamer.EmitSymbolValue(Entry.BeginSym, Size);
-        Asm->OutStreamer.EmitSymbolValue(Entry.EndSym, Size);
+        Asm->OutStreamer->EmitSymbolValue(Entry.BeginSym, Size);
+        Asm->OutStreamer->EmitSymbolValue(Entry.EndSym, Size);
       }
 
       emitDebugLocEntryLocation(Entry);
     }
-    Asm->OutStreamer.EmitIntValue(0, Size);
-    Asm->OutStreamer.EmitIntValue(0, Size);
+    Asm->OutStreamer->EmitIntValue(0, Size);
+    Asm->OutStreamer->EmitIntValue(0, Size);
   }
 }
 
 void DwarfDebug::emitDebugLocDWO() {
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfLocDWOSection());
   for (const auto &List : DebugLocs.getLists()) {
-    Asm->OutStreamer.EmitLabel(List.Label);
+    Asm->OutStreamer->EmitLabel(List.Label);
     for (const auto &Entry : DebugLocs.getEntries(List)) {
       // Just always use start_length for now - at least that's one address
       // rather than two. We could get fancier and try to, say, reuse an
@@ -1637,7 +1637,7 @@ void DwarfDebug::emitDebugARanges() {
     MCSymbol *Sym = nullptr;
 
     if (Section)
-      Sym = Asm->OutStreamer.endSection(Section);
+      Sym = Asm->OutStreamer->endSection(Section);
 
     // Insert a final terminator.
     SectionMap[Section].push_back(SymbolCU(nullptr, Sym));
@@ -1667,8 +1667,8 @@ void DwarfDebug::emitDebugARanges() {
     // Sort the symbols by offset within the section.
     std::sort(List.begin(), List.end(),
               [&](const SymbolCU &A, const SymbolCU &B) {
-      unsigned IA = A.Sym ? Asm->OutStreamer.GetSymbolOrder(A.Sym) : 0;
-      unsigned IB = B.Sym ? Asm->OutStreamer.GetSymbolOrder(B.Sym) : 0;
+      unsigned IA = A.Sym ? Asm->OutStreamer->GetSymbolOrder(A.Sym) : 0;
+      unsigned IB = B.Sym ? Asm->OutStreamer->GetSymbolOrder(B.Sym) : 0;
 
       // Symbols with no order assigned should be placed at the end.
       // (e.g. section end labels)
@@ -1697,7 +1697,7 @@ void DwarfDebug::emitDebugARanges() {
   }
 
   // Start the dwarf aranges section.
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfARangesSection());
 
   unsigned PtrSize = Asm->getDataLayout().getPointerSize();
@@ -1739,18 +1739,18 @@ void DwarfDebug::emitDebugARanges() {
     ContentSize += (List.size() + 1) * TupleSize;
 
     // For each compile unit, write the list of spans it covers.
-    Asm->OutStreamer.AddComment("Length of ARange Set");
+    Asm->OutStreamer->AddComment("Length of ARange Set");
     Asm->EmitInt32(ContentSize);
-    Asm->OutStreamer.AddComment("DWARF Arange version number");
+    Asm->OutStreamer->AddComment("DWARF Arange version number");
     Asm->EmitInt16(dwarf::DW_ARANGES_VERSION);
-    Asm->OutStreamer.AddComment("Offset Into Debug Info Section");
+    Asm->OutStreamer->AddComment("Offset Into Debug Info Section");
     Asm->emitSectionOffset(CU->getLabelBegin());
-    Asm->OutStreamer.AddComment("Address Size (in bytes)");
+    Asm->OutStreamer->AddComment("Address Size (in bytes)");
     Asm->EmitInt8(PtrSize);
-    Asm->OutStreamer.AddComment("Segment Size (in bytes)");
+    Asm->OutStreamer->AddComment("Segment Size (in bytes)");
     Asm->EmitInt8(0);
 
-    Asm->OutStreamer.EmitFill(Padding, 0xff);
+    Asm->OutStreamer->EmitFill(Padding, 0xff);
 
     for (const ArangeSpan &Span : List) {
       Asm->EmitLabelReference(Span.Start, PtrSize);
@@ -1765,20 +1765,20 @@ void DwarfDebug::emitDebugARanges() {
         if (Size == 0)
           Size = 1;
 
-        Asm->OutStreamer.EmitIntValue(Size, PtrSize);
+        Asm->OutStreamer->EmitIntValue(Size, PtrSize);
       }
     }
 
-    Asm->OutStreamer.AddComment("ARange terminator");
-    Asm->OutStreamer.EmitIntValue(0, PtrSize);
-    Asm->OutStreamer.EmitIntValue(0, PtrSize);
+    Asm->OutStreamer->AddComment("ARange terminator");
+    Asm->OutStreamer->EmitIntValue(0, PtrSize);
+    Asm->OutStreamer->EmitIntValue(0, PtrSize);
   }
 }
 
 // Emit visible names into a debug ranges section.
 void DwarfDebug::emitDebugRanges() {
   // Start the dwarf ranges section.
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfRangesSection());
 
   // Size for our labels.
@@ -1794,7 +1794,7 @@ void DwarfDebug::emitDebugRanges() {
     // Iterate over the misc ranges for the compile units in the module.
     for (const RangeSpanList &List : TheCU->getRangeLists()) {
       // Emit our symbol so we can find the beginning of the range.
-      Asm->OutStreamer.EmitLabel(List.getSym());
+      Asm->OutStreamer->EmitLabel(List.getSym());
 
       for (const RangeSpan &Range : List.getRanges()) {
         const MCSymbol *Begin = Range.getStart();
@@ -1805,14 +1805,14 @@ void DwarfDebug::emitDebugRanges() {
           Asm->EmitLabelDifference(Begin, Base, Size);
           Asm->EmitLabelDifference(End, Base, Size);
         } else {
-          Asm->OutStreamer.EmitSymbolValue(Begin, Size);
-          Asm->OutStreamer.EmitSymbolValue(End, Size);
+          Asm->OutStreamer->EmitSymbolValue(Begin, Size);
+          Asm->OutStreamer->EmitSymbolValue(End, Size);
         }
       }
 
       // And terminate the list with two 0 values.
-      Asm->OutStreamer.EmitIntValue(0, Size);
-      Asm->OutStreamer.EmitIntValue(0, Size);
+      Asm->OutStreamer->EmitIntValue(0, Size);
+      Asm->OutStreamer->EmitIntValue(0, Size);
     }
   }
 }
@@ -1866,9 +1866,9 @@ void DwarfDebug::emitDebugAbbrevDWO() {
 
 void DwarfDebug::emitDebugLineDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfLineDWOSection());
-  SplitTypeUnitFileTable.Emit(Asm->OutStreamer);
+  SplitTypeUnitFileTable.Emit(*Asm->OutStreamer);
 }
 
 // Emit the .debug_str.dwo section for separated dwarf. This contains the

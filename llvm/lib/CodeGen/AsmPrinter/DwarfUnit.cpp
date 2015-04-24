@@ -1494,12 +1494,12 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(const MDDerivedType *DT) {
 
 void DwarfUnit::emitHeader(bool UseOffsets) {
   // Emit size of content not including length itself
-  Asm->OutStreamer.AddComment("Length of Unit");
+  Asm->OutStreamer->AddComment("Length of Unit");
   Asm->EmitInt32(getHeaderSize() + UnitDie.getSize());
 
-  Asm->OutStreamer.AddComment("DWARF version number");
+  Asm->OutStreamer->AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
-  Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
+  Asm->OutStreamer->AddComment("Offset Into Abbrev. Section");
 
   // We share one abbreviations table across all units so it's always at the
   // start of the section. Use a relocatable offset where needed to ensure
@@ -1510,7 +1510,7 @@ void DwarfUnit::emitHeader(bool UseOffsets) {
   else
     Asm->EmitInt32(0);
 
-  Asm->OutStreamer.AddComment("Address Size (in bytes)");
+  Asm->OutStreamer->AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
 
@@ -1521,12 +1521,12 @@ void DwarfUnit::initSection(const MCSection *Section) {
 
 void DwarfTypeUnit::emitHeader(bool UseOffsets) {
   DwarfUnit::emitHeader(UseOffsets);
-  Asm->OutStreamer.AddComment("Type Signature");
-  Asm->OutStreamer.EmitIntValue(TypeSignature, sizeof(TypeSignature));
-  Asm->OutStreamer.AddComment("Type DIE Offset");
+  Asm->OutStreamer->AddComment("Type Signature");
+  Asm->OutStreamer->EmitIntValue(TypeSignature, sizeof(TypeSignature));
+  Asm->OutStreamer->AddComment("Type DIE Offset");
   // In a skeleton type unit there is no type DIE so emit a zero offset.
-  Asm->OutStreamer.EmitIntValue(Ty ? Ty->getOffset() : 0,
-                                sizeof(Ty->getOffset()));
+  Asm->OutStreamer->EmitIntValue(Ty ? Ty->getOffset() : 0,
+                                 sizeof(Ty->getOffset()));
 }
 
 bool DwarfTypeUnit::isDwoUnit() const {

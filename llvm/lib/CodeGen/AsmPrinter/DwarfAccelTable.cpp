@@ -111,27 +111,27 @@ void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, StringRef Prefix) {
 
 // Emits the header for the table via the AsmPrinter.
 void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
-  Asm->OutStreamer.AddComment("Header Magic");
+  Asm->OutStreamer->AddComment("Header Magic");
   Asm->EmitInt32(Header.magic);
-  Asm->OutStreamer.AddComment("Header Version");
+  Asm->OutStreamer->AddComment("Header Version");
   Asm->EmitInt16(Header.version);
-  Asm->OutStreamer.AddComment("Header Hash Function");
+  Asm->OutStreamer->AddComment("Header Hash Function");
   Asm->EmitInt16(Header.hash_function);
-  Asm->OutStreamer.AddComment("Header Bucket Count");
+  Asm->OutStreamer->AddComment("Header Bucket Count");
   Asm->EmitInt32(Header.bucket_count);
-  Asm->OutStreamer.AddComment("Header Hash Count");
+  Asm->OutStreamer->AddComment("Header Hash Count");
   Asm->EmitInt32(Header.hashes_count);
-  Asm->OutStreamer.AddComment("Header Data Length");
+  Asm->OutStreamer->AddComment("Header Data Length");
   Asm->EmitInt32(Header.header_data_len);
-  Asm->OutStreamer.AddComment("HeaderData Die Offset Base");
+  Asm->OutStreamer->AddComment("HeaderData Die Offset Base");
   Asm->EmitInt32(HeaderData.die_offset_base);
-  Asm->OutStreamer.AddComment("HeaderData Atom Count");
+  Asm->OutStreamer->AddComment("HeaderData Atom Count");
   Asm->EmitInt32(HeaderData.Atoms.size());
   for (size_t i = 0; i < HeaderData.Atoms.size(); i++) {
     Atom A = HeaderData.Atoms[i];
-    Asm->OutStreamer.AddComment(dwarf::AtomTypeString(A.type));
+    Asm->OutStreamer->AddComment(dwarf::AtomTypeString(A.type));
     Asm->EmitInt16(A.type);
-    Asm->OutStreamer.AddComment(dwarf::FormEncodingString(A.form));
+    Asm->OutStreamer->AddComment(dwarf::FormEncodingString(A.form));
     Asm->EmitInt16(A.form);
   }
 }
@@ -141,7 +141,7 @@ void DwarfAccelTable::EmitHeader(AsmPrinter *Asm) {
 void DwarfAccelTable::EmitBuckets(AsmPrinter *Asm) {
   unsigned index = 0;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
-    Asm->OutStreamer.AddComment("Bucket " + Twine(i));
+    Asm->OutStreamer->AddComment("Bucket " + Twine(i));
     if (Buckets[i].size() != 0)
       Asm->EmitInt32(index);
     else
@@ -169,7 +169,7 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
       uint32_t HashValue = (*HI)->HashValue;
       if (PrevHash == HashValue)
         continue;
-      Asm->OutStreamer.AddComment("Hash in Bucket " + Twine(i));
+      Asm->OutStreamer->AddComment("Hash in Bucket " + Twine(i));
       Asm->EmitInt32(HashValue);
       PrevHash = HashValue;
     }
@@ -190,12 +190,12 @@ void DwarfAccelTable::emitOffsets(AsmPrinter *Asm, const MCSymbol *SecBegin) {
       if (PrevHash == HashValue)
         continue;
       PrevHash = HashValue;
-      Asm->OutStreamer.AddComment("Offset in Bucket " + Twine(i));
-      MCContext &Context = Asm->OutStreamer.getContext();
+      Asm->OutStreamer->AddComment("Offset in Bucket " + Twine(i));
+      MCContext &Context = Asm->OutStreamer->getContext();
       const MCExpr *Sub = MCBinaryExpr::CreateSub(
           MCSymbolRefExpr::Create((*HI)->Sym, Context),
           MCSymbolRefExpr::Create(SecBegin, Context), Context);
-      Asm->OutStreamer.EmitValue(Sub, sizeof(uint32_t));
+      Asm->OutStreamer->EmitValue(Sub, sizeof(uint32_t));
     }
   }
 }
@@ -214,10 +214,10 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
       if (PrevHash != UINT64_MAX && PrevHash != (*HI)->HashValue)
         Asm->EmitInt32(0);
       // Remember to emit the label for our offset.
-      Asm->OutStreamer.EmitLabel((*HI)->Sym);
-      Asm->OutStreamer.AddComment((*HI)->Str);
+      Asm->OutStreamer->EmitLabel((*HI)->Sym);
+      Asm->OutStreamer->AddComment((*HI)->Str);
       Asm->emitSectionOffset((*HI)->Data.StrSym);
-      Asm->OutStreamer.AddComment("Num DIEs");
+      Asm->OutStreamer->AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.Values.size());
       for (HashDataContents *HD : (*HI)->Data.Values) {
         // Emit the DIE offset

@@ -64,9 +64,9 @@ unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName,
 
   // FIXME: add a better feature test than hasRawTextSupport. Even better,
   // extend .file to support this.
-  return Asm->OutStreamer.EmitDwarfFileDirective(
+  return Asm->OutStreamer->EmitDwarfFileDirective(
       0, DirName, FileName,
-      Asm->OutStreamer.hasRawTextSupport() ? 0 : getUniqueID());
+      Asm->OutStreamer->hasRawTextSupport() ? 0 : getUniqueID());
 }
 
 // Return const expression if value is a GEP to access merged global
@@ -240,7 +240,7 @@ void DwarfCompileUnit::addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
 void DwarfCompileUnit::initStmtList() {
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym =
-      Asm->OutStreamer.getDwarfLineTableSymbol(getUniqueID());
+      Asm->OutStreamer->getDwarfLineTableSymbol(getUniqueID());
 
   stmtListIndex = UnitDie.getValues().size();
 
@@ -700,7 +700,7 @@ void DwarfCompileUnit::emitHeader(bool UseOffsets) {
   // Don't bother labeling the .dwo unit, as its offset isn't used.
   if (!Skeleton) {
     LabelBegin = Asm->createTempSymbol("cu_begin");
-    Asm->OutStreamer.EmitLabel(LabelBegin);
+    Asm->OutStreamer->EmitLabel(LabelBegin);
   }
 
   DwarfUnit::emitHeader(UseOffsets);

@@ -86,7 +86,7 @@ namespace {
 } // end of anonymous namespace
 
 XCoreTargetStreamer &XCoreAsmPrinter::getTargetStreamer() {
-  return static_cast<XCoreTargetStreamer&>(*OutStreamer.getTargetStreamer());
+  return static_cast<XCoreTargetStreamer&>(*OutStreamer->getTargetStreamer());
 }
 
 void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
@@ -98,13 +98,13 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
 
     MCSymbol *SymGlob = OutContext.GetOrCreateSymbol(
                           Twine(Sym->getName() + StringRef(".globound")));
-    OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Global);
-    OutStreamer.EmitAssignment(SymGlob,
-                               MCConstantExpr::Create(ATy->getNumElements(),
-                                                      OutContext));
+    OutStreamer->EmitSymbolAttribute(SymGlob, MCSA_Global);
+    OutStreamer->EmitAssignment(SymGlob,
+                                MCConstantExpr::Create(ATy->getNumElements(),
+                                                       OutContext));
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
         GV->hasCommonLinkage()) {
-      OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Weak);
+      OutStreamer->EmitSymbolAttribute(SymGlob, MCSA_Weak);
     }
   }
 }
@@ -116,7 +116,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     return;
 
   const DataLayout *TD = TM.getDataLayout();
-  OutStreamer.SwitchSection(
+  OutStreamer->SwitchSection(
       getObjFileLowering().SectionForGlobal(GV, *Mang, TM));
 
   MCSymbol *GVSym = getSymbol(GV);
@@ -136,11 +136,11 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   case GlobalValue::ExternalLinkage:
   case GlobalValue::CommonLinkage:
     emitArrayBound(GVSym, GV);
-    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
+    OutStreamer->EmitSymbolAttribute(GVSym, MCSA_Global);
 
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
         GV->hasCommonLinkage())
-      OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);
+      OutStreamer->EmitSymbolAttribute(GVSym, MCSA_Weak);
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
@@ -156,16 +156,16 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   }
   unsigned Size = TD->getTypeAllocSize(C->getType());
   if (MAI->hasDotTypeDotSizeDirective()) {
-    OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
-    OutStreamer.EmitELFSize(GVSym, MCConstantExpr::Create(Size, OutContext));
+    OutStreamer->EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
+    OutStreamer->EmitELFSize(GVSym, MCConstantExpr::Create(Size, OutContext));
   }
-  OutStreamer.EmitLabel(GVSym);
+  OutStreamer->EmitLabel(GVSym);
   
   EmitGlobalConstant(C);
   // The ABI requires that unsigned scalar types smaller than 32 bits
   // are padded to 32 bits.
   if (Size < 4)
-    OutStreamer.EmitZeros(4 - Size);
+    OutStreamer->EmitZeros(4 - Size);
   
   // Mark the end of the global
   getTargetStreamer().emitCCBottomData(GVSym->getName());
@@ -185,7 +185,7 @@ void XCoreAsmPrinter::EmitFunctionBodyEnd() {
 void XCoreAsmPrinter::EmitFunctionEntryLabel() {
   // Mark the start of the function
   getTargetStreamer().emitCCTopFunction(CurrentFnSym->getName());
-  OutStreamer.EmitLabel(CurrentFnSym);
+  OutStreamer->EmitLabel(CurrentFnSym);
 }
 
 void XCoreAsmPrinter::
@@ -275,7 +275,7 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       O << "\tmov "
         << XCoreInstPrinter::getRegisterName(MI->getOperand(0).getReg()) << ", "
         << XCoreInstPrinter::getRegisterName(MI->getOperand(1).getReg());
-      OutStreamer.EmitRawText(O.str());
+      OutStreamer->EmitRawText(O.str());
       return;
     }
     break;
@@ -288,14 +288,14 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     else
       printInlineJT32(MI, 0, O);
     O << '\n';
-    OutStreamer.EmitRawText(O.str());
+    OutStreamer->EmitRawText(O.str());
     return;
   }
 
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
 
-  EmitToStreamer(OutStreamer, TmpInst);
+  EmitToStreamer(*OutStreamer, TmpInst);
 }
 
 // Force static initialization.

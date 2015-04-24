@@ -44,7 +44,7 @@ DwarfCFIExceptionBase::DwarfCFIExceptionBase(AsmPrinter *A)
 
 void DwarfCFIExceptionBase::markFunctionEnd() {
   if (shouldEmitCFI)
-    Asm->OutStreamer.EmitCFIEndProc();
+    Asm->OutStreamer->EmitCFIEndProc();
 
   if (MMI->getLandingPads().empty())
     return;
@@ -64,7 +64,7 @@ DwarfCFIException::~DwarfCFIException() {}
 /// content.
 void DwarfCFIException::endModule() {
   if (moveTypeModule == AsmPrinter::CFI_M_Debug)
-    Asm->OutStreamer.EmitCFISections(false, true);
+    Asm->OutStreamer->EmitCFISections(false, true);
 
   // SjLj uses this pass and it doesn't need this info.
   if (!Asm->MAI->usesCFIForEH())
@@ -83,7 +83,7 @@ void DwarfCFIException::endModule() {
     if (!Personalities[i])
       continue;
     MCSymbol *Sym = Asm->getSymbol(Personalities[i]);
-    TLOF.emitPersonalityValue(Asm->OutStreamer, Asm->TM, Sym);
+    TLOF.emitPersonalityValue(*Asm->OutStreamer, Asm->TM, Sym);
   }
 }
 
@@ -117,7 +117,7 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitCFI)
     return;
 
-  Asm->OutStreamer.EmitCFIStartProc(/*IsSimple=*/false);
+  Asm->OutStreamer->EmitCFIStartProc(/*IsSimple=*/false);
 
   // Indicate personality routine, if any.
   if (!shouldEmitPersonality)
@@ -125,13 +125,13 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
 
   const MCSymbol *Sym =
       TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
-  Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
+  Asm->OutStreamer->EmitCFIPersonality(Sym, PerEncoding);
 
   // Provide LSDA information.
   if (!shouldEmitLSDA)
     return;
 
-  Asm->OutStreamer.EmitCFILsda(Asm->getCurExceptionSym(), LSDAEncoding);
+  Asm->OutStreamer->EmitCFILsda(Asm->getCurExceptionSym(), LSDAEncoding);
 }
 
 /// endFunction - Gather and emit post-function exception information.

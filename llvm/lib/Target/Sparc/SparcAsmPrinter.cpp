@@ -40,7 +40,7 @@ namespace {
   class SparcAsmPrinter : public AsmPrinter {
     SparcTargetStreamer &getTargetStreamer() {
       return static_cast<SparcTargetStreamer &>(
-          *OutStreamer.getTargetStreamer());
+          *OutStreamer->getTargetStreamer());
     }
   public:
     explicit SparcAsmPrinter(TargetMachine &TM,
@@ -191,35 +191,35 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
     default:
       llvm_unreachable("Unsupported absolute code model");
     case CodeModel::Small:
-      EmitHiLo(OutStreamer, GOTLabel,
+      EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
                MCRegOP, OutContext, STI);
       break;
     case CodeModel::Medium: {
-      EmitHiLo(OutStreamer, GOTLabel,
+      EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_H44, SparcMCExpr::VK_Sparc_M44,
                MCRegOP, OutContext, STI);
       MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(12,
                                                                    OutContext));
-      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP, STI);
+      EmitSHL(*OutStreamer, MCRegOP, imm, MCRegOP, STI);
       MCOperand lo = createSparcMCOperand(SparcMCExpr::VK_Sparc_L44,
                                           GOTLabel, OutContext);
-      EmitOR(OutStreamer, MCRegOP, lo, MCRegOP, STI);
+      EmitOR(*OutStreamer, MCRegOP, lo, MCRegOP, STI);
       break;
     }
     case CodeModel::Large: {
-      EmitHiLo(OutStreamer, GOTLabel,
+      EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HH, SparcMCExpr::VK_Sparc_HM,
                MCRegOP, OutContext, STI);
       MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(32,
                                                                    OutContext));
-      EmitSHL(OutStreamer, MCRegOP, imm, MCRegOP, STI);
+      EmitSHL(*OutStreamer, MCRegOP, imm, MCRegOP, STI);
       // Use register %o7 to load the lower 32 bits.
       MCOperand RegO7 = MCOperand::CreateReg(SP::O7);
-      EmitHiLo(OutStreamer, GOTLabel,
+      EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
                RegO7, OutContext, STI);
-      EmitADD(OutStreamer, MCRegOP, RegO7, MCRegOP, STI);
+      EmitADD(*OutStreamer, MCRegOP, RegO7, MCRegOP, STI);
     }
     }
     return;
@@ -239,20 +239,20 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
   //   or  <MO>, %lo(_GLOBAL_OFFSET_TABLE_+(<EndLabel>-<StartLabel>))), <MO>
   //   add <MO>, %o7, <MO>
 
-  OutStreamer.EmitLabel(StartLabel);
+  OutStreamer->EmitLabel(StartLabel);
   MCOperand Callee =  createPCXCallOP(EndLabel, OutContext);
-  EmitCall(OutStreamer, Callee, STI);
-  OutStreamer.EmitLabel(SethiLabel);
+  EmitCall(*OutStreamer, Callee, STI);
+  OutStreamer->EmitLabel(SethiLabel);
   MCOperand hiImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_PC22,
                                        GOTLabel, StartLabel, SethiLabel,
                                        OutContext);
-  EmitSETHI(OutStreamer, hiImm, MCRegOP, STI);
-  OutStreamer.EmitLabel(EndLabel);
+  EmitSETHI(*OutStreamer, hiImm, MCRegOP, STI);
+  OutStreamer->EmitLabel(EndLabel);
   MCOperand loImm = createPCXRelExprOp(SparcMCExpr::VK_Sparc_PC10,
                                        GOTLabel, StartLabel, EndLabel,
                                        OutContext);
-  EmitOR(OutStreamer, MCRegOP, loImm, MCRegOP, STI);
-  EmitADD(OutStreamer, MCRegOP, RegO7, MCRegOP, STI);
+  EmitOR(*OutStreamer, MCRegOP, loImm, MCRegOP, STI);
+  EmitADD(*OutStreamer, MCRegOP, RegO7, MCRegOP, STI);
 }
 
 void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
@@ -272,7 +272,7 @@ void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
   do {
     MCInst TmpInst;
     LowerSparcMachineInstrToMCInst(I, TmpInst, *this);
-    EmitToStreamer(OutStreamer, TmpInst);
+    EmitToStreamer(*OutStreamer, TmpInst);
   } while ((++I != E) && I->isInsideBundle()); // Delay slot check.
 }
 

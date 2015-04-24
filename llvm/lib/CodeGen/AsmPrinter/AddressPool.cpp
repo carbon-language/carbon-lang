@@ -29,7 +29,7 @@ void AddressPool::emit(AsmPrinter &Asm, const MCSection *AddrSection) {
     return;
 
   // Start the dwarf addr section.
-  Asm.OutStreamer.SwitchSection(AddrSection);
+  Asm.OutStreamer->SwitchSection(AddrSection);
 
   // Order the address pool entries by ID
   SmallVector<const MCExpr *, 64> Entries(Pool.size());
@@ -41,5 +41,5 @@ void AddressPool::emit(AsmPrinter &Asm, const MCSection *AddrSection) {
             : MCSymbolRefExpr::Create(I.first, Asm.OutContext);
 
   for (const MCExpr *Entry : Entries)
-    Asm.OutStreamer.EmitValue(Entry, Asm.getDataLayout().getPointerSize());
+    Asm.OutStreamer->EmitValue(Entry, Asm.getDataLayout().getPointerSize());
 }

@@ -113,7 +113,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   } else {
     MCInst TmpInst;
     MCInstLowering.lower(MI, TmpInst);
-    EmitToStreamer(OutStreamer, TmpInst);
+    EmitToStreamer(*OutStreamer, TmpInst);
 
     if (STI.dumpCode()) {
       // Disassemble instruction/operands to text.

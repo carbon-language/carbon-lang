@@ -151,7 +151,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   std::stringstream temp;
   temp << "\t.loc " << filenameMap[fileName] << " " << curLoc.getLine()
        << " " << curLoc.getCol();
-  OutStreamer.EmitRawText(temp.str());
+  OutStreamer->EmitRawText(temp.str());
 }
 
 void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -162,7 +162,7 @@ void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   MCInst Inst;
   lowerToMCInst(MI, Inst);
-  EmitToStreamer(OutStreamer, Inst);
+  EmitToStreamer(*OutStreamer, Inst);
 }
 
 // Handle symbol backtracking for targets that do not support image handles
@@ -444,7 +444,7 @@ bool NVPTXAsmPrinter::isLoopHeaderOfNoUnroll(
 void NVPTXAsmPrinter::EmitBasicBlockStart(const MachineBasicBlock &MBB) const {
   AsmPrinter::EmitBasicBlockStart(MBB);
   if (isLoopHeaderOfNoUnroll(MBB))
-    OutStreamer.EmitRawText(StringRef("\t.pragma \"nounroll\";\n"));
+    OutStreamer->EmitRawText(StringRef("\t.pragma \"nounroll\";\n"));
 }
 
 void NVPTXAsmPrinter::EmitFunctionEntryLabel() {
@@ -474,37 +474,37 @@ void NVPTXAsmPrinter::EmitFunctionEntryLabel() {
   if (llvm::isKernelFunction(*F))
     emitKernelFunctionDirectives(*F, O);
 
-  OutStreamer.EmitRawText(O.str());
+  OutStreamer->EmitRawText(O.str());
 
   prevDebugLoc = DebugLoc();
 }
 
 void NVPTXAsmPrinter::EmitFunctionBodyStart() {
   VRegMapping.clear();
-  OutStreamer.EmitRawText(StringRef("{\n"));
+  OutStreamer->EmitRawText(StringRef("{\n"));
   setAndEmitFunctionVirtualRegisters(*MF);
 
   SmallString<128> Str;
   raw_svector_ostream O(Str);
   emitDemotedVars(MF->getFunction(), O);
-  OutStreamer.EmitRawText(O.str());
+  OutStreamer->EmitRawText(O.str());
 }
 
 void NVPTXAsmPrinter::EmitFunctionBodyEnd() {
-  OutStreamer.EmitRawText(StringRef("}\n"));
+  OutStreamer->EmitRawText(StringRef("}\n"));
   VRegMapping.clear();
 }
 
 void NVPTXAsmPrinter::emitImplicitDef(const MachineInstr *MI) const {
   unsigned RegNo = MI->getOperand(0).getReg();
   if (TargetRegisterInfo::isVirtualRegister(RegNo)) {
-    OutStreamer.AddComment(Twine("implicit-def: ") +
-                           getVirtualRegisterName(RegNo));
+    OutStreamer->AddComment(Twine("implicit-def: ") +
+                            getVirtualRegisterName(RegNo));
   } else {
-    OutStreamer.AddComment(Twine("implicit-def: ") +
-                           nvptxSubtarget->getRegisterInfo()->getName(RegNo));
+    OutStreamer->AddComment(Twine("implicit-def: ") +
+                            nvptxSubtarget->getRegisterInfo()->getName(RegNo));
   }
-  OutStreamer.AddBlankLine();
+  OutStreamer->AddBlankLine();
 }
 
 void NVPTXAsmPrinter::emitKernelFunctionDirectives(const Function &F,
@@ -784,7 +784,7 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     if (filenameMap.find(Filename) != filenameMap.end())
       continue;
     filenameMap[Filename] = i;
-    OutStreamer.EmitDwarfFileDirective(i, "", Filename);
+    OutStreamer->EmitDwarfFileDirective(i, "", Filename);
     ++i;
   }
 
@@ -830,19 +830,19 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
 
   // Emit header before any dwarf directives are emitted below.
   emitHeader(M, OS1, STI);
-  OutStreamer.EmitRawText(OS1.str());
+  OutStreamer->EmitRawText(OS1.str());
 
   // Already commented out
   //bool Result = AsmPrinter::doInitialization(M);
 
   // Emit module-level inline asm if it exists.
   if (!M.getModuleInlineAsm().empty()) {
-    OutStreamer.AddComment("Start of file scope inline assembly");
-    OutStreamer.AddBlankLine();
-    OutStreamer.EmitRawText(StringRef(M.getModuleInlineAsm()));
-    OutStreamer.AddBlankLine();
-    OutStreamer.AddComment("End of file scope inline assembly");
-    OutStreamer.AddBlankLine();
+    OutStreamer->AddComment("Start of file scope inline assembly");
+    OutStreamer->AddBlankLine();
+    OutStreamer->EmitRawText(StringRef(M.getModuleInlineAsm()));
+    OutStreamer->AddBlankLine();
+    OutStreamer->AddComment("End of file scope inline assembly");
+    OutStreamer->AddBlankLine();
   }
 
   // If we're not NVCL we're CUDA, go ahead and emit filenames.
@@ -884,7 +884,7 @@ void NVPTXAsmPrinter::emitGlobals(const Module &M) {
 
   OS2 << '\n';
 
-  OutStreamer.EmitRawText(OS2.str());
+  OutStreamer->EmitRawText(OS2.str());
 }
 
 void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
@@ -1666,7 +1666,7 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
     }
   }
 
-  OutStreamer.EmitRawText(O.str());
+  OutStreamer->EmitRawText(O.str());
 }
 
 void NVPTXAsmPrinter::printFPConstant(const ConstantFP *Fp, raw_ostream &O) {
@@ -2087,7 +2087,7 @@ void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
   temp << " ";
   temp << reader->readLine(line);
   temp << "\n";
-  this->OutStreamer.EmitRawText(temp.str());
+  this->OutStreamer->EmitRawText(temp.str());
 }
 
 LineReader *NVPTXAsmPrinter::getReader(std::string filename) {

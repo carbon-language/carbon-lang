@@ -93,10 +93,10 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
   // This label is used to mark the end of the .text section.
   const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  OutStreamer.SwitchSection(TLOF.getTextSection());
+  OutStreamer->SwitchSection(TLOF.getTextSection());
   MCSymbol *EndOfTextLabel =
       OutContext.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
-  OutStreamer.EmitLabel(EndOfTextLabel);
+  OutStreamer->EmitLabel(EndOfTextLabel);
 }
 
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
@@ -109,14 +109,14 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   MCContext &Context = getObjFileLowering().getContext();
   const MCSectionELF *ConfigSection =
       Context.getELFSection(".AMDGPU.config", ELF::SHT_PROGBITS, 0);
-  OutStreamer.SwitchSection(ConfigSection);
+  OutStreamer->SwitchSection(ConfigSection);
 
   const AMDGPUSubtarget &STM = MF.getSubtarget<AMDGPUSubtarget>();
   SIProgramInfo KernelInfo;
   if (STM.isAmdHsaOS()) {
     getSIProgramInfo(KernelInfo, MF);
     EmitAmdKernelCodeT(MF, KernelInfo);
-    OutStreamer.EmitCodeAlignment(2 << (MF.getAlignment() - 1));
+    OutStreamer->EmitCodeAlignment(2 << (MF.getAlignment() - 1));
   } else if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
     getSIProgramInfo(KernelInfo, MF);
     EmitProgramInfoSI(MF, KernelInfo);
@@ -133,40 +133,40 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (isVerbose()) {
     const MCSectionELF *CommentSection =
         Context.getELFSection(".AMDGPU.csdata", ELF::SHT_PROGBITS, 0);
-    OutStreamer.SwitchSection(CommentSection);
+    OutStreamer->SwitchSection(CommentSection);
 
     if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
-      OutStreamer.emitRawComment(" Kernel info:", false);
-      OutStreamer.emitRawComment(" codeLenInByte = " + Twine(KernelInfo.CodeLen),
-                                 false);
-      OutStreamer.emitRawComment(" NumSgprs: " + Twine(KernelInfo.NumSGPR),
-                                 false);
-      OutStreamer.emitRawComment(" NumVgprs: " + Twine(KernelInfo.NumVGPR),
-                                 false);
-      OutStreamer.emitRawComment(" FloatMode: " + Twine(KernelInfo.FloatMode),
-                                 false);
-      OutStreamer.emitRawComment(" IeeeMode: " + Twine(KernelInfo.IEEEMode),
-                                 false);
-      OutStreamer.emitRawComment(" ScratchSize: " + Twine(KernelInfo.ScratchSize),
-                                 false);
+      OutStreamer->emitRawComment(" Kernel info:", false);
+      OutStreamer->emitRawComment(" codeLenInByte = " + Twine(KernelInfo.CodeLen),
+                                  false);
+      OutStreamer->emitRawComment(" NumSgprs: " + Twine(KernelInfo.NumSGPR),
+                                  false);
+      OutStreamer->emitRawComment(" NumVgprs: " + Twine(KernelInfo.NumVGPR),
+                                  false);
+      OutStreamer->emitRawComment(" FloatMode: " + Twine(KernelInfo.FloatMode),
+                                  false);
+      OutStreamer->emitRawComment(" IeeeMode: " + Twine(KernelInfo.IEEEMode),
+                                  false);
+      OutStreamer->emitRawComment(" ScratchSize: " + Twine(KernelInfo.ScratchSize),
+                                  false);
     } else {
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
-      OutStreamer.emitRawComment(
+      OutStreamer->emitRawComment(
         Twine("SQ_PGM_RESOURCES:STACK_SIZE = " + Twine(MFI->StackSize)));
     }
   }
 
   if (STM.dumpCode()) {
 
-    OutStreamer.SwitchSection(
+    OutStreamer->SwitchSection(
         Context.getELFSection(".AMDGPU.disasm", ELF::SHT_NOTE, 0));
 
     for (size_t i = 0; i < DisasmLines.size(); ++i) {
       std::string Comment(DisasmLineMaxLen - DisasmLines[i].size(), ' ');
       Comment += " ; " + HexLines[i] + "\n";
 
-      OutStreamer.EmitBytes(StringRef(DisasmLines[i]));
-      OutStreamer.EmitBytes(StringRef(Comment));
+      OutStreamer->EmitBytes(StringRef(DisasmLines[i]));
+      OutStreamer->EmitBytes(StringRef(Comment));
     }
   }
 
@@ -221,15 +221,15 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(const MachineFunction &MF) {
     }
   }
 
-  OutStreamer.EmitIntValue(RsrcReg, 4);
-  OutStreamer.EmitIntValue(S_NUM_GPRS(MaxGPR + 1) |
+  OutStreamer->EmitIntValue(RsrcReg, 4);
+  OutStreamer->EmitIntValue(S_NUM_GPRS(MaxGPR + 1) |
                            S_STACK_SIZE(MFI->StackSize), 4);
-  OutStreamer.EmitIntValue(R_02880C_DB_SHADER_CONTROL, 4);
-  OutStreamer.EmitIntValue(S_02880C_KILL_ENABLE(killPixel), 4);
+  OutStreamer->EmitIntValue(R_02880C_DB_SHADER_CONTROL, 4);
+  OutStreamer->EmitIntValue(S_02880C_KILL_ENABLE(killPixel), 4);
 
   if (MFI->getShaderType() == ShaderType::COMPUTE) {
-    OutStreamer.EmitIntValue(R_0288E8_SQ_LDS_ALLOC, 4);
-    OutStreamer.EmitIntValue(RoundUpToAlignment(MFI->LDSSize, 4) >> 2, 4);
+    OutStreamer->EmitIntValue(R_0288E8_SQ_LDS_ALLOC, 4);
+    OutStreamer->EmitIntValue(RoundUpToAlignment(MFI->LDSSize, 4) >> 2, 4);
   }
 }
 
@@ -426,33 +426,33 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
   unsigned RsrcReg = getRsrcReg(MFI->getShaderType());
 
   if (MFI->getShaderType() == ShaderType::COMPUTE) {
-    OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
+    OutStreamer->EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
 
-    OutStreamer.EmitIntValue(KernelInfo.ComputePGMRSrc1, 4);
+    OutStreamer->EmitIntValue(KernelInfo.ComputePGMRSrc1, 4);
 
-    OutStreamer.EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
-    OutStreamer.EmitIntValue(KernelInfo.ComputePGMRSrc2, 4);
+    OutStreamer->EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
+    OutStreamer->EmitIntValue(KernelInfo.ComputePGMRSrc2, 4);
 
-    OutStreamer.EmitIntValue(R_00B860_COMPUTE_TMPRING_SIZE, 4);
-    OutStreamer.EmitIntValue(S_00B860_WAVESIZE(KernelInfo.ScratchBlocks), 4);
+    OutStreamer->EmitIntValue(R_00B860_COMPUTE_TMPRING_SIZE, 4);
+    OutStreamer->EmitIntValue(S_00B860_WAVESIZE(KernelInfo.ScratchBlocks), 4);
 
     // TODO: Should probably note flat usage somewhere. SC emits a "FlatPtr32 =
     // 0" comment but I don't see a corresponding field in the register spec.
   } else {
-    OutStreamer.EmitIntValue(RsrcReg, 4);
-    OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.VGPRBlocks) |
-                             S_00B028_SGPRS(KernelInfo.SGPRBlocks), 4);
+    OutStreamer->EmitIntValue(RsrcReg, 4);
+    OutStreamer->EmitIntValue(S_00B028_VGPRS(KernelInfo.VGPRBlocks) |
+                              S_00B028_SGPRS(KernelInfo.SGPRBlocks), 4);
     if (STM.isVGPRSpillingEnabled(MFI)) {
-      OutStreamer.EmitIntValue(R_0286E8_SPI_TMPRING_SIZE, 4);
-      OutStreamer.EmitIntValue(S_0286E8_WAVESIZE(KernelInfo.ScratchBlocks), 4);
+      OutStreamer->EmitIntValue(R_0286E8_SPI_TMPRING_SIZE, 4);
+      OutStreamer->EmitIntValue(S_0286E8_WAVESIZE(KernelInfo.ScratchBlocks), 4);
     }
   }
 
   if (MFI->getShaderType() == ShaderType::PIXEL) {
-    OutStreamer.EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
-    OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(KernelInfo.LDSBlocks), 4);
-    OutStreamer.EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);
-    OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
+    OutStreamer->EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
+    OutStreamer->EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(KernelInfo.LDSBlocks), 4);
+    OutStreamer->EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);
+    OutStreamer->EmitIntValue(MFI->PSInputAddr, 4);
   }
 }
 
@@ -511,69 +511,71 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
 
   const MCSectionELF *VersionSection =
       OutContext.getELFSection(".hsa.version", ELF::SHT_PROGBITS, 0);
-  OutStreamer.SwitchSection(VersionSection);
-  OutStreamer.EmitBytes(Twine("HSA Code Unit:" +
-                        Twine(header.hsail_version_major) + "." +
-                        Twine(header.hsail_version_minor) + ":" +
-                        "AMD:" +
-                        Twine(header.amd_code_version_major) + "." +
-                        Twine(header.amd_code_version_minor) +  ":" +
-                        "GFX8.1:0").str());
+  OutStreamer->SwitchSection(VersionSection);
+  OutStreamer->EmitBytes(Twine("HSA Code Unit:" +
+                         Twine(header.hsail_version_major) + "." +
+                         Twine(header.hsail_version_minor) + ":" +
+                         "AMD:" +
+                         Twine(header.amd_code_version_major) + "." +
+                         Twine(header.amd_code_version_minor) +  ":" +
+                         "GFX8.1:0").str());
 
-  OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
+  OutStreamer->SwitchSection(getObjFileLowering().getTextSection());
 
   if (isVerbose()) {
-    OutStreamer.emitRawComment("amd_code_version_major = " +
-                               Twine(header.amd_code_version_major), false);
-    OutStreamer.emitRawComment("amd_code_version_minor = " +
-                               Twine(header.amd_code_version_minor), false);
-    OutStreamer.emitRawComment("struct_byte_size = " +
-                               Twine(header.struct_byte_size), false);
-    OutStreamer.emitRawComment("target_chip = " +
-                               Twine(header.target_chip), false);
-    OutStreamer.emitRawComment(" compute_pgm_rsrc1: " +
-                               Twine::utohexstr(KernelInfo.ComputePGMRSrc1), false);
-    OutStreamer.emitRawComment(" compute_pgm_rsrc2: " +
-                               Twine::utohexstr(KernelInfo.ComputePGMRSrc2), false);
-    OutStreamer.emitRawComment("enable_sgpr_private_segment_buffer = " +
+    OutStreamer->emitRawComment("amd_code_version_major = " +
+                                Twine(header.amd_code_version_major), false);
+    OutStreamer->emitRawComment("amd_code_version_minor = " +
+                                Twine(header.amd_code_version_minor), false);
+    OutStreamer->emitRawComment("struct_byte_size = " +
+                                Twine(header.struct_byte_size), false);
+    OutStreamer->emitRawComment("target_chip = " +
+                                Twine(header.target_chip), false);
+    OutStreamer->emitRawComment(" compute_pgm_rsrc1: " +
+                                Twine::utohexstr(KernelInfo.ComputePGMRSrc1),
+                                false);
+    OutStreamer->emitRawComment(" compute_pgm_rsrc2: " +
+                                Twine::utohexstr(KernelInfo.ComputePGMRSrc2),
+                                false);
+    OutStreamer->emitRawComment("enable_sgpr_private_segment_buffer = " +
       Twine((bool)(header.code_properties &
                    AMD_CODE_PROPERTY_ENABLE_SGPR_PRIVATE_SEGMENT_SIZE)), false);
-    OutStreamer.emitRawComment("enable_sgpr_kernarg_segment_ptr = " +
+    OutStreamer->emitRawComment("enable_sgpr_kernarg_segment_ptr = " +
       Twine((bool)(header.code_properties &
                    AMD_CODE_PROPERTY_ENABLE_SGPR_KERNARG_SEGMENT_PTR)), false);
-    OutStreamer.emitRawComment("private_element_size = 2 ", false);
-    OutStreamer.emitRawComment("is_ptr64 = " +
+    OutStreamer->emitRawComment("private_element_size = 2 ", false);
+    OutStreamer->emitRawComment("is_ptr64 = " +
         Twine((bool)(header.code_properties & AMD_CODE_PROPERTY_IS_PTR64)), false);
-    OutStreamer.emitRawComment("workitem_private_segment_byte_size = " +
-                               Twine(header.workitem_private_segment_byte_size),
-                               false);
-    OutStreamer.emitRawComment("workgroup_group_segment_byte_size = " +
-                               Twine(header.workgroup_group_segment_byte_size),
-                               false);
-    OutStreamer.emitRawComment("gds_segment_byte_size = " +
-                               Twine(header.gds_segment_byte_size), false);
-    OutStreamer.emitRawComment("kernarg_segment_byte_size = " +
-                               Twine(header.kernarg_segment_byte_size), false);
-    OutStreamer.emitRawComment("wavefront_sgpr_count = " +
-                               Twine(header.wavefront_sgpr_count), false);
-    OutStreamer.emitRawComment("workitem_vgpr_count = " +
-                               Twine(header.workitem_vgpr_count), false);
-    OutStreamer.emitRawComment("code_type = " + Twine(header.code_type), false);
-    OutStreamer.emitRawComment("wavefront_size = " +
-                               Twine((int)header.wavefront_size), false);
-    OutStreamer.emitRawComment("optimization_level = " +
-                               Twine(header.optimization_level), false);
-    OutStreamer.emitRawComment("hsail_profile = " +
-                               Twine(header.hsail_profile), false);
-    OutStreamer.emitRawComment("hsail_machine_model = " +
-                               Twine(header.hsail_machine_model), false);
-    OutStreamer.emitRawComment("hsail_version_major = " +
-                               Twine(header.hsail_version_major), false);
-    OutStreamer.emitRawComment("hsail_version_minor = " +
-                               Twine(header.hsail_version_minor), false);
+    OutStreamer->emitRawComment("workitem_private_segment_byte_size = " +
+                                Twine(header.workitem_private_segment_byte_size),
+                                false);
+    OutStreamer->emitRawComment("workgroup_group_segment_byte_size = " +
+                                Twine(header.workgroup_group_segment_byte_size),
+                                false);
+    OutStreamer->emitRawComment("gds_segment_byte_size = " +
+                                Twine(header.gds_segment_byte_size), false);
+    OutStreamer->emitRawComment("kernarg_segment_byte_size = " +
+                                Twine(header.kernarg_segment_byte_size), false);
+    OutStreamer->emitRawComment("wavefront_sgpr_count = " +
+                                Twine(header.wavefront_sgpr_count), false);
+    OutStreamer->emitRawComment("workitem_vgpr_count = " +
+                                Twine(header.workitem_vgpr_count), false);
+    OutStreamer->emitRawComment("code_type = " + Twine(header.code_type), false);
+    OutStreamer->emitRawComment("wavefront_size = " +
+                                Twine((int)header.wavefront_size), false);
+    OutStreamer->emitRawComment("optimization_level = " +
+                                Twine(header.optimization_level), false);
+    OutStreamer->emitRawComment("hsail_profile = " +
+                                Twine(header.hsail_profile), false);
+    OutStreamer->emitRawComment("hsail_machine_model = " +
+                                Twine(header.hsail_machine_model), false);
+    OutStreamer->emitRawComment("hsail_version_major = " +
+                                Twine(header.hsail_version_major), false);
+    OutStreamer->emitRawComment("hsail_version_minor = " +
+                                Twine(header.hsail_version_minor), false);
   }
 
-  OutStreamer.EmitBytes(StringRef((char*)&header, sizeof(header)));
+  OutStreamer->EmitBytes(StringRef((char*)&header, sizeof(header)));
 }
 
 bool AMDGPUAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

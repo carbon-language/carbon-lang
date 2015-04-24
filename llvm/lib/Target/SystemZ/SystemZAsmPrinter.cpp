@@ -198,7 +198,7 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Lower.lower(MI, LoweredMI);
     break;
   }
-  EmitToStreamer(OutStreamer, LoweredMI);
+  EmitToStreamer(*OutStreamer, LoweredMI);
 }
 
 // Convert a SystemZ-specific constant pool modifier into the associated
@@ -224,7 +224,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
                             OutContext);
   uint64_t Size = TM.getDataLayout()->getTypeAllocSize(ZCPV->getType());
 
-  OutStreamer.EmitValue(Expr, Size);
+  OutStreamer->EmitValue(Expr, Size);
 }
 
 bool SystemZAsmPrinter::PrintAsmOperand(const MachineInstr *MI,

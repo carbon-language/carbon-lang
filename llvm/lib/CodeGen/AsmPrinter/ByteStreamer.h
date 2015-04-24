@@ -40,15 +40,15 @@ private:
 public:
   APByteStreamer(AsmPrinter &Asm) : AP(Asm) {}
   void EmitInt8(uint8_t Byte, const Twine &Comment) override {
-    AP.OutStreamer.AddComment(Comment);
+    AP.OutStreamer->AddComment(Comment);
     AP.EmitInt8(Byte);
   }
   void EmitSLEB128(uint64_t DWord, const Twine &Comment) override {
-    AP.OutStreamer.AddComment(Comment);
+    AP.OutStreamer->AddComment(Comment);
     AP.EmitSLEB128(DWord);
   }
   void EmitULEB128(uint64_t DWord, const Twine &Comment) override {
-    AP.OutStreamer.AddComment(Comment);
+    AP.OutStreamer->AddComment(Comment);
     AP.EmitULEB128(DWord);
   }
 };

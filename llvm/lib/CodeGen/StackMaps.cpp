@@ -273,9 +273,9 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
                                     MachineInstr::const_mop_iterator MOE,
                                     bool recordResult) {
 
-  MCContext &OutContext = AP.OutStreamer.getContext();
+  MCContext &OutContext = AP.OutStreamer->getContext();
   MCSymbol *MILabel = OutContext.CreateTempSymbol();
-  AP.OutStreamer.EmitLabel(MILabel);
+  AP.OutStreamer->EmitLabel(MILabel);
 
   LocationVec Locations;
   LiveOutVec LiveOuts;
@@ -521,8 +521,8 @@ void StackMaps::serializeToStackMapSection() {
   if (CSInfos.empty())
     return;
 
-  MCContext &OutContext = AP.OutStreamer.getContext();
-  MCStreamer &OS = AP.OutStreamer;
+  MCContext &OutContext = AP.OutStreamer->getContext();
+  MCStreamer &OS = *AP.OutStreamer;
 
   // Create the section.
   const MCSection *StackMapSection =

@@ -205,7 +205,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       HexagonMCInstrInfo::AppendImplicitOperands(MCI);
       HexagonMCInstrInfo::setPacketBegin(MCI, Index == 0);
       HexagonMCInstrInfo::setPacketEnd(MCI, Index == (Size - 1));
-      EmitToStreamer(OutStreamer, MCI);
+      EmitToStreamer(*OutStreamer, MCI);
     }
   }
   else {
@@ -216,7 +216,7 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       HexagonMCInstrInfo::setPacketBegin(MCI, true);
       HexagonMCInstrInfo::setPacketEnd(MCI, true);
     }
-    EmitToStreamer(OutStreamer, MCI);
+    EmitToStreamer(*OutStreamer, MCI);
   }
 
   return;

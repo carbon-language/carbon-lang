@@ -95,7 +95,7 @@ void WinCodeViewLineTables::maybeRecordLocation(DebugLoc DL,
   FileNameRegistry.add(Filename);
 
   MCSymbol *MCL = Asm->MMI->getContext().CreateTempSymbol();
-  Asm->OutStreamer.EmitLabel(MCL);
+  Asm->OutStreamer->EmitLabel(MCL);
   CurFn->Instrs.push_back(MCL);
   InstrInfo[MCL] = InstrInfoTy(Filename, DL.getLine());
 }
@@ -120,7 +120,7 @@ void WinCodeViewLineTables::endModule() {
     return;
 
   assert(Asm != nullptr);
-  Asm->OutStreamer.SwitchSection(
+  Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getCOFFDebugSymbolsSection());
   Asm->EmitInt32(COFF::DEBUG_SECTION_MAGIC);
 
@@ -135,7 +135,7 @@ void WinCodeViewLineTables::endModule() {
     emitDebugInfoForFunction(VisitedFunctions[I]);
 
   // This subsection holds a file index to offset in string table table.
-  Asm->OutStreamer.AddComment("File index to string table offset subsection");
+  Asm->OutStreamer->AddComment("File index to string table offset subsection");
   Asm->EmitInt32(COFF::DEBUG_INDEX_SUBSECTION);
   size_t NumFilenames = FileNameRegistry.Infos.size();
   Asm->EmitInt32(8 * NumFilenames);
@@ -148,7 +148,7 @@ void WinCodeViewLineTables::endModule() {
   }
 
   // This subsection holds the string table.
-  Asm->OutStreamer.AddComment("String table");
+  Asm->OutStreamer->AddComment("String table");
   Asm->EmitInt32(COFF::DEBUG_STRING_TABLE_SUBSECTION);
   Asm->EmitInt32(FileNameRegistry.LastOffset);
   // The payload starts with a null character.
@@ -156,12 +156,12 @@ void WinCodeViewLineTables::endModule() {
 
   for (size_t I = 0, E = FileNameRegistry.Filenames.size(); I != E; ++I) {
     // Just emit unique filenames one by one, separated by a null character.
-    Asm->OutStreamer.EmitBytes(FileNameRegistry.Filenames[I]);
+    Asm->OutStreamer->EmitBytes(FileNameRegistry.Filenames[I]);
     Asm->EmitInt8(0);
   }
 
   // No more subsections. Fill with zeros to align the end of the section by 4.
-  Asm->OutStreamer.EmitFill((-FileNameRegistry.LastOffset) % 4, 0);
+  Asm->OutStreamer->EmitFill((-FileNameRegistry.LastOffset) % 4, 0);
 
   clear();
 }
@@ -203,39 +203,39 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   // Emit a symbol subsection, required by VS2012+ to find function boundaries.
   MCSymbol *SymbolsBegin = Asm->MMI->getContext().CreateTempSymbol(),
            *SymbolsEnd = Asm->MMI->getContext().CreateTempSymbol();
-  Asm->OutStreamer.AddComment("Symbol subsection for " + Twine(FuncName));
+  Asm->OutStreamer->AddComment("Symbol subsection for " + Twine(FuncName));
   Asm->EmitInt32(COFF::DEBUG_SYMBOL_SUBSECTION);
-  EmitLabelDiff(Asm->OutStreamer, SymbolsBegin, SymbolsEnd);
-  Asm->OutStreamer.EmitLabel(SymbolsBegin);
+  EmitLabelDiff(*Asm->OutStreamer, SymbolsBegin, SymbolsEnd);
+  Asm->OutStreamer->EmitLabel(SymbolsBegin);
   {
     MCSymbol *ProcSegmentBegin = Asm->MMI->getContext().CreateTempSymbol(),
              *ProcSegmentEnd = Asm->MMI->getContext().CreateTempSymbol();
-    EmitLabelDiff(Asm->OutStreamer, ProcSegmentBegin, ProcSegmentEnd, 2);
-    Asm->OutStreamer.EmitLabel(ProcSegmentBegin);
+    EmitLabelDiff(*Asm->OutStreamer, ProcSegmentBegin, ProcSegmentEnd, 2);
+    Asm->OutStreamer->EmitLabel(ProcSegmentBegin);
 
     Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_START);
     // Some bytes of this segment don't seem to be required for basic debugging,
     // so just fill them with zeroes.
-    Asm->OutStreamer.EmitFill(12, 0);
+    Asm->OutStreamer->EmitFill(12, 0);
     // This is the important bit that tells the debugger where the function
     // code is located and what's its size:
-    EmitLabelDiff(Asm->OutStreamer, Fn, FI.End);
-    Asm->OutStreamer.EmitFill(12, 0);
-    Asm->OutStreamer.EmitCOFFSecRel32(Fn);
-    Asm->OutStreamer.EmitCOFFSectionIndex(Fn);
+    EmitLabelDiff(*Asm->OutStreamer, Fn, FI.End);
+    Asm->OutStreamer->EmitFill(12, 0);
+    Asm->OutStreamer->EmitCOFFSecRel32(Fn);
+    Asm->OutStreamer->EmitCOFFSectionIndex(Fn);
     Asm->EmitInt8(0);
     // Emit the function display name as a null-terminated string.
-    Asm->OutStreamer.EmitBytes(FuncName);
+    Asm->OutStreamer->EmitBytes(FuncName);
     Asm->EmitInt8(0);
-    Asm->OutStreamer.EmitLabel(ProcSegmentEnd);
+    Asm->OutStreamer->EmitLabel(ProcSegmentEnd);
 
     // We're done with this function.
     Asm->EmitInt16(0x0002);
     Asm->EmitInt16(COFF::DEBUG_SYMBOL_TYPE_PROC_END);
   }
-  Asm->OutStreamer.EmitLabel(SymbolsEnd);
+  Asm->OutStreamer->EmitLabel(SymbolsEnd);
   // Every subsection must be aligned to a 4-byte boundary.
-  Asm->OutStreamer.EmitFill((-FuncName.size()) % 4, 0);
+  Asm->OutStreamer->EmitFill((-FuncName.size()) % 4, 0);
 
   // PCs/Instructions are grouped into segments sharing the same filename.
   // Pre-calculate the lengths (in instructions) of these segments and store
@@ -254,21 +254,21 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   FilenameSegmentLengths[LastSegmentEnd] = FI.Instrs.size() - LastSegmentEnd;
 
   // Emit a line table subsection, requred to do PC-to-file:line lookup.
-  Asm->OutStreamer.AddComment("Line table subsection for " + Twine(FuncName));
+  Asm->OutStreamer->AddComment("Line table subsection for " + Twine(FuncName));
   Asm->EmitInt32(COFF::DEBUG_LINE_TABLE_SUBSECTION);
   MCSymbol *LineTableBegin = Asm->MMI->getContext().CreateTempSymbol(),
            *LineTableEnd = Asm->MMI->getContext().CreateTempSymbol();
-  EmitLabelDiff(Asm->OutStreamer, LineTableBegin, LineTableEnd);
-  Asm->OutStreamer.EmitLabel(LineTableBegin);
+  EmitLabelDiff(*Asm->OutStreamer, LineTableBegin, LineTableEnd);
+  Asm->OutStreamer->EmitLabel(LineTableBegin);
 
   // Identify the function this subsection is for.
-  Asm->OutStreamer.EmitCOFFSecRel32(Fn);
-  Asm->OutStreamer.EmitCOFFSectionIndex(Fn);
+  Asm->OutStreamer->EmitCOFFSecRel32(Fn);
+  Asm->OutStreamer->EmitCOFFSectionIndex(Fn);
   // Insert padding after a 16-bit section index.
   Asm->EmitInt16(0);
 
   // Length of the function's code, in bytes.
-  EmitLabelDiff(Asm->OutStreamer, Fn, FI.End);
+  EmitLabelDiff(*Asm->OutStreamer, Fn, FI.End);
 
   // PC-to-linenumber lookup table:
   MCSymbol *FileSegmentEnd = nullptr;
@@ -279,17 +279,17 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
     if (FilenameSegmentLengths.count(J)) {
       // We came to a beginning of a new filename segment.
       if (FileSegmentEnd)
-        Asm->OutStreamer.EmitLabel(FileSegmentEnd);
+        Asm->OutStreamer->EmitLabel(FileSegmentEnd);
       StringRef CurFilename = InstrInfo[FI.Instrs[J]].Filename;
       assert(FileNameRegistry.Infos.count(CurFilename));
       size_t IndexInStringTable =
           FileNameRegistry.Infos[CurFilename].FilenameID;
       // Each segment starts with the offset of the filename
       // in the string table.
-      Asm->OutStreamer.AddComment(
+      Asm->OutStreamer->AddComment(
           "Segment for file '" + Twine(CurFilename) + "' begins");
       MCSymbol *FileSegmentBegin = Asm->MMI->getContext().CreateTempSymbol();
-      Asm->OutStreamer.EmitLabel(FileSegmentBegin);
+      Asm->OutStreamer->EmitLabel(FileSegmentBegin);
       Asm->EmitInt32(8 * IndexInStringTable);
 
       // Number of PC records in the lookup table.
@@ -299,17 +299,17 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
       // Full size of the segment for this filename, including the prev two
       // records.
       FileSegmentEnd = Asm->MMI->getContext().CreateTempSymbol();
-      EmitLabelDiff(Asm->OutStreamer, FileSegmentBegin, FileSegmentEnd);
+      EmitLabelDiff(*Asm->OutStreamer, FileSegmentBegin, FileSegmentEnd);
     }
 
     // The first PC with the given linenumber and the linenumber itself.
-    EmitLabelDiff(Asm->OutStreamer, Fn, Instr);
+    EmitLabelDiff(*Asm->OutStreamer, Fn, Instr);
     Asm->EmitInt32(InstrInfo[Instr].LineNumber);
   }
 
   if (FileSegmentEnd)
-    Asm->OutStreamer.EmitLabel(FileSegmentEnd);
-  Asm->OutStreamer.EmitLabel(LineTableEnd);
+    Asm->OutStreamer->EmitLabel(FileSegmentEnd);
+  Asm->OutStreamer->EmitLabel(LineTableEnd);
 }
 
 void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {

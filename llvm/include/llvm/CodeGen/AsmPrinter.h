@@ -78,7 +78,7 @@ public:
   /// This is the MCStreamer object for the file we are generating. This
   /// contains the transient state for the current translation unit that we are
   /// generating (such as the current section etc).
-  MCStreamer &OutStreamer;
+  std::unique_ptr<MCStreamer> OutStreamer;
 
   /// The current machine function.
   const MachineFunction *MF;

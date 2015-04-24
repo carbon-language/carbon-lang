@@ -128,7 +128,7 @@ void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // implementation of multiple entry points).  If this doesn't occur, the
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
-    OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+    OutStreamer->EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
     SM.serializeToStackMapSection();
   }
 }
@@ -156,7 +156,7 @@ void AArch64AsmPrinter::EmitLOHs() {
              "Label hasn't been inserted for LOH related instruction");
       MCArgs.push_back(LabelIt->second);
     }
-    OutStreamer.EmitLOHDirective(D.getKind(), MCArgs);
+    OutStreamer->EmitLOHDirective(D.getKind(), MCArgs);
     MCArgs.clear();
   }
 }
@@ -436,7 +436,7 @@ void AArch64AsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
 
 void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Do any auto-generated pseudo lowerings.
-  if (emitPseudoExpansionLowering(OutStreamer, MI))
+  if (emitPseudoExpansionLowering(*OutStreamer, MI))
     return;
 
   if (AArch64FI->getLOHRelated().count(MI)) {
@@ -444,7 +444,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *LOHLabel = createTempSymbol("loh");
     // Associate the instruction with the label
     LOHInstToLabel[MI] = LOHLabel;
-    OutStreamer.EmitLabel(LOHLabel);
+    OutStreamer->EmitLabel(LOHLabel);
   }
 
   // Do any manual lowerings.
@@ -452,11 +452,11 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   default:
     break;
   case AArch64::DBG_VALUE: {
-    if (isVerbose() && OutStreamer.hasRawTextSupport()) {
+    if (isVerbose() && OutStreamer->hasRawTextSupport()) {
       SmallString<128> TmpStr;
       raw_svector_ostream OS(TmpStr);
       PrintDebugValueComment(MI, OS);
-      OutStreamer.EmitRawText(StringRef(OS.str()));
+      OutStreamer->EmitRawText(StringRef(OS.str()));
     }
     return;
   }
@@ -468,7 +468,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCInst TmpInst;
     TmpInst.setOpcode(AArch64::BR);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    EmitToStreamer(OutStreamer, TmpInst);
+    EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
   case AArch64::TCRETURNdi: {
@@ -477,7 +477,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCInst TmpInst;
     TmpInst.setOpcode(AArch64::B);
     TmpInst.addOperand(Dest);
-    EmitToStreamer(OutStreamer, TmpInst);
+    EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
   case AArch64::TLSDESC_CALLSEQ: {
@@ -502,7 +502,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Adrp.setOpcode(AArch64::ADRP);
     Adrp.addOperand(MCOperand::CreateReg(AArch64::X0));
     Adrp.addOperand(SymTLSDesc);
-    EmitToStreamer(OutStreamer, Adrp);
+    EmitToStreamer(*OutStreamer, Adrp);
 
     MCInst Ldr;
     Ldr.setOpcode(AArch64::LDRXui);
@@ -510,7 +510,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Ldr.addOperand(MCOperand::CreateReg(AArch64::X0));
     Ldr.addOperand(SymTLSDescLo12);
     Ldr.addOperand(MCOperand::CreateImm(0));
-    EmitToStreamer(OutStreamer, Ldr);
+    EmitToStreamer(*OutStreamer, Ldr);
 
     MCInst Add;
     Add.setOpcode(AArch64::ADDXri);
@@ -518,34 +518,34 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     Add.addOperand(MCOperand::CreateReg(AArch64::X0));
     Add.addOperand(SymTLSDescLo12);
     Add.addOperand(MCOperand::CreateImm(AArch64_AM::getShiftValue(0)));
-    EmitToStreamer(OutStreamer, Add);
+    EmitToStreamer(*OutStreamer, Add);
 
     // Emit a relocation-annotation. This expands to no code, but requests
     // the following instruction gets an R_AARCH64_TLSDESC_CALL.
     MCInst TLSDescCall;
     TLSDescCall.setOpcode(AArch64::TLSDESCCALL);
     TLSDescCall.addOperand(Sym);
-    EmitToStreamer(OutStreamer, TLSDescCall);
+    EmitToStreamer(*OutStreamer, TLSDescCall);
 
     MCInst Blr;
     Blr.setOpcode(AArch64::BLR);
     Blr.addOperand(MCOperand::CreateReg(AArch64::X1));
-    EmitToStreamer(OutStreamer, Blr);
+    EmitToStreamer(*OutStreamer, Blr);
 
     return;
   }
 
   case TargetOpcode::STACKMAP:
-    return LowerSTACKMAP(OutStreamer, SM, *MI);
+    return LowerSTACKMAP(*OutStreamer, SM, *MI);
 
   case TargetOpcode::PATCHPOINT:
-    return LowerPATCHPOINT(OutStreamer, SM, *MI);
+    return LowerPATCHPOINT(*OutStreamer, SM, *MI);
   }
 
   // Finally, do the automated lowerings for everything else.
   MCInst TmpInst;
   MCInstLowering.Lower(MI, TmpInst);
-  EmitToStreamer(OutStreamer, TmpInst);
+  EmitToStreamer(*OutStreamer, TmpInst);
 }
 
 // Force static initialization.

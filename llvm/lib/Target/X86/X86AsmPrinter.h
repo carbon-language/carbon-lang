@@ -103,7 +103,7 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   void EmitInstruction(const MachineInstr *MI) override;
 
   void EmitBasicBlockEnd(const MachineBasicBlock &MBB) override {
-    SMShadowTracker.emitShadowPadding(OutStreamer, getSubtargetInfo());
+    SMShadowTracker.emitShadowPadding(*OutStreamer, getSubtargetInfo());
   }
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
