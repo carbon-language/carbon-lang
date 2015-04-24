@@ -665,12 +665,6 @@ void Preprocessor::LeaveSubmodule() {
 
     // Restore the old macro state.
     Macro.second = State;
-
-    // If our submodule defined a macro, import it.
-    // FIXME: Do this lazily.
-    if (MM)
-      appendMacroDirective(II,
-                           AllocateImportedMacroDirective(MM, Info.ImportLoc));
   }
 
   BuildingSubmoduleStack.pop_back();
