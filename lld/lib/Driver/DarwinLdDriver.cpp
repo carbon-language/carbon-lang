@@ -80,12 +80,12 @@ loadFile(MachOLinkingContext &ctx, StringRef path,
   ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr = ctx.getMemoryBuffer(path);
   if (std::error_code ec = mbOrErr.getError())
     return makeErrorFile(path, ec);
-  std::unique_ptr<File> file;
-  if (std::error_code ec =
-          ctx.registry().loadFile(std::move(mbOrErr.get()), file))
+  ErrorOr<std::unique_ptr<File>> fileOrErr =
+      ctx.registry().loadFile(std::move(mbOrErr.get()));
+  if (std::error_code ec = fileOrErr.getError())
     return makeErrorFile(path, ec);
   std::vector<std::unique_ptr<File>> files;
-  files.push_back(std::move(file));
+  files.push_back(std::move(fileOrErr.get()));
   for (std::unique_ptr<File> &pf : files) {
     // If file is a dylib, inform LinkingContext about it.
     if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(pf.get())) {

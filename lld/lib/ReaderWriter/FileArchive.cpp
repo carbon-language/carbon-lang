@@ -173,11 +173,12 @@ private:
     std::unique_ptr<MemoryBuffer> memberMB(MemoryBuffer::getMemBuffer(
         mb.getBuffer(), mb.getBufferIdentifier(), false));
 
-    std::unique_ptr<File> file;
-    if (std::error_code ec = _registry.loadFile(std::move(memberMB), file))
+    ErrorOr<std::unique_ptr<File>> fileOrErr =
+        _registry.loadFile(std::move(memberMB));
+    if (std::error_code ec = fileOrErr.getError())
       return ec;
     std::vector<std::unique_ptr<File>> files;
-    files.push_back(std::move(file));
+    files.push_back(std::move(fileOrErr.get()));
     assert(files.size() == 1);
     result = std::move(files[0]);
     if (std::error_code ec = result->parse())

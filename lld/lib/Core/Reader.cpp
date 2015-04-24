@@ -28,8 +28,8 @@ void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
   _yamlHandlers.push_back(std::move(handler));
 }
 
-std::error_code Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
-                                   std::unique_ptr<File> &result) const {
+ErrorOr<std::unique_ptr<File>>
+Registry::loadFile(std::unique_ptr<MemoryBuffer> mb) const {
   // Get file magic.
   StringRef content(mb->getBufferStart(), mb->getBufferSize());
   llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(content);
@@ -38,12 +38,7 @@ std::error_code Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
   for (const std::unique_ptr<Reader> &reader : _readers) {
     if (!reader->canParse(fileType, *mb))
       continue;
-    ErrorOr<std::unique_ptr<File>> fileOrErr =
-        reader->loadFile(std::move(mb), *this);
-    if (std::error_code ec = fileOrErr.getError())
-      return ec;
-    result = std::move(fileOrErr.get());
-    return std::error_code();
+    return reader->loadFile(std::move(mb), *this);
   }
 
   // No Reader could parse this file.
