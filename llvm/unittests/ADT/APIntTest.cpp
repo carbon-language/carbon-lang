@@ -209,217 +209,101 @@ TEST(APIntTest, i1) {
   }
 }
 
-TEST(APIntTest, divrem_big1) {
-  // Tests KnuthDiv rare step D6
-  APInt a{256, "1ffffffffffffffff", 16};
-  APInt b{256, "1ffffffffffffffff", 16};
-  APInt c{256, 0};
+
+// Tests different div/rem varaints using scheme (a * b + c) / a
+void testDiv(APInt a, APInt b, APInt c) {
+  ASSERT_TRUE(a.uge(b)); // Must: a >= b
+  ASSERT_TRUE(a.ugt(c)); // Must: a > c
 
   auto p = a * b + c;
+
   auto q = p.udiv(a);
   auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
+  EXPECT_EQ(b, q);
+  EXPECT_EQ(c, r);
   APInt::udivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.udiv(b);
-  r = p.urem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+  EXPECT_EQ(b, q);
+  EXPECT_EQ(c, r);
   q = p.sdiv(a);
   r = p.srem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
+  EXPECT_EQ(b, q);
+  EXPECT_EQ(c, r);
   APInt::sdivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(b);
-  r = p.srem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+  EXPECT_EQ(b, q);
+  EXPECT_EQ(c, r);
+
+  if (b.ugt(c)) { // Test also symmetric case
+    q = p.udiv(b);
+    r = p.urem(b);
+    EXPECT_EQ(a, q);
+    EXPECT_EQ(c, r);
+    APInt::udivrem(p, b, q, r);
+    EXPECT_EQ(a, q);
+    EXPECT_EQ(c, r);
+    q = p.sdiv(b);
+    r = p.srem(b);
+    EXPECT_EQ(a, q);
+    EXPECT_EQ(c, r);
+    APInt::sdivrem(p, b, q, r);
+    EXPECT_EQ(a, q);
+    EXPECT_EQ(c, r);
+  }
+}
+
+TEST(APIntTest, divrem_big1) {
+  // Tests KnuthDiv rare step D6
+  testDiv({256, "1ffffffffffffffff", 16},
+          {256, "1ffffffffffffffff", 16},
+          {256, 0});
 }
 
 TEST(APIntTest, divrem_big2) {
   // Tests KnuthDiv rare step D6
-  APInt a{1024,           "111111ffffffffffffffff"
-                "ffffffffffffffffffffffffffffffff"
-                "fffffffffffffffffffffffffffffccf"
-                "ffffffffffffffffffffffffffffff00", 16};
-  APInt b{1024,                       "112233ceff"
-                "cecece000000ffffffffffffffffffff"
-                "ffffffffffffffffffffffffffffffff"
-                "ffffffffffffffffffffffffffffffff"
-                "ffffffffffffffffffffffffffffff33", 16};
-  APInt c{1024, 7919};
-
-  auto p = a * b + c;
-  auto q = p.udiv(a);
-  auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.udiv(b);
-  r = p.urem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(a);
-  r = p.srem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(b);
-  r = p.srem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+  testDiv({1024,                       "112233ceff"
+                 "cecece000000ffffffffffffffffffff"
+                 "ffffffffffffffffffffffffffffffff"
+                 "ffffffffffffffffffffffffffffffff"
+                 "ffffffffffffffffffffffffffffff33", 16},
+          {1024,           "111111ffffffffffffffff"
+                 "ffffffffffffffffffffffffffffffff"
+                 "fffffffffffffffffffffffffffffccf"
+                 "ffffffffffffffffffffffffffffff00", 16},
+          {1024, 7919});
 }
 
 TEST(APIntTest, divrem_big3) {
   // Tests KnuthDiv case without shift
-  APInt a{256, "ffffffffffffff0000000", 16};
-  APInt b{256, "80000001ffffffffffffffff", 16};
-  APInt c{256, 4219};
-
-  auto p = a * b + c;
-  auto q = p.udiv(a);
-  auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.udiv(b);
-  r = p.urem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(a);
-  r = p.srem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(b);
-  r = p.srem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+  testDiv({256, "80000001ffffffffffffffff", 16},
+          {256, "ffffffffffffff0000000", 16},
+          {256, 4219});
 }
 
 TEST(APIntTest, divrem_big4) {
   // Tests heap allocation in divide() enfoced by huge numbers
-  auto a = APInt{4096, 1}.shl(2000);
-  auto b = APInt{4096, 5}.shl(2001);
-  auto c = APInt{4096, 4219*13};
-
-  auto p = a * b + c;
-  auto q = p.udiv(a);
-  auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = APInt{1024, 0}; // test non-single word APInt conversion in divide()
-  r = APInt{1024, 0};
-  APInt::udivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.udiv(b);
-  r = p.urem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = APInt{1024, 0};
-  r = APInt{1024, 0};
-  APInt::udivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(a);
-  r = p.srem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = APInt{1024, 0};
-  r = APInt{1024, 0};
-  APInt::sdivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(b);
-  r = p.srem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = APInt{1024, 0};
-  r = APInt{1024, 0};
-  APInt::sdivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+  testDiv(APInt{4096, 5}.shl(2001),
+          APInt{4096, 1}.shl(2000),
+          APInt{4096, 4219*13});
 }
 
 TEST(APIntTest, divrem_big5) {
   // Tests one word divisor case of divide()
-  auto a = APInt{1024, 19}.shl(811);
-  auto b = APInt{1024, 4356013}; // one word
-  auto c = APInt{1024, 1};
+  testDiv(APInt{1024, 19}.shl(811),
+          APInt{1024, 4356013}, // one word
+          APInt{1024, 1});
+}
 
-  auto p = a * b + c;
-  auto q = p.udiv(a);
-  auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.udiv(b);
-  r = p.urem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::udivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(a);
-  r = p.srem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, a, q, r);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
-  q = p.sdiv(b);
-  r = p.srem(b);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
-  APInt::sdivrem(p, b, q, r);
-  EXPECT_EQ(q, a);
-  EXPECT_EQ(r, c);
+TEST(APIntTest, divrem_big6) {
+  // Tests some rare "borrow" cases in D4 step
+  testDiv(APInt{512, "ffffffffffffffff00000000000000000000000001", 16},
+          APInt{512, "10000000000000001000000000000001", 16},
+          APInt{512, "10000000000000000000000000000000", 16});
 }
 
 TEST(APIntTest, divrem_big7) {
   // Yet another test for KnuthDiv rare step D6.
-  APInt a{224, "800000008000000200000005", 16};
-  APInt b{224, "fffffffd", 16};
-  APInt c{224, "80000000800000010000000f", 16};
-
-  auto p = a * b + c;
-  auto q = p.udiv(a);
-  auto r = p.urem(a);
-  EXPECT_EQ(q, b);
-  EXPECT_EQ(r, c);
+  testDiv({224, "800000008000000200000005", 16},
+          {224, "fffffffd", 16},
+          {224, "80000000800000010000000f", 16});
 }
 
 TEST(APIntTest, fromString) {

@@ -1586,28 +1586,18 @@ static void KnuthDiv(unsigned *u, unsigned *v, unsigned *q, unsigned* r,
     // this step is actually negative, (u[j+n]...u[j]) should be left as the
     // true value plus b**(n+1), namely as the b's complement of
     // the true value, and a "borrow" to the left should be remembered.
-    bool isNeg = false;
+    int64_t borrow = 0;
     for (unsigned i = 0; i < n; ++i) {
-      uint64_t u_tmp = (uint64_t(u[j+i+1]) << 32) | uint64_t(u[j+i]);
-      uint64_t subtrahend = uint64_t(qp) * uint64_t(v[i]);
-      bool borrow = subtrahend > u_tmp;
-      DEBUG(dbgs() << "KnuthDiv: u_tmp = " << u_tmp
-                   << ", subtrahend = " << subtrahend
+      uint64_t p = uint64_t(qp) * uint64_t(v[i]);
+      int64_t subres = int64_t(u[j+i]) - borrow - (unsigned)p;
+      u[j+i] = (unsigned)subres;
+      borrow = (p >> 32) - (subres >> 32);
+      DEBUG(dbgs() << "KnuthDiv: u[j+i] = " << u[j+i]
                    << ", borrow = " << borrow << '\n');
-
-      uint64_t result = u_tmp - subtrahend;
-      unsigned k = j + i;
-      u[k++] = (unsigned)result;         // subtraction low word
-      u[k++] = (unsigned)(result >> 32); // subtraction high word
-      while (borrow && k <= m+n) {       // deal with borrow to the left
-        borrow = u[k] == 0;
-        u[k]--;
-        k++;
-      }
-      isNeg |= borrow;
-      DEBUG(dbgs() << "KnuthDiv: u[j+i] = " << u[j+i] 
-                   << ", u[j+i+1] = " << u[j+i+1] << '\n');
     }
+    bool isNeg = u[j+n] < borrow;
+    u[j+n] -= (unsigned)borrow;
+
     DEBUG(dbgs() << "KnuthDiv: after subtraction:");
     DEBUG(for (int i = m+n; i >=0; i--) dbgs() << " " << u[i]);
     DEBUG(dbgs() << '\n');
