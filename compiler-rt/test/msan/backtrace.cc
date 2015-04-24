@@ -17,7 +17,7 @@ void f() {
   char **s = backtrace_symbols(buf, sz);
   assert(s > 0);
   for (int i = 0; i < sz; ++i)
-    printf("%d\n", strlen(s[i]));
+    printf("%d\n", (int)strlen(s[i]));
 }
 
 int main(void) {
