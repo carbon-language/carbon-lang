@@ -767,16 +767,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     // Old intrinsic, add bitcasts
     Value *Arg1 = CI->getArgOperand(1);
 
-    Value *BC0 =
-      Builder.CreateBitCast(Arg0,
-                            VectorType::get(Type::getInt64Ty(C), 2),
-                            "cast");
-    Value *BC1 =
-      Builder.CreateBitCast(Arg1,
-                            VectorType::get(Type::getInt64Ty(C), 2),
-                            "cast");
+    Type *NewVecTy = VectorType::get(Type::getInt64Ty(C), 2);
 
-    CallInst* NewCall = Builder.CreateCall2(NewFn, BC0, BC1, Name);
+    Value *BC0 = Builder.CreateBitCast(Arg0, NewVecTy, "cast");
+    Value *BC1 = Builder.CreateBitCast(Arg1, NewVecTy, "cast");
+
+    Type *Ty[] = {NewVecTy, NewVecTy};
+    CallInst *NewCall = Builder.CreateCall2(
+        FunctionType::get(CI->getType(), Ty, false), NewFn, BC0, BC1, Name);
     CI->replaceAllUsesWith(NewCall);
     CI->eraseFromParent();
     return;

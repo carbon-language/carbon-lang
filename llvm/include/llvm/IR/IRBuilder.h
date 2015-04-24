@@ -1448,8 +1448,14 @@ public:
   }
   CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
                         const Twine &Name = "") {
+    return CreateCall2(cast<FunctionType>(cast<PointerType>(Callee->getType())
+                                              ->getElementType()),
+                       Callee, Arg1, Arg2, Name);
+  }
+  CallInst *CreateCall2(FunctionType *Ty, Value *Callee, Value *Arg1,
+                        Value *Arg2, const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2 };
-    return Insert(CallInst::Create(Callee, Args), Name);
+    return Insert(CallInst::Create(Ty, Callee, Args), Name);
   }
   CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         const Twine &Name = "") {

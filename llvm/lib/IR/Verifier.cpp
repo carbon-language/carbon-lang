@@ -2243,12 +2243,8 @@ void Verifier::verifyMustTailCall(CallInst &CI) {
   //   parameters or return types may differ in pointee type, but not
   //   address space.
   Function *F = CI.getParent()->getParent();
-  auto GetFnTy = [](Value *V) {
-    return cast<FunctionType>(
-        cast<PointerType>(V->getType())->getElementType());
-  };
-  FunctionType *CallerTy = GetFnTy(F);
-  FunctionType *CalleeTy = GetFnTy(CI.getCalledValue());
+  FunctionType *CallerTy = F->getFunctionType();
+  FunctionType *CalleeTy = CI.getFunctionType();
   Assert(CallerTy->getNumParams() == CalleeTy->getNumParams(),
          "cannot guarantee tail call due to mismatched parameter counts", &CI);
   Assert(CallerTy->isVarArg() == CalleeTy->isVarArg(),
@@ -2600,7 +2596,7 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
   Assert(PTy->getAddressSpace() == 0,
          "Allocation instruction pointer not in the generic address space!",
          &AI);
-  Assert(PTy->getElementType()->isSized(&Visited),
+  Assert(AI.getAllocatedType()->isSized(&Visited),
          "Cannot allocate unsized type", &AI);
   Assert(AI.getArraySize()->getType()->isIntegerTy(),
          "Alloca array size must have integer type", &AI);
