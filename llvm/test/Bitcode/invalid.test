@@ -78,3 +78,12 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=ARRAY-TYPE %s
 
 ARRAY-TYPE: Array element type can't be an Array or a Blob
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-non-vector-extractelement.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-TYPE %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-non-vector-insertelement.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-TYPE %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-non-vector-shufflevector.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-TYPE %s
+
+INVALID-TYPE: Invalid type for value
