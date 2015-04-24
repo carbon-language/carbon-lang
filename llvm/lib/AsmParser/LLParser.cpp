@@ -1490,6 +1490,18 @@ bool LLParser::ParseOptionalCallingConv(unsigned &CC) {
   return false;
 }
 
+/// ParseMetadataAttachment
+///   ::= !dbg !42
+bool LLParser::ParseMetadataAttachment(unsigned &Kind, MDNode *&MD) {
+  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata attachment");
+
+  std::string Name = Lex.getStrVal();
+  Kind = M->getMDKindID(Name);
+  Lex.Lex();
+
+  return ParseMDNode(MD);
+}
+
 /// ParseInstructionMetadata
 ///   ::= !dbg !42 (',' !dbg !57)*
 bool LLParser::ParseInstructionMetadata(Instruction *Inst,
@@ -1498,12 +1510,9 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     if (Lex.getKind() != lltok::MetadataVar)
       return TokError("expected metadata after comma");
 
-    std::string Name = Lex.getStrVal();
-    unsigned MDK = M->getMDKindID(Name);
-    Lex.Lex();
-
+    unsigned MDK;
     MDNode *N;
-    if (ParseMDNode(N))
+    if (ParseMetadataAttachment(MDK, N))
       return true;
 
     Inst->setMetadata(MDK, N);

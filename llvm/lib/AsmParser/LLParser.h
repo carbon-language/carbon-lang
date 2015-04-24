@@ -392,6 +392,7 @@ namespace llvm {
     bool ParseMDNode(MDNode *&MD);
     bool ParseMDNodeTail(MDNode *&MD);
     bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &MDs);
+    bool ParseMetadataAttachment(unsigned &Kind, MDNode *&MD);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 
     template <class FieldTy>
