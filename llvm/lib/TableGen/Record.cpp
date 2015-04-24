@@ -91,8 +91,8 @@ void RecTy::dump() const { print(errs()); }
 
 ListRecTy *RecTy::getListTy() {
   if (!ListTy)
-    ListTy = new ListRecTy(this);
-  return ListTy;
+    ListTy.reset(new ListRecTy(this));
+  return ListTy.get();
 }
 
 bool RecTy::baseClassOf(const RecTy *RHS) const{
@@ -141,13 +141,13 @@ bool BitRecTy::baseClassOf(const RecTy *RHS) const{
 }
 
 BitsRecTy *BitsRecTy::get(unsigned Sz) {
-  static std::vector<BitsRecTy*> Shared;
+  static std::vector<std::unique_ptr<BitsRecTy>> Shared;
   if (Sz >= Shared.size())
     Shared.resize(Sz + 1);
-  BitsRecTy *&Ty = Shared[Sz];
+  std::unique_ptr<BitsRecTy> &Ty = Shared[Sz];
   if (!Ty)
-    Ty = new BitsRecTy(Sz);
-  return Ty;
+    Ty.reset(new BitsRecTy(Sz));
+  return Ty.get();
 }
 
 std::string BitsRecTy::getAsString() const {
@@ -451,8 +451,8 @@ ProfileBitsInit(FoldingSetNodeID &ID, ArrayRef<Init *> Range) {
 }
 
 BitsInit *BitsInit::get(ArrayRef<Init *> Range) {
-  typedef FoldingSet<BitsInit> Pool;
-  static Pool ThePool;  
+  static FoldingSet<BitsInit> ThePool;
+  static std::vector<std::unique_ptr<BitsInit>> TheActualPool;
 
   FoldingSetNodeID ID;
   ProfileBitsInit(ID, Range);
@@ -463,7 +463,7 @@ BitsInit *BitsInit::get(ArrayRef<Init *> Range) {
 
   BitsInit *I = new BitsInit(Range);
   ThePool.InsertNode(I, IP);
-
+  TheActualPool.push_back(std::unique_ptr<BitsInit>(I));
   return I;
 }
 
@@ -601,8 +601,7 @@ static void ProfileListInit(FoldingSetNodeID &ID,
 }
 
 ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
-  typedef FoldingSet<ListInit> Pool;
-  static Pool ThePool;
+  static FoldingSet<ListInit> ThePool;
   static std::vector<std::unique_ptr<ListInit>> TheActualPool;
 
   FoldingSetNodeID ID;
@@ -995,8 +994,7 @@ TernOpInit *TernOpInit::get(TernaryOp opc, Init *lhs,
     Init *
     > Key;
 
-  typedef DenseMap<Key, TernOpInit *> Pool;
-  static Pool ThePool;
+  static DenseMap<Key, std::unique_ptr<TernOpInit>> ThePool;
 
   Key TheKey(std::make_pair(std::make_pair(std::make_pair(std::make_pair(opc,
                                                                          Type),
@@ -1004,9 +1002,9 @@ TernOpInit *TernOpInit::get(TernaryOp opc, Init *lhs,
                                            mhs),
                             rhs));
 
-  TernOpInit *&I = ThePool[TheKey];
-  if (!I) I = new TernOpInit(opc, lhs, mhs, rhs, Type);
-  return I;
+  std::unique_ptr<TernOpInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new TernOpInit(opc, lhs, mhs, rhs, Type));
+  return I.get();
 }
 
 static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
@@ -1402,15 +1400,13 @@ Init *VarBitInit::resolveReferences(Record &R, const RecordVal *RV) const {
 VarListElementInit *VarListElementInit::get(TypedInit *T,
                                             unsigned E) {
   typedef std::pair<TypedInit *, unsigned> Key;
-  typedef DenseMap<Key, VarListElementInit *> Pool;
-
-  static Pool ThePool;
+  static DenseMap<Key, std::unique_ptr<VarListElementInit>> ThePool;
 
   Key TheKey(std::make_pair(T, E));
 
-  VarListElementInit *&I = ThePool[TheKey];
-  if (!I) I = new VarListElementInit(T, E);
-  return I;
+  std::unique_ptr<VarListElementInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new VarListElementInit(T, E));
+  return I.get();
 }
 
 std::string VarListElementInit::getAsString() const {
@@ -1440,7 +1436,7 @@ Init *VarListElementInit:: resolveListElementReference(Record &R,
     if (TypedInit *TInit = dyn_cast<TypedInit>(Result)) {
       Init *Result2 = TInit->resolveListElementReference(R, RV, Elt);
       if (Result2) return Result2;
-      return new VarListElementInit(TInit, Elt);
+      return VarListElementInit::get(TInit, Elt);
     }
     return Result;
   }
@@ -1470,14 +1466,13 @@ std::string DefInit::getAsString() const {
 
 FieldInit *FieldInit::get(Init *R, const std::string &FN) {
   typedef std::pair<Init *, TableGenStringKey> Key;
-  typedef DenseMap<Key, FieldInit *> Pool;
-  static Pool ThePool;  
+  static DenseMap<Key, std::unique_ptr<FieldInit>> ThePool;
 
   Key TheKey(std::make_pair(R, FN));
 
-  FieldInit *&I = ThePool[TheKey];
-  if (!I) I = new FieldInit(R, FN);
-  return I;
+  std::unique_ptr<FieldInit> &I = ThePool[TheKey];
+  if (!I) I.reset(new FieldInit(R, FN));
+  return I.get();
 }
 
 Init *FieldInit::getBit(unsigned Bit) const {
@@ -1537,8 +1532,8 @@ DagInit *
 DagInit::get(Init *V, const std::string &VN,
              ArrayRef<Init *> ArgRange,
              ArrayRef<std::string> NameRange) {
-  typedef FoldingSet<DagInit> Pool;
-  static Pool ThePool;  
+  static FoldingSet<DagInit> ThePool;
+  static std::vector<std::unique_ptr<DagInit>> TheActualPool;
 
   FoldingSetNodeID ID;
   ProfileDagInit(ID, V, VN, ArgRange, NameRange);
@@ -1549,7 +1544,7 @@ DagInit::get(Init *V, const std::string &VN,
 
   DagInit *I = new DagInit(V, VN, ArgRange, NameRange);
   ThePool.InsertNode(I, IP);
-
+  TheActualPool.push_back(std::unique_ptr<DagInit>(I));
   return I;
 }
 
@@ -1661,9 +1656,13 @@ void Record::checkName() {
 }
 
 DefInit *Record::getDefInit() {
-  if (!TheInit)
-    TheInit = new DefInit(this, new RecordRecTy(this));
-  return TheInit;
+  static DenseMap<Record *, std::unique_ptr<DefInit>> ThePool;
+  if (TheInit)
+    return TheInit;
+
+  std::unique_ptr<DefInit> &I = ThePool[this];
+  if (!I) I.reset(new DefInit(this, new RecordRecTy(this)));
+  return I.get();
 }
 
 const std::string &Record::getName() const {

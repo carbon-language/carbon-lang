@@ -81,7 +81,7 @@ public:
 
 private:
   RecTyKind Kind;
-  ListRecTy *ListTy;
+  std::unique_ptr<ListRecTy> ListTy;
   virtual void anchor();
 
 public:
@@ -566,6 +566,11 @@ class TypedInit : public Init {
 
 protected:
   explicit TypedInit(InitKind K, RecTy *T) : Init(K), Ty(T) {}
+  ~TypedInit() {
+    // If this is a DefInit we need to delete the RecordRecTy.
+    if (getKind() == IK_DefInit)
+      delete Ty;
+  }
 
 public:
   static bool classof(const Init *I) {
