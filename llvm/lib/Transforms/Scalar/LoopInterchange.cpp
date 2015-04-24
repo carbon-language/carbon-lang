@@ -1012,8 +1012,8 @@ void LoopInterchangeTransform::restructureLoops(Loop *InnerLoop,
     LI->changeTopLevelLoop(OuterLoop, InnerLoop);
   }
 
-  for (Loop::iterator I = InnerLoop->begin(), E = InnerLoop->end(); I != E; ++I)
-    OuterLoop->addChildLoop(InnerLoop->removeChildLoop(I));
+  while (!InnerLoop->empty())
+    OuterLoop->addChildLoop(InnerLoop->removeChildLoop(InnerLoop->begin()));
 
   InnerLoop->addChildLoop(OuterLoop);
 }
