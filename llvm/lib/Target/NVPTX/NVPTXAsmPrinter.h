@@ -86,6 +86,14 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
     std::vector<unsigned char> buffer; // the buffer
     SmallVector<unsigned, 4> symbolPosInBuffer;
     SmallVector<const Value *, 4> Symbols;
+    // SymbolsBeforeStripping[i] is the original form of Symbols[i] before
+    // stripping pointer casts, i.e.,
+    // Symbols[i] == SymbolsBeforeStripping[i]->stripPointerCasts().
+    //
+    // We need to keep these values because AggBuffer::print decides whether to
+    // emit a "generic()" cast for Symbols[i] depending on the address space of
+    // SymbolsBeforeStripping[i].
+    SmallVector<const Value *, 4> SymbolsBeforeStripping;
     unsigned curpos;
     raw_ostream &O;
     NVPTXAsmPrinter &AP;
@@ -119,9 +127,10 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
       }
       return curpos;
     }
-    void addSymbol(const Value *GVar) {
+    void addSymbol(const Value *GVar, const Value *GVarBeforeStripping) {
       symbolPosInBuffer.push_back(curpos);
       Symbols.push_back(GVar);
+      SymbolsBeforeStripping.push_back(GVarBeforeStripping);
       numSymbols++;
     }
     void print() {
@@ -145,10 +154,11 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
             O << ", ";
           if (pos == nextSymbolPos) {
             const Value *v = Symbols[nSym];
+            const Value *v0 = SymbolsBeforeStripping[nSym];
             if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
               MCSymbol *Name = AP.getSymbol(GVar);
-              PointerType *PTy = dyn_cast<PointerType>(GVar->getType());
-              bool IsNonGenericPointer = false;
+              PointerType *PTy = dyn_cast<PointerType>(v0->getType());
+              bool IsNonGenericPointer = false; // Is v0 a non-generic pointer?
               if (PTy && PTy->getAddressSpace() != 0) {
                 IsNonGenericPointer = true;
               }

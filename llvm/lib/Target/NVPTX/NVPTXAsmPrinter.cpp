@@ -1179,7 +1179,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       if ((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
           (PTy->getAddressSpace() == llvm::ADDRESS_SPACE_CONST)) {
         const Constant *Initializer = GVar->getInitializer();
-        // 'undef' is treated as there is no value spefied.
+        // 'undef' is treated as there is no value specified.
         if (!Initializer->isNullValue() && !isa<UndefValue>(Initializer)) {
           O << " = ";
           printScalarConstant(Initializer, O);
@@ -1788,7 +1788,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
         }
         if (Cexpr->getOpcode() == Instruction::PtrToInt) {
           Value *v = Cexpr->getOperand(0)->stripPointerCasts();
-          aggBuffer->addSymbol(v);
+          aggBuffer->addSymbol(v, Cexpr->getOperand(0));
           aggBuffer->addZeros(4);
           break;
         }
@@ -1810,7 +1810,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
         }
         if (Cexpr->getOpcode() == Instruction::PtrToInt) {
           Value *v = Cexpr->getOperand(0)->stripPointerCasts();
-          aggBuffer->addSymbol(v);
+          aggBuffer->addSymbol(v, Cexpr->getOperand(0));
           aggBuffer->addZeros(8);
           break;
         }
@@ -1839,10 +1839,10 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
   }
   case Type::PointerTyID: {
     if (const GlobalValue *GVar = dyn_cast<GlobalValue>(CPV)) {
-      aggBuffer->addSymbol(GVar);
+      aggBuffer->addSymbol(GVar, GVar);
     } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
       const Value *v = Cexpr->stripPointerCasts();
-      aggBuffer->addSymbol(v);
+      aggBuffer->addSymbol(v, Cexpr);
     }
     unsigned int s = TD->getTypeAllocSize(CPV->getType());
     aggBuffer->addZeros(s);
