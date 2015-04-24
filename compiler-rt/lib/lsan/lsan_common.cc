@@ -126,13 +126,14 @@ static inline bool CanBeAHeapPointer(uptr p) {
 
 // Scans the memory range, looking for byte patterns that point into allocator
 // chunks. Marks those chunks with |tag| and adds them to |frontier|.
-// There are two usage modes for this function: finding reachable or ignored
-// chunks (|tag| = kReachable or kIgnored) and finding indirectly leaked chunks
+// There are two usage modes for this function: finding reachable chunks
+// (|tag| = kReachable) and finding indirectly leaked chunks
 // (|tag| = kIndirectlyLeaked). In the second case, there's no flood fill,
 // so |frontier| = 0.
 void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,
                           const char *region_type, ChunkTag tag) {
+  CHECK(tag == kReachable || tag == kIndirectlyLeaked);
   const uptr alignment = flags()->pointer_alignment();
   LOG_POINTERS("Scanning %s range %p-%p.\n", region_type, begin, end);
   uptr pp = begin;
@@ -146,9 +147,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
     // Pointers to self don't count. This matters when tag == kIndirectlyLeaked.
     if (chunk == begin) continue;
     LsanMetadata m(chunk);
-    // Reachable beats ignored beats leaked.
-    if (m.tag() == kReachable) continue;
-    if (m.tag() == kIgnored && tag != kReachable) continue;
+    if (m.tag() == kReachable || m.tag() == kIgnored) continue;
 
     // Do this check relatively late so we can log only the interesting cases.
     if (!flags()->use_poisoned && WordIsPoisoned(pp)) {
@@ -287,7 +286,7 @@ static void MarkIndirectlyLeakedCb(uptr chunk, void *arg) {
   LsanMetadata m(chunk);
   if (m.allocated() && m.tag() != kReachable) {
     ScanRangeForPointers(chunk, chunk + m.requested_size(),
-                         /* frontier */ 0, "HEAP", kIndirectlyLeaked);
+                         /* frontier */ nullptr, "HEAP", kIndirectlyLeaked);
   }
 }
 
@@ -297,8 +296,11 @@ static void CollectIgnoredCb(uptr chunk, void *arg) {
   CHECK(arg);
   chunk = GetUserBegin(chunk);
   LsanMetadata m(chunk);
-  if (m.allocated() && m.tag() == kIgnored)
+  if (m.allocated() && m.tag() == kIgnored) {
+    LOG_POINTERS("Ignored: chunk %p-%p of size %zu.\n",
+                 chunk, chunk + m.requested_size(), m.requested_size());
     reinterpret_cast<Frontier *>(arg)->push_back(chunk);
+  }
 }
 
 // Sets the appropriate tag on each chunk.
@@ -306,26 +308,33 @@ static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
   Frontier frontier(1);
 
+  ForEachChunk(CollectIgnoredCb, &frontier);
   ProcessGlobalRegions(&frontier);
   ProcessThreads(suspended_threads, &frontier);
   ProcessRootRegions(&frontier);
   FloodFillTag(&frontier, kReachable);
+
   // The check here is relatively expensive, so we do this in a separate flood
   // fill. That way we can skip the check for chunks that are reachable
   // otherwise.
   LOG_POINTERS("Processing platform-specific allocations.\n");
+  CHECK_EQ(0, frontier.size());
   ProcessPlatformSpecificAllocations(&frontier);
   FloodFillTag(&frontier, kReachable);
-
-  LOG_POINTERS("Scanning ignored chunks.\n");
-  CHECK_EQ(0, frontier.size());
-  ForEachChunk(CollectIgnoredCb, &frontier);
-  FloodFillTag(&frontier, kIgnored);
 
   // Iterate over leaked chunks and mark those that are reachable from other
   // leaked chunks.
   LOG_POINTERS("Scanning leaked chunks.\n");
-  ForEachChunk(MarkIndirectlyLeakedCb, 0 /* arg */);
+  ForEachChunk(MarkIndirectlyLeakedCb, nullptr);
+}
+
+// ForEachChunk callback. Resets the tags to pre-leak-check state.
+static void ResetTagsCb(uptr chunk, void *arg) {
+  (void)arg;
+  chunk = GetUserBegin(chunk);
+  LsanMetadata m(chunk);
+  if (m.allocated() && m.tag() != kIgnored)
+    m.set_tag(kDirectlyLeaked);
 }
 
 static void PrintStackTraceById(u32 stack_trace_id) {
@@ -371,35 +380,33 @@ static void PrintMatchedSuppressions() {
   Printf("%s\n\n", line);
 }
 
-struct DoLeakCheckParam {
+struct CheckForLeaksParam {
   bool success;
   LeakReport leak_report;
 };
 
-static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
-                                void *arg) {
-  DoLeakCheckParam *param = reinterpret_cast<DoLeakCheckParam *>(arg);
+static void CheckForLeaksCallback(const SuspendedThreadsList &suspended_threads,
+                                  void *arg) {
+  CheckForLeaksParam *param = reinterpret_cast<CheckForLeaksParam *>(arg);
   CHECK(param);
   CHECK(!param->success);
   ClassifyAllChunks(suspended_threads);
   ForEachChunk(CollectLeaksCb, &param->leak_report);
+  // Clean up for subsequent leak checks. This assumes we did not overwrite any
+  // kIgnored tags.
+  ForEachChunk(ResetTagsCb, nullptr);
   param->success = true;
 }
 
-void DoLeakCheck() {
-  EnsureMainThreadIDIsCorrect();
-  BlockingMutexLock l(&global_mutex);
-  static bool already_done;
-  if (already_done) return;
-  already_done = true;
+static bool CheckForLeaks() {
   if (&__lsan_is_turned_off && __lsan_is_turned_off())
-      return;
-
-  DoLeakCheckParam param;
+      return false;
+  EnsureMainThreadIDIsCorrect();
+  CheckForLeaksParam param;
   param.success = false;
   LockThreadRegistry();
   LockAllocator();
-  DoStopTheWorld(DoLeakCheckCallback, &param);
+  DoStopTheWorld(CheckForLeaksCallback, &param);
   UnlockAllocator();
   UnlockThreadRegistry();
 
@@ -423,12 +430,31 @@ void DoLeakCheck() {
     PrintMatchedSuppressions();
   if (unsuppressed_count > 0) {
     param.leak_report.PrintSummary();
-    if (flags()->exitcode) {
-      if (common_flags()->coverage)
-        __sanitizer_cov_dump();
-      internal__exit(flags()->exitcode);
-    }
+    return true;
   }
+  return false;
+}
+
+void DoLeakCheck() {
+  BlockingMutexLock l(&global_mutex);
+  static bool already_done;
+  if (already_done) return;
+  already_done = true;
+  bool have_leaks = CheckForLeaks();
+  if (!have_leaks) {
+    return;
+  }
+  if (flags()->exitcode) {
+    if (common_flags()->coverage)
+      __sanitizer_cov_dump();
+    internal__exit(flags()->exitcode);
+  }
+}
+
+static int DoRecoverableLeakCheck() {
+  BlockingMutexLock l(&global_mutex);
+  bool have_leaks = CheckForLeaks();
+  return have_leaks ? 1 : 0;
 }
 
 static Suppression *GetSuppressionForAddr(uptr addr) {
@@ -674,6 +700,14 @@ void __lsan_do_leak_check() {
   if (common_flags()->detect_leaks)
     __lsan::DoLeakCheck();
 #endif  // CAN_SANITIZE_LEAKS
+}
+
+int __lsan_do_recoverable_leak_check() {
+#if CAN_SANITIZE_LEAKS
+  if (common_flags()->detect_leaks)
+    return __lsan::DoRecoverableLeakCheck();
+#endif  // CAN_SANITIZE_LEAKS
+  return 0;
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS

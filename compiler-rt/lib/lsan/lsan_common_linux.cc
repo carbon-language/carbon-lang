@@ -110,7 +110,7 @@ static void ProcessPlatformSpecificAllocationsCb(uptr chunk, void *arg) {
       reinterpret_cast<ProcessPlatformAllocParam *>(arg);
   chunk = GetUserBegin(chunk);
   LsanMetadata m(chunk);
-  if (m.allocated() && m.tag() != kReachable) {
+  if (m.allocated() && m.tag() != kReachable && m.tag() != kIgnored) {
     u32 stack_id = m.stack_trace_id();
     uptr caller_pc = 0;
     if (stack_id > 0)
