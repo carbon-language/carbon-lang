@@ -1160,3 +1160,79 @@ void Instruction::clearMetadataHashEntries() {
   getContext().pImpl->InstructionMetadata.erase(this);
   setHasMetadataHashEntry(false);
 }
+
+MDNode *Function::getMetadata(unsigned KindID) const {
+  if (!hasMetadata())
+    return nullptr;
+  return getContext().pImpl->FunctionMetadata[this].lookup(KindID);
+}
+
+MDNode *Function::getMetadata(StringRef Kind) const {
+  if (!hasMetadata())
+    return nullptr;
+  return getMetadata(getContext().getMDKindID(Kind));
+}
+
+void Function::setMetadata(unsigned KindID, MDNode *MD) {
+  if (MD) {
+    if (!hasMetadata())
+      setHasMetadataHashEntry(true);
+
+    getContext().pImpl->FunctionMetadata[this].set(KindID, *MD);
+    return;
+  }
+
+  // Nothing to unset.
+  if (!hasMetadata())
+    return;
+
+  auto &Store = getContext().pImpl->FunctionMetadata[this];
+  Store.erase(KindID);
+  if (Store.empty())
+    clearMetadata();
+}
+
+void Function::setMetadata(StringRef Kind, MDNode *MD) {
+  if (!MD && !hasMetadata())
+    return;
+  setMetadata(getContext().getMDKindID(Kind), MD);
+}
+
+void Function::getAllMetadata(
+    SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) const {
+  MDs.clear();
+
+  if (!hasMetadata())
+    return;
+
+  getContext().pImpl->FunctionMetadata[this].getAll(MDs);
+}
+
+void Function::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
+  if (!hasMetadata())
+    return;
+  if (KnownIDs.empty()) {
+    clearMetadata();
+    return;
+  }
+
+  SmallSet<unsigned, 5> KnownSet;
+  KnownSet.insert(KnownIDs.begin(), KnownIDs.end());
+
+  auto &Store = getContext().pImpl->FunctionMetadata[this];
+  assert(!Store.empty());
+
+  Store.remove_if([&KnownSet](const std::pair<unsigned, TrackingMDNodeRef> &I) {
+    return !KnownSet.count(I.first);
+  });
+
+  if (Store.empty())
+    clearMetadata();
+}
+
+void Function::clearMetadata() {
+  if (!hasMetadata())
+    return;
+  getContext().pImpl->FunctionMetadata.erase(this);
+  setHasMetadataHashEntry(false);
+}

@@ -2125,4 +2125,112 @@ TEST(NamedMDNodeTest, Search) {
   EXPECT_STREQ("!llvm.NMD1 = !{!0, !1}\n",
                oss.str().c_str());
 }
+
+typedef MetadataTest FunctionAttachmentTest;
+TEST_F(FunctionAttachmentTest, setMetadata) {
+  Function *F = getFunction("foo");
+  ASSERT_FALSE(F->hasMetadata());
+  EXPECT_EQ(nullptr, F->getMetadata(LLVMContext::MD_dbg));
+  EXPECT_EQ(nullptr, F->getMetadata("dbg"));
+  EXPECT_EQ(nullptr, F->getMetadata("other"));
+
+  MDSubprogram *SP1 = getSubprogram();
+  MDSubprogram *SP2 = getSubprogram();
+  ASSERT_NE(SP1, SP2);
+
+  F->setMetadata("dbg", SP1);
+  EXPECT_TRUE(F->hasMetadata());
+  EXPECT_EQ(SP1, F->getMetadata(LLVMContext::MD_dbg));
+  EXPECT_EQ(SP1, F->getMetadata("dbg"));
+  EXPECT_EQ(nullptr, F->getMetadata("other"));
+
+  F->setMetadata(LLVMContext::MD_dbg, SP2);
+  EXPECT_TRUE(F->hasMetadata());
+  EXPECT_EQ(SP2, F->getMetadata(LLVMContext::MD_dbg));
+  EXPECT_EQ(SP2, F->getMetadata("dbg"));
+  EXPECT_EQ(nullptr, F->getMetadata("other"));
+
+  F->setMetadata("dbg", nullptr);
+  EXPECT_FALSE(F->hasMetadata());
+  EXPECT_EQ(nullptr, F->getMetadata(LLVMContext::MD_dbg));
+  EXPECT_EQ(nullptr, F->getMetadata("dbg"));
+  EXPECT_EQ(nullptr, F->getMetadata("other"));
+
+  MDTuple *T1 = getTuple();
+  MDTuple *T2 = getTuple();
+  ASSERT_NE(T1, T2);
+
+  F->setMetadata("other1", T1);
+  F->setMetadata("other2", T2);
+  EXPECT_TRUE(F->hasMetadata());
+  EXPECT_EQ(T1, F->getMetadata("other1"));
+  EXPECT_EQ(T2, F->getMetadata("other2"));
+  EXPECT_EQ(nullptr, F->getMetadata("dbg"));
+
+  F->setMetadata("other1", T2);
+  F->setMetadata("other2", T1);
+  EXPECT_EQ(T2, F->getMetadata("other1"));
+  EXPECT_EQ(T1, F->getMetadata("other2"));
+
+  F->setMetadata("other1", nullptr);
+  F->setMetadata("other2", nullptr);
+  EXPECT_FALSE(F->hasMetadata());
+  EXPECT_EQ(nullptr, F->getMetadata("other1"));
+  EXPECT_EQ(nullptr, F->getMetadata("other2"));
+}
+
+TEST_F(FunctionAttachmentTest, getAll) {
+  Function *F = getFunction("foo");
+
+  MDTuple *T1 = getTuple();
+  MDTuple *T2 = getTuple();
+  MDTuple *P = getTuple();
+  MDSubprogram *SP = getSubprogram();
+
+  F->setMetadata("other1", T2);
+  F->setMetadata(LLVMContext::MD_dbg, SP);
+  F->setMetadata("other2", T1);
+  F->setMetadata(LLVMContext::MD_prof, P);
+  F->setMetadata("other2", T2);
+  F->setMetadata("other1", T1);
+
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  F->getAllMetadata(MDs);
+  ASSERT_EQ(4u, MDs.size());
+  EXPECT_EQ(LLVMContext::MD_dbg, MDs[0].first);
+  EXPECT_EQ(LLVMContext::MD_prof, MDs[1].first);
+  EXPECT_EQ(Context.getMDKindID("other1"), MDs[2].first);
+  EXPECT_EQ(Context.getMDKindID("other2"), MDs[3].first);
+  EXPECT_EQ(SP, MDs[0].second);
+  EXPECT_EQ(P, MDs[1].second);
+  EXPECT_EQ(T1, MDs[2].second);
+  EXPECT_EQ(T2, MDs[3].second);
+}
+
+TEST_F(FunctionAttachmentTest, dropUnknownMetadata) {
+  Function *F = getFunction("foo");
+
+  MDTuple *T1 = getTuple();
+  MDTuple *T2 = getTuple();
+  MDTuple *P = getTuple();
+  MDSubprogram *SP = getSubprogram();
+
+  F->setMetadata("other1", T1);
+  F->setMetadata(LLVMContext::MD_dbg, SP);
+  F->setMetadata("other2", T2);
+  F->setMetadata(LLVMContext::MD_prof, P);
+
+  unsigned Known[] = {Context.getMDKindID("other2"), LLVMContext::MD_prof};
+  F->dropUnknownMetadata(Known);
+
+  EXPECT_EQ(T2, F->getMetadata("other2"));
+  EXPECT_EQ(P, F->getMetadata(LLVMContext::MD_prof));
+  EXPECT_EQ(nullptr, F->getMetadata("other1"));
+  EXPECT_EQ(nullptr, F->getMetadata(LLVMContext::MD_dbg));
+
+  F->setMetadata("other2", nullptr);
+  F->setMetadata(LLVMContext::MD_prof, nullptr);
+  EXPECT_FALSE(F->hasMetadata());
+}
+
 }

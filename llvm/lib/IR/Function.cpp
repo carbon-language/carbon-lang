@@ -324,6 +324,9 @@ void Function::dropAllReferences() {
   // Prefix and prologue data are stored in a side table.
   setPrefixData(nullptr);
   setPrologueData(nullptr);
+
+  // Metadata is stored in a side-table.
+  clearMetadata();
 }
 
 void Function::addAttribute(unsigned i, Attribute::AttrKind attr) {
