@@ -1205,6 +1205,13 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
     ++DI;
   }
 
+  // Copy over the metadata attachments.
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MDs;
+  Src.getAllMetadata(MDs);
+  for (const auto &I : MDs)
+    Dst.setMetadata(I.first, MapMetadata(I.second, ValueMap, RF_None, &TypeMap,
+                                         &ValMaterializer));
+
   // Splice the body of the source function into the dest function.
   Dst.getBasicBlockList().splice(Dst.end(), Src.getBasicBlockList());
 
