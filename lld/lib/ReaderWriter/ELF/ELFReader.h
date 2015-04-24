@@ -24,7 +24,7 @@ template <typename FileT> class ELFReader : public Reader {
 public:
   ELFReader(ELFLinkingContext &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, MemoryBufferRef mb) const override {
     return FileT::canParse(magic);
   }
 

@@ -361,7 +361,7 @@ class COFFImportLibraryReader : public Reader {
 public:
   COFFImportLibraryReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, MemoryBufferRef mb) const override {
     if (mb.getBufferSize() < sizeof(COFF::ImportHeader))
       return false;
     return magic == llvm::sys::fs::file_magic::coff_import_library;

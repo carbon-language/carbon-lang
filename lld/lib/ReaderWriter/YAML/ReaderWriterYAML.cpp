@@ -1289,7 +1289,7 @@ class YAMLReader : public Reader {
 public:
   YAMLReader(const Registry &registry) : _registry(registry) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, MemoryBufferRef mb) const override {
     StringRef ext = llvm::sys::path::extension(mb.getBufferIdentifier());
     return ext.equals(".objtxt") || ext.equals(".yaml");
   }

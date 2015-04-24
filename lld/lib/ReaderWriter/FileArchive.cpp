@@ -261,7 +261,7 @@ class ArchiveReader : public Reader {
 public:
   ArchiveReader(bool logLoading) : _logLoading(logLoading) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &) const override {
+  bool canParse(file_magic magic, MemoryBufferRef) const override {
     return magic == llvm::sys::fs::file_magic::archive;
   }
 

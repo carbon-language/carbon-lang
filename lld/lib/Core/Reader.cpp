@@ -36,7 +36,7 @@ Registry::loadFile(std::unique_ptr<MemoryBuffer> mb) const {
 
   // Ask each registered reader if it can handle this file type or extension.
   for (const std::unique_ptr<Reader> &reader : _readers) {
-    if (!reader->canParse(fileType, *mb))
+    if (!reader->canParse(fileType, mb->getMemBufferRef()))
       continue;
     return reader->loadFile(std::move(mb), *this);
   }

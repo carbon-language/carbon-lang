@@ -517,7 +517,7 @@ class MachOObjectReader : public Reader {
 public:
   MachOObjectReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, MemoryBufferRef mb) const override {
     return (magic == llvm::sys::fs::file_magic::macho_object &&
             mb.getBufferSize() > 32);
   }
@@ -538,7 +538,7 @@ class MachODylibReader : public Reader {
 public:
   MachODylibReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
 
-  bool canParse(file_magic magic, const MemoryBuffer &mb) const override {
+  bool canParse(file_magic magic, MemoryBufferRef mb) const override {
     switch (magic) {
     case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib:
     case llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
