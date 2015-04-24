@@ -17,6 +17,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 using namespace llvm;
@@ -2231,6 +2232,23 @@ TEST_F(FunctionAttachmentTest, dropUnknownMetadata) {
   F->setMetadata("other2", nullptr);
   F->setMetadata(LLVMContext::MD_prof, nullptr);
   EXPECT_FALSE(F->hasMetadata());
+}
+
+TEST_F(FunctionAttachmentTest, Verifier) {
+  Function *F = getFunction("foo");
+  F->setMetadata("attach", getTuple());
+
+  // Confirm this has no body.
+  ASSERT_TRUE(F->empty());
+
+  // Functions without a body cannot have metadata attachments (they also can't
+  // be verified directly, so check that the module fails to verify).
+  EXPECT_TRUE(verifyModule(*F->getParent()));
+
+  // Functions with a body can.
+  (void)new UnreachableInst(Context, BasicBlock::Create(Context, "bb", F));
+  EXPECT_FALSE(verifyModule(*F->getParent()));
+  EXPECT_FALSE(verifyFunction(*F));
 }
 
 }
