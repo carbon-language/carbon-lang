@@ -1,0 +1,3 @@
+undefined-atoms:
+    - name:              f1
+      can-be-null:       never

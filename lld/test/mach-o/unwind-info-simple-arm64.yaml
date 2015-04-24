@@ -1,4 +1,5 @@
-# RUN: lld -flavor darwin -arch arm64 %s -o %t -e _main %p/Inputs/libSystem.yaml
+# RUN: lld -flavor darwin -arch arm64 -o %t %s \
+# RUN: %p/Inputs/unwind-info-simple-arm64.yaml -e _main %p/Inputs/libSystem.yaml
 # RUN: llvm-objdump -unwind-info %t | FileCheck %s
 
 --- !mach-o
@@ -235,20 +236,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-
---- !mach-o
-arch:            arm64
-file-type:       MH_DYLIB
-install-name:    /usr/lib/libc++.dylib
-exports:
-  - name:            __Unwind_Resume
-  - name:            __ZTIl
-  - name:            __ZTIi
-  - name:            ___cxa_end_catch
-  - name:            ___cxa_begin_catch
-  - name:            ___cxa_allocate_exception
-  - name:            ___cxa_throw
-  - name:            ___gxx_personality_v0
 
 ...
 

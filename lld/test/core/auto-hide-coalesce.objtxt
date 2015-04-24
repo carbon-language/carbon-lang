@@ -1,4 +1,4 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/auto-hide-coalesce.objtxt | FileCheck %s
 
 #
 # Tests auto-hide bit during coalescing
@@ -20,27 +20,6 @@ defined-atoms:
       scope:             global
       type:              code
       merge:             as-addressed-weak
-
-    - name:              _inlineFunc4
-      scope:             global
-      type:              code
-      merge:             as-addressed-weak
----
-defined-atoms:
-    - name:              _inlineFunc1
-      scope:             global
-      type:              code
-      merge:             as-weak
-
-    - name:              _inlineFunc2
-      scope:             global
-      type:              code
-      merge:             as-addressed-weak
-
-    - name:              _inlineFunc3
-      scope:             global
-      type:              code
-      merge:             as-weak
 
     - name:              _inlineFunc4
       scope:             global

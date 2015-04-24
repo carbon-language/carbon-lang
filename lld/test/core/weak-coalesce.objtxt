@@ -1,20 +1,6 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/weak-coalesce.objtxt \
+# RUN: %p/Inputs/weak-coalesce2.objtxt | FileCheck %s
 
-#
-# Test that weak definitions are coalesced away in favor of a regular definition
-#
-
----
-defined-atoms:
-    - name:         _foo
-      merge:        as-weak
-      scope:        global
-      type:         data
----
-defined-atoms:
-    - name:         _foo
-      scope:        global
-      type:         data
 ---
 defined-atoms:
     - name:         _foo

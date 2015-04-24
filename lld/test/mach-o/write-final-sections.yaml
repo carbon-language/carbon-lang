@@ -1,4 +1,5 @@
-# RUN: lld -flavor darwin -arch x86_64 %s -o %t -e _foo
+# RUN: lld -flavor darwin -arch x86_64 %s %p/Inputs/write-final-sections.yaml \
+# RUN: -o %t -e _foo
 # RUN: llvm-readobj -sections -section-data %t | FileCheck %s
 
 --- !native
@@ -143,25 +144,3 @@ defined-atoms:
   - type:            compact-unwind
     content:         [ 0E, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK-NOT: Name: __compact_unwind
-
-
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ ]
-install-name:    /usr/lib/libSystem.B.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000000
-    content:         [ 0x55 ]
-
-global-symbols:
-  - name:            dyld_stub_binder
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000000
-

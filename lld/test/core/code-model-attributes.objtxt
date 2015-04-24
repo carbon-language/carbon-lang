@@ -1,5 +1,8 @@
-# RUN: lld -core %s | FileCheck %s
-
+# RUN: lld -core %s %p/Inputs/code-model-attributes.objtxt \
+# RUN: %p/Inputs/code-model-attributes2.objtxt \
+# RUN: %p/Inputs/code-model-attributes3.objtxt \
+# RUN: %p/Inputs/code-model-attributes4.objtxt \
+# RUN: %p/Inputs/code-model-attributes5.objtxt | FileCheck %s
 #
 # Test that code model attributes are preserved
 #
@@ -7,26 +10,6 @@
 ---
 defined-atoms:
     - name:         _def
----
-defined-atoms:
-    - name:         _none
-      code-model:   none
----
-defined-atoms:
-    - name:         _mips_pic
-      code-model:   mips-pic
----
-defined-atoms:
-    - name:         _mips_micro
-      code-model:   mips-micro
----
-defined-atoms:
-    - name:         _mips_micro_pic
-      code-model:   mips-micro-pic
----
-defined-atoms:
-    - name:         _mips_16
-      code-model:   mips-16
 ...
 
 # CHECK:       name: _def

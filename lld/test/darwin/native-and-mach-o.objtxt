@@ -1,4 +1,6 @@
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  && \
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s \
+# RUN: %p/Inputs/native-and-mach-o.objtxt  \
+# RUN: %p/Inputs/native-and-mach-o2.objtxt -o %t  && \
 # RUN: llvm-nm %t | FileCheck %s
 #
 # Test a mix of atoms and mach-o both encoded in yaml
@@ -18,46 +20,6 @@ defined-atoms:
 
 undefined-atoms:
  - name:                _foo
-
-
---- !mach-o
-arch:         x86_64
-file-type:    MH_OBJECT
-sections:
- - segment:     __TEXT
-   section:     __text
-   type:        S_REGULAR
-   attributes:  [ S_ATTR_PURE_INSTRUCTIONS ]
-   address:     0
-   content:     [ 0xC3 ]
-global-symbols:
- - name:        _foo
-   type:        N_SECT
-   scope:       [ N_EXT ]
-   sect:        1
-   desc:        [ ]
-   value:       0
-
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ ]
-install-name:    /usr/lib/libSystem.B.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000000
-    content:         [ 0x55 ]
-
-global-symbols:
-  - name:            dyld_stub_binder
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000000
-
 
 ...
 

@@ -1,0 +1,6 @@
+---
+defined-atoms:
+    - name:         _foo
+      scope:        global
+      type:         data
+      content:      [ 00, 00, 00, 00 ]

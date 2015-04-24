@@ -623,9 +623,11 @@ MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
   if (mbOrErr.getError())
     return nullptr;
 
-  std::vector<std::unique_ptr<File>> files;
-  if (registry().loadFile(std::move(mbOrErr.get()), files))
+  std::unique_ptr<File> file;
+  if (registry().loadFile(std::move(mbOrErr.get()), file))
     return nullptr;
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::move(file));
   assert(files.size() == 1 && "expected one file in dylib");
   files[0]->parse();
   MachODylibFile* result = reinterpret_cast<MachODylibFile*>(files[0].get());

@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
@@ -521,11 +522,10 @@ public:
             mb.getBufferSize() > 32);
   }
 
-  std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
-           std::vector<std::unique_ptr<File>> &result) const override {
-    auto *file = new MachOFile(std::move(mb), &_ctx);
-    result.push_back(std::unique_ptr<MachOFile>(file));
+  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
+                           const Registry &registry,
+                           std::unique_ptr<File> &result) const override {
+    result = llvm::make_unique<MachOFile>(std::move(mb), &_ctx);
     return std::error_code();
   }
 
@@ -547,11 +547,10 @@ public:
     }
   }
 
-  std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
-           std::vector<std::unique_ptr<File>> &result) const override {
-    auto *file = new MachODylibFile(std::move(mb), &_ctx);
-    result.push_back(std::unique_ptr<MachODylibFile>(file));
+  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
+                           const Registry &registry,
+                           std::unique_ptr<File> &result) const override {
+    result = llvm::make_unique<MachODylibFile>(std::move(mb), &_ctx);
     return std::error_code();
   }
 

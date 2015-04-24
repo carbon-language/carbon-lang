@@ -31,32 +31,6 @@ defined-atoms:
         target:          g1
       - kind:            group-child
         target:          d1
----
-defined-atoms:
-  - name:            f1
-    scope:           global
-    type:            code
-  - name:            f2
-    scope:           global
-    type:            code
-  - name:            g1
-    scope:           global
-    type:            code
-  - name:            d1
-    scope:           global
-    type:            data
-  - name:            g1
-    scope:           global
-    type:            group-comdat
-    references:
-      - kind:            group-child
-        target:          f1
-      - kind:            group-child
-        target:          f2
-      - kind:            group-child
-        target:          g1
-      - kind:            group-child
-        target:          d1
 ...
 
 #CHECK: defined-atoms:

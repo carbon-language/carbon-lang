@@ -1,36 +1,10 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/sectiongroup-rearrange-resolve.objtxt | FileCheck %s
 
 #
 # Test that section groups are parsed and the first group selected for symbol
 # resolution
 #
 
----
-defined-atoms:
-  - name:            g1
-    scope:           global
-    type:            group-comdat
-    references:
-      - kind:            group-child
-        target:          f1
-      - kind:            group-child
-        target:          f2
-      - kind:            group-child
-        target:          g1
-      - kind:            group-child
-        target:          d1
-  - name:            f1
-    scope:           global
-    type:            code
-  - name:            f2
-    scope:           global
-    type:            code
-  - name:            g1
-    scope:           global
-    type:            code
-  - name:            d1
-    scope:           global
-    type:            data
 ---
 defined-atoms:
   - name:            g1

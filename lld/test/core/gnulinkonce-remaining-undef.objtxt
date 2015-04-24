@@ -1,4 +1,5 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/gnulinkonce-remaining-undef.objtxt \
+# RUN: %p/Inputs/gnulinkonce-remaining-undef2.objtxt | FileCheck %s
 
 #
 # Test that gnu linkonce sections are parsed and the first section selected for
@@ -33,44 +34,6 @@ defined-atoms:
         target:          g1
       - kind:            group-child
         target:          d1
----
-defined-atoms:
-  - name:            anotherfunction
-    scope:           global
-    type:            data
-  - name:            f1
-    scope:           global
-    type:            code
-  - name:            f2
-    scope:           global
-    type:            code
-  - name:            f3
-    scope:           global
-    type:            code
-  - name:            g1
-    scope:           global
-    type:            code
-  - name:            d1
-    scope:           global
-    type:            data
-  - name:            g1
-    scope:           global
-    type:            gnu-linkonce
-    references:
-      - kind:            group-child
-        target:          f1
-      - kind:            group-child
-        target:          f2
-      - kind:            group-child
-        target:          f3
-      - kind:            group-child
-        target:          g1
-      - kind:            group-child
-        target:          d1
----
-undefined-atoms:
-    - name:              f3
-      can-be-null:       never
 ...
 
 #CHECK:   - name:            anotherfunction

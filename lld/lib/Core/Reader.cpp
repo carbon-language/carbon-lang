@@ -28,9 +28,8 @@ void Registry::add(std::unique_ptr<YamlIOTaggedDocumentHandler> handler) {
   _yamlHandlers.push_back(std::move(handler));
 }
 
-std::error_code
-Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
-                   std::vector<std::unique_ptr<File>> &result) const {
+std::error_code Registry::loadFile(std::unique_ptr<MemoryBuffer> mb,
+                                   std::unique_ptr<File> &result) const {
   // Get file magic.
   StringRef content(mb->getBufferStart(), mb->getBufferSize());
   llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(content);

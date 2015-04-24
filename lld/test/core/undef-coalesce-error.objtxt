@@ -1,6 +1,6 @@
-# RUN: not lld -core --undefines-are-errors %s 2> %t.err
+# RUN: not lld -core --undefines-are-errors %s %p/Inputs/undef-coalesce-error.objtxt %p/Inputs/undef-coalesce-error2.objtxt 2> %t.err
 # RUN: FileCheck -check-prefix=CHECKERR %s < %t.err
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/undef-coalesce-error.objtxt %p/Inputs/undef-coalesce-error2.objtxt | FileCheck %s
 
 #
 # Test that -undefines-are-errors triggers and error
@@ -14,22 +14,6 @@ defined-atoms:
 
 undefined-atoms:
     - name:              malloc
-    - name:              free
----
-defined-atoms:
-    - name:              bar
-      type:              code
-
-undefined-atoms:
-    - name:              malloc
-    - name:              myfunc
----
-defined-atoms:
-    - name:              myfunc
-      scope:             global
-      type:              code
-
-undefined-atoms:
     - name:              free
 ...
 

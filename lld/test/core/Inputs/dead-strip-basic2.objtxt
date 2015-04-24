@@ -1,0 +1,8 @@
+---
+defined-atoms:
+    - name:         baz
+      scope:        global
+      type:         code
+
+    - name:         mydead3
+      type:         code

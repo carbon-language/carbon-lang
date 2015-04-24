@@ -1,4 +1,5 @@
-# RUN: lld -flavor darwin -arch x86_64  %s -dylib -o %t %p/Inputs/libSystem.yaml
+# RUN: lld -flavor darwin -arch x86_64  %s %p/Inputs/interposing-section.yaml \
+# RUN: -dylib -o %t %p/Inputs/libSystem.yaml
 # RUN: llvm-objdump -private-headers %t | FileCheck %s
 #
 # RUN: lld -flavor darwin -arch x86_64  %s -r -o %t1
@@ -62,14 +63,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-    
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-install-name:    /usr/lib/libSystem.B.dylib
-exports:
-  - name:            _open
-
 ...
 
 

@@ -1,5 +1,5 @@
-# RUN: lld -core %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld -core --commons-search-archives  %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core %s %p/Inputs/archive-tentdef-search.objtxt | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core --commons-search-archives %s %p/Inputs/archive-tentdef-search.objtxt | FileCheck -check-prefix=CHK2 %s
 
 #
 # Tests that -commons-search-archives cause core linker to look for overrides
@@ -16,18 +16,6 @@ defined-atoms:
       scope:             global
       type:              zero-fill
       merge:             as-tentative
-
---- !archive
-members:
-  - name:               bar.o
-    content: !native
-      defined-atoms:
-        - name:              bar
-          scope:             global
-          type:              data
-
-        - name:              bar2
-          type:              data
 ...
 
 # CHK1:       name:       foo

@@ -1,4 +1,4 @@
-# RUN: not lld -core %s 2>&1 | FileCheck %s
+# RUN: not lld -core %s %p/Inputs/sectiongroup-gnulinkonce-error.objtxt 2>&1 | FileCheck %s
 
 #
 # Test that section groups/gnu linkonce sections are parsed and a merge error
@@ -22,32 +22,6 @@ defined-atoms:
   - name:            g1
     scope:           global
     type:            group-comdat
-    references:
-      - kind:            group-child
-        target:          f1
-      - kind:            group-child
-        target:          f2
-      - kind:            group-child
-        target:          g1
-      - kind:            group-child
-        target:          d1
----
-defined-atoms:
-  - name:            f1
-    scope:           global
-    type:            code
-  - name:            f2
-    scope:           global
-    type:            code
-  - name:            g1
-    scope:           global
-    type:            code
-  - name:            d1
-    scope:           global
-    type:            data
-  - name:            g1
-    scope:           global
-    type:            gnu-linkonce
     references:
       - kind:            group-child
         target:          f1

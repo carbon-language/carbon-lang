@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch arm64 %s -o %t
+# RUN: lld -flavor darwin -arch arm64 %s %p/Inputs/hello-world-arm64.yaml -o %t
 # RUN: llvm-nm -m -n %t | FileCheck %s
 #
 # Test that arm64 hello-world can be linked into a mach-o executable
@@ -86,16 +86,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-...
-
---- !mach-o
-arch:            arm64
-file-type:       MH_DYLIB
-install-name:    /usr/lib/libSystem.B.dylib
-exports:
-  - name:            _fprintf
-  - name:            ___stdoutp
-  - name:            dyld_stub_binder
 ...
 
 # CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external _main

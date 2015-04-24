@@ -1,4 +1,4 @@
-# RUN: not lld -core %s 2> %t.err
+# RUN: not lld -core %s %p/Inputs/error-duplicate-absolutes.objtxt 2> %t.err
 # RUN: FileCheck %s < %t.err
 
 #
@@ -12,11 +12,6 @@ absolute-atoms:
       scope:        global
 undefined-atoms:
     - name:         undefatom
----
-absolute-atoms:
-    - name:         absatom
-      value:        0
-      scope:        global
 ...
 
 

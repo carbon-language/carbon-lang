@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch armv6 %s -o %t
+# RUN: lld -flavor darwin -arch armv6 %s %p/Inputs/hello-world-armv6.yaml -o %t
 # RUN: llvm-nm -m %t | FileCheck %s
 #
 # Test that armv6 (arm) hello-world can be linked into a mach-o executable
@@ -57,14 +57,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-
---- !mach-o
-arch:            armv6
-file-type:       MH_DYLIB
-install-name:    /usr/lib/libSystem.B.dylib
-exports:
-  - name:            _printf
-  - name:            dyld_stub_binder
 ...
 
 # CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external _main

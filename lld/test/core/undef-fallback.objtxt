@@ -1,4 +1,4 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %p/undef-fallback.objtxt %p/Inputs/undef-fallback.objtxt | FileCheck %s
 
 # Test that fallback atoms can be parsed by YAML reader and processed by the
 # core linker.
@@ -15,14 +15,6 @@ undefined-atoms:
   - name: undef2
     fallback:
       name: fallback2
----
-defined-atoms:
-  - name: fallback1
-
-undefined-atoms:
-  - name: def1
-    fallback:
-      name: fallback3
 ...
 
 # CHECK:      defined-atoms:

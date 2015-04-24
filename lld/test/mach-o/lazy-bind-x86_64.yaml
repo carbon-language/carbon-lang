@@ -1,6 +1,8 @@
 # REQUIRES: x86
 
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  \
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s \
+# RUN: %p/Inputs/lazy-bind-x86_64.yaml  %p/Inputs/lazy-bind-x86_64-2.yaml \
+# RUN: %p/Inputs/lazy-bind-x86_64-3.yaml -o %t  \
 # RUN:   %p/Inputs/libSystem.yaml
 # RUN: llvm-objdump -lazy-bind %t | FileCheck %s
 # RUN: llvm-nm -m %t | FileCheck --check-prefix=CHECK-NM %s
@@ -62,33 +64,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-
---- !mach-o
-arch:              x86_64
-file-type:         MH_DYLIB
-install-name:      /usr/lib/libbar.dylib
-compat-version:    1.0
-current-version:   2.3
-exports:
-  - name:            _bar
-
---- !mach-o
-arch:              x86_64
-file-type:         MH_DYLIB
-install-name:      /usr/lib/libfoo.dylib
-compat-version:    2.0
-current-version:   3.4
-exports:
-  - name:            _foo
-
---- !mach-o
-arch:              x86_64
-file-type:         MH_DYLIB
-install-name:      /usr/lib/libbaz.dylib
-compat-version:    3.0
-current-version:   4.5
-exports:
-  - name:            _baz
 
 ...
 

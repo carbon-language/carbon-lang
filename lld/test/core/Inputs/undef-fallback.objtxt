@@ -1,0 +1,7 @@
+defined-atoms:
+  - name: fallback1
+
+undefined-atoms:
+  - name: def1
+    fallback:
+      name: fallback3

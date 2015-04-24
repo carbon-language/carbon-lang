@@ -1294,9 +1294,9 @@ public:
     return ext.equals(".objtxt") || ext.equals(".yaml");
   }
 
-  std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
-           std::vector<std::unique_ptr<File>> &result) const override {
+  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
+                           const class Registry &,
+                           std::unique_ptr<File> &result) const override {
     // Create YAML Input Reader.
     YamlContext yamlContext;
     yamlContext._registry = &_registry;
@@ -1306,19 +1306,19 @@ public:
     // Fill vector with File objects created by parsing yaml.
     std::vector<const lld::File *> createdFiles;
     yin >> createdFiles;
+    assert(createdFiles.size() == 1);
 
     // Error out now if there were parsing errors.
     if (yin.error())
       return make_error_code(lld::YamlReaderError::illegal_value);
 
     std::shared_ptr<MemoryBuffer> smb(mb.release());
-    for (const File *file : createdFiles) {
-      // Note: loadFile() should return vector of *const* File
-      File *f = const_cast<File *>(file);
-      f->setLastError(std::error_code());
-      f->setSharedMemoryBuffer(smb);
-      result.emplace_back(f);
-    }
+    const File *file = createdFiles[0];
+    // Note: loadFile() should return vector of *const* File
+    File *f = const_cast<File *>(file);
+    f->setLastError(std::error_code());
+    f->setSharedMemoryBuffer(smb);
+    result = std::unique_ptr<File>(f);
     return make_error_code(lld::YamlReaderError::success);
   }
 

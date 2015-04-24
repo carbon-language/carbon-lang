@@ -1,4 +1,4 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/gnulinkonce-simple.objtxt | FileCheck %s
 
 #
 # Test that gnu linkonce sections are parsed properly when there is a reference to a
@@ -37,10 +37,6 @@ defined-atoms:
   - name:            anotherfunction
     scope:           global
     type:            data
----
-undefined-atoms:
-    - name:              f1
-      can-be-null:       never
 ...
 
 #CHECK: defined-atoms:

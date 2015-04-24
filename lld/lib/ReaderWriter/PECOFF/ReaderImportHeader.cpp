@@ -367,11 +367,11 @@ public:
     return magic == llvm::sys::fs::file_magic::coff_import_library;
   }
 
-  std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
-           std::vector<std::unique_ptr<File> > &result) const override {
-    auto *file = new FileImportLibrary(std::move(mb), _ctx.getMachineType());
-    result.push_back(std::unique_ptr<File>(file));
+  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
+                           const class Registry &,
+                           std::unique_ptr<File> &result) const override {
+    result = llvm::make_unique<FileImportLibrary>(std::move(mb),
+                                                  _ctx.getMachineType());
     return std::error_code();
   }
 

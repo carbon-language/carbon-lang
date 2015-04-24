@@ -1,0 +1,8 @@
+---
+defined-atoms:
+    - name:              bar
+      type:              code
+
+undefined-atoms:
+    - name:              malloc
+    - name:              myfunc

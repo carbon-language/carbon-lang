@@ -1,4 +1,7 @@
-# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -dylib -o %t \
+# RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s \
+# RUN: %p/Inputs/re-exported-dylib-ordinal.yaml \
+# RUN: %p/Inputs/re-exported-dylib-ordinal2.yaml \
+# RUN: %p/Inputs/re-exported-dylib-ordinal3.yaml -dylib -o %t \
 # RUN:  && llvm-nm -m %t | FileCheck %s
 #
 # Test that when one dylib A re-exports dylib B that using a symbol from B
@@ -37,68 +40,6 @@ undefined-symbols:
     type:            N_UNDF
     scope:           [ N_EXT ]
     value:           0x0000000000000000
-
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ MH_TWOLEVEL ]
-install-name:    /junk/libfoo.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000F9A
-    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x5D, 0xC3 ]
-global-symbols:
-  - name:            _foo
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000F9A
-dependents:
-  - path:            /junk/libbar.dylib
-    kind:            LC_REEXPORT_DYLIB
-
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ MH_TWOLEVEL ]
-install-name:    /junk/libbar.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000F9A
-    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x5D, 0xC3 ]
-global-symbols:
-  - name:            _bar
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000F9A
-
---- !mach-o
-arch:            x86_64
-file-type:       MH_DYLIB
-flags:           [ MH_TWOLEVEL ]
-install-name:    /usr/lib/libSystem.B.dylib
-sections:
-  - segment:         __TEXT
-    section:         __text
-    type:            S_REGULAR
-    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
-    address:         0x0000000000000000
-    content:         [ 0x55 ]
-
-global-symbols:
-  - name:            dyld_stub_binder
-    type:            N_SECT
-    scope:           [ N_EXT ]
-    sect:            1
-    value:           0x0000000000000000
-
 ...
 
 # CHECK:	(undefined) external _bar (from libfoo)

@@ -1,5 +1,5 @@
-# RUN: lld -core --dead-strip --keep-globals  %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld -core --dead-strip  %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core --dead-strip --keep-globals  %s %p/Inputs/dead-strip-globals.objtxt %p/Inputs/dead-strip-globals2.objtxt | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core --dead-strip  %s  %p/Inputs/dead-strip-globals.objtxt %p/Inputs/dead-strip-globals2.objtxt | FileCheck -check-prefix=CHK2 %s
 
 #
 # Test that -keep-globals prevents -dead-strip from removing globals.
@@ -23,23 +23,6 @@ defined-atoms:
 undefined-atoms:
     - name:         bar
     - name:         baz
----
-defined-atoms:
-    - name:         myglobal2
-      scope:        global
-      type:         data
-
-    - name:         bar
-      scope:        hidden
-      type:         data
----
-defined-atoms:
-    - name:         baz
-      scope:        hidden
-      type:         code
-
-    - name:         mydead
-      type:         code
 ...
 
 

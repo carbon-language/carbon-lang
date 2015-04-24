@@ -1,4 +1,5 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/custom-section-coalesce.objtxt \
+# RUN: %p/Inputs/custom-section-coalesce2.objtxt | FileCheck %s
 
 #
 # Test that custom sections are preserved when duplicate merge-by-content
@@ -22,35 +23,6 @@ defined-atoms:
       section-name:      .mysection
 
     - ref-name:          L3
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 02, 03, 04 ]
-
----
-defined-atoms:
-    - ref-name:          L1
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 02, 03, 04 ]
-      section-choice:    custom-required
-      section-name:      .mysection
-
-    - ref-name:          L2
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 02, 03, 04 ]
-      section-choice:    custom-required
-      section-name:      .mysection2
----
-defined-atoms:
-    - ref-name:          L1
-      type:              constant
-      merge:             by-content
-      content:           [ 05, 06, 07, 08 ]
-      section-choice:    custom-required
-      section-name:      .mysection
-
-    - ref-name:          L2
       type:              constant
       merge:             by-content
       content:           [ 01, 02, 03, 04 ]

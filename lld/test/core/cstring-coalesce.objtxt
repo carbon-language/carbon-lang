@@ -15,18 +15,6 @@ defined-atoms:
       type:              c-string
       merge:             by-content
       content:           [ 74, 68, 65, 72, 65, 00 ]
----
-defined-atoms:
-    - ref-name:          L2
-      type:              c-string
-      merge:             by-content
-      content:           [ 68, 65, 6c, 6c, 6f, 00 ]
----
-defined-atoms:
-    - ref-name:          L2
-      type:              c-string
-      merge:             by-content
-      content:           [ 74, 68, 65, 72, 65, 00 ]
 ...
 
 # CHECK-NOT:   name:

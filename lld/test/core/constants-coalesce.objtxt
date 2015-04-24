@@ -1,4 +1,5 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/constants-coalesce.objtxt \
+# RUN: %p/Inputs/constants-coalesce2.objtxt | FileCheck %s
 
 #
 # Test that duplicate merge-by-content anonymous constants are coalesced
@@ -20,25 +21,6 @@ defined-atoms:
     - ref-name:          L1
       type:              constant
       content:           [ 01, 02 ]
----
-defined-atoms:
-    - ref-name:          L1
-      type:              constant
-      content:           [ 01, 02 ]
-    - ref-name:          L2
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 02, 03, 04 ]
----
-defined-atoms:
-    - ref-name:          L2
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 23, 45, 67, 89, AB, CD, EF ]
-    - ref-name:          L3
-      type:              constant
-      merge:             by-content
-      content:           [ 01, 02, 03 ]
 ...
 
 # CHECK-NOT:   name:

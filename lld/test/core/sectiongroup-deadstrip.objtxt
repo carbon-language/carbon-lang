@@ -1,6 +1,6 @@
 # Test for section group members be preserved even if there is a
 # reference to only one functions in the group.
-# RUN: lld -core --dead-strip %s | FileCheck %s
+# RUN: lld -core --dead-strip %s %p/Inputs/sectiongroup-deadstrip.objtxt | FileCheck %s
 
 #
 # Test that section groups are parsed properly when there is a reference to a
@@ -45,10 +45,6 @@ defined-atoms:
   - name:            anotherfunction
     scope:           global
     type:            data
----
-undefined-atoms:
-    - name:              f1
-      can-be-null:       never
 ...
 
 #CHECK: defined-atoms:

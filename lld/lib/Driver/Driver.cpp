@@ -54,9 +54,11 @@ FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
       = MemoryBuffer::getFileOrSTDIN(path);
   if (std::error_code ec = mb.getError())
     return makeErrorFile(path, ec);
-  std::vector<std::unique_ptr<File>> files;
-  if (std::error_code ec = ctx.registry().loadFile(std::move(mb.get()), files))
+  std::unique_ptr<File> file;
+  if (std::error_code ec = ctx.registry().loadFile(std::move(mb.get()), file))
     return makeErrorFile(path, ec);
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::move(file));
   if (wholeArchive)
     return parseMemberFiles(files);
   return files;

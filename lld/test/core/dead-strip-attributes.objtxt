@@ -1,4 +1,5 @@
-# RUN: lld -core %s | FileCheck %s
+# RUN: lld -core %s %p/Inputs/dead-strip-attributes.objtxt \
+# RUN: %p/Inputs/dead-strip-attributes2.objtxt | FileCheck %s
 
 #
 # Test that dead strip attributes are preserved
@@ -8,14 +9,6 @@
 defined-atoms:
     - name:         _foo1
       dead-strip:   normal
----
-defined-atoms:
-    - name:         _foo2
-      dead-strip:   never
----
-defined-atoms:
-    - name:         _foo3
-      dead-strip:   always
 ...
 
 

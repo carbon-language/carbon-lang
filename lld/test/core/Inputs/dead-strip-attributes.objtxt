@@ -1,0 +1,4 @@
+---
+defined-atoms:
+    - name:         _foo2
+      dead-strip:   never

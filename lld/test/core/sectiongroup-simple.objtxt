@@ -37,10 +37,6 @@ defined-atoms:
   - name:            anotherfunction
     scope:           global
     type:            data
----
-undefined-atoms:
-    - name:              f1
-      can-be-null:       never
 ...
 
 #CHECK: defined-atoms:

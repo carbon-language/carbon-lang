@@ -1,0 +1,9 @@
+---
+defined-atoms:
+    - name:         myglobal2
+      scope:        global
+      type:         data
+
+    - name:         bar
+      scope:        hidden
+      type:         data

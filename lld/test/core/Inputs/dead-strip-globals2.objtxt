@@ -1,0 +1,8 @@
+---
+defined-atoms:
+    - name:         baz
+      scope:        hidden
+      type:         code
+
+    - name:         mydead
+      type:         code

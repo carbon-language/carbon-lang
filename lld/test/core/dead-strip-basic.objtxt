@@ -1,5 +1,5 @@
-# RUN: lld -core --dead-strip  %s | FileCheck -check-prefix=CHK1 %s
-# RUN: lld -core  %s | FileCheck -check-prefix=CHK2 %s
+# RUN: lld -core --dead-strip  %s %p/Inputs/dead-strip-basic.objtxt %p/Inputs/dead-strip-basic2.objtxt | FileCheck -check-prefix=CHK1 %s
+# RUN: lld -core  %s %p/Inputs/dead-strip-basic.objtxt %p/Inputs/dead-strip-basic2.objtxt | FileCheck -check-prefix=CHK2 %s
 
 #
 # Test that -dead-strip removes unreachable code and data
@@ -25,23 +25,6 @@ undefined-atoms:
     - name:         bar
 
     - name:         baz
----
-defined-atoms:
-    - name:         mydead2
-      scope:        global
-      type:         data
-
-    - name:         bar
-      scope:        global
-      type:         data
----
-defined-atoms:
-    - name:         baz
-      scope:        global
-      type:         code
-
-    - name:         mydead3
-      type:         code
 ...
 
 

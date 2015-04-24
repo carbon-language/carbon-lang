@@ -173,9 +173,11 @@ private:
     std::unique_ptr<MemoryBuffer> memberMB(MemoryBuffer::getMemBuffer(
         mb.getBuffer(), mb.getBufferIdentifier(), false));
 
-    std::vector<std::unique_ptr<File>> files;
-    if (std::error_code ec = _registry.loadFile(std::move(memberMB), files))
+    std::unique_ptr<File> file;
+    if (std::error_code ec = _registry.loadFile(std::move(memberMB), file))
       return ec;
+    std::vector<std::unique_ptr<File>> files;
+    files.push_back(std::move(file));
     assert(files.size() == 1);
     result = std::move(files[0]);
     if (std::error_code ec = result->parse())
@@ -265,13 +267,12 @@ public:
     return magic == llvm::sys::fs::file_magic::archive;
   }
 
-  std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &reg,
-           std::vector<std::unique_ptr<File>> &result) const override {
+  std::error_code loadFile(std::unique_ptr<MemoryBuffer> mb,
+                           const Registry &reg,
+                           std::unique_ptr<File> &result) const override {
     StringRef path = mb->getBufferIdentifier();
-    std::unique_ptr<FileArchive> file(
-        new FileArchive(std::move(mb), reg, path, _logLoading));
-    result.push_back(std::move(file));
+    result =
+        llvm::make_unique<FileArchive>(std::move(mb), reg, path, _logLoading);
     return std::error_code();
   }
 
