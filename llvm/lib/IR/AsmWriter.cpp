@@ -1990,7 +1990,8 @@ private:
 
   /// \brief Print out metadata attachments.
   void printMetadataAttachments(
-      const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs);
+      const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs,
+      StringRef Separator);
 
   // printInfoComment - Print a little comment after the instruction indicating
   // which slot it occupies.
@@ -2957,14 +2958,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print Metadata info.
   SmallVector<std::pair<unsigned, MDNode *>, 4> InstMD;
   I.getAllMetadata(InstMD);
-  printMetadataAttachments(InstMD);
+  printMetadataAttachments(InstMD, ", ");
 
   // Print a nice comment.
   printInfoComment(I);
 }
 
 void AssemblyWriter::printMetadataAttachments(
-    const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs) {
+    const SmallVectorImpl<std::pair<unsigned, MDNode *>> &MDs,
+    StringRef Separator) {
   if (MDs.empty())
     return;
 
@@ -2973,11 +2975,11 @@ void AssemblyWriter::printMetadataAttachments(
 
   for (const auto &I : MDs) {
     unsigned Kind = I.first;
-    if (Kind < MDNames.size()) {
-      Out << ", !" << MDNames[Kind];
-    } else {
-      Out << ", !<unknown kind #" << Kind << ">";
-    }
+    Out << Separator;
+    if (Kind < MDNames.size())
+      Out << "!" << MDNames[Kind];
+    else
+      Out << "!<unknown kind #" << Kind << ">";
     Out << ' ';
     WriteAsOperandInternal(Out, I.second, &TypePrinter, &Machine, TheModule);
   }
