@@ -36,7 +36,7 @@ PYTHON_DIR := $(PROJ_OBJ_ROOT)/$(BuildMode)
 SWIG_SOURCES := $(shell find $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts -type f -name '*.swig' -print)
 
 LLDBWrapPython.cpp lldb.py: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py \
-                            $(wildcard $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/interface/*.i) \
+                            $(wildcard $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/interface/*.i) \
                             ${SWIG_SOURCES}
 	$(Echo) Generating LLDBWrapPython.cpp
 	$(Verb) "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/build-swig-wrapper-classes.sh" "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)" "$(PROJ_OBJ_DIR)" "$(PROJ_OBJ_DIR)" "$(PYTHON_DIR)" -m $(if $(DISABLE_AUTO_DEPENDENCIES),,-M)

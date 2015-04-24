@@ -3230,7 +3230,7 @@
 				B2A5872514313B480092BFBA /* SBWatchpoint.i */,
 			);
 			name = interface;
-			path = scripts/Python/interface;
+			path = scripts/interface;
 			sourceTree = SOURCE_ROOT;
 		};
 		26274FA414030F79006BA130 /* Darwin-Kernel */ = {

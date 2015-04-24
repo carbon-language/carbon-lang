@@ -260,6 +260,9 @@ def run_post_process_for_each_script_supported( vDictArgs ):
         if nDepth == 0:
             break;
 
+    # Skip the directory that contains the interface files.
+    listDirs.remove('interface')
+
     if gbDbgFlag:
         print strScriptLangsFound,
         for dir in listDirs:
