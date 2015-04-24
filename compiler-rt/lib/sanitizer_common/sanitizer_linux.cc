@@ -915,9 +915,11 @@ void *internal_start_thread(void(*func)(void *arg), void *arg) {
   // Start the thread with signals blocked, otherwise it can steal user signals.
   __sanitizer_sigset_t set, old;
   internal_sigfillset(&set);
+#if SANITIZER_LINUX
   // Glibc uses SIGSETXID signal during setuid call. If this signal is blocked
   // on any thread, setuid call hangs (see test/tsan/setuid.c).
   internal_sigdelset(&set, 33);
+#endif
   internal_sigprocmask(SIG_SETMASK, &set, &old);
   void *th;
   real_pthread_create(&th, 0, (void*(*)(void *arg))func, arg);
