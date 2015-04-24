@@ -15,6 +15,7 @@
 // In-house headers:
 #include "MICmnBase.h"
 #include "MIUtilString.h"
+#include "MICmnMIValueConst.h"
 #include "MICmnMIValueResult.h"
 
 //++ ============================================================================
@@ -63,6 +64,7 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
         eOutOfBand_ThreadSelected,
         eOutOfBand_TargetModulesLoaded,
         eOutOfBand_TargetModulesUnloaded,
+        eOutOfBand_TargetStreamOutput,
         eOutOfBand_count // Always the last one
     };
 
@@ -75,10 +77,11 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
   public:
     /* ctor */ CMICmnMIOutOfBandRecord(void);
     /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType);
-    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vValue);
+    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueConst &vConst);
+    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vResult);
     //
     const CMIUtilString &GetString(void) const;
-    bool Add(const CMICmnMIValue &vMIValue);
+    bool Add(const CMICmnMIValueResult &vResult);
 
     // Overridden:
   public:

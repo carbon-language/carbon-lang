@@ -26,7 +26,8 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_MapOutOfBandToOutOfBan
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadExited, "thread-exited"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadSelected, "thread-selected"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesLoaded, "shlibs-added"},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "shlibs-removed"}};
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "shlibs-removed"},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, ""}};
 CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTextToToken = {
     {CMICmnMIOutOfBandRecord::eOutOfBand_Running, "*"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, "*"},
@@ -41,7 +42,8 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTex
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadExited, "="},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadSelected, "="},
     {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesLoaded, "="},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "="}};
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "="},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, "@"}};
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnMIOutOfBandRecord constructor.
@@ -73,14 +75,30 @@ CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(const OutOfBand_e veType)
 // Details: CMICmnMIOutOfBandRecord constructor.
 // Type:    Method.
 // Args:    veType      - (R) A MI Out-of-Bound enumeration.
-//          vMIResult   - (R) A MI result object.
+//          vConst      - (R) A MI const object.
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vValue)
+CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueConst &vConst)
     : m_eResultAsyncRecordClass(veType)
     , m_strAsyncRecord(MIRSRC(IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION))
-    , m_partResult(vValue)
+{
+    BuildAsyncRecord();
+    m_strAsyncRecord += vConst.GetString();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmnMIOutOfBandRecord constructor.
+// Type:    Method.
+// Args:    veType      - (R) A MI Out-of-Bound enumeration.
+//          vResult     - (R) A MI result object.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vResult)
+    : m_eResultAsyncRecordClass(veType)
+    , m_strAsyncRecord(MIRSRC(IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION))
+    , m_partResult(vResult)
 {
     BuildAsyncRecord();
     Add(m_partResult);
@@ -136,16 +154,16 @@ CMICmnMIOutOfBandRecord::BuildAsyncRecord(void)
 //++ ------------------------------------------------------------------------------------
 // Details: Add to *this Out-of-band record additional information.
 // Type:    Method.
-// Args:    vMIValue    - (R) A MI value derived object.
+// Args:    vResult           - (R) A MI result object.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.
 //--
 bool
-CMICmnMIOutOfBandRecord::Add(const CMICmnMIValue &vMIValue)
+CMICmnMIOutOfBandRecord::Add(const CMICmnMIValueResult &vResult)
 {
     m_strAsyncRecord += ",";
-    m_strAsyncRecord += vMIValue.GetString();
+    m_strAsyncRecord += vResult.GetString();
 
     return MIstatus::success;
 }
