@@ -734,21 +734,13 @@ bool RelocationPass<ELFT>::isDynamic(const Atom *atom) const {
   const auto *da = dyn_cast<const DefinedAtom>(atom);
   if (da && da->dynamicExport() == DefinedAtom::dynamicExportAlways)
     return true;
-
-  const auto *sa = dyn_cast<SharedLibraryAtom>(atom);
-  if (sa)
+  if (isa<SharedLibraryAtom>(atom))
     return true;
-
-  if (_ctx.getOutputELFType() == ET_DYN) {
-    if (da && da->scope() != DefinedAtom::scopeTranslationUnit)
-      return true;
-
-    const auto *ua = dyn_cast<UndefinedAtom>(atom);
-    if (ua)
-      return true;
-  }
-
-  return false;
+  if (_ctx.getOutputELFType() != ET_DYN)
+    return false;
+  if (da && da->scope() != DefinedAtom::scopeTranslationUnit)
+    return true;
+  return isa<UndefinedAtom>(atom);
 }
 
 template <typename ELFT>
