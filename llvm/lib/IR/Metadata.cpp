@@ -1007,22 +1007,14 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   }
 
   auto &Info = InstructionMetadata[this];
-  unsigned I;
-  unsigned E;
-  // Walk the array and drop any metadata we don't know.
-  for (I = 0, E = Info.size(); I != E;) {
-    if (KnownSet.count(Info[I].first)) {
-      ++I;
-      continue;
-    }
+  Info.erase(std::remove_if(
+                 Info.begin(), Info.end(),
+                 [&KnownSet](const std::pair<unsigned, TrackingMDNodeRef> &I) {
+                   return !KnownSet.count(I.first);
+                 }),
+             Info.end());
 
-    Info[I] = std::move(Info.back());
-    Info.pop_back();
-    --E;
-  }
-  assert(E == Info.size());
-
-  if (E == 0) {
+  if (Info.empty()) {
     // Drop our entry at the store.
     InstructionMetadata.erase(this);
     setHasMetadataHashEntry(false);
