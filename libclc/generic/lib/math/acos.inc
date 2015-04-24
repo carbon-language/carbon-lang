@@ -11,11 +11,19 @@
  * precision of #4 may be better.
  */
 
+#if __CLC_FPSIZE == 32
+#define __CLC_CONST(x) x ## f
+#else
+#define __CLC_CONST(x) x
+#endif
+
 _CLC_OVERLOAD _CLC_DEF __CLC_GENTYPE acos(__CLC_GENTYPE x) {
   return (
-    (__CLC_GENTYPE) 2.0 * atan2(
-      sqrt((__CLC_GENTYPE) 1.0 - x),
-      sqrt((__CLC_GENTYPE) 1.0 + x)
+    (__CLC_GENTYPE) __CLC_CONST(2.0) * atan2(
+      sqrt((__CLC_GENTYPE) __CLC_CONST(1.0) - x),
+      sqrt((__CLC_GENTYPE) __CLC_CONST(1.0) + x)
     )
   );
 }
+
+#undef __CLC_CONST
