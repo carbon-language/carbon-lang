@@ -247,9 +247,8 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
       OS << format(", %s", (const char*)symbol->Name);
 
     // Print the source file and line number information.
-    IMAGEHLP_LINE64 line;
+    IMAGEHLP_LINE64 line = {};
     DWORD dwLineDisp;
-    memset(&line, 0, sizeof(line));
     line.SizeOfStruct = sizeof(line);
     if (SymGetLineFromAddr64(hProcess, PC, &dwLineDisp, &line)) {
       OS << format(", %s, line %lu", line.FileName, line.LineNumber);
@@ -404,8 +403,7 @@ extern "C" VOID WINAPI RtlCaptureContext(PCONTEXT ContextRecord);
 void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 
   STACKFRAME64 StackFrame = {};
-  CONTEXT Context;
-  memset(&Context, 0, sizeof(Context));
+  CONTEXT Context = {};
   ::RtlCaptureContext(&Context);
 #if defined(_M_X64)
   StackFrame.AddrPC.Offset = Context.Rip;
@@ -477,8 +475,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   Cleanup();
 
   // Initialize the STACKFRAME structure.
-  STACKFRAME64 StackFrame;
-  memset(&StackFrame, 0, sizeof(StackFrame));
+  STACKFRAME64 StackFrame = {};
 
 #if defined(_M_X64)
   StackFrame.AddrPC.Offset = ep->ContextRecord->Rip;
