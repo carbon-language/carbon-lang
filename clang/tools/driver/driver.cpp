@@ -27,7 +27,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
