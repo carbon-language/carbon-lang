@@ -191,7 +191,7 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
     return false;
 
   // Build up the final weights that will be used in a temporary buffer, but
-  // don't add them until all weihts are present. Each weight value is clamped
+  // don't add them until all weights are present. Each weight value is clamped
   // to [1, getMaxWeightFor(BB)].
   uint32_t WeightLimit = getMaxWeightFor(BB);
   SmallVector<uint32_t, 2> Weights;
