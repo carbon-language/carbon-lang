@@ -18,7 +18,7 @@
 
 // Effects: aborts if -a overflows
 
-si_int __negvsi2(si_int a);
+COMPILER_RT_ABI si_int __negvsi2(si_int a);
 
 int test__negvsi2(si_int a)
 {

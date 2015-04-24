@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "int_lib.h"
 #include <stdio.h>
 
 #if __LDBL_MANT_DIG__ == 113
@@ -18,7 +19,7 @@
 #include "fp_test.h"
 
 // Returns: a / b
-long double __divtf3(long double a, long double b);
+COMPILER_RT_ABI long double __divtf3(long double a, long double b);
 
 int test__divtf3(long double a, long double b,
                  uint64_t expectedHi, uint64_t expectedLo)

@@ -19,7 +19,7 @@
 
 // Effects: aborts if abs(x) < 0
 
-si_int __absvsi2(si_int a);
+COMPILER_RT_ABI si_int __absvsi2(si_int a);
 
 int test__absvsi2(si_int a)
 {

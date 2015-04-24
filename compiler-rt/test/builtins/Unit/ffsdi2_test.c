@@ -17,7 +17,7 @@
 // Returns: the index of the least significant 1-bit in a, or
 // the value zero if a is zero. The least significant bit is index one.
 
-si_int __ffsdi2(di_int a);
+COMPILER_RT_ABI si_int __ffsdi2(di_int a);
 
 int test__ffsdi2(di_int a, si_int expected)
 {

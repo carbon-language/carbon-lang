@@ -14,9 +14,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "int_lib.h"
 
-
-extern float __floatunssisfvfp(unsigned int a);
+extern COMPILER_RT_ABI float __floatunssisfvfp(unsigned int a);
 
 #if __arm__
 int test__floatunssisfvfp(unsigned int a)

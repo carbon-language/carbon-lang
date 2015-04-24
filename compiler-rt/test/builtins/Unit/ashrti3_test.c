@@ -20,7 +20,7 @@
 
 // Precondition:  0 <= b < bits_in_tword
 
-ti_int __ashrti3(ti_int a, si_int b);
+COMPILER_RT_ABI ti_int __ashrti3(ti_int a, si_int b);
 
 int test__ashrti3(ti_int a, si_int b, ti_int expected)
 {

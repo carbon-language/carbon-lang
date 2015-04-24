@@ -16,7 +16,7 @@
 
 #ifdef CRT_HAS_128BIT
 
-ti_int __multi3(ti_int a, ti_int b);
+COMPILER_RT_ABI ti_int __multi3(ti_int a, ti_int b);
 
 int test__multi3(ti_int a, ti_int b, ti_int expected)
 {

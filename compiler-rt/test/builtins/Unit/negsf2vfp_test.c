@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "int_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 
-extern float __negsf2vfp(float a);
+extern COMPILER_RT_ABI float __negsf2vfp(float a);
 
 #if __arm__
 int test__negsf2vfp(float a)

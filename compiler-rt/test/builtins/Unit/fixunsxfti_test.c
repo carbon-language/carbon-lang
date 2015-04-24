@@ -27,7 +27,7 @@
 // gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
 // 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-tu_int __fixunsxfti(long double a);
+COMPILER_RT_ABI tu_int __fixunsxfti(long double a);
 
 int test__fixunsxfti(long double a, tu_int expected)
 {

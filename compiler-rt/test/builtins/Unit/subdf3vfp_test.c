@@ -17,7 +17,7 @@
 
 
 #if __arm__
-extern double __subdf3vfp(double a, double b);
+extern COMPILER_RT_ABI double __subdf3vfp(double a, double b);
 
 int test__subdf3vfp(double a, double b)
 {

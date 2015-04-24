@@ -17,7 +17,7 @@
 
 /* Returns: a % b */
 
-si_int __modsi3(si_int a, si_int b);
+COMPILER_RT_ABI si_int __modsi3(si_int a, si_int b);
 
 int test__modsi3(si_int a, si_int b, si_int expected) {
     si_int x = __modsi3(a, b);

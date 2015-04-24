@@ -25,7 +25,7 @@
 // gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
 // 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-ti_int __fixxfti(long double a);
+COMPILER_RT_ABI ti_int __fixxfti(long double a);
 
 int test__fixxfti(long double a, ti_int expected)
 {

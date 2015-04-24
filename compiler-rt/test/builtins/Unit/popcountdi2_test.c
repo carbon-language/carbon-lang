@@ -17,7 +17,7 @@
 
 // Returns: count of 1 bits
 
-si_int __popcountdi2(di_int a);
+COMPILER_RT_ABI si_int __popcountdi2(di_int a);
 
 int naive_popcount(di_int a)
 {

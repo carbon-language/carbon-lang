@@ -18,7 +18,7 @@
 
 // Effects: aborts if a + b overflows
 
-si_int __addvsi3(si_int a, si_int b);
+COMPILER_RT_ABI si_int __addvsi3(si_int a, si_int b);
 
 int test__addvsi3(si_int a, si_int b)
 {

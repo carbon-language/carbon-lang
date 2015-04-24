@@ -22,7 +22,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-di_int __fixdfdi(double a);
+COMPILER_RT_ABI di_int __fixdfdi(double a);
 
 int test__fixdfdi(double a, di_int expected)
 {

@@ -26,7 +26,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-tu_int __fixunssfti(float a);
+COMPILER_RT_ABI tu_int __fixunssfti(float a);
 
 int test__fixunssfti(float a, tu_int expected)
 {

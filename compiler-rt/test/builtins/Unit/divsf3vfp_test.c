@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "int_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 
-extern float __divsf3vfp(float a, float b);
+extern COMPILER_RT_ABI float __divsf3vfp(float a, float b);
 
 #if __arm__
 int test__divsf3vfp(float a, float b)

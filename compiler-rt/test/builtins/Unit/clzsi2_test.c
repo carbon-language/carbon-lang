@@ -18,7 +18,7 @@
 
 // Precondition: a != 0
 
-si_int __clzsi2(si_int a);
+COMPILER_RT_ABI si_int __clzsi2(si_int a);
 
 int test__clzsi2(si_int a, si_int expected)
 {

@@ -22,7 +22,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-double __floatdidf(di_int a);
+COMPILER_RT_ABI double __floatdidf(di_int a);
 
 int test__floatdidf(di_int a, double expected)
 {

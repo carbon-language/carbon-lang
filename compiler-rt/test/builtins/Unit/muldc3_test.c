@@ -18,7 +18,8 @@
 
 // Returns: the product of a + ib and c + id
 
-double _Complex __muldc3(double __a, double __b, double __c, double __d);
+COMPILER_RT_ABI double _Complex
+__muldc3(double __a, double __b, double __c, double __d);
 
 enum {zero, non_zero, inf, NaN, non_zero_nan};
 

@@ -16,7 +16,7 @@
 
 // Returns: a / b
 
-extern su_int __udivmodsi4(su_int a, su_int b, su_int* rem);
+extern COMPILER_RT_ABI su_int __udivmodsi4(su_int a, su_int b, su_int* rem);
 
 int test__udivmodsi4(su_int a, su_int b, 
 						su_int expected_result, su_int expected_rem)

@@ -20,8 +20,8 @@
 
 // Effects: aborts if -a overflows
 
-ti_int __negvti2(ti_int a);
-ti_int __negti2(ti_int a);
+COMPILER_RT_ABI ti_int __negvti2(ti_int a);
+COMPILER_RT_ABI ti_int __negti2(ti_int a);
 
 int test__negvti2(ti_int a)
 {

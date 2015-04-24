@@ -22,7 +22,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-float __floatundisf(du_int a);
+COMPILER_RT_ABI float __floatundisf(du_int a);
 
 int test__floatundisf(du_int a, float expected)
 {

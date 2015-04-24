@@ -24,7 +24,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-su_int __fixunssfsi(float a);
+COMPILER_RT_ABI su_int __fixunssfsi(float a);
 
 int test__fixunssfsi(float a, su_int expected)
 {

@@ -20,7 +20,7 @@
 //           if (a == b) returns 1
 //           if (a >  b) returns 2
 
-si_int __ucmpti2(tu_int a, tu_int b);
+COMPILER_RT_ABI si_int __ucmpti2(tu_int a, tu_int b);
 
 int test__ucmpti2(tu_int a, tu_int b, si_int expected)
 {

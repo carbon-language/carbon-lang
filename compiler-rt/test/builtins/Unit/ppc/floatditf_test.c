@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-long double __floatditf(int64_t);
+COMPILER_RT_ABI long double __floatditf(int64_t);
 
 #include "floatunditf_test.h"
 #include "DD.h"

@@ -24,7 +24,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-du_int __fixunssfdi(float a);
+COMPILER_RT_ABI du_int __fixunssfdi(float a);
 
 int test__fixunssfdi(float a, du_int expected)
 {

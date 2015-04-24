@@ -24,7 +24,7 @@
 
 // seee eeee emmm mmmm mmmm mmmm mmmm mmmm
 
-float __floattisf(ti_int a);
+COMPILER_RT_ABI float __floattisf(ti_int a);
 
 int test__floattisf(ti_int a, float expected)
 {

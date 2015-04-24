@@ -21,7 +21,7 @@
 
 // Effects: aborts if abs(x) < 0
 
-ti_int __absvti2(ti_int a);
+COMPILER_RT_ABI ti_int __absvti2(ti_int a);
 
 int test__absvti2(ti_int a)
 {

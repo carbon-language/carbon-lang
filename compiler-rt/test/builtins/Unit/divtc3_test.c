@@ -21,7 +21,7 @@
 
 // Returns: the quotient of (a + ib) / (c + id)
 
-long double _Complex 
+COMPILER_RT_ABI long double _Complex
 __divtc3(long double __a, long double __b, long double __c, long double __d);
 
 enum {zero, non_zero, inf, NaN, non_zero_nan};

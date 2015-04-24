@@ -24,7 +24,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-su_int __fixunsdfsi(double a);
+COMPILER_RT_ABI su_int __fixunsdfsi(double a);
 
 int test__fixunsdfsi(double a, su_int expected)
 {

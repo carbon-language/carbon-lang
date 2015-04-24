@@ -18,7 +18,7 @@
 
 // Effects: aborts if a * b overflows
 
-si_int __mulosi4(si_int a, si_int b, int *overflow);
+COMPILER_RT_ABI si_int __mulosi4(si_int a, si_int b, int *overflow);
 
 int test__mulosi4(si_int a, si_int b, si_int expected, int expected_overflow)
 {

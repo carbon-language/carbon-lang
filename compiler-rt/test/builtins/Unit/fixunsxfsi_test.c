@@ -26,7 +26,7 @@
 // gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
 // 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-su_int __fixunsxfsi(long double a);
+COMPILER_RT_ABI su_int __fixunsxfsi(long double a);
 
 int test__fixunsxfsi(long double a, su_int expected)
 {

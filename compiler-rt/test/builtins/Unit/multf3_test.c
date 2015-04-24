@@ -18,7 +18,7 @@
 #include "fp_test.h"
 
 // Returns: a * b
-long double __multf3(long double a, long double b);
+COMPILER_RT_ABI long double __multf3(long double a, long double b);
 
 int test__multf3(long double a, long double b,
                  uint64_t expectedHi, uint64_t expectedLo)

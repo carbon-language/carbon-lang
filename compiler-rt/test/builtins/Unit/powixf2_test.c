@@ -19,7 +19,7 @@
 
 // Returns: a ^ b
 
-long double __powixf2(long double a, si_int b);
+COMPILER_RT_ABI long double __powixf2(long double a, si_int b);
 
 int test__powixf2(long double a, si_int b, long double expected)
 {

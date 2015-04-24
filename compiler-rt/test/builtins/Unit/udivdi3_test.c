@@ -16,7 +16,7 @@
 
 // Returns: a / b
 
-du_int __udivdi3(du_int a, du_int b);
+COMPILER_RT_ABI du_int __udivdi3(du_int a, du_int b);
 
 int test__udivdi3(du_int a, du_int b, du_int expected_q)
 {

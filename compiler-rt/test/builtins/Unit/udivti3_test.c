@@ -18,7 +18,7 @@
 
 // Returns: a / b
 
-tu_int __udivti3(tu_int a, tu_int b);
+COMPILER_RT_ABI tu_int __udivti3(tu_int a, tu_int b);
 
 int test__udivti3(tu_int a, tu_int b, tu_int expected_q)
 {

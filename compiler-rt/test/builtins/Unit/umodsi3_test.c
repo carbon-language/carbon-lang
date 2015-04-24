@@ -16,7 +16,7 @@
 
 // Returns: a % b
 
-su_int __umodsi3(su_int a, su_int b);
+COMPILER_RT_ABI su_int __umodsi3(su_int a, su_int b);
 
 int test__umodsi3(su_int a, su_int b, su_int expected_r)
 {

@@ -18,7 +18,7 @@
 //           if (a == b) returns 1
 //           if (a >  b) returns 2
 
-si_int __cmpdi2(di_int a, di_int b);
+COMPILER_RT_ABI si_int __cmpdi2(di_int a, di_int b);
 
 int test__cmpdi2(di_int a, di_int b, si_int expected)
 {
