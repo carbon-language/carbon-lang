@@ -15,7 +15,12 @@ int main(void) {
   char inbuf_[100];
   strcpy(inbuf_, "sample text");
   char outbuf_[100];
+#if defined(__FreeBSD__)
+  // FreeBSD's iconv() expects the 2nd argument be of type 'const char**'.
+  const char *inbuf = inbuf_;
+#else
   char *inbuf = inbuf_;
+#endif
   char *outbuf = outbuf_;
   size_t inbytesleft = strlen(inbuf_);
   size_t outbytesleft = sizeof(outbuf_);

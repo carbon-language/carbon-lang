@@ -47,6 +47,7 @@
 #define pthread_setname_np pthread_set_name_np
 #define inet_aton __inet_aton
 #define inet_pton __inet_pton
+#define iconv __bsd_iconv
 #endif
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
