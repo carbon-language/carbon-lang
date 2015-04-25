@@ -1,14 +1,18 @@
-; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+avx < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+sse2 < %s | FileCheck %s --check-prefix=SSE
+; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+avx < %s | FileCheck %s --check-prefix=AVX
 
 ; Verify that we're folding the load into the math instruction.
 
-; FIXME: The folding should also happen without the avx attribute; 
-; ie, when generating SSE (non-VEX-prefixed) instructions.
-
 define float @rcpss(float* %a) {
-; CHECK-LABEL: rcpss:
-; CHECK:       vrcpss (%rdi), %xmm0, %xmm0
-
+; SSE-LABEL: rcpss:
+; SSE:       # BB#0:
+; SSE-NEXT:    rcpss (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: rcpss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vrcpss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %ld = load float, float* %a
     %ins = insertelement <4 x float> undef, float %ld, i32 0
     %res = tail call <4 x float> @llvm.x86.sse.rcp.ss(<4 x float> %ins)
@@ -17,9 +21,15 @@ define float @rcpss(float* %a) {
 }
 
 define float @rsqrtss(float* %a) {
-; CHECK-LABEL: rsqrtss:
-; CHECK:       vrsqrtss (%rdi), %xmm0, %xmm0
-
+; SSE-LABEL: rsqrtss:
+; SSE:       # BB#0:
+; SSE-NEXT:    rsqrtss (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: rsqrtss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vrsqrtss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %ld = load float, float* %a
     %ins = insertelement <4 x float> undef, float %ld, i32 0
     %res = tail call <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float> %ins)
@@ -28,9 +38,15 @@ define float @rsqrtss(float* %a) {
 }
 
 define float @sqrtss(float* %a) {
-; CHECK-LABEL: sqrtss:
-; CHECK:       vsqrtss (%rdi), %xmm0, %xmm0
-
+; SSE-LABEL: sqrtss:
+; SSE:       # BB#0:
+; SSE-NEXT:    sqrtss (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: sqrtss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsqrtss (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %ld = load float, float* %a
     %ins = insertelement <4 x float> undef, float %ld, i32 0
     %res = tail call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %ins)
@@ -39,9 +55,15 @@ define float @sqrtss(float* %a) {
 }
 
 define double @sqrtsd(double* %a) {
-; CHECK-LABEL: sqrtsd:
-; CHECK:       vsqrtsd (%rdi), %xmm0, %xmm0
-
+; SSE-LABEL: sqrtsd:
+; SSE:       # BB#0:
+; SSE-NEXT:    sqrtsd (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: sqrtsd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsqrtsd (%rdi), %xmm0, %xmm0
+; AVX-NEXT:    retq
     %ld = load double, double* %a
     %ins = insertelement <2 x double> undef, double %ld, i32 0
     %res = tail call <2 x double> @llvm.x86.sse2.sqrt.sd(<2 x double> %ins)
