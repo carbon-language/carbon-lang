@@ -77,13 +77,18 @@ CMICmnLLDBUtilSBValue::GetValue(const bool vbExpandAggregates /* = false */) con
     if (!m_bValidSBValue)
         return m_pUnkwn;
 
-    const bool bHandleArrayTypeAsSimple = m_bHandleArrayType && !vbExpandAggregates;
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    bool bPrintExpandAggregates = false;
+    bPrintExpandAggregates = rSessionInfo.SharedDataRetrieve<bool>(rSessionInfo.m_constStrPrintExpandAggregates,
+                                                                   bPrintExpandAggregates) && bPrintExpandAggregates;
+
+    const bool bHandleArrayTypeAsSimple = m_bHandleArrayType && !vbExpandAggregates && !bPrintExpandAggregates;
     CMIUtilString value;
     const bool bIsSimpleValue = GetSimpleValue(bHandleArrayTypeAsSimple, value);
     if (bIsSimpleValue)
         return value;
 
-    if (!vbExpandAggregates)
+    if (!vbExpandAggregates && !bPrintExpandAggregates)
         return m_pComposite;
 
     CMICmnMIValueTuple miValueTuple;

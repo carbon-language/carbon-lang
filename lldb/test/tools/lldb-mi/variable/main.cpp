@@ -43,6 +43,15 @@ gdb_set_show_print_char_array_as_string_test(void)
     // BP_gdb_set_show_print_char_array_as_string_test
 }
 
+void
+gdb_set_show_print_expand_aggregates(void)
+{
+    complex_type complx = { 3, { 3L }, &complx };
+    complex_type complx_array[2] = { { 4, { 4L }, &complx_array[1] }, { 5, { 5 }, &complx_array[0] } };
+
+    // BP_gdb_set_show_print_expand_aggregates
+}
+
 int g_MyVar = 3;
 static int s_MyVar = 4;
 
@@ -53,5 +62,6 @@ main(int argc, char const *argv[])
     s_MyVar = a + b;
     var_update_test();
     gdb_set_show_print_char_array_as_string_test();
+    gdb_set_show_print_expand_aggregates();
     return 0; // BP_return
 }

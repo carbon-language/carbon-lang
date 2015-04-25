@@ -282,6 +282,8 @@ CMICmdCmdGdbSet::OptionFnPrint(const CMIUtilString::VecString_t &vrWords)
     CMIUtilString strOptionKey;
     if (CMIUtilString::Compare(strOption, "char-array-as-string"))
         strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintCharArrayAsString;
+    else if (CMIUtilString::Compare(strOption, "expand-aggregates"))
+        strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintExpandAggregates;
     else
     {
         m_bGbbOptionFnHasError = true;

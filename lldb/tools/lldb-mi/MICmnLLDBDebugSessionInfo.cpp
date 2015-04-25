@@ -41,6 +41,7 @@ CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo(void)
     , m_constStrSharedDataKeyWkDir("Working Directory")
     , m_constStrSharedDataSolibPath("Solib Path")
     , m_constStrPrintCharArrayAsString("Print CharArrayAsString")
+    , m_constStrPrintExpandAggregates("Print ExpandAggregates")
 {
 }
 

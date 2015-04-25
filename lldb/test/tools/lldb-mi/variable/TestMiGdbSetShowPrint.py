@@ -65,5 +65,60 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-gdb-set print char-array-as-string unknown")
         self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
 
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_lldbmi_gdb_set_show_print_expand_aggregates(self):
+        """Test that 'lldb-mi --interpreter' can expand aggregates everywhere."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to BP_gdb_set_show_print_expand_aggregates
+        line = line_number('main.cpp', '// BP_gdb_set_show_print_expand_aggregates')
+        self.runCmd("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that default print expand-aggregates value is "off"
+        self.runCmd("-gdb-show print expand-aggregates")
+        self.expect("\^done,value=\"off\"")
+
+        # Test that composite type isn't expanded when print expand-aggregates is "off"
+        self.runCmd("-var-create var1 * complx")
+        self.expect("\^done,name=\"var1\",numchild=\"3\",value=\"{\.\.\.}\",type=\"complex_type\",thread-id=\"1\",has_more=\"0\"")
+
+        # Test that composite type[] isn't expanded when print expand-aggregates is "off"
+        self.runCmd("-var-create var2 * complx_array")
+        self.expect("\^done,name=\"var2\",numchild=\"2\",value=\"\[2\]\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
+
+        # Test that -gdb-set can set print expand-aggregates flag
+        self.runCmd("-gdb-set print expand-aggregates on")
+        self.expect("\^done")
+        self.runCmd("-gdb-set print expand-aggregates 1")
+        self.expect("\^done")
+        self.runCmd("-gdb-show print expand-aggregates")
+        self.expect("\^done,value=\"on\"")
+
+        # Test that composite type is expanded when print expand-aggregates is "on"
+        self.runCmd("-var-create var3 * complx")
+        self.expect("\^done,name=\"var3\",numchild=\"3\",value=\"{i = 3, inner = {l = 3}, complex_ptr = 0x[0-9a-f]+}\",type=\"complex_type\",thread-id=\"1\",has_more=\"0\"")
+
+        # Test that composite type[] is expanded when print expand-aggregates is "on"
+        self.runCmd("-var-create var4 * complx_array")
+        self.expect("\^done,name=\"var4\",numchild=\"2\",value=\"{\[0\] = {i = 4, inner = {l = 4}, complex_ptr = 0x[0-9a-f]+}, \[1\] = {i = 5, inner = {l = 5}, complex_ptr = 0x[0-9a-f]+}}\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
+
+        # Test that -gdb-set print expand-aggregates fails if "on"/"off" isn't specified
+        self.runCmd("-gdb-set print expand-aggregates")
+        self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
+
+        # Test that -gdb-set print expand-aggregates fails when option is unknown
+        self.runCmd("-gdb-set print expand-aggregates unknown")
+        self.expect("\^error,msg=\"The request ''print' expects option-name and \"on\" or \"off\"' failed.\"")
+
 if __name__ == '__main__':
     unittest2.main()
