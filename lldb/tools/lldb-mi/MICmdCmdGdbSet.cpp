@@ -21,6 +21,7 @@
 // Instantiations:
 const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_mapGdbOptionNameToFnGdbOptionPtr = {
     {"target-async", &CMICmdCmdGdbSet::OptionFnTargetAsync},
+    {"print", &CMICmdCmdGdbSet::OptionFnPrint},
     // { "auto-solib-add", &CMICmdCmdGdbSet::OptionFnAutoSolibAdd },    // Example code if need to implement GDB set other options
     {"output-radix", &CMICmdCmdGdbSet::OptionFnOutputRadix},
     {"solib-search-path", &CMICmdCmdGdbSet::OptionFnSolibSearchPath},
@@ -251,6 +252,50 @@ CMICmdCmdGdbSet::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
     // Turn async mode on/off.
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     rSessionInfo.GetDebugger().SetAsync(bAsyncMode);
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Carry out work to complete the GDB set option 'print-char-array-as-string' to
+//          prepare and send back information asked for.
+// Type:    Method.
+// Args:    vrWords - (R) List of additional parameters used by this option.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdGdbSet::OptionFnPrint(const CMIUtilString::VecString_t &vrWords)
+{
+    const bool bAllArgs(vrWords.size() == 2);
+    const bool bArgOn(bAllArgs && (CMIUtilString::Compare(vrWords[1], "on") || CMIUtilString::Compare(vrWords[1], "1")));
+    const bool bArgOff(bAllArgs && (CMIUtilString::Compare(vrWords[1], "off") || CMIUtilString::Compare(vrWords[1], "0")));
+    if (!bAllArgs || (!bArgOn && !bArgOff))
+    {
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSET_OPT_PRINT_BAD_ARGS);
+        return MIstatus::failure;
+    }
+
+    const CMIUtilString strOption(vrWords[0]);
+    CMIUtilString strOptionKey;
+    if (CMIUtilString::Compare(strOption, "char-array-as-string"))
+        strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintCharArrayAsString;
+    else
+    {
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_GDBSET_OPT_PRINT_UNKNOWN_OPTION), strOption.c_str());
+        return MIstatus::failure;
+    }
+
+    const bool bOptionValue(bArgOn);
+    if (!m_rLLDBDebugSessionInfo.SharedDataAdd<bool>(strOptionKey, bOptionValue))
+    {
+        m_bGbbOptionFnHasError = false;
+        SetError(CMIUtilString::Format(MIRSRC(IDS_DBGSESSION_ERR_SHARED_DATA_ADD), m_cmdData.strMiCmd.c_str(), strOptionKey.c_str()));
+        return MIstatus::failure;
+    }
 
     return MIstatus::success;
 }

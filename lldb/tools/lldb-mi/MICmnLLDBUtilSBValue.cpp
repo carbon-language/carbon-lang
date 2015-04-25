@@ -144,10 +144,25 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
             return MIstatus::success;
         }
     }
-    else if (IsArrayType() && vbHandleArrayType)
+    else if (IsArrayType())
     {
-        vwrValue = CMIUtilString::Format("[%u]", nChildren);
-        return MIstatus::success;
+        CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+        bool bPrintCharArrayAsString = false;
+        bPrintCharArrayAsString = rSessionInfo.SharedDataRetrieve<bool>(rSessionInfo.m_constStrPrintCharArrayAsString,
+                                                                        bPrintCharArrayAsString) && bPrintCharArrayAsString;
+        if (bPrintCharArrayAsString && m_bHandleCharType && IsFirstChildCharType())
+        {
+            // TODO: to match char* it should be the following
+            //       vwrValue = CMIUtilString::Format("[%u] \"%s\"", nChildren, prefix.c_str());
+            const CMIUtilString prefix(GetValueCString().Escape().AddSlashes());
+            vwrValue = CMIUtilString::Format("\"%s\"", prefix.c_str());
+            return MIstatus::success;
+        }
+        else if (vbHandleArrayType)
+        {
+            vwrValue = CMIUtilString::Format("[%u]", nChildren);
+            return MIstatus::success;
+        }
     }
 
     // Composite variable type i.e. struct

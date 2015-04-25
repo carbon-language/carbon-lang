@@ -21,6 +21,7 @@
 // Instantiations:
 const CMICmdCmdGdbShow::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbShow::ms_mapGdbOptionNameToFnGdbOptionPtr = {
     {"target-async", &CMICmdCmdGdbShow::OptionFnTargetAsync},
+    {"print", &CMICmdCmdGdbShow::OptionFnPrint},
     {"fallback", &CMICmdCmdGdbShow::OptionFnFallback}};
 
 //++ ------------------------------------------------------------------------------------
@@ -235,6 +236,46 @@ CMICmdCmdGdbShow::OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords)
     const bool bAsyncMode = rSessionInfo.GetDebugger().GetAsync();
 
     m_strValue = bAsyncMode ? "on" : "off";
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Carry out work to complete the GDB show option 'print' to prepare and send
+//          back the requested information.
+// Type:    Method.
+// Args:    vrWords - (R) List of additional parameters used by this option.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdGdbShow::OptionFnPrint(const CMIUtilString::VecString_t &vrWords)
+{
+    const bool bAllArgs(vrWords.size() == 1);
+    if (!bAllArgs)
+    {
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = MIRSRC(IDS_CMD_ERR_GDBSHOW_OPT_PRINT_BAD_ARGS);
+        return MIstatus::failure;
+    }
+
+    const CMIUtilString strOption(vrWords[0]);
+    CMIUtilString strOptionKey;
+    bool bOptionValueDefault = false;
+    if (CMIUtilString::Compare(strOption, "char-array-as-string"))
+        strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintCharArrayAsString;
+    else
+    {
+        m_bGbbOptionFnHasError = true;
+        m_strGdbOptionFnError = CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_GDBSHOW_OPT_PRINT_UNKNOWN_OPTION), strOption.c_str());
+        return MIstatus::failure;
+    }
+
+    bool bOptionValue = false;
+    bOptionValue = bOptionValueDefault ? !m_rLLDBDebugSessionInfo.SharedDataRetrieve<bool>(strOptionKey, bOptionValue) || bOptionValue
+        : m_rLLDBDebugSessionInfo.SharedDataRetrieve<bool>(strOptionKey, bOptionValue) && bOptionValue;
+
+    m_strValue = bOptionValue ? "on" : "off";
     return MIstatus::success;
 }
 

@@ -244,7 +244,11 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_INFO_PRINTFN_NOT_FOUND, "The request '%s' was not recogised, not implemented"},
     {IDS_CMD_ERR_INFO_PRINTFN_FAILED, "The request '%s' failed."},
     {IDS_CMD_ERR_GDBSET_OPT_TARGETASYNC, "'target-async' expects \"on\" or \"off\""},
-    {IDS_CMD_ERR_GDBSET_OPT_SOLIBSEARCHPATH, "'solib-search-path' requires at least one argument"}};
+    {IDS_CMD_ERR_GDBSET_OPT_SOLIBSEARCHPATH, "'solib-search-path' requires at least one argument"},
+    {IDS_CMD_ERR_GDBSET_OPT_PRINT_BAD_ARGS, "'print' expects option-name and \"on\" or \"off\""},
+    {IDS_CMD_ERR_GDBSET_OPT_PRINT_UNKNOWN_OPTION, "'print' error. The option '%s' not found"},
+    {IDS_CMD_ERR_GDBSHOW_OPT_PRINT_BAD_ARGS, "'print' expects option-name and \"on\" or \"off\""},
+    {IDS_CMD_ERR_GDBSHOW_OPT_PRINT_UNKNOWN_OPTION, "'print' error. The option '%s' not found"}};
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnResources constructor.

@@ -183,6 +183,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     // Note: This list is expected to grow and will be moved and abstracted in the future.
     const CMIUtilString m_constStrSharedDataKeyWkDir;
     const CMIUtilString m_constStrSharedDataSolibPath;
+    const CMIUtilString m_constStrPrintCharArrayAsString;
 
     // Typedefs:
   private:

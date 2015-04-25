@@ -67,6 +67,7 @@ class CMICmdCmdGdbShow : public CMICmdBase
   private:
     bool GetOptionFn(const CMIUtilString &vrGdbOptionName, FnGdbOptionPtr &vrwpFn) const;
     bool OptionFnTargetAsync(const CMIUtilString::VecString_t &vrWords);
+    bool OptionFnPrint(const CMIUtilString::VecString_t &vrWords);
     bool OptionFnFallback(const CMIUtilString::VecString_t &vrWords);
 
     // Attributes:
