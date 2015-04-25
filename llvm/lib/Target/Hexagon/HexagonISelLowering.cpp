@@ -1311,12 +1311,6 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     addRegisterClass(MVT::f64, &Hexagon::DoubleRegsRegClass);
   }
 
-  // Generic action function (for use in std::for_each).
-  auto ExpandOp = [this] (MVT VT) -> std::function<void(unsigned)> {
-    HexagonTargetLowering *T = this;
-    return [T, VT] (unsigned Op) { T->setOperationAction(Op, VT, Expand); };
-  };
-
   //
   // Handling of scalar operations.
   //
@@ -1416,23 +1410,20 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::MUL,   MVT::i64, Expand);
   setOperationAction(ISD::MULHS, MVT::i64, Expand);
 
-  static unsigned IntExpOps[] = {
-    ISD::SDIV,      ISD::UDIV,      ISD::SREM,      ISD::UREM,
-    ISD::SDIVREM,   ISD::UDIVREM,   ISD::ROTL,      ISD::ROTR,
-    ISD::BSWAP,     ISD::SHL_PARTS, ISD::SRA_PARTS, ISD::SRL_PARTS,
-    ISD::SMUL_LOHI, ISD::UMUL_LOHI
-  };
-  static unsigned IntExpOpsLen = array_lengthof(IntExpOps);
-  std::for_each(IntExpOps, IntExpOps+IntExpOpsLen, ExpandOp(MVT::i32));
-  std::for_each(IntExpOps, IntExpOps+IntExpOpsLen, ExpandOp(MVT::i64));
+  for (unsigned IntExpOp :
+       {ISD::SDIV, ISD::UDIV, ISD::SREM, ISD::UREM, ISD::SDIVREM, ISD::UDIVREM,
+        ISD::ROTL, ISD::ROTR, ISD::BSWAP, ISD::SHL_PARTS, ISD::SRA_PARTS,
+        ISD::SRL_PARTS, ISD::SMUL_LOHI, ISD::UMUL_LOHI}) {
+    setOperationAction(IntExpOp, MVT::i32, Expand);
+    setOperationAction(IntExpOp, MVT::i64, Expand);
+  }
 
-  static unsigned FPExpOps[] = {
-    ISD::FDIV, ISD::FREM, ISD::FSQRT, ISD::FSIN, ISD::FCOS, ISD::FSINCOS,
-    ISD::FPOW, ISD::FCOPYSIGN
-  };
-  static unsigned FPExpOpsLen = array_lengthof(FPExpOps);
-  std::for_each(FPExpOps, FPExpOps+FPExpOpsLen, ExpandOp(MVT::f32));
-  std::for_each(FPExpOps, FPExpOps+FPExpOpsLen, ExpandOp(MVT::f64));
+  for (unsigned FPExpOp :
+       {ISD::FDIV, ISD::FREM, ISD::FSQRT, ISD::FSIN, ISD::FCOS, ISD::FSINCOS,
+        ISD::FPOW, ISD::FCOPYSIGN}) {
+    setOperationAction(FPExpOp, MVT::f32, Expand);
+    setOperationAction(FPExpOp, MVT::f64, Expand);
+  }
 
   // No extending loads from i32.
   for (MVT VT : MVT::integer_valuetypes()) {
@@ -1500,10 +1491,10 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     ISD::EXTRACT_SUBVECTOR,     ISD::INSERT_SUBVECTOR,
     ISD::CONCAT_VECTORS,        ISD::VECTOR_SHUFFLE
   };
-  static unsigned VectExpOpsLen = array_lengthof(VectExpOps);
 
   for (MVT VT : MVT::vector_valuetypes()) {
-    std::for_each(VectExpOps, VectExpOps+VectExpOpsLen, ExpandOp(VT));
+    for (unsigned VectExpOp : VectExpOps)
+      setOperationAction(VectExpOp, VT, Expand);
 
     // Expand all extended loads and truncating stores:
     for (MVT TargetVT : MVT::vector_valuetypes()) {
@@ -1517,28 +1508,22 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   }
 
   // Types natively supported:
-  static MVT NativeVT[] = {
-    MVT::v2i1,    MVT::v4i1,    MVT::v8i1,  MVT::v32i1,   MVT::v64i1,
-    MVT::v4i8,    MVT::v8i8,
-    MVT::v2i16,   MVT::v4i16,
-    MVT::v1i32,   MVT::v2i32,
-    MVT::v1i64
-  };
-  static unsigned NativeVTLen = array_lengthof(NativeVT);
-  for (auto I = NativeVT, E = NativeVT+NativeVTLen; I != E; ++I) {
-    setOperationAction(ISD::BUILD_VECTOR,       *I, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, *I, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT,  *I, Custom);
-    setOperationAction(ISD::EXTRACT_SUBVECTOR,  *I, Custom);
-    setOperationAction(ISD::INSERT_SUBVECTOR,   *I, Custom);
-    setOperationAction(ISD::CONCAT_VECTORS,     *I, Custom);
+  for (MVT NativeVT : {MVT::v2i1, MVT::v4i1, MVT::v8i1, MVT::v32i1, MVT::v64i1,
+                       MVT::v4i8, MVT::v8i8, MVT::v2i16, MVT::v4i16, MVT::v1i32,
+                       MVT::v2i32, MVT::v1i64}) {
+    setOperationAction(ISD::BUILD_VECTOR,       NativeVT, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, NativeVT, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  NativeVT, Custom);
+    setOperationAction(ISD::EXTRACT_SUBVECTOR,  NativeVT, Custom);
+    setOperationAction(ISD::INSERT_SUBVECTOR,   NativeVT, Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     NativeVT, Custom);
 
-    setOperationAction(ISD::ADD, *I, Legal);
-    setOperationAction(ISD::SUB, *I, Legal);
-    setOperationAction(ISD::MUL, *I, Legal);
-    setOperationAction(ISD::AND, *I, Legal);
-    setOperationAction(ISD::OR,  *I, Legal);
-    setOperationAction(ISD::XOR, *I, Legal);
+    setOperationAction(ISD::ADD, NativeVT, Legal);
+    setOperationAction(ISD::SUB, NativeVT, Legal);
+    setOperationAction(ISD::MUL, NativeVT, Legal);
+    setOperationAction(ISD::AND, NativeVT, Legal);
+    setOperationAction(ISD::OR,  NativeVT, Legal);
+    setOperationAction(ISD::XOR, NativeVT, Legal);
   }
 
   setOperationAction(ISD::SETCC,          MVT::v2i16, Custom);
@@ -1584,34 +1569,25 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::CTPOP, MVT::i64, Expand);
 
     // Expand these operations for both f32 and f64:
-    static unsigned FPExpOpsV4[] = {
-      ISD::FADD, ISD::FSUB, ISD::FMUL, ISD::FABS, ISD::FNEG, ISD::FMA
-    };
-    static unsigned FPExpOpsV4Len = array_lengthof(FPExpOpsV4);
-    std::for_each(FPExpOpsV4, FPExpOpsV4+FPExpOpsV4Len, ExpandOp(MVT::f32));
-    std::for_each(FPExpOpsV4, FPExpOpsV4+FPExpOpsV4Len, ExpandOp(MVT::f64));
+    for (unsigned FPExpOpV4 :
+         {ISD::FADD, ISD::FSUB, ISD::FMUL, ISD::FABS, ISD::FNEG, ISD::FMA}) {
+      setOperationAction(FPExpOpV4, MVT::f32, Expand);
+      setOperationAction(FPExpOpV4, MVT::f64, Expand);
+    }
 
-    static ISD::CondCode FPExpCCV4[] = {
-      ISD::SETOEQ, ISD::SETOGT, ISD::SETOLT, ISD::SETOGE, ISD::SETOLE,
-      ISD::SETUO,  ISD::SETO
-    };
-    static unsigned FPExpCCV4Len = array_lengthof(FPExpCCV4);
-    for (auto I = FPExpCCV4, E = FPExpCCV4+FPExpCCV4Len; I != E; ++I) {
-      setCondCodeAction(*I, MVT::f32, Expand);
-      setCondCodeAction(*I, MVT::f64, Expand);
+    for (ISD::CondCode FPExpCCV4 :
+         {ISD::SETOEQ, ISD::SETOGT, ISD::SETOLT, ISD::SETOGE, ISD::SETOLE,
+          ISD::SETUO, ISD::SETO}) {
+      setCondCodeAction(FPExpCCV4, MVT::f32, Expand);
+      setCondCodeAction(FPExpCCV4, MVT::f64, Expand);
     }
   }
 
   // Handling of indexed loads/stores: default is "expand".
   //
-  static MVT LSXTys[] = {
-    MVT::i8,    MVT::i16,    MVT::i32,    MVT::i64,
-  };
-  static unsigned LSXTysLen = array_lengthof(LSXTys);
-
-  for (auto I = LSXTys, E = LSXTys+LSXTysLen; I != E; ++I) {
-    setIndexedLoadAction(ISD::POST_INC, *I, Legal);
-    setIndexedStoreAction(ISD::POST_INC, *I, Legal);
+  for (MVT LSXTy : {MVT::i8, MVT::i16, MVT::i32, MVT::i64}) {
+    setIndexedLoadAction(ISD::POST_INC, LSXTy, Legal);
+    setIndexedStoreAction(ISD::POST_INC, LSXTy, Legal);
   }
 
   computeRegisterProperties(&HRI);
