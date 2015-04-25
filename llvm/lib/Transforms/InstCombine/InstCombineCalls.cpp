@@ -201,7 +201,7 @@ static Value *SimplifyX86insertps(const IntrinsicInst &II,
                                   InstCombiner::BuilderTy &Builder) {
   if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
     VectorType *VecTy = cast<VectorType>(II.getType());
-    ConstantAggregateZero *ZeroVector = ConstantAggregateZero::get(VecTy);
+    assert(VecTy->getNumElements() == 4 && "insertps with wrong vector type");
     
     // The immediate permute control byte looks like this:
     //    [3:0] - zero mask for each 32-bit lane
@@ -213,25 +213,42 @@ static Value *SimplifyX86insertps(const IntrinsicInst &II,
     uint8_t DestLane = (Imm >> 4) & 0x3;
     uint8_t SourceLane = (Imm >> 6) & 0x3;
 
+    ConstantAggregateZero *ZeroVector = ConstantAggregateZero::get(VecTy);
+
     // If all zero mask bits are set, this was just a weird way to
     // generate a zero vector.
     if (ZMask == 0xf)
       return ZeroVector;
-    
-    // TODO: Model this case as two shuffles or a 'logical and' plus shuffle?
-    if (ZMask)
-      return nullptr;
 
-    assert(VecTy->getNumElements() == 4 && "insertps with wrong vector type");
-
-    // If we're not zeroing anything, this is a single shuffle.
-    // Replace the selected destination lane with the selected source lane.
-    // For all other lanes, pass the first source bits through.
+    // Initialize by passing all of the first source bits through.
     int ShuffleMask[4] = { 0, 1, 2, 3 };
-    ShuffleMask[DestLane] = SourceLane + 4;
-    
-    return Builder.CreateShuffleVector(II.getArgOperand(0), II.getArgOperand(1),
-                                       ShuffleMask);
+
+    // We may replace the second operand with the zero vector.
+    Value *V1 = II.getArgOperand(1);
+
+    if (ZMask) {
+      // If the zero mask is being used with a single input or the zero mask
+      // overrides the destination lane, this is a shuffle with the zero vector.
+      if ((II.getArgOperand(0) == II.getArgOperand(1)) ||
+          (ZMask & (1 << DestLane))) {
+        V1 = ZeroVector;
+        // We may still move 32-bits of the first source vector from one lane
+        // to another.
+        ShuffleMask[DestLane] = SourceLane;
+        // The zero mask may override the previous insert operation.
+        for (unsigned i = 0; i < 4; ++i)
+          if ((ZMask >> i) & 0x1)
+            ShuffleMask[i] = i + 4;
+      } else {
+        // TODO: Model this case as 2 shuffles or a 'logical and' plus shuffle?
+        return nullptr;
+      }
+    } else {
+      // Replace the selected destination lane with the selected source lane.
+      ShuffleMask[DestLane] = SourceLane + 4;
+    }
+  
+    return Builder.CreateShuffleVector(II.getArgOperand(0), V1, ShuffleMask);
   }
   return nullptr;
 }

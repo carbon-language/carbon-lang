@@ -30,14 +30,47 @@ define <4 x float> @insertps_0xff(<4 x float> %v1, <4 x float> %v2) {
 ; CHECK-NEXT:  ret <4 x float> zeroinitializer
 }
 
-; If some zero mask bits are set, we do not change anything.
+; If some zero mask bits are set that do not override the insertion, we do not change anything.
 
-define <4 x float> @insertps_0x03(<4 x float> %v1, <4 x float> %v2) {
-  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v2, i8 3)
+define <4 x float> @insertps_0x0c(<4 x float> %v1, <4 x float> %v2) {
+  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v2, i8 12)
   ret <4 x float> %res
 
-; CHECK-LABEL: @insertps_0x03
-; CHECK-NEXT:  call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v2, i8 3)
+; CHECK-LABEL: @insertps_0x0c
+; CHECK-NEXT:  call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v2, i8 12)
+; CHECK-NEXT:  ret <4 x float>
+}
+
+; ...unless both input vectors are the same operand.
+
+define <4 x float> @insertps_0x15_single_input(<4 x float> %v1) {
+  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v1, i8 21)
+  ret <4 x float> %res
+
+; CHECK-LABEL: @insertps_0x15_single_input
+; CHECK-NEXT:  shufflevector <4 x float> %v1, <4 x float> <float 0.000000e+00, float undef, float 0.000000e+00, float undef>, <4 x i32> <i32 4, i32 0, i32 6, i32 3>
+; CHECK-NEXT:  ret <4 x float>
+}
+
+; The zero mask overrides the insertion lane.
+
+define <4 x float> @insertps_0x1a_single_input(<4 x float> %v1) {
+  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v1, i8 26)
+  ret <4 x float> %res
+
+; CHECK-LABEL: @insertps_0x1a_single_input
+; CHECK-NEXT:  shufflevector <4 x float> %v1, <4 x float> <float undef, float 0.000000e+00, float undef, float 0.000000e+00>, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+; CHECK-NEXT:  ret <4 x float>
+}
+
+; The zero mask overrides the insertion lane, so the second input vector is not used.
+
+define <4 x float> @insertps_0xc1(<4 x float> %v1, <4 x float> %v2) {
+  %res = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %v1, <4 x float> %v2, i8 193)
+  ret <4 x float> %res
+
+; CHECK-LABEL: @insertps_0xc1
+; CHECK-NEXT:  shufflevector <4 x float> %v1, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
 ; CHECK-NEXT:  ret <4 x float>
 }
 
