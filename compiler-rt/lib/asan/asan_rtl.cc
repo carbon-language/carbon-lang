@@ -347,9 +347,9 @@ static void PrintAddressSpaceLayout() {
   Printf("malloc_context_size=%zu\n",
          (uptr)common_flags()->malloc_context_size);
 
-  Printf("SHADOW_SCALE: %zx\n", (uptr)SHADOW_SCALE);
-  Printf("SHADOW_GRANULARITY: %zx\n", (uptr)SHADOW_GRANULARITY);
-  Printf("SHADOW_OFFSET: %zx\n", (uptr)SHADOW_OFFSET);
+  Printf("SHADOW_SCALE: %d\n", (int)SHADOW_SCALE);
+  Printf("SHADOW_GRANULARITY: %d\n", (int)SHADOW_GRANULARITY);
+  Printf("SHADOW_OFFSET: 0x%zx\n", (uptr)SHADOW_OFFSET);
   CHECK(SHADOW_SCALE >= 3 && SHADOW_SCALE <= 7);
   if (kMidMemBeg)
     CHECK(kMidShadowBeg > kLowShadowEnd &&
