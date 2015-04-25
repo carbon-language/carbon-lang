@@ -206,9 +206,6 @@ bool isPositiveHalfWord(SDNode *N);
     /// compare a register against the immediate without having to materialize
     /// the immediate into a register.
     bool isLegalICmpImmediate(int64_t Imm) const override;
-
-  private:
-    void setHexLibcallName(RTLIB::Libcall Call, Twine Name);
   };
 } // end namespace llvm
 

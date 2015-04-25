@@ -1262,15 +1262,6 @@ HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 // TargetLowering Implementation
 //===----------------------------------------------------------------------===//
 
-void HexagonTargetLowering::setHexLibcallName(RTLIB::Libcall Call, Twine Name) {
-  std::string EmulationPrefix = "__hexagon_";
-  std::string N = EmulationPrefix + Name.str();
-  unsigned S = N.size()+1;
-  char *p = new char[S];
-  memcpy(p, N.c_str(), S);
-  setLibcallName(Call, p);
-}
-
 HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
                                              const HexagonSubtarget &STI)
     : TargetLowering(TM), HTM(static_cast<const HexagonTargetMachine&>(TM)),
@@ -1630,88 +1621,104 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   //
   bool FastMath  = EnableFastMath;
 
-  setHexLibcallName(RTLIB::SDIV_I32, "divsi3");
-  setHexLibcallName(RTLIB::SDIV_I64, "divdi3");
-  setHexLibcallName(RTLIB::UDIV_I32, "udivsi3");
-  setHexLibcallName(RTLIB::UDIV_I64, "udivdi3");
-  setHexLibcallName(RTLIB::SREM_I32, "modsi3");
-  setHexLibcallName(RTLIB::SREM_I64, "moddi3");
-  setHexLibcallName(RTLIB::UREM_I32, "umodsi3");
-  setHexLibcallName(RTLIB::UREM_I64, "umoddi3");
+  setLibcallName(RTLIB::SDIV_I32, "__hexagon_divsi3");
+  setLibcallName(RTLIB::SDIV_I64, "__hexagon_divdi3");
+  setLibcallName(RTLIB::UDIV_I32, "__hexagon_udivsi3");
+  setLibcallName(RTLIB::UDIV_I64, "__hexagon_udivdi3");
+  setLibcallName(RTLIB::SREM_I32, "__hexagon_modsi3");
+  setLibcallName(RTLIB::SREM_I64, "__hexagon_moddi3");
+  setLibcallName(RTLIB::UREM_I32, "__hexagon_umodsi3");
+  setLibcallName(RTLIB::UREM_I64, "__hexagon_umoddi3");
 
-  setHexLibcallName(RTLIB::SINTTOFP_I128_F64, "floattidf");
-  setHexLibcallName(RTLIB::SINTTOFP_I128_F32, "floattisf");
-  setHexLibcallName(RTLIB::FPTOUINT_F32_I128, "fixunssfti");
-  setHexLibcallName(RTLIB::FPTOUINT_F64_I128, "fixunsdfti");
-  setHexLibcallName(RTLIB::FPTOSINT_F32_I128, "fixsfti");
-  setHexLibcallName(RTLIB::FPTOSINT_F64_I128, "fixdfti");
+  setLibcallName(RTLIB::SINTTOFP_I128_F64, "__hexagon_floattidf");
+  setLibcallName(RTLIB::SINTTOFP_I128_F32, "__hexagon_floattisf");
+  setLibcallName(RTLIB::FPTOUINT_F32_I128, "__hexagon_fixunssfti");
+  setLibcallName(RTLIB::FPTOUINT_F64_I128, "__hexagon_fixunsdfti");
+  setLibcallName(RTLIB::FPTOSINT_F32_I128, "__hexagon_fixsfti");
+  setLibcallName(RTLIB::FPTOSINT_F64_I128, "__hexagon_fixdfti");
 
   if (IsV4) {
     // Handle single-precision floating point operations on V4.
-    Twine Pref = (FastMath ? "fast_" : "");
-    setHexLibcallName(RTLIB::ADD_F32, Pref+"addsf3");
-    setHexLibcallName(RTLIB::SUB_F32, Pref+"subsf3");
-    setHexLibcallName(RTLIB::MUL_F32, Pref+"mulsf3");
-    setHexLibcallName(RTLIB::OGT_F32, Pref+"gtsf2");
-    setHexLibcallName(RTLIB::OLT_F32, Pref+"ltsf2");
-    // Double-precision compares.
-    setHexLibcallName(RTLIB::OGT_F64, Pref+"gtdf2");
-    setHexLibcallName(RTLIB::OLT_F64, Pref+"ltdf2");
+    if (FastMath) {
+      setLibcallName(RTLIB::ADD_F32, "__hexagon_fast_addsf3");
+      setLibcallName(RTLIB::SUB_F32, "__hexagon_fast_subsf3");
+      setLibcallName(RTLIB::MUL_F32, "__hexagon_fast_mulsf3");
+      setLibcallName(RTLIB::OGT_F32, "__hexagon_fast_gtsf2");
+      setLibcallName(RTLIB::OLT_F32, "__hexagon_fast_ltsf2");
+      // Double-precision compares.
+      setLibcallName(RTLIB::OGT_F64, "__hexagon_fast_gtdf2");
+      setLibcallName(RTLIB::OLT_F64, "__hexagon_fast_ltdf2");
+    } else {
+      setLibcallName(RTLIB::ADD_F32, "__hexagon_addsf3");
+      setLibcallName(RTLIB::SUB_F32, "__hexagon_subsf3");
+      setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
+      setLibcallName(RTLIB::OGT_F32, "__hexagon_gtsf2");
+      setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
+      // Double-precision compares.
+      setLibcallName(RTLIB::OGT_F64, "__hexagon_gtdf2");
+      setLibcallName(RTLIB::OLT_F64, "__hexagon_ltdf2");
+    }
   }
 
   // This is the only fast library function for sqrtd.
   if (FastMath)
-    setHexLibcallName(RTLIB::SQRT_F64, "fast2_sqrtdf2");
+    setLibcallName(RTLIB::SQRT_F64, "__hexagon_fast2_sqrtdf2");
 
-  // PrefFP = nothing  for "slow-math",
-  //        = "fast2_" for V4 fast-math and V5+ fast-math double-precision
+  // Prefix is: nothing  for "slow-math",
+  //            "fast2_" for V4 fast-math and V5+ fast-math double-precision
   // (actually, keep fast-math and fast-math2 separate for now)
-  Twine PrefFP = (FastMath ? "fast_" : "");
-
-  setHexLibcallName(RTLIB::ADD_F64, PrefFP+"adddf3");
-  setHexLibcallName(RTLIB::SUB_F64, PrefFP+"subdf3");
-  setHexLibcallName(RTLIB::MUL_F64, PrefFP+"muldf3");
-  setHexLibcallName(RTLIB::DIV_F64, PrefFP+"divdf3");
-  // Calling __hexagon_fast2_divsf3 with fast-math on V5 (ok).
-  setHexLibcallName(RTLIB::DIV_F32, PrefFP+"divsf3");
+  if (FastMath) {
+    setLibcallName(RTLIB::ADD_F64, "__hexagon_fast_adddf3");
+    setLibcallName(RTLIB::SUB_F64, "__hexagon_fast_subdf3");
+    setLibcallName(RTLIB::MUL_F64, "__hexagon_fast_muldf3");
+    setLibcallName(RTLIB::DIV_F64, "__hexagon_fast_divdf3");
+    // Calling __hexagon_fast2_divsf3 with fast-math on V5 (ok).
+    setLibcallName(RTLIB::DIV_F32, "__hexagon_fast_divsf3");
+  } else {
+    setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
+    setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
+    setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
+    setLibcallName(RTLIB::DIV_F64, "__hexagon_divdf3");
+    setLibcallName(RTLIB::DIV_F32, "__hexagon_divsf3");
+  }
 
   if (Subtarget.hasV5TOps()) {
     if (FastMath)
-      setHexLibcallName(RTLIB::SQRT_F32, "fast2_sqrtf");
+      setLibcallName(RTLIB::SQRT_F32, "__hexagon_fast2_sqrtf");
     else
-      setHexLibcallName(RTLIB::SQRT_F32, "sqrtf");
+      setLibcallName(RTLIB::SQRT_F32, "__hexagon_sqrtf");
   } else {
     // V4
-    setHexLibcallName(RTLIB::SINTTOFP_I32_F32, "floatsisf");
-    setHexLibcallName(RTLIB::SINTTOFP_I32_F64, "floatsidf");
-    setHexLibcallName(RTLIB::SINTTOFP_I64_F32, "floatdisf");
-    setHexLibcallName(RTLIB::SINTTOFP_I64_F64, "floatdidf");
-    setHexLibcallName(RTLIB::UINTTOFP_I32_F32, "floatunsisf");
-    setHexLibcallName(RTLIB::UINTTOFP_I32_F64, "floatunsidf");
-    setHexLibcallName(RTLIB::UINTTOFP_I64_F32, "floatundisf");
-    setHexLibcallName(RTLIB::UINTTOFP_I64_F64, "floatundidf");
-    setHexLibcallName(RTLIB::FPTOUINT_F32_I32, "fixunssfsi");
-    setHexLibcallName(RTLIB::FPTOUINT_F32_I64, "fixunssfdi");
-    setHexLibcallName(RTLIB::FPTOUINT_F64_I32, "fixunsdfsi");
-    setHexLibcallName(RTLIB::FPTOUINT_F64_I64, "fixunsdfdi");
-    setHexLibcallName(RTLIB::FPTOSINT_F32_I32, "fixsfsi");
-    setHexLibcallName(RTLIB::FPTOSINT_F32_I64, "fixsfdi");
-    setHexLibcallName(RTLIB::FPTOSINT_F64_I32, "fixdfsi");
-    setHexLibcallName(RTLIB::FPTOSINT_F64_I64, "fixdfdi");
-    setHexLibcallName(RTLIB::FPEXT_F32_F64,    "extendsfdf2");
-    setHexLibcallName(RTLIB::FPROUND_F64_F32,  "truncdfsf2");
-    setHexLibcallName(RTLIB::OEQ_F32, "eqsf2");
-    setHexLibcallName(RTLIB::OEQ_F64, "eqdf2");
-    setHexLibcallName(RTLIB::OGE_F32, "gesf2");
-    setHexLibcallName(RTLIB::OGE_F64, "gedf2");
-    setHexLibcallName(RTLIB::OLE_F32, "lesf2");
-    setHexLibcallName(RTLIB::OLE_F64, "ledf2");
-    setHexLibcallName(RTLIB::UNE_F32, "nesf2");
-    setHexLibcallName(RTLIB::UNE_F64, "nedf2");
-    setHexLibcallName(RTLIB::UO_F32,  "unordsf2");
-    setHexLibcallName(RTLIB::UO_F64,  "unorddf2");
-    setHexLibcallName(RTLIB::O_F32,   "unordsf2");
-    setHexLibcallName(RTLIB::O_F64,   "unorddf2");
+    setLibcallName(RTLIB::SINTTOFP_I32_F32, "__hexagon_floatsisf");
+    setLibcallName(RTLIB::SINTTOFP_I32_F64, "__hexagon_floatsidf");
+    setLibcallName(RTLIB::SINTTOFP_I64_F32, "__hexagon_floatdisf");
+    setLibcallName(RTLIB::SINTTOFP_I64_F64, "__hexagon_floatdidf");
+    setLibcallName(RTLIB::UINTTOFP_I32_F32, "__hexagon_floatunsisf");
+    setLibcallName(RTLIB::UINTTOFP_I32_F64, "__hexagon_floatunsidf");
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, "__hexagon_floatundisf");
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, "__hexagon_floatundidf");
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, "__hexagon_fixunssfsi");
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, "__hexagon_fixunssfdi");
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, "__hexagon_fixunsdfsi");
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, "__hexagon_fixunsdfdi");
+    setLibcallName(RTLIB::FPTOSINT_F32_I32, "__hexagon_fixsfsi");
+    setLibcallName(RTLIB::FPTOSINT_F32_I64, "__hexagon_fixsfdi");
+    setLibcallName(RTLIB::FPTOSINT_F64_I32, "__hexagon_fixdfsi");
+    setLibcallName(RTLIB::FPTOSINT_F64_I64, "__hexagon_fixdfdi");
+    setLibcallName(RTLIB::FPEXT_F32_F64,    "__hexagon_extendsfdf2");
+    setLibcallName(RTLIB::FPROUND_F64_F32,  "__hexagon_truncdfsf2");
+    setLibcallName(RTLIB::OEQ_F32, "__hexagon_eqsf2");
+    setLibcallName(RTLIB::OEQ_F64, "__hexagon_eqdf2");
+    setLibcallName(RTLIB::OGE_F32, "__hexagon_gesf2");
+    setLibcallName(RTLIB::OGE_F64, "__hexagon_gedf2");
+    setLibcallName(RTLIB::OLE_F32, "__hexagon_lesf2");
+    setLibcallName(RTLIB::OLE_F64, "__hexagon_ledf2");
+    setLibcallName(RTLIB::UNE_F32, "__hexagon_nesf2");
+    setLibcallName(RTLIB::UNE_F64, "__hexagon_nedf2");
+    setLibcallName(RTLIB::UO_F32,  "__hexagon_unordsf2");
+    setLibcallName(RTLIB::UO_F64,  "__hexagon_unorddf2");
+    setLibcallName(RTLIB::O_F32,   "__hexagon_unordsf2");
+    setLibcallName(RTLIB::O_F64,   "__hexagon_unorddf2");
   }
 
   // These cause problems when the shift amount is non-constant.
