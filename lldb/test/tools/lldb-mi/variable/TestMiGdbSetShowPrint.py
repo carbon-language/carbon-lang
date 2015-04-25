@@ -12,6 +12,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_gdb_set_show_print_char_array_as_string(self):
         """Test that 'lldb-mi --interpreter' can print array of chars as string."""
 
