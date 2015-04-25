@@ -55,7 +55,7 @@ class CMICmnLLDBUtilSBValue
   private:
     CMIUtilString ReadCStringFromHostMemory(const lldb::SBValue &vrValueObj) const;
     bool GetSimpleValue(const bool vbHandleArrayType, CMIUtilString &vrValue) const;
-    bool GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
+    bool GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
 
     // Attributes:
   private:

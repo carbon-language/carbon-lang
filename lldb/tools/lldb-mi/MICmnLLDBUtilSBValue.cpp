@@ -91,8 +91,12 @@ CMICmnLLDBUtilSBValue::GetValue(const bool vbExpandAggregates /* = false */) con
     if (!vbExpandAggregates && !bPrintExpandAggregates)
         return m_pComposite;
 
+    bool bPrintAggregateFieldNames = false;
+    bPrintAggregateFieldNames = !rSessionInfo.SharedDataRetrieve<bool>(rSessionInfo.m_constStrPrintAggregateFieldNames,
+                                                                       bPrintAggregateFieldNames) || bPrintAggregateFieldNames;
+
     CMICmnMIValueTuple miValueTuple;
-    const bool bOk = GetCompositeValue(miValueTuple);
+    const bool bOk = GetCompositeValue(bPrintAggregateFieldNames, miValueTuple);
     if (!bOk)
         return m_pUnkwn;
 
@@ -175,7 +179,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
 }
 
 bool
-CMICmnLLDBUtilSBValue::GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple,
+CMICmnLLDBUtilSBValue::GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple,
                                          const MIuint vnDepth /* = 1 */) const
 {
     const MIuint nMaxDepth = 10;
@@ -195,7 +199,7 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple,
         {
             // Need to get value from composite type
             CMICmnMIValueTuple miValueTuple;
-            const bool bOk = utilMember.GetCompositeValue(miValueTuple, vnDepth + 1);
+            const bool bOk = utilMember.GetCompositeValue(vbPrintFieldNames, miValueTuple, vnDepth + 1);
             if (!bOk)
                 // Can't obtain composite type
                 value = m_pUnkwn;
@@ -210,11 +214,21 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(CMICmnMIValueTuple &vwrMiValueTuple,
         }
         const bool bNoQuotes = true;
         const CMICmnMIValueConst miValueConst(value, bNoQuotes);
-        const bool bUseSpacing = true;
-        const CMICmnMIValueResult miValueResult(utilMember.GetName(), miValueConst, bUseSpacing);
-        const bool bOk = vwrMiValueTuple.Add(miValueResult, bUseSpacing);
-        if (!bOk)
-            return MIstatus::failure;
+        if (vbPrintFieldNames)
+        {
+            const bool bUseSpacing = true;
+            const CMICmnMIValueResult miValueResult(utilMember.GetName(), miValueConst, bUseSpacing);
+            const bool bOk = vwrMiValueTuple.Add(miValueResult, bUseSpacing);
+            if (!bOk)
+                return MIstatus::failure;
+        }
+        else
+        {
+            const bool bUseSpacing = false;
+            const bool bOk = vwrMiValueTuple.Add(miValueConst, bUseSpacing);
+            if (!bOk)
+                return MIstatus::failure;
+        }
     }
 
     return MIstatus::success;

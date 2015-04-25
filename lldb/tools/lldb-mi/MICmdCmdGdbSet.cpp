@@ -284,6 +284,8 @@ CMICmdCmdGdbSet::OptionFnPrint(const CMIUtilString::VecString_t &vrWords)
         strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintCharArrayAsString;
     else if (CMIUtilString::Compare(strOption, "expand-aggregates"))
         strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintExpandAggregates;
+    else if (CMIUtilString::Compare(strOption, "aggregate-field-names"))
+        strOptionKey = m_rLLDBDebugSessionInfo.m_constStrPrintAggregateFieldNames;
     else
     {
         m_bGbbOptionFnHasError = true;

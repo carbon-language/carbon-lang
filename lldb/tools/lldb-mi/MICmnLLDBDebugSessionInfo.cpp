@@ -42,6 +42,7 @@ CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo(void)
     , m_constStrSharedDataSolibPath("Solib Path")
     , m_constStrPrintCharArrayAsString("Print CharArrayAsString")
     , m_constStrPrintExpandAggregates("Print ExpandAggregates")
+    , m_constStrPrintAggregateFieldNames("Print AggregateFieldNames")
 {
 }
 
