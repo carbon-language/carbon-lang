@@ -65,7 +65,7 @@ target_link_libraries(unwind ${libraries})
 
 # Setup flags.
 append_if(LIBUNWIND_COMPILE_FLAGS LIBUNWIND_HAS_FPIC_FLAG -fPIC)
-append_if(LIBUNWIND_COMPILE_FLAGS LIBUNWIND_HAS_NO_RTTI_FLAG -fno-rtti)
+append_if(LIBUNWIND_CXX_FLAGS LIBUNWIND_HAS_NO_RTTI_FLAG -fno-rtti)
 
 append_if(LIBUNWIND_LINK_FLAGS LIBUNWIND_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs)
 
@@ -93,6 +93,7 @@ if (APPLE)
 endif ()
 
 string(REPLACE ";" " " LIBUNWIND_COMPILE_FLAGS "${LIBUNWIND_COMPILE_FLAGS}")
+string(REPLACE ";" " " LIBUNWIND_CXX_FLAGS "${LIBUNWIND_CXX_FLAGS}")
 string(REPLACE ";" " " LIBUNWIND_LINK_FLAGS "${LIBUNWIND_LINK_FLAGS}")
 
 set_target_properties(unwind
@@ -102,6 +103,8 @@ set_target_properties(unwind
                         OUTPUT_NAME   "unwind"
                         VERSION       "1.0"
                         SOVERSION     "1")
+set_property(SOURCE ${LIBUNWIND_CXX_SOURCES}
+             APPEND_STRING PROPERTY COMPILE_FLAGS "${LIBUNWIND_CXX_FLAGS}")
 
 install(TARGETS unwind
         LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
