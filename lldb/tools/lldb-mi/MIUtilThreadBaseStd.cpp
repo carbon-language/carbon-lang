@@ -205,6 +205,8 @@ CMIUtilThreadActiveObjBase::ThreadManage(void)
     // Execute the finish routine just before we die
     // to give the object a chance to clean up
     ThreadFinish();
+
+    m_thread.Finish();
 }
 
 //---------------------------------------------------------------------------------------
@@ -214,6 +216,7 @@ CMIUtilThreadActiveObjBase::ThreadManage(void)
 //
 CMIUtilThread::CMIUtilThread(void)
     : m_pThread(nullptr)
+    , m_bIsActive(false)
 {
 }
 
@@ -266,12 +269,24 @@ CMIUtilThread::Join(void)
 bool
 CMIUtilThread::IsActive(void)
 {
-    // Lock while we access the thread pointer
+    // Lock while we access the thread status
     CMIUtilThreadLock _lock(m_mutex);
-    if (m_pThread == nullptr)
-        return false;
-    else
-        return true;
+    return m_bIsActive;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Finish this thread
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMIUtilThread::Finish(void)
+{
+    // Lock while we access the thread status
+    CMIUtilThreadLock _lock(m_mutex);
+    m_bIsActive = false;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -286,8 +301,12 @@ CMIUtilThread::IsActive(void)
 bool
 CMIUtilThread::Start(FnThreadProc vpFn, void *vpArg)
 {
-    // Create the std thread, which starts immediately
+    // Lock while we access the thread pointer and status
+    CMIUtilThreadLock _lock(m_mutex);
+
+    // Create the std thread, which starts immediately and update its status
     m_pThread = new std::thread(vpFn, vpArg);
+    m_bIsActive = true;
 
     // We expect to always be able to create one
     assert(m_pThread != nullptr);

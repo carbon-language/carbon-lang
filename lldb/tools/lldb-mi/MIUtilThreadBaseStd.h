@@ -75,6 +75,8 @@ class CMIUtilThread
     Join(void); // Wait for this thread to stop
     bool
     IsActive(void); // Returns true if this thread is running
+    void
+    Finish(void); // Finish this thread
 
     // Overrideable:
   public:
@@ -84,6 +86,7 @@ class CMIUtilThread
   private:
     CMIUtilThreadMutex m_mutex;
     std::thread *m_pThread;
+    bool m_bIsActive;
 };
 
 //++ ============================================================================
