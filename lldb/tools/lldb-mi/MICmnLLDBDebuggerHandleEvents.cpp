@@ -799,8 +799,10 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBCommandInterpreter(const lldb::SBEv
 bool
 CMICmnLLDBDebuggerHandleEvents::HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent)
 {
-    if (lldb::SBProcess::GetRestartedFromEvent (vEvent))
-        return true;
+    // Make sure the program hasn't been auto-restarted:
+    if (lldb::SBProcess::GetRestartedFromEvent(vEvent))
+        return MIstatus::success;
+
     bool bOk = ChkForStateChanges();
     bOk = bOk && GetProcessStdout();
     bOk = bOk && GetProcessStderr();
@@ -889,10 +891,6 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventBroadcastBitStateChanged(const
 bool
 CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateSuspended(const lldb::SBEvent &vEvent)
 {
-    // Make sure the program hasn't been auto-restarted:
-    if (lldb::SBProcess::GetRestartedFromEvent(vEvent))
-        return MIstatus::success;
-
     bool bOk = MIstatus::success;
     lldb::SBDebugger &rDebugger = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger();
     lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
