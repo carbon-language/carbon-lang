@@ -10285,6 +10285,8 @@ Semantics:
 
 This intrinsic is lowered to the ``val``.
 
+.. _int_assume:
+
 '``llvm.assume``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

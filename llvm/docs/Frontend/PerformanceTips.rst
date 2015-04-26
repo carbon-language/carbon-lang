@@ -144,7 +144,7 @@ Other things to consider
 #. When checking a value against a constant, emit the check using a consistent
    comparison type.  The GVN pass _will_ optimize redundant equalities even if
    the type of comparison is inverted, but GVN only runs late in the pipeline.
-   As a result, you may miss the oppurtunity to run other important 
+   As a result, you may miss the opportunity to run other important 
    optimizations.  Improvements to EarlyCSE to remove this issue are tracked in 
    Bug 23333.
 
@@ -156,6 +156,13 @@ Other things to consider
    intrinsics itself late in the optimization pipeline.  It is _very_ rarely 
    profitable to emit these directly in the language frontend.  This item
    explicitly includes the use of the :ref:`overflow intrinsics <int_overflow>`.
+
+#. Avoid using the :ref:`assume intrinsic <int_assume>` until you've 
+   established that a) there's no other way to express the given fact and b) 
+   that fact is critical for optimization purposes.  Assumes are a great 
+   prototyping mechanism, but they can have negative effects on both compile 
+   time and optimization effectiveness.  The former is fixable with enough 
+   effort, but the later is fairly fundamental to their designed purpose.
 
 p.s. If you want to help improve this document, patches expanding any of the 
 above items into standalone sections of their own with a more complete 
