@@ -1504,9 +1504,7 @@ static void relocationViaAlloca(
         store->insertAfter(inst);
       }
     } else {
-      assert((isa<Argument>(def) || isa<GlobalVariable>(def) ||
-              isa<ConstantPointerNull>(def)) &&
-             "Must be argument or global");
+      assert(isa<Argument>(def));
       store->insertAfter(cast<Instruction>(alloca));
     }
   }
@@ -1958,11 +1956,6 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
 // TODO: Consider using bitvectors for liveness, the set of potentially
 // interesting values should be small and easy to pre-compute.
 
-/// Is this value a constant consisting of entirely null values?
-static bool isConstantNull(Value *V) {
-  return isa<Constant>(V) && cast<Constant>(V)->isNullValue();
-}
-
 /// Compute the live-in set for the location rbegin starting from
 /// the live-out set of the basic block
 static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
@@ -1984,9 +1977,17 @@ static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
     for (Value *V : I->operands()) {
       assert(!isUnhandledGCPointerType(V->getType()) &&
              "support for FCA unimplemented");
-      if (isHandledGCPointerType(V->getType()) && !isConstantNull(V) &&
-          !isa<UndefValue>(V)) {
-        // The choice to exclude null and undef is arbitrary here.  Reconsider?
+      if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
+        // The choice to exclude all things constant here is slightly subtle.
+        // There are two idependent reasons:
+        // - We assume that things which are constant (from LLVM's definition)
+        // do not move at runtime.  For example, the address of a global
+        // variable is fixed, even though it's contents may not be.
+        // - Second, we can't disallow arbitrary inttoptr constants even
+        // if the language frontend does.  Optimization passes are free to
+        // locally exploit facts without respect to global reachability.  This
+        // can create sections of code which are dynamically unreachable and
+        // contain just about anything.  (see constants.ll in tests)
         LiveTmp.insert(V);
       }
     }
@@ -2002,9 +2003,7 @@ static void computeLiveOutSeed(BasicBlock *BB, DenseSet<Value *> &LiveTmp) {
       Value *V = Phi->getIncomingValueForBlock(BB);
       assert(!isUnhandledGCPointerType(V->getType()) &&
              "support for FCA unimplemented");
-      if (isHandledGCPointerType(V->getType()) && !isConstantNull(V) &&
-          !isa<UndefValue>(V)) {
-        // The choice to exclude null and undef is arbitrary here.  Reconsider?
+      if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
         LiveTmp.insert(V);
       }
     }
