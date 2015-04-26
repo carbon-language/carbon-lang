@@ -438,8 +438,12 @@ void CGRecordLowering::accumulateBases() {
   for (const auto &Base : RD->bases()) {
     if (Base.isVirtual())
       continue;
+
+    // Bases can be zero-sized even if not technically empty if they
+    // contain only a trailing array member.
     const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
-    if (!BaseDecl->isEmpty())
+    if (!BaseDecl->isEmpty() &&
+        !Context.getASTRecordLayout(BaseDecl).getSize().isZero())
       Members.push_back(MemberInfo(Layout.getBaseClassOffset(BaseDecl),
           MemberInfo::Base, getStorageType(BaseDecl), BaseDecl));
   }
