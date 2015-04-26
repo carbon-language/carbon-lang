@@ -451,6 +451,18 @@ define void @kernel_arg_i64(i64 addrspace(1)* %out, i64 %a) nounwind {
   ret void
 }
 
+; FUNC-LABEL: {{^}}f64_kernel_arg:
+; SI-DAG: s_load_dwordx2 s[{{[0-9]:[0-9]}}], s[0:1], 0x9
+; SI-DAG: s_load_dwordx2 s[{{[0-9]:[0-9]}}], s[0:1], 0xb
+; VI-DAG: s_load_dwordx2 s[{{[0-9]:[0-9]}}], s[0:1], 0x24
+; VI-DAG: s_load_dwordx2 s[{{[0-9]:[0-9]}}], s[0:1], 0x2c
+; GCN: buffer_store_dwordx2
+define void @f64_kernel_arg(double addrspace(1)* %out, double  %in) {
+entry:
+  store double %in, double addrspace(1)* %out
+  ret void
+}
+
 ; XFUNC-LABEL: {{^}}kernel_arg_v1i64:
 ; XGCN: s_load_dwordx2
 ; XGCN: s_load_dwordx2
