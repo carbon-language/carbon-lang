@@ -3438,6 +3438,11 @@ static void TryReferenceListInitialization(Sema &S,
     Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
     return;
   }
+  // Can't reference initialize a compound literal.
+  if (Entity.getKind() == InitializedEntity::EK_CompoundLiteralInit) {
+    Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
+    return;
+  }
 
   QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
