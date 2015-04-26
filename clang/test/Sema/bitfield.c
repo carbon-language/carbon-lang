@@ -74,3 +74,7 @@ typedef __typeof__(+(--t5.n)) Signed; // This should not promote to signed.
 
 typedef __typeof__(+(t5.n++)) Unsigned; // Post-increment is underspecified, but seems to
 typedef __typeof__(+(t5.n--)) Unsigned; // also act like compound-assignment.
+
+struct Test6 {
+  : 0.0; // expected-error{{type name requires a specifier or qualifier}}
+};
