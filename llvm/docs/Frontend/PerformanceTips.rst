@@ -142,18 +142,18 @@ Other things to consider
    this guidance is that a unified return block with high in-degree is fine.
 
 #. When checking a value against a constant, emit the check using a consistent
-   comparison type.  The GVN pass _will_ optimize redundant equalities even if
+   comparison type.  The GVN pass *will* optimize redundant equalities even if
    the type of comparison is inverted, but GVN only runs late in the pipeline.
    As a result, you may miss the opportunity to run other important 
    optimizations.  Improvements to EarlyCSE to remove this issue are tracked in 
    Bug 23333.
 
-#. Avoid using arithmetic intrinsics unless you are _required_ by your source 
+#. Avoid using arithmetic intrinsics unless you are *required* by your source 
    language specification to emit a particular code sequence.  The optimizer 
    is quite good at reasoning about general control flow and arithmetic, it is
    not anywhere near as strong at reasoning about the various intrinsics.  If 
    profitable for code generation purposes, the optimizer will likely form the 
-   intrinsics itself late in the optimization pipeline.  It is _very_ rarely 
+   intrinsics itself late in the optimization pipeline.  It is *very* rarely 
    profitable to emit these directly in the language frontend.  This item
    explicitly includes the use of the :ref:`overflow intrinsics <int_overflow>`.
 
