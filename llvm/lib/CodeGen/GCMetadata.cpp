@@ -148,7 +148,6 @@ bool Printer::doFinalization(Module &M) {
   return false;
 }
 
-
 GCStrategy *GCModuleInfo::getGCStrategy(const StringRef Name) {
   // TODO: Arguably, just doing a linear search would be faster for small N
   auto NMI = GCStrategyMap.find(Name);
@@ -165,5 +164,14 @@ GCStrategy *GCModuleInfo::getGCStrategy(const StringRef Name) {
     }
   }
 
-  report_fatal_error(std::string("unsupported GC: ") + Name);
+  if (GCRegistry::begin() == GCRegistry::end()) {
+    // In normal operation, the registry should not be empty.  There should 
+    // be the builtin GCs if nothing else.  The most likely scenario here is
+    // that we got here without running the initializers used by the Registry 
+    // itself and it's registration mechanism.
+    const std::string error = ("unsupported GC: " + Name).str() + 
+      " (did you remember to link and initialize the CodeGen library?)";
+    report_fatal_error(error);
+  } else
+    report_fatal_error(std::string("unsupported GC: ") + Name);
 }
