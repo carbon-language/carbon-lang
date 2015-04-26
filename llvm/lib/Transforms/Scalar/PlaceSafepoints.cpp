@@ -430,6 +430,13 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
         if (II->getIntrinsicID() == Intrinsic::assume) {
           continue;
         }
+        // llvm.frameescape() intrinsic is not a real call. The intrinsic can 
+        // exist only in the entry block.
+        // Inserting a statepoint before llvm.frameescape() may split the 
+        // entry block, and push the intrinsic out of the entry block.
+        if (II->getIntrinsicID() == Intrinsic::frameescape) {
+          continue;
+        }
       }
       break;
     }
