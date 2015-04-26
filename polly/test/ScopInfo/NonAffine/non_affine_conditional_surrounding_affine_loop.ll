@@ -5,7 +5,7 @@
 ; INNERMOST:    Region: %bb9---%bb17
 ; INNERMOST:    Max Loop Depth:  1
 ; INNERMOST:    Context:
-; INNERMOST:    [N] -> {  :  }
+; INNERMOST:    [N] -> {  : N >= -2147483648 and N <= 2147483647 }
 ; INNERMOST:    Assumed Context:
 ; INNERMOST:    [N] -> {  :  }
 ; INNERMOST:    p0: %N

@@ -311,18 +311,18 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
   isl_val *V;
   isl_ctx *ctx = isl_set_get_ctx(S);
 
-  bool isWrapping = Range.isSignWrappedSet();
-  const auto LB = isWrapping ? Range.getLower() : Range.getSignedMin();
+  bool useLowerUpperBound = Range.isSignWrappedSet() && !Range.isFullSet();
+  const auto LB = useLowerUpperBound ? Range.getLower() : Range.getSignedMin();
   V = isl_valFromAPInt(ctx, LB, true);
   isl_set *SLB = isl_set_lower_bound_val(isl_set_copy(S), type, dim, V);
 
-  const auto UB = isWrapping ? Range.getUpper() : Range.getSignedMax();
+  const auto UB = useLowerUpperBound ? Range.getUpper() : Range.getSignedMax();
   V = isl_valFromAPInt(ctx, UB, true);
-  if (isWrapping)
+  if (useLowerUpperBound)
     V = isl_val_sub_ui(V, 1);
   isl_set *SUB = isl_set_upper_bound_val(S, type, dim, V);
 
-  if (isWrapping)
+  if (useLowerUpperBound)
     return isl_set_union(SLB, SUB);
   else
     return isl_set_intersect(SLB, SUB);
@@ -1344,10 +1344,6 @@ void Scop::addParameterBounds() {
     int dim = ParamID.second;
 
     ConstantRange SRange = SE->getSignedRange(ParamID.first);
-
-    // TODO: Find a case where the full set is actually helpful.
-    if (SRange.isFullSet())
-      continue;
 
     Context = addRangeBoundsToSet(Context, SRange, dim, isl_dim_param);
   }

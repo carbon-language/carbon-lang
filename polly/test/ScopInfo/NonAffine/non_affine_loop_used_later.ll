@@ -7,7 +7,7 @@
 ; CHECK:    Region: %bb2---%bb24
 ; CHECK:    Max Loop Depth:  1
 ; CHECK:    Context:
-; CHECK:    [N] -> {  :  }
+; CHECK:    [N] -> {  : N >= -2147483648 and N <= 2147483647 }
 ; CHECK:    Assumed Context:
 ; CHECK:    [N] -> {  :  }
 ; CHECK:    p0: %N

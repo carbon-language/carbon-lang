@@ -10,7 +10,11 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; }
 
 ; CHECK:   Assumed Context:
-; CHECK:   [o, m] -> {  : m >= 150 and o >= 200 }
+; CHECK:   [o, m] -> {  :
+; CHECK-DAG:               m >= 150
+; CHECK-DAG:               and
+; CHECK-DAG:               o >= 200
+; CHECK:             }
 ; CHECK:   p0: %o
 ; CHECK:   p1: %m
 ; CHECK:   Statements {
