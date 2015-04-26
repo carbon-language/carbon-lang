@@ -11,7 +11,7 @@
 ; INNERMOST:    Function: f
 ; INNERMOST:    Region: %bb15---%bb26
 ; INNERMOST:    Max Loop Depth:  1
-; INNERMOST:    p0: {0,+,{0,+,-1}<nw><%bb11>}<%bb13>
+; INNERMOST:    p0: {0,+,{0,+,-1}<nw><%bb11>}<nw><%bb13>
 ; INNERMOST:    p1: {0,+,{0,+,1}<nuw><nsw><%bb11>}<nuw><nsw><%bb13>
 ; INNERMOST:    p2: {0,+,4}<nuw><nsw><%bb11>
 ; INNERMOST:    p3: {0,+,4}<nuw><nsw><%bb13>

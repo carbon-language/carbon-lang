@@ -287,7 +287,7 @@ public:
     // if 'start' is not zero.
     const SCEV *ZeroStartExpr = SE.getAddRecExpr(
         SE.getConstant(Expr->getStart()->getType(), 0),
-        Expr->getStepRecurrence(SE), Expr->getLoop(), SCEV::FlagAnyWrap);
+        Expr->getStepRecurrence(SE), Expr->getLoop(), Expr->getNoWrapFlags());
 
     ValidatorResult ZeroStartResult =
         ValidatorResult(SCEVType::PARAM, ZeroStartExpr);

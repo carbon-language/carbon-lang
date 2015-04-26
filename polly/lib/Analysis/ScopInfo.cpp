@@ -214,6 +214,8 @@ __isl_give isl_pw_aff *
 SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
   assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
 
+  auto Flags = Expr->getNoWrapFlags();
+
   // Directly generate isl_pw_aff for Expr if 'start' is zero.
   if (Expr->getStart()->isZero()) {
     assert(S->getRegion().contains(Expr->getLoop()) &&
@@ -236,10 +238,13 @@ SCEVAffinator::visitAddRecExpr(const SCEVAddRecExpr *Expr) {
 
   // Translate AddRecExpr from '{start, +, inc}' into 'start + {0, +, inc}'
   // if 'start' is not zero.
+  // TODO: Using the original SCEV no-wrap flags is not always safe, however
+  //       as our code generation is reordering the expression anyway it doesn't
+  //       really matter.
   ScalarEvolution &SE = *S->getSE();
-  const SCEV *ZeroStartExpr = SE.getAddRecExpr(
-      SE.getConstant(Expr->getStart()->getType(), 0),
-      Expr->getStepRecurrence(SE), Expr->getLoop(), SCEV::FlagAnyWrap);
+  const SCEV *ZeroStartExpr =
+      SE.getAddRecExpr(SE.getConstant(Expr->getStart()->getType(), 0),
+                       Expr->getStepRecurrence(SE), Expr->getLoop(), Flags);
 
   isl_pw_aff *ZeroStartResult = visit(ZeroStartExpr);
   isl_pw_aff *Start = visit(Expr->getStart());
