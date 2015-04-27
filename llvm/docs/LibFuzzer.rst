@@ -32,7 +32,7 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   the sanitizer (asan, etc) it will be reported as usual and the reproducer
   will be written to disk.
   Each Fuzzer process is single-threaded (unless the library starts its own
-  threads). You can run the Fuzzer on the same corpus in multiple processes.
+  threads). You can run the Fuzzer on the same corpus in multiple processes
   in parallel. For run-time options run the Fuzzer binary with '-help=1'.
 
 
@@ -359,6 +359,6 @@ Examples: regular expression matchers, text or binary format parsers.
 
 .. _AFL: http://lcamtuf.coredump.cx/afl/
 
-.. _SanitizerCoverage: https://code.google.com/p/address-sanitizer/wiki/AsanCoverage
+.. _SanitizerCoverage: http://clang.llvm.org/docs/SanitizerCoverage.html
 
 .. _Heartbleed: http://en.wikipedia.org/wiki/Heartbleed
