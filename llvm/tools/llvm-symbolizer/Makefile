@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-symbolizer
-LINK_COMPONENTS := DebugInfoDWARF Object
+LINK_COMPONENTS := DebugInfoDWARF DebugInfoPDB Object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1
