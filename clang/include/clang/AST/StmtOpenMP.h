@@ -108,7 +108,7 @@ public:
     typedef const OMPClause *value_type;
     filtered_clause_iterator() : Current(), End() {}
     filtered_clause_iterator(ArrayRef<OMPClause *> Arr, FilterPredicate Pred)
-        : Current(Arr.begin()), End(Arr.end()), Pred(Pred) {
+        : Current(Arr.begin()), End(Arr.end()), Pred(std::move(Pred)) {
       SkipToNextClause();
     }
     value_type operator*() const { return *Current; }
@@ -126,29 +126,24 @@ public:
     }
 
     bool operator!() { return Current == End; }
-    operator bool() { return Current != End; }
+    explicit operator bool() { return Current != End; }
     bool empty() const { return Current == End; }
   };
 
-  /// \brief A filter to iterate over 'linear' clauses using a C++ range
-  /// for loop.
-  struct linear_filter : public filtered_clause_iterator<
-                             std::function<bool(const OMPClause *)> > {
-    linear_filter(ArrayRef<OMPClause *> Arr)
-        : filtered_clause_iterator(Arr, [](const OMPClause *C)->bool {
-            return C->getClauseKind() == OMPC_linear;
-          }) {}
-    const OMPLinearClause *operator*() const {
-      return cast<OMPLinearClause>(*Current);
-    }
-    const OMPLinearClause *operator->() const {
-      return cast<OMPLinearClause>(*Current);
-    }
-    friend linear_filter begin(const linear_filter &range) { return range; }
-    friend linear_filter end(const linear_filter &range) {
-      return linear_filter(ArrayRef<OMPClause *>(range.End, range.End));
+  template <typename Fn>
+  filtered_clause_iterator<Fn> getFilteredClauses(Fn &&fn) const {
+    return filtered_clause_iterator<Fn>(clauses(), std::move(fn));
+  }
+  struct ClauseKindFilter {
+    OpenMPClauseKind Kind;
+    bool operator()(const OMPClause *clause) const {
+      return clause->getClauseKind() == Kind;
     }
   };
+  filtered_clause_iterator<ClauseKindFilter>
+  getClausesOfKind(OpenMPClauseKind Kind) const {
+    return getFilteredClauses(ClauseKindFilter{Kind});
+  }
 
   /// \brief Gets a single clause of the specified kind \a K associated with the
   /// current directive iff there is only one clause of this kind (and assertion

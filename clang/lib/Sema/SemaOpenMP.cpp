@@ -2997,11 +2997,11 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *NestedLoopCountExpr,
 }
 
 static Expr *GetCollapseNumberExpr(ArrayRef<OMPClause *> Clauses) {
-  auto CollapseFilter = [](const OMPClause *C) -> bool {
+  auto &&CollapseFilter = [](const OMPClause *C) -> bool {
     return C->getClauseKind() == OMPC_collapse;
   };
   OMPExecutableDirective::filtered_clause_iterator<decltype(CollapseFilter)> I(
-      Clauses, CollapseFilter);
+      Clauses, std::move(CollapseFilter));
   if (I)
     return cast<OMPCollapseClause>(*I)->getNumForLoops();
   return nullptr;

@@ -1581,10 +1581,7 @@ OMPFlushClause *OMPFlushClause::CreateEmpty(const ASTContext &C, unsigned N) {
 
 const OMPClause *
 OMPExecutableDirective::getSingleClause(OpenMPClauseKind K) const {
-  auto ClauseFilter =
-      [=](const OMPClause *C) -> bool { return C->getClauseKind() == K; };
-  OMPExecutableDirective::filtered_clause_iterator<decltype(ClauseFilter)> I(
-      clauses(), ClauseFilter);
+  auto &&I = getClausesOfKind(K);
 
   if (I) {
     auto *Clause = *I;
