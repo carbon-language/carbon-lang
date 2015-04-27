@@ -23,7 +23,7 @@ BOOL WINAPI CtrlHandler(DWORD ctrlType)
 {
     if (_ctrlHandler != NULL)
     {
-        _ctrlHandler(0);
+        _ctrlHandler(SIGINT);
         return TRUE;
     }
     return FALSE;
