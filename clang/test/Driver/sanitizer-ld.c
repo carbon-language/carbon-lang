@@ -160,8 +160,9 @@
 // CHECK-TSAN-LINUX-CXX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-TSAN-LINUX-CXX-NOT: stdc++
 // CHECK-TSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.tsan-x86_64.a" "-no-whole-archive"
-// CHECK-TSAN-LINUX-CXX-NOT: "-export-dynamic"
 // CHECK-TSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.tsan-x86_64.a.syms"
+// CHECK-TSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.tsan_cxx-x86_64.a" "-no-whole-archive"
+// CHECK-TSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.tsan_cxx-x86_64.a.syms"
 // CHECK-TSAN-LINUX-CXX-NOT: "-export-dynamic"
 // CHECK-TSAN-LINUX-CXX: stdc++
 // CHECK-TSAN-LINUX-CXX: "-lpthread"
@@ -177,8 +178,9 @@
 // CHECK-MSAN-LINUX-CXX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-MSAN-LINUX-CXX-NOT: stdc++
 // CHECK-MSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.msan-x86_64.a" "-no-whole-archive"
-// CHECK-MSAN-LINUX-CXX-NOT: "-export-dynamic"
 // CHECK-MSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.msan-x86_64.a.syms"
+// CHECK-MSAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.msan_cxx-x86_64.a" "-no-whole-archive"
+// CHECK-MSAN-LINUX-CXX: "--dynamic-list={{.*}}libclang_rt.msan_cxx-x86_64.a.syms"
 // CHECK-MSAN-LINUX-CXX-NOT: "-export-dynamic"
 // CHECK-MSAN-LINUX-CXX: stdc++
 // CHECK-MSAN-LINUX-CXX: "-lpthread"
