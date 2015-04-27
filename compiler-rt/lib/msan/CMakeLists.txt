@@ -7,11 +7,14 @@ set(MSAN_RTL_SOURCES
   msan_chained_origin_depot.cc
   msan_interceptors.cc
   msan_linux.cc
-  msan_new_delete.cc
   msan_report.cc
   msan_thread.cc
   msan_poisoning.cc
   )
+
+set(MSAN_RTL_CXX_SOURCES
+  msan_new_delete.cc)
+
 
 set(MSAN_RTL_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(MSAN_RTL_CFLAGS)
@@ -30,11 +33,18 @@ foreach(arch ${MSAN_SUPPORTED_ARCH})
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${MSAN_RTL_CFLAGS})
-  add_dependencies(msan clang_rt.msan-${arch})
-  list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
+  add_compiler_rt_runtime(clang_rt.msan_cxx-${arch} ${arch} STATIC
+    SOURCES ${MSAN_RTL_CXX_SOURCES}
+    CFLAGS ${MSAN_RTL_CFLAGS})
+  add_dependencies(msan clang_rt.msan-${arch}
+                        clang_rt.msan_cxx-${arch})
+  list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch}
+                                     clang_rt.msan_cxx-${arch})
   if(UNIX)
     add_sanitizer_rt_symbols(clang_rt.msan-${arch} msan.syms.extra)
-    add_dependencies(msan clang_rt.msan-${arch}-symbols)
+    add_sanitizer_rt_symbols(clang_rt.msan_cxx-${arch} msan.syms.extra)
+    add_dependencies(msan clang_rt.msan-${arch}-symbols
+                          clang_rt.msan_cxx-${arch}-symbols)
   endif()
 endforeach()
 
