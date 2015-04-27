@@ -249,8 +249,7 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
     switch (encoding & 0x0F)
     {
     case DW_EH_PE_absptr:
-        result = *((uintptr_t*)p);
-        p += sizeof(uintptr_t);
+        result = readPointerHelper<uintptr_t>(p);
         break;
     case DW_EH_PE_uleb128:
         result = readULEB128(&p);

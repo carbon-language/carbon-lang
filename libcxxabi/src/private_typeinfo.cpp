@@ -599,7 +599,7 @@ __dynamic_cast(const void* static_ptr,
     // Currently clang always sets src2dst_offset to -1 (no hint).
 
     // Get (dynamic_ptr, dynamic_type) from static_ptr
-    void** vtable = *(void***)static_ptr;
+    void **vtable = *static_cast<void ** const *>(static_ptr);
     ptrdiff_t offset_to_derived = reinterpret_cast<ptrdiff_t>(vtable[-2]);
     const void* dynamic_ptr = static_cast<const char*>(static_ptr) + offset_to_derived;
     const __class_type_info* dynamic_type = static_cast<const __class_type_info*>(vtable[-1]);
