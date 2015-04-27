@@ -112,22 +112,6 @@ maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
   return std::make_tuple(argc, copy);
 }
 
-static std::error_code
-getFileMagic(StringRef path, llvm::sys::fs::file_magic &magic) {
-  std::error_code ec = llvm::sys::fs::identify_magic(path, magic);
-  if (ec)
-    return ec;
-  switch (magic) {
-  case llvm::sys::fs::file_magic::archive:
-  case llvm::sys::fs::file_magic::elf_relocatable:
-  case llvm::sys::fs::file_magic::elf_shared_object:
-  case llvm::sys::fs::file_magic::unknown:
-    return std::error_code();
-  default:
-    return make_dynamic_error_code("unknown type of object file");
-  }
-}
-
 // Parses an argument of --defsym=<sym>=<number>
 static bool parseDefsymAsAbsolute(StringRef opt, StringRef &sym,
                                   uint64_t &addr) {
@@ -214,9 +198,9 @@ getArchType(const llvm::Triple &triple, StringRef value) {
 
 static bool isLinkerScript(StringRef path, raw_ostream &diag) {
   llvm::sys::fs::file_magic magic = llvm::sys::fs::file_magic::unknown;
-  std::error_code ec = getFileMagic(path, magic);
-  if (ec) {
-    diag << "unknown input file format for file " << path << "\n";
+  if (std::error_code ec = llvm::sys::fs::identify_magic(path, magic)) {
+    diag << "unknown input file format: " << path << ": "
+         << ec.message() << "\n";
     return false;
   }
   return magic == llvm::sys::fs::file_magic::unknown;
