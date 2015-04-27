@@ -24,7 +24,6 @@ template<typename T>
 struct Boom {
   Boom(const Boom&) { 
     T* x = 1; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}} \
-    // expected-error{{cannot initialize a variable of type 'float *' with an rvalue of type 'int'}} \
     // expected-error{{cannot initialize a variable of type 'double *' with an rvalue of type 'int'}}
   }
   void tickle() const;
@@ -34,9 +33,11 @@ void odr_used(P &p, Boom<int> boom_int, Boom<float> boom_float,
               Boom<double> boom_double) {
   const std::type_info &ti1
     = typeid([=,&p]() -> P& { boom_int.tickle(); return p; }()); // expected-note{{in instantiation of member function 'Boom<int>::Boom' requested here}}
+  // This does not cause the instantiation of the Boom copy constructor,
+  // because the copy-initialization of the capture of boom_float occurs in an
+  // unevaluated operand.
   const std::type_info &ti2
-    = typeid([=]() -> int { boom_float.tickle(); return 0; }()); // expected-error{{lambda expression in an unevaluated operand}} \
-  // expected-note{{in instantiation of member function 'Boom<float>::Boom' requested here}}
+    = typeid([=]() -> int { boom_float.tickle(); return 0; }()); // expected-error{{lambda expression in an unevaluated operand}}
 
   auto foo = [=]() -> int { boom_double.tickle(); return 0; }; // expected-note{{in instantiation of member function 'Boom<double>::Boom' requested here}}
 }

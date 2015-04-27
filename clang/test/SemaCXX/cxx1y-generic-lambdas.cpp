@@ -899,8 +899,10 @@ struct X1 {
     int L2 = ([](auto i) { return i; })(2);
     void fooG(T i = ([] (auto i) { return i; })(2)) { }
     int BG : ([](auto i) { return i; })(3); //expected-error{{not an integral constant}}\
-                                            //expected-note{{non-literal type}}
-    int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}}
+                                            //expected-note{{non-literal type}}\
+                                            //expected-error{{inside of a constant expression}}
+    int arrG[([](auto i) { return i; })(3)]; //expected-error{{must have a constant size}} \
+                                             //expected-error{{inside of a constant expression}}
     int (*fpG)(T) = [](auto i) { return i; };
     void fooptrG(T (*fp)(char) = [](auto c) { return 0; }) { }
     template<class U = char> int fooG2(T (*fp)(U) = [](auto a) { return 0; }) { return 0; }

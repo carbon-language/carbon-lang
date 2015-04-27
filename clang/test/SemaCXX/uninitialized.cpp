@@ -1428,3 +1428,12 @@ class A {
   A(int (*) [7]) : a(rvalueref::notmove(a)) {}
 };
 }
+
+void array_capture(bool b) {
+  const char fname[] = "array_capture";
+  if (b) {
+    int unused; // expected-warning {{unused variable}}
+  } else {
+    [fname]{};
+  }
+}
