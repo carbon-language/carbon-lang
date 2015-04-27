@@ -321,7 +321,7 @@ namespace __sanitizer {
     long pw_change;
     char *pw_class;
 #endif
-#if !SANITIZER_ANDROID
+#if !(SANITIZER_ANDROID && (SANITIZER_WORDSIZE == 32))
     char *pw_gecos;
 #endif
     char *pw_dir;
@@ -383,7 +383,7 @@ namespace __sanitizer {
   };
 #endif
 
-#if SANITIZER_ANDROID || SANITIZER_MAC || SANITIZER_FREEBSD
+#if SANITIZER_MAC || SANITIZER_FREEBSD
   struct __sanitizer_msghdr {
     void *msg_name;
     unsigned msg_namelen;
@@ -520,6 +520,27 @@ namespace __sanitizer {
 #endif
 
   // Linux system headers define the 'sa_handler' and 'sa_sigaction' macros.
+#if SANITIZER_ANDROID && (SANITIZER_WORDSIZE == 64)
+  struct __sanitizer_sigaction {
+    unsigned sa_flags;
+    union {
+      void (*sigaction)(int sig, void *siginfo, void *uctx);
+      void (*handler)(int sig);
+    };
+    __sanitizer_sigset_t sa_mask;
+    void (*sa_restorer)();
+  };
+#elif SANITIZER_ANDROID && (SANITIZER_WORDSIZE == 32)
+  struct __sanitizer_sigaction {
+    union {
+      void (*sigaction)(int sig, void *siginfo, void *uctx);
+      void (*handler)(int sig);
+    };
+    __sanitizer_sigset_t sa_mask;
+    uptr sa_flags;
+    void (*sa_restorer)();
+  };
+#else // !SANITIZER_ANDROID
   struct __sanitizer_sigaction {
 #if defined(__mips__) && !SANITIZER_FREEBSD
     unsigned int sa_flags;
@@ -544,6 +565,7 @@ namespace __sanitizer {
     int sa_resv[1];
 #endif
   };
+#endif // !SANITIZER_ANDROID
 
 #if SANITIZER_FREEBSD
   typedef __sanitizer_sigset_t __sanitizer_kernel_sigset_t;
