@@ -18,7 +18,7 @@
 // its code in the new execution order defined by the changed schedule.
 //
 //===----------------------------------------------------------------------===//
-#include "polly/Config/config.h"
+
 #include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
@@ -34,15 +34,12 @@
 #include "polly/TempScopInfo.h"
 
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "isl/union_map.h"
