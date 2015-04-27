@@ -1,5 +1,5 @@
 # Check that search paths explicitly provided by the -L option
-# are used in search before default paths. 
+# are used in search before default paths.
 
 RUN: not lld -flavor gnu -target x86_64 -t -ltest \
 RUN:         --sysroot=%p/Inputs -L%p/Inputs 2> %t

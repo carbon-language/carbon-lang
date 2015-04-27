@@ -49,13 +49,13 @@
 
 # jump11.o
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
   Flags:           [ EF_ARM_EABI_VER5 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -66,7 +66,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x000000000000012A
         Symbol:          __gnu_h2f_internal
         Type:            R_ARM_THM_JUMP11
@@ -83,8 +83,8 @@ Sections:
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
     Content:         ''
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -101,7 +101,7 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000001
       Size:            0x00000000000000C2
-  Global:          
+  Global:
     - Name:            __gnu_f2h_ieee
       Type:            STT_FUNC
       Section:         .text
@@ -130,13 +130,13 @@ Symbols:
     - Name:            __gnu_h2f_internal
 # thm-call.o
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
   Flags:           [ EF_ARM_EABI_VER5 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -147,21 +147,21 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000014
         Symbol:          my_fn
         Type:            R_ARM_THM_CALL
       - Offset:          0x0000000000000018
         Symbol:          weak_fn
         Type:            R_ARM_THM_CALL
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
     - Name:            '$t'
       Section:         .text
-  Global:          
+  Global:
     - Name:            my_fn
       Type:            STT_FUNC
       Section:         .text
@@ -172,17 +172,17 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000011
       Size:            0x0000000000000012
-  Weak:            
+  Weak:
     - Name:            weak_fn
 # arm-call.o
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
   Flags:           [ EF_ARM_EABI_VER5 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -193,21 +193,21 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000024
         Symbol:          my_fn
         Type:            R_ARM_CALL
       - Offset:          0x0000000000000028
         Symbol:          weak_fn
         Type:            R_ARM_CALL
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
     - Name:            '$a'
       Section:         .text
-  Global:          
+  Global:
     - Name:            my_fn
       Type:            STT_FUNC
       Section:         .text
@@ -217,6 +217,6 @@ Symbols:
       Section:         .text
       Value:           0x000000000000001C
       Size:            0x000000000000001C
-  Weak:            
+  Weak:
     - Name:            weak_fn
 ...

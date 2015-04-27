@@ -18,7 +18,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          10
       NumberOfRelocations: 1
       NumberOfLinenumbers: 0

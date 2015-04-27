@@ -20,7 +20,7 @@
 
 # t1.o
 ---
-FileHeader:      
+FileHeader:
   Class:   ELFCLASS32
   Data:    ELFDATA2LSB
   Type:    ET_REL
@@ -28,15 +28,15 @@ FileHeader:
   Flags:   [EF_MIPS_NOREORDER, EF_MIPS_CPIC, EF_MIPS_PIC,
             EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2]
 
-Sections:        
+Sections:
   - Name:          .text
     Type:          SHT_PROGBITS
     Flags:         [SHF_ALLOC, SHF_EXECINSTR]
     AddressAlign:  16
     Size:          4
 
-Symbols:         
-  Global:          
+Symbols:
+  Global:
     - Name:    T1
       Type:    STT_FUNC
       Section: .text
@@ -45,7 +45,7 @@ Symbols:
 
 # t2.o
 ---
-FileHeader:      
+FileHeader:
   Class:   ELFCLASS32
   Data:    ELFDATA2LSB
   Type:    ET_REL
@@ -53,7 +53,7 @@ FileHeader:
   Flags:   [EF_MIPS_NOREORDER, EF_MIPS_CPIC, EF_MIPS_PIC,
             EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2]
 
-Sections:        
+Sections:
   - Name:          .text
     Type:          SHT_PROGBITS
     Flags:         [SHF_ALLOC, SHF_EXECINSTR]
@@ -77,7 +77,7 @@ Sections:
     Link:          .symtab
     AddressAlign:  4
     Info:          .gnu_extab
-    Relocations:     
+    Relocations:
       - Offset:  1
         Symbol:  T1
         Type:    R_MIPS_EH
@@ -96,7 +96,7 @@ Sections:
     Link:          .symtab
     AddressAlign:  4
     Info:          .eh_frame_entry
-    Relocations:     
+    Relocations:
       - Offset:  0
         Symbol:  .text
         Type:    R_MIPS_PC32
@@ -104,8 +104,8 @@ Sections:
         Symbol:  .gnu_extab
         Type:    R_MIPS_PC32
 
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:    .text
       Type:    STT_SECTION
       Section: .text
@@ -118,7 +118,7 @@ Symbols:
       Value:   0
       Size:    4
 
-  Global:          
+  Global:
     - Name:    T0
       Type:    STT_FUNC
       Section: .text

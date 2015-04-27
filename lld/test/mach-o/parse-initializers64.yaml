@@ -76,21 +76,21 @@ global-symbols:
 # CHECK:  - type:            initializer-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
-# CHECK:     references:      
+# CHECK:     references:
 # CHECK:       - kind:        pointer64
 # CHECK:         offset:      0
 # CHECK:         target:      _init
 # CHECK:  - type:            initializer-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
-# CHECK:     references:      
+# CHECK:     references:
 # CHECK:       - kind:        pointer64
 # CHECK:         offset:      0
 # CHECK:         target:      _init2
 # CHECK:  - type:            terminator-pointer
 # CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
 # CHECK:    dead-strip:      never
-# CHECK:     references:      
+# CHECK:     references:
 # CHECK:       - kind:        pointer64
 # CHECK:         offset:      0
 # CHECK:         target:      _term

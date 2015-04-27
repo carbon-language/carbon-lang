@@ -11,16 +11,16 @@
 # The following instruction creates a RM_ARM_V4BX relocation that
 # allows the linker to replace the bx instruction to a ARMv4
 # compatible one.  Currently lld does not change it.
-# CHECK:   400114:       1e ff 2f 01     bxeq    lr 
+# CHECK:   400114:       1e ff 2f 01     bxeq    lr
 
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
   Flags:           [ EF_ARM_EABI_VER5 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -32,7 +32,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000000
         Symbol:          ''
         Type:            R_ARM_V4BX
@@ -50,8 +50,8 @@ Sections:
     Type:            SHT_ARM_ATTRIBUTES
     AddressAlign:    0x0000000000000001
     Content:         4115000000616561626900010B000000060208010901
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -66,7 +66,7 @@ Symbols:
     - Name:            .ARM.attributes
       Type:            STT_SECTION
       Section:         .ARM.attributes
-  Global:          
+  Global:
     - Name:            main
       Type:            STT_FUNC
       Section:         .text

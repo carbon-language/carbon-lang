@@ -12,15 +12,15 @@
 arch:            x86_64
 file-type:       MH_OBJECT
 flags:           [ MH_SUBSECTIONS_VIA_SYMBOLS ]
-sections:        
+sections:
   - segment:         __TEXT
     section:         __text
     type:            S_REGULAR
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     address:         0x0000000000000000
-    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x31, 0xC0, 0x5D, 0xE9, 
+    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x31, 0xC0, 0x5D, 0xE9,
                        0x00, 0x00, 0x00, 0x00 ]
-    relocations:     
+    relocations:
       - offset:          0x00000008
         type:            X86_64_RELOC_BRANCH
         length:          2
@@ -33,9 +33,9 @@ sections:
     attributes:      [  ]
     alignment:       3
     address:         0x0000000000000010
-    content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    content:         [ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]
-    relocations:     
+    relocations:
       - offset:          0x00000008
         type:            X86_64_RELOC_UNSIGNED
         length:          3
@@ -48,7 +48,7 @@ sections:
         pc-rel:          false
         extern:          true
         symbol:          0
-local-symbols:   
+local-symbols:
   - name:            _my_open
     type:            N_SECT
     sect:            1
@@ -58,7 +58,7 @@ local-symbols:
     sect:            2
     desc:            [ N_NO_DEAD_STRIP ]
     value:           0x0000000000000010
-undefined-symbols: 
+undefined-symbols:
   - name:            _open
     type:            N_UNDF
     scope:           [ N_EXT ]

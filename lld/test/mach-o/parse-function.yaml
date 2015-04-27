@@ -1,4 +1,4 @@
-# RUN: lld -flavor darwin -arch x86_64 -r %s -o %t  
+# RUN: lld -flavor darwin -arch x86_64 -r %s -o %t
 # RUN: lld -flavor darwin -arch x86_64 -r %t -print_atoms -o %t2 | FileCheck %s
 #
 # Test parsing of mach-o functions.
@@ -17,7 +17,7 @@ sections:
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     alignment:       4
     address:         0x0000000000000000
-    content:         [ 0xCC, 0xC3, 0x90, 0xC3, 0x90, 0x90, 0xC3, 0x90, 
+    content:         [ 0xCC, 0xC3, 0x90, 0xC3, 0x90, 0x90, 0xC3, 0x90,
                        0x90, 0x90, 0xC3, 0x90, 0x90, 0x90, 0x90, 0xC3,
                        0xCC, 0x31, 0xC0, 0xC3 ]
 local-symbols:
@@ -62,7 +62,7 @@ global-symbols:
     value:           0x0000000000000011
 ...
 
-# CHECK-NOT:  name:  
+# CHECK-NOT:  name:
 # CHECK:      content:         [ CC ]
 
 # CHECK:      name:   _myGlobal

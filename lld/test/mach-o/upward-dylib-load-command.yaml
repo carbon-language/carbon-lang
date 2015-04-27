@@ -1,7 +1,7 @@
 # RUN: lld -flavor darwin -arch x86_64 -dylib %p/Inputs/bar.yaml \
 # RUN:     -install_name /usr/lib/libbar.dylib %p/Inputs/libSystem.yaml -o %t1.dylib
 # RUN: lld -flavor darwin -arch x86_64 -dylib %s -upward_library  %t1.dylib \
-# RUN:      -install_name /usr/lib/libfoo.dylib %p/Inputs/libSystem.yaml -o %t 
+# RUN:      -install_name /usr/lib/libfoo.dylib %p/Inputs/libSystem.yaml -o %t
 # RUN: llvm-objdump -private-headers %t | FileCheck %s
 #
 #
@@ -19,7 +19,7 @@ sections:
     type:            S_REGULAR
     attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
     address:         0x0000000000000000
-    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x31, 0xC0, 0x5D, 0xE9, 
+    content:         [ 0x55, 0x48, 0x89, 0xE5, 0x31, 0xC0, 0x5D, 0xE9,
                        0x00, 0x00, 0x00, 0x00 ]
     relocations:
       - offset:          0x00000008

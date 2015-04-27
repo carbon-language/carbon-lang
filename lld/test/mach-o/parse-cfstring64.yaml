@@ -72,7 +72,7 @@ undefined-symbols:
     value:           0x0000000000000000
 ...
 
-# CHECK:defined-atoms:   
+# CHECK:defined-atoms:
 # CHECK:  - ref-name:        L000
 # CHECK:    scope:           hidden
 # CHECK:    type:            c-string
@@ -86,7 +86,7 @@ undefined-symbols:
 # CHECK:  - scope:           hidden
 # CHECK:    type:            cfstring
 # CHECK:    merge:           by-content
-# CHECK:    references:      
+# CHECK:    references:
 # CHECK:      - kind:            pointer64
 # CHECK:        offset:          0
 # CHECK:        target:          ___CFConstantStringClassReference
@@ -96,13 +96,13 @@ undefined-symbols:
 # CHECK:  - scope:           hidden
 # CHECK:    type:            cfstring
 # CHECK:    merge:           by-content
-# CHECK:    references:      
+# CHECK:    references:
 # CHECK:      - kind:            pointer64
 # CHECK:        offset:          0
 # CHECK:        target:          ___CFConstantStringClassReference
 # CHECK:      - kind:            pointer64
 # CHECK:        offset:          16
 # CHECK:        target:          L001
-# CHECK:undefined-atoms: 
+# CHECK:undefined-atoms:
 # CHECK:  - name:            ___CFConstantStringClassReference
 

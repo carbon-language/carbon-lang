@@ -1,6 +1,6 @@
 # Check handling of group relocations (R_ARM_ALU_PC_G0_NC, R_ARM_ALU_PC_G1_NC,
 # R_ARM_LDR_PC_G2).
-# 
+#
 # RUN: yaml2obj -format=elf %s > %t-o.o
 # RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: -e plt_func %t-o.o -o %t
@@ -25,12 +25,12 @@
 # CHECK: 00401000 g       .data	00000004 got_func
 
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   Type:            ET_REL
   Machine:         EM_ARM
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -41,7 +41,7 @@ Sections:
     Link:            .symtab
     Info:            .text
     AddressAlign:    0x4
-    Relocations:     
+    Relocations:
       - Offset:          0
         Symbol:          got_func
         Type:            R_ARM_ALU_PC_G0_NC
@@ -58,9 +58,9 @@ Sections:
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x4
     Content:         74004000
-Symbols:         
-  Local:           
-  Global:          
+Symbols:
+  Local:
+  Global:
     - Name:            plt_func
       Type:            STT_FUNC
       Section:         .text

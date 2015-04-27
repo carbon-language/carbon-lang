@@ -16,7 +16,7 @@ sections:
     alignment:       2
     address:         0x0000000000000000
     content:         [ 0x00, 0x00, 0x00, 0x00 ]
-global-symbols:  
+global-symbols:
   - name:            _myData
     type:            N_SECT
     scope:           [ N_EXT ]

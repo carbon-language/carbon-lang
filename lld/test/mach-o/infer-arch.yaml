@@ -25,5 +25,5 @@ global-symbols:
 ...
 
 
-# CHECK: defined-atoms:   
+# CHECK: defined-atoms:
 # CHECK:  - name:            _foo

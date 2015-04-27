@@ -21,5 +21,5 @@ sections:
                        0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D ]
 ...
 
-# CHECK:       error: 
+# CHECK:       error:
 

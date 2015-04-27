@@ -16,8 +16,8 @@ sections:
     attributes:      [  ]
     alignment:       1
     address:         0x0000000000000100
-    content:         [ 0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0x74, 0x68, 
-                       0x65, 0x72, 0x65, 0x00, 0x77, 0x6F, 0x72, 0x6C, 
+    content:         [ 0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x00, 0x74, 0x68,
+                       0x65, 0x72, 0x65, 0x00, 0x77, 0x6F, 0x72, 0x6C,
                        0x00 ]
   - segment:         __TEXT
     section:         __literal4
@@ -49,13 +49,13 @@ sections:
     attributes:      [  ]
     alignment:       1
     address:         0x0000000000000100
-    content:         [ 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 
-                       0x6F, 0x00, 0x00, 0x00, 0x74, 0x00, 0x68, 0x00, 
+    content:         [ 0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00,
+                       0x6F, 0x00, 0x00, 0x00, 0x74, 0x00, 0x68, 0x00,
                        0x65, 0x00, 0x72, 0x00, 0x00, 0x00 ]
 ...
 
 
-# CHECK:defined-atoms:   
+# CHECK:defined-atoms:
 # CHECK:  - scope:           hidden
 # CHECK:    type:            c-string
 # CHECK:    content:         [ 68, 65, 6C, 6C, 6F, 00 ]
@@ -88,6 +88,6 @@ sections:
 # CHECK:    content:         [ 28, 29, 2A, 2B, 2C, 2D, 2E, 2F ]
 # CHECK:  - scope:           hidden
 # CHECK:    type:            const-16-byte
-# CHECK:    content:         [ 01, 02, 03, 04, 05, 06, 07, 08, 09, 0A, 0B, 0C, 
+# CHECK:    content:         [ 01, 02, 03, 04, 05, 06, 07, 08, 09, 0A, 0B, 0C,
 # CHECK:                       0D, 0E, 0F, 00 ]
 

@@ -1,5 +1,5 @@
 #
-# Test framework and SDK search paths. 
+# Test framework and SDK search paths.
 #   myFrameworks is not an absolute path, so it should not by found in SDK
 #   /Custom/Frameworks should be found in SDK
 #   /opt/Frameworks should not be found in SDK

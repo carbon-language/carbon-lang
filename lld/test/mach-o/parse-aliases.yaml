@@ -68,7 +68,7 @@ global-symbols:
     value:           0x0000000000000001
 ...
 
-# CHECK: defined-atoms:   
+# CHECK: defined-atoms:
 # CHECK:   - name:            _pad
 # CHECK:     scope:           global
 # CHECK:     content:         [ CC ]

@@ -68,7 +68,7 @@ defined-atoms:
 
 # Generic x86_64 CIE:
   - type:            unwind-cfi
-    content:         [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00, 
+    content:         [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00,
                        01, 78, 10, 01, 10, 0C, 07, 08, 90, 01, 00, 00 ]
 
   - type:            unwind-cfi

@@ -1,11 +1,11 @@
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS64
   Data:            ELFDATA2LSB
   OSABI:           ELFOSABI_GNU
   Type:            ET_REL
   Machine:         EM_X86_64
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -16,7 +16,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000008
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x000000000000001D
         Symbol:          my_func
         Type:            R_X86_64_PC32
@@ -31,8 +31,8 @@ Sections:
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
     Content:         ''
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -42,7 +42,7 @@ Symbols:
     - Name:            .bss
       Type:            STT_SECTION
       Section:         .bss
-  Global:          
+  Global:
     - Name:            main
       Type:            STT_FUNC
       Section:         .text

@@ -1,11 +1,11 @@
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS64
   Data:            ELFDATA2LSB
   OSABI:           ELFOSABI_GNU
   Type:            ET_REL
   Machine:         EM_X86_64
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -16,7 +16,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000008
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000006
         Symbol:          .rodata.str1.1
         Type:            R_X86_64_64
@@ -54,12 +54,12 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x0000000000000008
     Info:            .eh_frame
-    Relocations:     
+    Relocations:
       - Offset:          0x0000000000000020
         Symbol:          .text
         Type:            R_X86_64_PC32
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -81,7 +81,7 @@ Symbols:
     - Name:            .eh_frame
       Type:            STT_SECTION
       Section:         .eh_frame
-  Global:          
+  Global:
     - Name:            prog2
       Type:            STT_FUNC
       Section:         .text
