@@ -203,31 +203,6 @@ static const EnumEntry<uint32_t> MachOHeaderFlags[] = {
   LLVM_READOBJ_ENUM_ENT(MachO, MH_APP_EXTENSION_SAFE),
 };
 
-static const EnumEntry<unsigned> MachOSectionTypes[] = {
-  { "Regular"                        , 0x00 },
-  { "ZeroFill"                       , 0x01 },
-  { "CStringLiterals"                , 0x02 },
-  { "4ByteLiterals"                  , 0x03 },
-  { "8ByteLiterals"                  , 0x04 },
-  { "LiteralPointers"                , 0x05 },
-  { "NonLazySymbolPointers"          , 0x06 },
-  { "LazySymbolPointers"             , 0x07 },
-  { "SymbolStubs"                    , 0x08 },
-  { "ModInitFuncs"                   , 0x09 },
-  { "ModTermFuncs"                   , 0x0A },
-  { "Coalesced"                      , 0x0B },
-  { "GBZeroFill"                     , 0x0C },
-  { "Interposing"                    , 0x0D },
-  { "16ByteLiterals"                 , 0x0E },
-  { "DTraceDOF"                      , 0x0F },
-  { "LazyDylibSymbolPoints"          , 0x10 },
-  { "ThreadLocalRegular"             , 0x11 },
-  { "ThreadLocalZerofill"            , 0x12 },
-  { "ThreadLocalVariables"           , 0x13 },
-  { "ThreadLocalVariablePointers"    , 0x14 },
-  { "ThreadLocalInitFunctionPointers", 0x15 }
-};
-
 static const EnumEntry<unsigned> MachOSectionAttributes[] = {
   { "LocReloc"         , 1 <<  0 /*S_ATTR_LOC_RELOC          */ },
   { "ExtReloc"         , 1 <<  1 /*S_ATTR_EXT_RELOC          */ },
