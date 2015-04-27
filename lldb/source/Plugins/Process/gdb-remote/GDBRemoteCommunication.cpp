@@ -770,7 +770,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         }
 
         llvm::SmallString<PATH_MAX> named_pipe_path;
-        Pipe port_named_pipe;
+        Pipe port_pipe;
 
         bool listen = false;
         if (host_and_port[0])
@@ -783,11 +783,33 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             {
                 // Binding to port zero, we need to figure out what port it ends up
                 // using using a named pipe...
-                error = port_named_pipe.CreateWithUniqueName("debugserver-named-pipe", false, named_pipe_path);
-                if (error.Fail())
-                    return error;
-                debugserver_args.AppendArgument("--named-pipe");
-                debugserver_args.AppendArgument(named_pipe_path.c_str());
+                error = port_pipe.CreateWithUniqueName("debugserver-named-pipe", false, named_pipe_path);
+                if (error.Success())
+                {
+                    debugserver_args.AppendArgument("--named-pipe");
+                    debugserver_args.AppendArgument(named_pipe_path.c_str());
+                }
+                else
+                {
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "named pipe creation failed: %s",
+                                __FUNCTION__, error.AsCString());
+                    // let's try an unnamed pipe
+                    error = port_pipe.CreateNew(true);
+                    if (error.Fail())
+                    {
+                        if (log)
+                            log->Printf("GDBRemoteCommunication::%s() "
+                                    "unnamed pipe creation failed: %s",
+                                    __FUNCTION__, error.AsCString());
+                        return error;
+                    }
+                    int write_fd = port_pipe.GetWriteFileDescriptor();
+                    debugserver_args.AppendArgument("--pipe");
+                    debugserver_args.AppendArgument(std::to_string(write_fd).c_str());
+                    launch_info.AppendCloseFileAction(port_pipe.GetReadFileDescriptor());
+                }
             }
             else
             {
@@ -869,50 +891,57 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         {
             if (named_pipe_path.size() > 0)
             {
-                error = port_named_pipe.OpenAsReader(named_pipe_path, false);
+                error = port_pipe.OpenAsReader(named_pipe_path, false);
+                if (error.Fail())
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "failed to open named pipe %s for reading: %s",
+                                __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
+            }
+
+            if (port_pipe.CanWrite())
+                port_pipe.CloseWriteFileDescriptor();
+            if (port_pipe.CanRead())
+            {
+                char port_cstr[256];
+                port_cstr[0] = '\0';
+                size_t num_bytes = sizeof(port_cstr);
+                // Read port from pipe with 10 second timeout.
+                error = port_pipe.ReadWithTimeout(port_cstr, num_bytes,
+                        std::chrono::seconds{10}, num_bytes);
                 if (error.Success())
                 {
-                    char port_cstr[256];
-                    port_cstr[0] = '\0';
-                    size_t num_bytes = sizeof(port_cstr);
-                    // Read port from pipe with 10 second timeout.
-                    error = port_named_pipe.ReadWithTimeout(port_cstr, num_bytes, std::chrono::microseconds(10 * 1000000), num_bytes);
-                    if (error.Success())
-                    {
-                        assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
-                        out_port = StringConvert::ToUInt32(port_cstr, 0);
-                        if (log)
-                            log->Printf("GDBRemoteCommunication::%s() debugserver listens %u port", __FUNCTION__, out_port);
-                    }
-                    else
-                    {
-                        if (log)
-                            log->Printf("GDBRemoteCommunication::%s() failed to read a port value from named pipe %s: %s", __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
-
-                    }
-                    port_named_pipe.Close();
+                    assert(num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
+                    out_port = StringConvert::ToUInt32(port_cstr, 0);
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "debugserver listens %u port",
+                                __FUNCTION__, out_port);
                 }
                 else
                 {
                     if (log)
-                        log->Printf("GDBRemoteCommunication::%s() failed to open named pipe %s for reading: %s", __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
+                        log->Printf("GDBRemoteCommunication::%s() "
+                                "failed to read a port value from pipe %s: %s",
+                                __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
+
                 }
-                const auto err = port_named_pipe.Delete(named_pipe_path);
+                port_pipe.Close();
+            }
+
+            if (named_pipe_path.size() > 0)
+            {
+                const auto err = port_pipe.Delete(named_pipe_path);
                 if (err.Fail())
                 {
                     if (log)
-                        log->Printf ("GDBRemoteCommunication::%s failed to delete pipe %s: %s", __FUNCTION__, named_pipe_path.c_str(), err.AsCString());
+                        log->Printf ("GDBRemoteCommunication::%s failed to delete pipe %s: %s",
+                                __FUNCTION__, named_pipe_path.c_str(), err.AsCString());
                 }
             }
-            else if (listen)
-            {
-                
-            }
-            else
-            {
-                // Make sure we actually connect with the debugserver...
-                JoinListenThread();
-            }
+
+            // Make sure we actually connect with the debugserver...
+            JoinListenThread();
         }
     }
     else

@@ -77,7 +77,8 @@ static struct option g_long_options[] =
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
     { "attach",             required_argument,  NULL,               'a' },
-    { "named-pipe",         required_argument,  NULL,               'P' },
+    { "named-pipe",         required_argument,  NULL,               'N' },
+    { "pipe",               required_argument,  NULL,               'U' },
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.  NOTE: this is a do-nothing arg as it's behavior is default now.  FIXME remove call from lldb-platform.
     { "reverse-connect",    no_argument,        NULL,               'R' },  // Specifies that llgs attaches to the client address:port rather than llgs listening for a connection from address on port.
     { "setsid",             no_argument,        NULL,               'S' },  // Call setsid() to make llgs run in its own session.
@@ -122,7 +123,16 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname, const char* subcommand)
 {
-    fprintf(stderr, "Usage:\n  %s %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [--setsid] [--named-pipe named-pipe-path] [--native-regs] [--attach pid] [[HOST]:PORT] "
+    fprintf(stderr, "Usage:\n  %s %s "
+            "[--log-file log-file-path] "
+            "[--log-flags flags] "
+            "[--lldb-command command]* "
+            "[--platform platform_name] "
+            "[--setsid] "
+            "[--named-pipe named-pipe-path] "
+            "[--native-regs] "
+            "[--attach pid] "
+            "[[HOST]:PORT] "
             "[-- PROGRAM ARG1 ARG2 ...]\n", progname, subcommand);
     exit(0);
 }
@@ -309,24 +319,44 @@ JoinListenThread ()
 }
 
 Error
-writePortToPipe (const char *const named_pipe_path, const uint16_t port)
+WritePortToPipe(Pipe port_pipe, const uint16_t port)
 {
-    Pipe port_name_pipe;
-    // Wait for 10 seconds for pipe to be opened.
-    auto error = port_name_pipe.OpenAsWriterWithTimeout (named_pipe_path, false, std::chrono::microseconds (10 * 1000000));
-    if (error.Fail ())
-        return error;
-
     char port_str[64];
-    const auto port_str_len = ::snprintf (port_str, sizeof (port_str), "%u", port);
+    const auto port_str_len = ::snprintf(port_str, sizeof(port_str), "%u", port);
 
     size_t bytes_written = 0;
     // Write the port number as a C string with the NULL terminator.
-    return port_name_pipe.Write (port_str, port_str_len + 1, bytes_written);
+    return port_pipe.Write(port_str, port_str_len + 1, bytes_written);
+}
+
+Error
+writePortToPipe(const char *const named_pipe_path, const uint16_t port)
+{
+    Pipe port_name_pipe;
+    // Wait for 10 seconds for pipe to be opened.
+    auto error = port_name_pipe.OpenAsWriterWithTimeout(named_pipe_path, false,
+            std::chrono::seconds{10});
+    if (error.Fail())
+        return error;
+    return WritePortToPipe(port_name_pipe, port);
+}
+
+Error
+writePortToPipe(int unnamed_pipe_fd, const uint16_t port)
+{
+    Pipe port_pipe;
+    // Wait for 10 seconds for pipe to be opened.
+    auto error = port_pipe.CreateWithFD(Pipe::kInvalidDescriptor, unnamed_pipe_fd);
+    if (error.Fail())
+        return error;
+    return WritePortToPipe(port_pipe, port);
 }
 
 void
-ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const subcommand, const char *const named_pipe_path)
+ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
+        bool reverse_connect, const char *const host_and_port,
+        const char *const progname, const char *const subcommand,
+        const char *const named_pipe_path, int unnamed_pipe_fd)
 {
     Error error;
 
@@ -414,6 +444,25 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
                 else
                 {
                     fprintf (stderr, "unable to get the bound port for the listening connection\n");
+                }
+            }
+
+            // If we have an unnamed pipe to write the port number back to, do that now.
+            if (unnamed_pipe_fd >= 0 && connection_portno == 0)
+            {
+                const uint16_t bound_port = s_listen_connection_up->GetListeningPort(10);
+                if (bound_port > 0)
+                {
+                    error = writePortToPipe(unnamed_pipe_fd, bound_port);
+                    if (error.Fail())
+                    {
+                        fprintf(stderr, "failed to write to the unnamed pipe: %s",
+                                error.AsCString());
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "unable to get the bound port for the listening connection\n");
                 }
             }
 
@@ -512,6 +561,7 @@ main_gdbserver (int argc, char *argv[])
     std::string platform_name;
     std::string attach_target;
     std::string named_pipe_path;
+    int unnamed_pipe_fd = -1;
     bool reverse_connect = false;
 
     lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
@@ -587,10 +637,14 @@ main_gdbserver (int argc, char *argv[])
                 platform_name = optarg;
             break;
 
-        case 'P': // named pipe
+        case 'N': // named pipe
             if (optarg && optarg[0])
                 named_pipe_path = optarg;
             break;
+
+        case 'U': // unnamed pipe
+            if (optarg && optarg[0])
+                unnamed_pipe_fd = StringConvert::ToUInt32(optarg, -1);
 
         case 'r':
             // Do nothing, native regs is the default these days
@@ -692,7 +746,9 @@ main_gdbserver (int argc, char *argv[])
     // Print version info.
     printf("%s-%s", LLGS_PROGRAM_NAME, LLGS_VERSION_STR);
 
-    ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, subcommand, named_pipe_path.c_str ());
+    ConnectToRemote(gdb_server, reverse_connect,
+                    host_and_port, progname, subcommand,
+                    named_pipe_path.c_str(), unnamed_pipe_fd);
 
     fprintf(stderr, "lldb-server exiting...\n");
 

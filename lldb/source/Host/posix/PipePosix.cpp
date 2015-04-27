@@ -187,6 +187,15 @@ PipePosix::CreateNew(llvm::StringRef name, bool child_process_inherit)
 }
 
 Error
+PipePosix::CreateWithFD(int read_fd, int write_fd) {
+    if (CanRead() || CanWrite())
+        return Error("Pipe is already opened");
+    m_fds[READ] = read_fd;
+    m_fds[WRITE] = write_fd;
+    return Error();
+}
+
+Error
 PipePosix::CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name)
 {
     llvm::SmallString<PATH_MAX> named_pipe_path;

@@ -16,7 +16,7 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class PipePosix PipePosix	.h "lldb/Host/posix/PipePosix.h"
+/// @class PipePosix PipePosix.h "lldb/Host/posix/PipePosix.h"
 /// @brief A posix-based implementation of Pipe, a class that abtracts
 ///        unix style pipes.
 ///
@@ -35,6 +35,8 @@ public:
     CreateNew(bool child_process_inherit) override;
     Error
     CreateNew(llvm::StringRef name, bool child_process_inherit) override;
+    Error
+    CreateWithFD(int read_fd, int write_fd);
     Error
     CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name) override;
     Error
@@ -68,12 +70,12 @@ public:
     Error
     ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_read) override;
 
-private:
     void
     CloseReadFileDescriptor();
     void
     CloseWriteFileDescriptor();
 
+private:
     int m_fds[2];
 };
 
