@@ -30,48 +30,6 @@ extern CodeGenChoice PollyCodeGenChoice;
 
 /// @brief Flag to turn on/off annotation of alias scopes.
 extern bool PollyAnnotateAliasScopes;
-
-static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
-  int Dim = isl_set_dim(Domain, isl_dim_set);
-
-  // Calculate a map similar to the identity map, but with the last input
-  // and output dimension not related.
-  //  [i0, i1, i2, i3] -> [i0, i1, i2, o0]
-  isl_space *Space = isl_set_get_space(Domain);
-  Space = isl_space_drop_dims(Space, isl_dim_out, Dim - 1, 1);
-  Space = isl_space_map_from_set(Space);
-  isl_map *Identity = isl_map_identity(Space);
-  Identity = isl_map_add_dims(Identity, isl_dim_in, 1);
-  Identity = isl_map_add_dims(Identity, isl_dim_out, 1);
-
-  Domain = isl_set_reset_tuple_id(Domain);
-
-  isl_map *Map =
-      isl_map_from_domain_and_range(isl_set_copy(Domain), isl_set_copy(Domain));
-  isl_set_free(Domain);
-  Map = isl_map_intersect(Map, Identity);
-
-  isl_map *LexMax = isl_map_lexmax(isl_map_copy(Map));
-  isl_map *LexMin = isl_map_lexmin(Map);
-  isl_map *Sub = isl_map_sum(LexMax, isl_map_neg(LexMin));
-
-  isl_set *Elements = isl_map_range(Sub);
-
-  if (!isl_set_is_singleton(Elements)) {
-    isl_set_free(Elements);
-    return -1;
-  }
-
-  isl_point *P = isl_set_sample_point(Elements);
-
-  isl_val *V;
-  V = isl_point_get_coordinate_val(P, isl_dim_set, Dim - 1);
-  int NumberIterations = isl_val_get_num_si(V);
-  isl_val_free(V);
-  isl_point_free(P);
-
-  return NumberIterations;
-}
 }
 
 #endif // POLLY_CODEGENERATION_H
