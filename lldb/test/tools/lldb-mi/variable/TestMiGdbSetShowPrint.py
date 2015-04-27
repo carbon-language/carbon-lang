@@ -68,6 +68,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @expectedFailureGcc("https://llvm.org/bugs/show_bug.cgi?id=23357")
     def test_lldbmi_gdb_set_show_print_expand_aggregates(self):
         """Test that 'lldb-mi --interpreter' can expand aggregates everywhere."""
 
@@ -123,6 +124,7 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @expectedFailureGcc("https://llvm.org/bugs/show_bug.cgi?id=23357")
     def test_lldbmi_gdb_set_show_print_aggregate_field_names(self):
         """Test that 'lldb-mi --interpreter' can expand aggregates everywhere."""
 
