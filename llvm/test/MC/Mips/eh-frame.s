@@ -31,7 +31,7 @@ func:
 // MIPS32: 00000000
 
 // Version
-// MIPS32: 03
+// MIPS32: 01
 
 // Augmentation String
 // MIPS32: 7a5200
@@ -67,7 +67,7 @@ func:
 // MIPS32EL: 00000000
 
 // Version
-// MIPS32EL: 03
+// MIPS32EL: 01
 
 // Augmentation String
 // MIPS32EL: 7a5200
@@ -103,7 +103,7 @@ func:
 // MIPS64: 00000000
 
 // Version
-// MIPS64: 03
+// MIPS64: 01
 
 // Augmentation String
 // MIPS64: 7a5200
@@ -141,7 +141,7 @@ func:
 // MIPS64EL: 00000000
 
 // Version
-// MIPS64EL: 03
+// MIPS64EL: 01
 
 // Augmentation String
 // MIPS64EL: 7a5200

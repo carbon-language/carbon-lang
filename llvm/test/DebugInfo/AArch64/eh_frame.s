@@ -17,7 +17,7 @@ foo:
 // Output is:
 
 // CHECK: Contents of section .eh_frame:
-// CHECK-NEXT: 0000 10000000 00000000 037a5200 017c1e01  .........zR..|..
+// CHECK-NEXT: 0000 10000000 00000000 017a5200 017c1e01  .........zR..|..
 // CHECK-NEXT: 0010 1b0c1f00 10000000 18000000 00000000  ................
 
 

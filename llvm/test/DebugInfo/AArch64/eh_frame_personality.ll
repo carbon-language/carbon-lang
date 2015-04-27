@@ -16,7 +16,7 @@ clean:
 }
 
 ; CHECK: Contents of section .eh_frame:
-; CHECK: 0000 1c000000 00000000 037a504c 5200017c  .........zPLR..|
+; CHECK: 0000 1c000000 00000000 017a504c 5200017c  .........zPLR..|
 ; CHECK: 0010 1e0b0000 00000000 00000000 1b0c1f00  ................
 
 ; Don't really care about the rest:

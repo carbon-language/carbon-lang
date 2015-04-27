@@ -1270,9 +1270,10 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   streamer.EmitIntValue(CIE_ID, 4);
 
   // Version
+  // For .eh_frame, we use CIE version 1
   // For DWARF2, we use CIE version 1
   // For DWARF3+, we use CIE version 3
-  uint8_t CIEVersion = context.getDwarfVersion() <= 2 ? 1 : 3;
+  uint8_t CIEVersion = (IsEH || context.getDwarfVersion() <= 2) ? 1 : 3;
   streamer.EmitIntValue(CIEVersion, 1);
 
   // Augmentation String
