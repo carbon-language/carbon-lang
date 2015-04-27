@@ -3173,15 +3173,8 @@ multiclass scalar_math_f32_patterns<SDNode Op, string OpcPrefix> {
       (!cast<I>(OpcPrefix#SSrr_Int) v4f32:$dst, v4f32:$src)>;
   }
 
-  // With SSE 4.1, insertps/blendi are preferred to movsd, so match those too.
+  // With SSE 4.1, blendi is preferred to movsd, so match that too.
   let Predicates = [UseSSE41] in {
-    // extracted scalar math op with insert via insertps
-    def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
-          (Op (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-          FR32:$src))), (iPTR 0))),
-      (!cast<I>(OpcPrefix#SSrr_Int) v4f32:$dst,
-          (COPY_TO_REGCLASS FR32:$src, VR128))>;
-
     // extracted scalar math op with insert via blend
     def : Pat<(v4f32 (X86Blendi (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
           (Op (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
@@ -3199,13 +3192,6 @@ multiclass scalar_math_f32_patterns<SDNode Op, string OpcPrefix> {
   // Repeat everything for AVX, except for the movss + scalar combo...
   // because that one shouldn't occur with AVX codegen?
   let Predicates = [HasAVX] in {
-    // extracted scalar math op with insert via insertps
-    def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
-          (Op (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
-          FR32:$src))), (iPTR 0))),
-      (!cast<I>("V"#OpcPrefix#SSrr_Int) v4f32:$dst,
-          (COPY_TO_REGCLASS FR32:$src, VR128))>;
-
     // extracted scalar math op with insert via blend
     def : Pat<(v4f32 (X86Blendi (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
           (Op (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
