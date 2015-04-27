@@ -1,4 +1,4 @@
-//===-- X86IntinsicsInfo.h - X86 Instrinsics ------------*- C++ -*-===//
+//===-- X86IntrinsicsInfo.h - X86 Intrinsics ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
