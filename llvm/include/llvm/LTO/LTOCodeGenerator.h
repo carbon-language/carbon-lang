@@ -80,6 +80,7 @@ struct LTOCodeGenerator {
   void setOptLevel(unsigned optLevel) { OptLevel = optLevel; }
 
   void setShouldInternalize(bool Value) { ShouldInternalize = Value; }
+  void setShouldEmbedUselists(bool Value) { ShouldEmbedUselists = Value; }
 
   void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
@@ -176,6 +177,7 @@ private:
   void *DiagContext = nullptr;
   LTOModule *OwnedModule = nullptr;
   bool ShouldInternalize = true;
+  bool ShouldEmbedUselists = false;
 };
 }
 #endif

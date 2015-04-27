@@ -202,8 +202,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   }
 
   // write bitcode to it
-  WriteBitcodeToFile(IRLinker.getModule(), Out.os(),
-                     /* ShouldPreserveUseListOrder */ true);
+  WriteBitcodeToFile(IRLinker.getModule(), Out.os(), ShouldEmbedUselists);
   Out.os().close();
 
   if (Out.os().has_error()) {

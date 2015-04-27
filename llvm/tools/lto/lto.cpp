@@ -338,3 +338,8 @@ void lto_codegen_set_should_internalize(lto_code_gen_t cg,
                                         bool ShouldInternalize) {
   unwrap(cg)->setShouldInternalize(ShouldInternalize);
 }
+
+void lto_codegen_set_should_embed_uselists(lto_code_gen_t cg,
+                                           lto_bool_t ShouldEmbedUselists) {
+  unwrap(cg)->setShouldEmbedUselists(ShouldEmbedUselists);
+}
