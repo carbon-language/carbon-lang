@@ -1752,7 +1752,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     // <- hi16 ->             <- lo16 ->
     //  _________________________________
     // |          |          |          |
-    // | 16-bytes | 16-bytes | 16-bytes |
+    // | 16-bits  | 16-bits  | 16-bits  |
     // |__________|__________|__________|
     //
     // For any 64-bit value that is representable as a 48-bit integer:
@@ -1777,7 +1777,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     // <- hi16 ->                        <- lo16 ->
     //  ___________________________________________
     // |          |          |          |          |
-    // | 16-bytes | 16-bytes | 16-bytes | 16-bytes |
+    // | 16-bits  | 16-bits  | 16-bits  | 16-bits  |
     // |__________|__________|__________|__________|
     //
     // For all other values which are representable as a 64-bit integer:
