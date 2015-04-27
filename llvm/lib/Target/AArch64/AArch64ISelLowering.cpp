@@ -8644,12 +8644,20 @@ static SDValue performVSelectCombine(SDNode *N, SelectionDAG &DAG) {
 /// the compare-mask instructions rather than going via NZCV, even if LHS and
 /// RHS are really scalar. This replaces any scalar setcc in the above pattern
 /// with a vector one followed by a DUP shuffle on the result.
-static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
+static SDValue performSelectCombine(SDNode *N,
+                                    TargetLowering::DAGCombinerInfo &DCI) {
+  SelectionDAG &DAG = DCI.DAG;
   SDValue N0 = N->getOperand(0);
   EVT ResVT = N->getValueType(0);
 
-  if (N0.getOpcode() != ISD::SETCC || N0.getValueType() != MVT::i1)
+  if (N0.getOpcode() != ISD::SETCC)
     return SDValue();
+
+  // Make sure the SETCC result is either i1 (initial DAG), or i32, the lowered
+  // scalar SetCCResultType. We also don't expect vectors, because we assume
+  // that selects fed by vector SETCCs are canonicalized to VSELECT.
+  assert((N0.getValueType() == MVT::i1 || N0.getValueType() == MVT::i32) &&
+         "Scalar-SETCC feeding SELECT has unexpected result type!");
 
   // If NumMaskElts == 0, the comparison is larger than select result. The
   // largest real NEON comparison is 64-bits per lane, which means the result is
@@ -8673,6 +8681,10 @@ static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   // (e.g., f64 vs v3f32).
   if (CCVT.getSizeInBits() != ResVT.getSizeInBits())
     return SDValue();
+
+  // Make sure we didn't create illegal types, if we're not supposed to.
+  assert(DCI.isBeforeLegalize() ||
+         DAG.getTargetLoweringInfo().isTypeLegal(SrcVT));
 
   // First perform a vector comparison, where lane 0 is the one we're interested
   // in.
@@ -8721,7 +8733,7 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::CONCAT_VECTORS:
     return performConcatVectorsCombine(N, DCI, DAG);
   case ISD::SELECT:
-    return performSelectCombine(N, DAG);
+    return performSelectCombine(N, DCI);
   case ISD::VSELECT:
     return performVSelectCombine(N, DCI.DAG);
   case ISD::STORE:

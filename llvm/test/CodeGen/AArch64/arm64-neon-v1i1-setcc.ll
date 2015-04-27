@@ -50,9 +50,15 @@ define <1 x double> @test_select_v1i1_2(<1 x i64> %v1, <1 x i64> %v2, <1 x doubl
   ret <1 x double> %res
 }
 
+; For v1i64, it's not clear which of the vector or scalar compare is better.
+; Let's stick to the vector form, like for all other vector selects fed by a
+; scalar setcc.  If anything, it exposes more ILP.
 define <1 x i64> @test_select_v1i1_3(i64 %lhs, i64 %rhs, <1 x i64> %v3) {
 ; CHECK-LABEL: test_select_v1i1_3:
-; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}
+; CHECK: fmov d{{[0-9]+}}, x{{[0-9]+}}
+; CHECK: fmov d{{[0-9]+}}, x{{[0-9]+}}
+; CHECK: cmeq d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: bic v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
   %tst = icmp eq i64 %lhs, %rhs
   %evil = insertelement <1 x i1> undef, i1 %tst, i32 0
   %res = select <1 x i1> %evil, <1 x i64> zeroinitializer, <1 x i64> %v3

@@ -225,9 +225,9 @@ define <2 x i32> @test_select_cc_v2i32_icmpi1(i1 %cc, <2 x i32> %a, <2 x i32> %b
 define <3 x float> @test_select_cc_v3f32_fcmp_f32(<3 x float> %a, <3 x float> %b, float %c1, float %c2) #0 {
 ; CHECK-LABEL: test_select_cc_v3f32_fcmp_f32:
 ; CHECK-NEXT: fcmeq [[MASK:v[0-9]+]].4s, v2.4s, v3.4s
-; CHECK-NEXT: dup [[VMASK:v[0-9]+]].4s, [[MASK]].s[0]
-; CHECK-NEXT: bsl [[RES:v[0-9]+]].16b, v0.16b, v1.16b
-; CHECK-NEXT: mov v0.16b, [[RES]].16b
+; CHECK-NEXT: dup [[DUPMASK:v[0-9]+]].4s, [[MASK]].s[0]
+; CHECK-NEXT: bsl [[DUPMASK:v[0-9]+]].16b, v0.16b, v1.16b
+; CHECK-NEXT: mov v0.16b, [[DUPMASK]].16b
 ; CHECK-NEXT: ret
   %cc = fcmp oeq float %c1, %c2
   %r = select i1 %cc, <3 x float> %a, <3 x float> %b
@@ -236,12 +236,10 @@ define <3 x float> @test_select_cc_v3f32_fcmp_f32(<3 x float> %a, <3 x float> %b
 
 define <3 x float> @test_select_cc_v3f32_fcmp_f64(<3 x float> %a, <3 x float> %b, double %c1, double %c2) #0 {
 ; CHECK-LABEL: test_select_cc_v3f32_fcmp_f64:
-; CHECK-NEXT: fcmp d2, d3
-; CHECK-NEXT: movn [[N0:w[0-9]+]], #0
-; CHECK-NEXT: csel [[MASK:w[0-9]+]], [[N0]], wzr, eq
-; CHECK-NEXT: dup [[VMASK:v[0-9]+]].4s, [[MASK]]
-; CHECK-NEXT: bsl [[RES:v[0-9]+]].16b, v0.16b, v1.16b
-; CHECK-NEXT: mov v0.16b, [[RES]].16b
+; CHECK-NEXT: fcmeq [[MASK:v[0-9]+]].2d, v2.2d, v3.2d
+; CHECK-NEXT: dup [[DUPMASK:v[0-9]+]].2d, [[MASK]].d[0]
+; CHECK-NEXT: bsl [[DUPMASK:v[0-9]+]].16b, v0.16b, v1.16b
+; CHECK-NEXT: mov v0.16b, [[DUPMASK]].16b
 ; CHECK-NEXT: ret
   %cc = fcmp oeq double %c1, %c2
   %r = select i1 %cc, <3 x float> %a, <3 x float> %b
