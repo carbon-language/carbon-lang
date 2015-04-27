@@ -436,8 +436,8 @@ public:
   // TODO: see how can we get this info.
   bool abiUsesSoftFloat() const { return false; }
 
-  /// Warn if RegNo is the current assembler temporary.
-  void warnIfAssemblerTemporary(int RegNo, SMLoc Loc);
+  /// Warn if RegIndex is the same as the current AT.
+  void warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc);
 };
 }
 
@@ -546,7 +546,7 @@ public:
   /// target.
   unsigned getGPR32Reg() const {
     assert(isRegIdx() && (RegIdx.Kind & RegKind_GPR) && "Invalid access!");
-    AsmParser.warnIfAssemblerTemporary(RegIdx.Index, StartLoc);
+    AsmParser.warnIfRegIndexIsAT(RegIdx.Index, StartLoc);
     unsigned ClassID = Mips::GPR32RegClassID;
     return RegIdx.RegInfo->getRegClass(ClassID).getRegister(RegIdx.Index);
   }
@@ -2203,15 +2203,10 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   llvm_unreachable("Implement any new match types added!");
 }
 
-void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
-  if ((RegIndex != 0) && 
-      ((int)AssemblerOptions.back()->getATRegIndex() == RegIndex)) {
-    if (RegIndex == 1)
-      Warning(Loc, "used $at without \".set noat\"");
-    else
-      Warning(Loc, Twine("used $") + Twine(RegIndex) + " with \".set at=$" +
-                       Twine(RegIndex) + "\"");
-  }
+void MipsAsmParser::warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc) {
+  if (RegIndex != 0 && AssemblerOptions.back()->getATRegIndex() == RegIndex)
+    Warning(Loc, "used $at (currently $" + Twine(RegIndex) +
+                     ") without \".set noat\"");
 }
 
 void
