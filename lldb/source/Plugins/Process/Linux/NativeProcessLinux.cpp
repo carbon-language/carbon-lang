@@ -2738,10 +2738,11 @@ struct EmulatorBaton
 {
     NativeProcessLinux* m_process;
     NativeRegisterContext* m_reg_context;
-    RegisterValue m_pc;
-    RegisterValue m_flags;
 
-    EmulatorBaton(NativeProcessLinux* process, NativeRegisterContext* reg_context) : 
+    // eRegisterKindDWARF -> RegsiterValue
+    std::unordered_map<uint32_t, RegisterValue> m_register_values;
+
+    EmulatorBaton(NativeProcessLinux* process, NativeRegisterContext* reg_context) :
             m_process(process), m_reg_context(reg_context) {}
 };
 
@@ -2770,6 +2771,13 @@ ReadRegisterCallback (EmulateInstruction *instruction,
 {
     EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
 
+    auto it = emulator_baton->m_register_values.find(reg_info->kinds[eRegisterKindDWARF]);
+    if (it != emulator_baton->m_register_values.end())
+    {
+        reg_value = it->second;
+        return true;
+    }
+
     // The emulator only fill in the dwarf regsiter numbers (and in some case
     // the generic register numbers). Get the full register info from the
     // register context based on the dwarf register numbers.
@@ -2777,7 +2785,12 @@ ReadRegisterCallback (EmulateInstruction *instruction,
             eRegisterKindDWARF, reg_info->kinds[eRegisterKindDWARF]);
 
     Error error = emulator_baton->m_reg_context->ReadRegister(full_reg_info, reg_value);
-    return error.Success();
+    if (error.Success())
+    {
+        emulator_baton->m_register_values[reg_info->kinds[eRegisterKindDWARF]] = reg_value;
+        return true;
+    }
+    return false;
 }
 
 static bool
@@ -2788,17 +2801,7 @@ WriteRegisterCallback (EmulateInstruction *instruction,
                        const RegisterValue &reg_value)
 {
     EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
-
-    switch (reg_info->kinds[eRegisterKindGeneric])
-    {
-    case LLDB_REGNUM_GENERIC_PC:
-        emulator_baton->m_pc = reg_value;
-        break;
-    case LLDB_REGNUM_GENERIC_FLAGS:
-        emulator_baton->m_flags = reg_value;
-        break;
-    }
-
+    emulator_baton->m_register_values[reg_info->kinds[eRegisterKindDWARF]] = reg_value;
     return true;
 }
 
@@ -2843,17 +2846,27 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp
     if (!emulator_ap->ReadInstruction())
         return Error("Read instruction failed!");
 
+    bool emulation_result = emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC);
+
+    const RegisterInfo* reg_info_pc = register_context_sp->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+    const RegisterInfo* reg_info_flags = register_context_sp->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
+
+    auto pc_it = baton.m_register_values.find(reg_info_pc->kinds[eRegisterKindDWARF]);
+    auto flags_it = baton.m_register_values.find(reg_info_flags->kinds[eRegisterKindDWARF]);
+
     lldb::addr_t next_pc;
     lldb::addr_t next_flags;
-    if (emulator_ap->EvaluateInstruction(eEmulateInstructionOptionAutoAdvancePC))
+    if (emulation_result)
     {
-        next_pc = baton.m_pc.GetAsUInt64();
-        if (baton.m_flags.GetType() != RegisterValue::eTypeInvalid)
-            next_flags = baton.m_flags.GetAsUInt32();
+        assert(pc_it != baton.m_register_values.end() && "Emulation was successfull but PC wasn't updated");
+        next_pc = pc_it->second.GetAsUInt64();
+
+        if (flags_it != baton.m_register_values.end())
+            next_flags = flags_it->second.GetAsUInt64();
         else
             next_flags = ReadFlags (register_context_sp.get());
     }
-    else if (baton.m_pc.GetType() == RegisterValue::eTypeInvalid)
+    else if (pc_it == baton.m_register_values.end())
     {
         // Emulate instruction failed and it haven't changed PC. Advance PC
         // with the size of the current opcode because the emulation of all
@@ -2888,7 +2901,6 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp
         // No size hint is given for the next breakpoint
         error = SetSoftwareBreakpoint(next_pc, 0);
     }
-
 
     if (error.Fail())
         return error;
