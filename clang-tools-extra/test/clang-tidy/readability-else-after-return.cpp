@@ -24,5 +24,12 @@ void f(int a) {
   } else {
     return;
   }
+
+  if (a > 0)
+    f(0);
+  else if (a > 10)
+    return;
+  else
+    f(0);
 }
 

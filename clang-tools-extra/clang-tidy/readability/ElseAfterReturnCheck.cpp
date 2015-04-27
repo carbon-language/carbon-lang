@@ -20,9 +20,11 @@ namespace readability {
 void ElseAfterReturnCheck::registerMatchers(MatchFinder *Finder) {
   // FIXME: Support continue, break and throw.
   Finder->addMatcher(
-      ifStmt(
-          hasThen(stmt(anyOf(returnStmt(), compoundStmt(has(returnStmt()))))),
-          hasElse(stmt().bind("else"))).bind("if"),
+      compoundStmt(
+          forEach(ifStmt(hasThen(stmt(anyOf(returnStmt(),
+                                            compoundStmt(has(returnStmt()))))),
+                         hasElse(stmt().bind("else")))
+                      .bind("if"))),
       this);
 }
 
