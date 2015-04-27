@@ -15,6 +15,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/PDB/PDB.h"
+#include "llvm/DebugInfo/PDB/PDBContext.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
@@ -164,6 +166,7 @@ DILineInfo ModuleInfo::symbolizeCode(
 DIInliningInfo ModuleInfo::symbolizeInlinedCode(
     uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const {
   DIInliningInfo InlinedContext;
+
   if (DebugInfoContext) {
     InlinedContext = DebugInfoContext->getInliningInfoForAddress(
         ModuleOffset, getDILineInfoSpecifier(Opts));
@@ -461,7 +464,18 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     Modules.insert(make_pair(ModuleName, (ModuleInfo *)nullptr));
     return nullptr;
   }
-  DIContext *Context = new DWARFContextInMemory(*Objects.second);
+  DIContext *Context = nullptr;
+  if (auto CoffObject = dyn_cast<COFFObjectFile>(Objects.first)) {
+    // If this is a COFF object, assume it contains PDB debug information.  If
+    // we don't find any we will fall back to the DWARF case.
+    std::unique_ptr<IPDBSession> Session;
+    PDB_ErrorCode Error = loadDataForEXE(PDB_ReaderType::DIA,
+                                         Objects.first->getFileName(), Session);
+    if (Error == PDB_ErrorCode::Success)
+      Context = new PDBContext(*CoffObject, std::move(Session));
+  }
+  if (!Context)
+    Context = new DWARFContextInMemory(*Objects.second);
   assert(Context);
   ModuleInfo *Info = new ModuleInfo(Objects.first, Context);
   Modules.insert(make_pair(ModuleName, Info));

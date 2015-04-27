@@ -32,6 +32,7 @@ list(APPEND LIBPDB_ADDITIONAL_HEADER_DIRS "${LLVM_MAIN_INCLUDE_DIR}/llvm/DebugIn
 add_llvm_library(LLVMDebugInfoPDB
   IPDBSourceFile.cpp
   PDB.cpp
+  PDBContext.cpp
   PDBExtras.cpp
   PDBInterfaceAnchors.cpp
   PDBSymbol.cpp

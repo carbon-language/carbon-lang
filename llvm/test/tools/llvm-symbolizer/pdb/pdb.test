@@ -1,0 +1,8 @@
+RUN: llvm-symbolizer -obj="%p/Inputs/test.exe" < "%p/Inputs/test.exe.input" | FileCheck %s --check-prefix=CHECK
+
+CHECK: _foo
+CHECK-NEXT: test.c:3:0
+CHECK: _main
+CHECK-NEXT: test.c:6:0
+CHECK: ??
+CHECK-NEXT: ??:0:0
