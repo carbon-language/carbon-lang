@@ -527,10 +527,8 @@ else()
 endif()
 
 find_program(GOLD_EXECUTABLE NAMES ld.gold ld DOC "The gold linker")
-if(GOLD_EXECUTABLE)
-	set(LLVM_BINUTILS_INCDIR "" CACHE PATH
-		"PATH to binutils/include containing plugin-api.h for gold plugin.")
-endif()
+set(LLVM_BINUTILS_INCDIR "" CACHE PATH
+	"PATH to binutils/include containing plugin-api.h for gold plugin.")
 
 if(APPLE)
   find_program(LD64_EXECUTABLE NAMES ld DOC "The ld64 linker")
