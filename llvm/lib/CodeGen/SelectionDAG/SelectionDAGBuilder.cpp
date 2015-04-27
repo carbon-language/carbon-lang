@@ -7678,11 +7678,12 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
       return a.Weight > b.Weight;
     });
 
-    // Rearrange the case blocks so that the last one falls through if possible.
-    // Start at the bottom as that's the case with the lowest weight.
-    // FIXME: Take branch probability into account.
+    // Rearrange the case blocks so that the last one falls through if possible
+    // without without changing the order of weights.
     for (CaseClusterIt I = W.LastCluster; I > W.FirstCluster; ) {
       --I;
+      if (I->Weight > W.LastCluster->Weight)
+        break;
       if (I->Kind == CC_Range && I->MBB == NextMBB) {
         std::swap(*I, *W.LastCluster);
         break;

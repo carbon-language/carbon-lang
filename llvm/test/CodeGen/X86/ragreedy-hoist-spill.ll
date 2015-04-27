@@ -30,7 +30,7 @@ if.then:
 if.end:
   switch i64 undef, label %if.end25 [
     i64 0, label %if.then4
-    i64 1, label %land.lhs.true14
+    i64 1, label %if.end25
   ]
 
 if.then4:

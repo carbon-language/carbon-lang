@@ -49,14 +49,14 @@ tailrecurse.switch:                               ; preds = %tailrecurse
 ; V8-NEXT: beq
 ; V8-NEXT: %tailrecurse.switch
 ; V8: cmp
-; V8-NEXT: beq
+; V8-NEXT: bne
 ; V8-NEXT: b	
 ; The trailing space in the last line checks that the branch is unconditional
   switch i32 %and, label %sw.epilog [
     i32 1, label %sw.bb
     i32 3, label %sw.bb6
     i32 2, label %sw.bb8
-  ]
+  ], !prof !1
 
 sw.bb:                                            ; preds = %tailrecurse.switch, %tailrecurse
   %shl = shl i32 %acc.tr, 1
@@ -134,3 +134,5 @@ bb4:                                              ; preds = %bb2
 return:                                           ; preds = %bb2, %bb, %entry
   ret i8 1
 }
+
+!1 = !{!"branch_weights", i32 1, i32 1, i32 3, i32 2 }

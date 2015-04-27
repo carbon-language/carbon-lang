@@ -413,3 +413,32 @@ return: ret void
        i32 4294967295, i32 2, i32 4294967295,
        ; Cases 2,5,8,9:
        i32 3, i32 3, i32 3, i32 3}
+
+define void @order_by_weight_and_fallthrough(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 100, label %bb1
+    i32 200, label %bb0
+    i32 300, label %bb0
+  ], !prof !2
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+return: ret void
+
+; Case 200 has the highest weight and should come first. 100 and 300 have the
+; same weight, but 300 goes to the 'next' block, so should be last.
+; CHECK-LABEL: order_by_weight_and_fallthrough
+; CHECK: cmpl $200
+; CHECK: cmpl $100
+; CHECK: cmpl $300
+}
+
+!2 = !{!"branch_weights",
+       ; Default:
+       i32 1,
+       ; Case 100:
+       i32 10,
+       ; Case 200:
+       i32 1000,
+       ; Case 300:
+       i32 10}
