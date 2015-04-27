@@ -367,3 +367,49 @@ return: ret void
 ; CHECK-LABEL: int_max_table_cluster
 ; CHECK: jmpq *.LJTI
 }
+
+
+define void @bt_order_by_weight(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 0, label %bb0
+    i32 3, label %bb0
+    i32 6, label %bb0
+    i32 1, label %bb1
+    i32 4, label %bb1
+    i32 7, label %bb1
+    i32 2, label %bb2
+    i32 5, label %bb2
+    i32 8, label %bb2
+    i32 9, label %bb2
+  ], !prof !1
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 2) br label %return
+return: ret void
+
+; Cases 1,4,7 have a very large branch weight (which shouldn't overflow), so
+; their bit test should come first. 0,3,6 and 2,5,8,9 both have a weight of 12,
+; but the latter set has more cases, so should be tested for earlier.
+
+; CHECK-LABEL: bt_order_by_weight
+; 146 = 2^1 + 2^4 + 2^7
+; CHECK: movl $146
+; CHECK: btl
+; 292 = 2^2 + 2^5 + 2^8 + 2^9
+; CHECK: movl $804
+; CHECK: btl
+; 73 = 2^0 + 2^3 + 2^6
+; CHECK: movl $73
+; CHECK: btl
+}
+
+!1 = !{!"branch_weights",
+       ; Default:
+       i32 1,
+       ; Cases 0,3,6:
+       i32 4, i32 4, i32 4,
+       ; Cases 1,4,7:
+       i32 4294967295, i32 2, i32 4294967295,
+       ; Cases 2,5,8,9:
+       i32 3, i32 3, i32 3, i32 3}

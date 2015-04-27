@@ -7482,12 +7482,15 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
       CB->Bits++;
     }
     CB->ExtraWeight += Clusters[i].Weight;
+    assert(CB->ExtraWeight >= Clusters[i].Weight && "Weight sum overflowed!");
     TotalWeight += Clusters[i].Weight;
   }
 
   BitTestInfo BTI;
   std::sort(CBV.begin(), CBV.end(), [](const CaseBits &a, const CaseBits &b) {
-    // FIXME: Sort by weight.
+    // Sort by weight first, number of bits second.
+    if (a.ExtraWeight != b.ExtraWeight)
+      return a.ExtraWeight > b.ExtraWeight;
     return a.Bits > b.Bits;
   });
 
