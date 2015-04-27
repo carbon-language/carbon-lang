@@ -1483,15 +1483,15 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     // Add target-cpu and target-features work if they differ from the defaults.
     std::string &CPU = getTarget().getTargetOpts().CPU;
-    if (CPU != "" && CPU != getTarget().getTriple().getArchName())
-      FuncAttrs.addAttribute("target-cpu", getTarget().getTargetOpts().CPU);
+    if (CPU != "")
+      FuncAttrs.addAttribute("target-cpu", CPU);
 
-    // TODO: FeaturesAsWritten gets us the features on the command line,
-    // for canonicalization purposes we might want to avoid putting features
-    // in the target-features set if we know it'll be one of the default
-    // features in the backend, e.g. corei7-avx and +avx.
-    std::vector<std::string> &Features =
-        getTarget().getTargetOpts().FeaturesAsWritten;
+    // TODO: Features gets us the features on the command line including
+    // feature dependencies. For canonicalization purposes we might want to
+    // avoid putting features in the target-features set if we know it'll be one
+    // of the default features in the backend, e.g. corei7-avx and +avx or figure
+    // out non-explicit dependencies.
+    std::vector<std::string> &Features = getTarget().getTargetOpts().Features;
     if (!Features.empty()) {
       std::stringstream S;
       std::copy(Features.begin(), Features.end(),
