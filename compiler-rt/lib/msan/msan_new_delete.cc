@@ -19,13 +19,6 @@
 
 #include <stddef.h>
 
-namespace __msan {
-// This function is a no-op. We need it to make sure that object file
-// with our replacements will actually be loaded from static MSan
-// run-time library at link-time.
-void ReplaceOperatorsNewAndDelete() { }
-}
-
 using namespace __msan;  // NOLINT
 
 // Fake std::nothrow_t to avoid including <new>.

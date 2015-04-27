@@ -131,7 +131,6 @@ void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,
 void MsanDeallocate(StackTrace *stack, void *ptr);
 void InstallTrapHandler();
 void InstallAtExitHandler();
-void ReplaceOperatorsNewAndDelete();
 
 const char *GetStackOriginDescr(u32 id, uptr *pc);
 
