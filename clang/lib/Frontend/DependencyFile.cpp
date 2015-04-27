@@ -150,6 +150,8 @@ class DFGImpl : public PPCallbacks {
   bool AddMissingHeaderDeps;
   bool SeenMissingHeader;
   bool IncludeModuleFiles;
+  DependencyOutputFormat OutputFormat;
+
 private:
   bool FileMatchesDepCriteria(const char *Filename,
                               SrcMgr::CharacteristicKind FileType);
@@ -162,7 +164,8 @@ public:
       PhonyTarget(Opts.UsePhonyTargets),
       AddMissingHeaderDeps(Opts.AddMissingHeaderDeps),
       SeenMissingHeader(false),
-      IncludeModuleFiles(Opts.IncludeModuleFiles) {}
+      IncludeModuleFiles(Opts.IncludeModuleFiles),
+      OutputFormat(Opts.OutputFormat) {}
 
   void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                    SrcMgr::CharacteristicKind FileType,
@@ -290,8 +293,23 @@ void DFGImpl::AddFilename(StringRef Filename) {
 }
 
 /// PrintFilename - GCC escapes spaces, # and $, but apparently not ' or " or
-/// other scary characters.
-static void PrintFilename(raw_ostream &OS, StringRef Filename) {
+/// other scary characters. NMake/Jom has a different set of scary characters,
+/// but wraps filespecs in double-quotes to avoid misinterpreting them;
+/// https://msdn.microsoft.com/en-us/library/dd9y37ha.aspx for NMake info,
+/// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+/// for Windows file-naming info.
+static void PrintFilename(raw_ostream &OS, StringRef Filename,
+                          DependencyOutputFormat OutputFormat) {
+  if (OutputFormat == DependencyOutputFormat::NMake) {
+    // Add quotes if needed. These are the characters listed as "special" to
+    // NMake, that are legal in a Windows filespec, and that could cause
+    // misinterpretation of the dependency string.
+    if (Filename.find_first_of(" #${}^!") != StringRef::npos)
+      OS << '\"' << Filename << '\"';
+    else
+      OS << Filename;
+    return;
+  }
   for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
     if (Filename[i] == ' ' || Filename[i] == '#')
       OS << '\\';
@@ -354,7 +372,7 @@ void DFGImpl::OutputDependencyFile() {
       Columns = 2;
     }
     OS << ' ';
-    PrintFilename(OS, *I);
+    PrintFilename(OS, *I, OutputFormat);
     Columns += N + 1;
   }
   OS << '\n';
@@ -365,7 +383,7 @@ void DFGImpl::OutputDependencyFile() {
     for (std::vector<std::string>::iterator I = Files.begin() + 1,
            E = Files.end(); I != E; ++I) {
       OS << '\n';
-      PrintFilename(OS, *I);
+      PrintFilename(OS, *I, OutputFormat);
       OS << ":\n";
     }
   }

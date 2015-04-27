@@ -250,6 +250,8 @@ def MQ : JoinedOrSeparate<["-"], "MQ">, Group<M_Group>, Flags<[CC1Option]>,
     HelpText<"Specify name of main file output to quote in depfile">;
 def MT : JoinedOrSeparate<["-"], "MT">, Group<M_Group>, Flags<[CC1Option]>,
     HelpText<"Specify name of main file output in depfile">;
+def MV : Flag<["-"], "MV">, Group<M_Group>, Flags<[CC1Option]>,
+    HelpText<"Use NMake/Jom format for the depfile">;
 def Mach : Flag<["-"], "Mach">;
 def O0 : Flag<["-"], "O0">, Group<O_Group>, Flags<[CC1Option]>;
 def O4 : Flag<["-"], "O4">, Group<O_Group>, Flags<[CC1Option]>;

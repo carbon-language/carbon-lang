@@ -338,6 +338,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_MP);
+  Args.AddLastArg(CmdArgs, options::OPT_MV);
 
   // Convert all -MQ <target> args to -MT <quoted target>
   for (arg_iterator it = Args.filtered_begin(options::OPT_MT,
