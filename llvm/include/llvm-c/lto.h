@@ -171,7 +171,7 @@ lto_module_create_from_memory(const void* mem, size_t length);
  * Loads an object file from memory with an extra path argument.
  * Returns NULL on error (check lto_get_error_message() for details).
  *
- * \since prior to LTO_API_VERSION=9
+ * \since LTO_API_VERSION=9
  */
 extern lto_module_t
 lto_module_create_from_memory_with_path(const void* mem, size_t length,
@@ -401,7 +401,7 @@ lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
  *
  * \c cg and \c mod must both be in the same context.
  *
- * \since prior to LTO_API_VERSION=13
+ * \since LTO_API_VERSION=13
  */
 extern void
 lto_codegen_set_module(lto_code_gen_t cg, lto_module_t mod);
@@ -552,7 +552,7 @@ lto_initialize_disassembler(void);
  * Sets if we should run internalize pass during optimization and code
  * generation.
  *
- * \since prior to LTO_API_VERSION=14
+ * \since LTO_API_VERSION=14
  */
 extern void
 lto_codegen_set_should_internalize(lto_code_gen_t cg,
