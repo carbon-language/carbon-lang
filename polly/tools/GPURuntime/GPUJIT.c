@@ -1,10 +1,9 @@
-/******************** GPUJIT.cpp - GPUJIT Execution Engine                     \
- * ********************/
+/******************** GPUJIT.c - GPUJIT Execution Engine **********************/
 /*                                                                            */
 /*                     The LLVM Compiler Infrastructure                       */
 /*                                                                            */
 /* This file is dual licensed under the MIT and the University of Illinois    */
-/* Open Source License. See LICENSE.TXT for details.                         */
+/* Open Source License. See LICENSE.TXT for details.                          */
 /*                                                                            */
 /******************************************************************************/
 /*                                                                            */
