@@ -1,26 +1,26 @@
 set(LLVM_NO_RTTI 1)
 
-macro(add_process_windows_subdirectory group)
-  list(APPEND PROC_WINDOWS_SOURCES ${ARGN})
-  source_group(${group} FILES ${ARGN})
-endmacro()
-
 include_directories(.)
 include_directories(../Utility)
 
-add_process_windows_subdirectory(common
+set(PROC_WINDOWS_SOURCES
   DebuggerThread.cpp
   DynamicLoaderWindows.cpp
   LocalDebugDelegate.cpp
   ProcessWindows.cpp
   ProcessWindowsLog.cpp
+  RegisterContextWindows.cpp
   TargetThreadWindows.cpp
   )
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)
-  add_process_windows_subdirectory(x86
-  x86/RegisterContextWindows_x86.cpp
-  )
+  set(PROC_WINDOWS_SOURCES ${PROC_WINDOWS_SOURCES}
+    x86/RegisterContextWindows_x86.cpp
+    )
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(PROC_WINDOWS_SOURCES ${PROC_WINDOWS_SOURCES}
+    x64/RegisterContextWindows_x64.cpp
+    )
 endif()
 
 add_lldb_library(lldbPluginProcessWindows
