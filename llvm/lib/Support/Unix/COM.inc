@@ -19,9 +19,9 @@
 namespace llvm {
 namespace sys {
 
-COMInitializer::COMInitializer(COMThreadingMode Threading,
-                               bool SpeedOverMemory) {}
+InitializeCOMRAII::InitializeCOMRAII(COMThreadingMode Threading,
+                                     bool SpeedOverMemory) {}
 
-COMInitializer::~COMInitializer() {}
+InitializeCOMRAII::~InitializeCOMRAII() {}
 }
 }
