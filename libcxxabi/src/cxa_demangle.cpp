@@ -1575,10 +1575,9 @@ parse_function_type(const char* first, const char* last, C& db)
         const char* t = first+1;
         if (t != last)
         {
-            bool externC = false;
             if (*t == 'Y')
             {
-                externC = true;
+                /* extern "C" */
                 if (++t == last)
                     return first;
             }
