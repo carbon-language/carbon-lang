@@ -761,6 +761,10 @@ void PPCVSXSwapRemoval::dumpSwapVector() {
       DEBUG(dbgs() << "remove ");
 
     DEBUG(dbgs() << "\n");
+
+    // For no-asserts builds.
+    (void)MI;
+    (void)ID;
   }
 
   DEBUG(dbgs() << "\n");
