@@ -65,25 +65,12 @@ const char* LTOCodeGenerator::getVersionString() {
 
 LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), IRLinker(new Module("ld-temp.o", Context)) {
-  initialize();
+  initializeLTOPasses();
 }
 
 LTOCodeGenerator::LTOCodeGenerator(std::unique_ptr<LLVMContext> Context)
     : OwnedContext(std::move(Context)), Context(*OwnedContext),
-      IRLinker(new Module("ld-temp.o", *OwnedContext)), OptLevel(2) {
-  initialize();
-}
-
-void LTOCodeGenerator::initialize() {
-  TargetMach = nullptr;
-  EmitDwarfDebugInfo = false;
-  ScopeRestrictionsDone = false;
-  CodeModel = LTO_CODEGEN_PIC_MODEL_DEFAULT;
-  DiagHandler = nullptr;
-  DiagContext = nullptr;
-  OwnedModule = nullptr;
-  ShouldInternalize = true;
-
+      IRLinker(new Module("ld-temp.o", *OwnedContext)) {
   initializeLTOPasses();
 }
 
