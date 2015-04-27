@@ -1379,13 +1379,12 @@ void MicrosoftCXXNameMangler::mangleArgumentType(QualType T,
   void *TypePtr;
   if (const auto *DT = T->getAs<DecayedType>()) {
     QualType OriginalType = DT->getOriginalType();
-    // Decayed ConstantArrayType should be treated identically to decayed
-    // IncompleteArrayType.
-    if (const auto *CAT =
-            getASTContext().getAsConstantArrayType(OriginalType))
+    // All decayed ArrayTypes should be treated identically; as-if they were
+    // a decayed IncompleteArrayType.
+    if (const auto *AT = getASTContext().getAsArrayType(OriginalType))
       OriginalType = getASTContext().getIncompleteArrayType(
-          CAT->getElementType(), CAT->getSizeModifier(),
-          CAT->getIndexTypeCVRQualifiers());
+          AT->getElementType(), AT->getSizeModifier(),
+          AT->getIndexTypeCVRQualifiers());
 
     TypePtr = OriginalType.getCanonicalType().getAsOpaquePtr();
     // If the original parameter was textually written as an array,
