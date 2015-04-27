@@ -9,6 +9,7 @@ set(POLLY_JSON_FILES
 set(ISL_CODEGEN_FILES
     CodeGen/IslAst.cpp
     CodeGen/IslExprBuilder.cpp
+    CodeGen/IslNodeBuilder.cpp
     CodeGen/IslCodeGeneration.cpp)
 
 if (GPU_CODEGEN)
