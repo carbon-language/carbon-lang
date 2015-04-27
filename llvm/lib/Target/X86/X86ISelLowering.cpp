@@ -1303,6 +1303,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,           MVT::i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i8, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
+    if (Subtarget->hasDQI()) {
+      setOperationAction(ISD::TRUNCATE,           MVT::v2i1, Custom);
+      setOperationAction(ISD::TRUNCATE,           MVT::v4i1, Custom);
+    }
     setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i16, Custom);
@@ -1313,7 +1317,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i8, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i16, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i16, Custom);
-
+    if (Subtarget->hasDQI()) {
+      setOperationAction(ISD::SIGN_EXTEND,        MVT::v4i32, Custom);
+      setOperationAction(ISD::SIGN_EXTEND,        MVT::v2i64, Custom);
+    }
     setOperationAction(ISD::FFLOOR,             MVT::v16f32, Legal);
     setOperationAction(ISD::FFLOOR,             MVT::v8f64, Legal);
     setOperationAction(ISD::FCEIL,              MVT::v16f32, Legal);
@@ -12055,6 +12062,23 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 
+  // move vector to mask - truncate solution for SKX
+  if (VT.getVectorElementType() == MVT::i1) {
+    if (InVT.is512BitVector() && InVT.getScalarSizeInBits() <= 16 &&
+        Subtarget->hasBWI())
+      return Op; // legal, will go to VPMOVB2M, VPMOVW2M
+    if ((InVT.is256BitVector() || InVT.is128BitVector()) 
+        && InVT.getScalarSizeInBits() <= 16 &&
+        Subtarget->hasBWI() && Subtarget->hasVLX())
+      return Op; // legal, will go to VPMOVB2M, VPMOVW2M
+    if (InVT.is512BitVector() && InVT.getScalarSizeInBits() >= 32 &&
+        Subtarget->hasDQI())
+      return Op; // legal, will go to VPMOVD2M, VPMOVQ2M
+    if ((InVT.is256BitVector() || InVT.is128BitVector()) 
+        && InVT.getScalarSizeInBits() >= 32 &&
+        Subtarget->hasDQI() && Subtarget->hasVLX())
+      return Op; // legal, will go to VPMOVB2M, VPMOVQ2M
+  }
   if (InVT.is512BitVector() || VT.getVectorElementType() == MVT::i1) {
     if (VT.getVectorElementType().getSizeInBits() >=8)
       return DAG.getNode(X86ISD::VTRUNC, DL, VT, In);
@@ -13001,6 +13025,49 @@ static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2, CC));
 }
 
+static SDValue LowerBoolVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue CC = Op.getOperand(2);
+  MVT VT = Op.getSimpleValueType();
+  SDLoc dl(Op);
+
+  assert(Op0.getValueType().getVectorElementType() == MVT::i1 &&
+         "Unexpected type for boolean compare operation");
+  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+  SDValue NotOp0 = DAG.getNode(ISD::XOR, dl, VT, Op0,
+                               DAG.getConstant(-1, VT));
+  SDValue NotOp1 = DAG.getNode(ISD::XOR, dl, VT, Op1,
+                               DAG.getConstant(-1, VT));
+  switch (SetCCOpcode) {
+  default: llvm_unreachable("Unexpected SETCC condition");
+  case ISD::SETNE:
+    // (x != y) -> ~(x ^ y)
+    return DAG.getNode(ISD::XOR, dl, VT,
+                       DAG.getNode(ISD::XOR, dl, VT, Op0, Op1),
+                       DAG.getConstant(-1, VT));
+  case ISD::SETEQ:
+    // (x == y) -> (x ^ y)
+    return DAG.getNode(ISD::XOR, dl, VT, Op0, Op1);
+  case ISD::SETUGT:
+  case ISD::SETGT:
+    // (x > y) -> (x & ~y)
+    return DAG.getNode(ISD::AND, dl, VT, Op0, NotOp1);
+  case ISD::SETULT:
+  case ISD::SETLT:
+    // (x < y) -> (~x & y)
+    return DAG.getNode(ISD::AND, dl, VT, NotOp0, Op1);
+  case ISD::SETULE:
+  case ISD::SETLE:
+    // (x <= y) -> (~x | y)
+    return DAG.getNode(ISD::OR, dl, VT, NotOp0, Op1);
+  case ISD::SETUGE:
+  case ISD::SETGE:
+    // (x >=y) -> (x | ~y)
+    return DAG.getNode(ISD::OR, dl, VT, Op0, NotOp1);
+  }
+}
+
 static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget) {
   SDValue Op0 = Op.getOperand(0);
@@ -13119,8 +13186,11 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   if (VT.is256BitVector() && !Subtarget->hasInt256())
     return Lower256IntVSETCC(Op, DAG);
 
-  bool MaskResult = (VT.getVectorElementType() == MVT::i1);
   EVT OpVT = Op1.getValueType();
+  if (OpVT.getVectorElementType() == MVT::i1)
+    return LowerBoolVSETCC_AVX512(Op, DAG);
+
+  bool MaskResult = (VT.getVectorElementType() == MVT::i1);
   if (Subtarget->hasAVX512()) {
     if (Op1.getValueType().is512BitVector() ||
         (Subtarget->hasBWI() && Subtarget->hasVLX()) ||

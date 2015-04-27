@@ -90,6 +90,8 @@ define   <8 x i64> @zext_8i1_to_8xi64(i8 %b) {
 ; CHECK: vpandd
 ; CHECK: vptestmd
 ; CHECK: ret
+; SKX-LABEL: trunc_16i8_to_16i1
+; SKX: vpmovb2m %xmm
 define i16 @trunc_16i8_to_16i1(<16 x i8> %a) {
   %mask_b = trunc <16 x i8>%a to <16 x i1>
   %mask = bitcast <16 x i1> %mask_b to i16
@@ -100,10 +102,24 @@ define i16 @trunc_16i8_to_16i1(<16 x i8> %a) {
 ; CHECK: vpandd
 ; CHECK: vptestmd
 ; CHECK: ret
+; SKX-LABEL: trunc_16i32_to_16i1
+; SKX: vpmovd2m %zmm
 define i16 @trunc_16i32_to_16i1(<16 x i32> %a) {
   %mask_b = trunc <16 x i32>%a to <16 x i1>
   %mask = bitcast <16 x i1> %mask_b to i16
   ret i16 %mask
+}
+
+; SKX-LABEL: trunc_4i32_to_4i1
+; SKX: vpmovd2m        %xmm
+; SKX: kandw
+; SKX: vpmovm2d
+define <4 x i32> @trunc_4i32_to_4i1(<4 x i32> %a, <4 x i32> %b) {
+  %mask_a = trunc <4 x i32>%a to <4 x i1>
+  %mask_b = trunc <4 x i32>%b to <4 x i1>
+  %a_and_b = and <4 x i1>%mask_a, %mask_b
+  %res = sext <4 x i1>%a_and_b to <4 x i32>
+  ret <4 x i32>%res
 }
 
 ; CHECK-LABEL: trunc_8i16_to_8i1
@@ -111,6 +127,9 @@ define i16 @trunc_16i32_to_16i1(<16 x i32> %a) {
 ; CHECK: vpandq LCP{{.*}}(%rip){1to8}
 ; CHECK: vptestmq
 ; CHECK: ret
+
+; SKX-LABEL: trunc_8i16_to_8i1
+; SKX: vpmovw2m %xmm
 define i8 @trunc_8i16_to_8i1(<8 x i16> %a) {
   %mask_b = trunc <8 x i16>%a to <8 x i1>
   %mask = bitcast <8 x i1> %mask_b to i8

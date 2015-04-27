@@ -374,3 +374,27 @@ define <8 x i64> @test27(<8 x i64> %x, i64* %yb.ptr, <8 x i64> %x1, <8 x i64> %y
   %max = select <8 x i1> %mask, <8 x i64> %x, <8 x i64> %x1
   ret <8 x i64> %max
 }
+
+; CHECK-LABEL: test28
+; CHECK: vpcmpgtq
+; CHECK: vpcmpgtq
+; CHECK: kxorw
+define <8 x i32>@test28(<8 x i64> %x, <8 x i64> %y, <8 x i64> %x1, <8 x i64> %y1) {
+  %x_gt_y = icmp sgt <8 x i64> %x, %y
+  %x1_gt_y1 = icmp sgt <8 x i64> %x1, %y1
+  %res = icmp eq <8 x i1>%x_gt_y, %x1_gt_y1
+  %resse = sext <8 x i1>%res to <8 x i32>
+  ret <8 x i32> %resse
+}
+
+; CHECK-LABEL: test29
+; CHECK: vpcmpgtd
+; CHECK: vpcmpgtd
+; CHECK: kxnorw
+define <16 x i8>@test29(<16 x i32> %x, <16 x i32> %y, <16 x i32> %x1, <16 x i32> %y1) {
+  %x_gt_y = icmp sgt <16 x i32> %x, %y
+  %x1_gt_y1 = icmp sgt <16 x i32> %x1, %y1
+  %res = icmp ne <16 x i1>%x_gt_y, %x1_gt_y1
+  %resse = sext <16 x i1>%res to <16 x i8>
+  ret <16 x i8> %resse
+}

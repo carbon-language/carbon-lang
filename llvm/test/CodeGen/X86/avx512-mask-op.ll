@@ -132,3 +132,29 @@ entry:
   %mask_convert = bitcast <8 x i1> %mask to i8
   ret i8 %mask_convert
 }
+
+; SKX-LABEL: test4
+; SKX: vpcmpgt
+; SKX: knot
+; SKX: vpcmpgt
+; SKX: vpmovm2d
+define <4 x i32> @test4(<4 x i64> %x, <4 x i64> %y, <4 x i64> %x1, <4 x i64> %y1) {
+  %x_gt_y = icmp sgt <4 x i64> %x, %y
+  %x1_gt_y1 = icmp sgt <4 x i64> %x1, %y1
+  %res = icmp sgt <4 x i1>%x_gt_y, %x1_gt_y1
+  %resse = sext <4 x i1>%res to <4 x i32>
+  ret <4 x i32> %resse
+}
+
+; SKX-LABEL: test5
+; SKX: vpcmpgt
+; SKX: knot
+; SKX: vpcmpgt
+; SKX: vpmovm2q
+define <2 x i64> @test5(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1, <2 x i64> %y1) {
+  %x_gt_y = icmp slt <2 x i64> %x, %y
+  %x1_gt_y1 = icmp sgt <2 x i64> %x1, %y1
+  %res = icmp slt <2 x i1>%x_gt_y, %x1_gt_y1
+  %resse = sext <2 x i1>%res to <2 x i64>
+  ret <2 x i64> %resse
+}
