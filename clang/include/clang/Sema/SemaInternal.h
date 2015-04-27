@@ -48,6 +48,18 @@ inline bool IsVariableAConstantExpression(VarDecl *Var, ASTContext &Context) {
     Var->getAnyInitializer(DefVD) && DefVD->checkInitIsICE(); 
 }
 
+// Helper function to check whether D's attributes match current CUDA mode.
+// Decls with mismatched attributes and related diagnostics may have to be
+// ignored during this CUDA compilation pass.
+inline bool DeclAttrsMatchCUDAMode(const LangOptions &LangOpts, Decl *D) {
+  if (!LangOpts.CUDA || !D)
+    return true;
+  bool isDeviceSideDecl = D->hasAttr<CUDADeviceAttr>() ||
+                          D->hasAttr<CUDASharedAttr>() ||
+                          D->hasAttr<CUDAGlobalAttr>();
+  return isDeviceSideDecl == LangOpts.CUDAIsDevice;
+}
+
 // Directly mark a variable odr-used. Given a choice, prefer to use 
 // MarkVariableReferenced since it does additional checks and then 
 // calls MarkVarDeclODRUsed.
