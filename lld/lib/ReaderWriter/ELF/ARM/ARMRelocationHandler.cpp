@@ -652,6 +652,9 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_IRELATIVE:
     // Runtime only relocations. Ignore here.
     break;
+  case R_ARM_V4BX:
+    // TODO implement
+    break;
   default:
     return make_unhandled_reloc_error();
   }

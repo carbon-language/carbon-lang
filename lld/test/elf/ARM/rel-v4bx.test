@@ -8,13 +8,10 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: main:
-# CHECK:   400114:       03 30 8f e0     add     r3, pc, r3
-# CHECK:   400118:       02 20 93 e7     ldr     r2, [r3, r2]
-# CHECK:   40011c:       00 00 52 e3     cmp     r2, #0
 # The following instruction creates a RM_ARM_V4BX relocation that
 # allows the linker to replace the bx instruction to a ARMv4
 # compatible one.  Currently lld does not change it.
-# CHECK:   400120:       1e ff 2f 01     bxeq    lr 
+# CHECK:   400114:       1e ff 2f 01     bxeq    lr 
 
 ---
 FileHeader:      
@@ -28,7 +25,7 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         03308FE0022093E7000052E31EFF2F01
+    Content:         1EFF2F01
   - Name:            .rel.text
     Type:            SHT_REL
     Flags:           [ SHF_INFO_LINK ]
@@ -36,7 +33,7 @@ Sections:
     AddressAlign:    0x0000000000000004
     Info:            .text
     Relocations:     
-      - Offset:          0x000000000000000C
+      - Offset:          0x0000000000000000
         Symbol:          ''
         Type:            R_ARM_V4BX
   - Name:            .data
