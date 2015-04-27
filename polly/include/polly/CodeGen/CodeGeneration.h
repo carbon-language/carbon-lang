@@ -24,9 +24,6 @@ enum VectorizerChoice {
   VECTORIZER_POLLY,
 };
 extern VectorizerChoice PollyVectorizerChoice;
-
-enum CodeGenChoice { CODEGEN_ISL, CODEGEN_NONE };
-extern CodeGenChoice PollyCodeGenChoice;
 }
 
 #endif // POLLY_CODEGENERATION_H
