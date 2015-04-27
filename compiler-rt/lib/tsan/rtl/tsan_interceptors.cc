@@ -20,6 +20,7 @@
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "interception/interception.h"
+#include "tsan_interceptors.h"
 #include "tsan_interface.h"
 #include "tsan_platform.h"
 #include "tsan_suppressions.h"
@@ -31,10 +32,8 @@ using namespace __tsan;  // NOLINT
 
 #if SANITIZER_FREEBSD
 #define __errno_location __error
-#define __libc_malloc __malloc
 #define __libc_realloc __realloc
 #define __libc_calloc __calloc
-#define __libc_free __free
 #define stdout __stdoutp
 #define stderr __stderrp
 #endif
@@ -78,10 +77,8 @@ extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int *__errno_location();
 extern "C" int fileno_unlocked(void *stream);
-extern "C" void *__libc_malloc(uptr size);
 extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
-extern "C" void __libc_free(void *ptr);
 extern "C" int dirfd(void *dirp);
 #if !SANITIZER_FREEBSD
 extern "C" int mallopt(int param, int value);
@@ -159,10 +156,6 @@ const int SIG_SETMASK = 2;
 #define COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED \
   (!cur_thread()->is_inited)
 
-namespace std {
-struct nothrow_t {};
-}  // namespace std
-
 static sigaction_t sigactions[kSigCount];
 
 namespace __tsan {
@@ -212,16 +205,6 @@ static ThreadSignalContext *SigCtx(ThreadState *thr) {
 
 static unsigned g_thread_finalize_key;
 
-class ScopedInterceptor {
- public:
-  ScopedInterceptor(ThreadState *thr, const char *fname, uptr pc);
-  ~ScopedInterceptor();
- private:
-  ThreadState *const thr_;
-  const uptr pc_;
-  bool in_ignored_lib_;
-};
-
 ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
                                      uptr pc)
     : thr_(thr)
@@ -250,14 +233,6 @@ ScopedInterceptor::~ScopedInterceptor() {
     CheckNoLocks(thr_);
   }
 }
-
-#define SCOPED_INTERCEPTOR_RAW(func, ...) \
-    ThreadState *thr = cur_thread(); \
-    const uptr caller_pc = GET_CALLER_PC(); \
-    ScopedInterceptor si(thr, #func, caller_pc); \
-    const uptr pc = StackTrace::GetCurrentPc(); \
-    (void)pc; \
-/**/
 
 #define SCOPED_TSAN_INTERCEPTOR(func, ...) \
     SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); \
@@ -596,73 +571,6 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
 TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
   return user_alloc_usable_size(p);
-}
-
-#define OPERATOR_NEW_BODY(mangled_name) \
-  if (cur_thread()->in_symbolizer) \
-    return __libc_malloc(size); \
-  void *p = 0; \
-  {  \
-    SCOPED_INTERCEPTOR_RAW(mangled_name, size); \
-    p = user_alloc(thr, pc, size); \
-  }  \
-  invoke_malloc_hook(p, size);  \
-  return p;
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void *operator new(__sanitizer::uptr size);
-void *operator new(__sanitizer::uptr size) {
-  OPERATOR_NEW_BODY(_Znwm);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void *operator new[](__sanitizer::uptr size);
-void *operator new[](__sanitizer::uptr size) {
-  OPERATOR_NEW_BODY(_Znam);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void *operator new(__sanitizer::uptr size, std::nothrow_t const&);
-void *operator new(__sanitizer::uptr size, std::nothrow_t const&) {
-  OPERATOR_NEW_BODY(_ZnwmRKSt9nothrow_t);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void *operator new[](__sanitizer::uptr size, std::nothrow_t const&);
-void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
-  OPERATOR_NEW_BODY(_ZnamRKSt9nothrow_t);
-}
-
-#define OPERATOR_DELETE_BODY(mangled_name) \
-  if (ptr == 0) return;  \
-  if (cur_thread()->in_symbolizer) \
-    return __libc_free(ptr); \
-  invoke_free_hook(ptr);  \
-  SCOPED_INTERCEPTOR_RAW(mangled_name, ptr);  \
-  user_free(thr, pc, ptr);
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void operator delete(void *ptr) throw();
-void operator delete(void *ptr) throw() {
-  OPERATOR_DELETE_BODY(_ZdlPv);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void operator delete[](void *ptr) throw();
-void operator delete[](void *ptr) throw() {
-  OPERATOR_DELETE_BODY(_ZdaPv);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void operator delete(void *ptr, std::nothrow_t const&);
-void operator delete(void *ptr, std::nothrow_t const&) {
-  OPERATOR_DELETE_BODY(_ZdlPvRKSt9nothrow_t);
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void operator delete[](void *ptr, std::nothrow_t const&);
-void operator delete[](void *ptr, std::nothrow_t const&) {
-  OPERATOR_DELETE_BODY(_ZdaPvRKSt9nothrow_t);
 }
 
 TSAN_INTERCEPTOR(uptr, strlen, const char *s) {

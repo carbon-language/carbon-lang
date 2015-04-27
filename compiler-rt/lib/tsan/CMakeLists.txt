@@ -30,6 +30,7 @@ set(TSAN_SOURCES
   rtl/tsan_mman.cc
   rtl/tsan_mutex.cc
   rtl/tsan_mutexset.cc
+  rtl/tsan_new_delete.cc
   rtl/tsan_report.cc
   rtl/tsan_rtl.cc
   rtl/tsan_rtl_mutex.cc
@@ -57,6 +58,7 @@ set(TSAN_HEADERS
   rtl/tsan_flags.h
   rtl/tsan_flags.inc
   rtl/tsan_ignoreset.h
+  rtl/tsan_interceptors.h
   rtl/tsan_interface_ann.h
   rtl/tsan_interface.h
   rtl/tsan_interface_inl.h
