@@ -26,7 +26,6 @@
 #include "libunwind.h"
 #include "libunwind_ext.h"
 #include "unwind.h"
-#include "../private_typeinfo.h"
 
 namespace {
 
