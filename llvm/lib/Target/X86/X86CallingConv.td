@@ -39,6 +39,16 @@ def RetCC_X86Common : CallingConv<[
   CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>,
   CCIfType<[i64], CCAssignToReg<[RAX, RDX, RCX]>>,
 
+  // Boolean vectors of AVX-512 are returned in SIMD registers.
+  // The call from AVX to AVX-512 function should work,
+  // since the boolean types in AVX/AVX2 are promoted by default.
+  CCIfType<[v2i1],  CCPromoteToType<v2i64>>,
+  CCIfType<[v4i1],  CCPromoteToType<v4i32>>,
+  CCIfType<[v8i1],  CCPromoteToType<v8i16>>,
+  CCIfType<[v16i1], CCPromoteToType<v16i8>>,
+  CCIfType<[v32i1], CCPromoteToType<v32i8>>,
+  CCIfType<[v64i1], CCPromoteToType<v64i8>>,
+
   // Vector types are returned in XMM0 and XMM1, when they fit.  XMM2 and XMM3
   // can only be used by ABI non-compliant code. If the target doesn't have XMM
   // registers, it won't have vector types.
@@ -257,6 +267,16 @@ def CC_X86_64_C : CallingConv<[
             CCIfSubtarget<"isTargetDarwin()",
             CCIfSubtarget<"hasSSE2()",
             CCPromoteToType<v2i64>>>>,
+
+  // Boolean vectors of AVX-512 are returned in SIMD registers.
+  // The call from AVX to AVX-512 function should work,
+  // since the boolean types in AVX/AVX2 are promoted by default.
+  CCIfType<[v2i1],  CCPromoteToType<v2i64>>,
+  CCIfType<[v4i1],  CCPromoteToType<v4i32>>,
+  CCIfType<[v8i1],  CCPromoteToType<v8i16>>,
+  CCIfType<[v16i1], CCPromoteToType<v16i8>>,
+  CCIfType<[v32i1], CCPromoteToType<v32i8>>,
+  CCIfType<[v64i1], CCPromoteToType<v64i8>>,
 
   // The first 8 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
