@@ -1,4 +1,5 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
+; RUN: llc  -mtriple=arm64-none-linux-gnu -mattr=+neon -fp-contract=fast \
+; RUN:        < %s -verify-machineinstrs -asm-verbose=false | FileCheck %s
 
 define <8x i8> @test_select_cc_v8i8_i8(i8 %a, i8 %b, <8x i8> %c, <8x i8> %d ) {
 ; CHECK-LABEL: test_select_cc_v8i8_i8:
@@ -219,3 +220,32 @@ define <2 x i32> @test_select_cc_v2i32_icmpi1(i1 %cc, <2 x i32> %a, <2 x i32> %b
   %e = select i1 %cmp, <2 x i32> %a, <2 x i32> %b
   ret <2 x i32> %e
 }
+
+; Also make sure we support irregular/non-power-of-2 types such as v3f32.
+define <3 x float> @test_select_cc_v3f32_fcmp_f32(<3 x float> %a, <3 x float> %b, float %c1, float %c2) #0 {
+; CHECK-LABEL: test_select_cc_v3f32_fcmp_f32:
+; CHECK-NEXT: fcmeq [[MASK:v[0-9]+]].4s, v2.4s, v3.4s
+; CHECK-NEXT: dup [[VMASK:v[0-9]+]].4s, [[MASK]].s[0]
+; CHECK-NEXT: bsl [[RES:v[0-9]+]].16b, v0.16b, v1.16b
+; CHECK-NEXT: mov v0.16b, [[RES]].16b
+; CHECK-NEXT: ret
+  %cc = fcmp oeq float %c1, %c2
+  %r = select i1 %cc, <3 x float> %a, <3 x float> %b
+  ret <3 x float> %r
+}
+
+define <3 x float> @test_select_cc_v3f32_fcmp_f64(<3 x float> %a, <3 x float> %b, double %c1, double %c2) #0 {
+; CHECK-LABEL: test_select_cc_v3f32_fcmp_f64:
+; CHECK-NEXT: fcmp d2, d3
+; CHECK-NEXT: movn [[N0:w[0-9]+]], #0
+; CHECK-NEXT: csel [[MASK:w[0-9]+]], [[N0]], wzr, eq
+; CHECK-NEXT: dup [[VMASK:v[0-9]+]].4s, [[MASK]]
+; CHECK-NEXT: bsl [[RES:v[0-9]+]].16b, v0.16b, v1.16b
+; CHECK-NEXT: mov v0.16b, [[RES]].16b
+; CHECK-NEXT: ret
+  %cc = fcmp oeq double %c1, %c2
+  %r = select i1 %cc, <3 x float> %a, <3 x float> %b
+  ret <3 x float> %r
+}
+
+attributes #0 = { nounwind}

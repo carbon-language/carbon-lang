@@ -8668,6 +8668,12 @@ static SDValue performSelectCombine(SDNode *N, SelectionDAG &DAG) {
   SrcVT = EVT::getVectorVT(*DAG.getContext(), SrcVT, NumMaskElts);
   EVT CCVT = SrcVT.changeVectorElementTypeToInteger();
 
+  // Also bail out if the vector CCVT isn't the same size as ResVT.
+  // This can happen if the SETCC operand size doesn't divide the ResVT size
+  // (e.g., f64 vs v3f32).
+  if (CCVT.getSizeInBits() != ResVT.getSizeInBits())
+    return SDValue();
+
   // First perform a vector comparison, where lane 0 is the one we're interested
   // in.
   SDLoc DL(N0);
