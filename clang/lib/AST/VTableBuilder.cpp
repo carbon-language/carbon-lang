@@ -3442,6 +3442,15 @@ MicrosoftVTableContext::~MicrosoftVTableContext() {
   llvm::DeleteContainerSeconds(VBaseInfo);
 }
 
+/// Find the full path of bases from the most derived class to the base class
+/// containing the vptr described by Info. Use depth-first search for this, but
+/// search non-virtual bases before virtual bases. This is important in cases
+/// like this where we need to find the path to a vbase that goes through an
+/// nvbase:
+///   struct A { virtual void f(); }
+///   struct B : virtual A { virtual void f(); };
+///   struct C : virtual A, B { virtual void f(); };
+/// The path to A's vftable in C should be 'C, B, A', not 'C, A'.
 static bool
 findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
                 const CXXRecordDecl *RD, CharUnits Offset,
@@ -3454,9 +3463,9 @@ findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
-  // Recurse with non-virtual bases first.
-  // FIXME: Does this need to be in layout order? Virtual bases will be in base
-  // specifier order, which isn't necessarily layout order.
+  // Sort direct bases into non-virtual bases followed by virtual bases. This
+  // approximates layout order with the exception of classes that do not contain
+  // vptrs, and those don't affect our results.
   SmallVector<CXXBaseSpecifier, 4> Bases(RD->bases_begin(), RD->bases_end());
   std::stable_partition(Bases.begin(), Bases.end(),
                         [](CXXBaseSpecifier bs) { return !bs.isVirtual(); });
@@ -3468,7 +3477,7 @@ findPathForVPtr(ASTContext &Context, const ASTRecordLayout &MostDerivedLayout,
       NewOffset = Offset + Layout.getBaseClassOffset(Base);
     else {
       if (!VBasesSeen.insert(Base).second)
-        return false;
+        continue;
       NewOffset = MostDerivedLayout.getVBaseClassOffset(Base);
     }
     FullPath.push_back(Base);
