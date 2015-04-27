@@ -1479,8 +1479,9 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std:
             break;
     }
 
+    bool versions_valid = false;
     if (use_current_os_version)
-        GetOSVersion(versions[0], versions[1], versions[2]);
+        versions_valid = GetOSVersion(versions[0], versions[1], versions[2]);
     else if (target)
     {
         // Our OS doesn't match our executable so we need to get the min OS version from the object file
@@ -1489,14 +1490,17 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std:
         {
             ObjectFile *object_file = exe_module_sp->GetObjectFile();
             if (object_file)
-                object_file->GetMinimumOSVersion(versions, 3);
+                versions_valid = object_file->GetMinimumOSVersion(versions, 3) > 0;
         }
     }
     // Only add the version-min options if we got a version from somewhere
-    if (versions[0])
+    if (versions_valid && versions[0] != UINT32_MAX)
     {
+        // Make any invalid versions be zero if needed
+        if (versions[1] == UINT32_MAX)
+            versions[1] = 0;
         if (versions[2] == UINT32_MAX)
-            versions[2] = 0; // FIXME who actually likes this behavior?
+            versions[2] = 0;
         
         switch (sdk_type)
         {
