@@ -37,6 +37,7 @@ add_llvm_library(LLVMSupport
   BlockFrequency.cpp
   BranchProbability.cpp
   circular_raw_ostream.cpp
+  COM.cpp
   CommandLine.cpp
   Compression.cpp
   ConvertUTF.c
