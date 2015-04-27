@@ -60,6 +60,49 @@ define <16 x i16> @test_vpmullw(<16 x i16> %i, <16 x i16> %j) nounwind readnone 
   ret <16 x i16> %x
 }
 
+; CHECK: mul-v16i8
+; CHECK:       # BB#0:
+; CHECK-NEXT:  vpmovsxbw %xmm1, %ymm1
+; CHECK-NEXT:  vpmovsxbw %xmm0, %ymm0
+; CHECK-NEXT:  vpmullw %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:  vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:  vmovdqa {{.*#+}} xmm2 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
+; CHECK-NEXT:  vpshufb %xmm2, %xmm1, %xmm1
+; CHECK-NEXT:  vpshufb %xmm2, %xmm0, %xmm0
+; CHECK-NEXT:  vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:  vzeroupper
+; CHECK-NEXT:  retq
+define <16 x i8> @mul-v16i8(<16 x i8> %i, <16 x i8> %j) nounwind readnone {
+  %x = mul <16 x i8> %i, %j
+  ret <16 x i8> %x
+}
+
+; CHECK: mul-v32i8
+; CHECK:       # BB#0:
+; CHECK-NEXT:  vextracti128 $1, %ymm1, %xmm2
+; CHECK-NEXT:  vpmovsxbw %xmm2, %ymm2
+; CHECK-NEXT:  vextracti128 $1, %ymm0, %xmm3
+; CHECK-NEXT:  vpmovsxbw %xmm3, %ymm3
+; CHECK-NEXT:  vpmullw %ymm2, %ymm3, %ymm2
+; CHECK-NEXT:  vextracti128 $1, %ymm2, %xmm3
+; CHECK-NEXT:  vmovdqa {{.*#+}} xmm4 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
+; CHECK-NEXT:  vpshufb %xmm4, %xmm3, %xmm3
+; CHECK-NEXT:  vpshufb %xmm4, %xmm2, %xmm2
+; CHECK-NEXT:  vpunpcklqdq {{.*#+}} xmm2 = xmm2[0],xmm3[0]
+; CHECK-NEXT:  vpmovsxbw %xmm1, %ymm1
+; CHECK-NEXT:  vpmovsxbw %xmm0, %ymm0
+; CHECK-NEXT:  vpmullw %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:  vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:  vpshufb %xmm4, %xmm1, %xmm1
+; CHECK-NEXT:  vpshufb %xmm4, %xmm0, %xmm0
+; CHECK-NEXT:  vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:  vinserti128 $1, %xmm2, %ymm0, %ymm0
+; CHECK-NEXT:  retq
+define <32 x i8> @mul-v32i8(<32 x i8> %i, <32 x i8> %j) nounwind readnone {
+  %x = mul <32 x i8> %i, %j
+  ret <32 x i8> %x
+}
+
 ; CHECK: mul-v4i64
 ; CHECK: vpmuludq %ymm
 ; CHECK-NEXT: vpsrlq $32, %ymm
