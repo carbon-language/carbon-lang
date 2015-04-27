@@ -483,19 +483,12 @@ CMICmdCmdInterpreterExec::Acknowledge(void)
         CMIUtilString strMsg(m_lldbResult.GetOutput());
         strMsg = strMsg.StripCREndOfLine();
         CMICmnStreamStdout::TextToStdout(strMsg);
-
-        // Send the LLDB result message to console so the user can see the result of the
-        // command they typed. It is not necessary an error message.
-        CMICmnStreamStderr::LLDBMsgToConsole(strMsg);
     }
     if (m_lldbResult.GetErrorSize() > 0)
     {
         CMIUtilString strMsg(m_lldbResult.GetError());
         strMsg = strMsg.StripCREndOfLine();
         CMICmnStreamStderr::LLDBMsgToConsole(strMsg);
-
-        // Send LLDB's error message to the MI Driver's Log file
-        CMICmnStreamStdout::TextToStdout(strMsg);
     }
 
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
