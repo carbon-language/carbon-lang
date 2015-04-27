@@ -50,6 +50,7 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   auto *OldMD = StoredMD.getLatest();
   MD->setPrevious(OldMD);
   StoredMD.setLatest(MD);
+  StoredMD.overrideActiveModuleMacros(*this, II);
 
   // Set up the identifier as having associated macro history.
   II->setHasMacroDefinition(true);
@@ -57,43 +58,6 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
     II->setHasMacroDefinition(false);
   if (II->isFromAST() && !MD->isImported())
     II->setChangedSinceDeserialization();
-
-  // Accumulate any overridden imported macros.
-  if (!MD->isImported() && getCurrentModule()) {
-    Module *OwningMod = getModuleContainingLocation(MD->getLocation());
-    if (!OwningMod)
-      return;
-
-    for (auto *PrevMD = OldMD; PrevMD; PrevMD = PrevMD->getPrevious()) {
-      Module *DirectiveMod = getModuleContainingLocation(PrevMD->getLocation());
-      if (ModuleMacro *PrevMM = PrevMD->getOwningModuleMacro())
-        StoredMD.addOverriddenMacro(*this, PrevMM);
-      else if (ModuleMacro *PrevMM = getModuleMacro(DirectiveMod, II))
-        // The previous macro was from another submodule that we #included.
-        // FIXME: Create an import directive when importing a macro from a local
-        // submodule.
-        StoredMD.addOverriddenMacro(*this, PrevMM);
-      else
-        // We're still within the module defining the previous macro. We don't
-        // override it.
-        break;
-
-      // Stop once we leave the original macro's submodule.
-      //
-      // Either this submodule #included another submodule of the same
-      // module or it just happened to be built after the other module.
-      // In the former case, we override the submodule's macro.
-      //
-      // FIXME: In the latter case, we shouldn't do so, but we can't tell
-      // these cases apart.
-      //
-      // FIXME: We can leave this submodule and re-enter it if it #includes a
-      // header within a different submodule of the same module. In such cases
-      // the overrides list will be incomplete.
-      if (DirectiveMod != OwningMod || !PrevMD->isImported())
-        break;
-    }
-  }
 }
 
 void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
@@ -155,6 +119,71 @@ ModuleMacro *Preprocessor::getModuleMacro(Module *Mod, IdentifierInfo *II) {
 
   void *InsertPos;
   return ModuleMacros.FindNodeOrInsertPos(ID, InsertPos);
+}
+
+void Preprocessor::updateModuleMacroInfo(IdentifierInfo *II,
+                                         ModuleMacroInfo &Info) {
+  assert(Info.ActiveModuleMacrosGeneration != MacroVisibilityGeneration &&
+         "don't need to update this macro name info");
+  Info.ActiveModuleMacrosGeneration = MacroVisibilityGeneration;
+
+  auto Leaf = LeafModuleMacros.find(II);
+  if (Leaf == LeafModuleMacros.end()) {
+    // No imported macros at all: nothing to do.
+    return;
+  }
+
+  Info.ActiveModuleMacros.clear();
+
+  // Every macro that's locally overridden is overridden by a visible macro.
+  llvm::DenseMap<ModuleMacro *, int> NumHiddenOverrides;
+  for (auto *O : Info.OverriddenMacros)
+    NumHiddenOverrides[O] = -1;
+
+  // Collect all macros that are not overridden by a visible macro.
+  llvm::SmallVector<ModuleMacro *, 16> Worklist(Leaf->second.begin(),
+                                                Leaf->second.end());
+  while (!Worklist.empty()) {
+    auto *MM = Worklist.pop_back_val();
+    if (MM->getOwningModule()->NameVisibility >= Module::MacrosVisible) {
+      // We only care about collecting definitions; undefinitions only act
+      // to override other definitions.
+      if (MM->getMacroInfo())
+        Info.ActiveModuleMacros.push_back(MM);
+    } else {
+      for (auto *O : MM->overrides())
+        if ((unsigned)++NumHiddenOverrides[O] == O->getNumOverridingMacros())
+          Worklist.push_back(O);
+    }
+  }
+
+  // Determine whether the macro name is ambiguous.
+  Info.IsAmbiguous = false;
+  MacroInfo *MI = nullptr;
+  bool IsSystemMacro = false;
+  if (auto *DMD = dyn_cast<DefMacroDirective>(Info.MD)) {
+    MI = DMD->getInfo();
+    IsSystemMacro = SourceMgr.isInSystemHeader(DMD->getLocation());
+  }
+  for (auto *Active : Info.ActiveModuleMacros) {
+    auto *NewMI = Active->getMacroInfo();
+
+    // Before marking the macro as ambiguous, check if this is a case where
+    // both macros are in system headers. If so, we trust that the system
+    // did not get it wrong. This also handles cases where Clang's own
+    // headers have a different spelling of certain system macros:
+    //   #define LONG_MAX __LONG_MAX__ (clang's limits.h)
+    //   #define LONG_MAX 0x7fffffffffffffffL (system's limits.h)
+    //
+    // FIXME: Remove the defined-in-system-headers check. clang's limits.h
+    // overrides the system limits.h's macros, so there's no conflict here.
+    IsSystemMacro &= Active->getOwningModule()->IsSystem;
+    if (MI && NewMI != MI && !IsSystemMacro &&
+        !MI->isIdenticalTo(*NewMI, *this, /*Syntactically=*/true)) {
+      Info.IsAmbiguous = true;
+      break;
+    }
+  }
 }
 
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier

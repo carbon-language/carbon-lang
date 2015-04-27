@@ -616,7 +616,13 @@ void Preprocessor::EnterSubmodule(Module *M, SourceLocation ImportLoc) {
   auto &Info = BuildingSubmoduleStack.back();
   // Copy across our macros and start the submodule with the current state.
   // FIXME: We should start each submodule with just the predefined macros.
-  Info.Macros = Macros;
+  for (auto &M : Macros) {
+    BuildingSubmoduleInfo::SavedMacroInfo SMI;
+    SMI.Latest = M.second.getLatest();
+    auto O = M.second.getOverriddenMacros();
+    SMI.Overridden.insert(SMI.Overridden.end(), O.begin(), O.end());
+    Info.Macros.insert(std::make_pair(M.first, SMI));
+  }
 }
 
 void Preprocessor::LeaveSubmodule() {
@@ -625,12 +631,12 @@ void Preprocessor::LeaveSubmodule() {
   // Create ModuleMacros for any macros defined in this submodule.
   for (auto &Macro : Macros) {
     auto *II = const_cast<IdentifierInfo*>(Macro.first);
-    MacroState State = Info.Macros.lookup(II);
+    auto SavedInfo = Info.Macros.lookup(II);
 
     // This module may have exported a new macro. If so, create a ModuleMacro
     // representing that fact.
     bool ExplicitlyPublic = false;
-    for (auto *MD = Macro.second.getLatest(); MD != State.getLatest();
+    for (auto *MD = Macro.second.getLatest(); MD != SavedInfo.Latest;
          MD = MD->getPrevious()) {
       // Skip macros defined in other submodules we #included along the way.
       Module *Mod = getModuleContainingLocation(MD->getLocation());
@@ -659,11 +665,15 @@ void Preprocessor::LeaveSubmodule() {
       }
     }
 
-    // Update the macro to refer to the latest directive in the chain.
-    State.setLatest(Macro.second.getLatest());
+    // Restore the macro's overrides list.
+    Macro.second.setOverriddenMacros(SavedInfo.Overridden);
+  }
 
-    // Restore the old macro state.
-    Macro.second = State;
+  if (Info.M->NameVisibility < Module::MacrosVisible) {
+    Info.M->NameVisibility = Module::MacrosVisible;
+    Info.M->MacroVisibilityLoc = Info.ImportLoc;
+    ++MacroVisibilityGeneration;
+    // FIXME: Also mark any exported macros as visible, and check for conflicts.
   }
 
   BuildingSubmoduleStack.pop_back();
