@@ -170,9 +170,8 @@ bool isThinObjectFile(StringRef path, MachOLinkingContext::Arch &arch) {
   return true;
 }
 
-
-bool sliceFromFatFile(const MemoryBuffer &mb, MachOLinkingContext::Arch arch,
-                                             uint32_t &offset, uint32_t &size) {
+bool sliceFromFatFile(MemoryBufferRef mb, MachOLinkingContext::Arch arch,
+                      uint32_t &offset, uint32_t &size) {
   const char *start = mb.getBufferStart();
   const llvm::MachO::fat_header *fh =
       reinterpret_cast<const llvm::MachO::fat_header *>(start);
@@ -212,7 +211,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
 
   uint32_t sliceOffset;
   uint32_t sliceSize;
-  if (sliceFromFatFile(*mb, arch, sliceOffset, sliceSize)) {
+  if (sliceFromFatFile(mb->getMemBufferRef(), arch, sliceOffset, sliceSize)) {
     start = &start[sliceOffset];
     objSize = sliceSize;
     mh = reinterpret_cast<const mach_header *>(start);

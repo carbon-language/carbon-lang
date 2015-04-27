@@ -90,7 +90,7 @@ public:
   ELFFile(StringRef name, ELFLinkingContext &ctx);
   ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
 
-  static std::error_code isCompatible(const MemoryBuffer &mb,
+  static std::error_code isCompatible(MemoryBufferRef mb,
                                       ELFLinkingContext &ctx);
 
   static bool canParse(file_magic magic) {

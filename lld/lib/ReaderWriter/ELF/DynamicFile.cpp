@@ -24,7 +24,7 @@ DynamicFile<ELFT>::DynamicFile(std::unique_ptr<MemoryBuffer> mb,
       _ctx(ctx), _useShlibUndefines(ctx.useShlibUndefines()) {}
 
 template <typename ELFT>
-std::error_code DynamicFile<ELFT>::isCompatible(const MemoryBuffer &mb,
+std::error_code DynamicFile<ELFT>::isCompatible(MemoryBufferRef mb,
                                                 ELFLinkingContext &ctx) {
   return elf::isCompatible<ELFT>(mb, ctx);
 }

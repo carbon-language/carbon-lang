@@ -271,8 +271,7 @@ public:
 
   /// If the memoryBuffer is a fat file with a slice for the current arch,
   /// this method will return the offset and size of that slice.
-  bool sliceFromFatFile(const MemoryBuffer &mb, uint32_t &offset,
-                        uint32_t &size);
+  bool sliceFromFatFile(MemoryBufferRef mb, uint32_t &offset, uint32_t &size);
 
   /// Returns if a command line option specified dylib is an upward link.
   bool isUpwardDylib(StringRef installName) const;

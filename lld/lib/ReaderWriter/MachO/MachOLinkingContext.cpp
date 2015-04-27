@@ -133,8 +133,7 @@ bool MachOLinkingContext::isThinObjectFile(StringRef path, Arch &arch) {
   return mach_o::normalized::isThinObjectFile(path, arch);
 }
 
-bool MachOLinkingContext::sliceFromFatFile(const MemoryBuffer &mb,
-                                           uint32_t &offset,
+bool MachOLinkingContext::sliceFromFatFile(MemoryBufferRef mb, uint32_t &offset,
                                            uint32_t &size) {
   return mach_o::normalized::sliceFromFatFile(mb, _arch, offset, size);
 }
@@ -613,7 +612,7 @@ MachOLinkingContext::getMemoryBuffer(StringRef path) {
   // and switch buffer to point to just that required slice.
   uint32_t offset;
   uint32_t size;
-  if (sliceFromFatFile(*mb, offset, size))
+  if (sliceFromFatFile(mb->getMemBufferRef(), offset, size))
     return MemoryBuffer::getFileSlice(path, size, offset);
   return std::move(mb);
 }

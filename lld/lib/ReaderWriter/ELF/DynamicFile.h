@@ -23,7 +23,7 @@ template <class ELFT> class DynamicFile : public SharedLibraryFile {
 public:
   DynamicFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
 
-  static std::error_code isCompatible(const MemoryBuffer &mb,
+  static std::error_code isCompatible(MemoryBufferRef mb,
                                       ELFLinkingContext &ctx);
 
   const SharedLibraryAtom *exports(StringRef name,

@@ -31,7 +31,7 @@ public:
   ErrorOr<std::unique_ptr<File>>
   loadFile(std::unique_ptr<MemoryBuffer> mb,
            const class Registry &) const override {
-    if (std::error_code ec = FileT::isCompatible(*mb, _ctx))
+    if (std::error_code ec = FileT::isCompatible(mb->getMemBufferRef(), _ctx))
       return ec;
     std::unique_ptr<File> ret = llvm::make_unique<FileT>(std::move(mb), _ctx);
     return std::move(ret);

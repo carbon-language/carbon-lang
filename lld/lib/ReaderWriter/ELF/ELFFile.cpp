@@ -28,7 +28,7 @@ ELFFile<ELFT>::ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
       _useWrap(ctx.wrapCalls().size()), _ctx(ctx) {}
 
 template <typename ELFT>
-std::error_code ELFFile<ELFT>::isCompatible(const MemoryBuffer &mb,
+std::error_code ELFFile<ELFT>::isCompatible(MemoryBufferRef mb,
                                             ELFLinkingContext &ctx) {
   return elf::isCompatible<ELFT>(mb, ctx);
 }
