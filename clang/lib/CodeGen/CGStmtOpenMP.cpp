@@ -1270,6 +1270,7 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
   auto &&CodeGen = [&S, &HasFirstprivates](CodeGenFunction &CGF) {
     CodeGenFunction::OMPPrivateScope SingleScope(CGF);
     HasFirstprivates = CGF.EmitOMPFirstprivateClause(S, SingleScope);
+    CGF.EmitOMPPrivateClause(S, SingleScope);
     (void)SingleScope.Privatize();
 
     CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
