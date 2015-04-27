@@ -38,6 +38,11 @@ Atom *ELFFile<ELFT>::findAtom(const Elf_Sym *sourceSym,
                               const Elf_Sym *targetSym) {
   // Return the atom for targetSym if we can do so.
   Atom *target = _symbolToAtomMapping.lookup(targetSym);
+  if (!target)
+    // Some realocations (R_ARM_V4BX) do not have a defined
+    // target.  For this cases make it points to itself.
+    target = _symbolToAtomMapping.lookup(sourceSym);
+
   if (target->definition() != Atom::definitionRegular)
     return target;
   Atom::Scope scope = llvm::cast<DefinedAtom>(target)->scope();
