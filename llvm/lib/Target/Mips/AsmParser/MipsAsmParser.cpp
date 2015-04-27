@@ -47,14 +47,14 @@ public:
     ATReg(1), Reorder(true), Macro(true), Features(Features_) {}
 
   MipsAssemblerOptions(const MipsAssemblerOptions *Opts) {
-    ATReg = Opts->getATRegNum();
+    ATReg = Opts->getATRegIndex();
     Reorder = Opts->isReorder();
     Macro = Opts->isMacro();
     Features = Opts->getFeatures();
   }
 
-  unsigned getATRegNum() const { return ATReg; }
-  bool setATReg(unsigned Reg) {
+  unsigned getATRegIndex() const { return ATReg; }
+  bool setATRegIndex(unsigned Reg) {
     if (Reg > 31)
       return false;
 
@@ -2205,7 +2205,7 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {
   if ((RegIndex != 0) && 
-      ((int)AssemblerOptions.back()->getATRegNum() == RegIndex)) {
+      ((int)AssemblerOptions.back()->getATRegIndex() == RegIndex)) {
     if (RegIndex == 1)
       Warning(Loc, "used $at without \".set noat\"");
     else
@@ -2386,7 +2386,7 @@ int MipsAsmParser::matchMSA128CtrlRegisterName(StringRef Name) {
 }
 
 unsigned MipsAsmParser::getATReg(SMLoc Loc) {
-  unsigned ATIndex = AssemblerOptions.back()->getATRegNum();
+  unsigned ATIndex = AssemblerOptions.back()->getATRegIndex();
   if (ATIndex == 0) {
     reportParseError(Loc,
                      "pseudo-instruction requires $at, which is not available");
@@ -3300,7 +3300,7 @@ bool MipsAsmParser::parseSetNoAtDirective() {
   // Line should look like: ".set noat".
 
   // Set the $at register to $0.
-  AssemblerOptions.back()->setATReg(0);
+  AssemblerOptions.back()->setATRegIndex(0);
 
   Parser.Lex(); // Eat "noat".
 
@@ -3323,7 +3323,7 @@ bool MipsAsmParser::parseSetAtDirective() {
 
   if (getLexer().is(AsmToken::EndOfStatement)) {
     // No register was specified, so we set $at to $1.
-    AssemblerOptions.back()->setATReg(1);
+    AssemblerOptions.back()->setATRegIndex(1);
 
     getTargetStreamer().emitDirectiveSetAt();
     Parser.Lex(); // Consume the EndOfStatement.
@@ -3360,7 +3360,7 @@ bool MipsAsmParser::parseSetAtDirective() {
   }
 
   // Check if $reg is a valid register. If it is, set $at to $reg.
-  if (!AssemblerOptions.back()->setATReg(AtRegNo)) {
+  if (!AssemblerOptions.back()->setATRegIndex(AtRegNo)) {
     reportParseError("invalid register");
     return false;
   }
