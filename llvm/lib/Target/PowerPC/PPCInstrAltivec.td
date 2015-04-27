@@ -11,6 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+// *********************************** NOTE ***********************************
+// ** For POWER8 Little Endian, the VSX swap optimization relies on knowing  **
+// ** which VMX and VSX instructions are lane-sensitive and which are not.   **
+// ** A lane-sensitive instruction relies, implicitly or explicitly, on      **
+// ** whether lanes are numbered from left to right.  An instruction like    **
+// ** VADDFP is not lane-sensitive, because each lane of the result vector   **
+// ** relies only on the corresponding lane of the source vectors.  However, **
+// ** an instruction like VMULESB is lane-sensitive, because "even" and      **
+// ** "odd" lanes are different for big-endian and little-endian numbering.  **
+// **                                                                        **
+// ** When adding new VMX and VSX instructions, please consider whether they **
+// ** are lane-sensitive.  If so, they must be added to a switch statement   **
+// ** in PPCVSXSwapRemoval::gatherVectorInstructions().                      **
+// ****************************************************************************
+
 //===----------------------------------------------------------------------===//
 // Altivec transformation functions and pattern fragments.
 //

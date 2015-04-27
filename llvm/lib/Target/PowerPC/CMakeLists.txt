@@ -36,6 +36,7 @@ add_llvm_target(PowerPCCodeGen
   PPCTLSDynamicCall.cpp
   PPCVSXCopy.cpp
   PPCVSXFMAMutate.cpp
+  PPCVSXSwapRemoval.cpp
   )
 
 add_subdirectory(AsmParser)

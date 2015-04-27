@@ -12,7 +12,6 @@
 ; RUN: llc -mcpu=pwr8 -mattr=+vsx -O2 -mtriple=powerpc64le-unknown-linux-gnu < %s > %t
 ; RUN: grep lxvd2x < %t | count 6
 ; RUN: grep stxvd2x < %t | count 6
-; RUN: grep xxswapd < %t | count 12
 
 @vsi = global <4 x i32> <i32 -1, i32 2, i32 -3, i32 4>, align 16
 @vui = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
