@@ -128,6 +128,9 @@ private:
     OMPRTL__kmpc_ordered,
     // Call to void __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid);
     OMPRTL__kmpc_end_ordered,
+    // Call to kmp_int32 __kmpc_omp_taskwait(ident_t *loc, kmp_int32
+    // global_tid);
+    OMPRTL__kmpc_omp_taskwait,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -602,6 +605,9 @@ public:
                              ArrayRef<const Expr *> RHSExprs,
                              ArrayRef<const Expr *> ReductionOps,
                              bool WithNowait);
+
+  /// \brief Emit code for 'taskwait' directive.
+  virtual void emitTaskwaitCall(CodeGenFunction &CGF, SourceLocation Loc);
 };
 
 } // namespace CodeGen

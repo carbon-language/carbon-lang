@@ -1435,8 +1435,8 @@ void CodeGenFunction::EmitOMPBarrierDirective(const OMPBarrierDirective &S) {
   CGM.getOpenMPRuntime().emitBarrierCall(*this, S.getLocStart(), OMPD_barrier);
 }
 
-void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &) {
-  llvm_unreachable("CodeGen for 'omp taskwait' is not supported yet.");
+void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &S) {
+  CGM.getOpenMPRuntime().emitTaskwaitCall(*this, S.getLocStart());
 }
 
 void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &S) {
