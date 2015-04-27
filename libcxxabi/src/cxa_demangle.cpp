@@ -195,7 +195,7 @@ parse_floating_number(const char* first, const char* last, C& db)
         }
         if (*t == 'E')
         {
-#if __LITTLE_ENDIAN__
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
             std::reverse(buf, e);
 #endif
             char num[float_data<Float>::max_demangled_size] = {0};
