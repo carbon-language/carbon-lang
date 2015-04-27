@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - | FileCheck %s
 
-// FIXME: Perform this outlining automatically CodeGen.
 void try_body(int numerator, int denominator, int *myres) {
   *myres = numerator / denominator;
 }
@@ -37,20 +36,19 @@ int safe_div(int numerator, int denominator, int *res) {
 
 void j(void);
 
-// FIXME: Implement local variable captures in filter expressions.
 int filter_expr_capture(void) {
   int r = 42;
   __try {
     j();
-  } __except(/*r =*/ -1) {
+  } __except(r = -1) {
     r = 13;
   }
   return r;
 }
 
 // CHECK-LABEL: define i32 @filter_expr_capture()
-// FIXMECHECK: %[[captures]] = call i8* @llvm.frameallocate(i32 4)
-// CHECK: store i32 42, i32* %[[r:[^ ,]*]]
+// CHECK: call void (...) @llvm.frameescape(i32* %[[r:[^ ,]*]])
+// CHECK: store i32 42, i32* %[[r]]
 // CHECK: invoke void @j() #[[NOINLINE]]
 //
 // CHECK: landingpad
@@ -61,8 +59,8 @@ int filter_expr_capture(void) {
 // CHECK: ret i32 %[[rv]]
 
 // CHECK-LABEL: define internal i32 @"\01?filt$0@0@filter_expr_capture@@"(i8* %exception_pointers, i8* %frame_pointer)
-// FIXMECHECK: %[[captures]] = call i8* @llvm.framerecover(i8* bitcast (i32 ()* @filter_expr_capture, i8* %frame_pointer)
-// FIXMECHECK: store i32 -1, i32* %{{.*}}
+// CHECK: call i8* @llvm.framerecover(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %frame_pointer, i32 0)
+// CHECK: store i32 -1, i32* %{{.*}}
 // CHECK: ret i32 -1
 
 int nested_try(void) {
