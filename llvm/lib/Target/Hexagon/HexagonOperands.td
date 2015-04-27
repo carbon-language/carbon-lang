@@ -483,7 +483,9 @@ let PrintMethod = "printJumpTable" in
 def jumptablebase : Operand<i32>;
 
 def brtarget : Operand<OtherVT>;
-def brtargetExt : Operand<OtherVT>;
+def brtargetExt : Operand<OtherVT> {
+  let PrintMethod = "printExtBrtarget";
+}
 def calltarget : Operand<i32>;
 
 def bblabel : Operand<i32>;

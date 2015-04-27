@@ -56,6 +56,7 @@ namespace llvm {
     void printGlobalOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O)
            const;
     void printJumpTable(const MCInst *MI, unsigned OpNo, raw_ostream &O) const;
+    void printExtBrtarget(const MCInst *MI, unsigned OpNo, raw_ostream &O) const;
 
     void printConstantPool(const MCInst *MI, unsigned OpNo,
                            raw_ostream &O) const;

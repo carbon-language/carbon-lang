@@ -249,3 +249,17 @@ void HexagonInstPrinter::printSymbol(const MCInst *MI, unsigned OpNo,
   printOperand(MI, OpNo, O);
   O << ')';
 }
+
+void HexagonInstPrinter::printExtBrtarget(const MCInst *MI, unsigned OpNo,
+                                          raw_ostream &O) const {
+  const MCOperand &MO = MI->getOperand(OpNo);
+  const MCInstrDesc &MII = getMII().get(MI->getOpcode());
+
+  assert((isExtendable(MII.TSFlags) || isExtended(MII.TSFlags)) &&
+         "Expecting an extendable operand");
+
+  if (MO.isExpr() || isExtended(MII.TSFlags)) {
+    O << "##";
+  }
+  printOperand(MI, OpNo, O);
+}

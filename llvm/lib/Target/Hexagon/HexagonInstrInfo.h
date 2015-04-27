@@ -1,3 +1,4 @@
+
 //===- HexagonInstrInfo.h - Hexagon Instruction Information -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -203,7 +204,8 @@ public:
 
 
   void immediateExtend(MachineInstr *MI) const;
-  bool isConstExtended(MachineInstr *MI) const;
+  bool isConstExtended(const MachineInstr *MI) const;
+  unsigned getSize(const MachineInstr *MI) const;  
   int getDotNewPredJumpOp(MachineInstr *MI,
                       const MachineBranchProbabilityInfo *MBPI) const;
   unsigned getAddrMode(const MachineInstr* MI) const;

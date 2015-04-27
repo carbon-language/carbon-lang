@@ -1742,14 +1742,14 @@ bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   return false;
 }
 
-bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
+bool HexagonInstrInfo::isConstExtended(const MachineInstr *MI) const {
   const uint64_t F = MI->getDesc().TSFlags;
   unsigned isExtended = (F >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
   if (isExtended) // Instruction must be extended.
     return true;
 
-  unsigned isExtendable = (F >> HexagonII::ExtendablePos)
-                          & HexagonII::ExtendableMask;
+  unsigned isExtendable =
+    (F >> HexagonII::ExtendablePos) & HexagonII::ExtendableMask;
   if (!isExtendable)
     return false;
 
@@ -1783,6 +1783,27 @@ bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
   int ImmValue = MO.getImm();
 
   return (ImmValue < MinValue || ImmValue > MaxValue);
+}
+
+// Return the number of bytes required to encode the instruction.
+// Hexagon instructions are fixed length, 4 bytes, unless they
+// use a constant extender, which requires another 4 bytes.
+// For debug instructions and prolog labels, return 0.
+unsigned HexagonInstrInfo::getSize(const MachineInstr *MI) const {
+
+  if (MI->isDebugValue() || MI->isPosition())
+    return 0;
+
+  unsigned Size = MI->getDesc().getSize();
+  if (!Size)
+    // Assume the default insn size in case it cannot be determined
+    // for whatever reason.
+    Size = HEXAGON_INSTR_SIZE;
+
+  if (isConstExtended(MI) || isExtended(MI))
+    Size += HEXAGON_INSTR_SIZE;
+
+  return Size;
 }
 
 // Returns the opcode to use when converting MI, which is a conditional jump,

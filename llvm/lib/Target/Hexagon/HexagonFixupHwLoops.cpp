@@ -6,9 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 // The loop start address in the LOOPn instruction is encoded as a distance
-// from the LOOPn instruction itself.  If the start address is too far from
-// the LOOPn instruction, the loop needs to be set up manually, i.e. via
-// direct transfers to SAn and LCn.
+// from the LOOPn instruction itself. If the start address is too far from
+// the LOOPn instruction, the instruction needs to use a constant extender.
 // This pass will identify and convert such LOOPn instructions to a proper
 // form.
 //===----------------------------------------------------------------------===//
@@ -21,11 +20,14 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
+
+static cl::opt<unsigned> MaxLoopRange(
+    "hexagon-loop-range", cl::Hidden, cl::init(200),
+    cl::desc("Restrict range of loopN instructions (testing only)"));
 
 namespace llvm {
   void initializeHexagonFixupHwLoopsPass(PassRegistry&);
@@ -52,20 +54,15 @@ namespace {
     }
 
   private:
-    /// \brief Maximum distance between the loop instr and the basic block.
-    /// Just an estimate.
-    static const unsigned MAX_LOOP_DISTANCE = 200;
-
     /// \brief Check the offset between each loop instruction and
     /// the loop basic block to determine if we can use the LOOP instruction
     /// or if we need to set the LC/SA registers explicitly.
     bool fixupLoopInstrs(MachineFunction &MF);
 
-    /// \brief Add the instruction to set the LC and SA registers explicitly.
-    void convertLoopInstr(MachineFunction &MF,
-                          MachineBasicBlock::iterator &MII,
-                          RegScavenger &RS);
-
+    /// \brief Replace loop instruction with the constant extended
+    /// version if the loop label is too far from the loop instruction.
+    void useExtLoopInstr(MachineFunction &MF,
+                         MachineBasicBlock::iterator &MII);
   };
 
   char HexagonFixupHwLoops::ID = 0;
@@ -78,19 +75,17 @@ FunctionPass *llvm::createHexagonFixupHwLoops() {
   return new HexagonFixupHwLoops();
 }
 
-
 /// \brief Returns true if the instruction is a hardware loop instruction.
 static bool isHardwareLoop(const MachineInstr *MI) {
   return MI->getOpcode() == Hexagon::J2_loop0r ||
-         MI->getOpcode() == Hexagon::J2_loop0i;
+         MI->getOpcode() == Hexagon::J2_loop0i ||
+         MI->getOpcode() == Hexagon::J2_loop1r ||
+         MI->getOpcode() == Hexagon::J2_loop1i;
 }
-
 
 bool HexagonFixupHwLoops::runOnMachineFunction(MachineFunction &MF) {
-  bool Changed = fixupLoopInstrs(MF);
-  return Changed;
+  return fixupLoopInstrs(MF);
 }
-
 
 /// \brief For Hexagon, if the loop label is to far from the
 /// loop instruction then we need to set the LC0 and SA0 registers
@@ -105,41 +100,49 @@ bool HexagonFixupHwLoops::fixupLoopInstrs(MachineFunction &MF) {
   // Offset of the current instruction from the start.
   unsigned InstOffset = 0;
   // Map for each basic block to it's first instruction.
-  DenseMap<MachineBasicBlock*, unsigned> BlockToInstOffset;
+  DenseMap<const MachineBasicBlock *, unsigned> BlockToInstOffset;
+
+  const HexagonInstrInfo *HII =
+      static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   // First pass - compute the offset of each basic block.
-  for (MachineFunction::iterator MBB = MF.begin(), MBBe = MF.end();
-       MBB != MBBe; ++MBB) {
-    BlockToInstOffset[MBB] = InstOffset;
-    InstOffset += (MBB->size() * 4);
+  for (const MachineBasicBlock &MBB : MF) {
+    if (MBB.getAlignment()) {
+      // Although we don't know the exact layout of the final code, we need
+      // to account for alignment padding somehow. This heuristic pads each
+      // aligned basic block according to the alignment value.
+      int ByteAlign = (1u << MBB.getAlignment()) - 1;
+      InstOffset = (InstOffset + ByteAlign) & ~(ByteAlign);
+    }
+
+    BlockToInstOffset[&MBB] = InstOffset;
+    for (const MachineInstr &MI : MBB)
+      InstOffset += HII->getSize(&MI);
   }
 
-  // Second pass - check each loop instruction to see if it needs to
-  // be converted.
+  // Second pass - check each loop instruction to see if it needs to be
+  // converted.
   InstOffset = 0;
   bool Changed = false;
-  RegScavenger RS;
-
-  // Loop over all the basic blocks.
-  for (MachineFunction::iterator MBB = MF.begin(), MBBe = MF.end();
-       MBB != MBBe; ++MBB) {
-    InstOffset = BlockToInstOffset[MBB];
-    RS.enterBasicBlock(MBB);
+  for (MachineBasicBlock &MBB : MF) {
+    InstOffset = BlockToInstOffset[&MBB];
 
     // Loop over all the instructions.
-    MachineBasicBlock::iterator MIE = MBB->end();
-    MachineBasicBlock::iterator MII = MBB->begin();
+    MachineBasicBlock::iterator MII = MBB.begin();
+    MachineBasicBlock::iterator MIE = MBB.end();
     while (MII != MIE) {
+      InstOffset += HII->getSize(&*MII);
+      if (MII->isDebugValue()) {
+        ++MII;
+        continue;
+      }
       if (isHardwareLoop(MII)) {
-        RS.forward(MII);
         assert(MII->getOperand(0).isMBB() &&
                "Expect a basic block as loop operand");
-        int Sub = InstOffset - BlockToInstOffset[MII->getOperand(0).getMBB()];
-        unsigned Dist = Sub > 0 ? Sub : -Sub;
-        if (Dist > MAX_LOOP_DISTANCE) {
-          // Convert to explicity setting LC0 and SA0.
-          convertLoopInstr(MF, MII, RS);
-          MII = MBB->erase(MII);
+        int diff = InstOffset - BlockToInstOffset[MII->getOperand(0).getMBB()];
+        if ((unsigned)abs(diff) > MaxLoopRange) {
+          useExtLoopInstr(MF, MII);
+          MII = MBB.erase(MII);
           Changed = true;
         } else {
           ++MII;
@@ -147,39 +150,38 @@ bool HexagonFixupHwLoops::fixupLoopInstrs(MachineFunction &MF) {
       } else {
         ++MII;
       }
-      InstOffset += 4;
     }
   }
 
   return Changed;
 }
 
-
-/// \brief convert a loop instruction to a sequence of instructions that
-/// set the LC0 and SA0 register explicitly.
-void HexagonFixupHwLoops::convertLoopInstr(MachineFunction &MF,
-                                           MachineBasicBlock::iterator &MII,
-                                           RegScavenger &RS) {
+/// \brief Replace loop instructions with the constant extended version.
+void HexagonFixupHwLoops::useExtLoopInstr(MachineFunction &MF,
+                                          MachineBasicBlock::iterator &MII) {
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   MachineBasicBlock *MBB = MII->getParent();
   DebugLoc DL = MII->getDebugLoc();
-  unsigned Scratch = RS.scavengeRegister(&Hexagon::IntRegsRegClass, MII, 0);
-
-  // First, set the LC0 with the trip count.
-  if (MII->getOperand(1).isReg()) {
-    // Trip count is a register
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::LC0)
-      .addReg(MII->getOperand(1).getReg());
-  } else {
-    // Trip count is an immediate.
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrsi), Scratch)
-      .addImm(MII->getOperand(1).getImm());
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::LC0)
-      .addReg(Scratch);
+  MachineInstrBuilder MIB;
+  unsigned newOp;
+  switch (MII->getOpcode()) {
+  case Hexagon::J2_loop0r:
+    newOp = Hexagon::J2_loop0rext;
+    break;
+  case Hexagon::J2_loop0i:
+    newOp = Hexagon::J2_loop0iext;
+    break;
+  case Hexagon::J2_loop1r:
+    newOp = Hexagon::J2_loop1rext;
+    break;
+  case Hexagon::J2_loop1i:
+    newOp = Hexagon::J2_loop1iext;
+    break;
+  default:
+    llvm_unreachable("Invalid Hardware Loop Instruction.");
   }
-  // Then, set the SA0 with the loop start address.
-  BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrsi), Scratch)
-    .addMBB(MII->getOperand(0).getMBB());
-  BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::SA0)
-    .addReg(Scratch);
+  MIB = BuildMI(*MBB, MII, DL, TII->get(newOp));
+
+  for (unsigned i = 0; i < MII->getNumOperands(); ++i)
+    MIB.addOperand(MII->getOperand(i));
 }
