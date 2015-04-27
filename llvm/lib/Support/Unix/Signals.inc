@@ -112,6 +112,12 @@ static void RegisterHandler(int Signal) {
 }
 
 static void RegisterHandlers() {
+  // We need to dereference the signals mutex during handler registration so
+  // that we force its construction. This is to prevent the first use being
+  // during handling an actual signal because you can't safely call new in a
+  // signal handler.
+  *SignalsMutex;
+  
   // If the handlers are already registered, we're done.
   if (NumRegisteredSignals != 0) return;
 
