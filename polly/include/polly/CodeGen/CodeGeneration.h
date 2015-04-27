@@ -27,9 +27,6 @@ extern VectorizerChoice PollyVectorizerChoice;
 
 enum CodeGenChoice { CODEGEN_ISL, CODEGEN_NONE };
 extern CodeGenChoice PollyCodeGenChoice;
-
-/// @brief Flag to turn on/off annotation of alias scopes.
-extern bool PollyAnnotateAliasScopes;
 }
 
 #endif // POLLY_CODEGENERATION_H

@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen-isl -S < %s | FileCheck %s --check-prefix=SCOPES
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen-isl -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
 ;
 ; Check that we create alias scopes that indicate the accesses to A, B and C cannot alias in any way.
 ;
@@ -26,21 +25,6 @@
 ; SCOPES-DAG:     ![[AliasScopeB]]
 ; SCOPES-DAG:     ![[AliasScopeC]]
 ; SCOPES:       }
-;
-; NOSCOPES:    %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %B, i64 %polly.indvar
-; NOSCOPES:    load i32, i32* %[[BIdx]]
-; NOSCOPES-NOT: alias.scope
-; NOSCOPES-NOT: noalias
-; NOSCOPES:    %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} float* %C, i64 %polly.indvar
-; NOSCOPES:    load float, float* %[[CIdx]]
-; NOSCOPES-NOT: alias.scope
-; NOSCOPES-NOT: noalias
-; NOSCOPES:    %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %A, i64 %polly.indvar
-; NOSCOPES:    store i32 %{{[._a-zA-Z0-9]*}}, i32* %[[AIdx]]
-; NOSCOPES-NOT: alias.scope
-; NOSCOPES-NOT: noalias
-;
-; NOSCOPES-NOT: !
 ;
 ;    void jd(int *A, int *B, float *C) {
 ;      for (int i = 0; i < 1024; i++)

@@ -124,13 +124,6 @@ static cl::opt<bool>
                cl::desc("Show the Polly CFG right after code generation"),
                cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
-bool polly::PollyAnnotateAliasScopes;
-static cl::opt<bool, true> XPollyAnnotateAliasScopes(
-    "polly-annotate-alias-scopes",
-    cl::desc("Annotate memory instructions with alias scopes"),
-    cl::location(PollyAnnotateAliasScopes), cl::init(true), cl::ZeroOrMore,
-    cl::cat(PollyCategory));
-
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
   initializeIslCodeGenerationPass(Registry);
