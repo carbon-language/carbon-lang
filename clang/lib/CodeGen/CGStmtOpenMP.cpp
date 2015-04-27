@@ -1172,6 +1172,7 @@ static OpenMPDirectiveKind emitSections(CodeGenFunction &CGF,
         CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, S.getLocStart(),
                                                    OMPD_unknown);
       }
+      CGF.EmitOMPPrivateClause(S, LoopScope);
       (void)LoopScope.Privatize();
 
       // Emit static non-chunked loop.
@@ -1202,6 +1203,7 @@ static OpenMPDirectiveKind emitSections(CodeGenFunction &CGF,
   auto &&CodeGen = [Stmt, &S, &HasFirstprivates](CodeGenFunction &CGF) {
     CodeGenFunction::OMPPrivateScope SingleScope(CGF);
     HasFirstprivates = CGF.EmitOMPFirstprivateClause(S, SingleScope);
+    CGF.EmitOMPPrivateClause(S, SingleScope);
     (void)SingleScope.Privatize();
 
     CGF.EmitStmt(Stmt);
