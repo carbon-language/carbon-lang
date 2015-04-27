@@ -2876,12 +2876,18 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
       Type *Ty = getTypeByID(Record[0]);
       if (!Ty)
         return Error("Invalid record");
-      if (!Ty->isPointerTy())
-        return Error("Invalid type for value");
-      unsigned AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
-      Ty = cast<PointerType>(Ty)->getElementType();
+      bool isConstant = Record[1] & 1;
+      bool explicitType = Record[1] & 2;
+      unsigned AddressSpace;
+      if (explicitType) {
+        AddressSpace = Record[1] >> 2;
+      } else {
+        if (!Ty->isPointerTy())
+          return Error("Invalid type for value");
+        AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
+        Ty = cast<PointerType>(Ty)->getElementType();
+      }
 
-      bool isConstant = Record[1];
       uint64_t RawLinkage = Record[3];
       GlobalValue::LinkageTypes Linkage = getDecodedLinkage(RawLinkage);
       unsigned Alignment;
