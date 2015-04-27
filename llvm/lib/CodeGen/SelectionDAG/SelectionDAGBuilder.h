@@ -153,7 +153,7 @@ private:
       unsigned JTCasesIndex;
       unsigned BTCasesIndex;
     };
-    uint64_t Weight;
+    uint32_t Weight;
 
     static CaseCluster range(const ConstantInt *Low, const ConstantInt *High,
                              MachineBasicBlock *MBB, uint32_t Weight) {
