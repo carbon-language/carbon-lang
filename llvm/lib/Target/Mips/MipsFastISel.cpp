@@ -100,6 +100,7 @@ private:
   bool selectRet(const Instruction *I);
   bool selectTrunc(const Instruction *I);
   bool selectIntExt(const Instruction *I);
+  bool selectShift(const Instruction *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -1413,6 +1414,81 @@ unsigned MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
   return Success ? DestReg : 0;
 }
 
+bool MipsFastISel::selectShift(const Instruction *I) {
+  MVT RetVT;
+
+  if (!isTypeSupported(I->getType(), RetVT))
+    return false;
+
+  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
+  if (!ResultReg)
+    return false;
+
+  unsigned Opcode = I->getOpcode();
+  const Value *Op0 = I->getOperand(0);
+  unsigned Op0Reg = getRegForValue(Op0);
+  if (!Op0Reg)
+    return false;
+
+  // If AShr or LShr, then we need to make sure the operand0 is sign extended.
+  if (Opcode == Instruction::AShr || Opcode == Instruction::LShr) {
+    unsigned TempReg = createResultReg(&Mips::GPR32RegClass);
+    if (!TempReg)
+      return false;
+
+    MVT Op0MVT = TLI.getValueType(Op0->getType(), true).getSimpleVT();
+    bool IsZExt = Opcode == Instruction::LShr;
+    if (!emitIntExt(Op0MVT, Op0Reg, MVT::i32, TempReg, IsZExt))
+      return false;
+
+    Op0Reg = TempReg;
+  }
+
+  if (const auto *C = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    uint64_t ShiftVal = C->getZExtValue();
+
+    switch (Opcode) {
+    default:
+      llvm_unreachable("Unexpected instruction.");
+    case Instruction::Shl:
+      Opcode = Mips::SLL;
+      break;
+    case Instruction::AShr:
+      Opcode = Mips::SRA;
+      break;
+    case Instruction::LShr:
+      Opcode = Mips::SRL;
+      break;
+    }
+
+    emitInst(Opcode, ResultReg).addReg(Op0Reg).addImm(ShiftVal);
+    updateValueMap(I, ResultReg);
+    return true;
+  }
+
+  unsigned Op1Reg = getRegForValue(I->getOperand(1));
+  if (!Op1Reg)
+    return false;
+
+  switch (Opcode) {
+  default:
+    llvm_unreachable("Unexpected instruction.");
+  case Instruction::Shl:
+    Opcode = Mips::SLLV;
+    break;
+  case Instruction::AShr:
+    Opcode = Mips::SRAV;
+    break;
+  case Instruction::LShr:
+    Opcode = Mips::SRLV;
+    break;
+  }
+
+  emitInst(Opcode, ResultReg).addReg(Op0Reg).addReg(Op1Reg);
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
   if (!TargetSupported)
     return false;
@@ -1423,6 +1499,10 @@ bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
     return selectLoad(I);
   case Instruction::Store:
     return selectStore(I);
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    return selectShift(I);
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
