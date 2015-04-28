@@ -13,7 +13,6 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfGcc #https://llvm.org/bugs/show_bug.cgi?id=23239
     def test_lldbmi_eval(self):
         """Test that 'lldb-mi --interpreter' works for evaluating."""
 
@@ -119,7 +118,8 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-show-attributes var6")
         self.expect("\^done,status=\"editable\"")
         self.runCmd("-var-list-children --all-values var6")
-        self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$11\",exp=\"\*\$11\",numchild=\"0\",type=\"const char\",thread-id=\"4294967295\",value=\"47 '/'\",has_more=\"0\"\}\]") #FIXME -var-list-children shows invalid thread-id
+        # FIXME: The name below is not correct. It should be "var.*argv[0]".
+        self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$[0-9]+\",exp=\"\*\$[0-9]+\",numchild=\"0\",type=\"const char\",thread-id=\"4294967295\",value=\"47 '/'\",has_more=\"0\"\}\]") #FIXME -var-list-children shows invalid thread-id
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
