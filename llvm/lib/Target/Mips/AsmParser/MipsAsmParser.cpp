@@ -1633,7 +1633,7 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
 
 namespace {
 template <bool PerformShift>
-void createShiftOr(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
+void createLShiftOri(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
                    SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
   if (PerformShift) {
@@ -1654,9 +1654,9 @@ void createShiftOr(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
 }
 
 template <int Shift, bool PerformShift>
-void createShiftOr(int64_t Value, unsigned RegNo, SMLoc IDLoc,
+void createLShiftOri(int64_t Value, unsigned RegNo, SMLoc IDLoc,
                    SmallVectorImpl<MCInst> &Instructions) {
-  createShiftOr<PerformShift>(
+  createLShiftOri<PerformShift>(
       MCOperand::CreateImm(((Value & (0xffffLL << Shift)) >> Shift)), RegNo,
       IDLoc, Instructions);
 }
@@ -1741,7 +1741,7 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateReg(Reg));
     tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
     Instructions.push_back(tmpInst);
-    createShiftOr<0, false>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<0, false>(ImmValue, Reg, IDLoc, Instructions);
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (!isGP64bit()) {
       Error(IDLoc, "instruction requires a 64-bit architecture");
@@ -1766,8 +1766,8 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(
         MCOperand::CreateImm((ImmValue & (0xffffLL << 32)) >> 32));
     Instructions.push_back(tmpInst);
-    createShiftOr<16, false>(ImmValue, Reg, IDLoc, Instructions);
-    createShiftOr<0, true>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<16, false>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<0, true>(ImmValue, Reg, IDLoc, Instructions);
   } else {
     if (!isGP64bit()) {
       Error(IDLoc, "instruction requires a 64-bit architecture");
@@ -1793,9 +1793,9 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(
         MCOperand::CreateImm((ImmValue & (0xffffLL << 48)) >> 48));
     Instructions.push_back(tmpInst);
-    createShiftOr<32, false>(ImmValue, Reg, IDLoc, Instructions);
-    createShiftOr<16, true>(ImmValue, Reg, IDLoc, Instructions);
-    createShiftOr<0, true>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<32, false>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<16, true>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<0, true>(ImmValue, Reg, IDLoc, Instructions);
   }
   return false;
 }
@@ -1934,11 +1934,11 @@ MipsAsmParser::expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateExpr(HighestExpr));
     Instructions.push_back(tmpInst);
 
-    createShiftOr<false>(MCOperand::CreateExpr(HigherExpr), RegNo, SMLoc(),
+    createLShiftOri<false>(MCOperand::CreateExpr(HigherExpr), RegNo, SMLoc(),
                          Instructions);
-    createShiftOr<true>(MCOperand::CreateExpr(HiExpr), RegNo, SMLoc(),
+    createLShiftOri<true>(MCOperand::CreateExpr(HiExpr), RegNo, SMLoc(),
                         Instructions);
-    createShiftOr<true>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
+    createLShiftOri<true>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
                         Instructions);
   } else {
     // Otherwise, expand to:
@@ -1949,7 +1949,7 @@ MipsAsmParser::expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
     tmpInst.addOperand(MCOperand::CreateExpr(HiExpr));
     Instructions.push_back(tmpInst);
 
-    createShiftOr<false>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
+    createLShiftOri<false>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
                          Instructions);
   }
 }
