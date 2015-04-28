@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions %s -Wno-unreachable-code
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions -std=gnu++11 %s -Wno-unreachable-code
+// RUN: %clang_cc1 -triple x86_64-windows -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions %s -Wno-unreachable-code
+// RUN: %clang_cc1 -triple x86_64-windows -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions -std=gnu++11 %s -Wno-unreachable-code
 
 namespace testInvalid {
 Invalid inv; // expected-error {{unknown type name}}

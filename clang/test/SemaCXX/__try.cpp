@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fborland-extensions -fcxx-exceptions %s
+// RUN: %clang_cc1 -triple x86_64-windows -fsyntax-only -verify -fborland-extensions -fcxx-exceptions %s
 
 // This test is from http://docwiki.embarcadero.com/RADStudio/en/Try
 
