@@ -105,7 +105,7 @@ public:
 
   /// @}
 
-  void PrintImpl(raw_ostream &OS) const;
+  void PrintImpl(raw_ostream &OS) const override;
   bool EvaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAsmLayout *Layout,
                                  const MCFixup *Fixup) const override {
