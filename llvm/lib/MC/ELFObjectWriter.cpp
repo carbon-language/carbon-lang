@@ -957,15 +957,6 @@ void ELFObjectWriter::maybeAddToGroup(MCAssembler &Asm,
 void ELFObjectWriter::computeIndexMap(
     MCAssembler &Asm, std::vector<const MCSectionELF *> &Sections,
     SectionIndexMapTy &SectionIndexMap, const RevGroupMapTy &RevGroupMap) {
-  for (const MCSectionData &SD : Asm) {
-    const MCSectionELF &Section =
-        static_cast<const MCSectionELF &>(SD.getSection());
-    if (Section.getType() != ELF::SHT_GROUP)
-      continue;
-    Sections.push_back(&Section);
-    SectionIndexMap[&Section] = Sections.size();
-  }
-
   std::vector<const MCSectionELF *> RelSections;
   for (const MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
@@ -1465,6 +1456,9 @@ void ELFObjectWriter::createIndexedSections(
     const MCSectionELF *&Group = RevGroupMap[SignatureSymbol];
     if (!Group) {
       Group = Ctx.createELFGroupSection(SignatureSymbol);
+      Sections.push_back(Group);
+      SectionIndexMap[Group] = Sections.size();
+
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
       Data.setAlignment(4);
       MCDataFragment *F = new MCDataFragment(&Data);
