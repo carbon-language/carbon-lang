@@ -344,7 +344,7 @@ CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
                           SDLoc dl) {
 
-  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
+  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), dl, MVT::i32);
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
                        /*isVolatile=*/false, /*AlwaysInline=*/false,
                        /*isTailCall=*/false,
@@ -542,7 +542,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     if (VA.isMemLoc()) {
       unsigned LocMemOffset = VA.getLocMemOffset();
-      SDValue MemAddr = DAG.getConstant(LocMemOffset, StackPtr.getValueType());
+      SDValue MemAddr = DAG.getConstant(LocMemOffset, dl,
+                                        StackPtr.getValueType());
       MemAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, StackPtr, MemAddr);
       if (Flags.isByVal()) {
         // The argument is a struct passed by value. According to LLVM, "Arg"
@@ -570,7 +571,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
 
   if (!isTailCall) {
-    SDValue C = DAG.getConstant(NumBytes, getPointerTy(), true);
+    SDValue C = DAG.getConstant(NumBytes, dl, getPointerTy(), true);
     Chain = DAG.getCALLSEQ_START(Chain, C, dl);
   }
 
@@ -644,8 +645,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
-                             DAG.getIntPtrConstant(0, true), InFlag, dl);
+  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, dl, true),
+                             DAG.getIntPtrConstant(0, dl, true), InFlag, dl);
   InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
@@ -808,7 +809,7 @@ LowerBR_JT(SDValue Op, SelectionDAG &DAG) const
   SDValue JumpTableBase = DAG.getNode(HexagonISD::JT, dl,
                                       getPointerTy(), TargetJT);
   SDValue ShiftIndex = DAG.getNode(ISD::SHL, dl, MVT::i32, Index,
-                                   DAG.getConstant(2, MVT::i32));
+                                   DAG.getConstant(2, dl, MVT::i32));
   SDValue JTAddress = DAG.getNode(ISD::ADD, dl, MVT::i32, JumpTableBase,
                                   ShiftIndex);
   SDValue LoadTarget = DAG.getLoad(MVT::i32, dl, Chain, JTAddress,
@@ -841,7 +842,7 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     dbgs() << "\n";
   });
 
-  SDValue AC = DAG.getConstant(A, MVT::i32);
+  SDValue AC = DAG.getConstant(A, dl, MVT::i32);
   SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
   return DAG.getNode(HexagonISD::ALLOCA, dl, VTs, Chain, Size, AC);
 }
@@ -994,7 +995,7 @@ SDValue HexagonTargetLowering::LowerCTPOP(SDValue Op, SelectionDAG &DAG) const {
   SDValue InpVal = Op.getOperand(0);
   if (isa<ConstantSDNode>(InpVal)) {
     uint64_t V = cast<ConstantSDNode>(InpVal)->getZExtValue();
-    return DAG.getTargetConstant(countPopulation(V), MVT::i64);
+    return DAG.getTargetConstant(countPopulation(V), dl, MVT::i64);
   }
   SDValue PopOut = DAG.getNode(HexagonISD::POPCOUNT, dl, MVT::i32, InpVal);
   return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i64, PopOut);
@@ -1095,7 +1096,7 @@ SDValue HexagonTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                 LoadNode->isInvariant(),
                                 Alignment);
       // Base+2 load.
-      SDValue Increment = DAG.getConstant(2, MVT::i32);
+      SDValue Increment = DAG.getConstant(2, DL, MVT::i32);
       Ptr = DAG.getNode(ISD::ADD, DL, Base.getValueType(), Base, Increment);
       Loads[1] = DAG.getExtLoad(Ext, DL, MVT::i32, Chain, Ptr,
                                 LoadNode->getPointerInfo(), MVT::i16,
@@ -1104,11 +1105,11 @@ SDValue HexagonTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                 LoadNode->isInvariant(),
                                 Alignment);
       // SHL 16, then OR base and base+2.
-      SDValue ShiftAmount = DAG.getConstant(16, MVT::i32);
+      SDValue ShiftAmount = DAG.getConstant(16, DL, MVT::i32);
       SDValue Tmp1 = DAG.getNode(ISD::SHL, DL, MVT::i32, Loads[1], ShiftAmount);
       SDValue Tmp2 = DAG.getNode(ISD::OR, DL, MVT::i32, Tmp1, Loads[0]);
       // Base + 4.
-      Increment = DAG.getConstant(4, MVT::i32);
+      Increment = DAG.getConstant(4, DL, MVT::i32);
       Ptr = DAG.getNode(ISD::ADD, DL, Base.getValueType(), Base, Increment);
       Loads[2] = DAG.getExtLoad(Ext, DL, MVT::i32, Chain, Ptr,
                                 LoadNode->getPointerInfo(), MVT::i16,
@@ -1117,7 +1118,7 @@ SDValue HexagonTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                 LoadNode->isInvariant(),
                                 Alignment);
       // Base + 6.
-      Increment = DAG.getConstant(6, MVT::i32);
+      Increment = DAG.getConstant(6, DL, MVT::i32);
       Ptr = DAG.getNode(ISD::ADD, DL, Base.getValueType(), Base, Increment);
       Loads[3] = DAG.getExtLoad(Ext, DL, MVT::i32, Chain, Ptr,
                                 LoadNode->getPointerInfo(), MVT::i16,
@@ -1183,7 +1184,7 @@ HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   if (Depth) {
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
-    SDValue Offset = DAG.getConstant(4, MVT::i32);
+    SDValue Offset = DAG.getConstant(4, dl, MVT::i32);
     return DAG.getLoad(VT, dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, VT, FrameAddr, Offset),
                        MachinePointerInfo(), false, false, false, 0);
@@ -1822,7 +1823,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
       if (IsScalarToVector)
         return createSplat(DAG, dl, VT, V1.getOperand(0));
     }
-    return createSplat(DAG, dl, VT, DAG.getConstant(Lane, MVT::i32));
+    return createSplat(DAG, dl, VT, DAG.getConstant(Lane, dl, MVT::i32));
   }
 
   // FIXME: We need to support more general vector shuffles.  See
@@ -1930,7 +1931,7 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     unsigned SplatBits = APSplatBits.getZExtValue();
     int32_t SextVal = ((int32_t) (SplatBits << (32 - SplatBitSize)) >>
                        (32 - SplatBitSize));
-    return createSplat(DAG, dl, VT, DAG.getConstant(SextVal, MVT::i32));
+    return createSplat(DAG, dl, VT, DAG.getConstant(SextVal, dl, MVT::i32));
   }
 
   // Try to generate COMBINE to build v2i32 vectors.
@@ -1939,9 +1940,9 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     SDValue V1 = BVN->getOperand(1);
 
     if (V0.getOpcode() == ISD::UNDEF)
-      V0 = DAG.getConstant(0, MVT::i32);
+      V0 = DAG.getConstant(0, dl, MVT::i32);
     if (V1.getOpcode() == ISD::UNDEF)
-      V1 = DAG.getConstant(0, MVT::i32);
+      V1 = DAG.getConstant(0, dl, MVT::i32);
 
     ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(V0);
     ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(V1);
@@ -2002,17 +2003,17 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (Size == 64)
-    ConstVal = DAG.getConstant(Res, MVT::i64);
+    ConstVal = DAG.getConstant(Res, dl, MVT::i64);
   else
-    ConstVal = DAG.getConstant(Res, MVT::i32);
+    ConstVal = DAG.getConstant(Res, dl, MVT::i32);
 
   // When there are non constant operands, add them with INSERT_VECTOR_ELT to
   // ConstVal, the constant part of the vector.
   if (HasNonConstantElements) {
     EVT EltVT = VT.getVectorElementType();
-    SDValue Width = DAG.getConstant(EltVT.getSizeInBits(), MVT::i64);
+    SDValue Width = DAG.getConstant(EltVT.getSizeInBits(), dl, MVT::i64);
     SDValue Shifted = DAG.getNode(ISD::SHL, dl, MVT::i64, Width,
-                                  DAG.getConstant(32, MVT::i64));
+                                  DAG.getConstant(32, dl, MVT::i64));
 
     for (unsigned i = 0, e = NElts; i != e; ++i) {
       // LLVM's BUILD_VECTOR operands are in Little Endian mode, whereas Hexagon
@@ -2025,11 +2026,11 @@ HexagonTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
       if (VT.getSizeInBits() == 64 &&
           Operand.getValueType().getSizeInBits() == 32) {
-        SDValue C = DAG.getConstant(0, MVT::i32);
+        SDValue C = DAG.getConstant(0, dl, MVT::i32);
         Operand = DAG.getNode(HexagonISD::COMBINE, dl, VT, C, Operand);
       }
 
-      SDValue Idx = DAG.getConstant(OpIdx, MVT::i64);
+      SDValue Idx = DAG.getConstant(OpIdx, dl, MVT::i64);
       SDValue Offset = DAG.getNode(ISD::MUL, dl, MVT::i64, Idx, Width);
       SDValue Combined = DAG.getNode(ISD::OR, dl, MVT::i64, Shifted, Offset);
       const SDValue Ops[] = {ConstVal, Operand, Combined};
@@ -2052,10 +2053,10 @@ HexagonTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
   unsigned NElts = Op.getNumOperands();
   SDValue Vec = Op.getOperand(0);
   EVT VecVT = Vec.getValueType();
-  SDValue Width = DAG.getConstant(VecVT.getSizeInBits(), MVT::i64);
+  SDValue Width = DAG.getConstant(VecVT.getSizeInBits(), dl, MVT::i64);
   SDValue Shifted = DAG.getNode(ISD::SHL, dl, MVT::i64, Width,
-                                DAG.getConstant(32, MVT::i64));
-  SDValue ConstVal = DAG.getConstant(0, MVT::i64);
+                                DAG.getConstant(32, dl, MVT::i64));
+  SDValue ConstVal = DAG.getConstant(0, dl, MVT::i64);
 
   ConstantSDNode *W = dyn_cast<ConstantSDNode>(Width);
   ConstantSDNode *S = dyn_cast<ConstantSDNode>(Shifted);
@@ -2084,11 +2085,11 @@ HexagonTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
 
     if (VT.getSizeInBits() == 64 &&
         Operand.getValueType().getSizeInBits() == 32) {
-      SDValue C = DAG.getConstant(0, MVT::i32);
+      SDValue C = DAG.getConstant(0, dl, MVT::i32);
       Operand = DAG.getNode(HexagonISD::COMBINE, dl, VT, C, Operand);
     }
 
-    SDValue Idx = DAG.getConstant(OpIdx, MVT::i64);
+    SDValue Idx = DAG.getConstant(OpIdx, dl, MVT::i64);
     SDValue Offset = DAG.getNode(ISD::MUL, dl, MVT::i64, Idx, Width);
     SDValue Combined = DAG.getNode(ISD::OR, dl, MVT::i64, Shifted, Offset);
     const SDValue Ops[] = {ConstVal, Operand, Combined};
@@ -2114,12 +2115,12 @@ HexagonTargetLowering::LowerEXTRACT_VECTOR(SDValue Op,
   EVT EltVT = VecVT.getVectorElementType();
   int EltSize = EltVT.getSizeInBits();
   SDValue Width = DAG.getConstant(Op.getOpcode() == ISD::EXTRACT_VECTOR_ELT ?
-                                  EltSize : VTN * EltSize, MVT::i64);
+                                  EltSize : VTN * EltSize, dl, MVT::i64);
 
   // Constant element number.
   if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Idx)) {
     uint64_t X = CI->getZExtValue();
-    SDValue Offset = DAG.getConstant(X * EltSize, MVT::i32);
+    SDValue Offset = DAG.getConstant(X * EltSize, dl, MVT::i32);
     const SDValue Ops[] = {Vec, Width, Offset};
 
     ConstantSDNode *CW = dyn_cast<ConstantSDNode>(Width);
@@ -2158,9 +2159,9 @@ HexagonTargetLowering::LowerEXTRACT_VECTOR(SDValue Op,
 
   // Variable element number.
   SDValue Offset = DAG.getNode(ISD::MUL, dl, MVT::i32, Idx,
-                               DAG.getConstant(EltSize, MVT::i32));
+                               DAG.getConstant(EltSize, dl, MVT::i32));
   SDValue Shifted = DAG.getNode(ISD::SHL, dl, MVT::i64, Width,
-                                DAG.getConstant(32, MVT::i64));
+                                DAG.getConstant(32, dl, MVT::i64));
   SDValue Combined = DAG.getNode(ISD::OR, dl, MVT::i64, Shifted, Offset);
 
   const SDValue Ops[] = {Vec, Combined};
@@ -2189,10 +2190,10 @@ HexagonTargetLowering::LowerINSERT_VECTOR(SDValue Op,
   EVT EltVT = VecVT.getVectorElementType();
   int EltSize = EltVT.getSizeInBits();
   SDValue Width = DAG.getConstant(Op.getOpcode() == ISD::INSERT_VECTOR_ELT ?
-                                  EltSize : VTN * EltSize, MVT::i64);
+                                  EltSize : VTN * EltSize, dl, MVT::i64);
 
   if (ConstantSDNode *C = cast<ConstantSDNode>(Idx)) {
-    SDValue Offset = DAG.getConstant(C->getSExtValue() * EltSize, MVT::i32);
+    SDValue Offset = DAG.getConstant(C->getSExtValue() * EltSize, dl, MVT::i32);
     const SDValue Ops[] = {Vec, Val, Width, Offset};
 
     SDValue N;
@@ -2206,14 +2207,14 @@ HexagonTargetLowering::LowerINSERT_VECTOR(SDValue Op,
 
   // Variable element number.
   SDValue Offset = DAG.getNode(ISD::MUL, dl, MVT::i32, Idx,
-                               DAG.getConstant(EltSize, MVT::i32));
+                               DAG.getConstant(EltSize, dl, MVT::i32));
   SDValue Shifted = DAG.getNode(ISD::SHL, dl, MVT::i64, Width,
-                                DAG.getConstant(32, MVT::i64));
+                                DAG.getConstant(32, dl, MVT::i64));
   SDValue Combined = DAG.getNode(ISD::OR, dl, MVT::i64, Shifted, Offset);
 
   if (VT.getSizeInBits() == 64 &&
       Val.getValueType().getSizeInBits() == 32) {
-    SDValue C = DAG.getConstant(0, MVT::i32);
+    SDValue C = DAG.getConstant(0, dl, MVT::i32);
     Val = DAG.getNode(HexagonISD::COMBINE, dl, VT, C, Val);
   }
 
@@ -2257,7 +2258,7 @@ HexagonTargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue StoreAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                   DAG.getRegister(Hexagon::R30, getPointerTy()),
-                                  DAG.getIntPtrConstant(4));
+                                  DAG.getIntPtrConstant(4, dl));
   Chain = DAG.getStore(Chain, dl, Handler, StoreAddr, MachinePointerInfo(),
                        false, false, 0);
   Chain = DAG.getCopyToReg(Chain, dl, OffsetReg, Offset);

@@ -21,7 +21,7 @@ def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
 
 def imm_sr_XFORM: SDNodeXForm<imm, [{
   unsigned Imm = N->getZExtValue();
-  return CurDAG->getTargetConstant((Imm == 32 ? 0 : Imm), MVT::i32);
+  return CurDAG->getTargetConstant((Imm == 32 ? 0 : Imm), SDLoc(N), MVT::i32);
 }]>;
 def ThumbSRImmAsmOperand: AsmOperandClass { let Name = "ImmThumbSR"; }
 def imm_sr : Operand<i32>, PatLeaf<(imm), [{
@@ -33,7 +33,8 @@ def imm_sr : Operand<i32>, PatLeaf<(imm), [{
 }
 
 def imm_comp_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
+  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 def imm0_7_neg : PatLeaf<(i32 imm), [{
@@ -61,12 +62,12 @@ def thumb_immshifted : PatLeaf<(imm), [{
 
 def thumb_immshifted_val : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getThumbImmNonShiftedVal((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, SDLoc(N), MVT::i32);
 }]>;
 
 def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getThumbImmValShift((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(V, MVT::i32);
+  return CurDAG->getTargetConstant(V, SDLoc(N), MVT::i32);
 }]>;
 
 // Scaled 4 immediate.

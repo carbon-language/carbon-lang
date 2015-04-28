@@ -37,7 +37,7 @@ def vfp_f32imm : Operand<f32>,
     }], SDNodeXForm<fpimm, [{
       APFloat InVal = N->getValueAPF();
       uint32_t enc = ARM_AM::getFP32Imm(InVal);
-      return CurDAG->getTargetConstant(enc, MVT::i32);
+      return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i32);
     }]>> {
   let PrintMethod = "printFPImmOperand";
   let ParserMatchClass = FPImmOperand;
@@ -49,7 +49,7 @@ def vfp_f64imm : Operand<f64>,
     }], SDNodeXForm<fpimm, [{
       APFloat InVal = N->getValueAPF();
       uint32_t enc = ARM_AM::getFP64Imm(InVal);
-      return CurDAG->getTargetConstant(enc, MVT::i32);
+      return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i32);
     }]>> {
   let PrintMethod = "printFPImmOperand";
   let ParserMatchClass = FPImmOperand;

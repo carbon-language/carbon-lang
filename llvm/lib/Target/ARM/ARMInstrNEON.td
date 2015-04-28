@@ -2393,36 +2393,41 @@ def : Pat<(byte_alignedstore (v2f64 QPR:$value), addrmode6:$addr),
 // Extract D sub-registers of Q registers.
 def DSubReg_i8_reg  : SDNodeXForm<imm, [{
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/8, MVT::i32);
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/8, SDLoc(N),
+                                   MVT::i32);
 }]>;
 def DSubReg_i16_reg : SDNodeXForm<imm, [{
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/4, MVT::i32);
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/4, SDLoc(N),
+                                   MVT::i32);
 }]>;
 def DSubReg_i32_reg : SDNodeXForm<imm, [{
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/2, MVT::i32);
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue()/2, SDLoc(N),
+                                   MVT::i32);
 }]>;
 def DSubReg_f64_reg : SDNodeXForm<imm, [{
   assert(ARM::dsub_7 == ARM::dsub_0+7 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(ARM::dsub_0 + N->getZExtValue(), SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 // Extract S sub-registers of Q/D registers.
 def SSubReg_f32_reg : SDNodeXForm<imm, [{
   assert(ARM::ssub_3 == ARM::ssub_0+3 && "Unexpected subreg numbering");
-  return CurDAG->getTargetConstant(ARM::ssub_0 + N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(ARM::ssub_0 + N->getZExtValue(), SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 // Translate lane numbers from Q registers to D subregs.
 def SubReg_i8_lane  : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 7, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 7, SDLoc(N), MVT::i32);
 }]>;
 def SubReg_i16_lane : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 3, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 3, SDLoc(N), MVT::i32);
 }]>;
 def SubReg_i32_lane : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 1, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 1, SDLoc(N), MVT::i32);
 }]>;
 
 //===----------------------------------------------------------------------===//

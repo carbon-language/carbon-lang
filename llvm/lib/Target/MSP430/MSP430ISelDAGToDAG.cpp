@@ -274,7 +274,7 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
     Disp = CurDAG->getTargetBlockAddress(AM.BlockAddr, MVT::i32, 0,
                                          0/*AM.SymbolFlags*/);
   else
-    Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i16);
+    Disp = CurDAG->getTargetConstant(AM.Disp, SDLoc(N), MVT::i16);
 
   return true;
 }
@@ -401,10 +401,10 @@ SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i16);
     if (Node->hasOneUse())
-      return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, MVT::i16,
-                                  TFI, CurDAG->getTargetConstant(0, MVT::i16));
-    return CurDAG->getMachineNode(MSP430::ADD16ri, dl, MVT::i16,
-                                  TFI, CurDAG->getTargetConstant(0, MVT::i16));
+      return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, MVT::i16, TFI,
+                                  CurDAG->getTargetConstant(0, dl, MVT::i16));
+    return CurDAG->getMachineNode(MSP430::ADD16ri, dl, MVT::i16, TFI,
+                                  CurDAG->getTargetConstant(0, dl, MVT::i16));
   }
   case ISD::LOAD:
     if (SDNode *ResNode = SelectIndexedLoad(Node))

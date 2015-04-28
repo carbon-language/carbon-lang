@@ -17,12 +17,12 @@
 
 def GetLo32XForm : SDNodeXForm<imm, [{
   // Transformation function: get the low 32 bits.
-  return getI32Imm((unsigned)N->getZExtValue());
+  return getI32Imm((unsigned)N->getZExtValue(), SDLoc(N));
 }]>;
 
 def GetLo8XForm : SDNodeXForm<imm, [{
   // Transformation function: get the low 8 bits.
-  return getI8Imm((uint8_t)N->getZExtValue());
+  return getI8Imm((uint8_t)N->getZExtValue(), SDLoc(N));
 }]>;
 
 

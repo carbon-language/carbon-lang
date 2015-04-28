@@ -71,8 +71,8 @@ private:
   SDNode *SelectSurfaceIntrinsic(SDNode *N);
   SDNode *SelectBFE(SDNode *N);
         
-  inline SDValue getI32Imm(unsigned Imm) {
-    return CurDAG->getTargetConstant(Imm, MVT::i32);
+  inline SDValue getI32Imm(unsigned Imm, SDLoc DL) {
+    return CurDAG->getTargetConstant(Imm, DL, MVT::i32);
   }
 
   // Match direct address complex pattern.

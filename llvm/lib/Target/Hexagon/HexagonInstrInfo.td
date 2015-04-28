@@ -36,28 +36,28 @@ def HiReg: OutPatFrag<(ops node:$Rs),
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformSToSM1Imm(imm);
+   return XformSToSM1Imm(imm, SDLoc(N));
 }]>;
 
 // SDNode for converting immediate C to C-2.
 def DEC2_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-2 as an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformSToSM2Imm(imm);
+   return XformSToSM2Imm(imm, SDLoc(N));
 }]>;
 
 // SDNode for converting immediate C to C-3.
 def DEC3_CONST_SIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-3 as an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformSToSM3Imm(imm);
+   return XformSToSM3Imm(imm, SDLoc(N));
 }]>;
 
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
    uint32_t imm = N->getZExtValue();
-   return XformUToUM1Imm(imm);
+   return XformUToUM1Imm(imm, SDLoc(N));
 }]>;
 
 //===----------------------------------------------------------------------===//

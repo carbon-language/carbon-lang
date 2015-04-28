@@ -271,7 +271,8 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
     }
   } else {
     // The token value is never used from here on, just generate a poison value
-    Builder.setValue(CS.getInstruction(), Builder.DAG.getIntPtrConstant(-1));
+    Builder.setValue(CS.getInstruction(),
+                     Builder.DAG.getIntPtrConstant(-1, Builder.getCurSDLoc()));
   }
   // Remove the fake entry we created so we don't have a hanging reference
   // after we delete this node.
@@ -393,9 +394,12 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
     // such in the stackmap.  This is required so that the consumer can
     // parse any internal format to the deopt state.  It also handles null
     // pointers and other constant pointers in GC states
-    Ops.push_back(
-        Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
-    Ops.push_back(Builder.DAG.getTargetConstant(C->getSExtValue(), MVT::i64));
+    Ops.push_back(Builder.DAG.getTargetConstant(StackMaps::ConstantOp,
+                                                Builder.getCurSDLoc(),
+                                                MVT::i64));
+    Ops.push_back(Builder.DAG.getTargetConstant(C->getSExtValue(),
+                                                Builder.getCurSDLoc(),
+                                                MVT::i64));
   } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
     // This handles allocas as arguments to the statepoint (this is only
     // really meaningful for a deopt value.  For GC, we'd be trying to
@@ -490,9 +494,11 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // lowered.  Note that this is the number of *Values* not the
   // number of SDValues required to lower them.
   const int NumVMSArgs = StatepointSite.numTotalVMSArgs();
-  Ops.push_back(
-      Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
-  Ops.push_back(Builder.DAG.getTargetConstant(NumVMSArgs, MVT::i64));
+  Ops.push_back( Builder.DAG.getTargetConstant(StackMaps::ConstantOp,
+                                               Builder.getCurSDLoc(),
+                                               MVT::i64));
+  Ops.push_back(Builder.DAG.getTargetConstant(NumVMSArgs, Builder.getCurSDLoc(),
+                                              MVT::i64));
 
   assert(NumVMSArgs + 1 == std::distance(StatepointSite.vm_state_begin(),
                                          StatepointSite.vm_state_end()));
@@ -608,7 +614,7 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
   // Get number of arguments incoming directly into call node
   unsigned NumCallRegArgs =
       CallNode->getNumOperands() - (Glue.getNode() ? 4 : 3);
-  Ops.push_back(DAG.getTargetConstant(NumCallRegArgs, MVT::i32));
+  Ops.push_back(DAG.getTargetConstant(NumCallRegArgs, getCurSDLoc(), MVT::i32));
 
   // Add call target
   SDValue CallTarget = SDValue(CallNode->getOperand(1).getNode(), 0);
@@ -628,9 +634,10 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
   CallingConv::ID CallConv = CS.getCallingConv();
   int Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
   assert(Flags == 0 && "not expected to be used");
-  Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
-  Ops.push_back(
-      DAG.getTargetConstant(Flags | ((unsigned)CallConv << 1), MVT::i64));
+  Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, getCurSDLoc(),
+                                      MVT::i64));
+  Ops.push_back(DAG.getTargetConstant(Flags | ((unsigned)CallConv << 1),
+                                      getCurSDLoc(), MVT::i64));
 
   // Insert all vmstate and gcstate arguments
   Ops.insert(Ops.end(), LoweredArgs.begin(), LoweredArgs.end());

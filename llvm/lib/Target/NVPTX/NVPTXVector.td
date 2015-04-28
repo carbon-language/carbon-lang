@@ -735,19 +735,19 @@ def VecShuffle_v2i64 : NVPTXVecInst<(outs V2I64Regs:$dst),
 
 def ShuffleMask0 : SDNodeXForm<vector_shuffle, [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return CurDAG->getTargetConstant(SVOp->getMaskElt(0), MVT::i32);
+  return CurDAG->getTargetConstant(SVOp->getMaskElt(0), SDLoc(N), MVT::i32);
 }]>;
 def ShuffleMask1 : SDNodeXForm<vector_shuffle, [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return CurDAG->getTargetConstant(SVOp->getMaskElt(1), MVT::i32);
+  return CurDAG->getTargetConstant(SVOp->getMaskElt(1), SDLoc(N), MVT::i32);
 }]>;
 def ShuffleMask2 : SDNodeXForm<vector_shuffle, [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return CurDAG->getTargetConstant(SVOp->getMaskElt(2), MVT::i32);
+  return CurDAG->getTargetConstant(SVOp->getMaskElt(2), SDLoc(N), MVT::i32);
 }]>;
 def ShuffleMask3 : SDNodeXForm<vector_shuffle, [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return CurDAG->getTargetConstant(SVOp->getMaskElt(3), MVT::i32);
+  return CurDAG->getTargetConstant(SVOp->getMaskElt(3), SDLoc(N), MVT::i32);
 }]>;
 
 // The spurious call is here to silence a compiler warning about N being

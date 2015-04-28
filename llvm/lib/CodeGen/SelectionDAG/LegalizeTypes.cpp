@@ -997,9 +997,9 @@ void DAGTypeLegalizer::GetPairElements(SDValue Pair,
   SDLoc dl(Pair);
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), Pair.getValueType());
   Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
-                   DAG.getIntPtrConstant(0));
+                   DAG.getIntPtrConstant(0, dl));
   Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, NVT, Pair,
-                   DAG.getIntPtrConstant(1));
+                   DAG.getIntPtrConstant(1, dl));
 }
 
 SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
@@ -1012,7 +1012,7 @@ SDValue DAGTypeLegalizer::GetVectorElementPointer(SDValue VecPtr, EVT EltVT,
   unsigned EltSize = EltVT.getSizeInBits() / 8; // FIXME: should be ABI size.
 
   Index = DAG.getNode(ISD::MUL, dl, Index.getValueType(), Index,
-                      DAG.getConstant(EltSize, Index.getValueType()));
+                      DAG.getConstant(EltSize, dl, Index.getValueType()));
   return DAG.getNode(ISD::ADD, dl, Index.getValueType(), Index, VecPtr);
 }
 
@@ -1029,7 +1029,8 @@ SDValue DAGTypeLegalizer::JoinIntegers(SDValue Lo, SDValue Hi) {
   Lo = DAG.getNode(ISD::ZERO_EXTEND, dlLo, NVT, Lo);
   Hi = DAG.getNode(ISD::ANY_EXTEND, dlHi, NVT, Hi);
   Hi = DAG.getNode(ISD::SHL, dlHi, NVT, Hi,
-                   DAG.getConstant(LVT.getSizeInBits(), TLI.getPointerTy()));
+                   DAG.getConstant(LVT.getSizeInBits(), dlHi,
+                                   TLI.getPointerTy()));
   return DAG.getNode(ISD::OR, dlHi, NVT, Lo, Hi);
 }
 
@@ -1115,7 +1116,8 @@ void DAGTypeLegalizer::SplitInteger(SDValue Op,
          Op.getValueType().getSizeInBits() && "Invalid integer splitting!");
   Lo = DAG.getNode(ISD::TRUNCATE, dl, LoVT, Op);
   Hi = DAG.getNode(ISD::SRL, dl, Op.getValueType(), Op,
-                   DAG.getConstant(LoVT.getSizeInBits(), TLI.getPointerTy()));
+                   DAG.getConstant(LoVT.getSizeInBits(), dl,
+                                   TLI.getPointerTy()));
   Hi = DAG.getNode(ISD::TRUNCATE, dl, HiVT, Hi);
 }
 

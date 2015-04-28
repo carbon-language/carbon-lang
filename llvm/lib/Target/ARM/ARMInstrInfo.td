@@ -323,12 +323,12 @@ class RegConstraint<string C> {
 
 // imm_neg_XFORM - Return the negation of an i32 immediate value.
 def imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 // imm_not_XFORM - Return the complement of a i32 immediate value.
 def imm_not_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~(int)N->getZExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(~(int)N->getZExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 /// imm16_31 predicate - True if the 32-bit immediate is in the range [16,31].
@@ -343,7 +343,8 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
 
 /// Split a 32-bit immediate into two 16 bit parts.
 def hi16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, MVT::i32);
+  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 def lo16AllZero : PatLeaf<(i32 imm), [{
@@ -485,10 +486,10 @@ def neon_vcvt_imm32 : Operand<i32> {
 def rot_imm_XFORM: SDNodeXForm<imm, [{
   switch (N->getZExtValue()){
   default: llvm_unreachable(nullptr);
-  case 0:  return CurDAG->getTargetConstant(0, MVT::i32);
-  case 8:  return CurDAG->getTargetConstant(1, MVT::i32);
-  case 16: return CurDAG->getTargetConstant(2, MVT::i32);
-  case 24: return CurDAG->getTargetConstant(3, MVT::i32);
+  case 0:  return CurDAG->getTargetConstant(0, SDLoc(N), MVT::i32);
+  case 8:  return CurDAG->getTargetConstant(1, SDLoc(N), MVT::i32);
+  case 16: return CurDAG->getTargetConstant(2, SDLoc(N), MVT::i32);
+  case 24: return CurDAG->getTargetConstant(3, SDLoc(N), MVT::i32);
   }
 }]>;
 def RotImmAsmOperand : AsmOperandClass {
@@ -767,7 +768,8 @@ def bf_inv_mask_imm : Operand<i32>,
 }
 
 def imm1_32_XFORM: SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, MVT::i32);
+  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, SDLoc(N),
+                                   MVT::i32);
 }]>;
 def Imm1_32AsmOperand: AsmOperandClass { let Name = "Imm1_32"; }
 def imm1_32 : Operand<i32>, PatLeaf<(imm), [{
@@ -780,7 +782,8 @@ def imm1_32 : Operand<i32>, PatLeaf<(imm), [{
 }
 
 def imm1_16_XFORM: SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, MVT::i32);
+  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, SDLoc(N),
+                                   MVT::i32);
 }]>;
 def Imm1_16AsmOperand: AsmOperandClass { let Name = "Imm1_16"; }
 def imm1_16 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 16; }],
