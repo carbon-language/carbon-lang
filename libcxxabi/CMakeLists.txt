@@ -302,6 +302,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCXXABI_C_FLAGS}")
 include_directories(include)
 if (LIBCXXABI_USE_LLVM_UNWINDER OR ${LLVM_NATIVE_ARCH} MATCHES ARM)
   include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/include)
+  # TODO: libunwind does not place libunwind_ext.h into include, so we need to
+  # reach into its source directory.  This is primarily for
+  # _Unwind_VRS_Interpret, which is part of ARM EHABI, and should be in unwind.h
+  include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/src)
 endif ()
 
 # Add source code. This also contains all of the logic for deciding linker flags
