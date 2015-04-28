@@ -100,6 +100,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBHostOS.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstruction.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstructionList.h"\
+" ${SRC_ROOT}/include/lldb/API/SBLanguageRuntime.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLaunchInfo.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
 " ${SRC_ROOT}/include/lldb/API/SBListener.h"\
@@ -154,6 +155,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/interface/SBHostOS.i"\
 " ${SRC_ROOT}/scripts/interface/SBInstruction.i"\
 " ${SRC_ROOT}/scripts/interface/SBInstructionList.i"\
+" ${SRC_ROOT}/scripts/interface/SBLanguageRuntime.i"\
 " ${SRC_ROOT}/scripts/interface/SBLaunchInfo.i"\
 " ${SRC_ROOT}/scripts/interface/SBLineEntry.i"\
 " ${SRC_ROOT}/scripts/interface/SBListener.i"\

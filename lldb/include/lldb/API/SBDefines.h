@@ -55,6 +55,7 @@ class LLDB_API SBFunction;
 class LLDB_API SBHostOS;
 class LLDB_API SBInstruction;
 class LLDB_API SBInstructionList;
+class LLDB_API SBLanguageRuntime;
 class LLDB_API SBLaunchInfo;
 class LLDB_API SBLineEntry;
 class LLDB_API SBListener;

@@ -33,6 +33,7 @@ add_lldb_library(liblldb SHARED
   SBHostOS.cpp
   SBInstruction.cpp
   SBInstructionList.cpp
+  SBLanguageRuntime.cpp
   SBLaunchInfo.cpp
   SBLineEntry.cpp
   SBListener.cpp

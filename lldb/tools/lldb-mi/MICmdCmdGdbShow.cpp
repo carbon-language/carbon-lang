@@ -9,6 +9,12 @@
 
 // Overview:    CMICmdCmdGdbShow implementation.
 
+// Third party headers:
+#include "lldb/API/SBCompileUnit.h"
+#include "lldb/API/SBFrame.h"
+#include "lldb/API/SBLanguageRuntime.h"
+#include "lldb/API/SBThread.h"
+
 // In-house headers:
 #include "MICmdCmdGdbShow.h"
 #include "MICmnMIResultRecord.h"
@@ -22,6 +28,7 @@
 const CMICmdCmdGdbShow::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbShow::ms_mapGdbOptionNameToFnGdbOptionPtr = {
     {"target-async", &CMICmdCmdGdbShow::OptionFnTargetAsync},
     {"print", &CMICmdCmdGdbShow::OptionFnPrint},
+    {"language", &CMICmdCmdGdbShow::OptionFnLanguage},
     {"fallback", &CMICmdCmdGdbShow::OptionFnFallback}};
 
 //++ ------------------------------------------------------------------------------------
@@ -283,6 +290,31 @@ CMICmdCmdGdbShow::OptionFnPrint(const CMIUtilString::VecString_t &vrWords)
         : m_rLLDBDebugSessionInfo.SharedDataRetrieve<bool>(strOptionKey, bOptionValue) && bOptionValue;
 
     m_strValue = bOptionValue ? "on" : "off";
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Carry out work to complete the GDB show option 'language' to prepare
+//          and send back the requested information.
+// Type:    Method.
+// Args:    vrWords - (R) List of additional parameters used by this option.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdGdbShow::OptionFnLanguage(const CMIUtilString::VecString_t &vrWords)
+{
+    MIunused(vrWords);
+
+    // Get current language
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBThread sbThread = rSessionInfo.GetProcess().GetSelectedThread();
+    const lldb::SBFrame sbFrame = sbThread.GetSelectedFrame();
+    lldb::SBCompileUnit sbCompileUnit = sbFrame.GetCompileUnit();
+    const lldb::LanguageType eLanguageType = sbCompileUnit.GetLanguage();
+
+    m_strValue = lldb::SBLanguageRuntime::GetNameForLanguageType(eLanguageType);
     return MIstatus::success;
 }
 

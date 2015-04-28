@@ -98,6 +98,29 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_gdb_show_language(self):
+        """Test that 'lldb-mi --interpreter' can get current language."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that -gdb-show language gets current language
+        self.runCmd("-gdb-show language")
+        self.expect("\^done,value=\"c\+\+\"")
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @unittest2.expectedFailure("-gdb-set ignores unknown properties")
     def test_lldbmi_gdb_set_unknown(self):
         """Test that 'lldb-mi --interpreter' fails when setting an unknown property."""
