@@ -221,9 +221,8 @@ class ELFObjectWriter : public MCObjectWriter {
     typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
     // Map from a signature symbol to the group section
     typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
-    // Map from a section to its start and end offset
-    typedef DenseMap<const MCSectionELF *, std::pair<uint64_t, uint64_t>>
-        SectionOffsetMapTy;
+    // Start and end offset of each section
+    typedef std::vector<std::pair<uint64_t, uint64_t>> SectionOffsetsTy;
 
     /// Compute the symbol table data
     ///
@@ -259,7 +258,7 @@ class ELFObjectWriter : public MCObjectWriter {
                             MCAssembler &Asm, const GroupMapTy &GroupMap,
                             const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
-                            const SectionOffsetMapTy &SectionOffsetMap);
+                            const SectionOffsetsTy &SectionOffsets);
 
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
@@ -1550,7 +1549,7 @@ void ELFObjectWriter::writeSectionHeader(
     ArrayRef<const MCSectionELF *> Sections, MCAssembler &Asm,
     const GroupMapTy &GroupMap, const MCAsmLayout &Layout,
     const SectionIndexMapTy &SectionIndexMap,
-    const SectionOffsetMapTy &SectionOffsetMap) {
+    const SectionOffsetsTy &SectionOffsets) {
   const unsigned NumSections = Asm.size();
 
   // Null section first.
@@ -1570,8 +1569,7 @@ void ELFObjectWriter::writeSectionHeader(
       GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm,
                                                      GroupMap.lookup(&Section));
 
-    const std::pair<uint64_t, uint64_t> &Offsets =
-        SectionOffsetMap.lookup(&Section);
+    const std::pair<uint64_t, uint64_t> &Offsets = SectionOffsets[i];
     uint64_t Size = Section.getType() == ELF::SHT_NOBITS
                         ? Layout.getSectionAddressSize(&SD)
                         : Offsets.second - Offsets.first;
@@ -1607,7 +1605,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   for (auto &Pair : SectionIndexMap)
     Sections[Pair.second - 1] = Pair.first;
 
-  SectionOffsetMapTy SectionOffsetMap;
+  SectionOffsetsTy SectionOffsets;
 
   // Write out the ELF header ...
   WriteHeader(Asm, NumSections + 1);
@@ -1623,7 +1621,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     uint64_t SecStart = OS.tell();
     writeDataSectionData(Asm, Layout, SD);
     uint64_t SecEnd = OS.tell();
-    SectionOffsetMap[&Section] = std::make_pair(SecStart, SecEnd);
+    SectionOffsets.push_back(std::make_pair(SecStart, SecEnd));
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
@@ -1634,7 +1632,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   // ... then the section header table ...
   writeSectionHeader(Sections, Asm, GroupMap, Layout, SectionIndexMap,
-                     SectionOffsetMap);
+                     SectionOffsets);
 
   if (is64Bit()) {
     uint64_t Val = SectionHeaderOffset;
