@@ -58,7 +58,9 @@ namespace clang {
   class Stmt;
   class Expr;
 
-  class ExprIterator {
+  class ExprIterator : public std::iterator<std::forward_iterator_tag,
+                                            Expr *&, ptrdiff_t,
+                                            Expr *&, Expr *&> {
     Stmt** I;
   public:
     ExprIterator(Stmt** i) : I(i) {}
@@ -77,7 +79,10 @@ namespace clang {
     bool operator>=(const ExprIterator& R) const { return I >= R.I; }
   };
 
-  class ConstExprIterator {
+  class ConstExprIterator : public std::iterator<std::forward_iterator_tag,
+                                                 const Expr *&, ptrdiff_t,
+                                                 const Expr *&,
+                                                 const Expr *&> {
     const Stmt * const *I;
   public:
     ConstExprIterator(const Stmt * const *i) : I(i) {}
