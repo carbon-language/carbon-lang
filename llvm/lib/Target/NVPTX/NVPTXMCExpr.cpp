@@ -45,3 +45,13 @@ void NVPTXFloatMCExpr::PrintImpl(raw_ostream &OS) const {
     OS << std::string(NumHex - HexStr.length(), '0');
   OS << utohexstr(API.getZExtValue());
 }
+
+const NVPTXGenericMCSymbolRefExpr*
+NVPTXGenericMCSymbolRefExpr::Create(const MCSymbolRefExpr *SymExpr,
+                                    MCContext &Ctx) {
+  return new (Ctx) NVPTXGenericMCSymbolRefExpr(SymExpr);
+}
+
+void NVPTXGenericMCSymbolRefExpr::PrintImpl(raw_ostream &OS) const {
+  OS << "generic(" << *SymExpr << ")";
+}
