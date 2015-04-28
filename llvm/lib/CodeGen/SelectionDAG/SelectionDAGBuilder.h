@@ -667,6 +667,8 @@ public:
   // generate the debug data structures now that we've seen its definition.
   void resolveDanglingDebugInfo(const Value *V, SDValue Val);
   SDValue getValue(const Value *V);
+  bool findValue(const Value *V) const;
+
   SDValue getNonRegisterValue(const Value *V);
   SDValue getValueImpl(const Value *V);
 
@@ -814,6 +816,8 @@ private:
   void visitStore(const StoreInst &I);
   void visitMaskedLoad(const CallInst &I);
   void visitMaskedStore(const CallInst &I);
+  void visitMaskedGather(const CallInst &I);
+  void visitMaskedScatter(const CallInst &I);
   void visitAtomicCmpXchg(const AtomicCmpXchgInst &I);
   void visitAtomicRMW(const AtomicRMWInst &I);
   void visitFence(const FenceInst &I);

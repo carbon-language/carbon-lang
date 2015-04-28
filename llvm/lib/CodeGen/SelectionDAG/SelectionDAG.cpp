@@ -5097,6 +5097,55 @@ SDValue SelectionDAG::getMaskedStore(SDValue Chain, SDLoc dl, SDValue Val,
   return SDValue(N, 0);
 }
 
+SDValue
+SelectionDAG::getMaskedGather(SDVTList VTs, EVT VT, SDLoc dl,
+                              ArrayRef<SDValue> Ops,
+                              MachineMemOperand *MMO) {
+
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::MGATHER, VTs, Ops);
+  ID.AddInteger(VT.getRawBits());
+  ID.AddInteger(encodeMemSDNodeFlags(ISD::NON_EXTLOAD, ISD::UNINDEXED,
+                                     MMO->isVolatile(),
+                                     MMO->isNonTemporal(),
+                                     MMO->isInvariant()));
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
+  void *IP = nullptr;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
+    cast<MaskedGatherSDNode>(E)->refineAlignment(MMO);
+    return SDValue(E, 0);
+  }
+  MaskedGatherSDNode *N = 
+    new (NodeAllocator) MaskedGatherSDNode(dl.getIROrder(), dl.getDebugLoc(),
+                                           Ops, VTs, VT, MMO);
+  CSEMap.InsertNode(N, IP);
+  InsertNode(N);
+  return SDValue(N, 0);
+}
+
+SDValue SelectionDAG::getMaskedScatter(SDVTList VTs, EVT VT, SDLoc dl,
+                                       ArrayRef<SDValue> Ops,
+                                       MachineMemOperand *MMO) {
+  FoldingSetNodeID ID;
+  AddNodeIDNode(ID, ISD::MSCATTER, VTs, Ops);
+  ID.AddInteger(VT.getRawBits());
+  ID.AddInteger(encodeMemSDNodeFlags(false, ISD::UNINDEXED, MMO->isVolatile(),
+                                     MMO->isNonTemporal(),
+                                     MMO->isInvariant()));
+  ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
+  void *IP = nullptr;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
+    cast<MaskedScatterSDNode>(E)->refineAlignment(MMO);
+    return SDValue(E, 0);
+  }
+  SDNode *N =
+    new (NodeAllocator) MaskedScatterSDNode(dl.getIROrder(), dl.getDebugLoc(),
+                                            Ops, VTs, VT, MMO);
+  CSEMap.InsertNode(N, IP);
+  InsertNode(N);
+  return SDValue(N, 0);
+}
+
 SDValue SelectionDAG::getVAArg(EVT VT, SDLoc dl,
                                SDValue Chain, SDValue Ptr,
                                SDValue SV,

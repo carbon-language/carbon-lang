@@ -687,8 +687,15 @@ namespace ISD {
     ATOMIC_LOAD_UMIN,
     ATOMIC_LOAD_UMAX,
 
-    // Masked load and store
+    // Masked load and store - consecutive vector load and store operations
+    // with additional mask operand that prevents memory accesses to the
+    // masked-off lanes.
     MLOAD, MSTORE,
+
+    // Masked gather and scatter - load and store operations for a vector of
+    // random addresses with additional mask operand that prevents memory
+    // accesses to the masked-off lanes.
+    MGATHER, MSCATTER,
 
     /// This corresponds to the llvm.lifetime.* intrinsics. The first operand
     /// is the chain and the second operand is the alloca pointer.
