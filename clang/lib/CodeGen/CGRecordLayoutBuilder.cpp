@@ -99,10 +99,25 @@ struct CGRecordLowering {
   MemberInfo StorageInfo(CharUnits Offset, llvm::Type *Data) {
     return MemberInfo(Offset, MemberInfo::Field, Data);
   }
-  bool useMSABI() {
+
+  /// The Microsoft bitfield layout rule allocates discrete storage
+  /// units of the field's formal type and only combines adjacent
+  /// fields of the same formal type.  We want to emit a layout with
+  /// these discrete storage units instead of combining them into a
+  /// continuous run.
+  bool isDiscreteBitFieldABI() {
     return Context.getTargetInfo().getCXXABI().isMicrosoft() ||
            D->isMsStruct(Context);
   }
+
+  /// The Itanium base layout rule allows virtual bases to overlap
+  /// other bases, which complicates layout in specific ways.
+  ///
+  /// Note specifically that the ms_struct attribute doesn't change this.
+  bool isOverlappingVBaseABI() {
+    return !Context.getTargetInfo().getCXXABI().isMicrosoft();
+  }
+
   /// \brief Wraps llvm::Type::getIntNTy with some implicit arguments.
   llvm::Type *getIntNType(uint64_t NumBits) {
     return llvm::Type::getIntNTy(Types.getLLVMContext(),
@@ -119,8 +134,9 @@ struct CGRecordLowering {
   /// for itanium bitfields that are smaller than their declared type.
   llvm::Type *getStorageType(const FieldDecl *FD) {
     llvm::Type *Type = Types.ConvertTypeForMem(FD->getType());
-    return useMSABI() || !FD->isBitField() ? Type :
-        getIntNType(std::min(FD->getBitWidthValue(Context),
+    if (!FD->isBitField()) return Type;
+    if (isDiscreteBitFieldABI()) return Type;
+    return getIntNType(std::min(FD->getBitWidthValue(Context),
                              (unsigned)Context.toBits(getSize(Type))));
   }
   /// \brief Gets the llvm Basesubobject type from a CXXRecordDecl.
@@ -365,7 +381,7 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
   // used to determine if the ASTRecordLayout is treating these two bitfields as
   // contiguous.  StartBitOffset is offset of the beginning of the Run.
   uint64_t StartBitOffset, Tail = 0;
-  if (useMSABI()) {
+  if (isDiscreteBitFieldABI()) {
     for (; Field != FieldEnd; ++Field) {
       uint64_t BitOffset = getFieldBitOffset(*Field);
       // Zero-width bitfields end runs.
@@ -465,7 +481,7 @@ void CGRecordLowering::accumulateVBases() {
   // smaller than the nvsize.  Here we check to see if such a base is placed
   // before the nvsize and set the scissor offset to that, instead of the
   // nvsize.
-  if (!useMSABI())
+  if (isOverlappingVBaseABI())
     for (const auto &Base : RD->vbases()) {
       const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
       if (BaseDecl->isEmpty())
@@ -486,7 +502,8 @@ void CGRecordLowering::accumulateVBases() {
     CharUnits Offset = Layout.getVBaseClassOffset(BaseDecl);
     // If the vbase is a primary virtual base of some base, then it doesn't
     // get its own storage location but instead lives inside of that base.
-    if (!useMSABI() && Context.isNearlyEmpty(BaseDecl) &&
+    if (isOverlappingVBaseABI() &&
+        Context.isNearlyEmpty(BaseDecl) &&
         !hasOwnStorage(RD, BaseDecl)) {
       Members.push_back(MemberInfo(Offset, MemberInfo::VBase, nullptr,
                                    BaseDecl));
