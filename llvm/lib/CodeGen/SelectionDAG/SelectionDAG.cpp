@@ -515,8 +515,10 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   case ISD::SUB:
   case ISD::SHL: {
     const BinaryWithFlagsSDNode *BinNode = cast<BinaryWithFlagsSDNode>(N);
-    AddBinaryNodeIDCustom(ID, N->getOpcode(), BinNode->hasNoUnsignedWrap(),
-                          BinNode->hasNoSignedWrap(), BinNode->isExact());
+    AddBinaryNodeIDCustom(ID, N->getOpcode(),
+                          BinNode->Flags.hasNoUnsignedWrap(),
+                          BinNode->Flags.hasNoSignedWrap(),
+                          BinNode->Flags.hasExact());
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
@@ -963,9 +965,9 @@ BinarySDNode *SelectionDAG::GetBinarySDNode(unsigned Opcode, SDLoc DL,
   if (isBinOpWithFlags(Opcode)) {
     BinaryWithFlagsSDNode *FN = new (NodeAllocator) BinaryWithFlagsSDNode(
         Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, N1, N2);
-    FN->setHasNoUnsignedWrap(nuw);
-    FN->setHasNoSignedWrap(nsw);
-    FN->setIsExact(exact);
+    FN->Flags.setNoUnsignedWrap(nuw);
+    FN->Flags.setNoSignedWrap(nsw);
+    FN->Flags.setExact(exact);
 
     return FN;
   }

@@ -926,6 +926,62 @@ inline void SDUse::setNode(SDNode *N) {
   if (N) N->addUse(*this);
 }
 
+/// These are IR-level optimization flags that may be propagated to SDNodes.
+/// TODO: This data structure should be shared by the IR optimizer and the
+/// the backend.
+struct SDNodeFlags {
+private:
+  bool NoUnsignedWrap : 1;
+  bool NoSignedWrap : 1;
+  bool Exact : 1;
+  bool UnsafeAlgebra : 1;
+  bool NoNaNs : 1;
+  bool NoInfs : 1;
+  bool NoSignedZeros : 1;
+  bool AllowReciprocal : 1;
+
+public:
+  /// Default constructor turns off all optimization flags.
+  SDNodeFlags() {
+    NoUnsignedWrap = false;
+    NoSignedWrap = false;
+    Exact = false;
+    UnsafeAlgebra = false;
+    NoNaNs = false;
+    NoInfs = false;
+    NoSignedZeros = false;
+    AllowReciprocal = false;
+  }
+
+  // These are mutators for each flag.
+  void setNoUnsignedWrap(bool b) { NoUnsignedWrap = b; }
+  void setNoSignedWrap(bool b) { NoSignedWrap = b; }
+  void setExact(bool b) { Exact = b; }
+  void setUnsafeAlgebra(bool b) { UnsafeAlgebra = b; }
+  void setNoNaNs(bool b) { NoNaNs = b; }
+  void setNoInfs(bool b) { NoInfs = b; }
+  void setNoSignedZeros(bool b) { NoSignedZeros = b; }
+  void setAllowReciprocal(bool b) { AllowReciprocal = b; }
+
+  // These are accessors for each flag.
+  bool hasNoUnsignedWrap() const { return NoUnsignedWrap; }
+  bool hasNoSignedWrap() const { return NoSignedWrap; }
+  bool hasExact() const { return Exact; }
+  bool hasUnsafeAlgebra() const { return UnsafeAlgebra; }
+  bool hasNoNaNs() const { return NoNaNs; }
+  bool hasNoInfs() const { return NoInfs; }
+  bool hasNoSignedZeros() const { return NoSignedZeros; }
+  bool hasAllowReciprocal() const { return AllowReciprocal; }
+
+  /// Return a raw encoding of the flags.
+  /// This function should only be used to add data to the NodeID value.
+  unsigned getRawFlags() const {
+    return (NoUnsignedWrap << 0) | (NoSignedWrap << 1) | (Exact << 2) |
+           (UnsafeAlgebra << 3) | (NoNaNs << 4) | (NoInfs << 5) |
+           (NoSignedZeros << 6) | (AllowReciprocal << 7);
+  }
+};
+
 /// This class is used for single-operand SDNodes.  This is solely
 /// to allow co-allocation of node operands with the node itself.
 class UnarySDNode : public SDNode {
@@ -970,27 +1026,11 @@ static bool isBinOpWithFlags(unsigned Opcode) {
 /// This class is an extension of BinarySDNode
 /// used from those opcodes that have associated extra flags.
 class BinaryWithFlagsSDNode : public BinarySDNode {
-  enum { NUW = (1 << 0), NSW = (1 << 1), EXACT = (1 << 2) };
-
 public:
+  SDNodeFlags Flags;
   BinaryWithFlagsSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
                         SDValue X, SDValue Y)
-      : BinarySDNode(Opc, Order, dl, VTs, X, Y) {}
-  /// Return the SubclassData value, which contains an encoding of the flags.
-  /// This function should be used to add subclass data to the NodeID value.
-  unsigned getRawSubclassData() const { return SubclassData; }
-  void setHasNoUnsignedWrap(bool b) {
-    SubclassData = (SubclassData & ~NUW) | (b ? NUW : 0);
-  }
-  void setHasNoSignedWrap(bool b) {
-    SubclassData = (SubclassData & ~NSW) | (b ? NSW : 0);
-  }
-  void setIsExact(bool b) {
-    SubclassData = (SubclassData & ~EXACT) | (b ? EXACT : 0);
-  }
-  bool hasNoUnsignedWrap() const { return SubclassData & NUW; }
-  bool hasNoSignedWrap() const { return SubclassData & NSW; }
-  bool isExact() const { return SubclassData & EXACT; }
+    : BinarySDNode(Opc, Order, dl, VTs, X, Y), Flags() { }
   static bool classof(const SDNode *N) {
     return isBinOpWithFlags(N->getOpcode());
   }

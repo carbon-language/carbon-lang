@@ -1450,9 +1450,10 @@ SDValue DAGCombiner::combine(SDNode *N) {
       SDNode *CSENode;
       if (const BinaryWithFlagsSDNode *BinNode =
               dyn_cast<BinaryWithFlagsSDNode>(N)) {
-        CSENode = DAG.getNodeIfExists(
-            N->getOpcode(), N->getVTList(), Ops, BinNode->hasNoUnsignedWrap(),
-            BinNode->hasNoSignedWrap(), BinNode->isExact());
+        CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(), Ops,
+                                      BinNode->Flags.hasNoUnsignedWrap(),
+                                      BinNode->Flags.hasNoSignedWrap(),
+                                      BinNode->Flags.hasExact());
       } else {
         CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(), Ops);
       }

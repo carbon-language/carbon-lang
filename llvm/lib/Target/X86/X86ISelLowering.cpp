@@ -12560,7 +12560,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     case ISD::SHL: {
       const BinaryWithFlagsSDNode *BinNode =
           cast<BinaryWithFlagsSDNode>(Op.getNode());
-      if (BinNode->hasNoSignedWrap())
+      if (BinNode->Flags.hasNoSignedWrap())
         break;
     }
     default:
