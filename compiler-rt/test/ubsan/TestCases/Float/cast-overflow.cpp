@@ -1,4 +1,3 @@
-// FIXME: run this (and other) UBSan tests in both 32- and 64-bit modes (?).
 // RUN: %clangxx -fsanitize=float-cast-overflow -g %s -o %t
 // RUN: %run %t _
 // RUN: env UBSAN_OPTIONS=print_summary=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0

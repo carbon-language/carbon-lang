@@ -23,8 +23,6 @@
 // RUN: echo "vptr_check:S" > %t.loc-supp
 // RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp':halt_on_error=1" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
-// FIXME: This test produces linker errors on Darwin.
-// XFAIL: darwin
 // REQUIRES: stable-runtime
 #include <new>
 
