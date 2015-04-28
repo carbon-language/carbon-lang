@@ -2315,16 +2315,6 @@ static bool isSuitableForMask(MachineInstr *&MI, unsigned SrcReg,
       if (SrcReg == MI->getOperand(CommonUse ? 1 : 0).getReg())
         return true;
       break;
-    case ARM::COPY: {
-      // Walk down one instruction which is potentially an 'and'.
-      const MachineInstr &Copy = *MI;
-      MachineBasicBlock::iterator AND(
-        std::next(MachineBasicBlock::iterator(MI)));
-      if (AND == MI->getParent()->end()) return false;
-      MI = AND;
-      return isSuitableForMask(MI, Copy.getOperand(0).getReg(),
-                               CmpMask, true);
-    }
   }
 
   return false;

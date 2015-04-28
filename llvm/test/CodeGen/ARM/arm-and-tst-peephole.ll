@@ -8,9 +8,9 @@
 
 %struct.Foo = type { i8* }
 
-; ARM:   foo
-; THUMB: foo
-; T2:    foo
+; ARM-LABEL:   foo:
+; THUMB-LABEL: foo:
+; T2-LABEL:    foo:
 define %struct.Foo* @foo(%struct.Foo* %this, i32 %acc) nounwind readonly align 2 {
 entry:
   %scevgep = getelementptr %struct.Foo, %struct.Foo* %this, i32 1
@@ -83,9 +83,9 @@ sw.epilog:                                        ; preds = %tailrecurse.switch
 
 %struct.S = type { i8* (i8*)*, [1 x i8] }
 
-; ARM: bar
-; THUMB: bar
-; T2: bar
+; ARM-LABEL: bar:
+; THUMB-LABEL: bar:
+; T2-LABEL: bar:
 ; V8-LABEL: bar:
 define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
 entry:
@@ -133,6 +133,28 @@ bb4:                                              ; preds = %bb2
 
 return:                                           ; preds = %bb2, %bb, %entry
   ret i8 1
+}
+
+
+; We were looking through multiple COPY instructions to find an AND we might
+; fold into a TST, but in doing so we changed the register being tested allowing
+; folding of unrelated tests (in this case, a TST against r1 was eliminated in
+; favour of an AND of r0).
+
+; ARM-LABEL: test_tst_assessment:
+; THUMB-LABEL: test_tst_assessment:
+; T2-LABEL: test_tst_assessment:
+; V8-LABEL: test_tst_assessment:
+define i32 @test_tst_assessment(i1 %lhs, i1 %rhs) {
+  %lhs32 = zext i1 %lhs to i32
+  %rhs32 = zext i1 %rhs to i32
+  %diff = sub nsw i32 %lhs32, %rhs32
+; ARM: tst r1, #1
+; THUMB: movs [[RTMP:r[0-9]+]], #1
+; THUMB: tst r1, [[RTMP]]
+; T2: tst.w r1, #1
+; V8: tst.w r1, #1
+  ret i32 %diff
 }
 
 !1 = !{!"branch_weights", i32 1, i32 1, i32 3, i32 2 }
