@@ -114,12 +114,7 @@ endif()
 option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
-set(LIBCXXABI_USE_LLVM_UNWINDER_DEFAULT OFF)
-if (${LLVM_NATIVE_ARCH} MATCHES arm)
-  set(LIBCXXABI_USE_LLVM_UNWINDER_DEFAULT ON)
-endif ()
-option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder."
-       ${LIBCXXABI_USE_LLVM_UNWINDER_DEFAULT})
+option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
 option(LIBCXXABI_ENABLE_THREADS "Build with threads enabled" ON)
 set(LIBCXXABI_GCC_TOOLCHAIN "" CACHE STRING "GCC toolchain for cross compiling.")
 set(LIBCXXABI_SYSROOT "" CACHE STRING "Sysroot for cross compiling.")
@@ -286,7 +281,7 @@ if (MSVC)
 endif()
 
 # Define LIBCXXABI_USE_LLVM_UNWINDER for conditional compilation.
-if (LIBCXXABI_USE_LLVM_UNWINDER)
+if (LIBCXXABI_USE_LLVM_UNWINDER OR ${LLVM_NATIVE_ARCH} MATCHES ARM)
   add_definitions(-DLIBCXXABI_USE_LLVM_UNWINDER=1)
 endif()
 
@@ -305,7 +300,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCXXABI_C_FLAGS}")
 #===============================================================================
 
 include_directories(include)
-if (LIBCXXABI_USE_LLVM_UNWINDER)
+if (LIBCXXABI_USE_LLVM_UNWINDER OR ${LLVM_NATIVE_ARCH} MATCHES ARM)
   include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/include)
 endif ()
 
