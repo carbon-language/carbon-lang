@@ -638,6 +638,8 @@ void Preprocessor::LeaveSubmodule() {
     bool ExplicitlyPublic = false;
     for (auto *MD = Macro.second.getLatest(); MD != SavedInfo.Latest;
          MD = MD->getPrevious()) {
+      assert(MD && "broken macro directive chain");
+
       // Skip macros defined in other submodules we #included along the way.
       Module *Mod = getModuleContainingLocation(MD->getLocation());
       if (Mod != Info.M)
@@ -673,7 +675,8 @@ void Preprocessor::LeaveSubmodule() {
     Info.M->NameVisibility = Module::MacrosVisible;
     Info.M->MacroVisibilityLoc = Info.ImportLoc;
     ++MacroVisibilityGeneration;
-    // FIXME: Also mark any exported macros as visible, and check for conflicts.
+    // FIXME: Also mark any exported modules as visible, and check for
+    // conflicts.
   }
 
   BuildingSubmoduleStack.pop_back();

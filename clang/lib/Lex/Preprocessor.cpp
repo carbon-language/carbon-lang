@@ -142,9 +142,6 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
 Preprocessor::~Preprocessor() {
   assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
 
-  for (auto &Macro : Macros)
-    Macro.second.destroy();
-
   IncludeMacroStack.clear();
 
   // Destroy any macro definitions.
