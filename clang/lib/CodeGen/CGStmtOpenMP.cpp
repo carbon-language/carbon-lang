@@ -578,15 +578,12 @@ static void EmitPrivateLoopCounters(CodeGenFunction &CGF,
                                     ArrayRef<Expr *> Counters) {
   for (auto *E : Counters) {
     auto VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
-    bool IsRegistered = LoopScope.addPrivate(VD, [&]() -> llvm::Value * {
+    (void)LoopScope.addPrivate(VD, [&]() -> llvm::Value *{
       // Emit var without initialization.
       auto VarEmission = CGF.EmitAutoVarAlloca(*VD);
       CGF.EmitAutoVarCleanups(VarEmission);
       return VarEmission.getAllocatedAddress();
     });
-    assert(IsRegistered && "counter already registered as private");
-    // Silence the warning about unused variable.
-    (void)IsRegistered;
   }
 }
 

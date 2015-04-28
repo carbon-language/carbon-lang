@@ -115,6 +115,12 @@ int main() {
     vec[i] = t_var;
     s_arr[i] = var;
   }
+  int i;
+#pragma omp parallel
+#pragma omp for private(i)
+  for (i = 0; i < 2; ++i) {
+    ;
+  }
   return tmain<int>();
 #endif
 }
