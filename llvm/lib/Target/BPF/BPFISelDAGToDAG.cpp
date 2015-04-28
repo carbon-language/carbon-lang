@@ -56,9 +56,10 @@ private:
 // ComplexPattern used on BPF Load/Store instructions
 bool BPFDAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
   // if Address is FI, get the TargetFrameIndex.
+  SDLoc DL(Addr);
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i64);
-    Offset = CurDAG->getTargetConstant(0, MVT::i64);
+    Offset = CurDAG->getTargetConstant(0, DL, MVT::i64);
     return true;
   }
 
@@ -78,13 +79,13 @@ bool BPFDAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
       else
         Base = Addr.getOperand(0);
 
-      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), MVT::i64);
+      Offset = CurDAG->getTargetConstant(CN->getSExtValue(), DL, MVT::i64);
       return true;
     }
   }
 
   Base   = Addr;
-  Offset = CurDAG->getTargetConstant(0, MVT::i64);
+  Offset = CurDAG->getTargetConstant(0, DL, MVT::i64);
   return true;
 }
 

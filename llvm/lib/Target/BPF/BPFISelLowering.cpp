@@ -303,7 +303,7 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
 
   Chain = DAG.getCALLSEQ_START(
-      Chain, DAG.getConstant(NumBytes, getPointerTy(), true), CLI.DL);
+      Chain, DAG.getConstant(NumBytes, CLI.DL, getPointerTy(), true), CLI.DL);
 
   SmallVector<std::pair<unsigned, SDValue>, 5> RegsToPass;
 
@@ -374,8 +374,8 @@ SDValue BPFTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Create the CALLSEQ_END node.
   Chain = DAG.getCALLSEQ_END(
-      Chain, DAG.getConstant(NumBytes, getPointerTy(), true),
-      DAG.getConstant(0, getPointerTy(), true), InFlag, CLI.DL);
+      Chain, DAG.getConstant(NumBytes, CLI.DL, getPointerTy(), true),
+      DAG.getConstant(0, CLI.DL, getPointerTy(), true), InFlag, CLI.DL);
   InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
@@ -487,7 +487,7 @@ SDValue BPFTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   NegateCC(LHS, RHS, CC);
 
   return DAG.getNode(BPFISD::BR_CC, DL, Op.getValueType(), Chain, LHS, RHS,
-                     DAG.getConstant(CC, MVT::i64), Dest);
+                     DAG.getConstant(CC, DL, MVT::i64), Dest);
 }
 
 SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
@@ -500,7 +500,7 @@ SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 
   NegateCC(LHS, RHS, CC);
 
-  SDValue TargetCC = DAG.getConstant(CC, MVT::i64);
+  SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i64);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   SDValue Ops[] = {LHS, RHS, TargetCC, TrueV, FalseV};
