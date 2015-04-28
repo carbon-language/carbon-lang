@@ -28,6 +28,7 @@
 #include <dlfcn.h>  // for dlsym()
 #endif
 
+#include <link.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/resource.h>
@@ -42,9 +43,12 @@
 #include <sys/prctl.h>
 #endif
 
+#if SANITIZER_ANDROID
+#include <android/api-level.h>
+#endif
+
 #if !SANITIZER_ANDROID
 #include <elf.h>
-#include <link.h>
 #include <unistd.h>
 #endif
 
@@ -397,13 +401,6 @@ void AdjustStackSize(void *attr_) {
   }
 }
 
-#if SANITIZER_ANDROID
-uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
-                      string_predicate_t filter) {
-  MemoryMappingLayout memory_mapping(false);
-  return memory_mapping.DumpListOfModules(modules, max_modules, filter);
-}
-#else  // SANITIZER_ANDROID
 # if !SANITIZER_FREEBSD
 typedef ElfW(Phdr) Elf_Phdr;
 # elif SANITIZER_WORDSIZE == 32 && __FreeBSD_version <= 902001  // v9.2
@@ -451,14 +448,27 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   return 0;
 }
 
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+extern "C" __attribute__((weak)) int dl_iterate_phdr(
+    int (*)(struct dl_phdr_info *, size_t, void *), void *);
+#endif
+
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+  // Fall back to /proc/maps if dl_iterate_phdr is not available.
+  // The runtime check allows the same library to work with
+  // both K and L (and future) Android releases.
+  if (!dl_iterate_phdr) {
+    MemoryMappingLayout memory_mapping(false);
+    return memory_mapping.DumpListOfModules(modules, max_modules, filter);
+  }
+#endif
   CHECK(modules);
   DlIteratePhdrData data = {modules, 0, true, max_modules, filter};
   dl_iterate_phdr(dl_iterate_phdr_cb, &data);
   return data.current_n;
 }
-#endif  // SANITIZER_ANDROID
 
 // getrusage does not give us the current RSS, only the max RSS.
 // Still, this is better than nothing if /proc/self/statm is not available
