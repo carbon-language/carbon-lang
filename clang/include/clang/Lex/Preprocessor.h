@@ -408,6 +408,11 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   public:
     MacroState() : MacroState(nullptr) {}
     MacroState(MacroDirective *MD) : State(MD) {}
+    void destroy() {
+      if (auto *Info = State.dyn_cast<ModuleMacroInfo*>())
+        Info->~ModuleMacroInfo();
+      State = (MacroDirective*)nullptr;
+    }
     MacroDirective *getLatest() const {
       if (auto *Info = State.dyn_cast<ModuleMacroInfo*>())
         return Info->MD;
