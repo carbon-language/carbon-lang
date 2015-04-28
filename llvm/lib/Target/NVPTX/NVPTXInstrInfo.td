@@ -452,13 +452,13 @@ def Int4Const : PatLeaf<(imm), [{
 def SHL2MUL32 : SDNodeXForm<imm, [{
   const APInt &v = N->getAPIntValue();
   APInt temp(32, 1);
-  return CurDAG->getTargetConstant(temp.shl(v), MVT::i32);
+  return CurDAG->getTargetConstant(temp.shl(v), SDLoc(N), MVT::i32);
 }]>;
 
 def SHL2MUL16 : SDNodeXForm<imm, [{
   const APInt &v = N->getAPIntValue();
   APInt temp(16, 1);
-  return CurDAG->getTargetConstant(temp.shl(v), MVT::i16);
+  return CurDAG->getTargetConstant(temp.shl(v), SDLoc(N), MVT::i16);
 }]>;
 
 def MULWIDES64
@@ -1138,7 +1138,7 @@ def ROT32imm_sw : NVPTXInst<(outs Int32Regs:$dst),
     []>;
 
 def SUB_FRM_32 : SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(32-N->getZExtValue(), MVT::i32);
+    return CurDAG->getTargetConstant(32-N->getZExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 def : Pat<(rotl Int32Regs:$src, (i32 imm:$amt)),
@@ -1189,7 +1189,7 @@ def ROT64imm_sw : NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$src,
     []>;
 
 def SUB_FRM_64 : SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(64-N->getZExtValue(), MVT::i32);
+    return CurDAG->getTargetConstant(64-N->getZExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 def : Pat<(rotl Int64Regs:$src, (i32 imm:$amt)),

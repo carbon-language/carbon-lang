@@ -131,7 +131,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
-  return DAG.getConstant(N->getValueAPF().bitcastToAPInt(),
+  return DAG.getConstant(N->getValueAPF().bitcastToAPInt(), SDLoc(N),
                          TLI.getTypeToTransformTo(*DAG.getContext(),
                                                   N->getValueType(0)));
 }
@@ -149,8 +149,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FABS(SDNode *N) {
 
   // Mask = ~(1 << (Size-1))
   APInt API = APInt::getAllOnesValue(Size);
-  API.clearBit(Size-1);
-  SDValue Mask = DAG.getConstant(API, NVT);
+  API.clearBit(Size - 1);
+  SDValue Mask = DAG.getConstant(API, SDLoc(N), NVT);
   SDValue Op = GetSoftenedFloat(N->getOperand(0));
   return DAG.getNode(ISD::AND, SDLoc(N), NVT, Op, Mask);
 }
@@ -218,8 +218,8 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
   unsigned RSize = RVT.getSizeInBits();
 
   // First get the sign bit of second operand.
-  SDValue SignBit = DAG.getNode(ISD::SHL, dl, RVT, DAG.getConstant(1, RVT),
-                                  DAG.getConstant(RSize - 1,
+  SDValue SignBit = DAG.getNode(ISD::SHL, dl, RVT, DAG.getConstant(1, dl, RVT),
+                                  DAG.getConstant(RSize - 1, dl,
                                                   TLI.getShiftAmountTy(RVT)));
   SignBit = DAG.getNode(ISD::AND, dl, RVT, RHS, SignBit);
 
@@ -227,21 +227,21 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
   int SizeDiff = RVT.getSizeInBits() - LVT.getSizeInBits();
   if (SizeDiff > 0) {
     SignBit = DAG.getNode(ISD::SRL, dl, RVT, SignBit,
-                          DAG.getConstant(SizeDiff,
+                          DAG.getConstant(SizeDiff, dl,
                                  TLI.getShiftAmountTy(SignBit.getValueType())));
     SignBit = DAG.getNode(ISD::TRUNCATE, dl, LVT, SignBit);
   } else if (SizeDiff < 0) {
     SignBit = DAG.getNode(ISD::ANY_EXTEND, dl, LVT, SignBit);
     SignBit = DAG.getNode(ISD::SHL, dl, LVT, SignBit,
-                          DAG.getConstant(-SizeDiff,
+                          DAG.getConstant(-SizeDiff, dl,
                                  TLI.getShiftAmountTy(SignBit.getValueType())));
   }
 
   // Clear the sign bit of the first operand.
-  SDValue Mask = DAG.getNode(ISD::SHL, dl, LVT, DAG.getConstant(1, LVT),
-                               DAG.getConstant(LSize - 1,
+  SDValue Mask = DAG.getNode(ISD::SHL, dl, LVT, DAG.getConstant(1, dl, LVT),
+                               DAG.getConstant(LSize - 1, dl,
                                                TLI.getShiftAmountTy(LVT)));
-  Mask = DAG.getNode(ISD::SUB, dl, LVT, Mask, DAG.getConstant(1, LVT));
+  Mask = DAG.getNode(ISD::SUB, dl, LVT, Mask, DAG.getConstant(1, dl, LVT));
   LHS = DAG.getNode(ISD::AND, dl, LVT, LHS, Mask);
 
   // Or the value with the sign bit.
@@ -386,8 +386,9 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FNEARBYINT(SDNode *N) {
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FNEG(SDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDLoc dl(N);
   // Expand Y = FNEG(X) -> Y = SUB -0.0, X
-  SDValue Ops[2] = { DAG.getConstantFP(-0.0, N->getValueType(0)),
+  SDValue Ops[2] = { DAG.getConstantFP(-0.0, dl, N->getValueType(0)),
                      GetSoftenedFloat(N->getOperand(0)) };
   return TLI.makeLibCall(DAG, GetFPLibCall(N->getValueType(0),
                                            RTLIB::SUB_F32,
@@ -395,7 +396,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FNEG(SDNode *N) {
                                            RTLIB::SUB_F80,
                                            RTLIB::SUB_F128,
                                            RTLIB::SUB_PPCF128),
-                         NVT, Ops, 2, false, SDLoc(N)).first;
+                         NVT, Ops, 2, false, dl).first;
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FP_EXTEND(SDNode *N) {
@@ -755,7 +756,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
   // If softenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
 
@@ -794,7 +795,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {
   // If softenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
 
@@ -837,7 +838,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
   if (ST->isTruncatingStore())
     // Do an FP_ROUND followed by a non-truncating store.
     Val = BitConvertToInteger(DAG.getNode(ISD::FP_ROUND, dl, ST->getMemoryVT(),
-                                          Val, DAG.getIntPtrConstant(0)));
+                                          Val, DAG.getIntPtrConstant(0, dl)));
   else
     Val = GetSoftenedFloat(Val);
 
@@ -927,12 +928,13 @@ void DAGTypeLegalizer::ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo,
   assert(NVT.getSizeInBits() == integerPartWidth &&
          "Do not know how to expand this float constant!");
   APInt C = cast<ConstantFPSDNode>(N)->getValueAPF().bitcastToAPInt();
+  SDLoc dl(N);
   Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
                                  APInt(integerPartWidth, C.getRawData()[1])),
-                         NVT);
+                         dl, NVT);
   Hi = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
                                  APInt(integerPartWidth, C.getRawData()[0])),
-                         NVT);
+                         dl, NVT);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FABS(SDNode *N, SDValue &Lo,
@@ -1136,9 +1138,10 @@ void DAGTypeLegalizer::ExpandFloatRes_FNEG(SDNode *N, SDValue &Lo,
 void DAGTypeLegalizer::ExpandFloatRes_FP_EXTEND(SDNode *N, SDValue &Lo,
                                                 SDValue &Hi) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
-  Hi = DAG.getNode(ISD::FP_EXTEND, SDLoc(N), NVT, N->getOperand(0));
+  SDLoc dl(N);
+  Hi = DAG.getNode(ISD::FP_EXTEND, dl, NVT, N->getOperand(0));
   Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
-                                 APInt(NVT.getSizeInBits(), 0)), NVT);
+                                 APInt(NVT.getSizeInBits(), 0)), dl, NVT);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FPOW(SDNode *N,
@@ -1262,7 +1265,7 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
 
   // The low part is zero.
   Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
-                                 APInt(NVT.getSizeInBits(), 0)), NVT);
+                                 APInt(NVT.getSizeInBits(), 0)), dl, NVT);
 
   // Modified the chain - switch anything that used the old chain to use the
   // new one.
@@ -1287,7 +1290,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, dl,
                       MVT::i32, Src);
     Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
-                                   APInt(NVT.getSizeInBits(), 0)), NVT);
+                                   APInt(NVT.getSizeInBits(), 0)), dl, NVT);
     Hi = DAG.getNode(ISD::SINT_TO_FP, dl, NVT, Src);
   } else {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
@@ -1335,8 +1338,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
                    DAG.getConstantFP(APFloat(APFloat::PPCDoubleDouble,
                                              APInt(128, Parts)),
-                                     MVT::ppcf128));
-  Lo = DAG.getSelectCC(dl, Src, DAG.getConstant(0, SrcVT),
+                                     dl, MVT::ppcf128));
+  Lo = DAG.getSelectCC(dl, Src, DAG.getConstant(0, dl, SrcVT),
                        Lo, Hi, ISD::SETLT);
   GetPairElements(Lo, Lo, Hi);
 }
@@ -1436,7 +1439,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
 
@@ -1479,7 +1482,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_SINT(SDNode *N) {
     SDValue Res = DAG.getNode(ISD::FP_ROUND_INREG, dl, MVT::ppcf128,
                               N->getOperand(0), DAG.getValueType(MVT::f64));
     Res = DAG.getNode(ISD::FP_ROUND, dl, MVT::f64, Res,
-                      DAG.getIntPtrConstant(1));
+                      DAG.getIntPtrConstant(1, dl));
     return DAG.getNode(ISD::FP_TO_SINT, dl, MVT::i32, Res);
   }
 
@@ -1499,7 +1502,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
            "Logic only correct for ppcf128!");
     const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
     APFloat APF = APFloat(APFloat::PPCDoubleDouble, APInt(128, TwoE31));
-    SDValue Tmp = DAG.getConstantFP(APF, MVT::ppcf128);
+    SDValue Tmp = DAG.getConstantFP(APF, dl, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.
     return DAG.getSelectCC(dl, N->getOperand(0), Tmp,
@@ -1509,7 +1512,8 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
                                                                MVT::ppcf128,
                                                                N->getOperand(0),
                                                                Tmp)),
-                                       DAG.getConstant(0x80000000, MVT::i32)),
+                                       DAG.getConstant(0x80000000, dl,
+                                                       MVT::i32)),
                            DAG.getNode(ISD::FP_TO_SINT, dl,
                                        MVT::i32, N->getOperand(0)),
                            ISD::SETGE);
@@ -1529,7 +1533,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SELECT_CC(SDNode *N) {
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
   if (!NewRHS.getNode()) {
-    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    NewRHS = DAG.getConstant(0, SDLoc(N), NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
 
@@ -1793,17 +1797,18 @@ SDValue DAGTypeLegalizer::PromoteFloatRes_BITCAST(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteFloatRes_ConstantFP(SDNode *N) {
   ConstantFPSDNode *CFPNode = cast<ConstantFPSDNode>(N);
   EVT VT = N->getValueType(0);
+  SDLoc DL(N);
 
   // Get the (bit-cast) APInt of the APFloat and build an integer constant
   EVT IVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits());
-  SDValue C = DAG.getConstant(CFPNode->getValueAPF().bitcastToAPInt(),
+  SDValue C = DAG.getConstant(CFPNode->getValueAPF().bitcastToAPInt(), DL,
                               IVT);
 
   // Convert the Constant to the desired FP type
   // FIXME We might be able to do the conversion during compilation and get rid
   // of it from the object code
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
-  return DAG.getNode(GetPromotionOpcode(VT, NVT), SDLoc(N), NVT, C);
+  return DAG.getNode(GetPromotionOpcode(VT, NVT), DL, NVT, C);
 }
 
 // If the Index operand is a constant, try to redirect the extract operation to
@@ -1846,7 +1851,7 @@ SDValue DAGTypeLegalizer::PromoteFloatRes_EXTRACT_VECTOR_ELT(SDNode *N) {
         Res = DAG.getNode(N->getOpcode(), DL, EltVT, Lo, Idx);
       else
         Res = DAG.getNode(N->getOpcode(), DL, EltVT, Hi,
-                          DAG.getConstant(IdxVal - LoElts,
+                          DAG.getConstant(IdxVal - LoElts, DL,
                                           Idx.getValueType()));
       ReplaceValueWith(SDValue(N, 0), Res);
       return SDValue();

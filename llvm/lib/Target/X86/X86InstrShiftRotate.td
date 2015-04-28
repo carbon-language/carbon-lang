@@ -850,12 +850,12 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
 
 def ROT32L2R_imm8  : SDNodeXForm<imm, [{
   // Convert a ROTL shamt to a ROTR shamt on 32-bit integer.
-  return getI8Imm(32 - N->getZExtValue());
+  return getI8Imm(32 - N->getZExtValue(), SDLoc(N));
 }]>;
 
 def ROT64L2R_imm8  : SDNodeXForm<imm, [{
   // Convert a ROTL shamt to a ROTR shamt on 64-bit integer.
-  return getI8Imm(64 - N->getZExtValue());
+  return getI8Imm(64 - N->getZExtValue(), SDLoc(N));
 }]>;
 
 multiclass bmi_rotate<string asm, RegisterClass RC, X86MemOperand x86memop> {

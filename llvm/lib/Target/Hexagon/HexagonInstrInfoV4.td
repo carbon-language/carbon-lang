@@ -57,7 +57,7 @@ def BITPOS32 : SDNodeXForm<imm, [{
    // Return the bit position we will set [0-31].
    // As an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformMskToBitPosU5Imm(imm);
+   return XformMskToBitPosU5Imm(imm, SDLoc(N));
 }]>;
 
 
@@ -1153,14 +1153,14 @@ def IMM_BYTE : SDNodeXForm<imm, [{
   // -1 etc is  represented as 255 etc
   // assigning to a byte restores our desired signed value.
   int8_t imm = N->getSExtValue();
-  return CurDAG->getTargetConstant(imm, MVT::i32);
+  return CurDAG->getTargetConstant(imm, SDLoc(N), MVT::i32);
 }]>;
 
 def IMM_HALF : SDNodeXForm<imm, [{
   // -1 etc is  represented as 65535 etc
   // assigning to a short restores our desired signed value.
   int16_t imm = N->getSExtValue();
-  return CurDAG->getTargetConstant(imm, MVT::i32);
+  return CurDAG->getTargetConstant(imm, SDLoc(N), MVT::i32);
 }]>;
 
 def IMM_WORD : SDNodeXForm<imm, [{
@@ -1169,7 +1169,7 @@ def IMM_WORD : SDNodeXForm<imm, [{
   // might convert -1 to a large +ve number.
   // assigning to a word restores our desired signed value.
   int32_t imm = N->getSExtValue();
-  return CurDAG->getTargetConstant(imm, MVT::i32);
+  return CurDAG->getTargetConstant(imm, SDLoc(N), MVT::i32);
 }]>;
 
 def ToImmByte : OutPatFrag<(ops node:$R), (IMM_BYTE $R)>;
@@ -2805,7 +2805,7 @@ def MEMOPIMM : SDNodeXForm<imm, [{
   // Call the transformation function XformM5ToU5Imm to get the negative
   // immediate's positive counterpart.
   int32_t imm = N->getSExtValue();
-  return XformM5ToU5Imm(imm);
+  return XformM5ToU5Imm(imm, SDLoc(N));
 }]>;
 
 def MEMOPIMM_HALF : SDNodeXForm<imm, [{
@@ -2814,7 +2814,7 @@ def MEMOPIMM_HALF : SDNodeXForm<imm, [{
   // Call the transformation function XformM5ToU5Imm to get the negative
   // immediate's positive counterpart.
   int16_t imm = N->getSExtValue();
-  return XformM5ToU5Imm(imm);
+  return XformM5ToU5Imm(imm, SDLoc(N));
 }]>;
 
 def MEMOPIMM_BYTE : SDNodeXForm<imm, [{
@@ -2823,14 +2823,14 @@ def MEMOPIMM_BYTE : SDNodeXForm<imm, [{
   // Call the transformation function XformM5ToU5Imm to get the negative
   // immediate's positive counterpart.
   int8_t imm = N->getSExtValue();
-  return XformM5ToU5Imm(imm);
+  return XformM5ToU5Imm(imm, SDLoc(N));
 }]>;
 
 def SETMEMIMM : SDNodeXForm<imm, [{
    // Return the bit position we will set [0-31].
    // As an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformMskToBitPosU5Imm(imm);
+   return XformMskToBitPosU5Imm(imm, SDLoc(N));
 }]>;
 
 def CLRMEMIMM : SDNodeXForm<imm, [{
@@ -2838,14 +2838,14 @@ def CLRMEMIMM : SDNodeXForm<imm, [{
    // As an SDNode.
    // we bit negate the value first
    int32_t imm = ~(N->getSExtValue());
-   return XformMskToBitPosU5Imm(imm);
+   return XformMskToBitPosU5Imm(imm, SDLoc(N));
 }]>;
 
 def SETMEMIMM_SHORT : SDNodeXForm<imm, [{
    // Return the bit position we will set [0-15].
    // As an SDNode.
    int16_t imm = N->getSExtValue();
-   return XformMskToBitPosU4Imm(imm);
+   return XformMskToBitPosU4Imm(imm, SDLoc(N));
 }]>;
 
 def CLRMEMIMM_SHORT : SDNodeXForm<imm, [{
@@ -2853,14 +2853,14 @@ def CLRMEMIMM_SHORT : SDNodeXForm<imm, [{
    // As an SDNode.
    // we bit negate the value first
    int16_t imm = ~(N->getSExtValue());
-   return XformMskToBitPosU4Imm(imm);
+   return XformMskToBitPosU4Imm(imm, SDLoc(N));
 }]>;
 
 def SETMEMIMM_BYTE : SDNodeXForm<imm, [{
    // Return the bit position we will set [0-7].
    // As an SDNode.
    int8_t imm =  N->getSExtValue();
-   return XformMskToBitPosU3Imm(imm);
+   return XformMskToBitPosU3Imm(imm, SDLoc(N));
 }]>;
 
 def CLRMEMIMM_BYTE : SDNodeXForm<imm, [{
@@ -2868,7 +2868,7 @@ def CLRMEMIMM_BYTE : SDNodeXForm<imm, [{
    // As an SDNode.
    // we bit negate the value first
    int8_t imm = ~(N->getSExtValue());
-   return XformMskToBitPosU3Imm(imm);
+   return XformMskToBitPosU3Imm(imm, SDLoc(N));
 }]>;
 
 //===----------------------------------------------------------------------===//
@@ -3202,7 +3202,7 @@ def: Pat<(i1 (setne (i32 IntRegs:$src1), s32ImmPred:$src2)),
 def DEC_CONST_BYTE : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
    int32_t imm = N->getSExtValue();
-   return XformU7ToU7M1Imm(imm);
+   return XformU7ToU7M1Imm(imm, SDLoc(N));
 }]>;
 
 // For the sequence

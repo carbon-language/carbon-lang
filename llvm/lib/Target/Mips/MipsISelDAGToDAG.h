@@ -119,7 +119,7 @@ private:
 
   // getImm - Return a target constant with the specified value.
   inline SDValue getImm(const SDNode *Node, uint64_t Imm) {
-    return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
+    return CurDAG->getTargetConstant(Imm, SDLoc(Node), Node->getValueType(0));
   }
 
   virtual void processFunctionAfterISel(MachineFunction &MF) = 0;

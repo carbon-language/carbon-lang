@@ -252,8 +252,9 @@ bool AArch64DAGToDAGISel::SelectArithImmed(SDValue N, SDValue &Val,
     return false;
 
   unsigned ShVal = AArch64_AM::getShifterImm(AArch64_AM::LSL, ShiftAmt);
-  Val = CurDAG->getTargetConstant(Immed, MVT::i32);
-  Shift = CurDAG->getTargetConstant(ShVal, MVT::i32);
+  SDLoc dl(N);
+  Val = CurDAG->getTargetConstant(Immed, dl, MVT::i32);
+  Shift = CurDAG->getTargetConstant(ShVal, dl, MVT::i32);
   return true;
 }
 
@@ -286,7 +287,8 @@ bool AArch64DAGToDAGISel::SelectNegArithImmed(SDValue N, SDValue &Val,
     return false;
 
   Immed &= 0xFFFFFFULL;
-  return SelectArithImmed(CurDAG->getConstant(Immed, MVT::i32), Val, Shift);
+  return SelectArithImmed(CurDAG->getConstant(Immed, SDLoc(N), MVT::i32), Val,
+                          Shift);
 }
 
 /// getShiftTypeForNode - Translate a shift node to the corresponding
@@ -334,7 +336,7 @@ bool AArch64DAGToDAGISel::SelectShiftedRegister(SDValue N, bool AllowROR,
     unsigned ShVal = AArch64_AM::getShifterImm(ShType, Val);
 
     Reg = N.getOperand(0);
-    Shift = CurDAG->getTargetConstant(ShVal, MVT::i32);
+    Shift = CurDAG->getTargetConstant(ShVal, SDLoc(N), MVT::i32);
     return isWorthFolding(N);
   }
 
@@ -435,6 +437,7 @@ static bool checkV64LaneV128(SDValue Op0, SDValue Op1, SDValue &StdOp,
 /// is a lane in the upper half of a 128-bit vector.  Recognize and select this
 /// so that we don't emit unnecessary lane extracts.
 SDNode *AArch64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
+  SDLoc dl(N);
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
   SDValue MLAOp1;   // Will hold ordinary multiplicand for MLA.
@@ -451,7 +454,7 @@ SDNode *AArch64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
       return nullptr;
   }
 
-  SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, MVT::i64);
+  SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, dl, MVT::i64);
 
   SDValue Ops[] = { Op0, MLAOp1, MLAOp2, LaneIdxVal };
 
@@ -474,10 +477,11 @@ SDNode *AArch64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
     break;
   }
 
-  return CurDAG->getMachineNode(MLAOpc, SDLoc(N), N->getValueType(0), Ops);
+  return CurDAG->getMachineNode(MLAOpc, dl, N->getValueType(0), Ops);
 }
 
 SDNode *AArch64DAGToDAGISel::SelectMULLV64LaneV128(unsigned IntNo, SDNode *N) {
+  SDLoc dl(N);
   SDValue SMULLOp0;
   SDValue SMULLOp1;
   int LaneIdx;
@@ -486,7 +490,7 @@ SDNode *AArch64DAGToDAGISel::SelectMULLV64LaneV128(unsigned IntNo, SDNode *N) {
                         LaneIdx))
     return nullptr;
 
-  SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, MVT::i64);
+  SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, dl, MVT::i64);
 
   SDValue Ops[] = { SMULLOp0, SMULLOp1, LaneIdxVal };
 
@@ -517,7 +521,7 @@ SDNode *AArch64DAGToDAGISel::SelectMULLV64LaneV128(unsigned IntNo, SDNode *N) {
   } else
     llvm_unreachable("Unrecognized intrinsic.");
 
-  return CurDAG->getMachineNode(SMULLOpc, SDLoc(N), N->getValueType(0), Ops);
+  return CurDAG->getMachineNode(SMULLOpc, dl, N->getValueType(0), Ops);
 }
 
 /// Instructions that accept extend modifiers like UXTW expect the register
@@ -528,9 +532,10 @@ static SDValue narrowIfNeeded(SelectionDAG *CurDAG, SDValue N) {
   if (N.getValueType() == MVT::i32)
     return N;
 
-  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, MVT::i32);
+  SDLoc dl(N);
+  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
   MachineSDNode *Node = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
-                                               SDLoc(N), MVT::i32, N, SubReg);
+                                               dl, MVT::i32, N, SubReg);
   return SDValue(Node, 0);
 }
 
@@ -570,7 +575,8 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
   // (harmlessly) synthesize one by injected an EXTRACT_SUBREG here.
   assert(Ext != AArch64_AM::UXTX && Ext != AArch64_AM::SXTX);
   Reg = narrowIfNeeded(CurDAG, Reg);
-  Shift = CurDAG->getTargetConstant(getArithExtendImm(Ext, ShiftVal), MVT::i32);
+  Shift = CurDAG->getTargetConstant(getArithExtendImm(Ext, ShiftVal), SDLoc(N),
+                                    MVT::i32);
   return isWorthFolding(N);
 }
 
@@ -600,11 +606,12 @@ static bool isWorthFoldingADDlow(SDValue N) {
 /// reference, which determines the scale.
 bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
                                               SDValue &Base, SDValue &OffImm) {
+  SDLoc dl(N);
   const TargetLowering *TLI = getTargetLowering();
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
-    OffImm = CurDAG->getTargetConstant(0, MVT::i64);
+    OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
     return true;
   }
 
@@ -637,7 +644,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
           int FI = cast<FrameIndexSDNode>(Base)->getIndex();
           Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
         }
-        OffImm = CurDAG->getTargetConstant(RHSC >> Scale, MVT::i64);
+        OffImm = CurDAG->getTargetConstant(RHSC >> Scale, dl, MVT::i64);
         return true;
       }
     }
@@ -653,7 +660,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
   //    add x0, Xbase, #offset
   //    ldr x0, [x0]
   Base = N;
-  OffImm = CurDAG->getTargetConstant(0, MVT::i64);
+  OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
   return true;
 }
 
@@ -680,7 +687,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeUnscaled(SDValue N, unsigned Size,
         const TargetLowering *TLI = getTargetLowering();
         Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
       }
-      OffImm = CurDAG->getTargetConstant(RHSC, MVT::i64);
+      OffImm = CurDAG->getTargetConstant(RHSC, SDLoc(N), MVT::i64);
       return true;
     }
   }
@@ -688,12 +695,12 @@ bool AArch64DAGToDAGISel::SelectAddrModeUnscaled(SDValue N, unsigned Size,
 }
 
 static SDValue Widen(SelectionDAG *CurDAG, SDValue N) {
-  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, MVT::i32);
+  SDLoc dl(N);
+  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
   SDValue ImpDef = SDValue(
-      CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, SDLoc(N), MVT::i64),
-      0);
+      CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, MVT::i64), 0);
   MachineSDNode *Node = CurDAG->getMachineNode(
-      TargetOpcode::INSERT_SUBREG, SDLoc(N), MVT::i64, ImpDef, N, SubReg);
+      TargetOpcode::INSERT_SUBREG, dl, MVT::i64, ImpDef, N, SubReg);
   return SDValue(Node, 0);
 }
 
@@ -707,6 +714,7 @@ bool AArch64DAGToDAGISel::SelectExtendedSHL(SDValue N, unsigned Size,
   if (!CSD || (CSD->getZExtValue() & 0x7) != CSD->getZExtValue())
     return false;
 
+  SDLoc dl(N);
   if (WantExtend) {
     AArch64_AM::ShiftExtendType Ext =
         getExtendTypeForNode(N.getOperand(0), true);
@@ -714,10 +722,11 @@ bool AArch64DAGToDAGISel::SelectExtendedSHL(SDValue N, unsigned Size,
       return false;
 
     Offset = narrowIfNeeded(CurDAG, N.getOperand(0).getOperand(0));
-    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, MVT::i32);
+    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, dl,
+                                           MVT::i32);
   } else {
     Offset = N.getOperand(0);
-    SignExtend = CurDAG->getTargetConstant(0, MVT::i32);
+    SignExtend = CurDAG->getTargetConstant(0, dl, MVT::i32);
   }
 
   unsigned LegalShiftVal = Log2_32(Size);
@@ -740,6 +749,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
     return false;
   SDValue LHS = N.getOperand(0);
   SDValue RHS = N.getOperand(1);
+  SDLoc dl(N);
 
   // We don't want to match immediate adds here, because they are better lowered
   // to the register-immediate addressing modes.
@@ -762,7 +772,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding && RHS.getOpcode() == ISD::SHL &&
       SelectExtendedSHL(RHS, Size, true, Offset, SignExtend)) {
     Base = LHS;
-    DoShift = CurDAG->getTargetConstant(true, MVT::i32);
+    DoShift = CurDAG->getTargetConstant(true, dl, MVT::i32);
     return true;
   }
 
@@ -770,12 +780,12 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding && LHS.getOpcode() == ISD::SHL &&
       SelectExtendedSHL(LHS, Size, true, Offset, SignExtend)) {
     Base = RHS;
-    DoShift = CurDAG->getTargetConstant(true, MVT::i32);
+    DoShift = CurDAG->getTargetConstant(true, dl, MVT::i32);
     return true;
   }
 
   // There was no shift, whatever else we find.
-  DoShift = CurDAG->getTargetConstant(false, MVT::i32);
+  DoShift = CurDAG->getTargetConstant(false, dl, MVT::i32);
 
   AArch64_AM::ShiftExtendType Ext = AArch64_AM::InvalidShiftExtend;
   // Try to match an unshifted extend on the LHS.
@@ -784,7 +794,8 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
           AArch64_AM::InvalidShiftExtend) {
     Base = RHS;
     Offset = narrowIfNeeded(CurDAG, LHS.getOperand(0));
-    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, MVT::i32);
+    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, dl,
+                                           MVT::i32);
     if (isWorthFolding(LHS))
       return true;
   }
@@ -795,7 +806,8 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
           AArch64_AM::InvalidShiftExtend) {
     Base = LHS;
     Offset = narrowIfNeeded(CurDAG, RHS.getOperand(0));
-    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, MVT::i32);
+    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, dl,
+                                           MVT::i32);
     if (isWorthFolding(RHS))
       return true;
   }
@@ -826,6 +838,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
     return false;
   SDValue LHS = N.getOperand(0);
   SDValue RHS = N.getOperand(1);
+  SDLoc DL(N);
 
   // Check if this particular node is reused in any non-memory related
   // operation.  If yes, do not try to fold this node into the address
@@ -857,7 +870,6 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
         isPreferredADD(ImmOff) || isPreferredADD(-ImmOff))
       return false;
 
-    SDLoc DL(N.getNode());
     SDValue Ops[] = { RHS };
     SDNode *MOVI =
         CurDAG->getMachineNode(AArch64::MOVi64imm, DL, MVT::i64, Ops);
@@ -873,7 +885,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding && RHS.getOpcode() == ISD::SHL &&
       SelectExtendedSHL(RHS, Size, false, Offset, SignExtend)) {
     Base = LHS;
-    DoShift = CurDAG->getTargetConstant(true, MVT::i32);
+    DoShift = CurDAG->getTargetConstant(true, DL, MVT::i32);
     return true;
   }
 
@@ -881,15 +893,15 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
   if (IsExtendedRegisterWorthFolding && LHS.getOpcode() == ISD::SHL &&
       SelectExtendedSHL(LHS, Size, false, Offset, SignExtend)) {
     Base = RHS;
-    DoShift = CurDAG->getTargetConstant(true, MVT::i32);
+    DoShift = CurDAG->getTargetConstant(true, DL, MVT::i32);
     return true;
   }
 
   // Match any non-shifted, non-extend, non-immediate add expression.
   Base = LHS;
   Offset = RHS;
-  SignExtend = CurDAG->getTargetConstant(false, MVT::i32);
-  DoShift = CurDAG->getTargetConstant(false, MVT::i32);
+  SignExtend = CurDAG->getTargetConstant(false, DL, MVT::i32);
+  DoShift = CurDAG->getTargetConstant(false, DL, MVT::i32);
   // Reg1 + Reg2 is free: no check needed.
   return true;
 }
@@ -922,18 +934,18 @@ SDValue AArch64DAGToDAGISel::createTuple(ArrayRef<SDValue> Regs,
 
   assert(Regs.size() >= 2 && Regs.size() <= 4);
 
-  SDLoc DL(Regs[0].getNode());
+  SDLoc DL(Regs[0]);
 
   SmallVector<SDValue, 4> Ops;
 
   // First operand of REG_SEQUENCE is the desired RegClass.
   Ops.push_back(
-      CurDAG->getTargetConstant(RegClassIDs[Regs.size() - 2], MVT::i32));
+      CurDAG->getTargetConstant(RegClassIDs[Regs.size() - 2], DL, MVT::i32));
 
   // Then we get pairs of source & subregister-position for the components.
   for (unsigned i = 0; i < Regs.size(); ++i) {
     Ops.push_back(Regs[i]);
-    Ops.push_back(CurDAG->getTargetConstant(SubRegs[i], MVT::i32));
+    Ops.push_back(CurDAG->getTargetConstant(SubRegs[i], DL, MVT::i32));
   }
 
   SDNode *N =
@@ -1030,19 +1042,21 @@ SDNode *AArch64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   SDValue Base = LD->getBasePtr();
   ConstantSDNode *OffsetOp = cast<ConstantSDNode>(LD->getOffset());
   int OffsetVal = (int)OffsetOp->getZExtValue();
-  SDValue Offset = CurDAG->getTargetConstant(OffsetVal, MVT::i64);
+  SDLoc dl(N);
+  SDValue Offset = CurDAG->getTargetConstant(OffsetVal, dl, MVT::i64);
   SDValue Ops[] = { Base, Offset, Chain };
-  SDNode *Res = CurDAG->getMachineNode(Opcode, SDLoc(N), MVT::i64, DstVT,
+  SDNode *Res = CurDAG->getMachineNode(Opcode, dl, MVT::i64, DstVT,
                                        MVT::Other, Ops);
   // Either way, we're replacing the node, so tell the caller that.
   Done = true;
   SDValue LoadedVal = SDValue(Res, 1);
   if (InsertTo64) {
-    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, MVT::i32);
+    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
     LoadedVal =
         SDValue(CurDAG->getMachineNode(
-                    AArch64::SUBREG_TO_REG, SDLoc(N), MVT::i64,
-                    CurDAG->getTargetConstant(0, MVT::i64), LoadedVal, SubReg),
+                    AArch64::SUBREG_TO_REG, dl, MVT::i64,
+                    CurDAG->getTargetConstant(0, dl, MVT::i64), LoadedVal,
+                    SubReg),
                 0);
   }
 
@@ -1198,7 +1212,7 @@ SDNode *AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
 
-  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 3), N->getOperand(0)};
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
@@ -1240,7 +1254,8 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
 
   SDValue Ops[] = {RegSeq,
-                   CurDAG->getTargetConstant(LaneNo, MVT::i64), // Lane Number
+                   CurDAG->getTargetConstant(LaneNo, dl,
+                                             MVT::i64),         // Lane Number
                    N->getOperand(NumVecs + 2),                  // Base register
                    N->getOperand(NumVecs + 3),                  // Incremental
                    N->getOperand(0)};
@@ -1291,7 +1306,7 @@ SDNode *AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
 
-  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 3), N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops);
 
@@ -1324,7 +1339,7 @@ SDNode *AArch64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs,
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
 
-  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 2), // Base Register
                    N->getOperand(NumVecs + 3), // Incremental
                    N->getOperand(0)};
@@ -1590,23 +1605,24 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
     return nullptr;
 
   EVT VT = N->getValueType(0);
+  SDLoc dl(N);
 
   // If the bit extract operation is 64bit but the original type is 32bit, we
   // need to add one EXTRACT_SUBREG.
   if ((Opc == AArch64::SBFMXri || Opc == AArch64::UBFMXri) && VT == MVT::i32) {
-    SDValue Ops64[] = {Opd0, CurDAG->getTargetConstant(LSB, MVT::i64),
-                       CurDAG->getTargetConstant(MSB, MVT::i64)};
+    SDValue Ops64[] = {Opd0, CurDAG->getTargetConstant(LSB, dl, MVT::i64),
+                       CurDAG->getTargetConstant(MSB, dl, MVT::i64)};
 
-    SDNode *BFM = CurDAG->getMachineNode(Opc, SDLoc(N), MVT::i64, Ops64);
-    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, MVT::i32);
+    SDNode *BFM = CurDAG->getMachineNode(Opc, dl, MVT::i64, Ops64);
+    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
     MachineSDNode *Node =
-        CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG, SDLoc(N), MVT::i32,
+        CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG, dl, MVT::i32,
                                SDValue(BFM, 0), SubReg);
     return Node;
   }
 
-  SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(LSB, VT),
-                   CurDAG->getTargetConstant(MSB, VT)};
+  SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(LSB, dl, VT),
+                   CurDAG->getTargetConstant(MSB, dl, VT)};
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
@@ -1810,6 +1826,7 @@ static SDValue getLeftShift(SelectionDAG *CurDAG, SDValue Op, int ShlAmount) {
     return Op;
 
   EVT VT = Op.getValueType();
+  SDLoc dl(Op);
   unsigned BitWidth = VT.getSizeInBits();
   unsigned UBFMOpc = BitWidth == 32 ? AArch64::UBFMWri : AArch64::UBFMXri;
 
@@ -1817,16 +1834,16 @@ static SDValue getLeftShift(SelectionDAG *CurDAG, SDValue Op, int ShlAmount) {
   if (ShlAmount > 0) {
     // LSL wD, wN, #Amt == UBFM wD, wN, #32-Amt, #31-Amt
     ShiftNode = CurDAG->getMachineNode(
-        UBFMOpc, SDLoc(Op), VT, Op,
-        CurDAG->getTargetConstant(BitWidth - ShlAmount, VT),
-        CurDAG->getTargetConstant(BitWidth - 1 - ShlAmount, VT));
+        UBFMOpc, dl, VT, Op,
+        CurDAG->getTargetConstant(BitWidth - ShlAmount, dl, VT),
+        CurDAG->getTargetConstant(BitWidth - 1 - ShlAmount, dl, VT));
   } else {
     // LSR wD, wN, #Amt == UBFM wD, wN, #Amt, #32-1
     assert(ShlAmount < 0 && "expected right shift");
     int ShrAmount = -ShlAmount;
     ShiftNode = CurDAG->getMachineNode(
-        UBFMOpc, SDLoc(Op), VT, Op, CurDAG->getTargetConstant(ShrAmount, VT),
-        CurDAG->getTargetConstant(BitWidth - 1, VT));
+        UBFMOpc, dl, VT, Op, CurDAG->getTargetConstant(ShrAmount, dl, VT),
+        CurDAG->getTargetConstant(BitWidth - 1, dl, VT));
   }
 
   return SDValue(ShiftNode, 0);
@@ -1991,10 +2008,11 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
     return nullptr;
 
   EVT VT = N->getValueType(0);
+  SDLoc dl(N);
   SDValue Ops[] = { Opd0,
                     Opd1,
-                    CurDAG->getTargetConstant(LSB, VT),
-                    CurDAG->getTargetConstant(MSB, VT) };
+                    CurDAG->getTargetConstant(LSB, dl, VT),
+                    CurDAG->getTargetConstant(MSB, dl, VT) };
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
@@ -2092,7 +2110,7 @@ AArch64DAGToDAGISel::SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos,
   // finding FBits, but it must still be in range.
   if (FBits == 0 || FBits > RegWidth) return false;
 
-  FixedPos = CurDAG->getTargetConstant(FBits, MVT::i32);
+  FixedPos = CurDAG->getTargetConstant(FBits, SDLoc(N), MVT::i32);
   return true;
 }
 
@@ -2207,8 +2225,9 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     unsigned Shifter = AArch64_AM::getShifterImm(AArch64_AM::LSL, 0);
     const TargetLowering *TLI = getTargetLowering();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
-    SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
-                      CurDAG->getTargetConstant(Shifter, MVT::i32) };
+    SDLoc DL(Node);
+    SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, DL, MVT::i32),
+                      CurDAG->getTargetConstant(Shifter, DL, MVT::i32) };
     return CurDAG->SelectNodeTo(Node, AArch64::ADDXri, MVT::i64, Ops);
   }
   case ISD::INTRINSIC_W_CHAIN: {

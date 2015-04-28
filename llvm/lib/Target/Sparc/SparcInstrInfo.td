@@ -64,13 +64,14 @@ def simm11  : PatLeaf<(imm), [{ return isInt<11>(N->getSExtValue()); }]>;
 def simm13  : PatLeaf<(imm), [{ return isInt<13>(N->getSExtValue()); }]>;
 
 def LO10 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() & 1023,
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() & 1023, SDLoc(N),
                                    MVT::i32);
 }]>;
 
 def HI22 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 10, MVT::i32);
+  return CurDAG->getTargetConstant((unsigned)N->getZExtValue() >> 10, SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 def SETHIimm : PatLeaf<(imm), [{

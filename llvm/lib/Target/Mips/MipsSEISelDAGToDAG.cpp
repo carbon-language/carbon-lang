@@ -253,9 +253,10 @@ SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
     // that SLTu64 produces an i32. We need to fix this in the long run but for
     // now, just make the DAG type-correct by asserting the upper bits are zero.
     Carry = CurDAG->getMachineNode(Mips::SUBREG_TO_REG, DL, VT,
-                                   CurDAG->getTargetConstant(0, VT),
+                                   CurDAG->getTargetConstant(0, DL, VT),
                                    SDValue(Carry, 0),
-                                   CurDAG->getTargetConstant(Mips::sub_32, VT));
+                                   CurDAG->getTargetConstant(Mips::sub_32, DL,
+                                                             VT));
   }
 
   // Generate a second addition only if we know that RHS is not a
@@ -276,7 +277,7 @@ bool MipsSEDAGToDAGISel::selectAddrFrameIndex(SDValue Addr, SDValue &Base,
     EVT ValTy = Addr.getValueType();
 
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-    Offset = CurDAG->getTargetConstant(0, ValTy);
+    Offset = CurDAG->getTargetConstant(0, SDLoc(Addr), ValTy);
     return true;
   }
   return false;
@@ -298,7 +299,8 @@ bool MipsSEDAGToDAGISel::selectAddrFrameIndexOffset(SDValue Addr, SDValue &Base,
       else
         Base = Addr.getOperand(0);
 
-      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
+      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), SDLoc(Addr),
+                                         ValTy);
       return true;
     }
   }
@@ -372,7 +374,7 @@ bool MipsSEDAGToDAGISel::selectAddrRegReg(SDValue Addr, SDValue &Base,
 bool MipsSEDAGToDAGISel::selectAddrDefault(SDValue Addr, SDValue &Base,
                                            SDValue &Offset) const {
   Base = Addr;
-  Offset = CurDAG->getTargetConstant(0, Addr.getValueType());
+  Offset = CurDAG->getTargetConstant(0, SDLoc(Addr), Addr.getValueType());
   return true;
 }
 
@@ -523,7 +525,7 @@ selectVSplatCommon(SDValue N, SDValue &Imm, bool Signed,
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
     if (( Signed && ImmValue.isSignedIntN(ImmBitSize)) ||
         (!Signed && ImmValue.isIntN(ImmBitSize))) {
-      Imm = CurDAG->getTargetConstant(ImmValue, EltTy);
+      Imm = CurDAG->getTargetConstant(ImmValue, SDLoc(N), EltTy);
       return true;
     }
   }
@@ -599,7 +601,7 @@ bool MipsSEDAGToDAGISel::selectVSplatUimmPow2(SDValue N, SDValue &Imm) const {
     int32_t Log2 = ImmValue.exactLogBase2();
 
     if (Log2 != -1) {
-      Imm = CurDAG->getTargetConstant(Log2, EltTy);
+      Imm = CurDAG->getTargetConstant(Log2, SDLoc(N), EltTy);
       return true;
     }
   }
@@ -632,7 +634,8 @@ bool MipsSEDAGToDAGISel::selectVSplatMaskL(SDValue N, SDValue &Imm) const {
     // as the original value.
     if (ImmValue == ~(~ImmValue & ~(~ImmValue + 1))) {
 
-      Imm = CurDAG->getTargetConstant(ImmValue.countPopulation(), EltTy);
+      Imm = CurDAG->getTargetConstant(ImmValue.countPopulation(), SDLoc(N),
+                                      EltTy);
       return true;
     }
   }
@@ -663,7 +666,8 @@ bool MipsSEDAGToDAGISel::selectVSplatMaskR(SDValue N, SDValue &Imm) const {
     // Extract the run of set bits starting with bit zero, and test that the
     // result is the same as the original value
     if (ImmValue == (ImmValue & ~(ImmValue + 1))) {
-      Imm = CurDAG->getTargetConstant(ImmValue.countPopulation(), EltTy);
+      Imm = CurDAG->getTargetConstant(ImmValue.countPopulation(), SDLoc(N),
+                                      EltTy);
       return true;
     }
   }
@@ -684,7 +688,7 @@ bool MipsSEDAGToDAGISel::selectVSplatUimmInvPow2(SDValue N,
     int32_t Log2 = (~ImmValue).exactLogBase2();
 
     if (Log2 != -1) {
-      Imm = CurDAG->getTargetConstant(Log2, EltTy);
+      Imm = CurDAG->getTargetConstant(Log2, SDLoc(N), EltTy);
       return true;
     }
   }
@@ -762,7 +766,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     SDLoc DL(CN);
     SDNode *RegOpnd;
     SDValue ImmOpnd = CurDAG->getTargetConstant(SignExtend64<16>(Inst->ImmOpnd),
-                                                MVT::i64);
+                                                DL, MVT::i64);
 
     // The first instruction can be a LUi which is different from other
     // instructions (ADDiu, ORI and SLL) in that it does not have a register
@@ -777,7 +781,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
 
     // The remaining instructions in the sequence are handled here.
     for (++Inst; Inst != Seq.end(); ++Inst) {
-      ImmOpnd = CurDAG->getTargetConstant(SignExtend64<16>(Inst->ImmOpnd),
+      ImmOpnd = CurDAG->getTargetConstant(SignExtend64<16>(Inst->ImmOpnd), DL,
                                           MVT::i64);
       RegOpnd = CurDAG->getMachineNode(Inst->Opc, DL, MVT::i64,
                                        SDValue(RegOpnd, 0), ImmOpnd);
@@ -848,7 +852,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     }
 
     SDNode *Rdhwr =
-      CurDAG->getMachineNode(RdhwrOpc, SDLoc(Node),
+      CurDAG->getMachineNode(RdhwrOpc, DL,
                              Node->getValueType(0),
                              CurDAG->getRegister(Mips::HWR29, MVT::i32));
     SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), DL, DestReg,
@@ -911,10 +915,10 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     if (!SplatValue.isSignedIntN(10))
       return std::make_pair(false, nullptr);
 
-    SDValue Imm = CurDAG->getTargetConstant(SplatValue,
+    SDValue Imm = CurDAG->getTargetConstant(SplatValue, DL,
                                             ViaVecTy.getVectorElementType());
 
-    SDNode *Res = CurDAG->getMachineNode(LdiOp, SDLoc(Node), ViaVecTy, Imm);
+    SDNode *Res = CurDAG->getMachineNode(LdiOp, DL, ViaVecTy, Imm);
 
     if (ResVecTy != ViaVecTy) {
       // If LdiOp is writing to a different register class to ResVecTy, then
@@ -924,9 +928,9 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
       const TargetLowering *TLI = getTargetLowering();
       MVT ResVecTySimple = ResVecTy.getSimpleVT();
       const TargetRegisterClass *RC = TLI->getRegClassFor(ResVecTySimple);
-      Res = CurDAG->getMachineNode(Mips::COPY_TO_REGCLASS, SDLoc(Node),
+      Res = CurDAG->getMachineNode(Mips::COPY_TO_REGCLASS, DL,
                                    ResVecTy, SDValue(Res, 0),
-                                   CurDAG->getTargetConstant(RC->getID(),
+                                   CurDAG->getTargetConstant(RC->getID(), DL,
                                                              MVT::i32));
     }
 
@@ -949,7 +953,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
   // All memory constraints can at least accept raw pointers.
   case InlineAsm::Constraint_i:
     OutOps.push_back(Op);
-    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    OutOps.push_back(CurDAG->getTargetConstant(0, SDLoc(Op), MVT::i32));
     return false;
   case InlineAsm::Constraint_m:
     if (selectAddrRegImm16(Op, Base, Offset)) {
@@ -958,7 +962,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
       return false;
     }
     OutOps.push_back(Op);
-    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    OutOps.push_back(CurDAG->getTargetConstant(0, SDLoc(Op), MVT::i32));
     return false;
   case InlineAsm::Constraint_R:
     // The 'R' constraint is supposed to be much more complicated than this.
@@ -972,7 +976,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
       return false;
     }
     OutOps.push_back(Op);
-    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    OutOps.push_back(CurDAG->getTargetConstant(0, SDLoc(Op), MVT::i32));
     return false;
   case InlineAsm::Constraint_ZC:
     // ZC matches whatever the pref, ll, and sc instructions can handle for the
@@ -999,7 +1003,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
     }
     // In all cases, 0-bit offsets are acceptable.
     OutOps.push_back(Op);
-    OutOps.push_back(CurDAG->getTargetConstant(0, MVT::i32));
+    OutOps.push_back(CurDAG->getTargetConstant(0, SDLoc(Op), MVT::i32));
     return false;
   }
   return true;

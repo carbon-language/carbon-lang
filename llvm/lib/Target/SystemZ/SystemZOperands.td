@@ -134,72 +134,79 @@ class BDLMode<string type, string bitsize, string dispsize, string suffix,
 // Bits 0-15 (counting from the lsb).
 def LL16 : SDNodeXForm<imm, [{
   uint64_t Value = N->getZExtValue() & 0x000000000000FFFFULL;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // Bits 16-31 (counting from the lsb).
 def LH16 : SDNodeXForm<imm, [{
   uint64_t Value = (N->getZExtValue() & 0x00000000FFFF0000ULL) >> 16;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // Bits 32-47 (counting from the lsb).
 def HL16 : SDNodeXForm<imm, [{
   uint64_t Value = (N->getZExtValue() & 0x0000FFFF00000000ULL) >> 32;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // Bits 48-63 (counting from the lsb).
 def HH16 : SDNodeXForm<imm, [{
   uint64_t Value = (N->getZExtValue() & 0xFFFF000000000000ULL) >> 48;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // Low 32 bits.
 def LF32 : SDNodeXForm<imm, [{
   uint64_t Value = N->getZExtValue() & 0x00000000FFFFFFFFULL;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // High 32 bits.
 def HF32 : SDNodeXForm<imm, [{
   uint64_t Value = N->getZExtValue() >> 32;
-  return CurDAG->getTargetConstant(Value, MVT::i64);
+  return CurDAG->getTargetConstant(Value, SDLoc(N), MVT::i64);
 }]>;
 
 // Truncate an immediate to a 8-bit signed quantity.
 def SIMM8 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(int8_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(int8_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Truncate an immediate to a 8-bit unsigned quantity.
 def UIMM8 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(uint8_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(uint8_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Truncate an immediate to a 16-bit signed quantity.
 def SIMM16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(int16_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(int16_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Truncate an immediate to a 16-bit unsigned quantity.
 def UIMM16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(uint16_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(uint16_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Truncate an immediate to a 32-bit signed quantity.
 def SIMM32 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(int32_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(int32_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Truncate an immediate to a 32-bit unsigned quantity.
 def UIMM32 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(uint32_t(N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(uint32_t(N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 // Negate and then truncate an immediate to a 32-bit unsigned quantity.
 def NEGIMM32 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(uint32_t(-N->getZExtValue()), MVT::i64);
+  return CurDAG->getTargetConstant(uint32_t(-N->getZExtValue()), SDLoc(N),
+                                   MVT::i64);
 }]>;
 
 //===----------------------------------------------------------------------===//

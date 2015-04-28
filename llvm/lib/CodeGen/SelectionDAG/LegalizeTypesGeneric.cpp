@@ -120,7 +120,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
       SmallVector<SDValue, 8> Vals;
       for (unsigned i = 0; i < NumElems; ++i)
         Vals.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, ElemVT,
-                                   CastInOp, DAG.getConstant(i,
+                                   CastInOp, DAG.getConstant(i, dl,
                                              TLI.getVectorIdxTy())));
 
       // Build Lo, Hi pair by pairing extracted elements if needed.
@@ -173,7 +173,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
   // Increment the pointer to the other half.
   unsigned IncrementSize = NOutVT.getSizeInBits() / 8;
   StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
-                         DAG.getConstant(IncrementSize,
+                         DAG.getConstant(IncrementSize, dl,
                                          StackPtr.getValueType()));
 
   // Load the second half from the stack slot.
@@ -238,7 +238,7 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, Idx);
 
   Idx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx,
-                    DAG.getConstant(1, Idx.getValueType()));
+                    DAG.getConstant(1, dl, Idx.getValueType()));
   Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, Idx);
 
   if (TLI.isBigEndian())
@@ -270,7 +270,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDValue &Lo,
   // Increment the pointer to the other half.
   unsigned IncrementSize = NVT.getSizeInBits() / 8;
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
+                    DAG.getConstant(IncrementSize, dl, Ptr.getValueType()));
   Hi = DAG.getLoad(NVT, dl, Chain, Ptr,
                    LD->getPointerInfo().getWithOffset(IncrementSize),
                    isVolatile, isNonTemporal, isInvariant,
@@ -439,7 +439,7 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
   NewVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NewVecVT, NewVec, Lo, Idx);
   Idx = DAG.getNode(ISD::ADD, dl,
                     Idx.getValueType(), Idx,
-                    DAG.getConstant(1, Idx.getValueType()));
+                    DAG.getConstant(1, dl, Idx.getValueType()));
   NewVec =  DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NewVecVT, NewVec, Hi, Idx);
 
   // Convert the new vector to the old vector type.
@@ -488,7 +488,7 @@ SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
                     isVolatile, isNonTemporal, Alignment, AAInfo);
 
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getConstant(IncrementSize, Ptr.getValueType()));
+                    DAG.getConstant(IncrementSize, dl, Ptr.getValueType()));
   Hi = DAG.getStore(Chain, dl, Hi, Ptr,
                     St->getPointerInfo().getWithOffset(IncrementSize),
                     isVolatile, isNonTemporal,

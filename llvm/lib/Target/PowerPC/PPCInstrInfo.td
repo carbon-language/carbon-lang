@@ -228,41 +228,42 @@ def PPCdynalloc   : SDNode<"PPCISD::DYNALLOC", SDTDynOp, [SDNPHasChain]>;
 
 def SHL32 : SDNodeXForm<imm, [{
   // Transformation function: 31 - imm
-  return getI32Imm(31 - N->getZExtValue());
+  return getI32Imm(31 - N->getZExtValue(), SDLoc(N));
 }]>;
 
 def SRL32 : SDNodeXForm<imm, [{
   // Transformation function: 32 - imm
-  return N->getZExtValue() ? getI32Imm(32 - N->getZExtValue()) : getI32Imm(0);
+  return N->getZExtValue() ? getI32Imm(32 - N->getZExtValue(), SDLoc(N))
+                           : getI32Imm(0, SDLoc(N));
 }]>;
 
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
-  return getI32Imm((unsigned short)N->getZExtValue());
+  return getI32Imm((unsigned short)N->getZExtValue(), SDLoc(N));
 }]>;
 
 def HI16 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned)N->getZExtValue() >> 16);
+  return getI32Imm((unsigned)N->getZExtValue() >> 16, SDLoc(N));
 }]>;
 
 def HA16 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
   signed int Val = N->getZExtValue();
-  return getI32Imm((Val - (signed short)Val) >> 16);
+  return getI32Imm((Val - (signed short)Val) >> 16, SDLoc(N));
 }]>;
 def MB : SDNodeXForm<imm, [{
   // Transformation function: get the start bit of a mask
   unsigned mb = 0, me;
   (void)isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
-  return getI32Imm(mb);
+  return getI32Imm(mb, SDLoc(N));
 }]>;
 
 def ME : SDNodeXForm<imm, [{
   // Transformation function: get the end bit of a mask
   unsigned mb, me = 0;
   (void)isRunOfOnes((unsigned)N->getZExtValue(), mb, me);
-  return getI32Imm(me);
+  return getI32Imm(me, SDLoc(N));
 }]>;
 def maskimm32 : PatLeaf<(imm), [{
   // maskImm predicate - True if immediate is a run of ones.

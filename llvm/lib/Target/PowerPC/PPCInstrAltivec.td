@@ -144,7 +144,7 @@ def vmrghw_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 
 
 def VSLDOI_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 0, *CurDAG));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 0, *CurDAG), SDLoc(N));
 }]>;
 def vsldoi_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
@@ -155,7 +155,7 @@ def vsldoi_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 /// VSLDOI_unary* - These are used to match vsldoi(X,X), which is turned into
 /// vector_shuffle(X,undef,mask) by the dag combiner.
 def VSLDOI_unary_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 1, *CurDAG));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 1, *CurDAG), SDLoc(N));
 }]>;
 def vsldoi_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                    (vector_shuffle node:$lhs, node:$rhs), [{
@@ -166,7 +166,7 @@ def vsldoi_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 /// VSLDOI_swapped* - These fragments are provided for little-endian, where
 /// the inputs must be swapped for correct semantics.
 def VSLDOI_swapped_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 2, *CurDAG));
+  return getI32Imm(PPC::isVSLDOIShuffleMask(N, 2, *CurDAG), SDLoc(N));
 }]>;
 def vsldoi_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                      (vector_shuffle node:$lhs, node:$rhs), [{
@@ -176,21 +176,21 @@ def vsldoi_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 
 // VSPLT*_get_imm xform function: convert vector_shuffle mask to VSPLT* imm.
 def VSPLTB_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 1, *CurDAG));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 1, *CurDAG), SDLoc(N));
 }]>;
 def vspltb_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isSplatShuffleMask(cast<ShuffleVectorSDNode>(N), 1);
 }], VSPLTB_get_imm>;
 def VSPLTH_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 2, *CurDAG));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 2, *CurDAG), SDLoc(N));
 }]>;
 def vsplth_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isSplatShuffleMask(cast<ShuffleVectorSDNode>(N), 2);
 }], VSPLTH_get_imm>;
 def VSPLTW_get_imm : SDNodeXForm<vector_shuffle, [{
-  return getI32Imm(PPC::getVSPLTImmediate(N, 4, *CurDAG));
+  return getI32Imm(PPC::getVSPLTImmediate(N, 4, *CurDAG), SDLoc(N));
 }]>;
 def vspltw_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                              (vector_shuffle node:$lhs, node:$rhs), [{

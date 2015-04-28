@@ -126,7 +126,8 @@ def SIconstdata_ptr : SDNode<
 
 // Transformation function, extract the lower 32bit of a 64bit immediate
 def LO32 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, SDLoc(N),
+                                   MVT::i32);
 }]>;
 
 def LO32f : SDNodeXForm<fpimm, [{
@@ -136,12 +137,13 @@ def LO32f : SDNodeXForm<fpimm, [{
 
 // Transformation function, extract the upper 32bit of a 64bit immediate
 def HI32 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() >> 32, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() >> 32, SDLoc(N), MVT::i32);
 }]>;
 
 def HI32f : SDNodeXForm<fpimm, [{
   APInt V = N->getValueAPF().bitcastToAPInt().lshr(32).trunc(32);
-  return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), MVT::f32);
+  return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), SDLoc(N),
+                                     MVT::f32);
 }]>;
 
 def IMM8bitDWORD : PatLeaf <(imm),
@@ -149,39 +151,39 @@ def IMM8bitDWORD : PatLeaf <(imm),
 >;
 
 def as_dword_i32imm : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue() >> 2, MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue() >> 2, SDLoc(N), MVT::i32);
 }]>;
 
 def as_i1imm : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i1);
+  return CurDAG->getTargetConstant(N->getZExtValue(), SDLoc(N), MVT::i1);
 }]>;
 
 def as_i8imm : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i8);
+  return CurDAG->getTargetConstant(N->getZExtValue(), SDLoc(N), MVT::i8);
 }]>;
 
 def as_i16imm : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i16);
+  return CurDAG->getTargetConstant(N->getSExtValue(), SDLoc(N), MVT::i16);
 }]>;
 
 def as_i32imm: SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i32);
+  return CurDAG->getTargetConstant(N->getSExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 def as_i64imm: SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i64);
+  return CurDAG->getTargetConstant(N->getSExtValue(), SDLoc(N), MVT::i64);
 }]>;
 
 // Copied from the AArch64 backend:
 def bitcast_fpimm_to_i32 : SDNodeXForm<fpimm, [{
 return CurDAG->getTargetConstant(
-  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i32);
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), SDLoc(N), MVT::i32);
 }]>;
 
 // Copied from the AArch64 backend:
 def bitcast_fpimm_to_i64 : SDNodeXForm<fpimm, [{
 return CurDAG->getTargetConstant(
-  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i64);
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), SDLoc(N), MVT::i64);
 }]>;
 
 def IMM8bit : PatLeaf <(imm),
