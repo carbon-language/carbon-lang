@@ -61,8 +61,8 @@ void throws() {
   // PGOUSE: ret void
 }
 
-// PGOGEN-LABEL: @_Z11unreachablei(i32 %i)
-// PGOUSE-LABEL: @_Z11unreachablei(i32 %i)
+// PGOGEN-LABEL: @_Z11unreachablei(i32
+// PGOUSE-LABEL: @_Z11unreachablei(i32
 // PGOGEN: store {{.*}} @[[UNC]], i64 0, i64 0
 void unreachable(int i) {
   // PGOGEN: store {{.*}} @[[UNC]], i64 0, i64 1
