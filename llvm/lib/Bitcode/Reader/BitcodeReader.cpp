@@ -4022,21 +4022,28 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, opty, op, align]
       if (Record.size() != 4)
         return Error("Invalid record");
-      PointerType *Ty =
-        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
-      Type *OpTy = getTypeByID(Record[1]);
-      Value *Size = getFnValueByID(Record[2], OpTy);
       uint64_t AlignRecord = Record[3];
       const uint64_t InAllocaMask = uint64_t(1) << 5;
+      const uint64_t ExplicitTypeMask = uint64_t(1) << 6;
+      const uint64_t FlagMask = InAllocaMask | ExplicitTypeMask;
       bool InAlloca = AlignRecord & InAllocaMask;
+      Type *Ty = getTypeByID(Record[0]);
+      if ((AlignRecord & ExplicitTypeMask) == 0) {
+        auto *PTy = dyn_cast_or_null<PointerType>(Ty);
+        if (!PTy)
+          return Error("Old-style alloca with a non-pointer type");
+        Ty = PTy->getElementType();
+      }
+      Type *OpTy = getTypeByID(Record[1]);
+      Value *Size = getFnValueByID(Record[2], OpTy);
       unsigned Align;
       if (std::error_code EC =
-          parseAlignmentValue(AlignRecord & ~InAllocaMask, Align)) {
+              parseAlignmentValue(AlignRecord & ~FlagMask, Align)) {
         return EC;
       }
       if (!Ty || !Size)
         return Error("Invalid record");
-      AllocaInst *AI = new AllocaInst(Ty->getElementType(), Size, Align);
+      AllocaInst *AI = new AllocaInst(Ty, Size, Align);
       AI->setUsedWithInAlloca(InAlloca);
       I = AI;
       InstructionList.push_back(I);

@@ -1870,15 +1870,16 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
   case Instruction::Alloca: {
     Code = bitc::FUNC_CODE_INST_ALLOCA;
-    Vals.push_back(VE.getTypeID(I.getType()));
+    const AllocaInst &AI = cast<AllocaInst>(I);
+    Vals.push_back(VE.getTypeID(AI.getAllocatedType()));
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
     Vals.push_back(VE.getValueID(I.getOperand(0))); // size.
-    const AllocaInst &AI = cast<AllocaInst>(I);
     unsigned AlignRecord = Log2_32(AI.getAlignment()) + 1;
     assert(Log2_32(Value::MaximumAlignment) + 1 < 1 << 5 &&
            "not enough bits for maximum alignment");
     assert(AlignRecord < 1 << 5 && "alignment greater than 1 << 64");
     AlignRecord |= AI.isUsedWithInAlloca() << 5;
+    AlignRecord |= 1 << 6;
     Vals.push_back(AlignRecord);
     break;
   }
