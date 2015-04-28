@@ -939,20 +939,16 @@ bool ELFObjectWriter::isLocal(const MCSymbolData &Data, bool isUsedInReloc) {
 void ELFObjectWriter::computeIndexMap(MCAssembler &Asm,
                                       SectionIndexMapTy &SectionIndexMap) {
   unsigned Index = 1;
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
+  for (const MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(it->getSection());
+        static_cast<const MCSectionELF &>(SD.getSection());
     if (Section.getType() != ELF::SHT_GROUP)
       continue;
     SectionIndexMap[&Section] = Index++;
   }
 
   std::vector<const MCSectionELF *> RelSections;
-
-  for (MCAssembler::iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSectionData &SD = *it;
+  for (const MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF &>(SD.getSection());
     if (Section.getType() == ELF::SHT_GROUP ||
