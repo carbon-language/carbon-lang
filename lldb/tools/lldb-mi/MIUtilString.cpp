@@ -17,6 +17,7 @@
 
 // In-house headers:
 #include "MIUtilString.h"
+#include "Platform.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMIUtilString constructor.
@@ -844,8 +845,9 @@ CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
                     strNew.push_back(cUnescapedChar);
                 else
                 {
-                    char strEscapedChar[sizeof("\\xXX")];
-                    ::sprintf(strEscapedChar, "\\x%02" PRIx8, cUnescapedChar);
+                    const size_t size = sizeof("\\xXX");
+                    char strEscapedChar[size];
+                    ::snprintf(strEscapedChar, size, "\\x%02" PRIx8, cUnescapedChar);
                     strNew.append(strEscapedChar);
                 }
                 break;
