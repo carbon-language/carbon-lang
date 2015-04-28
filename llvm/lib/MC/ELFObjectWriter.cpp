@@ -91,9 +91,6 @@ class ELFObjectWriter : public MCObjectWriter {
                            bool Used, bool Renamed);
     static bool isLocal(const MCSymbolData &Data, bool isUsedInReloc);
     static bool IsELFMetaDataSection(const MCSectionData &SD);
-    static uint64_t DataSectionSize(const MCSectionData &SD);
-    static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
-                                          const MCSectionData &SD);
 
     void writeDataSectionData(MCAssembler &Asm, const MCAsmLayout &Layout,
                               const MCSectionData &SD);
@@ -224,8 +221,9 @@ class ELFObjectWriter : public MCObjectWriter {
     typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
     // Map from a signature symbol to the group section
     typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
-    // Map from a section to its offset
-    typedef DenseMap<const MCSectionELF*, uint64_t> SectionOffsetMapTy;
+    // Map from a section to its start and end offset
+    typedef DenseMap<const MCSectionELF *, std::pair<uint64_t, uint64_t>>
+        SectionOffsetMapTy;
 
     /// Compute the symbol table data
     ///
@@ -1533,24 +1531,6 @@ bool ELFObjectWriter::IsELFMetaDataSection(const MCSectionData &SD) {
     !SD.getSection().isVirtualSection();
 }
 
-uint64_t ELFObjectWriter::DataSectionSize(const MCSectionData &SD) {
-  uint64_t Ret = 0;
-  for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
-       ++i) {
-    const MCFragment &F = *i;
-    assert(F.getKind() == MCFragment::FT_Data);
-    Ret += cast<MCDataFragment>(F).getContents().size();
-  }
-  return Ret;
-}
-
-uint64_t ELFObjectWriter::GetSectionAddressSize(const MCAsmLayout &Layout,
-                                                const MCSectionData &SD) {
-  if (IsELFMetaDataSection(SD))
-    return DataSectionSize(SD);
-  return Layout.getSectionAddressSize(&SD);
-}
-
 void ELFObjectWriter::writeDataSectionData(MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCSectionData &SD) {
@@ -1590,11 +1570,14 @@ void ELFObjectWriter::writeSectionHeader(
       GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm,
                                                      GroupMap.lookup(&Section));
 
-    uint64_t Size = GetSectionAddressSize(Layout, SD);
+    const std::pair<uint64_t, uint64_t> &Offsets =
+        SectionOffsetMap.lookup(&Section);
+    uint64_t Size = Section.getType() == ELF::SHT_NOBITS
+                        ? Layout.getSectionAddressSize(&SD)
+                        : Offsets.second - Offsets.first;
 
-    writeSection(Asm, SectionIndexMap, GroupSymbolIndex,
-                 SectionOffsetMap.lookup(&Section), Size, SD.getAlignment(),
-                 Section);
+    writeSection(Asm, SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
+                 SD.getAlignment(), Section);
   }
 }
 
@@ -1637,9 +1620,10 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     WriteZeros(Padding);
 
     // Remember the offset into the file for this section.
-    SectionOffsetMap[&Section] = OS.tell();
-
+    uint64_t SecStart = OS.tell();
     writeDataSectionData(Asm, Layout, SD);
+    uint64_t SecEnd = OS.tell();
+    SectionOffsetMap[&Section] = std::make_pair(SecStart, SecEnd);
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
