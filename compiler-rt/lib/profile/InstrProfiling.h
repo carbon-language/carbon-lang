@@ -62,7 +62,9 @@ uint64_t *__llvm_profile_end_counters(void);
  *
  * Writes to the file with the last name given to \a __llvm_profile_set_filename(),
  * or if it hasn't been called, the \c LLVM_PROFILE_FILE environment variable,
- * or if that's not set, \c "default.profdata".
+ * or if that's not set, the last name given to
+ * \a __llvm_profile_override_default_filename(), or if that's not set,
+ * \c "default.profdata".
  */
 int __llvm_profile_write_file(void);
 
@@ -76,6 +78,19 @@ int __llvm_profile_write_file(void);
  * filename logic to the default behaviour.
  */
 void __llvm_profile_set_filename(const char *Name);
+
+/*!
+ * \brief Set the filename for writing instrumentation data, unless the
+ * \c LLVM_PROFILE_FILE environment variable was set.
+ *
+ * Unless overridden, sets the filename to be used for subsequent calls to
+ * \a __llvm_profile_write_file().
+ *
+ * \c Name is not copied, so it must remain valid.  Passing NULL resets the
+ * filename logic to the default behaviour (unless the \c LLVM_PROFILE_FILE
+ * was set in which case it has no effect).
+ */
+void __llvm_profile_override_default_filename(const char *Name);
 
 /*! \brief Register to write instrumentation data to file at exit. */
 int __llvm_profile_register_write_file_atexit(void);
