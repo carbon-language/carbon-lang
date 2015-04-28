@@ -5769,12 +5769,16 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
            diag::err_thread_non_global)
         << DeclSpec::getSpecifierName(TSCS);
     else if (!Context.getTargetInfo().isTLSSupported()) {
-      if (getLangOpts().CUDA)
+      if (getLangOpts().CUDA) {
         // Postpone error emission until we've collected attributes required to
         // figure out whether it's a host or device variable and whether the
         // error should be ignored.
         EmitTLSUnsupportedError = true;
-      else
+        // We still need to mark the variable as TLS so it shows up in AST with
+        // proper storage class for other tools to use even if we're not going
+        // to emit any code for it.
+        NewVD->setTSCSpec(TSCS);
+      } else
         Diag(D.getDeclSpec().getThreadStorageClassSpecLoc(),
              diag::err_thread_unsupported);
     } else
