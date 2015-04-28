@@ -128,7 +128,7 @@ int access_p(T *p, char type) {
     // CHECK-MEMBER-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-MEMBER-NEXT: {{^              vptr for}} [[DYN_TYPE]]
-    // CHECK-MEMBER-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-MEMBER-NEXT: #0 {{.*}}access_p{{.*}}vptr.cpp:[[@LINE+1]]
     return p->b;
 
     // CHECK-NULL-MEMBER: vptr.cpp:[[@LINE-2]]:15: runtime error: member access within address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
@@ -136,7 +136,7 @@ int access_p(T *p, char type) {
     // CHECK-NULL-MEMBER-NEXT: {{^  ?.. .. .. ..  ?00 00 00 00  ?00 00 00 00  ?}}
     // CHECK-NULL-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-NULL-MEMBER-NEXT: {{^              invalid vptr}}
-    // CHECK-NULL-MEMBER-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE-7]]
+    // CHECK-NULL-MEMBER-NEXT: #0 {{.*}}access_p{{.*}}vptr.cpp:[[@LINE-7]]
 
   case 'f':
     // CHECK-MEMFUN: vptr.cpp:[[@LINE+6]]:12: runtime error: member call on address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
@@ -153,7 +153,7 @@ int access_p(T *p, char type) {
     // CHECK-OFFSET-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-OFFSET-NEXT: {{^              \^                        (                         ~~~~~~~~~~~~)?~~~~~~~~~~~ *$}}
     // CHECK-OFFSET-NEXT: {{^                                       (                         )?vptr for}} 'T' base class of [[DYN_TYPE]]
-    // CHECK-OFFSET-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-OFFSET-NEXT: #0 {{.*}}access_p{{.*}}vptr.cpp:[[@LINE+1]]
     return reinterpret_cast<U*>(p)->v() - 2;
 
   case 'c':
@@ -162,7 +162,7 @@ int access_p(T *p, char type) {
     // CHECK-DOWNCAST-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-DOWNCAST-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-DOWNCAST-NEXT: {{^              vptr for}} [[DYN_TYPE]]
-    // CHECK-DOWNCAST-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-DOWNCAST-NEXT: #0 {{.*}}access_p{{.*}}vptr.cpp:[[@LINE+1]]
     static_cast<T*>(reinterpret_cast<S*>(p));
     return 0;
   }

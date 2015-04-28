@@ -107,9 +107,11 @@ if(UNIX AND NOT APPLE)
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+              $<TARGET_OBJECTS:RTUbsan.${arch}>
       CFLAGS ${TSAN_RTL_CFLAGS})
     add_compiler_rt_runtime(clang_rt.tsan_cxx-${arch} ${arch} STATIC
       SOURCES ${TSAN_CXX_SOURCES}
+              $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
       CFLAGS ${TSAN_RTL_CFLAGS})
     list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch}
                                        clang_rt.tsan_cxx-${arch})

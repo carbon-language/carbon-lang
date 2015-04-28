@@ -24,6 +24,7 @@
 #include "tsan_mman.h"
 #include "tsan_suppressions.h"
 #include "tsan_symbolize.h"
+#include "ubsan/ubsan_init.h"
 
 #ifdef __SSE3__
 // <emmintrin.h> transitively includes <stdlib.h>,
@@ -350,6 +351,9 @@ void Initialize(ThreadState *thr) {
   int tid = ThreadCreate(thr, 0, 0, true);
   CHECK_EQ(tid, 0);
   ThreadStart(thr, tid, internal_getpid());
+#if TSAN_CONTAINS_UBSAN
+  __ubsan::InitAsPlugin();
+#endif
   ctx->initialized = true;
 
   if (flags()->stop_on_start) {

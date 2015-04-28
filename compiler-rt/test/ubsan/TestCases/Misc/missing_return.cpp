@@ -6,8 +6,8 @@
 int f() {
 // Slow stack unwinding is disabled on Darwin for now, see
 // https://code.google.com/p/address-sanitizer/issues/detail?id=137
-// CHECK-Linux-STACKTRACE: #0 {{.*}} in f(){{.*}}missing_return.cpp:[[@LINE-3]]
-// CHECK-FreeBSD-STACKTRACE: #0 {{.*}} in f(void){{.*}}missing_return.cpp:[[@LINE-4]]
+// CHECK-Linux-STACKTRACE: #0 {{.*}}f(){{.*}}missing_return.cpp:[[@LINE-3]]
+// CHECK-FreeBSD-STACKTRACE: #0 {{.*}}f(void){{.*}}missing_return.cpp:[[@LINE-4]]
 // Check for already checked line to avoid lit error reports.
 // CHECK-Darwin-STACKTRACE: missing_return.cpp
 }

@@ -17,6 +17,7 @@
 #include "tsan_flags.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
+#include "ubsan/ubsan_flags.h"
 
 namespace __tsan {
 
@@ -54,12 +55,6 @@ void RegisterTsanFlags(FlagParser *parser, Flags *f) {
 }
 
 void InitializeFlags(Flags *f, const char *env) {
-  FlagParser parser;
-  RegisterTsanFlags(&parser, f);
-  RegisterCommonFlags(&parser);
-
-  f->SetDefaults();
-
   SetCommonFlagsDefaults();
   {
     // Override some common flags defaults.
@@ -74,10 +69,32 @@ void InitializeFlags(Flags *f, const char *env) {
     OverrideCommonFlags(cf);
   }
 
+  f->SetDefaults();
+
+  FlagParser parser;
+  RegisterTsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
+
+#if TSAN_CONTAINS_UBSAN
+  __ubsan::Flags *uf = __ubsan::flags();
+  uf->SetDefaults();
+
+  FlagParser ubsan_parser;
+  __ubsan::RegisterUbsanFlags(&ubsan_parser, uf);
+  RegisterCommonFlags(&ubsan_parser);
+#endif
+
   // Let a frontend override.
   parser.ParseString(__tsan_default_options());
+#if TSAN_CONTAINS_UBSAN
+  const char *ubsan_default_options = __ubsan::MaybeCallUbsanDefaultOptions();
+  ubsan_parser.ParseString(ubsan_default_options);
+#endif
   // Override from command line.
   parser.ParseString(env);
+#if TSAN_CONTAINS_UBSAN
+  ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
+#endif
 
   // Sanity check.
   if (!f->report_bugs) {

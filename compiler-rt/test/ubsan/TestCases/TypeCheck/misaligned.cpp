@@ -45,7 +45,7 @@ int main(int, char **argv) {
     return *p && 0;
     // Slow stack unwinding is disabled on Darwin for now, see
     // https://code.google.com/p/address-sanitizer/issues/detail?id=137
-    // CHECK-Linux-STACK-LOAD: #0 {{.*}} in main{{.*}}misaligned.cpp
+    // CHECK-Linux-STACK-LOAD: #0 {{.*}}main{{.*}}misaligned.cpp
     // Check for the already checked line to avoid lit error reports.
     // CHECK-Darwin-STACK-LOAD: {{ }}
 

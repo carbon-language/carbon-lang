@@ -26,6 +26,8 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
+#include "ubsan/ubsan_flags.h"
+#include "ubsan/ubsan_init.h"
 
 // ACHTUNG! No system header includes in this file.
 
@@ -133,11 +135,6 @@ static void RegisterMsanFlags(FlagParser *parser, Flags *f) {
 }
 
 static void InitializeFlags() {
-  Flags *f = flags();
-  FlagParser parser;
-  RegisterMsanFlags(&parser, f);
-  RegisterCommonFlags(&parser);
-
   SetCommonFlagsDefaults();
   {
     CommonFlags cf;
@@ -151,14 +148,35 @@ static void InitializeFlags() {
     OverrideCommonFlags(cf);
   }
 
+  Flags *f = flags();
   f->SetDefaults();
+
+  FlagParser parser;
+  RegisterMsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
+
+#if MSAN_CONTAINS_UBSAN
+  __ubsan::Flags *uf = __ubsan::flags();
+  uf->SetDefaults();
+
+  FlagParser ubsan_parser;
+  __ubsan::RegisterUbsanFlags(&ubsan_parser, uf);
+  RegisterCommonFlags(&ubsan_parser);
+#endif
 
   // Override from user-specified string.
   if (__msan_default_options)
     parser.ParseString(__msan_default_options());
+#if MSAN_CONTAINS_UBSAN
+  const char *ubsan_default_options = __ubsan::MaybeCallUbsanDefaultOptions();
+  ubsan_parser.ParseString(ubsan_default_options);
+#endif
 
   const char *msan_options = GetEnv("MSAN_OPTIONS");
   parser.ParseString(msan_options);
+#if MSAN_CONTAINS_UBSAN
+  ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
+#endif
   VPrintf(1, "MSAN_OPTIONS: %s\n", msan_options ? msan_options : "<empty>");
 
   SetVerbosity(common_flags()->verbosity);
@@ -391,6 +409,10 @@ void __msan_init() {
   MsanThread *main_thread = MsanThread::Create(0, 0);
   SetCurrentThread(main_thread);
   main_thread->ThreadStart();
+
+#if MSAN_CONTAINS_UBSAN
+  __ubsan::InitAsPlugin();
+#endif
 
   VPrintf(1, "MemorySanitizer init done\n");
 

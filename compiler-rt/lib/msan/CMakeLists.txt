@@ -32,9 +32,11 @@ foreach(arch ${MSAN_SUPPORTED_ARCH})
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+            $<TARGET_OBJECTS:RTUbsan.${arch}>
     CFLAGS ${MSAN_RTL_CFLAGS})
   add_compiler_rt_runtime(clang_rt.msan_cxx-${arch} ${arch} STATIC
     SOURCES ${MSAN_RTL_CXX_SOURCES}
+            $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
     CFLAGS ${MSAN_RTL_CFLAGS})
   add_dependencies(msan clang_rt.msan-${arch}
                         clang_rt.msan_cxx-${arch})

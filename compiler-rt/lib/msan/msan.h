@@ -20,9 +20,14 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "msan_interface_internal.h"
 #include "msan_flags.h"
+#include "ubsan/ubsan_platform.h"
 
 #ifndef MSAN_REPLACE_OPERATORS_NEW_AND_DELETE
 # define MSAN_REPLACE_OPERATORS_NEW_AND_DELETE 1
+#endif
+
+#ifndef MSAN_CONTAINS_UBSAN
+# define MSAN_CONTAINS_UBSAN CAN_SANITIZE_UB
 #endif
 
 struct MappingDesc {

@@ -17,6 +17,7 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
+#include "ubsan/ubsan_platform.h"
 
 // Setup defaults for compile definitions.
 #ifndef TSAN_NO_HISTORY
@@ -25,6 +26,10 @@
 
 #ifndef TSAN_COLLECT_STATS
 # define TSAN_COLLECT_STATS 0
+#endif
+
+#ifndef TSAN_CONTAINS_UBSAN
+# define TSAN_CONTAINS_UBSAN (CAN_SANITIZE_UB && !defined(SANITIZER_GO))
 #endif
 
 namespace __tsan {
