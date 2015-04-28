@@ -337,10 +337,10 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
   return Result;
 }
 
-const MCSectionELF *MCContext::CreateELFGroupSection() {
+const MCSectionELF *MCContext::createELFGroupSection(const MCSymbol *Group) {
   MCSectionELF *Result = new (*this)
       MCSectionELF(".group", ELF::SHT_GROUP, 0, SectionKind::getReadOnly(), 4,
-                   nullptr, ~0, nullptr, nullptr);
+                   Group, ~0, nullptr, nullptr);
   return Result;
 }
 

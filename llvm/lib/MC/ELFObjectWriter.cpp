@@ -217,8 +217,6 @@ class ELFObjectWriter : public MCObjectWriter {
     uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
 
-    // Map from a group section to the signature symbol
-    typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
     // Map from a signature symbol to the group section
     typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
     // Start and end offset of each section
@@ -248,15 +246,14 @@ class ELFObjectWriter : public MCObjectWriter {
     // Create the sections that show up in the symbol table. Currently
     // those are the .note.GNU-stack section and the group sections.
     void createIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                               GroupMapTy &GroupMap, RevGroupMapTy &RevGroupMap,
+                               RevGroupMapTy &RevGroupMap,
                                SectionIndexMapTy &SectionIndexMap);
 
     void ExecutePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
 
     void writeSectionHeader(ArrayRef<const MCSectionELF *> Sections,
-                            MCAssembler &Asm, const GroupMapTy &GroupMap,
-                            const MCAsmLayout &Layout,
+                            MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetsTy &SectionOffsets);
 
@@ -1422,8 +1419,8 @@ void ELFObjectWriter::CreateMetadataSections(
 }
 
 void ELFObjectWriter::createIndexedSections(
-    MCAssembler &Asm, MCAsmLayout &Layout, GroupMapTy &GroupMap,
-    RevGroupMapTy &RevGroupMap, SectionIndexMapTy &SectionIndexMap) {
+    MCAssembler &Asm, MCAsmLayout &Layout, RevGroupMapTy &RevGroupMap,
+    SectionIndexMapTy &SectionIndexMap) {
   MCContext &Ctx = Asm.getContext();
 
   // Build the groups
@@ -1438,13 +1435,12 @@ void ELFObjectWriter::createIndexedSections(
     Asm.getOrCreateSymbolData(*SignatureSymbol);
     const MCSectionELF *&Group = RevGroupMap[SignatureSymbol];
     if (!Group) {
-      Group = Ctx.CreateELFGroupSection();
+      Group = Ctx.createELFGroupSection(SignatureSymbol);
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
       Data.setAlignment(4);
       MCDataFragment *F = new MCDataFragment(&Data);
       write(*F, uint32_t(ELF::GRP_COMDAT));
     }
-    GroupMap[Group] = SignatureSymbol;
   }
 
   computeIndexMap(Asm, SectionIndexMap);
@@ -1540,8 +1536,7 @@ void ELFObjectWriter::writeDataSectionData(MCAssembler &Asm,
 
 void ELFObjectWriter::writeSectionHeader(
     ArrayRef<const MCSectionELF *> Sections, MCAssembler &Asm,
-    const GroupMapTy &GroupMap, const MCAsmLayout &Layout,
-    const SectionIndexMapTy &SectionIndexMap,
+    const MCAsmLayout &Layout, const SectionIndexMapTy &SectionIndexMap,
     const SectionOffsetsTy &SectionOffsets) {
   const unsigned NumSections = Asm.size();
 
@@ -1559,8 +1554,7 @@ void ELFObjectWriter::writeSectionHeader(
     if (Section.getType() != ELF::SHT_GROUP)
       GroupSymbolIndex = 0;
     else
-      GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm,
-                                                     GroupMap.lookup(&Section));
+      GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm, Section.getGroup());
 
     const std::pair<uint64_t, uint64_t> &Offsets = SectionOffsets[i];
     uint64_t Size = Section.getType() == ELF::SHT_NOBITS
@@ -1574,13 +1568,12 @@ void ELFObjectWriter::writeSectionHeader(
 
 void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
-  GroupMapTy GroupMap;
   RevGroupMapTy RevGroupMap;
   SectionIndexMapTy SectionIndexMap;
 
   CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
-  createIndexedSections(Asm, const_cast<MCAsmLayout &>(Layout), GroupMap,
-                        RevGroupMap, SectionIndexMap);
+  createIndexedSections(Asm, const_cast<MCAsmLayout &>(Layout), RevGroupMap,
+                        SectionIndexMap);
 
   // Compute symbol table information.
   computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap);
@@ -1621,8 +1614,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   const unsigned SectionHeaderOffset = OS.tell();
 
   // ... then the section header table ...
-  writeSectionHeader(Sections, Asm, GroupMap, Layout, SectionIndexMap,
-                     SectionOffsets);
+  writeSectionHeader(Sections, Asm, Layout, SectionIndexMap, SectionOffsets);
 
   if (is64Bit()) {
     uint64_t Val = SectionHeaderOffset;
