@@ -1482,7 +1482,7 @@ ExprResult Sema::BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
   // Collect information from the lambda scope.
   SmallVector<LambdaCapture, 4> Captures;
   SmallVector<Expr *, 4> CaptureInits;
-  LambdaCaptureDefault CaptureDefault;
+  LambdaCaptureDefault CaptureDefault = LCD_None;
   SourceLocation CaptureDefaultLoc;
   CXXRecordDecl *Class;
   CXXMethodDecl *CallOperator;
