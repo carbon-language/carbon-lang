@@ -160,7 +160,9 @@ static bool getDefaultBlacklist(const Driver &D, uint64_t Kinds,
 
 bool SanitizerArgs::needsUbsanRt() const {
   return !UbsanTrapOnError && hasOneOf(Sanitizers, NeedsUbsanRt) &&
-         !Sanitizers.has(SanitizerKind::Address);
+         !Sanitizers.has(SanitizerKind::Address) &&
+         !Sanitizers.has(SanitizerKind::Memory) &&
+         !Sanitizers.has(SanitizerKind::Thread);
 }
 
 bool SanitizerArgs::requiresPIE() const {
@@ -284,9 +286,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       std::make_pair(SanitizeKind::Address, SanitizeKind::Memory),
       std::make_pair(SanitizeKind::Thread, SanitizeKind::Memory),
       std::make_pair(SanitizeKind::Leak, SanitizeKind::Thread),
-      std::make_pair(SanitizeKind::Leak, SanitizeKind::Memory),
-      std::make_pair(SanitizeKind::NeedsUbsanRt, SanitizeKind::Thread),
-      std::make_pair(SanitizeKind::NeedsUbsanRt, SanitizeKind::Memory)};
+      std::make_pair(SanitizeKind::Leak, SanitizeKind::Memory)};
   for (auto G : IncompatibleGroups) {
     uint64_t Group = G.first;
     if (Kinds & Group) {

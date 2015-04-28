@@ -57,9 +57,6 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=leak,memory -pie -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANL-SANM
 // CHECK-SANL-SANM: '-fsanitize=leak' not allowed with '-fsanitize=memory'
 
-// RUN: %clang -target x86_64-linux-gnu -fsanitize=signed-integer-overflow,memory -pie -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MSAN-UBSAN
-// CHECK-MSAN-UBSAN: '-fsanitize=signed-integer-overflow' not allowed with '-fsanitize=memory'
-
 // RUN: %clang -target x86_64-linux-gnu -fsanitize-memory-track-origins -pie %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-TRACK-ORIGINS
 // CHECK-ONLY-TRACK-ORIGINS: warning: argument unused during compilation: '-fsanitize-memory-track-origins'
 
