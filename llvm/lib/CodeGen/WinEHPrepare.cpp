@@ -250,8 +250,8 @@ public:
                              BasicBlock *NewBB) override;
   CloningAction handleResume(ValueToValueMapTy &VMap, const ResumeInst *Resume,
                              BasicBlock *NewBB) override;
-  CloningAction handleCompare(ValueToValueMapTy &VMap,
-                              const CmpInst *Compare, BasicBlock *NewBB) override;
+  CloningAction handleCompare(ValueToValueMapTy &VMap, const CmpInst *Compare,
+                              BasicBlock *NewBB) override;
   CloningAction handleLandingPad(ValueToValueMapTy &VMap,
                                  const LandingPadInst *LPad,
                                  BasicBlock *NewBB) override;
@@ -288,8 +288,8 @@ public:
                              BasicBlock *NewBB) override;
   CloningAction handleResume(ValueToValueMapTy &VMap, const ResumeInst *Resume,
                              BasicBlock *NewBB) override;
-  CloningAction handleCompare(ValueToValueMapTy &VMap,
-                              const CmpInst *Compare, BasicBlock *NewBB) override;
+  CloningAction handleCompare(ValueToValueMapTy &VMap, const CmpInst *Compare,
+                              BasicBlock *NewBB) override;
   CloningAction handleLandingPad(ValueToValueMapTy &VMap,
                                  const LandingPadInst *LPad,
                                  BasicBlock *NewBB) override;
@@ -441,7 +441,7 @@ void WinEHPrepare::findCXXEHReturnPoints(
     BasicBlock *BB = BBI;
     for (Instruction &I : *BB) {
       if (match(&I, m_Intrinsic<Intrinsic::eh_begincatch>())) {
-        Instruction *SplitPt = 
+        Instruction *SplitPt =
             findBeginCatchSplitPoint(BB, cast<IntrinsicInst>(&I));
         if (SplitPt) {
           // Split the block before the llvm.eh.begincatch call to allow
@@ -545,8 +545,8 @@ void WinEHPrepare::demoteValuesLiveAcrossHandlers(
       dbgs() << "  " << BB->getName() << '\n';
   });
 
-  // Join points should not have phis at this point, unless they are a
-  // landingpad, in which case we will demote their phis later.
+// Join points should not have phis at this point, unless they are a
+// landingpad, in which case we will demote their phis later.
 #ifndef NDEBUG
   for (BasicBlock *BB : EHReturnBlocks)
     assert((BB->isLandingPad() || !isa<PHINode>(BB->begin())) &&
@@ -1096,8 +1096,8 @@ static BasicBlock *createStubLandingPad(Function *Handler,
                             Type::getInt32Ty(Context), nullptr),
       PersonalityFn, 0);
   // Insert a call to llvm.eh.actions so that we don't try to outline this lpad.
-  Function *ActionIntrin = Intrinsic::getDeclaration(Handler->getParent(),
-                                                     Intrinsic::eh_actions);
+  Function *ActionIntrin =
+      Intrinsic::getDeclaration(Handler->getParent(), Intrinsic::eh_actions);
   Builder.CreateCall(ActionIntrin, "recover");
   LPad->setCleanup(true);
   Builder.CreateUnreachable();
@@ -1237,7 +1237,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   // list.  We can recognize it, however, as the cloned block which has no
   // predecessors.  Any other block wouldn't have been cloned if it didn't
   // have a predecessor which was also cloned.
-  Function::iterator  ClonedIt = std::next(Function::iterator(Entry));
+  Function::iterator ClonedIt = std::next(Function::iterator(Entry));
   while (!pred_empty(ClonedIt))
     ++ClonedIt;
   BasicBlock *ClonedEntryBB = ClonedIt;
@@ -1544,7 +1544,8 @@ WinEHCatchDirector::handleCompare(ValueToValueMapTy &VMap,
   const IntrinsicInst *IntrinCall = nullptr;
   if (match(Compare->getOperand(0), m_Intrinsic<Intrinsic::eh_typeid_for>())) {
     IntrinCall = dyn_cast<IntrinsicInst>(Compare->getOperand(0));
-  } else if (match(Compare->getOperand(1), m_Intrinsic<Intrinsic::eh_typeid_for>())) {
+  } else if (match(Compare->getOperand(1),
+                   m_Intrinsic<Intrinsic::eh_typeid_for>())) {
     IntrinCall = dyn_cast<IntrinsicInst>(Compare->getOperand(1));
   }
   if (IntrinCall) {
@@ -1553,8 +1554,7 @@ WinEHCatchDirector::handleCompare(ValueToValueMapTy &VMap,
     // on the filter function we intend to match.
     if (Selector == CurrentSelector->stripPointerCasts()) {
       VMap[Compare] = ConstantInt::get(SelectorIDType, 1);
-    }
-    else {
+    } else {
       VMap[Compare] = ConstantInt::get(SelectorIDType, 0);
     }
     return CloningDirector::SkipInstruction;
@@ -1657,7 +1657,6 @@ WinEHCleanupDirector::handleCompare(ValueToValueMapTy &VMap,
     return CloningDirector::SkipInstruction;
   }
   return CloningDirector::CloneInstruction;
-
 }
 
 WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(
@@ -1754,7 +1753,8 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
 
     // See if the clause we're looking for is a catch-all.
     // If so, the catch begins immediately.
-    Constant *ExpectedSelector = LPad->getClause(HandlersFound)->stripPointerCasts();
+    Constant *ExpectedSelector =
+        LPad->getClause(HandlersFound)->stripPointerCasts();
     if (isa<ConstantPointerNull>(ExpectedSelector)) {
       // The catch all must occur last.
       assert(HandlersFound == NumClauses - 1);
@@ -1765,7 +1765,7 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
       Constant *Selector;
       while (BB && isSelectorDispatch(BB, CatchBlock, Selector, NextBB)) {
         DEBUG(dbgs() << "  Found extra catch dispatch in block "
-          << CatchBlock->getName() << "\n");
+                     << CatchBlock->getName() << "\n");
         BB = NextBB;
       }
 
@@ -1996,7 +1996,7 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
       if (auto *Action = CleanupHandlerMap[BB]) {
         Actions.insertCleanupHandler(Action);
         DEBUG(dbgs() << "  Found cleanup code in block "
-              << Action->getStartBlock()->getName() << "\n");
+                     << Action->getStartBlock()->getName() << "\n");
         // FIXME: This cleanup might chain into another, and we need to discover
         // that.
         return;
@@ -2130,7 +2130,8 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
                 cast<InvokeInst>(FinallyCall.getInstruction())->getNormalDest();
           } else {
             SuccBB = BB->getUniqueSuccessor();
-            assert(SuccBB && "splitOutlinedFinallyCalls didn't insert a branch");
+            assert(SuccBB &&
+                   "splitOutlinedFinallyCalls didn't insert a branch");
           }
         }
         BB = SuccBB;
