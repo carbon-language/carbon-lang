@@ -29,11 +29,8 @@ RC=""
 Triple=""
 use_gzip="no"
 do_checkout="yes"
-do_ada="no"
 do_clang="yes"
 do_dragonegg="no"
-do_fortran="no"
-do_objc="yes"
 do_64bit="yes"
 do_debug="no"
 do_asserts="no"
@@ -104,20 +101,11 @@ while [ $# -gt 0 ]; do
         -no-64bit | --no-64bit )
             do_64bit="no"
             ;;
-        -enable-ada | --enable-ada )
-            do_ada="yes"
-            ;;
         -disable-clang | --disable-clang )
             do_clang="no"
             ;;
         -enable-dragonegg | --enable-dragonegg )
             do_dragonegg="yes"
-            ;;
-        -enable-fortran | --enable-fortran )
-            do_fortran="yes"
-            ;;
-        -disable-objc | --disable-objc )
-            do_objc="no"
             ;;
         -test-debug | --test-debug )
             do_debug="yes"
