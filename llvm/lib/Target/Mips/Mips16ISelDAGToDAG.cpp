@@ -163,15 +163,14 @@ void Mips16DAGToDAGISel::getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg) {
 bool Mips16DAGToDAGISel::selectAddr16(
   SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset,
   SDValue &Alias) {
-  SDLoc DL(Addr);
   EVT ValTy = Addr.getValueType();
 
-  Alias = CurDAG->getTargetConstant(0, DL, ValTy);
+  Alias = CurDAG->getTargetConstant(0, ValTy);
 
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-    Offset = CurDAG->getTargetConstant(0, DL, ValTy);
+    Offset = CurDAG->getTargetConstant(0, ValTy);
     getMips16SPRefReg(Parent, Alias);
     return true;
   }
@@ -200,7 +199,7 @@ bool Mips16DAGToDAGISel::selectAddr16(
       else
         Base = Addr.getOperand(0);
 
-      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), DL, ValTy);
+      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
       return true;
     }
   }
@@ -236,7 +235,7 @@ bool Mips16DAGToDAGISel::selectAddr16(
     }
   }
   Base   = Addr;
-  Offset = CurDAG->getTargetConstant(0, DL, ValTy);
+  Offset = CurDAG->getTargetConstant(0, ValTy);
   return true;
 }
 

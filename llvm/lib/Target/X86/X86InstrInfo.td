@@ -2223,7 +2223,7 @@ let Predicates = [HasBMI2], Defs = [EFLAGS] in {
 
 def CountTrailingOnes : SDNodeXForm<imm, [{
   // Count the trailing ones in the immediate.
-  return getI8Imm(countTrailingOnes(N->getZExtValue()), SDLoc(N));
+  return getI8Imm(countTrailingOnes(N->getZExtValue()));
 }]>;
 
 def BZHIMask : ImmLeaf<i64, [{

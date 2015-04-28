@@ -1361,10 +1361,9 @@ public:
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
   friend class SelectionDAG;
-  ConstantSDNode(bool isTarget, bool isOpaque, const ConstantInt *val,
-                 DebugLoc DL, EVT VT)
+  ConstantSDNode(bool isTarget, bool isOpaque, const ConstantInt *val, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
-             0, DL, getSDVTList(VT)), Value(val) {
+             0, DebugLoc(), getSDVTList(VT)), Value(val) {
     SubclassData |= (uint16_t)isOpaque;
   }
 public:

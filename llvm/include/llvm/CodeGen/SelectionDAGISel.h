@@ -199,7 +199,7 @@ protected:
 
   /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
   /// by tblgen.  Others should not call it.
-  void SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops, SDLoc DL);
+  void SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops);
 
 
 public:

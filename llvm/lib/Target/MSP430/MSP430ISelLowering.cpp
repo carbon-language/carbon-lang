@@ -593,7 +593,7 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes, dl,
+  Chain = DAG.getCALLSEQ_START(Chain ,DAG.getConstant(NumBytes,
                                                       getPointerTy(), true),
                                dl);
 
@@ -634,14 +634,13 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
       SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    StackPtr,
-                                   DAG.getIntPtrConstant(VA.getLocMemOffset(),
-                                                         dl));
+                                   DAG.getIntPtrConstant(VA.getLocMemOffset()));
 
       SDValue MemOp;
       ISD::ArgFlagsTy Flags = Outs[i].Flags;
 
       if (Flags.isByVal()) {
-        SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), dl, MVT::i16);
+        SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i16);
         MemOp = DAG.getMemcpy(Chain, dl, PtrOff, Arg, SizeNode,
                               Flags.getByValAlign(),
                               /*isVolatile*/false,
@@ -701,9 +700,8 @@ MSP430TargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
   // Create the CALLSEQ_END node.
   Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getConstant(NumBytes, dl, getPointerTy(),
-                                             true),
-                             DAG.getConstant(0, dl, getPointerTy(), true),
+                             DAG.getConstant(NumBytes, getPointerTy(), true),
+                             DAG.getConstant(0, getPointerTy(), true),
                              InFlag, dl);
   InFlag = Chain.getValue(1);
 
@@ -845,7 +843,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     // fold constant into instruction.
     if (const ConstantSDNode * C = dyn_cast<ConstantSDNode>(LHS)) {
       LHS = RHS;
-      RHS = DAG.getConstant(C->getSExtValue() + 1, dl, C->getValueType(0));
+      RHS = DAG.getConstant(C->getSExtValue() + 1, C->getValueType(0));
       TCC = MSP430CC::COND_LO;
       break;
     }
@@ -858,7 +856,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     // fold constant into instruction.
     if (const ConstantSDNode * C = dyn_cast<ConstantSDNode>(LHS)) {
       LHS = RHS;
-      RHS = DAG.getConstant(C->getSExtValue() + 1, dl, C->getValueType(0));
+      RHS = DAG.getConstant(C->getSExtValue() + 1, C->getValueType(0));
       TCC = MSP430CC::COND_HS;
       break;
     }
@@ -871,7 +869,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     // fold constant into instruction.
     if (const ConstantSDNode * C = dyn_cast<ConstantSDNode>(LHS)) {
       LHS = RHS;
-      RHS = DAG.getConstant(C->getSExtValue() + 1, dl, C->getValueType(0));
+      RHS = DAG.getConstant(C->getSExtValue() + 1, C->getValueType(0));
       TCC = MSP430CC::COND_L;
       break;
     }
@@ -884,7 +882,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     // fold constant into instruction.
     if (const ConstantSDNode * C = dyn_cast<ConstantSDNode>(LHS)) {
       LHS = RHS;
-      RHS = DAG.getConstant(C->getSExtValue() + 1, dl, C->getValueType(0));
+      RHS = DAG.getConstant(C->getSExtValue() + 1, C->getValueType(0));
       TCC = MSP430CC::COND_GE;
       break;
     }
@@ -892,7 +890,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     break;
   }
 
-  TargetCC = DAG.getConstant(TCC, dl, MVT::i8);
+  TargetCC = DAG.getConstant(TCC, MVT::i8);
   return DAG.getNode(MSP430ISD::CMP, dl, MVT::Glue, LHS, RHS);
 }
 
@@ -969,7 +967,7 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
      break;
   }
   EVT VT = Op.getValueType();
-  SDValue One  = DAG.getConstant(1, dl, VT);
+  SDValue One  = DAG.getConstant(1, VT);
   if (Convert) {
     SDValue SR = DAG.getCopyFromReg(DAG.getEntryNode(), dl, MSP430::SR,
                                     MVT::i16, Flag);
@@ -981,7 +979,7 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       SR = DAG.getNode(ISD::XOR, dl, MVT::i16, SR, One);
     return SR;
   } else {
-    SDValue Zero = DAG.getConstant(0, dl, VT);
+    SDValue Zero = DAG.getConstant(0, VT);
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
     SDValue Ops[] = {One, Zero, TargetCC, Flag};
     return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, Ops);
@@ -1050,7 +1048,7 @@ SDValue MSP430TargetLowering::LowerRETURNADDR(SDValue Op,
   if (Depth > 0) {
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
     SDValue Offset =
-        DAG.getConstant(getDataLayout()->getPointerSize(), dl, MVT::i16);
+        DAG.getConstant(getDataLayout()->getPointerSize(), MVT::i16);
     return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, getPointerTy(),
                                    FrameAddr, Offset),
@@ -1131,7 +1129,7 @@ bool MSP430TargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
       return false;
 
     Base = Op->getOperand(0);
-    Offset = DAG.getConstant(RHSC, SDLoc(N), VT);
+    Offset = DAG.getConstant(RHSC, VT);
     AM = ISD::POST_INC;
     return true;
   }

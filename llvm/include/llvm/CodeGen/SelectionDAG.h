@@ -413,40 +413,36 @@ public:
   //===--------------------------------------------------------------------===//
   // Node creation methods.
   //
-  SDValue getConstant(uint64_t Val, SDLoc DL, EVT VT, bool isTarget = false,
+  SDValue getConstant(uint64_t Val, EVT VT, bool isTarget = false,
                       bool isOpaque = false);
-  SDValue getConstant(const APInt &Val, SDLoc DL, EVT VT, bool isTarget = false,
+  SDValue getConstant(const APInt &Val, EVT VT, bool isTarget = false,
                       bool isOpaque = false);
-  SDValue getConstant(const ConstantInt &Val, SDLoc DL, EVT VT,
-                      bool isTarget = false, bool isOpaque = false);
-  SDValue getIntPtrConstant(uint64_t Val, SDLoc DL, bool isTarget = false);
-  SDValue getTargetConstant(uint64_t Val, SDLoc DL, EVT VT,
-                            bool isOpaque = false) {
-    return getConstant(Val, DL, VT, true, isOpaque);
+  SDValue getConstant(const ConstantInt &Val, EVT VT, bool isTarget = false,
+                      bool isOpaque = false);
+  SDValue getIntPtrConstant(uint64_t Val, bool isTarget = false);
+  SDValue getTargetConstant(uint64_t Val, EVT VT, bool isOpaque = false) {
+    return getConstant(Val, VT, true, isOpaque);
   }
-  SDValue getTargetConstant(const APInt &Val, SDLoc DL, EVT VT,
-                            bool isOpaque = false) {
-    return getConstant(Val, DL, VT, true, isOpaque);
+  SDValue getTargetConstant(const APInt &Val, EVT VT, bool isOpaque = false) {
+    return getConstant(Val, VT, true, isOpaque);
   }
-  SDValue getTargetConstant(const ConstantInt &Val, SDLoc DL, EVT VT,
+  SDValue getTargetConstant(const ConstantInt &Val, EVT VT,
                             bool isOpaque = false) {
-    return getConstant(Val, DL, VT, true, isOpaque);
+    return getConstant(Val, VT, true, isOpaque);
   }
   // The forms below that take a double should only be used for simple
   // constants that can be exactly represented in VT.  No checks are made.
-  SDValue getConstantFP(double Val, SDLoc DL, EVT VT, bool isTarget = false);
-  SDValue getConstantFP(const APFloat& Val, SDLoc DL, EVT VT,
-                        bool isTarget = false);
-  SDValue getConstantFP(const ConstantFP &CF, SDLoc DL, EVT VT,
-                        bool isTarget = false);
-  SDValue getTargetConstantFP(double Val, SDLoc DL, EVT VT) {
-    return getConstantFP(Val, DL, VT, true);
+  SDValue getConstantFP(double Val, EVT VT, bool isTarget = false);
+  SDValue getConstantFP(const APFloat& Val, EVT VT, bool isTarget = false);
+  SDValue getConstantFP(const ConstantFP &CF, EVT VT, bool isTarget = false);
+  SDValue getTargetConstantFP(double Val, EVT VT) {
+    return getConstantFP(Val, VT, true);
   }
-  SDValue getTargetConstantFP(const APFloat& Val, SDLoc DL, EVT VT) {
-    return getConstantFP(Val, DL, VT, true);
+  SDValue getTargetConstantFP(const APFloat& Val, EVT VT) {
+    return getConstantFP(Val, VT, true);
   }
-  SDValue getTargetConstantFP(const ConstantFP &Val, SDLoc DL, EVT VT) {
-    return getConstantFP(Val, DL, VT, true);
+  SDValue getTargetConstantFP(const ConstantFP &Val, EVT VT) {
+    return getConstantFP(Val, VT, true);
   }
   SDValue getGlobalAddress(const GlobalValue *GV, SDLoc DL, EVT VT,
                            int64_t offset = 0, bool isTargetGA = false,
@@ -1121,7 +1117,7 @@ public:
   /// either of the specified value types.
   SDValue CreateStackTemporary(EVT VT1, EVT VT2);
 
-  SDValue FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
+  SDValue FoldConstantArithmetic(unsigned Opcode, EVT VT,
                                  SDNode *Cst1, SDNode *Cst2);
 
   /// Constant fold a setcc to true or false.

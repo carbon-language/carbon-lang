@@ -131,7 +131,7 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
 
   // Used by SystemZOperands.td to create integer constants.
   inline SDValue getImm(const SDNode *Node, uint64_t Imm) const {
-    return CurDAG->getTargetConstant(Imm, SDLoc(Node), Node->getValueType(0));
+    return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
   const SystemZTargetMachine &getTargetMachine() const {
@@ -596,7 +596,7 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
   }
 
   // Lower the displacement to a TargetConstant.
-  Disp = CurDAG->getTargetConstant(AM.Disp, SDLoc(Base), VT);
+  Disp = CurDAG->getTargetConstant(AM.Disp, VT);
 }
 
 void SystemZDAGToDAGISel::getAddressOperands(const SystemZAddressingMode &AM,
@@ -864,7 +864,6 @@ SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) const {
 }
 
 SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
-  SDLoc DL(N);
   EVT VT = N->getValueType(0);
   RxSBGOperands RISBG(SystemZ::RISBG, SDValue(N, 0));
   unsigned Count = 0;
@@ -890,7 +889,7 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
       // Force the new mask into the DAG, since it may include known-one bits.
       auto *MaskN = cast<ConstantSDNode>(N->getOperand(1).getNode());
       if (MaskN->getZExtValue() != RISBG.Mask) {
-        SDValue NewMask = CurDAG->getConstant(RISBG.Mask, DL, VT);
+        SDValue NewMask = CurDAG->getConstant(RISBG.Mask, VT);
         N = CurDAG->UpdateNodeOperands(N, N->getOperand(0), NewMask);
         return SelectCode(N);
       }
@@ -910,14 +909,14 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
     RISBG.End &= 31;
   }
   SDValue Ops[5] = {
-    getUNDEF(DL, OpcodeVT),
-    convertTo(DL, OpcodeVT, RISBG.Input),
-    CurDAG->getTargetConstant(RISBG.Start, DL, MVT::i32),
-    CurDAG->getTargetConstant(RISBG.End | 128, DL, MVT::i32),
-    CurDAG->getTargetConstant(RISBG.Rotate, DL, MVT::i32)
+    getUNDEF(SDLoc(N), OpcodeVT),
+    convertTo(SDLoc(N), OpcodeVT, RISBG.Input),
+    CurDAG->getTargetConstant(RISBG.Start, MVT::i32),
+    CurDAG->getTargetConstant(RISBG.End | 128, MVT::i32),
+    CurDAG->getTargetConstant(RISBG.Rotate, MVT::i32)
   };
-  N = CurDAG->getMachineNode(Opcode, DL, OpcodeVT, Ops);
-  return convertTo(DL, VT, SDValue(N, 0)).getNode();
+  N = CurDAG->getMachineNode(Opcode, SDLoc(N), OpcodeVT, Ops);
+  return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();
 }
 
 SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
@@ -956,17 +955,16 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
       Opcode = SystemZ::RISBGN;
   }
 
-  SDLoc DL(N);
   EVT VT = N->getValueType(0);
   SDValue Ops[5] = {
-    convertTo(DL, MVT::i64, Op0),
-    convertTo(DL, MVT::i64, RxSBG[I].Input),
-    CurDAG->getTargetConstant(RxSBG[I].Start, DL, MVT::i32),
-    CurDAG->getTargetConstant(RxSBG[I].End, DL, MVT::i32),
-    CurDAG->getTargetConstant(RxSBG[I].Rotate, DL, MVT::i32)
+    convertTo(SDLoc(N), MVT::i64, Op0),
+    convertTo(SDLoc(N), MVT::i64, RxSBG[I].Input),
+    CurDAG->getTargetConstant(RxSBG[I].Start, MVT::i32),
+    CurDAG->getTargetConstant(RxSBG[I].End, MVT::i32),
+    CurDAG->getTargetConstant(RxSBG[I].Rotate, MVT::i32)
   };
-  N = CurDAG->getMachineNode(Opcode, DL, MVT::i64, Ops);
-  return convertTo(DL, VT, SDValue(N, 0)).getNode();
+  N = CurDAG->getMachineNode(Opcode, SDLoc(N), MVT::i64, Ops);
+  return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();
 }
 
 SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
@@ -974,12 +972,12 @@ SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
                                                  uint64_t LowerVal) {
   EVT VT = Node->getValueType(0);
   SDLoc DL(Node);
-  SDValue Upper = CurDAG->getConstant(UpperVal, DL, VT);
+  SDValue Upper = CurDAG->getConstant(UpperVal, VT);
   if (Op0.getNode())
     Upper = CurDAG->getNode(Opcode, DL, VT, Op0, Upper);
   Upper = SDValue(Select(Upper.getNode()), 0);
 
-  SDValue Lower = CurDAG->getConstant(LowerVal, DL, VT);
+  SDValue Lower = CurDAG->getConstant(LowerVal, VT);
   SDValue Or = CurDAG->getNode(Opcode, DL, VT, Upper, Lower);
   return Or.getNode();
 }
@@ -1113,7 +1111,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
       uint64_t ConstCCMask =
         cast<ConstantSDNode>(CCMask.getNode())->getZExtValue();
       // Invert the condition.
-      CCMask = CurDAG->getConstant(ConstCCValid ^ ConstCCMask, SDLoc(Node),
+      CCMask = CurDAG->getConstant(ConstCCValid ^ ConstCCMask,
                                    CCMask.getValueType());
       SDValue Op4 = Node->getOperand(4);
       Node = CurDAG->UpdateNodeOperands(Node, Op1, Op0, CCValid, CCMask, Op4);

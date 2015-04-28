@@ -56,23 +56,22 @@ def tlscall : Operand<i64> {
 
 def SHL64 : SDNodeXForm<imm, [{
   // Transformation function: 63 - imm
-  return getI32Imm(63 - N->getZExtValue(), SDLoc(N));
+  return getI32Imm(63 - N->getZExtValue());
 }]>;
 
 def SRL64 : SDNodeXForm<imm, [{
   // Transformation function: 64 - imm
-  return N->getZExtValue() ? getI32Imm(64 - N->getZExtValue(), SDLoc(N))
-                           : getI32Imm(0, SDLoc(N));
+  return N->getZExtValue() ? getI32Imm(64 - N->getZExtValue()) : getI32Imm(0);
 }]>;
 
 def HI32_48 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getZExtValue() >> 32, SDLoc(N)));
+  return getI32Imm((unsigned short)(N->getZExtValue() >> 32));
 }]>;
 
 def HI48_64 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned short)(N->getZExtValue() >> 48, SDLoc(N)));
+  return getI32Imm((unsigned short)(N->getZExtValue() >> 48));
 }]>;
 
 

@@ -17,7 +17,7 @@
 def HasHTM : Predicate<"PPCSubTarget->hasHTM()">;
 
 def HTM_get_imm : SDNodeXForm<imm, [{
-  return getI32Imm (N->getZExtValue(), SDLoc(N));
+  return getI32Imm (N->getZExtValue());
 }]>;
 
 let hasSideEffects = 1, usesCustomInserter = 1  in {

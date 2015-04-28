@@ -498,7 +498,7 @@ def i64imm_32bit : ImmLeaf<i64, [{
 }]>;
 
 def trunc_imm : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(N->getZExtValue(), SDLoc(N), MVT::i32);
+  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i32);
 }]>;
 
 def : Pat<(i64 i64imm_32bit:$src),
@@ -507,12 +507,12 @@ def : Pat<(i64 i64imm_32bit:$src),
 // Materialize FP constants via MOVi32imm/MOVi64imm (MachO large code model).
 def bitcast_fpimm_to_i32 : SDNodeXForm<fpimm, [{
 return CurDAG->getTargetConstant(
-  N->getValueAPF().bitcastToAPInt().getZExtValue(), SDLoc(N), MVT::i32);
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i32);
 }]>;
 
 def bitcast_fpimm_to_i64 : SDNodeXForm<fpimm, [{
 return CurDAG->getTargetConstant(
-  N->getValueAPF().bitcastToAPInt().getZExtValue(), SDLoc(N), MVT::i64);
+  N->getValueAPF().bitcastToAPInt().getZExtValue(), MVT::i64);
 }]>;
 
 
@@ -857,57 +857,57 @@ defm UBFM : BitfieldImm<0b10, "ubfm">;
 
 def i32shift_a : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = (32 - N->getZExtValue()) & 0x1f;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 def i32shift_b : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(7, 31 - shift_amt)
 def i32shift_sext_i8 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
   enc = enc > 7 ? 7 : enc;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(15, 31 - shift_amt)
 def i32shift_sext_i16 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
   enc = enc > 15 ? 15 : enc;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 def i64shift_a : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = (64 - N->getZExtValue()) & 0x3f;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 def i64shift_b : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 63 - N->getZExtValue();
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(7, 63 - shift_amt)
 def i64shift_sext_i8 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 63 - N->getZExtValue();
   enc = enc > 7 ? 7 : enc;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(15, 63 - shift_amt)
 def i64shift_sext_i16 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 63 - N->getZExtValue();
   enc = enc > 15 ? 15 : enc;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(31, 63 - shift_amt)
 def i64shift_sext_i32 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 63 - N->getZExtValue();
   enc = enc > 31 ? 31 : enc;
-  return CurDAG->getTargetConstant(enc, SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 def : Pat<(shl GPR32:$Rn, (i64 imm0_31:$imm)),
@@ -3563,13 +3563,13 @@ def : Pat<(v2f64 (AArch64duplane64 (v2f64 V128:$Rn), VectorIndexD:$imm)),
 // instruction even if the types don't match: we just have to remap the lane
 // carefully. N.b. this trick only applies to truncations.
 def VecIndex_x2 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(2 * N->getZExtValue(), SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(2 * N->getZExtValue(), MVT::i64);
 }]>;
 def VecIndex_x4 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(4 * N->getZExtValue(), SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(4 * N->getZExtValue(), MVT::i64);
 }]>;
 def VecIndex_x8 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(8 * N->getZExtValue(), SDLoc(N), MVT::i64);
+  return CurDAG->getTargetConstant(8 * N->getZExtValue(), MVT::i64);
 }]>;
 
 multiclass DUPWithTruncPats<ValueType ResVT, ValueType Src64VT,

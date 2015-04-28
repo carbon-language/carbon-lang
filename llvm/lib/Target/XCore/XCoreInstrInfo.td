@@ -94,34 +94,33 @@ def XCoreMemBarrier : SDNode<"XCoreISD::MEMBARRIER", SDT_XCoreMEMBARRIER,
 def div4_xform : SDNodeXForm<imm, [{
   // Transformation function: imm/4
   assert(N->getZExtValue() % 4 == 0);
-  return getI32Imm(N->getZExtValue()/4, SDLoc(N));
+  return getI32Imm(N->getZExtValue()/4);
 }]>;
 
 def msksize_xform : SDNodeXForm<imm, [{
   // Transformation function: get the size of a mask
   assert(isMask_32(N->getZExtValue()));
   // look for the first non-zero bit
-  return getI32Imm(32 - countLeadingZeros((uint32_t)N->getZExtValue()),
-                   SDLoc(N));
+  return getI32Imm(32 - countLeadingZeros((uint32_t)N->getZExtValue()));
 }]>;
 
 def neg_xform : SDNodeXForm<imm, [{
   // Transformation function: -imm
   uint32_t value = N->getZExtValue();
-  return getI32Imm(-value, SDLoc(N));
+  return getI32Imm(-value);
 }]>;
 
 def bpwsub_xform : SDNodeXForm<imm, [{
   // Transformation function: 32-imm
   uint32_t value = N->getZExtValue();
-  return getI32Imm(32 - value, SDLoc(N));
+  return getI32Imm(32-value);
 }]>;
 
 def div4neg_xform : SDNodeXForm<imm, [{
   // Transformation function: -imm/4
   uint32_t value = N->getZExtValue();
   assert(-value % 4 == 0);
-  return getI32Imm(-value/4, SDLoc(N));
+  return getI32Imm(-value/4);
 }]>;
 
 def immUs4Neg : PatLeaf<(imm), [{

@@ -54,14 +54,12 @@ def t2_so_reg : Operand<i32>,    // reg imm
 
 // t2_so_imm_not_XFORM - Return the complement of a t2_so_imm value
 def t2_so_imm_not_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), SDLoc(N),
-                                   MVT::i32);
+  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
 }]>;
 
 // t2_so_imm_neg_XFORM - Return the negation of a t2_so_imm value
 def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(-((int)N->getZExtValue()), SDLoc(N),
-                                   MVT::i32);
+  return CurDAG->getTargetConstant(-((int)N->getZExtValue()), MVT::i32);
 }]>;
 
 // so_imm_notSext_XFORM - Return a so_imm value packed into the format
@@ -70,7 +68,7 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 def t2_so_imm_notSext16_XFORM : SDNodeXForm<imm, [{
   APInt apIntN = N->getAPIntValue();
   unsigned N16bitSignExt = apIntN.trunc(16).sext(32).getZExtValue();
-  return CurDAG->getTargetConstant(~N16bitSignExt, SDLoc(N), MVT::i32);
+  return CurDAG->getTargetConstant(~N16bitSignExt, MVT::i32);
 }]>;
 
 // t2_so_imm - Match a 32-bit immediate operand, which is an

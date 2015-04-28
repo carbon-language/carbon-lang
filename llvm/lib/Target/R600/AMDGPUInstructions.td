@@ -583,7 +583,7 @@ def IMMZeroBasedBitfieldMask : PatLeaf <(imm), [{
 }]>;
 
 def IMMPopCount : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(countPopulation(N->getZExtValue()), SDLoc(N),
+  return CurDAG->getTargetConstant(countPopulation(N->getZExtValue()),
                                    MVT::i32);
 }]>;
 

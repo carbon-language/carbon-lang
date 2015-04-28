@@ -138,22 +138,22 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
     default:  // Byte aligned
       AVT = MVT::i8;
       ValReg = X86::AL;
-      Count = DAG.getIntPtrConstant(SizeVal, dl);
+      Count = DAG.getIntPtrConstant(SizeVal);
       break;
     }
 
     if (AVT.bitsGT(MVT::i8)) {
       unsigned UBytes = AVT.getSizeInBits() / 8;
-      Count = DAG.getIntPtrConstant(SizeVal / UBytes, dl);
+      Count = DAG.getIntPtrConstant(SizeVal / UBytes);
       BytesLeft = SizeVal % UBytes;
     }
 
-    Chain  = DAG.getCopyToReg(Chain, dl, ValReg, DAG.getConstant(Val, dl, AVT),
+    Chain  = DAG.getCopyToReg(Chain, dl, ValReg, DAG.getConstant(Val, AVT),
                               InFlag);
     InFlag = Chain.getValue(1);
   } else {
     AVT = MVT::i8;
-    Count  = DAG.getIntPtrConstant(SizeVal, dl);
+    Count  = DAG.getIntPtrConstant(SizeVal);
     Chain  = DAG.getCopyToReg(Chain, dl, X86::AL, Src, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -174,8 +174,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
     Count  = Size;
     EVT CVT = Count.getValueType();
     SDValue Left = DAG.getNode(ISD::AND, dl, CVT, Count,
-                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, dl,
-                                               CVT));
+                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
     Chain  = DAG.getCopyToReg(Chain, dl, (CVT == MVT::i64) ? X86::RCX :
                                                              X86::ECX,
                               Left, InFlag);
@@ -191,9 +190,9 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
 
     Chain = DAG.getMemset(Chain, dl,
                           DAG.getNode(ISD::ADD, dl, AddrVT, Dst,
-                                      DAG.getConstant(Offset, dl, AddrVT)),
+                                      DAG.getConstant(Offset, AddrVT)),
                           Src,
-                          DAG.getConstant(BytesLeft, dl, SizeVT),
+                          DAG.getConstant(BytesLeft, SizeVT),
                           Align, isVolatile, false,
                           DstPtrInfo.getWithOffset(Offset));
   }
@@ -249,7 +248,7 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
 
   unsigned UBytes = AVT.getSizeInBits() / 8;
   unsigned CountVal = SizeVal / UBytes;
-  SDValue Count = DAG.getIntPtrConstant(CountVal, dl);
+  SDValue Count = DAG.getIntPtrConstant(CountVal);
   unsigned BytesLeft = SizeVal % UBytes;
 
   SDValue InFlag;
@@ -280,12 +279,10 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
     EVT SizeVT = Size.getValueType();
     Results.push_back(DAG.getMemcpy(Chain, dl,
                                     DAG.getNode(ISD::ADD, dl, DstVT, Dst,
-                                                DAG.getConstant(Offset, dl,
-                                                                DstVT)),
+                                                DAG.getConstant(Offset, DstVT)),
                                     DAG.getNode(ISD::ADD, dl, SrcVT, Src,
-                                                DAG.getConstant(Offset, dl,
-                                                                SrcVT)),
-                                    DAG.getConstant(BytesLeft, dl, SizeVT),
+                                                DAG.getConstant(Offset, SrcVT)),
+                                    DAG.getConstant(BytesLeft, SizeVT),
                                     Align, isVolatile, AlwaysInline, false,
                                     DstPtrInfo.getWithOffset(Offset),
                                     SrcPtrInfo.getWithOffset(Offset)));
