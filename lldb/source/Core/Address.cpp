@@ -745,10 +745,15 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         if (var && var->LocationIsValidForAddress (*this))
                         {
                             s->Indent();
-                            s->Printf ("   Variable: id = {0x%8.8" PRIx64 "}, name = \"%s\", type= \"%s\", location =",
+                            s->Printf ("   Variable: id = {0x%8.8" PRIx64 "}, name = \"%s\"",
                                        var->GetID(),
-                                       var->GetName().GetCString(),
-                                       var->GetType()->GetName().GetCString());
+                                       var->GetName().GetCString());
+                            Type *type = var->GetType();
+                            if (type)
+                                s->Printf(", type = \"%s\"", type->GetName().GetCString());
+                            else
+                                s->PutCString(", type = <unknown>");
+                            s->PutCString(", location = ");
                             var->DumpLocationForAddress(s, *this);
                             s->PutCString(", decl = ");
                             var->GetDeclaration().DumpStopContext(s, false);
