@@ -3464,46 +3464,6 @@ let Predicates = [HasAVX] in {
             Sched<[itins.Sched.Folded]>;
 }
 
-/// sse1_fp_unop_p_int - SSE1 intrinsics unops in packed forms.
-multiclass sse1_fp_unop_p_int<bits<8> opc, string OpcodeStr,
-                              Intrinsic V4F32Int, Intrinsic V8F32Int,
-                              OpndItins itins> {
-let isCodeGenOnly = 1 in {
-let Predicates = [HasAVX] in {
-  def V#NAME#PSr_Int : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                           !strconcat("v", OpcodeStr,
-                                      "ps\t{$src, $dst|$dst, $src}"),
-                           [(set VR128:$dst, (V4F32Int VR128:$src))],
-                           itins.rr>, VEX, Sched<[itins.Sched]>;
-  def V#NAME#PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                          !strconcat("v", OpcodeStr,
-                          "ps\t{$src, $dst|$dst, $src}"),
-                          [(set VR128:$dst, (V4F32Int (loadv4f32 addr:$src)))],
-                          itins.rm>, VEX, Sched<[itins.Sched.Folded]>;
-  def V#NAME#PSYr_Int : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                            !strconcat("v", OpcodeStr,
-                                       "ps\t{$src, $dst|$dst, $src}"),
-                            [(set VR256:$dst, (V8F32Int VR256:$src))],
-                            itins.rr>, VEX, VEX_L, Sched<[itins.Sched]>;
-  def V#NAME#PSYm_Int : PSI<opc, MRMSrcMem, (outs VR256:$dst),
-                          (ins f256mem:$src),
-                          !strconcat("v", OpcodeStr,
-                                    "ps\t{$src, $dst|$dst, $src}"),
-                          [(set VR256:$dst, (V8F32Int (loadv8f32 addr:$src)))],
-                          itins.rm>, VEX, VEX_L, Sched<[itins.Sched.Folded]>;
-}
-
-  def PSr_Int : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                    !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (V4F32Int VR128:$src))],
-                    itins.rr>, Sched<[itins.Sched]>;
-  def PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                    !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (V4F32Int (memopv4f32 addr:$src)))],
-                    itins.rm>, Sched<[itins.Sched.Folded]>;
-} // isCodeGenOnly = 1
-}
-
 /// sse2_fp_unop_p - SSE2 unops in vector forms.
 multiclass sse2_fp_unop_p<bits<8> opc, string OpcodeStr,
                           SDNode OpNode, OpndItins itins> {
@@ -3574,13 +3534,9 @@ defm SQRT  : sse1_fp_unop_s<0x51, "sqrt", fsqrt, SSE_SQRTSS>,
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
 defm RSQRT : sse1_fp_unop_s<0x52, "rsqrt", X86frsqrt, SSE_RSQRTSS>,
-             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_RSQRTPS>,
-             sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
-                                int_x86_avx_rsqrt_ps_256, SSE_RSQRTPS>;
+             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_RSQRTPS>;
 defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, SSE_RCPS>,
-             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
-             sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps,
-                                int_x86_avx_rcp_ps_256, SSE_RCPP>;
+             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>;
 
 // There is no f64 version of the reciprocal approximation instructions.
 
