@@ -47,7 +47,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-show-attributes var2")
         self.expect("\^done,status=\"editable\"")
         self.runCmd("-var-list-children var2")
-        self.expect("\^done,numchild=\"0\",children=\"\[\]\"")
+        self.expect("\^done,numchild=\"0\"")
         self.runCmd("-data-evaluate-expression \"g_MyVar=30\"")
         self.expect("\^done,value=\"30\"")
         self.runCmd("-var-update --all-values var2")
@@ -67,7 +67,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-show-attributes var3")
         self.expect("\^done,status=\"editable\"")
         self.runCmd("-var-list-children var3")
-        self.expect("\^done,numchild=\"0\",children=\"\[\]\"")
+        self.expect("\^done,numchild=\"0\"")
         self.runCmd("-data-evaluate-expression \"s_MyVar=3\"")
         self.expect("\^done,value=\"3\"")
         self.runCmd("-var-update --all-values var3")
@@ -87,7 +87,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-show-attributes var4")
         self.expect("\^done,status=\"editable\"")
         self.runCmd("-var-list-children var4")
-        self.expect("\^done,numchild=\"0\",children=\"\[\]\"")
+        self.expect("\^done,numchild=\"0\"")
         self.runCmd("-data-evaluate-expression \"b=2\"")
         self.expect("\^done,value=\"2\"")
         self.runCmd("-var-update --all-values var4")
@@ -107,7 +107,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-show-attributes var5")
         self.expect("\^done,status=\"editable\"") #FIXME editable or not?
         self.runCmd("-var-list-children var5")
-        self.expect("\^done,numchild=\"0\",children=\"\[\]\"")
+        self.expect("\^done,numchild=\"0\"")
 
         # Print argument "argv[0]"
         self.runCmd("-data-evaluate-expression \"argv[0]\"")

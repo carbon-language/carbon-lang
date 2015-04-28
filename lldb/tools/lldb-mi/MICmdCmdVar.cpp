@@ -1099,12 +1099,7 @@ CMICmdCmdVarListChildren::Acknowledge(void)
         CMICmnMIValueResult miValueResult("numchild", miValueConst);
 
         VecMIValueResult_t::const_iterator it = m_vecMiValueResult.begin();
-        if (it == m_vecMiValueResult.end())
-        {
-            const CMICmnMIValueConst miValueConst("[]");
-            miValueResult.Add("children", miValueConst);
-        }
-        else
+        if (it != m_vecMiValueResult.end())
         {
             CMICmnMIValueList miValueList(*it);
             ++it;
