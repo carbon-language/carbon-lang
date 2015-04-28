@@ -4146,17 +4146,20 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
+    case bitc::FUNC_CODE_INST_CMPXCHG_OLD:
     case bitc::FUNC_CODE_INST_CMPXCHG: {
       // CMPXCHG:[ptrty, ptr, cmp, new, vol, successordering, synchscope,
       //          failureordering?, isweak?]
       unsigned OpNum = 0;
       Value *Ptr, *Cmp, *New;
       if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
-          popValue(Record, OpNum, NextValueNo,
-                    cast<PointerType>(Ptr->getType())->getElementType(), Cmp) ||
-          popValue(Record, OpNum, NextValueNo,
-                    cast<PointerType>(Ptr->getType())->getElementType(), New) ||
-          (Record.size() < OpNum + 3 || Record.size() > OpNum + 5))
+          (BitCode == bitc::FUNC_CODE_INST_CMPXCHG
+               ? getValueTypePair(Record, OpNum, NextValueNo, Cmp)
+               : popValue(Record, OpNum, NextValueNo,
+                          cast<PointerType>(Ptr->getType())->getElementType(),
+                          Cmp)) ||
+          popValue(Record, OpNum, NextValueNo, Cmp->getType(), New) ||
+          Record.size() < OpNum + 3 || Record.size() > OpNum + 5)
         return Error("Invalid record");
       AtomicOrdering SuccessOrdering = GetDecodedOrdering(Record[OpNum+1]);
       if (SuccessOrdering == NotAtomic || SuccessOrdering == Unordered)
