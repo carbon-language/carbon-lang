@@ -2385,10 +2385,10 @@ bool Sema::AreMultipleMethodsInGlobalPool(Selector Sel, ObjCMethodDecl *BestMeth
   // Diagnose finding more than one method in global pool
   SmallVector<ObjCMethodDecl *, 4> Methods;
   Methods.push_back(BestMethod);
-  for (ObjCMethodList *M = &MethList; M; M = M->getNext())
-    if (M->getMethod() && !M->getMethod()->isHidden() &&
-        M->getMethod() != BestMethod)
-      Methods.push_back(M->getMethod());
+  for (ObjCMethodList *ML = &MethList; ML; ML = ML->getNext())
+    if (ObjCMethodDecl *M = ML->getMethod())
+      if (!M->isHidden() && M != BestMethod && !M->hasAttr<UnavailableAttr>())
+        Methods.push_back(M);
   if (Methods.size() > 1)
     DiagnoseMultipleMethodInGlobalPool(Methods, Sel, R, receiverIdOrClass);
 
@@ -2420,7 +2420,7 @@ void Sema::DiagnoseMultipleMethodInGlobalPool(SmallVectorImpl<ObjCMethodDecl*> &
                                               bool receiverIdOrClass) {
   // We found multiple methods, so we may have to complain.
   bool issueDiagnostic = false, issueError = false;
-  
+
   // We support a warning which complains about *any* difference in
   // method signature.
   bool strictSelectorMatch =
@@ -2434,7 +2434,7 @@ void Sema::DiagnoseMultipleMethodInGlobalPool(SmallVectorImpl<ObjCMethodDecl*> &
       }
     }
   }
-  
+
   // If we didn't see any strict differences, we won't see any loose
   // differences.  In ARC, however, we also need to check for loose
   // mismatches, because most of them are errors.
