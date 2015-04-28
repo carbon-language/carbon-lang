@@ -7801,6 +7801,24 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
                            N0.getOperand(0), DAG.getConstantFP(4.0, DL, VT));
       }
     }
+
+    // Canonicalize chains of adds to LHS to simplify the following transform.
+    if (N0.getOpcode() != ISD::FADD && N1.getOpcode() == ISD::FADD)
+      return DAG.getNode(ISD::FADD, SDLoc(N), VT, N1, N0);
+    
+    // Convert a chain of 3 dependent operations into 2 independent operations
+    // and 1 dependent operation:
+    //  (fadd N0: (fadd N00: (fadd z, w), N01: y), N1: x) ->
+    //  (fadd N00: (fadd z, w), (fadd N1: x, N01: y))
+    if (N0.getOpcode() == ISD::FADD &&  N0.hasOneUse() &&
+        N1.getOpcode() != ISD::FADD) {
+      SDValue N00 = N0.getOperand(0);
+      if (N00.getOpcode() == ISD::FADD) {
+        SDValue N01 = N0.getOperand(1);
+        SDValue NewAdd = DAG.getNode(ISD::FADD, SDLoc(N), VT, N1, N01);
+        return DAG.getNode(ISD::FADD, SDLoc(N), VT, N00, NewAdd);
+      }
+    }
   } // enable-unsafe-fp-math
 
   // FADD -> FMA combines:
