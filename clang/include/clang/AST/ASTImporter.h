@@ -121,6 +121,11 @@ namespace clang {
     /// if an error occurred.
     Decl *Import(Decl *FromD);
 
+    /// \brief Return the copy of the given declaration in the "to" context if
+    /// it has already been imported from the "from" context.  Otherwise return
+    /// NULL.
+    Decl *GetAlreadyImportedOrNull(Decl *FromD);
+
     /// \brief Import the given declaration context from the "from"
     /// AST context into the "to" AST context.
     ///
