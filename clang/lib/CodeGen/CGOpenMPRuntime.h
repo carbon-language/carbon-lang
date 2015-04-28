@@ -524,7 +524,7 @@ public:
                          SourceLocation Loc);
 
   /// \brief Emit task region for the task directive. The task region is
-  /// emmitted in several steps:
+  /// emitted in several steps:
   /// 1. Emit a call to kmp_task_t *__kmpc_omp_task_alloc(ident_t *, kmp_int32
   /// gtid, kmp_int32 flags, size_t sizeof_kmp_task_t, size_t sizeof_shareds,
   /// kmp_routine_entry_t *task_entry). Here task_entry is a pointer to the
