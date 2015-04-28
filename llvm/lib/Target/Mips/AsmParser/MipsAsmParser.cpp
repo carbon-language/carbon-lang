@@ -1645,6 +1645,10 @@ void createLShiftOri(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
     Instructions.push_back(tmpInst);
     tmpInst.clear();
   }
+  // There's no need for an ORi if the immediate is 0.
+  if (Operand.isImm() && Operand.getImm() == 0)
+    return;
+
   tmpInst.setOpcode(Mips::ORi);
   tmpInst.addOperand(MCOperand::CreateReg(RegNo));
   tmpInst.addOperand(MCOperand::CreateReg(RegNo));
