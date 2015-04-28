@@ -1253,6 +1253,10 @@ ExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
 
+  // Check if GNU-styple InlineAsm is disabled.
+  if (!getLangOpts().GNUAsm)
+    Diag(Loc, diag::err_gnu_inline_asm_disabled);
+
   if (Tok.is(tok::kw_volatile)) {
     // Remove from the end of 'asm' to the end of 'volatile'.
     SourceRange RemovalRange(PP.getLocForEndOfToken(Loc),
