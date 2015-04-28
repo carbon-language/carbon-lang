@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -fPIE -g -Wall -Werror -fno-builtin -msse3 -DSANITIZER_DEBUG=$(DEBUG)
+CXXFLAGS = -std=c++11 -fPIE -g -Wall -Werror -fno-builtin -msse3 -DSANITIZER_DEBUG=$(DEBUG) -DTSAN_CONTAINS_UBSAN=0
 CLANG=clang
 ifeq ($(DEBUG), 0)
   CXXFLAGS += -O3
