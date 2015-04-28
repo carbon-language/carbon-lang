@@ -11,7 +11,7 @@
 
 #include <experimental/system_error>
 
-#ifndef _LIBCPP_STD_VER > 11
+#if _LIBCPP_STD_VER > 11
 # ifndef _LIBCPP_SYSTEM_ERROR
 #   error "<experimental/system_error> must include <system_error>"
 # endif

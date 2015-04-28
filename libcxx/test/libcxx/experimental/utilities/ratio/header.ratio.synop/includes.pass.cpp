@@ -13,7 +13,7 @@
 
 #include <experimental/ratio>
 
-#ifndef _LIBCPP_STD_VER > 11
+#if _LIBCPP_STD_VER > 11
 # ifndef _LIBCPP_RATIO
 #   error " <experimental/ratio> must include <ratio>"
 # endif
