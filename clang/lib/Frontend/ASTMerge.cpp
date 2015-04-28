@@ -57,6 +57,7 @@ void ASTMergeAction::ExecuteAction() {
                          /*MinimalImport=*/false);
 
     TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
+    CI.getASTConsumer().Initialize(CI.getASTContext());
     for (auto *D : TU->decls()) {
       // Don't re-import __va_list_tag, __builtin_va_list.
       if (const auto *ND = dyn_cast<NamedDecl>(D))
@@ -64,7 +65,12 @@ void ASTMergeAction::ExecuteAction() {
           if (II->isStr("__va_list_tag") || II->isStr("__builtin_va_list"))
             continue;
       
-      Importer.Import(D);
+      Decl *ToD = Importer.Import(D);
+    
+      if (ToD) {
+        DeclGroupRef DGR(ToD);
+        CI.getASTConsumer().HandleTopLevelDecl(DGR);
+      }
     }
   }
 
