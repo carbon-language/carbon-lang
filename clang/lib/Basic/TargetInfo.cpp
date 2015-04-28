@@ -75,6 +75,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   RegParmMax = 0;
   SSERegParmMax = 0;
   HasAlignMac68kSupport = false;
+  EnforceBitfieldContainerAlignment = false;
 
   // Default to no types using fpret.
   RealTypeUsesObjCFPRet = 0;

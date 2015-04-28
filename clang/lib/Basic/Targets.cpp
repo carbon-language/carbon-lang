@@ -3983,6 +3983,9 @@ class ARMTargetInfo : public TargetInfo {
 
     ZeroLengthBitfieldBoundary = 0;
 
+    // Enforce the alignment of bitfield structs
+    EnforceBitfieldContainerAlignment = true;
+
     // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
     // so set preferred for small types to 32.
     if (T.isOSBinFormatMachO()) {
@@ -4824,6 +4827,9 @@ public:
     // zero-sized or anonymous bit-fields."
     UseBitFieldTypeAlignment = true;
     UseZeroLengthBitfieldAlignment = true;
+
+    // Enforce the alignment of bitfield structs
+    EnforceBitfieldContainerAlignment = true;
 
     // AArch64 targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericAArch64);
