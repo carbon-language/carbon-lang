@@ -1,7 +1,7 @@
 // RUN: llvm-mc -triple arm-unknown-linux %s | FileCheck %s
 
 // CHECK: .byte 1
-.if [~0 >> 1] == -1
+.if [~0 >> 63] == 1
 .byte 1
 .else
 .byte 2
