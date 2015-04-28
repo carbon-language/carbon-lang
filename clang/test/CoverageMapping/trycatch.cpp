@@ -10,17 +10,19 @@ class Warning {
 };
 
                                       // CHECK: func
-void func(int i) {                    // CHECK-NEXT: File 0, [[@LINE]]:18 -> [[@LINE+6]]:2 = #0
-  if(i % 2)                           // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE]]:11 = #0
-    throw Error();                    // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:18 = #1
-                                      // CHECK-NEXT: File 0, [[@LINE+1]]:8 -> [[@LINE+2]]:27 = (#0 - #1)
-  else if(i == 8)                     // CHECK-NEXT: File 0, [[@LINE]]:11 -> [[@LINE]]:17 = (#0 - #1)
+void func(int i) {                    // CHECK-NEXT: File 0, [[@LINE]]:18 -> {{[0-9]+}}:2 = #0
+                                      // CHECK-NEXT: File 0, [[@LINE+1]]:6 -> [[@LINE+1]]:11 = #0
+  if(i % 2) {                         // CHECK-NEXT: File 0, [[@LINE]]:13 -> [[@LINE+4]]:4 = #1
+    throw Error();
+    int j = 0;                        // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE+2]]:4 = 0
+                                      // CHECK-NEXT: File 0, [[@LINE+1]]:10 -> [[@LINE+2]]:27 = (#0 - #1)
+  } else if(i == 8)                   // CHECK-NEXT: File 0, [[@LINE]]:13 -> [[@LINE]]:19 = (#0 - #1)
     throw ImportantError();           // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:27 = #2
 }
 
                                       // CHECK-NEXT: main
 int main() {                          // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@LINE+13]]:2 = #0
-  int j = 0;
+  int j = 1;
   try {
     func(j);
   } catch(const Error &e) {           // CHECK-NEXT: File 0, [[@LINE]]:27 -> [[@LINE+2]]:4 = #2

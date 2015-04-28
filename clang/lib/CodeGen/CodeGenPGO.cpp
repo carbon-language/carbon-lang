@@ -317,6 +317,14 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
     RecordNextStmtCount = true;
   }
 
+  void VisitCXXThrowExpr(const CXXThrowExpr *E) {
+    RecordStmtCount(E);
+    if (E->getSubExpr())
+      Visit(E->getSubExpr());
+    PGO.setCurrentRegionUnreachable();
+    RecordNextStmtCount = true;
+  }
+
   void VisitGotoStmt(const GotoStmt *S) {
     RecordStmtCount(S);
     PGO.setCurrentRegionUnreachable();

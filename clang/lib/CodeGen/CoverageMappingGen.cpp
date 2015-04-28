@@ -592,6 +592,13 @@ struct CounterCoverageMappingBuilder
     terminateRegion(S);
   }
 
+  void VisitCXXThrowExpr(const CXXThrowExpr *E) {
+    extendRegion(E);
+    if (E->getSubExpr())
+      Visit(E->getSubExpr());
+    terminateRegion(E);
+  }
+
   void VisitGotoStmt(const GotoStmt *S) { terminateRegion(S); }
 
   void VisitLabelStmt(const LabelStmt *S) {

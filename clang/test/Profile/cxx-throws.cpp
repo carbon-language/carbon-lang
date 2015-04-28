@@ -12,6 +12,7 @@
 
 // PGOGEN: @[[THC:__llvm_profile_counters__Z6throwsv]] = private global [9 x i64] zeroinitializer
 // PGOGEN-EXC: @[[THC:__llvm_profile_counters__Z6throwsv]] = private global [9 x i64] zeroinitializer
+// PGOGEN: @[[UNC:__llvm_profile_counters__Z11unreachablei]] = private global [3 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @_Z6throwsv()
 // PGOUSE-LABEL: @_Z6throwsv()
@@ -60,14 +61,33 @@ void throws() {
   // PGOUSE: ret void
 }
 
+// PGOGEN-LABEL: @_Z11unreachablei(i32 %i)
+// PGOUSE-LABEL: @_Z11unreachablei(i32 %i)
+// PGOGEN: store {{.*}} @[[UNC]], i64 0, i64 0
+void unreachable(int i) {
+  // PGOGEN: store {{.*}} @[[UNC]], i64 0, i64 1
+  // PGOUSE: br {{.*}} !prof ![[UN1:[0-9]+]]
+  if (i)
+    throw i;
+
+  // PGOGEN: store {{.*}} @[[UNC]], i64 0, i64 2
+  // Since we never reach here, the weights should all be zero (and skipped)
+  // PGOUSE-NOT: br {{.*}} !prof !{{.*}}
+  if (i) {}
+}
+
 // PGOUSE-DAG: ![[TH1]] = !{!"branch_weights", i32 101, i32 2}
 // PGOUSE-DAG: ![[TH2]] = !{!"branch_weights", i32 67, i32 35}
 // PGOUSE-DAG: ![[TH3]] = !{!"branch_weights", i32 34, i32 34}
 // PGOUSE-DAG: ![[TH4]] = !{!"branch_weights", i32 18, i32 18}
 // PGOUSE-EXC: ![[TH5]] = !{!"branch_weights", i32 34, i32 18}
 // PGOUSE-DAG: ![[TH6]] = !{!"branch_weights", i32 101, i32 1}
+// PGOUSE-DAG: ![[UN1]] = !{!"branch_weights", i32 2, i32 1}
 
 int main(int argc, const char *argv[]) {
   throws();
+  try {
+    unreachable(1);
+  } catch (int) {}
   return 0;
 }
