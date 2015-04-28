@@ -247,7 +247,9 @@ multiclass fp_cond_alias<string cond, int condVal> {
 defm : int_cond_alias<"a",    0b1000>;
 defm : int_cond_alias<"n",    0b0000>;
 defm : int_cond_alias<"ne",   0b1001>;
+defm : int_cond_alias<"nz",   0b1001>; // same as ne
 defm : int_cond_alias<"e",    0b0001>;
+defm : int_cond_alias<"z",    0b0001>; // same as e
 defm : int_cond_alias<"g",    0b1010>;
 defm : int_cond_alias<"le",   0b0010>;
 defm : int_cond_alias<"ge",   0b1011>;
@@ -255,7 +257,9 @@ defm : int_cond_alias<"l",    0b0011>;
 defm : int_cond_alias<"gu",   0b1100>;
 defm : int_cond_alias<"leu",  0b0100>;
 defm : int_cond_alias<"cc",   0b1101>;
+defm : int_cond_alias<"geu",  0b1101>; // same as cc
 defm : int_cond_alias<"cs",   0b0101>;
+defm : int_cond_alias<"lu",   0b0101>; // same as cs
 defm : int_cond_alias<"pos",  0b1110>;
 defm : int_cond_alias<"neg",  0b0110>;
 defm : int_cond_alias<"vc",   0b1111>;
@@ -270,7 +274,9 @@ defm : fp_cond_alias<"l",     0b0100>;
 defm : fp_cond_alias<"ul",    0b0011>;
 defm : fp_cond_alias<"lg",    0b0010>;
 defm : fp_cond_alias<"ne",    0b0001>;
+defm : fp_cond_alias<"nz",    0b0001>; // same as ne
 defm : fp_cond_alias<"e",     0b1001>;
+defm : fp_cond_alias<"z",     0b1001>; // same as e
 defm : fp_cond_alias<"ue",    0b1010>;
 defm : fp_cond_alias<"ge",    0b1011>;
 defm : fp_cond_alias<"uge",   0b1100>;
