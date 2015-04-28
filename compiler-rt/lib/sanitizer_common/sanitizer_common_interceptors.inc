@@ -3904,25 +3904,33 @@ INTERCEPTOR(SSIZE_T, getline, char **lineptr, SIZE_T *n, void *stream) {
   }
   return res;
 }
-INTERCEPTOR(SSIZE_T, __getdelim, char **lineptr, SIZE_T *n, int delim,
-            void *stream) {
-  void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, __getdelim, lineptr, n, delim, stream);
-  // FIXME: under ASan the call below may write to freed memory and corrupt
-  // its metadata. See
-  // https://code.google.com/p/address-sanitizer/issues/detail?id=321.
-  SSIZE_T res = REAL(__getdelim)(lineptr, n, delim, stream);
-  if (res > 0) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lineptr, sizeof(*lineptr));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, n, sizeof(*n));
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *lineptr, res + 1);
+
+// FIXME: under ASan the call below may write to freed memory and corrupt its
+// metadata. See
+// https://code.google.com/p/address-sanitizer/issues/detail?id=321.
+#define GETDELIM_INTERCEPTOR_IMPL(vname)                                       \
+  {                                                                            \
+    void *ctx;                                                                 \
+    COMMON_INTERCEPTOR_ENTER(ctx, vname, lineptr, n, delim, stream);           \
+    SSIZE_T res = REAL(vname)(lineptr, n, delim, stream);                      \
+    if (res > 0) {                                                             \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lineptr, sizeof(*lineptr));          \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, n, sizeof(*n));                      \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *lineptr, res + 1);                  \
+    }                                                                          \
+    return res;                                                                \
   }
-  return res;
-}
+
+INTERCEPTOR(SSIZE_T, __getdelim, char **lineptr, SIZE_T *n, int delim,
+            void *stream)
+GETDELIM_INTERCEPTOR_IMPL(__getdelim)
+
+// There's no __getdelim() on FreeBSD so we supply the getdelim() interceptor
+// with its own body.
 INTERCEPTOR(SSIZE_T, getdelim, char **lineptr, SIZE_T *n, int delim,
-            void *stream) {
-  return __getdelim(lineptr, n, delim, stream);
-}
+            void *stream)
+GETDELIM_INTERCEPTOR_IMPL(getdelim)
+
 #define INIT_GETLINE                     \
   COMMON_INTERCEPT_FUNCTION(getline);    \
   COMMON_INTERCEPT_FUNCTION(__getdelim); \
