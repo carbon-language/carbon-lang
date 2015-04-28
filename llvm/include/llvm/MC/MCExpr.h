@@ -413,7 +413,8 @@ public:
     NE,   ///< Inequality comparison.
     Or,   ///< Bitwise or.
     Shl,  ///< Shift left.
-    Shr,  ///< Shift right (arithmetic or logical, depending on target)
+    AShr, ///< Arithmetic shift right.
+    LShr, ///< Logical shift right.
     Sub,  ///< Subtraction.
     Xor   ///< Bitwise exclusive or.
   };
@@ -491,9 +492,13 @@ public:
                                        MCContext &Ctx) {
     return Create(Shl, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateShr(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *CreateAShr(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Shr, LHS, RHS, Ctx);
+    return Create(AShr, LHS, RHS, Ctx);
+  }
+  static const MCBinaryExpr *CreateLShr(const MCExpr *LHS, const MCExpr *RHS,
+                                       MCContext &Ctx) {
+    return Create(LShr, LHS, RHS, Ctx);
   }
   static const MCBinaryExpr *CreateSub(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {

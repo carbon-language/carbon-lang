@@ -1128,7 +1128,7 @@ unsigned AsmParser::getBinOpPrecedence(AsmToken::TokenKind K,
     Kind = MCBinaryExpr::Shl;
     return 4;
   case AsmToken::GreaterGreater:
-    Kind = MCBinaryExpr::Shr;
+    Kind = MAI.shouldUseLogicalShr() ? MCBinaryExpr::LShr : MCBinaryExpr::AShr;
     return 4;
 
   // High Intermediate Precedence: +, -

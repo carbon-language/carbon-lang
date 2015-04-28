@@ -339,7 +339,7 @@ protected:
 
   std::vector<MCCFIInstruction> InitialFrameState;
 
-  //===--- Integrated Assembler State ----------------------------------===//
+  //===--- Integrated Assembler Information ----------------------------===//
 
   /// Should we use the integrated assembler?
   /// The integrated assembler should be enabled by default (by the
@@ -350,6 +350,10 @@ protected:
 
   /// Compress DWARF debug sections. Defaults to false.
   bool CompressDebugSections;
+
+  /// True if the integrated assembler should interpret 'a >> b' constant
+  /// expressions as logical rather than arithmetic.
+  bool UseLogicalShr;
 
 public:
   explicit MCAsmInfo();
@@ -538,6 +542,8 @@ public:
   void setCompressDebugSections(bool CompressDebugSections) {
     this->CompressDebugSections = CompressDebugSections;
   }
+
+  bool shouldUseLogicalShr() const { return UseLogicalShr; }
 };
 }
 

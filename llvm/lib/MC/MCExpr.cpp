@@ -89,6 +89,7 @@ void MCExpr::print(raw_ostream &OS) const {
 
       OS <<  '+';
       break;
+    case MCBinaryExpr::AShr: OS << ">>"; break;
     case MCBinaryExpr::And:  OS <<  '&'; break;
     case MCBinaryExpr::Div:  OS <<  '/'; break;
     case MCBinaryExpr::EQ:   OS << "=="; break;
@@ -96,6 +97,7 @@ void MCExpr::print(raw_ostream &OS) const {
     case MCBinaryExpr::GTE:  OS << ">="; break;
     case MCBinaryExpr::LAnd: OS << "&&"; break;
     case MCBinaryExpr::LOr:  OS << "||"; break;
+    case MCBinaryExpr::LShr: OS << ">>"; break;
     case MCBinaryExpr::LT:   OS <<  '<'; break;
     case MCBinaryExpr::LTE:  OS << "<="; break;
     case MCBinaryExpr::Mod:  OS <<  '%'; break;
@@ -103,7 +105,6 @@ void MCExpr::print(raw_ostream &OS) const {
     case MCBinaryExpr::NE:   OS << "!="; break;
     case MCBinaryExpr::Or:   OS <<  '|'; break;
     case MCBinaryExpr::Shl:  OS << "<<"; break;
-    case MCBinaryExpr::Shr:  OS << ">>"; break;
     case MCBinaryExpr::Sub:  OS <<  '-'; break;
     case MCBinaryExpr::Xor:  OS <<  '^'; break;
     }
@@ -709,11 +710,12 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     }
 
     // FIXME: We need target hooks for the evaluation. It may be limited in
-    // width, and gas defines the result of comparisons and right shifts
-    // differently from Apple as.
+    // width, and gas defines the result of comparisons differently from
+    // Apple as.
     int64_t LHS = LHSValue.getConstant(), RHS = RHSValue.getConstant();
     int64_t Result = 0;
     switch (ABE->getOpcode()) {
+    case MCBinaryExpr::AShr: Result = LHS >> RHS; break;
     case MCBinaryExpr::Add:  Result = LHS + RHS; break;
     case MCBinaryExpr::And:  Result = LHS & RHS; break;
     case MCBinaryExpr::Div:  Result = LHS / RHS; break;
@@ -722,6 +724,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     case MCBinaryExpr::GTE:  Result = LHS >= RHS; break;
     case MCBinaryExpr::LAnd: Result = LHS && RHS; break;
     case MCBinaryExpr::LOr:  Result = LHS || RHS; break;
+    case MCBinaryExpr::LShr: Result = uint64_t(LHS) >> uint64_t(RHS); break;
     case MCBinaryExpr::LT:   Result = LHS < RHS; break;
     case MCBinaryExpr::LTE:  Result = LHS <= RHS; break;
     case MCBinaryExpr::Mod:  Result = LHS % RHS; break;
@@ -729,7 +732,6 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
     case MCBinaryExpr::NE:   Result = LHS != RHS; break;
     case MCBinaryExpr::Or:   Result = LHS | RHS; break;
     case MCBinaryExpr::Shl:  Result = LHS << RHS; break;
-    case MCBinaryExpr::Shr:  Result = LHS >> RHS; break;
     case MCBinaryExpr::Sub:  Result = LHS - RHS; break;
     case MCBinaryExpr::Xor:  Result = LHS ^ RHS; break;
     }

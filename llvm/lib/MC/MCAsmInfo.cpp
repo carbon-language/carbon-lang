@@ -90,6 +90,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRegNumForCFI = false;
   NeedsDwarfSectionOffsetDirective = false;
   UseParensForSymbolVariant = false;
+  UseLogicalShr = false;
 
   // FIXME: Clang's logic should be synced with the logic used to initialize
   //        this member and the two implementations should be merged.
