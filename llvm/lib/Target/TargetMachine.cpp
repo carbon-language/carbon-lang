@@ -54,6 +54,11 @@ TargetMachine::~TargetMachine() {
 }
 
 /// \brief Reset the target options based on the function's attributes.
+// FIXME: This function needs to go away for a number of reasons:
+// a) global state on the TargetMachine is terrible in general,
+// b) there's no default state here to keep,
+// c) these target options should be passed only on the function
+//    and not on the TargetMachine (via TargetOptions) at all.
 void TargetMachine::resetTargetOptions(const Function &F) const {
 #define RESET_OPTION(X, Y)                                                     \
   do {                                                                         \
