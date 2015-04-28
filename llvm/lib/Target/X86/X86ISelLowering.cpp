@@ -2269,10 +2269,10 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
 
   const Function *Fn = MF.getFunction();
   bool NoImplicitFloatOps = Fn->hasFnAttribute(Attribute::NoImplicitFloat);
-  assert(!(MF.getTarget().Options.UseSoftFloat && NoImplicitFloatOps) &&
+  bool isSoftFloat = MF.getTarget().Options.UseSoftFloat;
+  assert(!(isSoftFloat && NoImplicitFloatOps) &&
          "SSE register cannot be used when SSE is disabled!");
-  if (MF.getTarget().Options.UseSoftFloat || NoImplicitFloatOps ||
-      !Subtarget->hasSSE1())
+  if (isSoftFloat || NoImplicitFloatOps || !Subtarget->hasSSE1())
     // Kernel mode asks for SSE to be disabled, so there are no XMM argument
     // registers.
     return None;
