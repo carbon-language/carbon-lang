@@ -93,3 +93,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-non-vector-shufflevector.bc 
 RUN:   FileCheck --check-prefix=INVALID-TYPE %s
 
 INVALID-TYPE: Invalid type for value
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-fwdref-type-mismatch.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=FWDREF-TYPE %s
+
+FWDREF-TYPE: Invalid record

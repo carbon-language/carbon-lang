@@ -794,7 +794,9 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, Type *Ty) {
     resize(Idx + 1);
 
   if (Value *V = ValuePtrs[Idx]) {
-    assert((!Ty || Ty == V->getType()) && "Type mismatch in value table!");
+    // If the types don't match, it's invalid.
+    if (Ty && Ty != V->getType())
+      return nullptr;
     return V;
   }
 
