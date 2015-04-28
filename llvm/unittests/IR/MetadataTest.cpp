@@ -1849,6 +1849,26 @@ TEST_F(MDLocalVariableTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDLocalVariableTest, getArg256) {
+  EXPECT_EQ(255u, MDLocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
+                                       getSubprogram(), "", getFile(), 0,
+                                       nullptr, 255, 0)
+                      ->getArg());
+  EXPECT_EQ(256u, MDLocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
+                                       getSubprogram(), "", getFile(), 0,
+                                       nullptr, 256, 0)
+                      ->getArg());
+  EXPECT_EQ(257u, MDLocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
+                                       getSubprogram(), "", getFile(), 0,
+                                       nullptr, 257, 0)
+                      ->getArg());
+  unsigned Max = UINT16_MAX;
+  EXPECT_EQ(Max, MDLocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
+                                      getSubprogram(), "", getFile(), 0,
+                                      nullptr, Max, 0)
+                     ->getArg());
+}
+
 typedef MetadataTest MDExpressionTest;
 
 TEST_F(MDExpressionTest, get) {

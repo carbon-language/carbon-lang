@@ -456,11 +456,8 @@ MDLocalVariable *MDLocalVariable::getImpl(LLVMContext &Context, unsigned Tag,
                                           Metadata *Type, unsigned Arg,
                                           unsigned Flags, StorageType Storage,
                                           bool ShouldCreate) {
-  // Truncate Arg to 8 bits.
-  //
-  // FIXME: This is gross (and should be changed to an assert or removed), but
-  // it matches historical behaviour for now.
-  Arg &= (1u << 8) - 1;
+  // 64K ought to be enough for any frontend.
+  assert(Arg <= UINT16_MAX && "Expected argument number to fit in 16-bits");
 
   assert(Scope && "Expected scope");
   assert(isCanonical(Name) && "Expected canonical MDString");
