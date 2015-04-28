@@ -128,3 +128,12 @@ void nestedCapture () {
     };
   };
 }
+
+// Ensure we don't assert here.
+struct CaptureArrayAndThis {
+  CaptureArrayAndThis() {
+    char array[] = "floop";
+    [array, this] {};
+  }
+} capture_array_and_this;
+

@@ -648,13 +648,6 @@ public:
   /// \brief Whether the lambda contains an unexpanded parameter pack.
   bool ContainsUnexpandedParameterPack;
 
-  /// \brief Variables used to index into by-copy array captures.
-  SmallVector<VarDecl *, 4> ArrayIndexVars;
-
-  /// \brief Offsets into the ArrayIndexVars array at which each capture starts
-  /// its list of array index variables.
-  SmallVector<unsigned, 4> ArrayIndexStarts;
-  
   /// \brief If this is a generic lambda, use this as the depth of 
   /// each 'auto' parameter, during initial AST construction.
   unsigned AutoTemplateParameterDepth;
@@ -842,9 +835,6 @@ CapturingScopeInfo::addThisCapture(bool isNested, SourceLocation Loc,
   Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, CaptureType,
                              Cpy));
   CXXThisCaptureIndex = Captures.size();
-
-  if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(this))
-    LSI->ArrayIndexStarts.push_back(LSI->ArrayIndexVars.size());
 }
 
 } // end namespace sema
