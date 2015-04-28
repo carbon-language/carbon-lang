@@ -280,7 +280,7 @@ Finally, there's:
 
 (lldb) thread until 100
 
-which runs the thread in the current frame till it reaches line 100 in
+Which runs the thread in the current frame till it reaches line 100 in
 this frame or stops if it leaves the current frame.  This is a pretty 
 close equivalent to gdb's "until" command.
 
