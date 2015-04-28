@@ -326,6 +326,9 @@ private:
   bool parseAssignment(StringRef Name, bool allow_redef,
                        bool NoDeadStrip = false);
 
+  unsigned getBinOpPrecedence(AsmToken::TokenKind K,
+                              MCBinaryExpr::Opcode &Kind);
+
   bool parseBinOpRHS(unsigned Precedence, const MCExpr *&Res, SMLoc &EndLoc);
   bool parseParenExpr(const MCExpr *&Res, SMLoc &EndLoc);
   bool parseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc);
@@ -1072,8 +1075,8 @@ bool AsmParser::parseAbsoluteExpression(int64_t &Res) {
   return false;
 }
 
-static unsigned getBinOpPrecedence(AsmToken::TokenKind K,
-                                   MCBinaryExpr::Opcode &Kind) {
+unsigned AsmParser::getBinOpPrecedence(AsmToken::TokenKind K,
+                                       MCBinaryExpr::Opcode &Kind) {
   switch (K) {
   default:
     return 0; // not a binop.
