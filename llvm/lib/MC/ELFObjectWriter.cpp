@@ -217,8 +217,8 @@ class ELFObjectWriter : public MCObjectWriter {
     uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
 
-    // Map from a signature symbol to the group section
-    typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
+    // Map from a signature symbol to the group section index
+    typedef DenseMap<const MCSymbol *, unsigned> RevGroupMapTy;
     // Start and end offset of each section
     typedef std::vector<std::pair<uint64_t, uint64_t>> SectionOffsetsTy;
 
@@ -231,7 +231,9 @@ class ELFObjectWriter : public MCObjectWriter {
                             const SectionIndexMapTy &SectionIndexMap,
                             const RevGroupMapTy &RevGroupMap);
 
-    void maybeAddToGroup(MCAssembler &Asm, const RevGroupMapTy &RevGroupMap,
+    void maybeAddToGroup(MCAssembler &Asm,
+                         ArrayRef<const MCSectionELF *> Sections,
+                         const RevGroupMapTy &RevGroupMap,
                          const MCSectionELF &Section, unsigned Index);
 
     void computeIndexMap(MCAssembler &Asm,
@@ -940,13 +942,14 @@ bool ELFObjectWriter::isLocal(const MCSymbolData &Data, bool isUsedInReloc) {
 }
 
 void ELFObjectWriter::maybeAddToGroup(MCAssembler &Asm,
+                                      ArrayRef<const MCSectionELF *> Sections,
                                       const RevGroupMapTy &RevGroupMap,
                                       const MCSectionELF &Section,
                                       unsigned Index) {
   const MCSymbol *Sym = Section.getGroup();
   if (!Sym)
     return;
-  const MCSectionELF *Group = RevGroupMap.lookup(Sym);
+  const MCSectionELF *Group = Sections[RevGroupMap.lookup(Sym) - 1];
   MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
   // FIXME: we could use the previous fragment
   MCDataFragment *F = new MCDataFragment(&Data);
@@ -964,7 +967,7 @@ void ELFObjectWriter::computeIndexMap(
     Sections.push_back(&Section);
     unsigned Index = Sections.size();
     SectionIndexMap[&Section] = Index;
-    maybeAddToGroup(Asm, RevGroupMap, Section, Index);
+    maybeAddToGroup(Asm, Sections, RevGroupMap, Section, Index);
     createRelocationSection(Asm, SD);
   }
 }
@@ -1017,7 +1020,7 @@ void ELFObjectWriter::computeSymbolTable(
       MSD.SectionIndex = ELF::SHN_COMMON;
     } else if (BaseSymbol->isUndefined()) {
       if (isSignature && !Used)
-        MSD.SectionIndex = SectionIndexMap.lookup(RevGroupMap.lookup(&Symbol));
+        MSD.SectionIndex = RevGroupMap.lookup(&Symbol);
       else
         MSD.SectionIndex = ELF::SHN_UNDEF;
       if (!Used && WeakrefUsed)
@@ -1435,11 +1438,11 @@ void ELFObjectWriter::createIndexedSections(
 
     const MCSymbol *SignatureSymbol = Section.getGroup();
     Asm.getOrCreateSymbolData(*SignatureSymbol);
-    const MCSectionELF *&Group = RevGroupMap[SignatureSymbol];
-    if (!Group) {
-      Group = Ctx.createELFGroupSection(SignatureSymbol);
+    unsigned &GroupIdx = RevGroupMap[SignatureSymbol];
+    if (!GroupIdx) {
+      const MCSectionELF *Group = Ctx.createELFGroupSection(SignatureSymbol);
       Sections.push_back(Group);
-      SectionIndexMap[Group] = Sections.size();
+      GroupIdx = Sections.size();
 
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
       Data.setAlignment(4);
