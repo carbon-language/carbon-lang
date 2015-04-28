@@ -239,8 +239,7 @@ class ELFObjectWriter : public MCObjectWriter {
                          SectionIndexMapTy &SectionIndexMap,
                          const RevGroupMapTy &RevGroupMap);
 
-    MCSectionData *createRelocationSection(MCAssembler &Asm,
-                                           const MCSectionData &SD);
+    void createRelocationSection(MCAssembler &Asm, const MCSectionData &SD);
 
     void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
@@ -957,32 +956,16 @@ void ELFObjectWriter::maybeAddToGroup(MCAssembler &Asm,
 void ELFObjectWriter::computeIndexMap(
     MCAssembler &Asm, std::vector<const MCSectionELF *> &Sections,
     SectionIndexMapTy &SectionIndexMap, const RevGroupMapTy &RevGroupMap) {
-  std::vector<const MCSectionELF *> RelSections;
   for (const MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
       static_cast<const MCSectionELF &>(SD.getSection());
-    if (Section.getType() == ELF::SHT_GROUP ||
-        Section.getType() == ELF::SHT_REL ||
-        Section.getType() == ELF::SHT_RELA)
+    if (Section.getType() == ELF::SHT_GROUP)
       continue;
     Sections.push_back(&Section);
     unsigned Index = Sections.size();
     SectionIndexMap[&Section] = Index;
     maybeAddToGroup(Asm, RevGroupMap, Section, Index);
-
-    if (MCSectionData *RelSD = createRelocationSection(Asm, SD)) {
-      const MCSectionELF *RelSection =
-          static_cast<const MCSectionELF *>(&RelSD->getSection());
-      RelSections.push_back(RelSection);
-    }
-  }
-
-  // Put relocation sections close together. The linker reads them
-  // first, so this improves cache locality.
-  for (const MCSectionELF *Sec : RelSections) {
-    Sections.push_back(Sec);
-    unsigned Index = Sections.size();
-    maybeAddToGroup(Asm, RevGroupMap, *Sec, Index);
+    createRelocationSection(Asm, SD);
   }
 }
 
@@ -1131,11 +1114,10 @@ void ELFObjectWriter::computeSymbolTable(
     UndefinedSymbolData[i].SymbolData->setIndex(Index++);
 }
 
-MCSectionData *
-ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
-                                         const MCSectionData &SD) {
+void ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
+                                              const MCSectionData &SD) {
   if (Relocations[&SD].empty())
-    return nullptr;
+    return;
 
   MCContext &Ctx = Asm.getContext();
   const MCSectionELF &Section =
@@ -1158,7 +1140,7 @@ ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
   const MCSectionELF *RelaSection = Ctx.createELFRelSection(
       RelaSectionName, hasRelocationAddend() ? ELF::SHT_RELA : ELF::SHT_REL,
       Flags, EntrySize, Section.getGroup(), &Section);
-  return &Asm.getOrCreateSectionData(*RelaSection);
+  Asm.getOrCreateSectionData(*RelaSection);
 }
 
 static SmallVector<char, 128>
