@@ -1454,10 +1454,9 @@ void ELFObjectWriter::createIndexedSections(
   MCContext &Ctx = Asm.getContext();
 
   // Build the groups
-  for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
-       it != ie; ++it) {
+  for (const MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(it->getSection());
+        static_cast<const MCSectionELF &>(SD.getSection());
     if (!(Section.getFlags() & ELF::SHF_GROUP))
       continue;
 
