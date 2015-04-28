@@ -1253,7 +1253,7 @@ ExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
 
-  // Check if GNU-styple InlineAsm is disabled.
+  // Check if GNU-style InlineAsm is disabled.
   if (!getLangOpts().GNUAsm)
     Diag(Loc, diag::err_gnu_inline_asm_disabled);
 
