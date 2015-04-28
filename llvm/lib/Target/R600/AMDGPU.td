@@ -20,6 +20,11 @@ def FeatureDumpCode : SubtargetFeature <"DumpCode",
         "true",
         "Dump MachineInstrs in the CodeEmitter">;
 
+def FeatureDumpCodeLower : SubtargetFeature <"dumpcode",
+        "DumpCode",
+        "true",
+        "Dump MachineInstrs in the CodeEmitter">;
+
 def FeatureIRStructurizer : SubtargetFeature <"disable-irstructurizer",
         "EnableIRStructurizer",
         "false",
