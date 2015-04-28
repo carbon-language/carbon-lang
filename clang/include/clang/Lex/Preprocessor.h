@@ -498,6 +498,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
     SourceLocation ImportLoc;
 
     struct SavedMacroInfo {
+      SavedMacroInfo() : Latest(nullptr) {}
       MacroDirective *Latest;
       llvm::TinyPtrVector<ModuleMacro*> Overridden;
     };
