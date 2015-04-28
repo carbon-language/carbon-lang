@@ -263,6 +263,9 @@ namespace process_linux {
         MonitorCallback(lldb::pid_t pid, bool exited, int signal, int status);
 
         void
+        WaitForNewThread(::pid_t tid);
+
+        void
         MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid);
 
         void

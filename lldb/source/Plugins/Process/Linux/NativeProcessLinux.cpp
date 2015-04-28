@@ -2239,6 +2239,75 @@ NativeProcessLinux::MonitorCallback(lldb::pid_t pid,
 }
 
 void
+NativeProcessLinux::WaitForNewThread(::pid_t tid)
+{
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+    NativeThreadProtocolSP new_thread_sp = GetThreadByID(tid);
+
+    if (new_thread_sp)
+    {
+        // We are already tracking the thread - we got the event on the new thread (see
+        // MonitorSignal) before this one. We are done.
+        return;
+    }
+
+    // The thread is not tracked yet, let's wait for it to appear.
+    int status = -1;
+    ::pid_t wait_pid;
+    do
+    {
+        if (log)
+            log->Printf ("NativeProcessLinux::%s() received thread creation event for tid %" PRIu32 ". tid not tracked yet, waiting for thread to appear...", __FUNCTION__, tid);
+        wait_pid = waitpid(tid, &status, __WALL);
+    }
+    while (wait_pid == -1 && errno == EINTR);
+    // Since we are waiting on a specific tid, this must be the creation event. But let's do
+    // some checks just in case.
+    if (wait_pid != tid) {
+        if (log)
+            log->Printf ("NativeProcessLinux::%s() waiting for tid %" PRIu32 " failed. Assuming the thread has disappeared in the meantime", __FUNCTION__, tid);
+        // The only way I know of this could happen is if the whole process was
+        // SIGKILLed in the mean time. In any case, we can't do anything about that now.
+        return;
+    }
+    if (WIFEXITED(status))
+    {
+        if (log)
+            log->Printf ("NativeProcessLinux::%s() waiting for tid %" PRIu32 " returned an 'exited' event. Not tracking the thread.", __FUNCTION__, tid);
+        // Also a very improbable event.
+        return;
+    }
+
+    siginfo_t info;
+    Error error = GetSignalInfo(tid, &info);
+    if (error.Fail())
+    {
+        if (log)
+            log->Printf ("NativeProcessLinux::%s() GetSignalInfo for tid %" PRIu32 " failed. Assuming the thread has disappeared in the meantime.", __FUNCTION__, tid);
+        return;
+    }
+
+    if (((info.si_pid != 0) || (info.si_code != SI_USER)) && log)
+    {
+        // We should be getting a thread creation signal here, but we received something
+        // else. There isn't much we can do about it now, so we will just log that. Since the
+        // thread is alive and we are receiving events from it, we shall pretend that it was
+        // created properly.
+        log->Printf ("NativeProcessLinux::%s() GetSignalInfo for tid %" PRIu32 " received unexpected signal with code %d from pid %d.", __FUNCTION__, tid, info.si_code, info.si_pid);
+    }
+
+    if (log)
+        log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 ": tracking new thread tid %" PRIu32,
+                 __FUNCTION__, GetID (), tid);
+
+    new_thread_sp = AddThread(tid);
+    std::static_pointer_cast<NativeThreadLinux> (new_thread_sp)->SetRunning ();
+    Resume (tid, LLDB_INVALID_SIGNAL_NUMBER);
+    m_coordinator_up->NotifyThreadCreate (tid, false, CoordinatorErrorHandler);
+}
+
+void
 NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
@@ -2267,22 +2336,18 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
     case (SIGTRAP | (PTRACE_EVENT_CLONE << 8)):
     {
         // This is the notification on the parent thread which informs us of new thread
-        // creation. We are not interested in these events at this point (an interesting use
-        // case would be to stop the process upon thread creation), so we just resume the thread.
-        // We will pickup the new thread when we get its SIGSTOP notification.
+        // creation.
+        // We don't want to do anything with the parent thread so we just resume it. In case we
+        // want to implement "break on thread creation" functionality, we would need to stop
+        // here.
 
-        if (log)
+        unsigned long event_message = 0;
+        if (GetEventMessage (pid, &event_message).Fail())
         {
-            unsigned long event_message = 0;
-            if (GetEventMessage (pid, &event_message).Success())
-            {
-                lldb::tid_t tid = static_cast<lldb::tid_t> (event_message);
-                log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " received thread creation event for tid %" PRIu64, __FUNCTION__, pid, tid);
-
-            }
-            else
+            if (log)
                 log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " received thread creation event but GetEventMessage failed so we don't know the new tid", __FUNCTION__, pid);
-        }
+        } else 
+            WaitForNewThread(event_message);
 
         Resume (pid, LLDB_INVALID_SIGNAL_NUMBER);
         break;
@@ -2603,8 +2668,10 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
     // Check for new thread notification.
     if ((info->si_pid == 0) && (info->si_code == SI_USER))
     {
-        // A new thread creation is being signaled.  This is one of two parts that come in
-        // a non-deterministic order.  pid is the thread id.
+        // A new thread creation is being signaled. This is one of two parts that come in
+        // a non-deterministic order. This code handles the case where the new thread event comes
+        // before the event on the parent thread. For the opposite case see code in
+        // MonitorSIGTRAP.
         if (log)
             log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " tid %" PRIu64 ": new thread notification",
                      __FUNCTION__, GetID (), pid);
