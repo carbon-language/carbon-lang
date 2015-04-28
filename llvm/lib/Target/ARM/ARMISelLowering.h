@@ -592,8 +592,7 @@ namespace llvm {
                                 MachineBasicBlock *MBB,
                                 MachineBasicBlock *DispatchBB, int FI) const;
 
-    MachineBasicBlock *EmitSjLjDispatchBlock(MachineInstr *MI,
-                                             MachineBasicBlock *MBB) const;
+    void EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
     bool RemapAddSubWithFlags(MachineInstr *MI, MachineBasicBlock *BB) const;
 

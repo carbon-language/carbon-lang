@@ -6481,8 +6481,8 @@ SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
   }
 }
 
-MachineBasicBlock *ARMTargetLowering::
-EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
+void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
+                                              MachineBasicBlock *MBB) const {
   const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   MachineFunction *MF = MBB->getParent();
@@ -6878,8 +6878,6 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   // The instruction is gone now.
   MI->eraseFromParent();
-
-  return MBB;
 }
 
 static
