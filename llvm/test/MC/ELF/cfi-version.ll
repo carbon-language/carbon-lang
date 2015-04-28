@@ -1,6 +1,6 @@
 ; RUN: %llc_dwarf %s -o - -dwarf-version 2 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF2
-; RUN: %llc_dwarf %s -o - -dwarf-version 3 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF34
-; RUN: %llc_dwarf %s -o - -dwarf-version 4 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF34
+; RUN: %llc_dwarf %s -o - -dwarf-version 3 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF3
+; RUN: %llc_dwarf %s -o - -dwarf-version 4 -filetype=obj | llvm-dwarfdump - | FileCheck %s --check-prefix=DWARF4
 
 ; .debug_frame is not emitted for targeting Windows x64.
 ; REQUIRES: debug_frame
@@ -40,6 +40,10 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 ; DWARF2:        Version:               1
 ; DWARF2-NEXT:   Augmentation:
 
-; DWARF34:      .debug_frame contents:
-; DWARF34:        Version:               3
-; DWARF34-NEXT:   Augmentation:
+; DWARF3:      .debug_frame contents:
+; DWARF3:        Version:               3
+; DWARF3-NEXT:   Augmentation:
+
+; DWARF4:      .debug_frame contents:
+; DWARF4:        Version:               4
+; DWARF4-NEXT:   Augmentation:

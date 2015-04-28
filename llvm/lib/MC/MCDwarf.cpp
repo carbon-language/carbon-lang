@@ -1244,6 +1244,20 @@ void FrameEmitterImpl::EmitCompactUnwind(MCObjectStreamer &Streamer,
     Streamer.EmitIntValue(0, Size); // No LSDA
 }
 
+static unsigned getCIEVersion(bool IsEH, unsigned DwarfVersion) {
+  if (IsEH)
+    return 1;
+  switch (DwarfVersion) {
+  case 2:
+    return 1;
+  case 3:
+    return 3;
+  case 4:
+    return 4;
+  }
+  llvm_unreachable("Unknown version");
+}
+
 const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
                                           const MCSymbol *personality,
                                           unsigned personalityEncoding,
@@ -1270,10 +1284,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   streamer.EmitIntValue(CIE_ID, 4);
 
   // Version
-  // For .eh_frame, we use CIE version 1
-  // For DWARF2, we use CIE version 1
-  // For DWARF3+, we use CIE version 3
-  uint8_t CIEVersion = (IsEH || context.getDwarfVersion() <= 2) ? 1 : 3;
+  uint8_t CIEVersion = getCIEVersion(IsEH, context.getDwarfVersion());
   streamer.EmitIntValue(CIEVersion, 1);
 
   // Augmentation String
