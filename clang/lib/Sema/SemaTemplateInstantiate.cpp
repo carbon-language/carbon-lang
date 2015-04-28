@@ -2233,7 +2233,7 @@ bool Sema::InstantiateInClassInitializer(
   EnterExpressionEvaluationContext EvalContext(*this,
                                                Sema::PotentiallyEvaluated);
 
-  LocalInstantiationScope Scope(*this);
+  LocalInstantiationScope Scope(*this, true);
 
   // Instantiate the initializer.
   ActOnStartCXXInClassMemberInitializer();
