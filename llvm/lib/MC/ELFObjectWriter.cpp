@@ -1611,9 +1611,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   WriteHeader(Asm, NumSections + 1);
 
   // ... then the sections ...
-  for (unsigned i = 0; i < NumSections; ++i) {
-    const MCSectionELF &Section = *Sections[i];
-    const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
+  for (const MCSectionELF *Section : Sections) {
+    const MCSectionData &SD = Asm.getOrCreateSectionData(*Section);
     uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
     WriteZeros(Padding);
 
