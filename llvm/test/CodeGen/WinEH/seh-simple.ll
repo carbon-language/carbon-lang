@@ -63,10 +63,10 @@ return:
 ; CHECK-LABEL: define i32 @catch_all()
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: catch i8* null
-; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* null, i32 -1, i8* blockaddress(@catch_all, %catch.all))
-; CHECK-NEXT: indirectbr {{.*}} [label %catch.all]
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* null, i32 -1, i8* blockaddress(@catch_all, %lpad.split))
+; CHECK-NEXT: indirectbr {{.*}} [label %lpad.split]
 ;
-; CHECK: catch.all:
+; CHECK: lpad.split:
 ; CHECK: store i32 1, i32* %retval
 
 

@@ -51,9 +51,9 @@ __try.cont:                                       ; preds = %__except, %invoke.c
 ; CHECK-LABEL: define void @seh_catch_all()
 ; CHECK: landingpad
 ; CHECK-NEXT: catch i8* null
-; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* null, i32 -1, i8* blockaddress(@seh_catch_all, %catch.all))
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 1, i8* null, i32 -1, i8* blockaddress(@seh_catch_all, %lpad.split))
 ; CHECK-NEXT: indirectbr
 ;
-; CHECK: catch.all:
+; CHECK: lpad.split:
 ; CHECK-NOT: extractvalue
 ; CHECK: call i32 @puts

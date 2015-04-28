@@ -89,6 +89,10 @@ private:
   void promoteLandingPadValues(LandingPadInst *LPad);
   void demoteValuesLiveAcrossHandlers(Function &F,
                                       SmallVectorImpl<LandingPadInst *> &LPads);
+  void findSEHEHReturnPoints(Function &F,
+                             SetVector<BasicBlock *> &EHReturnBlocks);
+  void findCXXEHReturnPoints(Function &F,
+                             SetVector<BasicBlock *> &EHReturnBlocks);
   void completeNestedLandingPad(Function *ParentFn,
                                 LandingPadInst *OutlinedLPad,
                                 const LandingPadInst *OriginalLPad,
@@ -392,13 +396,62 @@ static void findReachableBlocks(SmallPtrSetImpl<BasicBlock *> &ReachableBBs,
   }
 }
 
+// Attempt to find an instruction where a block can be split before
+// a call to llvm.eh.begincatch and its operands.  If the block
+// begins with the begincatch call or one of its adjacent operands
+// the block will not be split.
+static Instruction *findBeginCatchSplitPoint(BasicBlock *BB,
+                                             IntrinsicInst *II) {
+  // If the begincatch call is already the first instruction in the block,
+  // don't split.
+  Instruction *FirstNonPHI = BB->getFirstNonPHI();
+  if (II == FirstNonPHI)
+    return nullptr;
+
+  // If either operand is in the same basic block as the instruction and
+  // isn't used by another instruction before the begincatch call, include it
+  // in the split block.
+  auto *Op0 = dyn_cast<Instruction>(II->getOperand(0));
+  auto *Op1 = dyn_cast<Instruction>(II->getOperand(1));
+
+  Instruction *I = II->getPrevNode();
+  Instruction *LastI = II;
+
+  while (I == Op0 || I == Op1) {
+    // If the block begins with one of the operands and there are no other
+    // instructions between the operand and the begincatch call, don't split.
+    if (I == FirstNonPHI)
+      return nullptr;
+
+    LastI = I;
+    I = I->getPrevNode();
+  }
+
+  // If there is at least one instruction in the block before the begincatch
+  // call and its operands, split the block at either the begincatch or
+  // its operand.
+  return LastI;
+}
+
 /// Find all points where exceptional control rejoins normal control flow via
 /// llvm.eh.endcatch. Add them to the normal bb reachability worklist.
-static void findCXXEHReturnPoints(Function &F,
-                                  SetVector<BasicBlock *> &EHReturnBlocks) {
+void WinEHPrepare::findCXXEHReturnPoints(
+    Function &F, SetVector<BasicBlock *> &EHReturnBlocks) {
   for (auto BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = BBI;
     for (Instruction &I : *BB) {
+      if (match(&I, m_Intrinsic<Intrinsic::eh_begincatch>())) {
+        Instruction *SplitPt = 
+            findBeginCatchSplitPoint(BB, cast<IntrinsicInst>(&I));
+        if (SplitPt) {
+          // Split the block before the llvm.eh.begincatch call to allow
+          // cleanup and catch code to be distinguished later.
+          // Do not update BBI because we still need to process the
+          // portion of the block that we are splitting off.
+          SplitBlock(BB, &I, DT);
+          break;
+        }
+      }
       if (match(&I, m_Intrinsic<Intrinsic::eh_endcatch>())) {
         // Split the block after the call to llvm.eh.endcatch if there is
         // anything other than an unconditional branch, or if the successor
@@ -408,7 +461,7 @@ static void findCXXEHReturnPoints(Function &F,
             isa<PHINode>(Br->getSuccessor(0)->begin())) {
           DEBUG(dbgs() << "splitting block " << BB->getName()
                        << " with llvm.eh.endcatch\n");
-          BBI = BB->splitBasicBlock(I.getNextNode(), "ehreturn");
+          BBI = SplitBlock(BB, I.getNextNode(), DT);
         }
         // The next BB is normal control flow.
         EHReturnBlocks.insert(BB->getTerminator()->getSuccessor(0));
@@ -429,8 +482,8 @@ static bool isCatchAllLandingPad(const BasicBlock *BB) {
 
 /// Find all points where exceptions control rejoins normal control flow via
 /// selector dispatch.
-static void findSEHEHReturnPoints(Function &F,
-                                  SetVector<BasicBlock *> &EHReturnBlocks) {
+void WinEHPrepare::findSEHEHReturnPoints(
+    Function &F, SetVector<BasicBlock *> &EHReturnBlocks) {
   for (auto BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = BBI;
     // If the landingpad is a catch-all, treat the whole lpad as if it is
@@ -682,8 +735,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
     // Split the block after the landingpad instruction so that it is just a
     // call to llvm.eh.actions followed by indirectbr.
     assert(!isa<PHINode>(LPadBB->begin()) && "lpad phi not removed");
-    LPadBB->splitBasicBlock(LPad->getNextNode(),
-                            LPadBB->getName() + ".prepsplit");
+    SplitBlock(LPadBB, LPad->getNextNode(), DT);
     // Erase the branch inserted by the split so we can insert indirectbr.
     LPadBB->getTerminator()->eraseFromParent();
 
@@ -1085,7 +1137,7 @@ void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
   else
     Term = Unreached;
   BasicBlock *OldRetBB = Term->getParent();
-  BasicBlock *NewRetBB = SplitBlock(OldRetBB, Term);
+  BasicBlock *NewRetBB = SplitBlock(OldRetBB, Term, DT);
   // SplitBlock adds an unconditional branch instruction at the end of the
   // parent block.  We want to replace that with an invoke call, so we can
   // erase it now.
@@ -1257,8 +1309,7 @@ void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
   } else {
     // This must be a catch-all. Split the block after the landingpad.
     assert(CatchAction->getSelector()->isNullValue() && "expected catch-all");
-    HandlerBB =
-        StartBB->splitBasicBlock(StartBB->getFirstInsertionPt(), "catch.all");
+    HandlerBB = SplitBlock(StartBB, StartBB->getFirstInsertionPt(), DT);
   }
   IRBuilder<> Builder(HandlerBB->getFirstInsertionPt());
   Function *EHCodeFn = Intrinsic::getDeclaration(
@@ -1718,14 +1769,6 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
         BB = NextBB;
       }
 
-      // For C++ EH, check if there is any interesting cleanup code before we
-      // begin the catch. This is important because cleanups cannot rethrow
-      // exceptions but code called from catches can. For SEH, it isn't
-      // important if some finally code before a catch-all is executed out of
-      // line or after recovering from the exception.
-      if (Personality == EHPersonality::MSVC_CXX)
-        findCleanupHandlers(Actions, BB, BB);
-
       // Add the catch handler to the action list.
       CatchHandler *Action = nullptr;
       if (CatchHandlerMap.count(BB) && CatchHandlerMap[BB] != nullptr) {
@@ -1733,11 +1776,29 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
         Action = CatchHandlerMap[BB];
         assert(Action->getSelector() == ExpectedSelector);
       } else {
-        // Since this is a catch-all handler, the selector won't actually appear
-        // in the code anywhere.  ExpectedSelector here is the constant null ptr
-        // that we got from the landing pad instruction.
-        Action = new CatchHandler(BB, ExpectedSelector, nullptr);
-        CatchHandlerMap[BB] = Action;
+        // We don't expect a selector dispatch, but there may be a call to
+        // llvm.eh.begincatch, which separates catch handling code from
+        // cleanup code in the same control flow.  This call looks for the
+        // begincatch intrinsic.
+        Action = findCatchHandler(BB, NextBB, VisitedBlocks);
+        if (Action) {
+          // For C++ EH, check if there is any interesting cleanup code before
+          // we begin the catch. This is important because cleanups cannot
+          // rethrow exceptions but code called from catches can. For SEH, it
+          // isn't important if some finally code before a catch-all is executed
+          // out of line or after recovering from the exception.
+          if (Personality == EHPersonality::MSVC_CXX)
+            findCleanupHandlers(Actions, BB, BB);
+        } else {
+          // If an action was not found, it means that the control flows
+          // directly into the catch-all handler and there is no cleanup code.
+          // That's an expected situation and we must create a catch action.
+          // Since this is a catch-all handler, the selector won't actually
+          // appear in the code anywhere.  ExpectedSelector here is the constant
+          // null ptr that we got from the landing pad instruction.
+          Action = new CatchHandler(BB, ExpectedSelector, nullptr);
+          CatchHandlerMap[BB] = Action;
+        }
       }
       Actions.insertCatchHandler(Action);
       DEBUG(dbgs() << "  Catch all handler at block " << BB->getName() << "\n");
@@ -2059,11 +2120,14 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
         // for finally calls in the normal successor block.
         BasicBlock *SuccBB = BB;
         if (FinallyCall.getInstruction() != BB->getTerminator() &&
-            FinallyCall.getInstruction()->getNextNode() != BB->getTerminator()) {
-          SuccBB = BB->splitBasicBlock(FinallyCall.getInstruction()->getNextNode());
+            FinallyCall.getInstruction()->getNextNode() !=
+                BB->getTerminator()) {
+          SuccBB =
+              SplitBlock(BB, FinallyCall.getInstruction()->getNextNode(), DT);
         } else {
           if (FinallyCall.isInvoke()) {
-            SuccBB = cast<InvokeInst>(FinallyCall.getInstruction())->getNormalDest();
+            SuccBB =
+                cast<InvokeInst>(FinallyCall.getInstruction())->getNormalDest();
           } else {
             SuccBB = BB->getUniqueSuccessor();
             assert(SuccBB && "splitOutlinedFinallyCalls didn't insert a branch");

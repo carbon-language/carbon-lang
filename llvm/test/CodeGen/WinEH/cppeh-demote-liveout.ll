@@ -55,18 +55,18 @@ resume:
 ; CHECK: invoke void @might_throw()
 ;
 ; CHECK: landingpad
-; CHECK: indirectbr i8* {{.*}}, [label %ehreturn]
+; CHECK: indirectbr i8* {{.*}}, [label %catchit.split]
 ;
-; CHECK: ehreturn:
+; CHECK: catchit.split:
 ; CHECK: load i32, i32* %val.lpad.reg2mem
 ; CHECK: br label %ret
 ;
 ; CHECK: ret:
-; CHECK: %rv = phi i32 [ {{.*}}, %entry ], [ {{.*}}, %ehreturn ]
+; CHECK: %rv = phi i32 [ {{.*}}, %entry ], [ {{.*}}, %catchit.split ]
 ; CHECK: ret i32
 
 ; CHECK-LABEL: define internal i8* @liveout_catch.catch(i8*, i8*)
 ; CHECK: %[[val:[^ ]*]] = load i32, i32*
 ; CHECK-NEXT: %[[val_lpad:[^ ]*]] = add i32 %[[val]], 1
 ; CHECK-NEXT: store i32 %[[val_lpad]], i32*
-; CHECK: ret i8* blockaddress(@liveout_catch, %ehreturn)
+; CHECK: ret i8* blockaddress(@liveout_catch, %catchit.split)
