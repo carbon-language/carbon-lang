@@ -60,7 +60,7 @@ EnableJoining("join-liveintervals",
 
 static cl::opt<bool> UseTerminalRule("terminal-rule",
                                      cl::desc("Apply the terminal rule"),
-                                     cl::init(false));
+                                     cl::init(false), cl::Hidden);
 
 /// Temporary flag to test critical edge unsplitting.
 static cl::opt<bool>
