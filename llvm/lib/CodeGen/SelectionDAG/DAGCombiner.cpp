@@ -7383,13 +7383,9 @@ SDValue DAGCombiner::visitFADDForFMACombine(SDNode *N) {
 
 /// Try to perform FMA combining on a given FSUB node.
 SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
-
-
-
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
-
   SDLoc SL(N);
 
   const TargetOptions &Options = DAG.getTarget().Options;
