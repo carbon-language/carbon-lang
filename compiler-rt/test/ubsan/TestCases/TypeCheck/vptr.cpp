@@ -1,38 +1,33 @@
-// RUN: %clangxx -frtti -fsanitize=vptr -g %s -O3 -o %t
+// RUN: %clangxx -frtti -fsanitize=vptr -fno-sanitize-recover=vptr -g %s -O3 -o %t
+// RUN: export UBSAN_OPTIONS=print_stacktrace=1
 // RUN: %run %t rT && %run %t mT && %run %t fT && %run %t cT
 // RUN: %run %t rU && %run %t mU && %run %t fU && %run %t cU
 // RUN: %run %t rS && %run %t rV && %run %t oV
-// RUN: %run %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
-// RUN: %run %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: %run %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
-// RUN: %run %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
-// RUN: %run %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: %run %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
-// RUN: %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
-// RUN: %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
+// RUN: not %run %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
+// RUN: not %run %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: not %run %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
+// RUN: not %run %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
+// RUN: not %run %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: not %run %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
+// RUN: not %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
+// RUN: not %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
 // RUN: (echo "vptr_check:S"; echo "vptr_check:T"; echo "vptr_check:U") > %t.supp
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t mS 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t fS 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t cS 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t mV 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t fV 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t cV 2>&1
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp':halt_on_error=1" %run %t oU 2>&1
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t mS
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t fS
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t cS
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t mV
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t fV
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t cV
+// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t oU
 
 // RUN: echo "vptr_check:S" > %t.loc-supp
-// RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp':halt_on_error=1" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
+// RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp'" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
-// FIXME: This test doesn't pass on Darwin yet.
-// XFAIL: darwin
 // REQUIRES: stable-runtime
 #include <new>
-
-extern "C" {
-const char *__ubsan_default_options() {
-  return "print_stacktrace=1";
-}
-}
+#include <assert.h>
+#include <stdio.h>
 
 struct S {
   S() : a(0) {}
@@ -58,7 +53,9 @@ T *p = 0;
 
 int access_p(T *p, char type);
 
-int main(int, char **argv) {
+int main(int argc, char **argv) {
+  assert(argc > 1);
+  fprintf(stderr, "Test case: %s\n", argv[1]);
   T t;
   (void)t.a;
   (void)t.b;
@@ -107,7 +104,7 @@ int access_p(T *p, char type) {
   case 'r':
     // Binding a reference to storage of appropriate size and alignment is OK.
     {T &r = *p;}
-    break;
+    return 0;
 
   case 'x':
     for (int i = 0; i < 2; i++) {
@@ -157,13 +154,13 @@ int access_p(T *p, char type) {
     return reinterpret_cast<U*>(p)->v() - 2;
 
   case 'c':
-    // CHECK-DOWNCAST: vptr.cpp:[[@LINE+6]]:5: runtime error: downcast of address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
+    // CHECK-DOWNCAST: vptr.cpp:[[@LINE+6]]:11: runtime error: downcast of address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
     // CHECK-DOWNCAST-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:'S'|'U']]
     // CHECK-DOWNCAST-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-DOWNCAST-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-DOWNCAST-NEXT: {{^              vptr for}} [[DYN_TYPE]]
     // CHECK-DOWNCAST-NEXT: #0 {{.*}}access_p{{.*}}vptr.cpp:[[@LINE+1]]
-    static_cast<T*>(reinterpret_cast<S*>(p));
+    (void)static_cast<T*>(reinterpret_cast<S*>(p));
     return 0;
   }
 }
