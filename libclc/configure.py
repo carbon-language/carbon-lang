@@ -70,6 +70,8 @@ if (int(llvm_version[0]) != 3 and int(llvm_version[1]) != 6):
     print "libclc requires LLVM 3.6"
     sys.exit(1)
 
+llvm_string_version = 'LLVM' + llvm_version[0] + '.' + llvm_version[1]
+
 llvm_system_libs = llvm_config(['--system-libs'])
 llvm_bindir = llvm_config(['--bindir'])
 llvm_core_libs = llvm_config(['--libs', 'core', 'bitreader', 'bitwriter']) + ' ' + \
@@ -189,6 +191,7 @@ for target in targets:
 
     objects = []
     sources_seen = set()
+    compats_seen = set()
 
     if device['gpu'] == '':
       full_target_name = target
@@ -201,6 +204,14 @@ for target in targets:
       subdir_list_file = os.path.join(libdir, 'SOURCES')
       manifest_deps.add(subdir_list_file)
       override_list_file = os.path.join(libdir, 'OVERRIDES')
+      compat_list_file = os.path.join(libdir,
+        'SOURCES_' + llvm_string_version)
+
+      # Build compat list
+      if os.path.exists(compat_list_file):
+        for compat in open(compat_list_file).readlines():
+          compat = compat.rstrip()
+          compats_seen.add(compat)
 
       # Add target overrides
       if os.path.exists(override_list_file):
@@ -214,7 +225,10 @@ for target in targets:
           sources_seen.add(src)
           obj = os.path.join(target, 'lib', src + obj_suffix + '.bc')
           objects.append(obj)
-          src_file = os.path.join(libdir, src)
+          src_path = libdir
+          if src in compats_seen:
+            src_path = os.path.join(libdir, llvm_string_version)
+          src_file = os.path.join(src_path, src)
           ext = os.path.splitext(src)[1]
           if ext == '.ll':
             b.build(obj, 'LLVM_AS', src_file)
