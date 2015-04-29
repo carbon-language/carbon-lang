@@ -1,4 +1,4 @@
-//===-- ABIMacOSX_arm.cpp --------------------------------------*- C++ -*-===//
+//===-- ABISysV_arm.cpp --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ABIMacOSX_arm.h"
+#include "ABISysV_arm.h"
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
@@ -149,7 +149,7 @@ static const uint32_t k_num_register_infos = llvm::array_lengthof(g_register_inf
 static bool g_register_info_names_constified = false;
 
 const lldb_private::RegisterInfo *
-ABIMacOSX_arm::GetRegisterInfoArray (uint32_t &count)
+ABISysV_arm::GetRegisterInfoArray (uint32_t &count)
 {
     // Make the C-string names and alt_names for the register infos into const 
     // C-string values by having the ConstString unique the names in the global
@@ -171,7 +171,7 @@ ABIMacOSX_arm::GetRegisterInfoArray (uint32_t &count)
 
 
 size_t
-ABIMacOSX_arm::GetRedZoneSize () const
+ABISysV_arm::GetRedZoneSize () const
 {
     return 0;
 }
@@ -180,19 +180,19 @@ ABIMacOSX_arm::GetRedZoneSize () const
 // Static Functions
 //------------------------------------------------------------------
 ABISP
-ABIMacOSX_arm::CreateInstance (const ArchSpec &arch)
+ABISysV_arm::CreateInstance (const ArchSpec &arch)
 {
     static ABISP g_abi_sp;
     const llvm::Triple::ArchType arch_type = arch.GetTriple().getArch();
     const llvm::Triple::VendorType vendor_type = arch.GetTriple().getVendor();
 
-    if (vendor_type == llvm::Triple::Apple)
+    if (vendor_type != llvm::Triple::Apple)
     {
         if ((arch_type == llvm::Triple::arm) ||
             (arch_type == llvm::Triple::thumb))
         {
             if (!g_abi_sp)
-                g_abi_sp.reset (new ABIMacOSX_arm);
+                g_abi_sp.reset (new ABISysV_arm);
             return g_abi_sp;
         }
     }
@@ -201,7 +201,7 @@ ABIMacOSX_arm::CreateInstance (const ArchSpec &arch)
 }
 
 bool
-ABIMacOSX_arm::PrepareTrivialCall (Thread &thread, 
+ABISysV_arm::PrepareTrivialCall (Thread &thread, 
                                    addr_t sp, 
                                    addr_t function_addr, 
                                    addr_t return_addr, 
@@ -217,7 +217,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
 
     RegisterValue reg_value;
 
-    const char *reg_names[] = { "r0", "r1", "r2", "r3" };
+    const uint8_t reg_names[] = { LLDB_REGNUM_GENERIC_ARG1, LLDB_REGNUM_GENERIC_ARG2, LLDB_REGNUM_GENERIC_ARG3, LLDB_REGNUM_GENERIC_ARG4 };
     
     llvm::ArrayRef<addr_t>::iterator ai = args.begin(), ae = args.end();
     
@@ -227,7 +227,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
             break;
         
         reg_value.SetUInt32(*ai);
-        if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfoByName(reg_names[i]), reg_value))
+        if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfo(eRegisterKindGeneric, reg_names[i]), reg_value))
             return false;
         
         ++ai;
@@ -277,8 +277,8 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     // this out from the symbols.
     so_addr.SetLoadAddress (function_addr, target_sp.get());
     function_addr = so_addr.GetCallableLoadAddress (target_sp.get());
-    
-    const RegisterInfo *cpsr_reg_info = reg_ctx->GetRegisterInfoByName("cpsr");
+
+    const RegisterInfo *cpsr_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
     const uint32_t curr_cpsr = reg_ctx->ReadRegisterAsUnsigned(cpsr_reg_info, 0);
 
     // Make a new CPSR and mask out any Thumb IT (if/then) bits
@@ -305,7 +305,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
 }
 
 bool
-ABIMacOSX_arm::GetArgumentValues (Thread &thread,
+ABISysV_arm::GetArgumentValues (Thread &thread,
                                   ValueList &values) const
 {
     uint32_t num_values = values.GetSize();
@@ -358,23 +358,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                 {
                     // Arguments 1-4 are in r0-r3...
                     const RegisterInfo *arg_reg_info = NULL;
-                    // Search by generic ID first, then fall back to by name
-                    uint32_t arg_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + value_idx);
-                    if (arg_reg_num != LLDB_INVALID_REGNUM)
-                    {
-                        arg_reg_info = reg_ctx->GetRegisterInfoAtIndex(arg_reg_num);
-                    }
-                    else
-                    {
-                        switch (value_idx)
-                        {
-                            case 0: arg_reg_info = reg_ctx->GetRegisterInfoByName("r0"); break;
-                            case 1: arg_reg_info = reg_ctx->GetRegisterInfoByName("r1"); break;
-                            case 2: arg_reg_info = reg_ctx->GetRegisterInfoByName("r2"); break;
-                            case 3: arg_reg_info = reg_ctx->GetRegisterInfoByName("r3"); break;
-                        }
-                    }
-
+                    arg_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + value_idx);
                     if (arg_reg_info)
                     {
                         RegisterValue reg_value;
@@ -415,7 +399,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
 }
 
 ValueObjectSP
-ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
+ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
                                          lldb_private::ClangASTType &clang_type) const
 {
     Value value;
@@ -440,7 +424,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     // Get the pointer to the first stack argument so we have a place to start 
     // when reading data
     
-    const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfoByName("r0", 0);
+    const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
     if (clang_type.IsIntegerType (is_signed))
     {
         size_t bit_width = clang_type.GetBitSize(&thread);
@@ -451,7 +435,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
                 return return_valobj_sp;
             case 64:
             {
-                const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfoByName("r1", 0);
+                const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG2);
                 uint64_t raw_value;
                 raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
                 raw_value |= ((uint64_t)(reg_ctx->ReadRegisterAsUnsigned(r1_reg_info, 0) & UINT32_MAX)) << 32;
@@ -501,7 +485,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
 }
 
 Error
-ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
+ABISysV_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value_sp)
 {
     Error error;
     if (!new_value_sp)
@@ -539,7 +523,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
         lldb::offset_t offset = 0;
         if (num_bytes <= 8)
         {
-            const RegisterInfo *r0_info = reg_ctx->GetRegisterInfoByName("r0", 0);
+            const RegisterInfo *r0_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
             if (num_bytes <= 4)
             {
                 uint32_t raw_value = data.GetMaxU32(&offset, num_bytes);
@@ -553,7 +537,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
         
                 if (reg_ctx->WriteRegisterFromUnsigned (r0_info, raw_value))
                 {
-                    const RegisterInfo *r1_info = reg_ctx->GetRegisterInfoByName("r1", 0);
+                    const RegisterInfo *r1_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG2);
                     uint32_t raw_value = data.GetMaxU32(&offset, num_bytes - offset);
                 
                     if (reg_ctx->WriteRegisterFromUnsigned (r1_info, raw_value))
@@ -581,7 +565,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
 }
 
 bool
-ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
+ABISysV_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {
     unwind_plan.Clear();
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
@@ -608,12 +592,13 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 }
 
 bool
-ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
+ABISysV_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 {
     unwind_plan.Clear ();
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
 
-    uint32_t fp_reg_num = dwarf_r7;   // apple uses r7 for all frames. Normal arm uses r11
+    //TODO: Handle thumb
+    uint32_t fp_reg_num = dwarf_r11;
     uint32_t pc_reg_num = dwarf_pc;
     
     UnwindPlan::RowSP row(new UnwindPlan::Row);
@@ -626,7 +611,7 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
     
     unwind_plan.AppendRow (row);
-    unwind_plan.SetSourceName ("arm-apple-ios default unwind plan");
+    unwind_plan.SetSourceName ("arm default unwind plan");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
 
@@ -634,30 +619,23 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 }
 
 // cf. "ARMv6 Function Calling Conventions"
-// https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARMv6FunctionCallingConventions.html
-// and "ARMv7 Function Calling Conventions"
-// https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARMv7FunctionCallingConventions.html
 
-// ARMv7 on iOS general purpose reg rules:
+// ARMv7 on GNU/Linux general purpose reg rules:
 //    r0-r3 not preserved  (used for argument passing)
-//    r4-r6 preserved
-//    r7    preserved (frame pointer)
-//    r8    preserved
-//    r9    not preserved (usable as volatile scratch register with iOS 3.x and later)
-//    r10-r11 preserved
+//    r4-r11 preserved (v1-v8)
 //    r12   not presrved
 //    r13   preserved (stack pointer)
-//    r14   not preserved (link register)
+//    r14   preserved (link register)
 //    r15   preserved (pc)
 //    cpsr  not preserved (different rules for different bits)
 
-// ARMv7 on iOS floating point rules:
+// ARMv7 VFP register rules:
 //    d0-d7   not preserved   (aka s0-s15, q0-q3)
 //    d8-d15  preserved       (aka s16-s31, q4-q7)
 //    d16-d31 not preserved   (aka q8-q15)
 
 bool
-ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
+ABISysV_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 {
     if (reg_info)
     {
@@ -674,8 +652,7 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
                     case '\0':
                         return true; // r1
                     case '2':
-                    case '3':
-                        return name[3] == '\0'; // r12, r13 (sp)
+                        return name[3] == '\0'; // r12
                     default:
                         break;
                     }
@@ -683,9 +660,8 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 
                 case '2': return name[2] == '\0'; // r2
                 case '3': return name[2] == '\0'; // r3
-                case '9': return name[2] == '\0'; // r9 (apple-ios only...)
-                    
-                break;
+                default:
+                    break;
             }
         }
         else if (name[0] == 'd')
@@ -843,23 +819,23 @@ ABIMacOSX_arm::RegisterIsVolatile (const RegisterInfo *reg_info)
 }
 
 void
-ABIMacOSX_arm::Initialize()
+ABISysV_arm::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
-                                   "Mac OS X ABI for arm targets",
+                                   "SysV ABI for arm targets",
                                    CreateInstance);    
 }
 
 void
-ABIMacOSX_arm::Terminate()
+ABISysV_arm::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 lldb_private::ConstString
-ABIMacOSX_arm::GetPluginNameStatic()
+ABISysV_arm::GetPluginNameStatic()
 {
-    static ConstString g_name("macosx-arm");
+    static ConstString g_name("SysV-arm");
     return g_name;
 }
 
@@ -867,13 +843,13 @@ ABIMacOSX_arm::GetPluginNameStatic()
 // PluginInterface protocol
 //------------------------------------------------------------------
 lldb_private::ConstString
-ABIMacOSX_arm::GetPluginName()
+ABISysV_arm::GetPluginName()
 {
     return GetPluginNameStatic();
 }
 
 uint32_t
-ABIMacOSX_arm::GetPluginVersion()
+ABISysV_arm::GetPluginVersion()
 {
     return 1;
 }

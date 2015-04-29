@@ -1,3 +1,4 @@
+add_subdirectory(SysV-arm)
 add_subdirectory(SysV-hexagon)
 add_subdirectory(SysV-ppc)
 add_subdirectory(SysV-ppc64)
