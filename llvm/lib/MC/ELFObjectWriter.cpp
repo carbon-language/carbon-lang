@@ -41,13 +41,6 @@ using namespace llvm;
 #define DEBUG_TYPE "reloc-info"
 
 namespace {
-class FragmentWriter {
-  bool IsLittleEndian;
-
-public:
-  FragmentWriter(bool IsLittleEndian);
-  template <typename T> void write(MCDataFragment &F, T Val);
-};
 
 typedef DenseMap<const MCSectionELF *, uint32_t> SectionIndexMapTy;
 
@@ -77,8 +70,6 @@ public:
 };
 
 class ELFObjectWriter : public MCObjectWriter {
-  FragmentWriter FWriter;
-
   protected:
 
     static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
@@ -161,8 +152,8 @@ class ELFObjectWriter : public MCObjectWriter {
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_pwrite_stream &OS,
                     bool IsLittleEndian)
-        : MCObjectWriter(OS, IsLittleEndian), FWriter(IsLittleEndian),
-          TargetObjectWriter(MOTW), NeedsGOT(false) {}
+        : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW),
+          NeedsGOT(false) {}
 
     void reset() override {
       UsedInReloc.clear();
@@ -194,9 +185,7 @@ class ELFObjectWriter : public MCObjectWriter {
         support::endian::Writer<support::big>(OS).write(Val);
     }
 
-    template <typename T> void write(MCDataFragment &F, T Value) {
-      FWriter.write(F, Value);
-    }
+    template <typename T> void write(MCDataFragment &F, T Value);
 
     void writeHeader(const MCAssembler &Asm);
 
@@ -299,10 +288,7 @@ class ELFObjectWriter : public MCObjectWriter {
   };
 }
 
-FragmentWriter::FragmentWriter(bool IsLittleEndian)
-    : IsLittleEndian(IsLittleEndian) {}
-
-template <typename T> void FragmentWriter::write(MCDataFragment &F, T Val) {
+template <typename T> void ELFObjectWriter::write(MCDataFragment &F, T Val) {
   if (IsLittleEndian)
     Val = support::endian::byte_swap<T, support::little>(Val);
   else
