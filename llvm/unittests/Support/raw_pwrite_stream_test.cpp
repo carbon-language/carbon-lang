@@ -50,6 +50,7 @@ TEST(raw_pwrite_ostreamTest, TestFD) {
 #endif
 }
 
+#ifdef LLVM_ON_UNIX
 TEST(raw_pwrite_ostreamTest, TestDevNull) {
   int FD;
   sys::fs::openFileForWrite("/dev/null", FD, sys::fs::F_None);
@@ -59,4 +60,5 @@ TEST(raw_pwrite_ostreamTest, TestDevNull) {
   OS.pwrite(Test.data(), Test.size(), 0);
   OS.pwrite(Test.data(), Test.size(), 0);
 }
+#endif
 }
