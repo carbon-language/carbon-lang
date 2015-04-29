@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/CodeGen/WinEHFuncInfo.h"
@@ -71,7 +72,10 @@ class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), DT(nullptr), SEHExceptionCodeSlot(nullptr) {}
+      : FunctionPass(ID), DT(nullptr), SEHExceptionCodeSlot(nullptr) {
+    if (TM)
+      TheTriple = Triple(TM->getTargetTriple());
+  }
 
   bool runOnFunction(Function &Fn) override;
 
@@ -97,6 +101,8 @@ private:
                                 LandingPadInst *OutlinedLPad,
                                 const LandingPadInst *OriginalLPad,
                                 FrameVarInfoMap &VarInfo);
+  Function *createHandlerFunc(Type *RetTy, const Twine &Name, Module *M,
+                              Value *&ParentFP);
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
@@ -109,6 +115,8 @@ private:
                            BasicBlock *EndBB);
 
   void processSEHCatchHandler(CatchHandler *Handler, BasicBlock *StartBB);
+
+  Triple TheTriple;
 
   // All fields are reset by runOnFunction.
   DominatorTree *DT;
@@ -138,12 +146,16 @@ private:
   // outlined but before the outlined code is pruned from the parent function.
   DenseMap<const BasicBlock *, BasicBlock *> LPadTargetBlocks;
 
+  // Map from outlined handler to call to llvm.frameaddress(1). Only used for
+  // 32-bit EH.
+  DenseMap<Function *, Value *> HandlerToParentFP;
+
   AllocaInst *SEHExceptionCodeSlot;
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
 public:
-  WinEHFrameVariableMaterializer(Function *OutlinedFn,
+  WinEHFrameVariableMaterializer(Function *OutlinedFn, Value *ParentFP,
                                  FrameVarInfoMap &FrameVarInfo);
   ~WinEHFrameVariableMaterializer() override {}
 
@@ -179,16 +191,12 @@ private:
 
 class WinEHCloningDirectorBase : public CloningDirector {
 public:
-  WinEHCloningDirectorBase(Function *HandlerFn, FrameVarInfoMap &VarInfo,
-                           LandingPadMap &LPadMap)
-      : Materializer(HandlerFn, VarInfo),
+  WinEHCloningDirectorBase(Function *HandlerFn, Value *ParentFP,
+                           FrameVarInfoMap &VarInfo, LandingPadMap &LPadMap)
+      : Materializer(HandlerFn, ParentFP, VarInfo),
         SelectorIDType(Type::getInt32Ty(HandlerFn->getContext())),
         Int8PtrType(Type::getInt8PtrTy(HandlerFn->getContext())),
-        LPadMap(LPadMap) {
-    auto AI = HandlerFn->getArgumentList().begin();
-    ++AI;
-    EstablisherFrame = AI;
-  }
+        LPadMap(LPadMap), ParentFP(ParentFP) {}
 
   CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                   const Instruction *Inst,
@@ -225,16 +233,16 @@ protected:
   LandingPadMap &LPadMap;
 
   /// The value representing the parent frame pointer.
-  Value *EstablisherFrame;
+  Value *ParentFP;
 };
 
 class WinEHCatchDirector : public WinEHCloningDirectorBase {
 public:
   WinEHCatchDirector(
-      Function *CatchFn, Value *Selector, FrameVarInfoMap &VarInfo,
-      LandingPadMap &LPadMap,
+      Function *CatchFn, Value *ParentFP, Value *Selector,
+      FrameVarInfoMap &VarInfo, LandingPadMap &LPadMap,
       DenseMap<LandingPadInst *, const LandingPadInst *> &NestedLPads)
-      : WinEHCloningDirectorBase(CatchFn, VarInfo, LPadMap),
+      : WinEHCloningDirectorBase(CatchFn, ParentFP, VarInfo, LPadMap),
         CurrentSelector(Selector->stripPointerCasts()),
         ExceptionObjectVar(nullptr), NestedLPtoOriginalLP(NestedLPads) {}
 
@@ -272,9 +280,10 @@ private:
 
 class WinEHCleanupDirector : public WinEHCloningDirectorBase {
 public:
-  WinEHCleanupDirector(Function *CleanupFn, FrameVarInfoMap &VarInfo,
-                       LandingPadMap &LPadMap)
-      : WinEHCloningDirectorBase(CleanupFn, VarInfo, LPadMap) {}
+  WinEHCleanupDirector(Function *CleanupFn, Value *ParentFP,
+                       FrameVarInfoMap &VarInfo, LandingPadMap &LPadMap)
+      : WinEHCloningDirectorBase(CleanupFn, ParentFP, VarInfo,
+                                 LPadMap) {}
 
   CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
                                  const Instruction *Inst,
@@ -880,19 +889,23 @@ bool WinEHPrepare::prepareExceptionHandlers(
       if (TempAlloca == getCatchObjectSentinel())
         continue; // Skip catch parameter sentinels.
       Function *HandlerFn = TempAlloca->getParent()->getParent();
-      // FIXME: Sink this GEP into the blocks where it is used.
+      llvm::Value *FP = HandlerToParentFP[HandlerFn];
+      assert(FP);
+
+      // FIXME: Sink this framerecover into the blocks where it is used.
       Builder.SetInsertPoint(TempAlloca);
       Builder.SetCurrentDebugLocation(TempAlloca->getDebugLoc());
       Value *RecoverArgs[] = {
-          Builder.CreateBitCast(&F, Int8PtrType, ""),
-          &(HandlerFn->getArgumentList().back()),
+          Builder.CreateBitCast(&F, Int8PtrType, ""), FP,
           llvm::ConstantInt::get(Int32Type, AllocasToEscape.size() - 1)};
-      Value *RecoveredAlloca = Builder.CreateCall(RecoverFrameFn, RecoverArgs);
+      Instruction *RecoveredAlloca =
+          Builder.CreateCall(RecoverFrameFn, RecoverArgs);
+
       // Add a pointer bitcast if the alloca wasn't an i8.
       if (RecoveredAlloca->getType() != TempAlloca->getType()) {
         RecoveredAlloca->setName(Twine(TempAlloca->getName()) + ".i8");
-        RecoveredAlloca =
-            Builder.CreateBitCast(RecoveredAlloca, TempAlloca->getType());
+        RecoveredAlloca = cast<Instruction>(
+            Builder.CreateBitCast(RecoveredAlloca, TempAlloca->getType()));
       }
       TempAlloca->replaceAllUsesWith(RecoveredAlloca);
       TempAlloca->removeFromParent();
@@ -918,6 +931,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
   CatchHandlerMap.clear();
   DeleteContainerSeconds(CleanupHandlerMap);
   CleanupHandlerMap.clear();
+  HandlerToParentFP.clear();
+  DT = nullptr;
 
   return HandlersOutlined;
 }
@@ -987,7 +1002,6 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
   IntrinsicInst *EHActions = cast<IntrinsicInst>(Recover->clone());
 
   // Remap the exception variables into the outlined function.
-  WinEHFrameVariableMaterializer Materializer(OutlinedHandlerFn, FrameVarInfo);
   SmallVector<BlockAddress *, 4> ActionTargets;
   SmallVector<ActionHandler *, 4> ActionList;
   parseEHActions(EHActions, ActionList);
@@ -1148,35 +1162,62 @@ void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
   InvokeInst::Create(F, NewRetBB, StubLandingPad, None, "", OldRetBB);
 }
 
+// FIXME: Consider sinking this into lib/Target/X86 somehow. TargetLowering
+// usually doesn't build LLVM IR, so that's probably the wrong place.
+Function *WinEHPrepare::createHandlerFunc(Type *RetTy, const Twine &Name,
+                                          Module *M, Value *&ParentFP) {
+  // x64 uses a two-argument prototype where the parent FP is the second
+  // argument. x86 uses no arguments, just the incoming EBP value.
+  LLVMContext &Context = M->getContext();
+  FunctionType *FnType;
+  if (TheTriple.getArch() == Triple::x86_64) {
+    Type *Int8PtrType = Type::getInt8PtrTy(Context);
+    Type *ArgTys[2] = {Int8PtrType, Int8PtrType};
+    FnType = FunctionType::get(RetTy, ArgTys, false);
+  } else {
+    FnType = FunctionType::get(RetTy, None, false);
+  }
+
+  Function *Handler =
+      Function::Create(FnType, GlobalVariable::InternalLinkage, Name, M);
+  BasicBlock *Entry = BasicBlock::Create(Context, "entry");
+  Handler->getBasicBlockList().push_front(Entry);
+  if (TheTriple.getArch() == Triple::x86_64) {
+    ParentFP = &(Handler->getArgumentList().back());
+  } else {
+    assert(M);
+    Function *FrameAddressFn =
+        Intrinsic::getDeclaration(M, Intrinsic::frameaddress);
+    Value *Args[1] = {ConstantInt::get(Type::getInt32Ty(Context), 1)};
+    ParentFP = CallInst::Create(FrameAddressFn, Args, "parent_fp",
+                                &Handler->getEntryBlock());
+  }
+  return Handler;
+}
+
 bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
                                   LandingPadInst *LPad, BasicBlock *StartBB,
                                   FrameVarInfoMap &VarInfo) {
   Module *M = SrcFn->getParent();
   LLVMContext &Context = M->getContext();
+  Type *Int8PtrType = Type::getInt8PtrTy(Context);
 
   // Create a new function to receive the handler contents.
-  Type *Int8PtrType = Type::getInt8PtrTy(Context);
-  std::vector<Type *> ArgTys;
-  ArgTys.push_back(Int8PtrType);
-  ArgTys.push_back(Int8PtrType);
+  Value *ParentFP;
   Function *Handler;
   if (Action->getType() == Catch) {
-    FunctionType *FnType = FunctionType::get(Int8PtrType, ArgTys, false);
-    Handler = Function::Create(FnType, GlobalVariable::InternalLinkage,
-                               SrcFn->getName() + ".catch", M);
+    Handler = createHandlerFunc(Int8PtrType, SrcFn->getName() + ".catch", M,
+                                ParentFP);
   } else {
-    FunctionType *FnType =
-        FunctionType::get(Type::getVoidTy(Context), ArgTys, false);
-    Handler = Function::Create(FnType, GlobalVariable::InternalLinkage,
-                               SrcFn->getName() + ".cleanup", M);
+    Handler = createHandlerFunc(Type::getVoidTy(Context),
+                                SrcFn->getName() + ".cleanup", M, ParentFP);
   }
-
+  HandlerToParentFP[Handler] = ParentFP;
   Handler->addFnAttr("wineh-parent", SrcFn->getName());
+  BasicBlock *Entry = &Handler->getEntryBlock();
 
   // Generate a standard prolog to setup the frame recovery structure.
   IRBuilder<> Builder(Context);
-  BasicBlock *Entry = BasicBlock::Create(Context, "entry");
-  Handler->getBasicBlockList().push_front(Entry);
   Builder.SetInsertPoint(Entry);
   Builder.SetCurrentDebugLocation(LPad->getDebugLoc());
 
@@ -1189,12 +1230,14 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     LPadMap.mapLandingPad(LPad);
   if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
     Constant *Sel = CatchAction->getSelector();
-    Director.reset(new WinEHCatchDirector(Handler, Sel, VarInfo, LPadMap,
+    Director.reset(new WinEHCatchDirector(Handler, ParentFP, Sel,
+                                          VarInfo, LPadMap,
                                           NestedLPtoOriginalLP));
     LPadMap.remapEHValues(VMap, UndefValue::get(Int8PtrType),
                           ConstantInt::get(Type::getInt32Ty(Context), 1));
   } else {
-    Director.reset(new WinEHCleanupDirector(Handler, VarInfo, LPadMap));
+    Director.reset(
+        new WinEHCleanupDirector(Handler, ParentFP, VarInfo, LPadMap));
     LPadMap.remapEHValues(VMap, UndefValue::get(Int8PtrType),
                           UndefValue::get(Type::getInt32Ty(Context)));
   }
@@ -1421,7 +1464,7 @@ CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
   // When outlining llvm.frameaddress(i32 0), remap that to the second argument,
   // which is the FP of the parent.
   if (isFrameAddressCall(Inst)) {
-    VMap[Inst] = EstablisherFrame;
+    VMap[Inst] = ParentFP;
     return CloningDirector::SkipInstruction;
   }
 
@@ -1660,10 +1703,16 @@ WinEHCleanupDirector::handleCompare(ValueToValueMapTy &VMap,
 }
 
 WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(
-    Function *OutlinedFn, FrameVarInfoMap &FrameVarInfo)
+    Function *OutlinedFn, Value *ParentFP, FrameVarInfoMap &FrameVarInfo)
     : FrameVarInfo(FrameVarInfo), Builder(OutlinedFn->getContext()) {
   BasicBlock *EntryBB = &OutlinedFn->getEntryBlock();
-  Builder.SetInsertPoint(EntryBB, EntryBB->getFirstInsertionPt());
+
+  // New allocas should be inserted in the entry block, but after the parent FP
+  // is established if it is an instruction.
+  Instruction *InsertPoint = EntryBB->getFirstInsertionPt();
+  if (auto *FPInst = dyn_cast<Instruction>(ParentFP))
+    InsertPoint = FPInst->getNextNode();
+  Builder.SetInsertPoint(EntryBB, InsertPoint);
 }
 
 Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {

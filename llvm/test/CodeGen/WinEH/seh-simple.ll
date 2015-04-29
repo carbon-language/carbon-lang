@@ -1,7 +1,10 @@
-; RUN: opt -S -winehprepare -mtriple=x86_64-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-windows-msvc < %s \
+; RUN: 		| FileCheck %s --check-prefix=CHECK --check-prefix=X64
 
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc"
+; This test should also pass in 32-bit using _except_handler3.
+; RUN: sed %s -e 's/__C_specific_handler/_except_handler3/' \
+; RUN: 		| opt -S -winehprepare -mtriple=i686-windows-msvc \
+; RUN: 		| FileCheck %s --check-prefix=CHECK --check-prefix=X86
 
 declare void @cleanup()
 declare i32 @filt()
@@ -139,7 +142,7 @@ eh.resume:
 ; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: catch i32 ()* @filt
-; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void (i8*, i8*)* @lpad_phi.cleanup, i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@lpad_phi, %lpad.return_crit_edge))
+; CHECK-NEXT: call i8* (...) @llvm.eh.actions(i32 0, void ({{.*}})* @lpad_phi.cleanup, i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@lpad_phi, %lpad.return_crit_edge))
 ; CHECK-NEXT: indirectbr {{.*}} [label %lpad.return_crit_edge]
 ;
 ; CHECK: lpad.return_crit_edge:
@@ -178,7 +181,7 @@ eh.resume:
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: catch i32 ()* @filt
 ; CHECK-NEXT: call i8* (...) @llvm.eh.actions(
-; CHECK: i32 0, void (i8*, i8*)* @cleanup_and_except.cleanup,
+; CHECK: i32 0, void ({{.*}})* @cleanup_and_except.cleanup,
 ; CHECK: i32 1, i8* bitcast (i32 ()* @filt to i8*), i32 -1, i8* blockaddress(@cleanup_and_except, %lpad.return_crit_edge))
 ; CHECK-NEXT: indirectbr {{.*}} [label %lpad.return_crit_edge]
 ;
@@ -190,6 +193,9 @@ eh.resume:
 ; CHECK-NEXT: ret i32 %r
 
 ; FIXME: This cleanup is an artifact of bad demotion.
-; CHECK-LABEL: define internal void @lpad_phi.cleanup(i8*, i8*)
+; X64-LABEL: define internal void @lpad_phi.cleanup(i8*, i8*)
+; X86-LABEL: define internal void @lpad_phi.cleanup()
+; X86: call i8* @llvm.frameaddress(i32 1)
+; CHECK: call i8* @llvm.framerecover({{.*}})
 ; CHECK: load i32
 ; CHECK: store i32 %{{.*}}, i32*

@@ -1,4 +1,4 @@
-; RUN: opt -winehprepare -S < %s | FileCheck %s
+; RUN: opt -mtriple=x86_64-pc-windows-msvc -winehprepare -S < %s | FileCheck %s
 
 ; Notionally based on this C++ source:
 ; int liveout_catch(int p) {

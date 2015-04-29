@@ -1,4 +1,4 @@
-; RUN: opt -mtriple=i386-pc-windows-msvc -winehprepare -S -o - < %s | FileCheck %s
+; RUN: opt -mtriple=x86_64-pc-windows-msvc -winehprepare -S -o - < %s | FileCheck %s
 
 ; This test is built from the following code:
 ; struct A {
@@ -24,8 +24,6 @@
 ; the inalloca instruction was manually sunk into the landingpad.
 
 ; ModuleID = 'cppeh-inalloca.cpp'
-target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
-target triple = "i386-pc-windows-msvc"
 
 %rtti.TypeDescriptor2 = type { i8**, i8*, [3 x i8] }
 %struct.A = type { i32 }
