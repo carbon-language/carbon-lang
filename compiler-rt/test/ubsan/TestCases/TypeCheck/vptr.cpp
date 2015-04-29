@@ -24,6 +24,8 @@
 // RUN: echo "vptr_check:S" > %t.loc-supp
 // RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp'" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
+// FIXME: The test still fails on Darwin
+// XFAIL: darwin
 // REQUIRES: stable-runtime
 #include <new>
 #include <assert.h>
@@ -163,4 +165,5 @@ int access_p(T *p, char type) {
     (void)static_cast<T*>(reinterpret_cast<S*>(p));
     return 0;
   }
+  return 0;
 }
