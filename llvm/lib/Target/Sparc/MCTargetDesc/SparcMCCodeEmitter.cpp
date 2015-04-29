@@ -21,6 +21,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -78,16 +79,23 @@ MCCodeEmitter *llvm::createSparcMCCodeEmitter(const MCInstrInfo &MCII,
   return new SparcMCCodeEmitter(Ctx);
 }
 
-void SparcMCCodeEmitter::
-EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                  SmallVectorImpl<MCFixup> &Fixups,
-                  const MCSubtargetInfo &STI) const {
+void SparcMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+                                           SmallVectorImpl<MCFixup> &Fixups,
+                                           const MCSubtargetInfo &STI) const {
   unsigned Bits = getBinaryCodeForInstr(MI, Fixups, STI);
 
-  // Output the constant in big endian byte order.
-  for (unsigned i = 0; i != 4; ++i) {
-    OS << (char)(Bits >> 24);
-    Bits <<= 8;
+  if (Ctx.getAsmInfo()->isLittleEndian()) {
+    // Output the bits in little-endian byte order.
+    for (unsigned i = 0; i != 4; ++i) {
+      OS << (char)Bits;
+      Bits >>= 8;
+    }
+  } else {
+    // Output the bits in big-endian byte order.
+    for (unsigned i = 0; i != 4; ++i) {
+      OS << (char)(Bits >> 24);
+      Bits <<= 8;
+    }
   }
   unsigned tlsOpNo = 0;
   switch (MI.getOpcode()) {

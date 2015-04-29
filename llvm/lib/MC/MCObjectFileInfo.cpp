@@ -337,6 +337,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;
     break;
+  case Triple::sparcel:
   case Triple::sparc:
     if (RelocM == Reloc::PIC_) {
       LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;

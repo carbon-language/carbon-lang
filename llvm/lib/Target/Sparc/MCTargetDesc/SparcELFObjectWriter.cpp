@@ -106,7 +106,9 @@ unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
 }
 
 MCObjectWriter *llvm::createSparcELFObjectWriter(raw_pwrite_stream &OS,
-                                                 bool Is64Bit, uint8_t OSABI) {
+                                                 bool Is64Bit,
+                                                 bool IsLittleEndian,
+                                                 uint8_t OSABI) {
   MCELFObjectTargetWriter *MOTW = new SparcELFObjectWriter(Is64Bit, OSABI);
-  return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/false);
+  return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

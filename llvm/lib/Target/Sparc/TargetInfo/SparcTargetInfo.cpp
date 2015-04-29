@@ -14,10 +14,13 @@ using namespace llvm;
 
 Target llvm::TheSparcTarget;
 Target llvm::TheSparcV9Target;
+Target llvm::TheSparcelTarget;
 
 extern "C" void LLVMInitializeSparcTargetInfo() {
-  RegisterTarget<Triple::sparc, /*HasJIT=*/ true>
-    X(TheSparcTarget, "sparc", "Sparc");
-  RegisterTarget<Triple::sparcv9, /*HasJIT=*/ true>
-    Y(TheSparcV9Target, "sparcv9", "Sparc V9");
+  RegisterTarget<Triple::sparc, /*HasJIT=*/true> X(TheSparcTarget, "sparc",
+                                                   "Sparc");
+  RegisterTarget<Triple::sparcv9, /*HasJIT=*/true> Y(TheSparcV9Target,
+                                                     "sparcv9", "Sparc V9");
+  RegisterTarget<Triple::sparcel, /*HasJIT=*/true> Z(TheSparcelTarget,
+                                                     "sparcel", "Sparc LE");
 }

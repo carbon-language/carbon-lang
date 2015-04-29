@@ -928,7 +928,7 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
 
   case ELF::EM_SPARC:
   case ELF::EM_SPARC32PLUS:
-    return Triple::sparc;
+    return IsLittleEndian ? Triple::sparcel : Triple::sparc;
   case ELF::EM_SPARCV9:
     return Triple::sparcv9;
 

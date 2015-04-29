@@ -216,9 +216,9 @@ namespace {
       return true;
     }
 
-    bool is64Bit() const {
-      StringRef name = TheTarget.getName();
-      return name == "sparcv9";
+    bool is64Bit() const { return StringRef(TheTarget.getName()) == "sparcv9"; }
+    bool isLittleEndian() const {
+      return StringRef(TheTarget.getName()) == "sparcel";
     }
   };
 
@@ -246,7 +246,7 @@ namespace {
 
     MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
       uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(OSType);
-      return createSparcELFObjectWriter(OS, is64Bit(), OSABI);
+      return createSparcELFObjectWriter(OS, is64Bit(), isLittleEndian(), OSABI);
     }
   };
 
