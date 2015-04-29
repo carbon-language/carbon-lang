@@ -4777,6 +4777,17 @@ def warn_self_move : Warning<
   "explicitly moving variable of type %0 to itself">,
   InGroup<SelfMove>, DefaultIgnore;
 
+def warn_redundant_move_on_return : Warning<
+  "redundant move in return statement">,
+  InGroup<RedundantMove>, DefaultIgnore;
+def warn_pessimizing_move_on_return : Warning<
+  "moving a local object in a return statement prevents copy elision">,
+  InGroup<PessimizingMove>, DefaultIgnore;
+def warn_pessimizing_move_on_initialization : Warning<
+  "moving a temporary object prevents copy elision">,
+  InGroup<PessimizingMove>, DefaultIgnore;
+def note_remove_move : Note<"remove std::move call here">;
+
 def warn_string_plus_int : Warning<
   "adding %0 to a string does not append to the string">,
   InGroup<StringPlusInt>;

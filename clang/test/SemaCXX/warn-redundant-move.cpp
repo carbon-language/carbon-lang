@@ -1,0 +1,68 @@
+// RUN: %clang_cc1 -fsyntax-only -Wredundant-move -std=c++11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wredundant-move -std=c++11 -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+
+// definitions for std::move
+namespace std {
+inline namespace foo {
+template <class T> struct remove_reference { typedef T type; };
+template <class T> struct remove_reference<T&> { typedef T type; };
+template <class T> struct remove_reference<T&&> { typedef T type; };
+
+template <class T> typename remove_reference<T>::type &&move(T &&t);
+}
+}
+
+struct A {};
+struct B : public A {};
+
+A test1(B b1) {
+  B b2;
+  //return b1;
+  //return b2;
+  return std::move(b1);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+  return std::move(b2);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+}
+
+struct C {
+  C() {}
+  C(A) {}
+};
+
+C test2(A a1, B b1) {
+  A a2;
+  B b2;
+
+  return a1;
+  return a2;
+  return b1;
+  return b2;
+
+  return std::move(a1);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+  return std::move(a2);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+  return std::move(b1);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+  return std::move(b2);
+  // expected-warning@-1{{redundant move}}
+  // expected-note@-2{{remove std::move call}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+}

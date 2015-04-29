@@ -5768,6 +5768,112 @@ static void DiagnoseNarrowingInInitList(Sema &S,
                                         QualType EntityType,
                                         const Expr *PostInit);
 
+/// Provide warnings when std::move is used on construction.
+static void CheckMoveOnConstruction(Sema &S, const Expr *InitExpr,
+                                    bool IsReturnStmt) {
+  if (!InitExpr)
+    return;
+
+  QualType DestType = InitExpr->getType();
+  if (!DestType->isRecordType())
+    return;
+
+  unsigned DiagID = 0;
+  if (IsReturnStmt) {
+    const CXXConstructExpr *CCE =
+        dyn_cast<CXXConstructExpr>(InitExpr->IgnoreParens());
+    if (!CCE || CCE->getNumArgs() != 1)
+      return;
+
+    if (!CCE->getConstructor()->isCopyOrMoveConstructor())
+      return;
+
+    InitExpr = CCE->getArg(0)->IgnoreImpCasts();
+
+    // Remove implicit temporary and constructor nodes.
+    if (const MaterializeTemporaryExpr *MTE =
+            dyn_cast<MaterializeTemporaryExpr>(InitExpr)) {
+      InitExpr = MTE->GetTemporaryExpr()->IgnoreImpCasts();
+      while (const CXXConstructExpr *CCE =
+                 dyn_cast<CXXConstructExpr>(InitExpr)) {
+        if (isa<CXXTemporaryObjectExpr>(CCE))
+          return;
+        if (CCE->getNumArgs() == 0)
+          return;
+        if (CCE->getNumArgs() > 1 && !isa<CXXDefaultArgExpr>(CCE->getArg(1)))
+          return;
+        InitExpr = CCE->getArg(0);
+      }
+      InitExpr = InitExpr->IgnoreImpCasts();
+      DiagID = diag::warn_redundant_move_on_return;
+    }
+  }
+
+  // Find the std::move call and get the argument.
+  const CallExpr *CE = dyn_cast<CallExpr>(InitExpr->IgnoreParens());
+  if (!CE || CE->getNumArgs() != 1)
+    return;
+
+  const FunctionDecl *MoveFunction = CE->getDirectCallee();
+  if (!MoveFunction || !MoveFunction->isInStdNamespace() ||
+      !MoveFunction->getIdentifier() ||
+      !MoveFunction->getIdentifier()->isStr("move"))
+    return;
+
+  const Expr *Arg = CE->getArg(0)->IgnoreImplicit();
+
+  if (IsReturnStmt) {
+    const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Arg->IgnoreParenImpCasts());
+    if (!DRE || DRE->refersToEnclosingVariableOrCapture())
+      return;
+
+    const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl());
+    if (!VD || !VD->hasLocalStorage())
+      return;
+
+    if (DiagID == 0) {
+      DiagID = S.Context.hasSameUnqualifiedType(DestType, VD->getType())
+                   ? diag::warn_pessimizing_move_on_return
+                   : diag::warn_redundant_move_on_return;
+    }
+  } else {
+    DiagID = diag::warn_pessimizing_move_on_initialization;
+    const Expr *ArgStripped = Arg->IgnoreImplicit()->IgnoreParens();
+    if (!ArgStripped->isRValue() || !ArgStripped->getType()->isRecordType())
+      return;
+  }
+
+  S.Diag(CE->getLocStart(), DiagID);
+
+  // Get all the locations for a fix-it.  Don't emit the fix-it if any location
+  // is within a macro.
+  SourceLocation CallBegin = CE->getCallee()->getLocStart();
+  if (CallBegin.isMacroID())
+    return;
+  SourceLocation RParen = CE->getRParenLoc();
+  if (RParen.isMacroID())
+    return;
+  SourceLocation LParen;
+  SourceLocation ArgLoc = Arg->getLocStart();
+
+  // Special testing for the argument location.  Since the fix-it needs the
+  // location right before the argument, the argument location can be in a
+  // macro only if it is at the beginning of the macro.
+  while (ArgLoc.isMacroID() &&
+         S.getSourceManager().isAtStartOfImmediateMacroExpansion(ArgLoc)) {
+    ArgLoc = S.getSourceManager().getImmediateExpansionRange(ArgLoc).first;
+  }
+
+  if (LParen.isMacroID())
+    return;
+
+  LParen = ArgLoc.getLocWithOffset(-1);
+
+  S.Diag(CE->getLocStart(), diag::note_remove_move)
+      << FixItHint::CreateRemoval(SourceRange(CallBegin, LParen))
+      << FixItHint::CreateRemoval(SourceRange(RParen, RParen));
+}
+
 ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -6496,6 +6602,12 @@ InitializationSequence::Perform(Sema &S,
     S.CheckBitFieldInitialization(Kind.getLocation(),
                                   cast<FieldDecl>(Entity.getDecl()),
                                   CurInit.get());
+
+  // Check for std::move on construction.
+  if (const Expr *E = CurInit.get()) {
+    CheckMoveOnConstruction(S, E,
+                            Entity.getKind() == InitializedEntity::EK_Result);
+  }
 
   return CurInit;
 }
