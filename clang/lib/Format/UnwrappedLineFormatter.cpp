@@ -461,7 +461,9 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
 
           if (static_cast<int>(LevelIndent) - Offset >= 0)
             LevelIndent -= Offset;
-          if (Tok->isNot(tok::comment) && !TheLine.InPPDirective)
+          if ((Tok->isNot(tok::comment) ||
+               IndentForLevel[TheLine.Level] == -1) &&
+              !TheLine.InPPDirective)
             IndentForLevel[TheLine.Level] = LevelIndent;
         } else if (!DryRun) {
           Whitespaces->addUntouchableToken(*Tok, TheLine.InPPDirective);

@@ -3262,6 +3262,19 @@ TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
                    "    int a; //\n"
                    "});",
                    0, 0, getLLVMStyle()));
+  EXPECT_EQ("someFunction(\n"
+            "    [] {\n"
+            "      // Only with this comment.\n"
+            "      int i; // invoke formatting here.\n"
+            "    }, // force line break\n"
+            "    aaa);",
+            format("someFunction(\n"
+                   "    [] {\n"
+                   "      // Only with this comment.\n"
+                   "      int   i; // invoke formatting here.\n"
+                   "    }, // force line break\n"
+                   "    aaa);",
+                   63, 1, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
