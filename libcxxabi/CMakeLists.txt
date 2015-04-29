@@ -281,7 +281,7 @@ if (MSVC)
 endif()
 
 # Define LIBCXXABI_USE_LLVM_UNWINDER for conditional compilation.
-if (LIBCXXABI_USE_LLVM_UNWINDER OR ${LLVM_NATIVE_ARCH} MATCHES ARM)
+if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
   add_definitions(-DLIBCXXABI_USE_LLVM_UNWINDER=1)
 endif()
 
@@ -300,7 +300,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCXXABI_C_FLAGS}")
 #===============================================================================
 
 include_directories(include)
-if (LIBCXXABI_USE_LLVM_UNWINDER OR ${LLVM_NATIVE_ARCH} MATCHES ARM)
+if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
   include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/include)
   # TODO: libunwind does not place libunwind_ext.h into include, so we need to
   # reach into its source directory.  This is primarily for
