@@ -35,8 +35,6 @@ Missing Options
 * -Ur
 * --unique
 * -v,--version,-V
-* -x,--discard-all
-* -X,--discard-locals
 * -y,--trace-symbol
 * -z (keywords need to be implemented)
 * --accept-unknown-input-arch,--no-accept-unknown-input-arch
