@@ -37,6 +37,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case amdgcn:      return "amdgcn";
   case sparc:       return "sparc";
   case sparcv9:     return "sparcv9";
+  case sparcel:     return "sparcel";
   case systemz:     return "s390x";
   case tce:         return "tce";
   case thumb:       return "thumb";
@@ -90,6 +91,7 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case bpf:         return "bpf";
 
   case sparcv9:
+  case sparcel:
   case sparc:       return "sparc";
 
   case systemz:     return "s390";
@@ -312,6 +314,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("hexagon", Triple::hexagon)
     .Case("s390x", Triple::systemz)
     .Case("sparc", Triple::sparc)
+    .Case("sparcel", Triple::sparcel)
     .Cases("sparcv9", "sparc64", Triple::sparcv9)
     .Case("tce", Triple::tce)
     .Case("xcore", Triple::xcore)
@@ -918,6 +921,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::ppc:
   case llvm::Triple::r600:
   case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
   case llvm::Triple::tce:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
@@ -990,6 +994,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::ppc:
   case Triple::r600:
   case Triple::sparc:
+  case Triple::sparcel:
   case Triple::tce:
   case Triple::thumb:
   case Triple::thumbeb:
@@ -1026,6 +1031,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::thumb:
   case Triple::thumbeb:
   case Triple::xcore:
+  case Triple::sparcel:
     T.setArch(UnknownArch);
     break;
 
