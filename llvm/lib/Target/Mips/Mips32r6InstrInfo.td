@@ -453,7 +453,7 @@ class BNEZALC_DESC : CMP_CBR_RT_Z_DESC_BASE<"bnezalc", brtarget, GPR32Opnd> {
 }
 
 class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
-                       SDPatternOperator Op=null_frag> {
+                       SDPatternOperator Op=null_frag> : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
@@ -709,10 +709,10 @@ def MOD : MOD_ENC, MOD_DESC, ISA_MIPS32R6;
 def MODU : MODU_ENC, MODU_DESC, ISA_MIPS32R6;
 def MSUBF_S : MSUBF_S_ENC, MSUBF_S_DESC, ISA_MIPS32R6;
 def MSUBF_D : MSUBF_D_ENC, MSUBF_D_DESC, ISA_MIPS32R6;
-def MUH    : MUH_ENC, MUH_DESC, ISA_MIPS32R6;
-def MUHU   : MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
-def MUL_R6 : MUL_R6_ENC, MUL_R6_DESC, ISA_MIPS32R6;
-def MULU   : MULU_ENC, MULU_DESC, ISA_MIPS32R6;
+def MUH    : R6MMR6Rel, MUH_ENC, MUH_DESC, ISA_MIPS32R6;
+def MUHU   : R6MMR6Rel, MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
+def MUL_R6 : R6MMR6Rel, MUL_R6_ENC, MUL_R6_DESC, ISA_MIPS32R6;
+def MULU   : R6MMR6Rel, MULU_ENC, MULU_DESC, ISA_MIPS32R6;
 def NAL; // BAL with rd=0
 def PREF_R6 : R6MMR6Rel, PREF_ENC, PREF_DESC, ISA_MIPS32R6;
 def RINT_D : RINT_D_ENC, RINT_D_DESC, ISA_MIPS32R6;
