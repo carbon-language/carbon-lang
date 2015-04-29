@@ -2256,6 +2256,7 @@ def BLXi : AXI<(outs), (ins blx_target:$target), BrMiscFrm, NoItinerary,
   bits<25> target;
   let Inst{23-0} = target{24-1};
   let Inst{24} = target{0};
+  let isCall = 1;
 }
 
 // Branch and Exchange Jazelle
@@ -2266,6 +2267,7 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
   let Inst{19-8} = 0xfff;
   let Inst{7-4} = 0b0010;
   let Inst{3-0} = func;
+  let isBranch = 1;
 }
 
 // Tail calls.
