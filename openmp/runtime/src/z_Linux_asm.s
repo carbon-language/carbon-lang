@@ -598,6 +598,12 @@ __kmp_unnamed_critical_addr:
 				//	temp: -8(%ebp)
 				//
 	pushl %ebx		// save %ebx to use during this routine
+				//
+#if OMPT_SUPPORT
+	movl 28(%ebp),%ebx	// get exit_frame address
+	movl %ebp,(%ebx)	// save exit_frame
+#endif
+
 	movl 20(%ebp),%ebx	// Stack alignment - # args
 	addl $2,%ebx		// #args +2  Always pass at least 2 args (gtid and tid)
 	shll $2,%ebx		// Number of bytes used on stack: (#args+2)*4
@@ -1221,6 +1227,7 @@ KMP_LABEL(invoke_3):
 //	%edx:	tid
 //	%ecx:	argc
 //	%r8:	p_argv
+//	%r9:	&exit_frame
 //
 // locals:
 //	__gtid:	gtid parm pushed on stack so can pass &gtid to pkfn
@@ -1250,6 +1257,11 @@ __tid = -24
 	KMP_CFI_OFFSET rbp,-16
 	movq 	%rsp,%rbp	// establish the base pointer for this routine.
 	KMP_CFI_REGISTER rbp
+
+#if OMPT_SUPPORT
+	movq	%rbp, (%r9)	// save exit_frame
+#endif
+
 	pushq 	%rbx		// %rbx is callee-saved register
 	pushq	%rsi		// Put gtid on stack so can pass &tgid to pkfn
 	pushq	%rdx		// Put tid on stack so can pass &tid to pkfn

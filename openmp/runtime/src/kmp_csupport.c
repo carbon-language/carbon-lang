@@ -20,6 +20,11 @@
 #include "kmp_error.h"
 #include "kmp_stats.h"
 
+#if OMPT_SUPPORT
+#include "ompt-internal.h"
+#include "ompt-specific.h"
+#endif
+
 #define MAX_MESSAGE 512
 
 /* ------------------------------------------------------------------------ */
@@ -283,12 +288,23 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     va_list     ap;
     va_start(   ap, microtask );
 
+#if OMPT_SUPPORT
+    kmp_info_t *master_th = __kmp_threads[ gtid ];
+    kmp_team_t *parent_team = master_th->th.th_team;
+    int tid = __kmp_tid_from_gtid( gtid );
+    parent_team->t.t_implicit_task_taskdata[tid].
+        ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+#endif
+
 #if INCLUDE_SSC_MARKS
     SSC_MARK_FORKING();
 #endif
     __kmp_fork_call( loc, gtid, fork_context_intel,
             argc,
-            VOLATILE_CAST(microtask_t) microtask,
+#if OMPT_SUPPORT
+            VOLATILE_CAST(void *) microtask,      // "unwrapped" task
+#endif
+            VOLATILE_CAST(microtask_t) microtask, // "wrapped" task
             VOLATILE_CAST(launch_t)    __kmp_invoke_task_func,
 /* TODO: revert workaround for Intel(R) 64 tracker #96 */
 #if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
@@ -303,6 +319,13 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     __kmp_join_call( loc, gtid );
 
     va_end( ap );
+
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        parent_team->t.t_implicit_task_taskdata[tid].
+            ompt_task_info.frame.reenter_runtime_frame = 0;
+    }
+#endif
   }
   KMP_START_EXPLICIT_TIMER(OMP_serial);
 }
@@ -358,7 +381,10 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 
     __kmp_fork_call( loc, gtid, fork_context_intel,
             argc,
-            VOLATILE_CAST(microtask_t) __kmp_teams_master,
+#if OMPT_SUPPORT
+            VOLATILE_CAST(void *) microtask,               // "unwrapped" task
+#endif
+            VOLATILE_CAST(microtask_t) __kmp_teams_master, // "wrapped" task
             VOLATILE_CAST(launch_t)    __kmp_invoke_teams_master,
 #if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
             &ap
@@ -662,6 +688,20 @@ __kmpc_master(ident_t *loc, kmp_int32 global_tid)
     if( KMP_MASTER_GTID( global_tid ))
         status = 1;
 
+#if OMPT_SUPPORT && OMPT_TRACE
+    if (status) {
+        kmp_info_t  *this_thr        = __kmp_threads[ global_tid ];
+        kmp_team_t  *team            = this_thr -> th.th_team;
+        if ((ompt_status == ompt_status_track_callback) &&
+            ompt_callbacks.ompt_callback(ompt_event_master_begin)) {
+            int  tid = __kmp_tid_from_gtid( global_tid );
+            ompt_callbacks.ompt_callback(ompt_event_master_begin)(
+                team->t.ompt_team_info.parallel_id,
+                team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+        }
+    }
+#endif
+
     if ( __kmp_env_consistency_check ) {
 #if KMP_USE_DYNAMIC_LOCK
         if (status)
@@ -693,6 +733,18 @@ __kmpc_end_master(ident_t *loc, kmp_int32 global_tid)
     KC_TRACE( 10, ("__kmpc_end_master: called T#%d\n", global_tid ) );
 
     KMP_DEBUG_ASSERT( KMP_MASTER_GTID( global_tid ));
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    kmp_info_t  *this_thr        = __kmp_threads[ global_tid ];
+    kmp_team_t  *team            = this_thr -> th.th_team;
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_master_end)) {
+        int  tid = __kmp_tid_from_gtid( global_tid );
+        ompt_callbacks.ompt_callback(ompt_event_master_end)(
+            team->t.ompt_team_info.parallel_id,
+            team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+    }
+#endif
 
     if ( __kmp_env_consistency_check ) {
         if( global_tid < 0 )
@@ -729,10 +781,40 @@ __kmpc_ordered( ident_t * loc, kmp_int32 gtid )
 
     th = __kmp_threads[ gtid ];
 
+#if OMPT_SUPPORT && OMPT_TRACE
+    if (ompt_status & ompt_status_track) {
+        /* OMPT state update */
+        th->th.ompt_thread_info.wait_id = (uint64_t) loc;
+        th->th.ompt_thread_info.state = ompt_state_wait_ordered;
+
+        /* OMPT event callback */
+        if ((ompt_status == ompt_status_track_callback) &&
+            ompt_callbacks.ompt_callback(ompt_event_wait_ordered)) {
+            ompt_callbacks.ompt_callback(ompt_event_wait_ordered)(
+                th->th.ompt_thread_info.wait_id);
+        }
+    }
+#endif
+
     if ( th -> th.th_dispatch -> th_deo_fcn != 0 )
         (*th->th.th_dispatch->th_deo_fcn)( & gtid, & cid, loc );
     else
         __kmp_parallel_deo( & gtid, & cid, loc );
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    if (ompt_status & ompt_status_track) {
+        /* OMPT state update */
+        th->th.ompt_thread_info.state = ompt_state_work_parallel;
+        th->th.ompt_thread_info.wait_id = 0;
+
+        /* OMPT event callback */
+        if ((ompt_status == ompt_status_track_callback) &&
+            ompt_callbacks.ompt_callback(ompt_event_acquired_ordered)) {
+            ompt_callbacks.ompt_callback(ompt_event_acquired_ordered)(
+                th->th.ompt_thread_info.wait_id);
+        }
+    }
+#endif
 
 #if USE_ITT_BUILD
     __kmp_itt_ordered_start( gtid );
@@ -765,6 +847,14 @@ __kmpc_end_ordered( ident_t * loc, kmp_int32 gtid )
         (*th->th.th_dispatch->th_dxo_fcn)( & gtid, & cid, loc );
     else
         __kmp_parallel_dxo( & gtid, & cid, loc );
+
+#if OMPT_SUPPORT && OMPT_BLAME
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_release_ordered)) {
+        ompt_callbacks.ompt_callback(ompt_event_release_ordered)(
+            th->th.ompt_thread_info.wait_id);
+    }
+#endif
 }
 
 #if KMP_USE_DYNAMIC_LOCK
@@ -1137,6 +1227,14 @@ __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
     // Value of 'crit' should be good for using as a critical_id of the critical section directive.
     __kmp_release_user_lock_with_checks( lck, global_tid );
 
+#if OMPT_SUPPORT && OMPT_BLAME
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_release_critical)) {
+        ompt_callbacks.ompt_callback(ompt_event_release_critical)(
+            (uint64_t) lck);
+    }
+#endif
+
 #endif // KMP_USE_DYNAMIC_LOCK
 
     KA_TRACE( 15, ("__kmpc_end_critical: done T#%d\n", global_tid ));
@@ -1257,6 +1355,31 @@ __kmpc_single(ident_t *loc, kmp_int32 global_tid)
 {
     KMP_COUNT_BLOCK(OMP_SINGLE);
     kmp_int32 rc = __kmp_enter_single( global_tid, loc, TRUE );
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    kmp_info_t *this_thr        = __kmp_threads[ global_tid ];
+    kmp_team_t *team            = this_thr -> th.th_team;
+    int tid = __kmp_tid_from_gtid( global_tid );
+
+    if ((ompt_status == ompt_status_track_callback)) {
+        if (rc) {
+            if (ompt_callbacks.ompt_callback(ompt_event_single_in_block_begin)) {
+                ompt_callbacks.ompt_callback(ompt_event_single_in_block_begin)(
+                    team->t.ompt_team_info.parallel_id,
+                    team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id,
+                    team->t.ompt_team_info.microtask);
+            }
+        } else {
+            if (ompt_callbacks.ompt_callback(ompt_event_single_others_begin)) {
+                ompt_callbacks.ompt_callback(ompt_event_single_others_begin)(
+                    team->t.ompt_team_info.parallel_id,
+                    team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+            }
+            this_thr->th.ompt_thread_info.state = ompt_state_wait_single;
+        }
+    }
+#endif
+
     return rc;
 }
 
@@ -1273,6 +1396,19 @@ void
 __kmpc_end_single(ident_t *loc, kmp_int32 global_tid)
 {
     __kmp_exit_single( global_tid );
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    kmp_info_t *this_thr        = __kmp_threads[ global_tid ];
+    kmp_team_t *team            = this_thr -> th.th_team;
+    int tid = __kmp_tid_from_gtid( global_tid );
+
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_single_in_block_end)) {
+        ompt_callbacks.ompt_callback(ompt_event_single_in_block_end)(
+            team->t.ompt_team_info.parallel_id,
+            team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+    }
+#endif
 }
 
 /*!
@@ -1286,6 +1422,19 @@ void
 __kmpc_for_static_fini( ident_t *loc, kmp_int32 global_tid )
 {
     KE_TRACE( 10, ("__kmpc_for_static_fini called T#%d\n", global_tid));
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    kmp_info_t *this_thr        = __kmp_threads[ global_tid ];
+    kmp_team_t *team            = this_thr -> th.th_team;
+    int tid = __kmp_tid_from_gtid( global_tid );
+
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_loop_end)) {
+        ompt_callbacks.ompt_callback(ompt_event_loop_end)(
+            team->t.ompt_team_info.parallel_id,
+            team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+    }
+#endif
 
     if ( __kmp_env_consistency_check )
      __kmp_pop_workshare( global_tid, ct_pdo, loc );
@@ -1928,6 +2077,13 @@ __kmpc_unset_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 
     RELEASE_LOCK( lck, gtid );
 
+#if OMPT_SUPPORT && OMPT_BLAME
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_release_lock)) {
+        ompt_callbacks.ompt_callback(ompt_event_release_lock)((uint64_t) lck);
+    }
+#endif
+
 #endif // KMP_USE_DYNAMIC_LOCK
 }
 
@@ -1980,7 +2136,20 @@ __kmpc_unset_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     __kmp_itt_lock_releasing( lck );
 #endif /* USE_ITT_BUILD */
 
-    RELEASE_NESTED_LOCK( lck, gtid );
+    int release_status = RELEASE_NESTED_LOCK( lck, gtid );
+#if OMPT_SUPPORT && OMPT_BLAME
+    if (ompt_status == ompt_status_track_callback) {
+        if (release_status == KMP_LOCK_RELEASED) {
+            if (ompt_callbacks.ompt_callback(ompt_event_release_nest_lock_last)) {
+                ompt_callbacks.ompt_callback(ompt_event_release_nest_lock_last)(
+                    (uint64_t) lck);
+            }
+        } else if (ompt_callbacks.ompt_callback(ompt_event_release_nest_lock_prev)) {
+            ompt_callbacks.ompt_callback(ompt_event_release_nest_lock_prev)(
+                (uint64_t) lck);
+        }
+    }
+#endif
 
 #endif // KMP_USE_DYNAMIC_LOCK
 }

@@ -434,6 +434,18 @@ __kmp_task_start( kmp_int32 gtid, kmp_task_t * task, kmp_taskdata_t * current_ta
     KA_TRACE(10, ("__kmp_task_start(exit): T#%d task=%p\n",
                   gtid, taskdata ) );
 
+#if OMPT_SUPPORT
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_task_begin)) {
+        kmp_taskdata_t *parent = taskdata->td_parent;
+        ompt_callbacks.ompt_callback(ompt_event_task_begin)(
+            parent ? parent->ompt_task_info.task_id : ompt_task_id_none,
+            parent ? &(parent->ompt_task_info.frame) : NULL,
+            taskdata->ompt_task_info.task_id,
+            taskdata->ompt_task_info.function);
+    }
+#endif
+
     return;
 }
 
@@ -579,6 +591,15 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
     kmp_info_t * thread = __kmp_threads[ gtid ];
     kmp_int32 children = 0;
 
+#if OMPT_SUPPORT
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_task_end)) {
+        kmp_taskdata_t *parent = taskdata->td_parent;
+        ompt_callbacks.ompt_callback(ompt_event_task_end)(
+            taskdata->ompt_task_info.task_id);
+    }
+#endif
+
     KA_TRACE(10, ("__kmp_task_finish(enter): T#%d finishing task %p and resuming task %p\n",
                   gtid, taskdata, resumed_task) );
 
@@ -654,6 +675,9 @@ __kmp_task_finish( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t *resumed_tas
     // Free this task and then ancestor tasks if they have no children.
     __kmp_free_task_and_ancestors(gtid, taskdata, thread);
 
+    // FIXME johnmc: I this statement should be before the last one so if an
+    // asynchronous inquiry peers into the runtime system it doesn't see the freed
+    // task as the current task
     __kmp_threads[ gtid ] -> th.th_current_task = resumed_task; // restore current_task
 
     // TODO: GEH - make sure root team implicit task is initialized properly.
@@ -782,6 +806,10 @@ __kmp_init_implicit_task( ident_t *loc_ref, kmp_info_t *this_thr, kmp_team_t *te
         KMP_DEBUG_ASSERT(task->td_incomplete_child_tasks == 0);
         KMP_DEBUG_ASSERT(task->td_allocated_child_tasks  == 0);
     }
+
+#if OMPT_SUPPORT
+    __kmp_task_init_ompt(task, tid);
+#endif
 
     KF_TRACE(10, ("__kmp_init_implicit_task(exit): T#:%d team=%p task=%p\n",
                   tid, team, task ) );
@@ -937,6 +965,15 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
     KA_TRACE(20, ("__kmp_task_alloc(exit): T#%d created task %p parent=%p\n",
                   gtid, taskdata, taskdata->td_parent) );
 
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        taskdata->ompt_task_info.task_id = __ompt_task_id_new(gtid);
+        taskdata->ompt_task_info.function = (void*) task_entry;
+        taskdata->ompt_task_info.frame = (ompt_frame_t)
+            { .exit_runtime_frame = NULL, .reenter_runtime_frame = NULL };
+    }
+#endif
+
     return task;
 }
 
@@ -984,6 +1021,19 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
 
     __kmp_task_start( gtid, task, current_task );
 
+#if OMPT_SUPPORT
+    ompt_thread_info_t oldInfo;
+    kmp_info_t * thread;
+    if (ompt_status & ompt_status_track) {
+        // Store the threads states and restore them after the task
+        thread = __kmp_threads[ gtid ];
+        oldInfo = thread->th.ompt_thread_info;
+        thread->th.ompt_thread_info.wait_id = 0;
+        thread->th.ompt_thread_info.state = ompt_state_work_parallel;
+        taskdata->ompt_task_info.frame.exit_runtime_frame = __builtin_frame_address(0);
+    }
+#endif
+
 #if OMP_40_ENABLED
     // TODO: cancel tasks if the parallel region has also been cancelled
     // TODO: check if this sequence can be hoisted above __kmp_task_start
@@ -1016,6 +1066,14 @@ __kmp_invoke_task( kmp_int32 gtid, kmp_task_t *task, kmp_taskdata_t * current_ta
 #if OMP_40_ENABLED
     }
 #endif // OMP_40_ENABLED
+
+
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        thread->th.ompt_thread_info = oldInfo;
+        taskdata->ompt_task_info.frame.exit_runtime_frame = 0;
+    }
+#endif
 
     __kmp_task_finish( gtid, task, current_task );
 
@@ -1073,6 +1131,13 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate 
 {
     kmp_taskdata_t * new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
 
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        new_taskdata->ompt_task_info.frame.reenter_runtime_frame =
+            __builtin_frame_address(0);
+    }
+#endif
+
     /* Should we execute the new task or queue it?   For now, let's just always try to
        queue it.  If the queue fills up, then we'll execute it.  */
 
@@ -1084,6 +1149,11 @@ __kmp_omp_task( kmp_int32 gtid, kmp_task_t * new_task, bool serialize_immediate 
         __kmp_invoke_task( gtid, new_task, current_task );
     }
 
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        new_taskdata->ompt_task_info.frame.reenter_runtime_frame = 0;
+    }
+#endif
 
     return TASK_CURRENT_NOT_QUEUED;
 }

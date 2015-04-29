@@ -35,6 +35,11 @@
     #include <float.h>
 #endif
 
+#if OMPT_SUPPORT
+#include "ompt-internal.h"
+#include "ompt-specific.h"
+#endif
+
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
@@ -1189,6 +1194,16 @@ __kmp_dispatch_init(
       }
     }
     #endif // ( KMP_STATIC_STEAL_ENABLED && USE_STEALING )
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_loop_begin)) {
+        ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
+        ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
+        ompt_callbacks.ompt_callback(ompt_event_loop_begin)(
+            team_info->parallel_id, task_info->task_id, team_info->microtask);
+    }
+#endif
 }
 
 /*
@@ -1339,6 +1354,24 @@ __kmp_dispatch_finish_chunk( int gtid, ident_t *loc )
 
 #endif /* KMP_GOMP_COMPAT */
 
+/* Define a macro for exiting __kmp_dispatch_next(). If status is 0
+ * (no more work), then tell OMPT the loop is over. In some cases
+ * kmp_dispatch_fini() is not called. */
+#if OMPT_SUPPORT && OMPT_TRACE
+#define OMPT_LOOP_END                                                          \
+    if (status == 0) {                                                         \
+        if ((ompt_status == ompt_status_track_callback) &&                     \
+            ompt_callbacks.ompt_callback(ompt_event_loop_end)) {               \
+            ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);        \
+            ompt_task_info_t *task_info = __ompt_get_taskinfo(0);              \
+            ompt_callbacks.ompt_callback(ompt_event_loop_end)(                 \
+                team_info->parallel_id, task_info->task_id);                   \
+        }                                                                      \
+    }
+#else
+#define OMPT_LOOP_END // no-op
+#endif
+
 template< typename T >
 static int
 __kmp_dispatch_next(
@@ -1476,6 +1509,7 @@ __kmp_dispatch_next(
 #if INCLUDE_SSC_MARKS
         SSC_MARK_DISPATCH_NEXT();
 #endif
+        OMPT_LOOP_END;
         return status;
     } else {
         kmp_int32 last = 0;
@@ -2115,6 +2149,7 @@ __kmp_dispatch_next(
 #if INCLUDE_SSC_MARKS
     SSC_MARK_DISPATCH_NEXT();
 #endif
+    OMPT_LOOP_END;
     return status;
 }
 

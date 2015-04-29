@@ -1034,9 +1034,36 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
     register kmp_team_t *team = this_thr->th.th_team;
     register int status = 0;
     ident_t *loc = __kmp_threads[gtid]->th.th_ident;
+#if OMPT_SUPPORT
+    ompt_task_id_t my_task_id;
+    ompt_parallel_id_t my_parallel_id;
+#endif
 
     KA_TRACE(15, ("__kmp_barrier: T#%d(%d:%d) has arrived\n",
                   gtid, __kmp_team_from_gtid(gtid)->t.t_id, __kmp_tid_from_gtid(gtid)));
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    if (ompt_status & ompt_status_track) {
+        if (ompt_status == ompt_status_track_callback) {
+            my_task_id = team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id;
+            my_parallel_id = team->t.ompt_team_info.parallel_id;
+
+            if (this_thr->th.ompt_thread_info.state == ompt_state_wait_single) {
+                if (ompt_callbacks.ompt_callback(ompt_event_single_others_end)) {
+                    ompt_callbacks.ompt_callback(ompt_event_single_others_end)(
+                        my_parallel_id, my_task_id);
+                }
+            }
+            this_thr->th.ompt_thread_info.state = ompt_state_wait_barrier;
+            if (ompt_callbacks.ompt_callback(ompt_event_barrier_begin)) {
+                ompt_callbacks.ompt_callback(ompt_event_barrier_begin)(
+                    my_parallel_id, my_task_id);
+            }
+        } else {
+            this_thr->th.ompt_thread_info.state = ompt_state_wait_barrier;
+        }
+    }
+#endif
 
     if (! team->t.t_serialized) {
 #if USE_ITT_BUILD
@@ -1195,6 +1222,20 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
     }
     KA_TRACE(15, ("__kmp_barrier: T#%d(%d:%d) is leaving with return value %d\n",
                   gtid, __kmp_team_from_gtid(gtid)->t.t_id, __kmp_tid_from_gtid(gtid), status));
+
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+#if OMPT_TRACE
+        if ((ompt_status == ompt_status_track_callback) &&
+            ompt_callbacks.ompt_callback(ompt_event_barrier_end)) {
+            ompt_callbacks.ompt_callback(ompt_event_barrier_end)(
+                my_parallel_id, my_task_id);
+        }
+#endif
+        this_thr->th.ompt_thread_info.state = ompt_state_work_parallel;
+    }
+#endif
+
     return status;
 }
 
@@ -1285,6 +1326,16 @@ __kmp_join_barrier(int gtid)
     KMP_DEBUG_ASSERT(TCR_PTR(this_thr->th.th_root));
     KMP_DEBUG_ASSERT(this_thr == team->t.t_threads[tid]);
     KA_TRACE(10, ("__kmp_join_barrier: T#%d(%d:%d) arrived at join barrier\n", gtid, team_id, tid));
+
+#if OMPT_SUPPORT && OMPT_TRACE
+    if ((ompt_status == ompt_status_track_callback) &&
+        ompt_callbacks.ompt_callback(ompt_event_barrier_begin)) {
+        ompt_callbacks.ompt_callback(ompt_event_barrier_begin)(
+            team->t.ompt_team_info.parallel_id,
+            team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+    }
+    this_thr->th.ompt_thread_info.state = ompt_state_wait_barrier;
+#endif
 
     if (__kmp_tasking_mode == tskm_extra_barrier) {
         __kmp_tasking_barrier(team, this_thr, gtid);
@@ -1401,6 +1452,22 @@ __kmp_join_barrier(int gtid)
     // TODO now, mark worker threads as done so they may be disbanded
     KMP_MB(); // Flush all pending memory write invalidates.
     KA_TRACE(10, ("__kmp_join_barrier: T#%d(%d:%d) leaving\n", gtid, team_id, tid));
+
+#if OMPT_SUPPORT
+    if (ompt_status == ompt_status_track) {
+#if OMPT_TRACE
+        if ((ompt_status == ompt_status_track_callback) &&
+            ompt_callbacks.ompt_callback(ompt_event_barrier_end)) {
+            ompt_callbacks.ompt_callback(ompt_event_barrier_end)(
+                team->t.ompt_team_info.parallel_id,
+                team->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id);
+       }
+#endif
+
+        // return to default state
+        this_thr->th.ompt_thread_info.state = ompt_state_overhead;
+    }
+#endif
 }
 
 

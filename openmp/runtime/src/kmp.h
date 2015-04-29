@@ -3023,11 +3023,17 @@ extern kmp_info_t * __kmp_allocate_thread( kmp_root_t *root,
                                            kmp_team_t *team, int tid);
 #if OMP_40_ENABLED
 extern kmp_team_t * __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
+#if OMPT_SUPPORT
+                                         ompt_parallel_id_t ompt_parallel_id,
+#endif
                                          kmp_proc_bind_t proc_bind,
                                          kmp_internal_control_t *new_icvs,
                                          int argc USE_NESTED_HOT_ARG(kmp_info_t *thr) );
 #else
 extern kmp_team_t * __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
+#if OMPT_SUPPORT
+                                         ompt_parallel_id_t ompt_parallel_id,
+#endif
                                          kmp_internal_control_t *new_icvs,
                                          int argc USE_NESTED_HOT_ARG(kmp_info_t *thr) );
 #endif // OMP_40_ENABLED
@@ -3062,7 +3068,11 @@ enum fork_context_e
     fork_context_last
 };
 extern int __kmp_fork_call( ident_t *loc, int gtid, enum fork_context_e fork_context,
-  kmp_int32 argc, microtask_t microtask, launch_t invoker,
+  kmp_int32 argc,
+#if OMPT_SUPPORT
+  void *unwrapped_task,
+#endif
+  microtask_t microtask, launch_t invoker,
 /* TODO: revert workaround for Intel(R) 64 tracker #96 */
 #if (KMP_ARCH_ARM || KMP_ARCH_X86_64 || KMP_ARCH_AARCH64) && KMP_OS_LINUX
                              va_list *ap
@@ -3172,7 +3182,11 @@ extern void __kmp_clear_x87_fpu_status_word();
 
 #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
 
-extern int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int npr, int argc, void *argv[] );
+extern int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int npr, int argc, void *argv[]
+#if OMPT_SUPPORT
+                                   , void **exit_frame_ptr
+#endif
+);
 
 
 /* ------------------------------------------------------------------------ */
