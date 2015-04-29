@@ -350,21 +350,21 @@ defm CMOVNP : FPCMov<X86_COND_NP>;
 
 let Predicates = [HasCMov] in {
 // These are not factored because there's no clean way to pass DA/DB.
-def CMOVB_F  : FPI<0xDA, MRM0r, (outs RST:$op), (ins),
+def CMOVB_F  : FPI<0xDA, MRM0r, (outs), (ins RST:$op),
                   "fcmovb\t{$op, %st(0)|st(0), $op}">;
-def CMOVBE_F : FPI<0xDA, MRM2r, (outs RST:$op), (ins),
+def CMOVBE_F : FPI<0xDA, MRM2r, (outs), (ins RST:$op),
                   "fcmovbe\t{$op, %st(0)|st(0), $op}">;
-def CMOVE_F  : FPI<0xDA, MRM1r, (outs RST:$op), (ins),
+def CMOVE_F  : FPI<0xDA, MRM1r, (outs), (ins RST:$op),
                   "fcmove\t{$op, %st(0)|st(0), $op}">;
-def CMOVP_F  : FPI<0xDA, MRM3r, (outs RST:$op), (ins),
+def CMOVP_F  : FPI<0xDA, MRM3r, (outs), (ins RST:$op),
                   "fcmovu\t{$op, %st(0)|st(0), $op}">;
-def CMOVNB_F : FPI<0xDB, MRM0r, (outs RST:$op), (ins),
+def CMOVNB_F : FPI<0xDB, MRM0r, (outs), (ins RST:$op),
                   "fcmovnb\t{$op, %st(0)|st(0), $op}">;
-def CMOVNBE_F: FPI<0xDB, MRM2r, (outs RST:$op), (ins),
+def CMOVNBE_F: FPI<0xDB, MRM2r, (outs), (ins RST:$op),
                   "fcmovnbe\t{$op, %st(0)|st(0), $op}">;
-def CMOVNE_F : FPI<0xDB, MRM1r, (outs RST:$op), (ins),
+def CMOVNE_F : FPI<0xDB, MRM1r, (outs), (ins RST:$op),
                   "fcmovne\t{$op, %st(0)|st(0), $op}">;
-def CMOVNP_F : FPI<0xDB, MRM3r, (outs RST:$op), (ins),
+def CMOVNP_F : FPI<0xDB, MRM3r, (outs), (ins RST:$op),
                   "fcmovnu\t{$op, %st(0)|st(0), $op}">;
 } // Predicates = [HasCMov]
 
