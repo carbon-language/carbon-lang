@@ -129,10 +129,10 @@ SelectIO(int handle, bool is_read, const std::function<Error(bool&)> &io_handler
 }
 
 PipePosix::PipePosix()
-{
-    m_fds[READ] = PipePosix::kInvalidDescriptor;
-    m_fds[WRITE] = PipePosix::kInvalidDescriptor;
-}
+    : m_fds{PipePosix::kInvalidDescriptor, PipePosix::kInvalidDescriptor} {}
+
+PipePosix::PipePosix(int read_fd, int write_fd)
+    : m_fds{read_fd, write_fd} {}
 
 PipePosix::~PipePosix()
 {
@@ -184,15 +184,6 @@ PipePosix::CreateNew(llvm::StringRef name, bool child_process_inherit)
         error.SetErrorToErrno();
 
     return error;
-}
-
-Error
-PipePosix::CreateWithFD(int read_fd, int write_fd) {
-    if (CanRead() || CanWrite())
-        return Error("Pipe is already opened");
-    m_fds[READ] = read_fd;
-    m_fds[WRITE] = write_fd;
-    return Error();
 }
 
 Error

@@ -28,6 +28,7 @@ public:
     static int kInvalidDescriptor;
 
     PipePosix();
+    PipePosix(int read_fd, int write_fd);
 
     ~PipePosix() override;
 
@@ -35,8 +36,6 @@ public:
     CreateNew(bool child_process_inherit) override;
     Error
     CreateNew(llvm::StringRef name, bool child_process_inherit) override;
-    Error
-    CreateWithFD(int read_fd, int write_fd);
     Error
     CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name) override;
     Error

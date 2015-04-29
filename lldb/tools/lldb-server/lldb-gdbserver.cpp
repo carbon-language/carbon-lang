@@ -344,11 +344,7 @@ writePortToPipe(const char *const named_pipe_path, const uint16_t port)
 Error
 writePortToPipe(int unnamed_pipe_fd, const uint16_t port)
 {
-    Pipe port_pipe;
-    // Wait for 10 seconds for pipe to be opened.
-    auto error = port_pipe.CreateWithFD(Pipe::kInvalidDescriptor, unnamed_pipe_fd);
-    if (error.Fail())
-        return error;
+    Pipe port_pipe{Pipe::kInvalidDescriptor, unnamed_pipe_fd};
     return WritePortToPipe(port_pipe, port);
 }
 
