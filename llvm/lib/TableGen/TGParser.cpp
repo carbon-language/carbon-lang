@@ -51,11 +51,8 @@ void SubMultiClassReference::dump() const {
   MC->dump();
 
   errs() << "Template args:\n";
-  for (std::vector<Init *>::const_iterator i = TemplateArgs.begin(),
-         iend = TemplateArgs.end();
-       i != iend;
-       ++i) {
-    (*i)->dump();
+  for (Init *TA : TemplateArgs) {
+    TA->dump();
   }
 }
 
@@ -217,27 +214,21 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
   MultiClass *SMC = SubMultiClass.MC;
   Record *CurRec = &CurMC->Rec;
 
-  const std::vector<RecordVal> &MCVals = CurRec->getValues();
-
   // Add all of the values in the subclass into the current class.
-  const std::vector<RecordVal> &SMCVals = SMC->Rec.getValues();
-  for (unsigned i = 0, e = SMCVals.size(); i != e; ++i)
-    if (AddValue(CurRec, SubMultiClass.RefRange.Start, SMCVals[i]))
+  for (const auto &SMCVal : SMC->Rec.getValues())
+    if (AddValue(CurRec, SubMultiClass.RefRange.Start, SMCVal))
       return true;
 
   unsigned newDefStart = CurMC->DefPrototypes.size();
 
   // Add all of the defs in the subclass into the current multiclass.
-  for (MultiClass::RecordVector::const_iterator i = SMC->DefPrototypes.begin(),
-         iend = SMC->DefPrototypes.end();
-       i != iend;
-       ++i) {
+  for (const std::unique_ptr<Record> &R : SMC->DefPrototypes) {
     // Clone the def and add it to the current multiclass
-    auto NewDef = make_unique<Record>(**i);
+    auto NewDef = make_unique<Record>(*R);
 
     // Add all of the values in the superclass into the current def.
-    for (unsigned i = 0, e = MCVals.size(); i != e; ++i)
-      if (AddValue(NewDef.get(), SubMultiClass.RefRange.Start, MCVals[i]))
+    for (const auto &MCVal : CurRec->getValues())
+      if (AddValue(NewDef.get(), SubMultiClass.RefRange.Start, MCVal))
         return true;
 
     CurMC->DefPrototypes.push_back(std::move(NewDef));
@@ -758,10 +749,8 @@ Init *TGParser::ParseIDValue(Record *CurRec,
   }
 
   // If this is in a foreach loop, make sure it's not a loop iterator
-  for (LoopVector::iterator i = Loops.begin(), iend = Loops.end();
-       i != iend;
-       ++i) {
-    VarInit *IterVar = dyn_cast<VarInit>(i->IterVar);
+  for (const auto &L : Loops) {
+    VarInit *IterVar = dyn_cast<VarInit>(L.IterVar);
     if (IterVar && IterVar->getName() == Name)
       return IterVar;
   }
@@ -1256,11 +1245,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       CurMultiClass->DefPrototypes.push_back(std::move(NewRecOwner));
 
       // Copy the template arguments for the multiclass into the def.
-      const std::vector<Init *> &TArgs =
-                                  CurMultiClass->Rec.getTemplateArgs();
-
-      for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
-        const RecordVal *RV = CurMultiClass->Rec.getValue(TArgs[i]);
+      for (Init *TArg : CurMultiClass->Rec.getTemplateArgs()) {
+        const RecordVal *RV = CurMultiClass->Rec.getValue(TArg);
         assert(RV && "Template arg doesn't exist?");
         NewRec->addValue(*RV);
       }
@@ -1384,10 +1370,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
 
     // Check elements
     RecTy *EltTy = nullptr;
-    for (std::vector<Init *>::iterator i = Vals.begin(), ie = Vals.end();
-         i != ie;
-         ++i) {
-      TypedInit *TArg = dyn_cast<TypedInit>(*i);
+    for (Init *V : Vals) {
+      TypedInit *TArg = dyn_cast<TypedInit>(V);
       if (!TArg) {
         TokError("Untyped list element");
         return nullptr;
@@ -2053,9 +2037,8 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
       return true;
 
     // Otherwise, a def inside a multiclass, add it to the multiclass.
-    for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size(); i != e; ++i)
-      if (CurMultiClass->DefPrototypes[i]->getNameInit()
-          == CurRec->getNameInit())
+    for (const auto &Proto : CurMultiClass->DefPrototypes)
+      if (Proto->getNameInit() == CurRec->getNameInit())
         return Error(DefLoc, "def '" + CurRec->getNameInitAsString() +
                      "' already defined in this multiclass!");
     CurMultiClass->DefPrototypes.push_back(std::move(CurRecOwner));
@@ -2074,11 +2057,8 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
 
   if (CurMultiClass) {
     // Copy the template arguments for the multiclass into the def.
-    const std::vector<Init *> &TArgs =
-                                CurMultiClass->Rec.getTemplateArgs();
-
-    for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
-      const RecordVal *RV = CurMultiClass->Rec.getValue(TArgs[i]);
+    for (Init *TArg : CurMultiClass->Rec.getTemplateArgs()) {
+      const RecordVal *RV = CurMultiClass->Rec.getValue(TArg);
       assert(RV && "Template arg doesn't exist?");
       CurRec->addValue(*RV);
     }
@@ -2497,20 +2477,15 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
   // with the new created definition.
   if (!CurMultiClass)
     return false;
-  for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
-       i != e; ++i)
-    if (CurMultiClass->DefPrototypes[i]->getNameInit()
-        == CurRec->getNameInit())
+  for (const auto &Proto : CurMultiClass->DefPrototypes)
+    if (Proto->getNameInit() == CurRec->getNameInit())
       return Error(DefmPrefixLoc, "defm '" + CurRec->getNameInitAsString() +
                    "' already defined in this multiclass!");
   CurMultiClass->DefPrototypes.push_back(std::unique_ptr<Record>(CurRec));
 
   // Copy the template arguments for the multiclass into the new def.
-  const std::vector<Init *> &TA =
-    CurMultiClass->Rec.getTemplateArgs();
-
-  for (unsigned i = 0, e = TA.size(); i != e; ++i) {
-    const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
+  for (Init * TA : CurMultiClass->Rec.getTemplateArgs()) {
+    const RecordVal *RV = CurMultiClass->Rec.getValue(TA);
     assert(RV && "Template arg doesn't exist?");
     CurRec->addValue(*RV);
   }
@@ -2564,10 +2539,8 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
                    "more template args specified than multiclass expects");
 
     // Loop over all the def's in the multiclass, instantiating each one.
-    for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
-      Record *DefProto = MC->DefPrototypes[i].get();
-
-      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix,
+    for (const std::unique_ptr<Record> &DefProto : MC->DefPrototypes) {
+      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto.get(), DefmPrefix,
                                                 SMRange(DefmLoc,
                                                         DefmPrefixEndLoc));
       if (!CurRec)
@@ -2577,7 +2550,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
                                    TArgs, TemplateVals, true/*Delete args*/))
         return Error(SubClassLoc, "could not instantiate def");
 
-      if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmLoc))
+      if (ResolveMulticlassDef(*MC, CurRec, DefProto.get(), DefmLoc))
         return Error(SubClassLoc, "could not instantiate def");
 
       // Defs that can be used by other definitions should be fully resolved
@@ -2618,9 +2591,7 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 
       // Get the expanded definition prototypes and teach them about
       // the record values the current class to inherit has
-      for (unsigned i = 0, e = NewRecDefs.size(); i != e; ++i) {
-        Record *CurRec = NewRecDefs[i];
-
+      for (Record *CurRec : NewRecDefs) {
         // Add it.
         if (AddSubClass(CurRec, SubClass))
           return true;
@@ -2636,11 +2607,11 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   }
 
   if (!CurMultiClass)
-    for (unsigned i = 0, e = NewRecDefs.size(); i != e; ++i)
+    for (Record *CurRec : NewRecDefs)
       // See Record::setName().  This resolve step will see any new
       // name for the def that might have been created when resolving
       // inheritance, values and arguments above.
-      NewRecDefs[i]->resolveReferences();
+      CurRec->resolveReferences();
 
   if (Lex.getCode() != tgtok::semi)
     return TokError("expected ';' at end of defm");
