@@ -2839,6 +2839,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
     // all union fields.
     const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
     if (RD->isUnion() && RD->isAnonymousStructOrUnion()) {
+      // GDB has trouble finding local variables in anonymous unions, so we emit
+      // artifical local variables for each of the members.
+      //
+      // FIXME: Remove this code as soon as GDB supports this.
+      // The debug info verifier in LLVM operates based on the assumption that a
+      // variable has the same size as its storage and we had to disable the check
+      // for artificial variables.
       for (const auto *Field : RD->fields()) {
         llvm::DIType *FieldTy = getOrCreateType(Field->getType(), Unit);
         StringRef FieldName = Field->getName();
@@ -2850,14 +2857,14 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
         // Use VarDecl's Tag, Scope and Line number.
         auto *D = DBuilder.createLocalVariable(
             Tag, Scope, FieldName, Unit, Line, FieldTy,
-            CGM.getLangOpts().Optimize, Flags, ArgNo);
+            CGM.getLangOpts().Optimize, Flags | llvm::DINode::FlagArtificial,
+            ArgNo);
 
         // Insert an llvm.dbg.declare into the current block.
         DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
                                llvm::DebugLoc::get(Line, Column, Scope),
                                Builder.GetInsertBlock());
       }
-      return;
     }
   }
 
