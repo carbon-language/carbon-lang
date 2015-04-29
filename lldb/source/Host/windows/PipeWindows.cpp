@@ -85,7 +85,7 @@ PipeWindows::CreateNew(llvm::StringRef name, bool child_process_inherit)
     Error result = OpenNamedPipe(name, child_process_inherit, false);
     if (!result.Success())
     {
-        CloseReadEndpoint();
+        CloseReadFileDescriptor();
         return result;
     }
 
@@ -215,7 +215,7 @@ PipeWindows::ReleaseWriteFileDescriptor()
 }
 
 void
-PipeWindows::CloseReadEndpoint()
+PipeWindows::CloseReadFileDescriptor()
 {
     if (!CanRead())
         return;
@@ -229,7 +229,7 @@ PipeWindows::CloseReadEndpoint()
 }
 
 void
-PipeWindows::CloseWriteEndpoint()
+PipeWindows::CloseWriteFileDescriptor()
 {
     if (!CanWrite())
         return;
@@ -243,8 +243,8 @@ PipeWindows::CloseWriteEndpoint()
 void
 PipeWindows::Close()
 {
-    CloseReadEndpoint();
-    CloseWriteEndpoint();
+    CloseReadFileDescriptor();
+    CloseWriteFileDescriptor();
 }
 
 Error

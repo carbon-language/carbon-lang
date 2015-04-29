@@ -56,6 +56,11 @@ public:
     ReleaseReadFileDescriptor() override;
     int
     ReleaseWriteFileDescriptor() override;
+    void
+    CloseReadFileDescriptor() override;
+    void
+    CloseWriteFileDescriptor() override;
+
 
     // Close both descriptors
     void
@@ -68,11 +73,6 @@ public:
     Write(const void *buf, size_t size, size_t &bytes_written) override;
     Error
     ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_read) override;
-
-    void
-    CloseReadFileDescriptor();
-    void
-    CloseWriteFileDescriptor();
 
 private:
     int m_fds[2];

@@ -42,6 +42,8 @@ class PipeWindows : public PipeBase
     int GetWriteFileDescriptor() const override;
     int ReleaseReadFileDescriptor() override;
     int ReleaseWriteFileDescriptor() override;
+    void CloseReadFileDescriptor() override;
+    void CloseWriteFileDescriptor() override;
 
     void Close() override;
 
@@ -56,9 +58,6 @@ class PipeWindows : public PipeBase
 
   private:
     Error OpenNamedPipe(llvm::StringRef name, bool child_process_inherit, bool is_read);
-
-    void CloseReadEndpoint();
-    void CloseWriteEndpoint();
 
     HANDLE m_read;
     HANDLE m_write;

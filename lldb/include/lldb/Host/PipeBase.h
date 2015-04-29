@@ -40,6 +40,8 @@ class PipeBase
     virtual int GetWriteFileDescriptor() const = 0;
     virtual int ReleaseReadFileDescriptor() = 0;
     virtual int ReleaseWriteFileDescriptor() = 0;
+    virtual void CloseReadFileDescriptor() = 0;
+    virtual void CloseWriteFileDescriptor() = 0;
 
     // Close both descriptors
     virtual void Close() = 0;
