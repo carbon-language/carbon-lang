@@ -1007,21 +1007,18 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
 static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
                                RecTy *Type, Record *CurRec,
                                MultiClass *CurMultiClass) {
-  std::vector<Init *> NewOperands;
-
-  TypedInit *TArg = dyn_cast<TypedInit>(Arg);
-
   // If this is a dag, recurse
-  if (TArg && TArg->getType()->getAsString() == "dag") {
-    Init *Result = ForeachHelper(LHS, Arg, RHSo, Type,
-                                 CurRec, CurMultiClass);
-    return Result;
+  if (TypedInit *TArg = dyn_cast<TypedInit>(Arg)) {
+    if (TArg->getType()->getAsString() == "dag") {
+      Init *Result = ForeachHelper(LHS, Arg, RHSo, Type,
+                                   CurRec, CurMultiClass);
+      return Result;
+    }
   }
 
+  std::vector<Init *> NewOperands;
   for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-    OpInit *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i));
-
-    if (RHSoo) {
+    if (OpInit *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
       Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
                                        Type, CurRec, CurMultiClass);
       if (Result) {
