@@ -1060,7 +1060,7 @@ llvm::Value *CGObjCGNU::GetSelector(CodeGenFunction &CGF, Selector Sel,
   }
   if (!SelValue) {
     SelValue = llvm::GlobalAlias::create(
-        SelectorTy->getElementType(), 0, llvm::GlobalValue::PrivateLinkage,
+        SelectorTy, llvm::GlobalValue::PrivateLinkage,
         ".objc_selector_" + Sel.getAsString(), &TheModule);
     Types.push_back(TypedSelector(TypeEncoding, SelValue));
   }
@@ -1266,14 +1266,14 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
     if (IsClassMessage)  {
       if (!MetaClassPtrAlias) {
         MetaClassPtrAlias = llvm::GlobalAlias::create(
-            IdTy->getElementType(), 0, llvm::GlobalValue::InternalLinkage,
+            IdTy, llvm::GlobalValue::InternalLinkage,
             ".objc_metaclass_ref" + Class->getNameAsString(), &TheModule);
       }
       ReceiverClass = MetaClassPtrAlias;
     } else {
       if (!ClassPtrAlias) {
         ClassPtrAlias = llvm::GlobalAlias::create(
-            IdTy->getElementType(), 0, llvm::GlobalValue::InternalLinkage,
+            IdTy, llvm::GlobalValue::InternalLinkage,
             ".objc_class_ref" + Class->getNameAsString(), &TheModule);
       }
       ReceiverClass = ClassPtrAlias;

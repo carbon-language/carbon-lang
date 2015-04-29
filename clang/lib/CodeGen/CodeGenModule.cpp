@@ -2523,7 +2523,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
 
   // Create the new alias itself, but don't set a name yet.
   auto *GA = llvm::GlobalAlias::create(
-      cast<llvm::PointerType>(Aliasee->getType())->getElementType(), 0,
+      cast<llvm::PointerType>(Aliasee->getType()),
       llvm::Function::ExternalLinkage, "", Aliasee, &getModule());
 
   if (Entry) {
