@@ -2835,6 +2835,31 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
       return;
     } else if (isa<VariableArrayType>(VD->getType()))
       Expr.push_back(llvm::dwarf::DW_OP_deref);
+  } else if (const RecordType *RT = dyn_cast<RecordType>(VD->getType())) {
+    // If VD is an anonymous union then Storage represents value for
+    // all union fields.
+    const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
+    if (RD->isUnion() && RD->isAnonymousStructOrUnion()) {
+      for (const auto *Field : RD->fields()) {
+        llvm::MDType *FieldTy = getOrCreateType(Field->getType(), Unit);
+        StringRef FieldName = Field->getName();
+
+        // Ignore unnamed fields. Do not ignore unnamed records.
+        if (FieldName.empty() && !isa<RecordType>(Field->getType()))
+          continue;
+
+        // Use VarDecl's Tag, Scope and Line number.
+        auto *D = DBuilder.createLocalVariable(
+            Tag, Scope, FieldName, Unit, Line, FieldTy,
+            CGM.getLangOpts().Optimize, Flags, ArgNo);
+
+        // Insert an llvm.dbg.declare into the current block.
+        DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
+                               llvm::DebugLoc::get(Line, Column, Scope),
+                               Builder.GetInsertBlock());
+      }
+      return;
+    }
   }
 
   // Create the descriptor for the variable.
