@@ -443,11 +443,8 @@ static void
 ProfileBitsInit(FoldingSetNodeID &ID, ArrayRef<Init *> Range) {
   ID.AddInteger(Range.size());
 
-  for (ArrayRef<Init *>::iterator i = Range.begin(),
-         iend = Range.end();
-       i != iend;
-       ++i)
-    ID.AddPointer(*i);
+  for (Init *I : Range)
+    ID.AddPointer(I);
 }
 
 BitsInit *BitsInit::get(ArrayRef<Init *> Range) {
@@ -593,11 +590,8 @@ static void ProfileListInit(FoldingSetNodeID &ID,
   ID.AddInteger(Range.size());
   ID.AddPointer(EltTy);
 
-  for (ArrayRef<Init *>::iterator i = Range.begin(),
-         iend = Range.end();
-       i != iend;
-       ++i)
-    ID.AddPointer(*i);
+  for (Init *I : Range)
+    ID.AddPointer(I);
 }
 
 ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
@@ -1540,17 +1534,12 @@ DagInit::get(Init *V, const std::string &VN,
 DagInit *
 DagInit::get(Init *V, const std::string &VN,
              const std::vector<std::pair<Init*, std::string> > &args) {
-  typedef std::pair<Init*, std::string> PairType;
-
   std::vector<Init *> Args;
   std::vector<std::string> Names;
 
-  for (std::vector<PairType>::const_iterator i = args.begin(),
-         iend = args.end();
-       i != iend;
-       ++i) {
-    Args.push_back(i->first);
-    Names.push_back(i->second);
+  for (const auto &Arg : args) {
+    Args.push_back(Arg.first);
+    Names.push_back(Arg.second);
   }
 
   return DagInit::get(V, VN, Args, Names);
@@ -1942,11 +1931,8 @@ void MultiClass::dump() const {
   Rec.dump();
 
   errs() << "Defs:\n";
-  for (RecordVector::const_iterator r = DefPrototypes.begin(),
-         rend = DefPrototypes.end();
-       r != rend;
-       ++r) {
-    (*r)->dump();
+  for (const auto &Proto : DefPrototypes) {
+    Proto->dump();
   }
 }
 
