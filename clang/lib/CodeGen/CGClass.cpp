@@ -540,6 +540,23 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
   CGF.EmitBlock(AfterFor, true);
 }
 
+static bool isMemcpyEquivalentSpecialMember(const CXXMethodDecl *D) {
+  auto *CD = dyn_cast<CXXConstructorDecl>(D);
+  if (!(CD && CD->isCopyOrMoveConstructor()) &&
+      !D->isCopyAssignmentOperator() && !D->isMoveAssignmentOperator())
+    return false;
+
+  // We can emit a memcpy for a trivial copy or move constructor/assignment.
+  if (D->isTrivial() && !D->getParent()->mayInsertExtraPadding())
+    return true;
+
+  // We *must* emit a memcpy for a defaulted union copy or move op.
+  if (D->getParent()->isUnion() && D->isDefaulted())
+    return true;
+
+  return false;
+}
+
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
                                   CXXCtorInitializer *MemberInit,
@@ -581,7 +598,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     QualType BaseElementTy = CGF.getContext().getBaseElementType(Array);
     CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(MemberInit->getInit());
     if (BaseElementTy.isPODType(CGF.getContext()) ||
-        (CE && CE->getConstructor()->isTrivial())) {
+        (CE && isMemcpyEquivalentSpecialMember(CE->getConstructor()))) {
       unsigned SrcArgIndex =
           CGF.CGM.getCXXABI().getSrcArgforCopyCtor(Constructor, Args);
       llvm::Value *SrcPtr
@@ -1021,8 +1038,8 @@ namespace {
       QualType FieldType = Field->getType();
       CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(MemberInit->getInit());
 
-      // Bail out on non-POD, not-trivially-constructable members.
-      if (!(CE && CE->getConstructor()->isTrivial()) &&
+      // Bail out on non-memcpyable, not-trivially-copyable members.
+      if (!(CE && isMemcpyEquivalentSpecialMember(CE->getConstructor())) &&
           !(FieldType.isTriviallyCopyableType(CGF.getContext()) ||
             FieldType->isReferenceType()))
         return false;
@@ -1127,9 +1144,7 @@ namespace {
         return Field;
       } else if (CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(S)) {
         CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MCE->getCalleeDecl());
-        if (!(MD && (MD->isCopyAssignmentOperator() ||
-                       MD->isMoveAssignmentOperator()) &&
-              MD->isTrivial()))
+        if (!(MD && isMemcpyEquivalentSpecialMember(MD)))
           return nullptr;
         MemberExpr *IOA = dyn_cast<MemberExpr>(MCE->getImplicitObjectArgument());
         if (!IOA)
@@ -1732,18 +1747,23 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                              bool ForVirtualBase,
                                              bool Delegating, llvm::Value *This,
                                              const CXXConstructExpr *E) {
-  // If this is a trivial constructor, just emit what's needed.
-  if (D->isTrivial() && !D->getParent()->mayInsertExtraPadding()) {
-    if (E->getNumArgs() == 0) {
-      // Trivial default constructor, no codegen required.
-      assert(D->isDefaultConstructor() &&
-             "trivial 0-arg ctor not a default ctor");
-      return;
-    }
+  // C++11 [class.mfct.non-static]p2:
+  //   If a non-static member function of a class X is called for an object that
+  //   is not of type X, or of a type derived from X, the behavior is undefined.
+  // FIXME: Provide a source location here.
+  EmitTypeCheck(CodeGenFunction::TCK_ConstructorCall, SourceLocation(), This,
+                getContext().getRecordType(D->getParent()));
 
+  if (D->isTrivial() && D->isDefaultConstructor()) {
+    assert(E->getNumArgs() == 0 && "trivial default ctor with args");
+    return;
+  }
+
+  // If this is a trivial constructor, just emit what's needed. If this is a
+  // union copy constructor, we must emit a memcpy, because the AST does not
+  // model that copy.
+  if (isMemcpyEquivalentSpecialMember(D)) {
     assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
-    assert(D->isCopyOrMoveConstructor() &&
-           "trivial 1-arg ctor not a copy/move ctor");
 
     const Expr *Arg = E->getArg(0);
     QualType SrcTy = Arg->getType();
@@ -1752,13 +1772,6 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
     EmitAggregateCopyCtor(This, Src, DestTy, SrcTy);
     return;
   }
-
-  // C++11 [class.mfct.non-static]p2:
-  //   If a non-static member function of a class X is called for an object that
-  //   is not of type X, or of a type derived from X, the behavior is undefined.
-  // FIXME: Provide a source location here.
-  EmitTypeCheck(CodeGenFunction::TCK_ConstructorCall, SourceLocation(), This,
-                getContext().getRecordType(D->getParent()));
 
   CallArgList Args;
 
@@ -1784,8 +1797,7 @@ void
 CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This, llvm::Value *Src,
                                         const CXXConstructExpr *E) {
-  if (D->isTrivial() &&
-      !D->getParent()->mayInsertExtraPadding()) {
+  if (isMemcpyEquivalentSpecialMember(D)) {
     assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");

@@ -1415,7 +1415,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
       assert((Record->hasTrivialCopyConstructor() || 
               Record->hasTrivialCopyAssignment() ||
               Record->hasTrivialMoveConstructor() ||
-              Record->hasTrivialMoveAssignment()) &&
+              Record->hasTrivialMoveAssignment() ||
+              Record->isUnion()) &&
              "Trying to aggregate-copy a type without a trivial copy/move "
              "constructor or assignment operator");
       // Ignore empty classes in C++.

@@ -173,7 +173,7 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorMemberCallExpr(
     This = EmitLValue(Base).getAddress();
 
 
-  if (MD->isTrivial()) {
+  if (MD->isTrivial() || (MD->isDefaulted() && MD->getParent()->isUnion())) {
     if (isa<CXXDestructorDecl>(MD)) return RValue::get(nullptr);
     if (isa<CXXConstructorDecl>(MD) && 
         cast<CXXConstructorDecl>(MD)->isDefaultConstructor())
