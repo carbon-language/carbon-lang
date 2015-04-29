@@ -627,6 +627,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
   // If this is a macro to be expanded, do it.
   if (MacroDefinition MD = getMacroDefinition(&II)) {
     auto *MI = MD.getMacroInfo();
+    assert(MI && "macro definition with no macro info?");
     if (!DisableMacroExpansion) {
       if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
         // C99 6.10.3p10: If the preprocessing token immediately after the
