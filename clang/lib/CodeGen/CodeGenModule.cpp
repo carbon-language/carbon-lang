@@ -1799,23 +1799,6 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
         D->getType().isConstant(Context) &&
         isExternallyVisible(D->getLinkageAndVisibility().getLinkage()))
       GV->setSection(".cp.rodata");
-
-    // The ARM/AArch64 ABI expects structs with bitfields to respect the proper
-    // container alignment, hence we have to enfore this in the IR so as to
-    // work around clang combining bitfields into one large type.
-    if (getContext().getTargetInfo().enforceBitfieldContainerAlignment()) {
-      if (const auto *RT = D->getType()->getAs<RecordType>()) {
-        const RecordDecl *RD = RT->getDecl();
-
-        for (auto I = RD->field_begin(), End = RD->field_end(); I != End; ++I) {
-          if ((*I)->isBitField()) {
-            const ASTRecordLayout &Info = getContext().getASTRecordLayout(RD);
-            GV->setAlignment(Info.getAlignment().getQuantity());
-            break;
-          }
-        }
-      }
-    }
   }
 
   if (AddrSpace != Ty->getAddressSpace())

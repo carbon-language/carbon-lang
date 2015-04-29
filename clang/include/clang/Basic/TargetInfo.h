@@ -204,11 +204,6 @@ protected:
   /// not for language specific address spaces
   bool UseAddrSpaceMapMangling;
 
-  /// \brief Specify if globals of a struct type containing bitfields should
-  /// have their alignment explicitly specified so as to ensure that LLVM uses
-  /// the correct alignment
-  bool EnforceBitfieldContainerAlignment;
-
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -457,11 +452,6 @@ public:
   /// \brief Check whether this target support '\#pragma options align=mac68k'.
   bool hasAlignMac68kSupport() const {
     return HasAlignMac68kSupport;
-  }
-
-  /// \brief Check whether the alignment of bitfield struct should be enforced
-  bool enforceBitfieldContainerAlignment() const {
-    return EnforceBitfieldContainerAlignment;
   }
 
   /// \brief Return the user string for the specified integer type enum.
