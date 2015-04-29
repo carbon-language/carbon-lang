@@ -714,6 +714,29 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features,
                                  bool ForAS) {
+  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
+  if (!ForAS) {
+    // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
+    // yet (it uses the -mfloat-abi and -msoft-float options), and it is
+    // stripped out by the ARM target. We should probably pass this a new
+    // -target-option, which is handled by the -cc1/-cc1as invocation.
+    //
+    // FIXME2:  For consistency, it would be ideal if we set up the target
+    // machine state the same when using the frontend or the assembler. We don't
+    // currently do that for the assembler, we pass the options directly to the
+    // backend and never even instantiate the frontend TargetInfo. If we did,
+    // and used its handleTargetFeatures hook, then we could ensure the
+    // assembler and the frontend behave the same.
+
+    // Use software floating point operations?
+    if (FloatABI == "soft")
+      Features.push_back("+soft-float");
+
+    // Use software floating point argument passing?
+    if (FloatABI != "hard")
+      Features.push_back("+soft-float-abi");
+  }
+
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
     getARMFPUFeatures(D, A, Args, Features);
@@ -722,7 +745,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
-  StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
   if (FloatABI == "soft") {
     Features.push_back("-neon");
     // Also need to explicitly disable features which imply NEON.
