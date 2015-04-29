@@ -42,6 +42,12 @@ T tmain() {
     vec[i] = t_var;
     s_arr[i] = var;
   }
+#pragma omp parallel
+#pragma omp for reduction(&& : t_var)
+  for (int i = 0; i < 2; ++i) {
+    vec[i] = t_var;
+    s_arr[i] = var;
+  }
   return T();
 }
 

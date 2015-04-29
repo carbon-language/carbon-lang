@@ -1502,7 +1502,7 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
       atomics.getAtomicType(), SourceLocation()));
   // Try to write new value using cmpxchg operation
   auto Pair = atomics.EmitAtomicCompareExchange(OriginalRValue, NewRValue, AO);
-  PHI->addIncoming(Pair.first.getScalarVal(), ContBB);
+  PHI->addIncoming(Pair.first.getScalarVal(), Builder.GetInsertBlock());
   Builder.CreateCondBr(Pair.second, ExitBB, ContBB);
   EmitBlock(ExitBB, /*IsFinished=*/true);
 }
@@ -1592,7 +1592,7 @@ void CodeGenFunction::EmitAtomicUpdate(
   auto Pair = Atomics.EmitAtomicCompareExchange(OriginalRValue, NewRVal, AO);
   OldVal = IsScalar ? Pair.first.getScalarVal()
                     : Atomics.convertRValueToInt(Pair.first);
-  PHI->addIncoming(OldVal, ContBB);
+  PHI->addIncoming(OldVal, Builder.GetInsertBlock());
   Builder.CreateCondBr(Pair.second, ExitBB, ContBB);
   EmitBlock(ExitBB, /*IsFinished=*/true);
 }
