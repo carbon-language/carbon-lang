@@ -1,2 +1,0 @@
-# Add custom tests in this list
-omp_parallel_copyin

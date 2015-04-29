@@ -34,14 +34,19 @@
 # 3. Compiler selection and Flags
 #########################################################
 
-# GNU Compiler
-CC     = gcc
-CFLAGS = -fopenmp -lm -O3
-CFLAGS = -fopenmp -lm -O3
+# CLANG Compiler
+CC     = clang
+CFLAGS = -fopenmp -S -emit-llvm
 FC     = gfortran
 FFLAGS = -fopenmp -lm
 FFLAGS = -fopenmp -lm -O3
 
+# GNU Compiler
+# CC     = gcc
+# CFLAGS = -fopenmp -lm -O3
+# FC     = gfortran 
+# FFLAGS = -fopenmp -lm
+# FFLAGS = -fopenmp -lm -O3
 
 # Fujitsu Compilers:
 #CC = fcc
@@ -148,6 +153,10 @@ FFLAGS = -fopenmp -lm -O3
 #FC = uhf90
 #FFLAGS = -mp
 
+# Check path
+FILE=LLVM-IR/lit.tmp
+CHECK_PATH=`cat $(FILE)`
+
 #########################################################################
 
 help:
@@ -170,9 +179,11 @@ help:
 	@echo "  cleanlogs"
 	@echo "    Remove all *.log files from bin/ directory"
 	@echo "  clean"
-	@echo "    Remove all sources and executables from bin/ directory"
-	@echo "  cleanall"
-	@echo "    Remove the entire bin/ directory"
+	@echo "    Clean out and log files"
+	@echo "  distclean"
+	@echo "    Clean arch test directory with clean"
+	@echo "  veryclean"
+	@echo "    Remove the entire bin/c directory with distclean"
 
 omp_my_sleep:
 	mkdir -p bin/c
@@ -187,6 +198,7 @@ omp_testsuite.h: ompts-c.conf c/*
 
 ctest: omp_my_sleep omp_testsuite
 	./runtest.pl --lang=c testlist-c.txt
+	cd bin/; make -j
 
 ftest:
 	mkdir -p bin/fortran
@@ -206,17 +218,37 @@ print_compile_options:
 	@echo "compilation: $(FC) $(FFLAGS)"
 	@$(FC) --version
 
+
+
+path_to_arch=$(shell ../runtime/tools/check-openmp-test.pl)
+
 cleansrcs:
-	find bin/ -iname "*.[cf]" -exec rm {} \;
+	find bin/ -iname "*.[cf]" -exec rm -rf {} \;
 cleanbins:
-	find bin/ -perm /a+x -type f -exec rm {} \;
+	find bin/c -perm /a+x -type f -exec rm -rf {} \;
+	find ./bin/c -not -name "*.c" -a -not -name "*.ll" -type f -exec rm -rf {} \;
 cleanouts:
-	find bin/ -iname "*.out" -exec rm {} \;
+	find bin/ -iname "*.out" -exec rm -rf {} \;
 cleanlogs:
-	find bin/ -iname "*.log" -exec rm {} \;
+	find bin/ -iname "*.log" -exec rm -rf {} \;
+	rm -rf ./$(path_to_arch)
 
-clean: cleansrcs cleanbins
+clean: cleanouts cleanlogs cleanbins cleansrcs
 
-cleanall:
-	rm -rf bin/
+distclean: clean
+	rm -rf bin/c/*
+	rm -rf LLVM-IR/$(CHECK_PATH)
+
+veryclean: distclean
+	rm -rf bin/c/
+	rm -rf bin/fortran/
+
+
+cleanall: 
+	rm -rf ./bin/c/
+	rm -rf ./bin/fortran/
+	rm -rf ./LLVM-IR/$(path_to_arch)
+	rm -rf ./$(path_to_arch)
+	rm -rf ./*.log
+
 
