@@ -239,8 +239,8 @@ namespace ISD {
     FMAD,
 
     /// FCOPYSIGN(X, Y) - Return the value of X with the sign of Y.  NOTE: This
-    /// DAG node does not require that X and Y have the same type, just that the
-    /// are both floating point.  X and the result must have the same type.
+    /// DAG node does not require that X and Y have the same type, just that
+    /// they are both floating point.  X and the result must have the same type.
     /// FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
 
