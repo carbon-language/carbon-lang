@@ -30,8 +30,7 @@ class SelectionDAGBuilder;
 /// works in concert with information in FunctionLoweringInfo.
 class StatepointLoweringState {
 public:
-  StatepointLoweringState() : NextSlotToAllocate(0) {
-  }
+  StatepointLoweringState() : NextSlotToAllocate(0) {}
 
   /// Reset all state tracking for a newly encountered safepoint.  Also
   /// performs some consistency checking.

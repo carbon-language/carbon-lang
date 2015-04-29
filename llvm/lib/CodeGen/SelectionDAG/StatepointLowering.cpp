@@ -38,8 +38,7 @@ STATISTIC(NumOfStatepoints, "Number of statepoint nodes encountered");
 STATISTIC(StatepointMaxSlotsRequired,
           "Maximum number of stack slots required for a singe statepoint");
 
-void
-StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
+void StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
   // Consistency check
   assert(PendingGCRelocateCalls.empty() &&
          "Trying to visit statepoint before finished processing previous one");
@@ -262,8 +261,7 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
       unsigned reg = Builder.FuncInfo.CreateRegs(Tmp->getType());
       Builder.CopyValueToVirtualRegister(Tmp, reg);
       Builder.FuncInfo.ValueMap[CS.getInstruction()] = reg;
-    }
-    else {
+    } else {
       // The value of the statepoint itself will be the value of call itself.
       // We'll replace the actually call node shortly.  gc_result will grab
       // this value.
@@ -291,7 +289,7 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
   // ch = eh_label ch (only in case of invoke statepoint)
   //
   // DAG root will be either last eh_label or callseq_end.
-    
+
   SDNode *CallNode = nullptr;
 
   // We just emitted a call, so it should be last thing generated
@@ -325,14 +323,12 @@ static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
 ///   Relocs - the gc_relocate corresponding to each base/ptr pair
 /// Elements of this arrays should be in one-to-one correspondence with each
 /// other i.e Bases[i], Ptrs[i] are from the same gcrelocate call
-static void
-getIncomingStatepointGCValues(SmallVectorImpl<const Value *> &Bases,
-                              SmallVectorImpl<const Value *> &Ptrs,
-                              SmallVectorImpl<const Value *> &Relocs,
-                              ImmutableStatepoint StatepointSite,
-                              SelectionDAGBuilder &Builder) {
+static void getIncomingStatepointGCValues(
+    SmallVectorImpl<const Value *> &Bases, SmallVectorImpl<const Value *> &Ptrs,
+    SmallVectorImpl<const Value *> &Relocs, ImmutableStatepoint StatepointSite,
+    SelectionDAGBuilder &Builder) {
   for (GCRelocateOperands relocateOpers :
-         StatepointSite.getRelocates(StatepointSite)) {
+       StatepointSite.getRelocates(StatepointSite)) {
     Relocs.push_back(relocateOpers.getUnderlyingCallSite().getInstruction());
     Bases.push_back(relocateOpers.basePtr());
     Ptrs.push_back(relocateOpers.derivedPtr());
@@ -404,7 +400,7 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
     // This handles allocas as arguments to the statepoint (this is only
     // really meaningful for a deopt value.  For GC, we'd be trying to
     // relocate the address of the alloca itself?)
-    Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(), 
+    Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(),
                                                   Incoming.getValueType()));
   } else {
     // Otherwise, locate a spill slot and explicitly spill it so it
@@ -437,8 +433,8 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // be: deopt argument length, deopt arguments.., gc arguments...
 
   SmallVector<const Value *, 64> Bases, Ptrs, Relocations;
-  getIncomingStatepointGCValues(Bases, Ptrs, Relocations,
-                                StatepointSite, Builder);
+  getIncomingStatepointGCValues(Bases, Ptrs, Relocations, StatepointSite,
+                                Builder);
 
 #ifndef NDEBUG
   // Check that each of the gc pointer and bases we've gotten out of the
@@ -468,8 +464,6 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
     }
   }
 #endif
-
-
 
   // Before we actually start lowering (and allocating spill slots for values),
   // reserve any stack slots which we judge to be profitable to reuse for a
@@ -529,18 +523,17 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
     lowerIncomingStatepointValue(Incoming, Ops, Builder);
   }
 
-  // If there are any explicit spill slots passed to the statepoint, record 
+  // If there are any explicit spill slots passed to the statepoint, record
   // them, but otherwise do not do anything special.  These are user provided
-  // allocas and give control over placement to the consumer.  In this case, 
+  // allocas and give control over placement to the consumer.  In this case,
   // it is the contents of the slot which may get updated, not the pointer to
   // the alloca
   for (Value *V : StatepointSite.gc_args()) {
     SDValue Incoming = Builder.getValue(V);
     if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
       // This handles allocas as arguments to the statepoint
-      Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(), 
+      Ops.push_back(Builder.DAG.getTargetFrameIndex(FI->getIndex(),
                                                     Incoming.getValueType()));
-
     }
   }
 }
@@ -553,9 +546,8 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
   LowerStatepoint(ImmutableStatepoint(&CI));
 }
 
-void
-SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
-                                     MachineBasicBlock *LandingPad/*=nullptr*/) {
+void SelectionDAGBuilder::LowerStatepoint(
+    ImmutableStatepoint ISP, MachineBasicBlock *LandingPad /*=nullptr*/) {
   // The basic scheme here is that information about both the original call and
   // the safepoint is encoded in the CallInst.  We create a temporary call and
   // lower it, then reverse engineer the calling sequence.
@@ -656,8 +648,8 @@ SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP,
   // input.  This allows someone else to chain off us as needed.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
 
-  SDNode *StatepointMCNode = DAG.getMachineNode(TargetOpcode::STATEPOINT,
-                                                getCurSDLoc(), NodeTys, Ops);
+  SDNode *StatepointMCNode =
+      DAG.getMachineNode(TargetOpcode::STATEPOINT, getCurSDLoc(), NodeTys, Ops);
 
   // Replace original call
   DAG.ReplaceAllUsesWith(CallNode, StatepointMCNode); // This may update Root
@@ -678,8 +670,7 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
   // The result value of the gc_result is simply the result of the actual
   // call.  We've already emitted this, so just grab the value.
   Instruction *I = cast<Instruction>(CI.getArgOperand(0));
-  assert(isStatepoint(I) &&
-         "first argument must be a statepoint token");
+  assert(isStatepoint(I) && "first argument must be a statepoint token");
 
   if (isa<InvokeInst>(I)) {
     // For invokes we should have stored call result in a virtual register.
@@ -687,16 +678,15 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
     // register because statepoint and actuall call return types can be
     // different, and getValue() will use CopyFromReg of the wrong type,
     // which is always i32 in our case.
-    PointerType *CalleeType = cast<PointerType>(
-                                ImmutableStatepoint(I).actualCallee()->getType());
-    Type *RetTy = cast<FunctionType>(
-                                CalleeType->getElementType())->getReturnType();
+    PointerType *CalleeType =
+        cast<PointerType>(ImmutableStatepoint(I).actualCallee()->getType());
+    Type *RetTy =
+        cast<FunctionType>(CalleeType->getElementType())->getReturnType();
     SDValue CopyFromReg = getCopyFromRegs(I, RetTy);
 
     assert(CopyFromReg.getNode());
     setValue(&CI, CopyFromReg);
-  }
-  else {
+  } else {
     setValue(&CI, getValue(I));
   }
 }
@@ -728,9 +718,9 @@ void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {
     // it may allow more scheduling opprtunities
     SDValue Chain = getRoot();
 
-    Loc = DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain,
-                      SpillSlot, MachinePointerInfo::getFixedStack(FI), false,
-                      false, false, 0);
+    Loc = DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain, SpillSlot,
+                      MachinePointerInfo::getFixedStack(FI), false, false,
+                      false, 0);
 
     StatepointLowering.setRelocLocation(SD, Loc);
 
