@@ -54,7 +54,8 @@ func2:
 @ Check the .TEST1 section.  There should be two "bx lr" instructions.
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Name: .TEST1
+@ CHECK:     Index: 5
+@ CHECK-NEXT:     Name: .TEST1
 @ CHECK:     SectionData (
 @ CHECK:       0000: 1EFF2FE1 1EFF2FE1                    |../.../.|
 @ CHECK:     )
@@ -86,7 +87,7 @@ func2:
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
 @ CHECK:     Name: .ARM.exidx.TEST1
-@ CHECK:     Link: 4
+@ CHECK:     Link: 5
 @-------------------------------------------------------------------------------
 @ The first word should be the offset to .TEST1.
 @ The second word should be the offset to .ARM.extab.TEST1
@@ -123,7 +124,7 @@ func2:
 @ CHECK:     Binding: Global (0x1)
 @ CHECK:     Type: Function (0x2)
 @ CHECK:     Other: 0
-@ CHECK:     Section: .TEST1 (0x4)
+@ CHECK:     Section: .TEST1
 @ CHECK:   }
 @ CHECK:   Symbol {
 @ CHECK:     Name: func2
@@ -132,6 +133,6 @@ func2:
 @ CHECK:     Binding: Global (0x1)
 @ CHECK:     Type: Function (0x2)
 @ CHECK:     Other: 0
-@ CHECK:     Section: .TEST1 (0x4)
+@ CHECK:     Section: .TEST1
 @ CHECK:   }
 @ CHECK: ]

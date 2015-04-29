@@ -4,7 +4,7 @@
 // of the file.
 
 // CHECK:        Section {
-// CHECK:          Index: 1
+// CHECK:          Index: 2
 // CHECK-NEXT:     Name: .group
 // CHECK-NEXT:     Type: SHT_GROUP
 // CHECK-NEXT:     Flags [
@@ -12,22 +12,8 @@
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x40
 // CHECK-NEXT:     Size: 12
-// CHECK-NEXT:     Link: 13
+// CHECK-NEXT:     Link:
 // CHECK-NEXT:     Info: 1
-// CHECK-NEXT:     AddressAlignment: 4
-// CHECK-NEXT:     EntrySize: 4
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Section {
-// CHECK-NEXT:     Index: 2
-// CHECK-NEXT:     Name: .group
-// CHECK-NEXT:     Type: SHT_GROUP
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x4C
-// CHECK-NEXT:     Size: 8
-// CHECK-NEXT:     Link: 13
-// CHECK-NEXT:     Info: 2
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
 // CHECK-NEXT:   }
@@ -38,9 +24,23 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
+// CHECK-NEXT:     Offset: 0x4C
+// CHECK-NEXT:     Size: 8
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info: 2
+// CHECK-NEXT:     AddressAlignment: 4
+// CHECK-NEXT:     EntrySize: 4
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Section {
+// CHECK-NEXT:     Index: 4
+// CHECK-NEXT:     Name: .group
+// CHECK-NEXT:     Type: SHT_GROUP
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:     ]
+// CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset: 0x54
 // CHECK-NEXT:     Size: 12
-// CHECK-NEXT:     Link: 13
+// CHECK-NEXT:     Link:
 // CHECK-NEXT:     Info: 10
 // CHECK-NEXT:     AddressAlignment: 4
 // CHECK-NEXT:     EntrySize: 4
@@ -55,7 +55,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .foo (0x7)
+// CHECK-NEXT:     Section: .foo
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: g2
@@ -64,7 +64,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .group (0x2)
+// CHECK-NEXT:     Section: .group (0x3)
 // CHECK-NEXT:   }
 
 // CHECK:        Symbol {

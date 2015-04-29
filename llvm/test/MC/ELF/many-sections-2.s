@@ -18,7 +18,7 @@
 // SYMBOLS-NEXT:    Binding: Local (0x0)
 // SYMBOLS-NEXT:    Type: None (0x0)
 // SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:    Section: dm (0xFF00)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:  Symbol {
 // SYMBOLS-NEXT:    Name: b
@@ -27,18 +27,18 @@
 // SYMBOLS-NEXT:    Binding: Local (0x0)
 // SYMBOLS-NEXT:    Type: None (0x0)
 // SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:    Section: dm (0xFF00)
 // SYMBOLS-NEXT:  }
 
 
 // Test that this file has one section too many.
-// SYMBOLS:         Name: last
+// SYMBOLS:         Name: dm
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)
 // SYMBOLS-NEXT:    Type: Section (0x3)
 // SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:    Section: dm (0xFF00)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:]
 
@@ -128,6 +128,5 @@ gen_sections16 k
 gen_sections8 l
 gen_sections4 m
 
-.section last
 a:
 b = a + 1

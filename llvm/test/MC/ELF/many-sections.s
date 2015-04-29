@@ -9,13 +9,13 @@
 
 // Check the last referenced section.
 
-// SYMBOLS:         Name: dm (0)
+// SYMBOLS:         Name: zed
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)
 // SYMBOLS-NEXT:    Type: Section (0x3)
 // SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: dm (0xFEFF)
+// SYMBOLS-NEXT:    Section: zed (0xFEFF)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:]
 
@@ -103,4 +103,6 @@ gen_sections64 i
 gen_sections32 j
 gen_sections16 k
 gen_sections8 l
-gen_sections4 m
+        .section foo
+        .section bar
+        .section zed

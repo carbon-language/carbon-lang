@@ -29,8 +29,8 @@ func1:
 @-------------------------------------------------------------------------------
 @ Check the index of .text section.  This will be used in .ARM.exidx.
 @-------------------------------------------------------------------------------
-@ CHECK:     Index: 1
-@ CHECK:     Name: .text
+@ CHECK:     Index: 2
+@ CHECK-NEXT:     Name: .text
 @ CHECK:     Type: SHT_PROGBITS (0x1)
 @ CHECK:     Flags [ (0x6)
 @ CHECK:       SHF_ALLOC (0x2)
@@ -58,7 +58,7 @@ func1:
 @ Check the linked section of the EXIDX section.  This should be the index
 @ of the .text section.
 @-------------------------------------------------------------------------------
-@ CHECK:     Link: 1
+@ CHECK:     Link: 2
 
 @-------------------------------------------------------------------------------
 @ The first word should be the offset to .text.  The second word should be

@@ -26,7 +26,7 @@ g:
 // OBJ:   Binding: Global
 // OBJ:   Type:    None
 // OBJ:   Other:   0
-// OBJ:   Section: .text (0x4)
+// OBJ:   Section: .text (0x5)
 // OBJ: }
 // OBJ: Symbol {
 // OBJ:   Name:    g
@@ -35,5 +35,5 @@ g:
 // OBJ:   Binding: Global
 // OBJ:   Type:    None
 // OBJ:   Other:   0
-// OBJ:   Section: .text (0x5)
+// OBJ:   Section: .text (0x6)
 // OBJ: }

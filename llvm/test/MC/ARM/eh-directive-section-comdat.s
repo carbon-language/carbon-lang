@@ -52,7 +52,7 @@ func1:
 @ The second, third, and fourth word should correspond to the section index
 @ of .TEST1, .ARM.extab.TEST1, and .ARM.exidx.TEST1.
 @-------------------------------------------------------------------------------
-@ CHECK:       0000: 01000000 05000000 06000000 07000000  |................|
+@ CHECK:       0000: 01000000 06000000 07000000 08000000  |................|
 @ CHECK:     )
 @ CHECK:   }
 
@@ -61,8 +61,8 @@ func1:
 @ Check the .TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 5
-@ CHECK:     Name: .TEST1
+@ CHECK:     Index: 6
+@ CHECK-NEXT:     Name: .TEST1
 @ CHECK:     Type: SHT_PROGBITS (0x1)
 @-------------------------------------------------------------------------------
 @ The flags should contain SHF_GROUP.
@@ -79,8 +79,8 @@ func1:
 @ Check the .ARM.extab.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 6
-@ CHECK:     Name: .ARM.extab.TEST1
+@ CHECK:     Index: 7
+@ CHECK-NEXT:     Name: .ARM.extab.TEST1
 @ CHECK:     Type: SHT_PROGBITS (0x1)
 @-------------------------------------------------------------------------------
 @ The flags should contain SHF_GROUP.
@@ -96,8 +96,8 @@ func1:
 @ Check the .ARM.exidx.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 7
-@ CHECK:     Name: .ARM.exidx.TEST1
+@ CHECK:     Index: 8
+@ CHECK-NEXT:     Name: .ARM.exidx.TEST1
 @ CHECK:     Type: SHT_ARM_EXIDX (0x70000001)
 @-------------------------------------------------------------------------------
 @ The flags should contain SHF_GROUP.
@@ -107,7 +107,7 @@ func1:
 @ CHECK:       SHF_GROUP (0x200)
 @ CHECK:       SHF_LINK_ORDER (0x80)
 @ CHECK:     ]
-@ CHECK:     Link: 5
+@ CHECK:     Link: 6
 @ CHECK:   }
 @ CHECK: ]
 
@@ -121,6 +121,6 @@ func1:
 @ CHECK:     Name: func1
 @ CHECK:     Binding: Weak (0x2)
 @ CHECK:     Type: Function (0x2)
-@ CHECK:     Section: .TEST1 (0x5)
+@ CHECK:     Section: .TEST1
 @ CHECK:   }
 @ CHECK: ]

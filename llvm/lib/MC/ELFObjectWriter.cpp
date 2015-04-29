@@ -247,6 +247,9 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void WriteRelocations(MCAssembler &Asm, const MCAsmLayout &Layout);
 
+    void
+    createSectionHeaderStringTable(MCAssembler &Asm,
+                                   std::vector<const MCSectionELF *> &Sections);
     void CreateMetadataSections(MCAssembler &Asm, const MCAsmLayout &Layout,
                                 std::vector<const MCSectionELF *> &Sections);
 
@@ -452,10 +455,8 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
     Write16(NumberOfSections);
 
   // e_shstrndx  = Section # of '.shstrtab'
-  if (ShstrtabIndex >= ELF::SHN_LORESERVE)
-    Write16(ELF::SHN_XINDEX);
-  else
-    Write16(ShstrtabIndex);
+  assert(ShstrtabIndex < ELF::SHN_LORESERVE);
+  Write16(ShstrtabIndex);
 }
 
 uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
@@ -1372,6 +1373,21 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
   }
 }
 
+void ELFObjectWriter::createSectionHeaderStringTable(
+    MCAssembler &Asm, std::vector<const MCSectionELF *> &Sections) {
+  const MCSectionELF *ShstrtabSection = Sections[ShstrtabIndex - 1];
+
+  Asm.getOrCreateSectionData(*ShstrtabSection);
+
+  for (MCSectionData &SD : Asm) {
+    const MCSectionELF &Section =
+        static_cast<const MCSectionELF &>(SD.getSection());
+    ShStrTabBuilder.add(Section.getSectionName());
+  }
+  ShStrTabBuilder.finalize(StringTableBuilder::ELF);
+  OS << ShStrTabBuilder.data();
+}
+
 void ELFObjectWriter::CreateMetadataSections(
     MCAssembler &Asm, const MCAsmLayout &Layout,
     std::vector<const MCSectionELF *> &Sections) {
@@ -1379,14 +1395,6 @@ void ELFObjectWriter::CreateMetadataSections(
   MCDataFragment *F;
 
   unsigned EntrySize = is64Bit() ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
-
-  // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
-  const MCSectionELF *ShstrtabSection =
-      Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
-  MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
-  ShstrtabSD.setAlignment(1);
-  ShstrtabIndex = Sections.size() + 1;
-  Sections.push_back(ShstrtabSection);
 
   const MCSectionELF *SymtabSection =
     Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
@@ -1410,18 +1418,6 @@ void ELFObjectWriter::CreateMetadataSections(
   F = new MCDataFragment(&StrtabSD);
   F->getContents().append(StrTabBuilder.data().begin(),
                           StrTabBuilder.data().end());
-
-  F = new MCDataFragment(&ShstrtabSD);
-
-  // Section header string table.
-  for (auto it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(it->getSection());
-    ShStrTabBuilder.add(Section.getSectionName());
-  }
-  ShStrTabBuilder.finalize(StringTableBuilder::ELF);
-  F->getContents().append(ShStrTabBuilder.data().begin(),
-                          ShStrTabBuilder.data().end());
 }
 
 void ELFObjectWriter::createIndexedSections(
@@ -1429,6 +1425,12 @@ void ELFObjectWriter::createIndexedSections(
     std::vector<const MCSectionELF *> &Sections,
     SectionIndexMapTy &SectionIndexMap) {
   MCContext &Ctx = Asm.getContext();
+
+  const MCSectionELF *ShstrtabSection =
+      Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
+  Sections.push_back(ShstrtabSection);
+  ShstrtabIndex = Sections.size();
+  assert(ShstrtabIndex == 1);
 
   // Build the groups
   for (const MCSectionData &SD : Asm) {
@@ -1537,9 +1539,7 @@ void ELFObjectWriter::writeSectionHeader(
   // Null section first.
   uint64_t FirstSectionSize =
       (NumSections + 1) >= ELF::SHN_LORESERVE ? NumSections + 1 : 0;
-  uint32_t FirstSectionLink =
-    ShstrtabIndex >= ELF::SHN_LORESERVE ? ShstrtabIndex : 0;
-  WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, FirstSectionLink, 0, 0, 0);
+  WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, 0, 0, 0, 0);
 
   for (unsigned i = 0; i < NumSections; ++i) {
     const MCSectionELF &Section = *Sections[i];
@@ -1576,15 +1576,16 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   CreateMetadataSections(Asm, Layout, Sections);
 
-  unsigned NumSections = Asm.size();
+  unsigned NumSections = Asm.size() + 1;
   SectionOffsetsTy SectionOffsets;
 
   // Write out the ELF header ...
   WriteHeader(Asm, NumSections + 1);
 
   // ... then the sections ...
-  for (const MCSectionELF *Section : Sections) {
-    const MCSectionData &SD = Asm.getOrCreateSectionData(*Section);
+  SectionOffsets.push_back(std::make_pair(0, 0));
+  for (auto I = ++Sections.begin(), E = Sections.end(); I != E; ++I) {
+    const MCSectionData &SD = Asm.getOrCreateSectionData(**I);
     uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
     WriteZeros(Padding);
 
@@ -1593,6 +1594,13 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     writeDataSectionData(Asm, Layout, SD);
     uint64_t SecEnd = OS.tell();
     SectionOffsets.push_back(std::make_pair(SecStart, SecEnd));
+  }
+
+  {
+    uint64_t SecStart = OS.tell();
+    createSectionHeaderStringTable(Asm, Sections);
+    uint64_t SecEnd = OS.tell();
+    SectionOffsets[0] = std::make_pair(SecStart, SecEnd);
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
