@@ -3853,12 +3853,13 @@ GDBRemoteCommunicationClient::ReadExtFeature (const lldb_private::ConstString ob
             // last chunk
         case ( 'l' ):
             active = false;
-            // fall through intensional
+            // fall through intentional
 
             // more chunks
         case ( 'm' ) :
             if ( str.length() > 1 )
                 output << &str[1];
+            offset += size;
             break;
 
             // unknown chunk
