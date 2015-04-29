@@ -20,7 +20,6 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Basic/TargetBuiltins.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -1272,6 +1271,14 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
 }
 
 void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
+  // FIXME: Implement SEH on other architectures.
+  const llvm::Triple &T = CGM.getTarget().getTriple();
+  if (T.getArch() != llvm::Triple::x86_64 ||
+      !T.isKnownWindowsMSVCEnvironment()) {
+    ErrorUnsupported(&S, "__try statement");
+    return;
+  }
+
   EnterSEHTryStmt(S);
   {
     JumpDest TryExit = getJumpDestInCurrentScope("__try.__leave");
@@ -1296,39 +1303,25 @@ struct PerformSEHFinally : EHScopeStack::Cleanup {
 
   void Emit(CodeGenFunction &CGF, Flags F) override {
     ASTContext &Context = CGF.getContext();
-    CodeGenModule &CGM = CGF.CGM;
+    QualType ArgTys[2] = {Context.UnsignedCharTy, Context.VoidPtrTy};
+    FunctionProtoType::ExtProtoInfo EPI;
+    const auto *FTP = cast<FunctionType>(
+        Context.getFunctionType(Context.VoidTy, ArgTys, EPI));
 
-    // In 64-bit, we call the child function with arguments. In 32-bit, we store
-    // zero in the parent frame and use framerecover to check the value.
-    const CGFunctionInfo *FnInfo;
     CallArgList Args;
-    if (CGF.getTarget().getTriple().getArch() == llvm::Triple::x86_64) {
-      // Compute the two argument values.
-      QualType ArgTys[2] = {Context.UnsignedCharTy, Context.VoidPtrTy};
-      llvm::Value *FrameAddr = CGM.getIntrinsic(llvm::Intrinsic::frameaddress);
-      llvm::Value *FP =
-          CGF.Builder.CreateCall(FrameAddr, CGF.Builder.getInt32(0));
-      llvm::Value *IsForEH =
-          llvm::ConstantInt::get(CGF.ConvertType(ArgTys[0]), F.isForEHCleanup());
-      Args.add(RValue::get(IsForEH), ArgTys[0]);
-      Args.add(RValue::get(FP), ArgTys[1]);
+    llvm::Value *IsForEH =
+        llvm::ConstantInt::get(CGF.ConvertType(ArgTys[0]), F.isForEHCleanup());
+    Args.add(RValue::get(IsForEH), ArgTys[0]);
 
-      // Arrange a two-arg function info and type.
-      FunctionProtoType::ExtProtoInfo EPI;
-      const auto *FPT = cast<FunctionProtoType>(
-          Context.getFunctionType(Context.VoidTy, ArgTys, EPI));
-      FnInfo = &CGM.getTypes().arrangeFreeFunctionCall(Args, FPT,
-                                                       /*chainCall=*/false);
-    } else {
-      // Emit the zero store if this is normal control flow. There are no
-      // explicit arguments.
-      if (F.isForNormalCleanup() && CGF.ChildAbnormalTerminationSlot)
-        CGF.Builder.CreateStore(CGF.Builder.getInt32(0),
-                                CGF.ChildAbnormalTerminationSlot);
-      FnInfo = &CGM.getTypes().arrangeNullaryFunction();
-    }
+    CodeGenModule &CGM = CGF.CGM;
+    llvm::Value *Zero = llvm::ConstantInt::get(CGM.Int32Ty, 0);
+    llvm::Value *FrameAddr = CGM.getIntrinsic(llvm::Intrinsic::frameaddress);
+    llvm::Value *FP = CGF.Builder.CreateCall(FrameAddr, Zero);
+    Args.add(RValue::get(FP), ArgTys[1]);
 
-    CGF.EmitCall(*FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
+    const CGFunctionInfo &FnInfo =
+        CGM.getTypes().arrangeFreeFunctionCall(Args, FTP, /*chainCall=*/false);
+    CGF.EmitCall(FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
   }
 };
 }
@@ -1339,7 +1332,6 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   CodeGenFunction &ParentCGF;
   const VarDecl *ParentThis;
   SmallVector<const VarDecl *, 4> Captures;
-  llvm::Value *AbnormalTermination = nullptr;
   CaptureFinder(CodeGenFunction &ParentCGF, const VarDecl *ParentThis)
       : ParentCGF(ParentCGF), ParentThis(ParentThis) {}
 
@@ -1366,93 +1358,25 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   void VisitCXXThisExpr(const CXXThisExpr *E) {
     Captures.push_back(ParentThis);
   }
-
-  void VisitCallExpr(const CallExpr *E) {
-    // We only need to add parent frame allocations for these builtins in x86.
-    if (ParentCGF.getTarget().getTriple().getArch() != llvm::Triple::x86)
-      return;
-
-    unsigned ID = E->getBuiltinCallee();
-    switch (ID) {
-    case Builtin::BI__abnormal_termination:
-    case Builtin::BI_abnormal_termination:
-      // This is the simple case where we are the outermost finally. All we
-      // have to do here is make sure we escape this and recover it in the
-      // outlined handler.
-      if (!AbnormalTermination)
-        AbnormalTermination = ParentCGF.CreateMemTemp(
-            ParentCGF.getContext().IntTy, "abnormal_termination");
-      break;
-    }
-  }
 };
 }
 
-llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
-    CodeGenFunction &ParentCGF, llvm::Value *ParentVar, llvm::Value *ParentFP) {
-  llvm::CallInst *RecoverCall = nullptr;
-  CGBuilderTy Builder(AllocaInsertPt);
-  if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar)) {
-    // Mark the variable escaped if nobody else referenced it and compute the
-    // frameescape index.
-    auto InsertPair = ParentCGF.EscapedLocals.insert(
-        std::make_pair(ParentAlloca, ParentCGF.EscapedLocals.size()));
-    int FrameEscapeIdx = InsertPair.first->second;
-    // call i8* @llvm.framerecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
-    llvm::Function *FrameRecoverFn = llvm::Intrinsic::getDeclaration(
-        &CGM.getModule(), llvm::Intrinsic::framerecover);
-    llvm::Constant *ParentI8Fn =
-        llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
-    RecoverCall =
-        Builder.CreateCall3(FrameRecoverFn, ParentI8Fn, ParentFP,
-                            llvm::ConstantInt::get(Int32Ty, FrameEscapeIdx));
-
-  } else {
-    // If the parent didn't have an alloca, we're doing some nested outlining.
-    // Just clone the existing framerecover call, but tweak the FP argument to
-    // use our FP value. All other arguments are constants.
-    auto *ParentRecover =
-        cast<llvm::IntrinsicInst>(ParentVar->stripPointerCasts());
-    assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::framerecover &&
-           "expected alloca or framerecover in parent LocalDeclMap");
-    RecoverCall = cast<llvm::CallInst>(ParentRecover->clone());
-    RecoverCall->setArgOperand(1, ParentFP);
-    RecoverCall->insertBefore(AllocaInsertPt);
-  }
-
-  // Bitcast the variable, rename it, and insert it in the local decl map.
-  llvm::Value *ChildVar =
-      Builder.CreateBitCast(RecoverCall, ParentVar->getType());
-  ChildVar->setName(ParentVar->getName());
-  return ChildVar;
-}
-
 void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
-                                         const Stmt *OutlinedStmt) {
+                                         const Stmt *OutlinedStmt,
+                                         llvm::Value *ParentFP) {
   // Find all captures in the Stmt.
   CaptureFinder Finder(ParentCGF, ParentCGF.CXXABIThisDecl);
   Finder.Visit(OutlinedStmt);
 
   // Typically there are no captures and we can exit early.
-  if (Finder.Captures.empty() && !Finder.AbnormalTermination)
+  if (Finder.Captures.empty())
     return;
 
-  // The parent FP is passed in as EBP on x86 and the second argument on x64.
-  llvm::Value *ParentFP;
-  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::x86_64) {
-    auto AI = CurFn->arg_begin();
-    ++AI;
-    ParentFP = AI;
-  } else {
-    CGBuilderTy Builder(AllocaInsertPt);
-    ParentFP = Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::frameaddress), Builder.getInt32(1));
-
-    // Inlining will break llvm.frameaddress(1), so disable it.
-    // FIXME: We could teach the inliner about the special meaning of
-    // frameaddress, framerecover, and frameescape to remove this limitation.
-    CurFn->addFnAttr(llvm::Attribute::NoInline);
-  }
+  // Prepare the first two arguments to llvm.framerecover.
+  llvm::Function *FrameRecoverFn = llvm::Intrinsic::getDeclaration(
+      &CGM.getModule(), llvm::Intrinsic::framerecover);
+  llvm::Constant *ParentI8Fn =
+      llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
 
   // Create llvm.framerecover calls for all captures.
   for (const VarDecl *VD : Finder.Captures) {
@@ -1475,16 +1399,39 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
       continue;
     llvm::Value *ParentVar = I->second;
 
-    LocalDeclMap[VD] =
-        recoverAddrOfEscapedLocal(ParentCGF, ParentVar, ParentFP);
-  }
+    llvm::CallInst *RecoverCall = nullptr;
+    CGBuilderTy Builder(AllocaInsertPt);
+    if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar)) {
+      // Mark the variable escaped if nobody else referenced it and compute the
+      // frameescape index.
+      auto InsertPair =
+          ParentCGF.EscapedLocals.insert(std::make_pair(ParentAlloca, -1));
+      if (InsertPair.second)
+        InsertPair.first->second = ParentCGF.EscapedLocals.size() - 1;
+      int FrameEscapeIdx = InsertPair.first->second;
+      // call i8* @llvm.framerecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
+      RecoverCall =
+          Builder.CreateCall3(FrameRecoverFn, ParentI8Fn, ParentFP,
+                              llvm::ConstantInt::get(Int32Ty, FrameEscapeIdx));
 
-  // AbnormalTermination is just another capture, but it has no Decl.
-  if (Finder.AbnormalTermination) {
-    AbnormalTerminationSlot = recoverAddrOfEscapedLocal(
-        ParentCGF, Finder.AbnormalTermination, ParentFP);
-    // Save the slot on the parent so it can store 1 and 0 to it.
-    ParentCGF.ChildAbnormalTerminationSlot = Finder.AbnormalTermination;
+    } else {
+      // If the parent didn't have an alloca, we're doing some nested outlining.
+      // Just clone the existing framerecover call, but tweak the FP argument to
+      // use our FP value. All other arguments are constants.
+      auto *ParentRecover =
+          cast<llvm::IntrinsicInst>(ParentVar->stripPointerCasts());
+      assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::framerecover &&
+             "expected alloca or framerecover in parent LocalDeclMap");
+      RecoverCall = cast<llvm::CallInst>(ParentRecover->clone());
+      RecoverCall->setArgOperand(1, ParentFP);
+      RecoverCall->insertBefore(AllocaInsertPt);
+    }
+
+    // Bitcast the variable, rename it, and insert it in the local decl map.
+    llvm::Value *ChildVar =
+        Builder.CreateBitCast(RecoverCall, ParentVar->getType());
+    ChildVar->setName(ParentVar->getName());
+    LocalDeclMap[VD] = ChildVar;
   }
 }
 
@@ -1519,7 +1466,10 @@ void CodeGenFunction::startOutlinedSEHHelper(CodeGenFunction &ParentCGF,
                 OutlinedStmt->getLocStart(), OutlinedStmt->getLocStart());
 
   CGM.SetLLVMFunctionAttributes(nullptr, FnInfo, CurFn);
-  EmitCapturedLocals(ParentCGF, OutlinedStmt);
+
+  auto AI = Fn->arg_begin();
+  ++AI;
+  EmitCapturedLocals(ParentCGF, OutlinedStmt, &*AI);
 }
 
 /// Create a stub filter function that will ultimately hold the code of the
@@ -1531,16 +1481,14 @@ CodeGenFunction::GenerateSEHFilterFunction(CodeGenFunction &ParentCGF,
   const Expr *FilterExpr = Except.getFilterExpr();
   SourceLocation StartLoc = FilterExpr->getLocStart();
 
+  SEHPointersDecl = ImplicitParamDecl::Create(
+      getContext(), nullptr, StartLoc,
+      &getContext().Idents.get("exception_pointers"), getContext().VoidPtrTy);
   FunctionArgList Args;
-  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::x86_64) {
-    SEHPointersDecl = ImplicitParamDecl::Create(
-        getContext(), nullptr, StartLoc,
-        &getContext().Idents.get("exception_pointers"), getContext().VoidPtrTy);
-    Args.push_back(SEHPointersDecl);
-    Args.push_back(ImplicitParamDecl::Create(
-        getContext(), nullptr, StartLoc,
-        &getContext().Idents.get("frame_pointer"), getContext().VoidPtrTy));
-  }
+  Args.push_back(SEHPointersDecl);
+  Args.push_back(ImplicitParamDecl::Create(
+      getContext(), nullptr, StartLoc,
+      &getContext().Idents.get("frame_pointer"), getContext().VoidPtrTy));
 
   // Get the mangled function name.
   SmallString<128> Name;
@@ -1581,15 +1529,13 @@ CodeGenFunction::GenerateSEHFinallyFunction(CodeGenFunction &ParentCGF,
   SourceLocation StartLoc = FinallyBlock->getLocStart();
 
   FunctionArgList Args;
-  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::x86_64) {
-    Args.push_back(ImplicitParamDecl::Create(
-        getContext(), nullptr, StartLoc,
-        &getContext().Idents.get("abnormal_termination"),
-        getContext().UnsignedCharTy));
-    Args.push_back(ImplicitParamDecl::Create(
-        getContext(), nullptr, StartLoc,
-        &getContext().Idents.get("frame_pointer"), getContext().VoidPtrTy));
-  }
+  Args.push_back(ImplicitParamDecl::Create(
+      getContext(), nullptr, StartLoc,
+      &getContext().Idents.get("abnormal_termination"),
+      getContext().UnsignedCharTy));
+  Args.push_back(ImplicitParamDecl::Create(
+      getContext(), nullptr, StartLoc,
+      &getContext().Idents.get("frame_pointer"), getContext().VoidPtrTy));
 
   // Get the mangled function name.
   SmallString<128> Name;
@@ -1621,7 +1567,7 @@ void CodeGenFunction::EmitSEHExceptionCodeSave() {
   // };
   // void *exn.slot =
   //     (void *)(uintptr_t)exception_pointers->ExceptionRecord->ExceptionCode;
-  llvm::Value *Ptrs = EmitSEHExceptionInfo();
+  llvm::Value *Ptrs = Builder.CreateLoad(GetAddrOfLocalVar(SEHPointersDecl));
   llvm::Type *RecordTy = CGM.Int32Ty->getPointerTo();
   llvm::Type *PtrsTy = llvm::StructType::get(RecordTy, CGM.VoidPtrTy, nullptr);
   Ptrs = Builder.CreateBitCast(Ptrs, PtrsTy->getPointerTo());
@@ -1636,9 +1582,6 @@ void CodeGenFunction::EmitSEHExceptionCodeSave() {
 }
 
 llvm::Value *CodeGenFunction::EmitSEHExceptionInfo() {
-  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86_64)
-    return Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::eh_exceptioninfo));
   // Sema should diagnose calling this builtin outside of a filter context, but
   // don't crash if we screw up.
   if (!SEHPointersDecl)
@@ -1656,8 +1599,6 @@ llvm::Value *CodeGenFunction::EmitSEHExceptionCode() {
 }
 
 llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {
-  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86_64)
-    return Builder.CreateLoad(AbnormalTerminationSlot);
   // Abnormal termination is just the first parameter to the outlined finally
   // helper.
   auto AI = CurFn->arg_begin();
@@ -1667,15 +1608,9 @@ llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {
 void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
   CodeGenFunction HelperCGF(CGM, /*suppressNewContext=*/true);
   if (const SEHFinallyStmt *Finally = S.getFinallyHandler()) {
-    // Outline the finally block.
+    // Push a cleanup for __finally blocks.
     llvm::Function *FinallyFunc =
         HelperCGF.GenerateSEHFinallyFunction(*this, *Finally);
-
-    // Store 1 to indicate abnormal termination if an exception is thrown.
-    if (ChildAbnormalTerminationSlot)
-      Builder.CreateStore(Builder.getInt32(1), ChildAbnormalTerminationSlot);
-
-    // Push a cleanup for __finally blocks.
     EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, FinallyFunc);
     return;
   }
@@ -1707,7 +1642,6 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
   // Just pop the cleanup if it's a __finally block.
   if (S.getFinallyHandler()) {
     PopCleanupBlock();
-    ChildAbnormalTerminationSlot = nullptr;
     return;
   }
 
