@@ -2030,7 +2030,7 @@ public:
   }
 };
 
-/// This is a base class is used to represent
+/// This is a base class used to represent
 /// MGATHER and MSCATTER nodes
 ///
 class MaskedGatherScatterSDNode : public MemSDNode {

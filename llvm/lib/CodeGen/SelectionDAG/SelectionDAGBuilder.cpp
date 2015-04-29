@@ -3123,7 +3123,7 @@ void SelectionDAGBuilder::visitMaskedScatter(const CallInst &I) {
   Value *BasePtr = Ptr;
   bool UniformBase = getUniformBase(BasePtr, Base, Index, this);
 
-  Value *MemOpBasePtr = UniformBase ? BasePtr : NULL;
+  Value *MemOpBasePtr = UniformBase ? BasePtr : nullptr;
   MachineMemOperand *MMO = DAG.getMachineFunction().
     getMachineMemOperand(MachinePointerInfo(MemOpBasePtr),
                          MachineMemOperand::MOStore,  VT.getStoreSize(),
@@ -3215,15 +3215,14 @@ void SelectionDAGBuilder::visitMaskedGather(const CallInst &I) {
 
   MachineMemOperand *MMO =
     DAG.getMachineFunction().
-    getMachineMemOperand(MachinePointerInfo(UniformBase ? BasePtr : NULL),
-                          MachineMemOperand::MOLoad,  VT.getStoreSize(),
-                          Alignment, AAInfo, Ranges);
+    getMachineMemOperand(MachinePointerInfo(UniformBase ? BasePtr : nullptr),
+                         MachineMemOperand::MOLoad,  VT.getStoreSize(),
+                         Alignment, AAInfo, Ranges);
 
   if (!UniformBase) {
     Base = DAG.getTargetConstant(0, sdl, TLI.getPointerTy());
     Index = getValue(Ptr);
   }
-
   SDValue Ops[] = { Root, Src0, Mask, Base, Index };
   SDValue Gather = DAG.getMaskedGather(DAG.getVTList(VT, MVT::Other), VT, sdl,
                                        Ops, MMO);
