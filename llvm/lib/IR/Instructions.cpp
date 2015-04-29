@@ -864,8 +864,9 @@ AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, const Twine &Name,
 
 AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, unsigned Align,
                        const Twine &Name, Instruction *InsertBefore)
-  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
-                     getAISize(Ty->getContext(), ArraySize), InsertBefore) {
+    : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                       getAISize(Ty->getContext(), ArraySize), InsertBefore),
+      AllocatedType(Ty) {
   setAlignment(Align);
   assert(!Ty->isVoidTy() && "Cannot allocate void!");
   setName(Name);
@@ -873,8 +874,9 @@ AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, unsigned Align,
 
 AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, unsigned Align,
                        const Twine &Name, BasicBlock *InsertAtEnd)
-  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
-                     getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
+    : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                       getAISize(Ty->getContext(), ArraySize), InsertAtEnd),
+      AllocatedType(Ty) {
   setAlignment(Align);
   assert(!Ty->isVoidTy() && "Cannot allocate void!");
   setName(Name);
@@ -897,10 +899,6 @@ bool AllocaInst::isArrayAllocation() const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(0)))
     return !CI->isOne();
   return true;
-}
-
-Type *AllocaInst::getAllocatedType() const {
-  return getType()->getElementType();
 }
 
 /// isStaticAlloca - Return true if this alloca is in the entry block of the

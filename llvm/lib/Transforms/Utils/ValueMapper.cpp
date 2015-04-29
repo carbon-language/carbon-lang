@@ -396,6 +396,9 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
       Tys.push_back(TypeMapper->remapType(Ty));
     CS.mutateFunctionType(FunctionType::get(
         TypeMapper->remapType(I->getType()), Tys, FTy->isVarArg()));
-  } else
-    I->mutateType(TypeMapper->remapType(I->getType()));
+    return;
+  }
+  if (auto *AI = dyn_cast<AllocaInst>(I))
+    AI->setAllocatedType(TypeMapper->remapType(AI->getAllocatedType()));
+  I->mutateType(TypeMapper->remapType(I->getType()));
 }

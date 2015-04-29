@@ -73,6 +73,8 @@ return (Ord == Release ||
 /// AllocaInst - an instruction to allocate memory on the stack
 ///
 class AllocaInst : public UnaryInstruction {
+  Type *AllocatedType;
+
 protected:
   AllocaInst *clone_impl() const override;
 public:
@@ -113,7 +115,10 @@ public:
   /// getAllocatedType - Return the type that is being allocated by the
   /// instruction.
   ///
-  Type *getAllocatedType() const;
+  Type *getAllocatedType() const { return AllocatedType; }
+  /// \brief for use only in special circumstances that need to generically
+  /// transform a whole instruction (eg: IR linking and vectorization).
+  void setAllocatedType(Type *Ty) { AllocatedType = Ty; }
 
   /// getAlignment - Return the alignment of the memory that is being allocated
   /// by the instruction.
