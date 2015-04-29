@@ -217,7 +217,7 @@ Log::Error(const char *format, ...)
     if (arg_msg == nullptr)
         return;
 
-    VAPrintf("error: %s", arg_msg);
+    Printf("error: %s", args);
     free(arg_msg);
 }
 
@@ -236,7 +236,7 @@ Log::FatalError(int err, const char *format, ...)
 
     if (arg_msg != nullptr)
     {
-        VAPrintf("error: %s", arg_msg);
+        Printf("error: %s", arg_msg);
         ::free(arg_msg);
     }
     ::exit(err);
@@ -278,7 +278,7 @@ Log::WarningVerbose(const char *format, ...)
     if (arg_msg == nullptr)
         return;
 
-    VAPrintf("warning: %s", arg_msg);
+    Printf("warning: %s", arg_msg);
     free(arg_msg);
 }
 //----------------------------------------------------------------------
@@ -296,7 +296,7 @@ Log::Warning(const char *format, ...)
     if (arg_msg == nullptr)
         return;
 
-    VAPrintf("warning: %s", arg_msg);
+    Printf("warning: %s", arg_msg);
     free(arg_msg);
 }
 
