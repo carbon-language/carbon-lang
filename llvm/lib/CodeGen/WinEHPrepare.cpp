@@ -448,7 +448,7 @@ void WinEHPrepare::findCXXEHReturnPoints(
           // cleanup and catch code to be distinguished later.
           // Do not update BBI because we still need to process the
           // portion of the block that we are splitting off.
-          SplitBlock(BB, &I, DT);
+          SplitBlock(BB, SplitPt, DT);
           break;
         }
       }
