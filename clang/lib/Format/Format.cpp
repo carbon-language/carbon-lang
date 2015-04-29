@@ -174,6 +174,7 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("AlignEscapedNewlinesLeft", Style.AlignEscapedNewlinesLeft);
     IO.mapOptional("AlignOperands", Style.AlignOperands);
     IO.mapOptional("AlignTrailingComments", Style.AlignTrailingComments);
+    IO.mapOptional("AlignConsecutiveAssignments", Style.AlignConsecutiveAssignments);
     IO.mapOptional("AllowAllParametersOfDeclarationOnNextLine",
                    Style.AllowAllParametersOfDeclarationOnNextLine);
     IO.mapOptional("AllowShortBlocksOnASingleLine",
@@ -329,6 +330,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AlignAfterOpenBracket = true;
   LLVMStyle.AlignOperands = true;
   LLVMStyle.AlignTrailingComments = true;
+  LLVMStyle.AlignConsecutiveAssignments = false;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
   LLVMStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_All;
   LLVMStyle.AllowShortBlocksOnASingleLine = false;

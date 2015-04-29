@@ -160,6 +160,17 @@ the configuration (without a prefix: ``Auto``).
   argument2);
   \endcode
 
+**AlignConsecutiveAssignments** (``bool``)
+  If ``true``, aligns consecutive assignments.
+
+  This will align the assignment operators of consecutive lines. This
+  will result in formattings like
+  \code
+  int aaaa = 12;
+  int b    = 23;
+  int ccc  = 23;
+  \endcode
+
 **AlignEscapedNewlinesLeft** (``bool``)
   If ``true``, aligns escaped newlines as far left as possible.
   Otherwise puts them into the right-most column.

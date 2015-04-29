@@ -164,6 +164,13 @@ private:
   /// \c EscapedNewlineColumn for the first tokens or token parts in a line.
   void calculateLineBreakInformation();
 
+  /// \brief Align consecutive assignments over all \c Changes.
+  void alignConsecutiveAssignments();
+
+  /// \brief Align consecutive assignments from change \p Start to change \p End at
+  /// the specified \p Column.
+  void alignConsecutiveAssignments(unsigned Start, unsigned End, unsigned Column);
+
   /// \brief Align trailing comments over all \c Changes.
   void alignTrailingComments();
 

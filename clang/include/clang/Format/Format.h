@@ -247,6 +247,17 @@ struct FormatStyle {
   /// \brief If \c true, aligns trailing comments.
   bool AlignTrailingComments;
 
+  /// \brief If \c true, aligns consecutive assignments.
+  ///
+  /// This will align the assignment operators of consecutive lines. This
+  /// will result in formattings like
+  /// \code
+  /// int aaaa = 12;
+  /// int b    = 23;
+  /// int ccc  = 23;
+  /// \endcode
+  bool AlignConsecutiveAssignments;
+
   /// \brief If \c true, aligns escaped newlines as far left as possible.
   /// Otherwise puts them into the right-most column.
   bool AlignEscapedNewlinesLeft;
