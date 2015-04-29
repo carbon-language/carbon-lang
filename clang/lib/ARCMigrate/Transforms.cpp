@@ -16,6 +16,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/DenseSet.h"
@@ -212,11 +213,8 @@ bool trans::isGlobalVar(Expr *E) {
   return false;  
 }
 
-StringRef trans::getNilString(ASTContext &Ctx) {
-  if (Ctx.Idents.get("nil").hasMacroDefinition())
-    return "nil";
-  else
-    return "0";
+StringRef trans::getNilString(MigrationPass &Pass) {
+  return Pass.SemaRef.PP.isMacroDefined("nil") ? "nil" : "0";
 }
 
 namespace {

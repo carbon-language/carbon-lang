@@ -28,7 +28,7 @@ void test_variadic() {
 // RUN: c-index-test -code-completion-at=%s:7:1 %s -I%S | FileCheck -check-prefix=CHECK-CC0 %s
 // CHECK-CC0-NOT: FOO
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:1 %s -I%S | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: macro definition:{TypedText FOO}{LeftParen (}{Placeholder Arg1}{Comma , }{Placeholder Arg2}{RightParen )}
+// CHECK-CC1: macro definition:{TypedText FOO} (70)
 // RUN: c-index-test -code-completion-at=%s:13:13 %s -I%S | FileCheck -check-prefix=CHECK-CC2 %s
 // RUN: c-index-test -code-completion-at=%s:14:8 %s -I%S | FileCheck -check-prefix=CHECK-CC2 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:14:8 %s -I%S | FileCheck -check-prefix=CHECK-CC2 %s

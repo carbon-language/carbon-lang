@@ -2050,7 +2050,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     // If the macro or identifier need no updates, don't write the macro history
     // for this one.
     // FIXME: Chain the macro history instead of re-writing it.
-    if (MD->isFromPCH() &&
+    if (MD && MD->isFromPCH() &&
         Name->isFromAST() && !Name->hasChangedSinceDeserialization())
       continue;
 

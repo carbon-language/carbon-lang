@@ -216,6 +216,9 @@ public:
   /// of that name in objective-c.
   StringRef GetNSIntegralKind(QualType T) const;
 
+  /// \brief Returns \c true if \p Id is currently defined as a macro.
+  bool isMacroDefined(StringRef Id) const;
+
 private:
   bool isObjCTypedef(QualType T, StringRef name, IdentifierInfo *&II) const;
   bool isObjCEnumerator(const Expr *E,

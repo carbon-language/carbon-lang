@@ -145,7 +145,7 @@ public:
       // when an exception is thrown.
       Pass.TA.replace(RecContainer->getSourceRange(), RecRange);
       std::string str = " = ";
-      str += getNilString(Pass.Ctx);
+      str += getNilString(Pass);
       Pass.TA.insertAfterToken(RecRange.getEnd(), str);
       return true;
     }

@@ -58,7 +58,7 @@ public:
       SourceRange ExprRange = ME->getSourceRange();
       Pass.TA.insert(ExprRange.getBegin(), "if (!(self = ");
       std::string retStr = ")) return ";
-      retStr += getNilString(Pass.Ctx);
+      retStr += getNilString(Pass);
       Pass.TA.insertAfterToken(ExprRange.getEnd(), retStr);
     }
     return true;

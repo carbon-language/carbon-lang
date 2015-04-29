@@ -309,7 +309,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
         }
         if (const IdentifierInfo *DefinedMacro =
               CurPPLexer->MIOpt.GetDefinedMacro()) {
-          if (!ControllingMacro->hasMacroDefinition() &&
+          if (!isMacroDefined(ControllingMacro) &&
               DefinedMacro != ControllingMacro &&
               HeaderInfo.FirstTimeLexingFile(FE)) {
 

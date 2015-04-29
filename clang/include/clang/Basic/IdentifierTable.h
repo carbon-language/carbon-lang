@@ -124,6 +124,7 @@ public:
   }
 
   /// \brief Return true if this identifier is \#defined to some other value.
+  /// \note The current definition may be in a module and not currently visible.
   bool hasMacroDefinition() const {
     return HasMacro;
   }

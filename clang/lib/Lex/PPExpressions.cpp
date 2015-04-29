@@ -108,15 +108,13 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
   // Otherwise, we got an identifier, is it defined to something?
   IdentifierInfo *II = PeekTok.getIdentifierInfo();
-  Result.Val = II->hasMacroDefinition();
+  Preprocessor::MacroDefinition Macro = PP.getMacroDefinition(II);
+  Result.Val = !!Macro;
   Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
 
-  MacroDirective *Macro = nullptr;
   // If there is a macro, mark it used.
-  if (Result.Val != 0 && ValueLive) {
-    Macro = PP.getMacroDirective(II);
-    PP.markMacroAsUsed(Macro->getMacroInfo());
-  }
+  if (Result.Val != 0 && ValueLive)
+    PP.markMacroAsUsed(Macro.getMacroInfo());
 
   // Save macro token for callback.
   Token macroToken(PeekTok);
@@ -144,10 +142,8 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
   // Invoke the 'defined' callback.
   if (PPCallbacks *Callbacks = PP.getPPCallbacks()) {
-    MacroDirective *MD = Macro;
-    // Pass the MacroInfo for the macro name even if the value is dead.
-    if (!MD && Result.Val != 0)
-      MD = PP.getMacroDirective(II);
+    // FIXME: Tell callbacks about module macros.
+    MacroDirective *MD = Macro.getLocalDirective();
     Callbacks->Defined(macroToken, MD,
                        SourceRange(beginLoc, PeekTok.getLocation()));
   }

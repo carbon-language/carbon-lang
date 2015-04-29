@@ -505,6 +505,11 @@ StringRef NSAPI::GetNSIntegralKind(QualType T) const {
   return StringRef();
 }
 
+bool NSAPI::isMacroDefined(StringRef Id) const {
+  // FIXME: Check whether the relevant module macros are visible.
+  return Ctx.Idents.get(Id).hasMacroDefinition();
+}
+
 bool NSAPI::isObjCTypedef(QualType T,
                           StringRef name, IdentifierInfo *&II) const {
   if (!Ctx.getLangOpts().ObjC1)

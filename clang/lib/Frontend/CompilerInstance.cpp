@@ -1084,79 +1084,51 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
   // not have changed.
   if (!Id->hadMacroDefinition())
     return;
+  auto *LatestLocalMD = PP.getLocalMacroDirectiveHistory(Id);
 
-  // If this identifier does not currently have a macro definition,
-  // check whether it had one on the command line.
-  if (!Id->hasMacroDefinition()) {
-    MacroDirective::DefInfo LatestDef =
-        PP.getMacroDirectiveHistory(Id)->getDefinition();
-    for (MacroDirective::DefInfo Def = LatestDef; Def;
-           Def = Def.getPreviousDefinition()) {
-      FileID FID = SourceMgr.getFileID(Def.getLocation());
-      if (FID.isInvalid())
-        continue;
-
-      // We only care about the predefines buffer.
-      if (FID != PP.getPredefinesFileID())
-        continue;
-
-      // This macro was defined on the command line, then #undef'd later.
-      // Complain.
-      PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
-        << true << ConfigMacro << Mod->getFullModuleName();
-      if (LatestDef.isUndefined())
-        PP.Diag(LatestDef.getUndefLocation(), diag::note_module_def_undef_here)
-          << true;
-      return;
-    }
-
-    // Okay: no definition in the predefines buffer.
-    return;
-  }
-
-  // This identifier has a macro definition. Check whether we had a definition
-  // on the command line.
-  MacroDirective::DefInfo LatestDef =
-      PP.getMacroDirectiveHistory(Id)->getDefinition();
-  MacroDirective::DefInfo PredefinedDef;
-  for (MacroDirective::DefInfo Def = LatestDef; Def;
-         Def = Def.getPreviousDefinition()) {
-    FileID FID = SourceMgr.getFileID(Def.getLocation());
-    if (FID.isInvalid())
-      continue;
-
+  // Find the macro definition from the command line.
+  MacroInfo *CmdLineDefinition = nullptr;
+  for (auto *MD = LatestLocalMD; MD; MD = MD->getPrevious()) {
     // We only care about the predefines buffer.
-    if (FID != PP.getPredefinesFileID())
+    FileID FID = SourceMgr.getFileID(MD->getLocation());
+    if (FID.isInvalid() || FID != PP.getPredefinesFileID())
       continue;
-
-    PredefinedDef = Def;
+    if (auto *DMD = dyn_cast<DefMacroDirective>(MD))
+      CmdLineDefinition = DMD->getMacroInfo();
     break;
   }
 
-  // If there was no definition for this macro in the predefines buffer,
-  // complain.
-  if (!PredefinedDef ||
-      (!PredefinedDef.getLocation().isValid() &&
-       PredefinedDef.getUndefLocation().isValid())) {
+  auto *CurrentDefinition = PP.getMacroInfo(Id);
+  if (CurrentDefinition == CmdLineDefinition) {
+    // Macro matches. Nothing to do.
+  } else if (!CurrentDefinition) {
+    // This macro was defined on the command line, then #undef'd later.
+    // Complain.
+    PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
+      << true << ConfigMacro << Mod->getFullModuleName();
+    auto LatestDef = LatestLocalMD->getDefinition();
+    assert(LatestDef.isUndefined() &&
+           "predefined macro went away with no #undef?");
+    PP.Diag(LatestDef.getUndefLocation(), diag::note_module_def_undef_here)
+      << true;
+    return;
+  } else if (!CmdLineDefinition) {
+    // There was no definition for this macro in the predefines buffer,
+    // but there was a local definition. Complain.
     PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
       << false << ConfigMacro << Mod->getFullModuleName();
-    PP.Diag(LatestDef.getLocation(), diag::note_module_def_undef_here)
+    PP.Diag(CurrentDefinition->getDefinitionLoc(),
+            diag::note_module_def_undef_here)
       << false;
-    return;
+  } else if (!CurrentDefinition->isIdenticalTo(*CmdLineDefinition, PP,
+                                               /*Syntactically=*/true)) {
+    // The macro definitions differ.
+    PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
+      << false << ConfigMacro << Mod->getFullModuleName();
+    PP.Diag(CurrentDefinition->getDefinitionLoc(),
+            diag::note_module_def_undef_here)
+      << false;
   }
-
-  // If the current macro definition is the same as the predefined macro
-  // definition, it's okay.
-  if (LatestDef.getMacroInfo() == PredefinedDef.getMacroInfo() ||
-      LatestDef.getMacroInfo()->isIdenticalTo(*PredefinedDef.getMacroInfo(),PP,
-                                              /*Syntactically=*/true))
-    return;
-
-  // The macro definitions differ.
-  PP.Diag(ImportLoc, diag::warn_module_config_macro_undef)
-    << false << ConfigMacro << Mod->getFullModuleName();
-  PP.Diag(LatestDef.getLocation(), diag::note_module_def_undef_here)
-    << false;
 }
 
 /// \brief Write a new timestamp file with the given path.

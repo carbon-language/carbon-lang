@@ -386,7 +386,8 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   class MacroState {
     mutable llvm::PointerUnion<MacroDirective *, ModuleMacroInfo *> State;
 
-    ModuleMacroInfo *getModuleInfo(Preprocessor &PP, IdentifierInfo *II) const {
+    ModuleMacroInfo *getModuleInfo(Preprocessor &PP,
+                                   const IdentifierInfo *II) const {
       // FIXME: Find a spare bit on IdentifierInfo and store a
       //        HasModuleMacros flag.
       if (!II->hasMacroDefinition() || !PP.getLangOpts().Modules ||
@@ -434,12 +435,12 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
         State = MD;
     }
 
-    bool isAmbiguous(Preprocessor &PP, IdentifierInfo *II) const {
+    bool isAmbiguous(Preprocessor &PP, const IdentifierInfo *II) const {
       auto *Info = getModuleInfo(PP, II);
       return Info ? Info->IsAmbiguous : false;
     }
-    ArrayRef<ModuleMacro *> getActiveModuleMacros(Preprocessor &PP,
-                                                  IdentifierInfo *II) const {
+    ArrayRef<ModuleMacro *>
+    getActiveModuleMacros(Preprocessor &PP, const IdentifierInfo *II) const {
       if (auto *Info = getModuleInfo(PP, II))
         return Info->ActiveModuleMacros;
       return None;
@@ -755,33 +756,119 @@ public:
   }
   /// \}
 
-  /// \brief Given an identifier, return its latest MacroDirective if it is
-  /// \#defined or null if it isn't \#define'd.
-  MacroDirective *getMacroDirective(IdentifierInfo *II) const {
+  /// \brief A description of the current definition of a macro.
+  class MacroDefinition {
+    llvm::PointerIntPair<DefMacroDirective*, 1, bool> LatestLocalAndAmbiguous;
+    ArrayRef<ModuleMacro*> ModuleMacros;
+  public:
+    MacroDefinition() : LatestLocalAndAmbiguous(), ModuleMacros() {}
+    MacroDefinition(DefMacroDirective *MD, ArrayRef<ModuleMacro *> MMs,
+                    bool IsAmbiguous)
+        : LatestLocalAndAmbiguous(MD, IsAmbiguous), ModuleMacros(MMs) {}
+
+    /// \brief Determine whether there is a definition of this macro.
+    explicit operator bool() const {
+      return getLocalDirective() || !ModuleMacros.empty();
+    }
+
+    /// \brief Get the MacroInfo that should be used for this definition.
+    MacroInfo *getMacroInfo() const {
+      if (!ModuleMacros.empty())
+        return ModuleMacros.back()->getMacroInfo();
+      if (auto *MD = getLocalDirective())
+        return MD->getMacroInfo();
+      return nullptr;
+    }
+
+    /// \brief \c true if the definition is ambiguous, \c false otherwise.
+    bool isAmbiguous() const { return LatestLocalAndAmbiguous.getInt(); }
+
+    /// \brief Get the latest non-imported, non-\#undef'd macro definition
+    /// for this macro.
+    DefMacroDirective *getLocalDirective() const {
+      return LatestLocalAndAmbiguous.getPointer();
+    }
+
+    /// \brief Get the active module macros for this macro.
+    ArrayRef<ModuleMacro *> getModuleMacros() const {
+      return ModuleMacros;
+    }
+
+    template<typename Fn> void forAllDefinitions(Fn F) const {
+      if (auto *MD = getLocalDirective())
+        F(MD->getMacroInfo());
+      for (auto *MM : getModuleMacros())
+        F(MM->getMacroInfo());
+    }
+  };
+
+  bool isMacroDefined(StringRef Id) {
+    return isMacroDefined(&Identifiers.get(Id));
+  }
+  bool isMacroDefined(const IdentifierInfo *II) {
+    return II->hasMacroDefinition() &&
+           (!getLangOpts().Modules || (bool)getMacroDefinition(II));
+  }
+
+  MacroDefinition getMacroDefinition(const IdentifierInfo *II) {
+    if (!II->hasMacroDefinition())
+      return MacroDefinition();
+
+    MacroState &S = Macros[II];
+    auto *MD = S.getLatest();
+    while (MD && isa<VisibilityMacroDirective>(MD))
+      MD = MD->getPrevious();
+    return MacroDefinition(dyn_cast_or_null<DefMacroDirective>(MD),
+                           S.getActiveModuleMacros(*this, II),
+                           S.isAmbiguous(*this, II));
+  }
+
+  MacroDefinition getMacroDefinitionAtLoc(const IdentifierInfo *II,
+                                          SourceLocation Loc) {
+    if (!II->hadMacroDefinition())
+      return MacroDefinition();
+
+    MacroState &S = Macros[II];
+    MacroDirective::DefInfo DI;
+    if (auto *MD = S.getLatest())
+      DI = MD->findDirectiveAtLoc(Loc, getSourceManager());
+    // FIXME: Compute the set of active module macros at the specified location.
+    return MacroDefinition(DI.getDirective(),
+                           S.getActiveModuleMacros(*this, II),
+                           S.isAmbiguous(*this, II));
+  }
+
+  /// \brief Given an identifier, return its latest non-imported MacroDirective
+  /// if it is \#define'd and not \#undef'd, or null if it isn't \#define'd.
+  MacroDirective *getLocalMacroDirective(const IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
       return nullptr;
 
-    MacroDirective *MD = getMacroDirectiveHistory(II);
-    assert(MD->isDefined() && "Macro is undefined!");
+    auto *MD = getLocalMacroDirectiveHistory(II);
+    if (!MD || MD->getDefinition().isUndefined())
+      return nullptr;
+
     return MD;
   }
 
-  const MacroInfo *getMacroInfo(IdentifierInfo *II) const {
+  const MacroInfo *getMacroInfo(const IdentifierInfo *II) const {
     return const_cast<Preprocessor*>(this)->getMacroInfo(II);
   }
 
-  MacroInfo *getMacroInfo(IdentifierInfo *II) {
-    if (MacroDirective *MD = getMacroDirective(II))
-      return MD->getMacroInfo();
+  MacroInfo *getMacroInfo(const IdentifierInfo *II) {
+    if (!II->hasMacroDefinition())
+      return nullptr;
+    if (auto MD = getMacroDefinition(II))
+      return MD.getMacroInfo();
     return nullptr;
   }
 
-  /// \brief Given an identifier, return the (probably #undef'd) MacroInfo
-  /// representing the most recent macro definition.
+  /// \brief Given an identifier, return the latest non-imported macro
+  /// directive for that identifier.
   ///
-  /// One can iterate over all previous macro definitions from the most recent
-  /// one. This should only be called for identifiers that hadMacroDefinition().
-  MacroDirective *getMacroDirectiveHistory(const IdentifierInfo *II) const;
+  /// One can iterate over all previous macro directives from the most recent
+  /// one.
+  MacroDirective *getLocalMacroDirectiveHistory(const IdentifierInfo *II) const;
 
   /// \brief Add a directive to the macro directive history for this identifier.
   void appendMacroDirective(IdentifierInfo *II, MacroDirective *MD);
@@ -1580,7 +1667,7 @@ private:
 
   /// Update the set of active module macros and ambiguity flag for a module
   /// macro name.
-  void updateModuleMacroInfo(IdentifierInfo *II, ModuleMacroInfo &Info);
+  void updateModuleMacroInfo(const IdentifierInfo *II, ModuleMacroInfo &Info);
 
   /// \brief Allocate a new MacroInfo object.
   MacroInfo *AllocateMacroInfo();
@@ -1644,7 +1731,7 @@ private:
   /// If an identifier token is read that is to be expanded as a macro, handle
   /// it and return the next token as 'Tok'.  If we lexed a token, return true;
   /// otherwise the caller should lex again.
-  bool HandleMacroExpandedIdentifier(Token &Tok, MacroDirective *MD);
+  bool HandleMacroExpandedIdentifier(Token &Tok, const MacroDefinition &MD);
 
   /// \brief Cache macro expanded tokens for TokenLexers.
   //
