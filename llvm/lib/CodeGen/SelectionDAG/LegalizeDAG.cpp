@@ -1245,12 +1245,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     break;
   case ISD::EXTRACT_ELEMENT:
   case ISD::FLT_ROUNDS_:
-  case ISD::SADDO:
-  case ISD::SSUBO:
-  case ISD::UADDO:
-  case ISD::USUBO:
-  case ISD::SMULO:
-  case ISD::UMULO:
   case ISD::FPOWI:
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
