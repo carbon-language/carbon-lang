@@ -3478,6 +3478,15 @@ void Verifier::verifyBitPieceExpression(const DbgInfoIntrinsic &I,
   if (!E->isBitPiece())
     return;
 
+  // The frontend helps out GDB by emitting the members of local anonymous
+  // unions as artificial local variables with shared storage. When SROA splits
+  // the storage for artificial local variables that are smaller than the entire
+  // union, the overhang piece will be outside of the allotted space for the
+  // variable and this check fails.
+  // FIXME: Remove this check as soon as clang stops doing this; it hides bugs.
+  if (V->isArtificial())
+    return;
+
   // If there's no size, the type is broken, but that should be checked
   // elsewhere.
   uint64_t VarSize = getVariableSize(*V, TypeRefs);
