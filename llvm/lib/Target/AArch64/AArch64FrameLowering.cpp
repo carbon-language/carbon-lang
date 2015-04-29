@@ -250,6 +250,31 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
   }
 }
 
+/// Get FPOffset by analyzing the first instruction.
+static int getFPOffsetInPrologue(MachineInstr *MBBI) {
+  // First instruction must a) allocate the stack  and b) have an immediate
+  // that is a multiple of -2.
+  assert(((MBBI->getOpcode() == AArch64::STPXpre ||
+           MBBI->getOpcode() == AArch64::STPDpre) &&
+          MBBI->getOperand(3).getReg() == AArch64::SP &&
+          MBBI->getOperand(4).getImm() < 0 &&
+          (MBBI->getOperand(4).getImm() & 1) == 0));
+
+  // Frame pointer is fp = sp - 16. Since the  STPXpre subtracts the space
+  // required for the callee saved register area we get the frame pointer
+  // by addding that offset - 16 = -getImm()*8 - 2*8 = -(getImm() + 2) * 8.
+  int FPOffset = -(MBBI->getOperand(4).getImm() + 2) * 8;
+  assert(FPOffset >= 0 && "Bad Framepointer Offset");
+  return FPOffset;
+}
+
+static bool isCSSave(MachineInstr *MBBI) {
+  return MBBI->getOpcode() == AArch64::STPXi ||
+         MBBI->getOpcode() == AArch64::STPDi ||
+         MBBI->getOpcode() == AArch64::STPXpre ||
+         MBBI->getOpcode() == AArch64::STPDpre;
+}
+
 void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front(); // Prologue goes in entry BB.
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -300,27 +325,11 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Only set up FP if we actually need to.
   int FPOffset = 0;
-  if (HasFP) {
-    // First instruction must a) allocate the stack  and b) have an immediate
-    // that is a multiple of -2.
-    assert((MBBI->getOpcode() == AArch64::STPXpre ||
-            MBBI->getOpcode() == AArch64::STPDpre) &&
-           MBBI->getOperand(3).getReg() == AArch64::SP &&
-           MBBI->getOperand(4).getImm() < 0 &&
-           (MBBI->getOperand(4).getImm() & 1) == 0);
-
-    // Frame pointer is fp = sp - 16. Since the  STPXpre subtracts the space
-    // required for the callee saved register area we get the frame pointer
-    // by addding that offset - 16 = -getImm()*8 - 2*8 = -(getImm() + 2) * 8.
-    FPOffset = -(MBBI->getOperand(4).getImm() + 2) * 8;
-    assert(FPOffset >= 0 && "Bad Framepointer Offset");
-  }
+  if (HasFP)
+    FPOffset = getFPOffsetInPrologue(MBBI);
 
   // Move past the saves of the callee-saved registers.
-  while (MBBI->getOpcode() == AArch64::STPXi ||
-         MBBI->getOpcode() == AArch64::STPDi ||
-         MBBI->getOpcode() == AArch64::STPXpre ||
-         MBBI->getOpcode() == AArch64::STPDpre) {
+  while (isCSSave(MBBI)) {
     ++MBBI;
     NumBytes -= 16;
   }
