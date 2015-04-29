@@ -57,9 +57,16 @@ extern EHTEntry __exidx_end;
 #endif // !defined(_LIBUNWIND_IS_BAREMETAL)
 #endif  // LIBCXXABI_ARM_EHABI
 
-#if defined(__CloudABI__) || defined(__linux__)
+#if defined(__CloudABI__) || defined(__FreeBSD__) || defined(__linux__)
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND && _LIBUNWIND_SUPPORT_DWARF_INDEX
 #include <link.h>
+// Macro for machine-independent access to the ELF program headers. This
+// macro is not available on some systems (e.g., FreeBSD). On these
+// systems the data structures are just called Elf_XXX. Define ElfW()
+// locally.
+#if !defined(ElfW)
+#define ElfW(type) Elf_##type
+#endif
 #include "EHHeaderParser.hpp"
 #endif
 #endif
