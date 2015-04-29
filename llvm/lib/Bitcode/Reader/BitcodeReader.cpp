@@ -1474,7 +1474,8 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid record");
-      if ((ResultTy = getTypeByID(Record[1])))
+      if ((ResultTy = getTypeByID(Record[1])) &&
+          StructType::isValidElementType(ResultTy))
         ResultTy = ArrayType::get(ResultTy, Record[0]);
       else
         return Error("Invalid type");
@@ -1482,7 +1483,8 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_VECTOR:    // VECTOR: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid record");
-      if ((ResultTy = getTypeByID(Record[1])))
+      if ((ResultTy = getTypeByID(Record[1])) &&
+          StructType::isValidElementType(ResultTy))
         ResultTy = VectorType::get(ResultTy, Record[0]);
       else
         return Error("Invalid type");
