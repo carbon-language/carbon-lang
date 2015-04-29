@@ -5319,9 +5319,11 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
     SoftFloat = false;
-    for (unsigned i = 0, e = Features.size(); i != e; ++i)
-      if (Features[i] == "+soft-float")
-        SoftFloat = true;
+    auto Feature = std::find(Features.begin(), Features.end(), "+soft-float");
+    if (Feature != Features.end()) {
+      SoftFloat = true;
+      Features.erase(Feature);
+    }
     return true;
   }
   void getTargetDefines(const LangOptions &Opts,
