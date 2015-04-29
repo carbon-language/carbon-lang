@@ -103,6 +103,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-element-type.bc 2>&1 |
 RUN:   FileCheck --check-prefix=ELEMENT-TYPE %s
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-vector-element-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=ELEMENT-TYPE %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-pointer-element-type.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=ELEMENT-TYPE %s
 
 ELEMENT-TYPE: Invalid type
 

@@ -1360,7 +1360,8 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
       if (Record.size() == 2)
         AddressSpace = Record[1];
       ResultTy = getTypeByID(Record[0]);
-      if (!ResultTy)
+      if (!ResultTy ||
+          !PointerType::isValidElementType(ResultTy))
         return Error("Invalid type");
       ResultTy = PointerType::get(ResultTy, AddressSpace);
       break;
