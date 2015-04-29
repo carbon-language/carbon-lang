@@ -194,8 +194,7 @@ class ELFObjectWriter : public MCObjectWriter {
       FWriter.write(F, Value);
     }
 
-    void WriteHeader(const MCAssembler &Asm,
-                     unsigned NumberOfSections);
+    void writeHeader(const MCAssembler &Asm);
 
     void WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                      const MCAsmLayout &Layout);
@@ -405,8 +404,7 @@ ELFObjectWriter::~ELFObjectWriter()
 {}
 
 // Emit the ELF header.
-void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
-                                  unsigned NumberOfSections) {
+void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
   // ELF Header
   // ----------
   //
@@ -451,10 +449,7 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
   Write16(is64Bit() ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
 
   // e_shnum     = # of section header ents
-  if (NumberOfSections >= ELF::SHN_LORESERVE)
-    Write16(ELF::SHN_UNDEF);
-  else
-    Write16(NumberOfSections);
+  Write16(0);
 
   // e_shstrndx  = Section # of '.shstrtab'
   assert(ShstrtabIndex < ELF::SHN_LORESERVE);
@@ -1577,11 +1572,10 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   CreateMetadataSections(Asm, Layout, Sections);
 
-  unsigned NumSections = Asm.size() + 2;
   SectionOffsetsTy SectionOffsets;
 
   // Write out the ELF header ...
-  WriteHeader(Asm, NumSections + 1);
+  writeHeader(Asm);
 
   // ... then the sections ...
   SectionOffsets.push_back(std::make_pair(0, 0));
@@ -1620,19 +1614,30 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   // ... then the section header table ...
   writeSectionHeader(Sections, Asm, Layout, SectionIndexMap, SectionOffsets);
 
+  uint16_t NumSections = (Sections.size() + 1 >= ELF::SHN_LORESERVE)
+                             ? ELF::SHN_UNDEF
+                             : Sections.size() + 1;
+  if (sys::IsLittleEndianHost != IsLittleEndian)
+    sys::swapByteOrder(NumSections);
+  unsigned NumSectionsOffset;
+
   if (is64Bit()) {
     uint64_t Val = SectionHeaderOffset;
     if (sys::IsLittleEndianHost != IsLittleEndian)
       sys::swapByteOrder(Val);
     OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
               offsetof(ELF::Elf64_Ehdr, e_shoff));
+    NumSectionsOffset = offsetof(ELF::Elf64_Ehdr, e_shnum);
   } else {
     uint32_t Val = SectionHeaderOffset;
     if (sys::IsLittleEndianHost != IsLittleEndian)
       sys::swapByteOrder(Val);
     OS.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
               offsetof(ELF::Elf32_Ehdr, e_shoff));
+    NumSectionsOffset = offsetof(ELF::Elf32_Ehdr, e_shnum);
   }
+  OS.pwrite(reinterpret_cast<char *>(&NumSections), sizeof(NumSections),
+            NumSectionsOffset);
 }
 
 bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
