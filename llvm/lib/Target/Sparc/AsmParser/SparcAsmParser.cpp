@@ -360,11 +360,11 @@ public:
   }
 
   static std::unique_ptr<SparcOperand>
-  CreateMEMri(unsigned Base, const MCExpr *Off, SMLoc S, SMLoc E) {
-    auto Op = make_unique<SparcOperand>(k_MemoryImm);
+  CreateMEMr(unsigned Base, SMLoc S, SMLoc E) {
+    auto Op = make_unique<SparcOperand>(k_MemoryReg);
     Op->Mem.Base = Base;
-    Op->Mem.OffsetReg = 0;
-    Op->Mem.Off = Off;
+    Op->Mem.OffsetReg = Sparc::G0;  // always 0
+    Op->Mem.Off = nullptr;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -556,7 +556,7 @@ SparcAsmParser::parseMEMOperand(OperandVector &Operands) {
   case AsmToken::Comma:
   case AsmToken::RBrac:
   case AsmToken::EndOfStatement:
-    Operands.push_back(SparcOperand::CreateMEMri(BaseReg, nullptr, S, E));
+    Operands.push_back(SparcOperand::CreateMEMr(BaseReg, S, E));
     return MatchOperand_Success;
 
   case AsmToken:: Plus:

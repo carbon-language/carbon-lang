@@ -11,7 +11,7 @@
         ! CHECK: call %o1+8   ! encoding: [0x9f,0xc2,0x60,0x08]
         call %o1 + 8
 
-        ! CHECK: call %g1     ! encoding: [0x9f,0xc0,0x60,0x00]
+        ! CHECK: call %g1     ! encoding: [0x9f,0xc0,0x40,0x00]
         call %g1
 
         ! CHECK: call %g1+%lo(sym)   ! encoding: [0x9f,0xc0,0b011000AA,A]
@@ -24,7 +24,7 @@
         ! CHECK: jmp %o1+8    ! encoding: [0x81,0xc2,0x60,0x08]
         jmp %o1 + 8
 
-        ! CHECK: jmp %g1      ! encoding: [0x81,0xc0,0x60,0x00]
+        ! CHECK: jmp %g1      ! encoding: [0x81,0xc0,0x40,0x00]
         jmp %g1
 
         ! CHECK: jmp %g1+%lo(sym)   ! encoding: [0x81,0xc0,0b011000AA,A]
@@ -37,7 +37,7 @@
         ! CHECK: jmpl %o1+8, %g2    ! encoding: [0x85,0xc2,0x60,0x08]
         jmpl %o1 + 8, %g2
 
-        ! CHECK: jmpl %g1, %g2      ! encoding: [0x85,0xc0,0x60,0x00]
+        ! CHECK: jmpl %g1, %g2      ! encoding: [0x85,0xc0,0x40,0x00]
         jmpl %g1, %g2
 
         ! CHECK: jmpl %g1+%lo(sym), %g2   ! encoding: [0x85,0xc0,0b011000AA,A]
