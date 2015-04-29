@@ -16,7 +16,9 @@
 // Instruction Encodings
 //
 //===----------------------------------------------------------------------===//
-
+class ADD_MMR6_ENC : ARITH_FM_MMR6<"add", 0x110>;
+class ADDIU_MMR6_ENC : ADDI_FM_MMR6<"addiu", 0xc>;
+class ADDU_MMR6_ENC : ARITH_FM_MMR6<"addu", 0x150>;
 class BALC_MMR6_ENC  : BRANCH_OFF26_FM<0b101101>;
 class BC_MMR6_ENC : BRANCH_OFF26_FM<0b100101>;
 class BITSWAP_MMR6_ENC : POOL32A_BITSWAP_FM_MMR6<0b101100>;
@@ -28,6 +30,10 @@ class PREF_MMR6_ENC : CACHE_PREF_FM_MMR6<0b011000, 0b0010>;
 // Instruction Descriptions
 //
 //===----------------------------------------------------------------------===//
+
+class ADD_MMR6_DESC : ArithLogicR<"add", GPR32Opnd>;
+class ADDIU_MMR6_DESC : ArithLogicI<"addiu", simm16, GPR32Opnd>;
+class ADDU_MMR6_DESC : ArithLogicR<"addu", GPR32Opnd>;
 
 class BC_MMR6_DESC_BASE<string instr_asm, DAGOperand opnd>
     : BRANCH_DESC_BASE, MMR6Arch<instr_asm> {
@@ -72,6 +78,9 @@ class PREF_MMR6_DESC : CACHE_HINT_MMR6_DESC<"pref", mem_mm_12, GPR32Opnd>;
 //===----------------------------------------------------------------------===//
 
 let DecoderNamespace = "MicroMips32r6" in {
+def ADD_MMR6 : StdMMR6Rel, ADD_MMR6_DESC, ADD_MMR6_ENC, ISA_MICROMIPS32R6;
+def ADDIU_MMR6 : StdMMR6Rel, ADDIU_MMR6_DESC, ADDIU_MMR6_ENC, ISA_MICROMIPS32R6;
+def ADDU_MMR6 : StdMMR6Rel, ADDU_MMR6_DESC, ADDU_MMR6_ENC, ISA_MICROMIPS32R6;
 def BALC_MMR6 : R6MMR6Rel, BALC_MMR6_ENC, BALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BC_MMR6 : R6MMR6Rel, BC_MMR6_ENC, BC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BITSWAP_MMR6 : R6MMR6Rel, BITSWAP_MMR6_ENC, BITSWAP_MMR6_DESC,
