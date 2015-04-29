@@ -15,6 +15,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_INDIRECTIONUTILS_H
 
 #include "JITSymbol.h"
+#include "LambdaResolver.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/IR/IRBuilder.h"
@@ -159,9 +160,16 @@ private:
     std::unique_ptr<Module> M(new Module("resolver_block_module",
                                          Context));
     TargetT::insertResolverBlock(*M, *this);
+    auto NonResolver =
+      createLambdaResolver(
+          [](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+            llvm_unreachable("External symbols in resolver block?");
+          },
+          [](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+            llvm_unreachable("Dylib symbols in resolver block?");
+          });
     auto H = JIT.addModuleSet(SingletonSet(std::move(M)), &MemMgr,
-                              static_cast<RuntimeDyld::SymbolResolver*>(
-                                  nullptr));
+                              std::move(NonResolver));
     JIT.emitAndFinalize(H);
     auto ResolverBlockSymbol =
       JIT.findSymbolIn(H, TargetT::ResolverBlockName, false);
@@ -186,9 +194,16 @@ private:
       TargetT::insertCompileCallbackTrampolines(*M, ResolverBlockAddr,
                                                 this->NumTrampolinesPerBlock,
                                                 this->ActiveTrampolines.size());
+    auto NonResolver =
+      createLambdaResolver(
+          [](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+            llvm_unreachable("External symbols in trampoline block?");
+          },
+          [](const std::string &Name) -> RuntimeDyld::SymbolInfo {
+            llvm_unreachable("Dylib symbols in trampoline block?");
+          });
     auto H = JIT.addModuleSet(SingletonSet(std::move(M)), &MemMgr,
-                              static_cast<RuntimeDyld::SymbolResolver*>(
-                                  nullptr));
+                              std::move(NonResolver));
     JIT.emitAndFinalize(H);
     for (unsigned I = 0; I < this->NumTrampolinesPerBlock; ++I) {
       std::string Name = GetLabelName(I);
