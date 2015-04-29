@@ -204,6 +204,133 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_stack_list_variables(self):
+        """Test that 'lldb-mi --interpreter' can shows local variables and arguments."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test int local variables:
+        # Run to BP_local_int_test
+        line = line_number('main.cpp', '// BP_local_int_test_with_args')
+        self.runCmd("-break-insert --file main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"2\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test -stack-list-variables: use 0 or --no-values
+        self.runCmd("-stack-list-variables 0")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\"},{arg=\"1\",name=\"d\"},{name=\"a\"},{name=\"b\"}\]")
+        self.runCmd("-stack-list-variables --no-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\"},{arg=\"1\",name=\"d\"},{name=\"a\"},{name=\"b\"}\]")
+
+        # Test -stack-list-variables: use 1 or --all-values
+        self.runCmd("-stack-list-variables 1")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\",value=\"30\"},{arg=\"1\",name=\"d\",value=\"40\"},{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+        self.runCmd("-stack-list-variables --all-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\",value=\"30\"},{arg=\"1\",name=\"d\",value=\"40\"},{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+
+        # Test -stack-list-variables: use 2 or --simple-values
+        self.runCmd("-stack-list-variables 2")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\",value=\"30\"},{arg=\"1\",name=\"d\",value=\"40\"},{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+        self.runCmd("-stack-list-variables --simple-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"c\",value=\"30\"},{arg=\"1\",name=\"d\",value=\"40\"},{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+        
+        # Test struct local variable:
+        # Run to BP_local_struct_test
+        line = line_number('main.cpp', '// BP_local_struct_test_with_args')
+        self.runCmd("-break-insert --file main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"3\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+        
+        # Test -stack-list-variables: use 0 or --no-values
+        self.runCmd("-stack-list-variables 0")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\"},{name=\"var_c\"}\]")
+        self.runCmd("-stack-list-variables --no-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\"},{name=\"var_c\"}\]")
+
+        # Test -stack-list-variables: use 1 or --all-values
+        self.runCmd("-stack-list-variables 1")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\",value=\"{var_a = 20, var_b = 98 'b', inner_ = {var_d = 40}}\"},{name=\"var_c\",value=\"{var_a = 10, var_b = 97 'a', inner_ = {var_d = 30}}\"}\]")
+        self.runCmd("-stack-list-variables --all-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\",value=\"{var_a = 20, var_b = 98 'b', inner_ = {var_d = 40}}\"},{name=\"var_c\",value=\"{var_a = 10, var_b = 97 'a', inner_ = {var_d = 30}}\"}\]")
+
+        # Test -stack-list-variables: use 2 or --simple-values
+        self.runCmd("-stack-list-variables 2")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\"},{name=\"var_c\"}\]")
+        self.runCmd("-stack-list-variables --simple-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"var_e\"},{name=\"var_c\"}\]")
+        
+        # Test array local variable:
+        # Run to BP_local_array_test
+        line = line_number('main.cpp', '// BP_local_array_test_with_args')
+        self.runCmd("-break-insert --file main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"4\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+        
+        # Test -stack-list-variables: use 0 or --no-values
+        self.runCmd("-stack-list-variables 0")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\"},{name=\"array\"}\]")
+        self.runCmd("-stack-list-variables --no-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\"},{name=\"array\"}\]")
+
+        # Test -stack-list-variables: use 1 or --all-values
+        self.runCmd("-stack-list-variables 1")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\",value=\".*?\"},{name=\"array\",value=\"{\[0\] = 100, \[1\] = 200, \[2\] = 300}\"}\]")
+        self.runCmd("-stack-list-variables --all-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\",value=\".*?\"},{name=\"array\",value=\"{\[0\] = 100, \[1\] = 200, \[2\] = 300}\"}\]")
+
+        # Test -stack-list-variables: use 2 or --simple-values
+        self.runCmd("-stack-list-variables 2")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\",value=\".*?\"},{name=\"array\"}\]")
+        self.runCmd("-stack-list-variables --simple-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"other_array\",value=\".*?\"},{name=\"array\"}\]")
+        
+        # Test pointers as local variable:
+        # Run to BP_local_pointer_test
+        line = line_number('main.cpp', '// BP_local_pointer_test_with_args')
+        self.runCmd("-break-insert --file main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"5\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+        
+        # Test -stack-list-variables: use 0 or --no-values
+        self.runCmd("-stack-list-variables 0")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\"},{arg=\"1\",name=\"arg_ptr\"},{name=\"test_str\"},{name=\"var_e\"},{name=\"ptr\"}\]")
+        self.runCmd("-stack-list-variables --no-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\"},{arg=\"1\",name=\"arg_ptr\"},{name=\"test_str\"},{name=\"var_e\"},{name=\"ptr\"}\]")
+
+        # Test -stack-list-variables: use 1 or --all-values
+        self.runCmd("-stack-list-variables 1")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",value=\".*?\"},{name=\"test_str\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",value=\"24\"},{name=\"ptr\",value=\".*?\"}\]")
+        self.runCmd("-stack-list-variables --all-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",value=\".*?\"},{name=\"test_str\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",value=\"24\"},{name=\"ptr\",value=\".*?\"}\]")
+
+        # Test -stack-list-variables: use 2 or --simple-values
+        self.runCmd("-stack-list-variables 2")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",value=\".*?\"},{name=\"test_str\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",value=\"24\"},{name=\"ptr\",value=\".*?\"}\]")
+        self.runCmd("-stack-list-variables --simple-values")
+        self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",value=\".*?\"},{name=\"test_str\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",value=\"24\"},{name=\"ptr\",value=\".*?\"}\]")
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_info_depth(self):
         """Test that 'lldb-mi --interpreter' can shows depth of the stack."""
 

@@ -214,6 +214,42 @@ class CMICmdCmdStackListLocals : public CMICmdBase
 
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "stack-list-variables".
+//--
+class CMICmdCmdStackListVariables : public CMICmdBase
+{
+    // Statics:
+public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+    
+    // Methods:
+public:
+    /* ctor */ CMICmdCmdStackListVariables(void);
+    
+    // Overridden:
+public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdStackListVariables(void);
+    
+    // Attributes
+private:
+    bool m_bThreadInvalid; // True = yes invalid thread, false = thread object valid
+    CMICmnMIValueList m_miValueList;
+    const CMIUtilString m_constStrArgThread;
+    const CMIUtilString m_constStrArgFrame;
+    const CMIUtilString m_constStrArgPrintValues;
+    const CMIUtilString m_constStrArgNoValues;
+    const CMIUtilString m_constStrArgAllValues;
+    const CMIUtilString m_constStrArgSimpleValues;
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "stack-select-frame".
 //--
 class CMICmdCmdStackSelectFrame : public CMICmdBase
