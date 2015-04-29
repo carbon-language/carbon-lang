@@ -1475,7 +1475,7 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
       if (Record.size() < 2)
         return Error("Invalid record");
       if ((ResultTy = getTypeByID(Record[1])) &&
-          StructType::isValidElementType(ResultTy))
+          ArrayType::isValidElementType(ResultTy))
         ResultTy = ArrayType::get(ResultTy, Record[0]);
       else
         return Error("Invalid type");
