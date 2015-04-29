@@ -8,7 +8,7 @@
  .cfi_endproc
 
 // CHECK:      Relocations [
-// CHECK-NEXT:   Section (5) .rela.eh_frame {
+// CHECK-NEXT:   Section ({{.*}}) .rela.eh_frame {
 // CHECK-NEXT:     0x20 R_X86_64_PC32 .text 0x3E8
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

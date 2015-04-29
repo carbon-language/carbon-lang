@@ -10,7 +10,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x3)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 // CHECK:        Symbol {
 // CHECK:          Name: B
@@ -19,5 +19,5 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x3)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }

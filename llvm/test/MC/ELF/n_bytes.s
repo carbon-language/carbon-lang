@@ -6,8 +6,8 @@
         .int 42, 1, 2, 3
 
 // CHECK:        Section {
-// CHECK:          Index: 1
-// CHECK-NEXT:     Name: .text
+// CHECK:          Index:
+// CHECK:          Name: .text
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:       SHF_ALLOC

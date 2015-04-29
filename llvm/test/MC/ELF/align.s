@@ -23,7 +23,7 @@
 // CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Section {
-// CHECK-NEXT:     Index: 4
+// CHECK-NEXT:     Index:
 // CHECK-NEXT:     Name: .rodata
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [

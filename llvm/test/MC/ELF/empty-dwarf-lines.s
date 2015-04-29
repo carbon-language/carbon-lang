@@ -8,8 +8,8 @@ c:
         .asciz   "hi\n"
 
 // CHECK:        Section {
-// CHECK:          Index: 4
-// CHECK-NEXT:     Name: .debug_line
+// CHECK:          Index:
+// CHECK:          Name: .debug_line
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]

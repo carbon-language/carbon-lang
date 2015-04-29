@@ -1,8 +1,8 @@
 // RUN: llvm-mc -no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -t | FileCheck  %s
 
 // CHECK:        Section {
-// CHECK:          Index: 4
-// CHECK-NEXT:     Name: .note.GNU-stack
+// CHECK:          Index:
+// CHECK:          Name: .note.GNU-stack
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
@@ -22,5 +22,5 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .note.GNU-stack (0x4)
+// CHECK-NEXT:     Section: .note.GNU-stack
 // CHECK-NEXT:   }

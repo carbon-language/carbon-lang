@@ -29,7 +29,7 @@ ptr:
 
 @@ make sure the relocation is with f. That is one way to make sure it includes
 @@ the thumb bit.
-@CHECK-NEXT:   Section (6) .rel.data.rel.local {
+@CHECK-NEXT:   Section ({{.*}}) .rel.data.rel.local {
 @CHECK-NEXT:     0x0 R_ARM_ABS32 f 0x0
 @CHECK-NEXT:   }
 @CHECK-NEXT: ]

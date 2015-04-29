@@ -36,7 +36,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Object (0x1)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym02
@@ -45,7 +45,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Function (0x2)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym03
@@ -54,7 +54,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Function (0x2)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym04
@@ -63,7 +63,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Object (0x1)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym05
@@ -75,7 +75,7 @@ sym10:
 // CHECK-NEXT:    Type: Object (0x1)
 
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym06
@@ -102,7 +102,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Function (0x2)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym09
@@ -114,7 +114,7 @@ sym10:
 // CHECK-NEXT:    Type: Function (0x2)
 
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym10
@@ -123,7 +123,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: Function (0x2)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym11
@@ -135,7 +135,7 @@ sym10:
 // CHECK-NEXT:    Type: Function (0x2)
 
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym12
@@ -147,5 +147,5 @@ sym10:
 // CHECK-NEXT:    Type: Function (0x2)
 
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section: .text (0x1)
+// CHECK-NEXT:    Section: .text
 // CHECK-NEXT:  }

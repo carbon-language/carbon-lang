@@ -72,10 +72,10 @@ func2:
 @ CHECK: Symbols [
 @ CHECK:   Symbol {
 @ CHECK:     Name: func1
-@ CHECK:     Section: .text (0x1)
+@ CHECK:     Section: .text
 @ CHECK:   }
 @ CHECK:   Symbol {
 @ CHECK:     Name: func2
-@ CHECK:     Section: .text (0x1)
+@ CHECK:     Section: .text
 @ CHECK:   }
 @ CHECK: ]

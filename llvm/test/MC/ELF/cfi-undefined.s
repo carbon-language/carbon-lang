@@ -8,8 +8,8 @@ f:
 	.cfi_endproc
 
 // CHECK:        Section {
-// CHECK:          Index: 4
-// CHECK-NEXT:     Name: .eh_frame
+// CHECK:          Index:
+// CHECK:          Name: .eh_frame
 // CHECK-NEXT:     Type: SHT_PROGBITS
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:       SHF_ALLOC
@@ -30,7 +30,7 @@ f:
 // CHECK-NEXT:     )
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Section {
-// CHECK-NEXT:     Index: 5
+// CHECK-NEXT:     Index:
 // CHECK-NEXT:     Name: .rela.eh_frame
 // CHECK-NEXT:     Type: SHT_RELA
 // CHECK-NEXT:     Flags [
@@ -38,8 +38,8 @@ f:
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 24
-// CHECK-NEXT:     Link: 7
-// CHECK-NEXT:     Info: 4
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [

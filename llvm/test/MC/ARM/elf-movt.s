@@ -44,8 +44,8 @@ barf:                                   @ @barf
 @ OBJ-NEXT:     Address: 0x0
 @ OBJ-NEXT:     Offset:
 @ OBJ-NEXT:     Size: 16
-@ OBJ-NEXT:     Link: 6
-@ OBJ-NEXT:     Info: 1
+@ OBJ-NEXT:     Link:
+@ OBJ-NEXT:     Info:
 @ OBJ-NEXT:     AddressAlignment: 4
 @ OBJ-NEXT:     EntrySize: 8
 @ OBJ-NEXT:     Relocations [

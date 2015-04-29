@@ -24,8 +24,8 @@ defined3:
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 24
-// CHECK-NEXT:     Link: 6
-// CHECK-NEXT:     Info: 1
+// CHECK-NEXT:     Link:
+// CHECK-NEXT:     Info:
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [
