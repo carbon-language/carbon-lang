@@ -24,6 +24,8 @@ class BC_MMR6_ENC : BRANCH_OFF26_FM<0b100101>;
 class BITSWAP_MMR6_ENC : POOL32A_BITSWAP_FM_MMR6<0b101100>;
 class CACHE_MMR6_ENC : CACHE_PREF_FM_MMR6<0b001000, 0b0110>;
 class PREF_MMR6_ENC : CACHE_PREF_FM_MMR6<0b011000, 0b0010>;
+class SUB_MMR6_ENC : ARITH_FM_MMR6<"sub", 0x190>;
+class SUBU_MMR6_ENC : ARITH_FM_MMR6<"subu", 0x1d0>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -48,6 +50,8 @@ class BALC_MMR6_DESC : BC_MMR6_DESC_BASE<"balc", brtarget26> {
   list<Register> Defs = [RA];
 }
 class BC_MMR6_DESC : BC_MMR6_DESC_BASE<"bc", brtarget26>;
+class SUB_MMR6_DESC : ArithLogicR<"sub", GPR32Opnd>;
+class SUBU_MMR6_DESC : ArithLogicR<"subu", GPR32Opnd>;
 
 class BITSWAP_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
     : MMR6Arch<instr_asm> {
@@ -87,4 +91,6 @@ def BITSWAP_MMR6 : R6MMR6Rel, BITSWAP_MMR6_ENC, BITSWAP_MMR6_DESC,
                    ISA_MICROMIPS32R6;
 def CACHE_MMR6 : R6MMR6Rel, CACHE_MMR6_ENC, CACHE_MMR6_DESC, ISA_MICROMIPS32R6;
 def PREF_MMR6 : R6MMR6Rel, PREF_MMR6_ENC, PREF_MMR6_DESC, ISA_MICROMIPS32R6;
+def SUB_MMR6 : StdMMR6Rel, SUB_MMR6_DESC, SUB_MMR6_ENC, ISA_MICROMIPS32R6;
+def SUBU_MMR6 : StdMMR6Rel, SUBU_MMR6_DESC, SUBU_MMR6_ENC, ISA_MICROMIPS32R6;
 }
