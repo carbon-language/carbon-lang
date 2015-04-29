@@ -446,23 +446,16 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
         ssize_t found_priority = -1;
         clang::MacroInfo *info = nullptr;
         
-        for (clang::MacroDirective *directive = m_compiler_instance->getPreprocessor().getMacroDirectiveHistory(ii);
-             directive != nullptr;
-             directive = directive->getPrevious())
+        for (clang::ModuleMacro *macro : m_compiler_instance->getPreprocessor().getMacroDefinition(ii).getModuleMacros())
         {
-            unsigned module_id = directive->getMacroInfo()->getOwningModuleID();
-            
-            if (!module_id)
-                continue;
-            
-            clang::Module *module = m_compiler_instance->getModuleManager()->getModule(module_id);
+            clang::Module *module = macro->getOwningModule();
             
             {
                 ModulePriorityMap::iterator pi = module_priorities.find(reinterpret_cast<ModuleID>(module));
                 
                 if (pi != module_priorities.end() && pi->second > found_priority)
                 {
-                    info = directive->getMacroInfo();
+                    info = macro->getMacroInfo();
                     found_priority = pi->second;
                 }
             }
@@ -475,7 +468,7 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
 
                 if ((pi != module_priorities.end()) && pi->second > found_priority)
                 {
-                    info = directive->getMacroInfo();
+                    info = macro->getMacroInfo();
                     found_priority = pi->second;
                 }
             }
