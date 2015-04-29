@@ -245,14 +245,14 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
-    void WriteRelocations(MCAssembler &Asm, MCAsmLayout &Layout);
+    void WriteRelocations(MCAssembler &Asm, const MCAsmLayout &Layout);
 
-    void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
+    void CreateMetadataSections(MCAssembler &Asm, const MCAsmLayout &Layout,
                                 std::vector<const MCSectionELF *> &Sections);
 
     // Create the sections that show up in the symbol table. Currently
     // those are the .note.GNU-stack section and the group sections.
-    void createIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
+    void createIndexedSections(MCAssembler &Asm, const MCAsmLayout &Layout,
                                RevGroupMapTy &RevGroupMap,
                                std::vector<const MCSectionELF *> &Sections,
                                SectionIndexMapTy &SectionIndexMap);
@@ -1147,7 +1147,7 @@ void ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
 }
 
 static SmallVector<char, 128>
-getUncompressedData(MCAsmLayout &Layout,
+getUncompressedData(const MCAsmLayout &Layout,
                     MCSectionData::FragmentListType &Fragments) {
   SmallVector<char, 128> UncompressedData;
   for (const MCFragment &F : Fragments) {
@@ -1194,7 +1194,7 @@ prependCompressionHeader(uint64_t Size,
 // Return a single fragment containing the compressed contents of the whole
 // section. Null if the section was not compressed for any reason.
 static std::unique_ptr<MCDataFragment>
-getCompressedFragment(MCAsmLayout &Layout,
+getCompressedFragment(const MCAsmLayout &Layout,
                       MCSectionData::FragmentListType &Fragments) {
   std::unique_ptr<MCDataFragment> CompressedFragment(new MCDataFragment());
 
@@ -1291,7 +1291,8 @@ void ELFObjectWriter::CompressDebugSections(MCAssembler &Asm,
   }
 }
 
-void ELFObjectWriter::WriteRelocations(MCAssembler &Asm, MCAsmLayout &Layout) {
+void ELFObjectWriter::WriteRelocations(MCAssembler &Asm,
+                                       const MCAsmLayout &Layout) {
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it) {
     MCSectionData &RelSD = *it;
     const MCSectionELF &RelSection =
@@ -1372,7 +1373,7 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
 }
 
 void ELFObjectWriter::CreateMetadataSections(
-    MCAssembler &Asm, MCAsmLayout &Layout,
+    MCAssembler &Asm, const MCAsmLayout &Layout,
     std::vector<const MCSectionELF *> &Sections) {
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
@@ -1424,7 +1425,7 @@ void ELFObjectWriter::CreateMetadataSections(
 }
 
 void ELFObjectWriter::createIndexedSections(
-    MCAssembler &Asm, MCAsmLayout &Layout, RevGroupMapTy &RevGroupMap,
+    MCAssembler &Asm, const MCAsmLayout &Layout, RevGroupMapTy &RevGroupMap,
     std::vector<const MCSectionELF *> &Sections,
     SectionIndexMapTy &SectionIndexMap) {
   MCContext &Ctx = Asm.getContext();
@@ -1566,16 +1567,14 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
   std::vector<const MCSectionELF *> Sections;
-  createIndexedSections(Asm, const_cast<MCAsmLayout &>(Layout), RevGroupMap,
-                        Sections, SectionIndexMap);
+  createIndexedSections(Asm, Layout, RevGroupMap, Sections, SectionIndexMap);
 
   // Compute symbol table information.
   computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap);
 
-  WriteRelocations(Asm, const_cast<MCAsmLayout &>(Layout));
+  WriteRelocations(Asm, Layout);
 
-  CreateMetadataSections(const_cast<MCAssembler &>(Asm),
-                         const_cast<MCAsmLayout &>(Layout), Sections);
+  CreateMetadataSections(Asm, Layout, Sections);
 
   unsigned NumSections = Asm.size();
   SectionOffsetsTy SectionOffsets;
