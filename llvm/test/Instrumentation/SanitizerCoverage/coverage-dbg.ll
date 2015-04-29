@@ -16,7 +16,7 @@
 
 ; Test that __sanitizer_cov call has !dbg pointing to the opening { of A::f().
 ; CHECK: call void @__sanitizer_cov(i32*{{.*}}), !dbg [[A:!.*]]
-; CHECK: [[A]] = !MDLocation(line: 6, scope: !{{.*}})
+; CHECK: [[A]] = !DILocation(line: 6, scope: !{{.*}})
 
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
@@ -27,7 +27,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind readonly uwtable
 define i32 @_ZN1A1fEv(%struct.A* nocapture readonly %this) #0 align 2 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.A* %this, i64 0, metadata !15, metadata !MDExpression()), !dbg !20
+  tail call void @llvm.dbg.value(metadata %struct.A* %this, i64 0, metadata !15, metadata !DIExpression()), !dbg !20
   %x = getelementptr inbounds %struct.A, %struct.A* %this, i64 0, i32 0, !dbg !21
   %0 = load i32, i32* %x, align 4, !dbg !21
   ret i32 %0, !dbg !21
@@ -43,25 +43,25 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18}
 !llvm.ident = !{!19}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (210251)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !2, imports: !2)
-!1 = !MDFile(filename: "../1.cc", directory: "/code/llvm/build0")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (210251)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !2, imports: !2)
+!1 = !DIFile(filename: "../1.cc", directory: "/code/llvm/build0")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "A", line: 1, size: 32, align: 32, file: !1, elements: !5, identifier: "_ZTS1A")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "A", line: 1, size: 32, align: 32, file: !1, elements: !5, identifier: "_ZTS1A")
 !5 = !{!6, !8}
-!6 = !MDDerivedType(tag: DW_TAG_member, name: "x", line: 3, size: 32, align: 32, file: !1, scope: !"_ZTS1A", baseType: !7)
-!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = !MDSubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !"_ZTS1A", type: !9)
-!9 = !MDSubroutineType(types: !10)
+!6 = !DIDerivedType(tag: DW_TAG_member, name: "x", line: 3, size: 32, align: 32, file: !1, scope: !"_ZTS1A", baseType: !7)
+!7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DISubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !"_ZTS1A", type: !9)
+!9 = !DISubroutineType(types: !10)
 !10 = !{!7, !11}
-!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
+!11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
 !12 = !{!13}
-!13 = !MDSubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !9, function: i32 (%struct.A*)* @_ZN1A1fEv, declaration: !8, variables: !14)
+!13 = !DISubprogram(name: "f", linkageName: "_ZN1A1fEv", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !9, function: i32 (%struct.A*)* @_ZN1A1fEv, declaration: !8, variables: !14)
 !14 = !{!15}
-!15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !13, type: !16)
-!16 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")
+!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !13, type: !16)
+!16 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")
 !17 = !{i32 2, !"Dwarf Version", i32 4}
 !18 = !{i32 2, !"Debug Info Version", i32 3}
 !19 = !{!"clang version 3.5.0 (210251)"}
-!20 = !MDLocation(line: 0, scope: !13)
-!21 = !MDLocation(line: 7, scope: !13)
+!20 = !DILocation(line: 0, scope: !13)
+!21 = !DILocation(line: 7, scope: !13)

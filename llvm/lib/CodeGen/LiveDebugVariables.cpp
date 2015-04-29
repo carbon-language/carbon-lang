@@ -158,7 +158,7 @@ public:
   UserValue *getNext() const { return next; }
 
   /// match - Does this UserValue match the parameters?
-  bool match(const MDNode *Var, const MDNode *Expr, const MDLocation *IA,
+  bool match(const MDNode *Var, const MDNode *Expr, const DILocation *IA,
              unsigned Offset, bool indirect) const {
     return Var == Variable && Expr == Expression && dl->getInlinedAt() == IA &&
            Offset == offset && indirect == IsIndirect;
@@ -362,7 +362,7 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
   if (!DL)
     return;
 
-  auto *Scope = cast<MDScope>(DL.getScope());
+  auto *Scope = cast<DIScope>(DL.getScope());
   // Omit the directory, because it's likely to be long and uninteresting.
   CommentOS << Scope->getFilename();
   CommentOS << ':' << DL.getLine();
@@ -378,8 +378,8 @@ static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
   CommentOS << " ]";
 }
 
-static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V,
-                              const MDLocation *DL) {
+static void printExtendedName(raw_ostream &OS, const DILocalVariable *V,
+                              const DILocation *DL) {
   const LLVMContext &Ctx = V->getContext();
   StringRef Res = V->getName();
   if (!Res.empty())
@@ -394,7 +394,7 @@ static void printExtendedName(raw_ostream &OS, const MDLocalVariable *V,
 }
 
 void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
-  auto *DV = cast<MDLocalVariable>(Variable);
+  auto *DV = cast<DILocalVariable>(Variable);
   OS << "!\"";
   printExtendedName(OS, DV, dl);
 
@@ -981,7 +981,7 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
   MachineOperand &Loc = locations[LocNo];
   ++NumInsertedDebugValues;
 
-  assert(cast<MDLocalVariable>(Variable)
+  assert(cast<DILocalVariable>(Variable)
              ->isValidLocationForIntrinsic(getDebugLoc()) &&
          "Expected inlined-at fields to agree");
   if (Loc.isReg())

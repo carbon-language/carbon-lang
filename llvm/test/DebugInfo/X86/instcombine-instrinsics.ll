@@ -30,7 +30,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define void @init() #0 {
   %p = alloca %struct.i14*, align 8
-  call void @llvm.dbg.declare(metadata %struct.i14** %p, metadata !11, metadata !MDExpression()), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.i14** %p, metadata !11, metadata !DIExpression()), !dbg !18
   store %struct.i14* null, %struct.i14** %p, align 8, !dbg !18
   %1 = call i32 @foo(%struct.i14** %p), !dbg !19
   %2 = load %struct.i14*, %struct.i14** %p, align 8, !dbg !20
@@ -54,26 +54,26 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "instcombine_intrinsics.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "instcombine_intrinsics.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "init", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, function: void ()* @init, variables: !2)
-!5 = !MDFile(filename: "instcombine_intrinsics.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "init", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, function: void ()* @init, variables: !2)
+!5 = !DIFile(filename: "instcombine_intrinsics.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 2}
 !9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}
-!11 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 8, scope: !4, file: !5, type: !12)
-!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
-!13 = !MDDerivedType(tag: DW_TAG_typedef, name: "i14", line: 3, file: !1, baseType: !14)
-!14 = !MDCompositeType(tag: DW_TAG_structure_type, line: 1, size: 64, align: 64, file: !1, elements: !15)
+!11 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 8, scope: !4, file: !5, type: !12)
+!12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
+!13 = !DIDerivedType(tag: DW_TAG_typedef, name: "i14", line: 3, file: !1, baseType: !14)
+!14 = !DICompositeType(tag: DW_TAG_structure_type, line: 1, size: 64, align: 64, file: !1, elements: !15)
 !15 = !{!16}
-!16 = !MDDerivedType(tag: DW_TAG_member, name: "i", line: 2, size: 64, align: 64, file: !1, scope: !14, baseType: !17)
-!17 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
-!18 = !MDLocation(line: 8, scope: !4)
-!19 = !MDLocation(line: 9, scope: !4)
-!20 = !MDLocation(line: 10, scope: !4)
-!21 = !MDLocation(line: 11, scope: !4)
-!22 = !MDLocation(line: 12, scope: !4)
+!16 = !DIDerivedType(tag: DW_TAG_member, name: "i", line: 2, size: 64, align: 64, file: !1, scope: !14, baseType: !17)
+!17 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
+!18 = !DILocation(line: 8, scope: !4)
+!19 = !DILocation(line: 9, scope: !4)
+!20 = !DILocation(line: 10, scope: !4)
+!21 = !DILocation(line: 11, scope: !4)
+!22 = !DILocation(line: 12, scope: !4)

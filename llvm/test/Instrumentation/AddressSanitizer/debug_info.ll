@@ -11,8 +11,8 @@ entry:
   %p.addr = alloca i32, align 4
   %r = alloca i32, align 4
   store volatile i32 %p, i32* %p.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %p.addr, metadata !10, metadata !MDExpression()), !dbg !11
-  call void @llvm.dbg.declare(metadata i32* %r, metadata !12, metadata !MDExpression()), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %p.addr, metadata !10, metadata !DIExpression()), !dbg !11
+  call void @llvm.dbg.declare(metadata i32* %r, metadata !12, metadata !DIExpression()), !dbg !14
   %0 = load i32, i32* %p.addr, align 4, !dbg !14
   %add = add nsw i32 %0, 1, !dbg !14
   store volatile i32 %add, i32* %r, align 4, !dbg !14
@@ -33,30 +33,30 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!17}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169314)", isOptimized: true, emissionKind: 0, file: !16, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169314)", isOptimized: true, emissionKind: 0, file: !16, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "zzz", linkageName: "_Z3zzzi", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !16, scope: !6, type: !7, function: i32 (i32)* @_Z3zzzi, variables: !1)
-!6 = !MDFile(filename: "a.cc", directory: "/usr/local/google/llvm_cmake_clang/tmp/debuginfo")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "zzz", linkageName: "_Z3zzzi", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !16, scope: !6, type: !7, function: i32 (i32)* @_Z3zzzi, variables: !1)
+!6 = !DIFile(filename: "a.cc", directory: "/usr/local/google/llvm_cmake_clang/tmp/debuginfo")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !5, file: !6, type: !9)
-!11 = !MDLocation(line: 1, scope: !5)
-!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "r", line: 2, scope: !13, file: !6, type: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !5, file: !6, type: !9)
+!11 = !DILocation(line: 1, scope: !5)
+!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "r", line: 2, scope: !13, file: !6, type: !9)
 
 ; Verify that debug descriptors for argument and local variable will be replaced
 ; with descriptors that end with OpDeref (encoded as 2).
-;   CHECK: ![[ARG_ID]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p", arg: 1,{{.*}} line: 1
-;   CHECK: ![[OPDEREF]] = !MDExpression(DW_OP_deref)
-;   CHECK: ![[VAR_ID]] = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "r",{{.*}} line: 2
+;   CHECK: ![[ARG_ID]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", arg: 1,{{.*}} line: 1
+;   CHECK: ![[OPDEREF]] = !DIExpression(DW_OP_deref)
+;   CHECK: ![[VAR_ID]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "r",{{.*}} line: 2
 ; Verify that there are no more variable descriptors.
-;   CHECK-NOT: !MDLocalVariable(tag: DW_TAG_arg_variable
-;   CHECK-NOT: !MDLocalVariable(tag: DW_TAG_auto_variable
+;   CHECK-NOT: !DILocalVariable(tag: DW_TAG_arg_variable
+;   CHECK-NOT: !DILocalVariable(tag: DW_TAG_auto_variable
 
 
-!13 = distinct !MDLexicalBlock(line: 1, column: 0, file: !16, scope: !5)
-!14 = !MDLocation(line: 2, scope: !13)
-!15 = !MDLocation(line: 3, scope: !13)
-!16 = !MDFile(filename: "a.cc", directory: "/usr/local/google/llvm_cmake_clang/tmp/debuginfo")
+!13 = distinct !DILexicalBlock(line: 1, column: 0, file: !16, scope: !5)
+!14 = !DILocation(line: 2, scope: !13)
+!15 = !DILocation(line: 3, scope: !13)
+!16 = !DIFile(filename: "a.cc", directory: "/usr/local/google/llvm_cmake_clang/tmp/debuginfo")
 !17 = !{i32 1, !"Debug Info Version", i32 3}

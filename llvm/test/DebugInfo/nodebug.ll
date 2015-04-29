@@ -37,15 +37,15 @@ attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "nodebug.cpp", directory: "/tmp/dbginfo")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "nodebug.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "f1", linkageName: "_Z2f1v", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
-!5 = !MDFile(filename: "nodebug.cpp", directory: "/tmp/dbginfo")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "f1", linkageName: "_Z2f1v", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
+!5 = !DIFile(filename: "nodebug.cpp", directory: "/tmp/dbginfo")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}
-!11 = !MDLocation(line: 3, scope: !4)
+!11 = !DILocation(line: 3, scope: !4)

@@ -126,7 +126,7 @@ namespace {
     Function *insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> >);
     void insertIndirectCounterIncrement();
 
-    std::string mangleName(const MDCompileUnit *CU, const char *NewStem);
+    std::string mangleName(const DICompileUnit *CU, const char *NewStem);
 
     GCOVOptions Options;
 
@@ -149,7 +149,7 @@ ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
   return new GCOVProfiler(Options);
 }
 
-static StringRef getFunctionName(const MDSubprogram *SP) {
+static StringRef getFunctionName(const DISubprogram *SP) {
   if (!SP->getLinkageName().empty())
     return SP->getLinkageName();
   return SP->getName();
@@ -309,7 +309,7 @@ namespace {
   // object users can construct, the blocks and lines will be rooted here.
   class GCOVFunction : public GCOVRecord {
    public:
-     GCOVFunction(const MDSubprogram *SP, raw_ostream *os, uint32_t Ident,
+     GCOVFunction(const DISubprogram *SP, raw_ostream *os, uint32_t Ident,
                   bool UseCfgChecksum, bool ExitBlockBeforeBody)
          : SP(SP), Ident(Ident), UseCfgChecksum(UseCfgChecksum), CfgChecksum(0),
            ReturnBlock(1, os) {
@@ -411,7 +411,7 @@ namespace {
     }
 
    private:
-     const MDSubprogram *SP;
+     const DISubprogram *SP;
     uint32_t Ident;
     uint32_t FuncChecksum;
     bool UseCfgChecksum;
@@ -421,7 +421,7 @@ namespace {
   };
 }
 
-std::string GCOVProfiler::mangleName(const MDCompileUnit *CU,
+std::string GCOVProfiler::mangleName(const DICompileUnit *CU,
                                      const char *NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
@@ -488,7 +488,7 @@ void GCOVProfiler::emitProfileNotes() {
     // this pass over the original .o's as they're produced, or run it after
     // LTO, we'll generate the same .gcno files.
 
-    auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
+    auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
     std::error_code EC;
     raw_fd_ostream out(mangleName(CU, "gcno"), EC, sys::fs::F_None);
     std::string EdgeDestinations;
@@ -571,7 +571,7 @@ bool GCOVProfiler::emitProfileArcs() {
   bool Result = false;
   bool InsertIndCounterIncrCode = false;
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-    auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
+    auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
     for (auto *SP : CU->getSubprograms()) {
       Function *F = SP->getFunction();
@@ -847,7 +847,7 @@ Function *GCOVProfiler::insertCounterWriteout(
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
+      auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
       uint32_t CfgChecksum = FileChecksums.empty() ? 0 : FileChecksums[i];
       Builder.CreateCall3(StartFile,
@@ -855,7 +855,7 @@ Function *GCOVProfiler::insertCounterWriteout(
                           Builder.CreateGlobalStringPtr(ReversedVersion),
                           Builder.getInt32(CfgChecksum));
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
-        auto *SP = cast_or_null<MDSubprogram>(CountersBySP[j].second);
+        auto *SP = cast_or_null<DISubprogram>(CountersBySP[j].second);
         uint32_t FuncChecksum = Funcs.empty() ? 0 : Funcs[j]->getFuncChecksum();
         Builder.CreateCall5(
             EmitFunction, Builder.getInt32(j),

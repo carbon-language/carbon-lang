@@ -13,8 +13,8 @@
 !llvm.module.flags = !{!3, !4}
 !llvm.ident = !{!5}
 
-!0 = !MDCompileUnit(file: !1, language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2, emissionKind: 1)
-!1 = !MDFile(filename: "empty.c", directory: "/a")
+!0 = !DICompileUnit(file: !1, language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2, emissionKind: 1)
+!1 = !DIFile(filename: "empty.c", directory: "/a")
 !2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 2, !"Debug Info Version", i32 3}

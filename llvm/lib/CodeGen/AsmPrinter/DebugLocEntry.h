@@ -29,25 +29,25 @@ class DebugLocEntry {
 public:
   /// \brief A single location or constant.
   struct Value {
-    Value(const MDExpression *Expr, int64_t i)
+    Value(const DIExpression *Expr, int64_t i)
         : Expression(Expr), EntryKind(E_Integer) {
       Constant.Int = i;
     }
-    Value(const MDExpression *Expr, const ConstantFP *CFP)
+    Value(const DIExpression *Expr, const ConstantFP *CFP)
         : Expression(Expr), EntryKind(E_ConstantFP) {
       Constant.CFP = CFP;
     }
-    Value(const MDExpression *Expr, const ConstantInt *CIP)
+    Value(const DIExpression *Expr, const ConstantInt *CIP)
         : Expression(Expr), EntryKind(E_ConstantInt) {
       Constant.CIP = CIP;
     }
-    Value(const MDExpression *Expr, MachineLocation Loc)
+    Value(const DIExpression *Expr, MachineLocation Loc)
         : Expression(Expr), EntryKind(E_Location), Loc(Loc) {
-      assert(cast<MDExpression>(Expr)->isValid());
+      assert(cast<DIExpression>(Expr)->isValid());
     }
 
     /// Any complex address location expression for this Value.
-    const MDExpression *Expression;
+    const DIExpression *Expression;
 
     /// Type of entry that this represents.
     enum EntryType { E_Location, E_Integer, E_ConstantFP, E_ConstantInt };
@@ -72,7 +72,7 @@ public:
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
     bool isBitPiece() const { return getExpression()->isBitPiece(); }
-    const MDExpression *getExpression() const { return Expression; }
+    const DIExpression *getExpression() const { return Expression; }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
@@ -94,8 +94,8 @@ public:
   /// Return true if the merge was successful.
   bool MergeValues(const DebugLocEntry &Next) {
     if (Begin == Next.Begin) {
-      auto *Expr = cast_or_null<MDExpression>(Values[0].Expression);
-      auto *NextExpr = cast_or_null<MDExpression>(Next.Values[0].Expression);
+      auto *Expr = cast_or_null<DIExpression>(Values[0].Expression);
+      auto *NextExpr = cast_or_null<DIExpression>(Next.Values[0].Expression);
       if (Expr->isBitPiece() && NextExpr->isBitPiece()) {
         addValues(Next.Values);
         End = Next.End;
@@ -143,7 +143,7 @@ public:
 
   /// \brief Lower this entry into a DWARF expression.
   void finalize(const AsmPrinter &AP, DebugLocStream &Locs,
-                const MDBasicType *BT);
+                const DIBasicType *BT);
 };
 
 /// \brief Compare two Values for equality.

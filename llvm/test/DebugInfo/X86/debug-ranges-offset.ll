@@ -31,11 +31,11 @@ entry:
   %call = call i8* @_Znwm(i64 4) #4, !dbg !19
   %_msret = load i64, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %3 = bitcast i8* %call to i32*, !dbg !19
-  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !DIExpression()), !dbg !19
   %4 = inttoptr i64 %1 to i64*, !dbg !19
   store i64 %_msret, i64* %4, align 8, !dbg !19
   store volatile i32* %3, i32** %p, align 8, !dbg !19
-  tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !DIExpression()), !dbg !19
   %p.0.p.0. = load volatile i32*, i32** %p, align 8, !dbg !20
   %_msld = load i64, i64* %4, align 8, !dbg !20
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !20
@@ -96,11 +96,11 @@ entry:
   %call.i = call i8* @_Znwm(i64 4) #4, !dbg !30
   %_msret = load i64, i64* getelementptr inbounds ([8 x i64], [8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %3 = bitcast i8* %call.i to i32*, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !DIExpression()), !dbg !30
   %4 = inttoptr i64 %1 to i64*, !dbg !30
   store i64 %_msret, i64* %4, align 8, !dbg !30
   store volatile i32* %3, i32** %p.i, align 8, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !DIExpression()), !dbg !30
   %p.i.0.p.0.p.0..i = load volatile i32*, i32** %p.i, align 8, !dbg !33
   %_msld = load i64, i64* %4, align 8, !dbg !33
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !33
@@ -202,40 +202,40 @@ attributes #4 = { builtin }
 !llvm.module.flags = !{!16, !17}
 !llvm.ident = !{!18}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4, !13}
-!4 = !MDSubprogram(name: "f", linkageName: "_Z1fv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z1fv, variables: !8)
-!5 = !MDFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "f", linkageName: "_Z1fv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z1fv, variables: !8)
+!5 = !DIFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null}
 !8 = !{!9}
-!9 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10)
-!10 = !MDDerivedType(tag: DW_TAG_volatile_type, baseType: !11)
-!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
-!12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!13 = !MDSubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !1, scope: !5, type: !14, function: i32 ()* @main, variables: !2)
-!14 = !MDSubroutineType(types: !15)
+!9 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10)
+!10 = !DIDerivedType(tag: DW_TAG_volatile_type, baseType: !11)
+!11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
+!12 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!13 = !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !1, scope: !5, type: !14, function: i32 ()* @main, variables: !2)
+!14 = !DISubroutineType(types: !15)
 !15 = !{!12}
 !16 = !{i32 2, !"Dwarf Version", i32 4}
 !17 = !{i32 1, !"Debug Info Version", i32 3}
 !18 = !{!"clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)"}
-!19 = !MDLocation(line: 4, scope: !4)
-!20 = !MDLocation(line: 5, scope: !21)
-!21 = distinct !MDLexicalBlock(line: 5, column: 0, file: !1, scope: !4)
+!19 = !DILocation(line: 4, scope: !4)
+!20 = !DILocation(line: 5, scope: !21)
+!21 = distinct !DILexicalBlock(line: 5, column: 0, file: !1, scope: !4)
 !22 = !{!"branch_weights", i32 1000, i32 1}
 !23 = !{!24, !24, i64 0}
 !24 = !{!"int", !25, i64 0}
 !25 = !{!"omnipotent char", !26, i64 0}
 !26 = !{!"Simple C/C++ TBAA"}
 !27 = !{!"branch_weights", i32 1, i32 1000}
-!28 = !MDLocation(line: 6, scope: !21)
-!29 = !MDLocation(line: 7, scope: !4)
-!30 = !MDLocation(line: 4, scope: !4, inlinedAt: !31)
-!31 = !MDLocation(line: 10, scope: !13)
-!32 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10)
-!33 = !MDLocation(line: 5, scope: !21, inlinedAt: !31)
-!34 = !MDLocation(line: 6, scope: !21, inlinedAt: !31)
-!35 = !MDLocation(line: 7, scope: !4, inlinedAt: !31)
-!36 = !MDLocation(line: 11, scope: !13)
+!28 = !DILocation(line: 6, scope: !21)
+!29 = !DILocation(line: 7, scope: !4)
+!30 = !DILocation(line: 4, scope: !4, inlinedAt: !31)
+!31 = !DILocation(line: 10, scope: !13)
+!32 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10)
+!33 = !DILocation(line: 5, scope: !21, inlinedAt: !31)
+!34 = !DILocation(line: 6, scope: !21, inlinedAt: !31)
+!35 = !DILocation(line: 7, scope: !4, inlinedAt: !31)
+!36 = !DILocation(line: 11, scope: !13)

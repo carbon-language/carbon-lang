@@ -15,14 +15,14 @@ target triple = "thumbv7-apple-ios"
 ; Function Attrs: nounwind
 define arm_aapcscc void @_Z1hiiiif(i32, i32, i32, i32, float %x) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !12, metadata !MDExpression()), !dbg !18
-  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !13, metadata !MDExpression()), !dbg !18
-  tail call void @llvm.dbg.value(metadata i32 %2, i64 0, metadata !14, metadata !MDExpression()), !dbg !18
-  tail call void @llvm.dbg.value(metadata i32 %3, i64 0, metadata !15, metadata !MDExpression()), !dbg !18
-  tail call void @llvm.dbg.value(metadata float %x, i64 0, metadata !16, metadata !MDExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !12, metadata !DIExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !13, metadata !DIExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %2, i64 0, metadata !14, metadata !DIExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %3, i64 0, metadata !15, metadata !DIExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata float %x, i64 0, metadata !16, metadata !DIExpression()), !dbg !18
   %call = tail call arm_aapcscc i32 @_Z1fv() #3, !dbg !19
   %conv = sitofp i32 %call to float, !dbg !19
-  tail call void @llvm.dbg.value(metadata float %conv, i64 0, metadata !16, metadata !MDExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata float %conv, i64 0, metadata !16, metadata !DIExpression()), !dbg !19
   tail call arm_aapcscc void @_Z1gf(float %conv) #3, !dbg !19
   ret void, !dbg !20
 }
@@ -41,25 +41,25 @@ attributes #3 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!17, !21}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (trunk 190804) (llvm/trunk 190797)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "/<unknown>", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (trunk 190804) (llvm/trunk 190797)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "/<unknown>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "h", linkageName: "_Z1hiiiif", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: void (i32, i32, i32, i32, float)* @_Z1hiiiif, variables: !11)
-!5 = !MDFile(filename: "/arm.cpp", directory: "")
-!6 = !MDFile(filename: "/arm.cpp", directory: "")
-!7 = !MDSubroutineType(types: !8)
+!4 = !DISubprogram(name: "h", linkageName: "_Z1hiiiif", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !6, type: !7, function: void (i32, i32, i32, i32, float)* @_Z1hiiiif, variables: !11)
+!5 = !DIFile(filename: "/arm.cpp", directory: "")
+!6 = !DIFile(filename: "/arm.cpp", directory: "")
+!7 = !DISubroutineType(types: !8)
 !8 = !{null, !9, !9, !9, !9, !10}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !11 = !{!12, !13, !14, !15, !16}
-!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 1, scope: !4, file: !6, type: !9)
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 2, scope: !4, file: !6, type: !9)
-!14 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 3, scope: !4, file: !6, type: !9)
-!15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 4, scope: !4, file: !6, type: !9)
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 3, arg: 5, scope: !4, file: !6, type: !10)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 1, scope: !4, file: !6, type: !9)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 2, scope: !4, file: !6, type: !9)
+!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 3, scope: !4, file: !6, type: !9)
+!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 3, arg: 4, scope: !4, file: !6, type: !9)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 3, arg: 5, scope: !4, file: !6, type: !10)
 !17 = !{i32 2, !"Dwarf Version", i32 4}
-!18 = !MDLocation(line: 3, scope: !4)
-!19 = !MDLocation(line: 4, scope: !4)
-!20 = !MDLocation(line: 5, scope: !4)
+!18 = !DILocation(line: 3, scope: !4)
+!19 = !DILocation(line: 4, scope: !4)
+!20 = !DILocation(line: 5, scope: !4)
 !21 = !{i32 1, !"Debug Info Version", i32 3}

@@ -23,34 +23,34 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18}
 !llvm.ident = !{!19}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "pieces.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "pieces.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: i32 (i64, i32)* @foo, variables: !15)
-!5 = !MDFile(filename: "pieces.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: i32 (i64, i32)* @foo, variables: !15)
+!5 = !DIFile(filename: "pieces.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDDerivedType(tag: DW_TAG_typedef, name: "S", line: 1, file: !1, baseType: !10)
-!10 = !MDCompositeType(tag: DW_TAG_structure_type, line: 1, size: 128, align: 64, file: !1, elements: !11)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_typedef, name: "S", line: 1, file: !1, baseType: !10)
+!10 = !DICompositeType(tag: DW_TAG_structure_type, line: 1, size: 128, align: 64, file: !1, elements: !11)
 !11 = !{!12, !14}
-!12 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 1, size: 64, align: 64, file: !1, scope: !10, baseType: !13)
-!13 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
-!14 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 1, size: 32, align: 32, offset: 64, file: !1, scope: !10, baseType: !8)
+!12 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 1, size: 64, align: 64, file: !1, scope: !10, baseType: !13)
+!13 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
+!14 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 1, size: 32, align: 32, offset: 64, file: !1, scope: !10, baseType: !8)
 !15 = !{!16}
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
 !17 = !{i32 2, !"Dwarf Version", i32 4}
 !18 = !{i32 1, !"Debug Info Version", i32 3}
 !19 = !{!"clang version 3.5 "}
-!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
-!21 = !MDLocation(line: 3, scope: !4)
-!22 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
-!23 = !MDLocation(line: 4, scope: !4)
-!24 = !MDExpression(DW_OP_deref, DW_OP_bit_piece, 0, 64)
+!20 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!21 = !DILocation(line: 3, scope: !4)
+!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!23 = !DILocation(line: 4, scope: !4)
+!24 = !DIExpression(DW_OP_deref, DW_OP_bit_piece, 0, 64)
 !25 = !{}
 ; This expression has elements after DW_OP_bit_piece.
 ; CHECK: invalid expression
-; CHECK-NEXT: !MDExpression({{[0-9]+}}, 64, 32, {{[0-9]+}})
+; CHECK-NEXT: !DIExpression({{[0-9]+}}, 64, 32, {{[0-9]+}})
 ; CHECK-NOT: invalid expression
-!27 = !MDExpression(DW_OP_bit_piece, 64, 32, DW_OP_deref)
+!27 = !DIExpression(DW_OP_bit_piece, 64, 32, DW_OP_deref)

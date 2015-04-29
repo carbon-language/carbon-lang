@@ -93,13 +93,13 @@ class ExprAST;
 }
 static IRBuilder<> Builder(getGlobalContext());
 struct DebugInfo {
-  MDCompileUnit *TheCU;
-  MDType *DblTy;
-  std::vector<MDScope *> LexicalBlocks;
-  std::map<const PrototypeAST *, MDScope *> FnScopeMap;
+  DICompileUnit *TheCU;
+  DIType *DblTy;
+  std::vector<DIScope *> LexicalBlocks;
+  std::map<const PrototypeAST *, DIScope *> FnScopeMap;
 
   void emitLocation(ExprAST *AST);
-  MDType *getDoubleTy();
+  DIType *getDoubleTy();
 } KSDbgInfo;
 
 static std::string IdentifierStr; // Filled in if tok_identifier
@@ -816,7 +816,7 @@ static PrototypeAST *ParseExtern() {
 
 static DIBuilder *DBuilder;
 
-MDType *DebugInfo::getDoubleTy() {
+DIType *DebugInfo::getDoubleTy() {
   if (DblTy)
     return DblTy;
 
@@ -827,7 +827,7 @@ MDType *DebugInfo::getDoubleTy() {
 void DebugInfo::emitLocation(ExprAST *AST) {
   if (!AST)
     return Builder.SetCurrentDebugLocation(DebugLoc());
-  MDScope *Scope;
+  DIScope *Scope;
   if (LexicalBlocks.empty())
     Scope = TheCU;
   else
@@ -836,9 +836,9 @@ void DebugInfo::emitLocation(ExprAST *AST) {
       DebugLoc::get(AST->getLine(), AST->getCol(), Scope));
 }
 
-static MDSubroutineType *CreateFunctionType(unsigned NumArgs, MDFile *Unit) {
+static DISubroutineType *CreateFunctionType(unsigned NumArgs, DIFile *Unit) {
   SmallVector<Metadata *, 8> EltTys;
-  MDType *DblTy = KSDbgInfo.getDoubleTy();
+  DIType *DblTy = KSDbgInfo.getDoubleTy();
 
   // Add the result type.
   EltTys.push_back(DblTy);
@@ -1227,15 +1227,15 @@ Function *PrototypeAST::Codegen() {
     AI->setName(Args[Idx]);
 
   // Create a subprogram DIE for this function.
-  MDFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
+  DIFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
                                       KSDbgInfo.TheCU->getDirectory());
-  MDScope *FContext = Unit;
+  DIScope *FContext = Unit;
   unsigned LineNo = Line;
   unsigned ScopeLine = Line;
-  MDSubprogram *SP = DBuilder->createFunction(
+  DISubprogram *SP = DBuilder->createFunction(
       FContext, Name, StringRef(), Unit, LineNo,
       CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
-      true /* definition */, ScopeLine, DebugNode::FlagPrototyped, false, F);
+      true /* definition */, ScopeLine, DINode::FlagPrototyped, false, F);
 
   KSDbgInfo.FnScopeMap[this] = SP;
   return F;
@@ -1250,10 +1250,10 @@ void PrototypeAST::CreateArgumentAllocas(Function *F) {
     AllocaInst *Alloca = CreateEntryBlockAlloca(F, Args[Idx]);
 
     // Create a debug descriptor for the variable.
-    MDScope *Scope = KSDbgInfo.LexicalBlocks.back();
-    MDFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
+    DIScope *Scope = KSDbgInfo.LexicalBlocks.back();
+    DIFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU->getFilename(),
                                         KSDbgInfo.TheCU->getDirectory());
-    MDLocalVariable *D = DBuilder->createLocalVariable(
+    DILocalVariable *D = DBuilder->createLocalVariable(
         dwarf::DW_TAG_arg_variable, Scope, Args[Idx], Unit, Line,
         KSDbgInfo.getDoubleTy(), Idx);
 

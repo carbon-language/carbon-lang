@@ -22,14 +22,14 @@ namespace llvm {
 
   class LLVMContext;
   class raw_ostream;
-  class MDLocation;
+  class DILocation;
 
   /// \brief A debug info location.
   ///
-  /// This class is a wrapper around a tracking reference to an \a MDLocation
+  /// This class is a wrapper around a tracking reference to an \a DILocation
   /// pointer.
   ///
-  /// To avoid extra includes, \a DebugLoc doubles the \a MDLocation API with a
+  /// To avoid extra includes, \a DebugLoc doubles the \a DILocation API with a
   /// one based on relatively opaque \a MDNode pointers.
   class DebugLoc {
     TrackingMDNodeRef Loc;
@@ -47,31 +47,31 @@ namespace llvm {
       return *this;
     }
 
-    /// \brief Construct from an \a MDLocation.
-    DebugLoc(const MDLocation *L);
+    /// \brief Construct from an \a DILocation.
+    DebugLoc(const DILocation *L);
 
     /// \brief Construct from an \a MDNode.
     ///
-    /// Note: if \c N is not an \a MDLocation, a verifier check will fail, and
+    /// Note: if \c N is not an \a DILocation, a verifier check will fail, and
     /// accessors will crash.  However, construction from other nodes is
     /// supported in order to handle forward references when reading textual
     /// IR.
     explicit DebugLoc(const MDNode *N);
 
-    /// \brief Get the underlying \a MDLocation.
+    /// \brief Get the underlying \a DILocation.
     ///
-    /// \pre !*this or \c isa<MDLocation>(getAsMDNode()).
+    /// \pre !*this or \c isa<DILocation>(getAsMDNode()).
     /// @{
-    MDLocation *get() const;
-    operator MDLocation *() const { return get(); }
-    MDLocation *operator->() const { return get(); }
-    MDLocation &operator*() const { return *get(); }
+    DILocation *get() const;
+    operator DILocation *() const { return get(); }
+    DILocation *operator->() const { return get(); }
+    DILocation &operator*() const { return *get(); }
     /// @}
 
     /// \brief Check for null.
     ///
     /// Check for null in a way that is safe with broken debug info.  Unlike
-    /// the conversion to \c MDLocation, this doesn't require that \c Loc is of
+    /// the conversion to \c DILocation, this doesn't require that \c Loc is of
     /// the right type.  Important for cases like \a llvm::StripDebugInfo() and
     /// \a Instruction::hasMetadata().
     explicit operator bool() const { return Loc; }
@@ -82,18 +82,18 @@ namespace llvm {
     /// \brief Create a new DebugLoc.
     ///
     /// Create a new DebugLoc at the specified line/col and scope/inline.  This
-    /// forwards to \a MDLocation::get().
+    /// forwards to \a DILocation::get().
     ///
     /// If \c !Scope, returns a default-constructed \a DebugLoc.
     ///
-    /// FIXME: Remove this.  Users should use MDLocation::get().
+    /// FIXME: Remove this.  Users should use DILocation::get().
     static DebugLoc get(unsigned Line, unsigned Col, const MDNode *Scope,
                         const MDNode *InlinedAt = nullptr);
 
     unsigned getLine() const;
     unsigned getCol() const;
     MDNode *getScope() const;
-    MDLocation *getInlinedAt() const;
+    DILocation *getInlinedAt() const;
 
     /// \brief Get the fully inlined-at scope for a DebugLoc.
     ///
@@ -105,8 +105,8 @@ namespace llvm {
     /// Walk up the scope chain of given debug loc and find line number info
     /// for the function.
     ///
-    /// FIXME: Remove this.  Users should use MDLocation/MDLocalScope API to
-    /// find the subprogram, and then MDLocation::get().
+    /// FIXME: Remove this.  Users should use DILocation/DILocalScope API to
+    /// find the subprogram, and then DILocation::get().
     DebugLoc getFnDebugLoc() const;
 
     /// \brief Return \c this as a bar \a MDNode.

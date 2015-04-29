@@ -21,11 +21,11 @@
 
 ; Debug location of the code in caller() and of the inlined code that did not
 ; have any debug location before.
-; CHECK-DAG: [[A]] = !MDLocation(line: 4, scope: !{{[0-9]+}})
+; CHECK-DAG: [[A]] = !DILocation(line: 4, scope: !{{[0-9]+}})
 
 ; Debug location of the inlined code.
-; CHECK-DAG: [[B]] = !MDLocation(line: 2, scope: !{{[0-9]+}}, inlinedAt: [[A_INL:![0-9]*]])
-; CHECK-DAG: [[A_INL]] = distinct !MDLocation(line: 4, scope: !{{[0-9]+}})
+; CHECK-DAG: [[B]] = !DILocation(line: 2, scope: !{{[0-9]+}}, inlinedAt: [[A_INL:![0-9]*]])
+; CHECK-DAG: [[A_INL]] = distinct !DILocation(line: 4, scope: !{{[0-9]+}})
 
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
@@ -55,16 +55,16 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (210174)", isOptimized: true, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "test.c", directory: "/code/llvm/build0")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (210174)", isOptimized: true, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "test.c", directory: "/code/llvm/build0")
 !2 = !{}
 !3 = !{!4, !7}
-!4 = !MDSubprogram(name: "caller", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @caller, variables: !2)
-!5 = !MDFile(filename: "test.c", directory: "/code/llvm/build0")
-!6 = !MDSubroutineType(types: !2)
-!7 = !MDSubprogram(name: "callee2", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
+!4 = !DISubprogram(name: "caller", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @caller, variables: !2)
+!5 = !DIFile(filename: "test.c", directory: "/code/llvm/build0")
+!6 = !DISubroutineType(types: !2)
+!7 = !DISubprogram(name: "callee2", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 (210174)"}
-!11 = !MDLocation(line: 2, scope: !7)
-!12 = !MDLocation(line: 4, scope: !4)
+!11 = !DILocation(line: 2, scope: !7)
+!12 = !DILocation(line: 4, scope: !4)

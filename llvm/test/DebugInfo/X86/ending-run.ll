@@ -13,8 +13,8 @@ entry:
   %x.addr = alloca i32, align 4
   %y = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %x.addr, metadata !12, metadata !MDExpression()), !dbg !13
-  call void @llvm.dbg.declare(metadata i32* %y, metadata !14, metadata !MDExpression()), !dbg !16
+  call void @llvm.dbg.declare(metadata i32* %x.addr, metadata !12, metadata !DIExpression()), !dbg !13
+  call void @llvm.dbg.declare(metadata i32* %y, metadata !14, metadata !DIExpression()), !dbg !16
   %0 = load i32, i32* %x.addr, align 4, !dbg !17
   %1 = load i32, i32* %x.addr, align 4, !dbg !17
   %mul = mul nsw i32 %0, %1, !dbg !17
@@ -29,20 +29,20 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!20}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 153921) (llvm/trunk 153916)", isOptimized: false, emissionKind: 0, file: !19, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 153921) (llvm/trunk 153916)", isOptimized: false, emissionKind: 0, file: !19, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "callee", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !19, scope: !6, type: !7, function: i32 (i32)* @callee)
-!6 = !MDFile(filename: "ending-run.c", directory: "/Users/echristo/tmp")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "callee", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !19, scope: !6, type: !7, function: i32 (i32)* @callee)
+!6 = !DIFile(filename: "ending-run.c", directory: "/Users/echristo/tmp")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !9)
-!13 = !MDLocation(line: 5, column: 5, scope: !5)
-!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 8, scope: !15, file: !6, type: !9)
-!15 = distinct !MDLexicalBlock(line: 7, column: 1, file: !19, scope: !5)
-!16 = !MDLocation(line: 8, column: 9, scope: !15)
-!17 = !MDLocation(line: 8, column: 18, scope: !15)
-!18 = !MDLocation(line: 9, column: 5, scope: !15)
-!19 = !MDFile(filename: "ending-run.c", directory: "/Users/echristo/tmp")
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !9)
+!13 = !DILocation(line: 5, column: 5, scope: !5)
+!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 8, scope: !15, file: !6, type: !9)
+!15 = distinct !DILexicalBlock(line: 7, column: 1, file: !19, scope: !5)
+!16 = !DILocation(line: 8, column: 9, scope: !15)
+!17 = !DILocation(line: 8, column: 18, scope: !15)
+!18 = !DILocation(line: 9, column: 5, scope: !15)
+!19 = !DIFile(filename: "ending-run.c", directory: "/Users/echristo/tmp")
 !20 = !{i32 1, !"Debug Info Version", i32 3}

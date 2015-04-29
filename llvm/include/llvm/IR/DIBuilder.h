@@ -104,7 +104,7 @@ namespace llvm {
     ///                        source location information in the back end
     ///                        without actually changing the output (e.g.,
     ///                        when using optimization remarks).
-    MDCompileUnit *createCompileUnit(unsigned Lang, StringRef File,
+    DICompileUnit *createCompileUnit(unsigned Lang, StringRef File,
                                      StringRef Dir, StringRef Producer,
                                      bool isOptimized, StringRef Flags,
                                      unsigned RV, StringRef SplitName = "",
@@ -113,16 +113,16 @@ namespace llvm {
 
     /// createFile - Create a file descriptor to hold debugging information
     /// for a file.
-    MDFile *createFile(StringRef Filename, StringRef Directory);
+    DIFile *createFile(StringRef Filename, StringRef Directory);
 
     /// createEnumerator - Create a single enumerator value.
-    MDEnumerator *createEnumerator(StringRef Name, int64_t Val);
+    DIEnumerator *createEnumerator(StringRef Name, int64_t Val);
 
     /// \brief Create a DWARF unspecified type.
-    MDBasicType *createUnspecifiedType(StringRef Name);
+    DIBasicType *createUnspecifiedType(StringRef Name);
 
     /// \brief Create C++11 nullptr type.
-    MDBasicType *createNullPtrType();
+    DIBasicType *createNullPtrType();
 
     /// createBasicType - Create debugging information entry for a basic
     /// type.
@@ -130,21 +130,21 @@ namespace llvm {
     /// @param SizeInBits  Size of the type.
     /// @param AlignInBits Type alignment.
     /// @param Encoding    DWARF encoding code, e.g. dwarf::DW_ATE_float.
-    MDBasicType *createBasicType(StringRef Name, uint64_t SizeInBits,
+    DIBasicType *createBasicType(StringRef Name, uint64_t SizeInBits,
                                  uint64_t AlignInBits, unsigned Encoding);
 
     /// createQualifiedType - Create debugging information entry for a qualified
     /// type, e.g. 'const int'.
     /// @param Tag         Tag identifing type, e.g. dwarf::TAG_volatile_type
     /// @param FromTy      Base Type.
-    MDDerivedType *createQualifiedType(unsigned Tag, MDType *FromTy);
+    DIDerivedType *createQualifiedType(unsigned Tag, DIType *FromTy);
 
     /// createPointerType - Create debugging information entry for a pointer.
     /// @param PointeeTy   Type pointed by this pointer.
     /// @param SizeInBits  Size.
     /// @param AlignInBits Alignment. (optional)
     /// @param Name        Pointer type name. (optional)
-    MDDerivedType *createPointerType(MDType *PointeeTy, uint64_t SizeInBits,
+    DIDerivedType *createPointerType(DIType *PointeeTy, uint64_t SizeInBits,
                                      uint64_t AlignInBits = 0,
                                      StringRef Name = "");
 
@@ -153,13 +153,13 @@ namespace llvm {
     /// @param SizeInBits  Size.
     /// @param AlignInBits Alignment. (optional)
     /// @param Class Type for which this pointer points to members of.
-    MDDerivedType *createMemberPointerType(MDType *PointeeTy, MDType *Class,
+    DIDerivedType *createMemberPointerType(DIType *PointeeTy, DIType *Class,
                                            uint64_t SizeInBits,
                                            uint64_t AlignInBits = 0);
 
     /// createReferenceType - Create debugging information entry for a c++
     /// style reference or rvalue reference type.
-    MDDerivedType *createReferenceType(unsigned Tag, MDType *RTy);
+    DIDerivedType *createReferenceType(unsigned Tag, DIType *RTy);
 
     /// createTypedef - Create debugging information entry for a typedef.
     /// @param Ty          Original type.
@@ -167,11 +167,11 @@ namespace llvm {
     /// @param File        File where this type is defined.
     /// @param LineNo      Line number.
     /// @param Context     The surrounding context for the typedef.
-    MDDerivedType *createTypedef(MDType *Ty, StringRef Name, MDFile *File,
-                                 unsigned LineNo, MDScope *Context);
+    DIDerivedType *createTypedef(DIType *Ty, StringRef Name, DIFile *File,
+                                 unsigned LineNo, DIScope *Context);
 
     /// createFriend - Create debugging information entry for a 'friend'.
-    MDDerivedType *createFriend(MDType *Ty, MDType *FriendTy);
+    DIDerivedType *createFriend(DIType *Ty, DIType *FriendTy);
 
     /// createInheritance - Create debugging information entry to establish
     /// inheritance relationship between two types.
@@ -180,7 +180,7 @@ namespace llvm {
     /// @param BaseOffset   Base offset.
     /// @param Flags        Flags to describe inheritance attribute,
     ///                     e.g. private
-    MDDerivedType *createInheritance(MDType *Ty, MDType *BaseTy,
+    DIDerivedType *createInheritance(DIType *Ty, DIType *BaseTy,
                                      uint64_t BaseOffset, unsigned Flags);
 
     /// createMemberType - Create debugging information entry for a member.
@@ -193,11 +193,11 @@ namespace llvm {
     /// @param OffsetInBits Member offset.
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
-    MDDerivedType *createMemberType(MDScope *Scope, StringRef Name,
-                                    MDFile *File, unsigned LineNo,
+    DIDerivedType *createMemberType(DIScope *Scope, StringRef Name,
+                                    DIFile *File, unsigned LineNo,
                                     uint64_t SizeInBits, uint64_t AlignInBits,
                                     uint64_t OffsetInBits, unsigned Flags,
-                                    MDType *Ty);
+                                    DIType *Ty);
 
     /// createStaticMemberType - Create debugging information entry for a
     /// C++ static data member.
@@ -208,9 +208,9 @@ namespace llvm {
     /// @param Ty         Type of the static member.
     /// @param Flags      Flags to encode member attribute, e.g. private.
     /// @param Val        Const initializer of the member.
-    MDDerivedType *createStaticMemberType(MDScope *Scope, StringRef Name,
-                                          MDFile *File, unsigned LineNo,
-                                          MDType *Ty, unsigned Flags,
+    DIDerivedType *createStaticMemberType(DIScope *Scope, StringRef Name,
+                                          DIFile *File, unsigned LineNo,
+                                          DIType *Ty, unsigned Flags,
                                           llvm::Constant *Val);
 
     /// createObjCIVar - Create debugging information entry for Objective-C
@@ -224,10 +224,10 @@ namespace llvm {
     /// @param Flags        Flags to encode member attribute, e.g. private
     /// @param Ty           Parent type.
     /// @param PropertyNode Property associated with this ivar.
-    MDDerivedType *createObjCIVar(StringRef Name, MDFile *File, unsigned LineNo,
+    DIDerivedType *createObjCIVar(StringRef Name, DIFile *File, unsigned LineNo,
                                   uint64_t SizeInBits, uint64_t AlignInBits,
                                   uint64_t OffsetInBits, unsigned Flags,
-                                  MDType *Ty, MDNode *PropertyNode);
+                                  DIType *Ty, MDNode *PropertyNode);
 
     /// createObjCProperty - Create debugging information entry for Objective-C
     /// property.
@@ -238,11 +238,11 @@ namespace llvm {
     /// @param SetterName   Name of the Objective C property setter selector.
     /// @param PropertyAttributes Objective C property attributes.
     /// @param Ty           Type.
-    MDObjCProperty *createObjCProperty(StringRef Name, MDFile *File,
+    DIObjCProperty *createObjCProperty(StringRef Name, DIFile *File,
                                        unsigned LineNumber,
                                        StringRef GetterName,
                                        StringRef SetterName,
-                                       unsigned PropertyAttributes, MDType *Ty);
+                                       unsigned PropertyAttributes, DIType *Ty);
 
     /// createClassType - Create debugging information entry for a class.
     /// @param Scope        Scope in which this class is defined.
@@ -260,12 +260,14 @@ namespace llvm {
     ///                     for more info.
     /// @param TemplateParms Template type parameters.
     /// @param UniqueIdentifier A unique identifier for the class.
-    MDCompositeType *createClassType(
-        MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
-        uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-        unsigned Flags, MDType *DerivedFrom, DebugNodeArray Elements,
-        MDType *VTableHolder = nullptr, MDNode *TemplateParms = nullptr,
-        StringRef UniqueIdentifier = "");
+    DICompositeType *createClassType(DIScope *Scope, StringRef Name,
+                                     DIFile *File, unsigned LineNumber,
+                                     uint64_t SizeInBits, uint64_t AlignInBits,
+                                     uint64_t OffsetInBits, unsigned Flags,
+                                     DIType *DerivedFrom, DINodeArray Elements,
+                                     DIType *VTableHolder = nullptr,
+                                     MDNode *TemplateParms = nullptr,
+                                     StringRef UniqueIdentifier = "");
 
     /// createStructType - Create debugging information entry for a struct.
     /// @param Scope        Scope in which this struct is defined.
@@ -278,11 +280,11 @@ namespace llvm {
     /// @param Elements     Struct elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
     /// @param UniqueIdentifier A unique identifier for the struct.
-    MDCompositeType *createStructType(
-        MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
+    DICompositeType *createStructType(
+        DIScope *Scope, StringRef Name, DIFile *File, unsigned LineNumber,
         uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
-        MDType *DerivedFrom, DebugNodeArray Elements, unsigned RunTimeLang = 0,
-        MDType *VTableHolder = nullptr, StringRef UniqueIdentifier = "");
+        DIType *DerivedFrom, DINodeArray Elements, unsigned RunTimeLang = 0,
+        DIType *VTableHolder = nullptr, StringRef UniqueIdentifier = "");
 
     /// createUnionType - Create debugging information entry for an union.
     /// @param Scope        Scope in which this union is defined.
@@ -295,10 +297,10 @@ namespace llvm {
     /// @param Elements     Union elements.
     /// @param RunTimeLang  Optional parameter, Objective-C runtime version.
     /// @param UniqueIdentifier A unique identifier for the union.
-    MDCompositeType *createUnionType(MDScope *Scope, StringRef Name,
-                                     MDFile *File, unsigned LineNumber,
+    DICompositeType *createUnionType(DIScope *Scope, StringRef Name,
+                                     DIFile *File, unsigned LineNumber,
                                      uint64_t SizeInBits, uint64_t AlignInBits,
-                                     unsigned Flags, DebugNodeArray Elements,
+                                     unsigned Flags, DINodeArray Elements,
                                      unsigned RunTimeLang = 0,
                                      StringRef UniqueIdentifier = "");
 
@@ -307,8 +309,8 @@ namespace llvm {
     /// @param Scope        Scope in which this type is defined.
     /// @param Name         Type parameter name.
     /// @param Ty           Parameter type.
-    MDTemplateTypeParameter *
-    createTemplateTypeParameter(MDScope *Scope, StringRef Name, MDType *Ty);
+    DITemplateTypeParameter *
+    createTemplateTypeParameter(DIScope *Scope, StringRef Name, DIType *Ty);
 
     /// createTemplateValueParameter - Create debugging information for template
     /// value parameter.
@@ -316,9 +318,9 @@ namespace llvm {
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          Constant parameter value.
-    MDTemplateValueParameter *createTemplateValueParameter(MDScope *Scope,
+    DITemplateValueParameter *createTemplateValueParameter(DIScope *Scope,
                                                            StringRef Name,
-                                                           MDType *Ty,
+                                                           DIType *Ty,
                                                            Constant *Val);
 
     /// \brief Create debugging information for a template template parameter.
@@ -326,9 +328,9 @@ namespace llvm {
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          The fully qualified name of the template.
-    MDTemplateValueParameter *createTemplateTemplateParameter(MDScope *Scope,
+    DITemplateValueParameter *createTemplateTemplateParameter(DIScope *Scope,
                                                               StringRef Name,
-                                                              MDType *Ty,
+                                                              DIType *Ty,
                                                               StringRef Val);
 
     /// \brief Create debugging information for a template parameter pack.
@@ -336,26 +338,26 @@ namespace llvm {
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          An array of types in the pack.
-    MDTemplateValueParameter *createTemplateParameterPack(MDScope *Scope,
+    DITemplateValueParameter *createTemplateParameterPack(DIScope *Scope,
                                                           StringRef Name,
-                                                          MDType *Ty,
-                                                          DebugNodeArray Val);
+                                                          DIType *Ty,
+                                                          DINodeArray Val);
 
     /// createArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.
     /// @param AlignInBits  Alignment.
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
-    MDCompositeType *createArrayType(uint64_t Size, uint64_t AlignInBits,
-                                     MDType *Ty, DebugNodeArray Subscripts);
+    DICompositeType *createArrayType(uint64_t Size, uint64_t AlignInBits,
+                                     DIType *Ty, DINodeArray Subscripts);
 
     /// createVectorType - Create debugging information entry for a vector type.
     /// @param Size         Array size.
     /// @param AlignInBits  Alignment.
     /// @param Ty           Element type.
     /// @param Subscripts   Subscripts.
-    MDCompositeType *createVectorType(uint64_t Size, uint64_t AlignInBits,
-                                      MDType *Ty, DebugNodeArray Subscripts);
+    DICompositeType *createVectorType(uint64_t Size, uint64_t AlignInBits,
+                                      DIType *Ty, DINodeArray Subscripts);
 
     /// createEnumerationType - Create debugging information entry for an
     /// enumeration.
@@ -368,10 +370,10 @@ namespace llvm {
     /// @param Elements       Enumeration elements.
     /// @param UnderlyingType Underlying type of a C++11/ObjC fixed enum.
     /// @param UniqueIdentifier A unique identifier for the enum.
-    MDCompositeType *createEnumerationType(
-        MDScope *Scope, StringRef Name, MDFile *File, unsigned LineNumber,
-        uint64_t SizeInBits, uint64_t AlignInBits, DebugNodeArray Elements,
-        MDType *UnderlyingType, StringRef UniqueIdentifier = "");
+    DICompositeType *createEnumerationType(
+        DIScope *Scope, StringRef Name, DIFile *File, unsigned LineNumber,
+        uint64_t SizeInBits, uint64_t AlignInBits, DINodeArray Elements,
+        DIType *UnderlyingType, StringRef UniqueIdentifier = "");
 
     /// createSubroutineType - Create subroutine type.
     /// @param File            File in which this subroutine is defined.
@@ -379,49 +381,49 @@ namespace llvm {
     ///                        includes return type at 0th index.
     /// @param Flags           E.g.: LValueReference.
     ///                        These flags are used to emit dwarf attributes.
-    MDSubroutineType *createSubroutineType(MDFile *File,
-                                           MDTypeRefArray ParameterTypes,
+    DISubroutineType *createSubroutineType(DIFile *File,
+                                           DITypeRefArray ParameterTypes,
                                            unsigned Flags = 0);
 
-    /// createArtificialType - Create a new MDType* with "artificial" flag set.
-    MDType *createArtificialType(MDType *Ty);
+    /// createArtificialType - Create a new DIType* with "artificial" flag set.
+    DIType *createArtificialType(DIType *Ty);
 
-    /// createObjectPointerType - Create a new MDType* with the "object pointer"
+    /// createObjectPointerType - Create a new DIType* with the "object pointer"
     /// flag set.
-    MDType *createObjectPointerType(MDType *Ty);
+    DIType *createObjectPointerType(DIType *Ty);
 
     /// \brief Create a permanent forward-declared type.
-    MDCompositeType *createForwardDecl(unsigned Tag, StringRef Name,
-                                       MDScope *Scope, MDFile *F, unsigned Line,
+    DICompositeType *createForwardDecl(unsigned Tag, StringRef Name,
+                                       DIScope *Scope, DIFile *F, unsigned Line,
                                        unsigned RuntimeLang = 0,
                                        uint64_t SizeInBits = 0,
                                        uint64_t AlignInBits = 0,
                                        StringRef UniqueIdentifier = "");
 
     /// \brief Create a temporary forward-declared type.
-    MDCompositeType *createReplaceableCompositeType(
-        unsigned Tag, StringRef Name, MDScope *Scope, MDFile *F, unsigned Line,
+    DICompositeType *createReplaceableCompositeType(
+        unsigned Tag, StringRef Name, DIScope *Scope, DIFile *F, unsigned Line,
         unsigned RuntimeLang = 0, uint64_t SizeInBits = 0,
-        uint64_t AlignInBits = 0, unsigned Flags = DebugNode::FlagFwdDecl,
+        uint64_t AlignInBits = 0, unsigned Flags = DINode::FlagFwdDecl,
         StringRef UniqueIdentifier = "");
 
-    /// retainType - Retain MDType* in a module even if it is not referenced
+    /// retainType - Retain DIType* in a module even if it is not referenced
     /// through debug info anchors.
-    void retainType(MDType *T);
+    void retainType(DIType *T);
 
     /// createUnspecifiedParameter - Create unspecified parameter type
     /// for a subroutine type.
-    MDBasicType *createUnspecifiedParameter();
+    DIBasicType *createUnspecifiedParameter();
 
-    /// getOrCreateArray - Get a DebugNodeArray, create one if required.
-    DebugNodeArray getOrCreateArray(ArrayRef<Metadata *> Elements);
+    /// getOrCreateArray - Get a DINodeArray, create one if required.
+    DINodeArray getOrCreateArray(ArrayRef<Metadata *> Elements);
 
-    /// getOrCreateTypeArray - Get a MDTypeRefArray, create one if required.
-    MDTypeRefArray getOrCreateTypeArray(ArrayRef<Metadata *> Elements);
+    /// getOrCreateTypeArray - Get a DITypeRefArray, create one if required.
+    DITypeRefArray getOrCreateTypeArray(ArrayRef<Metadata *> Elements);
 
     /// getOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.
-    MDSubrange *getOrCreateSubrange(int64_t Lo, int64_t Count);
+    DISubrange *getOrCreateSubrange(int64_t Lo, int64_t Count);
 
     /// createGlobalVariable - Create a new descriptor for the specified
     /// variable.
@@ -435,18 +437,18 @@ namespace llvm {
     ///                      externally visible or not.
     /// @param Val         llvm::Value of the variable.
     /// @param Decl        Reference to the corresponding declaration.
-    MDGlobalVariable *createGlobalVariable(MDScope *Context, StringRef Name,
-                                           StringRef LinkageName, MDFile *File,
-                                           unsigned LineNo, MDType *Ty,
+    DIGlobalVariable *createGlobalVariable(DIScope *Context, StringRef Name,
+                                           StringRef LinkageName, DIFile *File,
+                                           unsigned LineNo, DIType *Ty,
                                            bool isLocalToUnit,
                                            llvm::Constant *Val,
                                            MDNode *Decl = nullptr);
 
     /// createTempGlobalVariableFwdDecl - Identical to createGlobalVariable
     /// except that the resulting DbgNode is temporary and meant to be RAUWed.
-    MDGlobalVariable *createTempGlobalVariableFwdDecl(
-        MDScope *Context, StringRef Name, StringRef LinkageName, MDFile *File,
-        unsigned LineNo, MDType *Ty, bool isLocalToUnit, llvm::Constant *Val,
+    DIGlobalVariable *createTempGlobalVariableFwdDecl(
+        DIScope *Context, StringRef Name, StringRef LinkageName, DIFile *File,
+        unsigned LineNo, DIType *Ty, bool isLocalToUnit, llvm::Constant *Val,
         MDNode *Decl = nullptr);
 
     /// createLocalVariable - Create a new descriptor for the specified
@@ -463,9 +465,9 @@ namespace llvm {
     /// @param Flags       Flags, e.g. artificial variable.
     /// @param ArgNo       If this variable is an argument then this argument's
     ///                    number. 1 indicates 1st argument.
-    MDLocalVariable *createLocalVariable(unsigned Tag, MDScope *Scope,
-                                         StringRef Name, MDFile *File,
-                                         unsigned LineNo, MDType *Ty,
+    DILocalVariable *createLocalVariable(unsigned Tag, DIScope *Scope,
+                                         StringRef Name, DIFile *File,
+                                         unsigned LineNo, DIType *Ty,
                                          bool AlwaysPreserve = false,
                                          unsigned Flags = 0,
                                          unsigned ArgNo = 0);
@@ -473,19 +475,19 @@ namespace llvm {
     /// createExpression - Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
     /// @param Addr        An array of complex address operations.
-    MDExpression *createExpression(ArrayRef<uint64_t> Addr = None);
-    MDExpression *createExpression(ArrayRef<int64_t> Addr);
+    DIExpression *createExpression(ArrayRef<uint64_t> Addr = None);
+    DIExpression *createExpression(ArrayRef<int64_t> Addr);
 
     /// createBitPieceExpression - Create a descriptor to describe one part
     /// of aggregate variable that is fragmented across multiple Values.
     ///
     /// @param OffsetInBits Offset of the piece in bits.
     /// @param SizeInBits   Size of the piece in bits.
-    MDExpression *createBitPieceExpression(unsigned OffsetInBits,
+    DIExpression *createBitPieceExpression(unsigned OffsetInBits,
                                            unsigned SizeInBits);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
-    /// See comments in MDSubprogram* for descriptions of these fields.
+    /// See comments in DISubprogram* for descriptions of these fields.
     /// @param Scope         Function scope.
     /// @param Name          Function name.
     /// @param LinkageName   Mangled function name.
@@ -500,9 +502,9 @@ namespace llvm {
     /// @param isOptimized   True if optimization is ON.
     /// @param Fn            llvm::Function pointer.
     /// @param TParam        Function template parameters.
-    MDSubprogram *
-    createFunction(MDScope *Scope, StringRef Name, StringRef LinkageName,
-                   MDFile *File, unsigned LineNo, MDSubroutineType *Ty,
+    DISubprogram *
+    createFunction(DIScope *Scope, StringRef Name, StringRef LinkageName,
+                   DIFile *File, unsigned LineNo, DISubroutineType *Ty,
                    bool isLocalToUnit, bool isDefinition, unsigned ScopeLine,
                    unsigned Flags = 0, bool isOptimized = false,
                    Function *Fn = nullptr, MDNode *TParam = nullptr,
@@ -510,25 +512,25 @@ namespace llvm {
 
     /// createTempFunctionFwdDecl - Identical to createFunction,
     /// except that the resulting DbgNode is meant to be RAUWed.
-    MDSubprogram *createTempFunctionFwdDecl(
-        MDScope *Scope, StringRef Name, StringRef LinkageName, MDFile *File,
-        unsigned LineNo, MDSubroutineType *Ty, bool isLocalToUnit,
+    DISubprogram *createTempFunctionFwdDecl(
+        DIScope *Scope, StringRef Name, StringRef LinkageName, DIFile *File,
+        unsigned LineNo, DISubroutineType *Ty, bool isLocalToUnit,
         bool isDefinition, unsigned ScopeLine, unsigned Flags = 0,
         bool isOptimized = false, Function *Fn = nullptr,
         MDNode *TParam = nullptr, MDNode *Decl = nullptr);
 
     /// FIXME: this is added for dragonegg. Once we update dragonegg
     /// to call resolve function, this will be removed.
-    MDSubprogram *
-    createFunction(MDScopeRef Scope, StringRef Name, StringRef LinkageName,
-                   MDFile *File, unsigned LineNo, MDSubroutineType *Ty,
+    DISubprogram *
+    createFunction(DIScopeRef Scope, StringRef Name, StringRef LinkageName,
+                   DIFile *File, unsigned LineNo, DISubroutineType *Ty,
                    bool isLocalToUnit, bool isDefinition, unsigned ScopeLine,
                    unsigned Flags = 0, bool isOptimized = false,
                    Function *Fn = nullptr, MDNode *TParam = nullptr,
                    MDNode *Decl = nullptr);
 
     /// createMethod - Create a new descriptor for the specified C++ method.
-    /// See comments in MDSubprogram* for descriptions of these fields.
+    /// See comments in DISubprogram* for descriptions of these fields.
     /// @param Scope         Function scope.
     /// @param Name          Function name.
     /// @param LinkageName   Mangled function name.
@@ -546,11 +548,11 @@ namespace llvm {
     /// @param isOptimized   True if optimization is ON.
     /// @param Fn            llvm::Function pointer.
     /// @param TParam        Function template parameters.
-    MDSubprogram *
-    createMethod(MDScope *Scope, StringRef Name, StringRef LinkageName,
-                 MDFile *File, unsigned LineNo, MDSubroutineType *Ty,
+    DISubprogram *
+    createMethod(DIScope *Scope, StringRef Name, StringRef LinkageName,
+                 DIFile *File, unsigned LineNo, DISubroutineType *Ty,
                  bool isLocalToUnit, bool isDefinition, unsigned Virtuality = 0,
-                 unsigned VTableIndex = 0, MDType *VTableHolder = nullptr,
+                 unsigned VTableIndex = 0, DIType *VTableHolder = nullptr,
                  unsigned Flags = 0, bool isOptimized = false,
                  Function *Fn = nullptr, MDNode *TParam = nullptr);
 
@@ -560,7 +562,7 @@ namespace llvm {
     /// @param Name        Name of this namespace
     /// @param File        Source file
     /// @param LineNo      Line number
-    MDNamespace *createNameSpace(MDScope *Scope, StringRef Name, MDFile *File,
+    DINamespace *createNameSpace(DIScope *Scope, StringRef Name, DIFile *File,
                                  unsigned LineNo);
 
     /// createLexicalBlockFile - This creates a descriptor for a lexical
@@ -569,7 +571,7 @@ namespace llvm {
     /// @param Scope       Lexical block.
     /// @param File        Source file.
     /// @param Discriminator DWARF path discriminator value.
-    MDLexicalBlockFile *createLexicalBlockFile(MDScope *Scope, MDFile *File,
+    DILexicalBlockFile *createLexicalBlockFile(DIScope *Scope, DIFile *File,
                                                unsigned Discriminator = 0);
 
     /// createLexicalBlock - This creates a descriptor for a lexical block
@@ -578,30 +580,30 @@ namespace llvm {
     /// @param File          Source file.
     /// @param Line          Line number.
     /// @param Col           Column number.
-    MDLexicalBlock *createLexicalBlock(MDScope *Scope, MDFile *File,
+    DILexicalBlock *createLexicalBlock(DIScope *Scope, DIFile *File,
                                        unsigned Line, unsigned Col);
 
     /// \brief Create a descriptor for an imported module.
     /// @param Context The scope this module is imported into
     /// @param NS The namespace being imported here
     /// @param Line Line number
-    MDImportedEntity *createImportedModule(MDScope *Context, MDNamespace *NS,
+    DIImportedEntity *createImportedModule(DIScope *Context, DINamespace *NS,
                                            unsigned Line);
 
     /// \brief Create a descriptor for an imported module.
     /// @param Context The scope this module is imported into
     /// @param NS An aliased namespace
     /// @param Line Line number
-    MDImportedEntity *createImportedModule(MDScope *Context,
-                                           MDImportedEntity *NS, unsigned Line);
+    DIImportedEntity *createImportedModule(DIScope *Context,
+                                           DIImportedEntity *NS, unsigned Line);
 
     /// \brief Create a descriptor for an imported function.
     /// @param Context The scope this module is imported into
     /// @param Decl The declaration (or definition) of a function, type, or
     ///             variable
     /// @param Line Line number
-    MDImportedEntity *createImportedDeclaration(MDScope *Context,
-                                                DebugNode *Decl, unsigned Line,
+    DIImportedEntity *createImportedDeclaration(DIScope *Context, DINode *Decl,
+                                                unsigned Line,
                                                 StringRef Name = "");
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
@@ -610,8 +612,8 @@ namespace llvm {
     /// @param Expr         A complex location expression.
     /// @param DL           Debug info location.
     /// @param InsertAtEnd Location for the new intrinsic.
-    Instruction *insertDeclare(llvm::Value *Storage, MDLocalVariable *VarInfo,
-                               MDExpression *Expr, const MDLocation *DL,
+    Instruction *insertDeclare(llvm::Value *Storage, DILocalVariable *VarInfo,
+                               DIExpression *Expr, const DILocation *DL,
                                BasicBlock *InsertAtEnd);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
@@ -620,8 +622,8 @@ namespace llvm {
     /// @param Expr         A complex location expression.
     /// @param DL           Debug info location.
     /// @param InsertBefore Location for the new intrinsic.
-    Instruction *insertDeclare(llvm::Value *Storage, MDLocalVariable *VarInfo,
-                               MDExpression *Expr, const MDLocation *DL,
+    Instruction *insertDeclare(llvm::Value *Storage, DILocalVariable *VarInfo,
+                               DIExpression *Expr, const DILocation *DL,
                                Instruction *InsertBefore);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
@@ -632,9 +634,9 @@ namespace llvm {
     /// @param DL           Debug info location.
     /// @param InsertAtEnd Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
-                                         MDLocalVariable *VarInfo,
-                                         MDExpression *Expr,
-                                         const MDLocation *DL,
+                                         DILocalVariable *VarInfo,
+                                         DIExpression *Expr,
+                                         const DILocation *DL,
                                          BasicBlock *InsertAtEnd);
 
     /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
@@ -645,25 +647,25 @@ namespace llvm {
     /// @param DL           Debug info location.
     /// @param InsertBefore Location for the new intrinsic.
     Instruction *insertDbgValueIntrinsic(llvm::Value *Val, uint64_t Offset,
-                                         MDLocalVariable *VarInfo,
-                                         MDExpression *Expr,
-                                         const MDLocation *DL,
+                                         DILocalVariable *VarInfo,
+                                         DIExpression *Expr,
+                                         const DILocation *DL,
                                          Instruction *InsertBefore);
 
     /// \brief Replace the vtable holder in the given composite type.
     ///
     /// If this creates a self reference, it may orphan some unresolved cycles
     /// in the operands of \c T, so \a DIBuilder needs to track that.
-    void replaceVTableHolder(MDCompositeType *&T,
-                             MDCompositeType *VTableHolder);
+    void replaceVTableHolder(DICompositeType *&T,
+                             DICompositeType *VTableHolder);
 
     /// \brief Replace arrays on a composite type.
     ///
     /// If \c T is resolved, but the arrays aren't -- which can happen if \c T
     /// has a self-reference -- \a DIBuilder needs to track the array to
     /// resolve cycles.
-    void replaceArrays(MDCompositeType *&T, DebugNodeArray Elements,
-                       DebugNodeArray TParems = DebugNodeArray());
+    void replaceArrays(DICompositeType *&T, DINodeArray Elements,
+                       DINodeArray TParems = DINodeArray());
 
     /// \brief Replace a temporary node.
     ///

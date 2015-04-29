@@ -47,12 +47,12 @@ define void @test_with_debug() {
 entry:
   %c = alloca %class.C, align 1
   %0 = load i8, i8* @argc, align 1
-  tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !19, metadata !29), !dbg !MDLocation(scope: !13)
+  tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !19, metadata !29), !dbg !DILocation(scope: !13)
   %conv = sext i8 %0 to i32
-  tail call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !MDLocation(scope: !13)
+  tail call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !DILocation(scope: !13)
   %call = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %0, i8 signext 0, i32 %conv)
   %1 = load i8, i8* @argc, align 1
-  call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !MDLocation(scope: !13)
+  call void @llvm.dbg.value(metadata %class.C* %c, i64 0, metadata !18, metadata !29), !dbg !DILocation(scope: !13)
   %call2 = call i32 (%class.C*, i8, i8, i8, ...) @test_function(%class.C* %c, i8 signext 0, i8 signext %1, i8 signext 0, i32 %conv)
   ret void
 }
@@ -62,29 +62,29 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22, !23}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !20, imports: !2)
-!1 = !MDFile(filename: "test.cpp", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !20, imports: !2)
+!1 = !DIFile(filename: "test.cpp", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_class_type, name: "C", line: 2, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1C")
+!4 = !DICompositeType(tag: DW_TAG_class_type, name: "C", line: 2, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1C")
 !5 = !{!6}
-!6 = !MDSubprogram(name: "test", file: !1, scope: !"_ZTS1C", type: !7)
-!7 = !MDSubroutineType(types: !8)
+!6 = !DISubprogram(name: "test", file: !1, scope: !"_ZTS1C", type: !7)
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !10, !11, !11, !11, null}
-!9 = !MDBasicType(encoding: DW_ATE_signed, size: 32, align: 32, name: "int")
-!10 = !MDDerivedType(baseType: !"_ZTS1C", tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial)
-!11 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!9 = !DIBasicType(encoding: DW_ATE_signed, size: 32, align: 32, name: "int")
+!10 = !DIDerivedType(baseType: !"_ZTS1C", tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial)
+!11 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !12 = !{!13}
-!13 = !MDSubprogram(name: "test_with_debug", linkageName: "test_with_debug", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !14, type: !15, function: void ()* @test_with_debug, variables: !17)
-!14 = !MDFile(filename: "test.cpp", directory: "")
-!15 = !MDSubroutineType(types: !16)
+!13 = !DISubprogram(name: "test_with_debug", linkageName: "test_with_debug", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !14, type: !15, function: void ()* @test_with_debug, variables: !17)
+!14 = !DIFile(filename: "test.cpp", directory: "")
+!15 = !DISubroutineType(types: !16)
 !16 = !{null}
 !17 = !{!18, !19}
-!18 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 7, scope: !13, file: !14, type: !"_ZTS1C")
-!19 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "lc", line: 8, scope: !13, file: !14, type: !11)
+!18 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 7, scope: !13, file: !14, type: !"_ZTS1C")
+!19 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "lc", line: 8, scope: !13, file: !14, type: !11)
 !20 = !{!21}
-!21 = !MDGlobalVariable(name: "argc", line: 1, isLocal: false, isDefinition: true, scope: null, file: !14, type: !11, variable: i8* @argc)
+!21 = !DIGlobalVariable(name: "argc", line: 1, isLocal: false, isDefinition: true, scope: null, file: !14, type: !11, variable: i8* @argc)
 !22 = !{i32 2, !"Dwarf Version", i32 4}
 !23 = !{i32 2, !"Debug Info Version", i32 3}
-!25 = !MDLocation(line: 8, column: 3, scope: !13)
-!29 = !MDExpression()
+!25 = !DILocation(line: 8, column: 3, scope: !13)
+!29 = !DIExpression()

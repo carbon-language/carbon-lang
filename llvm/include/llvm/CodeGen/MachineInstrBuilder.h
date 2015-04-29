@@ -356,9 +356,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(isa<MDLocalVariable>(Variable) && "not a variable");
-  assert(cast<MDExpression>(Expr)->isValid() && "not an expression");
-  assert(cast<MDLocalVariable>(Variable)->isValidLocationForIntrinsic(DL) &&
+  assert(isa<DILocalVariable>(Variable) && "not a variable");
+  assert(cast<DIExpression>(Expr)->isValid() && "not an expression");
+  assert(cast<DILocalVariable>(Variable)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
   if (IsIndirect)
     return BuildMI(MF, DL, MCID)
@@ -385,8 +385,8 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
                                    const MDNode *Variable, const MDNode *Expr) {
-  assert(isa<MDLocalVariable>(Variable) && "not a variable");
-  assert(cast<MDExpression>(Expr)->isValid() && "not an expression");
+  assert(isa<DILocalVariable>(Variable) && "not a variable");
+  assert(cast<DIExpression>(Expr)->isValid() && "not an expression");
   MachineFunction &MF = *BB.getParent();
   MachineInstr *MI =
       BuildMI(MF, DL, MCID, IsIndirect, Reg, Offset, Variable, Expr);

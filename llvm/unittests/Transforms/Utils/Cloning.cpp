@@ -229,8 +229,8 @@ protected:
 
     // Function DI
     auto *File = DBuilder.createFile("filename.c", "/file/dir/");
-    MDTypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
-    MDSubroutineType *FuncType =
+    DITypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
+    DISubroutineType *FuncType =
         DBuilder.createSubroutineType(File, ParamTypes);
     auto *CU =
         DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
@@ -257,7 +257,7 @@ protected:
     auto *E = DBuilder.createExpression();
     auto *Variable = DBuilder.createLocalVariable(
         dwarf::DW_TAG_auto_variable, Subprogram, "x", File, 5, IntType, true);
-    auto *DL = MDLocation::get(Subprogram->getContext(), 5, 0, Subprogram);
+    auto *DL = DILocation::get(Subprogram->getContext(), 5, 0, Subprogram);
     DBuilder.insertDeclare(Alloca, Variable, E, DL, Store);
     DBuilder.insertDbgValueIntrinsic(AllocaContent, 0, Variable, E, DL,
                                      Terminator);
@@ -304,9 +304,9 @@ TEST_F(CloneFunc, Subprogram) {
   EXPECT_EQ(2U, SubprogramCount);
 
   auto Iter = Finder->subprograms().begin();
-  auto *Sub1 = cast<MDSubprogram>(*Iter);
+  auto *Sub1 = cast<DISubprogram>(*Iter);
   Iter++;
-  auto *Sub2 = cast<MDSubprogram>(*Iter);
+  auto *Sub2 = cast<DISubprogram>(*Iter);
 
   EXPECT_TRUE(
       (Sub1->getFunction() == OldFunc && Sub2->getFunction() == NewFunc) ||
@@ -321,9 +321,9 @@ TEST_F(CloneFunc, SubprogramInRightCU) {
   EXPECT_EQ(2U, Finder->compile_unit_count());
 
   auto Iter = Finder->compile_units().begin();
-  auto *CU1 = cast<MDCompileUnit>(*Iter);
+  auto *CU1 = cast<DICompileUnit>(*Iter);
   Iter++;
-  auto *CU2 = cast<MDCompileUnit>(*Iter);
+  auto *CU2 = cast<DICompileUnit>(*Iter);
   EXPECT_TRUE(CU1->getSubprograms().size() == 0 ||
               CU2->getSubprograms().size() == 0);
 }
@@ -352,8 +352,8 @@ TEST_F(CloneFunc, InstructionOwnership) {
       EXPECT_EQ(OldDL.getCol(), NewDL.getCol());
 
       // But that they belong to different functions
-      auto *OldSubprogram = cast<MDSubprogram>(OldDL.getScope());
-      auto *NewSubprogram = cast<MDSubprogram>(NewDL.getScope());
+      auto *OldSubprogram = cast<DISubprogram>(OldDL.getScope());
+      auto *NewSubprogram = cast<DISubprogram>(NewDL.getScope());
       EXPECT_EQ(OldFunc, OldSubprogram->getFunction());
       EXPECT_EQ(NewFunc, NewSubprogram->getFunction());
     }
@@ -390,11 +390,11 @@ TEST_F(CloneFunc, DebugIntrinsics) {
 
       // Old variable must belong to the old function
       EXPECT_EQ(OldFunc,
-                cast<MDSubprogram>(OldIntrin->getVariable()->getScope())
+                cast<DISubprogram>(OldIntrin->getVariable()->getScope())
                     ->getFunction());
       // New variable must belong to the New function
       EXPECT_EQ(NewFunc,
-                cast<MDSubprogram>(NewIntrin->getVariable()->getScope())
+                cast<DISubprogram>(NewIntrin->getVariable()->getScope())
                     ->getFunction());
     } else if (DbgValueInst* OldIntrin = dyn_cast<DbgValueInst>(&OldI)) {
       DbgValueInst* NewIntrin = dyn_cast<DbgValueInst>(&NewI);
@@ -402,11 +402,11 @@ TEST_F(CloneFunc, DebugIntrinsics) {
 
       // Old variable must belong to the old function
       EXPECT_EQ(OldFunc,
-                cast<MDSubprogram>(OldIntrin->getVariable()->getScope())
+                cast<DISubprogram>(OldIntrin->getVariable()->getScope())
                     ->getFunction());
       // New variable must belong to the New function
       EXPECT_EQ(NewFunc,
-                cast<MDSubprogram>(NewIntrin->getVariable()->getScope())
+                cast<DISubprogram>(NewIntrin->getVariable()->getScope())
                     ->getFunction());
     }
 

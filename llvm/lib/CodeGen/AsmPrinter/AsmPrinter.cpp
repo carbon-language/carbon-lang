@@ -668,15 +668,15 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   raw_svector_ostream OS(Str);
   OS << "DEBUG_VALUE: ";
 
-  const MDLocalVariable *V = MI->getDebugVariable();
-  if (auto *SP = dyn_cast<MDSubprogram>(V->getScope())) {
+  const DILocalVariable *V = MI->getDebugVariable();
+  if (auto *SP = dyn_cast<DISubprogram>(V->getScope())) {
     StringRef Name = SP->getDisplayName();
     if (!Name.empty())
       OS << Name << ":";
   }
   OS << V->getName();
 
-  const MDExpression *Expr = MI->getDebugExpression();
+  const DIExpression *Expr = MI->getDebugExpression();
   if (Expr->isBitPiece())
     OS << " [bit_piece offset=" << Expr->getBitPieceOffset()
        << " size=" << Expr->getBitPieceSize() << "]";

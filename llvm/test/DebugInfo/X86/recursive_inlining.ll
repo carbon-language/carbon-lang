@@ -95,7 +95,7 @@ define void @_Z3fn6v() #0 {
 entry:
   tail call void @_Z3fn8v() #3, !dbg !31
   %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !32, !tbaa !33
-  tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !37, metadata !MDExpression()) #3, !dbg !38
+  tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !37, metadata !DIExpression()) #3, !dbg !38
   tail call void @_Z3fn8v() #3, !dbg !39
   %b.i = getelementptr inbounds %struct.C, %struct.C* %0, i64 0, i32 0, !dbg !40
   %1 = load i32, i32* %b.i, align 4, !dbg !40, !tbaa !42
@@ -116,7 +116,7 @@ declare void @_Z3fn8v() #1
 ; Function Attrs: nounwind
 define linkonce_odr void @_ZN1C5m_fn2Ev(%struct.C* nocapture readonly %this) #0 align 2 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !24, metadata !MDExpression()), !dbg !49
+  tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !24, metadata !DIExpression()), !dbg !49
   tail call void @_Z3fn8v() #3, !dbg !50
   %b = getelementptr inbounds %struct.C, %struct.C* %this, i64 0, i32 0, !dbg !51
   %0 = load i32, i32* %b, align 4, !dbg !51, !tbaa !42
@@ -130,7 +130,7 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry, %if.then
   tail call void @_Z3fn8v() #3, !dbg !53
   %1 = load %struct.C*, %struct.C** @x, align 8, !dbg !56, !tbaa !33
-  tail call void @llvm.dbg.value(metadata %struct.C* %1, i64 0, metadata !57, metadata !MDExpression()) #3, !dbg !58
+  tail call void @llvm.dbg.value(metadata %struct.C* %1, i64 0, metadata !57, metadata !DIExpression()) #3, !dbg !58
   tail call void @_Z3fn8v() #3, !dbg !59
   %b.i.i = getelementptr inbounds %struct.C, %struct.C* %1, i64 0, i32 0, !dbg !60
   %2 = load i32, i32* %b.i.i, align 4, !dbg !60, !tbaa !42
@@ -154,7 +154,7 @@ entry:
 tailrecurse:                                      ; preds = %tailrecurse.backedge, %entry
   tail call void @_Z3fn8v() #3, !dbg !64
   %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !66, !tbaa !33
-  tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !67, metadata !MDExpression()) #3, !dbg !68
+  tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !67, metadata !DIExpression()) #3, !dbg !68
   tail call void @_Z3fn8v() #3, !dbg !69
   %b.i.i = getelementptr inbounds %struct.C, %struct.C* %0, i64 0, i32 0, !dbg !70
   %1 = load i32, i32* %b.i.i, align 4, !dbg !70, !tbaa !42
@@ -199,77 +199,77 @@ attributes #3 = { nounwind }
 !llvm.module.flags = !{!28, !29}
 !llvm.ident = !{!30}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !13, globals: !26, imports: !2)
-!1 = !MDFile(filename: "<stdin>", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !13, globals: !26, imports: !2)
+!1 = !DIFile(filename: "<stdin>", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "C", line: 5, size: 32, align: 32, file: !5, elements: !6, identifier: "_ZTS1C")
-!5 = !MDFile(filename: "recursive_inlining.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "C", line: 5, size: 32, align: 32, file: !5, elements: !6, identifier: "_ZTS1C")
+!5 = !DIFile(filename: "recursive_inlining.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
 !6 = !{!7, !9}
-!7 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 6, size: 32, align: 32, file: !5, scope: !"_ZTS1C", baseType: !8)
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDSubprogram(name: "m_fn2", linkageName: "_ZN1C5m_fn2Ev", line: 7, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !5, scope: !"_ZTS1C", type: !10)
-!10 = !MDSubroutineType(types: !11)
+!7 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 6, size: 32, align: 32, file: !5, scope: !"_ZTS1C", baseType: !8)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DISubprogram(name: "m_fn2", linkageName: "_ZN1C5m_fn2Ev", line: 7, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !5, scope: !"_ZTS1C", type: !10)
+!10 = !DISubroutineType(types: !11)
 !11 = !{null, !12}
-!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1C")
+!12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1C")
 !13 = !{!14, !18, !19, !20, !21, !22}
-!14 = !MDSubprogram(name: "fn6", linkageName: "_Z3fn6v", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 15, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn6v, variables: !2)
-!15 = !MDFile(filename: "recursive_inlining.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
-!16 = !MDSubroutineType(types: !17)
+!14 = !DISubprogram(name: "fn6", linkageName: "_Z3fn6v", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 15, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn6v, variables: !2)
+!15 = !DIFile(filename: "recursive_inlining.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch/missing_concrete_variable_on_darwin/reduce")
+!16 = !DISubroutineType(types: !17)
 !17 = !{null}
-!18 = !MDSubprogram(name: "fn3", linkageName: "_Z3fn3v", line: 20, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 20, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn3v, variables: !2)
-!19 = !MDSubprogram(name: "fn4", linkageName: "_Z3fn4v", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 21, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn4v, variables: !2)
-!20 = !MDSubprogram(name: "fn5", linkageName: "_Z3fn5v", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 22, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn5v, variables: !2)
-!21 = !MDSubprogram(name: "fn7", linkageName: "_Z3fn7v", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 14, file: !5, scope: !15, type: !16, variables: !2)
-!22 = !MDSubprogram(name: "m_fn2", linkageName: "_ZN1C5m_fn2Ev", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !5, scope: !"_ZTS1C", type: !10, function: void (%struct.C*)* @_ZN1C5m_fn2Ev, declaration: !9, variables: !23)
+!18 = !DISubprogram(name: "fn3", linkageName: "_Z3fn3v", line: 20, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 20, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn3v, variables: !2)
+!19 = !DISubprogram(name: "fn4", linkageName: "_Z3fn4v", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 21, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn4v, variables: !2)
+!20 = !DISubprogram(name: "fn5", linkageName: "_Z3fn5v", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 22, file: !5, scope: !15, type: !16, function: void ()* @_Z3fn5v, variables: !2)
+!21 = !DISubprogram(name: "fn7", linkageName: "_Z3fn7v", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 14, file: !5, scope: !15, type: !16, variables: !2)
+!22 = !DISubprogram(name: "m_fn2", linkageName: "_ZN1C5m_fn2Ev", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 7, file: !5, scope: !"_ZTS1C", type: !10, function: void (%struct.C*)* @_ZN1C5m_fn2Ev, declaration: !9, variables: !23)
 !23 = !{!24}
-!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
-!25 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1C")
+!24 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
+!25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1C")
 !26 = !{!27}
-!27 = !MDGlobalVariable(name: "x", line: 13, isLocal: false, isDefinition: true, scope: null, file: !15, type: !25, variable: %struct.C** @x)
+!27 = !DIGlobalVariable(name: "x", line: 13, isLocal: false, isDefinition: true, scope: null, file: !15, type: !25, variable: %struct.C** @x)
 !28 = !{i32 2, !"Dwarf Version", i32 4}
 !29 = !{i32 2, !"Debug Info Version", i32 3}
 !30 = !{!"clang version 3.6.0 "}
-!31 = !MDLocation(line: 16, scope: !14)
-!32 = !MDLocation(line: 17, scope: !14)
+!31 = !DILocation(line: 16, scope: !14)
+!32 = !DILocation(line: 17, scope: !14)
 !33 = !{!34, !34, i64 0}
 !34 = !{!"any pointer", !35, i64 0}
 !35 = !{!"omnipotent char", !36, i64 0}
 !36 = !{!"Simple C/C++ TBAA"}
-!37 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
-!38 = !MDLocation(line: 0, scope: !22, inlinedAt: !32)
-!39 = !MDLocation(line: 8, scope: !22, inlinedAt: !32)
-!40 = !MDLocation(line: 9, scope: !41, inlinedAt: !32)
-!41 = distinct !MDLexicalBlock(line: 9, column: 0, file: !5, scope: !22)
+!37 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
+!38 = !DILocation(line: 0, scope: !22, inlinedAt: !32)
+!39 = !DILocation(line: 8, scope: !22, inlinedAt: !32)
+!40 = !DILocation(line: 9, scope: !41, inlinedAt: !32)
+!41 = distinct !DILexicalBlock(line: 9, column: 0, file: !5, scope: !22)
 !42 = !{!43, !44, i64 0}
 !43 = !{!"_ZTS1C", !44, i64 0}
 !44 = !{!"int", !35, i64 0}
-!45 = !MDLocation(line: 9, scope: !46, inlinedAt: !32)
-!46 = distinct !MDLexicalBlock(line: 9, column: 0, file: !5, scope: !41)
-!47 = !MDLocation(line: 10, scope: !22, inlinedAt: !32)
-!48 = !MDLocation(line: 19, scope: !14)
-!49 = !MDLocation(line: 0, scope: !22)
-!50 = !MDLocation(line: 8, scope: !22)
-!51 = !MDLocation(line: 9, scope: !41)
-!52 = !MDLocation(line: 9, scope: !46)
-!53 = !MDLocation(line: 16, scope: !14, inlinedAt: !54)
-!54 = !MDLocation(line: 20, scope: !18, inlinedAt: !55)
-!55 = !MDLocation(line: 10, scope: !22)
-!56 = !MDLocation(line: 17, scope: !14, inlinedAt: !54)
-!57 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
-!58 = !MDLocation(line: 0, scope: !22, inlinedAt: !56)
-!59 = !MDLocation(line: 8, scope: !22, inlinedAt: !56)
-!60 = !MDLocation(line: 9, scope: !41, inlinedAt: !56)
-!61 = !MDLocation(line: 9, scope: !46, inlinedAt: !56)
-!62 = !MDLocation(line: 10, scope: !22, inlinedAt: !56)
-!63 = !MDLocation(line: 11, scope: !22)
-!64 = !MDLocation(line: 16, scope: !14, inlinedAt: !65)
-!65 = !MDLocation(line: 20, scope: !18)
-!66 = !MDLocation(line: 17, scope: !14, inlinedAt: !65)
-!67 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
-!68 = !MDLocation(line: 0, scope: !22, inlinedAt: !66)
-!69 = !MDLocation(line: 8, scope: !22, inlinedAt: !66)
-!70 = !MDLocation(line: 9, scope: !41, inlinedAt: !66)
-!71 = !MDLocation(line: 9, scope: !46, inlinedAt: !66)
-!72 = !MDLocation(line: 21, scope: !19)
-!73 = !MDLocation(line: 22, scope: !20)
+!45 = !DILocation(line: 9, scope: !46, inlinedAt: !32)
+!46 = distinct !DILexicalBlock(line: 9, column: 0, file: !5, scope: !41)
+!47 = !DILocation(line: 10, scope: !22, inlinedAt: !32)
+!48 = !DILocation(line: 19, scope: !14)
+!49 = !DILocation(line: 0, scope: !22)
+!50 = !DILocation(line: 8, scope: !22)
+!51 = !DILocation(line: 9, scope: !41)
+!52 = !DILocation(line: 9, scope: !46)
+!53 = !DILocation(line: 16, scope: !14, inlinedAt: !54)
+!54 = !DILocation(line: 20, scope: !18, inlinedAt: !55)
+!55 = !DILocation(line: 10, scope: !22)
+!56 = !DILocation(line: 17, scope: !14, inlinedAt: !54)
+!57 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
+!58 = !DILocation(line: 0, scope: !22, inlinedAt: !56)
+!59 = !DILocation(line: 8, scope: !22, inlinedAt: !56)
+!60 = !DILocation(line: 9, scope: !41, inlinedAt: !56)
+!61 = !DILocation(line: 9, scope: !46, inlinedAt: !56)
+!62 = !DILocation(line: 10, scope: !22, inlinedAt: !56)
+!63 = !DILocation(line: 11, scope: !22)
+!64 = !DILocation(line: 16, scope: !14, inlinedAt: !65)
+!65 = !DILocation(line: 20, scope: !18)
+!66 = !DILocation(line: 17, scope: !14, inlinedAt: !65)
+!67 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !22, type: !25)
+!68 = !DILocation(line: 0, scope: !22, inlinedAt: !66)
+!69 = !DILocation(line: 8, scope: !22, inlinedAt: !66)
+!70 = !DILocation(line: 9, scope: !41, inlinedAt: !66)
+!71 = !DILocation(line: 9, scope: !46, inlinedAt: !66)
+!72 = !DILocation(line: 21, scope: !19)
+!73 = !DILocation(line: 22, scope: !20)

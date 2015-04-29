@@ -12,16 +12,16 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!13}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !12, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !12, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "bar", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !6, type: !7, function: i32 ()* @bar)
-!6 = !MDFile(filename: "two.c", directory: "/private/tmp")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "bar", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: !6, type: !7, function: i32 ()* @bar)
+!6 = !DIFile(filename: "two.c", directory: "/private/tmp")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDLocation(line: 1, column: 13, scope: !11)
-!11 = distinct !MDLexicalBlock(line: 1, column: 11, file: !12, scope: !5)
-!12 = !MDFile(filename: "two.c", directory: "/private/tmp")
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DILocation(line: 1, column: 13, scope: !11)
+!11 = distinct !DILexicalBlock(line: 1, column: 11, file: !12, scope: !5)
+!12 = !DIFile(filename: "two.c", directory: "/private/tmp")
 !13 = !{i32 1, !"Debug Info Version", i32 3}

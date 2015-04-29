@@ -24,7 +24,7 @@
 ; ASM-CHECK: DW_OP_breg2
 
 ; RUN: llvm-as %s -o - | llvm-dis - | FileCheck %s --check-prefix=PRETTY-PRINT
-; PRETTY-PRINT: MDExpression(DW_OP_deref, DW_OP_deref)
+; PRETTY-PRINT: DIExpression(DW_OP_deref, DW_OP_deref)
 
 define void @testVLAwithSize(i32 %s) nounwind uwtable ssp {
 entry:
@@ -32,14 +32,14 @@ entry:
   %saved_stack = alloca i8*
   %i = alloca i32, align 4
   store i32 %s, i32* %s.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %s.addr, metadata !10, metadata !MDExpression()), !dbg !11
+  call void @llvm.dbg.declare(metadata i32* %s.addr, metadata !10, metadata !DIExpression()), !dbg !11
   %0 = load i32, i32* %s.addr, align 4, !dbg !12
   %1 = zext i32 %0 to i64, !dbg !12
   %2 = call i8* @llvm.stacksave(), !dbg !12
   store i8* %2, i8** %saved_stack, !dbg !12
   %vla = alloca i32, i64 %1, align 16, !dbg !12
   call void @llvm.dbg.declare(metadata i32* %vla, metadata !14, metadata !30), !dbg !18
-  call void @llvm.dbg.declare(metadata i32* %i, metadata !19, metadata !MDExpression()), !dbg !20
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !19, metadata !DIExpression()), !dbg !20
   store i32 0, i32* %i, align 4, !dbg !21
   br label %for.cond, !dbg !21
 
@@ -80,32 +80,32 @@ declare void @llvm.stackrestore(i8*) nounwind
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!29}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156005) (llvm/trunk 156000)", isOptimized: false, emissionKind: 1, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156005) (llvm/trunk 156000)", isOptimized: false, emissionKind: 1, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !28, scope: !6, type: !7, function: void (i32)* @testVLAwithSize, variables: !1)
-!6 = !MDFile(filename: "bar.c", directory: "/Users/echristo/tmp")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !28, scope: !6, type: !7, function: void (i32)* @testVLAwithSize, variables: !1)
+!6 = !DIFile(filename: "bar.c", directory: "/Users/echristo/tmp")
+!7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 1, arg: 1, scope: !5, file: !6, type: !9)
-!11 = !MDLocation(line: 1, column: 26, scope: !5)
-!12 = !MDLocation(line: 3, column: 13, scope: !13)
-!13 = distinct !MDLexicalBlock(line: 2, column: 1, file: !28, scope: !5)
-!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "vla", line: 3, scope: !13, file: !6, type: !15)
-!15 = !MDCompositeType(tag: DW_TAG_array_type, align: 32, baseType: !9, elements: !16)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 1, arg: 1, scope: !5, file: !6, type: !9)
+!11 = !DILocation(line: 1, column: 26, scope: !5)
+!12 = !DILocation(line: 3, column: 13, scope: !13)
+!13 = distinct !DILexicalBlock(line: 2, column: 1, file: !28, scope: !5)
+!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "vla", line: 3, scope: !13, file: !6, type: !15)
+!15 = !DICompositeType(tag: DW_TAG_array_type, align: 32, baseType: !9, elements: !16)
 !16 = !{!17}
-!17 = !MDSubrange(count: -1)
-!18 = !MDLocation(line: 3, column: 7, scope: !13)
-!19 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !13, file: !6, type: !9)
-!20 = !MDLocation(line: 4, column: 7, scope: !13)
-!21 = !MDLocation(line: 5, column: 8, scope: !22)
-!22 = distinct !MDLexicalBlock(line: 5, column: 3, file: !28, scope: !13)
-!23 = !MDLocation(line: 6, column: 5, scope: !24)
-!24 = distinct !MDLexicalBlock(line: 5, column: 27, file: !28, scope: !22)
-!25 = !MDLocation(line: 7, column: 3, scope: !24)
-!26 = !MDLocation(line: 5, column: 22, scope: !22)
-!27 = !MDLocation(line: 8, column: 1, scope: !13)
-!28 = !MDFile(filename: "bar.c", directory: "/Users/echristo/tmp")
+!17 = !DISubrange(count: -1)
+!18 = !DILocation(line: 3, column: 7, scope: !13)
+!19 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !13, file: !6, type: !9)
+!20 = !DILocation(line: 4, column: 7, scope: !13)
+!21 = !DILocation(line: 5, column: 8, scope: !22)
+!22 = distinct !DILexicalBlock(line: 5, column: 3, file: !28, scope: !13)
+!23 = !DILocation(line: 6, column: 5, scope: !24)
+!24 = distinct !DILexicalBlock(line: 5, column: 27, file: !28, scope: !22)
+!25 = !DILocation(line: 7, column: 3, scope: !24)
+!26 = !DILocation(line: 5, column: 22, scope: !22)
+!27 = !DILocation(line: 8, column: 1, scope: !13)
+!28 = !DIFile(filename: "bar.c", directory: "/Users/echristo/tmp")
 !29 = !{i32 1, !"Debug Info Version", i32 3}
-!30 = !MDExpression(DW_OP_deref, DW_OP_deref)
+!30 = !DIExpression(DW_OP_deref, DW_OP_deref)

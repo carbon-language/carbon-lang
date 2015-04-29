@@ -13,15 +13,15 @@ entry:
 !llvm.module.flags = !{!10}
 !llvm.gcov = !{!9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 177323)", isOptimized: false, emissionKind: 0, file: !2, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3, imports:  !3)
-!1 = !MDFile(filename: "hello.cc", directory: "/home/nlewycky")
-!2 = !MDFile(filename: "hello.cc", directory: "/home/nlewycky")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 177323)", isOptimized: false, emissionKind: 0, file: !2, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3, imports:  !3)
+!1 = !DIFile(filename: "hello.cc", directory: "/home/nlewycky")
+!2 = !DIFile(filename: "hello.cc", directory: "/home/nlewycky")
 !3 = !{}
 !4 = !{!5}
-!5 = !MDSubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !1, type: !6, function: void ()* @_Z3foov, variables: !3)
-!6 = !MDSubroutineType(types: !7)
+!5 = !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !1, type: !6, function: void ()* @_Z3foov, variables: !3)
+!6 = !DISubroutineType(types: !7)
 !7 = !{null}
-!8 = !MDLocation(line: 1, scope: !5)
+!8 = !DILocation(line: 1, scope: !5)
 
 
 !10 = !{i32 1, !"Debug Info Version", i32 3}

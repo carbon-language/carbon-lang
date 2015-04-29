@@ -12,8 +12,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 191846) (llvm/trunk 191866)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2)
-!1 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 191846) (llvm/trunk 191866)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2)
+!1 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
 !4 = !{i32 1, !"Debug Info Version", i32 3}

@@ -12,7 +12,7 @@ entry:
   %retval = alloca i32, align 4
   %i = alloca [2 x i32], align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata [2 x i32]* %i, metadata !10, metadata !MDExpression()), !dbg !15
+  call void @llvm.dbg.declare(metadata [2 x i32]* %i, metadata !10, metadata !DIExpression()), !dbg !15
   ret i32 0, !dbg !16
 }
 
@@ -21,20 +21,20 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 171472) (llvm/trunk 171487)", isOptimized: false, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 171472) (llvm/trunk 171487)", isOptimized: false, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
-!6 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!6 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !11, file: !6, type: !12)
-!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !6, scope: !5)
-!12 = !MDCompositeType(tag: DW_TAG_array_type, size: 64, align: 32, baseType: !9, elements: !13)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !11, file: !6, type: !12)
+!11 = distinct !DILexicalBlock(line: 3, column: 0, file: !6, scope: !5)
+!12 = !DICompositeType(tag: DW_TAG_array_type, size: 64, align: 32, baseType: !9, elements: !13)
 !13 = !{!14}
-!14 = !MDSubrange(count: 2)
-!15 = !MDLocation(line: 4, scope: !11)
-!16 = !MDLocation(line: 6, scope: !11)
-!17 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!14 = !DISubrange(count: 2)
+!15 = !DILocation(line: 4, scope: !11)
+!16 = !DILocation(line: 6, scope: !11)
+!17 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
 !18 = !{i32 1, !"Debug Info Version", i32 3}

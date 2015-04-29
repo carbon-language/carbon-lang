@@ -127,7 +127,7 @@ namespace {
     // As the code generation for module is finished (and DIBuilder is
     // finalized) we assume that subprogram descriptors won't be changed, and
     // they are stored in map for short duration anyway.
-    DenseMap<const Function *, MDSubprogram *> FunctionDIs;
+    DenseMap<const Function *, DISubprogram *> FunctionDIs;
 
   protected:
     // DAH uses this to specify a different ID.
@@ -303,7 +303,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Patch the pointer to LLVM function in debug info descriptor.
   auto DI = FunctionDIs.find(&Fn);
   if (DI != FunctionDIs.end()) {
-    MDSubprogram *SP = DI->second;
+    DISubprogram *SP = DI->second;
     SP->replaceFunction(NF);
     // Ensure the map is updated so it can be reused on non-varargs argument
     // eliminations of the same function.

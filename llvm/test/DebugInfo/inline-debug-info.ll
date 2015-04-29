@@ -31,8 +31,8 @@
 ; CHECK: br label %invoke.cont, !dbg [[MD:![0-9]+]]
 ; The branch instruction has the source location of line 9 and its inlined location
 ; has the source location of line 14.
-; CHECK: [[INL:![0-9]*]] = distinct !MDLocation(line: 14, scope: {{.*}})
-; CHECK: [[MD]] = !MDLocation(line: 9, scope: {{.*}}, inlinedAt: [[INL]])
+; CHECK: [[INL:![0-9]*]] = distinct !DILocation(line: 14, scope: {{.*}})
+; CHECK: [[MD]] = !DILocation(line: 9, scope: {{.*}}, inlinedAt: [[INL]])
 
 ; ModuleID = 'test.cpp'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
@@ -47,8 +47,8 @@ entry:
   %k.addr = alloca i32, align 4
   %k2 = alloca i32, align 4
   store i32 %k, i32* %k.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %k.addr, metadata !13, metadata !MDExpression()), !dbg !14
-  call void @llvm.dbg.declare(metadata i32* %k2, metadata !15, metadata !MDExpression()), !dbg !16
+  call void @llvm.dbg.declare(metadata i32* %k.addr, metadata !13, metadata !DIExpression()), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %k2, metadata !15, metadata !DIExpression()), !dbg !16
   %0 = load i32, i32* %k.addr, align 4, !dbg !16
   %call = call i32 @_Z8test_exti(i32 %0), !dbg !16
   store i32 %call, i32* %k2, align 4, !dbg !16
@@ -103,7 +103,7 @@ catch.dispatch:                                   ; preds = %lpad
   br i1 %matches, label %catch, label %eh.resume, !dbg !23
 
 catch:                                            ; preds = %catch.dispatch
-  call void @llvm.dbg.declare(metadata i32* %e, metadata !24, metadata !MDExpression()), !dbg !25
+  call void @llvm.dbg.declare(metadata i32* %e, metadata !24, metadata !DIExpression()), !dbg !25
   %exn = load i8*, i8** %exn.slot, !dbg !23
   %5 = call i8* @__cxa_begin_catch(i8* %exn) #2, !dbg !23
   %6 = bitcast i8* %5 to i32*, !dbg !23
@@ -140,35 +140,35 @@ attributes #2 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!31}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "<unknown>", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "<unknown>", directory: "")
 !2 = !{}
 !3 = !{!4, !10}
-!4 = !MDSubprogram(name: "test", linkageName: "_Z4testi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !6, type: !7, function: i32 (i32)* @_Z4testi, variables: !2)
-!5 = !MDFile(filename: "test.cpp", directory: "")
-!6 = !MDFile(filename: "test.cpp", directory: "")
-!7 = !MDSubroutineType(types: !8)
+!4 = !DISubprogram(name: "test", linkageName: "_Z4testi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !6, type: !7, function: i32 (i32)* @_Z4testi, variables: !2)
+!5 = !DIFile(filename: "test.cpp", directory: "")
+!6 = !DIFile(filename: "test.cpp", directory: "")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDSubprogram(name: "test2", linkageName: "_Z5test2v", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !6, type: !11, function: i32 ()* @_Z5test2v, variables: !2)
-!11 = !MDSubroutineType(types: !12)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DISubprogram(name: "test2", linkageName: "_Z5test2v", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !6, type: !11, function: i32 ()* @_Z5test2v, variables: !2)
+!11 = !DISubroutineType(types: !12)
 !12 = !{!9}
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "k", line: 4, arg: 1, scope: !4, file: !6, type: !9)
-!14 = !MDLocation(line: 4, scope: !4)
-!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "k2", line: 5, scope: !4, file: !6, type: !9)
-!16 = !MDLocation(line: 5, scope: !4)
-!17 = !MDLocation(line: 6, scope: !4)
-!18 = !MDLocation(line: 7, scope: !4)
-!19 = !MDLocation(line: 8, scope: !4)
-!20 = !MDLocation(line: 9, scope: !4)
-!21 = !MDLocation(line: 14, scope: !22)
-!22 = distinct !MDLexicalBlock(line: 13, column: 0, file: !5, scope: !10)
-!23 = !MDLocation(line: 15, scope: !22)
-!24 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 16, scope: !10, file: !6, type: !9)
-!25 = !MDLocation(line: 16, scope: !10)
-!26 = !MDLocation(line: 17, scope: !27)
-!27 = distinct !MDLexicalBlock(line: 16, column: 0, file: !5, scope: !10)
-!28 = !MDLocation(line: 18, scope: !27)
-!29 = !MDLocation(line: 19, scope: !10)
-!30 = !MDLocation(line: 20, scope: !10)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "k", line: 4, arg: 1, scope: !4, file: !6, type: !9)
+!14 = !DILocation(line: 4, scope: !4)
+!15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "k2", line: 5, scope: !4, file: !6, type: !9)
+!16 = !DILocation(line: 5, scope: !4)
+!17 = !DILocation(line: 6, scope: !4)
+!18 = !DILocation(line: 7, scope: !4)
+!19 = !DILocation(line: 8, scope: !4)
+!20 = !DILocation(line: 9, scope: !4)
+!21 = !DILocation(line: 14, scope: !22)
+!22 = distinct !DILexicalBlock(line: 13, column: 0, file: !5, scope: !10)
+!23 = !DILocation(line: 15, scope: !22)
+!24 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 16, scope: !10, file: !6, type: !9)
+!25 = !DILocation(line: 16, scope: !10)
+!26 = !DILocation(line: 17, scope: !27)
+!27 = distinct !DILexicalBlock(line: 16, column: 0, file: !5, scope: !10)
+!28 = !DILocation(line: 18, scope: !27)
+!29 = !DILocation(line: 19, scope: !10)
+!30 = !DILocation(line: 20, scope: !10)
 !31 = !{i32 1, !"Debug Info Version", i32 3}

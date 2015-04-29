@@ -129,7 +129,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   if (!curLoc)
     return;
 
-  auto *Scope = cast_or_null<MDScope>(curLoc.getScope());
+  auto *Scope = cast_or_null<DIScope>(curLoc.getScope());
   if (!Scope)
      return;
 
@@ -773,7 +773,7 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
   DbgFinder.processModule(M);
 
   unsigned i = 1;
-  for (const MDCompileUnit *DIUnit : DbgFinder.compile_units()) {
+  for (const DICompileUnit *DIUnit : DbgFinder.compile_units()) {
     StringRef Filename = DIUnit->getFilename();
     StringRef Dirname = DIUnit->getDirectory();
     SmallString<128> FullPathName = Dirname;
@@ -788,7 +788,7 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     ++i;
   }
 
-  for (MDSubprogram *SP : DbgFinder.subprograms()) {
+  for (DISubprogram *SP : DbgFinder.subprograms()) {
     StringRef Filename = SP->getFilename();
     StringRef Dirname = SP->getDirectory();
     SmallString<128> FullPathName = Dirname;

@@ -32,8 +32,8 @@ define i32 @main(i32 %argc, i8** nocapture readonly %argv) #0 {
 ; CHECK: Printing analysis 'Branch Probability Analysis' for function 'main':
 
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !13, metadata !MDExpression()), !dbg !27
-  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !14, metadata !MDExpression()), !dbg !27
+  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !13, metadata !DIExpression()), !dbg !27
+  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !14, metadata !DIExpression()), !dbg !27
   %cmp = icmp slt i32 %argc, 2, !dbg !28
   br i1 %cmp, label %return, label %if.end, !dbg !28
 ; CHECK: edge entry -> return probability is 1 / 2 = 50%
@@ -43,7 +43,7 @@ if.end:                                           ; preds = %entry
   %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1, !dbg !30
   %0 = load i8*, i8** %arrayidx, align 8, !dbg !30, !tbaa !31
   %call = tail call i32 @atoi(i8* %0) #4, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !17, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !17, metadata !DIExpression()), !dbg !30
   %cmp1 = icmp sgt i32 %call, 100, !dbg !35
   br i1 %cmp1, label %for.body, label %if.end6, !dbg !35
 ; CHECK: edge if.end -> for.body probability is 1 / 2 = 50%
@@ -55,14 +55,14 @@ for.body:                                         ; preds = %if.end, %for.body
   %add = fadd double %s.015, 3.049000e+00, !dbg !36
   %conv = sitofp i32 %u.016 to double, !dbg !36
   %add4 = fadd double %add, %conv, !dbg !36
-  tail call void @llvm.dbg.value(metadata double %add4, i64 0, metadata !18, metadata !MDExpression()), !dbg !36
+  tail call void @llvm.dbg.value(metadata double %add4, i64 0, metadata !18, metadata !DIExpression()), !dbg !36
   %div = fdiv double 3.940000e+00, %s.015, !dbg !37
   %mul = fmul double %div, 3.200000e-01, !dbg !37
   %add5 = fadd double %add4, %mul, !dbg !37
   %sub = fsub double %add4, %add5, !dbg !37
-  tail call void @llvm.dbg.value(metadata double %sub, i64 0, metadata !18, metadata !MDExpression()), !dbg !37
+  tail call void @llvm.dbg.value(metadata double %sub, i64 0, metadata !18, metadata !DIExpression()), !dbg !37
   %inc = add nsw i32 %u.016, 1, !dbg !38
-  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !21, metadata !MDExpression()), !dbg !38
+  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !21, metadata !DIExpression()), !dbg !38
   %exitcond = icmp eq i32 %inc, %call, !dbg !38
   br i1 %exitcond, label %if.end6, label %for.body, !dbg !38
 ; CHECK: edge for.body -> if.end6 probability is 1 / 10227 = 0.00977804
@@ -98,46 +98,46 @@ attributes #4 = { nounwind readonly }
 !llvm.module.flags = !{!25, !42}
 !llvm.ident = !{!26}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (trunk 192896) (llvm/trunk 192895)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "branch.cc", directory: ".")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (trunk 192896) (llvm/trunk 192895)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "branch.cc", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 (i32, i8**)* @main, variables: !12)
-!5 = !MDFile(filename: "branch.cc", directory: ".")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 (i32, i8**)* @main, variables: !12)
+!5 = !DIFile(filename: "branch.cc", directory: ".")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8, !9}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
-!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
-!11 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
+!11 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !12 = !{!13, !14, !15, !17, !18, !21, !23}
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 4, arg: 1, scope: !4, file: !5, type: !8)
-!14 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 4, arg: 2, scope: !4, file: !5, type: !9)
-!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "result", line: 7, scope: !4, file: !5, type: !16)
-!16 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
-!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "limit", line: 8, scope: !4, file: !5, type: !8)
-!18 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "s", line: 10, scope: !19, file: !5, type: !16)
-!19 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !20)
-!20 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !4)
-!21 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "u", line: 11, scope: !22, file: !5, type: !8)
-!22 = distinct !MDLexicalBlock(line: 11, column: 0, file: !1, scope: !19)
-!23 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 12, scope: !24, file: !5, type: !16)
-!24 = distinct !MDLexicalBlock(line: 11, column: 0, file: !1, scope: !22)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 4, arg: 1, scope: !4, file: !5, type: !8)
+!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 4, arg: 2, scope: !4, file: !5, type: !9)
+!15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "result", line: 7, scope: !4, file: !5, type: !16)
+!16 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!17 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "limit", line: 8, scope: !4, file: !5, type: !8)
+!18 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "s", line: 10, scope: !19, file: !5, type: !16)
+!19 = distinct !DILexicalBlock(line: 9, column: 0, file: !1, scope: !20)
+!20 = distinct !DILexicalBlock(line: 9, column: 0, file: !1, scope: !4)
+!21 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "u", line: 11, scope: !22, file: !5, type: !8)
+!22 = distinct !DILexicalBlock(line: 11, column: 0, file: !1, scope: !19)
+!23 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 12, scope: !24, file: !5, type: !16)
+!24 = distinct !DILexicalBlock(line: 11, column: 0, file: !1, scope: !22)
 !25 = !{i32 2, !"Dwarf Version", i32 4}
 !26 = !{!"clang version 3.4 (trunk 192896) (llvm/trunk 192895)"}
-!27 = !MDLocation(line: 4, scope: !4)
-!28 = !MDLocation(line: 5, scope: !29)
-!29 = distinct !MDLexicalBlock(line: 5, column: 0, file: !1, scope: !4)
-!30 = !MDLocation(line: 8, scope: !4)
+!27 = !DILocation(line: 4, scope: !4)
+!28 = !DILocation(line: 5, scope: !29)
+!29 = distinct !DILexicalBlock(line: 5, column: 0, file: !1, scope: !4)
+!30 = !DILocation(line: 8, scope: !4)
 !31 = !{!32, !32, i64 0}
 !32 = !{!"any pointer", !33, i64 0}
 !33 = !{!"omnipotent char", !34, i64 0}
 !34 = !{!"Simple C/C++ TBAA"}
-!35 = !MDLocation(line: 9, scope: !20)
-!36 = !MDLocation(line: 13, scope: !24)
-!37 = !MDLocation(line: 14, scope: !24)
-!38 = !MDLocation(line: 11, scope: !22)
-!39 = !MDLocation(line: 20, scope: !4)
-!40 = !MDLocation(line: 21, scope: !4)
-!41 = !MDLocation(line: 22, scope: !4)
+!35 = !DILocation(line: 9, scope: !20)
+!36 = !DILocation(line: 13, scope: !24)
+!37 = !DILocation(line: 14, scope: !24)
+!38 = !DILocation(line: 11, scope: !22)
+!39 = !DILocation(line: 20, scope: !4)
+!40 = !DILocation(line: 21, scope: !4)
+!41 = !DILocation(line: 22, scope: !4)
 !42 = !{i32 1, !"Debug Info Version", i32 3}

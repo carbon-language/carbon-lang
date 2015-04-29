@@ -44,7 +44,7 @@
 define zeroext i1 @_ZN3Foo3batEv(%struct.Foo* %this) #0 align 2 {
 entry:
   %0 = load %struct.Foo*, %struct.Foo** @pfoo, align 8
-  tail call void @llvm.dbg.value(metadata %struct.Foo* %0, i64 0, metadata !62, metadata !MDExpression()), !dbg !MDLocation(scope: !MDSubprogram())
+  tail call void @llvm.dbg.value(metadata %struct.Foo* %0, i64 0, metadata !62, metadata !DIExpression()), !dbg !DILocation(scope: !DISubprogram())
   %cmp.i = icmp eq %struct.Foo* %0, %this
   ret i1 %cmp.i
 }
@@ -53,7 +53,7 @@ entry:
 define void @_Z3bazv() #1 {
 entry:
   %0 = load %struct.Wibble*, %struct.Wibble** @wibble1, align 8
-  tail call void @llvm.dbg.value(metadata %struct.Flibble* undef, i64 0, metadata !65, metadata !MDExpression()), !dbg !MDLocation(scope: !MDSubprogram())
+  tail call void @llvm.dbg.value(metadata %struct.Flibble* undef, i64 0, metadata !65, metadata !DIExpression()), !dbg !DILocation(scope: !DISubprogram())
   %1 = load %struct.Wibble*, %struct.Wibble** @wibble2, align 8
   %cmp.i = icmp ugt %struct.Wibble* %1, %0
   br i1 %cmp.i, label %if.then.i, label %_ZN7Flibble3barEP6Wibble.exit
@@ -76,8 +76,8 @@ attributes #1 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 attributes #2 = { nounwind readnone }
 
 
-!17 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: null)
-!45 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
-!62 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "arg", line: 4, arg: 2, scope: !MDSubprogram(), type: !17)
+!17 = !DIDerivedType(tag: DW_TAG_reference_type, baseType: null)
+!45 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
+!62 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "arg", line: 4, arg: 2, scope: !DISubprogram(), type: !17)
 !64 = !{%struct.Flibble* undef}
-!65 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 13, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !MDSubprogram(), type: !45)
+!65 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 13, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !DISubprogram(), type: !45)

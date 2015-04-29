@@ -28,7 +28,7 @@ define void @foo(i32 %map) #0 {
 entry:
   %map.addr = alloca i32, align 4
   store i32 %map, i32* %map.addr, align 4, !tbaa !15
-  call void @llvm.dbg.declare(metadata i32* %map.addr, metadata !10, metadata !MDExpression()), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %map.addr, metadata !10, metadata !DIExpression()), !dbg !14
   %call = call i32 (i32*, ...) bitcast (i32 (...)* @lookup to i32 (i32*, ...)*)(i32* %map.addr) #3, !dbg !19
   ; Ensure that all dbg intrinsics have the same scope after
   ; LowerDbgDeclare is finished with them.
@@ -59,26 +59,26 @@ attributes #3 = { nounwind }
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "formal_parameter.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "formal_parameter.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !9)
-!5 = !MDFile(filename: "formal_parameter.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !9)
+!5 = !DIFile(filename: "formal_parameter.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "map", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "map", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !11 = !{i32 2, !"Dwarf Version", i32 2}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.5.0 "}
-!14 = !MDLocation(line: 1, scope: !4)
+!14 = !DILocation(line: 1, scope: !4)
 !15 = !{!16, !16, i64 0}
 !16 = !{!"int", !17, i64 0}
 !17 = !{!"omnipotent char", !18, i64 0}
 !18 = !{!"Simple C/C++ TBAA"}
-!19 = !MDLocation(line: 3, scope: !4)
-!20 = !MDLocation(line: 4, scope: !21)
-!21 = distinct !MDLexicalBlock(line: 4, column: 0, file: !1, scope: !4)
-!22 = !MDLocation(line: 5, scope: !4)
+!19 = !DILocation(line: 3, scope: !4)
+!20 = !DILocation(line: 4, scope: !21)
+!21 = distinct !DILexicalBlock(line: 4, column: 0, file: !1, scope: !4)
+!22 = !DILocation(line: 5, scope: !4)

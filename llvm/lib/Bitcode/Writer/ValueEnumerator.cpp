@@ -285,7 +285,7 @@ static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
 
 ValueEnumerator::ValueEnumerator(const Module &M,
                                  bool ShouldPreserveUseListOrder)
-    : HasMDString(false), HasMDLocation(false), HasGenericDebugNode(false),
+    : HasMDString(false), HasDILocation(false), HasGenericDINode(false),
       ShouldPreserveUseListOrder(ShouldPreserveUseListOrder) {
   if (ShouldPreserveUseListOrder)
     UseListOrders = predictUseListOrder(M);
@@ -382,7 +382,7 @@ ValueEnumerator::ValueEnumerator(const Module &M,
 
         // Don't enumerate the location directly -- it has a special record
         // type -- but enumerate its operands.
-        if (MDLocation *L = I.getDebugLoc())
+        if (DILocation *L = I.getDebugLoc())
           EnumerateMDNodeOperands(L);
       }
   }
@@ -548,8 +548,8 @@ void ValueEnumerator::EnumerateMetadata(const Metadata *MD) {
     EnumerateValue(C->getValue());
 
   HasMDString |= isa<MDString>(MD);
-  HasMDLocation |= isa<MDLocation>(MD);
-  HasGenericDebugNode |= isa<GenericDebugNode>(MD);
+  HasDILocation |= isa<DILocation>(MD);
+  HasGenericDINode |= isa<GenericDINode>(MD);
 
   // Replace the dummy ID inserted above with the correct one.  MDValueMap may
   // have changed by inserting operands, so we need a fresh lookup here.

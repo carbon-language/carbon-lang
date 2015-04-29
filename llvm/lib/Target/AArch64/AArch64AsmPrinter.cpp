@@ -348,7 +348,7 @@ void AArch64AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   assert(NOps == 4);
   OS << '\t' << MAI->getCommentString() << "DEBUG_VALUE: ";
   // cast away const; DIetc do not take const operands for some reason.
-  OS << cast<MDLocalVariable>(MI->getOperand(NOps - 2).getMetadata())
+  OS << cast<DILocalVariable>(MI->getOperand(NOps - 2).getMetadata())
             ->getName();
   OS << " <- ";
   // Frame address.  Currently handles register +- offset only.

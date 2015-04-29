@@ -3,4 +3,4 @@
 !0 = !{}
 
 ; CHECK: <stdin>:[[@LINE+1]]:38: error: field 'line' cannot be specified more than once
-!1 = !MDLocation(line: 3, scope: !0, line: 3)
+!1 = !DILocation(line: 3, scope: !0, line: 3)

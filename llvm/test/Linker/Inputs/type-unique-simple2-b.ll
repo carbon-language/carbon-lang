@@ -8,8 +8,8 @@ entry:
   %a.addr = alloca i32, align 4
   %t = alloca %struct.Base, align 8
   store i32 %a, i32* %a.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !20, metadata !MDExpression()), !dbg !21
-  call void @llvm.dbg.declare(metadata %struct.Base* %t, metadata !22, metadata !MDExpression()), !dbg !23
+  call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !20, metadata !DIExpression()), !dbg !21
+  call void @llvm.dbg.declare(metadata %struct.Base* %t, metadata !22, metadata !DIExpression()), !dbg !23
   ret void, !dbg !24
 }
 
@@ -36,32 +36,32 @@ attributes #3 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!19, !28}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (http://llvm.org/git/clang.git 8a3f9e46cb988d2c664395b21910091e3730ae82) (http://llvm.org/git/llvm.git 4699e9549358bc77824a59114548eecc3f7c523c)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !11, globals: !2, imports: !2)
-!1 = !MDFile(filename: "bar.cpp", directory: ".")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 (http://llvm.org/git/clang.git 8a3f9e46cb988d2c664395b21910091e3730ae82) (http://llvm.org/git/llvm.git 4699e9549358bc77824a59114548eecc3f7c523c)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !11, globals: !2, imports: !2)
+!1 = !DIFile(filename: "bar.cpp", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", line: 1, size: 128, align: 64, file: !5, elements: !6, identifier: "_ZTS4Base")
-!5 = !MDFile(filename: "./a.hpp", directory: ".")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "Base", line: 1, size: 128, align: 64, file: !5, elements: !6, identifier: "_ZTS4Base")
+!5 = !DIFile(filename: "./a.hpp", directory: ".")
 !6 = !{!7, !9}
-!7 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !5, scope: !"_ZTS4Base", baseType: !8)
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !5, scope: !"_ZTS4Base", baseType: !10)
-!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS4Base")
+!7 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !5, scope: !"_ZTS4Base", baseType: !8)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !5, scope: !"_ZTS4Base", baseType: !10)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS4Base")
 !11 = !{!12, !16}
-!12 = !MDSubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !13, type: !14, function: void (i32)* @_Z1gi, variables: !2)
-!13 = !MDFile(filename: "bar.cpp", directory: ".")
-!14 = !MDSubroutineType(types: !15)
+!12 = !DISubprogram(name: "g", linkageName: "_Z1gi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !13, type: !14, function: void (i32)* @_Z1gi, variables: !2)
+!13 = !DIFile(filename: "bar.cpp", directory: ".")
+!14 = !DISubroutineType(types: !15)
 !15 = !{null, !8}
-!16 = !MDSubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !13, type: !17, function: i32 ()* @main, variables: !2)
-!17 = !MDSubroutineType(types: !18)
+!16 = !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !13, type: !17, function: i32 ()* @main, variables: !2)
+!17 = !DISubroutineType(types: !18)
 !18 = !{!8}
 !19 = !{i32 2, !"Dwarf Version", i32 2}
-!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 4, arg: 1, scope: !12, file: !13, type: !8)
-!21 = !MDLocation(line: 4, scope: !12)
-!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "t", line: 5, scope: !12, file: !13, type: !4)
-!23 = !MDLocation(line: 5, scope: !12)
-!24 = !MDLocation(line: 6, scope: !12)
-!25 = !MDLocation(line: 8, scope: !16)
-!26 = !MDLocation(line: 9, scope: !16)
-!27 = !MDLocation(line: 10, scope: !16)
+!20 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 4, arg: 1, scope: !12, file: !13, type: !8)
+!21 = !DILocation(line: 4, scope: !12)
+!22 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "t", line: 5, scope: !12, file: !13, type: !4)
+!23 = !DILocation(line: 5, scope: !12)
+!24 = !DILocation(line: 6, scope: !12)
+!25 = !DILocation(line: 8, scope: !16)
+!26 = !DILocation(line: 9, scope: !16)
+!27 = !DILocation(line: 10, scope: !16)
 !28 = !{i32 1, !"Debug Info Version", i32 3}

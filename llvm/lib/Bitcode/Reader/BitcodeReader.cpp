@@ -1724,7 +1724,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       Metadata *InlinedAt =
           Record[4] ? MDValueList.getValueFwdRef(Record[4] - 1) : nullptr;
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDLocation, Record[0],
+          GET_OR_DISTINCT(DILocation, Record[0],
                           (Context, Line, Column, Scope, InlinedAt)),
           NextMDValueNo++);
       break;
@@ -1744,7 +1744,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       for (unsigned I = 4, E = Record.size(); I != E; ++I)
         DwarfOps.push_back(Record[I] ? MDValueList.getValueFwdRef(Record[I] - 1)
                                      : nullptr);
-      MDValueList.AssignValue(GET_OR_DISTINCT(GenericDebugNode, Record[0],
+      MDValueList.AssignValue(GET_OR_DISTINCT(GenericDINode, Record[0],
                                               (Context, Tag, Header, DwarfOps)),
                               NextMDValueNo++);
       break;
@@ -1754,7 +1754,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDSubrange, Record[0],
+          GET_OR_DISTINCT(DISubrange, Record[0],
                           (Context, Record[1], unrotateSign(Record[2]))),
           NextMDValueNo++);
       break;
@@ -1763,7 +1763,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       if (Record.size() != 3)
         return Error("Invalid record");
 
-      MDValueList.AssignValue(GET_OR_DISTINCT(MDEnumerator, Record[0],
+      MDValueList.AssignValue(GET_OR_DISTINCT(DIEnumerator, Record[0],
                                               (Context, unrotateSign(Record[1]),
                                                getMDString(Record[2]))),
                               NextMDValueNo++);
@@ -1774,7 +1774,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDBasicType, Record[0],
+          GET_OR_DISTINCT(DIBasicType, Record[0],
                           (Context, Record[1], getMDString(Record[2]),
                            Record[3], Record[4], Record[5])),
           NextMDValueNo++);
@@ -1785,7 +1785,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDDerivedType, Record[0],
+          GET_OR_DISTINCT(DIDerivedType, Record[0],
                           (Context, Record[1], getMDString(Record[2]),
                            getMDOrNull(Record[3]), Record[4],
                            getMDOrNull(Record[5]), getMDOrNull(Record[6]),
@@ -1799,7 +1799,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDCompositeType, Record[0],
+          GET_OR_DISTINCT(DICompositeType, Record[0],
                           (Context, Record[1], getMDString(Record[2]),
                            getMDOrNull(Record[3]), Record[4],
                            getMDOrNull(Record[5]), getMDOrNull(Record[6]),
@@ -1815,7 +1815,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDSubroutineType, Record[0],
+          GET_OR_DISTINCT(DISubroutineType, Record[0],
                           (Context, Record[1], getMDOrNull(Record[2]))),
           NextMDValueNo++);
       break;
@@ -1825,7 +1825,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDFile, Record[0], (Context, getMDString(Record[1]),
+          GET_OR_DISTINCT(DIFile, Record[0], (Context, getMDString(Record[1]),
                                               getMDString(Record[2]))),
           NextMDValueNo++);
       break;
@@ -1835,7 +1835,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDCompileUnit, Record[0],
+          GET_OR_DISTINCT(DICompileUnit, Record[0],
                           (Context, Record[1], getMDOrNull(Record[2]),
                            getMDString(Record[3]), Record[4],
                            getMDString(Record[5]), Record[6],
@@ -1852,7 +1852,7 @@ std::error_code BitcodeReader::ParseMetadata() {
 
       MDValueList.AssignValue(
           GET_OR_DISTINCT(
-              MDSubprogram, Record[0],
+              DISubprogram, Record[0],
               (Context, getMDOrNull(Record[1]), getMDString(Record[2]),
                getMDString(Record[3]), getMDOrNull(Record[4]), Record[5],
                getMDOrNull(Record[6]), Record[7], Record[8], Record[9],
@@ -1867,7 +1867,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDLexicalBlock, Record[0],
+          GET_OR_DISTINCT(DILexicalBlock, Record[0],
                           (Context, getMDOrNull(Record[1]),
                            getMDOrNull(Record[2]), Record[3], Record[4])),
           NextMDValueNo++);
@@ -1878,7 +1878,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDLexicalBlockFile, Record[0],
+          GET_OR_DISTINCT(DILexicalBlockFile, Record[0],
                           (Context, getMDOrNull(Record[1]),
                            getMDOrNull(Record[2]), Record[3])),
           NextMDValueNo++);
@@ -1889,7 +1889,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDNamespace, Record[0],
+          GET_OR_DISTINCT(DINamespace, Record[0],
                           (Context, getMDOrNull(Record[1]),
                            getMDOrNull(Record[2]), getMDString(Record[3]),
                            Record[4])),
@@ -1900,7 +1900,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       if (Record.size() != 3)
         return Error("Invalid record");
 
-      MDValueList.AssignValue(GET_OR_DISTINCT(MDTemplateTypeParameter,
+      MDValueList.AssignValue(GET_OR_DISTINCT(DITemplateTypeParameter,
                                               Record[0],
                                               (Context, getMDString(Record[1]),
                                                getMDOrNull(Record[2]))),
@@ -1912,7 +1912,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDTemplateValueParameter, Record[0],
+          GET_OR_DISTINCT(DITemplateValueParameter, Record[0],
                           (Context, Record[1], getMDString(Record[2]),
                            getMDOrNull(Record[3]), getMDOrNull(Record[4]))),
           NextMDValueNo++);
@@ -1923,7 +1923,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDGlobalVariable, Record[0],
+          GET_OR_DISTINCT(DIGlobalVariable, Record[0],
                           (Context, getMDOrNull(Record[1]),
                            getMDString(Record[2]), getMDString(Record[3]),
                            getMDOrNull(Record[4]), Record[5],
@@ -1938,7 +1938,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDLocalVariable, Record[0],
+          GET_OR_DISTINCT(DILocalVariable, Record[0],
                           (Context, Record[1], getMDOrNull(Record[2]),
                            getMDString(Record[3]), getMDOrNull(Record[4]),
                            Record[5], getMDOrNull(Record[6]), Record[7],
@@ -1951,7 +1951,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDExpression, Record[0],
+          GET_OR_DISTINCT(DIExpression, Record[0],
                           (Context, makeArrayRef(Record).slice(1))),
           NextMDValueNo++);
       break;
@@ -1961,7 +1961,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDObjCProperty, Record[0],
+          GET_OR_DISTINCT(DIObjCProperty, Record[0],
                           (Context, getMDString(Record[1]),
                            getMDOrNull(Record[2]), Record[3],
                            getMDString(Record[4]), getMDString(Record[5]),
@@ -1974,7 +1974,7 @@ std::error_code BitcodeReader::ParseMetadata() {
         return Error("Invalid record");
 
       MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDImportedEntity, Record[0],
+          GET_OR_DISTINCT(DIImportedEntity, Record[0],
                           (Context, Record[1], getMDOrNull(Record[2]),
                            getMDOrNull(Record[3]), Record[4],
                            getMDString(Record[5]))),

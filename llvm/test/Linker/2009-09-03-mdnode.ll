@@ -26,6 +26,6 @@ declare void @llvm.dbg.stoppoint(i32, i32, metadata) nounwind readnone
 
 declare void @llvm.dbg.region.end(metadata) nounwind readnone
 
-!0 = !MDSubprogram(name: "main", linkageName: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !1)
-!1 = !MDCompileUnit(language: DW_LANG_C99, producer: "ellcc 0.1.0", isOptimized: true, emissionKind: 0, file: !2)
-!2 = !MDFile(filename: "a.c", directory: "/home/rich/ellcc/test/source")
+!0 = !DISubprogram(name: "main", linkageName: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !1)
+!1 = !DICompileUnit(language: DW_LANG_C99, producer: "ellcc 0.1.0", isOptimized: true, emissionKind: 0, file: !2)
+!2 = !DIFile(filename: "a.c", directory: "/home/rich/ellcc/test/source")

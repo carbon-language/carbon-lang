@@ -66,7 +66,7 @@ class DwarfCompileUnit : public DwarfUnit {
   bool includeMinimalInlineScopes() const;
 
 public:
-  DwarfCompileUnit(unsigned UID, const MDCompileUnit *Node, AsmPrinter *A,
+  DwarfCompileUnit(unsigned UID, const DICompileUnit *Node, AsmPrinter *A,
                    DwarfDebug *DW, DwarfFile *DWU);
 
   DwarfCompileUnit *getSkeleton() const {
@@ -79,7 +79,7 @@ public:
   void applyStmtList(DIE &D);
 
   /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
-  DIE *getOrCreateGlobalVariableDIE(const MDGlobalVariable *GV);
+  DIE *getOrCreateGlobalVariableDIE(const DIGlobalVariable *GV);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
@@ -113,7 +113,7 @@ public:
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
   /// variables in this scope then create and insert DIEs for these
   /// variables.
-  DIE &updateSubprogramScopeDIE(const MDSubprogram *SP);
+  DIE &updateSubprogramScopeDIE(const DISubprogram *SP);
 
   void constructScopeDIE(LexicalScope *Scope,
                          SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren);
@@ -156,11 +156,11 @@ public:
 
   /// \brief Construct import_module DIE.
   std::unique_ptr<DIE>
-  constructImportedEntityDIE(const MDImportedEntity *Module);
+  constructImportedEntityDIE(const DIImportedEntity *Module);
 
-  void finishSubprogramDefinition(const MDSubprogram *SP);
+  void finishSubprogramDefinition(const DISubprogram *SP);
 
-  void collectDeadVariables(const MDSubprogram *SP);
+  void collectDeadVariables(const DISubprogram *SP);
 
   /// Set the skeleton unit associated with this unit.
   void setSkeleton(DwarfCompileUnit &Skel) { Skeleton = &Skel; }
@@ -183,11 +183,11 @@ public:
   }
 
   /// Add a new global name to the compile unit.
-  void addGlobalName(StringRef Name, DIE &Die, const MDScope *Context) override;
+  void addGlobalName(StringRef Name, DIE &Die, const DIScope *Context) override;
 
   /// Add a new global type to the compile unit.
-  void addGlobalType(const MDType *Ty, const DIE &Die,
-                     const MDScope *Context) override;
+  void addGlobalType(const DIType *Ty, const DIE &Die,
+                     const DIScope *Context) override;
 
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
@@ -215,7 +215,7 @@ public:
   /// Add a Dwarf expression attribute data and value.
   void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
 
-  void applySubprogramAttributesToDefinition(const MDSubprogram *SP,
+  void applySubprogramAttributesToDefinition(const DISubprogram *SP,
                                              DIE &SPDie);
 
   /// getRangeLists - Get the vector of range lists.

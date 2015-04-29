@@ -20,9 +20,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ;
 ; There should be no debug info for the padding.
 ; CHECK-NOT: DW_OP_bit_piece, 56
-; CHECK: MDExpression(DW_OP_bit_piece, 32, 24)
+; CHECK: DIExpression(DW_OP_bit_piece, 32, 24)
 ; CHECK-NOT: DW_OP_bit_piece, 56
-; CHECK: MDExpression(DW_OP_bit_piece, 0, 32)
+; CHECK: DIExpression(DW_OP_bit_piece, 0, 32)
 ; CHECK-NOT: DW_OP_bit_piece, 56
 %struct.prog_src_register = type { i32, i24 }
 
@@ -66,26 +66,26 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "<stdin>", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "<stdin>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "src_reg_for_float", line: 7, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: i64 ()* @src_reg_for_float, variables: !2)
-!5 = !MDFile(filename: "pr22495.c", directory: "")
-!6 = !MDFile(filename: "pr22495.c", directory: "")
-!7 = !MDSubroutineType(types: !8)
+!4 = !DISubprogram(name: "src_reg_for_float", line: 7, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: i64 ()* @src_reg_for_float, variables: !2)
+!5 = !DIFile(filename: "pr22495.c", directory: "")
+!6 = !DIFile(filename: "pr22495.c", directory: "")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9}
-!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "prog_src_register", line: 1, size: 64, align: 32, file: !5, elements: !10)
+!9 = !DICompositeType(tag: DW_TAG_structure_type, name: "prog_src_register", line: 1, size: 64, align: 32, file: !5, elements: !10)
 !10 = !{!11}
-!11 = !MDDerivedType(tag: DW_TAG_member, name: "Index", line: 3, size: 13, align: 32, offset: 4, file: !5, scope: !9, baseType: !12)
-!12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!11 = !DIDerivedType(tag: DW_TAG_member, name: "Index", line: 3, size: 13, align: 32, offset: 4, file: !5, scope: !9, baseType: !12)
+!12 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !13 = !{i32 2, !"Dwarf Version", i32 4}
 !14 = !{i32 2, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.7.0 "}
-!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !4, file: !6, type: !9)
-!17 = !MDExpression()
-!18 = !MDLocation(line: 8, scope: !4)
-!19 = !MDLocation(line: 9, scope: !4)
-!20 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 10, scope: !4, file: !6, type: !12)
-!21 = !MDLocation(line: 10, scope: !4)
-!22 = !MDLocation(line: 11, scope: !4)
+!16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !4, file: !6, type: !9)
+!17 = !DIExpression()
+!18 = !DILocation(line: 8, scope: !4)
+!19 = !DILocation(line: 9, scope: !4)
+!20 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 10, scope: !4, file: !6, type: !12)
+!21 = !DILocation(line: 10, scope: !4)
+!22 = !DILocation(line: 11, scope: !4)

@@ -22,8 +22,8 @@ define void @test3() !bar !3 {
   unreachable, !bar !4
 }
 
-!0 = !MDLocation(line: 662302, column: 26, scope: !1)
-!1 = !MDSubprogram(name: "foo")
+!0 = !DILocation(line: 662302, column: 26, scope: !1)
+!1 = !DISubprogram(name: "foo")
 !2 = distinct !{}
 !3 = distinct !{}
 !4 = distinct !{}

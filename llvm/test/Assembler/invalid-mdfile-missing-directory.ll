@@ -1,4 +1,4 @@
 ; RUN: not llvm-as < %s -disable-output 2>&1 | FileCheck %s
 
 ; CHECK: [[@LINE+1]]:30: error: missing required field 'directory'
-!0 = !MDFile(filename: "file")
+!0 = !DIFile(filename: "file")

@@ -75,9 +75,9 @@ public:
 /// - Variables that are described by multiple MMI table entries have multiple
 ///   expressions and frame indices.
 class DbgVariable {
-  const MDLocalVariable *Var; /// Variable Descriptor.
-  const MDLocation *IA;       /// Inlined at location.
-  SmallVector<const MDExpression *, 1>
+  const DILocalVariable *Var; /// Variable Descriptor.
+  const DILocation *IA;       /// Inlined at location.
+  SmallVector<const DIExpression *, 1>
       Expr;                          /// Complex address location expression.
   DIE *TheDIE;                /// Variable DIE.
   unsigned DebugLocListIndex;        /// Offset in DebugLocs.
@@ -87,8 +87,8 @@ class DbgVariable {
 
 public:
   /// Construct a DbgVariable from a variable.
-  DbgVariable(const MDLocalVariable *V, const MDLocation *IA,
-              const MDExpression *E, DwarfDebug *DD, int FI = ~0)
+  DbgVariable(const DILocalVariable *V, const DILocation *IA,
+              const DIExpression *E, DwarfDebug *DD, int FI = ~0)
       : Var(V), IA(IA), Expr(1, E), TheDIE(nullptr), DebugLocListIndex(~0U),
         MInsn(nullptr), DD(DD) {
     FrameIndex.push_back(FI);
@@ -106,9 +106,9 @@ public:
   }
 
   // Accessors.
-  const MDLocalVariable *getVariable() const { return Var; }
-  const MDLocation *getInlinedAt() const { return IA; }
-  const ArrayRef<const MDExpression *> getExpression() const { return Expr; }
+  const DILocalVariable *getVariable() const { return Var; }
+  const DILocation *getInlinedAt() const { return IA; }
+  const ArrayRef<const DIExpression *> getExpression() const { return Expr; }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
   void setDebugLocListIndex(unsigned O) { DebugLocListIndex = O; }
@@ -130,7 +130,7 @@ public:
       FrameIndex.append(FI.begin(), FI.end());
     }
     assert(Expr.size() > 1 ? std::all_of(Expr.begin(), Expr.end(),
-                                         [](const MDExpression *E) {
+                                         [](const DIExpression *E) {
                                            return E->isBitPiece();
                                          })
                            : (true && "conflicting locations for variable"));
@@ -167,12 +167,12 @@ public:
     return Expr.back()->getNumElements() > 0;
   }
   bool isBlockByrefVariable() const;
-  const MDType *getType() const;
+  const DIType *getType() const;
 
 private:
   /// resolve - Look in the DwarfDebug map for the MDNode that
   /// corresponds to the reference.
-  template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const;
+  template <typename T> T *resolve(TypedDINodeRef<T> Ref) const;
 };
 
 
@@ -271,7 +271,7 @@ class DwarfDebug : public AsmPrinterHandler {
   DenseMap<const MDNode *, const DwarfTypeUnit *> DwarfTypeUnits;
 
   SmallVector<
-      std::pair<std::unique_ptr<DwarfTypeUnit>, const MDCompositeType *>, 1>
+      std::pair<std::unique_ptr<DwarfTypeUnit>, const DICompositeType *>, 1>
       TypeUnitsUnderConstruction;
 
   // Whether to emit the pubnames/pubtypes sections.
@@ -324,7 +324,7 @@ class DwarfDebug : public AsmPrinterHandler {
   DwarfAccelTable AccelNamespace;
   DwarfAccelTable AccelTypes;
 
-  DenseMap<const Function *, MDSubprogram *> FunctionDIs;
+  DenseMap<const Function *, DISubprogram *> FunctionDIs;
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
@@ -336,9 +336,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Find abstract variable associated with Var.
   DbgVariable *getExistingAbstractVariable(InlinedVariable IV,
-                                           const MDLocalVariable *&Cleansed);
+                                           const DILocalVariable *&Cleansed);
   DbgVariable *getExistingAbstractVariable(InlinedVariable IV);
-  void createAbstractVariable(const MDLocalVariable *DV, LexicalScope *Scope);
+  void createAbstractVariable(const DILocalVariable *DV, LexicalScope *Scope);
   void ensureAbstractVariableIsCreated(InlinedVariable Var,
                                        const MDNode *Scope);
   void ensureAbstractVariableIsCreatedIfScoped(InlinedVariable Var,
@@ -453,11 +453,11 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  DwarfCompileUnit &constructDwarfCompileUnit(const MDCompileUnit *DIUnit);
+  DwarfCompileUnit &constructDwarfCompileUnit(const DICompileUnit *DIUnit);
 
   /// \brief Construct imported_module or imported_declaration DIE.
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                        const MDImportedEntity *N);
+                                        const DIImportedEntity *N);
 
   /// \brief Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the
@@ -470,7 +470,7 @@ class DwarfDebug : public AsmPrinterHandler {
   void identifyScopeMarkers();
 
   /// \brief Populate LexicalScope entries with variables' info.
-  void collectVariableInfo(DwarfCompileUnit &TheCU, const MDSubprogram *SP,
+  void collectVariableInfo(DwarfCompileUnit &TheCU, const DISubprogram *SP,
                            DenseSet<InlinedVariable> &ProcessedVars);
 
   /// \brief Build the location list for all DBG_VALUEs in the
@@ -522,7 +522,7 @@ public:
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
   void addDwarfTypeUnitType(DwarfCompileUnit &CU, StringRef Identifier,
-                            DIE &Die, const MDCompositeType *CTy);
+                            DIE &Die, const DICompositeType *CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
@@ -566,7 +566,7 @@ public:
   void emitDebugLocEntryLocation(const DebugLocStream::Entry &Entry);
 
   /// Find the MDNode for the given reference.
-  template <typename T> T *resolve(TypedDebugNodeRef<T> Ref) const {
+  template <typename T> T *resolve(TypedDINodeRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
   }
 
@@ -583,7 +583,7 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
-  void addSubprogramNames(const MDSubprogram *SP, DIE &Die);
+  void addSubprogramNames(const DISubprogram *SP, DIE &Die);
 
   AddressPool &getAddressPool() { return AddrPool; }
 

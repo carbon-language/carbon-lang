@@ -31,7 +31,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define i32 @foo(%struct.Outer* byval align 8 %outer) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !25, metadata !MDExpression()), !dbg !26
+  call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !25, metadata !DIExpression()), !dbg !26
   %i1.sroa.0.0..sroa_idx = getelementptr inbounds %struct.Outer, %struct.Outer* %outer, i64 0, i32 0, i64 1, i32 0, !dbg !27
   %i1.sroa.0.0.copyload = load i32, i32* %i1.sroa.0.0..sroa_idx, align 8, !dbg !27
   call void @llvm.dbg.value(metadata i32 %i1.sroa.0.0.copyload, i64 0, metadata !28, metadata !29), !dbg !27
@@ -57,35 +57,35 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!22, !23}
 !llvm.ident = !{!24}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "sroasplit-1.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "sroasplit-1.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (%struct.Outer*)* @foo, variables: !2)
-!5 = !MDFile(filename: "sroasplit-1.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (%struct.Outer*)* @foo, variables: !2)
+!5 = !DIFile(filename: "sroasplit-1.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDDerivedType(tag: DW_TAG_typedef, name: "Outer", line: 8, file: !1, baseType: !10)
-!10 = !MDCompositeType(tag: DW_TAG_structure_type, line: 6, size: 256, align: 64, file: !1, elements: !11)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_typedef, name: "Outer", line: 8, file: !1, baseType: !10)
+!10 = !DICompositeType(tag: DW_TAG_structure_type, line: 6, size: 256, align: 64, file: !1, elements: !11)
 !11 = !{!12}
-!12 = !MDDerivedType(tag: DW_TAG_member, name: "inner", line: 7, size: 256, align: 64, file: !1, scope: !10, baseType: !13)
-!13 = !MDCompositeType(tag: DW_TAG_array_type, size: 256, align: 64, baseType: !14, elements: !20)
-!14 = !MDDerivedType(tag: DW_TAG_typedef, name: "Inner", line: 4, file: !1, baseType: !15)
-!15 = !MDCompositeType(tag: DW_TAG_structure_type, line: 1, size: 128, align: 64, file: !1, elements: !16)
+!12 = !DIDerivedType(tag: DW_TAG_member, name: "inner", line: 7, size: 256, align: 64, file: !1, scope: !10, baseType: !13)
+!13 = !DICompositeType(tag: DW_TAG_array_type, size: 256, align: 64, baseType: !14, elements: !20)
+!14 = !DIDerivedType(tag: DW_TAG_typedef, name: "Inner", line: 4, file: !1, baseType: !15)
+!15 = !DICompositeType(tag: DW_TAG_structure_type, line: 1, size: 128, align: 64, file: !1, elements: !16)
 !16 = !{!17, !18}
-!17 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !1, scope: !15, baseType: !8)
-!18 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !1, scope: !15, baseType: !19)
-!19 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
+!17 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !1, scope: !15, baseType: !8)
+!18 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 64, align: 64, offset: 64, file: !1, scope: !15, baseType: !19)
+!19 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
 !20 = !{!21}
-!21 = !MDSubrange(count: 2)
+!21 = !DISubrange(count: 2)
 !22 = !{i32 2, !"Dwarf Version", i32 2}
 !23 = !{i32 1, !"Debug Info Version", i32 3}
 !24 = !{!"clang version 3.5.0 "}
-!25 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
-!26 = !MDLocation(line: 10, scope: !4)
-!27 = !MDLocation(line: 11, scope: !4)
-!28 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i1", line: 11, scope: !4, file: !5, type: !14)
-!29 = !MDExpression(DW_OP_bit_piece, 0, 32)
+!25 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!26 = !DILocation(line: 10, scope: !4)
+!27 = !DILocation(line: 11, scope: !4)
+!28 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i1", line: 11, scope: !4, file: !5, type: !14)
+!29 = !DIExpression(DW_OP_bit_piece, 0, 32)
 !31 = !{i32 3, i32 0, i32 12}
-!32 = !MDLocation(line: 12, scope: !4)
+!32 = !DILocation(line: 12, scope: !4)

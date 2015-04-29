@@ -66,14 +66,14 @@ entry:
   %otherBitmap.addr = alloca %0*, align 8
   %length.addr = alloca i64, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !28, metadata !MDExpression()), !dbg !29
+  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !28, metadata !DIExpression()), !dbg !29
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !30, metadata !MDExpression()), !dbg !29
+  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !30, metadata !DIExpression()), !dbg !29
   store %0* %otherBitmap, %0** %otherBitmap.addr, align 8
-  call void @llvm.dbg.declare(metadata %0** %otherBitmap.addr, metadata !32, metadata !MDExpression()), !dbg !29
-  call void @llvm.dbg.declare(metadata %struct.ImageInfo* %info, metadata !33, metadata !MDExpression()), !dbg !34
+  call void @llvm.dbg.declare(metadata %0** %otherBitmap.addr, metadata !32, metadata !DIExpression()), !dbg !29
+  call void @llvm.dbg.declare(metadata %struct.ImageInfo* %info, metadata !33, metadata !DIExpression()), !dbg !34
   store i64 %length, i64* %length.addr, align 8
-  call void @llvm.dbg.declare(metadata i64* %length.addr, metadata !35, metadata !MDExpression()), !dbg !36
+  call void @llvm.dbg.declare(metadata i64* %length.addr, metadata !35, metadata !DIExpression()), !dbg !36
   %0 = load i8*, i8** %retval, !dbg !37
   ret i8* %0, !dbg !37
 }
@@ -87,42 +87,42 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!24, !25, !26, !27, !38}
 
-!0 = !MDCompileUnit(language: DW_LANG_ObjC_plus_plus, producer: "clang version 3.4 ", isOptimized: false, runtimeVersion: 2, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !6, globals: !2, imports: !2)
-!1 = !MDFile(filename: "t.mm", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_ObjC_plus_plus, producer: "clang version 3.4 ", isOptimized: false, runtimeVersion: 2, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !6, globals: !2, imports: !2)
+!1 = !DIFile(filename: "t.mm", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Bitmap", line: 8, size: 8, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC_plus_plus, file: !1, scope: !5, elements: !2)
-!5 = !MDFile(filename: "t.mm", directory: "")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "Bitmap", line: 8, size: 8, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC_plus_plus, file: !1, scope: !5, elements: !2)
+!5 = !DIFile(filename: "t.mm", directory: "")
 !6 = !{!7}
-!7 = !MDSubprogram(name: "-[Bitmap initWithCopy:andInfo:andLength:]", line: 9, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !8, function: i8* (%0*, i8*, %0*, %struct.ImageInfo*, i64)* @"\01-[Bitmap initWithCopy:andInfo:andLength:]", variables: !2)
-!8 = !MDSubroutineType(types: !9)
+!7 = !DISubprogram(name: "-[Bitmap initWithCopy:andInfo:andLength:]", line: 9, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 9, file: !1, scope: !5, type: !8, function: i8* (%0*, i8*, %0*, %struct.ImageInfo*, i64)* @"\01-[Bitmap initWithCopy:andInfo:andLength:]", variables: !2)
+!8 = !DISubroutineType(types: !9)
 !9 = !{!4, !10, !11, !14, !15, !19}
-!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
-!11 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 9, flags: DIFlagArtificial, file: !1, baseType: !12)
-!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
-!13 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
-!14 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
-!15 = !MDDerivedType(tag: DW_TAG_typedef, name: "ImageInfo", line: 7, file: !1, baseType: !16)
-!16 = !MDCompositeType(tag: DW_TAG_structure_type, line: 2, size: 192, align: 64, file: !1, elements: !17)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
+!11 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 9, flags: DIFlagArtificial, file: !1, baseType: !12)
+!12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
+!13 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
+!14 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
+!15 = !DIDerivedType(tag: DW_TAG_typedef, name: "ImageInfo", line: 7, file: !1, baseType: !16)
+!16 = !DICompositeType(tag: DW_TAG_structure_type, line: 2, size: 192, align: 64, file: !1, elements: !17)
 !17 = !{!18, !21, !22}
-!18 = !MDDerivedType(tag: DW_TAG_member, name: "width", line: 4, size: 64, align: 64, file: !1, scope: !16, baseType: !19)
-!19 = !MDDerivedType(tag: DW_TAG_typedef, name: "NSUInteger", line: 1, file: !1, baseType: !20)
-!20 = !MDBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
-!21 = !MDDerivedType(tag: DW_TAG_member, name: "height", line: 5, size: 64, align: 64, offset: 64, file: !1, scope: !16, baseType: !19)
-!22 = !MDDerivedType(tag: DW_TAG_member, name: "pixelAspect", line: 6, size: 64, align: 64, offset: 128, file: !1, scope: !16, baseType: !23)
-!23 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!18 = !DIDerivedType(tag: DW_TAG_member, name: "width", line: 4, size: 64, align: 64, file: !1, scope: !16, baseType: !19)
+!19 = !DIDerivedType(tag: DW_TAG_typedef, name: "NSUInteger", line: 1, file: !1, baseType: !20)
+!20 = !DIBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
+!21 = !DIDerivedType(tag: DW_TAG_member, name: "height", line: 5, size: 64, align: 64, offset: 64, file: !1, scope: !16, baseType: !19)
+!22 = !DIDerivedType(tag: DW_TAG_member, name: "pixelAspect", line: 6, size: 64, align: 64, offset: 128, file: !1, scope: !16, baseType: !23)
+!23 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !24 = !{i32 1, !"Objective-C Version", i32 2}
 !25 = !{i32 1, !"Objective-C Image Info Version", i32 0}
 !26 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
 !27 = !{i32 4, !"Objective-C Garbage Collection", i32 0}
-!28 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "self", line: 9, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !7, file: !5, type: !14)
-!29 = !MDLocation(line: 9, scope: !7)
-!30 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", line: 9, arg: 2, flags: DIFlagArtificial, scope: !7, file: !5, type: !31)
-!31 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 9, file: !1, baseType: !12)
-!32 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "otherBitmap", line: 9, arg: 3, scope: !7, file: !5, type: !14)
-!33 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "info", line: 10, arg: 4, scope: !7, file: !5, type: !15)
-!34 = !MDLocation(line: 10, scope: !7)
-!35 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "length", line: 11, arg: 5, scope: !7, file: !5, type: !19)
-!36 = !MDLocation(line: 11, scope: !7)
-!37 = !MDLocation(line: 13, scope: !7)
+!28 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "self", line: 9, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !7, file: !5, type: !14)
+!29 = !DILocation(line: 9, scope: !7)
+!30 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", line: 9, arg: 2, flags: DIFlagArtificial, scope: !7, file: !5, type: !31)
+!31 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 9, file: !1, baseType: !12)
+!32 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "otherBitmap", line: 9, arg: 3, scope: !7, file: !5, type: !14)
+!33 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "info", line: 10, arg: 4, scope: !7, file: !5, type: !15)
+!34 = !DILocation(line: 10, scope: !7)
+!35 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "length", line: 11, arg: 5, scope: !7, file: !5, type: !19)
+!36 = !DILocation(line: 11, scope: !7)
+!37 = !DILocation(line: 13, scope: !7)
 !38 = !{i32 1, !"Debug Info Version", i32 3}

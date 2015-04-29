@@ -155,9 +155,9 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 }
 
 // Find the MDNode which corresponds to the subprogram data that described F.
-static MDSubprogram *FindSubprogram(const Function *F,
+static DISubprogram *FindSubprogram(const Function *F,
                                     DebugInfoFinder &Finder) {
-  for (MDSubprogram *Subprogram : Finder.subprograms()) {
+  for (DISubprogram *Subprogram : Finder.subprograms()) {
     if (Subprogram->describes(F))
       return Subprogram;
   }
@@ -166,7 +166,7 @@ static MDSubprogram *FindSubprogram(const Function *F,
 
 // Add an operand to an existing MDNode. The new operand will be added at the
 // back of the operand list.
-static void AddOperand(MDCompileUnit *CU, MDSubprogramArray SPs,
+static void AddOperand(DICompileUnit *CU, DISubprogramArray SPs,
                        Metadata *NewSP) {
   SmallVector<Metadata *, 16> NewSPs;
   NewSPs.reserve(SPs.size() + 1);
@@ -183,14 +183,14 @@ static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
   DebugInfoFinder Finder;
   Finder.processModule(*OldFunc->getParent());
 
-  const MDSubprogram *OldSubprogramMDNode = FindSubprogram(OldFunc, Finder);
+  const DISubprogram *OldSubprogramMDNode = FindSubprogram(OldFunc, Finder);
   if (!OldSubprogramMDNode) return;
 
   // Ensure that OldFunc appears in the map.
   // (if it's already there it must point to NewFunc anyway)
   VMap[OldFunc] = NewFunc;
   auto *NewSubprogram =
-      cast<MDSubprogram>(MapMetadata(OldSubprogramMDNode, VMap));
+      cast<DISubprogram>(MapMetadata(OldSubprogramMDNode, VMap));
 
   for (auto *CU : Finder.compile_units()) {
     auto Subprograms = CU->getSubprograms();

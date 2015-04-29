@@ -1096,8 +1096,8 @@ public:
     // Retain the debug information attached to the alloca for use when
     // rewriting loads and stores.
     if (auto *L = LocalAsMetadata::getIfExists(&AI)) {
-      if (auto *DebugNode = MetadataAsValue::getIfExists(AI.getContext(), L)) {
-        for (User *U : DebugNode->users())
+      if (auto *DINode = MetadataAsValue::getIfExists(AI.getContext(), L)) {
+        for (User *U : DINode->users())
           if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
             DDIs.push_back(DDI);
           else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))

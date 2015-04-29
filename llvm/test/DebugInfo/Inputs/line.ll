@@ -39,17 +39,17 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "line.cpp", directory: "/tmp/dbginfo")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "line.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32, i32)* @_Z1fii, variables: !2)
-!5 = !MDFile(filename: "line.cpp", directory: "/tmp/dbginfo")
-!6 = !MDSubroutineType(types: !2)
+!4 = !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32, i32)* @_Z1fii, variables: !2)
+!5 = !DIFile(filename: "line.cpp", directory: "/tmp/dbginfo")
+!6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 2, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)"}
-!10 = !MDLocation(line: 2, scope: !4)
-!11 = !MDLocation(line: 3, scope: !4)
-!12 = !MDLocation(line: 4, scope: !4)
-!13 = !MDLocation(line: 2, scope: !4)
+!10 = !DILocation(line: 2, scope: !4)
+!11 = !DILocation(line: 3, scope: !4)
+!12 = !DILocation(line: 4, scope: !4)
+!13 = !DILocation(line: 2, scope: !4)

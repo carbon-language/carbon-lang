@@ -7,7 +7,7 @@
 
 define i32 @f() nounwind {
   %LOC = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata i32* %LOC, metadata !15, metadata !MDExpression()), !dbg !17
+  call void @llvm.dbg.declare(metadata i32* %LOC, metadata !15, metadata !DIExpression()), !dbg !17
   %1 = load i32, i32* @GLB, align 4, !dbg !18
   store i32 %1, i32* %LOC, align 4, !dbg !18
   %2 = load i32, i32* @GLB, align 4, !dbg !19
@@ -19,22 +19,22 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !12, imports:  !1)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !12, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "f", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !6, scope: !6, type: !7, function: i32 ()* @f)
-!6 = !MDFile(filename: "test.c", directory: "/work/llvm/vanilla/test/DebugInfo")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "f", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !6, scope: !6, type: !7, function: i32 ()* @f)
+!6 = !DIFile(filename: "test.c", directory: "/work/llvm/vanilla/test/DebugInfo")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!14}
-!14 = !MDGlobalVariable(name: "GLB", line: 1, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @GLB)
-!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "LOC", line: 4, scope: !16, file: !6, type: !9)
-!16 = distinct !MDLexicalBlock(line: 3, column: 9, file: !20, scope: !5)
-!17 = !MDLocation(line: 4, column: 9, scope: !16)
-!18 = !MDLocation(line: 4, column: 23, scope: !16)
-!19 = !MDLocation(line: 5, column: 5, scope: !16)
-!20 = !MDFile(filename: "test.c", directory: "/work/llvm/vanilla/test/DebugInfo")
+!14 = !DIGlobalVariable(name: "GLB", line: 1, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @GLB)
+!15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "LOC", line: 4, scope: !16, file: !6, type: !9)
+!16 = distinct !DILexicalBlock(line: 3, column: 9, file: !20, scope: !5)
+!17 = !DILocation(line: 4, column: 9, scope: !16)
+!18 = !DILocation(line: 4, column: 23, scope: !16)
+!19 = !DILocation(line: 5, column: 5, scope: !16)
+!20 = !DIFile(filename: "test.c", directory: "/work/llvm/vanilla/test/DebugInfo")
 
 ; CHECK: DW_TAG_variable
 ; CHECK-NOT: DW_TAG

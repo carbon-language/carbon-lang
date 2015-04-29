@@ -18,14 +18,14 @@
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !3, imports: !2)
-!1 = !MDFile(filename: "typedef.cpp", directory: "/tmp/dbginfo")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !3, imports: !2)
+!1 = !DIFile(filename: "typedef.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDGlobalVariable(name: "y", line: 2, isLocal: false, isDefinition: true, scope: null, file: !5, type: !6, variable: i8** @y)
-!5 = !MDFile(filename: "typedef.cpp", directory: "/tmp/dbginfo")
-!6 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !7)
-!7 = !MDDerivedType(tag: DW_TAG_typedef, name: "x", line: 1, file: !1, baseType: null)
+!4 = !DIGlobalVariable(name: "y", line: 2, isLocal: false, isDefinition: true, scope: null, file: !5, type: !6, variable: i8** @y)
+!5 = !DIFile(filename: "typedef.cpp", directory: "/tmp/dbginfo")
+!6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !7)
+!7 = !DIDerivedType(tag: DW_TAG_typedef, name: "x", line: 1, file: !1, baseType: null)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}

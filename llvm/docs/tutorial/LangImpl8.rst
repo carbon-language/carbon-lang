@@ -187,13 +187,13 @@ expressions:
   static DIBuilder *DBuilder;
 
   struct DebugInfo {
-    MDCompileUnit *TheCU;
-    MDType *DblTy;
+    DICompileUnit *TheCU;
+    DIType *DblTy;
 
-    MDType *getDoubleTy();
+    DIType *getDoubleTy();
   } KSDbgInfo;
 
-  MDType *DebugInfo::getDoubleTy() {
+  DIType *DebugInfo::getDoubleTy() {
     if (DblTy.isValid())
       return DblTy;
 
@@ -245,25 +245,25 @@ So the context:
 
 .. code-block:: c++
 
-  MDFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
+  DIFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
                                       KSDbgInfo.TheCU.getDirectory());
 
-giving us an MDFile and asking the ``Compile Unit`` we created above for the
+giving us an DIFile and asking the ``Compile Unit`` we created above for the
 directory and filename where we are currently. Then, for now, we use some
 source locations of 0 (since our AST doesn't currently have source location
 information) and construct our function definition:
 
 .. code-block:: c++
 
-  MDScope *FContext = Unit;
+  DIScope *FContext = Unit;
   unsigned LineNo = 0;
   unsigned ScopeLine = 0;
-  MDSubprogram *SP = DBuilder->createFunction(
+  DISubprogram *SP = DBuilder->createFunction(
       FContext, Name, StringRef(), Unit, LineNo,
       CreateFunctionType(Args.size(), Unit), false /* internal linkage */,
-      true /* definition */, ScopeLine, DebugNode::FlagPrototyped, false, F);
+      true /* definition */, ScopeLine, DINode::FlagPrototyped, false, F);
 
-and we now have an MDSubprogram that contains a reference to all of our
+and we now have an DISubprogram that contains a reference to all of our
 metadata for the function.
 
 Source Locations
@@ -330,7 +330,7 @@ by constructing another small function:
 .. code-block:: c++
 
   void DebugInfo::emitLocation(ExprAST *AST) {
-    MDScope *Scope;
+    DIScope *Scope;
     if (LexicalBlocks.empty())
       Scope = TheCU;
     else
@@ -347,11 +347,11 @@ of scopes:
 
 .. code-block:: c++
 
-   std::vector<MDScope *> LexicalBlocks;
-   std::map<const PrototypeAST *, MDScope *> FnScopeMap;
+   std::vector<DIScope *> LexicalBlocks;
+   std::map<const PrototypeAST *, DIScope *> FnScopeMap;
 
 and keep a map of each function to the scope that it represents (an
-MDSubprogram is also an MDScope).
+DISubprogram is also an DIScope).
 
 Then we make sure to:
 
@@ -392,10 +392,10 @@ argument allocas in ``PrototypeAST::CreateArgumentAllocas``.
 
 .. code-block:: c++
 
-  MDScope *Scope = KSDbgInfo.LexicalBlocks.back();
-  MDFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
+  DIScope *Scope = KSDbgInfo.LexicalBlocks.back();
+  DIFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
                                       KSDbgInfo.TheCU.getDirectory());
-  MDLocalVariable D = DBuilder->createLocalVariable(
+  DILocalVariable D = DBuilder->createLocalVariable(
       dwarf::DW_TAG_arg_variable, Scope, Args[Idx], Unit, Line,
       KSDbgInfo.getDoubleTy(), Idx);
 

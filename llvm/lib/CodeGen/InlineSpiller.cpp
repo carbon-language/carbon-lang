@@ -1232,7 +1232,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
       DebugLoc DL = MI->getDebugLoc();
       DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
       MachineBasicBlock *MBB = MI->getParent();
-      assert(cast<MDLocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
+      assert(cast<DILocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
              "Expected inlined-at fields to agree");
       BuildMI(*MBB, MBB->erase(MI), DL, TII.get(TargetOpcode::DBG_VALUE))
           .addFrameIndex(StackSlot)

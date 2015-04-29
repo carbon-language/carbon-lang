@@ -5,7 +5,7 @@
 ; require non-null in the assembler and rework this test to check for that ala
 ; test/Assembler/invalid-mdcompileunit-null-file.ll.
 !named = !{!0}
-!0 = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: null)
+!0 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null)
 
 ; CHECK: !named = !{!0}
-; CHECK: !0 = !MDDerivedType({{.*}}baseType: null{{.*}})
+; CHECK: !0 = !DIDerivedType({{.*}}baseType: null{{.*}})

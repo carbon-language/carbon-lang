@@ -183,7 +183,7 @@
 define void @_Z3foov() #0 {
 entry:
   %b = alloca %struct.baz, align 1
-  call void @llvm.dbg.declare(metadata %struct.baz* %b, metadata !46, metadata !MDExpression()), !dbg !48
+  call void @llvm.dbg.declare(metadata %struct.baz* %b, metadata !46, metadata !DIExpression()), !dbg !48
   ret void, !dbg !49
 }
 
@@ -201,7 +201,7 @@ define internal void @_ZN12_GLOBAL__N_16walrusC2Ev(%"struct.<anonymous namespace
 entry:
   %this.addr = alloca %"struct.<anonymous namespace>::walrus"*, align 8
   store %"struct.<anonymous namespace>::walrus"* %this, %"struct.<anonymous namespace>::walrus"** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %"struct.<anonymous namespace>::walrus"** %this.addr, metadata !51, metadata !MDExpression()), !dbg !53
+  call void @llvm.dbg.declare(metadata %"struct.<anonymous namespace>::walrus"** %this.addr, metadata !51, metadata !DIExpression()), !dbg !53
   %this1 = load %"struct.<anonymous namespace>::walrus"*, %"struct.<anonymous namespace>::walrus"** %this.addr
   ret void, !dbg !54
 }
@@ -219,58 +219,58 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!43, !44}
 !llvm.ident = !{!45}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, splitDebugFilename: "bar.dwo", emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !21, globals: !38, imports: !2)
-!1 = !MDFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, splitDebugFilename: "bar.dwo", emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !21, globals: !38, imports: !2)
+!1 = !DIFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !6, !14, !17}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "bar", line: 1, size: 8, align: 8, file: !5, elements: !2, identifier: "_ZTS3bar")
-!5 = !MDFile(filename: "bar.h", directory: "/tmp/dbginfo")
-!6 = !MDCompositeType(tag: DW_TAG_class_type, name: "fluffy", line: 13, size: 64, align: 32, file: !1, scope: !7, elements: !10, identifier: "_ZTSN7echidna8capybara8mongoose6fluffyE")
-!7 = !MDNamespace(name: "mongoose", line: 12, file: !1, scope: !8)
-!8 = !MDNamespace(name: "capybara", line: 11, file: !1, scope: !9)
-!9 = !MDNamespace(name: "echidna", line: 10, file: !1, scope: null)
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "bar", line: 1, size: 8, align: 8, file: !5, elements: !2, identifier: "_ZTS3bar")
+!5 = !DIFile(filename: "bar.h", directory: "/tmp/dbginfo")
+!6 = !DICompositeType(tag: DW_TAG_class_type, name: "fluffy", line: 13, size: 64, align: 32, file: !1, scope: !7, elements: !10, identifier: "_ZTSN7echidna8capybara8mongoose6fluffyE")
+!7 = !DINamespace(name: "mongoose", line: 12, file: !1, scope: !8)
+!8 = !DINamespace(name: "capybara", line: 11, file: !1, scope: !9)
+!9 = !DINamespace(name: "echidna", line: 10, file: !1, scope: null)
 !10 = !{!11, !13}
-!11 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 14, size: 32, align: 32, flags: DIFlagPrivate, file: !1, scope: !"_ZTSN7echidna8capybara8mongoose6fluffyE", baseType: !12)
-!12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!13 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 15, size: 32, align: 32, offset: 32, flags: DIFlagPrivate, file: !1, scope: !"_ZTSN7echidna8capybara8mongoose6fluffyE", baseType: !12)
-!14 = !MDCompositeType(tag: DW_TAG_structure_type, name: "wombat", line: 31, size: 64, align: 32, file: !1, elements: !15, identifier: "_ZTS6wombat")
+!11 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 14, size: 32, align: 32, flags: DIFlagPrivate, file: !1, scope: !"_ZTSN7echidna8capybara8mongoose6fluffyE", baseType: !12)
+!12 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!13 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 15, size: 32, align: 32, offset: 32, flags: DIFlagPrivate, file: !1, scope: !"_ZTSN7echidna8capybara8mongoose6fluffyE", baseType: !12)
+!14 = !DICompositeType(tag: DW_TAG_structure_type, name: "wombat", line: 31, size: 64, align: 32, file: !1, elements: !15, identifier: "_ZTS6wombat")
 !15 = !{!16}
-!16 = !MDDerivedType(tag: DW_TAG_member, name: "a_b", line: 35, size: 64, align: 32, file: !1, scope: !"_ZTS6wombat", baseType: !"_ZTSN6wombatUt_E")
-!17 = !MDCompositeType(tag: DW_TAG_structure_type, line: 32, size: 64, align: 32, file: !1, scope: !"_ZTS6wombat", elements: !18, identifier: "_ZTSN6wombatUt_E")
+!16 = !DIDerivedType(tag: DW_TAG_member, name: "a_b", line: 35, size: 64, align: 32, file: !1, scope: !"_ZTS6wombat", baseType: !"_ZTSN6wombatUt_E")
+!17 = !DICompositeType(tag: DW_TAG_structure_type, line: 32, size: 64, align: 32, file: !1, scope: !"_ZTS6wombat", elements: !18, identifier: "_ZTSN6wombatUt_E")
 !18 = !{!19, !20}
-!19 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 33, size: 32, align: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
-!20 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 34, size: 32, align: 32, offset: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
+!19 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 33, size: 32, align: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
+!20 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 34, size: 32, align: 32, offset: 32, file: !1, scope: !"_ZTSN6wombatUt_E", baseType: !12)
 !21 = !{!22, !26, !27, !36}
-!22 = !MDSubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !23, type: !24, function: void ()* @_Z3foov, variables: !2)
-!23 = !MDFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
-!24 = !MDSubroutineType(types: !25)
+!22 = !DISubprogram(name: "foo", linkageName: "_Z3foov", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !1, scope: !23, type: !24, function: void ()* @_Z3foov, variables: !2)
+!23 = !DIFile(filename: "bar.cpp", directory: "/tmp/dbginfo")
+!24 = !DISubroutineType(types: !25)
 !25 = !{null}
-!26 = !MDSubprogram(name: "__cxx_global_var_init", line: 29, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 29, file: !1, scope: !23, type: !24, function: void ()* @__cxx_global_var_init, variables: !2)
-!27 = !MDSubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32, function: void (%"struct.<anonymous namespace>::walrus"*)* @_ZN12_GLOBAL__N_16walrusC2Ev, declaration: !31, variables: !2)
-!28 = !MDCompositeType(tag: DW_TAG_structure_type, name: "walrus", line: 24, size: 8, align: 8, file: !1, scope: !29, elements: !30)
-!29 = !MDNamespace(line: 23, file: !1, scope: null)
+!26 = !DISubprogram(name: "__cxx_global_var_init", line: 29, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 29, file: !1, scope: !23, type: !24, function: void ()* @__cxx_global_var_init, variables: !2)
+!27 = !DISubprogram(name: "walrus", linkageName: "_ZN12_GLOBAL__N_16walrusC2Ev", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32, function: void (%"struct.<anonymous namespace>::walrus"*)* @_ZN12_GLOBAL__N_16walrusC2Ev, declaration: !31, variables: !2)
+!28 = !DICompositeType(tag: DW_TAG_structure_type, name: "walrus", line: 24, size: 8, align: 8, file: !1, scope: !29, elements: !30)
+!29 = !DINamespace(line: 23, file: !1, scope: null)
 !30 = !{!31}
-!31 = !MDSubprogram(name: "walrus", line: 25, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32)
-!32 = !MDSubroutineType(types: !33)
+!31 = !DISubprogram(name: "walrus", line: 25, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 25, file: !1, scope: !28, type: !32)
+!32 = !DISubroutineType(types: !33)
 !33 = !{null, !34}
-!34 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !28)
-!36 = !MDSubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 25, file: !1, scope: !23, type: !37, function: void ()* @_GLOBAL__I_a, variables: !2)
-!37 = !MDSubroutineType(types: !2)
+!34 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !28)
+!36 = !DISubprogram(name: "", linkageName: "_GLOBAL__I_a", line: 25, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial, isOptimized: false, scopeLine: 25, file: !1, scope: !23, type: !37, function: void ()* @_GLOBAL__I_a, variables: !2)
+!37 = !DISubroutineType(types: !2)
 !38 = !{!39, !40, !41, !42}
-!39 = !MDGlobalVariable(name: "b", line: 3, isLocal: false, isDefinition: true, scope: null, file: !23, type: !4, variable: %struct.bar* @b)
-!40 = !MDGlobalVariable(name: "animal", linkageName: "_ZN7echidna8capybara8mongoose6animalE", line: 18, isLocal: false, isDefinition: true, scope: !7, file: !23, type: !6, variable: %"class.echidna::capybara::mongoose::fluffy"* @_ZN7echidna8capybara8mongoose6animalE)
-!41 = !MDGlobalVariable(name: "w", line: 29, isLocal: true, isDefinition: true, scope: null, file: !23, type: !28, variable: %"struct.<anonymous namespace>::walrus"* @w)
-!42 = !MDGlobalVariable(name: "wom", line: 38, isLocal: false, isDefinition: true, scope: null, file: !23, type: !14, variable: %struct.wombat* @wom)
+!39 = !DIGlobalVariable(name: "b", line: 3, isLocal: false, isDefinition: true, scope: null, file: !23, type: !4, variable: %struct.bar* @b)
+!40 = !DIGlobalVariable(name: "animal", linkageName: "_ZN7echidna8capybara8mongoose6animalE", line: 18, isLocal: false, isDefinition: true, scope: !7, file: !23, type: !6, variable: %"class.echidna::capybara::mongoose::fluffy"* @_ZN7echidna8capybara8mongoose6animalE)
+!41 = !DIGlobalVariable(name: "w", line: 29, isLocal: true, isDefinition: true, scope: null, file: !23, type: !28, variable: %"struct.<anonymous namespace>::walrus"* @w)
+!42 = !DIGlobalVariable(name: "wom", line: 38, isLocal: false, isDefinition: true, scope: null, file: !23, type: !14, variable: %struct.wombat* @wom)
 !43 = !{i32 2, !"Dwarf Version", i32 4}
 !44 = !{i32 1, !"Debug Info Version", i32 3}
 !45 = !{!"clang version 3.5 "}
-!46 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 7, scope: !22, file: !23, type: !47)
-!47 = !MDCompositeType(tag: DW_TAG_structure_type, name: "baz", line: 6, size: 8, align: 8, file: !1, scope: !22, elements: !2)
-!48 = !MDLocation(line: 7, scope: !22)
-!49 = !MDLocation(line: 8, scope: !22)
-!50 = !MDLocation(line: 29, scope: !26)
-!51 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !27, type: !52)
-!52 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !28)
-!53 = !MDLocation(line: 0, scope: !27)
-!54 = !MDLocation(line: 25, scope: !27)
-!55 = !MDLocation(line: 25, scope: !36)
+!46 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 7, scope: !22, file: !23, type: !47)
+!47 = !DICompositeType(tag: DW_TAG_structure_type, name: "baz", line: 6, size: 8, align: 8, file: !1, scope: !22, elements: !2)
+!48 = !DILocation(line: 7, scope: !22)
+!49 = !DILocation(line: 8, scope: !22)
+!50 = !DILocation(line: 29, scope: !26)
+!51 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !27, type: !52)
+!52 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !28)
+!53 = !DILocation(line: 0, scope: !27)
+!54 = !DILocation(line: 25, scope: !27)
+!55 = !DILocation(line: 25, scope: !36)

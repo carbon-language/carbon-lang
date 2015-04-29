@@ -77,7 +77,7 @@ entry:
   %21 = inttoptr i64 %20 to i8*
   %22 = load i8, i8* %21
   %23 = icmp ne i8 %22, 0
-  call void @llvm.dbg.declare(metadata i32* %8, metadata !12, metadata !14), !dbg !MDLocation(scope: !4)
+  call void @llvm.dbg.declare(metadata i32* %8, metadata !12, metadata !14), !dbg !DILocation(scope: !4)
   br i1 %23, label %24, label %30
 
 ; <label>:24                                      ; preds = %5
@@ -165,18 +165,18 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!9, !10}
 !llvm.ident = !{!11}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (209308)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (209308)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z3bari, variables: !2)
-!5 = !MDFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "bar", linkageName: "_Z3bari", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z3bari, variables: !2)
+!5 = !DIFile(filename: "test.cc", directory: "/llvm_cmake_gcc")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5.0 (209308)"}
-!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!13 = !MDLocation(line: 2, scope: !4)
-!14 = !MDExpression(DW_OP_deref)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!13 = !DILocation(line: 2, scope: !4)
+!14 = !DIExpression(DW_OP_deref)

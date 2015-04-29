@@ -13,7 +13,7 @@ target triple = "x86_64-apple-darwin10.2"
 define i32 @main() nounwind readonly {
   %diff1 = alloca i64                             ; <i64*> [#uses=2]
 ; CHECK: call void @llvm.dbg.value(metadata i64 72,
-  call void @llvm.dbg.declare(metadata i64* %diff1, metadata !0, metadata !MDExpression()), !dbg !MDLocation(scope: !1)
+  call void @llvm.dbg.declare(metadata i64* %diff1, metadata !0, metadata !DIExpression()), !dbg !DILocation(scope: !1)
   store i64 72, i64* %diff1, align 8
   %v1 = load %struct.test*, %struct.test** @TestArrayPtr, align 8 ; <%struct.test*> [#uses=1]
   %v2 = ptrtoint %struct.test* %v1 to i64 ; <i64> [#uses=1]
@@ -25,14 +25,14 @@ define i32 @main() nounwind readonly {
 declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !7 = !{!1}
-!6 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 131941)", isOptimized: true, emissionKind: 0, file: !8, enums: !9, retainedTypes: !9, subprograms: !7)
-!0 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 2, scope: !1, file: !2, type: !5)
-!1 = !MDSubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !8, scope: !2, type: !3, function: i32 ()* @main)
-!2 = !MDFile(filename: "/d/j/debug-test.c", directory: "/Volumes/Data/b")
-!3 = !MDSubroutineType(types: !4)
+!6 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 131941)", isOptimized: true, emissionKind: 0, file: !8, enums: !9, retainedTypes: !9, subprograms: !7)
+!0 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 2, scope: !1, file: !2, type: !5)
+!1 = !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !8, scope: !2, type: !3, function: i32 ()* @main)
+!2 = !DIFile(filename: "/d/j/debug-test.c", directory: "/Volumes/Data/b")
+!3 = !DISubroutineType(types: !4)
 !4 = !{!5}
-!5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = !MDFile(filename: "/d/j/debug-test.c", directory: "/Volumes/Data/b")
+!5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIFile(filename: "/d/j/debug-test.c", directory: "/Volumes/Data/b")
 !9 = !{i32 0}
 
 !llvm.module.flags = !{!10}

@@ -4,8 +4,8 @@
 ; not partitioned into multiple allocas.
 ;
 ; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, i64 0, metadata ![[VAR:[0-9]+]], metadata ![[EXPR:[0-9]+]])
-; CHECK: ![[VAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s",{{.*}} line: 3,
-; CHECK: ![[EXPR]] = !MDExpression(
+; CHECK: ![[VAR]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s",{{.*}} line: 3,
+; CHECK: ![[EXPR]] = !DIExpression(
 ; CHECK-NOT:                       DW_OP_bit_piece
 
 ;
@@ -41,23 +41,23 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!12, !13, !14}
 !llvm.ident = !{!15}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
-!5 = !MDFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
+!5 = !DIFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
-!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "S", line: 1, size: 32, align: 32, file: !1, elements: !10)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!9 = !DICompositeType(tag: DW_TAG_structure_type, name: "S", line: 1, size: 32, align: 32, file: !1, elements: !10)
 !10 = !{!11}
-!11 = !MDDerivedType(tag: DW_TAG_member, name: "f", line: 1, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
+!11 = !DIDerivedType(tag: DW_TAG_member, name: "f", line: 1, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
 !12 = !{i32 2, !"Dwarf Version", i32 2}
 !13 = !{i32 2, !"Debug Info Version", i32 3}
 !14 = !{i32 1, !"PIC Level", i32 2}
 !15 = !{!"clang version 3.6.0 "}
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
-!17 = !MDExpression()
-!18 = !MDLocation(line: 3, column: 20, scope: !4)
-!19 = !MDLocation(line: 4, column: 2, scope: !4)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!17 = !DIExpression()
+!18 = !DILocation(line: 3, column: 20, scope: !4)
+!19 = !DILocation(line: 4, column: 2, scope: !4)

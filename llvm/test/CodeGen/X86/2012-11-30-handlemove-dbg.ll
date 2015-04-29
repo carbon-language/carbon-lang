@@ -16,7 +16,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp {
 entry:
-  call void @llvm.dbg.declare(metadata %struct.hgstruct.2.29* %hg, metadata !4, metadata !MDExpression()), !dbg !MDLocation(scope: !14)
+  call void @llvm.dbg.declare(metadata %struct.hgstruct.2.29* %hg, metadata !4, metadata !DIExpression()), !dbg !DILocation(scope: !14)
   %type = getelementptr inbounds %struct.node.0.27, %struct.node.0.27* %p, i64 0, i32 0
   %0 = load i16, i16* %type, align 2
   %cmp = icmp eq i16 %0, 1
@@ -38,15 +38,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 168918) (llvm/trunk 168920)", isOptimized: true, emissionKind: 0, file: !11, enums: !2, retainedTypes: !2, subprograms: !13, globals: !2)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 168918) (llvm/trunk 168920)", isOptimized: true, emissionKind: 0, file: !11, enums: !2, retainedTypes: !2, subprograms: !13, globals: !2)
 !2 = !{}
-!4 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "hg", line: 725, arg: 4, scope: !14, file: !5, type: !6)
-!5 = !MDFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
-!6 = !MDDerivedType(tag: DW_TAG_typedef, name: "hgstruct", line: 492, file: !11, baseType: !7)
-!7 = !MDCompositeType(tag: DW_TAG_structure_type, line: 487, size: 512, align: 64, file: !11)
-!11 = !MDFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
+!4 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "hg", line: 725, arg: 4, scope: !14, file: !5, type: !6)
+!5 = !DIFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
+!6 = !DIDerivedType(tag: DW_TAG_typedef, name: "hgstruct", line: 492, file: !11, baseType: !7)
+!7 = !DICompositeType(tag: DW_TAG_structure_type, line: 487, size: 512, align: 64, file: !11)
+!11 = !DIFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!14}
-!14 = !MDSubprogram(name: "subdivp", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !11, scope: !5, type: !15, function: i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp)
-!15 = !MDSubroutineType(types: !16)
+!14 = !DISubprogram(name: "subdivp", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !11, scope: !5, type: !15, function: i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp)
+!15 = !DISubroutineType(types: !16)
 !16 = !{null}

@@ -4,10 +4,10 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.7.0"
 
 define i32 @foo(i32 %i, i32* nocapture %c) nounwind uwtable readonly ssp {
-  tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !6, metadata !MDExpression()), !dbg !12
+  tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !6, metadata !DIExpression()), !dbg !12
   %ab = load i32, i32* %c, align 1, !dbg !14
-  tail call void @llvm.dbg.value(metadata i32* %c, i64 0, metadata !7, metadata !MDExpression()), !dbg !13
-  tail call void @llvm.dbg.value(metadata i32 %ab, i64 0, metadata !10, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32* %c, i64 0, metadata !7, metadata !DIExpression()), !dbg !13
+  tail call void @llvm.dbg.value(metadata i32 %ab, i64 0, metadata !10, metadata !DIExpression()), !dbg !14
   %cd = icmp eq i32 %i, 42, !dbg !15
   br i1 %cd, label %bb1, label %bb2, !dbg !15
 
@@ -28,26 +28,26 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-211.10.1) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !18, imports:  null)
-!1 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, function: i32 (i32, i32*)* @foo, variables: !19)
-!2 = !MDFile(filename: "a.c", directory: "/private/tmp")
-!3 = !MDSubroutineType(types: !4)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-211.10.1) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !18, imports:  null)
+!1 = !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, function: i32 (i32, i32*)* @foo, variables: !19)
+!2 = !DIFile(filename: "a.c", directory: "/private/tmp")
+!3 = !DISubroutineType(types: !4)
 !4 = !{!5}
-!5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !5)
-!7 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 2, arg: 2, scope: !1, file: !2, type: !8)
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !0, baseType: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
-!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 3, scope: !11, file: !2, type: !9)
-!11 = distinct !MDLexicalBlock(line: 2, column: 25, file: !20, scope: !1)
-!12 = !MDLocation(line: 2, column: 13, scope: !1)
-!13 = !MDLocation(line: 2, column: 22, scope: !1)
-!14 = !MDLocation(line: 3, column: 14, scope: !11)
-!15 = !MDLocation(line: 4, column: 3, scope: !11)
-!16 = !MDLocation(line: 5, column: 5, scope: !11)
-!17 = !MDLocation(line: 7, column: 1, scope: !11)
+!5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!6 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !5)
+!7 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 2, arg: 2, scope: !1, file: !2, type: !8)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !0, baseType: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 3, scope: !11, file: !2, type: !9)
+!11 = distinct !DILexicalBlock(line: 2, column: 25, file: !20, scope: !1)
+!12 = !DILocation(line: 2, column: 13, scope: !1)
+!13 = !DILocation(line: 2, column: 22, scope: !1)
+!14 = !DILocation(line: 3, column: 14, scope: !11)
+!15 = !DILocation(line: 4, column: 3, scope: !11)
+!16 = !DILocation(line: 5, column: 5, scope: !11)
+!17 = !DILocation(line: 7, column: 1, scope: !11)
 !18 = !{!1}
 !19 = !{!6, !7, !10}
-!20 = !MDFile(filename: "a.c", directory: "/private/tmp")
+!20 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !21 = !{}
 !22 = !{i32 1, !"Debug Info Version", i32 3}

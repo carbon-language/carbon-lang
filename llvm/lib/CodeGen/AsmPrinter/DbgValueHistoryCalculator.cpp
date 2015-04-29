@@ -204,7 +204,7 @@ void llvm::calculateDbgValueHistory(const MachineFunction *MF,
       // Use the base variable (without any DW_OP_piece expressions)
       // as index into History. The full variables including the
       // piece expressions are attached to the MI.
-      const MDLocalVariable *RawVar = MI.getDebugVariable();
+      const DILocalVariable *RawVar = MI.getDebugVariable();
       assert(RawVar->isValidLocationForIntrinsic(MI.getDebugLoc()) &&
              "Expected inlined-at fields to agree");
       InlinedVariable Var(RawVar, MI.getDebugLoc()->getInlinedAt());

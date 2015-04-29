@@ -192,7 +192,7 @@ static unsigned getOffsetOrZero(unsigned OffsetInBits,
   return OffsetInBits;
 }
 
-bool DwarfExpression::AddMachineRegExpression(const MDExpression *Expr,
+bool DwarfExpression::AddMachineRegExpression(const DIExpression *Expr,
                                               unsigned MachineReg,
                                               unsigned PieceOffsetInBits) {
   auto I = Expr->expr_op_begin();
@@ -240,8 +240,8 @@ bool DwarfExpression::AddMachineRegExpression(const MDExpression *Expr,
   return true;
 }
 
-void DwarfExpression::AddExpression(MDExpression::expr_op_iterator I,
-                                    MDExpression::expr_op_iterator E,
+void DwarfExpression::AddExpression(DIExpression::expr_op_iterator I,
+                                    DIExpression::expr_op_iterator E,
                                     unsigned PieceOffsetInBits) {
   for (; I != E; ++I) {
     switch (I->getOp()) {

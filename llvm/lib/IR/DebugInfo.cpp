@@ -33,13 +33,13 @@
 using namespace llvm;
 using namespace llvm::dwarf;
 
-MDSubprogram *llvm::getDISubprogram(const MDNode *Scope) {
-  if (auto *LocalScope = dyn_cast_or_null<MDLocalScope>(Scope))
+DISubprogram *llvm::getDISubprogram(const MDNode *Scope) {
+  if (auto *LocalScope = dyn_cast_or_null<DILocalScope>(Scope))
     return LocalScope->getSubprogram();
   return nullptr;
 }
 
-MDSubprogram *llvm::getDISubprogram(const Function *F) {
+DISubprogram *llvm::getDISubprogram(const Function *F) {
   // We look for the first instr that has a debug annotation leading back to F.
   for (auto &BB : *F) {
     auto Inst = std::find_if(BB.begin(), BB.end(), [](const Instruction &Inst) {
@@ -56,11 +56,11 @@ MDSubprogram *llvm::getDISubprogram(const Function *F) {
   return nullptr;
 }
 
-MDCompositeTypeBase *llvm::getDICompositeType(MDType *T) {
-  if (auto *C = dyn_cast_or_null<MDCompositeTypeBase>(T))
+DICompositeTypeBase *llvm::getDICompositeType(DIType *T) {
+  if (auto *C = dyn_cast_or_null<DICompositeTypeBase>(T))
     return C;
 
-  if (auto *D = dyn_cast_or_null<MDDerivedTypeBase>(T)) {
+  if (auto *D = dyn_cast_or_null<DIDerivedTypeBase>(T)) {
     // This function is currently used by dragonegg and dragonegg does
     // not generate identifier for types, so using an empty map to resolve
     // DerivedFrom should be fine.
@@ -75,12 +75,12 @@ DITypeIdentifierMap
 llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   DITypeIdentifierMap Map;
   for (unsigned CUi = 0, CUe = CU_Nodes->getNumOperands(); CUi != CUe; ++CUi) {
-    auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(CUi));
-    DebugNodeArray Retain = CU->getRetainedTypes();
+    auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(CUi));
+    DINodeArray Retain = CU->getRetainedTypes();
     for (unsigned Ti = 0, Te = Retain.size(); Ti != Te; ++Ti) {
-      if (!isa<MDCompositeType>(Retain[Ti]))
+      if (!isa<DICompositeType>(Retain[Ti]))
         continue;
-      auto *Ty = cast<MDCompositeType>(Retain[Ti]);
+      auto *Ty = cast<DICompositeType>(Retain[Ti]);
       if (MDString *TypeId = Ty->getRawIdentifier()) {
         // Definition has priority over declaration.
         // Try to insert (TypeId, Ty) to Map.
@@ -123,7 +123,7 @@ void DebugInfoFinder::processModule(const Module &M) {
   InitializeTypeMap(M);
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
     for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      auto *CU = cast<MDCompileUnit>(CU_Nodes->getOperand(i));
+      auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
       for (auto *DIG : CU->getGlobalVariables()) {
         if (addGlobalVariable(DIG)) {
@@ -139,18 +139,18 @@ void DebugInfoFinder::processModule(const Module &M) {
         processType(RT);
       for (auto *Import : CU->getImportedEntities()) {
         auto *Entity = Import->getEntity().resolve(TypeIdentifierMap);
-        if (auto *T = dyn_cast<MDType>(Entity))
+        if (auto *T = dyn_cast<DIType>(Entity))
           processType(T);
-        else if (auto *SP = dyn_cast<MDSubprogram>(Entity))
+        else if (auto *SP = dyn_cast<DISubprogram>(Entity))
           processSubprogram(SP);
-        else if (auto *NS = dyn_cast<MDNamespace>(Entity))
+        else if (auto *NS = dyn_cast<DINamespace>(Entity))
           processScope(NS->getScope());
       }
     }
   }
 }
 
-void DebugInfoFinder::processLocation(const Module &M, const MDLocation *Loc) {
+void DebugInfoFinder::processLocation(const Module &M, const DILocation *Loc) {
   if (!Loc)
     return;
   InitializeTypeMap(M);
@@ -158,61 +158,61 @@ void DebugInfoFinder::processLocation(const Module &M, const MDLocation *Loc) {
   processLocation(M, Loc->getInlinedAt());
 }
 
-void DebugInfoFinder::processType(MDType *DT) {
+void DebugInfoFinder::processType(DIType *DT) {
   if (!addType(DT))
     return;
   processScope(DT->getScope().resolve(TypeIdentifierMap));
-  if (auto *DCT = dyn_cast<MDCompositeTypeBase>(DT)) {
+  if (auto *DCT = dyn_cast<DICompositeTypeBase>(DT)) {
     processType(DCT->getBaseType().resolve(TypeIdentifierMap));
-    if (auto *ST = dyn_cast<MDSubroutineType>(DCT)) {
-      for (MDTypeRef Ref : ST->getTypeArray())
+    if (auto *ST = dyn_cast<DISubroutineType>(DCT)) {
+      for (DITypeRef Ref : ST->getTypeArray())
         processType(Ref.resolve(TypeIdentifierMap));
       return;
     }
     for (Metadata *D : DCT->getElements()) {
-      if (auto *T = dyn_cast<MDType>(D))
+      if (auto *T = dyn_cast<DIType>(D))
         processType(T);
-      else if (auto *SP = dyn_cast<MDSubprogram>(D))
+      else if (auto *SP = dyn_cast<DISubprogram>(D))
         processSubprogram(SP);
     }
-  } else if (auto *DDT = dyn_cast<MDDerivedTypeBase>(DT)) {
+  } else if (auto *DDT = dyn_cast<DIDerivedTypeBase>(DT)) {
     processType(DDT->getBaseType().resolve(TypeIdentifierMap));
   }
 }
 
-void DebugInfoFinder::processScope(MDScope *Scope) {
+void DebugInfoFinder::processScope(DIScope *Scope) {
   if (!Scope)
     return;
-  if (auto *Ty = dyn_cast<MDType>(Scope)) {
+  if (auto *Ty = dyn_cast<DIType>(Scope)) {
     processType(Ty);
     return;
   }
-  if (auto *CU = dyn_cast<MDCompileUnit>(Scope)) {
+  if (auto *CU = dyn_cast<DICompileUnit>(Scope)) {
     addCompileUnit(CU);
     return;
   }
-  if (auto *SP = dyn_cast<MDSubprogram>(Scope)) {
+  if (auto *SP = dyn_cast<DISubprogram>(Scope)) {
     processSubprogram(SP);
     return;
   }
   if (!addScope(Scope))
     return;
-  if (auto *LB = dyn_cast<MDLexicalBlockBase>(Scope)) {
+  if (auto *LB = dyn_cast<DILexicalBlockBase>(Scope)) {
     processScope(LB->getScope());
-  } else if (auto *NS = dyn_cast<MDNamespace>(Scope)) {
+  } else if (auto *NS = dyn_cast<DINamespace>(Scope)) {
     processScope(NS->getScope());
   }
 }
 
-void DebugInfoFinder::processSubprogram(MDSubprogram *SP) {
+void DebugInfoFinder::processSubprogram(DISubprogram *SP) {
   if (!addSubprogram(SP))
     return;
   processScope(SP->getScope().resolve(TypeIdentifierMap));
   processType(SP->getType());
   for (auto *Element : SP->getTemplateParams()) {
-    if (auto *TType = dyn_cast<MDTemplateTypeParameter>(Element)) {
+    if (auto *TType = dyn_cast<DITemplateTypeParameter>(Element)) {
       processType(TType->getType().resolve(TypeIdentifierMap));
-    } else if (auto *TVal = dyn_cast<MDTemplateValueParameter>(Element)) {
+    } else if (auto *TVal = dyn_cast<DITemplateValueParameter>(Element)) {
       processType(TVal->getType().resolve(TypeIdentifierMap));
     }
   }
@@ -225,7 +225,7 @@ void DebugInfoFinder::processDeclare(const Module &M,
     return;
   InitializeTypeMap(M);
 
-  auto *DV = dyn_cast<MDLocalVariable>(N);
+  auto *DV = dyn_cast<DILocalVariable>(N);
   if (!DV)
     return;
 
@@ -241,7 +241,7 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
     return;
   InitializeTypeMap(M);
 
-  auto *DV = dyn_cast<MDLocalVariable>(N);
+  auto *DV = dyn_cast<DILocalVariable>(N);
   if (!DV)
     return;
 
@@ -251,18 +251,18 @@ void DebugInfoFinder::processValue(const Module &M, const DbgValueInst *DVI) {
   processType(DV->getType().resolve(TypeIdentifierMap));
 }
 
-bool DebugInfoFinder::addType(MDType *DT) {
+bool DebugInfoFinder::addType(DIType *DT) {
   if (!DT)
     return false;
 
   if (!NodesSeen.insert(DT).second)
     return false;
 
-  TYs.push_back(const_cast<MDType *>(DT));
+  TYs.push_back(const_cast<DIType *>(DT));
   return true;
 }
 
-bool DebugInfoFinder::addCompileUnit(MDCompileUnit *CU) {
+bool DebugInfoFinder::addCompileUnit(DICompileUnit *CU) {
   if (!CU)
     return false;
   if (!NodesSeen.insert(CU).second)
@@ -272,7 +272,7 @@ bool DebugInfoFinder::addCompileUnit(MDCompileUnit *CU) {
   return true;
 }
 
-bool DebugInfoFinder::addGlobalVariable(MDGlobalVariable *DIG) {
+bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable *DIG) {
   if (!DIG)
     return false;
 
@@ -283,7 +283,7 @@ bool DebugInfoFinder::addGlobalVariable(MDGlobalVariable *DIG) {
   return true;
 }
 
-bool DebugInfoFinder::addSubprogram(MDSubprogram *SP) {
+bool DebugInfoFinder::addSubprogram(DISubprogram *SP) {
   if (!SP)
     return false;
 
@@ -294,7 +294,7 @@ bool DebugInfoFinder::addSubprogram(MDSubprogram *SP) {
   return true;
 }
 
-bool DebugInfoFinder::addScope(MDScope *Scope) {
+bool DebugInfoFinder::addScope(DIScope *Scope) {
   if (!Scope)
     return false;
   // FIXME: Ocaml binding generates a scope with no content, we treat it
@@ -369,16 +369,16 @@ unsigned llvm::getDebugMetadataVersionFromModule(const Module &M) {
   return 0;
 }
 
-DenseMap<const llvm::Function *, MDSubprogram *>
+DenseMap<const llvm::Function *, DISubprogram *>
 llvm::makeSubprogramMap(const Module &M) {
-  DenseMap<const Function *, MDSubprogram *> R;
+  DenseMap<const Function *, DISubprogram *> R;
 
   NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes)
     return R;
 
   for (MDNode *N : CU_Nodes->operands()) {
-    auto *CUNode = cast<MDCompileUnit>(N);
+    auto *CUNode = cast<DICompileUnit>(N);
     for (auto *SP : CUNode->getSubprograms()) {
       if (Function *F = SP->getFunction())
         R.insert(std::make_pair(F, SP));

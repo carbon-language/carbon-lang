@@ -9,7 +9,7 @@ target triple = "x86_64-apple-darwin10"
 
 define i8* @bar(%struct.a* %myvar) nounwind optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.a* %myvar, i64 0, metadata !8, metadata !MDExpression()), !dbg !MDLocation(scope: !9)
+  tail call void @llvm.dbg.value(metadata %struct.a* %myvar, i64 0, metadata !8, metadata !DIExpression()), !dbg !DILocation(scope: !9)
   %0 = getelementptr inbounds %struct.a, %struct.a* %myvar, i64 0, i32 0, !dbg !28 ; <i32*> [#uses=1]
   %1 = load i32, i32* %0, align 8, !dbg !28            ; <i32> [#uses=1]
   tail call void @foo(i32 %1) nounwind optsize noinline ssp, !dbg !28
@@ -24,43 +24,43 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!38}
 
-!0 = !MDGlobalVariable(name: "ret", line: 7, isLocal: false, isDefinition: true, scope: !1, file: !1, type: !3)
-!1 = !MDFile(filename: "foo.c", directory: "/tmp/")
-!2 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !36, enums: !37, retainedTypes: !37, subprograms: !32, globals: !31, imports:  !37)
-!3 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!4 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 12, arg: 0, scope: !5, file: !1, type: !3)
-!5 = !MDSubprogram(name: "foo", linkageName: "foo", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 13, file: !36, scope: !1, type: !6, function: void (i32)* @foo, variables: !33)
-!6 = !MDSubroutineType(types: !7)
+!0 = !DIGlobalVariable(name: "ret", line: 7, isLocal: false, isDefinition: true, scope: !1, file: !1, type: !3)
+!1 = !DIFile(filename: "foo.c", directory: "/tmp/")
+!2 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !36, enums: !37, retainedTypes: !37, subprograms: !32, globals: !31, imports:  !37)
+!3 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!4 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 12, arg: 0, scope: !5, file: !1, type: !3)
+!5 = !DISubprogram(name: "foo", linkageName: "foo", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 13, file: !36, scope: !1, type: !6, function: void (i32)* @foo, variables: !33)
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !3}
-!8 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "myvar", line: 17, arg: 0, scope: !9, file: !1, type: !13)
-!9 = !MDSubprogram(name: "bar", linkageName: "bar", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 17, file: !36, scope: !1, type: !10, function: i8* (%struct.a*)* @bar, variables: !34)
-!10 = !MDSubroutineType(types: !11)
+!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "myvar", line: 17, arg: 0, scope: !9, file: !1, type: !13)
+!9 = !DISubprogram(name: "bar", linkageName: "bar", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 17, file: !36, scope: !1, type: !10, function: i8* (%struct.a*)* @bar, variables: !34)
+!10 = !DISubroutineType(types: !11)
 !11 = !{!12, !13}
-!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: null)
-!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !14)
-!14 = !MDCompositeType(tag: DW_TAG_structure_type, name: "a", line: 2, size: 128, align: 64, file: !36, scope: !1, elements: !15)
+!12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: null)
+!13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !14)
+!14 = !DICompositeType(tag: DW_TAG_structure_type, name: "a", line: 2, size: 128, align: 64, file: !36, scope: !1, elements: !15)
 !15 = !{!16, !17}
-!16 = !MDDerivedType(tag: DW_TAG_member, name: "c", line: 3, size: 32, align: 32, file: !36, scope: !14, baseType: !3)
-!17 = !MDDerivedType(tag: DW_TAG_member, name: "d", line: 4, size: 64, align: 64, offset: 64, file: !36, scope: !14, baseType: !13)
-!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 22, arg: 0, scope: !19, file: !1, type: !3)
-!19 = !MDSubprogram(name: "main", linkageName: "main", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 22, file: !36, scope: !1, type: !20, variables: !35)
-!20 = !MDSubroutineType(types: !21)
+!16 = !DIDerivedType(tag: DW_TAG_member, name: "c", line: 3, size: 32, align: 32, file: !36, scope: !14, baseType: !3)
+!17 = !DIDerivedType(tag: DW_TAG_member, name: "d", line: 4, size: 64, align: 64, offset: 64, file: !36, scope: !14, baseType: !13)
+!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 22, arg: 0, scope: !19, file: !1, type: !3)
+!19 = !DISubprogram(name: "main", linkageName: "main", line: 22, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 22, file: !36, scope: !1, type: !20, variables: !35)
+!20 = !DISubroutineType(types: !21)
 !21 = !{!3, !3, !22}
-!22 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !23)
-!23 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !24)
-!24 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
-!25 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 22, arg: 0, scope: !19, file: !1, type: !22)
-!26 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 23, scope: !27, file: !1, type: !14)
-!27 = distinct !MDLexicalBlock(line: 22, column: 0, file: !36, scope: !19)
-!28 = !MDLocation(line: 18, scope: !29)
-!29 = distinct !MDLexicalBlock(line: 17, column: 0, file: !36, scope: !9)
-!30 = !MDLocation(line: 19, scope: !29)
+!22 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !23)
+!23 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !36, scope: !1, baseType: !24)
+!24 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!25 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 22, arg: 0, scope: !19, file: !1, type: !22)
+!26 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 23, scope: !27, file: !1, type: !14)
+!27 = distinct !DILexicalBlock(line: 22, column: 0, file: !36, scope: !19)
+!28 = !DILocation(line: 18, scope: !29)
+!29 = distinct !DILexicalBlock(line: 17, column: 0, file: !36, scope: !9)
+!30 = !DILocation(line: 19, scope: !29)
 !31 = !{!0}
 !32 = !{!5, !9, !19}
 !33 = !{!4}
 !34 = !{!8}
 !35 = !{!18, !25, !26}
-!36 = !MDFile(filename: "foo.c", directory: "/tmp/")
+!36 = !DIFile(filename: "foo.c", directory: "/tmp/")
 !37 = !{}
 
 ; The variable bar:myvar changes registers after the first movq.

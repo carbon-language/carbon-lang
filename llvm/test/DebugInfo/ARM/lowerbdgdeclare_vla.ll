@@ -19,18 +19,18 @@ target triple = "thumbv7-apple-ios8.0.0"
 ; Function Attrs: nounwind optsize readnone
 define void @run(float %r) #0 {
 entry:
-  tail call void @llvm.dbg.declare(metadata float %r, metadata !11, metadata !MDExpression()), !dbg !22
+  tail call void @llvm.dbg.declare(metadata float %r, metadata !11, metadata !DIExpression()), !dbg !22
   %conv = fptosi float %r to i32, !dbg !23
-  tail call void @llvm.dbg.declare(metadata i32 %conv, metadata !12, metadata !MDExpression()), !dbg !23
+  tail call void @llvm.dbg.declare(metadata i32 %conv, metadata !12, metadata !DIExpression()), !dbg !23
   %vla = alloca float, i32 %conv, align 4, !dbg !24
-  tail call void @llvm.dbg.declare(metadata float* %vla, metadata !14, metadata !MDExpression(DW_OP_deref)), !dbg !24
+  tail call void @llvm.dbg.declare(metadata float* %vla, metadata !14, metadata !DIExpression(DW_OP_deref)), !dbg !24
 ; The VLA alloca should be described by a dbg.declare:
 ; CHECK: call void @llvm.dbg.declare(metadata float* %vla, metadata ![[VLA:.*]], metadata {{.*}})
 ; The VLA alloca and following store into the array should not be lowered to like this:
 ; CHECK-NOT:  call void @llvm.dbg.value(metadata float %r, i64 0, metadata ![[VLA]])
 ; the backend interprets this as "vla has the location of %r".
   store float %r, float* %vla, align 4, !dbg !25, !tbaa !26
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18, metadata !DIExpression()), !dbg !30
   %cmp8 = icmp sgt i32 %conv, 0, !dbg !30
   br i1 %cmp8, label %for.body, label %for.end, !dbg !30
 
@@ -41,7 +41,7 @@ for.body:                                         ; preds = %entry, %for.body.fo
   %div = fdiv float %0, %r, !dbg !31
   store float %div, float* %arrayidx2, align 4, !dbg !31, !tbaa !26
   %inc = add nsw i32 %i.09, 1, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !18, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !18, metadata !DIExpression()), !dbg !30
   %exitcond = icmp eq i32 %inc, %conv, !dbg !30
   br i1 %exitcond, label %for.end, label %for.body.for.body_crit_edge, !dbg !30
 
@@ -67,37 +67,37 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!20, !33}
 !llvm.ident = !{!21}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 ", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "<unknown>", directory: "/Volumes/Data/radar/15464571")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 ", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "<unknown>", directory: "/Volumes/Data/radar/15464571")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "run", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !5, scope: !6, type: !7, function: void (float)* @run, variables: !10)
-!5 = !MDFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
-!6 = !MDFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
-!7 = !MDSubroutineType(types: !8)
+!4 = !DISubprogram(name: "run", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !5, scope: !6, type: !7, function: void (float)* @run, variables: !10)
+!5 = !DIFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
+!6 = !DIFile(filename: "test.c", directory: "/Volumes/Data/radar/15464571")
+!7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !10 = !{!11, !12, !14, !18}
-!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "r", line: 1, arg: 1, scope: !4, file: !6, type: !9)
-!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "count", line: 3, scope: !4, file: !6, type: !13)
-!13 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "vla", line: 4, scope: !4, file: !6, type: !15)
-!15 = !MDCompositeType(tag: DW_TAG_array_type, align: 32, baseType: !9, elements: !16)
+!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "r", line: 1, arg: 1, scope: !4, file: !6, type: !9)
+!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "count", line: 3, scope: !4, file: !6, type: !13)
+!13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "vla", line: 4, scope: !4, file: !6, type: !15)
+!15 = !DICompositeType(tag: DW_TAG_array_type, align: 32, baseType: !9, elements: !16)
 !16 = !{!17}
-!17 = !MDSubrange(count: -1)
-!18 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 6, scope: !19, file: !6, type: !13)
-!19 = distinct !MDLexicalBlock(line: 6, column: 0, file: !5, scope: !4)
+!17 = !DISubrange(count: -1)
+!18 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 6, scope: !19, file: !6, type: !13)
+!19 = distinct !DILexicalBlock(line: 6, column: 0, file: !5, scope: !4)
 !20 = !{i32 2, !"Dwarf Version", i32 2}
 !21 = !{!"clang version 3.4 "}
-!22 = !MDLocation(line: 1, scope: !4)
-!23 = !MDLocation(line: 3, scope: !4)
-!24 = !MDLocation(line: 4, scope: !4)
-!25 = !MDLocation(line: 5, scope: !4)
+!22 = !DILocation(line: 1, scope: !4)
+!23 = !DILocation(line: 3, scope: !4)
+!24 = !DILocation(line: 4, scope: !4)
+!25 = !DILocation(line: 5, scope: !4)
 !26 = !{!27, !27, i64 0}
 !27 = !{!"float", !28, i64 0}
 !28 = !{!"omnipotent char", !29, i64 0}
 !29 = !{!"Simple C/C++ TBAA"}
-!30 = !MDLocation(line: 6, scope: !19)
-!31 = !MDLocation(line: 7, scope: !19)
-!32 = !MDLocation(line: 8, scope: !4)
+!30 = !DILocation(line: 6, scope: !19)
+!31 = !DILocation(line: 7, scope: !19)
+!32 = !DILocation(line: 8, scope: !4)
 !33 = !{i32 1, !"Debug Info Version", i32 3}

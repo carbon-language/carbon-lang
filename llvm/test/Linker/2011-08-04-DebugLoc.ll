@@ -17,15 +17,15 @@ define i32 @foo() nounwind ssp {
 !llvm.module.flags = !{!11}
 !llvm.dbg.sp = !{!1}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-209.11) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 0, file: !8, enums: !9, retainedTypes: !9, subprograms: !10)
-!1 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !8, scope: !2, type: !3, function: i32 ()* @foo)
-!2 = !MDFile(filename: "a.c", directory: "/private/tmp")
-!3 = !MDSubroutineType(types: !4)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "Apple clang version 3.0 (tags/Apple/clang-209.11) (based on LLVM 3.0svn)", isOptimized: true, emissionKind: 0, file: !8, enums: !9, retainedTypes: !9, subprograms: !10)
+!1 = !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !8, scope: !2, type: !3, function: i32 ()* @foo)
+!2 = !DIFile(filename: "a.c", directory: "/private/tmp")
+!3 = !DISubroutineType(types: !4)
 !4 = !{!5}
-!5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = !MDLocation(line: 2, column: 13, scope: !7)
-!7 = distinct !MDLexicalBlock(line: 2, column: 11, file: !8, scope: !1)
-!8 = !MDFile(filename: "a.c", directory: "/private/tmp")
+!5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!6 = !DILocation(line: 2, column: 13, scope: !7)
+!7 = distinct !DILexicalBlock(line: 2, column: 11, file: !8, scope: !1)
+!8 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !9 = !{}
 !10 = !{!1}
 !11 = !{i32 1, !"Debug Info Version", i32 3}

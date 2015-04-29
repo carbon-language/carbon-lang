@@ -64,7 +64,7 @@ define void @f() nounwind {
 entry:
   %call = tail call i32 @g(i32 0, i32 0) nounwind, !dbg !8
   store i32 %call, i32* @a, align 4, !dbg !8
-  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !5, metadata !MDExpression()), !dbg !13
+  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !5, metadata !DIExpression()), !dbg !13
   br label %while.body
 
 while.body:                                       ; preds = %entry, %while.body
@@ -75,10 +75,10 @@ while.body:                                       ; preds = %entry, %while.body
   br i1 %tobool, label %while.end, label %while.body, !dbg !14
 
 while.end:                                        ; preds = %while.body
-  tail call void @llvm.dbg.value(metadata i32 %mul, i64 0, metadata !5, metadata !MDExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 %mul, i64 0, metadata !5, metadata !DIExpression()), !dbg !14
   %call4 = tail call i32 @g(i32 %mul, i32 0) nounwind, !dbg !15
   store i32 %call4, i32* @a, align 4, !dbg !15
-  tail call void @llvm.dbg.value(metadata i32 2, i64 0, metadata !5, metadata !MDExpression()), !dbg !17
+  tail call void @llvm.dbg.value(metadata i32 2, i64 0, metadata !5, metadata !DIExpression()), !dbg !17
   br label %while.body9
 
 while.body9:                                      ; preds = %while.end, %while.body9
@@ -89,7 +89,7 @@ while.body9:                                      ; preds = %while.end, %while.b
   br i1 %tobool8, label %while.end13, label %while.body9, !dbg !18
 
 while.end13:                                      ; preds = %while.body9
-  tail call void @llvm.dbg.value(metadata i32 %mul12, i64 0, metadata !5, metadata !MDExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %mul12, i64 0, metadata !5, metadata !DIExpression()), !dbg !18
   %call15 = tail call i32 @g(i32 0, i32 %mul12) nounwind, !dbg !19
   store i32 %call15, i32* @a, align 4, !dbg !19
   ret void, !dbg !20
@@ -102,25 +102,25 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!24}
 
-!0 = !MDSubprogram(name: "f", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !23, scope: !1, type: !3, function: void ()* @f, variables: !22)
-!1 = !MDFile(filename: "simple.c", directory: "/home/rengol01/temp/tests/dwarf/relocation")
-!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: true, emissionKind: 1, file: !23, enums: !{}, retainedTypes: !{}, subprograms: !21, imports:  null)
-!3 = !MDSubroutineType(types: !4)
+!0 = !DISubprogram(name: "f", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !23, scope: !1, type: !3, function: void ()* @f, variables: !22)
+!1 = !DIFile(filename: "simple.c", directory: "/home/rengol01/temp/tests/dwarf/relocation")
+!2 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk)", isOptimized: true, emissionKind: 1, file: !23, enums: !{}, retainedTypes: !{}, subprograms: !21, imports:  null)
+!3 = !DISubroutineType(types: !4)
 !4 = !{null}
-!5 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 5, scope: !6, file: !1, type: !7)
-!6 = distinct !MDLexicalBlock(line: 4, column: 14, file: !23, scope: !0)
-!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = !MDLocation(line: 6, column: 3, scope: !6)
+!5 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 5, scope: !6, file: !1, type: !7)
+!6 = distinct !DILexicalBlock(line: 4, column: 14, file: !23, scope: !0)
+!7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DILocation(line: 6, column: 3, scope: !6)
 !12 = !{i32 1}
-!13 = !MDLocation(line: 7, column: 3, scope: !6)
-!14 = !MDLocation(line: 8, column: 3, scope: !6)
-!15 = !MDLocation(line: 9, column: 3, scope: !6)
+!13 = !DILocation(line: 7, column: 3, scope: !6)
+!14 = !DILocation(line: 8, column: 3, scope: !6)
+!15 = !DILocation(line: 9, column: 3, scope: !6)
 !16 = !{i32 2}
-!17 = !MDLocation(line: 10, column: 3, scope: !6)
-!18 = !MDLocation(line: 11, column: 3, scope: !6)
-!19 = !MDLocation(line: 12, column: 3, scope: !6)
-!20 = !MDLocation(line: 13, column: 1, scope: !6)
+!17 = !DILocation(line: 10, column: 3, scope: !6)
+!18 = !DILocation(line: 11, column: 3, scope: !6)
+!19 = !DILocation(line: 12, column: 3, scope: !6)
+!20 = !DILocation(line: 13, column: 1, scope: !6)
 !21 = !{!0}
 !22 = !{!5}
-!23 = !MDFile(filename: "simple.c", directory: "/home/rengol01/temp/tests/dwarf/relocation")
+!23 = !DIFile(filename: "simple.c", directory: "/home/rengol01/temp/tests/dwarf/relocation")
 !24 = !{i32 1, !"Debug Info Version", i32 3}

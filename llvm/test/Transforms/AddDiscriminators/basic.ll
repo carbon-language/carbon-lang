@@ -41,22 +41,22 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "basic.c", directory: ".")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "basic.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
-!5 = !MDFile(filename: "basic.c", directory: ".")
-!6 = !MDSubroutineType(types: !2)
+!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!5 = !DIFile(filename: "basic.c", directory: ".")
+!6 = !DISubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5 "}
-!10 = !MDLocation(line: 3, scope: !11)
-!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !4)
-!12 = !MDLocation(line: 4, scope: !4)
+!10 = !DILocation(line: 3, scope: !11)
+!11 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !4)
+!12 = !DILocation(line: 4, scope: !4)
 
-; CHECK: ![[FOO:[0-9]+]] = !MDSubprogram(name: "foo"
-; CHECK: ![[BLOCK:[0-9]+]] = distinct !MDLexicalBlock(scope: ![[FOO]],{{.*}} line: 3)
-; CHECK: ![[THEN]] = !MDLocation(line: 3, scope: ![[BLOCKFILE:[0-9]+]])
-; CHECK: ![[BLOCKFILE]] = !MDLexicalBlockFile(scope: ![[BLOCK]],{{.*}} discriminator: 1)
-; CHECK: ![[END]] = !MDLocation(line: 4, scope: ![[FOO]])
+; CHECK: ![[FOO:[0-9]+]] = !DISubprogram(name: "foo"
+; CHECK: ![[BLOCK:[0-9]+]] = distinct !DILexicalBlock(scope: ![[FOO]],{{.*}} line: 3)
+; CHECK: ![[THEN]] = !DILocation(line: 3, scope: ![[BLOCKFILE:[0-9]+]])
+; CHECK: ![[BLOCKFILE]] = !DILexicalBlockFile(scope: ![[BLOCK]],{{.*}} discriminator: 1)
+; CHECK: ![[END]] = !DILocation(line: 4, scope: ![[FOO]])

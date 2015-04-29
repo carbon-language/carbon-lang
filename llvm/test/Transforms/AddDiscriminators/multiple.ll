@@ -51,22 +51,22 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 (trunk 199750) (llvm/trunk 199751)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "multiple.c", directory: ".")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 (trunk 199750) (llvm/trunk 199751)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "multiple.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
-!5 = !MDFile(filename: "multiple.c", directory: ".")
-!6 = !MDSubroutineType(types: !{null, !13})
-!13 = !MDBasicType(encoding: DW_ATE_signed, name: "int", size: 32, align: 32)
+!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!5 = !DIFile(filename: "multiple.c", directory: ".")
+!6 = !DISubroutineType(types: !{null, !13})
+!13 = !DIBasicType(encoding: DW_ATE_signed, name: "int", size: 32, align: 32)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5 (trunk 199750) (llvm/trunk 199751)"}
-!10 = !MDLocation(line: 3, scope: !11)
-!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !4)
-!12 = !MDLocation(line: 4, scope: !4)
+!10 = !DILocation(line: 3, scope: !11)
+!11 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !4)
+!12 = !DILocation(line: 4, scope: !4)
 
-; CHECK: ![[THEN]] = !MDLocation(line: 3, scope: ![[THENBLOCK:[0-9]+]])
-; CHECK: ![[THENBLOCK]] = !MDLexicalBlockFile(scope: ![[SCOPE:[0-9]+]],{{.*}} discriminator: 1)
-; CHECK: ![[ELSE]] = !MDLocation(line: 3, scope: ![[ELSEBLOCK:[0-9]+]])
-; CHECK: ![[ELSEBLOCK]] = !MDLexicalBlockFile(scope: ![[SCOPE]],{{.*}} discriminator: 2)
+; CHECK: ![[THEN]] = !DILocation(line: 3, scope: ![[THENBLOCK:[0-9]+]])
+; CHECK: ![[THENBLOCK]] = !DILexicalBlockFile(scope: ![[SCOPE:[0-9]+]],{{.*}} discriminator: 1)
+; CHECK: ![[ELSE]] = !DILocation(line: 3, scope: ![[ELSEBLOCK:[0-9]+]])
+; CHECK: ![[ELSEBLOCK]] = !DILexicalBlockFile(scope: ![[SCOPE]],{{.*}} discriminator: 2)

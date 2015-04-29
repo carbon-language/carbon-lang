@@ -18,7 +18,7 @@ define i32 @b(i32 %c) #0 {
 entry:
   %c.addr = alloca i32, align 4
   store i32 %c, i32* %c.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %c.addr, metadata !13, metadata !MDExpression()), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %c.addr, metadata !13, metadata !DIExpression()), !dbg !14
   %0 = load i32, i32* %c.addr, align 4, !dbg !14
   %add = add nsw i32 %0, 1, !dbg !14
   ret i32 %add, !dbg !14
@@ -42,7 +42,7 @@ define i32 @d(i32 %e) #0 {
 entry:
   %e.addr = alloca i32, align 4
   store i32 %e, i32* %e.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %e.addr, metadata !15, metadata !MDExpression()), !dbg !16
+  call void @llvm.dbg.declare(metadata i32* %e.addr, metadata !15, metadata !DIExpression()), !dbg !16
   %0 = load i32, i32* %e.addr, align 4, !dbg !16
   %add = add nsw i32 %0, 1, !dbg !16
   ret i32 %add, !dbg !16
@@ -56,19 +56,19 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!11, !12}
 
 !0 = !{!"clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)"}
-!1 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)", isOptimized: false, emissionKind: 1, file: !2, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3, imports: !3)
-!2 = !MDFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
+!1 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)", isOptimized: false, emissionKind: 1, file: !2, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3, imports: !3)
+!2 = !DIFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
 !3 = !{}
 !4 = !{!5, !10}
-!5 = !MDSubprogram(name: "b", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !2, scope: !6, type: !7, function: i32 (i32)* @b, variables: !3)
-!6 = !MDFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "b", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !2, scope: !6, type: !7, function: i32 (i32)* @b, variables: !3)
+!6 = !DIFile(filename: "b.c", directory: "/usr/local/google/home/echristo")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDSubprogram(name: "d", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !2, scope: !6, type: !7, function: i32 (i32)* @d, variables: !3)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DISubprogram(name: "d", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !2, scope: !6, type: !7, function: i32 (i32)* @d, variables: !3)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 1, arg: 1, scope: !5, file: !6, type: !9)
-!14 = !MDLocation(line: 1, scope: !5)
-!15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "e", line: 3, arg: 1, scope: !10, file: !6, type: !9)
-!16 = !MDLocation(line: 3, scope: !10)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 1, arg: 1, scope: !5, file: !6, type: !9)
+!14 = !DILocation(line: 1, scope: !5)
+!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "e", line: 3, arg: 1, scope: !10, file: !6, type: !9)
+!16 = !DILocation(line: 3, scope: !10)

@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 define void @_Z3barN2N11AE() nounwind uwtable ssp {
 entry:
   %youra = alloca %"class.N1::A", align 1
-  call void @llvm.dbg.declare(metadata %"class.N1::A"* %youra, metadata !9, metadata !MDExpression()), !dbg !13
+  call void @llvm.dbg.declare(metadata %"class.N1::A"* %youra, metadata !9, metadata !DIExpression()), !dbg !13
   ret void, !dbg !14
 }
 
@@ -18,21 +18,21 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !16, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !16, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
 !2 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "bar", linkageName: "_Z3barN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scope: !6, type: !7, function: void ()* @_Z3barN2N11AE)
-!6 = !MDFile(filename: "n2.c", directory: "/private/tmp")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "bar", linkageName: "_Z3barN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scope: !6, type: !7, function: void ()* @_Z3barN2N11AE)
+!6 = !DIFile(filename: "n2.c", directory: "/private/tmp")
+!7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "youra", line: 4, arg: 1, scope: !5, file: !6, type: !10)
-!10 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 3, size: 8, align: 8, file: !17, scope: !11, elements: !2)
-!11 = !MDNamespace(name: "N1", line: 2, file: !17, scope: null)
-!12 = !MDFile(filename: "./n.h", directory: "/private/tmp")
-!13 = !MDLocation(line: 4, column: 12, scope: !5)
-!14 = !MDLocation(line: 4, column: 20, scope: !15)
-!15 = distinct !MDLexicalBlock(line: 4, column: 19, file: !16, scope: !5)
-!16 = !MDFile(filename: "n2.c", directory: "/private/tmp")
-!17 = !MDFile(filename: "./n.h", directory: "/private/tmp")
+!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "youra", line: 4, arg: 1, scope: !5, file: !6, type: !10)
+!10 = !DICompositeType(tag: DW_TAG_class_type, name: "A", line: 3, size: 8, align: 8, file: !17, scope: !11, elements: !2)
+!11 = !DINamespace(name: "N1", line: 2, file: !17, scope: null)
+!12 = !DIFile(filename: "./n.h", directory: "/private/tmp")
+!13 = !DILocation(line: 4, column: 12, scope: !5)
+!14 = !DILocation(line: 4, column: 20, scope: !15)
+!15 = distinct !DILexicalBlock(line: 4, column: 19, file: !16, scope: !5)
+!16 = !DIFile(filename: "n2.c", directory: "/private/tmp")
+!17 = !DIFile(filename: "./n.h", directory: "/private/tmp")
 !18 = !{i32 1, !"Debug Info Version", i32 3}

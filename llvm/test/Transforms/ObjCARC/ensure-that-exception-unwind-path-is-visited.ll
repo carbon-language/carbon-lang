@@ -41,10 +41,10 @@ entry:
   %tmp2 = bitcast %struct._class_t* %tmp to i8*, !dbg !37
 ; CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1)
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1), !dbg !37, !clang.arc.no_objc_arc_exceptions !38
-  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !MDExpression()), !dbg !37
+  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !DIExpression()), !dbg !37
 ; CHECK: call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
   %tmp3 = call i8* @objc_retain(i8* %call) nounwind, !dbg !39
-  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !MDExpression()), !dbg !39
+  call void @llvm.dbg.value(metadata i8* %call, i64 0, metadata !25, metadata !DIExpression()), !dbg !39
   invoke fastcc void @ThrowFunc(i8* %call)
           to label %eh.cont unwind label %lpad, !dbg !40, !clang.arc.no_objc_arc_exceptions !38
 
@@ -58,7 +58,7 @@ lpad:                                             ; preds = %entry
           catch i8* null, !dbg !40
   %tmp5 = extractvalue { i8*, i32 } %tmp4, 0, !dbg !40
   %exn.adjusted = call i8* @objc_begin_catch(i8* %tmp5) nounwind, !dbg !44
-  call void @llvm.dbg.value(metadata i8 0, i64 0, metadata !21, metadata !MDExpression()), !dbg !46
+  call void @llvm.dbg.value(metadata i8 0, i64 0, metadata !21, metadata !DIExpression()), !dbg !46
   call void @objc_end_catch(), !dbg !49, !clang.arc.no_objc_arc_exceptions !38
 ; CHECK: call void @objc_release(i8* %call)
   call void @objc_release(i8* %call) nounwind, !dbg !42, !clang.imprecise_release !38
@@ -87,7 +87,7 @@ declare void @objc_exception_rethrow()
 define internal fastcc void @ThrowFunc(i8* %obj) uwtable noinline ssp {
 entry:
   %tmp = call i8* @objc_retain(i8* %obj) nounwind
-  call void @llvm.dbg.value(metadata i8* %obj, i64 0, metadata !32, metadata !MDExpression()), !dbg !55
+  call void @llvm.dbg.value(metadata i8* %obj, i64 0, metadata !32, metadata !DIExpression()), !dbg !55
   %tmp1 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_1", align 8, !dbg !56
   %tmp2 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_5", align 8, !dbg !56, !invariant.load !38
   %tmp3 = bitcast %struct._class_t* %tmp1 to i8*, !dbg !56
@@ -113,60 +113,60 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33, !34, !35, !36, !61}
 
-!0 = !MDCompileUnit(language: DW_LANG_ObjC, producer: "clang version 3.3 ", isOptimized: true, runtimeVersion: 2, emissionKind: 0, file: !60, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
+!0 = !DICompileUnit(language: DW_LANG_ObjC, producer: "clang version 3.3 ", isOptimized: true, runtimeVersion: 2, emissionKind: 0, file: !60, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1)
 !1 = !{}
 !3 = !{!5, !27}
-!5 = !MDSubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 10, file: !60, scope: !6, type: !7, function: i32 ()* @main, variables: !11)
-!6 = !MDFile(filename: "test.m", directory: "/Volumes/Files/gottesmmcab/Radar/12906997")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 10, file: !60, scope: !6, type: !7, function: i32 ()* @main, variables: !11)
+!6 = !DIFile(filename: "test.m", directory: "/Volumes/Files/gottesmmcab/Radar/12906997")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !11 = !{!12, !21, !25}
-!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "obj", line: 11, scope: !13, file: !6, type: !14)
-!13 = distinct !MDLexicalBlock(line: 10, column: 0, file: !60, scope: !5)
-!14 = !MDDerivedType(tag: DW_TAG_typedef, name: "id", line: 11, file: !60, baseType: !15)
-!15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !60, baseType: !16)
-!16 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_object", file: !60, elements: !17)
+!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "obj", line: 11, scope: !13, file: !6, type: !14)
+!13 = distinct !DILexicalBlock(line: 10, column: 0, file: !60, scope: !5)
+!14 = !DIDerivedType(tag: DW_TAG_typedef, name: "id", line: 11, file: !60, baseType: !15)
+!15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !60, baseType: !16)
+!16 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_object", file: !60, elements: !17)
 !17 = !{!18}
-!18 = !MDDerivedType(tag: DW_TAG_member, name: "isa", size: 64, file: !60, scope: !16, baseType: !19)
-!19 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !20)
-!20 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_class", flags: DIFlagFwdDecl, file: !60)
-!21 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "ok", line: 13, scope: !22, file: !6, type: !23)
-!22 = distinct !MDLexicalBlock(line: 12, column: 0, file: !60, scope: !13)
-!23 = !MDDerivedType(tag: DW_TAG_typedef, name: "BOOL", line: 62, file: !60, baseType: !24)
-!24 = !MDBasicType(tag: DW_TAG_base_type, name: "signed char", size: 8, align: 8, encoding: DW_ATE_signed_char)
-!25 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "obj2", line: 15, scope: !26, file: !6, type: !14)
-!26 = distinct !MDLexicalBlock(line: 14, column: 0, file: !60, scope: !22)
-!27 = !MDSubprogram(name: "ThrowFunc", line: 4, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !60, scope: !6, type: !28, function: void (i8*)* @ThrowFunc, variables: !31)
-!28 = !MDSubroutineType(types: !29)
+!18 = !DIDerivedType(tag: DW_TAG_member, name: "isa", size: 64, file: !60, scope: !16, baseType: !19)
+!19 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !20)
+!20 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_class", flags: DIFlagFwdDecl, file: !60)
+!21 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "ok", line: 13, scope: !22, file: !6, type: !23)
+!22 = distinct !DILexicalBlock(line: 12, column: 0, file: !60, scope: !13)
+!23 = !DIDerivedType(tag: DW_TAG_typedef, name: "BOOL", line: 62, file: !60, baseType: !24)
+!24 = !DIBasicType(tag: DW_TAG_base_type, name: "signed char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!25 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "obj2", line: 15, scope: !26, file: !6, type: !14)
+!26 = distinct !DILexicalBlock(line: 14, column: 0, file: !60, scope: !22)
+!27 = !DISubprogram(name: "ThrowFunc", line: 4, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !60, scope: !6, type: !28, function: void (i8*)* @ThrowFunc, variables: !31)
+!28 = !DISubroutineType(types: !29)
 !29 = !{null, !14}
 !31 = !{!32}
-!32 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "obj", line: 4, arg: 1, scope: !27, file: !6, type: !14)
+!32 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "obj", line: 4, arg: 1, scope: !27, file: !6, type: !14)
 !33 = !{i32 1, !"Objective-C Version", i32 2}
 !34 = !{i32 1, !"Objective-C Image Info Version", i32 0}
 !35 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
 !36 = !{i32 4, !"Objective-C Garbage Collection", i32 0}
-!37 = !MDLocation(line: 11, scope: !13)
+!37 = !DILocation(line: 11, scope: !13)
 !38 = !{}
-!39 = !MDLocation(line: 15, scope: !26)
-!40 = !MDLocation(line: 17, scope: !41)
-!41 = distinct !MDLexicalBlock(line: 16, column: 0, file: !60, scope: !26)
-!42 = !MDLocation(line: 22, scope: !26)
-!43 = !MDLocation(line: 23, scope: !22)
-!44 = !MDLocation(line: 19, scope: !41)
+!39 = !DILocation(line: 15, scope: !26)
+!40 = !DILocation(line: 17, scope: !41)
+!41 = distinct !DILexicalBlock(line: 16, column: 0, file: !60, scope: !26)
+!42 = !DILocation(line: 22, scope: !26)
+!43 = !DILocation(line: 23, scope: !22)
+!44 = !DILocation(line: 19, scope: !41)
 !45 = !{i8 0}
-!46 = !MDLocation(line: 20, scope: !47)
-!47 = distinct !MDLexicalBlock(line: 19, column: 0, file: !60, scope: !48)
-!48 = distinct !MDLexicalBlock(line: 19, column: 0, file: !60, scope: !26)
-!49 = !MDLocation(line: 21, scope: !47)
-!50 = !MDLocation(line: 24, scope: !51)
-!51 = distinct !MDLexicalBlock(line: 23, column: 0, file: !60, scope: !22)
-!52 = !MDLocation(line: 25, scope: !51)
-!53 = !MDLocation(line: 27, scope: !13)
-!54 = !MDLocation(line: 28, scope: !13)
-!55 = !MDLocation(line: 4, scope: !27)
-!56 = !MDLocation(line: 6, scope: !57)
-!57 = distinct !MDLexicalBlock(line: 5, column: 0, file: !60, scope: !27)
-!58 = !MDLocation(line: 7, scope: !57)
-!60 = !MDFile(filename: "test.m", directory: "/Volumes/Files/gottesmmcab/Radar/12906997")
+!46 = !DILocation(line: 20, scope: !47)
+!47 = distinct !DILexicalBlock(line: 19, column: 0, file: !60, scope: !48)
+!48 = distinct !DILexicalBlock(line: 19, column: 0, file: !60, scope: !26)
+!49 = !DILocation(line: 21, scope: !47)
+!50 = !DILocation(line: 24, scope: !51)
+!51 = distinct !DILexicalBlock(line: 23, column: 0, file: !60, scope: !22)
+!52 = !DILocation(line: 25, scope: !51)
+!53 = !DILocation(line: 27, scope: !13)
+!54 = !DILocation(line: 28, scope: !13)
+!55 = !DILocation(line: 4, scope: !27)
+!56 = !DILocation(line: 6, scope: !57)
+!57 = distinct !DILexicalBlock(line: 5, column: 0, file: !60, scope: !27)
+!58 = !DILocation(line: 7, scope: !57)
+!60 = !DIFile(filename: "test.m", directory: "/Volumes/Files/gottesmmcab/Radar/12906997")
 !61 = !{i32 1, !"Debug Info Version", i32 3}

@@ -20,7 +20,7 @@ if.then:                                          ; preds = %entry
   unreachable
 
 if.end:                                           ; preds = %entry
-  call void @llvm.dbg.declare(metadata %struct.btCompoundLeafCallback* %callback, metadata !3, metadata !MDExpression()), !dbg !MDLocation(scope: !2)
+  call void @llvm.dbg.declare(metadata %struct.btCompoundLeafCallback* %callback, metadata !3, metadata !DIExpression()), !dbg !DILocation(scope: !2)
   %m = getelementptr inbounds %struct.btCompoundLeafCallback, %struct.btCompoundLeafCallback* %callback, i64 0, i32 1
   store i32 0, i32* undef, align 8
   %cmp12447 = icmp sgt i32 undef, 0
@@ -36,13 +36,13 @@ invoke.cont44:                                    ; preds = %if.end
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!8}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 168984) (llvm/trunk 168983)", isOptimized: true, emissionKind: 0, file: !6, subprograms: !1)
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 168984) (llvm/trunk 168983)", isOptimized: true, emissionKind: 0, file: !6, subprograms: !1)
 !1 = !{!2}
-!2 = !MDSubprogram(name: "test", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !5, type: !7, function: void ()* @test)
-!3 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "callback", line: 214, scope: !2, type: !4)
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "btCompoundLeafCallback", line: 90, size: 512, align: 64, file: !6)
-!5 = !MDFile(filename: "MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", directory: "MultiSource/Benchmarks/Bullet")
-!6 = !MDFile(filename: "MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", directory: "MultiSource/Benchmarks/Bullet")
-!7 = !MDSubroutineType(types: !9)
+!2 = !DISubprogram(name: "test", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !6, scope: !5, type: !7, function: void ()* @test)
+!3 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "callback", line: 214, scope: !2, type: !4)
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "btCompoundLeafCallback", line: 90, size: 512, align: 64, file: !6)
+!5 = !DIFile(filename: "MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", directory: "MultiSource/Benchmarks/Bullet")
+!6 = !DIFile(filename: "MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", directory: "MultiSource/Benchmarks/Bullet")
+!7 = !DISubroutineType(types: !9)
 !8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{null}

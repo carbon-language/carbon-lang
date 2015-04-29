@@ -101,9 +101,9 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   %3 = alloca %struct._objc_super
   %4 = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, align 8
   store %0* %self, %0** %1, align 8
-  call void @llvm.dbg.declare(metadata %0** %1, metadata !60, metadata !MDExpression()), !dbg !62
+  call void @llvm.dbg.declare(metadata %0** %1, metadata !60, metadata !DIExpression()), !dbg !62
   store i8* %_cmd, i8** %2, align 8
-  call void @llvm.dbg.declare(metadata i8** %2, metadata !63, metadata !MDExpression()), !dbg !62
+  call void @llvm.dbg.declare(metadata i8** %2, metadata !63, metadata !DIExpression()), !dbg !62
   %5 = load %0*, %0** %1, !dbg !65
   %6 = bitcast %0* %5 to i8*, !dbg !65
   %7 = getelementptr inbounds %struct._objc_super, %struct._objc_super* %3, i32 0, i32 0, !dbg !65
@@ -150,7 +150,7 @@ declare i8* @objc_msgSendSuper2(%struct._objc_super*, i8*, ...)
 define internal void @run(void ()* %block) #0 {
   %1 = alloca void ()*, align 8
   store void ()* %block, void ()** %1, align 8
-  call void @llvm.dbg.declare(metadata void ()** %1, metadata !72, metadata !MDExpression()), !dbg !73
+  call void @llvm.dbg.declare(metadata void ()** %1, metadata !72, metadata !DIExpression()), !dbg !73
   %2 = load void ()*, void ()** %1, align 8, !dbg !74
   %3 = bitcast void ()* %2 to %struct.__block_literal_generic*, !dbg !74
   %4 = getelementptr inbounds %struct.__block_literal_generic, %struct.__block_literal_generic* %3, i32 0, i32 3, !dbg !74
@@ -167,13 +167,13 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   %d = alloca %1*, align 8
   store i8* %.block_descriptor, i8** %1, align 8
   %3 = load i8*, i8** %1
-  call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !76, metadata !MDExpression()), !dbg !88
-  call void @llvm.dbg.declare(metadata i8* %.block_descriptor, metadata !76, metadata !MDExpression()), !dbg !88
+  call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !76, metadata !DIExpression()), !dbg !88
+  call void @llvm.dbg.declare(metadata i8* %.block_descriptor, metadata !76, metadata !DIExpression()), !dbg !88
   %4 = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
   store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, align 8, !dbg !88
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !88
   call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, metadata !89, metadata !111), !dbg !90
-  call void @llvm.dbg.declare(metadata %1** %d, metadata !91, metadata !MDExpression()), !dbg !100
+  call void @llvm.dbg.declare(metadata %1** %d, metadata !91, metadata !DIExpression()), !dbg !100
   %6 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", !dbg !100
   %7 = bitcast %struct._class_t* %6 to i8*, !dbg !100
   %8 = load i8*, i8** getelementptr inbounds (%struct._message_ref_t, %struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !100
@@ -210,9 +210,9 @@ define internal void @__copy_helper_block_(i8*, i8*) {
   %3 = alloca i8*, align 8
   %4 = alloca i8*, align 8
   store i8* %0, i8** %3, align 8
-  call void @llvm.dbg.declare(metadata i8** %3, metadata !102, metadata !MDExpression()), !dbg !103
+  call void @llvm.dbg.declare(metadata i8** %3, metadata !102, metadata !DIExpression()), !dbg !103
   store i8* %1, i8** %4, align 8
-  call void @llvm.dbg.declare(metadata i8** %4, metadata !104, metadata !MDExpression()), !dbg !103
+  call void @llvm.dbg.declare(metadata i8** %4, metadata !104, metadata !DIExpression()), !dbg !103
   %5 = load i8*, i8** %4, !dbg !103
   %6 = bitcast i8* %5 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %7 = load i8*, i8** %3, !dbg !103
@@ -231,7 +231,7 @@ declare void @_Block_object_assign(i8*, i8*, i32)
 define internal void @__destroy_helper_block_(i8*) {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
-  call void @llvm.dbg.declare(metadata i8** %2, metadata !105, metadata !MDExpression()), !dbg !106
+  call void @llvm.dbg.declare(metadata i8** %2, metadata !105, metadata !DIExpression()), !dbg !106
   %3 = load i8*, i8** %2, !dbg !106
   %4 = bitcast i8* %3 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !106
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !106
@@ -247,7 +247,7 @@ define i32 @main() #0 {
   %1 = alloca i32, align 4
   %a = alloca %0*, align 8
   store i32 0, i32* %1
-  call void @llvm.dbg.declare(metadata %0** %a, metadata !107, metadata !MDExpression()), !dbg !108
+  call void @llvm.dbg.declare(metadata %0** %a, metadata !107, metadata !DIExpression()), !dbg !108
   %2 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_5", !dbg !108
   %3 = bitcast %struct._class_t* %2 to i8*, !dbg !108
   %4 = load i8*, i8** getelementptr inbounds (%struct._message_ref_t, %struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !108
@@ -270,115 +270,115 @@ attributes #3 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!56, !57, !58, !59, !110}
 
-!0 = !MDCompileUnit(language: DW_LANG_ObjC, producer: "clang version 3.3 ", isOptimized: false, runtimeVersion: 2, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !2, imports:  !2)
-!1 = !MDFile(filename: "llvm/tools/clang/test/CodeGenObjC/<unknown>", directory: "llvm/_build.ninja.Debug")
+!0 = !DICompileUnit(language: DW_LANG_ObjC, producer: "clang version 3.3 ", isOptimized: false, runtimeVersion: 2, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !2, imports:  !2)
+!1 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/<unknown>", directory: "llvm/_build.ninja.Debug")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "A", line: 33, size: 32, align: 32, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !7)
-!5 = !MDFile(filename: "llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", directory: "llvm/_build.ninja.Debug")
-!6 = !MDFile(filename: "llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", directory: "llvm/_build.ninja.Debug")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "A", line: 33, size: 32, align: 32, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !7)
+!5 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", directory: "llvm/_build.ninja.Debug")
+!6 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/debug-info-blocks.m", directory: "llvm/_build.ninja.Debug")
 !7 = !{!8, !10}
-!8 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !4, baseType: !9)
-!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "NSObject", line: 21, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !2)
-!10 = !MDDerivedType(tag: DW_TAG_member, name: "ivar", line: 35, size: 32, align: 32, file: !5, scope: !6, baseType: !11)
-!11 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIDerivedType(tag: DW_TAG_inheritance, scope: !4, baseType: !9)
+!9 = !DICompositeType(tag: DW_TAG_structure_type, name: "NSObject", line: 21, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !2)
+!10 = !DIDerivedType(tag: DW_TAG_member, name: "ivar", line: 35, size: 32, align: 32, file: !5, scope: !6, baseType: !11)
+!11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!13, !27, !31, !35, !36, !39}
-!13 = !MDSubprogram(name: "-[A init]", line: 46, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 46, file: !5, scope: !6, type: !14, function: i8* (%0*, i8*)* @"\01-[A init]", variables: !2)
-!14 = !MDSubroutineType(types: !15)
+!13 = !DISubprogram(name: "-[A init]", line: 46, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 46, file: !5, scope: !6, type: !14, function: i8* (%0*, i8*)* @"\01-[A init]", variables: !2)
+!14 = !DISubroutineType(types: !15)
 !15 = !{!16, !23, !24}
-!16 = !MDDerivedType(tag: DW_TAG_typedef, name: "id", line: 46, file: !5, baseType: !17)
-!17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !18)
-!18 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_object", file: !1, elements: !19)
+!16 = !DIDerivedType(tag: DW_TAG_typedef, name: "id", line: 46, file: !5, baseType: !17)
+!17 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !18)
+!18 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_object", file: !1, elements: !19)
 !19 = !{!20}
-!20 = !MDDerivedType(tag: DW_TAG_member, name: "isa", size: 64, file: !1, scope: !18, baseType: !21)
-!21 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !22)
-!22 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_class", flags: DIFlagFwdDecl, file: !1)
-!23 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
-!24 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 46, flags: DIFlagArtificial, file: !5, baseType: !25)
-!25 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !26)
-!26 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
-!27 = !MDSubprogram(name: "__9-[A init]_block_invoke", line: 49, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 49, file: !5, scope: !6, type: !28, function: void (i8*)* @"__9-[A init]_block_invoke", variables: !2)
-!28 = !MDSubroutineType(types: !29)
+!20 = !DIDerivedType(tag: DW_TAG_member, name: "isa", size: 64, file: !1, scope: !18, baseType: !21)
+!21 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !22)
+!22 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_class", flags: DIFlagFwdDecl, file: !1)
+!23 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
+!24 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 46, flags: DIFlagArtificial, file: !5, baseType: !25)
+!25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !26)
+!26 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
+!27 = !DISubprogram(name: "__9-[A init]_block_invoke", line: 49, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 49, file: !5, scope: !6, type: !28, function: void (i8*)* @"__9-[A init]_block_invoke", variables: !2)
+!28 = !DISubroutineType(types: !29)
 !29 = !{null, !30}
-!30 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
-!31 = !MDSubprogram(name: "__copy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !33, function: void (i8*, i8*)* @__copy_helper_block_, variables: !2)
-!32 = !MDFile(filename: "llvm/tools/clang/test/CodeGenObjC/<unknown>", directory: "llvm/_build.ninja.Debug")
-!33 = !MDSubroutineType(types: !34)
+!30 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
+!31 = !DISubprogram(name: "__copy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !33, function: void (i8*, i8*)* @__copy_helper_block_, variables: !2)
+!32 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/<unknown>", directory: "llvm/_build.ninja.Debug")
+!33 = !DISubroutineType(types: !34)
 !34 = !{null, !30, !30}
-!35 = !MDSubprogram(name: "__destroy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !28, function: void (i8*)* @__destroy_helper_block_, variables: !2)
-!36 = !MDSubprogram(name: "main", line: 59, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 60, file: !5, scope: !6, type: !37, function: i32 ()* @main, variables: !2)
-!37 = !MDSubroutineType(types: !38)
+!35 = !DISubprogram(name: "__destroy_helper_block_", line: 52, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 52, file: !1, scope: !32, type: !28, function: void (i8*)* @__destroy_helper_block_, variables: !2)
+!36 = !DISubprogram(name: "main", line: 59, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 60, file: !5, scope: !6, type: !37, function: i32 ()* @main, variables: !2)
+!37 = !DISubroutineType(types: !38)
 !38 = !{!11}
-!39 = !MDSubprogram(name: "run", line: 39, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 40, file: !5, scope: !6, type: !40, function: void (void ()*)* @run, variables: !2)
-!40 = !MDSubroutineType(types: !41)
+!39 = !DISubprogram(name: "run", line: 39, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 40, file: !5, scope: !6, type: !40, function: void (void ()*)* @run, variables: !2)
+!40 = !DISubroutineType(types: !41)
 !41 = !{null, !42}
-!42 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !43)
-!43 = !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_literal_generic", line: 40, size: 256, flags: DIFlagAppleBlock, file: !5, scope: !6, elements: !44)
+!42 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !43)
+!43 = !DICompositeType(tag: DW_TAG_structure_type, name: "__block_literal_generic", line: 40, size: 256, flags: DIFlagAppleBlock, file: !5, scope: !6, elements: !44)
 !44 = !{!45, !46, !47, !48, !49}
-!45 = !MDDerivedType(tag: DW_TAG_member, name: "__isa", size: 64, align: 64, file: !5, scope: !6, baseType: !30)
-!46 = !MDDerivedType(tag: DW_TAG_member, name: "__flags", size: 32, align: 32, offset: 64, file: !5, scope: !6, baseType: !11)
-!47 = !MDDerivedType(tag: DW_TAG_member, name: "__reserved", size: 32, align: 32, offset: 96, file: !5, scope: !6, baseType: !11)
-!48 = !MDDerivedType(tag: DW_TAG_member, name: "__FuncPtr", size: 64, align: 64, offset: 128, file: !5, scope: !6, baseType: !30)
-!49 = !MDDerivedType(tag: DW_TAG_member, name: "__descriptor", line: 40, size: 64, align: 64, offset: 192, file: !5, scope: !6, baseType: !50)
-!50 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !51)
-!51 = !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_descriptor", line: 40, size: 128, flags: DIFlagAppleBlock, file: !5, scope: !6, elements: !52)
+!45 = !DIDerivedType(tag: DW_TAG_member, name: "__isa", size: 64, align: 64, file: !5, scope: !6, baseType: !30)
+!46 = !DIDerivedType(tag: DW_TAG_member, name: "__flags", size: 32, align: 32, offset: 64, file: !5, scope: !6, baseType: !11)
+!47 = !DIDerivedType(tag: DW_TAG_member, name: "__reserved", size: 32, align: 32, offset: 96, file: !5, scope: !6, baseType: !11)
+!48 = !DIDerivedType(tag: DW_TAG_member, name: "__FuncPtr", size: 64, align: 64, offset: 128, file: !5, scope: !6, baseType: !30)
+!49 = !DIDerivedType(tag: DW_TAG_member, name: "__descriptor", line: 40, size: 64, align: 64, offset: 192, file: !5, scope: !6, baseType: !50)
+!50 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !51)
+!51 = !DICompositeType(tag: DW_TAG_structure_type, name: "__block_descriptor", line: 40, size: 128, flags: DIFlagAppleBlock, file: !5, scope: !6, elements: !52)
 !52 = !{!53, !55}
-!53 = !MDDerivedType(tag: DW_TAG_member, name: "reserved", size: 64, align: 64, file: !5, scope: !6, baseType: !54)
-!54 = !MDBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
-!55 = !MDDerivedType(tag: DW_TAG_member, name: "Size", size: 64, align: 64, offset: 64, file: !5, scope: !6, baseType: !54)
+!53 = !DIDerivedType(tag: DW_TAG_member, name: "reserved", size: 64, align: 64, file: !5, scope: !6, baseType: !54)
+!54 = !DIBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
+!55 = !DIDerivedType(tag: DW_TAG_member, name: "Size", size: 64, align: 64, offset: 64, file: !5, scope: !6, baseType: !54)
 !56 = !{i32 1, !"Objective-C Version", i32 2}
 !57 = !{i32 1, !"Objective-C Image Info Version", i32 0}
 !58 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
 !59 = !{i32 4, !"Objective-C Garbage Collection", i32 0}
-!60 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "self", line: 46, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !13, file: !32, type: !61)
-!61 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
-!62 = !MDLocation(line: 46, scope: !13)
-!63 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", line: 46, arg: 2, flags: DIFlagArtificial, scope: !13, file: !32, type: !64)
-!64 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 46, file: !5, baseType: !25)
-!65 = !MDLocation(line: 48, scope: !66)
-!66 = distinct !MDLexicalBlock(line: 47, column: 0, file: !5, scope: !13)
+!60 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "self", line: 46, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !13, file: !32, type: !61)
+!61 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
+!62 = !DILocation(line: 46, scope: !13)
+!63 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", line: 46, arg: 2, flags: DIFlagArtificial, scope: !13, file: !32, type: !64)
+!64 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 46, file: !5, baseType: !25)
+!65 = !DILocation(line: 48, scope: !66)
+!66 = distinct !DILexicalBlock(line: 47, column: 0, file: !5, scope: !13)
 !67 = !{}
-!68 = !MDLocation(line: 49, scope: !69)
-!69 = distinct !MDLexicalBlock(line: 48, column: 0, file: !5, scope: !66)
-!70 = !MDLocation(line: 53, scope: !69)
-!71 = !MDLocation(line: 54, scope: !66)
-!72 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "block", line: 39, arg: 1, scope: !39, file: !6, type: !42)
-!73 = !MDLocation(line: 39, scope: !39)
-!74 = !MDLocation(line: 41, scope: !39)
-!75 = !MDLocation(line: 42, scope: !39)
-!76 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: ".block_descriptor", line: 49, arg: 1, flags: DIFlagArtificial, scope: !27, file: !6, type: !77)
-!77 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !78)
-!78 = !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_literal_1", line: 49, size: 320, align: 64, file: !5, scope: !6, elements: !79)
+!68 = !DILocation(line: 49, scope: !69)
+!69 = distinct !DILexicalBlock(line: 48, column: 0, file: !5, scope: !66)
+!70 = !DILocation(line: 53, scope: !69)
+!71 = !DILocation(line: 54, scope: !66)
+!72 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "block", line: 39, arg: 1, scope: !39, file: !6, type: !42)
+!73 = !DILocation(line: 39, scope: !39)
+!74 = !DILocation(line: 41, scope: !39)
+!75 = !DILocation(line: 42, scope: !39)
+!76 = !DILocalVariable(tag: DW_TAG_arg_variable, name: ".block_descriptor", line: 49, arg: 1, flags: DIFlagArtificial, scope: !27, file: !6, type: !77)
+!77 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !78)
+!78 = !DICompositeType(tag: DW_TAG_structure_type, name: "__block_literal_1", line: 49, size: 320, align: 64, file: !5, scope: !6, elements: !79)
 !79 = !{!80, !81, !82, !83, !84, !87}
-!80 = !MDDerivedType(tag: DW_TAG_member, name: "__isa", line: 49, size: 64, align: 64, file: !5, scope: !6, baseType: !30)
-!81 = !MDDerivedType(tag: DW_TAG_member, name: "__flags", line: 49, size: 32, align: 32, offset: 64, file: !5, scope: !6, baseType: !11)
-!82 = !MDDerivedType(tag: DW_TAG_member, name: "__reserved", line: 49, size: 32, align: 32, offset: 96, file: !5, scope: !6, baseType: !11)
-!83 = !MDDerivedType(tag: DW_TAG_member, name: "__FuncPtr", line: 49, size: 64, align: 64, offset: 128, file: !5, scope: !6, baseType: !30)
-!84 = !MDDerivedType(tag: DW_TAG_member, name: "__descriptor", line: 49, size: 64, align: 64, offset: 192, file: !5, scope: !6, baseType: !85)
-!85 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !86)
-!86 = !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_descriptor_withcopydispose", line: 49, flags: DIFlagFwdDecl, file: !1)
-!87 = !MDDerivedType(tag: DW_TAG_member, name: "self", line: 49, size: 64, align: 64, offset: 256, file: !5, scope: !6, baseType: !61)
-!88 = !MDLocation(line: 49, scope: !27)
-!89 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "self", line: 52, scope: !27, file: !32, type: !23)
-!90 = !MDLocation(line: 52, scope: !27)
-!91 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "d", line: 50, scope: !92, file: !6, type: !93)
-!92 = distinct !MDLexicalBlock(line: 49, column: 0, file: !5, scope: !27)
-!93 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !94)
-!94 = !MDCompositeType(tag: DW_TAG_structure_type, name: "NSMutableDictionary", line: 30, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !95)
+!80 = !DIDerivedType(tag: DW_TAG_member, name: "__isa", line: 49, size: 64, align: 64, file: !5, scope: !6, baseType: !30)
+!81 = !DIDerivedType(tag: DW_TAG_member, name: "__flags", line: 49, size: 32, align: 32, offset: 64, file: !5, scope: !6, baseType: !11)
+!82 = !DIDerivedType(tag: DW_TAG_member, name: "__reserved", line: 49, size: 32, align: 32, offset: 96, file: !5, scope: !6, baseType: !11)
+!83 = !DIDerivedType(tag: DW_TAG_member, name: "__FuncPtr", line: 49, size: 64, align: 64, offset: 128, file: !5, scope: !6, baseType: !30)
+!84 = !DIDerivedType(tag: DW_TAG_member, name: "__descriptor", line: 49, size: 64, align: 64, offset: 192, file: !5, scope: !6, baseType: !85)
+!85 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !86)
+!86 = !DICompositeType(tag: DW_TAG_structure_type, name: "__block_descriptor_withcopydispose", line: 49, flags: DIFlagFwdDecl, file: !1)
+!87 = !DIDerivedType(tag: DW_TAG_member, name: "self", line: 49, size: 64, align: 64, offset: 256, file: !5, scope: !6, baseType: !61)
+!88 = !DILocation(line: 49, scope: !27)
+!89 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "self", line: 52, scope: !27, file: !32, type: !23)
+!90 = !DILocation(line: 52, scope: !27)
+!91 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "d", line: 50, scope: !92, file: !6, type: !93)
+!92 = distinct !DILexicalBlock(line: 49, column: 0, file: !5, scope: !27)
+!93 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !94)
+!94 = !DICompositeType(tag: DW_TAG_structure_type, name: "NSMutableDictionary", line: 30, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !95)
 !95 = !{!96}
-!96 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !94, baseType: !97)
-!97 = !MDCompositeType(tag: DW_TAG_structure_type, name: "NSDictionary", line: 26, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !98)
+!96 = !DIDerivedType(tag: DW_TAG_inheritance, scope: !94, baseType: !97)
+!97 = !DICompositeType(tag: DW_TAG_structure_type, name: "NSDictionary", line: 26, align: 8, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !98)
 !98 = !{!99}
-!99 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !97, baseType: !9)
-!100 = !MDLocation(line: 50, scope: !92)
-!101 = !MDLocation(line: 51, scope: !92)
-!102 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, file: !32, type: !30)
-!103 = !MDLocation(line: 52, scope: !31)
-!104 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 2, flags: DIFlagArtificial, scope: !31, file: !32, type: !30)
-!105 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !35, file: !32, type: !30)
-!106 = !MDLocation(line: 52, scope: !35)
-!107 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 61, scope: !36, file: !6, type: !61)
-!108 = !MDLocation(line: 61, scope: !36)
-!109 = !MDLocation(line: 62, scope: !36)
+!99 = !DIDerivedType(tag: DW_TAG_inheritance, scope: !97, baseType: !9)
+!100 = !DILocation(line: 50, scope: !92)
+!101 = !DILocation(line: 51, scope: !92)
+!102 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, file: !32, type: !30)
+!103 = !DILocation(line: 52, scope: !31)
+!104 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 2, flags: DIFlagArtificial, scope: !31, file: !32, type: !30)
+!105 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 52, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !35, file: !32, type: !30)
+!106 = !DILocation(line: 52, scope: !35)
+!107 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 61, scope: !36, file: !6, type: !61)
+!108 = !DILocation(line: 61, scope: !36)
+!109 = !DILocation(line: 62, scope: !36)
 !110 = !{i32 1, !"Debug Info Version", i32 3}
-!111 = !MDExpression(DW_OP_deref, DW_OP_plus, 32)
+!111 = !DIExpression(DW_OP_deref, DW_OP_plus, 32)

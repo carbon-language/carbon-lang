@@ -52,7 +52,7 @@
 define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
-  call void @llvm.dbg.declare(metadata i32* %1, metadata !22, metadata !MDExpression()), !dbg !23
+  call void @llvm.dbg.declare(metadata i32* %1, metadata !22, metadata !DIExpression()), !dbg !23
   %2 = load i32, i32* %1, align 4, !dbg !24
   %3 = mul nsw i32 %2, 2, !dbg !24
   ret i32 %3, !dbg !24
@@ -68,28 +68,28 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!19, !20}
 !llvm.ident = !{!21, !21}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !9, imports: !2)
-!1 = !MDFile(filename: "a.cpp", directory: "/tmp/dbginfo")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !9, imports: !2)
+!1 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
-!5 = !MDFile(filename: "a.cpp", directory: "/tmp/dbginfo")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
+!5 = !DIFile(filename: "a.cpp", directory: "/tmp/dbginfo")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !8}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !MDGlobalVariable(name: "x", line: 4, isLocal: false, isDefinition: true, scope: null, file: !5, type: !11, variable: i32 (i32)** @x)
-!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !6)
-!12 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !13, enums: !2, retainedTypes: !2, subprograms: !14, globals: !17, imports: !2)
-!13 = !MDFile(filename: "b.cpp", directory: "/tmp/dbginfo")
+!10 = !DIGlobalVariable(name: "x", line: 4, isLocal: false, isDefinition: true, scope: null, file: !5, type: !11, variable: i32 (i32)** @x)
+!11 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !6)
+!12 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !13, enums: !2, retainedTypes: !2, subprograms: !14, globals: !17, imports: !2)
+!13 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !14 = !{!15}
-!15 = !MDSubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !13, scope: !16, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
-!16 = !MDFile(filename: "b.cpp", directory: "/tmp/dbginfo")
+!15 = !DISubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !13, scope: !16, type: !6, function: i32 (i32)* @_Z4funci, variables: !2)
+!16 = !DIFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !17 = !{!18}
-!18 = !MDGlobalVariable(name: "y", line: 4, isLocal: false, isDefinition: true, scope: null, file: !16, type: !11, variable: i32 (i32)** @y)
+!18 = !DIGlobalVariable(name: "y", line: 4, isLocal: false, isDefinition: true, scope: null, file: !16, type: !11, variable: i32 (i32)** @y)
 !19 = !{i32 2, !"Dwarf Version", i32 4}
 !20 = !{i32 1, !"Debug Info Version", i32 3}
 !21 = !{!"clang version 3.5.0 "}
-!22 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!23 = !MDLocation(line: 1, scope: !4)
-!24 = !MDLocation(line: 2, scope: !4)
+!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!23 = !DILocation(line: 1, scope: !4)
+!24 = !DILocation(line: 2, scope: !4)

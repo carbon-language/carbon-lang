@@ -6,7 +6,7 @@
 define void @foo(i32 %a) {
 entry:
   %s = alloca i32
-  call void @llvm.dbg.value(metadata i32* %s, i64 0, metadata !"", metadata !MDExpression()), !dbg !MDLocation(scope: !1)
+  call void @llvm.dbg.value(metadata i32* %s, i64 0, metadata !"", metadata !DIExpression()), !dbg !DILocation(scope: !1)
   ret void
 }
 
@@ -14,4 +14,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 !llvm.module.flags = !{!0}
 !0 = !{i32 2, !"Debug Info Version", i32 3}
-!1 = !MDSubprogram()
+!1 = !DISubprogram()

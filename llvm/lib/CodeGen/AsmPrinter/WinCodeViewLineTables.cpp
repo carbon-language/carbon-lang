@@ -20,11 +20,11 @@ namespace llvm {
 
 StringRef WinCodeViewLineTables::getFullFilepath(const MDNode *S) {
   assert(S);
-  assert((isa<MDCompileUnit>(S) || isa<MDFile>(S) || isa<MDSubprogram>(S) ||
-          isa<MDLexicalBlockBase>(S)) &&
+  assert((isa<DICompileUnit>(S) || isa<DIFile>(S) || isa<DISubprogram>(S) ||
+          isa<DILexicalBlockBase>(S)) &&
          "Unexpected scope info");
 
-  auto *Scope = cast<MDScope>(S);
+  auto *Scope = cast<DIScope>(S);
   StringRef Dir = Scope->getDirectory(),
             Filename = Scope->getFilename();
   char *&Result = DirAndFilenameToFilepathMap[std::make_pair(Dir, Filename)];

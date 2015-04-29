@@ -7,13 +7,13 @@ entry:
   %retval = alloca double                         ; <double*> [#uses=2]
   %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata i32* %i_addr, metadata !0, metadata !MDExpression()), !dbg !8
+  call void @llvm.dbg.declare(metadata i32* %i_addr, metadata !0, metadata !DIExpression()), !dbg !8
 ; CHECK: call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata ![[IVAR:[0-9]*]], metadata {{.*}})
 ; CHECK: call void @llvm.dbg.value(metadata double %j, i64 0, metadata ![[JVAR:[0-9]*]], metadata {{.*}})
-; CHECK: ![[IVAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i"
-; CHECK: ![[JVAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j"
+; CHECK: ![[IVAR]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i"
+; CHECK: ![[JVAR]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j"
   store i32 %i, i32* %i_addr
-  call void @llvm.dbg.declare(metadata double* %j_addr, metadata !9, metadata !MDExpression()), !dbg !8
+  call void @llvm.dbg.declare(metadata double* %j_addr, metadata !9, metadata !DIExpression()), !dbg !8
   store double %j, double* %j_addr
   %1 = load i32, i32* %i_addr, align 4, !dbg !10       ; <i32> [#uses=1]
   %2 = add nsw i32 %1, 1, !dbg !10                ; <i32> [#uses=1]
@@ -35,18 +35,18 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!14}
 
-!0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 0, scope: !1, file: !2, type: !7)
-!1 = !MDSubprogram(name: "testfunc", linkageName: "testfunc", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !12, scope: !2, type: !4, function: double (i32, double)* @testfunc)
-!2 = !MDFile(filename: "testfunc.c", directory: "/tmp")
-!3 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !13, retainedTypes: !13)
-!4 = !MDSubroutineType(types: !5)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 0, scope: !1, file: !2, type: !7)
+!1 = !DISubprogram(name: "testfunc", linkageName: "testfunc", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !12, scope: !2, type: !4, function: double (i32, double)* @testfunc)
+!2 = !DIFile(filename: "testfunc.c", directory: "/tmp")
+!3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !13, retainedTypes: !13)
+!4 = !DISubroutineType(types: !5)
 !5 = !{!6, !7, !6}
-!6 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
-!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!8 = !MDLocation(line: 2, scope: !1)
-!9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 2, arg: 0, scope: !1, file: !2, type: !6)
-!10 = !MDLocation(line: 3, scope: !11)
-!11 = distinct !MDLexicalBlock(line: 2, column: 0, file: !12, scope: !1)
-!12 = !MDFile(filename: "testfunc.c", directory: "/tmp")
+!6 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DILocation(line: 2, scope: !1)
+!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 2, arg: 0, scope: !1, file: !2, type: !6)
+!10 = !DILocation(line: 3, scope: !11)
+!11 = distinct !DILexicalBlock(line: 2, column: 0, file: !12, scope: !1)
+!12 = !DIFile(filename: "testfunc.c", directory: "/tmp")
 !13 = !{}
 !14 = !{i32 1, !"Debug Info Version", i32 3}

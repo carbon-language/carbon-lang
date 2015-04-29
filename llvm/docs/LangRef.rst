@@ -2922,12 +2922,12 @@ order.
 These aren't inherently debug info centric, but currently all the specialized
 metadata nodes are related to debug info.
 
-.. _MDCompileUnit:
+.. _DICompileUnit:
 
-MDCompileUnit
+DICompileUnit
 """""""""""""
 
-``MDCompileUnit`` nodes represent a compile unit.  The ``enums:``,
+``DICompileUnit`` nodes represent a compile unit.  The ``enums:``,
 ``retainedTypes:``, ``subprograms:``, ``globals:`` and ``imports:`` fields are
 tuples containing the debug info to be emitted along with the compile unit,
 regardless of code optimizations (some nodes are only emitted if there are
@@ -2935,7 +2935,7 @@ references to them from instructions).
 
 .. code-block:: llvm
 
-    !0 = !MDCompileUnit(language: DW_LANG_C99, file: !1, producer: "clang",
+    !0 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang",
                         isOptimized: true, flags: "-O2", runtimeVersion: 2,
                         splitDebugFilename: "abc.debug", emissionKind: 1,
                         enums: !2, retainedTypes: !3, subprograms: !4,
@@ -2947,33 +2947,33 @@ These descriptors are collected by a named metadata ``!llvm.dbg.cu``.  They
 keep track of subprograms, global variables, type information, and imported
 entities (declarations and namespaces).
 
-.. _MDFile:
+.. _DIFile:
 
-MDFile
+DIFile
 """"""
 
-``MDFile`` nodes represent files.  The ``filename:`` can include slashes.
+``DIFile`` nodes represent files.  The ``filename:`` can include slashes.
 
 .. code-block:: llvm
 
-    !0 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
+    !0 = !DIFile(filename: "path/to/file", directory: "/path/to/dir")
 
 Files are sometimes used in ``scope:`` fields, and are the only valid target
 for ``file:`` fields.
 
-.. _MDLocation:
+.. _DILocation:
 
-MDBasicType
+DIBasicType
 """""""""""
 
-``MDBasicType`` nodes represent primitive types, such as ``int``, ``bool`` and
+``DIBasicType`` nodes represent primitive types, such as ``int``, ``bool`` and
 ``float``.  ``tag:`` defaults to ``DW_TAG_base_type``.
 
 .. code-block:: llvm
 
-    !0 = !MDBasicType(name: "unsigned char", size: 8, align: 8,
+    !0 = !DIBasicType(name: "unsigned char", size: 8, align: 8,
                       encoding: DW_ATE_unsigned_char)
-    !1 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
+    !1 = !DIBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
 
 The ``encoding:`` describes the details of the type.  Usually it's one of the
 following:
@@ -2988,12 +2988,12 @@ following:
   DW_ATE_unsigned      = 7
   DW_ATE_unsigned_char = 8
 
-.. _MDSubroutineType:
+.. _DISubroutineType:
 
-MDSubroutineType
+DISubroutineType
 """"""""""""""""
 
-``MDSubroutineType`` nodes represent subroutine types.  Their ``types:`` field
+``DISubroutineType`` nodes represent subroutine types.  Their ``types:`` field
 refers to a tuple; the first operand is the return type, while the rest are the
 types of the formal arguments in order.  If the first operand is ``null``, that
 represents a function with no return value (such as ``void foo() {}`` in C++).
@@ -3002,21 +3002,21 @@ represents a function with no return value (such as ``void foo() {}`` in C++).
 
     !0 = !BasicType(name: "int", size: 32, align: 32, DW_ATE_signed)
     !1 = !BasicType(name: "char", size: 8, align: 8, DW_ATE_signed_char)
-    !2 = !MDSubroutineType(types: !{null, !0, !1}) ; void (int, char)
+    !2 = !DISubroutineType(types: !{null, !0, !1}) ; void (int, char)
 
-.. _MDDerivedType:
+.. _DIDerivedType:
 
-MDDerivedType
+DIDerivedType
 """""""""""""
 
-``MDDerivedType`` nodes represent types derived from other types, such as
+``DIDerivedType`` nodes represent types derived from other types, such as
 qualified types.
 
 .. code-block:: llvm
 
-    !0 = !MDBasicType(name: "unsigned char", size: 8, align: 8,
+    !0 = !DIBasicType(name: "unsigned char", size: 8, align: 8,
                       encoding: DW_ATE_unsigned_char)
-    !1 = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: !0, size: 32,
+    !1 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !0, size: 32,
                         align: 32)
 
 The following ``tag:`` values are valid:
@@ -3034,7 +3034,7 @@ The following ``tag:`` values are valid:
   DW_TAG_restrict_type      = 55
 
 ``DW_TAG_member`` is used to define a member of a :ref:`composite type
-<MDCompositeType>` or :ref:`subprogram <MDSubprogram>`.  The type of the member
+<DICompositeType>` or :ref:`subprogram <DISubprogram>`.  The type of the member
 is the ``baseType:``.  The ``offset:`` is the member's bit offset.
 ``DW_TAG_formal_parameter`` is used to define a member which is a formal
 argument of a subprogram.
@@ -3047,12 +3047,12 @@ argument of a subprogram.
 
 Note that the ``void *`` type is expressed as a type derived from NULL.
 
-.. _MDCompositeType:
+.. _DICompositeType:
 
-MDCompositeType
+DICompositeType
 """""""""""""""
 
-``MDCompositeType`` nodes represent types composed of other types, like
+``DICompositeType`` nodes represent types composed of other types, like
 structures and unions.  ``elements:`` points to a tuple of the composed types.
 
 If the source language supports ODR, the ``identifier:`` field gives the unique
@@ -3062,10 +3062,10 @@ can refer to composite types indirectly via a :ref:`metadata string
 
 .. code-block:: llvm
 
-    !0 = !MDEnumerator(name: "SixKind", value: 7)
-    !1 = !MDEnumerator(name: "SevenKind", value: 7)
-    !2 = !MDEnumerator(name: "NegEightKind", value: -8)
-    !3 = !MDCompositeType(tag: DW_TAG_enumeration_type, name: "Enum", file: !12,
+    !0 = !DIEnumerator(name: "SixKind", value: 7)
+    !1 = !DIEnumerator(name: "SevenKind", value: 7)
+    !2 = !DIEnumerator(name: "NegEightKind", value: -8)
+    !3 = !DICompositeType(tag: DW_TAG_enumeration_type, name: "Enum", file: !12,
                           line: 2, size: 32, align: 32, identifier: "_M4Enum",
                           elements: !{!0, !1, !2})
 
@@ -3083,108 +3083,108 @@ The following ``tag:`` values are valid:
 
 
 For ``DW_TAG_array_type``, the ``elements:`` should be :ref:`subrange
-descriptors <MDSubrange>`, each representing the range of subscripts at that
+descriptors <DISubrange>`, each representing the range of subscripts at that
 level of indexing.  The ``DIFlagVector`` flag to ``flags:`` indicates that an
 array type is a native packed vector.
 
 For ``DW_TAG_enumeration_type``, the ``elements:`` should be :ref:`enumerator
-descriptors <MDEnumerator>`, each representing the definition of an enumeration
+descriptors <DIEnumerator>`, each representing the definition of an enumeration
 value for the set.  All enumeration type descriptors are collected in the
-``enums:`` field of the :ref:`compile unit <MDCompileUnit>`.
+``enums:`` field of the :ref:`compile unit <DICompileUnit>`.
 
 For ``DW_TAG_structure_type``, ``DW_TAG_class_type``, and
 ``DW_TAG_union_type``, the ``elements:`` should be :ref:`derived types
-<MDDerivedType>` with ``tag: DW_TAG_member`` or ``tag: DW_TAG_inheritance``.
+<DIDerivedType>` with ``tag: DW_TAG_member`` or ``tag: DW_TAG_inheritance``.
 
-.. _MDSubrange:
+.. _DISubrange:
 
-MDSubrange
+DISubrange
 """"""""""
 
-``MDSubrange`` nodes are the elements for ``DW_TAG_array_type`` variants of
-:ref:`MDCompositeType`.  ``count: -1`` indicates an empty array.
+``DISubrange`` nodes are the elements for ``DW_TAG_array_type`` variants of
+:ref:`DICompositeType`.  ``count: -1`` indicates an empty array.
 
 .. code-block:: llvm
 
-    !0 = !MDSubrange(count: 5, lowerBound: 0) ; array counting from 0
-    !1 = !MDSubrange(count: 5, lowerBound: 1) ; array counting from 1
-    !2 = !MDSubrange(count: -1) ; empty array.
+    !0 = !DISubrange(count: 5, lowerBound: 0) ; array counting from 0
+    !1 = !DISubrange(count: 5, lowerBound: 1) ; array counting from 1
+    !2 = !DISubrange(count: -1) ; empty array.
 
-.. _MDEnumerator:
+.. _DIEnumerator:
 
-MDEnumerator
+DIEnumerator
 """"""""""""
 
-``MDEnumerator`` nodes are the elements for ``DW_TAG_enumeration_type``
-variants of :ref:`MDCompositeType`.
+``DIEnumerator`` nodes are the elements for ``DW_TAG_enumeration_type``
+variants of :ref:`DICompositeType`.
 
 .. code-block:: llvm
 
-    !0 = !MDEnumerator(name: "SixKind", value: 7)
-    !1 = !MDEnumerator(name: "SevenKind", value: 7)
-    !2 = !MDEnumerator(name: "NegEightKind", value: -8)
+    !0 = !DIEnumerator(name: "SixKind", value: 7)
+    !1 = !DIEnumerator(name: "SevenKind", value: 7)
+    !2 = !DIEnumerator(name: "NegEightKind", value: -8)
 
-MDTemplateTypeParameter
+DITemplateTypeParameter
 """""""""""""""""""""""
 
-``MDTemplateTypeParameter`` nodes represent type parameters to generic source
-language constructs.  They are used (optionally) in :ref:`MDCompositeType` and
-:ref:`MDSubprogram` ``templateParams:`` fields.
+``DITemplateTypeParameter`` nodes represent type parameters to generic source
+language constructs.  They are used (optionally) in :ref:`DICompositeType` and
+:ref:`DISubprogram` ``templateParams:`` fields.
 
 .. code-block:: llvm
 
-    !0 = !MDTemplateTypeParameter(name: "Ty", type: !1)
+    !0 = !DITemplateTypeParameter(name: "Ty", type: !1)
 
-MDTemplateValueParameter
+DITemplateValueParameter
 """"""""""""""""""""""""
 
-``MDTemplateValueParameter`` nodes represent value parameters to generic source
+``DITemplateValueParameter`` nodes represent value parameters to generic source
 language constructs.  ``tag:`` defaults to ``DW_TAG_template_value_parameter``,
 but if specified can also be set to ``DW_TAG_GNU_template_template_param`` or
 ``DW_TAG_GNU_template_param_pack``.  They are used (optionally) in
-:ref:`MDCompositeType` and :ref:`MDSubprogram` ``templateParams:`` fields.
+:ref:`DICompositeType` and :ref:`DISubprogram` ``templateParams:`` fields.
 
 .. code-block:: llvm
 
-    !0 = !MDTemplateValueParameter(name: "Ty", type: !1, value: i32 7)
+    !0 = !DITemplateValueParameter(name: "Ty", type: !1, value: i32 7)
 
-MDNamespace
+DINamespace
 """""""""""
 
-``MDNamespace`` nodes represent namespaces in the source language.
+``DINamespace`` nodes represent namespaces in the source language.
 
 .. code-block:: llvm
 
-    !0 = !MDNamespace(name: "myawesomeproject", scope: !1, file: !2, line: 7)
+    !0 = !DINamespace(name: "myawesomeproject", scope: !1, file: !2, line: 7)
 
-MDGlobalVariable
+DIGlobalVariable
 """"""""""""""""
 
-``MDGlobalVariable`` nodes represent global variables in the source language.
+``DIGlobalVariable`` nodes represent global variables in the source language.
 
 .. code-block:: llvm
 
-    !0 = !MDGlobalVariable(name: "foo", linkageName: "foo", scope: !1,
+    !0 = !DIGlobalVariable(name: "foo", linkageName: "foo", scope: !1,
                            file: !2, line: 7, type: !3, isLocal: true,
                            isDefinition: false, variable: i32* @foo,
                            declaration: !4)
 
 All global variables should be referenced by the `globals:` field of a
-:ref:`compile unit <MDCompileUnit>`.
+:ref:`compile unit <DICompileUnit>`.
 
-.. _MDSubprogram:
+.. _DISubprogram:
 
-MDSubprogram
+DISubprogram
 """"""""""""
 
-``MDSubprogram`` nodes represent functions from the source language.  The
-``variables:`` field points at :ref:`variables <MDLocalVariable>` that must be
+``DISubprogram`` nodes represent functions from the source language.  The
+``variables:`` field points at :ref:`variables <DILocalVariable>` that must be
 retained, even if their IR counterparts are optimized out of the IR.  The
-``type:`` field must point at an :ref:`MDSubroutineType`.
+``type:`` field must point at an :ref:`DISubroutineType`.
 
 .. code-block:: llvm
 
-    !0 = !MDSubprogram(name: "foo", linkageName: "_Zfoov", scope: !1,
+    !0 = !DISubprogram(name: "foo", linkageName: "_Zfoov", scope: !1,
                        file: !2, line: 7, type: !3, isLocal: true,
                        isDefinition: false, scopeLine: 8, containingType: !4,
                        virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10,
@@ -3192,76 +3192,76 @@ retained, even if their IR counterparts are optimized out of the IR.  The
                        function: void ()* @_Z3foov,
                        templateParams: !5, declaration: !6, variables: !7)
 
-.. _MDLexicalBlock:
+.. _DILexicalBlock:
 
-MDLexicalBlock
+DILexicalBlock
 """"""""""""""
 
-``MDLexicalBlock`` nodes describe nested blocks within a :ref:`subprogram
-<MDSubprogram>`.  The line number and column numbers are used to dinstinguish
+``DILexicalBlock`` nodes describe nested blocks within a :ref:`subprogram
+<DISubprogram>`.  The line number and column numbers are used to dinstinguish
 two lexical blocks at same depth.  They are valid targets for ``scope:``
 fields.
 
 .. code-block:: llvm
 
-    !0 = distinct !MDLexicalBlock(scope: !1, file: !2, line: 7, column: 35)
+    !0 = distinct !DILexicalBlock(scope: !1, file: !2, line: 7, column: 35)
 
 Usually lexical blocks are ``distinct`` to prevent node merging based on
 operands.
 
-.. _MDLexicalBlockFile:
+.. _DILexicalBlockFile:
 
-MDLexicalBlockFile
+DILexicalBlockFile
 """"""""""""""""""
 
-``MDLexicalBlockFile`` nodes are used to discriminate between sections of a
-:ref:`lexical block <MDLexicalBlock>`.  The ``file:`` field can be changed to
+``DILexicalBlockFile`` nodes are used to discriminate between sections of a
+:ref:`lexical block <DILexicalBlock>`.  The ``file:`` field can be changed to
 indicate textual inclusion, or the ``discriminator:`` field can be used to
 discriminate between control flow within a single block in the source language.
 
 .. code-block:: llvm
 
-    !0 = !MDLexicalBlock(scope: !3, file: !4, line: 7, column: 35)
-    !1 = !MDLexicalBlockFile(scope: !0, file: !4, discriminator: 0)
-    !2 = !MDLexicalBlockFile(scope: !0, file: !4, discriminator: 1)
+    !0 = !DILexicalBlock(scope: !3, file: !4, line: 7, column: 35)
+    !1 = !DILexicalBlockFile(scope: !0, file: !4, discriminator: 0)
+    !2 = !DILexicalBlockFile(scope: !0, file: !4, discriminator: 1)
 
-MDLocation
+DILocation
 """"""""""
 
-``MDLocation`` nodes represent source debug locations.  The ``scope:`` field is
-mandatory, and points at an :ref:`MDLexicalBlockFile`, an
-:ref:`MDLexicalBlock`, or an :ref:`MDSubprogram`.
+``DILocation`` nodes represent source debug locations.  The ``scope:`` field is
+mandatory, and points at an :ref:`DILexicalBlockFile`, an
+:ref:`DILexicalBlock`, or an :ref:`DISubprogram`.
 
 .. code-block:: llvm
 
-    !0 = !MDLocation(line: 2900, column: 42, scope: !1, inlinedAt: !2)
+    !0 = !DILocation(line: 2900, column: 42, scope: !1, inlinedAt: !2)
 
-.. _MDLocalVariable:
+.. _DILocalVariable:
 
-MDLocalVariable
+DILocalVariable
 """""""""""""""
 
-``MDLocalVariable`` nodes represent local variables in the source language.
+``DILocalVariable`` nodes represent local variables in the source language.
 Instead of ``DW_TAG_variable``, they use LLVM-specific fake tags to
 discriminate between local variables (``DW_TAG_auto_variable``) and subprogram
 arguments (``DW_TAG_arg_variable``).  In the latter case, the ``arg:`` field
 specifies the argument position, and this variable will be included in the
-``variables:`` field of its :ref:`MDSubprogram`.
+``variables:`` field of its :ref:`DISubprogram`.
 
 .. code-block:: llvm
 
-    !0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 0,
+    !0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 0,
                           scope: !3, file: !2, line: 7, type: !3,
                           flags: DIFlagArtificial)
-    !1 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1,
+    !1 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1,
                           scope: !4, file: !2, line: 7, type: !3)
-    !1 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y",
+    !1 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y",
                           scope: !5, file: !2, line: 7, type: !3)
 
-MDExpression
+DIExpression
 """"""""""""
 
-``MDExpression`` nodes represent DWARF expression sequences.  They are used in
+``DIExpression`` nodes represent DWARF expression sequences.  They are used in
 :ref:`debug intrinsics<dbg_intrinsics>` (such as ``llvm.dbg.declare``) to
 describe how the referenced LLVM variable relates to the source language
 variable.
@@ -3275,30 +3275,30 @@ The current supported vocabulary is limited:
 
 .. code-block:: llvm
 
-    !0 = !MDExpression(DW_OP_deref)
-    !1 = !MDExpression(DW_OP_plus, 3)
-    !2 = !MDExpression(DW_OP_bit_piece, 3, 7)
-    !3 = !MDExpression(DW_OP_deref, DW_OP_plus, 3, DW_OP_bit_piece, 3, 7)
+    !0 = !DIExpression(DW_OP_deref)
+    !1 = !DIExpression(DW_OP_plus, 3)
+    !2 = !DIExpression(DW_OP_bit_piece, 3, 7)
+    !3 = !DIExpression(DW_OP_deref, DW_OP_plus, 3, DW_OP_bit_piece, 3, 7)
 
-MDObjCProperty
+DIObjCProperty
 """"""""""""""
 
-``MDObjCProperty`` nodes represent Objective-C property nodes.
+``DIObjCProperty`` nodes represent Objective-C property nodes.
 
 .. code-block:: llvm
 
-    !3 = !MDObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
+    !3 = !DIObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
                          getter: "getFoo", attributes: 7, type: !2)
 
-MDImportedEntity
+DIImportedEntity
 """"""""""""""""
 
-``MDImportedEntity`` nodes represent entities (such as modules) imported into a
+``DIImportedEntity`` nodes represent entities (such as modules) imported into a
 compile unit.
 
 .. code-block:: llvm
 
-   !2 = !MDImportedEntity(tag: DW_TAG_imported_module, name: "foo", scope: !0,
+   !2 = !DIImportedEntity(tag: DW_TAG_imported_module, name: "foo", scope: !0,
                           entity: !1, line: 7)
 
 '``tbaa``' Metadata

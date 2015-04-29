@@ -93,13 +93,13 @@ public:
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
   /// \return false if no DWARF register exists for MachineReg.
-  bool AddMachineRegExpression(const MDExpression *Expr, unsigned MachineReg,
+  bool AddMachineRegExpression(const DIExpression *Expr, unsigned MachineReg,
                                unsigned PieceOffsetInBits = 0);
   /// Emit a the operations remaining the DIExpressionIterator I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
-  void AddExpression(MDExpression::expr_op_iterator I,
-                     MDExpression::expr_op_iterator E,
+  void AddExpression(DIExpression::expr_op_iterator I,
+                     DIExpression::expr_op_iterator E,
                      unsigned PieceOffsetInBits = 0);
 };
 

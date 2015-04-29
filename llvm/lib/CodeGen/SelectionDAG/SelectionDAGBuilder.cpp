@@ -999,8 +999,8 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
     const DbgValueInst *DI = DDI.getDI();
     DebugLoc dl = DDI.getdl();
     unsigned DbgSDNodeOrder = DDI.getSDNodeOrder();
-    MDLocalVariable *Variable = DI->getVariable();
-    MDExpression *Expr = DI->getExpression();
+    DILocalVariable *Variable = DI->getVariable();
+    DIExpression *Expr = DI->getExpression();
     assert(Variable->isValidLocationForIntrinsic(dl) &&
            "Expected inlined-at fields to agree");
     uint64_t Offset = DI->getOffset();
@@ -3980,8 +3980,8 @@ static unsigned getTruncatedArgReg(const SDValue &N) {
 /// argument, create the corresponding DBG_VALUE machine instruction for it now.
 /// At the end of instruction selection, they will be inserted to the entry BB.
 bool SelectionDAGBuilder::EmitFuncArgumentDbgValue(
-    const Value *V, MDLocalVariable *Variable, MDExpression *Expr,
-    MDLocation *DL, int64_t Offset, bool IsIndirect, const SDValue &N) {
+    const Value *V, DILocalVariable *Variable, DIExpression *Expr,
+    DILocation *DL, int64_t Offset, bool IsIndirect, const SDValue &N) {
   const Argument *Arg = dyn_cast<Argument>(V);
   if (!Arg)
     return false;
@@ -4175,8 +4175,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-    MDLocalVariable *Variable = DI.getVariable();
-    MDExpression *Expression = DI.getExpression();
+    DILocalVariable *Variable = DI.getVariable();
+    DIExpression *Expression = DI.getExpression();
     const Value *Address = DI.getAddress();
     assert(Variable && "Missing variable");
     if (!Address) {
@@ -4257,8 +4257,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     const DbgValueInst &DI = cast<DbgValueInst>(I);
     assert(DI.getVariable() && "Missing variable");
 
-    MDLocalVariable *Variable = DI.getVariable();
-    MDExpression *Expression = DI.getExpression();
+    DILocalVariable *Variable = DI.getVariable();
+    DIExpression *Expression = DI.getExpression();
     uint64_t Offset = DI.getOffset();
     const Value *V = DI.getValue();
     if (!V)

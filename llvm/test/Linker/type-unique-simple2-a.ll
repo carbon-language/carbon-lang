@@ -48,7 +48,7 @@ define linkonce_odr void @_ZN1AC1Ev(%class.A* %this) unnamed_addr #2 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !39, metadata !MDExpression()), !dbg !41
+  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !39, metadata !DIExpression()), !dbg !41
   %this1 = load %class.A*, %class.A** %this.addr
   call void @_ZN1AC2Ev(%class.A* %this1) #1, !dbg !42
   ret void, !dbg !42
@@ -64,7 +64,7 @@ define linkonce_odr void @_ZN1AC2Ev(%class.A* %this) unnamed_addr #2 align 2 {
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !44, metadata !MDExpression()), !dbg !45
+  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !44, metadata !DIExpression()), !dbg !45
   %this1 = load %class.A*, %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !46
   store i8** getelementptr inbounds ([4 x i8*], [4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !46
@@ -80,47 +80,47 @@ attributes #4 = { nounwind readnone }
 !llvm.module.flags = !{!35, !36}
 !llvm.ident = !{!37}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !26, globals: !2, imports: !2)
-!1 = !MDFile(filename: "<unknown>", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !26, globals: !2, imports: !2)
+!1 = !DIFile(filename: "<unknown>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 2, size: 64, align: 64, file: !5, elements: !6, vtableHolder: !"_ZTS1A", identifier: "_ZTS1A")
-!5 = !MDFile(filename: "./ab.h", directory: "")
+!4 = !DICompositeType(tag: DW_TAG_class_type, name: "A", line: 2, size: 64, align: 64, file: !5, elements: !6, vtableHolder: !"_ZTS1A", identifier: "_ZTS1A")
+!5 = !DIFile(filename: "./ab.h", directory: "")
 !6 = !{!7, !14, !19}
-!7 = !MDDerivedType(tag: DW_TAG_member, name: "_vptr$A", size: 64, flags: DIFlagArtificial, file: !5, scope: !8, baseType: !9)
-!8 = !MDFile(filename: "./ab.h", directory: "")
-!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !10)
-!10 = !MDDerivedType(tag: DW_TAG_pointer_type, name: "__vtbl_ptr_type", size: 64, baseType: !11)
-!11 = !MDSubroutineType(types: !12)
+!7 = !DIDerivedType(tag: DW_TAG_member, name: "_vptr$A", size: 64, flags: DIFlagArtificial, file: !5, scope: !8, baseType: !9)
+!8 = !DIFile(filename: "./ab.h", directory: "")
+!9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, baseType: !10)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, name: "__vtbl_ptr_type", size: 64, baseType: !11)
+!11 = !DISubroutineType(types: !12)
 !12 = !{!13}
-!13 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!14 = !MDSubprogram(name: "setFoo", linkageName: "_ZN1A6setFooEv", line: 4, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, flags: DIFlagPublic | DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !"_ZTS1A", type: !15, containingType: !"_ZTS1A")
-!15 = !MDSubroutineType(types: !16)
+!13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!14 = !DISubprogram(name: "setFoo", linkageName: "_ZN1A6setFooEv", line: 4, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, flags: DIFlagPublic | DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !5, scope: !"_ZTS1A", type: !15, containingType: !"_ZTS1A")
+!15 = !DISubroutineType(types: !16)
 !16 = !{null, !17}
-!17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
-!19 = !MDSubprogram(name: "getFoo", linkageName: "_ZN1A6getFooEv", line: 5, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, flags: DIFlagPublic | DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !"_ZTS1A", type: !20, containingType: !"_ZTS1A")
-!20 = !MDSubroutineType(types: !21)
+!17 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
+!19 = !DISubprogram(name: "getFoo", linkageName: "_ZN1A6getFooEv", line: 5, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, flags: DIFlagPublic | DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !"_ZTS1A", type: !20, containingType: !"_ZTS1A")
+!20 = !DISubroutineType(types: !21)
 !21 = !{!22, !17}
-!22 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !23)
-!23 = !MDDerivedType(tag: DW_TAG_typedef, name: "foo_t", line: 1, file: !24, baseType: !13)
-!24 = !MDFile(filename: "a.cpp", directory: "")
+!22 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !23)
+!23 = !DIDerivedType(tag: DW_TAG_typedef, name: "foo_t", line: 1, file: !24, baseType: !13)
+!24 = !DIFile(filename: "a.cpp", directory: "")
 !26 = !{!27, !31, !34}
-!27 = !MDSubprogram(name: "bar", linkageName: "_Z3barv", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !24, scope: !28, type: !29, function: i32 ()* @_Z3barv, variables: !2)
-!28 = !MDFile(filename: "a.cpp", directory: "")
-!29 = !MDSubroutineType(types: !30)
+!27 = !DISubprogram(name: "bar", linkageName: "_Z3barv", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !24, scope: !28, type: !29, function: i32 ()* @_Z3barv, variables: !2)
+!28 = !DIFile(filename: "a.cpp", directory: "")
+!29 = !DISubroutineType(types: !30)
 !30 = !{!23}
-!31 = !MDSubprogram(name: "A", linkageName: "_ZN1AC1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !"_ZTS1A", type: !15, function: void (%class.A*)* @_ZN1AC1Ev, declaration: !32, variables: !2)
-!32 = !MDSubprogram(name: "A", isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scope: !"_ZTS1A", type: !15)
-!34 = !MDSubprogram(name: "A", linkageName: "_ZN1AC2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !"_ZTS1A", type: !15, function: void (%class.A*)* @_ZN1AC2Ev, declaration: !32, variables: !2)
+!31 = !DISubprogram(name: "A", linkageName: "_ZN1AC1Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !"_ZTS1A", type: !15, function: void (%class.A*)* @_ZN1AC1Ev, declaration: !32, variables: !2)
+!32 = !DISubprogram(name: "A", isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scope: !"_ZTS1A", type: !15)
+!34 = !DISubprogram(name: "A", linkageName: "_ZN1AC2Ev", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !"_ZTS1A", type: !15, function: void (%class.A*)* @_ZN1AC2Ev, declaration: !32, variables: !2)
 !35 = !{i32 2, !"Dwarf Version", i32 2}
 !36 = !{i32 1, !"Debug Info Version", i32 3}
 !37 = !{!"clang version 3.5 "}
-!38 = !MDLocation(line: 3, scope: !27)
-!39 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, type: !40)
-!40 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")
-!41 = !MDLocation(line: 0, scope: !31)
-!42 = !MDLocation(line: 2, scope: !43)
-!43 = !MDLexicalBlockFile(discriminator: 0, file: !5, scope: !31)
-!44 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !34, type: !40)
-!45 = !MDLocation(line: 0, scope: !34)
-!46 = !MDLocation(line: 2, scope: !34)
+!38 = !DILocation(line: 3, scope: !27)
+!39 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, type: !40)
+!40 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")
+!41 = !DILocation(line: 0, scope: !31)
+!42 = !DILocation(line: 2, scope: !43)
+!43 = !DILexicalBlockFile(discriminator: 0, file: !5, scope: !31)
+!44 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !34, type: !40)
+!45 = !DILocation(line: 0, scope: !34)
+!46 = !DILocation(line: 2, scope: !34)

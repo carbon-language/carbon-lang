@@ -72,7 +72,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
   // Printing the nodes directly isn't particularly helpful (since they
   // reference other nodes that won't be printed, particularly for the
   // filenames), so just print a few useful things.
-  for (MDCompileUnit *CU : Finder.compile_units()) {
+  for (DICompileUnit *CU : Finder.compile_units()) {
     O << "Compile unit: ";
     if (const char *Lang = dwarf::LanguageString(CU->getSourceLanguage()))
       O << Lang;
@@ -82,7 +82,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     O << '\n';
   }
 
-  for (MDSubprogram *S : Finder.subprograms()) {
+  for (DISubprogram *S : Finder.subprograms()) {
     O << "Subprogram: " << S->getName();
     printFile(O, S->getFilename(), S->getDirectory(), S->getLine());
     if (!S->getLinkageName().empty())
@@ -90,7 +90,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     O << '\n';
   }
 
-  for (const MDGlobalVariable *GV : Finder.global_variables()) {
+  for (const DIGlobalVariable *GV : Finder.global_variables()) {
     O << "Global variable: " << GV->getName();
     printFile(O, GV->getFilename(), GV->getDirectory(), GV->getLine());
     if (!GV->getLinkageName().empty())
@@ -98,12 +98,12 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
     O << '\n';
   }
 
-  for (const MDType *T : Finder.types()) {
+  for (const DIType *T : Finder.types()) {
     O << "Type:";
     if (!T->getName().empty())
       O << ' ' << T->getName();
     printFile(O, T->getFilename(), T->getDirectory(), T->getLine());
-    if (auto *BT = dyn_cast<MDBasicType>(T)) {
+    if (auto *BT = dyn_cast<DIBasicType>(T)) {
       O << " ";
       if (const char *Encoding =
               dwarf::AttributeEncodingString(BT->getEncoding()))
@@ -117,7 +117,7 @@ void ModuleDebugInfoPrinter::print(raw_ostream &O, const Module *M) const {
       else
         O << "unknown-tag(" << T->getTag() << ")";
     }
-    if (auto *CT = dyn_cast<MDCompositeType>(T)) {
+    if (auto *CT = dyn_cast<DICompositeType>(T)) {
       if (auto *S = CT->getRawIdentifier())
         O << " (identifier: '" << S->getString() << "')";
     }

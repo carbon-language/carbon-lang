@@ -7,16 +7,16 @@ target triple = "thumbv7-apple-darwin3.0.0-iphoneos"
 
 define void @x0(i8* nocapture %buf, i32 %nbytes) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata i8* %buf, i64 0, metadata !0, metadata !MDExpression()), !dbg !15
-  tail call void @llvm.dbg.value(metadata i32 %nbytes, i64 0, metadata !8, metadata !MDExpression()), !dbg !16
+  tail call void @llvm.dbg.value(metadata i8* %buf, i64 0, metadata !0, metadata !DIExpression()), !dbg !15
+  tail call void @llvm.dbg.value(metadata i32 %nbytes, i64 0, metadata !8, metadata !DIExpression()), !dbg !16
   %tmp = load i32, i32* @length, !dbg !17              ; <i32> [#uses=3]
   %cmp = icmp eq i32 %tmp, -1, !dbg !17           ; <i1> [#uses=1]
   %cmp.not = xor i1 %cmp, true                    ; <i1> [#uses=1]
   %cmp3 = icmp ult i32 %tmp, %nbytes, !dbg !17    ; <i1> [#uses=1]
   %or.cond = and i1 %cmp.not, %cmp3               ; <i1> [#uses=1]
-  tail call void @llvm.dbg.value(metadata i32 %tmp, i64 0, metadata !8, metadata !MDExpression()), !dbg !17
+  tail call void @llvm.dbg.value(metadata i32 %tmp, i64 0, metadata !8, metadata !DIExpression()), !dbg !17
   %nbytes.addr.0 = select i1 %or.cond, i32 %tmp, i32 %nbytes ; <i32> [#uses=1]
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !10, metadata !MDExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !10, metadata !DIExpression()), !dbg !19
   br label %while.cond, !dbg !20
 
 while.cond:                                       ; preds = %while.body, %entry
@@ -47,30 +47,30 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.lv.fn = !{!0, !8, !10, !12}
 !llvm.dbg.gv = !{!14}
 
-!0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "buf", line: 4, arg: 0, scope: !1, file: !2, type: !6)
-!1 = !MDSubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !26, scope: null, type: !4)
-!2 = !MDFile(filename: "t.c", directory: "/private/tmp")
-!3 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang 2.0", isOptimized: true, file: !26)
-!4 = !MDSubroutineType(types: !5)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "buf", line: 4, arg: 0, scope: !1, file: !2, type: !6)
+!1 = !DISubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !26, scope: null, type: !4)
+!2 = !DIFile(filename: "t.c", directory: "/private/tmp")
+!3 = !DICompileUnit(language: DW_LANG_C99, producer: "clang 2.0", isOptimized: true, file: !26)
+!4 = !DISubroutineType(types: !5)
 !5 = !{null}
-!6 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !26, scope: !2, baseType: !7)
-!7 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
-!8 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "nbytes", line: 4, arg: 0, scope: !1, file: !2, type: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned long", size: 32, align: 32, encoding: DW_ATE_unsigned)
-!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "nread", line: 6, scope: !11, file: !2, type: !9)
-!11 = distinct !MDLexicalBlock(line: 5, column: 1, file: !26, scope: !1)
-!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 7, scope: !11, file: !2, type: !13)
-!13 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!14 = !MDGlobalVariable(name: "length", linkageName: "length", line: 1, isLocal: false, isDefinition: true, scope: !2, file: !2, type: !13, variable: i32* @length)
-!15 = !MDLocation(line: 4, column: 24, scope: !1)
-!16 = !MDLocation(line: 4, column: 43, scope: !1)
-!17 = !MDLocation(line: 9, column: 2, scope: !11)
+!6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !26, scope: !2, baseType: !7)
+!7 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
+!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "nbytes", line: 4, arg: 0, scope: !1, file: !2, type: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned long", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "nread", line: 6, scope: !11, file: !2, type: !9)
+!11 = distinct !DILexicalBlock(line: 5, column: 1, file: !26, scope: !1)
+!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 7, scope: !11, file: !2, type: !13)
+!13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!14 = !DIGlobalVariable(name: "length", linkageName: "length", line: 1, isLocal: false, isDefinition: true, scope: !2, file: !2, type: !13, variable: i32* @length)
+!15 = !DILocation(line: 4, column: 24, scope: !1)
+!16 = !DILocation(line: 4, column: 43, scope: !1)
+!17 = !DILocation(line: 9, column: 2, scope: !11)
 !18 = !{i32 0}
-!19 = !MDLocation(line: 10, column: 2, scope: !11)
-!20 = !MDLocation(line: 11, column: 2, scope: !11)
-!21 = !MDLocation(line: 12, column: 3, scope: !22)
-!22 = distinct !MDLexicalBlock(line: 11, column: 45, file: !26, scope: !11)
-!23 = !MDLocation(line: 13, column: 3, scope: !22)
-!24 = !MDLocation(line: 14, column: 2, scope: !22)
-!25 = !MDLocation(line: 15, column: 1, scope: !11)
-!26 = !MDFile(filename: "t.c", directory: "/private/tmp")
+!19 = !DILocation(line: 10, column: 2, scope: !11)
+!20 = !DILocation(line: 11, column: 2, scope: !11)
+!21 = !DILocation(line: 12, column: 3, scope: !22)
+!22 = distinct !DILexicalBlock(line: 11, column: 45, file: !26, scope: !11)
+!23 = !DILocation(line: 13, column: 3, scope: !22)
+!24 = !DILocation(line: 14, column: 2, scope: !22)
+!25 = !DILocation(line: 15, column: 1, scope: !11)
+!26 = !DIFile(filename: "t.c", directory: "/private/tmp")

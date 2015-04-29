@@ -1288,10 +1288,10 @@ void ModuleLinker::stripReplacedSubprograms() {
   if (!CompileUnits)
     return;
   for (unsigned I = 0, E = CompileUnits->getNumOperands(); I != E; ++I) {
-    auto *CU = cast<MDCompileUnit>(CompileUnits->getOperand(I));
+    auto *CU = cast<DICompileUnit>(CompileUnits->getOperand(I));
     assert(CU && "Expected valid compile unit");
 
-    for (MDSubprogram *SP : CU->getSubprograms()) {
+    for (DISubprogram *SP : CU->getSubprograms()) {
       if (!SP || !SP->getFunction() || !Functions.count(SP->getFunction()))
         continue;
 

@@ -18,16 +18,16 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: load <2 x double>, <2 x double>* {{.*}}, !dbg ![[LOC]]
 ;CHECK: store <2 x double> {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ;CHECK: ret
-;CHECK: ![[LOC]] = !MDLocation(line: 4, scope:
-;CHECK: ![[LOC2]] = !MDLocation(line: 7, scope:
+;CHECK: ![[LOC]] = !DILocation(line: 4, scope:
+;CHECK: ![[LOC2]] = !DILocation(line: 7, scope:
 
 define i32 @depth(double* nocapture %A, i32 %m) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata double* %A, i64 0, metadata !12, metadata !MDExpression()), !dbg !19
-  tail call void @llvm.dbg.value(metadata i32 %m, i64 0, metadata !13, metadata !MDExpression()), !dbg !19
-  tail call void @llvm.dbg.value(metadata i32 00, i64 0, metadata !14, metadata !MDExpression()), !dbg !21
-  tail call void @llvm.dbg.value(metadata i32 02, i64 0, metadata !15, metadata !MDExpression()), !dbg !21
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !MDExpression()), !dbg !23
+  tail call void @llvm.dbg.value(metadata double* %A, i64 0, metadata !12, metadata !DIExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 %m, i64 0, metadata !13, metadata !DIExpression()), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32 00, i64 0, metadata !14, metadata !DIExpression()), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 02, i64 0, metadata !15, metadata !DIExpression()), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !DIExpression()), !dbg !23
   %cmp8 = icmp sgt i32 %m, 0, !dbg !23
   br i1 %cmp8, label %for.body.lr.ph, label %for.end, !dbg !23
 
@@ -57,33 +57,33 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18, !32}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 187335) (llvm/trunk 187335:187340M)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "file.c", directory: "/Users/nadav")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 187335) (llvm/trunk 187335:187340M)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "file.c", directory: "/Users/nadav")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "depth", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (double*, i32)* @depth, variables: !11)
-!5 = !MDFile(filename: "file.c", directory: "/Users/nadav")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "depth", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (double*, i32)* @depth, variables: !11)
+!5 = !DIFile(filename: "file.c", directory: "/Users/nadav")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9, !8}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
-!10 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
+!10 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !11 = !{!12, !13, !14, !15, !16}
-!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !9)
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "m", line: 1, arg: 2, scope: !4, file: !5, type: !8)
-!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y0", line: 2, scope: !4, file: !5, type: !10)
-!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y1", line: 2, scope: !4, file: !5, type: !10)
-!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 3, scope: !17, file: !5, type: !8)
-!17 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !4)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !9)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "m", line: 1, arg: 2, scope: !4, file: !5, type: !8)
+!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y0", line: 2, scope: !4, file: !5, type: !10)
+!15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y1", line: 2, scope: !4, file: !5, type: !10)
+!16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 3, scope: !17, file: !5, type: !8)
+!17 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !4)
 !18 = !{i32 2, !"Dwarf Version", i32 2}
-!19 = !MDLocation(line: 1, scope: !4)
+!19 = !DILocation(line: 1, scope: !4)
 !20 = !{double 0.000000e+00}
-!21 = !MDLocation(line: 2, scope: !4)
+!21 = !DILocation(line: 2, scope: !4)
 !22 = !{double 1.000000e+00}
-!23 = !MDLocation(line: 3, scope: !17)
-!24 = !MDLocation(line: 4, scope: !25)
-!25 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !17)
-!29 = !MDLocation(line: 5, scope: !25)
-!30 = !MDLocation(line: 7, scope: !4)
-!31 = !MDLocation(line: 8, scope: !4)
+!23 = !DILocation(line: 3, scope: !17)
+!24 = !DILocation(line: 4, scope: !25)
+!25 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !17)
+!29 = !DILocation(line: 5, scope: !25)
+!30 = !DILocation(line: 7, scope: !4)
+!31 = !DILocation(line: 8, scope: !4)
 !32 = !{i32 1, !"Debug Info Version", i32 3}

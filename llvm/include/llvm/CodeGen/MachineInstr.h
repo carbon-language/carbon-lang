@@ -246,16 +246,16 @@ public:
 
   /// \brief Return the debug variable referenced by
   /// this DBG_VALUE instruction.
-  const MDLocalVariable *getDebugVariable() const {
+  const DILocalVariable *getDebugVariable() const {
     assert(isDebugValue() && "not a DBG_VALUE");
-    return cast<MDLocalVariable>(getOperand(2).getMetadata());
+    return cast<DILocalVariable>(getOperand(2).getMetadata());
   }
 
   /// \brief Return the complex address expression referenced by
   /// this DBG_VALUE instruction.
-  const MDExpression *getDebugExpression() const {
+  const DIExpression *getDebugExpression() const {
     assert(isDebugValue() && "not a DBG_VALUE");
-    return cast<MDExpression>(getOperand(3).getMetadata());
+    return cast<DIExpression>(getOperand(3).getMetadata());
   }
 
   /// emitError - Emit an error referring to the source location of this

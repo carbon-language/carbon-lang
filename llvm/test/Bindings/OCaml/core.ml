@@ -1445,7 +1445,7 @@ let test_builder () =
  * CHECK: !llvm.module.flags = !{!0}
  * CHECK: !0 = !{i32 1, !"Debug Info Version", i32 3}
  * CHECK: !1 = !{i32 1, !"metadata test"}
- * CHECK: !2 = !MDLocation(line: 2, column: 3, scope: !3, inlinedAt: !3)
+ * CHECK: !2 = !DILocation(line: 2, column: 3, scope: !3, inlinedAt: !3)
  *)
 
 (*===-- Pass Managers -----------------------------------------------------===*)

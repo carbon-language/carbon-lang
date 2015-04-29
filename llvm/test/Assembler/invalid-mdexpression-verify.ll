@@ -4,6 +4,6 @@
 ; NOVERIFY: !named = !{!0}
 !named = !{!0}
 
-; NOVERIFY: !0 = !MDExpression(0, 1, 9, 7, 2)
+; NOVERIFY: !0 = !DIExpression(0, 1, 9, 7, 2)
 ; VERIFY: assembly parsed, but does not verify
-!0 = !MDExpression(0, 1, 9, 7, 2)
+!0 = !DIExpression(0, 1, 9, 7, 2)

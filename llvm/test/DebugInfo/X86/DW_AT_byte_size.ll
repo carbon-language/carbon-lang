@@ -14,7 +14,7 @@ define i32 @_Z3fooP1A(%struct.A* %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca %struct.A*, align 8
   store %struct.A* %a, %struct.A** %a.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.A** %a.addr, metadata !16, metadata !MDExpression()), !dbg !17
+  call void @llvm.dbg.declare(metadata %struct.A** %a.addr, metadata !16, metadata !DIExpression()), !dbg !17
   %0 = load %struct.A*, %struct.A** %a.addr, align 8, !dbg !18
   %b = getelementptr inbounds %struct.A, %struct.A* %0, i32 0, i32 0, !dbg !18
   %1 = load i32, i32* %b, align 4, !dbg !18
@@ -26,21 +26,21 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}
 
-!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 150996)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
+!0 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 150996)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !MDSubprogram(name: "foo", linkageName: "_Z3fooP1A", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !20, scope: !6, type: !7, function: i32 (%struct.A*)* @_Z3fooP1A)
-!6 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
-!7 = !MDSubroutineType(types: !8)
+!5 = !DISubprogram(name: "foo", linkageName: "_Z3fooP1A", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !20, scope: !6, type: !7, function: i32 (%struct.A*)* @_Z3fooP1A)
+!6 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo")
+!7 = !DISubroutineType(types: !8)
 !8 = !{!9, !10}
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
-!11 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 32, align: 32, file: !20, elements: !12)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
+!11 = !DICompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 32, align: 32, file: !20, elements: !12)
 !12 = !{!13}
-!13 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 1, size: 32, align: 32, file: !20, scope: !11, baseType: !9)
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 3, arg: 1, scope: !5, file: !6, type: !10)
-!17 = !MDLocation(line: 3, column: 13, scope: !5)
-!18 = !MDLocation(line: 4, column: 3, scope: !19)
-!19 = distinct !MDLexicalBlock(line: 3, column: 16, file: !20, scope: !5)
-!20 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
+!13 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 1, size: 32, align: 32, file: !20, scope: !11, baseType: !9)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 3, arg: 1, scope: !5, file: !6, type: !10)
+!17 = !DILocation(line: 3, column: 13, scope: !5)
+!18 = !DILocation(line: 4, column: 3, scope: !19)
+!19 = distinct !DILexicalBlock(line: 3, column: 16, file: !20, scope: !5)
+!20 = !DIFile(filename: "foo.cpp", directory: "/Users/echristo")
 !21 = !{i32 1, !"Debug Info Version", i32 3}

@@ -63,7 +63,7 @@ namespace {
 
 static void printDebugLoc(const DebugLoc &DL, formatted_raw_ostream &OS) {
   OS << DL.getLine() << ":" << DL.getCol();
-  if (MDLocation *IDL = DL.getInlinedAt()) {
+  if (DILocation *IDL = DL.getInlinedAt()) {
     OS << "@";
     printDebugLoc(IDL, OS);
   }

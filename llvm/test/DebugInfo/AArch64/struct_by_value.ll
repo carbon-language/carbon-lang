@@ -33,7 +33,7 @@ target triple = "arm64-apple-ios3.0.0"
 ; Function Attrs: nounwind ssp
 define i32 @return_five_int(%struct.five* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !MDExpression(DW_OP_deref)), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !DIExpression(DW_OP_deref)), !dbg !18
   %a = getelementptr inbounds %struct.five, %struct.five* %f, i32 0, i32 0, !dbg !19
   %0 = load i32, i32* %a, align 4, !dbg !19
   ret i32 %0, !dbg !19
@@ -48,24 +48,24 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!16, !20}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "LLVM version 3.4 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "struct_by_value.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "LLVM version 3.4 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "struct_by_value.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "return_five_int", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: !5, type: !6, function: i32 (%struct.five*)* @return_five_int, variables: !2)
-!5 = !MDFile(filename: "struct_by_value.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "return_five_int", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: !5, type: !6, function: i32 (%struct.five*)* @return_five_int, variables: !2)
+!5 = !DIFile(filename: "struct_by_value.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "five", line: 1, size: 160, align: 32, file: !1, elements: !10)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !DICompositeType(tag: DW_TAG_structure_type, name: "five", line: 1, size: 160, align: 32, file: !1, elements: !10)
 !10 = !{!11, !12, !13, !14, !15}
-!11 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 3, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
-!12 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 4, size: 32, align: 32, offset: 32, file: !1, scope: !9, baseType: !8)
-!13 = !MDDerivedType(tag: DW_TAG_member, name: "c", line: 5, size: 32, align: 32, offset: 64, file: !1, scope: !9, baseType: !8)
-!14 = !MDDerivedType(tag: DW_TAG_member, name: "d", line: 6, size: 32, align: 32, offset: 96, file: !1, scope: !9, baseType: !8)
-!15 = !MDDerivedType(tag: DW_TAG_member, name: "e", line: 7, size: 32, align: 32, offset: 128, file: !1, scope: !9, baseType: !8)
+!11 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 3, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
+!12 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 4, size: 32, align: 32, offset: 32, file: !1, scope: !9, baseType: !8)
+!13 = !DIDerivedType(tag: DW_TAG_member, name: "c", line: 5, size: 32, align: 32, offset: 64, file: !1, scope: !9, baseType: !8)
+!14 = !DIDerivedType(tag: DW_TAG_member, name: "d", line: 6, size: 32, align: 32, offset: 96, file: !1, scope: !9, baseType: !8)
+!15 = !DIDerivedType(tag: DW_TAG_member, name: "e", line: 7, size: 32, align: 32, offset: 128, file: !1, scope: !9, baseType: !8)
 !16 = !{i32 2, !"Dwarf Version", i32 2}
-!17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "f", line: 13, arg: 1, scope: !4, file: !5, type: !9)
-!18 = !MDLocation(line: 13, scope: !4)
-!19 = !MDLocation(line: 16, scope: !4)
+!17 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "f", line: 13, arg: 1, scope: !4, file: !5, type: !9)
+!18 = !DILocation(line: 13, scope: !4)
+!19 = !DILocation(line: 16, scope: !4)
 !20 = !{i32 1, !"Debug Info Version", i32 3}

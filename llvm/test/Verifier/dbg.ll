@@ -2,9 +2,9 @@
 
 define void @foo() {
 entry:
-  br label %exit, !dbg !MDLocation(scope: !MDSubprogram(), inlinedAt: !{})
+  br label %exit, !dbg !DILocation(scope: !DISubprogram(), inlinedAt: !{})
 ; CHECK: inlined-at should be a location
-; CHECK-NEXT: !{{[0-9]+}} = !MDLocation(line: 0, scope: !{{[0-9]+}}, inlinedAt: ![[IA:[0-9]+]])
+; CHECK-NEXT: !{{[0-9]+}} = !DILocation(line: 0, scope: !{{[0-9]+}}, inlinedAt: ![[IA:[0-9]+]])
 ; CHECK-NEXT: ![[IA]] = !{}
 
 exit:

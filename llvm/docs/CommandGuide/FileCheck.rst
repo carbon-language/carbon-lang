@@ -200,9 +200,9 @@ For example, the following works like you'd expect:
 
 .. code-block:: llvm
 
-   !0 = !MDLocation(line: 5, scope: !1, inlinedAt: !2)
+   !0 = !DILocation(line: 5, scope: !1, inlinedAt: !2)
 
-   ; CHECK:       !MDLocation(line: 5,
+   ; CHECK:       !DILocation(line: 5,
    ; CHECK-NOT:               column:
    ; CHECK-SAME:              scope: ![[SCOPE:[0-9]+]]
 

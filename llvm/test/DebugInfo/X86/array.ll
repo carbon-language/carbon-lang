@@ -25,7 +25,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 ; Function Attrs: nounwind ssp uwtable
 define void @f(i32* nocapture %p) #0 {
-  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !MDExpression()), !dbg !28
+  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !DIExpression()), !dbg !28
   store i32 42, i32* %p, align 4, !dbg !29, !tbaa !30
   ret void, !dbg !34
 }
@@ -33,15 +33,15 @@ define void @f(i32* nocapture %p) #0 {
 ; Function Attrs: nounwind ssp uwtable
 define i32 @main(i32 %argc, i8** nocapture readnone %argv) #0 {
   %array = alloca [4 x i32], align 16
-  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !19, metadata !MDExpression()), !dbg !35
-  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !20, metadata !MDExpression()), !dbg !35
-  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !MDExpression()), !dbg !36
+  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !19, metadata !DIExpression()), !dbg !35
+  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !20, metadata !DIExpression()), !dbg !35
+  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !DIExpression()), !dbg !36
   %1 = bitcast [4 x i32]* %array to i8*, !dbg !36
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* bitcast ([4 x i32]* @main.array to i8*), i64 16, i32 16, i1 false), !dbg !36
-  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !MDExpression()), !dbg !36
+  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !DIExpression()), !dbg !36
   %2 = getelementptr inbounds [4 x i32], [4 x i32]* %array, i64 0, i64 0, !dbg !37
   call void @f(i32* %2), !dbg !37
-  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !MDExpression()), !dbg !36
+  tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !DIExpression()), !dbg !36
   %3 = load i32, i32* %2, align 16, !dbg !38, !tbaa !30
   ret i32 %3, !dbg !38
 }
@@ -60,42 +60,42 @@ attributes #2 = { nounwind readnone }
 !llvm.module.flags = !{!25, !26}
 !llvm.ident = !{!27}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "array.c", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "array.c", directory: "")
 !2 = !{}
 !3 = !{!4, !12}
-!4 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @f, variables: !10)
-!5 = !MDFile(filename: "array.c", directory: "")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @f, variables: !10)
+!5 = !DIFile(filename: "array.c", directory: "")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11}
-!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!12 = !MDSubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !13, function: i32 (i32, i8**)* @main, variables: !18)
-!13 = !MDSubroutineType(types: !14)
+!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!12 = !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !13, function: i32 (i32, i8**)* @main, variables: !18)
+!13 = !DISubroutineType(types: !14)
 !14 = !{!9, !9, !15}
-!15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
-!16 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !17)
-!17 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
+!16 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !17)
+!17 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !18 = !{!19, !20, !21}
-!19 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 5, arg: 1, scope: !12, file: !5, type: !9)
-!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 5, arg: 2, scope: !12, file: !5, type: !15)
-!21 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "array", line: 6, scope: !12, file: !5, type: !22)
-!22 = !MDCompositeType(tag: DW_TAG_array_type, size: 128, align: 32, baseType: !9, elements: !23)
+!19 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 5, arg: 1, scope: !12, file: !5, type: !9)
+!20 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 5, arg: 2, scope: !12, file: !5, type: !15)
+!21 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "array", line: 6, scope: !12, file: !5, type: !22)
+!22 = !DICompositeType(tag: DW_TAG_array_type, size: 128, align: 32, baseType: !9, elements: !23)
 !23 = !{!24}
-!24 = !MDSubrange(count: 4)
+!24 = !DISubrange(count: 4)
 !25 = !{i32 2, !"Dwarf Version", i32 2}
 !26 = !{i32 1, !"Debug Info Version", i32 3}
 !27 = !{!"clang version 3.5.0 "}
-!28 = !MDLocation(line: 1, scope: !4)
-!29 = !MDLocation(line: 2, scope: !4)
+!28 = !DILocation(line: 1, scope: !4)
+!29 = !DILocation(line: 2, scope: !4)
 !30 = !{!31, !31, i64 0}
 !31 = !{!"int", !32, i64 0}
 !32 = !{!"omnipotent char", !33, i64 0}
 !33 = !{!"Simple C/C++ TBAA"}
-!34 = !MDLocation(line: 3, scope: !4)
-!35 = !MDLocation(line: 5, scope: !12)
-!36 = !MDLocation(line: 6, scope: !12)
-!37 = !MDLocation(line: 7, scope: !12)
-!38 = !MDLocation(line: 8, scope: !12)
+!34 = !DILocation(line: 3, scope: !4)
+!35 = !DILocation(line: 5, scope: !12)
+!36 = !DILocation(line: 6, scope: !12)
+!37 = !DILocation(line: 7, scope: !12)
+!38 = !DILocation(line: 8, scope: !12)

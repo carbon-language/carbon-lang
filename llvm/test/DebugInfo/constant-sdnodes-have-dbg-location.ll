@@ -13,14 +13,14 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!8, !9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false, subprograms: !3)
-!1 = !MDFile(filename: "test.c", directory: "/home/user/clang-llvm/build")
+!0 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false, subprograms: !3)
+!1 = !DIFile(filename: "test.c", directory: "/home/user/clang-llvm/build")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "main", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @main, variables: !2)
-!5 = !MDSubroutineType(types: !6)
+!4 = !DISubprogram(name: "main", scope: !1, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: false, function: i32 ()* @main, variables: !2)
+!5 = !DISubroutineType(types: !6)
 !6 = !{!7}
-!7 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
-!10 = !MDLocation(line: 4, column: 5, scope: !4)
+!10 = !DILocation(line: 4, column: 5, scope: !4)

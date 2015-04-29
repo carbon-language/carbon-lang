@@ -33,15 +33,15 @@
 
 define i32 @bar(i32 %a, i32 %b) {
 entry:
-  %sum = add i32 %a, %b, !dbg !MDLocation(line: 2, scope: !4,
-                                          inlinedAt: !MDLocation(line: 12, scope: !3))
-  ret i32 %sum, !dbg !MDLocation(line: 13, scope: !3)
+  %sum = add i32 %a, %b, !dbg !DILocation(line: 2, scope: !4,
+                                          inlinedAt: !DILocation(line: 12, scope: !3))
+  ret i32 %sum, !dbg !DILocation(line: 13, scope: !3)
 }
 
 define linkonce i32 @foo(i32 %a, i32 %b) {
 entry:
-  %sum = add i32 %a, %b, !dbg !MDLocation(line: 2, scope: !4)
-  ret i32 %sum, !dbg !MDLocation(line: 3, scope: !4)
+  %sum = add i32 %a, %b, !dbg !DILocation(line: 2, scope: !4)
+  ret i32 %sum, !dbg !DILocation(line: 3, scope: !4)
 }
 
 !llvm.module.flags = !{!0}
@@ -52,46 +52,46 @@ entry:
 ; WL-SAME: !{![[WCU:[0-9]+]], ![[LCU:[0-9]+]]}
 !llvm.dbg.cu = !{!1}
 
-; LW: ![[LCU]] = !MDCompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
+; LW: ![[LCU]] = !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; LW: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
-; LW: ![[BARSP]] = !MDSubprogram(name: "bar",
+; LW: ![[BARSP]] = !DISubprogram(name: "bar",
 ; LW-SAME: function: i32 (i32, i32)* @bar
-; LW: ![[FOOSP]] = {{.*}}!MDSubprogram(name: "foo",
+; LW: ![[FOOSP]] = {{.*}}!DISubprogram(name: "foo",
 ; LW-NOT: function:
 ; LW-SAME: ){{$}}
-; LW: ![[WCU]] = !MDCompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
+; LW: ![[WCU]] = !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; LW: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
-; LW: ![[WEAKFOOSP]] = !MDSubprogram(name: "foo",
+; LW: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
 ; LW-SAME: function: i32 (i32, i32)* @foo
-; LW: ![[FOOINBAR]] = !MDLocation(line: 2, scope: ![[FOOSP]], inlinedAt: ![[BARIA:[0-9]+]])
-; LW: ![[BARIA]] = !MDLocation(line: 12, scope: ![[BARSP]])
-; LW: ![[BARRET]] = !MDLocation(line: 13, scope: ![[BARSP]])
-; LW: ![[FOOCALL]] = !MDLocation(line: 52, scope: ![[WEAKFOOSP]])
-; LW: ![[FOORET]] = !MDLocation(line: 53, scope: ![[WEAKFOOSP]])
+; LW: ![[FOOINBAR]] = !DILocation(line: 2, scope: ![[FOOSP]], inlinedAt: ![[BARIA:[0-9]+]])
+; LW: ![[BARIA]] = !DILocation(line: 12, scope: ![[BARSP]])
+; LW: ![[BARRET]] = !DILocation(line: 13, scope: ![[BARSP]])
+; LW: ![[FOOCALL]] = !DILocation(line: 52, scope: ![[WEAKFOOSP]])
+; LW: ![[FOORET]] = !DILocation(line: 53, scope: ![[WEAKFOOSP]])
 
 ; Same as above, but reordered.
-; WL: ![[WCU]] = !MDCompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
+; WL: ![[WCU]] = !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; WL: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
-; WL: ![[WEAKFOOSP]] = !MDSubprogram(name: "foo",
+; WL: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
 ; WL-SAME: function: i32 (i32, i32)* @foo
-; WL: ![[LCU]] = !MDCompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
+; WL: ![[LCU]] = !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; WL: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
-; WL: ![[BARSP]] = !MDSubprogram(name: "bar",
+; WL: ![[BARSP]] = !DISubprogram(name: "bar",
 ; WL-SAME: function: i32 (i32, i32)* @bar
-; WL: ![[FOOSP]] = {{.*}}!MDSubprogram(name: "foo",
+; WL: ![[FOOSP]] = {{.*}}!DISubprogram(name: "foo",
 ; Note, for symmetry, this should be "NOT: function:" and "SAME: ){{$}}".
 ; WL-SAME: function: i32 (i32, i32)* @foo
-; WL: ![[FOOCALL]] = !MDLocation(line: 52, scope: ![[WEAKFOOSP]])
-; WL: ![[FOORET]] = !MDLocation(line: 53, scope: ![[WEAKFOOSP]])
-; WL: ![[FOOINBAR]] = !MDLocation(line: 2, scope: ![[FOOSP]], inlinedAt: ![[BARIA:[0-9]+]])
-; WL: ![[BARIA]] = !MDLocation(line: 12, scope: ![[BARSP]])
-; WL: ![[BARRET]] = !MDLocation(line: 13, scope: ![[BARSP]])
+; WL: ![[FOOCALL]] = !DILocation(line: 52, scope: ![[WEAKFOOSP]])
+; WL: ![[FOORET]] = !DILocation(line: 53, scope: ![[WEAKFOOSP]])
+; WL: ![[FOOINBAR]] = !DILocation(line: 2, scope: ![[FOOSP]], inlinedAt: ![[BARIA:[0-9]+]])
+; WL: ![[BARIA]] = !DILocation(line: 12, scope: ![[BARSP]])
+; WL: ![[BARRET]] = !DILocation(line: 13, scope: ![[BARSP]])
 
-!1 = !MDCompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3, !4}, emissionKind: 1)
-!2 = !MDFile(filename: "bar.c", directory: "/path/to/dir")
-!3 = !MDSubprogram(file: !2, scope: !2, line: 11, name: "bar", function: i32 (i32, i32)* @bar, type: !5)
-!4 = !MDSubprogram(file: !2, scope: !2, line: 1, name: "foo", function: i32 (i32, i32)* @foo, type: !5)
-!5 = !MDSubroutineType(types: !{})
+!1 = !DICompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3, !4}, emissionKind: 1)
+!2 = !DIFile(filename: "bar.c", directory: "/path/to/dir")
+!3 = !DISubprogram(file: !2, scope: !2, line: 11, name: "bar", function: i32 (i32, i32)* @bar, type: !5)
+!4 = !DISubprogram(file: !2, scope: !2, line: 1, name: "foo", function: i32 (i32, i32)* @foo, type: !5)
+!5 = !DISubroutineType(types: !{})
 
 ; Crasher for llc.
 ; REQUIRES: object-emission

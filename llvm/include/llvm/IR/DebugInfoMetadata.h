@@ -41,39 +41,39 @@
 
 namespace llvm {
 
-/// \brief Pointer union between a subclass of DebugNode and MDString.
+/// \brief Pointer union between a subclass of DINode and MDString.
 ///
-/// \a MDCompositeType can be referenced via an \a MDString unique identifier.
+/// \a DICompositeType can be referenced via an \a MDString unique identifier.
 /// This class allows some type safety in the face of that, requiring either a
 /// node of a particular type or an \a MDString.
-template <class T> class TypedDebugNodeRef {
+template <class T> class TypedDINodeRef {
   const Metadata *MD = nullptr;
 
 public:
-  TypedDebugNodeRef() = default;
-  TypedDebugNodeRef(std::nullptr_t) {}
+  TypedDINodeRef() = default;
+  TypedDINodeRef(std::nullptr_t) {}
 
   /// \brief Construct from a raw pointer.
-  explicit TypedDebugNodeRef(const Metadata *MD) : MD(MD) {
+  explicit TypedDINodeRef(const Metadata *MD) : MD(MD) {
     assert((!MD || isa<MDString>(MD) || isa<T>(MD)) && "Expected valid ref");
   }
 
   template <class U>
-  TypedDebugNodeRef(
-      const TypedDebugNodeRef<U> &X,
+  TypedDINodeRef(
+      const TypedDINodeRef<U> &X,
       typename std::enable_if<std::is_convertible<U *, T *>::value>::type * =
           nullptr)
       : MD(X) {}
 
   operator Metadata *() const { return const_cast<Metadata *>(MD); }
 
-  bool operator==(const TypedDebugNodeRef<T> &X) const { return MD == X.MD; };
-  bool operator!=(const TypedDebugNodeRef<T> &X) const { return MD != X.MD; };
+  bool operator==(const TypedDINodeRef<T> &X) const { return MD == X.MD; };
+  bool operator!=(const TypedDINodeRef<T> &X) const { return MD != X.MD; };
 
   /// \brief Create a reference.
   ///
   /// Get a reference to \c N, using an \a MDString reference if available.
-  static TypedDebugNodeRef get(const T *N);
+  static TypedDINodeRef get(const T *N);
 
   template <class MapTy> T *resolve(const MapTy &Map) const {
     if (!MD)
@@ -89,15 +89,15 @@ public:
   }
 };
 
-typedef TypedDebugNodeRef<DebugNode> DebugNodeRef;
-typedef TypedDebugNodeRef<MDScope> MDScopeRef;
-typedef TypedDebugNodeRef<MDType> MDTypeRef;
+typedef TypedDINodeRef<DINode> DINodeRef;
+typedef TypedDINodeRef<DIScope> DIScopeRef;
+typedef TypedDINodeRef<DIType> DITypeRef;
 
-class MDTypeRefArray {
+class DITypeRefArray {
   const MDTuple *N = nullptr;
 
 public:
-  MDTypeRefArray(const MDTuple *N) : N(N) {}
+  DITypeRefArray(const MDTuple *N) : N(N) {}
 
   explicit operator bool() const { return get(); }
   explicit operator MDTuple *() const { return get(); }
@@ -108,16 +108,16 @@ public:
 
   // FIXME: Fix callers and remove condition on N.
   unsigned size() const { return N ? N->getNumOperands() : 0u; }
-  MDTypeRef operator[](unsigned I) const { return MDTypeRef(N->getOperand(I)); }
+  DITypeRef operator[](unsigned I) const { return DITypeRef(N->getOperand(I)); }
 
-  class iterator : std::iterator<std::input_iterator_tag, MDTypeRef,
-                                 std::ptrdiff_t, void, MDTypeRef> {
+  class iterator : std::iterator<std::input_iterator_tag, DITypeRef,
+                                 std::ptrdiff_t, void, DITypeRef> {
     MDNode::op_iterator I = nullptr;
 
   public:
     iterator() = default;
     explicit iterator(MDNode::op_iterator I) : I(I) {}
-    MDTypeRef operator*() const { return MDTypeRef(*I); }
+    DITypeRef operator*() const { return DITypeRef(*I); }
     iterator &operator++() {
       ++I;
       return *this;
@@ -139,20 +139,20 @@ public:
 /// \brief Tagged DWARF-like metadata node.
 ///
 /// A metadata node with a DWARF tag (i.e., a constant named \c DW_TAG_*,
-/// defined in llvm/Support/Dwarf.h).  Called \a DebugNode because it's
+/// defined in llvm/Support/Dwarf.h).  Called \a DINode because it's
 /// potentially used for non-DWARF output.
-class DebugNode : public MDNode {
+class DINode : public MDNode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
 protected:
-  DebugNode(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
-            ArrayRef<Metadata *> Ops1, ArrayRef<Metadata *> Ops2 = None)
+  DINode(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+         ArrayRef<Metadata *> Ops1, ArrayRef<Metadata *> Ops2 = None)
       : MDNode(C, ID, Storage, Ops1, Ops2) {
     assert(Tag < 1u << 16);
     SubclassData16 = Tag;
   }
-  ~DebugNode() = default;
+  ~DINode() = default;
 
   template <class Ty> Ty *getOperandAs(unsigned I) const {
     return cast_or_null<Ty>(getOperand(I));
@@ -193,47 +193,46 @@ public:
   static unsigned splitFlags(unsigned Flags,
                              SmallVectorImpl<unsigned> &SplitFlags);
 
-  DebugNodeRef getRef() const { return DebugNodeRef::get(this); }
+  DINodeRef getRef() const { return DINodeRef::get(this); }
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
       return false;
-    case GenericDebugNodeKind:
-    case MDSubrangeKind:
-    case MDEnumeratorKind:
-    case MDBasicTypeKind:
-    case MDDerivedTypeKind:
-    case MDCompositeTypeKind:
-    case MDSubroutineTypeKind:
-    case MDFileKind:
-    case MDCompileUnitKind:
-    case MDSubprogramKind:
-    case MDLexicalBlockKind:
-    case MDLexicalBlockFileKind:
-    case MDNamespaceKind:
-    case MDTemplateTypeParameterKind:
-    case MDTemplateValueParameterKind:
-    case MDGlobalVariableKind:
-    case MDLocalVariableKind:
-    case MDObjCPropertyKind:
-    case MDImportedEntityKind:
+    case GenericDINodeKind:
+    case DISubrangeKind:
+    case DIEnumeratorKind:
+    case DIBasicTypeKind:
+    case DIDerivedTypeKind:
+    case DICompositeTypeKind:
+    case DISubroutineTypeKind:
+    case DIFileKind:
+    case DICompileUnitKind:
+    case DISubprogramKind:
+    case DILexicalBlockKind:
+    case DILexicalBlockFileKind:
+    case DINamespaceKind:
+    case DITemplateTypeParameterKind:
+    case DITemplateValueParameterKind:
+    case DIGlobalVariableKind:
+    case DILocalVariableKind:
+    case DIObjCPropertyKind:
+    case DIImportedEntityKind:
       return true;
     }
   }
 };
 
-template <class T>
-struct simplify_type<const TypedDebugNodeRef<T>> {
+template <class T> struct simplify_type<const TypedDINodeRef<T>> {
   typedef Metadata *SimpleType;
-  static SimpleType getSimplifiedValue(const TypedDebugNodeRef<T> &MD) {
+  static SimpleType getSimplifiedValue(const TypedDINodeRef<T> &MD) {
     return MD;
   }
 };
 
 template <class T>
-struct simplify_type<TypedDebugNodeRef<T>>
-    : simplify_type<const TypedDebugNodeRef<T>> {};
+struct simplify_type<TypedDINodeRef<T>>
+    : simplify_type<const TypedDINodeRef<T>> {};
 
 /// \brief Generic tagged DWARF-like metadata node.
 ///
@@ -241,37 +240,33 @@ struct simplify_type<TypedDebugNodeRef<T>>
 /// (possibly empty) null-separated \a MDString header that contains arbitrary
 /// fields.  The remaining operands are \a dwarf_operands(), and are pointers
 /// to other metadata.
-class GenericDebugNode : public DebugNode {
+class GenericDINode : public DINode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  GenericDebugNode(LLVMContext &C, StorageType Storage, unsigned Hash,
-                   unsigned Tag, ArrayRef<Metadata *> Ops1,
-                   ArrayRef<Metadata *> Ops2)
-      : DebugNode(C, GenericDebugNodeKind, Storage, Tag, Ops1, Ops2) {
+  GenericDINode(LLVMContext &C, StorageType Storage, unsigned Hash,
+                unsigned Tag, ArrayRef<Metadata *> Ops1,
+                ArrayRef<Metadata *> Ops2)
+      : DINode(C, GenericDINodeKind, Storage, Tag, Ops1, Ops2) {
     setHash(Hash);
   }
-  ~GenericDebugNode() { dropAllReferences(); }
+  ~GenericDINode() { dropAllReferences(); }
 
   void setHash(unsigned Hash) { SubclassData32 = Hash; }
   void recalculateHash();
 
-  static GenericDebugNode *getImpl(LLVMContext &Context, unsigned Tag,
-                                   StringRef Header,
-                                   ArrayRef<Metadata *> DwarfOps,
-                                   StorageType Storage,
-                                   bool ShouldCreate = true) {
+  static GenericDINode *getImpl(LLVMContext &Context, unsigned Tag,
+                                StringRef Header, ArrayRef<Metadata *> DwarfOps,
+                                StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Header),
                    DwarfOps, Storage, ShouldCreate);
   }
 
-  static GenericDebugNode *getImpl(LLVMContext &Context, unsigned Tag,
-                                   MDString *Header,
-                                   ArrayRef<Metadata *> DwarfOps,
-                                   StorageType Storage,
-                                   bool ShouldCreate = true);
+  static GenericDINode *getImpl(LLVMContext &Context, unsigned Tag,
+                                MDString *Header, ArrayRef<Metadata *> DwarfOps,
+                                StorageType Storage, bool ShouldCreate = true);
 
-  TempGenericDebugNode cloneImpl() const {
+  TempGenericDINode cloneImpl() const {
     return getTemporary(
         getContext(), getTag(), getHeader(),
         SmallVector<Metadata *, 4>(dwarf_op_begin(), dwarf_op_end()));
@@ -280,15 +275,15 @@ class GenericDebugNode : public DebugNode {
 public:
   unsigned getHash() const { return SubclassData32; }
 
-  DEFINE_MDNODE_GET(GenericDebugNode, (unsigned Tag, StringRef Header,
-                                       ArrayRef<Metadata *> DwarfOps),
+  DEFINE_MDNODE_GET(GenericDINode, (unsigned Tag, StringRef Header,
+                                    ArrayRef<Metadata *> DwarfOps),
                     (Tag, Header, DwarfOps))
-  DEFINE_MDNODE_GET(GenericDebugNode, (unsigned Tag, MDString *Header,
-                                       ArrayRef<Metadata *> DwarfOps),
+  DEFINE_MDNODE_GET(GenericDINode, (unsigned Tag, MDString *Header,
+                                    ArrayRef<Metadata *> DwarfOps),
                     (Tag, Header, DwarfOps))
 
   /// \brief Return a (temporary) clone of this.
-  TempGenericDebugNode clone() const { return cloneImpl(); }
+  TempGenericDINode clone() const { return cloneImpl(); }
 
   unsigned getTag() const { return SubclassData16; }
   StringRef getHeader() const { return getStringOperand(0); }
@@ -308,7 +303,7 @@ public:
   }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == GenericDebugNodeKind;
+    return MD->getMetadataID() == GenericDINodeKind;
   }
 };
 
@@ -316,39 +311,38 @@ public:
 ///
 /// TODO: Merge into node for DW_TAG_array_type, which should have a custom
 /// type.
-class MDSubrange : public DebugNode {
+class DISubrange : public DINode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   int64_t Count;
   int64_t LowerBound;
 
-  MDSubrange(LLVMContext &C, StorageType Storage, int64_t Count,
+  DISubrange(LLVMContext &C, StorageType Storage, int64_t Count,
              int64_t LowerBound)
-      : DebugNode(C, MDSubrangeKind, Storage, dwarf::DW_TAG_subrange_type,
-                  None),
+      : DINode(C, DISubrangeKind, Storage, dwarf::DW_TAG_subrange_type, None),
         Count(Count), LowerBound(LowerBound) {}
-  ~MDSubrange() = default;
+  ~DISubrange() = default;
 
-  static MDSubrange *getImpl(LLVMContext &Context, int64_t Count,
+  static DISubrange *getImpl(LLVMContext &Context, int64_t Count,
                              int64_t LowerBound, StorageType Storage,
                              bool ShouldCreate = true);
 
-  TempMDSubrange cloneImpl() const {
+  TempDISubrange cloneImpl() const {
     return getTemporary(getContext(), getCount(), getLowerBound());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDSubrange, (int64_t Count, int64_t LowerBound = 0),
+  DEFINE_MDNODE_GET(DISubrange, (int64_t Count, int64_t LowerBound = 0),
                     (Count, LowerBound))
 
-  TempMDSubrange clone() const { return cloneImpl(); }
+  TempDISubrange clone() const { return cloneImpl(); }
 
   int64_t getLowerBound() const { return LowerBound; }
   int64_t getCount() const { return Count; }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDSubrangeKind;
+    return MD->getMetadataID() == DISubrangeKind;
   }
 };
 
@@ -356,39 +350,39 @@ public:
 ///
 /// TODO: Add a pointer to the context (DW_TAG_enumeration_type) once that no
 /// longer creates a type cycle.
-class MDEnumerator : public DebugNode {
+class DIEnumerator : public DINode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   int64_t Value;
 
-  MDEnumerator(LLVMContext &C, StorageType Storage, int64_t Value,
+  DIEnumerator(LLVMContext &C, StorageType Storage, int64_t Value,
                ArrayRef<Metadata *> Ops)
-      : DebugNode(C, MDEnumeratorKind, Storage, dwarf::DW_TAG_enumerator, Ops),
+      : DINode(C, DIEnumeratorKind, Storage, dwarf::DW_TAG_enumerator, Ops),
         Value(Value) {}
-  ~MDEnumerator() = default;
+  ~DIEnumerator() = default;
 
-  static MDEnumerator *getImpl(LLVMContext &Context, int64_t Value,
+  static DIEnumerator *getImpl(LLVMContext &Context, int64_t Value,
                                StringRef Name, StorageType Storage,
                                bool ShouldCreate = true) {
     return getImpl(Context, Value, getCanonicalMDString(Context, Name), Storage,
                    ShouldCreate);
   }
-  static MDEnumerator *getImpl(LLVMContext &Context, int64_t Value,
+  static DIEnumerator *getImpl(LLVMContext &Context, int64_t Value,
                                MDString *Name, StorageType Storage,
                                bool ShouldCreate = true);
 
-  TempMDEnumerator cloneImpl() const {
+  TempDIEnumerator cloneImpl() const {
     return getTemporary(getContext(), getValue(), getName());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDEnumerator, (int64_t Value, StringRef Name),
+  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, StringRef Name),
                     (Value, Name))
-  DEFINE_MDNODE_GET(MDEnumerator, (int64_t Value, MDString *Name),
+  DEFINE_MDNODE_GET(DIEnumerator, (int64_t Value, MDString *Name),
                     (Value, Name))
 
-  TempMDEnumerator clone() const { return cloneImpl(); }
+  TempDIEnumerator clone() const { return cloneImpl(); }
 
   int64_t getValue() const { return Value; }
   StringRef getName() const { return getStringOperand(0); }
@@ -396,7 +390,7 @@ public:
   MDString *getRawName() const { return getOperandAs<MDString>(0); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDEnumeratorKind;
+    return MD->getMetadataID() == DIEnumeratorKind;
   }
 };
 
@@ -406,49 +400,49 @@ public:
 /// contexts).
 ///
 /// TODO: Separate the concepts of declaration contexts and lexical scopes.
-class MDScope : public DebugNode {
+class DIScope : public DINode {
 protected:
-  MDScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+  DIScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
           ArrayRef<Metadata *> Ops)
-      : DebugNode(C, ID, Storage, Tag, Ops) {}
-  ~MDScope() = default;
+      : DINode(C, ID, Storage, Tag, Ops) {}
+  ~DIScope() = default;
 
 public:
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+  DIFile *getFile() const { return cast_or_null<DIFile>(getRawFile()); }
 
   inline StringRef getFilename() const;
   inline StringRef getDirectory() const;
 
   StringRef getName() const;
-  MDScopeRef getScope() const;
+  DIScopeRef getScope() const;
 
   /// \brief Return the raw underlying file.
   ///
-  /// An \a MDFile is an \a MDScope, but it doesn't point at a separate file
-  /// (it\em is the file).  If \c this is an \a MDFile, we need to return \c
+  /// An \a DIFile is an \a DIScope, but it doesn't point at a separate file
+  /// (it\em is the file).  If \c this is an \a DIFile, we need to return \c
   /// this.  Otherwise, return the first operand, which is where all other
   /// subclasses store their file pointer.
   Metadata *getRawFile() const {
-    return isa<MDFile>(this) ? const_cast<MDScope *>(this)
+    return isa<DIFile>(this) ? const_cast<DIScope *>(this)
                              : static_cast<Metadata *>(getOperand(0));
   }
 
-  MDScopeRef getRef() const { return MDScopeRef::get(this); }
+  DIScopeRef getRef() const { return DIScopeRef::get(this); }
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
       return false;
-    case MDBasicTypeKind:
-    case MDDerivedTypeKind:
-    case MDCompositeTypeKind:
-    case MDSubroutineTypeKind:
-    case MDFileKind:
-    case MDCompileUnitKind:
-    case MDSubprogramKind:
-    case MDLexicalBlockKind:
-    case MDLexicalBlockFileKind:
-    case MDNamespaceKind:
+    case DIBasicTypeKind:
+    case DIDerivedTypeKind:
+    case DICompositeTypeKind:
+    case DISubroutineTypeKind:
+    case DIFileKind:
+    case DICompileUnitKind:
+    case DISubprogramKind:
+    case DILexicalBlockKind:
+    case DILexicalBlockFileKind:
+    case DINamespaceKind:
       return true;
     }
   }
@@ -458,36 +452,36 @@ public:
 ///
 /// TODO: Merge with directory/file node (including users).
 /// TODO: Canonicalize paths on creation.
-class MDFile : public MDScope {
+class DIFile : public DIScope {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDFile(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Ops)
-      : MDScope(C, MDFileKind, Storage, dwarf::DW_TAG_file_type, Ops) {}
-  ~MDFile() = default;
+  DIFile(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Ops)
+      : DIScope(C, DIFileKind, Storage, dwarf::DW_TAG_file_type, Ops) {}
+  ~DIFile() = default;
 
-  static MDFile *getImpl(LLVMContext &Context, StringRef Filename,
+  static DIFile *getImpl(LLVMContext &Context, StringRef Filename,
                          StringRef Directory, StorageType Storage,
                          bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Filename),
                    getCanonicalMDString(Context, Directory), Storage,
                    ShouldCreate);
   }
-  static MDFile *getImpl(LLVMContext &Context, MDString *Filename,
+  static DIFile *getImpl(LLVMContext &Context, MDString *Filename,
                          MDString *Directory, StorageType Storage,
                          bool ShouldCreate = true);
 
-  TempMDFile cloneImpl() const {
+  TempDIFile cloneImpl() const {
     return getTemporary(getContext(), getFilename(), getDirectory());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDFile, (StringRef Filename, StringRef Directory),
+  DEFINE_MDNODE_GET(DIFile, (StringRef Filename, StringRef Directory),
                     (Filename, Directory))
-  DEFINE_MDNODE_GET(MDFile, (MDString * Filename, MDString *Directory),
+  DEFINE_MDNODE_GET(DIFile, (MDString * Filename, MDString *Directory),
                     (Filename, Directory))
 
-  TempMDFile clone() const { return cloneImpl(); }
+  TempDIFile clone() const { return cloneImpl(); }
 
   StringRef getFilename() const { return getStringOperand(0); }
   StringRef getDirectory() const { return getStringOperand(1); }
@@ -496,17 +490,17 @@ public:
   MDString *getRawDirectory() const { return getOperandAs<MDString>(1); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDFileKind;
+    return MD->getMetadataID() == DIFileKind;
   }
 };
 
-StringRef MDScope::getFilename() const {
+StringRef DIScope::getFilename() const {
   if (auto *F = getFile())
     return F->getFilename();
   return "";
 }
 
-StringRef MDScope::getDirectory() const {
+StringRef DIScope::getDirectory() const {
   if (auto *F = getFile())
     return F->getDirectory();
   return "";
@@ -517,7 +511,7 @@ StringRef MDScope::getDirectory() const {
 /// TODO: Remove the hardcoded name and context, since many types don't use
 /// them.
 /// TODO: Split up flags.
-class MDType : public MDScope {
+class DIType : public DIScope {
   unsigned Line;
   unsigned Flags;
   uint64_t SizeInBits;
@@ -525,17 +519,17 @@ class MDType : public MDScope {
   uint64_t OffsetInBits;
 
 protected:
-  MDType(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+  DIType(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
          unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
          uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
-      : MDScope(C, ID, Storage, Tag, Ops), Line(Line), Flags(Flags),
+      : DIScope(C, ID, Storage, Tag, Ops), Line(Line), Flags(Flags),
         SizeInBits(SizeInBits), AlignInBits(AlignInBits),
         OffsetInBits(OffsetInBits) {}
-  ~MDType() = default;
+  ~DIType() = default;
 
 public:
-  TempMDType clone() const {
-    return TempMDType(cast<MDType>(MDNode::clone().release()));
+  TempDIType clone() const {
+    return TempDIType(cast<DIType>(MDNode::clone().release()));
   }
 
   unsigned getLine() const { return Line; }
@@ -544,7 +538,7 @@ public:
   uint64_t getOffsetInBits() const { return OffsetInBits; }
   unsigned getFlags() const { return Flags; }
 
-  MDScopeRef getScope() const { return MDScopeRef(getRawScope()); }
+  DIScopeRef getScope() const { return DIScopeRef(getRawScope()); }
   StringRef getName() const { return getStringOperand(2); }
 
 
@@ -579,16 +573,16 @@ public:
   bool isLValueReference() const { return getFlags() & FlagLValueReference; }
   bool isRValueReference() const { return getFlags() & FlagRValueReference; }
 
-  MDTypeRef getRef() const { return MDTypeRef::get(this); }
+  DITypeRef getRef() const { return DITypeRef::get(this); }
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:
       return false;
-    case MDBasicTypeKind:
-    case MDDerivedTypeKind:
-    case MDCompositeTypeKind:
-    case MDSubroutineTypeKind:
+    case DIBasicTypeKind:
+    case DIDerivedTypeKind:
+    case DICompositeTypeKind:
+    case DISubroutineTypeKind:
       return true;
     }
   }
@@ -598,79 +592,79 @@ public:
 ///
 /// TODO: Split out DW_TAG_unspecified_type.
 /// TODO: Drop unused accessors.
-class MDBasicType : public MDType {
+class DIBasicType : public DIType {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Encoding;
 
-  MDBasicType(LLVMContext &C, StorageType Storage, unsigned Tag,
+  DIBasicType(LLVMContext &C, StorageType Storage, unsigned Tag,
               uint64_t SizeInBits, uint64_t AlignInBits, unsigned Encoding,
               ArrayRef<Metadata *> Ops)
-      : MDType(C, MDBasicTypeKind, Storage, Tag, 0, SizeInBits, AlignInBits, 0,
+      : DIType(C, DIBasicTypeKind, Storage, Tag, 0, SizeInBits, AlignInBits, 0,
                0, Ops),
         Encoding(Encoding) {}
-  ~MDBasicType() = default;
+  ~DIBasicType() = default;
 
-  static MDBasicType *getImpl(LLVMContext &Context, unsigned Tag,
+  static DIBasicType *getImpl(LLVMContext &Context, unsigned Tag,
                               StringRef Name, uint64_t SizeInBits,
                               uint64_t AlignInBits, unsigned Encoding,
                               StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Name),
                    SizeInBits, AlignInBits, Encoding, Storage, ShouldCreate);
   }
-  static MDBasicType *getImpl(LLVMContext &Context, unsigned Tag,
+  static DIBasicType *getImpl(LLVMContext &Context, unsigned Tag,
                               MDString *Name, uint64_t SizeInBits,
                               uint64_t AlignInBits, unsigned Encoding,
                               StorageType Storage, bool ShouldCreate = true);
 
-  TempMDBasicType cloneImpl() const {
+  TempDIBasicType cloneImpl() const {
     return getTemporary(getContext(), getTag(), getName(), getSizeInBits(),
                         getAlignInBits(), getEncoding());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDBasicType, (unsigned Tag, StringRef Name),
+  DEFINE_MDNODE_GET(DIBasicType, (unsigned Tag, StringRef Name),
                     (Tag, Name, 0, 0, 0))
-  DEFINE_MDNODE_GET(MDBasicType,
+  DEFINE_MDNODE_GET(DIBasicType,
                     (unsigned Tag, StringRef Name, uint64_t SizeInBits,
                      uint64_t AlignInBits, unsigned Encoding),
                     (Tag, Name, SizeInBits, AlignInBits, Encoding))
-  DEFINE_MDNODE_GET(MDBasicType,
+  DEFINE_MDNODE_GET(DIBasicType,
                     (unsigned Tag, MDString *Name, uint64_t SizeInBits,
                      uint64_t AlignInBits, unsigned Encoding),
                     (Tag, Name, SizeInBits, AlignInBits, Encoding))
 
-  TempMDBasicType clone() const { return cloneImpl(); }
+  TempDIBasicType clone() const { return cloneImpl(); }
 
   unsigned getEncoding() const { return Encoding; }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDBasicTypeKind;
+    return MD->getMetadataID() == DIBasicTypeKind;
   }
 };
 
-/// \brief Base class for MDDerivedType and MDCompositeType.
+/// \brief Base class for DIDerivedType and DICompositeType.
 ///
 /// TODO: Delete; they're not really related.
-class MDDerivedTypeBase : public MDType {
+class DIDerivedTypeBase : public DIType {
 protected:
-  MDDerivedTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
+  DIDerivedTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
                     unsigned Tag, unsigned Line, uint64_t SizeInBits,
                     uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                     ArrayRef<Metadata *> Ops)
-      : MDType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
+      : DIType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
                Flags, Ops) {}
-  ~MDDerivedTypeBase() = default;
+  ~DIDerivedTypeBase() = default;
 
 public:
-  MDTypeRef getBaseType() const { return MDTypeRef(getRawBaseType()); }
+  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
   Metadata *getRawBaseType() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDDerivedTypeKind ||
-           MD->getMetadataID() == MDCompositeTypeKind ||
-           MD->getMetadataID() == MDSubroutineTypeKind;
+    return MD->getMetadataID() == DIDerivedTypeKind ||
+           MD->getMetadataID() == DICompositeTypeKind ||
+           MD->getMetadataID() == DISubroutineTypeKind;
   }
 };
 
@@ -680,20 +674,20 @@ public:
 /// class members.
 ///
 /// TODO: Split out members (inheritance, fields, methods, etc.).
-class MDDerivedType : public MDDerivedTypeBase {
+class DIDerivedType : public DIDerivedTypeBase {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDDerivedType(LLVMContext &C, StorageType Storage, unsigned Tag,
+  DIDerivedType(LLVMContext &C, StorageType Storage, unsigned Tag,
                 unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
                 uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
-      : MDDerivedTypeBase(C, MDDerivedTypeKind, Storage, Tag, Line, SizeInBits,
+      : DIDerivedTypeBase(C, DIDerivedTypeKind, Storage, Tag, Line, SizeInBits,
                           AlignInBits, OffsetInBits, Flags, Ops) {}
-  ~MDDerivedType() = default;
+  ~DIDerivedType() = default;
 
-  static MDDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
-                                StringRef Name, MDFile *File, unsigned Line,
-                                MDScopeRef Scope, MDTypeRef BaseType,
+  static DIDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
+                                StringRef Name, DIFile *File, unsigned Line,
+                                DIScopeRef Scope, DITypeRef BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
                                 uint64_t OffsetInBits, unsigned Flags,
                                 Metadata *ExtraData, StorageType Storage,
@@ -702,7 +696,7 @@ class MDDerivedType : public MDDerivedTypeBase {
                    Line, Scope, BaseType, SizeInBits, AlignInBits, OffsetInBits,
                    Flags, ExtraData, Storage, ShouldCreate);
   }
-  static MDDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
+  static DIDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
                                 MDString *Name, Metadata *File, unsigned Line,
                                 Metadata *Scope, Metadata *BaseType,
                                 uint64_t SizeInBits, uint64_t AlignInBits,
@@ -710,7 +704,7 @@ class MDDerivedType : public MDDerivedTypeBase {
                                 Metadata *ExtraData, StorageType Storage,
                                 bool ShouldCreate = true);
 
-  TempMDDerivedType cloneImpl() const {
+  TempDIDerivedType cloneImpl() const {
     return getTemporary(getContext(), getTag(), getName(), getFile(), getLine(),
                         getScope(), getBaseType(), getSizeInBits(),
                         getAlignInBits(), getOffsetInBits(), getFlags(),
@@ -718,7 +712,7 @@ class MDDerivedType : public MDDerivedTypeBase {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDDerivedType,
+  DEFINE_MDNODE_GET(DIDerivedType,
                     (unsigned Tag, MDString *Name, Metadata *File,
                      unsigned Line, Metadata *Scope, Metadata *BaseType,
                      uint64_t SizeInBits, uint64_t AlignInBits,
@@ -726,15 +720,15 @@ public:
                      Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
-  DEFINE_MDNODE_GET(MDDerivedType,
-                    (unsigned Tag, StringRef Name, MDFile *File, unsigned Line,
-                     MDScopeRef Scope, MDTypeRef BaseType, uint64_t SizeInBits,
+  DEFINE_MDNODE_GET(DIDerivedType,
+                    (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
+                     DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
                      uint64_t AlignInBits, uint64_t OffsetInBits,
                      unsigned Flags, Metadata *ExtraData = nullptr),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, ExtraData))
 
-  TempMDDerivedType clone() const { return cloneImpl(); }
+  TempDIDerivedType clone() const { return cloneImpl(); }
 
   /// \brief Get extra data associated with this derived type.
   ///
@@ -748,12 +742,12 @@ public:
 
   /// \brief Get casted version of extra data.
   /// @{
-  MDTypeRef getClassType() const {
+  DITypeRef getClassType() const {
     assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-    return MDTypeRef(getExtraData());
+    return DITypeRef(getExtraData());
   }
-  MDObjCProperty *getObjCProperty() const {
-    return dyn_cast_or_null<MDObjCProperty>(getExtraData());
+  DIObjCProperty *getObjCProperty() const {
+    return dyn_cast_or_null<DIObjCProperty>(getExtraData());
   }
   Constant *getConstant() const {
     assert(getTag() == dwarf::DW_TAG_member && isStaticMember());
@@ -764,39 +758,39 @@ public:
   /// @}
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDDerivedTypeKind;
+    return MD->getMetadataID() == DIDerivedTypeKind;
   }
 };
 
-/// \brief Base class for MDCompositeType and MDSubroutineType.
+/// \brief Base class for DICompositeType and DISubroutineType.
 ///
 /// TODO: Delete; they're not really related.
-class MDCompositeTypeBase : public MDDerivedTypeBase {
+class DICompositeTypeBase : public DIDerivedTypeBase {
   unsigned RuntimeLang;
 
 protected:
-  MDCompositeTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
+  DICompositeTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
                       unsigned Tag, unsigned Line, unsigned RuntimeLang,
                       uint64_t SizeInBits, uint64_t AlignInBits,
                       uint64_t OffsetInBits, unsigned Flags,
                       ArrayRef<Metadata *> Ops)
-      : MDDerivedTypeBase(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits,
+      : DIDerivedTypeBase(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits,
                           OffsetInBits, Flags, Ops),
         RuntimeLang(RuntimeLang) {}
-  ~MDCompositeTypeBase() = default;
+  ~DICompositeTypeBase() = default;
 
 public:
   /// \brief Get the elements of the composite type.
   ///
-  /// \note Calling this is only valid for \a MDCompositeType.  This assertion
-  /// can be removed once \a MDSubroutineType has been separated from
+  /// \note Calling this is only valid for \a DICompositeType.  This assertion
+  /// can be removed once \a DISubroutineType has been separated from
   /// "composite types".
-  DebugNodeArray getElements() const {
-    assert(!isa<MDSubroutineType>(this) && "no elements for DISubroutineType");
+  DINodeArray getElements() const {
+    assert(!isa<DISubroutineType>(this) && "no elements for DISubroutineType");
     return cast_or_null<MDTuple>(getRawElements());
   }
-  MDTypeRef getVTableHolder() const { return MDTypeRef(getRawVTableHolder()); }
-  MDTemplateParameterArray getTemplateParams() const {
+  DITypeRef getVTableHolder() const { return DITypeRef(getRawVTableHolder()); }
+  DITemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
   }
   StringRef getIdentifier() const { return getStringOperand(7); }
@@ -813,25 +807,25 @@ public:
   /// this will be RAUW'ed and deleted.  Use a \a TrackingMDRef to keep track
   /// of its movement if necessary.
   /// @{
-  void replaceElements(DebugNodeArray Elements) {
+  void replaceElements(DINodeArray Elements) {
 #ifndef NDEBUG
-    for (DebugNode *Op : getElements())
+    for (DINode *Op : getElements())
       assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
              "Lost a member during member list replacement");
 #endif
     replaceOperandWith(4, Elements.get());
   }
-  void replaceVTableHolder(MDTypeRef VTableHolder) {
+  void replaceVTableHolder(DITypeRef VTableHolder) {
     replaceOperandWith(5, VTableHolder);
   }
-  void replaceTemplateParams(MDTemplateParameterArray TemplateParams) {
+  void replaceTemplateParams(DITemplateParameterArray TemplateParams) {
     replaceOperandWith(6, TemplateParams.get());
   }
   /// @}
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDCompositeTypeKind ||
-           MD->getMetadataID() == MDSubroutineTypeKind;
+    return MD->getMetadataID() == DICompositeTypeKind ||
+           MD->getMetadataID() == DISubroutineTypeKind;
   }
 };
 
@@ -839,25 +833,25 @@ public:
 ///
 /// TODO: Detach from DerivedTypeBase (split out MDEnumType?).
 /// TODO: Create a custom, unrelated node for DW_TAG_array_type.
-class MDCompositeType : public MDCompositeTypeBase {
+class DICompositeType : public DICompositeTypeBase {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDCompositeType(LLVMContext &C, StorageType Storage, unsigned Tag,
+  DICompositeType(LLVMContext &C, StorageType Storage, unsigned Tag,
                   unsigned Line, unsigned RuntimeLang, uint64_t SizeInBits,
                   uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                   ArrayRef<Metadata *> Ops)
-      : MDCompositeTypeBase(C, MDCompositeTypeKind, Storage, Tag, Line,
+      : DICompositeTypeBase(C, DICompositeTypeKind, Storage, Tag, Line,
                             RuntimeLang, SizeInBits, AlignInBits, OffsetInBits,
                             Flags, Ops) {}
-  ~MDCompositeType() = default;
+  ~DICompositeType() = default;
 
-  static MDCompositeType *
+  static DICompositeType *
   getImpl(LLVMContext &Context, unsigned Tag, StringRef Name, Metadata *File,
-          unsigned Line, MDScopeRef Scope, MDTypeRef BaseType,
+          unsigned Line, DIScopeRef Scope, DITypeRef BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
-          uint64_t Flags, DebugNodeArray Elements, unsigned RuntimeLang,
-          MDTypeRef VTableHolder, MDTemplateParameterArray TemplateParams,
+          uint64_t Flags, DINodeArray Elements, unsigned RuntimeLang,
+          DITypeRef VTableHolder, DITemplateParameterArray TemplateParams,
           StringRef Identifier, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(
         Context, Tag, getCanonicalMDString(Context, Name), File, Line, Scope,
@@ -865,7 +859,7 @@ class MDCompositeType : public MDCompositeTypeBase {
         RuntimeLang, VTableHolder, TemplateParams.get(),
         getCanonicalMDString(Context, Identifier), Storage, ShouldCreate);
   }
-  static MDCompositeType *
+  static DICompositeType *
   getImpl(LLVMContext &Context, unsigned Tag, MDString *Name, Metadata *File,
           unsigned Line, Metadata *Scope, Metadata *BaseType,
           uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
@@ -873,7 +867,7 @@ class MDCompositeType : public MDCompositeTypeBase {
           Metadata *VTableHolder, Metadata *TemplateParams,
           MDString *Identifier, StorageType Storage, bool ShouldCreate = true);
 
-  TempMDCompositeType cloneImpl() const {
+  TempDICompositeType cloneImpl() const {
     return getTemporary(getContext(), getTag(), getName(), getFile(), getLine(),
                         getScope(), getBaseType(), getSizeInBits(),
                         getAlignInBits(), getOffsetInBits(), getFlags(),
@@ -882,18 +876,18 @@ class MDCompositeType : public MDCompositeTypeBase {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDCompositeType,
-                    (unsigned Tag, StringRef Name, MDFile *File, unsigned Line,
-                     MDScopeRef Scope, MDTypeRef BaseType, uint64_t SizeInBits,
+  DEFINE_MDNODE_GET(DICompositeType,
+                    (unsigned Tag, StringRef Name, DIFile *File, unsigned Line,
+                     DIScopeRef Scope, DITypeRef BaseType, uint64_t SizeInBits,
                      uint64_t AlignInBits, uint64_t OffsetInBits,
-                     unsigned Flags, DebugNodeArray Elements,
-                     unsigned RuntimeLang, MDTypeRef VTableHolder,
-                     MDTemplateParameterArray TemplateParams = nullptr,
+                     unsigned Flags, DINodeArray Elements, unsigned RuntimeLang,
+                     DITypeRef VTableHolder,
+                     DITemplateParameterArray TemplateParams = nullptr,
                      StringRef Identifier = ""),
                     (Tag, Name, File, Line, Scope, BaseType, SizeInBits,
                      AlignInBits, OffsetInBits, Flags, Elements, RuntimeLang,
                      VTableHolder, TemplateParams, Identifier))
-  DEFINE_MDNODE_GET(MDCompositeType,
+  DEFINE_MDNODE_GET(DICompositeType,
                     (unsigned Tag, MDString *Name, Metadata *File,
                      unsigned Line, Metadata *Scope, Metadata *BaseType,
                      uint64_t SizeInBits, uint64_t AlignInBits,
@@ -905,71 +899,71 @@ public:
                      AlignInBits, OffsetInBits, Flags, Elements, RuntimeLang,
                      VTableHolder, TemplateParams, Identifier))
 
-  TempMDCompositeType clone() const { return cloneImpl(); }
+  TempDICompositeType clone() const { return cloneImpl(); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDCompositeTypeKind;
+    return MD->getMetadataID() == DICompositeTypeKind;
   }
 };
 
-template <class T> TypedDebugNodeRef<T> TypedDebugNodeRef<T>::get(const T *N) {
+template <class T> TypedDINodeRef<T> TypedDINodeRef<T>::get(const T *N) {
   if (N)
-    if (auto *Composite = dyn_cast<MDCompositeType>(N))
+    if (auto *Composite = dyn_cast<DICompositeType>(N))
       if (auto *S = Composite->getRawIdentifier())
-        return TypedDebugNodeRef<T>(S);
-  return TypedDebugNodeRef<T>(N);
+        return TypedDINodeRef<T>(S);
+  return TypedDINodeRef<T>(N);
 }
 
 /// \brief Type array for a subprogram.
 ///
 /// TODO: Detach from CompositeType, and fold the array of types in directly
 /// as operands.
-class MDSubroutineType : public MDCompositeTypeBase {
+class DISubroutineType : public DICompositeTypeBase {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDSubroutineType(LLVMContext &C, StorageType Storage, unsigned Flags,
+  DISubroutineType(LLVMContext &C, StorageType Storage, unsigned Flags,
                    ArrayRef<Metadata *> Ops)
-      : MDCompositeTypeBase(C, MDSubroutineTypeKind, Storage,
+      : DICompositeTypeBase(C, DISubroutineTypeKind, Storage,
                             dwarf::DW_TAG_subroutine_type, 0, 0, 0, 0, 0, Flags,
                             Ops) {}
-  ~MDSubroutineType() = default;
+  ~DISubroutineType() = default;
 
-  static MDSubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
-                                   MDTypeRefArray TypeArray,
+  static DISubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
+                                   DITypeRefArray TypeArray,
                                    StorageType Storage,
                                    bool ShouldCreate = true) {
     return getImpl(Context, Flags, TypeArray.get(), Storage, ShouldCreate);
   }
-  static MDSubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
+  static DISubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
                                    Metadata *TypeArray, StorageType Storage,
                                    bool ShouldCreate = true);
 
-  TempMDSubroutineType cloneImpl() const {
+  TempDISubroutineType cloneImpl() const {
     return getTemporary(getContext(), getFlags(), getTypeArray());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDSubroutineType,
-                    (unsigned Flags, MDTypeRefArray TypeArray),
+  DEFINE_MDNODE_GET(DISubroutineType,
+                    (unsigned Flags, DITypeRefArray TypeArray),
                     (Flags, TypeArray))
-  DEFINE_MDNODE_GET(MDSubroutineType, (unsigned Flags, Metadata *TypeArray),
+  DEFINE_MDNODE_GET(DISubroutineType, (unsigned Flags, Metadata *TypeArray),
                     (Flags, TypeArray))
 
-  TempMDSubroutineType clone() const { return cloneImpl(); }
+  TempDISubroutineType clone() const { return cloneImpl(); }
 
-  MDTypeRefArray getTypeArray() const {
+  DITypeRefArray getTypeArray() const {
     return cast_or_null<MDTuple>(getRawTypeArray());
   }
   Metadata *getRawTypeArray() const { return getRawElements(); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDSubroutineTypeKind;
+    return MD->getMetadataID() == DISubroutineTypeKind;
   }
 };
 
 /// \brief Compile unit.
-class MDCompileUnit : public MDScope {
+class DICompileUnit : public DIScope {
   friend class LLVMContextImpl;
   friend class MDNode;
 
@@ -978,22 +972,22 @@ class MDCompileUnit : public MDScope {
   unsigned RuntimeVersion;
   unsigned EmissionKind;
 
-  MDCompileUnit(LLVMContext &C, StorageType Storage, unsigned SourceLanguage,
+  DICompileUnit(LLVMContext &C, StorageType Storage, unsigned SourceLanguage,
                 bool IsOptimized, unsigned RuntimeVersion,
                 unsigned EmissionKind, ArrayRef<Metadata *> Ops)
-      : MDScope(C, MDCompileUnitKind, Storage, dwarf::DW_TAG_compile_unit, Ops),
+      : DIScope(C, DICompileUnitKind, Storage, dwarf::DW_TAG_compile_unit, Ops),
         SourceLanguage(SourceLanguage), IsOptimized(IsOptimized),
         RuntimeVersion(RuntimeVersion), EmissionKind(EmissionKind) {}
-  ~MDCompileUnit() = default;
+  ~DICompileUnit() = default;
 
-  static MDCompileUnit *
-  getImpl(LLVMContext &Context, unsigned SourceLanguage, MDFile *File,
+  static DICompileUnit *
+  getImpl(LLVMContext &Context, unsigned SourceLanguage, DIFile *File,
           StringRef Producer, bool IsOptimized, StringRef Flags,
           unsigned RuntimeVersion, StringRef SplitDebugFilename,
-          unsigned EmissionKind, MDCompositeTypeArray EnumTypes,
-          MDTypeArray RetainedTypes, MDSubprogramArray Subprograms,
-          MDGlobalVariableArray GlobalVariables,
-          MDImportedEntityArray ImportedEntities, StorageType Storage,
+          unsigned EmissionKind, DICompositeTypeArray EnumTypes,
+          DITypeArray RetainedTypes, DISubprogramArray Subprograms,
+          DIGlobalVariableArray GlobalVariables,
+          DIImportedEntityArray ImportedEntities, StorageType Storage,
           bool ShouldCreate = true) {
     return getImpl(
         Context, SourceLanguage, File, getCanonicalMDString(Context, Producer),
@@ -1002,7 +996,7 @@ class MDCompileUnit : public MDScope {
         EnumTypes.get(), RetainedTypes.get(), Subprograms.get(),
         GlobalVariables.get(), ImportedEntities.get(), Storage, ShouldCreate);
   }
-  static MDCompileUnit *
+  static DICompileUnit *
   getImpl(LLVMContext &Context, unsigned SourceLanguage, Metadata *File,
           MDString *Producer, bool IsOptimized, MDString *Flags,
           unsigned RuntimeVersion, MDString *SplitDebugFilename,
@@ -1011,7 +1005,7 @@ class MDCompileUnit : public MDScope {
           Metadata *ImportedEntities, StorageType Storage,
           bool ShouldCreate = true);
 
-  TempMDCompileUnit cloneImpl() const {
+  TempDICompileUnit cloneImpl() const {
     return getTemporary(
         getContext(), getSourceLanguage(), getFile(), getProducer(),
         isOptimized(), getFlags(), getRuntimeVersion(), getSplitDebugFilename(),
@@ -1020,19 +1014,19 @@ class MDCompileUnit : public MDScope {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDCompileUnit,
-                    (unsigned SourceLanguage, MDFile *File, StringRef Producer,
+  DEFINE_MDNODE_GET(DICompileUnit,
+                    (unsigned SourceLanguage, DIFile *File, StringRef Producer,
                      bool IsOptimized, StringRef Flags, unsigned RuntimeVersion,
                      StringRef SplitDebugFilename, unsigned EmissionKind,
-                     MDCompositeTypeArray EnumTypes, MDTypeArray RetainedTypes,
-                     MDSubprogramArray Subprograms,
-                     MDGlobalVariableArray GlobalVariables,
-                     MDImportedEntityArray ImportedEntities),
+                     DICompositeTypeArray EnumTypes, DITypeArray RetainedTypes,
+                     DISubprogramArray Subprograms,
+                     DIGlobalVariableArray GlobalVariables,
+                     DIImportedEntityArray ImportedEntities),
                     (SourceLanguage, File, Producer, IsOptimized, Flags,
                      RuntimeVersion, SplitDebugFilename, EmissionKind,
                      EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
                      ImportedEntities))
-  DEFINE_MDNODE_GET(MDCompileUnit,
+  DEFINE_MDNODE_GET(DICompileUnit,
                     (unsigned SourceLanguage, Metadata *File,
                      MDString *Producer, bool IsOptimized, MDString *Flags,
                      unsigned RuntimeVersion, MDString *SplitDebugFilename,
@@ -1044,7 +1038,7 @@ public:
                      EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
                      ImportedEntities))
 
-  TempMDCompileUnit clone() const { return cloneImpl(); }
+  TempDICompileUnit clone() const { return cloneImpl(); }
 
   unsigned getSourceLanguage() const { return SourceLanguage; }
   bool isOptimized() const { return IsOptimized; }
@@ -1053,19 +1047,19 @@ public:
   StringRef getProducer() const { return getStringOperand(1); }
   StringRef getFlags() const { return getStringOperand(2); }
   StringRef getSplitDebugFilename() const { return getStringOperand(3); }
-  MDCompositeTypeArray getEnumTypes() const {
+  DICompositeTypeArray getEnumTypes() const {
     return cast_or_null<MDTuple>(getRawEnumTypes());
   }
-  MDTypeArray getRetainedTypes() const {
+  DITypeArray getRetainedTypes() const {
     return cast_or_null<MDTuple>(getRawRetainedTypes());
   }
-  MDSubprogramArray getSubprograms() const {
+  DISubprogramArray getSubprograms() const {
     return cast_or_null<MDTuple>(getRawSubprograms());
   }
-  MDGlobalVariableArray getGlobalVariables() const {
+  DIGlobalVariableArray getGlobalVariables() const {
     return cast_or_null<MDTuple>(getRawGlobalVariables());
   }
-  MDImportedEntityArray getImportedEntities() const {
+  DIImportedEntityArray getImportedEntities() const {
     return cast_or_null<MDTuple>(getRawImportedEntities());
   }
 
@@ -1084,71 +1078,71 @@ public:
   ///
   /// If this \a isUniqued() and not \a isResolved(), it will be RAUW'ed and
   /// deleted on a uniquing collision.  In practice, uniquing collisions on \a
-  /// MDCompileUnit should be fairly rare.
+  /// DICompileUnit should be fairly rare.
   /// @{
-  void replaceSubprograms(MDSubprogramArray N) {
+  void replaceSubprograms(DISubprogramArray N) {
     replaceOperandWith(6, N.get());
   }
-  void replaceGlobalVariables(MDGlobalVariableArray N) {
+  void replaceGlobalVariables(DIGlobalVariableArray N) {
     replaceOperandWith(7, N.get());
   }
   /// @}
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDCompileUnitKind;
+    return MD->getMetadataID() == DICompileUnitKind;
   }
 };
 
 /// \brief A scope for locals.
 ///
 /// A legal scope for lexical blocks, local variables, and debug info
-/// locations.  Subclasses are \a MDSubprogram, \a MDLexicalBlock, and \a
-/// MDLexicalBlockFile.
-class MDLocalScope : public MDScope {
+/// locations.  Subclasses are \a DISubprogram, \a DILexicalBlock, and \a
+/// DILexicalBlockFile.
+class DILocalScope : public DIScope {
 protected:
-  MDLocalScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+  DILocalScope(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
                ArrayRef<Metadata *> Ops)
-      : MDScope(C, ID, Storage, Tag, Ops) {}
-  ~MDLocalScope() = default;
+      : DIScope(C, ID, Storage, Tag, Ops) {}
+  ~DILocalScope() = default;
 
 public:
   /// \brief Get the subprogram for this scope.
   ///
-  /// Return this if it's an \a MDSubprogram; otherwise, look up the scope
+  /// Return this if it's an \a DISubprogram; otherwise, look up the scope
   /// chain.
-  MDSubprogram *getSubprogram() const;
+  DISubprogram *getSubprogram() const;
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDSubprogramKind ||
-           MD->getMetadataID() == MDLexicalBlockKind ||
-           MD->getMetadataID() == MDLexicalBlockFileKind;
+    return MD->getMetadataID() == DISubprogramKind ||
+           MD->getMetadataID() == DILexicalBlockKind ||
+           MD->getMetadataID() == DILexicalBlockFileKind;
   }
 };
 
 /// \brief Debug location.
 ///
 /// A debug location in source code, used for debug info and otherwise.
-class MDLocation : public MDNode {
+class DILocation : public MDNode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
+  DILocation(LLVMContext &C, StorageType Storage, unsigned Line,
              unsigned Column, ArrayRef<Metadata *> MDs);
-  ~MDLocation() { dropAllReferences(); }
+  ~DILocation() { dropAllReferences(); }
 
-  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
+  static DILocation *getImpl(LLVMContext &Context, unsigned Line,
                              unsigned Column, Metadata *Scope,
                              Metadata *InlinedAt, StorageType Storage,
                              bool ShouldCreate = true);
-  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
-                             unsigned Column, MDLocalScope *Scope,
-                             MDLocation *InlinedAt, StorageType Storage,
+  static DILocation *getImpl(LLVMContext &Context, unsigned Line,
+                             unsigned Column, DILocalScope *Scope,
+                             DILocation *InlinedAt, StorageType Storage,
                              bool ShouldCreate = true) {
     return getImpl(Context, Line, Column, static_cast<Metadata *>(Scope),
                    static_cast<Metadata *>(InlinedAt), Storage, ShouldCreate);
   }
 
-  TempMDLocation cloneImpl() const {
+  TempDILocation cloneImpl() const {
     return getTemporary(getContext(), getLine(), getColumn(), getScope(),
                         getInlinedAt());
   }
@@ -1157,28 +1151,26 @@ class MDLocation : public MDNode {
   void replaceOperandWith(unsigned I, Metadata *New) = delete;
 
 public:
-  DEFINE_MDNODE_GET(MDLocation,
+  DEFINE_MDNODE_GET(DILocation,
                     (unsigned Line, unsigned Column, Metadata *Scope,
                      Metadata *InlinedAt = nullptr),
                     (Line, Column, Scope, InlinedAt))
-  DEFINE_MDNODE_GET(MDLocation,
-                    (unsigned Line, unsigned Column, MDLocalScope *Scope,
-                     MDLocation *InlinedAt = nullptr),
+  DEFINE_MDNODE_GET(DILocation,
+                    (unsigned Line, unsigned Column, DILocalScope *Scope,
+                     DILocation *InlinedAt = nullptr),
                     (Line, Column, Scope, InlinedAt))
 
   /// \brief Return a (temporary) clone of this.
-  TempMDLocation clone() const { return cloneImpl(); }
+  TempDILocation clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return SubclassData32; }
   unsigned getColumn() const { return SubclassData16; }
-  MDLocalScope *getScope() const {
-    return cast<MDLocalScope>(getRawScope());
-  }
-  MDLocation *getInlinedAt() const {
-    return cast_or_null<MDLocation>(getRawInlinedAt());
+  DILocalScope *getScope() const { return cast<DILocalScope>(getRawScope()); }
+  DILocation *getInlinedAt() const {
+    return cast_or_null<DILocation>(getRawInlinedAt());
   }
 
-  MDFile *getFile() const { return getScope()->getFile(); }
+  DIFile *getFile() const { return getScope()->getFile(); }
   StringRef getFilename() const { return getScope()->getFilename(); }
   StringRef getDirectory() const { return getScope()->getDirectory(); }
 
@@ -1186,7 +1178,7 @@ public:
   ///
   /// Walk through \a getInlinedAt() and return \a getScope() from the deepest
   /// location.
-  MDLocalScope *getInlinedAtScope() const {
+  DILocalScope *getInlinedAtScope() const {
     if (auto *IA = getInlinedAt())
       return IA->getInlinedAtScope();
     return getScope();
@@ -1205,7 +1197,7 @@ public:
   /// FIXME: Add a check for getColumn().
   /// FIXME: Change the getFilename() check to getFile() (or add one for
   /// getDirectory()).
-  bool canDiscriminate(const MDLocation &RHS) const {
+  bool canDiscriminate(const DILocation &RHS) const {
     return getFilename() != RHS.getFilename() || getLine() != RHS.getLine();
   }
 
@@ -1232,7 +1224,7 @@ public:
   }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLocationKind;
+    return MD->getMetadataID() == DILocationKind;
   }
 };
 
@@ -1240,7 +1232,7 @@ public:
 ///
 /// TODO: Remove DisplayName.  It's always equal to Name.
 /// TODO: Split up flags.
-class MDSubprogram : public MDLocalScope {
+class DISubprogram : public DILocalScope {
   friend class LLVMContextImpl;
   friend class MDNode;
 
@@ -1253,25 +1245,25 @@ class MDSubprogram : public MDLocalScope {
   bool IsDefinition;
   bool IsOptimized;
 
-  MDSubprogram(LLVMContext &C, StorageType Storage, unsigned Line,
+  DISubprogram(LLVMContext &C, StorageType Storage, unsigned Line,
                unsigned ScopeLine, unsigned Virtuality, unsigned VirtualIndex,
                unsigned Flags, bool IsLocalToUnit, bool IsDefinition,
                bool IsOptimized, ArrayRef<Metadata *> Ops)
-      : MDLocalScope(C, MDSubprogramKind, Storage, dwarf::DW_TAG_subprogram,
+      : DILocalScope(C, DISubprogramKind, Storage, dwarf::DW_TAG_subprogram,
                      Ops),
         Line(Line), ScopeLine(ScopeLine), Virtuality(Virtuality),
         VirtualIndex(VirtualIndex), Flags(Flags), IsLocalToUnit(IsLocalToUnit),
         IsDefinition(IsDefinition), IsOptimized(IsOptimized) {}
-  ~MDSubprogram() = default;
+  ~DISubprogram() = default;
 
-  static MDSubprogram *
-  getImpl(LLVMContext &Context, MDScopeRef Scope, StringRef Name,
-          StringRef LinkageName, MDFile *File, unsigned Line,
-          MDSubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
-          unsigned ScopeLine, MDTypeRef ContainingType, unsigned Virtuality,
+  static DISubprogram *
+  getImpl(LLVMContext &Context, DIScopeRef Scope, StringRef Name,
+          StringRef LinkageName, DIFile *File, unsigned Line,
+          DISubroutineType *Type, bool IsLocalToUnit, bool IsDefinition,
+          unsigned ScopeLine, DITypeRef ContainingType, unsigned Virtuality,
           unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
-          Constant *Function, MDTemplateParameterArray TemplateParams,
-          MDSubprogram *Declaration, MDLocalVariableArray Variables,
+          Constant *Function, DITemplateParameterArray TemplateParams,
+          DISubprogram *Declaration, DILocalVariableArray Variables,
           StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
@@ -1281,7 +1273,7 @@ class MDSubprogram : public MDLocalScope {
                    TemplateParams.get(), Declaration, Variables.get(), Storage,
                    ShouldCreate);
   }
-  static MDSubprogram *
+  static DISubprogram *
   getImpl(LLVMContext &Context, Metadata *Scope, MDString *Name,
           MDString *LinkageName, Metadata *File, unsigned Line, Metadata *Type,
           bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
@@ -1290,7 +1282,7 @@ class MDSubprogram : public MDLocalScope {
           Metadata *TemplateParams, Metadata *Declaration, Metadata *Variables,
           StorageType Storage, bool ShouldCreate = true);
 
-  TempMDSubprogram cloneImpl() const {
+  TempDISubprogram cloneImpl() const {
     return getTemporary(getContext(), getScope(), getName(), getLinkageName(),
                         getFile(), getLine(), getType(), isLocalToUnit(),
                         isDefinition(), getScopeLine(), getContainingType(),
@@ -1300,22 +1292,22 @@ class MDSubprogram : public MDLocalScope {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDSubprogram,
-                    (MDScopeRef Scope, StringRef Name, StringRef LinkageName,
-                     MDFile *File, unsigned Line, MDSubroutineType *Type,
+  DEFINE_MDNODE_GET(DISubprogram,
+                    (DIScopeRef Scope, StringRef Name, StringRef LinkageName,
+                     DIFile *File, unsigned Line, DISubroutineType *Type,
                      bool IsLocalToUnit, bool IsDefinition, unsigned ScopeLine,
-                     MDTypeRef ContainingType, unsigned Virtuality,
+                     DITypeRef ContainingType, unsigned Virtuality,
                      unsigned VirtualIndex, unsigned Flags, bool IsOptimized,
                      Constant *Function = nullptr,
-                     MDTemplateParameterArray TemplateParams = nullptr,
-                     MDSubprogram *Declaration = nullptr,
-                     MDLocalVariableArray Variables = nullptr),
+                     DITemplateParameterArray TemplateParams = nullptr,
+                     DISubprogram *Declaration = nullptr,
+                     DILocalVariableArray Variables = nullptr),
                     (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
                      IsDefinition, ScopeLine, ContainingType, Virtuality,
                      VirtualIndex, Flags, IsOptimized, Function, TemplateParams,
                      Declaration, Variables))
   DEFINE_MDNODE_GET(
-      MDSubprogram,
+      DISubprogram,
       (Metadata * Scope, MDString *Name, MDString *LinkageName, Metadata *File,
        unsigned Line, Metadata *Type, bool IsLocalToUnit, bool IsDefinition,
        unsigned ScopeLine, Metadata *ContainingType, unsigned Virtuality,
@@ -1326,7 +1318,7 @@ public:
        ScopeLine, ContainingType, Virtuality, VirtualIndex, Flags, IsOptimized,
        Function, TemplateParams, Declaration, Variables))
 
-  TempMDSubprogram clone() const { return cloneImpl(); }
+  TempDISubprogram clone() const { return cloneImpl(); }
 
 public:
   unsigned getLine() const { return Line; }
@@ -1367,7 +1359,7 @@ public:
     return getFlags() & FlagRValueReference;
   }
 
-  MDScopeRef getScope() const { return MDScopeRef(getRawScope()); }
+  DIScopeRef getScope() const { return DIScopeRef(getRawScope()); }
 
   StringRef getName() const { return getStringOperand(2); }
   StringRef getDisplayName() const { return getStringOperand(3); }
@@ -1376,11 +1368,11 @@ public:
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
   MDString *getRawLinkageName() const { return getOperandAs<MDString>(4); }
 
-  MDSubroutineType *getType() const {
-    return cast_or_null<MDSubroutineType>(getRawType());
+  DISubroutineType *getType() const {
+    return cast_or_null<DISubroutineType>(getRawType());
   }
-  MDTypeRef getContainingType() const {
-    return MDTypeRef(getRawContainingType());
+  DITypeRef getContainingType() const {
+    return DITypeRef(getRawContainingType());
   }
 
   Constant *getFunctionConstant() const {
@@ -1388,13 +1380,13 @@ public:
       return C->getValue();
     return nullptr;
   }
-  MDTemplateParameterArray getTemplateParams() const {
+  DITemplateParameterArray getTemplateParams() const {
     return cast_or_null<MDTuple>(getRawTemplateParams());
   }
-  MDSubprogram *getDeclaration() const {
-    return cast_or_null<MDSubprogram>(getRawDeclaration());
+  DISubprogram *getDeclaration() const {
+    return cast_or_null<DISubprogram>(getRawDeclaration());
   }
-  MDLocalVariableArray getVariables() const {
+  DILocalVariableArray getVariables() const {
     return cast_or_null<MDTuple>(getRawVariables());
   }
 
@@ -1430,50 +1422,50 @@ public:
   bool describes(const Function *F) const;
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDSubprogramKind;
+    return MD->getMetadataID() == DISubprogramKind;
   }
 };
 
-class MDLexicalBlockBase : public MDLocalScope {
+class DILexicalBlockBase : public DILocalScope {
 protected:
-  MDLexicalBlockBase(LLVMContext &C, unsigned ID, StorageType Storage,
+  DILexicalBlockBase(LLVMContext &C, unsigned ID, StorageType Storage,
                      ArrayRef<Metadata *> Ops)
-      : MDLocalScope(C, ID, Storage, dwarf::DW_TAG_lexical_block, Ops) {}
-  ~MDLexicalBlockBase() = default;
+      : DILocalScope(C, ID, Storage, dwarf::DW_TAG_lexical_block, Ops) {}
+  ~DILexicalBlockBase() = default;
 
 public:
-  MDLocalScope *getScope() const { return cast<MDLocalScope>(getRawScope()); }
+  DILocalScope *getScope() const { return cast<DILocalScope>(getRawScope()); }
 
   Metadata *getRawScope() const { return getOperand(1); }
 
   /// \brief Forwarding accessors to LexicalBlock.
   ///
-  /// TODO: Remove these and update code to use \a MDLexicalBlock directly.
+  /// TODO: Remove these and update code to use \a DILexicalBlock directly.
   /// @{
   inline unsigned getLine() const;
   inline unsigned getColumn() const;
   /// @}
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLexicalBlockKind ||
-           MD->getMetadataID() == MDLexicalBlockFileKind;
+    return MD->getMetadataID() == DILexicalBlockKind ||
+           MD->getMetadataID() == DILexicalBlockFileKind;
   }
 };
 
-class MDLexicalBlock : public MDLexicalBlockBase {
+class DILexicalBlock : public DILexicalBlockBase {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Line;
   unsigned Column;
 
-  MDLexicalBlock(LLVMContext &C, StorageType Storage, unsigned Line,
+  DILexicalBlock(LLVMContext &C, StorageType Storage, unsigned Line,
                  unsigned Column, ArrayRef<Metadata *> Ops)
-      : MDLexicalBlockBase(C, MDLexicalBlockKind, Storage, Ops), Line(Line),
+      : DILexicalBlockBase(C, DILexicalBlockKind, Storage, Ops), Line(Line),
         Column(Column) {}
-  ~MDLexicalBlock() = default;
+  ~DILexicalBlock() = default;
 
-  static MDLexicalBlock *getImpl(LLVMContext &Context, MDLocalScope *Scope,
-                                 MDFile *File, unsigned Line, unsigned Column,
+  static DILexicalBlock *getImpl(LLVMContext &Context, DILocalScope *Scope,
+                                 DIFile *File, unsigned Line, unsigned Column,
                                  StorageType Storage,
                                  bool ShouldCreate = true) {
     return getImpl(Context, static_cast<Metadata *>(Scope),
@@ -1481,59 +1473,59 @@ class MDLexicalBlock : public MDLexicalBlockBase {
                    ShouldCreate);
   }
 
-  static MDLexicalBlock *getImpl(LLVMContext &Context, Metadata *Scope,
+  static DILexicalBlock *getImpl(LLVMContext &Context, Metadata *Scope,
                                  Metadata *File, unsigned Line, unsigned Column,
                                  StorageType Storage, bool ShouldCreate = true);
 
-  TempMDLexicalBlock cloneImpl() const {
+  TempDILexicalBlock cloneImpl() const {
     return getTemporary(getContext(), getScope(), getFile(), getLine(),
                         getColumn());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDLexicalBlock, (MDLocalScope * Scope, MDFile *File,
+  DEFINE_MDNODE_GET(DILexicalBlock, (DILocalScope * Scope, DIFile *File,
                                      unsigned Line, unsigned Column),
                     (Scope, File, Line, Column))
-  DEFINE_MDNODE_GET(MDLexicalBlock, (Metadata * Scope, Metadata *File,
+  DEFINE_MDNODE_GET(DILexicalBlock, (Metadata * Scope, Metadata *File,
                                      unsigned Line, unsigned Column),
                     (Scope, File, Line, Column))
 
-  TempMDLexicalBlock clone() const { return cloneImpl(); }
+  TempDILexicalBlock clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLexicalBlockKind;
+    return MD->getMetadataID() == DILexicalBlockKind;
   }
 };
 
-unsigned MDLexicalBlockBase::getLine() const {
-  if (auto *N = dyn_cast<MDLexicalBlock>(this))
+unsigned DILexicalBlockBase::getLine() const {
+  if (auto *N = dyn_cast<DILexicalBlock>(this))
     return N->getLine();
   return 0;
 }
 
-unsigned MDLexicalBlockBase::getColumn() const {
-  if (auto *N = dyn_cast<MDLexicalBlock>(this))
+unsigned DILexicalBlockBase::getColumn() const {
+  if (auto *N = dyn_cast<DILexicalBlock>(this))
     return N->getColumn();
   return 0;
 }
 
-class MDLexicalBlockFile : public MDLexicalBlockBase {
+class DILexicalBlockFile : public DILexicalBlockBase {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Discriminator;
 
-  MDLexicalBlockFile(LLVMContext &C, StorageType Storage,
+  DILexicalBlockFile(LLVMContext &C, StorageType Storage,
                      unsigned Discriminator, ArrayRef<Metadata *> Ops)
-      : MDLexicalBlockBase(C, MDLexicalBlockFileKind, Storage, Ops),
+      : DILexicalBlockBase(C, DILexicalBlockFileKind, Storage, Ops),
         Discriminator(Discriminator) {}
-  ~MDLexicalBlockFile() = default;
+  ~DILexicalBlockFile() = default;
 
-  static MDLexicalBlockFile *getImpl(LLVMContext &Context, MDLocalScope *Scope,
-                                     MDFile *File, unsigned Discriminator,
+  static DILexicalBlockFile *getImpl(LLVMContext &Context, DILocalScope *Scope,
+                                     DIFile *File, unsigned Discriminator,
                                      StorageType Storage,
                                      bool ShouldCreate = true) {
     return getImpl(Context, static_cast<Metadata *>(Scope),
@@ -1541,213 +1533,213 @@ class MDLexicalBlockFile : public MDLexicalBlockBase {
                    ShouldCreate);
   }
 
-  static MDLexicalBlockFile *getImpl(LLVMContext &Context, Metadata *Scope,
+  static DILexicalBlockFile *getImpl(LLVMContext &Context, Metadata *Scope,
                                      Metadata *File, unsigned Discriminator,
                                      StorageType Storage,
                                      bool ShouldCreate = true);
 
-  TempMDLexicalBlockFile cloneImpl() const {
+  TempDILexicalBlockFile cloneImpl() const {
     return getTemporary(getContext(), getScope(), getFile(),
                         getDiscriminator());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDLexicalBlockFile, (MDLocalScope * Scope, MDFile *File,
+  DEFINE_MDNODE_GET(DILexicalBlockFile, (DILocalScope * Scope, DIFile *File,
                                          unsigned Discriminator),
                     (Scope, File, Discriminator))
-  DEFINE_MDNODE_GET(MDLexicalBlockFile,
+  DEFINE_MDNODE_GET(DILexicalBlockFile,
                     (Metadata * Scope, Metadata *File, unsigned Discriminator),
                     (Scope, File, Discriminator))
 
-  TempMDLexicalBlockFile clone() const { return cloneImpl(); }
+  TempDILexicalBlockFile clone() const { return cloneImpl(); }
 
-  // TODO: Remove these once they're gone from MDLexicalBlockBase.
+  // TODO: Remove these once they're gone from DILexicalBlockBase.
   unsigned getLine() const = delete;
   unsigned getColumn() const = delete;
 
   unsigned getDiscriminator() const { return Discriminator; }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLexicalBlockFileKind;
+    return MD->getMetadataID() == DILexicalBlockFileKind;
   }
 };
 
-unsigned MDLocation::getDiscriminator() const {
-  if (auto *F = dyn_cast<MDLexicalBlockFile>(getScope()))
+unsigned DILocation::getDiscriminator() const {
+  if (auto *F = dyn_cast<DILexicalBlockFile>(getScope()))
     return F->getDiscriminator();
   return 0;
 }
 
-class MDNamespace : public MDScope {
+class DINamespace : public DIScope {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Line;
 
-  MDNamespace(LLVMContext &Context, StorageType Storage, unsigned Line,
+  DINamespace(LLVMContext &Context, StorageType Storage, unsigned Line,
               ArrayRef<Metadata *> Ops)
-      : MDScope(Context, MDNamespaceKind, Storage, dwarf::DW_TAG_namespace,
+      : DIScope(Context, DINamespaceKind, Storage, dwarf::DW_TAG_namespace,
                 Ops),
         Line(Line) {}
-  ~MDNamespace() = default;
+  ~DINamespace() = default;
 
-  static MDNamespace *getImpl(LLVMContext &Context, MDScope *Scope,
-                              MDFile *File, StringRef Name, unsigned Line,
+  static DINamespace *getImpl(LLVMContext &Context, DIScope *Scope,
+                              DIFile *File, StringRef Name, unsigned Line,
                               StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, File, getCanonicalMDString(Context, Name),
                    Line, Storage, ShouldCreate);
   }
-  static MDNamespace *getImpl(LLVMContext &Context, Metadata *Scope,
+  static DINamespace *getImpl(LLVMContext &Context, Metadata *Scope,
                               Metadata *File, MDString *Name, unsigned Line,
                               StorageType Storage, bool ShouldCreate = true);
 
-  TempMDNamespace cloneImpl() const {
+  TempDINamespace cloneImpl() const {
     return getTemporary(getContext(), getScope(), getFile(), getName(),
                         getLine());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDNamespace, (MDScope * Scope, MDFile *File, StringRef Name,
+  DEFINE_MDNODE_GET(DINamespace, (DIScope * Scope, DIFile *File, StringRef Name,
                                   unsigned Line),
                     (Scope, File, Name, Line))
-  DEFINE_MDNODE_GET(MDNamespace, (Metadata * Scope, Metadata *File,
+  DEFINE_MDNODE_GET(DINamespace, (Metadata * Scope, Metadata *File,
                                   MDString *Name, unsigned Line),
                     (Scope, File, Name, Line))
 
-  TempMDNamespace clone() const { return cloneImpl(); }
+  TempDINamespace clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
-  MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
+  DIScope *getScope() const { return cast_or_null<DIScope>(getRawScope()); }
   StringRef getName() const { return getStringOperand(2); }
 
   Metadata *getRawScope() const { return getOperand(1); }
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDNamespaceKind;
+    return MD->getMetadataID() == DINamespaceKind;
   }
 };
 
 /// \brief Base class for template parameters.
-class MDTemplateParameter : public DebugNode {
+class DITemplateParameter : public DINode {
 protected:
-  MDTemplateParameter(LLVMContext &Context, unsigned ID, StorageType Storage,
+  DITemplateParameter(LLVMContext &Context, unsigned ID, StorageType Storage,
                       unsigned Tag, ArrayRef<Metadata *> Ops)
-      : DebugNode(Context, ID, Storage, Tag, Ops) {}
-  ~MDTemplateParameter() = default;
+      : DINode(Context, ID, Storage, Tag, Ops) {}
+  ~DITemplateParameter() = default;
 
 public:
   StringRef getName() const { return getStringOperand(0); }
-  MDTypeRef getType() const { return MDTypeRef(getRawType()); }
+  DITypeRef getType() const { return DITypeRef(getRawType()); }
 
   MDString *getRawName() const { return getOperandAs<MDString>(0); }
   Metadata *getRawType() const { return getOperand(1); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDTemplateTypeParameterKind ||
-           MD->getMetadataID() == MDTemplateValueParameterKind;
+    return MD->getMetadataID() == DITemplateTypeParameterKind ||
+           MD->getMetadataID() == DITemplateValueParameterKind;
   }
 };
 
-class MDTemplateTypeParameter : public MDTemplateParameter {
+class DITemplateTypeParameter : public DITemplateParameter {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDTemplateTypeParameter(LLVMContext &Context, StorageType Storage,
+  DITemplateTypeParameter(LLVMContext &Context, StorageType Storage,
                           ArrayRef<Metadata *> Ops)
-      : MDTemplateParameter(Context, MDTemplateTypeParameterKind, Storage,
+      : DITemplateParameter(Context, DITemplateTypeParameterKind, Storage,
                             dwarf::DW_TAG_template_type_parameter, Ops) {}
-  ~MDTemplateTypeParameter() = default;
+  ~DITemplateTypeParameter() = default;
 
-  static MDTemplateTypeParameter *getImpl(LLVMContext &Context, StringRef Name,
-                                          MDTypeRef Type, StorageType Storage,
+  static DITemplateTypeParameter *getImpl(LLVMContext &Context, StringRef Name,
+                                          DITypeRef Type, StorageType Storage,
                                           bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Name), Type, Storage,
                    ShouldCreate);
   }
-  static MDTemplateTypeParameter *getImpl(LLVMContext &Context, MDString *Name,
+  static DITemplateTypeParameter *getImpl(LLVMContext &Context, MDString *Name,
                                           Metadata *Type, StorageType Storage,
                                           bool ShouldCreate = true);
 
-  TempMDTemplateTypeParameter cloneImpl() const {
+  TempDITemplateTypeParameter cloneImpl() const {
     return getTemporary(getContext(), getName(), getType());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDTemplateTypeParameter, (StringRef Name, MDTypeRef Type),
+  DEFINE_MDNODE_GET(DITemplateTypeParameter, (StringRef Name, DITypeRef Type),
                     (Name, Type))
-  DEFINE_MDNODE_GET(MDTemplateTypeParameter, (MDString * Name, Metadata *Type),
+  DEFINE_MDNODE_GET(DITemplateTypeParameter, (MDString * Name, Metadata *Type),
                     (Name, Type))
 
-  TempMDTemplateTypeParameter clone() const { return cloneImpl(); }
+  TempDITemplateTypeParameter clone() const { return cloneImpl(); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDTemplateTypeParameterKind;
+    return MD->getMetadataID() == DITemplateTypeParameterKind;
   }
 };
 
-class MDTemplateValueParameter : public MDTemplateParameter {
+class DITemplateValueParameter : public DITemplateParameter {
   friend class LLVMContextImpl;
   friend class MDNode;
 
-  MDTemplateValueParameter(LLVMContext &Context, StorageType Storage,
+  DITemplateValueParameter(LLVMContext &Context, StorageType Storage,
                            unsigned Tag, ArrayRef<Metadata *> Ops)
-      : MDTemplateParameter(Context, MDTemplateValueParameterKind, Storage, Tag,
+      : DITemplateParameter(Context, DITemplateValueParameterKind, Storage, Tag,
                             Ops) {}
-  ~MDTemplateValueParameter() = default;
+  ~DITemplateValueParameter() = default;
 
-  static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
-                                           StringRef Name, MDTypeRef Type,
+  static DITemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
+                                           StringRef Name, DITypeRef Type,
                                            Metadata *Value, StorageType Storage,
                                            bool ShouldCreate = true) {
     return getImpl(Context, Tag, getCanonicalMDString(Context, Name), Type,
                    Value, Storage, ShouldCreate);
   }
-  static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
+  static DITemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
                                            MDString *Name, Metadata *Type,
                                            Metadata *Value, StorageType Storage,
                                            bool ShouldCreate = true);
 
-  TempMDTemplateValueParameter cloneImpl() const {
+  TempDITemplateValueParameter cloneImpl() const {
     return getTemporary(getContext(), getTag(), getName(), getType(),
                         getValue());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDTemplateValueParameter, (unsigned Tag, StringRef Name,
-                                               MDTypeRef Type, Metadata *Value),
+  DEFINE_MDNODE_GET(DITemplateValueParameter, (unsigned Tag, StringRef Name,
+                                               DITypeRef Type, Metadata *Value),
                     (Tag, Name, Type, Value))
-  DEFINE_MDNODE_GET(MDTemplateValueParameter, (unsigned Tag, MDString *Name,
+  DEFINE_MDNODE_GET(DITemplateValueParameter, (unsigned Tag, MDString *Name,
                                                Metadata *Type, Metadata *Value),
                     (Tag, Name, Type, Value))
 
-  TempMDTemplateValueParameter clone() const { return cloneImpl(); }
+  TempDITemplateValueParameter clone() const { return cloneImpl(); }
 
   Metadata *getValue() const { return getOperand(2); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDTemplateValueParameterKind;
+    return MD->getMetadataID() == DITemplateValueParameterKind;
   }
 };
 
 /// \brief Base class for variables.
 ///
 /// TODO: Hardcode to DW_TAG_variable.
-class MDVariable : public DebugNode {
+class DIVariable : public DINode {
   unsigned Line;
 
 protected:
-  MDVariable(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
+  DIVariable(LLVMContext &C, unsigned ID, StorageType Storage, unsigned Tag,
              unsigned Line, ArrayRef<Metadata *> Ops)
-      : DebugNode(C, ID, Storage, Tag, Ops), Line(Line) {}
-  ~MDVariable() = default;
+      : DINode(C, ID, Storage, Tag, Ops), Line(Line) {}
+  ~DIVariable() = default;
 
 public:
   unsigned getLine() const { return Line; }
-  MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
+  DIScope *getScope() const { return cast_or_null<DIScope>(getRawScope()); }
   StringRef getName() const { return getStringOperand(1); }
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
-  MDTypeRef getType() const { return MDTypeRef(getRawType()); }
+  DIFile *getFile() const { return cast_or_null<DIFile>(getRawFile()); }
+  DITypeRef getType() const { return DITypeRef(getRawType()); }
 
   StringRef getFilename() const {
     if (auto *F = getFile())
@@ -1766,34 +1758,34 @@ public:
   Metadata *getRawType() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLocalVariableKind ||
-           MD->getMetadataID() == MDGlobalVariableKind;
+    return MD->getMetadataID() == DILocalVariableKind ||
+           MD->getMetadataID() == DIGlobalVariableKind;
   }
 };
 
 /// \brief Global variables.
 ///
 /// TODO: Remove DisplayName.  It's always equal to Name.
-class MDGlobalVariable : public MDVariable {
+class DIGlobalVariable : public DIVariable {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   bool IsLocalToUnit;
   bool IsDefinition;
 
-  MDGlobalVariable(LLVMContext &C, StorageType Storage, unsigned Line,
+  DIGlobalVariable(LLVMContext &C, StorageType Storage, unsigned Line,
                    bool IsLocalToUnit, bool IsDefinition,
                    ArrayRef<Metadata *> Ops)
-      : MDVariable(C, MDGlobalVariableKind, Storage, dwarf::DW_TAG_variable,
+      : DIVariable(C, DIGlobalVariableKind, Storage, dwarf::DW_TAG_variable,
                    Line, Ops),
         IsLocalToUnit(IsLocalToUnit), IsDefinition(IsDefinition) {}
-  ~MDGlobalVariable() = default;
+  ~DIGlobalVariable() = default;
 
-  static MDGlobalVariable *
-  getImpl(LLVMContext &Context, MDScope *Scope, StringRef Name,
-          StringRef LinkageName, MDFile *File, unsigned Line, MDTypeRef Type,
+  static DIGlobalVariable *
+  getImpl(LLVMContext &Context, DIScope *Scope, StringRef Name,
+          StringRef LinkageName, DIFile *File, unsigned Line, DITypeRef Type,
           bool IsLocalToUnit, bool IsDefinition, Constant *Variable,
-          MDDerivedType *StaticDataMemberDeclaration, StorageType Storage,
+          DIDerivedType *StaticDataMemberDeclaration, StorageType Storage,
           bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, LinkageName), File, Line, Type,
@@ -1801,14 +1793,14 @@ class MDGlobalVariable : public MDVariable {
                    Variable ? ConstantAsMetadata::get(Variable) : nullptr,
                    StaticDataMemberDeclaration, Storage, ShouldCreate);
   }
-  static MDGlobalVariable *
+  static DIGlobalVariable *
   getImpl(LLVMContext &Context, Metadata *Scope, MDString *Name,
           MDString *LinkageName, Metadata *File, unsigned Line, Metadata *Type,
           bool IsLocalToUnit, bool IsDefinition, Metadata *Variable,
           Metadata *StaticDataMemberDeclaration, StorageType Storage,
           bool ShouldCreate = true);
 
-  TempMDGlobalVariable cloneImpl() const {
+  TempDIGlobalVariable cloneImpl() const {
     return getTemporary(getContext(), getScope(), getName(), getLinkageName(),
                         getFile(), getLine(), getType(), isLocalToUnit(),
                         isDefinition(), getVariable(),
@@ -1816,14 +1808,14 @@ class MDGlobalVariable : public MDVariable {
   }
 
 public:
-  DEFINE_MDNODE_GET(MDGlobalVariable,
-                    (MDScope * Scope, StringRef Name, StringRef LinkageName,
-                     MDFile *File, unsigned Line, MDTypeRef Type,
+  DEFINE_MDNODE_GET(DIGlobalVariable,
+                    (DIScope * Scope, StringRef Name, StringRef LinkageName,
+                     DIFile *File, unsigned Line, DITypeRef Type,
                      bool IsLocalToUnit, bool IsDefinition, Constant *Variable,
-                     MDDerivedType *StaticDataMemberDeclaration),
+                     DIDerivedType *StaticDataMemberDeclaration),
                     (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
                      IsDefinition, Variable, StaticDataMemberDeclaration))
-  DEFINE_MDNODE_GET(MDGlobalVariable,
+  DEFINE_MDNODE_GET(DIGlobalVariable,
                     (Metadata * Scope, MDString *Name, MDString *LinkageName,
                      Metadata *File, unsigned Line, Metadata *Type,
                      bool IsLocalToUnit, bool IsDefinition, Metadata *Variable,
@@ -1831,7 +1823,7 @@ public:
                     (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
                      IsDefinition, Variable, StaticDataMemberDeclaration))
 
-  TempMDGlobalVariable clone() const { return cloneImpl(); }
+  TempDIGlobalVariable clone() const { return cloneImpl(); }
 
   bool isLocalToUnit() const { return IsLocalToUnit; }
   bool isDefinition() const { return IsDefinition; }
@@ -1842,8 +1834,8 @@ public:
       return dyn_cast<Constant>(C->getValue());
     return nullptr;
   }
-  MDDerivedType *getStaticDataMemberDeclaration() const {
-    return cast_or_null<MDDerivedType>(getRawStaticDataMemberDeclaration());
+  DIDerivedType *getStaticDataMemberDeclaration() const {
+    return cast_or_null<DIDerivedType>(getRawStaticDataMemberDeclaration());
   }
 
   MDString *getRawLinkageName() const { return getOperandAs<MDString>(5); }
@@ -1851,7 +1843,7 @@ public:
   Metadata *getRawStaticDataMemberDeclaration() const { return getOperand(7); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDGlobalVariableKind;
+    return MD->getMetadataID() == DIGlobalVariableKind;
   }
 };
 
@@ -1860,57 +1852,57 @@ public:
 /// TODO: Split between arguments and otherwise.
 /// TODO: Use \c DW_TAG_variable instead of fake tags.
 /// TODO: Split up flags.
-class MDLocalVariable : public MDVariable {
+class DILocalVariable : public DIVariable {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Arg;
   unsigned Flags;
 
-  MDLocalVariable(LLVMContext &C, StorageType Storage, unsigned Tag,
+  DILocalVariable(LLVMContext &C, StorageType Storage, unsigned Tag,
                   unsigned Line, unsigned Arg, unsigned Flags,
                   ArrayRef<Metadata *> Ops)
-      : MDVariable(C, MDLocalVariableKind, Storage, Tag, Line, Ops), Arg(Arg),
+      : DIVariable(C, DILocalVariableKind, Storage, Tag, Line, Ops), Arg(Arg),
         Flags(Flags) {}
-  ~MDLocalVariable() = default;
+  ~DILocalVariable() = default;
 
-  static MDLocalVariable *getImpl(LLVMContext &Context, unsigned Tag,
-                                  MDScope *Scope, StringRef Name, MDFile *File,
-                                  unsigned Line, MDTypeRef Type, unsigned Arg,
+  static DILocalVariable *getImpl(LLVMContext &Context, unsigned Tag,
+                                  DIScope *Scope, StringRef Name, DIFile *File,
+                                  unsigned Line, DITypeRef Type, unsigned Arg,
                                   unsigned Flags, StorageType Storage,
                                   bool ShouldCreate = true) {
     return getImpl(Context, Tag, Scope, getCanonicalMDString(Context, Name),
                    File, Line, Type, Arg, Flags, Storage, ShouldCreate);
   }
-  static MDLocalVariable *
+  static DILocalVariable *
   getImpl(LLVMContext &Context, unsigned Tag, Metadata *Scope, MDString *Name,
           Metadata *File, unsigned Line, Metadata *Type, unsigned Arg,
           unsigned Flags, StorageType Storage, bool ShouldCreate = true);
 
-  TempMDLocalVariable cloneImpl() const {
+  TempDILocalVariable cloneImpl() const {
     return getTemporary(getContext(), getTag(), getScope(), getName(),
                         getFile(), getLine(), getType(), getArg(), getFlags());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDLocalVariable,
-                    (unsigned Tag, MDLocalScope *Scope, StringRef Name,
-                     MDFile *File, unsigned Line, MDTypeRef Type, unsigned Arg,
+  DEFINE_MDNODE_GET(DILocalVariable,
+                    (unsigned Tag, DILocalScope *Scope, StringRef Name,
+                     DIFile *File, unsigned Line, DITypeRef Type, unsigned Arg,
                      unsigned Flags),
                     (Tag, Scope, Name, File, Line, Type, Arg, Flags))
-  DEFINE_MDNODE_GET(MDLocalVariable,
+  DEFINE_MDNODE_GET(DILocalVariable,
                     (unsigned Tag, Metadata *Scope, MDString *Name,
                      Metadata *File, unsigned Line, Metadata *Type,
                      unsigned Arg, unsigned Flags),
                     (Tag, Scope, Name, File, Line, Type, Arg, Flags))
 
-  TempMDLocalVariable clone() const { return cloneImpl(); }
+  TempDILocalVariable clone() const { return cloneImpl(); }
 
   /// \brief Get the local scope for this variable.
   ///
   /// Variables must be defined in a local scope.
-  MDLocalScope *getScope() const {
-    return cast<MDLocalScope>(MDVariable::getScope());
+  DILocalScope *getScope() const {
+    return cast<DILocalScope>(DIVariable::getScope());
   }
 
   unsigned getArg() const { return Arg; }
@@ -1924,12 +1916,12 @@ public:
   /// Check that \c DL exists, is in the same subprogram, and has the same
   /// inlined-at location as \c this.  (Otherwise, it's not a valid attachemnt
   /// to a \a DbgInfoIntrinsic.)
-  bool isValidLocationForIntrinsic(const MDLocation *DL) const {
+  bool isValidLocationForIntrinsic(const DILocation *DL) const {
     return DL && getScope()->getSubprogram() == DL->getScope()->getSubprogram();
   }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDLocalVariableKind;
+    return MD->getMetadataID() == DILocalVariableKind;
   }
 };
 
@@ -1944,29 +1936,29 @@ public:
 /// TODO: Co-allocate the expression elements.
 /// TODO: Separate from MDNode, or otherwise drop Distinct and Temporary
 /// storage types.
-class MDExpression : public MDNode {
+class DIExpression : public MDNode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   std::vector<uint64_t> Elements;
 
-  MDExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
-      : MDNode(C, MDExpressionKind, Storage, None),
+  DIExpression(LLVMContext &C, StorageType Storage, ArrayRef<uint64_t> Elements)
+      : MDNode(C, DIExpressionKind, Storage, None),
         Elements(Elements.begin(), Elements.end()) {}
-  ~MDExpression() = default;
+  ~DIExpression() = default;
 
-  static MDExpression *getImpl(LLVMContext &Context,
+  static DIExpression *getImpl(LLVMContext &Context,
                                ArrayRef<uint64_t> Elements, StorageType Storage,
                                bool ShouldCreate = true);
 
-  TempMDExpression cloneImpl() const {
+  TempDIExpression cloneImpl() const {
     return getTemporary(getContext(), getElements());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDExpression, (ArrayRef<uint64_t> Elements), (Elements))
+  DEFINE_MDNODE_GET(DIExpression, (ArrayRef<uint64_t> Elements), (Elements))
 
-  TempMDExpression clone() const { return cloneImpl(); }
+  TempDIExpression clone() const { return cloneImpl(); }
 
   ArrayRef<uint64_t> getElements() const { return Elements; }
 
@@ -1991,7 +1983,7 @@ public:
 
   /// \brief A lightweight wrapper around an expression operand.
   ///
-  /// TODO: Store arguments directly and change \a MDExpression to store a
+  /// TODO: Store arguments directly and change \a DIExpression to store a
   /// range of these.
   class ExprOperand {
     const uint64_t *Op;
@@ -2076,65 +2068,65 @@ public:
   bool isValid() const;
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDExpressionKind;
+    return MD->getMetadataID() == DIExpressionKind;
   }
 };
 
-class MDObjCProperty : public DebugNode {
+class DIObjCProperty : public DINode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Line;
   unsigned Attributes;
 
-  MDObjCProperty(LLVMContext &C, StorageType Storage, unsigned Line,
+  DIObjCProperty(LLVMContext &C, StorageType Storage, unsigned Line,
                  unsigned Attributes, ArrayRef<Metadata *> Ops)
-      : DebugNode(C, MDObjCPropertyKind, Storage, dwarf::DW_TAG_APPLE_property,
-                  Ops),
+      : DINode(C, DIObjCPropertyKind, Storage, dwarf::DW_TAG_APPLE_property,
+               Ops),
         Line(Line), Attributes(Attributes) {}
-  ~MDObjCProperty() = default;
+  ~DIObjCProperty() = default;
 
-  static MDObjCProperty *
-  getImpl(LLVMContext &Context, StringRef Name, MDFile *File, unsigned Line,
+  static DIObjCProperty *
+  getImpl(LLVMContext &Context, StringRef Name, DIFile *File, unsigned Line,
           StringRef GetterName, StringRef SetterName, unsigned Attributes,
-          MDType *Type, StorageType Storage, bool ShouldCreate = true) {
+          DIType *Type, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Name), File, Line,
                    getCanonicalMDString(Context, GetterName),
                    getCanonicalMDString(Context, SetterName), Attributes, Type,
                    Storage, ShouldCreate);
   }
-  static MDObjCProperty *getImpl(LLVMContext &Context, MDString *Name,
+  static DIObjCProperty *getImpl(LLVMContext &Context, MDString *Name,
                                  Metadata *File, unsigned Line,
                                  MDString *GetterName, MDString *SetterName,
                                  unsigned Attributes, Metadata *Type,
                                  StorageType Storage, bool ShouldCreate = true);
 
-  TempMDObjCProperty cloneImpl() const {
+  TempDIObjCProperty cloneImpl() const {
     return getTemporary(getContext(), getName(), getFile(), getLine(),
                         getGetterName(), getSetterName(), getAttributes(),
                         getType());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDObjCProperty,
-                    (StringRef Name, MDFile *File, unsigned Line,
+  DEFINE_MDNODE_GET(DIObjCProperty,
+                    (StringRef Name, DIFile *File, unsigned Line,
                      StringRef GetterName, StringRef SetterName,
-                     unsigned Attributes, MDType *Type),
+                     unsigned Attributes, DIType *Type),
                     (Name, File, Line, GetterName, SetterName, Attributes,
                      Type))
-  DEFINE_MDNODE_GET(MDObjCProperty,
+  DEFINE_MDNODE_GET(DIObjCProperty,
                     (MDString * Name, Metadata *File, unsigned Line,
                      MDString *GetterName, MDString *SetterName,
                      unsigned Attributes, Metadata *Type),
                     (Name, File, Line, GetterName, SetterName, Attributes,
                      Type))
 
-  TempMDObjCProperty clone() const { return cloneImpl(); }
+  TempDIObjCProperty clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
   unsigned getAttributes() const { return Attributes; }
   StringRef getName() const { return getStringOperand(0); }
-  MDFile *getFile() const { return cast_or_null<MDFile>(getRawFile()); }
+  DIFile *getFile() const { return cast_or_null<DIFile>(getRawFile()); }
   StringRef getGetterName() const { return getStringOperand(2); }
   StringRef getSetterName() const { return getStringOperand(3); }
 
@@ -2142,7 +2134,7 @@ public:
   ///
   /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
   /// a type ref here.
-  MDType *getType() const { return cast_or_null<MDType>(getRawType()); }
+  DIType *getType() const { return cast_or_null<DIType>(getRawType()); }
 
   StringRef getFilename() const {
     if (auto *F = getFile())
@@ -2162,56 +2154,56 @@ public:
   Metadata *getRawType() const { return getOperand(4); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDObjCPropertyKind;
+    return MD->getMetadataID() == DIObjCPropertyKind;
   }
 };
 
 /// \brief An imported module (C++ using directive or similar).
-class MDImportedEntity : public DebugNode {
+class DIImportedEntity : public DINode {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   unsigned Line;
 
-  MDImportedEntity(LLVMContext &C, StorageType Storage, unsigned Tag,
+  DIImportedEntity(LLVMContext &C, StorageType Storage, unsigned Tag,
                    unsigned Line, ArrayRef<Metadata *> Ops)
-      : DebugNode(C, MDImportedEntityKind, Storage, Tag, Ops), Line(Line) {}
-  ~MDImportedEntity() = default;
+      : DINode(C, DIImportedEntityKind, Storage, Tag, Ops), Line(Line) {}
+  ~DIImportedEntity() = default;
 
-  static MDImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
-                                   MDScope *Scope, DebugNodeRef Entity,
+  static DIImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
+                                   DIScope *Scope, DINodeRef Entity,
                                    unsigned Line, StringRef Name,
                                    StorageType Storage,
                                    bool ShouldCreate = true) {
     return getImpl(Context, Tag, Scope, Entity, Line,
                    getCanonicalMDString(Context, Name), Storage, ShouldCreate);
   }
-  static MDImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
+  static DIImportedEntity *getImpl(LLVMContext &Context, unsigned Tag,
                                    Metadata *Scope, Metadata *Entity,
                                    unsigned Line, MDString *Name,
                                    StorageType Storage,
                                    bool ShouldCreate = true);
 
-  TempMDImportedEntity cloneImpl() const {
+  TempDIImportedEntity cloneImpl() const {
     return getTemporary(getContext(), getTag(), getScope(), getEntity(),
                         getLine(), getName());
   }
 
 public:
-  DEFINE_MDNODE_GET(MDImportedEntity,
-                    (unsigned Tag, MDScope *Scope, DebugNodeRef Entity,
+  DEFINE_MDNODE_GET(DIImportedEntity,
+                    (unsigned Tag, DIScope *Scope, DINodeRef Entity,
                      unsigned Line, StringRef Name = ""),
                     (Tag, Scope, Entity, Line, Name))
-  DEFINE_MDNODE_GET(MDImportedEntity,
+  DEFINE_MDNODE_GET(DIImportedEntity,
                     (unsigned Tag, Metadata *Scope, Metadata *Entity,
                      unsigned Line, MDString *Name),
                     (Tag, Scope, Entity, Line, Name))
 
-  TempMDImportedEntity clone() const { return cloneImpl(); }
+  TempDIImportedEntity clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
-  MDScope *getScope() const { return cast_or_null<MDScope>(getRawScope()); }
-  DebugNodeRef getEntity() const { return DebugNodeRef(getRawEntity()); }
+  DIScope *getScope() const { return cast_or_null<DIScope>(getRawScope()); }
+  DINodeRef getEntity() const { return DINodeRef(getRawEntity()); }
   StringRef getName() const { return getStringOperand(2); }
 
   Metadata *getRawScope() const { return getOperand(0); }
@@ -2219,7 +2211,7 @@ public:
   MDString *getRawName() const { return getOperandAs<MDString>(2); }
 
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDImportedEntityKind;
+    return MD->getMetadataID() == DIImportedEntityKind;
   }
 };
 

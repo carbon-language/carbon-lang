@@ -7,11 +7,11 @@ target triple = "x86_64-unknown-linux-gnu"
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 143523)", isOptimized: true, emissionKind: 0, file: !4, enums: !2, retainedTypes: !7, subprograms: !2, globals: !2)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 143523)", isOptimized: true, emissionKind: 0, file: !4, enums: !2, retainedTypes: !7, subprograms: !2, globals: !2)
 !2 = !{}
-!3 = !MDFile(filename: "empty.c", directory: "/home/nlewycky")
-!4 = !MDFile(filename: "empty.c", directory: "/home/nlewycky")
-!6 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo", line: 1, size: 8, align: 8, file: !4, elements: !2, identifier: "_ZTS3foo")
+!3 = !DIFile(filename: "empty.c", directory: "/home/nlewycky")
+!4 = !DIFile(filename: "empty.c", directory: "/home/nlewycky")
+!6 = !DICompositeType(tag: DW_TAG_structure_type, name: "foo", line: 1, size: 8, align: 8, file: !4, elements: !2, identifier: "_ZTS3foo")
 !7 = !{!6}
 
 ; The important part of the following check is that dir = #0.

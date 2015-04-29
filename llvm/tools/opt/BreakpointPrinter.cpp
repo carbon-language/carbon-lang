@@ -29,13 +29,13 @@ struct BreakpointPrinter : public ModulePass {
 
   BreakpointPrinter(raw_ostream &out) : ModulePass(ID), Out(out) {}
 
-  void getContextName(const MDScope *Context, std::string &N) {
-    if (auto *NS = dyn_cast<MDNamespace>(Context)) {
+  void getContextName(const DIScope *Context, std::string &N) {
+    if (auto *NS = dyn_cast<DINamespace>(Context)) {
       if (!NS->getName().empty()) {
         getContextName(NS->getScope(), N);
         N = N + NS->getName().str() + "::";
       }
-    } else if (auto *TY = dyn_cast<MDType>(Context)) {
+    } else if (auto *TY = dyn_cast<DIType>(Context)) {
       if (!TY->getName().empty()) {
         getContextName(TY->getScope().resolve(TypeIdentifierMap), N);
         N = N + TY->getName().str() + "::";
@@ -53,7 +53,7 @@ struct BreakpointPrinter : public ModulePass {
     if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp"))
       for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
         std::string Name;
-        auto *SP = cast_or_null<MDSubprogram>(NMD->getOperand(i));
+        auto *SP = cast_or_null<DISubprogram>(NMD->getOperand(i));
         if (!SP)
           continue;
         getContextName(SP->getScope().resolve(TypeIdentifierMap), Name);

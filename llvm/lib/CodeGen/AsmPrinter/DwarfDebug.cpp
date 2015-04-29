@@ -130,7 +130,7 @@ bool DebugLocDwarfExpression::isFrameRegister(unsigned MachineReg) {
 
 /// resolve - Look in the DwarfDebug map for the MDNode that
 /// corresponds to the reference.
-template <typename T> T *DbgVariable::resolve(TypedDebugNodeRef<T> Ref) const {
+template <typename T> T *DbgVariable::resolve(TypedDINodeRef<T> Ref) const {
   return DD->resolve(Ref);
 }
 
@@ -141,8 +141,8 @@ bool DbgVariable::isBlockByrefVariable() const {
       ->isBlockByrefStruct();
 }
 
-const MDType *DbgVariable::getType() const {
-  MDType *Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
+const DIType *DbgVariable::getType() const {
+  DIType *Ty = Var->getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
   if (Ty->isBlockByrefStruct()) {
@@ -170,15 +170,15 @@ const MDType *DbgVariable::getType() const {
        have a DW_AT_location that tells the debugger how to unwind through
        the pointers and __Block_byref_x_VarName struct to find the actual
        value of the variable.  The function addBlockByrefType does this.  */
-    MDType *subType = Ty;
+    DIType *subType = Ty;
     uint16_t tag = Ty->getTag();
 
     if (tag == dwarf::DW_TAG_pointer_type)
-      subType = resolve(cast<MDDerivedType>(Ty)->getBaseType());
+      subType = resolve(cast<DIDerivedType>(Ty)->getBaseType());
 
-    auto Elements = cast<MDCompositeTypeBase>(subType)->getElements();
+    auto Elements = cast<DICompositeTypeBase>(subType)->getElements();
     for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-      auto *DT = cast<MDDerivedTypeBase>(Elements[i]);
+      auto *DT = cast<DIDerivedTypeBase>(Elements[i]);
       if (getName() == DT->getName())
         return resolve(DT->getBaseType());
     }
@@ -277,7 +277,7 @@ static StringRef getObjCMethodName(StringRef In) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-void DwarfDebug::addSubprogramNames(const MDSubprogram *SP, DIE &Die) {
+void DwarfDebug::addSubprogramNames(const DISubprogram *SP, DIE &Die) {
   if (!SP->isDefinition())
     return;
   addAccelName(SP->getName(), Die);
@@ -305,9 +305,9 @@ void DwarfDebug::addSubprogramNames(const MDSubprogram *SP, DIE &Die) {
 bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
   if (!Context)
     return false;
-  if (isa<MDSubprogram>(Context))
+  if (isa<DISubprogram>(Context))
     return true;
-  if (auto *T = dyn_cast<MDType>(Context))
+  if (auto *T = dyn_cast<DIType>(Context))
     return isSubprogramContext(resolve(T->getScope()));
   return false;
 }
@@ -364,7 +364,7 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
 // Create new DwarfCompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
 DwarfCompileUnit &
-DwarfDebug::constructDwarfCompileUnit(const MDCompileUnit *DIUnit) {
+DwarfDebug::constructDwarfCompileUnit(const DICompileUnit *DIUnit) {
   StringRef FN = DIUnit->getFilename();
   CompilationDir = DIUnit->getDirectory();
 
@@ -422,7 +422,7 @@ DwarfDebug::constructDwarfCompileUnit(const MDCompileUnit *DIUnit) {
 }
 
 void DwarfDebug::constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                                  const MDImportedEntity *N) {
+                                                  const DIImportedEntity *N) {
   if (DIE *D = TheCU.getOrCreateContextDIE(N->getScope()))
     D->addChild(TheCU.constructImportedEntityDIE(N));
 }
@@ -446,7 +446,7 @@ void DwarfDebug::beginModule() {
   SingleCU = CU_Nodes->getNumOperands() == 1;
 
   for (MDNode *N : CU_Nodes->operands()) {
-    auto *CUNode = cast<MDCompileUnit>(N);
+    auto *CUNode = cast<DICompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     for (auto *IE : CUNode->getImportedEntities())
       ScopesWithImportedEntities.push_back(std::make_pair(IE->getScope(), IE));
@@ -462,12 +462,12 @@ void DwarfDebug::beginModule() {
     for (auto *Ty : CUNode->getEnumTypes()) {
       // The enum types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      CU.getOrCreateTypeDIE(cast<MDType>(resolve(Ty->getRef())));
+      CU.getOrCreateTypeDIE(cast<DIType>(resolve(Ty->getRef())));
     }
     for (auto *Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      CU.getOrCreateTypeDIE(cast<MDType>(resolve(Ty->getRef())));
+      CU.getOrCreateTypeDIE(cast<DIType>(resolve(Ty->getRef())));
     }
     // Emit imported_modules last so that the relevant context is already
     // available.
@@ -501,7 +501,7 @@ void DwarfDebug::finishVariableDefinitions() {
 void DwarfDebug::finishSubprogramDefinitions() {
   for (const auto &P : SPMap)
     forBothCUs(*P.second, [&](DwarfCompileUnit &CU) {
-      CU.finishSubprogramDefinition(cast<MDSubprogram>(P.first));
+      CU.finishSubprogramDefinition(cast<DISubprogram>(P.first));
     });
 }
 
@@ -512,7 +512,7 @@ void DwarfDebug::collectDeadVariables() {
 
   if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
     for (MDNode *N : CU_Nodes->operands()) {
-      auto *TheCU = cast<MDCompileUnit>(N);
+      auto *TheCU = cast<DICompileUnit>(N);
       // Construct subprogram DIE and add variables DIEs.
       DwarfCompileUnit *SPCU =
           static_cast<DwarfCompileUnit *>(CUMap.lookup(TheCU));
@@ -662,7 +662,7 @@ void DwarfDebug::endModule() {
 // Find abstract variable, if any, associated with Var.
 DbgVariable *
 DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
-                                        const MDLocalVariable *&Cleansed) {
+                                        const DILocalVariable *&Cleansed) {
   // More then one inlined variable corresponds to one abstract variable.
   Cleansed = IV.first;
   auto I = AbstractVariables.find(Cleansed);
@@ -672,11 +672,11 @@ DwarfDebug::getExistingAbstractVariable(InlinedVariable IV,
 }
 
 DbgVariable *DwarfDebug::getExistingAbstractVariable(InlinedVariable IV) {
-  const MDLocalVariable *Cleansed;
+  const DILocalVariable *Cleansed;
   return getExistingAbstractVariable(IV, Cleansed);
 }
 
-void DwarfDebug::createAbstractVariable(const MDLocalVariable *Var,
+void DwarfDebug::createAbstractVariable(const DILocalVariable *Var,
                                         LexicalScope *Scope) {
   auto AbsDbgVariable =
       make_unique<DbgVariable>(Var, /* IA */ nullptr, /* Expr */ nullptr, this);
@@ -686,22 +686,22 @@ void DwarfDebug::createAbstractVariable(const MDLocalVariable *Var,
 
 void DwarfDebug::ensureAbstractVariableIsCreated(InlinedVariable IV,
                                                  const MDNode *ScopeNode) {
-  const MDLocalVariable *Cleansed = nullptr;
+  const DILocalVariable *Cleansed = nullptr;
   if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
   createAbstractVariable(Cleansed, LScopes.getOrCreateAbstractScope(
-                                       cast<MDLocalScope>(ScopeNode)));
+                                       cast<DILocalScope>(ScopeNode)));
 }
 
 void DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(
     InlinedVariable IV, const MDNode *ScopeNode) {
-  const MDLocalVariable *Cleansed = nullptr;
+  const DILocalVariable *Cleansed = nullptr;
   if (getExistingAbstractVariable(IV, Cleansed))
     return;
 
   if (LexicalScope *Scope =
-          LScopes.findAbstractScope(cast_or_null<MDLocalScope>(ScopeNode)))
+          LScopes.findAbstractScope(cast_or_null<DILocalScope>(ScopeNode)))
     createAbstractVariable(Cleansed, Scope);
 }
 
@@ -722,7 +722,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     if (!Scope)
       continue;
 
-    const MDExpression *Expr = cast_or_null<MDExpression>(VI.Expr);
+    const DIExpression *Expr = cast_or_null<DIExpression>(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(Var, Scope->getScopeNode());
     auto RegVar =
         make_unique<DbgVariable>(Var.first, Var.second, Expr, this, VI.Slot);
@@ -733,7 +733,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
 
 // Get .debug_loc entry for the instruction range starting at MI.
 static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
-  const MDExpression *Expr = MI->getDebugExpression();
+  const DIExpression *Expr = MI->getDebugExpression();
 
   assert(MI->getNumOperands() == 4);
   if (MI->getOperand(0).isReg()) {
@@ -757,7 +757,7 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
 }
 
 /// Determine whether two variable pieces overlap.
-static bool piecesOverlap(const MDExpression *P1, const MDExpression *P2) {
+static bool piecesOverlap(const DIExpression *P1, const DIExpression *P2) {
   if (!P1->isBitPiece() || !P2->isBitPiece())
     return true;
   unsigned l1 = P1->getBitPieceOffset();
@@ -809,7 +809,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     }
 
     // If this piece overlaps with any open ranges, truncate them.
-    const MDExpression *DIExpr = Begin->getDebugExpression();
+    const DIExpression *DIExpr = Begin->getDebugExpression();
     auto Last = std::remove_if(OpenRanges.begin(), OpenRanges.end(),
                                [&](DebugLocEntry::Value R) {
       return piecesOverlap(DIExpr, R.getExpression());
@@ -874,7 +874,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
 // Find variables for each lexical scope.
 void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
-                                     const MDSubprogram *SP,
+                                     const DISubprogram *SP,
                                      DenseSet<InlinedVariable> &Processed) {
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
@@ -890,7 +890,7 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (const MDLocation *IA = IV.second)
+    if (const DILocation *IA = IV.second)
       Scope = LScopes.findInlinedScope(IV.first->getScope(), IA);
     else
       Scope = LScopes.findLexicalScope(IV.first->getScope());
@@ -918,10 +918,10 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
     SmallVector<DebugLocEntry, 8> Entries;
     buildLocationList(Entries, Ranges);
 
-    // If the variable has an MDBasicType, extract it.  Basic types cannot have
+    // If the variable has an DIBasicType, extract it.  Basic types cannot have
     // unique identifiers, so don't bother resolving the type with the
     // identifier map.
-    const MDBasicType *BT = dyn_cast<MDBasicType>(
+    const DIBasicType *BT = dyn_cast<DIBasicType>(
         static_cast<const Metadata *>(IV.first->getType()));
 
     // Finalize the entry by lowering it into a DWARF bytestream.
@@ -930,7 +930,7 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
   }
 
   // Collect info for variables that were optimized out.
-  for (const MDLocalVariable *DV : SP->getVariables()) {
+  for (const DILocalVariable *DV : SP->getVariables()) {
     if (!Processed.insert(InlinedVariable(DV, nullptr)).second)
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV->getScope())) {
@@ -1128,14 +1128,14 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
     // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
-    const MDLocalVariable *DIVar = Ranges.front().first->getDebugVariable();
+    const DILocalVariable *DIVar = Ranges.front().first->getDebugVariable();
     if (DIVar->getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar->getScope())->describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression()->isBitPiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
-          const MDExpression *Piece = I->first->getDebugExpression();
+          const DIExpression *Piece = I->first->getDebugExpression();
           if (std::all_of(Ranges.begin(), I,
                           [&](DbgValueHistoryMap::InstrRange Pred) {
                 return !piecesOverlap(Piece, Pred.first->getDebugExpression());
@@ -1159,7 +1159,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   // Record beginning of function.
   PrologEndLoc = findPrologueEndLoc(MF);
-  if (MDLocation *L = PrologEndLoc) {
+  if (DILocation *L = PrologEndLoc) {
     // We'd like to list the prologue as "not statements" but GDB behaves
     // poorly if we do that. Revisit this with caution/GDB (7.5+) testing.
     auto *SP = L->getInlinedAtScope()->getSubprogram();
@@ -1186,7 +1186,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   Asm->OutStreamer->getContext().setDwarfCompileUnitID(0);
 
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  auto *SP = cast<MDSubprogram>(FnScope->getScopeNode());
+  auto *SP = cast<DISubprogram>(FnScope->getScopeNode());
   DwarfCompileUnit &TheCU = *SPMap.lookup(SP);
 
   DenseSet<InlinedVariable> ProcessedVars;
@@ -1216,9 +1216,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 #endif
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
-    auto *SP = cast<MDSubprogram>(AScope->getScopeNode());
+    auto *SP = cast<DISubprogram>(AScope->getScopeNode());
     // Collect info for variables that were optimized out.
-    for (const MDLocalVariable *DV : SP->getVariables()) {
+    for (const DILocalVariable *DV : SP->getVariables()) {
       if (!ProcessedVars.insert(InlinedVariable(DV, nullptr)).second)
         continue;
       ensureAbstractVariableIsCreated(InlinedVariable(DV, nullptr),
@@ -1254,10 +1254,10 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   StringRef Dir;
   unsigned Src = 1;
   unsigned Discriminator = 0;
-  if (auto *Scope = cast_or_null<MDScope>(S)) {
+  if (auto *Scope = cast_or_null<DIScope>(S)) {
     Fn = Scope->getFilename();
     Dir = Scope->getDirectory();
-    if (auto *LBF = dyn_cast<MDLexicalBlockFile>(Scope))
+    if (auto *LBF = dyn_cast<DILexicalBlockFile>(Scope))
       Discriminator = LBF->getDiscriminator();
 
     unsigned CUID = Asm->OutStreamer->getContext().getDwarfCompileUnitID();
@@ -1471,7 +1471,7 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
     Streamer.EmitInt8(Byte, Comment != End ? *(Comment++) : "");
 }
 
-static void emitDebugLocValue(const AsmPrinter &AP, const MDBasicType *BT,
+static void emitDebugLocValue(const AsmPrinter &AP, const DIBasicType *BT,
                               ByteStreamer &Streamer,
                               const DebugLocEntry::Value &Value,
                               unsigned PieceOffsetInBits) {
@@ -1487,7 +1487,7 @@ static void emitDebugLocValue(const AsmPrinter &AP, const MDBasicType *BT,
       DwarfExpr.AddUnsignedConstant(Value.getInt());
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
-    const MDExpression *Expr = Value.getExpression();
+    const DIExpression *Expr = Value.getExpression();
     if (!Expr || !Expr->getNumElements())
       // Regular entry.
       AP.EmitDwarfRegOp(Streamer, Loc);
@@ -1508,7 +1508,7 @@ static void emitDebugLocValue(const AsmPrinter &AP, const MDBasicType *BT,
 }
 
 void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
-                             const MDBasicType *BT) {
+                             const DIBasicType *BT) {
   Locs.startEntry(Begin, End);
   BufferByteStreamer Streamer = Locs.getStreamer();
   const DebugLocEntry::Value &Value = Values[0];
@@ -1522,7 +1522,7 @@ void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
    
     unsigned Offset = 0;
     for (auto Piece : Values) {
-      const MDExpression *Expr = Piece.getExpression();
+      const DIExpression *Expr = Piece.getExpression();
       unsigned PieceOffset = Expr->getBitPieceOffset();
       unsigned PieceSize = Expr->getBitPieceSize();
       assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
@@ -1903,7 +1903,7 @@ static uint64_t makeTypeSignature(StringRef Identifier) {
 
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                       StringRef Identifier, DIE &RefDie,
-                                      const MDCompositeType *CTy) {
+                                      const DICompositeType *CTy) {
   // Fast path if we're building some type units and one has already used the
   // address pool we know we're going to throw away all this work anyway, so
   // don't bother building dependent types.
@@ -1962,7 +1962,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
       // This is inefficient because all the dependent types will be rebuilt
       // from scratch, including building them in type units, discovering that
       // they depend on addresses, throwing them out and rebuilding them.
-      CU.constructTypeDIE(RefDie, cast<MDCompositeType>(CTy));
+      CU.constructTypeDIE(RefDie, cast<DICompositeType>(CTy));
       return;
     }
 

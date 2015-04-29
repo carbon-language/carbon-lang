@@ -153,8 +153,8 @@ debugger to interpret the information.
 To provide basic functionality, the LLVM debugger does have to make some
 assumptions about the source-level language being debugged, though it keeps
 these to a minimum.  The only common features that the LLVM debugger assumes
-exist are `source files <LangRef.html#MDFile>`_, and `program objects
-<LangRef.html#MDGlobalVariable>`_.  These abstract objects are used by a
+exist are `source files <LangRef.html#DIFile>`_, and `program objects
+<LangRef.html#DIGlobalVariable>`_.  These abstract objects are used by a
 debugger to form stack traces, show information about local variables, etc.
 
 This section of the documentation first describes the representation aspects
@@ -181,9 +181,9 @@ provide debug information at various points in generated code.
 
 This intrinsic provides information about a local element (e.g., variable).
 The first argument is metadata holding the alloca for the variable.  The second
-argument is a `local variable <LangRef.html#MDLocalVariable>`_ containing a
+argument is a `local variable <LangRef.html#DILocalVariable>`_ containing a
 description of the variable.  The third argument is a `complex expression
-<LangRef.html#MDExpression>`_.
+<LangRef.html#DIExpression>`_.
 
 ``llvm.dbg.value``
 ^^^^^^^^^^^^^^^^^^
@@ -196,8 +196,8 @@ This intrinsic provides information when a user source variable is set to a new
 value.  The first argument is the new value (wrapped as metadata).  The second
 argument is the offset in the user source variable where the new value is
 written.  The third argument is a `local variable
-<LangRef.html#MDLocalVariable>`_ containing a description of the variable.  The
-third argument is a `complex expression <LangRef.html#MDExpression>`_.
+<LangRef.html#DILocalVariable>`_ containing a description of the variable.  The
+third argument is a `complex expression <LangRef.html#DIExpression>`_.
 
 Object lifetimes and scoping
 ============================
@@ -259,31 +259,31 @@ Compiled to LLVM, this function would be represented like this:
   !llvm.module.flags = !{!7, !8, !9}
   !llvm.ident = !{!10}
 
-  !0 = !MDCompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.7.0 (trunk 231150) (llvm/trunk 231154)", isOptimized: false, runtimeVersion: 0, emissionKind: 1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-  !1 = !MDFile(filename: "/dev/stdin", directory: "/Users/dexonsmith/data/llvm/debug-info")
+  !0 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.7.0 (trunk 231150) (llvm/trunk 231154)", isOptimized: false, runtimeVersion: 0, emissionKind: 1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+  !1 = !DIFile(filename: "/dev/stdin", directory: "/Users/dexonsmith/data/llvm/debug-info")
   !2 = !{}
   !3 = !{!4}
-  !4 = !MDSubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, function: void ()* @foo, variables: !2)
-  !5 = !MDSubroutineType(types: !6)
+  !4 = !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 1, isOptimized: false, function: void ()* @foo, variables: !2)
+  !5 = !DISubroutineType(types: !6)
   !6 = !{null}
   !7 = !{i32 2, !"Dwarf Version", i32 2}
   !8 = !{i32 2, !"Debug Info Version", i32 3}
   !9 = !{i32 1, !"PIC Level", i32 2}
   !10 = !{!"clang version 3.7.0 (trunk 231150) (llvm/trunk 231154)"}
-  !11 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "X", scope: !4, file: !1, line: 2, type: !12)
-  !12 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-  !13 = !MDExpression()
-  !14 = !MDLocation(line: 2, column: 9, scope: !4)
-  !15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "Y", scope: !4, file: !1, line: 3, type: !12)
-  !16 = !MDLocation(line: 3, column: 9, scope: !4)
-  !17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "Z", scope: !18, file: !1, line: 5, type: !12)
-  !18 = distinct !MDLexicalBlock(scope: !4, file: !1, line: 4, column: 5)
-  !19 = !MDLocation(line: 5, column: 11, scope: !18)
-  !20 = !MDLocation(line: 6, column: 11, scope: !18)
-  !21 = !MDLocation(line: 6, column: 9, scope: !18)
-  !22 = !MDLocation(line: 8, column: 9, scope: !4)
-  !23 = !MDLocation(line: 8, column: 7, scope: !4)
-  !24 = !MDLocation(line: 9, column: 3, scope: !4)
+  !11 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "X", scope: !4, file: !1, line: 2, type: !12)
+  !12 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+  !13 = !DIExpression()
+  !14 = !DILocation(line: 2, column: 9, scope: !4)
+  !15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "Y", scope: !4, file: !1, line: 3, type: !12)
+  !16 = !DILocation(line: 3, column: 9, scope: !4)
+  !17 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "Z", scope: !18, file: !1, line: 5, type: !12)
+  !18 = distinct !DILexicalBlock(scope: !4, file: !1, line: 4, column: 5)
+  !19 = !DILocation(line: 5, column: 11, scope: !18)
+  !20 = !DILocation(line: 6, column: 11, scope: !18)
+  !21 = !DILocation(line: 6, column: 9, scope: !18)
+  !22 = !DILocation(line: 8, column: 9, scope: !4)
+  !23 = !DILocation(line: 8, column: 7, scope: !4)
+  !24 = !DILocation(line: 9, column: 3, scope: !4)
 
 
 This example illustrates a few important details about LLVM debugging
@@ -303,15 +303,15 @@ scope information for the variable ``X``.
 
 .. code-block:: llvm
 
-  !14 = !MDLocation(line: 2, column: 9, scope: !4)
-  !4 = !MDSubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5,
+  !14 = !DILocation(line: 2, column: 9, scope: !4)
+  !4 = !DISubprogram(name: "foo", scope: !1, file: !1, line: 1, type: !5,
                      isLocal: false, isDefinition: true, scopeLine: 1,
                      isOptimized: false, function: void ()* @foo,
                      variables: !2)
 
 Here ``!14`` is metadata providing `location information
-<LangRef.html#MDLocation>`_.  In this example, scope is encoded by ``!4``, a
-`subprogram descriptor <LangRef.html#MDSubprogram>`_.  This way the location
+<LangRef.html#DILocation>`_.  In this example, scope is encoded by ``!4``, a
+`subprogram descriptor <LangRef.html#DISubprogram>`_.  This way the location
 information attached to the intrinsics indicates that the variable ``X`` is
 declared at line number 2 at a function level scope in function ``foo``.
 
@@ -328,8 +328,8 @@ scope information for the variable ``Z``.
 
 .. code-block:: llvm
 
-  !18 = distinct !MDLexicalBlock(scope: !4, file: !1, line: 4, column: 5)
-  !19 = !MDLocation(line: 5, column: 11, scope: !18)
+  !18 = distinct !DILexicalBlock(scope: !4, file: !1, line: 4, column: 5)
+  !19 = !DILocation(line: 5, column: 11, scope: !18)
 
 Here ``!19`` indicates that ``Z`` is declared at line number 5 and column
 number 0 inside of lexical scope ``!18``.  The lexical scope itself resides
@@ -406,7 +406,7 @@ a C/C++ front-end would generate the following descriptors:
   !llvm.module.flags = !{!6, !7}
 
   ;; Define the compile unit.
-  !0 = !MDCompileUnit(language: DW_LANG_C99, file: !1,
+  !0 = !DICompileUnit(language: DW_LANG_C99, file: !1,
                       producer:
                       "clang version 3.7.0 (trunk 231150) (llvm/trunk 231154)",
                       isOptimized: false, runtimeVersion: 0, emissionKind: 1,
@@ -416,7 +416,7 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define the file
   ;;
-  !1 = !MDFile(filename: "/dev/stdin",
+  !1 = !DIFile(filename: "/dev/stdin",
                directory: "/Users/dexonsmith/data/llvm/debug-info")
 
   ;; An empty array.
@@ -428,14 +428,14 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define the global variable itself.
   ;;
-  !4 = !MDGlobalVariable(name: "MyGlobal", scope: !0, file: !1, line: 1,
+  !4 = !DIGlobalVariable(name: "MyGlobal", scope: !0, file: !1, line: 1,
                          type: !5, isLocal: false, isDefinition: true,
                          variable: i32* @MyGlobal)
 
   ;;
   ;; Define the type
   ;;
-  !5 = !MDBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+  !5 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 
   ;; Dwarf version to output.
   !6 = !{i32 2, !"Dwarf Version", i32 2}
@@ -461,7 +461,7 @@ a C/C++ front-end would generate the following descriptors:
   ;;
   ;; Define the anchor for subprograms.
   ;;
-  !4 = !MDSubprogram(name: "main", scope: !1, file: !1, line: 1, type: !5,
+  !4 = !DISubprogram(name: "main", scope: !1, file: !1, line: 1, type: !5,
                      isLocal: false, isDefinition: true, scopeLine: 1,
                      flags: DIFlagPrototyped, isOptimized: false,
                      function: i32 (i32, i8**)* @main, variables: !2)

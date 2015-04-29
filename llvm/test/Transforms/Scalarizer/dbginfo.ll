@@ -37,9 +37,9 @@ define void @f1(<4 x i32>* nocapture %a, <4 x i32>* nocapture readonly %b, <4 x 
 ; CHECK: store i32 %add.i3, i32* %a.i3, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
 ; CHECK: ret void
 entry:
-  tail call void @llvm.dbg.value(metadata <4 x i32>* %a, i64 0, metadata !15, metadata !MDExpression()), !dbg !20
-  tail call void @llvm.dbg.value(metadata <4 x i32>* %b, i64 0, metadata !16, metadata !MDExpression()), !dbg !20
-  tail call void @llvm.dbg.value(metadata <4 x i32>* %c, i64 0, metadata !17, metadata !MDExpression()), !dbg !20
+  tail call void @llvm.dbg.value(metadata <4 x i32>* %a, i64 0, metadata !15, metadata !DIExpression()), !dbg !20
+  tail call void @llvm.dbg.value(metadata <4 x i32>* %b, i64 0, metadata !16, metadata !DIExpression()), !dbg !20
+  tail call void @llvm.dbg.value(metadata <4 x i32>* %c, i64 0, metadata !17, metadata !DIExpression()), !dbg !20
   %bval = load <4 x i32>, <4 x i32>* %b, align 16, !dbg !21, !tbaa !22
   %cval = load <4 x i32>, <4 x i32>* %c, align 16, !dbg !21, !tbaa !22
   %add = add <4 x i32> %bval, %cval, !dbg !21
@@ -57,30 +57,30 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!18, !26}
 !llvm.ident = !{!19}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 194134) (llvm/trunk 194126)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 194134) (llvm/trunk 194126)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "f1", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void (<4 x i32>*, <4 x i32>*, <4 x i32>*)* @f1, variables: !14)
-!5 = !MDFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "f1", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void (<4 x i32>*, <4 x i32>*, <4 x i32>*)* @f1, variables: !14)
+!5 = !DIFile(filename: "/tmp/add.c", directory: "/home/richards/llvm/build")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !8, !8}
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
-!9 = !MDDerivedType(tag: DW_TAG_typedef, name: "V4SI", line: 1, file: !1, baseType: !10)
-!10 = !MDCompositeType(tag: DW_TAG_array_type, size: 128, align: 128, flags: DIFlagVector, baseType: !11, elements: !12)
-!11 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !DIDerivedType(tag: DW_TAG_typedef, name: "V4SI", line: 1, file: !1, baseType: !10)
+!10 = !DICompositeType(tag: DW_TAG_array_type, size: 128, align: 128, flags: DIFlagVector, baseType: !11, elements: !12)
+!11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!13}
-!13 = !MDSubrange(count: 4)
+!13 = !DISubrange(count: 4)
 !14 = !{!15, !16, !17}
-!15 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 3, arg: 1, scope: !4, file: !5, type: !8)
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 3, arg: 2, scope: !4, file: !5, type: !8)
-!17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 3, arg: 3, scope: !4, file: !5, type: !8)
+!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 3, arg: 1, scope: !4, file: !5, type: !8)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 3, arg: 2, scope: !4, file: !5, type: !8)
+!17 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 3, arg: 3, scope: !4, file: !5, type: !8)
 !18 = !{i32 2, !"Dwarf Version", i32 4}
 !19 = !{!"clang version 3.4 (trunk 194134) (llvm/trunk 194126)"}
-!20 = !MDLocation(line: 3, scope: !4)
-!21 = !MDLocation(line: 5, scope: !4)
+!20 = !DILocation(line: 3, scope: !4)
+!21 = !DILocation(line: 5, scope: !4)
 !22 = !{!23, !23, i64 0}
 !23 = !{!"omnipotent char", !24, i64 0}
 !24 = !{!"Simple C/C++ TBAA"}
-!25 = !MDLocation(line: 6, scope: !4)
+!25 = !DILocation(line: 6, scope: !4)
 !26 = !{i32 1, !"Debug Info Version", i32 3}

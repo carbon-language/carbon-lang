@@ -87,7 +87,7 @@ VEC_edge_base_index.exit7.i:                      ; preds = %"3.i5.i"
 "44.i":                                           ; preds = %"42.i"
   %2 = load %a*, %a** undef, align 8, !dbg !12
   %3 = bitcast %a* %2 to %a*, !dbg !12
-  call void @llvm.dbg.value(metadata %a* %3, i64 0, metadata !6, metadata !MDExpression()), !dbg !12
+  call void @llvm.dbg.value(metadata %a* %3, i64 0, metadata !6, metadata !DIExpression()), !dbg !12
   br label %may_unswitch_on.exit, !dbg !12
 
 "45.i":                                           ; preds = %"38.i"
@@ -113,21 +113,21 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "Apple clang version", isOptimized: true, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !18, imports:  null)
-!1 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, function: %a* ()* @test, variables: !19)
-!2 = !MDFile(filename: "a.c", directory: "/private/tmp")
-!3 = !MDSubroutineType(types: !4)
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "Apple clang version", isOptimized: true, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !18, imports:  null)
+!1 = !DISubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !20, scope: !2, type: !3, function: %a* ()* @test, variables: !19)
+!2 = !DIFile(filename: "a.c", directory: "/private/tmp")
+!3 = !DISubroutineType(types: !4)
 !4 = !{!5}
-!5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !5)
-!7 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 2, arg: 2, scope: !1, file: !2, type: !8)
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !0, baseType: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
-!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 3, scope: !11, file: !2, type: !9)
-!11 = distinct !MDLexicalBlock(line: 2, column: 25, file: !20, scope: !1)
-!12 = !MDLocation(line: 2, column: 13, scope: !1)
+!5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!6 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !5)
+!7 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 2, arg: 2, scope: !1, file: !2, type: !8)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !0, baseType: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 3, scope: !11, file: !2, type: !9)
+!11 = distinct !DILexicalBlock(line: 2, column: 25, file: !20, scope: !1)
+!12 = !DILocation(line: 2, column: 13, scope: !1)
 !18 = !{!1}
 !19 = !{!6, !7, !10}
-!20 = !MDFile(filename: "a.c", directory: "/private/tmp")
+!20 = !DIFile(filename: "a.c", directory: "/private/tmp")
 !21 = !{}
 !22 = !{i32 1, !"Debug Info Version", i32 3}

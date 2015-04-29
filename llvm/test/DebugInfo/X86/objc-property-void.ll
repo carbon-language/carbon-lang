@@ -56,9 +56,9 @@ entry:
   %self.addr = alloca %0*, align 8
   %_cmd.addr = alloca i8*, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !24, metadata !MDExpression()), !dbg !26
+  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !24, metadata !DIExpression()), !dbg !26
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !27, metadata !MDExpression()), !dbg !26
+  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !27, metadata !DIExpression()), !dbg !26
   ret void, !dbg !29
 }
 
@@ -72,23 +72,23 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18, !19, !20, !21, !22}
 !llvm.ident = !{!23}
 
-!0 = !MDCompileUnit(language: DW_LANG_ObjC, isOptimized: false, runtimeVersion: 2, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !9, globals: !2, imports: !2)
-!1 = !MDFile(filename: "-", directory: "")
+!0 = !DICompileUnit(language: DW_LANG_ObjC, isOptimized: false, runtimeVersion: 2, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !9, globals: !2, imports: !2)
+!1 = !DIFile(filename: "-", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Foo", line: 1, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !7)
-!5 = !MDFile(filename: "<stdin>", directory: "")
-!6 = !MDFile(filename: "<stdin>", directory: "")
+!4 = !DICompositeType(tag: DW_TAG_structure_type, name: "Foo", line: 1, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !7)
+!5 = !DIFile(filename: "<stdin>", directory: "")
+!6 = !DIFile(filename: "<stdin>", directory: "")
 !7 = !{!8}
-!8 = !MDObjCProperty(name: "foo", line: 2, attributes: 2117, file: !6)
+!8 = !DIObjCProperty(name: "foo", line: 2, attributes: 2117, file: !6)
 !9 = !{!10}
-!10 = !MDSubprogram(name: "-[Foo foo]", line: 5, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !6, type: !11, function: void (%0*, i8*)* @"\01-[Foo foo]", variables: !2)
-!11 = !MDSubroutineType(types: !12)
+!10 = !DISubprogram(name: "-[Foo foo]", line: 5, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !6, type: !11, function: void (%0*, i8*)* @"\01-[Foo foo]", variables: !2)
+!11 = !DISubroutineType(types: !12)
 !12 = !{null, !13, !14}
-!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
-!14 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, flags: DIFlagArtificial, file: !5, baseType: !15)
-!15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
-!16 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
+!13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
+!14 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, flags: DIFlagArtificial, file: !5, baseType: !15)
+!15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
+!16 = !DICompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
 !17 = !{i32 1, !"Objective-C Version", i32 2}
 !18 = !{i32 1, !"Objective-C Image Info Version", i32 0}
 !19 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
@@ -96,9 +96,9 @@ attributes #1 = { nounwind readnone }
 !21 = !{i32 2, !"Dwarf Version", i32 2}
 !22 = !{i32 1, !"Debug Info Version", i32 3}
 !23 = !{!""}
-!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "self", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !10, type: !25)
-!25 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
-!26 = !MDLocation(line: 0, scope: !10)
-!27 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", arg: 2, flags: DIFlagArtificial, scope: !10, type: !28)
-!28 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, file: !5, baseType: !15)
-!29 = !MDLocation(line: 5, scope: !10)
+!24 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "self", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !10, type: !25)
+!25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
+!26 = !DILocation(line: 0, scope: !10)
+!27 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", arg: 2, flags: DIFlagArtificial, scope: !10, type: !28)
+!28 = !DIDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, file: !5, baseType: !15)
+!29 = !DILocation(line: 5, scope: !10)

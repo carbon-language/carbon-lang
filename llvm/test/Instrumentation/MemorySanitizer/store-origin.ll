@@ -11,8 +11,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind
 define void @Store(i32* nocapture %p, i32 %x) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !MDExpression()), !dbg !16
-  tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !12, metadata !MDExpression()), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32* %p, i64 0, metadata !11, metadata !DIExpression()), !dbg !16
+  tail call void @llvm.dbg.value(metadata i32 %x, i64 0, metadata !12, metadata !DIExpression()), !dbg !16
   store i32 %x, i32* %p, align 4, !dbg !17, !tbaa !18
   ret void, !dbg !22
 }
@@ -27,29 +27,29 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (204220)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "../2.cc", directory: "/tmp/build0")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (204220)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "../2.cc", directory: "/tmp/build0")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "Store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*, i32)* @Store, variables: !10)
-!5 = !MDFile(filename: "../2.cc", directory: "/tmp/build0")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "Store", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*, i32)* @Store, variables: !10)
+!5 = !DIFile(filename: "../2.cc", directory: "/tmp/build0")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8, !9}
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11, !12}
-!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 2, scope: !4, file: !5, type: !9)
+!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 2, scope: !4, file: !5, type: !9)
 !13 = !{i32 2, !"Dwarf Version", i32 4}
 !14 = !{i32 1, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.5.0 (204220)"}
-!16 = !MDLocation(line: 1, scope: !4)
-!17 = !MDLocation(line: 2, scope: !4)
+!16 = !DILocation(line: 1, scope: !4)
+!17 = !DILocation(line: 2, scope: !4)
 !18 = !{!19, !19, i64 0}
 !19 = !{!"int", !20, i64 0}
 !20 = !{!"omnipotent char", !21, i64 0}
 !21 = !{!"Simple C/C++ TBAA"}
-!22 = !MDLocation(line: 3, scope: !4)
+!22 = !DILocation(line: 3, scope: !4)
 
 
 ; CHECK: @Store

@@ -50,34 +50,34 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 (trunk 199750) (llvm/trunk 199751)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "first-only.c", directory: ".")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 (trunk 199750) (llvm/trunk 199751)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "first-only.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
-!5 = !MDFile(filename: "first-only.c", directory: ".")
-!6 = !MDSubroutineType(types: !{null})
+!4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!5 = !DIFile(filename: "first-only.c", directory: ".")
+!6 = !DISubroutineType(types: !{null})
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5 (trunk 199750) (llvm/trunk 199751)"}
-!10 = !MDLocation(line: 3, scope: !11)
+!10 = !DILocation(line: 3, scope: !11)
 
-!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !4)
-; CHECK: ![[FOO:[0-9]+]] = !MDSubprogram(name: "foo"
-; CHECK: ![[BLOCK1:[0-9]+]] = distinct !MDLexicalBlock(scope: ![[FOO]],{{.*}} line: 3)
+!11 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !4)
+; CHECK: ![[FOO:[0-9]+]] = !DISubprogram(name: "foo"
+; CHECK: ![[BLOCK1:[0-9]+]] = distinct !DILexicalBlock(scope: ![[FOO]],{{.*}} line: 3)
 
-!12 = !MDLocation(line: 3, scope: !13)
+!12 = !DILocation(line: 3, scope: !13)
 
-!13 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !11)
-; CHECK: !MDLexicalBlockFile(scope: ![[BLOCK2:[0-9]+]],{{.*}} discriminator: 1)
+!13 = distinct !DILexicalBlock(line: 3, column: 0, file: !1, scope: !11)
+; CHECK: !DILexicalBlockFile(scope: ![[BLOCK2:[0-9]+]],{{.*}} discriminator: 1)
 
-!14 = !MDLocation(line: 4, scope: !13)
-; CHECK: ![[BLOCK2]] = distinct !MDLexicalBlock(scope: ![[BLOCK1]],{{.*}} line: 3)
+!14 = !DILocation(line: 4, scope: !13)
+; CHECK: ![[BLOCK2]] = distinct !DILexicalBlock(scope: ![[BLOCK1]],{{.*}} line: 3)
 
-!15 = !MDLocation(line: 5, scope: !13)
-; CHECK: ![[THEN]] = !MDLocation(line: 4, scope: ![[BLOCK2]])
+!15 = !DILocation(line: 5, scope: !13)
+; CHECK: ![[THEN]] = !DILocation(line: 4, scope: ![[BLOCK2]])
 
-!16 = !MDLocation(line: 6, scope: !4)
-; CHECK: ![[BR]] = !MDLocation(line: 5, scope: ![[BLOCK2]])
-; CHECK: ![[END]] = !MDLocation(line: 6, scope: ![[FOO]])
+!16 = !DILocation(line: 6, scope: !4)
+; CHECK: ![[BR]] = !DILocation(line: 5, scope: ![[BLOCK2]])
+; CHECK: ![[END]] = !DILocation(line: 6, scope: ![[FOO]])
 

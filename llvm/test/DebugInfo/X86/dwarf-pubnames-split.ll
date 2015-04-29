@@ -24,15 +24,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9, !11}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 189287) (llvm/trunk 189296)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 189287) (llvm/trunk 189296)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
-!5 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!5 = !DIFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!6 = !DISubroutineType(types: !7)
 !7 = !{!8}
-!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{i32 2, !"Dwarf Version", i32 3}
-!10 = !MDLocation(line: 2, scope: !4)
+!10 = !DILocation(line: 2, scope: !4)
 !11 = !{i32 1, !"Debug Info Version", i32 3}
