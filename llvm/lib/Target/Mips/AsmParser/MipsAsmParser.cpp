@@ -1657,12 +1657,11 @@ void createLShiftOri(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
   Instructions.push_back(tmpInst);
 }
 
-template <int Shift, bool PerformShift>
+template <bool PerformShift>
 void createLShiftOri(int64_t Value, unsigned RegNo, SMLoc IDLoc,
                    SmallVectorImpl<MCInst> &Instructions) {
-  createLShiftOri<PerformShift>(
-      MCOperand::CreateImm(((Value & (0xffffLL << Shift)) >> Shift)), RegNo,
-      IDLoc, Instructions);
+  createLShiftOri<PerformShift>(MCOperand::CreateImm(Value), RegNo, IDLoc,
+                                Instructions);
 }
 }
 
@@ -1741,11 +1740,14 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     // For all other values which are representable as a 32-bit integer:
     // li d,j => lui d,hi16(j)
     //           ori d,d,lo16(j)
+    uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
+    uint16_t Bits15To0 = ImmValue & 0xffff;
+
     tmpInst.setOpcode(Mips::LUi);
     tmpInst.addOperand(MCOperand::CreateReg(Reg));
-    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
+    tmpInst.addOperand(MCOperand::CreateImm(Bits31To16));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0, false>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<false>(Bits15To0, Reg, IDLoc, Instructions);
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (!isGP64bit()) {
       Error(IDLoc, "instruction requires a 64-bit architecture");
@@ -1765,13 +1767,16 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     //           ori d,d,hi16(lo32(j))
     //           dsll d,d,16
     //           ori d,d,lo16(lo32(j))
+    uint16_t Bits47To32 = (ImmValue >> 32) & 0xffff;
+    uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
+    uint16_t Bits15To0 = ImmValue & 0xffff;
+
     tmpInst.setOpcode(Mips::LUi);
     tmpInst.addOperand(MCOperand::CreateReg(Reg));
-    tmpInst.addOperand(
-        MCOperand::CreateImm((ImmValue & (0xffffLL << 32)) >> 32));
+    tmpInst.addOperand(MCOperand::CreateImm(Bits47To32));
     Instructions.push_back(tmpInst);
-    createLShiftOri<16, false>(ImmValue, Reg, IDLoc, Instructions);
-    createLShiftOri<0, true>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<false>(Bits31To16, Reg, IDLoc, Instructions);
+    createLShiftOri<true>(Bits15To0, Reg, IDLoc, Instructions);
   } else {
     if (!isGP64bit()) {
       Error(IDLoc, "instruction requires a 64-bit architecture");
@@ -1792,14 +1797,18 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     //           ori d,d,hi16(lo32(j))
     //           dsll d,d,16
     //           ori d,d,lo16(lo32(j))
+    uint16_t Bits63To48 = (ImmValue >> 48) & 0xffff;
+    uint16_t Bits47To32 = (ImmValue >> 32) & 0xffff;
+    uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
+    uint16_t Bits15To0 = ImmValue & 0xffff;
+
     tmpInst.setOpcode(Mips::LUi);
     tmpInst.addOperand(MCOperand::CreateReg(Reg));
-    tmpInst.addOperand(
-        MCOperand::CreateImm((ImmValue & (0xffffLL << 48)) >> 48));
+    tmpInst.addOperand(MCOperand::CreateImm(Bits63To48));
     Instructions.push_back(tmpInst);
-    createLShiftOri<32, false>(ImmValue, Reg, IDLoc, Instructions);
-    createLShiftOri<16, true>(ImmValue, Reg, IDLoc, Instructions);
-    createLShiftOri<0, true>(ImmValue, Reg, IDLoc, Instructions);
+    createLShiftOri<false>(Bits47To32, Reg, IDLoc, Instructions);
+    createLShiftOri<true>(Bits31To16, Reg, IDLoc, Instructions);
+    createLShiftOri<true>(Bits15To0, Reg, IDLoc, Instructions);
   }
   return false;
 }
