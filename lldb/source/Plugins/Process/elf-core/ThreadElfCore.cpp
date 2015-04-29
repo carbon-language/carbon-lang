@@ -17,6 +17,7 @@
 #include "ThreadElfCore.h"
 #include "ProcessElfCore.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_arm.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_arm64.h"
@@ -135,6 +136,9 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
                 {
                     case llvm::Triple::arm:
                         reg_interface = new RegisterContextLinux_arm(arch);
+                        break;
+                    case llvm::Triple::aarch64:
+                        reg_interface = new RegisterContextLinux_arm64(arch);
                         break;
                     case llvm::Triple::x86_64:
                         reg_interface = new RegisterContextLinux_x86_64(arch);

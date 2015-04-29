@@ -18,6 +18,7 @@
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
 #include "Plugins/ABI/MacOSX-arm64/ABIMacOSX_arm64.h"
 #include "Plugins/ABI/SysV-arm/ABISysV_arm.h"
+#include "Plugins/ABI/SysV-arm64/ABISysV_arm64.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/ABI/SysV-ppc/ABISysV_ppc.h"
 #include "Plugins/ABI/SysV-ppc64/ABISysV_ppc64.h"
@@ -237,6 +238,7 @@ SystemInitializerFull::Initialize()
     ABIMacOSX_arm::Initialize();
     ABIMacOSX_arm64::Initialize();
     ABISysV_arm::Initialize();
+    ABISysV_arm64::Initialize();
     ABISysV_x86_64::Initialize();
     ABISysV_ppc::Initialize();
     ABISysV_ppc64::Initialize();
@@ -342,6 +344,7 @@ SystemInitializerFull::Terminate()
     ABIMacOSX_arm::Terminate();
     ABIMacOSX_arm64::Terminate();
     ABISysV_arm::Terminate();
+    ABISysV_arm64::Terminate();
     ABISysV_x86_64::Terminate();
     ABISysV_ppc::Terminate();
     ABISysV_ppc64::Terminate();
