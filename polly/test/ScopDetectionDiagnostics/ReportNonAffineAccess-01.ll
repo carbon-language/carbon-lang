@@ -17,8 +17,8 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !MDExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32* %A, i64 0, metadata !13, metadata !DIExpression()), !dbg !14
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !16, metadata !DIExpression()), !dbg !18
   br label %for.body, !dbg !19
 
 for.body:                                         ; preds = %entry.split, %for.body
@@ -28,7 +28,7 @@ for.body:                                         ; preds = %entry.split, %for.b
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %idxprom1, !dbg !20
   store i32 0, i32* %arrayidx, align 4, !dbg !20
   %1 = add nsw i32 %0, 1, !dbg !21
-  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !16, metadata !MDExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !16, metadata !DIExpression()), !dbg !18
   %exitcond = icmp ne i32 %1, 42, !dbg !19
   br i1 %exitcond, label %for.body, label %for.end, !dbg !19
 
@@ -47,26 +47,26 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!10, !11}
 !llvm.ident = !{!12}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "ReportNonAffineAccess-01.c", directory: "test/ScopDetectionDiagnostic/")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "ReportNonAffineAccess-01.c", directory: "test/ScopDetectionDiagnostic/")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @f, variables: !2)
-!5 = !MDFile(filename: "ReportNonAffineAccess-01.c", directory: "test/ScopDetectionDiagnostic/")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @f, variables: !2)
+!5 = !DIFile(filename: "ReportNonAffineAccess-01.c", directory: "test/ScopDetectionDiagnostic/")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
-!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{i32 2, !"Dwarf Version", i32 4}
 !11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{!"clang version 3.6.0 "}
-!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !8)
-!14 = !MDLocation(line: 1, column: 12, scope: !4)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!14 = !DILocation(line: 1, column: 12, scope: !4)
 !15 = !{i32 0}
-!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 2, scope: !17, file: !5, type: !9)
-!17 = distinct !MDLexicalBlock(line: 2, column: 3, file: !1, scope: !4)
-!18 = !MDLocation(line: 2, column: 11, scope: !17)
-!19 = !MDLocation(line: 2, column: 7, scope: !17)
-!20 = !MDLocation(line: 3, column: 5, scope: !17)
-!21 = !MDLocation(line: 2, column: 22, scope: !17)
-!22 = !MDLocation(line: 4, column: 1, scope: !4)
+!16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 2, scope: !17, file: !5, type: !9)
+!17 = distinct !DILexicalBlock(line: 2, column: 3, file: !1, scope: !4)
+!18 = !DILocation(line: 2, column: 11, scope: !17)
+!19 = !DILocation(line: 2, column: 7, scope: !17)
+!20 = !DILocation(line: 3, column: 5, scope: !17)
+!21 = !DILocation(line: 2, column: 22, scope: !17)
+!22 = !DILocation(line: 4, column: 1, scope: !4)

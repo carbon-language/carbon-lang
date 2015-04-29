@@ -21,8 +21,8 @@ entry:
   br label %entry.split
 
 entry.split:                                      ; preds = %entry
-  tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16, metadata !MDExpression()), !dbg !23
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17, metadata !MDExpression()), !dbg !25
+  tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16, metadata !DIExpression()), !dbg !23
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17, metadata !DIExpression()), !dbg !25
   %b = getelementptr inbounds %struct.b, %struct.b* %A, i64 0, i32 0, !dbg !26
   br label %for.body, !dbg !27
 
@@ -61,38 +61,38 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!20, !21}
 !llvm.ident = !{!22}
 
-!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
-!1 = !MDFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
+!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !DIFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
 !2 = !{}
 !3 = !{!4}
-!4 = !MDSubprogram(name: "a", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: void (%struct.b*)* @a, variables: !15)
-!5 = !MDFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
-!6 = !MDSubroutineType(types: !7)
+!4 = !DISubprogram(name: "a", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: void (%struct.b*)* @a, variables: !15)
+!5 = !DIFile(filename: "ReportVariantBasePtr01.c", directory: "test/ScopDetectionDiagnostics")
+!6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
-!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "b", line: 1, size: 64, align: 64, file: !1, elements: !10)
+!8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !DICompositeType(tag: DW_TAG_structure_type, name: "b", line: 1, size: 64, align: 64, file: !1, elements: !10)
 !10 = !{!11}
-!11 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 2, size: 64, align: 64, file: !1, scope: !9, baseType: !12)
-!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
-!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !14)
-!14 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!11 = !DIDerivedType(tag: DW_TAG_member, name: "b", line: 2, size: 64, align: 64, file: !1, scope: !9, baseType: !12)
+!12 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
+!13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !14)
+!14 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !15 = !{!16, !17}
-!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 5, arg: 1, scope: !4, file: !5, type: !8)
-!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 6, scope: !18, file: !5, type: !19)
-!18 = distinct !MDLexicalBlock(line: 6, column: 3, file: !1, scope: !4)
-!19 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 5, arg: 1, scope: !4, file: !5, type: !8)
+!17 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 6, scope: !18, file: !5, type: !19)
+!18 = distinct !DILexicalBlock(line: 6, column: 3, file: !1, scope: !4)
+!19 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !20 = !{i32 2, !"Dwarf Version", i32 4}
 !21 = !{i32 2, !"Debug Info Version", i32 3}
 !22 = !{!"clang version 3.5.0 "}
-!23 = !MDLocation(line: 5, column: 18, scope: !4)
+!23 = !DILocation(line: 5, column: 18, scope: !4)
 !24 = !{i32 0}
-!25 = !MDLocation(line: 6, column: 12, scope: !18)
-!26 = !MDLocation(line: 7, column: 5, scope: !18)
-!27 = !MDLocation(line: 6, column: 8, scope: !18)
+!25 = !DILocation(line: 6, column: 12, scope: !18)
+!26 = !DILocation(line: 7, column: 5, scope: !18)
+!27 = !DILocation(line: 6, column: 8, scope: !18)
 !28 = !{!29, !30, i64 0}
 !29 = !{!"b", !30, i64 0}
 !30 = !{!"any pointer", !31, i64 0}
 !31 = !{!"omnipotent char", !32, i64 0}
 !32 = !{!"Simple C/C++ TBAA"}
 !33 = !{!30, !30, i64 0}
-!34 = !MDLocation(line: 8, column: 1, scope: !4)
+!34 = !DILocation(line: 8, column: 1, scope: !4)
