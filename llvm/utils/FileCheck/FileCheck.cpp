@@ -958,7 +958,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   // prefix as a filler for the error message.
   if (!DagNotMatches.empty()) {
     CheckStrings.push_back(CheckString(Pattern(Check::CheckEOF),
-                                       CheckPrefixes[0],
+                                       *CheckPrefixes.begin(),
                                        SMLoc::getFromPointer(Buffer.data()),
                                        Check::CheckEOF));
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
@@ -967,12 +967,14 @@ static bool ReadCheckFile(SourceMgr &SM,
   if (CheckStrings.empty()) {
     errs() << "error: no check strings found with prefix"
            << (CheckPrefixes.size() > 1 ? "es " : " ");
-    for (size_t I = 0, N = CheckPrefixes.size(); I != N; ++I) {
-      StringRef Prefix(CheckPrefixes[I]);
-      errs() << '\'' << Prefix << ":'";
-      if (I != N - 1)
-        errs() << ", ";
+    prefix_iterator I = CheckPrefixes.begin();
+    prefix_iterator E = CheckPrefixes.end();
+    if (I != E) {
+      errs() << "\'" << *I << ":'";
+      ++I;
     }
+    for (; I != E; ++I) 
+      errs() << ", \'" << *I << ":'";
 
     errs() << '\n';
     return true;
