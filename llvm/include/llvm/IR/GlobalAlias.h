@@ -33,8 +33,8 @@ class GlobalAlias : public GlobalValue, public ilist_node<GlobalAlias> {
 
   void setParent(Module *parent);
 
-  GlobalAlias(Type *Ty, unsigned AddressSpace, LinkageTypes Linkage,
-              const Twine &Name, Constant *Aliasee, Module *Parent);
+  GlobalAlias(PointerType *Ty, LinkageTypes Linkage, const Twine &Name,
+              Constant *Aliasee, Module *Parent);
 
 public:
   // allocate space for exactly one operand
@@ -44,19 +44,17 @@ public:
 
   /// If a parent module is specified, the alias is automatically inserted into
   /// the end of the specified module's alias list.
-  static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
-                             LinkageTypes Linkage, const Twine &Name,
-                             Constant *Aliasee, Module *Parent);
-
-  // Without the Aliasee.
-  static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
-                             LinkageTypes Linkage, const Twine &Name,
+  static GlobalAlias *create(PointerType *Ty, LinkageTypes Linkage,
+                             const Twine &Name, Constant *Aliasee,
                              Module *Parent);
 
+  // Without the Aliasee.
+  static GlobalAlias *create(PointerType *Ty, LinkageTypes Linkage,
+                             const Twine &Name, Module *Parent);
+
   // The module is taken from the Aliasee.
-  static GlobalAlias *create(Type *Ty, unsigned AddressSpace,
-                             LinkageTypes Linkage, const Twine &Name,
-                             GlobalValue *Aliasee);
+  static GlobalAlias *create(PointerType *Ty, LinkageTypes Linkage,
+                             const Twine &Name, GlobalValue *Aliasee);
 
   // Type, Parent and AddressSpace taken from the Aliasee.
   static GlobalAlias *create(LinkageTypes Linkage, const Twine &Name,

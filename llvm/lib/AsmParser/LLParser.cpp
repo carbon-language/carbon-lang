@@ -663,13 +663,11 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc, unsigned L,
   auto *PTy = dyn_cast<PointerType>(AliaseeType);
   if (!PTy)
     return Error(AliaseeLoc, "An alias must have pointer type");
-  Type *Ty = PTy->getElementType();
-  unsigned AddrSpace = PTy->getAddressSpace();
 
   // Okay, create the alias but do not insert it into the module yet.
   std::unique_ptr<GlobalAlias> GA(
-      GlobalAlias::create(Ty, AddrSpace, (GlobalValue::LinkageTypes)Linkage,
-                          Name, Aliasee, /*Parent*/ nullptr));
+      GlobalAlias::create(PTy, (GlobalValue::LinkageTypes)Linkage, Name,
+                          Aliasee, /*Parent*/ nullptr));
   GA->setThreadLocalMode(TLM);
   GA->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GA->setDLLStorageClass((GlobalValue::DLLStorageClassTypes)DLLStorageClass);

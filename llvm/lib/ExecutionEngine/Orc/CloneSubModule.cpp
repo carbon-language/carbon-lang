@@ -61,9 +61,7 @@ void CloneSubModule(llvm::Module &Dst, const Module &Src,
   for (Module::const_alias_iterator I = Src.alias_begin(), E = Src.alias_end();
        I != E; ++I) {
     auto *PTy = cast<PointerType>(I->getType());
-    auto *GA =
-        GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
-                            I->getLinkage(), I->getName(), &Dst);
+    auto *GA = GlobalAlias::create(PTy, I->getLinkage(), I->getName(), &Dst);
     GA->copyAttributesFrom(I);
     VMap[I] = GA;
   }
