@@ -3605,8 +3605,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
-  { { echo "$as_me:$LINENO: error: Selected compiler could not find or parse C++ standard library headers.  Rerun with CC=c-compiler CXX=c++-compiler ./configure ..." >&5
-echo "$as_me: error: Selected compiler could not find or parse C++ standard library headers.  Rerun with CC=c-compiler CXX=c++-compiler ./configure ..." >&2;}
+  { { echo "$as_me:$LINENO: error: Selected compiler could not find or parse C++ standard library headers.  Rerun with CC=c-compiler CXX=c++-compiler LLVM_SRC_DIR/configure ..." >&5
+echo "$as_me: error: Selected compiler could not find or parse C++ standard library headers.  Rerun with CC=c-compiler CXX=c++-compiler LLVM_SRC_DIR/configure ..." >&2;}
    { (exit 1); exit 1; }; }
 
 fi

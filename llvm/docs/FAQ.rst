@@ -102,7 +102,7 @@ grabbing the wrong linker/assembler/etc, there are two ways to fix it:
 
 .. code-block:: console
 
-   % PATH=[the path without the bad program] ./configure ...
+   % PATH=[the path without the bad program] $LLVM_SRC_DIR/configure ...
 
 This is still somewhat inconvenient, but it allows ``configure`` to do its
 work without having to adjust your ``PATH`` permanently.
