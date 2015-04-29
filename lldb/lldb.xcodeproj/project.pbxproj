@@ -887,6 +887,13 @@
 		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
 		AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */; };
 		AF1FA88A1A60A69500272AFC /* RegisterNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */; };
+		AF20F7661AF18F8500751A6E /* ABISysV_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F7641AF18F8500751A6E /* ABISysV_arm.cpp */; };
+		AF20F7671AF18F8500751A6E /* ABISysV_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F7651AF18F8500751A6E /* ABISysV_arm.h */; };
+		AF20F76A1AF18F9000751A6E /* ABISysV_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F7681AF18F9000751A6E /* ABISysV_arm64.cpp */; };
+		AF20F76B1AF18F9000751A6E /* ABISysV_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F7691AF18F9000751A6E /* ABISysV_arm64.h */; };
+		AF20F76D1AF18FC700751A6E /* SBLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F76C1AF18FC700751A6E /* SBLanguageRuntime.cpp */; };
+		AF20F7701AF1902900751A6E /* RegisterContextLinux_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F76E1AF1902900751A6E /* RegisterContextLinux_arm64.cpp */; };
+		AF20F7711AF1902900751A6E /* RegisterContextLinux_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F76F1AF1902900751A6E /* RegisterContextLinux_arm64.h */; };
 		AF23B4DB19009C66003E2A58 /* FreeBSDSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
 		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
@@ -2643,6 +2650,13 @@
 		AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetPendingItemsHandler.cpp; sourceTree = "<group>"; };
 		AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetPendingItemsHandler.h; sourceTree = "<group>"; };
 		AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterNumber.cpp; path = source/Utility/RegisterNumber.cpp; sourceTree = "<group>"; };
+		AF20F7641AF18F8500751A6E /* ABISysV_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_arm.cpp; path = "SysV-arm/ABISysV_arm.cpp"; sourceTree = "<group>"; };
+		AF20F7651AF18F8500751A6E /* ABISysV_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_arm.h; path = "SysV-arm/ABISysV_arm.h"; sourceTree = "<group>"; };
+		AF20F7681AF18F9000751A6E /* ABISysV_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_arm64.cpp; path = "SysV-arm64/ABISysV_arm64.cpp"; sourceTree = "<group>"; };
+		AF20F7691AF18F9000751A6E /* ABISysV_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_arm64.h; path = "SysV-arm64/ABISysV_arm64.h"; sourceTree = "<group>"; };
+		AF20F76C1AF18FC700751A6E /* SBLanguageRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBLanguageRuntime.cpp; path = source/API/SBLanguageRuntime.cpp; sourceTree = "<group>"; };
+		AF20F76E1AF1902900751A6E /* RegisterContextLinux_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLinux_arm64.cpp; path = Utility/RegisterContextLinux_arm64.cpp; sourceTree = "<group>"; };
+		AF20F76F1AF1902900751A6E /* RegisterContextLinux_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLinux_arm64.h; path = Utility/RegisterContextLinux_arm64.h; sourceTree = "<group>"; };
 		AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FreeBSDSignals.cpp; path = Utility/FreeBSDSignals.cpp; sourceTree = "<group>"; };
 		AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FreeBSDSignals.h; path = Utility/FreeBSDSignals.h; sourceTree = "<group>"; };
 		AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwinKernel.cpp; sourceTree = "<group>"; };
@@ -3302,6 +3316,7 @@
 				9AC703AE117675410086C050 /* SBInstruction.cpp */,
 				9AC7038F117675270086C050 /* SBInstructionList.h */,
 				9AC703B0117675490086C050 /* SBInstructionList.cpp */,
+				AF20F76C1AF18FC700751A6E /* SBLanguageRuntime.cpp */,
 				254FBB961A81B03100BD6378 /* SBLaunchInfo.h */,
 				254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */,
 				26DE205811618FE700A093E2 /* SBLineEntry.h */,
@@ -3821,6 +3836,8 @@
 				256CBDBF1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h */,
 				256CBDB61ADD107200BC6CDC /* RegisterContextLinux_arm.cpp */,
 				256CBDB71ADD107200BC6CDC /* RegisterContextLinux_arm.h */,
+				AF20F76E1AF1902900751A6E /* RegisterContextLinux_arm64.cpp */,
+				AF20F76F1AF1902900751A6E /* RegisterContextLinux_arm64.h */,
 				256CBDB81ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp */,
 				256CBDB91ADD107200BC6CDC /* RegisterContextLinux_mips64.h */,
 				E7723D4A1AC4A944002BA082 /* RegisterContextPOSIX_arm64.cpp */,
@@ -4717,6 +4734,8 @@
 				26DB3E061379E7AD0080DC73 /* MacOSX-arm */,
 				26DB3E0A1379E7AD0080DC73 /* MacOSX-arm64 */,
 				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
+				AF20F7621AF18F5E00751A6E /* SysV-arm */,
+				AF20F7631AF18F6800751A6E /* SysV-arm64 */,
 				AF77E08B1A033C3E0096C0EA /* SysV-ppc */,
 				AF77E08C1A033C4B0096C0EA /* SysV-ppc64 */,
 				26DB3E121379E7AD0080DC73 /* SysV-x86_64 */,
@@ -5197,6 +5216,24 @@
 			path = MacOSX;
 			sourceTree = "<group>";
 		};
+		AF20F7621AF18F5E00751A6E /* SysV-arm */ = {
+			isa = PBXGroup;
+			children = (
+				AF20F7641AF18F8500751A6E /* ABISysV_arm.cpp */,
+				AF20F7651AF18F8500751A6E /* ABISysV_arm.h */,
+			);
+			name = "SysV-arm";
+			sourceTree = "<group>";
+		};
+		AF20F7631AF18F6800751A6E /* SysV-arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				AF20F7681AF18F9000751A6E /* ABISysV_arm64.cpp */,
+				AF20F7691AF18F9000751A6E /* ABISysV_arm64.h */,
+			);
+			name = "SysV-arm64";
+			sourceTree = "<group>";
+		};
 		AF2BCA6518C7EFDE005B4526 /* JITLoader */ = {
 			isa = PBXGroup;
 			children = (
@@ -5370,12 +5407,15 @@
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 				26AB54121832DC3400EADFF3 /* RegisterCheckpoint.h in Headers */,
 				26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */,
+				AF20F76B1AF18F9000751A6E /* ABISysV_arm64.h in Headers */,
 				AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */,
 				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
+				AF20F7671AF18F8500751A6E /* ABISysV_arm.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
 				E7723D451AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.h in Headers */,
 				AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */,
+				AF20F7711AF1902900751A6E /* RegisterContextLinux_arm64.h in Headers */,
 				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
 				26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */,
 				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
@@ -5964,6 +6004,7 @@
 				25420ECD1A6490B8009ADBCB /* OptionValueChar.cpp in Sources */,
 				2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */,
 				2689000313353DB600698AC0 /* BreakpointResolverFileLine.cpp in Sources */,
+				AF20F76D1AF18FC700751A6E /* SBLanguageRuntime.cpp in Sources */,
 				26474CA818D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp in Sources */,
 				449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */,
 				94CD705216F8F5BC00CF1E42 /* LibCxxMap.cpp in Sources */,
@@ -6055,6 +6096,7 @@
 				AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */,
 				2689004813353E0400698AC0 /* RegularExpression.cpp in Sources */,
 				2689004913353E0400698AC0 /* Scalar.cpp in Sources */,
+				AF20F7701AF1902900751A6E /* RegisterContextLinux_arm64.cpp in Sources */,
 				263FDE601A79A01500E68013 /* FormatEntity.cpp in Sources */,
 				2689004A13353E0400698AC0 /* SearchFilter.cpp in Sources */,
 				2689004B13353E0400698AC0 /* Section.cpp in Sources */,
@@ -6118,6 +6160,7 @@
 				2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */,
 				2689007213353E1A00698AC0 /* Mutex.cpp in Sources */,
 				25420ED21A649D88009ADBCB /* PipeBase.cpp in Sources */,
+				AF20F7661AF18F8500751A6E /* ABISysV_arm.cpp in Sources */,
 				2689007313353E1A00698AC0 /* Symbols.cpp in Sources */,
 				26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */,
 				257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */,
@@ -6355,6 +6398,7 @@
 				26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */,
 				2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */,
 				B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */,
+				AF20F76A1AF18F9000751A6E /* ABISysV_arm64.cpp in Sources */,
 				26F73062139D8FDB00FD51C7 /* History.cpp in Sources */,
 				4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */,
 				4CCA645013B40B82003BDF98 /* AppleObjCRuntime.cpp in Sources */,
