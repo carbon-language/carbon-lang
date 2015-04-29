@@ -154,7 +154,10 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     const GlobalValue *GV = MO.getGlobal();
     AsmPrinter.getNameWithPrefix(Name, GV);
   } else if (MO.isSymbol()) {
-    getMang()->getNameWithPrefix(Name, MO.getSymbolName());
+    if (MO.getTargetFlags() == X86II::MO_NOPREFIX)
+      Name += MO.getSymbolName();
+    else
+      getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {
     Name += MO.getMBB()->getSymbol()->getName();
   }
@@ -231,6 +234,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
+  case X86II::MO_NOPREFIX:
     break;
 
   case X86II::MO_TLVP:      RefKind = MCSymbolRefExpr::VK_TLVP; break;

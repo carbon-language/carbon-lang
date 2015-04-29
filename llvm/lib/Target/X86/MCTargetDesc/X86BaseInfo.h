@@ -213,7 +213,11 @@ namespace X86II {
     /// the offset from beginning of section.
     ///
     /// This is the TLS offset for the COFF/Windows TLS mechanism.
-    MO_SECREL
+    MO_SECREL,
+
+    /// MO_NOPREFIX - On a symbol operand this indicates that the symbol should
+    /// not be mangled with a prefix.
+    MO_NOPREFIX,
   };
 
   enum : uint64_t {

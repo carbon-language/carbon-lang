@@ -1009,7 +1009,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     if (!AM.hasSymbolicDisplacement())
       if (const auto *ESNode = dyn_cast<ExternalSymbolSDNode>(N.getOperand(0)))
         if (ESNode->getOpcode() == ISD::TargetExternalSymbol) {
+          // Use the symbol and don't prefix it.
           AM.ES = ESNode->getSymbol();
+          AM.SymbolFlags = X86II::MO_NOPREFIX;
           return false;
         }
     break;

@@ -37,15 +37,15 @@ define void @print_framealloc_from_fp(i8* %fp) {
 ; X86: pushl   %esi
 ; X86: subl    $8, %esp
 ; X86: movl    16(%esp), %esi
-; X86: movl    _Lalloc_func$frame_escape_0(%esi), %eax
+; X86: movl    Lalloc_func$frame_escape_0(%esi), %eax
 ; X86: movl    %eax, 4(%esp)
 ; X86: movl    $_str, (%esp)
 ; X86: calll   _printf
-; X86: movl    _Lalloc_func$frame_escape_1(%esi), %eax
+; X86: movl    Lalloc_func$frame_escape_1(%esi), %eax
 ; X86: movl    %eax, 4(%esp)
 ; X86: movl    $_str, (%esp)
 ; X86: calll   _printf
-; X86: movl    $42, _Lalloc_func$frame_escape_1(%esi)
+; X86: movl    $42, Lalloc_func$frame_escape_1(%esi)
 ; X86: addl    $8, %esp
 ; X86: popl    %esi
 ; X86: retl
