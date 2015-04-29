@@ -618,9 +618,7 @@ ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
 }
 
 void ListInit::Profile(FoldingSetNodeID &ID) const {
-  ListRecTy *ListType = dyn_cast<ListRecTy>(getType());
-  assert(ListType && "Bad type for ListInit!");
-  RecTy *EltTy = ListType->getElementType();
+  RecTy *EltTy = cast<ListRecTy>(getType())->getElementType();
 
   ProfileListInit(ID, Values, EltTy);
 }
@@ -697,14 +695,10 @@ Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   }
 
   if (Resolved != this) {
-    TypedInit *Typed = dyn_cast<TypedInit>(Resolved);
-    assert(Typed && "Expected typed init for list reference");
-    if (Typed) {
-      Init *New = Typed->resolveListElementReference(R, IRV, Elt);
-      if (New)
-        return New;
-      return VarListElementInit::get(Typed, Elt);
-    }
+    TypedInit *Typed = cast<TypedInit>(Resolved);
+    if (Init *New = Typed->resolveListElementReference(R, IRV, Elt))
+      return New;
+    return VarListElementInit::get(Typed, Elt);
   }
 
   return nullptr;
@@ -1301,8 +1295,7 @@ VarInit *VarInit::get(Init *VN, RecTy *T) {
 }
 
 const std::string &VarInit::getName() const {
-  StringInit *NameString = dyn_cast<StringInit>(getNameInit());
-  assert(NameString && "VarInit name is not a string!");
+  StringInit *NameString = cast<StringInit>(getNameInit());
   return NameString->getValue();
 }
 
@@ -1322,8 +1315,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   assert(RV && "Reference to a non-existent variable?");
   ListInit *LI = dyn_cast<ListInit>(RV->getValue());
   if (!LI) {
-    TypedInit *VI = dyn_cast<TypedInit>(RV->getValue());
-    assert(VI && "Invalid list element!");
+    TypedInit *VI = cast<TypedInit>(RV->getValue());
     return VarListElementInit::get(VI, Elt);
   }
 
@@ -1618,9 +1610,7 @@ RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
 }
 
 const std::string &RecordVal::getName() const {
-  StringInit *NameString = dyn_cast<StringInit>(Name);
-  assert(NameString && "RecordVal name is not a string!");
-  return NameString->getValue();
+  return cast<StringInit>(Name)->getValue();
 }
 
 void RecordVal::dump() const { errs() << *this; }
@@ -1648,8 +1638,7 @@ void Record::init() {
 
 void Record::checkName() {
   // Ensure the record name has string type.
-  const TypedInit *TypedName = dyn_cast<const TypedInit>(Name);
-  assert(TypedName && "Record name is not typed!");
+  const TypedInit *TypedName = cast<const TypedInit>(Name);
   RecTy *Type = TypedName->getType();
   if (!isa<StringRecTy>(Type))
     PrintFatalError(getLoc(), "Record name is not a string!");
@@ -1666,9 +1655,7 @@ DefInit *Record::getDefInit() {
 }
 
 const std::string &Record::getName() const {
-  const StringInit *NameString = dyn_cast<StringInit>(Name);
-  assert(NameString && "Record name is not a string!");
-  return NameString->getValue();
+  return cast<StringInit>(Name)->getValue();
 }
 
 void Record::setName(Init *NewName) {
