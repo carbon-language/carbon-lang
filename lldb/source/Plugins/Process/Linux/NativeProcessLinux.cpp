@@ -345,19 +345,19 @@ namespace
     // NativeProcessLinux::WriteMemory.  This enables mutual recursion between these
     // functions without needed to go thru the thread funnel.
 
-    lldb::addr_t
-    DoReadMemory (
+    size_t
+    DoReadMemory(
         lldb::pid_t pid,
         lldb::addr_t vm_addr,
         void *buf,
-        lldb::addr_t size,
+        size_t size,
         Error &error)
     {
         // ptrace word size is determined by the host, not the child
         static const unsigned word_size = sizeof(void*);
         unsigned char *dst = static_cast<unsigned char*>(buf);
-        lldb::addr_t bytes_read;
-        lldb::addr_t remainder;
+        size_t bytes_read;
+        size_t remainder;
         long data;
 
         Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
@@ -407,19 +407,19 @@ namespace
         return bytes_read;
     }
 
-    lldb::addr_t
+    size_t
     DoWriteMemory(
         lldb::pid_t pid,
         lldb::addr_t vm_addr,
         const void *buf,
-        lldb::addr_t size,
+        size_t size,
         Error &error)
     {
         // ptrace word size is determined by the host, not the child
         static const unsigned word_size = sizeof(void*);
         const unsigned char *src = static_cast<const unsigned char*>(buf);
-        lldb::addr_t bytes_written = 0;
-        lldb::addr_t remainder;
+        size_t bytes_written = 0;
+        size_t remainder;
 
         Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
         if (log)
@@ -526,11 +526,11 @@ namespace
     class ReadOperation : public Operation
     {
     public:
-        ReadOperation (
+        ReadOperation(
             lldb::addr_t addr,
             void *buff,
-            lldb::addr_t size,
-            lldb::addr_t &result) :
+            size_t size,
+            size_t &result) :
             Operation (),
             m_addr (addr),
             m_buff (buff),
@@ -544,8 +544,8 @@ namespace
     private:
         lldb::addr_t m_addr;
         void *m_buff;
-        lldb::addr_t m_size;
-        lldb::addr_t &m_result;
+        size_t m_size;
+        size_t &m_result;
     };
 
     void
@@ -560,11 +560,11 @@ namespace
     class WriteOperation : public Operation
     {
     public:
-        WriteOperation (
+        WriteOperation(
             lldb::addr_t addr,
             const void *buff,
-            lldb::addr_t size,
-            lldb::addr_t &result) :
+            size_t size,
+            size_t &result) :
             Operation (),
             m_addr (addr),
             m_buff (buff),
@@ -578,8 +578,8 @@ namespace
     private:
         lldb::addr_t m_addr;
         const void *m_buff;
-        lldb::addr_t m_size;
-        lldb::addr_t &m_result;
+        size_t m_size;
+        size_t &m_result;
     };
 
     void
@@ -2825,7 +2825,7 @@ ReadMemoryCallback (EmulateInstruction *instruction,
 {
     EmulatorBaton* emulator_baton = static_cast<EmulatorBaton*>(baton);
 
-    lldb::addr_t bytes_read;
+    size_t bytes_read;
     emulator_baton->m_process->ReadMemory(addr, dst, length, bytes_read);
     return bytes_read;
 }
@@ -3472,10 +3472,7 @@ NativeProcessLinux::DoStopIDBumped (uint32_t newBumpId)
 }
 
 Error
-NativeProcessLinux::AllocateMemory (
-    lldb::addr_t size,
-    uint32_t permissions,
-    lldb::addr_t &addr)
+NativeProcessLinux::AllocateMemory(size_t size, uint32_t permissions, lldb::addr_t &addr)
 {
     // FIXME implementing this requires the equivalent of
     // InferiorCallPOSIX::InferiorCallMmap, which depends on
@@ -3837,7 +3834,7 @@ NativeProcessLinux::GetCrashReasonForSIGBUS(const siginfo_t *info)
 #endif
 
 Error
-NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, lldb::addr_t size, lldb::addr_t &bytes_read)
+NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read)
 {
     ReadOperation op(addr, buf, size, bytes_read);
     m_monitor_up->DoOperation(&op);
@@ -3845,7 +3842,15 @@ NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, lldb::addr_t size,
 }
 
 Error
-NativeProcessLinux::WriteMemory (lldb::addr_t addr, const void *buf, lldb::addr_t size, lldb::addr_t &bytes_written)
+NativeProcessLinux::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read)
+{
+    Error error = ReadMemory(addr, buf, size, bytes_read);
+    if (error.Fail()) return error;
+    return m_breakpoint_list.RemoveTrapsFromBuffer(addr, buf, size);
+}
+
+Error
+NativeProcessLinux::WriteMemory(lldb::addr_t addr, const void *buf, size_t size, size_t &bytes_written)
 {
     WriteOperation op(addr, buf, size, bytes_written);
     m_monitor_up->DoOperation(&op);
@@ -4182,11 +4187,11 @@ NativeProcessLinux::FixupBreakpointPCAsNeeded (NativeThreadProtocolSP &thread_sp
     // First try probing for a breakpoint at a software breakpoint location: PC - breakpoint size.
     const lldb::addr_t initial_pc_addr = context_sp->GetPC ();
     lldb::addr_t breakpoint_addr = initial_pc_addr;
-    if (breakpoint_size > static_cast<lldb::addr_t> (0))
+    if (breakpoint_size > 0)
     {
         // Do not allow breakpoint probe to wrap around.
-        if (breakpoint_addr >= static_cast<lldb::addr_t> (breakpoint_size))
-            breakpoint_addr -= static_cast<lldb::addr_t> (breakpoint_size);
+        if (breakpoint_addr >= breakpoint_size)
+            breakpoint_addr -= breakpoint_size;
     }
 
     // Check if we stopped because of a breakpoint.

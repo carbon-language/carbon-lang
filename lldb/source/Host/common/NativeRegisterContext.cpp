@@ -338,7 +338,7 @@ Error
 NativeRegisterContext::ReadRegisterValueFromMemory (
     const RegisterInfo *reg_info,
     lldb::addr_t src_addr,
-    lldb::addr_t src_len,
+    size_t src_len,
     RegisterValue &reg_value)
 {
     Error error;
@@ -371,7 +371,7 @@ NativeRegisterContext::ReadRegisterValueFromMemory (
         return error;
     }
 
-    const lldb::addr_t dst_len = reg_info->byte_size;
+    const size_t dst_len = reg_info->byte_size;
 
     if (src_len > dst_len)
     {
@@ -389,7 +389,7 @@ NativeRegisterContext::ReadRegisterValueFromMemory (
     uint8_t src[RegisterValue::kMaxRegisterByteSize];
 
     // Read the memory
-    lldb::addr_t bytes_read;
+    size_t bytes_read;
     error = process_sp->ReadMemory (src_addr, src, src_len, bytes_read);
     if (error.Fail ())
         return error;
@@ -428,7 +428,7 @@ Error
 NativeRegisterContext::WriteRegisterValueToMemory (
     const RegisterInfo *reg_info,
     lldb::addr_t dst_addr,
-    lldb::addr_t dst_len,
+    size_t dst_len,
     const RegisterValue &reg_value)
 {
     
@@ -447,7 +447,7 @@ NativeRegisterContext::WriteRegisterValueToMemory (
         if (!process_sp->GetByteOrder (byte_order))
             return Error ("NativeProcessProtocol::GetByteOrder () failed");
 
-        const lldb::addr_t bytes_copied = reg_value.GetAsMemoryData (
+        const size_t bytes_copied = reg_value.GetAsMemoryData (
             reg_info,
             dst,
             dst_len,
@@ -462,8 +462,8 @@ NativeRegisterContext::WriteRegisterValueToMemory (
             }
             else
             {
-                lldb::addr_t bytes_written;
-                error = process_sp->WriteMemory (dst_addr, dst, bytes_copied, bytes_written);
+                size_t bytes_written;
+                error = process_sp->WriteMemory(dst_addr, dst, bytes_copied, bytes_written);
                 if (error.Fail ())
                     return error;
 

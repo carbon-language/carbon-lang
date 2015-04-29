@@ -1846,8 +1846,8 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
 
 
     // Retrieve the process memory.
-    lldb::addr_t bytes_read = 0;
-    Error error = m_debugged_process_sp->ReadMemory (read_addr, &buf[0], byte_count, bytes_read);
+    size_t bytes_read = 0;
+    Error error = m_debugged_process_sp->ReadMemoryWithoutTrap(read_addr, &buf[0], byte_count, bytes_read);
     if (error.Fail ())
     {
         if (log)
@@ -1863,7 +1863,7 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
     }
 
     StreamGDBRemote response;
-    for (lldb::addr_t i = 0; i < bytes_read; ++i)
+    for (size_t i = 0; i < bytes_read; ++i)
         response.PutHex8(buf[i]);
 
     return SendPacketNoLock(response.GetData(), response.GetSize());
@@ -1917,7 +1917,7 @@ GDBRemoteCommunicationServerLLGS::Handle_M (StringExtractorGDBRemote &packet)
 
     // Convert the hex memory write contents to bytes.
     StreamGDBRemote response;
-    const uint64_t convert_count = static_cast<uint64_t> (packet.GetHexBytes (&buf[0], byte_count, 0));
+    const uint64_t convert_count = packet.GetHexBytes(&buf[0], byte_count, 0);
     if (convert_count != byte_count)
     {
         if (log)
@@ -1926,7 +1926,7 @@ GDBRemoteCommunicationServerLLGS::Handle_M (StringExtractorGDBRemote &packet)
     }
 
     // Write the process memory.
-    lldb::addr_t bytes_written = 0;
+    size_t bytes_written = 0;
     Error error = m_debugged_process_sp->WriteMemory (write_addr, &buf[0], byte_count, bytes_written);
     if (error.Fail ())
     {

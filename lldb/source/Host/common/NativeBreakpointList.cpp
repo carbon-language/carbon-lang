@@ -12,6 +12,7 @@
 #include "lldb/Core/Log.h"
 
 #include "lldb/Host/common/NativeBreakpoint.h"
+#include "lldb/Host/common/SoftwareBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -197,3 +198,24 @@ NativeBreakpointList::GetBreakpoint (lldb::addr_t addr, NativeBreakpointSP &brea
     return Error ();
 }
 
+Error
+NativeBreakpointList::RemoveTrapsFromBuffer(lldb::addr_t addr, void *buf, size_t size) const
+{
+    for (const auto &map : m_breakpoints)
+    {
+        lldb::addr_t bp_addr = map.first;
+        // Breapoint not in range, ignore
+        if (bp_addr < addr || addr + size <= bp_addr)
+            continue;
+        const auto &bp_sp = map.second;
+        // Not software breakpoint, ignore
+        if (!bp_sp->IsSoftwareBreakpoint())
+            continue;
+        auto software_bp_sp = std::static_pointer_cast<SoftwareBreakpoint>(bp_sp);
+        auto opcode_addr = static_cast<char *>(buf) + bp_addr - addr;
+        auto saved_opcodes = software_bp_sp->m_saved_opcodes;
+        auto opcode_size = software_bp_sp->m_opcode_size;
+        ::memcpy(opcode_addr, saved_opcodes, opcode_size);
+    }
+    return Error();
+}

@@ -17,6 +17,8 @@ namespace lldb_private
 {
     class SoftwareBreakpoint : public NativeBreakpoint
     {
+        friend class NativeBreakpointList;
+
     public:
         static Error
         CreateSoftwareBreakpoint (NativeProcessProtocol &process, lldb::addr_t addr, size_t size_hint, NativeBreakpointSP &breakpoint_spn);

@@ -90,13 +90,16 @@ namespace lldb_private
         GetMemoryRegionInfo (lldb::addr_t load_addr, MemoryRegionInfo &range_info);
 
         virtual Error
-        ReadMemory (lldb::addr_t addr, void *buf, lldb::addr_t size, lldb::addr_t &bytes_read) = 0;
+        ReadMemory(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read) = 0;
 
         virtual Error
-        WriteMemory (lldb::addr_t addr, const void *buf, lldb::addr_t size, lldb::addr_t &bytes_written) = 0;
+        ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read) = 0;
 
         virtual Error
-        AllocateMemory (lldb::addr_t size, uint32_t permissions, lldb::addr_t &addr) = 0;
+        WriteMemory(lldb::addr_t addr, const void *buf, size_t size, size_t &bytes_written) = 0;
+
+        virtual Error
+        AllocateMemory(size_t size, uint32_t permissions, lldb::addr_t &addr) = 0;
 
         virtual Error
         DeallocateMemory (lldb::addr_t addr) = 0;

@@ -42,6 +42,9 @@ namespace lldb_private
         Error
         GetBreakpoint (lldb::addr_t addr, NativeBreakpointSP &breakpoint_sp);
 
+        Error
+        RemoveTrapsFromBuffer(lldb::addr_t addr, void *buf, size_t size) const;
+
     private:
         typedef std::map<lldb::addr_t, NativeBreakpointSP> BreakpointMap;
 
