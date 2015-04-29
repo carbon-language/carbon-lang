@@ -4,20 +4,20 @@
 // type info at all.
 // RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -g %s -o - -gline-tables-only | FileCheck %s -check-prefix LINES-ONLY
 
-// LINES-ONLY-NOT: !MDCompositeType(tag: DW_TAG_structure_type
+// LINES-ONLY-NOT: !DICompositeType(tag: DW_TAG_structure_type
 
 template <typename T>
 struct a {
 };
 extern template class a<int>;
-// CHECK-NOT: MDCompositeType(tag: DW_TAG_structure_type, name: "a<int>"
+// CHECK-NOT: DICompositeType(tag: DW_TAG_structure_type, name: "a<int>"
 
 template <typename T>
 struct b {
 };
 extern template class b<int>;
 b<int> bi;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "b<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "b<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -27,7 +27,7 @@ struct c {
 };
 extern template class c<int>;
 c<int> ci;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "c<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "c<int>"
 // CHECK-SAME: DIFlagFwdDecl
 
 template <typename T>
@@ -36,7 +36,7 @@ struct d {
 };
 extern template class d<int>;
 d<int> di;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "d<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "d<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -52,7 +52,7 @@ e<int> ei;
 // There's no guarantee that the out of line definition will appear before the
 // explicit template instantiation definition, so conservatively emit the type
 // definition here.
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "e<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "e<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -65,7 +65,7 @@ template <typename T>
 void f<T>::g() {
 }
 f<int> fi;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "f<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "f<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -77,7 +77,7 @@ template <>
 void g<int>::f();
 extern template class g<int>;
 g<int> gi;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "g<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "g<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -85,7 +85,7 @@ template <typename T>
 struct h {
 };
 template class h<int>;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "h<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "h<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -96,7 +96,7 @@ struct i {
 template<> void i<int>::f();
 extern template class i<int>;
 i<int> ii;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "i<int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "i<int>"
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: ){{$}}
 
@@ -105,7 +105,7 @@ struct j {
 };
 extern template class j<int>;
 j<int> jj;
-// CHECK: MDCompositeType(tag: DW_TAG_structure_type, name: "j<int, int>"
+// CHECK: DICompositeType(tag: DW_TAG_structure_type, name: "j<int, int>"
 
 template <typename T>
 struct k {
@@ -113,4 +113,4 @@ struct k {
 template <>
 struct k<int>;
 template struct k<int>;
-// CHECK-NOT: !MDCompositeType(tag: DW_TAG_structure_type, name: "k<int>"
+// CHECK-NOT: !DICompositeType(tag: DW_TAG_structure_type, name: "k<int>"

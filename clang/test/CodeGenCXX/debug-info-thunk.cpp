@@ -14,7 +14,7 @@ struct C : A, B {
 
 void C::f() { }
 
-// CHECK: !MDSubprogram(linkageName: "_ZThn{{[48]}}_N1C1fEv"
+// CHECK: !DISubprogram(linkageName: "_ZThn{{[48]}}_N1C1fEv"
 // CHECK-SAME:          line: 15
 // CHECK-SAME:          isDefinition: true
 // CHECK-SAME:          ){{$}}

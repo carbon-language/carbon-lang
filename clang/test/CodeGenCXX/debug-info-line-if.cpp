@@ -48,8 +48,8 @@ int main() {
   // CHECK: br label
   // CHECK: br label {{.*}}, !dbg [[DBG4:!.*]]
 
-  // CHECK: [[DBG1]] = !MDLocation(line: 100, scope: !{{.*}})
-  // CHECK: [[DBG2]] = !MDLocation(line: 200, scope: !{{.*}})
-  // CHECK: [[DBG3]] = !MDLocation(line: 300, scope: !{{.*}})
-  // CHECK: [[DBG4]] = !MDLocation(line: 401, scope: !{{.*}})
+  // CHECK: [[DBG1]] = !DILocation(line: 100, scope: !{{.*}})
+  // CHECK: [[DBG2]] = !DILocation(line: 200, scope: !{{.*}})
+  // CHECK: [[DBG3]] = !DILocation(line: 300, scope: !{{.*}})
+  // CHECK: [[DBG4]] = !DILocation(line: 401, scope: !{{.*}})
 }

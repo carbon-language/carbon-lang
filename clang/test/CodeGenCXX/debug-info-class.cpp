@@ -90,63 +90,63 @@ int main(int argc, char **argv) {
 // CHECK: invoke {{.+}} @_ZN1BD1Ev(%class.B* %b)
 // CHECK-NEXT: unwind label %{{.+}}, !dbg ![[EXCEPTLOC:.*]]
 // CHECK: store i32 0, i32* %{{.+}}, !dbg ![[RETLOC:.*]]
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "foo"
-// CHECK: !MDCompositeType(tag: DW_TAG_class_type, name: "bar"
-// CHECK: !MDCompositeType(tag: DW_TAG_union_type, name: "baz"
-// CHECK: !MDCompositeType(tag: DW_TAG_class_type, name: "B"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "foo"
+// CHECK: !DICompositeType(tag: DW_TAG_class_type, name: "bar"
+// CHECK: !DICompositeType(tag: DW_TAG_union_type, name: "baz"
+// CHECK: !DICompositeType(tag: DW_TAG_class_type, name: "B"
 // CHECK-NOT:              DIFlagFwdDecl
 // CHECK-SAME:             ){{$}}
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "_vptr$B",
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "_vptr$B",
 // CHECK-SAME:           DIFlagArtificial
 
-// CHECK: ![[INT:[0-9]+]] = !MDBasicType(name: "int"
+// CHECK: ![[INT:[0-9]+]] = !DIBasicType(name: "int"
 
-// CHECK: [[C:![0-9]*]] = !MDCompositeType(tag: DW_TAG_structure_type, name: "C",
+// CHECK: [[C:![0-9]*]] = !DICompositeType(tag: DW_TAG_structure_type, name: "C",
 // CHECK-NOT:                              DIFlagFwdDecl
 // CHECK-SAME:                             elements: [[C_MEM:![0-9]*]]
 // CHECK-SAME:                             vtableHolder: !"_ZTS1C"
 // CHECK-SAME:                             identifier: "_ZTS1C"
 // CHECK: [[C_MEM]] = !{[[C_VPTR:![0-9]*]], [[C_S:![0-9]*]], [[C_DTOR:![0-9]*]]}
-// CHECK: [[C_VPTR]] = !MDDerivedType(tag: DW_TAG_member, name: "_vptr$C"
+// CHECK: [[C_VPTR]] = !DIDerivedType(tag: DW_TAG_member, name: "_vptr$C"
 // CHECK-SAME:                        DIFlagArtificial
-// CHECK: [[C_S]] = !MDDerivedType(tag: DW_TAG_member, name: "s"
+// CHECK: [[C_S]] = !DIDerivedType(tag: DW_TAG_member, name: "s"
 // CHECK-SAME:                     baseType: ![[INT]]
 // CHECK-SAME:                     DIFlagStaticMember
-// CHECK: [[C_DTOR]] = !MDSubprogram(name: "~C"
+// CHECK: [[C_DTOR]] = !DISubprogram(name: "~C"
 
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "D"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "D"
 // CHECK-SAME:             DIFlagFwdDecl
 // CHECK-SAME:             identifier: "_ZTS1D"
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "E"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "E"
 // CHECK-SAME:             DIFlagFwdDecl
 // CHECK-SAME:             identifier: "_ZTS1E"
-// CHECK: [[F:![0-9]*]] = !MDCompositeType(tag: DW_TAG_structure_type, name: "F"
+// CHECK: [[F:![0-9]*]] = !DICompositeType(tag: DW_TAG_structure_type, name: "F"
 // CHECK-SAME:                             DIFlagFwdDecl
 // CHECK-SAME:                             identifier: "_ZTS1F"
 
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "G"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "G"
 // CHECK-SAME:             DIFlagFwdDecl
 // CHECK-SAME:             identifier: "_ZTS1G"
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "inner"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "inner"
 // CHECK: line: 50
 // CHECK-NOT: DIFlagFwdDecl
 // CHECK-SAME: elements: [[G_INNER_MEM:![0-9]*]]
 // CHECK-SAME: identifier: "_ZTSN1G5innerE"
 // CHECK: [[G_INNER_MEM]] = !{[[G_INNER_I:![0-9]*]]}
-// CHECK: [[G_INNER_I]] = !MDDerivedType(tag: DW_TAG_member, name: "j"
+// CHECK: [[G_INNER_I]] = !DIDerivedType(tag: DW_TAG_member, name: "j"
 // CHECK-SAME:                           baseType: ![[INT]]
 
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "A"
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "HdrSize"
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "I"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "A"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "HdrSize"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "I"
 // CHECK-NOT:              DIFlagFwdDecl
 // CHECK-SAME:             ){{$}}
 //
-// CHECK: !MDSubprogram(name: "func",{{.*}} scope: !"_ZTS1D"
+// CHECK: !DISubprogram(name: "func",{{.*}} scope: !"_ZTS1D"
 // CHECK-SAME:          isDefinition: true
 // CHECK-SAME:          declaration: [[D_FUNC_DECL:![0-9]*]]
-// CHECK: [[D_FUNC_DECL]] = !MDSubprogram(name: "func",{{.*}} scope: !"_ZTS1D"
+// CHECK: [[D_FUNC_DECL]] = !DISubprogram(name: "func",{{.*}} scope: !"_ZTS1D"
 // CHECK-SAME:                            isDefinition: false
 
-// CHECK: ![[EXCEPTLOC]] = !MDLocation(line: 84,
-// CHECK: ![[RETLOC]] = !MDLocation(line: 83,
+// CHECK: ![[EXCEPTLOC]] = !DILocation(line: 84,
+// CHECK: ![[RETLOC]] = !DILocation(line: 83,

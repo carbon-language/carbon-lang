@@ -7,5 +7,5 @@ typedef int MyType;
 
 MyType a;
 
-// CHECK: !MDDerivedType(tag: DW_TAG_typedef, name: "MyType", file: ![[HEADER:[0-9]+]], line: 2,
-// CHECK: ![[HEADER]] = !MDFile(filename: "b.h",
+// CHECK: !DIDerivedType(tag: DW_TAG_typedef, name: "MyType", file: ![[HEADER:[0-9]+]], line: 2,
+// CHECK: ![[HEADER]] = !DIFile(filename: "b.h",

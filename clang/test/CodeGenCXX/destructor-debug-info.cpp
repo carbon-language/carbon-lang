@@ -19,4 +19,4 @@ void foo() {
   }
 }
 // Check there is a line number entry for line 19 where b1 is destructed.
-// CHECK: !MDLocation(line: 19,
+// CHECK: !DILocation(line: 19,

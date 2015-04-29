@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -emit-llvm -g < %s | FileCheck %s
 // Test to check number of lexical scope identified in debug info.
-// CHECK: !MDLexicalBlock(
-// CHECK: !MDLexicalBlock(
-// CHECK: !MDLexicalBlock(
-// CHECK: !MDLexicalBlock(
+// CHECK: !DILexicalBlock(
+// CHECK: !DILexicalBlock(
+// CHECK: !DILexicalBlock(
+// CHECK: !DILexicalBlock(
 
 extern int bar();
 extern void foobar();

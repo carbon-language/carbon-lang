@@ -13,4 +13,4 @@ void func(char c, char* d)
 }
 
 // CHECK: ret void, !dbg [[LINE:.*]]
-// CHECK: [[LINE]] = !MDLocation(line: 6,
+// CHECK: [[LINE]] = !DILocation(line: 6,

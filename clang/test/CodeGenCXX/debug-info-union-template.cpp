@@ -10,8 +10,8 @@ namespace PR15637 {
   Value<float> f;
 }
 
-// CHECK: !MDCompositeType(tag: DW_TAG_union_type, name: "Value<float>",
+// CHECK: !DICompositeType(tag: DW_TAG_union_type, name: "Value<float>",
 // CHECK-SAME:             templateParams: [[TTPARAM:![0-9]+]]
 // CHECK-SAME:             identifier: "_ZTSN7PR156375ValueIfEE"
 // CHECK: [[TTPARAM]] = !{[[PARAMS:.*]]}
-// CHECK: [[PARAMS]] = !MDTemplateTypeParameter(name: "T"
+// CHECK: [[PARAMS]] = !DITemplateTypeParameter(name: "T"

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -S -emit-llvm -g %s -o - | FileCheck %s
 
 @interface I1
-// CHECK: !MDObjCProperty(name: "p1"
+// CHECK: !DIObjCProperty(name: "p1"
 // CHECK-SAME:            line: [[@LINE+2]]
 // CHECK-SAME:            attributes: 2316
 @property int p1;

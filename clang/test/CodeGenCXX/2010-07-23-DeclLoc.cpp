@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
 // Require the template function declaration refer to the correct filename.
 // First, locate the function decl in metadata, and pluck out the file handle:
-// CHECK: !MDSubprogram(name: "extract_dwarf_data_from_header
+// CHECK: !DISubprogram(name: "extract_dwarf_data_from_header
 // CHECK-SAME:          file: [[FILE:![0-9]+]]
 // Second: Require that filehandle refer to the correct filename:
-// CHECK: [[FILE]] = !MDFile(filename: "decl_should_be_here.hpp"
+// CHECK: [[FILE]] = !DIFile(filename: "decl_should_be_here.hpp"
 typedef long unsigned int __darwin_size_t;
 typedef __darwin_size_t size_t;
 typedef unsigned char uint8_t;

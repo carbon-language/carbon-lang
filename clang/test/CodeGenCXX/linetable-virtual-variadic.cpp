@@ -17,7 +17,7 @@ void Derived::VariadicFunction(...) { }
 //
 // CHECK: !llvm.dbg.cu = !{![[CU:[0-9]+]]}
 //
-// CHECK: ![[CU]] = !MDCompileUnit({{.*}} subprograms: ![[SPs:[0-9]+]]
+// CHECK: ![[CU]] = !DICompileUnit({{.*}} subprograms: ![[SPs:[0-9]+]]
 // CHECK: ![[SPs]] = !{![[SP:[0-9]+]]}
-// CHECK: ![[SP]] = !MDSubprogram(name: "VariadicFunction",{{.*}} function: {{[^:]+}} @_ZN7Derived16VariadicFunctionEz
-// CHECK: ![[LOC]] = !MDLocation({{.*}}scope: ![[SP]])
+// CHECK: ![[SP]] = !DISubprogram(name: "VariadicFunction",{{.*}} function: {{[^:]+}} @_ZN7Derived16VariadicFunctionEz
+// CHECK: ![[LOC]] = !DILocation({{.*}}scope: ![[SP]])

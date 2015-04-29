@@ -10,9 +10,9 @@ void test() {
   __block A a;
 }
 
-// CHECK: !MDSubprogram(name: "__Block_byref_object_copy_",
+// CHECK: !DISubprogram(name: "__Block_byref_object_copy_",
 // CHECK-SAME:          line: 10,
 // CHECK-SAME:          isLocal: true, isDefinition: true
-// CHECK: !MDSubprogram(name: "__Block_byref_object_dispose_",
+// CHECK: !DISubprogram(name: "__Block_byref_object_dispose_",
 // CHECK-SAME:          line: 10,
 // CHECK-SAME:          isLocal: true, isDefinition: true

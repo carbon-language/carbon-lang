@@ -7,7 +7,7 @@
 
 @implementation Foo
 -(int) barMethod {
-  // CHECK: !MDSubprogram({{.*}}line: [[@LINE-1]]
+  // CHECK: !DISubprogram({{.*}}line: [[@LINE-1]]
   int i = 0;
   int j = 1;
   int k = 1;

@@ -10,12 +10,12 @@ int f1() {
   return ns::cnst + ns::cnst;
 }
 
-// CHECK: !MDCompileUnit(
+// CHECK: !DICompileUnit(
 // CHECK-SAME:           globals: [[GLOBALS:![0-9]*]]
 
 // CHECK: [[GLOBALS]] = !{[[CNST:![0-9]*]]}
 
-// CHECK: [[CNST]] = !MDGlobalVariable(name: "cnst",
+// CHECK: [[CNST]] = !DIGlobalVariable(name: "cnst",
 // CHECK-SAME:                         scope: [[NS:![0-9]*]]
-// CHECK: [[NS]] = !MDNamespace(name: "ns"
+// CHECK: [[NS]] = !DINamespace(name: "ns"
 

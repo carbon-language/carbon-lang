@@ -10,7 +10,7 @@
 @implementation Foo
 - (void) Bar: (int) n, ...
 {
-  // CHECK: !MDSubroutineType(types: ![[NUM:[0-9]+]])
+  // CHECK: !DISubroutineType(types: ![[NUM:[0-9]+]])
   // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}
 }
 @end

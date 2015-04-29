@@ -3,7 +3,7 @@
 extern "C" void test_name1() {}
 void test_name2() {}
 
-// CHECK: !MDSubprogram(name: "test_name1",
+// CHECK: !DISubprogram(name: "test_name1",
 // CHECK-NOT:           linkageName:
 // CHECK-SAME:          ){{$}}
-// CHECK: !MDSubprogram(name: "test_name2", linkageName: "_Z10test_name2v"
+// CHECK: !DISubprogram(name: "test_name2", linkageName: "_Z10test_name2v"

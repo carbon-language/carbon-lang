@@ -34,5 +34,5 @@ int main(void) {}
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: store i32 %[[C2]], i32* @_ZL1k, align 4, !dbg
 // 
-// CHECK: ![[LINE]] = !MDLocation(line: 13,
-// CHECK: ![[LINE2]] = !MDLocation(line: 15,
+// CHECK: ![[LINE]] = !DILocation(line: 13,
+// CHECK: ![[LINE2]] = !DILocation(line: 15,

@@ -32,14 +32,14 @@ __attribute((objc_root_class)) @interface NSObject {
 }
 @end
 
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "foo"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "foo"
 // CHECK-SAME:           line: 14
 // CHECK-SAME:           baseType: ![[INT:[0-9]+]]
 // CHECK-SAME:           size: 32, align: 32,
 // CHECK-NOT:            offset:
 // CHECK-SAME:           flags: DIFlagProtected
-// CHECK: ![[INT]] = !MDBasicType(name: "int"
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "bar"
+// CHECK: ![[INT]] = !DIBasicType(name: "int"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "bar"
 // CHECK-SAME:           line: 27
 // CHECK-SAME:           baseType: ![[INT:[0-9]+]]
 // CHECK-SAME:           size: 32, align: 32,

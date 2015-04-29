@@ -12,10 +12,10 @@
 // CHECK-NEXT: cleanup, !dbg ![[DBG3:.*]]
 // CHECK-DAG: ![[CURRENT_ADDR]] = {{.*}}name: "current_address"
 // CHECK-DAG: ![[FOUND_IT]] = {{.*}}name: "found_it"
-// CHECK-DAG: ![[DBG1]] = !MDLocation(line: 256,
-// CHECK-DAG: ![[DBG2]] = !MDLocation(line: 257,
-// CHECK-DAG: ![[DBG3]] = !MDLocation(line: 268,
-// CHECK-DAG: ![[DBG4]] = !MDLocation(line: 256,
+// CHECK-DAG: ![[DBG1]] = !DILocation(line: 256,
+// CHECK-DAG: ![[DBG2]] = !DILocation(line: 257,
+// CHECK-DAG: ![[DBG3]] = !DILocation(line: 268,
+// CHECK-DAG: ![[DBG4]] = !DILocation(line: 256,
 typedef unsigned long long uint64_t;
 template<class _Tp> class shared_ptr {
 public:

@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -emit-llvm -fblocks -g -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 %s -o - | FileCheck %s
 extern void foo(void(^)(void));
 
-// CHECK: !MDSubprogram(name: "__destroy_helper_block_"
+// CHECK: !DISubprogram(name: "__destroy_helper_block_"
 
 @interface NSObject {
   struct objc_object *isa;

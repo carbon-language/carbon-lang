@@ -5,7 +5,7 @@
 // Ensure we emit the names of explicit/renamed accessors even if they
 // are defined later in the implementation section.
 //
-// CHECK:  !MDObjCProperty(name: "blah"
+// CHECK:  !DIObjCProperty(name: "blah"
 // CHECK-SAME:             getter: "isBlah"
 
 @class NSString;

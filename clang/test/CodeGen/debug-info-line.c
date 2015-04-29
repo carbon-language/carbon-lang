@@ -8,4 +8,4 @@ int f1(int a, int b) {
          b;
 }
 
-// CHECK: [[DBG_F1]] = !MDLocation(line: 100,
+// CHECK: [[DBG_F1]] = !DILocation(line: 100,

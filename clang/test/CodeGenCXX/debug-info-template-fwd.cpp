@@ -2,7 +2,7 @@
 // This test is for a crash when emitting debug info for not-yet-completed
 // types.
 // Test that we don't actually emit a forward decl for the offending class:
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived<int>"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "Derived<int>"
 // CHECK-NOT:              DIFlagFwdDecl
 // CHECK-SAME:             ){{$}}
 // rdar://problem/15931354

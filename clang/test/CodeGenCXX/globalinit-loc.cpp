@@ -6,11 +6,11 @@
 //
 // CHECK: define internal void @_GLOBAL__sub_I_globalinit_loc.cpp
 // CHECK: !dbg ![[DBG:.*]]
-// CHECK: !MDSubprogram(linkageName: "_GLOBAL__sub_I_globalinit_loc.cpp"
+// CHECK: !DISubprogram(linkageName: "_GLOBAL__sub_I_globalinit_loc.cpp"
 // CHECK-NOT:           line:
 // CHECK-SAME:          isLocal: true
 // CHECK-SAME:          isDefinition: true
-// CHECK: ![[DBG]] = !MDLocation(line: 0,
+// CHECK: ![[DBG]] = !DILocation(line: 0,
 # 99 "someheader.h"
 class A {
 public:

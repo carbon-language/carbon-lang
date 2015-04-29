@@ -6,10 +6,10 @@
 // This happens to be the order the members are emitted in... I'm assuming it's
 // not meaningful/important, so if something causes the order to change, feel
 // free to update the test to reflect the new order.
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "a"
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "d"
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "c"
-// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "b"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "a"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "d"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "c"
+// CHECK: !DIDerivedType(tag: DW_TAG_member, name: "b"
 
 @interface I
 {

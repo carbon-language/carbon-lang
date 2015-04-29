@@ -25,5 +25,5 @@ int test(int a, int b) {
 
   return res;
 // CHECK: ret i32 %{{.*}}, !dbg [[DI:![0-9]+]]
-// CHECK: [[DI]] = !MDLocation(line: [[@LINE-2]]
+// CHECK: [[DI]] = !DILocation(line: [[@LINE-2]]
 }

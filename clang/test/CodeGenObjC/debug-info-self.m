@@ -14,15 +14,15 @@
 }
 @end
 
-// CHECK: !MDLocalVariable(tag: DW_TAG_arg_variable, name: "self", arg: 1,
+// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable, name: "self", arg: 1,
 // CHECK-SAME:             scope: ![[CTOR:[0-9]+]]
 // CHECK-NOT:              line:
 // CHECK-SAME:             flags: DIFlagArtificial | DIFlagObjectPointer{{[,)]}}
-// CHECK: !MDLocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", arg: 2,
+// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", arg: 2,
 // CHECK-SAME:             scope: ![[CTOR]]
 // CHECK-NOT:              line:
 // CHECK-SAME:             flags: DIFlagArtificial{{[,)]}}
-// CHECK: !MDLocalVariable(tag: DW_TAG_arg_variable, name: "myarg", arg: 3,
+// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable, name: "myarg", arg: 3,
 // CHECK-SAME:             scope: ![[CTOR]]
 // CHECK-SAME:             line: 11
 // CHECK-NOT:              flags:

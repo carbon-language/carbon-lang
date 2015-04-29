@@ -14,9 +14,9 @@ int foo() {
   return i + j;
 }
 
-// CHECK-NOT: !MDLexicalBlock
-// CHECK: !MDLexicalBlockFile({{.*}}file: ![[MH:[0-9]+]]
-// CHECK: !MDFile(filename: "m.h"
-// CHECK: !MDLexicalBlockFile({{.*}}file: ![[MC:[0-9]+]]
-// CHECK: !MDFile(filename: "m.c"
-// CHECK-NOT: !MDLexicalBlock
+// CHECK-NOT: !DILexicalBlock
+// CHECK: !DILexicalBlockFile({{.*}}file: ![[MH:[0-9]+]]
+// CHECK: !DIFile(filename: "m.h"
+// CHECK: !DILexicalBlockFile({{.*}}file: ![[MC:[0-9]+]]
+// CHECK: !DIFile(filename: "m.c"
+// CHECK-NOT: !DILexicalBlock

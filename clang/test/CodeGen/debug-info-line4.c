@@ -8,4 +8,4 @@ int foo(int a, int b) { int c = a + b;
 }
 
 // Without column information we wouldn't change locations for b.
-// CHECK:  !MDLocation(line: 4, column: 20,
+// CHECK:  !DILocation(line: 4, column: 20,

@@ -164,7 +164,7 @@ void parallel_single() {
   // TERM_DEBUG:     unreachable
   foo();
 }
-// TERM_DEBUG-DAG: [[DBG_LOC_START]] = !MDLocation(line: [[@LINE-12]],
-// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !MDLocation(line: [[@LINE-3]],
+// TERM_DEBUG-DAG: [[DBG_LOC_START]] = !DILocation(line: [[@LINE-12]],
+// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !DILocation(line: [[@LINE-3]],
 
 #endif

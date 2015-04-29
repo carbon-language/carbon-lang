@@ -368,9 +368,9 @@ void parallel_for(float *a) {
     a[i] += foo();
 }
 // Check source line corresponds to "#pragma omp parallel for schedule(static, 5)" above:
-// TERM_DEBUG-DAG: [[DBG_LOC_START]] = !MDLocation(line: [[@LINE-4]],
-// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !MDLocation(line: [[@LINE-16]],
-// TERM_DEBUG-DAG: [[DBG_LOC_CANCEL]] = !MDLocation(line: [[@LINE-17]],
+// TERM_DEBUG-DAG: [[DBG_LOC_START]] = !DILocation(line: [[@LINE-4]],
+// TERM_DEBUG-DAG: [[DBG_LOC_END]] = !DILocation(line: [[@LINE-16]],
+// TERM_DEBUG-DAG: [[DBG_LOC_CANCEL]] = !DILocation(line: [[@LINE-17]],
 
 #endif // HEADER
 

@@ -473,6 +473,6 @@ void parallel_simd(float *a) {
   for (unsigned i = 131071; i <= 2147483647; i += 127)
     a[i] += bar();
 }
-// TERM_DEBUG: !{{[0-9]+}} = !MDLocation(line: [[@LINE-11]],
+// TERM_DEBUG: !{{[0-9]+}} = !DILocation(line: [[@LINE-11]],
 #endif // HEADER
 

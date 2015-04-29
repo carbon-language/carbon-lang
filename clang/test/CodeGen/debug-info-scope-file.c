@@ -5,10 +5,10 @@
 
 // CHECK: ret void, !dbg [[F1_LINE:![0-9]*]]
 // CHECK: ret void, !dbg [[F2_LINE:![0-9]*]]
-// CHECK: [[F1:![0-9]*]] = !MDSubprogram(name: "f1",{{.*}} isDefinition: true
-// CHECK: [[F2:![0-9]*]] = !MDSubprogram(name: "f2",{{.*}} isDefinition: true
-// CHECK: [[F1_LINE]] = !MDLocation({{.*}}, scope: [[F1]])
-// CHECK: [[F2_LINE]] = !MDLocation({{.*}}, scope: [[F2]])
+// CHECK: [[F1:![0-9]*]] = !DISubprogram(name: "f1",{{.*}} isDefinition: true
+// CHECK: [[F2:![0-9]*]] = !DISubprogram(name: "f2",{{.*}} isDefinition: true
+// CHECK: [[F1_LINE]] = !DILocation({{.*}}, scope: [[F1]])
+// CHECK: [[F2_LINE]] = !DILocation({{.*}}, scope: [[F2]])
 
 void f1() {
 }

@@ -8,6 +8,6 @@ extern int x;
 int f() {
   int *p = &x;
 // CHECK: ret i32 %{{.*}}, !dbg [[DI:![0-9]*]]
-// CHECK: [[DI]] = !MDLocation(line: [[@LINE+1]]
+// CHECK: [[DI]] = !DILocation(line: [[@LINE+1]]
   return *p;
 }

@@ -21,8 +21,8 @@ int test_it() {
   return (c == 1);
 }
 
-// CHECK: [[FILE:.*]] = !MDFile(filename: "{{.*}}debug-info-anon-union-vars.cpp",
-// CHECK: !MDGlobalVariable(name: "c",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
-// CHECK: !MDGlobalVariable(name: "d",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
-// CHECK: !MDGlobalVariable(name: "a",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
-// CHECK: !MDGlobalVariable(name: "b",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: [[FILE:.*]] = !DIFile(filename: "{{.*}}debug-info-anon-union-vars.cpp",
+// CHECK: !DIGlobalVariable(name: "c",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !DIGlobalVariable(name: "d",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !DIGlobalVariable(name: "a",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !DIGlobalVariable(name: "b",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true

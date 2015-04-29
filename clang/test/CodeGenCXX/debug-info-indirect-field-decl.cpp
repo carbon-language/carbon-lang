@@ -7,13 +7,13 @@ template <class T, int T::*ptr> class Foo {  };
 
 struct Bar {
   int i1;
-  // CHECK: ![[INT:[0-9]+]] = !MDBasicType(name: "int"
-  // CHECK: !MDDerivedType(tag: DW_TAG_member, scope:
+  // CHECK: ![[INT:[0-9]+]] = !DIBasicType(name: "int"
+  // CHECK: !DIDerivedType(tag: DW_TAG_member, scope:
   // CHECK-SAME:           line: [[@LINE+3]]
   // CHECK-SAME:           baseType: !"_ZTSN3BarUt_E"
   // CHECK-SAME:           size: 32, align: 32, offset: 32
   union {
-    // CHECK: !MDDerivedType(tag: DW_TAG_member, name: "i2",
+    // CHECK: !DIDerivedType(tag: DW_TAG_member, name: "i2",
     // CHECK-SAME:           line: [[@LINE+5]]
     // CHECK-SAME:           baseType: ![[INT]]
     // CHECK-SAME:           size: 32, align: 32

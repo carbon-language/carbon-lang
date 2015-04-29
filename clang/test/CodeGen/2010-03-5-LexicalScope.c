@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
-// CHECK: !MDLexicalBlock(
-// CHECK: !MDLexicalBlock(
+// CHECK: !DILexicalBlock(
+// CHECK: !DILexicalBlock(
 int foo(int i) {
 	if (i) {
 		int j = 2;

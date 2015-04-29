@@ -6,11 +6,11 @@ int main() {
   return 0;
 }
 
-// CHECK: !MDGlobalVariable(name: "localstatic"
+// CHECK: !DIGlobalVariable(name: "localstatic"
 // CHECK-NOT:               linkageName:
 // CHECK-SAME:              line: 5,
 // CHECK-SAME:              variable: i32* @main.localstatic
-// CHECK: !MDGlobalVariable(name: "global"
+// CHECK: !DIGlobalVariable(name: "global"
 // CHECK-NOT:               linkageName:
 // CHECK-SAME:              line: 3,
 // CHECK-SAME:              variable: i32* @global

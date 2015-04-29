@@ -36,12 +36,12 @@ int main()
     }
 }
 // Verify that the debug type for both variables is 'id'.
-// CHECK:  ![[IDTYPE:[0-9]+]] = !MDDerivedType(tag: DW_TAG_typedef, name: "id"
+// CHECK:  ![[IDTYPE:[0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "id"
 //
-// CHECK:  !MDLocalVariable(tag: DW_TAG_arg_variable, name: "bad_carrier"
+// CHECK:  !DILocalVariable(tag: DW_TAG_arg_variable, name: "bad_carrier"
 // CHECK-NOT:               line:
 // CHECK-SAME:              type: ![[IDTYPE]]
 //
-// CHECK:  !MDLocalVariable(tag: DW_TAG_arg_variable, name: "good_carrier"
+// CHECK:  !DILocalVariable(tag: DW_TAG_arg_variable, name: "good_carrier"
 // CHECK-NOT:               line:
 // CHECK-SAME:              type: ![[IDTYPE]]

@@ -104,7 +104,7 @@ void parallel_atomic() {
   // TERM_DEBUG:     call void @__clang_call_terminate
   // TERM_DEBUG:     unreachable
 }
-// TERM_DEBUG-DAG: [[READ_LOC]] = !MDLocation(line: [[@LINE-33]],
-// TERM_DEBUG-DAG: [[WRITE_LOC]] = !MDLocation(line: [[@LINE-28]],
-// TERM_DEBUG-DAG: [[UPDATE_LOC]] = !MDLocation(line: [[@LINE-22]],
-// TERM_DEBUG-DAG: [[CAPTURE_LOC]] = !MDLocation(line: [[@LINE-16]],
+// TERM_DEBUG-DAG: [[READ_LOC]] = !DILocation(line: [[@LINE-33]],
+// TERM_DEBUG-DAG: [[WRITE_LOC]] = !DILocation(line: [[@LINE-28]],
+// TERM_DEBUG-DAG: [[UPDATE_LOC]] = !DILocation(line: [[@LINE-22]],
+// TERM_DEBUG-DAG: [[CAPTURE_LOC]] = !DILocation(line: [[@LINE-16]],

@@ -7,7 +7,7 @@
 @interface Shape : NSObject
 
 @end
-// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "Circle"
+// CHECK: !DICompositeType(tag: DW_TAG_structure_type, name: "Circle"
 // CHECK-SAME:             line: [[@LINE+1]],
 @interface Circle : Shape
 

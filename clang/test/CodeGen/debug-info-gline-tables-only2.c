@@ -8,6 +8,6 @@ int main() {
 }
 
 // CHECK: !llvm.dbg.cu = !{!0}
-// CHECK: !MDCompileUnit(
-// CHECK: !MDSubprogram(
-// CHECK: !MDFile(
+// CHECK: !DICompileUnit(
+// CHECK: !DISubprogram(
+// CHECK: !DIFile(

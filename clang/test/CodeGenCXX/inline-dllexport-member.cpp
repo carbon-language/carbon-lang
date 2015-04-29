@@ -5,7 +5,7 @@ struct __declspec(dllexport) s {
   static const unsigned int ui = 0;
 };
 
-// CHECK: ![[SCOPE:[0-9]+]] = !MDCompileUnit(
-// CHECK: !MDGlobalVariable(name: "ui", linkageName: "_ZN1s2uiE", scope: ![[SCOPE]],
+// CHECK: ![[SCOPE:[0-9]+]] = !DICompileUnit(
+// CHECK: !DIGlobalVariable(name: "ui", linkageName: "_ZN1s2uiE", scope: ![[SCOPE]],
 // CHECK-SAME:              variable: i32* @_ZN1s2uiE
 

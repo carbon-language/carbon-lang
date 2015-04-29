@@ -1,7 +1,7 @@
 // REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin10 -fexceptions -fobjc-exceptions -g %s -o - | FileCheck %s
 
-// CHECK:  !MDSubprogram(name: "-[InstanceVariablesEverywhereButTheInterface someString]"
+// CHECK:  !DISubprogram(name: "-[InstanceVariablesEverywhereButTheInterface someString]"
 
 //rdar: //8498026
 

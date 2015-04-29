@@ -11,6 +11,6 @@ int main() {
 	int j = foo(1);
 	return 0;
 }
-// CHECK: !MDGlobalVariable(name: "b",
+// CHECK: !DIGlobalVariable(name: "b",
 // CHECK-NOT:               linkageName:
 // CHECK-SAME:              ){{$}}

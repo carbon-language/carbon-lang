@@ -25,13 +25,13 @@ int foo()
   c.i = 42;
   return 0;
   // This breakpoint should be at/before the cleanup code.
-  // CHECK: ![[RET]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
+  // CHECK: ![[RET]] = !DILocation(line: [[@LINE+1]], scope: !{{.*}})
 }
 
 void bar()
 {
   if (!foo())
-    // CHECK: {{.*}} = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
+    // CHECK: {{.*}} = !DILocation(line: [[@LINE+1]], scope: !{{.*}})
     return;
 
   if (foo()) {
@@ -39,21 +39,21 @@ void bar()
     c.i = foo();
   }
   // Clang creates only a single ret instruction. Make sure it is at a useful line.
-  // CHECK: ![[RETBAR]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
+  // CHECK: ![[RETBAR]] = !DILocation(line: [[@LINE+1]], scope: !{{.*}})
 }
 
 void baz()
 {
   if (!foo())
-    // CHECK: ![[SCOPE1:.*]] = distinct !MDLexicalBlock({{.*}}, line: [[@LINE-1]])
-    // CHECK: {{.*}} = !MDLocation(line: [[@LINE+1]], scope: ![[SCOPE1]])
+    // CHECK: ![[SCOPE1:.*]] = distinct !DILexicalBlock({{.*}}, line: [[@LINE-1]])
+    // CHECK: {{.*}} = !DILocation(line: [[@LINE+1]], scope: ![[SCOPE1]])
     return;
 
   if (foo()) {
     // no cleanup
-    // CHECK: {{.*}} = !MDLocation(line: [[@LINE+2]], scope: ![[SCOPE2:.*]])
-    // CHECK: ![[SCOPE2]] = distinct !MDLexicalBlock({{.*}}, line: [[@LINE-3]])
+    // CHECK: {{.*}} = !DILocation(line: [[@LINE+2]], scope: ![[SCOPE2:.*]])
+    // CHECK: ![[SCOPE2]] = distinct !DILexicalBlock({{.*}}, line: [[@LINE-3]])
     return;
   }
-  // CHECK: ![[RETBAZ]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
+  // CHECK: ![[RETBAZ]] = !DILocation(line: [[@LINE+1]], scope: !{{.*}})
 }

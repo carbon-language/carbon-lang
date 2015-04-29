@@ -6,9 +6,9 @@ struct C {
 extern bool b;
 // CHECK: call {{.*}}, !dbg [[DTOR_CALL1_LOC:![0-9]*]]
 // CHECK: call {{.*}}, !dbg [[DTOR_CALL2_LOC:![0-9]*]]
-// CHECK: [[FUN1:.*]] = !MDSubprogram(name: "fun1",{{.*}} isDefinition: true
-// CHECK: [[FUN2:.*]] = !MDSubprogram(name: "fun2",{{.*}} isDefinition: true
-// CHECK: [[DTOR_CALL1_LOC]] = !MDLocation(line: [[@LINE+1]], scope: [[FUN1]])
+// CHECK: [[FUN1:.*]] = !DISubprogram(name: "fun1",{{.*}} isDefinition: true
+// CHECK: [[FUN2:.*]] = !DISubprogram(name: "fun2",{{.*}} isDefinition: true
+// CHECK: [[DTOR_CALL1_LOC]] = !DILocation(line: [[@LINE+1]], scope: [[FUN1]])
 void fun1() { b && (C(), 1); }
-// CHECK: [[DTOR_CALL2_LOC]] = !MDLocation(line: [[@LINE+1]], scope: [[FUN2]])
+// CHECK: [[DTOR_CALL2_LOC]] = !DILocation(line: [[@LINE+1]], scope: [[FUN2]])
 bool fun2() { return (C(), b) && 0; }
