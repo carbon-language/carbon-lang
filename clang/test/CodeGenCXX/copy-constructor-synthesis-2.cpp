@@ -1,3 +1,4 @@
+// XFAIL: hexagon
 // RUN: %clang_cc1 -triple %itanium_abi_triple -std=c++11 -emit-llvm -o - %s | FileCheck %s
 
 union PR23373 {
