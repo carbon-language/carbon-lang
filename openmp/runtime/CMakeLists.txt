@@ -96,6 +96,11 @@ set(tests           false        CACHE BOOL   "Perform touch, relo, execstack, i
 #   particular openmp regions are recorded.
 set(stats           false         CACHE BOOL   "Stats-Gathering functionality?"                         )
 
+# OMPT-support
+set(ompt_support    false         CACHE BOOL   "OMPT-support?"                                          )
+set(ompt_blame      true          CACHE BOOL   "OMPT-blame?"                                            )
+set(ompt_trace      true          CACHE BOOL   "OMPT-trace?"                                            )
+
 # User specified flags.  These are appended to the predetermined flags found in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (e.g., GNU/CFlags.cmake)
 set(USER_C_FLAGS      "" CACHE STRING "Appended user specified C compiler flags."             )
 set(USER_CXX_FLAGS    "" CACHE STRING "Appended user specified C++ compiler flags."           )
@@ -205,6 +210,20 @@ if("${stats}") # string "on" or "ON" is seen as boolean TRUE
     set(STATS_GATHERING TRUE)
 endif()
 
+# OMPT-support
+set(OMPT_SUPPORT FALSE)
+if("${ompt_support}") # string "on" or "ON" is seen as boolean TRUE
+    set(OMPT_SUPPORT TRUE)
+endif()
+set(OMPT_BLAME TRUE)
+if(NOT "${ompt_blame}") # string "on" or "ON" is seen as boolean TRUE
+    set(OMPT_BLAME FALSE)
+endif()
+set(OMPT_TRACE TRUE)
+if(NOT "${ompt_trace}") # string "on" or "ON" is seen as boolean TRUE
+    set(OMPT_TRACE FALSE)
+endif()
+
 # Include itt notify interface? Right now, always.
 set(USE_ITT_NOTIFY TRUE)
 
@@ -285,6 +304,15 @@ endif()
 if(${STATS_GATHERING})
     set(suffix "${suffix}.s1")
 endif()
+if(${OMPT_SUPPORT})
+    set(suffix "${suffix}.ompt")
+    if(NOT ${OMPT_BLAME})
+        set(suffix "${suffix}.no-ompt-blame")
+    endif()
+    if(NOT ${OMPT_TRACE})
+        set(suffix "${suffix}.no-ompt-trace")
+    endif()
+endif()
 
 ####################################
 # Setting file extensions / suffixes
@@ -357,6 +385,11 @@ set(export_inc_files  "iomp_lib.h")
 set(export_mod_files  "omp_lib.mod" "omp_lib_kinds.mod")
 set(export_cmn_files1 "omp.h" "omp_lib.h" "omp_lib.f" "omp_lib.f90")
 set(export_cmn_files2 "iomp.h")
+
+if(${OMPT_SUPPORT})
+    set(export_cmn_files1 ${export_cmn_files1} "ompt.h")
+endif()
+
 add_prefix("${export_lib_dir}/"                export_lib_files)
 add_prefix("${export_ptf_dir}/include_compat/" export_inc_files)
 add_prefix("${export_ptf_dir}/include/"        export_mod_files)
@@ -563,6 +596,7 @@ macro (simple_copy_recipe target src_dir dest_dir)
 endmacro()
 # copy from build directory to final resting places in exports directory
 simple_copy_recipe("omp.h"             "${build_dir}"  "${export_cmn_dir}/include")
+simple_copy_recipe("ompt.h"            "${build_dir}"  "${export_cmn_dir}/include")
 simple_copy_recipe("omp_lib.h"         "${build_dir}"  "${export_cmn_dir}/include")
 simple_copy_recipe("omp_lib.f"         "${build_dir}"  "${export_cmn_dir}/include")
 simple_copy_recipe("omp_lib.f90"       "${build_dir}"  "${export_cmn_dir}/include")
@@ -804,6 +838,7 @@ endif()
 # libiomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
 set_source_files_properties(libiomp.rc PROPERTIES COMPILE_DEFINITIONS "-D KMP_FILE=${lib_file}") 
 expand_vars_recipe(omp.h)
+expand_vars_recipe(ompt.h)
 expand_vars_recipe(omp_lib.h)
 expand_vars_recipe(omp_lib.f)
 expand_vars_recipe(omp_lib.f90)
@@ -833,6 +868,11 @@ else()
 endif()
 say("Build              : ${build}")
 say("Stats-Gathering    : ${stats}")
+say("OMPT-support       : ${ompt_support}")
+if(${OMPT_SUPPORT})
+    say("OMPT-blame         : ${ompt_blame}")
+    say("OMPT-trace         : ${ompt_trace}")
+endif()
 say("Use build.pl rules : ${USE_BUILDPL_RULES}")
 say("Adaptive locks     : ${USE_ADAPTIVE_LOCKS}")
 say("Use predefined linker flags      : ${USE_PREDEFINED_LINKER_FLAGS}")

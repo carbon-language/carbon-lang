@@ -26,6 +26,10 @@ N: Intel Corporation OpenMP runtime team
 W: http://openmprtl.org
 D: Created the runtime.
 
+N: John Mellor-Crummey and other members of the OpenMP Tools Working Group
+E: johnmc@rice.edu
+D: OpenMP Tools Interface (OMPT)
+
 N: Matthias Muller
 D: Contributor to testsuite from OpenUH
 

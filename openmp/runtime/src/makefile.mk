@@ -94,6 +94,9 @@ define curr_config
     CXXFLAGS=$(subst $(space),_,$(CXXFLAGS))
     FFLAGS=$(subst $(space),_,$(FFLAGS))
     LDFLAGS=$(subst $(space),_,$(LDFLAGS))
+    OMPT_SUPPORT=$(OMPT_SUPPORT)
+    OMPT_BLAME=$(OMPT_BLAME)
+    OMPT_TRACE=$(OMPT_TRACE)
 endef
 # And check it.
 include $(tools_dir)src/common-checks.mk
@@ -689,12 +692,25 @@ ld-flags   += $(LDFLAGS)
 # --------------------------------------------------------------------------------------------------
 # Files.
 # --------------------------------------------------------------------------------------------------
+ifeq "$(OMPT_SUPPORT)" "on"
+    ompt_items = ompt-general
+    cpp-flags += -D OMPT_SUPPORT=1
+
+    ifeq "$(OMPT_BLAME)" "on"
+        cpp-flags += -D OMPT_BLAME=1
+    endif
+
+    ifeq "$(OMPT_TRACE)" "on"
+        cpp-flags += -D OMPT_TRACE=1
+    endif
+endif
 
 # Library files. These files participate in all kinds of library.
 lib_c_items :=      \
     kmp_ftn_cdecl   \
     kmp_ftn_extra   \
     kmp_version     \
+    $(ompt_items)   \
     $(empty)
 lib_cpp_items :=
 lib_asm_items :=
@@ -858,7 +874,7 @@ out_inc_files  = $(addprefix $(out_ptf_dir)include_compat/,iomp_lib.h)
 out_mod_files  = \
     $(addprefix $(out_ptf_dir)include/,omp_lib.mod omp_lib_kinds.mod)
 out_cmn_files  = \
-    $(addprefix $(out_cmn_dir)include/,omp.h omp_lib.h omp_lib.f omp_lib.f90) \
+    $(addprefix $(out_cmn_dir)include/,omp.h ompt.h omp_lib.h omp_lib.f omp_lib.f90) \
     $(addprefix $(out_cmn_dir)include_compat/,iomp.h)
 ifneq "$(out_lib_fat_dir)" ""
     out_lib_fat_files  = $(addprefix $(out_lib_fat_dir),$(lib_file) $(imp_file))
