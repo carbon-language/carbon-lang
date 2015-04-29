@@ -1302,11 +1302,19 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // DR1484 clarifies that the members of a local class are instantiated as part
   // of the instantiation of their enclosing entity.
   if (D->isCompleteDefinition() && D->isLocalClass()) {
+    Sema::SavePendingLocalImplicitInstantiationsRAII
+        SavedPendingLocalImplicitInstantiations(SemaRef);
+
     SemaRef.InstantiateClass(D->getLocation(), Record, D, TemplateArgs,
                              TSK_ImplicitInstantiation,
                              /*Complain=*/true);
+
     SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
                                     TSK_ImplicitInstantiation);
+
+    // This class may have local implicit instantiations that need to be
+    // performed within this scope.
+    SemaRef.PerformPendingInstantiations(/*LocalOnly=*/true);
   }
 
   SemaRef.DiagnoseUnusedNestedTypedefs(Record);

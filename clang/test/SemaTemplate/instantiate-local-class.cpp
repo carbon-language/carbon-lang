@@ -213,3 +213,16 @@ namespace PR23194 {
     return make_seed_pair();
   }
 }
+
+namespace PR20625 {
+template <typename T>
+void f() {
+  struct N {
+    static constexpr int get() { return 42; }
+  };
+  constexpr int n = N::get();
+  static_assert(n == 42, "n == 42");
+}
+
+void g() { f<void>(); }
+}
