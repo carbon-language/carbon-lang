@@ -38,6 +38,7 @@ add_lldb_library(lldbCore
   Module.cpp
   ModuleChild.cpp
   ModuleList.cpp
+  NullLog.cpp
   Opcode.cpp
   PluginManager.cpp
   RegisterValue.cpp
