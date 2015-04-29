@@ -1112,6 +1112,8 @@ bool MipsFastISel::finishCall(CallLoweringInfo &CLI, MVT RetVT,
       CopyVT = MVT::i32;
 
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(CopyVT));
+    if (!ResultReg)
+      return false;
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(TargetOpcode::COPY),
             ResultReg).addReg(RVLocs[0].getLocReg());
@@ -1142,7 +1144,7 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   MVT RetVT;
   if (CLI.RetTy->isVoidTy())
     RetVT = MVT::isVoid;
-  else if (!isTypeLegal(CLI.RetTy, RetVT))
+  else if (!isTypeSupported(CLI.RetTy, RetVT))
     return false;
 
   for (auto Flag : CLI.OutFlags)
@@ -1260,13 +1262,12 @@ bool MipsFastISel::selectRet(const Instruction *I) {
       if (RVVT != MVT::i1 && RVVT != MVT::i8 && RVVT != MVT::i16)
         return false;
 
-      if (!Outs[0].Flags.isZExt() && !Outs[0].Flags.isSExt())
-        return false;
-
-      bool IsZExt = Outs[0].Flags.isZExt();
-      SrcReg = emitIntExt(RVVT, SrcReg, DestVT, IsZExt);
-      if (SrcReg == 0)
-        return false;
+      if (Outs[0].Flags.isZExt() || Outs[0].Flags.isSExt()) {
+        bool IsZExt = Outs[0].Flags.isZExt();
+        SrcReg = emitIntExt(RVVT, SrcReg, DestVT, IsZExt);
+        if (SrcReg == 0)
+          return false;
+      }
     }
 
     // Make the copy.

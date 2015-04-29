@@ -22,6 +22,20 @@ entry:
 }
 
 ; Function Attrs: nounwind
+define i16 @retus() {
+entry:
+; CHECK-LABEL: retus:
+  %0 = load i16, i16* @s, align 2
+  ret i16 %0
+; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
+; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
+; CHECK:        addu    $[[REG_GP:[0-9]+]], $[[REG_GPb]], $25
+; CHECK:        lw      $[[REG_S_ADDR:[0-9]+]], %got(s)($[[REG_GP]])
+; CHECK:        lhu     $2, 0($[[REG_S_ADDR]])
+; CHECK:        jr      $ra
+}
+
+; Function Attrs: nounwind
 define signext i16 @rets() {
 entry:
 ; CHECK-LABEL: rets:
@@ -33,6 +47,20 @@ entry:
 ; CHECK:        lw      $[[REG_S_ADDR:[0-9]+]], %got(s)($[[REG_GP]])
 ; CHECK:        lhu     $[[REG_S:[0-9]+]], 0($[[REG_S_ADDR]])
 ; CHECK:        seh     $2, $[[REG_S]]
+; CHECK:        jr      $ra
+}
+
+; Function Attrs: nounwind
+define i8 @retuc() {
+entry:
+; CHECK-LABEL: retuc:
+  %0 = load i8, i8* @c, align 1
+  ret i8 %0
+; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
+; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
+; CHECK:        addu    $[[REG_GP:[0-9]+]], $[[REG_GPb]], $25
+; CHECK:        lw      $[[REG_C_ADDR:[0-9]+]], %got(c)($[[REG_GP]])
+; CHECK:        lbu     $2, 0($[[REG_C_ADDR]])
 ; CHECK:        jr      $ra
 }
 

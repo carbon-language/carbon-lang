@@ -90,6 +90,9 @@ def CC_MipsO32 : CallingConv<[
 // Only the return rules are defined here for O32. The rules for argument
 // passing are defined in MipsISelLowering.cpp.
 def RetCC_MipsO32 : CallingConv<[
+  // Promote i1/i8/i16 return values to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
+
   // i32 are returned in registers V0, V1, A0, A1
   CCIfType<[i32], CCAssignToReg<[V0, V1, A0, A1]>>,
 
