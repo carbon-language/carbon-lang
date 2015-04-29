@@ -323,7 +323,13 @@ public:
   explicit raw_pwrite_stream(bool Unbuffered = false)
       : raw_ostream(Unbuffered) {}
   void pwrite(const char *Ptr, size_t Size, uint64_t Offset) {
-    assert(Size + Offset <= tell() && "We don't support extending the stream");
+#ifndef NDBEBUG
+    uint64_t Pos = tell();
+    // /dev/null always reports a pos of 0, so we cannot perform this check
+    // in that case.
+    if (Pos)
+      assert(Size + Offset <= Pos && "We don't support extending the stream");
+#endif
     pwrite_impl(Ptr, Size, Offset);
   }
 };
