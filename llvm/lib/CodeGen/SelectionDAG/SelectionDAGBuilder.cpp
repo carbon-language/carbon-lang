@@ -4385,11 +4385,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::masked_gather:
     visitMaskedGather(I);
+    return nullptr;
   case Intrinsic::masked_load:
     visitMaskedLoad(I);
     return nullptr;
   case Intrinsic::masked_scatter:
     visitMaskedScatter(I);
+    return nullptr;
   case Intrinsic::masked_store:
     visitMaskedStore(I);
     return nullptr;
