@@ -1444,6 +1444,7 @@ public:
   void DumpToken(const Token &Tok, bool DumpFlags = false) const;
   void DumpLocation(SourceLocation Loc) const;
   void DumpMacro(const MacroInfo &MI) const;
+  void dumpMacroInfo(const IdentifierInfo *II);
 
   /// \brief Given a location that specifies the start of a
   /// token, return a new location that specifies a character within the token.

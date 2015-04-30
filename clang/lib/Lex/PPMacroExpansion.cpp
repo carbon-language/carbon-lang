@@ -194,6 +194,70 @@ void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
   Info.IsAmbiguous = IsAmbiguous && !IsSystemMacro;
 }
 
+void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
+  ArrayRef<ModuleMacro*> Leaf;
+  auto LeafIt = LeafModuleMacros.find(II);
+  if (LeafIt != LeafModuleMacros.end())
+    Leaf = LeafIt->second;
+  const MacroState *State = nullptr;
+  auto Pos = Macros.find(II);
+  if (Pos != Macros.end())
+    State = &Pos->second;
+
+  llvm::errs() << "MacroState " << State << " " << II->getNameStart();
+  if (State && State->isAmbiguous(*this, II))
+    llvm::errs() << " ambiguous";
+  if (!State->getOverriddenMacros().empty()) {
+    llvm::errs() << " overrides";
+    for (auto *O : State->getOverriddenMacros())
+      llvm::errs() << " " << O->getOwningModule()->getFullModuleName();
+  }
+  llvm::errs() << "\n";
+
+  // Dump local macro directives.
+  for (auto *MD = State ? State->getLatest() : nullptr; MD;
+       MD = MD->getPrevious()) {
+    llvm::errs() << " ";
+    MD->dump();
+  }
+
+  // Dump module macros.
+  llvm::DenseSet<ModuleMacro*> Active;
+  for (auto *MM : State ? State->getActiveModuleMacros(*this, II) : None)
+    Active.insert(MM);
+  llvm::DenseSet<ModuleMacro*> Visited;
+  llvm::SmallVector<ModuleMacro *, 16> Worklist(Leaf.begin(), Leaf.end());
+  while (!Worklist.empty()) {
+    auto *MM = Worklist.pop_back_val();
+    llvm::errs() << " ModuleMacro " << MM << " "
+                 << MM->getOwningModule()->getFullModuleName();
+    if (!MM->getMacroInfo())
+      llvm::errs() << " undef";
+
+    if (Active.count(MM))
+      llvm::errs() << " active";
+    else if (MM->getOwningModule()->NameVisibility < Module::MacrosVisible)
+      llvm::errs() << " hidden";
+    else
+      llvm::errs() << " overridden";
+
+    if (!MM->overrides().empty()) {
+      llvm::errs() << " overrides";
+      for (auto *O : MM->overrides()) {
+        llvm::errs() << " " << O->getOwningModule()->getFullModuleName();
+        if (Visited.insert(O).second)
+          Worklist.push_back(O);
+      }
+    }
+    llvm::errs() << "\n";
+    if (auto *MI = MM->getMacroInfo()) {
+      llvm::errs() << "  ";
+      MI->dump();
+      llvm::errs() << "\n";
+    }
+  }
+}
+
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 static IdentifierInfo *RegisterBuiltinMacro(Preprocessor &PP, const char *Name){

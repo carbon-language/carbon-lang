@@ -875,6 +875,14 @@ struct PragmaDebugHandler : public PragmaHandler {
       llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
     } else if (II->isStr("llvm_unreachable")) {
       llvm_unreachable("#pragma clang __debug llvm_unreachable");
+    } else if (II->isStr("macro")) {
+      Token MacroName;
+      PP.LexUnexpandedToken(MacroName);
+      auto *MacroII = MacroName.getIdentifierInfo();
+      if (MacroII)
+        PP.dumpMacroInfo(MacroII);
+      else
+        PP.Diag(MacroName, diag::warn_pragma_diagnostic_invalid);
     } else if (II->isStr("overflow_stack")) {
       DebugOverflowStack();
     } else if (II->isStr("handle_crash")) {

@@ -219,10 +219,8 @@ void MacroDirective::dump() const {
     Out << " prev " << Prev;
   if (IsFromPCH) Out << " from_pch";
 
-  if (IsPublic)
-    Out << " public";
-  else if (isa<VisibilityMacroDirective>(this))
-    Out << " private";
+  if (isa<VisibilityMacroDirective>(this))
+    Out << (IsPublic ? " public" : " private");
 
   if (auto *DMD = dyn_cast<DefMacroDirective>(this)) {
     if (auto *Info = DMD->getInfo()) {
