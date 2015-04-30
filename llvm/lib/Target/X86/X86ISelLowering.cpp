@@ -16044,8 +16044,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
       ALo = DAG.getNode(X86ISD::VSEXT, dl, ExVT, A);
       BLo = DAG.getNode(X86ISD::VSEXT, dl, ExVT, B);
     } else {
-      const int ShufMask[] = {0, -1, 1, -1, 2, -1, 3, -1,
-                              4, -1, 5, -1, 6, -1, 7, -1};
+      const int ShufMask[] = {-1, 0, -1, 1, -1, 2, -1, 3,
+                              -1, 4, -1, 5, -1, 6, -1, 7};
       ALo = DAG.getVectorShuffle(VT, dl, A, A, ShufMask);
       BLo = DAG.getVectorShuffle(VT, dl, B, B, ShufMask);
       ALo = DAG.getNode(ISD::BITCAST, dl, ExVT, ALo);
@@ -16064,8 +16064,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
       AHi = DAG.getNode(X86ISD::VSEXT, dl, ExVT, AHi);
       BHi = DAG.getNode(X86ISD::VSEXT, dl, ExVT, BHi);
     } else {
-      const int ShufMask[] = {8,  -1, 9,  -1, 10, -1, 11, -1,
-                              12, -1, 13, -1, 14, -1, 15, -1};
+      const int ShufMask[] = {-1, 8,  -1, 9,  -1, 10, -1, 11,
+                              -1, 12, -1, 13, -1, 14, -1, 15};
       AHi = DAG.getVectorShuffle(VT, dl, A, A, ShufMask);
       BHi = DAG.getVectorShuffle(VT, dl, B, B, ShufMask);
       AHi = DAG.getNode(ISD::BITCAST, dl, ExVT, AHi);
