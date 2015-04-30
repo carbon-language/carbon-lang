@@ -1114,9 +1114,9 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     VarInit *RHSv = dyn_cast<VarInit>(RHS);
     StringInit *RHSs = dyn_cast<StringInit>(RHS);
 
-    if ((LHSd && MHSd && RHSd)
-        || (LHSv && MHSv && RHSv)
-        || (LHSs && MHSs && RHSs)) {
+    if ((LHSd && MHSd && RHSd) ||
+        (LHSv && MHSv && RHSv) ||
+        (LHSs && MHSs && RHSs)) {
       if (RHSd) {
         Record *Val = RHSd->getDef();
         if (LHSd->getAsString() == RHSd->getAsString()) {
@@ -1214,9 +1214,9 @@ std::string TernOpInit::getAsString() const {
   case SUBST: Result = "!subst"; break;
   case FOREACH: Result = "!foreach"; break;
   case IF: Result = "!if"; break;
- }
-  return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", "
-    + RHS->getAsString() + ")";
+  }
+  return Result + "(" + LHS->getAsString() + ", " + MHS->getAsString() + ", " +
+         RHS->getAsString() + ")";
 }
 
 RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
@@ -1663,14 +1663,13 @@ void Record::resolveReferencesTo(const RecordVal *RV) {
       continue;
     if (Init *V = Values[i].getValue())
       if (Values[i].setValue(V->resolveReferences(*this, RV)))
-        PrintFatalError(getLoc(), "Invalid value is found when setting '"
-                      + Values[i].getNameInitAsString()
-                      + "' after resolving references"
-                      + (RV ? " against '" + RV->getNameInitAsString()
-                              + "' of ("
-                              + RV->getValue()->getAsUnquotedString() + ")"
-                            : "")
-                      + "\n");
+        PrintFatalError(getLoc(), "Invalid value is found when setting '" +
+                        Values[i].getNameInitAsString() +
+                        "' after resolving references" +
+                        (RV ? " against '" + RV->getNameInitAsString() +
+                              "' of (" + RV->getValue()->getAsUnquotedString() +
+                              ")"
+                            : "") + "\n");
   }
   Init *OldName = getNameInit();
   Init *NewName = Name->resolveReferences(*this, RV);

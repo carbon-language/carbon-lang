@@ -85,8 +85,8 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
 
   RecordVal *RV = CurRec->getValue(ValName);
   if (!RV)
-    return Error(Loc, "Value '" + ValName->getAsUnquotedString()
-                 + "' unknown!");
+    return Error(Loc, "Value '" + ValName->getAsUnquotedString() +
+                 "' unknown!");
 
   // Do not allow assignments like 'X = X'.  This will just cause infinite loops
   // in the resolution machinery.
@@ -102,8 +102,8 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
   if (!BitList.empty()) {
     BitsInit *CurVal = dyn_cast<BitsInit>(RV->getValue());
     if (!CurVal)
-      return Error(Loc, "Value '" + ValName->getAsUnquotedString()
-                   + "' is not a bits type");
+      return Error(Loc, "Value '" + ValName->getAsUnquotedString() +
+                   "' is not a bits type");
 
     // Convert the incoming value to a bits type of the appropriate size...
     Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
@@ -138,11 +138,10 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
       InitType = (Twine("' of type bit initializer with length ") +
                   Twine(BI->getNumBits())).str();
     }
-    return Error(Loc, "Value '" + ValName->getAsUnquotedString() + "' of type '"
-                 + RV->getType()->getAsString() +
-                 "' is incompatible with initializer '" + V->getAsString()
-                 + InitType
-                 + "'");
+    return Error(Loc, "Value '" + ValName->getAsUnquotedString() +
+                 "' of type '" + RV->getType()->getAsString() +
+                 "' is incompatible with initializer '" + V->getAsString() +
+                 InitType + "'");
   }
   return false;
 }
@@ -181,9 +180,9 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClass.RefRange.Start,
-                   "Value not specified for template argument #"
-                   + utostr(i) + " (" + TArgs[i]->getAsUnquotedString()
-                   + ") of subclass '" + SC->getNameInitAsString() + "'!");
+                   "Value not specified for template argument #" +
+                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString() +
+                   ") of subclass '" + SC->getNameInitAsString() + "'!");
     }
   }
 
@@ -275,9 +274,9 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
       }
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
       return Error(SubMultiClass.RefRange.Start,
-                   "Value not specified for template argument #"
-                   + utostr(i) + " (" + SMCTArgs[i]->getAsUnquotedString()
-                   + ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
+                   "Value not specified for template argument #" +
+                   utostr(i) + " (" + SMCTArgs[i]->getAsUnquotedString() +
+                   ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
     }
   }
 
@@ -821,9 +820,9 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
     Init *LHS = ParseValue(CurRec);
     if (!LHS) return nullptr;
 
-    if (Code == UnOpInit::HEAD
-        || Code == UnOpInit::TAIL
-        || Code == UnOpInit::EMPTY) {
+    if (Code == UnOpInit::HEAD ||
+        Code == UnOpInit::TAIL ||
+        Code == UnOpInit::EMPTY) {
       ListInit *LHSl = dyn_cast<ListInit>(LHS);
       StringInit *LHSs = dyn_cast<StringInit>(LHS);
       TypedInit *LHSt = dyn_cast<TypedInit>(LHS);
@@ -840,8 +839,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
         }
       }
 
-      if (Code == UnOpInit::HEAD
-          || Code == UnOpInit::TAIL) {
+      if (Code == UnOpInit::HEAD || Code == UnOpInit::TAIL) {
         if (!LHSl && !LHSt) {
           TokError("expected list type argument in unary operator");
           return nullptr;
@@ -2139,8 +2137,8 @@ bool TGParser::ParseClass() {
     if (CurRec->getValues().size() > 1 ||  // Account for NAME.
         !CurRec->getSuperClasses().empty() ||
         !CurRec->getTemplateArgs().empty())
-      return TokError("Class '" + CurRec->getNameInitAsString()
-                      + "' already defined");
+      return TokError("Class '" + CurRec->getNameInitAsString() +
+                      "' already defined");
   } else {
     // If this is the first reference to this class, create and add it.
     auto NewRec =
@@ -2382,9 +2380,9 @@ InstantiateMulticlassDef(MultiClass &MC,
   // confused.
   if (SetValue(CurRec.get(), Ref.RefRange.Start, "NAME",
                std::vector<unsigned>(), DefmPrefix)) {
-    Error(DefmPrefixRange.Start, "Could not resolve "
-          + CurRec->getNameInitAsString() + ":NAME to '"
-          + DefmPrefix->getAsUnquotedString() + "'");
+    Error(DefmPrefixRange.Start, "Could not resolve " +
+          CurRec->getNameInitAsString() + ":NAME to '" +
+          DefmPrefix->getAsUnquotedString() + "'");
     return nullptr;
   }
 
@@ -2454,10 +2452,10 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
         CurRec->removeValue(TArgs[i]);
         
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
-      return Error(SubClassLoc, "value not specified for template argument #"+
-                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString()
-                   + ") of multiclassclass '" + MC.Rec.getNameInitAsString()
-                   + "'");
+      return Error(SubClassLoc, "value not specified for template argument #" +
+                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString() +
+                   ") of multiclassclass '" + MC.Rec.getNameInitAsString() +
+                   "'");
     }
   }
   return false;
