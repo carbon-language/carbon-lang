@@ -383,10 +383,19 @@ private:
         char *end_m_write_ptr = m_write_ptr + content_length;
         if (end_m_write_ptr > m_buffer_end)
         {
-            GrowBuffer(end_m_write_ptr - m_buffer_end);
+            if (content >= m_buffer && content < m_buffer_end) 
+            {
+                long offset = content - m_buffer;
+                GrowBuffer (end_m_write_ptr - m_buffer_end);
+                content = m_buffer + offset;
+            }
+            else 
+            {
+                GrowBuffer (end_m_write_ptr - m_buffer_end);
+            }
             end_m_write_ptr = m_write_ptr + content_length;
         }
-        memcpy(m_write_ptr, content, content_length);
+        memcpy (m_write_ptr, content, content_length);
         m_write_ptr = end_m_write_ptr;
     }
 #define WRITE(x) Write(x, sizeof (x) - 1)
