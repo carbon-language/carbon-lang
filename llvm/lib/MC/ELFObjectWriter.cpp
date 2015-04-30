@@ -1268,7 +1268,6 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
 
   case ELF::SHT_DYNAMIC:
     llvm_unreachable("SHT_DYNAMIC in a relocatable object");
-    break;
 
   case ELF::SHT_REL:
   case ELF::SHT_RELA: {
