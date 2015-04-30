@@ -447,6 +447,7 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
 
   void VisitCXXForRangeStmt(const CXXForRangeStmt *S) {
     RecordStmtCount(S);
+    Visit(S->getLoopVarStmt());
     Visit(S->getRangeStmt());
     Visit(S->getBeginEndStmt());
     // Counter tracks the body of the loop.
@@ -455,8 +456,7 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
     // Visit the body region first. (This is basically the same as a while
     // loop; see further comments in VisitWhileStmt.)
     Cnt.beginRegion();
-    CountMap[S->getLoopVarStmt()] = PGO.getCurrentRegionCount();
-    Visit(S->getLoopVarStmt());
+    CountMap[S->getBody()] = PGO.getCurrentRegionCount();
     Visit(S->getBody());
     Cnt.adjustForControlFlow();
 
@@ -475,7 +475,6 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
                               BC.ContinueCount);
     CountMap[S->getCond()] = PGO.getCurrentRegionCount();
     Visit(S->getCond());
-    Cnt.adjustForControlFlow();
     Cnt.applyAdjustmentsToRegion(BC.BreakCount + BC.ContinueCount);
     RecordNextStmtCount = true;
   }
