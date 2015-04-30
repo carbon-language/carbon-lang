@@ -204,6 +204,9 @@ namespace {
     bool SelectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
                     SDValue &Segment);
+    bool SelectVectorAddr(SDNode *Parent, SDValue N, SDValue &Base,
+                          SDValue &Scale, SDValue &Index, SDValue &Disp,
+                          SDValue &Segment);
     bool SelectMOV64Imm32(SDValue N, SDValue &Imm);
     bool SelectLEAAddr(SDValue N, SDValue &Base,
                        SDValue &Scale, SDValue &Index, SDValue &Disp,
@@ -1317,6 +1320,41 @@ bool X86DAGToDAGISel::MatchAddressBase(SDValue N, X86ISelAddressMode &AM) {
   AM.BaseType = X86ISelAddressMode::RegBase;
   AM.Base_Reg = N;
   return false;
+}
+
+bool X86DAGToDAGISel::SelectVectorAddr(SDNode *Parent, SDValue N, SDValue &Base,
+                                      SDValue &Scale, SDValue &Index,
+                                      SDValue &Disp, SDValue &Segment) {
+
+  MaskedGatherScatterSDNode *Mgs = dyn_cast<MaskedGatherScatterSDNode>(Parent);
+  if (!Mgs)
+    return false;
+  X86ISelAddressMode AM;
+  unsigned AddrSpace = Mgs->getPointerInfo().getAddrSpace();
+  // AddrSpace 256 -> GS, 257 -> FS.
+  if (AddrSpace == 256)
+    AM.Segment = CurDAG->getRegister(X86::GS, MVT::i16);
+  if (AddrSpace == 257)
+    AM.Segment = CurDAG->getRegister(X86::FS, MVT::i16);
+
+  SDLoc DL(N);
+  Base = Mgs->getBasePtr();
+  Index = Mgs->getIndex();
+  unsigned ScalarSize = Mgs->getValue().getValueType().getScalarSizeInBits();
+  Scale = getI8Imm(ScalarSize/8, DL);
+
+  // If Base is 0, the whole address is in index and the Scale is 1
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Base)) {
+    assert(C->isNullValue() && "Unexpected base in gather/scatter");
+    Scale = getI8Imm(1, DL);
+    Base = CurDAG->getRegister(0, MVT::i32);
+  }
+  if (AM.Segment.getNode())
+    Segment = AM.Segment;
+  else
+    Segment = CurDAG->getRegister(0, MVT::i32);
+  Disp = CurDAG->getTargetConstant(0, DL, MVT::i32);
+  return true;
 }
 
 /// SelectAddr - returns true if it is able pattern match an addressing mode.

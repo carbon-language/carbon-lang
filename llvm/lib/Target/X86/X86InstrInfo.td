@@ -716,6 +716,8 @@ def tls64addr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
 def tls64baseaddr : ComplexPattern<i64, 5, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
 
+def vectoraddr : ComplexPattern<iPTR, 5, "SelectVectorAddr", [],[SDNPWantParent]>;
+
 //===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
 def HasCMov      : Predicate<"Subtarget->hasCMov()">;

@@ -528,6 +528,52 @@ def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
   return false;
 }]>;
 
+def mgatherv8i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_gather node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
+    return (Mgt->getIndex().getValueType() == MVT::v8i32 ||
+            Mgt->getBasePtr().getValueType() == MVT::v8i32);
+  return false;
+}]>;
+
+def mgatherv8i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_gather node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
+    return (Mgt->getIndex().getValueType() == MVT::v8i64 ||
+            Mgt->getBasePtr().getValueType() == MVT::v8i64);
+  return false;
+}]>;
+def mgatherv16i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_gather node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
+    return (Mgt->getIndex().getValueType() == MVT::v16i32 ||
+            Mgt->getBasePtr().getValueType() == MVT::v16i32);
+  return false;
+}]>;
+
+def mscatterv8i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v8i32 ||
+            Sc->getBasePtr().getValueType() == MVT::v8i32);
+  return false;
+}]>;
+
+def mscatterv8i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v8i64 ||
+            Sc->getBasePtr().getValueType() == MVT::v8i64);
+  return false;
+}]>;
+def mscatterv16i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v16i32 ||
+            Sc->getBasePtr().getValueType() == MVT::v16i32);
+  return false;
+}]>;
+
 // 128-bit bitconvert pattern fragments
 def bc_v4f32 : PatFrag<(ops node:$in), (v4f32 (bitconvert node:$in))>;
 def bc_v2f64 : PatFrag<(ops node:$in), (v2f64 (bitconvert node:$in))>;
