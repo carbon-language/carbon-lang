@@ -16,9 +16,11 @@
 //              CMICmdCmdDataListRegisterChanged    implementation.
 //              CMICmdCmdDataWriteMemoryBytes       implementation.
 //              CMICmdCmdDataWriteMemory            implementation.
+//              CMICmdCmdDataInfoLine               implementation.
 
 // Third Party Headers:
 #include <inttypes.h> // For PRIx64
+#include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBInstruction.h"
 #include "lldb/API/SBInstructionList.h"
@@ -1536,4 +1538,225 @@ CMICmdBase *
 CMICmdCmdDataWriteMemory::CreateSelf(void)
 {
     return new CMICmdCmdDataWriteMemory();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdDataInfoLine constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdDataInfoLine::CMICmdCmdDataInfoLine(void)
+    : m_constStrArgLocation("location")
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "data-info-line";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdDataInfoLine::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdDataInfoLine destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdDataInfoLine::~CMICmdCmdDataInfoLine(void)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdDataInfoLine::ParseArgs(void)
+{
+    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgLocation, true, true)));
+    return (bOk && ParseValidateCmdOptions());
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdDataInfoLine::Execute(void)
+{
+    CMICMDBASE_GETOPTION(pArgLocation, String, m_constStrArgLocation);
+
+    const CMIUtilString &strLocation(pArgLocation->GetValue());
+    CMIUtilString strCmdOptionsLocation;
+    if (strLocation.at(0) == '*')
+    {
+        // Parse argument:
+        // *0x12345
+        //  ^^^^^^^ -- address
+        const CMIUtilString strAddress(strLocation.c_str() + 1);
+        strCmdOptionsLocation = CMIUtilString::Format("--address %s", strAddress.c_str());
+    }
+    else
+    {
+        const MIuint nLineStartPos = strLocation.rfind(':');
+        if ((nLineStartPos == (MIuint)std::string::npos) || (nLineStartPos == 0) || (nLineStartPos == strLocation.length() - 1))
+        {
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_LOCATION_FORMAT), m_cmdData.strMiCmd.c_str(), strLocation.c_str())
+                         .c_str());
+            return MIstatus::failure;
+        }
+        // Parse argument:
+        // hello.cpp:5
+        // ^^^^^^^^^ -- file
+        //           ^ -- line
+        const CMIUtilString strFile(strLocation.substr(0, nLineStartPos).c_str());
+        const CMIUtilString strLine(strLocation.substr(nLineStartPos + 1).c_str());
+        strCmdOptionsLocation = CMIUtilString::Format("--file \"%s\" --line %s", strFile.AddSlashes().c_str(), strLine.c_str());
+    }
+    const CMIUtilString strCmd(CMIUtilString::Format("target modules lookup -v %s", strCmdOptionsLocation.c_str()));
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    const lldb::ReturnStatus rtn = rSessionInfo.GetDebugger().GetCommandInterpreter().HandleCommand(strCmd.c_str(), m_lldbResult);
+    MIunused(rtn);
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdDataInfoLine::Acknowledge(void)
+{
+    if (m_lldbResult.GetErrorSize() > 0)
+    {
+        const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
+        const CMICmnMIValueResult miValueResult("msg", miValueConst);
+        const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+        m_miResultRecord = miRecordResult;
+        return MIstatus::success;
+    }
+    else if (m_lldbResult.GetOutputSize() > 0)
+    {
+        CMIUtilString::VecString_t vecLines;
+        const CMIUtilString strLldbMsg(m_lldbResult.GetOutput());
+        const MIuint nLines(strLldbMsg.SplitLines(vecLines));
+
+        for (MIuint i = 0; i < nLines; ++i)
+        {
+            // String looks like:
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            const CMIUtilString &rLine(vecLines[i]);
+
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            // ^^^^^^^^^ -- property
+            const MIuint nPropertyStartPos = rLine.find_first_not_of(' ');
+            const MIuint nPropertyEndPos = rLine.find(':');
+            const MIuint nPropertyLen = nPropertyEndPos - nPropertyStartPos;
+            const CMIUtilString strProperty(rLine.substr(nPropertyStartPos, nPropertyLen).c_str());
+
+            // Skip all except LineEntry
+            if (!CMIUtilString::Compare(strProperty, "LineEntry"))
+                continue;
+
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            //              ^^^^^^^^^^^^^^^^^^ -- start address
+            const MIuint nStartAddressStartPos = rLine.find("[");
+            const MIuint nStartAddressEndPos = rLine.find("-");
+            const MIuint nStartAddressLen = nStartAddressEndPos - nStartAddressStartPos - 1;
+            const CMIUtilString strStartAddress(rLine.substr(nStartAddressStartPos + 1, nStartAddressLen).c_str());
+            const CMICmnMIValueConst miValueConst(strStartAddress);
+            const CMICmnMIValueResult miValueResult("start", miValueConst);
+            CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult);
+
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            //                                 ^^^^^^^^^^^^^^^^^^ -- end address
+            const MIuint nEndAddressEndPos = rLine.find(")");
+            const MIuint nEndAddressLen = nEndAddressEndPos - nStartAddressEndPos - 1;
+            const CMIUtilString strEndAddress(rLine.substr(nStartAddressEndPos + 1, nEndAddressLen).c_str());
+            const CMICmnMIValueConst miValueConst2(strEndAddress);
+            const CMICmnMIValueResult miValueResult2("end", miValueConst2);
+            bool bOk = miRecordResult.Add(miValueResult2);
+            if (!bOk)
+                return MIstatus::failure;
+
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            //                                                       ^^^^^^^^^^^^^ -- file
+            //                                                                     ^ -- line
+            //                                                                        ^ -- column (optional)
+            const MIuint nFileStartPos = rLine.find_first_not_of(' ', nEndAddressEndPos + 2);
+            const MIuint nFileOrLineEndPos = rLine.rfind(':');
+            const MIuint nFileOrLineStartPos = rLine.rfind(':', nFileOrLineEndPos - 1);
+            const MIuint nFileEndPos = nFileStartPos < nFileOrLineStartPos ? nFileOrLineStartPos : nFileOrLineEndPos;
+            const MIuint nFileLen = nFileEndPos - nFileStartPos;
+            const CMIUtilString strFile(rLine.substr(nFileStartPos, nFileLen).c_str());
+            const CMICmnMIValueConst miValueConst3(strFile);
+            const CMICmnMIValueResult miValueResult3("file", miValueConst3);
+            bOk = miRecordResult.Add(miValueResult3);
+            if (!bOk)
+                return MIstatus::failure;
+
+            // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
+            //                                                                     ^ -- line
+            const MIuint nLineStartPos = nFileEndPos + 1;
+            const MIuint nLineEndPos = rLine.find(':', nLineStartPos);
+            const MIuint nLineLen = nLineEndPos != (MIuint)std::string::npos ? nLineEndPos - nLineStartPos - 1
+                                                                             : (MIuint)std::string::npos;
+            const CMIUtilString strLine(rLine.substr(nLineStartPos, nLineLen).c_str());
+            const CMICmnMIValueConst miValueConst4(strLine);
+            const CMICmnMIValueResult miValueResult4("line", miValueConst4);
+            bOk = miRecordResult.Add(miValueResult4);
+            if (!bOk)
+                return MIstatus::failure;
+
+            // MI print "%s^done,start=\"%d\",end=\"%d\"",file=\"%s\",line=\"%d\"
+            m_miResultRecord = miRecordResult;
+
+            return MIstatus::success;
+        }
+    }
+
+    // MI print "%s^error,msg=\"Command '-data-info-line'. Error: The LineEntry is absent or has an unknown format.\""
+    const CMICmnMIValueConst miValueConst(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_SOME_ERROR), m_cmdData.strMiCmd.c_str(), "The LineEntry is absent or has an unknown format."));
+    const CMICmnMIValueResult miValueResult("msg", miValueConst);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdDataInfoLine::CreateSelf(void)
+{
+    return new CMICmdCmdDataInfoLine();
 }

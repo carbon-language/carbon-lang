@@ -83,6 +83,7 @@ MICmnCommands::RegisterAll(void)
     bOk &= Register<CMICmdCmdBreakInsert>();
     bOk &= Register<CMICmdCmdDataDisassemble>();
     bOk &= Register<CMICmdCmdDataEvaluateExpression>();
+    bOk &= Register<CMICmdCmdDataInfoLine>();
     bOk &= Register<CMICmdCmdDataReadMemoryBytes>();
     bOk &= Register<CMICmdCmdDataReadMemory>();
     bOk &= Register<CMICmdCmdDataListRegisterNames>();

@@ -236,6 +236,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_LLDB_ERR_READ_MEM_BYTES, "Command '%s'. Unable to read memory block of %u bytes at address 0x%016" PRIx64 ": %s "},
     {IDS_CMD_ERR_INVALID_PROCESS, "Command '%s'. Invalid process during debug session"},
     {IDS_CMD_ERR_INVALID_PRINT_VALUES, "Command '%s'. Unknown value for PRINT_VALUES: must be: 0 or \"--no-values\", 1 or \"--all-values\", 2 or \"--simple-values\""},
+    {IDS_CMD_ERR_INVALID_LOCATION_FORMAT, "Command '%s'. Invalid location format '%s'"},
     {IDS_CMD_ERR_INVALID_FORMAT_TYPE, "Command '%s'. Invalid var format type '%s'"},
     {IDS_CMD_ERR_BRKPT_INFO_OBJ_NOT_FOUND, "Command '%s'. Breakpoint information for breakpoint ID %d not found"},
     {IDS_CMD_ERR_LLDB_ERR_WRITE_MEM_BYTES, "Command '%s'. Unable to write memory block of %u bytes at address 0x%016" PRIx64 ": %s "},

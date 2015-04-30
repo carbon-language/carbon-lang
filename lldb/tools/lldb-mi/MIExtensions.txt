@@ -1,4 +1,4 @@
--file-exec-and-symbols now takes two new (optional) options:
+# -file-exec-and-symbols now takes two new (optional) options:
 
 Synopsis
 
@@ -8,3 +8,26 @@ Specify the executable file to be debugged. This file is the one from which the 
 When debugging remote targets specify a remote-file for execution and a file from which symbols are read. 
 The optional platform is the name of the platform, e.g., "remote-ios" or "ios-simulator". The remote-file 
 is the on-device path to the exe.
+
+# -data-info-line
+
+Synopsis
+
+	-data-info-line *<address>
+	-data-info-line <file>:<line>
+
+Provides information about a source line. The input can be <address> like 0x12345678 or <file>:<line>
+where file is a name of source file and line is the line number. As a result the command returns the following
+fields:
+    start - address of the first instruction which refers to that source line
+    end - address of the last instruction which refers to that source line
+    file - the file name
+    line - the line number
+The last two fields are useful in case you have specified a source line using its address.
+
+Example:
+    -data-info-line *0x100000f80
+    ^done,start="0x0000000100000f80",end="0x0000000100000f94",file="/Users/IliaK/p/hello.cpp",line="15"
+
+    -data-info-line hello.cpp:15
+    ^done,start="0x0000000100000f80",end="0x0000000100000f94",file="/Users/IliaK/p/hello.cpp",line="15"

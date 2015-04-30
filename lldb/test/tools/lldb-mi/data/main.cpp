@@ -12,6 +12,6 @@ static const char s_CharArray[] = "\x20\x21\x22\x23";
 
 int
 main(int argc, char const *argv[])
-{
+{ // FUNC_main
     return 0;
 }

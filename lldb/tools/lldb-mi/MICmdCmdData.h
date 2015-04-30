@@ -16,6 +16,7 @@
 //              CMICmdCmdDataListRegisterChanged    interface.
 //              CMICmdCmdDataWriteMemoryBytes       interface.
 //              CMICmdCmdDataWriteMemory            interface.
+//              CMICmdCmdDataInfoLine               interface.
 //
 //              To implement new MI commands derive a new command class from the command base
 //              class. To enable the new command for interpretation add the new command class
@@ -28,6 +29,9 @@
 //
 
 #pragma once
+
+// Third party headers:
+#include <lldb/API/SBCommandReturnObject.h>
 
 // In-house headers:
 #include "MICmdBase.h"
@@ -365,4 +369,35 @@ class CMICmdCmdDataWriteMemory : public CMICmdBase
     CMIUtilString m_strContents;
     MIuint64 m_nCount;
     MIuchar *m_pBufferMemory;
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "data-info-line".
+//          See MIExtensions.txt for details.
+//--
+class CMICmdCmdDataInfoLine : public CMICmdBase
+{
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdDataInfoLine(void);
+
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdDataInfoLine(void);
+
+    // Attributes:
+  private:
+    lldb::SBCommandReturnObject m_lldbResult;
+    const CMIUtilString m_constStrArgLocation;
 };
