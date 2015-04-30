@@ -364,7 +364,7 @@ public:
     bool IsPublic;
 
   public:
-    DefInfo() : DefDirective(nullptr) { }
+    DefInfo() : DefDirective(nullptr), IsPublic(true) { }
 
     DefInfo(DefMacroDirective *DefDirective, SourceLocation UndefLoc,
             bool isPublic)
