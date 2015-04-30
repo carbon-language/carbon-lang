@@ -47,13 +47,15 @@ func1:
 @ CHECK:     Type: SHT_GROUP (0x11)
 @ CHECK:     Flags [ (0x0)
 @ CHECK:     ]
+@ CHECK:     Size: 24
 @ CHECK:     SectionData (
 @-------------------------------------------------------------------------------
-@ The second, third, and fourth word should correspond to the section index
-@ of .TEST1, .ARM.extab.TEST1, and .ARM.exidx.TEST1.
+@ These are the section indexes of .TEST1, .ARM.extab.TEST1, .ARM.exidx.TEST1,
+@ .rel.ARM.extab.TEST1, and .rel.ARM.exidx.TEST1.
 @-------------------------------------------------------------------------------
-@ CHECK:       0000: 01000000 06000000 07000000 08000000  |................|
-@ CHECK:     )
+@ CHECK-NEXT:     0000: 01000000 06000000 07000000 08000000
+@ CHECK-NEXT:     0010: 09000000 0A000000
+@ CHECK-NEXT:     )
 @ CHECK:   }
 
 
@@ -109,9 +111,19 @@ func1:
 @ CHECK:     ]
 @ CHECK:     Link: 6
 @ CHECK:   }
+
+
+@ CHECK:   Section {
+@ CHECK:     Index: 9
+@ CHECK-NEXT:     Name: .rel.ARM.extab.TEST1
+@ CHECK: }
+
+@ CHECK:   Section {
+@ CHECK:     Index: 10
+@ CHECK-NEXT:     Name: .rel.ARM.exidx.TEST1
+@ CHECK: }
+
 @ CHECK: ]
-
-
 
 @-------------------------------------------------------------------------------
 @ Check symbol func1.  It should be weak binding, and belong to .TEST1 section.
