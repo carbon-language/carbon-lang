@@ -1731,14 +1731,16 @@ Process::ResumeSynchronous (Stream *stream)
     HijackProcessEvents(listener_sp.get());
 
     Error error = PrivateResume();
-
-    StateType state = WaitForProcessToStop (NULL, NULL, true, listener_sp.get(), stream);
+    if (error.Success())
+    {
+        StateType state = WaitForProcessToStop (NULL, NULL, true, listener_sp.get(), stream);
+        const bool must_be_alive = false; // eStateExited is ok, so this must be false
+        if (!StateIsStoppedState(state, must_be_alive))
+            error.SetErrorStringWithFormat("process not in stopped state after synchronous resume: %s", StateAsCString(state));
+    }
 
     // Undo the hijacking of process events...
     RestoreProcessEvents();
-
-    if (error.Success() && !StateIsStoppedState(state, false))
-        error.SetErrorStringWithFormat("process not in stopped state after synchronous resume: %s", StateAsCString(state));
 
     return error;
 }
