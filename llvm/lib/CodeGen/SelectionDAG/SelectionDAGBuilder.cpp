@@ -7983,8 +7983,7 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
   assert(W.FirstCluster->Low->getValue().slt(W.LastCluster->Low->getValue()) &&
          "Clusters not sorted?");
 
-  unsigned NumClusters = W.LastCluster - W.FirstCluster + 1;
-  assert(NumClusters >= 2 && "Too small to split!");
+  assert(W.LastCluster - W.FirstCluster + 1 >= 2 && "Too small to split!");
 
   // Balance the tree based on branch weights to create a near-optimal (in terms
   // of search time given key frequency) binary search tree. See e.g. Kurt
