@@ -70,8 +70,6 @@ public:
 };
 
 class ELFObjectWriter : public MCObjectWriter {
-  protected:
-
     static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
     static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant);
     static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout);
