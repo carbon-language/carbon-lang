@@ -225,12 +225,12 @@ TEST(TripleTest, Normalization) {
   // Check that normalizing a permutated set of valid components returns a
   // triple with the unpermuted components.
   StringRef C[4];
-  for (int Arch = 1+Triple::UnknownArch; Arch <= Triple::amdil; ++Arch) {
+  for (int Arch = 1+Triple::UnknownArch; Arch <= Triple::LastArchType; ++Arch) {
     C[0] = Triple::getArchTypeName(Triple::ArchType(Arch));
-    for (int Vendor = 1+Triple::UnknownVendor; Vendor <= Triple::PC;
+    for (int Vendor = 1+Triple::UnknownVendor; Vendor <= Triple::LastVendorType;
          ++Vendor) {
       C[1] = Triple::getVendorTypeName(Triple::VendorType(Vendor));
-      for (int OS = 1+Triple::UnknownOS; OS <= Triple::Minix; ++OS) {
+      for (int OS = 1+Triple::UnknownOS; OS <= Triple::LastOSType; ++OS) {
         if (OS == Triple::Win32)
           continue;
 
@@ -245,7 +245,7 @@ TEST(TripleTest, Normalization) {
         EXPECT_EQ(E, Triple::normalize(Join(C[2], C[0], C[1])));
         EXPECT_EQ(E, Triple::normalize(Join(C[2], C[1], C[0])));
 
-        for (int Env = 1 + Triple::UnknownEnvironment; Env <= Triple::Android;
+        for (int Env = 1 + Triple::UnknownEnvironment; Env <= Triple::LastEnvironmentType;
              ++Env) {
           C[3] = Triple::getEnvironmentTypeName(Triple::EnvironmentType(Env));
 
