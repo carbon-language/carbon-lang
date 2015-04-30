@@ -109,7 +109,7 @@ func2:
 @ Check the TEST2 section (without the dot in the beginning)
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 8
+@ CHECK:     Index: 10
 @ CHECK-NEXT:     Name: TEST2
 @ CHECK:     SectionData (
 @ CHECK:       0000: 1EFF2FE1                             |../.|
@@ -143,7 +143,7 @@ func2:
 @-------------------------------------------------------------------------------
 @ This section should linked with TEST2 section.
 @-------------------------------------------------------------------------------
-@ CHECK:     Link: 8
+@ CHECK:     Link: 10
 
 @-------------------------------------------------------------------------------
 @ The first word should be relocated to the code address in TEST2 section.

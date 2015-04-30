@@ -7,9 +7,9 @@
 
 // Test that the relocation points to the first section foo.
 
-// The first seciton foo has index 7
+// The first seciton foo has index 6
 // CHECK:      Section {
-// CHECK:        Index:   7
+// CHECK:        Index:   6
 // CHECK-NEXT:   Name:    foo (28)
 // CHECK-NEXT:   Type:    SHT_PROGBITS (0x1)
 // CHECK-NEXT:   Flags [ (0x202)
@@ -24,8 +24,8 @@
 // CHECK-NEXT:   AddressAlignment:        1
 // CHECK-NEXT:   EntrySize:       0
 // CHECK-NEXT: }
-// CHECK-NEXT: Section {
-// CHECK-NEXT:   Index:   8
+// CHECK:      Section {
+// CHECK:        Index:   8
 // CHECK-NEXT:   Name:    foo (28)
 // CHECK-NEXT:   Type:    SHT_PROGBITS (0x1)
 // CHECK-NEXT:   Flags [ (0x200)
@@ -83,7 +83,7 @@
 // symbol 6
 // CHECK-NOT: Name
 // CHECK: Name:    foo
-// CHECK: Section: foo (0x7)
+// CHECK: Section: foo (0x6)
 
 // symbol 7
 // CHECK-NOT: Name

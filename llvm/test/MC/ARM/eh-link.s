@@ -8,7 +8,7 @@
 @ name first we could use a FileCheck variable.
 
 @ CHECK:      Section {
-@ CHECK:        Index: 7
+@ CHECK:        Index: 6
 @ CHECK-NEXT:   Name: .text
 @ CHECK-NEXT:   Type: SHT_PROGBITS
 @ CHECK-NEXT:   Flags [
@@ -25,7 +25,7 @@
 @ CHECK-NEXT:   EntrySize: 0
 @ CHECK-NEXT: }
 @ CHECK-NEXT: Section {
-@ CHECK-NEXT:   Index: 8
+@ CHECK-NEXT:   Index: 7
 @ CHECK-NEXT:   Name: .ARM.exidx
 @ CHECK-NEXT:   Type: SHT_ARM_EXIDX
 @ CHECK-NEXT:   Flags [
@@ -36,14 +36,14 @@
 @ CHECK-NEXT:   Address: 0x0
 @ CHECK-NEXT:   Offset:
 @ CHECK-NEXT:   Size: 8
-@ CHECK-NEXT:   Link: 7
+@ CHECK-NEXT:   Link: 6
 @ CHECK-NEXT:   Info: 0
 @ CHECK-NEXT:   AddressAlignment: 4
 @ CHECK-NEXT:   EntrySize: 0
 @ CHECK-NEXT: }
 
 @ CHECK:      Section {
-@ CHECK:        Index: 9
+@ CHECK:        Index: 10
 @ CHECK-NEXT:   Name: .text
 @ CHECK-NEXT:   Type: SHT_PROGBITS
 @ CHECK-NEXT:   Flags [
@@ -60,7 +60,7 @@
 @ CHECK-NEXT:   EntrySize: 0
 @ CHECK-NEXT: }
 @ CHECK-NEXT: Section {
-@ CHECK-NEXT:   Index: 10
+@ CHECK-NEXT:   Index: 11
 @ CHECK-NEXT:   Name: .ARM.exidx
 @ CHECK-NEXT:   Type: SHT_ARM_EXIDX
 @ CHECK-NEXT:   Flags [
@@ -71,7 +71,7 @@
 @ CHECK-NEXT:   Address: 0x0
 @ CHECK-NEXT:   Offset:
 @ CHECK-NEXT:   Size: 8
-@ CHECK-NEXT:   Link: 9
+@ CHECK-NEXT:   Link: 10
 @ CHECK-NEXT:   Info: 0
 @ CHECK-NEXT:   AddressAlignment: 4
 @ CHECK-NEXT:   EntrySize: 0

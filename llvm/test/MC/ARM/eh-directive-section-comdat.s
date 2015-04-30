@@ -93,12 +93,16 @@ func1:
 @ CHECK:     ]
 @ CHECK:   }
 
+@ CHECK:   Section {
+@ CHECK:     Index: 8
+@ CHECK-NEXT:     Name: .rel.ARM.extab.TEST1
+@ CHECK: }
 
 @-------------------------------------------------------------------------------
 @ Check the .ARM.exidx.TEST1 section
 @-------------------------------------------------------------------------------
 @ CHECK:   Section {
-@ CHECK:     Index: 8
+@ CHECK:     Index: 9
 @ CHECK-NEXT:     Name: .ARM.exidx.TEST1
 @ CHECK:     Type: SHT_ARM_EXIDX (0x70000001)
 @-------------------------------------------------------------------------------
@@ -112,11 +116,6 @@ func1:
 @ CHECK:     Link: 6
 @ CHECK:   }
 
-
-@ CHECK:   Section {
-@ CHECK:     Index: 9
-@ CHECK-NEXT:     Name: .rel.ARM.extab.TEST1
-@ CHECK: }
 
 @ CHECK:   Section {
 @ CHECK:     Index: 10
