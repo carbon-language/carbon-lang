@@ -485,12 +485,6 @@ ClangUserExpression::Parse (Stream &error_stream,
                 }
             }
         }
-        
-        decl_vendor->ForEachMacro(modules_for_macros, [log, &prefix] (const std::string &expansion) -> bool {
-            prefix.append(expansion);
-            prefix.append("\n");
-            return false;
-        });
     }
     
     std::unique_ptr<ExpressionSourceCode> source_code (ExpressionSourceCode::CreateWrapped(prefix.c_str(), m_expr_text.c_str()));
