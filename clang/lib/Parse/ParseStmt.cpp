@@ -1689,6 +1689,12 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
                                                      FirstPart.get(),
                                                      Collection.get(),
                                                      T.getCloseLocation());
+  } else {
+    // In OpenMP loop region loop control variable must be captured and be
+    // private. Perform analysis of first part (if any).
+    if (getLangOpts().OpenMP && FirstPart.isUsable()) {
+      Actions.ActOnOpenMPLoopInitialization(ForLoc, FirstPart.get());
+    }
   }
 
   // C99 6.8.5p5 - In C99, the body of the for statement is a scope, even if

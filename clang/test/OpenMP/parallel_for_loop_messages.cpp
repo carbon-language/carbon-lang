@@ -265,14 +265,12 @@ int test_iteration_spaces() {
   }
 
   {
-// expected-error@+2 {{loop iteration variable in the associated loop of 'omp parallel for' directive may not be a variable with global storage without being explicitly marked as private}}
 #pragma omp parallel for
     for (globalii = 0; globalii < 10; globalii += 1)
       c[globalii] = a[globalii];
   }
 
   {
-// expected-error@+3 {{loop iteration variable in the associated loop of 'omp parallel for' directive may not be a variable with global storage without being explicitly marked as private}}
 #pragma omp parallel for collapse(2)
     for (ii = 0; ii < 10; ii += 1)
     for (globalii = 0; globalii < 10; globalii += 1)
