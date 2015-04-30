@@ -3565,7 +3565,6 @@ static void computeFullPathsForVFTables(ASTContext &Context,
   const ASTRecordLayout &MostDerivedLayout = Context.getASTRecordLayout(RD);
   VPtrInfo::BasePath FullPath;
   FinalOverriders Overriders(RD, CharUnits(), RD);
-  Overriders.dump();
   for (VPtrInfo *Info : Paths) {
     findPathForVPtr(Context, MostDerivedLayout, RD, CharUnits::Zero(),
                     Overriders, FullPath, Info);
