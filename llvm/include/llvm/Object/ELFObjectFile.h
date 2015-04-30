@@ -409,6 +409,9 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
   if (isExportedToOtherDSO(ESym))
     Result |= SymbolRef::SF_Exported;
 
+  if (ESym->getVisibility() == ELF::STV_HIDDEN)
+    Result |= SymbolRef::SF_Hidden;
+
   return Result;
 }
 
