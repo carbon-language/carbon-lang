@@ -1921,6 +1921,13 @@ ARMBaseInstrInfo::optimizeSelect(MachineInstr *MI,
   SeenMIs.insert(NewMI);
   SeenMIs.erase(DefMI);
 
+  // If MI is inside a loop, and DefMI is outside the loop, then kill flags on
+  // DefMI would be invalid when tranferred inside the loop.  Checking for a
+  // loop is expensive, but at least remove kill flags if they are in different
+  // BBs.
+  if (DefMI->getParent() != MI->getParent())
+    NewMI->clearKillInfo();
+
   // The caller will erase MI, but not DefMI.
   DefMI->eraseFromParent();
   return NewMI;
