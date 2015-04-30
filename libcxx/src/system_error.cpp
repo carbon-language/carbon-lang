@@ -152,7 +152,7 @@ system_error::__init(const error_code& ec, string what_arg)
             what_arg += ": ";
         what_arg += ec.message();
     }
-    return _VSTD::move(what_arg);
+    return what_arg;
 }
 
 system_error::system_error(error_code ec, const string& what_arg)
