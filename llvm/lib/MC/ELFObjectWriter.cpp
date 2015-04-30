@@ -182,8 +182,6 @@ class ELFObjectWriter : public MCObjectWriter {
         support::endian::Writer<support::big>(OS).write(Val);
     }
 
-    template <typename T> void write(MCDataFragment &F, T Value);
-
     void writeHeader(const MCAssembler &Asm);
 
     void WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
@@ -224,8 +222,6 @@ class ELFObjectWriter : public MCObjectWriter {
     const MCSectionELF *createRelocationSection(MCAssembler &Asm,
                                                 const MCSectionELF &Sec);
 
-    void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
-
     const MCSectionELF *createSectionHeaderStringTable();
     const MCSectionELF *createStringTable(MCContext &Ctx);
 
@@ -236,10 +232,13 @@ class ELFObjectWriter : public MCObjectWriter {
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetsTy &SectionOffsets);
 
+    void writeSectionData(const MCAssembler &Asm, const MCSectionData &SD,
+                          const MCAsmLayout &Layout);
+
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
-                          uint64_t Address, uint64_t Offset,
-                          uint64_t Size, uint32_t Link, uint32_t Info,
-                          uint64_t Alignment, uint64_t EntrySize);
+                          uint64_t Address, uint64_t Offset, uint64_t Size,
+                          uint32_t Link, uint32_t Info, uint64_t Alignment,
+                          uint64_t EntrySize);
 
     void writeRelocations(const MCAssembler &Asm, const MCSectionELF &Sec);
 
@@ -265,15 +264,6 @@ unsigned ELFObjectWriter::addToSectionTable(const MCSectionELF *Sec) {
   SectionTable.push_back(Sec);
   ShStrTabBuilder.add(Sec->getSectionName());
   return SectionTable.size();
-}
-
-template <typename T> void ELFObjectWriter::write(MCDataFragment &F, T Val) {
-  if (IsLittleEndian)
-    Val = support::endian::byte_swap<T, support::little>(Val);
-  else
-    Val = support::endian::byte_swap<T, support::big>(Val);
-  const char *Start = (const char *)&Val;
-  F.getContents().append(Start, Start + sizeof(T));
 }
 
 void SymbolTableWriter::createSymtabShndx() {
@@ -1105,7 +1095,7 @@ ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
 
 static SmallVector<char, 128>
 getUncompressedData(const MCAsmLayout &Layout,
-                    MCSectionData::FragmentListType &Fragments) {
+                    const MCSectionData::FragmentListType &Fragments) {
   SmallVector<char, 128> UncompressedData;
   for (const MCFragment &F : Fragments) {
     const SmallVectorImpl<char> *Contents;
@@ -1148,104 +1138,43 @@ prependCompressionHeader(uint64_t Size,
   return true;
 }
 
-// Return a single fragment containing the compressed contents of the whole
-// section. Null if the section was not compressed for any reason.
-static std::unique_ptr<MCDataFragment>
-getCompressedFragment(const MCAsmLayout &Layout,
-                      MCSectionData::FragmentListType &Fragments) {
-  std::unique_ptr<MCDataFragment> CompressedFragment(new MCDataFragment());
+void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
+                                       const MCSectionData &SD,
+                                       const MCAsmLayout &Layout) {
+  const MCSectionELF &Section =
+      static_cast<const MCSectionELF &>(SD.getSection());
+  StringRef SectionName = Section.getSectionName();
 
-  // Gather the uncompressed data from all the fragments, recording the
-  // alignment fragment, if seen, and any fixups.
+  // Compressing debug_frame requires handling alignment fragments which is
+  // more work (possibly generalizing MCAssembler.cpp:writeFragment to allow
+  // for writing to arbitrary buffers) for little benefit.
+  if (!Asm.getContext().getAsmInfo()->compressDebugSections() ||
+      !SectionName.startswith(".debug_") || SectionName == ".debug_frame") {
+    Asm.writeSectionData(&SD, Layout);
+    return;
+  }
+
+  // Gather the uncompressed data from all the fragments.
+  const MCSectionData::FragmentListType &Fragments = SD.getFragmentList();
   SmallVector<char, 128> UncompressedData =
       getUncompressedData(Layout, Fragments);
 
-  SmallVectorImpl<char> &CompressedContents = CompressedFragment->getContents();
-
+  SmallVector<char, 128> CompressedContents;
   zlib::Status Success = zlib::compress(
       StringRef(UncompressedData.data(), UncompressedData.size()),
       CompressedContents);
-  if (Success != zlib::StatusOK)
-    return nullptr;
-
-  if (!prependCompressionHeader(UncompressedData.size(), CompressedContents))
-    return nullptr;
-
-  return CompressedFragment;
-}
-
-typedef DenseMap<const MCSectionData *, std::vector<MCSymbolData *>>
-DefiningSymbolMap;
-
-static void UpdateSymbols(const MCAsmLayout &Layout,
-                          const std::vector<MCSymbolData *> &Symbols,
-                          MCFragment &NewFragment) {
-  for (MCSymbolData *Sym : Symbols) {
-    Sym->setOffset(Sym->getOffset() +
-                   Layout.getFragmentOffset(Sym->getFragment()));
-    Sym->setFragment(&NewFragment);
-  }
-}
-
-static void CompressDebugSection(MCAssembler &Asm, MCAsmLayout &Layout,
-                                 const DefiningSymbolMap &DefiningSymbols,
-                                 const MCSectionELF &Section,
-                                 MCSectionData &SD) {
-  StringRef SectionName = Section.getSectionName();
-  MCSectionData::FragmentListType &Fragments = SD.getFragmentList();
-
-  std::unique_ptr<MCDataFragment> CompressedFragment =
-      getCompressedFragment(Layout, Fragments);
-
-  // Leave the section as-is if the fragments could not be compressed.
-  if (!CompressedFragment)
+  if (Success != zlib::StatusOK) {
+    Asm.writeSectionData(&SD, Layout);
     return;
+  }
 
-  // Update the fragment+offsets of any symbols referring to fragments in this
-  // section to refer to the new fragment.
-  auto I = DefiningSymbols.find(&SD);
-  if (I != DefiningSymbols.end())
-    UpdateSymbols(Layout, I->second, *CompressedFragment);
-
-  // Invalidate the layout for the whole section since it will have new and
-  // different fragments now.
-  Layout.invalidateFragmentsFrom(&Fragments.front());
-  Fragments.clear();
-
-  // Complete the initialization of the new fragment
-  CompressedFragment->setParent(&SD);
-  CompressedFragment->setLayoutOrder(0);
-  Fragments.push_back(CompressedFragment.release());
-
-  // Rename from .debug_* to .zdebug_*
+  if (!prependCompressionHeader(UncompressedData.size(), CompressedContents)) {
+    Asm.writeSectionData(&SD, Layout);
+    return;
+  }
   Asm.getContext().renameELFSection(&Section,
                                     (".z" + SectionName.drop_front(1)).str());
-}
-
-void ELFObjectWriter::CompressDebugSections(MCAssembler &Asm,
-                                            MCAsmLayout &Layout) {
-  if (!Asm.getContext().getAsmInfo()->compressDebugSections())
-    return;
-
-  DefiningSymbolMap DefiningSymbols;
-
-  for (MCSymbolData &SD : Asm.symbols())
-    if (MCFragment *F = SD.getFragment())
-      DefiningSymbols[F->getParent()].push_back(&SD);
-
-  for (MCSectionData &SD : Asm) {
-    const MCSectionELF &Section =
-        static_cast<const MCSectionELF &>(SD.getSection());
-    StringRef SectionName = Section.getSectionName();
-
-    // Compressing debug_frame requires handling alignment fragments which is
-    // more work (possibly generalizing MCAssembler.cpp:writeFragment to allow
-    // for writing to arbitrary buffers) for little benefit.
-    if (!SectionName.startswith(".debug_") || SectionName == ".debug_frame")
-      continue;
-
-    CompressDebugSection(Asm, Layout, DefiningSymbols, Section, SD);
-  }
+  OS << CompressedContents;
 }
 
 void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
@@ -1408,8 +1337,6 @@ void ELFObjectWriter::writeSectionHeader(
 
 void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
-  CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
-
   MCContext &Ctx = Asm.getContext();
   const MCSectionELF *ShstrtabSection =
       Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
@@ -1453,7 +1380,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
       }
       writeRelocations(Asm, *Section.getAssociatedSection());
     } else {
-      Asm.writeSectionData(&SD, Layout);
+      writeSectionData(Asm, SD, Layout);
     }
 
     uint64_t SecEnd = OS.tell();
