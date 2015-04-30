@@ -98,7 +98,7 @@ enum AllUnavailable {
 enum User {
   UserOD = OriginalDeprecated, // expected-warning {{deprecated}}
   UserODDeprecated __attribute__((availability(macosx, deprecated=10.2))) = OriginalDeprecated,
-  UserODUnavailable __attribute__((availability(macosx, unavailable))) = OriginalDeprecated, // expected-warning {{deprecated}}
+  UserODUnavailable __attribute__((availability(macosx, unavailable))) = OriginalDeprecated,
 
   UserOU = OriginalUnavailable, // expected-error {{unavailable}}
   UserOUDeprecated __attribute__((availability(macosx, deprecated=10.2))) = OriginalUnavailable, // expected-error {{unavailable}}
@@ -106,7 +106,7 @@ enum User {
 
   UserAD = AllDeprecatedCase, // expected-warning {{deprecated}}
   UserADDeprecated __attribute__((availability(macosx, deprecated=10.2))) = AllDeprecatedCase,
-  UserADUnavailable __attribute__((availability(macosx, unavailable))) = AllDeprecatedCase, // expected-warning {{deprecated}}
+  UserADUnavailable __attribute__((availability(macosx, unavailable))) = AllDeprecatedCase,
 
   UserADU = AllDeprecatedUnavailable, // expected-error {{unavailable}}
   UserADUDeprecated __attribute__((availability(macosx, deprecated=10.2))) = AllDeprecatedUnavailable, // expected-error {{unavailable}}
@@ -140,17 +140,17 @@ enum UserDeprecated {
 } __attribute__((availability(macosx, deprecated=10.2)));
 
 enum UserUnavailable {
-  UserUnavailableOD = OriginalDeprecated, // expected-warning {{deprecated}}
+  UserUnavailableOD = OriginalDeprecated,
   UserUnavailableODDeprecated __attribute__((availability(macosx, deprecated=10.2))) = OriginalDeprecated,
-  UserUnavailableODUnavailable __attribute__((availability(macosx, unavailable))) = OriginalDeprecated, // expected-warning {{deprecated}}
+  UserUnavailableODUnavailable __attribute__((availability(macosx, unavailable))) = OriginalDeprecated,
 
   UserUnavailableOU = OriginalUnavailable,
   UserUnavailableOUDeprecated __attribute__((availability(macosx, deprecated=10.2))) = OriginalUnavailable,
   UserUnavailableOUUnavailable __attribute__((availability(macosx, unavailable))) = OriginalUnavailable,
 
-  UserUnavailableAD = AllDeprecatedCase, // expected-warning {{deprecated}}
+  UserUnavailableAD = AllDeprecatedCase,
   UserUnavailableADDeprecated __attribute__((availability(macosx, deprecated=10.2))) = AllDeprecatedCase,
-  UserUnavailableADUnavailable __attribute__((availability(macosx, unavailable))) = AllDeprecatedCase, // expected-warning {{deprecated}}
+  UserUnavailableADUnavailable __attribute__((availability(macosx, unavailable))) = AllDeprecatedCase,
 
   UserUnavailableADU = AllDeprecatedUnavailable,
   UserUnavailableADUDeprecated __attribute__((availability(macosx, deprecated=10.2))) = AllDeprecatedUnavailable,

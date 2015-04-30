@@ -5211,7 +5211,7 @@ static void DoEmitAvailabilityWarning(Sema &S, Sema::AvailabilityDiagnostic K,
   // Don't warn if our current context is deprecated or unavailable.
   switch (K) {
   case Sema::AD_Deprecation:
-    if (isDeclDeprecated(Ctx))
+    if (isDeclDeprecated(Ctx) || isDeclUnavailable(Ctx))
       return;
     diag = !ObjCPropertyAccess ? diag::warn_deprecated
                                : diag::warn_property_method_deprecated;
