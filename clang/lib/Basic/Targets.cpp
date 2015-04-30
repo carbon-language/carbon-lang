@@ -3531,8 +3531,9 @@ public:
     DoubleAlign = LongLongAlign = 64;
     bool IsWinCOFF =
         getTriple().isOSWindows() && getTriple().isOSBinFormatCOFF();
-    DescriptionString = IsWinCOFF ? "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-S32"
-                                  : "e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32";
+    DescriptionString = IsWinCOFF
+                            ? "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-a:0:32-S32"
+                            : "e-m:e-p:32:32-i64:64-f80:32-n8:16:32-a:0:32-S32";
   }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
@@ -3611,7 +3612,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
-    DescriptionString = "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-S32";
+    DescriptionString = "e-m:x-p:32:32-i64:64-f80:32-n8:16:32-a:0:32-S32";
   }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
