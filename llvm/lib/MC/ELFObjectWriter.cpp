@@ -263,6 +263,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
 unsigned ELFObjectWriter::addToSectionTable(const MCSectionELF *Sec) {
   SectionTable.push_back(Sec);
+  ShStrTabBuilder.add(Sec->getSectionName());
   return SectionTable.size();
 }
 
@@ -1310,14 +1311,7 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
 const MCSectionELF *
 ELFObjectWriter::createSectionHeaderStringTable(MCAssembler &Asm) {
   const MCSectionELF *ShstrtabSection = SectionTable[ShstrtabIndex - 1];
-
   Asm.getOrCreateSectionData(*ShstrtabSection);
-
-  for (MCSectionData &SD : Asm) {
-    const MCSectionELF &Section =
-        static_cast<const MCSectionELF &>(SD.getSection());
-    ShStrTabBuilder.add(Section.getSectionName());
-  }
   ShStrTabBuilder.finalize(StringTableBuilder::ELF);
   OS << ShStrTabBuilder.data();
   return ShstrtabSection;
