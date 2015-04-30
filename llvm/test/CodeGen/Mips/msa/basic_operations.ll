@@ -137,7 +137,7 @@ define void @const_v2i64() nounwind {
   ; MIPS32-AE: .size const_v2i64
 }
 
-define void @nonconst_v16i8(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g, i8 %h) nounwind {
+define void @nonconst_v16i8(i8 signext %a, i8 signext %b, i8 signext %c, i8 signext %d, i8 signext %e, i8 signext %f, i8 signext %g, i8 signext %h) nounwind {
   ; MIPS32-AE-LABEL: nonconst_v16i8:
 
   %1 = insertelement <16 x i8> undef, i8 %a, i32 0
@@ -160,17 +160,13 @@ define void @nonconst_v16i8(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g, i8 
   ; MIPS32-AE-DAG: insert.b [[R1]][1], $5
   ; MIPS32-AE-DAG: insert.b [[R1]][2], $6
   ; MIPS32-AE-DAG: insert.b [[R1]][3], $7
-  ; MIPS32-BE-DAG: lbu [[R2:\$[0-9]+]], 19($sp)
-  ; MIPS32-LE-DAG: lbu [[R2:\$[0-9]+]], 16($sp)
+  ; MIPS32-AE-DAG: lw [[R2:\$[0-9]+]], 16($sp)
   ; MIPS32-AE-DAG: insert.b [[R1]][4], [[R2]]
-  ; MIPS32-BE-DAG: lbu [[R3:\$[0-9]+]], 23($sp)
-  ; MIPS32-LE-DAG: lbu [[R3:\$[0-9]+]], 20($sp)
+  ; MIPS32-AE-DAG: lw [[R3:\$[0-9]+]], 20($sp)
   ; MIPS32-AE-DAG: insert.b [[R1]][5], [[R3]]
-  ; MIPS32-BE-DAG: lbu [[R4:\$[0-9]+]], 27($sp)
-  ; MIPS32-LE-DAG: lbu [[R4:\$[0-9]+]], 24($sp)
+  ; MIPS32-AE-DAG: lw [[R4:\$[0-9]+]], 24($sp)
   ; MIPS32-AE-DAG: insert.b [[R1]][6], [[R4]]
-  ; MIPS32-BE-DAG: lbu [[R5:\$[0-9]+]], 31($sp)
-  ; MIPS32-LE-DAG: lbu [[R5:\$[0-9]+]], 28($sp)
+  ; MIPS32-AE-DAG: lw [[R5:\$[0-9]+]], 28($sp)
   ; MIPS32-AE-DAG: insert.b [[R1]][7], [[R5]]
   ; MIPS32-AE-DAG: insert.b [[R1]][8], [[R5]]
   ; MIPS32-AE-DAG: insert.b [[R1]][9], [[R5]]
@@ -187,7 +183,7 @@ define void @nonconst_v16i8(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g, i8 
   ; MIPS32-AE: .size nonconst_v16i8
 }
 
-define void @nonconst_v8i16(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 %g, i16 %h) nounwind {
+define void @nonconst_v8i16(i16 signext %a, i16 signext %b, i16 signext %c, i16 signext %d, i16 signext %e, i16 signext %f, i16 signext %g, i16 signext %h) nounwind {
   ; MIPS32-AE-LABEL: nonconst_v8i16:
 
   %1 = insertelement <8 x i16> undef, i16 %a, i32 0
@@ -202,17 +198,13 @@ define void @nonconst_v8i16(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 
   ; MIPS32-AE-DAG: insert.h [[R1]][1], $5
   ; MIPS32-AE-DAG: insert.h [[R1]][2], $6
   ; MIPS32-AE-DAG: insert.h [[R1]][3], $7
-  ; MIPS32-BE-DAG: lhu [[R2:\$[0-9]+]], 18($sp)
-  ; MIPS32-LE-DAG: lhu [[R2:\$[0-9]+]], 16($sp)
+  ; MIPS32-AE-DAG: lw [[R2:\$[0-9]+]], 16($sp)
   ; MIPS32-AE-DAG: insert.h [[R1]][4], [[R2]]
-  ; MIPS32-BE-DAG: lhu [[R2:\$[0-9]+]], 22($sp)
-  ; MIPS32-LE-DAG: lhu [[R2:\$[0-9]+]], 20($sp)
+  ; MIPS32-AE-DAG: lw [[R2:\$[0-9]+]], 20($sp)
   ; MIPS32-AE-DAG: insert.h [[R1]][5], [[R2]]
-  ; MIPS32-BE-DAG: lhu [[R2:\$[0-9]+]], 26($sp)
-  ; MIPS32-LE-DAG: lhu [[R2:\$[0-9]+]], 24($sp)
+  ; MIPS32-AE-DAG: lw [[R2:\$[0-9]+]], 24($sp)
   ; MIPS32-AE-DAG: insert.h [[R1]][6], [[R2]]
-  ; MIPS32-BE-DAG: lhu [[R2:\$[0-9]+]], 30($sp)
-  ; MIPS32-LE-DAG: lhu [[R2:\$[0-9]+]], 28($sp)
+  ; MIPS32-AE-DAG: lw [[R2:\$[0-9]+]], 28($sp)
   ; MIPS32-AE-DAG: insert.h [[R1]][7], [[R2]]
 
   store volatile <8 x i16> %8, <8 x i16>*@v8i16
@@ -221,7 +213,7 @@ define void @nonconst_v8i16(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 
   ; MIPS32-AE: .size nonconst_v8i16
 }
 
-define void @nonconst_v4i32(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
+define void @nonconst_v4i32(i32 signext %a, i32 signext %b, i32 signext %c, i32 signext %d) nounwind {
   ; MIPS32-AE-LABEL: nonconst_v4i32:
 
   %1 = insertelement <4 x i32> undef, i32 %a, i32 0
@@ -239,7 +231,7 @@ define void @nonconst_v4i32(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
   ; MIPS32-AE: .size nonconst_v4i32
 }
 
-define void @nonconst_v2i64(i64 %a, i64 %b) nounwind {
+define void @nonconst_v2i64(i64 signext %a, i64 signext %b) nounwind {
   ; MIPS32-AE-LABEL: nonconst_v2i64:
 
   %1 = insertelement <2 x i64> undef, i64 %a, i32 0
@@ -590,7 +582,7 @@ define i64 @extract_zext_v2i64_vidx() nounwind {
   ; MIPS32-AE: .size extract_zext_v2i64_vidx
 }
 
-define void @insert_v16i8(i32 %a) nounwind {
+define void @insert_v16i8(i32 signext %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v16i8:
 
   %1 = load <16 x i8>, <16 x i8>* @v16i8
@@ -612,7 +604,7 @@ define void @insert_v16i8(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v16i8
 }
 
-define void @insert_v8i16(i32 %a) nounwind {
+define void @insert_v8i16(i32 signext %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v8i16:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
@@ -634,7 +626,7 @@ define void @insert_v8i16(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v8i16
 }
 
-define void @insert_v4i32(i32 %a) nounwind {
+define void @insert_v4i32(i32 signext %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v4i32:
 
   %1 = load <4 x i32>, <4 x i32>* @v4i32
@@ -653,7 +645,7 @@ define void @insert_v4i32(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v4i32
 }
 
-define void @insert_v2i64(i64 %a) nounwind {
+define void @insert_v2i64(i64 signext %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v2i64:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
@@ -673,7 +665,7 @@ define void @insert_v2i64(i64 %a) nounwind {
   ; MIPS32-AE: .size insert_v2i64
 }
 
-define void @insert_v16i8_vidx(i32 %a) nounwind {
+define void @insert_v16i8_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE: insert_v16i8_vidx:
 
   %1 = load <16 x i8>, <16 x i8>* @v16i8
@@ -702,7 +694,7 @@ define void @insert_v16i8_vidx(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v16i8_vidx
 }
 
-define void @insert_v8i16_vidx(i32 %a) nounwind {
+define void @insert_v8i16_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE: insert_v8i16_vidx:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
@@ -732,7 +724,7 @@ define void @insert_v8i16_vidx(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v8i16_vidx
 }
 
-define void @insert_v4i32_vidx(i32 %a) nounwind {
+define void @insert_v4i32_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE: insert_v4i32_vidx:
 
   %1 = load <4 x i32>, <4 x i32>* @v4i32
@@ -759,7 +751,7 @@ define void @insert_v4i32_vidx(i32 %a) nounwind {
   ; MIPS32-AE: .size insert_v4i32_vidx
 }
 
-define void @insert_v2i64_vidx(i64 %a) nounwind {
+define void @insert_v2i64_vidx(i64 signext %a) nounwind {
   ; MIPS32-AE: insert_v2i64_vidx:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
