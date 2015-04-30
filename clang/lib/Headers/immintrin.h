@@ -88,8 +88,16 @@
 #include <avx512bwintrin.h>
 #endif
 
+#ifdef __AVX512DQ__
+#include <avx512dqintrin.h>
+#endif
+
 #if defined (__AVX512VL__) && defined (__AVX512BW__)
 #include <avx512vlbwintrin.h>
+#endif
+
+#if defined (__AVX512VL__) && defined (__AVX512DQ__)
+#include <avx512vldqintrin.h>
 #endif
 
 #ifdef __AVX512ER__
