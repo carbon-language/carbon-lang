@@ -540,6 +540,7 @@ public:
   /// 4. Emit a call to kmp_int32 __kmpc_omp_task(ident_t *, kmp_int32 gtid,
   /// kmp_task_t *new_task), where new_task is a resulting structure from
   /// previous items.
+  /// \param D Current task directive.
   /// \param Tied true if the task is tied (the task is tied to the thread that
   /// can suspend its task region), false - untied (the task is not tied to any
   /// thread).
@@ -553,10 +554,17 @@ public:
   /// TaskFunction.
   /// \param IfCond Not a nullptr if 'if' clause was specified, nullptr
   /// otherwise.
-  virtual void emitTaskCall(CodeGenFunction &CGF, SourceLocation Loc, bool Tied,
+  /// \param PrivateVars List of references to private variables for the task
+  /// directive.
+  /// \param PrivateCopies List of private copies for each private variable in
+  /// \a PrivateVars.
+  virtual void emitTaskCall(CodeGenFunction &CGF, SourceLocation Loc,
+                            const OMPExecutableDirective &D, bool Tied,
                             llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
                             llvm::Value *TaskFunction, QualType SharedsTy,
-                            llvm::Value *Shareds, const Expr *IfCond);
+                            llvm::Value *Shareds, const Expr *IfCond,
+                            const ArrayRef<const Expr *> PrivateVars,
+                            const ArrayRef<const Expr *> PrivateCopies);
 
   /// \brief Emit code for the directive that does not require outlining.
   ///

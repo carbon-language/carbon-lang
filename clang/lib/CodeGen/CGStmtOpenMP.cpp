@@ -1373,9 +1373,25 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   if (auto C = S.getSingleClause(OMPC_if)) {
     IfCond = cast<OMPIfClause>(C)->getCondition();
   }
-  CGM.getOpenMPRuntime().emitTaskCall(*this, S.getLocStart(), Tied, Final,
+  // Get list of private variables.
+  llvm::SmallVector<const Expr *, 8> Privates;
+  llvm::SmallVector<const Expr *, 8> PrivateCopies;
+  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
+  for (auto &&I = S.getClausesOfKind(OMPC_private); I; ++I) {
+    auto *C = cast<OMPPrivateClause>(*I);
+    auto IRef = C->varlist_begin();
+    for (auto *IInit : C->private_copies()) {
+      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
+        Privates.push_back(*IRef);
+        PrivateCopies.push_back(IInit);
+      }
+      ++IRef;
+    }
+  }
+  CGM.getOpenMPRuntime().emitTaskCall(*this, S.getLocStart(), S, Tied, Final,
                                       OutlinedFn, SharedsTy, CapturedStruct,
-                                      IfCond);
+                                      IfCond, Privates, PrivateCopies);
 }
 
 void CodeGenFunction::EmitOMPTaskyieldDirective(
