@@ -226,8 +226,8 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
-    const MCSectionELF *createSectionHeaderStringTable(MCAssembler &Asm);
-    const MCSectionELF *createStringTable(MCAssembler &Asm);
+    const MCSectionELF *createSectionHeaderStringTable();
+    const MCSectionELF *createStringTable(MCContext &Ctx);
 
     void ExecutePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
@@ -1308,20 +1308,16 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
   }
 }
 
-const MCSectionELF *
-ELFObjectWriter::createSectionHeaderStringTable(MCAssembler &Asm) {
+const MCSectionELF *ELFObjectWriter::createSectionHeaderStringTable() {
   const MCSectionELF *ShstrtabSection = SectionTable[ShstrtabIndex - 1];
-  Asm.getOrCreateSectionData(*ShstrtabSection);
   ShStrTabBuilder.finalize(StringTableBuilder::ELF);
   OS << ShStrTabBuilder.data();
   return ShstrtabSection;
 }
 
-const MCSectionELF *ELFObjectWriter::createStringTable(MCAssembler &Asm) {
-  MCContext &Ctx = Asm.getContext();
+const MCSectionELF *ELFObjectWriter::createStringTable(MCContext &Ctx) {
   const MCSectionELF *StrtabSection =
       Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0);
-  Asm.getOrCreateSectionData(*StrtabSection);
   StringTableIndex = addToSectionTable(StrtabSection);
   OS << StrTabBuilder.data();
   return StrtabSection;
@@ -1384,7 +1380,7 @@ void ELFObjectWriter::writeSectionHeader(
     MCAssembler &Asm, const MCAsmLayout &Layout,
     const SectionIndexMapTy &SectionIndexMap,
     const SectionOffsetsTy &SectionOffsets) {
-  const unsigned NumSections = Asm.size();
+  const unsigned NumSections = SectionTable.size();
 
   // Null section first.
   uint64_t FirstSectionSize =
@@ -1497,14 +1493,14 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   {
     uint64_t SecStart = OS.tell();
-    const MCSectionELF *Sec = createStringTable(Asm);
+    const MCSectionELF *Sec = createStringTable(Ctx);
     uint64_t SecEnd = OS.tell();
     SectionOffsets[Sec] = std::make_pair(SecStart, SecEnd);
   }
 
   {
     uint64_t SecStart = OS.tell();
-    const MCSectionELF *Sec = createSectionHeaderStringTable(Asm);
+    const MCSectionELF *Sec = createSectionHeaderStringTable();
     uint64_t SecEnd = OS.tell();
     SectionOffsets[Sec] = std::make_pair(SecStart, SecEnd);
   }
