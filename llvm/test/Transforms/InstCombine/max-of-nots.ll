@@ -66,3 +66,20 @@ define i32 @compute_min_pessimization(i32 %x, i32 %y) {
   %min = sub i32 -1, %not_min
   ret i32 %min
 }
+
+define i32 @max_of_nots(i32 %x, i32 %y) {
+; CHECK-LABEL: @max_of_nots(
+; CHECK-NEXT: icmp
+; CHECK-NEXT: select
+; CHECK-NEXT: icmp
+; CHECK-NEXT: select
+; CHECK-NEXT: xor
+; CHECK-NEXT: ret
+  %c0 = icmp sgt i32 %y, 0
+  %xor_y = xor i32 %y, -1
+  %s0 = select i1 %c0, i32 %xor_y, i32 -1
+  %xor_x = xor i32 %x, -1
+  %c1 = icmp slt i32 %s0, %xor_x
+  %smax96 = select i1 %c1, i32 %xor_x, i32 %s0
+  ret i32 %smax96
+}
