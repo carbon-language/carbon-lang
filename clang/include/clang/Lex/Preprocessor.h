@@ -367,7 +367,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// Information about a name that has been used to define a module macro.
   struct ModuleMacroInfo {
     ModuleMacroInfo(MacroDirective *MD)
-        : MD(MD), ActiveModuleMacrosGeneration(0) {}
+        : MD(MD), ActiveModuleMacrosGeneration(0), IsAmbiguous(false) {}
 
     /// The most recent macro directive for this identifier.
     MacroDirective *MD;
