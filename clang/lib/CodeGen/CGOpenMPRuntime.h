@@ -100,7 +100,7 @@ private:
     // new_task);
     OMPRTL__kmpc_omp_task,
     // Call to void __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid,
-    // kmp_int32 cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
+    // size_t cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
     // kmp_int32 didit);
     OMPRTL__kmpc_copyprivate,
     // Call to kmp_int32 __kmpc_reduce(ident_t *loc, kmp_int32 global_tid,

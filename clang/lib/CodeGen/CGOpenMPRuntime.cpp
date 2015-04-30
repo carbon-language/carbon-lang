@@ -641,12 +641,12 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
   }
   case OMPRTL__kmpc_copyprivate: {
     // Build void __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid,
-    // kmp_int32 cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
+    // size_t cpy_size, void *cpy_data, void(*cpy_func)(void *, void *),
     // kmp_int32 didit);
     llvm::Type *CpyTypeParams[] = {CGM.VoidPtrTy, CGM.VoidPtrTy};
     auto *CpyFnTy =
         llvm::FunctionType::get(CGM.VoidTy, CpyTypeParams, /*isVarArg=*/false);
-    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.Int32Ty,
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.SizeTy,
                                 CGM.VoidPtrTy, CpyFnTy->getPointerTo(),
                                 CGM.Int32Ty};
     llvm::FunctionType *FnTy =
@@ -1319,7 +1319,8 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     // int32 did_it = 0;
     auto KmpInt32Ty = C.getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1);
     DidIt = CGF.CreateMemTemp(KmpInt32Ty, ".omp.copyprivate.did_it");
-    CGF.InitTempAlloca(DidIt, CGF.Builder.getInt32(0));
+    CGF.Builder.CreateAlignedStore(CGF.Builder.getInt32(0), DidIt,
+                                   DidIt->getAlignment());
   }
   // Prepare arguments and build a call to __kmpc_single
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
@@ -1360,8 +1361,8 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     auto *CpyFn = emitCopyprivateCopyFunction(
         CGM, CGF.ConvertTypeForMem(CopyprivateArrayTy)->getPointerTo(),
         CopyprivateVars, SrcExprs, DstExprs, AssignmentOps);
-    auto *BufSize = CGF.Builder.getInt32(
-        C.getTypeSizeInChars(CopyprivateArrayTy).getQuantity());
+    auto *BufSize = llvm::ConstantInt::get(
+        CGM.SizeTy, C.getTypeSizeInChars(CopyprivateArrayTy).getQuantity());
     auto *CL = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(CopyprivateList,
                                                                CGF.VoidPtrTy);
     auto *DidItVal =
@@ -1369,7 +1370,7 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
     llvm::Value *Args[] = {
         emitUpdateLocation(CGF, Loc), // ident_t *<loc>
         getThreadID(CGF, Loc),        // i32 <gtid>
-        BufSize,                      // i32 <buf_size>
+        BufSize,                      // size_t <buf_size>
         CL,                           // void *<copyprivate list>
         CpyFn,                        // void (*) (void *, void *) <copy_func>
         DidItVal                      // i32 did_it
