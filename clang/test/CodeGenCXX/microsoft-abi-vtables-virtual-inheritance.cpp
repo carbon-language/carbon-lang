@@ -423,7 +423,7 @@ void use(T *obj) { obj->f(); }
 
 namespace Test10 {
 struct X : virtual C, virtual A {
-  // CHECK-LABEL: VFTable for 'A' in 'C' in 'Test10::X' (2 entries).
+  // CHECK-LABEL: VFTable for 'A' in 'Test10::X' (2 entries).
   // CHECK-NEXT: 0 | void Test10::X::f()
   // CHECK-NEXT: 1 | void A::z()
 

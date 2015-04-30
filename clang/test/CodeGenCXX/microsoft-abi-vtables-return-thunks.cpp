@@ -128,3 +128,30 @@ C::C() {}
 // GLOBALS: @"\01?f@B@pr20479@@QAEPAUA@2@XZ"
 // GLOBALS: @"\01?f@B@pr20479@@UAEPAU12@XZ"
 }
+
+namespace pr21073 {
+struct A {
+  virtual A *f();
+};
+
+struct B : virtual A {
+  virtual B *f();
+};
+
+struct C : virtual A, virtual B {
+// VFTABLES-LABEL: VFTable for 'pr21073::A' in 'pr21073::B' in 'pr21073::C' (2 entries).
+// VFTABLES-NEXT:   0 | pr21073::B *pr21073::B::f()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct pr21073::A *'): vbase #1, 0 non-virtual]
+// VFTABLES-NEXT:       [this adjustment: 8 non-virtual]
+// VFTABLES-NEXT:   1 | pr21073::B *pr21073::B::f()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct pr21073::B *'): 0 non-virtual]
+// VFTABLES-NEXT:       [this adjustment: 8 non-virtual]
+  C();
+};
+
+C::C() {}
+
+// GLOBALS-LABEL: @"\01??_7C@pr21073@@6B@" = linkonce_odr unnamed_addr constant [2 x i8*]
+// GLOBALS: @"\01?f@B@pr21073@@WPPPPPPPI@AEPAUA@2@XZ"
+// GLOBALS: @"\01?f@B@pr21073@@WPPPPPPPI@AEPAU12@XZ"
+}
