@@ -62,8 +62,8 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
         eOutOfBand_ThreadCreated,
         eOutOfBand_ThreadExited,
         eOutOfBand_ThreadSelected,
-        eOutOfBand_TargetModulesLoaded,
-        eOutOfBand_TargetModulesUnloaded,
+        eOutOfBand_TargetModuleLoaded,
+        eOutOfBand_TargetModuleUnloaded,
         eOutOfBand_TargetStreamOutput,
         eOutOfBand_count // Always the last one
     };

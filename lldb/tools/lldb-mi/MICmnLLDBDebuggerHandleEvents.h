@@ -71,8 +71,8 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool HandleProcessEventStateSuspended(const lldb::SBEvent &vEvent);
     bool HandleTargetEventBroadcastBitModulesLoaded(const lldb::SBEvent &vEvent);
     bool HandleTargetEventBroadcastBitModulesUnloaded(const lldb::SBEvent &vEvent);
-    bool MiHelpGetModuleInfo(const lldb::SBModule &vModule, const MIuint nModuleNum,
-                             CMICmnMIValueList &vwrMiValueList);
+    bool MiHelpGetModuleInfo(const lldb::SBModule &vModule, const bool vbWithExtraFields,
+                             CMICmnMIOutOfBandRecord &vwrMiOutOfBandRecord);
     bool MiHelpGetCurrentThreadFrame(CMICmnMIValueTuple &vwrMiValueTuple);
     bool MiResultRecordToStdout(const CMICmnMIResultRecord &vrMiResultRecord);
     bool MiOutOfBandRecordToStdout(const CMICmnMIOutOfBandRecord &vrMiResultRecord);

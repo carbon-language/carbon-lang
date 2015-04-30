@@ -31,3 +31,14 @@ Example:
 
     -data-info-line hello.cpp:15
     ^done,start="0x0000000100000f80",end="0x0000000100000f94",file="/Users/IliaK/p/hello.cpp",line="15"
+
+# =library-loaded notification
+
+The =library-loaded notification has 3 extra fields:
+    symbols-loaded - indicates that there are symbols for the loaded library
+    symbols-path   - if symbols are exist then it contains a path for symbols of the loaded library
+    loaded_addr    - contains an address of the loaded library or "-" if address isn't resolved yet
+
+For example:
+    =library-loaded,id="/Users/IliaK/p/hello",target-name="/Users/IliaK/p/hello",host-name="/Users/IliaK/p/hello",symbols-loaded="1",symbols-path="/Users/IliaK/p/hello.dSYM/Contents/Resources/DWARF/hello",loaded_addr="-"
+    =library-loaded,id="/usr/lib/dyld",target-name="/usr/lib/dyld",host-name="/usr/lib/dyld",symbols-loaded="0",loaded_addr="0x00007fff5fc00000"

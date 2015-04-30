@@ -25,8 +25,8 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_MapOutOfBandToOutOfBan
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadCreated, "thread-created"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadExited, "thread-exited"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadSelected, "thread-selected"},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesLoaded, "shlibs-added"},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "shlibs-removed"},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModuleLoaded, "library-loaded"},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModuleUnloaded, "library-unloaded"},
     {CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, ""}};
 CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTextToToken = {
     {CMICmnMIOutOfBandRecord::eOutOfBand_Running, "*"},
@@ -41,8 +41,8 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTex
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadCreated, "="},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadExited, "="},
     {CMICmnMIOutOfBandRecord::eOutOfBand_ThreadSelected, "="},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesLoaded, "="},
-    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModulesUnloaded, "="},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModuleLoaded, "="},
+    {CMICmnMIOutOfBandRecord::eOutOfBand_TargetModuleUnloaded, "="},
     {CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, "@"}};
 
 //++ ------------------------------------------------------------------------------------
