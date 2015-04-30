@@ -630,16 +630,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     // Otherwise just hand the sub off to computeKnownBits to fill in
     // the known zeros and ones.
     computeKnownBits(V, KnownZero, KnownOne, Depth, CxtI);
-
-    // Turn this into a xor if LHS is 2^n-1 and the remaining bits are known
-    // zero.
-    if (ConstantInt *C0 = dyn_cast<ConstantInt>(I->getOperand(0))) {
-      APInt I0 = C0->getValue();
-      if ((I0 + 1).isPowerOf2() && (I0 | KnownZero).isAllOnesValue()) {
-        Instruction *Xor = BinaryOperator::CreateXor(I->getOperand(1), C0);
-        return InsertNewInstWith(Xor, *I);
-      }
-    }
     break;
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {

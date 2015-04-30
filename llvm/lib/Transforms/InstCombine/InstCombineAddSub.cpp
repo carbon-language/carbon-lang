@@ -1586,6 +1586,19 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           CI->getValue() == I.getType()->getPrimitiveSizeInBits() - 1)
         return BinaryOperator::CreateLShr(X, CI);
     }
+
+    // Turn this into a xor if LHS is 2^n-1 and the remaining bits are known
+    // zero.
+    APInt IntVal = C->getValue();
+    if ((IntVal + 1).isPowerOf2()) {
+      unsigned BitWidth = I.getType()->getScalarSizeInBits();
+      APInt KnownZero(BitWidth, 0);
+      APInt KnownOne(BitWidth, 0);
+      computeKnownBits(&I, KnownZero, KnownOne, 0, &I);
+      if ((IntVal | KnownZero).isAllOnesValue()) {
+        return BinaryOperator::CreateXor(Op1, C);
+      }
+    }
   }
 
 
