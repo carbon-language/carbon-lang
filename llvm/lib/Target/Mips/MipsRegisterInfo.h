@@ -57,9 +57,6 @@ public:
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                       RegScavenger *RS = nullptr) const;
-
   /// Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const override;
 
