@@ -140,7 +140,7 @@ define <32 x i8> @splat_v32i8(<32 x i8> %x) #0 {
 
 ; PR23259: Verify that ISel doesn't crash with a 'fatal error in backend'
 ; due to a missing AVX pattern to select a v2i64 X86ISD::BROADCAST of a
-; loadi16 with multiple uses.
+; loadi64 with multiple uses.
 
 @A = common global <3 x i64> zeroinitializer, align 32
 
