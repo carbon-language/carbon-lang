@@ -74,6 +74,9 @@ struct InstrProfOptions {
 
   // Add the 'noredzone' attribute to added runtime library calls.
   bool NoRedZone;
+
+  // Name of the profile file to use as output
+  std::string InstrProfileOutput;
 };
 
 /// Insert frontend instrumentation based profiling.
