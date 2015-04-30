@@ -2992,7 +2992,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
         // FIXME: Change to an error if non-default in 4.0.
         Func->setVisibility(GetDecodedVisibility(Record[7]));
       if (Record.size() > 8 && Record[8]) {
-        if (Record[8]-1 > GCTable.size())
+        if (Record[8]-1 >= GCTable.size())
           return Error("Invalid ID");
         Func->setGC(GCTable[Record[8]-1].c_str());
       }
