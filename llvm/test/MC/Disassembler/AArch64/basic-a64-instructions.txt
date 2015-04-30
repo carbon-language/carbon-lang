@@ -622,7 +622,7 @@
 
 # CHECK: bfi      x4, x5, #52, #11
 # CHECK: bfxil    xzr, x4, #0, #1
-# CHECK: bfi      x4, xzr, #1, #6
+# CHECK: bfc      x4, #1, #6
 # CHECK: bfxil    x5, x6, #12, #52
 0xa4 0x28 0x4c 0xb3
 0x9f 0x0 0x40 0xb3
@@ -715,7 +715,7 @@
 # CHECK: bfxil    w9, w10, #0, #32
 # CHECK: bfi      w11, w12, #31, #1
 # CHECK: bfi      w13, w14, #29, #3
-# CHECK: bfi      xzr, xzr, #10, #11
+# CHECK: bfc      xzr, #10, #11
 0x49 0x1 0x0 0x33
 0x62 0x0 0x41 0xb3
 0x93 0xfe 0x40 0xb3

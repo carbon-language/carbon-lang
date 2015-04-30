@@ -3644,6 +3644,60 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                 Op3.getEndLoc(), getContext());
       }
     }
+  } else if (NumOperands == 4 && Tok == "bfc") {
+    // FIXME: Horrible hack to handle BFC->BFM alias.
+    AArch64Operand &Op1 = static_cast<AArch64Operand &>(*Operands[1]);
+    AArch64Operand LSBOp = static_cast<AArch64Operand &>(*Operands[2]);
+    AArch64Operand WidthOp = static_cast<AArch64Operand &>(*Operands[3]);
+
+    if (Op1.isReg() && LSBOp.isImm() && WidthOp.isImm()) {
+      const MCConstantExpr *LSBCE = dyn_cast<MCConstantExpr>(LSBOp.getImm());
+      const MCConstantExpr *WidthCE = dyn_cast<MCConstantExpr>(WidthOp.getImm());
+
+      if (LSBCE && WidthCE) {
+        uint64_t LSB = LSBCE->getValue();
+        uint64_t Width = WidthCE->getValue();
+
+        uint64_t RegWidth = 0;
+        if (AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
+                Op1.getReg()))
+          RegWidth = 64;
+        else
+          RegWidth = 32;
+
+        if (LSB >= RegWidth)
+          return Error(LSBOp.getStartLoc(),
+                       "expected integer in range [0, 31]");
+        if (Width < 1 || Width > RegWidth)
+          return Error(WidthOp.getStartLoc(),
+                       "expected integer in range [1, 32]");
+
+        uint64_t ImmR = 0;
+        if (RegWidth == 32)
+          ImmR = (32 - LSB) & 0x1f;
+        else
+          ImmR = (64 - LSB) & 0x3f;
+
+        uint64_t ImmS = Width - 1;
+
+        if (ImmR != 0 && ImmS >= ImmR)
+          return Error(WidthOp.getStartLoc(),
+                       "requested insert overflows register");
+
+        const MCExpr *ImmRExpr = MCConstantExpr::Create(ImmR, getContext());
+        const MCExpr *ImmSExpr = MCConstantExpr::Create(ImmS, getContext());
+        Operands[0] = AArch64Operand::CreateToken(
+              "bfm", false, Op.getStartLoc(), getContext());
+        Operands[2] = AArch64Operand::CreateReg(
+            RegWidth == 32 ? AArch64::WZR : AArch64::XZR, false, SMLoc(),
+            SMLoc(), getContext());
+        Operands[3] = AArch64Operand::CreateImm(
+            ImmRExpr, LSBOp.getStartLoc(), LSBOp.getEndLoc(), getContext());
+        Operands.emplace_back(
+            AArch64Operand::CreateImm(ImmSExpr, WidthOp.getStartLoc(),
+                                      WidthOp.getEndLoc(), getContext()));
+      }
+    }
   } else if (NumOperands == 5) {
     // FIXME: Horrible hack to handle the BFI -> BFM, SBFIZ->SBFM, and
     // UBFIZ -> UBFM aliases.
@@ -3675,8 +3729,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                          "expected integer in range [1, 32]");
 
           uint64_t NewOp3Val = 0;
-          if (AArch64MCRegisterClasses[AArch64::GPR32allRegClassID].contains(
-                  Op1.getReg()))
+          if (RegWidth == 32)
             NewOp3Val = (32 - Op3Val) & 0x1f;
           else
             NewOp3Val = (64 - Op3Val) & 0x3f;

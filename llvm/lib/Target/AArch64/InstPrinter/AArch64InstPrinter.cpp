@@ -162,11 +162,23 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     int ImmR = MI->getOperand(3).getImm();
     int ImmS = MI->getOperand(4).getImm();
 
-    // BFI alias
-    if (ImmS < ImmR) {
+    if ((Op2.getReg() == AArch64::WZR || Op2.getReg() == AArch64::XZR) &&
+        (ImmR == 0 || ImmS < ImmR)) {
+      // BFC takes precedence over its entire range, sligtly differently to BFI.
       int BitWidth = Opcode == AArch64::BFMXri ? 64 : 32;
       int LSB = (BitWidth - ImmR) % BitWidth;
       int Width = ImmS + 1;
+
+      O << "\tbfc\t" << getRegisterName(Op0.getReg())
+        << ", #" << LSB << ", #" << Width;
+      printAnnotation(O, Annot);
+      return;
+    } else if (ImmS < ImmR) {
+      // BFI alias
+      int BitWidth = Opcode == AArch64::BFMXri ? 64 : 32;
+      int LSB = (BitWidth - ImmR) % BitWidth;
+      int Width = ImmS + 1;
+
       O << "\tbfi\t" << getRegisterName(Op0.getReg()) << ", "
         << getRegisterName(Op2.getReg()) << ", #" << LSB << ", #" << Width;
       printAnnotation(O, Annot);

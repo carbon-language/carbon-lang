@@ -1088,6 +1088,23 @@
 // CHECK-ERROR-NEXT:         ubfx w3, wsp, #10, #8
 // CHECK-ERROR-NEXT:                  ^
 
+        bfc wsp, #3, #6
+        bfc w4, #2, #31
+        bfc sp, #0, #1
+        bfc x6, #0, #0
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:        bfc wsp, #3, #6
+// CHECK-ERROR-NEXT:            ^
+// CHECK-ERROR-NEXT: error: requested insert overflows register
+// CHECK-ERROR-NEXT:         bfc w4, #2, #31
+// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:         bfc sp, #0, #1
+// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: expected integer in range [1, 32]
+// CHECK-ERROR-NEXT:         bfc x6, #0, #0
+// CHECK-ERROR-NEXT:                     ^
+
 //------------------------------------------------------------------------------
 // Compare & branch (immediate)
 //------------------------------------------------------------------------------
