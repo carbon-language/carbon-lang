@@ -217,7 +217,7 @@ Log::Error(const char *format, ...)
     if (arg_msg == nullptr)
         return;
 
-    Printf("error: %s", args);
+    Printf("error: %s", arg_msg);
     free(arg_msg);
 }
 
