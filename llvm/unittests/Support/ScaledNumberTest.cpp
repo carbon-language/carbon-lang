@@ -155,7 +155,7 @@ TEST(ScaledNumberHelpersTest, getQuotient) {
   EXPECT_EQ(SP32(0xaaaaaaab, -33), getQuotient32(1, 3));
   EXPECT_EQ(SP32(0xd5555555, -31), getQuotient32(5, 3));
 
-  // 64-bit division is hard to test, since divide64 doesn't canonicalized its
+  // 64-bit division is hard to test, since divide64 doesn't canonicalize its
   // output.  However, this is the algorithm the implementation uses:
   //
   // - Shift divisor right.
