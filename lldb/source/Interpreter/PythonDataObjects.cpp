@@ -178,7 +178,7 @@ PythonString::GetString() const
 {
     if (m_py_obj)
         return llvm::StringRef(PyString_AsString(m_py_obj), GetSize());
-    return nullptr;
+    return llvm::StringRef();
 }
 
 size_t
