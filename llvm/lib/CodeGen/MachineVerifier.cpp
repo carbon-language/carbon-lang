@@ -329,8 +329,18 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
       } else if (!CurBundle)
         report("No bundle header", MBBI);
       visitMachineInstrBefore(MBBI);
-      for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I)
-        visitMachineOperand(&MBBI->getOperand(I), I);
+      for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I) {
+        const MachineInstr &MI = *MBBI;
+        const MachineOperand &Op = MI.getOperand(I);
+        if (Op.getParent() != &MI) {
+          // Make sure to use correct addOperand / RmeoveOperand / ChangeTo
+          // functions when replacing operands of a MachineInstr.
+          report("Instruction has operand with wrong parent set", &MI);
+        }
+
+        visitMachineOperand(&Op, I);
+      }
+
       visitMachineInstrAfter(MBBI);
 
       // Was this the last bundled instruction?
