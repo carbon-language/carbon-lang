@@ -1076,11 +1076,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
       std::vector<Init *> NewOperands;
       std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
 
-      for (std::vector<Init *>::iterator li = NewList.begin(),
-             liend = NewList.end();
-           li != liend;
-           ++li) {
-        Init *Item = *li;
+      for (Init *&Item : NewList) {
         NewOperands.clear();
         for(int i = 0; i < RHSo->getNumOperands(); ++i) {
           // First, replace the foreach variable with the list item
@@ -1095,7 +1091,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
         const OpInit *NewOp = RHSo->clone(NewOperands);
         Init *NewItem = NewOp->Fold(CurRec, CurMultiClass);
         if (NewItem != NewOp)
-          *li = NewItem;
+          Item = NewItem;
       }
       return ListInit::get(NewList, MHSl->getType());
     }
