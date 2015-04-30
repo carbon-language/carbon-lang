@@ -86,6 +86,17 @@ MatchSelectPattern(Value *V, Value *&LHS, Value *&RHS) {
         return (CmpLHS == FalseVal) ? SPF_ABS : SPF_NABS;
       }
     }
+
+    // Y >s C ? ~Y : ~C == ~Y <s ~C ? ~Y : ~C = SMIN(~Y, ~C)
+    if (const auto *C2 = dyn_cast<ConstantInt>(FalseVal)) {
+      if (C1->getType() == C2->getType() && ~C1->getValue() == C2->getValue() &&
+          (match(TrueVal, m_Not(m_Specific(CmpLHS))) ||
+           match(CmpLHS, m_Not(m_Specific(TrueVal))))) {
+        LHS = TrueVal;
+        RHS = FalseVal;
+        return SPF_SMIN;
+      }
+    }
   }
 
   // TODO: (X > 4) ? X : 5   -->  (X >= 5) ? X : 5  -->  MAX(X, 5)

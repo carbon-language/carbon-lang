@@ -1520,3 +1520,15 @@ define i32 @test_select_select1(i32 %a, i32 %r0, i32 %r1, i32 %v1, i32 %v2) {
   %s1 = select i1 %c1, i32 %r0, i32 %s0
   ret i32 %s1
 }
+
+define i32 @test_max_of_min(i32 %a) {
+; MAX(MIN(%a, -1), -1) == -1
+; CHECK-LABEL: @test_max_of_min(
+; CHECK: ret i32 -1
+  %not_a = xor i32 %a, -1
+  %c0 = icmp sgt i32 %a, 0
+  %s0 = select i1 %c0, i32 %not_a, i32 -1
+  %c1 = icmp sgt i32 %s0, -1
+  %s1 = select i1 %c1, i32 %s0, i32 -1
+  ret i32 %s1
+}
