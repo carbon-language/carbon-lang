@@ -2,7 +2,7 @@
 ; RUN: 		| FileCheck %s --check-prefix=CHECK --check-prefix=X64
 
 ; This test should also pass in 32-bit using _except_handler3.
-; RUN: sed %s -e 's/__C_specific_handler/_except_handler3/' \
+; RUN: sed -e 's/__C_specific_handler/_except_handler3/' %s \
 ; RUN: 		| opt -S -winehprepare -mtriple=i686-windows-msvc \
 ; RUN: 		| FileCheck %s --check-prefix=CHECK --check-prefix=X86
 
