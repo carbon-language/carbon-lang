@@ -58,11 +58,13 @@ define void @test_sub_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)
 ; SI: s_sub_u32
 ; SI: s_subb_u32
 
-; EG-DAG: SETGE_UINT
-; EG-DAG: CNDE_INT
+; EG: MEM_RAT_CACHELESS STORE_RAW [[LO:T[0-9]+\.[XYZW]]]
+; EG: MEM_RAT_CACHELESS STORE_RAW [[HI:T[0-9]+\.[XYZW]]]
+; EG-DAG: SUB_INT {{[* ]*}}[[LO]]
+; EG-DAG: SUBB_UINT
 ; EG-DAG: SUB_INT
-; EG-DAG: SUB_INT
-; EG-DAG: SUB_INT
+; EG-DAG: SUB_INT {{[* ]*}}[[HI]]
+; EG-NOT: SUB
 define void @s_sub_i64(i64 addrspace(1)* noalias %out, i64 %a, i64 %b) nounwind {
   %result = sub i64 %a, %b
   store i64 %result, i64 addrspace(1)* %out, align 8
@@ -73,11 +75,13 @@ define void @s_sub_i64(i64 addrspace(1)* noalias %out, i64 %a, i64 %b) nounwind 
 ; SI: v_sub_i32_e32
 ; SI: v_subb_u32_e32
 
-; EG-DAG: SETGE_UINT
-; EG-DAG: CNDE_INT
+; EG: MEM_RAT_CACHELESS STORE_RAW [[LO:T[0-9]+\.[XYZW]]]
+; EG: MEM_RAT_CACHELESS STORE_RAW [[HI:T[0-9]+\.[XYZW]]]
+; EG-DAG: SUB_INT {{[* ]*}}[[LO]]
+; EG-DAG: SUBB_UINT
 ; EG-DAG: SUB_INT
-; EG-DAG: SUB_INT
-; EG-DAG: SUB_INT
+; EG-DAG: SUB_INT {{[* ]*}}[[HI]]
+; EG-NOT: SUB
 define void @v_sub_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %inA, i64 addrspace(1)* noalias %inB) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() readnone
   %a_ptr = getelementptr i64, i64 addrspace(1)* %inA, i32 %tid

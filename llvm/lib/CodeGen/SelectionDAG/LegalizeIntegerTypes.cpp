@@ -1644,6 +1644,38 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
     return;
   }
 
+  bool hasOVF =
+    TLI.isOperationLegalOrCustom(N->getOpcode() == ISD::ADD ?
+                                   ISD::UADDO : ISD::USUBO,
+                                 TLI.getTypeToExpandTo(*DAG.getContext(), NVT));
+  if (hasOVF) {
+    SDVTList VTList = DAG.getVTList(NVT, NVT);
+    TargetLoweringBase::BooleanContent BoolType = TLI.getBooleanContents(NVT);
+    int RevOpc;
+    if (N->getOpcode() == ISD::ADD) {
+      RevOpc = ISD::SUB;
+      Lo = DAG.getNode(ISD::UADDO, dl, VTList, LoOps);
+      Hi = DAG.getNode(ISD::ADD, dl, NVT, makeArrayRef(HiOps, 2));
+    } else {
+      RevOpc = ISD::ADD;
+      Lo = DAG.getNode(ISD::USUBO, dl, VTList, LoOps);
+      Hi = DAG.getNode(ISD::SUB, dl, NVT, makeArrayRef(HiOps, 2));
+    }
+    SDValue OVF = Lo.getValue(1);
+
+    switch (BoolType) {
+    case TargetLoweringBase::UndefinedBooleanContent:
+      OVF = DAG.getNode(ISD::AND, dl, NVT, DAG.getConstant(1, dl, NVT), OVF);
+      // Fallthrough
+    case TargetLoweringBase::ZeroOrOneBooleanContent:
+      Hi = DAG.getNode(N->getOpcode(), dl, NVT, Hi, OVF);
+      break;
+    case TargetLoweringBase::ZeroOrNegativeOneBooleanContent:
+      Hi = DAG.getNode(RevOpc, dl, NVT, Hi, OVF);
+    }
+    return;
+  }
+
   if (N->getOpcode() == ISD::ADD) {
     Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps);
     Hi = DAG.getNode(ISD::ADD, dl, NVT, makeArrayRef(HiOps, 2));

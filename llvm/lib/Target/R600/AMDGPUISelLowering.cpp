@@ -2771,6 +2771,12 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
                               KnownZero, KnownOne, DAG, Depth);
     break;
 
+  case AMDGPUISD::CARRY:
+  case AMDGPUISD::BORROW: {
+    KnownZero = APInt::getHighBitsSet(32, 31);
+    break;
+  }
+
   case AMDGPUISD::BFE_I32:
   case AMDGPUISD::BFE_U32: {
     ConstantSDNode *CWidth = dyn_cast<ConstantSDNode>(Op.getOperand(2));
@@ -2812,6 +2818,10 @@ unsigned AMDGPUTargetLowering::ComputeNumSignBitsForTargetNode(
     ConstantSDNode *Width = dyn_cast<ConstantSDNode>(Op.getOperand(2));
     return Width ? 32 - (Width->getZExtValue() & 0x1f) : 1;
   }
+
+  case AMDGPUISD::CARRY:
+  case AMDGPUISD::BORROW:
+    return 31;
 
   default:
     return 1;

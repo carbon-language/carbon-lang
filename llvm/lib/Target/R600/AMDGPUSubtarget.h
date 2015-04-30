@@ -185,6 +185,14 @@ public:
     return (getGeneration() >= EVERGREEN);
   }
 
+  bool hasCARRY() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
+  bool hasBORROW() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
   bool IsIRStructurizerEnabled() const {
     return EnableIRStructurizer;
   }
