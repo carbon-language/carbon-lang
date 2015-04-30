@@ -532,4 +532,28 @@ TEST(ScaledNumberHelpersTest, getDifference) {
   EXPECT_EQ(SP64(0, 0), getDifference64(1, -64, 1, -1));
 }
 
+TEST(ScaledNumberHelpersTest, arithmeticOperators) {
+  EXPECT_EQ(ScaledNumber<uint32_t>(10, 0),
+            ScaledNumber<uint32_t>(1, 3) + ScaledNumber<uint32_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint32_t>(6, 0),
+            ScaledNumber<uint32_t>(1, 3) - ScaledNumber<uint32_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint32_t>(2, 3),
+            ScaledNumber<uint32_t>(1, 3) * ScaledNumber<uint32_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint32_t>(1, 2),
+            ScaledNumber<uint32_t>(1, 3) / ScaledNumber<uint32_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint32_t>(1, 2), ScaledNumber<uint32_t>(1, 3) >> 1);
+  EXPECT_EQ(ScaledNumber<uint32_t>(1, 4), ScaledNumber<uint32_t>(1, 3) << 1);
+
+  EXPECT_EQ(ScaledNumber<uint64_t>(10, 0),
+            ScaledNumber<uint64_t>(1, 3) + ScaledNumber<uint64_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint64_t>(6, 0),
+            ScaledNumber<uint64_t>(1, 3) - ScaledNumber<uint64_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint64_t>(2, 3),
+            ScaledNumber<uint64_t>(1, 3) * ScaledNumber<uint64_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint64_t>(1, 2),
+            ScaledNumber<uint64_t>(1, 3) / ScaledNumber<uint64_t>(1, 1));
+  EXPECT_EQ(ScaledNumber<uint64_t>(1, 2), ScaledNumber<uint64_t>(1, 3) >> 1);
+  EXPECT_EQ(ScaledNumber<uint64_t>(1, 4), ScaledNumber<uint64_t>(1, 3) << 1);
+}
+
 } // end namespace

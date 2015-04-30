@@ -514,7 +514,7 @@ public:
       : Digits(Digits), Scale(Scale) {}
 
 private:
-  ScaledNumber(const std::pair<uint64_t, int16_t> &X)
+  ScaledNumber(const std::pair<DigitsT, int16_t> &X)
       : Digits(X.first), Scale(X.second) {}
 
 public:
@@ -732,9 +732,19 @@ SCALED_NUMBER_BOP(+, += )
 SCALED_NUMBER_BOP(-, -= )
 SCALED_NUMBER_BOP(*, *= )
 SCALED_NUMBER_BOP(/, /= )
-SCALED_NUMBER_BOP(<<, <<= )
-SCALED_NUMBER_BOP(>>, >>= )
 #undef SCALED_NUMBER_BOP
+
+template <class DigitsT>
+ScaledNumber<DigitsT> operator<<(const ScaledNumber<DigitsT> &L,
+                                 int16_t Shift) {
+  return ScaledNumber<DigitsT>(L) <<= Shift;
+}
+
+template <class DigitsT>
+ScaledNumber<DigitsT> operator>>(const ScaledNumber<DigitsT> &L,
+                                 int16_t Shift) {
+  return ScaledNumber<DigitsT>(L) >>= Shift;
+}
 
 template <class DigitsT>
 raw_ostream &operator<<(raw_ostream &OS, const ScaledNumber<DigitsT> &X) {
