@@ -1002,24 +1002,18 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
                                RecTy *Type, Record *CurRec,
                                MultiClass *CurMultiClass) {
   // If this is a dag, recurse
-  if (TypedInit *TArg = dyn_cast<TypedInit>(Arg)) {
-    if (TArg->getType()->getAsString() == "dag") {
-      Init *Result = ForeachHelper(LHS, Arg, RHSo, Type,
-                                   CurRec, CurMultiClass);
-      return Result;
-    }
-  }
+  if (auto *TArg = dyn_cast<TypedInit>(Arg))
+    if (TArg->getType()->getAsString() == "dag")
+      return ForeachHelper(LHS, Arg, RHSo, Type, CurRec, CurMultiClass);
 
   std::vector<Init *> NewOperands;
   for (int i = 0; i < RHSo->getNumOperands(); ++i) {
-    if (OpInit *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
-      Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
-                                       Type, CurRec, CurMultiClass);
-      if (Result) {
+    if (auto *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
+      if (Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
+                                           Type, CurRec, CurMultiClass))
         NewOperands.push_back(Result);
-      } else {
+      else
         NewOperands.push_back(Arg);
-      }
     } else if (LHS->getAsString() == RHSo->getOperand(i)->getAsString()) {
       NewOperands.push_back(Arg);
     } else {
