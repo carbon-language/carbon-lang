@@ -416,6 +416,12 @@ TEST_F(FormatTest, FormatShortBracedStatements) {
                "  f();\n"
                "}",
                AllowSimpleBracedStatements);
+  verifyFormat("if (true) {\n"
+               "  f();\n"
+               "} else {\n"
+               "  f();\n"
+               "}",
+               AllowSimpleBracedStatements);
 
   verifyFormat("template <int> struct A2 {\n"
                "  struct B {};\n"
@@ -424,6 +430,12 @@ TEST_F(FormatTest, FormatShortBracedStatements) {
 
   AllowSimpleBracedStatements.AllowShortIfStatementsOnASingleLine = false;
   verifyFormat("if (true) {\n"
+               "  f();\n"
+               "}",
+               AllowSimpleBracedStatements);
+  verifyFormat("if (true) {\n"
+               "  f();\n"
+               "} else {\n"
                "  f();\n"
                "}",
                AllowSimpleBracedStatements);
