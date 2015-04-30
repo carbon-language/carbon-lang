@@ -1344,8 +1344,9 @@ bool X86DAGToDAGISel::SelectVectorAddr(SDNode *Parent, SDValue N, SDValue &Base,
   Scale = getI8Imm(ScalarSize/8, DL);
 
   // If Base is 0, the whole address is in index and the Scale is 1
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Base)) {
-    assert(C->isNullValue() && "Unexpected base in gather/scatter");
+  if (isa<ConstantSDNode>(Base)) {
+    assert(dyn_cast<ConstantSDNode>(Base)->isNullValue() &&
+           "Unexpected base in gather/scatter");
     Scale = getI8Imm(1, DL);
     Base = CurDAG->getRegister(0, MVT::i32);
   }
