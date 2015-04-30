@@ -10,7 +10,7 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x40
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 12
 // CHECK-NEXT:     Link:
 // CHECK-NEXT:     Info: 1
@@ -24,7 +24,7 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x4C
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 8
 // CHECK-NEXT:     Link:
 // CHECK-NEXT:     Info: 2
@@ -38,7 +38,7 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x54
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 12
 // CHECK-NEXT:     Link:
 // CHECK-NEXT:     Info: 10

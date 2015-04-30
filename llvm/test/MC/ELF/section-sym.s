@@ -17,7 +17,7 @@
 // CHECK-NEXT:     SHF_GROUP (0x200)
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address:         0x0
-// CHECK-NEXT:   Offset:  0x50
+// CHECK-NEXT:   Offset:
 // CHECK-NEXT:   Size:    0
 // CHECK-NEXT:   Link:    0
 // CHECK-NEXT:   Info:    0
@@ -32,7 +32,7 @@
 // CHECK-NEXT:     SHF_GROUP (0x200)
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address:         0x0
-// CHECK-NEXT:   Offset:  0x50
+// CHECK-NEXT:   Offset:
 // CHECK-NEXT:   Size:    0
 // CHECK-NEXT:   Link:    0
 // CHECK-NEXT:   Info:    0

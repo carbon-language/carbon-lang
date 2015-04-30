@@ -27,7 +27,7 @@
 // CHECK-NEXT:       SHF_EXECINSTR
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -43,7 +43,7 @@
 // CHECK-NEXT:       SHF_EXECINSTR
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -58,7 +58,7 @@
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -72,7 +72,7 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -87,7 +87,7 @@
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -112,7 +112,7 @@ bar:
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset: 0x50
+// CHECK-NEXT:     Offset:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
@@ -129,7 +129,7 @@ bar:
 // CHECK-NEXT:     SHF_EXCLUDE (0x80000000)
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: 0x0
-// CHECK-NEXT:   Offset: 0x50
+// CHECK-NEXT:   Offset:
 // CHECK-NEXT:   Size: 0
 // CHECK-NEXT:   Link: 0
 // CHECK-NEXT:   Info: 0
