@@ -790,6 +790,10 @@ Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
 }
 
 Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, Type *Ty) {
+  // Bail out for a clearly invalid value. This would make us call resize(0)
+  if (Idx == UINT_MAX)
+    return nullptr;
+
   if (Idx >= size())
     resize(Idx + 1);
 

@@ -112,3 +112,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-op-not-2nd-to-last.bc 
 RUN:   FileCheck --check-prefix=ARRAY-NOT-2LAST %s
 
 ARRAY-NOT-2LAST: Array op not second to last
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-too-big-fwdref.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=HUGE-FWDREF %s
+
+HUGE-FWDREF: Invalid record
