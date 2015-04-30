@@ -333,7 +333,7 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
         const MachineInstr &MI = *MBBI;
         const MachineOperand &Op = MI.getOperand(I);
         if (Op.getParent() != &MI) {
-          // Make sure to use correct addOperand / RmeoveOperand / ChangeTo
+          // Make sure to use correct addOperand / RemoveOperand / ChangeTo
           // functions when replacing operands of a MachineInstr.
           report("Instruction has operand with wrong parent set", &MI);
         }
