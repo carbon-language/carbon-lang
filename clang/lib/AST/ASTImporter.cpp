@@ -5643,8 +5643,7 @@ FileID ASTImporter::Import(FileID FromID) {
   // Map the FileID for to the "to" source manager.
   FileID ToID;
   const SrcMgr::ContentCache *Cache = FromSLoc.getFile().getContentCache();
-  if (Cache->OrigEntry &&
-      Cache->OrigEntry->getUniqueID() != llvm::sys::fs::UniqueID()) {
+  if (Cache->OrigEntry && Cache->OrigEntry->getDir()) {
     // FIXME: We probably want to use getVirtualFile(), so we don't hit the
     // disk again
     // FIXME: We definitely want to re-use the existing MemoryBuffer, rather
