@@ -72,7 +72,7 @@ class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), DT(nullptr), SEHExceptionCodeSlot(nullptr) {
+      : FunctionPass(ID) {
     if (TM)
       TheTriple = Triple(TM->getTargetTriple());
   }
@@ -119,8 +119,8 @@ private:
   Triple TheTriple;
 
   // All fields are reset by runOnFunction.
-  DominatorTree *DT;
-  EHPersonality Personality;
+  DominatorTree *DT = nullptr;
+  EHPersonality Personality = EHPersonality::Unknown;
   CatchHandlerMapTy CatchHandlerMap;
   CleanupHandlerMapTy CleanupHandlerMap;
   DenseMap<const LandingPadInst *, LandingPadMap> LPadMaps;
@@ -150,7 +150,7 @@ private:
   // 32-bit EH.
   DenseMap<Function *, Value *> HandlerToParentFP;
 
-  AllocaInst *SEHExceptionCodeSlot;
+  AllocaInst *SEHExceptionCodeSlot = nullptr;
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
