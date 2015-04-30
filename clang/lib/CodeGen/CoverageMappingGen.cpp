@@ -969,7 +969,7 @@ void CoverageMappingModuleGen::emit() {
     llvm::sys::fs::make_absolute(Path);
 
     auto I = Entry.second;
-    FilenameStrs[I] = std::move(std::string(Path.begin(), Path.end()));
+    FilenameStrs[I] = std::string(Path.begin(), Path.end());
     FilenameRefs[I] = FilenameStrs[I];
   }
 
