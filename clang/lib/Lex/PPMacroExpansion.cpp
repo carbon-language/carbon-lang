@@ -207,7 +207,7 @@ void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
   llvm::errs() << "MacroState " << State << " " << II->getNameStart();
   if (State && State->isAmbiguous(*this, II))
     llvm::errs() << " ambiguous";
-  if (!State->getOverriddenMacros().empty()) {
+  if (State && !State->getOverriddenMacros().empty()) {
     llvm::errs() << " overrides";
     for (auto *O : State->getOverriddenMacros())
       llvm::errs() << " " << O->getOwningModule()->getFullModuleName();
