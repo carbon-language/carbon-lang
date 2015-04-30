@@ -81,7 +81,7 @@ static std::string computeDataLayout(const Triple &TT) {
 
   // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
   if (!TT.isArch64Bit() && TT.isOSWindows())
-    Ret += "-S32";
+    Ret += "-a:0:32-S32";
   else
     Ret += "-S128";
 

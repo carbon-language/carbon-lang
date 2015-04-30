@@ -21,8 +21,9 @@ blah:
   %end = getelementptr %frame.reverse, %frame.reverse* %rev_args, i32 0, i32 1
 
 ; CHECK:  calll   __chkstk
-; CHECK:  movl    %[[beg:[^,]*]], %esp
-; CHECK:  leal    12(%[[beg]]), %[[end:[^ ]*]]
+; CHECK:  movl %esp, %[[beg:[^ ]*]]
+; CHECK:  movl %esp, %[[end:[^ ]*]]
+; CHECK:  addl $12, %[[end]]
 
   call void @begin(%Iter* sret %temp.lvalue)
 ; CHECK:  calll _begin
