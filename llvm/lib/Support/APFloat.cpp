@@ -3920,7 +3920,7 @@ APFloat::makeZero(bool Negative) {
 
 APFloat llvm::scalbn(APFloat X, int Exp) {
   if (X.isInfinity() || X.isZero() || X.isNaN())
-    return std::move(X);
+    return X;
 
   auto MaxExp = X.getSemantics().maxExponent;
   auto MinExp = X.getSemantics().minExponent;
@@ -3932,5 +3932,5 @@ APFloat llvm::scalbn(APFloat X, int Exp) {
     return APFloat::getZero(X.getSemantics(), X.isNegative());
 
   X.exponent += Exp;
-  return std::move(X);
+  return X;
 }

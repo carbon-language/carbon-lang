@@ -680,7 +680,7 @@ LoopInfo LoopAnalysis::run(Function &F, AnalysisManager<Function> *AM) {
   // the problem is better understood.
   LoopInfo LI;
   LI.Analyze(AM->getResult<DominatorTreeAnalysis>(F));
-  return std::move(LI);
+  return LI;
 }
 
 PreservedAnalyses LoopPrinterPass::run(Function &F,
