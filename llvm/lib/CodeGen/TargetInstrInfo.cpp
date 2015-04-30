@@ -144,6 +144,8 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI,
   bool Reg2IsKill = MI->getOperand(Idx2).isKill();
   bool Reg1IsUndef = MI->getOperand(Idx1).isUndef();
   bool Reg2IsUndef = MI->getOperand(Idx2).isUndef();
+  bool Reg1IsInternal = MI->getOperand(Idx1).isInternalRead();
+  bool Reg2IsInternal = MI->getOperand(Idx2).isInternalRead();
   // If destination is tied to either of the commuted source register, then
   // it must be updated.
   if (HasDef && Reg0 == Reg1 &&
@@ -176,6 +178,8 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI,
   MI->getOperand(Idx1).setIsKill(Reg2IsKill);
   MI->getOperand(Idx2).setIsUndef(Reg1IsUndef);
   MI->getOperand(Idx1).setIsUndef(Reg2IsUndef);
+  MI->getOperand(Idx2).setIsInternalRead(Reg1IsInternal);
+  MI->getOperand(Idx1).setIsInternalRead(Reg2IsInternal);
   return MI;
 }
 
