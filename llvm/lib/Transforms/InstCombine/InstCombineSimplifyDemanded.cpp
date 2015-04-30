@@ -43,19 +43,6 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
   Demanded &= OpC->getValue();
   I->setOperand(OpNo, ConstantInt::get(OpC->getType(), Demanded));
 
-  // If either 'nsw' or 'nuw' is set and the constant is negative,
-  // removing *any* bits from the constant could make overflow occur.
-  // Remove 'nsw' and 'nuw' from the instruction in this case.
-  if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(I)) {
-    assert(OBO->getOpcode() == Instruction::Add);
-    if (OBO->hasNoSignedWrap() || OBO->hasNoUnsignedWrap()) {
-      if (OpC->getValue().isNegative()) {
-        cast<BinaryOperator>(OBO)->setHasNoSignedWrap(false);
-        cast<BinaryOperator>(OBO)->setHasNoUnsignedWrap(false);
-      }
-    }
-  }
-
   return true;
 }
 
@@ -528,109 +515,35 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     }
     break;
   }
-  case Instruction::Add: {
-    // Figure out what the input bits are.  If the top bits of the and result
-    // are not demanded, then the add doesn't demand them from its input
-    // either.
+  case Instruction::Add:
+  case Instruction::Sub: {
+    /// If the high-bits of an ADD/SUB are not demanded, then we do not care
+    /// about the high bits of the operands.
     unsigned NLZ = DemandedMask.countLeadingZeros();
-
-    // If there is a constant on the RHS, there are a variety of xformations
-    // we can do.
-    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      // If null, this should be simplified elsewhere.  Some of the xforms here
-      // won't work if the RHS is zero.
-      if (RHS->isZero())
-        break;
-
-      // If the top bit of the output is demanded, demand everything from the
-      // input.  Otherwise, we demand all the input bits except NLZ top bits.
-      APInt InDemandedBits(APInt::getLowBitsSet(BitWidth, BitWidth - NLZ));
-
-      // Find information about known zero/one bits in the input.
-      if (SimplifyDemandedBits(I->getOperandUse(0), InDemandedBits,
-                               LHSKnownZero, LHSKnownOne, Depth + 1))
-        return I;
-
-      // If the RHS of the add has bits set that can't affect the input, reduce
-      // the constant.
-      if (ShrinkDemandedConstant(I, 1, InDemandedBits))
-        return I;
-
-      // Avoid excess work.
-      if (LHSKnownZero == 0 && LHSKnownOne == 0)
-        break;
-
-      // Turn it into OR if input bits are zero.
-      if ((LHSKnownZero & RHS->getValue()) == RHS->getValue()) {
-        Instruction *Or =
-          BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
-                                   I->getName());
-        return InsertNewInstWith(Or, *I);
-      }
-
-      // We can say something about the output known-zero and known-one bits,
-      // depending on potential carries from the input constant and the
-      // unknowns.  For example if the LHS is known to have at most the 0x0F0F0
-      // bits set and the RHS constant is 0x01001, then we know we have a known
-      // one mask of 0x00001 and a known zero mask of 0xE0F0E.
-
-      // To compute this, we first compute the potential carry bits.  These are
-      // the bits which may be modified.  I'm not aware of a better way to do
-      // this scan.
-      const APInt &RHSVal = RHS->getValue();
-      APInt CarryBits((~LHSKnownZero + RHSVal) ^ (~LHSKnownZero ^ RHSVal));
-
-      // Now that we know which bits have carries, compute the known-1/0 sets.
-
-      // Bits are known one if they are known zero in one operand and one in the
-      // other, and there is no input carry.
-      KnownOne = ((LHSKnownZero & RHSVal) |
-                  (LHSKnownOne & ~RHSVal)) & ~CarryBits;
-
-      // Bits are known zero if they are known zero in both operands and there
-      // is no input carry.
-      KnownZero = LHSKnownZero & ~RHSVal & ~CarryBits;
-    } else {
-      // If the high-bits of this ADD are not demanded, then it does not demand
-      // the high bits of its LHS or RHS.
-      if (DemandedMask[BitWidth-1] == 0) {
-        // Right fill the mask of bits for this ADD to demand the most
-        // significant bit and all those below it.
-        APInt DemandedFromOps(APInt::getLowBitsSet(BitWidth, BitWidth-NLZ));
-        if (SimplifyDemandedBits(I->getOperandUse(0), DemandedFromOps,
-                                 LHSKnownZero, LHSKnownOne, Depth + 1) ||
-            SimplifyDemandedBits(I->getOperandUse(1), DemandedFromOps,
-                                 LHSKnownZero, LHSKnownOne, Depth + 1)) {
-          cast<BinaryOperator>(I)->setHasNoSignedWrap(false);
-          cast<BinaryOperator>(I)->setHasNoUnsignedWrap(false);
-          return I;
-        }
-      }
-    }
-    break;
-  }
-  case Instruction::Sub:
-    // If the high-bits of this SUB are not demanded, then it does not demand
-    // the high bits of its LHS or RHS.
-    if (DemandedMask[BitWidth-1] == 0) {
-      // Right fill the mask of bits for this SUB to demand the most
+    if (NLZ > 0) {
+      // Right fill the mask of bits for this ADD/SUB to demand the most
       // significant bit and all those below it.
-      uint32_t NLZ = DemandedMask.countLeadingZeros();
       APInt DemandedFromOps(APInt::getLowBitsSet(BitWidth, BitWidth-NLZ));
       if (SimplifyDemandedBits(I->getOperandUse(0), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth + 1) ||
+          ShrinkDemandedConstant(I, 1, DemandedFromOps) ||
           SimplifyDemandedBits(I->getOperandUse(1), DemandedFromOps,
                                LHSKnownZero, LHSKnownOne, Depth + 1)) {
-        cast<BinaryOperator>(I)->setHasNoSignedWrap(false);
-        cast<BinaryOperator>(I)->setHasNoUnsignedWrap(false);
+        // Disable the nsw and nuw flags here: We can no longer guarantee that
+        // we won't wrap after simplification. Removing the nsw/nuw flags is
+        // legal here because the top bit is not demanded.
+        BinaryOperator &BinOP = *cast<BinaryOperator>(I);
+        BinOP.setHasNoSignedWrap(false);
+        BinOP.setHasNoUnsignedWrap(false);
         return I;
       }
     }
 
-    // Otherwise just hand the sub off to computeKnownBits to fill in
+    // Otherwise just hand the add/sub off to computeKnownBits to fill in
     // the known zeros and ones.
     computeKnownBits(V, KnownZero, KnownOne, Depth, CxtI);
     break;
+  }
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
       {
