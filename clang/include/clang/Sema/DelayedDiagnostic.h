@@ -250,6 +250,17 @@ public:
       i->Destroy();
   }
 
+  DelayedDiagnosticPool(DelayedDiagnosticPool &&Other)
+    : Parent(Other.Parent), Diagnostics(std::move(Other.Diagnostics)) {
+    Other.Diagnostics.clear();
+  }
+  DelayedDiagnosticPool &operator=(DelayedDiagnosticPool &&Other) {
+    Parent = Other.Parent;
+    Diagnostics = std::move(Other.Diagnostics);
+    Other.Diagnostics.clear();
+    return *this;
+  }
+
   const DelayedDiagnosticPool *getParent() const { return Parent; }
 
   /// Does this pool, or any of its ancestors, contain any diagnostics?

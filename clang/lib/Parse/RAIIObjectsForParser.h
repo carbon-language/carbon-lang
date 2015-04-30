@@ -58,6 +58,12 @@ namespace clang {
         Active = false;
       }
     }
+    SuppressAccessChecks(SuppressAccessChecks &&Other)
+      : S(Other.S), DiagnosticPool(std::move(Other.DiagnosticPool)),
+        State(Other.State), Active(Other.Active) {
+      Other.Active = false;
+    }
+    void operator=(SuppressAccessChecks &&Other) = delete;
 
     void done() {
       assert(Active && "trying to end an inactive suppression");
