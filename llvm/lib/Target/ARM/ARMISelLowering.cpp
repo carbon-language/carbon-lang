@@ -7501,6 +7501,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     unsigned int ABSSrcReg = MI->getOperand(1).getReg();
     unsigned int ABSDstReg = MI->getOperand(0).getReg();
+    bool ABSSrcKIll = MI->getOperand(1).isKill();
     bool isThumb2 = Subtarget->isThumb2();
     MachineRegisterInfo &MRI = Fn->getRegInfo();
     // In Thumb mode S must not be specified if source register is the SP or
@@ -7534,7 +7535,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // by if-conversion pass
     BuildMI(*RSBBB, RSBBB->begin(), dl,
       TII->get(isThumb2 ? ARM::t2RSBri : ARM::RSBri), NewRsbDstReg)
-      .addReg(ABSSrcReg, RegState::Kill)
+      .addReg(ABSSrcReg, ABSSrcKIll ? RegState::Kill : 0)
       .addImm(0).addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
 
     // insert PHI in SinkBB,
