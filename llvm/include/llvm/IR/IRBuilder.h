@@ -1499,6 +1499,11 @@ public:
     return Insert(ExtractElementInst::Create(Vec, Idx), Name);
   }
 
+  Value *CreateExtractElement(Value *Vec, uint64_t Idx,
+                              const Twine &Name = "") {
+    return CreateExtractElement(Vec, getInt64(Idx), Name);
+  }
+
   Value *CreateInsertElement(Value *Vec, Value *NewElt, Value *Idx,
                              const Twine &Name = "") {
     if (Constant *VC = dyn_cast<Constant>(Vec))
@@ -1506,6 +1511,11 @@ public:
         if (Constant *IC = dyn_cast<Constant>(Idx))
           return Insert(Folder.CreateInsertElement(VC, NC, IC), Name);
     return Insert(InsertElementInst::Create(Vec, NewElt, Idx), Name);
+  }
+
+  Value *CreateInsertElement(Value *Vec, Value *NewElt, uint64_t Idx,
+                             const Twine &Name = "") {
+    return CreateInsertElement(Vec, NewElt, getInt64(Idx), Name);
   }
 
   Value *CreateShuffleVector(Value *V1, Value *V2, Value *Mask,
