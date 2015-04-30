@@ -1338,7 +1338,7 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
     break;
 
   case ELF::SHT_DYNAMIC:
-    sh_link = ShStrTabBuilder.getOffset(Section.getSectionName());
+    llvm_unreachable("SHT_DYNAMIC in a relocatable object");
     break;
 
   case ELF::SHT_REL:
