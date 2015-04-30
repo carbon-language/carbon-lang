@@ -32,7 +32,6 @@ class SetWatchlocationAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # fails in 10/100 dosep runs
     def test_watch_location_with_dwarf(self):
         """Exercise SBValue.WatchPointee() API to set a watchpoint."""
         self.buildDwarf()

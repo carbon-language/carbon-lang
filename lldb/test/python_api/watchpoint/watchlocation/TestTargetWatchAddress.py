@@ -32,7 +32,6 @@ class TargetWatchAddressAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # failed 11/100 dosep runs
     def test_watch_address_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDwarf()
