@@ -4065,6 +4065,8 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       Type *Ty = nullptr;
       if (OpNum + 3 == Record.size())
         Ty = getTypeByID(Record[OpNum++]);
+      if (!isa<PointerType>(Op->getType()))
+        return Error("Load operand is not a pointer type");
       if (!Ty)
         Ty = cast<PointerType>(Op->getType())->getElementType();
       else if (Ty != cast<PointerType>(Op->getType())->getElementType())
