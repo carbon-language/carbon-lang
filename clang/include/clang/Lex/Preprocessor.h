@@ -1678,9 +1678,6 @@ private:
   VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                              bool isPublic);
 
-  MacroDirective *AllocateImportedMacroDirective(ModuleMacro *MM,
-                                                 SourceLocation Loc);
-
   /// \brief Lex and validate a macro name, which occurs after a
   /// \#define or \#undef.
   ///

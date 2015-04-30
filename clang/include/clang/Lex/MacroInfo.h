@@ -305,15 +305,8 @@ class DefMacroDirective;
 ///
 /// MacroDirectives, associated with an identifier, are used to model the macro
 /// history. Usually a macro definition (MacroInfo) is where a macro name
-/// becomes active (MacroDirective) but modules can have their own macro
-/// history, separate from the local (current translation unit) macro history.
-///
-/// For example, if "@import A;" imports macro FOO, there will be a new local
-/// MacroDirective created to indicate that "FOO" became active at the import
-/// location. Module "A" itself will contain another MacroDirective in its macro
-/// history (at the point of the definition of FOO) and both MacroDirectives
-/// will point to the same MacroInfo object.
-///
+/// becomes active (MacroDirective) but #pragma push_macro / pop_macro can
+/// create additional DefMacroDirectives for the same MacroInfo.
 class MacroDirective {
 public:
   enum Kind {
@@ -334,38 +327,15 @@ protected:
   /// \brief True if the macro directive was loaded from a PCH file.
   bool IsFromPCH : 1;
 
-  // Used by DefMacroDirective -----------------------------------------------//
-
-  /// \brief Whether the definition of this macro is ambiguous, due to
-  /// multiple definitions coming in from multiple modules.
-  bool IsAmbiguous : 1;
-
   // Used by VisibilityMacroDirective ----------------------------------------//
 
   /// \brief Whether the macro has public visibility (when described in a
   /// module).
   bool IsPublic : 1;
 
-  // Used by DefMacroDirective and UndefMacroDirective -----------------------//
-
-  /// \brief True if this macro was imported from a module.
-  bool IsImported : 1;
-
-  struct ImportData {
-    ModuleMacro *ImportedFrom;
-  };
-  ImportData *getImportData();
-  const ImportData *getImportData() const {
-    return const_cast<MacroDirective*>(this)->getImportData();
-  }
-
-  MacroDirective(Kind K, SourceLocation Loc,
-                 ModuleMacro *ImportedFrom = nullptr)
+  MacroDirective(Kind K, SourceLocation Loc)
       : Previous(nullptr), Loc(Loc), MDKind(K), IsFromPCH(false),
-        IsAmbiguous(false), IsPublic(true), IsImported(ImportedFrom) {
-    if (IsImported)
-      getImportData()->ImportedFrom = ImportedFrom;
-  }
+        IsPublic(true) {}
 
 public:
   Kind getKind() const { return Kind(MDKind); }
@@ -387,18 +357,6 @@ public:
   bool isFromPCH() const { return IsFromPCH; }
 
   void setIsFromPCH() { IsFromPCH = true; }
-
-  /// \brief True if this macro was imported from a module.
-  /// Note that this is never the case for a VisibilityMacroDirective.
-  bool isImported() const { return IsImported; }
-
-  /// \brief If this directive was imported from a module, get the module
-  /// macro from which this directive was created.
-  ModuleMacro *getOwningModuleMacro() const {
-    if (isImported())
-      return getImportData()->ImportedFrom;
-    return 0;
-  }
 
   class DefInfo {
     DefMacroDirective *DefDirective;
@@ -471,31 +429,17 @@ public:
 class DefMacroDirective : public MacroDirective {
   MacroInfo *Info;
 
-  DefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                    ModuleMacro *ImportedFrom)
-      : MacroDirective(MD_Define, Loc, ImportedFrom), Info(MI) {
-    assert(MI && "MacroInfo is null");
-  }
-
 public:
   DefMacroDirective(MacroInfo *MI, SourceLocation Loc)
-      : DefMacroDirective(MI, Loc, nullptr) {}
+      : MacroDirective(MD_Define, Loc), Info(MI) {
+    assert(MI && "MacroInfo is null");
+  }
   explicit DefMacroDirective(MacroInfo *MI)
       : DefMacroDirective(MI, MI->getDefinitionLoc()) {}
-  static DefMacroDirective *createImported(Preprocessor &PP, MacroInfo *MI,
-                                           SourceLocation Loc,
-                                           ModuleMacro *ImportedFrom);
 
   /// \brief The data for the macro definition.
   const MacroInfo *getInfo() const { return Info; }
   MacroInfo *getInfo() { return Info; }
-
-  /// \brief Determine whether this macro definition is ambiguous with
-  /// other macro definitions.
-  bool isAmbiguous() const { return IsAmbiguous; }
-
-  /// \brief Set whether this macro definition is ambiguous.
-  void setAmbiguous(bool Val) { IsAmbiguous = Val; }
 
   static bool classof(const MacroDirective *MD) {
     return MD->getKind() == MD_Define;
@@ -505,17 +449,11 @@ public:
 
 /// \brief A directive for an undefined macro.
 class UndefMacroDirective : public MacroDirective  {
-  UndefMacroDirective(SourceLocation UndefLoc, ModuleMacro *ImportedFrom)
-      : MacroDirective(MD_Undefine, UndefLoc, ImportedFrom) {
-    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
-  }
-
 public:
   explicit UndefMacroDirective(SourceLocation UndefLoc)
-      : UndefMacroDirective(UndefLoc, nullptr) {}
-  static UndefMacroDirective *createImported(Preprocessor &PP,
-                                             SourceLocation UndefLoc,
-                                             ModuleMacro *ImportedFrom);
+      : MacroDirective(MD_Undefine, UndefLoc) {
+    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
+  }
 
   static bool classof(const MacroDirective *MD) {
     return MD->getKind() == MD_Undefine;
@@ -540,14 +478,6 @@ public:
   }
   static bool classof(const VisibilityMacroDirective *) { return true; }
 };
-
-inline MacroDirective::ImportData *MacroDirective::getImportData() {
-  assert(IsImported && "only an imported macro has import data");
-  if (auto *Def = dyn_cast<DefMacroDirective>(this))
-    return reinterpret_cast<ImportData*>(Def + 1);
-  else
-    return reinterpret_cast<ImportData*>(cast<UndefMacroDirective>(this) + 1);
-}
 
 inline SourceLocation MacroDirective::DefInfo::getLocation() const {
   if (isInvalid())

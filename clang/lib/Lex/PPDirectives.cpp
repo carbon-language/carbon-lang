@@ -78,15 +78,6 @@ Preprocessor::AllocateVisibilityMacroDirective(SourceLocation Loc,
   return new (BP) VisibilityMacroDirective(Loc, isPublic);
 }
 
-MacroDirective *
-Preprocessor::AllocateImportedMacroDirective(ModuleMacro *MM,
-                                             SourceLocation Loc) {
-  if (auto *MI = MM->getMacroInfo())
-    return DefMacroDirective::createImported(*this, MI, Loc, MM);
-  else
-    return UndefMacroDirective::createImported(*this, Loc, MM);
-}
-
 /// \brief Read and discard all tokens remaining on the current line until
 /// the tok::eod token is found.
 void Preprocessor::DiscardUntilEndOfDirective() {

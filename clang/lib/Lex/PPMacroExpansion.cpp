@@ -55,7 +55,7 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   II->setHasMacroDefinition(true);
   if (!MD->isDefined() && LeafModuleMacros.find(II) == LeafModuleMacros.end())
     II->setHasMacroDefinition(false);
-  if (II->isFromAST() && !MD->isImported())
+  if (II->isFromAST())
     II->setChangedSinceDeserialization();
 }
 

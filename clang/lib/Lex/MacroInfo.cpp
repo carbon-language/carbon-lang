@@ -218,8 +218,6 @@ void MacroDirective::dump() const {
   if (auto *Prev = getPrevious())
     Out << " prev " << Prev;
   if (IsFromPCH) Out << " from_pch";
-  if (IsImported) Out << " imported";
-  if (IsAmbiguous) Out << " ambiguous";
 
   if (IsPublic)
     Out << " public";
@@ -233,25 +231,6 @@ void MacroDirective::dump() const {
     }
   }
   Out << "\n";
-}
-
-DefMacroDirective *
-DefMacroDirective::createImported(Preprocessor &PP, MacroInfo *MI,
-                                  SourceLocation Loc,
-                                  ModuleMacro *ImportedFrom) {
-  void *Mem = PP.getPreprocessorAllocator().Allocate(
-      sizeof(DefMacroDirective) + sizeof(MacroDirective::ImportData),
-      llvm::alignOf<DefMacroDirective>());
-  return new (Mem) DefMacroDirective(MI, Loc, ImportedFrom);
-}
-
-UndefMacroDirective *
-UndefMacroDirective::createImported(Preprocessor &PP, SourceLocation Loc,
-                                    ModuleMacro *ImportedFrom) {
-  void *Mem = PP.getPreprocessorAllocator().Allocate(
-      sizeof(UndefMacroDirective) + sizeof(MacroDirective::ImportData),
-      llvm::alignOf<UndefMacroDirective>());
-  return new (Mem) UndefMacroDirective(Loc, ImportedFrom);
 }
 
 ModuleMacro *ModuleMacro::create(Preprocessor &PP, Module *OwningModule,

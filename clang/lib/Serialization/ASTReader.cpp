@@ -1809,21 +1809,11 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
     switch (K) {
     case MacroDirective::MD_Define: {
       MacroInfo *MI = getMacro(getGlobalMacroID(M, Record[Idx++]));
-      bool IsAmbiguous = Record[Idx++];
-      ModuleMacro *MM = nullptr;
-      if (SubmoduleID ImportedFrom = getGlobalSubmoduleID(M, Record[Idx++]))
-        MM = PP.getModuleMacro(getSubmodule(ImportedFrom), II);
-      MD = MM ? PP.AllocateImportedMacroDirective(MM, Loc)
-              : PP.AllocateDefMacroDirective(MI, Loc);
-      cast<DefMacroDirective>(MD)->setAmbiguous(IsAmbiguous);
+      MD = PP.AllocateDefMacroDirective(MI, Loc);
       break;
     }
     case MacroDirective::MD_Undefine: {
-      ModuleMacro *MM = nullptr;
-      if (SubmoduleID ImportedFrom = getGlobalSubmoduleID(M, Record[Idx++]))
-        MM = PP.getModuleMacro(getSubmodule(ImportedFrom), II);
-      MD = MM ? PP.AllocateImportedMacroDirective(MM, Loc)
-              : PP.AllocateUndefMacroDirective(Loc);
+      MD = PP.AllocateUndefMacroDirective(Loc);
       break;
     }
     case MacroDirective::MD_Visibility:
