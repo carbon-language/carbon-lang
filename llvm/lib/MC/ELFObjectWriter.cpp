@@ -111,8 +111,8 @@ class ELFObjectWriter : public MCObjectWriter {
     SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;
     DenseMap<const MCSymbol *, const MCSymbol *> Renames;
 
-    llvm::DenseMap<const MCSectionData *, std::vector<ELFRelocationEntry>>
-    Relocations;
+    llvm::DenseMap<const MCSectionELF *, std::vector<ELFRelocationEntry>>
+        Relocations;
     StringTableBuilder ShStrTabBuilder;
 
     /// @}
@@ -234,7 +234,7 @@ class ELFObjectWriter : public MCObjectWriter {
                          SectionIndexMapTy &SectionIndexMap,
                          const RevGroupMapTy &RevGroupMap);
 
-    void createRelocationSection(MCAssembler &Asm, const MCSectionData &SD);
+    void createRelocationSection(MCAssembler &Asm, const MCSectionELF &Sec);
 
     void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
@@ -264,7 +264,7 @@ class ELFObjectWriter : public MCObjectWriter {
                           uint64_t Size, uint32_t Link, uint32_t Info,
                           uint64_t Alignment, uint64_t EntrySize);
 
-    void writeRelocations(const MCAssembler &Asm, const MCSectionData &SD);
+    void writeRelocations(const MCAssembler &Asm, const MCSectionELF &Sec);
 
     bool
     IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
@@ -792,7 +792,9 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
                                        const MCFragment *Fragment,
                                        const MCFixup &Fixup, MCValue Target,
                                        bool &IsPCRel, uint64_t &FixedValue) {
-  const MCSectionData *FixupSection = Fragment->getParent();
+  const MCSectionData *FixupSectionD = Fragment->getParent();
+  const MCSectionELF &FixupSection =
+      cast<MCSectionELF>(FixupSectionD->getSection());
   uint64_t C = Target.getConstant();
   uint64_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
@@ -822,7 +824,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
 
     assert(!SymB.isAbsolute() && "Should have been folded");
     const MCSection &SecB = SymB.getSection();
-    if (&SecB != &FixupSection->getSection())
+    if (&SecB != &FixupSection)
       Asm.getContext().FatalError(
           Fixup.getLoc(), "Cannot represent a difference across sections");
 
@@ -869,7 +871,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
         ELFSec ? Asm.getContext().getOrCreateSectionSymbol(*ELFSec)
                : nullptr;
     ELFRelocationEntry Rec(FixupOffset, SectionSymbol, Type, Addend);
-    Relocations[FixupSection].push_back(Rec);
+    Relocations[&FixupSection].push_back(Rec);
     return;
   }
 
@@ -883,7 +885,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
       UsedInReloc.insert(SymA);
   }
   ELFRelocationEntry Rec(FixupOffset, SymA, Type, Addend);
-  Relocations[FixupSection].push_back(Rec);
+  Relocations[&FixupSection].push_back(Rec);
   return;
 }
 
@@ -973,7 +975,7 @@ void ELFObjectWriter::computeIndexMap(
     unsigned Index = Sections.size();
     SectionIndexMap[&Section] = Index;
     maybeAddToGroup(Asm, Sections, RevGroupMap, Section, Index);
-    createRelocationSection(Asm, SD);
+    createRelocationSection(Asm, Section);
   }
 }
 
@@ -1123,15 +1125,12 @@ void ELFObjectWriter::computeSymbolTable(
 }
 
 void ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
-                                              const MCSectionData &SD) {
-  if (Relocations[&SD].empty())
+                                              const MCSectionELF &Sec) {
+  if (Relocations[&Sec].empty())
     return;
 
   MCContext &Ctx = Asm.getContext();
-  const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(SD.getSection());
-
-  const StringRef SectionName = Section.getSectionName();
+  const StringRef SectionName = Sec.getSectionName();
   std::string RelaSectionName = hasRelocationAddend() ? ".rela" : ".rel";
   RelaSectionName += SectionName;
 
@@ -1142,12 +1141,12 @@ void ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
     EntrySize = is64Bit() ? sizeof(ELF::Elf64_Rel) : sizeof(ELF::Elf32_Rel);
 
   unsigned Flags = 0;
-  if (Section.getFlags() & ELF::SHF_GROUP)
+  if (Sec.getFlags() & ELF::SHF_GROUP)
     Flags = ELF::SHF_GROUP;
 
   const MCSectionELF *RelaSection = Ctx.createELFRelSection(
       RelaSectionName, hasRelocationAddend() ? ELF::SHT_RELA : ELF::SHT_REL,
-      Flags, EntrySize, Section.getGroup(), &Section);
+      Flags, EntrySize, Sec.getGroup(), &Sec);
   MCSectionData &RelSD = Asm.getOrCreateSectionData(*RelaSection);
   RelSD.setAlignment(is64Bit() ? 8 : 4);
 }
@@ -1316,8 +1315,8 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
 }
 
 void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
-                                       const MCSectionData &SD) {
-  std::vector<ELFRelocationEntry> &Relocs = Relocations[&SD];
+                                       const MCSectionELF &Sec) {
+  std::vector<ELFRelocationEntry> &Relocs = Relocations[&Sec];
 
   // Sort the relocation entries. Most targets just sort by Offset, but some
   // (e.g., MIPS) have additional constraints.
@@ -1552,13 +1551,10 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     uint64_t SecStart = OS.tell();
 
     unsigned Type = Sec.getType();
-    if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA) {
+    if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
       writeDataSectionData(Asm, Layout, SD);
-    } else {
-      const MCSectionELF &RelocatedSec = *Sec.getAssociatedSection();
-      MCSectionData &RelocatedSecD = Asm.getOrCreateSectionData(RelocatedSec);
-      writeRelocations(Asm, RelocatedSecD);
-    }
+    else
+      writeRelocations(Asm, *Sec.getAssociatedSection());
 
     uint64_t SecEnd = OS.tell();
     SectionOffsets.push_back(std::make_pair(SecStart, SecEnd));
