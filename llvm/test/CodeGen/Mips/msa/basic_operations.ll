@@ -42,7 +42,6 @@ define void @const_v16i8() nounwind {
   ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32-AE: .size const_v16i8
 }
 
 define void @const_v8i16() nounwind {
@@ -73,7 +72,6 @@ define void @const_v8i16() nounwind {
   ; MIPS32-AE: ld.h  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32-AE: .size const_v8i16
 }
 
 define void @const_v4i32() nounwind {
@@ -104,7 +102,6 @@ define void @const_v4i32() nounwind {
   ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32-AE: .size const_v4i32
 }
 
 define void @const_v2i64() nounwind {
@@ -134,7 +131,6 @@ define void @const_v2i64() nounwind {
   ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32-AE: .size const_v2i64
 }
 
 define void @nonconst_v16i8(i8 signext %a, i8 signext %b, i8 signext %c, i8 signext %d, i8 signext %e, i8 signext %f, i8 signext %g, i8 signext %h) nounwind {
@@ -180,7 +176,6 @@ define void @nonconst_v16i8(i8 signext %a, i8 signext %b, i8 signext %c, i8 sign
   store volatile <16 x i8> %16, <16 x i8>*@v16i8
 
   ret void
-  ; MIPS32-AE: .size nonconst_v16i8
 }
 
 define void @nonconst_v8i16(i16 signext %a, i16 signext %b, i16 signext %c, i16 signext %d, i16 signext %e, i16 signext %f, i16 signext %g, i16 signext %h) nounwind {
@@ -210,7 +205,6 @@ define void @nonconst_v8i16(i16 signext %a, i16 signext %b, i16 signext %c, i16 
   store volatile <8 x i16> %8, <8 x i16>*@v8i16
 
   ret void
-  ; MIPS32-AE: .size nonconst_v8i16
 }
 
 define void @nonconst_v4i32(i32 signext %a, i32 signext %b, i32 signext %c, i32 signext %d) nounwind {
@@ -228,7 +222,6 @@ define void @nonconst_v4i32(i32 signext %a, i32 signext %b, i32 signext %c, i32 
   store volatile <4 x i32> %4, <4 x i32>*@v4i32
 
   ret void
-  ; MIPS32-AE: .size nonconst_v4i32
 }
 
 define void @nonconst_v2i64(i64 signext %a, i64 signext %b) nounwind {
@@ -244,7 +237,6 @@ define void @nonconst_v2i64(i64 signext %a, i64 signext %b) nounwind {
   store volatile <2 x i64> %2, <2 x i64>*@v2i64
 
   ret void
-  ; MIPS32-AE: .size nonconst_v2i64
 }
 
 define i32 @extract_sext_v16i8() nounwind {
@@ -263,7 +255,6 @@ define i32 @extract_sext_v16i8() nounwind {
   ; MIPS32-AE-NOT: sra
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_sext_v16i8
 }
 
 define i32 @extract_sext_v8i16() nounwind {
@@ -282,7 +273,6 @@ define i32 @extract_sext_v8i16() nounwind {
   ; MIPS32-AE-NOT: sra
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_sext_v8i16
 }
 
 define i32 @extract_sext_v4i32() nounwind {
@@ -298,7 +288,6 @@ define i32 @extract_sext_v4i32() nounwind {
   ; MIPS32-AE-DAG: copy_s.w [[R3:\$[0-9]+]], [[R1]][1]
 
   ret i32 %3
-  ; MIPS32-AE: .size extract_sext_v4i32
 }
 
 define i64 @extract_sext_v2i64() nounwind {
@@ -317,7 +306,6 @@ define i64 @extract_sext_v2i64() nounwind {
   ; MIPS32-AE-NOT: sra
 
   ret i64 %3
-  ; MIPS32-AE: .size extract_sext_v2i64
 }
 
 define i32 @extract_zext_v16i8() nounwind {
@@ -335,7 +323,6 @@ define i32 @extract_zext_v16i8() nounwind {
   ; MIPS32-AE-NOT: andi
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_zext_v16i8
 }
 
 define i32 @extract_zext_v8i16() nounwind {
@@ -353,7 +340,6 @@ define i32 @extract_zext_v8i16() nounwind {
   ; MIPS32-AE-NOT: andi
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_zext_v8i16
 }
 
 define i32 @extract_zext_v4i32() nounwind {
@@ -369,7 +355,6 @@ define i32 @extract_zext_v4i32() nounwind {
   ; MIPS32-AE-DAG: copy_{{[su]}}.w [[R3:\$[0-9]+]], [[R1]][1]
 
   ret i32 %3
-  ; MIPS32-AE: .size extract_zext_v4i32
 }
 
 define i64 @extract_zext_v2i64() nounwind {
@@ -387,7 +372,6 @@ define i64 @extract_zext_v2i64() nounwind {
   ; MIPS32-AE-NOT: andi
 
   ret i64 %3
-  ; MIPS32-AE: .size extract_zext_v2i64
 }
 
 define i32 @extract_sext_v16i8_vidx() nounwind {
@@ -411,7 +395,6 @@ define i32 @extract_sext_v16i8_vidx() nounwind {
   ; MIPS32-AE-DAG: sra [[R6:\$[0-9]+]], [[R5]], 24
 
   ret i32 %5
-  ; MIPS32-AE: .size extract_sext_v16i8_vidx
 }
 
 define i32 @extract_sext_v8i16_vidx() nounwind {
@@ -435,7 +418,6 @@ define i32 @extract_sext_v8i16_vidx() nounwind {
   ; MIPS32-AE-DAG: sra [[R6:\$[0-9]+]], [[R5]], 16
 
   ret i32 %5
-  ; MIPS32-AE: .size extract_sext_v8i16_vidx
 }
 
 define i32 @extract_sext_v4i32_vidx() nounwind {
@@ -458,7 +440,6 @@ define i32 @extract_sext_v4i32_vidx() nounwind {
   ; MIPS32-AE-NOT: sra
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_sext_v4i32_vidx
 }
 
 define i64 @extract_sext_v2i64_vidx() nounwind {
@@ -483,7 +464,6 @@ define i64 @extract_sext_v2i64_vidx() nounwind {
   ; MIPS32-AE-NOT: sra
 
   ret i64 %4
-  ; MIPS32-AE: .size extract_sext_v2i64_vidx
 }
 
 define i32 @extract_zext_v16i8_vidx() nounwind {
@@ -507,7 +487,6 @@ define i32 @extract_zext_v16i8_vidx() nounwind {
   ; MIPS32-AE-DAG: srl [[R6:\$[0-9]+]], [[R5]], 24
 
   ret i32 %5
-  ; MIPS32-AE: .size extract_zext_v16i8_vidx
 }
 
 define i32 @extract_zext_v8i16_vidx() nounwind {
@@ -531,7 +510,6 @@ define i32 @extract_zext_v8i16_vidx() nounwind {
   ; MIPS32-AE-DAG: srl [[R6:\$[0-9]+]], [[R5]], 16
 
   ret i32 %5
-  ; MIPS32-AE: .size extract_zext_v8i16_vidx
 }
 
 define i32 @extract_zext_v4i32_vidx() nounwind {
@@ -554,7 +532,6 @@ define i32 @extract_zext_v4i32_vidx() nounwind {
   ; MIPS32-AE-NOT: srl
 
   ret i32 %4
-  ; MIPS32-AE: .size extract_zext_v4i32_vidx
 }
 
 define i64 @extract_zext_v2i64_vidx() nounwind {
@@ -579,7 +556,6 @@ define i64 @extract_zext_v2i64_vidx() nounwind {
   ; MIPS32-AE-NOT: srl
 
   ret i64 %4
-  ; MIPS32-AE: .size extract_zext_v2i64_vidx
 }
 
 define void @insert_v16i8(i32 signext %a) nounwind {
@@ -601,7 +577,6 @@ define void @insert_v16i8(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.b [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v16i8
 }
 
 define void @insert_v8i16(i32 signext %a) nounwind {
@@ -623,7 +598,6 @@ define void @insert_v8i16(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.h [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v8i16
 }
 
 define void @insert_v4i32(i32 signext %a) nounwind {
@@ -642,7 +616,6 @@ define void @insert_v4i32(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v4i32
 }
 
 define void @insert_v2i64(i64 signext %a) nounwind {
@@ -662,11 +635,10 @@ define void @insert_v2i64(i64 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v2i64
 }
 
 define void @insert_v16i8_vidx(i32 signext %a) nounwind {
-  ; MIPS32-AE: insert_v16i8_vidx:
+  ; MIPS32-AE-LABEL: insert_v16i8_vidx:
 
   %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
@@ -691,11 +663,10 @@ define void @insert_v16i8_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.b [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v16i8_vidx
 }
 
-define void @insert_v8i16_vidx(i32 signext %a) nounwind {
-  ; MIPS32-AE: insert_v8i16_vidx:
+define void @insert_v8i16_vidx(i32 %a) nounwind {
+  ; MIPS32-AE-LABEL: insert_v8i16_vidx:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
@@ -721,11 +692,10 @@ define void @insert_v8i16_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.h [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v8i16_vidx
 }
 
 define void @insert_v4i32_vidx(i32 signext %a) nounwind {
-  ; MIPS32-AE: insert_v4i32_vidx:
+  ; MIPS32-AE-LABEL: insert_v4i32_vidx:
 
   %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
@@ -748,11 +718,10 @@ define void @insert_v4i32_vidx(i32 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v4i32_vidx
 }
 
 define void @insert_v2i64_vidx(i64 signext %a) nounwind {
-  ; MIPS32-AE: insert_v2i64_vidx:
+  ; MIPS32-AE-LABEL: insert_v2i64_vidx:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
@@ -785,7 +754,6 @@ define void @insert_v2i64_vidx(i64 signext %a) nounwind {
   ; MIPS32-AE-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32-AE: .size insert_v2i64_vidx
 }
 
 define void @truncstore() nounwind {
@@ -795,5 +763,4 @@ define void @truncstore() nounwind {
   ; TODO: What code should be emitted?
 
   ret void
-  ; MIPS32-AE: .size truncstore
 }

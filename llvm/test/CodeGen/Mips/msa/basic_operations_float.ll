@@ -35,7 +35,6 @@ define void @const_v4f32() nounwind {
   ; MIPS32: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32: .size const_v4f32
 }
 
 define void @const_v2f64() nounwind {
@@ -69,7 +68,6 @@ define void @const_v2f64() nounwind {
   ; MIPS32: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
-  ; MIPS32: .size const_v2f64
 }
 
 define void @nonconst_v4f32() nounwind {
@@ -85,7 +83,6 @@ define void @nonconst_v4f32() nounwind {
   ; MIPS32: splati.w [[R2:\$w[0-9]+]], $w[[R1]]
 
   ret void
-  ; MIPS32: .size nonconst_v4f32
 }
 
 define void @nonconst_v2f64() nounwind {
@@ -99,7 +96,6 @@ define void @nonconst_v2f64() nounwind {
   ; MIPS32: splati.d [[R2:\$w[0-9]+]], $w[[R1]]
 
   ret void
-  ; MIPS32: .size nonconst_v2f64
 }
 
 define float @extract_v4f32() nounwind {
@@ -117,7 +113,6 @@ define float @extract_v4f32() nounwind {
   ; MIPS32-DAG: splati.w $w0, [[R1]][1]
 
   ret float %3
-  ; MIPS32: .size extract_v4f32
 }
 
 define float @extract_v4f32_elt0() nounwind {
@@ -135,7 +130,6 @@ define float @extract_v4f32_elt0() nounwind {
   ; MIPS32-NOT: mtc1
 
   ret float %3
-  ; MIPS32: .size extract_v4f32_elt0
 }
 
 define float @extract_v4f32_elt2() nounwind {
@@ -153,7 +147,6 @@ define float @extract_v4f32_elt2() nounwind {
   ; MIPS32-DAG: splati.w $w0, [[R1]][2]
 
   ret float %3
-  ; MIPS32: .size extract_v4f32_elt2
 }
 
 define float @extract_v4f32_vidx() nounwind {
@@ -174,7 +167,6 @@ define float @extract_v4f32_vidx() nounwind {
   ; MIPS32-DAG: splat.w $w0, [[R1]]{{\[}}[[IDX]]]
 
   ret float %4
-  ; MIPS32: .size extract_v4f32_vidx
 }
 
 define double @extract_v2f64() nounwind {
@@ -197,7 +189,6 @@ define double @extract_v2f64() nounwind {
   ; MIPS32-NOT: sra
 
   ret double %3
-  ; MIPS32: .size extract_v2f64
 }
 
 define double @extract_v2f64_elt0() nounwind {
@@ -218,7 +209,6 @@ define double @extract_v2f64_elt0() nounwind {
   ; MIPS32-NOT: sra
 
   ret double %3
-  ; MIPS32: .size extract_v2f64_elt0
 }
 
 define double @extract_v2f64_vidx() nounwind {
@@ -239,7 +229,6 @@ define double @extract_v2f64_vidx() nounwind {
   ; MIPS32-DAG: splat.d $w0, [[R1]]{{\[}}[[IDX]]]
 
   ret double %4
-  ; MIPS32: .size extract_v2f64_vidx
 }
 
 define void @insert_v4f32(float %a) nounwind {
@@ -256,7 +245,6 @@ define void @insert_v4f32(float %a) nounwind {
   ; MIPS32-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32: .size insert_v4f32
 }
 
 define void @insert_v2f64(double %a) nounwind {
@@ -273,7 +261,6 @@ define void @insert_v2f64(double %a) nounwind {
   ; MIPS32-DAG: st.d [[R1]]
 
   ret void
-  ; MIPS32: .size insert_v2f64
 }
 
 define void @insert_v4f32_vidx(float %a) nounwind {
@@ -299,7 +286,6 @@ define void @insert_v4f32_vidx(float %a) nounwind {
   ; MIPS32-DAG: st.w [[R1]]
 
   ret void
-  ; MIPS32: .size insert_v4f32_vidx
 }
 
 define void @insert_v2f64_vidx(double %a) nounwind {
@@ -325,5 +311,4 @@ define void @insert_v2f64_vidx(double %a) nounwind {
   ; MIPS32-DAG: st.d [[R1]]
 
   ret void
-  ; MIPS32: .size insert_v2f64_vidx
 }
