@@ -1586,7 +1586,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   writeSectionHeader(Sections, Asm, Layout, SectionIndexMap, SectionOffsets);
 
   uint16_t NumSections = (Sections.size() + 1 >= ELF::SHN_LORESERVE)
-                             ? ELF::SHN_UNDEF
+                             ? (uint16_t)ELF::SHN_UNDEF
                              : Sections.size() + 1;
   if (sys::IsLittleEndianHost != IsLittleEndian)
     sys::swapByteOrder(NumSections);
