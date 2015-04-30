@@ -41,3 +41,16 @@ class C {
 
 };
 
+struct Func {
+  template <typename F>
+  Func(F&&);
+};
+
+int getInt();
+
+void test() {
+  [val = getInt()]() { };
+  Func{
+    [val = getInt()]() { }
+  };
+}
