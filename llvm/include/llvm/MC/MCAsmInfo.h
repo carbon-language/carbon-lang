@@ -37,7 +37,6 @@ enum class EncodingType {
   ARM,     /// Windows NT (Windows on ARM)
   CE,      /// Windows CE ARM, PowerPC, SH3, SH4
   Itanium, /// Windows x64, Windows Itanium (IA-64)
-  X86,     /// Windows x86, uses no CFI, just EH tables
   MIPS = Alpha,
 };
 }
@@ -507,13 +506,12 @@ public:
   /// frame information to unwind.
   bool usesCFIForEH() const {
     return (ExceptionsType == ExceptionHandling::DwarfCFI ||
-            ExceptionsType == ExceptionHandling::ARM || usesWindowsCFI());
+            ExceptionsType == ExceptionHandling::ARM ||
+            ExceptionsType == ExceptionHandling::WinEH);
   }
 
   bool usesWindowsCFI() const {
-    return ExceptionsType == ExceptionHandling::WinEH &&
-           (WinEHEncodingType != WinEH::EncodingType::Invalid &&
-            WinEHEncodingType != WinEH::EncodingType::X86);
+    return ExceptionsType == ExceptionHandling::WinEH;
   }
 
   bool doesDwarfUseRelocationsAcrossSections() const {
