@@ -447,7 +447,10 @@ struct CounterCoverageMappingBuilder
   /// This should be used after visiting any statements in non-source order.
   void adjustForOutOfOrderTraversal(SourceLocation EndLoc) {
     MostRecentLocation = EndLoc;
-    if (MostRecentLocation == getEndOfFileOrMacro(MostRecentLocation))
+    // Avoid adding duplicate regions if we have a completed region on the top
+    // of the stack and are adjusting to the end of a virtual file.
+    if (getRegion().hasEndLoc() &&
+        MostRecentLocation == getEndOfFileOrMacro(MostRecentLocation))
       MostRecentLocation = getIncludeOrExpansionLoc(MostRecentLocation);
   }
 
