@@ -34,7 +34,7 @@ namespace clang {
       DIAG_START_LEX           = DIAG_START_SERIALIZATION   +  120,
       DIAG_START_PARSE         = DIAG_START_LEX             +  300,
       DIAG_START_AST           = DIAG_START_PARSE           +  500,
-      DIAG_START_COMMENT       = DIAG_START_AST             +  100,
+      DIAG_START_COMMENT       = DIAG_START_AST             +  110,
       DIAG_START_SEMA          = DIAG_START_COMMENT         +  100,
       DIAG_START_ANALYSIS      = DIAG_START_SEMA            + 3000,
       DIAG_UPPER_LIMIT         = DIAG_START_ANALYSIS        +  100

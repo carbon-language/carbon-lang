@@ -168,6 +168,14 @@ let CategoryName = "Inline Assembly Issue" in {
     "invalid operand number in inline asm string">;
 }
 
+// vtable related.
+let CategoryName = "VTable ABI Issue" in {
+  def err_vftable_ambiguous_component : Error<
+    "ambiguous vftable component for %0 introduced via covariant thunks; "
+    "this is an inherent limitation of the ABI">;
+  def note_covariant_thunk : Note<
+    "covariant thunk required by %0">;
+}
 
 // Importing ASTs
 def err_odr_variable_type_inconsistent : Error<

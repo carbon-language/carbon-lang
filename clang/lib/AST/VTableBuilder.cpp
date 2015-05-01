@@ -13,6 +13,7 @@
 
 #include "clang/AST/VTableBuilder.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
@@ -3482,9 +3483,24 @@ static bool findPathForVPtr(ASTContext &Context,
 
   CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
                      /*DetectVirtual=*/true);
+#if 0
+  std::vector<const CXXRecordDecl *> BaseLists;
+  for (const auto &B : RD->bases()) {
+    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
+    Paths.clear();
+    if (!Base->isDerivedFrom(Info->BaseWithVPtr, Paths))
+      continue;
+    for (const auto &Chain : BaseLists) {
+      const CXXRecordDecl *MostDerived = Chain.front();
+    }
+  }
+#endif
   // All virtual bases which are on the path to the BaseWithVPtr are not equal.
   // Specifically, virtual paths which introduce additional covariant thunks
   // must be preferred over paths which do not introduce such thunks.
+  const CXXRecordDecl *Base = nullptr;
+  CharUnits NewOffset;
+  const CXXMethodDecl *CovariantMD = nullptr;
   for (const auto *MD : Info->BaseWithVPtr->methods()) {
     if (!MD->isVirtual())
       continue;
@@ -3501,10 +3517,10 @@ static bool findPathForVPtr(ASTContext &Context,
 
     // Ok, let's iterate through our virtual bases looking for a base which
     // provides a return adjusting overrider for this method.
-    const CXXRecordDecl *Base = nullptr;
-    CharUnits NewOffset;
     for (const auto &B : RD->bases()) {
       const CXXRecordDecl *VBase = B.getType()->getAsCXXRecordDecl();
+      if (Base == VBase)
+        continue;
       // There might be a vbase which derives from a vbase which provides a
       // covariant override for the method *and* provides its own covariant
       // override.
@@ -3512,7 +3528,7 @@ static bool findPathForVPtr(ASTContext &Context,
       // looking for the most derived virtual base which provides a covariant
       // override for the method.
       Paths.clear();
-      if (!VBase->isDerivedFrom(Base ? Base : Info->BaseWithVPtr, Paths) ||
+      if (!VBase->isDerivedFrom(Info->BaseWithVPtr, Paths) ||
           !Paths.getDetectedVirtual())
         continue;
       const CXXMethodDecl *VBaseMD = MD->getCorrespondingMethodInClass(VBase);
@@ -3525,17 +3541,33 @@ static bool findPathForVPtr(ASTContext &Context,
       // Skip any overriders which are not return adjusting.
       if (BO.isEmpty() || !BO.VirtualBase)
         continue;
-      Base = VBase;
-      NewOffset = VBaseNewOffset;
+      Paths.clear();
+      if (!Base || VBase->isDerivedFrom(Base, Paths)) {
+        assert(!Base || Paths.getDetectedVirtual());
+        Base = VBase;
+        NewOffset = VBaseNewOffset;
+        CovariantMD = VBaseMD;
+      } else {
+        Paths.clear();
+        if (!Base->isDerivedFrom(VBase, Paths)) {
+          DiagnosticsEngine &Diags = Context.getDiagnostics();
+          Diags.Report(RD->getLocation(), diag::err_vftable_ambiguous_component)
+              << RD;
+          Diags.Report(CovariantMD->getLocation(), diag::note_covariant_thunk)
+              << CovariantMD;
+          Diags.Report(VBaseMD->getLocation(), diag::note_covariant_thunk)
+              << VBaseMD;
+        }
+      }
     }
-
-    if (Base && Recurse(Base, NewOffset))
-      return true;
   }
 
+  if (Base && Recurse(Base, NewOffset))
+    return true;
+
   for (const auto &B : RD->bases()) {
-    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
-    CharUnits NewOffset = GetBaseOffset(B);
+    Base = B.getType()->getAsCXXRecordDecl();
+    NewOffset = GetBaseOffset(B);
     if (Recurse(Base, NewOffset))
       return true;
   }
