@@ -741,14 +741,17 @@ bool ELFFile<ELFT>::redirectReferenceUsingUndefAtom(
 }
 
 template <class ELFT>
-void RuntimeFile<ELFT>::addAbsoluteAtom(StringRef symbolName) {
+void RuntimeFile<ELFT>::addAbsoluteAtom(StringRef symbolName, bool isHidden) {
   assert(!symbolName.empty() && "AbsoluteAtoms must have a name");
   Elf_Sym *sym = new (this->_readerStorage) Elf_Sym;
   sym->st_name = 0;
   sym->st_value = 0;
   sym->st_shndx = llvm::ELF::SHN_ABS;
   sym->setBindingAndType(llvm::ELF::STB_GLOBAL, llvm::ELF::STT_OBJECT);
-  sym->setVisibility(llvm::ELF::STV_DEFAULT);
+  if (isHidden)
+    sym->setVisibility(llvm::ELF::STV_HIDDEN);
+  else
+    sym->setVisibility(llvm::ELF::STV_DEFAULT);
   sym->st_size = 0;
   ELFAbsoluteAtom<ELFT> *atom = this->createAbsoluteAtom(symbolName, sym, -1);
   this->addAtom(*atom);

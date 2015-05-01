@@ -81,10 +81,10 @@ std::unique_ptr<RuntimeFile<ELFT>> ExecutableWriter<ELFT>::createRuntimeFile() {
   file->addAbsoluteAtom("__bss_end");
   file->addAbsoluteAtom("_end");
   file->addAbsoluteAtom("end");
-  file->addAbsoluteAtom("__preinit_array_start");
-  file->addAbsoluteAtom("__preinit_array_end");
-  file->addAbsoluteAtom("__init_array_start");
-  file->addAbsoluteAtom("__init_array_end");
+  file->addAbsoluteAtom("__preinit_array_start", true);
+  file->addAbsoluteAtom("__preinit_array_end", true);
+  file->addAbsoluteAtom("__init_array_start", true);
+  file->addAbsoluteAtom("__init_array_end", true);
   if (this->_ctx.isRelaOutputFormat()) {
     file->addAbsoluteAtom("__rela_iplt_start");
     file->addAbsoluteAtom("__rela_iplt_end");
@@ -92,8 +92,8 @@ std::unique_ptr<RuntimeFile<ELFT>> ExecutableWriter<ELFT>::createRuntimeFile() {
     file->addAbsoluteAtom("__rel_iplt_start");
     file->addAbsoluteAtom("__rel_iplt_end");
   }
-  file->addAbsoluteAtom("__fini_array_start");
-  file->addAbsoluteAtom("__fini_array_end");
+  file->addAbsoluteAtom("__fini_array_start", true);
+  file->addAbsoluteAtom("__fini_array_end", true);
   return file;
 }
 

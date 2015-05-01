@@ -398,7 +398,7 @@ public:
       : ELFFile<ELFT>(name, ctx) {}
 
   /// \brief add a global absolute atom
-  virtual void addAbsoluteAtom(StringRef symbolName);
+  virtual void addAbsoluteAtom(StringRef symbolName, bool isHidden = false);
 
   /// \brief add an undefined atom
   virtual void addUndefinedAtom(StringRef symbolName);
