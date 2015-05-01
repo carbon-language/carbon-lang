@@ -2323,19 +2323,6 @@ static unsigned getNumberOfModules(Module *Mod) {
 }
 
 void ASTWriter::WriteSubmodules(Module *WritingModule) {
-  // Determine the dependencies of our module and each of it's submodules.
-  // FIXME: This feels like it belongs somewhere else, but there are no
-  // other consumers of this information.
-  SourceManager &SrcMgr = PP->getSourceManager();
-  ModuleMap &ModMap = PP->getHeaderSearchInfo().getModuleMap();
-  for (const auto *I : Context->local_imports()) {
-    if (Module *ImportedFrom
-          = ModMap.inferModuleFromLocation(FullSourceLoc(I->getLocation(), 
-                                                         SrcMgr))) {
-      ImportedFrom->Imports.push_back(I->getImportedModule());
-    }
-  }
-  
   // Enter the submodule description block.
   Stream.EnterSubblock(SUBMODULE_BLOCK_ID, /*bits for abbreviations*/5);
   

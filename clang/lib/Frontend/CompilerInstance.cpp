@@ -1357,7 +1357,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     if (LastModuleImportResult && ModuleName != getLangOpts().CurrentModule &&
         ModuleName != getLangOpts().ImplementationOfModule)
       ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility,
-                                       ImportLoc, /*Complain=*/false);
+                                       ImportLoc);
     return LastModuleImportResult;
   }
 
@@ -1600,8 +1600,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       return ModuleLoadResult();
     }
 
-    ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc,
-                                     /*Complain=*/true);
+    ModuleManager->makeModuleVisible(Module, Visibility, ImportLoc);
   }
 
   // Check for any configuration macros that have changed.
@@ -1637,9 +1636,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
 void CompilerInstance::makeModuleVisible(Module *Mod,
                                          Module::NameVisibilityKind Visibility,
-                                         SourceLocation ImportLoc,
-                                         bool Complain){
-  ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc, Complain);
+                                         SourceLocation ImportLoc) {
+  ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc);
 }
 
 GlobalModuleIndex *CompilerInstance::loadGlobalModuleIndex(

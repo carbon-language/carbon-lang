@@ -89,7 +89,7 @@ ModuleMap::ModuleMap(SourceManager &SourceMgr, DiagnosticsEngine &Diags,
                      HeaderSearch &HeaderInfo)
     : SourceMgr(SourceMgr), Diags(Diags), LangOpts(LangOpts), Target(Target),
       HeaderInfo(HeaderInfo), BuiltinIncludeDir(nullptr),
-      CompilingModule(nullptr), SourceModule(nullptr) {
+      CompilingModule(nullptr), SourceModule(nullptr), NumCreatedModules(0) {
   MMapLangOpts.LineComment = true;
 }
 
@@ -563,7 +563,7 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
   
   // Create a new module with this name.
   Module *Result = new Module(Name, SourceLocation(), Parent,
-                              IsFramework, IsExplicit);
+                              IsFramework, IsExplicit, NumCreatedModules++);
   if (LangOpts.CurrentModule == Name) {
     SourceModule = Result;
     SourceModuleName = Name;
@@ -693,7 +693,8 @@ Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
     return nullptr;
 
   Module *Result = new Module(ModuleName, SourceLocation(), Parent,
-                              /*IsFramework=*/true, /*IsExplicit=*/false);
+                              /*IsFramework=*/true, /*IsExplicit=*/false,
+                              NumCreatedModules++);
   InferredModuleAllowedBy[Result] = ModuleMapFile;
   Result->IsInferred = true;
   if (LangOpts.CurrentModule == ModuleName) {

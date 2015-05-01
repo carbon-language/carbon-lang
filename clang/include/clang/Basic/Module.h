@@ -21,6 +21,7 @@
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
@@ -84,6 +85,9 @@ private:
 
   /// \brief Cache of modules visible to lookup in this module.
   mutable llvm::DenseSet<const Module*> VisibleModulesCache;
+
+  /// The ID used when referencing this module within a VisibleModuleSet.
+  unsigned VisibilityID;
 
 public:
   enum HeaderKind {
@@ -288,7 +292,7 @@ public:
 
   /// \brief Construct a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
-         bool IsFramework, bool IsExplicit);
+         bool IsFramework, bool IsExplicit, unsigned VisibilityID);
   
   ~Module();
   
@@ -441,6 +445,8 @@ public:
     return VisibleModulesCache.count(M);
   }
 
+  unsigned getVisibilityID() const { return VisibilityID; }
+
   typedef std::vector<Module *>::iterator submodule_iterator;
   typedef std::vector<Module *>::const_iterator submodule_const_iterator;
   
@@ -468,6 +474,53 @@ public:
 
 private:
   void buildVisibleModulesCache() const;
+};
+
+/// \brief A set of visible modules.
+class VisibleModuleSet {
+public:
+  VisibleModuleSet() : Generation(0) {}
+
+  VisibleModuleSet &operator=(VisibleModuleSet &&O) {
+    ImportLocs = std::move(O.ImportLocs);
+    ++Generation;
+    return *this;
+  }
+
+  /// \brief Get the current visibility generation.
+  unsigned getGeneration() const { return Generation; }
+
+  /// \brief Determine whether a module is visible.
+  bool isVisible(const Module *M) const {
+    return getImportLoc(M).isValid();
+  }
+
+  /// \brief Get the location at which the import of a module was triggered.
+  SourceLocation getImportLoc(const Module *M) const {
+    return M->getVisibilityID() < ImportLocs.size()
+               ? ImportLocs[M->getVisibilityID()]
+               : SourceLocation();
+  }
+
+  /// \brief A callback to call when a module is made visible (directly or
+  /// indirectly) by a call to \ref setVisible.
+  typedef llvm::function_ref<void(Module *M)> VisibleCallback;
+  /// \brief A callback to call when a module conflict is found. \p Path
+  /// consists of a sequence of modules from the conflicting module to the one
+  /// made visible, where each was exported by the next.
+  typedef llvm::function_ref<void(ArrayRef<Module *> Path,
+                                  Module *Conflict, StringRef Message)>
+      ConflictCallback;
+  /// \brief Make a specific module visible.
+  void setVisible(Module *M, SourceLocation Loc,
+                  VisibleCallback Vis, ConflictCallback Cb);
+
+private:
+  /// Import locations for each visible module. Indexed by the module's
+  /// VisibilityID.
+  std::vector<SourceLocation> ImportLocs;
+  /// Visibility generation, bumped every time the visibility state changes.
+  unsigned Generation;
 };
 
 } // end namespace clang

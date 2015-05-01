@@ -671,13 +671,7 @@ void Preprocessor::LeaveSubmodule() {
     Macro.second.setOverriddenMacros(SavedInfo.Overridden);
   }
 
-  if (Info.M->NameVisibility < Module::MacrosVisible) {
-    Info.M->NameVisibility = Module::MacrosVisible;
-    Info.M->MacroVisibilityLoc = Info.ImportLoc;
-    ++MacroVisibilityGeneration;
-    // FIXME: Also mark any exported modules as visible, and check for
-    // conflicts.
-  }
+  makeModuleVisible(Info.M, Info.ImportLoc);
 
   BuildingSubmoduleStack.pop_back();
 }

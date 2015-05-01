@@ -124,9 +124,9 @@ ModuleMacro *Preprocessor::getModuleMacro(Module *Mod, IdentifierInfo *II) {
 
 void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
                                          ModuleMacroInfo &Info) {
-  assert(Info.ActiveModuleMacrosGeneration != MacroVisibilityGeneration &&
+  assert(Info.ActiveModuleMacrosGeneration != VisibleModules.getGeneration() &&
          "don't need to update this macro name info");
-  Info.ActiveModuleMacrosGeneration = MacroVisibilityGeneration;
+  Info.ActiveModuleMacrosGeneration = VisibleModules.getGeneration();
 
   auto Leaf = LeafModuleMacros.find(II);
   if (Leaf == LeafModuleMacros.end()) {
@@ -146,7 +146,7 @@ void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
                                                 Leaf->second.end());
   while (!Worklist.empty()) {
     auto *MM = Worklist.pop_back_val();
-    if (MM->getOwningModule()->NameVisibility >= Module::MacrosVisible) {
+    if (VisibleModules.isVisible(MM->getOwningModule())) {
       // We only care about collecting definitions; undefinitions only act
       // to override other definitions.
       if (MM->getMacroInfo())
@@ -236,7 +236,7 @@ void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
 
     if (Active.count(MM))
       llvm::errs() << " active";
-    else if (MM->getOwningModule()->NameVisibility < Module::MacrosVisible)
+    else if (!VisibleModules.isVisible(MM->getOwningModule()))
       llvm::errs() << " hidden";
     else
       llvm::errs() << " overridden";

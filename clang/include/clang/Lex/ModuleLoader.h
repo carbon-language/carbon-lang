@@ -99,8 +99,7 @@ public:
   /// \brief Make the given module visible.
   virtual void makeModuleVisible(Module *Mod,
                                  Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc,
-                                 bool Complain) = 0;
+                                 SourceLocation ImportLoc) = 0;
 
   /// \brief Load, create, or return global module.
   /// This function returns an existing global module index, if one

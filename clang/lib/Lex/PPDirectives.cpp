@@ -1686,7 +1686,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     ModuleLoadResult Imported
       = TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
                                    /*IsIncludeDirective=*/true);
-    ++MacroVisibilityGeneration;
+    if (Imported)
+      makeModuleVisible(Imported, IncludeTok.getLocation());
     assert((Imported == nullptr || Imported == SuggestedModule.getModule()) &&
            "the imported module is different than the suggested one");
 
@@ -1766,6 +1767,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   assert(!FID.isInvalid() && "Expected valid file ID");
 
   // Determine if we're switching to building a new submodule, and which one.
+  //
+  // FIXME: If we've already processed this header, just make it visible rather
+  // than entering it again.
   ModuleMap::KnownHeader BuildingModule;
   if (getLangOpts().Modules && !getLangOpts().CurrentModule.empty()) {
     Module *RequestingModule = getModuleForLocation(FilenameLoc);

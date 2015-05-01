@@ -3240,8 +3240,7 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner) {
 
 void ASTReader::makeModuleVisible(Module *Mod,
                                   Module::NameVisibilityKind NameVisibility,
-                                  SourceLocation ImportLoc,
-                                  bool Complain) {
+                                  SourceLocation ImportLoc) {
   llvm::SmallPtrSet<Module *, 4> Visited;
   SmallVector<Module *, 4> Stack;
   Stack.push_back(Mod);
@@ -3284,20 +3283,6 @@ void ASTReader::makeModuleVisible(Module *Mod,
       Module *Exported = *I;
       if (Visited.insert(Exported).second)
         Stack.push_back(Exported);
-    }
-
-    // Detect any conflicts.
-    if (Complain) {
-      assert(ImportLoc.isValid() && "Missing import location");
-      for (unsigned I = 0, N = Mod->Conflicts.size(); I != N; ++I) {
-        if (Mod->Conflicts[I].Other->NameVisibility >= NameVisibility) {
-          Diag(ImportLoc, diag::warn_module_conflict)
-            << Mod->getFullModuleName()
-            << Mod->Conflicts[I].Other->getFullModuleName()
-            << Mod->Conflicts[I].Message;
-          // FIXME: Need note where the other module was imported.
-        }
-      }
     }
   }
 }
@@ -3669,7 +3654,7 @@ ASTReader::ReadASTCore(StringRef FileName,
   return Success;
 }
 
-void ASTReader::InitializeContext() {  
+void ASTReader::InitializeContext() {
   // If there's a listener, notify them that we "read" the translation unit.
   if (DeserializationListener)
     DeserializationListener->DeclRead(PREDEF_DECL_TRANSLATION_UNIT_ID, 
@@ -3792,13 +3777,13 @@ void ASTReader::InitializeContext() {
   }
 
   // Re-export any modules that were imported by a non-module AST file.
-  // FIXME: This does not make macro-only imports visible again. It also doesn't
-  // make #includes mapped to module imports visible.
+  // FIXME: This does not make macro-only imports visible again.
   for (auto &Import : ImportedModules) {
-    if (Module *Imported = getSubmodule(Import.ID))
+    if (Module *Imported = getSubmodule(Import.ID)) {
       makeModuleVisible(Imported, Module::AllVisible,
-                        /*ImportLoc=*/Import.ImportLoc,
-                        /*Complain=*/false);
+                        /*ImportLoc=*/Import.ImportLoc);
+      PP.makeModuleVisible(Imported, Import.ImportLoc);
+    }
   }
   ImportedModules.clear();
 }

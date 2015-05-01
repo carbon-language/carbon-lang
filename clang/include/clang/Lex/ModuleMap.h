@@ -64,6 +64,9 @@ private:
   /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
 
+  /// \brief The number of modules we have created in total.
+  unsigned NumCreatedModules;
+
 public:
   /// \brief Flags describing the role of a module header.
   enum ModuleHeaderRole {

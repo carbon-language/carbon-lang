@@ -638,7 +638,9 @@ def warn_non_modular_include_in_framework_module : Warning<
 def warn_non_modular_include_in_module : Warning<
   "include of non-modular header inside module '%0'">,
   InGroup<NonModularIncludeInModule>, DefaultIgnore;
-
+def warn_module_conflict : Warning<
+  "module '%0' conflicts with already-imported module '%1': %2">, 
+  InGroup<ModuleConflict>;
 
 def warn_header_guard : Warning<
   "%0 is used as a header guard here, followed by #define of a different macro">,
