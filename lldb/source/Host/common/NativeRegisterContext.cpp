@@ -375,7 +375,8 @@ NativeRegisterContext::ReadRegisterValueFromMemory (
 
     if (src_len > dst_len)
     {
-        error.SetErrorStringWithFormat("%" PRIu64 " bytes is too big to store in register %s (%" PRIu64 " bytes)", (unsigned long long)src_len, reg_info->name, (unsigned long long)dst_len);
+        error.SetErrorStringWithFormat("%" PRIu64 " bytes is too big to store in register %s (%" PRIu64 " bytes)",
+                static_cast<uint64_t>(src_len), reg_info->name, static_cast<uint64_t>(dst_len));
         return error;
     }
 
@@ -398,7 +399,8 @@ NativeRegisterContext::ReadRegisterValueFromMemory (
     if (bytes_read != src_len)
     {
         // This might happen if we read _some_ bytes but not all
-        error.SetErrorStringWithFormat("read %" PRIu64 " of %" PRIu64 " bytes", (unsigned long long)bytes_read, (unsigned long long)src_len);
+        error.SetErrorStringWithFormat("read %" PRIu64 " of %" PRIu64 " bytes",
+                static_cast<uint64_t>(bytes_read), static_cast<uint64_t>(src_len));
         return error;
     }
 
@@ -470,7 +472,8 @@ NativeRegisterContext::WriteRegisterValueToMemory (
                 if (bytes_written != bytes_copied)
                 {
                     // This might happen if we read _some_ bytes but not all
-                    error.SetErrorStringWithFormat("only wrote %" PRIu64 " of %" PRIu64 " bytes", (unsigned long long)bytes_written, (unsigned long long)bytes_copied);
+                    error.SetErrorStringWithFormat("only wrote %" PRIu64 " of %" PRIu64 " bytes",
+                            static_cast<uint64_t>(bytes_written), static_cast<uint64_t>(bytes_copied));
                 }
             }
         }
