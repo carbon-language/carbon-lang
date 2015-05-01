@@ -31,27 +31,28 @@ const char * kFAIL = "FAIL";
 }  // namespace
 
 Error
-AdbClient::CreateByDeviceID (const char* device_id, AdbClient &adb)
+AdbClient::CreateByDeviceID(const std::string &device_id, AdbClient &adb)
 {
     DeviceIDList connect_devices;
-    auto error = adb.GetDevices (connect_devices);
-    if (error.Fail ())
+    auto error = adb.GetDevices(connect_devices);
+    if (error.Fail())
         return error;
 
-    if (device_id)
+    if (device_id.empty())
     {
-        auto find_it = std::find(connect_devices.begin (), connect_devices.end (), device_id);
-        if (find_it == connect_devices.end ())
-            return Error ("Device \"%s\" not found", device_id);
+        if (connect_devices.size() != 1)
+            return Error("Expected a single connected device, got instead %" PRIu64,
+                    static_cast<uint64_t>(connect_devices.size()));
 
-        adb.SetDeviceID (*find_it);
+        adb.SetDeviceID(connect_devices.front());
     }
     else
     {
-        if (connect_devices.size () != 1)
-            return Error ("Expected a single connected device, got instead %" PRIu64, static_cast<uint64_t>(connect_devices.size ()));
+        auto find_it = std::find(connect_devices.begin(), connect_devices.end(), device_id);
+        if (find_it == connect_devices.end())
+            return Error("Device \"%s\" not found", device_id.c_str());
 
-        adb.SetDeviceID (connect_devices.front ());
+        adb.SetDeviceID(*find_it);
     }
     return error;
 }

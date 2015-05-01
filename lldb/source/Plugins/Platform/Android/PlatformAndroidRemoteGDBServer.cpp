@@ -27,18 +27,16 @@ ForwardPortWithAdb (uint16_t port, std::string& device_id)
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
 
-    // Fetch the device list from ADB and if only 1 device found then use that device
-    // TODO: Handle the case when more device is available
     AdbClient adb;
-    auto error = AdbClient::CreateByDeviceID (nullptr, adb);
+    auto error = AdbClient::CreateByDeviceID(device_id, adb);
     if (error.Fail ())
         return error;
 
-    device_id = adb.GetDeviceID ();
+    device_id = adb.GetDeviceID();
     if (log)
         log->Printf("Connected to Android device \"%s\"", device_id.c_str ());
 
-    return adb.SetPortForwarding (port);
+    return adb.SetPortForwarding(port);
 }
 
 static Error
@@ -55,9 +53,7 @@ PlatformAndroidRemoteGDBServer::PlatformAndroidRemoteGDBServer ()
 PlatformAndroidRemoteGDBServer::~PlatformAndroidRemoteGDBServer ()
 {
     for (const auto& it : m_port_forwards)
-    {
-        DeleteForwardPortWithAdb (it.second.first, it.second.second);
-    }
+        DeleteForwardPortWithAdb(it.second, m_device_id);
 }
 
 uint16_t
@@ -67,12 +63,11 @@ PlatformAndroidRemoteGDBServer::LaunchGDBserverAndGetPort (lldb::pid_t &pid)
     if (port == 0)
         return port;
 
-    std::string device_id;
-    Error error = ForwardPortWithAdb (port, device_id);
+    Error error = ForwardPortWithAdb(port, m_device_id);
     if (error.Fail ())
         return 0;
 
-    m_port_forwards[pid] = std::make_pair (port, device_id);
+    m_port_forwards[pid] = port;
 
     return port;
 }
@@ -87,23 +82,28 @@ PlatformAndroidRemoteGDBServer::KillSpawnedProcess (lldb::pid_t pid)
 Error
 PlatformAndroidRemoteGDBServer::ConnectRemote (Args& args)
 {
-    if (args.GetArgumentCount () != 1)
-        return Error ("\"platform connect\" takes a single argument: <connect-url>");
-  
+    m_device_id.clear();
+
+    if (args.GetArgumentCount() != 1)
+        return Error("\"platform connect\" takes a single argument: <connect-url>");
+
     int port;
     std::string scheme, host, path;
     const char *url = args.GetArgumentAtIndex (0);
+    if (!url)
+        return Error("URL is null.");
     if (!UriParser::Parse (url, scheme, host, port, path))
-        return Error ("invalid uri");
+        return Error("Invalid URL: %s", url);
+    if (scheme == "adb")
+        m_device_id = host;
 
-    std::string device_id;
-    Error error = ForwardPortWithAdb (port, device_id);
-    if (error.Fail ())
+    Error error = ForwardPortWithAdb(port, m_device_id);
+    if (error.Fail())
         return error;
 
-    m_port_forwards[g_remote_platform_pid] = std::make_pair (port, device_id);
+    m_port_forwards[g_remote_platform_pid] = port;
 
-    error = PlatformRemoteGDBServer::ConnectRemote (args);
+    error = PlatformRemoteGDBServer::ConnectRemote(args);
     if (error.Fail ())
         DeleteForwardPort (g_remote_platform_pid);
 
@@ -120,18 +120,18 @@ PlatformAndroidRemoteGDBServer::DisconnectRemote ()
 void
 PlatformAndroidRemoteGDBServer::DeleteForwardPort (lldb::pid_t pid)
 {
-    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PLATFORM));
 
-    auto it = m_port_forwards.find (pid);
-    if (it == m_port_forwards.end ())
+    auto it = m_port_forwards.find(pid);
+    if (it == m_port_forwards.end())
         return;
 
-    const auto& forward_val = it->second;
-    const auto error = DeleteForwardPortWithAdb (forward_val.first, forward_val.second);
-    if (error.Fail ()) {
+    const auto port = it->second;
+    const auto error = DeleteForwardPortWithAdb(port, m_device_id);
+    if (error.Fail()) {
         if (log)
-            log->Printf ("Failed to delete port forwarding (pid=%" PRIu64 ", port=%d, device=%s): %s",
-                         pid, forward_val.first, forward_val.second.c_str (), error.AsCString ());
+            log->Printf("Failed to delete port forwarding (pid=%" PRIu64 ", port=%d, device=%s): %s",
+                         pid, port, m_device_id.c_str(), error.AsCString());
     }
-    m_port_forwards.erase (it);
+    m_port_forwards.erase(it);
 }

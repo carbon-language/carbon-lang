@@ -216,6 +216,7 @@ public:
 protected:
     process_gdb_remote::GDBRemoteCommunicationClient m_gdb_client;
     std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
+    std::string m_platform_scheme;
     std::string m_platform_hostname;
 
     // Launch the lldb-gdbserver on the remote host and return the port it is listening on or 0 on

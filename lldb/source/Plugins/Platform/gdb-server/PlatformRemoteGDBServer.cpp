@@ -40,13 +40,18 @@ using namespace lldb_private::platform_gdb_server;
 
 static bool g_initialized = false;
 
-static std::string MakeGdbServerUrl (const std::string &platform_hostname, uint16_t port)
+static std::string MakeGdbServerUrl(
+        const std::string &platform_scheme,
+        const std::string &platform_hostname,
+        uint16_t port)
 {
+    const char *override_scheme = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_SCHEME");
     const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
     const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
     int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
     StreamString result;
-    result.Printf("connect://%s:%u",
+    result.Printf("%s://%s:%u",
+            override_scheme ? override_scheme : platform_scheme.c_str(),
             override_hostname ? override_hostname : platform_hostname.c_str(),
             port + port_offset);
     return result.GetString();
@@ -375,17 +380,15 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
     {
         if (args.GetArgumentCount() == 1)
         {
-            const char *url = args.GetArgumentAtIndex(0);
-            m_gdb_client.SetConnection (new ConnectionFileDescriptor());
+            m_gdb_client.SetConnection(new ConnectionFileDescriptor());
             // we're going to reuse the hostname when we connect to the debugserver
-            std::string scheme;
             int port;
             std::string path;
-            if ( !UriParser::Parse(url, scheme, m_platform_hostname, port, path) )
-            {
-                error.SetErrorString("invalid uri");
-                return error;
-            }
+            const char *url = args.GetArgumentAtIndex(0);
+            if (!url)
+                return Error("URL is null.");
+            if (!UriParser::Parse(url, m_platform_scheme, m_platform_hostname, port, path))
+                return Error("Invalid URL: %s", url);
 
             const ConnectionStatus status = m_gdb_client.Connect(url, &error);
             if (status == eConnectionStatusSuccess)
@@ -624,7 +627,8 @@ PlatformRemoteGDBServer::DebugProcess (ProcessLaunchInfo &launch_info,
                     
                     if (process_sp)
                     {
-                        std::string connect_url = MakeGdbServerUrl(m_platform_hostname, port);
+                        std::string connect_url =
+                            MakeGdbServerUrl(m_platform_scheme, m_platform_hostname, port);
                         error = process_sp->ConnectRemote (nullptr, connect_url.c_str());
                         // Retry the connect remote one time...
                         if (error.Fail())
@@ -719,7 +723,8 @@ PlatformRemoteGDBServer::Attach (ProcessAttachInfo &attach_info,
                     
                     if (process_sp)
                     {
-                        std::string connect_url = MakeGdbServerUrl(m_platform_hostname, port);
+                        std::string connect_url =
+                            MakeGdbServerUrl(m_platform_scheme, m_platform_hostname, port);
                         error = process_sp->ConnectRemote(nullptr, connect_url.c_str());
                         if (error.Success())
                         {

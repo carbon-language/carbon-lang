@@ -32,7 +32,7 @@ public:
     using DeviceIDList = std::list<std::string>;
 
     static Error
-    CreateByDeviceID (const char* device_id, AdbClient &adb);
+    CreateByDeviceID(const std::string &device_id, AdbClient &adb);
 
     AdbClient () = default;
     explicit AdbClient (const std::string &device_id);
