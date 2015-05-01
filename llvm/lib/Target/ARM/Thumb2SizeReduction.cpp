@@ -470,9 +470,11 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
 
   unsigned OffsetReg = 0;
   bool OffsetKill = false;
+  bool OffsetInternal = false;
   if (HasShift) {
     OffsetReg  = MI->getOperand(2).getReg();
     OffsetKill = MI->getOperand(2).isKill();
+    OffsetInternal = MI->getOperand(2).isInternalRead();
 
     if (MI->getOperand(3).getImm())
       // Thumb1 addressing mode doesn't support shift.
@@ -502,7 +504,8 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     assert((!HasShift || OffsetReg) && "Invalid so_reg load / store address!");
 
     if (HasOffReg)
-      MIB.addReg(OffsetReg, getKillRegState(OffsetKill));
+      MIB.addReg(OffsetReg, getKillRegState(OffsetKill) |
+                            getInternalReadRegState(OffsetInternal));
   }
 
   // Transfer the rest of operands.
