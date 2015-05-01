@@ -266,8 +266,9 @@ void CoverageData::ReInit() {
       // In memory-mapped mode we must extend the new file to the known array
       // size.
       uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
+      uptr npcs = size / sizeof(uptr);
       Enable();
-      if (size) Extend(size);
+      if (size) Extend(npcs);
       if (coverage_enabled) CovUpdateMapping(coverage_dir);
     } else {
       Enable();
