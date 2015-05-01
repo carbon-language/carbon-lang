@@ -24,7 +24,7 @@ static void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_X86_64_PC32 - word32: S + A - P
 static void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint32_t result = (uint32_t)(S + A - P);
-  write32le(location, result | read32le(location));
+  write32le(location, result + read32le(location));
 }
 
 /// \brief R_X86_64_32 - word32:  S + A
