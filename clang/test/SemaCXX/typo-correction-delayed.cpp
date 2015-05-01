@@ -198,3 +198,8 @@ namespace PR23005 {
 void f() { int a = Unknown::b(c); }  // expected-error {{use of undeclared identifier 'Unknown'}}
 // expected-error@-1 {{use of undeclared identifier 'c'}}
 }
+
+namespace PR23350 {
+int z = 1 ? N : ;  // expected-error {{expected expression}}
+// expected-error-re@-1 {{use of undeclared identifier 'N'{{$}}}}
+}
