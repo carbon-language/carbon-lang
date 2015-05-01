@@ -319,7 +319,7 @@ JoinListenThread ()
 }
 
 Error
-WritePortToPipe(Pipe port_pipe, const uint16_t port)
+WritePortToPipe(Pipe &port_pipe, const uint16_t port)
 {
     char port_str[64];
     const auto port_str_len = ::snprintf(port_str, sizeof(port_str), "%u", port);

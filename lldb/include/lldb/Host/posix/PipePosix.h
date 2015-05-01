@@ -29,6 +29,10 @@ public:
 
     PipePosix();
     PipePosix(int read_fd, int write_fd);
+    PipePosix(const PipePosix &) = delete;
+    PipePosix(PipePosix &&pipe_posix);
+    PipePosix &operator=(const PipePosix &) = delete;
+    PipePosix &operator=(PipePosix &&pipe_posix);
 
     ~PipePosix() override;
 
