@@ -41,7 +41,7 @@ void PDBContext::dump(raw_ostream &OS, DIDumpType DumpType) {}
 
 DILineInfo PDBContext::getLineInfoForAddress(uint64_t Address,
                                              DILineInfoSpecifier Specifier) {
-  auto Symbol = Session->findSymbolByAddress(Address);
+  auto Symbol = Session->findSymbolByAddress(Address, PDB_SymType::None);
 
   uint32_t Length = 1;
   DILineInfo Result;
