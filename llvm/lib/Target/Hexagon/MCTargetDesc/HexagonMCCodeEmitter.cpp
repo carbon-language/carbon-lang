@@ -203,7 +203,6 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
       Hexagon::Fixups(Hexagon::fixup_Hexagon_TPREL_LO16);
   const MCSymbolRefExpr *MCSRE = static_cast<const MCSymbolRefExpr *>(ME);
   const MCInstrDesc &MCID = HexagonMCInstrInfo::getDesc(MCII, MI);
-  unsigned opcode = MCID.getOpcode();
   unsigned bits = HexagonMCInstrInfo::getExtentBits(MCII, MI) -
                   HexagonMCInstrInfo::getExtentAlignment(MCII, MI);
   const MCSymbolRefExpr::VariantKind kind = MCSRE->getKind();
@@ -211,7 +210,7 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
   DEBUG(dbgs() << "----------------------------------------\n");
   DEBUG(dbgs() << "Opcode Name: " << HexagonMCInstrInfo::getName(MCII, MI)
                << "\n");
-  DEBUG(dbgs() << "Opcode: " << opcode << "\n");
+  DEBUG(dbgs() << "Opcode: " << MCID.getOpcode() << "\n");
   DEBUG(dbgs() << "Relocation bits: " << bits << "\n");
   DEBUG(dbgs() << "Addend: " << *Addend << "\n");
   DEBUG(dbgs() << "----------------------------------------\n");
