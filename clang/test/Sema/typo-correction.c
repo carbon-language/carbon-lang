@@ -34,3 +34,9 @@ int c11Generic(int arg) {
   _Generic(hello, int : banana)();  // expected-error-re {{use of undeclared identifier 'hello'{{$}}}}
   _Generic(arg, int : bandana)();  // expected-error {{use of undeclared identifier 'bandana'; did you mean 'banana'?}}
 }
+
+typedef long long __m128i __attribute__((__vector_size__(16)));
+int PR23101(__m128i __x) {
+  return foo((__v2di)__x);  // expected-warning {{implicit declaration of function 'foo'}} \
+                            // expected-error {{use of undeclared identifier '__v2di'}}
+}
