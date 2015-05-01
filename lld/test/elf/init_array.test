@@ -1,5 +1,5 @@
 #RUN: yaml2obj -format=elf %s -o=%t.o
-#RUN: lld -flavor gnu -target x86_64-linux %t.o -o %t1 -e=main
+#RUN: lld -flavor gnu -target x86_64 %t.o -o %t1 -e=main
 #RUN: llvm-objdump -t -section-headers %t | FileCheck %s
 
 #CHECK: .init_array {{[0-9]+}} [[ADDR:[0-9]+]]
