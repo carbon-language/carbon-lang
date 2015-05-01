@@ -3483,18 +3483,6 @@ static bool findPathForVPtr(ASTContext &Context,
 
   CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
                      /*DetectVirtual=*/true);
-#if 0
-  std::vector<const CXXRecordDecl *> BaseLists;
-  for (const auto &B : RD->bases()) {
-    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
-    Paths.clear();
-    if (!Base->isDerivedFrom(Info->BaseWithVPtr, Paths))
-      continue;
-    for (const auto &Chain : BaseLists) {
-      const CXXRecordDecl *MostDerived = Chain.front();
-    }
-  }
-#endif
   // All virtual bases which are on the path to the BaseWithVPtr are not equal.
   // Specifically, virtual paths which introduce additional covariant thunks
   // must be preferred over paths which do not introduce such thunks.
