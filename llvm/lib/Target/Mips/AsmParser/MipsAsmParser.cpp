@@ -179,7 +179,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
                          SmallVectorImpl<MCInst> &Instructions);
 
-  bool expandLoadImm(MCInst &Inst, SMLoc IDLoc,
+  bool expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
   bool expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
@@ -1609,13 +1609,9 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   switch (Inst.getOpcode()) {
   default: llvm_unreachable("unimplemented expansion");
   case Mips::LoadImm32:
-    return expandLoadImm(Inst, IDLoc, Instructions);
+    return expandLoadImm(Inst, true, IDLoc, Instructions);
   case Mips::LoadImm64:
-    if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a 64-bit architecture");
-      return true;
-    }
-    return expandLoadImm(Inst, IDLoc, Instructions);
+    return expandLoadImm(Inst, false, IDLoc, Instructions);
   case Mips::LoadAddrImm32:
     return expandLoadAddressImm(Inst, IDLoc, Instructions);
   case Mips::LoadAddrReg32:
@@ -1715,8 +1711,13 @@ bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
   return false;
 }
 
-bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
+bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions) {
+  if (!Is32BitImm && !isGP64bit()) {
+    Error(IDLoc, "instruction requires a 64-bit architecture");
+    return true;
+  }
+
   MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
   assert(ImmOp.isImm() && "expected immediate operand kind");
@@ -1757,8 +1758,8 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     Instructions.push_back(tmpInst);
     createLShiftOri<0>(Bits15To0, Reg, IDLoc, Instructions);
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
-    if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a 64-bit architecture");
+    if (Is32BitImm) {
+      Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
 
@@ -1786,8 +1787,8 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,
     createLShiftOri<0>(Bits31To16, Reg, IDLoc, Instructions);
     createLShiftOri<16>(Bits15To0, Reg, IDLoc, Instructions);
   } else {
-    if (!isGP64bit()) {
-      Error(IDLoc, "instruction requires a 64-bit architecture");
+    if (Is32BitImm) {
+      Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
 
