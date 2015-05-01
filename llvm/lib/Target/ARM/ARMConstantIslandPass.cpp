@@ -423,6 +423,10 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   CPEMIs.clear();
   DEBUG(dumpBBs());
 
+  // Functions with jump tables need an alignment of 4 because they use the ADR
+  // instruction, which aligns the PC to 4 bytes before adding an offset.
+  if (!T2JumpTables.empty())
+    MF->ensureAlignment(2);
 
   /// Remove dead constant pool entries.
   MadeChange |= removeUnusedCPEntries();
