@@ -3410,6 +3410,7 @@ Sema::ActOnObjCAutoreleasePoolStmt(SourceLocation AtLoc, Stmt *Body) {
   return new (Context) ObjCAutoreleasePoolStmt(AtLoc, Body);
 }
 
+namespace {
 class CatchHandlerType {
   QualType QT;
   unsigned IsPointer : 1;
@@ -3451,6 +3452,7 @@ public:
     return LHS.QT == RHS.QT;
   }
 };
+} // namespace
 
 namespace llvm {
 template <> struct DenseMapInfo<CatchHandlerType> {

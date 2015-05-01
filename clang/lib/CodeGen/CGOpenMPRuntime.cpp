@@ -1740,11 +1740,10 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   return TaskEntry;
 }
 
-llvm::Value *emitDestructorsFunction(CodeGenModule &CGM, SourceLocation Loc,
-                                     QualType KmpInt32Ty,
-                                     QualType KmpTaskTPtrQTy,
-                                     QualType KmpTaskQTy,
-                                     RecordDecl *KmpTaskQTyRD) {
+static llvm::Value *
+emitDestructorsFunction(CodeGenModule &CGM, SourceLocation Loc,
+                        QualType KmpInt32Ty, QualType KmpTaskTPtrQTy,
+                        QualType KmpTaskQTy, RecordDecl *KmpTaskQTyRD) {
   auto &C = CGM.getContext();
   FunctionArgList Args;
   ImplicitParamDecl GtidArg(C, /*DC=*/nullptr, Loc, /*Id=*/nullptr, KmpInt32Ty);
