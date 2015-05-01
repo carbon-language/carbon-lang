@@ -17,6 +17,7 @@
 // PGOGEN: @[[BOC:__llvm_profile_counters_boolean_operators]] = private global [8 x i64] zeroinitializer
 // PGOGEN: @[[BLC:__llvm_profile_counters_boolop_loops]] = private global [9 x i64] zeroinitializer
 // PGOGEN: @[[COC:__llvm_profile_counters_conditional_operator]] = private global [3 x i64] zeroinitializer
+// PGOGEN: @[[DFC:__llvm_profile_counters_do_fallthrough]] = private global [4 x i64] zeroinitializer
 // PGOGEN: @[[MAC:__llvm_profile_counters_main]] = private global [1 x i64] zeroinitializer
 // PGOGEN: @[[STC:"__llvm_profile_counters_c-general.c:static_func"]] = private global [2 x i64] zeroinitializer
 
@@ -436,15 +437,24 @@ void conditional_operator() {
   // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
 }
 
+// PGOGEN-LABEL: @do_fallthrough()
+// PGOUSE-LABEL: @do_fallthrough()
+// PGOGEN: store {{.*}} @[[DFC]], i64 0, i64 0
 void do_fallthrough() {
+  // PGOGEN: store {{.*}} @[[DFC]], i64 0, i64 1
+  // PGOUSE: br {{.*}} !prof ![[DF1:[0-9]+]]
   for (int i = 0; i < 10; ++i) {
     int j = 0;
+    // PGOGEN: store {{.*}} @[[DFC]], i64 0, i64 2
     do {
       // The number of exits out of this do-loop via the break statement
       // exceeds the counter value for the loop (which does not include the
       // fallthrough count). Make sure that does not violate any assertions.
+      // PGOGEN: store {{.*}} @[[DFC]], i64 0, i64 3
+      // PGOUSE: br {{.*}} !prof ![[DF3:[0-9]+]]
       if (i < 8) break;
       j++;
+    // PGOUSE: br {{.*}} !prof ![[DF2:[0-9]+]]
     } while (j < 2);
   }
 }
@@ -529,6 +539,11 @@ static void static_func() {
 // PGOUSE-DAG: ![[BL8]] = !{!"branch_weights", i32 51, i32 2}
 // PGOUSE-DAG: ![[CO1]] = !{!"branch_weights", i32 1, i32 2}
 // PGOUSE-DAG: ![[CO2]] = !{!"branch_weights", i32 2, i32 1}
+
+// PGOUSE-DAG: ![[DF1]] = !{!"branch_weights", i32 11, i32 2}
+// PGOUSE-DAG: ![[DF2]] = !{!"branch_weights", i32 3, i32 3}
+// PGOUSE-DAG: ![[DF3]] = !{!"branch_weights", i32 9, i32 5}
+
 // PGOUSE-DAG: ![[ST1]] = !{!"branch_weights", i32 11, i32 2}
 
 int main(int argc, const char *argv[]) {
