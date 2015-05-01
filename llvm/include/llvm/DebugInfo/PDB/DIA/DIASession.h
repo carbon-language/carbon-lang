@@ -30,7 +30,8 @@ public:
   std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const override;
 
   std::unique_ptr<PDBSymbol>
-  findSymbolByAddress(uint64_t Address) const override;
+  findSymbolByAddress(uint64_t Address, PDB_SymType Type) const override;
+
   std::unique_ptr<IPDBEnumLineNumbers>
   findLineNumbersByAddress(uint64_t Address, uint32_t Length) const override;
 

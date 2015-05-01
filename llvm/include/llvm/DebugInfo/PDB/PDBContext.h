@@ -32,7 +32,7 @@ class PDBContext : public DIContext {
 
 public:
   PDBContext(const object::COFFObjectFile &Object,
-             std::unique_ptr<IPDBSession> PDBSession);
+             std::unique_ptr<IPDBSession> PDBSession, bool RelativeAddress);
 
   static bool classof(const DIContext *DICtx) {
     return DICtx->getKind() == CK_PDB;

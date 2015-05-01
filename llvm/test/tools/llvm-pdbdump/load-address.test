@@ -1,0 +1,10 @@
+; RUN: llvm-pdbdump -externals %p/Inputs/LoadAddressTest.pdb \
+; RUN:    | FileCheck --check-prefix=RVA %s
+; RUN: llvm-pdbdump -externals -load-address=0x40000000 \
+; RUN: %p/Inputs/LoadAddressTest.pdb | FileCheck --check-prefix=VA %s
+
+; RVA: ---EXTERNALS---
+; RVA: [0x00001010] _main
+
+; VA: ---EXTERNALS---
+; VA: [0x40001010] _main

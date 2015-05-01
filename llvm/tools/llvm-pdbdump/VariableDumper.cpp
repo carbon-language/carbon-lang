@@ -44,7 +44,7 @@ void VariableDumper::start(const PDBSymbolData &Var) {
     Printer.NewLine();
     Printer << "data [";
     WithColor(Printer, PDB_ColorItem::Address).get()
-        << format_hex(Var.getRelativeVirtualAddress(), 10);
+        << format_hex(Var.getVirtualAddress(), 10);
     Printer << "] ";
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "static ";
     dumpSymbolTypeAndName(*VarType, Var.getName());

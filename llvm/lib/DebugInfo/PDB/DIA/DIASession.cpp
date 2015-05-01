@@ -141,10 +141,18 @@ std::unique_ptr<PDBSymbol> DIASession::getSymbolById(uint32_t SymbolId) const {
 }
 
 std::unique_ptr<PDBSymbol>
-DIASession::findSymbolByAddress(uint64_t Address) const {
+DIASession::findSymbolByAddress(uint64_t Address, PDB_SymType Type) const {
+  enum SymTagEnum EnumVal = static_cast<enum SymTagEnum>(Type);
+
   CComPtr<IDiaSymbol> Symbol;
-  if (S_OK != Session->findSymbolByVA(Address, SymTagNull, &Symbol))
-    return nullptr;
+  if (S_OK != Session->findSymbolByVA(Address, EnumVal, &Symbol)) {
+    ULONGLONG LoadAddr = 0;
+    if (S_OK != Session->get_loadAddress(&LoadAddr))
+      return nullptr;
+    DWORD RVA = static_cast<DWORD>(Address - LoadAddr);
+    if (S_OK != Session->findSymbolByRVA(RVA, EnumVal, &Symbol))
+      return nullptr;
+  }
   auto RawSymbol = llvm::make_unique<DIARawSymbol>(*this, Symbol);
   return PDBSymbol::create(*this, std::move(RawSymbol));
 }

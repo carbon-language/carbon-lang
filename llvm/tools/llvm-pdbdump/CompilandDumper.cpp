@@ -69,7 +69,7 @@ void CompilandDumper::dump(const PDBSymbolData &Symbol) {
   case PDB_LocType::Static:
     Printer << "data: ";
     WithColor(Printer, PDB_ColorItem::Address).get()
-        << "[" << format_hex(Symbol.getRelativeVirtualAddress(), 10) << "]";
+        << "[" << format_hex(Symbol.getVirtualAddress(), 10) << "]";
     break;
   case PDB_LocType::Constant:
     Printer << "constant: ";
@@ -102,7 +102,7 @@ void CompilandDumper::dump(const PDBSymbolLabel &Symbol) {
   Printer.NewLine();
   Printer << "label ";
   WithColor(Printer, PDB_ColorItem::Address).get()
-      << "[" << format_hex(Symbol.getRelativeVirtualAddress(), 10) << "] ";
+      << "[" << format_hex(Symbol.getVirtualAddress(), 10) << "] ";
   WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
 }
 
@@ -113,16 +113,16 @@ void CompilandDumper::dump(const PDBSymbolThunk &Symbol) {
   Printer.NewLine();
   Printer << "thunk ";
   PDB_ThunkOrdinal Ordinal = Symbol.getThunkOrdinal();
-  uint32_t RVA = Symbol.getRelativeVirtualAddress();
+  uint64_t VA = Symbol.getVirtualAddress();
   if (Ordinal == PDB_ThunkOrdinal::TrampIncremental) {
-    uint32_t Target = Symbol.getTargetRelativeVirtualAddress();
-    WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(RVA, 10);
+    uint64_t Target = Symbol.getTargetVirtualAddress();
+    WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(VA, 10);
     Printer << " -> ";
     WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(Target, 10);
   } else {
     WithColor(Printer, PDB_ColorItem::Address).get()
-        << "[" << format_hex(RVA, 10) << " - "
-        << format_hex(RVA + Symbol.getLength(), 10) << "]";
+        << "[" << format_hex(VA, 10) << " - "
+        << format_hex(VA + Symbol.getLength(), 10) << "]";
   }
   Printer << " (";
   WithColor(Printer, PDB_ColorItem::Register).get() << Ordinal;
