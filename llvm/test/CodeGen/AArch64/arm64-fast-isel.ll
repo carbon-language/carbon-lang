@@ -101,3 +101,16 @@ entry:
   store i32 %cond91, i32* %addr, align 4
   ret void
 }
+
+define i64 @mul_umul(i64 %arg) {
+; CHECK-LABEL: mul_umul:
+; CHECK: mul x{{[0-9]+}}, [[ARG1:x[0-9]+]], [[ARG2:x[0-9]+]]
+; CHECK-NEXT: umulh x{{[0-9]+}}, [[ARG1]], [[ARG2]]
+entry:
+  %sub.ptr.div = sdiv exact i64 %arg, 8
+  %tmp = call { i64, i1 } @llvm.umul.with.overflow.i64(i64 %sub.ptr.div, i64 8)
+  %tmp1 = extractvalue { i64, i1 } %tmp, 0
+  ret i64 %tmp1
+}
+
+declare { i64, i1 } @llvm.umul.with.overflow.i64(i64, i64)
