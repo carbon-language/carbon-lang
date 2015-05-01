@@ -694,7 +694,6 @@ TEST(TripleTest, getARMCPUForArch) {
     EXPECT_STREQ("cortex-a8", Triple.getARMCPUForArch("arm"));
   }
 }
-}
 
 TEST(TripleTest, NormalizeARM) {
   EXPECT_EQ("armv6--netbsd-eabi", Triple::normalize("armv6-netbsd-eabi"));
@@ -712,3 +711,5 @@ TEST(TripleTest, NormalizeARM) {
   T = Triple("armv6eb--netbsd-eabi");
   EXPECT_EQ(Triple::armeb, T.getArch());
 }
+
+} // end anonymous namespace
