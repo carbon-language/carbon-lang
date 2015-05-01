@@ -21,6 +21,7 @@ ARM_EABI_FNALIAS(f2ulz, fixunssfdi)
 COMPILER_RT_ABI du_int
 __fixunssfdi(float a)
 {
+    if (a <= 0.0f) return 0;
     double da = a;
     su_int high = da/0x1p32f;
     su_int low = da - (double)high*0x1p32f;
