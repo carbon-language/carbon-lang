@@ -480,14 +480,24 @@ private:
 class VisibleModuleSet {
 public:
   VisibleModuleSet() : Generation(0) {}
+  VisibleModuleSet(VisibleModuleSet &&O)
+      : ImportLocs(std::move(O.ImportLocs)), Generation(O.Generation ? 1 : 0) {
+    O.ImportLocs.clear();
+    ++O.Generation;
+  }
 
+  /// Move from another visible modules set. Guaranteed to leave the source
+  /// empty and bump the generation on both.
   VisibleModuleSet &operator=(VisibleModuleSet &&O) {
     ImportLocs = std::move(O.ImportLocs);
+    O.ImportLocs.clear();
+    ++O.Generation;
     ++Generation;
     return *this;
   }
 
-  /// \brief Get the current visibility generation.
+  /// \brief Get the current visibility generation. Incremented each time the
+  /// set of visible modules changes in any way.
   unsigned getGeneration() const { return Generation; }
 
   /// \brief Determine whether a module is visible.

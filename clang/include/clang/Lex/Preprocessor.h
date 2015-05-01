@@ -466,12 +466,15 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
         return Info->OverriddenMacros;
       return None;
     }
-    void setOverriddenMacros(ArrayRef<ModuleMacro*> Overrides) {
+    void setOverriddenMacros(Preprocessor &PP,
+                             ArrayRef<ModuleMacro *> Overrides) {
       auto *Info = State.dyn_cast<ModuleMacroInfo*>();
       if (!Info) {
-        assert(Overrides.empty() &&
-               "have overrides but never had module macro");
-        return;
+        if (Overrides.empty())
+          return;
+        Info = new (PP.getPreprocessorAllocator())
+            ModuleMacroInfo(State.get<MacroDirective *>());
+        State = Info;
       }
       Info->OverriddenMacros.clear();
       Info->OverriddenMacros.insert(Info->OverriddenMacros.end(),
@@ -498,16 +501,11 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
     Module *M;
     /// The location at which the module was included.
     SourceLocation ImportLoc;
-
-    struct SavedMacroInfo {
-      SavedMacroInfo() : Latest(nullptr) {}
-      MacroDirective *Latest;
-      llvm::TinyPtrVector<ModuleMacro*> Overridden;
-    };
     /// The macros that were visible before we entered the module.
-    llvm::DenseMap<const IdentifierInfo*, SavedMacroInfo> Macros;
+    MacroMap Macros;
+    /// The set of modules that was visible in the surrounding submodule.
+    VisibleModuleSet VisibleModules;
 
-    // FIXME: VisibleModules?
     // FIXME: CounterValue?
     // FIXME: PragmaPushMacroInfo?
   };
@@ -662,6 +660,7 @@ public:
   HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
+  const IdentifierTable &getIdentifierTable() const { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
   Builtin::Context &getBuiltinInfo() { return BuiltinInfo; }
   llvm::BumpPtrAllocator &getPreprocessorAllocator() { return BP; }

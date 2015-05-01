@@ -2019,37 +2019,23 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   // Loop over all the macro directives that are live at the end of the file,
   // emitting each to the PP section.
 
-  // Construct the list of macro directives that need to be serialized.
-  typedef std::pair<const IdentifierInfo *, MacroDirective *> MacroChain;
-  SmallVector<MacroChain, 2> MacroDirectives;
-  for (Preprocessor::macro_iterator
-         I = PP.macro_begin(/*IncludeExternalMacros=*/false),
-         E = PP.macro_end(/*IncludeExternalMacros=*/false);
-       I != E; ++I) {
-    MacroDirectives.push_back(std::make_pair(I->first, I->second.getLatest()));
-  }
-
+  // Construct the list of identifiers with macro directives that need to be
+  // serialized.
+  SmallVector<const IdentifierInfo *, 128> MacroIdentifiers;
+  for (auto &Id : PP.getIdentifierTable())
+    if (Id.second->hadMacroDefinition() &&
+        (!Id.second->isFromAST() ||
+         Id.second->hasChangedSinceDeserialization()))
+      MacroIdentifiers.push_back(Id.second);
   // Sort the set of macro definitions that need to be serialized by the
   // name of the macro, to provide a stable ordering.
-  int (*Cmp)(const MacroChain*, const MacroChain*) =
-    [](const MacroChain *A, const MacroChain *B) -> int {
-      return A->first->getName().compare(B->first->getName());
-    };
-  llvm::array_pod_sort(MacroDirectives.begin(), MacroDirectives.end(), Cmp);
+  std::sort(MacroIdentifiers.begin(), MacroIdentifiers.end(),
+            llvm::less_ptr<IdentifierInfo>());
 
   // Emit the macro directives as a list and associate the offset with the
   // identifier they belong to.
-  for (auto &Chain : MacroDirectives) {
-    const IdentifierInfo *Name = Chain.first;
-    MacroDirective *MD = Chain.second;
-
-    // If the macro or identifier need no updates, don't write the macro history
-    // for this one.
-    // FIXME: Chain the macro history instead of re-writing it.
-    if (MD && MD->isFromPCH() &&
-        Name->isFromAST() && !Name->hasChangedSinceDeserialization())
-      continue;
-
+  for (const IdentifierInfo *Name : MacroIdentifiers) {
+    MacroDirective *MD = PP.getLocalMacroDirectiveHistory(Name);
     auto StartOffset = Stream.GetCurrentBitNo();
 
     // Emit the macro directives in reverse source order.
@@ -2069,6 +2055,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     }
 
     // Write out any exported module macros.
+    bool EmittedModuleMacros = false;
     if (IsModule) {
       auto Leafs = PP.getLeafModuleMacros(Name);
       SmallVector<ModuleMacro*, 8> Worklist(Leafs.begin(), Leafs.end());
@@ -2079,7 +2066,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
         // Emit a record indicating this submodule exports this macro.
         ModuleMacroRecord.push_back(
             getSubmoduleID(Macro->getOwningModule()));
-        ModuleMacroRecord.push_back(getMacroID(Macro->getMacroInfo()));
+        ModuleMacroRecord.push_back(getMacroRef(Macro->getMacroInfo(), Name));
         for (auto *M : Macro->overrides())
           ModuleMacroRecord.push_back(getSubmoduleID(M->getOwningModule()));
 
@@ -2090,10 +2077,12 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
         for (auto *M : Macro->overrides())
           if (++Visits[M] == M->getNumOverridingMacros())
             Worklist.push_back(M);
+
+        EmittedModuleMacros = true;
       }
     }
 
-    if (Record.empty())
+    if (Record.empty() && !EmittedModuleMacros)
       continue;
 
     IdentMacroDirectivesOffsetMap[Name] = StartOffset;

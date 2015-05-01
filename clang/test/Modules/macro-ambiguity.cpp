@@ -57,6 +57,27 @@
 // RUN:   -fmodule-file=%t/c.pcm \
 // RUN:   -fmodule-file=%t/d.pcm \
 // RUN:   -Wambiguous-macro -verify macro-ambiguity.cpp
+//
+// RUN: %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
+// RUN:   -v -fmodules-local-submodule-visibility \
+// RUN:   -iquote Inputs/macro-ambiguity/a/quote \
+// RUN:   -isystem Inputs/macro-ambiguity/a/system \
+// RUN:   -iquote Inputs/macro-ambiguity/b/quote \
+// RUN:   -isystem Inputs/macro-ambiguity/b/system \
+// RUN:   -iquote Inputs/macro-ambiguity/c/quote \
+// RUN:   -isystem Inputs/macro-ambiguity/c/system \
+// RUN:   -iquote Inputs/macro-ambiguity/d/quote \
+// RUN:   -isystem Inputs/macro-ambiguity/d/system \
+// RUN:   -iquote Inputs/macro-ambiguity/e/quote \
+// RUN:   -isystem Inputs/macro-ambiguity/e/system \
+// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fmodule-map-file-home-is-cwd \
+// RUN:   -fmodule-map-file=Inputs/macro-ambiguity/module.modulemap \
+// RUN:   -fmodule-file=%t/a.pcm \
+// RUN:   -fmodule-file=%t/b.pcm \
+// RUN:   -fmodule-file=%t/c.pcm \
+// RUN:   -fmodule-file=%t/d.pcm \
+// RUN:   -Wambiguous-macro -verify macro-ambiguity.cpp
 
 // Include the textual headers first to maximize the ways in which things can
 // become ambiguous.

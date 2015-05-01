@@ -612,16 +612,25 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
 void Preprocessor::EnterSubmodule(Module *M, SourceLocation ImportLoc) {
   // Save the current state for future imports.
   BuildingSubmoduleStack.push_back(BuildingSubmoduleInfo(M, ImportLoc));
-
   auto &Info = BuildingSubmoduleStack.back();
-  // Copy across our macros and start the submodule with the current state.
-  // FIXME: We should start each submodule with just the predefined macros.
-  for (auto &M : Macros) {
-    BuildingSubmoduleInfo::SavedMacroInfo SMI;
-    SMI.Latest = M.second.getLatest();
-    auto O = M.second.getOverriddenMacros();
-    SMI.Overridden.insert(SMI.Overridden.end(), O.begin(), O.end());
-    Info.Macros.insert(std::make_pair(M.first, SMI));
+  Info.Macros.swap(Macros);
+  // Save our visible modules set. This is guaranteed to clear the set.
+  if (getLangOpts().ModulesLocalVisibility)
+    Info.VisibleModules = std::move(VisibleModules);
+
+  // Determine the set of starting macros for this submodule.
+  // FIXME: If we re-enter a submodule, should we restore its MacroDirectives?
+  auto &StartingMacros = (getLangOpts().ModulesLocalVisibility &&
+                          BuildingSubmoduleStack.size() > 1)
+                             ? BuildingSubmoduleStack[0].Macros
+                             : Info.Macros;
+
+  // Restore to the starting state.
+  // FIXME: Do this lazily, when each macro name is first referenced.
+  for (auto &Macro : StartingMacros) {
+    MacroState MS(Macro.second.getLatest());
+    MS.setOverriddenMacros(*this, MS.getOverriddenMacros());
+    Macros.insert(std::make_pair(Macro.first, std::move(MS)));
   }
 }
 
@@ -631,19 +640,35 @@ void Preprocessor::LeaveSubmodule() {
   // Create ModuleMacros for any macros defined in this submodule.
   for (auto &Macro : Macros) {
     auto *II = const_cast<IdentifierInfo*>(Macro.first);
-    auto SavedInfo = Info.Macros.lookup(II);
+    auto &OuterInfo = Info.Macros[II];
+
+    // Find the starting point for the MacroDirective chain in this submodule.
+    auto *OldMD = OuterInfo.getLatest();
+    if (getLangOpts().ModulesLocalVisibility &&
+        BuildingSubmoduleStack.size() > 1) {
+      auto &PredefMacros = BuildingSubmoduleStack[0].Macros;
+      auto PredefMacroIt = PredefMacros.find(Macro.first);
+      if (PredefMacroIt == PredefMacros.end())
+        OldMD = nullptr;
+      else
+        OldMD = PredefMacroIt->second.getLatest();
+    }
 
     // This module may have exported a new macro. If so, create a ModuleMacro
     // representing that fact.
     bool ExplicitlyPublic = false;
-    for (auto *MD = Macro.second.getLatest(); MD != SavedInfo.Latest;
+    for (auto *MD = Macro.second.getLatest(); MD != OldMD;
          MD = MD->getPrevious()) {
       assert(MD && "broken macro directive chain");
 
       // Skip macros defined in other submodules we #included along the way.
-      Module *Mod = getModuleContainingLocation(MD->getLocation());
-      if (Mod != Info.M)
-        continue;
+      // There's no point doing this if we're tracking local submodule
+      // visibiltiy, since there can be no such directives in our list.
+      if (!getLangOpts().ModulesLocalVisibility) {
+        Module *Mod = getModuleContainingLocation(MD->getLocation());
+        if (Mod != Info.M)
+          continue;
+      }
 
       if (auto *VisMD = dyn_cast<VisibilityMacroDirective>(MD)) {
         // The latest visibility directive for a name in a submodule affects
@@ -667,11 +692,21 @@ void Preprocessor::LeaveSubmodule() {
       }
     }
 
-    // Restore the macro's overrides list.
-    Macro.second.setOverriddenMacros(SavedInfo.Overridden);
+    // Maintain a single macro directive chain if we're not tracking
+    // per-submodule macro visibility.
+    if (!getLangOpts().ModulesLocalVisibility)
+      OuterInfo.setLatest(Macro.second.getLatest());
   }
 
-  makeModuleVisible(Info.M, Info.ImportLoc);
+  // Put back the old macros.
+  std::swap(Info.Macros, Macros);
+
+  if (getLangOpts().ModulesLocalVisibility)
+    VisibleModules = std::move(Info.VisibleModules);
+
+  // A nested #include makes the included submodule visible.
+  if (BuildingSubmoduleStack.size() > 1)
+    makeModuleVisible(Info.M, Info.ImportLoc);
 
   BuildingSubmoduleStack.pop_back();
 }
