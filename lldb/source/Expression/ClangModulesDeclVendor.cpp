@@ -446,7 +446,7 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
         ssize_t found_priority = -1;
         clang::MacroInfo *info = nullptr;
         
-        for (clang::ModuleMacro *macro : m_compiler_instance->getPreprocessor().getMacroDefinition(ii).getModuleMacros())
+        for (clang::ModuleMacro *macro : m_compiler_instance->getPreprocessor().getLeafModuleMacros(ii))
         {
             clang::Module *module = macro->getOwningModule();
             
