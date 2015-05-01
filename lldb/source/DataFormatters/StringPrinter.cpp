@@ -555,7 +555,7 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
         sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
         needs_zero_terminator = true;
     }
-    else
+    else if (!options.GetIgnoreMaxLength())
         sourceSize = std::min(sourceSize,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
 
     const int bufferSPSize = sourceSize * type_width;
