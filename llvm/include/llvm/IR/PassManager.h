@@ -509,7 +509,7 @@ private:
   PreservedAnalyses invalidateImpl(IRUnitT &IR, PreservedAnalyses PA) {
     // Short circuit for a common case of all analyses being preserved.
     if (PA.areAllPreserved())
-      return std::move(PA);
+      return PA;
 
     if (DebugLogging)
       dbgs() << "Invalidating all non-preserved analyses for: "
@@ -549,7 +549,7 @@ private:
     if (ResultsList.empty())
       AnalysisResultLists.erase(&IR);
 
-    return std::move(PA);
+    return PA;
   }
 
   /// \brief List of function analysis pass IDs and associated concept pointers.
