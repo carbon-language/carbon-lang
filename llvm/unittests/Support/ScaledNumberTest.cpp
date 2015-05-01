@@ -556,4 +556,9 @@ TEST(ScaledNumberHelpersTest, arithmeticOperators) {
   EXPECT_EQ(ScaledNumber<uint64_t>(1, 4), ScaledNumber<uint64_t>(1, 3) << 1);
 }
 
+TEST(ScaledNumberHelpersTest, toIntBug) {
+  ScaledNumber<uint32_t> n(1, 0);
+  EXPECT_EQ(1u, (n * n).toInt<uint32_t>());
+}
+
 } // end namespace

@@ -670,14 +670,7 @@ public:
     return ScaledNumbers::compare(Digits, Scale, X.Digits, X.Scale);
   }
   int compareTo(uint64_t N) const {
-    ScaledNumber Scaled = get(N);
-    int Compare = compare(Scaled);
-    if (Width == 64 || Compare != 0)
-      return Compare;
-
-    // Check for precision loss.  We know *this == RoundTrip.
-    uint64_t RoundTrip = Scaled.template toInt<uint64_t>();
-    return N == RoundTrip ? 0 : RoundTrip < N ? -1 : 1;
+    return ScaledNumbers::compare<uint64_t>(Digits, Scale, N, 0);
   }
   int compareTo(int64_t N) const { return N < 0 ? 1 : compareTo(uint64_t(N)); }
 
