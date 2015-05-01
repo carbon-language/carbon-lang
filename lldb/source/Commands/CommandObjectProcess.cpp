@@ -1466,7 +1466,7 @@ protected:
 
         if (command.GetArgumentCount() == 0)
         {
-            Error error (process->Destroy(false));
+            Error error (process->Destroy(true));
             if (error.Success())
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
