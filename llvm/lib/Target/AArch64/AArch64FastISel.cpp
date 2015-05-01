@@ -2573,7 +2573,7 @@ bool AArch64FastISel::optimizeSelect(const SelectInst *SI) {
     Src1Reg = emitLogicalOp_ri(ISD::XOR, MVT::i32, Src1Reg, Src1IsKill, 1);
     Src1IsKill = true;
   }
-  unsigned ResultReg = fastEmitInst_rr(Opc, &AArch64::GPR32spRegClass, Src1Reg,
+  unsigned ResultReg = fastEmitInst_rr(Opc, &AArch64::GPR32RegClass, Src1Reg,
                                        Src1IsKill, Src2Reg, Src2IsKill);
   updateValueMap(SI, ResultReg);
   return true;
