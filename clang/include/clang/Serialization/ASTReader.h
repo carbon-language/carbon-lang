@@ -1312,8 +1312,6 @@ public:
   /// module.  Visibility can only be increased over time.
   ///
   /// \param ImportLoc The location at which the import occurs.
-  ///
-  /// \param Complain Whether to complain about conflicting module imports.
   void makeModuleVisible(Module *Mod,
                          Module::NameVisibilityKind NameVisibility,
                          SourceLocation ImportLoc);
