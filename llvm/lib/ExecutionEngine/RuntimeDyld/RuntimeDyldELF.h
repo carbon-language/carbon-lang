@@ -99,6 +99,13 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                                      uint64_t SymbolOffset,
                                      unsigned Type);
 
+  // Compute the address in memory where we can find the placeholder
+  void *computePlaceholderAddress(unsigned SectionID, uint64_t Offset) const;
+
+  // Split out common case for createing the RelocationEntry for when the relocation requires
+  // no particular advanced processing.
+  void processSimpleRelocation(unsigned SectionID, uint64_t Offset, unsigned RelType, RelocationValueRef Value);
+
   // The tentative ID for the GOT section
   unsigned GOTSectionID;
 

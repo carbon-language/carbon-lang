@@ -574,10 +574,16 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   uint8_t *Addr;
   const char *pData = nullptr;
 
+  // In either case, set the location of the unrelocated section in memory,
+  // since we still process relocations for it even if we're not applying them.
+  Check(Section.getContents(data));
+  // Virtual sections have no data in the object image, so leave pData = 0
+  if (!IsVirtual)
+    pData = data.data();
+
   // Some sections, such as debug info, don't need to be loaded for execution.
   // Leave those where they are.
   if (IsRequired) {
-    Check(Section.getContents(data));
     Allocate = DataSize + PaddingSize + StubBufSize;
     if (!Allocate)
       Allocate = 1;
@@ -587,10 +593,6 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
                                                Name, IsReadOnly);
     if (!Addr)
       report_fatal_error("Unable to allocate section memory!");
-
-    // Virtual sections have no data in the object image, so leave pData = 0
-    if (!IsVirtual)
-      pData = data.data();
 
     // Zero-initialize or copy the data from the image
     if (IsZeroInit || IsVirtual)
