@@ -4172,12 +4172,8 @@ public:
       Features["neon"] = true;
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
-    } else if (CPU == "cyclone") {
-      Features["v8fp"] = true;
-      Features["neon"] = true;
-      Features["hwdiv"] = true;
-      Features["hwdiv-arm"] = true;
-    } else if (CPU == "cortex-a53" || CPU == "cortex-a57" || CPU == "cortex-a72") {
+    } else if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57" ||
+               CPU == "cortex-a72") {
       Features["fp-armv8"] = true;
       Features["neon"] = true;
       Features["hwdiv"] = true;
