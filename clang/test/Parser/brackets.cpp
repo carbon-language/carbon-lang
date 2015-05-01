@@ -7,7 +7,7 @@
 void test1() {
   int a[] = {0,1,1,2,3};
   int []b = {0,1,4,9,16};
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int []b = {0,1,4,9,16};
   // CHECK: {{^}}      ~~ ^
   // CHECK: {{^}}         []
@@ -21,7 +21,7 @@ void test1() {
   int *f = b;  // No undeclared identifer error here.
 
   int[1] g[2];
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int[1] g[2];
   // CHECK: {{^}}     ~~~     ^
   // CHECK: {{^}}             [1]
@@ -31,7 +31,7 @@ void test1() {
 
 void test2() {
   int [3] (*a) = 0;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int [3] (*a) = 0;
   // CHECK: {{^}}      ~~~~    ^
   // CHECK: {{^}}              [3]
@@ -47,7 +47,7 @@ void test2() {
 
 struct A {
   static int [1][1]x;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  static int [1][1]x;
   // CHECK: {{^}}             ~~~~~~ ^
   // CHECK: {{^}}                    [1][1]
@@ -56,7 +56,7 @@ struct A {
 };
 
 int [1][1]A::x = { {42} };
-// expected-error@-1{{brackets go after the unqualified-id}}
+// expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
 // CHECK: {{^}}int [1][1]A::x = { {42} };
 // CHECK: {{^}}    ~~~~~~    ^
 // CHECK: {{^}}              [1][1]
@@ -65,7 +65,7 @@ int [1][1]A::x = { {42} };
 
 struct B { static int (*x)[5]; };
 int [5] *B::x = 0;
-// expected-error@-1{{brackets go after the unqualified-id}}
+// expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
 // CHECK: {{^}}int [5] *B::x = 0;
 // CHECK: {{^}}    ~~~~     ^
 // CHECK: {{^}}        (    )[5]
@@ -75,7 +75,7 @@ int [5] *B::x = 0;
 
 void test3() {
   int [3] *a;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int [3] *a;
   // CHECK: {{^}}      ~~~~  ^
   // CHECK: {{^}}          ( )[3]
@@ -88,7 +88,7 @@ void test3() {
 
 void test4() {
   int [2] a;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int [2] a;
   // CHECK: {{^}}      ~~~~ ^
   // CHECK: {{^}}           [2]
@@ -96,7 +96,7 @@ void test4() {
   // CHECK: fix-it:{{.*}}:{[[@LINE-6]]:12-[[@LINE-6]]:12}:"[2]"
 
   int [2] &b = a;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int [2] &b = a;
   // CHECK: {{^}}      ~~~~  ^
   // CHECK: {{^}}          ( )[2]
@@ -128,7 +128,7 @@ struct A {
   static int arr[3];
 };
 int [3] ::test6::A::arr = {1,2,3};
-// expected-error@-1{{brackets go after the unqualified-id}}
+// expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
 // CHECK: {{^}}int [3] ::test6::A::arr = {1,2,3};
 // CHECK: {{^}}    ~~~~               ^
 // CHECK: {{^}}                       [3]
@@ -141,7 +141,7 @@ namespace test7 {
 class A{};
 void test() {
   int [3] A::*a;
-  // expected-error@-1{{brackets go after the unqualified-id}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
   // CHECK: {{^}}  int [3] A::*a;
   // CHECK: {{^}}      ~~~~     ^
   // CHECK: {{^}}          (    )[3]
@@ -150,4 +150,12 @@ void test() {
   // CHECK: fix-it:{{.*}}:{[[@LINE-7]]:16-[[@LINE-7]]:16}:")[3]"
 }
 }
-// CHECK: 14 errors generated.
+
+namespace test8 {
+struct A {
+  static const char f[];
+};
+const char[] A::f = "f";
+// expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the name}}
+}
+// CHECK: 15 errors generated.

@@ -7,7 +7,7 @@
 void test1() {
   int a[] = {0,1,1,2,3};
   int []b = {0,1,4,9,16};
-  // expected-error@-1{{brackets go after the identifier}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the identifier}}
   // CHECK: {{^}}  int []b = {0,1,4,9,16};
   // CHECK: {{^}}      ~~ ^
   // CHECK: {{^}}         []
@@ -23,7 +23,7 @@ void test1() {
 
 struct S {
   int [1][1]x;
-  // expected-error@-1{{brackets go after the identifier}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the identifier}}
   // CHECK: {{^}}  int [1][1]x;
   // CHECK: {{^}}      ~~~~~~ ^
   // CHECK: {{^}}             [1][1]
@@ -53,7 +53,7 @@ void test3() {
   // CHECK: {{^}}  int [5] *;
   // CHECK: {{^}}           ^
   // CHECK-NOT: fix-it
-  // expected-error@-5{{brackets go after the identifier}}
+  // expected-error@-5{{brackets are not allowed here; to declare an array, place the brackets after the identifier}}
   // CHECK: {{^}}  int [5] *;
   // CHECK: {{^}}      ~~~~ ^
   // CHECK: {{^}}          ()[5]
@@ -62,7 +62,7 @@ void test3() {
   // CHECK: fix-it:{{.*}}:{[[@LINE-11]]:12-[[@LINE-11]]:12}:")[5]"
 
   int [5] * a;
-  // expected-error@-1{{brackets go after the identifier}}
+  // expected-error@-1{{brackets are not allowed here; to declare an array, place the brackets after the identifier}}
   // CHECK: {{^}}  int [5] * a;
   // CHECK: {{^}}      ~~~~   ^
   // CHECK: {{^}}          (  )[5]

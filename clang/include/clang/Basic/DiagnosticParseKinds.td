@@ -477,7 +477,8 @@ def err_invalid_operator_on_type : Error<
 def err_expected_unqualified_id : Error<
   "expected %select{identifier|unqualified-id}0">;
 def err_brackets_go_after_unqualified_id : Error<
-  "brackets go after the %select{identifier|unqualified-id}0">;
+  "brackets are not allowed here; to declare an array, "
+  "place the brackets after the %select{identifier|name}0">;
 def err_unexpected_unqualified_id : Error<"type-id cannot have a name">;
 def err_func_def_no_params : Error<
   "function definition does not declare parameters">;
