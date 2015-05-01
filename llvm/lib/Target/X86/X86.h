@@ -69,6 +69,12 @@ FunctionPass *createX86FixupLEAs();
 /// esp-relative movs with pushes.
 FunctionPass *createX86CallFrameOptimization();
 
+/// createX86WinEHStatePass - Return an IR pass that inserts EH registration
+/// stack objects and explicit EH state updates. This pass must run after EH
+/// preparation, which does Windows-specific but architecture-neutral
+/// preparation.
+FunctionPass *createX86WinEHStatePass();
+
 } // End llvm namespace
 
 #endif

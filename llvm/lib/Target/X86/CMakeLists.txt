@@ -32,6 +32,7 @@ set(sources
   X86TargetTransformInfo.cpp
   X86VZeroUpper.cpp
   X86FixupLEAs.cpp
+  X86WinEHState.cpp
   )
 
 if( CMAKE_CL_64 )
