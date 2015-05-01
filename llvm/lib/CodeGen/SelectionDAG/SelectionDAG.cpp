@@ -2858,23 +2858,43 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         // FIXME: Entirely reasonable to perform folding of other unary
         // operations here as the need arises.
         break;
-      case ISD::TRUNCATE:
-        // Constant build vector truncation can be done with the original scalar
-        // operands but with a new build vector with the truncated value type.
-        return getNode(ISD::BUILD_VECTOR, DL, VT, BV->ops());
       case ISD::FNEG:
       case ISD::FABS:
       case ISD::FCEIL:
       case ISD::FTRUNC:
       case ISD::FFLOOR:
       case ISD::FP_EXTEND:
+      case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP: {
+        EVT SVT = VT.getScalarType();
+        EVT InVT = BV->getValueType(0);
+        EVT InSVT = InVT.getScalarType();
+
+        // Find legal integer scalar type for constant promotion.
+        EVT LegalSVT = SVT;
+        if (SVT.isInteger()) {
+          LegalSVT = TLI->getTypeToTransformTo(*getContext(), SVT);
+          assert(LegalSVT.bitsGE(SVT) && "Unexpected legal scalar type size");
+        }
+
         // Let the above scalar folding handle the folding of each element.
         SmallVector<SDValue, 8> Ops;
         for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
           SDValue OpN = BV->getOperand(i);
-          OpN = getNode(Opcode, DL, VT.getVectorElementType(), OpN);
+          EVT OpVT = OpN.getValueType();
+
+          // Build vector (integer) scalar operands may need implicit
+          // truncation - do this before constant folding.
+          if (OpVT.isInteger() && OpVT.bitsGT(InSVT))
+            OpN = getNode(ISD::TRUNCATE, DL, InSVT, OpN);
+
+          OpN = getNode(Opcode, DL, SVT, OpN);
+
+          // Legalize the (integer) scalar constant if necessary.
+          if (LegalSVT != SVT)
+            OpN = getNode(ISD::ANY_EXTEND, DL, LegalSVT, OpN);
+
           if (OpN.getOpcode() != ISD::UNDEF &&
               OpN.getOpcode() != ISD::Constant &&
               OpN.getOpcode() != ISD::ConstantFP)
