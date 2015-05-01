@@ -100,6 +100,9 @@ public:
     WillParse (ExecutionContext &exe_ctx,
                Materializer *materializer);
     
+    void
+    InstallCodeGenerator (clang::ASTConsumer *code_gen);
+    
     //------------------------------------------------------------------
     /// [Used by ClangExpressionParser] For each variable that had an unknown
     ///     type at the beginning of parsing, determine its final type now.
@@ -396,11 +399,6 @@ private:
     {
     public:
         ParserVars(ClangExpressionDeclMap &decl_map) :
-            m_exe_ctx(),
-            m_sym_ctx(),
-            m_persistent_vars(NULL),
-            m_enable_lookups(false),
-            m_materializer(NULL),
             m_decl_map(decl_map)
         {
         }
@@ -415,12 +413,13 @@ private:
             return NULL;
         }
         
-        ExecutionContext            m_exe_ctx;          ///< The execution context to use when parsing.
-        SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
-        ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
-        bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
-        TargetInfo                  m_target_info;      ///< Basic information about the target.
-        Materializer               *m_materializer;     ///< If non-NULL, the materializer to use when reporting used variables.
+        ExecutionContext            m_exe_ctx;                      ///< The execution context to use when parsing.
+        SymbolContext               m_sym_ctx;                      ///< The symbol context to use in finding variables and types.
+        ClangPersistentVariables   *m_persistent_vars = nullptr;    ///< The persistent variables for the process.
+        bool                        m_enable_lookups = false;       ///< Set to true during parsing if we have found the first "$__lldb" name.
+        TargetInfo                  m_target_info;                  ///< Basic information about the target.
+        Materializer               *m_materializer = nullptr;       ///< If non-NULL, the materializer to use when reporting used variables.
+        clang::ASTConsumer         *m_code_gen = nullptr;           ///< If non-NULL, a code generator that receives new top-level functions.
     private:
         ClangExpressionDeclMap     &m_decl_map;
         DISALLOW_COPY_AND_ASSIGN (ParserVars);

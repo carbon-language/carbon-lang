@@ -409,6 +409,9 @@ ClangExpressionParser::Parse (Stream &stream)
 
     ASTConsumer *ast_transformer = m_expr.ASTTransformer(m_code_generator.get());
 
+    if (ClangExpressionDeclMap *decl_map = m_expr.DeclMap())
+        decl_map->InstallCodeGenerator(m_code_generator.get());
+    
     if (ast_transformer)
         ParseAST(m_compiler->getPreprocessor(), ast_transformer, m_compiler->getASTContext());
     else

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Decl.h"
@@ -108,6 +109,13 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx,
     m_parser_vars->m_materializer = materializer;
 
     return true;
+}
+
+void
+ClangExpressionDeclMap::InstallCodeGenerator (clang::ASTConsumer *code_gen)
+{
+    assert(m_parser_vars);
+    m_parser_vars->m_code_gen = code_gen;
 }
 
 void
@@ -1486,6 +1494,62 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         context.m_found.function = true;
                     }
                 }
+            }
+            
+            if (!context.m_found.function_with_type_info)
+            {
+                // Try the modules next.
+                
+                do
+                {
+                    if (ClangModulesDeclVendor *modules_decl_vendor = m_target->GetClangModulesDeclVendor())
+                    {
+                        bool append = false;
+                        uint32_t max_matches = 1;
+                        std::vector <clang::NamedDecl *> decls;
+                        
+                        if (!modules_decl_vendor->FindDecls(name,
+                                                            append,
+                                                            max_matches,
+                                                            decls))
+                            break;
+                        
+                        clang::NamedDecl *const decl_from_modules = decls[0];
+                        
+                        if (llvm::isa<clang::FunctionDecl>(decl_from_modules))
+                        {
+                            if (log)
+                            {
+                                log->Printf("  CAS::FEVD[%u] Matching function found for \"%s\" in the modules",
+                                            current_id,
+                                            name.GetCString());
+                            }
+                            
+                            clang::Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &decl_from_modules->getASTContext(), decl_from_modules);
+                            clang::FunctionDecl *copied_function_decl = copied_decl ? dyn_cast<clang::FunctionDecl>(copied_decl) : nullptr;
+                            
+                            if (!copied_function_decl)
+                            {
+                                if (log)
+                                    log->Printf("  CAS::FEVD[%u] - Couldn't export a function declaration from the modules",
+                                                current_id);
+                                
+                                break;
+                            }
+                            
+                            if (copied_function_decl->getBody() && m_parser_vars->m_code_gen)
+                            {
+                                DeclGroupRef decl_group_ref(copied_function_decl);
+                                m_parser_vars->m_code_gen->HandleTopLevelDecl(decl_group_ref);
+                            }
+                            
+                            context.AddNamedDecl(copied_function_decl);
+                            
+                            context.m_found.function_with_type_info = true;
+                            context.m_found.function = true;
+                        }
+                    }
+                } while (0);
             }
 
             if (target && !context.m_found.variable && !namespace_decl)
