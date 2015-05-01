@@ -3443,10 +3443,10 @@ MicrosoftVTableContext::~MicrosoftVTableContext() {
 }
 
 /// Find the full path of bases from the most derived class to the base class
-/// containing the vptr described by Info. Use depth-first search for this, but
-/// search non-virtual bases before virtual bases. This is important in cases
-/// like this where we need to find the path to a vbase that goes through an
-/// nvbase:
+/// containing the vptr described by Info. Utilize final overriders to detect
+/// vftable slots gained through covariant overriders on virtual base paths.
+/// This is important in cases like this where we need to find the path to a
+/// vbase that goes through an nvbase:
 ///   struct A { virtual void f(); }
 ///   struct B : virtual A { virtual void f(); };
 ///   struct C : virtual A, B { virtual void f(); };
@@ -3474,29 +3474,11 @@ static bool findPathForVPtr(ASTContext &Context,
     return false;
   };
 
-  // Start with the non-virtual bases so that we correctly create paths to
-  // virtual bases *through* non-virtual bases.
-  for (const auto &B : RD->bases()) {
-    if (B.isVirtual())
-      continue;
-    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
-    CharUnits NewOffset = Offset + Layout.getBaseClassOffset(Base);
-    if (Recurse(Base, NewOffset))
-      return true;
-  }
-  // None of non-virtual bases got us to the BaseWithVPtr, we need to try the
-  // virtual bases.
-  std::set<std::pair<const CXXRecordDecl *, CharUnits>> VBases;
-  for (const auto &B : RD->bases()) {
-    if (!B.isVirtual())
-      continue;
-    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
-    CharUnits NewOffset = MostDerivedLayout.getVBaseClassOffset(Base);
-    VBases.insert(std::make_pair(Base, NewOffset));
-  }
-  // No virtual bases, bail out early.
-  if (VBases.empty())
-    return false;
+  auto GetBaseOffset = [&](const CXXBaseSpecifier &BS) {
+    const CXXRecordDecl *Base = BS.getType()->getAsCXXRecordDecl();
+    return BS.isVirtual() ? MostDerivedLayout.getVBaseClassOffset(Base)
+                          : Offset + Layout.getBaseClassOffset(Base);
+  };
 
   CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
                      /*DetectVirtual=*/true);
@@ -3521,8 +3503,8 @@ static bool findPathForVPtr(ASTContext &Context,
     // provides a return adjusting overrider for this method.
     const CXXRecordDecl *Base = nullptr;
     CharUnits NewOffset;
-    for (auto VBasePair : VBases) {
-      const CXXRecordDecl *VBase = VBasePair.first;
+    for (const auto &B : RD->bases()) {
+      const CXXRecordDecl *VBase = B.getType()->getAsCXXRecordDecl();
       // There might be a vbase which derives from a vbase which provides a
       // covariant override for the method *and* provides its own covariant
       // override.
@@ -3534,7 +3516,10 @@ static bool findPathForVPtr(ASTContext &Context,
           !Paths.getDetectedVirtual())
         continue;
       const CXXMethodDecl *VBaseMD = MD->getCorrespondingMethodInClass(VBase);
-      CharUnits VBaseNewOffset = VBasePair.second;
+      // Skip the base if it does not have an override of this method.
+      if (VBaseMD == MD)
+        continue;
+      CharUnits VBaseNewOffset = GetBaseOffset(B);
       Overrider = Overriders.getOverrider(VBaseMD, VBaseNewOffset);
       BO = ComputeReturnAdjustmentBaseOffset(Context, Overrider.Method, MD);
       // Skip any overriders which are not return adjusting.
@@ -3547,15 +3532,14 @@ static bool findPathForVPtr(ASTContext &Context,
     if (Base && Recurse(Base, NewOffset))
       return true;
   }
-  // There are no virtual bases listed as a base specifier which provides a
-  // covariant override.  However, we may still need to go through the virtual
-  // base to get to BaseWithVPtr.
-  for (const auto &B : VBases) {
-    const CXXRecordDecl *Base = B.first;
-    CharUnits NewOffset = B.second;
+
+  for (const auto &B : RD->bases()) {
+    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
+    CharUnits NewOffset = GetBaseOffset(B);
     if (Recurse(Base, NewOffset))
       return true;
   }
+
   return false;
 }
 
@@ -3564,10 +3548,11 @@ static void computeFullPathsForVFTables(ASTContext &Context,
                                         VPtrInfoVector &Paths) {
   const ASTRecordLayout &MostDerivedLayout = Context.getASTRecordLayout(RD);
   VPtrInfo::BasePath FullPath;
-  FinalOverriders Overriders(RD, CharUnits(), RD);
+  FinalOverriders Overriders(RD, CharUnits::Zero(), RD);
   for (VPtrInfo *Info : Paths) {
-    findPathForVPtr(Context, MostDerivedLayout, RD, CharUnits::Zero(),
-                    Overriders, FullPath, Info);
+    if (!findPathForVPtr(Context, MostDerivedLayout, RD, CharUnits::Zero(),
+                         Overriders, FullPath, Info))
+      llvm_unreachable("no path for vptr!");
     FullPath.clear();
   }
 }

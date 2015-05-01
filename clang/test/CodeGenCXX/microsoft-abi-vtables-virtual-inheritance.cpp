@@ -423,7 +423,7 @@ void use(T *obj) { obj->f(); }
 
 namespace Test10 {
 struct X : virtual C, virtual A {
-  // CHECK-LABEL: VFTable for 'A' in 'Test10::X' (2 entries).
+  // CHECK-LABEL: VFTable for 'A' in 'C' in 'Test10::X' (2 entries).
   // CHECK-NEXT: 0 | void Test10::X::f()
   // CHECK-NEXT: 1 | void A::z()
 
@@ -782,7 +782,7 @@ struct B : virtual A { virtual void g(void); };
 struct C : virtual A, B { C(); };
 C::C() {}
 
-// CHECK-LABEL: VFTable for 'pr21031_1::A' in 'pr21031_1::B' in 'pr21031_1::C' (1 entry)
+// CHECK-LABEL: VFTable for 'pr21031_1::A' in 'pr21031_1::C' (1 entry)
 // CHECK-NEXT:   0 | void pr21031_1::A::f()
 
 // CHECK-LABEL: VFTable for 'pr21031_1::B' in 'pr21031_1::C' (1 entry)

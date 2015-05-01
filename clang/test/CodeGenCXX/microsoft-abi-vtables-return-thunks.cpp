@@ -155,3 +155,20 @@ C::C() {}
 // GLOBALS: @"\01?f@B@pr21073@@WPPPPPPPI@AEPAUA@2@XZ"
 // GLOBALS: @"\01?f@B@pr21073@@WPPPPPPPI@AEPAU12@XZ"
 }
+
+namespace pr21073_2 {
+struct A { virtual A *foo(); };
+struct B : virtual A {};
+struct C : virtual A { virtual C *foo(); };
+struct D : B, C { D(); };
+D::D() {}
+
+// VFTABLES-LABEL: VFTable for 'pr21073_2::A' in 'pr21073_2::C' in 'pr21073_2::D' (2 entries)
+// VFTABLES-NEXT:   0 | pr21073_2::C *pr21073_2::C::foo()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct pr21073_2::A *'): vbase #1, 0 non-virtual]
+// VFTABLES-NEXT:   1 | pr21073_2::C *pr21073_2::C::foo()
+
+// GLOBALS-LABEL: @"\01??_7D@pr21073_2@@6B@" = {{.*}} constant [2 x i8*]
+// GLOBALS: @"\01?foo@C@pr21073_2@@QAEPAUA@2@XZ"
+// GLOBALS: @"\01?foo@C@pr21073_2@@UAEPAU12@XZ"
+}
