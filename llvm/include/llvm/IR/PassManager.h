@@ -827,7 +827,7 @@ private:
 template <typename FunctionPassT>
 ModuleToFunctionPassAdaptor<FunctionPassT>
 createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
-  return std::move(ModuleToFunctionPassAdaptor<FunctionPassT>(std::move(Pass)));
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(std::move(Pass));
 }
 
 /// \brief A template utility pass to force an analysis result to be available.
