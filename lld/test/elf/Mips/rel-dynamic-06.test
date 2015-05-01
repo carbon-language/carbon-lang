@@ -9,6 +9,7 @@
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: lld -flavor gnu -target mipsel -shared -o %t1-so %t-obj
 # RUN: llvm-readobj -dt -r -s %t1-so | FileCheck -check-prefix=PLT1 %s
+# RUN: llvm-readobj -mips-plt-got %t1-so | FileCheck -check-prefix=GOT %s
 
 # PLT1-SYM:     Sections [
 # PLT1-SYM:       Section {
@@ -49,6 +50,20 @@
 # PLT1-NEXT:     Section: .text (0x5)
 # PLT1-NEXT:   }
 # PLT1-NEXT: ]
+
+# GOT:      Local entries [
+# GOT-NEXT: ]
+# GOT-NEXT: Global entries [
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1008
+# GOT-NEXT:     Access: -32744
+# GOT-NEXT:     Initial: 0x100
+# GOT-NEXT:     Value: 0x100
+# GOT-NEXT:     Type: Function (0x2)
+# GOT-NEXT:     Section: .text (0x5)
+# GOT-NEXT:     Name: T0@ (1)
+# GOT-NEXT:   }
+# GOT-NEXT: ]
 
 !ELF
 FileHeader: !FileHeader

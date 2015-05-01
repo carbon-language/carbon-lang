@@ -11,6 +11,7 @@
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     -o %t2.so %t-o.o %t1.so
 # RUN: llvm-readobj -dt -r -sections %t2.so | FileCheck %s
+# RUN: llvm-readobj -mips-plt-got %t2.so | FileCheck -check-prefix=GOT %s
 
 # CHECK:   Sections [
 # CHECK:     Section {
@@ -122,6 +123,92 @@
 # CHECK-NEXT:     Section: Undefined (0x0)
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
+
+# GOT:      Local entries [
+# GOT-NEXT: ]
+# GOT-NEXT: Global entries [
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1008
+# GOT-NEXT:     Access: -32744
+# GOT-NEXT:     Initial: 0x214
+# GOT-NEXT:     Value: 0x214
+# GOT-NEXT:     Type: Function (0x2)
+# GOT-NEXT:     Section: .text (0x5)
+# GOT-NEXT:     Name: T0@ (1)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x100C
+# GOT-NEXT:     Access: -32740
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: None (0x0)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: T4@ (7)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1010
+# GOT-NEXT:     Access: -32736
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: Object (0x1)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: D2@ (25)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1014
+# GOT-NEXT:     Access: -32732
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: Function (0x2)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: T1@ (16)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1018
+# GOT-NEXT:     Access: -32728
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: Function (0x2)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: T2@ (19)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x101C
+# GOT-NEXT:     Access: -32724
+# GOT-NEXT:     Initial: 0x2004
+# GOT-NEXT:     Value: 0x2004
+# GOT-NEXT:     Type: Object (0x1)
+# GOT-NEXT:     Section: .data (0x8)
+# GOT-NEXT:     Name: D0@ (4)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1020
+# GOT-NEXT:     Access: -32720
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: Object (0x1)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: D1@ (22)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1024
+# GOT-NEXT:     Access: -32716
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: None (0x0)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: D4@ (10)
+# GOT-NEXT:   }
+# GOT-NEXT:   Entry {
+# GOT-NEXT:     Address: 0x1028
+# GOT-NEXT:     Access: -32712
+# GOT-NEXT:     Initial: 0x0
+# GOT-NEXT:     Value: 0x0
+# GOT-NEXT:     Type: None (0x0)
+# GOT-NEXT:     Section: Undefined (0x0)
+# GOT-NEXT:     Name: U1@ (13)
+# GOT-NEXT:   }
+# GOT-NEXT: ]
 
 # so.o
 ---
