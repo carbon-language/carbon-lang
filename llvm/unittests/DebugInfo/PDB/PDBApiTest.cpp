@@ -74,7 +74,7 @@ class MockSession : public IPDBSession {
   }
 
   std::unique_ptr<PDBSymbol>
-  findSymbolByAddress(uint64_t Address) const override {
+  findSymbolByAddress(uint64_t Address, PDB_SymType Type) const override {
     return nullptr;
   }
   std::unique_ptr<IPDBEnumLineNumbers>
