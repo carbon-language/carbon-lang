@@ -98,16 +98,23 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 
 namespace {
   class SparcAsmBackend : public MCAsmBackend {
+  protected:
     const Target &TheTarget;
+    bool IsLittleEndian;
+    bool Is64Bit;
+
   public:
-    SparcAsmBackend(const Target &T) : MCAsmBackend(), TheTarget(T) {}
+    SparcAsmBackend(const Target &T)
+        : MCAsmBackend(), TheTarget(T),
+          IsLittleEndian(StringRef(TheTarget.getName()) == "sparcel"),
+          Is64Bit(StringRef(TheTarget.getName()) == "sparcv9") {}
 
     unsigned getNumFixupKinds() const override {
       return Sparc::NumTargetFixupKinds;
     }
 
     const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
-      const static MCFixupKindInfo Infos[Sparc::NumTargetFixupKinds] = {
+      const static MCFixupKindInfo InfosBE[Sparc::NumTargetFixupKinds] = {
         // name                    offset bits  flags
         { "fixup_sparc_call30",     2,     30,  MCFixupKindInfo::FKF_IsPCRel },
         { "fixup_sparc_br22",      10,     22,  MCFixupKindInfo::FKF_IsPCRel },
@@ -146,12 +153,54 @@ namespace {
         { "fixup_sparc_tls_le_lox10",   0,  0,  0 }
       };
 
+      const static MCFixupKindInfo InfosLE[Sparc::NumTargetFixupKinds] = {
+        // name                    offset bits  flags
+        { "fixup_sparc_call30",     0,     30,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br22",       0,     22,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br19",       0,     19,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br16_2",    20,      2,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_br16_14",    0,     14,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_hi22",       0,     22,  0 },
+        { "fixup_sparc_lo10",       0,     10,  0 },
+        { "fixup_sparc_h44",        0,     22,  0 },
+        { "fixup_sparc_m44",        0,     10,  0 },
+        { "fixup_sparc_l44",        0,     12,  0 },
+        { "fixup_sparc_hh",         0,     22,  0 },
+        { "fixup_sparc_hm",         0,     10,  0 },
+        { "fixup_sparc_pc22",       0,     22,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_pc10",       0,     10,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_got22",      0,     22,  0 },
+        { "fixup_sparc_got10",      0,     10,  0 },
+        { "fixup_sparc_wplt30",      0,     30,  MCFixupKindInfo::FKF_IsPCRel },
+        { "fixup_sparc_tls_gd_hi22",    0, 22,  0 },
+        { "fixup_sparc_tls_gd_lo10",    0, 10,  0 },
+        { "fixup_sparc_tls_gd_add",     0,  0,  0 },
+        { "fixup_sparc_tls_gd_call",    0,  0,  0 },
+        { "fixup_sparc_tls_ldm_hi22",   0, 22,  0 },
+        { "fixup_sparc_tls_ldm_lo10",   0, 10,  0 },
+        { "fixup_sparc_tls_ldm_add",    0,  0,  0 },
+        { "fixup_sparc_tls_ldm_call",   0,  0,  0 },
+        { "fixup_sparc_tls_ldo_hix22",  0, 22,  0 },
+        { "fixup_sparc_tls_ldo_lox10",  0, 10,  0 },
+        { "fixup_sparc_tls_ldo_add",    0,  0,  0 },
+        { "fixup_sparc_tls_ie_hi22",    0, 22,  0 },
+        { "fixup_sparc_tls_ie_lo10",    0, 10,  0 },
+        { "fixup_sparc_tls_ie_ld",      0,  0,  0 },
+        { "fixup_sparc_tls_ie_ldx",     0,  0,  0 },
+        { "fixup_sparc_tls_ie_add",     0,  0,  0 },
+        { "fixup_sparc_tls_le_hix22",   0,  0,  0 },
+        { "fixup_sparc_tls_le_lox10",   0,  0,  0 }
+      };
+
       if (Kind < FirstTargetFixupKind)
         return MCAsmBackend::getFixupKindInfo(Kind);
 
       assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
              "Invalid kind!");
-      return Infos[Kind - FirstTargetFixupKind];
+      if (IsLittleEndian)
+        return InfosLE[Kind - FirstTargetFixupKind];
+
+      return InfosBE[Kind - FirstTargetFixupKind];
     }
 
     void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
@@ -215,11 +264,6 @@ namespace {
 
       return true;
     }
-
-    bool is64Bit() const { return StringRef(TheTarget.getName()) == "sparcv9"; }
-    bool isLittleEndian() const {
-      return StringRef(TheTarget.getName()) == "sparcel";
-    }
   };
 
   class ELFSparcAsmBackend : public SparcAsmBackend {
@@ -239,14 +283,15 @@ namespace {
       // For each byte of the fragment that the fixup touches, mask in the bits
       // from the fixup value. The Value has been "split up" into the
       // appropriate bitfields above.
-      for (unsigned i = 0; i != 4; ++i)
-        Data[Offset + i] |= uint8_t((Value >> ((4 - i - 1)*8)) & 0xff);
-
+      for (unsigned i = 0; i != 4; ++i) {
+        unsigned Idx = IsLittleEndian ? i : 3 - i;
+        Data[Offset + Idx] |= uint8_t((Value >> (i * 8)) & 0xff);
+      }
     }
 
     MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
       uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(OSType);
-      return createSparcELFObjectWriter(OS, is64Bit(), isLittleEndian(), OSABI);
+      return createSparcELFObjectWriter(OS, Is64Bit, IsLittleEndian, OSABI);
     }
   };
 
