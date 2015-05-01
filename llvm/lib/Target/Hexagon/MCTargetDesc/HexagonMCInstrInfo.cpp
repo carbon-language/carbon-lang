@@ -20,6 +20,14 @@ void HexagonMCInstrInfo::AppendImplicitOperands(MCInst &MCI) {
   MCI.addOperand(MCOperand::CreateInst(nullptr));
 }
 
+HexagonII::MemAccessSize
+HexagonMCInstrInfo::getAccessSize(MCInstrInfo const &MCII, MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+
+  return (HexagonII::MemAccessSize((F >> HexagonII::MemAccessSizePos) &
+                                   HexagonII::MemAccesSizeMask));
+}
+
 unsigned HexagonMCInstrInfo::getBitCount(MCInstrInfo const &MCII,
                                          MCInst const &MCI) {
   uint64_t const F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
@@ -36,6 +44,18 @@ unsigned short HexagonMCInstrInfo::getCExtOpNum(MCInstrInfo const &MCII,
 MCInstrDesc const &HexagonMCInstrInfo::getDesc(MCInstrInfo const &MCII,
                                                MCInst const &MCI) {
   return (MCII.get(MCI.getOpcode()));
+}
+
+unsigned HexagonMCInstrInfo::getExtentAlignment(MCInstrInfo const &MCII,
+                                                MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::ExtentAlignPos) & HexagonII::ExtentAlignMask);
+}
+
+unsigned HexagonMCInstrInfo::getExtentBits(MCInstrInfo const &MCII,
+                                           MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask);
 }
 
 std::bitset<16> HexagonMCInstrInfo::GetImplicitBits(MCInst const &MCI) {
@@ -72,6 +92,11 @@ int HexagonMCInstrInfo::getMinValue(MCInstrInfo const &MCII,
     return -1U << (bits - 1);
   else
     return 0;
+}
+
+char const *HexagonMCInstrInfo::getName(MCInstrInfo const &MCII,
+                                        MCInst const &MCI) {
+  return MCII.getName(MCI.getOpcode());
 }
 
 // Return the operand that consumes or produces a new value.

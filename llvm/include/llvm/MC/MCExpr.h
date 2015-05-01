@@ -278,7 +278,20 @@ public:
     VK_Mips_PCREL_HI16,
     VK_Mips_PCREL_LO16,
 
-    VK_COFF_IMGREL32 // symbol@imgrel (image-relative)
+    VK_COFF_IMGREL32, // symbol@imgrel (image-relative)
+
+    VK_Hexagon_PCREL,
+    VK_Hexagon_LO16,
+    VK_Hexagon_HI16,
+    VK_Hexagon_GPREL,
+    VK_Hexagon_GD_GOT,
+    VK_Hexagon_LD_GOT,
+    VK_Hexagon_GD_PLT,
+    VK_Hexagon_LD_PLT,
+    VK_Hexagon_IE,
+    VK_Hexagon_IE_GOT,
+    VK_TPREL,
+    VK_DTPREL
   };
 
 private:

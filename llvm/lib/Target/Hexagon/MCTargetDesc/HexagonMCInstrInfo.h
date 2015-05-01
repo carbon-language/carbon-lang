@@ -23,8 +23,15 @@ class MCInstrDesc;
 class MCInstrInfo;
 class MCInst;
 class MCOperand;
+namespace HexagonII {
+enum class MemAccessSize;
+}
 namespace HexagonMCInstrInfo {
 void AppendImplicitOperands(MCInst &MCI);
+
+// Return memory access size
+HexagonII::MemAccessSize getAccessSize(MCInstrInfo const &MCII,
+                                       MCInst const &MCI);
 
 // Return number of bits in the constant extended operand.
 unsigned getBitCount(MCInstrInfo const &MCII, MCInst const &MCI);
@@ -33,6 +40,12 @@ unsigned getBitCount(MCInstrInfo const &MCII, MCInst const &MCI);
 unsigned short getCExtOpNum(MCInstrInfo const &MCII, MCInst const &MCI);
 
 MCInstrDesc const &getDesc(MCInstrInfo const &MCII, MCInst const &MCI);
+
+// Return the implicit alignment of the extendable operand
+unsigned getExtentAlignment(MCInstrInfo const &MCII, MCInst const &MCI);
+
+// Return the number of logical bits of the extendable operand
+unsigned getExtentBits(MCInstrInfo const &MCII, MCInst const &MCI);
 
 std::bitset<16> GetImplicitBits(MCInst const &MCI);
 
@@ -44,6 +57,9 @@ int getMaxValue(MCInstrInfo const &MCII, MCInst const &MCI);
 // without being extended.
 int getMinValue(MCInstrInfo const &MCII, MCInst const &MCI);
 
+// Return instruction name
+char const *getName(MCInstrInfo const &MCII, MCInst const &MCI);
+
 // Return the operand that consumes or produces a new value.
 MCOperand const &getNewValue(MCInstrInfo const &MCII, MCInst const &MCI);
 
@@ -52,7 +68,7 @@ unsigned getType(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Return whether the instruction is a legal new-value producer.
 bool hasNewValue(MCInstrInfo const &MCII, MCInst const &MCI);
-  
+
 // Return whether the insn is an actual insn.
 bool isCanon(MCInstrInfo const &MCII, MCInst const &MCI);
 
@@ -90,9 +106,8 @@ void resetPacket(MCInst &MCI);
 inline void SanityCheckImplicitOperands(MCInst const &MCI) {
   assert(MCI.getNumOperands() >= 2 && "At least the two implicit operands");
   assert(MCI.getOperand(MCI.getNumOperands() - 1).isInst() &&
-          "Implicit bits and flags");
-  assert(MCI.getOperand(MCI.getNumOperands() - 2).isImm() &&
-          "Parent pointer");
+         "Implicit bits and flags");
+  assert(MCI.getOperand(MCI.getNumOperands() - 2).isImm() && "Parent pointer");
 }
 
 void SetImplicitBits(MCInst &MCI, std::bitset<16> Bits);

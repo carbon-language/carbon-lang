@@ -283,6 +283,18 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_Mips_PCREL_HI16: return "PCREL_HI16";
   case VK_Mips_PCREL_LO16: return "PCREL_LO16";
   case VK_COFF_IMGREL32: return "IMGREL";
+  case VK_Hexagon_PCREL: return "PCREL";
+  case VK_Hexagon_LO16: return "LO16";
+  case VK_Hexagon_HI16: return "HI16";
+  case VK_Hexagon_GPREL: return "GPREL";
+  case VK_Hexagon_GD_GOT: return "GDGOT";
+  case VK_Hexagon_LD_GOT: return "LDGOT";
+  case VK_Hexagon_GD_PLT: return "GDPLT";
+  case VK_Hexagon_LD_PLT: return "LDPLT";
+  case VK_Hexagon_IE: return "IE";
+  case VK_Hexagon_IE_GOT: return "IEGOT";
+  case VK_TPREL: return "tprel";
+  case VK_DTPREL: return "dtprel";
   }
   llvm_unreachable("Invalid variant kind");
 }
