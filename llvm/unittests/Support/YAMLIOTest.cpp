@@ -829,6 +829,26 @@ namespace yaml {
 }
 }
 
+typedef std::vector<MyNumber> MyNumberFlowSequence;
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(MyNumberFlowSequence)
+
+struct NameAndNumbersFlow {
+  llvm::StringRef                    name;
+  std::vector<MyNumberFlowSequence>  sequenceOfNumbers;
+};
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<NameAndNumbersFlow> {
+    static void mapping(IO &io, NameAndNumbersFlow& nn) {
+      io.mapRequired("name",     nn.name);
+      io.mapRequired("sequenceOfNumbers",  nn.sequenceOfNumbers);
+    }
+  };
+}
+}
 
 //
 // Test writing then reading back custom values
@@ -875,6 +895,51 @@ TEST(YAMLIO, TestReadWriteMyFlowSequence) {
   }
 }
 
+
+//
+// Test writing then reading back a sequence of flow sequences.
+//
+TEST(YAMLIO, TestReadWriteSequenceOfMyFlowSequence) {
+  std::string intermediate;
+  {
+    NameAndNumbersFlow map;
+    map.name  = "hello";
+    MyNumberFlowSequence single = { 0 };
+    MyNumberFlowSequence numbers = { 12, 1, -512 };
+    map.sequenceOfNumbers.push_back(single);
+    map.sequenceOfNumbers.push_back(numbers);
+    map.sequenceOfNumbers.push_back(MyNumberFlowSequence());
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << map;
+
+    // Verify sequences were written in flow style
+    // and that the parent sequence used '-'.
+    ostr.flush();
+    llvm::StringRef flowOut(intermediate);
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- [ 0 ]"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- [ 12, 1, -512 ]"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- [  ]"));
+  }
+
+  {
+    Input yin(intermediate);
+    NameAndNumbersFlow map2;
+    yin >> map2;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_TRUE(map2.name.equals("hello"));
+    EXPECT_EQ(map2.sequenceOfNumbers.size(), 3UL);
+    EXPECT_EQ(map2.sequenceOfNumbers[0].size(), 1UL);
+    EXPECT_EQ(0,    map2.sequenceOfNumbers[0][0]);
+    EXPECT_EQ(map2.sequenceOfNumbers[1].size(), 3UL);
+    EXPECT_EQ(12,   map2.sequenceOfNumbers[1][0]);
+    EXPECT_EQ(1,    map2.sequenceOfNumbers[1][1]);
+    EXPECT_EQ(-512, map2.sequenceOfNumbers[1][2]);
+    EXPECT_TRUE(map2.sequenceOfNumbers[2].empty());
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //  Test normalizing/denormalizing

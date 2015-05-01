@@ -633,7 +633,8 @@ void Output::newLineCheck() {
 
   if (StateStack.back() == inSeq) {
     OutputDash = true;
-  } else if ((StateStack.size() > 1) && (StateStack.back() == inMapFirstKey) &&
+  } else if ((StateStack.size() > 1) && ((StateStack.back() == inMapFirstKey) ||
+             (StateStack.back() == inFlowSeq)) &&
              (StateStack[StateStack.size() - 2] == inSeq)) {
     --Indent;
     OutputDash = true;
