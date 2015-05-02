@@ -25,7 +25,7 @@ namespace llvm {
   class raw_ostream;
 
   /// MCSymbol - Instances of this class represent a symbol name in the MC file,
-  /// and MCSymbols are created and unique'd by the MCContext class.  MCSymbols
+  /// and MCSymbols are created and uniqued by the MCContext class.  MCSymbols
   /// should only be constructed with valid names for the object file.
   ///
   /// If the symbol is defined/emitted into the current translation unit, the

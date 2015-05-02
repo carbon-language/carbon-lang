@@ -419,7 +419,7 @@ public:
   ///              There may be extra indices created by dead code elimination.
   void finish(SmallVectorImpl<unsigned> *LRMap = nullptr);
 
-  /// dump - print the current interval maping to dbgs().
+  /// dump - print the current interval mapping to dbgs().
   void dump() const;
 
   // ===--- High level methods ---===

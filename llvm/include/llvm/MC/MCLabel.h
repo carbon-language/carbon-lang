@@ -21,7 +21,7 @@ namespace llvm {
   class raw_ostream;
 
   /// MCLabel - Instances of this class represent a label name in the MC file,
-  /// and MCLabel are created and unique'd by the MCContext class.  MCLabel
+  /// and MCLabel are created and uniqued by the MCContext class.  MCLabel
   /// should only be constructed for valid instances in the object file.
   class MCLabel {
     // Instance - the instance number of this Directional Local Label

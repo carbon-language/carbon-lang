@@ -75,7 +75,7 @@ namespace llvm {
     /// other.
     DenseMap<const MCSectionELF*, MCSymbol*> SectionSymbols;
 
-    /// A maping from a local label number and an instance count to a symbol.
+    /// A mapping from a local label number and an instance count to a symbol.
     /// For example, in the assembly
     ///     1:
     ///     2:

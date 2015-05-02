@@ -39,7 +39,7 @@ class SMLoc;
 
 /// MCDwarfFile - Instances of this class represent the name of the dwarf
 /// .file directive and its associated dwarf file number in the MC file,
-/// and MCDwarfFile's are created and unique'd by the MCContext class where
+/// and MCDwarfFile's are created and uniqued by the MCContext class where
 /// the file number for each is its index into the vector of DwarfFiles (note
 /// index 0 is not used and not a valid dwarf file number).
 struct MCDwarfFile {

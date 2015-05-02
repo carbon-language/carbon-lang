@@ -228,7 +228,7 @@ protected:
 
   /// True if the expression
   ///   .long f - g
-  /// uses an relocation but it can be supressed by writting
+  /// uses a relocation but it can be suppressed by writing
   ///   a = f - g
   ///   .long a
   bool SetDirectiveSuppressesReloc;
@@ -256,7 +256,7 @@ protected:
   /// argument and how it is interpreted.  Defaults to NoAlignment.
   LCOMM::LCOMMType LCOMMDirectiveAlignmentType;
 
-  // True if the target allows .align directives on funtions. This is true for
+  // True if the target allows .align directives on functions. This is true for
   // most targets, so defaults to true.
   bool HasFunctionAlignment;
 
