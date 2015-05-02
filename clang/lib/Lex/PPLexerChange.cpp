@@ -685,8 +685,11 @@ void Preprocessor::LeaveSubmodule() {
         // FIXME: Issue a warning if multiple headers for the same submodule
         // define a macro, rather than silently ignoring all but the first.
         bool IsNew;
-        addModuleMacro(Info.M, II, Def, Macro.second.getOverriddenMacros(),
-                       IsNew);
+        // Don't bother creating a module macro if it would represent a #undef
+        // that doesn't override anything.
+        if (Def || !Macro.second.getOverriddenMacros().empty())
+          addModuleMacro(Info.M, II, Def, Macro.second.getOverriddenMacros(),
+                         IsNew);
         break;
       }
     }
