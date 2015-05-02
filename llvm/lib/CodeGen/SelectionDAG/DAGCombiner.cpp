@@ -8549,11 +8549,10 @@ static SDValue FoldIntToFPToInt(SDNode *N, SelectionDAG &DAG) {
 
 SDValue DAGCombiner::visitFP_TO_SINT(SDNode *N) {
   SDValue N0 = N->getOperand(0);
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   EVT VT = N->getValueType(0);
 
   // fold (fp_to_sint c1fp) -> c1
-  if (N0CFP)
+  if (isConstantFPBuildVectorOrConstantFP(N0))
     return DAG.getNode(ISD::FP_TO_SINT, SDLoc(N), VT, N0);
 
   return FoldIntToFPToInt(N, DAG);
@@ -8561,11 +8560,10 @@ SDValue DAGCombiner::visitFP_TO_SINT(SDNode *N) {
 
 SDValue DAGCombiner::visitFP_TO_UINT(SDNode *N) {
   SDValue N0 = N->getOperand(0);
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   EVT VT = N->getValueType(0);
 
   // fold (fp_to_uint c1fp) -> c1
-  if (N0CFP)
+  if (isConstantFPBuildVectorOrConstantFP(N0))
     return DAG.getNode(ISD::FP_TO_UINT, SDLoc(N), VT, N0);
 
   return FoldIntToFPToInt(N, DAG);

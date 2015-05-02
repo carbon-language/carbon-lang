@@ -745,3 +745,211 @@ define <4 x i64> @fptoui_8vf32_i64(<8 x float> %a) {
   %cvt = fptoui <4 x float> %shuf to <4 x i64>
   ret <4 x i64> %cvt
 }
+
+;
+; Constant Folding
+;
+
+define <2 x i64> @fptosi_2vf64c() {
+; SSE2-LABEL: fptosi_2vf64c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,18446744073709551615]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_2vf64c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [1,18446744073709551615]
+; AVX-NEXT:    retq
+  %cvt = fptosi <2 x double> <double 1.0, double -1.0> to <2 x i64>
+  ret <2 x i64> %cvt
+}
+
+define <4 x i32> @fptosi_2vf64c_i32() {
+; SSE2-LABEL: fptosi_2vf64c_i32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = <4294967295,1,u,u>
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_2vf64c_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = <4294967295,1,u,u>
+; AVX-NEXT:    retq
+  %cvt = fptosi <2 x double> <double -1.0, double 1.0> to <2 x i32>
+  %ext = shufflevector <2 x i32> %cvt, <2 x i32> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  ret <4 x i32> %ext
+}
+
+define <4 x i64> @fptosi_4vf64c() {
+; SSE2-LABEL: fptosi_4vf64c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,18446744073709551615]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [2,18446744073709551613]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_4vf64c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [1,18446744073709551615,2,18446744073709551613]
+; AVX-NEXT:    retq
+  %cvt = fptosi <4 x double> <double 1.0, double -1.0, double 2.0, double -3.0> to <4 x i64>
+  ret <4 x i64> %cvt
+}
+
+define <4 x i32> @fptosi_4vf64c_i32() {
+; SSE2-LABEL: fptosi_4vf64c_i32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [4294967295,1,4294967294,3]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_4vf64c_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [4294967295,1,4294967294,3]
+; AVX-NEXT:    retq
+  %cvt = fptosi <4 x double> <double -1.0, double 1.0, double -2.0, double 3.0> to <4 x i32>
+  ret <4 x i32> %cvt
+}
+
+define <2 x i64> @fptoui_2vf64c() {
+; SSE2-LABEL: fptoui_2vf64c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [2,4]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_2vf64c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [2,4]
+; AVX-NEXT:    retq
+  %cvt = fptoui <2 x double> <double 2.0, double 4.0> to <2 x i64>
+  ret <2 x i64> %cvt
+}
+
+define <4 x i32> @fptoui_2vf64c_i32(<2 x double> %a) {
+; SSE2-LABEL: fptoui_2vf64c_i32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = <2,4,u,u>
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_2vf64c_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = <2,4,u,u>
+; AVX-NEXT:    retq
+  %cvt = fptoui <2 x double> <double 2.0, double 4.0> to <2 x i32>
+  %ext = shufflevector <2 x i32> %cvt, <2 x i32> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  ret <4 x i32> %ext
+}
+
+define <4 x i64> @fptoui_4vf64c(<4 x double> %a) {
+; SSE2-LABEL: fptoui_4vf64c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [2,4]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [6,8]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_4vf64c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [2,4,6,8]
+; AVX-NEXT:    retq
+  %cvt = fptoui <4 x double> <double 2.0, double 4.0, double 6.0, double 8.0> to <4 x i64>
+  ret <4 x i64> %cvt
+}
+
+define <4 x i32> @fptoui_4vf64c_i32(<4 x double> %a) {
+; SSE2-LABEL: fptoui_4vf64c_i32:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [2,4,6,8]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_4vf64c_i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [2,4,6,8]
+; AVX-NEXT:    retq
+  %cvt = fptoui <4 x double> <double 2.0, double 4.0, double 6.0, double 8.0> to <4 x i32>
+  ret <4 x i32> %cvt
+}
+
+define <4 x i32> @fptosi_4vf32c() {
+; SSE2-LABEL: fptosi_4vf32c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,4294967295,2,3]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_4vf32c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [1,4294967295,2,3]
+; AVX-NEXT:    retq
+  %cvt = fptosi <4 x float> <float 1.0, float -1.0, float 2.0, float 3.0> to <4 x i32>
+  ret <4 x i32> %cvt
+}
+
+define <4 x i64> @fptosi_4vf32c_i64() {
+; SSE2-LABEL: fptosi_4vf32c_i64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,18446744073709551615]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [2,3]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_4vf32c_i64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [1,18446744073709551615,2,3]
+; AVX-NEXT:    retq
+  %cvt = fptosi <4 x float> <float 1.0, float -1.0, float 2.0, float 3.0> to <4 x i64>
+  ret <4 x i64> %cvt
+}
+
+define <8 x i32> @fptosi_8vf32c(<8 x float> %a) {
+; SSE2-LABEL: fptosi_8vf32c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,4294967295,2,3]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [6,4294967288,2,4294967295]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptosi_8vf32c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [1,4294967295,2,3,6,4294967288,2,4294967295]
+; AVX-NEXT:    retq
+  %cvt = fptosi <8 x float> <float 1.0, float -1.0, float 2.0, float 3.0, float 6.0, float -8.0, float 2.0, float -1.0> to <8 x i32>
+  ret <8 x i32> %cvt
+}
+
+define <4 x i32> @fptoui_4vf32c(<4 x float> %a) {
+; SSE2-LABEL: fptoui_4vf32c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,2,4,6]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_4vf32c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [1,2,4,6]
+; AVX-NEXT:    retq
+  %cvt = fptoui <4 x float> <float 1.0, float 2.0, float 4.0, float 6.0> to <4 x i32>
+  ret <4 x i32> %cvt
+}
+
+define <4 x i64> @fptoui_4vf32c_i64() {
+; SSE2-LABEL: fptoui_4vf32c_i64:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,2]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [4,8]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_4vf32c_i64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [1,2,4,8]
+; AVX-NEXT:    retq
+  %cvt = fptoui <4 x float> <float 1.0, float 2.0, float 4.0, float 8.0> to <4 x i64>
+  ret <4 x i64> %cvt
+}
+
+define <8 x i32> @fptoui_8vf32c(<8 x float> %a) {
+; SSE2-LABEL: fptoui_8vf32c:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movaps {{.*#+}} xmm0 = [1,2,4,6]
+; SSE2-NEXT:    movaps {{.*#+}} xmm1 = [8,6,4,1]
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: fptoui_8vf32c:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [1,2,4,6,8,6,4,1]
+; AVX-NEXT:    retq
+  %cvt = fptoui <8 x float> <float 1.0, float 2.0, float 4.0, float 6.0, float 8.0, float 6.0, float 4.0, float 1.0> to <8 x i32>
+  ret <8 x i32> %cvt
+}

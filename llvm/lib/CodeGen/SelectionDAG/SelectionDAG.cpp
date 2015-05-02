@@ -2864,6 +2864,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
       case ISD::FTRUNC:
       case ISD::FFLOOR:
       case ISD::FP_EXTEND:
+      case ISD::FP_TO_SINT:
+      case ISD::FP_TO_UINT:
       case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP: {
