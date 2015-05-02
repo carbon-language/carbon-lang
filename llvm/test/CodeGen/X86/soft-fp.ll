@@ -1,7 +1,9 @@
-; RUN: llc < %s -march=x86    -mattr=+sse2 -soft-float | not grep xmm
-; RUN: llc < %s -march=x86-64 -mattr=+sse2 -soft-float | not grep xmm
+; RUN: llc < %s -march=x86    -mattr=+sse2 -soft-float | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 -soft-float | FileCheck %s
 
-	%struct.__va_list_tag = type { i32, i32, i8*, i8* }
+; CHECK-NOT: xmm{[0-9]+}
+
+%struct.__va_list_tag = type { i32, i32, i8*, i8* }
 
 define i32 @t1(i32 %a, ...) nounwind {
 entry:
