@@ -60,11 +60,6 @@ public:
   /// exits.
   void setCurrentRegionCount(uint64_t Count) { CurrentRegionCount = Count; }
 
-  /// Indicate that the current region is never reached, and thus should have a
-  /// counter value of zero. This is important so that subsequent regions can
-  /// correctly track their parent counts.
-  void setCurrentRegionUnreachable() { setCurrentRegionCount(0); }
-
   /// Check if an execution count is known for a given statement. If so, return
   /// true and put the value in Count; else return false.
   Optional<uint64_t> getStmtCount(const Stmt *S) {
