@@ -1193,8 +1193,8 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
   // Create branch weights based on the number of times we get here and the
   // number of times the condition should be true.
   uint64_t CurrentCount = std::max(getCurrentProfileCount(), TrueCount);
-  llvm::MDNode *Weights = PGO.createBranchWeights(TrueCount,
-                                                  CurrentCount - TrueCount);
+  llvm::MDNode *Weights =
+      createProfileWeights(TrueCount, CurrentCount - TrueCount);
 
   // Emit the code with the fully general case.
   llvm::Value *CondV;

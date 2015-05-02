@@ -78,11 +78,6 @@ public:
       setCurrentRegionCount(*Count);
   }
 
-  /// Calculate branch weights appropriate for PGO data
-  llvm::MDNode *createBranchWeights(uint64_t TrueCount, uint64_t FalseCount);
-  llvm::MDNode *createBranchWeights(ArrayRef<uint64_t> Weights);
-  llvm::MDNode *createLoopWeights(const Stmt *Cond, uint64_t LoopCount);
-
   /// Check if we need to emit coverage mapping for a given declaration
   void checkGlobalDecl(GlobalDecl GD);
   /// Assign counters to regions and configure them for PGO of a given

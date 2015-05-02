@@ -1506,7 +1506,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   Builder.CreateCondBr(
       Builder.CreateICmpEQ(initialBufferLimit, zero, "iszero"), EmptyBB,
       LoopInitBB,
-      PGO.createBranchWeights(EntryCount, getProfileCount(S.getBody())));
+      createProfileWeights(EntryCount, getProfileCount(S.getBody())));
 
   // Otherwise, initialize the loop.
   EmitBlock(LoopInitBB);
@@ -1649,7 +1649,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // elements and then returns to the loop.
   Builder.CreateCondBr(
       Builder.CreateICmpULT(indexPlusOne, count), LoopBodyBB, FetchMoreBB,
-      PGO.createBranchWeights(getProfileCount(S.getBody()), EntryCount));
+      createProfileWeights(getProfileCount(S.getBody()), EntryCount));
 
   index->addIncoming(indexPlusOne, AfterBody.getBlock());
   count->addIncoming(count, AfterBody.getBlock());

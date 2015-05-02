@@ -831,8 +831,8 @@ static uint32_t scaleBranchWeight(uint64_t Weight, uint64_t Scale) {
   return Scaled;
 }
 
-llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
-                                              uint64_t FalseCount) {
+llvm::MDNode *CodeGenFunction::createProfileWeights(uint64_t TrueCount,
+                                                    uint64_t FalseCount) {
   // Check for empty weights.
   if (!TrueCount && !FalseCount)
     return nullptr;
@@ -845,7 +845,8 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
                                       scaleBranchWeight(FalseCount, Scale));
 }
 
-llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
+llvm::MDNode *
+CodeGenFunction::createProfileWeights(ArrayRef<uint64_t> Weights) {
   // We need at least two elements to create meaningful weights.
   if (Weights.size() < 2)
     return nullptr;
@@ -867,14 +868,14 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
   return MDHelper.createBranchWeights(ScaledWeights);
 }
 
-llvm::MDNode *CodeGenPGO::createLoopWeights(const Stmt *Cond,
-                                            uint64_t LoopCount) {
-  if (!haveRegionCounts())
+llvm::MDNode *CodeGenFunction::createProfileWeightsForLoop(const Stmt *Cond,
+                                                           uint64_t LoopCount) {
+  if (!PGO.haveRegionCounts())
     return nullptr;
-  Optional<uint64_t> CondCount = getStmtCount(Cond);
+  Optional<uint64_t> CondCount = PGO.getStmtCount(Cond);
   assert(CondCount.hasValue() && "missing expected loop condition count");
   if (*CondCount == 0)
     return nullptr;
-  return createBranchWeights(LoopCount,
-                             std::max(*CondCount, LoopCount) - LoopCount);
+  return createProfileWeights(LoopCount,
+                              std::max(*CondCount, LoopCount) - LoopCount);
 }

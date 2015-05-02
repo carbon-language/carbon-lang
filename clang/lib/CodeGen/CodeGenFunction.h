@@ -889,6 +889,12 @@ private:
 
   CodeGenPGO PGO;
 
+  /// Calculate branch weights appropriate for PGO data
+  llvm::MDNode *createProfileWeights(uint64_t TrueCount, uint64_t FalseCount);
+  llvm::MDNode *createProfileWeights(ArrayRef<uint64_t> Weights);
+  llvm::MDNode *createProfileWeightsForLoop(const Stmt *Cond,
+                                            uint64_t LoopCount);
+
 public:
   /// Increment the profiler's counter for the given statement.
   void incrementProfileCounter(const Stmt *S) {

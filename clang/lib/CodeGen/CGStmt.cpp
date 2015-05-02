@@ -723,7 +723,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S,
       ExitBlock = createBasicBlock("while.exit");
     llvm::BranchInst *CondBr = Builder.CreateCondBr(
         BoolCondVal, LoopBody, ExitBlock,
-        PGO.createLoopWeights(S.getCond(), getProfileCount(S.getBody())));
+        createProfileWeightsForLoop(S.getCond(), getProfileCount(S.getBody())));
 
     if (ExitBlock != LoopExit.getBlock()) {
       EmitBlock(ExitBlock);
@@ -806,9 +806,9 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S,
   // As long as the condition is true, iterate the loop.
   if (EmitBoolCondBranch) {
     uint64_t BackedgeCount = getProfileCount(S.getBody()) - ParentCount;
-    llvm::BranchInst *CondBr =
-        Builder.CreateCondBr(BoolCondVal, LoopBody, LoopExit.getBlock(),
-                             PGO.createLoopWeights(S.getCond(), BackedgeCount));
+    llvm::BranchInst *CondBr = Builder.CreateCondBr(
+        BoolCondVal, LoopBody, LoopExit.getBlock(),
+        createProfileWeightsForLoop(S.getCond(), BackedgeCount));
 
     // Attach metadata to loop body conditional branch.
     EmitCondBrHints(LoopBody->getContext(), CondBr, DoAttrs);
@@ -878,7 +878,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S,
     llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
     llvm::BranchInst *CondBr = Builder.CreateCondBr(
         BoolCondVal, ForBody, ExitBlock,
-        PGO.createLoopWeights(S.getCond(), getProfileCount(S.getBody())));
+        createProfileWeightsForLoop(S.getCond(), getProfileCount(S.getBody())));
 
     // Attach metadata to loop body conditional branch.
     EmitCondBrHints(ForBody->getContext(), CondBr, ForAttrs);
@@ -956,7 +956,7 @@ CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S,
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
   llvm::BranchInst *CondBr = Builder.CreateCondBr(
       BoolCondVal, ForBody, ExitBlock,
-      PGO.createLoopWeights(S.getCond(), getProfileCount(S.getBody())));
+      createProfileWeightsForLoop(S.getCond(), getProfileCount(S.getBody())));
 
   // Attach metadata to loop body conditional branch.
   EmitCondBrHints(ForBody->getContext(), CondBr, ForAttrs);
@@ -1189,7 +1189,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   if (SwitchWeights) {
     uint64_t ThisCount = getProfileCount(&S);
     uint64_t DefaultCount = (*SwitchWeights)[0];
-    Weights = PGO.createBranchWeights(ThisCount, DefaultCount);
+    Weights = createProfileWeights(ThisCount, DefaultCount);
 
     // Since we're chaining the switch default through each large case range, we
     // need to update the weight for the default, ie, the first case, to include
@@ -1621,7 +1621,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
     // If there's only one jump destination there's no sense weighting it.
     if (SwitchWeights->size() > 1)
       SwitchInsn->setMetadata(llvm::LLVMContext::MD_prof,
-                              PGO.createBranchWeights(*SwitchWeights));
+                              createProfileWeights(*SwitchWeights));
     delete SwitchWeights;
   }
   SwitchInsn = SavedSwitchInsn;
