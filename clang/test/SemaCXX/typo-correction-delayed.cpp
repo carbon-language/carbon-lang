@@ -203,3 +203,9 @@ namespace PR23350 {
 int z = 1 ? N : ;  // expected-error {{expected expression}}
 // expected-error-re@-1 {{use of undeclared identifier 'N'{{$}}}}
 }
+
+// PR 23285. This test must be at the end of the file to avoid additional,
+// unwanted diagnostics.
+// expected-error-re@+2 {{use of undeclared identifier 'uintmax_t'{{$}}}}
+// expected-error@+1 {{expected ';' after top level declarator}}
+unsigned int a = 0(uintmax_t
