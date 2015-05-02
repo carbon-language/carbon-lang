@@ -782,7 +782,7 @@ private:
       return false;
 
     FormatToken *EndBacktick = Tokens.back();
-    // Backticks get lexed as tok:unknown tokens. If a template string contains
+    // Backticks get lexed as tok::unknown tokens. If a template string contains
     // a comment start, it gets lexed as a tok::comment, or tok::unknown if
     // unterminated.
     if (!EndBacktick->isOneOf(tok::comment, tok::unknown))
@@ -795,7 +795,8 @@ private:
 
     unsigned TokenCount = 0;
     bool IsMultiline = false;
-    unsigned EndColumnInFirstLine = 0;
+    unsigned EndColumnInFirstLine =
+        EndBacktick->OriginalColumn + EndBacktick->ColumnWidth;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; I++) {
       ++TokenCount;
       if (I[0]->NewlinesBefore > 0 || I[0]->IsMultiline)
@@ -833,6 +834,15 @@ private:
       Tokens.back()->TokenText =
           StringRef(Tokens.back()->TokenText.data(),
                     EndOffset - Tokens.back()->TokenText.data());
+
+      unsigned EndOriginalColumn = EndBacktick->OriginalColumn;
+      if (EndOriginalColumn == 0) {
+        SourceLocation Loc = EndBacktick->Tok.getLocation();
+        EndOriginalColumn = SourceMgr.getSpellingColumnNumber(Loc);
+      }
+      // If the ` is further down within the token (e.g. in a comment).
+      EndOriginalColumn += CommentBacktickPos;
+
       if (IsMultiline) {
         // ColumnWidth is from backtick to last token in line.
         // LastLineColumnWidth is 0 to backtick.
@@ -840,12 +850,12 @@ private:
         //     until here`;
         Tokens.back()->ColumnWidth =
             EndColumnInFirstLine - Tokens.back()->OriginalColumn;
-        Tokens.back()->LastLineColumnWidth = EndBacktick->OriginalColumn;
+        Tokens.back()->LastLineColumnWidth = EndOriginalColumn;
         Tokens.back()->IsMultiline = true;
       } else {
         // Token simply spans from start to end, +1 for the ` itself.
         Tokens.back()->ColumnWidth =
-            EndBacktick->OriginalColumn - Tokens.back()->OriginalColumn + 1;
+            EndOriginalColumn - Tokens.back()->OriginalColumn + 1;
       }
       return true;
     }
