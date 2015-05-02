@@ -1,4 +1,6 @@
-; RUN: llc -split-dwarf=Enable -O0 < %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -split-dwarf=Enable -O0 < %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj > %t
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llvm-objdump -r %t | FileCheck --check-prefix=RELOCS %s
 
 ; Test the emission of gmlt-like inlining information into the skeleton unit.
 ; This allows inline-aware symbolication/backtracing given only the linked
@@ -65,9 +67,12 @@
 ; CHECK:        DW_TAG_inlined_subroutine
 ; CHECK-NEXT:     DW_AT_abstract_origin {{.*}} "f2<int>"
 ; CHECK-NEXT:     DW_AT_ranges
-; CHECK-NEXT:     DW_AT_call_file
+; CHECK-NOT: {{DW_AT|DW_TAG|NULL}}
+; CHECK:     DW_AT_call_file
 ; CHECK-NEXT:     DW_AT_call_line {{.*}} (18)
 ; CHECK-NOT: DW_
+
+; RELOCS-NOT: RELOCATION RECORDS FOR [.rela.debug_ranges]
 
 ; Function Attrs: uwtable
 define void @_ZN3foo2f3Ez(...) #0 align 2 {
