@@ -205,7 +205,7 @@ public:
 
   /// \brief The set of modules imported by this module, and on which this
   /// module depends.
-  SmallVector<Module *, 2> Imports;
+  llvm::SmallSetVector<Module *, 2> Imports;
   
   /// \brief Describes an exported module.
   ///
