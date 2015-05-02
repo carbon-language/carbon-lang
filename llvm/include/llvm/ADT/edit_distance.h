@@ -50,7 +50,7 @@ unsigned ComputeEditDistance(ArrayRef<T> FromArray, ArrayRef<T> ToArray,
   //   http://en.wikipedia.org/wiki/Levenshtein_distance
   //
   // Although the algorithm is typically described using an m x n
-  // array, only two rows are used at a time, so this implemenation
+  // array, only two rows are used at a time, so this implementation
   // just keeps two separate vectors for those two rows.
   typename ArrayRef<T>::size_type m = FromArray.size();
   typename ArrayRef<T>::size_type n = ToArray.size();
