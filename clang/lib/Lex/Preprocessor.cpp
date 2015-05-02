@@ -752,7 +752,7 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
     if (getLangOpts().Modules) {
       Imported = TheModuleLoader.loadModule(ModuleImportLoc,
                                             ModuleImportPath,
-                                            Module::MacrosVisible,
+                                            Module::Hidden,
                                             /*IsIncludeDirective=*/false);
       if (Imported)
         makeModuleVisible(Imported, ModuleImportLoc);

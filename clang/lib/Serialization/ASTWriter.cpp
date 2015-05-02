@@ -4458,7 +4458,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
         // FIXME: If the module has macros imported then later has declarations
         // imported, this location won't be the right one as a location for the
         // declaration imports.
-        AddSourceLocation(Import.M->MacroVisibilityLoc, ImportedModules);
+        AddSourceLocation(PP.getModuleImportLoc(Import.M), ImportedModules);
       }
 
       Stream.EmitRecord(IMPORTED_MODULES, ImportedModules);

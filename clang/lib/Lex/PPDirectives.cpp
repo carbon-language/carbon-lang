@@ -1680,12 +1680,11 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
                  ReplaceRange, ("@import " + PathString + ";").str());
     }
     
-    // Load the module. Only make macros visible. We'll make the declarations
+    // Load the module to import its macros. We'll make the declarations
     // visible when the parser gets here.
-    Module::NameVisibilityKind Visibility = Module::MacrosVisible;
-    ModuleLoadResult Imported
-      = TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
-                                   /*IsIncludeDirective=*/true);
+    ModuleLoadResult Imported = TheModuleLoader.loadModule(
+        IncludeTok.getLocation(), Path, Module::Hidden,
+        /*IsIncludeDirective=*/true);
     if (Imported)
       makeModuleVisible(Imported, IncludeTok.getLocation());
     assert((Imported == nullptr || Imported == SuggestedModule.getModule()) &&

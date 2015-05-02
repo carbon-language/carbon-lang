@@ -186,19 +186,13 @@ public:
   /// particular module.
   enum NameVisibilityKind {
     /// \brief All of the names in this module are hidden.
-    ///
     Hidden,
-    /// \brief Only the macro names in this module are visible.
-    MacrosVisible,
     /// \brief All of the names in this module are visible.
     AllVisible
   };
 
   /// \brief The visibility of names within this particular module.
   NameVisibilityKind NameVisibility;
-
-  /// \brief The location at which macros within this module became visible.
-  SourceLocation MacroVisibilityLoc;
 
   /// \brief The location of the inferred submodule.
   SourceLocation InferredSubmoduleLoc;

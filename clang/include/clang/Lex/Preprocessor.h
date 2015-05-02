@@ -1063,6 +1063,10 @@ public:
 
   void makeModuleVisible(Module *M, SourceLocation Loc);
 
+  SourceLocation getModuleImportLoc(Module *M) const {
+    return VisibleModules.getImportLoc(M);
+  }
+
   /// \brief Lex a string literal, which may be the concatenation of multiple
   /// string literals and may even come from macro expansion.
   /// \returns true on success, false if a error diagnostic has been generated.
