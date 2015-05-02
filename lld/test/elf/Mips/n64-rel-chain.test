@@ -4,13 +4,83 @@
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t-so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
 # RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t-o.o %t.so
-# RUN: llvm-objdump -s %t.exe | FileCheck %s
+# RUN: llvm-readobj -s -t -dt -mips-plt-got %t.exe | \
+# RUN:   FileCheck -check-prefix=SYM %s
+# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=RAW %s
 
-# CHECK:      Contents of section .text:
-# CHECK-NEXT:  1200001d0 01000000 00000000 208e0000 00000000 ........ .......
-# CHECK-NEXT:  1200001e0 20800000 f8010000 28800000 00000000 .......(.......
-# CHECK:      Contents of section .pdr:
-# CHECK-NEXT:  0000 d0010020 e0010020 ... ...
+# SYM:      Section {
+# SYM:        Index: 6
+# SYM-NEXT:   Name: .rodata
+# SYM-NEXT:   Type: SHT_PROGBITS
+# SYM-NEXT:   Flags [
+# SYM-NEXT:     SHF_ALLOC
+# SYM-NEXT:   ]
+# SYM-NEXT:   Address: 0x1200001F0
+#
+# SYM:      Symbol {
+# SYM:        Name: LT1
+# SYM-NEXT:   Value: 0x1200001D0
+# SYM-NEXT:   Size: 16
+# SYM-NEXT:   Binding: Global
+# SYM-NEXT:   Type: Function
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: .text
+# SYM-NEXT: }
+# SYM:      Symbol {
+# SYM:        Name: T0
+# SYM-NEXT:   Value: 0x1200001E0
+# SYM-NEXT:   Size: 16
+# SYM-NEXT:   Binding: Global
+# SYM-NEXT:   Type: Function
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: .text
+# SYM-NEXT: }
+# SYM:      Symbol {
+# SYM:        Name: T1@
+# SYM-NEXT:   Value: 0x0
+# SYM-NEXT:   Size: 0
+# SYM-NEXT:   Binding: Global
+# SYM-NEXT:   Type: Function
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: Undefined
+# SYM-NEXT: }
+#
+# SYM:      Canonical gp value: 0x120008FF0
+# SYM:      Local entries [
+# SYM-NEXT:   Entry {
+# SYM-NEXT:     Address: 0x120001010
+# SYM-NEXT:     Access: -32736
+# SYM-NEXT:     Initial: 0x120000000
+# SYM-NEXT:   }
+# SYM-NEXT: ]
+# SYM-NEXT: Global entries [
+# SYM-NEXT:   Entry {
+# SYM-NEXT:     Address: 0x120001018
+# SYM-NEXT:     Access: -32728
+# SYM-NEXT:     Initial: 0x0
+# SYM-NEXT:     Value: 0x0
+# SYM-NEXT:     Type: Function (0x2)
+# SYM-NEXT:     Section: Undefined (0x0)
+# SYM-NEXT:     Name: T1@ (1)
+# SYM-NEXT:   }
+# SYM-NEXT: ]
+
+# RAW:      Contents of section .text:
+# RAW-NEXT:  1200001d0 01000000 00000000 208e0000 00000000
+#                      ^
+#                      S - GP = 0x1200001d0 - 0x120008ff0 = -36384
+#                      S - A = 0 - (-36384) = 36384
+#                      (AHL + S + 0x8000) >> 16 = 1
+#                                        ^
+#                      S - GP = 0x1200001d0 - 0x120008ff0 = -36384
+#                      S - A = 0 - (-36384) = 36384
+#                      AHL + S = 0x8E20
+# RAW-NEXT:  1200001e0 20800000 f8010000 28800000 00000000
+#                      ^ 0x8020 = -32736 GOT
+#                               ^ (0x1200001F0 + 8 - page) = 0x1f8
+#                                        ^ 0x8028 = -32728
+# RAW:      Contents of section .pdr:
+# RAW-NEXT:  0000 d0010020 e0010020
 
 ---
 FileHeader:
