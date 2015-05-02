@@ -1804,7 +1804,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
         Line.First->isOneOf(Keywords.kw_import, tok::kw_export))
       return false;
     if (Left.is(TT_TemplateCloser) &&
-        !Right.isOneOf(tok::l_brace, tok::comma, tok::l_square,
+        !Right.isOneOf(tok::equal, tok::l_brace, tok::comma, tok::l_square,
                        Keywords.kw_implements, Keywords.kw_extends))
       // Type assertions ('<type>expr') are not followed by whitespace. Other
       // locations that should have whitespace following are identified by the

@@ -687,6 +687,8 @@ TEST_F(FormatTestJS, TypeArguments) {
   verifyFormat("foo<Y>(a);");
   verifyFormat("var x: X<Y>[];");
   verifyFormat("class C extends D<E> implements F<G>, H<I> {}");
+  verifyFormat("function f(a: List<any> = null) {\n}");
+  verifyFormat("function f(): List<any> {\n}");
 }
 
 TEST_F(FormatTestJS, OptionalTypes) {
