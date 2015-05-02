@@ -16688,24 +16688,15 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
   }
 
   if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
-    assert(Subtarget->hasSSE2() && "Need SSE2 for pslli/pcmpeq.");
-
-    // a = a << 5;
+    // Turn 'a' into a mask suitable for VSELECT: a = a << 5;
     Op = DAG.getNode(ISD::SHL, dl, VT, Amt, DAG.getConstant(5, dl, VT));
-    Op = DAG.getNode(ISD::BITCAST, dl, VT, Op);
 
-    // Turn 'a' into a mask suitable for VSELECT
     SDValue VSelM = DAG.getConstant(0x80, dl, VT);
     SDValue OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
     OpVSel = DAG.getNode(X86ISD::PCMPEQ, dl, VT, OpVSel, VSelM);
 
-    SDValue CM1 = DAG.getConstant(0x0f, dl, VT);
-    SDValue CM2 = DAG.getConstant(0x3f, dl, VT);
-
-    // r = VSELECT(r, psllw(r & (char16)15, 4), a);
-    SDValue M = DAG.getNode(ISD::AND, dl, VT, R, CM1);
-    M = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, MVT::v8i16, M, 4, DAG);
-    M = DAG.getNode(ISD::BITCAST, dl, VT, M);
+    // r = VSELECT(r, shl(r, 4), a);
+    SDValue M = DAG.getNode(ISD::SHL, dl, VT, R, DAG.getConstant(4, dl, VT));
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
 
     // a += a
@@ -16713,10 +16704,8 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
     OpVSel = DAG.getNode(X86ISD::PCMPEQ, dl, VT, OpVSel, VSelM);
 
-    // r = VSELECT(r, psllw(r & (char16)63, 2), a);
-    M = DAG.getNode(ISD::AND, dl, VT, R, CM2);
-    M = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, MVT::v8i16, M, 2, DAG);
-    M = DAG.getNode(ISD::BITCAST, dl, VT, M);
+    // r = VSELECT(r, shl(r, 2), a);
+    M = DAG.getNode(ISD::SHL, dl, VT, R, DAG.getConstant(2, dl, VT));
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
 
     // a += a
