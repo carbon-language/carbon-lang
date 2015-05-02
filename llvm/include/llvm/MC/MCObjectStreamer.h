@@ -93,7 +93,7 @@ public:
 
   MCAssembler &getAssembler() { return *Assembler; }
 
-  /// @name MCStreamer Interface
+  /// \name MCStreamer Interface
   /// @{
 
   void EmitLabel(MCSymbol *Symbol) override;

@@ -103,8 +103,8 @@ class MCLOHDirective {
   /// Arguments of this directive. Order matters.
   SmallVector<MCSymbol *, 3> Args;
 
-  /// Emit this directive in @p OutStream using the information available
-  /// in the given @p ObjWriter and @p Layout to get the address of the
+  /// Emit this directive in \p OutStream using the information available
+  /// in the given \p ObjWriter and \p Layout to get the address of the
   /// arguments within the object file.
   void Emit_impl(raw_ostream &OutStream, const MachObjectWriter &ObjWriter,
                  const MCAsmLayout &Layout) const;
@@ -128,8 +128,8 @@ public:
     Emit_impl(OutStream, ObjWriter, Layout);
   }
 
-  /// Get the size in bytes of this directive if emitted in @p ObjWriter with
-  /// the given @p Layout.
+  /// Get the size in bytes of this directive if emitted in \p ObjWriter with
+  /// the given \p Layout.
   uint64_t getEmitSize(const MachObjectWriter &ObjWriter,
                        const MCAsmLayout &Layout) const {
     class raw_counting_ostream : public raw_ostream {
@@ -167,8 +167,8 @@ public:
     return Directives;
   }
 
-  /// Add the directive of the given kind @p Kind with the given arguments
-  /// @p Args to the container.
+  /// Add the directive of the given kind \p Kind with the given arguments
+  /// \p Args to the container.
   void addDirective(MCLOHType Kind, const MCLOHDirective::LOHArgs &Args) {
     Directives.push_back(MCLOHDirective(Kind, Args));
   }

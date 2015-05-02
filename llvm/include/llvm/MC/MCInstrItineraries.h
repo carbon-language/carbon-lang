@@ -67,12 +67,12 @@ struct InstrStage {
   int NextCycles_;   ///< Number of machine cycles to next stage
   ReservationKinds Kind_; ///< Kind of the FU reservation
 
-  /// Returns the number of cycles the stage is occupied.
+  /// \brief Returns the number of cycles the stage is occupied.
   unsigned getCycles() const {
     return Cycles_;
   }
 
-  /// Returns the choice of FUs.
+  /// \brief Returns the choice of FUs.
   unsigned getUnits() const {
     return Units_;
   }
@@ -81,8 +81,8 @@ struct InstrStage {
     return Kind_;
   }
 
-  /// Returns the number of cycles from the start of
-  /// this stage to the start of the next stage in the itinerary
+  /// \brief Returns the number of cycles from the start of this stage to the
+  /// start of the next stage in the itinerary
   unsigned getNextCycles() const {
     return (NextCycles_ >= 0) ? (unsigned)NextCycles_ : Cycles_;
   }
@@ -115,7 +115,6 @@ public:
   const InstrItinerary *Itineraries;    ///< Array of itineraries selected
 
   /// Ctors.
-  ///
   InstrItineraryData() : SchedModel(MCSchedModel::GetDefaultSchedModel()),
                          Stages(nullptr), OperandCycles(nullptr),
                          Forwardings(nullptr), Itineraries(nullptr) {}
@@ -125,30 +124,30 @@ public:
     : SchedModel(SM), Stages(S), OperandCycles(OS), Forwardings(F),
       Itineraries(SchedModel.InstrItineraries) {}
 
-  /// Returns true if there are no itineraries.
+  /// \brief Returns true if there are no itineraries.
   bool isEmpty() const { return Itineraries == nullptr; }
 
-  /// Returns true if the index is for the end marker itinerary.
+  /// \brief Returns true if the index is for the end marker itinerary.
   bool isEndMarker(unsigned ItinClassIndx) const {
     return ((Itineraries[ItinClassIndx].FirstStage == ~0U) &&
             (Itineraries[ItinClassIndx].LastStage == ~0U));
   }
 
-  /// Return the first stage of the itinerary.
+  /// \brief Return the first stage of the itinerary.
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineraries[ItinClassIndx].FirstStage;
     return Stages + StageIdx;
   }
 
-  /// Return the last+1 stage of the itinerary.
+  /// \brief Return the last+1 stage of the itinerary.
   const InstrStage *endStage(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineraries[ItinClassIndx].LastStage;
     return Stages + StageIdx;
   }
 
-  /// Return the total stage latency of the given class.
-  /// The latency is the maximum completion time for any stage in the itinerary.
-  /// If no stages exist, it defaults to one cycle.
+  /// \brief Return the total stage latency of the given class.  The latency is
+  /// the maximum completion time for any stage in the itinerary.  If no stages
+  /// exist, it defaults to one cycle.
   unsigned getStageLatency(unsigned ItinClassIndx) const {
     // If the target doesn't provide itinerary information, use a simple
     // non-zero default value for all instructions.
@@ -165,8 +164,8 @@ public:
     return Latency;
   }
 
-  /// Return the cycle for the given class and operand.
-  /// Return -1 if no cycle is specified for the operand.
+  /// \brief Return the cycle for the given class and operand.  Return -1 if no
+  /// cycle is specified for the operand.
   int getOperandCycle(unsigned ItinClassIndx, unsigned OperandIdx) const {
     if (isEmpty())
       return -1;
@@ -179,11 +178,11 @@ public:
     return (int)OperandCycles[FirstIdx + OperandIdx];
   }
 
-  /// Return true if there is a pipeline forwarding
-  /// between instructions of itinerary classes DefClass and UseClasses so that
-  /// value produced by an instruction of itinerary class DefClass, operand
-  /// index DefIdx can be bypassed when it's read by an instruction of
-  /// itinerary class UseClass, operand index UseIdx.
+  /// \brief Return true if there is a pipeline forwarding between instructions
+  /// of itinerary classes DefClass and UseClasses so that value produced by an
+  /// instruction of itinerary class DefClass, operand index DefIdx can be
+  /// bypassed when it's read by an instruction of itinerary class UseClass,
+  /// operand index UseIdx.
   bool hasPipelineForwarding(unsigned DefClass, unsigned DefIdx,
                              unsigned UseClass, unsigned UseIdx) const {
     unsigned FirstDefIdx = Itineraries[DefClass].FirstOperandCycle;
@@ -202,9 +201,9 @@ public:
       Forwardings[FirstUseIdx + UseIdx];
   }
 
-  /// Compute and return the use operand latency of a given
-  /// itinerary class and operand index if the value is produced by an
-  /// instruction of the specified itinerary class and def operand index.
+  /// \brief Compute and return the use operand latency of a given itinerary
+  /// class and operand index if the value is produced by an instruction of the
+  /// specified itinerary class and def operand index.
   int getOperandLatency(unsigned DefClass, unsigned DefIdx,
                         unsigned UseClass, unsigned UseIdx) const {
     if (isEmpty())
@@ -226,7 +225,7 @@ public:
     return UseCycle;
   }
 
-  /// Return the number of micro-ops that the given class decodes to.
+  /// \brief Return the number of micro-ops that the given class decodes to.
   /// Return -1 for classes that require dynamic lookup via TargetInstrInfo.
   int getNumMicroOps(unsigned ItinClassIndx) const {
     if (isEmpty())

@@ -59,14 +59,14 @@ public:
   /// represent this immediate in a more understandable way, for instance as a
   /// symbol or an offset from a symbol. Relocations can also be used to enrich
   /// the symbolic expression.
-  /// @param Inst      - The MCInst where to insert the symbolic operand.
-  /// @param cStream   - Stream to print comments and annotations on.
-  /// @param Value     - Operand value, pc-adjusted by the caller if necessary.
-  /// @param Address   - Load address of the instruction.
-  /// @param IsBranch  - Is the instruction a branch?
-  /// @param Offset    - Byte offset of the operand inside the inst.
-  /// @param InstSize  - Size of the instruction in bytes.
-  /// @return Whether a symbolic operand was added.
+  /// \param Inst      - The MCInst where to insert the symbolic operand.
+  /// \param cStream   - Stream to print comments and annotations on.
+  /// \param Value     - Operand value, pc-adjusted by the caller if necessary.
+  /// \param Address   - Load address of the instruction.
+  /// \param IsBranch  - Is the instruction a branch?
+  /// \param Offset    - Byte offset of the operand inside the inst.
+  /// \param InstSize  - Size of the instruction in bytes.
+  /// \return Whether a symbolic operand was added.
   virtual bool tryAddingSymbolicOperand(MCInst &Inst, raw_ostream &cStream,
                                         int64_t Value, uint64_t Address,
                                         bool IsBranch, uint64_t Offset,

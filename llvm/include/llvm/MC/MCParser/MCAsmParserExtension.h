@@ -48,7 +48,7 @@ public:
   /// parsing routines.
   virtual void Initialize(MCAsmParser &Parser);
 
-  /// @name MCAsmParser Proxy Interfaces
+  /// \name MCAsmParser Proxy Interfaces
   /// @{
 
   MCContext &getContext() { return getParser().getContext(); }

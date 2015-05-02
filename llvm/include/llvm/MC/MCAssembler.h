@@ -73,7 +73,7 @@ private:
   /// symbol.
   MCSymbolData *Atom;
 
-  /// @name Assembler Backend Data
+  /// \name Assembler Backend Data
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
@@ -367,7 +367,7 @@ public:
       : MCFragment(FT_Align, SD), Alignment(Alignment), Value(Value),
         ValueSize(ValueSize), MaxBytesToEmit(MaxBytesToEmit), EmitNops(false) {}
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   unsigned getAlignment() const { return Alignment; }
@@ -410,7 +410,7 @@ public:
            "Fill size must be a multiple of the value size!");
   }
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   int64_t getValue() const { return Value; }
@@ -439,7 +439,7 @@ public:
   MCOrgFragment(const MCExpr &Offset, int8_t Value, MCSectionData *SD = nullptr)
       : MCFragment(FT_Org, SD), Offset(&Offset), Value(Value) {}
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   const MCExpr &getOffset() const { return *Offset; }
@@ -469,7 +469,7 @@ public:
     : MCFragment(FT_LEB, SD),
       Value(&Value_), IsSigned(IsSigned_) { Contents.push_back(0); }
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   const MCExpr &getValue() const { return *Value; }
@@ -506,7 +506,7 @@ public:
     Contents.push_back(0);
   }
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   int64_t getLineDelta() const { return LineDelta; }
@@ -538,7 +538,7 @@ public:
     Contents.push_back(0);
   }
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   const MCExpr &getAddrDelta() const { return *AddrDelta; }
@@ -600,7 +600,7 @@ private:
   /// yet.
   bool BundleGroupBeforeFirstInst;
 
-  /// @name Assembler Backend Data
+  /// \name Assembler Backend Data
   /// @{
   //
   // FIXME: This could all be kept private to the assembler implementation.
@@ -634,7 +634,7 @@ public:
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
-  /// @name Fragment Access
+  /// \name Fragment Access
   /// @{
 
   const FragmentListType &getFragmentList() const { return Fragments; }
@@ -721,7 +721,7 @@ public:
   MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset,
                MCAssembler *A = nullptr);
 
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   const MCSymbol &getSymbol() const { return *Symbol; }
@@ -739,7 +739,7 @@ public:
   }
 
   /// @}
-  /// @name Symbol Attributes
+  /// \name Symbol Attributes
   /// @{
 
   bool isExternal() const { return Fragment.getInt() & 1; }
@@ -1077,7 +1077,7 @@ public:
     BundleAlignSize = Size;
   }
 
-  /// @name Section List Access
+  /// \name Section List Access
   /// @{
 
   const SectionDataListType &getSectionList() const { return Sections; }
@@ -1092,7 +1092,7 @@ public:
   size_t size() const { return Sections.size(); }
 
   /// @}
-  /// @name Symbol List Access
+  /// \name Symbol List Access
   /// @{
 
   const SymbolDataListType &getSymbolList() const { return Symbols; }
@@ -1110,7 +1110,7 @@ public:
   size_t symbol_size() const { return Symbols.size(); }
 
   /// @}
-  /// @name Indirect Symbol List Access
+  /// \name Indirect Symbol List Access
   /// @{
 
   // FIXME: This is a total hack, this should not be here. Once things are
@@ -1137,7 +1137,7 @@ public:
   size_t indirect_symbol_size() const { return IndirectSymbols.size(); }
 
   /// @}
-  /// @name Linker Option List Access
+  /// \name Linker Option List Access
   /// @{
 
   std::vector<std::vector<std::string> > &getLinkerOptions() {
@@ -1145,7 +1145,7 @@ public:
   }
 
   /// @}
-  /// @name Data Region List Access
+  /// \name Data Region List Access
   /// @{
 
   // FIXME: This is a total hack, this should not be here. Once things are
@@ -1172,7 +1172,7 @@ public:
   size_t data_region_size() const { return DataRegions.size(); }
 
   /// @}
-  /// @name Data Region List Access
+  /// \name Data Region List Access
   /// @{
 
   // FIXME: This is a total hack, this should not be here. Once things are
@@ -1185,7 +1185,7 @@ public:
     return const_cast<MCAssembler *>(this)->getLOHContainer();
   }
   /// @}
-  /// @name Backend Data Access
+  /// \name Backend Data Access
   /// @{
 
   MCSectionData &getSectionData(const MCSection &Section) const {

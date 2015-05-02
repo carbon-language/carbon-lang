@@ -225,7 +225,7 @@ namespace llvm {
 
     void setAllowTemporaryLabels(bool Value) { AllowTemporaryLabels = Value; }
 
-    /// @name Module Lifetime Management
+    /// \name Module Lifetime Management
     /// @{
 
     /// reset - return object to right after construction state to prepare
@@ -234,7 +234,7 @@ namespace llvm {
 
     /// @}
 
-    /// @name Symbol Management
+    /// \name Symbol Management
     /// @{
 
     /// Create and return a new linker temporary symbol with a unique but
@@ -255,10 +255,10 @@ namespace llvm {
     /// for "1b" or 1f" references).
     MCSymbol *GetDirectionalLocalSymbol(unsigned LocalLabelVal, bool Before);
 
-    /// Lookup the symbol inside with the specified @p Name.  If it exists,
+    /// Lookup the symbol inside with the specified \p Name.  If it exists,
     /// return it.  If not, create a forward reference and return it.
     ///
-    /// @param Name - The symbol name, which must be unique across all symbols.
+    /// \param Name - The symbol name, which must be unique across all symbols.
     MCSymbol *GetOrCreateSymbol(const Twine &Name);
 
     MCSymbol *getOrCreateSectionSymbol(const MCSectionELF &Section);
@@ -266,7 +266,7 @@ namespace llvm {
     /// Gets a symbol that will be defined to the final stack offset of a local
     /// variable after codegen.
     ///
-    /// @param Idx - The index of a local variable passed to @llvm.frameescape.
+    /// \param Idx - The index of a local variable passed to @llvm.frameescape.
     MCSymbol *getOrCreateFrameAllocSymbol(StringRef FuncName, unsigned Idx);
 
     MCSymbol *getOrCreateParentFrameOffsetSymbol(StringRef FuncName);
@@ -284,7 +284,7 @@ namespace llvm {
 
     /// @}
 
-    /// @name Section Management
+    /// \name Section Management
     /// @{
 
     /// Return the MCSection for the specified mach-o section.  This requires
@@ -376,7 +376,7 @@ namespace llvm {
 
     /// @}
 
-    /// @name Dwarf Management
+    /// \name Dwarf Management
     /// @{
 
     /// \brief Get the compilation directory for DW_AT_comp_dir
@@ -523,33 +523,33 @@ namespace llvm {
 
 // operator new and delete aren't allowed inside namespaces.
 // The throw specifications are mandated by the standard.
-/// @brief Placement new for using the MCContext's allocator.
+/// \brief Placement new for using the MCContext's allocator.
 ///
 /// This placement form of operator new uses the MCContext's allocator for
 /// obtaining memory. It is a non-throwing new, which means that it returns
 /// null on error. (If that is what the allocator does. The current does, so if
 /// this ever changes, this operator will have to be changed, too.)
 /// Usage looks like this (assuming there's an MCContext 'Context' in scope):
-/// @code
+/// \code
 /// // Default alignment (16)
 /// IntegerLiteral *Ex = new (Context) IntegerLiteral(arguments);
 /// // Specific alignment
 /// IntegerLiteral *Ex2 = new (Context, 8) IntegerLiteral(arguments);
-/// @endcode
+/// \endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
-/// @c Context.Deallocate(Ptr).
+/// \c Context.Deallocate(Ptr).
 ///
-/// @param Bytes The number of bytes to allocate. Calculated by the compiler.
-/// @param C The MCContext that provides the allocator.
-/// @param Alignment The alignment of the allocated memory (if the underlying
+/// \param Bytes The number of bytes to allocate. Calculated by the compiler.
+/// \param C The MCContext that provides the allocator.
+/// \param Alignment The alignment of the allocated memory (if the underlying
 ///                  allocator supports it).
-/// @return The allocated memory. Could be NULL.
+/// \return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, llvm::MCContext &C,
                           size_t Alignment = 16) throw () {
   return C.Allocate(Bytes, Alignment);
 }
-/// @brief Placement delete companion to the new above.
+/// \brief Placement delete companion to the new above.
 ///
 /// This operator is just a companion to the new above. There is no way of
 /// invoking it directly; see the new operator for more details. This operator
@@ -564,27 +564,27 @@ inline void operator delete(void *Ptr, llvm::MCContext &C, size_t)
 /// obtaining memory. It is a non-throwing new[], which means that it returns
 /// null on error.
 /// Usage looks like this (assuming there's an MCContext 'Context' in scope):
-/// @code
+/// \code
 /// // Default alignment (16)
 /// char *data = new (Context) char[10];
 /// // Specific alignment
 /// char *data = new (Context, 8) char[10];
-/// @endcode
+/// \endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
-/// @c Context.Deallocate(Ptr).
+/// \c Context.Deallocate(Ptr).
 ///
-/// @param Bytes The number of bytes to allocate. Calculated by the compiler.
-/// @param C The MCContext that provides the allocator.
-/// @param Alignment The alignment of the allocated memory (if the underlying
+/// \param Bytes The number of bytes to allocate. Calculated by the compiler.
+/// \param C The MCContext that provides the allocator.
+/// \param Alignment The alignment of the allocated memory (if the underlying
 ///                  allocator supports it).
-/// @return The allocated memory. Could be NULL.
+/// \return The allocated memory. Could be NULL.
 inline void *operator new[](size_t Bytes, llvm::MCContext& C,
                             size_t Alignment = 16) throw () {
   return C.Allocate(Bytes, Alignment);
 }
 
-/// @brief Placement delete[] companion to the new[] above.
+/// \brief Placement delete[] companion to the new[] above.
 ///
 /// This operator is just a companion to the new[] above. There is no way of
 /// invoking it directly; see the new[] operator for more details. This operator

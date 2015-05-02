@@ -60,7 +60,7 @@ public:
 
   raw_ostream &getStream() { return OS; }
 
-  /// @name High-Level API
+  /// \name High-Level API
   /// @{
 
   /// \brief Perform any late binding of symbols (for example, to assign symbol
@@ -112,7 +112,7 @@ public:
                            const MCAsmLayout &Layout) = 0;
 
   /// @}
-  /// @name Binary Output
+  /// \name Binary Output
   /// @{
 
   void Write8(uint8_t Value) {

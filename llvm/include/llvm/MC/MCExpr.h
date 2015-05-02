@@ -29,7 +29,7 @@ class raw_ostream;
 class StringRef;
 typedef DenseMap<const MCSectionData*, uint64_t> SectionAddrMap;
 
-/// MCExpr - Base class for the full range of assembler expressions which are
+/// \brief Base class for the full range of assembler expressions which are
 /// needed for parsing.
 class MCExpr {
 public:
@@ -64,29 +64,29 @@ protected:
                                  const SectionAddrMap *Addrs, bool InSet) const;
 
 public:
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   ExprKind getKind() const { return Kind; }
 
   /// @}
-  /// @name Utility Methods
+  /// \name Utility Methods
   /// @{
 
   void print(raw_ostream &OS) const;
   void dump() const;
 
   /// @}
-  /// @name Expression Evaluation
+  /// \name Expression Evaluation
   /// @{
 
-  /// EvaluateAsAbsolute - Try to evaluate the expression to an absolute value.
+  /// \brief Try to evaluate the expression to an absolute value.
   ///
-  /// @param Res - The absolute value, if evaluation succeeds.
-  /// @param Layout - The assembler layout object to use for evaluating symbol
+  /// \param Res - The absolute value, if evaluation succeeds.
+  /// \param Layout - The assembler layout object to use for evaluating symbol
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
-  /// @result - True on success.
+  /// \return - True on success.
   bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
                           const SectionAddrMap &Addrs) const;
   bool EvaluateAsAbsolute(int64_t &Res) const;
@@ -95,13 +95,13 @@ public:
 
   bool evaluateKnownAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
-  /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
-  /// value, i.e. an expression of the fixed form (a - b + constant).
+  /// \brief Try to evaluate the expression to a relocatable value, i.e. an
+  /// expression of the fixed form (a - b + constant).
   ///
-  /// @param Res - The relocatable value, if evaluation succeeds.
-  /// @param Layout - The assembler layout object to use for evaluating values.
-  /// @param Fixup - The Fixup object if available.
-  /// @result - True on success.
+  /// \param Res - The relocatable value, if evaluation succeeds.
+  /// \param Layout - The assembler layout object to use for evaluating values.
+  /// \param Fixup - The Fixup object if available.
+  /// \return - True on success.
   bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout,
                              const MCFixup *Fixup) const;
 
@@ -112,8 +112,8 @@ public:
   /// use is for when relocations are not available, like the .size directive.
   bool evaluateAsValue(MCValue &Res, const MCAsmLayout &Layout) const;
 
-  /// FindAssociatedSection - Find the "associated section" for this expression,
-  /// which is currently defined as the absolute section for constants, or
+  /// \brief Find the "associated section" for this expression, which is
+  /// currently defined as the absolute section for constants, or
   /// otherwise the section associated with the first defined symbol in the
   /// expression.
   const MCSection *FindAssociatedSection() const;
@@ -126,7 +126,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
   return OS;
 }
 
-//// MCConstantExpr - Represent a constant integer expression.
+//// \brief  Represent a constant integer expression.
 class MCConstantExpr : public MCExpr {
   int64_t Value;
 
@@ -134,13 +134,13 @@ class MCConstantExpr : public MCExpr {
       : MCExpr(MCExpr::Constant), Value(Value) {}
 
 public:
-  /// @name Construction
+  /// \name Construction
   /// @{
 
   static const MCConstantExpr *Create(int64_t Value, MCContext &Ctx);
 
   /// @}
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   int64_t getValue() const { return Value; }
@@ -152,8 +152,7 @@ public:
   }
 };
 
-/// MCSymbolRefExpr - Represent a reference to a symbol from inside an
-/// expression.
+/// \brief  Represent a reference to a symbol from inside an expression.
 ///
 /// A symbol reference in an expression may be a use of a label, a use of an
 /// assembler variable (defined constant), or constitute an implicit definition
@@ -311,7 +310,7 @@ private:
                            const MCAsmInfo *MAI);
 
 public:
-  /// @name Construction
+  /// \name Construction
   /// @{
 
   static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx) {
@@ -324,7 +323,7 @@ public:
                                        MCContext &Ctx);
 
   /// @}
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
   const MCSymbol &getSymbol() const { return *Symbol; }
@@ -336,7 +335,7 @@ public:
   bool hasSubsectionsViaSymbols() const { return HasSubsectionsViaSymbols; }
 
   /// @}
-  /// @name Static Utility Functions
+  /// \name Static Utility Functions
   /// @{
 
   static StringRef getVariantKindName(VariantKind Kind);
@@ -350,7 +349,7 @@ public:
   }
 };
 
-/// MCUnaryExpr - Unary assembler expressions.
+/// \brief Unary assembler expressions.
 class MCUnaryExpr : public MCExpr {
 public:
   enum Opcode {
@@ -368,7 +367,7 @@ private:
       : MCExpr(MCExpr::Unary), Op(Op), Expr(Expr) {}
 
 public:
-  /// @name Construction
+  /// \name Construction
   /// @{
 
   static const MCUnaryExpr *Create(Opcode Op, const MCExpr *Expr,
@@ -387,13 +386,13 @@ public:
   }
 
   /// @}
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
-  /// getOpcode - Get the kind of this unary expression.
+  /// \brief Get the kind of this unary expression.
   Opcode getOpcode() const { return Op; }
 
-  /// getSubExpr - Get the child of this unary expression.
+  /// \brief Get the child of this unary expression.
   const MCExpr *getSubExpr() const { return Expr; }
 
   /// @}
@@ -403,7 +402,7 @@ public:
   }
 };
 
-/// MCBinaryExpr - Binary assembler expressions.
+/// \brief Binary assembler expressions.
 class MCBinaryExpr : public MCExpr {
 public:
   enum Opcode {
@@ -440,7 +439,7 @@ private:
       : MCExpr(MCExpr::Binary), Op(Op), LHS(LHS), RHS(RHS) {}
 
 public:
-  /// @name Construction
+  /// \name Construction
   /// @{
 
   static const MCBinaryExpr *Create(Opcode Op, const MCExpr *LHS,
@@ -523,16 +522,16 @@ public:
   }
 
   /// @}
-  /// @name Accessors
+  /// \name Accessors
   /// @{
 
-  /// getOpcode - Get the kind of this binary expression.
+  /// \brief Get the kind of this binary expression.
   Opcode getOpcode() const { return Op; }
 
-  /// getLHS - Get the left-hand side expression of the binary operator.
+  /// \brief Get the left-hand side expression of the binary operator.
   const MCExpr *getLHS() const { return LHS; }
 
-  /// getRHS - Get the right-hand side expression of the binary operator.
+  /// \brief Get the right-hand side expression of the binary operator.
   const MCExpr *getRHS() const { return RHS; }
 
   /// @}
@@ -542,8 +541,8 @@ public:
   }
 };
 
-/// MCTargetExpr - This is an extension point for target-specific MCExpr
-/// subclasses to implement.
+/// \brief This is an extension point for target-specific MCExpr subclasses to
+/// implement.
 ///
 /// NOTE: All subclasses are required to have trivial destructors because
 /// MCExprs are bump pointer allocated and not destructed.

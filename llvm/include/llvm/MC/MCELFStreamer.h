@@ -44,7 +44,7 @@ public:
     MCObjectStreamer::reset();
   }
 
-  /// @name MCStreamer Interface
+  /// \name MCStreamer Interface
   /// @{
 
   void InitSections(bool NoExecStack) override;

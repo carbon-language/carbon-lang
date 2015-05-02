@@ -61,16 +61,16 @@ public:
 
   /// Returns the disassembly of a single instruction.
   ///
-  /// @param Instr    - An MCInst to populate with the contents of the
+  /// \param Instr    - An MCInst to populate with the contents of the
   ///                   instruction.
-  /// @param Size     - A value to populate with the size of the instruction, or
+  /// \param Size     - A value to populate with the size of the instruction, or
   ///                   the number of bytes consumed while attempting to decode
   ///                   an invalid instruction.
-  /// @param Address  - The address, in the memory space of region, of the first
+  /// \param Address  - The address, in the memory space of region, of the first
   ///                   byte of the instruction.
-  /// @param VStream  - The stream to print warnings and diagnostic messages on.
-  /// @param CStream  - The stream to print comments and annotations on.
-  /// @return         - MCDisassembler::Success if the instruction is valid,
+  /// \param VStream  - The stream to print warnings and diagnostic messages on.
+  /// \param CStream  - The stream to print comments and annotations on.
+  /// \return         - MCDisassembler::Success if the instruction is valid,
   ///                   MCDisassembler::SoftFail if the instruction was
   ///                                            disassemblable but invalid,
   ///                   MCDisassembler::Fail if the instruction was invalid.

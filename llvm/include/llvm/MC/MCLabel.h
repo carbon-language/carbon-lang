@@ -20,11 +20,11 @@ namespace llvm {
   class MCContext;
   class raw_ostream;
 
-  /// MCLabel - Instances of this class represent a label name in the MC file,
+  /// \brief Instances of this class represent a label name in the MC file,
   /// and MCLabel are created and uniqued by the MCContext class.  MCLabel
   /// should only be constructed for valid instances in the object file.
   class MCLabel {
-    // Instance - the instance number of this Directional Local Label
+    // \brief The instance number of this Directional Local Label.
     unsigned Instance;
 
   private:  // MCContext creates and uniques these.
@@ -35,17 +35,16 @@ namespace llvm {
     MCLabel(const MCLabel&) = delete;
     void operator=(const MCLabel&) = delete;
   public:
-    /// getInstance - Get the current instance of this Directional Local Label.
+    /// \brief Get the current instance of this Directional Local Label.
     unsigned getInstance() const { return Instance; }
 
-    /// incInstance - Increment the current instance of this Directional Local
-    /// Label.
+    /// \brief Increment the current instance of this Directional Local Label.
     unsigned incInstance() { return ++Instance; }
 
-    /// print - Print the value to the stream \p OS.
+    /// \brief Print the value to the stream \p OS.
     void print(raw_ostream &OS) const;
 
-    /// dump - Print the value to stderr.
+    /// \brief Print the value to stderr.
     void dump() const;
   };
 

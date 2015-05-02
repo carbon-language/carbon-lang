@@ -80,7 +80,7 @@ namespace llvm {
     /// getName - Get the symbol name.
     StringRef getName() const { return Name; }
 
-    /// @name Accessors
+    /// \name Accessors
     /// @{
 
     /// isTemporary - Check if this is an assembler temporary symbol.
@@ -104,7 +104,7 @@ namespace llvm {
     }
 
     /// @}
-    /// @name Associated Sections
+    /// \name Associated Sections
     /// @{
 
     /// isDefined - Check if this symbol is defined (i.e., it has an address).
@@ -149,7 +149,7 @@ namespace llvm {
     }
 
     /// @}
-    /// @name Variable Symbols
+    /// \name Variable Symbols
     /// @{
 
     /// isVariable - Check if this is a variable symbol.

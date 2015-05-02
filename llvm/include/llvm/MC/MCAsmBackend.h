@@ -61,7 +61,7 @@ public:
   /// region directives will be ignored.
   bool hasDataInCodeSupport() const { return HasDataInCodeSupport; }
 
-  /// @name Target Fixup Interfaces
+  /// \name Target Fixup Interfaces
   /// @{
 
   /// Get the number of target specific fixup kinds.
@@ -87,7 +87,7 @@ public:
 
   /// @}
 
-  /// @name Target Relaxation Interfaces
+  /// \name Target Relaxation Interfaces
   /// @{
 
   /// Check whether the given instruction may need relaxation.

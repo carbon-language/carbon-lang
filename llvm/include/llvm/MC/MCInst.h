@@ -28,7 +28,7 @@ class MCInstPrinter;
 class MCExpr;
 class MCInst;
 
-/// MCOperand - Instances of this class represent operands of the MCInst class.
+/// \brief Instances of this class represent operands of the MCInst class.
 /// This is a simple discriminated union.
 class MCOperand {
   enum MachineOperandType : unsigned char {
@@ -59,13 +59,13 @@ public:
   bool isExpr() const { return Kind == kExpr; }
   bool isInst() const { return Kind == kInst; }
 
-  /// getReg - Returns the register number.
+  /// \brief Returns the register number.
   unsigned getReg() const {
     assert(isReg() && "This is not a register operand!");
     return RegVal;
   }
 
-  /// setReg - Set the register number.
+  /// \brief Set the register number.
   void setReg(unsigned Reg) {
     assert(isReg() && "This is not a register operand!");
     RegVal = Reg;
@@ -145,7 +145,7 @@ public:
 
 template <> struct isPodLike<MCOperand> { static const bool value = true; };
 
-/// MCInst - Instances of this class represent a single low-level machine
+/// \brief Instances of this class represent a single low-level machine
 /// instruction.
 class MCInst {
   unsigned Opcode;
