@@ -120,6 +120,7 @@ add_polly_library(Polly
   Support/SCEVValidator.cpp
   Support/RegisterPasses.cpp
   Support/ScopHelper.cpp
+  Support/ScopLocation.cpp
   ${POLLY_JSON_FILES}
   Transform/Canonicalization.cpp
   Transform/CodePreparation.cpp

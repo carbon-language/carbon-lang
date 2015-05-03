@@ -16,6 +16,7 @@
 
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopDetection.h"
+#include "polly/Support/ScopLocation.h"
 #include "llvm/Analysis/DOTGraphTraitsPass.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
@@ -112,9 +113,21 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
                                  raw_ostream &O, unsigned depth = 0) {
     O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void *>(R)
                         << " {\n";
+    unsigned LineBegin, LineEnd;
+    std::string FileName;
+
+    getDebugLocation(R, LineBegin, LineEnd, FileName);
+
+    std::string Location;
+    if (LineBegin != (unsigned)-1) {
+      Location = escapeString(FileName + ":" + std::to_string(LineBegin) + "-" +
+                              std::to_string(LineEnd) + "\n");
+    }
+
     std::string ErrorMessage = SD->regionIsInvalidBecause(R);
     ErrorMessage = escapeString(ErrorMessage);
-    O.indent(2 * (depth + 1)) << "label = \"" << ErrorMessage << "\";\n";
+    O.indent(2 * (depth + 1)) << "label = \"" << Location << ErrorMessage
+                              << "\";\n";
 
     if (SD->isMaxRegionInScop(*R)) {
       O.indent(2 * (depth + 1)) << "style = filled;\n";

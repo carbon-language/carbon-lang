@@ -51,6 +51,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
+#include "polly/Support/ScopLocation.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"

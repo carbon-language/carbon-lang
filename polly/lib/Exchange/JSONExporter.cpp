@@ -16,6 +16,7 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
+#include "polly/Support/ScopLocation.h"
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/RegionInfo.h"
@@ -90,9 +91,19 @@ void JSONExporter::printScop(raw_ostream &OS, Scop &S) const { S.print(OS); }
 
 Json::Value JSONExporter::getJSON(Scop &S) const {
   Json::Value root;
+  unsigned LineBegin, LineEnd;
+  std::string FileName;
+
+  getDebugLocation(&S.getRegion(), LineBegin, LineEnd, FileName);
+  std::string Location;
+  if (LineBegin != (unsigned)-1)
+    Location = FileName + ":" + std::to_string(LineBegin) + "-" +
+               std::to_string(LineEnd);
 
   root["name"] = S.getRegion().getNameStr();
   root["context"] = S.getContextStr();
+  if (LineBegin != (unsigned)-1)
+    root["location"] = Location;
   root["statements"];
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
