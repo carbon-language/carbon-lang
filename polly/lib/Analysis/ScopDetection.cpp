@@ -488,6 +488,13 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     SE->findArrayDimensions(Terms, Shape->DelinearizedSizes,
                             Context.ElementSize[BasePointer]);
 
+    if (!AllowNonAffine)
+      for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes)
+        if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
+          invalid<ReportNonAffineAccess>(
+              Context, /*Assert=*/true, DelinearizedSize,
+              Context.Accesses[BasePointer].front().first, BaseValue);
+
     // No array shape derived.
     if (Shape->DelinearizedSizes.empty()) {
       if (AllowNonAffine)

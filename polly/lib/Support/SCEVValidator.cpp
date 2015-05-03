@@ -559,6 +559,7 @@ std::vector<const SCEV *> getParamsInAffineExpr(const Region *R,
 
   SCEVValidator Validator(R, SE, BaseAddress);
   ValidatorResult Result = Validator.visit(Expr);
+  assert(Result.isValid() && "Requested parameters for an invalid SCEV!");
 
   return Result.getParameters();
 }
