@@ -1389,6 +1389,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // Custom lower several nodes.
     for (MVT VT : MVT::vector_valuetypes()) {
       unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+      if (EltSize >= 32 && VT.getSizeInBits() <= 512) {
+        setOperationAction(ISD::MGATHER,  VT, Custom);
+        setOperationAction(ISD::MSCATTER, VT, Custom);
+      }
       // Extract subvector is special because the value type
       // (result) is 256/128-bit but the source is 512-bit wide.
       if (VT.is128BitVector() || VT.is256BitVector()) {
@@ -17360,6 +17364,56 @@ static SDValue LowerFSINCOS(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getNode(ISD::MERGE_VALUES, dl, Tys, SinVal, CosVal);
 }
 
+static SDValue LowerMSCATTER(SDValue Op, const X86Subtarget *Subtarget,
+                             SelectionDAG &DAG) {
+  assert(Subtarget->hasAVX512() &&
+         "MGATHER/MSCATTER are supported on AVX-512 arch only");
+
+  MaskedScatterSDNode *N = cast<MaskedScatterSDNode>(Op.getNode());
+  EVT VT = N->getValue().getValueType();
+  assert(VT.getScalarSizeInBits() >= 32 && "Unsupported scatter op");
+  SDLoc dl(Op);
+
+  // X86 scatter kills mask register, so its type should be added to
+  // the list of return values
+  if (N->getNumValues() == 1) {
+    SDValue Index = N->getIndex();
+    if (!Subtarget->hasVLX() && !VT.is512BitVector() &&
+        !Index.getValueType().is512BitVector())
+      Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+
+    SDVTList VTs = DAG.getVTList(N->getMask().getValueType(), MVT::Other);
+    SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
+                      N->getOperand(3), Index };
+
+    SDValue NewScatter = DAG.getMaskedScatter(VTs, VT, dl, Ops, N->getMemOperand());
+    DAG.ReplaceAllUsesWith(Op, SDValue(NewScatter.getNode(), 1));
+    return SDValue(NewScatter.getNode(), 0);
+  }
+  return Op;
+}
+
+static SDValue LowerMGATHER(SDValue Op, const X86Subtarget *Subtarget,
+                            SelectionDAG &DAG) {
+  assert(Subtarget->hasAVX512() &&
+         "MGATHER/MSCATTER are supported on AVX-512 arch only");
+
+  MaskedGatherSDNode *N = cast<MaskedGatherSDNode>(Op.getNode());
+  EVT VT = Op.getValueType();
+  assert(VT.getScalarSizeInBits() >= 32 && "Unsupported gather op");
+  SDLoc dl(Op);
+
+  SDValue Index = N->getIndex();
+  if (!Subtarget->hasVLX() && !VT.is512BitVector() &&
+      !Index.getValueType().is512BitVector()) {
+    Index = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i64, Index);
+    SDValue Ops[] = { N->getOperand(0), N->getOperand(1),  N->getOperand(2),
+                      N->getOperand(3), Index };
+    DAG.UpdateNodeOperands(N, Ops);
+  }
+  return Op;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
@@ -17447,6 +17501,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:                return LowerADD(Op, DAG);
   case ISD::SUB:                return LowerSUB(Op, DAG);
   case ISD::FSINCOS:            return LowerFSINCOS(Op, Subtarget, DAG);
+  case ISD::MGATHER:            return LowerMGATHER(Op, Subtarget, DAG);
+  case ISD::MSCATTER:           return LowerMSCATTER(Op, Subtarget, DAG);
   }
 }
 

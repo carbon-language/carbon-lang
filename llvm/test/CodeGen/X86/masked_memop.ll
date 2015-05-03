@@ -7,8 +7,8 @@
 ; AVX512: vmovdqu32       (%rdi), %zmm0 {%k1} {z}
 
 ; AVX2-LABEL: test1
-; AVX2: vpmaskmovd      32(%rdi)
-; AVX2: vpmaskmovd      (%rdi)
+; AVX2: vpmaskmovd      {{.*}}(%rdi)
+; AVX2: vpmaskmovd      {{.*}}(%rdi)
 ; AVX2-NOT: blend
 
 ; AVX_SCALAR-LABEL: test1
