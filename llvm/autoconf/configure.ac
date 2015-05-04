@@ -73,6 +73,19 @@ if test ${srcdir} != "." ; then
   fi
 fi
 
+dnl Quit if it is an in-source build
+if test ${srcdir} == "." ; then
+  AC_MSG_WARN([**************************************************************************************])
+  AC_MSG_WARN([*                                                                                    *])
+  AC_MSG_WARN([*                                   WARNING                                          *])
+  AC_MSG_WARN([*                                                                                    *])
+  AC_MSG_WARN([*                        In-source builds are deprecated.                            *])
+  AC_MSG_WARN([*                                                                                    *])
+  AC_MSG_WARN([*               Please configure from a separate build directory!                    *])
+  AC_MSG_WARN([*                                                                                    *])
+  AC_MSG_WARN([**************************************************************************************])
+fi
+
 dnl Default to empty (i.e. assigning the null string to) CFLAGS and CXXFLAGS,
 dnl instead of the autoconf default (for example, '-g -O2' for CC=gcc).
 : ${CFLAGS=}
