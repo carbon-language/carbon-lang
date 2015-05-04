@@ -118,7 +118,9 @@ These are major API changes that have happened since the 3.6 release of
 Clang. If upgrading an external codebase that uses Clang as a library,
 this section should help get you past the largest hurdles of upgrading.
 
-...
+-  Some of the `PPCallbacks` interface now deals in `MacroDefinition`
+   objects instead of `MacroDirective` objects. This allows preserving
+   full information on macros imported from modules.
 
 libclang
 --------
