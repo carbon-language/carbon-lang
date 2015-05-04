@@ -105,21 +105,7 @@ class AnnotatedLine;
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceding it.
 struct FormatToken {
-  FormatToken()
-      : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
-        ColumnWidth(0), LastLineColumnWidth(0), IsMultiline(false),
-        IsFirst(false), MustBreakBefore(false), IsUnterminatedLiteral(false),
-        BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
-        CanBreakBefore(false), ClosesTemplateDeclaration(false),
-        ParameterCount(0), BlockParameterCount(0), ParentBracket(tok::unknown),
-        PackingKind(PPK_Inconclusive), TotalLength(0), UnbreakableTailLength(0),
-        BindingStrength(0), NestingLevel(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0),
-        StartsBinaryExpression(false), EndsBinaryExpression(false),
-        OperatorIndex(0), LastOperator(false),
-        PartOfMultiVariableDeclStmt(false), IsForEachMacro(false),
-        MatchingParen(nullptr), Previous(nullptr), Next(nullptr),
-        Decision(FD_Unformatted), Finalized(false) {}
+  FormatToken() {}
 
   /// \brief The \c Token.
   Token Tok;
@@ -128,48 +114,39 @@ struct FormatToken {
   ///
   /// This can be used to determine what the user wrote in the original code
   /// and thereby e.g. leave an empty line between two function definitions.
-  unsigned NewlinesBefore;
+  unsigned NewlinesBefore = 0;
 
   /// \brief Whether there is at least one unescaped newline before the \c
   /// Token.
-  bool HasUnescapedNewline;
+  bool HasUnescapedNewline = false;
 
   /// \brief The range of the whitespace immediately preceding the \c Token.
   SourceRange WhitespaceRange;
 
   /// \brief The offset just past the last '\n' in this token's leading
   /// whitespace (relative to \c WhiteSpaceStart). 0 if there is no '\n'.
-  unsigned LastNewlineOffset;
+  unsigned LastNewlineOffset = 0;
 
   /// \brief The width of the non-whitespace parts of the token (or its first
   /// line for multi-line tokens) in columns.
   /// We need this to correctly measure number of columns a token spans.
-  unsigned ColumnWidth;
+  unsigned ColumnWidth = 0;
 
   /// \brief Contains the width in columns of the last line of a multi-line
   /// token.
-  unsigned LastLineColumnWidth;
+  unsigned LastLineColumnWidth = 0;
 
   /// \brief Whether the token text contains newlines (escaped or not).
-  bool IsMultiline;
+  bool IsMultiline = false;
 
   /// \brief Indicates that this is the first token.
-  bool IsFirst;
+  bool IsFirst = false;
 
   /// \brief Whether there must be a line break before this token.
   ///
   /// This happens for example when a preprocessor directive ended directly
   /// before the token.
-  bool MustBreakBefore;
-
-  /// \brief Returns actual token start location without leading escaped
-  /// newlines and whitespace.
-  ///
-  /// This can be different to Tok.getLocation(), which includes leading escaped
-  /// newlines.
-  SourceLocation getStartOfNonWhitespace() const {
-    return WhitespaceRange.getEnd();
-  }
+  bool MustBreakBefore = false;
 
   /// \brief The raw text of the token.
   ///
@@ -178,73 +155,74 @@ struct FormatToken {
   StringRef TokenText;
 
   /// \brief Set to \c true if this token is an unterminated literal.
-  bool IsUnterminatedLiteral;
+  bool IsUnterminatedLiteral = 0;
 
   /// \brief Contains the kind of block if this token is a brace.
-  BraceBlockKind BlockKind;
+  BraceBlockKind BlockKind = BK_Unknown;
 
-  TokenType Type;
+  TokenType Type = TT_Unknown;
 
   /// \brief The number of spaces that should be inserted before this token.
-  unsigned SpacesRequiredBefore;
+  unsigned SpacesRequiredBefore = 0;
 
   /// \brief \c true if it is allowed to break before this token.
-  bool CanBreakBefore;
+  bool CanBreakBefore = false;
 
-  bool ClosesTemplateDeclaration;
+  /// \brief \c true if this is the ">" of "template<..>".
+  bool ClosesTemplateDeclaration = false;
 
   /// \brief Number of parameters, if this is "(", "[" or "<".
   ///
   /// This is initialized to 1 as we don't need to distinguish functions with
   /// 0 parameters from functions with 1 parameter. Thus, we can simply count
   /// the number of commas.
-  unsigned ParameterCount;
+  unsigned ParameterCount = 0;
 
   /// \brief Number of parameters that are nested blocks,
   /// if this is "(", "[" or "<".
-  unsigned BlockParameterCount;
+  unsigned BlockParameterCount = 0;
 
   /// \brief If this is a bracket ("<", "(", "[" or "{"), contains the kind of
   /// the surrounding bracket.
-  tok::TokenKind ParentBracket;
+  tok::TokenKind ParentBracket = tok::unknown;
 
   /// \brief A token can have a special role that can carry extra information
   /// about the token's formatting.
   std::unique_ptr<TokenRole> Role;
 
   /// \brief If this is an opening parenthesis, how are the parameters packed?
-  ParameterPackingKind PackingKind;
+  ParameterPackingKind PackingKind = PPK_Inconclusive;
 
   /// \brief The total length of the unwrapped line up to and including this
   /// token.
-  unsigned TotalLength;
+  unsigned TotalLength = 0;
 
   /// \brief The original 0-based column of this token, including expanded tabs.
   /// The configured TabWidth is used as tab width.
-  unsigned OriginalColumn;
+  unsigned OriginalColumn = 0;
 
   /// \brief The length of following tokens until the next natural split point,
   /// or the next token that can be broken.
-  unsigned UnbreakableTailLength;
+  unsigned UnbreakableTailLength = 0;
 
   // FIXME: Come up with a 'cleaner' concept.
   /// \brief The binding strength of a token. This is a combined value of
   /// operator precedence, parenthesis nesting, etc.
-  unsigned BindingStrength;
+  unsigned BindingStrength = 0;
 
   /// \brief The nesting level of this token, i.e. the number of surrounding (),
   /// [], {} or <>.
-  unsigned NestingLevel;
+  unsigned NestingLevel = 0;
 
   /// \brief Penalty for inserting a line break before this token.
-  unsigned SplitPenalty;
+  unsigned SplitPenalty = 0;
 
   /// \brief If this is the first ObjC selector name in an ObjC method
   /// definition or call, this contains the length of the longest name.
   ///
   /// This being set to 0 means that the selectors should not be colon-aligned,
   /// e.g. because several of them are block-type.
-  unsigned LongestObjCSelectorName;
+  unsigned LongestObjCSelectorName = 0;
 
   /// \brief Stores the number of required fake parentheses and the
   /// corresponding operator precedence.
@@ -253,29 +231,51 @@ struct FormatToken {
   /// reverse order, i.e. inner fake parenthesis first.
   SmallVector<prec::Level, 4> FakeLParens;
   /// \brief Insert this many fake ) after this token for correct indentation.
-  unsigned FakeRParens;
+  unsigned FakeRParens = 0;
 
   /// \brief \c true if this token starts a binary expression, i.e. has at least
   /// one fake l_paren with a precedence greater than prec::Unknown.
-  bool StartsBinaryExpression;
+  bool StartsBinaryExpression = false;
   /// \brief \c true if this token ends a binary expression.
-  bool EndsBinaryExpression;
+  bool EndsBinaryExpression = false;
 
   /// \brief Is this is an operator (or "."/"->") in a sequence of operators
   /// with the same precedence, contains the 0-based operator index.
-  unsigned OperatorIndex;
+  unsigned OperatorIndex = 0;
 
   /// \brief Is this the last operator (or "."/"->") in a sequence of operators
   /// with the same precedence?
-  bool LastOperator;
+  bool LastOperator = false;
 
   /// \brief Is this token part of a \c DeclStmt defining multiple variables?
   ///
   /// Only set if \c Type == \c TT_StartOfName.
-  bool PartOfMultiVariableDeclStmt;
+  bool PartOfMultiVariableDeclStmt = false;
 
   /// \brief Is this a foreach macro?
-  bool IsForEachMacro;
+  bool IsForEachMacro = false;
+
+
+  /// \brief If this is a bracket, this points to the matching one.
+  FormatToken *MatchingParen = nullptr;
+
+  /// \brief The previous token in the unwrapped line.
+  FormatToken *Previous = nullptr;
+
+  /// \brief The next token in the unwrapped line.
+  FormatToken *Next = nullptr;
+
+  /// \brief If this token starts a block, this contains all the unwrapped lines
+  /// in it.
+  SmallVector<AnnotatedLine *, 1> Children;
+
+  /// \brief Stores the formatting decision for the token once it was made.
+  FormatDecision Decision = FD_Unformatted;
+
+  /// \brief If \c true, this token has been fully formatted (indented and
+  /// potentially re-formatted inside), and we do not allow further formatting
+  /// changes.
+  bool Finalized = false;
 
   bool is(tok::TokenKind Kind) const { return Tok.is(Kind); }
   bool is(TokenType TT) const { return Type == TT; }
@@ -376,6 +376,15 @@ struct FormatToken {
     }
   }
 
+  /// \brief Returns actual token start location without leading escaped
+  /// newlines and whitespace.
+  ///
+  /// This can be different to Tok.getLocation(), which includes leading escaped
+  /// newlines.
+  SourceLocation getStartOfNonWhitespace() const {
+    return WhitespaceRange.getEnd();
+  }
+
   prec::Level getPrecedence() const {
     return getBinOpPrecedence(Tok.getKind(), true, true);
   }
@@ -409,21 +418,6 @@ struct FormatToken {
   bool closesBlockTypeList(const FormatStyle &Style) const {
     return MatchingParen && MatchingParen->opensBlockTypeList(Style);
   }
-
-  FormatToken *MatchingParen;
-
-  FormatToken *Previous;
-  FormatToken *Next;
-
-  SmallVector<AnnotatedLine *, 1> Children;
-
-  /// \brief Stores the formatting decision for the token once it was made.
-  FormatDecision Decision;
-
-  /// \brief If \c true, this token has been fully formatted (indented and
-  /// potentially re-formatted inside), and we do not allow further formatting
-  /// changes.
-  bool Finalized;
 
 private:
   // Disallow copying.
