@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-int printf(const char * restrict format, ...);
+int printf(const char * __restrict format, ...);
 
 typedef struct {
     int a;

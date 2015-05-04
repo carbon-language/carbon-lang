@@ -121,7 +121,6 @@ class InlineTest(TestBase):
         self.buildDsym()
         self.do_test()
 
-    @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def __test_with_dwarf(self):
         self.using_dsym = False
         self.BuildMakefile()
