@@ -168,6 +168,10 @@ void Input::endMapping() {
   }
 }
 
+void Input::beginFlowMapping() { beginMapping(); }
+
+void Input::endFlowMapping() { endMapping(); }
+
 unsigned Input::beginSequence() {
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode))
     return SQ->Entries.size();
@@ -393,6 +397,7 @@ Output::Output(raw_ostream &yout, void *context)
       Out(yout),
       Column(0),
       ColumnAtFlowStart(0),
+      ColumnAtMapFlowStart(0),
       NeedBitValueComma(false),
       NeedFlowSequenceComma(false),
       EnumerationMatchFound(false),
@@ -427,8 +432,13 @@ bool Output::preflightKey(const char *Key, bool Required, bool SameAsDefault,
                           bool &UseDefault, void *&) {
   UseDefault = false;
   if (Required || !SameAsDefault) {
-    this->newLineCheck();
-    this->paddedKey(Key);
+    auto State = StateStack.back();
+    if (State == inFlowMapFirstKey || State == inFlowMapOtherKey) {
+      flowKey(Key);
+    } else {
+      this->newLineCheck();
+      this->paddedKey(Key);
+    }
     return true;
   }
   return false;
@@ -438,7 +448,22 @@ void Output::postflightKey(void *) {
   if (StateStack.back() == inMapFirstKey) {
     StateStack.pop_back();
     StateStack.push_back(inMapOtherKey);
+  } else if (StateStack.back() == inFlowMapFirstKey) {
+    StateStack.pop_back();
+    StateStack.push_back(inFlowMapOtherKey);
   }
+}
+
+void Output::beginFlowMapping() {
+  StateStack.push_back(inFlowMapFirstKey);
+  this->newLineCheck();
+  ColumnAtMapFlowStart = Column;
+  output("{ ");
+}
+
+void Output::endFlowMapping() {
+  StateStack.pop_back();
+  this->outputUpToEndOfLine(" }");
 }
 
 void Output::beginDocuments() {
@@ -607,7 +632,9 @@ void Output::output(StringRef s) {
 
 void Output::outputUpToEndOfLine(StringRef s) {
   this->output(s);
-  if (StateStack.empty() || StateStack.back() != inFlowSeq)
+  if (StateStack.empty() || (StateStack.back() != inFlowSeq &&
+                             StateStack.back() != inFlowMapFirstKey &&
+                             StateStack.back() != inFlowMapOtherKey))
     NeedsNewLine = true;
 }
 
@@ -634,7 +661,8 @@ void Output::newLineCheck() {
   if (StateStack.back() == inSeq) {
     OutputDash = true;
   } else if ((StateStack.size() > 1) && ((StateStack.back() == inMapFirstKey) ||
-             (StateStack.back() == inFlowSeq)) &&
+             (StateStack.back() == inFlowSeq) ||
+             (StateStack.back() == inFlowMapFirstKey)) &&
              (StateStack[StateStack.size() - 2] == inSeq)) {
     --Indent;
     OutputDash = true;
@@ -657,6 +685,20 @@ void Output::paddedKey(StringRef key) {
     output(&spaces[key.size()]);
   else
     output(" ");
+}
+
+void Output::flowKey(StringRef Key) {
+  if (StateStack.back() == inFlowMapOtherKey)
+    output(", ");
+  if (Column > 70) {
+    output("\n");
+    for (int I = 0; I < ColumnAtMapFlowStart; ++I)
+      output(" ");
+    Column = ColumnAtMapFlowStart;
+    output("  ");
+  }
+  output(Key);
+  output(": ");
 }
 
 //===----------------------------------------------------------------------===//

@@ -46,6 +46,10 @@ struct MappingTraits {
   // static void mapping(IO &io, T &fields);
   // Optionally may provide:
   // static StringRef validate(IO &io, T &fields);
+  //
+  // The optional flow flag will cause generated YAML to use a flow mapping
+  // (e.g. { a: 0, b: 1 }):
+  // static const bool flow = true;
 };
 
 
@@ -445,6 +449,9 @@ public:
   virtual bool preflightKey(const char*, bool, bool, bool &, void *&) = 0;
   virtual void postflightKey(void*) = 0;
 
+  virtual void beginFlowMapping() = 0;
+  virtual void endFlowMapping() = 0;
+
   virtual void beginEnumScalar() = 0;
   virtual bool matchEnumScalar(const char*, bool) = 0;
   virtual bool matchEnumFallback() = 0;
@@ -643,7 +650,10 @@ yamlize(IO &io, T &Val, bool) {
 template<typename T>
 typename std::enable_if<validatedMappingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
-  io.beginMapping();
+  if (has_FlowTraits<MappingTraits<T>>::value)
+    io.beginFlowMapping();
+  else
+    io.beginMapping();
   if (io.outputting()) {
     StringRef Err = MappingTraits<T>::validate(io, Val);
     if (!Err.empty()) {
@@ -657,15 +667,24 @@ yamlize(IO &io, T &Val, bool) {
     if (!Err.empty())
       io.setError(Err);
   }
-  io.endMapping();
+  if (has_FlowTraits<MappingTraits<T>>::value)
+    io.endFlowMapping();
+  else
+    io.endMapping();
 }
 
 template<typename T>
 typename std::enable_if<unvalidatedMappingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
-  io.beginMapping();
-  MappingTraits<T>::mapping(io, Val);
-  io.endMapping();
+  if (has_FlowTraits<MappingTraits<T>>::value) {
+    io.beginFlowMapping();
+    MappingTraits<T>::mapping(io, Val);
+    io.endFlowMapping();
+  } else {
+    io.beginMapping();
+    MappingTraits<T>::mapping(io, Val);
+    io.endMapping();
+  }
 }
 
 template<typename T>
@@ -900,6 +919,8 @@ private:
   void endMapping() override;
   bool preflightKey(const char *, bool, bool, bool &, void *&) override;
   void postflightKey(void *) override;
+  void beginFlowMapping() override;
+  void endFlowMapping() override;
   unsigned beginSequence() override;
   void endSequence() override;
   bool preflightElement(unsigned index, void *&) override;
@@ -1028,6 +1049,8 @@ public:
   void endMapping() override;
   bool preflightKey(const char *key, bool, bool, bool &, void *&) override;
   void postflightKey(void *) override;
+  void beginFlowMapping() override;
+  void endFlowMapping() override;
   unsigned beginSequence() override;
   void endSequence() override;
   bool preflightElement(unsigned, void *&) override;
@@ -1060,13 +1083,22 @@ private:
   void newLineCheck();
   void outputNewLine();
   void paddedKey(StringRef key);
+  void flowKey(StringRef Key);
 
-  enum InState { inSeq, inFlowSeq, inMapFirstKey, inMapOtherKey };
+  enum InState {
+    inSeq,
+    inFlowSeq,
+    inMapFirstKey,
+    inMapOtherKey,
+    inFlowMapFirstKey,
+    inFlowMapOtherKey
+  };
 
   llvm::raw_ostream       &Out;
   SmallVector<InState, 8>  StateStack;
   int                      Column;
   int                      ColumnAtFlowStart;
+  int                      ColumnAtMapFlowStart;
   bool                     NeedBitValueComma;
   bool                     NeedFlowSequenceComma;
   bool                     EnumerationMatchFound;

@@ -1367,6 +1367,91 @@ TEST(YAMLIO, TestValidatingInput) {
   EXPECT_TRUE(!!yin.error());
 }
 
+//===----------------------------------------------------------------------===//
+//  Test flow mapping
+//===----------------------------------------------------------------------===//
+
+struct FlowFooBar {
+  int foo;
+  int bar;
+
+  FlowFooBar() : foo(0), bar(0) {}
+  FlowFooBar(int foo, int bar) : foo(foo), bar(bar) {}
+};
+
+typedef std::vector<FlowFooBar> FlowFooBarSequence;
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(FlowFooBar)
+
+struct FlowFooBarDoc {
+  FlowFooBar attribute;
+  FlowFooBarSequence seq;
+};
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<FlowFooBar> {
+    static void mapping(IO &io, FlowFooBar &fb) {
+      io.mapRequired("foo", fb.foo);
+      io.mapRequired("bar", fb.bar);
+    }
+
+    static const bool flow = true;
+  };
+
+  template <>
+  struct MappingTraits<FlowFooBarDoc> {
+    static void mapping(IO &io, FlowFooBarDoc &fb) {
+      io.mapRequired("attribute", fb.attribute);
+      io.mapRequired("seq", fb.seq);
+    }
+  };
+}
+}
+
+//
+// Test writing then reading back custom mappings
+//
+TEST(YAMLIO, TestReadWriteMyFlowMapping) {
+  std::string intermediate;
+  {
+    FlowFooBarDoc doc;
+    doc.attribute = FlowFooBar(42, 907);
+    doc.seq.push_back(FlowFooBar(1, 2));
+    doc.seq.push_back(FlowFooBar(0, 0));
+    doc.seq.push_back(FlowFooBar(-1, 1024));
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << doc;
+
+    // Verify that mappings were written in flow style
+    ostr.flush();
+    llvm::StringRef flowOut(intermediate);
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("{ foo: 42, bar: 907 }"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- { foo: 1, bar: 2 }"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- { foo: 0, bar: 0 }"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("- { foo: -1, bar: 1024 }"));
+  }
+
+  {
+    Input yin(intermediate);
+    FlowFooBarDoc doc2;
+    yin >> doc2;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(doc2.attribute.foo, 42);
+    EXPECT_EQ(doc2.attribute.bar, 907);
+    EXPECT_EQ(doc2.seq.size(), 3UL);
+    EXPECT_EQ(doc2.seq[0].foo, 1);
+    EXPECT_EQ(doc2.seq[0].bar, 2);
+    EXPECT_EQ(doc2.seq[1].foo, 0);
+    EXPECT_EQ(doc2.seq[1].bar, 0);
+    EXPECT_EQ(doc2.seq[2].foo, -1);
+    EXPECT_EQ(doc2.seq[2].bar, 1024);
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //  Test error handling

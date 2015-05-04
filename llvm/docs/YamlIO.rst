@@ -723,6 +723,31 @@ because it is a programming error to have invalid struct values.
       }
     };
 
+Flow Mapping
+------------
+A YAML "flow mapping" is a mapping that uses the inline notation
+(e.g { x: 1, y: 0 } ) when written to YAML. To specify that a type should be
+written in YAML using flow mapping, your MappingTraits specialization should
+add "static const bool flow = true;". For instance:
+
+.. code-block:: c++
+
+    using llvm::yaml::MappingTraits;
+    using llvm::yaml::IO;
+
+    struct Stuff {
+      ...
+    };
+
+    template <>
+    struct MappingTraits<Stuff> {
+      static void mapping(IO &io, Stuff &stuff) {
+        ...
+      }
+
+      static const bool flow = true;
+    }
+
 
 Sequence
 ========
