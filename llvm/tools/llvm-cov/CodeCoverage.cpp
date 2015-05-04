@@ -195,7 +195,20 @@ CodeCoverageTool::createSourceFileView(StringRef SourceFile,
   return View;
 }
 
+static bool modifiedTimeGT(StringRef LHS, StringRef RHS) {
+  sys::fs::file_status Status;
+  if (sys::fs::status(LHS, Status))
+    return false;
+  auto LHSTime = Status.getLastModificationTime();
+  if (sys::fs::status(RHS, Status))
+    return false;
+  auto RHSTime = Status.getLastModificationTime();
+  return LHSTime > RHSTime;
+}
+
 std::unique_ptr<CoverageMapping> CodeCoverageTool::load() {
+  if (modifiedTimeGT(ObjectFilename, PGOFilename))
+    errs() << "warning: profile data may be out of date - object is newer\n";
   auto CoverageOrErr = CoverageMapping::load(ObjectFilename, PGOFilename,
                                              CoverageArch);
   if (std::error_code EC = CoverageOrErr.getError()) {
