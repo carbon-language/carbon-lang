@@ -1854,7 +1854,7 @@ bool Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
   char C = getAndAdvanceChar(CurPtr, Result);
   while (C != '>') {
     // Skip escaped characters.
-    if (C == '\\') {
+    if (C == '\\' && CurPtr < BufferEnd) {
       // Skip the escaped character.
       getAndAdvanceChar(CurPtr, Result);
     } else if (C == '\n' || C == '\r' ||             // Newline.
