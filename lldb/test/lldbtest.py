@@ -1425,6 +1425,30 @@ class Base(unittest2.TestCase):
             arch = 'x86_64'
         return arch
 
+    def getLldbArchitecture(self):
+        """Returns the architecture of the lldb binary."""
+        if not hasattr(self, 'lldbArchitecture'):
+
+            # spawn local process
+            command = [
+                self.lldbHere,
+                "-o",
+                "file " + self.lldbHere,
+                "-o",
+                "quit"
+            ]
+
+            output = check_output(command)
+            str = output.decode("utf-8");
+
+            for line in str.splitlines():
+                m = re.search("Current executable set to '.*' \\((.*)\\)\\.", line)
+                if m:
+                    self.lldbArchitecture = m.group(1)
+                    break
+
+        return self.lldbArchitecture
+
     def getCompiler(self):
         """Returns the compiler in effect the test suite is running with."""
         module = builder_module()

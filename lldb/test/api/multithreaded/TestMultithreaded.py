@@ -15,23 +15,18 @@ class SBBreakpointCallbackCase(TestBase):
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
         self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
         self.inferior = 'inferior_program'
-        if self.getArchitecture() != "i386":
-          self.buildProgram('inferior.cpp', self.inferior)
-          self.addTearDownHook(lambda: os.remove(self.inferior))
+        if self.getLldbArchitecture() == self.getArchitecture():
+            self.buildProgram('inferior.cpp', self.inferior)
+            self.addTearDownHook(lambda: os.remove(self.inferior))
 
-    @unittest2.expectedFailure("llvm.org/pr16000: SBBreakpoint.SetCallback() does nothing")
-    @skipIfi386
     @skipIfRemote
-    @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     @skipIfNoSBHeaders
     def test_breakpoint_callback(self):
         """Test the that SBBreakpoint callback is invoked when a breakpoint is hit. """
         self.build_and_test('driver.cpp test_breakpoint_callback.cpp',
                             'test_breakpoint_callback')
 
-    @skipIfi386
     @skipIfRemote
-    @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     @skipIfNoSBHeaders
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     def test_sb_api_listener_event_description(self):
@@ -40,9 +35,7 @@ class SBBreakpointCallbackCase(TestBase):
                             'test_listener_event_description')
         pass
 
-    @skipIfi386
     @skipIfRemote
-    @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     @skipIfNoSBHeaders
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     def test_sb_api_listener_event_process_state(self):
@@ -54,9 +47,7 @@ class SBBreakpointCallbackCase(TestBase):
         pass
 
 
-    @skipIfi386
     @skipIfRemote
-    @skipIfLinuxClang # buildbot clang version unable to use libstdc++ with c++11
     @skipIfNoSBHeaders
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
     def test_sb_api_listener_resume(self):
@@ -67,6 +58,14 @@ class SBBreakpointCallbackCase(TestBase):
 
     def build_and_test(self, sources, test_name, args = None):
         """ Build LLDB test from sources, and run expecting 0 exit code """
+
+        # These tests link against host lldb API.
+        # Compiler's target triple must match liblldb triple
+        # because remote is disabled, we can assume that the os is the same
+        # still need to check architecture
+        if self.getLldbArchitecture() != self.getArchitecture():
+            self.skipTest("This test is only run if the target arch is the same as the lldb binary arch")
+
         self.buildDriver(sources, test_name)
         self.addTearDownHook(lambda: os.remove(test_name))
 
