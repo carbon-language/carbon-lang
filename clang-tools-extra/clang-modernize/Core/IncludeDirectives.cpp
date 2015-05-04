@@ -144,17 +144,15 @@ private:
   }
 
   void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-              const MacroDirective *MD) override {
+              const MacroDefinition &MD) override {
     Guard->Count++;
 
     // If this #ifndef is the top-most directive and the symbol isn't defined
     // store those information in the guard detection, the next step will be to
     // check for the define.
-    if (Guard->Count == 1 && MD == nullptr) {
+    if (Guard->Count == 1 && !MD) {
       IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
 
-      if (MII->hasMacroDefinition())
-        return;
       Guard->IfndefLoc = Loc;
       Guard->TheMacro = MII;
     }
@@ -196,14 +194,14 @@ private:
     Guard->EndifLoc = Loc;
   }
 
-  void MacroExpands(const Token &, const MacroDirective *, SourceRange,
+  void MacroExpands(const Token &, const MacroDefinition &, SourceRange,
                     const MacroArgs *) override {
     Guard->Count++;
   }
-  void MacroUndefined(const Token &, const MacroDirective *) override {
+  void MacroUndefined(const Token &, const MacroDefinition &) override {
     Guard->Count++;
   }
-  void Defined(const Token &, const MacroDirective *, SourceRange) override {
+  void Defined(const Token &, const MacroDefinition &, SourceRange) override {
     Guard->Count++;
   }
   void If(SourceLocation, SourceRange, ConditionValueKind) override {
@@ -213,7 +211,7 @@ private:
             SourceLocation) override {
     Guard->Count++;
   }
-  void Ifdef(SourceLocation, const Token &, const MacroDirective *) override {
+  void Ifdef(SourceLocation, const Token &, const MacroDefinition &) override {
     Guard->Count++;
   }
   void Else(SourceLocation, SourceLocation) override {

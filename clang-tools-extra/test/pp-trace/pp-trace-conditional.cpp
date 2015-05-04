@@ -271,14 +271,14 @@
 // CHECK-NEXT: - Callback: Ifdef
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:55:2"
 // CHECK-NEXT:   MacroNameTok: MACRO
-// CHECK-NEXT:   MacroDirective: MD_Define
+// CHECK-NEXT:   MacroDefinition: [(local)]
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:56:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:55:2"
 // CHECK-NEXT: - Callback: Ifdef
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:57:2"
 // CHECK-NEXT:   MacroNameTok: NO_MACRO
-// CHECK-NEXT:   MacroDirective: (null)
+// CHECK-NEXT:   MacroDefinition: []
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:58:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:57:2"
@@ -287,7 +287,7 @@
 // CHECK-NEXT: - Callback: Ifndef
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:59:2"
 // CHECK-NEXT:   MacroNameTok: MACRO
-// CHECK-NEXT:   MacroDirective: MD_Define
+// CHECK-NEXT:   MacroDefinition: [(local)]
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:60:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:59:2"
@@ -296,7 +296,7 @@
 // CHECK-NEXT: - Callback: Ifndef
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:61:2"
 // CHECK-NEXT:   MacroNameTok: NO_MACRO
-// CHECK-NEXT:   MacroDirective: (null)
+// CHECK-NEXT:   MacroDefinition: []
 // CHECK-NEXT: - Callback: Endif
 // CHECK-NEXT:   Loc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:62:2"
 // CHECK-NEXT:   IfLoc: "{{.*}}{{[/\\]}}pp-trace-conditional.cpp:61:2"

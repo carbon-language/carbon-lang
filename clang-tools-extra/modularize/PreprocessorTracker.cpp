@@ -763,10 +763,10 @@ public:
                    clang::SrcMgr::CharacteristicKind FileType,
                    clang::FileID PrevFID = clang::FileID()) override;
   void MacroExpands(const clang::Token &MacroNameTok,
-                    const clang::MacroDirective *MD, clang::SourceRange Range,
+                    const clang::MacroDefinition &MD, clang::SourceRange Range,
                     const clang::MacroArgs *Args) override;
   void Defined(const clang::Token &MacroNameTok,
-               const clang::MacroDirective *MD,
+               const clang::MacroDefinition &MD,
                clang::SourceRange Range) override;
   void If(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
           clang::PPCallbacks::ConditionValueKind ConditionResult) override;
@@ -774,9 +774,9 @@ public:
             clang::PPCallbacks::ConditionValueKind ConditionResult,
             clang::SourceLocation IfLoc) override;
   void Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-             const clang::MacroDirective *MD) override;
+             const clang::MacroDefinition &MD) override;
   void Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-              const clang::MacroDirective *MD) override;
+              const clang::MacroDefinition &MD) override;
 
 private:
   PreprocessorTrackerImpl &PPTracker;
@@ -1336,7 +1336,7 @@ void PreprocessorCallbacks::FileChanged(
 
 // Handle macro expansion.
 void PreprocessorCallbacks::MacroExpands(const clang::Token &MacroNameTok,
-                                         const clang::MacroDirective *MD,
+                                         const clang::MacroDefinition &MD,
                                          clang::SourceRange Range,
                                          const clang::MacroArgs *Args) {
   clang::SourceLocation Loc = Range.getBegin();
@@ -1344,7 +1344,7 @@ void PreprocessorCallbacks::MacroExpands(const clang::Token &MacroNameTok,
   if (!Loc.isFileID())
     return;
   clang::IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
-  const clang::MacroInfo *MI = PP.getMacroInfo(II);
+  const clang::MacroInfo *MI = MD.getMacroInfo();
   std::string MacroName = II->getName().str();
   std::string Unexpanded(getMacroUnexpandedString(Range, PP, MacroName, MI));
   std::string Expanded(getMacroExpandedString(PP, MacroName, MI, Args));
@@ -1354,11 +1354,11 @@ void PreprocessorCallbacks::MacroExpands(const clang::Token &MacroNameTok,
 }
 
 void PreprocessorCallbacks::Defined(const clang::Token &MacroNameTok,
-                                    const clang::MacroDirective *MD,
+                                    const clang::MacroDefinition &MD,
                                     clang::SourceRange Range) {
   clang::SourceLocation Loc(Range.getBegin());
   clang::IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
-  const clang::MacroInfo *MI = PP.getMacroInfo(II);
+  const clang::MacroInfo *MI = MD.getMacroInfo();
   std::string MacroName = II->getName().str();
   std::string Unexpanded(getSourceString(PP, Range));
   PPTracker.addMacroExpansionInstance(
@@ -1388,7 +1388,7 @@ void PreprocessorCallbacks::Elif(clang::SourceLocation Loc,
 
 void PreprocessorCallbacks::Ifdef(clang::SourceLocation Loc,
                                   const clang::Token &MacroNameTok,
-                                  const clang::MacroDirective *MD) {
+                                  const clang::MacroDefinition &MD) {
   clang::PPCallbacks::ConditionValueKind IsDefined =
     (MD ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(
@@ -1399,7 +1399,7 @@ void PreprocessorCallbacks::Ifdef(clang::SourceLocation Loc,
 
 void PreprocessorCallbacks::Ifndef(clang::SourceLocation Loc,
                                    const clang::Token &MacroNameTok,
-                                   const clang::MacroDirective *MD) {
+                                   const clang::MacroDefinition &MD) {
   clang::PPCallbacks::ConditionValueKind IsNotDefined =
     (!MD ? clang::PPCallbacks::CVK_True : clang::PPCallbacks::CVK_False );
   PPTracker.addConditionalExpansionInstance(

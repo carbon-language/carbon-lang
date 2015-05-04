@@ -129,14 +129,14 @@ public:
   void PragmaWarningPush(clang::SourceLocation Loc, int Level) override;
   void PragmaWarningPop(clang::SourceLocation Loc) override;
   void MacroExpands(const clang::Token &MacroNameTok,
-                    const clang::MacroDirective *MD, clang::SourceRange Range,
+                    const clang::MacroDefinition &MD, clang::SourceRange Range,
                     const clang::MacroArgs *Args) override;
   void MacroDefined(const clang::Token &MacroNameTok,
                     const clang::MacroDirective *MD) override;
   void MacroUndefined(const clang::Token &MacroNameTok,
-                      const clang::MacroDirective *MD) override;
+                      const clang::MacroDefinition &MD) override;
   void Defined(const clang::Token &MacroNameTok,
-               const clang::MacroDirective *MD,
+               const clang::MacroDefinition &MD,
                clang::SourceRange Range) override;
   void SourceRangeSkipped(clang::SourceRange Range) override;
   void If(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
@@ -144,9 +144,9 @@ public:
   void Elif(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
             ConditionValueKind ConditionValue, clang::SourceLocation IfLoc) override;
   void Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-             const clang::MacroDirective *MD) override;
+             const clang::MacroDefinition &MD) override;
   void Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-              const clang::MacroDirective *MD) override;
+              const clang::MacroDefinition &MD) override;
   void Else(clang::SourceLocation Loc,
             clang::SourceLocation IfLoc) override;
   void Endif(clang::SourceLocation Loc,
@@ -204,6 +204,9 @@ public:
 
   /// \brief Append a MacroDirective argument to the top trace item.
   void appendArgument(const char *Name, const clang::MacroDirective *Value);
+
+  /// \brief Append a MacroDefinition argument to the top trace item.
+  void appendArgument(const char *Name, const clang::MacroDefinition &Value);
 
   /// \brief Append a MacroArgs argument to the top trace item.
   void appendArgument(const char *Name, const clang::MacroArgs *Value);

@@ -58,7 +58,7 @@ public:
   }
 
   void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-              const MacroDirective *MD) override {
+              const MacroDefinition &MD) override {
     if (MD)
       return;
 
@@ -71,7 +71,7 @@ public:
                     const MacroDirective *MD) override {
     // Record all defined macros. We store the whole token to get info on the
     // name later.
-    Macros.emplace_back(MacroNameTok, MD);
+    Macros.emplace_back(MacroNameTok, MD->getMacroInfo());
   }
 
   void Endif(SourceLocation Loc, SourceLocation IfLoc) override {
@@ -84,7 +84,7 @@ public:
     SourceManager &SM = PP->getSourceManager();
 
     for (const auto &MacroEntry : Macros) {
-      const MacroInfo *MI = MacroEntry.second->getMacroInfo();
+      const MacroInfo *MI = MacroEntry.second;
 
       // We use clang's header guard detection. This has the advantage of also
       // emitting a warning for cases where a pseudo header guard is found but
@@ -268,7 +268,7 @@ public:
   }
 
 private:
-  std::vector<std::pair<Token, const MacroDirective *>> Macros;
+  std::vector<std::pair<Token, const MacroInfo *>> Macros;
   llvm::StringMap<const FileEntry *> Files;
   std::map<const IdentifierInfo *, std::pair<SourceLocation, SourceLocation>>
       Ifndefs;
