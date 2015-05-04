@@ -9,10 +9,10 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/ExecutionEngine/Orc/CloneSubModule.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <set>
 #include <sstream>
 
@@ -32,9 +32,11 @@ GlobalVariable* createImplPointer(PointerType &PT, Module &M,
                                   const Twine &Name, Constant *Initializer) {
   if (!Initializer)
     Initializer = Constant::getNullValue(&PT);
-  return new GlobalVariable(M, &PT, false, GlobalValue::ExternalLinkage,
-                            Initializer, Name, nullptr,
-                            GlobalValue::NotThreadLocal, 0, true);
+  auto IP = new GlobalVariable(M, &PT, false, GlobalValue::ExternalLinkage,
+                               Initializer, Name, nullptr,
+                               GlobalValue::NotThreadLocal, 0, true);
+  IP->setVisibility(GlobalValue::HiddenVisibility);
+  return IP;
 }
 
 void makeStub(Function &F, GlobalVariable &ImplPointer) {
@@ -50,7 +52,10 @@ void makeStub(Function &F, GlobalVariable &ImplPointer) {
   CallInst *Call = Builder.CreateCall(ImplAddr, CallArgs);
   Call->setTailCall();
   Call->setAttributes(F.getAttributes());
-  Builder.CreateRet(Call);
+  if (F.getReturnType()->isVoidTy())
+    Builder.CreateRetVoid();
+  else
+    Builder.CreateRet(Call);
 }
 
 // Utility class for renaming global values and functions during partitioning.
@@ -84,83 +89,94 @@ private:
   DenseMap<const Value*, std::string> Names;
 };
 
-void partition(Module &M, const ModulePartitionMap &PMap) {
-
-  GlobalRenamer Renamer;
-
-  for (auto &KVPair : PMap) {
-
-    auto ExtractGlobalVars =
-      [&](GlobalVariable &New, const GlobalVariable &Orig,
-          ValueToValueMapTy &VMap) {
-        if (KVPair.second.count(&Orig)) {
-          copyGVInitializer(New, Orig, VMap);
-        }
-        if (New.hasLocalLinkage()) {
-          if (Renamer.needsRenaming(New))
-            New.setName(Renamer.getRename(Orig));
-          New.setLinkage(GlobalValue::ExternalLinkage);
-          New.setVisibility(GlobalValue::HiddenVisibility);
-        }
-        assert(!Renamer.needsRenaming(New) && "Invalid global name.");
-      };
-
-    auto ExtractFunctions =
-      [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
-        if (KVPair.second.count(&Orig))
-          copyFunctionBody(New, Orig, VMap);
-        if (New.hasLocalLinkage()) {
-          if (Renamer.needsRenaming(New))
-            New.setName(Renamer.getRename(Orig));
-          New.setLinkage(GlobalValue::ExternalLinkage);
-          New.setVisibility(GlobalValue::HiddenVisibility);
-        }
-        assert(!Renamer.needsRenaming(New) && "Invalid function name.");
-      };
-
-    CloneSubModule(*KVPair.first, M, ExtractGlobalVars, ExtractFunctions,
-                   false);
+static void raiseVisibilityOnValue(GlobalValue &V, GlobalRenamer &R) {
+  if (V.hasLocalLinkage()) {
+    if (R.needsRenaming(V))
+      V.setName(R.getRename(V));
+    V.setLinkage(GlobalValue::ExternalLinkage);
+    V.setVisibility(GlobalValue::HiddenVisibility);
   }
+  V.setUnnamedAddr(false);
+  assert(!R.needsRenaming(V) && "Invalid global name.");
 }
 
-FullyPartitionedModule fullyPartition(Module &M) {
-  FullyPartitionedModule MP;
+void makeAllSymbolsExternallyAccessible(Module &M) {
+  GlobalRenamer Renamer;
 
-  ModulePartitionMap PMap;
+  for (auto &F : M)
+    raiseVisibilityOnValue(F, Renamer);
 
-  for (auto &F : M) {
+  for (auto &GV : M.globals())
+    raiseVisibilityOnValue(GV, Renamer);
+}
 
-    if (F.isDeclaration())
-      continue;
+Function* cloneFunctionDecl(Module &Dst, const Function &F,
+                            ValueToValueMapTy *VMap) {
+  assert(F.getParent() != &Dst && "Can't copy decl over existing function.");
+  Function *NewF =
+    Function::Create(cast<FunctionType>(F.getType()->getElementType()),
+                     F.getLinkage(), F.getName(), &Dst);
+  NewF->copyAttributesFrom(&F);
 
-    std::string NewModuleName = (M.getName() + "." + F.getName()).str();
-    MP.Functions.push_back(
-      llvm::make_unique<Module>(NewModuleName, M.getContext()));
-    MP.Functions.back()->setDataLayout(M.getDataLayout());
-    PMap[MP.Functions.back().get()].insert(&F);
+  if (VMap) {
+    (*VMap)[&F] = NewF;
+    auto NewArgI = NewF->arg_begin();
+    for (auto ArgI = F.arg_begin(), ArgE = F.arg_end(); ArgI != ArgE;
+         ++ArgI, ++NewArgI)
+      (*VMap)[ArgI] = NewArgI;
   }
 
-  MP.GlobalVars =
-    llvm::make_unique<Module>((M.getName() + ".globals_and_stubs").str(),
-                              M.getContext());
-  MP.GlobalVars->setDataLayout(M.getDataLayout());
+  return NewF;
+}
 
-  MP.Commons =
-    llvm::make_unique<Module>((M.getName() + ".commons").str(), M.getContext());
-  MP.Commons->setDataLayout(M.getDataLayout());
+void moveFunctionBody(Function &OrigF, ValueToValueMapTy &VMap,
+                      ValueMaterializer *Materializer,
+                      Function *NewF) {
+  assert(!OrigF.isDeclaration() && "Nothing to move");
+  if (!NewF)
+    NewF = cast<Function>(VMap[&OrigF]);
+  else
+    assert(VMap[&OrigF] == NewF && "Incorrect function mapping in VMap.");
+  assert(NewF && "Function mapping missing from VMap.");
+  assert(NewF->getParent() != OrigF.getParent() &&
+         "moveFunctionBody should only be used to move bodies between "
+         "modules.");
 
-  // Make sure there's at least an empty set for the stubs map or we'll fail
-  // to clone anything for it (including the decls).
-  PMap[MP.GlobalVars.get()] = ModulePartitionMap::mapped_type();
-  for (auto &GV : M.globals())
-    if (GV.getLinkage() == GlobalValue::CommonLinkage)
-      PMap[MP.Commons.get()].insert(&GV);
-    else
-      PMap[MP.GlobalVars.get()].insert(&GV);
+  SmallVector<ReturnInst *, 8> Returns; // Ignore returns cloned.
+  CloneFunctionInto(NewF, &OrigF, VMap, /*ModuleLevelChanges=*/true, Returns,
+                    "", nullptr, nullptr, Materializer);
+  OrigF.deleteBody();
+}
 
-  partition(M, PMap);
+GlobalVariable* cloneGlobalVariableDecl(Module &Dst, const GlobalVariable &GV,
+                                        ValueToValueMapTy *VMap) {
+  assert(GV.getParent() != &Dst && "Can't copy decl over existing global var.");
+  GlobalVariable *NewGV = new GlobalVariable(
+      Dst, GV.getType()->getElementType(), GV.isConstant(),
+      GV.getLinkage(), nullptr, GV.getName(), nullptr,
+      GV.getThreadLocalMode(), GV.getType()->getAddressSpace());
+  NewGV->copyAttributesFrom(&GV);
+  if (VMap)
+    (*VMap)[&GV] = NewGV;
+  return NewGV;
+}
 
-  return MP;
+void moveGlobalVariableInitializer(GlobalVariable &OrigGV,
+                                   ValueToValueMapTy &VMap,
+                                   ValueMaterializer *Materializer,
+                                   GlobalVariable *NewGV) {
+  assert(OrigGV.hasInitializer() && "Nothing to move");
+  if (!NewGV)
+    NewGV = cast<GlobalVariable>(VMap[&OrigGV]);
+  else
+    assert(VMap[&OrigGV] == NewGV &&
+           "Incorrect global variable mapping in VMap.");
+  assert(NewGV->getParent() != OrigGV.getParent() &&
+         "moveGlobalVariable should only be used to move initializers between "
+         "modules");
+
+  NewGV->setInitializer(MapValue(OrigGV.getInitializer(), VMap, RF_None,
+                                 nullptr, Materializer));
 }
 
 } // End namespace orc.

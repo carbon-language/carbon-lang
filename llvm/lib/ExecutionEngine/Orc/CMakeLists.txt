@@ -1,5 +1,4 @@
 add_llvm_library(LLVMOrcJIT
-  CloneSubModule.cpp
   ExecutionUtils.cpp
   IndirectionUtils.cpp
   OrcMCJITReplacement.cpp
