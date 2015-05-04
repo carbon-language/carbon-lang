@@ -41,6 +41,7 @@ enum TokenType {
   TT_CtorInitializerComma,
   TT_DesignatedInitializerPeriod,
   TT_DictLiteral,
+  TT_ForEachMacro,
   TT_FunctionDeclarationName,
   TT_FunctionLBrace,
   TT_FunctionTypeLParen,
@@ -251,10 +252,6 @@ struct FormatToken {
   ///
   /// Only set if \c Type == \c TT_StartOfName.
   bool PartOfMultiVariableDeclStmt = false;
-
-  /// \brief Is this a foreach macro?
-  bool IsForEachMacro = false;
-
 
   /// \brief If this is a bracket, this points to the matching one.
   FormatToken *MatchingParen = nullptr;

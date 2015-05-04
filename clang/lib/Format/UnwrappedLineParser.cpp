@@ -744,7 +744,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     }
     break;
   case tok::identifier:
-    if (FormatTok->IsForEachMacro) {
+    if (FormatTok->is(TT_ForEachMacro)) {
       parseForOrWhileLoop();
       return;
     }
@@ -1323,8 +1323,7 @@ void UnwrappedLineParser::parseNew() {
 }
 
 void UnwrappedLineParser::parseForOrWhileLoop() {
-  assert((FormatTok->Tok.is(tok::kw_for) || FormatTok->Tok.is(tok::kw_while) ||
-          FormatTok->IsForEachMacro) &&
+  assert(FormatTok->isOneOf(tok::kw_for, tok::kw_while, TT_ForEachMacro) &&
          "'for', 'while' or foreach macro expected");
   nextToken();
   if (FormatTok->Tok.is(tok::l_paren))

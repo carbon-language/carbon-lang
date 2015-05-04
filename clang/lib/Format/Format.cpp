@@ -1115,9 +1115,9 @@ private:
       Column = FormatTok->LastLineColumnWidth;
     }
 
-    FormatTok->IsForEachMacro =
-        std::binary_search(ForEachMacros.begin(), ForEachMacros.end(),
-                           FormatTok->Tok.getIdentifierInfo());
+    if (std::find(ForEachMacros.begin(), ForEachMacros.end(),
+                  FormatTok->Tok.getIdentifierInfo()) != ForEachMacros.end())
+      FormatTok->Type = TT_ForEachMacro;
 
     return FormatTok;
   }

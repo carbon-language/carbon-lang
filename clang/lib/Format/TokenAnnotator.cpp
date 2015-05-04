@@ -134,7 +134,7 @@ private:
       Contexts.back().IsExpression = false;
     } else if (Left->Previous && Left->Previous->is(tok::kw___attribute)) {
       Left->Type = TT_AttributeParen;
-    } else if (Left->Previous && Left->Previous->IsForEachMacro) {
+    } else if (Left->Previous && Left->Previous->is(TT_ForEachMacro)) {
       // The first argument to a foreach macro is a declaration.
       Contexts.back().IsForEachMacro = true;
       Contexts.back().IsExpression = false;
@@ -718,9 +718,9 @@ private:
 
     // Reset token type in case we have already looked at it and then
     // recovered from an error (e.g. failure to find the matching >).
-    if (!CurrentToken->isOneOf(TT_LambdaLSquare, TT_FunctionLBrace,
-                               TT_ImplicitStringLiteral, TT_RegexLiteral,
-                               TT_TrailingReturnArrow))
+    if (!CurrentToken->isOneOf(TT_LambdaLSquare, TT_ForEachMacro,
+                               TT_FunctionLBrace, TT_ImplicitStringLiteral,
+                               TT_RegexLiteral, TT_TrailingReturnArrow))
       CurrentToken->Type = TT_Unknown;
     CurrentToken->Role.reset();
     CurrentToken->MatchingParen = nullptr;
@@ -1754,11 +1754,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Line.Type == LT_ObjCDecl || Left.is(tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
-                          tok::kw_switch, tok::kw_case) ||
+                          tok::kw_switch, tok::kw_case, TT_ForEachMacro) ||
              (Left.isOneOf(tok::kw_try, Keywords.kw___except, tok::kw_catch,
                            tok::kw_new, tok::kw_delete) &&
-              (!Left.Previous || Left.Previous->isNot(tok::period))) ||
-             Left.IsForEachMacro)) ||
+              (!Left.Previous || Left.Previous->isNot(tok::period))))) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
             (Left.is(tok::identifier) || Left.isFunctionLikeKeyword()) &&
             Line.Type != LT_PreprocessorDirective);
