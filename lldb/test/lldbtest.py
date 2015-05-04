@@ -747,8 +747,8 @@ def skipIfLinuxClang(func):
         from unittest2 import case
         self = args[0]
         compiler = self.getCompiler()
-        platform = sys.platform
-        if "clang" in compiler and "linux" in platform:
+        platform = self.getPlatform()
+        if "clang" in compiler and platform == "linux":
             self.skipTest("skipping because Clang is used on Linux")
         else:
             func(*args, **kwargs)
