@@ -883,7 +883,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       Args.insert(Args.end(), LHSs->begin(), LHSs->end());
       Args.insert(Args.end(), RHSs->begin(), RHSs->end());
       return ListInit::get(
-          Args, static_cast<ListRecTy *>(LHSs->getType())->getElementType());
+          Args, cast<ListRecTy>(LHSs->getType())->getElementType());
     }
     break;
   }
