@@ -2293,17 +2293,15 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
 
   // Okay, we have a valid identifier to undef.
   auto *II = MacroNameTok.getIdentifierInfo();
+  auto MD = getMacroDefinition(II);
 
   // If the callbacks want to know, tell them about the macro #undef.
   // Note: no matter if the macro was defined or not.
-  if (Callbacks) {
-    // FIXME: Tell callbacks about module macros.
-    MacroDirective *MD = getLocalMacroDirective(II);
+  if (Callbacks)
     Callbacks->MacroUndefined(MacroNameTok, MD);
-  }
 
   // If the macro is not defined, this is a noop undef, just return.
-  const MacroInfo *MI = getMacroInfo(II);
+  const MacroInfo *MI = MD.getMacroInfo();
   if (!MI)
     return;
 
@@ -2348,7 +2346,8 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   CheckEndOfDirective(isIfndef ? "ifndef" : "ifdef");
 
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
-  MacroInfo *MI = getMacroInfo(MII);
+  auto MD = getMacroDefinition(MII);
+  MacroInfo *MI = MD.getMacroInfo();
 
   if (CurPPLexer->getConditionalStackDepth() == 0) {
     // If the start of a top-level #ifdef and if the macro is not defined,
@@ -2367,8 +2366,6 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
     markMacroAsUsed(MI);
 
   if (Callbacks) {
-    // FIXME: Tell callbacks about module macros.
-    MacroDirective *MD = getLocalMacroDirective(MII);
     if (isIfndef)
       Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok, MD);
     else

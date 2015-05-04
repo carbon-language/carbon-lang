@@ -419,10 +419,9 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
-    // FIXME: Tell callbacks about module macros.
-    if (Callbacks) Callbacks->MacroExpands(Identifier, M.getLocalDirective(),
-                                           Identifier.getLocation(),
-                                           /*Args=*/nullptr);
+    if (Callbacks)
+      Callbacks->MacroExpands(Identifier, M, Identifier.getLocation(),
+                              /*Args=*/nullptr);
     ExpandBuiltinMacro(Identifier);
     return true;
   }
@@ -468,13 +467,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       // reading the function macro arguments. To ensure, in that case, that
       // MacroExpands callbacks still happen in source order, queue this
       // callback to have it happen after the function macro callback.
-      // FIXME: Tell callbacks about module macros.
       DelayedMacroExpandsCallbacks.push_back(
-          MacroExpandsInfo(Identifier, M.getLocalDirective(), ExpansionRange));
+          MacroExpandsInfo(Identifier, M, ExpansionRange));
     } else {
-      // FIXME: Tell callbacks about module macros.
-      Callbacks->MacroExpands(Identifier, M.getLocalDirective(), ExpansionRange,
-                              Args);
+      Callbacks->MacroExpands(Identifier, M, ExpansionRange, Args);
       if (!DelayedMacroExpandsCallbacks.empty()) {
         for (unsigned i=0, e = DelayedMacroExpandsCallbacks.size(); i!=e; ++i) {
           MacroExpandsInfo &Info = DelayedMacroExpandsCallbacks[i];

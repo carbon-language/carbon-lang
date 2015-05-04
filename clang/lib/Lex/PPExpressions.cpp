@@ -142,9 +142,7 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
   // Invoke the 'defined' callback.
   if (PPCallbacks *Callbacks = PP.getPPCallbacks()) {
-    // FIXME: Tell callbacks about module macros.
-    MacroDirective *MD = Macro.getLocalDirective();
-    Callbacks->Defined(macroToken, MD,
+    Callbacks->Defined(macroToken, Macro,
                        SourceRange(beginLoc, PeekTok.getLocation()));
   }
 

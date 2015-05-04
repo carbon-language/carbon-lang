@@ -27,6 +27,7 @@ namespace clang {
   class SourceLocation;
   class Token;
   class IdentifierInfo;
+  class MacroDefinition;
   class MacroDirective;
   class MacroArgs;
 
@@ -238,9 +239,9 @@ public:
 
   /// \brief Called by Preprocessor::HandleMacroExpandedIdentifier when a
   /// macro invocation is found.
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range, const MacroArgs *Args) {
-  }
+  virtual void MacroExpands(const Token &MacroNameTok,
+                            const MacroDefinition &MD, SourceRange Range,
+                            const MacroArgs *Args) {}
 
   /// \brief Hook called whenever a macro definition is seen.
   virtual void MacroDefined(const Token &MacroNameTok,
@@ -251,12 +252,12 @@ public:
   ///
   /// MD is released immediately following this callback.
   virtual void MacroUndefined(const Token &MacroNameTok,
-                              const MacroDirective *MD) {
+                              const MacroDefinition &MD) {
   }
   
   /// \brief Hook called whenever the 'defined' operator is seen.
   /// \param MD The MacroDirective if the name was a macro, null otherwise.
-  virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD,
+  virtual void Defined(const Token &MacroNameTok, const MacroDefinition &MD,
                        SourceRange Range) {
   }
   
@@ -293,17 +294,17 @@ public:
   /// \brief Hook called whenever an \#ifdef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
-  /// \param MD The MacroDirective if the name was a macro, null otherwise.
+  /// \param MD The MacroDefinition if the name was a macro, null otherwise.
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-                     const MacroDirective *MD) {
+                     const MacroDefinition &MD) {
   }
 
   /// \brief Hook called whenever an \#ifndef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
-  /// \param MD The MacroDirective if the name was a macro, null otherwise.
+  /// \param MD The MacroDefiniton if the name was a macro, null otherwise.
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroDirective *MD) {
+                      const MacroDefinition &MD) {
   }
 
   /// \brief Hook called whenever an \#else is seen.
@@ -434,7 +435,7 @@ public:
     Second->PragmaWarningPop(Loc);
   }
 
-  void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
+  void MacroExpands(const Token &MacroNameTok, const MacroDefinition &MD,
                     SourceRange Range, const MacroArgs *Args) override {
     First->MacroExpands(MacroNameTok, MD, Range, Args);
     Second->MacroExpands(MacroNameTok, MD, Range, Args);
@@ -446,12 +447,12 @@ public:
   }
 
   void MacroUndefined(const Token &MacroNameTok,
-                      const MacroDirective *MD) override {
+                      const MacroDefinition &MD) override {
     First->MacroUndefined(MacroNameTok, MD);
     Second->MacroUndefined(MacroNameTok, MD);
   }
 
-  void Defined(const Token &MacroNameTok, const MacroDirective *MD,
+  void Defined(const Token &MacroNameTok, const MacroDefinition &MD,
                SourceRange Range) override {
     First->Defined(MacroNameTok, MD, Range);
     Second->Defined(MacroNameTok, MD, Range);
@@ -478,14 +479,14 @@ public:
 
   /// \brief Hook called whenever an \#ifdef is seen.
   void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-             const MacroDirective *MD) override {
+             const MacroDefinition &MD) override {
     First->Ifdef(Loc, MacroNameTok, MD);
     Second->Ifdef(Loc, MacroNameTok, MD);
   }
 
   /// \brief Hook called whenever an \#ifndef is seen.
   void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-              const MacroDirective *MD) override {
+              const MacroDefinition &MD) override {
     First->Ifndef(Loc, MacroNameTok, MD);
     Second->Ifndef(Loc, MacroNameTok, MD);
   }

@@ -357,9 +357,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
   struct MacroExpandsInfo {
     Token Tok;
-    MacroDirective *MD;
+    MacroDefinition MD;
     SourceRange Range;
-    MacroExpandsInfo(Token Tok, MacroDirective *MD, SourceRange Range)
+    MacroExpandsInfo(Token Tok, MacroDefinition MD, SourceRange Range)
       : Tok(Tok), MD(MD), Range(Range) { }
   };
   SmallVector<MacroExpandsInfo, 2> DelayedMacroExpandsCallbacks;

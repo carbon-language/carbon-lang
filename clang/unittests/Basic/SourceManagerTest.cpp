@@ -263,7 +263,7 @@ public:
                                  MacroNameTok.getIdentifierInfo()->getName(),
                                  true));
   }
-  void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
+  void MacroExpands(const Token &MacroNameTok, const MacroDefinition &MD,
                     SourceRange Range, const MacroArgs *Args) override {
     Macros.push_back(MacroAction(MacroNameTok.getLocation(),
                                  MacroNameTok.getIdentifierInfo()->getName(),
