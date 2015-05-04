@@ -114,7 +114,7 @@ enum Fixups {
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
-enum FixupBitmaps {
+enum FixupBitmaps : unsigned {
   Word8 = 0xff,
   Word16 = 0xffff,
   Word32 = 0xffffffff,
