@@ -371,8 +371,6 @@ namespace llvm {
       VPERMI,
       VPERM2X128,
       VBROADCAST,
-      // masked broadcast
-      VBROADCASTM,
       // Insert/Extract vector element
       VINSERT,
       VEXTRACT,

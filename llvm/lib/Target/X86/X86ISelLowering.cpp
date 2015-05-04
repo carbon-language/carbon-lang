@@ -1312,6 +1312,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,           MVT::v16i16, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i32, Custom);
     setOperationAction(ISD::ZERO_EXTEND,        MVT::v8i64, Custom);
+    setOperationAction(ISD::ANY_EXTEND,         MVT::v16i32, Custom);
+    setOperationAction(ISD::ANY_EXTEND,         MVT::v8i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i32, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i8, Custom);
@@ -2078,7 +2080,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
     CCValAssign &VA = RVLocs[i];
-    EVT CopyVT = VA.getValVT();
+    EVT CopyVT = VA.getLocVT();
 
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
@@ -2088,15 +2090,18 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
     // If we prefer to use the value in xmm registers, copy it out as f80 and
     // use a truncate to move it from fp stack reg to xmm reg.
+    bool RoundAfterCopy = false;
     if ((VA.getLocReg() == X86::FP0 || VA.getLocReg() == X86::FP1) &&
-        isScalarFPTypeInSSEReg(VA.getValVT()))
+        isScalarFPTypeInSSEReg(VA.getValVT())) {
       CopyVT = MVT::f80;
+      RoundAfterCopy = (CopyVT != VA.getLocVT());
+    }
 
     Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
                                CopyVT, InFlag).getValue(1);
     SDValue Val = Chain.getValue(0);
 
-    if (CopyVT != VA.getValVT())
+    if (RoundAfterCopy)
       Val = DAG.getNode(ISD::FP_ROUND, dl, VA.getValVT(), Val,
                         // This truncation won't change the value.
                         DAG.getIntPtrConstant(1, dl));
@@ -2825,7 +2830,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, RegVT, Arg);
       break;
     case CCValAssign::AExt:
-      if (RegVT.is128BitVector()) {
+      if (Arg.getValueType().getScalarType() == MVT::i1)
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, RegVT, Arg);
+      else if (RegVT.is128BitVector()) {
         // Special case: passing MMX values in XMM registers.
         Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i64, Arg);
         Arg = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64, Arg);
@@ -11969,6 +11976,9 @@ static SDValue LowerAVXExtend(SDValue Op, SelectionDAG &DAG,
   MVT InVT = In.getSimpleValueType();
   SDLoc dl(Op);
 
+  if (VT.is512BitVector() || InVT.getScalarType() == MVT::i1)
+    return DAG.getNode(ISD::ZERO_EXTEND, dl, VT, In);
+
   // Optimize vectors in AVX mode:
   //
   //   v8i16 -> v8i32
@@ -12018,22 +12028,17 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
   if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1)
     return DAG.getNode(X86ISD::VZEXT, DL, VT, In);
 
-  EVT ExtVT = (NumElts == 8)? MVT::v8i64 : MVT::v16i32;
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  // Now we have only mask extension
   assert(InVT.getVectorElementType() == MVT::i1);
-  SDValue Cst = DAG.getTargetConstant(1, DL, ExtVT.getScalarType());
-  const Constant *C = cast<ConstantSDNode>(Cst)->getConstantIntValue();
-  SDValue CP = DAG.getConstantPool(C, TLI.getPointerTy());
-  unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
-  SDValue Ld = DAG.getLoad(Cst.getValueType(), DL, DAG.getEntryNode(), CP,
-                           MachinePointerInfo::getConstantPool(),
-                           false, false, false, Alignment);
+  MVT ExtVT = NumElts == 8 ? MVT::v8i64 : MVT::v16i32;
+  SDValue One =
+   DAG.getConstant(APInt(ExtVT.getScalarSizeInBits(), 1), DL, ExtVT);
+  SDValue Zero =
+   DAG.getConstant(APInt::getNullValue(ExtVT.getScalarSizeInBits()), DL, ExtVT);
 
-  SDValue Brcst = DAG.getNode(X86ISD::VBROADCASTM, DL, ExtVT, In, Ld);
+  SDValue V = DAG.getNode(ISD::VSELECT, DL, ExtVT, In, One, Zero);
   if (VT.is512BitVector())
-    return Brcst;
-  return DAG.getNode(X86ISD::VTRUNC, DL, VT, Brcst);
+    return V;
+  return DAG.getNode(X86ISD::VTRUNC, DL, VT, V);
 }
 
 static SDValue LowerANY_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
@@ -12115,14 +12120,8 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
       InVT = ExtVT;
     }
 
-    SDValue Cst = DAG.getTargetConstant(1, DL, InVT.getVectorElementType());
-    const Constant *C = cast<ConstantSDNode>(Cst)->getConstantIntValue();
-    SDValue CP = DAG.getConstantPool(C, getPointerTy());
-    unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
-    SDValue Ld = DAG.getLoad(Cst.getValueType(), DL, DAG.getEntryNode(), CP,
-                           MachinePointerInfo::getConstantPool(),
-                           false, false, false, Alignment);
-    SDValue OneV = DAG.getNode(X86ISD::VBROADCAST, DL, InVT, Ld);
+    SDValue OneV =
+     DAG.getConstant(APInt::getSignBit(InVT.getScalarSizeInBits()), DL, InVT);
     SDValue And = DAG.getNode(ISD::AND, DL, InVT, OneV, In);
     return DAG.getNode(X86ISD::TESTM, DL, VT, And, And);
   }
@@ -13802,22 +13801,18 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op, const X86Subtarget *Subtarget
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
   }
 
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   assert (InVT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
+  MVT ExtVT = NumElts == 8 ? MVT::v8i64 : MVT::v16i32;
+  SDValue NegOne =
+   DAG.getConstant(APInt::getAllOnesValue(ExtVT.getScalarSizeInBits()), dl,
+                   ExtVT);
+  SDValue Zero =
+   DAG.getConstant(APInt::getNullValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
 
-  MVT ExtVT = (NumElts == 8) ? MVT::v8i64 : MVT::v16i32;
-  Constant *C = ConstantInt::get(*DAG.getContext(),
-    APInt::getAllOnesValue(ExtVT.getScalarType().getSizeInBits()));
-
-  SDValue CP = DAG.getConstantPool(C, TLI.getPointerTy());
-  unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
-  SDValue Ld = DAG.getLoad(ExtVT.getScalarType(), dl, DAG.getEntryNode(), CP,
-                          MachinePointerInfo::getConstantPool(),
-                          false, false, false, Alignment);
-  SDValue Brcst = DAG.getNode(X86ISD::VBROADCASTM, dl, ExtVT, In, Ld);
+  SDValue V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
   if (VT.is512BitVector())
-    return Brcst;
-  return DAG.getNode(X86ISD::VTRUNC, dl, VT, Brcst);
+    return V;
+  return DAG.getNode(X86ISD::VTRUNC, dl, VT, V);
 }
 
 static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
@@ -17860,7 +17855,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UNPCKL:             return "X86ISD::UNPCKL";
   case X86ISD::UNPCKH:             return "X86ISD::UNPCKH";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
-  case X86ISD::VBROADCASTM:        return "X86ISD::VBROADCASTM";
   case X86ISD::VEXTRACT:           return "X86ISD::VEXTRACT";
   case X86ISD::VPERMILPI:          return "X86ISD::VPERMILPI";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";

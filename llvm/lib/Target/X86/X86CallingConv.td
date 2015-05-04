@@ -268,7 +268,7 @@ def CC_X86_64_C : CallingConv<[
             CCIfSubtarget<"hasSSE2()",
             CCPromoteToType<v2i64>>>>,
 
-  // Boolean vectors of AVX-512 are returned in SIMD registers.
+  // Boolean vectors of AVX-512 are passed in SIMD registers.
   // The call from AVX to AVX-512 function should work,
   // since the boolean types in AVX/AVX2 are promoted by default.
   CCIfType<[v2i1],  CCPromoteToType<v2i64>>,
@@ -471,6 +471,16 @@ def CC_X86_32_Common : CallingConv<[
 
   // Long doubles get slots whose size depends on the subtarget.
   CCIfType<[f80], CCAssignToStack<0, 4>>,
+
+  // Boolean vectors of AVX-512 are passed in SIMD registers.
+  // The call from AVX to AVX-512 function should work,
+  // since the boolean types in AVX/AVX2 are promoted by default.
+  CCIfType<[v2i1],  CCPromoteToType<v2i64>>,
+  CCIfType<[v4i1],  CCPromoteToType<v4i32>>,
+  CCIfType<[v8i1],  CCPromoteToType<v8i16>>,
+  CCIfType<[v16i1], CCPromoteToType<v16i8>>,
+  CCIfType<[v32i1], CCPromoteToType<v32i8>>,
+  CCIfType<[v64i1], CCPromoteToType<v64i8>>,
 
   // The first 4 SSE vector arguments are passed in XMM registers.
   CCIfNotVarArg<CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
