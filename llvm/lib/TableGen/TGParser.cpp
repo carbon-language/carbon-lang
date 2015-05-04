@@ -51,9 +51,8 @@ void SubMultiClassReference::dump() const {
   MC->dump();
 
   errs() << "Template args:\n";
-  for (Init *TA : TemplateArgs) {
+  for (Init *TA : TemplateArgs)
     TA->dump();
-  }
 }
 
 } // end namespace llvm
@@ -107,9 +106,8 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
 
     // Convert the incoming value to a bits type of the appropriate size...
     Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
-    if (!BI) {
+    if (!BI)
       return Error(Loc, "Initializer is not compatible with bit range");
-    }
 
     // We should have a BitsInit type now.
     BitsInit *BInit = cast<BitsInit>(BI);
@@ -134,10 +132,9 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
 
   if (RV->setValue(V)) {
     std::string InitType = "";
-    if (BitsInit *BI = dyn_cast<BitsInit>(V)) {
+    if (BitsInit *BI = dyn_cast<BitsInit>(V))
       InitType = (Twine("' of type bit initializer with length ") +
                   Twine(BI->getNumBits())).str();
-    }
     return Error(Loc, "Value '" + ValName->getAsUnquotedString() +
                  "' of type '" + RV->getType()->getAsString() +
                  "' is incompatible with initializer '" + V->getAsString() +
@@ -580,13 +577,12 @@ bool TGParser::ParseRangePiece(std::vector<unsigned> &Ranges) {
   Lex.Lex();
 
   // Add to the range.
-  if (Start < End) {
+  if (Start < End)
     for (; Start <= End; ++Start)
       Ranges.push_back(Start);
-  } else {
+  else
     for (; Start >= End; --Start)
       Ranges.push_back(Start);
-  }
   return false;
 }
 
@@ -763,7 +759,7 @@ Init *TGParser::ParseIDValue(Record *CurRec,
     Error(NameLoc, "Variable not defined: '" + Name + "'");
     return nullptr;
   }
-  
+
   return StringInit::get(Name);
 }
 
@@ -856,11 +852,8 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
             TokError("untyped list element in unary operator");
             return nullptr;
           }
-          if (Code == UnOpInit::HEAD) {
-            Type = Itemt->getType();
-          } else {
-            Type = ListRecTy::get(Itemt->getType());
-          }
+          Type = (Code == UnOpInit::HEAD) ? Itemt->getType()
+                                          : ListRecTy::get(Itemt->getType());
         } else {
           assert(LHSt && "expected list type argument in unary operator");
           ListRecTy *LType = dyn_cast<ListRecTy>(LHSt->getType());
@@ -868,11 +861,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
             TokError("expected list type argument in unary operator");
             return nullptr;
           }
-          if (Code == UnOpInit::HEAD) {
-            Type = LType->getElementType();
-          } else {
-            Type = LType;
-          }
+          Type = (Code == UnOpInit::HEAD) ? LType->getElementType() : LType;
         }
       }
     }
@@ -1559,7 +1548,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         Error(PasteLoc, "LHS of paste is not typed!");
         return nullptr;
       }
-  
+
       if (LHS->getType() != StringRecTy::get()) {
         LHS = UnOpInit::get(UnOpInit::CAST, LHS, StringRecTy::get());
       }
@@ -1574,7 +1563,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         // These are all of the tokens that can begin an object body.
         // Some of these can also begin values but we disallow those cases
         // because they are unlikely to be useful.
-       
+
         // Trailing paste, concat with an empty string.
         RHS = StringInit::get("");
         break;
@@ -1590,7 +1579,7 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
         if (RHS->getType() != StringRecTy::get()) {
           RHS = UnOpInit::get(UnOpInit::CAST, RHS, StringRecTy::get());
         }
-  
+
         break;
       }
 
@@ -1724,11 +1713,10 @@ Init *TGParser::ParseDeclaration(Record *CurRec,
   Lex.Lex();
 
   if (ParsingTemplateArgs) {
-    if (CurRec) {
+    if (CurRec)
       DeclName = QualifyName(*CurRec, CurMultiClass, DeclName, ":");
-    } else {
+    else
       assert(CurMultiClass);
-    }
     if (CurMultiClass)
       DeclName = QualifyName(CurMultiClass->Rec, CurMultiClass, DeclName,
                              "::");
@@ -2061,10 +2049,9 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
     }
   }
 
-  if (ProcessForeachDefs(CurRec, DefLoc)) {
+  if (ProcessForeachDefs(CurRec, DefLoc))
     return Error(DefLoc, "Could not process loops for def" +
                  CurRec->getNameInitAsString());
-  }
 
   return false;
 }
@@ -2097,8 +2084,7 @@ bool TGParser::ParseForeach(MultiClass *CurMultiClass) {
     // FOREACH Declaration IN Object
     if (ParseObject(CurMultiClass))
       return true;
-  }
-  else {
+  } else {
     SMLoc BraceLoc = Lex.getLoc();
     // Otherwise, this is a group foreach.
     Lex.Lex();  // eat the '{'.
@@ -2443,14 +2429,14 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
       if (SetValue(CurRec, DefmPrefixLoc, TArgs[i], std::vector<unsigned>(),
                    TemplateVals[i]))
         return true;
-        
+
       // Resolve it next.
       CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
 
       if (DeleteArgs)
         // Now remove it.
         CurRec->removeValue(TArgs[i]);
-        
+
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClassLoc, "value not specified for template argument #" +
                    utostr(i) + " (" + TArgs[i]->getAsUnquotedString() +
