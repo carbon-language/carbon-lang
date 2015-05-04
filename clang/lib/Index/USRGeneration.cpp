@@ -847,7 +847,7 @@ bool clang::index::generateUSRForDecl(const Decl *D,
   return UG.ignoreResults();
 }
 
-bool clang::index::generateUSRForMacro(const MacroDefinition *MD,
+bool clang::index::generateUSRForMacro(const MacroDefinitionRecord *MD,
                                        const SourceManager &SM,
                                        SmallVectorImpl<char> &Buf) {
   // Don't generate USRs for things with invalid locations.

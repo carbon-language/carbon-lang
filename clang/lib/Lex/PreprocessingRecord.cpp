@@ -246,10 +246,11 @@ PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
   assert(Entity);
   SourceLocation BeginLoc = Entity->getSourceRange().getBegin();
 
-  if (isa<MacroDefinition>(Entity)) {
+  if (isa<MacroDefinitionRecord>(Entity)) {
     assert((PreprocessedEntities.empty() ||
-            !SourceMgr.isBeforeInTranslationUnit(BeginLoc,
-                   PreprocessedEntities.back()->getSourceRange().getBegin())) &&
+            !SourceMgr.isBeforeInTranslationUnit(
+                BeginLoc,
+                PreprocessedEntities.back()->getSourceRange().getBegin())) &&
            "a macro definition was encountered out-of-order");
     PreprocessedEntities.push_back(Entity);
     return getPPEntityID(PreprocessedEntities.size()-1, /*isLoaded=*/false);
@@ -318,7 +319,7 @@ unsigned PreprocessingRecord::allocateLoadedEntities(unsigned NumEntities) {
 }
 
 void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro,
-                                                  MacroDefinition *Def) {
+                                                  MacroDefinitionRecord *Def) {
   MacroDefinitions[Macro] = Def;
 }
 
@@ -355,9 +356,10 @@ PreprocessingRecord::getLoadedPreprocessedEntity(unsigned Index) {
   return Entity;
 }
 
-MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
-  llvm::DenseMap<const MacroInfo *, MacroDefinition *>::iterator Pos
-    = MacroDefinitions.find(MI);
+MacroDefinitionRecord *
+PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
+  llvm::DenseMap<const MacroInfo *, MacroDefinitionRecord *>::iterator Pos =
+      MacroDefinitions.find(MI);
   if (Pos == MacroDefinitions.end())
     return nullptr;
 
@@ -372,11 +374,10 @@ void PreprocessingRecord::addMacroExpansion(const Token &Id,
     return;
 
   if (MI->isBuiltinMacro())
-    addPreprocessedEntity(
-                      new (*this) MacroExpansion(Id.getIdentifierInfo(),Range));
-  else if (MacroDefinition *Def = findMacroDefinition(MI))
-    addPreprocessedEntity(
-                       new (*this) MacroExpansion(Def, Range));
+    addPreprocessedEntity(new (*this)
+                              MacroExpansion(Id.getIdentifierInfo(), Range));
+  else if (MacroDefinitionRecord *Def = findMacroDefinition(MI))
+    addPreprocessedEntity(new (*this) MacroExpansion(Def, Range));
 }
 
 void PreprocessingRecord::Ifdef(SourceLocation Loc, const Token &MacroNameTok,
@@ -418,8 +419,8 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
                                        const MacroDirective *MD) {
   const MacroInfo *MI = MD->getMacroInfo();
   SourceRange R(MI->getDefinitionLoc(), MI->getDefinitionEndLoc());
-  MacroDefinition *Def
-      = new (*this) MacroDefinition(Id.getIdentifierInfo(), R);
+  MacroDefinitionRecord *Def =
+      new (*this) MacroDefinitionRecord(Id.getIdentifierInfo(), R);
   addPreprocessedEntity(Def);
   MacroDefinitions[MI] = Def;
 }

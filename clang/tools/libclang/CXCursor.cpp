@@ -750,28 +750,28 @@ SourceRange cxcursor::getCursorPreprocessingDirective(CXCursor C) {
   return TU->mapRangeFromPreamble(Range);
 }
 
-CXCursor cxcursor::MakeMacroDefinitionCursor(const MacroDefinition *MI,
+CXCursor cxcursor::MakeMacroDefinitionCursor(const MacroDefinitionRecord *MI,
                                              CXTranslationUnit TU) {
-  CXCursor C = { CXCursor_MacroDefinition, 0, { MI, nullptr, TU } };
+  CXCursor C = {CXCursor_MacroDefinition, 0, {MI, nullptr, TU}};
   return C;
 }
 
-const MacroDefinition *cxcursor::getCursorMacroDefinition(CXCursor C) {
+const MacroDefinitionRecord *cxcursor::getCursorMacroDefinition(CXCursor C) {
   assert(C.kind == CXCursor_MacroDefinition);
-  return static_cast<const MacroDefinition *>(C.data[0]);
+  return static_cast<const MacroDefinitionRecord *>(C.data[0]);
 }
 
-CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI, 
+CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI,
                                             CXTranslationUnit TU) {
   CXCursor C = { CXCursor_MacroExpansion, 0, { MI, nullptr, TU } };
   return C;
 }
 
-CXCursor cxcursor::MakeMacroExpansionCursor(MacroDefinition *MI,
+CXCursor cxcursor::MakeMacroExpansionCursor(MacroDefinitionRecord *MI,
                                             SourceLocation Loc,
                                             CXTranslationUnit TU) {
   assert(Loc.isValid());
-  CXCursor C = { CXCursor_MacroExpansion, 0, { MI, Loc.getPtrEncoding(), TU } };
+  CXCursor C = {CXCursor_MacroExpansion, 0, {MI, Loc.getPtrEncoding(), TU}};
   return C;
 }
 
@@ -780,7 +780,8 @@ const IdentifierInfo *cxcursor::MacroExpansionCursor::getName() const {
     return getAsMacroDefinition()->getName();
   return getAsMacroExpansion()->getName();
 }
-const MacroDefinition *cxcursor::MacroExpansionCursor::getDefinition() const {
+const MacroDefinitionRecord *
+cxcursor::MacroExpansionCursor::getDefinition() const {
   if (isPseudo())
     return getAsMacroDefinition();
   return getAsMacroExpansion()->getDefinition();
@@ -1291,18 +1292,15 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
                                  true);
       return String;
     }
-  }
-  else if (kind == CXCursor_MacroDefinition) {
-    const MacroDefinition *definition = getCursorMacroDefinition(cursor);
+  } else if (kind == CXCursor_MacroDefinition) {
+    const MacroDefinitionRecord *definition = getCursorMacroDefinition(cursor);
     const IdentifierInfo *MacroInfo = definition->getName();
     ASTUnit *unit = getCursorASTUnit(cursor);
     CodeCompletionResult Result(MacroInfo);
-    CodeCompletionString *String
-      = Result.CreateCodeCompletionString(unit->getASTContext(),
-                                          unit->getPreprocessor(),
-                                 unit->getCodeCompletionTUInfo().getAllocator(),
-                                 unit->getCodeCompletionTUInfo(),
-                                 false);
+    CodeCompletionString *String = Result.CreateCodeCompletionString(
+        unit->getASTContext(), unit->getPreprocessor(),
+        unit->getCodeCompletionTUInfo().getAllocator(),
+        unit->getCodeCompletionTUInfo(), false);
     return String;
   }
   return nullptr;

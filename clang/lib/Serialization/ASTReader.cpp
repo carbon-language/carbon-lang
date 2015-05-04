@@ -1432,10 +1432,10 @@ MacroInfo *ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
         PreprocessedEntityID
             GlobalID = getGlobalPreprocessedEntityID(F, Record[NextIndex]);
         PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
-        PreprocessingRecord::PPEntityID
-          PPID = PPRec.getPPEntityID(GlobalID-1, /*isLoaded=*/true);
-        MacroDefinition *PPDef =
-          cast_or_null<MacroDefinition>(PPRec.getPreprocessedEntity(PPID));
+        PreprocessingRecord::PPEntityID PPID =
+            PPRec.getPPEntityID(GlobalID - 1, /*isLoaded=*/true);
+        MacroDefinitionRecord *PPDef = cast_or_null<MacroDefinitionRecord>(
+            PPRec.getPreprocessedEntity(PPID));
         if (PPDef)
           PPRec.RegisterMacroDefinition(Macro, PPDef);
       }
@@ -4621,13 +4621,14 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   case PPD_MACRO_EXPANSION: {
     bool isBuiltin = Record[0];
     IdentifierInfo *Name = nullptr;
-    MacroDefinition *Def = nullptr;
+    MacroDefinitionRecord *Def = nullptr;
     if (isBuiltin)
       Name = getLocalIdentifier(M, Record[1]);
     else {
-      PreprocessedEntityID
-          GlobalID = getGlobalPreprocessedEntityID(M, Record[1]);
-      Def =cast<MacroDefinition>(PPRec.getLoadedPreprocessedEntity(GlobalID-1));
+      PreprocessedEntityID GlobalID =
+          getGlobalPreprocessedEntityID(M, Record[1]);
+      Def = cast<MacroDefinitionRecord>(
+          PPRec.getLoadedPreprocessedEntity(GlobalID - 1));
     }
 
     MacroExpansion *ME;
@@ -4643,8 +4644,7 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
     // Decode the identifier info and then check again; if the macro is
     // still defined and associated with the identifier,
     IdentifierInfo *II = getLocalIdentifier(M, Record[0]);
-    MacroDefinition *MD
-      = new (PPRec) MacroDefinition(II, Range);
+    MacroDefinitionRecord *MD = new (PPRec) MacroDefinitionRecord(II, Range);
 
     if (DeserializationListener)
       DeserializationListener->MacroDefinitionRead(PPID, MD);

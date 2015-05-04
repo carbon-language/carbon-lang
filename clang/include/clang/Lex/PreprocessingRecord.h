@@ -36,11 +36,11 @@ void* operator new(size_t bytes, clang::PreprocessingRecord& PR,
                    unsigned alignment = 8) throw();
 
 /// \brief Frees memory allocated in a Clang preprocessing record.
-void operator delete(void* ptr, clang::PreprocessingRecord& PR,
+void operator delete(void *ptr, clang::PreprocessingRecord &PR,
                      unsigned) throw();
 
 namespace clang {
-  class MacroDefinition;
+  class MacroDefinitionRecord;
   class FileEntry;
 
   /// \brief Base class that describes a preprocessed entity, which may be a
@@ -133,19 +133,20 @@ namespace clang {
              PD->getKind() <= LastPreprocessingDirective;
     }
   };
-  
+
   /// \brief Record the location of a macro definition.
-  class MacroDefinition : public PreprocessingDirective {
+  class MacroDefinitionRecord : public PreprocessingDirective {
     /// \brief The name of the macro being defined.
     const IdentifierInfo *Name;
 
   public:
-    explicit MacroDefinition(const IdentifierInfo *Name, SourceRange Range)
-      : PreprocessingDirective(MacroDefinitionKind, Range), Name(Name) { }
-    
+    explicit MacroDefinitionRecord(const IdentifierInfo *Name,
+                                   SourceRange Range)
+        : PreprocessingDirective(MacroDefinitionKind, Range), Name(Name) {}
+
     /// \brief Retrieve the name of the macro being defined.
     const IdentifierInfo *getName() const { return Name; }
-    
+
     /// \brief Retrieve the location of the macro name in the definition.
     SourceLocation getLocation() const { return getSourceRange().getBegin(); }
     
@@ -159,31 +160,31 @@ namespace clang {
   class MacroExpansion : public PreprocessedEntity {
     /// \brief The definition of this macro or the name of the macro if it is
     /// a builtin macro.
-    llvm::PointerUnion<IdentifierInfo *, MacroDefinition *> NameOrDef; 
+    llvm::PointerUnion<IdentifierInfo *, MacroDefinitionRecord *> NameOrDef;
 
   public:
     MacroExpansion(IdentifierInfo *BuiltinName, SourceRange Range)
-      : PreprocessedEntity(MacroExpansionKind, Range),
-        NameOrDef(BuiltinName) { }
+        : PreprocessedEntity(MacroExpansionKind, Range),
+          NameOrDef(BuiltinName) {}
 
-    MacroExpansion(MacroDefinition *Definition, SourceRange Range)
-      : PreprocessedEntity(MacroExpansionKind, Range),
-        NameOrDef(Definition) { }
+    MacroExpansion(MacroDefinitionRecord *Definition, SourceRange Range)
+        : PreprocessedEntity(MacroExpansionKind, Range), NameOrDef(Definition) {
+    }
 
     /// \brief True if it is a builtin macro.
     bool isBuiltinMacro() const { return NameOrDef.is<IdentifierInfo *>(); }
-    
+
     /// \brief The name of the macro being expanded.
     const IdentifierInfo *getName() const {
-      if (MacroDefinition *Def = getDefinition())
+      if (MacroDefinitionRecord *Def = getDefinition())
         return Def->getName();
-      return NameOrDef.get<IdentifierInfo*>();
+      return NameOrDef.get<IdentifierInfo *>();
     }
-    
+
     /// \brief The definition of the macro being expanded. May return null if
     /// this is a builtin macro.
-    MacroDefinition *getDefinition() const {
-      return NameOrDef.dyn_cast<MacroDefinition *>();
+    MacroDefinitionRecord *getDefinition() const {
+      return NameOrDef.dyn_cast<MacroDefinitionRecord *>();
     }
 
     // Implement isa/cast/dyncast/etc.
@@ -330,7 +331,7 @@ namespace clang {
     }
 
     /// \brief Mapping from MacroInfo structures to their definitions.
-    llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
+    llvm::DenseMap<const MacroInfo *, MacroDefinitionRecord *> MacroDefinitions;
 
     /// \brief External source of preprocessed entities.
     ExternalPreprocessingRecordSource *ExternalSource;
@@ -361,12 +362,12 @@ namespace clang {
     unsigned allocateLoadedEntities(unsigned NumEntities);
 
     /// \brief Register a new macro definition.
-    void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinition *Def);
-    
+    void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinitionRecord *Def);
+
   public:
     /// \brief Construct a new preprocessing record.
     explicit PreprocessingRecord(SourceManager &SM);
-    
+
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return BumpAlloc.Allocate(Size, Align);
@@ -476,10 +477,10 @@ namespace clang {
     ExternalPreprocessingRecordSource *getExternalSource() const {
       return ExternalSource;
     }
-    
+
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.
-    MacroDefinition *findMacroDefinition(const MacroInfo *MI);
+    MacroDefinitionRecord *findMacroDefinition(const MacroInfo *MI);
 
     /// \brief Retrieve all ranges that got skipped while preprocessing.
     const std::vector<SourceRange> &getSkippedRanges() const {

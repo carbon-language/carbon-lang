@@ -108,9 +108,9 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
 
   // Otherwise, we got an identifier, is it defined to something?
   IdentifierInfo *II = PeekTok.getIdentifierInfo();
-  Preprocessor::MacroDefinition Macro = PP.getMacroDefinition(II);
+  MacroDefinition Macro = PP.getMacroDefinition(II);
   Result.Val = !!Macro;
-  Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
+  Result.Val.setIsUnsigned(false); // Result is signed intmax_t.
 
   // If there is a macro, mark it used.
   if (Result.Val != 0 && ValueLive)

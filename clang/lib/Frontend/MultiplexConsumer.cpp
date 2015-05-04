@@ -37,9 +37,10 @@ public:
   void DeclRead(serialization::DeclID ID, const Decl *D) override;
   void SelectorRead(serialization::SelectorID iD, Selector Sel) override;
   void MacroDefinitionRead(serialization::PreprocessedEntityID,
-                           MacroDefinition *MD) override;
+                           MacroDefinitionRecord *MD) override;
+
 private:
-  std::vector<ASTDeserializationListener*> Listeners;
+  std::vector<ASTDeserializationListener *> Listeners;
 };
 
 MultiplexASTDeserializationListener::MultiplexASTDeserializationListener(
@@ -78,7 +79,7 @@ void MultiplexASTDeserializationListener::SelectorRead(
 }
 
 void MultiplexASTDeserializationListener::MacroDefinitionRead(
-    serialization::PreprocessedEntityID ID, MacroDefinition *MD) {
+    serialization::PreprocessedEntityID ID, MacroDefinitionRecord *MD) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->MacroDefinitionRead(ID, MD);
 }

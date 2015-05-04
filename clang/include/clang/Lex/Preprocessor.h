@@ -755,52 +755,6 @@ public:
   }
   /// \}
 
-  /// \brief A description of the current definition of a macro.
-  class MacroDefinition {
-    llvm::PointerIntPair<DefMacroDirective*, 1, bool> LatestLocalAndAmbiguous;
-    ArrayRef<ModuleMacro*> ModuleMacros;
-  public:
-    MacroDefinition() : LatestLocalAndAmbiguous(), ModuleMacros() {}
-    MacroDefinition(DefMacroDirective *MD, ArrayRef<ModuleMacro *> MMs,
-                    bool IsAmbiguous)
-        : LatestLocalAndAmbiguous(MD, IsAmbiguous), ModuleMacros(MMs) {}
-
-    /// \brief Determine whether there is a definition of this macro.
-    explicit operator bool() const {
-      return getLocalDirective() || !ModuleMacros.empty();
-    }
-
-    /// \brief Get the MacroInfo that should be used for this definition.
-    MacroInfo *getMacroInfo() const {
-      if (!ModuleMacros.empty())
-        return ModuleMacros.back()->getMacroInfo();
-      if (auto *MD = getLocalDirective())
-        return MD->getMacroInfo();
-      return nullptr;
-    }
-
-    /// \brief \c true if the definition is ambiguous, \c false otherwise.
-    bool isAmbiguous() const { return LatestLocalAndAmbiguous.getInt(); }
-
-    /// \brief Get the latest non-imported, non-\#undef'd macro definition
-    /// for this macro.
-    DefMacroDirective *getLocalDirective() const {
-      return LatestLocalAndAmbiguous.getPointer();
-    }
-
-    /// \brief Get the active module macros for this macro.
-    ArrayRef<ModuleMacro *> getModuleMacros() const {
-      return ModuleMacros;
-    }
-
-    template<typename Fn> void forAllDefinitions(Fn F) const {
-      if (auto *MD = getLocalDirective())
-        F(MD->getMacroInfo());
-      for (auto *MM : getModuleMacros())
-        F(MM->getMacroInfo());
-    }
-  };
-
   bool isMacroDefined(StringRef Id) {
     return isMacroDefined(&Identifiers.get(Id));
   }

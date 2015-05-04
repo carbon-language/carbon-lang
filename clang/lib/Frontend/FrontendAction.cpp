@@ -71,7 +71,7 @@ public:
       Previous->SelectorRead(ID, Sel);
   }
   void MacroDefinitionRead(serialization::PreprocessedEntityID PPID,
-                           MacroDefinition *MD) override {
+                           MacroDefinitionRecord *MD) override {
     if (Previous)
       Previous->MacroDefinitionRead(PPID, MD);
   }

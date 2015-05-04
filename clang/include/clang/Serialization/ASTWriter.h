@@ -49,7 +49,7 @@ class FPOptions;
 class HeaderSearch;
 class HeaderSearchOptions;
 class IdentifierResolver;
-class MacroDefinition;
+class MacroDefinitionRecord;
 class MacroDirective;
 class MacroInfo;
 class OpaqueValueExpr;
@@ -284,8 +284,8 @@ private:
 
   /// \brief Mapping from macro definitions (as they occur in the preprocessing
   /// record) to the macro IDs.
-  llvm::DenseMap<const MacroDefinition *, serialization::PreprocessedEntityID>
-      MacroDefinitions;
+  llvm::DenseMap<const MacroDefinitionRecord *,
+                 serialization::PreprocessedEntityID> MacroDefinitions;
 
   /// \brief Cache of indices of anonymous declarations within their lexical
   /// contexts.
@@ -827,7 +827,7 @@ public:
   void TypeRead(serialization::TypeIdx Idx, QualType T) override;
   void SelectorRead(serialization::SelectorID ID, Selector Sel) override;
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
-                           MacroDefinition *MD) override;
+                           MacroDefinitionRecord *MD) override;
   void ModuleRead(serialization::SubmoduleID ID, Module *Mod) override;
 
   // ASTMutationListener implementation.
