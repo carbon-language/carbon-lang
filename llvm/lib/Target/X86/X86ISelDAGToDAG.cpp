@@ -603,6 +603,9 @@ static bool isDispSafeForFrameIndex(int64_t Val) {
 
 bool X86DAGToDAGISel::FoldOffsetIntoAddress(uint64_t Offset,
                                             X86ISelAddressMode &AM) {
+  // Cannot combine ExternalSymbol displacements with integer offsets.
+  if (Offset != 0 && AM.ES)
+    return true;
   int64_t Val = AM.Disp + Offset;
   CodeModel::Model M = TM.getCodeModel();
   if (Subtarget->is64Bit()) {
@@ -1009,7 +1012,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   switch (N.getOpcode()) {
   default: break;
   case ISD::FRAME_ALLOC_RECOVER: {
-    if (!AM.hasSymbolicDisplacement())
+    if (!AM.hasSymbolicDisplacement() && AM.Disp == 0)
       if (const auto *ESNode = dyn_cast<ExternalSymbolSDNode>(N.getOperand(0)))
         if (ESNode->getOpcode() == ISD::TargetExternalSymbol) {
           // Use the symbol and don't prefix it.
