@@ -1594,7 +1594,7 @@ AppleObjCRuntimeV2::WarnIfNoClassesCached ()
     
     if (debugger.GetAsyncOutputStream())
     {
-        debugger.GetAsyncOutputStream()->PutCString("warning: could not load any Objective-C class information from the dyld shared cache. This will signficantly reduce the quality of type information available.\n");
+        debugger.GetAsyncOutputStream()->PutCString("warning: could not load any Objective-C class information from the dyld shared cache. This will significantly reduce the quality of type information available.\n");
         m_noclasses_warning_emitted = true;
     }
 }
