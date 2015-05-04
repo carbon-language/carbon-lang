@@ -1,5 +1,4 @@
-// RUN: not llvm-mc -triple x86_64-unknown-unknown -mcpu=knl -mattr=+avx512dq --show-encoding %s 2> %t.err | FileCheck %s
-// RUN: FileCheck --check-prefix=ERR < %t.err %s
+// RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=knl -mattr=+avx512dq --show-encoding < %s  | FileCheck %s
 
 // CHECK: vaddpd %zmm6, %zmm27, %zmm8
 // CHECK:  encoding: [0x62,0x71,0xa5,0x40,0x58,0xc6]
@@ -5809,14 +5808,6 @@ vinserti32x4  $1, %xmm21, %zmm5, %zmm17
 // CHECK: encoding: [0x62,0xe3,0x1d,0x40,0x38,0x4f,0x10,0x01]
 vinserti32x4  $1, 256(%rdi), %zmm28, %zmm17
 
-// CHECK: vinserti32x8
-// CHECK: encoding: [0x62,0xd3,0x4d,0x40,0x3a,0xdb,0x01]
-vinserti32x8  $1, %ymm11, %zmm22, %zmm3
-
-// CHECK: vinsertf64x2
-// CHECK: encoding: [0x62,0xf3,0xed,0x48,0x18,0x4f,0x10,0x01]
-vinsertf64x2  $1, 256(%rdi), %zmm2, %zmm1
-
 // CHECK: vextracti32x4
 // CHECK: encoding: [0x62,0x33,0x7d,0x48,0x39,0xc9,0x01]
 vextracti32x4  $1, %zmm9, %xmm17
@@ -5920,9 +5911,6 @@ vpcmpd $1, %zmm24, %zmm7, %k5{%k4}
 // CHECK: vpcmpuq $2,
 // CHECK: encoding: [0x62,0xf3,0xf5,0x47,0x1e,0x72,0x01,0x02]
 vpcmpuq $2, 0x40(%rdx), %zmm17, %k6{%k7}
-
-// ERR: invalid operand for instruction
-vpcmpd $1, %zmm24, %zmm7, %k5{%k0}
 
 // CHECK: vpermi2d
 // CHECK: encoding: [0x62,0x42,0x6d,0x4b,0x76,0xd6]
