@@ -468,16 +468,12 @@ void FrontendAction::EndSourceFile() {
   // FIXME: There is more per-file stuff we could just drop here?
   bool DisableFree = CI.getFrontendOpts().DisableFree;
   if (DisableFree) {
-    if (!isCurrentFileAST()) {
-      CI.resetAndLeakSema();
-      CI.resetAndLeakASTContext();
-    }
+    CI.resetAndLeakSema();
+    CI.resetAndLeakASTContext();
     BuryPointer(CI.takeASTConsumer().get());
   } else {
-    if (!isCurrentFileAST()) {
-      CI.setSema(nullptr);
-      CI.setASTContext(nullptr);
-    }
+    CI.setSema(nullptr);
+    CI.setASTContext(nullptr);
     CI.setASTConsumer(nullptr);
   }
 
@@ -494,13 +490,16 @@ void FrontendAction::EndSourceFile() {
   // FrontendAction.
   CI.clearOutputFiles(/*EraseFiles=*/shouldEraseOutputFiles());
 
-  // FIXME: Only do this if DisableFree is set.
   if (isCurrentFileAST()) {
-    CI.resetAndLeakSema();
-    CI.resetAndLeakASTContext();
-    CI.resetAndLeakPreprocessor();
-    CI.resetAndLeakSourceManager();
-    CI.resetAndLeakFileManager();
+    if (DisableFree) {
+      CI.resetAndLeakPreprocessor();
+      CI.resetAndLeakSourceManager();
+      CI.resetAndLeakFileManager();
+    } else {
+      CI.setPreprocessor(nullptr);
+      CI.setSourceManager(nullptr);
+      CI.setFileManager(nullptr);
+    }
   }
 
   setCompilerInstance(nullptr);
