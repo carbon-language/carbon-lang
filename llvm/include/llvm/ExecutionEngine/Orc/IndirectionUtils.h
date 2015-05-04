@@ -21,7 +21,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
 #include <sstream>
 
 namespace llvm {
@@ -33,22 +32,28 @@ class JITCompileCallbackManagerBase {
 public:
 
   typedef std::function<TargetAddress()> CompileFtor;
+  typedef std::function<void(TargetAddress)> UpdateFtor;
 
   /// @brief Handle to a newly created compile callback. Can be used to get an
   ///        IR constant representing the address of the trampoline, and to set
-  ///        the compile action for the callback.
+  ///        the compile and update actions for the callback.
   class CompileCallbackInfo {
   public:
-    CompileCallbackInfo(TargetAddress Addr, CompileFtor &Compile)
-      : Addr(Addr), Compile(Compile) {}
+    CompileCallbackInfo(TargetAddress Addr, CompileFtor &Compile,
+                        UpdateFtor &Update)
+      : Addr(Addr), Compile(Compile), Update(Update) {}
 
     TargetAddress getAddress() const { return Addr; }
     void setCompileAction(CompileFtor Compile) {
       this->Compile = std::move(Compile);
     }
+    void setUpdateAction(UpdateFtor Update) {
+      this->Update = std::move(Update);
+    }
   private:
     TargetAddress Addr;
     CompileFtor &Compile;
+    UpdateFtor &Update;
   };
 
   /// @brief Construct a JITCompileCallbackManagerBase.
@@ -66,8 +71,8 @@ public:
 
   /// @brief Execute the callback for the given trampoline id. Called by the JIT
   ///        to compile functions on demand.
-  TargetAddress executeCompileCallback(TargetAddress TrampolineAddr) {
-    auto I = ActiveTrampolines.find(TrampolineAddr);
+  TargetAddress executeCompileCallback(TargetAddress TrampolineID) {
+    TrampolineMapT::iterator I = ActiveTrampolines.find(TrampolineID);
     // FIXME: Also raise an error in the Orc error-handler when we finally have
     //        one.
     if (I == ActiveTrampolines.end())
@@ -79,43 +84,31 @@ public:
     // Moving the trampoline ID back to the available list first means there's at
     // least one available trampoline if the compile action triggers a request for
     // a new one.
-    auto Compile = std::move(I->second);
+    AvailableTrampolines.push_back(I->first);
+    auto CallbackHandler = std::move(I->second);
     ActiveTrampolines.erase(I);
-    AvailableTrampolines.push_back(TrampolineAddr);
 
-    if (auto Addr = Compile())
+    if (auto Addr = CallbackHandler.Compile()) {
+      CallbackHandler.Update(Addr);
       return Addr;
-
+    }
     return ErrorHandlerAddress;
   }
 
-  /// @brief Reserve a compile callback.
+  /// @brief Get/create a compile callback with the given signature.
   virtual CompileCallbackInfo getCompileCallback(LLVMContext &Context) = 0;
 
-  /// @brief Get a CompileCallbackInfo for an existing callback.
-  CompileCallbackInfo getCompileCallbackInfo(TargetAddress TrampolineAddr) {
-    auto I = ActiveTrampolines.find(TrampolineAddr);
-    assert(I != ActiveTrampolines.end() && "Not an active trampoline.");
-    return CompileCallbackInfo(I->first, I->second);
-  }
-
-  /// @brief Release a compile callback.
-  ///
-  ///   Note: Callbacks are auto-released after they execute. This method should
-  /// only be called to manually release a callback that is not going to
-  /// execute.
-  void releaseCompileCallback(TargetAddress TrampolineAddr) {
-    auto I = ActiveTrampolines.find(TrampolineAddr);
-    assert(I != ActiveTrampolines.end() && "Not an active trampoline.");
-    ActiveTrampolines.erase(I);
-    AvailableTrampolines.push_back(TrampolineAddr);
-  }
-
 protected:
+
+  struct CallbackHandler {
+    CompileFtor Compile;
+    UpdateFtor Update;
+  };
+
   TargetAddress ErrorHandlerAddress;
   unsigned NumTrampolinesPerBlock;
 
-  typedef std::map<TargetAddress, CompileFtor> TrampolineMapT;
+  typedef std::map<TargetAddress, CallbackHandler> TrampolineMapT;
   TrampolineMapT ActiveTrampolines;
   std::vector<TargetAddress> AvailableTrampolines;
 };
@@ -147,8 +140,11 @@ public:
   /// @brief Get/create a compile callback with the given signature.
   CompileCallbackInfo getCompileCallback(LLVMContext &Context) final {
     TargetAddress TrampolineAddr = getAvailableTrampolineAddr(Context);
-    auto &Compile = this->ActiveTrampolines[TrampolineAddr];
-    return CompileCallbackInfo(TrampolineAddr, Compile);
+    auto &CallbackHandler =
+      this->ActiveTrampolines[TrampolineAddr];
+
+    return CompileCallbackInfo(TrampolineAddr, CallbackHandler.Compile,
+                               CallbackHandler.Update);
   }
 
 private:
@@ -222,6 +218,22 @@ private:
   TargetAddress ResolverBlockAddr;
 };
 
+/// @brief Get an update functor that updates the value of a named function
+///        pointer.
+template <typename JITLayerT>
+JITCompileCallbackManagerBase::UpdateFtor
+getLocalFPUpdater(JITLayerT &JIT, typename JITLayerT::ModuleSetHandleT H,
+                  std::string Name) {
+    // FIXME: Move-capture Name once we can use C++14.
+    return [=,&JIT](TargetAddress Addr) {
+      auto FPSym = JIT.findSymbolIn(H, Name, true);
+      assert(FPSym && "Cannot find function pointer to update.");
+      void *FPAddr = reinterpret_cast<void*>(
+                       static_cast<uintptr_t>(FPSym.getAddress()));
+      memcpy(FPAddr, &Addr, sizeof(uintptr_t));
+    };
+  }
+
 /// @brief Build a function pointer of FunctionType with the given constant
 ///        address.
 ///
@@ -238,56 +250,27 @@ GlobalVariable* createImplPointer(PointerType &PT, Module &M,
 ///        indirect call using the given function pointer.
 void makeStub(Function &F, GlobalVariable &ImplPointer);
 
-/// @brief Raise linkage types and rename as necessary to ensure that all
-///        symbols are accessible for other modules.
-///
-///   This should be called before partitioning a module to ensure that the
-/// partitions retain access to each other's symbols.
-void makeAllSymbolsExternallyAccessible(Module &M);
+typedef std::map<Module*, DenseSet<const GlobalValue*>> ModulePartitionMap;
 
-/// @brief Clone a function declaration into a new module.
-///
-///   This function can be used as the first step towards creating a callback
-/// stub (see makeStub), or moving a function body (see moveFunctionBody).
-///
-///   If the VMap argument is non-null, a mapping will be added between F and
-/// the new declaration, and between each of F's arguments and the new
-/// declaration's arguments. This map can then be passed in to moveFunction to
-/// move the function body if required. Note: When moving functions between
-/// modules with these utilities, all decls should be cloned (and added to a
-/// single VMap) before any bodies are moved. This will ensure that references
-/// between functions all refer to the versions in the new module.
-Function* cloneFunctionDecl(Module &Dst, const Function &F,
-                            ValueToValueMapTy *VMap = nullptr);
+/// @brief Extract subsections of a Module into the given Module according to
+///        the given ModulePartitionMap.
+void partition(Module &M, const ModulePartitionMap &PMap);
 
-/// @brief Move the body of function 'F' to a cloned function declaration in a
-///        different module (See related cloneFunctionDecl).
-///
-///   If the target function declaration is not supplied via the NewF parameter
-/// then it will be looked up via the VMap.
-///
-///   This will delete the body of function 'F' from its original parent module,
-/// but leave its declaration.
-void moveFunctionBody(Function &OrigF, ValueToValueMapTy &VMap,
-                      ValueMaterializer *Materializer = nullptr,
-                      Function *NewF = nullptr);
+/// @brief Struct for trivial "complete" partitioning of a module.
+class FullyPartitionedModule {
+public:
+  std::unique_ptr<Module> GlobalVars;
+  std::unique_ptr<Module> Commons;
+  std::vector<std::unique_ptr<Module>> Functions;
 
-/// @brief Clone a global variable declaration into a new module.
-GlobalVariable* cloneGlobalVariableDecl(Module &Dst, const GlobalVariable &GV,
-                                        ValueToValueMapTy *VMap = nullptr);
+  FullyPartitionedModule() = default;
+  FullyPartitionedModule(FullyPartitionedModule &&S)
+      : GlobalVars(std::move(S.GlobalVars)), Commons(std::move(S.Commons)),
+        Functions(std::move(S.Functions)) {}
+};
 
-/// @brief Move global variable GV from its parent module to cloned global
-///        declaration in a different module.
-///
-///   If the target global declaration is not supplied via the NewGV parameter
-/// then it will be looked up via the VMap.
-///
-///   This will delete the initializer of GV from its original parent module,
-/// but leave its declaration.
-void moveGlobalVariableInitializer(GlobalVariable &OrigGV,
-                                   ValueToValueMapTy &VMap,
-                                   ValueMaterializer *Materializer = nullptr,
-                                   GlobalVariable *NewGV = nullptr);
+/// @brief Extract every function in M into a separate module.
+FullyPartitionedModule fullyPartition(Module &M);
 
 } // End namespace orc.
 } // End namespace llvm.
