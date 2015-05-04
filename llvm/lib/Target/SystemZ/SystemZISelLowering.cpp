@@ -2784,6 +2784,8 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(RET_FLAG);
     OPCODE(CALL);
     OPCODE(SIBCALL);
+    OPCODE(TLS_GDCALL);
+    OPCODE(TLS_LDCALL);
     OPCODE(PCREL_WRAPPER);
     OPCODE(PCREL_OFFSET);
     OPCODE(IABS);
@@ -2794,7 +2796,9 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(SELECT_CCMASK);
     OPCODE(ADJDYNALLOC);
     OPCODE(EXTRACT_ACCESS);
+    OPCODE(POPCNT);
     OPCODE(UMUL_LOHI64);
+    OPCODE(SDIVREM32);
     OPCODE(SDIVREM64);
     OPCODE(UDIVREM32);
     OPCODE(UDIVREM64);
@@ -2808,8 +2812,8 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(XC_LOOP);
     OPCODE(CLC);
     OPCODE(CLC_LOOP);
-    OPCODE(STRCMP);
     OPCODE(STPCPY);
+    OPCODE(STRCMP);
     OPCODE(SEARCH_STRING);
     OPCODE(IPM);
     OPCODE(SERIALIZE);
