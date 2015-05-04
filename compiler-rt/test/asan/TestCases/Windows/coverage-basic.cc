@@ -1,7 +1,7 @@
 // RUN: rm -rf %T/coverage-basic
 // RUN: mkdir %T/coverage-basic && cd %T/coverage-basic
 // RUN: %clangxx_asan -fsanitize-coverage=1 %s -o test.exe
-// RUN: env ASAN_OPTIONS=coverage=1 %run test.exe
+// RUN: env ASAN_OPTIONS=coverage=1 %run ./test.exe
 //
 // RUN: %sancov print *.sancov | FileCheck %s
 #include <stdio.h>
