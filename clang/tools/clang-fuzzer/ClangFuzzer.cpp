@@ -24,7 +24,7 @@ extern "C" void TestOneInput(uint8_t *data, size_t size) {
   std::string s((const char *)data, size);
   llvm::opt::ArgStringList CC1Args;
   CC1Args.push_back("-cc1");
-  CC1Args.push_back("test.cc");
+  CC1Args.push_back("./test.cc");
   llvm::IntrusiveRefCntPtr<FileManager> Files(
       new FileManager(FileSystemOptions()));
   IgnoringDiagConsumer Diags;
@@ -36,7 +36,7 @@ extern "C" void TestOneInput(uint8_t *data, size_t size) {
       tooling::newInvocation(&Diagnostics, CC1Args));
   std::unique_ptr<llvm::MemoryBuffer> Input =
       llvm::MemoryBuffer::getMemBuffer(s);
-  Invocation->getPreprocessorOpts().addRemappedFile("test.cc", Input.release());
+  Invocation->getPreprocessorOpts().addRemappedFile("./test.cc", Input.release());
   std::unique_ptr<tooling::ToolAction> action(
       tooling::newFrontendActionFactory<clang::SyntaxOnlyAction>());
   action->runInvocation(Invocation.release(), Files.get(), &Diags);
