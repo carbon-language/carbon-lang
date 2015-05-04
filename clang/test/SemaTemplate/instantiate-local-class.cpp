@@ -213,3 +213,132 @@ namespace PR23194 {
     return make_seed_pair();
   }
 }
+
+namespace PR18653 {
+  // Forward declarations
+
+  template<typename T> void f1() {
+    void g1(struct x1);
+    struct x1 {};
+  }
+  template void f1<int>();
+
+  template<typename T> void f2() {
+    void g2(enum x2);  // expected-error{{ISO C++ forbids forward references to 'enum' types}}
+    enum x2 { nothing };
+  }
+  template void f2<int>();
+
+  template<typename T> void f3() {
+    void g3(enum class x3);
+    enum class x3 { nothing };
+  }
+  template void f3<int>();
+
+
+  template<typename T> void f4() {
+    void g4(struct x4 {} x);  // expected-error{{'x4' cannot be defined in a parameter type}}
+  }
+  template void f4<int>();
+
+
+  template <class T> void f();
+  template <class T> struct S1 {
+    void m() {
+      f<class newclass>();
+    }
+  };
+  template struct S1<int>;
+
+  template <class T> struct S2 {
+    void m() {
+      f<enum new_enum>();  // expected-error{{ISO C++ forbids forward references to 'enum' types}}
+    }
+  };
+  template struct S2<int>;
+
+  template <class T> struct S3 {
+    void m() {
+      f<enum class new_enum>();
+    }
+  };
+  template struct S3<int>;
+
+  template <class T> struct S4 {
+    struct local {};
+    void m() {
+      f<local>();
+    }
+  };
+  template struct S4<int>;
+
+  template <class T> struct S5 {
+    enum local { nothing };
+    void m() {
+      f<local>();
+    }
+  };
+  template struct S5<int>;
+
+  template <class T> struct S7 {
+    enum class local { nothing };
+    void m() {
+      f<local>();
+    }
+  };
+  template struct S7<int>;
+
+
+  template <class T> void fff(T *x);
+  template <class T> struct S01 {
+    struct local { };
+    void m() {
+      local x;
+      fff(&x);
+    }
+  };
+  template struct S01<int>;
+
+  template <class T> struct S02 {
+    enum local { nothing };
+    void m() {
+      local x;
+      fff(&x);
+    }
+  };
+  template struct S02<int>;
+
+  template <class T> struct S03 {
+    enum class local { nothing };
+    void m() {
+      local x;
+      fff(&x);
+    }
+  };
+  template struct S03<int>;
+
+
+  template <class T> struct S04 {
+    void m() {
+      struct { } x;
+      fff(&x);
+    }
+  };
+  template struct S04<int>;
+
+  template <class T> struct S05 {
+    void m() {
+      enum { nothing } x;
+      fff(&x);
+    }
+  };
+  template struct S05<int>;
+
+  template <class T> struct S06 {
+    void m() {
+      class { virtual void mmm() {} } x;
+      fff(&x);
+    }
+  };
+  template struct S06<int>;
+}

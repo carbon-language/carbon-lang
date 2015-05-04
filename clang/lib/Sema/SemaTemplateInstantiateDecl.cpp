@@ -4434,6 +4434,14 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     if (D->isInvalidDecl())
       return nullptr;
 
+    // Tag type may be referenced prior to definition, in this case it must be
+    // instantiated now.
+    if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
+      Decl *Inst = SubstDecl(D, CurContext, TemplateArgs);
+      CurrentInstantiationScope->InstantiatedLocal(D, Inst);
+      return cast<TypeDecl>(Inst);
+    }
+
     // If we didn't find the decl, then we must have a label decl that hasn't
     // been found yet.  Lazily instantiate it and return it now.
     assert(isa<LabelDecl>(D));

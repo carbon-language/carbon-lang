@@ -2788,6 +2788,11 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
       isa<TemplateTemplateParmDecl>(D))
     return nullptr;
 
+  // Tag type may be referenced prior to definition, in this case it does not
+  // have instantiation yet.
+  if (isa<TagDecl>(D))
+    return nullptr;
+
   // If we didn't find the decl, then we either have a sema bug, or we have a
   // forward reference to a label declaration.  Return null to indicate that
   // we have an uninstantiated label.
