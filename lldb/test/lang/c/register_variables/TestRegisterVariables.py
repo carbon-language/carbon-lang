@@ -17,7 +17,6 @@ class RegisterVariableTestCase(TestBase):
         self.buildDsym()
         self.const_variable()
 
-    @expectedFailureClang
     @dwarf_test
     @expectedFailureGcc #xfail to get buildbot green, test failed with gcc4.8.2
     def test_with_dwarf_and_run_command(self):

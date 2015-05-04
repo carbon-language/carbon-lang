@@ -1821,12 +1821,13 @@ ValueObject::GetAddressOf (bool scalar_is_load_address, AddressType *address_typ
 
     case Value::eValueTypeLoadAddress: 
     case Value::eValueTypeFileAddress:
-    case Value::eValueTypeHostAddress:
         {
             if(address_type)
                 *address_type = m_value.GetValueAddressType ();
             return m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
         }
+        break;
+    case Value::eValueTypeHostAddress:
         break;
     }
     if (address_type)
@@ -3785,7 +3786,7 @@ ValueObject::AddressOf (Error &error)
     const bool scalar_is_load_address = false;
     addr_t addr = GetAddressOf (scalar_is_load_address, &address_type);
     error.Clear();
-    if (addr != LLDB_INVALID_ADDRESS)
+    if (addr != LLDB_INVALID_ADDRESS && address_type != eAddressTypeHost)
     {
         switch (address_type)
         {
@@ -3799,7 +3800,6 @@ ValueObject::AddressOf (Error &error)
 
         case eAddressTypeFile:
         case eAddressTypeLoad:
-        case eAddressTypeHost:
             {
                 ClangASTType clang_type = GetClangType();
                 if (clang_type)
@@ -3815,6 +3815,8 @@ ValueObject::AddressOf (Error &error)
                                                                           m_data.GetAddressByteSize());
                 }
             }
+            break;
+        default:
             break;
         }
     }
