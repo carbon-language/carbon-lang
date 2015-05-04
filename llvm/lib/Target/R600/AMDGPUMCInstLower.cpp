@@ -132,9 +132,8 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       SmallVector<char, 16> CodeBytes;
       raw_svector_ostream CodeStream(CodeBytes);
 
-      MCObjectStreamer *ObjStreamer =
-          static_cast<MCObjectStreamer *>(OutStreamer.get());
-      MCCodeEmitter &InstEmitter = ObjStreamer->getAssembler().getEmitter();
+      auto &ObjStreamer = static_cast<MCObjectStreamer&>(*OutStreamer);
+      MCCodeEmitter &InstEmitter = ObjStreamer.getAssembler().getEmitter();
       InstEmitter.EncodeInstruction(TmpInst, CodeStream, Fixups,
                                     MF->getSubtarget<MCSubtargetInfo>());
       CodeStream.flush();
