@@ -209,3 +209,17 @@ TEST(Option, Slurp) {
   EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[1], "--");
   EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[2], "foo");
 }
+
+TEST(Option, FlagAliasToJoined) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  // Check that a flag alias provides an empty argument to a joined option.
+  const char *MyArgs[] = { "-K" };
+  std::unique_ptr<InputArgList> AL(
+      T.ParseArgs(std::begin(MyArgs), std::end(MyArgs), MAI, MAC));
+  EXPECT_EQ(AL->size(), 1U);
+  EXPECT_TRUE(AL->hasArg(OPT_B));
+  EXPECT_EQ(AL->getAllArgValues(OPT_B).size(), 1U);
+  EXPECT_EQ(AL->getAllArgValues(OPT_B)[0], "");
+}

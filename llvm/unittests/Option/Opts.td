@@ -23,4 +23,6 @@ def I : Flag<["-"], "I">, Alias<H>, Group<my_group>;
 def J : Flag<["-"], "J">, Alias<B>, AliasArgs<["foo"]>;
 def Joo : Flag<["-"], "Joo">, Alias<B>, AliasArgs<["bar"]>;
 
+def K : Flag<["-"], "K">, Alias<B>;
+
 def Slurp : Option<["-"], "slurp", KIND_REMAINING_ARGS>;

@@ -125,6 +125,11 @@ Arg *Option::accept(const ArgList &Args,
         Val += strlen(Val) + 1;
       }
     }
+
+    if (UnaliasedOption.getKind() == JoinedClass && !getAliasArgs())
+      // A Flag alias for a Joined option must provide an argument.
+      A->getValues().push_back("");
+
     return A;
   }
   case JoinedClass: {
