@@ -146,7 +146,7 @@ def main(builtinParameters = {}):
     parser.add_option("", "--config-prefix", dest="configPrefix",
                       metavar="NAME", help="Prefix for 'lit' config files",
                       action="store", default=None)
-    parser.add_option("", "--param", dest="userParameters",
+    parser.add_option("-D", "--param", dest="userParameters",
                       metavar="NAME=VAL",
                       help="Add 'NAME' = 'VAL' to the user defined parameters",
                       type=str, action="append", default=[])
