@@ -1695,7 +1695,9 @@ class R600TargetInfo : public TargetInfo {
     GK_SEA_ISLANDS
   } GPU;
 
-  bool hasFP64;
+  bool hasFP64:1;
+  bool hasFMAF:1;
+  bool hasLDEXPF:1;
 
 public:
   R600TargetInfo(const llvm::Triple &Triple)
@@ -1705,10 +1707,14 @@ public:
       DescriptionString = DescriptionStringSI;
       GPU = GK_SOUTHERN_ISLANDS;
       hasFP64 = true;
+      hasFMAF = true;
+      hasLDEXPF = true;
     } else {
       DescriptionString = DescriptionStringR600;
       GPU = GK_R600;
       hasFP64 = false;
+      hasFMAF = false;
+      hasLDEXPF = false;
     }
     AddrSpaceMap = &R600AddrSpaceMap;
     UseAddrSpaceMapMangling = true;
@@ -1755,6 +1761,10 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__R600__");
+    if (hasFMAF)
+      Builder.defineMacro("__HAS_FMAF__");
+    if (hasLDEXPF)
+      Builder.defineMacro("__HAS_LDEXPF__");
     if (hasFP64 && Opts.OpenCL) {
       Builder.defineMacro("cl_khr_fp64");
     }
@@ -1816,6 +1826,8 @@ public:
     case GK_NORTHERN_ISLANDS:
       DescriptionString = DescriptionStringR600;
       hasFP64 = false;
+      hasFMAF = false;
+      hasLDEXPF = false;
       break;
     case GK_R600_DOUBLE_OPS:
     case GK_R700_DOUBLE_OPS:
@@ -1823,11 +1835,15 @@ public:
     case GK_CAYMAN:
       DescriptionString = DescriptionStringR600DoubleOps;
       hasFP64 = true;
+      hasFMAF = true;
+      hasLDEXPF = false;
       break;
     case GK_SOUTHERN_ISLANDS:
     case GK_SEA_ISLANDS:
       DescriptionString = DescriptionStringSI;
       hasFP64 = true;
+      hasFMAF = true;
+      hasLDEXPF = true;
       break;
     }
 
