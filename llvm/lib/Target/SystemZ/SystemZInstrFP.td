@@ -141,7 +141,7 @@ def LDXBRA : UnaryRRF4<"ldxbra", 0xB345, FP128, FP128>,
              Requires<[FeatureFPExtension]>;
 
 def : Pat<(f32 (fround FP128:$src)),
-          (EXTRACT_SUBREG (LEXBR FP128:$src), subreg_hh32)>;
+          (EXTRACT_SUBREG (LEXBR FP128:$src), subreg_hr32)>;
 def : Pat<(f64 (fround FP128:$src)),
           (EXTRACT_SUBREG (LDXBR FP128:$src), subreg_h64)>;
 
@@ -345,13 +345,13 @@ def MDB  : BinaryRXE<"mdb",  0xED1C, fmul, FP64, load, 8>;
 def MDEBR : BinaryRRE<"mdeb", 0xB30C, null_frag, FP64, FP32>;
 def : Pat<(fmul (f64 (fextend FP32:$src1)), (f64 (fextend FP32:$src2))),
           (MDEBR (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
-                                FP32:$src1, subreg_h32), FP32:$src2)>;
+                                FP32:$src1, subreg_r32), FP32:$src2)>;
 
 // f64 multiplication of an FP32 register and an f32 memory.
 def MDEB : BinaryRXE<"mdeb", 0xED0C, null_frag, FP64, load, 4>;
 def : Pat<(fmul (f64 (fextend FP32:$src1)),
                 (f64 (extloadf32 bdxaddr12only:$addr))),
-          (MDEB (INSERT_SUBREG (f64 (IMPLICIT_DEF)), FP32:$src1, subreg_h32),
+          (MDEB (INSERT_SUBREG (f64 (IMPLICIT_DEF)), FP32:$src1, subreg_r32),
                 bdxaddr12only:$addr)>;
 
 // f128 multiplication of two FP64 registers.

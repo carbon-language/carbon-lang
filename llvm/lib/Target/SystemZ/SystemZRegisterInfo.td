@@ -25,8 +25,10 @@ def subreg_l32   : SubRegIndex<32, 0>;  // Also acts as subreg_ll32.
 def subreg_h32   : SubRegIndex<32, 32>; // Also acts as subreg_lh32.
 def subreg_l64   : SubRegIndex<64, 0>;
 def subreg_h64   : SubRegIndex<64, 64>;
+def subreg_r32   : SubRegIndex<32, 32>; // Reinterpret a wider reg as 32 bits.
 def subreg_hh32  : ComposedSubRegIndex<subreg_h64, subreg_h32>;
 def subreg_hl32  : ComposedSubRegIndex<subreg_h64, subreg_l32>;
+def subreg_hr32  : ComposedSubRegIndex<subreg_h64, subreg_r32>;
 }
 
 // Define a register class that contains values of type TYPE and an
@@ -151,7 +153,7 @@ class FPR32<bits<16> num, string n> : SystemZReg<n> {
 class FPR64<bits<16> num, string n, FPR32 low>
  : SystemZRegWithSubregs<n, [low]> {
   let HWEncoding = num;
-  let SubRegIndices = [subreg_h32];
+  let SubRegIndices = [subreg_r32];
 }
 
 // 8 pairs of FPR64s, with a one-register gap inbetween.
