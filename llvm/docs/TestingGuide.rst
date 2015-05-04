@@ -473,6 +473,25 @@ RUN lines:
 To add more substituations, look at ``test/lit.cfg`` or ``lit.local.cfg``.
 
 
+Options
+-------
+
+The llvm lit configuration allows to customize some things with user options:
+
+``llc``, ``opt``, ...
+    Substitute the respective llvm tool name with a custom command line. This
+    allows to specify custom paths and default arguments for these tools.
+    Example:
+
+    % llvm-lit "-Dllc=llc -verify-machineinstrs"
+
+``run_long_tests``
+    Enable the execution of long running tests.
+
+``llvm_site_config``
+    Load the specified lit configuration instead of the default one.
+
+
 Other Features
 --------------
 
