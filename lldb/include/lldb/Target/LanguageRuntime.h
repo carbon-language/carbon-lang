@@ -34,6 +34,9 @@ public:
     
     static LanguageRuntime* 
     FindPlugin (Process *process, lldb::LanguageType language);
+
+    static void
+    InitializeCommands (CommandObject* parent);
     
     virtual lldb::LanguageType
     GetLanguageType () const = 0;

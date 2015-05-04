@@ -12,6 +12,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/SearchFilter.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -415,6 +416,33 @@ LanguageRuntime::LanguageIsCPlusPlus (LanguageType language)
             return true;
         default:
             return false;
+    }
+}
+
+void
+LanguageRuntime::InitializeCommands (CommandObject* parent)
+{
+    if (!parent)
+        return;
+
+    if (!parent->IsMultiwordObject())
+        return;
+
+    LanguageRuntimeCreateInstance create_callback;
+
+    for (uint32_t idx = 0;
+         (create_callback = PluginManager::GetLanguageRuntimeCreateCallbackAtIndex(idx)) != nullptr;
+         ++idx)
+    {
+        if (LanguageRuntimeGetCommandObject command_callback = 
+                PluginManager::GetLanguageRuntimeGetCommandObjectAtIndex(idx))
+        {
+            CommandObjectSP command = command_callback(parent->GetCommandInterpreter());
+            if (command)
+            {
+                parent->LoadSubCommand(command->GetCommandName(), command);
+            }
+        }
     }
 }
 

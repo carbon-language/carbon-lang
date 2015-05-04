@@ -40,6 +40,7 @@
 #include "../Commands/CommandObjectType.h"
 #include "../Commands/CommandObjectVersion.h"
 #include "../Commands/CommandObjectWatchpoint.h"
+#include "../Commands/CommandObjectLanguage.h"
 
 
 #include "lldb/Core/Debugger.h"
@@ -443,6 +444,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["type"]      = CommandObjectSP (new CommandObjectType (*this));
     m_command_dict["version"]   = CommandObjectSP (new CommandObjectVersion (*this));
     m_command_dict["watchpoint"]= CommandObjectSP (new CommandObjectMultiwordWatchpoint (*this));
+    m_command_dict["language"]  = CommandObjectSP (new CommandObjectLanguage(*this));
 
     const char *break_regexes[][2] = {{"^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2"},
                                       {"^/([^/]+)/$", "breakpoint set --source-pattern-regexp '%1'"},

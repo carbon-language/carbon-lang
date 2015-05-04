@@ -137,13 +137,17 @@ public:
     static bool
     RegisterPlugin (const ConstString &name,
                     const char *description,
-                    LanguageRuntimeCreateInstance create_callback);
+                    LanguageRuntimeCreateInstance create_callback,
+                    LanguageRuntimeGetCommandObject command_callback = nullptr);
 
     static bool
     UnregisterPlugin (LanguageRuntimeCreateInstance create_callback);
 
     static LanguageRuntimeCreateInstance
     GetLanguageRuntimeCreateCallbackAtIndex (uint32_t idx);
+
+    static LanguageRuntimeGetCommandObject
+    GetLanguageRuntimeGetCommandObjectAtIndex (uint32_t idx);
 
     static LanguageRuntimeCreateInstance
     GetLanguageRuntimeCreateCallbackForPluginName (const ConstString &name);
