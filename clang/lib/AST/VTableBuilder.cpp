@@ -17,6 +17,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -217,7 +218,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
 #endif
 }
 
-static BaseOffset ComputeBaseOffset(ASTContext &Context, 
+static BaseOffset ComputeBaseOffset(const ASTContext &Context,
                                     const CXXRecordDecl *DerivedRD,
                                     const CXXBasePath &Path) {
   CharUnits NonVirtualOffset = CharUnits::Zero();
@@ -256,7 +257,7 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
   
 }
 
-static BaseOffset ComputeBaseOffset(ASTContext &Context, 
+static BaseOffset ComputeBaseOffset(const ASTContext &Context,
                                     const CXXRecordDecl *BaseRD,
                                     const CXXRecordDecl *DerivedRD) {
   CXXBasePaths Paths(/*FindAmbiguities=*/false,
@@ -3443,137 +3444,176 @@ MicrosoftVTableContext::~MicrosoftVTableContext() {
   llvm::DeleteContainerSeconds(VBaseInfo);
 }
 
-/// Find the full path of bases from the most derived class to the base class
-/// containing the vptr described by Info. Utilize final overriders to detect
-/// vftable slots gained through covariant overriders on virtual base paths.
-/// This is important in cases like this where we need to find the path to a
-/// vbase that goes through an nvbase:
-///   struct A { virtual void f(); }
-///   struct B : virtual A { virtual void f(); };
-///   struct C : virtual A, B { virtual void f(); };
-/// The path to A's vftable in C should be 'C, B, A', not 'C, A'.
-static bool findPathForVPtr(ASTContext &Context,
-                            const ASTRecordLayout &MostDerivedLayout,
-                            const CXXRecordDecl *RD, CharUnits Offset,
-                            FinalOverriders &Overriders,
-                            VPtrInfo::BasePath &FullPath, VPtrInfo *Info) {
-  if (RD == Info->BaseWithVPtr && Offset == Info->FullOffsetInMDC) {
-    Info->PathToBaseWithVPtr = FullPath;
-    return true;
+namespace {
+typedef llvm::SetVector<BaseSubobject, std::vector<BaseSubobject>,
+                        llvm::DenseSet<BaseSubobject>> FullPathTy;
+}
+
+// This recursive function finds all paths from a subobject centered at
+// (RD, Offset) to the subobject located at BaseWithVPtr.
+static void findPathsToSubobject(ASTContext &Context,
+                                 const ASTRecordLayout &MostDerivedLayout,
+                                 const CXXRecordDecl *RD, CharUnits Offset,
+                                 BaseSubobject BaseWithVPtr,
+                                 FullPathTy &FullPath,
+                                 std::list<FullPathTy> &Paths) {
+  if (BaseSubobject(RD, Offset) == BaseWithVPtr) {
+    Paths.push_back(FullPath);
+    return;
   }
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
-  auto Recurse = [&](const CXXRecordDecl *Base, CharUnits NewOffset) {
-    FullPath.push_back(Base);
-    if (findPathForVPtr(Context, MostDerivedLayout, Base, NewOffset, Overriders,
-                        FullPath, Info))
-      return true;
-    // Adding 'Base' didn't get us to the BaseWithVPtr, pop it off the stack so
-    // that we can try another.
-    FullPath.pop_back();
-    return false;
-  };
-
-  auto GetBaseOffset = [&](const CXXBaseSpecifier &BS) {
+  for (const CXXBaseSpecifier &BS : RD->bases()) {
     const CXXRecordDecl *Base = BS.getType()->getAsCXXRecordDecl();
-    return BS.isVirtual() ? MostDerivedLayout.getVBaseClassOffset(Base)
-                          : Offset + Layout.getBaseClassOffset(Base);
-  };
+    CharUnits NewOffset = BS.isVirtual()
+                              ? MostDerivedLayout.getVBaseClassOffset(Base)
+                              : Offset + Layout.getBaseClassOffset(Base);
+    FullPath.insert(BaseSubobject(Base, NewOffset));
+    findPathsToSubobject(Context, MostDerivedLayout, Base, NewOffset,
+                         BaseWithVPtr, FullPath, Paths);
+    FullPath.pop_back();
+  }
+}
 
-  CXXBasePaths Paths(/*FindAmbiguities=*/false, /*RecordPaths=*/false,
-                     /*DetectVirtual=*/true);
-  // All virtual bases which are on the path to the BaseWithVPtr are not equal.
-  // Specifically, virtual paths which introduce additional covariant thunks
-  // must be preferred over paths which do not introduce such thunks.
-  const CXXRecordDecl *Base = nullptr;
-  CharUnits NewOffset;
-  const CXXMethodDecl *CovariantMD = nullptr;
-  for (const auto *MD : Info->BaseWithVPtr->methods()) {
-    if (!MD->isVirtual())
-      continue;
-    MD = MD->getCanonicalDecl();
-    // Let's find overriders for the BaseWithVPtr where the method is overriden
-    // with a covariant method.
-    FinalOverriders::OverriderInfo Overrider =
-        Overriders.getOverrider(MD, Info->FullOffsetInMDC);
-    BaseOffset BO =
-        ComputeReturnAdjustmentBaseOffset(Context, Overrider.Method, MD);
-    // Skip any overriders which are not return adjusting.
-    if (BO.isEmpty() || !BO.VirtualBase)
-      continue;
-
-    // Ok, let's iterate through our virtual bases looking for a base which
-    // provides a return adjusting overrider for this method.
-    for (const auto &B : RD->bases()) {
-      const CXXRecordDecl *VBase = B.getType()->getAsCXXRecordDecl();
-      if (Base == VBase)
+// Return the paths which are not subsets of other paths.
+static void removeRedundantPaths(std::list<FullPathTy> &FullPaths) {
+  FullPaths.remove_if([&](const FullPathTy &SpecificPath) {
+    for (const FullPathTy &OtherPath : FullPaths) {
+      if (&SpecificPath == &OtherPath)
         continue;
-      // There might be a vbase which derives from a vbase which provides a
-      // covariant override for the method *and* provides its own covariant
-      // override.
-      // Because of this, we want to keep climbing up the inheritance lattice
-      // looking for the most derived virtual base which provides a covariant
-      // override for the method.
-      Paths.clear();
-      if (!VBase->isDerivedFrom(Info->BaseWithVPtr, Paths) ||
-          !Paths.getDetectedVirtual())
-        continue;
-      const CXXMethodDecl *VBaseMD = MD->getCorrespondingMethodInClass(VBase);
-      // Skip the base if it does not have an override of this method.
-      if (VBaseMD == MD)
-        continue;
-      CharUnits VBaseNewOffset = GetBaseOffset(B);
-      Overrider = Overriders.getOverrider(VBaseMD, VBaseNewOffset);
-      BO = ComputeReturnAdjustmentBaseOffset(Context, Overrider.Method, MD);
-      // Skip any overriders which are not return adjusting.
-      if (BO.isEmpty() || !BO.VirtualBase)
-        continue;
-      Paths.clear();
-      if (!Base || VBase->isDerivedFrom(Base, Paths)) {
-        assert(!Base || Paths.getDetectedVirtual());
-        Base = VBase;
-        NewOffset = VBaseNewOffset;
-        CovariantMD = VBaseMD;
-      } else {
-        Paths.clear();
-        if (!Base->isDerivedFrom(VBase, Paths)) {
-          DiagnosticsEngine &Diags = Context.getDiagnostics();
-          Diags.Report(RD->getLocation(), diag::err_vftable_ambiguous_component)
-              << RD;
-          Diags.Report(CovariantMD->getLocation(), diag::note_covariant_thunk)
-              << CovariantMD;
-          Diags.Report(VBaseMD->getLocation(), diag::note_covariant_thunk)
-              << VBaseMD;
-        }
+      if (std::all_of(SpecificPath.begin(), SpecificPath.end(),
+                      [&](const BaseSubobject &BSO) {
+                        return OtherPath.count(BSO) != 0;
+                      })) {
+        return true;
       }
     }
+    return false;
+  });
+}
+
+static CharUnits getOffsetOfFullPath(ASTContext &Context,
+                                     const CXXRecordDecl *RD,
+                                     const FullPathTy &FullPath) {
+  const ASTRecordLayout &MostDerivedLayout =
+      Context.getASTRecordLayout(RD);
+  CharUnits Offset = CharUnits::fromQuantity(-1);
+  for (const BaseSubobject &BSO : FullPath) {
+    const CXXRecordDecl *Base = BSO.getBase();
+    // The first entry in the path is always the most derived record, skip it.
+    if (Base == RD) {
+      assert(Offset.getQuantity() == -1);
+      Offset = CharUnits::Zero();
+      continue;
+    }
+    assert(Offset.getQuantity() != -1);
+    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+    // While we know which base has to be traversed, we don't know if that base
+    // was a virtual base.
+    const CXXBaseSpecifier *BaseBS = std::find_if(
+        RD->bases_begin(), RD->bases_end(), [&](const CXXBaseSpecifier &BS) {
+          return BS.getType()->getAsCXXRecordDecl() == Base;
+        });
+    Offset = BaseBS->isVirtual() ? MostDerivedLayout.getVBaseClassOffset(Base)
+                                 : Offset + Layout.getBaseClassOffset(Base);
+    RD = Base;
   }
+  return Offset;
+}
 
-  if (Base && Recurse(Base, NewOffset))
-    return true;
-
-  for (const auto &B : RD->bases()) {
-    Base = B.getType()->getAsCXXRecordDecl();
-    NewOffset = GetBaseOffset(B);
-    if (Recurse(Base, NewOffset))
-      return true;
+// We want to select the path which introduces the most covariant overrides.  If
+// two paths introduce overrides which the other path doesn't contain, issue a
+// diagnostic.
+static const FullPathTy *selectBestPath(ASTContext &Context,
+                                        const CXXRecordDecl *RD, VPtrInfo *Info,
+                                        std::list<FullPathTy> &FullPaths) {
+  const FullPathTy *BestPath = nullptr;
+  typedef std::set<const CXXMethodDecl *> OverriderSetTy;
+  OverriderSetTy LastOverrides;
+  for (const FullPathTy &SpecificPath : FullPaths) {
+    if (SpecificPath.empty())
+      continue;
+    OverriderSetTy CurrentOverrides;
+    const CXXRecordDecl *TopLevelRD = SpecificPath.begin()->getBase();
+    // Find the distance from the start of the path to the subobject with the
+    // VPtr.
+    CharUnits BaseOffset =
+        getOffsetOfFullPath(Context, TopLevelRD, SpecificPath);
+    FinalOverriders Overriders(TopLevelRD, CharUnits::Zero(), TopLevelRD);
+    for (const CXXMethodDecl *MD : Info->BaseWithVPtr->methods()) {
+      if (!MD->isVirtual())
+        continue;
+      FinalOverriders::OverriderInfo OI =
+          Overriders.getOverrider(MD->getCanonicalDecl(), BaseOffset);
+      // Only overriders which have a return adjustment introduce problematic
+      // thunks.
+      if (ComputeReturnAdjustmentBaseOffset(Context, OI.Method, MD).isEmpty())
+        continue;
+      // It's possible that the overrider isn't in this path.  If so, skip it
+      // because this path didn't introduce it.
+      const CXXRecordDecl *OverridingParent = OI.Method->getParent();
+      if (std::none_of(SpecificPath.begin(), SpecificPath.end(),
+                       [&](const BaseSubobject &BSO) {
+                         return BSO.getBase() == OverridingParent;
+                       }))
+        continue;
+      CurrentOverrides.insert(OI.Method);
+    }
+    OverriderSetTy NewOverrides =
+        llvm::set_difference(CurrentOverrides, LastOverrides);
+    if (NewOverrides.empty())
+      continue;
+    OverriderSetTy MissingOverrides =
+        llvm::set_difference(LastOverrides, CurrentOverrides);
+    if (MissingOverrides.empty()) {
+      // This path is a strict improvement over the last path, let's use it.
+      BestPath = &SpecificPath;
+      std::swap(CurrentOverrides, LastOverrides);
+    } else {
+      // This path introduces an overrider with a conflicting covariant thunk.
+      DiagnosticsEngine &Diags = Context.getDiagnostics();
+      const CXXMethodDecl *CovariantMD = *NewOverrides.begin();
+      const CXXMethodDecl *ConflictMD = *MissingOverrides.begin();
+      Diags.Report(RD->getLocation(), diag::err_vftable_ambiguous_component)
+          << RD;
+      Diags.Report(CovariantMD->getLocation(), diag::note_covariant_thunk)
+          << CovariantMD;
+      Diags.Report(ConflictMD->getLocation(), diag::note_covariant_thunk)
+          << ConflictMD;
+    }
   }
-
-  return false;
+  // Select the longest path if no path introduces covariant overrides.
+  // Technically, the path we choose should have no effect but longer paths are
+  // nicer to see in -fdump-vtable-layouts.
+  if (!BestPath)
+    BestPath =
+        &*std::max_element(FullPaths.begin(), FullPaths.end(),
+                           [](const FullPathTy &FP1, const FullPathTy &FP2) {
+                             return FP1.size() < FP2.size();
+                           });
+  return BestPath;
 }
 
 static void computeFullPathsForVFTables(ASTContext &Context,
                                         const CXXRecordDecl *RD,
                                         VPtrInfoVector &Paths) {
   const ASTRecordLayout &MostDerivedLayout = Context.getASTRecordLayout(RD);
-  VPtrInfo::BasePath FullPath;
-  FinalOverriders Overriders(RD, CharUnits::Zero(), RD);
+  FullPathTy FullPath;
+  std::list<FullPathTy> FullPaths;
   for (VPtrInfo *Info : Paths) {
-    if (!findPathForVPtr(Context, MostDerivedLayout, RD, CharUnits::Zero(),
-                         Overriders, FullPath, Info))
-      llvm_unreachable("no path for vptr!");
+    findPathsToSubobject(
+        Context, MostDerivedLayout, RD, CharUnits::Zero(),
+        BaseSubobject(Info->BaseWithVPtr, Info->FullOffsetInMDC), FullPath,
+        FullPaths);
     FullPath.clear();
+    removeRedundantPaths(FullPaths);
+    Info->PathToBaseWithVPtr.clear();
+    if (const FullPathTy *BestPath =
+            selectBestPath(Context, RD, Info, FullPaths))
+      for (const BaseSubobject &BSO : *BestPath)
+        Info->PathToBaseWithVPtr.push_back(BSO.getBase());
+    FullPaths.clear();
   }
 }
 

@@ -172,3 +172,32 @@ D::D() {}
 // GLOBALS: @"\01?foo@C@pr21073_2@@QAEPAUA@2@XZ"
 // GLOBALS: @"\01?foo@C@pr21073_2@@UAEPAU12@XZ"
 }
+
+namespace test3 {
+struct A { virtual A *fn(); };
+struct B : virtual A { virtual B *fn(); };
+struct X : virtual B {};
+struct Y : virtual B {};
+struct C : X, Y {};
+struct D : virtual B, virtual A, C {
+  D *fn();
+  D();
+};
+D::D() {}
+
+// VFTABLES-LABEL: VFTable for 'test3::A' in 'test3::B' in 'test3::X' in 'test3::C' in 'test3::D' (3 entries).
+// VFTABLES-NEXT:   0 | test3::D *test3::D::fn()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct test3::A *'): vbase #1, 0 non-virtual]
+// VFTABLES-NEXT:       [this adjustment: vtordisp at -4, 0 non-virtual]
+// VFTABLES-NEXT:   1 | test3::D *test3::D::fn()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct test3::B *'): vbase #2, 0 non-virtual]
+// VFTABLES-NEXT:       [this adjustment: vtordisp at -4, 0 non-virtual]
+// VFTABLES-NEXT:   2 | test3::D *test3::D::fn()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct test3::D *'): 0 non-virtual]
+// VFTABLES-NEXT:       [this adjustment: vtordisp at -4, 0 non-virtual]
+
+// GLOBALS-LABEL: @"\01??_7D@test3@@6B@" = {{.*}} constant [3 x i8*]
+// GLOBALS: @"\01?fn@D@test3@@$4PPPPPPPM@A@AEPAUA@2@XZ"
+// GLOBALS: @"\01?fn@D@test3@@$4PPPPPPPM@A@AEPAUB@2@XZ"
+// GLOBALS: @"\01?fn@D@test3@@$4PPPPPPPM@A@AEPAU12@XZ"
+}

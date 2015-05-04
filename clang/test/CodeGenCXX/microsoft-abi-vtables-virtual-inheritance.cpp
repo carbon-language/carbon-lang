@@ -782,7 +782,7 @@ struct B : virtual A { virtual void g(void); };
 struct C : virtual A, B { C(); };
 C::C() {}
 
-// CHECK-LABEL: VFTable for 'pr21031_1::A' in 'pr21031_1::C' (1 entry)
+// CHECK-LABEL: VFTable for 'pr21031_1::A' in 'pr21031_1::B' in 'pr21031_1::C' (1 entry)
 // CHECK-NEXT:   0 | void pr21031_1::A::f()
 
 // CHECK-LABEL: VFTable for 'pr21031_1::B' in 'pr21031_1::C' (1 entry)
