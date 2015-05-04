@@ -494,20 +494,13 @@ void FrontendAction::EndSourceFile() {
   // FrontendAction.
   CI.clearOutputFiles(/*EraseFiles=*/shouldEraseOutputFiles());
 
+  // FIXME: Only do this if DisableFree is set.
   if (isCurrentFileAST()) {
-    if (DisableFree) {
-      CI.resetAndLeakSema();
-      CI.resetAndLeakASTContext();
-      CI.resetAndLeakPreprocessor();
-      CI.resetAndLeakSourceManager();
-      CI.resetAndLeakFileManager();
-    } else {
-      CI.setSema(nullptr);
-      CI.setASTContext(nullptr);
-      CI.setPreprocessor(nullptr);
-      CI.setSourceManager(nullptr);
-      CI.setFileManager(nullptr);
-    }
+    CI.resetAndLeakSema();
+    CI.resetAndLeakASTContext();
+    CI.resetAndLeakPreprocessor();
+    CI.resetAndLeakSourceManager();
+    CI.resetAndLeakFileManager();
   }
 
   setCompilerInstance(nullptr);
