@@ -1088,22 +1088,59 @@ void ScheduleDAGInstrs::startBlockForKills(MachineBasicBlock *BB) {
   }
 }
 
+/// \brief If we change a kill flag on the bundle instruction implicit register
+/// operands, then we also need to propagate that to any instructions inside
+/// the bundle which had the same kill state.
+static void toggleBundleKillFlag(MachineInstr *MI, unsigned Reg,
+                                 bool NewKillState) {
+  if (MI->getOpcode() != TargetOpcode::BUNDLE)
+    return;
+
+  // Walk backwards from the last instruction in the bundle to the first.
+  // Once we set a kill flag on an instruction, we bail out, as otherwise we
+  // might set it on too many operands.  We will clear as many flags as we
+  // can though.
+  MachineBasicBlock::instr_iterator Begin = MI;
+  MachineBasicBlock::instr_iterator End = getBundleEnd(MI);
+  while (Begin != End) {
+    for (MIOperands MO(--End); MO.isValid(); ++MO) {
+      if (!MO->isReg() || MO->isDef() || Reg != MO->getReg())
+        continue;
+
+      // If the register has the internal flag then it could be killing an
+      // internal def of the register.  In this case, just skip.  We only want
+      // to toggle the flag on operands visible outside the bundle.
+      if (MO->isInternalRead())
+        continue;
+
+      if (MO->isKill() == NewKillState)
+        continue;
+      MO->setIsKill(NewKillState);
+      if (NewKillState)
+        return;
+    }
+  }
+}
+
 bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
   // Setting kill flag...
   if (!MO.isKill()) {
     MO.setIsKill(true);
+    toggleBundleKillFlag(MI, MO.getReg(), true);
     return false;
   }
 
   // If MO itself is live, clear the kill flag...
   if (LiveRegs.test(MO.getReg())) {
     MO.setIsKill(false);
+    toggleBundleKillFlag(MI, MO.getReg(), false);
     return false;
   }
 
   // If any subreg of MO is live, then create an imp-def for that
   // subreg and keep MO marked as killed.
   MO.setIsKill(false);
+  toggleBundleKillFlag(MI, MO.getReg(), false);
   bool AllDead = true;
   const unsigned SuperReg = MO.getReg();
   MachineInstrBuilder MIB(MF, MI);
@@ -1114,8 +1151,10 @@ bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
     }
   }
 
-  if(AllDead)
+  if(AllDead) {
     MO.setIsKill(true);
+    toggleBundleKillFlag(MI, MO.getReg(), true);
+  }
   return false;
 }
 
@@ -1188,6 +1227,12 @@ void ScheduleDAGInstrs::fixupKills(MachineBasicBlock *MBB) {
         // Warning: toggleKillFlag may invalidate MO.
         toggleKillFlag(MI, MO);
         DEBUG(MI->dump());
+        DEBUG(if (MI->getOpcode() == TargetOpcode::BUNDLE) {
+          MachineBasicBlock::instr_iterator Begin = MI;
+          MachineBasicBlock::instr_iterator End = getBundleEnd(MI);
+          while (++Begin != End)
+            DEBUG(Begin->dump());
+        });
       }
 
       killedRegs.set(Reg);
