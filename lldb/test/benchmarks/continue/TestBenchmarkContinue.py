@@ -21,7 +21,6 @@ class TestBenchmarkContinue(BenchBase):
         self.data_formatter_commands()
 
     @benchmarks_test
-    @skipIfLinux # No standard locations for libc++ on Linux, so skip for now 
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Benchmark different ways to continue a process"""

@@ -22,7 +22,6 @@ class CModulesTestCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD
-    @skipIfLinux
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
