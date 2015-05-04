@@ -5803,6 +5803,13 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
   verifyFormat("typedef size_t (*aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)(\n"
                "    const aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "        *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    vector<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>\n"
+               "        aaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    vector<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<\n"
+               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>>\n"
+               "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, FormatsArrays) {

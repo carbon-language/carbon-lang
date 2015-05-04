@@ -43,8 +43,9 @@ private:
   bool parseAngle() {
     if (!CurrentToken)
       return false;
-    ScopedContextCreator ContextCreator(*this, tok::less, 10);
     FormatToken *Left = CurrentToken->Previous;
+    Left->ParentBracket = Contexts.back().ContextKind;
+    ScopedContextCreator ContextCreator(*this, tok::less, 10);
     Contexts.back().IsExpression = false;
     // If there's a template keyword before the opening angle bracket, this is a
     // template parameter, not an argument.
@@ -92,6 +93,8 @@ private:
   bool parseParens(bool LookForDecls = false) {
     if (!CurrentToken)
       return false;
+    FormatToken *Left = CurrentToken->Previous;
+    Left->ParentBracket = Contexts.back().ContextKind;
     ScopedContextCreator ContextCreator(*this, tok::l_paren, 1);
 
     // FIXME: This is a bit of a hack. Do better.
@@ -99,7 +102,6 @@ private:
         Contexts.size() == 2 && Contexts[0].ColonIsForRangeExpr;
 
     bool StartsObjCMethodExpr = false;
-    FormatToken *Left = CurrentToken->Previous;
     if (CurrentToken->is(tok::caret)) {
       // (^ can start a block type.
       Left->Type = TT_ObjCBlockLParen;
@@ -245,6 +247,7 @@ private:
     // ')' or ']'), it could be the start of an Objective-C method
     // expression, or it could the the start of an Objective-C array literal.
     FormatToken *Left = CurrentToken->Previous;
+    Left->ParentBracket = Contexts.back().ContextKind;
     FormatToken *Parent = Left->getPreviousNonComment();
     bool StartsObjCMethodExpr =
         Contexts.back().CanBeExpression && Left->isNot(TT_LambdaLSquare) &&
@@ -324,6 +327,7 @@ private:
   bool parseBrace() {
     if (CurrentToken) {
       FormatToken *Left = CurrentToken->Previous;
+      Left->ParentBracket = Contexts.back().ContextKind;
 
       if (Contexts.back().CaretFound)
         Left->Type = TT_ObjCBlockLBrace;

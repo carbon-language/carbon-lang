@@ -814,6 +814,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
 
   unsigned NewIndent;
   unsigned NewIndentLevel = State.Stack.back().IndentLevel;
+  unsigned LastSpace = State.Stack.back().LastSpace;
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare)) {
@@ -833,6 +834,18 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
     NewIndent = Style.ContinuationIndentWidth +
                 std::max(State.Stack.back().LastSpace,
                          State.Stack.back().StartOfFunctionCall);
+
+    // Ensure that different different brackets force relative alignment, e.g.:
+    // void SomeFunction(vector<  // break
+    //                       int> v);
+    // FIXME: We likely want to do this for more combinations of brackets.
+    // Verify that it is wanted for ObjC, too.
+    if (Current.Tok.getKind() == tok::less &&
+        Current.ParentBracket == tok::l_paren) {
+      NewIndent = std::max(NewIndent, State.Stack.back().Indent);
+      LastSpace = std::max(LastSpace, State.Stack.back().Indent);
+    }
+
     AvoidBinPacking =
         (State.Line->MustBeDeclaration && !Style.BinPackParameters) ||
         (!State.Line->MustBeDeclaration && !Style.BinPackArguments) ||
@@ -866,8 +879,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
                       State.Stack.back().ContainsUnwrappedBuilder);
   unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
                                         State.Stack.back().NestedBlockIndent);
-  State.Stack.push_back(ParenState(NewIndent, NewIndentLevel,
-                                   State.Stack.back().LastSpace,
+  State.Stack.push_back(ParenState(NewIndent, NewIndentLevel, LastSpace,
                                    AvoidBinPacking, NoLineBreak));
   State.Stack.back().NestedBlockIndent = NestedBlockIndent;
   State.Stack.back().BreakBeforeParameter = BreakBeforeParameter;

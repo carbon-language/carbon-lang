@@ -111,7 +111,7 @@ struct FormatToken {
         IsFirst(false), MustBreakBefore(false), IsUnterminatedLiteral(false),
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
-        ParameterCount(0), BlockParameterCount(0),
+        ParameterCount(0), BlockParameterCount(0), ParentBracket(tok::unknown),
         PackingKind(PPK_Inconclusive), TotalLength(0), UnbreakableTailLength(0),
         BindingStrength(0), NestingLevel(0), SplitPenalty(0),
         LongestObjCSelectorName(0), FakeRParens(0),
@@ -203,6 +203,10 @@ struct FormatToken {
   /// \brief Number of parameters that are nested blocks,
   /// if this is "(", "[" or "<".
   unsigned BlockParameterCount;
+
+  /// \brief If this is a bracket ("<", "(", "[" or "{"), contains the kind of
+  /// the surrounding bracket.
+  tok::TokenKind ParentBracket;
 
   /// \brief A token can have a special role that can carry extra information
   /// about the token's formatting.
