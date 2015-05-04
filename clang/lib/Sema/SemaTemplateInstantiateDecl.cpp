@@ -4436,7 +4436,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 
     // Tag type may be referenced prior to definition, in this case it must be
     // instantiated now.
-    if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    if (isa<TagDecl>(D)) {
       Decl *Inst = SubstDecl(D, CurContext, TemplateArgs);
       CurrentInstantiationScope->InstantiatedLocal(D, Inst);
       return cast<TypeDecl>(Inst);
