@@ -600,3 +600,191 @@ define <64 x i8> @test_mask_packus_epi16_rmkz_512(<32 x i16> %a, <32 x i16>* %pt
 }
 
 declare <64 x i8> @llvm.x86.avx512.mask.packuswb.512(<32 x i16>, <32 x i16>, <64 x i8>, i64)
+
+define <32 x i16> @test_mask_adds_epi16_rr_512(<32 x i16> %a, <32 x i16> %b) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rr_512
+  ;CHECK: vpaddsw %zmm1, %zmm0, %zmm0     
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epi16_rrk_512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rrk_512
+  ;CHECK: vpaddsw %zmm1, %zmm0, %zmm2 {%k1} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epi16_rrkz_512(<32 x i16> %a, <32 x i16> %b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rrkz_512
+  ;CHECK: vpaddsw %zmm1, %zmm0, %zmm0 {%k1} {z} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epi16_rm_512(<32 x i16> %a, <32 x i16>* %ptr_b) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rm_512
+  ;CHECK: vpaddsw (%rdi), %zmm0, %zmm0    
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epi16_rmk_512(<32 x i16> %a, <32 x i16>* %ptr_b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rmk_512
+  ;CHECK: vpaddsw (%rdi), %zmm0, %zmm1 {%k1} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epi16_rmkz_512(<32 x i16> %a, <32 x i16>* %ptr_b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epi16_rmkz_512
+  ;CHECK: vpaddsw (%rdi), %zmm0, %zmm0 {%k1} {z} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.padds.w.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16> @test_mask_subs_epi16_rr_512(<32 x i16> %a, <32 x i16> %b) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rr_512
+  ;CHECK: vpsubsw %zmm1, %zmm0, %zmm0     
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epi16_rrk_512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rrk_512
+  ;CHECK: vpsubsw %zmm1, %zmm0, %zmm2 {%k1} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epi16_rrkz_512(<32 x i16> %a, <32 x i16> %b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rrkz_512
+  ;CHECK: vpsubsw %zmm1, %zmm0, %zmm0 {%k1} {z} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epi16_rm_512(<32 x i16> %a, <32 x i16>* %ptr_b) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rm_512
+  ;CHECK: vpsubsw (%rdi), %zmm0, %zmm0    
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epi16_rmk_512(<32 x i16> %a, <32 x i16>* %ptr_b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rmk_512
+  ;CHECK: vpsubsw (%rdi), %zmm0, %zmm1 {%k1} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epi16_rmkz_512(<32 x i16> %a, <32 x i16>* %ptr_b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epi16_rmkz_512
+  ;CHECK: vpsubsw (%rdi), %zmm0, %zmm0 {%k1} {z} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.psubs.w.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16> @test_mask_adds_epu16_rr_512(<32 x i16> %a, <32 x i16> %b) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rr_512
+  ;CHECK: vpaddusw %zmm1, %zmm0, %zmm0     
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epu16_rrk_512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rrk_512
+  ;CHECK: vpaddusw %zmm1, %zmm0, %zmm2 {%k1} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epu16_rrkz_512(<32 x i16> %a, <32 x i16> %b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rrkz_512
+  ;CHECK: vpaddusw %zmm1, %zmm0, %zmm0 {%k1} {z} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epu16_rm_512(<32 x i16> %a, <32 x i16>* %ptr_b) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rm_512
+  ;CHECK: vpaddusw (%rdi), %zmm0, %zmm0    
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epu16_rmk_512(<32 x i16> %a, <32 x i16>* %ptr_b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rmk_512
+  ;CHECK: vpaddusw (%rdi), %zmm0, %zmm1 {%k1} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_adds_epu16_rmkz_512(<32 x i16> %a, <32 x i16>* %ptr_b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_adds_epu16_rmkz_512
+  ;CHECK: vpaddusw (%rdi), %zmm0, %zmm0 {%k1} {z} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.paddus.w.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16> @test_mask_subs_epu16_rr_512(<32 x i16> %a, <32 x i16> %b) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rr_512
+  ;CHECK: vpsubusw %zmm1, %zmm0, %zmm0     
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epu16_rrk_512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rrk_512
+  ;CHECK: vpsubusw %zmm1, %zmm0, %zmm2 {%k1} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epu16_rrkz_512(<32 x i16> %a, <32 x i16> %b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rrkz_512
+  ;CHECK: vpsubusw %zmm1, %zmm0, %zmm0 {%k1} {z} 
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epu16_rm_512(<32 x i16> %a, <32 x i16>* %ptr_b) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rm_512
+  ;CHECK: vpsubusw (%rdi), %zmm0, %zmm0    
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 -1)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epu16_rmk_512(<32 x i16> %a, <32 x i16>* %ptr_b, <32 x i16> %passThru, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rmk_512
+  ;CHECK: vpsubusw (%rdi), %zmm0, %zmm1 {%k1} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> %passThru, i32 %mask)
+  ret <32 x i16> %res
+}
+
+define <32 x i16> @test_mask_subs_epu16_rmkz_512(<32 x i16> %a, <32 x i16>* %ptr_b, i32 %mask) {
+  ;CHECK-LABEL: test_mask_subs_epu16_rmkz_512
+  ;CHECK: vpsubusw (%rdi), %zmm0, %zmm0 {%k1} {z} 
+  %b = load <32 x i16>, <32 x i16>* %ptr_b
+  %res = call <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16> %a, <32 x i16> %b, <32 x i16> zeroinitializer, i32 %mask)
+  ret <32 x i16> %res
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.psubus.w.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)

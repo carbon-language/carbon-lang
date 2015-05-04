@@ -3089,6 +3089,14 @@ defm VPADD : avx512_binop_rm_vl_all<0xFC, 0xFD, 0xFE, 0xD4, "vpadd", add,
                                     SSE_INTALU_ITINS_P, 1>;
 defm VPSUB : avx512_binop_rm_vl_all<0xF8, 0xF9, 0xFA, 0xFB, "vpsub", sub,
                                     SSE_INTALU_ITINS_P, 0>;
+defm VPADDS : avx512_binop_rm_vl_bw<0xEC, 0xED, "vpadds", X86adds,
+                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
+defm VPSUBS : avx512_binop_rm_vl_bw<0xE8, 0xE9, "vpsubs", X86subs,
+                                    SSE_INTALU_ITINS_P, HasBWI, 0>;
+defm VPADDUS : avx512_binop_rm_vl_bw<0xDC, 0xDD, "vpaddus", X86addus,
+                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
+defm VPSUBUS : avx512_binop_rm_vl_bw<0xD8, 0xD9, "vpsubus", X86subus,
+                                    SSE_INTALU_ITINS_P, HasBWI, 0>;
 defm VPMULLD : avx512_binop_rm_vl_d<0x40, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmull", mul,
