@@ -3118,6 +3118,77 @@ defm VPMULDQ : avx512_binop_all<0x28, "vpmuldq", SSE_INTALU_ITINS_P,
 defm VPMULUDQ : avx512_binop_all<0xF4, "vpmuludq", SSE_INTMUL_ITINS_P,
                    X86pmuludq, 1>;
 
+multiclass avx512_packs_rmb<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                            X86VectorVTInfo _Src, X86VectorVTInfo _Dst> {
+  let mayLoad = 1 in {
+      defm rmb : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
+                        (ins _Src.RC:$src1, _Src.ScalarMemOp:$src2), 
+                        OpcodeStr,
+                        "${src2}"##_Src.BroadcastStr##", $src1",
+                         "$src1, ${src2}"##_Src.BroadcastStr,
+                        (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bitconvert 
+                                     (_Src.VT (X86VBroadcast 
+                                              (_Src.ScalarLdFrag addr:$src2)))))),
+                        "">,
+                        EVEX_4V, EVEX_B, EVEX_CD8<_Src.EltSize, CD8VF>;
+  }
+}
+
+multiclass avx512_packs_rm<bits<8> opc, string OpcodeStr, 
+                            SDNode OpNode,X86VectorVTInfo _Src, 
+                            X86VectorVTInfo _Dst> {
+  defm rr : AVX512_maskable<opc, MRMSrcReg, _Dst, (outs _Dst.RC:$dst), 
+                            (ins _Src.RC:$src1, _Src.RC:$src2), OpcodeStr,
+                            "$src2, $src1","$src1, $src2", 
+                            (_Dst.VT (OpNode 
+                                         (_Src.VT _Src.RC:$src1), 
+                                         (_Src.VT _Src.RC:$src2))),
+                            "">,  EVEX_CD8<_Src.EltSize, CD8VF>, EVEX_4V;
+  let mayLoad = 1 in {
+    defm rm : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
+                          (ins _Src.RC:$src1, _Src.MemOp:$src2), OpcodeStr,
+                          "$src2, $src1", "$src1, $src2",
+                          (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1),
+                                        (bitconvert (_Src.LdFrag addr:$src2)))),
+                            "">, EVEX_4V, EVEX_CD8<_Src.EltSize, CD8VF>;
+  }
+}
+
+multiclass avx512_packs_all_i32_i16<bits<8> opc, string OpcodeStr,
+                                    SDNode OpNode> {
+  defm NAME#Z : avx512_packs_rm<opc, OpcodeStr, OpNode, v16i32_info,
+                                 v32i16_info>,
+                avx512_packs_rmb<opc, OpcodeStr, OpNode, v16i32_info,
+                                 v32i16_info>, EVEX_V512;
+  let Predicates = [HasVLX] in {
+    defm NAME#Z256 : avx512_packs_rm<opc, OpcodeStr, OpNode, v8i32x_info,
+                                     v16i16x_info>,
+                     avx512_packs_rmb<opc, OpcodeStr, OpNode, v8i32x_info,
+                                     v16i16x_info>, EVEX_V256;
+    defm NAME#Z128 : avx512_packs_rm<opc, OpcodeStr, OpNode, v4i32x_info,
+                                     v8i16x_info>,
+                     avx512_packs_rmb<opc, OpcodeStr, OpNode, v4i32x_info,
+                                     v8i16x_info>, EVEX_V128;
+  }
+}
+multiclass avx512_packs_all_i16_i8<bits<8> opc, string OpcodeStr,
+                            SDNode OpNode> {
+  defm NAME#Z : avx512_packs_rm<opc, OpcodeStr, OpNode, v32i16_info,
+                                v64i8_info>, EVEX_V512;
+  let Predicates = [HasVLX] in {
+    defm NAME#Z256 : avx512_packs_rm<opc, OpcodeStr, OpNode, v16i16x_info,
+                                    v32i8x_info>, EVEX_V256;
+    defm NAME#Z128 : avx512_packs_rm<opc, OpcodeStr, OpNode, v8i16x_info,
+                                    v16i8x_info>, EVEX_V128;
+  }
+}
+let Predicates = [HasBWI] in {
+  defm VPACKSSDW : avx512_packs_all_i32_i16<0x6B, "vpackssdw", X86Packss>, PD;
+  defm VPACKUSDW : avx512_packs_all_i32_i16<0x2b, "vpackusdw", X86Packus>, T8PD;
+  defm VPACKSSWB : avx512_packs_all_i16_i8 <0x63, "vpacksswb", X86Packss>, AVX512BIBase, VEX_W;
+  defm VPACKUSWB : avx512_packs_all_i16_i8 <0x67, "vpackuswb", X86Packus>, AVX512BIBase, VEX_W;
+}
+
 defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxs", X86smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
 defm VPMAXSW : avx512_binop_rm_vl_w<0xEE, "vpmaxs", X86smax,
