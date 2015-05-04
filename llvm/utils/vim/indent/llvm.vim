@@ -25,7 +25,7 @@ if exists("*GetLLVMIndent")
   finish
 endif
 
-function! FindOpenBracket(lnum)
+function! FindOpenBrace(lnum)
   call cursor(a:lnum, 1)
   return searchpair('{', '', '}', 'bW')
 endfun
@@ -44,7 +44,7 @@ function! GetLLVMIndent()
 
   " Indent labels the same as the current opening block
   if thisline =~ ':\s*$'
-    let blockbegin = FindOpenBracket(v:lnum)
+    let blockbegin = FindOpenBrace(v:lnum)
     if blockbegin > 0
       return indent(blockbegin)
     endif
@@ -52,7 +52,7 @@ function! GetLLVMIndent()
 
   " Find a non-blank not-completely commented line above the current line.
   let prev_lnum = prevnonblank(v:lnum - 1)
-  while prev_num > 0 && synIDattr(synID(prev_lnum, indent(prev_lnum)+1, 0), "name") =? "string\|comment"
+  while prev_lnum > 0 && synIDattr(synID(prev_lnum, indent(prev_lnum)+1, 0), "name") =? "string\|comment"
     let prev_lnum = prevnonblank(prev_lnum-1)
   endwhile
   " Hit the start of the file, use zero indent.
