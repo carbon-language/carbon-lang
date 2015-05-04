@@ -237,6 +237,10 @@ ifeq (1,$(USE_LIBCPP))
 	ifneq (,$(findstring clang,$(CC)))
 		CXXFLAGS += -stdlib=libc++
 		LDFLAGS += -stdlib=libc++
+		ifeq "$(OS)" "Linux"
+			# This is the default install location on Ubuntu 14.04
+			CXXFLAGS += -I/usr/include/c++/v1
+        	endif
 	endif
 endif
 

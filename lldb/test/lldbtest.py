@@ -1737,7 +1737,7 @@ class Base(unittest2.TestCase):
             return self.lib_dir
 
     def getLibcPlusPlusLibs(self):
-        if sys.platform.startswith('freebsd'):
+        if sys.platform.startswith('freebsd') or sys.platform.startswith('linux'):
             return ['libc++.so.1']
         else:
             return ['libc++.1.dylib','libc++abi.dylib']

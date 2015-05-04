@@ -16,6 +16,6 @@ int main ()
     std::initializer_list<int> ili{1,2,3,4,5};
     std::initializer_list<std::string> ils{"1","2","3","4","surprise it is a long string!! yay!!"};
     
-    return 0; //% self.expect("frame variable ili", substrs = ['[1] = 2','[4] = 5'])
-     //% self.expect("frame variable ils", substrs = ['[4] = "surprise it is a long string!! yay!!"'])
+    return 0; // Set break point at this line.
 }
+
