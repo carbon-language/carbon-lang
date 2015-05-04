@@ -754,7 +754,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
        Arch == Triple::aarch64 ||
        Arch == Triple::ppc || Arch == Triple::ppc64 ||
        Arch == Triple::UnknownArch) &&
-      (TT.isOSDarwin() || TT.isOSBinFormatMachO())) {
+      TT.isOSBinFormatMachO()) {
     Env = IsMachO;
     InitMachOMCObjectFileInfo(TT);
   } else if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
