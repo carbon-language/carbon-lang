@@ -2,7 +2,7 @@
 ; uses a different register class, but the set of saved and restored
 ; registers should be the same.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; This function should require all FPRs, but no other spill slots.
 ; We need to save and restore 8 of the 16 FPRs, so the frame size

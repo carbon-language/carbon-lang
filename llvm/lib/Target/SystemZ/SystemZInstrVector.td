@@ -14,6 +14,8 @@
 let Predicates = [FeatureVector] in {
   // Register move.
   def VLR : UnaryVRRa<"vlr", 0xE756, null_frag, v128any, v128any>;
+  def VLR32 : UnaryAliasVRR<null_frag, v32eb, v32eb>;
+  def VLR64 : UnaryAliasVRR<null_frag, v64db, v64db>;
 
   // Load GR from VR element.
   def VLGVB : BinaryVRSc<"vlgvb", 0xE721, null_frag, v128b, 0>;
@@ -123,6 +125,13 @@ let Predicates = [FeatureVector] in {
   def : Pat<(v2f64 (z_replicate_loadf64 bdxaddr12only:$addr)),
             (VLREPG bdxaddr12only:$addr)>;
 
+  // Use VLREP to load subvectors.  These patterns use "12pair" because
+  // LEY and LDY offer full 20-bit displacement fields.  It's often better
+  // to use those instructions rather than force a 20-bit displacement
+  // into a GPR temporary.
+  def VL32 : UnaryAliasVRX<load, v32eb, bdxaddr12pair>;
+  def VL64 : UnaryAliasVRX<load, v64db, bdxaddr12pair>;
+
   // Load logical element and zero.
   def VLLEZB : UnaryVRX<"vllezb", 0xE704, z_vllezi8,  v128b, 1, 0>;
   def VLLEZH : UnaryVRX<"vllezh", 0xE704, z_vllezi16, v128h, 2, 1>;
@@ -192,6 +201,13 @@ let Predicates = [FeatureVector] in {
   def : Pat<(z_vstef64 (v2f64 VR128:$val), bdxaddr12only:$addr,
                        imm32zx1:$index),
             (VSTEG VR128:$val, bdxaddr12only:$addr, imm32zx1:$index)>;
+
+  // Use VSTE to store subvectors.  These patterns use "12pair" because
+  // STEY and STDY offer full 20-bit displacement fields.  It's often better
+  // to use those instructions rather than force a 20-bit displacement
+  // into a GPR temporary.
+  def VST32 : StoreAliasVRX<store, v32eb, bdxaddr12pair>;
+  def VST64 : StoreAliasVRX<store, v64db, bdxaddr12pair>;
 
   // Scatter element.
   def VSCEF : StoreBinaryVRV<"vscef", 0xE71B, 4, imm32zx2>;
@@ -778,7 +794,7 @@ multiclass VectorRounding<Instruction insn, TypedReg tr> {
 let Predicates = [FeatureVector] in {
   // Add.
   def VFADB : BinaryVRRc<"vfadb", 0xE7E3, fadd, v128db, v128db, 3, 0>;
-  def WFADB : BinaryVRRc<"wfadb", 0xE7E3, null_frag, v64db, v64db, 3, 8>;
+  def WFADB : BinaryVRRc<"wfadb", 0xE7E3, fadd, v64db, v64db, 3, 8>;
 
   // Convert from fixed 64-bit.
   def VCDGB : TernaryVRRa<"vcdgb", 0xE7C3, null_frag, v128db, v128g, 3, 0>;
@@ -804,53 +820,55 @@ let Predicates = [FeatureVector] in {
 
   // Divide.
   def VFDDB : BinaryVRRc<"vfddb", 0xE7E5, fdiv, v128db, v128db, 3, 0>;
-  def WFDDB : BinaryVRRc<"wfddb", 0xE7E5, null_frag, v64db, v64db, 3, 8>;
+  def WFDDB : BinaryVRRc<"wfddb", 0xE7E5, fdiv, v64db, v64db, 3, 8>;
 
   // Load FP integer.
   def VFIDB : TernaryVRRa<"vfidb", 0xE7C7, null_frag, v128db, v128db, 3, 0>;
   def WFIDB : TernaryVRRa<"wfidb", 0xE7C7, null_frag, v64db, v64db, 3, 8>;
   defm : VectorRounding<VFIDB, v128db>;
+  defm : VectorRounding<WFIDB, v64db>;
 
   // Load lengthened.
   def VLDEB : UnaryVRRa<"vldeb", 0xE7C4, z_vextend, v128db, v128eb, 2, 0>;
-  def WLDEB : UnaryVRRa<"wldeb", 0xE7C4, null_frag, v64db, v32eb, 2, 8>;
+  def WLDEB : UnaryVRRa<"wldeb", 0xE7C4, fextend, v64db, v32eb, 2, 8>;
 
   // Load rounded,
   def VLEDB : TernaryVRRa<"vledb", 0xE7C5, null_frag, v128eb, v128db, 3, 0>;
   def WLEDB : TernaryVRRa<"wledb", 0xE7C5, null_frag, v32eb, v64db, 3, 8>;
   def : Pat<(v4f32 (z_vround (v2f64 VR128:$src))), (VLEDB VR128:$src, 0, 0)>;
+  def : FPConversion<WLEDB, fround, v32eb, v64db, 0, 0>;
 
   // Multiply.
   def VFMDB : BinaryVRRc<"vfmdb", 0xE7E7, fmul, v128db, v128db, 3, 0>;
-  def WFMDB : BinaryVRRc<"wfmdb", 0xE7E7, null_frag, v64db, v64db, 3, 8>;
+  def WFMDB : BinaryVRRc<"wfmdb", 0xE7E7, fmul, v64db, v64db, 3, 8>;
 
   // Multiply and add.
   def VFMADB : TernaryVRRe<"vfmadb", 0xE78F, fma, v128db, v128db, 0, 3>;
-  def WFMADB : TernaryVRRe<"wfmadb", 0xE78F, null_frag, v64db, v64db, 8, 3>;
+  def WFMADB : TernaryVRRe<"wfmadb", 0xE78F, fma, v64db, v64db, 8, 3>;
 
   // Multiply and subtract.
   def VFMSDB : TernaryVRRe<"vfmsdb", 0xE78E, fms, v128db, v128db, 0, 3>;
-  def WFMSDB : TernaryVRRe<"wfmsdb", 0xE78E, null_frag, v64db, v64db, 8, 3>;
+  def WFMSDB : TernaryVRRe<"wfmsdb", 0xE78E, fms, v64db, v64db, 8, 3>;
 
   // Load complement,
   def VFLCDB : UnaryVRRa<"vflcdb", 0xE7CC, fneg, v128db, v128db, 3, 0, 0>;
-  def WFLCDB : UnaryVRRa<"wflcdb", 0xE7CC, null_frag, v64db, v64db, 3, 8, 0>;
+  def WFLCDB : UnaryVRRa<"wflcdb", 0xE7CC, fneg, v64db, v64db, 3, 8, 0>;
 
   // Load negative.
   def VFLNDB : UnaryVRRa<"vflndb", 0xE7CC, fnabs, v128db, v128db, 3, 0, 1>;
-  def WFLNDB : UnaryVRRa<"wflndb", 0xE7CC, null_frag, v64db, v64db, 3, 8, 1>;
+  def WFLNDB : UnaryVRRa<"wflndb", 0xE7CC, fnabs, v64db, v64db, 3, 8, 1>;
 
   // Load positive.
   def VFLPDB : UnaryVRRa<"vflpdb", 0xE7CC, fabs, v128db, v128db, 3, 0, 2>;
-  def WFLPDB : UnaryVRRa<"wflpdb", 0xE7CC, null_frag, v64db, v64db, 3, 8, 2>;
+  def WFLPDB : UnaryVRRa<"wflpdb", 0xE7CC, fabs, v64db, v64db, 3, 8, 2>;
 
   // Square root.
   def VFSQDB : UnaryVRRa<"vfsqdb", 0xE7CE, fsqrt, v128db, v128db, 3, 0>;
-  def WFSQDB : UnaryVRRa<"wfsqdb", 0xE7CE, null_frag, v64db, v64db, 3, 8>;
+  def WFSQDB : UnaryVRRa<"wfsqdb", 0xE7CE, fsqrt, v64db, v64db, 3, 8>;
 
   // Subtract.
   def VFSDB : BinaryVRRc<"vfsdb", 0xE7E2, fsub, v128db, v128db, 3, 0>;
-  def WFSDB : BinaryVRRc<"wfsdb", 0xE7E2, null_frag, v64db, v64db, 3, 8>;
+  def WFSDB : BinaryVRRc<"wfsdb", 0xE7E2, fsub, v64db, v64db, 3, 8>;
 
   // Test data class immediate.
   let Defs = [CC] in {
@@ -866,7 +884,7 @@ let Predicates = [FeatureVector] in {
 let Predicates = [FeatureVector] in {
   // Compare scalar.
   let Defs = [CC] in
-    def WFCDB : CompareVRRa<"wfcdb", 0xE7CB, null_frag, v64db, 3>;
+    def WFCDB : CompareVRRa<"wfcdb", 0xE7CB, z_fcmp, v64db, 3>;
 
   // Compare and signal scalar.
   let Defs = [CC] in

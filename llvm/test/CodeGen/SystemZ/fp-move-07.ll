@@ -1,6 +1,7 @@
 ; Test 64-bit floating-point stores.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
 ; Test the low end of the STD range.
 define void @f1(double *%src, double %val) {

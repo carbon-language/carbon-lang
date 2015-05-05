@@ -11,3 +11,23 @@ define void @f1(<2 x double> %val, <2 x float> *%ptr) {
   store <2 x float> %res, <2 x float> *%ptr
   ret void
 }
+
+; Test conversion of an f64 in a vector register to an f32.
+define float @f2(<2 x double> %vec) {
+; CHECK-LABEL: f2:
+; CHECK: wledb %f0, %v24
+; CHECK: br %r14
+  %scalar = extractelement <2 x double> %vec, i32 0
+  %ret = fptrunc double %scalar to float
+  ret float %ret
+}
+
+; Test conversion of an f32 in a vector register to an f64.
+define double @f3(<4 x float> %vec) {
+; CHECK-LABEL: f3:
+; CHECK: wldeb %f0, %v24
+; CHECK: br %r14
+  %scalar = extractelement <4 x float> %vec, i32 0
+  %ret = fpext float %scalar to double
+  ret double %ret
+}

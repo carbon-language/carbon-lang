@@ -46,9 +46,14 @@ let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0xF in {
   defm LTDBR : LoadAndTestRRE<"ltdb", 0xB312, FP64>;
   defm LTXBR : LoadAndTestRRE<"ltxb", 0xB342, FP128>;
 }
-defm : CompareZeroFP<LTEBRCompare, FP32>;
-defm : CompareZeroFP<LTDBRCompare, FP64>;
-defm : CompareZeroFP<LTXBRCompare, FP128>;
+// Note that the comparison against zero operation is not available if we
+// have vector support, since load-and-test instructions will partially
+// clobber the target (vector) register.
+let Predicates = [FeatureNoVector] in {
+  defm : CompareZeroFP<LTEBRCompare, FP32>;
+  defm : CompareZeroFP<LTDBRCompare, FP64>;
+  defm : CompareZeroFP<LTXBRCompare, FP128>;
+}
 
 // Moves between 64-bit integer and floating-point registers.
 def LGDR : UnaryRRE<"lgd", 0xB3CD, bitconvert, GR64, FP64>;
@@ -97,6 +102,9 @@ defm LoadStoreF128 : MVCLoadStore<load, f128, MVCSequence, 16>;
 let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
   defm LE : UnaryRXPair<"le", 0x78, 0xED64, load, FP32, 4>;
   defm LD : UnaryRXPair<"ld", 0x68, 0xED65, load, FP64, 8>;
+
+  // For z13 we prefer LDE over LE to avoid partial register dependencies.
+  def LDE32 : UnaryRXE<"lde", 0xED24, null_frag, FP32, 4>;
 
   // These instructions are split after register allocation, so we don't
   // want a custom inserter.

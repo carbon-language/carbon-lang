@@ -46,3 +46,13 @@ define <2 x double> @f5(<2 x double> %dummy, <2 x double> %val) {
   %ret = fsub <2 x double> <double -0.0, double -0.0>, %val
   ret <2 x double> %ret
 }
+
+; Test an f64 negation that uses vector registers.
+define double @f6(<2 x double> %val) {
+; CHECK-LABEL: f6:
+; CHECK: wflcdb %f0, %v24
+; CHECK: br %r14
+  %scalar = extractelement <2 x double> %val, i32 0
+  %ret = fsub double -0.0, %scalar
+  ret double %ret
+}

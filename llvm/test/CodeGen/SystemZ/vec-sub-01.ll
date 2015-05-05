@@ -74,3 +74,14 @@ define <2 x double> @f6(<2 x double> %dummy, <2 x double> %val1,
   %ret = fsub <2 x double> %val1, %val2
   ret <2 x double> %ret
 }
+
+; Test an f64 subtraction that uses vector registers.
+define double @f7(<2 x double> %val1, <2 x double> %val2) {
+; CHECK-LABEL: f7:
+; CHECK: wfsdb %f0, %v24, %v26
+; CHECK: br %r14
+  %scalar1 = extractelement <2 x double> %val1, i32 0
+  %scalar2 = extractelement <2 x double> %val2, i32 0
+  %ret = fsub double %scalar1, %scalar2
+  ret double %ret
+}

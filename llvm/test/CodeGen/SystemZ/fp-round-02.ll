@@ -1,6 +1,9 @@
 ; Test rounding functions for z196 and above.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-VECTOR %s
 
 ; Test rint for f32.
 declare float @llvm.rint.f32(float %f)
@@ -16,7 +19,8 @@ define float @f1(float %f) {
 declare double @llvm.rint.f64(double %f)
 define double @f2(double %f) {
 ; CHECK-LABEL: f2:
-; CHECK: fidbr %f0, 0, %f0
+; CHECK-SCALAR: fidbr %f0, 0, %f0
+; CHECK-VECTOR: fidbra %f0, 0, %f0, 0
 ; CHECK: br %r14
   %res = call double @llvm.rint.f64(double %f)
   ret double %res

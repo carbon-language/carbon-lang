@@ -1,11 +1,15 @@
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-VECTOR %s
 
 declare double @llvm.fma.f64(double %f1, double %f2, double %f3)
 
 define double @f1(double %f1, double %f2, double %acc) {
 ; CHECK-LABEL: f1:
-; CHECK: msdbr %f4, %f0, %f2
-; CHECK: ldr %f0, %f4
+; CHECK-SCALAR: msdbr %f4, %f0, %f2
+; CHECK-SCALAR: ldr %f0, %f4
+; CHECK-VECTOR: wfmsdb %f0, %f0, %f2, %f4
 ; CHECK: br %r14
   %negacc = fsub double -0.0, %acc
   %res = call double @llvm.fma.f64 (double %f1, double %f2, double %negacc)

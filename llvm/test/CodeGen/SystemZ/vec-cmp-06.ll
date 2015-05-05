@@ -1,4 +1,4 @@
-; Test v2f64 comparisons.
+; Test f64 and v2f64 comparisons.
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
@@ -334,4 +334,16 @@ define <2 x double> @f28(<2 x double> %val1, <2 x double> %val2,
   %cmp = fcmp uno <2 x double> %val1, %val2
   %ret = select <2 x i1> %cmp, <2 x double> %val3, <2 x double> %val4
   ret <2 x double> %ret
+}
+
+; Test an f64 comparison that uses vector registers.
+define i64 @f29(i64 %a, i64 %b, double %f1, <2 x double> %vec) {
+; CHECK-LABEL: f29:
+; CHECK: wfcdb %f0, %v24
+; CHECK-NEXT: locgrne %r2, %r3
+; CHECK: br %r14
+  %f2 = extractelement <2 x double> %vec, i32 0
+  %cond = fcmp oeq double %f1, %f2
+  %res = select i1 %cond, i64 %a, i64 %b
+  ret i64 %res
 }

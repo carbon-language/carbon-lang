@@ -1,6 +1,8 @@
 ; Test extensions of f32 to f64.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
 ; Check register extension.
 define double @f1(float %val) {
@@ -74,7 +76,7 @@ define double @f6(float *%base, i64 %index) {
 ; to use LDEB if possible.
 define void @f7(double *%ptr1, float *%ptr2) {
 ; CHECK-LABEL: f7:
-; CHECK: ldeb {{%f[0-9]+}}, 16{{[04]}}(%r15)
+; CHECK-SCALAR: ldeb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
   %val0 = load volatile float , float *%ptr2
   %val1 = load volatile float , float *%ptr2

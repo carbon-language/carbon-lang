@@ -2151,10 +2151,13 @@ class PrefetchRILPC<string mnemonic, bits<12> opcode,
 
 // A floating-point load-and test operation.  Create both a normal unary
 // operation and one that acts as a comparison against zero.
+// Note that the comparison against zero operation is not available if we
+// have vector support, since load-and-test instructions will partially
+// clobber the target (vector) register.
 multiclass LoadAndTestRRE<string mnemonic, bits<16> opcode,
                           RegisterOperand cls> {
   def "" : UnaryRRE<mnemonic, opcode, null_frag, cls, cls>;
-  let isCodeGenOnly = 1 in
+  let isCodeGenOnly = 1, Predicates = [FeatureNoVector] in
     def Compare : CompareRRE<mnemonic, opcode, null_frag, cls, cls>;
 }
 
@@ -2400,6 +2403,23 @@ class Alias<int size, dag outs, dag ins, list<dag> pattern>
 
 class UnaryAliasVRS<RegisterOperand cls1, RegisterOperand cls2>
  : Alias<6, (outs cls1:$src1), (ins cls2:$src2), []>;
+
+// An alias of a UnaryVRR*, but with different register sizes.
+class UnaryAliasVRR<SDPatternOperator operator, TypedReg tr1, TypedReg tr2>
+  : Alias<6, (outs tr1.op:$V1), (ins tr2.op:$V2),
+          [(set tr1.op:$V1, (tr1.vt (operator (tr2.vt tr2.op:$V2))))]>;
+
+// An alias of a UnaryVRX, but with different register sizes.
+class UnaryAliasVRX<SDPatternOperator operator, TypedReg tr,
+                    AddressingMode mode = bdxaddr12only>
+  : Alias<6, (outs tr.op:$V1), (ins mode:$XBD2),
+          [(set tr.op:$V1, (tr.vt (operator mode:$XBD2)))]>;
+
+// An alias of a StoreVRX, but with different register sizes.
+class StoreAliasVRX<SDPatternOperator operator, TypedReg tr,
+                    AddressingMode mode = bdxaddr12only>
+  : Alias<6, (outs), (ins tr.op:$V1, mode:$XBD2),
+          [(operator (tr.vt tr.op:$V1), mode:$XBD2)]>;
 
 // An alias of a BinaryRI, but with different register sizes.
 class BinaryAliasRI<SDPatternOperator operator, RegisterOperand cls,

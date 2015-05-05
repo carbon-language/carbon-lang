@@ -91,9 +91,14 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
     addRegisterClass(MVT::i32, &SystemZ::GRX32BitRegClass);
   else
     addRegisterClass(MVT::i32, &SystemZ::GR32BitRegClass);
-  addRegisterClass(MVT::i64,  &SystemZ::GR64BitRegClass);
-  addRegisterClass(MVT::f32,  &SystemZ::FP32BitRegClass);
-  addRegisterClass(MVT::f64,  &SystemZ::FP64BitRegClass);
+  addRegisterClass(MVT::i64, &SystemZ::GR64BitRegClass);
+  if (Subtarget.hasVector()) {
+    addRegisterClass(MVT::f32, &SystemZ::VR32BitRegClass);
+    addRegisterClass(MVT::f64, &SystemZ::VR64BitRegClass);
+  } else {
+    addRegisterClass(MVT::f32, &SystemZ::FP32BitRegClass);
+    addRegisterClass(MVT::f64, &SystemZ::FP64BitRegClass);
+  }
   addRegisterClass(MVT::f128, &SystemZ::FP128BitRegClass);
 
   if (Subtarget.hasVector()) {

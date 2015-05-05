@@ -1,6 +1,8 @@
 ; Test multiplication of two f64s, producing an f64 result.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
 declare double @foo()
 
@@ -76,7 +78,7 @@ define double @f6(double %f1, double *%base, i64 %index) {
 define double @f7(double *%ptr0) {
 ; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
-; CHECK: mdb %f0, 160(%r15)
+; CHECK-SCALAR: mdb %f0, 160(%r15)
 ; CHECK: br %r14
   %ptr1 = getelementptr double, double *%ptr0, i64 2
   %ptr2 = getelementptr double, double *%ptr0, i64 4

@@ -1,6 +1,6 @@
 ; Test spilling of FPRs.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; We need to save and restore 8 of the 16 FPRs and allocate an additional
 ; 4-byte spill slot, rounded to 8 bytes.  The frame size should be exactly

@@ -578,6 +578,10 @@ SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opcode = SystemZ::LDR;
   else if (SystemZ::FP128BitRegClass.contains(DestReg, SrcReg))
     Opcode = SystemZ::LXR;
+  else if (SystemZ::VR32BitRegClass.contains(DestReg, SrcReg))
+    Opcode = SystemZ::VLR32;
+  else if (SystemZ::VR64BitRegClass.contains(DestReg, SrcReg))
+    Opcode = SystemZ::VLR64;
   else if (SystemZ::VR128BitRegClass.contains(DestReg, SrcReg))
     Opcode = SystemZ::VLR;
   else
@@ -1118,6 +1122,12 @@ void SystemZInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
   } else if (RC == &SystemZ::FP128BitRegClass) {
     LoadOpcode = SystemZ::LX;
     StoreOpcode = SystemZ::STX;
+  } else if (RC == &SystemZ::VR32BitRegClass) {
+    LoadOpcode = SystemZ::VL32;
+    StoreOpcode = SystemZ::VST32;
+  } else if (RC == &SystemZ::VR64BitRegClass) {
+    LoadOpcode = SystemZ::VL64;
+    StoreOpcode = SystemZ::VST64;
   } else if (RC == &SystemZ::VF128BitRegClass ||
              RC == &SystemZ::VR128BitRegClass) {
     LoadOpcode = SystemZ::VL;

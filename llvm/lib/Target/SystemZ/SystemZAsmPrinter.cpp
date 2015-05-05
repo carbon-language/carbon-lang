@@ -80,6 +80,27 @@ static const MCSymbolRefExpr *getGlobalOffsetTable(MCContext &Context) {
                                  Context);
 }
 
+// MI loads the high part of a vector from memory.  Return an instruction
+// that uses replicating vector load Opcode to do the same thing.
+static MCInst lowerSubvectorLoad(const MachineInstr *MI, unsigned Opcode) {
+  return MCInstBuilder(Opcode)
+    .addReg(SystemZMC::getRegAsVR128(MI->getOperand(0).getReg()))
+    .addReg(MI->getOperand(1).getReg())
+    .addImm(MI->getOperand(2).getImm())
+    .addReg(MI->getOperand(3).getReg());
+}
+
+// MI stores the high part of a vector to memory.  Return an instruction
+// that uses elemental vector store Opcode to do the same thing.
+static MCInst lowerSubvectorStore(const MachineInstr *MI, unsigned Opcode) {
+  return MCInstBuilder(Opcode)
+    .addReg(SystemZMC::getRegAsVR128(MI->getOperand(0).getReg()))
+    .addReg(MI->getOperand(1).getReg())
+    .addImm(MI->getOperand(2).getImm())
+    .addReg(MI->getOperand(3).getReg())
+    .addImm(0);
+}
+
 void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SystemZMCInstLower Lower(MF->getContext(), *this);
   MCInst LoweredMI;
@@ -156,6 +177,29 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addReg(MI->getOperand(0).getReg())
       .addReg(SystemZMC::getRegAsGR64(MI->getOperand(1).getReg()))
       .addReg(SystemZMC::getRegAsGR64(MI->getOperand(2).getReg()));
+    break;
+
+  case SystemZ::VLR32:
+  case SystemZ::VLR64:
+    LoweredMI = MCInstBuilder(SystemZ::VLR)
+      .addReg(SystemZMC::getRegAsVR128(MI->getOperand(0).getReg()))
+      .addReg(SystemZMC::getRegAsVR128(MI->getOperand(1).getReg()));
+    break;
+
+  case SystemZ::VL32:
+    LoweredMI = lowerSubvectorLoad(MI, SystemZ::VLREPF);
+    break;
+
+  case SystemZ::VL64:
+    LoweredMI = lowerSubvectorLoad(MI, SystemZ::VLREPG);
+    break;
+
+  case SystemZ::VST32:
+    LoweredMI = lowerSubvectorStore(MI, SystemZ::VSTEF);
+    break;
+
+  case SystemZ::VST64:
+    LoweredMI = lowerSubvectorStore(MI, SystemZ::VSTEG);
     break;
 
   case SystemZ::LFER:

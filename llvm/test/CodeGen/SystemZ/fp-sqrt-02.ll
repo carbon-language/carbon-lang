@@ -1,6 +1,8 @@
 ; Test 64-bit square root.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
 declare double @llvm.sqrt.f64(double %f)
 declare double @sqrt(double)
@@ -77,7 +79,7 @@ define double @f6(double *%base, i64 %index) {
 ; to use SQDB if possible.
 define void @f7(double *%ptr) {
 ; CHECK-LABEL: f7:
-; CHECK: sqdb {{%f[0-9]+}}, 160(%r15)
+; CHECK-SCALAR: sqdb {{%f[0-9]+}}, 160(%r15)
 ; CHECK: br %r14
   %val0 = load volatile double , double *%ptr
   %val1 = load volatile double , double *%ptr

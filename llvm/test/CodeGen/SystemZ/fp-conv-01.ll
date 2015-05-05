@@ -1,11 +1,15 @@
 ; Test floating-point truncations.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-SCALAR %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 \
+; RUN:   | FileCheck -check-prefix=CHECK -check-prefix=CHECK-VECTOR %s
 
 ; Test f64->f32.
 define float @f1(double %d1, double %d2) {
 ; CHECK-LABEL: f1:
-; CHECK: ledbr %f0, %f2
+; CHECK-SCALAR: ledbr %f0, %f2
+; CHECK-VECTOR: ledbra %f0, 0, %f2, 0
 ; CHECK: br %r14
   %res = fptrunc double %d2 to float
   ret float %res
@@ -50,8 +54,10 @@ define double @f4(fp128 *%ptr) {
 define void @f5(double *%dst, fp128 *%ptr, double %d1, double %d2) {
 ; CHECK-LABEL: f5:
 ; CHECK: ldxbr %f1, %f1
-; CHECK: adbr %f1, %f2
-; CHECK: std %f1, 0(%r2)
+; CHECK-SCALAR: adbr %f1, %f2
+; CHECK-SCALAR: std %f1, 0(%r2)
+; CHECK-VECTOR: wfadb [[REG:%f[0-9]+]], %f1, %f2
+; CHECK-VECTOR: std [[REG]], 0(%r2)
 ; CHECK: br %r14
   %val = load fp128 , fp128 *%ptr
   %conv = fptrunc fp128 %val to double
