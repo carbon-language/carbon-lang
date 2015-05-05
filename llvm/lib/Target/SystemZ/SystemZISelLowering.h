@@ -201,6 +201,15 @@ enum {
   // Pack vector operands 0 and 1 into a single vector with half-sized elements.
   PACK,
 
+  // Unpack the first half of vector operand 0 into double-sized elements.
+  // UNPACK_HIGH sign-extends and UNPACKL_HIGH zero-extends.
+  UNPACK_HIGH,
+  UNPACKL_HIGH,
+
+  // Likewise for the second half.
+  UNPACK_LOW,
+  UNPACKL_LOW,
+
   // Shift each element of vector operand 0 by the number of bits specified
   // by scalar operand 1.
   VSHL_BY_SCALAR,
@@ -305,6 +314,23 @@ public:
     // Only the lower 12 bits of an element index are used, so we don't
     // want to clobber the upper 32 bits of a GPR unnecessarily.
     return MVT::i32;
+  }
+  TargetLoweringBase::LegalizeTypeAction getPreferredVectorAction(EVT VT)
+    const override {
+    // Widen subvectors to the full width rather than promoting integer
+    // elements.  This is better because:
+    //
+    // (a) it means that we can handle the ABI for passing and returning
+    //     sub-128 vectors without having to handle them as legal types.
+    //
+    // (b) we don't have instructions to extend on load and truncate on store,
+    //     so promoting the integers is less efficient.
+    //
+    // (c) there are no multiplication instructions for the widest integer
+    //     type (v2i64).
+    if (VT.getVectorElementType().getSizeInBits() % 8 == 0)
+      return TypeWidenVector;
+    return TargetLoweringBase::getPreferredVectorAction(VT);
   }
   EVT getSetCCResultType(LLVMContext &, EVT) const override;
   bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
@@ -417,6 +443,8 @@ private:
   SDValue lowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerExtendVectorInreg(SDValue Op, SelectionDAG &DAG,
+				 unsigned UnpackHigh) const;
   SDValue lowerShift(SDValue Op, SelectionDAG &DAG, unsigned ByScalar) const;
 
   SDValue combineExtract(SDLoc DL, EVT ElemVT, EVT VecVT, SDValue OrigOp,

@@ -28,6 +28,14 @@ private:
   /// See ISD::OutputArg::IsFixed.
   SmallVector<bool, 4> ArgIsFixed;
 
+  /// Records whether the value was widened from a short vector type.
+  SmallVector<bool, 4> ArgIsShortVector;
+
+  // Check whether ArgVT is a short vector type.
+  bool IsShortVectorType(EVT ArgVT) {
+    return ArgVT.isVector() && ArgVT.getStoreSize() <= 8;
+  }
+
 public:
   SystemZCCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
                  SmallVectorImpl<CCValAssign> &locs, LLVMContext &C)
@@ -39,6 +47,10 @@ public:
     ArgIsFixed.clear();
     for (unsigned i = 0; i < Ins.size(); ++i)
       ArgIsFixed.push_back(true);
+    // Record whether the call operand was a short vector.
+    ArgIsShortVector.clear();
+    for (unsigned i = 0; i < Ins.size(); ++i)
+      ArgIsShortVector.push_back(IsShortVectorType(Ins[i].ArgVT));
 
     CCState::AnalyzeFormalArguments(Ins, Fn);
   }
@@ -49,6 +61,10 @@ public:
     ArgIsFixed.clear();
     for (unsigned i = 0; i < Outs.size(); ++i)
       ArgIsFixed.push_back(Outs[i].IsFixed);
+    // Record whether the call operand was a short vector.
+    ArgIsShortVector.clear();
+    for (unsigned i = 0; i < Outs.size(); ++i)
+      ArgIsShortVector.push_back(IsShortVectorType(Outs[i].ArgVT));
 
     CCState::AnalyzeCallOperands(Outs, Fn);
   }
@@ -60,6 +76,7 @@ public:
                            CCAssignFn Fn) = delete;
 
   bool IsFixed(unsigned ValNo) { return ArgIsFixed[ValNo]; }
+  bool IsShortVector(unsigned ValNo) { return ArgIsShortVector[ValNo]; }
 };
 
 } // end namespace llvm

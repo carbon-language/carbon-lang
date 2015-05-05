@@ -193,6 +193,10 @@ def z_permute_dwords    : SDNode<"SystemZISD::PERMUTE_DWORDS",
                                  SDT_ZVecTernaryInt>;
 def z_permute           : SDNode<"SystemZISD::PERMUTE", SDT_ZVecTernary>;
 def z_pack              : SDNode<"SystemZISD::PACK", SDT_ZVecBinaryConv>;
+def z_unpack_high       : SDNode<"SystemZISD::UNPACK_HIGH", SDT_ZVecUnaryConv>;
+def z_unpackl_high      : SDNode<"SystemZISD::UNPACKL_HIGH", SDT_ZVecUnaryConv>;
+def z_unpack_low        : SDNode<"SystemZISD::UNPACK_LOW", SDT_ZVecUnaryConv>;
+def z_unpackl_low       : SDNode<"SystemZISD::UNPACKL_LOW", SDT_ZVecUnaryConv>;
 def z_vshl_by_scalar    : SDNode<"SystemZISD::VSHL_BY_SCALAR",
                                  SDT_ZVecBinaryInt>;
 def z_vsrl_by_scalar    : SDNode<"SystemZISD::VSRL_BY_SCALAR",
@@ -544,11 +548,12 @@ def z_vllezi64 : PatFrag<(ops node:$addr),
 def z_vllezf32 : PatFrag<(ops node:$addr),
                          (bitconvert
                           (z_merge_high
-                           (v2i64 (bitconvert
-                                   (z_merge_high
-                                    (v4f32 (z_vzero)),
-                                    (v4f32 (scalar_to_vector
-                                            (f32 (load node:$addr))))))),
+                           (v2i64
+                            (z_unpackl_high
+                             (v4i32
+                              (bitconvert
+                               (v4f32 (scalar_to_vector
+                                       (f32 (load node:$addr)))))))),
                            (v2i64 (z_vzero))))>;
 def z_vllezf64 : PatFrag<(ops node:$addr),
                          (z_merge_high

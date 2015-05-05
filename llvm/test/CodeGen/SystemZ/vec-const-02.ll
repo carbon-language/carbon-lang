@@ -45,3 +45,35 @@ define <8 x i16> @f5() {
   ret <8 x i16> <i16 65280, i16 0, i16 65535, i16 0,
                  i16 255, i16 65535, i16 256, i16 65280>
 }
+
+; Test an all-zeros v2i16 that gets promoted to v8i16.
+define <2 x i16> @f6() {
+; CHECK-LABEL: f6:
+; CHECK: vgbm %v24, 0
+; CHECK: br %r14
+  ret <2 x i16> zeroinitializer
+}
+
+; Test a mixed v2i16 that gets promoted to v8i16 (mask 0xc000).
+define <2 x i16> @f7() {
+; CHECK-LABEL: f7:
+; CHECK: vgbm %v24, 49152
+; CHECK: br %r14
+  ret <2 x i16> <i16 65535, i16 0>
+}
+
+; Test an all-zeros v4i16 that gets promoted to v8i16.
+define <4 x i16> @f8() {
+; CHECK-LABEL: f8:
+; CHECK: vgbm %v24, 0
+; CHECK: br %r14
+  ret <4 x i16> zeroinitializer
+}
+
+; Test a mixed v4i16 that gets promoted to v8i16 (mask 0x7200).
+define <4 x i16> @f9() {
+; CHECK-LABEL: f9:
+; CHECK: vgbm %v24, 29184
+; CHECK: br %r14
+  ret <4 x i16> <i16 255, i16 65535, i16 0, i16 65280>
+}

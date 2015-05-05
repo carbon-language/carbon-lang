@@ -41,3 +41,19 @@ define <4 x i32> @f5() {
 ; CHECK: br %r14
   ret <4 x i32> <i32 4278190080, i32 1, i32 16777215, i32 16776960>
 }
+
+; Test an all-zeros v2i32 that gets promoted to v4i32.
+define <2 x i32> @f6() {
+; CHECK-LABEL: f6:
+; CHECK: vgbm %v24, 0
+; CHECK: br %r14
+  ret <2 x i32> zeroinitializer
+}
+
+; Test a mixed v2i32 that gets promoted to v4i32 (mask 0xae00).
+define <2 x i32> @f7() {
+; CHECK-LABEL: f7:
+; CHECK: vgbm %v24, 44544
+; CHECK: br %r14
+  ret <2 x i32> <i32 4278255360, i32 -256>
+}

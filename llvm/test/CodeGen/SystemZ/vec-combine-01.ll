@@ -105,3 +105,51 @@ define i16 @f5(<4 x i32> %v1, <4 x i32> %v2, <2 x i64> %v3) {
   %res = add i16 %elem1, %elem2
   ret i16 %res
 }
+
+; Test a case where an unpack high can be eliminated from the usual
+; load-extend sequence.
+define void @f6(<8 x i8> *%ptr1, i8 *%ptr2, i8 *%ptr3, i8 *%ptr4) {
+; CHECK-LABEL: f6:
+; CHECK: vlrepg [[REG:%v[0-9]+]], 0(%r2)
+; CHECK-NOT: vup
+; CHECK-DAG: vsteb [[REG]], 0(%r3), 1
+; CHECK-DAG: vsteb [[REG]], 0(%r4), 2
+; CHECK-DAG: vsteb [[REG]], 0(%r5), 7
+; CHECK: br %r14
+  %vec = load <8 x i8>, <8 x i8> *%ptr1
+  %ext = sext <8 x i8> %vec to <8 x i16>
+  %elem1 = extractelement <8 x i16> %ext, i32 1
+  %elem2 = extractelement <8 x i16> %ext, i32 2
+  %elem3 = extractelement <8 x i16> %ext, i32 7
+  %trunc1 = trunc i16 %elem1 to i8
+  %trunc2 = trunc i16 %elem2 to i8
+  %trunc3 = trunc i16 %elem3 to i8
+  store i8 %trunc1, i8 *%ptr2
+  store i8 %trunc2, i8 *%ptr3
+  store i8 %trunc3, i8 *%ptr4
+  ret void
+}
+
+; ...and again with a bitcast inbetween.
+define void @f7(<4 x i8> *%ptr1, i8 *%ptr2, i8 *%ptr3, i8 *%ptr4) {
+; CHECK-LABEL: f7:
+; CHECK: vlrepf [[REG:%v[0-9]+]], 0(%r2)
+; CHECK-NOT: vup
+; CHECK-DAG: vsteb [[REG]], 0(%r3), 0
+; CHECK-DAG: vsteb [[REG]], 0(%r4), 1
+; CHECK-DAG: vsteb [[REG]], 0(%r5), 3
+; CHECK: br %r14
+  %vec = load <4 x i8>, <4 x i8> *%ptr1
+  %ext = sext <4 x i8> %vec to <4 x i32>
+  %bitcast = bitcast <4 x i32> %ext to <8 x i16>
+  %elem1 = extractelement <8 x i16> %bitcast, i32 1
+  %elem2 = extractelement <8 x i16> %bitcast, i32 3
+  %elem3 = extractelement <8 x i16> %bitcast, i32 7
+  %trunc1 = trunc i16 %elem1 to i8
+  %trunc2 = trunc i16 %elem2 to i8
+  %trunc3 = trunc i16 %elem3 to i8
+  store i8 %trunc1, i8 *%ptr2
+  store i8 %trunc2, i8 *%ptr3
+  store i8 %trunc3, i8 *%ptr4
+  ret void
+}

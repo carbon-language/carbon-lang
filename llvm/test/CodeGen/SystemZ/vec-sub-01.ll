@@ -85,3 +85,64 @@ define double @f7(<2 x double> %val1, <2 x double> %val2) {
   %ret = fsub double %scalar1, %scalar2
   ret double %ret
 }
+
+; Test a v2i8 subtraction, which gets promoted to v16i8.
+define <2 x i8> @f8(<2 x i8> %dummy, <2 x i8> %val1, <2 x i8> %val2) {
+; CHECK-LABEL: f8:
+; CHECK: vsb %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <2 x i8> %val1, %val2
+  ret <2 x i8> %ret
+}
+
+; Test a v4i8 subtraction, which gets promoted to v16i8.
+define <4 x i8> @f9(<4 x i8> %dummy, <4 x i8> %val1, <4 x i8> %val2) {
+; CHECK-LABEL: f9:
+; CHECK: vsb %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <4 x i8> %val1, %val2
+  ret <4 x i8> %ret
+}
+
+; Test a v8i8 subtraction, which gets promoted to v16i8.
+define <8 x i8> @f10(<8 x i8> %dummy, <8 x i8> %val1, <8 x i8> %val2) {
+; CHECK-LABEL: f10:
+; CHECK: vsb %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <8 x i8> %val1, %val2
+  ret <8 x i8> %ret
+}
+
+; Test a v2i16 subtraction, which gets promoted to v8i16.
+define <2 x i16> @f11(<2 x i16> %dummy, <2 x i16> %val1, <2 x i16> %val2) {
+; CHECK-LABEL: f11:
+; CHECK: vsh %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <2 x i16> %val1, %val2
+  ret <2 x i16> %ret
+}
+
+; Test a v4i16 subtraction, which gets promoted to v8i16.
+define <4 x i16> @f12(<4 x i16> %dummy, <4 x i16> %val1, <4 x i16> %val2) {
+; CHECK-LABEL: f12:
+; CHECK: vsh %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <4 x i16> %val1, %val2
+  ret <4 x i16> %ret
+}
+
+; Test a v2i32 subtraction, which gets promoted to v4i32.
+define <2 x i32> @f13(<2 x i32> %dummy, <2 x i32> %val1, <2 x i32> %val2) {
+; CHECK-LABEL: f13:
+; CHECK: vsf %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = sub <2 x i32> %val1, %val2
+  ret <2 x i32> %ret
+}
+
+; Test a v2f32 subtraction, which gets promoted to v4f32.
+define <2 x float> @f14(<2 x float> %val1, <2 x float> %val2) {
+; No particular output expected, but must compile.
+  %ret = fsub <2 x float> %val1, %val2
+  ret <2 x float> %ret
+}

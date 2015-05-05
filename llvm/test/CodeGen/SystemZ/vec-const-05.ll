@@ -45,3 +45,19 @@ define <4 x float> @f5() {
   ret <4 x float> <float 0xffffe00000000000, float 0x381fffffc0000000,
                    float 0x379fffe000000000, float 0x371fe00000000000>
 }
+
+; Test an all-zeros v2f32 that gets promoted to v4f32.
+define <2 x float> @f6() {
+; CHECK-LABEL: f6:
+; CHECK: vgbm %v24, 0
+; CHECK: br %r14
+  ret <2 x float> zeroinitializer
+}
+
+; Test a mixed v2f32 that gets promoted to v4f32 (mask 0xc700).
+define <2 x float> @f7() {
+; CHECK-LABEL: f7:
+; CHECK: vgbm %v24, 50944
+; CHECK: br %r14
+  ret <2 x float> <float 0xffffe00000000000, float 0x381fffffe0000000>
+}

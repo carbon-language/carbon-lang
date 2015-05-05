@@ -290,24 +290,24 @@ let Predicates = [FeatureVector] in {
   def : Pat<(z_vsei32_by_parts (v4i32 VR128:$src)), (VSEGF VR128:$src)>;
 
   // Unpack high.
-  def VUPHB : UnaryVRRa<"vuphb", 0xE7D7, null_frag, v128h, v128b, 0>;
-  def VUPHH : UnaryVRRa<"vuphh", 0xE7D7, null_frag, v128f, v128h, 1>;
-  def VUPHF : UnaryVRRa<"vuphf", 0xE7D7, null_frag, v128g, v128f, 2>;
+  def VUPHB : UnaryVRRa<"vuphb", 0xE7D7, z_unpack_high, v128h, v128b, 0>;
+  def VUPHH : UnaryVRRa<"vuphh", 0xE7D7, z_unpack_high, v128f, v128h, 1>;
+  def VUPHF : UnaryVRRa<"vuphf", 0xE7D7, z_unpack_high, v128g, v128f, 2>;
 
   // Unpack logical high.
-  def VUPLHB : UnaryVRRa<"vuplhb", 0xE7D5, null_frag, v128h, v128b, 0>;
-  def VUPLHH : UnaryVRRa<"vuplhh", 0xE7D5, null_frag, v128f, v128h, 1>;
-  def VUPLHF : UnaryVRRa<"vuplhf", 0xE7D5, null_frag, v128g, v128f, 2>;
+  def VUPLHB : UnaryVRRa<"vuplhb", 0xE7D5, z_unpackl_high, v128h, v128b, 0>;
+  def VUPLHH : UnaryVRRa<"vuplhh", 0xE7D5, z_unpackl_high, v128f, v128h, 1>;
+  def VUPLHF : UnaryVRRa<"vuplhf", 0xE7D5, z_unpackl_high, v128g, v128f, 2>;
 
   // Unpack low.
-  def VUPLB  : UnaryVRRa<"vuplb",  0xE7D6, null_frag, v128h, v128b, 0>;
-  def VUPLHW : UnaryVRRa<"vuplhw", 0xE7D6, null_frag, v128f, v128h, 1>;
-  def VUPLF  : UnaryVRRa<"vuplf",  0xE7D6, null_frag, v128g, v128f, 2>;
+  def VUPLB  : UnaryVRRa<"vuplb",  0xE7D6, z_unpack_low, v128h, v128b, 0>;
+  def VUPLHW : UnaryVRRa<"vuplhw", 0xE7D6, z_unpack_low, v128f, v128h, 1>;
+  def VUPLF  : UnaryVRRa<"vuplf",  0xE7D6, z_unpack_low, v128g, v128f, 2>;
 
   // Unpack logical low.
-  def VUPLLB : UnaryVRRa<"vupllb", 0xE7D4, null_frag, v128h, v128b, 0>;
-  def VUPLLH : UnaryVRRa<"vupllh", 0xE7D4, null_frag, v128f, v128h, 1>;
-  def VUPLLF : UnaryVRRa<"vupllf", 0xE7D4, null_frag, v128g, v128f, 2>;
+  def VUPLLB : UnaryVRRa<"vupllb", 0xE7D4, z_unpackl_low, v128h, v128b, 0>;
+  def VUPLLH : UnaryVRRa<"vupllh", 0xE7D4, z_unpackl_low, v128f, v128h, 1>;
+  def VUPLLF : UnaryVRRa<"vupllf", 0xE7D4, z_unpackl_low, v128g, v128f, 2>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -14,3 +14,17 @@ define <4 x i32> @foo(<4 x i32> %v1, <4 x i32> %v2, <4 x i32> %v3, <4 x i32> %v4
   %y = sub <4 x i32> %v2, %v10
   ret <4 x i32> %y
 }
+
+; This routine has 10 vector arguments, which fill up %v24-%v31 and
+; the two single-wide stack slots at 160 and 168.
+define <4 x i8> @bar(<4 x i8> %v1, <4 x i8> %v2, <4 x i8> %v3, <4 x i8> %v4,
+                     <4 x i8> %v5, <4 x i8> %v6, <4 x i8> %v7, <4 x i8> %v8,
+                     <4 x i8> %v9, <4 x i8> %v10) {
+; CHECK-LABEL: bar:
+; CHECK: vlrepg [[REG1:%v[0-9]+]], 168(%r15)
+; CHECK: vsb %v24, %v26, [[REG1]]
+; CHECK: br %r14
+  %y = sub <4 x i8> %v2, %v10
+  ret <4 x i8> %y
+}
+

@@ -21,6 +21,11 @@ class CCIfSubtarget<string F, CCAction A>
 class CCIfFixed<CCAction A>
     : CCIf<"static_cast<SystemZCCState *>(&State)->IsFixed(ValNo)", A>;
 
+// Match if this specific argument was widened from a short vector type.
+class CCIfShortVector<CCAction A>
+    : CCIf<"static_cast<SystemZCCState *>(&State)->IsShortVector(ValNo)", A>;
+
+
 //===----------------------------------------------------------------------===//
 // z/Linux return value calling convention
 //===----------------------------------------------------------------------===//
@@ -43,6 +48,8 @@ def RetCC_SystemZ : CallingConv<[
   CCIfType<[f64], CCAssignToReg<[F0D, F2D, F4D, F6D]>>,
 
   // Similarly for vectors, with V24 being the ABI-compliant choice.
+  // Sub-128 vectors are returned in the same way, but they're widened
+  // to one of these types during type legalization.
   CCIfSubtarget<"hasVector()",
     CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
              CCAssignToReg<[V24, V26, V28, V30, V25, V27, V29, V31]>>>
@@ -74,11 +81,19 @@ def CC_SystemZ : CallingConv<[
   CCIfType<[f32], CCAssignToReg<[F0S, F2S, F4S, F6S]>>,
   CCIfType<[f64], CCAssignToReg<[F0D, F2D, F4D, F6D]>>,
 
-  // The first 8 named vector arguments are passed in V24-V31.
+  // The first 8 named vector arguments are passed in V24-V31.  Sub-128 vectors
+  // are passed in the same way, but they're widened to one of these types
+  // during type legalization.
   CCIfSubtarget<"hasVector()",
     CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
              CCIfFixed<CCAssignToReg<[V24, V26, V28, V30,
                                       V25, V27, V29, V31]>>>>,
+
+  // However, sub-128 vectors which need to go on the stack occupy just a
+  // single 8-byte-aligned 8-byte stack slot.  Pass as i64.
+  CCIfSubtarget<"hasVector()",
+    CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+             CCIfShortVector<CCBitConvertToType<i64>>>>,
 
   // Other vector arguments are passed in 8-byte-aligned 16-byte stack slots.
   CCIfSubtarget<"hasVector()",

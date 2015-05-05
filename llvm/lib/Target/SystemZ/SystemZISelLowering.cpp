@@ -318,6 +318,10 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
       // Convert a GPR scalar to a vector by inserting it into element 0.
       setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
 
+      // Use a series of unpacks for extensions.
+      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, VT, Custom);
+      setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, VT, Custom);
+
       // Detect shifts by a scalar amount and convert them into
       // V*_BY_SCALAR.
       setOperationAction(ISD::SHL, VT, Custom);
@@ -793,7 +797,15 @@ static SDValue convertLocVTToValVT(SelectionDAG &DAG, SDLoc DL,
   else if (VA.getLocInfo() == CCValAssign::Indirect)
     Value = DAG.getLoad(VA.getValVT(), DL, Chain, Value,
                         MachinePointerInfo(), false, false, false, 0);
-  else
+  else if (VA.getLocInfo() == CCValAssign::BCvt) {
+    // If this is a short vector argument loaded from the stack,
+    // extend from i64 to full vector size and then bitcast.
+    assert(VA.getLocVT() == MVT::i64);
+    assert(VA.getValVT().isVector());
+    Value = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v2i64,
+                        Value, DAG.getUNDEF(MVT::i64));
+    Value = DAG.getNode(ISD::BITCAST, DL, VA.getValVT(), Value);
+  } else
     assert(VA.getLocInfo() == CCValAssign::Full && "Unsupported getLocInfo");
   return Value;
 }
@@ -810,6 +822,14 @@ static SDValue convertValVTToLocVT(SelectionDAG &DAG, SDLoc DL,
     return DAG.getNode(ISD::ZERO_EXTEND, DL, VA.getLocVT(), Value);
   case CCValAssign::AExt:
     return DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), Value);
+  case CCValAssign::BCvt:
+    // If this is a short vector argument to be stored to the stack,
+    // bitcast to v2i64 and then extract first element.
+    assert(VA.getLocVT() == MVT::i64);
+    assert(VA.getValVT().isVector());
+    Value = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, Value);
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VA.getLocVT(), Value,
+                       DAG.getConstant(0, DL, MVT::i32));
   case CCValAssign::Full:
     return Value;
   default:
@@ -3910,6 +3930,23 @@ SystemZTargetLowering::lowerEXTRACT_VECTOR_ELT(SDValue Op,
   return DAG.getNode(ISD::BITCAST, DL, VT, Res);
 }
 
+SDValue
+SystemZTargetLowering::lowerExtendVectorInreg(SDValue Op, SelectionDAG &DAG,
+					      unsigned UnpackHigh) const {
+  SDValue PackedOp = Op.getOperand(0);
+  EVT OutVT = Op.getValueType();
+  EVT InVT = PackedOp.getValueType();
+  unsigned ToBits = OutVT.getVectorElementType().getSizeInBits();
+  unsigned FromBits = InVT.getVectorElementType().getSizeInBits();
+  do {
+    FromBits *= 2;
+    EVT OutVT = MVT::getVectorVT(MVT::getIntegerVT(FromBits),
+                                 SystemZ::VectorBits / FromBits);
+    PackedOp = DAG.getNode(UnpackHigh, SDLoc(PackedOp), OutVT, PackedOp);
+  } while (FromBits != ToBits);
+  return PackedOp;
+}
+
 SDValue SystemZTargetLowering::lowerShift(SDValue Op, SelectionDAG &DAG,
                                           unsigned ByScalar) const {
   // Look for cases where a vector shift can use the *_BY_SCALAR form.
@@ -4058,6 +4095,10 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT:
     return lowerEXTRACT_VECTOR_ELT(Op, DAG);
+  case ISD::SIGN_EXTEND_VECTOR_INREG:
+    return lowerExtendVectorInreg(Op, DAG, SystemZISD::UNPACK_HIGH);
+  case ISD::ZERO_EXTEND_VECTOR_INREG:
+    return lowerExtendVectorInreg(Op, DAG, SystemZISD::UNPACKL_HIGH);
   case ISD::SHL:
     return lowerShift(Op, DAG, SystemZISD::VSHL_BY_SCALAR);
   case ISD::SRL:
@@ -4122,6 +4163,10 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(PERMUTE_DWORDS);
     OPCODE(PERMUTE);
     OPCODE(PACK);
+    OPCODE(UNPACK_HIGH);
+    OPCODE(UNPACKL_HIGH);
+    OPCODE(UNPACK_LOW);
+    OPCODE(UNPACKL_LOW);
     OPCODE(VSHL_BY_SCALAR);
     OPCODE(VSRL_BY_SCALAR);
     OPCODE(VSRA_BY_SCALAR);
@@ -4334,17 +4379,35 @@ SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
       }
     }
   }
-  // (z_merge_high 0, 0) -> 0.  This is mostly useful for using VLLEZF
-  // for v4f32.
-  if (Opcode == SystemZISD::MERGE_HIGH) {
+  if (Opcode == SystemZISD::MERGE_HIGH ||
+      Opcode == SystemZISD::MERGE_LOW) {
     SDValue Op0 = N->getOperand(0);
     SDValue Op1 = N->getOperand(1);
-    if (Op0 == Op1) {
-      if (Op0.getOpcode() == ISD::BITCAST)
-        Op0 = Op0.getOperand(0);
-      if (Op0.getOpcode() == SystemZISD::BYTE_MASK &&
-          cast<ConstantSDNode>(Op0.getOperand(0))->getZExtValue() == 0)
+    if (Op0.getOpcode() == ISD::BITCAST)
+      Op0 = Op0.getOperand(0);
+    if (Op0.getOpcode() == SystemZISD::BYTE_MASK &&
+        cast<ConstantSDNode>(Op0.getOperand(0))->getZExtValue() == 0) {
+      // (z_merge_* 0, 0) -> 0.  This is mostly useful for using VLLEZF
+      // for v4f32.
+      if (Op1 == N->getOperand(0))
         return Op1;
+      // (z_merge_? 0, X) -> (z_unpackl_? 0, X).
+      EVT VT = Op1.getValueType();
+      unsigned ElemBytes = VT.getVectorElementType().getStoreSize();
+      if (ElemBytes <= 4) {
+        Opcode = (Opcode == SystemZISD::MERGE_HIGH ?
+                  SystemZISD::UNPACKL_HIGH : SystemZISD::UNPACKL_LOW);
+        EVT InVT = VT.changeVectorElementTypeToInteger();
+        EVT OutVT = MVT::getVectorVT(MVT::getIntegerVT(ElemBytes * 16),
+                                     SystemZ::VectorBytes / ElemBytes / 2);
+        if (VT != InVT) {
+          Op1 = DAG.getNode(ISD::BITCAST, SDLoc(N), InVT, Op1);
+          DCI.AddToWorklist(Op1.getNode());
+        }
+        SDValue Op = DAG.getNode(Opcode, SDLoc(N), OutVT, Op1);
+        DCI.AddToWorklist(Op.getNode());
+        return DAG.getNode(ISD::BITCAST, SDLoc(N), VT, Op);
+      }
     }
   }
   // If we have (truncstoreiN (extract_vector_elt X, Y), Z) then it is better
