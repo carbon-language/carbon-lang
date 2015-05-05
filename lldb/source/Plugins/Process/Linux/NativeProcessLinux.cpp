@@ -3902,7 +3902,7 @@ NativeProcessLinux::RemoveWatchpoint (lldb::addr_t addr)
 }
 
 Error
-NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, lldb::addr_t size, lldb::addr_t &bytes_read)
+NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read)
 {
     ReadOperation op(addr, buf, size, bytes_read);
     m_monitor_up->DoOperation(&op);
