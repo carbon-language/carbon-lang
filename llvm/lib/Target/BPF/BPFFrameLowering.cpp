@@ -23,7 +23,8 @@ using namespace llvm;
 
 bool BPFFrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
-void BPFFrameLowering::emitPrologue(MachineFunction &MF) const {}
+void BPFFrameLowering::emitPrologue(MachineFunction &MF,
+                                    MachineBasicBlock &MBB) const {}
 
 void BPFFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {}

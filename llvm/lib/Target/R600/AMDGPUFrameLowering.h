@@ -37,7 +37,7 @@ public:
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
   const SpillSlot *
     getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
-  void emitPrologue(MachineFunction &MF) const override;
+  void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   bool hasFP(const MachineFunction &MF) const override;
 };

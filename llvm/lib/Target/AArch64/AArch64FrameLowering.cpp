@@ -275,8 +275,8 @@ static bool isCSSave(MachineInstr *MBBI) {
          MBBI->getOpcode() == AArch64::STPDpre;
 }
 
-void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB = MF.front(); // Prologue goes in entry BB.
+void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
+                                        MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
@@ -539,15 +539,19 @@ static bool isCSRestore(MachineInstr *MI, const MCPhysReg *CSRegs) {
 void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI->isReturn() && "Can only insert epilog into returning blocks");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const AArch64InstrInfo *TII =
       static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
-  DebugLoc DL = MBBI->getDebugLoc();
-  unsigned RetOpcode = MBBI->getOpcode();
-
+  DebugLoc DL;
+  bool IsTailCallReturn = false;
+  if (MBB.end() != MBBI) {
+    DL = MBBI->getDebugLoc();
+    unsigned RetOpcode = MBBI->getOpcode();
+    IsTailCallReturn = RetOpcode == AArch64::TCRETURNdi ||
+      RetOpcode == AArch64::TCRETURNri;
+  }
   int NumBytes = MFI->getStackSize();
   const AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
 
@@ -559,7 +563,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   // Initial and residual are named for consistency with the prologue. Note that
   // in the epilogue, the residual adjustment is executed first.
   uint64_t ArgumentPopSize = 0;
-  if (RetOpcode == AArch64::TCRETURNdi || RetOpcode == AArch64::TCRETURNri) {
+  if (IsTailCallReturn) {
     MachineOperand &StackAdjust = MBBI->getOperand(1);
 
     // For a tail-call in a callee-pops-arguments environment, some or all of
@@ -604,7 +608,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
 
   unsigned NumRestores = 0;
   // Move past the restores of the callee-saved registers.
-  MachineBasicBlock::iterator LastPopI = MBBI;
+  MachineBasicBlock::iterator LastPopI = MBB.getFirstTerminator();
   const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
   if (LastPopI != MBB.begin()) {
     do {

@@ -24,7 +24,7 @@ public:
   explicit BPFFrameLowering(const BPFSubtarget &sti)
       : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8, 0) {}
 
-  void emitPrologue(MachineFunction &MF) const override;
+  void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
   bool hasFP(const MachineFunction &MF) const override;

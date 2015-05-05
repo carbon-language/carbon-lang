@@ -130,21 +130,26 @@ public:
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
-  virtual void emitPrologue(MachineFunction &MF) const = 0;
+  virtual void emitPrologue(MachineFunction &MF,
+                            MachineBasicBlock &MBB) const = 0;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
 
   /// Adjust the prologue to have the function use segmented stacks. This works
   /// by adding a check even before the "normal" function prologue.
-  virtual void adjustForSegmentedStacks(MachineFunction &MF) const { }
+  virtual void adjustForSegmentedStacks(MachineFunction &MF,
+                                        MachineBasicBlock &PrologueMBB) const {}
 
   /// Adjust the prologue to add Erlang Run-Time System (ERTS) specific code in
   /// the assembly prologue to explicitly handle the stack.
-  virtual void adjustForHiPEPrologue(MachineFunction &MF) const { }
+  virtual void adjustForHiPEPrologue(MachineFunction &MF,
+                                     MachineBasicBlock &PrologueMBB) const {}
 
   /// Adjust the prologue to add an allocation at a fixed offset from the frame
   /// pointer.
-  virtual void adjustForFrameAllocatePrologue(MachineFunction &MF) const { }
+  virtual void
+  adjustForFrameAllocatePrologue(MachineFunction &MF,
+                                 MachineBasicBlock &PrologueMBB) const {}
 
   /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
   /// saved registers and returns true if it isn't possible / profitable to do

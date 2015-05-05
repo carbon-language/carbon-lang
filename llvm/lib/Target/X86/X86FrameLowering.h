@@ -35,12 +35,14 @@ public:
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
-  void emitPrologue(MachineFunction &MF) const override;
+  void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
-  void adjustForSegmentedStacks(MachineFunction &MF) const override;
+  void adjustForSegmentedStacks(MachineFunction &MF,
+                                MachineBasicBlock &PrologueMBB) const override;
 
-  void adjustForHiPEPrologue(MachineFunction &MF) const override;
+  void adjustForHiPEPrologue(MachineFunction &MF,
+                             MachineBasicBlock &PrologueMBB) const override;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS = nullptr) const override;

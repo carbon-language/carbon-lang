@@ -71,9 +71,9 @@ private:
   // stack frame indexes.
   unsigned MinCSFrameIndex, MaxCSFrameIndex;
 
-  // Entry and return blocks of the current function.
-  MachineBasicBlock *EntryBlock;
-  SmallVector<MachineBasicBlock *, 4> ReturnBlocks;
+  // Save and Restore blocks of the current function.
+  MachineBasicBlock *SaveBlock;
+  SmallVector<MachineBasicBlock *, 4> RestoreBlocks;
 
   // Flag to control whether to use the register scavenger to resolve
   // frame index materialization registers. Set according to
@@ -133,20 +133,26 @@ bool PEI::isReturnBlock(MachineBasicBlock* MBB) {
 
 /// Compute the set of return blocks
 void PEI::calculateSets(MachineFunction &Fn) {
-  // Sets used to compute spill, restore placement sets.
-  const std::vector<CalleeSavedInfo> &CSI =
-    Fn.getFrameInfo()->getCalleeSavedInfo();
+  const MachineFrameInfo *MFI = Fn.getFrameInfo();
 
-  // If no CSRs used, we are done.
-  if (CSI.empty())
+  // Even when we do not change any CSR, we still want to insert the
+  // prologue and epilogue of the function.
+  // So set the save points for those.
+
+  // Use the points found by shrink-wrapping, if any.
+  if (MFI->getSavePoint()) {
+    SaveBlock = MFI->getSavePoint();
+    assert(MFI->getRestorePoint() && "Both restore and save must be set");
+    RestoreBlocks.push_back(MFI->getRestorePoint());
     return;
+  }
 
   // Save refs to entry and return blocks.
-  EntryBlock = Fn.begin();
+  SaveBlock = Fn.begin();
   for (MachineFunction::iterator MBB = Fn.begin(), E = Fn.end();
        MBB != E; ++MBB)
     if (isReturnBlock(MBB))
-      ReturnBlocks.push_back(MBB);
+      RestoreBlocks.push_back(MBB);
 
   return;
 }
@@ -226,7 +232,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   }
 
   delete RS;
-  ReturnBlocks.clear();
+  RestoreBlocks.clear();
   return true;
 }
 
@@ -372,6 +378,61 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
   MFI->setCalleeSavedInfo(CSI);
 }
 
+/// Helper function to update the liveness information for the callee-saved
+/// registers.
+static void updateLiveness(MachineFunction &MF) {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  // Visited will contain all the basic blocks that are in the region
+  // where the callee saved registers are alive:
+  // - Anything that is not Save or Restore -> LiveThrough.
+  // - Save -> LiveIn.
+  // - Restore -> LiveOut.
+  // The live-out is not attached to the block, so no need to keep
+  // Restore in this set.
+  SmallPtrSet<MachineBasicBlock *, 8> Visited;
+  SmallVector<MachineBasicBlock *, 8> WorkList;
+  MachineBasicBlock *Entry = &MF.front();
+  MachineBasicBlock *Save = MFI->getSavePoint();
+
+  if (!Save)
+    Save = Entry;
+
+  if (Entry != Save) {
+    WorkList.push_back(Entry);
+    Visited.insert(Entry);
+  }
+  Visited.insert(Save);
+
+  MachineBasicBlock *Restore = MFI->getRestorePoint();
+  if (Restore)
+    // By construction Restore cannot be visited, otherwise it
+    // means there exists a path to Restore that does not go
+    // through Save.
+    WorkList.push_back(Restore);
+
+  while (!WorkList.empty()) {
+    const MachineBasicBlock *CurBB = WorkList.pop_back_val();
+    // By construction, the region that is after the save point is
+    // dominated by the Save and post-dominated by the Restore.
+    if (CurBB == Save)
+      continue;
+    // Enqueue all the successors not already visited.
+    // Those are by construction either before Save or after Restore.
+    for (MachineBasicBlock *SuccBB : CurBB->successors())
+      if (Visited.insert(SuccBB).second)
+        WorkList.push_back(SuccBB);
+  }
+
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    for (MachineBasicBlock *MBB : Visited)
+      // Add the callee-saved register as live-in.
+      // It's killed at the spill.
+      MBB->addLiveIn(CSI[i].getReg());
+  }
+}
+
 /// insertCSRSpillsAndRestores - Insert spill and restore code for
 /// callee saved registers used in the function.
 ///
@@ -392,26 +453,22 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   MachineBasicBlock::iterator I;
 
   // Spill using target interface.
-  I = EntryBlock->begin();
-  if (!TFI->spillCalleeSavedRegisters(*EntryBlock, I, CSI, TRI)) {
+  I = SaveBlock->begin();
+  if (!TFI->spillCalleeSavedRegisters(*SaveBlock, I, CSI, TRI)) {
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-      // Add the callee-saved register as live-in.
-      // It's killed at the spill.
-      EntryBlock->addLiveIn(CSI[i].getReg());
-
       // Insert the spill to the stack frame.
       unsigned Reg = CSI[i].getReg();
       const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
-      TII.storeRegToStackSlot(*EntryBlock, I, Reg, true, CSI[i].getFrameIdx(),
+      TII.storeRegToStackSlot(*SaveBlock, I, Reg, true, CSI[i].getFrameIdx(),
                               RC, TRI);
     }
   }
+  // Update the live-in information of all the blocks up to the save point.
+  updateLiveness(Fn);
 
   // Restore using target interface.
-  for (unsigned ri = 0, re = ReturnBlocks.size(); ri != re; ++ri) {
-    MachineBasicBlock *MBB = ReturnBlocks[ri];
+  for (MachineBasicBlock *MBB : RestoreBlocks) {
     I = MBB->end();
-    --I;
 
     // Skip over all terminator instructions, which are part of the return
     // sequence.
@@ -721,21 +778,18 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
 
   // Add prologue to the function...
-  TFI.emitPrologue(Fn);
+  TFI.emitPrologue(Fn, *SaveBlock);
 
-  // Add epilogue to restore the callee-save registers in each exiting block
-  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && I->back().isReturn())
-      TFI.emitEpilogue(Fn, *I);
-  }
+  // Add epilogue to restore the callee-save registers in each exiting block.
+  for (MachineBasicBlock *RestoreBlock : RestoreBlocks)
+    TFI.emitEpilogue(Fn, *RestoreBlock);
 
   // Emit additional code that is required to support segmented stacks, if
   // we've been asked for it.  This, when linked with a runtime with support
   // for segmented stacks (libgcc is one), will result in allocating stack
   // space in small chunks instead of one large contiguous block.
   if (Fn.shouldSplitStack())
-    TFI.adjustForSegmentedStacks(Fn);
+    TFI.adjustForSegmentedStacks(Fn, *SaveBlock);
 
   // Emit additional code that is required to explicitly handle the stack in
   // HiPE native code (if needed) when loaded in the Erlang/OTP runtime. The
@@ -743,7 +797,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   // different conditional check and another BIF for allocating more stack
   // space.
   if (Fn.getFunction()->getCallingConv() == CallingConv::HiPE)
-    TFI.adjustForHiPEPrologue(Fn);
+    TFI.adjustForHiPEPrologue(Fn, *SaveBlock);
 }
 
 /// replaceFrameIndices - Replace all MO_FrameIndex operands with physical

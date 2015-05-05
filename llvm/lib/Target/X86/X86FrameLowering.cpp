@@ -565,8 +565,9 @@ static uint64_t calculateMaxStackAlign(const MachineFunction &MF) {
   - for 32-bit code, substitute %e?? registers for %r??
 */
 
-void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB = MF.front(); // Prologue goes in entry BB.
+void X86FrameLowering::emitPrologue(MachineFunction &MF,
+                                    MachineBasicBlock &MBB) const {
+  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
@@ -1590,9 +1591,10 @@ GetScratchRegister(bool Is64Bit, bool IsLP64, const MachineFunction &MF, bool Pr
 // limit.
 static const uint64_t kSplitStackAvailable = 256;
 
-void
-X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
-  MachineBasicBlock &prologueMBB = MF.front();
+void X86FrameLowering::adjustForSegmentedStacks(
+    MachineFunction &MF, MachineBasicBlock &PrologueMBB) const {
+  assert(&PrologueMBB == &MF.front() &&
+         "Shrink-wrapping is not implemented yet");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
@@ -1634,8 +1636,9 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   // The MOV R10, RAX needs to be in a different block, since the RET we emit in
   // allocMBB needs to be last (terminating) instruction.
 
-  for (MachineBasicBlock::livein_iterator i = prologueMBB.livein_begin(),
-         e = prologueMBB.livein_end(); i != e; i++) {
+  for (MachineBasicBlock::livein_iterator i = PrologueMBB.livein_begin(),
+                                          e = PrologueMBB.livein_end();
+       i != e; i++) {
     allocMBB->addLiveIn(*i);
     checkMBB->addLiveIn(*i);
   }
@@ -1749,7 +1752,7 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   // This jump is taken if SP >= (Stacklet Limit + Stack Space required).
   // It jumps to normal execution of the function body.
-  BuildMI(checkMBB, DL, TII.get(X86::JA_1)).addMBB(&prologueMBB);
+  BuildMI(checkMBB, DL, TII.get(X86::JA_1)).addMBB(&PrologueMBB);
 
   // On 32 bit we first push the arguments size and then the frame size. On 64
   // bit, we pass the stack frame size in r10 and the argument size in r11.
@@ -1816,10 +1819,10 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   else
     BuildMI(allocMBB, DL, TII.get(X86::MORESTACK_RET));
 
-  allocMBB->addSuccessor(&prologueMBB);
+  allocMBB->addSuccessor(&PrologueMBB);
 
   checkMBB->addSuccessor(allocMBB);
-  checkMBB->addSuccessor(&prologueMBB);
+  checkMBB->addSuccessor(&PrologueMBB);
 
 #ifdef XDEBUG
   MF.verify();
@@ -1841,7 +1844,8 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 ///       call inc_stack   # doubles the stack space
 ///       temp0 = sp - MaxStack
 ///       if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
-void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
+void X86FrameLowering::adjustForHiPEPrologue(
+    MachineFunction &MF, MachineBasicBlock &PrologueMBB) const {
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1910,12 +1914,14 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
   // If the stack frame needed is larger than the guaranteed then runtime checks
   // and calls to "inc_stack_0" BIF should be inserted in the assembly prologue.
   if (MaxStack > Guaranteed) {
-    MachineBasicBlock &prologueMBB = MF.front();
+    assert(&PrologueMBB == &MF.front() &&
+           "Shrink-wrapping is not implemented yet");
     MachineBasicBlock *stackCheckMBB = MF.CreateMachineBasicBlock();
     MachineBasicBlock *incStackMBB = MF.CreateMachineBasicBlock();
 
-    for (MachineBasicBlock::livein_iterator I = prologueMBB.livein_begin(),
-           E = prologueMBB.livein_end(); I != E; I++) {
+    for (MachineBasicBlock::livein_iterator I = PrologueMBB.livein_begin(),
+                                            E = PrologueMBB.livein_end();
+         I != E; I++) {
       stackCheckMBB->addLiveIn(*I);
       incStackMBB->addLiveIn(*I);
     }
@@ -1951,7 +1957,7 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
     // SPLimitOffset is in a fixed heap location (pointed by BP).
     addRegOffset(BuildMI(stackCheckMBB, DL, TII.get(CMPop))
                  .addReg(ScratchReg), PReg, false, SPLimitOffset);
-    BuildMI(stackCheckMBB, DL, TII.get(X86::JAE_1)).addMBB(&prologueMBB);
+    BuildMI(stackCheckMBB, DL, TII.get(X86::JAE_1)).addMBB(&PrologueMBB);
 
     // Create new MBB for IncStack:
     BuildMI(incStackMBB, DL, TII.get(CALLop)).
@@ -1962,9 +1968,9 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
                  .addReg(ScratchReg), PReg, false, SPLimitOffset);
     BuildMI(incStackMBB, DL, TII.get(X86::JLE_1)).addMBB(incStackMBB);
 
-    stackCheckMBB->addSuccessor(&prologueMBB, 99);
+    stackCheckMBB->addSuccessor(&PrologueMBB, 99);
     stackCheckMBB->addSuccessor(incStackMBB, 1);
-    incStackMBB->addSuccessor(&prologueMBB, 99);
+    incStackMBB->addSuccessor(&PrologueMBB, 99);
     incStackMBB->addSuccessor(incStackMBB, 1);
   }
 #ifdef XDEBUG

@@ -278,8 +278,9 @@ static void emitAligningInstructions(MachineFunction &MF, ARMFunctionInfo *AFI,
   }
 }
 
-void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB = MF.front();
+void ARMFrameLowering::emitPrologue(MachineFunction &MF,
+                                    MachineBasicBlock &MBB) const {
+  assert(&MBB == &MF.front() && "Shrink-wrapping not yet implemented");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -1861,7 +1862,8 @@ static const uint64_t kSplitStackAvailable = 256;
 // ARM can be found at [1].
 //
 // [1] - https://github.com/mozilla/rust/blob/86efd9/src/rt/arch/arm/morestack.S
-void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
+void ARMFrameLowering::adjustForSegmentedStacks(
+    MachineFunction &MF, MachineBasicBlock &PrologueMBB) const {
   unsigned Opcode;
   unsigned CFIIndex;
   const ARMSubtarget *ST = &MF.getSubtarget<ARMSubtarget>();
@@ -1874,7 +1876,7 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (!ST->isTargetAndroid() && !ST->isTargetLinux())
     report_fatal_error("Segmented stacks not supported on this platform.");
 
-  MachineBasicBlock &prologueMBB = MF.front();
+  assert(&PrologueMBB == &MF.front() && "Shrink-wrapping not yet implemented");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   MCContext &Context = MMI.getContext();
@@ -1902,8 +1904,8 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MachineBasicBlock *GetMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *McrMBB = MF.CreateMachineBasicBlock();
 
-  for (MachineBasicBlock::livein_iterator i = prologueMBB.livein_begin(),
-                                          e = prologueMBB.livein_end();
+  for (MachineBasicBlock::livein_iterator i = PrologueMBB.livein_begin(),
+                                          e = PrologueMBB.livein_end();
        i != e; ++i) {
     AllocMBB->addLiveIn(*i);
     GetMBB->addLiveIn(*i);
@@ -2156,7 +2158,7 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       .addCFIIndex(CFIIndex);
 
   // Organizing MBB lists
-  PostStackMBB->addSuccessor(&prologueMBB);
+  PostStackMBB->addSuccessor(&PrologueMBB);
 
   AllocMBB->addSuccessor(PostStackMBB);
 

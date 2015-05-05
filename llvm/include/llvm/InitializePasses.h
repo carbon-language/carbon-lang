@@ -247,6 +247,7 @@ void initializeSROA_DTPass(PassRegistry&);
 void initializeSROA_SSAUpPass(PassRegistry&);
 void initializeScalarEvolutionAliasAnalysisPass(PassRegistry&);
 void initializeScalarEvolutionPass(PassRegistry&);
+void initializeShrinkWrapPass(PassRegistry &);
 void initializeSimpleInlinerPass(PassRegistry&);
 void initializeShadowStackGCLoweringPass(PassRegistry&);  
 void initializeRegisterCoalescerPass(PassRegistry&);

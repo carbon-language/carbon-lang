@@ -68,7 +68,7 @@ bool NVPTXPrologEpilogPass::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Add function prolog/epilog
-  TFI.emitPrologue(MF);
+  TFI.emitPrologue(MF, MF.front());
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue

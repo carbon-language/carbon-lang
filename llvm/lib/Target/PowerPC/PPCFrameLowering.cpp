@@ -555,8 +555,9 @@ void PPCFrameLowering::replaceFPWithRealFP(MachineFunction &MF) const {
     }
 }
 
-void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
+void PPCFrameLowering::emitPrologue(MachineFunction &MF,
+                                    MachineBasicBlock &MBB) const {
+  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const PPCInstrInfo &TII =

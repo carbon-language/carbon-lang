@@ -600,8 +600,8 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
   for (const MCPhysReg *CSR = TRI->getCalleeSavedRegs(MF); CSR && *CSR; ++CSR)
     BV.set(*CSR);
 
-  // The entry MBB always has all CSRs pristine.
-  if (MBB == &MF->front())
+  // Each MBB before the save point has all CSRs pristine.
+  if (isBeforeSavePoint(*MF, *MBB))
     return BV;
 
   // On other MBBs the saved CSRs are not pristine.
@@ -611,6 +611,40 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
     BV.reset(I->getReg());
 
   return BV;
+}
+
+// Note: We could use some sort of caching mecanism, but we lack the ability
+// to know when the cache is invalid, i.e., the CFG changed.
+// Assuming we have that, we can simply compute all the set of MBBs
+// that are before the save point.
+bool MachineFrameInfo::isBeforeSavePoint(const MachineFunction &MF,
+                                         const MachineBasicBlock &MBB) const {
+  // Early exit if shrink-wrapping did not kick.
+  if (!Save)
+    return &MBB == &MF.front();
+
+  // Starting from MBB, check if there is a path leading to Save that do
+  // not cross Restore.
+  SmallPtrSet<const MachineBasicBlock *, 8> Visited;
+  SmallVector<const MachineBasicBlock *, 8> WorkList;
+  WorkList.push_back(&MBB);
+  Visited.insert(&MBB);
+  do {
+    const MachineBasicBlock *CurBB = WorkList.pop_back_val();
+    // By construction, the region that is after the save point is
+    // dominated by the Save and post-dominated by the Restore.
+    // If we do not reach Restore and still reach Save, this
+    // means MBB is before Save.
+    if (CurBB == Save)
+      return true;
+    if (CurBB == Restore)
+      continue;
+    // Enqueue all the successors not already visited.
+    for (MachineBasicBlock *SuccBB : CurBB->successors())
+      if (Visited.insert(SuccBB).second)
+        WorkList.push_back(SuccBB);
+  } while (!WorkList.empty());
+  return false;
 }
 
 unsigned MachineFrameInfo::estimateStackSize(const MachineFunction &MF) const {

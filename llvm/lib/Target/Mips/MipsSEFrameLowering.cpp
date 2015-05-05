@@ -364,8 +364,9 @@ bool ExpandPseudo::expandExtractElementF64(MachineBasicBlock &MBB,
 MipsSEFrameLowering::MipsSEFrameLowering(const MipsSubtarget &STI)
     : MipsFrameLowering(STI, STI.stackAlignment()) {}
 
-void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB   = MF.front();
+void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
+                                       MachineBasicBlock &MBB) const {
+  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 

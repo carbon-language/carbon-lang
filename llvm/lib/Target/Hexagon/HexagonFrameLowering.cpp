@@ -344,16 +344,17 @@ void HexagonFrameLowering::findShrunkPrologEpilog(MachineFunction &MF,
   EpilogB = PDomB;
 }
 
-
 /// Perform most of the PEI work here:
 /// - saving/restoring of the callee-saved registers,
 /// - stack frame creation and destruction.
 /// Normally, this work is distributed among various functions, but doing it
 /// in one place allows shrink-wrapping of the stack frame.
-void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
+void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
+                                        MachineBasicBlock &MBB) const {
   auto &HST = static_cast<const HexagonSubtarget&>(MF.getSubtarget());
   auto &HRI = *HST.getRegisterInfo();
 
+  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 

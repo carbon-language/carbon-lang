@@ -39,8 +39,9 @@ bool MSP430FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const 
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-void MSP430FrameLowering::emitPrologue(MachineFunction &MF) const {
-  MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
+void MSP430FrameLowering::emitPrologue(MachineFunction &MF,
+                                       MachineBasicBlock &MBB) const {
+  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MSP430MachineFunctionInfo *MSP430FI = MF.getInfo<MSP430MachineFunctionInfo>();
   const MSP430InstrInfo &TII =

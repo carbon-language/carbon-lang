@@ -99,9 +99,8 @@ AMDGPUFrameLowering::getCalleeSavedSpillSlots(unsigned &NumEntries) const {
   NumEntries = 0;
   return nullptr;
 }
-void
-AMDGPUFrameLowering::emitPrologue(MachineFunction &MF) const {
-}
+void AMDGPUFrameLowering::emitPrologue(MachineFunction &MF,
+                                       MachineBasicBlock &MBB) const {}
 void
 AMDGPUFrameLowering::emitEpilogue(MachineFunction &MF,
                                   MachineBasicBlock &MBB) const {

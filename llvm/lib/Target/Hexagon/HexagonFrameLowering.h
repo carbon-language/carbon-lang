@@ -26,7 +26,8 @@ public:
   // All of the prolog/epilog functionality, including saving and restoring
   // callee-saved registers is handled in emitPrologue. This is to have the
   // logic for shrink-wrapping in one place.
-  void emitPrologue(MachineFunction &MF) const override;
+  void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const
+      override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
       override {}
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
