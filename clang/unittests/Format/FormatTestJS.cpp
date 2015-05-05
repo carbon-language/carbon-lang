@@ -547,6 +547,12 @@ TEST_F(FormatTestJS, ClassDeclarations) {
   verifyFormat("class C extends p.P implements i.I {}");
 }
 
+TEST_F(FormatTestJS, InterfaceDeclarations) {
+  verifyFormat("interface I {\n"
+               "  x: string;\n"
+               "}");
+}
+
 TEST_F(FormatTestJS, MetadataAnnotations) {
   verifyFormat("@A\nclass C {\n}");
   verifyFormat("@A({arg: 'value'})\nclass C {\n}");

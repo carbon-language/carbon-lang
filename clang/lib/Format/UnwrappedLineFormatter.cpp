@@ -239,7 +239,8 @@ private:
     } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace) &&
                !startsExternCBlock(Line)) {
       // We don't merge short records.
-      if (Line.First->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct))
+      if (Line.First->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct,
+                              Keywords.kw_interface))
         return 0;
 
       // Check that we still have three lines and they fit into the limit.
