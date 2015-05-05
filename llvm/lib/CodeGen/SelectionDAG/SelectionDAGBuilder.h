@@ -935,13 +935,14 @@ struct RegsForValue {
                           SDValue &Chain, SDValue *Flag,
                           const Value *V = nullptr) const;
 
-  /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
-  /// specified value into the registers specified by this object.  This uses
-  /// Chain/Flag as the input and updates them for the output Chain/Flag.
-  /// If the Flag pointer is NULL, no flag is used.
+  /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the specified
+  /// value into the registers specified by this object.  This uses Chain/Flag
+  /// as the input and updates them for the output Chain/Flag.  If the Flag
+  /// pointer is nullptr, no flag is used.  If V is not nullptr, then it is used
+  /// in printing better diagnostic messages on error.
   void
   getCopyToRegs(SDValue Val, SelectionDAG &DAG, SDLoc dl, SDValue &Chain,
-                SDValue *Flag, const Value *V,
+                SDValue *Flag, const Value *V = nullptr,
                 ISD::NodeType PreferredExtendType = ISD::ANY_EXTEND) const;
 
   /// AddInlineAsmOperands - Add this value to the specified inlineasm node
