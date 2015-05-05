@@ -145,6 +145,15 @@ else()
       DEFS ${ASAN_COMMON_DEFINITIONS})
     add_dependencies(asan clang_rt.asan-preinit-${arch})
 
+    if (UNIX AND NOT ${arch} MATCHES "i386|i686")
+      add_sanitizer_rt_version_list(clang_rt.asan-dynamic-${arch}
+                                    LIB clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
+                                    EXTRA asan.syms.extra)
+      add_dependencies(asan clang_rt.asan-dynamic-${arch}-version-list)
+      list(APPEND ASAN_DYNAMIC_LINK_FLAGS
+           -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/clang_rt.asan-dynamic-${arch}.vers)
+    endif()
+
     if (WIN32)
       set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
     else()
@@ -162,6 +171,7 @@ else()
     add_dependencies(asan clang_rt.asan-dynamic-${arch})
 
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
+      add_dependencies(clang_rt.asan-dynamic-${arch} clang_rt.asan-dynamic-${arch}-version-list)
       add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
       add_dependencies(asan clang_rt.asan_cxx-${arch}-symbols)
       add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)

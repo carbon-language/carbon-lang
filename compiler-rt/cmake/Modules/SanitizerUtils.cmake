@@ -13,9 +13,13 @@ set(SANITIZER_LINT_SCRIPT
 #   add_sanitizer_rt_symbols(<name> <files with extra symbols to export>)
 macro(add_sanitizer_rt_symbols name)
   set(stamp ${CMAKE_CURRENT_BINARY_DIR}/${name}.syms-stamp)
+  set(extra_args)
+  foreach(arg ${ARGN})
+    list(APPEND extra_args "--extra" ${arg})
+  endforeach()
   add_custom_command(OUTPUT ${stamp}
     COMMAND ${PYTHON_EXECUTABLE}
-      ${SANITIZER_GEN_DYNAMIC_LIST} $<TARGET_FILE:${name}> ${ARGN}
+      ${SANITIZER_GEN_DYNAMIC_LIST} ${extra_args} $<TARGET_FILE:${name}>
       > $<TARGET_FILE:${name}>.syms
     COMMAND ${CMAKE_COMMAND} -E touch ${stamp}
     DEPENDS ${name} ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN}
@@ -42,6 +46,29 @@ macro(add_sanitizer_rt_symbols name)
       install(FILES ${libfile}.syms DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
     endif()
   endif()
+endmacro()
+
+macro(add_sanitizer_rt_version_list name)
+  set(vers ${CMAKE_CURRENT_BINARY_DIR}/${name}.vers)
+  parse_arguments(ARG "LIB;EXTRA" "" ${ARGN})
+  set(args)
+  foreach(arg ${ARG_EXTRA})
+    list(APPEND args "--extra" ${arg})
+  endforeach()
+  foreach(arg ${ARG_LIB})
+    list(APPEND args "$<TARGET_FILE:${arg}>")
+  endforeach()
+  add_custom_command(OUTPUT ${vers}
+    COMMAND ${PYTHON_EXECUTABLE}
+      ${SANITIZER_GEN_DYNAMIC_LIST} --version-list ${args}
+      > ${vers}
+    DEPENDS ${SANITIZER_GEN_DYNAMIC_LIST} ${ARG_EXTRA} ${ARG_LIB}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating version list for ${name}"
+    VERBATIM)
+
+  add_custom_target(${name}-version-list ALL
+    DEPENDS ${vers})
 endmacro()
 
 # Add target to check code style for sanitizer runtimes.

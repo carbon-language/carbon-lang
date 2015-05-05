@@ -14,6 +14,7 @@
 #   gen_dynamic_list.py libclang_rt.*san*.a [ files ... ]
 #
 #===------------------------------------------------------------------------===#
+import argparse
 import os
 import re
 import subprocess
@@ -49,10 +50,17 @@ def get_global_functions(library):
   return functions
 
 def main(argv):
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--version-list', action='store_true')
+  parser.add_argument('--extra', default=[], action='append')
+  parser.add_argument('libraries', default=[], nargs='+')
+  args = parser.parse_args()
+
   result = []
 
-  library = argv[1]
-  all_functions = get_global_functions(library)
+  all_functions = []
+  for library in args.libraries:
+    all_functions.extend(get_global_functions(library))
   function_set = set(all_functions)
   for func in all_functions:
     # Export new/delete operators.
@@ -74,15 +82,20 @@ def main(argv):
       result.append(func)
 
   # Additional exported functions from files.
-  for fname in argv[2:]:
+  for fname in args.extra:
     f = open(fname, 'r')
     for line in f:
       result.append(line.rstrip())
   # Print the resulting list in the format recognized by ld.
   print('{')
+  if args.version_list:
+    print('global:')
   result.sort()
   for f in result:
-    print('  ' + f + ';')
+    print('  ' + f.encode('utf-8') + ';')
+  if args.version_list:
+    print('local:')
+    print('  *;')
   print('};')
 
 if __name__ == '__main__':
