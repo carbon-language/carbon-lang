@@ -3098,7 +3098,10 @@ static EVT FindMemType(SelectionDAG& DAG, const TargetLowering &TLI,
     unsigned MemVTWidth = MemVT.getSizeInBits();
     if (MemVT.getSizeInBits() <= WidenEltWidth)
       break;
-    if (TLI.isTypeLegal(MemVT) && (WidenWidth % MemVTWidth) == 0 &&
+    auto Action = TLI.getTypeAction(*DAG.getContext(), MemVT);
+    if ((Action == TargetLowering::TypeLegal ||
+         Action == TargetLowering::TypePromoteInteger) &&
+        (WidenWidth % MemVTWidth) == 0 &&
         isPowerOf2_32(WidenWidth / MemVTWidth) &&
         (MemVTWidth <= Width ||
          (Align!=0 && MemVTWidth<=AlignInBits && MemVTWidth<=Width+WidenEx))) {

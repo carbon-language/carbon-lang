@@ -109,3 +109,66 @@ define <16 x i8> @f11(i8 *%base, i64 %index) {
   %ret = load <16 x i8>, <16 x i8> *%ptr, align 1
   ret <16 x i8> %ret
 }
+
+; Test v2i8 loads.
+define <2 x i8> @f12(<2 x i8> *%ptr) {
+; CHECK-LABEL: f12:
+; CHECK: vlreph %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <2 x i8>, <2 x i8> *%ptr
+  ret <2 x i8> %ret
+}
+
+; Test v4i8 loads.
+define <4 x i8> @f13(<4 x i8> *%ptr) {
+; CHECK-LABEL: f13:
+; CHECK: vlrepf %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <4 x i8>, <4 x i8> *%ptr
+  ret <4 x i8> %ret
+}
+
+; Test v8i8 loads.
+define <8 x i8> @f14(<8 x i8> *%ptr) {
+; CHECK-LABEL: f14:
+; CHECK: vlrepg %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <8 x i8>, <8 x i8> *%ptr
+  ret <8 x i8> %ret
+}
+
+; Test v2i16 loads.
+define <2 x i16> @f15(<2 x i16> *%ptr) {
+; CHECK-LABEL: f15:
+; CHECK: vlrepf %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <2 x i16>, <2 x i16> *%ptr
+  ret <2 x i16> %ret
+}
+
+; Test v4i16 loads.
+define <4 x i16> @f16(<4 x i16> *%ptr) {
+; CHECK-LABEL: f16:
+; CHECK: vlrepg %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <4 x i16>, <4 x i16> *%ptr
+  ret <4 x i16> %ret
+}
+
+; Test v2i32 loads.
+define <2 x i32> @f17(<2 x i32> *%ptr) {
+; CHECK-LABEL: f17:
+; CHECK: vlrepg %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <2 x i32>, <2 x i32> *%ptr
+  ret <2 x i32> %ret
+}
+
+; Test v2f32 loads.
+define <2 x float> @f18(<2 x float> *%ptr) {
+; CHECK-LABEL: f18:
+; CHECK: vlrepg %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <2 x float>, <2 x float> *%ptr
+  ret <2 x float> %ret
+}

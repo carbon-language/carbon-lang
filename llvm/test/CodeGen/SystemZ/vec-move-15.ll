@@ -71,8 +71,7 @@ define <2 x i64> @f7(<2 x i1> *%ptr) {
 ; Test a v2i8->v2i64 extension.
 define <2 x i64> @f8(<2 x i8> *%ptr) {
 ; CHECK-LABEL: f8:
-; CHECK: vlrepb [[REG1:%v[0-9]+]], 0(%r2)
-; CHECK: vleb [[REG1]], 1(%r2), 1
+; CHECK: vlreph [[REG1:%v[0-9]+]], 0(%r2)
 ; CHECK: vuphb [[REG2:%v[0-9]+]], [[REG1]]
 ; CHECK: vuphh [[REG3:%v[0-9]+]], [[REG2]]
 ; CHECK: vuphf %v24, [[REG3]]

@@ -109,3 +109,66 @@ define void @f11(<16 x i8> %val, i8 *%base, i64 %index) {
   store <16 x i8> %val, <16 x i8> *%ptr, align 1
   ret void
 }
+
+; Test v2i8 stores.
+define void @f12(<2 x i8> %val, <2 x i8> *%ptr) {
+; CHECK-LABEL: f12:
+; CHECK: vsteh %v24, 0(%r2), 0
+; CHECK: br %r14
+  store <2 x i8> %val, <2 x i8> *%ptr
+  ret void
+}
+
+; Test v4i8 stores.
+define void @f13(<4 x i8> %val, <4 x i8> *%ptr) {
+; CHECK-LABEL: f13:
+; CHECK: vstef %v24, 0(%r2)
+; CHECK: br %r14
+  store <4 x i8> %val, <4 x i8> *%ptr
+  ret void
+}
+
+; Test v8i8 stores.
+define void @f14(<8 x i8> %val, <8 x i8> *%ptr) {
+; CHECK-LABEL: f14:
+; CHECK: vsteg %v24, 0(%r2)
+; CHECK: br %r14
+  store <8 x i8> %val, <8 x i8> *%ptr
+  ret void
+}
+
+; Test v2i16 stores.
+define void @f15(<2 x i16> %val, <2 x i16> *%ptr) {
+; CHECK-LABEL: f15:
+; CHECK: vstef %v24, 0(%r2), 0
+; CHECK: br %r14
+  store <2 x i16> %val, <2 x i16> *%ptr
+  ret void
+}
+
+; Test v4i16 stores.
+define void @f16(<4 x i16> %val, <4 x i16> *%ptr) {
+; CHECK-LABEL: f16:
+; CHECK: vsteg %v24, 0(%r2)
+; CHECK: br %r14
+  store <4 x i16> %val, <4 x i16> *%ptr
+  ret void
+}
+
+; Test v2i32 stores.
+define void @f17(<2 x i32> %val, <2 x i32> *%ptr) {
+; CHECK-LABEL: f17:
+; CHECK: vsteg %v24, 0(%r2), 0
+; CHECK: br %r14
+  store <2 x i32> %val, <2 x i32> *%ptr
+  ret void
+}
+
+; Test v2f32 stores.
+define void @f18(<2 x float> %val, <2 x float> *%ptr) {
+; CHECK-LABEL: f18:
+; CHECK: vsteg %v24, 0(%r2), 0
+; CHECK: br %r14
+  store <2 x float> %val, <2 x float> *%ptr
+  ret void
+}
