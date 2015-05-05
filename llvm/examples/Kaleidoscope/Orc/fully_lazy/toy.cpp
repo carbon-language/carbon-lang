@@ -1214,11 +1214,11 @@ public:
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
   JITSymbol findSymbol(const std::string &Name) {
-    return LazyEmitLayer.findSymbol(Name, true);
+    return LazyEmitLayer.findSymbol(Name, false);
   }
 
   JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name) {
-    return LazyEmitLayer.findSymbolIn(H, Name, true);
+    return LazyEmitLayer.findSymbolIn(H, Name, false);
   }
 
   JITSymbol findUnmangledSymbol(const std::string &Name) {
@@ -1276,7 +1276,7 @@ private:
     makeStub(*F, *FunctionBodyPointer);
 
     // Step 4) Add the module containing the stub to the JIT.
-    auto H = addModule(C.takeM());
+    auto StubH = addModule(C.takeM());
 
     // Step 5) Set the compile and update actions.
     //
@@ -1289,14 +1289,20 @@ private:
     //   The update action will update FunctionBodyPointer to point at the newly
     // compiled function.
     std::shared_ptr<FunctionAST> Fn = std::move(FnAST);
-    CallbackInfo.setCompileAction([this, Fn]() {
+    CallbackInfo.setCompileAction([this, Fn, BodyPtrName, StubH]() {
       auto H = addModule(IRGen(Session, *Fn));
-      return findUnmangledSymbolIn(H, Fn->Proto->Name).getAddress();
+      auto BodySym = findUnmangledSymbolIn(H, Fn->Proto->Name);
+      auto BodyPtrSym = findUnmangledSymbolIn(StubH, BodyPtrName);
+      assert(BodySym && "Missing function body.");
+      assert(BodyPtrSym && "Missing function pointer.");
+      auto BodyAddr = BodySym.getAddress();
+      auto BodyPtr = reinterpret_cast<void*>(
+                       static_cast<uintptr_t>(BodyPtrSym.getAddress()));
+      memcpy(BodyPtr, &BodyAddr, sizeof(uintptr_t));
+      return BodyAddr;
     });
-    CallbackInfo.setUpdateAction(
-        getLocalFPUpdater(LazyEmitLayer, H, mangle(BodyPtrName)));
 
-    return H;
+    return StubH;
   }
 
   SessionContext &Session;

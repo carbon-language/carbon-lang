@@ -21,7 +21,6 @@
 #include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
-#include "llvm/ExecutionEngine/Orc/LazyEmittingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/LLVMContext.h"
@@ -37,9 +36,7 @@ public:
   typedef std::function<std::unique_ptr<Module>(std::unique_ptr<Module>)>
     TransformFtor;
   typedef orc::IRTransformLayer<CompileLayerT, TransformFtor> IRDumpLayerT;
-  typedef orc::LazyEmittingLayer<IRDumpLayerT> LazyEmitLayerT;
-  typedef orc::CompileOnDemandLayer<LazyEmitLayerT,
-                                    CompileCallbackMgr> CODLayerT;
+  typedef orc::CompileOnDemandLayer<IRDumpLayerT, CompileCallbackMgr> CODLayerT;
   typedef CODLayerT::ModuleSetHandleT ModuleHandleT;
 
   typedef std::function<
@@ -57,9 +54,8 @@ public:
       ObjectLayer(),
       CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
       IRDumpLayer(CompileLayer, createDebugDumper()),
-      LazyEmitLayer(IRDumpLayer),
       CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-      CODLayer(LazyEmitLayer, *CCMgr),
+      CODLayer(IRDumpLayer, *CCMgr),
       CXXRuntimeOverrides([this](const std::string &S) { return mangle(S); }) {}
 
   ~OrcLazyJIT() {
@@ -154,7 +150,6 @@ private:
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   IRDumpLayerT IRDumpLayer;
-  LazyEmitLayerT LazyEmitLayer;
   std::unique_ptr<CompileCallbackMgr> CCMgr;
   CODLayerT CODLayer;
 

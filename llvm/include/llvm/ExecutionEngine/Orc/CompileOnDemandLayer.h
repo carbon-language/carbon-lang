@@ -15,110 +15,187 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_COMPILEONDEMANDLAYER_H
 #define LLVM_EXECUTIONENGINE_ORC_COMPILEONDEMANDLAYER_H
 
+//#include "CloneSubModule.h"
 #include "IndirectionUtils.h"
 #include "LambdaResolver.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <list>
+#include <set>
+
+#include "llvm/Support/Debug.h"
 
 namespace llvm {
 namespace orc {
 
 /// @brief Compile-on-demand layer.
 ///
-///   Modules added to this layer have their calls indirected, and are then
-/// broken up into a set of single-function modules, each of which is added
-/// to the layer below in a singleton set. The lower layer can be any layer that
-/// accepts IR module sets.
-///
-/// It is expected that this layer will frequently be used on top of a
-/// LazyEmittingLayer. The combination of the two ensures that each function is
-/// compiled only when it is first called.
+///   When a module is added to this layer a stub is created for each of its
+/// function definitions. The stubs and other global values are immediately
+/// added to the layer below. When a stub is called it triggers the extraction
+/// of the function body from the original module. The extracted body is then
+/// compiled and executed.
 template <typename BaseLayerT, typename CompileCallbackMgrT>
 class CompileOnDemandLayer {
 private:
-  /// @brief Lookup helper that provides compatibility with the classic
-  ///        static-compilation symbol resolution process.
-  ///
-  ///   The CompileOnDemand (COD) layer splits modules up into multiple
-  /// sub-modules, each held in its own llvm::Module instance, in order to
-  /// support lazy compilation. When a module that contains private symbols is
-  /// broken up symbol linkage changes may be required to enable access to
-  /// "private" data that now resides in a different llvm::Module instance. To
-  /// retain expected symbol resolution behavior for clients of the COD layer,
-  /// the CODScopedLookup class uses a two-tiered lookup system to resolve
-  /// symbols. Lookup first scans sibling modules that were split from the same
-  /// original module (logical-module scoped lookup), then scans all other
-  /// modules that have been added to the lookup scope (logical-dylib scoped
-  /// lookup).
-  class CODScopedLookup {
-  private:
-    typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
-    typedef std::vector<BaseLayerModuleSetHandleT> SiblingHandlesList;
-    typedef std::list<SiblingHandlesList> PseudoDylibModuleSetHandlesList;
 
+  // Utility class for MapValue. Only materializes declarations for global
+  // variables.
+  class GlobalDeclMaterializer : public ValueMaterializer {
   public:
-    /// @brief Handle for a logical module.
-    typedef typename PseudoDylibModuleSetHandlesList::iterator LMHandle;
+    GlobalDeclMaterializer(Module &Dst) : Dst(Dst) {}
+    Value* materializeValueFor(Value *V) final {
+      if (auto *GV = dyn_cast<GlobalVariable>(V))
+        return cloneGlobalVariableDecl(Dst, *GV);
+      else if (auto *F = dyn_cast<Function>(V))
+        return cloneFunctionDecl(Dst, *F);
+      // Else.
+      return nullptr;
+    }
+  private:
+    Module &Dst;
+  };
 
-    /// @brief Construct a scoped lookup.
-    CODScopedLookup(BaseLayerT &BaseLayer) : BaseLayer(BaseLayer) {}
+  typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
+  class UncompiledPartition;
 
-    virtual ~CODScopedLookup() {}
+  // Logical module.
+  //
+  //   This struct contains the handles for the global values and stubs (which
+  // cover the external symbols of the original module), plus the handes for
+  // each of the extracted partitions. These handleds are used for lookup (only
+  // the globals/stubs module is searched) and memory management. The actual
+  // searching and resource management are handled by the LogicalDylib that owns
+  // the LogicalModule.
+  struct LogicalModule {
+    LogicalModule() {}
 
-    /// @brief Start a new context for a single logical module.
+    LogicalModule(LogicalModule &&Other)
+        : SrcM(std::move(Other.SrcM)),
+          GVsAndStubsHandle(std::move(Other.GVsAndStubsHandle)),
+          ImplHandles(std::move(ImplHandles)) {}
+
+    std::unique_ptr<Module> SrcM;
+    BaseLayerModuleSetHandleT GVsAndStubsHandle;
+    std::vector<BaseLayerModuleSetHandleT> ImplHandles;
+  };
+
+  // Logical dylib.
+  //
+  //   This class handles symbol resolution and resource management for a set of
+  // modules that were added together as a logical dylib.
+  //
+  //   A logical dylib contains one-or-more LogicalModules plus a set of
+  // UncompiledPartitions. LogicalModules support symbol resolution and resource
+  // management for for code that has already been emitted. UncompiledPartitions
+  // represent code that has not yet been compiled.
+  class LogicalDylib {
+  private:
+    friend class UncompiledPartition;
+    typedef std::list<LogicalModule> LogicalModuleList;
+  public:
+
+    typedef unsigned UncompiledPartitionID;
+    typedef typename LogicalModuleList::iterator LMHandle;
+
+    // Construct a logical dylib.
+    LogicalDylib(CompileOnDemandLayer &CODLayer) : CODLayer(CODLayer) { }
+
+    // Delete this logical dylib, release logical module resources.
+    virtual ~LogicalDylib() {
+      releaseLogicalModuleResources();
+    }
+
+    // Get a reference to the containing layer.
+    CompileOnDemandLayer& getCODLayer() { return CODLayer; }
+
+    // Get a reference to the base layer.
+    BaseLayerT& getBaseLayer() { return CODLayer.BaseLayer; }
+
+    // Start a new context for a single logical module.
     LMHandle createLogicalModule() {
-      Handles.push_back(SiblingHandlesList());
-      return std::prev(Handles.end());
+      LogicalModules.push_back(LogicalModule());
+      return std::prev(LogicalModules.end());
     }
 
-    /// @brief Add a concrete Module's handle to the given logical Module's
-    ///        lookup scope.
+    // Set the global-values-and-stubs module handle for this logical module.
+    void setGVsAndStubsHandle(LMHandle LMH, BaseLayerModuleSetHandleT H) {
+      LMH->GVsAndStubsHandle = H;
+    }
+
+    // Return the global-values-and-stubs module handle for this logical module.
+    BaseLayerModuleSetHandleT getGVsAndStubsHandle(LMHandle LMH) {
+      return LMH->GVsAndStubsHandle;
+    }
+
+    //   Add a handle to a module containing lazy function bodies to the given
+    // logical module.
     void addToLogicalModule(LMHandle LMH, BaseLayerModuleSetHandleT H) {
-      LMH->push_back(H);
+      LMH->ImplHandles.push_back(H);
     }
 
-    /// @brief Remove a logical Module from the CODScopedLookup entirely.
-    void removeLogicalModule(LMHandle LMH) { Handles.erase(LMH); }
+    // Create an UncompiledPartition attached to this LogicalDylib.
+    UncompiledPartition& createUncompiledPartition(LMHandle LMH,
+                                                   std::shared_ptr<Module> SrcM);
 
-    /// @brief Look up a symbol in this context.
-    JITSymbol findSymbol(LMHandle LMH, const std::string &Name) {
-      if (auto Symbol = findSymbolIn(LMH, Name))
+    // Take ownership of the given UncompiledPartition from the logical dylib.
+    std::unique_ptr<UncompiledPartition>
+    takeUPOwnership(UncompiledPartitionID ID);
+
+    // Look up a symbol in this context.
+    JITSymbol findSymbolInternally(LMHandle LMH, const std::string &Name) {
+      if (auto Symbol = getBaseLayer().findSymbolIn(LMH->GVsAndStubsHandle,
+                                                    Name, false))
         return Symbol;
 
-      for (auto I = Handles.begin(), E = Handles.end(); I != E; ++I)
+      for (auto I = LogicalModules.begin(), E = LogicalModules.end(); I != E;
+           ++I)
         if (I != LMH)
-          if (auto Symbol = findSymbolIn(I, Name))
+          if (auto Symbol = getBaseLayer().findSymbolIn(I->GVsAndStubsHandle,
+                                                        Name, false))
             return Symbol;
 
       return nullptr;
     }
 
-    /// @brief Find an external symbol (via the user supplied SymbolResolver).
-    virtual RuntimeDyld::SymbolInfo
-    externalLookup(const std::string &Name) const = 0;
-
-  private:
-
-    JITSymbol findSymbolIn(LMHandle LMH, const std::string &Name) {
-      for (auto H : *LMH)
-        if (auto Symbol = BaseLayer.findSymbolIn(H, Name, false))
+    JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
+      for (auto &LM : LogicalModules)
+        if (auto Symbol = getBaseLayer().findSymbolIn(LM.GVsAndStubsHandle,
+                                                      Name,
+                                                      ExportedSymbolsOnly))
           return Symbol;
       return nullptr;
     }
 
-    BaseLayerT &BaseLayer;
-    PseudoDylibModuleSetHandlesList Handles;
+    // Find an external symbol (via the user supplied SymbolResolver).
+    virtual RuntimeDyld::SymbolInfo
+    findSymbolExternally(const std::string &Name) const = 0;
+
+  private:
+
+    void releaseLogicalModuleResources() {
+      for (auto I = LogicalModules.begin(), E = LogicalModules.end(); I != E;
+           ++I) {
+        getBaseLayer().removeModuleSet(I->GVsAndStubsHandle);
+        for (auto H : I->ImplHandles)
+          getBaseLayer().removeModuleSet(H);
+      }
+    }
+
+    CompileOnDemandLayer &CODLayer;
+    LogicalModuleList LogicalModules;
+    std::vector<std::unique_ptr<UncompiledPartition>> UncompiledPartitions;
   };
 
   template <typename ResolverPtrT>
-  class CODScopedLookupImpl : public CODScopedLookup {
+  class LogicalDylibImpl : public LogicalDylib  {
   public:
-    CODScopedLookupImpl(BaseLayerT &BaseLayer, ResolverPtrT Resolver)
-      : CODScopedLookup(BaseLayer), Resolver(std::move(Resolver)) {}
+    LogicalDylibImpl(CompileOnDemandLayer &CODLayer, ResolverPtrT Resolver)
+      : LogicalDylib(CODLayer), Resolver(std::move(Resolver)) {}
 
     RuntimeDyld::SymbolInfo
-    externalLookup(const std::string &Name) const override {
+    findSymbolExternally(const std::string &Name) const override {
       return Resolver->findSymbol(Name);
     }
 
@@ -127,44 +204,169 @@ private:
   };
 
   template <typename ResolverPtrT>
-  static std::shared_ptr<CODScopedLookup>
-  createCODScopedLookup(BaseLayerT &BaseLayer,
-                        ResolverPtrT Resolver) {
-    typedef CODScopedLookupImpl<ResolverPtrT> Impl;
-    return std::make_shared<Impl>(BaseLayer, std::move(Resolver));
+  static std::unique_ptr<LogicalDylib>
+  createLogicalDylib(CompileOnDemandLayer &CODLayer,
+                     ResolverPtrT Resolver) {
+    typedef LogicalDylibImpl<ResolverPtrT> Impl;
+    return llvm::make_unique<Impl>(CODLayer, std::move(Resolver));
   }
 
-  typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
-  typedef std::vector<BaseLayerModuleSetHandleT> BaseLayerModuleSetHandleListT;
+  // Uncompiled partition.
+  //
+  // Represents one as-yet uncompiled portion of a module.
+  class UncompiledPartition {
+  public:
 
-  struct ModuleSetInfo {
-    // Symbol lookup - just one for the whole module set.
-    std::shared_ptr<CODScopedLookup> Lookup;
+    struct PartitionEntry {
+      PartitionEntry(Function *F, TargetAddress CallbackID)
+          : F(F), CallbackID(CallbackID) {}
+      Function *F;
+      TargetAddress CallbackID;
+    };
 
-    // Logical module handles.
-    std::vector<typename CODScopedLookup::LMHandle> LMHandles;
+    typedef std::vector<PartitionEntry> PartitionEntryList;
 
-    // List of vectors of module set handles:
-    // One vector per logical module - each vector holds the handles for the
-    // exploded modules for that logical module in the base layer.
-    BaseLayerModuleSetHandleListT BaseLayerModuleSetHandles;
+    // Creates an uncompiled partition with the list of functions that make up
+    // this partition.
+    UncompiledPartition(LogicalDylib &LD, typename LogicalDylib::LMHandle LMH,
+                        std::shared_ptr<Module> SrcM)
+        : LD(LD), LMH(LMH), SrcM(std::move(SrcM)), ID(~0U) {}
 
-    ModuleSetInfo(std::shared_ptr<CODScopedLookup> Lookup)
-        : Lookup(std::move(Lookup)) {}
-
-    void releaseResources(BaseLayerT &BaseLayer) {
-      for (auto LMH : LMHandles)
-        Lookup->removeLogicalModule(LMH);
-      for (auto H : BaseLayerModuleSetHandles)
-        BaseLayer.removeModuleSet(H);
+    ~UncompiledPartition() {
+      // FIXME: When we want to support threaded lazy compilation we'll need to
+      //        lock the callback manager here.
+      auto &CCMgr = LD.getCODLayer().CompileCallbackMgr;
+      for (auto PEntry : PartitionEntries)
+        CCMgr.releaseCompileCallback(PEntry.CallbackID);
     }
+
+    // Set the ID for this partition.
+    void setID(typename LogicalDylib::UncompiledPartitionID ID) {
+      this->ID = ID;
+    }
+
+    // Set the function set and callbacks for this partition.
+    void setPartitionEntries(PartitionEntryList PartitionEntries) {
+      this->PartitionEntries = std::move(PartitionEntries);
+    }
+
+    // Handle a compile callback for the function at index FnIdx.
+    TargetAddress compile(unsigned FnIdx) {
+      // Take ownership of self. This will ensure we delete the partition and
+      // free all its resources once we're done compiling.
+      std::unique_ptr<UncompiledPartition> This = LD.takeUPOwnership(ID);
+
+      // Release all other compile callbacks for this partition.
+      // We skip the callback for this function because that's the one that
+      // called us, and the callback manager will already have removed it.
+      auto &CCMgr = LD.getCODLayer().CompileCallbackMgr;
+      for (unsigned I = 0; I < PartitionEntries.size(); ++I)
+        if (I != FnIdx)
+          CCMgr.releaseCompileCallback(PartitionEntries[I].CallbackID);
+
+      // Grab the name of the function being called here.
+      Function *F = PartitionEntries[FnIdx].F;
+      std::string CalledFnName = Mangle(F->getName(), SrcM->getDataLayout());
+
+      // Extract the function and add it to the base layer.
+      auto PartitionImplH = emitPartition();
+      LD.addToLogicalModule(LMH, PartitionImplH);
+
+      // Update body pointers.
+      // FIXME: When we start supporting remote lazy jitting this will need to
+      //        be replaced with a user-supplied callback for updating the
+      //        remote pointers.
+      TargetAddress CalledAddr = 0;
+      for (unsigned I = 0; I < PartitionEntries.size(); ++I) {
+        auto F = PartitionEntries[I].F;
+        std::string FName(F->getName());
+        auto FnBodySym =
+          LD.getBaseLayer().findSymbolIn(PartitionImplH,
+                                         Mangle(FName, SrcM->getDataLayout()),
+                                         false);
+        auto FnPtrSym =
+          LD.getBaseLayer().findSymbolIn(LD.getGVsAndStubsHandle(LMH),
+                                         Mangle(FName + "$orc_addr",
+                                                SrcM->getDataLayout()),
+                                         false);
+        assert(FnBodySym && "Couldn't find function body.");
+        assert(FnPtrSym && "Couldn't find function body pointer.");
+
+        auto FnBodyAddr = FnBodySym.getAddress();
+        void *FnPtrAddr = reinterpret_cast<void*>(
+                            static_cast<uintptr_t>(FnPtrSym.getAddress()));
+
+        // If this is the function we're calling record the address so we can
+        // return it from this function.
+        if (I == FnIdx)
+          CalledAddr = FnBodyAddr;
+
+        memcpy(FnPtrAddr, &FnBodyAddr, sizeof(uintptr_t));
+      }
+
+      // Finally, clear the partition structure so we don't try to
+      // double-release the callbacks in the UncompiledPartition destructor.
+      PartitionEntries.clear();
+
+      return CalledAddr;
+    }
+
+  private:
+
+    BaseLayerModuleSetHandleT emitPartition() {
+      // Create the module.
+      std::string NewName(SrcM->getName());
+      for (auto &PEntry : PartitionEntries) {
+        NewName += ".";
+        NewName += PEntry.F->getName();
+      }
+      auto PM = llvm::make_unique<Module>(NewName, SrcM->getContext());
+      PM->setDataLayout(SrcM->getDataLayout());
+      ValueToValueMapTy VMap;
+      GlobalDeclMaterializer GDM(*PM);
+
+      // Create decls in the new module.
+      for (auto &PEntry : PartitionEntries)
+        cloneFunctionDecl(*PM, *PEntry.F, &VMap);
+
+      // Move the function bodies.
+      for (auto &PEntry : PartitionEntries)
+        moveFunctionBody(*PEntry.F, VMap);
+
+      // Create memory manager and symbol resolver.
+      auto MemMgr = llvm::make_unique<SectionMemoryManager>();
+      auto Resolver = createLambdaResolver(
+          [this](const std::string &Name) {
+            if (auto Symbol = LD.findSymbolInternally(LMH, Name))
+              return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
+                                             Symbol.getFlags());
+            return LD.findSymbolExternally(Name);
+          },
+          [this](const std::string &Name) {
+            if (auto Symbol = LD.findSymbolInternally(LMH, Name))
+              return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
+                                             Symbol.getFlags());
+            return RuntimeDyld::SymbolInfo(nullptr);
+          });
+      std::vector<std::unique_ptr<Module>> PartMSet;
+      PartMSet.push_back(std::move(PM));
+      return LD.getBaseLayer().addModuleSet(std::move(PartMSet),
+                                            std::move(MemMgr),
+                                            std::move(Resolver));
+    }
+
+    LogicalDylib &LD;
+    typename LogicalDylib::LMHandle LMH;
+    std::shared_ptr<Module> SrcM;
+    typename LogicalDylib::UncompiledPartitionID ID;
+    PartitionEntryList PartitionEntries;
   };
 
-  typedef std::list<ModuleSetInfo> ModuleSetInfoListT;
+  typedef std::list<std::unique_ptr<LogicalDylib>> LogicalDylibList;
 
 public:
   /// @brief Handle to a set of loaded modules.
-  typedef typename ModuleSetInfoListT::iterator ModuleSetHandleT;
+  typedef typename LogicalDylibList::iterator ModuleSetHandleT;
 
   /// @brief Construct a compile-on-demand layer instance.
   CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr)
@@ -180,19 +382,23 @@ public:
     assert(MemMgr == nullptr &&
            "User supplied memory managers not supported with COD yet.");
 
-    // Create a lookup context and ModuleSetInfo for this module set.
-    // For the purposes of symbol resolution the set Ms will be treated as if
-    // the modules it contained had been linked together as a dylib.
-    auto DylibLookup = createCODScopedLookup(BaseLayer, std::move(Resolver));
-    ModuleSetHandleT H =
-        ModuleSetInfos.insert(ModuleSetInfos.end(), ModuleSetInfo(DylibLookup));
-    ModuleSetInfo &MSI = ModuleSetInfos.back();
+    LogicalDylibs.push_back(createLogicalDylib(*this, std::move(Resolver)));
 
     // Process each of the modules in this module set.
-    for (auto &M : Ms)
-      partitionAndAdd(*M, MSI);
+    for (auto &M : Ms) {
+      std::vector<std::vector<Function*>> Partitioning;
+      for (auto &F : *M) {
+        if (F.isDeclaration())
+          continue;
+        Partitioning.push_back(std::vector<Function*>());
+        Partitioning.back().push_back(&F);
+      }
+      addLogicalModule(*LogicalDylibs.back(),
+                       std::shared_ptr<Module>(std::move(M)),
+                       std::move(Partitioning));
+    }
 
-    return H;
+    return std::prev(LogicalDylibs.end());
   }
 
   /// @brief Remove the module represented by the given handle.
@@ -200,8 +406,7 @@ public:
   ///   This will remove all modules in the layers below that were derived from
   /// the module represented by H.
   void removeModuleSet(ModuleSetHandleT H) {
-    H->releaseResources(BaseLayer);
-    ModuleSetInfos.erase(H);
+    LogicalDylibs.erase(H);
   }
 
   /// @brief Search for the given named symbol.
@@ -216,149 +421,85 @@ public:
   ///        below this one.
   JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
                          bool ExportedSymbolsOnly) {
-
-    for (auto &BH : H->BaseLayerModuleSetHandles) {
-      if (auto Symbol = BaseLayer.findSymbolIn(BH, Name, ExportedSymbolsOnly))
-        return Symbol;
-    }
-    return nullptr;
+    return (*H)->findSymbol(Name, ExportedSymbolsOnly);
   }
 
 private:
 
-  void partitionAndAdd(Module &M, ModuleSetInfo &MSI) {
-    const char *AddrSuffix = "$orc_addr";
-    const char *BodySuffix = "$orc_body";
+  void addLogicalModule(LogicalDylib &LD, std::shared_ptr<Module> SrcM,
+                        std::vector<std::vector<Function*>> Partitions) {
 
-    // We're going to break M up into a bunch of sub-modules, but we want
-    // internal linkage symbols to still resolve sensibly. CODScopedLookup
-    // provides the "logical module" concept to make this work, so create a
-    // new logical module for M.
-    auto DylibLookup = MSI.Lookup;
-    auto LogicalModule = DylibLookup->createLogicalModule();
-    MSI.LMHandles.push_back(LogicalModule);
+    // Bump the linkage and rename any anonymous/privote members in SrcM to
+    // ensure that everything will resolve properly after we partition SrcM.
+    makeAllSymbolsExternallyAccessible(*SrcM);
 
-    // Partition M into a "globals and stubs" module, a "common symbols" module,
-    // and a list of single-function modules.
-    auto PartitionedModule = fullyPartition(M);
-    auto StubsModule = std::move(PartitionedModule.GlobalVars);
-    auto CommonsModule = std::move(PartitionedModule.Commons);
-    auto FunctionModules = std::move(PartitionedModule.Functions);
+    // Create a logical module handle for SrcM within the logical dylib.
+    auto LMH = LD.createLogicalModule();
 
-    // Emit the commons stright away.
-    auto CommonHandle = addModule(std::move(CommonsModule), MSI, LogicalModule);
-    BaseLayer.emitAndFinalize(CommonHandle);
+    // Create the GVs-and-stubs module.
+    auto GVsAndStubsM = llvm::make_unique<Module>(
+                          (SrcM->getName() + ".globals_and_stubs").str(),
+                          SrcM->getContext());
+    GVsAndStubsM->setDataLayout(SrcM->getDataLayout());
+    ValueToValueMapTy VMap;
 
-    // Map of definition names to callback-info data structures. We'll use
-    // this to build the compile actions for the stubs below.
-    typedef std::map<std::string,
-                     typename CompileCallbackMgrT::CompileCallbackInfo>
-      StubInfoMap;
-    StubInfoMap StubInfos;
-
-    // Now we need to take each of the extracted Modules and add them to
-    // base layer. Each Module will be added individually to make sure they
-    // can be compiled separately, and each will get its own lookaside
-    // memory manager that will resolve within this logical module first.
-    for (auto &SubM : FunctionModules) {
-
-      // Keep track of the stubs we create for this module so that we can set
-      // their compile actions.
-      std::vector<typename StubInfoMap::iterator> NewStubInfos;
-
-      // Search for function definitions and insert stubs into the stubs
-      // module.
-      for (auto &F : *SubM) {
-        if (F.isDeclaration())
-          continue;
-
-        std::string Name = F.getName();
-        Function *Proto = StubsModule->getFunction(Name);
-        assert(Proto && "Failed to clone function decl into stubs module.");
-        auto CallbackInfo =
-          CompileCallbackMgr.getCompileCallback(Proto->getContext());
-        GlobalVariable *FunctionBodyPointer =
-          createImplPointer(*Proto->getType(), *Proto->getParent(),
-                            Name + AddrSuffix,
-                            createIRTypedAddress(*Proto->getFunctionType(),
-                                                 CallbackInfo.getAddress()));
-        makeStub(*Proto, *FunctionBodyPointer);
-
-        F.setName(Name + BodySuffix);
-        F.setVisibility(GlobalValue::HiddenVisibility);
-
-        auto KV = std::make_pair(std::move(Name), std::move(CallbackInfo));
-        NewStubInfos.push_back(StubInfos.insert(StubInfos.begin(), KV));
+    // Process partitions and create stubs.
+    // We create the stubs before copying the global variables as we know the
+    // stubs won't refer to any globals (they only refer to their implementation
+    // pointer) so there's no ordering/value-mapping issues.
+    for (auto& Partition : Partitions) {
+      auto &UP = LD.createUncompiledPartition(LMH, SrcM);
+      typename UncompiledPartition::PartitionEntryList PartitionEntries;
+      for (auto &F : Partition) {
+        assert(!F->isDeclaration() &&
+               "Partition should only contain definitions");
+        unsigned FnIdx = PartitionEntries.size();
+        auto CCI = CompileCallbackMgr.getCompileCallback(SrcM->getContext());
+        PartitionEntries.push_back(
+          typename UncompiledPartition::PartitionEntry(F, CCI.getAddress()));
+        Function *StubF = cloneFunctionDecl(*GVsAndStubsM, *F, &VMap);
+        GlobalVariable *FnBodyPtr =
+          createImplPointer(*StubF->getType(), *StubF->getParent(),
+                            StubF->getName() + "$orc_addr",
+                            createIRTypedAddress(*StubF->getFunctionType(),
+                                                 CCI.getAddress()));
+        makeStub(*StubF, *FnBodyPtr);
+        CCI.setCompileAction([&UP, FnIdx]() { return UP.compile(FnIdx); });
       }
 
-      auto H = addModule(std::move(SubM), MSI, LogicalModule);
-
-      // Set the compile actions for this module:
-      for (auto &KVPair : NewStubInfos) {
-        std::string BodyName = Mangle(KVPair->first + BodySuffix,
-                                      M.getDataLayout());
-        auto &CCInfo = KVPair->second;
-        CCInfo.setCompileAction(
-          [=](){
-            return BaseLayer.findSymbolIn(H, BodyName, false).getAddress();
-          });
-      }
-
+      UP.setPartitionEntries(std::move(PartitionEntries));
     }
 
-    // Ok - we've processed all the partitioned modules. Now add the
-    // stubs/globals module and set the update actions.
-    auto StubsH =
-      addModule(std::move(StubsModule), MSI, LogicalModule);
+    // Now clone the global variable declarations.
+    GlobalDeclMaterializer GDMat(*GVsAndStubsM);
+    for (auto &GV : SrcM->globals())
+      if (!GV.isDeclaration())
+        cloneGlobalVariableDecl(*GVsAndStubsM, GV, &VMap);
 
-    for (auto &KVPair : StubInfos) {
-      std::string AddrName = Mangle(KVPair.first + AddrSuffix,
-                                    M.getDataLayout());
-      auto &CCInfo = KVPair.second;
-      CCInfo.setUpdateAction(
-        getLocalFPUpdater(BaseLayer, StubsH, AddrName));
-    }
-  }
+    // Then clone the initializers.
+    for (auto &GV : SrcM->globals())
+      if (!GV.isDeclaration())
+        moveGlobalVariableInitializer(GV, VMap, &GDMat);
 
-  // Add the given Module to the base layer using a memory manager that will
-  // perform the appropriate scoped lookup (i.e. will look first with in the
-  // module from which it was extracted, then into the set to which that module
-  // belonged, and finally externally).
-  BaseLayerModuleSetHandleT addModule(
-                               std::unique_ptr<Module> M,
-                               ModuleSetInfo &MSI,
-                               typename CODScopedLookup::LMHandle LogicalModule) {
-
-    // Add this module to the JIT with a memory manager that uses the
-    // DylibLookup to resolve symbols.
-    std::vector<std::unique_ptr<Module>> MSet;
-    MSet.push_back(std::move(M));
-
-    auto DylibLookup = MSI.Lookup;
-    auto Resolver =
-      createLambdaResolver(
-        [=](const std::string &Name) {
-          if (auto Symbol = DylibLookup->findSymbol(LogicalModule, Name))
+    // Build a resolver for the stubs module and add it to the base layer.
+    auto GVsAndStubsResolver = createLambdaResolver(
+        [&LD](const std::string &Name) {
+          if (auto Symbol = LD.findSymbol(Name, false))
             return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
                                            Symbol.getFlags());
-          return DylibLookup->externalLookup(Name);
+          return LD.findSymbolExternally(Name);
         },
-        [=](const std::string &Name) -> RuntimeDyld::SymbolInfo {
-          if (auto Symbol = DylibLookup->findSymbol(LogicalModule, Name))
-            return RuntimeDyld::SymbolInfo(Symbol.getAddress(),
-                                           Symbol.getFlags());
-          return nullptr;
+        [&LD](const std::string &Name) {
+          return RuntimeDyld::SymbolInfo(nullptr);
         });
 
-    BaseLayerModuleSetHandleT H =
-      BaseLayer.addModuleSet(std::move(MSet),
-                             make_unique<SectionMemoryManager>(),
-                             std::move(Resolver));
-    // Add this module to the logical module lookup.
-    DylibLookup->addToLogicalModule(LogicalModule, H);
-    MSI.BaseLayerModuleSetHandles.push_back(H);
-
-    return H;
+    std::vector<std::unique_ptr<Module>> GVsAndStubsMSet;
+    GVsAndStubsMSet.push_back(std::move(GVsAndStubsM));
+    auto GVsAndStubsH =
+      BaseLayer.addModuleSet(std::move(GVsAndStubsMSet),
+                             llvm::make_unique<SectionMemoryManager>(),
+                             std::move(GVsAndStubsResolver));
+    LD.setGVsAndStubsHandle(LMH, GVsAndStubsH);
   }
 
   static std::string Mangle(StringRef Name, const DataLayout &DL) {
@@ -373,8 +514,32 @@ private:
 
   BaseLayerT &BaseLayer;
   CompileCallbackMgrT &CompileCallbackMgr;
-  ModuleSetInfoListT ModuleSetInfos;
+  LogicalDylibList LogicalDylibs;
 };
+
+template <typename BaseLayerT, typename CompileCallbackMgrT>
+typename CompileOnDemandLayer<BaseLayerT, CompileCallbackMgrT>::
+           UncompiledPartition&
+CompileOnDemandLayer<BaseLayerT, CompileCallbackMgrT>::LogicalDylib::
+  createUncompiledPartition(LMHandle LMH, std::shared_ptr<Module> SrcM) {
+  UncompiledPartitions.push_back(
+      llvm::make_unique<UncompiledPartition>(*this, LMH, std::move(SrcM)));
+  UncompiledPartitions.back()->setID(UncompiledPartitions.size() - 1);
+  return *UncompiledPartitions.back();
+}
+
+template <typename BaseLayerT, typename CompileCallbackMgrT>
+std::unique_ptr<typename CompileOnDemandLayer<BaseLayerT, CompileCallbackMgrT>::
+                  UncompiledPartition>
+CompileOnDemandLayer<BaseLayerT, CompileCallbackMgrT>::LogicalDylib::
+  takeUPOwnership(UncompiledPartitionID ID) {
+
+  std::swap(UncompiledPartitions[ID], UncompiledPartitions.back());
+  UncompiledPartitions[ID]->setID(ID);
+  auto UP = std::move(UncompiledPartitions.back());
+  UncompiledPartitions.pop_back();
+  return UP;
+}
 
 } // End namespace orc.
 } // End namespace llvm.
