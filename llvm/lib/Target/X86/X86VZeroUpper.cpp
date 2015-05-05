@@ -281,8 +281,8 @@ bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
   // Process all blocks. This will compute block exit states, record the first
   // unguarded call in each block, and add successors of dirty blocks to the
   // DirtySuccessors list.
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    processBasicBlock(*I);
+  for (MachineBasicBlock &MBB : MF)
+    processBasicBlock(MBB);
 
   // If any YMM regs are live in to this function, add the entry block to the
   // DirtySuccessors list
