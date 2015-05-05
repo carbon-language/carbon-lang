@@ -711,7 +711,7 @@ public:
           unsigned ArgIdx,
           unsigned NumArgs,
           SDValue Callee,
-          bool UseVoidTy = false,
+          Type *ReturnTy,
           MachineBasicBlock *LandingPad = nullptr,
           bool IsPatchPoint = false);
 
