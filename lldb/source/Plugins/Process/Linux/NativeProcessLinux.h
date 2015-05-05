@@ -110,6 +110,12 @@ namespace process_linux {
         Error
         SetBreakpoint (lldb::addr_t addr, uint32_t size, bool hardware) override;
 
+        Error
+        SetWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags, bool hardware) override;
+
+        Error
+        RemoveWatchpoint (lldb::addr_t addr) override;
+
         void
         DoStopIDBumped (uint32_t newBumpId) override;
 
@@ -185,7 +191,6 @@ namespace process_linux {
         Mutex m_mem_region_cache_mutex;
 
         std::unique_ptr<ThreadStateCoordinator> m_coordinator_up;
-        HostThread m_coordinator_thread;
 
         // List of thread ids stepping with a breakpoint with the address of
         // the relevan breakpoint
@@ -302,19 +307,6 @@ namespace process_linux {
         static ::ProcessMessage::CrashReason
         GetCrashReasonForSIGBUS(const siginfo_t *info);
 #endif
-
-        Error
-        StartCoordinatorThread ();
-
-        static void*
-        CoordinatorThread (void *arg);
-
-        void
-        StopCoordinatorThread ();
-
-        /// Stops monitoring the child process thread.
-        void
-        StopMonitor();
 
         bool
         HasThreadNoLock (lldb::tid_t thread_id);

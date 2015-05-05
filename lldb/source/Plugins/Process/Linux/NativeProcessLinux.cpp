@@ -1069,7 +1069,6 @@ namespace
     {
         PTRACE(PTRACE_DETACH, m_tid, nullptr, 0, 0, m_error);
     }
-
 } // end of anonymous namespace
 
 // Simple helper function to ensure flags are enabled on the given file
@@ -1105,7 +1104,8 @@ EnsureFDFlags(int fd, int flags)
 //     pipe, and the completion of the operation is signalled over the semaphore.
 //   - thread exit event: this is signaled from the Monitor destructor by closing the write end
 //     of the command pipe.
-class NativeProcessLinux::Monitor {
+class NativeProcessLinux::Monitor
+{
 private:
     // The initial monitor operation (launch or attach). It returns a inferior process id.
     std::unique_ptr<InitialOperation> m_initial_operation_up;
@@ -1124,7 +1124,11 @@ private:
     sem_t      m_operation_sem;
     Error      m_operation_error;
 
-    static constexpr char operation_command = 'o';
+    unsigned   m_operation_nesting_level = 0;
+
+    static constexpr char operation_command   = 'o';
+    static constexpr char begin_block_command = '{';
+    static constexpr char end_block_command   = '}';
 
     void
     HandleSignals();
@@ -1143,7 +1147,22 @@ private:
     RunMonitor(void *arg);
 
     Error
-    WaitForOperation();
+    WaitForAck();
+
+    void
+    BeginOperationBlock()
+    {
+        write(m_pipefd[WRITE], &begin_block_command, sizeof operation_command);
+        WaitForAck();
+    }
+
+    void
+    EndOperationBlock()
+    {
+        write(m_pipefd[WRITE], &end_block_command, sizeof operation_command);
+        WaitForAck();
+    }
+
 public:
     Monitor(const InitialOperation &initial_operation,
             NativeProcessLinux *native_process)
@@ -1159,9 +1178,26 @@ public:
     Initialize();
 
     void
+    Terminate();
+
+    void
     DoOperation(Operation *op);
+
+    class ScopedOperationLock {
+        Monitor &m_monitor;
+
+    public:
+        ScopedOperationLock(Monitor &monitor)
+            : m_monitor(monitor)
+        { m_monitor.BeginOperationBlock(); }
+
+        ~ScopedOperationLock()
+        { m_monitor.EndOperationBlock(); }
+    };
 };
 constexpr char NativeProcessLinux::Monitor::operation_command;
+constexpr char NativeProcessLinux::Monitor::begin_block_command;
+constexpr char NativeProcessLinux::Monitor::end_block_command;
 
 Error
 NativeProcessLinux::Monitor::Initialize()
@@ -1198,7 +1234,7 @@ NativeProcessLinux::Monitor::Initialize()
         return Error("Failed to create monitor thread for NativeProcessLinux.");
 
     // Wait for initial operation to complete.
-    return WaitForOperation();
+    return WaitForAck();
 }
 
 void
@@ -1218,15 +1254,24 @@ NativeProcessLinux::Monitor::DoOperation(Operation *op)
     // notify the thread that an operation is ready to be processed
     write(m_pipefd[WRITE], &operation_command, sizeof operation_command);
 
-    WaitForOperation();
+    WaitForAck();
+}
+
+void
+NativeProcessLinux::Monitor::Terminate()
+{
+    if (m_pipefd[WRITE] >= 0)
+    {
+        close(m_pipefd[WRITE]);
+        m_pipefd[WRITE] = -1;
+    }
+    if (m_thread.IsJoinable())
+        m_thread.Join(nullptr);
 }
 
 NativeProcessLinux::Monitor::~Monitor()
 {
-    if (m_pipefd[WRITE] >= 0)
-        close(m_pipefd[WRITE]);
-    if (m_thread.IsJoinable())
-        m_thread.Join(nullptr);
+    Terminate();
     if (m_pipefd[READ] >= 0)
         close(m_pipefd[READ]);
     if (m_signal_fd >= 0)
@@ -1356,6 +1401,7 @@ NativeProcessLinux::Monitor::HandleCommands()
         {
             if (log)
                 log->Printf("NativeProcessLinux::Monitor::%s exit command received, exiting...", __FUNCTION__);
+            assert(m_operation_nesting_level == 0 && "Unbalanced begin/end block commands detected");
             return true; // We are done.
         }
 
@@ -1363,15 +1409,22 @@ NativeProcessLinux::Monitor::HandleCommands()
         {
         case operation_command:
             m_operation->Execute(m_native_process);
-
-            // notify calling thread that operation is complete
-            sem_post(&m_operation_sem);
+            break;
+        case begin_block_command:
+            ++m_operation_nesting_level;
+            break;
+        case end_block_command:
+            assert(m_operation_nesting_level > 0);
+            --m_operation_nesting_level;
             break;
         default:
             if (log)
                 log->Printf("NativeProcessLinux::Monitor::%s received unknown command '%c'",
                         __FUNCTION__, command);
         }
+
+        // notify calling thread that the command has been processed
+        sem_post(&m_operation_sem);
     }
 }
 
@@ -1387,7 +1440,10 @@ NativeProcessLinux::Monitor::MainLoop()
     {
         fd_set fds;
         FD_ZERO(&fds);
-        FD_SET(m_signal_fd, &fds);
+        // Only process waitpid events if we are outside of an operation block. Any pending
+        // events will be processed after we leave the block.
+        if (m_operation_nesting_level == 0)
+            FD_SET(m_signal_fd, &fds);
         FD_SET(m_pipefd[READ], &fds);
 
         int max_fd = std::max(m_signal_fd, m_pipefd[READ]) + 1;
@@ -1416,7 +1472,7 @@ NativeProcessLinux::Monitor::MainLoop()
 }
 
 Error
-NativeProcessLinux::Monitor::WaitForOperation()
+NativeProcessLinux::Monitor::WaitForAck()
 {
     Error error;
     while (sem_wait(&m_operation_sem) != 0)
@@ -1617,8 +1673,7 @@ NativeProcessLinux::NativeProcessLinux () :
     m_supports_mem_region (eLazyBoolCalculate),
     m_mem_region_cache (),
     m_mem_region_cache_mutex (),
-    m_coordinator_up (new ThreadStateCoordinator (GetThreadLoggerFunction ())),
-    m_coordinator_thread ()
+    m_coordinator_up (new ThreadStateCoordinator (GetThreadLoggerFunction ()))
 {
 }
 
@@ -1650,10 +1705,6 @@ NativeProcessLinux::LaunchInferior (
             working_dir, launch_info));
 
     StartMonitorThread ([&] (Error &e) { return Launch(args.get(), e); }, error);
-    if (!error.Success ())
-        return;
-
-    error = StartCoordinatorThread ();
     if (!error.Success ())
         return;
 }
@@ -1705,16 +1756,12 @@ NativeProcessLinux::AttachToInferior (lldb::pid_t pid, Error &error)
     StartMonitorThread ([=] (Error &e) { return Attach(pid, e); }, error);
     if (!error.Success ())
         return;
-
-    error = StartCoordinatorThread ();
-    if (!error.Success ())
-        return;
 }
 
 void
 NativeProcessLinux::Terminate ()
 {
-    StopMonitor();
+    m_monitor_up->Terminate();
 }
 
 ::pid_t
@@ -2997,6 +3044,7 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     bool stepping = false;
     bool software_single_step = !SupportHardwareSingleStepping();
 
+    Monitor::ScopedOperationLock monitor_lock(*m_monitor_up);
     Mutex::Locker locker (m_threads_mutex);
 
     if (software_single_step)
@@ -3144,7 +3192,7 @@ NativeProcessLinux::Detach ()
         error = Detach (GetID ());
 
     // Stop monitoring the inferior.
-    StopMonitor ();
+    m_monitor_up->Terminate();
 
     // No error.
     return error;
@@ -3179,6 +3227,7 @@ NativeProcessLinux::Interrupt ()
     if (log)
         log->Printf ("NativeProcessLinux::%s selecting running thread for interrupt target", __FUNCTION__);
 
+    Monitor::ScopedOperationLock monitor_lock(*m_monitor_up);
     Mutex::Locker locker (m_threads_mutex);
 
     for (auto thread_sp : m_threads)
@@ -3233,6 +3282,7 @@ NativeProcessLinux::Interrupt ()
                                      // Tell the process delegate that the process is in a stopped state.
                                      SetState (StateType::eStateStopped, true);
                                  });
+
     return Error();
 }
 
@@ -3834,7 +3884,25 @@ NativeProcessLinux::GetCrashReasonForSIGBUS(const siginfo_t *info)
 #endif
 
 Error
-NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read)
+NativeProcessLinux::SetWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags, bool hardware)
+{
+    // The base SetWatchpoint will end up executing monitor operations. Let's lock the monitor
+    // for it.
+    Monitor::ScopedOperationLock monitor_lock(*m_monitor_up);
+    return NativeProcessProtocol::SetWatchpoint(addr, size, watch_flags, hardware);
+}
+
+Error
+NativeProcessLinux::RemoveWatchpoint (lldb::addr_t addr)
+{
+    // The base RemoveWatchpoint will end up executing monitor operations. Let's lock the monitor
+    // for it.
+    Monitor::ScopedOperationLock monitor_lock(*m_monitor_up);
+    return NativeProcessProtocol::RemoveWatchpoint(addr);
+}
+
+Error
+NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, lldb::addr_t size, lldb::addr_t &bytes_read)
 {
     ReadOperation op(addr, buf, size, bytes_read);
     m_monitor_up->DoOperation(&op);
@@ -3995,77 +4063,6 @@ NativeProcessLinux::StartMonitorThread(const InitialOperation &initial_operation
     if (error.Fail()) {
         m_monitor_up.reset();
     }
-}
-
-void
-NativeProcessLinux::StopMonitor()
-{
-    StopCoordinatorThread ();
-    m_monitor_up.reset();
-}
-
-Error
-NativeProcessLinux::StartCoordinatorThread ()
-{
-    Error error;
-    static const char *g_thread_name = "lldb.process.linux.ts_coordinator";
-    Log *const log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-
-    // Skip if thread is already running
-    if (m_coordinator_thread.IsJoinable())
-    {
-        error.SetErrorString ("ThreadStateCoordinator's run loop is already running");
-        if (log)
-            log->Printf ("NativeProcessLinux::%s %s", __FUNCTION__, error.AsCString ());
-        return error;
-    }
-
-    // Enable verbose logging if lldb thread logging is enabled.
-    m_coordinator_up->LogEnableEventProcessing (log != nullptr);
-
-    if (log)
-        log->Printf ("NativeProcessLinux::%s launching ThreadStateCoordinator thread for pid %" PRIu64, __FUNCTION__, GetID ());
-    m_coordinator_thread = ThreadLauncher::LaunchThread(g_thread_name, CoordinatorThread, this, &error);
-    return error;
-}
-
-void *
-NativeProcessLinux::CoordinatorThread (void *arg)
-{
-    Log *const log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-
-    NativeProcessLinux *const process = static_cast<NativeProcessLinux*> (arg);
-    assert (process && "null process passed to CoordinatorThread");
-    if (!process)
-    {
-        if (log)
-            log->Printf ("NativeProcessLinux::%s null process, exiting ThreadStateCoordinator processing loop", __FUNCTION__);
-        return nullptr;
-    }
-
-    // Run the thread state coordinator loop until it is done.  This call uses
-    // efficient waiting for an event to be ready.
-    while (process->m_coordinator_up->ProcessNextEvent () == ThreadStateCoordinator::eventLoopResultContinue)
-    {
-    }
-
-    if (log)
-        log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " exiting ThreadStateCoordinator processing loop due to coordinator indicating completion", __FUNCTION__, process->GetID ());
-
-    return nullptr;
-}
-
-void
-NativeProcessLinux::StopCoordinatorThread()
-{
-    Log *const log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-    if (log)
-        log->Printf ("NativeProcessLinux::%s requesting ThreadStateCoordinator stop for pid %" PRIu64, __FUNCTION__, GetID ());
-
-    // Tell the coordinator we're done.  This will cause the coordinator
-    // run loop thread to exit when the processing queue hits this message.
-    m_coordinator_up->StopCoordinator ();
-    m_coordinator_thread.Join (nullptr);
 }
 
 bool

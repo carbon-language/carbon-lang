@@ -46,29 +46,6 @@ public:
 
 //===----------------------------------------------------------------------===//
 
-class ThreadStateCoordinator::EventStopCoordinator : public ThreadStateCoordinator::EventBase
-{
-public:
-    EventStopCoordinator ():
-        EventBase ()
-    {
-    }
-
-    EventLoopResult
-    ProcessEvent(ThreadStateCoordinator &coordinator) override
-    {
-        return eventLoopResultStop;
-    }
-
-    std::string
-    GetDescription () override
-    {
-        return "EventStopCoordinator";
-    }
-};
-
-//===----------------------------------------------------------------------===//
-
 class ThreadStateCoordinator::EventCallAfterThreadsStop : public ThreadStateCoordinator::EventBase
 {
 public:
@@ -588,39 +565,9 @@ private:
 
 ThreadStateCoordinator::ThreadStateCoordinator (const LogFunction &log_function) :
     m_log_function (log_function),
-    m_event_queue (),
-    m_queue_condition (),
-    m_queue_mutex (),
     m_tid_map (),
     m_log_event_processing (false)
 {
-}
-
-void
-ThreadStateCoordinator::EnqueueEvent (EventBaseSP event_sp)
-{
-    std::lock_guard<std::mutex> lock (m_queue_mutex);
-
-    m_event_queue.push (event_sp);
-    if (m_log_event_processing)
-        Log ("ThreadStateCoordinator::%s enqueued event: %s", __FUNCTION__, event_sp->GetDescription ().c_str ());
-
-    m_queue_condition.notify_one ();
-}
-
-ThreadStateCoordinator::EventBaseSP
-ThreadStateCoordinator::DequeueEventWithWait ()
-{
-    // Wait for an event to be present.
-    std::unique_lock<std::mutex> lock (m_queue_mutex);
-    m_queue_condition.wait (lock,
-                            [this] { return !m_event_queue.empty (); });
-
-    // Grab the event and pop it off the queue.
-    EventBaseSP event_sp = m_event_queue.front ();
-    m_event_queue.pop ();
-
-    return event_sp;
 }
 
 void
@@ -653,11 +600,11 @@ ThreadStateCoordinator::CallAfterThreadsStop (const lldb::tid_t triggering_tid,
                                               const ThreadIDFunction &call_after_function,
                                               const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventCallAfterThreadsStop (triggering_tid,
-                                                              wait_for_stop_tids,
-                                                              request_thread_stop_function,
-                                                              call_after_function,
-                                                              error_function)));
+    ProcessEvent(EventBaseSP(new EventCallAfterThreadsStop (triggering_tid,
+                wait_for_stop_tids,
+                request_thread_stop_function,
+                call_after_function,
+                error_function)));
 }
 
 void
@@ -666,10 +613,10 @@ ThreadStateCoordinator::CallAfterRunningThreadsStop (const lldb::tid_t triggerin
                                                      const ThreadIDFunction &call_after_function,
                                                      const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventCallAfterThreadsStop (triggering_tid,
-                                                              request_thread_stop_function,
-                                                              call_after_function,
-                                                              error_function)));
+    ProcessEvent(EventBaseSP(new EventCallAfterThreadsStop (triggering_tid,
+                request_thread_stop_function,
+                call_after_function,
+                error_function)));
 }
 
 void
@@ -679,11 +626,11 @@ ThreadStateCoordinator::CallAfterRunningThreadsStopWithSkipTIDs (lldb::tid_t tri
                                                                  const ThreadIDFunction &call_after_function,
                                                                  const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventCallAfterThreadsStop (triggering_tid,
-                                                              request_thread_stop_function,
-                                                              call_after_function,
-                                                              skip_stop_request_tids,
-                                                              error_function)));
+    ProcessEvent(EventBaseSP(new EventCallAfterThreadsStop (triggering_tid,
+                request_thread_stop_function,
+                call_after_function,
+                skip_stop_request_tids,
+                error_function)));
 }
 
 
@@ -826,7 +773,7 @@ ThreadStateCoordinator::NotifyThreadStop (lldb::tid_t tid,
                                           bool initiated_by_llgs,
                                           const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventThreadStopped (tid, initiated_by_llgs, error_function)));
+    ProcessEvent(EventBaseSP(new EventThreadStopped (tid, initiated_by_llgs, error_function)));
 }
 
 void
@@ -834,7 +781,7 @@ ThreadStateCoordinator::RequestThreadResume (lldb::tid_t tid,
                                              const ResumeThreadFunction &request_thread_resume_function,
                                              const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function, error_function, true)));
+    ProcessEvent(EventBaseSP(new EventRequestResume (tid, request_thread_resume_function, error_function, true)));
 }
 
 void
@@ -842,7 +789,7 @@ ThreadStateCoordinator::RequestThreadResumeAsNeeded (lldb::tid_t tid,
                                                      const ResumeThreadFunction &request_thread_resume_function,
                                                      const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function, error_function, false)));
+    ProcessEvent(EventBaseSP(new EventRequestResume (tid, request_thread_resume_function, error_function, false)));
 }
 
 void
@@ -850,56 +797,26 @@ ThreadStateCoordinator::NotifyThreadCreate (lldb::tid_t tid,
                                             bool is_stopped,
                                             const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventThreadCreate (tid, is_stopped, error_function)));
+    ProcessEvent(EventBaseSP(new EventThreadCreate (tid, is_stopped, error_function)));
 }
 
 void
 ThreadStateCoordinator::NotifyThreadDeath (lldb::tid_t tid,
                                            const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventThreadDeath (tid, error_function)));
+    ProcessEvent(EventBaseSP(new EventThreadDeath (tid, error_function)));
 }
 
 void
 ThreadStateCoordinator::ResetForExec ()
 {
-    std::lock_guard<std::mutex> lock (m_queue_mutex);
-
-    // Remove everything from the queue.  This is the only
-    // state mutation that takes place outside the processing
-    // loop.
-    QueueType empty_queue;
-    m_event_queue.swap (empty_queue);
-
-    // Do the real clear behavior on the the queue to eliminate
-    // the chance that processing of a dequeued earlier event is
-    // overlapping with the clearing of state here.  Push it
-    // directly because we need to have this happen with the lock,
-    // and so far I only have this one place that needs a no-lock
-    // variant.
-    m_event_queue.push (EventBaseSP (new EventReset ()));
+    ProcessEvent(EventBaseSP(new EventReset()));
 }
 
 void
-ThreadStateCoordinator::StopCoordinator ()
+ThreadStateCoordinator::ProcessEvent (const EventBaseSP &event_sp)
 {
-    EnqueueEvent (EventBaseSP (new EventStopCoordinator ()));
-}
-
-ThreadStateCoordinator::EventLoopResult
-ThreadStateCoordinator::ProcessNextEvent ()
-{
-    // Dequeue the next event, synchronous.
-    if (m_log_event_processing)
-        Log ("ThreadStateCoordinator::%s about to dequeue next event in blocking mode", __FUNCTION__);
-
-    EventBaseSP event_sp = DequeueEventWithWait();
-    assert (event_sp && "event should never be null");
-    if (!event_sp)
-    {
-        Log ("ThreadStateCoordinator::%s error: event_sp was null, signaling exit of event loop.", __FUNCTION__);
-        return eventLoopResultStop;
-    }
+    std::lock_guard<std::mutex> lock(m_event_mutex);
 
     if (m_log_event_processing)
     {
@@ -907,15 +824,12 @@ ThreadStateCoordinator::ProcessNextEvent ()
     }
 
     // Process the event.
-    const EventLoopResult result = event_sp->ProcessEvent (*this);
+    event_sp->ProcessEvent (*this);
 
     if (m_log_event_processing)
     {
-        Log ("ThreadStateCoordinator::%s event processing returned value %s", __FUNCTION__,
-             result == eventLoopResultContinue ? "eventLoopResultContinue" : "eventLoopResultStop");
+        Log ("ThreadStateCoordinator::%s event processing done", __FUNCTION__);
     }
-
-    return result;
 }
 
 void
