@@ -1336,7 +1336,7 @@ if lldb_platform_name:
     if lldb_platform_url:
         # We must connect to a remote platform if a LLDB platform URL was specified
         print "Connecting to remote platform '%s' at '%s'..." % (lldb_platform_name, lldb_platform_url)
-        lldb.platfrom_url = lldb_platform_url
+        lldb.platform_url = lldb_platform_url
         platform_connect_options = lldb.SBPlatformConnectOptions(lldb_platform_url)
         err = lldb.remote_platform.ConnectRemote(platform_connect_options)
         if err.Success():
@@ -1345,7 +1345,7 @@ if lldb_platform_name:
             print "error: failed to connect to remote platform using URL '%s': %s" % (lldb_platform_url, err)
             exitTestSuite(1)
     else:
-        lldb.platfrom_url = None
+        lldb.platform_url = None
 
     if lldb_platform_working_dir:
         print "Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir)
@@ -1356,7 +1356,7 @@ if lldb_platform_name:
 else:
     lldb.remote_platform = None
     lldb.remote_platform_working_dir = None
-    lldb.platfrom_url = None
+    lldb.platform_url = None
 
 target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 
