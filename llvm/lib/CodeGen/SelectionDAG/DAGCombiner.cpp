@@ -11416,9 +11416,10 @@ SDValue DAGCombiner::ReplaceExtractVectorEltOfLoadWithNarrowedLoad(
     Offset = DAG.getConstant(PtrOff, DL, PtrType);
     MPI = OriginalLoad->getPointerInfo().getWithOffset(PtrOff);
   } else {
+    Offset = DAG.getZExtOrTrunc(EltNo, DL, PtrType);
     Offset = DAG.getNode(
-        ISD::MUL, DL, EltNo.getValueType(), EltNo,
-        DAG.getConstant(VecEltVT.getStoreSize(), DL, EltNo.getValueType()));
+        ISD::MUL, DL, PtrType, Offset,
+        DAG.getConstant(VecEltVT.getStoreSize(), DL, PtrType));
     MPI = OriginalLoad->getPointerInfo();
   }
   NewPtr = DAG.getNode(ISD::ADD, DL, PtrType, NewPtr, Offset);
