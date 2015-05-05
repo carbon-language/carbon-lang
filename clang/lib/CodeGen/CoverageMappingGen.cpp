@@ -134,18 +134,18 @@ public:
                            : SM.getIncludeLoc(SM.getFileID(Loc));
   }
 
-  /// \brief Get the start of \c S ignoring macro argument locations.
+  /// \brief Get the start of \c S ignoring macro arguments and system macros.
   SourceLocation getStart(const Stmt *S) {
     SourceLocation Loc = S->getLocStart();
-    while (SM.isMacroArgExpansion(Loc))
+    while (SM.isMacroArgExpansion(Loc) || SM.isInSystemMacro(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).first;
     return Loc;
   }
 
-  /// \brief Get the end of \c S ignoring macro argument locations.
+  /// \brief Get the end of \c S ignoring macro arguments and system macros.
   SourceLocation getEnd(const Stmt *S) {
     SourceLocation Loc = S->getLocEnd();
-    while (SM.isMacroArgExpansion(Loc))
+    while (SM.isMacroArgExpansion(Loc) || SM.isInSystemMacro(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).first;
     return getPreciseTokenLocEnd(Loc);
   }
