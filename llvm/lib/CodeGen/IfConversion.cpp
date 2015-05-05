@@ -975,26 +975,18 @@ void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
 /// Behaves like LiveRegUnits::StepForward() but also adds implicit uses to all
 /// values defined in MI which are not live/used by MI.
 static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
-  for (ConstMIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
-    if (!Ops->isReg() || !Ops->isKill())
-      continue;
-    unsigned Reg = Ops->getReg();
-    if (Reg == 0)
-      continue;
-    Redefs.removeReg(Reg);
-  }
-  for (MIBundleOperands Ops(MI); Ops.isValid(); ++Ops) {
-    if (!Ops->isReg() || !Ops->isDef())
-      continue;
-    unsigned Reg = Ops->getReg();
-    if (Reg == 0 || Redefs.contains(Reg))
-      continue;
-    Redefs.addReg(Reg);
+  SmallVector<std::pair<unsigned, const MachineOperand*>, 4> Clobbers;
+  Redefs.stepForward(*MI, Clobbers);
 
-    MachineOperand &Op = *Ops;
-    MachineInstr *MI = Op.getParent();
-    MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
-    MIB.addReg(Reg, RegState::Implicit | RegState::Undef);
+  // Now add the implicit uses for each of the clobbered values.
+  for (auto Reg : Clobbers) {
+    const MachineOperand &Op = *Reg.second;
+    // FIXME: Const cast here is nasty, but better than making StepForward
+    // take a mutable instruction instead of const.
+    MachineInstr *OpMI = const_cast<MachineInstr*>(Op.getParent());
+    MachineInstrBuilder MIB(*OpMI->getParent()->getParent(), OpMI);
+    if (Op.isReg())
+      MIB.addReg(Reg.first, RegState::Implicit | RegState::Undef);
   }
 }
 
@@ -1374,7 +1366,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
 
   for (MachineBasicBlock::const_iterator I = BBI1->BB->begin(), E = DI1; I != E;
        ++I) {
-    Redefs.stepForward(*I);
+    SmallVector<std::pair<unsigned, const MachineOperand*>, 4> IgnoredClobbers;
+    Redefs.stepForward(*I, IgnoredClobbers);
   }
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);
