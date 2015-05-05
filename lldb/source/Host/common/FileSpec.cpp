@@ -558,6 +558,8 @@ FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &res
         {
             if (had_dots)
             {
+                while (before_sep.startswith("//"))
+                    before_sep = before_sep.substr(1);
                 if (!before_sep.empty())
                 {
                     result.append(before_sep.data(), before_sep.size());
