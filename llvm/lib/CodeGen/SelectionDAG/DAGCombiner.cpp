@@ -11413,19 +11413,12 @@ SDValue DAGCombiner::ReplaceExtractVectorEltOfLoadWithNarrowedLoad(
   if (auto *ConstEltNo = dyn_cast<ConstantSDNode>(EltNo)) {
     int Elt = ConstEltNo->getZExtValue();
     unsigned PtrOff = VecEltVT.getSizeInBits() * Elt / 8;
-    if (TLI.isBigEndian())
-      PtrOff = InVecVT.getSizeInBits() / 8 - PtrOff;
     Offset = DAG.getConstant(PtrOff, DL, PtrType);
     MPI = OriginalLoad->getPointerInfo().getWithOffset(PtrOff);
   } else {
     Offset = DAG.getNode(
         ISD::MUL, DL, EltNo.getValueType(), EltNo,
         DAG.getConstant(VecEltVT.getStoreSize(), DL, EltNo.getValueType()));
-    if (TLI.isBigEndian())
-      Offset = DAG.getNode(
-          ISD::SUB, DL, EltNo.getValueType(),
-          DAG.getConstant(InVecVT.getStoreSize(), DL, EltNo.getValueType()),
-          Offset);
     MPI = OriginalLoad->getPointerInfo();
   }
   NewPtr = DAG.getNode(ISD::ADD, DL, PtrType, NewPtr, Offset);
