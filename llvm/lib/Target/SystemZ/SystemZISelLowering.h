@@ -201,6 +201,11 @@ enum {
   // Pack vector operands 0 and 1 into a single vector with half-sized elements.
   PACK,
 
+  // Likewise, but saturate the result and set CC.  PACKS_CC does signed
+  // saturation and PACKLS_CC does unsigned saturation.
+  PACKS_CC,
+  PACKLS_CC,
+
   // Unpack the first half of vector operand 0 into double-sized elements.
   // UNPACK_HIGH sign-extends and UNPACKL_HIGH zero-extends.
   UNPACK_HIGH,
@@ -228,12 +233,25 @@ enum {
   VICMPH,
   VICMPHL,
 
+  // Likewise, but also set the condition codes on the result.
+  VICMPES,
+  VICMPHS,
+  VICMPHLS,
+
   // Compare floating-point vector operands 0 and 1 to preoduce the usual 0/-1
   // vector result.  VFCMPE is for "ordered and equal", VFCMPH for "ordered and
   // greater than" and VFCMPHE for "ordered and greater than or equal to".
   VFCMPE,
   VFCMPH,
   VFCMPHE,
+
+  // Likewise, but also set the condition codes on the result.
+  VFCMPES,
+  VFCMPHS,
+  VFCMPHES,
+
+  // Test floating-point data class for vectors.
+  VFTCI,
 
   // Extend the even f32 elements of vector operand 0 to produce a vector
   // of f64 elements.
@@ -242,6 +260,20 @@ enum {
   // Round the f64 elements of vector operand 0 to f32s and store them in the
   // even elements of the result.
   VROUND,
+
+  // AND the two vector operands together and set CC based on the result.
+  VTM,
+
+  // String operations that set CC as a side-effect.
+  VFAE_CC,
+  VFAEZ_CC,
+  VFEE_CC,
+  VFEEZ_CC,
+  VFENE_CC,
+  VFENEZ_CC,
+  VISTR_CC,
+  VSTRC_CC,
+  VSTRCZ_CC,
 
   // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
   // ATOMIC_LOAD_<op>.
@@ -438,6 +470,7 @@ private:
   SDValue lowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerPREFETCH(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;

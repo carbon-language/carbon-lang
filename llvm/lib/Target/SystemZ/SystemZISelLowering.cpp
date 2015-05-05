@@ -440,6 +440,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
 
   // Handle intrinsics.
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
   // We want to use MVC in preference to even a single load/store pair.
   MaxStoresPerMemcpy = 0;
@@ -1253,6 +1254,143 @@ static bool isIntrinsicWithCCAndChain(SDValue Op, unsigned &Opcode,
   }
 }
 
+// Return true if Op is an intrinsic node without chain that returns the
+// CC value as its final argument.  Provide the associated SystemZISD
+// opcode and the mask of valid CC values if so.
+static bool isIntrinsicWithCC(SDValue Op, unsigned &Opcode, unsigned &CCValid) {
+  unsigned Id = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  switch (Id) {
+  case Intrinsic::s390_vpkshs:
+  case Intrinsic::s390_vpksfs:
+  case Intrinsic::s390_vpksgs:
+    Opcode = SystemZISD::PACKS_CC;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vpklshs:
+  case Intrinsic::s390_vpklsfs:
+  case Intrinsic::s390_vpklsgs:
+    Opcode = SystemZISD::PACKLS_CC;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vceqbs:
+  case Intrinsic::s390_vceqhs:
+  case Intrinsic::s390_vceqfs:
+  case Intrinsic::s390_vceqgs:
+    Opcode = SystemZISD::VICMPES;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vchbs:
+  case Intrinsic::s390_vchhs:
+  case Intrinsic::s390_vchfs:
+  case Intrinsic::s390_vchgs:
+    Opcode = SystemZISD::VICMPHS;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vchlbs:
+  case Intrinsic::s390_vchlhs:
+  case Intrinsic::s390_vchlfs:
+  case Intrinsic::s390_vchlgs:
+    Opcode = SystemZISD::VICMPHLS;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vtm:
+    Opcode = SystemZISD::VTM;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vfaebs:
+  case Intrinsic::s390_vfaehs:
+  case Intrinsic::s390_vfaefs:
+    Opcode = SystemZISD::VFAE_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfaezbs:
+  case Intrinsic::s390_vfaezhs:
+  case Intrinsic::s390_vfaezfs:
+    Opcode = SystemZISD::VFAEZ_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfeebs:
+  case Intrinsic::s390_vfeehs:
+  case Intrinsic::s390_vfeefs:
+    Opcode = SystemZISD::VFEE_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfeezbs:
+  case Intrinsic::s390_vfeezhs:
+  case Intrinsic::s390_vfeezfs:
+    Opcode = SystemZISD::VFEEZ_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfenebs:
+  case Intrinsic::s390_vfenehs:
+  case Intrinsic::s390_vfenefs:
+    Opcode = SystemZISD::VFENE_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfenezbs:
+  case Intrinsic::s390_vfenezhs:
+  case Intrinsic::s390_vfenezfs:
+    Opcode = SystemZISD::VFENEZ_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vistrbs:
+  case Intrinsic::s390_vistrhs:
+  case Intrinsic::s390_vistrfs:
+    Opcode = SystemZISD::VISTR_CC;
+    CCValid = SystemZ::CCMASK_0 | SystemZ::CCMASK_3;
+    return true;
+
+  case Intrinsic::s390_vstrcbs:
+  case Intrinsic::s390_vstrchs:
+  case Intrinsic::s390_vstrcfs:
+    Opcode = SystemZISD::VSTRC_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vstrczbs:
+  case Intrinsic::s390_vstrczhs:
+  case Intrinsic::s390_vstrczfs:
+    Opcode = SystemZISD::VSTRCZ_CC;
+    CCValid = SystemZ::CCMASK_ANY;
+    return true;
+
+  case Intrinsic::s390_vfcedbs:
+    Opcode = SystemZISD::VFCMPES;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vfchdbs:
+    Opcode = SystemZISD::VFCMPHS;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vfchedbs:
+    Opcode = SystemZISD::VFCMPHES;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  case Intrinsic::s390_vftcidb:
+    Opcode = SystemZISD::VFTCI;
+    CCValid = SystemZ::CCMASK_VCMP;
+    return true;
+
+  default:
+    return false;
+  }
+}
+
 // Emit an intrinsic with chain with a glued value instead of its CC result.
 static SDValue emitIntrinsicWithChainAndGlue(SelectionDAG &DAG, SDValue Op,
                                              unsigned Opcode) {
@@ -1271,6 +1409,23 @@ static SDValue emitIntrinsicWithChainAndGlue(SelectionDAG &DAG, SDValue Op,
   SDValue NewChain = SDValue(Intr.getNode(), 0);
   DAG.ReplaceAllUsesOfValueWith(OldChain, NewChain);
   return Intr;
+}
+
+// Emit an intrinsic with a glued value instead of its CC result.
+static SDValue emitIntrinsicWithGlue(SelectionDAG &DAG, SDValue Op,
+                                     unsigned Opcode) {
+  // Copy all operands except the intrinsic ID.
+  unsigned NumOps = Op.getNumOperands();
+  SmallVector<SDValue, 6> Ops;
+  Ops.reserve(NumOps - 1);
+  for (unsigned I = 1; I < NumOps; ++I)
+    Ops.push_back(Op.getOperand(I));
+
+  if (Op->getNumValues() == 1)
+    return DAG.getNode(Opcode, SDLoc(Op), MVT::Glue, Ops);
+  assert(Op->getNumValues() == 2 && "Expected exactly one non-CC result");
+  SDVTList RawVTs = DAG.getVTList(Op->getValueType(0), MVT::Glue);
+  return DAG.getNode(Opcode, SDLoc(Op), RawVTs, Ops);
 }
 
 // CC is a comparison that will be implemented using an integer or
@@ -1876,6 +2031,10 @@ static Comparison getCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
         CmpOp0.getResNo() == 0 && CmpOp0->hasNUsesOfValue(1, 0) &&
         isIntrinsicWithCCAndChain(CmpOp0, Opcode, CCValid))
       return getIntrinsicCmp(DAG, Opcode, CmpOp0, CCValid, Constant, Cond);
+    if (CmpOp0.getOpcode() == ISD::INTRINSIC_WO_CHAIN &&
+        CmpOp0.getResNo() == CmpOp0->getNumValues() - 1 &&
+        isIntrinsicWithCC(CmpOp0, Opcode, CCValid))
+      return getIntrinsicCmp(DAG, Opcode, CmpOp0, CCValid, Constant, Cond);
   }
   Comparison C(CmpOp0, CmpOp1);
   C.CCMask = CCMaskForCondCode(Cond);
@@ -1923,6 +2082,9 @@ static SDValue emitCmp(SelectionDAG &DAG, SDLoc DL, Comparison &C) {
     switch (C.Op0.getOpcode()) {
     case ISD::INTRINSIC_W_CHAIN:
       Op = emitIntrinsicWithChainAndGlue(DAG, C.Op0, C.Opcode);
+      break;
+    case ISD::INTRINSIC_WO_CHAIN:
+      Op = emitIntrinsicWithGlue(DAG, C.Op0, C.Opcode);
       break;
     default:
       llvm_unreachable("Invalid comparison operands");
@@ -3058,6 +3220,67 @@ SystemZTargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
   return SDValue();
 }
 
+SDValue
+SystemZTargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  unsigned Opcode, CCValid;
+  if (isIntrinsicWithCC(Op, Opcode, CCValid)) {
+    SDValue Glued = emitIntrinsicWithGlue(DAG, Op, Opcode);
+    SDValue CC = getCCResult(DAG, Glued.getNode());
+    if (Op->getNumValues() == 1)
+      return CC;
+    assert(Op->getNumValues() == 2 && "Expected a CC and non-CC result");
+    return DAG.getNode(ISD::MERGE_VALUES, SDLoc(Op), Op->getVTList(),
+		    Glued, CC);
+  }
+
+  unsigned Id = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  switch (Id) {
+  case Intrinsic::s390_vpdi:
+    return DAG.getNode(SystemZISD::PERMUTE_DWORDS, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
+  case Intrinsic::s390_vperm:
+    return DAG.getNode(SystemZISD::PERMUTE, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+
+  case Intrinsic::s390_vuphb:
+  case Intrinsic::s390_vuphh:
+  case Intrinsic::s390_vuphf:
+    return DAG.getNode(SystemZISD::UNPACK_HIGH, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1));
+
+  case Intrinsic::s390_vuplhb:
+  case Intrinsic::s390_vuplhh:
+  case Intrinsic::s390_vuplhf:
+    return DAG.getNode(SystemZISD::UNPACKL_HIGH, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1));
+
+  case Intrinsic::s390_vuplb:
+  case Intrinsic::s390_vuplhw:
+  case Intrinsic::s390_vuplf:
+    return DAG.getNode(SystemZISD::UNPACK_LOW, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1));
+
+  case Intrinsic::s390_vupllb:
+  case Intrinsic::s390_vupllh:
+  case Intrinsic::s390_vupllf:
+    return DAG.getNode(SystemZISD::UNPACKL_LOW, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1));
+
+  case Intrinsic::s390_vsumb:
+  case Intrinsic::s390_vsumh:
+  case Intrinsic::s390_vsumgh:
+  case Intrinsic::s390_vsumgf:
+  case Intrinsic::s390_vsumqf:
+  case Intrinsic::s390_vsumqg:
+    return DAG.getNode(SystemZISD::VSUM, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  }
+
+  return SDValue();
+}
+
 namespace {
 // Says that SystemZISD operation Opcode can be used to perform the equivalent
 // of a VPERM with permute vector Bytes.  If Opcode takes three operands,
@@ -4117,6 +4340,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerPREFETCH(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:
     return lowerINTRINSIC_W_CHAIN(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN:
+    return lowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::BUILD_VECTOR:
     return lowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
@@ -4195,6 +4420,8 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(PERMUTE_DWORDS);
     OPCODE(PERMUTE);
     OPCODE(PACK);
+    OPCODE(PACKS_CC);
+    OPCODE(PACKLS_CC);
     OPCODE(UNPACK_HIGH);
     OPCODE(UNPACKL_HIGH);
     OPCODE(UNPACK_LOW);
@@ -4206,11 +4433,28 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(VICMPE);
     OPCODE(VICMPH);
     OPCODE(VICMPHL);
+    OPCODE(VICMPES);
+    OPCODE(VICMPHS);
+    OPCODE(VICMPHLS);
     OPCODE(VFCMPE);
     OPCODE(VFCMPH);
     OPCODE(VFCMPHE);
+    OPCODE(VFCMPES);
+    OPCODE(VFCMPHS);
+    OPCODE(VFCMPHES);
+    OPCODE(VFTCI);
     OPCODE(VEXTEND);
     OPCODE(VROUND);
+    OPCODE(VTM);
+    OPCODE(VFAE_CC);
+    OPCODE(VFAEZ_CC);
+    OPCODE(VFEE_CC);
+    OPCODE(VFEEZ_CC);
+    OPCODE(VFENE_CC);
+    OPCODE(VFENEZ_CC);
+    OPCODE(VISTR_CC);
+    OPCODE(VSTRC_CC);
+    OPCODE(VSTRCZ_CC);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
