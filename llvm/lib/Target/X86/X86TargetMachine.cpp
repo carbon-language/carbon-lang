@@ -185,6 +185,7 @@ public:
   void addIRPasses() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
+  bool addPreISel() override;
   void addPreRegAlloc() override;
   void addPostRegAlloc() override;
   void addPreEmitPass() override;
@@ -217,6 +218,14 @@ bool X86PassConfig::addInstSelector() {
 
 bool X86PassConfig::addILPOpts() {
   addPass(&EarlyIfConverterID);
+  return true;
+}
+
+bool X86PassConfig::addPreISel() {
+  // Only add this pass for 32-bit x86.
+  Triple TT(TM->getTargetTriple());
+  if (TT.getArch() == Triple::x86)
+    addPass(createX86WinEHStatePass());
   return true;
 }
 
