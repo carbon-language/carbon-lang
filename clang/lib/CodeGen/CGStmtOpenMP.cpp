@@ -1373,10 +1373,10 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   if (auto C = S.getSingleClause(OMPC_if)) {
     IfCond = cast<OMPIfClause>(C)->getCondition();
   }
+  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
   // Get list of private variables.
   llvm::SmallVector<const Expr *, 8> Privates;
   llvm::SmallVector<const Expr *, 8> PrivateCopies;
-  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
   for (auto &&I = S.getClausesOfKind(OMPC_private); I; ++I) {
     auto *C = cast<OMPPrivateClause>(*I);
     auto IRef = C->varlist_begin();
@@ -1389,9 +1389,29 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
       ++IRef;
     }
   }
-  CGM.getOpenMPRuntime().emitTaskCall(*this, S.getLocStart(), S, Tied, Final,
-                                      OutlinedFn, SharedsTy, CapturedStruct,
-                                      IfCond, Privates, PrivateCopies);
+  EmittedAsPrivate.clear();
+  // Get list of firstprivate variables.
+  llvm::SmallVector<const Expr *, 8> FirstprivateVars;
+  llvm::SmallVector<const Expr *, 8> FirstprivateCopies;
+  llvm::SmallVector<const Expr *, 8> FirstprivateInits;
+  for (auto &&I = S.getClausesOfKind(OMPC_firstprivate); I; ++I) {
+    auto *C = cast<OMPFirstprivateClause>(*I);
+    auto IRef = C->varlist_begin();
+    auto IElemInitRef = C->inits().begin();
+    for (auto *IInit : C->private_copies()) {
+      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
+        FirstprivateVars.push_back(*IRef);
+        FirstprivateCopies.push_back(IInit);
+        FirstprivateInits.push_back(*IElemInitRef);
+      }
+      ++IRef, ++IElemInitRef;
+    }
+  }
+  CGM.getOpenMPRuntime().emitTaskCall(
+      *this, S.getLocStart(), S, Tied, Final, OutlinedFn, SharedsTy,
+      CapturedStruct, IfCond, Privates, PrivateCopies, FirstprivateVars,
+      FirstprivateCopies, FirstprivateInits);
 }
 
 void CodeGenFunction::EmitOMPTaskyieldDirective(

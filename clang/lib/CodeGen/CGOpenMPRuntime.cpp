@@ -1630,12 +1630,21 @@ static void addFieldToRecordDecl(ASTContext &C, DeclContext *DC,
 }
 
 namespace {
-typedef std::pair<CharUnits /*Align*/,
-                  std::pair<const VarDecl *, const VarDecl *>> VDPair;
+struct PrivateHelpersTy {
+  PrivateHelpersTy(const VarDecl *Original, const VarDecl *PrivateCopy,
+                   const VarDecl *PrivateElemInit)
+      : Original(Original), PrivateCopy(PrivateCopy),
+        PrivateElemInit(PrivateElemInit) {}
+  const VarDecl *Original;
+  const VarDecl *PrivateCopy;
+  const VarDecl *PrivateElemInit;
+};
+typedef std::pair<CharUnits /*Align*/, PrivateHelpersTy> PrivateDataTy;
 } // namespace
 
-static RecordDecl *createPrivatesRecordDecl(CodeGenModule &CGM,
-                                            const ArrayRef<VDPair> Privates) {
+static RecordDecl *
+createPrivatesRecordDecl(CodeGenModule &CGM,
+                         const ArrayRef<PrivateDataTy> Privates) {
   if (!Privates.empty()) {
     auto &C = CGM.getContext();
     // Build struct .kmp_privates_t. {
@@ -1644,8 +1653,8 @@ static RecordDecl *createPrivatesRecordDecl(CodeGenModule &CGM,
     auto *RD = C.buildImplicitRecord(".kmp_privates.t");
     RD->startDefinition();
     for (auto &&Pair : Privates) {
-      addFieldToRecordDecl(C, RD,
-                           Pair.second.first->getType().getNonReferenceType());
+      addFieldToRecordDecl(
+          C, RD, Pair.second.Original->getType().getNonReferenceType());
     }
     // TODO: add firstprivate fields.
     RD->completeDefinition();
@@ -1654,10 +1663,10 @@ static RecordDecl *createPrivatesRecordDecl(CodeGenModule &CGM,
   return nullptr;
 }
 
-static RecordDecl *createKmpTaskTRecordDecl(CodeGenModule &CGM,
-                                            QualType KmpInt32Ty,
-                                            QualType KmpRoutineEntryPointerQTy,
-                                            const ArrayRef<VDPair> Privates) {
+static RecordDecl *
+createKmpTaskTRecordDecl(CodeGenModule &CGM, QualType KmpInt32Ty,
+                         QualType KmpRoutineEntryPointerQTy,
+                         const ArrayRef<PrivateDataTy> Privates) {
   auto &C = CGM.getContext();
   // Build struct kmp_task_t {
   //         void *              shareds;
@@ -1782,7 +1791,8 @@ emitDestructorsFunction(CodeGenModule &CGM, SourceLocation Loc,
   return DestructorFn;
 }
 
-static int array_pod_sort_comparator(const VDPair *P1, const VDPair *P2) {
+static int array_pod_sort_comparator(const PrivateDataTy *P1,
+                                     const PrivateDataTy *P2) {
   return P1->first < P2->first ? 1 : (P2->first < P1->first ? -1 : 0);
 }
 
@@ -1791,17 +1801,32 @@ void CGOpenMPRuntime::emitTaskCall(
     bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
     llvm::Value *TaskFunction, QualType SharedsTy, llvm::Value *Shareds,
     const Expr *IfCond, const ArrayRef<const Expr *> PrivateVars,
-    const ArrayRef<const Expr *> PrivateCopies) {
+    const ArrayRef<const Expr *> PrivateCopies,
+    const ArrayRef<const Expr *> FirstprivateVars,
+    const ArrayRef<const Expr *> FirstprivateCopies,
+    const ArrayRef<const Expr *> FirstprivateInits) {
   auto &C = CGM.getContext();
-  llvm::SmallVector<VDPair, 8> Privates;
-  auto I = PrivateCopies.begin();
+  llvm::SmallVector<PrivateDataTy, 8> Privates;
   // Aggeregate privates and sort them by the alignment.
+  auto I = PrivateCopies.begin();
   for (auto *E : PrivateVars) {
     auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
     Privates.push_back(std::make_pair(
         C.getTypeAlignInChars(VD->getType()),
-        std::make_pair(VD, cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl()))));
+        PrivateHelpersTy(VD, cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl()),
+                         /*PrivateElemInit=*/nullptr)));
     ++I;
+  }
+  I = FirstprivateCopies.begin();
+  auto IElemInitRef = FirstprivateInits.begin();
+  for (auto *E : FirstprivateVars) {
+    auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+    Privates.push_back(std::make_pair(
+        C.getTypeAlignInChars(VD->getType()),
+        PrivateHelpersTy(
+            VD, cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl()),
+            cast<VarDecl>(cast<DeclRefExpr>(*IElemInitRef)->getDecl()))));
+    ++I, ++IElemInitRef;
   }
   llvm::array_pod_sort(Privates.begin(), Privates.end(),
                        array_pod_sort_comparator);
@@ -1872,11 +1897,61 @@ void CGOpenMPRuntime::emitTaskCall(
     CodeGenFunction::CGCapturedStmtInfo CapturesInfo(
         cast<CapturedStmt>(*D.getAssociatedStmt()));
     for (auto &&Pair : Privates) {
-      auto *VD = Pair.second.second;
+      auto *VD = Pair.second.PrivateCopy;
       auto *Init = VD->getAnyInitializer();
       LValue PrivateLValue = CGF.EmitLValueForField(Base, *FI);
       if (Init) {
-        CGF.EmitExprAsInit(Init, VD, PrivateLValue, /*capturedByInit=*/false);
+        if (auto *Elem = Pair.second.PrivateElemInit) {
+          auto *OriginalVD = Pair.second.Original;
+          auto *SharedField = CapturesInfo.lookup(OriginalVD);
+          auto SharedRefLValue =
+              CGF.EmitLValueForField(SharedsBase, SharedField);
+          if (OriginalVD->getType()->isArrayType()) {
+            // Initialize firstprivate array.
+            if (!isa<CXXConstructExpr>(Init) ||
+                CGF.isTrivialInitializer(Init)) {
+              // Perform simple memcpy.
+              CGF.EmitAggregateAssign(PrivateLValue.getAddress(),
+                                      SharedRefLValue.getAddress(),
+                                      OriginalVD->getType());
+            } else {
+              // Initialize firstprivate array using element-by-element
+              // intialization.
+              CGF.EmitOMPAggregateAssign(
+                  PrivateLValue.getAddress(), SharedRefLValue.getAddress(),
+                  OriginalVD->getType(),
+                  [&CGF, Elem, Init, &CapturesInfo](llvm::Value *DestElement,
+                                                    llvm::Value *SrcElement) {
+                    // Clean up any temporaries needed by the initialization.
+                    CodeGenFunction::OMPPrivateScope InitScope(CGF);
+                    InitScope.addPrivate(Elem, [SrcElement]() -> llvm::Value *{
+                      return SrcElement;
+                    });
+                    (void)InitScope.Privatize();
+                    // Emit initialization for single element.
+                    auto *OldCapturedStmtInfo = CGF.CapturedStmtInfo;
+                    CGF.CapturedStmtInfo = &CapturesInfo;
+                    CGF.EmitAnyExprToMem(Init, DestElement,
+                                         Init->getType().getQualifiers(),
+                                         /*IsInitializer=*/false);
+                    CGF.CapturedStmtInfo = OldCapturedStmtInfo;
+                  });
+            }
+          } else {
+            CodeGenFunction::OMPPrivateScope InitScope(CGF);
+            InitScope.addPrivate(Elem, [SharedRefLValue]() -> llvm::Value *{
+              return SharedRefLValue.getAddress();
+            });
+            (void)InitScope.Privatize();
+            auto *OldCapturedStmtInfo = CGF.CapturedStmtInfo;
+            CGF.CapturedStmtInfo = &CapturesInfo;
+            CGF.EmitExprAsInit(Init, VD, PrivateLValue,
+                               /*capturedByInit=*/false);
+            CGF.CapturedStmtInfo = OldCapturedStmtInfo;
+          }
+        } else {
+          CGF.EmitExprAsInit(Init, VD, PrivateLValue, /*capturedByInit=*/false);
+        }
       }
       NeedsCleanup = NeedsCleanup || FI->getType().isDestructedType();
       // Copy addresses of privates to corresponding references in the list of
@@ -1884,7 +1959,7 @@ void CGOpenMPRuntime::emitTaskCall(
       //   ...
       //   tt->shareds.var_addr = &tt->privates.private_var;
       //   ...
-      auto *OriginalVD = Pair.second.first;
+      auto *OriginalVD = Pair.second.Original;
       auto *SharedField = CapturesInfo.lookup(OriginalVD);
       auto SharedRefLValue =
           CGF.EmitLValueForFieldInitialization(SharedsBase, SharedField);

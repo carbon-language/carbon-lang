@@ -557,14 +557,24 @@ public:
   /// \param PrivateVars List of references to private variables for the task
   /// directive.
   /// \param PrivateCopies List of private copies for each private variable in
-  /// \a PrivateVars.
+  /// \p PrivateVars.
+  /// \param FirstprivateVars List of references to private variables for the
+  /// task directive.
+  /// \param FirstprivateCopies List of private copies for each private variable
+  /// in \p FirstprivateVars.
+  /// \param FirstprivateInits List of references to auto generated variables
+  /// used for initialization of a single array element. Used if firstprivate
+  /// variable is of array type.
   virtual void emitTaskCall(CodeGenFunction &CGF, SourceLocation Loc,
                             const OMPExecutableDirective &D, bool Tied,
                             llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
                             llvm::Value *TaskFunction, QualType SharedsTy,
                             llvm::Value *Shareds, const Expr *IfCond,
                             const ArrayRef<const Expr *> PrivateVars,
-                            const ArrayRef<const Expr *> PrivateCopies);
+                            const ArrayRef<const Expr *> PrivateCopies,
+                            const ArrayRef<const Expr *> FirstprivateVars,
+                            const ArrayRef<const Expr *> FirstprivateCopies,
+                            const ArrayRef<const Expr *> FirstprivateInits);
 
   /// \brief Emit code for the directive that does not require outlining.
   ///
