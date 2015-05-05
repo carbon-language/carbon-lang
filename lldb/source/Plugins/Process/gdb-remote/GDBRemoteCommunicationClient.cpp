@@ -3751,7 +3751,7 @@ GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
     if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) != PacketResult::Success)
         return false;
 
-    if (response.IsErrorResponse ())
+    if (response.IsErrorResponse () || response.IsUnsupportedResponse ())
         return false;
 
     std::string name;
