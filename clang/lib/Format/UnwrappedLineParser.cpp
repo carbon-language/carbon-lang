@@ -262,9 +262,12 @@ bool UnwrappedLineParser::parse() {
 }
 
 void UnwrappedLineParser::parseFile() {
-  ScopedDeclarationState DeclarationState(
-      *Line, DeclarationScopeStack,
-      /*MustBeDeclaration=*/!Line->InPPDirective);
+  // The top-level context in a file always has declarations, except for pre-
+  // processor directives and JavaScript files.
+  bool MustBeDeclaration =
+      !Line->InPPDirective && Style.Language != FormatStyle::LK_JavaScript;
+  ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
+                                          MustBeDeclaration);
   parseLevel(/*HasOpeningBrace=*/false);
   // Make sure to format the remaining tokens.
   flushComments(true);
@@ -837,14 +840,21 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseTryCatch();
       return;
     case tok::identifier: {
-      StringRef Text = FormatTok->TokenText;
       // Parse function literal unless 'function' is the first token in a line
       // in which case this should be treated as a free-standing function.
-      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function" &&
-          Line->Tokens.size() > 0) {
+      if (Style.Language == FormatStyle::LK_JavaScript &&
+          FormatTok->is(Keywords.kw_function) && Line->Tokens.size() > 0) {
         tryToParseJSFunction();
         break;
       }
+      if ((Style.Language == FormatStyle::LK_JavaScript ||
+           Style.Language == FormatStyle::LK_Java) &&
+          FormatTok->is(Keywords.kw_interface)) {
+        parseRecord();
+        break;
+      }
+
+      StringRef Text = FormatTok->TokenText;
       nextToken();
       if (Line->Tokens.size() == 1 &&
           // JS doesn't have macros, and within classes colons indicate fields,
@@ -1577,7 +1587,7 @@ void UnwrappedLineParser::parseRecord() {
   // We fall through to parsing a structural element afterwards, so
   // class A {} n, m;
   // will end up in one unwrapped line.
-  // This does not apply for Java.
+  // This does not apply for Java and JavaScript.
   if (Style.Language == FormatStyle::LK_Java ||
       Style.Language == FormatStyle::LK_JavaScript)
     addUnwrappedLine();

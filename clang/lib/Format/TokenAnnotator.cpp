@@ -422,11 +422,12 @@ private:
         return false;
       // Colons from ?: are handled in parseConditional().
       if (Style.Language == FormatStyle::LK_JavaScript) {
-        if (Contexts.back().ColonIsForRangeExpr ||
-            (Contexts.size() == 1 &&
+        if (Contexts.back().ColonIsForRangeExpr || // colon in for loop
+            (Contexts.size() == 1 &&               // switch/case labels
              !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) ||
-            Contexts.back().ContextKind == tok::l_paren ||
-            Contexts.back().ContextKind == tok::l_square) {
+            Contexts.back().ContextKind == tok::l_paren ||  // function params
+            Contexts.back().ContextKind == tok::l_square || // array type
+            Line.MustBeDeclaration) { // method/property declaration
           Tok->Type = TT_JsTypeColon;
           break;
         }
@@ -533,14 +534,20 @@ private:
       break;
     case tok::question:
       if (Style.Language == FormatStyle::LK_JavaScript && Tok->Next &&
-          Tok->Next->isOneOf(tok::colon, tok::semi, tok::r_paren,
+          Tok->Next->isOneOf(tok::semi, tok::colon, tok::r_paren,
                              tok::r_brace)) {
-        // Question marks before semicolons, colons, commas, etc. indicate
-        // optional types (fields, parameters), e.g.
-        // `function(x?: string, y?) {...}` or `class X {y?;}`
+        // Question marks before semicolons, colons, etc. indicate optional
+        // types (fields, parameters), e.g.
+        //   function(x?: string, y?) {...}
+        //   class X { y?; }
         Tok->Type = TT_JsTypeOptionalQuestion;
         break;
       }
+      // Declarations cannot be conditional expressions, this can only be part
+      // of a type declaration.
+      if (Line.MustBeDeclaration &&
+          Style.Language == FormatStyle::LK_JavaScript)
+        break;
       parseConditional();
       break;
     case tok::kw_template:
@@ -872,7 +879,14 @@ private:
     } else if (Current.isOneOf(tok::exclaim, tok::tilde)) {
       Current.Type = TT_UnaryOperator;
     } else if (Current.is(tok::question)) {
-      Current.Type = TT_ConditionalExpr;
+      if (Style.Language == FormatStyle::LK_JavaScript &&
+          Line.MustBeDeclaration) {
+        // In JavaScript, `interface X { foo?(): bar; }` is an optional method
+        // on the interface, not a ternary expression.
+        Current.Type = TT_JsTypeOptionalQuestion;
+      } else {
+        Current.Type = TT_ConditionalExpr;
+      }
     } else if (Current.isBinaryOperator() &&
                (!Current.Previous || Current.Previous->isNot(tok::l_square))) {
       Current.Type = TT_BinaryOperator;
@@ -1854,12 +1868,20 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return Right.is(tok::coloncolon);
   if (Right.is(TT_OverloadedOperatorLParen))
     return false;
-  if (Right.is(tok::colon))
-    return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
-           Right.getNextNonComment() && Right.isNot(TT_ObjCMethodExpr) &&
-           !Left.is(tok::question) &&
-           !(Right.is(TT_InlineASMColon) && Left.is(tok::coloncolon)) &&
-           (Right.isNot(TT_DictLiteral) || Style.SpacesInContainerLiterals);
+  if (Right.is(tok::colon)) {
+    if (Line.First->isOneOf(tok::kw_case, tok::kw_default) ||
+        !Right.getNextNonComment())
+      return false;
+    if (Right.is(TT_ObjCMethodExpr))
+      return false;
+    if (Left.is(tok::question))
+      return false;
+    if (Right.is(TT_InlineASMColon) && Left.is(tok::coloncolon))
+      return false;
+    if (Right.is(TT_DictLiteral))
+      return Style.SpacesInContainerLiterals;
+    return true;
+  }
   if (Left.is(TT_UnaryOperator))
     return Right.is(TT_BinaryOperator);
   if (Left.is(TT_CastRParen))

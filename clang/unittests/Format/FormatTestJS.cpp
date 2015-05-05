@@ -709,6 +709,10 @@ TEST_F(FormatTestJS, OptionalTypes) {
                "  y?: z;\n"
                "  z?;\n"
                "}");
+  verifyFormat("interface X {\n"
+               "  y?(): z;\n"
+               "}");
+  verifyFormat("x ? 1 : 2;");
 }
 
 TEST_F(FormatTestJS, IndexSignature) {
