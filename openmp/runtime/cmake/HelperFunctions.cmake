@@ -22,7 +22,7 @@
 # void say(string message_to_user);
 # - prints out message_to_user
 macro(say message_to_user)
-    message("${message_to_user}")
+    message(STATUS "${message_to_user}")
 endmacro()
 
 # void warning_say(string message_to_user);

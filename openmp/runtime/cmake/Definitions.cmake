@@ -155,6 +155,6 @@ function(append_cpp_flags input_cpp_flags)
     else()
         append_definitions("-D KMP_USE_INTERNODE_ALIGNMENT=0")
     endif()
-    set(${input_cpp_flags} "${${input_cpp_flags}}" "${local_cpp_flags}" "${USER_CPP_FLAGS}" "$ENV{CPPFLAGS}" PARENT_SCOPE)
+    set(${input_cpp_flags} "${${input_cpp_flags}}" "${local_cpp_flags}" "${LIBIOMP_CPPFLAGS}" "$ENV{CPPFLAGS}" PARENT_SCOPE)
 endfunction()
 

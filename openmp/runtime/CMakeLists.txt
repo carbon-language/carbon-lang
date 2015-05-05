@@ -12,7 +12,6 @@
 ################
 # CMAKE libiomp5
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(libiomp C CXX)
 
 #########
 # GLOBALS 
@@ -24,6 +23,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 # Set base libomp directory (directory with exports/ , src/ , tools/ , etc.)
 # The top-level CMakeLists.txt should define this variable.
 set(LIBOMP_WORK ${CMAKE_CURRENT_SOURCE_DIR})
+
+#######################################################################
+# Standalone build or part of LLVM?
+set(LIBIOMP_STANDALONE_BUILD FALSE)
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}" OR 
+   "${CMAKE_SOURCE_DIR}/runtime" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+    project(libiomp C CXX)
+    set(LIBIOMP_STANDALONE_BUILD TRUE)
+endif()
 
 # These include files are in cmake/ subdirectory except for FindPerl which is a cmake standard module
 include(HelperFunctions)
@@ -102,13 +110,13 @@ set(ompt_blame      true          CACHE BOOL   "OMPT-blame?"                    
 set(ompt_trace      true          CACHE BOOL   "OMPT-trace?"                                            )
 
 # User specified flags.  These are appended to the predetermined flags found in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (e.g., GNU/CFlags.cmake)
-set(USER_C_FLAGS      "" CACHE STRING "Appended user specified C compiler flags."             )
-set(USER_CXX_FLAGS    "" CACHE STRING "Appended user specified C++ compiler flags."           )
-set(USER_CPP_FLAGS    "" CACHE STRING "Appended user specified C preprocessor flags."         )
-set(USER_ASM_FLAGS    "" CACHE STRING "Appended user specified assembler flags."              )
-set(USER_LD_FLAGS     "" CACHE STRING "Appended user specified linker flags."                 )
-set(USER_LD_LIB_FLAGS "" CACHE STRING "Appended user specified linked libs flags. (e.g., -lm)")
-set(USER_F_FLAGS      "" CACHE STRING "Appended user specified Fortran compiler flags.  These are only used if create_fortran_modules==true."       )
+set(LIBIOMP_CFLAGS      "" CACHE STRING "Appended user specified C compiler flags."             )
+set(LIBIOMP_CXXFLAGS    "" CACHE STRING "Appended user specified C++ compiler flags."           )
+set(LIBIOMP_CPPFLAGS    "" CACHE STRING "Appended user specified C preprocessor flags."         )
+set(LIBIOMP_ASMFLAGS    "" CACHE STRING "Appended user specified assembler flags."              )
+set(LIBIOMP_LDFLAGS     "" CACHE STRING "Appended user specified linker flags."                 )
+set(LIBIOMP_LIBFLAGS    "" CACHE STRING "Appended user specified linked libs flags. (e.g., -lm)")
+set(LIBIOMP_FFLAGS      "" CACHE STRING "Appended user specified Fortran compiler flags.  These are only used if create_fortran_modules==true."       )
 
 # - Allow three build types: Release, Debug, RelWithDebInfo (these relate to build.pl's release, debug, and diag settings respectively)
 # - default is Release (when CMAKE_BUILD_TYPE is not defined)
@@ -126,6 +134,12 @@ else()
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Release/Debug/RelWithDebInfo")
     string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_lowercase)
     check_variable(cmake_build_type_lowercase  "${build_type_possible_values}")
+endif()
+
+if(${LIBIOMP_STANDALONE_BUILD})
+    set(LIBIOMP_LIBDIR_SUFFIX "" CACHE STRING "suffix of lib installation directory e.g., 64 => lib64")
+else()
+    set(LIBIOMP_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
 endif()
 
 # Check valid values
@@ -339,8 +353,11 @@ set(build_dir      "${CMAKE_CURRENT_BINARY_DIR}"       ) # build directory (Wher
 set(src_dir        "${LIBOMP_WORK}/src"                )
 set(tools_dir      "${LIBOMP_WORK}/tools"              ) 
 set(export_dir     "${LIBOMP_WORK}/exports"            ) 
-set(export_cmn_dir "${export_dir}/common${suffix}"     ) 
 set(export_ptf_dir "${export_dir}/${platform}${suffix}")
+set(export_cmn_dir1 "${export_dir}/common${suffix}/include") 
+set(export_cmn_dir2 "${export_dir}/common${suffix}/include_compat") 
+set(export_inc_dir "${export_ptf_dir}/include") 
+set(export_mod_dir "${export_ptf_dir}/include_compat")
 _export_lib_dir(${platform} export_lib_dir)  # set exports directory (relative to build_dir) e.g., ../exports/lin_32e/lib/
                                              # or ../exports/mac_32e/lib.thin/ for mac
 if(${MAC})
@@ -371,7 +388,7 @@ set(lib_ext "${dll}")
 set(lib_file "${lib_item}${lib_ext}")
 
 ########################################
-# Setting export file names (full paths)
+# Setting export file names
 if(${WINDOWS})
     set(imp_file "${lib_item}${lib}") # this is exported (libiomp5md.lib)
     set(def_file "${lib_item}.def") # this is not exported
@@ -390,15 +407,9 @@ if(${OMPT_SUPPORT})
     set(export_cmn_files1 ${export_cmn_files1} "ompt.h")
 endif()
 
-add_prefix("${export_lib_dir}/"                export_lib_files)
-add_prefix("${export_ptf_dir}/include_compat/" export_inc_files)
-add_prefix("${export_ptf_dir}/include/"        export_mod_files)
-add_prefix("${export_cmn_dir}/include/"        export_cmn_files1)
-add_prefix("${export_cmn_dir}/include_compat/" export_cmn_files2)
 set(export_cmn_files "${export_cmn_files1}" "${export_cmn_files2}")
 if("${export_lib_fat_dir}")
     set(export_lib_fat_files "${lib_file}" "${imp_file}")
-    add_prefix("${export_lib_fat_dir}/" export_lib_fat_files)
 endif()
 
 #########################
@@ -415,7 +426,7 @@ set_legal_arch(legal_arch)
 # Linker    Flags (cmake/CommonFlags.cmake)
 # Archiver  Flags (cmake/CommonFlags.cmake)
 # Helper Perl Script Flags (cmake/PerlFlags.cmake)
-# * Inside the cmake/CommonFlags.cmake file, the USER_*_FLAGS are added.
+# * Inside the cmake/CommonFlags.cmake file, the LIBIOMP_*FLAGS are added.
 # * Cannot use CMAKE_*_FLAGS directly because -x c++ is put in the linker command and mangles the linking phase.
 
 # preprocessor flags (-D definitions and -I includes)
@@ -423,6 +434,17 @@ set_legal_arch(legal_arch)
 set(include_dirs ${CMAKE_CURRENT_BINARY_DIR} ${src_dir} ${src_dir}/i18n ${inc_dir} ${src_dir}/thirdparty/ittnotify)
 include_directories(${include_dirs})
 
+# Grab compiler-dependent flags
+# Cmake will look for cmake/${CMAKE_C_COMPILER_ID}/CFlags.cmake to append additional c, cxx, and linker flags.
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${CMAKE_C_COMPILER_ID} ${CMAKE_MODULE_PATH})
+find_file(compiler_specific_include_file_found CFlags.cmake ${CMAKE_MODULE_PATH})
+if(compiler_specific_include_file_found)
+    include(CFlags) # COMPILER_SUPPORTS_QUAD_PRECISION changed in here
+    append_compiler_specific_c_and_cxx_flags(C_FLAGS CXX_FLAGS)
+    append_compiler_specific_linker_flags(LD_FLAGS LD_LIB_FLAGS)
+else()
+    warning_say("Could not find cmake/${CMAKE_C_COMPILER_ID}/CFlags.cmake: will only use default flags")
+endif()
 # Grab assembler-dependent flags
 # CMake will look for cmake/${CMAKE_ASM_COMPILER_ID}/AsmFlags.cmake to append additional assembler flags.
 if(${WINDOWS})
@@ -440,8 +462,6 @@ if(${WINDOWS})
 else()
     # Unix (including Mac) based systems use CMAKE_ASM_COMPILER
     # Unix assembly files can be handled by compiler usually.
-    enable_language(ASM)
-    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${CMAKE_ASM_COMPILER_ID} ${CMAKE_MODULE_PATH})
     find_file(assembler_specific_include_file_found AsmFlags.cmake ${CMAKE_MODULE_PATH})
     if(assembler_specific_include_file_found)
         include(AsmFlags)
@@ -449,17 +469,6 @@ else()
     else()
         warning_say("Could not find cmake/${CMAKE_ASM_COMPILER_ID}/AsmFlags.cmake: will only use default flags")
     endif()
-endif()
-# Grab compiler-dependent flags
-# Cmake will look for cmake/${CMAKE_C_COMPILER_ID}/CFlags.cmake to append additional c, cxx, and linker flags.
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${CMAKE_C_COMPILER_ID} ${CMAKE_MODULE_PATH})
-find_file(compiler_specific_include_file_found CFlags.cmake ${CMAKE_MODULE_PATH})
-if(compiler_specific_include_file_found)
-    include(CFlags) # COMPILER_SUPPORTS_QUAD_PRECISION changed in here
-    append_compiler_specific_c_and_cxx_flags(C_FLAGS CXX_FLAGS)
-    append_compiler_specific_linker_flags(LD_FLAGS LD_LIB_FLAGS)
-else()
-    warning_say("Could not find cmake/${CMAKE_C_COMPILER_ID}/CFlags.cmake: will only use default flags")
 endif()
 
 # Grab all the compiler-independent flags
@@ -552,19 +561,10 @@ debug_say_var(imp_src_files)
 
 ####################
 # --- Create all ---
-add_custom_target(lib ALL DEPENDS ${export_lib_files})
+add_custom_target(lib ALL DEPENDS iomp5)
 add_custom_target(inc ALL DEPENDS ${export_inc_files})
 if(${create_fortran_modules})
-add_custom_target(mod ALL DEPENDS ${export_mod_files})
-endif()
-# --- Enforce the tests to be completed/skipped before copying to exports directory ---
-if(${tests})
-    if(${WINDOWS})
-        set(test-dependencies test-touch-mt/.success test-touch-md/.success test-relo/.success test-execstack/.success test-instr/.success test-deps/.success)
-    else()
-        set(test-dependencies test-touch-rt/.success test-relo/.success test-execstack/.success test-instr/.success test-deps/.success)
-    endif()
-    set_source_files_properties(${export_lib_files} PROPERTIES OBJECT_DEPENDS "${test-dependencies}")
+    add_custom_target(mod ALL DEPENDS ${export_mod_files})
 endif()
 
 #############################
@@ -572,42 +572,33 @@ endif()
 add_custom_target(common ALL DEPENDS ${export_cmn_files})
 add_custom_target(clean-common COMMAND ${CMAKE_COMMAND} -E remove -f ${export_cmn_files})
 
-##########################################
-# --- Copy files to export directories ---
-# - just a simple copy recipe which acts as an install step
-# - copies out of the src_dir into the dest_dir
-#
-# dest_dir/target : src_dir/target
-#    cp src_dir/target dest_dir/target
-macro (simple_copy_recipe target src_dir dest_dir)
-    get_source_file_property(extra_depends ${dest_dir}/${target} OBJECT_DEPENDS)
-    if("${extra_depends}" MATCHES "NOTFOUND")
-        set(extra_depends)
-    endif()
-    set(ldeps ${src_dir}/${target} "${extra_depends}")
-    if(NOT "${target}" STREQUAL "")
-        file(MAKE_DIRECTORY ${dest_dir}) # make sure destination directory exists
-        add_custom_command(
-            OUTPUT   ${dest_dir}/${target}
-            COMMAND  ${CMAKE_COMMAND} -E copy ${src_dir}/${target} ${dest_dir}/${target}
-            DEPENDS  ${ldeps}
-        )
-    endif()
-endmacro()
-# copy from build directory to final resting places in exports directory
-simple_copy_recipe("omp.h"             "${build_dir}"  "${export_cmn_dir}/include")
-simple_copy_recipe("ompt.h"            "${build_dir}"  "${export_cmn_dir}/include")
-simple_copy_recipe("omp_lib.h"         "${build_dir}"  "${export_cmn_dir}/include")
-simple_copy_recipe("omp_lib.f"         "${build_dir}"  "${export_cmn_dir}/include")
-simple_copy_recipe("omp_lib.f90"       "${build_dir}"  "${export_cmn_dir}/include")
-simple_copy_recipe("iomp.h"            "${build_dir}"  "${export_cmn_dir}/include_compat")
-simple_copy_recipe("${lib_file}"       "${build_dir}"  "${export_lib_dir}")
-simple_copy_recipe("${imp_file}"       "${build_dir}"  "${export_lib_dir}")
-simple_copy_recipe("${pdb_file}"       "${build_dir}"  "${export_lib_dir}")
-simple_copy_recipe("${dbg_file}"       "${build_dir}"  "${export_lib_dir}")
-simple_copy_recipe("omp_lib.mod"       "${build_dir}"  "${export_ptf_dir}/include")
-simple_copy_recipe("omp_lib_kinds.mod" "${build_dir}"  "${export_ptf_dir}/include")
-simple_copy_recipe("iomp_lib.h"        "${build_dir}"  "${export_ptf_dir}/include_compat")
+# --- Put headers in convenient locations post build ---
+add_custom_command(TARGET common POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir2}
+    COMMAND ${CMAKE_COMMAND} -E copy omp.h ${export_cmn_dir1}
+    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.h ${export_cmn_dir1}
+    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f ${export_cmn_dir1}
+    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f90 ${export_cmn_dir1}
+    COMMAND ${CMAKE_COMMAND} -E copy iomp.h ${export_cmn_dir2}
+)
+if(${OMPT_SUPPORT})
+    add_custom_command(TARGET common POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E copy ompt.h ${export_cmn_dir1}
+    )
+endif()
+add_custom_command(TARGET inc POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_inc_dir}
+    COMMAND ${CMAKE_COMMAND} -E copy iomp_lib.h ${export_inc_dir}
+)
+if(${create_fortran_modules})
+    add_custom_command(TARGET mod POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_mod_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.mod ${export_mod_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib_kinds.mod ${export_mod_dir}
+    )
+endif()
 
 ######################################################
 # --- Build the main library ---
@@ -621,11 +612,6 @@ add_custom_target(needed-headers DEPENDS ${build_dir}/kmp_i18n_id.inc ${build_di
 if(${WINDOWS})
     add_custom_target(needed-windows-files DEPENDS ${build_dir}/${def_file} ${build_dir}/${rc_file})
     list(APPEND lib_src_files ${build_dir}/${rc_file})
-    # The windows assembly files are in MASM format, and they require a tool that can handle MASM syntax (ml.exe or ml64.exe typically)
-    enable_language(ASM_MASM) 
-else()
-    # Unix assembly files can be handled by compiler.
-    enable_language(ASM)
 endif()
 
 # Remove any cmake-automatic linking of libraries by linker, This is so linux 
@@ -645,8 +631,21 @@ set_target_properties(iomp5 PROPERTIES
     LINKER_LANGUAGE C            # use C Compiler for linking step
     SKIP_BUILD_RPATH true        # have Mac linker -install_name just be "-install_name libiomp5.dylib"
 )
-# Target lib (export files) depend on the library (iomp5) being built
-add_dependencies(lib iomp5)
+
+# --- Copy libiomp into exports directory post build ---
+if(${WINDOWS})
+    get_target_property(LIBIOMP_OUTPUT_DIRECTORY iomp5 RUNTIME_OUTPUT_DIRECTORY)
+else()
+    get_target_property(LIBIOMP_OUTPUT_DIRECTORY iomp5 LIBRARY_OUTPUT_DIRECTORY)
+endif()
+if(NOT LIBIOMP_OUTPUT_DIRECTORY)
+    set(LIBIOMP_OUTPUT_DIRECTORY ${build_dir})
+endif()
+
+add_custom_command(TARGET iomp5 POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMP_OUTPUT_DIRECTORY}/${lib_file} ${export_lib_dir}
+)
 
 # Linking command will include libraries in LD_LIB_FLAGS
 target_link_libraries(iomp5 ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
@@ -662,7 +661,13 @@ endif()
 set_source_files_properties(${lib_c_items} 
                             ${imp_c_items}   PROPERTIES COMPILE_FLAGS "${C_FLAGS}"  )
 set_source_files_properties(${lib_cxx_items} PROPERTIES COMPILE_FLAGS "${CXX_FLAGS}")
-set_source_files_properties(${lib_asm_items} PROPERTIES COMPILE_FLAGS "${ASM_FLAGS}")
+if(${WINDOWS})
+    # Windows operating system has to use MASM assembler
+    set_source_files_properties(${lib_asm_items} PROPERTIES COMPILE_FLAGS "${ASM_FLAGS}")
+else()
+    # Non-Windows operating systems can use compiler to assemble the assembly files
+    set_source_files_properties(${lib_asm_items} PROPERTIES COMPILE_FLAGS "${ASM_FLAGS}" LANGUAGE C)
+endif()
 # Set the -D definitions for all sources
 add_definitions(${DEFINITIONS_FLAGS})
 
@@ -701,10 +706,10 @@ if(${MAC})
         _export_lib_fat_dir( "mac_32e" export_fat_mac_32e)
         _export_lib_dir(     "mac_32"  export_mac_32     )
         _export_lib_dir(     "mac_32e" export_mac_32e    )
-        file(MAKE_DIRECTORY ${export_fat_mac_32e})
         add_custom_target(fat
             COMMAND ${CMAKE_COMMAND} -E echo Building 32 and 32e fat libraries from ${export_mac_32}/${lib_file} and ${export_mac_32e}/${lib_file}
             COMMAND ${CMAKE_COMMAND} -E echo Will put fat library in ${export_fat_mac_32e} directory
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_fat_mac_32e}
             COMMAND lipo -create -output ${export_fat_mac_32e}/${lib_file} ${export_mac_32}/${lib_file} ${export_mac_32e}/${lib_file}
         )
     endif()
@@ -730,6 +735,14 @@ if(${WINDOWS})
         )
         add_custom_command(TARGET iomp5imp PRE_BUILD COMMAND ${CMAKE_COMMAND} -E remove -f ${imp_file})
         add_dependencies(iomp5imp iomp5)
+        get_target_property(LIBIOMPIMP_OUTPUT_DIRECTORY iomp5imp ARCHIVE_OUTPUT_DIRECTORY)
+        if(NOT LIBIOMPIMP_OUTPUT_DIRECTORY)
+            set(LIBIOMPIMP_OUTPUT_DIRECTORY ${build_dir})
+        endif()
+        add_custom_command(TARGET iomp5imp POST_BUILD 
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
+            COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMPIMP_OUTPUT_DIRECTORY}/${imp_file} ${export_lib_dir}
+        )
     endif()
 
     # --- Create $(def_file) ---
@@ -772,6 +785,22 @@ add_custom_command(
 # - Only perform if ${tests} == true (specify when invoking: cmake -Dtests=on ...)
 if(${tests})
     include(MicroTests)
+    add_custom_target(libiomp-micro-tests)
+    if(NOT ${MIC} AND ${test_touch})
+        add_dependencies(libiomp-micro-tests libiomp-test-touch)
+    endif()
+    if(${LINUX} AND ${test_relo})
+        add_dependencies(libiomp-micro-tests libiomp-test-relo)
+    endif()
+    if(${LINUX} AND ${test_execstack})
+        add_dependencies(libiomp-micro-tests libiomp-test-execstack)
+    endif()
+    if(${MIC} AND ${test_instr})
+        add_dependencies(libiomp-micro-tests libiomp-test-instr)
+    endif()
+    if(${test_deps}) 
+        add_dependencies(libiomp-micro-tests libiomp-test-deps)
+    endif()
 endif()
 
 ######################################################
@@ -808,21 +837,18 @@ endif()
 # --- Using expand-vars.pl to generate files ---
 # - 'file' is generated using expand-vars.pl and 'file'.var
 # - Any .h .f .f90 .rc files should be created with this recipe
-macro(expand_vars_recipe filename)
+macro(expand_vars_recipe file_dir filename)
     get_source_file_property(extra_ev_flags ${filename} COMPILE_DEFINITIONS)
     if("${extra_ev_flags}" MATCHES "NOTFOUND")
         set(extra_ev_flags)
     else()
         string_to_list("${extra_ev_flags}" extra_ev_flags)
     endif()
-    find_file(${filename}_path ${filename}.var PATHS ${src_dir}/include/${omp_version} ${src_dir})
-    set(ldeps "${${filename}_path}" "${src_dir}/kmp_version.c" "${tools_dir}/expand-vars.pl")
-    set(expandvarscmd ${PERL_EXECUTABLE} ${tools_dir}/expand-vars.pl --strict ${ev_flags} ${extra_ev_flags} ${${filename}_path} ${filename})
     if(NOT "${filename}" STREQUAL "")
         add_custom_command(
             OUTPUT  ${filename}
-            COMMAND ${expandvarscmd}
-            DEPENDS ${ldeps}
+            COMMAND ${PERL_EXECUTABLE} ${tools_dir}/expand-vars.pl --strict ${ev_flags} ${extra_ev_flags} ${file_dir}/${filename}.var ${filename}
+            DEPENDS ${file_dir}/${filename}.var ${src_dir}/kmp_version.c ${tools_dir}/expand-vars.pl
         )
     endif()
 endmacro()
@@ -837,46 +863,71 @@ else()
 endif()
 # libiomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
 set_source_files_properties(libiomp.rc PROPERTIES COMPILE_DEFINITIONS "-D KMP_FILE=${lib_file}") 
-expand_vars_recipe(omp.h)
-expand_vars_recipe(ompt.h)
-expand_vars_recipe(omp_lib.h)
-expand_vars_recipe(omp_lib.f)
-expand_vars_recipe(omp_lib.f90)
-expand_vars_recipe(iomp.h)
-expand_vars_recipe(iomp_lib.h)
-expand_vars_recipe(libiomp.rc)
-
+expand_vars_recipe(${src_dir}/include/${omp_version} omp.h)
+expand_vars_recipe(${src_dir}/include/${omp_version} ompt.h)
+expand_vars_recipe(${src_dir}/include/${omp_version} omp_lib.h)
+expand_vars_recipe(${src_dir}/include/${omp_version} omp_lib.f)
+expand_vars_recipe(${src_dir}/include/${omp_version} omp_lib.f90)
+expand_vars_recipe(${src_dir}/include/${omp_version} iomp.h)
+expand_vars_recipe(${src_dir}/include/${omp_version} iomp_lib.h)
+expand_vars_recipe(${src_dir} libiomp.rc)
 
 ####################################################################
 # Print configuration after all variables are set.
-say("")
-say("----------------------- CONFIGURATION -----------------------")
-say("Operating System   : ${os}")
-say("Target Architecture  : ${arch}")
-if(${MIC})
-    say("Intel(R) MIC Architecture    : ${mic_arch}")
+if(${LIBIOMP_STANDALONE_BUILD})
+    say("LIBIOMP: Operating System     -- ${os}")
+    say("LIBIOMP: Target Architecture  -- ${arch}")
+    if(${MIC})
+        say("LIBIOMP: Intel(R) MIC Architecture    -- ${mic_arch}")
+    endif()
+    say("LIBIOMP: Build Type           -- ${CMAKE_BUILD_TYPE}")
+    say("LIBIOMP: OpenMP Version       -- ${omp_version}")
+    say("LIBIOMP: Lib Type             -- ${lib_type}")
+    say("LIBIOMP: Fortran Modules      -- ${create_fortran_modules}")
+    # will say development if all zeros
+    if("${build_number}" STREQUAL "00000000")
+        set(build "development")
+    else()
+        set(build "${build_number}")
+    endif()
+    say("LIBIOMP: Build                -- ${build}")
+    say("LIBIOMP: Stats-Gathering      -- ${stats}")
+    say("LIBIOMP: OMPT-support         -- ${ompt_support}")
+    if(${OMPT_SUPPORT})
+        say("LIBIOMP: OMPT-blame           -- ${ompt_blame}")
+        say("LIBIOMP: OMPT-trace           -- ${ompt_trace}")
+    endif()
+    say("LIBIOMP: Use build.pl rules   -- ${USE_BUILDPL_RULES}")
+    say("LIBIOMP: Adaptive locks       -- ${USE_ADAPTIVE_LOCKS}")
+    say("LIBIOMP: Use predefined linker flags      -- ${USE_PREDEFINED_LINKER_FLAGS}")
+    say("LIBIOMP: Compiler supports quad precision -- ${COMPILER_SUPPORTS_QUAD_PRECISION}")
 endif()
-say("Build Type           : ${CMAKE_BUILD_TYPE}")
-say("OpenMP Version       : ${omp_version}")
-say("Lib Type             : ${lib_type}")
-say("Fortran Modules    : ${create_fortran_modules}")
-# will say development if all zeros
-if("${build_number}" STREQUAL "00000000")
-    set(build "development")
+
+####################################################################
+# Install rules
+# We want to install libiomp5 in DESTDIR/CMAKE_INSTALL_PREFIX/lib
+# We want to install headers in DESTDIR/CMAKE_INSTALL_PREFIX/include
+if(${LIBIOMP_STANDALONE_BUILD})
+    set(LIBIOMP_HEADERS_INSTALL_PATH include)
 else()
-    set(build "${build_number}")
+    string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION ${PACKAGE_VERSION})
+    set(LIBIOMP_HEADERS_INSTALL_PATH lib${LIBIOMP_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
 endif()
-say("Build              : ${build}")
-say("Stats-Gathering    : ${stats}")
-say("OMPT-support       : ${ompt_support}")
+if(${WINDOWS})
+    install(TARGETS iomp5 RUNTIME DESTINATION bin)
+    if(NOT "${imp_file}" STREQUAL "")
+        install(TARGETS iomp5imp ARCHIVE DESTINATION lib${LIBIOMP_LIBDIR_SUFFIX})
+    endif()
+else()
+    install(TARGETS iomp5 LIBRARY DESTINATION lib${LIBIOMP_LIBDIR_SUFFIX}) 
+endif()
+install(
+    FILES 
+    ${build_dir}/omp.h 
+    ${build_dir}/iomp.h 
+    DESTINATION ${LIBIOMP_HEADERS_INSTALL_PATH}
+)
 if(${OMPT_SUPPORT})
-    say("OMPT-blame         : ${ompt_blame}")
-    say("OMPT-trace         : ${ompt_trace}")
+    install( FILES ${build_dir}/ompt.h DESTINATION ${LIBIOMP_HEADERS_INSTALL_PATH})
 endif()
-say("Use build.pl rules : ${USE_BUILDPL_RULES}")
-say("Adaptive locks     : ${USE_ADAPTIVE_LOCKS}")
-say("Use predefined linker flags      : ${USE_PREDEFINED_LINKER_FLAGS}")
-say("Compiler supports quad precision : ${COMPILER_SUPPORTS_QUAD_PRECISION}")
-say("-------------------------------------------------------------")
-say("")
 

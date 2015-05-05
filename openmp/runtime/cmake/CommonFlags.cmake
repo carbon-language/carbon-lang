@@ -57,7 +57,7 @@ endmacro()
 # Global Assembly flags
 function(append_asm_flags_common input_asm_flags)
     set(local_asm_flags)
-    set(${input_asm_flags} "${${input_asm_flags}}" "${local_asm_flags}" "${USER_ASM_FLAGS}" PARENT_SCOPE)
+    set(${input_asm_flags} "${${input_asm_flags}}" "${local_asm_flags}" "${LIBIOMP_ASMFLAGS}" PARENT_SCOPE)
 endfunction()
 
 #########################################################
@@ -65,15 +65,15 @@ endfunction()
 function(append_c_and_cxx_flags_common input_c_flags input_cxx_flags)
     set(local_c_flags)
     set(local_cxx_flags)
-    set(${input_c_flags}   "${${input_c_flags}}"   "${local_c_flags}"   "${USER_C_FLAGS}"   PARENT_SCOPE)
-    set(${input_cxx_flags} "${${input_cxx_flags}}" "${local_cxx_flags}" "${USER_CXX_FLAGS}" PARENT_SCOPE)
+    set(${input_c_flags}   "${${input_c_flags}}"   "${local_c_flags}"   "${LIBIOMP_CFLAGS}"   PARENT_SCOPE)
+    set(${input_cxx_flags} "${${input_cxx_flags}}" "${local_cxx_flags}" "${LIBIOMP_CXXFLAGS}" PARENT_SCOPE)
 endfunction()
 
 #########################################################
 # Global Fortran Compiler flags (for creating .mod files)
 function(append_fort_flags_common input_fort_flags)
     set(local_fort_flags)
-    set(${input_fort_flags} "${${input_fort_flags}}" "${local_fort_flags}" "${USER_F_FLAGS}" PARENT_SCOPE)
+    set(${input_fort_flags} "${${input_fort_flags}}" "${local_fort_flags}" "${LIBIOMP_FFLAGS}" PARENT_SCOPE)
 endfunction()
 
 #########################################################
@@ -125,8 +125,8 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
 
     endif() # USE_PREDEFINED_LINKER_FLAGS
 
-    set(${input_ld_flags}      "${${input_ld_flags}}"      "${local_ld_flags}"      "${USER_LD_FLAGS}"     PARENT_SCOPE)
-    set(${input_ld_flags_libs} "${${input_ld_flags_libs}}" "${local_ld_flags_libs}" "${USER_LD_LIB_FLAGS}" PARENT_SCOPE)
+    set(${input_ld_flags}      "${${input_ld_flags}}"      "${local_ld_flags}"      "${LIBIOMP_LDFLAGS}"     PARENT_SCOPE)
+    set(${input_ld_flags_libs} "${${input_ld_flags_libs}}" "${local_ld_flags_libs}" "${LIBIOMP_LIBFLAGS}" PARENT_SCOPE)
 endfunction()
 
 #########################################################
