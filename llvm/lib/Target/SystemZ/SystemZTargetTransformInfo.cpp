@@ -238,3 +238,21 @@ SystemZTTIImpl::getPopcntSupport(unsigned TyWidth) {
   return TTI::PSK_Software;
 }
 
+unsigned SystemZTTIImpl::getNumberOfRegisters(bool Vector) {
+  if (!Vector)
+    // Discount the stack pointer.  Also leave out %r0, since it can't
+    // be used in an address.
+    return 14;
+  if (ST->hasVector())
+    return 32;
+  return 0;
+}
+
+unsigned SystemZTTIImpl::getRegisterBitWidth(bool Vector) {
+  if (!Vector)
+    return 64;
+  if (ST->hasVector())
+    return 128;
+  return 0;
+}
+

@@ -2414,6 +2414,10 @@ class BinaryAliasRIL<SDPatternOperator operator, RegisterOperand cls,
   let Constraints = "$R1 = $R1src";
 }
 
+// An alias of a BinaryVRRf, but with different register sizes.
+class BinaryAliasVRRf<RegisterOperand cls>
+  : Alias<6, (outs VR128:$V1), (ins cls:$R2, cls:$R3), []>;
+
 // An alias of a CompareRI, but with different register sizes.
 class CompareAliasRI<SDPatternOperator operator, RegisterOperand cls,
                      Immediate imm>

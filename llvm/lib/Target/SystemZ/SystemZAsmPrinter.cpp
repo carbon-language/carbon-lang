@@ -151,6 +151,13 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     LoweredMI = lowerRIEfLow(MI, SystemZ::RISBLG);
     break;
 
+  case SystemZ::VLVGP32:
+    LoweredMI = MCInstBuilder(SystemZ::VLVGP)
+      .addReg(MI->getOperand(0).getReg())
+      .addReg(SystemZMC::getRegAsGR64(MI->getOperand(1).getReg()))
+      .addReg(SystemZMC::getRegAsGR64(MI->getOperand(2).getReg()));
+    break;
+
 #define LOWER_LOW(NAME)                                                 \
   case SystemZ::NAME##64: LoweredMI = lowerRILow(MI, SystemZ::NAME); break
 

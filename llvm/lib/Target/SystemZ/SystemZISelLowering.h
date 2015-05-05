@@ -155,6 +155,70 @@ enum {
   // Transaction end.  Just the chain operand.  Returns chain and glue.
   TEND,
 
+  // Create a vector constant by filling byte N of the result with bit
+  // 15-N of the single operand.
+  BYTE_MASK,
+
+  // Create a vector constant by replicating an element-sized RISBG-style mask.
+  // The first operand specifies the starting set bit and the second operand
+  // specifies the ending set bit.  Both operands count from the MSB of the
+  // element.
+  ROTATE_MASK,
+
+  // Replicate a GPR scalar value into all elements of a vector.
+  REPLICATE,
+
+  // Create a vector from two i64 GPRs.
+  JOIN_DWORDS,
+
+  // Replicate one element of a vector into all elements.  The first operand
+  // is the vector and the second is the index of the element to replicate.
+  SPLAT,
+
+  // Interleave elements from the high half of operand 0 and the high half
+  // of operand 1.
+  MERGE_HIGH,
+
+  // Likewise for the low halves.
+  MERGE_LOW,
+
+  // Concatenate the vectors in the first two operands, shift them left
+  // by the third operand, and take the first half of the result.
+  SHL_DOUBLE,
+
+  // Take one element of the first v2i64 operand and the one element of
+  // the second v2i64 operand and concatenate them to form a v2i64 result.
+  // The third operand is a 4-bit value of the form 0A0B, where A and B
+  // are the element selectors for the first operand and second operands
+  // respectively.
+  PERMUTE_DWORDS,
+
+  // Perform a general vector permute on vector operands 0 and 1.
+  // Each byte of operand 2 controls the corresponding byte of the result,
+  // in the same way as a byte-level VECTOR_SHUFFLE mask.
+  PERMUTE,
+
+  // Pack vector operands 0 and 1 into a single vector with half-sized elements.
+  PACK,
+
+  // Shift each element of vector operand 0 by the number of bits specified
+  // by scalar operand 1.
+  VSHL_BY_SCALAR,
+  VSRL_BY_SCALAR,
+  VSRA_BY_SCALAR,
+
+  // For each element of the output type, sum across all sub-elements of
+  // operand 0 belonging to the corresponding element, and add in the
+  // rightmost sub-element of the corresponding element of operand 1.
+  VSUM,
+
+  // Compare integer vector operands 0 and 1 to produce the usual 0/-1
+  // vector result.  VICMPE is for equality, VICMPH for "signed greater than"
+  // and VICMPHL for "unsigned greater than".
+  VICMPE,
+  VICMPH,
+  VICMPHL,
+
   // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
   // ATOMIC_LOAD_<op>.
   //
@@ -220,6 +284,11 @@ public:
 
   // Override TargetLowering.
   MVT getScalarShiftAmountTy(EVT LHSTy) const override {
+    return MVT::i32;
+  }
+  MVT getVectorIdxTy() const override {
+    // Only the lower 12 bits of an element index are used, so we don't
+    // want to clobber the upper 32 bits of a GPR unnecessarily.
     return MVT::i32;
   }
   EVT getSetCCResultType(LLVMContext &, EVT) const override;
@@ -328,6 +397,16 @@ private:
   SDValue lowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerPREFETCH(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerShift(SDValue Op, SelectionDAG &DAG, unsigned ByScalar) const;
+
+  SDValue combineExtract(SDLoc DL, EVT ElemVT, EVT VecVT, SDValue OrigOp,
+                         unsigned Index, DAGCombinerInfo &DCI,
+                         bool Force) const;
+  SDValue combineTruncateExtract(SDLoc DL, EVT TruncVT, SDValue Op,
+                                 DAGCombinerInfo &DCI) const;
 
   // If the last instruction before MBBI in MBB was some form of COMPARE,
   // try to replace it with a COMPARE AND BRANCH just before MBBI.

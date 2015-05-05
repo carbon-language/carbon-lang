@@ -21,15 +21,70 @@ extern "C" void LLVMInitializeSystemZTarget() {
   RegisterTargetMachine<SystemZTargetMachine> X(TheSystemZTarget);
 }
 
+// Determine whether we use the vector ABI.
+static bool UsesVectorABI(StringRef CPU, StringRef FS) {
+  // We use the vector ABI whenever the vector facility is avaiable.
+  // This is the case by default if CPU is z13 or later, and can be
+  // overridden via "[+-]vector" feature string elements.
+  bool VectorABI = true;
+  if (CPU.empty() || CPU == "generic" ||
+      CPU == "z10" || CPU == "z196" || CPU == "zEC12")
+    VectorABI = false;
+
+  SmallVector<StringRef, 3> Features;
+  FS.split(Features, ",", -1, false /* KeepEmpty */);
+  for (auto &Feature : Features) {
+    if (Feature == "vector" || Feature == "+vector")
+      VectorABI = true;
+    if (Feature == "-vector")
+      VectorABI = false;
+  }
+
+  return VectorABI;
+}
+
+static std::string computeDataLayout(StringRef TT, StringRef CPU,
+                                     StringRef FS) {
+  const Triple Triple(TT);
+  bool VectorABI = UsesVectorABI(CPU, FS);
+  std::string Ret = "";
+
+  // Big endian.
+  Ret += "E";
+
+  // Data mangling.
+  Ret += DataLayout::getManglingComponent(Triple);
+
+  // Make sure that global data has at least 16 bits of alignment by
+  // default, so that we can refer to it using LARL.  We don't have any
+  // special requirements for stack variables though.
+  Ret += "-i1:8:16-i8:8:16";
+
+  // 64-bit integers are naturally aligned.
+  Ret += "-i64:64";
+
+  // 128-bit floats are aligned only to 64 bits.
+  Ret += "-f128:64";
+
+  // When using the vector ABI, 128-bit vectors are also aligned to 64 bits.
+  if (VectorABI)
+    Ret += "-v128:64";
+
+  // We prefer 16 bits of aligned for all globals; see above.
+  Ret += "-a:8:16";
+
+  // Integer registers are 32 or 64 bits.
+  Ret += "-n32:64";
+
+  return Ret;
+}
+
 SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-    // Make sure that global data has at least 16 bits of alignment by
-    // default, so that we can refer to it using LARL.  We don't have any
-    // special requirements for stack variables though.
-    : LLVMTargetMachine(T, "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64",
+    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, FS),
                         TT, CPU, FS, Options, RM, CM, OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this) {

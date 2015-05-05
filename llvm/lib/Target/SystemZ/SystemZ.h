@@ -87,6 +87,13 @@ const unsigned IPM_CC = 28;
 const unsigned PFD_READ  = 1;
 const unsigned PFD_WRITE = 2;
 
+// Number of bits in a vector register.
+const unsigned VectorBits = 128;
+
+// Number of bytes in a vector register (and consequently the number of
+// bytes in a general permute vector).
+const unsigned VectorBytes = VectorBits / 8;
+
 // Return true if Val fits an LLILL operand.
 static inline bool isImmLL(uint64_t Val) {
   return (Val & ~0x000000000000ffffULL) == 0;

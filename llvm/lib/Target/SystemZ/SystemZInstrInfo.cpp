@@ -578,6 +578,8 @@ SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opcode = SystemZ::LDR;
   else if (SystemZ::FP128BitRegClass.contains(DestReg, SrcReg))
     Opcode = SystemZ::LXR;
+  else if (SystemZ::VR128BitRegClass.contains(DestReg, SrcReg))
+    Opcode = SystemZ::VLR;
   else
     llvm_unreachable("Impossible reg-to-reg copy");
 
@@ -1116,6 +1118,10 @@ void SystemZInstrInfo::getLoadStoreOpcodes(const TargetRegisterClass *RC,
   } else if (RC == &SystemZ::FP128BitRegClass) {
     LoadOpcode = SystemZ::LX;
     StoreOpcode = SystemZ::STX;
+  } else if (RC == &SystemZ::VF128BitRegClass ||
+             RC == &SystemZ::VR128BitRegClass) {
+    LoadOpcode = SystemZ::VL;
+    StoreOpcode = SystemZ::VST;
   } else
     llvm_unreachable("Unsupported regclass to load or store");
 }
@@ -1185,6 +1191,7 @@ static bool isStringOfOnes(uint64_t Mask, unsigned &LSB, unsigned &Length) {
 bool SystemZInstrInfo::isRxSBGMask(uint64_t Mask, unsigned BitSize,
                                    unsigned &Start, unsigned &End) const {
   // Reject trivial all-zero masks.
+  Mask &= allOnes(BitSize);
   if (Mask == 0)
     return false;
 

@@ -12,6 +12,15 @@
 class CCIfExtend<CCAction A>
   : CCIf<"ArgFlags.isSExt() || ArgFlags.isZExt()", A>;
 
+class CCIfSubtarget<string F, CCAction A>
+  : CCIf<!strconcat("static_cast<const SystemZSubtarget&>"
+                    "(State.getMachineFunction().getSubtarget()).", F),
+         A>;
+
+// Match if this specific argument is a fixed (i.e. named) argument.
+class CCIfFixed<CCAction A>
+    : CCIf<"static_cast<SystemZCCState *>(&State)->IsFixed(ValNo)", A>;
+
 //===----------------------------------------------------------------------===//
 // z/Linux return value calling convention
 //===----------------------------------------------------------------------===//
@@ -31,7 +40,12 @@ def RetCC_SystemZ : CallingConv<[
   // doesn't care about the ABI.  All floating-point argument registers
   // are call-clobbered, so we can use all of them here.
   CCIfType<[f32], CCAssignToReg<[F0S, F2S, F4S, F6S]>>,
-  CCIfType<[f64], CCAssignToReg<[F0D, F2D, F4D, F6D]>>
+  CCIfType<[f64], CCAssignToReg<[F0D, F2D, F4D, F6D]>>,
+
+  // Similarly for vectors, with V24 being the ABI-compliant choice.
+  CCIfSubtarget<"hasVector()",
+    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+             CCAssignToReg<[V24, V26, V28, V30, V25, V27, V29, V31]>>>
 
   // ABI-compliant code returns long double by reference, but that conversion
   // is left to higher-level code.  Perhaps we could add an f128 definition
@@ -59,6 +73,17 @@ def CC_SystemZ : CallingConv<[
   // The first 4 float and double arguments are passed in even registers F0-F6.
   CCIfType<[f32], CCAssignToReg<[F0S, F2S, F4S, F6S]>>,
   CCIfType<[f64], CCAssignToReg<[F0D, F2D, F4D, F6D]>>,
+
+  // The first 8 named vector arguments are passed in V24-V31.
+  CCIfSubtarget<"hasVector()",
+    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+             CCIfFixed<CCAssignToReg<[V24, V26, V28, V30,
+                                      V25, V27, V29, V31]>>>>,
+
+  // Other vector arguments are passed in 8-byte-aligned 16-byte stack slots.
+  CCIfSubtarget<"hasVector()",
+    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+             CCAssignToStack<16, 8>>>,
 
   // Other arguments are passed in 8-byte-aligned 8-byte stack slots.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>

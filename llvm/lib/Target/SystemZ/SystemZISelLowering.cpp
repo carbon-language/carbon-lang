@@ -96,6 +96,13 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
   addRegisterClass(MVT::f64,  &SystemZ::FP64BitRegClass);
   addRegisterClass(MVT::f128, &SystemZ::FP128BitRegClass);
 
+  if (Subtarget.hasVector()) {
+    addRegisterClass(MVT::v16i8, &SystemZ::VR128BitRegClass);
+    addRegisterClass(MVT::v8i16, &SystemZ::VR128BitRegClass);
+    addRegisterClass(MVT::v4i32, &SystemZ::VR128BitRegClass);
+    addRegisterClass(MVT::v2i64, &SystemZ::VR128BitRegClass);
+  }
+
   // Compute derived properties from the register classes
   computeRegisterProperties(Subtarget.getRegisterInfo());
 
@@ -111,7 +118,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
   setSchedulingPreference(Sched::RegPressure);
 
   setBooleanContents(ZeroOrOneBooleanContent);
-  setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
   // Instructions are strings of 2-byte aligned 2-byte values.
   setMinFunctionAlignment(2);
@@ -250,6 +257,76 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
   // Handle prefetches with PFD or PFDRL.
   setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
 
+  for (MVT VT : MVT::vector_valuetypes()) {
+    // Assume by default that all vector operations need to be expanded.
+    for (unsigned Opcode = 0; Opcode < ISD::BUILTIN_OP_END; ++Opcode)
+      if (getOperationAction(Opcode, VT) == Legal)
+        setOperationAction(Opcode, VT, Expand);
+
+    // Likewise all truncating stores and extending loads.
+    for (MVT InnerVT : MVT::vector_valuetypes()) {
+      setTruncStoreAction(VT, InnerVT, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, VT, InnerVT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, InnerVT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, InnerVT, Expand);
+    }
+
+    if (isTypeLegal(VT)) {
+      // These operations are legal for anything that can be stored in a
+      // vector register, even if there is no native support for the format
+      // as such.
+      setOperationAction(ISD::LOAD, VT, Legal);
+      setOperationAction(ISD::STORE, VT, Legal);
+      setOperationAction(ISD::VSELECT, VT, Legal);
+      setOperationAction(ISD::BITCAST, VT, Legal);
+      setOperationAction(ISD::UNDEF, VT, Legal);
+
+      // Likewise, except that we need to replace the nodes with something
+      // more specific.
+      setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
+    }
+  }
+
+  // Handle integer vector types.
+  for (MVT VT : MVT::integer_vector_valuetypes()) {
+    if (isTypeLegal(VT)) {
+      // These operations have direct equivalents.
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Legal);
+      setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Legal);
+      setOperationAction(ISD::ADD, VT, Legal);
+      setOperationAction(ISD::SUB, VT, Legal);
+      if (VT != MVT::v2i64)
+        setOperationAction(ISD::MUL, VT, Legal);
+      setOperationAction(ISD::AND, VT, Legal);
+      setOperationAction(ISD::OR, VT, Legal);
+      setOperationAction(ISD::XOR, VT, Legal);
+      setOperationAction(ISD::CTPOP, VT, Custom);
+      setOperationAction(ISD::CTTZ, VT, Legal);
+      setOperationAction(ISD::CTLZ, VT, Legal);
+      setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Custom);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Custom);
+
+      // Convert a GPR scalar to a vector by inserting it into element 0.
+      setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
+
+      // Detect shifts by a scalar amount and convert them into
+      // V*_BY_SCALAR.
+      setOperationAction(ISD::SHL, VT, Custom);
+      setOperationAction(ISD::SRA, VT, Custom);
+      setOperationAction(ISD::SRL, VT, Custom);
+
+      // At present ROTL isn't matched by DAGCombiner.  ROTR should be
+      // converted into ROTL.
+      setOperationAction(ISD::ROTL, VT, Expand);
+      setOperationAction(ISD::ROTR, VT, Expand);
+
+      // Map SETCCs onto one of VCE, VCH or VCHL, swapping the operands
+      // and inverting the result as necessary.
+      setOperationAction(ISD::SETCC, VT, Custom);
+    }
+  }
+
   // Handle floating-point types.
   for (unsigned I = MVT::FIRST_FP_VALUETYPE;
        I <= MVT::LAST_FP_VALUETYPE;
@@ -304,6 +381,8 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
 
   // Codes for which we want to perform some z-specific combinations.
   setTargetDAGCombine(ISD::SIGN_EXTEND);
+  setTargetDAGCombine(ISD::STORE);
+  setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
 
   // Handle intrinsics.
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
@@ -703,7 +782,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  SystemZCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_SystemZ);
 
   unsigned NumFixedGPRs = 0;
@@ -734,6 +813,12 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
       case MVT::f64:
         NumFixedFPRs += 1;
         RC = &SystemZ::FP64BitRegClass;
+        break;
+      case MVT::v16i8:
+      case MVT::v8i16:
+      case MVT::v4i32:
+      case MVT::v2i64:
+        RC = &SystemZ::VR128BitRegClass;
         break;
       }
 
@@ -842,7 +927,7 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Analyze the operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState ArgCCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  SystemZCCState ArgCCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   ArgCCInfo.AnalyzeCallOperands(Outs, CC_SystemZ);
 
   // We don't support GuaranteedTailCallOpt, only automatically-detected
@@ -1809,12 +1894,78 @@ static SDValue emitSETCC(SelectionDAG &DAG, SDLoc DL, SDValue Glue,
   return Result;
 }
 
+// Return the SystemZISD vector comparison operation for CC, or 0 if it cannot
+// be done directly.
+static unsigned getVectorComparison(ISD::CondCode CC) {
+  switch (CC) {
+  case ISD::SETEQ:
+    return SystemZISD::VICMPE;
+
+  case ISD::SETGT:
+    return SystemZISD::VICMPH;
+
+  case ISD::SETUGT:
+    return SystemZISD::VICMPHL;
+
+  default:
+    return 0;
+  }
+}
+
+// Return the SystemZISD vector comparison operation for CC or its inverse,
+// or 0 if neither can be done directly.  Indicate in Invert whether the
+// result is for the inverse of CC.
+static unsigned getVectorComparisonOrInvert(ISD::CondCode CC, bool &Invert) {
+  if (unsigned Opcode = getVectorComparison(CC)) {
+    Invert = false;
+    return Opcode;
+  }
+
+  CC = ISD::getSetCCInverse(CC, true);
+  if (unsigned Opcode = getVectorComparison(CC)) {
+    Invert = true;
+    return Opcode;
+  }
+
+  return 0;
+}
+
+// Lower a vector comparison of type CC between CmpOp0 and CmpOp1, producing
+// an integer mask of type VT.
+static SDValue lowerVectorSETCC(SelectionDAG &DAG, SDLoc DL, EVT VT,
+                                ISD::CondCode CC, SDValue CmpOp0,
+                                SDValue CmpOp1) {
+  bool Invert = false;
+  SDValue Cmp;
+  // It doesn't really matter whether we try the inversion or the swap first,
+  // since there are no cases where both work.
+  if (unsigned Opcode = getVectorComparisonOrInvert(CC, Invert))
+    Cmp = DAG.getNode(Opcode, DL, VT, CmpOp0, CmpOp1);
+  else {
+    CC = ISD::getSetCCSwappedOperands(CC);
+    if (unsigned Opcode = getVectorComparisonOrInvert(CC, Invert))
+      Cmp = DAG.getNode(Opcode, DL, VT, CmpOp1, CmpOp0);
+    else
+      llvm_unreachable("Unhandled comparison");
+  }
+  if (Invert) {
+    SDValue Mask = DAG.getNode(SystemZISD::BYTE_MASK, DL, MVT::v16i8,
+                               DAG.getConstant(65535, DL, MVT::i32));
+    Mask = DAG.getNode(ISD::BITCAST, DL, VT, Mask);
+    Cmp = DAG.getNode(ISD::XOR, DL, VT, Cmp, Mask);
+  }
+  return Cmp;
+}
+
 SDValue SystemZTargetLowering::lowerSETCC(SDValue Op,
                                           SelectionDAG &DAG) const {
   SDValue CmpOp0   = Op.getOperand(0);
   SDValue CmpOp1   = Op.getOperand(1);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  if (VT.isVector())
+    return lowerVectorSETCC(DAG, DL, VT, CC, CmpOp0, CmpOp1);
 
   Comparison C(getCmp(DAG, CmpOp0, CmpOp1, CC, DL));
   SDValue Glue = emitCmp(DAG, DL, C);
@@ -2146,6 +2297,13 @@ SDValue SystemZTargetLowering::lowerBITCAST(SDValue Op,
   EVT InVT = In.getValueType();
   EVT ResVT = Op.getValueType();
 
+  // Convert loads directly.  This is normally done by DAGCombiner,
+  // but we need this case for bitcasts that are created during lowering
+  // and which are then lowered themselves.
+  if (auto *LoadN = dyn_cast<LoadSDNode>(In))
+    return DAG.getLoad(ResVT, DL, LoadN->getChain(), LoadN->getBasePtr(),
+                       LoadN->getMemOperand());
+
   if (InVT == MVT::i32 && ResVT == MVT::f32) {
     SDValue In64;
     if (Subtarget.hasHighWord()) {
@@ -2421,11 +2579,44 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
 SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
                                           SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
-  int64_t OrigBitSize = VT.getSizeInBits();
   SDLoc DL(Op);
+  Op = Op.getOperand(0);
+
+  // Handle vector types via VPOPCT.
+  if (VT.isVector()) {
+    Op = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Op);
+    Op = DAG.getNode(SystemZISD::POPCNT, DL, MVT::v16i8, Op);
+    switch (VT.getVectorElementType().getSizeInBits()) {
+    case 8:
+      break;
+    case 16: {
+      Op = DAG.getNode(ISD::BITCAST, DL, VT, Op);
+      SDValue Shift = DAG.getConstant(8, DL, MVT::i32);
+      SDValue Tmp = DAG.getNode(SystemZISD::VSHL_BY_SCALAR, DL, VT, Op, Shift);
+      Op = DAG.getNode(ISD::ADD, DL, VT, Op, Tmp);
+      Op = DAG.getNode(SystemZISD::VSRL_BY_SCALAR, DL, VT, Op, Shift);
+      break;
+    }
+    case 32: {
+      SDValue Tmp = DAG.getNode(SystemZISD::BYTE_MASK, DL, MVT::v16i8,
+                                DAG.getConstant(0, DL, MVT::i32));
+      Op = DAG.getNode(SystemZISD::VSUM, DL, VT, Op, Tmp);
+      break;
+    }
+    case 64: {
+      SDValue Tmp = DAG.getNode(SystemZISD::BYTE_MASK, DL, MVT::v16i8,
+                                DAG.getConstant(0, DL, MVT::i32));
+      Op = DAG.getNode(SystemZISD::VSUM, DL, MVT::v4i32, Op, Tmp);
+      Op = DAG.getNode(SystemZISD::VSUM, DL, VT, Op, Tmp);
+      break;
+    }
+    default:
+      llvm_unreachable("Unexpected type");
+    }
+    return Op;
+  }
 
   // Get the known-zero mask for the operand.
-  Op = Op.getOperand(0);
   APInt KnownZero, KnownOne;
   DAG.computeKnownBits(Op, KnownZero, KnownOne);
   unsigned NumSignificantBits = (~KnownZero).getActiveBits();
@@ -2433,6 +2624,7 @@ SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
     return DAG.getConstant(0, DL, VT);
 
   // Skip known-zero high parts of the operand.
+  int64_t OrigBitSize = VT.getSizeInBits();
   int64_t BitSize = (int64_t)1 << Log2_32_Ceil(NumSignificantBits);
   BitSize = std::min(BitSize, OrigBitSize);
 
@@ -2698,6 +2890,837 @@ SystemZTargetLowering::lowerINTRINSIC_W_CHAIN(SDValue Op,
   return SDValue();
 }
 
+namespace {
+// Says that SystemZISD operation Opcode can be used to perform the equivalent
+// of a VPERM with permute vector Bytes.  If Opcode takes three operands,
+// Operand is the constant third operand, otherwise it is the number of
+// bytes in each element of the result.
+struct Permute {
+  unsigned Opcode;
+  unsigned Operand;
+  unsigned char Bytes[SystemZ::VectorBytes];
+};
+}
+
+static const Permute PermuteForms[] = {
+  // VMRHG
+  { SystemZISD::MERGE_HIGH, 8,
+    { 0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23 } },
+  // VMRHF
+  { SystemZISD::MERGE_HIGH, 4,
+    { 0, 1, 2, 3, 16, 17, 18, 19, 4, 5, 6, 7, 20, 21, 22, 23 } },
+  // VMRHH
+  { SystemZISD::MERGE_HIGH, 2,
+    { 0, 1, 16, 17, 2, 3, 18, 19, 4, 5, 20, 21, 6, 7, 22, 23 } },
+  // VMRHB
+  { SystemZISD::MERGE_HIGH, 1,
+    { 0, 16, 1, 17, 2, 18, 3, 19, 4, 20, 5, 21, 6, 22, 7, 23 } },
+  // VMRLG
+  { SystemZISD::MERGE_LOW, 8,
+    { 8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31 } },
+  // VMRLF
+  { SystemZISD::MERGE_LOW, 4,
+    { 8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31 } },
+  // VMRLH
+  { SystemZISD::MERGE_LOW, 2,
+    { 8, 9, 24, 25, 10, 11, 26, 27, 12, 13, 28, 29, 14, 15, 30, 31 } },
+  // VMRLB
+  { SystemZISD::MERGE_LOW, 1,
+    { 8, 24, 9, 25, 10, 26, 11, 27, 12, 28, 13, 29, 14, 30, 15, 31 } },
+  // VPKG
+  { SystemZISD::PACK, 4,
+    { 4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31 } },
+  // VPKF
+  { SystemZISD::PACK, 2,
+    { 2, 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 31 } },
+  // VPKH
+  { SystemZISD::PACK, 1,
+    { 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31 } },
+  // VPDI V1, V2, 4  (low half of V1, high half of V2)
+  { SystemZISD::PERMUTE_DWORDS, 4,
+    { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 } },
+  // VPDI V1, V2, 1  (high half of V1, low half of V2)
+  { SystemZISD::PERMUTE_DWORDS, 1,
+    { 0, 1, 2, 3, 4, 5, 6, 7, 24, 25, 26, 27, 28, 29, 30, 31 } }
+};
+
+// Called after matching a vector shuffle against a particular pattern.
+// Both the original shuffle and the pattern have two vector operands.
+// OpNos[0] is the operand of the original shuffle that should be used for
+// operand 0 of the pattern, or -1 if operand 0 of the pattern can be anything.
+// OpNos[1] is the same for operand 1 of the pattern.  Resolve these -1s and
+// set OpNo0 and OpNo1 to the shuffle operands that should actually be used
+// for operands 0 and 1 of the pattern.
+static bool chooseShuffleOpNos(int *OpNos, unsigned &OpNo0, unsigned &OpNo1) {
+  if (OpNos[0] < 0) {
+    if (OpNos[1] < 0)
+      return false;
+    OpNo0 = OpNo1 = OpNos[1];
+  } else if (OpNos[1] < 0) {
+    OpNo0 = OpNo1 = OpNos[0];
+  } else {
+    OpNo0 = OpNos[0];
+    OpNo1 = OpNos[1];
+  }
+  return true;
+}
+
+// Bytes is a VPERM-like permute vector, except that -1 is used for
+// undefined bytes.  Return true if the VPERM can be implemented using P.
+// When returning true set OpNo0 to the VPERM operand that should be
+// used for operand 0 of P and likewise OpNo1 for operand 1 of P.
+//
+// For example, if swapping the VPERM operands allows P to match, OpNo0
+// will be 1 and OpNo1 will be 0.  If instead Bytes only refers to one
+// operand, but rewriting it to use two duplicated operands allows it to
+// match P, then OpNo0 and OpNo1 will be the same.
+static bool matchPermute(const SmallVectorImpl<int> &Bytes, const Permute &P,
+                         unsigned &OpNo0, unsigned &OpNo1) {
+  int OpNos[] = { -1, -1 };
+  for (unsigned I = 0; I < SystemZ::VectorBytes; ++I) {
+    int Elt = Bytes[I];
+    if (Elt >= 0) {
+      // Make sure that the two permute vectors use the same suboperand
+      // byte number.  Only the operand numbers (the high bits) are
+      // allowed to differ.
+      if ((Elt ^ P.Bytes[I]) & (SystemZ::VectorBytes - 1))
+        return false;
+      int ModelOpNo = P.Bytes[I] / SystemZ::VectorBytes;
+      int RealOpNo = unsigned(Elt) / SystemZ::VectorBytes;
+      // Make sure that the operand mappings are consistent with previous
+      // elements.
+      if (OpNos[ModelOpNo] == 1 - RealOpNo)
+        return false;
+      OpNos[ModelOpNo] = RealOpNo;
+    }
+  }
+  return chooseShuffleOpNos(OpNos, OpNo0, OpNo1);
+}
+
+// As above, but search for a matching permute.
+static const Permute *matchPermute(const SmallVectorImpl<int> &Bytes,
+                                   unsigned &OpNo0, unsigned &OpNo1) {
+  for (auto &P : PermuteForms)
+    if (matchPermute(Bytes, P, OpNo0, OpNo1))
+      return &P;
+  return nullptr;
+}
+
+// Bytes is a VPERM-like permute vector, except that -1 is used for
+// undefined bytes.  This permute is an operand of an outer permute.
+// See whether redistributing the -1 bytes gives a shuffle that can be
+// implemented using P.  If so, set Transform to a VPERM-like permute vector
+// that, when applied to the result of P, gives the original permute in Bytes.
+static bool matchDoublePermute(const SmallVectorImpl<int> &Bytes,
+                               const Permute &P,
+                               SmallVectorImpl<int> &Transform) {
+  unsigned To = 0;
+  for (unsigned From = 0; From < SystemZ::VectorBytes; ++From) {
+    int Elt = Bytes[From];
+    if (Elt < 0)
+      // Byte number From of the result is undefined.
+      Transform[From] = -1;
+    else {
+      while (P.Bytes[To] != Elt) {
+        To += 1;
+        if (To == SystemZ::VectorBytes)
+          return false;
+      }
+      Transform[From] = To;
+    }
+  }
+  return true;
+}
+
+// As above, but search for a matching permute.
+static const Permute *matchDoublePermute(const SmallVectorImpl<int> &Bytes,
+                                         SmallVectorImpl<int> &Transform) {
+  for (auto &P : PermuteForms)
+    if (matchDoublePermute(Bytes, P, Transform))
+      return &P;
+  return nullptr;
+}
+
+// Convert the mask of the given VECTOR_SHUFFLE into a byte-level mask,
+// as if it had type vNi8.
+static void getVPermMask(ShuffleVectorSDNode *VSN,
+                         SmallVectorImpl<int> &Bytes) {
+  EVT VT = VSN->getValueType(0);
+  unsigned NumElements = VT.getVectorNumElements();
+  unsigned BytesPerElement = VT.getVectorElementType().getStoreSize();
+  Bytes.resize(NumElements * BytesPerElement, -1);
+  for (unsigned I = 0; I < NumElements; ++I) {
+    int Index = VSN->getMaskElt(I);
+    if (Index >= 0)
+      for (unsigned J = 0; J < BytesPerElement; ++J)
+        Bytes[I * BytesPerElement + J] = Index * BytesPerElement + J;
+  }
+}
+
+// Bytes is a VPERM-like permute vector, except that -1 is used for
+// undefined bytes.  See whether bytes [Start, Start + BytesPerElement) of
+// the result come from a contiguous sequence of bytes from one input.
+// Set Base to the selector for the first byte if so.
+static bool getShuffleInput(const SmallVectorImpl<int> &Bytes, unsigned Start,
+                            unsigned BytesPerElement, int &Base) {
+  Base = -1;
+  for (unsigned I = 0; I < BytesPerElement; ++I) {
+    if (Bytes[Start + I] >= 0) {
+      unsigned Elem = Bytes[Start + I];
+      if (Base < 0) {
+        Base = Elem - I;
+        // Make sure the bytes would come from one input operand.
+        if (unsigned(Base) % Bytes.size() + BytesPerElement > Bytes.size())
+          return false;
+      } else if (unsigned(Base) != Elem - I)
+        return false;
+    }
+  }
+  return true;
+}
+
+// Bytes is a VPERM-like permute vector, except that -1 is used for
+// undefined bytes.  Return true if it can be performed using VSLDI.
+// When returning true, set StartIndex to the shift amount and OpNo0
+// and OpNo1 to the VPERM operands that should be used as the first
+// and second shift operand respectively.
+static bool isShlDoublePermute(const SmallVectorImpl<int> &Bytes,
+                               unsigned &StartIndex, unsigned &OpNo0,
+                               unsigned &OpNo1) {
+  int OpNos[] = { -1, -1 };
+  int Shift = -1;
+  for (unsigned I = 0; I < 16; ++I) {
+    int Index = Bytes[I];
+    if (Index >= 0) {
+      int ExpectedShift = (Index - I) % SystemZ::VectorBytes;
+      int ModelOpNo = unsigned(ExpectedShift + I) / SystemZ::VectorBytes;
+      int RealOpNo = unsigned(Index) / SystemZ::VectorBytes;
+      if (Shift < 0)
+        Shift = ExpectedShift;
+      else if (Shift != ExpectedShift)
+        return false;
+      // Make sure that the operand mappings are consistent with previous
+      // elements.
+      if (OpNos[ModelOpNo] == 1 - RealOpNo)
+        return false;
+      OpNos[ModelOpNo] = RealOpNo;
+    }
+  }
+  StartIndex = Shift;
+  return chooseShuffleOpNos(OpNos, OpNo0, OpNo1);
+}
+
+// Create a node that performs P on operands Op0 and Op1, casting the
+// operands to the appropriate type.  The type of the result is determined by P.
+static SDValue getPermuteNode(SelectionDAG &DAG, SDLoc DL,
+                              const Permute &P, SDValue Op0, SDValue Op1) {
+  // VPDI (PERMUTE_DWORDS) always operates on v2i64s.  The input
+  // elements of a PACK are twice as wide as the outputs.
+  unsigned InBytes = (P.Opcode == SystemZISD::PERMUTE_DWORDS ? 8 :
+                      P.Opcode == SystemZISD::PACK ? P.Operand * 2 :
+                      P.Operand);
+  // Cast both operands to the appropriate type.
+  MVT InVT = MVT::getVectorVT(MVT::getIntegerVT(InBytes * 8),
+                              SystemZ::VectorBytes / InBytes);
+  Op0 = DAG.getNode(ISD::BITCAST, DL, InVT, Op0);
+  Op1 = DAG.getNode(ISD::BITCAST, DL, InVT, Op1);
+  SDValue Op;
+  if (P.Opcode == SystemZISD::PERMUTE_DWORDS) {
+    SDValue Op2 = DAG.getConstant(P.Operand, DL, MVT::i32);
+    Op = DAG.getNode(SystemZISD::PERMUTE_DWORDS, DL, InVT, Op0, Op1, Op2);
+  } else if (P.Opcode == SystemZISD::PACK) {
+    MVT OutVT = MVT::getVectorVT(MVT::getIntegerVT(P.Operand * 8),
+                                 SystemZ::VectorBytes / P.Operand);
+    Op = DAG.getNode(SystemZISD::PACK, DL, OutVT, Op0, Op1);
+  } else {
+    Op = DAG.getNode(P.Opcode, DL, InVT, Op0, Op1);
+  }
+  return Op;
+}
+
+// Bytes is a VPERM-like permute vector, except that -1 is used for
+// undefined bytes.  Implement it on operands Ops[0] and Ops[1] using
+// VSLDI or VPERM.
+static SDValue getGeneralPermuteNode(SelectionDAG &DAG, SDLoc DL, SDValue *Ops,
+                                     const SmallVectorImpl<int> &Bytes) {
+  for (unsigned I = 0; I < 2; ++I)
+    Ops[I] = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Ops[I]);
+
+  // First see whether VSLDI can be used.
+  unsigned StartIndex, OpNo0, OpNo1;
+  if (isShlDoublePermute(Bytes, StartIndex, OpNo0, OpNo1))
+    return DAG.getNode(SystemZISD::SHL_DOUBLE, DL, MVT::v16i8, Ops[OpNo0],
+                       Ops[OpNo1], DAG.getConstant(StartIndex, DL, MVT::i32));
+
+  // Fall back on VPERM.  Construct an SDNode for the permute vector.
+  SDValue IndexNodes[SystemZ::VectorBytes];
+  for (unsigned I = 0; I < SystemZ::VectorBytes; ++I)
+    if (Bytes[I] >= 0)
+      IndexNodes[I] = DAG.getConstant(Bytes[I], DL, MVT::i32);
+    else
+      IndexNodes[I] = DAG.getUNDEF(MVT::i32);
+  SDValue Op2 = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, IndexNodes);
+  return DAG.getNode(SystemZISD::PERMUTE, DL, MVT::v16i8, Ops[0], Ops[1], Op2);
+}
+
+namespace {
+// Describes a general N-operand vector shuffle.
+struct GeneralShuffle {
+  GeneralShuffle(EVT vt) : VT(vt) {}
+  void addUndef();
+  void add(SDValue, unsigned);
+  SDValue getNode(SelectionDAG &, SDLoc);
+
+  // The operands of the shuffle.
+  SmallVector<SDValue, SystemZ::VectorBytes> Ops;
+
+  // Index I is -1 if byte I of the result is undefined.  Otherwise the
+  // result comes from byte Bytes[I] % SystemZ::VectorBytes of operand
+  // Bytes[I] / SystemZ::VectorBytes.
+  SmallVector<int, SystemZ::VectorBytes> Bytes;
+
+  // The type of the shuffle result.
+  EVT VT;
+};
+}
+
+// Add an extra undefined element to the shuffle.
+void GeneralShuffle::addUndef() {
+  unsigned BytesPerElement = VT.getVectorElementType().getStoreSize();
+  for (unsigned I = 0; I < BytesPerElement; ++I)
+    Bytes.push_back(-1);
+}
+
+// Add an extra element to the shuffle, taking it from element Elem of Op.
+// A null Op indicates a vector input whose value will be calculated later;
+// there is at most one such input per shuffle and it always has the same
+// type as the result.
+void GeneralShuffle::add(SDValue Op, unsigned Elem) {
+  unsigned BytesPerElement = VT.getVectorElementType().getStoreSize();
+
+  // The source vector can have wider elements than the result,
+  // either through an explicit TRUNCATE or because of type legalization.
+  // We want the least significant part.
+  EVT FromVT = Op.getNode() ? Op.getValueType() : VT;
+  unsigned FromBytesPerElement = FromVT.getVectorElementType().getStoreSize();
+  assert(FromBytesPerElement >= BytesPerElement &&
+         "Invalid EXTRACT_VECTOR_ELT");
+  unsigned Byte = ((Elem * FromBytesPerElement) % SystemZ::VectorBytes +
+                   (FromBytesPerElement - BytesPerElement));
+
+  // Look through things like shuffles and bitcasts.
+  while (Op.getNode()) {
+    if (Op.getOpcode() == ISD::BITCAST)
+      Op = Op.getOperand(0);
+    else if (Op.getOpcode() == ISD::VECTOR_SHUFFLE && Op.hasOneUse()) {
+      // See whether the bytes we need come from a contiguous part of one
+      // operand.
+      SmallVector<int, SystemZ::VectorBytes> OpBytes;
+      getVPermMask(cast<ShuffleVectorSDNode>(Op), OpBytes);
+      int NewByte;
+      if (!getShuffleInput(OpBytes, Byte, BytesPerElement, NewByte))
+        break;
+      if (NewByte < 0) {
+        addUndef();
+        return;
+      }
+      Op = Op.getOperand(unsigned(NewByte) / SystemZ::VectorBytes);
+      Byte = unsigned(NewByte) % SystemZ::VectorBytes;
+    } else if (Op.getOpcode() == ISD::UNDEF) {
+      addUndef();
+      return;
+    } else
+      break;
+  }
+
+  // Make sure that the source of the extraction is in Ops.
+  unsigned OpNo = 0;
+  for (; OpNo < Ops.size(); ++OpNo)
+    if (Ops[OpNo] == Op)
+      break;
+  if (OpNo == Ops.size())
+    Ops.push_back(Op);
+
+  // Add the element to Bytes.
+  unsigned Base = OpNo * SystemZ::VectorBytes + Byte;
+  for (unsigned I = 0; I < BytesPerElement; ++I)
+    Bytes.push_back(Base + I);
+}
+
+// Return SDNodes for the completed shuffle.
+SDValue GeneralShuffle::getNode(SelectionDAG &DAG, SDLoc DL) {
+  assert(Bytes.size() == SystemZ::VectorBytes && "Incomplete vector");
+
+  if (Ops.size() == 0)
+    return DAG.getUNDEF(VT);
+
+  // Make sure that there are at least two shuffle operands.
+  if (Ops.size() == 1)
+    Ops.push_back(DAG.getUNDEF(MVT::v16i8));
+
+  // Create a tree of shuffles, deferring root node until after the loop.
+  // Try to redistribute the undefined elements of non-root nodes so that
+  // the non-root shuffles match something like a pack or merge, then adjust
+  // the parent node's permute vector to compensate for the new order.
+  // Among other things, this copes with vectors like <2 x i16> that were
+  // padded with undefined elements during type legalization.
+  //
+  // In the best case this redistribution will lead to the whole tree
+  // using packs and merges.  It should rarely be a loss in other cases.
+  unsigned Stride = 1;
+  for (; Stride * 2 < Ops.size(); Stride *= 2) {
+    for (unsigned I = 0; I < Ops.size() - Stride; I += Stride * 2) {
+      SDValue SubOps[] = { Ops[I], Ops[I + Stride] };
+
+      // Create a mask for just these two operands.
+      SmallVector<int, SystemZ::VectorBytes> NewBytes(SystemZ::VectorBytes);
+      for (unsigned J = 0; J < SystemZ::VectorBytes; ++J) {
+        unsigned OpNo = unsigned(Bytes[J]) / SystemZ::VectorBytes;
+        unsigned Byte = unsigned(Bytes[J]) % SystemZ::VectorBytes;
+        if (OpNo == I)
+          NewBytes[J] = Byte;
+        else if (OpNo == I + Stride)
+          NewBytes[J] = SystemZ::VectorBytes + Byte;
+        else
+          NewBytes[J] = -1;
+      }
+      // See if it would be better to reorganize NewMask to avoid using VPERM.
+      SmallVector<int, SystemZ::VectorBytes> NewBytesMap(SystemZ::VectorBytes);
+      if (const Permute *P = matchDoublePermute(NewBytes, NewBytesMap)) {
+        Ops[I] = getPermuteNode(DAG, DL, *P, SubOps[0], SubOps[1]);
+        // Applying NewBytesMap to Ops[I] gets back to NewBytes.
+        for (unsigned J = 0; J < SystemZ::VectorBytes; ++J) {
+          if (NewBytes[J] >= 0) {
+            assert(unsigned(NewBytesMap[J]) < SystemZ::VectorBytes &&
+                   "Invalid double permute");
+            Bytes[J] = I * SystemZ::VectorBytes + NewBytesMap[J];
+          } else
+            assert(NewBytesMap[J] < 0 && "Invalid double permute");
+        }
+      } else {
+        // Just use NewBytes on the operands.
+        Ops[I] = getGeneralPermuteNode(DAG, DL, SubOps, NewBytes);
+        for (unsigned J = 0; J < SystemZ::VectorBytes; ++J)
+          if (NewBytes[J] >= 0)
+            Bytes[J] = I * SystemZ::VectorBytes + J;
+      }
+    }
+  }
+
+  // Now we just have 2 inputs.  Put the second operand in Ops[1].
+  if (Stride > 1) {
+    Ops[1] = Ops[Stride];
+    for (unsigned I = 0; I < SystemZ::VectorBytes; ++I)
+      if (Bytes[I] >= int(SystemZ::VectorBytes))
+        Bytes[I] -= (Stride - 1) * SystemZ::VectorBytes;
+  }
+
+  // Look for an instruction that can do the permute without resorting
+  // to VPERM.
+  unsigned OpNo0, OpNo1;
+  SDValue Op;
+  if (const Permute *P = matchPermute(Bytes, OpNo0, OpNo1))
+    Op = getPermuteNode(DAG, DL, *P, Ops[OpNo0], Ops[OpNo1]);
+  else
+    Op = getGeneralPermuteNode(DAG, DL, &Ops[0], Bytes);
+  return DAG.getNode(ISD::BITCAST, DL, VT, Op);
+}
+
+// Extend GPR scalars Op0 and Op1 to doublewords and return a v2i64
+// vector for them.
+static SDValue joinDwords(SelectionDAG &DAG, SDLoc DL, SDValue Op0,
+                          SDValue Op1) {
+  if (Op0.getOpcode() == ISD::UNDEF && Op1.getOpcode() == ISD::UNDEF)
+    return DAG.getUNDEF(MVT::v2i64);
+  // If one of the two inputs is undefined then replicate the other one,
+  // in order to avoid using another register unnecessarily.
+  if (Op0.getOpcode() == ISD::UNDEF)
+    Op0 = Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op1);
+  else if (Op1.getOpcode() == ISD::UNDEF)
+    Op0 = Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op0);
+  else {
+    Op0 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op0);
+    Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Op1);
+  }
+  return DAG.getNode(SystemZISD::JOIN_DWORDS, DL, MVT::v2i64, Op0, Op1);
+}
+
+// Try to represent constant BUILD_VECTOR node BVN using a
+// SystemZISD::BYTE_MASK-style mask.  Store the mask value in Mask
+// on success.
+static bool tryBuildVectorByteMask(BuildVectorSDNode *BVN, uint64_t &Mask) {
+  EVT ElemVT = BVN->getValueType(0).getVectorElementType();
+  unsigned BytesPerElement = ElemVT.getStoreSize();
+  for (unsigned I = 0, E = BVN->getNumOperands(); I != E; ++I) {
+    SDValue Op = BVN->getOperand(I);
+    if (Op.getOpcode() != ISD::UNDEF) {
+      uint64_t Value;
+      if (Op.getOpcode() == ISD::Constant)
+        Value = dyn_cast<ConstantSDNode>(Op)->getZExtValue();
+      else if (Op.getOpcode() == ISD::ConstantFP)
+        Value = (dyn_cast<ConstantFPSDNode>(Op)->getValueAPF().bitcastToAPInt()
+                 .getZExtValue());
+      else
+        return false;
+      for (unsigned J = 0; J < BytesPerElement; ++J) {
+        uint64_t Byte = (Value >> (J * 8)) & 0xff;
+        if (Byte == 0xff)
+          Mask |= 1 << ((E - I - 1) * BytesPerElement + J);
+        else if (Byte != 0)
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
+// Try to load a vector constant in which BitsPerElement-bit value Value
+// is replicated to fill the vector.  VT is the type of the resulting
+// constant, which may have elements of a different size from BitsPerElement.
+// Return the SDValue of the constant on success, otherwise return
+// an empty value.
+static SDValue tryBuildVectorReplicate(SelectionDAG &DAG,
+                                       const SystemZInstrInfo *TII,
+                                       SDLoc DL, EVT VT, uint64_t Value,
+                                       unsigned BitsPerElement) {
+  // Signed 16-bit values can be replicated using VREPI.
+  int64_t SignedValue = SignExtend64(Value, BitsPerElement);
+  if (isInt<16>(SignedValue)) {
+    MVT VecVT = MVT::getVectorVT(MVT::getIntegerVT(BitsPerElement),
+                                 SystemZ::VectorBits / BitsPerElement);
+    SDValue Op = DAG.getNode(SystemZISD::REPLICATE, DL, VecVT,
+                             DAG.getConstant(SignedValue, DL, MVT::i32));
+    return DAG.getNode(ISD::BITCAST, DL, VT, Op);
+  }
+  // See whether rotating the constant left some N places gives a value that
+  // is one less than a power of 2 (i.e. all zeros followed by all ones).
+  // If so we can use VGM.
+  unsigned Start, End;
+  if (TII->isRxSBGMask(Value, BitsPerElement, Start, End)) {
+    // isRxSBGMask returns the bit numbers for a full 64-bit value,
+    // with 0 denoting 1 << 63 and 63 denoting 1.  Convert them to
+    // bit numbers for an BitsPerElement value, so that 0 denotes
+    // 1 << (BitsPerElement-1).
+    Start -= 64 - BitsPerElement;
+    End -= 64 - BitsPerElement;
+    MVT VecVT = MVT::getVectorVT(MVT::getIntegerVT(BitsPerElement),
+                                 SystemZ::VectorBits / BitsPerElement);
+    SDValue Op = DAG.getNode(SystemZISD::ROTATE_MASK, DL, VecVT,
+                             DAG.getConstant(Start, DL, MVT::i32),
+                             DAG.getConstant(End, DL, MVT::i32));
+    return DAG.getNode(ISD::BITCAST, DL, VT, Op);
+  }
+  return SDValue();
+}
+
+// If a BUILD_VECTOR contains some EXTRACT_VECTOR_ELTs, it's usually
+// better to use VECTOR_SHUFFLEs on them, only using BUILD_VECTOR for
+// the non-EXTRACT_VECTOR_ELT elements.  See if the given BUILD_VECTOR
+// would benefit from this representation and return it if so.
+static SDValue tryBuildVectorShuffle(SelectionDAG &DAG,
+                                     BuildVectorSDNode *BVN) {
+  EVT VT = BVN->getValueType(0);
+  unsigned NumElements = VT.getVectorNumElements();
+
+  // Represent the BUILD_VECTOR as an N-operand VECTOR_SHUFFLE-like operation
+  // on byte vectors.  If there are non-EXTRACT_VECTOR_ELT elements that still
+  // need a BUILD_VECTOR, add an additional placeholder operand for that
+  // BUILD_VECTOR and store its operands in ResidueOps.
+  GeneralShuffle GS(VT);
+  SmallVector<SDValue, SystemZ::VectorBytes> ResidueOps;
+  bool FoundOne = false;
+  for (unsigned I = 0; I < NumElements; ++I) {
+    SDValue Op = BVN->getOperand(I);
+    if (Op.getOpcode() == ISD::TRUNCATE)
+      Op = Op.getOperand(0);
+    if (Op.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+        Op.getOperand(1).getOpcode() == ISD::Constant) {
+      unsigned Elem = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      GS.add(Op.getOperand(0), Elem);
+      FoundOne = true;
+    } else if (Op.getOpcode() == ISD::UNDEF) {
+      GS.addUndef();
+    } else {
+      GS.add(SDValue(), ResidueOps.size());
+      ResidueOps.push_back(Op);
+    }
+  }
+
+  // Nothing to do if there are no EXTRACT_VECTOR_ELTs.
+  if (!FoundOne)
+    return SDValue();
+
+  // Create the BUILD_VECTOR for the remaining elements, if any.
+  if (!ResidueOps.empty()) {
+    while (ResidueOps.size() < NumElements)
+      ResidueOps.push_back(DAG.getUNDEF(VT.getVectorElementType()));
+    for (auto &Op : GS.Ops) {
+      if (!Op.getNode()) {
+        Op = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(BVN), VT, ResidueOps);
+        break;
+      }
+    }
+  }
+  return GS.getNode(DAG, SDLoc(BVN));
+}
+
+// Combine GPR scalar values Elems into a vector of type VT.
+static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
+                           SmallVectorImpl<SDValue> &Elems) {
+  // See whether there is a single replicated value.
+  SDValue Single;
+  unsigned int NumElements = Elems.size();
+  unsigned int Count = 0;
+  for (auto Elem : Elems) {
+    if (Elem.getOpcode() != ISD::UNDEF) {
+      if (!Single.getNode())
+        Single = Elem;
+      else if (Elem != Single) {
+        Single = SDValue();
+        break;
+      }
+      Count += 1;
+    }
+  }
+  // There are three cases here:
+  //
+  // - if the only defined element is a loaded one, the best sequence
+  //   is a replicating load.
+  //
+  // - otherwise, if the only defined element is an i64 value, we will
+  //   end up with the same VLVGP sequence regardless of whether we short-cut
+  //   for replication or fall through to the later code.
+  //
+  // - otherwise, if the only defined element is an i32 or smaller value,
+  //   we would need 2 instructions to replicate it: VLVGP followed by VREPx.
+  //   This is only a win if the single defined element is used more than once.
+  //   In other cases we're better off using a single VLVGx.
+  if (Single.getNode() && (Count > 1 || Single.getOpcode() == ISD::LOAD))
+    return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Single);
+
+  // The best way of building a v2i64 from two i64s is to use VLVGP.
+  if (VT == MVT::v2i64)
+    return joinDwords(DAG, DL, Elems[0], Elems[1]);
+
+  // Collect the constant terms.
+  SmallVector<SDValue, SystemZ::VectorBytes> Constants(NumElements, SDValue());
+  SmallVector<bool, SystemZ::VectorBytes> Done(NumElements, false);
+
+  unsigned NumConstants = 0;
+  for (unsigned I = 0; I < NumElements; ++I) {
+    SDValue Elem = Elems[I];
+    if (Elem.getOpcode() == ISD::Constant ||
+        Elem.getOpcode() == ISD::ConstantFP) {
+      NumConstants += 1;
+      Constants[I] = Elem;
+      Done[I] = true;
+    }
+  }
+  // If there was at least one constant, fill in the other elements of
+  // Constants with undefs to get a full vector constant and use that
+  // as the starting point.
+  SDValue Result;
+  if (NumConstants > 0) {
+    for (unsigned I = 0; I < NumElements; ++I)
+      if (!Constants[I].getNode())
+        Constants[I] = DAG.getUNDEF(Elems[I].getValueType());
+    Result = DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Constants);
+  } else {
+    // Otherwise try to use VLVGP to start the sequence in order to
+    // avoid a false dependency on any previous contents of the vector
+    // register.  This only makes sense if one of the associated elements
+    // is defined.
+    unsigned I1 = NumElements / 2 - 1;
+    unsigned I2 = NumElements - 1;
+    bool Def1 = (Elems[I1].getOpcode() != ISD::UNDEF);
+    bool Def2 = (Elems[I2].getOpcode() != ISD::UNDEF);
+    if (Def1 || Def2) {
+      SDValue Elem1 = Elems[Def1 ? I1 : I2];
+      SDValue Elem2 = Elems[Def2 ? I2 : I1];
+      Result = DAG.getNode(ISD::BITCAST, DL, VT,
+                           joinDwords(DAG, DL, Elem1, Elem2));
+      Done[I1] = true;
+      Done[I2] = true;
+    } else
+      Result = DAG.getUNDEF(VT);
+  }
+
+  // Use VLVGx to insert the other elements.
+  for (unsigned I = 0; I < NumElements; ++I)
+    if (!Done[I] && Elems[I].getOpcode() != ISD::UNDEF)
+      Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, Result, Elems[I],
+                           DAG.getConstant(I, DL, MVT::i32));
+  return Result;
+}
+
+SDValue SystemZTargetLowering::lowerBUILD_VECTOR(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  const SystemZInstrInfo *TII =
+    static_cast<const SystemZInstrInfo *>(Subtarget.getInstrInfo());
+  auto *BVN = cast<BuildVectorSDNode>(Op.getNode());
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+
+  if (BVN->isConstant()) {
+    // Try using VECTOR GENERATE BYTE MASK.  This is the architecturally-
+    // preferred way of creating all-zero and all-one vectors so give it
+    // priority over other methods below.
+    uint64_t Mask = 0;
+    if (tryBuildVectorByteMask(BVN, Mask)) {
+      SDValue Op = DAG.getNode(SystemZISD::BYTE_MASK, DL, MVT::v16i8,
+                               DAG.getConstant(Mask, DL, MVT::i32));
+      return DAG.getNode(ISD::BITCAST, DL, VT, Op);
+    }
+
+    // Try using some form of replication.
+    APInt SplatBits, SplatUndef;
+    unsigned SplatBitSize;
+    bool HasAnyUndefs;
+    if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs,
+                             8, true) &&
+        SplatBitSize <= 64) {
+      // First try assuming that any undefined bits above the highest set bit
+      // and below the lowest set bit are 1s.  This increases the likelihood of
+      // being able to use a sign-extended element value in VECTOR REPLICATE
+      // IMMEDIATE or a wraparound mask in VECTOR GENERATE MASK.
+      uint64_t SplatBitsZ = SplatBits.getZExtValue();
+      uint64_t SplatUndefZ = SplatUndef.getZExtValue();
+      uint64_t Lower = (SplatUndefZ
+                        & ((uint64_t(1) << findFirstSet(SplatBitsZ)) - 1));
+      uint64_t Upper = (SplatUndefZ
+                        & ~((uint64_t(1) << findLastSet(SplatBitsZ)) - 1));
+      uint64_t Value = SplatBitsZ | Upper | Lower;
+      SDValue Op = tryBuildVectorReplicate(DAG, TII, DL, VT, Value,
+                                           SplatBitSize);
+      if (Op.getNode())
+        return Op;
+
+      // Now try assuming that any undefined bits between the first and
+      // last defined set bits are set.  This increases the chances of
+      // using a non-wraparound mask.
+      uint64_t Middle = SplatUndefZ & ~Upper & ~Lower;
+      Value = SplatBitsZ | Middle;
+      Op = tryBuildVectorReplicate(DAG, TII, DL, VT, Value, SplatBitSize);
+      if (Op.getNode())
+        return Op;
+    }
+
+    // Fall back to loading it from memory.
+    return SDValue();
+  }
+
+  // See if we should use shuffles to construct the vector from other vectors.
+  SDValue Res = tryBuildVectorShuffle(DAG, BVN);
+  if (Res.getNode())
+    return Res;
+
+  // Otherwise use buildVector to build the vector up from GPRs.
+  unsigned NumElements = Op.getNumOperands();
+  SmallVector<SDValue, SystemZ::VectorBytes> Ops(NumElements);
+  for (unsigned I = 0; I < NumElements; ++I)
+    Ops[I] = Op.getOperand(I);
+  return buildVector(DAG, DL, VT, Ops);
+}
+
+SDValue SystemZTargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
+                                                   SelectionDAG &DAG) const {
+  auto *VSN = cast<ShuffleVectorSDNode>(Op.getNode());
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  unsigned NumElements = VT.getVectorNumElements();
+
+  if (VSN->isSplat()) {
+    SDValue Op0 = Op.getOperand(0);
+    unsigned Index = VSN->getSplatIndex();
+    assert(Index < VT.getVectorNumElements() &&
+           "Splat index should be defined and in first operand");
+    // See whether the value we're splatting is directly available as a scalar.
+    if ((Index == 0 && Op0.getOpcode() == ISD::SCALAR_TO_VECTOR) ||
+        Op0.getOpcode() == ISD::BUILD_VECTOR)
+      return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Op0.getOperand(Index));
+    // Otherwise keep it as a vector-to-vector operation.
+    return DAG.getNode(SystemZISD::SPLAT, DL, VT, Op.getOperand(0),
+                       DAG.getConstant(Index, DL, MVT::i32));
+  }
+
+  GeneralShuffle GS(VT);
+  for (unsigned I = 0; I < NumElements; ++I) {
+    int Elt = VSN->getMaskElt(I);
+    if (Elt < 0)
+      GS.addUndef();
+    else
+      GS.add(Op.getOperand(unsigned(Elt) / NumElements),
+             unsigned(Elt) % NumElements);
+  }
+  return GS.getNode(DAG, SDLoc(VSN));
+}
+
+SDValue SystemZTargetLowering::lowerSCALAR_TO_VECTOR(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  // Just insert the scalar into element 0 of an undefined vector.
+  return DAG.getNode(ISD::INSERT_VECTOR_ELT, DL,
+                     Op.getValueType(), DAG.getUNDEF(Op.getValueType()),
+                     Op.getOperand(0), DAG.getConstant(0, DL, MVT::i32));
+}
+
+SDValue SystemZTargetLowering::lowerShift(SDValue Op, SelectionDAG &DAG,
+                                          unsigned ByScalar) const {
+  // Look for cases where a vector shift can use the *_BY_SCALAR form.
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  unsigned ElemBitSize = VT.getVectorElementType().getSizeInBits();
+
+  // See whether the shift vector is a splat represented as BUILD_VECTOR.
+  if (auto *BVN = dyn_cast<BuildVectorSDNode>(Op1)) {
+    APInt SplatBits, SplatUndef;
+    unsigned SplatBitSize;
+    bool HasAnyUndefs;
+    // Check for constant splats.  Use ElemBitSize as the minimum element
+    // width and reject splats that need wider elements.
+    if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs,
+                             ElemBitSize, true) &&
+        SplatBitSize == ElemBitSize) {
+      SDValue Shift = DAG.getConstant(SplatBits.getZExtValue() & 0xfff,
+                                      DL, MVT::i32);
+      return DAG.getNode(ByScalar, DL, VT, Op0, Shift);
+    }
+    // Check for variable splats.
+    BitVector UndefElements;
+    SDValue Splat = BVN->getSplatValue(&UndefElements);
+    if (Splat) {
+      // Since i32 is the smallest legal type, we either need a no-op
+      // or a truncation.
+      SDValue Shift = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Splat);
+      return DAG.getNode(ByScalar, DL, VT, Op0, Shift);
+    }
+  }
+
+  // See whether the shift vector is a splat represented as SHUFFLE_VECTOR,
+  // and the shift amount is directly available in a GPR.
+  if (auto *VSN = dyn_cast<ShuffleVectorSDNode>(Op1)) {
+    if (VSN->isSplat()) {
+      SDValue VSNOp0 = VSN->getOperand(0);
+      unsigned Index = VSN->getSplatIndex();
+      assert(Index < VT.getVectorNumElements() &&
+             "Splat index should be defined and in first operand");
+      if ((Index == 0 && VSNOp0.getOpcode() == ISD::SCALAR_TO_VECTOR) ||
+          VSNOp0.getOpcode() == ISD::BUILD_VECTOR) {
+        // Since i32 is the smallest legal type, we either need a no-op
+        // or a truncation.
+        SDValue Shift = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32,
+                                    VSNOp0.getOperand(Index));
+        return DAG.getNode(ByScalar, DL, VT, Op0, Shift);
+      }
+    }
+  }
+
+  // Otherwise just treat the current form as legal.
+  return Op;
+}
+
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
                                               SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
@@ -2737,6 +3760,12 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerOR(Op, DAG);
   case ISD::CTPOP:
     return lowerCTPOP(Op, DAG);
+  case ISD::CTLZ_ZERO_UNDEF:
+    return DAG.getNode(ISD::CTLZ, SDLoc(Op),
+                       Op.getValueType(), Op.getOperand(0));
+  case ISD::CTTZ_ZERO_UNDEF:
+    return DAG.getNode(ISD::CTTZ, SDLoc(Op),
+                       Op.getValueType(), Op.getOperand(0));
   case ISD::ATOMIC_SWAP:
     return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_SWAPW);
   case ISD::ATOMIC_STORE:
@@ -2773,6 +3802,18 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerPREFETCH(Op, DAG);
   case ISD::INTRINSIC_W_CHAIN:
     return lowerINTRINSIC_W_CHAIN(Op, DAG);
+  case ISD::BUILD_VECTOR:
+    return lowerBUILD_VECTOR(Op, DAG);
+  case ISD::VECTOR_SHUFFLE:
+    return lowerVECTOR_SHUFFLE(Op, DAG);
+  case ISD::SCALAR_TO_VECTOR:
+    return lowerSCALAR_TO_VECTOR(Op, DAG);
+  case ISD::SHL:
+    return lowerShift(Op, DAG, SystemZISD::VSHL_BY_SCALAR);
+  case ISD::SRL:
+    return lowerShift(Op, DAG, SystemZISD::VSRL_BY_SCALAR);
+  case ISD::SRA:
+    return lowerShift(Op, DAG, SystemZISD::VSRA_BY_SCALAR);
   default:
     llvm_unreachable("Unexpected node to lower");
   }
@@ -2820,6 +3861,24 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(TBEGIN);
     OPCODE(TBEGIN_NOFLOAT);
     OPCODE(TEND);
+    OPCODE(BYTE_MASK);
+    OPCODE(ROTATE_MASK);
+    OPCODE(REPLICATE);
+    OPCODE(JOIN_DWORDS);
+    OPCODE(SPLAT);
+    OPCODE(MERGE_HIGH);
+    OPCODE(MERGE_LOW);
+    OPCODE(SHL_DOUBLE);
+    OPCODE(PERMUTE_DWORDS);
+    OPCODE(PERMUTE);
+    OPCODE(PACK);
+    OPCODE(VSHL_BY_SCALAR);
+    OPCODE(VSRL_BY_SCALAR);
+    OPCODE(VSRA_BY_SCALAR);
+    OPCODE(VSUM);
+    OPCODE(VICMPE);
+    OPCODE(VICMPH);
+    OPCODE(VICMPHL);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
@@ -2836,6 +3895,157 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
   return nullptr;
 #undef OPCODE
+}
+
+// Return true if VT is a vector whose elements are a whole number of bytes
+// in width.
+static bool canTreatAsByteVector(EVT VT) {
+  return VT.isVector() && VT.getVectorElementType().getSizeInBits() % 8 == 0;
+}
+
+// Try to simplify an EXTRACT_VECTOR_ELT from a vector of type VecVT
+// producing a result of type ResVT.  Op is a possibly bitcast version
+// of the input vector and Index is the index (based on type VecVT) that
+// should be extracted.  Return the new extraction if a simplification
+// was possible or if Force is true.
+SDValue SystemZTargetLowering::combineExtract(SDLoc DL, EVT ResVT, EVT VecVT,
+                                              SDValue Op, unsigned Index,
+                                              DAGCombinerInfo &DCI,
+                                              bool Force) const {
+  SelectionDAG &DAG = DCI.DAG;
+
+  // The number of bytes being extracted.
+  unsigned BytesPerElement = VecVT.getVectorElementType().getStoreSize();
+
+  for (;;) {
+    unsigned Opcode = Op.getOpcode();
+    if (Opcode == ISD::BITCAST)
+      // Look through bitcasts.
+      Op = Op.getOperand(0);
+    else if (Opcode == ISD::VECTOR_SHUFFLE &&
+             canTreatAsByteVector(Op.getValueType())) {
+      // Get a VPERM-like permute mask and see whether the bytes covered
+      // by the extracted element are a contiguous sequence from one
+      // source operand.
+      SmallVector<int, SystemZ::VectorBytes> Bytes;
+      getVPermMask(cast<ShuffleVectorSDNode>(Op), Bytes);
+      int First;
+      if (!getShuffleInput(Bytes, Index * BytesPerElement,
+                           BytesPerElement, First))
+        break;
+      if (First < 0)
+        return DAG.getUNDEF(ResVT);
+      // Make sure the contiguous sequence starts at a multiple of the
+      // original element size.
+      unsigned Byte = unsigned(First) % Bytes.size();
+      if (Byte % BytesPerElement != 0)
+        break;
+      // We can get the extracted value directly from an input.
+      Index = Byte / BytesPerElement;
+      Op = Op.getOperand(unsigned(First) / Bytes.size());
+      Force = true;
+    } else if (Opcode == ISD::BUILD_VECTOR &&
+               canTreatAsByteVector(Op.getValueType())) {
+      // We can only optimize this case if the BUILD_VECTOR elements are
+      // at least as wide as the extracted value.
+      EVT OpVT = Op.getValueType();
+      unsigned OpBytesPerElement = OpVT.getVectorElementType().getStoreSize();
+      if (OpBytesPerElement < BytesPerElement)
+        break;
+      // Make sure that the least-significant bit of the extracted value
+      // is the least significant bit of an input.
+      unsigned End = (Index + 1) * BytesPerElement;
+      if (End % OpBytesPerElement != 0)
+        break;
+      // We're extracting the low part of one operand of the BUILD_VECTOR.
+      Op = Op.getOperand(End / OpBytesPerElement - 1);
+      if (!Op.getValueType().isInteger()) {
+        EVT VT = MVT::getIntegerVT(Op.getValueType().getSizeInBits());
+        Op = DAG.getNode(ISD::BITCAST, DL, VT, Op);
+        DCI.AddToWorklist(Op.getNode());
+      }
+      EVT VT = MVT::getIntegerVT(ResVT.getSizeInBits());
+      Op = DAG.getNode(ISD::TRUNCATE, DL, VT, Op);
+      if (VT != ResVT) {
+        DCI.AddToWorklist(Op.getNode());
+        Op = DAG.getNode(ISD::BITCAST, DL, ResVT, Op);
+      }
+      return Op;
+    } else if ((Opcode == ISD::SIGN_EXTEND_VECTOR_INREG ||
+		Opcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
+		Opcode == ISD::ANY_EXTEND_VECTOR_INREG) &&
+	       canTreatAsByteVector(Op.getValueType()) &&
+               canTreatAsByteVector(Op.getOperand(0).getValueType())) {
+      // Make sure that only the unextended bits are significant.
+      EVT ExtVT = Op.getValueType();
+      EVT OpVT = Op.getOperand(0).getValueType();
+      unsigned ExtBytesPerElement = ExtVT.getVectorElementType().getStoreSize();
+      unsigned OpBytesPerElement = OpVT.getVectorElementType().getStoreSize();
+      unsigned Byte = Index * BytesPerElement;
+      unsigned SubByte = Byte % ExtBytesPerElement;
+      unsigned MinSubByte = ExtBytesPerElement - OpBytesPerElement;
+      if (SubByte < MinSubByte ||
+	  SubByte + BytesPerElement > ExtBytesPerElement)
+	break;
+      // Get the byte offset of the unextended element
+      Byte = Byte / ExtBytesPerElement * OpBytesPerElement;
+      // ...then add the byte offset relative to that element.
+      Byte += SubByte - MinSubByte;
+      if (Byte % BytesPerElement != 0)
+	break;
+      Op = Op.getOperand(0);
+      Index = Byte / BytesPerElement;
+      Force = true;
+    } else
+      break;
+  }
+  if (Force) {
+    if (Op.getValueType() != VecVT) {
+      Op = DAG.getNode(ISD::BITCAST, DL, VecVT, Op);
+      DCI.AddToWorklist(Op.getNode());
+    }
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ResVT, Op,
+                       DAG.getConstant(Index, DL, MVT::i32));
+  }
+  return SDValue();
+}
+
+// Optimize vector operations in scalar value Op on the basis that Op
+// is truncated to TruncVT.
+SDValue
+SystemZTargetLowering::combineTruncateExtract(SDLoc DL, EVT TruncVT, SDValue Op,
+                                              DAGCombinerInfo &DCI) const {
+  // If we have (trunc (extract_vector_elt X, Y)), try to turn it into
+  // (extract_vector_elt (bitcast X), Y'), where (bitcast X) has elements
+  // of type TruncVT.
+  if (Op.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+      TruncVT.getSizeInBits() % 8 == 0) {
+    SDValue Vec = Op.getOperand(0);
+    EVT VecVT = Vec.getValueType();
+    if (canTreatAsByteVector(VecVT)) {
+      if (auto *IndexN = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+        unsigned BytesPerElement = VecVT.getVectorElementType().getStoreSize();
+        unsigned TruncBytes = TruncVT.getStoreSize();
+        if (BytesPerElement % TruncBytes == 0) {
+          // Calculate the value of Y' in the above description.  We are
+          // splitting the original elements into Scale equal-sized pieces
+          // and for truncation purposes want the last (least-significant)
+          // of these pieces for IndexN.  This is easiest to do by calculating
+          // the start index of the following element and then subtracting 1.
+          unsigned Scale = BytesPerElement / TruncBytes;
+          unsigned NewIndex = (IndexN->getZExtValue() + 1) * Scale - 1;
+
+          // Defer the creation of the bitcast from X to combineExtract,
+          // which might be able to optimize the extraction.
+          VecVT = MVT::getVectorVT(MVT::getIntegerVT(TruncBytes * 8),
+                                   VecVT.getStoreSize() / TruncBytes);
+          EVT ResVT = (TruncBytes < 4 ? MVT::i32 : TruncVT);
+          return combineExtract(DL, ResVT, VecVT, Vec, NewIndex, DCI, true);
+        }
+      }
+    }
+  }
+  return SDValue();
 }
 
 SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
@@ -2869,6 +4079,40 @@ SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
       }
     }
   }
+  // If we have (truncstoreiN (extract_vector_elt X, Y), Z) then it is better
+  // for the extraction to be done on a vMiN value, so that we can use VSTE.
+  // If X has wider elements then convert it to:
+  // (truncstoreiN (extract_vector_elt (bitcast X), Y2), Z).
+  if (Opcode == ISD::STORE) {
+    auto *SN = cast<StoreSDNode>(N);
+    EVT MemVT = SN->getMemoryVT();
+    if (MemVT.isInteger()) {
+      SDValue Value = combineTruncateExtract(SDLoc(N), MemVT,
+                                             SN->getValue(), DCI);
+      if (Value.getNode()) {
+        DCI.AddToWorklist(Value.getNode());
+
+        // Rewrite the store with the new form of stored value.
+        return DAG.getTruncStore(SN->getChain(), SDLoc(SN), Value,
+                                 SN->getBasePtr(), SN->getMemoryVT(),
+                                 SN->getMemOperand());
+      }
+    }
+  }
+  // Try to simplify a vector extraction.
+  if (Opcode == ISD::EXTRACT_VECTOR_ELT) {
+    if (auto *IndexN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+      SDValue Op0 = N->getOperand(0);
+      EVT VecVT = Op0.getValueType();
+      return combineExtract(SDLoc(N), N->getValueType(0), VecVT, Op0,
+                            IndexN->getZExtValue(), DCI, false);
+    }
+  }
+  // (join_dwords X, X) == (replicate X)
+  if (Opcode == SystemZISD::JOIN_DWORDS &&
+      N->getOperand(0) == N->getOperand(1))
+    return DAG.getNode(SystemZISD::REPLICATE, SDLoc(N), N->getValueType(0),
+                       N->getOperand(0));
   return SDValue();
 }
 
@@ -3681,11 +4925,18 @@ SystemZTargetLowering::emitTransactionBegin(MachineInstr *MI,
     }
   }
 
-  // Add FPR clobbers.
+  // Add FPR/VR clobbers.
   if (!NoFloat && (Control & 4) != 0) {
-    for (int I = 0; I < 16; I++) {
-      unsigned Reg = SystemZMC::FP64Regs[I];
-      MI->addOperand(MachineOperand::CreateReg(Reg, true, true));
+    if (Subtarget.hasVector()) {
+      for (int I = 0; I < 32; I++) {
+        unsigned Reg = SystemZMC::VR128Regs[I];
+        MI->addOperand(MachineOperand::CreateReg(Reg, true, true));
+      }
+    } else {
+      for (int I = 0; I < 16; I++) {
+        unsigned Reg = SystemZMC::FP64Regs[I];
+        MI->addOperand(MachineOperand::CreateReg(Reg, true, true));
+      }
     }
   }
 

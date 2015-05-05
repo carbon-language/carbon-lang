@@ -63,6 +63,14 @@ public:
   TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
 
   /// @}
+
+  /// \name Vector TTI Implementations
+  /// @{
+
+  unsigned getNumberOfRegisters(bool Vector);
+  unsigned getRegisterBitWidth(bool Vector);
+
+  /// @}
 };
 
 } // end namespace llvm
