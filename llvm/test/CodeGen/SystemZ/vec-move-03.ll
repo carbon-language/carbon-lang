@@ -38,6 +38,15 @@ define void @f4(<2 x i64> %val, <2 x i64> *%ptr) {
   ret void
 }
 
+; Test v4f32 stores.
+define void @f5(<4 x float> %val, <4 x float> *%ptr) {
+; CHECK-LABEL: f5:
+; CHECK: vst %v24, 0(%r2)
+; CHECK: br %r14
+  store <4 x float> %val, <4 x float> *%ptr
+  ret void
+}
+
 ; Test v2f64 stores.
 define void @f6(<2 x double> %val, <2 x double> *%ptr) {
 ; CHECK-LABEL: f6:

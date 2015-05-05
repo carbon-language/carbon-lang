@@ -34,6 +34,14 @@ define <2 x i64> @f4(<2 x i64> %val1, <2 x i64> %val2) {
   ret <2 x i64> %val2
 }
 
+; Test v4f32 moves.
+define <4 x float> @f5(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f5:
+; CHECK: vlr %v24, %v26
+; CHECK: br %r14
+  ret <4 x float> %val2
+}
+
 ; Test v2f64 moves.
 define <2 x double> @f6(<2 x double> %val1, <2 x double> %val2) {
 ; CHECK-LABEL: f6:

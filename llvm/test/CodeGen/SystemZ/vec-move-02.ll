@@ -38,6 +38,15 @@ define <2 x i64> @f4(<2 x i64> *%ptr) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 loads.
+define <4 x float> @f5(<4 x float> *%ptr) {
+; CHECK-LABEL: f5:
+; CHECK: vl %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <4 x float>, <4 x float> *%ptr
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 loads.
 define <2 x double> @f6(<2 x double> *%ptr) {
 ; CHECK-LABEL: f6:

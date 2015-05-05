@@ -2398,6 +2398,9 @@ class Alias<int size, dag outs, dag ins, list<dag> pattern>
   let isCodeGenOnly = 1;
 }
 
+class UnaryAliasVRS<RegisterOperand cls1, RegisterOperand cls2>
+ : Alias<6, (outs cls1:$src1), (ins cls2:$src2), []>;
+
 // An alias of a BinaryRI, but with different register sizes.
 class BinaryAliasRI<SDPatternOperator operator, RegisterOperand cls,
                     Immediate imm>

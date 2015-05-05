@@ -123,6 +123,37 @@ define <2 x i64> @f11(<2 x i64> %val) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 splat of the first element.
+define <4 x float> @f12(<4 x float> %val) {
+; CHECK-LABEL: f12:
+; CHECK: vrepf %v24, %v24, 0
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val, <4 x float> undef,
+                       <4 x i32> zeroinitializer
+  ret <4 x float> %ret
+}
+
+; Test v4f32 splat of the last element.
+define <4 x float> @f13(<4 x float> %val) {
+; CHECK-LABEL: f13:
+; CHECK: vrepf %v24, %v24, 3
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val, <4 x float> undef,
+                       <4 x i32> <i32 3, i32 3, i32 3, i32 3>
+  ret <4 x float> %ret
+}
+
+; Test v4f32 splat of an arbitrary element, using the second operand of
+; the shufflevector.
+define <4 x float> @f14(<4 x float> %val) {
+; CHECK-LABEL: f14:
+; CHECK: vrepf %v24, %v24, 1
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> undef, <4 x float> %val,
+                       <4 x i32> <i32 5, i32 5, i32 5, i32 5>
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 splat of the first element.
 define <2 x double> @f15(<2 x double> %val) {
 ; CHECK-LABEL: f15:

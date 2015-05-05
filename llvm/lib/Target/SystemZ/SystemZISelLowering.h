@@ -226,6 +226,14 @@ enum {
   VFCMPH,
   VFCMPHE,
 
+  // Extend the even f32 elements of vector operand 0 to produce a vector
+  // of f64 elements.
+  VEXTEND,
+
+  // Round the f64 elements of vector operand 0 to f32s and store them in the
+  // even elements of the result.
+  VROUND,
+
   // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
   // ATOMIC_LOAD_<op>.
   //

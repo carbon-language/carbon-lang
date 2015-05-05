@@ -71,6 +71,11 @@ inline unsigned getRegAsGR32(unsigned Reg) {
 inline unsigned getRegAsGRH32(unsigned Reg) {
   return GRH32Regs[getFirstReg(Reg)];
 }
+
+// Return the given register as a VR128.
+inline unsigned getRegAsVR128(unsigned Reg) {
+  return VR128Regs[getFirstReg(Reg)];
+}
 } // end namespace SystemZMC
 
 MCCodeEmitter *createSystemZMCCodeEmitter(const MCInstrInfo &MCII,

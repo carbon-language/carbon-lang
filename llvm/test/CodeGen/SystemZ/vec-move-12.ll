@@ -102,6 +102,16 @@ define <2 x i64> @f10(i64 *%ptr) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 insertion into an undef.
+define <4 x float> @f11(float *%ptr) {
+; CHECK-LABEL: f11:
+; CHECK: vlrepf %v24, 0(%r2)
+; CHECK: br %r14
+  %val = load float, float *%ptr
+  %ret = insertelement <4 x float> undef, float %val, i32 2
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 insertion into an undef.
 define <2 x double> @f12(double *%ptr) {
 ; CHECK-LABEL: f12:

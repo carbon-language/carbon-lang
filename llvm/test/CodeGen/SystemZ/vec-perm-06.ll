@@ -138,3 +138,23 @@ define <4 x i32> @f11(<4 x i32> %val1, <4 x i32> %val2) {
                        <4 x i32> <i32 5, i32 7, i32 1, i32 3>
   ret <4 x i32> %ret
 }
+
+; Test a canonical v4f32 pack.
+define <4 x float> @f12(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f12:
+; CHECK: vpkg %v24, %v24, %v26
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  ret <4 x float> %ret
+}
+
+; Test a reversed v4f32 pack.
+define <4 x float> @f13(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f13:
+; CHECK: vpkg %v24, %v26, %v24
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 5, i32 7, i32 1, i32 3>
+  ret <4 x float> %ret
+}

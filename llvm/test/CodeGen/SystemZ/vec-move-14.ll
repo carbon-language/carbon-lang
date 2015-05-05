@@ -75,6 +75,16 @@ define <2 x i64> @f7(i64 *%ptr) {
   ret <2 x i64> %ret
 }
 
+; Test VLLEZF with a float.
+define <4 x float> @f8(float *%ptr) {
+; CHECK-LABEL: f8:
+; CHECK: vllezf %v24, 0(%r2)
+; CHECK: br %r14
+  %val = load float, float *%ptr
+  %ret = insertelement <4 x float> zeroinitializer, float %val, i32 1
+  ret <4 x float> %ret
+}
+
 ; Test VLLEZG with a double.
 define <2 x double> @f9(double *%ptr) {
 ; CHECK-LABEL: f9:

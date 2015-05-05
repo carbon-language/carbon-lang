@@ -150,6 +150,59 @@ define i64 @f16(<2 x i64> %val, i32 %index) {
   ret i64 %ret
 }
 
+; Test v4f32 extraction of element 0.
+define float @f17(<4 x float> %val) {
+; CHECK-LABEL: f17:
+; CHECK: vlr %v0, %v24
+; CHECK: br %r14
+  %ret = extractelement <4 x float> %val, i32 0
+  ret float %ret
+}
+
+; Test v4f32 extraction of element 1.
+define float @f18(<4 x float> %val) {
+; CHECK-LABEL: f18:
+; CHECK: vrepf %v0, %v24, 1
+; CHECK: br %r14
+  %ret = extractelement <4 x float> %val, i32 1
+  ret float %ret
+}
+
+; Test v4f32 extraction of element 2.
+define float @f19(<4 x float> %val) {
+; CHECK-LABEL: f19:
+; CHECK: vrepf %v0, %v24, 2
+; CHECK: br %r14
+  %ret = extractelement <4 x float> %val, i32 2
+  ret float %ret
+}
+
+; Test v4f32 extraction of element 3.
+define float @f20(<4 x float> %val) {
+; CHECK-LABEL: f20:
+; CHECK: vrepf %v0, %v24, 3
+; CHECK: br %r14
+  %ret = extractelement <4 x float> %val, i32 3
+  ret float %ret
+}
+
+; Test v4f32 extractions of an absurd element number.  This must compile
+; but we don't care what it does.
+define float @f21(<4 x float> %val) {
+  %ret = extractelement <4 x float> %val, i32 100000
+  ret float %ret
+}
+
+; Test v4f32 extraction of a variable element.
+define float @f22(<4 x float> %val, i32 %index) {
+; CHECK-LABEL: f22:
+; CHECK: vlgvf [[REG:%r[0-5]]], %v24, 0(%r2)
+; CHECK: vlvgf %v0, [[REG]], 0
+; CHECK: br %r14
+  %ret = extractelement <4 x float> %val, i32 %index
+  ret float %ret
+}
+
 ; Test v2f64 extraction of the first element.
 define double @f23(<2 x double> %val) {
 ; CHECK-LABEL: f23:

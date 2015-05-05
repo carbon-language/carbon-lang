@@ -46,6 +46,17 @@ define <2 x i64> @f4(i64 %val) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 insertion into 0.
+define <4 x float> @f5(float %val) {
+; CHECK-LABEL: f5:
+; CHECK: vgbm [[ZERO:%v[0-9]+]], 0
+; CHECK: vmrhf [[REG:%v[0-9]+]], [[ZERO]], %v0
+; CHECK: vmrhg %v24, [[ZERO]], [[REG]]
+; CHECK: br %r14
+  %ret = insertelement <4 x float> zeroinitializer, float %val, i32 3
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 insertion into 0.
 define <2 x double> @f6(double %val) {
 ; CHECK-LABEL: f6:
@@ -55,3 +66,4 @@ define <2 x double> @f6(double %val) {
   %ret = insertelement <2 x double> zeroinitializer, double %val, i32 1
   ret <2 x double> %ret
 }
+

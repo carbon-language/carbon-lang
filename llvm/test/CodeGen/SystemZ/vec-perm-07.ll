@@ -122,4 +122,24 @@ define <4 x i32> @f10(<4 x i32> %val1, <4 x i32> %val2) {
   ret <4 x i32> %ret
 }
 
+; Test a v4f32 shift with the lowest useful shift amount.
+define <4 x float> @f12(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f12:
+; CHECK: vsldb %v24, %v24, %v26, 4
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 1, i32 2, i32 3, i32 4>
+  ret <4 x float> %ret
+}
+
+; Test a v4f32 shift with the highest useful shift amount.
+define <4 x float> @f13(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f13:
+; CHECK: vsldb %v24, %v24, %v26, 12
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+  ret <4 x float> %ret
+}
+
 ; We use VPDI for v2i64 shuffles.

@@ -129,6 +129,26 @@ define <2 x i64> @f11(<2 x i64> %val1, <2 x i64> %val2) {
   ret <2 x i64> %ret
 }
 
+; Test a high1/low2 permute for v4f32.
+define <4 x float> @f12(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f12:
+; CHECK: vpdi %v24, %v24, %v26, 1
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 0, i32 1, i32 6, i32 7>
+  ret <4 x float> %ret
+}
+
+; Test a low2/high1 permute for v4f32.
+define <4 x float> @f13(<4 x float> %val1, <4 x float> %val2) {
+; CHECK-LABEL: f13:
+; CHECK: vpdi %v24, %v26, %v24, 4
+; CHECK: br %r14
+  %ret = shufflevector <4 x float> %val1, <4 x float> %val2,
+                       <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+  ret <4 x float> %ret
+}
+
 ; Test a high1/low2 permute for v2f64.
 define <2 x double> @f14(<2 x double> %val1, <2 x double> %val2) {
 ; CHECK-LABEL: f14:

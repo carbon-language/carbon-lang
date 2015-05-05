@@ -236,6 +236,33 @@ define <2 x i64> @f26(<2 x i64> %val, i32 %index) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 insertion of 0 into the first element.
+define <4 x float> @f27(<4 x float> %val) {
+; CHECK-LABEL: f27:
+; CHECK: vleif %v24, 0, 0
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float 0.0, i32 0
+  ret <4 x float> %ret
+}
+
+; Test v4f32 insertion of 0 into the last element.
+define <4 x float> @f28(<4 x float> %val) {
+; CHECK-LABEL: f28:
+; CHECK: vleif %v24, 0, 3
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float 0.0, i32 3
+  ret <4 x float> %ret
+}
+
+; Test v4f32 insertion of a nonzero value.
+define <4 x float> @f29(<4 x float> %val) {
+; CHECK-LABEL: f29:
+; CHECK-NOT: vleif
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float 1.0, i32 1
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 insertion of 0 into the first element.
 define <2 x double> @f30(<2 x double> %val) {
 ; CHECK-LABEL: f30:

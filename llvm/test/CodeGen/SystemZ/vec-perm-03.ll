@@ -158,6 +158,44 @@ define <2 x i64> @f12(i64 *%base) {
   ret <2 x i64> %ret
 }
 
+; Test a v4f32 replicating load with no offset.
+define <4 x float> @f13(float *%ptr) {
+; CHECK-LABEL: f13:
+; CHECK: vlrepf %v24, 0(%r2)
+; CHECK: br %r14
+  %scalar = load float, float *%ptr
+  %val = insertelement <4 x float> undef, float %scalar, i32 0
+  %ret = shufflevector <4 x float> %val, <4 x float> undef,
+                       <4 x i32> zeroinitializer
+  ret <4 x float> %ret
+}
+
+; Test a v4f32 replicating load with the maximum in-range offset.
+define <4 x float> @f14(float *%base) {
+; CHECK-LABEL: f14:
+; CHECK: vlrepf %v24, 4092(%r2)
+; CHECK: br %r14
+  %ptr = getelementptr float, float *%base, i64 1023
+  %scalar = load float, float *%ptr
+  %val = insertelement <4 x float> undef, float %scalar, i32 0
+  %ret = shufflevector <4 x float> %val, <4 x float> undef,
+                       <4 x i32> zeroinitializer
+  ret <4 x float> %ret
+}
+
+; Test a v4f32 replicating load with the first out-of-range offset.
+define <4 x float> @f15(float *%base) {
+; CHECK-LABEL: f15:
+; CHECK: aghi %r2, 4096
+; CHECK: vlrepf %v24, 0(%r2)
+; CHECK: br %r14
+  %ptr = getelementptr float, float *%base, i64 1024
+  %scalar = load float, float *%ptr
+  %val = insertelement <4 x float> undef, float %scalar, i32 0
+  %ret = shufflevector <4 x float> %val, <4 x float> undef,
+                       <4 x i32> zeroinitializer
+  ret <4 x float> %ret
+}
 
 ; Test a v2f64 replicating load with no offset.
 define <2 x double> @f16(double *%ptr) {

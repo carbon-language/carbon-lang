@@ -258,6 +258,70 @@ define void @f24(<2 x i64> %val, i64 *%ptr, i32 %index) {
   ret void
 }
 
+; Test v4f32 extraction from the first element.
+define void @f25(<4 x float> %val, float *%ptr) {
+; CHECK-LABEL: f25:
+; CHECK: vstef %v24, 0(%r2), 0
+; CHECK: br %r14
+  %element = extractelement <4 x float> %val, i32 0
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test v4f32 extraction from the last element.
+define void @f26(<4 x float> %val, float *%ptr) {
+; CHECK-LABEL: f26:
+; CHECK: vstef %v24, 0(%r2), 3
+; CHECK: br %r14
+  %element = extractelement <4 x float> %val, i32 3
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test v4f32 extraction of an invalid element.  This must compile,
+; but we don't care what it does.
+define void @f27(<4 x float> %val, float *%ptr) {
+; CHECK-LABEL: f27:
+; CHECK-NOT: vstef %v24, 0(%r2), 4
+; CHECK: br %r14
+  %element = extractelement <4 x float> %val, i32 4
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test v4f32 extraction with the highest in-range offset.
+define void @f28(<4 x float> %val, float *%base) {
+; CHECK-LABEL: f28:
+; CHECK: vstef %v24, 4092(%r2), 2
+; CHECK: br %r14
+  %ptr = getelementptr float, float *%base, i32 1023
+  %element = extractelement <4 x float> %val, i32 2
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test v4f32 extraction with the first ouf-of-range offset.
+define void @f29(<4 x float> %val, float *%base) {
+; CHECK-LABEL: f29:
+; CHECK: aghi %r2, 4096
+; CHECK: vstef %v24, 0(%r2), 1
+; CHECK: br %r14
+  %ptr = getelementptr float, float *%base, i32 1024
+  %element = extractelement <4 x float> %val, i32 1
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test v4f32 extraction from a variable element.
+define void @f30(<4 x float> %val, float *%ptr, i32 %index) {
+; CHECK-LABEL: f30:
+; CHECK-NOT: vstef
+; CHECK: br %r14
+  %element = extractelement <4 x float> %val, i32 %index
+  store float %element, float *%ptr
+  ret void
+}
+
 ; Test v2f64 extraction from the first element.
 define void @f32(<2 x double> %val, double *%ptr) {
 ; CHECK-LABEL: f32:
@@ -377,6 +441,34 @@ define void @f41(<2 x i64> %val, <2 x i64> %index, i64 %base) {
   %ptr = inttoptr i64 %add to i64 *
   %element = extractelement <2 x i64> %val, i32 1
   store i64 %element, i64 *%ptr
+  ret void
+}
+
+; Test a v4f32 scatter of the first element.
+define void @f42(<4 x float> %val, <4 x i32> %index, i64 %base) {
+; CHECK-LABEL: f42:
+; CHECK: vscef %v24, 0(%v26,%r2), 0
+; CHECK: br %r14
+  %elem = extractelement <4 x i32> %index, i32 0
+  %ext = zext i32 %elem to i64
+  %add = add i64 %base, %ext
+  %ptr = inttoptr i64 %add to float *
+  %element = extractelement <4 x float> %val, i32 0
+  store float %element, float *%ptr
+  ret void
+}
+
+; Test a v4f32 scatter of the last element.
+define void @f43(<4 x float> %val, <4 x i32> %index, i64 %base) {
+; CHECK-LABEL: f43:
+; CHECK: vscef %v24, 0(%v26,%r2), 3
+; CHECK: br %r14
+  %elem = extractelement <4 x i32> %index, i32 3
+  %ext = zext i32 %elem to i64
+  %add = add i64 %base, %ext
+  %ptr = inttoptr i64 %add to float *
+  %element = extractelement <4 x float> %val, i32 3
+  store float %element, float *%ptr
   ret void
 }
 

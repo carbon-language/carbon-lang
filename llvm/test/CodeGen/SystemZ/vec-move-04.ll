@@ -110,6 +110,36 @@ define <2 x i64> @f12(<2 x i64> %val, i64 %element, i32 %index) {
   ret <2 x i64> %ret
 }
 
+; Test v4f32 insertion into the first element.
+define <4 x float> @f13(<4 x float> %val, float %element) {
+; CHECK-LABEL: f13:
+; CHECK: vlgvf [[REG:%r[0-5]]], %v0, 0
+; CHECK: vlvgf %v24, [[REG]], 0
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float %element, i32 0
+  ret <4 x float> %ret
+}
+
+; Test v4f32 insertion into the last element.
+define <4 x float> @f14(<4 x float> %val, float %element) {
+; CHECK-LABEL: f14:
+; CHECK: vlgvf [[REG:%r[0-5]]], %v0, 0
+; CHECK: vlvgf %v24, [[REG]], 3
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float %element, i32 3
+  ret <4 x float> %ret
+}
+
+; Test v4f32 insertion into a variable element.
+define <4 x float> @f15(<4 x float> %val, float %element, i32 %index) {
+; CHECK-LABEL: f15:
+; CHECK: vlgvf [[REG:%r[0-5]]], %v0, 0
+; CHECK: vlvgf %v24, [[REG]], 0(%r2)
+; CHECK: br %r14
+  %ret = insertelement <4 x float> %val, float %element, i32 %index
+  ret <4 x float> %ret
+}
+
 ; Test v2f64 insertion into the first element.
 define <2 x double> @f16(<2 x double> %val, double %element) {
 ; CHECK-LABEL: f16:

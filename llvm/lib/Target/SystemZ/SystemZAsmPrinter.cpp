@@ -158,6 +158,21 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addReg(SystemZMC::getRegAsGR64(MI->getOperand(2).getReg()));
     break;
 
+  case SystemZ::LFER:
+    LoweredMI = MCInstBuilder(SystemZ::VLGVF)
+      .addReg(SystemZMC::getRegAsGR64(MI->getOperand(0).getReg()))
+      .addReg(SystemZMC::getRegAsVR128(MI->getOperand(1).getReg()))
+      .addReg(0).addImm(0);
+    break;
+
+  case SystemZ::LEFR:
+    LoweredMI = MCInstBuilder(SystemZ::VLVGF)
+      .addReg(SystemZMC::getRegAsVR128(MI->getOperand(0).getReg()))
+      .addReg(SystemZMC::getRegAsVR128(MI->getOperand(0).getReg()))
+      .addReg(MI->getOperand(1).getReg())
+      .addReg(0).addImm(0);
+    break;
+
 #define LOWER_LOW(NAME)                                                 \
   case SystemZ::NAME##64: LoweredMI = lowerRILow(MI, SystemZ::NAME); break
 

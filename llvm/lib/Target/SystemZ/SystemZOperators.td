@@ -91,6 +91,9 @@ def SDT_ZExtractVectorElt   : SDTypeProfile<1, 2,
                                              SDTCisVT<2, i32>]>;
 def SDT_ZReplicate          : SDTypeProfile<1, 1,
                                             [SDTCisVec<0>]>;
+def SDT_ZVecUnaryConv       : SDTypeProfile<1, 1,
+                                            [SDTCisVec<0>,
+                                             SDTCisVec<1>]>;
 def SDT_ZVecBinary          : SDTypeProfile<1, 2,
                                             [SDTCisVec<0>,
                                              SDTCisSameAs<0, 1>,
@@ -203,6 +206,8 @@ def z_vicmphl           : SDNode<"SystemZISD::VICMPHL", SDT_ZVecBinary>;
 def z_vfcmpe            : SDNode<"SystemZISD::VFCMPE", SDT_ZVecBinaryConv>;
 def z_vfcmph            : SDNode<"SystemZISD::VFCMPH", SDT_ZVecBinaryConv>;
 def z_vfcmphe           : SDNode<"SystemZISD::VFCMPHE", SDT_ZVecBinaryConv>;
+def z_vextend           : SDNode<"SystemZISD::VEXTEND", SDT_ZVecUnaryConv>;
+def z_vround            : SDNode<"SystemZISD::VROUND", SDT_ZVecUnaryConv>;
 
 class AtomicWOp<string name, SDTypeProfile profile = SDT_ZAtomicLoadBinaryW>
   : SDNode<"SystemZISD::"##name, profile,
@@ -508,6 +513,7 @@ def z_replicate_loadi8  : z_replicate_load<i32, anyextloadi8>;
 def z_replicate_loadi16 : z_replicate_load<i32, anyextloadi16>;
 def z_replicate_loadi32 : z_replicate_load<i32, load>;
 def z_replicate_loadi64 : z_replicate_load<i64, load>;
+def z_replicate_loadf32 : z_replicate_load<f32, load>;
 def z_replicate_loadf64 : z_replicate_load<f64, load>;
 
 // Load a scalar and insert it into a single element of a vector.
@@ -519,6 +525,7 @@ def z_vlei8  : z_vle<i32, anyextloadi8>;
 def z_vlei16 : z_vle<i32, anyextloadi16>;
 def z_vlei32 : z_vle<i32, load>;
 def z_vlei64 : z_vle<i64, load>;
+def z_vlef32 : z_vle<f32, load>;
 def z_vlef64 : z_vle<f64, load>;
 
 // Load a scalar and insert it into the low element of the high i64 of a
@@ -532,6 +539,17 @@ def z_vllezi16 : z_vllez<i32, anyextloadi16, 3>;
 def z_vllezi32 : z_vllez<i32, load, 1>;
 def z_vllezi64 : PatFrag<(ops node:$addr),
                          (z_join_dwords (i64 (load node:$addr)), (i64 0))>;
+// We use high merges to form a v4f32 from four f32s.  Propagating zero
+// into all elements but index 1 gives this expression.
+def z_vllezf32 : PatFrag<(ops node:$addr),
+                         (bitconvert
+                          (z_merge_high
+                           (v2i64 (bitconvert
+                                   (z_merge_high
+                                    (v4f32 (z_vzero)),
+                                    (v4f32 (scalar_to_vector
+                                            (f32 (load node:$addr))))))),
+                           (v2i64 (z_vzero))))>;
 def z_vllezf64 : PatFrag<(ops node:$addr),
                          (z_merge_high
                           (scalar_to_vector (f64 (load node:$addr))),
@@ -546,6 +564,7 @@ def z_vstei8  : z_vste<i32, truncstorei8>;
 def z_vstei16 : z_vste<i32, truncstorei16>;
 def z_vstei32 : z_vste<i32, store>;
 def z_vstei64 : z_vste<i64, store>;
+def z_vstef32 : z_vste<f32, store>;
 def z_vstef64 : z_vste<f64, store>;
 
 // Arithmetic negation on vectors.
