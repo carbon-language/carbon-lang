@@ -74,7 +74,7 @@ private:
     LogicalModule(LogicalModule &&Other)
         : SrcM(std::move(Other.SrcM)),
           GVsAndStubsHandle(std::move(Other.GVsAndStubsHandle)),
-          ImplHandles(std::move(ImplHandles)) {}
+          ImplHandles(std::move(Other.ImplHandles)) {}
 
     std::unique_ptr<Module> SrcM;
     BaseLayerModuleSetHandleT GVsAndStubsHandle;
