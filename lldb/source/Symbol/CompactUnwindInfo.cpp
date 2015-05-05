@@ -841,7 +841,7 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                 //
                 // This is done with Lehmer code permutation, e.g. see
                 // http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
-                int permunreg[6];
+                int permunreg[6] = {0, 0, 0, 0, 0, 0};
 
                 // This decodes the variable-base number in the 10 bits
                 // and gives us the Lehmer code sequence which can then
@@ -901,7 +901,7 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                 // Decode the Lehmer code for this permutation of
                 // the registers v. http://en.wikipedia.org/wiki/Lehmer_code
 
-                int registers[6];
+                int registers[6] = { UNWIND_X86_64_REG_NONE, UNWIND_X86_64_REG_NONE, UNWIND_X86_64_REG_NONE, UNWIND_X86_64_REG_NONE, UNWIND_X86_64_REG_NONE, UNWIND_X86_64_REG_NONE };
                 bool used[7] = { false, false, false, false, false, false, false };
                 for (uint32_t i = 0; i < register_count; i++)
                 {
@@ -1115,7 +1115,7 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
                 //
                 // This is done with Lehmer code permutation, e.g. see
                 // http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
-                int permunreg[6];
+                int permunreg[6] = {0, 0, 0, 0, 0, 0};
 
                 // This decodes the variable-base number in the 10 bits
                 // and gives us the Lehmer code sequence which can then
@@ -1175,7 +1175,7 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
                 // Decode the Lehmer code for this permutation of
                 // the registers v. http://en.wikipedia.org/wiki/Lehmer_code
 
-                int registers[6];
+                int registers[6] = { UNWIND_X86_REG_NONE, UNWIND_X86_REG_NONE, UNWIND_X86_REG_NONE, UNWIND_X86_REG_NONE, UNWIND_X86_REG_NONE, UNWIND_X86_REG_NONE };
                 bool used[7] = { false, false, false, false, false, false, false };
                 for (uint32_t i = 0; i < register_count; i++)
                 {
