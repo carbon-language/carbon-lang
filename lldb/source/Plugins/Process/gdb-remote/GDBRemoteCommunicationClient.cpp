@@ -1312,7 +1312,7 @@ GDBRemoteCommunicationClient::SendArgumentsPacket (const ProcessLaunchInfo &laun
     const char *arg = NULL;
     const Args &launch_args = launch_info.GetArguments();
     if (exe_file)
-        exe_path = exe_file.GetPath();
+        exe_path = exe_file.GetPath(false);
     else
     {
         arg = launch_args.GetArgumentAtIndex(0);
@@ -3221,7 +3221,7 @@ GDBRemoteCommunicationClient::SetFilePermissions (const char *path,
     if (response.GetChar() != 'F')
         return Error("invalid response to '%s' packet", packet);
 
-    return Error(response.GetU32(false, UINT32_MAX), eErrorTypePOSIX);
+    return Error(response.GetU32(UINT32_MAX), eErrorTypePOSIX);
 }
 
 static uint64_t
