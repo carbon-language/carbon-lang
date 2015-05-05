@@ -3043,7 +3043,7 @@ MipsSETargetLowering::emitINSERT_DF_VIDX(MachineInstr *MI,
 
   const TargetRegisterClass *VecRC = nullptr;
   const TargetRegisterClass *GPRRC =
-      Subtarget.isGP64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+      Subtarget.isABI_N64() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
   unsigned EltLog2Size;
   unsigned InsertOp = 0;
   unsigned InsveOp = 0;
@@ -3121,8 +3121,9 @@ MipsSETargetLowering::emitINSERT_DF_VIDX(MachineInstr *MI,
   // sld.df inteprets $rt modulo the number of columns so we only need to negate
   // the lane index to do this.
   unsigned LaneTmp2 = RegInfo.createVirtualRegister(GPRRC);
-  BuildMI(*BB, MI, DL, TII->get(Mips::SUB), LaneTmp2)
-      .addReg(Mips::ZERO)
+  BuildMI(*BB, MI, DL, TII->get(Subtarget.isABI_N64() ? Mips::DSUB : Mips::SUB),
+          LaneTmp2)
+      .addReg(Subtarget.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO)
       .addReg(LaneReg);
   BuildMI(*BB, MI, DL, TII->get(Mips::SLD_B), Wd)
       .addReg(WdTmp2)

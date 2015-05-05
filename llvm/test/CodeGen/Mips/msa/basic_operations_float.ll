@@ -1,5 +1,7 @@
-; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL %s
-; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=O32 %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=O32 %s
+; RUN: llc -march=mips64 -target-abi=n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 %s
+; RUN: llc -march=mips64el -target-abi=n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 %s
 
 @v4f32 = global <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>
 @v2f64 = global <2 x double> <double 0.0, double 0.0>
@@ -18,7 +20,9 @@ define void @const_v4f32() nounwind {
   ; ALL: fill.w  [[R2:\$w[0-9]+]], [[R1]]
 
   store volatile <4 x float> <float 1.0, float 1.0, float 1.0, float 31.0>, <4 x float>*@v4f32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x float> <float 65537.0, float 65537.0, float 65537.0, float 65537.0>, <4 x float>*@v4f32
@@ -27,11 +31,15 @@ define void @const_v4f32() nounwind {
   ; ALL: fill.w  [[R3:\$w[0-9]+]], [[R2]]
 
   store volatile <4 x float> <float 1.0, float 2.0, float 1.0, float 2.0>, <4 x float>*@v4f32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x float> <float 3.0, float 4.0, float 5.0, float 6.0>, <4 x float>*@v4f32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
@@ -44,27 +52,39 @@ define void @const_v2f64() nounwind {
   ; ALL: ldi.b  [[R1:\$w[0-9]+]], 0
 
   store volatile <2 x double> <double 72340172838076673.0, double 72340172838076673.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x double> <double 281479271743489.0, double 281479271743489.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x double> <double 4294967297.0, double 4294967297.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x double> <double 1.0, double 1.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x double> <double 1.0, double 31.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x double> <double 3.0, double 4.0>, <2 x double>*@v2f64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
@@ -153,14 +173,18 @@ define float @extract_v4f32_vidx() nounwind {
   ; ALL-LABEL: extract_v4f32_vidx:
 
   %1 = load <4 x float>, <4 x float>* @v4f32
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v4f32)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v4f32)(
   ; ALL-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = fadd <4 x float> %1, %1
   ; ALL-DAG: fadd.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <4 x float> %2, i32 %3
@@ -215,14 +239,18 @@ define double @extract_v2f64_vidx() nounwind {
   ; ALL-LABEL: extract_v2f64_vidx:
 
   %1 = load <2 x double>, <2 x double>* @v2f64
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v2f64)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v2f64)(
   ; ALL-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = fadd <2 x double> %1, %1
   ; ALL-DAG: fadd.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <2 x double> %2, i32 %3
@@ -267,11 +295,15 @@ define void @insert_v4f32_vidx(float %a) nounwind {
   ; ALL-LABEL: insert_v4f32_vidx:
 
   %1 = load <4 x float>, <4 x float>* @v4f32
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v4f32)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v4f32)(
   ; ALL-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %3 = insertelement <4 x float> %1, float %a, i32 %2
@@ -292,11 +324,15 @@ define void @insert_v2f64_vidx(double %a) nounwind {
   ; ALL-LABEL: insert_v2f64_vidx:
 
   %1 = load <2 x double>, <2 x double>* @v2f64
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v2f64)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v2f64)(
   ; ALL-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %3 = insertelement <2 x double> %1, double %a, i32 %2

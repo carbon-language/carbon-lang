@@ -81,6 +81,9 @@ a:
         dmtc1     $s0,$f14
         dmult     $s7,$9
         dmultu    $a1,$a2
+        dneg      $2                   # CHECK: dneg $2, $2                 # encoding: [0x00,0x02,0x10,0x2e]
+        dneg      $2,$3                # CHECK: dneg $2, $3                 # encoding: [0x00,0x03,0x10,0x2e]
+        dnegu     $2,$3                # CHECK: dnegu $2, $3                # encoding: [0x00,0x03,0x10,0x2f]
         dsll      $zero,18             # CHECK: dsll $zero, $zero, 18       # encoding: [0x00,0x00,0x04,0xb8]
         dsll      $zero,$s4,18         # CHECK: dsll $zero, $20, 18         # encoding: [0x00,0x14,0x04,0xb8]
         dsll      $zero,$s4,$12        # CHECK: dsllv $zero, $20, $12       # encoding: [0x01,0x94,0x00,0x14]

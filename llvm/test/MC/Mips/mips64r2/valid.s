@@ -88,6 +88,9 @@ a:
         dmtc1     $s0,$f14
         dmult     $s7,$9
         dmultu    $a1,$a2
+        dneg      $2                   # CHECK: dneg $2, $2                 # encoding: [0x00,0x02,0x10,0x2e]
+        dneg      $2,$3                # CHECK: dneg $2, $3                 # encoding: [0x00,0x03,0x10,0x2e]
+        dnegu     $2,$3                # CHECK: dnegu $2, $3                # encoding: [0x00,0x03,0x10,0x2f]
         drotr     $1,15                # CHECK: drotr $1, $1, 15            # encoding: [0x00,0x21,0x0b,0xfa]
         drotr     $1,$14,15            # CHECK: drotr $1, $14, 15           # encoding: [0x00,0x2e,0x0b,0xfa]
         drotr32   $1,15                # CHECK: drotr32 $1, $1, 15          # encoding: [0x00,0x21,0x0b,0xfe]

@@ -1,5 +1,7 @@
-; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=MIPS32-BE %s
-; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=MIPS32-LE %s
+; RUN: llc -march=mips -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=O32 -check-prefix=MIPS32 -check-prefix=ALL-BE %s
+; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=O32 -check-prefix=MIPS32 -check-prefix=ALL-LE %s
+; RUN: llc -march=mips64 -target-abi n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 -check-prefix=MIPS64 -check-prefix=ALL-BE %s
+; RUN: llc -march=mips64el -target-abi n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 -check-prefix=MIPS64 -check-prefix=ALL-LE %s
 
 @v4i8 = global <4 x i8> <i8 0, i8 0, i8 0, i8 0>
 @v16i8 = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
@@ -19,26 +21,32 @@ define void @const_v16i8() nounwind {
   ; ALL: ldi.b [[R1:\$w[0-9]+]], 1
 
   store volatile <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 31>, <16 x i8>*@v16i8
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6>, <16 x i8>*@v16i8
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <16 x i8> <i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0>, <16 x i8>*@v16i8
-  ; MIPS32-BE: ldi.h [[R1:\$w[0-9]+]], 256
-  ; MIPS32-LE: ldi.h [[R1:\$w[0-9]+]], 1
+  ; ALL-BE: ldi.h [[R1:\$w[0-9]+]], 256
+  ; ALL-LE: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4, i8 1, i8 2, i8 3, i8 4>, <16 x i8>*@v16i8
-  ; MIPS32-BE-DAG: lui [[R2:\$[0-9]+]], 258
-  ; MIPS32-LE-DAG: lui [[R2:\$[0-9]+]], 1027
-  ; MIPS32-BE-DAG: ori [[R2]], [[R2]], 772
-  ; MIPS32-LE-DAG: ori [[R2]], [[R2]], 513
+  ; ALL-BE-DAG: lui [[R2:\$[0-9]+]], 258
+  ; ALL-LE-DAG: lui [[R2:\$[0-9]+]], 1027
+  ; ALL-BE-DAG: ori [[R2]], [[R2]], 772
+  ; ALL-LE-DAG: ori [[R2]], [[R2]], 513
   ; ALL-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8>, <16 x i8>*@v16i8
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
@@ -54,21 +62,25 @@ define void @const_v8i16() nounwind {
   ; ALL: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <8 x i16> <i16 1, i16 1, i16 1, i16 2, i16 1, i16 1, i16 1, i16 31>, <8 x i16>*@v8i16
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.h  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <8 x i16> <i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028>, <8 x i16>*@v8i16
   ; ALL: ldi.b [[R1:\$w[0-9]+]], 4
 
   store volatile <8 x i16> <i16 1, i16 2, i16 1, i16 2, i16 1, i16 2, i16 1, i16 2>, <8 x i16>*@v8i16
-  ; MIPS32-BE-DAG: lui [[R2:\$[0-9]+]], 1
-  ; MIPS32-LE-DAG: lui [[R2:\$[0-9]+]], 2
-  ; MIPS32-BE-DAG: ori [[R2]], [[R2]], 2
-  ; MIPS32-LE-DAG: ori [[R2]], [[R2]], 1
+  ; ALL-BE-DAG: lui [[R2:\$[0-9]+]], 1
+  ; ALL-LE-DAG: lui [[R2:\$[0-9]+]], 2
+  ; ALL-BE-DAG: ori [[R2]], [[R2]], 2
+  ; ALL-LE-DAG: ori [[R2]], [[R2]], 1
   ; ALL-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <8 x i16> <i16 1, i16 2, i16 3, i16 4, i16 1, i16 2, i16 3, i16 4>, <8 x i16>*@v8i16
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.h  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
@@ -84,7 +96,9 @@ define void @const_v4i32() nounwind {
   ; ALL: ldi.w [[R1:\$w[0-9]+]], 1
 
   store volatile <4 x i32> <i32 1, i32 1, i32 1, i32 31>, <4 x i32>*@v4i32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x i32> <i32 16843009, i32 16843009, i32 16843009, i32 16843009>, <4 x i32>*@v4i32
@@ -94,11 +108,15 @@ define void @const_v4i32() nounwind {
   ; ALL: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <4 x i32> <i32 1, i32 2, i32 1, i32 2>, <4 x i32>*@v4i32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x i32> <i32 3, i32 4, i32 5, i32 6>, <4 x i32>*@v4i32
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
   ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
@@ -123,12 +141,18 @@ define void @const_v2i64() nounwind {
   ; ALL: ldi.d [[R1:\$w[0-9]+]], 1
 
   store volatile <2 x i64> <i64 1, i64 31>, <2 x i64>*@v2i64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
-  ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; MIPS32: ld.w [[R1:\$w[0-9]+]], 0([[G_PTR]])
+  ; MIPS64: ld.d [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x i64> <i64 3, i64 4>, <2 x i64>*@v2i64
-  ; ALL: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
-  ; ALL: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
+  ; O32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; N32: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; N64: daddiu [[G_PTR:\$[0-9]+]], {{.*}}, %got_ofst($
+  ; MIPS32: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
+  ; MIPS64: ld.d  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
 }
@@ -156,14 +180,18 @@ define void @nonconst_v16i8(i8 signext %a, i8 signext %b, i8 signext %c, i8 sign
   ; ALL-DAG: insert.b [[R1]][1], $5
   ; ALL-DAG: insert.b [[R1]][2], $6
   ; ALL-DAG: insert.b [[R1]][3], $7
-  ; ALL-DAG: lw [[R2:\$[0-9]+]], 16($sp)
-  ; ALL-DAG: insert.b [[R1]][4], [[R2]]
-  ; ALL-DAG: lw [[R3:\$[0-9]+]], 20($sp)
-  ; ALL-DAG: insert.b [[R1]][5], [[R3]]
-  ; ALL-DAG: lw [[R4:\$[0-9]+]], 24($sp)
-  ; ALL-DAG: insert.b [[R1]][6], [[R4]]
-  ; ALL-DAG: lw [[R5:\$[0-9]+]], 28($sp)
-  ; ALL-DAG: insert.b [[R1]][7], [[R5]]
+  ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 16($sp)
+  ; MIPS32-DAG: insert.b [[R1]][4], [[R2]]
+  ; MIPS64-DAG: insert.b [[R1]][4], $8
+  ; MIPS32-DAG: lw [[R3:\$[0-9]+]], 20($sp)
+  ; MIPS32-DAG: insert.b [[R1]][5], [[R3]]
+  ; MIPS64-DAG: insert.b [[R1]][5], $9
+  ; MIPS32-DAG: lw [[R4:\$[0-9]+]], 24($sp)
+  ; MIPS32-DAG: insert.b [[R1]][6], [[R4]]
+  ; MIPS64-DAG: insert.b [[R1]][6], $10
+  ; MIPS32-DAG: lw [[R5:\$[0-9]+]], 28($sp)
+  ; MIPS32-DAG: insert.b [[R1]][7], [[R5]]
+  ; MIPS64-DAG: insert.b [[R1]][7], [[R5:\$11]]
   ; ALL-DAG: insert.b [[R1]][8], [[R5]]
   ; ALL-DAG: insert.b [[R1]][9], [[R5]]
   ; ALL-DAG: insert.b [[R1]][10], [[R5]]
@@ -193,14 +221,18 @@ define void @nonconst_v8i16(i16 signext %a, i16 signext %b, i16 signext %c, i16 
   ; ALL-DAG: insert.h [[R1]][1], $5
   ; ALL-DAG: insert.h [[R1]][2], $6
   ; ALL-DAG: insert.h [[R1]][3], $7
-  ; ALL-DAG: lw [[R2:\$[0-9]+]], 16($sp)
-  ; ALL-DAG: insert.h [[R1]][4], [[R2]]
-  ; ALL-DAG: lw [[R2:\$[0-9]+]], 20($sp)
-  ; ALL-DAG: insert.h [[R1]][5], [[R2]]
-  ; ALL-DAG: lw [[R2:\$[0-9]+]], 24($sp)
-  ; ALL-DAG: insert.h [[R1]][6], [[R2]]
-  ; ALL-DAG: lw [[R2:\$[0-9]+]], 28($sp)
-  ; ALL-DAG: insert.h [[R1]][7], [[R2]]
+  ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 16($sp)
+  ; MIPS32-DAG: insert.h [[R1]][4], [[R2]]
+  ; MIPS64-DAG: insert.h [[R1]][4], $8
+  ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 20($sp)
+  ; MIPS32-DAG: insert.h [[R1]][5], [[R2]]
+  ; MIPS64-DAG: insert.h [[R1]][5], $9
+  ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 24($sp)
+  ; MIPS32-DAG: insert.h [[R1]][6], [[R2]]
+  ; MIPS64-DAG: insert.h [[R1]][6], $10
+  ; MIPS32-DAG: lw [[R2:\$[0-9]+]], 28($sp)
+  ; MIPS32-DAG: insert.h [[R1]][7], [[R2]]
+  ; MIPS64-DAG: insert.h [[R1]][7], $11
 
   store volatile <8 x i16> %8, <8 x i16>*@v8i16
 
@@ -229,10 +261,12 @@ define void @nonconst_v2i64(i64 signext %a, i64 signext %b) nounwind {
 
   %1 = insertelement <2 x i64> undef, i64 %a, i32 0
   %2 = insertelement <2 x i64> %1, i64 %b, i32 1
-  ; ALL: insert.w [[R1:\$w[0-9]+]][0], $4
-  ; ALL: insert.w [[R1]][1], $5
-  ; ALL: insert.w [[R1]][2], $6
-  ; ALL: insert.w [[R1]][3], $7
+  ; MIPS32: insert.w [[R1:\$w[0-9]+]][0], $4
+  ; MIPS32: insert.w [[R1]][1], $5
+  ; MIPS32: insert.w [[R1]][2], $6
+  ; MIPS32: insert.w [[R1]][3], $7
+  ; MIPS64: insert.d [[R1:\$w[0-9]+]][0], $4
+  ; MIPS64: insert.d [[R1]][1], $5
 
   store volatile <2 x i64> %2, <2 x i64>*@v2i64
 
@@ -300,8 +334,9 @@ define i64 @extract_sext_v2i64() nounwind {
   ; ALL-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = extractelement <2 x i64> %2, i32 1
-  ; ALL-DAG: copy_s.w [[R3:\$[0-9]+]], [[R1]][2]
-  ; ALL-DAG: copy_s.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS32-DAG: copy_s.w [[R3:\$[0-9]+]], [[R1]][2]
+  ; MIPS32-DAG: copy_s.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS64-DAG: copy_s.d [[R3:\$[0-9]+]], [[R1]][1]
   ; ALL-NOT: sll
   ; ALL-NOT: sra
 
@@ -367,8 +402,9 @@ define i64 @extract_zext_v2i64() nounwind {
   ; ALL-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = extractelement <2 x i64> %2, i32 1
-  ; ALL-DAG: copy_{{[su]}}.w [[R3:\$[0-9]+]], [[R1]][2]
-  ; ALL-DAG: copy_{{[su]}}.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS32-DAG: copy_{{[su]}}.w [[R3:\$[0-9]+]], [[R1]][2]
+  ; MIPS32-DAG: copy_{{[su]}}.w [[R4:\$[0-9]+]], [[R1]][3]
+  ; MIPS64-DAG: copy_{{[su]}}.d [[R3:\$[0-9]+]], [[R1]][1]
   ; ALL-NOT: andi
 
   ret i64 %3
@@ -378,14 +414,18 @@ define i32 @extract_sext_v16i8_vidx() nounwind {
   ; ALL-LABEL: extract_sext_v16i8_vidx:
 
   %1 = load <16 x i8>, <16 x i8>* @v16i8
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v16i8)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v16i8)(
   ; ALL-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <16 x i8> %1, %1
   ; ALL-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <16 x i8> %2, i32 %3
@@ -401,14 +441,18 @@ define i32 @extract_sext_v8i16_vidx() nounwind {
   ; ALL-LABEL: extract_sext_v8i16_vidx:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v8i16)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v8i16)(
   ; ALL-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <8 x i16> %1, %1
   ; ALL-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <8 x i16> %2, i32 %3
@@ -424,14 +468,18 @@ define i32 @extract_sext_v4i32_vidx() nounwind {
   ; ALL-LABEL: extract_sext_v4i32_vidx:
 
   %1 = load <4 x i32>, <4 x i32>* @v4i32
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v4i32)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v4i32)(
   ; ALL-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <4 x i32> %1, %1
   ; ALL-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <4 x i32> %2, i32 %3
@@ -446,21 +494,27 @@ define i64 @extract_sext_v2i64_vidx() nounwind {
   ; ALL-LABEL: extract_sext_v2i64_vidx:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v2i64)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v2i64)(
   ; ALL-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <2 x i64> %1, %1
   ; ALL-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <2 x i64> %2, i32 %3
-  ; ALL-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
-  ; ALL-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
-  ; ALL-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
-  ; ALL-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS32-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS64-DAG: splat.d $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS64-DAG: dmfc1 [[R5:\$[0-9]+]], $f[[R3]]
   ; ALL-NOT: sra
 
   ret i64 %4
@@ -470,14 +524,18 @@ define i32 @extract_zext_v16i8_vidx() nounwind {
   ; ALL-LABEL: extract_zext_v16i8_vidx:
 
   %1 = load <16 x i8>, <16 x i8>* @v16i8
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v16i8)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v16i8)(
   ; ALL-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <16 x i8> %1, %1
   ; ALL-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <16 x i8> %2, i32 %3
@@ -493,14 +551,18 @@ define i32 @extract_zext_v8i16_vidx() nounwind {
   ; ALL-LABEL: extract_zext_v8i16_vidx:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v8i16)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v8i16)(
   ; ALL-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <8 x i16> %1, %1
   ; ALL-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <8 x i16> %2, i32 %3
@@ -516,14 +578,18 @@ define i32 @extract_zext_v4i32_vidx() nounwind {
   ; ALL-LABEL: extract_zext_v4i32_vidx:
 
   %1 = load <4 x i32>, <4 x i32>* @v4i32
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v4i32)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v4i32)(
   ; ALL-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <4 x i32> %1, %1
   ; ALL-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <4 x i32> %2, i32 %3
@@ -538,21 +604,27 @@ define i64 @extract_zext_v2i64_vidx() nounwind {
   ; ALL-LABEL: extract_zext_v2i64_vidx:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
-  ; ALL-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; O32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; N32-DAG: lw [[PTR_V:\$[0-9]+]], %got_disp(v2i64)(
+  ; N64-DAG: ld [[PTR_V:\$[0-9]+]], %got_disp(v2i64)(
   ; ALL-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <2 x i64> %1, %1
   ; ALL-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
   %3 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %4 = extractelement <2 x i64> %2, i32 %3
-  ; ALL-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
-  ; ALL-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
-  ; ALL-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
-  ; ALL-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS32-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS64-DAG: splat.d $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS64-DAG: dmfc1 [[R5:\$[0-9]+]], $f[[R3]]
   ; ALL-NOT: srl
 
   ret i64 %4
@@ -622,17 +694,20 @@ define void @insert_v2i64(i64 signext %a) nounwind {
   ; ALL-LABEL: insert_v2i64:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
-  ; ALL-DAG: ld.w [[R1:\$w[0-9]+]],
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+  ; MIPS64-DAG: ld.d [[R1:\$w[0-9]+]],
 
   ; ALL-NOT: andi
   ; ALL-NOT: sra
 
   %2 = insertelement <2 x i64> %1, i64 %a, i32 1
-  ; ALL-DAG: insert.w [[R1]][2], $4
-  ; ALL-DAG: insert.w [[R1]][3], $5
+  ; MIPS32-DAG: insert.w [[R1]][2], $4
+  ; MIPS32-DAG: insert.w [[R1]][3], $5
+  ; MIPS64-DAG: insert.d [[R1]][1], $4
 
   store <2 x i64> %2, <2 x i64>* @v2i64
-  ; ALL-DAG: st.w [[R1]]
+  ; MIPS32-DAG: st.w [[R1]]
+  ; MIPS64-DAG: st.d [[R1]]
 
   ret void
 }
@@ -644,7 +719,9 @@ define void @insert_v16i8_vidx(i32 signext %a) nounwind {
   ; ALL-DAG: ld.b [[R1:\$w[0-9]+]],
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %a2 = trunc i32 %a to i8
@@ -656,7 +733,9 @@ define void @insert_v16i8_vidx(i32 signext %a) nounwind {
   %3 = insertelement <16 x i8> %1, i8 %a4, i32 %2
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[IDX]]]
   ; ALL-DAG: insert.b [[R1]][0], $4
-  ; ALL-DAG: neg [[NIDX:\$[0-9]+]], [[IDX]]
+  ; O32-DAG: neg [[NIDX:\$[0-9]+]], [[IDX]]
+  ; N32-DAG: neg [[NIDX:\$[0-9]+]], [[IDX]]
+  ; N64-DAG: dneg [[NIDX:\$[0-9]+]], [[IDX]]
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
 
   store <16 x i8> %3, <16 x i8>* @v16i8
@@ -665,14 +744,16 @@ define void @insert_v16i8_vidx(i32 signext %a) nounwind {
   ret void
 }
 
-define void @insert_v8i16_vidx(i32 %a) nounwind {
+define void @insert_v8i16_vidx(i32 signext %a) nounwind {
   ; ALL-LABEL: insert_v8i16_vidx:
 
   %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; ALL-DAG: ld.h [[R1:\$w[0-9]+]],
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   %a2 = trunc i32 %a to i16
@@ -685,7 +766,9 @@ define void @insert_v8i16_vidx(i32 %a) nounwind {
   ; ALL-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 1
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
   ; ALL-DAG: insert.h [[R1]][0], $4
-  ; ALL-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; O32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; N32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; N64-DAG: dneg [[NIDX:\$[0-9]+]], [[BIDX]]
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
 
   store <8 x i16> %3, <8 x i16>* @v8i16
@@ -701,7 +784,9 @@ define void @insert_v4i32_vidx(i32 signext %a) nounwind {
   ; ALL-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   ; ALL-NOT: andi
@@ -724,10 +809,13 @@ define void @insert_v2i64_vidx(i64 signext %a) nounwind {
   ; ALL-LABEL: insert_v2i64_vidx:
 
   %1 = load <2 x i64>, <2 x i64>* @v2i64
-  ; ALL-DAG: ld.w [[R1:\$w[0-9]+]],
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+  ; MIPS64-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = load i32, i32* @i32
-  ; ALL-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; O32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; N32-DAG: lw [[PTR_I:\$[0-9]+]], %got_disp(i32)(
+  ; N64-DAG: ld [[PTR_I:\$[0-9]+]], %got_disp(i32)(
   ; ALL-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
   ; ALL-NOT: andi
@@ -738,20 +826,28 @@ define void @insert_v2i64_vidx(i64 signext %a) nounwind {
   ; 64-bit inserts into two 32-bit inserts because there is no i64 type on
   ; MIPS32. The obvious optimisation is to perform both insert.w's at once while
   ; the vector is rotated.
-  ; ALL-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
-  ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
-  ; ALL-DAG: insert.w [[R1]][0], $4
-  ; ALL-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
-  ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
-  ; ALL-DAG: addiu [[IDX2:\$[0-9]+]], [[IDX]], 1
-  ; ALL-DAG: sll [[BIDX:\$[0-9]+]], [[IDX2]], 2
-  ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
-  ; ALL-DAG: insert.w [[R1]][0], $5
-  ; ALL-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
-  ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+  ; MIPS32-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-DAG: insert.w [[R1]][0], $4
+  ; MIPS32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+  ; MIPS32-DAG: addiu [[IDX2:\$[0-9]+]], [[IDX]], 1
+  ; MIPS32-DAG: sll [[BIDX:\$[0-9]+]], [[IDX2]], 2
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-DAG: insert.w [[R1]][0], $5
+  ; MIPS32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  ; MIPS64-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 3
+  ; MIPS64-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS64-DAG: insert.d [[R1]][0], $4
+  ; N32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; N64-DAG: dneg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS64-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
 
   store <2 x i64> %3, <2 x i64>* @v2i64
-  ; ALL-DAG: st.w [[R1]]
+  ; MIPS32-DAG: st.w [[R1]]
+  ; MIPS64-DAG: st.d [[R1]]
 
   ret void
 }

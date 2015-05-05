@@ -567,6 +567,15 @@ def : MipsInstAlias<"dadd $rs, $imm",
 def : MipsInstAlias<"dsll $rd, $rt, $rs",
                     (DSLLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>,
                     ISA_MIPS3;
+def : MipsInstAlias<"dneg $rt, $rs",
+                    (DSUB GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
+                    ISA_MIPS3;
+def : MipsInstAlias<"dneg $rt",
+                    (DSUB GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rt), 0>,
+                    ISA_MIPS3;
+def : MipsInstAlias<"dnegu $rt, $rs",
+                    (DSUBu GPR64Opnd:$rt, ZERO_64, GPR64Opnd:$rs), 1>,
+                    ISA_MIPS3;
 def : MipsInstAlias<"dsubu $rt, $rs, $imm",
                     (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
                             InvertedImOperand64:$imm), 0>, ISA_MIPS3;
