@@ -2,6 +2,8 @@
 ; RUN: llc -march=mipsel -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=O32 -check-prefix=MIPS32 -check-prefix=ALL-LE %s
 ; RUN: llc -march=mips64 -target-abi n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 -check-prefix=MIPS64 -check-prefix=ALL-BE %s
 ; RUN: llc -march=mips64el -target-abi n32 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N32 -check-prefix=MIPS64 -check-prefix=ALL-LE %s
+; RUN: llc -march=mips64 -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N64 -check-prefix=MIPS64 -check-prefix=ALL-BE %s
+; RUN: llc -march=mips64el -mattr=+msa,+fp64 < %s | FileCheck -check-prefix=ALL -check-prefix=N64 -check-prefix=MIPS64 -check-prefix=ALL-LE %s
 
 @v4i8 = global <4 x i8> <i8 0, i8 0, i8 0, i8 0>
 @v16i8 = global <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>
@@ -796,7 +798,9 @@ define void @insert_v4i32_vidx(i32 signext %a) nounwind {
   ; ALL-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
   ; ALL-DAG: insert.w [[R1]][0], $4
-  ; ALL-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; O32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; N32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; N64-DAG: dneg [[NIDX:\$[0-9]+]], [[BIDX]]
   ; ALL-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
 
   store <4 x i32> %3, <4 x i32>* @v4i32

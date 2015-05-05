@@ -1146,16 +1146,22 @@ MipsSETargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case Mips::INSERT_FD_PSEUDO:
     return emitINSERT_FD(MI, BB);
   case Mips::INSERT_B_VIDX_PSEUDO:
+  case Mips::INSERT_B_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 1, false);
   case Mips::INSERT_H_VIDX_PSEUDO:
+  case Mips::INSERT_H_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 2, false);
   case Mips::INSERT_W_VIDX_PSEUDO:
+  case Mips::INSERT_W_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 4, false);
   case Mips::INSERT_D_VIDX_PSEUDO:
+  case Mips::INSERT_D_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 8, false);
   case Mips::INSERT_FW_VIDX_PSEUDO:
+  case Mips::INSERT_FW_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 4, true);
   case Mips::INSERT_FD_VIDX_PSEUDO:
+  case Mips::INSERT_FD_VIDX64_PSEUDO:
     return emitINSERT_DF_VIDX(MI, BB, 8, true);
   case Mips::FILL_FW_PSEUDO:
     return emitFILL_FW(MI, BB);
