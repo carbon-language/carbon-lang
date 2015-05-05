@@ -1154,16 +1154,16 @@ llvm::Value *CGOpenMPRuntime::getCriticalRegionLock(StringRef CriticalName) {
 }
 
 namespace {
-template <int N> class CallEndCleanup : public EHScopeStack::Cleanup {
+class CallEndCleanup : public EHScopeStack::Cleanup {
+public:
+  typedef ArrayRef<llvm::Value *> CleanupValuesTy;
+private:
   llvm::Value *Callee;
-  llvm::Value *Args[N];
+  llvm::SmallVector<llvm::Value *, 8> Args;
 
 public:
-  CallEndCleanup(llvm::Value *Callee, ArrayRef<llvm::Value *> CleanupArgs)
-      : Callee(Callee) {
-    assert(CleanupArgs.size() == N);
-    std::copy(CleanupArgs.begin(), CleanupArgs.end(), std::begin(Args));
-  }
+  CallEndCleanup(llvm::Value *Callee, CleanupValuesTy Args)
+      : Callee(Callee), Args(Args.begin(), Args.end()) {}
   void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
     CGF.EmitRuntimeCall(Callee, Args);
   }
@@ -1184,8 +1184,7 @@ void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
                            getCriticalRegionLock(CriticalName)};
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_critical), Args);
     // Build a call to __kmpc_end_critical
-    constexpr auto Size = array_lengthof(Args);
-    CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_critical),
         llvm::makeArrayRef(Args));
     emitInlinedDirective(CGF, CriticalOpGen);
@@ -1223,8 +1222,7 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_master), Args);
   emitIfStmt(CGF, IsMaster, [&](CodeGenFunction &CGF) -> void {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    constexpr auto Size = array_lengthof(Args);
-    CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_master),
         llvm::makeArrayRef(Args));
     MasterOpGen(CGF);
@@ -1330,8 +1328,7 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_single), Args);
   emitIfStmt(CGF, IsSingle, [&](CodeGenFunction &CGF) -> void {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    constexpr auto Size = array_lengthof(Args);
-    CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_single),
         llvm::makeArrayRef(Args));
     SingleOpGen(CGF);
@@ -1394,8 +1391,7 @@ void CGOpenMPRuntime::emitOrderedRegion(CodeGenFunction &CGF,
     llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_ordered), Args);
     // Build a call to __kmpc_end_ordered
-    constexpr auto Size = array_lengthof(Args);
-    CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_ordered),
         llvm::makeArrayRef(Args));
     emitInlinedDirective(CGF, OrderedOpGen);
@@ -2003,8 +1999,7 @@ void CGOpenMPRuntime::emitTaskCall(
             createRuntimeFunction(OMPRTL__kmpc_omp_task_begin_if0), TaskArgs);
         // Build void __kmpc_omp_task_complete_if0(ident_t *, kmp_int32 gtid,
         // kmp_task_t *new_task);
-        constexpr auto Size = array_lengthof(TaskArgs);
-        CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+        CGF.EHStack.pushCleanup<CallEndCleanup>(
             NormalAndEHCleanup,
             createRuntimeFunction(OMPRTL__kmpc_omp_task_complete_if0),
             llvm::makeArrayRef(TaskArgs));
@@ -2196,8 +2191,7 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
         ThreadId,  // i32 <gtid>
         Lock       // kmp_critical_name *&<lock>
     };
-    constexpr auto Size = array_lengthof(EndArgs);
-    CGF.EHStack.pushCleanup<CallEndCleanup<Size>>(
+    CGF.EHStack.pushCleanup<CallEndCleanup>(
         NormalAndEHCleanup,
         createRuntimeFunction(WithNowait ? OMPRTL__kmpc_end_reduce_nowait
                                          : OMPRTL__kmpc_end_reduce),
