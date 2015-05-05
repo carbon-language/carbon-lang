@@ -259,4 +259,18 @@ TEST_F(CoverageMappingTest, dont_combine_expansions) {
   ASSERT_EQ(CoverageSegment(9, 9, false), Segments[3]);
 }
 
+TEST_F(CoverageMappingTest, strip_filename_prefix) {
+  ProfileWriter.addFunctionCounts("file1:func", 0x1234, {10});
+  readProfCounts();
+
+  addCMR(Counter::getCounter(0), "file1", 1, 1, 9, 9);
+  loadCoverageMapping("file1:func", 0x1234);
+
+  std::vector<std::string> Names;
+  for (const auto &Func : LoadedCoverage->getCoveredFunctions())
+    Names.push_back(Func.Name);
+  ASSERT_EQ(1U, Names.size());
+  ASSERT_EQ("func", Names[0]);
+}
+
 } // end anonymous namespace
