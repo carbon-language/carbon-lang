@@ -9,6 +9,8 @@ bool foobool(int argc) {
 
 struct S1; // expected-note {{declared here}}
 
+#define redef_num_threads(a, b) num_threads(a)
+
 template <class T, typename S, int N> // expected-note {{declared here}}
 T tmain(T argc, S **argv) {
   #pragma omp parallel num_threads // expected-error {{expected '(' after 'num_threads'}}
@@ -22,6 +24,7 @@ T tmain(T argc, S **argv) {
   #pragma omp parallel num_threads (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error 2 {{expression must have integral or unscoped enumeration type, not 'char *'}}
   #pragma omp parallel num_threads (argc)
   #pragma omp parallel num_threads (N) // expected-error {{argument to 'num_threads' clause must be a positive integer value}}
+  #pragma omp parallel redef_num_threads (argc, argc)
   foo();
 
   return argc;
@@ -38,6 +41,7 @@ int main(int argc, char **argv) {
   #pragma omp parallel num_threads (S1) // expected-error {{'S1' does not refer to a value}}
   #pragma omp parallel num_threads (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{expression must have integral or unscoped enumeration type, not 'char *'}}
   #pragma omp parallel num_threads (num_threads(tmain<int, char, -1>(argc, argv) // expected-error 2 {{expected ')'}} expected-note 2 {{to match this '('}} expected-note {{in instantiation of function template specialization 'tmain<int, char, -1>' requested here}}
+  #pragma omp parallel redef_num_threads (argc, argc)
   foo();
 
   return tmain<int, char, 3>(argc, argv); // expected-note {{in instantiation of function template specialization 'tmain<int, char, 3>' requested here}}

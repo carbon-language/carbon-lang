@@ -1489,7 +1489,7 @@ PragmaOpenMPHandler::HandlePragma(Preprocessor &PP,
   Token *Toks = new Token[Pragma.size()];
   std::copy(Pragma.begin(), Pragma.end(), Toks);
   PP.EnterTokenStream(Toks, Pragma.size(),
-                      /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
+                      /*DisableMacroExpansion=*/false, /*OwnsTokens=*/true);
 }
 
 /// \brief Handle '#pragma pointers_to_members'
