@@ -12,7 +12,8 @@
 // ASAN options:
 //   * don't dump the coverage to disk.
 //   * enable coverage by default.
+//   * enable handle_abort.
 //===----------------------------------------------------------------------===//
 extern "C" const char *__asan_default_options() {
-  return "coverage_pcs=0:coverage=1";
+  return "coverage_pcs=0:coverage=1:handle_abort=1";
 }
