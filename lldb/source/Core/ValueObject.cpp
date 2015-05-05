@@ -1053,6 +1053,9 @@ ValueObject::GetPointeeData (DataExtractor& data,
                     if (max_bytes > offset)
                     {
                         size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
+                        addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                        if (addr == LLDB_INVALID_ADDRESS)
+                            break;
                         heap_buf_ptr->CopyData((uint8_t*)(addr + offset), bytes_read);
                         data.SetData(data_sp);
                         return bytes_read;
@@ -1828,6 +1831,11 @@ ValueObject::GetAddressOf (bool scalar_is_load_address, AddressType *address_typ
         }
         break;
     case Value::eValueTypeHostAddress:
+        {
+            if(address_type)
+                *address_type = m_value.GetValueAddressType ();
+            return LLDB_INVALID_ADDRESS;
+        }
         break;
     }
     if (address_type)
