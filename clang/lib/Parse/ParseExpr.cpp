@@ -931,7 +931,12 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     auto Validator = llvm::make_unique<CastExpressionIdValidator>(
         Tok, isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
     Validator->IsAddressOfOperand = isAddressOfOperand;
-    Validator->WantRemainingKeywords = Tok.isNot(tok::r_paren);
+    if (Tok.is(tok::periodstar) || Tok.is(tok::arrowstar)) {
+      Validator->WantExpressionKeywords = false;
+      Validator->WantRemainingKeywords = false;
+    } else {
+      Validator->WantRemainingKeywords = Tok.isNot(tok::r_paren);
+    }
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(
         getCurScope(), ScopeSpec, TemplateKWLoc, Name, Tok.is(tok::l_paren),
