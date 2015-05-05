@@ -777,6 +777,24 @@ bool SystemZTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   return true;
 }
 
+// We do not yet support 128-bit single-element vector types.  If the user
+// attempts to use such types as function argument or return type, prefer
+// to error out instead of emitting code violating the ABI.
+static void VerifyVectorType(MVT VT, EVT ArgVT) {
+  if (ArgVT.isVector() && !VT.isVector())
+    report_fatal_error("Unsupported vector argument or return type");
+}
+
+static void VerifyVectorTypes(const SmallVectorImpl<ISD::InputArg> &Ins) {
+  for (unsigned i = 0; i < Ins.size(); ++i)
+    VerifyVectorType(Ins[i].VT, Ins[i].ArgVT);
+}
+
+static void VerifyVectorTypes(const SmallVectorImpl<ISD::OutputArg> &Outs) {
+  for (unsigned i = 0; i < Outs.size(); ++i)
+    VerifyVectorType(Outs[i].VT, Outs[i].ArgVT);
+}
+
 // Value is a value that has been passed to us in the location described by VA
 // (and so has type VA.getLocVT()).  Convert Value to VA.getValVT(), chaining
 // any loads onto Chain.
@@ -849,6 +867,10 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
       MF.getInfo<SystemZMachineFunctionInfo>();
   auto *TFL =
       static_cast<const SystemZFrameLowering *>(Subtarget.getFrameLowering());
+
+  // Detect unsupported vector argument types.
+  if (Subtarget.hasVector())
+    VerifyVectorTypes(Ins);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -996,6 +1018,12 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
   bool IsVarArg = CLI.IsVarArg;
   MachineFunction &MF = DAG.getMachineFunction();
   EVT PtrVT = getPointerTy();
+
+  // Detect unsupported vector argument and return types.
+  if (Subtarget.hasVector()) {
+    VerifyVectorTypes(Outs);
+    VerifyVectorTypes(Ins);
+  }
 
   // Analyze the operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -1150,6 +1178,10 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
                                    const SmallVectorImpl<SDValue> &OutVals,
                                    SDLoc DL, SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
+
+  // Detect unsupported vector return types.
+  if (Subtarget.hasVector())
+    VerifyVectorTypes(Outs);
 
   // Assign locations to each returned value.
   SmallVector<CCValAssign, 16> RetLocs;
