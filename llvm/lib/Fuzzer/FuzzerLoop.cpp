@@ -246,6 +246,8 @@ void Fuzzer::WriteToCrash(const Unit &U, const char *Prefix) {
   std::string Path = Prefix + Hash(U);
   WriteToFile(U, Path);
   std::cerr << "CRASHED; file written to " << Path << std::endl;
+  std::cerr << "Base64: ";
+  PrintFileAsBase64(Path);
 }
 
 void Fuzzer::SaveCorpus() {
