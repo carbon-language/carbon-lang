@@ -22,17 +22,12 @@ using namespace llvm;
 
 /// \brief Remove all registers from the set that get clobbered by the register
 /// mask.
-/// The clobbers set will be the list of live registers clobbered
-/// by the regmask.
-void LivePhysRegs::removeRegsInMask(const MachineOperand &MO,
-        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> *Clobbers) {
+void LivePhysRegs::removeRegsInMask(const MachineOperand &MO) {
   SparseSet<unsigned>::iterator LRI = LiveRegs.begin();
   while (LRI != LiveRegs.end()) {
-    if (MO.clobbersPhysReg(*LRI)) {
-      if (Clobbers)
-        Clobbers->push_back(std::make_pair(*LRI, &MO));
+    if (MO.clobbersPhysReg(*LRI))
       LRI = LiveRegs.erase(LRI);
-    } else
+    else
       ++LRI;
   }
 }
@@ -50,7 +45,7 @@ void LivePhysRegs::stepBackward(const MachineInstr &MI) {
         continue;
       removeReg(Reg);
     } else if (O->isRegMask())
-      removeRegsInMask(*O, nullptr);
+      removeRegsInMask(*O);
   }
 
   // Add uses to the set.
@@ -68,8 +63,8 @@ void LivePhysRegs::stepBackward(const MachineInstr &MI) {
 /// killed-uses, add defs. This is the not recommended way, because it depends
 /// on accurate kill flags. If possible use stepBackwards() instead of this
 /// function.
-void LivePhysRegs::stepForward(const MachineInstr &MI,
-        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> &Clobbers) {
+void LivePhysRegs::stepForward(const MachineInstr &MI) {
+  SmallVector<unsigned, 4> Defs;
   // Remove killed registers from the set.
   for (ConstMIBundleOperands O(&MI); O.isValid(); ++O) {
     if (O->isReg()) {
@@ -78,7 +73,7 @@ void LivePhysRegs::stepForward(const MachineInstr &MI,
         continue;
       if (O->isDef()) {
         if (!O->isDead())
-          Clobbers.push_back(std::make_pair(Reg, &*O));
+          Defs.push_back(Reg);
       } else {
         if (!O->isKill())
           continue;
@@ -86,12 +81,12 @@ void LivePhysRegs::stepForward(const MachineInstr &MI,
         removeReg(Reg);
       }
     } else if (O->isRegMask())
-      removeRegsInMask(*O, &Clobbers);
+      removeRegsInMask(*O);
   }
 
   // Add defs to the set.
-  for (auto Reg : Clobbers)
-    addReg(Reg.first);
+  for (unsigned i = 0, e = Defs.size(); i != e; ++i)
+    addReg(Defs[i]);
 }
 
 /// Prin the currently live registers to OS.

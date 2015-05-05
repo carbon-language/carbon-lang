@@ -93,8 +93,7 @@ public:
   }
 
   /// \brief Removes physical registers clobbered by the regmask operand @p MO.
-  void removeRegsInMask(const MachineOperand &MO,
-        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> *Clobbers);
+  void removeRegsInMask(const MachineOperand &MO);
 
   /// \brief Returns true if register @p Reg is contained in the set. This also
   /// works if only the super register of @p Reg has been defined, because we
@@ -110,11 +109,7 @@ public:
   /// instruction(bundle): Remove killed-uses, add defs. This is the not
   /// recommended way, because it depends on accurate kill flags. If possible
   /// use stepBackwards() instead of this function.
-  /// The clobbers set will be the list of registers either defined or clobbered
-  /// by a regmask.  The operand will identify whether this is a regmask or
-  /// register operand.
-  void stepForward(const MachineInstr &MI,
-        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> &Clobbers);
+  void stepForward(const MachineInstr &MI);
 
   /// \brief Adds all live-in registers of basic block @p MBB.
   void addLiveIns(const MachineBasicBlock *MBB) {
