@@ -5146,12 +5146,17 @@ void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
 namespace {
 
 class SystemZABIInfo : public ABIInfo {
+  bool HasVector;
+
 public:
-  SystemZABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  SystemZABIInfo(CodeGenTypes &CGT, bool HV)
+    : ABIInfo(CGT), HasVector(HV) {}
 
   bool isPromotableIntegerType(QualType Ty) const;
   bool isCompoundType(QualType Ty) const;
+  bool isVectorArgumentType(QualType Ty) const;
   bool isFPArgumentType(QualType Ty) const;
+  QualType GetSingleElementType(QualType Ty) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType ArgTy) const;
@@ -5169,8 +5174,8 @@ public:
 
 class SystemZTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  SystemZTargetCodeGenInfo(CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new SystemZABIInfo(CGT)) {}
+  SystemZTargetCodeGenInfo(CodeGenTypes &CGT, bool HasVector)
+    : TargetCodeGenInfo(new SystemZABIInfo(CGT, HasVector)) {}
 };
 
 }
@@ -5202,6 +5207,12 @@ bool SystemZABIInfo::isCompoundType(QualType Ty) const {
           isAggregateTypeForABI(Ty));
 }
 
+bool SystemZABIInfo::isVectorArgumentType(QualType Ty) const {
+  return (HasVector &&
+          Ty->isVectorType() &&
+          getContext().getTypeSize(Ty) <= 128);
+}
+
 bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
   if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
     switch (BT->getKind()) {
@@ -5212,9 +5223,13 @@ bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
       return false;
     }
 
+  return false;
+}
+
+QualType SystemZABIInfo::GetSingleElementType(QualType Ty) const {
   if (const RecordType *RT = Ty->getAsStructureType()) {
     const RecordDecl *RD = RT->getDecl();
-    bool Found = false;
+    QualType Found;
 
     // If this is a C++ record, check the bases first.
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
@@ -5225,11 +5240,9 @@ bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
         if (isEmptyRecord(getContext(), Base, true))
           continue;
 
-        if (Found)
-          return false;
-        Found = isFPArgumentType(Base);
-        if (!Found)
-          return false;
+        if (!Found.isNull())
+          return Ty;
+        Found = GetSingleElementType(Base);
       }
 
     // Check the fields.
@@ -5242,20 +5255,19 @@ bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
         continue;
 
       // Unlike isSingleElementStruct(), arrays do not count.
-      // Nested isFPArgumentType structures still do though.
-      if (Found)
-        return false;
-      Found = isFPArgumentType(FD->getType());
-      if (!Found)
-        return false;
+      // Nested structures still do though.
+      if (!Found.isNull())
+        return Ty;
+      Found = GetSingleElementType(FD->getType());
     }
 
     // Unlike isSingleElementStruct(), trailing padding is allowed.
     // An 8-byte aligned struct s { float f; } is passed as a double.
-    return Found;
+    if (!Found.isNull())
+      return Found;
   }
 
-  return false;
+  return Ty;
 }
 
 llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -5268,14 +5280,16 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   //   i8 *__reg_save_area;
   // };
 
-  // Every argument occupies 8 bytes and is passed by preference in either
-  // GPRs or FPRs.
+  // Every non-vector argument occupies 8 bytes and is passed by preference
+  // in either GPRs or FPRs.  Vector arguments occupy 8 or 16 bytes and are
+  // always passed on the stack.
   Ty = CGF.getContext().getCanonicalType(Ty);
   llvm::Type *ArgTy = CGF.ConvertTypeForMem(Ty);
   llvm::Type *APTy = llvm::PointerType::getUnqual(ArgTy);
   ABIArgInfo AI = classifyArgumentType(Ty);
   bool IsIndirect = AI.isIndirect();
   bool InFPRs = false;
+  bool IsVector = false;
   unsigned UnpaddedBitSize;
   if (IsIndirect) {
     APTy = llvm::PointerType::getUnqual(APTy);
@@ -5284,13 +5298,37 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     if (AI.getCoerceToType())
       ArgTy = AI.getCoerceToType();
     InFPRs = ArgTy->isFloatTy() || ArgTy->isDoubleTy();
+    IsVector = ArgTy->isVectorTy();
     UnpaddedBitSize = getContext().getTypeSize(Ty);
   }
-  unsigned PaddedBitSize = 64;
+  unsigned PaddedBitSize = (IsVector && UnpaddedBitSize > 64) ? 128 : 64;
   assert((UnpaddedBitSize <= PaddedBitSize) && "Invalid argument size.");
 
   unsigned PaddedSize = PaddedBitSize / 8;
   unsigned Padding = (PaddedBitSize - UnpaddedBitSize) / 8;
+
+  llvm::Type *IndexTy = CGF.Int64Ty;
+  llvm::Value *PaddedSizeV = llvm::ConstantInt::get(IndexTy, PaddedSize);
+
+  if (IsVector) {
+    // Work out the address of a vector argument on the stack.
+    // Vector arguments are always passed in the high bits of a
+    // single (8 byte) or double (16 byte) stack slot.
+    llvm::Value *OverflowArgAreaPtr =
+      CGF.Builder.CreateStructGEP(nullptr, VAListAddr, 2,
+                                  "overflow_arg_area_ptr");
+    llvm::Value *OverflowArgArea =
+      CGF.Builder.CreateLoad(OverflowArgAreaPtr, "overflow_arg_area");
+    llvm::Value *MemAddr =
+      CGF.Builder.CreateBitCast(OverflowArgArea, APTy, "mem_addr");
+
+    // Update overflow_arg_area_ptr pointer
+    llvm::Value *NewOverflowArgArea =
+      CGF.Builder.CreateGEP(OverflowArgArea, PaddedSizeV, "overflow_arg_area");
+    CGF.Builder.CreateStore(NewOverflowArgArea, OverflowArgAreaPtr);
+
+    return MemAddr;
+  }
 
   unsigned MaxRegs, RegCountField, RegSaveIndex, RegPadding;
   if (InFPRs) {
@@ -5308,7 +5346,6 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Value *RegCountPtr = CGF.Builder.CreateStructGEP(
       nullptr, VAListAddr, RegCountField, "reg_count_ptr");
   llvm::Value *RegCount = CGF.Builder.CreateLoad(RegCountPtr, "reg_count");
-  llvm::Type *IndexTy = RegCount->getType();
   llvm::Value *MaxRegsV = llvm::ConstantInt::get(IndexTy, MaxRegs);
   llvm::Value *InRegs = CGF.Builder.CreateICmpULT(RegCount, MaxRegsV,
                                                  "fits_in_regs");
@@ -5322,7 +5359,6 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   CGF.EmitBlock(InRegBlock);
 
   // Work out the address of an argument register.
-  llvm::Value *PaddedSizeV = llvm::ConstantInt::get(IndexTy, PaddedSize);
   llvm::Value *ScaledRegCount =
     CGF.Builder.CreateMul(RegCount, PaddedSizeV, "scaled_reg_count");
   llvm::Value *RegBase =
@@ -5380,6 +5416,8 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
+  if (isVectorArgumentType(RetTy))
+    return ABIArgInfo::getDirect();
   if (isCompoundType(RetTy) || getContext().getTypeSize(RetTy) > 64)
     return ABIArgInfo::getIndirect(0);
   return (isPromotableIntegerType(RetTy) ?
@@ -5395,8 +5433,16 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
   if (isPromotableIntegerType(Ty))
     return ABIArgInfo::getExtend();
 
-  // Values that are not 1, 2, 4 or 8 bytes in size are passed indirectly.
+  // Handle vector types and vector-like structure types.  Note that
+  // as opposed to float-like structure types, we do not allow any
+  // padding for vector-like structures, so verify the sizes match.
   uint64_t Size = getContext().getTypeSize(Ty);
+  QualType SingleElementTy = GetSingleElementType(Ty);
+  if (isVectorArgumentType(SingleElementTy) &&
+      getContext().getTypeSize(SingleElementTy) == Size)
+    return ABIArgInfo::getDirect(CGT.ConvertType(SingleElementTy));
+
+  // Values that are not 1, 2, 4 or 8 bytes in size are passed indirectly.
   if (Size != 8 && Size != 16 && Size != 32 && Size != 64)
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
@@ -5410,7 +5456,7 @@ ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty) const {
 
     // The structure is passed as an unextended integer, a float, or a double.
     llvm::Type *PassTy;
-    if (isFPArgumentType(Ty)) {
+    if (isFPArgumentType(SingleElementTy)) {
       assert(Size == 32 || Size == 64);
       if (Size == 32)
         PassTy = llvm::Type::getFloatTy(getVMContext());
@@ -7067,8 +7113,11 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::msp430:
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
 
-  case llvm::Triple::systemz:
-    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types));
+  case llvm::Triple::systemz: {
+    bool HasVector = getTarget().getABI() == "vector";
+    return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types,
+                                                                 HasVector));
+  }
 
   case llvm::Triple::tce:
     return *(TheTargetCodeGenInfo = new TCETargetCodeGenInfo(Types));

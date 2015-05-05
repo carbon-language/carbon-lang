@@ -1310,6 +1310,9 @@ def fno_altivec : Flag<["-"], "fno-altivec">, Group<f_Group>, Flags<[CC1Option]>
 def maltivec : Flag<["-"], "maltivec">, Alias<faltivec>;
 def mno_altivec : Flag<["-"], "mno-altivec">, Alias<fno_altivec>;
 
+def mvx : Flag<["-"], "mvx">, Group<m_Group>;
+def mno_vx : Flag<["-"], "mno-vx">, Group<m_Group>;
+
 def mno_warn_nonportable_cfstrings : Flag<["-"], "mno-warn-nonportable-cfstrings">, Group<m_Group>;
 def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Group<m_Group>;
 def momit_leaf_frame_pointer : Flag<["-"], "momit-leaf-frame-pointer">, Group<m_Group>,

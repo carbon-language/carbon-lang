@@ -1,4 +1,9 @@
-// RUN: %clang_cc1 -triple s390x-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple s390x-linux-gnu \
+// RUN:   -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple s390x-linux-gnu -target-feature +vector \
+// RUN:   -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple s390x-linux-gnu -target-cpu z13 \
+// RUN:   -emit-llvm -o - %s | FileCheck %s
 
 // Scalar types
 

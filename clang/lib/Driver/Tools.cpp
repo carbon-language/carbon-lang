@@ -1442,6 +1442,14 @@ static void getSystemZTargetFeatures(const ArgList &Args,
     else
       Features.push_back("-transactional-execution");
   }
+  // -m(no-)vx overrides use of the vector facility.
+  if (Arg *A = Args.getLastArg(options::OPT_mvx,
+                               options::OPT_mno_vx)) {
+    if (A->getOption().matches(options::OPT_mvx))
+      Features.push_back("+vector");
+    else
+      Features.push_back("-vector");
+  }
 }
 
 static const char *getX86TargetCPU(const ArgList &Args,

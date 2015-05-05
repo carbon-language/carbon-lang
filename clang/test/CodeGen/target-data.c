@@ -155,6 +155,10 @@
 // RUN: FileCheck %s -check-prefix=SYSTEMZ
 // SYSTEMZ: target datalayout = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64"
 
+// RUN: %clang_cc1 -triple s390x-unknown -target-cpu z13 -o - -emit-llvm %s | \
+// RUN: FileCheck %s -check-prefix=SYSTEMZ-VECTOR
+// SYSTEMZ-VECTOR: target datalayout = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-v128:64-a:8:16-n32:64"
+
 // RUN: %clang_cc1 -triple msp430-unknown -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=MSP430
 // MSP430: target datalayout = "e-m:e-p:16:16-i32:16:32-a:16-n8:16"

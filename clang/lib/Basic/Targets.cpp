@@ -5531,10 +5531,11 @@ class SystemZTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
   std::string CPU;
   bool HasTransactionalExecution;
+  bool HasVector;
 
 public:
   SystemZTargetInfo(const llvm::Triple &Triple)
-    : TargetInfo(Triple), CPU("z10"), HasTransactionalExecution(false) {
+    : TargetInfo(Triple), CPU("z10"), HasTransactionalExecution(false), HasVector(false) {
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
     TLSSupported = true;
@@ -5587,6 +5588,7 @@ public:
       .Case("z10", true)
       .Case("z196", true)
       .Case("zEC12", true)
+      .Case("z13", true)
       .Default(false);
 
     return CPUKnown;
@@ -5594,6 +5596,10 @@ public:
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
     if (CPU == "zEC12")
       Features["transactional-execution"] = true;
+    if (CPU == "z13") {
+      Features["transactional-execution"] = true;
+      Features["vector"] = true;
+    }
   }
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
@@ -5602,6 +5608,14 @@ public:
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+transactional-execution")
         HasTransactionalExecution = true;
+      if (Features[i] == "+vector")
+        HasVector = true;
+    }
+    // If we use the vector ABI, vector types are 64-bit aligned.
+    if (HasVector) {
+      MaxVectorAlign = 64;
+      DescriptionString = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64"
+                          "-v128:64-a:8:16-n32:64";
     }
     return true;
   }
@@ -5610,7 +5624,14 @@ public:
     return llvm::StringSwitch<bool>(Feature)
         .Case("systemz", true)
         .Case("htm", HasTransactionalExecution)
+        .Case("vx", HasVector)
         .Default(false);
+  }
+
+  StringRef getABI() const override {
+    if (HasVector)
+      return "vector";
+    return "";
   }
 };
 
