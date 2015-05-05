@@ -582,8 +582,8 @@ void SelectionDAGBuilder::LowerStatepoint(
 #endif
 
   // Lower statepoint vmstate and gcstate arguments
-  SmallVector<SDValue, 10> LoweredArgs;
-  lowerStatepointMetaArgs(LoweredArgs, ISP, *this);
+  SmallVector<SDValue, 10> LoweredMetaArgs;
+  lowerStatepointMetaArgs(LoweredMetaArgs, ISP, *this);
 
   // Get call node, we will replace it later with statepoint
   SDNode *CallNode = lowerCallFromStatepoint(ISP, LandingPad, *this);
@@ -632,7 +632,7 @@ void SelectionDAGBuilder::LowerStatepoint(
                                       getCurSDLoc(), MVT::i64));
 
   // Insert all vmstate and gcstate arguments
-  Ops.insert(Ops.end(), LoweredArgs.begin(), LoweredArgs.end());
+  Ops.insert(Ops.end(), LoweredMetaArgs.begin(), LoweredMetaArgs.end());
 
   // Add register mask from call node
   Ops.push_back(*RegMaskIt);
