@@ -931,6 +931,10 @@
 		AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */; };
 		AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */; };
 		AFB3D2801AC262AB003B4B30 /* MICmdCmdGdbShow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFB3D27E1AC262AB003B4B30 /* MICmdCmdGdbShow.cpp */; };
+		AFC234081AF85CE000CDE8B6 /* CommandObjectLanguage.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */; };
+		AFC234091AF85CE100CDE8B6 /* CommandObjectLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */; };
+		AFC2340A1AF85CE100CDE8B6 /* CommandObjectLanguage.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */; };
+		AFC2340B1AF85CE100CDE8B6 /* CommandObjectLanguage.h in Headers */ = {isa = PBXBuildFile; fileRef = AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */; };
 		AFDCDBCB19DD0F42005EA55E /* SBExecutionContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */; };
 		AFEC3362194A8ABA00FF05C6 /* StructuredData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */; };
@@ -1157,7 +1161,9 @@
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 				33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */,
 				33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */,
+				AFC234081AF85CE000CDE8B6 /* CommandObjectLanguage.cpp in CopyFiles */,
 				33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */,
+				AFC2340A1AF85CE100CDE8B6 /* CommandObjectLanguage.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -2699,6 +2705,8 @@
 		AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemRuntimeMacOSX.h; sourceTree = "<group>"; };
 		AFB3D27E1AC262AB003B4B30 /* MICmdCmdGdbShow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdGdbShow.cpp; path = "tools/lldb-mi/MICmdCmdGdbShow.cpp"; sourceTree = SOURCE_ROOT; };
 		AFB3D27F1AC262AB003B4B30 /* MICmdCmdGdbShow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdGdbShow.h; path = "tools/lldb-mi/MICmdCmdGdbShow.h"; sourceTree = SOURCE_ROOT; };
+		AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectLanguage.cpp; path = source/Commands/CommandObjectLanguage.cpp; sourceTree = "<group>"; };
+		AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectLanguage.h; path = source/Commands/CommandObjectLanguage.h; sourceTree = "<group>"; };
 		AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ConnectionFileDescriptorPosix.cpp; sourceTree = "<group>"; };
 		AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StructuredData.cpp; path = source/Core/StructuredData.cpp; sourceTree = "<group>"; };
 		AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.plist; path = tools/debugserver/source/com.apple.debugserver.plist; sourceTree = "<group>"; };
@@ -4278,6 +4286,8 @@
 				26CEB5F018762056008F575A /* CommandObjectGUI.cpp */,
 				26BC7D1A10F1B76300F91463 /* CommandObjectHelp.h */,
 				26BC7E3310F1B84700F91463 /* CommandObjectHelp.cpp */,
+				AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */,
+				AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */,
 				264AD83911095BBD00E0B039 /* CommandObjectLog.h */,
 				264AD83711095BA600E0B039 /* CommandObjectLog.cpp */,
 				26BC7D1D10F1B76300F91463 /* CommandObjectMemory.h */,
@@ -5444,6 +5454,7 @@
 				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
 				26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
+				AFC2340B1AF85CE100CDE8B6 /* CommandObjectLanguage.h in Headers */,
 				964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */,
 				AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */,
 				260A39A619647A3A004B4130 /* Pipe.h in Headers */,
@@ -6145,6 +6156,7 @@
 				26474CB418D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp in Sources */,
 				2689006613353E0E00698AC0 /* DWARFExpression.cpp in Sources */,
 				2689006713353E0E00698AC0 /* ASTDumper.cpp in Sources */,
+				AFC234091AF85CE100CDE8B6 /* CommandObjectLanguage.cpp in Sources */,
 				2689006813353E0E00698AC0 /* ASTResultSynthesizer.cpp in Sources */,
 				2689006913353E0E00698AC0 /* ASTStructExtractor.cpp in Sources */,
 				2689006A13353E0E00698AC0 /* IRDynamicChecks.cpp in Sources */,
