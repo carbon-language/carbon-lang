@@ -31,7 +31,7 @@ class BranchProbability {
 
 public:
   BranchProbability(uint32_t n, uint32_t d) : N(n), D(d) {
-    assert(d > 0 && "Denomiator cannot be 0!");
+    assert(d > 0 && "Denominator cannot be 0!");
     assert(n <= d && "Probability cannot be bigger than 1!");
   }
 
