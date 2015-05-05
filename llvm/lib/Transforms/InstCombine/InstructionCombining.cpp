@@ -1602,6 +1602,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // is a leading zero) we can fold the cast into this GEP.
             if (StrippedPtrTy->getAddressSpace() == GEP.getAddressSpace()) {
               GEP.setOperand(0, StrippedPtr);
+              GEP.setSourceElementType(XATy);
               return &GEP;
             }
             // Cannot replace the base pointer directly because StrippedPtr's

@@ -1243,10 +1243,11 @@ void GetElementPtrInst::init(Value *Ptr, ArrayRef<Value *> IdxList,
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
-  : Instruction(GEPI.getType(), GetElementPtr,
-                OperandTraits<GetElementPtrInst>::op_end(this)
-                - GEPI.getNumOperands(),
-                GEPI.getNumOperands()) {
+    : Instruction(GEPI.getType(), GetElementPtr,
+                  OperandTraits<GetElementPtrInst>::op_end(this) -
+                      GEPI.getNumOperands(),
+                  GEPI.getNumOperands()),
+      SourceElementType(GEPI.SourceElementType) {
   std::copy(GEPI.op_begin(), GEPI.op_end(), op_begin());
   SubclassOptionalData = GEPI.SubclassOptionalData;
 }
