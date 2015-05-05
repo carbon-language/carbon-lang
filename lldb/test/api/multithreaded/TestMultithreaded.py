@@ -50,7 +50,7 @@ class SBBreakpointCallbackCase(TestBase):
 
     @skipIfRemote
     @skipIfNoSBHeaders
-    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["x86_64"])
+    @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.8"], archs=["x86_64"])
     def test_sb_api_listener_resume(self):
         """ Test that a process can be resumed from a non-main thread. """
         self.build_and_test('driver.cpp listener_test.cpp test_listener_resume.cpp',
