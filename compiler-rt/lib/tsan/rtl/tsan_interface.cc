@@ -38,6 +38,16 @@ void __tsan_write16(void *addr) {
   MemoryWrite(cur_thread(), CALLERPC, (uptr)addr + 8, kSizeLog8);
 }
 
+void __tsan_read16_pc(void *addr, void *pc) {
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr + 8, kSizeLog8);
+}
+
+void __tsan_write16_pc(void *addr, void *pc) {
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr + 8, kSizeLog8);
+}
+
 // __tsan_unaligned_read/write calls are emitted by compiler.
 
 void __tsan_unaligned_read2(const void *addr) {

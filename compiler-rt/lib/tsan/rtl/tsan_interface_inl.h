@@ -50,6 +50,38 @@ void __tsan_write8(void *addr) {
   MemoryWrite(cur_thread(), CALLERPC, (uptr)addr, kSizeLog8);
 }
 
+void __tsan_read1_pc(void *addr, void *pc) {
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog1);
+}
+
+void __tsan_read2_pc(void *addr, void *pc) {
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog2);
+}
+
+void __tsan_read4_pc(void *addr, void *pc) {
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog4);
+}
+
+void __tsan_read8_pc(void *addr, void *pc) {
+  MemoryRead(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
+}
+
+void __tsan_write1_pc(void *addr, void *pc) {
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog1);
+}
+
+void __tsan_write2_pc(void *addr, void *pc) {
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog2);
+}
+
+void __tsan_write4_pc(void *addr, void *pc) {
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog4);
+}
+
+void __tsan_write8_pc(void *addr, void *pc) {
+  MemoryWrite(cur_thread(), (uptr)pc, (uptr)addr, kSizeLog8);
+}
+
 void __tsan_vptr_update(void **vptr_p, void *new_val) {
   CHECK_EQ(sizeof(vptr_p), 8);
   if (*vptr_p != new_val) {
