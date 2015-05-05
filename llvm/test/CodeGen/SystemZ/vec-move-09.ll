@@ -235,3 +235,30 @@ define <2 x i64> @f26(<2 x i64> %val, i32 %index) {
   %ret = insertelement <2 x i64> %val, i64 0, i32 %index
   ret <2 x i64> %ret
 }
+
+; Test v2f64 insertion of 0 into the first element.
+define <2 x double> @f30(<2 x double> %val) {
+; CHECK-LABEL: f30:
+; CHECK: vleig %v24, 0, 0
+; CHECK: br %r14
+  %ret = insertelement <2 x double> %val, double 0.0, i32 0
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion of 0 into the last element.
+define <2 x double> @f31(<2 x double> %val) {
+; CHECK-LABEL: f31:
+; CHECK: vleig %v24, 0, 1
+; CHECK: br %r14
+  %ret = insertelement <2 x double> %val, double 0.0, i32 1
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion of a nonzero value.
+define <2 x double> @f32(<2 x double> %val) {
+; CHECK-LABEL: f32:
+; CHECK-NOT: vleig
+; CHECK: br %r14
+  %ret = insertelement <2 x double> %val, double 1.0, i32 1
+  ret <2 x double> %ret
+}

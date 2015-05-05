@@ -101,3 +101,13 @@ define <2 x i64> @f10(i64 *%ptr) {
   %ret = insertelement <2 x i64> undef, i64 %val, i32 1
   ret <2 x i64> %ret
 }
+
+; Test v2f64 insertion into an undef.
+define <2 x double> @f12(double *%ptr) {
+; CHECK-LABEL: f12:
+; CHECK: vlrepg %v24, 0(%r2)
+; CHECK: br %r14
+  %val = load double, double *%ptr
+  %ret = insertelement <2 x double> undef, double %val, i32 1
+  ret <2 x double> %ret
+}

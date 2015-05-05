@@ -258,6 +258,59 @@ define void @f24(<2 x i64> %val, i64 *%ptr, i32 %index) {
   ret void
 }
 
+; Test v2f64 extraction from the first element.
+define void @f32(<2 x double> %val, double *%ptr) {
+; CHECK-LABEL: f32:
+; CHECK: vsteg %v24, 0(%r2), 0
+; CHECK: br %r14
+  %element = extractelement <2 x double> %val, i32 0
+  store double %element, double *%ptr
+  ret void
+}
+
+; Test v2f64 extraction from the last element.
+define void @f33(<2 x double> %val, double *%ptr) {
+; CHECK-LABEL: f33:
+; CHECK: vsteg %v24, 0(%r2), 1
+; CHECK: br %r14
+  %element = extractelement <2 x double> %val, i32 1
+  store double %element, double *%ptr
+  ret void
+}
+
+; Test v2f64 extraction with the highest in-range offset.
+define void @f34(<2 x double> %val, double *%base) {
+; CHECK-LABEL: f34:
+; CHECK: vsteg %v24, 4088(%r2), 1
+; CHECK: br %r14
+  %ptr = getelementptr double, double *%base, i32 511
+  %element = extractelement <2 x double> %val, i32 1
+  store double %element, double *%ptr
+  ret void
+}
+
+; Test v2f64 extraction with the first ouf-of-range offset.
+define void @f35(<2 x double> %val, double *%base) {
+; CHECK-LABEL: f35:
+; CHECK: aghi %r2, 4096
+; CHECK: vsteg %v24, 0(%r2), 0
+; CHECK: br %r14
+  %ptr = getelementptr double, double *%base, i32 512
+  %element = extractelement <2 x double> %val, i32 0
+  store double %element, double *%ptr
+  ret void
+}
+
+; Test v2f64 extraction from a variable element.
+define void @f36(<2 x double> %val, double *%ptr, i32 %index) {
+; CHECK-LABEL: f36:
+; CHECK-NOT: vsteg
+; CHECK: br %r14
+  %element = extractelement <2 x double> %val, i32 %index
+  store double %element, double *%ptr
+  ret void
+}
+
 ; Test a v4i32 scatter of the first element.
 define void @f37(<4 x i32> %val, <4 x i32> %index, i64 %base) {
 ; CHECK-LABEL: f37:
@@ -324,5 +377,31 @@ define void @f41(<2 x i64> %val, <2 x i64> %index, i64 %base) {
   %ptr = inttoptr i64 %add to i64 *
   %element = extractelement <2 x i64> %val, i32 1
   store i64 %element, i64 *%ptr
+  ret void
+}
+
+; Test a v2f64 scatter of the first element.
+define void @f44(<2 x double> %val, <2 x i64> %index, i64 %base) {
+; CHECK-LABEL: f44:
+; CHECK: vsceg %v24, 0(%v26,%r2), 0
+; CHECK: br %r14
+  %elem = extractelement <2 x i64> %index, i32 0
+  %add = add i64 %base, %elem
+  %ptr = inttoptr i64 %add to double *
+  %element = extractelement <2 x double> %val, i32 0
+  store double %element, double *%ptr
+  ret void
+}
+
+; Test a v2f64 scatter of the last element.
+define void @f45(<2 x double> %val, <2 x i64> %index, i64 %base) {
+; CHECK-LABEL: f45:
+; CHECK: vsceg %v24, 0(%v26,%r2), 1
+; CHECK: br %r14
+  %elem = extractelement <2 x i64> %index, i32 1
+  %add = add i64 %base, %elem
+  %ptr = inttoptr i64 %add to double *
+  %element = extractelement <2 x double> %val, i32 1
+  store double %element, double *%ptr
   ret void
 }

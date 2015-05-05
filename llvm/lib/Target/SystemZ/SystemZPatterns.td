@@ -153,3 +153,17 @@ multiclass CompareZeroFP<Instruction insn, RegisterOperand cls> {
   // The sign of the zero makes no difference.
   def : Pat<(z_fcmp cls:$reg, (fpimmneg0)), (insn cls:$reg, cls:$reg)>;
 }
+
+// Use INSN for performing binary operation OPERATION of type VT
+// on registers of class CLS.
+class BinaryRRWithType<Instruction insn, RegisterOperand cls,
+                       SDPatternOperator operator, ValueType vt>
+  : Pat<(vt (operator cls:$x, cls:$y)), (insn cls:$x, cls:$y)>;
+
+// Use INSN to perform conversion operation OPERATOR, with the input being
+// TR2 and the output being TR1.  SUPPRESS is 4 to suppress inexact conditions
+// and 0 to allow them.  MODE is the rounding mode to use.
+class FPConversion<Instruction insn, SDPatternOperator operator, TypedReg tr1,
+                   TypedReg tr2, bits<3> suppress, bits<4> mode>
+  : Pat<(tr1.vt (operator (tr2.vt tr2.op:$vec))),
+        (insn tr2.op:$vec, suppress, mode)>;

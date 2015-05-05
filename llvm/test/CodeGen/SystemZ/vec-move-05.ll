@@ -150,6 +150,41 @@ define i64 @f16(<2 x i64> %val, i32 %index) {
   ret i64 %ret
 }
 
+; Test v2f64 extraction of the first element.
+define double @f23(<2 x double> %val) {
+; CHECK-LABEL: f23:
+; CHECK: vlr %v0, %v24
+; CHECK: br %r14
+  %ret = extractelement <2 x double> %val, i32 0
+  ret double %ret
+}
+
+; Test v2f64 extraction of the last element.
+define double @f24(<2 x double> %val) {
+; CHECK-LABEL: f24:
+; CHECK: vrepg %v0, %v24, 1
+; CHECK: br %r14
+  %ret = extractelement <2 x double> %val, i32 1
+  ret double %ret
+}
+
+; Test v2f64 extractions of an absurd element number.  This must compile
+; but we don't care what it does.
+define double @f25(<2 x double> %val) {
+  %ret = extractelement <2 x double> %val, i32 100000
+  ret double %ret
+}
+
+; Test v2f64 extraction of a variable element.
+define double @f26(<2 x double> %val, i32 %index) {
+; CHECK-LABEL: f26:
+; CHECK: vlgvg [[REG:%r[0-5]]], %v24, 0(%r2)
+; CHECK: ldgr %f0, [[REG]]
+; CHECK: br %r14
+  %ret = extractelement <2 x double> %val, i32 %index
+  ret double %ret
+}
+
 ; Test v16i8 extraction of a variable element with an offset.
 define i8 @f27(<16 x i8> %val, i32 %index) {
 ; CHECK-LABEL: f27:

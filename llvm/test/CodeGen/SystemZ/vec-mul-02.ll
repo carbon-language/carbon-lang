@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
+declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>)
+
 ; Test a v16i8 multiply-and-add.
 define <16 x i8> @f1(<16 x i8> %dummy, <16 x i8> %val1, <16 x i8> %val2,
                      <16 x i8> %val3) {
@@ -33,4 +35,29 @@ define <4 x i32> @f3(<4 x i32> %dummy, <4 x i32> %val1, <4 x i32> %val2,
   %mul = mul <4 x i32> %val1, %val2
   %ret = add <4 x i32> %mul, %val3
   ret <4 x i32> %ret
+}
+
+; Test a v2f64 multiply-and-add.
+define <2 x double> @f4(<2 x double> %dummy, <2 x double> %val1,
+                        <2 x double> %val2, <2 x double> %val3) {
+; CHECK-LABEL: f4:
+; CHECK: vfmadb %v24, %v26, %v28, %v30
+; CHECK: br %r14
+  %ret = call <2 x double> @llvm.fma.v2f64 (<2 x double> %val1,
+                                            <2 x double> %val2,
+                                            <2 x double> %val3)
+  ret <2 x double> %ret
+}
+
+; Test a v2f64 multiply-and-subtract.
+define <2 x double> @f5(<2 x double> %dummy, <2 x double> %val1,
+                        <2 x double> %val2, <2 x double> %val3) {
+; CHECK-LABEL: f5:
+; CHECK: vfmsdb %v24, %v26, %v28, %v30
+; CHECK: br %r14
+  %negval3 = fsub <2 x double> <double -0.0, double -0.0>, %val3
+  %ret = call <2 x double> @llvm.fma.v2f64 (<2 x double> %val1,
+                                            <2 x double> %val2,
+                                            <2 x double> %negval3)
+  ret <2 x double> %ret
 }

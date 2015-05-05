@@ -158,3 +158,23 @@ define <2 x i64> @f13(<2 x i64> %val1, <2 x i64> %val2) {
                        <2 x i32> <i32 2, i32 0>
   ret <2 x i64> %ret
 }
+
+; Test a canonical v2f64 merge high.
+define <2 x double> @f16(<2 x double> %val1, <2 x double> %val2) {
+; CHECK-LABEL: f16:
+; CHECK: vmrhg %v24, %v24, %v26
+; CHECK: br %r14
+  %ret = shufflevector <2 x double> %val1, <2 x double> %val2,
+                       <2 x i32> <i32 0, i32 2>
+  ret <2 x double> %ret
+}
+
+; Test a reversed v2f64 merge high.
+define <2 x double> @f17(<2 x double> %val1, <2 x double> %val2) {
+; CHECK-LABEL: f17:
+; CHECK: vmrhg %v24, %v26, %v24
+; CHECK: br %r14
+  %ret = shufflevector <2 x double> %val1, <2 x double> %val2,
+                       <2 x i32> <i32 2, i32 0>
+  ret <2 x double> %ret
+}

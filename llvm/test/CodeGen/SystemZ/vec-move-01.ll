@@ -33,3 +33,11 @@ define <2 x i64> @f4(<2 x i64> %val1, <2 x i64> %val2) {
 ; CHECK: br %r14
   ret <2 x i64> %val2
 }
+
+; Test v2f64 moves.
+define <2 x double> @f6(<2 x double> %val1, <2 x double> %val2) {
+; CHECK-LABEL: f6:
+; CHECK: vlr %v24, %v26
+; CHECK: br %r14
+  ret <2 x double> %val2
+}

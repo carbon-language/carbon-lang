@@ -219,6 +219,13 @@ enum {
   VICMPH,
   VICMPHL,
 
+  // Compare floating-point vector operands 0 and 1 to preoduce the usual 0/-1
+  // vector result.  VFCMPE is for "ordered and equal", VFCMPH for "ordered and
+  // greater than" and VFCMPHE for "ordered and greater than or equal to".
+  VFCMPE,
+  VFCMPH,
+  VFCMPHE,
+
   // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
   // ATOMIC_LOAD_<op>.
   //
@@ -400,6 +407,8 @@ private:
   SDValue lowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerShift(SDValue Op, SelectionDAG &DAG, unsigned ByScalar) const;
 
   SDValue combineExtract(SDLoc DL, EVT ElemVT, EVT VecVT, SDValue OrigOp,

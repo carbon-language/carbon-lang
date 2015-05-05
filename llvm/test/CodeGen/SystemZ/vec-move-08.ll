@@ -214,6 +214,59 @@ define <2 x i64> @f20(<2 x i64> %val, i64 *%ptr, i32 %index) {
   ret <2 x i64> %ret
 }
 
+; Test v2f64 insertion into the first element.
+define <2 x double> @f26(<2 x double> %val, double *%ptr) {
+; CHECK-LABEL: f26:
+; CHECK: vleg %v24, 0(%r2), 0
+; CHECK: br %r14
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 0
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion into the last element.
+define <2 x double> @f27(<2 x double> %val, double *%ptr) {
+; CHECK-LABEL: f27:
+; CHECK: vleg %v24, 0(%r2), 1
+; CHECK: br %r14
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 1
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion with the highest in-range offset.
+define <2 x double> @f28(<2 x double> %val, double *%base) {
+; CHECK-LABEL: f28:
+; CHECK: vleg %v24, 4088(%r2), 1
+; CHECK: br %r14
+  %ptr = getelementptr double, double *%base, i32 511
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 1
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion with the first ouf-of-range offset.
+define <2 x double> @f29(<2 x double> %val, double *%base) {
+; CHECK-LABEL: f29:
+; CHECK: aghi %r2, 4096
+; CHECK: vleg %v24, 0(%r2), 0
+; CHECK: br %r14
+  %ptr = getelementptr double, double *%base, i32 512
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 0
+  ret <2 x double> %ret
+}
+
+; Test v2f64 insertion into a variable element.
+define <2 x double> @f30(<2 x double> %val, double *%ptr, i32 %index) {
+; CHECK-LABEL: f30:
+; CHECK-NOT: vleg
+; CHECK: br %r14
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 %index
+  ret <2 x double> %ret
+}
+
 ; Test a v4i32 gather of the first element.
 define <4 x i32> @f31(<4 x i32> %val, <4 x i32> %index, i64 %base) {
 ; CHECK-LABEL: f31:
@@ -281,4 +334,30 @@ define <2 x i64> @f35(<2 x i64> %val, <2 x i64> %index, i64 %base) {
   %element = load i64, i64 *%ptr
   %ret = insertelement <2 x i64> %val, i64 %element, i32 1
   ret <2 x i64> %ret
+}
+
+; Test a v2f64 gather of the first element.
+define <2 x double> @f38(<2 x double> %val, <2 x i64> %index, i64 %base) {
+; CHECK-LABEL: f38:
+; CHECK: vgeg %v24, 0(%v26,%r2), 0
+; CHECK: br %r14
+  %elem = extractelement <2 x i64> %index, i32 0
+  %add = add i64 %base, %elem
+  %ptr = inttoptr i64 %add to double *
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 0
+  ret <2 x double> %ret
+}
+
+; Test a v2f64 gather of the last element.
+define <2 x double> @f39(<2 x double> %val, <2 x i64> %index, i64 %base) {
+; CHECK-LABEL: f39:
+; CHECK: vgeg %v24, 0(%v26,%r2), 1
+; CHECK: br %r14
+  %elem = extractelement <2 x i64> %index, i32 1
+  %add = add i64 %base, %elem
+  %ptr = inttoptr i64 %add to double *
+  %element = load double, double *%ptr
+  %ret = insertelement <2 x double> %val, double %element, i32 1
+  ret <2 x double> %ret
 }

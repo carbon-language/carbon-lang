@@ -37,3 +37,12 @@ define <2 x i64> @f4(<2 x i64> %dummy, <2 x i64> %val) {
   %ret = sub <2 x i64> zeroinitializer, %val
   ret <2 x i64> %ret
 }
+
+; Test a v2f64 negation.
+define <2 x double> @f5(<2 x double> %dummy, <2 x double> %val) {
+; CHECK-LABEL: f5:
+; CHECK: vflcdb %v24, %v26
+; CHECK: br %r14
+  %ret = fsub <2 x double> <double -0.0, double -0.0>, %val
+  ret <2 x double> %ret
+}

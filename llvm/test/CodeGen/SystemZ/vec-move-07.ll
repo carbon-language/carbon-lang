@@ -37,3 +37,12 @@ define <2 x i64> @f4(i64 %val) {
   %ret = insertelement <2 x i64> undef, i64 %val, i32 0
   ret <2 x i64> %ret
 }
+
+; Test v2f64, which is just a move.
+define <2 x double> @f6(double %val) {
+; CHECK-LABEL: f6:
+; CHECK: vlr %v24, %v0
+; CHECK: br %r14
+  %ret = insertelement <2 x double> undef, double %val, i32 0
+  ret <2 x double> %ret
+}

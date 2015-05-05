@@ -200,6 +200,9 @@ def z_vsum              : SDNode<"SystemZISD::VSUM", SDT_ZVecBinaryConv>;
 def z_vicmpe            : SDNode<"SystemZISD::VICMPE", SDT_ZVecBinary>;
 def z_vicmph            : SDNode<"SystemZISD::VICMPH", SDT_ZVecBinary>;
 def z_vicmphl           : SDNode<"SystemZISD::VICMPHL", SDT_ZVecBinary>;
+def z_vfcmpe            : SDNode<"SystemZISD::VFCMPE", SDT_ZVecBinaryConv>;
+def z_vfcmph            : SDNode<"SystemZISD::VFCMPH", SDT_ZVecBinaryConv>;
+def z_vfcmphe           : SDNode<"SystemZISD::VFCMPHE", SDT_ZVecBinaryConv>;
 
 class AtomicWOp<string name, SDTypeProfile profile = SDT_ZAtomicLoadBinaryW>
   : SDNode<"SystemZISD::"##name, profile,
@@ -468,6 +471,10 @@ def z_inegabs64 : PatFrag<(ops node:$src), (ineg (z_iabs64 node:$src))>;
 def z_muladd : PatFrag<(ops node:$src1, node:$src2, node:$src3),
                        (add (mul node:$src1, node:$src2), node:$src3)>;
 
+// Fused multiply-subtract, using the natural operand order.
+def fms : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                  (fma node:$src1, node:$src2, (fneg node:$src3))>;
+
 // Fused multiply-add and multiply-subtract, but with the order of the
 // operands matching SystemZ's MA and MS instructions.
 def z_fma : PatFrag<(ops node:$src1, node:$src2, node:$src3),
@@ -501,6 +508,7 @@ def z_replicate_loadi8  : z_replicate_load<i32, anyextloadi8>;
 def z_replicate_loadi16 : z_replicate_load<i32, anyextloadi16>;
 def z_replicate_loadi32 : z_replicate_load<i32, load>;
 def z_replicate_loadi64 : z_replicate_load<i64, load>;
+def z_replicate_loadf64 : z_replicate_load<f64, load>;
 
 // Load a scalar and insert it into a single element of a vector.
 class z_vle<ValueType scalartype, SDPatternOperator load>
@@ -511,6 +519,7 @@ def z_vlei8  : z_vle<i32, anyextloadi8>;
 def z_vlei16 : z_vle<i32, anyextloadi16>;
 def z_vlei32 : z_vle<i32, load>;
 def z_vlei64 : z_vle<i64, load>;
+def z_vlef64 : z_vle<f64, load>;
 
 // Load a scalar and insert it into the low element of the high i64 of a
 // zeroed vector.
@@ -523,6 +532,10 @@ def z_vllezi16 : z_vllez<i32, anyextloadi16, 3>;
 def z_vllezi32 : z_vllez<i32, load, 1>;
 def z_vllezi64 : PatFrag<(ops node:$addr),
                          (z_join_dwords (i64 (load node:$addr)), (i64 0))>;
+def z_vllezf64 : PatFrag<(ops node:$addr),
+                         (z_merge_high
+                          (scalar_to_vector (f64 (load node:$addr))),
+                          (z_vzero))>;
 
 // Store one element of a vector.
 class z_vste<ValueType scalartype, SDPatternOperator store>
@@ -533,6 +546,7 @@ def z_vstei8  : z_vste<i32, truncstorei8>;
 def z_vstei16 : z_vste<i32, truncstorei16>;
 def z_vstei32 : z_vste<i32, store>;
 def z_vstei64 : z_vste<i64, store>;
+def z_vstef64 : z_vste<f64, store>;
 
 // Arithmetic negation on vectors.
 def z_vneg : PatFrag<(ops node:$x), (sub (z_vzero), node:$x)>;

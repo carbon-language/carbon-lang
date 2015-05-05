@@ -38,6 +38,15 @@ define <2 x i64> @f4(<2 x i64> *%ptr) {
   ret <2 x i64> %ret
 }
 
+; Test v2f64 loads.
+define <2 x double> @f6(<2 x double> *%ptr) {
+; CHECK-LABEL: f6:
+; CHECK: vl %v24, 0(%r2)
+; CHECK: br %r14
+  %ret = load <2 x double>, <2 x double> *%ptr
+  ret <2 x double> %ret
+}
+
 ; Test the highest aligned in-range offset.
 define <16 x i8> @f7(<16 x i8> *%base) {
 ; CHECK-LABEL: f7:

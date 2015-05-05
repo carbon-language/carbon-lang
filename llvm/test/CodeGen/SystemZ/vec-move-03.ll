@@ -38,6 +38,15 @@ define void @f4(<2 x i64> %val, <2 x i64> *%ptr) {
   ret void
 }
 
+; Test v2f64 stores.
+define void @f6(<2 x double> %val, <2 x double> *%ptr) {
+; CHECK-LABEL: f6:
+; CHECK: vst %v24, 0(%r2)
+; CHECK: br %r14
+  store <2 x double> %val, <2 x double> *%ptr
+  ret void
+}
+
 ; Test the highest aligned in-range offset.
 define void @f7(<16 x i8> %val, <16 x i8> *%base) {
 ; CHECK-LABEL: f7:

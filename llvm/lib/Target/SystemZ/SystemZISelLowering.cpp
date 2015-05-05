@@ -101,6 +101,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
     addRegisterClass(MVT::v8i16, &SystemZ::VR128BitRegClass);
     addRegisterClass(MVT::v4i32, &SystemZ::VR128BitRegClass);
     addRegisterClass(MVT::v2i64, &SystemZ::VR128BitRegClass);
+    addRegisterClass(MVT::v2f64, &SystemZ::VR128BitRegClass);
   }
 
   // Compute derived properties from the register classes
@@ -327,6 +328,15 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
     }
   }
 
+  if (Subtarget.hasVector()) {
+    // There should be no need to check for float types other than v2f64
+    // since <2 x f32> isn't a legal type.
+    setOperationAction(ISD::FP_TO_SINT, MVT::v2i64, Legal);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Legal);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Legal);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Legal);
+  }
+
   // Handle floating-point types.
   for (unsigned I = MVT::FIRST_FP_VALUETYPE;
        I <= MVT::LAST_FP_VALUETYPE;
@@ -350,6 +360,33 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
       setOperationAction(ISD::FCOS, VT, Expand);
       setOperationAction(ISD::FREM, VT, Expand);
     }
+  }
+
+  // Handle floating-point vector types.
+  if (Subtarget.hasVector()) {
+    // Scalar-to-vector conversion is just a subreg.
+    setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v2f64, Legal);
+
+    // Some insertions and extractions can be done directly but others
+    // need to go via integers.
+    setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v2f64, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
+
+    // These operations have direct equivalents.
+    setOperationAction(ISD::FADD, MVT::v2f64, Legal);
+    setOperationAction(ISD::FNEG, MVT::v2f64, Legal);
+    setOperationAction(ISD::FSUB, MVT::v2f64, Legal);
+    setOperationAction(ISD::FMUL, MVT::v2f64, Legal);
+    setOperationAction(ISD::FMA, MVT::v2f64, Legal);
+    setOperationAction(ISD::FDIV, MVT::v2f64, Legal);
+    setOperationAction(ISD::FABS, MVT::v2f64, Legal);
+    setOperationAction(ISD::FSQRT, MVT::v2f64, Legal);
+    setOperationAction(ISD::FRINT, MVT::v2f64, Legal);
+    setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::v2f64, Legal);
+    setOperationAction(ISD::FCEIL, MVT::v2f64, Legal);
+    setOperationAction(ISD::FTRUNC, MVT::v2f64, Legal);
+    setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
   }
 
   // We have fused multiply-addition for f32 and f64 but not f128.
@@ -818,6 +855,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
       case MVT::v8i16:
       case MVT::v4i32:
       case MVT::v2i64:
+      case MVT::v2f64:
         RC = &SystemZ::VR128BitRegClass;
         break;
       }
@@ -1894,18 +1932,25 @@ static SDValue emitSETCC(SelectionDAG &DAG, SDLoc DL, SDValue Glue,
   return Result;
 }
 
-// Return the SystemZISD vector comparison operation for CC, or 0 if it cannot
-// be done directly.
-static unsigned getVectorComparison(ISD::CondCode CC) {
+// Return the SystemISD vector comparison operation for CC, or 0 if it cannot
+// be done directly.  IsFP is true if CC is for a floating-point rather than
+// integer comparison.
+static unsigned getVectorComparison(ISD::CondCode CC, bool IsFP) {
   switch (CC) {
+  case ISD::SETOEQ:
   case ISD::SETEQ:
-    return SystemZISD::VICMPE;
+    return IsFP ? SystemZISD::VFCMPE : SystemZISD::VICMPE;
 
+  case ISD::SETOGE:
+  case ISD::SETGE:
+    return IsFP ? SystemZISD::VFCMPHE : 0;
+
+  case ISD::SETOGT:
   case ISD::SETGT:
-    return SystemZISD::VICMPH;
+    return IsFP ? SystemZISD::VFCMPH : SystemZISD::VICMPH;
 
   case ISD::SETUGT:
-    return SystemZISD::VICMPHL;
+    return IsFP ? 0 : SystemZISD::VICMPHL;
 
   default:
     return 0;
@@ -1914,15 +1959,17 @@ static unsigned getVectorComparison(ISD::CondCode CC) {
 
 // Return the SystemZISD vector comparison operation for CC or its inverse,
 // or 0 if neither can be done directly.  Indicate in Invert whether the
-// result is for the inverse of CC.
-static unsigned getVectorComparisonOrInvert(ISD::CondCode CC, bool &Invert) {
-  if (unsigned Opcode = getVectorComparison(CC)) {
+// result is for the inverse of CC.  IsFP is true if CC is for a
+// floating-point rather than integer comparison.
+static unsigned getVectorComparisonOrInvert(ISD::CondCode CC, bool IsFP,
+                                            bool &Invert) {
+  if (unsigned Opcode = getVectorComparison(CC, IsFP)) {
     Invert = false;
     return Opcode;
   }
 
-  CC = ISD::getSetCCInverse(CC, true);
-  if (unsigned Opcode = getVectorComparison(CC)) {
+  CC = ISD::getSetCCInverse(CC, !IsFP);
+  if (unsigned Opcode = getVectorComparison(CC, IsFP)) {
     Invert = true;
     return Opcode;
   }
@@ -1935,18 +1982,46 @@ static unsigned getVectorComparisonOrInvert(ISD::CondCode CC, bool &Invert) {
 static SDValue lowerVectorSETCC(SelectionDAG &DAG, SDLoc DL, EVT VT,
                                 ISD::CondCode CC, SDValue CmpOp0,
                                 SDValue CmpOp1) {
+  bool IsFP = CmpOp0.getValueType().isFloatingPoint();
   bool Invert = false;
   SDValue Cmp;
-  // It doesn't really matter whether we try the inversion or the swap first,
-  // since there are no cases where both work.
-  if (unsigned Opcode = getVectorComparisonOrInvert(CC, Invert))
-    Cmp = DAG.getNode(Opcode, DL, VT, CmpOp0, CmpOp1);
-  else {
-    CC = ISD::getSetCCSwappedOperands(CC);
-    if (unsigned Opcode = getVectorComparisonOrInvert(CC, Invert))
-      Cmp = DAG.getNode(Opcode, DL, VT, CmpOp1, CmpOp0);
-    else
-      llvm_unreachable("Unhandled comparison");
+  switch (CC) {
+    // Handle tests for order using (or (ogt y x) (oge x y)).
+  case ISD::SETUO:
+    Invert = true;
+  case ISD::SETO: {
+    assert(IsFP && "Unexpected integer comparison");
+    SDValue LT = DAG.getNode(SystemZISD::VFCMPH, DL, VT, CmpOp1, CmpOp0);
+    SDValue GE = DAG.getNode(SystemZISD::VFCMPHE, DL, VT, CmpOp0, CmpOp1);
+    Cmp = DAG.getNode(ISD::OR, DL, VT, LT, GE);
+    break;
+  }
+
+    // Handle <> tests using (or (ogt y x) (ogt x y)).
+  case ISD::SETUEQ:
+    Invert = true;
+  case ISD::SETONE: {
+    assert(IsFP && "Unexpected integer comparison");
+    SDValue LT = DAG.getNode(SystemZISD::VFCMPH, DL, VT, CmpOp1, CmpOp0);
+    SDValue GT = DAG.getNode(SystemZISD::VFCMPH, DL, VT, CmpOp0, CmpOp1);
+    Cmp = DAG.getNode(ISD::OR, DL, VT, LT, GT);
+    break;
+  }
+
+    // Otherwise a single comparison is enough.  It doesn't really
+    // matter whether we try the inversion or the swap first, since
+    // there are no cases where both work.
+  default:
+    if (unsigned Opcode = getVectorComparisonOrInvert(CC, IsFP, Invert))
+      Cmp = DAG.getNode(Opcode, DL, VT, CmpOp0, CmpOp1);
+    else {
+      CC = ISD::getSetCCSwappedOperands(CC);
+      if (unsigned Opcode = getVectorComparisonOrInvert(CC, IsFP, Invert))
+        Cmp = DAG.getNode(Opcode, DL, VT, CmpOp1, CmpOp0);
+      else
+        llvm_unreachable("Unhandled comparison");
+    }
+    break;
   }
   if (Invert) {
     SDValue Mask = DAG.getNode(SystemZISD::BYTE_MASK, DL, MVT::v16i8,
@@ -3326,6 +3401,46 @@ SDValue GeneralShuffle::getNode(SelectionDAG &DAG, SDLoc DL) {
   return DAG.getNode(ISD::BITCAST, DL, VT, Op);
 }
 
+// Return true if the given BUILD_VECTOR is a scalar-to-vector conversion.
+static bool isScalarToVector(SDValue Op) {
+  for (unsigned I = 1, E = Op.getNumOperands(); I != E; ++I)
+    if (Op.getOperand(I).getOpcode() != ISD::UNDEF)
+      return false;
+  return true;
+}
+
+// Return a vector of type VT that contains Value in the first element.
+// The other elements don't matter.
+static SDValue buildScalarToVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
+                                   SDValue Value) {
+  // If we have a constant, replicate it to all elements and let the
+  // BUILD_VECTOR lowering take care of it.
+  if (Value.getOpcode() == ISD::Constant ||
+      Value.getOpcode() == ISD::ConstantFP) {
+    SmallVector<SDValue, 16> Ops(VT.getVectorNumElements(), Value);
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Ops);
+  }
+  if (Value.getOpcode() == ISD::UNDEF)
+    return DAG.getUNDEF(VT);
+  return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VT, Value);
+}
+
+// Return a vector of type VT in which Op0 is in element 0 and Op1 is in
+// element 1.  Used for cases in which replication is cheap.
+static SDValue buildMergeScalars(SelectionDAG &DAG, SDLoc DL, EVT VT,
+                                 SDValue Op0, SDValue Op1) {
+  if (Op0.getOpcode() == ISD::UNDEF) {
+    if (Op1.getOpcode() == ISD::UNDEF)
+      return DAG.getUNDEF(VT);
+    return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Op1);
+  }
+  if (Op1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(SystemZISD::REPLICATE, DL, VT, Op0);
+  return DAG.getNode(SystemZISD::MERGE_HIGH, DL, VT,
+                     buildScalarToVector(DAG, DL, VT, Op0),
+                     buildScalarToVector(DAG, DL, VT, Op1));
+}
+
 // Extend GPR scalars Op0 and Op1 to doublewords and return a v2i64
 // vector for them.
 static SDValue joinDwords(SelectionDAG &DAG, SDLoc DL, SDValue Op0,
@@ -3502,6 +3617,10 @@ static SDValue buildVector(SelectionDAG &DAG, SDLoc DL, EVT VT,
   if (VT == MVT::v2i64)
     return joinDwords(DAG, DL, Elems[0], Elems[1]);
 
+  // Use a 64-bit merge high to combine two doubles.
+  if (VT == MVT::v2f64)
+    return buildMergeScalars(DAG, DL, VT, Elems[0], Elems[1]);
+
   // Collect the constant terms.
   SmallVector<SDValue, SystemZ::VectorBytes> Constants(NumElements, SDValue());
   SmallVector<bool, SystemZ::VectorBytes> Done(NumElements, false);
@@ -3614,6 +3733,10 @@ SDValue SystemZTargetLowering::lowerBUILD_VECTOR(SDValue Op,
   if (Res.getNode())
     return Res;
 
+  // Detect SCALAR_TO_VECTOR conversions.
+  if (isOperationLegal(ISD::SCALAR_TO_VECTOR, VT) && isScalarToVector(Op))
+    return buildScalarToVector(DAG, DL, VT, Op.getOperand(0));
+
   // Otherwise use buildVector to build the vector up from GPRs.
   unsigned NumElements = Op.getNumOperands();
   SmallVector<SDValue, SystemZ::VectorBytes> Ops(NumElements);
@@ -3662,6 +3785,62 @@ SDValue SystemZTargetLowering::lowerSCALAR_TO_VECTOR(SDValue Op,
   return DAG.getNode(ISD::INSERT_VECTOR_ELT, DL,
                      Op.getValueType(), DAG.getUNDEF(Op.getValueType()),
                      Op.getOperand(0), DAG.getConstant(0, DL, MVT::i32));
+}
+
+SDValue SystemZTargetLowering::lowerINSERT_VECTOR_ELT(SDValue Op,
+                                                      SelectionDAG &DAG) const {
+  // Handle insertions of floating-point values.
+  SDLoc DL(Op);
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+  EVT VT = Op.getValueType();
+
+  // Insertions into constant indices can be done using VPDI.  However,
+  // if the inserted value is a bitcast or a constant then it's better
+  // to use GPRs, as below.
+  if (Op1.getOpcode() != ISD::BITCAST &&
+      Op1.getOpcode() != ISD::ConstantFP &&
+      Op2.getOpcode() == ISD::Constant) {
+    uint64_t Index = dyn_cast<ConstantSDNode>(Op2)->getZExtValue();
+    unsigned Mask = VT.getVectorNumElements() - 1;
+    if (Index <= Mask)
+      return Op;
+  }
+
+  // Otherwise bitcast to the equivalent integer form and insert via a GPR.
+  MVT IntVT = MVT::getIntegerVT(VT.getVectorElementType().getSizeInBits());
+  MVT IntVecVT = MVT::getVectorVT(IntVT, VT.getVectorNumElements());
+  SDValue Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, IntVecVT,
+                            DAG.getNode(ISD::BITCAST, DL, IntVecVT, Op0),
+                            DAG.getNode(ISD::BITCAST, DL, IntVT, Op1), Op2);
+  return DAG.getNode(ISD::BITCAST, DL, VT, Res);
+}
+
+SDValue
+SystemZTargetLowering::lowerEXTRACT_VECTOR_ELT(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  // Handle extractions of floating-point values.
+  SDLoc DL(Op);
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  EVT VT = Op.getValueType();
+  EVT VecVT = Op0.getValueType();
+
+  // Extractions of constant indices can be done directly.
+  if (auto *CIndexN = dyn_cast<ConstantSDNode>(Op1)) {
+    uint64_t Index = CIndexN->getZExtValue();
+    unsigned Mask = VecVT.getVectorNumElements() - 1;
+    if (Index <= Mask)
+      return Op;
+  }
+
+  // Otherwise bitcast to the equivalent integer form and extract via a GPR.
+  MVT IntVT = MVT::getIntegerVT(VT.getSizeInBits());
+  MVT IntVecVT = MVT::getVectorVT(IntVT, VecVT.getVectorNumElements());
+  SDValue Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, IntVT,
+                            DAG.getNode(ISD::BITCAST, DL, IntVecVT, Op0), Op1);
+  return DAG.getNode(ISD::BITCAST, DL, VT, Res);
 }
 
 SDValue SystemZTargetLowering::lowerShift(SDValue Op, SelectionDAG &DAG,
@@ -3808,6 +3987,10 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:
     return lowerSCALAR_TO_VECTOR(Op, DAG);
+  case ISD::INSERT_VECTOR_ELT:
+    return lowerINSERT_VECTOR_ELT(Op, DAG);
+  case ISD::EXTRACT_VECTOR_ELT:
+    return lowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::SHL:
     return lowerShift(Op, DAG, SystemZISD::VSHL_BY_SCALAR);
   case ISD::SRL:
@@ -3879,6 +4062,9 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(VICMPE);
     OPCODE(VICMPH);
     OPCODE(VICMPHL);
+    OPCODE(VFCMPE);
+    OPCODE(VFCMPH);
+    OPCODE(VFCMPHE);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);

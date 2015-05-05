@@ -142,3 +142,25 @@ define <2 x i64> @f11(i64 %scalar) {
                        <2 x i32> <i32 1, i32 1>
   ret <2 x i64> %ret
 }
+
+; Test v2f64 splat of the first element.
+define <2 x double> @f15(double %scalar) {
+; CHECK-LABEL: f15:
+; CHECK: vrepg %v24, %v0, 0
+; CHECK: br %r14
+  %val = insertelement <2 x double> undef, double %scalar, i32 0
+  %ret = shufflevector <2 x double> %val, <2 x double> undef,
+                       <2 x i32> zeroinitializer
+  ret <2 x double> %ret
+}
+
+; Test v2f64 splat of the last element.
+define <2 x double> @f16(double %scalar) {
+; CHECK-LABEL: f16:
+; CHECK: vrepg %v24, %v0, 0
+; CHECK: br %r14
+  %val = insertelement <2 x double> undef, double %scalar, i32 1
+  %ret = shufflevector <2 x double> %val, <2 x double> undef,
+                       <2 x i32> <i32 1, i32 1>
+  ret <2 x double> %ret
+}

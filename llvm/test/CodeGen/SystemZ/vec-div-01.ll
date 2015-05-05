@@ -1,5 +1,5 @@
-; Test vector division.  There is no native support for this, so it's really
-; a test of the operation legalization code.
+; Test vector division.  There is no native integer support for this,
+; so the integer cases are really a test of the operation legalization code.
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z13 | FileCheck %s
 
@@ -59,4 +59,14 @@ define <2 x i64> @f4(<2 x i64> %dummy, <2 x i64> %val1, <2 x i64> %val2) {
 ; CHECK: br %r14
   %ret = sdiv <2 x i64> %val1, %val2
   ret <2 x i64> %ret
+}
+
+; Test a v2f64 division.
+define <2 x double> @f5(<2 x double> %dummy, <2 x double> %val1,
+                        <2 x double> %val2) {
+; CHECK-LABEL: f5:
+; CHECK: vfddb %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = fdiv <2 x double> %val1, %val2
+  ret <2 x double> %ret
 }

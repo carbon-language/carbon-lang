@@ -122,3 +122,23 @@ define <2 x i64> @f11(<2 x i64> %val) {
                        <2 x i32> <i32 1, i32 1>
   ret <2 x i64> %ret
 }
+
+; Test v2f64 splat of the first element.
+define <2 x double> @f15(<2 x double> %val) {
+; CHECK-LABEL: f15:
+; CHECK: vrepg %v24, %v24, 0
+; CHECK: br %r14
+  %ret = shufflevector <2 x double> %val, <2 x double> undef,
+                       <2 x i32> zeroinitializer
+  ret <2 x double> %ret
+}
+
+; Test v2f64 splat of the last element.
+define <2 x double> @f16(<2 x double> %val) {
+; CHECK-LABEL: f16:
+; CHECK: vrepg %v24, %v24, 1
+; CHECK: br %r14
+  %ret = shufflevector <2 x double> %val, <2 x double> undef,
+                       <2 x i32> <i32 1, i32 1>
+  ret <2 x double> %ret
+}

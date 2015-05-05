@@ -37,3 +37,13 @@ define <2 x i64> @f4(<2 x i64> %dummy, <2 x i64> %val1, <2 x i64> %val2) {
   %ret = mul <2 x i64> %val1, %val2
   ret <2 x i64> %ret
 }
+
+; Test a v2f64 multiplication.
+define <2 x double> @f5(<2 x double> %dummy, <2 x double> %val1,
+                        <2 x double> %val2) {
+; CHECK-LABEL: f5:
+; CHECK: vfmdb %v24, %v26, %v28
+; CHECK: br %r14
+  %ret = fmul <2 x double> %val1, %val2
+  ret <2 x double> %ret
+}

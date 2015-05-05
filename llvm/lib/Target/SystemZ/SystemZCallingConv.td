@@ -44,7 +44,7 @@ def RetCC_SystemZ : CallingConv<[
 
   // Similarly for vectors, with V24 being the ABI-compliant choice.
   CCIfSubtarget<"hasVector()",
-    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+    CCIfType<[v16i8, v8i16, v4i32, v2i64, v2f64],
              CCAssignToReg<[V24, V26, V28, V30, V25, V27, V29, V31]>>>
 
   // ABI-compliant code returns long double by reference, but that conversion
@@ -76,13 +76,13 @@ def CC_SystemZ : CallingConv<[
 
   // The first 8 named vector arguments are passed in V24-V31.
   CCIfSubtarget<"hasVector()",
-    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+    CCIfType<[v16i8, v8i16, v4i32, v2i64, v2f64],
              CCIfFixed<CCAssignToReg<[V24, V26, V28, V30,
                                       V25, V27, V29, V31]>>>>,
 
   // Other vector arguments are passed in 8-byte-aligned 16-byte stack slots.
   CCIfSubtarget<"hasVector()",
-    CCIfType<[v16i8, v8i16, v4i32, v2i64],
+    CCIfType<[v16i8, v8i16, v4i32, v2i64, v2f64],
              CCAssignToStack<16, 8>>>,
 
   // Other arguments are passed in 8-byte-aligned 8-byte stack slots.
