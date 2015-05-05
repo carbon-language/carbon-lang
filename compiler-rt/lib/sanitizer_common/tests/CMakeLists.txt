@@ -51,11 +51,16 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -Werror=sign-compare
   -Wno-non-virtual-dtor)
 
+if(MSVC)
+  # Disable exceptions on Windows until they work reliably.
+  list(APPEND SANITIZER_TEST_CFLAGS_COMMON -fno-exceptions -DGTEST_HAS_SEH=0)
+endif()
+
 # -gline-tables-only must be enough for these tests, so use it if possible.
 if(COMPILER_RT_TEST_COMPILER_ID MATCHES "Clang")
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -gline-tables-only)
+  list(APPEND SANITIZER_TEST_CFLAGS_COMMON -gline-tables-only)
 else()
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -g)
+  list(APPEND SANITIZER_TEST_CFLAGS_COMMON -g)
 endif()
 
 if(NOT MSVC)
