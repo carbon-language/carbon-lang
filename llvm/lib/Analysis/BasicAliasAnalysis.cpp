@@ -1389,6 +1389,11 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   V1 = V1->stripPointerCasts();
   V2 = V2->stripPointerCasts();
 
+  // If V1 or V2 is undef, the result is NoAlias because we can always pick a
+  // value for undef that aliases nothing in the program.
+  if (isa<UndefValue>(V1) || isa<UndefValue>(V2))
+    return NoAlias;
+
   // Are we checking for alias of the same value?
   // Because we look 'through' phi nodes we could look at "Value" pointers from
   // different iterations. We must therefore make sure that this is not the
