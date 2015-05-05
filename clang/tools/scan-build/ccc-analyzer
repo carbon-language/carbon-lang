@@ -179,7 +179,11 @@ sub GetCCArgs {
   die "could not find clang line\n" if (!defined $line);
   # Strip leading and trailing whitespace characters.
   $line =~ s/^\s+|\s+$//g;
-  my @items = quotewords('\s+', 1, $line);
+  my @items = quotewords('\s+', 0, $line);
+  # Wrap arguments that have spaces with quotes.
+  foreach (@items) {
+    $_ = qq/"$_"/ if (/\s+/);
+  }
   my $cmd = shift @items;
   die "cannot find 'clang' in 'clang' command\n" if (!($cmd =~ /clang/));
   return \@items;
