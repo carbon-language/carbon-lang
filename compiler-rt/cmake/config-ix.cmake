@@ -4,6 +4,13 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(TestBigEndian)
 
+function(check_linker_flag flag out_var)
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
+  check_cxx_compiler_flag("" ${out_var})
+  cmake_pop_check_state()
+endfunction()
+
 # CodeGen options.
 check_cxx_compiler_flag(-fPIC                COMPILER_RT_HAS_FPIC_FLAG)
 check_cxx_compiler_flag(-fPIE                COMPILER_RT_HAS_FPIE_FLAG)
@@ -58,6 +65,11 @@ check_library_exists(dl dlopen "" COMPILER_RT_HAS_LIBDL)
 check_library_exists(m pow "" COMPILER_RT_HAS_LIBM)
 check_library_exists(pthread pthread_create "" COMPILER_RT_HAS_LIBPTHREAD)
 check_library_exists(stdc++ __cxa_throw "" COMPILER_RT_HAS_LIBSTDCXX)
+
+# Linker flags.
+if(ANDROID)
+  check_linker_flag("-Wl,-z,global" COMPILER_RT_HAS_Z_GLOBAL)
+endif()
 
 # Architectures.
 

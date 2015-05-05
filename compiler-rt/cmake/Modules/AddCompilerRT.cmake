@@ -47,13 +47,13 @@ endmacro()
 #                         OUTPUT_NAME <output library name>)
 macro(add_compiler_rt_runtime name arch type)
   if(CAN_TARGET_${arch})
-    parse_arguments(LIB "SOURCES;CFLAGS;DEFS;OUTPUT_NAME" "" ${ARGN})
+    parse_arguments(LIB "SOURCES;CFLAGS;LINKFLAGS;DEFS;OUTPUT_NAME" "" ${ARGN})
     add_library(${name} ${type} ${LIB_SOURCES})
     # Setup compile flags and definitions.
     set_target_compile_flags(${name}
       ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
     set_target_link_flags(${name}
-      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS} ${LIB_LINKFLAGS})
     set_property(TARGET ${name} APPEND PROPERTY
       COMPILE_DEFINITIONS ${LIB_DEFS})
     # Setup correct output directory in the build tree.
