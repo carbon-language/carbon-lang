@@ -817,26 +817,37 @@ def : Pat<(v16i8 (bitconvert (v8i16 VRRC:$src))), (v16i8 VRRC:$src)>;
 def : Pat<(v16i8 (bitconvert (v4i32 VRRC:$src))), (v16i8 VRRC:$src)>;
 def : Pat<(v16i8 (bitconvert (v4f32 VRRC:$src))), (v16i8 VRRC:$src)>;
 def : Pat<(v16i8 (bitconvert (v2i64 VRRC:$src))), (v16i8 VRRC:$src)>;
+def : Pat<(v16i8 (bitconvert (v1i128 VRRC:$src))), (v16i8 VRRC:$src)>;
 
 def : Pat<(v8i16 (bitconvert (v16i8 VRRC:$src))), (v8i16 VRRC:$src)>;
 def : Pat<(v8i16 (bitconvert (v4i32 VRRC:$src))), (v8i16 VRRC:$src)>;
 def : Pat<(v8i16 (bitconvert (v4f32 VRRC:$src))), (v8i16 VRRC:$src)>;
 def : Pat<(v8i16 (bitconvert (v2i64 VRRC:$src))), (v8i16 VRRC:$src)>;
+def : Pat<(v8i16 (bitconvert (v1i128 VRRC:$src))), (v8i16 VRRC:$src)>;
 
 def : Pat<(v4i32 (bitconvert (v16i8 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4i32 (bitconvert (v8i16 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4i32 (bitconvert (v2i64 VRRC:$src))), (v4i32 VRRC:$src)>;
+def : Pat<(v4i32 (bitconvert (v1i128 VRRC:$src))), (v4i32 VRRC:$src)>;
 
 def : Pat<(v4f32 (bitconvert (v16i8 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v8i16 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v2i64 VRRC:$src))), (v4f32 VRRC:$src)>;
+def : Pat<(v4f32 (bitconvert (v1i128 VRRC:$src))), (v4f32 VRRC:$src)>;
 
 def : Pat<(v2i64 (bitconvert (v16i8 VRRC:$src))), (v2i64 VRRC:$src)>;
 def : Pat<(v2i64 (bitconvert (v8i16 VRRC:$src))), (v2i64 VRRC:$src)>;
 def : Pat<(v2i64 (bitconvert (v4i32 VRRC:$src))), (v2i64 VRRC:$src)>;
 def : Pat<(v2i64 (bitconvert (v4f32 VRRC:$src))), (v2i64 VRRC:$src)>;
+def : Pat<(v2i64 (bitconvert (v1i128 VRRC:$src))), (v2i64 VRRC:$src)>;
+
+def : Pat<(v1i128 (bitconvert (v16i8 VRRC:$src))), (v1i128 VRRC:$src)>;
+def : Pat<(v1i128 (bitconvert (v8i16 VRRC:$src))), (v1i128 VRRC:$src)>;
+def : Pat<(v1i128 (bitconvert (v4i32 VRRC:$src))), (v1i128 VRRC:$src)>;
+def : Pat<(v1i128 (bitconvert (v4f32 VRRC:$src))), (v1i128 VRRC:$src)>;
+def : Pat<(v1i128 (bitconvert (v2i64 VRRC:$src))), (v1i128 VRRC:$src)>;
 
 // Shuffles.
 

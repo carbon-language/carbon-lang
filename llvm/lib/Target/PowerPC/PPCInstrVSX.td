@@ -890,6 +890,11 @@ def : Pat<(v2f64 (bitconvert v2i64:$A)),
 def : Pat<(v2i64 (bitconvert v2f64:$A)),
           (COPY_TO_REGCLASS $A, VRRC)>;
 
+def : Pat<(v2f64 (bitconvert v1i128:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
+def : Pat<(v1i128 (bitconvert v2f64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
+
 // sign extension patterns
 // To extend "in place" from v2i32 to v2i64, we have input data like:
 // | undef | i32 | undef | i32 |

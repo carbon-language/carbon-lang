@@ -39,6 +39,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
+
 using namespace llvm;
 
 // FIXME: Remove this once soft-float is supported.
@@ -402,11 +403,18 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     // will selectively turn on ones that can be effectively codegen'd.
     for (MVT VT : MVT::vector_valuetypes()) {
       // add/sub are legal for all supported vector VT's.
-      setOperationAction(ISD::ADD , VT, Legal);
-      setOperationAction(ISD::SUB , VT, Legal);
-
+      // This check is temporary until support for quadword add/sub is added
+      if (VT.SimpleTy != MVT::v1i128) {
+        setOperationAction(ISD::ADD , VT, Legal);
+        setOperationAction(ISD::SUB , VT, Legal);
+      }
+      else {
+        setOperationAction(ISD::ADD , VT, Expand);
+        setOperationAction(ISD::SUB , VT, Expand);
+      }
+      
       // Vector instructions introduced in P8
-      if (Subtarget.hasP8Altivec()) {
+      if (Subtarget.hasP8Altivec() && (VT.SimpleTy != MVT::v1i128)) {
         setOperationAction(ISD::CTPOP, VT, Legal);
         setOperationAction(ISD::CTLZ, VT, Legal);
       }
@@ -620,8 +628,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       addRegisterClass(MVT::v2i64, &PPC::VSRCRegClass);
     }
 
-    if (Subtarget.hasP8Altivec()) 
+    if (Subtarget.hasP8Altivec()) {
       addRegisterClass(MVT::v2i64, &PPC::VRRCRegClass);
+      addRegisterClass(MVT::v1i128, &PPC::VRRCRegClass);
+    }
   }
 
   if (Subtarget.hasQPX()) {
@@ -2473,7 +2483,8 @@ static unsigned CalculateStackSlotAlignment(EVT ArgVT, EVT OrigVT,
   // Altivec parameters are padded to a 16 byte boundary.
   if (ArgVT == MVT::v4f32 || ArgVT == MVT::v4i32 ||
       ArgVT == MVT::v8i16 || ArgVT == MVT::v16i8 ||
-      ArgVT == MVT::v2f64 || ArgVT == MVT::v2i64)
+      ArgVT == MVT::v2f64 || ArgVT == MVT::v2i64 ||
+      ArgVT == MVT::v1i128)
     Align = 16;
   // QPX vector types stored in double-precision are padded to a 32 byte
   // boundary.
@@ -2552,7 +2563,8 @@ static bool CalculateStackSlotUsed(EVT ArgVT, EVT OrigVT,
       }
     if (ArgVT == MVT::v4f32 || ArgVT == MVT::v4i32 ||
         ArgVT == MVT::v8i16 || ArgVT == MVT::v16i8 ||
-        ArgVT == MVT::v2f64 || ArgVT == MVT::v2i64)
+        ArgVT == MVT::v2f64 || ArgVT == MVT::v2i64 ||
+        ArgVT == MVT::v1i128)
       if (AvailableVRs > 0) {
         --AvailableVRs;
         return false;
@@ -3131,6 +3143,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
+    case MVT::v1i128:
       if (!Subtarget.hasQPX()) {
       // These can be scalar arguments or elements of a vector array type
       // passed directly.  The latter are used to implement ELFv2 homogenous
@@ -4605,6 +4618,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
         case MVT::v16i8:
         case MVT::v2f64:
         case MVT::v2i64:
+        case MVT::v1i128:
           if (++NumVRsUsed <= NumVRs)
             continue;
           break;
@@ -4967,6 +4981,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
+    case MVT::v1i128:
       if (!Subtarget.hasQPX()) {
       // These can be scalar arguments or elements of a vector array type
       // passed directly.  The latter are used to implement ELFv2 homogenous
