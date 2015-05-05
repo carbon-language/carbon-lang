@@ -150,8 +150,10 @@ else()
                                     LIB clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
                                     EXTRA asan.syms.extra)
       add_dependencies(asan clang_rt.asan-dynamic-${arch}-version-list)
-      list(APPEND ASAN_DYNAMIC_LINK_FLAGS
+      set(VERSION_SCRIPT_FLAG
            -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/clang_rt.asan-dynamic-${arch}.vers)
+    else()
+      set(VERSION_SCRIPT_FLAG)
     endif()
 
     if (WIN32)
@@ -166,6 +168,7 @@ else()
               ${ASAN_COMMON_RUNTIME_OBJECTS}
       CFLAGS ${ASAN_DYNAMIC_CFLAGS}
       LINKFLAGS ${ASAN_DYNAMIC_LINK_FLAGS}
+                ${VERSION_SCRIPT_FLAG}
       DEFS ${ASAN_DYNAMIC_DEFINITIONS})
     target_link_libraries(clang_rt.asan-dynamic-${arch} ${ASAN_DYNAMIC_LIBS})
     add_dependencies(asan clang_rt.asan-dynamic-${arch})
