@@ -985,20 +985,6 @@ static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
     // take a mutable instruction instead of const.
     MachineInstr *OpMI = const_cast<MachineInstr*>(Op.getParent());
     MachineInstrBuilder MIB(*OpMI->getParent()->getParent(), OpMI);
-
-    if (Op.isRegMask()) {
-      // First handle regmasks.  They clobber any entries in the mask which
-      // means that we need a def for those registers.
-      MIB.addReg(Reg.first, RegState::Implicit | RegState::Undef);
-
-      // We also need to add an implicit def of this register for the later
-      // use to read from.
-      // For the register allocator to have allocated a register clobbered
-      // by the call which is used later, it must be the case that
-      // the call doesn't return.
-      MIB.addReg(Reg.first, RegState::Implicit | RegState::Define);
-      continue;
-    }
     assert(Op.isReg() && "Register operand required");
     MIB.addReg(Reg.first, RegState::Implicit | RegState::Undef);
   }
