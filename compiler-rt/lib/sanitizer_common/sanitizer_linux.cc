@@ -907,6 +907,8 @@ void GetExtraActivationFlags(char *buf, uptr size) {
 #endif
 
 bool IsDeadlySignal(int signum) {
+  if (common_flags()->handle_abort)
+    return signum == SIGABRT;
   return (signum == SIGSEGV || signum == SIGBUS) && common_flags()->handle_segv;
 }
 
