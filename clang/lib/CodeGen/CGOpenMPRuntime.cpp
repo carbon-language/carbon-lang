@@ -1154,16 +1154,16 @@ llvm::Value *CGOpenMPRuntime::getCriticalRegionLock(StringRef CriticalName) {
 }
 
 namespace {
-class CallEndCleanup : public EHScopeStack::Cleanup {
-public:
-  typedef ArrayRef<llvm::Value *> CleanupValuesTy;
-private:
+template <size_t N> class CallEndCleanup : public EHScopeStack::Cleanup {
   llvm::Value *Callee;
-  llvm::SmallVector<llvm::Value *, 8> Args;
+  llvm::Value *Args[N];
 
 public:
-  CallEndCleanup(llvm::Value *Callee, CleanupValuesTy Args)
-      : Callee(Callee), Args(Args.begin(), Args.end()) {}
+  CallEndCleanup(llvm::Value *Callee, ArrayRef<llvm::Value *> CleanupArgs)
+      : Callee(Callee) {
+    assert(CleanupArgs.size() == N);
+    std::copy(CleanupArgs.begin(), CleanupArgs.end(), std::begin(Args));
+  }
   void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
     CGF.EmitRuntimeCall(Callee, Args);
   }
@@ -1184,7 +1184,7 @@ void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
                            getCriticalRegionLock(CriticalName)};
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_critical), Args);
     // Build a call to __kmpc_end_critical
-    CGF.EHStack.pushCleanup<CallEndCleanup>(
+    CGF.EHStack.pushCleanup<CallEndCleanup<std::extent<decltype(Args)>::value>>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_critical),
         llvm::makeArrayRef(Args));
     emitInlinedDirective(CGF, CriticalOpGen);
@@ -1220,9 +1220,11 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
   auto *IsMaster =
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_master), Args);
+  typedef CallEndCleanup<std::extent<decltype(Args)>::value>
+      MasterCallEndCleanup;
   emitIfStmt(CGF, IsMaster, [&](CodeGenFunction &CGF) -> void {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    CGF.EHStack.pushCleanup<CallEndCleanup>(
+    CGF.EHStack.pushCleanup<MasterCallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_master),
         llvm::makeArrayRef(Args));
     MasterOpGen(CGF);
@@ -1326,9 +1328,11 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
   auto *IsSingle =
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_single), Args);
+  typedef CallEndCleanup<std::extent<decltype(Args)>::value>
+      SingleCallEndCleanup;
   emitIfStmt(CGF, IsSingle, [&](CodeGenFunction &CGF) -> void {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    CGF.EHStack.pushCleanup<CallEndCleanup>(
+    CGF.EHStack.pushCleanup<SingleCallEndCleanup>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_single),
         llvm::makeArrayRef(Args));
     SingleOpGen(CGF);
@@ -1391,7 +1395,7 @@ void CGOpenMPRuntime::emitOrderedRegion(CodeGenFunction &CGF,
     llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_ordered), Args);
     // Build a call to __kmpc_end_ordered
-    CGF.EHStack.pushCleanup<CallEndCleanup>(
+    CGF.EHStack.pushCleanup<CallEndCleanup<std::extent<decltype(Args)>::value>>(
         NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_ordered),
         llvm::makeArrayRef(Args));
     emitInlinedDirective(CGF, OrderedOpGen);
@@ -1991,6 +1995,8 @@ void CGOpenMPRuntime::emitTaskCall(
     // TODO: add check for untied tasks.
     CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_task), TaskArgs);
   };
+  typedef CallEndCleanup<std::extent<decltype(TaskArgs)>::value>
+      IfCallEndCleanup;
   auto &&ElseCodeGen =
       [this, &TaskArgs, ThreadID, NewTaskNewTaskTTy, TaskEntry](
           CodeGenFunction &CGF) {
@@ -1999,7 +2005,7 @@ void CGOpenMPRuntime::emitTaskCall(
             createRuntimeFunction(OMPRTL__kmpc_omp_task_begin_if0), TaskArgs);
         // Build void __kmpc_omp_task_complete_if0(ident_t *, kmp_int32 gtid,
         // kmp_task_t *new_task);
-        CGF.EHStack.pushCleanup<CallEndCleanup>(
+        CGF.EHStack.pushCleanup<IfCallEndCleanup>(
             NormalAndEHCleanup,
             createRuntimeFunction(OMPRTL__kmpc_omp_task_complete_if0),
             llvm::makeArrayRef(TaskArgs));
@@ -2191,11 +2197,12 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
         ThreadId,  // i32 <gtid>
         Lock       // kmp_critical_name *&<lock>
     };
-    CGF.EHStack.pushCleanup<CallEndCleanup>(
-        NormalAndEHCleanup,
-        createRuntimeFunction(WithNowait ? OMPRTL__kmpc_end_reduce_nowait
-                                         : OMPRTL__kmpc_end_reduce),
-        llvm::makeArrayRef(EndArgs));
+    CGF.EHStack
+        .pushCleanup<CallEndCleanup<std::extent<decltype(EndArgs)>::value>>(
+            NormalAndEHCleanup,
+            createRuntimeFunction(WithNowait ? OMPRTL__kmpc_end_reduce_nowait
+                                             : OMPRTL__kmpc_end_reduce),
+            llvm::makeArrayRef(EndArgs));
     for (auto *E : ReductionOps) {
       CGF.EmitIgnoredExpr(E);
     }
