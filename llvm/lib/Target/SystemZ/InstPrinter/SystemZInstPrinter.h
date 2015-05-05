@@ -48,10 +48,15 @@ private:
   void printBDAddrOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printBDXAddrOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printBDLAddrOperand(const MCInst *MI, int OpNum, raw_ostream &O);
+  void printBDVAddrOperand(const MCInst *MI, int OpNum, raw_ostream &O);
+  void printU1ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
+  void printU2ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
+  void printU3ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printU4ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printU6ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printS8ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printU8ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
+  void printU12ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printS16ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printU16ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);
   void printS32ImmOperand(const MCInst *MI, int OpNum, raw_ostream &O);

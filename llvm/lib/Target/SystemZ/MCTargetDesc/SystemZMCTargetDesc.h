@@ -49,6 +49,9 @@ extern const unsigned GR128Regs[16];
 extern const unsigned FP32Regs[16];
 extern const unsigned FP64Regs[16];
 extern const unsigned FP128Regs[16];
+extern const unsigned VR32Regs[32];
+extern const unsigned VR64Regs[32];
+extern const unsigned VR128Regs[32];
 
 // Return the 0-based number of the first architectural register that
 // contains the given LLVM register.   E.g. R1D -> 1.

@@ -47,8 +47,8 @@ extern "C" void LLVMInitializeSystemZDisassembler() {
 }
 
 static DecodeStatus decodeRegisterClass(MCInst &Inst, uint64_t RegNo,
-                                        const unsigned *Regs) {
-  assert(RegNo < 16 && "Invalid register");
+                                        const unsigned *Regs, unsigned Size) {
+  assert(RegNo < Size && "Invalid register");
   RegNo = Regs[RegNo];
   if (RegNo == 0)
     return MCDisassembler::Fail;
@@ -59,61 +59,81 @@ static DecodeStatus decodeRegisterClass(MCInst &Inst, uint64_t RegNo,
 static DecodeStatus DecodeGR32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
                                                const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR32Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR32Regs, 16);
 }
 
 static DecodeStatus DecodeGRH32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                 uint64_t Address,
                                                 const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::GRH32Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GRH32Regs, 16);
 }
 
 static DecodeStatus DecodeGR64BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
                                                const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR64Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR64Regs, 16);
 }
 
 static DecodeStatus DecodeGR128BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                 uint64_t Address,
                                                 const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR128Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR128Regs, 16);
 }
 
 static DecodeStatus DecodeADDR64BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                  uint64_t Address,
                                                  const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR64Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::GR64Regs, 16);
 }
 
 static DecodeStatus DecodeFP32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
                                                const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP32Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP32Regs, 16);
 }
 
 static DecodeStatus DecodeFP64BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                uint64_t Address,
                                                const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP64Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP64Regs, 16);
 }
 
 static DecodeStatus DecodeFP128BitRegisterClass(MCInst &Inst, uint64_t RegNo,
                                                 uint64_t Address,
                                                 const void *Decoder) {
-  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP128Regs);
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::FP128Regs, 16);
+}
+
+static DecodeStatus DecodeVR32BitRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::VR32Regs, 32);
+}
+
+static DecodeStatus DecodeVR64BitRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::VR64Regs, 32);
+}
+
+static DecodeStatus DecodeVR128BitRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                                uint64_t Address,
+                                                const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, SystemZMC::VR128Regs, 32);
 }
 
 template<unsigned N>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm) {
-  assert(isUInt<N>(Imm) && "Invalid immediate");
+  if (!isUInt<N>(Imm))
+    return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(Imm));
   return MCDisassembler::Success;
 }
 
 template<unsigned N>
 static DecodeStatus decodeSImmOperand(MCInst &Inst, uint64_t Imm) {
-  assert(isUInt<N>(Imm) && "Invalid immediate");
+  if (!isUInt<N>(Imm))
+    return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(SignExtend64<N>(Imm)));
   return MCDisassembler::Success;
 }
@@ -122,6 +142,21 @@ static DecodeStatus decodeAccessRegOperand(MCInst &Inst, uint64_t Imm,
                                            uint64_t Address,
                                            const void *Decoder) {
   return decodeUImmOperand<4>(Inst, Imm);
+}
+
+static DecodeStatus decodeU1ImmOperand(MCInst &Inst, uint64_t Imm,
+                                       uint64_t Address, const void *Decoder) {
+  return decodeUImmOperand<1>(Inst, Imm);
+}
+
+static DecodeStatus decodeU2ImmOperand(MCInst &Inst, uint64_t Imm,
+                                       uint64_t Address, const void *Decoder) {
+  return decodeUImmOperand<2>(Inst, Imm);
+}
+
+static DecodeStatus decodeU3ImmOperand(MCInst &Inst, uint64_t Imm,
+                                       uint64_t Address, const void *Decoder) {
+  return decodeUImmOperand<3>(Inst, Imm);
 }
 
 static DecodeStatus decodeU4ImmOperand(MCInst &Inst, uint64_t Imm,
@@ -137,6 +172,11 @@ static DecodeStatus decodeU6ImmOperand(MCInst &Inst, uint64_t Imm,
 static DecodeStatus decodeU8ImmOperand(MCInst &Inst, uint64_t Imm,
                                        uint64_t Address, const void *Decoder) {
   return decodeUImmOperand<8>(Inst, Imm);
+}
+
+static DecodeStatus decodeU12ImmOperand(MCInst &Inst, uint64_t Imm,
+                                        uint64_t Address, const void *Decoder) {
+  return decodeUImmOperand<12>(Inst, Imm);
 }
 
 static DecodeStatus decodeU16ImmOperand(MCInst &Inst, uint64_t Imm,
@@ -240,6 +280,18 @@ static DecodeStatus decodeBDLAddr12Len8Operand(MCInst &Inst, uint64_t Field,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus decodeBDVAddr12Operand(MCInst &Inst, uint64_t Field,
+                                           const unsigned *Regs) {
+  uint64_t Index = Field >> 16;
+  uint64_t Base = (Field >> 12) & 0xf;
+  uint64_t Disp = Field & 0xfff;
+  assert(Index < 32 && "Invalid BDVAddr12");
+  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::CreateImm(Disp));
+  Inst.addOperand(MCOperand::CreateReg(SystemZMC::VR128Regs[Index]));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus decodeBDAddr32Disp12Operand(MCInst &Inst, uint64_t Field,
                                                 uint64_t Address,
                                                 const void *Decoder) {
@@ -281,6 +333,12 @@ static DecodeStatus decodeBDLAddr64Disp12Len8Operand(MCInst &Inst,
                                                      uint64_t Address,
                                                      const void *Decoder) {
   return decodeBDLAddr12Len8Operand(Inst, Field, SystemZMC::GR64Regs);
+}
+
+static DecodeStatus decodeBDVAddr64Disp12Operand(MCInst &Inst, uint64_t Field,
+                                                 uint64_t Address,
+                                                 const void *Decoder) {
+  return decodeBDVAddr12Operand(Inst, Field, SystemZMC::GR64Regs);
 }
 
 #include "SystemZGenDisassemblerTables.inc"

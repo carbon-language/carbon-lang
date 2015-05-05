@@ -76,6 +76,39 @@ const unsigned SystemZMC::FP128Regs[16] = {
   SystemZ::F12Q, SystemZ::F13Q, 0, 0
 };
 
+const unsigned SystemZMC::VR32Regs[32] = {
+  SystemZ::F0S, SystemZ::F1S, SystemZ::F2S, SystemZ::F3S,
+  SystemZ::F4S, SystemZ::F5S, SystemZ::F6S, SystemZ::F7S,
+  SystemZ::F8S, SystemZ::F9S, SystemZ::F10S, SystemZ::F11S,
+  SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S,
+  SystemZ::F16S, SystemZ::F17S, SystemZ::F18S, SystemZ::F19S,
+  SystemZ::F20S, SystemZ::F21S, SystemZ::F22S, SystemZ::F23S,
+  SystemZ::F24S, SystemZ::F25S, SystemZ::F26S, SystemZ::F27S,
+  SystemZ::F28S, SystemZ::F29S, SystemZ::F30S, SystemZ::F31S
+};
+
+const unsigned SystemZMC::VR64Regs[32] = {
+  SystemZ::F0D, SystemZ::F1D, SystemZ::F2D, SystemZ::F3D,
+  SystemZ::F4D, SystemZ::F5D, SystemZ::F6D, SystemZ::F7D,
+  SystemZ::F8D, SystemZ::F9D, SystemZ::F10D, SystemZ::F11D,
+  SystemZ::F12D, SystemZ::F13D, SystemZ::F14D, SystemZ::F15D,
+  SystemZ::F16D, SystemZ::F17D, SystemZ::F18D, SystemZ::F19D,
+  SystemZ::F20D, SystemZ::F21D, SystemZ::F22D, SystemZ::F23D,
+  SystemZ::F24D, SystemZ::F25D, SystemZ::F26D, SystemZ::F27D,
+  SystemZ::F28D, SystemZ::F29D, SystemZ::F30D, SystemZ::F31D
+};
+
+const unsigned SystemZMC::VR128Regs[32] = {
+  SystemZ::V0, SystemZ::V1, SystemZ::V2, SystemZ::V3,
+  SystemZ::V4, SystemZ::V5, SystemZ::V6, SystemZ::V7,
+  SystemZ::V8, SystemZ::V9, SystemZ::V10, SystemZ::V11,
+  SystemZ::V12, SystemZ::V13, SystemZ::V14, SystemZ::V15,
+  SystemZ::V16, SystemZ::V17, SystemZ::V18, SystemZ::V19,
+  SystemZ::V20, SystemZ::V21, SystemZ::V22, SystemZ::V23,
+  SystemZ::V24, SystemZ::V25, SystemZ::V26, SystemZ::V27,
+  SystemZ::V28, SystemZ::V29, SystemZ::V30, SystemZ::V31
+};
+
 unsigned SystemZMC::getFirstReg(unsigned Reg) {
   static unsigned Map[SystemZ::NUM_TARGET_REGS];
   static bool Initialized = false;
@@ -85,9 +118,12 @@ unsigned SystemZMC::getFirstReg(unsigned Reg) {
       Map[GRH32Regs[I]] = I;
       Map[GR64Regs[I]] = I;
       Map[GR128Regs[I]] = I;
-      Map[FP32Regs[I]] = I;
-      Map[FP64Regs[I]] = I;
       Map[FP128Regs[I]] = I;
+    }
+    for (unsigned I = 0; I < 32; ++I) {
+      Map[VR32Regs[I]] = I;
+      Map[VR64Regs[I]] = I;
+      Map[VR128Regs[I]] = I;
     }
   }
   assert(Reg < SystemZ::NUM_TARGET_REGS);

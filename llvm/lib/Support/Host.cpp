@@ -682,6 +682,28 @@ StringRef sys::getHostCPUName() {
   StringRef Str(buffer, CPUInfoSize);
   SmallVector<StringRef, 32> Lines;
   Str.split(Lines, "\n");
+
+  // Look for the CPU features.
+  SmallVector<StringRef, 32> CPUFeatures;
+  for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+    if (Lines[I].startswith("features")) {
+      size_t Pos = Lines[I].find(":");
+      if (Pos != StringRef::npos) {
+        Lines[I].drop_front(Pos + 1).split(CPUFeatures, " ");
+        break;
+      }
+    }
+
+  // We need to check for the presence of vector support independently of
+  // the machine type, since we may only use the vector register set when
+  // supported by the kernel (and hypervisor).
+  bool HaveVectorSupport = false;
+  for (unsigned I = 0, E = CPUFeatures.size(); I != E; ++I) {
+    if (CPUFeatures[I] == "vx")
+      HaveVectorSupport = true;
+  }
+
+  // Now check the processor machine type.
   for (unsigned I = 0, E = Lines.size(); I != E; ++I) {
     if (Lines[I].startswith("processor ")) {
       size_t Pos = Lines[I].find("machine = ");
@@ -689,6 +711,8 @@ StringRef sys::getHostCPUName() {
         Pos += sizeof("machine = ") - 1;
         unsigned int Id;
         if (!Lines[I].drop_front(Pos).getAsInteger(10, Id)) {
+          if (Id >= 2964 && HaveVectorSupport)
+            return "z13";
           if (Id >= 2827)
             return "zEC12";
           if (Id >= 2817)

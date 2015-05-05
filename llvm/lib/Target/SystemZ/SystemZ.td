@@ -41,6 +41,7 @@ include "SystemZPatterns.td"
 include "SystemZInstrFormats.td"
 include "SystemZInstrInfo.td"
 include "SystemZInstrFP.td"
+include "SystemZInstrVector.td"
 
 def SystemZInstrInfo : InstrInfo {}
 

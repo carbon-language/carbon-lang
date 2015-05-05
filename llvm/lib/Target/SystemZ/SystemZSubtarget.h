@@ -44,6 +44,7 @@ protected:
   bool HasMiscellaneousExtensions;
   bool HasTransactionalExecution;
   bool HasProcessorAssist;
+  bool HasVector;
 
 private:
   Triple TargetTriple;
@@ -109,6 +110,9 @@ public:
 
   // Return true if the target has the processor-assist facility.
   bool hasProcessorAssist() const { return HasProcessorAssist; }
+
+  // Return true if the target has the vector facility.
+  bool hasVector() const { return HasVector; }
 
   // Return true if GV can be accessed using LARL for reloc model RM
   // and code model CM.
