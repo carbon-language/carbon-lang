@@ -247,7 +247,9 @@ static bool format(StringRef FileName) {
     Rewriter Rewrite(Sources, LangOptions());
     tooling::applyAllReplacements(Replaces, Rewrite);
     if (Inplace) {
-      if (Rewrite.overwriteChangedFiles())
+      if (FileName == "-")
+        llvm::errs() << "error: cannot use -i when reading from stdin.\n";
+      else if (Rewrite.overwriteChangedFiles())
         return true;
     } else {
       if (Cursor.getNumOccurrences() != 0)
