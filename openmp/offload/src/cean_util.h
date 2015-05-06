@@ -11,8 +11,12 @@
 #ifndef CEAN_UTIL_H_INCLUDED
 #define CEAN_UTIL_H_INCLUDED
 
+#if MPSS_VERSION > 33
+#include <source/COIBuffer_source.h>
+#endif
 #include <stdint.h>
 
+#if MPSS_VERSION <= 33
 // CEAN expression representation
 struct dim_desc {
     int64_t size;       // Length of data type
@@ -27,6 +31,7 @@ struct arr_desc {
     int64_t rank;       // Rank of array
     dim_desc dim[1];
 };
+#endif
 
 struct CeanReadDim {
     int64_t count; // The number of elements in this dimension

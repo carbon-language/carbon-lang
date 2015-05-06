@@ -14,6 +14,7 @@
 # root_dir - path to root directory of liboffload
 # build_dir - path to build directory
 # mpss_dir - path to root directory of mpss
+# mpss_version - version of the mpss (e.g., version "3.3.x" would be "33")
 # libiomp_host_dir - path to host libiomp directory (unnecessary if compiler_host is icc)
 # libiomp_target_dir - path to target libiomp directory (unnecesarry if compiler_target is icc)
 # omp_header_dir - path to omp.h (unnecessary if compiler_host and compiler_target are icc)
@@ -47,13 +48,24 @@ compiler_host?=gcc
 compiler_target?=gcc
 
 # MPSS
+mpss_version?=30
 mpss_dir?=/
 mpss_present=$(shell if test -d $(mpss_dir); then echo OK; else echo KO; fi)
 ifneq ($(mpss_present), OK)
   $(error "Cannot find MPSS directory $(mpss_dir)")
 endif
 
-coi_dir=$(mpss_dir)/opt/intel/mic/coi
+ifeq ($(shell test $(mpss_version) -gt 33; echo $$?), 0)
+  coi_dir=$(mpss_dir)/sysroots/k1om-mpss-linux/usr
+  coi_include=$(coi_dir)/include/intel-coi
+  coi_lib_host=$(mpss_dir)/lib64
+  coi_lib_device=$(coi_dir)/lib64
+else
+  coi_dir=$(mpss_dir)/opt/intel/mic/coi
+  coi_include=$(coi_dir)/include
+  coi_lib_host=$(coi_dir)/host-linux-release/lib
+  coi_lib_device=$(coi_dir)/device-linux-release/lib
+endif
 myo_dir=$(mpss_dir)/opt/intel/mic/myo
 
 # Sources
@@ -90,25 +102,25 @@ obj_ofld_host=$(foreach file,$(obj_ofld),$(build_host_dir)/$(file))
 obj_ofld_target=$(foreach file,$(obj_ofld),$(build_target_dir)/$(file))
 
 # Options
-opts_common=-O2 -w -fpic -c -DCOI_LIBRARY_VERSION=2 -DMYO_SUPPORT -DOFFLOAD_DEBUG=1 -DSEP_SUPPORT -DTIMING_SUPPORT -I$(coi_dir)/include -I$(myo_dir)/include -I$(source_dir)
+opts_common=-O2 -w -fpic -c -DCOI_LIBRARY_VERSION=2 -DMYO_SUPPORT -DOFFLOAD_DEBUG=1 -DSEP_SUPPORT -DTIMING_SUPPORT -I$(coi_include) -I$(myo_dir)/include -I$(source_dir)
 ifneq ($(omp_header_dir), )
   opts_common+=-I$(imported_dir)
 endif
 
 opts_liboffload=-shared -Wl,-soname,liboffload.so.5 -ldl -lstdc++ -liomp5
 
-opts_liboffload_host=$(opts_liboffload) -L$(coi_dir)/host-linux-release/lib -lcoi_host -L$(myo_dir)/lib -lmyo-client
+opts_liboffload_host=$(opts_liboffload) -L$(coi_lib_host) -lcoi_host -L$(myo_dir)/lib -lmyo-client
 ifneq ($(libiomp_host_dir), )
   opts_liboffload_host+=-L$(libiomp_host_dir)
 endif
 
-opts_liboffload_target=$(opts_liboffload) -L$(coi_dir)/device-linux-release/lib -lcoi_device -L$(myo_dir)/lib -lmyo-service
+opts_liboffload_target=$(opts_liboffload) -L$(coi_lib_device) -lcoi_device -L$(myo_dir)/lib -lmyo-service
 ifneq ($(libiomp_target_dir), )
   opts_liboffload_target+=-L$(libiomp_target_dir)
 endif
 
 options_host?=
-opts_host=$(options_host) -DHOST_LIBRARY=1
+opts_host=$(options_host) -DHOST_LIBRARY=1 -DMPSS_VERSION=$(mpss_version)
 ifeq ($(os_host), linux)
   opts_host+=-DLINUX
 endif
@@ -117,6 +129,9 @@ options_target?=
 opts_target=$(options_target) -DHOST_LIBRARY=0
 ifeq ($(os_target), linux)
   opts_target+=-DLINUX
+endif
+ifeq ($(compiler_target), icc)
+  opts_target+=-mmic
 endif
 
 # Make targets
@@ -196,6 +211,7 @@ info:
 	@echo "root_dir = $(root_dir)"
 	@echo "build_dir = $(build_dir)"
 	@echo "mpss_dir = $(mpss_dir)"
+	@echo "mpss_version = $(mpss_version)"
 	@echo "libiomp_host_dir = $(libiomp_host_dir)"
 	@echo "libiomp_target_dir = $(libiomp_target_dir)"
 	@echo "omp_header_dir = $(omp_header_dir)"
