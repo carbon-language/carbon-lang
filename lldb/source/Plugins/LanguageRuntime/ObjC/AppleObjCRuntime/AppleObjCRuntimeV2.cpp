@@ -497,6 +497,7 @@ protected:
                 }
             }
             result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
+            return true;
         }
         else
         {
