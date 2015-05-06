@@ -36,11 +36,11 @@ void CoverageMappingIterator::increment() {
 
 std::error_code RawCoverageReader::readULEB128(uint64_t &Result) {
   if (Data.size() < 1)
-    return instrprof_error::truncated;
+    return coveragemap_error::truncated;
   unsigned N = 0;
   Result = decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
   if (N > Data.size())
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   Data = Data.substr(N);
   return std::error_code();
 }
@@ -50,7 +50,7 @@ std::error_code RawCoverageReader::readIntMax(uint64_t &Result,
   if (auto Err = readULEB128(Result))
     return Err;
   if (Result >= MaxPlus1)
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   return std::error_code();
 }
 
@@ -59,7 +59,7 @@ std::error_code RawCoverageReader::readSize(uint64_t &Result) {
     return Err;
   // Sanity check the number.
   if (Result > Data.size())
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   return std::error_code();
 }
 
@@ -104,13 +104,13 @@ std::error_code RawCoverageMappingReader::decodeCounter(unsigned Value,
   case CounterExpression::Add: {
     auto ID = Value >> Counter::EncodingTagBits;
     if (ID >= Expressions.size())
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     Expressions[ID].Kind = CounterExpression::ExprKind(Tag);
     C = Counter::getExpression(ID);
     break;
   }
   default:
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   }
   return std::error_code();
 }
@@ -159,7 +159,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
         ExpandedFileID = EncodedCounterAndRegion >>
                          Counter::EncodingCounterTagAndExpansionRegionTagBits;
         if (ExpandedFileID >= NumFileIDs)
-          return instrprof_error::malformed;
+          return coveragemap_error::malformed;
       } else {
         switch (EncodedCounterAndRegion >>
                 Counter::EncodingCounterTagAndExpansionRegionTagBits) {
@@ -170,7 +170,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
           Kind = CounterMappingRegion::SkippedRegion;
           break;
         default:
-          return instrprof_error::malformed;
+          return coveragemap_error::malformed;
         }
       }
     }
@@ -183,7 +183,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
     if (auto Err = readULEB128(ColumnStart))
       return Err;
     if (ColumnStart > std::numeric_limits<unsigned>::max())
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     if (auto Err = readIntMax(NumLines, std::numeric_limits<unsigned>::max()))
       return Err;
     if (auto Err = readIntMax(ColumnEnd, std::numeric_limits<unsigned>::max()))
@@ -301,17 +301,17 @@ struct SectionData {
     if (auto Err = Section.getContents(Data))
       return Err;
     Address = Section.getAddress();
-    return instrprof_error::success;
+    return std::error_code();
   }
 
   std::error_code get(uint64_t Pointer, size_t Size, StringRef &Result) {
     if (Pointer < Address)
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     auto Offset = Pointer - Address;
     if (Offset + Size > Data.size())
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     Result = Data.substr(Pointer - Address, Size);
-    return instrprof_error::success;
+    return std::error_code();
   }
 };
 }
@@ -327,7 +327,7 @@ std::error_code readCoverageMappingData(
   // Read the records in the coverage data section.
   for (const char *Buf = Data.data(), *End = Buf + Data.size(); Buf < End;) {
     if (Buf + 4 * sizeof(uint32_t) > End)
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     uint32_t NRecords = endian::readNext<uint32_t, Endian, unaligned>(Buf);
     uint32_t FilenamesSize = endian::readNext<uint32_t, Endian, unaligned>(Buf);
     uint32_t CoverageSize = endian::readNext<uint32_t, Endian, unaligned>(Buf);
@@ -337,7 +337,7 @@ std::error_code readCoverageMappingData(
     case CoverageMappingVersion1:
       break;
     default:
-      return instrprof_error::unsupported_version;
+      return coveragemap_error::unsupported_version;
     }
 
     // Skip past the function records, saving the start and end for later.
@@ -347,7 +347,7 @@ std::error_code readCoverageMappingData(
 
     // Get the filenames.
     if (Buf + FilenamesSize > End)
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
     size_t FilenamesBegin = Filenames.size();
     RawCoverageFilenamesReader Reader(StringRef(Buf, FilenamesSize), Filenames);
     if (auto Err = Reader.read())
@@ -359,7 +359,7 @@ std::error_code readCoverageMappingData(
     Buf += CoverageSize;
     const char *CovEnd = Buf;
     if (Buf > End)
-      return instrprof_error::malformed;
+      return coveragemap_error::malformed;
 
     while (FunBuf < FunEnd) {
       // Read the function information
@@ -370,7 +370,7 @@ std::error_code readCoverageMappingData(
 
       // Now use that to read the coverage data.
       if (CovBuf + DataSize > CovEnd)
-        return instrprof_error::malformed;
+        return coveragemap_error::malformed;
       auto Mapping = StringRef(CovBuf, DataSize);
       CovBuf += DataSize;
 
@@ -390,7 +390,7 @@ std::error_code readCoverageMappingData(
     }
   }
 
-  return instrprof_error::success;
+  return std::error_code();
 }
 
 static const char *TestingFormatMagic = "llvmcovmtestdata";
@@ -405,26 +405,26 @@ static std::error_code loadTestingFormat(StringRef Data,
 
   Data = Data.substr(StringRef(TestingFormatMagic).size());
   if (Data.size() < 1)
-    return instrprof_error::truncated;
+    return coveragemap_error::truncated;
   unsigned N = 0;
   auto ProfileNamesSize =
       decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
   if (N > Data.size())
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   Data = Data.substr(N);
   if (Data.size() < 1)
-    return instrprof_error::truncated;
+    return coveragemap_error::truncated;
   N = 0;
   ProfileNames.Address =
       decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
   if (N > Data.size())
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   Data = Data.substr(N);
   if (Data.size() < ProfileNamesSize)
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   ProfileNames.Data = Data.substr(0, ProfileNamesSize);
   CoverageMapping = Data.substr(ProfileNamesSize);
-  return instrprof_error::success;
+  return std::error_code();
 }
 
 static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
@@ -453,7 +453,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
       return object_error::arch_not_found;
   } else
     // We can only handle object files.
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
 
   // The coverage uses native pointer sizes for the object it's written in.
   BytesInAddress = OF->getBytesInAddress();
@@ -476,7 +476,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
     ++FoundSectionCount;
   }
   if (FoundSectionCount != 2)
-    return instrprof_error::bad_header;
+    return coveragemap_error::no_data_found;
 
   // Get the contents of the given sections.
   if (std::error_code EC = CoverageSection.getContents(CoverageMapping))
@@ -520,7 +520,7 @@ BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
     EC = readCoverageMappingData<uint64_t, support::endianness::big>(
         Profile, Coverage, Reader->MappingRecords, Reader->Filenames);
   else
-    return instrprof_error::malformed;
+    return coveragemap_error::malformed;
   if (EC)
     return EC;
   return std::move(Reader);
@@ -529,7 +529,7 @@ BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
 std::error_code
 BinaryCoverageReader::readNextRecord(CoverageMappingRecord &Record) {
   if (CurrentRecord >= MappingRecords.size())
-    return instrprof_error::eof;
+    return coveragemap_error::eof;
 
   FunctionsFilenames.clear();
   Expressions.clear();

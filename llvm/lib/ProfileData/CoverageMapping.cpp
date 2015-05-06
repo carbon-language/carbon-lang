@@ -20,6 +20,7 @@
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -494,4 +495,34 @@ CoverageMapping::getCoverageForExpansion(const ExpansionRecord &Expansion) {
   ExpansionCoverage.Segments = SegmentBuilder().buildSegments(Regions);
 
   return ExpansionCoverage;
+}
+
+namespace {
+class CoverageMappingErrorCategoryType : public std::error_category {
+  const char *name() const LLVM_NOEXCEPT override { return "llvm.coveragemap"; }
+  std::string message(int IE) const override {
+    auto E = static_cast<coveragemap_error>(IE);
+    switch (E) {
+    case coveragemap_error::success:
+      return "Success";
+    case coveragemap_error::eof:
+      return "End of File";
+    case coveragemap_error::no_data_found:
+      return "No coverage data found";
+    case coveragemap_error::unsupported_version:
+      return "Unsupported coverage format version";
+    case coveragemap_error::truncated:
+      return "Truncated coverage data";
+    case coveragemap_error::malformed:
+      return "Malformed coverage data";
+    }
+    llvm_unreachable("A value of coveragemap_error has no message.");
+  }
+};
+}
+
+static ManagedStatic<CoverageMappingErrorCategoryType> ErrorCategory;
+
+const std::error_category &llvm::coveragemap_category() {
+  return *ErrorCategory;
 }
