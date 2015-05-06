@@ -417,6 +417,10 @@ private:
                  , Token::TokenKind Kind
                  , TokenQueueT::iterator InsertPoint);
 
+  /// @brief Skip a single-line comment when the comment starts at the current
+  /// position of the scanner.
+  void skipComment();
+
   /// @brief Skip whitespace and comments until the start of the next token.
   void scanToNextToken();
 
@@ -962,24 +966,27 @@ bool Scanner::rollIndent( int ToColumn
   return true;
 }
 
+void Scanner::skipComment() {
+  if (*Current != '#')
+    return;
+  while (true) {
+    // This may skip more than one byte, thus Column is only incremented
+    // for code points.
+    StringRef::iterator I = skip_nb_char(Current);
+    if (I == Current)
+      break;
+    Current = I;
+    ++Column;
+  }
+}
+
 void Scanner::scanToNextToken() {
   while (true) {
     while (*Current == ' ' || *Current == '\t') {
       skip(1);
     }
 
-    // Skip comment.
-    if (*Current == '#') {
-      while (true) {
-        // This may skip more than one byte, thus Column is only incremented
-        // for code points.
-        StringRef::iterator i = skip_nb_char(Current);
-        if (i == Current)
-          break;
-        Current = i;
-        ++Column;
-      }
-    }
+    skipComment();
 
     // Skip EOL.
     StringRef::iterator i = skip_b_break(Current);
