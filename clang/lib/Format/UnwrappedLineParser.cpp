@@ -1531,38 +1531,40 @@ void UnwrappedLineParser::parseJavaEnumBody() {
 void UnwrappedLineParser::parseRecord() {
   const FormatToken &InitialToken = *FormatTok;
   nextToken();
-  if (FormatTok->isOneOf(tok::identifier, tok::coloncolon, tok::kw___attribute,
-                         tok::kw___declspec, tok::kw_alignas)) {
+
+
+  // The actual identifier can be a nested name specifier, and in macros
+  // it is often token-pasted.
+  while (FormatTok->isOneOf(tok::identifier, tok::coloncolon, tok::hashhash,
+                            tok::kw___attribute, tok::kw___declspec,
+                            tok::kw_alignas) ||
+         ((Style.Language == FormatStyle::LK_Java ||
+           Style.Language == FormatStyle::LK_JavaScript) &&
+          FormatTok->isOneOf(tok::period, tok::comma))) {
+    bool IsNonMacroIdentifier =
+        FormatTok->is(tok::identifier) &&
+        FormatTok->TokenText != FormatTok->TokenText.upper();
     nextToken();
     // We can have macros or attributes in between 'class' and the class name.
-    if (FormatTok->Tok.is(tok::l_paren)) {
+    if (!IsNonMacroIdentifier && FormatTok->Tok.is(tok::l_paren))
       parseParens();
-    }
-    // The actual identifier can be a nested name specifier, and in macros
-    // it is often token-pasted.
-    while (FormatTok->is(tok::identifier) || FormatTok->is(tok::coloncolon) ||
-           FormatTok->is(tok::hashhash) ||
-           ((Style.Language == FormatStyle::LK_Java ||
-             Style.Language == FormatStyle::LK_JavaScript) &&
-            FormatTok->isOneOf(tok::period, tok::comma)))
-      nextToken();
+  }
 
-    // Note that parsing away template declarations here leads to incorrectly
-    // accepting function declarations as record declarations.
-    // In general, we cannot solve this problem. Consider:
-    // class A<int> B() {}
-    // which can be a function definition or a class definition when B() is a
-    // macro. If we find enough real-world cases where this is a problem, we
-    // can parse for the 'template' keyword in the beginning of the statement,
-    // and thus rule out the record production in case there is no template
-    // (this would still leave us with an ambiguity between template function
-    // and class declarations).
-    if (FormatTok->Tok.is(tok::colon) || FormatTok->Tok.is(tok::less)) {
-      while (!eof() && FormatTok->Tok.isNot(tok::l_brace)) {
-        if (FormatTok->Tok.is(tok::semi))
-          return;
-        nextToken();
-      }
+  // Note that parsing away template declarations here leads to incorrectly
+  // accepting function declarations as record declarations.
+  // In general, we cannot solve this problem. Consider:
+  // class A<int> B() {}
+  // which can be a function definition or a class definition when B() is a
+  // macro. If we find enough real-world cases where this is a problem, we
+  // can parse for the 'template' keyword in the beginning of the statement,
+  // and thus rule out the record production in case there is no template
+  // (this would still leave us with an ambiguity between template function
+  // and class declarations).
+  if (FormatTok->Tok.is(tok::colon) || FormatTok->Tok.is(tok::less)) {
+    while (!eof() && FormatTok->Tok.isNot(tok::l_brace)) {
+      if (FormatTok->Tok.is(tok::semi))
+        return;
+      nextToken();
     }
   }
   if (FormatTok->Tok.is(tok::l_brace)) {
