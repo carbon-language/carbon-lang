@@ -655,7 +655,7 @@ public:
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
-                  const SDNodeFlags *Flags = nullptr);
+                  bool nuw = false, bool nsw = false, bool exact = false);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
                   SDValue N3);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
@@ -978,7 +978,8 @@ public:
 
   /// Get the specified node if it's already available, or else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs, ArrayRef<SDValue> Ops,
-                          const SDNodeFlags *Flags = nullptr);
+                          bool nuw = false, bool nsw = false,
+                          bool exact = false);
 
   /// Creates a SDDbgValue node.
   SDDbgValue *getDbgValue(MDNode *Var, MDNode *Expr, SDNode *N, unsigned R,
@@ -1235,8 +1236,9 @@ private:
 
   void allnodes_clear();
 
-  SDNode *GetSDNodeWithFlags(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                             ArrayRef<SDValue> Ops, const SDNodeFlags *Flags);
+  BinarySDNode *GetBinarySDNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
+                                SDValue N1, SDValue N2, bool nuw, bool nsw,
+                                bool exact);
 
   /// List of non-single value types.
   FoldingSet<SDVTListNode> VTListMap;

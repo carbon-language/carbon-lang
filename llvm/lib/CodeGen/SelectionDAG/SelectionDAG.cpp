@@ -400,22 +400,18 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
   }
 }
 
-/// Add logical or fast math flag values to FoldingSetNodeID value.
-static void AddNodeIDFlags(FoldingSetNodeID &ID, unsigned Opcode,
-                           const SDNodeFlags *Flags) {
-  if (!Flags || !mayHaveOptimizationFlags(Opcode))
-    return;
-
-  unsigned RawFlags = Flags->getRawFlags();
-  // If no flags are set, do not alter the ID. This saves time and allows
-  // a gradual increase in API usage of the optional optimization flags.
-  if (RawFlags != 0)
-    ID.AddInteger(RawFlags);
+static void AddBinaryNodeIDCustom(FoldingSetNodeID &ID, bool nuw, bool nsw,
+                                  bool exact) {
+  ID.AddBoolean(nuw);
+  ID.AddBoolean(nsw);
+  ID.AddBoolean(exact);
 }
 
-static void AddNodeIDFlags(FoldingSetNodeID &ID, const SDNode *N) {
-  if (auto *Node = dyn_cast<SDNodeWithFlags>(N))
-    AddNodeIDFlags(ID, Node->getOpcode(), &Node->Flags);
+/// AddBinaryNodeIDCustom - Add BinarySDNodes special infos
+static void AddBinaryNodeIDCustom(FoldingSetNodeID &ID, unsigned Opcode,
+                                  bool nuw, bool nsw, bool exact) {
+  if (isBinOpWithFlags(Opcode))
+    AddBinaryNodeIDCustom(ID, nuw, nsw, exact);
 }
 
 static void AddNodeIDNode(FoldingSetNodeID &ID, unsigned short OpC,
@@ -510,6 +506,21 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddInteger(ST->getPointerInfo().getAddrSpace());
     break;
   }
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::MUL:
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::SHL: {
+    const BinaryWithFlagsSDNode *BinNode = cast<BinaryWithFlagsSDNode>(N);
+    AddBinaryNodeIDCustom(ID, N->getOpcode(),
+                          BinNode->Flags.hasNoUnsignedWrap(),
+                          BinNode->Flags.hasNoSignedWrap(),
+                          BinNode->Flags.hasExact());
+    break;
+  }
   case ISD::ATOMIC_CMP_SWAP:
   case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
   case ISD::ATOMIC_SWAP:
@@ -552,8 +563,6 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     break;
   }
   } // end switch (N->getOpcode())
-
-  AddNodeIDFlags(ID, N);
 
   // Target specific memory nodes could also have address spaces to check.
   if (N->isTargetMemoryOpcode())
@@ -949,22 +958,22 @@ void SelectionDAG::allnodes_clear() {
     DeallocateNode(AllNodes.begin());
 }
 
-SDNode *SelectionDAG::GetSDNodeWithFlags(unsigned Opcode, SDLoc DL,
-                                         SDVTList VTs, ArrayRef<SDValue> Ops,
-                                         const SDNodeFlags *Flags) {
-  if (mayHaveOptimizationFlags(Opcode)) {
-    // If no flags were passed in, use a default flags object.
-    SDNodeFlags F;
-    if (Flags == nullptr)
-      Flags = &F;
+BinarySDNode *SelectionDAG::GetBinarySDNode(unsigned Opcode, SDLoc DL,
+                                            SDVTList VTs, SDValue N1,
+                                            SDValue N2, bool nuw, bool nsw,
+                                            bool exact) {
+  if (isBinOpWithFlags(Opcode)) {
+    BinaryWithFlagsSDNode *FN = new (NodeAllocator) BinaryWithFlagsSDNode(
+        Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, N1, N2);
+    FN->Flags.setNoUnsignedWrap(nuw);
+    FN->Flags.setNoSignedWrap(nsw);
+    FN->Flags.setExact(exact);
 
-    SDNodeWithFlags *NodeWithFlags = new (NodeAllocator) SDNodeWithFlags(
-      Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, Ops, *Flags);
-    return NodeWithFlags;
+    return FN;
   }
 
-  SDNode *N = new (NodeAllocator) SDNode(Opcode, DL.getIROrder(),
-                                         DL.getDebugLoc(), VTs, Ops);
+  BinarySDNode *N = new (NodeAllocator)
+      BinarySDNode(Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, N1, N2);
   return N;
 }
 
@@ -3192,7 +3201,7 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
-                              SDValue N2, const SDNodeFlags *Flags) {
+                              SDValue N2, bool nuw, bool nsw, bool exact) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
@@ -3654,23 +3663,24 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
   }
 
   // Memoize this node if possible.
-  SDNode *N;
+  BinarySDNode *N;
   SDVTList VTs = getVTList(VT);
-  SDValue Ops[] = { N1, N2 };
+  const bool BinOpHasFlags = isBinOpWithFlags(Opcode);
   if (VT != MVT::Glue) {
     SDValue Ops[] = {N1, N2};
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops);
-    AddNodeIDFlags(ID, Opcode, Flags);
+    if (BinOpHasFlags)
+      AddBinaryNodeIDCustom(ID, Opcode, nuw, nsw, exact);
     void *IP = nullptr;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return SDValue(E, 0);
 
-    N = GetSDNodeWithFlags(Opcode, DL, VTs, Ops, Flags);
-    
+    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, nuw, nsw, exact);
+
     CSEMap.InsertNode(N, IP);
   } else {
-    N = GetSDNodeWithFlags(Opcode, DL, VTs, Ops, Flags);
+    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, nuw, nsw, exact);
   }
 
   InsertNode(N);
@@ -5974,12 +5984,13 @@ SelectionDAG::getTargetInsertSubreg(int SRIdx, SDLoc DL, EVT VT,
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
-                                      ArrayRef<SDValue> Ops,
-                                      const SDNodeFlags *Flags) {
+                                      ArrayRef<SDValue> Ops, bool nuw, bool nsw,
+                                      bool exact) {
   if (VTList.VTs[VTList.NumVTs - 1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops);
-    AddNodeIDFlags(ID, Opcode, Flags);
+    if (isBinOpWithFlags(Opcode))
+      AddBinaryNodeIDCustom(ID, nuw, nsw, exact);
     void *IP = nullptr;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
       return E;

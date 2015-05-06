@@ -2139,8 +2139,6 @@ void SelectionDAGBuilder::visitBinary(const User &I, unsigned OpCode) {
   bool nuw = false;
   bool nsw = false;
   bool exact = false;
-  FastMathFlags FMF;
-  
   if (const OverflowingBinaryOperator *OFBinOp =
           dyn_cast<const OverflowingBinaryOperator>(&I)) {
     nuw = OFBinOp->hasNoUnsignedWrap();
@@ -2150,20 +2148,8 @@ void SelectionDAGBuilder::visitBinary(const User &I, unsigned OpCode) {
           dyn_cast<const PossiblyExactOperator>(&I))
     exact = ExactOp->isExact();
 
-  if (const FPMathOperator *FPOp = dyn_cast<const FPMathOperator>(&I))
-    FMF = FPOp->getFastMathFlags();
-  
-  SDNodeFlags Flags;
-  Flags.setAllowReciprocal(FMF.allowReciprocal());
-  Flags.setExact(exact);
-  Flags.setNoInfs(FMF.noInfs());
-  Flags.setNoNaNs(FMF.noNaNs());
-  Flags.setNoSignedWrap(nsw);
-  Flags.setNoSignedZeros(FMF.noSignedZeros());
-  Flags.setNoUnsignedWrap(nuw);
-  Flags.setUnsafeAlgebra(FMF.unsafeAlgebra());
   SDValue BinNodeValue = DAG.getNode(OpCode, getCurSDLoc(), Op1.getValueType(),
-                                     Op1, Op2, &Flags);
+                                     Op1, Op2, nuw, nsw, exact);
   setValue(&I, BinNodeValue);
 }
 
@@ -2212,12 +2198,8 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
       exact = ExactOp->isExact();
   }
 
-  SDNodeFlags Flags;
-  Flags.setExact(exact);
-  Flags.setNoSignedWrap(nsw);
-  Flags.setNoUnsignedWrap(nuw);
   SDValue Res = DAG.getNode(Opcode, getCurSDLoc(), Op1.getValueType(), Op1, Op2,
-                            &Flags);
+                            nuw, nsw, exact);
   setValue(&I, Res);
 }
 
