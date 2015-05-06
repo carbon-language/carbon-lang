@@ -236,29 +236,28 @@ CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,
                                             ArrayRef<Value *> DeoptArgs,
                                             ArrayRef<Value *> GCArgs,
                                             const Twine &Name) {
- // Extract out the type of the callee.
- PointerType *FuncPtrType = cast<PointerType>(ActualCallee->getType());
- assert(isa<FunctionType>(FuncPtrType->getElementType()) &&
-        "actual callee must be a callable value");
+  // Extract out the type of the callee.
+  PointerType *FuncPtrType = cast<PointerType>(ActualCallee->getType());
+  assert(isa<FunctionType>(FuncPtrType->getElementType()) &&
+         "actual callee must be a callable value");
 
- 
- Module *M = BB->getParent()->getParent();
- // Fill in the one generic type'd argument (the function is also vararg)
- Type *ArgTypes[] = { FuncPtrType };
- Function *FnStatepoint =
-   Intrinsic::getDeclaration(M, Intrinsic::experimental_gc_statepoint,
-                             ArgTypes);
+  Module *M = BB->getParent()->getParent();
+  // Fill in the one generic type'd argument (the function is also vararg)
+  Type *ArgTypes[] = { FuncPtrType };
+  Function *FnStatepoint =
+    Intrinsic::getDeclaration(M, Intrinsic::experimental_gc_statepoint,
+                              ArgTypes);
 
- std::vector<llvm::Value *> args;
- args.push_back(ActualCallee);
- args.push_back(getInt32(CallArgs.size()));
- args.push_back(getInt32(0 /*unused*/));
- args.insert(args.end(), CallArgs.begin(), CallArgs.end());
- args.push_back(getInt32(DeoptArgs.size()));
- args.insert(args.end(), DeoptArgs.begin(), DeoptArgs.end());
- args.insert(args.end(), GCArgs.begin(), GCArgs.end());
+  std::vector<llvm::Value *> args;
+  args.push_back(ActualCallee);
+  args.push_back(getInt32(CallArgs.size()));
+  args.push_back(getInt32(0 /*unused*/));
+  args.insert(args.end(), CallArgs.begin(), CallArgs.end());
+  args.push_back(getInt32(DeoptArgs.size()));
+  args.insert(args.end(), DeoptArgs.begin(), DeoptArgs.end());
+  args.insert(args.end(), GCArgs.begin(), GCArgs.end());
 
- return createCallHelper(FnStatepoint, args, this, Name);
+  return createCallHelper(FnStatepoint, args, this, Name);
 }
 
 CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,
