@@ -277,7 +277,7 @@ int     __kmp_settings = FALSE;
 int     __kmp_duplicate_library_ok = 0;
 #if USE_ITT_BUILD
 int     __kmp_forkjoin_frames = 1;
-int     __kmp_forkjoin_frames_mode = 0;
+int     __kmp_forkjoin_frames_mode = 3;
 #endif
 PACKED_REDUCTION_METHOD_T __kmp_force_reduction_method = reduction_method_not_defined;
 int     __kmp_determ_red = FALSE;
