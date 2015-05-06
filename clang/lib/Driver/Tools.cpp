@@ -2452,7 +2452,7 @@ static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
 }
 
 static const char *SplitDebugName(const ArgList &Args,
-                                  const InputInfoList &Inputs) {
+                                  const InputInfo &Input) {
   Arg *FinalOutput = Args.getLastArg(options::OPT_o);
   if (FinalOutput && Args.hasArg(options::OPT_c)) {
     SmallString<128> T(FinalOutput->getValue());
@@ -2462,7 +2462,7 @@ static const char *SplitDebugName(const ArgList &Args,
     // Use the compilation dir.
     SmallString<128> T(
         Args.getLastArgValue(options::OPT_fdebug_compilation_dir));
-    SmallString<128> F(llvm::sys::path::stem(Inputs[0].getBaseInput()));
+    SmallString<128> F(llvm::sys::path::stem(Input.getBaseInput()));
     llvm::sys::path::replace_extension(F, "dwo");
     T += F;
     return Args.MakeArgString(F);
@@ -2612,6 +2612,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   bool IsWindowsMSVC = getToolChain().getTriple().isWindowsMSVCEnvironment();
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
+  const InputInfo &Input = Inputs[0];
 
   // Invoke ourselves in -cc1 mode.
   //
@@ -2726,7 +2727,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Set the main file name, so that debug info works even with
   // -save-temps.
   CmdArgs.push_back("-main-file-name");
-  CmdArgs.push_back(getBaseInputName(Args, Inputs));
+  CmdArgs.push_back(getBaseInputName(Args, Input));
 
   // Some flags which affect the language (via preprocessor
   // defines).
@@ -2754,7 +2755,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       
       CmdArgs.push_back("-analyzer-checker=deadcode");
       
-      if (types::isCXX(Inputs[0].getType()))
+      if (types::isCXX(Input.getType()))
         CmdArgs.push_back("-analyzer-checker=cplusplus");
 
       // Enable the following experimental checkers for testing.
@@ -3287,7 +3288,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Explicitly error on some things we know we don't support and can't just
   // ignore.
-  types::ID InputType = Inputs[0].getType();
+  types::ID InputType = Input.getType();
   if (!Args.hasArg(options::OPT_fallow_unsupported)) {
     Arg *Unsupported;
     if (types::isCXX(InputType) &&
@@ -4706,7 +4707,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   const char *SplitDwarfOut;
   if (SplitDwarf) {
     CmdArgs.push_back("-split-dwarf-file");
-    SplitDwarfOut = SplitDebugName(Args, Inputs);
+    SplitDwarfOut = SplitDebugName(Args, Input);
     CmdArgs.push_back(SplitDwarfOut);
   }
 
@@ -5088,7 +5089,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Set the main file name, so that debug info works even with
   // -save-temps or preprocessed assembly.
   CmdArgs.push_back("-main-file-name");
-  CmdArgs.push_back(Clang::getBaseInputName(Args, Inputs));
+  CmdArgs.push_back(Clang::getBaseInputName(Args, Input));
 
   // Add the target cpu
   const llvm::Triple &Triple = getToolChain().getTriple();
@@ -5203,7 +5204,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_gsplit_dwarf) &&
       getToolChain().getTriple().isOSLinux())
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
-                   SplitDebugName(Args, Inputs));
+                   SplitDebugName(Args, Input));
 }
 
 void GnuTool::anchor() {}
@@ -5793,14 +5794,13 @@ void darwin::setTripleTypeForMachOArchName(llvm::Triple &T, StringRef Str) {
 }
 
 const char *Clang::getBaseInputName(const ArgList &Args,
-                                    const InputInfoList &Inputs) {
-  return Args.MakeArgString(
-    llvm::sys::path::filename(Inputs[0].getBaseInput()));
+                                    const InputInfo &Input) {
+  return Args.MakeArgString(llvm::sys::path::filename(Input.getBaseInput()));
 }
 
 const char *Clang::getBaseInputStem(const ArgList &Args,
                                     const InputInfoList &Inputs) {
-  const char *Str = getBaseInputName(Args, Inputs);
+  const char *Str = getBaseInputName(Args, Inputs[0]);
 
   if (const char *End = strrchr(Str, '.'))
     return Args.MakeArgString(std::string(Str, End));
@@ -7622,7 +7622,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_gsplit_dwarf) &&
       getToolChain().getTriple().isOSLinux())
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
-                   SplitDebugName(Args, Inputs));
+                   SplitDebugName(Args, Inputs[0]));
 }
 
 static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,

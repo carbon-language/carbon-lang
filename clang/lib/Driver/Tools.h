@@ -40,7 +40,7 @@ using llvm::opt::ArgStringList;
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
   public:
     static const char *getBaseInputName(const llvm::opt::ArgList &Args,
-                                        const InputInfoList &Inputs);
+                                        const InputInfo &Input);
     static const char *getBaseInputStem(const llvm::opt::ArgList &Args,
                                         const InputInfoList &Inputs);
     static const char *getDependencyFileName(const llvm::opt::ArgList &Args,
