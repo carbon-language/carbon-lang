@@ -15,6 +15,5 @@ add_lldb_library(lldbPluginProcessLinux
   ProcessLinux.cpp
   ProcessMonitor.cpp
   ProcFileReader.cpp
-  ThreadStateCoordinator.cpp
   )
 
