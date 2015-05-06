@@ -395,8 +395,15 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
           return false;
         }
 
-        for (ElfW(Half) i = 0; i < pinfo->dlpi_phnum; i++) {
-          const ElfW(Phdr) *phdr = &pinfo->dlpi_phdr[i];
+#if !defined(Elf_Half)
+        typedef ElfW(Half) Elf_Half;
+#endif
+#if !defined(Elf_Phdr)
+        typedef ElfW(Phdr) Elf_Phdr;
+#endif
+
+        for (Elf_Half i = 0; i < pinfo->dlpi_phnum; i++) {
+          const Elf_Phdr *phdr = &pinfo->dlpi_phdr[i];
           if (phdr->p_type == PT_LOAD) {
             uintptr_t begin = pinfo->dlpi_addr + phdr->p_vaddr;
             uintptr_t end = begin + phdr->p_memsz;
