@@ -17,8 +17,10 @@
 #define LLVM_CODEGEN_COMMANDFLAGS_H
 
 #include "llvm/MC/MCTargetOptionsCommandFlags.h"
+#include "llvm//MC/SubtargetFeature.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include <string>
@@ -258,6 +260,35 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.ThreadModel = TMModel;
 
   return Options;
+}
+
+static inline std::string getCPUStr() {
+  // If user asked for the 'native' CPU, autodetect here. If autodection fails,
+  // this will set the CPU to an empty string which tells the target to
+  // pick a basic default.
+  if (MCPU == "native")
+    return sys::getHostCPUName();
+
+  return MCPU;
+}
+
+static inline std::string getFeaturesStr() {
+  SubtargetFeatures Features;
+
+  // If user asked for the 'native' CPU, we need to autodetect features.
+  // This is necessary for x86 where the CPU might not support all the
+  // features the autodetected CPU name lists in the target. For example,
+  if (MCPU == "native") {
+    StringMap<bool> HostFeatures;
+    if (sys::getHostCPUFeatures(HostFeatures))
+      for (auto &F : HostFeatures)
+        Features.AddFeature(F.first(), F.second);
+  }
+
+  for (unsigned i = 0; i != MAttrs.size(); ++i)
+    Features.AddFeature(MAttrs[i]);
+
+  return Features.getString();
 }
 
 #endif
