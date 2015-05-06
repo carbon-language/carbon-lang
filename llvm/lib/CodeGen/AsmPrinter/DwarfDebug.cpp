@@ -1545,16 +1545,13 @@ void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
 }
 
 void DwarfDebug::emitDebugLocEntryLocation(const DebugLocStream::Entry &Entry) {
+  // Emit the size.
   Asm->OutStreamer->AddComment("Loc expr size");
-  MCSymbol *begin = Asm->OutStreamer->getContext().CreateTempSymbol();
-  MCSymbol *end = Asm->OutStreamer->getContext().CreateTempSymbol();
-  Asm->EmitLabelDifference(end, begin, 2);
-  Asm->OutStreamer->EmitLabel(begin);
+  Asm->EmitInt16(DebugLocs.getBytes(Entry).size());
+
   // Emit the entry.
   APByteStreamer Streamer(*Asm);
   emitDebugLocEntry(Streamer, Entry);
-  // Close the range.
-  Asm->OutStreamer->EmitLabel(end);
 }
 
 // Emit locations into the debug loc section.

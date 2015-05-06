@@ -77,18 +77,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 ; CHECK-NEXT: .quad   [[SET1]]
 ; CHECK-NEXT: [[SET2:.*]] = [[LABEL]]-Lfunc_begin0
 ; CHECK-NEXT: .quad   [[SET2]]
-; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
-; CHECK-NEXT: .short  Lset{{.*}}
-; CHECK-NEXT: Ltmp{{.*}}:
+; CHECK-NEXT: .short  1     ## Loc expr size
 ; CHECK-NEXT: .byte   85
-; CHECK-NEXT: Ltmp{{.*}}:
 ; CHECK-NEXT: [[SET3:.*]] = [[LABEL]]-Lfunc_begin0
 ; CHECK-NEXT: .quad   [[SET3]]
 ; CHECK-NEXT: [[SET4:.*]] = [[CLOBBER]]-Lfunc_begin0
 ; CHECK-NEXT: .quad   [[SET4]]
-; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
-; CHECK-NEXT: .short  Lset{{.*}}
-; CHECK-NEXT: Ltmp{{.*}}:
+; CHECK-NEXT: .short  1     ## Loc expr size
 ; CHECK-NEXT: .byte   83
-; CHECK-NEXT: Ltmp{{.*}}:
 !38 = !{i32 1, !"Debug Info Version", i32 3}

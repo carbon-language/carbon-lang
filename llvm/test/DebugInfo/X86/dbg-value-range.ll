@@ -55,11 +55,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 ;CHECK-NEXT:	.quad
 ;CHECK-NEXT: [[CLOBBER_OFF:Lset.*]] = [[CLOBBER]]-{{.*}}
 ;CHECK-NEXT:	.quad	[[CLOBBER_OFF]]
-;CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}
-;CHECK-NEXT:    .short  Lset
-;CHECK-NEXT: Ltmp
+;CHECK-NEXT:  .short 1 ## Loc expr size
 ;CHECK-NEXT:	.byte	85 ## DW_OP_reg
-;CHECK-NEXT: Ltmp
 ;CHECK-NEXT:	.quad	0
 ;CHECK-NEXT:	.quad	0
 !24 = !{i32 1, !"Debug Info Version", i32 3}
