@@ -13,7 +13,7 @@ static int sii;
 #pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
 static int globalii;
 
-register int reg0 __asm__("0"); // expected-note {{loop iteration variable is predetermined as linear}}
+register int reg0 __asm__("0"); // expected-note {{defined as threadprivate or thread local}}
 
 int test_iteration_spaces() {
   const int N = 100;

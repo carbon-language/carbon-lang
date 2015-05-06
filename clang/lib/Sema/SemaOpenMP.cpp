@@ -428,8 +428,13 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
   if (D->getTLSKind() != VarDecl::TLS_None ||
       (D->getStorageClass() == SC_Register && D->hasAttr<AsmLabelAttr>() &&
        !D->isLocalVarDecl())) {
-    DVar.CKind = OMPC_threadprivate;
-    return DVar;
+    addDSA(D,
+           DeclRefExpr::Create(SemaRef.getASTContext(),
+                               NestedNameSpecifierLoc(), SourceLocation(), D,
+                               /*RefersToEnclosingVariableOrCapture=*/false,
+                               D->getLocation(),
+                               D->getType().getNonReferenceType(), VK_LValue),
+           OMPC_threadprivate);
   }
   if (Stack[0].SharingMap.count(D)) {
     DVar.RefExpr = Stack[0].SharingMap[D].RefExpr;
@@ -2573,7 +2578,9 @@ static bool CheckOpenMPIterationSpace(
     SemaRef.Diag(Init->getLocStart(), diag::err_omp_loop_var_dsa)
         << getOpenMPClauseName(DVar.CKind) << getOpenMPDirectiveName(DKind)
         << getOpenMPClauseName(PredeterminedCKind);
-    ReportOriginalDSA(SemaRef, &DSA, Var, DVar, true);
+    if (DVar.RefExpr == nullptr)
+      DVar.CKind = PredeterminedCKind;
+    ReportOriginalDSA(SemaRef, &DSA, Var, DVar, /*IsLoopIterVar=*/true);
     HasErrors = true;
   } else if (LoopVarRefExpr != nullptr) {
     // Make the loop iteration variable private (for worksharing constructs),
