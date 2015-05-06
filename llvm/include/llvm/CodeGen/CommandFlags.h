@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_COMMANDFLAGS_H
 #define LLVM_CODEGEN_COMMANDFLAGS_H
 
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm//MC/SubtargetFeature.h"
 #include "llvm/Support/CodeGen.h"
@@ -289,6 +290,17 @@ static inline std::string getFeaturesStr() {
     Features.AddFeature(MAttrs[i]);
 
   return Features.getString();
+}
+
+static inline void overrideFunctionAttributes(StringRef CPU, StringRef Features,
+                                              Module &M) {
+  for (auto &F : M) {
+    if (!CPU.empty())
+      llvm::overrideFunctionAttribute("target-cpu", CPU, F);
+
+    if (!Features.empty())
+      llvm::overrideFunctionAttribute("target-features", Features, F);
+  }
 }
 
 #endif

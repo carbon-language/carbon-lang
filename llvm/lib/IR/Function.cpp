@@ -975,3 +975,16 @@ void Function::setPrologueData(Constant *PrologueData) {
   }
   setValueSubclassData(PDData);
 }
+
+void llvm::overrideFunctionAttribute(StringRef Kind, StringRef Value,
+                                     Function &F) {
+  auto &Ctx = F.getContext();
+  AttributeSet Attrs = F.getAttributes(), AttrsToRemove;
+
+  AttrsToRemove =
+      AttrsToRemove.addAttribute(Ctx, AttributeSet::FunctionIndex, Kind);
+  Attrs = Attrs.removeAttributes(Ctx, AttributeSet::FunctionIndex,
+                                 AttrsToRemove);
+  Attrs = Attrs.addAttribute(Ctx, AttributeSet::FunctionIndex, Kind, Value);
+  F.setAttributes(Attrs);
+}

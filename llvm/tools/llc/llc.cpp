@@ -305,6 +305,9 @@ static int compileModule(char **argv, LLVMContext &Context) {
   if (const DataLayout *DL = Target->getDataLayout())
     M->setDataLayout(*DL);
 
+  // Override function attributes.
+  overrideFunctionAttributes(CPUStr, FeaturesStr, *M);
+
   if (RelaxAll.getNumOccurrences() > 0 &&
       FileType != TargetMachine::CGFT_ObjectFile)
     errs() << argv[0]

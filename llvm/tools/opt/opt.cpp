@@ -394,6 +394,9 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<TargetMachine> TM(Machine);
 
+  // Override function attributes.
+  overrideFunctionAttributes(CPUStr, FeaturesStr, *M);
+
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't
   // impress anyone by spewing tons of binary goo to a terminal.

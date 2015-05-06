@@ -119,10 +119,10 @@ entry:
 }
 
 
-; CHECK: declare <2 x double> @llvm.sin.v2f64(<2 x double>) #0
-; CHECK: declare <2 x double> @llvm.cos.v2f64(<2 x double>) #0
-; CHECK: declare <2 x double> @llvm.pow.v2f64(<2 x double>, <2 x double>) #0
-; CHECK: declare <2 x double> @llvm.exp2.v2f64(<2 x double>) #0
+; CHECK: declare <2 x double> @llvm.sin.v2f64(<2 x double>) [[ATTR0:#[0-9]+]]
+; CHECK: declare <2 x double> @llvm.cos.v2f64(<2 x double>) [[ATTR0]]
+; CHECK: declare <2 x double> @llvm.pow.v2f64(<2 x double>, <2 x double>) [[ATTR0]]
+; CHECK: declare <2 x double> @llvm.exp2.v2f64(<2 x double>) [[ATTR0]]
 
-; CHECK: attributes #0 = { nounwind readnone }
+; CHECK: attributes [[ATTR0]] = { nounwind readnone }
 
