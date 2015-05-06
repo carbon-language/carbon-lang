@@ -455,10 +455,9 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   // Note: SplitBlock modifies the DT.  Simply passing a Pass (which is a
   // module pass) is not enough.
   DT.recalculate(F);
-#ifndef NDEBUG
+
   // SplitBlock updates the DT
-  DT.verifyDomTree();
-#endif
+  DEBUG(DT.verifyDomTree());
 
   return BB->getTerminator();
 }
