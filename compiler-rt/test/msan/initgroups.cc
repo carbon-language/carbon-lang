@@ -2,6 +2,7 @@
 
 #include <sys/types.h>
 #include <grp.h>
+#include <unistd.h>  // FreeBSD declares initgroups() here.
 
 int main(void) {
   initgroups("root", 0);
