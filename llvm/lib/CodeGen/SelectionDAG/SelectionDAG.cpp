@@ -3408,6 +3408,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
     if (N1.getOpcode() == ISD::UNDEF)
       return getUNDEF(VT);
 
+    // EXTRACT_VECTOR_ELT of out-of-bounds element is an UNDEF
+    if (N2C && N2C->getZExtValue() >= N1.getValueType().getVectorNumElements())
+      return getUNDEF(VT);
+
     // EXTRACT_VECTOR_ELT of CONCAT_VECTORS is often formed while lowering is
     // expanding copies of large vectors from registers.
     if (N2C &&
