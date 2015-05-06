@@ -158,6 +158,7 @@ namespace llvm {
     /// differences between temporary and non-temporary labels (primarily on
     /// Darwin).
     bool AllowTemporaryLabels;
+    bool UseNamesOnTempLabels = true;
 
     /// The Compile Unit ID that we are currently processing.
     unsigned DwarfCompileUnitID;
@@ -224,6 +225,7 @@ namespace llvm {
     const MCObjectFileInfo *getObjectFileInfo() const { return MOFI; }
 
     void setAllowTemporaryLabels(bool Value) { AllowTemporaryLabels = Value; }
+    void setUseNamesOnTempLabels(bool Value) { UseNamesOnTempLabels = Value; }
 
     /// \name Module Lifetime Management
     /// @{

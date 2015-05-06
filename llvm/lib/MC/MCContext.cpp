@@ -150,6 +150,9 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
   if (AllowTemporaryLabels)
     IsTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
+  if (IsTemporary && AlwaysAddSuffix && !UseNamesOnTempLabels)
+    return new (*this) MCSymbol("", true);
+
   SmallString<128> NewName = Name;
   bool AddSuffix = AlwaysAddSuffix;
   unsigned &NextUniqueID = NextID[Name];

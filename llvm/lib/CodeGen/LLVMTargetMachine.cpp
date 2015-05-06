@@ -198,6 +198,9 @@ bool LLVMTargetMachine::addPassesToEmitFile(
     if (!MCE || !MAB)
       return true;
 
+    // Don't waste memory on names of temp labels.
+    Context->setUseNamesOnTempLabels(false);
+
     Triple T(getTargetTriple());
     AsmStreamer.reset(getTarget().createMCObjectStreamer(
         T, *Context, *MAB, Out, MCE, STI, Options.MCOptions.MCRelaxAll,
