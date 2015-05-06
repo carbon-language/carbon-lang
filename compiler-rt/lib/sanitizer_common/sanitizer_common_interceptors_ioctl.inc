@@ -578,14 +578,10 @@ static void ioctl_common_pre(void *ctx, const ioctl_desc *desc, int d,
   }
   if (desc->type != ioctl_desc::CUSTOM)
     return;
-  switch (request) {
-    case 0x00008912: {  // SIOCGIFCONF
-      struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
-      COMMON_INTERCEPTOR_READ_RANGE(ctx, &ifc->ifc_len, sizeof(ifc->ifc_len));
-      break;
-    }
+  if (request == IOCTL_SIOCGIFCONF) {
+    struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, &ifc->ifc_len, sizeof(ifc->ifc_len));
   }
-  return;
 }
 
 static void ioctl_common_post(void *ctx, const ioctl_desc *desc, int res, int d,
@@ -597,12 +593,8 @@ static void ioctl_common_post(void *ctx, const ioctl_desc *desc, int res, int d,
   }
   if (desc->type != ioctl_desc::CUSTOM)
     return;
-  switch (request) {
-    case 0x00008912: {  // SIOCGIFCONF
-      struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifc->ifc_ifcu.ifcu_req, ifc->ifc_len);
-      break;
-    }
+  if (request == IOCTL_SIOCGIFCONF) {
+    struct __sanitizer_ifconf *ifc = (__sanitizer_ifconf *)arg;
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ifc->ifc_ifcu.ifcu_req, ifc->ifc_len);
   }
-  return;
 }
