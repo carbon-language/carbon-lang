@@ -1675,6 +1675,7 @@ unsigned FastISel::fastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
   if (ResultReg)
     return ResultReg;
   unsigned MaterialReg = fastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
+  bool IsImmKill = true;
   if (!MaterialReg) {
     // This is a bit ugly/slow, but failing here means falling out of
     // fast-isel, which would be very slow.
@@ -1683,9 +1684,12 @@ unsigned FastISel::fastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
     MaterialReg = getRegForValue(ConstantInt::get(ITy, Imm));
     if (!MaterialReg)
       return 0;
+    // If this constant was already materialized, then we don't want to kill it.
+    // In this case we will have a use.
+    if (!MRI.use_empty(MaterialReg))
+      IsImmKill = false;
   }
-  return fastEmit_rr(VT, VT, Opcode, Op0, Op0IsKill, MaterialReg,
-                     /*IsKill=*/true);
+  return fastEmit_rr(VT, VT, Opcode, Op0, Op0IsKill, MaterialReg, IsImmKill);
 }
 
 unsigned FastISel::createResultReg(const TargetRegisterClass *RC) {
