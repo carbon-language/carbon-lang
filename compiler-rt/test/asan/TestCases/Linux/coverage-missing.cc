@@ -44,6 +44,7 @@
 // RUN: %sancov missing %dynamiclib < foo.txt > foo-missing.txt
 // RUN: diff bar.txt foo-missing.txt
 
+// REQUIRES: x86_64-supported-target, i386-supported-target
 // XFAIL: android
 
 #include <stdio.h>
