@@ -934,6 +934,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
   CleanupHandlerMap.clear();
   HandlerToParentFP.clear();
   DT = nullptr;
+  SEHExceptionCodeSlot = nullptr;
 
   return HandlersOutlined;
 }
