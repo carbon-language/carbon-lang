@@ -116,7 +116,7 @@ class SanitizerCoverageModule : public ModulePass {
                                       ArrayRef<Instruction *> IndirCalls);
   void InjectTraceForCmp(Function &F, ArrayRef<Instruction *> CmpTraceTargets);
   bool InjectCoverage(Function &F, ArrayRef<BasicBlock *> AllBlocks);
-  void SetNoSanitizeMetada(Instruction *I);
+  void SetNoSanitizeMetadata(Instruction *I);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB, bool UseCalls);
   unsigned NumberOfInstrumentedBlocks() {
     return SanCovFunction->getNumUses() + SanCovWithCheckFunction->getNumUses();
@@ -169,7 +169,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
           kSanCovTraceCmp, VoidTy, Int64Ty, Int64Ty, Int64Ty, nullptr));
 
   SanCovModuleInit = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      kSanCovModuleInitName, Type::getVoidTy(*C), Int32PtrTy, IntptrTy,
+      kSanCovModuleInitName, VoidTy, Int32PtrTy, IntptrTy,
       Int8PtrTy, Int8PtrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
   // We insert an empty inline asm after cov callbacks to avoid callback merge.
@@ -329,7 +329,7 @@ void SanitizerCoverageModule::InjectTraceForCmp(
       Value *A1 = ICMP->getOperand(1);
       if (!A0->getType()->isIntegerTy()) continue;
       uint64_t TypeSize = DL->getTypeStoreSizeInBits(A0->getType());
-      // __sanitizer_cov_indir_call((type_size << 32) | predicate, A0, A1);
+      // __sanitizer_cov_trace_cmp((type_size << 32) | predicate, A0, A1);
       IRB.CreateCall3(
           SanCovTraceCmpFunction,
           ConstantInt::get(Int64Ty, (TypeSize << 32) | ICMP->getPredicate()),
@@ -339,7 +339,7 @@ void SanitizerCoverageModule::InjectTraceForCmp(
   }
 }
 
-void SanitizerCoverageModule::SetNoSanitizeMetada(Instruction *I) {
+void SanitizerCoverageModule::SetNoSanitizeMetadata(Instruction *I) {
   I->setMetadata(
       I->getParent()->getParent()->getParent()->getMDKindID("nosanitize"),
       MDNode::get(*C, None));
@@ -375,7 +375,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     LoadInst *Load = IRB.CreateLoad(GuardP);
     Load->setAtomic(Monotonic);
     Load->setAlignment(4);
-    SetNoSanitizeMetada(Load);
+    SetNoSanitizeMetadata(Load);
     Value *Cmp = IRB.CreateICmpSGE(Constant::getNullValue(Load->getType()), Load);
     Instruction *Ins = SplitBlockAndInsertIfThen(
         Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
@@ -395,8 +395,8 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     LoadInst *LI = IRB.CreateLoad(P);
     Value *Inc = IRB.CreateAdd(LI, ConstantInt::get(IRB.getInt8Ty(), 1));
     StoreInst *SI = IRB.CreateStore(Inc, P);
-    SetNoSanitizeMetada(LI);
-    SetNoSanitizeMetada(SI);
+    SetNoSanitizeMetadata(LI);
+    SetNoSanitizeMetadata(SI);
   }
 
   if (ClExperimentalTracing) {
