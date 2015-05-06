@@ -73,9 +73,9 @@
 // you will likely need to pass in additional compiler front-end
 // arguments to match those passed in by default by the driver.
 //
-// Note that by default, the underlying Clang front end assumes .h files
-// contain C source.  If your .h files in the file list contain C++ source,
-// you should append the following to your command lines: -x c++
+// Note that by default, the modularize assumes .h files contain C++ source.
+// If your .h files in the file list contain another language, you should
+// append an appropriate -x option to your command line, i.e.:  -x c
 //
 // Modularization Issue Checks
 //
@@ -331,7 +331,8 @@ static std::string findInputFile(const CommandLineArguments &CLArgs) {
 }
 
 // This arguments adjuster inserts "-include (file)" arguments for header
-// dependencies.
+// dependencies.  It also insertts a "-w" option and a "-x c++",
+// if no other "-x" option is present.
 static ArgumentsAdjuster
 getAddDependenciesAdjuster(DependencyMap &Dependencies) {
   return [&Dependencies](const CommandLineArguments &Args) {
@@ -345,6 +346,13 @@ getAddDependenciesAdjuster(DependencyMap &Dependencies) {
                          std::string("\""));
         NewArgs.push_back(FileDependents[Index]);
       }
+    }
+    // Ignore warnings.  (Insert after "clang_tool" at beginning.)
+    NewArgs.insert(NewArgs.begin() + 1, "-w");
+    // Since we are compiling .h files, assume C++ unless given a -x option.
+    if (std::find(NewArgs.begin(), NewArgs.end(), "-x") == NewArgs.end()) {
+      NewArgs.insert(NewArgs.begin() + 2, "-x");
+      NewArgs.insert(NewArgs.begin() + 3, "c++");
     }
     return NewArgs;
   };
