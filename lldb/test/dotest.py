@@ -1364,11 +1364,10 @@ target_platform = lldb.DBG.GetSelectedPlatform().GetTriple().split('-')[2]
 # Use @dsym_test or @dwarf_test decorators, defined in lldbtest.py, to mark a test
 # as a dsym or dwarf test.  Use '-N dsym' or '-N dwarf' to exclude dsym or dwarf
 # tests from running.
-dont_do_dsym_test = dont_do_dsym_test or "linux" in target_platform or "freebsd" in target_platform
+dont_do_dsym_test = dont_do_dsym_test or "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
 
 # Don't do debugserver tests on everything except OS X.
-# Something for Windows here?
-dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_platform
+dont_do_debugserver_test = "linux" in target_platform or "freebsd" in target_platform or "windows" in target_platform
 
 # Don't do lldb-server (llgs) tests on anything except Linux.
 dont_do_llgs_test = not ("linux" in target_platform)
