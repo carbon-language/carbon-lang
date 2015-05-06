@@ -1657,12 +1657,12 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
     if (Op2Reg == 0) return false;
   }
 
-  unsigned CmpOpc = isThumb2 ? ARM::t2CMPri : ARM::CMPri;
-  CondReg = constrainOperandRegClass(TII.get(CmpOpc), CondReg, 0);
+  unsigned TstOpc = isThumb2 ? ARM::t2TSTri : ARM::TSTri;
+  CondReg = constrainOperandRegClass(TII.get(TstOpc), CondReg, 0);
   AddOptionalDefs(
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CmpOpc))
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(TstOpc))
           .addReg(CondReg)
-          .addImm(0));
+          .addImm(1));
 
   unsigned MovCCOpc;
   const TargetRegisterClass *RC;

@@ -7,12 +7,12 @@ define i32 @t1(i1 %c) nounwind readnone {
 entry:
 ; ARM: t1
 ; ARM: movw r{{[1-9]}}, #10
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: moveq r{{[1-9]}}, #20
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB: t1
 ; THUMB: movs r{{[1-9]}}, #10
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it eq
 ; THUMB: moveq r{{[1-9]}}, #20
 ; THUMB: mov r0, r{{[1-9]}}
@@ -23,11 +23,11 @@ entry:
 define i32 @t2(i1 %c, i32 %a) nounwind readnone {
 entry:
 ; ARM: t2
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: moveq r{{[1-9]}}, #20
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB: t2
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it eq
 ; THUMB: moveq r{{[1-9]}}, #20
 ; THUMB: mov r0, r{{[1-9]}}
@@ -38,11 +38,11 @@ entry:
 define i32 @t3(i1 %c, i32 %a, i32 %b) nounwind readnone {
 entry:
 ; ARM: t3
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: movne r2, r1
 ; ARM: add r0, r2, r1
 ; THUMB: t3
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it ne
 ; THUMB: movne r2, r1
 ; THUMB: add.w r0, r2, r1
@@ -55,12 +55,12 @@ define i32 @t4(i1 %c) nounwind readnone {
 entry:
 ; ARM: t4
 ; ARM: mvn r{{[1-9]}}, #9
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: mvneq r{{[1-9]}}, #0
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB-LABEL: t4
 ; THUMB: mvn [[REG:r[1-9]+]], #9
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it eq
 ; THUMB: mvneq [[REG]], #0
 ; THUMB: mov r0, [[REG]]
@@ -71,11 +71,11 @@ entry:
 define i32 @t5(i1 %c, i32 %a) nounwind readnone {
 entry:
 ; ARM: t5
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: mvneq r{{[1-9]}}, #1
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB: t5
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it eq
 ; THUMB: mvneq r{{[1-9]}}, #1
 ; THUMB: mov r0, r{{[1-9]}}
@@ -87,11 +87,11 @@ entry:
 define i32 @t6(i1 %c, i32 %a) nounwind readnone {
 entry:
 ; ARM: t6
-; ARM: cmp r0, #0
+; ARM: tst r0, #1
 ; ARM: mvneq r{{[1-9]}}, #978944
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB: t6
-; THUMB: cmp r0, #0
+; THUMB: tst.w r0, #1
 ; THUMB: it eq
 ; THUMB: mvneq r{{[1-9]}}, #978944
 ; THUMB: mov r0, r{{[1-9]}}
