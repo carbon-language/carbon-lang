@@ -250,8 +250,9 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
 
   SDValue ReturnValue, CallEndVal;
   std::tie(ReturnValue, CallEndVal) = Builder.lowerCallOperands(
-      ISP.getCallSite(), ISP.callArgsBeginOffset(), ISP.getNumCallArgs(),
-      ActualCallee, DefTy, LandingPad, false /* IsPatchPoint */);
+      ISP.getCallSite(), ImmutableStatepoint::CallArgsBeginPos,
+      ISP.getNumCallArgs(), ActualCallee, DefTy, LandingPad,
+      false /* IsPatchPoint */);
 
   SDNode *CallEnd = CallEndVal.getNode();
 

@@ -63,11 +63,19 @@ protected:
 public:
   typedef typename CallSiteTy::arg_iterator arg_iterator;
 
+  enum {
+    ActualCalleePos = 0,
+    NumCallArgsPos = 1,
+    CallArgsBeginPos = 3,
+  };
+
   /// Return the underlying CallSite.
   CallSiteTy getCallSite() { return StatepointCS; }
 
   /// Return the value actually being called or invoked.
-  ValueTy *getActualCallee() { return StatepointCS.getArgument(0); }
+  ValueTy *getActualCallee() {
+    return StatepointCS.getArgument(ActualCalleePos);
+  }
 
   /// Return the type of the value returned by the call underlying the
   /// statepoint.
@@ -79,26 +87,16 @@ public:
 
   /// Number of arguments to be passed to the actual callee.
   int getNumCallArgs() {
-    return cast<ConstantInt>(StatepointCS.getArgument(1))->getZExtValue();
+    const Value *NumCallArgsVal = StatepointCS.getArgument(NumCallArgsPos);
+    return cast<ConstantInt>(NumCallArgsVal)->getZExtValue();
   }
-
-  /// Number of additional arguments excluding those intended
-  /// for garbage collection.
-  int getNumTotalVMSArgs() {
-    const Value *NumVMSArgs = StatepointCS.getArgument(3 + getNumCallArgs());
-    return cast<ConstantInt>(NumVMSArgs)->getZExtValue();
-  }
-
-  int callArgsBeginOffset() { return 3; }
 
   typename CallSiteTy::arg_iterator call_args_begin() {
-    // 3 = callTarget, #callArgs, flag
-    int Offset = callArgsBeginOffset();
-    assert(Offset <= (int)StatepointCS.arg_size());
-    return StatepointCS.arg_begin() + Offset;
+    assert(CallArgsBeginPos <= (int)StatepointCS.arg_size());
+    return StatepointCS.arg_begin() + CallArgsBeginPos;
   }
   typename CallSiteTy::arg_iterator call_args_end() {
-    int Offset = callArgsBeginOffset() + getNumCallArgs();
+    int Offset = CallArgsBeginPos + getNumCallArgs();
     assert(Offset <= (int)StatepointCS.arg_size());
     return StatepointCS.arg_begin() + Offset;
   }
@@ -108,9 +106,16 @@ public:
     return iterator_range<arg_iterator>(call_args_begin(), call_args_end());
   }
 
+  /// Number of additional arguments excluding those intended
+  /// for garbage collection.
+  int getNumTotalVMSArgs() {
+    Value *NumVMSArgs = *call_args_end();
+    return cast<ConstantInt>(NumVMSArgs)->getZExtValue();
+  }
+
   typename CallSiteTy::arg_iterator vm_state_begin() { return call_args_end(); }
   typename CallSiteTy::arg_iterator vm_state_end() {
-    int Offset = 3 + getNumCallArgs() + 1 + getNumTotalVMSArgs();
+    int Offset = CallArgsBeginPos + getNumCallArgs() + 1 + getNumTotalVMSArgs();
     assert(Offset <= (int)StatepointCS.arg_size());
     return StatepointCS.arg_begin() + Offset;
   }
@@ -118,12 +123,6 @@ public:
   /// range adapter for vm state arguments
   iterator_range<arg_iterator> vm_state_args() {
     return iterator_range<arg_iterator>(vm_state_begin(), vm_state_end());
-  }
-
-  typename CallSiteTy::arg_iterator first_vm_state_stack_begin() {
-    // 6 = numTotalVMSArgs, 1st_objectID, 1st_bci,
-    //     1st_#stack, 1st_#local, 1st_#monitor
-    return vm_state_begin() + 6;
   }
 
   typename CallSiteTy::arg_iterator gc_args_begin() { return vm_state_end(); }
