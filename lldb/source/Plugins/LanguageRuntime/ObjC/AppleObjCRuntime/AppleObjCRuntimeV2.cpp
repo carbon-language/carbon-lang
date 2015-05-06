@@ -965,7 +965,7 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
 
         static ConstString g_gdb_objc_realized_classes("gdb_objc_realized_classes");
         
-        const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_objc_realized_classes, lldb::eSymbolTypeData);
+        const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_objc_realized_classes, lldb::eSymbolTypeAny);
         if (symbol)
         {
             lldb::addr_t gdb_objc_realized_classes_ptr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
