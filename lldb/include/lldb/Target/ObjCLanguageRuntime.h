@@ -26,6 +26,8 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/LanguageRuntime.h"
 
+class CommandObjectObjC_ClassTable_Dump;
+
 namespace lldb_private {
     
 class ClangUtilityFunction;
@@ -662,6 +664,11 @@ protected:
 
     ISAToDescriptorIterator
     GetDescriptorIterator (const ConstString &name);
+
+    friend class ::CommandObjectObjC_ClassTable_Dump;
+    
+    std::pair<ISAToDescriptorIterator,ISAToDescriptorIterator>
+    GetDescriptorIteratorPair (bool update_if_needed = true);
 
     void
     ReadObjCLibraryIfNeeded (const ModuleList &module_list);

@@ -497,6 +497,14 @@ ObjCLanguageRuntime::GetDescriptorIterator (const ConstString &name)
     return end;
 }
 
+std::pair<ObjCLanguageRuntime::ISAToDescriptorIterator,ObjCLanguageRuntime::ISAToDescriptorIterator>
+ObjCLanguageRuntime::GetDescriptorIteratorPair (bool update_if_needed)
+{
+    if (update_if_needed)
+        UpdateISAToDescriptorMapIfNeeded();
+    return {m_isa_to_descriptor.begin(),m_isa_to_descriptor.end()};
+}
+
 
 ObjCLanguageRuntime::ObjCISA
 ObjCLanguageRuntime::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)

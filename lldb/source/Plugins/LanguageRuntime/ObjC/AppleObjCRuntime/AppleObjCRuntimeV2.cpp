@@ -32,6 +32,9 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
+#include "lldb/Interpreter/CommandObject.h"
+#include "lldb/Interpreter/CommandObjectMultiword.h"
+#include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"
@@ -445,12 +448,112 @@ AppleObjCRuntimeV2::CreateInstance (Process *process, LanguageType language)
         return NULL;
 }
 
+class CommandObjectObjC_ClassTable_Dump : public CommandObjectParsed
+{
+public:
+    
+    CommandObjectObjC_ClassTable_Dump (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "dump",
+                         "Dump information on Objective-C classes known to the current process.",
+                         "language objc class-table dump",
+                         eFlagRequiresProcess       |
+                         eFlagProcessMustBeLaunched |
+                         eFlagProcessMustBePaused   )
+    {
+    }
+    
+    ~CommandObjectObjC_ClassTable_Dump ()
+    {
+    }
+    
+protected:
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        Process *process = m_exe_ctx.GetProcessPtr();
+        ObjCLanguageRuntime *objc_runtime = process->GetObjCLanguageRuntime();
+        if (objc_runtime)
+        {
+            auto iterators_pair = objc_runtime->GetDescriptorIteratorPair();
+            auto iterator = iterators_pair.first;
+            for(; iterator != iterators_pair.second; iterator++)
+            {
+                result.GetOutputStream().Printf("isa = 0x%" PRIx64, iterator->first);
+                if (iterator->second)
+                {
+                    result.GetOutputStream().Printf(" name = %s", iterator->second->GetClassName().AsCString("<unknown>"));
+                    result.GetOutputStream().Printf(" instance size = %" PRIu64, iterator->second->GetInstanceSize());
+                    result.GetOutputStream().Printf(" num ivars = %" PRIuPTR, (uintptr_t)iterator->second->GetNumIVars());
+                    if (auto superclass = iterator->second->GetSuperclass())
+                    {
+                        result.GetOutputStream().Printf(" superclass = %s", superclass->GetClassName().AsCString("<unknown>"));
+                    }
+                    result.GetOutputStream().Printf("\n");
+                }
+                else
+                {
+                    result.GetOutputStream().Printf(" has no associated class.\n");
+                }
+            }
+            result.SetStatus(lldb::eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError("current process has no Objective-C runtime loaded");
+            result.SetStatus(lldb::eReturnStatusFailed);
+            return false;
+        }
+    }
+};
+
+class CommandObjectMultiwordObjC_ClassTable : public CommandObjectMultiword
+{
+public:
+    
+    CommandObjectMultiwordObjC_ClassTable (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "class-table",
+                            "A set of commands for operating on the Objective-C class table.",
+                            "class-table <subcommand> [<subcommand-options>]")
+    {
+        LoadSubCommand ("dump",   CommandObjectSP (new CommandObjectObjC_ClassTable_Dump (interpreter)));
+    }
+    
+    virtual
+    ~CommandObjectMultiwordObjC_ClassTable ()
+    {
+    }
+};
+
+class CommandObjectMultiwordObjC : public CommandObjectMultiword
+{
+public:
+    
+    CommandObjectMultiwordObjC (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "objc",
+                            "A set of commands for operating on the Objective-C Language Runtime.",
+                            "objc <subcommand> [<subcommand-options>]")
+    {
+        LoadSubCommand ("class-table",   CommandObjectSP (new CommandObjectMultiwordObjC_ClassTable (interpreter)));
+    }
+    
+    virtual
+    ~CommandObjectMultiwordObjC ()
+    {
+    }
+};
+
 void
 AppleObjCRuntimeV2::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    "Apple Objective C Language Runtime - Version 2",
-                                   CreateInstance);    
+                                   CreateInstance,
+                                   [] (CommandInterpreter& interpreter) -> lldb::CommandObjectSP {
+                                       return CommandObjectSP(new CommandObjectMultiwordObjC(interpreter));
+                                   });
 }
 
 void
