@@ -3534,6 +3534,23 @@ bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
   if (!Result)
     return false;
 
+  // The index register could be in the wrong register class.  Unfortunately,
+  // foldMemoryOperandImpl could have commuted the instruction so its not enough
+  // to just look at OpNo + the offset to the index reg.  We actually need to
+  // scan the instruction to find the index reg and see if its the correct reg
+  // class.
+  for (MIOperands MO(Result); MO.isValid(); ++MO) {
+    if (!MO->isReg() || MO->isDef() || MO->getReg() != AM.IndexReg)
+      continue;
+    // Found the index reg, now try to rewrite it.
+    unsigned OpNo = MO.getOperandNo();
+    unsigned IndexReg = constrainOperandRegClass(Result->getDesc(),
+                                                 MO->getReg(), OpNo);
+    if (IndexReg == MO->getReg())
+      continue;
+    MO->setReg(IndexReg);
+  }
+
   Result->addMemOperand(*FuncInfo.MF, createMachineMemOperandFor(LI));
   FuncInfo.MBB->insert(FuncInfo.InsertPt, Result);
   MI->eraseFromParent();
