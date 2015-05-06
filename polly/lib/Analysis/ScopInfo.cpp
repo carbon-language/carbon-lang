@@ -1722,7 +1722,7 @@ Scop::~Scop() {
     delete Stmt;
 
   // Free the ScopArrayInfo objects.
-  for (auto &ScopArrayInfoPair : ScopArrayInfoMap)
+  for (auto &ScopArrayInfoPair : arrays())
     delete ScopArrayInfoPair.second;
 
   // Free the alias groups

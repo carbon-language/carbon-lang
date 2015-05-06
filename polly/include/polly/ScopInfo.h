@@ -23,6 +23,7 @@
 #include "polly/ScopDetection.h"
 
 #include "llvm/Analysis/RegionPass.h"
+#include "llvm/ADT/MapVector.h"
 
 #include "isl/ctx.h"
 
@@ -745,8 +746,9 @@ private:
   /// Constraints on parameters.
   isl_set *Context;
 
+  typedef MapVector<const Value *, const ScopArrayInfo *> ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
-  DenseMap<const Value *, const ScopArrayInfo *> ScopArrayInfoMap;
+  ArrayInfoMapTy ScopArrayInfoMap;
 
   /// @brief The assumptions under which this scop was built.
   ///
@@ -849,6 +851,19 @@ public:
 
   /// @brief Take a list of parameters and add the new ones to the scop.
   void addParams(std::vector<const SCEV *> NewParameters);
+
+  int getNumArrays() { return ScopArrayInfoMap.size(); }
+
+  typedef iterator_range<ArrayInfoMapTy::iterator> array_range;
+  typedef iterator_range<ArrayInfoMapTy::const_iterator> const_array_range;
+
+  inline array_range arrays() {
+    return array_range(ScopArrayInfoMap.begin(), ScopArrayInfoMap.end());
+  }
+
+  inline const_array_range arrays() const {
+    return const_array_range(ScopArrayInfoMap.begin(), ScopArrayInfoMap.end());
+  }
 
   /// @brief Return the isl_id that represents a certain parameter.
   ///
