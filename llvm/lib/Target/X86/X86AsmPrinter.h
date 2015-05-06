@@ -82,6 +82,7 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   void InsertStackMapShadows(MachineFunction &MF);
   void LowerSTACKMAP(const MachineInstr &MI);
   void LowerPATCHPOINT(const MachineInstr &MI, X86MCInstLower &MCIL);
+  void LowerSTATEPOINT(const MachineInstr &MI, X86MCInstLower &MCIL);
 
   void LowerTlsAddr(X86MCInstLower &MCInstLowering, const MachineInstr &MI);
 
