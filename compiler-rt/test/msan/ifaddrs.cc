@@ -10,6 +10,10 @@
 
 #include <vector>
 
+#if defined(__FreeBSD__)
+#include <sys/socket.h>  // To define 'struct sockaddr'.
+#endif
+
 #include <sanitizer/msan_interface.h>
 
 #define CHECK_AND_PUSH(addr, size)                                \
