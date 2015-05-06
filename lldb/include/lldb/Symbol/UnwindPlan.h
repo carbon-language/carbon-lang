@@ -504,6 +504,22 @@ public:
     {
     }
 
+    // Performs a deep copy of the plan, including all the rows (expensive).
+    UnwindPlan (const UnwindPlan &rhs) :
+        m_plan_valid_address_range (rhs.m_plan_valid_address_range),
+        m_register_kind (rhs.m_register_kind),
+        m_return_addr_register (rhs.m_return_addr_register),
+        m_source_name (rhs.m_source_name),
+        m_plan_is_sourced_from_compiler (rhs.m_plan_is_sourced_from_compiler),
+        m_plan_is_valid_at_all_instruction_locations (rhs.m_plan_is_valid_at_all_instruction_locations),
+        m_lsda_address (rhs.m_lsda_address),
+        m_personality_func_addr (rhs.m_personality_func_addr)
+    {
+        m_row_list.reserve (rhs.m_row_list.size());
+        for (const RowSP &row_sp: rhs.m_row_list)
+            m_row_list.emplace_back (new Row (*row_sp));
+    }
+
     ~UnwindPlan ()
 	{
 	}

@@ -145,38 +145,26 @@ FuncUnwinders::GetEHFrameAugmentedUnwindPlan (Target &target, Thread &thread, in
     Mutex::Locker lock (m_mutex);
     m_tried_unwind_plan_eh_frame_augmented = true;
 
-    if (m_range.GetBaseAddress().IsValid())
-    {
-        Address current_pc (m_range.GetBaseAddress ());
-        if (current_offset != -1)
-            current_pc.SetOffset (current_pc.GetOffset() + current_offset);
-        DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
-        if (eh_frame)
-        {
-            m_unwind_plan_eh_frame_augmented_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-            if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_plan_eh_frame_augmented_sp))
-            {
-                m_unwind_plan_eh_frame_augmented_sp.reset();
-            }
-            else
-            {
-                // Augment the eh_frame instructions with epilogue descriptions if necessary so the
-                // UnwindPlan can be used at any instruction in the function.
+    UnwindPlanSP eh_frame_plan = GetEHFrameUnwindPlan (target, current_offset);
+    if (!eh_frame_plan)
+        return m_unwind_plan_eh_frame_augmented_sp;
 
-                UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
-                if (assembly_profiler_sp)
-                {
-                    if (!assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *m_unwind_plan_eh_frame_augmented_sp))
-                    {
-                        m_unwind_plan_eh_frame_augmented_sp.reset();
-                    }
-                }
-                else
-                {
-                    m_unwind_plan_eh_frame_augmented_sp.reset();
-                }
-            }
+    m_unwind_plan_eh_frame_augmented_sp.reset(new UnwindPlan(*eh_frame_plan));
+
+    // Augment the eh_frame instructions with epilogue descriptions if necessary so the
+    // UnwindPlan can be used at any instruction in the function.
+
+    UnwindAssemblySP assembly_profiler_sp (GetUnwindAssemblyProfiler());
+    if (assembly_profiler_sp)
+    {
+        if (!assembly_profiler_sp->AugmentUnwindPlanFromCallSite (m_range, thread, *m_unwind_plan_eh_frame_augmented_sp))
+        {
+            m_unwind_plan_eh_frame_augmented_sp.reset();
         }
+    }
+    else
+    {
+        m_unwind_plan_eh_frame_augmented_sp.reset();
     }
     return m_unwind_plan_eh_frame_augmented_sp;
 }
