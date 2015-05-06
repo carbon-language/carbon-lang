@@ -1350,9 +1350,10 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
          V);
 
   Assert(!AttrBuilder(Attrs, Idx)
-              .hasAttributes(AttributeFuncs::typeIncompatible(Ty, Idx), Idx),
+              .overlaps(AttributeFuncs::typeIncompatible(Ty)),
          "Wrong types for attribute: " +
-             AttributeFuncs::typeIncompatible(Ty, Idx).getAsString(Idx),
+         AttributeSet::get(*Context, Idx,
+                        AttributeFuncs::typeIncompatible(Ty)).getAsString(Idx),
          V);
 
   if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {

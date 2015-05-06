@@ -526,9 +526,9 @@ DataFlowSanitizer::buildWrapperFunction(Function *F, StringRef NewFName,
                                     F->getParent());
   NewF->copyAttributesFrom(F);
   NewF->removeAttributes(
-      AttributeSet::ReturnIndex,
-      AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
-                                       AttributeSet::ReturnIndex));
+    AttributeSet::ReturnIndex,
+    AttributeSet::get(F->getContext(), AttributeSet::ReturnIndex,
+                    AttributeFuncs::typeIncompatible(NewFT->getReturnType())));
 
   BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
   if (F->isVarArg()) {
@@ -703,9 +703,9 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         Function *NewF = Function::Create(NewFT, F.getLinkage(), "", &M);
         NewF->copyAttributesFrom(&F);
         NewF->removeAttributes(
-            AttributeSet::ReturnIndex,
-            AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
-                                             AttributeSet::ReturnIndex));
+          AttributeSet::ReturnIndex,
+          AttributeSet::get(NewF->getContext(), AttributeSet::ReturnIndex,
+                    AttributeFuncs::typeIncompatible(NewFT->getReturnType())));
         for (Function::arg_iterator FArg = F.arg_begin(),
                                     NewFArg = NewF->arg_begin(),
                                     FArgEnd = F.arg_end();
@@ -1587,8 +1587,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
     NewCS.setCallingConv(CS.getCallingConv());
     NewCS.setAttributes(CS.getAttributes().removeAttributes(
         *DFSF.DFS.Ctx, AttributeSet::ReturnIndex,
-        AttributeFuncs::typeIncompatible(NewCS.getInstruction()->getType(),
-                                         AttributeSet::ReturnIndex)));
+        AttributeFuncs::typeIncompatible(NewCS.getInstruction()->getType())));
 
     if (Next) {
       ExtractValueInst *ExVal =

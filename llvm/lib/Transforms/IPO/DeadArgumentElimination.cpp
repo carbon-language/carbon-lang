@@ -849,17 +849,12 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
   if (NRetTy->isVoidTy())
-    RAttrs =
-      AttributeSet::get(NRetTy->getContext(), AttributeSet::ReturnIndex,
-                        AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-         removeAttributes(AttributeFuncs::
-                          typeIncompatible(NRetTy, AttributeSet::ReturnIndex),
-                          AttributeSet::ReturnIndex));
+    RAttrs = RAttrs.removeAttributes(NRetTy->getContext(),
+                                     AttributeSet::ReturnIndex,
+                                     AttributeFuncs::typeIncompatible(NRetTy));
   else
     assert(!AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-             hasAttributes(AttributeFuncs::
-                           typeIncompatible(NRetTy, AttributeSet::ReturnIndex),
-                           AttributeSet::ReturnIndex) &&
+             overlaps(AttributeFuncs::typeIncompatible(NRetTy)) &&
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
@@ -903,13 +898,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     AttributeSet RAttrs = CallPAL.getRetAttributes();
 
     // Adjust in case the function was changed to return void.
-    RAttrs =
-      AttributeSet::get(NF->getContext(), AttributeSet::ReturnIndex,
-                        AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
-        removeAttributes(AttributeFuncs::
-                         typeIncompatible(NF->getReturnType(),
-                                          AttributeSet::ReturnIndex),
-                         AttributeSet::ReturnIndex));
+    RAttrs = RAttrs.removeAttributes(NRetTy->getContext(),
+                                     AttributeSet::ReturnIndex,
+                        AttributeFuncs::typeIncompatible(NF->getReturnType()));
     if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
       AttributesVec.push_back(AttributeSet::get(NF->getContext(), RAttrs));
 
