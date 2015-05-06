@@ -3377,12 +3377,6 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
                          SelectTrue, SelectFalse, ISD::SETNE);
 }
 
-static ISD::CondCode getInverseCCForVSEL(ISD::CondCode CC) {
-  if (CC == ISD::SETNE)
-    return ISD::SETEQ;
-  return ISD::getSetCCInverse(CC, true);
-}
-
 static void checkVSELConstraints(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
                                  bool &swpCmpOps, bool &swpVselOps) {
   // Start by selecting the GE condition code for opcodes that return true for
@@ -3495,7 +3489,7 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
       ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
       if (CondCode == ARMCC::LT || CondCode == ARMCC::LE ||
           CondCode == ARMCC::VC || CondCode == ARMCC::NE) {
-        CC = getInverseCCForVSEL(CC);
+        CC = ISD::getSetCCInverse(CC, true);
         std::swap(TrueVal, FalseVal);
       }
     }
@@ -3517,27 +3511,108 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
     //   c = fcmp [?gt, ?ge, ?lt, ?le] a, b
     //   select c, a, b
     // In NoNaNsFPMath the CC will have been changed from, e.g., 'ogt' to 'gt'.
-    // We only do this transformation in UnsafeFPMath and for no-NaNs
-    // comparisons, because signed zeros and NaNs are handled differently than
-    // the original code sequence.
-    // FIXME: There are more cases that can be transformed even with NaNs,
-    // signed zeroes and safe math.  E.g. in the following, the result will be
-    // FalseVal if a is a NaN or -0./0. and that's what vmaxnm will give, too.
-    //   c = fcmp ogt, a, 0. ; select c, a, 0. => vmaxnm a, 0.
     // FIXME: There is similar code that allows some extensions in
     // AArch64TargetLowering::LowerSELECT_CC that should be shared with this
     // code.
-    if (getTargetMachine().Options.UnsafeFPMath) {
-      if (LHS == TrueVal && RHS == FalseVal) {
-        if (CC == ISD::SETGT || CC == ISD::SETGE)
-          return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
-        if (CC == ISD::SETLT || CC == ISD::SETLE)
-          return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
-      } else if (LHS == FalseVal && RHS == TrueVal) {
-        if (CC == ISD::SETLT || CC == ISD::SETLE)
-          return DAG.getNode(ARMISD::VMAXNM, dl, VT, TrueVal, FalseVal);
-        if (CC == ISD::SETGT || CC == ISD::SETGE)
-          return DAG.getNode(ARMISD::VMINNM, dl, VT, TrueVal, FalseVal);
+    bool swapSides = false;
+    if (!getTargetMachine().Options.NoNaNsFPMath) {
+      // transformability may depend on which way around we compare
+      switch (CC) {
+      default:
+        break;
+      case ISD::SETOGT:
+      case ISD::SETOGE:
+      case ISD::SETOLT:
+      case ISD::SETOLE:
+        // the non-NaN should be RHS
+        swapSides = DAG.isKnownNeverNaN(LHS) && !DAG.isKnownNeverNaN(RHS);
+        break;
+      case ISD::SETUGT:
+      case ISD::SETUGE:
+      case ISD::SETULT:
+      case ISD::SETULE:
+        // the non-NaN should be LHS
+        swapSides = DAG.isKnownNeverNaN(RHS) && !DAG.isKnownNeverNaN(LHS);
+        break;
+      }
+    }
+    swapSides = swapSides || (LHS == FalseVal && RHS == TrueVal);
+    if (swapSides) {
+      CC = ISD::getSetCCSwappedOperands(CC);
+      std::swap(LHS, RHS);
+    }
+    if (LHS == TrueVal && RHS == FalseVal) {
+      bool canTransform = true;
+      // FIXME: FastMathFlags::noSignedZeros() doesn't appear reachable from here
+      if (!getTargetMachine().Options.UnsafeFPMath &&
+          !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS)) {
+        const ConstantFPSDNode *Zero;
+        switch (CC) {
+        default:
+          break;
+        case ISD::SETOGT:
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          // RHS must not be -0
+          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(RHS)) &&
+                         !Zero->isNegative();
+          break;
+        case ISD::SETOGE:
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          // LHS must not be -0
+          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(LHS)) &&
+                         !Zero->isNegative();
+          break;
+        case ISD::SETOLT:
+        case ISD::SETULT:
+        case ISD::SETLT:
+          // RHS must not be +0
+          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(RHS)) &&
+                          Zero->isNegative();
+          break;
+        case ISD::SETOLE:
+        case ISD::SETULE:
+        case ISD::SETLE:
+          // LHS must not be +0
+          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(LHS)) &&
+                          Zero->isNegative();
+          break;
+        }
+      }
+      if (canTransform) {
+        // Note: If one of the elements in a pair is a number and the other
+        // element is NaN, the corresponding result element is the number.
+        // This is consistent with the IEEE 754-2008 standard.
+        // Therefore, a > b ? a : b <=> vmax(a,b), if b is constant and a is NaN
+        switch (CC) {
+        default:
+          break;
+        case ISD::SETOGT:
+        case ISD::SETOGE:
+          if (!DAG.isKnownNeverNaN(RHS))
+            break;
+          return DAG.getNode(ARMISD::VMAXNM, dl, VT, LHS, RHS);
+        case ISD::SETUGT:
+        case ISD::SETUGE:
+          if (!DAG.isKnownNeverNaN(LHS))
+            break;
+        case ISD::SETGT:
+        case ISD::SETGE:
+          return DAG.getNode(ARMISD::VMAXNM, dl, VT, LHS, RHS);
+        case ISD::SETOLT:
+        case ISD::SETOLE:
+          if (!DAG.isKnownNeverNaN(RHS))
+            break;
+          return DAG.getNode(ARMISD::VMINNM, dl, VT, LHS, RHS);
+        case ISD::SETULT:
+        case ISD::SETULE:
+          if (!DAG.isKnownNeverNaN(LHS))
+            break;
+        case ISD::SETLT:
+        case ISD::SETLE:
+          return DAG.getNode(ARMISD::VMINNM, dl, VT, LHS, RHS);
+        }
       }
     }
 

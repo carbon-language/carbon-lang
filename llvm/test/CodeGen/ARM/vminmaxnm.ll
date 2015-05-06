@@ -218,6 +218,291 @@ define double @fp-armv8_vmaxnm_ule_rev(double %a, double %b) {
   ret double %cond
 }
 
+; known non-NaNs
+
+define float @fp-armv8_vminnm_NNNo(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNo":
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vminnm.f32
+; CHECK-LABEL: "fp-armv8_vminnm_NNNo":
+; CHECK: vminnm.f32
+; CHECK-NOT: vminnm.f32
+  %cmp1 = fcmp olt float %a, 12.
+  %cond1 = select i1 %cmp1, float %a, float 12.
+  %cmp2 = fcmp olt float 34., %cond1
+  %cond2 = select i1 %cmp2, float 34., float %cond1
+  ret float %cond2
+}
+
+define double @fp-armv8_vminnm_NNNole(double %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNole":
+; CHECK-FAST: vminnm.f64
+; CHECK-FAST: vminnm.f64
+; CHECK-LABEL: "fp-armv8_vminnm_NNNole":
+; CHECK: vminnm.f64
+; CHECK-NOT: vminnm.f64
+  %cmp1 = fcmp ole double %a, 34.
+  %cond1 = select i1 %cmp1, double %a, double 34.
+  %cmp2 = fcmp ole double 56., %cond1
+  %cond2 = select i1 %cmp2, double 56., double %cond1
+  ret double %cond2
+}
+
+define float @fp-armv8_vminnm_NNNo_rev(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNo_rev":
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vminnm.f32
+; CHECK-LABEL: "fp-armv8_vminnm_NNNo_rev":
+; CHECK: vminnm.f32
+; CHECK-NOT: vminnm.f32
+  %cmp1 = fcmp ogt float %a, 56.
+  %cond1 = select i1 %cmp1, float 56., float %a
+  %cmp2 = fcmp ogt float 78., %cond1
+  %cond2 = select i1 %cmp2, float %cond1, float 78.
+  ret float %cond2
+}
+
+define double @fp-armv8_vminnm_NNNoge_rev(double %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNoge_rev":
+; CHECK-FAST: vminnm.f64
+; CHECK-FAST: vminnm.f64
+; CHECK-LABEL: "fp-armv8_vminnm_NNNoge_rev":
+; CHECK: vminnm.f64
+; CHECK-NOT: vminnm.f64
+  %cmp1 = fcmp oge double %a, 78.
+  %cond1 = select i1 %cmp1, double 78., double %a
+  %cmp2 = fcmp oge double 90., %cond1
+  %cond2 = select i1 %cmp2, double %cond1, double 90.
+  ret double %cond2
+}
+
+define float @fp-armv8_vminnm_NNNu(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNu":
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vminnm.f32
+; CHECK-LABEL: "fp-armv8_vminnm_NNNu":
+; CHECK: vminnm.f32
+; CHECK-NOT: vminnm.f32
+  %cmp1 = fcmp ult float 12., %b
+  %cond1 = select i1 %cmp1, float 12., float %b
+  %cmp2 = fcmp ult float %cond1, 34.
+  %cond2 = select i1 %cmp2, float %cond1, float 34.
+  ret float %cond2
+}
+
+define float @fp-armv8_vminnm_NNNule(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNule":
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vminnm.f32
+; CHECK-LABEL: "fp-armv8_vminnm_NNNule":
+; CHECK: vminnm.f32
+; CHECK-NOT: vminnm.f32
+  %cmp1 = fcmp ule float 34., %b
+  %cond1 = select i1 %cmp1, float 34., float %b
+  %cmp2 = fcmp ule float %cond1, 56.
+  %cond2 = select i1 %cmp2, float %cond1, float 56.
+  ret float %cond2
+}
+
+define float @fp-armv8_vminnm_NNNu_rev(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNu_rev":
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vminnm.f32
+; CHECK-LABEL: "fp-armv8_vminnm_NNNu_rev":
+; CHECK: vminnm.f32
+; CHECK-NOT: vminnm.f32
+  %cmp1 = fcmp ugt float 56., %b
+  %cond1 = select i1 %cmp1, float %b, float 56.
+  %cmp2 = fcmp ugt float %cond1, 78.
+  %cond2 = select i1 %cmp2, float 78., float %cond1
+  ret float %cond2
+}
+
+define double @fp-armv8_vminnm_NNNuge_rev(double %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vminnm_NNNuge_rev":
+; CHECK-FAST: vminnm.f64
+; CHECK-FAST: vminnm.f64
+; CHECK-LABEL: "fp-armv8_vminnm_NNNuge_rev":
+; CHECK: vminnm.f64
+; CHECK-NOT: vminnm.f64
+  %cmp1 = fcmp uge double 78., %b
+  %cond1 = select i1 %cmp1, double %b, double 78.
+  %cmp2 = fcmp uge double %cond1, 90.
+  %cond2 = select i1 %cmp2, double 90., double %cond1
+  ret double %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNo(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNo":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNo":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp ogt float %a, 12.
+  %cond1 = select i1 %cmp1, float %a, float 12.
+  %cmp2 = fcmp ogt float 34., %cond1
+  %cond2 = select i1 %cmp2, float 34., float %cond1
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNoge(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNoge":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNoge":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp oge float %a, 34.
+  %cond1 = select i1 %cmp1, float %a, float 34.
+  %cmp2 = fcmp oge float 56., %cond1
+  %cond2 = select i1 %cmp2, float 56., float %cond1
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNo_rev(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNo_rev":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNo_rev":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp olt float %a, 56.
+  %cond1 = select i1 %cmp1, float 56., float %a
+  %cmp2 = fcmp olt float 78., %cond1
+  %cond2 = select i1 %cmp2, float %cond1, float 78.
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNole_rev(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNole_rev":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNole_rev":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp ole float %a, 78.
+  %cond1 = select i1 %cmp1, float 78., float %a
+  %cmp2 = fcmp ole float 90., %cond1
+  %cond2 = select i1 %cmp2, float %cond1, float 90.
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNu(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNu":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNu":
+; CHECK: vmaxnm.f32
+; CHEC-NOT: vmaxnm.f32
+  %cmp1 = fcmp ugt float 12., %b
+  %cond1 = select i1 %cmp1, float 12., float %b
+  %cmp2 = fcmp ugt float %cond1, 34.
+  %cond2 = select i1 %cmp2, float %cond1, float 34.
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNuge(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNuge":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNuge":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp uge float 34., %b
+  %cond1 = select i1 %cmp1, float 34., float %b
+  %cmp2 = fcmp uge float %cond1, 56.
+  %cond2 = select i1 %cmp2, float %cond1, float 56.
+  ret float %cond2
+}
+
+define float @fp-armv8_vmaxnm_NNNu_rev(float %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNu_rev":
+; CHECK-FAST: vmaxnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNu_rev":
+; CHECK: vmaxnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp ult float 56., %b
+  %cond1 = select i1 %cmp1, float %b, float 56.
+  %cmp2 = fcmp ult float %cond1, 78.
+  %cond2 = select i1 %cmp2, float 78., float %cond1
+  ret float %cond2
+}
+
+define double @fp-armv8_vmaxnm_NNNule_rev( double %b) {
+; CHECK-FAST-LABEL: "fp-armv8_vmaxnm_NNNule_rev":
+; CHECK-FAST: vmaxnm.f64
+; CHECK-FAST: vmaxnm.f64
+; CHECK-LABEL: "fp-armv8_vmaxnm_NNNule_rev":
+; CHECK: vmaxnm.f64
+; CHECK-NOT: vmaxnm.f64
+  %cmp1 = fcmp ule double 78., %b
+  %cond1 = select i1 %cmp1, double %b, double 78.
+  %cmp2 = fcmp ule double %cond1, 90.
+  %cond2 = select i1 %cmp2, double 90., double %cond1
+  ret double %cond2
+}
+
+define float @fp-armv8_vminmaxnm_0(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminmaxnm_0":
+; CHECK-FAST-NOT: vcmp
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vminmaxnm_0":
+; CHECK-NOT: vminnm.f32
+; CHECK: vmaxnm.f32
+  %cmp1 = fcmp olt float %a, 0.
+  %cond1 = select i1 %cmp1, float %a, float 0.
+  %cmp2 = fcmp ogt float %cond1, 0.
+  %cond2 = select i1 %cmp2, float %cond1, float 0.
+  ret float %cond2
+}
+
+define float @fp-armv8_vminmaxnm_neg0(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminmaxnm_neg0":
+; CHECK-FAST-NOT: vcmp
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vminmaxnm_neg0":
+; CHECK: vminnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp olt float %a, -0.
+  %cond1 = select i1 %cmp1, float %a, float -0.
+  %cmp2 = fcmp ogt float %cond1, -0.
+  %cond2 = select i1 %cmp2, float %cond1, float -0.
+  ret float %cond2
+}
+
+define float @fp-armv8_vminmaxnm_e_0(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminmaxnm_e_0":
+; CHECK-FAST-NOT: vcmp
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vminmaxnm_e_0":
+; CHECK-NOT: vminnm.f32
+; CHECK: vmaxnm.f32
+  %cmp1 = fcmp ule float 0., %a
+  %cond1 = select i1 %cmp1, float 0., float %a
+  %cmp2 = fcmp uge float 0., %cond1
+  %cond2 = select i1 %cmp2, float 0., float %cond1
+  ret float %cond2
+}
+
+define float @fp-armv8_vminmaxnm_e_neg0(float %a) {
+; CHECK-FAST-LABEL: "fp-armv8_vminmaxnm_e_neg0":
+; CHECK-FAST-NOT: vcmp
+; CHECK-FAST: vminnm.f32
+; CHECK-FAST: vmaxnm.f32
+; CHECK-LABEL: "fp-armv8_vminmaxnm_e_neg0":
+; CHECK: vminnm.f32
+; CHECK-NOT: vmaxnm.f32
+  %cmp1 = fcmp ule float -0., %a
+  %cond1 = select i1 %cmp1, float -0., float %a
+  %cmp2 = fcmp uge float -0., %cond1
+  %cond2 = select i1 %cmp2, float -0., float %cond1
+  ret float %cond2
+}
 
 declare <4 x float> @llvm.arm.neon.vminnm.v4f32(<4 x float>, <4 x float>) nounwind readnone
 declare <2 x float> @llvm.arm.neon.vminnm.v2f32(<2 x float>, <2 x float>) nounwind readnone
