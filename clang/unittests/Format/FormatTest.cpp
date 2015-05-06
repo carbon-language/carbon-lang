@@ -1939,6 +1939,9 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
   // Don't interpret 'signals' the wrong way.
   verifyFormat("signals.set();");
   verifyFormat("for (Signals signals : f()) {\n}");
+  verifyFormat("{\n"
+               "  signals.set(); // This needs indentation.\n"
+               "}");
 }
 
 TEST_F(FormatTest, SeparatesLogicalBlocks) {

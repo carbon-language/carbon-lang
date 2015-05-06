@@ -105,7 +105,9 @@ private:
         Style.Language == FormatStyle::LK_JavaScript)
       return 0;
     if (RootToken.isAccessSpecifier(false) ||
-        RootToken.isObjCAccessSpecifier() || RootToken.is(Keywords.kw_signals))
+        RootToken.isObjCAccessSpecifier() ||
+        (RootToken.is(Keywords.kw_signals) && RootToken.Next &&
+         RootToken.Next->is(tok::colon)))
       return Style.AccessModifierOffset;
     return 0;
   }
