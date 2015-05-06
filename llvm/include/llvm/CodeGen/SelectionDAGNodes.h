@@ -1030,7 +1030,7 @@ public:
   SDNodeFlags Flags;
   BinaryWithFlagsSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
                         SDValue X, SDValue Y)
-    : BinarySDNode(Opc, Order, dl, VTs, X, Y), Flags() { }
+      : BinarySDNode(Opc, Order, dl, VTs, X, Y), Flags() {}
   static bool classof(const SDNode *N) {
     return isBinOpWithFlags(N->getOpcode());
   }

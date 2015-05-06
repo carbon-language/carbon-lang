@@ -515,10 +515,9 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   case ISD::SUB:
   case ISD::SHL: {
     const BinaryWithFlagsSDNode *BinNode = cast<BinaryWithFlagsSDNode>(N);
-    AddBinaryNodeIDCustom(ID, N->getOpcode(),
-                          BinNode->Flags.hasNoUnsignedWrap(),
-                          BinNode->Flags.hasNoSignedWrap(),
-                          BinNode->Flags.hasExact());
+    AddBinaryNodeIDCustom(
+        ID, N->getOpcode(), BinNode->Flags.hasNoUnsignedWrap(),
+        BinNode->Flags.hasNoSignedWrap(), BinNode->Flags.hasExact());
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
