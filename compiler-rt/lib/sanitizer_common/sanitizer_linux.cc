@@ -36,6 +36,7 @@
 // access stat from asm/stat.h, without conflicting with definition in
 // sys/stat.h, we use this trick.
 #if defined(__mips64)
+#include <asm/unistd.h>
 #include <sys/types.h>
 #define stat kernel_stat
 #include <asm/stat.h>
@@ -864,11 +865,70 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
   return res;
 }
 #elif defined(__mips__)
-// TODO(sagarthakur): clone function is to be rewritten in assembly.
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                     int *parent_tidptr, void *newtls, int *child_tidptr) {
-  return clone(fn, child_stack, flags, arg, parent_tidptr,
-               newtls, child_tidptr);
+  long long res;
+  if (!fn || !child_stack)
+    return -EINVAL;
+  CHECK_EQ(0, (uptr)child_stack % 16);
+  child_stack = (char *)child_stack - 2 * sizeof(unsigned long long);
+  ((unsigned long long *)child_stack)[0] = (uptr)fn;
+  ((unsigned long long *)child_stack)[1] = (uptr)arg;
+  register void *a3 __asm__("$7") = newtls;
+  register int *a4 __asm__("$8") = child_tidptr;
+  // We don't have proper CFI directives here because it requires alot of code
+  // for very marginal benefits.
+  __asm__ __volatile__(
+                       /* $v0 = syscall($v0 = __NR_clone,
+                        * $a0 = flags,
+                        * $a1 = child_stack,
+                        * $a2 = parent_tidptr,
+                        * $a3 = new_tls,
+                        * $a4 = child_tidptr)
+                        */
+                       ".cprestore 16;\n"
+                       "move $4,%1;\n"
+                       "move $5,%2;\n"
+                       "move $6,%3;\n"
+                       "move $7,%4;\n"
+                       /* Store the fifth argument on stack
+                        * if we are using 32-bit abi.
+                        */
+#if SANITIZER_WORDSIZE == 32
+                       "lw %5,16($29);\n"
+#else
+                       "move $8,%5;\n"
+#endif
+                       "li $2,%6;\n"
+                       "syscall;\n"
+
+                       /* if ($v0 != 0)
+                        * return;
+                        */
+                       "bnez $2,1f;\n"
+
+                       /* Call "fn(arg)". */
+                       "ld $25,0($29);\n"
+                       "ld $4,8($29);\n"
+                       "jal $25;\n"
+
+                       /* Call _exit($v0). */
+                       "move $4,$2;\n"
+                       "li $2,%7;\n"
+                       "syscall;\n"
+
+                       /* Return to parent. */
+                     "1:\n"
+                       : "=r" (res)
+                       : "r"(flags),
+                         "r"(child_stack),
+                         "r"(parent_tidptr),
+                         "r"(a3),
+                         "r"(a4),
+                         "i"(__NR_clone),
+                         "i"(__NR_exit)
+                       : "memory", "$29" );
+  return res;
 }
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
