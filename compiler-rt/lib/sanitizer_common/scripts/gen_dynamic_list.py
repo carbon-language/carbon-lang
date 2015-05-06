@@ -23,7 +23,8 @@ import sys
 new_delete = set(['_ZdaPv', '_ZdaPvRKSt9nothrow_t',
                   '_ZdlPv', '_ZdlPvRKSt9nothrow_t',
                   '_Znam', '_ZnamRKSt9nothrow_t',
-                  '_Znwm', '_ZnwmRKSt9nothrow_t'])
+                  '_Znwm', '_ZnwmRKSt9nothrow_t',
+                  '_ZdlPvm', '_ZdaPvm'])
 
 versioned_functions = set(['memcpy', 'pthread_attr_getaffinity_np',
                            'pthread_cond_broadcast',
@@ -74,7 +75,7 @@ def main(argv):
       # We have to avoid exporting the interceptors for versioned library
       # functions due to gold internal error.
       orig_name = match.group(1)
-      if orig_name in function_set and orig_name not in versioned_functions:
+      if orig_name in function_set and (args.version_list or orig_name not in versioned_functions):
         result.append(orig_name)
       continue
     # Export sanitizer interface functions.
