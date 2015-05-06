@@ -52,7 +52,7 @@ class StatepointBase {
   void *operator new(size_t, unsigned) = delete;
   void *operator new(size_t s) = delete;
 
- protected:
+protected:
   explicit StatepointBase(InstructionTy *I) : StatepointCS(I) {
     assert(isStatepoint(I));
   }
@@ -60,13 +60,11 @@ class StatepointBase {
     assert(isStatepoint(CS));
   }
 
- public:
+public:
   typedef typename CallSiteTy::arg_iterator arg_iterator;
 
   /// Return the underlying CallSite.
-  CallSiteTy getCallSite() {
-    return StatepointCS;
-  }
+  CallSiteTy getCallSite() { return StatepointCS; }
 
   /// Return the value actually being called or invoked.
   ValueTy *getActualCallee() { return StatepointCS.getArgument(0); }
@@ -110,9 +108,7 @@ class StatepointBase {
     return iterator_range<arg_iterator>(call_args_begin(), call_args_end());
   }
 
-  typename CallSiteTy::arg_iterator vm_state_begin() {
-    return call_args_end();
-  }
+  typename CallSiteTy::arg_iterator vm_state_begin() { return call_args_end(); }
   typename CallSiteTy::arg_iterator vm_state_end() {
     int Offset = 3 + getNumCallArgs() + 1 + getNumTotalVMSArgs();
     assert(Offset <= (int)StatepointCS.arg_size());
@@ -130,9 +126,7 @@ class StatepointBase {
     return vm_state_begin() + 6;
   }
 
-  typename CallSiteTy::arg_iterator gc_args_begin() {
-    return vm_state_end();
-  }
+  typename CallSiteTy::arg_iterator gc_args_begin() { return vm_state_end(); }
   typename CallSiteTy::arg_iterator gc_args_end() {
     return StatepointCS.arg_end();
   }
@@ -170,8 +164,7 @@ class StatepointBase {
 /// A specialization of it's base class for read only access
 /// to a gc.statepoint.
 class ImmutableStatepoint
-    : public StatepointBase<const Instruction, const Value,
-                            ImmutableCallSite> {
+    : public StatepointBase<const Instruction, const Value, ImmutableCallSite> {
   typedef StatepointBase<const Instruction, const Value, ImmutableCallSite>
       Base;
 
@@ -196,30 +189,23 @@ public:
 class GCRelocateOperands {
   ImmutableCallSite RelocateCS;
 
- public:
-  GCRelocateOperands(const User* U) : RelocateCS(U) {
-    assert(isGCRelocate(U));
-  }
+public:
+  GCRelocateOperands(const User *U) : RelocateCS(U) { assert(isGCRelocate(U)); }
   GCRelocateOperands(const Instruction *inst) : RelocateCS(inst) {
     assert(isGCRelocate(inst));
   }
-  GCRelocateOperands(CallSite CS) : RelocateCS(CS) {
-    assert(isGCRelocate(CS));
-  }
+  GCRelocateOperands(CallSite CS) : RelocateCS(CS) { assert(isGCRelocate(CS)); }
 
   /// Return true if this relocate is tied to the invoke statepoint.
   /// This includes relocates which are on the unwinding path.
   bool isTiedToInvoke() const {
     const Value *Token = RelocateCS.getArgument(0);
 
-    return isa<ExtractValueInst>(Token) ||
-      isa<InvokeInst>(Token);
+    return isa<ExtractValueInst>(Token) || isa<InvokeInst>(Token);
   }
 
   /// Get enclosed relocate intrinsic
-  ImmutableCallSite getUnderlyingCallSite() {
-    return RelocateCS;
-  }
+  ImmutableCallSite getUnderlyingCallSite() { return RelocateCS; }
 
   /// The statepoint with which this gc.relocate is associated.
   const Instruction *getStatepoint() {
@@ -269,8 +255,8 @@ class GCRelocateOperands {
 
 template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
 std::vector<GCRelocateOperands>
-  StatepointBase<InstructionTy, ValueTy, CallSiteTy>::
-    getRelocates(ImmutableStatepoint &IS) {
+StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates(
+    ImmutableStatepoint &IS) {
 
   std::vector<GCRelocateOperands> Result;
 
@@ -288,7 +274,7 @@ std::vector<GCRelocateOperands>
 
   // We need to scan thorough exceptional relocations if it is invoke statepoint
   LandingPadInst *LandingPad =
-    cast<InvokeInst>(StatepointCS.getInstruction())->getLandingPadInst();
+      cast<InvokeInst>(StatepointCS.getInstruction())->getLandingPadInst();
 
   // Search for extract value from landingpad instruction to which
   // gc relocates will be attached
@@ -303,7 +289,6 @@ std::vector<GCRelocateOperands>
   }
   return Result;
 }
-
 }
 
 #endif
