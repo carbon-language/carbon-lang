@@ -1062,7 +1062,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif
 #elif defined(__mips__)
   ucontext_t *ucontext = (ucontext_t*)context;
-  *pc = ucontext->uc_mcontext.gregs[31];
+  *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.gregs[30];
   *sp = ucontext->uc_mcontext.gregs[29];
 #else
