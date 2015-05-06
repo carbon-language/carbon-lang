@@ -1621,6 +1621,17 @@ TEST_F(FormatTest, SplitsLongLinesInComments) {
                    "   */",
                    getLLVMStyleWithColumns(20)));
 
+  EXPECT_EQ("/**\n"
+            " * multiline block\n"
+            " * comment\n"
+            " *\n"
+            " */",
+            format("/**\n"
+                   " * multiline block comment\n"
+                   " *\n"
+                   " */",
+                   getLLVMStyleWithColumns(20)));
+
   EXPECT_EQ("/*\n"
             "\n"
             "\n"
@@ -6525,7 +6536,7 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("/*\n"
             "*\n"
             " * aaaaaa\n"
-            "*aaaaaa\n"
+            " * aaaaaa\n"
             "*/",
             format("/*\n"
                    "*\n"

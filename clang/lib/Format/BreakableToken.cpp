@@ -277,6 +277,8 @@ BreakableBlockComment::BreakableBlockComment(
     // If the last line is empty, the closing "*/" will have a star.
     if (i + 1 == e && Lines[i].empty())
       break;
+    if (!Lines[i].empty() && i + 1 != e && Decoration.startswith(Lines[i]))
+      continue;
     while (!Lines[i].startswith(Decoration))
       Decoration = Decoration.substr(0, Decoration.size() - 1);
   }
@@ -297,14 +299,18 @@ BreakableBlockComment::BreakableBlockComment(
       }
       continue;
     }
+
     // The first line already excludes the star.
     // For all other lines, adjust the line to exclude the star and
     // (optionally) the first whitespace.
-    StartOfLineColumn[i] += Decoration.size();
-    Lines[i] = Lines[i].substr(Decoration.size());
-    LeadingWhitespace[i] += Decoration.size();
-    IndentAtLineBreak =
-        std::min<int>(IndentAtLineBreak, std::max(0, StartOfLineColumn[i]));
+    unsigned DecorationSize =
+        Decoration.startswith(Lines[i]) ? Lines[i].size() : Decoration.size();
+    StartOfLineColumn[i] += DecorationSize;
+    Lines[i] = Lines[i].substr(DecorationSize);
+    LeadingWhitespace[i] += DecorationSize;
+    if (!Decoration.startswith(Lines[i]))
+      IndentAtLineBreak =
+          std::min<int>(IndentAtLineBreak, std::max(0, StartOfLineColumn[i]));
   }
   IndentAtLineBreak = std::max<unsigned>(IndentAtLineBreak, Decoration.size());
   DEBUG({
