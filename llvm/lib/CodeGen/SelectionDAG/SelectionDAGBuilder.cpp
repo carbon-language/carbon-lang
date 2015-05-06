@@ -8009,7 +8009,11 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
     const ConstantInt *CaseVal = I.getCaseValue();
     uint32_t Weight = 1;
     if (BPI) {
-      Weight = BPI->getEdgeWeight(SI.getParent(), I.getSuccessorIndex());
+      // TODO - BPI used to guarantee non-zero weights, but this produces
+      // information loss (see PR 22718). Since we can't handle zero weights
+      // here, use the same flooring mechanism previously used by BPI.
+      Weight = std::max(
+          1u, BPI->getEdgeWeight(SI.getParent(), I.getSuccessorIndex()));
       assert(Weight <= UINT32_MAX / SI.getNumSuccessors());
     }
     Clusters.push_back(CaseCluster::range(CaseVal, CaseVal, Succ, Weight));

@@ -201,8 +201,7 @@ bool BranchProbabilityInfo::calcMetadataWeights(BasicBlock *BB) {
         mdconst::dyn_extract<ConstantInt>(WeightsNode->getOperand(i));
     if (!Weight)
       return false;
-    Weights.push_back(
-      std::max<uint32_t>(1, Weight->getLimitedValue(WeightLimit)));
+    Weights.push_back(Weight->getLimitedValue(WeightLimit));
   }
   assert(Weights.size() == TI->getNumSuccessors() && "Checked above");
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
@@ -553,7 +552,7 @@ uint32_t BranchProbabilityInfo::getSumForBlock(const BasicBlock *BB) const {
     uint32_t PrevSum = Sum;
 
     Sum += Weight;
-    assert(Sum > PrevSum); (void) PrevSum;
+    assert(Sum >= PrevSum); (void) PrevSum;
   }
 
   return Sum;
@@ -616,14 +615,17 @@ uint32_t BranchProbabilityInfo::getEdgeWeight(const BasicBlock *Src,
 uint32_t BranchProbabilityInfo::
 getEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst) const {
   uint32_t Weight = 0;
+  bool FoundWeight = false;
   DenseMap<Edge, uint32_t>::const_iterator MapI;
   for (succ_const_iterator I = succ_begin(Src), E = succ_end(Src); I != E; ++I)
     if (*I == Dst) {
       MapI = Weights.find(std::make_pair(Src, I.getSuccessorIndex()));
-      if (MapI != Weights.end())
+      if (MapI != Weights.end()) {
+        FoundWeight = true;
         Weight += MapI->second;
+      }
     }
-  return (Weight == 0) ? DEFAULT_WEIGHT : Weight;
+  return (!FoundWeight) ? DEFAULT_WEIGHT : Weight;
 }
 
 /// Set the edge weight for a given edge specified by PredBlock and an index
