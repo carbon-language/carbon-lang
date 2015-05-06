@@ -224,6 +224,32 @@ namespace {
     /// Dst, we can drop \p Copy.
     bool applyTerminalRule(const MachineInstr &Copy) const;
 
+    /// Check whether or not \p LI is composed by multiple connected
+    /// components and if that is the case, fix that.
+    void splitNewRanges(LiveInterval *LI) {
+      ConnectedVNInfoEqClasses ConEQ(*LIS);
+      unsigned NumComps = ConEQ.Classify(LI);
+      if (NumComps <= 1)
+        return;
+      SmallVector<LiveInterval*, 8> NewComps(1, LI);
+      for (unsigned i = 1; i != NumComps; ++i) {
+        unsigned VReg = MRI->createVirtualRegister(MRI->getRegClass(LI->reg));
+        NewComps.push_back(&LIS->createEmptyInterval(VReg));
+      }
+
+      ConEQ.Distribute(&NewComps[0], *MRI);
+    }
+
+    /// Wrapper method for \see LiveIntervals::shrinkToUses.
+    /// This method does the proper fixing of the live-ranges when the afore
+    /// mentioned method returns true.
+    void shrinkToUses(LiveInterval *LI,
+                      SmallVectorImpl<MachineInstr * > *Dead = nullptr) {
+      if (LIS->shrinkToUses(LI, Dead))
+        // We may have created multiple connected components, split them.
+        splitNewRanges(LI);
+    }
+
   public:
     static char ID; ///< Class identification, replacement for typeinfo
     RegisterCoalescer() : MachineFunctionPass(ID) {
@@ -556,7 +582,7 @@ bool RegisterCoalescer::adjustCopiesBackFrom(const CoalescerPair &CP,
   // will also add the isKill marker.
   CopyMI->substituteRegister(IntA.reg, IntB.reg, 0, *TRI);
   if (AS->end == CopyIdx)
-    LIS->shrinkToUses(&IntA);
+    shrinkToUses(&IntA);
 
   ++numExtends;
   return true;
@@ -1046,7 +1072,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(const CoalescerPair &CP,
   ++NumReMats;
 
   // The source interval can become smaller because we removed a use.
-  LIS->shrinkToUses(&SrcInt, &DeadDefs);
+  shrinkToUses(&SrcInt, &DeadDefs);
   if (!DeadDefs.empty()) {
     // If the virtual SrcReg is completely eliminated, update all DBG_VALUEs
     // to describe DstReg instead.
@@ -1427,7 +1453,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   }
   if (ShrinkMainRange) {
     LiveInterval &LI = LIS->getInterval(CP.getDstReg());
-    LIS->shrinkToUses(&LI);
+    shrinkToUses(&LI);
   }
 
   // SrcReg is guaranteed to be the register whose live interval that is
@@ -2635,7 +2661,7 @@ bool RegisterCoalescer::joinVirtRegs(CoalescerPair &CP) {
   LHSVals.eraseInstrs(ErasedInstrs, ShrinkRegs);
   RHSVals.eraseInstrs(ErasedInstrs, ShrinkRegs);
   while (!ShrinkRegs.empty())
-    LIS->shrinkToUses(&LIS->getInterval(ShrinkRegs.pop_back_val()));
+    shrinkToUses(&LIS->getInterval(ShrinkRegs.pop_back_val()));
 
   // Join RHS into LHS.
   LHS.join(RHS, LHSVals.getAssignments(), RHSVals.getAssignments(), NewVNInfo);
