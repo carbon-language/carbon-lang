@@ -4926,6 +4926,12 @@ public:
 
     if (Crypto)
       Builder.defineMacro("__ARM_FEATURE_CRYPTO");
+
+    // All of the __sync_(bool|val)_compare_and_swap_(1|2|4|8) builtins work.
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4");
+    Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
   }
 
   void getTargetBuiltins(const Builtin::Info *&Records,
