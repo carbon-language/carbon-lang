@@ -1487,15 +1487,6 @@ private:
 
 } // end anonymous namespace
 
-tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
-                               SourceManager &SourceMgr,
-                               ArrayRef<CharSourceRange> Ranges) {
-  if (Style.DisableFormat)
-    return tooling::Replacements();
-  return reformat(Style, SourceMgr,
-                  SourceMgr.getFileID(Lex.getSourceLocation()), Ranges);
-}
-
 tooling::Replacements reformat(const FormatStyle &Style,
                                SourceManager &SourceMgr, FileID ID,
                                ArrayRef<CharSourceRange> Ranges) {
