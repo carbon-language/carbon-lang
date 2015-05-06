@@ -1196,7 +1196,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // facts about the relocate value, while being careful to
     // preserve relocation semantics.
     GCRelocateOperands Operands(II);
-    Value *DerivedPtr = Operands.derivedPtr();
+    Value *DerivedPtr = Operands.getDerivedPtr();
 
     // Remove the relocation if unused, note that this check is required
     // to prevent the cases below from looping forever.

@@ -531,8 +531,8 @@ static void computeBaseDerivedRelocateMap(
   for (auto &U : AllRelocateCalls) {
     GCRelocateOperands ThisRelocate(U);
     IntrinsicInst *I = cast<IntrinsicInst>(U);
-    auto K = std::make_pair(ThisRelocate.basePtrIndex(),
-                            ThisRelocate.derivedPtrIndex());
+    auto K = std::make_pair(ThisRelocate.getBasePtrIndex(),
+                            ThisRelocate.getDerivedPtrIndex());
     RelocateIdxMap.insert(std::make_pair(K, I));
   }
   for (auto &Item : RelocateIdxMap) {
@@ -581,15 +581,15 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
     GCRelocateOperands MasterRelocate(RelocatedBase);
     GCRelocateOperands ThisRelocate(ToReplace);
 
-    assert(ThisRelocate.basePtrIndex() == MasterRelocate.basePtrIndex() &&
+    assert(ThisRelocate.getBasePtrIndex() == MasterRelocate.getBasePtrIndex() &&
            "Not relocating a derived object of the original base object");
-    if (ThisRelocate.basePtrIndex() == ThisRelocate.derivedPtrIndex()) {
+    if (ThisRelocate.getBasePtrIndex() == ThisRelocate.getDerivedPtrIndex()) {
       // A duplicate relocate call. TODO: coalesce duplicates.
       continue;
     }
 
-    Value *Base = ThisRelocate.basePtr();
-    auto Derived = dyn_cast<GetElementPtrInst>(ThisRelocate.derivedPtr());
+    Value *Base = ThisRelocate.getBasePtr();
+    auto Derived = dyn_cast<GetElementPtrInst>(ThisRelocate.getDerivedPtr());
     if (!Derived || Derived->getPointerOperand() != Base)
       continue;
 

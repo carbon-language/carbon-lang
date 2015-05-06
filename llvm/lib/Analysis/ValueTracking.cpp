@@ -2957,7 +2957,8 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
   if (const IntrinsicInst *I = dyn_cast<IntrinsicInst>(V))
     if (I->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
       GCRelocateOperands RelocateInst(I);
-      return isDereferenceablePointer(RelocateInst.derivedPtr(), DL, Visited);
+      return isDereferenceablePointer(RelocateInst.getDerivedPtr(), DL,
+                                      Visited);
     }
 
   if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))

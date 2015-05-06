@@ -2654,9 +2654,9 @@ void AssemblyWriter::printGCRelocateComment(const Value &V) {
   GCRelocateOperands GCOps(cast<Instruction>(&V));
 
   Out << " ; (";
-  writeOperand(GCOps.basePtr(), false);
+  writeOperand(GCOps.getBasePtr(), false);
   Out << ", ";
-  writeOperand(GCOps.derivedPtr(), false);
+  writeOperand(GCOps.getDerivedPtr(), false);
   Out << ")";
 }
 

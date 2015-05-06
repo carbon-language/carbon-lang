@@ -229,7 +229,7 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
 
   ImmutableCallSite CS(ISP.getCallSite());
 
-  SDValue ActualCallee = Builder.getValue(ISP.actualCallee());
+  SDValue ActualCallee = Builder.getValue(ISP.getActualCallee());
 
   // Handle immediate and symbolic callees.
   if (auto *ConstCallee = dyn_cast<ConstantSDNode>(ActualCallee.getNode()))
@@ -245,12 +245,12 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
   assert(CS.getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");
 
-  Type *DefTy = ISP.actualReturnType();
+  Type *DefTy = ISP.getActualReturnType();
   bool HasDef = !DefTy->isVoidTy();
 
   SDValue ReturnValue, CallEndVal;
   std::tie(ReturnValue, CallEndVal) = Builder.lowerCallOperands(
-      ISP.getCallSite(), ISP.callArgsBeginOffset(), ISP.numCallArgs(),
+      ISP.getCallSite(), ISP.callArgsBeginOffset(), ISP.getNumCallArgs(),
       ActualCallee, DefTy, LandingPad, false /* IsPatchPoint */);
 
   SDNode *CallEnd = CallEndVal.getNode();
@@ -286,10 +286,10 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
       // register with correct type and save value into it manually.
       // TODO: To eliminate this problem we can remove gc.result intrinsics
       //       completelly and make statepoint call to return a tuple.
-      unsigned Reg = Builder.FuncInfo.CreateRegs(ISP.actualReturnType());
+      unsigned Reg = Builder.FuncInfo.CreateRegs(ISP.getActualReturnType());
       RegsForValue RFV(*Builder.DAG.getContext(),
                        Builder.DAG.getTargetLoweringInfo(), Reg,
-                       ISP.actualReturnType());
+                       ISP.getActualReturnType());
       SDValue Chain = Builder.DAG.getEntryNode();
 
       RFV.getCopyToRegs(ReturnValue, Builder.DAG, Builder.getCurSDLoc(), Chain,
@@ -325,8 +325,8 @@ static void getIncomingStatepointGCValues(
   for (GCRelocateOperands relocateOpers :
        StatepointSite.getRelocates(StatepointSite)) {
     Relocs.push_back(relocateOpers.getUnderlyingCallSite().getInstruction());
-    Bases.push_back(relocateOpers.basePtr());
-    Ptrs.push_back(relocateOpers.derivedPtr());
+    Bases.push_back(relocateOpers.getBasePtr());
+    Ptrs.push_back(relocateOpers.getDerivedPtr());
   }
 
   // Remove any redundant llvm::Values which map to the same SDValue as another
@@ -482,7 +482,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // First, prefix the list with the number of unique values to be
   // lowered.  Note that this is the number of *Values* not the
   // number of SDValues required to lower them.
-  const int NumVMSArgs = StatepointSite.numTotalVMSArgs();
+  const int NumVMSArgs = StatepointSite.getNumTotalVMSArgs();
   Ops.push_back( Builder.DAG.getTargetConstant(StackMaps::ConstantOp,
                                                Builder.getCurSDLoc(),
                                                MVT::i64));
@@ -675,7 +675,7 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
     // different, and getValue() will use CopyFromReg of the wrong type,
     // which is always i32 in our case.
     PointerType *CalleeType =
-        cast<PointerType>(ImmutableStatepoint(I).actualCallee()->getType());
+        cast<PointerType>(ImmutableStatepoint(I).getActualCallee()->getType());
     Type *RetTy =
         cast<FunctionType>(CalleeType->getElementType())->getReturnType();
     SDValue CopyFromReg = getCopyFromRegs(I, RetTy);
@@ -694,7 +694,7 @@ void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {
 #endif
 
   GCRelocateOperands relocateOpers(&CI);
-  SDValue SD = getValue(relocateOpers.derivedPtr());
+  SDValue SD = getValue(relocateOpers.getDerivedPtr());
 
   if (isa<ConstantSDNode>(SD) || isa<FrameIndexSDNode>(SD)) {
     // We didn't need to spill these special cases (constants and allocas).

@@ -3315,7 +3315,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     // Verify rest of the relocate arguments
 
     GCRelocateOperands ops(&CI);
-    ImmutableCallSite StatepointCS(ops.statepoint());
+    ImmutableCallSite StatepointCS(ops.getStatepoint());
 
     // Both the base and derived must be piped through the safepoint
     Value* Base = CI.getArgOperand(1);
@@ -3362,7 +3362,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
     // Assert that the result type matches the type of the relocated pointer
     GCRelocateOperands Operands(&CI);
-    Assert(Operands.derivedPtr()->getType() == CI.getType(),
+    Assert(Operands.getDerivedPtr()->getType() == CI.getType(),
            "gc.relocate: relocating a pointer shouldn't change its type", &CI);
     break;
   }

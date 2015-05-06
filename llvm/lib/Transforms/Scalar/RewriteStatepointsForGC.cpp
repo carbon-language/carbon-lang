@@ -1336,7 +1336,8 @@ insertRelocationStores(iterator_range<Value::user_iterator> gcRelocs,
     }
 
     GCRelocateOperands relocateOperands(relocatedValue);
-    Value *originalValue = const_cast<Value *>(relocateOperands.derivedPtr());
+    Value *originalValue =
+        const_cast<Value *>(relocateOperands.getDerivedPtr());
     assert(allocaMap.count(originalValue));
     Value *alloca = allocaMap[originalValue];
 
