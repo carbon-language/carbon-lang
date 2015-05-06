@@ -29,12 +29,6 @@ namespace process_linux {
         // Typedefs.
         typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
 
-        enum EventLoopResult
-        {
-            eventLoopResultContinue,
-            eventLoopResultStop
-        };
-
         // Callback/block definitions.
         typedef std::function<void (lldb::tid_t tid)> ThreadIDFunction;
         typedef std::function<void (const char *format, va_list args)> LogFunction;
@@ -133,19 +127,6 @@ namespace process_linux {
 
     private:
 
-        // Typedefs.
-        class EventBase;
-
-        class EventCallAfterThreadsStop;
-        class EventThreadStopped;
-        class EventThreadCreate;
-        class EventThreadDeath;
-        class EventRequestResume;
-
-        class EventReset;
-
-        typedef std::shared_ptr<EventBase> EventBaseSP;
-
         enum class ThreadState
         {
             Running,
@@ -160,26 +141,95 @@ namespace process_linux {
         };
         typedef std::unordered_map<lldb::tid_t, ThreadContext> TIDContextMap;
 
+        struct PendingNotification
+        {
+            PendingNotification (lldb::tid_t triggering_tid,
+                                       const ThreadIDSet &wait_for_stop_tids,
+                                       const StopThreadFunction &request_thread_stop_function,
+                                       const ThreadIDFunction &call_after_function,
+                                       const ErrorFunction &error_function):
+            triggering_tid (triggering_tid),
+            wait_for_stop_tids (wait_for_stop_tids),
+            original_wait_for_stop_tids (wait_for_stop_tids),
+            request_thread_stop_function (request_thread_stop_function),
+            call_after_function (call_after_function),
+            error_function (error_function),
+            request_stop_on_all_unstopped_threads (false),
+            skip_stop_request_tids ()
+            {
+            }
 
-        std::mutex m_event_mutex; // Serializes execution of ProcessEvent.
+            PendingNotification (lldb::tid_t triggering_tid,
+                                       const StopThreadFunction &request_thread_stop_function,
+                                       const ThreadIDFunction &call_after_function,
+                                       const ErrorFunction &error_function) :
+            triggering_tid (triggering_tid),
+            wait_for_stop_tids (),
+            original_wait_for_stop_tids (),
+            request_thread_stop_function (request_thread_stop_function),
+            call_after_function (call_after_function),
+            error_function (error_function),
+            request_stop_on_all_unstopped_threads (true),
+            skip_stop_request_tids ()
+            {
+            }
+
+            PendingNotification (lldb::tid_t triggering_tid,
+                                       const StopThreadFunction &request_thread_stop_function,
+                                       const ThreadIDFunction &call_after_function,
+                                       const ThreadIDSet &skip_stop_request_tids,
+                                       const ErrorFunction &error_function) :
+            triggering_tid (triggering_tid),
+            wait_for_stop_tids (),
+            original_wait_for_stop_tids (),
+            request_thread_stop_function (request_thread_stop_function),
+            call_after_function (call_after_function),
+            error_function (error_function),
+            request_stop_on_all_unstopped_threads (true),
+            skip_stop_request_tids (skip_stop_request_tids)
+            {
+            }
+
+            const lldb::tid_t  triggering_tid;
+            ThreadIDSet        wait_for_stop_tids;
+            const ThreadIDSet  original_wait_for_stop_tids;
+            StopThreadFunction request_thread_stop_function;
+            ThreadIDFunction   call_after_function;
+            ErrorFunction      error_function;
+            const bool         request_stop_on_all_unstopped_threads;
+            ThreadIDSet        skip_stop_request_tids;
+        };
+        typedef std::unique_ptr<PendingNotification> PendingNotificationUP;
+
+        // Fire pending notification if no pending thread stops remain.
+        void SignalIfRequirementsSatisfied();
+
+        bool
+        RequestStopOnAllSpecifiedThreads();
 
         void
-        ProcessEvent (const EventBaseSP &event_sp);
+        RequestStopOnAllRunningThreads();
 
         void
-        SetPendingNotification (const EventBaseSP &event_sp);
+        RequestThreadStop (lldb::tid_t tid, ThreadContext& context);
+
+        std::mutex m_event_mutex; // Serializes execution of TSC operations.
 
         void
-        ThreadDidStop (lldb::tid_t tid, bool initiated_by_llgs, ErrorFunction &error_function);
+        ThreadDidStop (lldb::tid_t tid, bool initiated_by_llgs, const ErrorFunction &error_function);
 
         void
-        ThreadWasCreated (lldb::tid_t tid, bool is_stopped, ErrorFunction &error_function);
+        DoResume(lldb::tid_t tid, ResumeThreadFunction request_thread_resume_function,
+                ErrorFunction error_function, bool error_when_already_running);
 
         void
-        ThreadDidDie (lldb::tid_t tid, ErrorFunction &error_function);
+        DoCallAfterThreadsStop(PendingNotificationUP &&notification_up);
 
         void
-        ResetNow ();
+        ThreadWasCreated (lldb::tid_t tid, bool is_stopped, const ErrorFunction &error_function);
+
+        void
+        ThreadDidDie (lldb::tid_t tid, const ErrorFunction &error_function);
 
         bool
         IsKnownThread(lldb::tid_t tid) const;
@@ -187,13 +237,9 @@ namespace process_linux {
         void
         Log (const char *format, ...);
 
-        EventCallAfterThreadsStop *
-        GetPendingThreadStopNotification ();
-
         // Member variables.
         LogFunction m_log_function;
-
-        EventBaseSP m_pending_notification_sp;
+        PendingNotificationUP m_pending_notification_up;
 
         // Maps known TIDs to ThreadContext.
         TIDContextMap m_tid_map;
