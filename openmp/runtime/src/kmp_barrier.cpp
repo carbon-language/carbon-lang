@@ -57,7 +57,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
 
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
     // Barrier imbalance - save arrive time to the thread
-    if(__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+    if(__kmp_forkjoin_frames_mode == 3 || __kmp_forkjoin_frames_mode == 2) {
         this_thr->th.th_bar_arrive_time = this_thr->th.th_bar_min_time = __itt_get_timestamp();
     }
 #endif
@@ -97,7 +97,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                       USE_ITT_BUILD_ARG(itt_sync_obj) );
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
             // Barrier imbalance - write min of the thread time and the other thread time to the thread.
-            if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+            if (__kmp_forkjoin_frames_mode == 2) {
                 this_thr->th.th_bar_min_time = KMP_MIN(this_thr->th.th_bar_min_time,
                                                           other_threads[i]->th.th_bar_min_time);
             }
@@ -234,7 +234,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
 
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
     // Barrier imbalance - save arrive time to the thread
-    if(__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+    if(__kmp_forkjoin_frames_mode == 3 || __kmp_forkjoin_frames_mode == 2) {
         this_thr->th.th_bar_arrive_time = this_thr->th.th_bar_min_time = __itt_get_timestamp();
     }
 #endif
@@ -262,7 +262,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
                       USE_ITT_BUILD_ARG(itt_sync_obj) );
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
             // Barrier imbalance - write min of the thread time and a child time to the thread.
-            if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+            if (__kmp_forkjoin_frames_mode == 2) {
                 this_thr->th.th_bar_min_time = KMP_MIN(this_thr->th.th_bar_min_time,
                                                           child_thr->th.th_bar_min_time);
             }
@@ -432,7 +432,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
 
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
     // Barrier imbalance - save arrive time to the thread
-    if(__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+    if(__kmp_forkjoin_frames_mode == 3 || __kmp_forkjoin_frames_mode == 2) {
         this_thr->th.th_bar_arrive_time = this_thr->th.th_bar_min_time = __itt_get_timestamp();
     }
 #endif
@@ -485,7 +485,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                         USE_ITT_BUILD_ARG(itt_sync_obj) );
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
             // Barrier imbalance - write min of the thread time and a child time to the thread.
-            if (__kmp_forkjoin_frames_mode == 2 || __kmp_forkjoin_frames_mode == 3) {
+            if (__kmp_forkjoin_frames_mode == 2) {
                 this_thr->th.th_bar_min_time = KMP_MIN(this_thr->th.th_bar_min_time,
                                                           child_thr->th.th_bar_min_time);
             }
@@ -1147,24 +1147,29 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
                 __kmp_itt_barrier_middle(gtid, itt_sync_obj);
 #endif /* USE_ITT_BUILD */
 #if USE_ITT_BUILD && USE_ITT_NOTIFY
-            // Barrier - report frame end
-            if (__itt_frame_submit_v3_ptr && __kmp_forkjoin_frames_mode) {
+            // Barrier - report frame end (only if active_level == 1)
+            if ((__itt_frame_submit_v3_ptr || KMP_ITT_DEBUG) && __kmp_forkjoin_frames_mode &&
+#if OMP_40_ENABLED
+                this_thr->th.th_teams_microtask == NULL &&
+#endif
+                team->t.t_active_level == 1)
+            {
                 kmp_uint64 cur_time = __itt_get_timestamp();
-                kmp_info_t **other_threads = this_thr->th.th_team->t.t_threads;
+                kmp_info_t **other_threads = team->t.t_threads;
                 int nproc = this_thr->th.th_team_nproc;
                 int i;
-                // Initialize with master's wait time
-                kmp_uint64 delta = cur_time - this_thr->th.th_bar_arrive_time;
                 switch(__kmp_forkjoin_frames_mode) {
                 case 1:
                     __kmp_itt_frame_submit(gtid, this_thr->th.th_frame_time, cur_time, 0, loc, nproc);
                     this_thr->th.th_frame_time = cur_time;
                     break;
-                case 2:
+                case 2: // AC 2015-01-19: currently does not work for hierarchical (to be fixed)
                     __kmp_itt_frame_submit(gtid, this_thr->th.th_bar_min_time, cur_time, 1, loc, nproc);
                     break;
                 case 3:
                     if( __itt_metadata_add_ptr ) {
+                        // Initialize with master's wait time
+                        kmp_uint64 delta = cur_time - this_thr->th.th_bar_arrive_time;
                         for (i=1; i<nproc; ++i) {
                             delta += ( cur_time - other_threads[i]->th.th_bar_arrive_time );
                         }
@@ -1413,14 +1418,17 @@ __kmp_join_barrier(int gtid)
 
 # if USE_ITT_BUILD && USE_ITT_NOTIFY
         // Join barrier - report frame end
-        if (__itt_frame_submit_v3_ptr && __kmp_forkjoin_frames_mode) {
+        if ((__itt_frame_submit_v3_ptr || KMP_ITT_DEBUG) && __kmp_forkjoin_frames_mode &&
+#if OMP_40_ENABLED
+            this_thr->th.th_teams_microtask == NULL &&
+#endif
+            team->t.t_active_level == 1)
+        {
             kmp_uint64 cur_time = __itt_get_timestamp();
             ident_t * loc = team->t.t_ident;
-            kmp_info_t **other_threads = this_thr->th.th_team->t.t_threads;
+            kmp_info_t **other_threads = team->t.t_threads;
             int nproc = this_thr->th.th_team_nproc;
             int i;
-            // Initialize with master's wait time
-            kmp_uint64 delta = cur_time - this_thr->th.th_bar_arrive_time;
             switch(__kmp_forkjoin_frames_mode) {
             case 1:
                 __kmp_itt_frame_submit(gtid, this_thr->th.th_frame_time, cur_time, 0, loc, nproc);
@@ -1430,6 +1438,8 @@ __kmp_join_barrier(int gtid)
                 break;
             case 3:
                 if( __itt_metadata_add_ptr ) {
+                    // Initialize with master's wait time
+                    kmp_uint64 delta = cur_time - this_thr->th.th_bar_arrive_time;
                     for (i=1; i<nproc; ++i) {
                         delta += ( cur_time - other_threads[i]->th.th_bar_arrive_time );
                     }

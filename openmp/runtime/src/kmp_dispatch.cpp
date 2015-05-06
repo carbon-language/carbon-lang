@@ -633,6 +633,12 @@ __kmp_dispatch_init(
 
 #if USE_ITT_BUILD
     kmp_uint64 cur_chunk = chunk;
+    int itt_need_metadata_reporting = __itt_metadata_add_ptr && __kmp_forkjoin_frames_mode == 3 &&
+        KMP_MASTER_GTID(gtid) &&
+#if OMP_40_ENABLED
+        th->th.th_teams_microtask == NULL &&
+#endif
+        team->t.t_active_level == 1;
 #endif
     if ( ! active ) {
         pr = reinterpret_cast< dispatch_private_info_template< T >* >
@@ -869,9 +875,8 @@ __kmp_dispatch_init(
             }
 #if USE_ITT_BUILD
             // Calculate chunk for metadata report
-            if(  __itt_metadata_add_ptr  && __kmp_forkjoin_frames_mode == 3 ) {
+            if ( itt_need_metadata_reporting )
                 cur_chunk = limit - init + 1;
-            }
 #endif
             if ( st == 1 ) {
                 pr->u.p.lb = lb + init;
@@ -1124,16 +1129,10 @@ __kmp_dispatch_init(
         if ( pr->ordered ) {
             __kmp_itt_ordered_init( gtid );
         }; // if
-#endif /* USE_ITT_BUILD */
-    }; // if
-
-#if USE_ITT_BUILD
-    // Report loop metadata
-    if( __itt_metadata_add_ptr  && __kmp_forkjoin_frames_mode == 3 ) {
-        kmp_uint32 tid  = __kmp_tid_from_gtid( gtid );
-        if (KMP_MASTER_TID(tid)) {
+        // Report loop metadata
+        if ( itt_need_metadata_reporting ) {
+            // Only report metadata by master of active team at level 1
             kmp_uint64 schedtype = 0;
-
             switch ( schedule ) {
             case kmp_sch_static_chunked:
             case kmp_sch_static_balanced:// Chunk is calculated in the switch above
@@ -1156,8 +1155,8 @@ __kmp_dispatch_init(
             }
             __kmp_itt_metadata_loop(loc, schedtype, tc, cur_chunk);
         }
-    }
 #endif /* USE_ITT_BUILD */
+    }; // if
 
     #ifdef KMP_DEBUG
     {
