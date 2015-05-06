@@ -1732,7 +1732,12 @@ Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
   }
 
   if (isa<Instruction>(V) || isa<Argument>(V)) {
-    errs() << "Failed to demote instruction used in exception handler:\n";
+    Function *Parent = isa<Instruction>(V)
+                           ? cast<Instruction>(V)->getParent()->getParent()
+                           : cast<Argument>(V)->getParent();
+    errs()
+        << "Failed to demote instruction used in exception handler of function "
+        << GlobalValue::getRealLinkageName(Parent->getName()) << ":\n";
     errs() << "  " << *V << '\n';
     report_fatal_error("WinEHPrepare failed to demote instruction");
   }
