@@ -1794,6 +1794,10 @@ bool ARMFastISel::SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode) {
   if (!FPVT.isSimple()) return false;
   MVT VT = FPVT.getSimpleVT();
 
+  // FIXME: Support vector types where possible.
+  if (VT.isVector())
+    return false;
+
   // We can get here in the case when we want to use NEON for our fp
   // operations, but can't figure out how to. Just use the vfp instructions
   // if we have them.
