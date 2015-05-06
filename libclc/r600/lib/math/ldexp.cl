@@ -34,5 +34,5 @@ _CLC_DEFINE_BINARY_BUILTIN(float, ldexp, __builtin_amdgpu_ldexpf, float, int);
 #endif
 
 // This defines all the ldexp(GENTYPE, int);
-#define __CLC_BODY <ldexp.inc>
+#define __CLC_BODY <../../../generic/lib/math/ldexp.inc>
 #include <clc/math/gentype.inc>
