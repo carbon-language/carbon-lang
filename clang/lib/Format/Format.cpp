@@ -1225,7 +1225,7 @@ public:
 
     UnwrappedLineParser Parser(Style, Tokens.getKeywords(), Tokens.lex(),
                                *this);
-    bool StructuralError = Parser.parse();
+    Parser.parse();
     assert(UnwrappedLines.rbegin()->empty());
     for (unsigned Run = 0, RunE = UnwrappedLines.size(); Run + 1 != RunE;
          ++Run) {
@@ -1234,8 +1234,7 @@ public:
       for (unsigned i = 0, e = UnwrappedLines[Run].size(); i != e; ++i) {
         AnnotatedLines.push_back(new AnnotatedLine(UnwrappedLines[Run][i]));
       }
-      tooling::Replacements RunResult =
-          format(AnnotatedLines, StructuralError, Tokens);
+      tooling::Replacements RunResult = format(AnnotatedLines, Tokens);
       DEBUG({
         llvm::dbgs() << "Replacements for run " << Run << ":\n";
         for (tooling::Replacements::iterator I = RunResult.begin(),
@@ -1254,7 +1253,7 @@ public:
   }
 
   tooling::Replacements format(SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
-                               bool StructuralError, FormatTokenLexer &Tokens) {
+                               FormatTokenLexer &Tokens) {
     TokenAnnotator Annotator(Style, Tokens.getKeywords());
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.annotate(*AnnotatedLines[i]);

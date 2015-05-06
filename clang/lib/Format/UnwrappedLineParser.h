@@ -65,8 +65,7 @@ public:
                       ArrayRef<FormatToken *> Tokens,
                       UnwrappedLineConsumer &Callback);
 
-  /// Returns true in case of a structural error.
-  bool parse();
+  void parse();
 
 private:
   void reset();
@@ -157,10 +156,6 @@ private:
   // We store for each line whether it must be a declaration depending on
   // whether we are in a compound statement or not.
   std::vector<bool> DeclarationScopeStack;
-
-  // Will be true if we encounter an error that leads to possibily incorrect
-  // indentation levels.
-  bool StructuralError;
 
   const FormatStyle &Style;
   const AdditionalKeywords &Keywords;
