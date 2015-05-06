@@ -819,12 +819,10 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Index,
   if (!pImpl) return AttributeSet();
   if (!Attrs.pImpl) return *this;
 
-#ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
   assert(!Attrs.hasAttribute(Index, Attribute::Alignment) &&
          "Attempt to change alignment!");
-#endif
 
   // Add the attribute slots before the one we're trying to add.
   SmallVector<AttributeSet, 4> AttrSet;
