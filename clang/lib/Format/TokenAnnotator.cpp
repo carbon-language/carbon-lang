@@ -1896,7 +1896,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return false;
   if (Right.is(tok::colon)) {
     if (Line.First->isOneOf(tok::kw_case, tok::kw_default) ||
-        !Right.getNextNonComment())
+        !Right.getNextNonComment() || Right.getNextNonComment()->is(tok::semi))
       return false;
     if (Right.is(TT_ObjCMethodExpr))
       return false;

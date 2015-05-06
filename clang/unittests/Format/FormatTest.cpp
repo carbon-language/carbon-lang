@@ -692,6 +692,11 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  case OP_name:                        \\\n"
                "    return operations::Operation##name\n",
                getLLVMStyleWithColumns(40));
+  verifyFormat("switch (x) {\n"
+               "case 1:;\n"
+               "default:;\n"
+               "  int i;\n"
+               "}");
 
   verifyGoogleFormat("switch (x) {\n"
                      "  case 1:\n"
@@ -826,6 +831,11 @@ TEST_F(FormatTest, FormatsLabels) {
                "  some_code();\n"
                "test_label:\n"
                "  some_other_code();\n"
+               "}");
+  verifyFormat("{\n"
+               "  some_code();\n"
+               "test_label:;\n"
+               "  int i = 0;\n"
                "}");
 }
 

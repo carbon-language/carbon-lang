@@ -1381,6 +1381,8 @@ void UnwrappedLineParser::parseLabel() {
     }
     addUnwrappedLine();
   } else {
+    if (FormatTok->is(tok::semi))
+      nextToken();
     addUnwrappedLine();
   }
   Line->Level = OldLineLevel;
