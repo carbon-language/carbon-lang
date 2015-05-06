@@ -889,7 +889,8 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
   // Create the statepoint given all the arguments
   Instruction *Token = nullptr;
-  AttributeSet ReturnAttrs;
+  AttributeSet OriginalAttrs;
+
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
     CallInst *Call = Builder.CreateGCStatepointCall(
@@ -899,24 +900,21 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     Call->setCallingConv(ToReplace->getCallingConv());
 
     // Before we have to worry about GC semantics, all attributes are legal
-    AttributeSet OriginalAttrs = ToReplace->getAttributes();
-    // In case if we can handle this set of sttributes - set up function attrs
-    // directly on statepoint and return attrs later for gc_result intrinsic.
-    Call->setAttributes(OriginalAttrs.getFnAttributes());
-    ReturnAttrs = OriginalAttrs.getRetAttributes();
     // TODO: handle param attributes
+    OriginalAttrs = ToReplace->getAttributes();
+
+    // In case if we can handle this set of attributes - set up function
+    // attributes directly on statepoint and return attributes later for
+    // gc_result intrinsic.
+    Call->setAttributes(OriginalAttrs.getFnAttributes());
 
     Token = Call;
 
     // Put the following gc_result and gc_relocate calls immediately after the
-    // the old call (which we're about to delete)
-    BasicBlock::iterator next(ToReplace);
-    assert(BB->end() != next && "not a terminator, must have next");
-    next++;
-    Instruction *IP = &*(next);
-    Builder.SetInsertPoint(IP);
-    Builder.SetCurrentDebugLocation(IP->getDebugLoc());
-
+    // the old call (which we're about to delete).
+    assert(ToReplace->getNextNode() && "not a terminator, must have next");
+    Builder.SetInsertPoint(ToReplace->getNextNode());
+    Builder.SetCurrentDebugLocation(ToReplace->getNextNode()->getDebugLoc());
   } else if (CS.isInvoke()) {
     InvokeInst *ToReplace = cast<InvokeInst>(CS.getInstruction());
 
@@ -931,19 +929,19 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
     // Currently we will fail on parameter attributes and on certain
     // function attributes.
-    AttributeSet OriginalAttrs = ToReplace->getAttributes();
-    // In case if we can handle this set of sttributes - set up function attrs
-    // directly on statepoint and return attrs later for gc_result intrinsic.
+    OriginalAttrs = ToReplace->getAttributes();
+
+    // In case if we can handle this set of attributes - set up function
+    // attributes directly on statepoint and return attributes later for
+    // gc_result intrinsic.
     Invoke->setAttributes(OriginalAttrs.getFnAttributes());
-    ReturnAttrs = OriginalAttrs.getRetAttributes();
 
     Token = Invoke;
 
     // We'll insert the gc.result into the normal block
     BasicBlock *NormalDest = normalizeBBForInvokeSafepoint(
         ToReplace->getNormalDest(), Invoke->getParent());
-    Instruction *IP = &*(NormalDest->getFirstInsertionPt());
-    Builder.SetInsertPoint(IP);
+    Builder.SetInsertPoint(NormalDest->getFirstInsertionPt());
   } else {
     llvm_unreachable("unexpect type of CallSite");
   }
@@ -957,7 +955,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     std::string TakenName =
         CS.getInstruction()->hasName() ? CS.getInstruction()->getName() : "";
     CallInst *GCResult = Builder.CreateGCResult(Token, CS.getType(), TakenName);
-    GCResult->setAttributes(ReturnAttrs);
+    GCResult->setAttributes(OriginalAttrs.getRetAttributes());
     return GCResult;
   } else {
     // No return value for the call.
