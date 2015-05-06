@@ -2015,16 +2015,14 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2,
 Constant *ConstantExpr::getGetElementPtr(Type *Ty, Constant *C,
                                          ArrayRef<Value *> Idxs, bool InBounds,
                                          Type *OnlyIfReducedTy) {
+  if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds, Idxs))
+    return FC;          // Fold a few common cases.
+
   if (!Ty)
     Ty = cast<PointerType>(C->getType()->getScalarType())->getElementType();
   else
-    assert(
-        Ty ==
-        cast<PointerType>(C->getType()->getScalarType())->getContainedType(0u));
-
-  if (Constant *FC = ConstantFoldGetElementPtr(Ty, C, InBounds, Idxs))
-    return FC;          // Fold a few common cases.
-
+    assert(Ty ==
+           cast<PointerType>(C->getType()->getScalarType())->getElementType());
   // Get the result type of the getelementptr!
   Type *DestTy = GetElementPtrInst::getIndexedType(Ty, Idxs);
   assert(DestTy && "GEP indices invalid!");
