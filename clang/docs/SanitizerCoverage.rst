@@ -96,15 +96,21 @@ numbers:
 How good is the coverage?
 =========================
 
-If you want to know what PCs are still not covered, you can get the list of all
-instrumented PCs and then subtract all covered PCs from it.  You can use
-``objdump`` to get all instrumented PCs:
+It is possible to find out which PCs are not covered, by subtracting the covered
+set from the set of all instrumented PCs. The latter can be obtained by listing
+all callsites of ``__sanitizer_cov()`` in the binary. On Linux, ``sancov.py``
+can do this for you. Just supply the path to binary and a list of covered PCs:
 
 .. code-block:: console
 
-    % objdump -d ./your-binary | grep '__sanitizer_cov\>' | grep -o "^ *[0-9a-f]\+"
-
-TODO: implement scripts for doing this.
+    % sancov.py print a.out.12345.sancov > covered.txt
+    sancov.py: read 2 64-bit PCs from a.out.12345.sancov
+    sancov.py: 1 file merged; 2 PCs total
+    % sancov.py missing a.out < covered.txt
+    sancov.py: found 3 instrumented PCs in a.out
+    sancov.py: read 2 PCs from stdin
+    sancov.py: 1 PCs missing from coverage
+    0x4cc61c
 
 Edge coverage
 =============
