@@ -72,6 +72,13 @@ class StatepointBase {
   ValueTy *actualCallee() {
     return StatepointCS.getArgument(0);
   }
+  /// Return the type of the value returned by the call underlying the
+  /// statepoint.
+  Type *actualReturnType() {
+    auto *FTy = cast<FunctionType>(
+        cast<PointerType>(actualCallee()->getType())->getElementType());
+    return FTy->getReturnType();
+  }
   /// Number of arguments to be passed to the actual callee.
   int numCallArgs() {
     return cast<ConstantInt>(StatepointCS.getArgument(1))->getZExtValue();
@@ -82,14 +89,16 @@ class StatepointBase {
     return cast<ConstantInt>(StatepointCS.getArgument(3 + numCallArgs()))->getZExtValue();
   }
 
+  int callArgsBeginOffset() { return 3; }
+
   typename CallSiteTy::arg_iterator call_args_begin() {
     // 3 = callTarget, #callArgs, flag
-    int Offset = 3;
+    int Offset = callArgsBeginOffset();
     assert(Offset <= (int)StatepointCS.arg_size());
     return StatepointCS.arg_begin() + Offset;
   }
   typename CallSiteTy::arg_iterator call_args_end() {
-    int Offset = 3 + numCallArgs();
+    int Offset = callArgsBeginOffset() + numCallArgs();
     assert(Offset <= (int)StatepointCS.arg_size());
     return StatepointCS.arg_begin() + Offset;
   }
