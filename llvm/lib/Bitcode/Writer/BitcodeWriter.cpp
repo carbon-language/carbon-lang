@@ -2135,6 +2135,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
       Vals.push_back(VE.getMetadataOrNullID(DL->getInlinedAt()));
       Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
       Vals.clear();
+
+      LastDL = DL;
     }
 
   // Emit names for all the instructions etc.
