@@ -82,6 +82,70 @@ TEST(BitReaderTest, DematerializeFunctionPreservesLinkageType) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }
 
+// Tests that lazy evaluation can parse functions out of order.
+TEST(BitReaderTest, MaterializeFunctionsOutOfOrder) {
+  SmallString<1024> Mem;
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getLazyModuleFromAssembly(
+      Context, Mem, "define void @f() {\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define void @g() {\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define void @h() {\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define void @j() {\n"
+                    "  unreachable\n"
+                    "}\n");
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  Function *F = M->getFunction("f");
+  Function *G = M->getFunction("g");
+  Function *H = M->getFunction("h");
+  Function *J = M->getFunction("j");
+
+  // Initially all functions are not materialized (no basic blocks).
+  EXPECT_TRUE(F->empty());
+  EXPECT_TRUE(G->empty());
+  EXPECT_TRUE(H->empty());
+  EXPECT_TRUE(J->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize h.
+  H->materialize();
+  EXPECT_TRUE(F->empty());
+  EXPECT_TRUE(G->empty());
+  EXPECT_FALSE(H->empty());
+  EXPECT_TRUE(J->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize g.
+  G->materialize();
+  EXPECT_TRUE(F->empty());
+  EXPECT_FALSE(G->empty());
+  EXPECT_FALSE(H->empty());
+  EXPECT_TRUE(J->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize j.
+  J->materialize();
+  EXPECT_TRUE(F->empty());
+  EXPECT_FALSE(G->empty());
+  EXPECT_FALSE(H->empty());
+  EXPECT_FALSE(J->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize f.
+  F->materialize();
+  EXPECT_FALSE(F->empty());
+  EXPECT_FALSE(G->empty());
+  EXPECT_FALSE(H->empty());
+  EXPECT_FALSE(J->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+}
+
 TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   SmallString<1024> Mem;
 
