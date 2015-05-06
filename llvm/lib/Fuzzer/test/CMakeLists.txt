@@ -16,6 +16,7 @@ set(Tests
   )
 
 set(DFSanTests
+  DFSanMemcmpTest
   DFSanSimpleCmpTest
   )
 
