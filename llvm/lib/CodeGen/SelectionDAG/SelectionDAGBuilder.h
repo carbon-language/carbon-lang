@@ -679,12 +679,6 @@ public:
     N = NewN;
   }
 
-  void removeValue(const Value *V) {
-    // This is to support hack in lowerCallFromStatepoint
-    // Should be removed when hack is resolved
-    NodeMap.erase(V);
-  }
-
   void setUnusedArgValue(const Value *V, SDValue NewN) {
     SDValue &N = UnusedArgNodeMap[V];
     assert(!N.getNode() && "Already set a value for this node!");
