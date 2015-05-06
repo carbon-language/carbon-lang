@@ -90,6 +90,11 @@
             logical (kind=omp_logical_kind) omp_in_parallel
           end function omp_in_parallel
 
+          function omp_in_final() bind(c)
+            use omp_lib_kinds
+            logical (kind=omp_logical_kind) omp_in_final
+          end function omp_in_final
+
           function omp_get_dynamic() bind(c)
             use omp_lib_kinds
             logical (kind=omp_logical_kind) omp_get_dynamic

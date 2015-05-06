@@ -54,6 +54,7 @@
     extern int    __KAI_KMPC_CONVENTION  omp_get_thread_num   (void);
     extern int    __KAI_KMPC_CONVENTION  omp_get_num_procs    (void);
     extern int    __KAI_KMPC_CONVENTION  omp_in_parallel      (void);
+    extern int    __KAI_KMPC_CONVENTION  omp_in_final         (void);
     extern int    __KAI_KMPC_CONVENTION  omp_get_active_level        (void);
     extern int    __KAI_KMPC_CONVENTION  omp_get_level               (void);
     extern int    __KAI_KMPC_CONVENTION  omp_get_ancestor_thread_num (int);

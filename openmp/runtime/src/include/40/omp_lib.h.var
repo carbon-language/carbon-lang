@@ -101,6 +101,11 @@
           logical (kind=omp_logical_kind) omp_in_parallel
         end function omp_in_parallel
 
+        function omp_in_final() bind(c)
+          import
+          logical (kind=omp_logical_kind) omp_in_final
+        end function omp_in_final
+
         function omp_get_dynamic() bind(c)
           import
           logical (kind=omp_logical_kind) omp_get_dynamic
@@ -444,6 +449,7 @@
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_get_thread_num
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_get_num_procs
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_in_parallel
+!DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_in_final
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_get_dynamic
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_get_nested
 !DIR$ ATTRIBUTES OFFLOAD:MIC :: omp_get_thread_limit
@@ -512,6 +518,7 @@
 !$omp declare target(omp_get_thread_num )
 !$omp declare target(omp_get_num_procs )
 !$omp declare target(omp_in_parallel )
+!$omp declare target(omp_in_final )
 !$omp declare target(omp_get_dynamic )
 !$omp declare target(omp_get_nested )
 !$omp declare target(omp_get_thread_limit )

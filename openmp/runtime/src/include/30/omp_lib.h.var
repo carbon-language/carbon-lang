@@ -86,6 +86,11 @@
           logical (kind=omp_logical_kind) omp_in_parallel
         end function omp_in_parallel
 
+        function omp_in_final()
+          import
+          logical (kind=omp_logical_kind) omp_in_final
+        end function omp_in_final
+
         function omp_get_dynamic()
           import
           logical (kind=omp_logical_kind) omp_get_dynamic
@@ -364,6 +369,7 @@
 !dec$ attributes alias:'OMP_GET_THREAD_NUM'::omp_get_thread_num
 !dec$ attributes alias:'OMP_GET_NUM_PROCS'::omp_get_num_procs
 !dec$ attributes alias:'OMP_IN_PARALLEL'::omp_in_parallel
+!dec$ attributes alias:'OMP_IN_FINAL'::omp_in_final
 !dec$ attributes alias:'OMP_GET_DYNAMIC'::omp_get_dynamic
 !dec$ attributes alias:'OMP_GET_NESTED'::omp_get_nested
 !dec$ attributes alias:'OMP_GET_THREAD_LIMIT'::omp_get_thread_limit
@@ -431,6 +437,7 @@
 !dec$ attributes alias:'_OMP_GET_THREAD_NUM'::omp_get_thread_num
 !dec$ attributes alias:'_OMP_GET_NUM_PROCS'::omp_get_num_procs
 !dec$ attributes alias:'_OMP_IN_PARALLEL'::omp_in_parallel
+!dec$ attributes alias:'_OMP_IN_FINAL'::omp_in_final
 !dec$ attributes alias:'_OMP_GET_DYNAMIC'::omp_get_dynamic
 !dec$ attributes alias:'_OMP_GET_NESTED'::omp_get_nested
 !dec$ attributes alias:'_OMP_GET_THREAD_LIMIT'::omp_get_thread_limit
@@ -501,6 +508,7 @@
 !dec$ attributes alias:'omp_get_thread_num_'::omp_get_thread_num
 !dec$ attributes alias:'omp_get_num_procs_'::omp_get_num_procs
 !dec$ attributes alias:'omp_in_parallel_'::omp_in_parallel
+!dec$ attributes alias:'omp_in_final_'::omp_in_final
 !dec$ attributes alias:'omp_get_dynamic_'::omp_get_dynamic
 !dec$ attributes alias:'omp_get_nested_'::omp_get_nested
 !dec$ attributes alias:'omp_get_thread_limit_'::omp_get_thread_limit
@@ -571,6 +579,7 @@
 !dec$ attributes alias:'_omp_get_thread_num_'::omp_get_thread_num
 !dec$ attributes alias:'_omp_get_num_procs_'::omp_get_num_procs
 !dec$ attributes alias:'_omp_in_parallel_'::omp_in_parallel
+!dec$ attributes alias:'_omp_in_final_'::omp_in_final
 !dec$ attributes alias:'_omp_get_dynamic_'::omp_get_dynamic
 !dec$ attributes alias:'_omp_get_nested_'::omp_get_nested
 !dec$ attributes alias:'_omp_get_thread_limit_'::omp_get_thread_limit
