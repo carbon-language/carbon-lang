@@ -248,7 +248,13 @@ public:
   uint64_t getDereferenceableBytes(unsigned i) const {
     return AttributeSets.getDereferenceableBytes(i);
   }
-
+  
+  /// @brief Extract the number of dereferenceable_or_null bytes for a call or
+  /// parameter (0=unknown).
+  uint64_t getDereferenceableOrNullBytes(unsigned i) const {
+    return AttributeSets.getDereferenceableOrNullBytes(i);
+  }
+  
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,

@@ -1491,6 +1491,12 @@ public:
     return AttributeList.getDereferenceableBytes(i);
   }
 
+  /// \brief Extract the number of dereferenceable_or_null bytes for a call or
+  /// parameter (0=unknown).
+  uint64_t getDereferenceableOrNullBytes(unsigned i) const {
+    return AttributeList.getDereferenceableOrNullBytes(i);
+  }
+  
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {
@@ -3199,6 +3205,12 @@ public:
   /// parameter (0=unknown).
   uint64_t getDereferenceableBytes(unsigned i) const {
     return AttributeList.getDereferenceableBytes(i);
+  }
+  
+  /// \brief Extract the number of dereferenceable_or_null bytes for a call or
+  /// parameter (0=unknown).
+  uint64_t getDereferenceableOrNullBytes(unsigned i) const {
+    return AttributeList.getDereferenceableOrNullBytes(i);
   }
 
   /// \brief Return true if the call should not be treated as a call to a

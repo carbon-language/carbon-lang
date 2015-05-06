@@ -117,6 +117,12 @@ uint64_t Argument::getDereferenceableBytes() const {
   return getParent()->getDereferenceableBytes(getArgNo()+1);
 }
 
+uint64_t Argument::getDereferenceableOrNullBytes() const {
+  assert(getType()->isPointerTy() &&
+         "Only pointers have dereferenceable bytes");
+  return getParent()->getDereferenceableOrNullBytes(getArgNo()+1);
+}
+
 /// hasNestAttr - Return true if this argument has the nest attribute on
 /// it in its containing function.
 bool Argument::hasNestAttr() const {

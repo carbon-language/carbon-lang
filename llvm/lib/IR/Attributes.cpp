@@ -532,6 +532,13 @@ uint64_t AttributeSetNode::getDereferenceableBytes() const {
   return 0;
 }
 
+uint64_t AttributeSetNode::getDereferenceableOrNullBytes() const {
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (I->hasAttribute(Attribute::DereferenceableOrNull))
+      return I->getDereferenceableOrNullBytes();
+  return 0;
+}
+
 std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
   std::string Str;
   for (iterator I = begin(), E = end(); I != E; ++I) {
@@ -955,6 +962,11 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
 uint64_t AttributeSet::getDereferenceableBytes(unsigned Index) const {
   AttributeSetNode *ASN = getAttributes(Index);
   return ASN ? ASN->getDereferenceableBytes() : 0;
+}
+
+uint64_t AttributeSet::getDereferenceableOrNullBytes(unsigned Index) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getDereferenceableOrNullBytes() : 0;
 }
 
 std::string AttributeSet::getAsString(unsigned Index,
