@@ -1056,6 +1056,8 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
 
   verifyNoCrash("/\\\n/");
   verifyNoCrash("/\\\n* */");
+  // The 0-character somehow makes the lexer return a proper comment.
+  verifyNoCrash(StringRef("/*\\\0\n/", 6));
 }
 
 TEST_F(FormatTest, KeepsParameterWithTrailingCommentsOnTheirOwnLine) {

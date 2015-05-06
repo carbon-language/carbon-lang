@@ -895,8 +895,16 @@ private:
                (!Current.Previous || Current.Previous->isNot(tok::l_square))) {
       Current.Type = TT_BinaryOperator;
     } else if (Current.is(tok::comment)) {
-      Current.Type =
-          Current.TokenText.startswith("/*") ? TT_BlockComment : TT_LineComment;
+      if (Current.TokenText.startswith("/*")) {
+        if (Current.TokenText.endswith("*/"))
+          Current.Type = TT_BlockComment;
+        else
+          // The lexer has for some reason determined a comment here. But we
+          // cannot really handle it, if it isn't properly terminated.
+          Current.Tok.setKind(tok::unknown);
+      } else {
+        Current.Type = TT_LineComment;
+      }
     } else if (Current.is(tok::r_paren)) {
       if (rParenEndsCast(Current))
         Current.Type = TT_CastRParen;
