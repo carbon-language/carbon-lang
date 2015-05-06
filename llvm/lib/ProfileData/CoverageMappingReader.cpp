@@ -36,13 +36,13 @@ void CoverageMappingIterator::increment() {
 
 std::error_code RawCoverageReader::readULEB128(uint64_t &Result) {
   if (Data.size() < 1)
-    return error(instrprof_error::truncated);
+    return instrprof_error::truncated;
   unsigned N = 0;
   Result = decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
   if (N > Data.size())
-    return error(instrprof_error::malformed);
+    return instrprof_error::malformed;
   Data = Data.substr(N);
-  return success();
+  return std::error_code();
 }
 
 std::error_code RawCoverageReader::readIntMax(uint64_t &Result,
@@ -50,8 +50,8 @@ std::error_code RawCoverageReader::readIntMax(uint64_t &Result,
   if (auto Err = readULEB128(Result))
     return Err;
   if (Result >= MaxPlus1)
-    return error(instrprof_error::malformed);
-  return success();
+    return instrprof_error::malformed;
+  return std::error_code();
 }
 
 std::error_code RawCoverageReader::readSize(uint64_t &Result) {
@@ -59,8 +59,8 @@ std::error_code RawCoverageReader::readSize(uint64_t &Result) {
     return Err;
   // Sanity check the number.
   if (Result > Data.size())
-    return error(instrprof_error::malformed);
-  return success();
+    return instrprof_error::malformed;
+  return std::error_code();
 }
 
 std::error_code RawCoverageReader::readString(StringRef &Result) {
@@ -69,7 +69,7 @@ std::error_code RawCoverageReader::readString(StringRef &Result) {
     return Err;
   Result = Data.substr(0, Length);
   Data = Data.substr(Length);
-  return success();
+  return std::error_code();
 }
 
 std::error_code RawCoverageFilenamesReader::read() {
@@ -82,7 +82,7 @@ std::error_code RawCoverageFilenamesReader::read() {
       return Err;
     Filenames.push_back(Filename);
   }
-  return success();
+  return std::error_code();
 }
 
 std::error_code RawCoverageMappingReader::decodeCounter(unsigned Value,
@@ -91,10 +91,10 @@ std::error_code RawCoverageMappingReader::decodeCounter(unsigned Value,
   switch (Tag) {
   case Counter::Zero:
     C = Counter::getZero();
-    return success();
+    return std::error_code();
   case Counter::CounterValueReference:
     C = Counter::getCounter(Value >> Counter::EncodingTagBits);
-    return success();
+    return std::error_code();
   default:
     break;
   }
@@ -104,15 +104,15 @@ std::error_code RawCoverageMappingReader::decodeCounter(unsigned Value,
   case CounterExpression::Add: {
     auto ID = Value >> Counter::EncodingTagBits;
     if (ID >= Expressions.size())
-      return error(instrprof_error::malformed);
+      return instrprof_error::malformed;
     Expressions[ID].Kind = CounterExpression::ExprKind(Tag);
     C = Counter::getExpression(ID);
     break;
   }
   default:
-    return error(instrprof_error::malformed);
+    return instrprof_error::malformed;
   }
-  return success();
+  return std::error_code();
 }
 
 std::error_code RawCoverageMappingReader::readCounter(Counter &C) {
@@ -122,7 +122,7 @@ std::error_code RawCoverageMappingReader::readCounter(Counter &C) {
     return Err;
   if (auto Err = decodeCounter(EncodedCounter, C))
     return Err;
-  return success();
+  return std::error_code();
 }
 
 static const unsigned EncodingExpansionRegionBit = 1
@@ -159,7 +159,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
         ExpandedFileID = EncodedCounterAndRegion >>
                          Counter::EncodingCounterTagAndExpansionRegionTagBits;
         if (ExpandedFileID >= NumFileIDs)
-          return error(instrprof_error::malformed);
+          return instrprof_error::malformed;
       } else {
         switch (EncodedCounterAndRegion >>
                 Counter::EncodingCounterTagAndExpansionRegionTagBits) {
@@ -170,7 +170,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
           Kind = CounterMappingRegion::SkippedRegion;
           break;
         default:
-          return error(instrprof_error::malformed);
+          return instrprof_error::malformed;
         }
       }
     }
@@ -183,7 +183,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
     if (auto Err = readULEB128(ColumnStart))
       return Err;
     if (ColumnStart > std::numeric_limits<unsigned>::max())
-      return error(instrprof_error::malformed);
+      return instrprof_error::malformed;
     if (auto Err = readIntMax(NumLines, std::numeric_limits<unsigned>::max()))
       return Err;
     if (auto Err = readIntMax(ColumnEnd, std::numeric_limits<unsigned>::max()))
@@ -217,7 +217,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
         C, InferredFileID, ExpandedFileID, LineStart, ColumnStart,
         LineStart + NumLines, ColumnEnd, Kind));
   }
-  return success();
+  return std::error_code();
 }
 
 std::error_code RawCoverageMappingReader::read() {
@@ -286,7 +286,7 @@ std::error_code RawCoverageMappingReader::read() {
     }
   }
 
-  return success();
+  return std::error_code();
 }
 
 namespace {
