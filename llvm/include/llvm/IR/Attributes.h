@@ -260,32 +260,32 @@ public:
                           ArrayRef<Attribute::AttrKind> Kind);
   static AttributeSet get(LLVMContext &C, unsigned Index, const AttrBuilder &B);
 
-  /// \brief Add an attribute to the attribute set at the given index. Since
+  /// \brief Add an attribute to the attribute set at the given index. Because
   /// attribute sets are immutable, this returns a new set.
   AttributeSet addAttribute(LLVMContext &C, unsigned Index,
                             Attribute::AttrKind Attr) const;
 
-  /// \brief Add an attribute to the attribute set at the given index. Since
+  /// \brief Add an attribute to the attribute set at the given index. Because
   /// attribute sets are immutable, this returns a new set.
   AttributeSet addAttribute(LLVMContext &C, unsigned Index,
                             StringRef Kind) const;
   AttributeSet addAttribute(LLVMContext &C, unsigned Index,
                             StringRef Kind, StringRef Value) const;
 
-  /// \brief Add attributes to the attribute set at the given index. Since
+  /// \brief Add attributes to the attribute set at the given index. Because
   /// attribute sets are immutable, this returns a new set.
   AttributeSet addAttributes(LLVMContext &C, unsigned Index,
                              AttributeSet Attrs) const;
 
   /// \brief Remove the specified attribute at the specified index from this
-  /// attribute list. Since attribute lists are immutable, this returns the new
-  /// list.
+  /// attribute list. Because attribute lists are immutable, this returns the
+  /// new list.
   AttributeSet removeAttribute(LLVMContext &C, unsigned Index, 
                                Attribute::AttrKind Attr) const;
 
   /// \brief Remove the specified attributes at the specified index from this
-  /// attribute list. Since attribute lists are immutable, this returns the new
-  /// list.
+  /// attribute list. Because attribute lists are immutable, this returns the
+  /// new list.
   AttributeSet removeAttributes(LLVMContext &C, unsigned Index, 
                                 AttributeSet Attrs) const;
 
@@ -296,12 +296,12 @@ public:
                                 const AttrBuilder &Attrs) const;
 
   /// \brief Add the dereferenceable attribute to the attribute set at the given
-  /// index. Since attribute sets are immutable, this returns a new set.
+  /// index. Because attribute sets are immutable, this returns a new set.
   AttributeSet addDereferenceableAttr(LLVMContext &C, unsigned Index,
                                       uint64_t Bytes) const;
 
   /// \brief Add the dereferenceable_or_null attribute to the attribute set at
-  /// the given index. Since attribute sets are immutable, this returns a new
+  /// the given index. Because attribute sets are immutable, this returns a new
   /// set.
   AttributeSet addDereferenceableOrNullAttr(LLVMContext &C, unsigned Index,
                                             uint64_t Bytes) const;
