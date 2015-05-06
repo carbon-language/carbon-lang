@@ -62,6 +62,7 @@ exceptional_return:
 }
 
 define i64 addrspace(1)* @test_phi_node(i1 %cond, i64 addrspace(1)* %obj) gc "statepoint-example" {
+; CHECK-LABEL: @test_phi_node
 ; CHECK-LABEL: entry:
 entry:
   br i1 %cond, label %left, label %right
@@ -74,15 +75,15 @@ right:
   %ret_val_right = invoke i64 addrspace(1)* @"some_call"(i64 addrspace(1)* %obj)
                      to label %merge unwind label %exceptional_return
 
-; CHECK-LABEL: merge1:
+; CHECK: merge[[A:[0-9]]]:
 ; CHECK: gc.result
-; CHECK: br label %merge
+; CHECK: br label %[[with_phi:merge[0-9]*]]
 
-; CHECK-LABEL: merge3:
+; CHECK: merge[[B:[0-9]]]:
 ; CHECK: gc.result
-; CHECK: br label %merge
+; CHECK: br label %[[with_phi]]
 
-; CHECK-LABEL: merge:
+; CHECK: [[with_phi]]:
 ; CHECK: phi
 ; CHECK: ret i64 addrspace(1)* %ret_val
 merge:

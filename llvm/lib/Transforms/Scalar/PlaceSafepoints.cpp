@@ -893,7 +893,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   AttributeSet return_attributes;
   if (CS.isCall()) {
     CallInst *toReplace = cast<CallInst>(CS.getInstruction());
-    CallInst *Call = Builder.CreateGCStatepoint(
+    CallInst *Call = Builder.CreateGCStatepointCall(
         CS.getCalledValue(), makeArrayRef(CS.arg_begin(), CS.arg_end()), None,
         None, "safepoint_token");
     Call->setTailCall(toReplace->isTailCall());
@@ -919,42 +919,16 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     Builder.SetCurrentDebugLocation(IP->getDebugLoc());
 
   } else if (CS.isInvoke()) {
-    // TODO: make CreateGCStatepoint return an Instruction that we can cast to a
-    // Call or Invoke, instead of doing this junk here.
-
-    // Fill in the one generic type'd argument (the function is also
-    // vararg)
-    std::vector<Type *> argTypes;
-    argTypes.push_back(CS.getCalledValue()->getType());
-
-    Function *gc_statepoint_decl = Intrinsic::getDeclaration(
-        M, Intrinsic::experimental_gc_statepoint, argTypes);
-
-    // First, create the statepoint (with all live ptrs as arguments).
-    std::vector<llvm::Value *> args;
-    // target, #call args, unused, ... call parameters, #deopt args, ... deopt
-    // parameters, ... gc parameters
-    Value *Target = CS.getCalledValue();
-    args.push_back(Target);
-    int callArgSize = CS.arg_size();
-    // #call args
-    args.push_back(Builder.getInt32(callArgSize));
-    // unused
-    args.push_back(Builder.getInt32(0));
-    // call parameters
-    args.insert(args.end(), CS.arg_begin(), CS.arg_end());
-    // #deopt args: 0
-    args.push_back(Builder.getInt32(0));
-
     InvokeInst *toReplace = cast<InvokeInst>(CS.getInstruction());
 
     // Insert the new invoke into the old block.  We'll remove the old one in a
     // moment at which point this will become the new terminator for the
     // original block.
-    InvokeInst *invoke = InvokeInst::Create(
-        gc_statepoint_decl, toReplace->getNormalDest(),
-        toReplace->getUnwindDest(), args, "", toReplace->getParent());
-    invoke->setCallingConv(toReplace->getCallingConv());
+    Builder.SetInsertPoint(toReplace->getParent());
+    InvokeInst *invoke = Builder.CreateGCStatepointInvoke(
+        CS.getCalledValue(), toReplace->getNormalDest(),
+        toReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
+        Builder.getInt32(0), None, "safepoint_token");
 
     // Currently we will fail on parameter attributes and on certain
     // function attributes.
