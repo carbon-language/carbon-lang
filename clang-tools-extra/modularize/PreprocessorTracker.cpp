@@ -418,7 +418,7 @@ static std::string getMacroExpandedString(clang::Preprocessor &PP,
         std::string Name = II->getName().str();
         // Check for nexted macro references.
         clang::MacroInfo *MacroInfo = PP.getMacroInfo(II);
-        if (MacroInfo)
+        if (MacroInfo && (Name != MacroName))
           Expanded += getMacroExpandedString(PP, Name, MacroInfo, nullptr);
         else
           Expanded += Name;
