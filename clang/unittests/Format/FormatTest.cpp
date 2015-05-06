@@ -7144,6 +7144,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "             fraction:1.0\n"
                "       respectFlipped:NO\n"
                "                hints:nil];");
+  verifyFormat("[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];");
 
   verifyFormat(
       "scoped_nsobject<NSTextField> message(\n"
