@@ -1686,6 +1686,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   prec::Level Level = Left.getPrecedence();
   if (Level != prec::Unknown)
     return Level;
+  Level = Right.getPrecedence();
+  if (Level != prec::Unknown)
+    return Level;
 
   return 3;
 }

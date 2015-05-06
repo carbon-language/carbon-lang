@@ -3500,6 +3500,10 @@ TEST_F(FormatTest, ExpressionIndentationBreakingBeforeOperators) {
       "             + cc;",
       Style);
 
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    = aaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
+               Style);
+
   // Forced by comments.
   verifyFormat(
       "unsigned ContentSize =\n"
