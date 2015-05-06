@@ -253,7 +253,8 @@ public:
 
   void skip() override {
     getKey()->skip();
-    getValue()->skip();
+    if (Node *Val = getValue())
+      Val->skip();
   }
 
   static inline bool classof(const Node *N) {

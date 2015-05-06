@@ -141,6 +141,10 @@ TEST(YAMLParser, HandlesEndOfFileGracefully) {
   ExpectParseError("In object hitting EOF", "{\"\"");
 }
 
+TEST(YAMLParser, HandlesNullValuesInKeyValueNodesGracefully) {
+  ExpectParseError("KeyValueNode with null value", "test: '");
+}
+
 // Checks that the given string can be parsed into an identical string inside
 // of an array.
 static void ExpectCanParseString(StringRef String) {
