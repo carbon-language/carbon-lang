@@ -2,9 +2,9 @@
 #include "gtest/gtest.h"
 #include <set>
 
-// For now, have TestOneInput just to make it link.
-// Later we may want to make unittests that actually call TestOneInput.
-extern "C" void TestOneInput(const uint8_t *Data, size_t Size) {
+// For now, have LLVMFuzzerTestOneInput just to make it link.
+// Later we may want to make unittests that actually call LLVMFuzzerTestOneInput.
+extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   abort();
 }
 

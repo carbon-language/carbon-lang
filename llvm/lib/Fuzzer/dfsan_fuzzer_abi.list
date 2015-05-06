@@ -9,4 +9,4 @@ fun:__sanitizer_cov_module_init=uninstrumented
 fun:__sanitizer_cov_module_init=discard
 
 # Don't add extra parameters to the Fuzzer callback.
-fun:TestOneInput=uninstrumented
+fun:LLVMFuzzerTestOneInput=uninstrumented

@@ -6,7 +6,7 @@
 
 static volatile int Sink;
 
-extern "C" void TestOneInput(const uint8_t *Data, size_t Size) {
+extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   if (Size > 0 && Data[0] == 'H') {
     Sink = 1;
     if (Size > 1 && Data[1] == 'i') {

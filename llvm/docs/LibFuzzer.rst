@@ -20,7 +20,7 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   optimizations options (e.g. -O0, -O1, -O2) to diversify testing.
 * Build a test driver using the same options as the library.
   The test driver is a C/C++ file containing interesting calls to the library
-  inside a single function  ``extern "C" void TestOneInput(const uint8_t *Data, size_t Size);``
+  inside a single function  ``extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);``
 * Link the Fuzzer, the library and the driver together into an executable
   using the same sanitizer options as for the library.
 * Collect the initial corpus of inputs for the
@@ -56,7 +56,7 @@ Toy example
 A simple function that does something interesting if it receives the input "HI!"::
 
   cat << EOF >> test_fuzzer.cc
-  extern "C" void TestOneInput(const unsigned char *data, unsigned long size) {
+  extern "C" void LLVMFuzzerTestOneInput(const unsigned char *data, unsigned long size) {
     if (size > 0 && data[0] == 'H')
       if (size > 1 && data[1] == 'I')
          if (size > 2 && data[2] == '!')
@@ -92,7 +92,7 @@ Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
   cat << EOF > pcre_fuzzer.cc
   #include <string.h>
   #include "pcre2posix.h"
-  extern "C" void TestOneInput(const unsigned char *data, size_t size) {
+  extern "C" void LLVMFuzzerTestOneInput(const unsigned char *data, size_t size) {
     if (size < 1) return;
     char *str = new char[size+1];
     memcpy(str, data, size);
@@ -196,7 +196,7 @@ to find Heartbleed with LibFuzzer::
     assert (SSL_CTX_use_PrivateKey_file(sctx, "server.key", SSL_FILETYPE_PEM));
     return 0;
   }
-  extern "C" void TestOneInput(unsigned char *Data, size_t Size) {
+  extern "C" void LLVMFuzzerTestOneInput(unsigned char *Data, size_t Size) {
     static int unused = Init();
     SSL *server = SSL_new(sctx);
     BIO *sinbio = BIO_new(BIO_s_mem());
@@ -259,7 +259,7 @@ Periodically restart both fuzzers so that they can use each other's findings.
 How good is my fuzzer?
 ----------------------
 
-Once you implement your target function ``TestOneInput`` and fuzz it to death,
+Once you implement your target function ``LLVMFuzzerTestOneInput`` and fuzz it to death,
 you will want to know whether the function or the corpus can be improved further.
 One easy to use metric is, of course, code coverage.
 You can get the coverage for your corpus like this::
