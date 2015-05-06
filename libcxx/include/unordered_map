@@ -551,7 +551,7 @@ union __hash_value_type
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_value_type(__hash_value_type&& __v)
-        : __nc(std::move(__v.__nc)) {}
+        : __nc(_VSTD::move(__v.__nc)) {}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_value_type& operator=(const __hash_value_type& __v)
@@ -559,7 +559,7 @@ union __hash_value_type
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_value_type& operator=(__hash_value_type&& __v)
-        {__nc = std::move(__v.__nc); return *this;}
+        {__nc = _VSTD::move(__v.__nc); return *this;}
 
     _LIBCPP_INLINE_VISIBILITY
     ~__hash_value_type() {__cc.~value_type();}
