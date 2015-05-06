@@ -7162,6 +7162,13 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "                 aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa |\n"
       "                 aaaaaaaaaaaaaaa | aaaaaaaaaaaaaaa];");
 
+  // FIXME: This violates the column limit.
+  verifyFormat(
+      "[aaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    aaaaaaaaaaaaaaaaa:aaaaaaaa\n"
+      "                  aaa:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];",
+      getLLVMStyleWithColumns(60));
+
   // Variadic parameters.
   verifyFormat(
       "NSArray *myStrings = [NSArray stringarray:@\"a\", @\"b\", nil];");
