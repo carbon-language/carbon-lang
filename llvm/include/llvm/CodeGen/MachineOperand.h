@@ -554,6 +554,12 @@ public:
   /// already, the setFPImm method should be used.
   void ChangeToFPImmediate(const ConstantFP *FPImm);
 
+  /// ChangeToES - Replace this operand with a new external symbol operand.
+  void ChangeToES(const char *SymName, unsigned char TargetFlags = 0);
+
+  /// ChangeToMCSymbol - Replace this operand with a new MC symbol operand.
+  void ChangeToMCSymbol(MCSymbol *Sym);
+
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.

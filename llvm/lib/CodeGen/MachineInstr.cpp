@@ -141,6 +141,28 @@ void MachineOperand::ChangeToFPImmediate(const ConstantFP *FPImm) {
   Contents.CFP = FPImm;
 }
 
+void MachineOperand::ChangeToES(const char *SymName, unsigned char TargetFlags) {
+  assert((!isReg() || !isTied()) &&
+         "Cannot change a tied operand into an external symbol");
+
+  removeRegFromUses();
+
+  OpKind = MO_ExternalSymbol;
+  Contents.OffsetedInfo.Val.SymbolName = SymName;
+  setOffset(0); // Offset is always 0.
+  setTargetFlags(TargetFlags);
+}
+
+void MachineOperand::ChangeToMCSymbol(MCSymbol *Sym) {
+  assert((!isReg() || !isTied()) &&
+         "Cannot change a tied operand into an MCSymbol");
+
+  removeRegFromUses();
+
+  OpKind = MO_MCSymbol;
+  Contents.Sym = Sym;
+}
+
 /// ChangeToRegister - Replace this operand with a new register operand of
 /// the specified value.  If an operand is known to be an register already,
 /// the setReg method should be used.
