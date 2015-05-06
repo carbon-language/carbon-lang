@@ -743,6 +743,13 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                   gtid, team->t.t_id, tid, bt));
     KMP_DEBUG_ASSERT(this_thr == other_threads[this_thr->th.th_info.ds.ds_tid]);
 
+#if USE_ITT_BUILD && USE_ITT_NOTIFY
+    // Barrier imbalance - save arrive time to the thread
+    if(__kmp_forkjoin_frames_mode == 3 || __kmp_forkjoin_frames_mode == 2) {
+        this_thr->th.th_bar_arrive_time = __itt_get_timestamp();
+    }
+#endif
+
     (void)__kmp_init_hierarchical_barrier_thread(bt, thr_bar, nproc, gtid, tid, team);
 
     if (thr_bar->my_level) { // not a leaf (my_level==0 means leaf)
