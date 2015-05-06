@@ -76,7 +76,7 @@ unsigned AMDGPUTTIImpl::getNumberOfRegisters(bool Vec) {
 
 unsigned AMDGPUTTIImpl::getRegisterBitWidth(bool) { return 32; }
 
-unsigned AMDGPUTTIImpl::getMaxInterleaveFactor() {
+unsigned AMDGPUTTIImpl::getMaxInterleaveFactor(unsigned VF) {
   // Semi-arbitrary large amount.
   return 64;
 }

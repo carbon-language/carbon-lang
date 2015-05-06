@@ -4160,7 +4160,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
                        std::max(1U, (R.MaxLocalUsers - 1)));
 
   // Clamp the unroll factor ranges to reasonable factors.
-  unsigned MaxInterleaveSize = TTI.getMaxInterleaveFactor();
+  unsigned MaxInterleaveSize = TTI.getMaxInterleaveFactor(VF);
 
   // Check if the user has overridden the unroll max.
   if (VF == 1) {

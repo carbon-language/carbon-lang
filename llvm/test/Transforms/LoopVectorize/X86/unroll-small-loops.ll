@@ -47,9 +47,11 @@ define i32 @foo(i32* nocapture %A) nounwind uwtable ssp {
 ; CHECK-VECTOR: store <4 x i32>
 ; CHECK-VECTOR: ret
 ;
+; For x86, loop unroll in loop vectorizer is disabled when VF==1.
+;
 ; CHECK-SCALAR-LABEL: @bar(
 ; CHECK-SCALAR: store i32
-; CHECK-SCALAR: store i32
+; CHECK-SCALAR-NOT: store i32
 ; CHECK-SCALAR: ret
 define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0

@@ -96,7 +96,7 @@ public:
     return 32;
   }
 
-  unsigned getMaxInterleaveFactor() {
+  unsigned getMaxInterleaveFactor(unsigned VF) {
     // These are out of order CPUs:
     if (ST->isCortexA15() || ST->isSwift())
       return 2;

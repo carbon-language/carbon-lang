@@ -419,7 +419,7 @@ unsigned AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
   return Cost;
 }
 
-unsigned AArch64TTIImpl::getMaxInterleaveFactor() {
+unsigned AArch64TTIImpl::getMaxInterleaveFactor(unsigned VF) {
   if (ST->isCortexA57())
     return 4;
   return 2;

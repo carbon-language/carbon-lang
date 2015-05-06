@@ -186,8 +186,8 @@ unsigned TargetTransformInfo::getRegisterBitWidth(bool Vector) const {
   return TTIImpl->getRegisterBitWidth(Vector);
 }
 
-unsigned TargetTransformInfo::getMaxInterleaveFactor() const {
-  return TTIImpl->getMaxInterleaveFactor();
+unsigned TargetTransformInfo::getMaxInterleaveFactor(unsigned VF) const {
+  return TTIImpl->getMaxInterleaveFactor(VF);
 }
 
 unsigned TargetTransformInfo::getArithmeticInstrCost(

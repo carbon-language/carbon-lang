@@ -66,7 +66,13 @@ unsigned X86TTIImpl::getRegisterBitWidth(bool Vector) {
 
 }
 
-unsigned X86TTIImpl::getMaxInterleaveFactor() {
+unsigned X86TTIImpl::getMaxInterleaveFactor(unsigned VF) {
+  // If the loop will not be vectorized, don't interleave the loop.
+  // Let regular unroll to unroll the loop, which saves the overflow
+  // check and memory check cost.
+  if (VF == 1)
+    return 1;
+
   if (ST->isAtom())
     return 1;
 

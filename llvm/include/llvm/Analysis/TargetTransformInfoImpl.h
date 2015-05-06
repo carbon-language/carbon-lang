@@ -263,7 +263,7 @@ public:
 
   unsigned getRegisterBitWidth(bool Vector) { return 32; }
 
-  unsigned getMaxInterleaveFactor() { return 1; }
+  unsigned getMaxInterleaveFactor(unsigned VF) { return 1; }
 
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                   TTI::OperandValueKind Opd1Info,
