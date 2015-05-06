@@ -289,6 +289,12 @@ public:
   AttributeSet removeAttributes(LLVMContext &C, unsigned Index, 
                                 AttributeSet Attrs) const;
 
+  /// \brief Remove the specified attributes at the specified index from this
+  /// attribute list. Because attribute lists are immutable, this returns the
+  /// new list.
+  AttributeSet removeAttributes(LLVMContext &C, unsigned Index,
+                                const AttrBuilder &Attrs) const;
+
   /// \brief Add the dereferenceable attribute to the attribute set at the given
   /// index. Since attribute sets are immutable, this returns a new set.
   AttributeSet addDereferenceableAttr(LLVMContext &C, unsigned Index,
@@ -463,6 +469,13 @@ public:
 
   /// \brief Add the attributes from the builder.
   AttrBuilder &merge(const AttrBuilder &B);
+
+  /// \brief Remove the attributes from the builder.
+  AttrBuilder &remove(const AttrBuilder &B);
+
+  /// \brief \brief Return true if the builder has any attribute that's in the
+  /// specified builder.
+  bool overlaps(const AttrBuilder &B) const;
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const {

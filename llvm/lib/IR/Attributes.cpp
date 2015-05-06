@@ -857,6 +857,42 @@ AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Index,
   return get(C, AttrSet);
 }
 
+AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Index,
+                                            const AttrBuilder &Attrs) const {
+  if (!pImpl) return AttributeSet();
+
+  // FIXME it is not obvious how this should work for alignment.
+  // For now, say we can't pass in alignment, which no current use does.
+  assert(!Attrs.hasAlignmentAttr() && "Attempt to change alignment!");
+
+  // Add the attribute slots before the one we're trying to add.
+  SmallVector<AttributeSet, 4> AttrSet;
+  uint64_t NumAttrs = pImpl->getNumAttributes();
+  AttributeSet AS;
+  uint64_t LastIndex = 0;
+  for (unsigned I = 0, E = NumAttrs; I != E; ++I) {
+    if (getSlotIndex(I) >= Index) {
+      if (getSlotIndex(I) == Index) AS = getSlotAttributes(LastIndex++);
+      break;
+    }
+    LastIndex = I + 1;
+    AttrSet.push_back(getSlotAttributes(I));
+  }
+
+  // Now remove the attribute from the correct slot. There may already be an
+  // AttributeSet there.
+  AttrBuilder B(AS, Index);
+  B.remove(Attrs);
+
+  AttrSet.push_back(AttributeSet::get(C, Index, B));
+
+  // Add the remaining attribute slots.
+  for (unsigned I = LastIndex, E = NumAttrs; I < E; ++I)
+    AttrSet.push_back(getSlotAttributes(I));
+
+  return get(C, AttrSet);
+}
+
 AttributeSet AttributeSet::addDereferenceableAttr(LLVMContext &C, unsigned Index,
                                                   uint64_t Bytes) const {
   llvm::AttrBuilder B;
@@ -1211,13 +1247,50 @@ AttrBuilder &AttrBuilder::merge(const AttrBuilder &B) {
   if (!DerefBytes)
     DerefBytes = B.DerefBytes;
 
+  if (!DerefOrNullBytes)
+    DerefOrNullBytes = B.DerefOrNullBytes;
+
   Attrs |= B.Attrs;
 
-  for (td_const_iterator I = B.TargetDepAttrs.begin(),
-         E = B.TargetDepAttrs.end(); I != E; ++I)
-    TargetDepAttrs[I->first] = I->second;
+  for (auto I : B.td_attrs())
+    TargetDepAttrs[I.first] = I.second;
 
   return *this;
+}
+
+AttrBuilder &AttrBuilder::remove(const AttrBuilder &B) {
+  // FIXME: What if both have alignments, but they don't match?!
+  if (B.Alignment)
+    Alignment = 0;
+
+  if (B.StackAlignment)
+    StackAlignment = 0;
+
+  if (B.DerefBytes)
+    DerefBytes = 0;
+
+  if (B.DerefOrNullBytes)
+    DerefOrNullBytes = 0;
+
+  Attrs &= ~B.Attrs;
+
+  for (auto I : B.td_attrs())
+    TargetDepAttrs.erase(I.first);
+
+  return *this;
+}
+
+bool AttrBuilder::overlaps(const AttrBuilder &B) const {
+  // First check if any of the target independent attributes overlap.
+  if ((Attrs & B.Attrs).any())
+    return true;
+
+  // Then check if any target dependent ones do.
+  for (auto I : td_attrs())
+    if (B.contains(I.first))
+      return true;
+
+  return false;
 }
 
 bool AttrBuilder::contains(StringRef A) const {
