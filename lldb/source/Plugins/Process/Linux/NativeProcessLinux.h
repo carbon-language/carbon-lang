@@ -359,13 +359,11 @@ namespace process_linux {
         NotifyThreadStop (lldb::tid_t tid);
 
         void
-        CallAfterRunningThreadsStop (lldb::tid_t tid,
-                                     const std::function<void (lldb::tid_t tid)> &call_after_function);
+        StopRunningThreads (lldb::tid_t triggering_tid);
 
         void
-        CallAfterRunningThreadsStopWithSkipTID (lldb::tid_t deferred_signal_tid,
-                                                lldb::tid_t skip_stop_request_tid,
-                                                const std::function<void (lldb::tid_t tid)> &call_after_function);
+        StopRunningThreadsWithSkipTID (lldb::tid_t deferred_signal_tid,
+                                                lldb::tid_t skip_stop_request_tid);
 
         Error
         Detach(lldb::tid_t tid);
@@ -379,7 +377,6 @@ namespace process_linux {
         typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
 
         // Callback/block definitions.
-        typedef std::function<void (lldb::tid_t tid)> ThreadIDFunction;
         typedef std::function<void (const char *format, va_list args)> LogFunction;
         typedef std::function<void (const std::string &error_message)> ErrorFunction;
         typedef std::function<Error (lldb::tid_t tid)> StopThreadFunction;
@@ -403,39 +400,31 @@ namespace process_linux {
                            const ErrorFunction &error_function);
 
 
-        // This method is the main purpose of the class: triggering a deferred
-        // action after a given set of threads stop.  The triggering_tid is the
-        // thread id passed to the call_after_function.  The error_function will
-        // be fired if either the triggering tid or any of the wait_for_stop_tids
-        // are unknown at the time the method is processed.
+        // Notify the delegate after a given set of threads stops. The triggering_tid will be set
+        // as the current thread. The error_function will be fired if either the triggering tid
+        // or any of the wait_for_stop_tids are unknown.
         void
-        CallAfterThreadsStop (lldb::tid_t triggering_tid,
+        StopThreads(lldb::tid_t triggering_tid,
                               const ThreadIDSet &wait_for_stop_tids,
                               const StopThreadFunction &request_thread_stop_function,
-                              const ThreadIDFunction &call_after_function,
                               const ErrorFunction &error_function);
 
-        // This method is the main purpose of the class: triggering a deferred
-        // action after all non-stopped threads stop.  The triggering_tid is the
-        // thread id passed to the call_after_function.  The error_function will
-        // be fired if the triggering tid is unknown at the time of execution.
+        // Notify the delegate after all non-stopped threads stop. The triggering_tid will be set
+        // as the current thread. The error_function will be fired if the triggering tid
+        // is unknown.
         void
-        CallAfterRunningThreadsStop (lldb::tid_t triggering_tid,
+        StopRunningThreads(lldb::tid_t triggering_tid,
                                      const StopThreadFunction &request_thread_stop_function,
-                                     const ThreadIDFunction &call_after_function,
                                      const ErrorFunction &error_function);
 
-        // This method is the main purpose of the class: triggering a deferred
-        // action after all non-stopped threads stop.  The triggering_tid is the
-        // thread id passed to the call_after_function.  The error_function will
-        // be fired if the triggering tid is unknown at the time of execution.
-        // This variant will send stop requests to all non-stopped threads except
-        // for any contained in skip_stop_request_tids.
+        // Notify the delegate after all non-stopped threads stop. The triggering_tid will be set
+        // as the current thread. The error_function will be fired if either the triggering tid
+        // or any of the wait_for_stop_tids are unknown.  This variant will send stop requests to
+        // all non-stopped threads except for any contained in skip_stop_request_tids.
         void
-        CallAfterRunningThreadsStopWithSkipTIDs (lldb::tid_t triggering_tid,
+        StopRunningThreadsWithSkipTID(lldb::tid_t triggering_tid,
                                                  const ThreadIDSet &skip_stop_request_tids,
                                                  const StopThreadFunction &request_thread_stop_function,
-                                                 const ThreadIDFunction &call_after_function,
                                                  const ErrorFunction &error_function);
 
         // Notify the thread stopped.  Will trigger error at time of execution if we
@@ -493,13 +482,11 @@ namespace process_linux {
             PendingNotification (lldb::tid_t triggering_tid,
                                        const ThreadIDSet &wait_for_stop_tids,
                                        const StopThreadFunction &request_thread_stop_function,
-                                       const ThreadIDFunction &call_after_function,
                                        const ErrorFunction &error_function):
             triggering_tid (triggering_tid),
             wait_for_stop_tids (wait_for_stop_tids),
             original_wait_for_stop_tids (wait_for_stop_tids),
             request_thread_stop_function (request_thread_stop_function),
-            call_after_function (call_after_function),
             error_function (error_function),
             request_stop_on_all_unstopped_threads (false),
             skip_stop_request_tids ()
@@ -508,13 +495,11 @@ namespace process_linux {
 
             PendingNotification (lldb::tid_t triggering_tid,
                                        const StopThreadFunction &request_thread_stop_function,
-                                       const ThreadIDFunction &call_after_function,
                                        const ErrorFunction &error_function) :
             triggering_tid (triggering_tid),
             wait_for_stop_tids (),
             original_wait_for_stop_tids (),
             request_thread_stop_function (request_thread_stop_function),
-            call_after_function (call_after_function),
             error_function (error_function),
             request_stop_on_all_unstopped_threads (true),
             skip_stop_request_tids ()
@@ -523,14 +508,12 @@ namespace process_linux {
 
             PendingNotification (lldb::tid_t triggering_tid,
                                        const StopThreadFunction &request_thread_stop_function,
-                                       const ThreadIDFunction &call_after_function,
                                        const ThreadIDSet &skip_stop_request_tids,
                                        const ErrorFunction &error_function) :
             triggering_tid (triggering_tid),
             wait_for_stop_tids (),
             original_wait_for_stop_tids (),
             request_thread_stop_function (request_thread_stop_function),
-            call_after_function (call_after_function),
             error_function (error_function),
             request_stop_on_all_unstopped_threads (true),
             skip_stop_request_tids (skip_stop_request_tids)
@@ -541,7 +524,6 @@ namespace process_linux {
             ThreadIDSet        wait_for_stop_tids;
             const ThreadIDSet  original_wait_for_stop_tids;
             StopThreadFunction request_thread_stop_function;
-            ThreadIDFunction   call_after_function;
             ErrorFunction      error_function;
             const bool         request_stop_on_all_unstopped_threads;
             ThreadIDSet        skip_stop_request_tids;
@@ -570,7 +552,7 @@ namespace process_linux {
                 ErrorFunction error_function, bool error_when_already_running);
 
         void
-        DoCallAfterThreadsStop(PendingNotificationUP &&notification_up);
+        DoStopThreads(PendingNotificationUP &&notification_up);
 
         void
         ThreadWasCreated (lldb::tid_t tid, bool is_stopped, const ErrorFunction &error_function);
