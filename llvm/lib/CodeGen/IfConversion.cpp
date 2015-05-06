@@ -980,10 +980,10 @@ static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
 
   // Now add the implicit uses for each of the clobbered values.
   for (auto Reg : Clobbers) {
-    const MachineOperand &Op = *Reg.second;
     // FIXME: Const cast here is nasty, but better than making StepForward
     // take a mutable instruction instead of const.
-    MachineInstr *OpMI = const_cast<MachineInstr*>(Op.getParent());
+    MachineOperand &Op = const_cast<MachineOperand&>(*Reg.second);
+    MachineInstr *OpMI = Op.getParent();
     MachineInstrBuilder MIB(*OpMI->getParent()->getParent(), OpMI);
     if (Op.isRegMask()) {
       // First handle regmasks.  They clobber any entries in the mask which
@@ -999,6 +999,12 @@ static void UpdatePredRedefs(MachineInstr *MI, LivePhysRegs &Redefs) {
       continue;
     }
     assert(Op.isReg() && "Register operand required");
+    if (Op.isDead()) {
+      // If we found a dead def, but it needs to be live, then remove the dead
+      // flag.
+      if (Redefs.contains(Op.getReg()))
+        Op.setIsDead(false);
+    }
     MIB.addReg(Reg.first, RegState::Implicit | RegState::Undef);
   }
 }

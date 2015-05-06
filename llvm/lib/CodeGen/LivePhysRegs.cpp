@@ -77,8 +77,9 @@ void LivePhysRegs::stepForward(const MachineInstr &MI,
       if (Reg == 0)
         continue;
       if (O->isDef()) {
-        if (!O->isDead())
-          Clobbers.push_back(std::make_pair(Reg, &*O));
+        // Note, dead defs are still recorded.  The caller should decide how to
+        // handle them.
+        Clobbers.push_back(std::make_pair(Reg, &*O));
       } else {
         if (!O->isKill())
           continue;
@@ -90,8 +91,12 @@ void LivePhysRegs::stepForward(const MachineInstr &MI,
   }
 
   // Add defs to the set.
-  for (auto Reg : Clobbers)
+  for (auto Reg : Clobbers) {
+    // Skip dead defs.  They shouldn't be added to the set.
+    if (Reg.second->isReg() && Reg.second->isDead())
+      continue;
     addReg(Reg.first);
+  }
 }
 
 /// Prin the currently live registers to OS.
