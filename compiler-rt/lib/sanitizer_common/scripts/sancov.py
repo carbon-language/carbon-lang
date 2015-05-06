@@ -8,16 +8,18 @@ import bisect
 import glob
 import os.path
 import struct
+import subprocess
 import sys
 
 prog_name = ""
 
 def Usage():
   print >> sys.stderr, "Usage: \n" + \
-      " " + prog_name + " [32|64] merge file1 [file2 ...]  > output\n" \
-      " " + prog_name + " [32|64] print file1 [file2 ...]\n" \
-      " " + prog_name + " [32|64] unpack file1 [file2 ...]\n" \
-      " " + prog_name + " [32|64] rawunpack file1 [file2 ...]\n"
+      " " + prog_name + " merge FILE [FILE...] > OUTPUT\n" \
+      " " + prog_name + " print FILE [FILE...]\n" \
+      " " + prog_name + " unpack FILE [FILE...]\n" \
+      " " + prog_name + " rawunpack FILE [FILE ...]\n" \
+      " " + prog_name + " missing BINARY < LIST_OF_PCS\n"
   exit(1)
 
 def CheckBits(bits):
@@ -177,10 +179,45 @@ def RawUnpack(files):
     f_map = f[:-3] + 'map'
     UnpackOneRawFile(f, f_map)
 
+def GetInstrumentedPCs(binary):
+  cmd = "objdump -d %s | " \
+        "grep '^\s\+[0-9a-f]\+:.*\scall\(q\|\)\s\+[0-9a-f]\+ <__sanitizer_cov\(@plt\|\)>' | " \
+        "grep '^\s\+[0-9a-f]\+' -o" % binary
+  proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                          shell=True)
+  proc.stdin.close()
+  # The PCs we get from objdump are off by 4 bytes, as they point to the
+  # beginning of the callq instruction. Empirically this is true on x86 and
+  # x86_64.
+  return set(int(line.strip(), 16) + 4 for line in proc.stdout)
+
+def PrintMissing(binary):
+  if not os.path.isfile(binary):
+    raise Exception('File not found: %s' % binary)
+  instrumented = GetInstrumentedPCs(binary)
+  print >> sys.stderr, "%s: found %d instrumented PCs in %s" % (prog_name,
+                                                                len(instrumented),
+                                                                binary)
+  covered = set(int(line, 16) for line in sys.stdin)
+  print >> sys.stderr, "%s: read %d PCs from stdin" % (prog_name, len(covered))
+  missing = instrumented - covered
+  print >> sys.stderr, "%s: %d PCs missing from coverage" % (prog_name, len(missing))
+  if (len(missing) > len(instrumented) - len(covered)):
+    print >> sys.stderr, \
+        "%s: WARNING: stdin contains PCs not found in binary" % prog_name
+  for pc in sorted(missing):
+    print "0x%x" % pc
+
 if __name__ == '__main__':
   prog_name = sys.argv[0]
   if len(sys.argv) <= 2:
     Usage();
+
+  if sys.argv[1] == "missing":
+    if len(sys.argv) != 3:
+      Usage()
+    PrintMissing(sys.argv[2])
+    exit(0)
 
   file_list = []
   for f in sys.argv[2:]:
