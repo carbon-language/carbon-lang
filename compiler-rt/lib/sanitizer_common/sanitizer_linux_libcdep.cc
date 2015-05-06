@@ -456,10 +456,11 @@ extern "C" __attribute__((weak)) int dl_iterate_phdr(
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
 #if SANITIZER_ANDROID && __ANDROID_API__ < 21
-  // Fall back to /proc/maps if dl_iterate_phdr is not available.
+  u32 api_level = AndroidGetApiLevel();
+  // Fall back to /proc/maps if dl_iterate_phdr is unavailable or broken.
   // The runtime check allows the same library to work with
   // both K and L (and future) Android releases.
-  if (!dl_iterate_phdr) {
+  if (api_level <= 22) { // L or earlier
     MemoryMappingLayout memory_mapping(false);
     return memory_mapping.DumpListOfModules(modules, max_modules, filter);
   }

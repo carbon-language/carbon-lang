@@ -46,9 +46,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#if !SANITIZER_ANDROID
 #include <link.h>
-#endif
 #include <pthread.h>
 #include <sched.h>
 #include <sys/mman.h>
@@ -964,6 +962,46 @@ void GetExtraActivationFlags(char *buf, uptr size) {
   CHECK(size > PROP_VALUE_MAX);
   __system_property_get("asan.options", buf);
 }
+
+#if __ANDROID_API__ < 21
+extern "C" __attribute__((weak)) int dl_iterate_phdr(
+    int (*)(struct dl_phdr_info *, size_t, void *), void *);
+#endif
+
+static int dl_iterate_phdr_test_cb(struct dl_phdr_info *info, size_t size,
+                                   void *data) {
+  // Any name starting with "lib" indicated a bug in L where library base names
+  // are returned instead of paths.
+  if (info->dlpi_name && info->dlpi_name[0] == 'l' &&
+      info->dlpi_name[1] == 'i' && info->dlpi_name[2] == 'b') {
+    *(bool *)data = true;
+    return 1;
+  }
+  return 0;
+}
+
+static atomic_uint32_t android_api_level;
+
+static u32 AndroidDetectApiLevel() {
+  if (!dl_iterate_phdr)
+    return 19; // K or lower
+  bool base_name_seen = false;
+  dl_iterate_phdr(dl_iterate_phdr_test_cb, &base_name_seen);
+  if (base_name_seen)
+    return 22; // L MR1
+  return 23;   // post-L
+  // Plain L (API level 21) is completely broken wrt ASan and not very
+  // interesting to detect.
+}
+
+u32 AndroidGetApiLevel() {
+  u32 level = atomic_load(&android_api_level, memory_order_relaxed);
+  if (level) return level;
+  level = AndroidDetectApiLevel();
+  atomic_store(&android_api_level, level, memory_order_relaxed);
+  return level;
+}
+
 #endif
 
 bool IsDeadlySignal(int signum) {

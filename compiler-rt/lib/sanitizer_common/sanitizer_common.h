@@ -622,11 +622,13 @@ void AndroidLogInit();
 void AndroidLogWrite(const char *buffer);
 void GetExtraActivationFlags(char *buf, uptr size);
 void SanitizerInitializeUnwinder();
+u32 AndroidGetApiLevel();
 #else
 INLINE void AndroidLogInit() {}
 INLINE void AndroidLogWrite(const char *buffer_unused) {}
 INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 INLINE void SanitizerInitializeUnwinder() {}
+INLINE u32 AndroidGetApiLevel() { return 0; }
 #endif
 
 void *internal_start_thread(void(*func)(void*), void *arg);
