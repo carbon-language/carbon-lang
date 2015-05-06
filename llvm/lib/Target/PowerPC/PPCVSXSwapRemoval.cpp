@@ -88,7 +88,6 @@ struct PPCVSXSwapEntry {
 
 enum SHValues {
   SH_NONE = 0,
-  SH_BUILDVEC,
   SH_EXTRACT,
   SH_INSERT,
   SH_NOSWAP_LD,
@@ -329,7 +328,7 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         // Splats are lane-sensitive, but we can use special handling
         // to adjust the source lane for the splat.  This is not yet
         // implemented.  When it is, we need to uncomment the following:
-        //        SwapVector[VecIdx].IsSwappable = 1;
+        SwapVector[VecIdx].IsSwappable = 1;
         SwapVector[VecIdx].SpecialHandling = SHValues::SH_SPLAT;
         break;
       // The presence of the following lane-sensitive operations in a
@@ -662,8 +661,12 @@ void PPCVSXSwapRemoval::markSwapsForRemoval() {
       }
 
     } else if (SwapVector[EntryIdx].IsSwappable &&
-               SwapVector[EntryIdx].SpecialHandling != 0)
-      handleSpecialSwappables(EntryIdx);
+               SwapVector[EntryIdx].SpecialHandling != 0) {
+      int Repr = EC->getLeaderValue(SwapVector[EntryIdx].VSEId);
+
+      if (!SwapVector[Repr].WebRejected)
+        handleSpecialSwappables(EntryIdx);
+    }
   }
 }
 
@@ -672,6 +675,39 @@ void PPCVSXSwapRemoval::markSwapsForRemoval() {
 // here.
 // FIXME: This code is to be phased in with subsequent patches.
 void PPCVSXSwapRemoval::handleSpecialSwappables(int EntryIdx) {
+  switch (SwapVector[EntryIdx].SpecialHandling) {
+
+  default:
+    assert(false && "Unexpected special handling type");
+    break;
+
+  // For splats based on an index into a vector, add N/2 modulo N
+  // to the index, where N is the number of vector elements.
+  case SHValues::SH_SPLAT: {
+    MachineInstr *MI = SwapVector[EntryIdx].VSEMI;
+    unsigned NElts;
+
+    DEBUG(dbgs() << "Changing splat: ");
+    DEBUG(MI->dump());
+
+    switch (MI->getOpcode()) {
+    default:
+      assert(false && "Unexpected splat opcode");
+    case PPC::VSPLTB: NElts = 16; break;
+    case PPC::VSPLTH: NElts = 8;  break;
+    case PPC::VSPLTW: NElts = 4;  break;
+    }
+
+    unsigned EltNo = MI->getOperand(1).getImm();
+    EltNo = (EltNo + NElts / 2) % NElts;
+    MI->getOperand(1).setImm(EltNo);
+
+    DEBUG(dbgs() << "  Into: ");
+    DEBUG(MI->dump());
+    break;
+  }
+
+  }
 }
 
 // Walk the swap vector and replace each entry marked for removal with
@@ -733,9 +769,6 @@ void PPCVSXSwapRemoval::dumpSwapVector() {
         DEBUG(dbgs() << "special:**unknown**");
         break;
       case SH_NONE:
-        break;
-      case SH_BUILDVEC:
-        DEBUG(dbgs() << "special:buildvec ");
         break;
       case SH_EXTRACT:
         DEBUG(dbgs() << "special:extract ");
