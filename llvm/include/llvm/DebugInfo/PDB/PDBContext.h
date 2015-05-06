@@ -32,7 +32,8 @@ class PDBContext : public DIContext {
 
 public:
   PDBContext(const object::COFFObjectFile &Object,
-             std::unique_ptr<IPDBSession> PDBSession);
+             std::unique_ptr<IPDBSession> PDBSession,
+             bool RelativeAddress);
 
   static bool classof(const DIContext *DICtx) {
     return DICtx->getKind() == CK_PDB;
@@ -51,6 +52,7 @@ public:
       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
 
 private:
+  std::string getFunctionName(uint64_t Address, DINameKind NameKind) const;
   std::unique_ptr<IPDBSession> Session;
 };
 }

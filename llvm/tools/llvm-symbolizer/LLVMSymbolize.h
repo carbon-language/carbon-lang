@@ -35,19 +35,20 @@ class ModuleInfo;
 class LLVMSymbolizer {
 public:
   struct Options {
-    bool UseSymbolTable : 1;
     FunctionNameKind PrintFunctions;
+    bool UseSymbolTable : 1;
     bool PrintInlining : 1;
     bool Demangle : 1;
+    bool RelativeAddresses : 1;
     std::string DefaultArch;
     std::vector<std::string> DsymHints;
-    Options(bool UseSymbolTable = true,
-            FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
-            bool PrintInlining = true, bool Demangle = true,
+    Options(FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
+            bool UseSymbolTable = true, bool PrintInlining = true,
+            bool Demangle = true, bool RelativeAddresses = false,
             std::string DefaultArch = "")
-        : UseSymbolTable(UseSymbolTable),
-          PrintFunctions(PrintFunctions), PrintInlining(PrintInlining),
-          Demangle(Demangle), DefaultArch(DefaultArch) {}
+        : PrintFunctions(PrintFunctions), UseSymbolTable(UseSymbolTable),
+          PrintInlining(PrintInlining), Demangle(Demangle),
+          RelativeAddresses(RelativeAddresses), DefaultArch(DefaultArch) {}
   };
 
   LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
