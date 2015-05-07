@@ -5676,7 +5676,7 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
         BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(), BOK,
                    LHSDRE, RHSDRE);
     if (ReductionOp.isUsable()) {
-      if (BOK != BO_LOr && BOK != BO_LAnd) {
+      if (BOK != BO_LT && BOK != BO_GT) {
         ReductionOp =
             BuildBinOp(DSAStack->getCurScope(), ReductionId.getLocStart(),
                        BO_Assign, LHSDRE, ReductionOp.get());

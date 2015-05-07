@@ -2121,6 +2121,7 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
   //  ...
   //  Atomic(<LHSExprs>[i] = RedOp<i>(*<LHSExprs>[i], *<RHSExprs>[i]));
   //  ...
+  // [__kmpc_end_reduce(<loc>, <gtid>, &<lock>);]
   // break;
   // default:;
   // }
@@ -2221,28 +2222,43 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
 
   {
     CodeGenFunction::RunCleanupsScope Scope(CGF);
+    if (!WithNowait) {
+      // Add emission of __kmpc_end_reduce(<loc>, <gtid>, &<lock>);
+      llvm::Value *EndArgs[] = {
+          IdentTLoc, // ident_t *<loc>
+          ThreadId,  // i32 <gtid>
+          Lock       // kmp_critical_name *&<lock>
+      };
+      CGF.EHStack
+          .pushCleanup<CallEndCleanup<std::extent<decltype(EndArgs)>::value>>(
+              NormalAndEHCleanup,
+              createRuntimeFunction(OMPRTL__kmpc_end_reduce),
+              llvm::makeArrayRef(EndArgs));
+    }
     auto I = LHSExprs.begin();
     for (auto *E : ReductionOps) {
       const Expr *XExpr = nullptr;
       const Expr *EExpr = nullptr;
       const Expr *UpExpr = nullptr;
       BinaryOperatorKind BO = BO_Comma;
-      // Try to emit update expression as a simple atomic.
-      if (auto *ACO = dyn_cast<AbstractConditionalOperator>(E)) {
-        // If this is a conditional operator, analyze it's condition for
-        // min/max reduction operator.
-        E = ACO->getCond();
-      }
       if (auto *BO = dyn_cast<BinaryOperator>(E)) {
         if (BO->getOpcode() == BO_Assign) {
           XExpr = BO->getLHS();
           UpExpr = BO->getRHS();
         }
       }
-      // Analyze RHS part of the whole expression.
-      if (UpExpr) {
+      // Try to emit update expression as a simple atomic.
+      auto *RHSExpr = UpExpr;
+      if (RHSExpr) {
+        // Analyze RHS part of the whole expression.
+        if (auto *ACO = dyn_cast<AbstractConditionalOperator>(
+                RHSExpr->IgnoreParenImpCasts())) {
+          // If this is a conditional operator, analyze its condition for
+          // min/max reduction operator.
+          RHSExpr = ACO->getCond();
+        }
         if (auto *BORHS =
-                dyn_cast<BinaryOperator>(UpExpr->IgnoreParenImpCasts())) {
+                dyn_cast<BinaryOperator>(RHSExpr->IgnoreParenImpCasts())) {
           EExpr = BORHS->getRHS();
           BO = BORHS->getOpcode();
         }

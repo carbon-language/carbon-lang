@@ -91,6 +91,7 @@ int main() {
     // LAMBDA: [[G_PRIV_VAL:%.+]] = load double, double* [[G_PRIVATE_ADDR]]
     // LAMBDA: fadd double
     // LAMBDA: cmpxchg i64*
+    // LAMBDA: call void @__kmpc_end_reduce(
     // LAMBDA: br label %[[REDUCTION_DONE]]
     // LAMBDA: [[REDUCTION_DONE]]
     // LAMBDA: ret void
@@ -151,6 +152,7 @@ int main() {
     // BLOCKS: [[G_PRIV_VAL:%.+]] = load double, double* [[G_PRIVATE_ADDR]]
     // BLOCKS: fadd double
     // BLOCKS: cmpxchg i64*
+    // BLOCKS: call void @__kmpc_end_reduce(
     // BLOCKS: br label %[[REDUCTION_DONE]]
     // BLOCKS: [[REDUCTION_DONE]]
     // BLOCKS: ret void
@@ -314,17 +316,15 @@ int main() {
 // var1 = var1.operator &&(var1_reduction);
 // CHECK: [[TO_INT:%.+]] = call i{{[0-9]+}} @{{.+}}([[S_INT_TY]]* [[VAR1_REF]])
 // CHECK: [[VAR1_BOOL:%.+]] = icmp ne i{{[0-9]+}} [[TO_INT]], 0
-// CHECK: br i1 [[VAR1_BOOL]], label %[[TRUE:.+]], label %[[FALSE:.+]]
+// CHECK: br i1 [[VAR1_BOOL]], label %[[TRUE:.+]], label %[[END2:.+]]
 // CHECK: [[TRUE]]
 // CHECK: [[TO_INT:%.+]] = call i{{[0-9]+}} @{{.+}}([[S_INT_TY]]* [[VAR1_PRIV]])
 // CHECK: [[VAR1_REDUCTION_BOOL:%.+]] = icmp ne i{{[0-9]+}} [[TO_INT]], 0
-// CHECK: br i1 [[VAR1_REDUCTION_BOOL]], label %[[TRUE2:.+]], label %[[FALSE2:.+]]
-// CHECK: [[TRUE2]]
-// CHECK: br label %[[END2:.+]]
-// CHECK: [[FALSE2]]
 // CHECK: br label %[[END2]]
 // CHECK: [[END2]]
-// CHECK: [[COND_LVALUE:%.+]] = phi [[S_INT_TY]]* [ [[VAR1_REF]], %[[TRUE2]] ], [ [[VAR1_PRIV]], %[[FALSE2]] ]
+// CHECK: [[COND_LVALUE:%.+]] = phi i1 [ false, %{{.+}} ], [ [[VAR1_REDUCTION_BOOL]], %[[TRUE]] ]
+// CHECK: [[CONV:%.+]] = zext i1 [[COND_LVALUE]] to i32
+// CHECK:  call void @{{.+}}([[S_INT_TY]]* [[COND_LVALUE:%.+]], i32 [[CONV]])
 // CHECK: [[BC1:%.+]] = bitcast [[S_INT_TY]]* [[VAR1_REF]] to i8*
 // CHECK: [[BC2:%.+]] = bitcast [[S_INT_TY]]* [[COND_LVALUE]] to i8*
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[BC1]], i8* [[BC2]], i64 4, i32 4, i1 false)
@@ -333,7 +333,8 @@ int main() {
 // CHECK: [[T_VAR1_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[T_VAR1_REF]],
 // CHECK: [[T_VAR1_PRIV_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[T_VAR1_PRIV]],
 // CHECK: [[CMP:%.+]] = icmp slt i{{[0-9]+}} [[T_VAR1_VAL]], [[T_VAR1_PRIV_VAL]]
-// CHECK: [[UP:%.+]] = zext i1 [[CMP]] to i{{[0-9]+}}
+// CHECK: br i1 [[CMP]]
+// CHECK: [[UP:%.+]] = phi i32
 // CHECK: store i{{[0-9]+}} [[UP]], i{{[0-9]+}}* [[T_VAR1_REF]],
 
 // __kmpc_end_reduce_nowait(<loc>, <gtid>, &<lock>);
@@ -363,13 +364,11 @@ int main() {
 // CHECK: [[TRUE]]
 // CHECK: [[TO_INT:%.+]] = call i{{[0-9]+}} @{{.+}}([[S_INT_TY]]* [[VAR1_PRIV]])
 // CHECK: [[VAR1_REDUCTION_BOOL:%.+]] = icmp ne i{{[0-9]+}} [[TO_INT]], 0
-// CHECK: br i1 [[VAR1_REDUCTION_BOOL]], label %[[TRUE2:.+]], label %[[FALSE2:.+]]
-// CHECK: [[TRUE2]]
-// CHECK: br label %[[END2:.+]]
-// CHECK: [[FALSE2]]
 // CHECK: br label %[[END2]]
 // CHECK: [[END2]]
-// CHECK: [[COND_LVALUE:%.+]] = phi [[S_INT_TY]]* [ [[VAR1_REF]], %[[TRUE2]] ], [ [[VAR1_PRIV]], %[[FALSE2]] ]
+// CHECK: [[COND_LVALUE:%.+]] = phi i1 [ false, %{{.+}} ], [ [[VAR1_REDUCTION_BOOL]], %[[TRUE]] ]
+// CHECK: [[CONV:%.+]] = zext i1 [[COND_LVALUE]] to i32
+// CHECK:  call void @{{.+}}([[S_INT_TY]]* [[COND_LVALUE:%.+]], i32 [[CONV]])
 // CHECK: [[BC1:%.+]] = bitcast [[S_INT_TY]]* [[VAR1_REF]] to i8*
 // CHECK: [[BC2:%.+]] = bitcast [[S_INT_TY]]* [[COND_LVALUE]] to i8*
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[BC1]], i8* [[BC2]], i64 4, i32 4, i1 false)
@@ -445,17 +444,15 @@ int main() {
 // var1_lhs = var1_lhs.operator &&(var1_rhs);
 // CHECK: [[TO_INT:%.+]] = call i{{[0-9]+}} @{{.+}}([[S_INT_TY]]* [[VAR1_LHS]])
 // CHECK: [[VAR1_BOOL:%.+]] = icmp ne i{{[0-9]+}} [[TO_INT]], 0
-// CHECK: br i1 [[VAR1_BOOL]], label %[[TRUE:.+]], label %[[FALSE:.+]]
+// CHECK: br i1 [[VAR1_BOOL]], label %[[TRUE:.+]], label %[[END2:.+]]
 // CHECK: [[TRUE]]
 // CHECK: [[TO_INT:%.+]] = call i{{[0-9]+}} @{{.+}}([[S_INT_TY]]* [[VAR1_RHS]])
 // CHECK: [[VAR1_REDUCTION_BOOL:%.+]] = icmp ne i{{[0-9]+}} [[TO_INT]], 0
-// CHECK: br i1 [[VAR1_REDUCTION_BOOL]], label %[[TRUE2:.+]], label %[[FALSE2:.+]]
-// CHECK: [[TRUE2]]
-// CHECK: br label %[[END2:.+]]
-// CHECK: [[FALSE2]]
 // CHECK: br label %[[END2]]
 // CHECK: [[END2]]
-// CHECK: [[COND_LVALUE:%.+]] = phi [[S_INT_TY]]* [ [[VAR1_LHS]], %[[TRUE2]] ], [ [[VAR1_RHS]], %[[FALSE2]] ]
+// CHECK: [[COND_LVALUE:%.+]] = phi i1 [ false, %{{.+}} ], [ [[VAR1_REDUCTION_BOOL]], %[[TRUE]] ]
+// CHECK: [[CONV:%.+]] = zext i1 [[COND_LVALUE]] to i32
+// CHECK:  call void @{{.+}}([[S_INT_TY]]* [[COND_LVALUE:%.+]], i32 [[CONV]])
 // CHECK: [[BC1:%.+]] = bitcast [[S_INT_TY]]* [[VAR1_LHS]] to i8*
 // CHECK: [[BC2:%.+]] = bitcast [[S_INT_TY]]* [[COND_LVALUE]] to i8*
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[BC1]], i8* [[BC2]], i64 4, i32 4, i1 false)
@@ -464,7 +461,8 @@ int main() {
 // CHECK: [[T_VAR1_LHS_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[T_VAR1_LHS]],
 // CHECK: [[T_VAR1_RHS_VAL:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[T_VAR1_RHS]],
 // CHECK: [[CMP:%.+]] = icmp slt i{{[0-9]+}} [[T_VAR1_LHS_VAL]], [[T_VAR1_RHS_VAL]]
-// CHECK: [[UP:%.+]] = zext i1 [[CMP]] to i{{[0-9]+}}
+// CHECK: br i1 [[CMP]]
+// CHECK: [[UP:%.+]] = phi i32
 // CHECK: store i{{[0-9]+}} [[UP]], i{{[0-9]+}}* [[T_VAR1_LHS]],
 // CHECK: ret void
 
