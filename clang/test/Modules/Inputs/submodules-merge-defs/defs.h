@@ -29,3 +29,10 @@ template<typename T> struct F {
 };
 template<typename T> int F<T>::f() { return 0; }
 template<typename T> template<typename U> int F<T>::g() { return 0; }
+
+namespace G {
+  enum A { a, b, c, d, e };
+  enum { f, g, h };
+  typedef enum { i, j } k;
+  typedef enum {} l;
+}

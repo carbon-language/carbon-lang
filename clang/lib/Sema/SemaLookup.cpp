@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/Lookup.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -1167,6 +1168,12 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
 /// instantiated from, or the member itself if it is an explicit specialization.
 static Decl *getInstantiatedFrom(Decl *D, MemberSpecializationInfo *MSInfo) {
   return MSInfo->isExplicitSpecialization() ? D : MSInfo->getInstantiatedFrom();
+}
+
+void Sema::makeMergedDefinitionVisible(NamedDecl *ND, SourceLocation Loc) {
+  if (auto *Listener = getASTMutationListener())
+    Listener->RedefinedHiddenDefinition(ND, Loc);
+  ND->setHidden(false);
 }
 
 /// \brief Find the module in which the given declaration was defined.
