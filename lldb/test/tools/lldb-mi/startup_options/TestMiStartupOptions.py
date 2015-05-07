@@ -130,6 +130,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_source_option_start_script(self):
         """Test that 'lldb-mi --interpreter' can execute user's commands after initial commands were executed."""
@@ -170,6 +171,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_source_option_start_script_exit(self):
         """Test that 'lldb-mi --interpreter' can execute a prepared file which passed via --source option."""
@@ -210,6 +212,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_source_option_start_script_error(self):
         """Test that 'lldb-mi --interpreter' stops execution of initial commands in case of error."""
 
