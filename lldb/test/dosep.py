@@ -48,6 +48,11 @@ def get_timeout_command():
 
 timeout_command = get_timeout_command()
 
+# TestConcurrentEvents is a long test and it times out with default 5m timeout.
+# Increase its timeout if it hasn't been already set.
+if os.environ.get('LLDB_TEST_TIMEOUT') == None and os.environ.get('LLDB_TESTCONCURRENTEVENTS_TIMEOUT') == None:
+    os.environ['LLDB_TESTCONCURRENTEVENTS_TIMEOUT'] = "7m"
+
 default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "5m"
 
 # Status codes for running command with timeout.
