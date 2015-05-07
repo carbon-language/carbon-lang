@@ -592,63 +592,48 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
 
   switch (ref.kindValue()) {
   case R_ARM_NONE:
-    break;
+    return std::error_code();
   case R_ARM_ABS32:
-    relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
   case R_ARM_REL32:
-    relocR_ARM_REL32(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_REL32(loc, reloc, target, addend, thumb);
   case R_ARM_TARGET1:
     if (_armLayout.target1Rel())
-      relocR_ARM_REL32(loc, reloc, target, addend, thumb);
+      return relocR_ARM_REL32(loc, reloc, target, addend, thumb);
     else
-      relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
-    break;
+      return relocR_ARM_ABS32(loc, reloc, target, addend, thumb);
   case R_ARM_THM_CALL:
     // TODO: consider adding bool variable to disable J1 & J2 for archs
     // before ARMv6
-    relocR_ARM_THM_CALL(loc, reloc, target, addend, true, thumb);
-    break;
+    return relocR_ARM_THM_CALL(loc, reloc, target, addend, true, thumb);
   case R_ARM_CALL:
-    relocR_ARM_CALL(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_CALL(loc, reloc, target, addend, thumb);
   case R_ARM_JUMP24:
-    relocR_ARM_JUMP24(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_JUMP24(loc, reloc, target, addend, thumb);
   case R_ARM_THM_JUMP24:
-    relocR_ARM_THM_JUMP24(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_THM_JUMP24(loc, reloc, target, addend, thumb);
   case R_ARM_THM_JUMP11:
-    relocR_ARM_THM_JUMP11(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_THM_JUMP11(loc, reloc, target, addend);
   case R_ARM_MOVW_ABS_NC:
-    relocR_ARM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
   case R_ARM_MOVT_ABS:
-    relocR_ARM_MOVT_ABS(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_MOVT_ABS(loc, reloc, target, addend);
   case R_ARM_THM_MOVW_ABS_NC:
-    relocR_ARM_THM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_THM_MOVW_ABS_NC(loc, reloc, target, addend, thumb);
   case R_ARM_THM_MOVT_ABS:
-    relocR_ARM_THM_MOVT_ABS(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_THM_MOVT_ABS(loc, reloc, target, addend);
   case R_ARM_PREL31:
-    relocR_ARM_PREL31(loc, reloc, target, addend, thumb);
-    break;
+    return relocR_ARM_PREL31(loc, reloc, target, addend, thumb);
   case R_ARM_TLS_IE32:
-    relocR_ARM_TLS_IE32(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_TLS_IE32(loc, reloc, target, addend);
   case R_ARM_TLS_LE32:
-    relocR_ARM_TLS_LE32(loc, reloc, target, addend, _armLayout.getTPOffset());
-    break;
+    return relocR_ARM_TLS_LE32(loc, reloc, target, addend,
+                               _armLayout.getTPOffset());
   case R_ARM_TLS_TPOFF32:
-    relocR_ARM_TLS_TPOFF32(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_TLS_TPOFF32(loc, reloc, target, addend);
   case R_ARM_GOT_BREL:
-    relocR_ARM_GOT_BREL(loc, reloc, target, addend, _armLayout.getGOTSymAddr());
-    break;
+    return relocR_ARM_GOT_BREL(loc, reloc, target, addend,
+                               _armLayout.getGOTSymAddr());
   case R_ARM_BASE_PREL:
     // GOT origin is used for NULL symbol and when explicitly specified
     if (!target || ref.target()->name().equals("_GLOBAL_OFFSET_TABLE_")) {
@@ -656,27 +641,23 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
     } else {
       llvm_unreachable("Segment-base relative addressing is not supported");
     }
-    relocR_ARM_BASE_PREL(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_BASE_PREL(loc, reloc, target, addend);
   case R_ARM_ALU_PC_G0_NC:
-    relocR_ARM_ALU_PC_G0_NC(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_ALU_PC_G0_NC(loc, reloc, target, addend);
   case R_ARM_ALU_PC_G1_NC:
-    relocR_ARM_ALU_PC_G1_NC(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_ALU_PC_G1_NC(loc, reloc, target, addend);
   case R_ARM_LDR_PC_G2:
-    relocR_ARM_LDR_PC_G2(loc, reloc, target, addend);
-    break;
+    return relocR_ARM_LDR_PC_G2(loc, reloc, target, addend);
   case R_ARM_JUMP_SLOT:
   case R_ARM_IRELATIVE:
     // Runtime only relocations. Ignore here.
-    break;
+    return std::error_code();
   case R_ARM_V4BX:
     // TODO implement
-    break;
+    return std::error_code();
   default:
     return make_unhandled_reloc_error();
   }
 
-  return std::error_code();
+  llvm_unreachable("All switch cases must return directly");
 }
