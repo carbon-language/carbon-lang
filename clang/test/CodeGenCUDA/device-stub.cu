@@ -9,7 +9,7 @@
 // CHECK: private unnamed_addr constant{{.*}}\00"
 // * constant struct that wraps GPU binary
 // CHECK: @__cuda_fatbin_wrapper = internal constant { i32, i32, i8*, i8* } 
-// CHECK:       { i32 1180844977, i32 1, {{.*}}, i64 0, i64 0), i8* null }
+// CHECK:       { i32 1180844977, i32 1, {{.*}}, i8* null }
 // * variable to save GPU binary handle after initialization
 // CHECK: @__cuda_gpubin_handle = internal global i8** null
 // * Make sure our constructor/destructor was added to global ctor/dtor list.
