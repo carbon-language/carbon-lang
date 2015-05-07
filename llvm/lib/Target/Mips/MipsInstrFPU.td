@@ -65,6 +65,8 @@ def IsSingleFloat    : Predicate<"Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"FeatureSingleFloat">;
 def IsNotSingleFloat : Predicate<"!Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"!FeatureSingleFloat">;
+def IsNotSoftFloat   : Predicate<"!Subtarget->abiUsesSoftFloat()">,
+                       AssemblerPredicate<"!FeatureSoftFloat">;
 
 //===----------------------------------------------------------------------===//
 // Mips FGR size adjectives.
@@ -73,6 +75,7 @@ def IsNotSingleFloat : Predicate<"!Subtarget->isSingleFloat()">,
 
 class FGR_32 { list<Predicate> FGRPredicates = [NotFP64bit]; }
 class FGR_64 { list<Predicate> FGRPredicates = [IsFP64bit]; }
+class HARDFLOAT { list<Predicate> HardFloatPredicate = [IsNotSoftFloat]; }
 
 //===----------------------------------------------------------------------===//
 
@@ -98,12 +101,12 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 //
 // Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
-
 class ADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin, bit IsComm,
               SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fs, RC:$ft),
          !strconcat(opstr, "\t$fd, $fs, $ft"),
-         [(set RC:$fd, (OpNode RC:$fs, RC:$ft))], Itin, FrmFR, opstr> {
+         [(set RC:$fd, (OpNode RC:$fs, RC:$ft))], Itin, FrmFR, opstr>,
+  HARDFLOAT {
   let isCommutable = IsComm;
 }
 
@@ -122,6 +125,7 @@ class ABSS_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$fd), (ins SrcRC:$fs), !strconcat(opstr, "\t$fd, $fs"),
          [(set DstRC:$fd, (OpNode SrcRC:$fs))], Itin, FrmFR, opstr>,
+  HARDFLOAT,
   NeverHasSideEffects;
 
 multiclass ABSS_M<string opstr, InstrItinClass Itin,
@@ -146,17 +150,17 @@ multiclass ROUND_M<string opstr, InstrItinClass Itin> {
 class MFC1_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$rt), (ins SrcRC:$fs), !strconcat(opstr, "\t$rt, $fs"),
-         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR, opstr>;
+         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR, opstr>, HARDFLOAT;
 
 class MTC1_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
               InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
-         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR, opstr>;
+         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR, opstr>, HARDFLOAT;
 
 class MTC1_64_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
                  InstrItinClass Itin> :
   InstSE<(outs DstRC:$fs), (ins DstRC:$fs_in, SrcRC:$rt),
-         !strconcat(opstr, "\t$rt, $fs"), [], Itin, FrmFR, opstr> {
+         !strconcat(opstr, "\t$rt, $fs"), [], Itin, FrmFR, opstr>, HARDFLOAT {
   // $fs_in is part of a white lie to work around a widespread bug in the FPU
   // implementation. See expandBuildPairF64 for details.
   let Constraints = "$fs = $fs_in";
@@ -165,7 +169,8 @@ class MTC1_64_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
 class LW_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
             SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RC:$rt, (OpNode addrDefault:$addr))], Itin, FrmFI, opstr> {
+         [(set RC:$rt, (OpNode addrDefault:$addr))], Itin, FrmFI, opstr>,
+  HARDFLOAT {
   let DecoderMethod = "DecodeFMem";
   let mayLoad = 1;
 }
@@ -173,7 +178,7 @@ class LW_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
 class SW_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
             SDPatternOperator OpNode= null_frag> :
   InstSE<(outs), (ins RC:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RC:$rt, addrDefault:$addr)], Itin, FrmFI, opstr> {
+         [(OpNode RC:$rt, addrDefault:$addr)], Itin, FrmFI, opstr>, HARDFLOAT {
   let DecoderMethod = "DecodeFMem";
   let mayStore = 1;
 }
@@ -183,21 +188,21 @@ class MADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
   InstSE<(outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
          !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
          [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))], Itin,
-         FrmFR, opstr>;
+         FrmFR, opstr>, HARDFLOAT;
 
 class NMADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
                 SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
          !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
          [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))],
-         Itin, FrmFR, opstr>;
+         Itin, FrmFR, opstr>, HARDFLOAT;
 
 class LWXC1_FT<string opstr, RegisterOperand DRC,
                InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
   InstSE<(outs DRC:$fd), (ins PtrRC:$base, PtrRC:$index),
          !strconcat(opstr, "\t$fd, ${index}(${base})"),
          [(set DRC:$fd, (OpNode (add iPTR:$base, iPTR:$index)))], Itin,
-         FrmFI, opstr> {
+         FrmFI, opstr>, HARDFLOAT {
   let AddedComplexity = 20;
 }
 
@@ -206,7 +211,7 @@ class SWXC1_FT<string opstr, RegisterOperand DRC,
   InstSE<(outs), (ins DRC:$fs, PtrRC:$base, PtrRC:$index),
          !strconcat(opstr, "\t$fs, ${index}(${base})"),
          [(OpNode DRC:$fs, (add iPTR:$base, iPTR:$index))], Itin,
-         FrmFI, opstr> {
+         FrmFI, opstr>, HARDFLOAT {
   let AddedComplexity = 20;
 }
 
@@ -215,7 +220,7 @@ class BC1F_FT<string opstr, DAGOperand opnd, InstrItinClass Itin,
   InstSE<(outs), (ins FCCRegsOpnd:$fcc, opnd:$offset),
          !strconcat(opstr, "\t$fcc, $offset"),
          [(MipsFPBrcond Op, FCCRegsOpnd:$fcc, bb:$offset)], Itin,
-         FrmFI, opstr> {
+         FrmFI, opstr>, HARDFLOAT {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = DelaySlot;
@@ -227,7 +232,7 @@ class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
   InstSE<(outs), (ins RC:$fs, RC:$ft, condcode:$cond),
          !strconcat("c.$cond.", typestr, "\t$fs, $ft"),
          [(OpNode RC:$fs, RC:$ft, imm:$cond)], Itin, FrmFR,
-         !strconcat("c.$cond.", typestr)> {
+         !strconcat("c.$cond.", typestr)>, HARDFLOAT {
   let Defs = [FCC0];
   let isCodeGenOnly = 1;
 }
@@ -236,7 +241,7 @@ class C_COND_FT<string CondStr, string Typestr, RegisterOperand RC,
                 InstrItinClass itin>  :
    InstSE<(outs), (ins RC:$fs, RC:$ft),
           !strconcat("c.", CondStr, ".", Typestr, "\t$fs, $ft"), [], itin,
-          FrmFR>;
+          FrmFR>, HARDFLOAT;
 
 multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt,
                     InstrItinClass itin> {
@@ -533,9 +538,9 @@ class BuildPairF64Base<RegisterOperand RO> :
            [(set RO:$dst, (MipsBuildPairF64 GPR32Opnd:$lo, GPR32Opnd:$hi))]>;
 
 def BuildPairF64 : BuildPairF64Base<AFGR64Opnd>,
-                   AdditionalRequires<[NotFP64bit]>;
+                   AdditionalRequires<[NotFP64bit]>, HARDFLOAT;
 def BuildPairF64_64 : BuildPairF64Base<FGR64Opnd>,
-                      AdditionalRequires<[IsFP64bit]>;
+                      AdditionalRequires<[IsFP64bit]>, HARDFLOAT;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
 // allocation.
@@ -546,21 +551,21 @@ class ExtractElementF64Base<RegisterOperand RO> :
            [(set GPR32Opnd:$dst, (MipsExtractElementF64 RO:$src, imm:$n))]>;
 
 def ExtractElementF64 : ExtractElementF64Base<AFGR64Opnd>,
-                        AdditionalRequires<[NotFP64bit]>;
+                        AdditionalRequires<[NotFP64bit]>, HARDFLOAT;
 def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
-                           AdditionalRequires<[IsFP64bit]>;
+                           AdditionalRequires<[IsFP64bit]>, HARDFLOAT;
 
 //===----------------------------------------------------------------------===//
 // InstAliases.
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>,
-      ISA_MIPS1_NOT_32R6_64R6;
+      ISA_MIPS1_NOT_32R6_64R6, HARDFLOAT;
 def : MipsInstAlias<"bc1tl $offset", (BC1TL FCC0, brtarget:$offset)>,
-      ISA_MIPS2_NOT_32R6_64R6;
+      ISA_MIPS2_NOT_32R6_64R6, HARDFLOAT;
 def : MipsInstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>,
-      ISA_MIPS1_NOT_32R6_64R6;
+      ISA_MIPS1_NOT_32R6_64R6, HARDFLOAT;
 def : MipsInstAlias<"bc1fl $offset", (BC1FL FCC0, brtarget:$offset)>,
-      ISA_MIPS2_NOT_32R6_64R6;
+      ISA_MIPS2_NOT_32R6_64R6, HARDFLOAT;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns

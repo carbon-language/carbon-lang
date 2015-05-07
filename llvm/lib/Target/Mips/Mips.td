@@ -28,12 +28,15 @@ class PredicateControl {
   list<Predicate> FGRPredicates = [];
   // Predicates for the instruction group membership such as ISA's and ASE's
   list<Predicate> InsnPredicates = [];
+  // Predicate for marking the instruction as usable in hard-float mode only.
+  list<Predicate> HardFloatPredicate = [];
   // Predicates for anything else
   list<Predicate> AdditionalPredicates = [];
   list<Predicate> Predicates = !listconcat(EncodingPredicates,
                                            GPRPredicates,
                                            FGRPredicates,
                                            InsnPredicates,
+                                           HardFloatPredicate,
                                            AdditionalPredicates);
 }
 
@@ -69,6 +72,8 @@ def FeatureNaN2008     : SubtargetFeature<"nan2008", "IsNaN2008bit", "true",
                                 "IEEE 754-2008 NaN encoding">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
                                 "true", "Only supports single precision float">;
+def FeatureSoftFloat   : SubtargetFeature<"soft-float", "IsSoftFloat", "true",
+                                "Does not support floating point instructions">;
 def FeatureNoOddSPReg  : SubtargetFeature<"nooddspreg", "UseOddSPReg", "false",
                               "Disable odd numbered single-precision "
                               "registers">;

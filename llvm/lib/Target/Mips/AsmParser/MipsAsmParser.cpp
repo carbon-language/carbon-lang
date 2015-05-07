@@ -433,8 +433,10 @@ public:
   bool inMips16Mode() const {
     return STI.getFeatureBits() & Mips::FeatureMips16;
   }
-  // TODO: see how can we get this info.
-  bool abiUsesSoftFloat() const { return false; }
+
+  bool abiUsesSoftFloat() const {
+    return (STI.getFeatureBits() & Mips::FeatureSoftFloat);
+  }
 
   /// Warn if RegIndex is the same as the current AT.
   void warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc);

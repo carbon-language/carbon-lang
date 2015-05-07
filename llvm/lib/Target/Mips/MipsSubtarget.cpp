@@ -63,11 +63,11 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine &TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
-      IsLittle(little), IsSingleFloat(false), IsFPXX(false), NoABICalls(false),
-      IsFP64bit(false), UseOddSPReg(true), IsNaN2008bit(false),
-      IsGP64bit(false), HasVFPU(false), HasCnMips(false), HasMips3_32(false),
-      HasMips3_32r2(false), HasMips4_32(false), HasMips4_32r2(false),
-      HasMips5_32r2(false), InMips16Mode(false),
+      IsLittle(little), IsSoftFloat(false), IsSingleFloat(false), IsFPXX(false),
+      NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
+      IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false), HasCnMips(false),
+      HasMips3_32(false), HasMips3_32r2(false), HasMips4_32(false),
+      HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
       HasMSA(false), TM(TM), TargetTriple(TT), TSInfo(*TM.getDataLayout()),
@@ -148,14 +148,10 @@ MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
-  if (InMips16Mode && !TM.Options.UseSoftFloat)
+  if (InMips16Mode && !IsSoftFloat)
     InMips16HardFloat = true;
 
   return *this;
-}
-
-bool MipsSubtarget::abiUsesSoftFloat() const {
-  return TM.Options.UseSoftFloat && !InMips16HardFloat;
 }
 
 bool MipsSubtarget::useConstantIslands() {

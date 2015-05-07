@@ -15,6 +15,8 @@ uint8_t MipsABIFlagsSection::getFpABIValue() {
   switch (FpABI) {
   case FpABIKind::ANY:
     return Val_GNU_MIPS_ABI_FP_ANY;
+  case FpABIKind::SOFT:
+    return Val_GNU_MIPS_ABI_FP_SOFT;
   case FpABIKind::XX:
     return Val_GNU_MIPS_ABI_FP_XX;
   case FpABIKind::S32:

@@ -68,6 +68,7 @@ struct MipsABIFlagsSection {
   enum Val_GNU_MIPS_ABI {
     Val_GNU_MIPS_ABI_FP_ANY = 0,
     Val_GNU_MIPS_ABI_FP_DOUBLE = 1,
+    Val_GNU_MIPS_ABI_FP_SOFT = 3,
     Val_GNU_MIPS_ABI_FP_XX = 5,
     Val_GNU_MIPS_ABI_FP_64 = 6,
     Val_GNU_MIPS_ABI_FP_64A = 7
@@ -77,8 +78,8 @@ struct MipsABIFlagsSection {
     AFL_FLAGS1_ODDSPREG = 1
   };
 
-  // Internal representation of the values used in .module fp=value
-  enum class FpABIKind { ANY, XX, S32, S64 };
+  // Internal representation of the fp_abi related values used in .module.
+  enum class FpABIKind { ANY, XX, S32, S64, SOFT };
 
   // Version of flags structure.
   uint16_t Version;
@@ -217,7 +218,9 @@ public:
     Is32BitABI = P.isABI_O32();
 
     FpABI = FpABIKind::ANY;
-    if (P.isABI_N32() || P.isABI_N64())
+    if (P.abiUsesSoftFloat())
+      FpABI = FpABIKind::SOFT;
+    else if (P.isABI_N32() || P.isABI_N64())
       FpABI = FpABIKind::S64;
     else if (P.isABI_O32()) {
       if (P.isABI_FPXX())
