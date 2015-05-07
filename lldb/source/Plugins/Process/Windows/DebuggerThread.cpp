@@ -23,6 +23,8 @@
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 
+#include "Plugins/Process/Windows/ProcessWindowsLog.h"
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -56,10 +58,19 @@ DebuggerThread::~DebuggerThread()
 Error
 DebuggerThread::DebugLaunch(const ProcessLaunchInfo &launch_info)
 {
-    Error error;
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+        "DebuggerThread::DebugLaunch launching '%s'", launch_info.GetExecutableFile().GetPath().c_str());
 
+    Error error;
     DebugLaunchContext *context = new DebugLaunchContext(this, launch_info);
-    HostThread slave_thread(ThreadLauncher::LaunchThread("lldb.plugin.process-windows.slave[?]", DebuggerThreadRoutine, context, &error));
+    HostThread slave_thread(ThreadLauncher::LaunchThread("lldb.plugin.process-windows.slave[?]",
+                            DebuggerThreadRoutine, context, &error));
+
+    if (!error.Success())
+    {
+        WINERR_IFALL(WINDOWS_LOG_PROCESS,
+            "DebugLaunch couldn't launch debugger thread.  %s", error.AsCString());
+    }
 
     return error;
 }
@@ -79,6 +90,10 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
     // Grab a shared_ptr reference to this so that we know it won't get deleted until after the
     // thread routine has exited.
     std::shared_ptr<DebuggerThread> this_ref(shared_from_this());
+
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+        "DebuggerThread preparing to launch '%s'.",
+        launch_info.GetExecutableFile().GetPath().c_str());
 
     Error error;
     ProcessLauncherWindows launcher;
@@ -101,29 +116,51 @@ DebuggerThread::StopDebugging(bool terminate)
 {
     Error error;
 
+    lldb::pid_t pid = m_process.GetProcessId();
+
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+        "StopDebugging('%s') called (inferior=%I64u).",
+        (terminate ? "true" : "false"), pid);
+
     if (terminate)
     {
-        // Make a copy of the process, since the termination sequence will reset DebuggerThread's
-        // internal copy and it needs to remain open for us to perform the Wait operation.
+        // Make a copy of the process, since the termination sequence will reset
+        // DebuggerThread's internal copy and it needs to remain open for the Wait operation.
         HostProcess process_copy = m_process;
-        lldb::process_t handle = process_copy.GetNativeProcess().GetSystemHandle();
+        lldb::process_t handle = m_process.GetNativeProcess().GetSystemHandle();
 
-        // Initiate the termination before continuing the exception, so that the next debug event
-        // we get is the exit process event, and not some other event.
+        // Initiate the termination before continuing the exception, so that the next debug
+        // event we get is the exit process event, and not some other event.
         BOOL terminate_suceeded = TerminateProcess(handle, 0);
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+            "StopDebugging called TerminateProcess(0x%p, 0) (inferior=%I64u), success='%s'",
+            handle, pid, (terminate_suceeded ? "true" : "false"));
+
 
         // If we're stuck waiting for an exception to continue, continue it now.  But only
         // AFTER setting the termination event, to make sure that we don't race and enter
         // another wait for another debug event.
         if (m_active_exception.get())
+        {
+            WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_EXCEPTION,
+                "StopDebugging masking active exception");
+
             ContinueAsyncException(ExceptionResult::MaskException);
+        }
 
         // Don't return until the process has exited.
         if (terminate_suceeded)
         {
+            WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+                "StopDebugging waiting for termination of process %u to complete.", pid);
+
             DWORD wait_result = ::WaitForSingleObject(handle, 5000);
             if (wait_result != WAIT_OBJECT_0)
                 terminate_suceeded = false;
+
+            WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+                "StopDebugging WaitForSingleObject(0x%p, 5000) returned %u",
+                handle, wait_result);
         }
 
         if (!terminate_suceeded)
@@ -134,6 +171,13 @@ DebuggerThread::StopDebugging(bool terminate)
         error.SetErrorString("Detach not yet supported on Windows.");
         // TODO: Implement detach.
     }
+
+    if (!error.Success())
+    {
+        WINERR_IFALL(WINDOWS_LOG_PROCESS,
+            "StopDebugging encountered an error while trying to  stop process %u.  %s",
+            pid, error.AsCString());
+    }
     return error;
 }
 
@@ -142,6 +186,10 @@ DebuggerThread::ContinueAsyncException(ExceptionResult result)
 {
     if (!m_active_exception.get())
         return;
+
+    WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_EXCEPTION,
+        "ContinueAsyncException called for inferior process %I64u, broadcasting.",
+        m_process.GetProcessId());
 
     m_active_exception.reset();
     m_exception_pred.SetValue(result, eBroadcastAlways);
@@ -164,51 +212,68 @@ DebuggerThread::DebugLoop()
 {
     DEBUG_EVENT dbe = {0};
     bool should_debug = true;
-    while (should_debug && WaitForDebugEvent(&dbe, INFINITE))
+    WINLOG_IFALL(WINDOWS_LOG_EVENT, "Entering WaitForDebugEvent loop");
+    while (should_debug)
     {
-        DWORD continue_status = DBG_CONTINUE;
-        switch (dbe.dwDebugEventCode)
+        WINLOGD_IFALL(WINDOWS_LOG_EVENT, "Calling WaitForDebugEvent");
+        BOOL wait_result = WaitForDebugEvent(&dbe, INFINITE);
+        if (wait_result)
         {
-            case EXCEPTION_DEBUG_EVENT:
+            DWORD continue_status = DBG_CONTINUE;
+            switch (dbe.dwDebugEventCode)
             {
-                ExceptionResult status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
+                case EXCEPTION_DEBUG_EVENT:
+                {
+                    ExceptionResult status = HandleExceptionEvent(dbe.u.Exception, dbe.dwThreadId);
 
-                if (status == ExceptionResult::MaskException)
-                    continue_status = DBG_CONTINUE;
-                else if (status == ExceptionResult::SendToApplication)
-                    continue_status = DBG_EXCEPTION_NOT_HANDLED;
-                break;
-            }
-            case CREATE_THREAD_DEBUG_EVENT:
-                continue_status = HandleCreateThreadEvent(dbe.u.CreateThread, dbe.dwThreadId);
-                break;
-            case CREATE_PROCESS_DEBUG_EVENT:
-                continue_status = HandleCreateProcessEvent(dbe.u.CreateProcessInfo, dbe.dwThreadId);
-                break;
-            case EXIT_THREAD_DEBUG_EVENT:
-                continue_status = HandleExitThreadEvent(dbe.u.ExitThread, dbe.dwThreadId);
-                break;
-            case EXIT_PROCESS_DEBUG_EVENT:
-                continue_status = HandleExitProcessEvent(dbe.u.ExitProcess, dbe.dwThreadId);
-                should_debug = false;
-                break;
-            case LOAD_DLL_DEBUG_EVENT:
-                continue_status = HandleLoadDllEvent(dbe.u.LoadDll, dbe.dwThreadId);
-                break;
-            case UNLOAD_DLL_DEBUG_EVENT:
-                continue_status = HandleUnloadDllEvent(dbe.u.UnloadDll, dbe.dwThreadId);
-                break;
-            case OUTPUT_DEBUG_STRING_EVENT:
-                continue_status = HandleODSEvent(dbe.u.DebugString, dbe.dwThreadId);
-                break;
-            case RIP_EVENT:
-                continue_status = HandleRipEvent(dbe.u.RipInfo, dbe.dwThreadId);
-                if (dbe.u.RipInfo.dwType == SLE_ERROR)
+                    if (status == ExceptionResult::MaskException)
+                        continue_status = DBG_CONTINUE;
+                    else if (status == ExceptionResult::SendToApplication)
+                        continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                    break;
+                }
+                case CREATE_THREAD_DEBUG_EVENT:
+                    continue_status = HandleCreateThreadEvent(dbe.u.CreateThread, dbe.dwThreadId);
+                    break;
+                case CREATE_PROCESS_DEBUG_EVENT:
+                    continue_status = HandleCreateProcessEvent(dbe.u.CreateProcessInfo, dbe.dwThreadId);
+                    break;
+                case EXIT_THREAD_DEBUG_EVENT:
+                    continue_status = HandleExitThreadEvent(dbe.u.ExitThread, dbe.dwThreadId);
+                    break;
+                case EXIT_PROCESS_DEBUG_EVENT:
+                    continue_status = HandleExitProcessEvent(dbe.u.ExitProcess, dbe.dwThreadId);
                     should_debug = false;
-                break;
-        }
+                    break;
+                case LOAD_DLL_DEBUG_EVENT:
+                    continue_status = HandleLoadDllEvent(dbe.u.LoadDll, dbe.dwThreadId);
+                    break;
+                case UNLOAD_DLL_DEBUG_EVENT:
+                    continue_status = HandleUnloadDllEvent(dbe.u.UnloadDll, dbe.dwThreadId);
+                    break;
+                case OUTPUT_DEBUG_STRING_EVENT:
+                    continue_status = HandleODSEvent(dbe.u.DebugString, dbe.dwThreadId);
+                    break;
+                case RIP_EVENT:
+                    continue_status = HandleRipEvent(dbe.u.RipInfo, dbe.dwThreadId);
+                    if (dbe.u.RipInfo.dwType == SLE_ERROR)
+                        should_debug = false;
+                    break;
+            }
 
-        ::ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, continue_status);
+            WINLOGD_IFALL(WINDOWS_LOG_EVENT, "DebugLoop calling ContinueDebugEvent(%u, %u, %u) on thread %u.",
+                          dbe.dwProcessId, dbe.dwThreadId, continue_status, ::GetCurrentThreadId());
+
+            ::ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, continue_status);
+        }
+        else
+        {
+            WINERR_IFALL(WINDOWS_LOG_EVENT,
+                "DebugLoop returned FALSE from WaitForDebugEvent.  Error = %u",
+                ::GetCurrentThreadId(), ::GetLastError());
+
+            should_debug = false;
+        }
     }
     FreeProcessHandles();
 }
@@ -219,10 +284,22 @@ DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thr
     bool first_chance = (info.dwFirstChance != 0);
 
     m_active_exception.reset(new ExceptionRecord(info.ExceptionRecord));
+    WINLOG_IFANY(WINDOWS_LOG_EVENT | WINDOWS_LOG_EXCEPTION,
+                 "HandleExceptionEvent encountered %s chance exception 0x%x on thread %u",
+                 first_chance ? "first" : "second", info.ExceptionRecord.ExceptionCode, thread_id);
 
-    ExceptionResult result = m_debug_delegate->OnDebugException(first_chance, *m_active_exception);
+    ExceptionResult result = m_debug_delegate->OnDebugException(first_chance,
+                                                                *m_active_exception);
     m_exception_pred.SetValue(result, eBroadcastNever);
+
+    WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_EXCEPTION,
+        "DebuggerThread::HandleExceptionEvent waiting for ExceptionPred != BreakInDebugger");
+
     m_exception_pred.WaitForValueNotEqualTo(ExceptionResult::BreakInDebugger, result);
+
+    WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_EXCEPTION,
+        "DebuggerThread::HandleExceptionEvent got ExceptionPred = %u",
+         m_exception_pred.GetValue());
 
     return result;
 }
@@ -230,15 +307,23 @@ DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thr
 DWORD
 DebuggerThread::HandleCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO &info, DWORD thread_id)
 {
+    WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_THREAD,
+        "HandleCreateThreadEvent Thread %u spawned in process %I64u",
+        m_process.GetProcessId(), thread_id);
+
     return DBG_CONTINUE;
 }
 
 DWORD
 DebuggerThread::HandleCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO &info, DWORD thread_id)
 {
+    uint32_t process_id = ::GetProcessId(info.hProcess);
+
+    WINLOG_IFANY(WINDOWS_LOG_EVENT | WINDOWS_LOG_PROCESS, "HandleCreateProcessEvent process %u spawned", process_id);
+
     std::string thread_name;
     llvm::raw_string_ostream name_stream(thread_name);
-    name_stream << "lldb.plugin.process-windows.slave[" << m_process.GetProcessId() << "]";
+    name_stream << "lldb.plugin.process-windows.slave[" << process_id << "]";
     name_stream.flush();
     ThisThread::SetName(thread_name.c_str());
 
@@ -259,12 +344,20 @@ DebuggerThread::HandleCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO &info, 
 DWORD
 DebuggerThread::HandleExitThreadEvent(const EXIT_THREAD_DEBUG_INFO &info, DWORD thread_id)
 {
+    WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_THREAD,
+        "HandleExitThreadEvent Thread %u exited with code %u in process %I64u",
+        thread_id, info.dwExitCode, m_process.GetProcessId());
+
     return DBG_CONTINUE;
 }
 
 DWORD
 DebuggerThread::HandleExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO &info, DWORD thread_id)
 {
+    WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_THREAD,
+        "HandleExitProcessEvent process %I64u exited with code %u",
+        m_process.GetProcessId(), info.dwExitCode);
+
     FreeProcessHandles();
 
     m_debug_delegate->OnExitProcess(info.dwExitCode);
@@ -277,6 +370,8 @@ DebuggerThread::HandleLoadDllEvent(const LOAD_DLL_DEBUG_INFO &info, DWORD thread
     if (info.hFile == nullptr)
     {
         // Not sure what this is, so just ignore it.
+        WINWARN_IFALL(WINDOWS_LOG_EVENT, "Inferior %I64u - HandleLoadDllEvent has a NULL file handle, returning...",
+                      m_process.GetProcessId());
         return DBG_CONTINUE;
     }
 
@@ -294,11 +389,17 @@ DebuggerThread::HandleLoadDllEvent(const LOAD_DLL_DEBUG_INFO &info, DWORD thread
         FileSpec file_spec(path, false);
         ModuleSpec module_spec(file_spec);
         lldb::addr_t load_addr = reinterpret_cast<lldb::addr_t>(info.lpBaseOfDll);
+
+        WINLOG_IFALL(WINDOWS_LOG_EVENT, "Inferior %I64u - HandleLoadDllEvent DLL '%s' loaded at address 0x%p...",
+                     m_process.GetProcessId(), path, info.lpBaseOfDll);
+
         m_debug_delegate->OnLoadDll(module_spec, load_addr);
     }
     else
     {
-        // An unknown error occurred getting the path name.
+        WINERR_IFALL(WINDOWS_LOG_EVENT,
+                     "Inferior %I64u - HandleLoadDllEvent Error %u occurred calling GetFinalPathNameByHandle",
+                     m_process.GetProcessId(), ::GetLastError());
     }
     // Windows does not automatically close info.hFile, so we need to do it.
     ::CloseHandle(info.hFile);
@@ -308,6 +409,10 @@ DebuggerThread::HandleLoadDllEvent(const LOAD_DLL_DEBUG_INFO &info, DWORD thread
 DWORD
 DebuggerThread::HandleUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO &info, DWORD thread_id)
 {
+    WINLOG_IFALL(WINDOWS_LOG_EVENT,
+        "HandleUnloadDllEvent process %I64u unloading DLL at addr 0x%p.",
+        m_process.GetProcessId(), info.lpBaseOfDll);
+
     m_debug_delegate->OnUnloadDll(reinterpret_cast<lldb::addr_t>(info.lpBaseOfDll));
     return DBG_CONTINUE;
 }
@@ -321,6 +426,10 @@ DebuggerThread::HandleODSEvent(const OUTPUT_DEBUG_STRING_INFO &info, DWORD threa
 DWORD
 DebuggerThread::HandleRipEvent(const RIP_INFO &info, DWORD thread_id)
 {
+    WINERR_IFALL(WINDOWS_LOG_EVENT,
+        "HandleRipEvent encountered error %u (type=%u) in process %I64u thread %u",
+        info.dwError, info.dwType, m_process.GetProcessId(), thread_id);
+
     Error error(info.dwError, eErrorTypeWin32);
     m_debug_delegate->OnDebuggerError(error, info.dwType);
 

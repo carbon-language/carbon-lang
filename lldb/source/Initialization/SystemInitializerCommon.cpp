@@ -171,6 +171,10 @@ SystemInitializerCommon::Terminate()
     PlatformDarwinKernel::Terminate();
 #endif
 
+#if defined(__WIN32__)
+    ProcessWindowsLog::Terminate();
+#endif
+
 #ifndef LLDB_DISABLE_PYTHON
     OperatingSystemPython::Terminate();
 #endif

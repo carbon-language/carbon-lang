@@ -12,25 +12,25 @@
 
 #include "lldb/Core/Log.h"
 
-#define WINDOWS_LOG_VERBOSE                  (1u << 0)
-#define WINDOWS_LOG_PROCESS                  (1u << 1)
-#define WINDOWS_LOG_THREAD                   (1u << 2)
-#define WINDOWS_LOG_MEMORY                   (1u << 3)    // Log memory reads/writes calls
-#define WINDOWS_LOG_MEMORY_DATA_SHORT        (1u << 4)    // Log short memory reads/writes bytes
-#define WINDOWS_LOG_MEMORY_DATA_LONG         (1u << 5)    // Log all memory reads/writes bytes
-#define WINDOWS_LOG_BREAKPOINTS              (1u << 6)
-#define WINDOWS_LOG_STEP                     (1u << 7)
-#define WINDOWS_LOG_ASYNC                    (1u << 8)
-#define WINDOWS_LOG_REGISTERS                (1u << 9)
-#define WINDOWS_LOG_ALL                      (UINT32_MAX)
-#define WINDOWS_LOG_DEFAULT                  WINDOWS_LOG_ASYNC
+#define WINDOWS_LOG_VERBOSE     (1u << 0)
+#define WINDOWS_LOG_PROCESS     (1u << 1)    // Log process operations
+#define WINDOWS_LOG_EXCEPTION   (1u << 1)    // Log exceptions
+#define WINDOWS_LOG_THREAD      (1u << 2)    // Log thread operations
+#define WINDOWS_LOG_MEMORY      (1u << 3)    // Log memory reads/writes calls
+#define WINDOWS_LOG_BREAKPOINTS (1u << 4)    // Log breakpoint operations
+#define WINDOWS_LOG_STEP        (1u << 5)    // Log step operations
+#define WINDOWS_LOG_REGISTERS   (1u << 6)    // Log register operations
+#define WINDOWS_LOG_EVENT       (1u << 7)    // Low level debug events
+#define WINDOWS_LOG_ALL         (UINT32_MAX)
 
-// The size which determines "short memory reads/writes".
-#define WINDOWS_LOG_MEMORY_SHORT_BYTES       (4 * sizeof(ptrdiff_t))
+enum class LogMaskReq
+{
+    All,
+    Any
+};
 
 class ProcessWindowsLog
 {
-    static int m_nestinglevel;
     static const char *m_pluginname;
 
 public:
@@ -39,6 +39,9 @@ public:
     // ---------------------------------------------------------------------
     static void
     Initialize();
+
+    static void
+    Terminate();
 
     static void
     RegisterPluginName(const char *pluginName)
@@ -52,8 +55,11 @@ public:
         m_pluginname = pluginName.GetCString();
     }
 
+    static bool
+    TestLogFlags(uint32_t mask, LogMaskReq req);
+
     static lldb_private::Log *
-    GetLogIfAllCategoriesSet(uint32_t mask = 0);
+    GetLog();
 
     static void
     DisableLog(const char **args, lldb_private::Stream *feedback_strm);
@@ -64,10 +70,27 @@ public:
 
     static void
     ListLogCategories(lldb_private::Stream *strm);
-
-    static void
-    LogIf(uint32_t mask, const char *format, ...);
-
 };
+
+#define WINLOGF_IF(Flags, Req, Method, ...)              \
+    {                                                    \
+        if (ProcessWindowsLog::TestLogFlags(Flags, Req)) \
+        {                                                \
+            Log *log = ProcessWindowsLog::GetLog();      \
+            if (log)                                     \
+                log->Method(__VA_ARGS__);                \
+        }                                                \
+    }
+
+#define WINLOG_IFANY(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::Any, Printf, __VA_ARGS__)
+#define WINLOG_IFALL(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::All, Printf, __VA_ARGS__)
+#define WINLOGV_IFANY(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::Any, Verbose, __VA_ARGS__)
+#define WINLOGV_IFALL(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::All, Verbose, __VA_ARGS__)
+#define WINLOGD_IFANY(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::Any, Debug, __VA_ARGS__)
+#define WINLOGD_IFALL(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::All, Debug, __VA_ARGS__)
+#define WINERR_IFANY(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::Any, Error, __VA_ARGS__)
+#define WINERR_IFALL(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::All, Error, __VA_ARGS__)
+#define WINWARN_IFANY(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::Any, Warning, __VA_ARGS__)
+#define WINWARN_IFALL(Flags, ...) WINLOGF_IF(Flags, LogMaskReq::All, Warning, __VA_ARGS__)
 
 #endif  // liblldb_ProcessWindowsLog_h_

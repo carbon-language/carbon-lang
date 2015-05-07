@@ -14,6 +14,7 @@
 #include "lldb/Host/windows/windows.h"
 
 #include "lldb-x86-register-enums.h"
+#include "ProcessWindowsLog.h"
 #include "RegisterContext_x86.h"
 #include "RegisterContextWindows_x86.h"
 #include "TargetThreadWindows.h"
@@ -127,37 +128,51 @@ RegisterContextWindows_x86::ReadRegister(const RegisterInfo *reg_info, RegisterV
     if (!CacheAllRegisterValues())
         return false;
 
-    switch (reg_info->kinds[eRegisterKindLLDB])
+    uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    switch (reg)
     {
         case lldb_eax_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EAX", m_context.Eax);
             reg_value.SetUInt32(m_context.Eax);
             break;
         case lldb_ebx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EBX", m_context.Ebx);
             reg_value.SetUInt32(m_context.Ebx);
             break;
         case lldb_ecx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from ECX", m_context.Ecx);
             reg_value.SetUInt32(m_context.Ecx);
             break;
         case lldb_edx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EDX", m_context.Edx);
             reg_value.SetUInt32(m_context.Edx);
             break;
         case lldb_edi_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EDI", m_context.Edi);
             reg_value.SetUInt32(m_context.Edi);
             break;
         case lldb_esi_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from ESI", m_context.Esi);
             reg_value.SetUInt32(m_context.Esi);
             break;
         case lldb_ebp_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EBP", m_context.Ebp);
             reg_value.SetUInt32(m_context.Ebp);
             break;
         case lldb_esp_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from ESP", m_context.Esp);
             reg_value.SetUInt32(m_context.Esp);
             break;
         case lldb_eip_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EIP", m_context.Eip);
             reg_value.SetUInt32(m_context.Eip);
             break;
         case lldb_eflags_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Read value 0x%x from EFLAGS", m_context.EFlags);
             reg_value.SetUInt32(m_context.EFlags);
+            break;
+        default:
+            WINWARN_IFALL(WINDOWS_LOG_REGISTERS, "Requested unknown register %u", reg);
             break;
     }
     return true;
@@ -172,38 +187,52 @@ RegisterContextWindows_x86::WriteRegister(const RegisterInfo *reg_info, const Re
     if (!CacheAllRegisterValues())
         return false;
 
-    switch (reg_info->kinds[eRegisterKindLLDB])
+    uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    switch (reg)
     {
         case lldb_eax_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EAX", reg_value.GetAsUInt32());
             m_context.Eax = reg_value.GetAsUInt32();
             break;
         case lldb_ebx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EBX", reg_value.GetAsUInt32());
             m_context.Ebx = reg_value.GetAsUInt32();
             break;
         case lldb_ecx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to ECX", reg_value.GetAsUInt32());
             m_context.Ecx = reg_value.GetAsUInt32();
             break;
         case lldb_edx_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EDX", reg_value.GetAsUInt32());
             m_context.Edx = reg_value.GetAsUInt32();
             break;
         case lldb_edi_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EDI", reg_value.GetAsUInt32());
             m_context.Edi = reg_value.GetAsUInt32();
             break;
         case lldb_esi_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to ESI", reg_value.GetAsUInt32());
             m_context.Esi = reg_value.GetAsUInt32();
             break;
         case lldb_ebp_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EBP", reg_value.GetAsUInt32());
             m_context.Ebp = reg_value.GetAsUInt32();
             break;
         case lldb_esp_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to ESP", reg_value.GetAsUInt32());
             m_context.Esp = reg_value.GetAsUInt32();
             break;
         case lldb_eip_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EIP", reg_value.GetAsUInt32());
             m_context.Eip = reg_value.GetAsUInt32();
             break;
         case lldb_eflags_i386:
+            WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to EFLAGS", reg_value.GetAsUInt32());
             m_context.EFlags = reg_value.GetAsUInt32();
             break;
+        default:
+            WINWARN_IFALL(WINDOWS_LOG_REGISTERS, "Write value 0x%x to unknown register %u", reg_value.GetAsUInt32(),
+                          reg);
     }
 
     // Physically update the registers in the target process.

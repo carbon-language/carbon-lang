@@ -128,6 +128,9 @@ public:
     Error(const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
     virtual void
+    VAError(const char *format, va_list args) __attribute__((format(printf, 2, 3)));
+
+    virtual void
     FatalError(int err, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 
     virtual void

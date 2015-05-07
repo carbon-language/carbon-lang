@@ -208,11 +208,18 @@ Log::LogIf(uint32_t bits, const char *format, ...)
 void
 Log::Error(const char *format, ...)
 {
-    char *arg_msg = nullptr;
     va_list args;
     va_start(args, format);
-    ::vasprintf(&arg_msg, format, args);
+    VAError(format, args);
     va_end(args);
+}
+
+
+void
+Log::VAError(const char *format, va_list args)
+{
+    char *arg_msg = nullptr;
+    ::vasprintf(&arg_msg, format, args);
 
     if (arg_msg == nullptr)
         return;
@@ -220,6 +227,7 @@ Log::Error(const char *format, ...)
     Printf("error: %s", arg_msg);
     free(arg_msg);
 }
+
 
 //----------------------------------------------------------------------
 // Printing of errors that ARE fatal. Exit with ERR exit code

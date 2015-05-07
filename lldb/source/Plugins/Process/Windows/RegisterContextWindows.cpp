@@ -13,6 +13,7 @@
 #include "lldb/Host/windows/HostThreadWindows.h"
 #include "lldb/Host/windows/windows.h"
 
+#include "ProcessWindowsLog.h"
 #include "RegisterContextWindows.h"
 #include "TargetThreadWindows.h"
 
@@ -143,7 +144,12 @@ RegisterContextWindows::CacheAllRegisterValues()
     memset(&m_context, 0, sizeof(m_context));
     m_context.ContextFlags = kWinContextFlags;
     if (!::GetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), &m_context))
+    {
+        WINERR_IFALL(WINDOWS_LOG_REGISTERS, "GetThreadContext failed with error %u while caching register values.",
+                     ::GetLastError());
         return false;
+    }
+    WINLOG_IFALL(WINDOWS_LOG_REGISTERS, "GetThreadContext successfully updated the register values.", ::GetLastError());
     m_context_stale = false;
     return true;
 }
