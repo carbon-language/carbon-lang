@@ -85,7 +85,7 @@ The status of major ABI-impacting C++ features:
   finished, along with support for the ``/GR`` flag.
 
 * Exceptions and SEH: :partial:`Partial`.
-  C++ exceptions (``try`` / ``catch``/ ``throw``) and
+  C++ exceptions (``try`` / ``catch`` / ``throw``) and
   structured exceptions (``__try`` / ``__except`` / ``__finally``) mostly
   work on x64. 32-bit exception handling support is being worked on.  LLVM does
   not model asynchronous exceptions, so it is currently impossible to catch an
@@ -96,7 +96,7 @@ The status of major ABI-impacting C++ features:
 .. _consistent with Visual C++:
   https://msdn.microsoft.com/en-us/library/wfa0edys.aspx
 
-* Thread-safe initialization of local statics: :none:`Complete`.  MSVC 2015
+* Thread-safe initialization of local statics: :good:`Complete`.  MSVC 2015
   added support for thread-safe initialization of such variables by taking an
   ABI break.
   We are ABI compatible with both the MSVC 2013 and 2015 ABI for static local
