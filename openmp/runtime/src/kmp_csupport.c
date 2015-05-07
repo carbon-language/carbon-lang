@@ -461,6 +461,14 @@ __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
     this_thr    = __kmp_threads[ global_tid ];
     serial_team = this_thr->th.th_serial_team;
 
+   #if OMP_41_ENABLED
+   kmp_task_team_t *   task_team = this_thr->th.th_task_team;
+
+   // we need to wait for the proxy tasks before finishing the thread
+   if ( task_team != NULL && task_team->tt.tt_found_proxy_tasks )
+        __kmp_task_team_wait(this_thr, serial_team, NULL ); // is an ITT object needed here?
+   #endif
+
     KMP_MB();
     KMP_DEBUG_ASSERT( serial_team );
     KMP_ASSERT(       serial_team -> t.t_serialized );

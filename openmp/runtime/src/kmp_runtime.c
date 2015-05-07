@@ -3940,6 +3940,16 @@ __kmp_unregister_root_current_thread( int gtid )
 
     KMP_MB();
 
+#if OMP_41_ENABLED
+   kmp_info_t * thread = __kmp_threads[gtid];
+   kmp_team_t * team = thread->th.th_team;
+   kmp_task_team_t *   task_team = thread->th.th_task_team;
+
+   // we need to wait for the proxy tasks before finishing the thread
+   if ( task_team != NULL && task_team->tt.tt_found_proxy_tasks )
+        __kmp_task_team_wait(thread, team, NULL );
+#endif
+
     __kmp_reset_root(gtid, root);
 
     /* free up this thread slot */

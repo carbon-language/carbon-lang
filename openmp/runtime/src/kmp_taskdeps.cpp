@@ -403,6 +403,9 @@ __kmpc_omp_task_with_deps( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_ta
     kmp_taskdata_t * current_task = thread->th.th_current_task;
 
     bool serial = current_task->td_flags.team_serial || current_task->td_flags.tasking_ser || current_task->td_flags.final;
+#if OMP_41_ENABLED
+    serial = serial && !(new_taskdata->td_flags.proxy == TASK_PROXY);
+#endif
 
     if ( !serial && ( ndeps > 0 || ndeps_noalias > 0 )) {
         /* if no dependencies have been tracked yet, create the dependence hash */
@@ -425,11 +428,20 @@ __kmpc_omp_task_with_deps( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_ta
                   new_taskdata ) );
             return TASK_CURRENT_NOT_QUEUED;
         }
+    } else {
+#if OMP_41_ENABLED
+        kmp_task_team_t * task_team = thread->th.th_task_team;
+        if ( task_team && task_team->tt.tt_found_proxy_tasks )
+           __kmpc_omp_wait_deps ( loc_ref, gtid, ndeps, dep_list, ndeps_noalias, noalias_dep_list );
+        else
+#endif
+           KA_TRACE(10, ("__kmpc_omp_task_with_deps(exit): T#%d ignored dependencies for task (serialized)"
+                           "loc=%p task=%p\n", gtid, loc_ref, new_taskdata ) );
     }
 
     KA_TRACE(10, ("__kmpc_omp_task_with_deps(exit): T#%d task had no blocking dependencies : "
                   "loc=%p task=%p, transferring to __kmpc_omp_task\n", gtid, loc_ref,
-                  new_taskdata ) );    
+                  new_taskdata ) );
 
     return __kmpc_omp_task(loc_ref,gtid,new_task);
 }
@@ -460,9 +472,15 @@ __kmpc_omp_wait_deps ( ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps, kmp_de
     kmp_taskdata_t * current_task = thread->th.th_current_task;
 
     // We can return immediately as:
-    //   - dependences are not computed in serial teams
+    //   - dependences are not computed in serial teams (except if we have proxy tasks)
     //   - if the dephash is not yet created it means we have nothing to wait for
-    if ( current_task->td_flags.team_serial || current_task->td_flags.tasking_ser || current_task->td_flags.final || current_task->td_dephash == NULL ) {
+    bool ignore = current_task->td_flags.team_serial || current_task->td_flags.tasking_ser || current_task->td_flags.final;
+#if OMP_41_ENABLED
+    ignore = ignore && thread->th.th_task_team->tt.tt_found_proxy_tasks == FALSE;
+#endif
+    ignore = ignore || current_task->td_dephash == NULL;
+
+    if ( ignore ) {
         KA_TRACE(10, ("__kmpc_omp_wait_deps(exit): T#%d has no blocking dependencies : loc=%p\n", gtid, loc_ref) );
         return;
     }

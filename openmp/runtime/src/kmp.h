@@ -51,6 +51,8 @@
 #define TASK_UNTIED              0
 #define TASK_EXPLICIT            1
 #define TASK_IMPLICIT            0
+#define TASK_PROXY               1
+#define TASK_FULL                0
 
 #define KMP_CANCEL_THREADS
 #define KMP_THREAD_ATTR
@@ -1987,7 +1989,12 @@ typedef struct kmp_tasking_flags {          /* Total struct must be exactly 32 b
     unsigned merged_if0  : 1;               /* no __kmpc_task_{begin/complete}_if0 calls in if0 code path */
 #if OMP_40_ENABLED
     unsigned destructors_thunk : 1;         /* set if the compiler creates a thunk to invoke destructors from the runtime */
+#if OMP_41_ENABLED
+    unsigned proxy       : 1;               /* task is a proxy task (it will be executed outside the context of the RTL) */
+    unsigned reserved    : 11;              /* reserved for compiler use */
+#else
     unsigned reserved    : 12;              /* reserved for compiler use */
+#endif
 #else // OMP_40_ENABLED
     unsigned reserved    : 13;              /* reserved for compiler use */
 #endif // OMP_40_ENABLED
@@ -2077,6 +2084,9 @@ typedef struct kmp_base_task_team {
                                                    /* TRUE means tt_threads_data is set up and initialized */
     kmp_int32               tt_nproc;              /* #threads in team           */
     kmp_int32               tt_max_threads;        /* number of entries allocated for threads_data array */
+#if OMP_41_ENABLED
+    kmp_int32               tt_found_proxy_tasks;  /* Have we found proxy tasks since last barrier */
+#endif
 
     KMP_ALIGN_CACHE
     volatile kmp_uint32     tt_unfinished_threads; /* #threads still active      */
@@ -3147,7 +3157,7 @@ int __kmp_execute_tasks_oncore(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_onco
 extern void __kmp_reap_task_teams( void );
 extern void __kmp_unref_task_team( kmp_task_team_t *task_team, kmp_info_t *thread );
 extern void __kmp_wait_to_unref_task_teams( void );
-extern void __kmp_task_team_setup ( kmp_info_t *this_thr, kmp_team_t *team, int both );
+extern void __kmp_task_team_setup ( kmp_info_t *this_thr, kmp_team_t *team, int both, int always );
 extern void __kmp_task_team_sync  ( kmp_info_t *this_thr, kmp_team_t *team );
 extern void __kmp_task_team_wait  ( kmp_info_t *this_thr, kmp_team_t *team
 #if USE_ITT_BUILD
@@ -3302,7 +3312,15 @@ KMP_EXPORT kmp_int32 __kmpc_cancellationpoint(ident_t* loc_ref, kmp_int32 gtid, 
 KMP_EXPORT kmp_int32 __kmpc_cancel_barrier(ident_t* loc_ref, kmp_int32 gtid);
 KMP_EXPORT int __kmp_get_cancellation_status(int cancel_kind);
 
+#if OMP_41_ENABLED
+
+KMP_EXPORT void __kmpc_proxy_task_completed( kmp_int32 gtid, kmp_task_t *ptask );
+KMP_EXPORT void __kmpc_proxy_task_completed_ooo ( kmp_task_t *ptask );
+
 #endif
+
+#endif
+
 
 /*
  * Lock interface routines (fast versions with gtid passed in)

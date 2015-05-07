@@ -1135,7 +1135,7 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
             if (__kmp_tasking_mode != tskm_immediate_exec) {
                 __kmp_task_team_wait(this_thr, team
                                      USE_ITT_BUILD_ARG(itt_sync_obj) );
-                __kmp_task_team_setup(this_thr, team, 0); // use 0 to only setup the current team
+                __kmp_task_team_setup(this_thr, team, 0, 0); // use 0,0 to only setup the current team if nthreads > 1
             }
 
 
@@ -1227,9 +1227,32 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
     } else { // Team is serialized.
         status = 0;
         if (__kmp_tasking_mode != tskm_immediate_exec) {
+#if OMP_41_ENABLED
+            if ( this_thr->th.th_task_team != NULL ) {
+                void *itt_sync_obj = NULL;
+#if USE_ITT_NOTIFY
+                if (__itt_sync_create_ptr || KMP_ITT_DEBUG) {
+                    itt_sync_obj = __kmp_itt_barrier_object(gtid, bt, 1);
+                    __kmp_itt_barrier_starting(gtid, itt_sync_obj);
+                }
+#endif
+
+                kmp_task_team_t * task_team = this_thr->th.th_task_team;
+                KMP_DEBUG_ASSERT(task_team->tt.tt_found_proxy_tasks == TRUE);
+                __kmp_task_team_wait(this_thr, team
+                                               USE_ITT_BUILD_ARG(itt_sync_obj));
+                __kmp_task_team_setup(this_thr, team, 0, 0);
+
+#if USE_ITT_BUILD
+                if (__itt_sync_create_ptr || KMP_ITT_DEBUG)
+                    __kmp_itt_barrier_finished(gtid, itt_sync_obj);
+#endif /* USE_ITT_BUILD */
+            }
+#else
             // The task team should be NULL for serialized code (tasks will be executed immediately)
             KMP_DEBUG_ASSERT(team->t.t_task_team[this_thr->th.th_task_state] == NULL);
             KMP_DEBUG_ASSERT(this_thr->th.th_task_team == NULL);
+#endif
         }
     }
     KA_TRACE(15, ("__kmp_barrier: T#%d(%d:%d) is leaving with return value %d\n",
@@ -1532,7 +1555,7 @@ __kmp_fork_barrier(int gtid, int tid)
 #endif
 
         if (__kmp_tasking_mode != tskm_immediate_exec) {
-            __kmp_task_team_setup(this_thr, team, 1);  // 1 indicates setup both task teams
+            __kmp_task_team_setup(this_thr, team, 1, 0);  // 1,0 indicates setup both task teams if nthreads > 1
         }
 
         /* The master thread may have changed its blocktime between the join barrier and the
