@@ -791,6 +791,17 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           CondBr->getSuccessor(ToRemove)->removePredecessor(BB, true);
           BranchInst::Create(CondBr->getSuccessor(ToKeep), CondBr);
           CondBr->eraseFromParent();
+          if (CondCmp->use_empty())
+            CondCmp->eraseFromParent();
+          else if (CondCmp->getParent() == BB) {
+            // If the fact we just learned is true for all uses of the
+            // condition, replace it with a constant value
+            auto *CI = Baseline == LazyValueInfo::True ?
+              ConstantInt::getTrue(CondCmp->getType()) :
+              ConstantInt::getFalse(CondCmp->getType());
+            CondCmp->replaceAllUsesWith(CI);
+            CondCmp->eraseFromParent();
+          }
           return true;
         }
       }
