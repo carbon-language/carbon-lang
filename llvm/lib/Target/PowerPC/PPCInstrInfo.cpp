@@ -815,7 +815,8 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // copies are generated, they are close enough to some use that the
     // lower-latency form is preferable.
     Opc = PPC::XXLOR;
-  else if (PPC::VSFRCRegClass.contains(DestReg, SrcReg))
+  else if (PPC::VSFRCRegClass.contains(DestReg, SrcReg) ||
+           PPC::VSSRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::XXLORf;
   else if (PPC::QFRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::QVFMR;
@@ -896,6 +897,12 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
     NonRI = true;
   } else if (PPC::VSFRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STXSDX))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
+    NonRI = true;
+  } else if (PPC::VSSRCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STXSSPX))
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
                                        FrameIdx));
@@ -1011,6 +1018,10 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     NonRI = true;
   } else if (PPC::VSFRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LXSDX), DestReg),
+                                       FrameIdx));
+    NonRI = true;
+  } else if (PPC::VSSRCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LXSSPX), DestReg),
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {

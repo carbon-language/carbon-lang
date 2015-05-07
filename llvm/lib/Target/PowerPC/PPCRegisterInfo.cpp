@@ -282,6 +282,7 @@ unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
     return 32 - DefaultSafety;
   case PPC::VSRCRegClassID:
   case PPC::VSFRCRegClassID:
+  case PPC::VSSRCRegClassID:
     return 64 - DefaultSafety;
   case PPC::CRRCRegClassID:
     return 8 - DefaultSafety;
@@ -300,6 +301,8 @@ PPCRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
       return &PPC::VSFRCRegClass;
     else if (RC == &PPC::VRRCRegClass)
       return &PPC::VSRCRegClass;
+    else if (RC == &PPC::F4RCRegClass && Subtarget.hasP8Vector())
+      return &PPC::VSSRCRegClass;
   }
 
   return TargetRegisterInfo::getLargestLegalSuperClass(RC, MF);

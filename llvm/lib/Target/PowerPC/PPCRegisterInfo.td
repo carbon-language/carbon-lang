@@ -316,6 +316,9 @@ def VFRC :  RegisterClass<"PPC", [f64], 64,
                                VF22, VF21, VF20)>;
 def VSFRC : RegisterClass<"PPC", [f64], 64, (add F8RC, VFRC)>;
 
+// Register class for single precision scalars in VSX registers
+def VSSRC : RegisterClass<"PPC", [f32], 32, (add VSFRC)>;
+
 // For QPX
 def QFRC : RegisterClass<"PPC", [v4f64], 256, (add (sequence "QF%u", 0, 13),
                                                 (sequence "QF%u", 31, 14))>;

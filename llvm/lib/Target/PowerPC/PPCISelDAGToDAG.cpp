@@ -2734,7 +2734,10 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     else if (N->getValueType(0) == MVT::i64)
       SelectCCOp = PPC::SELECT_CC_I8;
     else if (N->getValueType(0) == MVT::f32)
-      SelectCCOp = PPC::SELECT_CC_F4;
+      if (PPCSubTarget->hasP8Vector())
+        SelectCCOp = PPC::SELECT_CC_VSSRC;
+      else
+        SelectCCOp = PPC::SELECT_CC_F4;
     else if (N->getValueType(0) == MVT::f64)
       if (PPCSubTarget->hasVSX())
         SelectCCOp = PPC::SELECT_CC_VSFRC;
@@ -3449,6 +3452,7 @@ void PPCDAGToDAGISel::PeepholeCROps() {
       case PPC::SELECT_QBRC:
       case PPC::SELECT_VRRC:
       case PPC::SELECT_VSFRC:
+      case PPC::SELECT_VSSRC:
       case PPC::SELECT_VSRC: {
         SDValue Op = MachineNode->getOperand(0);
         if (Op.isMachineOpcode()) {
@@ -3759,6 +3763,7 @@ void PPCDAGToDAGISel::PeepholeCROps() {
       case PPC::SELECT_QBRC:
       case PPC::SELECT_VRRC:
       case PPC::SELECT_VSFRC:
+      case PPC::SELECT_VSSRC:
       case PPC::SELECT_VSRC:
         if (Op1Set)
           ResNode = MachineNode->getOperand(1).getNode();

@@ -582,6 +582,9 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
       setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Legal);
 
+      if (Subtarget.hasP8Vector())
+        addRegisterClass(MVT::f32, &PPC::VSSRCRegClass);
+
       addRegisterClass(MVT::f64, &PPC::VSFRCRegClass);
 
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
@@ -2680,7 +2683,10 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
           RC = &PPC::GPRCRegClass;
           break;
         case MVT::f32:
-          RC = &PPC::F4RCRegClass;
+          if (Subtarget.hasP8Vector())
+            RC = &PPC::VSSRCRegClass;
+          else
+            RC = &PPC::F4RCRegClass;
           break;
         case MVT::f64:
           if (Subtarget.hasVSX())
@@ -3094,7 +3100,10 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         unsigned VReg;
 
         if (ObjectVT == MVT::f32)
-          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F4RCRegClass);
+          VReg = MF.addLiveIn(FPR[FPR_idx],
+                              Subtarget.hasP8Vector()
+                                  ? &PPC::VSSRCRegClass
+                                  : &PPC::F4RCRegClass);
         else
           VReg = MF.addLiveIn(FPR[FPR_idx], Subtarget.hasVSX()
                                                 ? &PPC::VSFRCRegClass
@@ -8383,6 +8392,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
              MI->getOpcode() == PPC::SELECT_CC_QBRC ||
              MI->getOpcode() == PPC::SELECT_CC_VRRC ||
              MI->getOpcode() == PPC::SELECT_CC_VSFRC ||
+             MI->getOpcode() == PPC::SELECT_CC_VSSRC ||
              MI->getOpcode() == PPC::SELECT_CC_VSRC ||
              MI->getOpcode() == PPC::SELECT_I4 ||
              MI->getOpcode() == PPC::SELECT_I8 ||
@@ -8393,6 +8403,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
              MI->getOpcode() == PPC::SELECT_QBRC ||
              MI->getOpcode() == PPC::SELECT_VRRC ||
              MI->getOpcode() == PPC::SELECT_VSFRC ||
+             MI->getOpcode() == PPC::SELECT_VSSRC ||
              MI->getOpcode() == PPC::SELECT_VSRC) {
     // The incoming instruction knows the destination vreg to set, the
     // condition code register to branch on, the true/false values to
@@ -8429,6 +8440,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
         MI->getOpcode() == PPC::SELECT_QBRC ||
         MI->getOpcode() == PPC::SELECT_VRRC ||
         MI->getOpcode() == PPC::SELECT_VSFRC ||
+        MI->getOpcode() == PPC::SELECT_VSSRC ||
         MI->getOpcode() == PPC::SELECT_VSRC) {
       BuildMI(BB, dl, TII->get(PPC::BC))
         .addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
@@ -10648,7 +10660,10 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
              Constraint == "wf") {
     return std::make_pair(0U, &PPC::VSRCRegClass);
   } else if (Constraint == "ws") {
-    return std::make_pair(0U, &PPC::VSFRCRegClass);
+    if (VT == MVT::f32)
+      return std::make_pair(0U, &PPC::VSSRCRegClass);
+    else
+      return std::make_pair(0U, &PPC::VSFRCRegClass);
   }
 
   std::pair<unsigned, const TargetRegisterClass *> R =

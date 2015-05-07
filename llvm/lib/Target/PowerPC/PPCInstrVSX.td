@@ -40,6 +40,13 @@ def vsfrc : RegisterOperand<VSFRC> {
   let ParserMatchClass = PPCRegVSFRCAsmOperand;
 }
 
+def PPCRegVSSRCAsmOperand : AsmOperandClass {
+  let Name = "RegVSSRC"; let PredicateMethod = "isVSRegNumber";
+}
+def vssrc : RegisterOperand<VSSRC> {
+  let ParserMatchClass = PPCRegVSSRCAsmOperand;
+}
+
 // Little-endian-specific nodes.
 def SDT_PPClxvd2x : SDTypeProfile<1, 1, [
   SDTCisVT<0, v2f64>, SDTCisPtrTy<1>
@@ -103,7 +110,7 @@ let Uses = [RM] in {
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvw4x $XT, $src", IIC_LdStLFD,
                          [(set v4i32:$XT, (int_ppc_vsx_lxvw4x xoaddr:$src))]>;
-  }
+  } // mayLoad
 
   // Store indexed instructions
   let mayStore = 1 in {
@@ -121,7 +128,8 @@ let Uses = [RM] in {
                          (outs), (ins vsrc:$XT, memrr:$dst),
                          "stxvw4x $XT, $dst", IIC_LdStSTFD,
                          [(store v4i32:$XT, xoaddr:$dst)]>;
-  }
+
+  } // mayStore
 
   // Add/Mul Instructions
   let isCommutable = 1 in {
@@ -791,6 +799,15 @@ let usesCustomInserter = 1,    // Expanded after instruction selection.
                            "#SELECT_VSFRC",
                            [(set f64:$dst,
                                  (select i1:$cond, f64:$T, f64:$F))]>;
+  def SELECT_CC_VSSRC: Pseudo<(outs f4rc:$dst),
+                              (ins crrc:$cond, f4rc:$T, f4rc:$F,
+                               i32imm:$BROPC), "#SELECT_CC_VSSRC",
+                              []>;
+  def SELECT_VSSRC: Pseudo<(outs f4rc:$dst),
+                           (ins crbitrc:$cond, f4rc:$T, f4rc:$F),
+                           "#SELECT_VSSRC",
+                           [(set f32:$dst,
+                                 (select i1:$cond, f32:$T, f32:$F))]>;
 } // usesCustomInserter
 } // AddedComplexity
 
@@ -987,7 +1004,45 @@ def XXLORC : XX3Form<60, 170,
                      (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                      "xxlorc $XT, $XA, $XB", IIC_VecGeneral,
                      [(set v4i32:$XT, (or v4i32:$XA, (vnot_ppc v4i32:$XB)))]>;
-} // AddedComplexity = 500
+  // VSX scalar loads introduced in ISA 2.07
+  let mayLoad = 1 in {
+    def LXSSPX : XX1Form<31, 524, (outs vssrc:$XT), (ins memrr:$src),
+                         "lxsspx $XT, $src", IIC_LdStLFD,
+                         [(set f32:$XT, (load xoaddr:$src))]>;
+    def LXSIWAX : XX1Form<31, 76, (outs vsfrc:$XT), (ins memrr:$src),
+                          "lxsiwax $XT, $src", IIC_LdStLFD,
+                          [(set f64:$XT, (PPClfiwax xoaddr:$src))]>;
+    def LXSIWZX : XX1Form<31, 12, (outs vsfrc:$XT), (ins memrr:$src),
+                          "lxsiwzx $XT, $src", IIC_LdStLFD,
+                          [(set f64:$XT, (PPClfiwzx xoaddr:$src))]>;
+  } // mayLoad
+
+  // VSX scalar stores introduced in ISA 2.07
+  let mayStore = 1 in {
+    def STXSSPX : XX1Form<31, 652, (outs), (ins vssrc:$XT, memrr:$dst),
+                          "stxsspx $XT, $dst", IIC_LdStSTFD,
+                          [(store f32:$XT, xoaddr:$dst)]>;
+    def STXSIWX : XX1Form<31, 140, (outs), (ins vsfrc:$XT, memrr:$dst),
+                          "stxsiwx $XT, $dst", IIC_LdStSTFD,
+                          [(PPCstfiwx f64:$XT, xoaddr:$dst)]>;
+  } // mayStore
+def : Pat<(f64 (extloadf32 xoaddr:$src)),
+          (COPY_TO_REGCLASS (LXSSPX xoaddr:$src), VSFRC)>;
+def : Pat<(f64 (fextend f32:$src)),
+          (COPY_TO_REGCLASS $src, VSFRC)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETLT)),
+          (SELECT_VSSRC (CRANDC $rhs, $lhs), $tval, $fval)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETLE)),
+          (SELECT_VSSRC (CRORC  $rhs, $lhs), $tval, $fval)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETEQ)),
+          (SELECT_VSSRC (CREQV $lhs, $rhs), $tval, $fval)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETGE)),
+          (SELECT_VSSRC (CRORC  $lhs, $rhs), $tval, $fval)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETGT)),
+          (SELECT_VSSRC (CRANDC $lhs, $rhs), $tval, $fval)>;
+def : Pat<(f32 (selectcc i1:$lhs, i1:$rhs, f32:$tval, f32:$fval, SETNE)),
+          (SELECT_VSSRC (CRXOR $lhs, $rhs), $tval, $fval)>;
+} // AddedComplexity = 400
 } // HasP8Vector
 
 let Predicates = [HasDirectMove, HasVSX] in {
