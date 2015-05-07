@@ -210,14 +210,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name == "x86.avx2.mpsadbw")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_avx2_mpsadbw,
                                               NewFn);
-
-    if (Name == "x86.avx512.mask.cmp.ps.512")
-      return UpgradeAVX512CmpIntrinsic(F, Intrinsic::x86_avx512_mask_cmp_ps_512,
-                                       NewFn);
-    if (Name == "x86.avx512.mask.cmp.pd.512")
-      return UpgradeAVX512CmpIntrinsic(F, Intrinsic::x86_avx512_mask_cmp_pd_512,
-                                       NewFn);
-
     if (Name == "x86.avx512.mask.cmp.b.512")
       return UpgradeAVX512CmpIntrinsic(F, Intrinsic::x86_avx512_mask_cmp_b_512,
                                        NewFn);
@@ -793,21 +785,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
     // Replace the last argument with a trunc.
     Args.back() = Builder.CreateTrunc(Args.back(), Type::getInt8Ty(C), "trunc");
-
-    CallInst *NewCall = Builder.CreateCall(NewFn, Args);
-    CI->replaceAllUsesWith(NewCall);
-    CI->eraseFromParent();
-    return;
-  }
-  case Intrinsic::x86_avx512_mask_cmp_ps_512:
-  case Intrinsic::x86_avx512_mask_cmp_pd_512: {
-    // Need to truncate the last argument from i32 to i8 -- this argument models
-    // an inherently 8-bit immediate operand to these x86 instructions.
-    SmallVector<Value *, 5> Args(CI->arg_operands().begin(),
-                                 CI->arg_operands().end());
-
-    // Replace the last argument with a trunc.
-    Args[2] = Builder.CreateTrunc(Args[2], Type::getInt8Ty(C), "trunc");
 
     CallInst *NewCall = Builder.CreateCall(NewFn, Args);
     CI->replaceAllUsesWith(NewCall);

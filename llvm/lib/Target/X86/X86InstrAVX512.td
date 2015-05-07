@@ -305,8 +305,8 @@ multiclass AVX512_maskable_custom_cmp<bits<8> O, Format F,
                        Pattern, itin>;
 
     def NAME#k: AVX512<O, F, Outs, MaskingIns,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}"#Round#"|"#
-                                     "$dst {${mask}}"#Round#", "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#Round#AttSrcAsm#", $dst {${mask}}|"#
+                                     "$dst {${mask}}, "#IntelSrcAsm#Round#"}",
                        MaskingPattern, itin>, EVEX_K;
 }
 
@@ -334,6 +334,14 @@ multiclass AVX512_maskable_cmp<bits<8> O, Format F, X86VectorVTInfo _,
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
                           (and _.KRCWM:$mask, RHS),
                           Round, itin>;
+
+multiclass AVX512_maskable_cmp_alt<bits<8> O, Format F, X86VectorVTInfo _,
+                           dag Outs, dag Ins, string OpcodeStr,
+                           string AttSrcAsm, string IntelSrcAsm> :
+   AVX512_maskable_custom_cmp<O, F, Outs,
+                             Ins, !con((ins _.KRCWM:$mask),Ins), OpcodeStr,
+                             AttSrcAsm, IntelSrcAsm,
+                             [],[],"", NoItinerary>;
 
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
@@ -1590,53 +1598,97 @@ defm VPCMPQ : avx512_icmp_cc_rmb_vl<0x1F, "q", X86cmpm, avx512vl_i64_info,
 defm VPCMPUQ : avx512_icmp_cc_rmb_vl<0x1E, "uq", X86cmpmu, avx512vl_i64_info,
                                      HasAVX512>, VEX_W, EVEX_CD8<64, CD8VF>;
 
-// avx512_cmp_packed - compare packed instructions
-multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
-                           X86MemOperand x86memop, ValueType vt,
-                           string suffix, Domain d> {
-  def rri : AVX512PIi8<0xC2, MRMSrcReg,
-             (outs KRC:$dst), (ins RC:$src1, RC:$src2, AVXCC:$cc),
-             !strconcat("vcmp${cc}", suffix,
-                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set KRC:$dst, (X86cmpm (vt RC:$src1), (vt RC:$src2), imm:$cc))], d>;
-  let hasSideEffects = 0 in
-  def rrib: AVX512PIi8<0xC2, MRMSrcReg,
-             (outs KRC:$dst), (ins RC:$src1, RC:$src2, AVXCC:$cc),
-     !strconcat("vcmp${cc}", suffix,
-                "\t{{sae}, $src2, $src1, $dst|$dst, $src1, $src2, {sae}}"),
-                [], d>, EVEX_B;
-  def rmi : AVX512PIi8<0xC2, MRMSrcMem,
-             (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, AVXCC:$cc),
-              !strconcat("vcmp${cc}", suffix,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
-             [(set KRC:$dst,
-              (X86cmpm (vt RC:$src1), (load addr:$src2), imm:$cc))], d>;
+multiclass avx512_vcmp_common<X86VectorVTInfo _> {
 
+  defm  rri  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
+                   (outs _.KRC:$dst), (ins _.RC:$src1, _.RC:$src2,AVXCC:$cc),
+                   "vcmp${cc}"#_.Suffix,
+                   "$src2, $src1", "$src1, $src2",
+                   (X86cmpm (_.VT _.RC:$src1),
+                         (_.VT _.RC:$src2),
+                           imm:$cc)>;
+
+  let mayLoad = 1 in {
+    defm  rmi  : AVX512_maskable_cmp<0xC2, MRMSrcMem, _,
+                  (outs _.KRC:$dst),(ins _.RC:$src1, _.MemOp:$src2, AVXCC:$cc),
+                  "vcmp${cc}"#_.Suffix,
+                  "$src2, $src1", "$src1, $src2",
+                  (X86cmpm (_.VT _.RC:$src1),
+                          (_.VT (bitconvert (_.LdFrag addr:$src2))),
+                          imm:$cc)>;
+
+    defm  rmbi : AVX512_maskable_cmp<0xC2, MRMSrcMem, _,
+                  (outs _.KRC:$dst),
+                  (ins _.RC:$src1, _.ScalarMemOp:$src2, AVXCC:$cc),
+                  "vcmp${cc}"#_.Suffix,
+                  "${src2}"##_.BroadcastStr##", $src1",
+                  "$src1, ${src2}"##_.BroadcastStr,
+                  (X86cmpm (_.VT _.RC:$src1),
+                          (_.VT (X86VBroadcast(_.ScalarLdFrag addr:$src2))),
+                          imm:$cc)>,EVEX_B;
+  }
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
-    def rri_alt : AVX512PIi8<0xC2, MRMSrcReg,
-               (outs KRC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
-              !strconcat("vcmp", suffix,
-                        "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"), [], d>;
-    def rrib_alt: AVX512PIi8<0xC2, MRMSrcReg,
-               (outs KRC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
-       !strconcat("vcmp", suffix,
-                  "\t{{sae}, $cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc, {sae}}"),
-                  [], d>, EVEX_B;
-    let mayLoad = 1 in
-    def rmi_alt : AVX512PIi8<0xC2, MRMSrcMem,
-               (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, u8imm:$cc),
-              !strconcat("vcmp", suffix,
-                        "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"), [], d>;
+    defm  rri_alt : AVX512_maskable_cmp_alt<0xC2, MRMSrcReg, _,
+                         (outs _.KRC:$dst),
+                         (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
+                         "vcmp"#_.Suffix,
+                         "$cc, $src2, $src1", "$src1, $src2, $cc">;
+
+    let mayLoad = 1 in {
+      defm rmi_alt : AVX512_maskable_cmp_alt<0xC2, MRMSrcMem, _,
+                             (outs _.KRC:$dst),
+                             (ins _.RC:$src1, _.MemOp:$src2, u8imm:$cc),
+                             "vcmp"#_.Suffix,
+                             "$cc, $src2, $src1", "$src1, $src2, $cc">;
+
+      defm  rmbi_alt : AVX512_maskable_cmp_alt<0xC2, MRMSrcMem, _,
+                         (outs _.KRC:$dst),
+                         (ins _.RC:$src1, _.ScalarMemOp:$src2, u8imm:$cc),
+                         "vcmp"#_.Suffix,
+                         "$cc, ${src2}"##_.BroadcastStr##", $src1",
+                         "$src1, ${src2}"##_.BroadcastStr##", $cc">,EVEX_B;
+    }
+ }
+}
+
+multiclass avx512_vcmp_sae<X86VectorVTInfo _> {
+  // comparison code form (VCMP[EQ/LT/LE/...]
+  defm  rrib  : AVX512_maskable_cmp<0xC2, MRMSrcReg, _,
+                     (outs _.KRC:$dst),(ins _.RC:$src1, _.RC:$src2, AVXCC:$cc),
+                     "vcmp${cc}"#_.Suffix,
+                     "{sae}, $src2, $src1", "$src1, $src2,{sae}",
+                     (X86cmpmRnd (_.VT _.RC:$src1),
+                                    (_.VT _.RC:$src2),
+                                    imm:$cc,
+                                (i32 FROUND_NO_EXC))>, EVEX_B;
+
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
+    defm  rrib_alt  : AVX512_maskable_cmp_alt<0xC2, MRMSrcReg, _,
+                         (outs _.KRC:$dst),
+                         (ins _.RC:$src1, _.RC:$src2, u8imm:$cc),
+                         "vcmp"#_.Suffix,
+                         "$cc,{sae}, $src2, $src1",
+                         "$src1, $src2,{sae}, $cc">, EVEX_B;
+   }
+}
+
+multiclass avx512_vcmp<AVX512VLVectorVTInfo _> {
+  let Predicates = [HasAVX512] in {
+    defm Z    : avx512_vcmp_common<_.info512>,
+                avx512_vcmp_sae<_.info512>, EVEX_V512;
+
+  }
+  let Predicates = [HasAVX512,HasVLX] in {
+   defm Z128 : avx512_vcmp_common<_.info128>, EVEX_V128;
+   defm Z256 : avx512_vcmp_common<_.info256>, EVEX_V256;
   }
 }
 
-defm VCMPPSZ : avx512_cmp_packed<VK16, VR512, f512mem, v16f32,
-               "ps", SSEPackedSingle>, PS, EVEX_4V, EVEX_V512,
-               EVEX_CD8<32, CD8VF>;
-defm VCMPPDZ : avx512_cmp_packed<VK8, VR512, f512mem, v8f64,
-               "pd", SSEPackedDouble>, PD, EVEX_4V, VEX_W, EVEX_V512,
-               EVEX_CD8<64, CD8VF>;
+defm VCMPPD : avx512_vcmp<avx512vl_f64_info>,
+                          AVX512PDIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
+defm VCMPPS : avx512_vcmp<avx512vl_f32_info>,
+                          AVX512PSIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
 
 def : Pat<(v8i1 (X86cmpm (v8f32 VR256X:$src1), (v8f32 VR256X:$src2), imm:$cc)),
           (COPY_TO_REGCLASS (VCMPPSZrri
@@ -1654,30 +1706,7 @@ def : Pat<(v8i1 (X86cmpmu (v8i32 VR256X:$src1), (v8i32 VR256X:$src2), imm:$cc)),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src2, sub_ymm)),
             imm:$cc), VK8)>;
 
-def : Pat<(i16 (int_x86_avx512_mask_cmp_ps_512 (v16f32 VR512:$src1),
-                (v16f32 VR512:$src2), i8immZExt5:$cc, (i16 -1),
-                 FROUND_NO_EXC)),
-          (COPY_TO_REGCLASS (VCMPPSZrrib VR512:$src1, VR512:$src2,
-                             (I8Imm imm:$cc)), GR16)>;
-
-def : Pat<(i8 (int_x86_avx512_mask_cmp_pd_512 (v8f64 VR512:$src1),
-                (v8f64 VR512:$src2), i8immZExt5:$cc, (i8 -1),
-                 FROUND_NO_EXC)),
-          (COPY_TO_REGCLASS (VCMPPDZrrib VR512:$src1, VR512:$src2,
-                             (I8Imm imm:$cc)), GR8)>;
-
-def : Pat<(i16 (int_x86_avx512_mask_cmp_ps_512 (v16f32 VR512:$src1),
-                (v16f32 VR512:$src2), i8immZExt5:$cc, (i16 -1),
-                FROUND_CURRENT)),
-          (COPY_TO_REGCLASS (VCMPPSZrri VR512:$src1, VR512:$src2,
-                             (I8Imm imm:$cc)), GR16)>;
-
-def : Pat<(i8 (int_x86_avx512_mask_cmp_pd_512 (v8f64 VR512:$src1),
-                (v8f64 VR512:$src2), i8immZExt5:$cc, (i8 -1),
-                 FROUND_CURRENT)),
-          (COPY_TO_REGCLASS (VCMPPDZrri VR512:$src1, VR512:$src2,
-                             (I8Imm imm:$cc)), GR8)>;
-
+//-----------------------------------------------------------------
 // Mask register copy, including
 // - copy between mask registers
 // - load/store mask registers

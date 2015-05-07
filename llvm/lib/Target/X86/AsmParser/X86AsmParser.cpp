@@ -1414,7 +1414,8 @@ std::unique_ptr<X86Operand>
 X86AsmParser::ParseRoundingModeOp(SMLoc Start, SMLoc End) {
   MCAsmParser &Parser = getParser();
   const AsmToken &Tok = Parser.getTok();
-  consumeToken(); // Eat "{"
+  // Eat "{" and mark the current place.
+  const SMLoc consumedToken = consumeToken();
   if (Tok.getIdentifier().startswith("r")){
     int rndMode = StringSwitch<int>(Tok.getIdentifier())
       .Case("rn", X86::STATIC_ROUNDING::TO_NEAREST_INT)
@@ -1435,6 +1436,13 @@ X86AsmParser::ParseRoundingModeOp(SMLoc Start, SMLoc End) {
     const MCExpr *RndModeOp =
       MCConstantExpr::Create(rndMode, Parser.getContext());
     return X86Operand::CreateImm(RndModeOp, Start, End);
+  }
+  if(Tok.getIdentifier().equals("sae")){
+    Parser.Lex();  // Eat the sae
+    if (!getLexer().is(AsmToken::RCurly))
+      return ErrorOperand(Tok.getLoc(), "Expected } at this point");
+    Parser.Lex();  // Eat "}"
+    return X86Operand::CreateToken("{sae}", consumedToken);
   }
   return ErrorOperand(Tok.getLoc(), "unknown token in expression");
 }

@@ -2261,3 +2261,31 @@ define <4 x i64> @test_mask_andnot_epi64_rmbkz_256(<4 x i64> %a, i64* %ptr_b, i8
 }
 
 declare <4 x i64> @llvm.x86.avx512.mask.pandn.q.256(<4 x i64>, <4 x i64>, <4 x i64>, i8)
+
+define i8 @test_cmpps_256(<8 x float> %a, <8 x float> %b) {
+ ;CHECK: vcmpleps  %ymm1, %ymm0, %k0  ## encoding: [0x62,0xf1,0x7c,0x28,0xc2,0xc1,0x02]
+   %res = call i8 @llvm.x86.avx512.mask.cmp.ps.256(<8 x float> %a, <8 x float> %b, i32 2, i8 -1)
+   ret i8 %res
+ }
+ declare i8 @llvm.x86.avx512.mask.cmp.ps.256(<8 x float> , <8 x float> , i32, i8)
+
+define i8 @test_cmpps_128(<4 x float> %a, <4 x float> %b) {
+ ;CHECK: vcmpleps  %xmm1, %xmm0, %k0  ## encoding: [0x62,0xf1,0x7c,0x08,0xc2,0xc1,0x02]
+   %res = call i8 @llvm.x86.avx512.mask.cmp.ps.128(<4 x float> %a, <4 x float> %b, i32 2, i8 -1)
+   ret i8 %res
+ }
+ declare i8 @llvm.x86.avx512.mask.cmp.ps.128(<4 x float> , <4 x float> , i32, i8)
+
+define i8 @test_cmppd_256(<4 x double> %a, <4 x double> %b) {
+ ;CHECK: vcmplepd  %ymm1, %ymm0, %k0  ## encoding: [0x62,0xf1,0xfd,0x28,0xc2,0xc1,0x02]
+   %res = call i8 @llvm.x86.avx512.mask.cmp.pd.256(<4 x double> %a, <4 x double> %b, i32 2, i8 -1)
+   ret i8 %res
+ }
+ declare i8 @llvm.x86.avx512.mask.cmp.pd.256(<4 x double> , <4 x double> , i32, i8)
+
+define i8 @test_cmppd_128(<2 x double> %a, <2 x double> %b) {
+ ;CHECK: vcmplepd  %xmm1, %xmm0, %k0  ## encoding: [0x62,0xf1,0xfd,0x08,0xc2,0xc1,0x02]
+   %res = call i8 @llvm.x86.avx512.mask.cmp.pd.128(<2 x double> %a, <2 x double> %b, i32 2, i8 -1)
+   ret i8 %res
+ }
+ declare i8 @llvm.x86.avx512.mask.cmp.pd.128(<2 x double> , <2 x double> , i32, i8)

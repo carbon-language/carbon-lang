@@ -308,6 +308,8 @@ namespace llvm {
       /// integer signed and unsigned data types.
       CMPM,
       CMPMU,
+      // Vector comparison with rounding mode for FP values
+      CMPM_RND,
 
       // Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL,

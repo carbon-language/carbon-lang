@@ -392,17 +392,17 @@ declare <8 x i64> @llvm.x86.avx512.mask.blend.q.512(<8 x i64>, <8 x i64>, i8) no
 
  define i16 @test_cmpps(<16 x float> %a, <16 x float> %b) {
  ;CHECK: vcmpleps {sae}{{.*}}encoding: [0x62,0xf1,0x7c,0x18,0xc2,0xc1,0x02]
-   %res = call i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> %a, <16 x float> %b, i8 2, i16 -1, i32 8)
+   %res = call i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> %a, <16 x float> %b, i32 2, i16 -1, i32 8)
    ret i16 %res
  }
- declare i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> , <16 x float> , i8, i16, i32)
+ declare i16 @llvm.x86.avx512.mask.cmp.ps.512(<16 x float> , <16 x float> , i32, i16, i32)
 
  define i8 @test_cmppd(<8 x double> %a, <8 x double> %b) {
  ;CHECK: vcmpneqpd %zmm{{.*}}encoding: [0x62,0xf1,0xfd,0x48,0xc2,0xc1,0x04]
-   %res = call i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> %a, <8 x double> %b, i8 4, i8 -1, i32 4)
+   %res = call i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> %a, <8 x double> %b, i32 4, i8 -1, i32 4)
    ret i8 %res
  }
- declare i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> , <8 x double> , i8, i8, i32)
+ declare i8 @llvm.x86.avx512.mask.cmp.pd.512(<8 x double> , <8 x double> , i32, i8, i32)
 
  ; cvt intrinsics
  define <16 x float> @test_cvtdq2ps(<16 x i32> %a) {

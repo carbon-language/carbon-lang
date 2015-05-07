@@ -14926,12 +14926,27 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                        Mask.getValueType().getSizeInBits());
       SDValue Cmp;
       if (IntrData->Type == CMP_MASK_CC) {
-        Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT, Op.getOperand(1),
-                    Op.getOperand(2), Op.getOperand(3));
+        SDValue CC = Op.getOperand(3);
+        CC = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, CC);
+        // We specify 2 possible opcodes for intrinsics with rounding modes.
+        // First, we check if the intrinsic may have non-default rounding mode,
+        // (IntrData->Opc1 != 0), then we check the rounding mode operand.
+        if (IntrData->Opc1 != 0) {
+          SDValue Rnd = Op.getOperand(5);
+          if (cast<ConstantSDNode>(Rnd)->getZExtValue() !=
+              X86::STATIC_ROUNDING::CUR_DIRECTION)
+            Cmp = DAG.getNode(IntrData->Opc1, dl, MaskVT, Op.getOperand(1),
+                              Op.getOperand(2), CC, Rnd);
+        }
+        //default rounding mode
+        if(!Cmp.getNode())
+            Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT, Op.getOperand(1),
+                              Op.getOperand(2), CC);
+
       } else {
         assert(IntrData->Type == CMP_MASK && "Unexpected intrinsic type!");
         Cmp = DAG.getNode(IntrData->Opc0, dl, MaskVT, Op.getOperand(1),
-                    Op.getOperand(2));
+                          Op.getOperand(2));
       }
       SDValue CmpMask = getVectorMaskingNode(Cmp, Mask,
                                              DAG.getTargetConstant(0, dl,
