@@ -191,6 +191,9 @@ static cl::opt<bool> ClCheckConstantShadow("msan-check-constant-shadow",
        cl::desc("Insert checks for constant shadow values"),
        cl::Hidden, cl::init(false));
 
+static const char *const kMsanModuleCtorName = "msan.module_ctor";
+static const char *const kMsanInitName = "__msan_init";
+
 namespace {
 
 // Memory map parameters used in application-to-shadow address calculation.
@@ -332,6 +335,7 @@ class MemorySanitizer : public FunctionPass {
   MDNode *OriginStoreWeights;
   /// \brief An empty volatile inline asm that prevents callback merge.
   InlineAsm *EmptyAsm;
+  Function *MsanCtorFunction;
 
   friend struct MemorySanitizerVisitor;
   friend struct VarArgAMD64Helper;
@@ -491,9 +495,12 @@ bool MemorySanitizer::doInitialization(Module &M) {
   ColdCallWeights = MDBuilder(*C).createBranchWeights(1, 1000);
   OriginStoreWeights = MDBuilder(*C).createBranchWeights(1, 1000);
 
-  // Insert a call to __msan_init/__msan_track_origins into the module's CTORs.
-  appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
-                      "__msan_init", IRB.getVoidTy(), nullptr)), 0);
+  std::tie(MsanCtorFunction, std::ignore) =
+      createSanitizerCtorAndInitFunctions(M, kMsanModuleCtorName, kMsanInitName,
+                                          /*InitArgTypes=*/{},
+                                          /*InitArgs=*/{});
+
+  appendToGlobalCtors(M, MsanCtorFunction, 0);
 
   if (TrackOrigins)
     new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
@@ -2983,6 +2990,8 @@ VarArgHelper *CreateVarArgHelper(Function &Func, MemorySanitizer &Msan,
 }  // namespace
 
 bool MemorySanitizer::runOnFunction(Function &F) {
+  if (&F == MsanCtorFunction)
+    return false;
   MemorySanitizerVisitor Visitor(F, *this);
 
   // Clear out readonly/readnone attributes.
