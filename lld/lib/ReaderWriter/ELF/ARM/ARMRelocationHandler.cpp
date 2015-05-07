@@ -92,7 +92,7 @@ static Reference::Addend readAddend(const uint8_t *location,
   case R_ARM_TLS_TPOFF32:
     return (int32_t)read32le(location);
   case R_ARM_PREL31:
-    return (int32_t)(read32le(location) & 0x7FFFFFFF);
+    return llvm::SignExtend64<31>(read32le(location) & 0x7FFFFFFF);
   case R_ARM_THM_CALL:
   case R_ARM_THM_JUMP24:
     return readAddend_THM_CALL(location);
@@ -180,6 +180,9 @@ static std::error_code relocR_ARM_PREL31(uint8_t *location, uint64_t P,
                                          bool addressesThumb) {
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)(((S + A) | T) - P);
+  if (!llvm::isInt<31>((int32_t)result))
+    return make_out_of_range_reloc_error();
+
   const uint32_t mask = 0x7FFFFFFF;
   uint32_t rel31 = result & mask;
 
