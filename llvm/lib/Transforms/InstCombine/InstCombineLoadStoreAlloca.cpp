@@ -314,7 +314,8 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
 ///
 /// Note that this will create all of the instructions with whatever insert
 /// point the \c InstCombiner currently is using.
-static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewTy) {
+static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewTy,
+                                      const Twine &Suffix = "") {
   Value *Ptr = LI.getPointerOperand();
   unsigned AS = LI.getPointerAddressSpace();
   SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
@@ -322,7 +323,7 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
 
   LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
       IC.Builder->CreateBitCast(Ptr, NewTy->getPointerTo(AS)),
-      LI.getAlignment(), LI.getName());
+      LI.getAlignment(), LI.getName() + Suffix);
   MDBuilder MDB(NewLoad->getContext());
   for (const auto &MDPair : MD) {
     unsigned ID = MDPair.first;
@@ -492,6 +493,31 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
 
   // FIXME: We should also canonicalize loads of vectors when their elements are
   // cast to other types.
+  return nullptr;
+}
+
+static Instruction *unpackLoadToAggregate(InstCombiner &IC, LoadInst &LI) {
+  // FIXME: We could probably with some care handle both volatile and atomic
+  // stores here but it isn't clear that this is important.
+  if (!LI.isSimple())
+    return nullptr;
+
+  Type *T = LI.getType();
+  if (!T->isAggregateType())
+    return nullptr;
+
+  assert(LI.getAlignment() && "Alignement must be set at this point");
+
+  if (auto *ST = dyn_cast<StructType>(T)) {
+    // If the struct only have one element, we unpack.
+    if (ST->getNumElements() == 1) {
+      LoadInst *NewLoad = combineLoadToNewType(IC, LI, ST->getTypeAtIndex(0U),
+                                               ".unpack");
+      return IC.ReplaceInstUsesWith(LI, IC.Builder->CreateInsertValue(
+        UndefValue::get(T), NewLoad, 0, LI.getName()));
+    }
+  }
+
   return nullptr;
 }
 
@@ -701,6 +727,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   // FIXME: Some of it is okay for atomic loads; needs refactoring.
   if (!LI.isSimple()) return nullptr;
 
+  if (Instruction *Res = unpackLoadToAggregate(*this, LI))
+    return Res;
+
   // Do really simple store-to-load forwarding and load CSE, to catch cases
   // where there are several consecutive memory accesses to the same location,
   // separated by a few arithmetic operations.
@@ -832,7 +861,7 @@ static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
   if (!T->isAggregateType())
     return false;
 
-  if (StructType *ST = dyn_cast<StructType>(T)) {
+  if (auto *ST = dyn_cast<StructType>(T)) {
     // If the struct only have one element, we unpack.
     if (ST->getNumElements() == 1) {
       V = IC.Builder->CreateExtractValue(V, 0);
