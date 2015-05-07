@@ -131,7 +131,7 @@ public:
 
   template <class PredicateLibrary>
   void setCPR1SizeFromPredicates(const PredicateLibrary &P) {
-    if (P.abiUsesSoftFloat())
+    if (P.useSoftFloat())
       CPR1Size = Mips::AFL_REG_NONE;
     else if (P.hasMSA())
       CPR1Size = Mips::AFL_REG_128;
@@ -159,7 +159,7 @@ public:
     Is32BitABI = P.isABI_O32();
 
     FpABI = FpABIKind::ANY;
-    if (P.abiUsesSoftFloat())
+    if (P.useSoftFloat())
       FpABI = FpABIKind::SOFT;
     else if (P.isABI_N32() || P.isABI_N64())
       FpABI = FpABIKind::S64;

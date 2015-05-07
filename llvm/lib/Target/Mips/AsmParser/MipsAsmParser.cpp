@@ -434,7 +434,7 @@ public:
     return STI.getFeatureBits() & Mips::FeatureMips16;
   }
 
-  bool abiUsesSoftFloat() const {
+  bool useSoftFloat() const {
     return (STI.getFeatureBits() & Mips::FeatureSoftFloat);
   }
 

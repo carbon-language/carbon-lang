@@ -65,7 +65,7 @@ def IsSingleFloat    : Predicate<"Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"FeatureSingleFloat">;
 def IsNotSingleFloat : Predicate<"!Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"!FeatureSingleFloat">;
-def IsNotSoftFloat   : Predicate<"!Subtarget->abiUsesSoftFloat()">,
+def IsNotSoftFloat   : Predicate<"!Subtarget->useSoftFloat()">,
                        AssemblerPredicate<"!FeatureSoftFloat">;
 
 //===----------------------------------------------------------------------===//

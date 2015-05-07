@@ -3017,7 +3017,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         // when allocating floating point values to integer registers.
         // This shouldn't influence how we load the value into registers unless
         // we are targetting softfloat.
-        if (VA.getValVT().isFloatingPoint() && !Subtarget.abiUsesSoftFloat())
+        if (VA.getValVT().isFloatingPoint() && !Subtarget.useSoftFloat())
           LocVT = VA.getValVT();
       }
 
@@ -3087,7 +3087,7 @@ MipsTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
 
 bool
 MipsTargetLowering::shouldSignExtendTypeInLibCall(EVT Type, bool IsSigned) const {
-  if (Subtarget.hasMips3() && Subtarget.abiUsesSoftFloat()) {
+  if (Subtarget.hasMips3() && Subtarget.useSoftFloat()) {
     if (Type == MVT::i32)
       return true;
   }
