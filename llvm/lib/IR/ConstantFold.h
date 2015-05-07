@@ -51,6 +51,10 @@ namespace llvm {
                                       ArrayRef<Constant *> Idxs);
   Constant *ConstantFoldGetElementPtr(Constant *C, bool inBounds,
                                       ArrayRef<Value *> Idxs);
+  Constant *ConstantFoldGetElementPtr(Type *Ty, Constant *C, bool inBounds,
+                                      ArrayRef<Constant *> Idxs);
+  Constant *ConstantFoldGetElementPtr(Type *Ty, Constant *C, bool inBounds,
+                                      ArrayRef<Value *> Idxs);
 } // End llvm namespace
 
 #endif
