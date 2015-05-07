@@ -7927,17 +7927,15 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
 
   // Move LastLeft and FirstRight towards each other from opposite directions to
   // find a partitioning of the clusters which balances the weight on both
-  // sides.
+  // sides. If LeftWeight and RightWeight are equal, alternate which side is
+  // taken to ensure 0-weight nodes are distributed evenly.
+  unsigned I = 0;
   while (LastLeft + 1 < FirstRight) {
-    // Zero-weight nodes would cause skewed trees since they don't affect
-    // LeftWeight or RightWeight.
-    assert(LastLeft->Weight != 0);
-    assert(FirstRight->Weight != 0);
-
-    if (LeftWeight < RightWeight)
+    if (LeftWeight < RightWeight || (LeftWeight == RightWeight && (I & 1)))
       LeftWeight += (++LastLeft)->Weight;
     else
       RightWeight += (--FirstRight)->Weight;
+    I++;
   }
   assert(LastLeft + 1 == FirstRight);
   assert(LastLeft >= W.FirstCluster);
@@ -8007,15 +8005,8 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
   for (auto I : SI.cases()) {
     MachineBasicBlock *Succ = FuncInfo.MBBMap[I.getCaseSuccessor()];
     const ConstantInt *CaseVal = I.getCaseValue();
-    uint32_t Weight = 1;
-    if (BPI) {
-      // TODO - BPI used to guarantee non-zero weights, but this produces
-      // information loss (see PR 22718). Since we can't handle zero weights
-      // here, use the same flooring mechanism previously used by BPI.
-      Weight = std::max(
-          1u, BPI->getEdgeWeight(SI.getParent(), I.getSuccessorIndex()));
-      assert(Weight <= UINT32_MAX / SI.getNumSuccessors());
-    }
+    uint32_t Weight =
+        BPI ? BPI->getEdgeWeight(SI.getParent(), I.getSuccessorIndex()) : 0;
     Clusters.push_back(CaseCluster::range(CaseVal, CaseVal, Succ, Weight));
   }
 
