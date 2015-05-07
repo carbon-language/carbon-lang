@@ -3411,9 +3411,8 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
                                   mem_cpat:$src)>;
 
    def : Pat<(Intr VR128:$src),
-             (vt (COPY_TO_REGCLASS(
-             !cast<Instruction>("V"#NAME#Suffix##r) (ScalarVT (IMPLICIT_DEF)),
-                    (ScalarVT (COPY_TO_REGCLASS VR128:$src, RC))), VR128))>;
+             (!cast<Instruction>("V"#NAME#Suffix##r_Int) (vt (IMPLICIT_DEF)),
+                                 VR128:$src)>;
 
    def : Pat<(Intr mem_cpat:$src),
              (!cast<Instruction>("V"#NAME#Suffix##m_Int)
