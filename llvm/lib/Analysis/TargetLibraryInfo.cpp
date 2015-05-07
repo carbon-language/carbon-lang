@@ -467,14 +467,42 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
   switch (VecLib) {
   case Accelerate: {
     const VecDesc VecFuncs[] = {
-        {"expf", "vexpf", 4},
-        {"llvm.exp.f32", "vexpf", 4},
-        {"logf", "vlogf", 4},
-        {"llvm.log.f32", "vlogf", 4},
-        {"sqrtf", "vsqrtf", 4},
-        {"llvm.sqrt.f32", "vsqrtf", 4},
+        // Floating-Point Arithmetic and Auxiliary Functions
+        {"ceilf", "vceilf", 4},
         {"fabsf", "vfabsf", 4},
         {"llvm.fabs.f32", "vfabsf", 4},
+        {"floorf", "vfloorf", 4},
+        {"sqrtf", "vsqrtf", 4},
+        {"llvm.sqrt.f32", "vsqrtf", 4},
+
+        // Exponential and Logarithmic Functions
+        {"expf", "vexpf", 4},
+        {"llvm.exp.f32", "vexpf", 4},
+        {"expm1f", "vexpm1f", 4},
+        {"logf", "vlogf", 4},
+        {"llvm.log.f32", "vlogf", 4},
+        {"log1pf", "vlog1pf", 4},
+        {"log10f", "vlog10f", 4},
+        {"llvm.log10.f32", "vlog10f", 4},
+        {"logbf", "vlogbf", 4},
+
+        // Trigonometric Functions
+        {"sinf", "vsinf", 4},
+        {"llvm.sin.f32", "vsinf", 4},
+        {"cosf", "vcosf", 4},
+        {"llvm.cos.f32", "vcosf", 4},
+        {"tanf", "vtanf", 4},
+        {"asinf", "vasinf", 4},
+        {"acosf", "vacosf", 4},
+        {"atanf", "vatanf", 4},
+
+        // Hyperbolic Functions
+        {"sinhf", "vsinhf", 4},
+        {"coshf", "vcoshf", 4},
+        {"tanhf", "vtanhf", 4},
+        {"asinhf", "vasinhf", 4},
+        {"acoshf", "vacoshf", 4},
+        {"atanhf", "vatanhf", 4},
     };
     addVectorizableFunctions(VecFuncs);
     break;
