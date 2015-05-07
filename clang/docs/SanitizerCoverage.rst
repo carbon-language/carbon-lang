@@ -16,20 +16,21 @@ How to build and run
 ====================
 
 SanitizerCoverage can be used with :doc:`AddressSanitizer`,
-:doc:`LeakSanitizer` or :doc:`MemorySanitizer`. In addition to
-``-fsanitize=address``, ``leak`` or ``memory``, pass one of the following
-compile-time flags:
+:doc:`LeakSanitizer`, :doc:`MemorySanitizer`, and UndefinedBehaviorSanitizer.
+In addition to ``-fsanitize=``, pass one of the following compile-time flags:
 
-* ``-fsanitize-coverage=1`` for function-level coverage (very fast).
-* ``-fsanitize-coverage=2`` for basic-block-level coverage (may add up to 30%
+* ``-fsanitize-coverage=func`` for function-level coverage (very fast).
+* ``-fsanitize-coverage=bb`` for basic-block-level coverage (may add up to 30%
   **extra** slowdown).
-* ``-fsanitize-coverage=3`` for edge-level coverage (up to 40% slowdown).
-* ``-fsanitize-coverage=4`` for additional calleer-callee coverage.
+* ``-fsanitize-coverage=edge`` for edge-level coverage (up to 40% slowdown).
 
-At run time, pass ``coverage=1`` in ``ASAN_OPTIONS``, ``LSAN_OPTIONS`` or
-``MSAN_OPTIONS``, as appropriate.
+You may also specify ``-fsanitize-coverage=indirect-calls`` for
+additional `caller-callee coverage`_.
 
-To get `Coverage counters`_, add ``-mllvm -sanitizer-coverage-8bit-counters=1``
+At run time, pass ``coverage=1`` in ``ASAN_OPTIONS``, ``LSAN_OPTIONS``,
+``MSAN_OPTIONS`` or ``UBSAN_OPTIONS``, as appropriate.
+
+To get `Coverage counters`_, add ``-fsanitize-coverage=8bit-counters``
 to one of the above compile-time flags. At runtime, use
 ``*SAN_OPTIONS=coverage=1:coverage_counters=1``.
 
@@ -47,7 +48,7 @@ Example:
          7      foo();
          8    printf("main\n");
          9  }
-    % clang++ -g cov.cc -fsanitize=address -fsanitize-coverage=1
+    % clang++ -g cov.cc -fsanitize=address -fsanitize-coverage=func
     % ASAN_OPTIONS=coverage=1 ./a.out; ls -l *sancov
     main
     -rw-r----- 1 kcc eng 4 Nov 27 12:21 a.out.22673.sancov
@@ -140,8 +141,8 @@ If blocks A, B, and C are all covered we know for certain that the edges A=>B
 and B=>C were executed, but we still don't know if the edge A=>C was executed.
 Such edges of control flow graph are called
 `critical <http://en.wikipedia.org/wiki/Control_flow_graph#Special_edges>`_. The
-edge-level coverage (``-fsanitize-coverage=3``) simply splits all critical edges
-by introducing new dummy blocks and then instruments those blocks:
+edge-level coverage (``-fsanitize-coverage=edge``) simply splits all critical
+edges by introducing new dummy blocks and then instruments those blocks:
 
 .. code-block:: none
 
@@ -162,7 +163,7 @@ for blocks that were not).
 
 .. code-block:: console
 
-    % clang++ -fsanitize=address -fsanitize-coverage=3 cov.cc
+    % clang++ -fsanitize=address -fsanitize-coverage=edge cov.cc
     % ASAN_OPTIONS="coverage=1:coverage_bitset=1" ./a.out
     main
     % ASAN_OPTIONS="coverage=1:coverage_bitset=1" ./a.out 1
@@ -218,7 +219,7 @@ be dumped to disk.
 
 .. code-block:: console
 
-    % clang++ -g cov.cc -fsanitize=address -fsanitize-coverage=3  -mllvm -sanitizer-coverage-8bit-counters=1
+    % clang++ -g cov.cc -fsanitize=address -fsanitize-coverage=edge,8bit-counters
     % ASAN_OPTIONS="coverage=1:coverage_counters=1" ./a.out
     % ls -l *counters-sancov
     ... a.out.17110.counters-sancov
@@ -315,8 +316,8 @@ Performance
 ===========
 
 This coverage implementation is **fast**. With function-level coverage
-(``-fsanitize-coverage=1``) the overhead is not measurable. With
-basic-block-level coverage (``-fsanitize-coverage=2``) the overhead varies
+(``-fsanitize-coverage=func``) the overhead is not measurable. With
+basic-block-level coverage (``-fsanitize-coverage=bb``) the overhead varies
 between 0 and 25%.
 
 ==============  =========  =========  =========  =========  =========  =========
