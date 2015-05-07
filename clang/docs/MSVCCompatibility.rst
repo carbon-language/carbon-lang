@@ -95,10 +95,11 @@ The status of major ABI-impacting C++ features:
 .. _consistent with Visual C++:
   https://msdn.microsoft.com/en-us/library/wfa0edys.aspx
 
-* Thread-safe initialization of local statics: :none:`Unstarted`.  We are ABI
-  compatible with MSVC 2013, which does not support thread-safe local statics.
-  MSVC "14" changed the ABI to make initialization of local statics thread safe,
-  and we have not yet implemented this.
+* Thread-safe initialization of local statics: :none:`Complete`.  MSVC 2015
+  added support for thread-safe initialization of such variables by taking an
+  ABI break.
+  We are ABI compatible with both the MSVC 2013 and 2015 ABI for static local
+  variables.
 
 * Lambdas: :good:`Mostly complete`.  Clang is compatible with Microsoft's
   implementation of lambdas except for providing overloads for conversion to

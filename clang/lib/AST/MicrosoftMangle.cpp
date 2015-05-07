@@ -147,6 +147,8 @@ public:
   void mangleReferenceTemporary(const VarDecl *, unsigned ManglingNumber,
                                 raw_ostream &) override;
   void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out) override;
+  void mangleThreadSafeStaticGuardVariable(const VarDecl *D, unsigned GuardNum,
+                                           raw_ostream &Out) override;
   void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) override;
   void mangleDynamicAtExitDestructor(const VarDecl *D,
                                      raw_ostream &Out) override;
@@ -2521,17 +2523,16 @@ void MicrosoftMangleContextImpl::mangleReferenceTemporary(const VarDecl *VD,
   getDiags().Report(VD->getLocation(), DiagID);
 }
 
+void MicrosoftMangleContextImpl::mangleThreadSafeStaticGuardVariable(
+    const VarDecl *VD, unsigned GuardNum, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+
+  Mangler.getStream() << "\01?$TSS" << GuardNum << '@';
+  Mangler.mangleNestedName(VD);
+}
+
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
                                                            raw_ostream &Out) {
-  // TODO: This is not correct, especially with respect to VS "14".  VS "14"
-  // utilizes thread local variables to implement thread safe, re-entrant
-  // initialization for statics.  They no longer differentiate between an
-  // externally visible and non-externally visible static with respect to
-  // mangling, they all get $TSS <number>.
-  //
-  // N.B. This means that they can get more than 32 static variable guards in a
-  // scope.  It also means that they broke compatibility with their own ABI.
-
   // <guard-name> ::= ?_B <postfix> @5 <scope-depth>
   //              ::= ?$S <guard-num> @ <postfix> @4IA
 
@@ -2544,8 +2545,14 @@ void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
   MicrosoftCXXNameMangler Mangler(*this, Out);
 
   bool Visible = VD->isExternallyVisible();
-  // <operator-name> ::= ?_B # local static guard
-  Mangler.getStream() << (Visible ? "\01??_B" : "\01?$S1@");
+  if (Visible) {
+    Mangler.getStream() << (getASTContext().getLangOpts().isCompatibleWithMSVC(
+                                19)
+                                ? "\01??__J"
+                                : "\01??_B");
+  } else {
+    Mangler.getStream() << "\01?$S1@";
+  }
   unsigned ScopeDepth = 0;
   if (Visible && !getNextDiscriminator(VD, ScopeDepth))
     // If we do not have a discriminator and are emitting a guard variable for

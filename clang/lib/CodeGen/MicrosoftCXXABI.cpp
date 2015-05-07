@@ -687,6 +687,7 @@ private:
   /// Map from DeclContext to the current guard variable.  We assume that the
   /// AST is visited in source code order.
   llvm::DenseMap<const DeclContext *, GuardInfo> GuardVariableMap;
+  llvm::DenseMap<const DeclContext *, unsigned> ThreadSafeGuardNumMap;
 
   llvm::DenseMap<size_t, llvm::StructType *> TypeDescriptorTypeMap;
   llvm::StructType *BaseClassDescriptorType;
@@ -2013,6 +2014,81 @@ LValue MicrosoftCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
   return LValue();
 }
 
+static llvm::GlobalVariable *getInitThreadEpochPtr(CodeGenModule &CGM) {
+  StringRef VarName("_Init_thread_epoch");
+  if (auto *GV = CGM.getModule().getNamedGlobal(VarName))
+    return GV;
+  auto *GV = new llvm::GlobalVariable(
+      CGM.getModule(), CGM.IntTy,
+      /*Constant=*/false, llvm::GlobalVariable::ExternalLinkage,
+      /*Initializer=*/nullptr, VarName,
+      /*InsertBefore=*/nullptr, llvm::GlobalVariable::GeneralDynamicTLSModel);
+  GV->setAlignment(CGM.getTarget().getIntAlign() / 8);
+  return GV;
+}
+
+static llvm::Constant *getInitThreadHeaderFn(CodeGenModule &CGM) {
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
+                              CGM.IntTy->getPointerTo(), /*isVarArg=*/false);
+  return CGM.CreateRuntimeFunction(
+      FTy, "_Init_thread_header",
+      llvm::AttributeSet::get(CGM.getLLVMContext(),
+                              llvm::AttributeSet::FunctionIndex,
+                              llvm::Attribute::NoUnwind));
+}
+
+static llvm::Constant *getInitThreadFooterFn(CodeGenModule &CGM) {
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
+                              CGM.IntTy->getPointerTo(), /*isVarArg=*/false);
+  return CGM.CreateRuntimeFunction(
+      FTy, "_Init_thread_footer",
+      llvm::AttributeSet::get(CGM.getLLVMContext(),
+                              llvm::AttributeSet::FunctionIndex,
+                              llvm::Attribute::NoUnwind));
+}
+
+static llvm::Constant *getInitThreadAbortFn(CodeGenModule &CGM) {
+  llvm::FunctionType *FTy =
+      llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
+                              CGM.IntTy->getPointerTo(), /*isVarArg=*/false);
+  return CGM.CreateRuntimeFunction(
+      FTy, "_Init_thread_abort",
+      llvm::AttributeSet::get(CGM.getLLVMContext(),
+                              llvm::AttributeSet::FunctionIndex,
+                              llvm::Attribute::NoUnwind));
+}
+
+namespace {
+struct ResetGuardBit : EHScopeStack::Cleanup {
+  llvm::GlobalVariable *Guard;
+  unsigned GuardNum;
+  ResetGuardBit(llvm::GlobalVariable *Guard, unsigned GuardNum)
+      : Guard(Guard), GuardNum(GuardNum) {}
+
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
+    // Reset the bit in the mask so that the static variable may be
+    // reinitialized.
+    CGBuilderTy &Builder = CGF.Builder;
+    llvm::LoadInst *LI = Builder.CreateLoad(Guard);
+    llvm::ConstantInt *Mask =
+        llvm::ConstantInt::get(CGF.IntTy, ~(1U << GuardNum));
+    Builder.CreateStore(Builder.CreateAnd(LI, Mask), Guard);
+  }
+};
+
+struct CallInitThreadAbort : EHScopeStack::Cleanup {
+  llvm::GlobalVariable *Guard;
+  CallInitThreadAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
+
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
+    // Calling _Init_thread_abort will reset the guard's state.
+    CGF.EmitNounwindRuntimeCall(getInitThreadAbortFn(CGF.CGM), Guard);
+  }
+};
+}
+
 void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                       llvm::GlobalVariable *GV,
                                       bool PerformInit) {
@@ -2027,13 +2103,8 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
     return;
   }
 
-  // MSVC always uses an i32 bitfield to guard initialization, which is *not*
-  // threadsafe.  Since the user may be linking in inline functions compiled by
-  // cl.exe, there's no reason to provide a false sense of security by using
-  // critical sections here.
-
-  if (D.getTLSKind())
-    CGM.ErrorUnsupported(&D, "dynamic TLS initialization");
+  bool HasPerVariableGuard =
+      getContext().getLangOpts().ThreadsafeStatics && !D.getTLSKind();
 
   CGBuilderTy &Builder = CGF.Builder;
   llvm::IntegerType *GuardTy = CGF.Int32Ty;
@@ -2041,75 +2112,139 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
   // Get the guard variable for this function if we have one already.
   GuardInfo *GI = &GuardVariableMap[D.getDeclContext()];
-
-  unsigned BitIndex;
+  llvm::GlobalVariable *GuardVar = GI->Guard;
+  unsigned GuardNum;
   if (D.isStaticLocal() && D.isExternallyVisible()) {
     // Externally visible variables have to be numbered in Sema to properly
     // handle unreachable VarDecls.
-    BitIndex = getContext().getStaticLocalNumber(&D);
-    assert(BitIndex > 0);
-    BitIndex--;
+    GuardNum = getContext().getStaticLocalNumber(&D);
+    assert(GuardNum > 0);
+    GuardNum--;
+  } else if (HasPerVariableGuard) {
+    GuardNum = ThreadSafeGuardNumMap[D.getDeclContext()]++;
   } else {
     // Non-externally visible variables are numbered here in CodeGen.
-    BitIndex = GI->BitIndex++;
+    GuardNum = GI->BitIndex++;
   }
 
-  if (BitIndex >= 32) {
+  if (HasPerVariableGuard)
+    GuardVar = nullptr;
+
+  if (!HasPerVariableGuard && GuardNum >= 32) {
     if (D.isExternallyVisible())
       ErrorUnsupportedABI(CGF, "more than 32 guarded initializations");
-    BitIndex %= 32;
-    GI->Guard = nullptr;
+    GuardNum %= 32;
+    GuardVar = nullptr;
   }
 
-  // Lazily create the i32 bitfield for this function.
-  if (!GI->Guard) {
+  if (!GuardVar) {
     // Mangle the name for the guard.
     SmallString<256> GuardName;
     {
       llvm::raw_svector_ostream Out(GuardName);
-      getMangleContext().mangleStaticGuardVariable(&D, Out);
+      if (HasPerVariableGuard)
+        getMangleContext().mangleThreadSafeStaticGuardVariable(&D, GuardNum,
+                                                               Out);
+      else
+        getMangleContext().mangleStaticGuardVariable(&D, Out);
       Out.flush();
     }
 
     // Create the guard variable with a zero-initializer. Just absorb linkage,
     // visibility and dll storage class from the guarded variable.
-    GI->Guard =
-        new llvm::GlobalVariable(CGM.getModule(), GuardTy, false,
+    GuardVar =
+        new llvm::GlobalVariable(CGM.getModule(), GuardTy, /*isConstant=*/false,
                                  GV->getLinkage(), Zero, GuardName.str());
-    GI->Guard->setVisibility(GV->getVisibility());
-    GI->Guard->setDLLStorageClass(GV->getDLLStorageClass());
-    if (GI->Guard->isWeakForLinker())
-      GI->Guard->setComdat(
-          CGM.getModule().getOrInsertComdat(GI->Guard->getName()));
-  } else {
-    assert(GI->Guard->getLinkage() == GV->getLinkage() &&
-           "static local from the same function had different linkage");
+    GuardVar->setVisibility(GV->getVisibility());
+    GuardVar->setDLLStorageClass(GV->getDLLStorageClass());
+    if (GuardVar->isWeakForLinker())
+      GuardVar->setComdat(
+          CGM.getModule().getOrInsertComdat(GuardVar->getName()));
+    if (D.getTLSKind())
+      GuardVar->setThreadLocal(true);
+    if (GI && !HasPerVariableGuard)
+      GI->Guard = GuardVar;
   }
 
-  // Pseudo code for the test:
-  // if (!(GuardVar & MyGuardBit)) {
-  //   GuardVar |= MyGuardBit;
-  //   ... initialize the object ...;
-  // }
+  assert(GuardVar->getLinkage() == GV->getLinkage() &&
+         "static local from the same function had different linkage");
 
-  // Test our bit from the guard variable.
-  llvm::ConstantInt *Bit = llvm::ConstantInt::get(GuardTy, 1U << BitIndex);
-  llvm::LoadInst *LI = Builder.CreateLoad(GI->Guard);
-  llvm::Value *IsInitialized =
-      Builder.CreateICmpNE(Builder.CreateAnd(LI, Bit), Zero);
-  llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
-  llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
-  Builder.CreateCondBr(IsInitialized, EndBlock, InitBlock);
+  if (!HasPerVariableGuard) {
+    // Pseudo code for the test:
+    // if (!(GuardVar & MyGuardBit)) {
+    //   GuardVar |= MyGuardBit;
+    //   ... initialize the object ...;
+    // }
 
-  // Set our bit in the guard variable and emit the initializer and add a global
-  // destructor if appropriate.
-  CGF.EmitBlock(InitBlock);
-  Builder.CreateStore(Builder.CreateOr(LI, Bit), GI->Guard);
-  CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
-  Builder.CreateBr(EndBlock);
+    // Test our bit from the guard variable.
+    llvm::ConstantInt *Bit = llvm::ConstantInt::get(GuardTy, 1U << GuardNum);
+    llvm::LoadInst *LI = Builder.CreateLoad(GuardVar);
+    llvm::Value *IsInitialized =
+        Builder.CreateICmpNE(Builder.CreateAnd(LI, Bit), Zero);
+    llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
+    llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
+    Builder.CreateCondBr(IsInitialized, EndBlock, InitBlock);
 
-  // Continue.
-  CGF.EmitBlock(EndBlock);
+    // Set our bit in the guard variable and emit the initializer and add a global
+    // destructor if appropriate.
+    CGF.EmitBlock(InitBlock);
+    Builder.CreateStore(Builder.CreateOr(LI, Bit), GuardVar);
+    CGF.EHStack.pushCleanup<ResetGuardBit>(EHCleanup, GuardVar, GuardNum);
+    CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
+    CGF.PopCleanupBlock();
+    Builder.CreateBr(EndBlock);
+
+    // Continue.
+    CGF.EmitBlock(EndBlock);
+  } else {
+    // Pseudo code for the test:
+    // if (TSS > _Init_thread_epoch) {
+    //   _Init_thread_header(&TSS);
+    //   if (TSS == -1) {
+    //     ... initialize the object ...;
+    //     _Init_thread_footer(&TSS);
+    //   }
+    // }
+    //
+    // The algorithm is almost identical to what can be found in the appendix
+    // found in N2325.
+
+    unsigned IntAlign = CGM.getTarget().getIntAlign() / 8;
+
+    // This BasicBLock determines whether or not we have any work to do.
+    llvm::LoadInst *FirstGuardLoad =
+        Builder.CreateAlignedLoad(GuardVar, IntAlign);
+    FirstGuardLoad->setOrdering(llvm::AtomicOrdering::Unordered);
+    llvm::LoadInst *InitThreadEpoch =
+        Builder.CreateLoad(getInitThreadEpochPtr(CGM));
+    llvm::Value *IsUninitialized =
+        Builder.CreateICmpSGT(FirstGuardLoad, InitThreadEpoch);
+    llvm::BasicBlock *AttemptInitBlock = CGF.createBasicBlock("init.attempt");
+    llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
+    Builder.CreateCondBr(IsUninitialized, AttemptInitBlock, EndBlock);
+
+    // This BasicBlock attempts to determine whether or not this thread is
+    // responsible for doing the initialization.
+    CGF.EmitBlock(AttemptInitBlock);
+    CGF.EmitNounwindRuntimeCall(getInitThreadHeaderFn(CGM), GuardVar);
+    llvm::LoadInst *SecondGuardLoad =
+        Builder.CreateAlignedLoad(GuardVar, IntAlign);
+    SecondGuardLoad->setOrdering(llvm::AtomicOrdering::Unordered);
+    llvm::Value *ShouldDoInit =
+        Builder.CreateICmpEQ(SecondGuardLoad, getAllOnesInt());
+    llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
+    Builder.CreateCondBr(ShouldDoInit, InitBlock, EndBlock);
+
+    // Ok, we ended up getting selected as the initializing thread.
+    CGF.EmitBlock(InitBlock);
+    CGF.EHStack.pushCleanup<CallInitThreadAbort>(EHCleanup, GuardVar);
+    CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
+    CGF.PopCleanupBlock();
+    CGF.EmitNounwindRuntimeCall(getInitThreadFooterFn(CGM), GuardVar);
+    Builder.CreateBr(EndBlock);
+
+    CGF.EmitBlock(EndBlock);
+  }
 }
 
 bool MicrosoftCXXABI::isZeroInitializable(const MemberPointerType *MPT) {

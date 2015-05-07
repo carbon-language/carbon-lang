@@ -197,6 +197,10 @@ public:
                                 ArrayRef<const CXXRecordDecl *> BasePath,
                                 raw_ostream &Out) = 0;
 
+  virtual void mangleThreadSafeStaticGuardVariable(const VarDecl *VD,
+                                                   unsigned GuardNum,
+                                                   raw_ostream &Out) = 0;
+
   virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
                                         raw_ostream &) = 0;
 
