@@ -222,6 +222,28 @@ CMICmnLLDBDebugger::GetDriver(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Wait until all events have been handled.
+//          This function works in pair with CMICmnLLDBDebugger::MonitorSBListenerEvents
+//          that handles events from queue. When all events were handled and queue is
+//          empty the MonitorSBListenerEvents notifies this function that it's ready to
+//          go on. To synchronize them the m_mutexEventQueue and
+//          m_conditionEventQueueEmpty are used.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMICmnLLDBDebugger::WaitForHandleEvent(void)
+{
+    std::unique_lock<std::mutex> lock(m_mutexEventQueue);
+
+    lldb::SBEvent event;
+    if (ThreadIsActive() && m_lldbListener.PeekAtNextEvent(event))
+        m_conditionEventQueueEmpty.wait(lock);
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Initialize the LLDB Debugger object.
 // Type:    Method.
 // Args:    None.
@@ -642,39 +664,48 @@ CMICmnLLDBDebugger::MonitorSBListenerEvents(bool &vrbIsAlive)
 {
     vrbIsAlive = true;
 
+    // Lock the mutex of event queue
+    // Note that it should be locked while we are in CMICmnLLDBDebugger::MonitorSBListenerEvents to
+    // avoid a race condition with CMICmnLLDBDebugger::WaitForHandleEvent
+    std::unique_lock<std::mutex> lock(m_mutexEventQueue);
+
     lldb::SBEvent event;
     const bool bGotEvent = m_lldbListener.GetNextEvent(event);
-    if (!bGotEvent || !event.IsValid())
+    if (!bGotEvent)
     {
+        // Notify that we are finished and unlock the mutex of event queue before sleeping
+        m_conditionEventQueueEmpty.notify_one();
+        lock.unlock();
+
+        // Wait a bit to reduce CPU load
         const std::chrono::milliseconds time(1);
         std::this_thread::sleep_for(time);
         return MIstatus::success;
     }
-    if (!event.GetBroadcaster().IsValid())
-        return MIstatus::success;
+    assert(event.IsValid());
+    assert(event.GetBroadcaster().IsValid());
 
     // Debugging
     m_pLog->WriteLog(CMIUtilString::Format("##### An event occurred: %s", event.GetBroadcasterClass()));
 
     bool bHandledEvent = false;
-
     bool bOk = false;
     {
         // Lock Mutex before handling events so that we don't disturb a running cmd
         CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
         bOk = CMICmnLLDBDebuggerHandleEvents::Instance().HandleEvent(event, bHandledEvent);
     }
+
     if (!bHandledEvent)
     {
         const CMIUtilString msg(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_WRN_UNKNOWN_EVENT), event.GetBroadcasterClass()));
         m_pLog->WriteLog(msg);
     }
-    if (!bOk)
-    {
-        m_pLog->WriteLog(CMICmnLLDBDebuggerHandleEvents::Instance().GetErrorDescription());
-    }
 
-    return bOk;
+    if (!bOk)
+        m_pLog->WriteLog(CMICmnLLDBDebuggerHandleEvents::Instance().GetErrorDescription());
+
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------

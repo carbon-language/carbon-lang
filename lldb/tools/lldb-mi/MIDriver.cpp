@@ -536,12 +536,8 @@ CMIDriver::DoMainLoop(void)
             CMIUtilString lineText(pCmd);
             if (!lineText.empty ())
             {
-                if (lineText == "quit")
-                {
-                    // We want to be exiting when receiving a quit command
-                    m_bExitApp = true;
-                    break;
-                }
+                // Check that the handler thread is alive (otherwise we stuck here)
+                assert(CMICmnLLDBDebugger::Instance().ThreadIsActive());
 
                 {
                     // Lock Mutex before processing commands so that we don't disturb an event
@@ -549,9 +545,13 @@ CMIDriver::DoMainLoop(void)
                     CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
                     bOk = InterpretCommand(lineText);
                 }
+
                 // Draw prompt if desired
                 if (bOk && m_rStdin.GetEnablePrompt())
                     bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+
+                // Wait while the handler thread handles incoming events
+                CMICmnLLDBDebugger::Instance().WaitForHandleEvent();
             }
         }
     }

@@ -10,8 +10,9 @@
 #pragma once
 
 // Third party headers
-#include <queue>
+#include <condition_variable>
 #include <map>
+#include <mutex>
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBEvent.h"
@@ -48,6 +49,7 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     CMIDriverBase &GetDriver(void) const;
     lldb::SBDebugger &GetTheDebugger(void);
     lldb::SBListener &GetTheListener(void);
+    void WaitForHandleEvent(void);
 
     // MI Commands can use these functions to listen for events they require
     bool RegisterForEvent(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass, const MIuint vEventMask);
@@ -106,4 +108,6 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     const CMIUtilString m_constStrThisThreadId;
     MapBroadcastClassNameToEventMask_t m_mapBroadcastClassNameToEventMask;
     MapIdToEventMask_t m_mapIdToEventMask;
+    std::mutex m_mutexEventQueue;
+    std::condition_variable m_conditionEventQueueEmpty;
 };
