@@ -638,7 +638,8 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
     if (!target || ref.target()->name().equals("_GLOBAL_OFFSET_TABLE_")) {
       target = _armLayout.getGOTSymAddr();
     } else {
-      llvm_unreachable("Segment-base relative addressing is not supported");
+      return make_dynamic_error_code(
+          "Segment-base relative addressing is not supported");
     }
     return relocR_ARM_BASE_PREL(loc, reloc, target, addend);
   case R_ARM_ALU_PC_G0_NC:
