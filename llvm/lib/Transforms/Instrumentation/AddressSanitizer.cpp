@@ -1452,16 +1452,10 @@ bool AddressSanitizer::doInitialization(Module &M) {
   IntptrTy = Type::getIntNTy(*C, LongSize);
   TargetTriple = Triple(M.getTargetTriple());
 
-  AsanCtorFunction =
-      Function::Create(FunctionType::get(Type::getVoidTy(*C), false),
-                       GlobalValue::InternalLinkage, kAsanModuleCtorName, &M);
-  BasicBlock *AsanCtorBB = BasicBlock::Create(*C, "", AsanCtorFunction);
-  // call __asan_init in the module ctor.
-  IRBuilder<> IRB(ReturnInst::Create(*C, AsanCtorBB));
-  AsanInitFunction = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(kAsanInitName, IRB.getVoidTy(), nullptr));
-  AsanInitFunction->setLinkage(Function::ExternalLinkage);
-  IRB.CreateCall(AsanInitFunction);
+  std::tie(AsanCtorFunction, AsanInitFunction) =
+      createSanitizerCtorAndInitFunctions(M, kAsanModuleCtorName, kAsanInitName,
+                                          /*InitArgTypes=*/{},
+                                          /*InitArgs=*/{});
 
   Mapping = getShadowMapping(TargetTriple, LongSize);
 
