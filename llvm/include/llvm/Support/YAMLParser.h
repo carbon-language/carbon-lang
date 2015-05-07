@@ -76,9 +76,9 @@ std::string escape(StringRef Input);
 class Stream {
 public:
   /// \brief This keeps a reference to the string referenced by \p Input.
-  Stream(StringRef Input, SourceMgr &);
+  Stream(StringRef Input, SourceMgr &, bool ShowColors = true);
 
-  Stream(MemoryBufferRef InputBuffer, SourceMgr &);
+  Stream(MemoryBufferRef InputBuffer, SourceMgr &, bool ShowColors = true);
   ~Stream();
 
   document_iterator begin();

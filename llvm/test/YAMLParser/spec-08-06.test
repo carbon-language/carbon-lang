@@ -1,7 +1,7 @@
-# RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
+# RUN: not yaml-bench -canonical %s 2>&1 | FileCheck %s
 #
 # We don't currently validate tags.
-# XFAIL: *
+# CHECK: error: Unknown tag handle
 
 %TAG !o! tag:ben-kiki.org,2000:
 ---
@@ -9,4 +9,3 @@
 - !o! bar
 - !h!type baz
 
-# CHECK: error

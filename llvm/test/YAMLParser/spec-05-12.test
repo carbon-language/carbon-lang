@@ -1,7 +1,8 @@
 # RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
 #
+# FIXME: This test should actually fail. Yaml-bench should report an error
+# that a tab is being used to indent a plain scalar at line 15.
 # We don't currently reject tabs as indentation.
-# XFAIL: *
 
 # Tabs do's and don'ts:
 # comment:
@@ -13,4 +14,5 @@ block: |
 elsewhere:	# separation
 	indentation, in	plain scalar
 
-# CHECK: error
+
+# CHECK: !!str "Quoted\t\t"

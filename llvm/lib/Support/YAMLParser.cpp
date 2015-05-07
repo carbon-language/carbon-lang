@@ -260,8 +260,8 @@ namespace yaml {
 /// @brief Scans YAML tokens from a MemoryBuffer.
 class Scanner {
 public:
-  Scanner(StringRef Input, SourceMgr &SM);
-  Scanner(MemoryBufferRef Buffer, SourceMgr &SM_);
+  Scanner(StringRef Input, SourceMgr &SM, bool ShowColors = true);
+  Scanner(MemoryBufferRef Buffer, SourceMgr &SM_, bool ShowColors = true);
 
   /// @brief Parse the next token and return it without popping it.
   Token &peekNext();
@@ -271,7 +271,7 @@ public:
 
   void printError(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Message,
                   ArrayRef<SMRange> Ranges = None) {
-    SM.PrintMessage(Loc, Kind, Message, Ranges);
+    SM.PrintMessage(Loc, Kind, Message, Ranges, /* FixIts= */ None, ShowColors);
   }
 
   void setError(const Twine &Message, StringRef::iterator Position) {
@@ -505,6 +505,9 @@ private:
   /// @brief True if an error has occurred.
   bool Failed;
 
+  /// @brief Should colors be used when printing out the diagnostic messages?
+  bool ShowColors;
+
   /// @brief Queue of tokens. This is required to queue up tokens while looking
   ///        for the end of a simple key. And for cases where a single character
   ///        can produce multiple tokens (e.g. BlockEnd).
@@ -706,11 +709,13 @@ std::string yaml::escape(StringRef Input) {
   return EscapedInput;
 }
 
-Scanner::Scanner(StringRef Input, SourceMgr &sm) : SM(sm) {
+Scanner::Scanner(StringRef Input, SourceMgr &sm, bool ShowColors)
+    : SM(sm), ShowColors(ShowColors) {
   init(MemoryBufferRef(Input, "YAML"));
 }
 
-Scanner::Scanner(MemoryBufferRef Buffer, SourceMgr &SM_) : SM(SM_) {
+Scanner::Scanner(MemoryBufferRef Buffer, SourceMgr &SM_, bool ShowColors)
+    : SM(SM_), ShowColors(ShowColors) {
   init(Buffer);
 }
 
@@ -1525,11 +1530,11 @@ bool Scanner::fetchMoreTokens() {
   return false;
 }
 
-Stream::Stream(StringRef Input, SourceMgr &SM)
-    : scanner(new Scanner(Input, SM)), CurrentDoc() {}
+Stream::Stream(StringRef Input, SourceMgr &SM, bool ShowColors)
+    : scanner(new Scanner(Input, SM, ShowColors)), CurrentDoc() {}
 
-Stream::Stream(MemoryBufferRef InputBuffer, SourceMgr &SM)
-    : scanner(new Scanner(InputBuffer, SM)), CurrentDoc() {}
+Stream::Stream(MemoryBufferRef InputBuffer, SourceMgr &SM, bool ShowColors)
+    : scanner(new Scanner(InputBuffer, SM, ShowColors)), CurrentDoc() {}
 
 Stream::~Stream() {}
 

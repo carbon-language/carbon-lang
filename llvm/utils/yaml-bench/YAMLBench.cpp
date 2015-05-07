@@ -19,6 +19,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
@@ -51,6 +52,10 @@ static cl::opt<unsigned>
   MemoryLimitMB("memory-limit", cl::desc(
                   "Do not use more megabytes of memory"),
                 cl::init(1000));
+
+cl::opt<cl::boolOrDefault>
+    UseColor("use-color", cl::desc("Emit colored output (default=autodetect)"),
+             cl::init(cl::BOU_UNSET));
 
 struct indent {
   unsigned distance;
@@ -187,6 +192,9 @@ static std::string createJSONText(size_t MemoryMB, unsigned ValueSize) {
 
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
+  bool ShowColors = UseColor == cl::BOU_UNSET
+                        ? sys::Process::StandardOutHasColors()
+                        : UseColor == cl::BOU_TRUE;
   if (Input.getNumOccurrences()) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
         MemoryBuffer::getFileOrSTDIN(Input);
@@ -200,8 +208,10 @@ int main(int argc, char **argv) {
     }
 
     if (DumpCanonical) {
-      yaml::Stream stream(Buf.getBuffer(), sm);
+      yaml::Stream stream(Buf.getBuffer(), sm, ShowColors);
       dumpStream(stream);
+      if (stream.failed())
+        return 1;
     }
   }
 
