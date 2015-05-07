@@ -1441,6 +1441,11 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXNullPtrLiteralExpr> nullPtrLiteralExpr;
 
+/// \brief Matches GNU __null expression.
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  GNUNullExpr> gnuNullExpr;
+
 /// \brief Matches binary operator expressions.
 ///
 /// Example matches a || b
