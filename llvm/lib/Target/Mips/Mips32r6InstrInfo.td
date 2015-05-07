@@ -374,7 +374,8 @@ class BOVC_DESC   : CMP_BC_DESC_BASE<"bovc", brtarget, GPR32Opnd>;
 class BNVC_DESC   : CMP_BC_DESC_BASE<"bnvc", brtarget, GPR32Opnd>;
 
 class JMP_IDX_COMPACT_DESC_BASE<string opstr, DAGOperand opnd,
-                                RegisterOperand GPROpnd> {
+                                RegisterOperand GPROpnd>
+    : MipsR6Arch<opstr> {
   dag InOperandList = (ins GPROpnd:$rt, opnd:$offset);
   string AsmString = !strconcat(opstr, "\t$rt, $offset");
   list<dag> Pattern = [];
@@ -686,8 +687,8 @@ defm S : CMP_CC_M<FIELD_CMP_FORMAT_S, "s", FGR32Opnd>;
 defm D : CMP_CC_M<FIELD_CMP_FORMAT_D, "d", FGR64Opnd>;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
 def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
-def JIALC : JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
-def JIC : JIC_ENC, JIC_DESC, ISA_MIPS32R6;
+def JIALC : R6MMR6Rel, JIALC_ENC, JIALC_DESC, ISA_MIPS32R6;
+def JIC : R6MMR6Rel, JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
 def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
 def LL_R6 : LL_R6_ENC, LL_R6_DESC, ISA_MIPS32R6;
