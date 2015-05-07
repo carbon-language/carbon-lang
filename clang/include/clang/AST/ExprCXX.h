@@ -1452,6 +1452,9 @@ public:
     return CaptureDefaultLoc;
   }
 
+  /// \brief Determine whether one of this lambda's captures is an init-capture.
+  bool isInitCapture(const LambdaCapture *Capture) const;
+
   /// \brief An iterator that walks over the captures of the lambda,
   /// both implicit and explicit.
   typedef const Capture *capture_iterator;

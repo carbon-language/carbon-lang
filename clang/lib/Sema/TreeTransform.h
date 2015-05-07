@@ -9133,7 +9133,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   for (LambdaExpr::capture_iterator C = E->capture_begin(),
                                     CEnd = E->capture_end();
        C != CEnd; ++C) {
-    if (!C->isInitCapture())
+    if (!E->isInitCapture(C))
       continue;
     EnterExpressionEvaluationContext EEEC(getSema(),
                                           Sema::PotentiallyEvaluated);
@@ -9245,7 +9245,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
       continue;
 
     // Rebuild init-captures, including the implied field declaration.
-    if (C->isInitCapture()) {
+    if (E->isInitCapture(C)) {
       InitCaptureInfoTy InitExprTypePair = 
           InitCaptureExprsAndTypes[C - E->capture_begin()];
       ExprResult Init = InitExprTypePair.first;

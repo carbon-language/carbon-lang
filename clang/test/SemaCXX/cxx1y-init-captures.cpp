@@ -167,3 +167,26 @@ int test(T t = T{}) {
 int run = test(); //expected-note {{instantiation}}
 
 }
+
+namespace classification_of_captures_of_init_captures {
+
+template <typename T>
+void f() {
+  [a = 24] () mutable {
+    [&a] { a = 3; }();
+  }();
+}
+
+template <typename T>
+void h() {
+  [a = 24] (auto param) mutable {
+    [&a] { a = 3; }();
+  }(42);
+}
+
+int run() {
+  f<int>();
+  h<int>();
+}
+
+}

@@ -857,7 +857,7 @@ template <typename Derived>
 bool
 RecursiveASTVisitor<Derived>::TraverseLambdaCapture(LambdaExpr *LE,
                                                     const LambdaCapture *C) {
-  if (C->isInitCapture())
+  if (LE->isInitCapture(C))
     TRY_TO(TraverseDecl(C->getCapturedVar()));
   return true;
 }

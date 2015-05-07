@@ -1027,6 +1027,11 @@ LambdaExpr *LambdaExpr::CreateDeserialized(const ASTContext &C,
   return new (Mem) LambdaExpr(EmptyShell(), NumCaptures, NumArrayIndexVars > 0);
 }
 
+bool LambdaExpr::isInitCapture(const LambdaCapture *C) const {
+  return (C->capturesVariable() && C->getCapturedVar()->isInitCapture() &&
+          (getCallOperator() == C->getCapturedVar()->getDeclContext()));
+}
+
 LambdaExpr::capture_iterator LambdaExpr::capture_begin() const {
   return getLambdaClass()->getLambdaData().Captures;
 }
