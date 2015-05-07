@@ -1,5 +1,6 @@
-RUN: ./LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s --check-prefix=SimpleTest
-SimpleTest: Found the target, exiting
+CHECK: BINGO
+
+RUN: ./LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s
 
 RUN: not ./LLVMFuzzer-InfiniteTest -timeout=2 2>&1 | FileCheck %s --check-prefix=InfiniteTest
 InfiniteTest: ALARM: working on the last Unit for
@@ -12,17 +13,15 @@ TimeoutTest: CRASHED; file written to timeout
 RUN: not ./LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
 NullDerefTest: CRASHED; file written to crash-
 
-RUN: not ./LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s --check-prefix=FullCoverageSetTest
-FullCoverageSetTest: BINGO
+RUN: not ./LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_coverage_pairs=1 2>&1 | FileCheck %s --check-prefix=FourIndependentBranchesTest
-FourIndependentBranchesTest: BINGO
+RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_coverage_pairs=1 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s --check-prefix=CounterTest
-CounterTest: BINGO
+RUN: not ./LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-DFSanSimpleCmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s --check-prefix=DFSanSimpleCmpTest
-DFSanSimpleCmpTest: Found the target:
+RUN: not ./LLVMFuzzer-DFSanSimpleCmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s --check-prefix=CxxTokensTest
-CxxTokensTest: Found the target, exiting
+RUN: not ./LLVMFuzzer-DFSanMemcmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s
+
+RUN: not ./LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s
+

@@ -81,6 +81,8 @@ __attribute__((weak))
 void dfsan_add_label(dfsan_label label, void *addr, size_t size);
 __attribute__((weak))
 const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label);
+__attribute__((weak))
+dfsan_label dfsan_read_label(const void *addr, size_t size);
 }  // extern "C"
 
 namespace {
@@ -271,5 +273,18 @@ void __dfsw___sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
   uint64_t CmpSize = (SizeAndType >> 32) / 8;
   uint64_t Type = (SizeAndType << 32) >> 32;
   DFSan->DFSanCmpCallback(PC, CmpSize, Type, Arg1, Arg2, L1, L2);
+}
+
+void dfsan_weak_hook_memcmp(void *caller_pc, const void *s1, const void *s2,
+                            size_t n, dfsan_label s1_label,
+                            dfsan_label s2_label, dfsan_label n_label) {
+  uintptr_t PC = reinterpret_cast<uintptr_t>(caller_pc);
+  uint64_t S1, S2;
+  // Simplification: handle only first 8 bytes.
+  memcpy(&S1, s1, std::min(n, sizeof(S1)));
+  memcpy(&S2, s2, std::min(n, sizeof(S2)));
+  dfsan_label L1 = dfsan_read_label(s1, n);
+  dfsan_label L2 = dfsan_read_label(s2, n);
+  DFSan->DFSanCmpCallback(PC, n, ICMP_EQ, S1, S2, L1, L2);
 }
 }  // extern "C"

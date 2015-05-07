@@ -6,7 +6,7 @@
 #include <iostream>
 
 static void Found() {
-  std::cout << "Found the target, exiting\n";
+  std::cout << "BINGO; Found the target, exiting\n";
   exit(1);
 }
 
