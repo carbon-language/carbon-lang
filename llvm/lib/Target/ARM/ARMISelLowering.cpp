@@ -1005,11 +1005,12 @@ ARMTargetLowering::findRepresentativeClass(const TargetRegisterInfo *TRI,
 }
 
 const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return nullptr;
+  switch ((ARMISD::NodeType)Opcode) {
+  case ARMISD::FIRST_NUMBER:  break;
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
   case ARMISD::WrapperPIC:    return "ARMISD::WrapperPIC";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
+  case ARMISD::COPY_STRUCT_BYVAL: return "ARMIDF::COPY_STRUCT_BYVAL";
   case ARMISD::CALL:          return "ARMISD::CALL";
   case ARMISD::CALL_PRED:     return "ARMISD::CALL_PRED";
   case ARMISD::CALL_NOLINK:   return "ARMISD::CALL_NOLINK";
@@ -1086,6 +1087,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VQRSHRNs:      return "ARMISD::VQRSHRNs";
   case ARMISD::VQRSHRNu:      return "ARMISD::VQRSHRNu";
   case ARMISD::VQRSHRNsu:     return "ARMISD::VQRSHRNsu";
+  case ARMISD::VSLI:          return "ARMISD::VSLI";
+  case ARMISD::VSRI:          return "ARMISD::VSRI";
   case ARMISD::VGETLANEu:     return "ARMISD::VGETLANEu";
   case ARMISD::VGETLANEs:     return "ARMISD::VGETLANEs";
   case ARMISD::VMOVIMM:       return "ARMISD::VMOVIMM";
@@ -1136,6 +1139,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VST3LN_UPD:    return "ARMISD::VST3LN_UPD";
   case ARMISD::VST4LN_UPD:    return "ARMISD::VST4LN_UPD";
   }
+  return nullptr;
 }
 
 EVT ARMTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {

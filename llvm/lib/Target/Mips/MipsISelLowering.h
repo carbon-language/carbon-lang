@@ -27,7 +27,7 @@
 
 namespace llvm {
   namespace MipsISD {
-    enum NodeType {
+    enum NodeType : unsigned {
       // Start the numbering from where ISD NodeType finishes.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 

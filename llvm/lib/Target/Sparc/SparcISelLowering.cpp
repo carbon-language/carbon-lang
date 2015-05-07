@@ -1677,8 +1677,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
 }
 
 const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return nullptr;
+  switch ((SPISD::NodeType)Opcode) {
+  case SPISD::FIRST_NUMBER: break;
   case SPISD::CMPICC:     return "SPISD::CMPICC";
   case SPISD::CMPFCC:     return "SPISD::CMPFCC";
   case SPISD::BRICC:      return "SPISD::BRICC";
@@ -1701,6 +1701,7 @@ const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SPISD::TLS_LD:     return "SPISD::TLS_LD";
   case SPISD::TLS_CALL:   return "SPISD::TLS_CALL";
   }
+  return nullptr;
 }
 
 EVT SparcTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {

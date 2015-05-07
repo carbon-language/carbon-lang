@@ -2610,8 +2610,8 @@ SDValue AMDGPUTargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
 #define NODE_NAME_CASE(node) case AMDGPUISD::node: return #node;
 
 const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return nullptr;
+  switch ((AMDGPUISD::NodeType)Opcode) {
+  case AMDGPUISD::FIRST_NUMBER: break;
   // AMDIL DAG nodes
   NODE_NAME_CASE(CALL);
   NODE_NAME_CASE(UMUL);
@@ -2622,6 +2622,8 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(DWORDADDR)
   NODE_NAME_CASE(FRACT)
   NODE_NAME_CASE(CLAMP)
+  NODE_NAME_CASE(COS_HW)
+  NODE_NAME_CASE(SIN_HW)
   NODE_NAME_CASE(FMAX_LEGACY)
   NODE_NAME_CASE(SMAX)
   NODE_NAME_CASE(UMAX)
@@ -2646,6 +2648,8 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(LDEXP)
   NODE_NAME_CASE(FP_CLASS)
   NODE_NAME_CASE(DOT4)
+  NODE_NAME_CASE(CARRY)
+  NODE_NAME_CASE(BORROW)
   NODE_NAME_CASE(BFE_U32)
   NODE_NAME_CASE(BFE_I32)
   NODE_NAME_CASE(BFI)
@@ -2655,6 +2659,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(MUL_I24)
   NODE_NAME_CASE(MAD_U24)
   NODE_NAME_CASE(MAD_I24)
+  NODE_NAME_CASE(TEXTURE_FETCH)
   NODE_NAME_CASE(EXPORT)
   NODE_NAME_CASE(CONST_ADDRESS)
   NODE_NAME_CASE(REGISTER_LOAD)
@@ -2671,9 +2676,12 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(CVT_F32_UBYTE3)
   NODE_NAME_CASE(BUILD_VERTICAL_VECTOR)
   NODE_NAME_CASE(CONST_DATA_PTR)
+  case AMDGPUISD::FIRST_MEM_OPCODE_NUMBER: break;
   NODE_NAME_CASE(STORE_MSKOR)
   NODE_NAME_CASE(TBUFFER_STORE_FORMAT)
+  case AMDGPUISD::LAST_AMDGPU_ISD_NUMBER: break;
   }
+  return nullptr;
 }
 
 SDValue AMDGPUTargetLowering::getRsqrtEstimate(SDValue Operand,

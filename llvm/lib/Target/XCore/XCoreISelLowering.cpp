@@ -44,8 +44,9 @@ using namespace llvm;
 const char *XCoreTargetLowering::
 getTargetNodeName(unsigned Opcode) const
 {
-  switch (Opcode)
+  switch ((XCoreISD::NodeType)Opcode)
   {
+    case XCoreISD::FIRST_NUMBER      : break;
     case XCoreISD::BL                : return "XCoreISD::BL";
     case XCoreISD::PCRelativeWrapper : return "XCoreISD::PCRelativeWrapper";
     case XCoreISD::DPRelativeWrapper : return "XCoreISD::DPRelativeWrapper";
@@ -64,8 +65,8 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::FRAME_TO_ARGS_OFFSET : return "XCoreISD::FRAME_TO_ARGS_OFFSET";
     case XCoreISD::EH_RETURN         : return "XCoreISD::EH_RETURN";
     case XCoreISD::MEMBARRIER        : return "XCoreISD::MEMBARRIER";
-    default                          : return nullptr;
   }
+  return nullptr;
 }
 
 XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,

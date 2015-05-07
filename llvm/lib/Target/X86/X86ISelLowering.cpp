@@ -17729,8 +17729,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
 }
 
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return nullptr;
+  switch ((X86ISD::NodeType)Opcode) {
+  case X86ISD::FIRST_NUMBER:       break;
   case X86ISD::BSF:                return "X86ISD::BSF";
   case X86ISD::BSR:                return "X86ISD::BSR";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
@@ -17757,9 +17757,11 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UCOMI:              return "X86ISD::UCOMI";
   case X86ISD::CMPM:               return "X86ISD::CMPM";
   case X86ISD::CMPMU:              return "X86ISD::CMPMU";
+  case X86ISD::CMPM_RND:           return "X86ISD::CMPM_RND";
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::SETCC_CARRY:        return "X86ISD::SETCC_CARRY";
   case X86ISD::FSETCC:             return "X86ISD::FSETCC";
+  case X86ISD::FGETSIGNx86:        return "X86ISD::FGETSIGNx86";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
@@ -17768,16 +17770,21 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::WrapperRIP:         return "X86ISD::WrapperRIP";
+  case X86ISD::MOVDQ2Q:            return "X86ISD::MOVDQ2Q";
+  case X86ISD::MMX_MOVD2W:         return "X86ISD::MMX_MOVD2W";
+  case X86ISD::MMX_MOVW2D:         return "X86ISD::MMX_MOVW2D";
   case X86ISD::PEXTRB:             return "X86ISD::PEXTRB";
   case X86ISD::PEXTRW:             return "X86ISD::PEXTRW";
   case X86ISD::INSERTPS:           return "X86ISD::INSERTPS";
   case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
+  case X86ISD::MMX_PINSRW:         return "X86ISD::MMX_PINSRW";
   case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
   case X86ISD::ANDNP:              return "X86ISD::ANDNP";
   case X86ISD::PSIGN:              return "X86ISD::PSIGN";
   case X86ISD::BLENDI:             return "X86ISD::BLENDI";
   case X86ISD::SHRUNKBLEND:        return "X86ISD::SHRUNKBLEND";
+  case X86ISD::ADDUS:              return "X86ISD::ADDUS";
   case X86ISD::SUBUS:              return "X86ISD::SUBUS";
   case X86ISD::HADD:               return "X86ISD::HADD";
   case X86ISD::HSUB:               return "X86ISD::HSUB";
@@ -17871,6 +17878,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UNPCKH:             return "X86ISD::UNPCKH";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VEXTRACT:           return "X86ISD::VEXTRACT";
+  case X86ISD::VPERMILPV:          return "X86ISD::VPERMILPV";
   case X86ISD::VPERMILPI:          return "X86ISD::VPERMILPI";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
   case X86ISD::VPERMV:             return "X86ISD::VPERMV";
@@ -17883,6 +17891,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
   case X86ISD::MEMBARRIER:         return "X86ISD::MEMBARRIER";
+  case X86ISD::MFENCE:             return "X86ISD::MFENCE";
+  case X86ISD::SFENCE:             return "X86ISD::SFENCE";
+  case X86ISD::LFENCE:             return "X86ISD::LFENCE";
   case X86ISD::SEG_ALLOCA:         return "X86ISD::SEG_ALLOCA";
   case X86ISD::WIN_FTOL:           return "X86ISD::WIN_FTOL";
   case X86ISD::SAHF:               return "X86ISD::SAHF";
@@ -17894,6 +17905,13 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FNMSUB:             return "X86ISD::FNMSUB";
   case X86ISD::FMADDSUB:           return "X86ISD::FMADDSUB";
   case X86ISD::FMSUBADD:           return "X86ISD::FMSUBADD";
+  case X86ISD::FMADD_RND:          return "X86ISD::FMADD_RND";
+  case X86ISD::FNMADD_RND:         return "X86ISD::FNMADD_RND";
+  case X86ISD::FMSUB_RND:          return "X86ISD::FMSUB_RND";
+  case X86ISD::FNMSUB_RND:         return "X86ISD::FNMSUB_RND";
+  case X86ISD::FMADDSUB_RND:       return "X86ISD::FMADDSUB_RND";
+  case X86ISD::FMSUBADD_RND:       return "X86ISD::FMSUBADD_RND";
+  case X86ISD::RNDSCALE:           return "X86ISD::RNDSCALE";
   case X86ISD::PCMPESTRI:          return "X86ISD::PCMPESTRI";
   case X86ISD::PCMPISTRI:          return "X86ISD::PCMPISTRI";
   case X86ISD::XTEST:              return "X86ISD::XTEST";
@@ -17902,12 +17920,16 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SELECT:             return "X86ISD::SELECT";
   case X86ISD::ADDSUB:             return "X86ISD::ADDSUB";
   case X86ISD::RCP28:              return "X86ISD::RCP28";
+  case X86ISD::EXP2:               return "X86ISD::EXP2";
   case X86ISD::RSQRT28:            return "X86ISD::RSQRT28";
   case X86ISD::FADD_RND:           return "X86ISD::FADD_RND";
   case X86ISD::FSUB_RND:           return "X86ISD::FSUB_RND";
   case X86ISD::FMUL_RND:           return "X86ISD::FMUL_RND";
   case X86ISD::FDIV_RND:           return "X86ISD::FDIV_RND";
+  case X86ISD::ADDS:               return "X86ISD::ADDS";
+  case X86ISD::SUBS:               return "X86ISD::SUBS";
   }
+  return nullptr;
 }
 
 // isLegalAddressingMode - Return true if the addressing mode represented

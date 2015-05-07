@@ -22,7 +22,7 @@
 
 namespace llvm {
 namespace SystemZISD {
-enum {
+enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
   // Return with a flag operand.  Operand 0 is the chain operand.

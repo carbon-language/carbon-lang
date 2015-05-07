@@ -4369,7 +4369,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
 
 const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
 #define OPCODE(NAME) case SystemZISD::NAME: return "SystemZISD::" #NAME
-  switch (Opcode) {
+  switch ((SystemZISD::NodeType)Opcode) {
+    case SystemZISD::FIRST_NUMBER: break;
     OPCODE(RET_FLAG);
     OPCODE(CALL);
     OPCODE(SIBCALL);

@@ -27,7 +27,7 @@ namespace llvm {
 
   namespace ARMISD {
     // ARM Specific DAG Nodes
-    enum NodeType {
+    enum NodeType : unsigned {
       // Start the numbering where the builtin ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 

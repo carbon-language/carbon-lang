@@ -275,13 +275,15 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM,
 }
 
 const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    return nullptr;
+  switch ((NVPTXISD::NodeType)Opcode) {
+  case NVPTXISD::FIRST_NUMBER:
+    break;
   case NVPTXISD::CALL:
     return "NVPTXISD::CALL";
   case NVPTXISD::RET_FLAG:
     return "NVPTXISD::RET_FLAG";
+  case NVPTXISD::LOAD_PARAM:
+    return "NVPTXISD::LOAD_PARAM";
   case NVPTXISD::Wrapper:
     return "NVPTXISD::Wrapper";
   case NVPTXISD::DeclareParam:
@@ -290,10 +292,14 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::DeclareScalarParam";
   case NVPTXISD::DeclareRet:
     return "NVPTXISD::DeclareRet";
+  case NVPTXISD::DeclareScalarRet:
+    return "NVPTXISD::DeclareScalarRet";
   case NVPTXISD::DeclareRetParam:
     return "NVPTXISD::DeclareRetParam";
   case NVPTXISD::PrintCall:
     return "NVPTXISD::PrintCall";
+  case NVPTXISD::PrintCallUni:
+    return "NVPTXISD::PrintCallUni";
   case NVPTXISD::LoadParam:
     return "NVPTXISD::LoadParam";
   case NVPTXISD::LoadParamV2:
@@ -366,6 +372,8 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::FUN_SHFR_CLAMP";
   case NVPTXISD::IMAD:
     return "NVPTXISD::IMAD";
+  case NVPTXISD::Dummy:
+    return "NVPTXISD::Dummy";
   case NVPTXISD::MUL_WIDE_SIGNED:
     return "NVPTXISD::MUL_WIDE_SIGNED";
   case NVPTXISD::MUL_WIDE_UNSIGNED:
@@ -855,6 +863,7 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::Suld3DV4I16Zero:       return "NVPTXISD::Suld3DV4I16Zero";
   case NVPTXISD::Suld3DV4I32Zero:       return "NVPTXISD::Suld3DV4I32Zero";
   }
+  return nullptr;
 }
 
 TargetLoweringBase::LegalizeTypeAction

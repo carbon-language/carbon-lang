@@ -777,9 +777,8 @@ AArch64TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
 }
 
 const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    return nullptr;
+  switch ((AArch64ISD::NodeType)Opcode) {
+  case AArch64ISD::FIRST_NUMBER:      break;
   case AArch64ISD::CALL:              return "AArch64ISD::CALL";
   case AArch64ISD::ADRP:              return "AArch64ISD::ADRP";
   case AArch64ISD::ADDlow:            return "AArch64ISD::ADDlow";
@@ -864,6 +863,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::TBZ:               return "AArch64ISD::TBZ";
   case AArch64ISD::TBNZ:              return "AArch64ISD::TBNZ";
   case AArch64ISD::TC_RETURN:         return "AArch64ISD::TC_RETURN";
+  case AArch64ISD::PREFETCH:          return "AArch64ISD::PREFETCH";
   case AArch64ISD::SITOF:             return "AArch64ISD::SITOF";
   case AArch64ISD::UITOF:             return "AArch64ISD::UITOF";
   case AArch64ISD::NVCAST:            return "AArch64ISD::NVCAST";
@@ -899,6 +899,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::SMULL:             return "AArch64ISD::SMULL";
   case AArch64ISD::UMULL:             return "AArch64ISD::UMULL";
   }
+  return nullptr;
 }
 
 MachineBasicBlock *

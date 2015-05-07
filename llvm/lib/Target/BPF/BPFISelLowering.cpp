@@ -509,9 +509,9 @@ SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 }
 
 const char *BPFTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    return NULL;
+  switch ((BPFISD::NodeType)Opcode) {
+  case BPFISD::FIRST_TYPE:
+    break;
   case BPFISD::RET_FLAG:
     return "BPFISD::RET_FLAG";
   case BPFISD::CALL:
@@ -523,6 +523,7 @@ const char *BPFTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case BPFISD::Wrapper:
     return "BPFISD::Wrapper";
   }
+  return nullptr;
 }
 
 SDValue BPFTargetLowering::LowerGlobalAddress(SDValue Op,

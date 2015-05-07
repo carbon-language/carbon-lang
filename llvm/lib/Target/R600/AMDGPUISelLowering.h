@@ -207,7 +207,7 @@ public:
 
 namespace AMDGPUISD {
 
-enum {
+enum NodeType : unsigned {
   // AMDIL ISD Opcodes
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   CALL,        // Function call based on a single integer

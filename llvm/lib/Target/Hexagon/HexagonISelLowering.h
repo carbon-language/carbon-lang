@@ -26,7 +26,7 @@ namespace llvm {
 bool isPositiveHalfWord(SDNode *N);
 
   namespace HexagonISD {
-    enum {
+    enum NodeType : unsigned {
       OP_BEGIN = ISD::BUILTIN_OP_END,
 
       CONST32 = OP_BEGIN,

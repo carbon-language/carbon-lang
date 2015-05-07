@@ -26,7 +26,7 @@ namespace llvm {
 
   namespace X86ISD {
     // X86 Specific DAG Nodes
-    enum NodeType {
+    enum NodeType : unsigned {
       // Start the numbering where the builtin ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 

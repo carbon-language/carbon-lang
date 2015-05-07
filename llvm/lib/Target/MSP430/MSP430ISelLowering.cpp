@@ -1141,8 +1141,8 @@ bool MSP430TargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
 
 
 const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch (Opcode) {
-  default: return nullptr;
+  switch ((MSP430ISD::NodeType)Opcode) {
+  case MSP430ISD::FIRST_NUMBER:       break;
   case MSP430ISD::RET_FLAG:           return "MSP430ISD::RET_FLAG";
   case MSP430ISD::RETI_FLAG:          return "MSP430ISD::RETI_FLAG";
   case MSP430ISD::RRA:                return "MSP430ISD::RRA";
@@ -1152,10 +1152,13 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MSP430ISD::Wrapper:            return "MSP430ISD::Wrapper";
   case MSP430ISD::BR_CC:              return "MSP430ISD::BR_CC";
   case MSP430ISD::CMP:                return "MSP430ISD::CMP";
+  case MSP430ISD::SETCC:              return "MSP430ISD::SETCC";
   case MSP430ISD::SELECT_CC:          return "MSP430ISD::SELECT_CC";
   case MSP430ISD::SHL:                return "MSP430ISD::SHL";
   case MSP430ISD::SRA:                return "MSP430ISD::SRA";
+  case MSP430ISD::SRL:                return "MSP430ISD::SRL";
   }
+  return nullptr;
 }
 
 bool MSP430TargetLowering::isTruncateFree(Type *Ty1,
