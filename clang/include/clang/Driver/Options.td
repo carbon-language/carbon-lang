@@ -529,9 +529,10 @@ def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
 def fno_sanitize_blacklist : Flag<["-"], "fno-sanitize-blacklist">,
                              Group<f_clang_Group>,
                              HelpText<"Don't use blacklist file for sanitizers">;
-def fsanitize_coverage : Joined<["-"], "fsanitize-coverage=">,
-                                        Group<f_clang_Group>, Flags<[CC1Option, CoreOption]>,
-                                        HelpText<"Enable coverage instrumentation for Sanitizers">;
+def fsanitize_coverage
+    : Joined<["-"], "fsanitize-coverage=">,
+      Group<f_clang_Group>, Flags<[CoreOption]>,
+      HelpText<"Specify the type of coverage instrumentation for Sanitizers">;
 def fsanitize_memory_track_origins_EQ : Joined<["-"], "fsanitize-memory-track-origins=">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Enable origins tracking in MemorySanitizer">;

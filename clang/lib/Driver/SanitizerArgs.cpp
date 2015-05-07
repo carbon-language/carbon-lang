@@ -482,9 +482,14 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (AsanFieldPadding)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
                                          llvm::utostr(AsanFieldPadding)));
-  if (SanitizeCoverage)
-    CmdArgs.push_back(Args.MakeArgString("-fsanitize-coverage=" +
-                                         llvm::utostr(SanitizeCoverage)));
+  if (SanitizeCoverage) {
+    int CoverageType = std::min(SanitizeCoverage, 3);
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-coverage-type=" +
+                                         llvm::utostr(CoverageType)));
+    if (SanitizeCoverage == 4)
+      CmdArgs.push_back(
+          Args.MakeArgString("-fsanitize-coverage-indirect-calls"));
+  }
   // MSan: Workaround for PR16386.
   // ASan: This is mainly to help LSan with cases such as
   // https://code.google.com/p/address-sanitizer/issues/detail?id=373

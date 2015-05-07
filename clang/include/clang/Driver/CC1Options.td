@@ -241,6 +241,20 @@ def vectorize_slp_aggressive : Flag<["-"], "vectorize-slp-aggressive">,
   HelpText<"Run the BB vectorization passes">;
 def dependent_lib : Joined<["--"], "dependent-lib=">,
   HelpText<"Add dependent library">;
+def fsanitize_coverage_type : Joined<["-"], "fsanitize-coverage-type=">,
+                              HelpText<"Sanitizer coverage type">;
+def fsanitize_coverage_indirect_calls
+    : Flag<["-"], "fsanitize-coverage-indirect-calls">,
+      HelpText<"Enable sanitizer coverage for indirect calls">;
+def fsanitize_coverage_trace_bb
+    : Flag<["-"], "fsanitize-coverage-trace-bb">,
+      HelpText<"Enable basic block tracing in sanitizer coverage">;
+def fsanitize_coverage_trace_cmp
+    : Flag<["-"], "fsanitize-coverage-trace-cmp">,
+      HelpText<"Enable cmp instruction tracing in sanitizer coverage">;
+def fsanitize_coverage_8bit_counters
+    : Flag<["-"], "fsanitize-coverage-8bit-counters">,
+      HelpText<"Enable frequency counters in sanitizer coverage">;
 
 //===----------------------------------------------------------------------===//
 // Dependency Output Options
