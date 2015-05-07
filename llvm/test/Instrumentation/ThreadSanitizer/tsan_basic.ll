@@ -9,7 +9,7 @@ entry:
   ret i32 %tmp1
 }
 
-; CHECK: @llvm.global_ctors = {{.*}}@__tsan_init
+; CHECK: @llvm.global_ctors = {{.*}}@tsan.module_ctor
 
 ; CHECK: define i32 @read_4_bytes(i32* %a)
 ; CHECK:        call void @__tsan_func_entry(i8* %0)
@@ -53,3 +53,6 @@ entry:
 ; CHECK: call i8* @memset
 ; CHECK: ret void
 }
+
+; CHECK: define internal void @tsan.module_ctor()
+; CHECK: call void @__tsan_init()

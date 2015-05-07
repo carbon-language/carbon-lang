@@ -72,6 +72,9 @@ STATISTIC(NumOmittedReadsFromConstantGlobals,
 STATISTIC(NumOmittedReadsFromVtable, "Number of vtable reads");
 STATISTIC(NumOmittedNonCaptured, "Number of accesses ignored due to capturing");
 
+static const char *const kTsanModuleCtorName = "tsan.module_ctor";
+static const char *const kTsanInitName = "__tsan_init";
+
 namespace {
 
 /// ThreadSanitizer: instrument the code in module to find races.
@@ -113,6 +116,7 @@ struct ThreadSanitizer : public FunctionPass {
   Function *TsanVptrUpdate;
   Function *TsanVptrLoad;
   Function *MemmoveFn, *MemcpyFn, *MemsetFn;
+  Function *TsanCtorFunction;
 };
 }  // namespace
 
@@ -225,13 +229,12 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
 
 bool ThreadSanitizer::doInitialization(Module &M) {
   const DataLayout &DL = M.getDataLayout();
+  IntptrTy = DL.getIntPtrType(M.getContext());
+  std::tie(TsanCtorFunction, std::ignore) = createSanitizerCtorAndInitFunctions(
+      M, kTsanModuleCtorName, kTsanInitName, /*InitArgTypes=*/{},
+      /*InitArgs=*/{});
 
-  // Always insert a call to __tsan_init into the module's CTORs.
-  IRBuilder<> IRB(M.getContext());
-  IntptrTy = IRB.getIntPtrTy(DL);
-  Value *TsanInit = M.getOrInsertFunction("__tsan_init",
-                                          IRB.getVoidTy(), nullptr);
-  appendToGlobalCtors(M, cast<Function>(TsanInit), 0);
+  appendToGlobalCtors(M, TsanCtorFunction, 0);
 
   return true;
 }
@@ -329,6 +332,10 @@ static bool isAtomic(Instruction *I) {
 }
 
 bool ThreadSanitizer::runOnFunction(Function &F) {
+  // This is required to prevent instrumenting call to __tsan_init from within
+  // the module constructor.
+  if (&F == TsanCtorFunction)
+    return false;
   initializeCallbacks(*F.getParent());
   SmallVector<Instruction*, 8> RetVec;
   SmallVector<Instruction*, 8> AllLoadsAndStores;
