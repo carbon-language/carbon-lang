@@ -664,20 +664,22 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
     Addr.setExtendType(AArch64_AM::LSL);
 
     const Value *Src = U->getOperand(0);
-    if (const auto *I = dyn_cast<Instruction>(Src))
-      if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
-        Src = I;
-
-    // Fold the zext or sext when it won't become a noop.
-    if (const auto *ZE = dyn_cast<ZExtInst>(Src)) {
-      if (!isIntExtFree(ZE) && ZE->getOperand(0)->getType()->isIntegerTy(32)) {
-          Addr.setExtendType(AArch64_AM::UXTW);
-          Src = ZE->getOperand(0);
-      }
-    } else if (const auto *SE = dyn_cast<SExtInst>(Src)) {
-      if (!isIntExtFree(SE) && SE->getOperand(0)->getType()->isIntegerTy(32)) {
-        Addr.setExtendType(AArch64_AM::SXTW);
-        Src = SE->getOperand(0);
+    if (const auto *I = dyn_cast<Instruction>(Src)) {
+      if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB) {
+        // Fold the zext or sext when it won't become a noop.
+        if (const auto *ZE = dyn_cast<ZExtInst>(I)) {
+          if (!isIntExtFree(ZE) &&
+              ZE->getOperand(0)->getType()->isIntegerTy(32)) {
+            Addr.setExtendType(AArch64_AM::UXTW);
+            Src = ZE->getOperand(0);
+          }
+        } else if (const auto *SE = dyn_cast<SExtInst>(I)) {
+          if (!isIntExtFree(SE) &&
+              SE->getOperand(0)->getType()->isIntegerTy(32)) {
+            Addr.setExtendType(AArch64_AM::SXTW);
+            Src = SE->getOperand(0);
+          }
+        }
       }
     }
 
@@ -746,21 +748,22 @@ bool AArch64FastISel::computeAddress(const Value *Obj, Address &Addr, Type *Ty)
     Addr.setExtendType(AArch64_AM::LSL);
 
     const Value *Src = LHS;
-    if (const auto *I = dyn_cast<Instruction>(Src))
-      if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
-        Src = I;
-
-
-    // Fold the zext or sext when it won't become a noop.
-    if (const auto *ZE = dyn_cast<ZExtInst>(Src)) {
-      if (!isIntExtFree(ZE) && ZE->getOperand(0)->getType()->isIntegerTy(32)) {
-        Addr.setExtendType(AArch64_AM::UXTW);
-        Src = ZE->getOperand(0);
-      }
-    } else if (const auto *SE = dyn_cast<SExtInst>(Src)) {
-      if (!isIntExtFree(SE) && SE->getOperand(0)->getType()->isIntegerTy(32)) {
-        Addr.setExtendType(AArch64_AM::SXTW);
-        Src = SE->getOperand(0);
+    if (const auto *I = dyn_cast<Instruction>(Src)) {
+      if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB) {
+        // Fold the zext or sext when it won't become a noop.
+        if (const auto *ZE = dyn_cast<ZExtInst>(I)) {
+          if (!isIntExtFree(ZE) &&
+              ZE->getOperand(0)->getType()->isIntegerTy(32)) {
+            Addr.setExtendType(AArch64_AM::UXTW);
+            Src = ZE->getOperand(0);
+          }
+        } else if (const auto *SE = dyn_cast<SExtInst>(I)) {
+          if (!isIntExtFree(SE) &&
+              SE->getOperand(0)->getType()->isIntegerTy(32)) {
+            Addr.setExtendType(AArch64_AM::SXTW);
+            Src = SE->getOperand(0);
+          }
+        }
       }
     }
 
