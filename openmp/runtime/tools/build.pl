@@ -62,7 +62,7 @@ my $opts = {
     "lib-type"        => { targets => "rtl",               base => 1, parms => { normal  => "*", stubs => ""                  }, },
     "link-type"       => { targets => "rtl",               base => 1, parms => { dynamic => "*", static    => ""              }, },
     "mode"            => { targets => "rtl,dsl,timelimit", base => 0, parms => { release => "*", diag      => "", debug => "" }, suffix => sub { substr( $_[ 0 ], 0, 3 );       } },
-    "omp-version"     => { targets => "rtl",               base => 0, parms => { 40      => "*", 30        => ""              }, suffix => sub { $_[ 0 ]; } },
+    "omp-version"     => { targets => "rtl",               base => 0, parms => { 40      => "", 30        => "", 41 => "*"   }, suffix => sub { $_[ 0 ]; } },
     "coverage"        => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "c1" : "c0"; } },
     "stats"           => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "s1" : "s0"; } },
     "ompt-support"    => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "ompt" : "" } },

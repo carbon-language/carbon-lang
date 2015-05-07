@@ -64,7 +64,7 @@ LIB_TYPE     := $(call check_variable,LIB_TYPE,norm prof stub)
 # Type of library: dynamic or static linking.
 LINK_TYPE    := $(call check_variable,LINK_TYPE,dyna stat)
 # Supported OpenMP version, 2.5 or 3.0.
-OMP_VERSION  := $(call check_variable,OMP_VERSION,40 30 25)
+OMP_VERSION  := $(call check_variable,OMP_VERSION,41 40 30 25)
 # Generate optimized code.
 OPTIMIZATION := $(call check_variable,OPTIMIZATION,off on)
 # Library version: 4 -- legacy, 5 -- compat.
@@ -646,11 +646,15 @@ gd-flags += -D $(LIB_TYPE)
 ifeq "$(HAVE_QUAD)" "1"
     gd-flags += -D HAVE_QUAD
 endif
-ifeq "$(OMP_VERSION)" "40"
-    gd-flags += -D OMP_40 -D OMP_30
+ifeq "$(OMP_VERSION)" "41"
+    gd-flags += -D OMP_41 -D OMP_40 -D OMP_30
 else
-    ifeq "$(OMP_VERSION)" "30"
-        gd-flags += -D OMP_30
+    ifeq "$(OMP_VERSION)" "40"
+        gd-flags += -D OMP_40 -D OMP_30
+    else
+        ifeq "$(OMP_VERSION)" "30"
+            gd-flags += -D OMP_30
+        endif
     endif
 endif
 ifneq "$(VERSION)" "4"
@@ -756,7 +760,7 @@ else # norm or prof
         kmp_sched                    \
         $(empty)
 
-ifeq "$(OMP_VERSION)" "40"
+ifeq ($(OMP_VERSION),$(filter $(OMP_VERSION),40 41))
     lib_cpp_items += kmp_taskdeps
     lib_cpp_items += kmp_cancel
 endif
