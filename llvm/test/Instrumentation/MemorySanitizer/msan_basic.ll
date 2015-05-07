@@ -878,5 +878,5 @@ define void @MismatchedReturnTypeTailCall(i32 %a) sanitize_memory {
 ; CHECK: tail call i32 @InnerTailCall
 ; CHECK: ret void
 
-; CHECK: define internal void @msan.module_ctor
+; CHECK-LABEL: define internal void @msan.module_ctor
 ; CHECK: call void @__msan_init()
