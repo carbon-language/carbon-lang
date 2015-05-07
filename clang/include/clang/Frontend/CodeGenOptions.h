@@ -163,6 +163,11 @@ public:
   /// Name of the profile file to use as input for -fprofile-instr-use
   std::string InstrProfileInput;
 
+  /// A list of file names passed with -fcuda-include-gpubinary options to
+  /// forward to CUDA runtime back-end for incorporating them into host-side
+  /// object file.
+  std::vector<std::string> CudaGpuBinaryFileNames;
+
   /// Regular expression to select optimizations for which we should enable
   /// optimization remarks. Transformation passes whose name matches this
   /// expression (and support this feature), will emit a diagnostic

@@ -651,6 +651,9 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                       Args.getAllArgValues(OPT_fsanitize_recover_EQ), Diags,
                       Opts.SanitizeRecover);
 
+  Opts.CudaGpuBinaryFileNames =
+      Args.getAllArgValues(OPT_fcuda_include_gpubinary);
+
   return Success;
 }
 

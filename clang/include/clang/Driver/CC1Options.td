@@ -631,6 +631,8 @@ def fcuda_allow_host_calls_from_host_device : Flag<["-"],
 def fcuda_disable_target_call_checks : Flag<["-"],
     "fcuda-disable-target-call-checks">,
   HelpText<"Disable all cross-target (host, device, etc.) call checks in CUDA">;
+def fcuda_include_gpubinary : Separate<["-"], "fcuda-include-gpubinary">,
+  HelpText<"Incorporate CUDA device-side binary into host object file.">;
 
 } // let Flags = [CC1Option]
 

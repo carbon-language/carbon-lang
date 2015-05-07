@@ -878,7 +878,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   else if (getLangOpts().CUDA &&
            !getLangOpts().CUDAIsDevice &&
            FD->hasAttr<CUDAGlobalAttr>())
-    CGM.getCUDARuntime().EmitDeviceStubBody(*this, Args);
+    CGM.getCUDARuntime().emitDeviceStub(*this, Args);
   else if (isa<CXXConversionDecl>(FD) &&
            cast<CXXConversionDecl>(FD)->isLambdaToBlockPointerConversion()) {
     // The lambda conversion to block pointer is special; the semantics can't be

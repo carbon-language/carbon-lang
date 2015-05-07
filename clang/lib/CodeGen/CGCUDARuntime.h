@@ -16,6 +16,10 @@
 #ifndef LLVM_CLANG_LIB_CODEGEN_CGCUDARUNTIME_H
 #define LLVM_CLANG_LIB_CODEGEN_CGCUDARUNTIME_H
 
+namespace llvm {
+class Function;
+}
+
 namespace clang {
 
 class CUDAKernelCallExpr;
@@ -39,10 +43,17 @@ public:
   virtual RValue EmitCUDAKernelCallExpr(CodeGenFunction &CGF,
                                         const CUDAKernelCallExpr *E,
                                         ReturnValueSlot ReturnValue);
-  
-  virtual void EmitDeviceStubBody(CodeGenFunction &CGF,
-                                  FunctionArgList &Args) = 0;
 
+  /// Emits a kernel launch stub.
+  virtual void emitDeviceStub(CodeGenFunction &CGF, FunctionArgList &Args) = 0;
+
+  /// Constructs and returns a module initialization function or nullptr if it's
+  /// not needed. Must be called after all kernels have been emitted.
+  virtual llvm::Function *makeModuleCtorFunction() = 0;
+
+  /// Returns a module cleanup function or nullptr if it's not needed.
+  /// Must be called after ModuleCtorFunction
+  virtual llvm::Function *makeModuleDtorFunction() = 0;
 };
 
 /// Creates an instance of a CUDA runtime class.
