@@ -1133,6 +1133,7 @@ protected:
     friend class ClangExpressionVariable; // For SetName
     friend class Target;                  // For SetName
     friend class ValueObjectConstResultImpl;
+    friend class ValueObjectSynthetic;    // For ClearUserVisibleData
 
     //------------------------------------------------------------------
     // Constructors and Destructors

@@ -71,6 +71,15 @@ class VectorTypesFormattingTestCase(TestBase):
         
         self.expect("expr -f int16_t[] -- v", substrs=['[0] = 0', '[1] = 16288', '[2] = 0', '[3] = 16288', '[4] = 0', '[5] = 16416', '[6] = 0', '[7] = 16416'])
         self.expect("expr -f uint128_t[] -- v", substrs=['[0] = 85236745249553456609335044694184296448'])
+        
+        oldValue = v.GetChildAtIndex(0).GetValue()
+        v.SetFormat(lldb.eFormatHex)
+        newValue = v.GetChildAtIndex(0).GetValue()
+        self.assertFalse(oldValue == newValue, "values did not change along with format")
+        
+        v.SetFormat(lldb.eFormatVectorOfFloat32)
+        oldValueAgain = v.GetChildAtIndex(0).GetValue()
+        self.assertTrue(oldValue == oldValueAgain, "same format but different values")
 
 if __name__ == '__main__':
     import atexit

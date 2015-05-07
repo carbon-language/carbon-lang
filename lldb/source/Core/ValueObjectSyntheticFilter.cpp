@@ -304,3 +304,15 @@ ValueObjectSynthetic::SetValueFromCString (const char *value_str, Error& error)
 {
     return m_parent->SetValueFromCString(value_str, error);
 }
+
+void
+ValueObjectSynthetic::SetFormat (lldb::Format format)
+{
+    if (m_parent)
+    {
+        m_parent->ClearUserVisibleData(eClearUserVisibleDataItemsAll);
+        m_parent->SetFormat(format);
+    }
+    this->ValueObject::SetFormat(format);
+    this->ClearUserVisibleData(eClearUserVisibleDataItemsAll);
+}
