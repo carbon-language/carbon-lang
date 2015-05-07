@@ -3369,7 +3369,7 @@ multiclass sse_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   def : Pat<(Intr (load addr:$src)),
             (vt (COPY_TO_REGCLASS(!cast<Instruction>(NAME#Suffix##m)
                                       addr:$src), VR128))>;
-   def : Pat<(Intr mem_cpat:$src),
+  def : Pat<(Intr mem_cpat:$src),
              (!cast<Instruction>(NAME#Suffix##m_Int)
                     (vt (IMPLICIT_DEF)), mem_cpat:$src)>;
   }
@@ -3390,16 +3390,15 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
             [], itins.rm, d>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   let isCodeGenOnly = 1 in {
-  // todo: uncomment when all r_Int forms will be added to X86InstrInfo.cpp
-  //def r_Int : I<opc, MRMSrcReg, (outs VR128:$dst),
-  //              (ins VR128:$src1, VR128:$src2),
-  //           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-  //          []>, Sched<[itins.Sched.Folded]>;
+  def r_Int : I<opc, MRMSrcReg, (outs VR128:$dst),
+                (ins VR128:$src1, VR128:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, Sched<[itins.Sched.Folded]>;
   let mayLoad = 1 in
   def m_Int : I<opc, MRMSrcMem, (outs VR128:$dst),
                 (ins VR128:$src1, vec_memop:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-            []>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
+             []>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
   }
 
@@ -3411,13 +3410,11 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
              (!cast<Instruction>("V"#NAME#Suffix##m_Int) (vt (IMPLICIT_DEF)),
                                   mem_cpat:$src)>;
 
-   // todo: use r_Int form when it will be ready
-   //def : Pat<(Intr VR128:$src), (!cast<Instruction>("V"#NAME#Suffix##r_Int)
-   //                 (VT (IMPLICIT_DEF)), VR128:$src)>;
    def : Pat<(Intr VR128:$src),
              (vt (COPY_TO_REGCLASS(
              !cast<Instruction>("V"#NAME#Suffix##r) (ScalarVT (IMPLICIT_DEF)),
                     (ScalarVT (COPY_TO_REGCLASS VR128:$src, RC))), VR128))>;
+
    def : Pat<(Intr mem_cpat:$src),
              (!cast<Instruction>("V"#NAME#Suffix##m_Int)
                     (vt (IMPLICIT_DEF)), mem_cpat:$src)>;
@@ -3539,6 +3536,44 @@ defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, SSE_RCPS>,
              sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>;
 
 // There is no f64 version of the reciprocal approximation instructions.
+
+// TODO: We should add *scalar* op patterns for these just like we have for
+// the binops above. If the binop and unop patterns could all be unified
+// that would be even better.
+
+multiclass scalar_unary_math_patterns<Intrinsic Intr, string OpcPrefix,
+                                      SDNode Move, ValueType VT,
+                                      Predicate BasePredicate> {
+  let Predicates = [BasePredicate] in {
+    def : Pat<(VT (Move VT:$dst, (Intr VT:$src))),
+              (!cast<I>(OpcPrefix#r_Int) VT:$dst, VT:$src)>;
+  }
+
+  // With SSE 4.1, blendi is preferred to movs*, so match that too.
+  let Predicates = [UseSSE41] in {
+    def : Pat<(VT (X86Blendi VT:$dst, (Intr VT:$src), (i8 1))),
+              (!cast<I>(OpcPrefix#r_Int) VT:$dst, VT:$src)>;
+  }
+
+  // Repeat for AVX versions of the instructions.
+  let Predicates = [HasAVX] in {
+    def : Pat<(VT (Move VT:$dst, (Intr VT:$src))),
+              (!cast<I>("V"#OpcPrefix#r_Int) VT:$dst, VT:$src)>;
+    
+    def : Pat<(VT (X86Blendi VT:$dst, (Intr VT:$src), (i8 1))),
+              (!cast<I>("V"#OpcPrefix#r_Int) VT:$dst, VT:$src)>;
+  }
+}
+
+defm : scalar_unary_math_patterns<int_x86_sse_rcp_ss, "RCPSS", X86Movss,
+                                  v4f32, UseSSE1>;
+defm : scalar_unary_math_patterns<int_x86_sse_rsqrt_ss, "RSQRTSS", X86Movss,
+                                  v4f32, UseSSE1>;
+defm : scalar_unary_math_patterns<int_x86_sse_sqrt_ss, "SQRTSS", X86Movss,
+                                  v4f32, UseSSE1>;
+defm : scalar_unary_math_patterns<int_x86_sse2_sqrt_sd, "SQRTSD", X86Movsd,
+                                  v2f64, UseSSE2>;
+
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Non-temporal stores
