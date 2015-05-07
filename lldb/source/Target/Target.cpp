@@ -2630,13 +2630,6 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                     {
                         m_process_sp->RestoreProcessEvents();
                         error = m_process_sp->PrivateResume();
-                        if (error.Success())
-                        {
-                            // there is a race condition where this thread will return up the call stack to the main command
-                            // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
-                            // a chance to call PushProcessIOHandler()
-                            m_process_sp->SyncIOHandler(2000);
-                        }
                     }
                     if (!error.Success())
                     {
@@ -2652,11 +2645,6 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                     // Target was stopped at entry as was intended. Need to notify the listeners about it.
                     m_process_sp->RestoreProcessEvents();
                     m_process_sp->HandlePrivateEvent(event_sp);
-
-                    // there is a race condition where this thread will return up the call stack to the main command
-                    // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
-                    // a chance to call PushProcessIOHandler()
-                    m_process_sp->SyncIOHandler(2000);
                 }
             }
             else if (state == eStateExited)

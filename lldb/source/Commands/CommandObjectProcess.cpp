@@ -264,13 +264,18 @@ protected:
         
         if (error.Success())
         {
-            const char *archname = exe_module_sp->GetArchitecture().GetArchitectureName();
             ProcessSP process_sp (target->GetProcessSP());
             if (process_sp)
             {
+                // There is a race condition where this thread will return up the call stack to the main command
+                // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+                // a chance to call PushProcessIOHandler().
+                process_sp->SyncIOHandler(2000);
+
                 const char *data = stream.GetData();
                 if (data && strlen(data) > 0)
                     result.AppendMessage(stream.GetData());
+                const char *archname = exe_module_sp->GetArchitecture().GetArchitectureName();
                 result.AppendMessageWithFormat ("Process %" PRIu64 " launched: '%s' (%s)\n", process_sp->GetID(), exe_module_sp->GetFileSpec().GetPath().c_str(), archname);
                 result.SetStatus (eReturnStatusSuccessFinishResult);
                 result.SetDidChangeProcessState (true);
