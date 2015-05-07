@@ -156,6 +156,8 @@ static std::string getStaticDeclName(CodeGenModule &CGM, const VarDecl &D) {
   assert(!D.isExternallyVisible() && "name shouldn't matter");
   std::string ContextName;
   const DeclContext *DC = D.getDeclContext();
+  if (auto *CD = dyn_cast<CapturedDecl>(DC))
+    DC = cast<DeclContext>(CD->getNonClosureContext());
   if (const auto *FD = dyn_cast<FunctionDecl>(DC))
     ContextName = CGM.getMangledName(FD);
   else if (const auto *BD = dyn_cast<BlockDecl>(DC))

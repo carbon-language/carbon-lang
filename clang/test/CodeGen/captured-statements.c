@@ -14,9 +14,12 @@ void test1() {
   int i = 0;
   #pragma clang __debug captured
   {
+    static float inner = 3.0;
+    (void)inner;
     i++;
   }
   // CHECK-1: %struct.anon = type { i32* }
+  // CHECK-1: {{.+}} global float 3.0
   //
   // CHECK-1: test1
   // CHECK-1: alloca %struct.anon

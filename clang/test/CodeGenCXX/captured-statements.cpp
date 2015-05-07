@@ -21,6 +21,8 @@ struct TestClass {
     Foo f;
     #pragma clang __debug captured
     {
+      static double inner = x;
+      (void)inner;
       f.y = x;
     }
   }
@@ -29,22 +31,26 @@ struct TestClass {
 void test1() {
   TestClass c;
   c.MemberFunc();
-  // CHECK-1: %[[Capture:struct\.anon[\.0-9]*]] = type { %struct.Foo*, %struct.TestClass* }
+  // CHECK-1: %[[Capture:struct\.anon[\.0-9]*]] = type { %struct.TestClass*, %struct.Foo* }
+  // CHECK-1: [[INNER:@.+]] = {{.+}} global double
 
   // CHECK-1: define {{.*}} void @_ZN9TestClass10MemberFuncEv
   // CHECK-1:   alloca %struct.anon
   // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 0
-  // CHECK-1:   store %struct.Foo* %f, %struct.Foo**
   // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 1
+  // CHECK-1:   store %struct.Foo* %f, %struct.Foo**
   // CHECK-1:   call void @[[HelperName:[A-Za-z0-9_]+]](%[[Capture]]*
   // CHECK-1:   call {{.*}}FooD1Ev
   // CHECK-1:   ret
 }
 
 // CHECK-1: define internal void @[[HelperName]]
-// CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 1
-// CHECK-1:   getelementptr inbounds %struct.TestClass, %struct.TestClass* {{[^,]*}}, i32 0, i32 0
 // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 0
+// CHECK-1:   call i32 @__cxa_guard_acquire(
+// CHECK-1:   store double %{{.+}}, double* [[INNER]],
+// CHECK-1:   call void @__cxa_guard_release(
+// CHECK-1:   getelementptr inbounds %struct.TestClass, %struct.TestClass* {{[^,]*}}, i32 0, i32 0
+// CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 1
 
 void test2(int x) {
   int y = [&]() {
