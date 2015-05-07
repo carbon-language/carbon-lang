@@ -49,7 +49,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that the executable isn't loaded when unknown file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % path)
-        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'\. Target binary '%s' is invalid\. error: unable to find executable for '%s'\"" % (path, path))
+        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'. Target binary '%s' is invalid. error: unable to find executable for '%s'\"" % (path, path))
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
@@ -123,7 +123,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that the executable isn't loaded when file was specified using unknown path
         self.expect("-file-exec-and-symbols \"%s\"" % path)
-        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'\. Target binary '%s' is invalid\. error: unable to find executable for '%s'\"" % (path, path))
+        self.expect("\^error,msg=\"Command 'file-exec-and-symbols'. Target binary '%s' is invalid. error: unable to find executable for '%s'\"" % (path, path))
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
@@ -151,7 +151,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # After '-break-insert main.cpp:BP_return'
-        line = line_number('main.cpp', '// BP_return')
+        line = line_number('main.cpp', '//BP_return')
         self.expect("-break-insert main.cpp:%d" % line)
         self.expect("\^done,bkpt={number=\"2\"")
 
@@ -190,7 +190,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # After '-break-insert main.cpp:BP_return'
-        line = line_number('main.cpp', '// BP_return')
+        line = line_number('main.cpp', '//BP_return')
         self.expect("-break-insert main.cpp:%d" % line)
         self.expect("\^done,bkpt={number=\"2\"")
 
@@ -226,7 +226,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that lldb-mi is ready after execution of --source start_script
         self.expect(self.child_prompt, exactly = True)
-    
+
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
@@ -299,6 +299,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # Delete log
         for f in logFile:
             os.remove(f)
-       
+
 if __name__ == '__main__':
     unittest2.main()
