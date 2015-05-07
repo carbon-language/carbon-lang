@@ -206,8 +206,7 @@ static RETSIGTYPE SignalHandler(int Sig) {
 
   // Otherwise if it is a fault (like SEGV) run any handler.
   if (CallBacksToRun.isConstructed()) {
-    std::vector<std::pair<void (*)(void *), void *>>& CallBacksToRunRef =
-        *CallBacksToRun;
+    auto &CallBacksToRunRef = *CallBacksToRun;
     for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
       CallBacksToRunRef[i].first(CallBacksToRunRef[i].second);
   }
