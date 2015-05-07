@@ -449,6 +449,9 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
       DenseMap<unsigned, unsigned>::iterator VI = LocalVRMap.find(Reg);
       if (VI != LocalVRMap.end()) {
         MO.setReg(VI->second);
+        // Clear any kill flags from this operand.  The new register could have
+        // uses after this one, so kills are not valid here.
+        MO.setIsKill(false);
         MRI->constrainRegClass(VI->second, MRI->getRegClass(Reg));
       }
     }
