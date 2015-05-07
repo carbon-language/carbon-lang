@@ -2885,10 +2885,8 @@ ReadRegisterCallback (EmulateInstruction *instruction,
 
     Error error = emulator_baton->m_reg_context->ReadRegister(full_reg_info, reg_value);
     if (error.Success())
-    {
-        emulator_baton->m_register_values[reg_info->kinds[eRegisterKindDWARF]] = reg_value;
         return true;
-    }
+
     return false;
 }
 
@@ -2995,6 +2993,9 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp
             error = SetSoftwareBreakpoint(next_pc, 4);
         }
     }
+    else if (m_arch.GetMachine() == llvm::Triple::mips64
+            || m_arch.GetMachine() == llvm::Triple::mips64el)
+        error = SetSoftwareBreakpoint(next_pc, 4);
     else
     {
         // No size hint is given for the next breakpoint
@@ -3012,7 +3013,10 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp
 bool
 NativeProcessLinux::SupportHardwareSingleStepping() const
 {
-    return m_arch.GetMachine() != llvm::Triple::arm;
+    if (m_arch.GetMachine() == llvm::Triple::arm
+        || m_arch.GetMachine() == llvm::Triple::mips64 || m_arch.GetMachine() == llvm::Triple::mips64el)
+        return false;
+    return true;
 }
 
 Error

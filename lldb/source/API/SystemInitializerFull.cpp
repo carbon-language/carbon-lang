@@ -25,7 +25,6 @@
 #include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 #include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
-#include "Plugins/Instruction/MIPS64/EmulateInstructionMIPS64.h"
 #include "Plugins/InstrumentationRuntime/AddressSanitizer/AddressSanitizerRuntime.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
@@ -255,7 +254,6 @@ SystemInitializerFull::Initialize()
     UnwindAssemblyInstEmulation::Initialize();
     UnwindAssembly_x86::Initialize();
     EmulateInstructionARM64::Initialize();
-    EmulateInstructionMIPS64::Initialize();
     SymbolFileDWARFDebugMap::Initialize();
     ItaniumABILanguageRuntime::Initialize();
     AppleObjCRuntimeV2::Initialize();
@@ -360,7 +358,6 @@ SystemInitializerFull::Terminate()
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM64::Terminate();
-    EmulateInstructionMIPS64::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
     AppleObjCRuntimeV2::Terminate();

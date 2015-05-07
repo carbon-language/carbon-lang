@@ -48,6 +48,14 @@ using namespace lldb_private;
 //
 //----------------------------------------------------------------------
 
+extern "C" {
+    void LLVMInitializeMipsTargetInfo ();
+    void LLVMInitializeMipsTarget ();
+    void LLVMInitializeMipsAsmPrinter ();
+    void LLVMInitializeMipsTargetMC ();
+    void LLVMInitializeMipsDisassembler ();
+}
+
 EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec &arch) :
     EmulateInstruction (arch)
 {
@@ -55,7 +63,62 @@ EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec
     std::string Error;
     llvm::Triple triple = arch.GetTriple();
     const llvm::Target *target = llvm::TargetRegistry::lookupTarget (triple.getTriple(), Error);
+
+    /*
+     * If we fail to get the target then we haven't registered it. The SystemInitializerCommon 
+     * does not initialize targets, MCs and disassemblers. However we need the MCDisassembler 
+     * to decode the instructions so that the decoding complexity stays with LLVM. 
+     * Initialize the MIPS targets and disassemblers.
+    */
+    if (!target)
+    {
+        LLVMInitializeMipsTargetInfo ();
+        LLVMInitializeMipsTarget ();
+        LLVMInitializeMipsAsmPrinter ();
+        LLVMInitializeMipsTargetMC ();
+        LLVMInitializeMipsDisassembler ();
+        target = llvm::TargetRegistry::lookupTarget (triple.getTriple(), Error);
+    }
+
     assert (target);
+
+    llvm::StringRef cpu;
+
+    switch (arch.GetCore())
+    {
+        case ArchSpec::eCore_mips32:
+        case ArchSpec::eCore_mips32el:
+            cpu = "mips32"; break;
+        case ArchSpec::eCore_mips32r2:
+        case ArchSpec::eCore_mips32r2el:
+            cpu = "mips32r2"; break;
+        case ArchSpec::eCore_mips32r3:
+        case ArchSpec::eCore_mips32r3el:
+            cpu = "mips32r3"; break;
+        case ArchSpec::eCore_mips32r5:
+        case ArchSpec::eCore_mips32r5el:
+            cpu = "mips32r5"; break;
+        case ArchSpec::eCore_mips32r6:
+        case ArchSpec::eCore_mips32r6el:
+            cpu = "mips32r6"; break;
+        case ArchSpec::eCore_mips64:
+        case ArchSpec::eCore_mips64el:
+            cpu = "mips64"; break;
+        case ArchSpec::eCore_mips64r2:
+        case ArchSpec::eCore_mips64r2el:
+            cpu = "mips64r2"; break;
+        case ArchSpec::eCore_mips64r3:
+        case ArchSpec::eCore_mips64r3el:
+            cpu = "mips64r3"; break;
+        case ArchSpec::eCore_mips64r5:
+        case ArchSpec::eCore_mips64r5el:
+            cpu = "mips64r5"; break;
+        case ArchSpec::eCore_mips64r6:
+        case ArchSpec::eCore_mips64r6el:
+            cpu = "mips64r6"; break;
+        default:
+            cpu = "generic"; break;
+    }
 
     m_reg_info.reset (target->createMCRegInfo (triple.getTriple()));
     assert (m_reg_info.get());
@@ -64,7 +127,7 @@ EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec
     assert (m_insn_info.get());
 
     m_asm_info.reset (target->createMCAsmInfo (*m_reg_info, triple.getTriple()));
-    m_subtype_info.reset (target->createMCSubtargetInfo (triple.getTriple(), "", ""));
+    m_subtype_info.reset (target->createMCSubtargetInfo (triple.getTriple(), cpu, ""));
     assert (m_asm_info.get() && m_subtype_info.get());
 
     m_context.reset (new llvm::MCContext (m_asm_info.get(), m_reg_info.get(), nullptr));
@@ -207,7 +270,6 @@ EmulateInstructionMIPS64::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_n
             case LLDB_REGNUM_GENERIC_FP:    reg_kind = eRegisterKindDWARF; reg_num = gcc_dwarf_r30_mips64; break;
             case LLDB_REGNUM_GENERIC_RA:    reg_kind = eRegisterKindDWARF; reg_num = gcc_dwarf_ra_mips64; break;
             case LLDB_REGNUM_GENERIC_FLAGS: reg_kind = eRegisterKindDWARF; reg_num = gcc_dwarf_sr_mips64; break;
-                 return true;
             default:
                 return false;
         }

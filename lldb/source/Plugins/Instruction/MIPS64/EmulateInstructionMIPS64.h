@@ -51,9 +51,9 @@ public:
         {
             case lldb_private::eInstructionTypeAny:
             case lldb_private::eInstructionTypePrologueEpilogue:
+            case lldb_private::eInstructionTypePCModifying:
                 return true;
 
-            case lldb_private::eInstructionTypePCModifying:
             case lldb_private::eInstructionTypeAll:
                 return false;
         }
