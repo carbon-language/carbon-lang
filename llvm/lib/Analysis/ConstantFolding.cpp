@@ -1438,7 +1438,7 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         case Intrinsic::fabs:
           return ConstantFoldFP(fabs, V, Ty);
         case Intrinsic::log2:
-          return ConstantFoldFP(log2, V, Ty);
+          return ConstantFoldFP(Log2, V, Ty);
         case Intrinsic::log:
           return ConstantFoldFP(log, V, Ty);
         case Intrinsic::log10:

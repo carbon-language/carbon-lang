@@ -24,6 +24,10 @@
 #include <intrin.h>
 #endif
 
+#ifdef __ANDROID_NDK__
+#include <android/api-level.h>
+#endif
+
 namespace llvm {
 /// \brief The behavior an operation has on an input of 0.
 enum ZeroBehavior {
@@ -447,6 +451,15 @@ inline unsigned countPopulation(T Value) {
                     !std::numeric_limits<T>::is_signed,
                 "Only unsigned integral types are allowed.");
   return detail::PopulationCounter<T, sizeof(T)>::count(Value);
+}
+
+/// Log2 - This function returns the log base 2 of the specified value
+inline double Log2(double Value) {
+#if defined(__ANDROID_API__) && __ANDROID_API__ < 18
+  return (double)__builtin_log2l(Value);
+#else
+  return log2(Value);
+#endif
 }
 
 /// Log2_32 - This function returns the floor log base 2 of the specified value,
