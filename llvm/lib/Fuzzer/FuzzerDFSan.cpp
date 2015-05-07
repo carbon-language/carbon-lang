@@ -57,8 +57,7 @@
 (
   cd $LLVM/lib/Fuzzer/
   clang  -fPIC -c -g -O2 -std=c++11 Fuzzer*.cpp
-  clang++ -O0 -std=c++11 -fsanitize-coverage=3  \
-    -mllvm -sanitizer-coverage-experimental-trace-compares=1 \
+  clang++ -O0 -std=c++11 -fsanitize-coverage=edge,trace-cmp \
     -fsanitize=dataflow \
     test/dfsan/DFSanSimpleCmpTest.cpp Fuzzer*.o
   ./a.out

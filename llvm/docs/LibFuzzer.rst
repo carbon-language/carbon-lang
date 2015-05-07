@@ -14,7 +14,8 @@ This library is intended primarily for in-process coverage-guided fuzz testing
 * Build the Fuzzer library as a static archive (or just a set of .o files).
   Note that the Fuzzer contains the main() function.
   Preferably do *not* use sanitizers while building the Fuzzer.
-* Build the library you are going to test with -fsanitize-coverage=[234]
+* Build the library you are going to test with
+  `-fsanitize-coverage={bb,edge}[,indirect-calls]`
   and one of the sanitizers. We recommend to build the library in several
   different modes (e.g. asan, msan, lsan, ubsan, etc) and even using different
   optimizations options (e.g. -O0, -O1, -O2) to diversify testing.
@@ -68,7 +69,7 @@ A simple function that does something interesting if it receives the input "HI!"
   # Build lib/Fuzzer files.
   clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
   # Build test_fuzzer.cc with asan and link against lib/Fuzzer.
-  clang++ -fsanitize=address -fsanitize-coverage=3 test_fuzzer.cc Fuzzer*.o
+  clang++ -fsanitize=address -fsanitize-coverage=edge test_fuzzer.cc Fuzzer*.o
   # Run the fuzzer with no corpus.
   ./a.out
 
@@ -79,7 +80,7 @@ PCRE2
 
 Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
 
-  COV_FLAGS=" -fsanitize-coverage=4 -mllvm -sanitizer-coverage-8bit-counters=1"
+  COV_FLAGS=" -fsanitize-coverage=edge,indirect-calls,8bit-counters"
   # Get PCRE2
   svn co svn://vcs.exim.org/pcre2/code/trunk pcre
   # Get lib/Fuzzer. Assuming that you already have fresh clang in PATH.
@@ -172,7 +173,7 @@ to find Heartbleed with LibFuzzer::
 
   wget https://www.openssl.org/source/openssl-1.0.1f.tar.gz
   tar xf openssl-1.0.1f.tar.gz
-  COV_FLAGS="-fsanitize-coverage=4" # -mllvm -sanitizer-coverage-8bit-counters=1"
+  COV_FLAGS="-fsanitize-coverage=edge,indirect-calls" # -fsanitize-coverage=8bit-counters
   (cd openssl-1.0.1f/ && ./config &&
     make -j 32 CC="clang -g -fsanitize=address $COV_FLAGS")
   # Get and build LibFuzzer

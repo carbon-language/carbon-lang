@@ -2,7 +2,7 @@
 # basic blocks and we'll fail to discover the targets.
 # Also enable the coverage instrumentation back (it is disabled
 # for the Fuzzer lib)
-set(CMAKE_CXX_FLAGS_RELEASE "${LIBFUZZER_FLAGS_BASE} -O0 -fsanitize-coverage=4")
+set(CMAKE_CXX_FLAGS_RELEASE "${LIBFUZZER_FLAGS_BASE} -O0 -fsanitize-coverage=edge,indirect-calls")
 
 set(Tests
   CounterTest
