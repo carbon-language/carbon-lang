@@ -285,9 +285,14 @@ void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
 
 void Fuzzer::MutateAndTestOne(Unit *U) {
   for (int i = 0; i < Options.MutateDepth; i++) {
-    MutateWithDFSan(U);
+    StartTraceRecording();
     Mutate(U, Options.MaxLen);
     RunOneAndUpdateCorpus(*U);
+    size_t NumTraceBasedMutations = StopTraceRecording();
+    for (size_t j = 0; j < NumTraceBasedMutations; j++) {
+        ApplyTraceBasedMutation(j, U);
+        RunOneAndUpdateCorpus(*U);
+    }
   }
 }
 

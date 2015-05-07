@@ -94,9 +94,19 @@ class Fuzzer {
   size_t RunOneMaximizeCoveragePairs(const Unit &U);
   void WriteToOutputCorpus(const Unit &U);
   void WriteToCrash(const Unit &U, const char *Prefix);
-  bool MutateWithDFSan(Unit *U);
   void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
   void PrintUnitInASCIIOrTokens(const Unit &U, const char *PrintAfter = "");
+
+  // Trace-based fuzzing: we run a unit with some kind of tracing
+  // enabled and record potentially useful mutations. Then
+  // We apply these mutations one by one to the unit and run it again.
+
+  // Start tracing; forget all previously proposed mutations.
+  void StartTraceRecording();
+  // Stop tracing and return the number of proposed mutations.
+  size_t StopTraceRecording();
+  // Apply Idx-th trace-based mutation to U.
+  void ApplyTraceBasedMutation(size_t Idx, Unit *U);
 
   void SetDeathCallback();
   static void StaticDeathCallback();

@@ -19,9 +19,9 @@ RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_cover
 
 RUN: not ./LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-DFSanSimpleCmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s
+RUN: not ./LLVMFuzzer-DFSanSimpleCmpTest -seed=1 -runs=1000000 -timeout=5 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-DFSanMemcmpTest -seed=1 -timeout=15 2>&1 | FileCheck %s
+RUN: not ./LLVMFuzzer-DFSanMemcmpTest -seed=1 -runs=100 -timeout=5 2>&1 | FileCheck %s
 
 RUN: not ./LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s
 
