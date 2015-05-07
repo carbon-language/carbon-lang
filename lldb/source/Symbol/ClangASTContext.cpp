@@ -403,8 +403,12 @@ ClangASTContext::getASTContext()
                                        *getBuiltinContext()));
         
         m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
-        
-        m_ast_ap->InitBuiltinTypes(*getTargetInfo());
+
+        // This can be NULL if we don't know anything about the architecture or if the
+        // target for an architecture isn't enabled in the llvm/clang that we built
+        TargetInfo *target_info = getTargetInfo();
+        if (target_info)
+            m_ast_ap->InitBuiltinTypes(*target_info);
         
         if ((m_callback_tag_decl || m_callback_objc_decl) && m_callback_baton)
         {
@@ -906,7 +910,7 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                 {
                     if (streq(type_name, "wchar_t") &&
                         QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy) &&
-                        TargetInfo::isTypeSigned (getTargetInfo()->getWCharType()))
+                        (getTargetInfo() && TargetInfo::isTypeSigned (getTargetInfo()->getWCharType())))
                         return ClangASTType (ast, ast->WCharTy.getAsOpaquePtr());
                     if (streq(type_name, "void") &&
                         QualTypeMatchesBitSize (bit_size, ast, ast->VoidTy))
@@ -967,7 +971,7 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
                     {
                         if (QualTypeMatchesBitSize (bit_size, ast, ast->WCharTy))
                         {
-                            if (!TargetInfo::isTypeSigned (getTargetInfo()->getWCharType()))
+                            if (!(getTargetInfo() && TargetInfo::isTypeSigned (getTargetInfo()->getWCharType())))
                                 return ClangASTType (ast, ast->WCharTy.getAsOpaquePtr());
                         }
                     }
