@@ -25,7 +25,7 @@ class SanitizerArgs {
   SanitizerSet RecoverableSanitizers;
 
   std::vector<std::string> BlacklistFiles;
-  int SanitizeCoverage;
+  int CoverageFeatures;
   int MsanTrackOrigins;
   int AsanFieldPadding;
   bool AsanZeroBaseShadow;

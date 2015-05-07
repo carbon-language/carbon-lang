@@ -50,6 +50,16 @@ enum SanitizeKind : uint64_t {
   LegacyFsanitizeRecoverMask = Undefined | Integer,
   NeedsLTO = CFI,
 };
+
+enum CoverageFeature {
+  CoverageFunc = 1 << 0,
+  CoverageBB = 1 << 1,
+  CoverageEdge = 1 << 2,
+  CoverageIndirCall = 1 << 3,
+  CoverageTraceBB = 1 << 4,
+  CoverageTraceCmp = 1 << 5,
+  Coverage8bitCounters = 1 << 6,
+};
 }
 
 /// Returns true if set of \p Sanitizers contain at least one sanitizer from
@@ -87,6 +97,10 @@ static uint64_t parseValue(const char *Value);
 /// invalid components. Returns OR of members of \c SanitizeKind enumeration.
 static uint64_t parseArgValues(const Driver &D, const llvm::opt::Arg *A,
                                bool DiagnoseErrors);
+
+/// Parse -f(no-)?sanitize-coverage= flag values, diagnosing any invalid
+/// components. Returns OR of members of \c CoverageFeature enumeration.
+static int parseCoverageFeatures(const Driver &D, const llvm::opt::Arg *A);
 
 /// Produce an argument string from ArgList \p Args, which shows how it
 /// provides some sanitizer kind from \p Mask. For example, the argument list
@@ -181,7 +195,7 @@ void SanitizerArgs::clear() {
   Sanitizers.clear();
   RecoverableSanitizers.clear();
   BlacklistFiles.clear();
-  SanitizeCoverage = 0;
+  CoverageFeatures = 0;
   MsanTrackOrigins = 0;
   AsanFieldPadding = 0;
   AsanZeroBaseShadow = false;
@@ -393,16 +407,70 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     }
   }
 
-  // Parse -fsanitize-coverage=N. Currently one of asan/msan/lsan is required.
+  // Parse -f(no-)?sanitize-coverage flags if coverage is supported by the
+  // enabled sanitizers.
   if (Kinds & SanitizeKind::SupportsCoverage) {
-    if (Arg *A = Args.getLastArg(options::OPT_fsanitize_coverage)) {
-      StringRef S = A->getValue();
-      // Legal values are 0..4.
-      if (S.getAsInteger(0, SanitizeCoverage) || SanitizeCoverage < 0 ||
-          SanitizeCoverage > 4)
-        D.Diag(clang::diag::err_drv_invalid_value) << A->getAsString(Args) << S;
+    for (const auto *Arg : Args) {
+      if (Arg->getOption().matches(options::OPT_fsanitize_coverage)) {
+        Arg->claim();
+        int LegacySanitizeCoverage;
+        if (Arg->getNumValues() == 1 &&
+            !StringRef(Arg->getValue(0))
+                 .getAsInteger(0, LegacySanitizeCoverage) &&
+            LegacySanitizeCoverage >= 0 && LegacySanitizeCoverage <= 4) {
+          // TODO: Add deprecation notice for this form.
+          switch (LegacySanitizeCoverage) {
+          case 0:
+            CoverageFeatures = 0;
+            break;
+          case 1:
+            CoverageFeatures = CoverageFunc;
+            break;
+          case 2:
+            CoverageFeatures = CoverageBB;
+            break;
+          case 3:
+            CoverageFeatures = CoverageEdge;
+            break;
+          case 4:
+            CoverageFeatures = CoverageEdge | CoverageIndirCall;
+            break;
+          }
+          continue;
+        }
+        CoverageFeatures |= parseCoverageFeatures(D, Arg);
+      } else if (Arg->getOption().matches(options::OPT_fno_sanitize_coverage)) {
+        Arg->claim();
+        CoverageFeatures &= ~parseCoverageFeatures(D, Arg);
+      }
     }
   }
+  // Choose at most one coverage type: function, bb, or edge.
+  if ((CoverageFeatures & CoverageFunc) && (CoverageFeatures & CoverageBB))
+    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << "-fsanitize-coverage=func"
+        << "-fsanitize-coverage=bb";
+  if ((CoverageFeatures & CoverageFunc) && (CoverageFeatures & CoverageEdge))
+    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << "-fsanitize-coverage=func"
+        << "-fsanitize-coverage=edge";
+  if ((CoverageFeatures & CoverageBB) && (CoverageFeatures & CoverageEdge))
+    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << "-fsanitize-coverage=bb"
+        << "-fsanitize-coverage=edge";
+  // Basic block tracing and 8-bit counters require some type of coverage
+  // enabled.
+  int CoverageTypes = CoverageFunc | CoverageBB | CoverageEdge;
+  if ((CoverageFeatures & CoverageTraceBB) &&
+      !(CoverageFeatures & CoverageTypes))
+    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << "-fsanitize-coverage=trace-bb"
+        << "-fsanitize-coverage=(func|bb|edge)";
+  if ((CoverageFeatures & Coverage8bitCounters) &&
+      !(CoverageFeatures & CoverageTypes))
+    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << "-fsanitize-coverage=8bit-counters"
+        << "-fsanitize-coverage=(func|bb|edge)";
 
   if (Kinds & SanitizeKind::Address) {
     AsanSharedRuntime =
@@ -482,14 +550,21 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (AsanFieldPadding)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
                                          llvm::utostr(AsanFieldPadding)));
-  if (SanitizeCoverage) {
-    int CoverageType = std::min(SanitizeCoverage, 3);
-    CmdArgs.push_back(Args.MakeArgString("-fsanitize-coverage-type=" +
-                                         llvm::utostr(CoverageType)));
-    if (SanitizeCoverage == 4)
-      CmdArgs.push_back(
-          Args.MakeArgString("-fsanitize-coverage-indirect-calls"));
+  // Translate available CoverageFeatures to corresponding clang-cc1 flags.
+  std::pair<int, const char *> CoverageFlags[] = {
+    std::make_pair(CoverageFunc, "-fsanitize-coverage-type=1"),
+    std::make_pair(CoverageBB, "-fsanitize-coverage-type=2"),
+    std::make_pair(CoverageEdge, "-fsanitize-coverage-type=3"),
+    std::make_pair(CoverageIndirCall, "-fsanitize-coverage-indirect-calls"),
+    std::make_pair(CoverageTraceBB, "-fsanitize-coverage-trace-bb"),
+    std::make_pair(CoverageTraceCmp, "-fsanitize-coverage-trace-cmp"),
+    std::make_pair(Coverage8bitCounters, "-fsanitize-coverage-8bit-counters")};
+  for (auto F : CoverageFlags) {
+    if (CoverageFeatures & F.first)
+      CmdArgs.push_back(Args.MakeArgString(F.second));
   }
+
+
   // MSan: Workaround for PR16386.
   // ASan: This is mainly to help LSan with cases such as
   // https://code.google.com/p/address-sanitizer/issues/detail?id=373
@@ -541,6 +616,29 @@ uint64_t parseArgValues(const Driver &D, const llvm::opt::Arg *A,
           << A->getOption().getName() << Value;
   }
   return Kinds;
+}
+
+int parseCoverageFeatures(const Driver &D, const llvm::opt::Arg *A) {
+  assert(A->getOption().matches(options::OPT_fsanitize_coverage) ||
+         A->getOption().matches(options::OPT_fno_sanitize_coverage));
+  int Features = 0;
+  for (int i = 0, n = A->getNumValues(); i != n; ++i) {
+    const char *Value = A->getValue(i);
+    int F = llvm::StringSwitch<int>(Value)
+        .Case("func", CoverageFunc)
+        .Case("bb", CoverageBB)
+        .Case("edge", CoverageEdge)
+        .Case("indirect-calls", CoverageIndirCall)
+        .Case("trace-bb", CoverageTraceBB)
+        .Case("trace-cmp", CoverageTraceCmp)
+        .Case("8bit-counters", Coverage8bitCounters)
+        .Default(0);
+    if (F == 0)
+      D.Diag(clang::diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << Value;
+    Features |= F;
+  }
+  return Features;
 }
 
 std::string lastArgumentForMask(const Driver &D, const llvm::opt::ArgList &Args,

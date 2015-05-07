@@ -313,7 +313,9 @@ void EmitAssemblyHelper::CreatePasses() {
                            addBoundsCheckingPass);
   }
 
-  if (CodeGenOpts.SanitizeCoverageType) {
+  if (CodeGenOpts.SanitizeCoverageType ||
+      CodeGenOpts.SanitizeCoverageIndirectCalls ||
+      CodeGenOpts.SanitizeCoverageTraceCmp) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addSanitizerCoveragePass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
