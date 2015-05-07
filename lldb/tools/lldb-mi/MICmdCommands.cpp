@@ -121,6 +121,8 @@ MICmnCommands::RegisterAll(void)
     bOk &= Register<CMICmdCmdSupportListFeatures>();
     bOk &= Register<CMICmdCmdSymbolListLines>();
     bOk &= Register<CMICmdCmdTargetSelect>();
+    bOk &= Register<CMICmdCmdTargetAttach>();
+    bOk &= Register<CMICmdCmdTargetDetach>();
     bOk &= Register<CMICmdCmdThreadInfo>();
     bOk &= Register<CMICmdCmdVarAssign>();
     bOk &= Register<CMICmdCmdVarCreate>();

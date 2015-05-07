@@ -250,7 +250,9 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_GDBSET_OPT_PRINT_UNKNOWN_OPTION, "'print' error. The option '%s' not found"},
     {IDS_CMD_ERR_GDBSHOW_OPT_PRINT_BAD_ARGS, "'print' expects option-name and \"on\" or \"off\""},
     {IDS_CMD_ERR_GDBSHOW_OPT_PRINT_UNKNOWN_OPTION, "'print' error. The option '%s' not found"},
-    {IDS_CMD_ERR_EXPR_INVALID, "Failed to evaluate expression: %s"}};
+    {IDS_CMD_ERR_EXPR_INVALID, "Failed to evaluate expression: %s"},
+    {IDS_CMD_ERR_ATTACH_FAILED, "Command '%s'. Attach to processs failed: %s"},
+    {IDS_CMD_ERR_ATTACH_BAD_ARGS, "Command '%s'. Must specify either a PID or a Name"}};
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnResources constructor.

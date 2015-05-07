@@ -58,3 +58,62 @@ class CMICmdCmdTargetSelect : public CMICmdBase
     const CMIUtilString m_constStrArgNamedType;
     const CMIUtilString m_constStrArgNamedParameters;
 };
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "target-attach".
+//          http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Target-Manipulation.html#GDB_002fMI-Target-Manipulation
+//--
+class CMICmdCmdTargetAttach : public CMICmdBase
+{
+    // Statics:
+public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+    
+    // Methods:
+public:
+    /* ctor */ CMICmdCmdTargetAttach(void);
+    
+    // Overridden:
+public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdTargetAttach(void);
+    
+    // Attributes:
+private:
+    const CMIUtilString m_constStrArgPid;
+    const CMIUtilString m_constStrArgNamedFile;
+    const CMIUtilString m_constStrArgWaitFor;
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "target-attach".
+//          http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Target-Manipulation.html#GDB_002fMI-Target-Manipulation
+//--
+class CMICmdCmdTargetDetach : public CMICmdBase
+{
+    // Statics:
+public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+    
+    // Methods:
+public:
+    /* ctor */ CMICmdCmdTargetDetach(void);
+    
+    // Overridden:
+public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdTargetDetach(void);
+};
+

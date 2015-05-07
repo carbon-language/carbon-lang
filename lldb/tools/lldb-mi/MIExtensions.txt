@@ -91,3 +91,13 @@ The =library-loaded notification has 3 extra fields:
 For example:
     =library-loaded,id="/Users/IliaK/p/hello",target-name="/Users/IliaK/p/hello",host-name="/Users/IliaK/p/hello",symbols-loaded="1",symbols-path="/Users/IliaK/p/hello.dSYM/Contents/Resources/DWARF/hello",loaded_addr="-"
     =library-loaded,id="/usr/lib/dyld",target-name="/usr/lib/dyld",host-name="/usr/lib/dyld",symbols-loaded="0",loaded_addr="0x00007fff5fc00000"
+
+# -target-attach
+
+Synopsis
+
+Additional syntax provided by lldb-mi:
+	-target-attach -n <executable-name> [--waitfor]
+
+Attach to an executable. Using -n allows specifying an executable name to attach to. 
+Using this with --watifor can do a deffered attach. The flags -n and --waitfor match the syntax of lldb proper's 'process attach' command.
