@@ -427,6 +427,17 @@ static std::error_code loadTestingFormat(StringRef Data,
   return std::error_code();
 }
 
+static ErrorOr<SectionRef> lookupSection(ObjectFile &OF, StringRef Name) {
+  StringRef FoundName;
+  for (const auto &Section : OF.sections()) {
+    if (auto EC = Section.getName(FoundName))
+      return EC;
+    if (FoundName == Name)
+      return Section;
+  }
+  return coveragemap_error::no_data_found;
+}
+
 static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                         SectionData &ProfileNames,
                                         StringRef &CoverageMapping,
@@ -461,27 +472,17 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                 : support::endianness::big;
 
   // Look for the sections that we are interested in.
-  int FoundSectionCount = 0;
-  SectionRef NamesSection, CoverageSection;
-  for (const auto &Section : OF->sections()) {
-    StringRef Name;
-    if (auto Err = Section.getName(Name))
-      return Err;
-    if (Name == "__llvm_prf_names") {
-      NamesSection = Section;
-    } else if (Name == "__llvm_covmap") {
-      CoverageSection = Section;
-    } else
-      continue;
-    ++FoundSectionCount;
-  }
-  if (FoundSectionCount != 2)
-    return coveragemap_error::no_data_found;
+  auto NamesSection = lookupSection(*OF, "__llvm_prf_names");
+  if (auto EC = NamesSection.getError())
+    return EC;
+  auto CoverageSection = lookupSection(*OF, "__llvm_covmap");
+  if (auto EC = CoverageSection.getError())
+    return EC;
 
   // Get the contents of the given sections.
-  if (std::error_code EC = CoverageSection.getContents(CoverageMapping))
+  if (std::error_code EC = CoverageSection->getContents(CoverageMapping))
     return EC;
-  if (std::error_code EC = ProfileNames.load(NamesSection))
+  if (std::error_code EC = ProfileNames.load(*NamesSection))
     return EC;
 
   return std::error_code();
