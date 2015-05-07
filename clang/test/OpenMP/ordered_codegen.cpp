@@ -39,6 +39,7 @@ void static_not_chunked(float *a, float *b, float *c, float *d) {
 // ... loop body ...
 // End of body: store into a[i]:
 // CHECK: store float [[RESULT:%.+]], float* {{%.+}}
+// CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
     #pragma omp ordered
@@ -86,6 +87,7 @@ void dynamic1(float *a, float *b, float *c, float *d) {
 // ... loop body ...
 // End of body: store into a[i]:
 // CHECK: store float [[RESULT:%.+]], float* {{%.+}}
+// CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
     #pragma omp ordered
@@ -139,6 +141,7 @@ void test_auto(float *a, float *b, float *c, float *d) {
 // ... loop body ...
 // End of body: store into a[i]:
 // CHECK: store float [[RESULT:%.+]], float* {{%.+}}
+// CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
     #pragma omp ordered
@@ -189,6 +192,7 @@ void runtime(float *a, float *b, float *c, float *d) {
 // ... loop body ...
 // End of body: store into a[i]:
 // CHECK: store float [[RESULT:%.+]], float* {{%.+}}
+// CHECK-NOT: !llvm.mem.parallel_loop_access
 // CHECK-NEXT: call void @__kmpc_end_ordered([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // ... end of ordered region ...
     #pragma omp ordered
