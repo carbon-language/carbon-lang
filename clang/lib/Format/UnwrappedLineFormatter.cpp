@@ -403,6 +403,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
 
     bool FixIndentation =
         FixBadIndentation && (LevelIndent != FirstTok->OriginalColumn);
+    bool ShouldFormat = TheLine.Affected || FixIndentation;
     if (TheLine.First->is(tok::eof)) {
       if (PreviousLine && PreviousLine->Affected && !DryRun) {
         // Remove the file's trailing whitespace.
@@ -411,8 +412,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
                                        /*IndentLevel=*/0, /*Spaces=*/0,
                                        /*TargetColumn=*/0);
       }
-    } else if (TheLine.Type != LT_Invalid &&
-               (TheLine.Affected || FixIndentation)) {
+    } else if (TheLine.Type != LT_Invalid && ShouldFormat) {
       if (FirstTok->WhitespaceRange.isValid()) {
         if (!DryRun)
           formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level, Indent,
@@ -476,6 +476,8 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
         }
       }
     }
+    if (TheLine.Type == LT_Invalid && ShouldFormat && IncompleteFormat)
+      *IncompleteFormat = true;
     if (!DryRun)
       markFinalized(TheLine.First);
     PreviousLine = *I;

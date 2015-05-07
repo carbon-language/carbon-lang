@@ -21,12 +21,25 @@ FormatStyle getGoogleStyle() { return getGoogleStyle(FormatStyle::LK_Cpp); }
 
 class FormatTest : public ::testing::Test {
 protected:
+  enum IncompleteCheck {
+    IC_ExpectComplete,
+    IC_ExpectIncomplete,
+    IC_DoNotCheck
+  };
+
   std::string format(llvm::StringRef Code, unsigned Offset, unsigned Length,
-                     const FormatStyle &Style) {
+                     const FormatStyle &Style,
+                     IncompleteCheck CheckIncomplete = IC_ExpectComplete) {
     DEBUG(llvm::errs() << "---\n");
     DEBUG(llvm::errs() << Code << "\n\n");
     std::vector<tooling::Range> Ranges(1, tooling::Range(Offset, Length));
-    tooling::Replacements Replaces = reformat(Style, Code, Ranges);
+    bool IncompleteFormat = false;
+    tooling::Replacements Replaces =
+        reformat(Style, Code, Ranges, "<stdin>", &IncompleteFormat);
+    if (CheckIncomplete != IC_DoNotCheck) {
+      bool ExpectedIncompleteFormat = CheckIncomplete == IC_ExpectIncomplete;
+      EXPECT_EQ(ExpectedIncompleteFormat, IncompleteFormat) << Code << "\n\n";
+    }
     ReplacementCount = Replaces.size();
     std::string Result = applyAllReplacements(Code, Replaces);
     EXPECT_NE("", Result);
@@ -35,8 +48,9 @@ protected:
   }
 
   std::string format(llvm::StringRef Code,
-                     const FormatStyle &Style = getLLVMStyle()) {
-    return format(Code, 0, Code.size(), Style);
+                     const FormatStyle &Style = getLLVMStyle(),
+                     IncompleteCheck CheckIncomplete = IC_ExpectComplete) {
+    return format(Code, 0, Code.size(), Style, CheckIncomplete);
   }
 
   FormatStyle getLLVMStyleWithColumns(unsigned ColumnLimit) {
@@ -56,6 +70,12 @@ protected:
     EXPECT_EQ(Code.str(), format(test::messUp(Code), Style));
   }
 
+  void verifyIncompleteFormat(llvm::StringRef Code,
+                              const FormatStyle &Style = getLLVMStyle()) {
+    EXPECT_EQ(Code.str(),
+              format(test::messUp(Code), Style, IC_ExpectIncomplete));
+  }
+
   void verifyGoogleFormat(llvm::StringRef Code) {
     verifyFormat(Code, getGoogleStyle());
   }
@@ -68,7 +88,7 @@ protected:
   /// \brief Verify that clang-format does not crash on the given input.
   void verifyNoCrash(llvm::StringRef Code,
                      const FormatStyle &Style = getLLVMStyle()) {
-    format(Code, Style);
+    format(Code, Style, IC_DoNotCheck);
   }
 
   int ReplacementCount;
@@ -2324,7 +2344,7 @@ TEST_F(FormatTest, FormatTryCatch) {
                "};\n");
 
   // Incomplete try-catch blocks.
-  verifyFormat("try {} catch (");
+  verifyIncompleteFormat("try {} catch (");
 }
 
 TEST_F(FormatTest, FormatSEHTryCatch) {
@@ -2727,23 +2747,23 @@ TEST_F(FormatTest, EmptyLinesInMacroDefinitions) {
 }
 
 TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
-  verifyFormat("#define A :");
+  verifyIncompleteFormat("#define A :");
   verifyFormat("#define SOMECASES  \\\n"
                "  case 1:          \\\n"
                "  case 2\n",
                getLLVMStyleWithColumns(20));
   verifyFormat("#define A template <typename T>");
-  verifyFormat("#define STR(x) #x\n"
-               "f(STR(this_is_a_string_literal{));");
+  verifyIncompleteFormat("#define STR(x) #x\n"
+                         "f(STR(this_is_a_string_literal{));");
   verifyFormat("#pragma omp threadprivate( \\\n"
                "    y)), // expected-warning",
                getLLVMStyleWithColumns(28));
   verifyFormat("#d, = };");
   verifyFormat("#if \"a");
-  verifyFormat("({\n"
-               "#define b }\\\n"
-               "  a\n"
-               "a");
+  verifyIncompleteFormat("({\n"
+                         "#define b }\\\n"
+                         "  a\n"
+                         "a");
   verifyFormat("#define A     \\\n"
                "  {           \\\n"
                "    {\n"
@@ -2751,7 +2771,6 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "  }           \\\n"
                "  }",
                getLLVMStyleWithColumns(15));
-
   verifyNoCrash("#if a\na(\n#else\n#endif\n{a");
   verifyNoCrash("a={0,1\n#if a\n#else\n;\n#endif\n}");
   verifyNoCrash("#if a\na(\n#else\n#endif\n) a {a,b,c,d,f,g};");
@@ -3076,11 +3095,11 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "#else\n"
                "#endif");
 
-  verifyFormat("void f(\n"
-               "#if A\n"
-               "    );\n"
-               "#else\n"
-               "#endif");
+  verifyIncompleteFormat("void f(\n"
+                         "#if A\n"
+                         "    );\n"
+                         "#else\n"
+                         "#endif");
 }
 
 TEST_F(FormatTest, GraciouslyHandleIncorrectPreprocessorConditions) {
@@ -6010,16 +6029,16 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
 TEST_F(FormatTest, IncorrectCodeMissingParens) {
   verifyFormat("if {\n  foo;\n  foo();\n}");
   verifyFormat("switch {\n  foo;\n  foo();\n}");
-  verifyFormat("for {\n  foo;\n  foo();\n}");
+  verifyIncompleteFormat("for {\n  foo;\n  foo();\n}");
   verifyFormat("while {\n  foo;\n  foo();\n}");
   verifyFormat("do {\n  foo;\n  foo();\n} while;");
 }
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
-  verifyFormat("namespace {\n"
-               "class Foo { Foo (\n"
-               "};\n"
-               "} // comment");
+  verifyIncompleteFormat("namespace {\n"
+                         "class Foo { Foo (\n"
+                         "};\n"
+                         "} // comment");
 }
 
 TEST_F(FormatTest, IncorrectCodeErrorDetection) {
@@ -7302,8 +7321,8 @@ TEST_F(FormatTest, ObjCDictLiterals) {
                "}");
 
   verifyFormat("@{1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2}");
-  verifyFormat("[self setDict:@{}");
-  verifyFormat("[self setDict:@{@1 : @2}");
+  verifyIncompleteFormat("[self setDict:@{}");
+  verifyIncompleteFormat("[self setDict:@{@1 : @2}");
   verifyFormat("NSLog(@\"%@\", @{@1 : @2, @2 : @3}[@1]);");
   verifyFormat(
       "NSDictionary *masses = @{@\"H\" : @1.0078, @\"He\" : @4.0026};");
@@ -7346,7 +7365,7 @@ TEST_F(FormatTest, ObjCDictLiterals) {
 }
 
 TEST_F(FormatTest, ObjCArrayLiterals) {
-  verifyFormat("@[");
+  verifyIncompleteFormat("@[");
   verifyFormat("@[]");
   verifyFormat(
       "NSArray *array = @[ @\" Hey \", NSApp, [NSNumber numberWithInt:42] ];");
