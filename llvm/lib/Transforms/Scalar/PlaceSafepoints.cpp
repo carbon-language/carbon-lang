@@ -868,10 +868,8 @@ static BasicBlock *normalizeBBForInvokeSafepoint(BasicBlock *BB,
 /// NOT do explicit relocation for GC support.
 static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
                                     Pass *P) {
-  BasicBlock *BB = CS.getInstruction()->getParent();
-  Function *F = BB->getParent();
-  Module *M = F->getParent();
-  assert(M && "must be set");
+  assert(CS.getInstruction()->getParent()->getParent()->getParent() &&
+         "must be set");
 
   // TODO: technically, a pass is not allowed to get functions from within a
   // function pass since it might trigger a new function addition.  Refactor
