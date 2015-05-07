@@ -687,6 +687,7 @@ private:
   /// Map from DeclContext to the current guard variable.  We assume that the
   /// AST is visited in source code order.
   llvm::DenseMap<const DeclContext *, GuardInfo> GuardVariableMap;
+  llvm::DenseMap<const DeclContext *, GuardInfo> ThreadLocalGuardVariableMap;
   llvm::DenseMap<const DeclContext *, unsigned> ThreadSafeGuardNumMap;
 
   llvm::DenseMap<size_t, llvm::StructType *> TypeDescriptorTypeMap;
@@ -2103,18 +2104,27 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
     return;
   }
 
-  bool HasPerVariableGuard =
-      getContext().getLangOpts().ThreadsafeStatics && !D.getTLSKind();
+  bool ThreadlocalStatic = D.getTLSKind();
+  bool ThreadsafeStatic = getContext().getLangOpts().ThreadsafeStatics;
+
+  // Thread-safe static variables which aren't thread-specific have a
+  // per-variable guard.
+  bool HasPerVariableGuard = ThreadsafeStatic && !ThreadlocalStatic;
 
   CGBuilderTy &Builder = CGF.Builder;
   llvm::IntegerType *GuardTy = CGF.Int32Ty;
   llvm::ConstantInt *Zero = llvm::ConstantInt::get(GuardTy, 0);
 
   // Get the guard variable for this function if we have one already.
-  GuardInfo *GI = &GuardVariableMap[D.getDeclContext()];
-  llvm::GlobalVariable *GuardVar = GI->Guard;
+  GuardInfo *GI = nullptr;
+  if (ThreadlocalStatic)
+    GI = &ThreadLocalGuardVariableMap[D.getDeclContext()];
+  else if (!ThreadsafeStatic)
+    GI = &GuardVariableMap[D.getDeclContext()];
+
+  llvm::GlobalVariable *GuardVar = GI ? GI->Guard : nullptr;
   unsigned GuardNum;
-  if (D.isStaticLocal() && D.isExternallyVisible()) {
+  if (D.isExternallyVisible()) {
     // Externally visible variables have to be numbered in Sema to properly
     // handle unreachable VarDecls.
     GuardNum = getContext().getStaticLocalNumber(&D);
@@ -2126,9 +2136,6 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
     // Non-externally visible variables are numbered here in CodeGen.
     GuardNum = GI->BitIndex++;
   }
-
-  if (HasPerVariableGuard)
-    GuardVar = nullptr;
 
   if (!HasPerVariableGuard && GuardNum >= 32) {
     if (D.isExternallyVisible())

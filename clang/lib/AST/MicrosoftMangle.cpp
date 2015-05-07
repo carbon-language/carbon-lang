@@ -2534,6 +2534,7 @@ void MicrosoftMangleContextImpl::mangleThreadSafeStaticGuardVariable(
 void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
                                                            raw_ostream &Out) {
   // <guard-name> ::= ?_B <postfix> @5 <scope-depth>
+  //              ::= ?__J <postfix> @5 <scope-depth>
   //              ::= ?$S <guard-num> @ <postfix> @4IA
 
   // The first mangling is what MSVC uses to guard static locals in inline
@@ -2546,10 +2547,7 @@ void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
 
   bool Visible = VD->isExternallyVisible();
   if (Visible) {
-    Mangler.getStream() << (getASTContext().getLangOpts().isCompatibleWithMSVC(
-                                19)
-                                ? "\01??__J"
-                                : "\01??_B");
+    Mangler.getStream() << (VD->getTLSKind() ? "\01??__J" : "\01??_B");
   } else {
     Mangler.getStream() << "\01?$S1@";
   }

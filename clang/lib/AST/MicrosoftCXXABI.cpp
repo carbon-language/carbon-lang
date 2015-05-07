@@ -31,11 +31,12 @@ class MicrosoftNumberingContext : public MangleNumberingContext {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
   unsigned LambdaManglingNumber;
   unsigned StaticLocalNumber;
+  unsigned StaticThreadlocalNumber;
 
 public:
   MicrosoftNumberingContext()
       : MangleNumberingContext(), LambdaManglingNumber(0),
-        StaticLocalNumber(0) {}
+        StaticLocalNumber(0), StaticThreadlocalNumber(0) {}
 
   unsigned getManglingNumber(const CXXMethodDecl *CallOperator) override {
     return ++LambdaManglingNumber;
@@ -47,6 +48,8 @@ public:
   }
 
   unsigned getStaticLocalNumber(const VarDecl *VD) override {
+    if (VD->getTLSKind())
+      return ++StaticThreadlocalNumber;
     return ++StaticLocalNumber;
   }
 

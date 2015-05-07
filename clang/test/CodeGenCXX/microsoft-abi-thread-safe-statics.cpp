@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -fexceptions -fcxx-exceptions -fms-extensions -fms-compatibility -fms-compatibility-version=19 -std=c++11 -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
+// REQUIRES: asserts
+
 struct S {
   S();
   ~S();
@@ -9,6 +11,10 @@ struct S {
 // CHECK-DAG: @"\01?s@?1??g@@YAAAUS@@XZ@4U2@A" = linkonce_odr global %struct.S zeroinitializer
 // CHECK-DAG: @"\01?$TSS0@?1??g@@YAAAUS@@XZ" = linkonce_odr global i32 0
 // CHECK-DAG: @_Init_thread_epoch = external thread_local global i32, align 4
+// CHECK-DAG: @"\01?j@?1??h@@YAAAUS@@_N@Z@4U2@A" = linkonce_odr thread_local global %struct.S zeroinitializer
+// CHECK-DAG: @"\01??__J?1??h@@YAAAUS@@_N@Z@51" = linkonce_odr thread_local global i32 0
+// CHECK-DAG: @"\01?i@?1??h@@YAAAUS@@_N@Z@4U2@A" = linkonce_odr global %struct.S zeroinitializer
+// CHECK-DAG: @"\01?$TSS0@?1??h@@YAAAUS@@_N@Z" = linkonce_odr global i32 0
 
 // CHECK-LABEL: define {{.*}} @"\01?f@@YAAAUS@@XZ"()
 extern inline S &f() {
@@ -80,4 +86,8 @@ extern inline S &g() {
   return s;
 }
 
-// REQUIRES: asserts
+extern inline S&h(bool b) {
+  static thread_local S j;
+  static S i;
+  return b ? j : i;
+}
