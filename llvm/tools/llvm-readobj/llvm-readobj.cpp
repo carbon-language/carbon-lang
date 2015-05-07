@@ -148,6 +148,10 @@ namespace opts {
   MipsPLTGOT("mips-plt-got",
              cl::desc("Display the MIPS GOT and PLT GOT sections"));
 
+  // -mips-abi-flags
+  cl::opt<bool> MipsABIFlags("mips-abi-flags",
+                             cl::desc("Display the MIPS.abiflags section"));
+
   // -coff-imports
   cl::opt<bool>
   COFFImports("coff-imports", cl::desc("Display the PE/COFF import table"));
@@ -287,9 +291,12 @@ static void dumpObject(const ObjectFile *Obj) {
   if (Obj->getArch() == llvm::Triple::arm && Obj->isELF())
     if (opts::ARMAttributes)
       Dumper->printAttributes();
-  if (isMipsArch(Obj->getArch()) && Obj->isELF())
+  if (isMipsArch(Obj->getArch()) && Obj->isELF()) {
     if (opts::MipsPLTGOT)
       Dumper->printMipsPLTGOT();
+    if (opts::MipsABIFlags)
+      Dumper->printMipsABIFlags();
+  }
   if (opts::COFFImports)
     Dumper->printCOFFImports();
   if (opts::COFFExports)
