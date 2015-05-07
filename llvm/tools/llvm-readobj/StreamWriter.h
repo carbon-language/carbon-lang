@@ -96,9 +96,9 @@ public:
     }
   }
 
-  template<typename T, typename TFlag>
-  void printFlags(StringRef Label, T Value, ArrayRef<EnumEntry<TFlag> > Flags,
-                  TFlag EnumMask = TFlag(0)) {
+  template <typename T, typename TFlag>
+  void printFlags(StringRef Label, T Value, ArrayRef<EnumEntry<TFlag>> Flags,
+                  TFlag EnumMask1 = {}, TFlag EnumMask2 = {}) {
     typedef EnumEntry<TFlag> FlagEntry;
     typedef SmallVector<FlagEntry, 10> FlagVector;
     FlagVector SetFlags;
@@ -107,6 +107,11 @@ public:
       if (Flag.Value == 0)
         continue;
 
+      TFlag EnumMask{};
+      if (Flag.Value & EnumMask1)
+        EnumMask = EnumMask1;
+      else if (Flag.Value & EnumMask2)
+        EnumMask = EnumMask2;
       bool IsEnum = (Flag.Value & EnumMask) != 0;
       if ((!IsEnum && (Value & Flag.Value) == Flag.Value) ||
           (IsEnum  && (Value & EnumMask) == Flag.Value)) {

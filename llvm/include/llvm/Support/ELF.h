@@ -432,22 +432,29 @@ enum : unsigned {
   EF_MIPS_NOREORDER = 0x00000001, // Don't reorder instructions
   EF_MIPS_PIC       = 0x00000002, // Position independent code
   EF_MIPS_CPIC      = 0x00000004, // Call object with Position independent code
-  EF_MIPS_ABI2      = 0x00000020,
-  EF_MIPS_32BITMODE = 0x00000100,
+  EF_MIPS_ABI2      = 0x00000020, // File uses N32 ABI
+  EF_MIPS_32BITMODE = 0x00000100, // Code compiled for a 64-bit machine
+                                  // in 32-bit mode
+  EF_MIPS_FP64      = 0x00000200, // Code compiled for a 32-bit machine
+                                  // but uses 64-bit FP registers
   EF_MIPS_NAN2008   = 0x00000400, // Uses IEE 754-2008 NaN encoding
 
   // ABI flags
-  EF_MIPS_ABI_O32   = 0x00001000, // This file follows the first MIPS 32 bit ABI
+  EF_MIPS_ABI_O32    = 0x00001000, // This file follows the first MIPS 32 bit ABI
   EF_MIPS_ABI_O64    = 0x00002000, // O32 ABI extended for 64-bit architecture.
   EF_MIPS_ABI_EABI32 = 0x00003000, // EABI in 32 bit mode.
   EF_MIPS_ABI_EABI64 = 0x00004000, // EABI in 64 bit mode.
   EF_MIPS_ABI        = 0x0000f000, // Mask for selecting EF_MIPS_ABI_ variant.
 
-  //ARCH_ASE
+  // ARCH_ASE
   EF_MIPS_MICROMIPS = 0x02000000, // microMIPS
   EF_MIPS_ARCH_ASE_M16 =
                       0x04000000, // Has Mips-16 ISA extensions
-  //ARCH
+  EF_MIPS_ARCH_ASE_MDMX =
+                      0x08000000, // Has MDMX multimedia extensions
+  EF_MIPS_ARCH_ASE  = 0x0f000000, // Mask for EF_MIPS_ARCH_ASE_xxx flags
+
+  // ARCH
   EF_MIPS_ARCH_1    = 0x00000000, // MIPS1 instruction set
   EF_MIPS_ARCH_2    = 0x10000000, // MIPS2 instruction set
   EF_MIPS_ARCH_3    = 0x20000000, // MIPS3 instruction set

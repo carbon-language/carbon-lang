@@ -505,10 +505,15 @@ static const EnumEntry<unsigned> ElfHeaderMipsFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_CPIC),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI2),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_32BITMODE),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_FP64),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_NAN2008),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_O32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_O64),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_EABI32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_EABI64),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_MICROMIPS),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_ASE_M16),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_ASE_MDMX),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_1),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_2),
   LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_3),
@@ -551,7 +556,7 @@ void ELFDumper<ELFT>::printFileHeaders() {
     W.printHex   ("SectionHeaderOffset", Header->e_shoff);
     if (Header->e_machine == EM_MIPS)
       W.printFlags("Flags", Header->e_flags, makeArrayRef(ElfHeaderMipsFlags),
-                   unsigned(ELF::EF_MIPS_ARCH));
+                   unsigned(ELF::EF_MIPS_ARCH), unsigned(ELF::EF_MIPS_ABI));
     else
       W.printFlags("Flags", Header->e_flags);
     W.printNumber("HeaderSize", Header->e_ehsize);
