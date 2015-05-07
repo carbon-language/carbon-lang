@@ -15,7 +15,7 @@
 
 #include "clang/Format/Format.h"
 
-extern "C" void TestOneInput(uint8_t *data, size_t size) {
+extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   // FIXME: fuzz more things: different styles, different style features.
   std::string s((const char *)data, size);
   auto Style = getGoogleStyle(clang::format::FormatStyle::LK_Cpp);

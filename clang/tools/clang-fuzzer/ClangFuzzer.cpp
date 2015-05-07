@@ -20,7 +20,7 @@
 
 using namespace clang;
 
-extern "C" void TestOneInput(uint8_t *data, size_t size) {
+extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   std::string s((const char *)data, size);
   llvm::opt::ArgStringList CC1Args;
   CC1Args.push_back("-cc1");
