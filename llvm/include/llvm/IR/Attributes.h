@@ -477,7 +477,7 @@ public:
   /// \brief Remove the attributes from the builder.
   AttrBuilder &remove(const AttrBuilder &B);
 
-  /// \brief \brief Return true if the builder has any attribute that's in the
+  /// \brief Return true if the builder has any attribute that's in the
   /// specified builder.
   bool overlaps(const AttrBuilder &B) const;
 
