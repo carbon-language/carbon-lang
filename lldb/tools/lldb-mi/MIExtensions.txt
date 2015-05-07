@@ -32,6 +32,55 @@ Example:
     -data-info-line hello.cpp:15
     ^done,start="0x0000000100000f80",end="0x0000000100000f94",file="/Users/IliaK/p/hello.cpp",line="15"
 
+# -data-read-memory-bytes
+
+Synopsis
+
+	-data-read-memory-bytes [--thread <thread-id>] [--frame <frame-index>] [-o <byte-offset>] <address> <count>
+
+Where:
+
+	`address`
+		An expression specifying the start of the memory range to read.
+	`count`
+		Number of bytes to read.
+	`byte-offset`
+		Relative offset in bytes from `address` where reading should start.
+	`thread-id`
+		Integer identifier of the thread within which the expression should be evaluated,
+		if this option is omitted the currently selected thread will be used.
+		This option is not in the MI specification but is implemented by GDB.
+	`frame-index`
+		Index of the frame within which the expression should be evaluated,
+		if this option is omitted the currently selected frame will be used.
+		This option is not in the MI specification but is implemented by GDB.
+
+Reads a block of memory from the specified range.
+
+Note that currently this command works in an all-or-nothing fashion where it either reads the entire
+block of memory successfully and returns it as a single block, or it returns an error. This doesn't
+quite match up with the MI specification that says that subsets of the specified range may be
+returned as individual blocks if only some of the memory within the specified range is accessible.
+
+The result record for this command may contain one or more tuples representing the blocks of memory
+that were read, where each tuple has the following fields:
+
+	`begin`
+		The start of the address range for this block (in hex notation).
+	`end`
+		The end of the address range for this block (in hex notation).
+	`offset`
+		Offset of this block from `address` (that was passed in as an argument).
+	`contents`
+		The actual data in this block (in hex notation).
+
+Example:
+
+	(gdb)
+	-data-read-memory-bytes &array 4
+	^done,memory=[{begin="0x00007fffffffeccc",offset="0x0000000000000000",end="0x00007fffffffecd0",contents="01020304"}]
+	(gdb)
+
 # =library-loaded notification
 
 The =library-loaded notification has 3 extra fields:

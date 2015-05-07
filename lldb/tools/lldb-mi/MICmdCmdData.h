@@ -150,14 +150,14 @@ class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option. Not handled by command.
+    const CMIUtilString m_constStrArgThread; // Not in the MI spec but implemented by GDB.
+    const CMIUtilString m_constStrArgFrame; // Not in the MI spec but implemented by GDB.
     const CMIUtilString m_constStrArgByteOffset;
-    const CMIUtilString m_constStrArgAddrStart;
+    const CMIUtilString m_constStrArgAddrExpr;
     const CMIUtilString m_constStrArgNumBytes;
     MIuchar *m_pBufferMemory;
     MIuint64 m_nAddrStart;
     MIuint64 m_nAddrNumBytesToRead;
-    MIuint64 m_nAddrOffset;
 };
 
 //++ ============================================================================

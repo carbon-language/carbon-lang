@@ -41,9 +41,9 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @unittest2.skip("-data-evaluate-expression doesn't work") #FIXME: the global case worked before refactoring
-    def test_lldbmi_data_read_memory_bytes(self):
-        """Test that 'lldb-mi --interpreter' works for -data-read-memory-bytes."""
+    @unittest2.skip("-data-evaluate-expression doesn't work on globals") #FIXME: the global case worked before refactoring
+    def test_lldbmi_data_read_memory_bytes_global(self):
+        """Test that -data-read-memory-bytes can access global buffers."""
 
         self.spawnLldbMi(args = None)
 
@@ -77,6 +77,114 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that -data-read-memory-bytes works for static char[] type
         self.runCmd("-data-read-memory-bytes %#x %d" % (addr, size))
         self.expect("\^done,memory=\[{begin=\"0x0*%x\",offset=\"0x0+\",end=\"0x0*%x\",contents=\"1112131400\"}\]" % (addr, addr + size))
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_data_read_memory_bytes_local(self):
+        """Test that -data-read-memory-bytes can access local buffers."""
+
+        self.spawnLldbMi(args = None)
+        self.expect(self.child_prompt, exactly = True)
+
+        # Load executable
+        self.runCmd('-file-exec-and-symbols %s' % self.myexe)
+        self.expect(r'\^done')
+
+        # Run to BP_local_array_test_inner
+        line = line_number('main.cpp', '// BP_local_array_test_inner')
+        self.runCmd('-break-insert main.cpp:%d' % line)
+        self.expect(r'\^done,bkpt=\{number="1"')
+        self.runCmd('-exec-run')
+        self.expect(r'\^running')
+        self.expect(r'\*stopped,reason="breakpoint-hit"')
+
+        # Get address of local char[]
+        self.runCmd('-data-evaluate-expression &array')
+        self.expect(r'\^done,value="0x[0-9a-f]+"')
+        addr = int(self.child.after.split('"')[1], 16)
+        size = 4
+
+        # Test that an unquoted hex literal address works
+        self.runCmd('-data-read-memory-bytes %#x %d' % (addr, size))
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # Test that a double-quoted hex literal address works
+        self.runCmd('-data-read-memory-bytes "%#x" %d' % (addr, size))
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # Test that unquoted expressions work
+        self.runCmd('-data-read-memory-bytes &array %d' % size)
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # This doesn't work, and perhaps that makes sense, but it does work on GDB
+        self.runCmd('-data-read-memory-bytes array 4')
+        self.expect(r'\^error')
+        #self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        self.runCmd('-data-read-memory-bytes &array[2] 2')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="0304"\}\]' % (addr + 2, addr + size))
+
+        self.runCmd('-data-read-memory-bytes first_element_ptr %d' % size)
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # Test that double-quoted expressions work
+        self.runCmd('-data-read-memory-bytes "&array" %d' % size)
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        self.runCmd('-data-read-memory-bytes "&array[0] + 1" 3')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="020304"\}\]' % (addr + 1, addr + size))
+
+        self.runCmd('-data-read-memory-bytes "first_element_ptr + 1" 3')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="020304"\}\]' % (addr + 1, addr + size))
+
+        # Test the -o (offset) option
+        self.runCmd('-data-read-memory-bytes -o 1 &array 3')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="020304"\}\]' % (addr + 1, addr + size))
+
+        # Test the --thread option
+        self.runCmd('-data-read-memory-bytes --thread 1 &array 4')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # Test the --thread option with an invalid value
+        self.runCmd('-data-read-memory-bytes --thread 999 &array 4')
+        self.expect(r'\^error')
+
+        # Test the --frame option (current frame)
+        self.runCmd('-data-read-memory-bytes --frame 0 &array 4')
+        self.expect(r'\^done,memory=\[\{begin="0x0*%x",offset="0x0+",end="0x0*%x",contents="01020304"\}\]' % (addr, addr + size))
+
+        # Test the --frame option (outer frame)
+        self.runCmd('-data-read-memory-bytes --frame 1 &array 4')
+        self.expect(r'\^done,memory=\[\{begin="0x[0-9a-f]+",offset="0x0+",end="0x[0-9a-f]+",contents="05060708"\}\]')
+
+        # Test the --frame option with an invalid value
+        self.runCmd('-data-read-memory-bytes --frame 999 &array 4')
+        self.expect(r'\^error')
+
+        # Test all the options at once
+        self.runCmd('-data-read-memory-bytes --thread 1 --frame 1 -o 2 &array 2')
+        self.expect(r'\^done,memory=\[\{begin="0x[0-9a-f]+",offset="0x0+",end="0x[0-9a-f]+",contents="0708"\}\]')
+
+        # Test that an expression that references undeclared variables doesn't work
+        self.runCmd('-data-read-memory-bytes "&undeclared_array1 + undeclared_array2[1]" 2')
+        self.expect(r'\^error')
+
+        # Test that the address argument is required
+        self.runCmd('-data-read-memory-bytes')
+        self.expect(r'\^error')
+
+        # Test that the count argument is required
+        self.runCmd('-data-read-memory-bytes &array')
+        self.expect(r'\^error')
+
+        # Test that the address argument is required when other options are present
+        self.runCmd('-data-read-memory-bytes --thread 1')
+        self.expect(r'\^error')
+
+        # Test that the count argument is required when other options are present
+        self.runCmd('-data-read-memory-bytes --thread 1 &array')
+        self.expect(r'\^error')
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

@@ -517,13 +517,13 @@ CMICmdCmdDataDisassemble::CreateSelf(void)
 //--
 CMICmdCmdDataReadMemoryBytes::CMICmdCmdDataReadMemoryBytes(void)
     : m_constStrArgThread("thread")
+    , m_constStrArgFrame("frame")
     , m_constStrArgByteOffset("o")
-    , m_constStrArgAddrStart("address")
+    , m_constStrArgAddrExpr("address")
     , m_constStrArgNumBytes("count")
     , m_pBufferMemory(nullptr)
     , m_nAddrStart(0)
     , m_nAddrNumBytesToRead(0)
-    , m_nAddrOffset(0)
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "data-read-memory-bytes";
@@ -561,11 +561,13 @@ bool
 CMICmdCmdDataReadMemoryBytes::ParseArgs(void)
 {
     bool bOk =
-        m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1)));
+        m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
+    bOk = bOk &&
+        m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     bOk =
         bOk &&
         m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgAddrStart, true, true, CMICmdArgValNumber::eArgValNumberFormat_Auto)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgAddrExpr, true, true, true, true)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNumBytes, true, true)));
     return (bOk && ParseValidateCmdOptions());
 }
@@ -575,21 +577,108 @@ CMICmdCmdDataReadMemoryBytes::ParseArgs(void)
 //          The command is likely to communicate with the LLDB SBDebugger in here.
 // Type:    Overridden.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
 // Throws:  None.
 //--
 bool
 CMICmdCmdDataReadMemoryBytes::Execute(void)
 {
-    CMICMDBASE_GETOPTION(pArgAddrStart, Number, m_constStrArgAddrStart);
-    CMICMDBASE_GETOPTION(pArgAddrOffset, Number, m_constStrArgByteOffset);
+    CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
+    CMICMDBASE_GETOPTION(pArgFrame, OptionLong, m_constStrArgFrame);
+    CMICMDBASE_GETOPTION(pArgAddrOffset, OptionShort, m_constStrArgByteOffset);
+    CMICMDBASE_GETOPTION(pArgAddrExpr, String, m_constStrArgAddrExpr);
     CMICMDBASE_GETOPTION(pArgNumBytes, Number, m_constStrArgNumBytes);
 
-    const MIuint64 nAddrStart = pArgAddrStart->GetValue();
+    // get the --thread option value
+    MIuint64 nThreadId = UINT64_MAX;
+    if (pArgThread->GetFound() && !pArgThread->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nThreadId))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_OPTION_NOT_FOUND),
+                 m_cmdData.strMiCmd.c_str(), m_constStrArgThread.c_str()));
+        return MIstatus::failure;
+    }
+
+    // get the --frame option value
+    MIuint64 nFrame = UINT64_MAX;
+    if (pArgFrame->GetFound() && !pArgFrame->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nFrame))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_OPTION_NOT_FOUND),
+                 m_cmdData.strMiCmd.c_str(), m_constStrArgFrame.c_str()));
+        return MIstatus::failure;
+    }
+
+    // get the -o option value
+    MIuint64 nAddrOffset = 0;
+    if (pArgAddrOffset->GetFound() && !pArgAddrOffset->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nAddrOffset))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_OPTION_NOT_FOUND),
+                 m_cmdData.strMiCmd.c_str(), m_constStrArgByteOffset.c_str()));
+        return MIstatus::failure;
+    }
+
+    // FIXME: shouldn't have to ensure mandatory arguments are present, that should've been handled
+    // in ParseArgs(), unfortunately that seems kinda sorta broken right now if options are provided
+    // but mandatory arguments are missing, so here we go...
+    if (!pArgAddrExpr->GetFound())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY), m_constStrArgAddrExpr.c_str()));
+        return MIstatus::failure;
+    }
+
+    if (!pArgNumBytes->GetFound())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY), m_constStrArgNumBytes.c_str()));
+        return MIstatus::failure;
+    }
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    if (!sbProcess.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+
+    lldb::SBThread thread = (nThreadId != UINT64_MAX) ?
+                            sbProcess.GetThreadByIndexID(nThreadId) : sbProcess.GetSelectedThread();
+    if (!thread.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_THREAD_INVALID), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+
+    lldb::SBFrame frame = (nFrame != UINT64_MAX) ?
+                          thread.GetFrameAtIndex(nFrame) : thread.GetSelectedFrame();
+    if (!frame.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_FRAME_INVALID), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+
+    const CMIUtilString &rAddrExpr = pArgAddrExpr->GetValue();
+    lldb::SBValue addrExprValue = frame.EvaluateExpression(rAddrExpr.c_str());
+    lldb::SBError error = addrExprValue.GetError();
+    if (error.Fail())
+    {
+        SetError(error.GetCString());
+        return MIstatus::failure;
+    }
+    else if (!addrExprValue.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_EXPR_INVALID), rAddrExpr.c_str()));
+        return MIstatus::failure;
+    }
+
+    MIuint64 nAddrStart = 0;
+    if (!CMICmnLLDBProxySBValue::GetValueAsUnsigned(addrExprValue, nAddrStart))
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_EXPR_INVALID), rAddrExpr.c_str()));
+        return MIstatus::failure;
+    }
+
+    nAddrStart += nAddrOffset;
     const MIuint64 nAddrNumBytes = pArgNumBytes->GetValue();
-    if (pArgAddrOffset->GetFound())
-        m_nAddrOffset = pArgAddrOffset->GetValue();
 
     m_pBufferMemory = new MIuchar[nAddrNumBytes];
     if (m_pBufferMemory == nullptr)
@@ -598,9 +687,6 @@ CMICmdCmdDataReadMemoryBytes::Execute(void)
         return MIstatus::failure;
     }
 
-    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
-    lldb::SBError error;
     const MIuint64 nReadBytes = sbProcess.ReadMemory(static_cast<lldb::addr_t>(nAddrStart), (void *)m_pBufferMemory, nAddrNumBytes, error);
     if (nReadBytes != nAddrNumBytes)
     {
@@ -640,7 +726,8 @@ CMICmdCmdDataReadMemoryBytes::Acknowledge(void)
     const CMICmnMIValueConst miValueConst(CMIUtilString::Format("0x%016" PRIx64, m_nAddrStart));
     const CMICmnMIValueResult miValueResult("begin", miValueConst);
     CMICmnMIValueTuple miValueTuple(miValueResult);
-    const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("0x%016" PRIx64, m_nAddrOffset));
+    const MIuint64 nAddrOffset = 0;
+    const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("0x%016" PRIx64, nAddrOffset));
     const CMICmnMIValueResult miValueResult2("offset", miValueConst2);
     miValueTuple.Add(miValueResult2);
     const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("0x%016" PRIx64, m_nAddrStart + m_nAddrNumBytesToRead));
