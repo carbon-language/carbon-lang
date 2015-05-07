@@ -4387,13 +4387,11 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
         rep << "cputype:" << std::hex << cputype << ";";
     }
 
-    bool host_cpu_is_64bit;
+    bool host_cpu_is_64bit = false;
     uint32_t is64bit_capable;
     size_t is64bit_capable_len = sizeof (is64bit_capable);
     if (sysctlbyname("hw.cpu64bit_capable", &is64bit_capable, &is64bit_capable_len, NULL, 0) == 0)
-        host_cpu_is_64bit = true;
-    else
-        host_cpu_is_64bit = false;
+        host_cpu_is_64bit = is64bit_capable != 0;
 
     uint32_t cpusubtype;
     size_t cpusubtype_len = sizeof(cpusubtype);
