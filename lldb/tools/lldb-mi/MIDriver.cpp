@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // Third party headers:
+#include <fstream>
 #include "lldb/API/SBError.h"
 
 // In-house headers:
@@ -54,6 +55,7 @@ CMIDriver::CMIDriver(void)
     , m_eCurrentDriverState(eDriverState_NotRunning)
     , m_bHaveExecutableFileNamePathOnCmdLine(false)
     , m_bDriverDebuggingArgExecutable(false)
+    , m_bHaveCommandFileNamePathOnCmdLine(false)
 {
 }
 
@@ -407,20 +409,40 @@ CMIDriver::ParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &v
 
     if (bHaveArgs)
     {
-        // Search right to left to look for the executable
+        // Search right to left to look for filenames
         for (MIint i = argc - 1; i > 0; i--)
         {
             const CMIUtilString strArg(argv[i]);
             const CMICmdArgValFile argFile;
+
+            // Check for a filename
             if (argFile.IsFilePath(strArg) || CMICmdArgValString(true, false, true).IsStringArg(strArg))
             {
+                // Is this the command file for the '-s' or '--source' options?
+                const CMIUtilString strPrevArg(argv[i - 1]);
+                if (strPrevArg.compare("-s") == 0 || strPrevArg.compare("--source") == 0)
+                {
+                    m_strCmdLineArgCommandFileNamePath = strArg;
+                    m_bHaveCommandFileNamePathOnCmdLine = true;
+                    i--; // skip '-s' on the next loop
+                    continue;
+                }
+                // Else, must be the executable
                 bHaveExecutableFileNamePath = true;
                 m_strCmdLineArgExecuteableFileNamePath = strArg;
                 m_bHaveExecutableFileNamePathOnCmdLine = true;
             }
-            // This argument is also check for in CMIDriverMgr::ParseArgs()
-            if (0 == strArg.compare("--executable")) // Used to specify that there is executable argument also on the command line
-            {                                        // See fn description.
+            // Report error if no command file was specified for the '-s' or '--source' options
+            else if (strArg.compare("-s") == 0 || strArg.compare("--source") == 0)
+            {
+                vwbExiting = true;
+                const CMIUtilString errMsg = CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_VALIDATION_MISSING_INF), strArg.c_str());
+                errStatus.SetErrorString(errMsg.c_str());
+                break;
+            }
+            // This argument is also checked for in CMIDriverMgr::ParseArgs()
+            else if (strArg.compare("--executable") == 0) // Used to specify that there is executable argument also on the command line
+            {                                             // See fn description.
                 bHaveExecutableLongOption = true;
             }
         }
@@ -525,6 +547,13 @@ CMIDriver::DoMainLoop(void)
 
     // App is not quitting currently
     m_bExitApp = false;
+
+    // Handle source file
+    if (m_bHaveCommandFileNamePathOnCmdLine)
+    {
+        const bool bAsyncMode = false;
+        ExecuteCommandFile(bAsyncMode);
+    }
 
     // While the app is active
     while (bOk && !m_bExitApp)
@@ -1226,6 +1255,74 @@ bool
 CMIDriver::IsDriverDebuggingArgExecutable(void) const
 {
     return m_bDriverDebuggingArgExecutable;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Execute commands from prepared source file
+// Type:    Method.
+// Args:    vbAsyncMode       - (R) True = execute commands in asynchronous mode, false = otherwise.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMIDriver::ExecuteCommandFile(const bool vbAsyncMode)
+{
+    std::ifstream ifsStartScript(m_strCmdLineArgCommandFileNamePath.c_str());
+    if (!ifsStartScript.is_open())
+    {
+        const CMIUtilString errMsg(
+            CMIUtilString::Format(MIRSRC(IDS_UTIL_FILE_ERR_OPENING_FILE_UNKNOWN), m_strCmdLineArgCommandFileNamePath.c_str()));
+        SetErrorDescription(errMsg.c_str());
+        const bool bForceExit = true;
+        SetExitApplicationFlag(bForceExit);
+        return MIstatus::failure;
+    }
+
+    // Switch lldb to synchronous mode
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    const bool bAsyncSetting = rSessionInfo.GetDebugger().GetAsync();
+    rSessionInfo.GetDebugger().SetAsync(vbAsyncMode);
+
+    // Execute commands from file
+    bool bOk = MIstatus::success;
+    CMIUtilString strCommand;
+    while (!m_bExitApp && std::getline(ifsStartScript, strCommand))
+    {
+        // Print command
+        bOk = CMICmnStreamStdout::TextToStdout(strCommand);
+
+        // Skip if it's a comment or empty line
+        if (strCommand.empty() || strCommand[0] == '#')
+            continue;
+
+        // Execute if no error
+        if (bOk)
+        {
+            CMIUtilThreadLock lock(rSessionInfo.GetSessionMutex());
+            bOk = InterpretCommand(strCommand);
+        }
+
+        // Draw the prompt after command will be executed (if enabled)
+        if (bOk && m_rStdin.GetEnablePrompt())
+            bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+
+        // Exit if there is an error
+        if (!bOk)
+        {
+            const bool bForceExit = true;
+            SetExitApplicationFlag(bForceExit);
+            break;
+        }
+
+        // Wait while the handler thread handles incoming events
+        CMICmnLLDBDebugger::Instance().WaitForHandleEvent();
+    }
+
+    // Switch lldb back to initial mode
+    rSessionInfo.GetDebugger().SetAsync(bAsyncSetting);
+
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------

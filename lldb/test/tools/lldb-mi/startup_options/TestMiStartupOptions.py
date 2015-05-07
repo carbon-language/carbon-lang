@@ -127,6 +127,105 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_lldbmi_source_option_start_script(self):
+        """Test that 'lldb-mi --interpreter' can execute user's commands after initial commands were executed."""
+
+        # Prepared source file
+        sourceFile = "start_script"
+
+        self.spawnLldbMi(args = "--source %s" % sourceFile)
+
+        # After '-file-exec-and-symbols a.out'
+        self.expect("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # After '-break-insert -f main'
+        self.expect("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+
+        # After '-exec-run'
+        self.expect("-exec-run")
+        self.expect("\^running")
+
+        # After '-break-insert main.cpp:BP_return'
+        line = line_number('main.cpp', '// BP_return')
+        self.expect("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"2\"")
+
+        # After '-exec-continue'
+        self.expect("-exec-continue")
+        self.expect("\^running")
+
+        # Test that lldb-mi is ready after execution of --source start_script
+        self.expect(self.child_prompt, exactly = True)
+
+        # Try to evaluate 'a' expression
+        self.runCmd("-data-evaluate-expression a")
+        self.expect("\^done,value=\"10\"")
+        self.expect(self.child_prompt, exactly = True)
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_lldbmi_source_option_start_script_exit(self):
+        """Test that 'lldb-mi --interpreter' can execute a prepared file which passed via --source option."""
+
+        # Prepared source file
+        sourceFile = "start_script_exit"
+
+        self.spawnLldbMi(args = "--source %s" % sourceFile)
+
+        # After '-file-exec-and-symbols a.out'
+        self.expect("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # After '-break-insert -f main'
+        self.expect("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+
+        # After '-exec-run'
+        self.expect("-exec-run")
+        self.expect("\^running")
+
+        # After '-break-insert main.cpp:BP_return'
+        line = line_number('main.cpp', '// BP_return')
+        self.expect("-break-insert main.cpp:%d" % line)
+        self.expect("\^done,bkpt={number=\"2\"")
+
+        # After '-exec-continue'
+        self.expect("-exec-continue")
+        self.expect("\^running")
+
+        # After '-data-evaluate-expression a'
+        self.expect("-data-evaluate-expression a")
+        self.expect("\^done,value=\"10\"")
+
+        # After '-gdb-exit'
+        self.expect("-gdb-exit")
+        self.expect("\^exit")
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_lldbmi_source_option_start_script_error(self):
+        """Test that 'lldb-mi --interpreter' stops execution of initial commands in case of error."""
+
+        # Prepared source file
+        sourceFile = "start_script_error"
+
+        self.spawnLldbMi(args = "--source %s" % sourceFile)
+
+        # After '-file-exec-and-symbols a.out'
+        self.expect("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # After '-break-ins -f main'
+        self.expect("-break-ins -f main")
+        self.expect("\^error")
+
+        # Test that lldb-mi is ready after execution of --source start_script
+        self.expect(self.child_prompt, exactly = True)
     
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

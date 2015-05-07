@@ -10,5 +10,6 @@
 int
 main(int argc, char const *argv[])
 {
-    return 0;
+    int a = 10;
+    return 0; // BP_return
 }

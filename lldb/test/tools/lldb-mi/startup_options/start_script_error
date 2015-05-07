@@ -1,0 +1,2 @@
+-file-exec-and-symbols a.out
+-break-ins -f main
