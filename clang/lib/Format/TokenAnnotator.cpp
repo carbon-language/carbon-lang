@@ -49,7 +49,7 @@ private:
     ScopedContextCreator ContextCreator(*this, tok::less, 10);
 
     // If this angle is in the context of an expression, we need to be more
-    // hesitant to detect it as opening template parameters. 
+    // hesitant to detect it as opening template parameters.
     bool InExprContext = Contexts.back().IsExpression;
 
     Contexts.back().IsExpression = false;

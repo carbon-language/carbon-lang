@@ -584,9 +584,13 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
       return State.Stack.back().StartOfArraySubscripts;
     return ContinuationIndent;
   }
-  if (NextNonComment->is(TT_StartOfName) && NextNonComment->Next &&
-      NextNonComment->Next->is(TT_ObjCMethodExpr))
+
+  // This ensure that we correctly format ObjC methods calls without inputs,
+  // i.e. where the last element isn't selector like: [callee method];
+  if (NextNonComment->is(tok::identifier) && NextNonComment->FakeRParens == 0 &&
+      NextNonComment->Next && NextNonComment->Next->is(TT_ObjCMethodExpr))
     return State.Stack.back().Indent;
+
   if (NextNonComment->isOneOf(TT_StartOfName, TT_PointerOrReference) ||
       Previous.isOneOf(tok::coloncolon, tok::equal))
     return ContinuationIndent;
