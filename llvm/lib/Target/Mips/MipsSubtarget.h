@@ -236,7 +236,7 @@ public:
 
   bool hasStandardEncoding() const { return !inMips16Mode(); }
 
-  bool useSoftFloat() const { return IsSoftFloat && !InMips16HardFloat; }
+  bool useSoftFloat() const { return IsSoftFloat; }
 
   bool enableLongBranchPass() const {
     return hasStandardEncoding() || allowMixed16_32();
