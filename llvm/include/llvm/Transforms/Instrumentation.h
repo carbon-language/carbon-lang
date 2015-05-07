@@ -98,8 +98,28 @@ ModulePass *createDataFlowSanitizerPass(
     const std::vector<std::string> &ABIListFiles = std::vector<std::string>(),
     void *(*getArgTLS)() = nullptr, void *(*getRetValTLS)() = nullptr);
 
+// Options for sanitizer coverage instrumentation.
+struct SanitizerCoverageOptions {
+  SanitizerCoverageOptions()
+      : CoverageType(SCK_None), IndirectCalls(false), TraceBB(false),
+        TraceCmp(false), Use8bitCounters(false) {}
+
+  enum Type {
+    SCK_None = 0,
+    SCK_Function,
+    SCK_BB,
+    SCK_Edge
+  } CoverageType;
+  bool IndirectCalls;
+  bool TraceBB;
+  bool TraceCmp;
+  bool Use8bitCounters;
+};
+
 // Insert SanitizerCoverage instrumentation.
 ModulePass *createSanitizerCoverageModulePass(int CoverageLevel);
+ModulePass *createSanitizerCoverageModulePass(
+    const SanitizerCoverageOptions &Options = SanitizerCoverageOptions());
 
 #if defined(__GNUC__) && defined(__linux__) && !defined(ANDROID)
 inline ModulePass *createDataFlowSanitizerPassForJIT(
