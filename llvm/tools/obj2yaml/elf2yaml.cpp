@@ -41,6 +41,7 @@ class ELFDumper {
   ErrorOr<ELFYAML::RawContentSection *>
   dumpContentSection(const Elf_Shdr *Shdr);
   ErrorOr<ELFYAML::Group *> dumpGroup(const Elf_Shdr *Shdr);
+  ErrorOr<ELFYAML::MipsABIFlags *> dumpMipsABIFlags(const Elf_Shdr *Shdr);
 
 public:
   ELFDumper(const object::ELFFile<ELFT> &O);
@@ -91,6 +92,13 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     }
     case ELF::SHT_GROUP: {
       ErrorOr<ELFYAML::Group *> G = dumpGroup(&Sec);
+      if (std::error_code EC = G.getError())
+        return EC;
+      Y->Sections.push_back(std::unique_ptr<ELFYAML::Section>(G.get()));
+      break;
+    }
+    case ELF::SHT_MIPS_ABIFLAGS: {
+      ErrorOr<ELFYAML::MipsABIFlags *> G = dumpMipsABIFlags(&Sec);
       if (std::error_code EC = G.getError())
         return EC;
       Y->Sections.push_back(std::unique_ptr<ELFYAML::Section>(G.get()));
@@ -315,6 +323,35 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
     }
     S->Members.push_back(s);
   }
+  return S.release();
+}
+
+template <class ELFT>
+ErrorOr<ELFYAML::MipsABIFlags *>
+ELFDumper<ELFT>::dumpMipsABIFlags(const Elf_Shdr *Shdr) {
+  assert(Shdr->sh_type == ELF::SHT_MIPS_ABIFLAGS &&
+         "Section type is not SHT_MIPS_ABIFLAGS");
+  auto S = make_unique<ELFYAML::MipsABIFlags>();
+  if (std::error_code EC = dumpCommonSection(Shdr, *S))
+    return EC;
+
+  ErrorOr<ArrayRef<uint8_t>> ContentOrErr = Obj.getSectionContents(Shdr);
+  if (std::error_code EC = ContentOrErr.getError())
+    return EC;
+
+  auto *Flags = reinterpret_cast<const object::Elf_Mips_ABIFlags<ELFT> *>(
+      ContentOrErr.get().data());
+  S->Version = Flags->version;
+  S->ISALevel = Flags->isa_level;
+  S->ISARevision = Flags->isa_rev;
+  S->GPRSize = Flags->gpr_size;
+  S->CPR1Size = Flags->cpr1_size;
+  S->CPR2Size = Flags->cpr2_size;
+  S->FpABI = Flags->fp_abi;
+  S->ISAExtension = Flags->isa_ext;
+  S->ASEs = Flags->ases;
+  S->Flags1 = Flags->flags1;
+  S->Flags2 = Flags->flags2;
   return S.release();
 }
 

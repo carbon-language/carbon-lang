@@ -253,7 +253,12 @@ ELF-MIPSEL-NEXT:   - Name:            .MIPS.abiflags
 ELF-MIPSEL-NEXT:     Type:            SHT_MIPS_ABIFLAGS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC ]
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000008
-ELF-MIPSEL-NEXT:     Content:         '000020010101000100000000000000000100000000000000'
+ELF-MIPSEL-NEXT:     ISA:             MIPS32
+ELF-MIPSEL-NEXT:     ISARevision:     0x01
+ELF-MIPSEL-NEXT:     FpABI:           FP_DOUBLE
+ELF-MIPSEL-NEXT:     GPRSize:         REG_32
+ELF-MIPSEL-NEXT:     CPR1Size:        REG_32
+ELF-MIPSEL-NEXT:     Flags1:          [ ODDSPREG ]
 ELF-MIPSEL-NEXT: Symbols:
 ELF-MIPSEL-NEXT:   Local:
 ELF-MIPSEL-NEXT:     - Name:            trivial.ll

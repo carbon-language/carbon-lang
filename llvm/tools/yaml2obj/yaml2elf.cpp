@@ -133,6 +133,9 @@ class ELFState {
                            ContiguousBlobAccumulator &CBA);
   bool writeSectionContent(Elf_Shdr &SHeader, const ELFYAML::Group &Group,
                            ContiguousBlobAccumulator &CBA);
+  bool writeSectionContent(Elf_Shdr &SHeader,
+                           const ELFYAML::MipsABIFlags &Section,
+                           ContiguousBlobAccumulator &CBA);
 
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
   // - symbol table (.symtab) (placed third to last)
@@ -233,6 +236,9 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
         return false;
       }
       SHeader.sh_info = SymIdx;
+      if (!writeSectionContent(SHeader, *S, CBA))
+        return false;
+    } else if (auto S = dyn_cast<ELFYAML::MipsABIFlags>(Sec.get())) {
       if (!writeSectionContent(SHeader, *S, CBA))
         return false;
     } else
@@ -410,6 +416,37 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
     SIdx = sectionIndex;
     OS.write((const char *)&SIdx, sizeof(SIdx));
   }
+  return true;
+}
+
+template <class ELFT>
+bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
+                                         const ELFYAML::MipsABIFlags &Section,
+                                         ContiguousBlobAccumulator &CBA) {
+  if (Section.Type != llvm::ELF::SHT_MIPS_ABIFLAGS) {
+    errs() << "error: Invalid section type.\n";
+    return false;
+  }
+
+  object::Elf_Mips_ABIFlags<ELFT> Flags;
+  zero(Flags);
+  SHeader.sh_entsize = sizeof(Flags);
+  SHeader.sh_size = SHeader.sh_entsize;
+
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  Flags.version = Section.Version;
+  Flags.isa_level = Section.ISALevel;
+  Flags.isa_rev = Section.ISARevision;
+  Flags.gpr_size = Section.GPRSize;
+  Flags.cpr1_size = Section.CPR1Size;
+  Flags.cpr2_size = Section.CPR2Size;
+  Flags.fp_abi = Section.FpABI;
+  Flags.isa_ext = Section.ISAExtension;
+  Flags.ases = Section.ASEs;
+  Flags.flags1 = Section.Flags1;
+  Flags.flags2 = Section.Flags2;
+  OS.write((const char *)&Flags, sizeof(Flags));
+
   return true;
 }
 
