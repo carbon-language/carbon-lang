@@ -62,7 +62,12 @@ class GdbRemoteTestCaseBase(TestBase):
         self.stub_sends_two_stop_notifications_on_kill = False
         if lldb.platform_url:
             scheme, host = re.match('(.+)://(.+):\d+', lldb.platform_url).groups()
-            self.stub_hostname = 'localhost' if scheme == 'adb' else host
+            if scheme == 'adb':
+                self.stub_device = host
+                self.stub_hostname = 'localhost'
+            else:
+                self.stub_device = None
+                self.stub_hostname = host
         else:
             self.stub_hostname = "localhost"
 
@@ -177,11 +182,12 @@ class GdbRemoteTestCaseBase(TestBase):
         # when the process truly dies.
         self.stub_sends_two_stop_notifications_on_kill = True
 
-    def forward_adb_port(self, source, target, direction):
+    def forward_adb_port(self, source, target, direction, device):
+        adb = [ 'adb' ] + ([ '-s', device ] if device else []) + [ direction ]
         def remove_port_forward():
-            subprocess.call(["adb", direction, "--remove", "tcp:%d" % source])
-        
-        subprocess.call(["adb", direction, "tcp:%d" % source, "tcp:%d" % target])
+            subprocess.call(adb + [ "--remove", "tcp:%d" % source])
+
+        subprocess.call(adb + [ "tcp:%d" % source, "tcp:%d" % target])
         self.addTearDownHook(remove_port_forward)
 
     def create_socket(self):
@@ -190,7 +196,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         triple = self.dbg.GetSelectedPlatform().GetTriple()
         if re.match(".*-.*-.*-android", triple):
-            self.forward_adb_port(self.port, self.port, "forward")
+            self.forward_adb_port(self.port, self.port, "forward", self.stub_device)
 
         connect_info = (self.stub_hostname, self.port)
         sock.connect(connect_info)
