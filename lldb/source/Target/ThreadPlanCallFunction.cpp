@@ -407,7 +407,7 @@ ThreadPlanCallFunction::DoPlanExplainsStop (Event *event_ptr)
         // signal that is set not to stop.  Check that here first.  We just say we explain the stop
         // but aren't done and everything will continue on from there.
         
-        if (m_real_stop_info_sp->ShouldStopSynchronous(event_ptr))
+        if (m_real_stop_info_sp && m_real_stop_info_sp->ShouldStopSynchronous(event_ptr))
         {
             SetPlanComplete(false);
             if (m_subplan_sp)
