@@ -445,9 +445,6 @@ char SanitizerCoverageModule::ID = 0;
 INITIALIZE_PASS(SanitizerCoverageModule, "sancov",
     "SanitizerCoverage: TODO."
     "ModulePass", false, false)
-ModulePass *llvm::createSanitizerCoverageModulePass(int CoverageLevel) {
-  return createSanitizerCoverageModulePass(getOptions(CoverageLevel));
-}
 ModulePass *llvm::createSanitizerCoverageModulePass(
     const SanitizerCoverageOptions &Options) {
   return new SanitizerCoverageModule(Options);

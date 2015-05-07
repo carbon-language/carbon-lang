@@ -117,7 +117,6 @@ struct SanitizerCoverageOptions {
 };
 
 // Insert SanitizerCoverage instrumentation.
-ModulePass *createSanitizerCoverageModulePass(int CoverageLevel);
 ModulePass *createSanitizerCoverageModulePass(
     const SanitizerCoverageOptions &Options = SanitizerCoverageOptions());
 
