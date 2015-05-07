@@ -79,3 +79,5 @@ extern inline S &g() {
 // CHECK:       resume { i8*, i32 }
   return s;
 }
+
+// REQUIRES: asserts
