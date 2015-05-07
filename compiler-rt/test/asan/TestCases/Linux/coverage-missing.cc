@@ -5,7 +5,7 @@
 // First case: coverage from executable. main() is called on every code path;
 // other than that, the foo and bar code paths are complementary in terms of
 // PCs covered.
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t -DFOOBAR -DMAIN
+// RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t -DFOOBAR -DMAIN
 // RUN: rm -rf %T/coverage-missing
 // RUN: mkdir -p %T/coverage-missing
 // RUN: cd %T/coverage-missing
@@ -27,8 +27,8 @@
 
 // Second case: coverage from DSO. Strictly complementary code paths.
 // cd %T
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %dynamiclib -DFOOBAR -shared -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s %dynamiclib -o %t -DMAIN
+// RUN: %clangxx_asan -fsanitize-coverage=func %s -o %dynamiclib -DFOOBAR -shared -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func %s %dynamiclib -o %t -DMAIN
 // RUN: LIBNAME=`basename %dynamiclib`
 // RUN: rm -rf %T/coverage-missing
 // RUN: mkdir -p %T/coverage-missing

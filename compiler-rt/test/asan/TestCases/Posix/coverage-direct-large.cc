@@ -2,8 +2,8 @@
 // Current implementation maps output file in chunks of 64K. This test overflows
 // 1 chunk.
 
-// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 -DSHARED %s -shared -o %dynamiclib -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -O0 %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func -O0 -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func -O0 %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct-large
 

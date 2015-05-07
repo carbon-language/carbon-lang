@@ -1,7 +1,7 @@
 // Test for direct coverage writing with dlopen at coverage level 1 to 3.
 
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct
 
@@ -19,8 +19,8 @@
 // RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
 
 
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %dynamiclib -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSO_DIR=\"%T\" %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSO_DIR=\"%T\" %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct
 
@@ -38,8 +38,8 @@
 // RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
 
 
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSHARED %s -shared -o %dynamiclib -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSO_DIR=\"%T\" %s %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSO_DIR=\"%T\" %s %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct
 

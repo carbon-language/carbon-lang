@@ -1,6 +1,6 @@
-// Test -mllvm -sanitizer-coverage-experimental-tracing
+// Test -fsanitize-coverage=trace-bb
 //
-// RUN: %clangxx_asan -O1 -fsanitize-coverage=1 -mllvm -sanitizer-coverage-experimental-tracing %s -o %t
+// RUN: %clangxx_asan -O1 -fsanitize-coverage=func,trace-bb %s -o %t
 // RUN: rm -rf   %T/coverage-tracing
 // RUN: mkdir %T/coverage-tracing
 // RUN: cd %T/coverage-tracing

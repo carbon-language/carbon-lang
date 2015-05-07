@@ -1,8 +1,8 @@
 // Test for direct coverage writing with dlopen.
 
 // Test normal exit, coverage level 1.
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android
 // RUN: rm -rf %T/coverage-android
@@ -18,8 +18,8 @@
 
 
 // Test sudden death, coverage level 1.
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android-kill
 // RUN: rm -rf %T/coverage-android-kill
@@ -35,8 +35,8 @@
 
 
 // Test normal exit, coverage level 2.
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android
 // RUN: rm -rf %T/coverage-android
@@ -52,8 +52,8 @@
 
 
 // Test sudden death, coverage level 2.
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=2 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=bb -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android-kill
 // RUN: rm -rf %T/coverage-android-kill
@@ -69,8 +69,8 @@
 
 
 // Test normal exit, coverage level 3.
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android
 // RUN: rm -rf %T/coverage-android
@@ -86,8 +86,8 @@
 
 
 // Test sudden death, coverage level 3.
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -fsanitize-coverage=3 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=edge -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android-kill
 // RUN: rm -rf %T/coverage-android-kill

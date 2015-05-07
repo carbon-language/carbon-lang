@@ -2,7 +2,7 @@
 // RUN: DIR=%T/coverage-order-pcs
 // RUN: rm -rf $DIR
 // RUN: mkdir $DIR
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 // RUN: ASAN_OPTIONS=coverage_dir=$DIR:coverage=1:coverage_order_pcs=0 %run %t
 // RUN: mv $DIR/*sancov $DIR/A
 

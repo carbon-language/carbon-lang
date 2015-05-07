@@ -1,6 +1,6 @@
 // Test that no data is collected without a runtime flag.
 //
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 //
 // RUN: rm -rf %T/coverage-disabled
 //

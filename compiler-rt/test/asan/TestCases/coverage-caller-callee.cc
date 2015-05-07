@@ -1,7 +1,7 @@
 // Test caller-callee coverage with large number of threads
 // and various numbers of callers and callees.
 
-// RUN: %clangxx_asan -fsanitize-coverage=4 %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=edge,indirect-calls %s -o %t
 // RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 10 1 2>&1 | FileCheck %s --check-prefix=CHECK-10-1
 // RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 9  2 2>&1 | FileCheck %s --check-prefix=CHECK-9-2
 // RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 7  3 2>&1 | FileCheck %s --check-prefix=CHECK-7-3

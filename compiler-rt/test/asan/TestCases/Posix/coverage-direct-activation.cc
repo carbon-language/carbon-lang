@@ -1,8 +1,8 @@
 // Test for direct coverage writing enabled at activation time.
 
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %dynamiclib -fPIC
 // RUN: %clangxx -c -DSO_DIR=\"%T\" %s -o %t.o
-// RUN: %clangxx_asan -fsanitize-coverage=1 %t.o %libdl -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func %t.o %libdl -o %t
 
 // RUN: rm -rf %T/coverage-direct-activation
 

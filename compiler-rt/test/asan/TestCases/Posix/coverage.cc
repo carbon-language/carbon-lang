@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s %ld_flags_rpath_exe -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
+// RUN: %clangxx_asan -fsanitize-coverage=func %s %ld_flags_rpath_exe -o %t
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
 // RUN: rm -rf %T/coverage && mkdir -p %T/coverage && cd %T/coverage
 // RUN: %run %t 2>&1         | FileCheck %s --check-prefix=CHECK-main

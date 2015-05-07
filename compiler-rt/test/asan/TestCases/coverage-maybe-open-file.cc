@@ -1,7 +1,7 @@
 // FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
 // XFAIL: android
 //
-// RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 // RUN: rm -rf %T/coverage-maybe-open-file
 // RUN: mkdir -p %T/coverage-maybe-open-file && cd %T/coverage-maybe-open-file
 // RUN: ASAN_OPTIONS=coverage=1 %run %t | FileCheck %s --check-prefix=CHECK-success
