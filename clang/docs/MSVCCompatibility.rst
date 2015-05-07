@@ -84,8 +84,9 @@ The status of major ABI-impacting C++ features:
 * RTTI: :good:`Complete`.  Generation of RTTI data structures has been
   finished, along with support for the ``/GR`` flag.
 
-* Exceptions and SEH: :partial:`Partial`.  C++ exceptions (``try`` / ``catch``)
-  and structured exceptions (``__try`` / ``__except`` / ``__finally``) mostly
+* Exceptions and SEH: :partial:`Partial`.
+  C++ exceptions (``try`` / ``catch``/ ``throw``) and
+  structured exceptions (``__try`` / ``__except`` / ``__finally``) mostly
   work on x64. 32-bit exception handling support is being worked on.  LLVM does
   not model asynchronous exceptions, so it is currently impossible to catch an
   asynchronous exception generated in the same frame as the catching ``__try``.
