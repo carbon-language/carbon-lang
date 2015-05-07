@@ -48,6 +48,7 @@ using namespace lldb_private;
 //
 //----------------------------------------------------------------------
 
+#ifdef __mips__
 extern "C" {
     void LLVMInitializeMipsTargetInfo ();
     void LLVMInitializeMipsTarget ();
@@ -55,6 +56,7 @@ extern "C" {
     void LLVMInitializeMipsTargetMC ();
     void LLVMInitializeMipsDisassembler ();
 }
+#endif
 
 EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec &arch) :
     EmulateInstruction (arch)
@@ -70,6 +72,7 @@ EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec
      * to decode the instructions so that the decoding complexity stays with LLVM. 
      * Initialize the MIPS targets and disassemblers.
     */
+#ifdef __mips__
     if (!target)
     {
         LLVMInitializeMipsTargetInfo ();
@@ -79,6 +82,7 @@ EmulateInstructionMIPS64::EmulateInstructionMIPS64 (const lldb_private::ArchSpec
         LLVMInitializeMipsDisassembler ();
         target = llvm::TargetRegistry::lookupTarget (triple.getTriple(), Error);
     }
+#endif
 
     assert (target);
 
