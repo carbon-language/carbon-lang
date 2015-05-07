@@ -1066,10 +1066,11 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                     keep_expression_in_memory,
                                     generate_debug_info))
     {
+        execution_results = lldb::eExpressionParseError;
         if (error_stream.GetString().empty())
-            error.SetExpressionError (lldb::eExpressionParseError, "expression failed to parse, unknown error");
+            error.SetExpressionError (execution_results, "expression failed to parse, unknown error");
         else
-            error.SetExpressionError (lldb::eExpressionParseError, error_stream.GetString().c_str());
+            error.SetExpressionError (execution_results, error_stream.GetString().c_str());
     }
     else
     {
