@@ -1840,16 +1840,8 @@ Platform::GetCachedSharedModule (const ModuleSpec &module_spec,
         GetModuleCacheRoot (),
         GetCacheHostname (),
         module_spec,
-        [=](const ModuleSpec &module_spec, FileSpec &tmp_download_file_spec)
+        [=](const ModuleSpec &module_spec, const FileSpec &tmp_download_file_spec)
         {
-            // Get temporary file name for a downloaded module.
-            llvm::SmallString<PATH_MAX> tmp_download_file_path;
-            const auto err_code = llvm::sys::fs::createTemporaryFile (
-                "lldb", module_spec.GetUUID ().GetAsString ().c_str (), tmp_download_file_path);
-            if (err_code)
-                return Error ("Failed to create temp file: %s", err_code.message ().c_str ());
-
-            tmp_download_file_spec.SetFile (tmp_download_file_path.c_str (), true);
             return DownloadModuleSlice (module_spec.GetFileSpec (),
                                         module_spec.GetObjectOffset (),
                                         module_spec.GetObjectSize (),

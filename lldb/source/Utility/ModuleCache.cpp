@@ -11,20 +11,24 @@
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Host/File.h"
 #include "lldb/Host/FileSystem.h"
+#include "lldb/Host/LockFile.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 
 #include <assert.h>
 
 #include <cstdio>
-#
+
 using namespace lldb;
 using namespace lldb_private;
 
 namespace {
 
 const char* kModulesSubdir = ".cache";
+const char* kLockFileName = ".lock";
+const char* kTempFileName = ".temp";
 
 FileSpec
 JoinPath (const FileSpec &path1, const char* path2)
@@ -58,21 +62,13 @@ ModuleCache::Put (const FileSpec &root_dir_spec,
                   const FileSpec &tmp_file)
 {
     const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_spec.GetUUID ());
-    auto error = MakeDirectory (module_spec_dir);
-    if (error.Fail ())
-        return error;
-
     const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
 
     const auto tmp_file_path = tmp_file.GetPath ();
-    const auto err_code = llvm::sys::fs::copy_file (tmp_file_path.c_str (), module_file_path.GetPath ().c_str ());
+    const auto err_code = llvm::sys::fs::rename (tmp_file_path.c_str (), module_file_path.GetPath ().c_str ());
     if (err_code)
-    {
-        error.SetErrorStringWithFormat ("failed to copy file %s to %s: %s",
-                                        tmp_file_path.c_str (),
-                                        module_file_path.GetPath ().c_str (),
-                                        err_code.message ().c_str ());
-    }
+        return Error ("Failed to rename file %s to %s: %s",
+                      tmp_file_path.c_str (), module_file_path.GetPath ().c_str (), err_code.message ().c_str ());
 
     // Create sysroot link to a module.
     const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
@@ -99,7 +95,9 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
     const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
 
     if (!module_file_path.Exists ())
-        return Error ("module %s not found", module_file_path.GetPath ().c_str ());
+        return Error ("Module %s not found", module_file_path.GetPath ().c_str ());
+    if (module_file_path.GetByteSize () != module_spec.GetObjectSize ())
+        return Error ("Module %s has invalid file size", module_file_path.GetPath ().c_str ());
 
     // We may have already cached module but downloaded from an another host - in this case let's create a symlink to it.
     const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
@@ -127,34 +125,42 @@ ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
                         lldb::ModuleSP &cached_module_sp,
                         bool *did_create_ptr)
 {
+    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_spec.GetUUID ());
+    auto error = MakeDirectory (module_spec_dir);
+    if (error.Fail ())
+        return error;
+
+    // Open lock file.
+    const auto lock_file_spec = JoinPath (module_spec_dir, kLockFileName);
+    File lock_file (lock_file_spec, File::eOpenOptionWrite | File::eOpenOptionCanCreate | File::eOpenOptionCloseOnExec);
+    if (!lock_file)
+    {
+        error.SetErrorToErrno ();
+        return Error("Failed to open lock file %s: %s", lock_file_spec.GetPath ().c_str (), error.AsCString ());
+    }
+    LockFile lock (lock_file.GetDescriptor ());
+    error = lock.WriteLock (0, 1);
+    if (error.Fail ())
+        return Error("Failed to lock file %s:%s", lock_file_spec.GetPath ().c_str (), error.AsCString ());
+
     // Check local cache for a module.
-    auto error = Get (root_dir_spec,
-                      hostname,
-                      module_spec,
-                      cached_module_sp,
-                      did_create_ptr);
+    error = Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
     if (error.Success ())
         return error;
 
-    FileSpec tmp_download_file_spec;
+    const auto tmp_download_file_spec = JoinPath (module_spec_dir, kTempFileName);
     error = downloader (module_spec, tmp_download_file_spec);
     llvm::FileRemover tmp_file_remover (tmp_download_file_spec.GetPath ().c_str ());
     if (error.Fail ())
         return Error("Failed to download module: %s", error.AsCString ());
 
     // Put downloaded file into local module cache.
-    error = Put (root_dir_spec,
-                 hostname,
-                 module_spec,
-                 tmp_download_file_spec);
+    error = Put (root_dir_spec, hostname, module_spec, tmp_download_file_spec);
     if (error.Fail ())
         return Error ("Failed to put module into cache: %s", error.AsCString ());
 
-    return Get (root_dir_spec,
-                hostname,
-                module_spec,
-                cached_module_sp,
-                did_create_ptr);
+    tmp_file_remover.releaseFile ();
+    return Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
 }
 
 FileSpec

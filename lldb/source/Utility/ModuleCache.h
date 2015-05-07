@@ -14,6 +14,7 @@
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/Error.h"
+#include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
 
 #include <functional>
@@ -45,8 +46,17 @@ class UUID;
 class ModuleCache
 {
 public:
-    using Downloader = std::function<Error (const ModuleSpec&, FileSpec&)>;
+    using Downloader = std::function<Error (const ModuleSpec&, const FileSpec&)>;
 
+    Error
+    GetAndPut(const FileSpec &root_dir_spec,
+              const char *hostname,
+              const ModuleSpec &module_spec,
+              const Downloader &downloader,
+              lldb::ModuleSP &cached_module_sp,
+              bool *did_create_ptr);
+
+private:
     Error
     Put (const FileSpec &root_dir_spec,
          const char *hostname,
@@ -60,15 +70,6 @@ public:
          lldb::ModuleSP &cached_module_sp,
          bool *did_create_ptr);
 
-    Error
-    GetAndPut(const FileSpec &root_dir_spec,
-              const char *hostname,
-              const ModuleSpec &module_spec,
-              const Downloader &downloader,
-              lldb::ModuleSP &cached_module_sp,
-              bool *did_create_ptr);
-
-private:
     static FileSpec
     GetModuleDirectory (const FileSpec &root_dir_spec, const UUID &uuid);
 

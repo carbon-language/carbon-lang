@@ -97,6 +97,8 @@
 		254FBB971A81B03100BD6378 /* SBLaunchInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBB961A81B03100BD6378 /* SBLaunchInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		254FBBA31A9166F100BD6378 /* SBAttachInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBBA21A9166F100BD6378 /* SBAttachInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		254FBBA51A91670E00BD6378 /* SBAttachInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */; };
+		255EFF741AFABA720069F277 /* LockFileBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 255EFF731AFABA720069F277 /* LockFileBase.cpp */; };
+		255EFF761AFABA950069F277 /* LockFilePosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 255EFF751AFABA950069F277 /* LockFilePosix.cpp */; };
 		256CBDB11ADD0E1700BC6CDC /* NativeRegisterContextLinux_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDAB1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm.cpp */; };
 		256CBDB41ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB21ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.cpp */; };
 		256CBDB51ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 256CBDB31ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.h */; };
@@ -1250,6 +1252,11 @@
 		254FBBA21A9166F100BD6378 /* SBAttachInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBAttachInfo.h; path = include/lldb/API/SBAttachInfo.h; sourceTree = "<group>"; };
 		254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBAttachInfo.cpp; path = source/API/SBAttachInfo.cpp; sourceTree = "<group>"; };
 		254FBBA61A91672800BD6378 /* SBAttachInfo.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBAttachInfo.i; sourceTree = "<group>"; };
+		255EFF6F1AFABA320069F277 /* LockFileWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LockFileWindows.h; path = include/lldb/Host/windows/LockFileWindows.h; sourceTree = "<group>"; };
+		255EFF701AFABA320069F277 /* PipeWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PipeWindows.h; path = include/lldb/Host/windows/PipeWindows.h; sourceTree = "<group>"; };
+		255EFF711AFABA4D0069F277 /* LockFileWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LockFileWindows.cpp; path = source/Host/windows/LockFileWindows.cpp; sourceTree = "<group>"; };
+		255EFF731AFABA720069F277 /* LockFileBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LockFileBase.cpp; sourceTree = "<group>"; };
+		255EFF751AFABA950069F277 /* LockFilePosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LockFilePosix.cpp; sourceTree = "<group>"; };
 		256CBDAB1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeRegisterContextLinux_arm.cpp; sourceTree = "<group>"; };
 		256CBDAC1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeRegisterContextLinux_arm.h; sourceTree = "<group>"; };
 		256CBDAD1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeRegisterContextLinux_arm64.cpp; sourceTree = "<group>"; };
@@ -4876,6 +4883,7 @@
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
 			isa = PBXGroup;
 			children = (
+				255EFF751AFABA950069F277 /* LockFilePosix.cpp */,
 				AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */,
 				3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */,
 				3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */,
@@ -4906,6 +4914,9 @@
 		3FDFE53E19A2940E009756A7 /* windows */ = {
 			isa = PBXGroup;
 			children = (
+				255EFF711AFABA4D0069F277 /* LockFileWindows.cpp */,
+				255EFF6F1AFABA320069F277 /* LockFileWindows.h */,
+				255EFF701AFABA320069F277 /* PipeWindows.h */,
 				3FDFE54719A2946B009756A7 /* AutoHandle.h */,
 				3FDFE53F19A29448009756A7 /* Condition.cpp */,
 				3FDFE54819A2946B009756A7 /* editlinewin.h */,
@@ -5034,6 +5045,7 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				255EFF731AFABA720069F277 /* LockFileBase.cpp */,
 				250D6AE11A9679270049CC70 /* FileSystem.cpp */,
 				33E5E8411A672A240024ED68 /* StringConvert.cpp */,
 				25420ED11A649D88009ADBCB /* PipeBase.cpp */,
@@ -6009,6 +6021,7 @@
 				2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */,
 				25420ECD1A6490B8009ADBCB /* OptionValueChar.cpp in Sources */,
 				2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */,
+				255EFF741AFABA720069F277 /* LockFileBase.cpp in Sources */,
 				2689000313353DB600698AC0 /* BreakpointResolverFileLine.cpp in Sources */,
 				AF20F76D1AF18FC700751A6E /* SBLanguageRuntime.cpp in Sources */,
 				26474CA818D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp in Sources */,
@@ -6435,6 +6448,7 @@
 				94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */,
 				266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */,
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
+				255EFF761AFABA950069F277 /* LockFilePosix.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
 				94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */,
 				3FDFED2819BA6D96009756A7 /* HostThread.cpp in Sources */,
