@@ -143,6 +143,12 @@ size_t Fuzzer::RunOne(const Unit &U) {
   return Res;
 }
 
+void Fuzzer::RunOneAndUpdateCorpus(const Unit &U) {
+  if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
+    return;
+  ReportNewCoverage(RunOne(U), U);
+}
+
 static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
   uintptr_t Res = 0;
   for (uintptr_t i = 0; i < NumPCs; i++) {
@@ -259,55 +265,50 @@ void Fuzzer::SaveCorpus() {
               << Options.OutputCorpus << "\n";
 }
 
-size_t Fuzzer::MutateAndTestOne(Unit *U) {
-  size_t NewUnits = 0;
-  for (int i = 0; i < Options.MutateDepth; i++) {
-    if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
-      return NewUnits;
-    MutateWithDFSan(U);
-    Mutate(U, Options.MaxLen);
-    size_t NewCoverage = RunOne(*U);
-    if (NewCoverage) {
-      Corpus.push_back(*U);
-      NewUnits++;
-      PrintStats("NEW   ", NewCoverage, "");
-      if (Options.Verbosity) {
-        std::cerr << " L: " << U->size();
-        if (U->size() < 30) {
-          std::cerr << " ";
-          PrintUnitInASCIIOrTokens(*U, "\t");
-          Print(*U);
-        }
-        std::cerr << "\n";
-      }
-      WriteToOutputCorpus(*U);
-      if (Options.ExitOnFirst)
-        exit(0);
+void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
+  if (!NewCoverage) return;
+  Corpus.push_back(U);
+  PrintStats("NEW   ", NewCoverage, "");
+  if (Options.Verbosity) {
+    std::cerr << " L: " << U.size();
+    if (U.size() < 30) {
+      std::cerr << " ";
+      PrintUnitInASCIIOrTokens(U, "\t");
+      Print(U);
     }
+    std::cerr << "\n";
   }
-  return NewUnits;
+  WriteToOutputCorpus(U);
+  if (Options.ExitOnFirst)
+    exit(0);
 }
 
-size_t Fuzzer::Loop(size_t NumIterations) {
-  size_t NewUnits = 0;
+void Fuzzer::MutateAndTestOne(Unit *U) {
+  for (int i = 0; i < Options.MutateDepth; i++) {
+    MutateWithDFSan(U);
+    Mutate(U, Options.MaxLen);
+    RunOneAndUpdateCorpus(*U);
+  }
+}
+
+void Fuzzer::Loop(size_t NumIterations) {
   for (size_t i = 1; i <= NumIterations; i++) {
     for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
       if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
-        return NewUnits;
+        return;
       // First, simply mutate the unit w/o doing crosses.
       CurrentUnit = Corpus[J1];
-      NewUnits += MutateAndTestOne(&CurrentUnit);
+      MutateAndTestOne(&CurrentUnit);
       // Now, cross with others.
       if (Options.DoCrossOver) {
         for (size_t J2 = 0; J2 < Corpus.size(); J2++) {
           CurrentUnit.clear();
           CrossOver(Corpus[J1], Corpus[J2], &CurrentUnit, Options.MaxLen);
-          NewUnits += MutateAndTestOne(&CurrentUnit);
+          MutateAndTestOne(&CurrentUnit);
         }
       }
     }
   }
-  return NewUnits;
 }
 
 }  // namespace fuzzer

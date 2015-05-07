@@ -61,7 +61,7 @@ class Fuzzer {
   };
   Fuzzer(UserCallback Callback, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
-  size_t Loop(size_t NumIterations);
+  void Loop(size_t NumIterations);
   void ShuffleAndMinimize();
   void InitializeDFSan();
   size_t CorpusSize() const { return Corpus.size(); }
@@ -85,8 +85,10 @@ class Fuzzer {
  private:
   void AlarmCallback();
   void ExecuteCallback(const Unit &U);
-  size_t MutateAndTestOne(Unit *U);
+  void MutateAndTestOne(Unit *U);
+  void ReportNewCoverage(size_t NewCoverage, const Unit &U);
   size_t RunOne(const Unit &U);
+  void RunOneAndUpdateCorpus(const Unit &U);
   size_t RunOneMaximizeTotalCoverage(const Unit &U);
   size_t RunOneMaximizeFullCoverageSet(const Unit &U);
   size_t RunOneMaximizeCoveragePairs(const Unit &U);

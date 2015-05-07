@@ -287,4 +287,11 @@ void dfsan_weak_hook_memcmp(void *caller_pc, const void *s1, const void *s2,
   dfsan_label L2 = dfsan_read_label(s2, n);
   DFSan->DFSanCmpCallback(PC, n, ICMP_EQ, S1, S2, L1, L2);
 }
+
+void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
+                               uint64_t Arg2) {
+  // This symbol will be present if dfsan is disabled on the given function.
+  // FIXME: implement poor man's taint analysis here (w/o dfsan).
+}
+
 }  // extern "C"
