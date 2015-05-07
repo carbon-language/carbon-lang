@@ -436,13 +436,17 @@ class AttrBuilder {
   uint64_t DerefBytes;
   uint64_t DerefOrNullBytes;
 public:
-  AttrBuilder() : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0) {}
+  AttrBuilder()
+      : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0),
+        DerefOrNullBytes(0) {}
   explicit AttrBuilder(uint64_t Val)
-    : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0) {
+      : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0),
+        DerefOrNullBytes(0) {
     addRawValue(Val);
   }
   AttrBuilder(const Attribute &A)
-    : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0) {
+      : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0),
+        DerefOrNullBytes(0) {
     addAttribute(A);
   }
   AttrBuilder(AttributeSet AS, unsigned Idx);
