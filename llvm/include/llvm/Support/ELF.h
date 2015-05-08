@@ -446,6 +446,27 @@ enum : unsigned {
   EF_MIPS_ABI_EABI64 = 0x00004000, // EABI in 64 bit mode.
   EF_MIPS_ABI        = 0x0000f000, // Mask for selecting EF_MIPS_ABI_ variant.
 
+  // MIPS machine variant
+  EF_MIPS_MACH_3900    = 0x00810000, // Toshiba R3900
+  EF_MIPS_MACH_4010    = 0x00820000, // LSI R4010
+  EF_MIPS_MACH_4100    = 0x00830000, // NEC VR4100
+  EF_MIPS_MACH_4650    = 0x00850000, // MIPS R4650
+  EF_MIPS_MACH_4120    = 0x00870000, // NEC VR4120
+  EF_MIPS_MACH_4111    = 0x00880000, // NEC VR4111/VR4181
+  EF_MIPS_MACH_SB1     = 0x008a0000, // Broadcom SB-1
+  EF_MIPS_MACH_OCTEON  = 0x008b0000, // Cavium Networks Octeon
+  EF_MIPS_MACH_XLR     = 0x008c0000, // RMI Xlr
+  EF_MIPS_MACH_OCTEON2 = 0x008d0000, // Cavium Networks Octeon2
+  EF_MIPS_MACH_OCTEON3 = 0x008e0000, // Cavium Networks Octeon3
+  EF_MIPS_MACH_5400    = 0x00910000, // NEC VR5400
+  EF_MIPS_MACH_5900    = 0x00920000, // MIPS R5900
+  EF_MIPS_MACH_5500    = 0x00980000, // NEC VR5500
+  EF_MIPS_MACH_9000    = 0x00990000, // Unknown
+  EF_MIPS_MACH_LS2E    = 0x00a00000, // ST Microelectronics Loongson 2E
+  EF_MIPS_MACH_LS2F    = 0x00a10000, // ST Microelectronics Loongson 2F
+  EF_MIPS_MACH_LS3A    = 0x00a20000, // Loongson 3A
+  EF_MIPS_MACH         = 0x00ff0000, // EF_MIPS_MACH_xxx selection mask
+
   // ARCH_ASE
   EF_MIPS_MICROMIPS = 0x02000000, // microMIPS
   EF_MIPS_ARCH_ASE_M16 =

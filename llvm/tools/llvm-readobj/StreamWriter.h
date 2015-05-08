@@ -98,7 +98,8 @@ public:
 
   template <typename T, typename TFlag>
   void printFlags(StringRef Label, T Value, ArrayRef<EnumEntry<TFlag>> Flags,
-                  TFlag EnumMask1 = {}, TFlag EnumMask2 = {}) {
+                  TFlag EnumMask1 = {}, TFlag EnumMask2 = {},
+                  TFlag EnumMask3 = {}) {
     typedef EnumEntry<TFlag> FlagEntry;
     typedef SmallVector<FlagEntry, 10> FlagVector;
     FlagVector SetFlags;
@@ -112,6 +113,8 @@ public:
         EnumMask = EnumMask1;
       else if (Flag.Value & EnumMask2)
         EnumMask = EnumMask2;
+      else if (Flag.Value & EnumMask3)
+        EnumMask = EnumMask3;
       bool IsEnum = (Flag.Value & EnumMask) != 0;
       if ((!IsEnum && (Value & Flag.Value) == Flag.Value) ||
           (IsEnum  && (Value & EnumMask) == Flag.Value)) {
