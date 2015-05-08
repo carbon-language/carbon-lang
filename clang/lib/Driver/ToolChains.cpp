@@ -108,6 +108,7 @@ bool Darwin::hasBlocksRuntime() const {
   }
 }
 
+// FIXME: Use ARMTargetParser.
 static const char *GetArmArchForMArch(StringRef Value) {
   return llvm::StringSwitch<const char*>(Value)
     .Case("armv6k", "armv6")
@@ -125,6 +126,7 @@ static const char *GetArmArchForMArch(StringRef Value) {
     .Default(nullptr);
 }
 
+// FIXME: Use ARMTargetParser.
 static const char *GetArmArchForMCpu(StringRef Value) {
   return llvm::StringSwitch<const char *>(Value)
     .Cases("arm9e", "arm946e-s", "arm966e-s", "arm968e-s", "arm926ej-s","armv5")
