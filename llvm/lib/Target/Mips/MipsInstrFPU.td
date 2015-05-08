@@ -112,11 +112,8 @@ class ADDS_FT<string opstr, RegisterOperand RC, InstrItinClass Itin, bit IsComm,
 
 multiclass ADDS_M<string opstr, InstrItinClass Itin, bit IsComm,
                   SDPatternOperator OpNode = null_frag> {
-  def _D32 : MMRel, ADDS_FT<opstr, AFGR64Opnd, Itin, IsComm, OpNode>,
-             AdditionalRequires<[NotFP64bit]>;
-  def _D64 : ADDS_FT<opstr, FGR64Opnd, Itin,
-                     IsComm, OpNode>,
-             AdditionalRequires<[IsFP64bit]> {
+  def _D32 : MMRel, ADDS_FT<opstr, AFGR64Opnd, Itin, IsComm, OpNode>, FGR_32;
+  def _D64 : ADDS_FT<opstr, FGR64Opnd, Itin, IsComm, OpNode>, FGR_64 {
     string DecoderNamespace = "Mips64";
   }
 }
@@ -131,18 +128,15 @@ class ABSS_FT<string opstr, RegisterOperand DstRC, RegisterOperand SrcRC,
 multiclass ABSS_M<string opstr, InstrItinClass Itin,
                   SDPatternOperator OpNode= null_frag> {
   def _D32 : MMRel, ABSS_FT<opstr, AFGR64Opnd, AFGR64Opnd, Itin, OpNode>,
-             AdditionalRequires<[NotFP64bit]>;
-  def _D64 : ABSS_FT<opstr, FGR64Opnd, FGR64Opnd, Itin, OpNode>,
-             AdditionalRequires<[IsFP64bit]> {
+             FGR_32;
+  def _D64 : ABSS_FT<opstr, FGR64Opnd, FGR64Opnd, Itin, OpNode>, FGR_64 {
     string DecoderNamespace = "Mips64";
   }
 }
 
 multiclass ROUND_M<string opstr, InstrItinClass Itin> {
-  def _D32 : MMRel, ABSS_FT<opstr, FGR32Opnd, AFGR64Opnd, Itin>,
-             AdditionalRequires<[NotFP64bit]>;
-  def _D64 : ABSS_FT<opstr, FGR32Opnd, FGR64Opnd, Itin>,
-             AdditionalRequires<[IsFP64bit]> {
+  def _D32 : MMRel, ABSS_FT<opstr, FGR32Opnd, AFGR64Opnd, Itin>, FGR_32;
+  def _D64 : ABSS_FT<opstr, FGR32Opnd, FGR64Opnd, Itin>, FGR_64 {
     let DecoderNamespace = "Mips64";
   }
 }
@@ -265,10 +259,10 @@ multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt,
 
 defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>, ISA_MIPS1_NOT_32R6_64R6;
 defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
-           AdditionalRequires<[NotFP64bit]>;
+           FGR_32;
 let DecoderNamespace = "Mips64" in
 defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
-           AdditionalRequires<[IsFP64bit]>;
+           FGR_64;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
@@ -368,15 +362,15 @@ def MFC1 : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, II_MFC1,
 def MTC1 : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, II_MTC1,
                           bitconvert>, MFC1_FM<4>;
 def MFHC1_D32 : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, AFGR64Opnd, II_MFHC1>,
-                MFC1_FM<3>, ISA_MIPS32R2, AdditionalRequires<[NotFP64bit]>;
+                MFC1_FM<3>, ISA_MIPS32R2, FGR_32;
 def MFHC1_D64 : MFC1_FT<"mfhc1", GPR32Opnd, FGR64Opnd, II_MFHC1>,
-                MFC1_FM<3>, ISA_MIPS32R2, AdditionalRequires<[IsFP64bit]> {
+                MFC1_FM<3>, ISA_MIPS32R2, FGR_64 {
   let DecoderNamespace = "Mips64";
 }
 def MTHC1_D32 : MMRel, MTC1_64_FT<"mthc1", AFGR64Opnd, GPR32Opnd, II_MTHC1>,
-                MFC1_FM<7>, ISA_MIPS32R2, AdditionalRequires<[NotFP64bit]>;
+                MFC1_FM<7>, ISA_MIPS32R2, FGR_32;
 def MTHC1_D64 : MTC1_64_FT<"mthc1", FGR64Opnd, GPR32Opnd, II_MTHC1>,
-                MFC1_FM<7>, ISA_MIPS32R2, AdditionalRequires<[IsFP64bit]> {
+                MFC1_FM<7>, ISA_MIPS32R2, FGR_64 {
   let DecoderNamespace = "Mips64";
 }
 def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, II_DMFC1,
@@ -387,9 +381,9 @@ def DMTC1 : MTC1_FT<"dmtc1", FGR64Opnd, GPR64Opnd, II_DMTC1,
 def FMOV_S   : MMRel, ABSS_FT<"mov.s", FGR32Opnd, FGR32Opnd, II_MOV_S>,
                ABSS_FM<0x6, 16>;
 def FMOV_D32 : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>,
-               ABSS_FM<0x6, 17>, AdditionalRequires<[NotFP64bit]>;
+               ABSS_FM<0x6, 17>, FGR_32;
 def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, II_MOV_D>,
-               ABSS_FM<0x6, 17>, AdditionalRequires<[IsFP64bit]> {
+               ABSS_FM<0x6, 17>, FGR_64 {
                  let DecoderNamespace = "Mips64";
 }
 
@@ -522,10 +516,10 @@ def BC1TL : MMRel, BC1F_FT<"bc1tl", brtarget, IIBranch, MIPS_BRANCH_T, 0>,
 def FCMP_S32 : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>, CEQS_FM<16>,
                ISA_MIPS1_NOT_32R6_64R6;
 def FCMP_D32 : MMRel, CEQS_FT<"d", AFGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
-               ISA_MIPS1_NOT_32R6_64R6, AdditionalRequires<[NotFP64bit]>;
+               ISA_MIPS1_NOT_32R6_64R6, FGR_32;
 let DecoderNamespace = "Mips64" in
 def FCMP_D64 : CEQS_FT<"d", FGR64, II_C_CC_D, MipsFPCmp>, CEQS_FM<17>,
-               ISA_MIPS1_NOT_32R6_64R6, AdditionalRequires<[IsFP64bit]>;
+               ISA_MIPS1_NOT_32R6_64R6, FGR_64;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
@@ -537,10 +531,8 @@ class BuildPairF64Base<RegisterOperand RO> :
   PseudoSE<(outs RO:$dst), (ins GPR32Opnd:$lo, GPR32Opnd:$hi),
            [(set RO:$dst, (MipsBuildPairF64 GPR32Opnd:$lo, GPR32Opnd:$hi))]>;
 
-def BuildPairF64 : BuildPairF64Base<AFGR64Opnd>,
-                   AdditionalRequires<[NotFP64bit]>, HARDFLOAT;
-def BuildPairF64_64 : BuildPairF64Base<FGR64Opnd>,
-                      AdditionalRequires<[IsFP64bit]>, HARDFLOAT;
+def BuildPairF64 : BuildPairF64Base<AFGR64Opnd>, FGR_32, HARDFLOAT;
+def BuildPairF64_64 : BuildPairF64Base<FGR64Opnd>, FGR_64, HARDFLOAT;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
 // allocation.
@@ -550,10 +542,8 @@ class ExtractElementF64Base<RegisterOperand RO> :
   PseudoSE<(outs GPR32Opnd:$dst), (ins RO:$src, i32imm:$n),
            [(set GPR32Opnd:$dst, (MipsExtractElementF64 RO:$src, imm:$n))]>;
 
-def ExtractElementF64 : ExtractElementF64Base<AFGR64Opnd>,
-                        AdditionalRequires<[NotFP64bit]>, HARDFLOAT;
-def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
-                           AdditionalRequires<[IsFP64bit]>, HARDFLOAT;
+def ExtractElementF64 : ExtractElementF64Base<AFGR64Opnd>, FGR_32, HARDFLOAT;
+def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>, FGR_64, HARDFLOAT;
 
 //===----------------------------------------------------------------------===//
 // InstAliases.

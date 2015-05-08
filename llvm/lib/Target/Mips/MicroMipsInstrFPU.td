@@ -95,7 +95,7 @@ def FNEG_MM : MMRel, ABSS_FT<"neg.d", AFGR64Opnd, AFGR64Opnd, II_NEG, fneg>,
               ABS_FM_MM<1, 0x2d>;
 
 def FMOV_D32_MM : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>,
-                  ABS_FM_MM<1, 0x1>, AdditionalRequires<[NotFP64bit]>;
+                  ABS_FM_MM<1, 0x1>, FGR_32;
 
 def MOVZ_I_S_MM : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd,
                                      II_MOVZ_S>, CMov_I_F_FM_MM<0x78, 0>;
@@ -124,9 +124,9 @@ def MFC1_MM : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd,
 def MTC1_MM : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd,
                              II_MTC1, bitconvert>, MFC1_FM_MM<0xa0>;
 def MFHC1_MM : MMRel, MFC1_FT<"mfhc1", GPR32Opnd, AFGR64Opnd, II_MFHC1>,
-               MFC1_FM_MM<0xc0>, ISA_MIPS32R2, AdditionalRequires<[NotFP64bit]>;
+               MFC1_FM_MM<0xc0>, ISA_MIPS32R2, FGR_32;
 def MTHC1_MM : MMRel, MTC1_64_FT<"mthc1", AFGR64Opnd, GPR32Opnd, II_MTHC1>,
-               MFC1_FM_MM<0xe0>, ISA_MIPS32R2, AdditionalRequires<[NotFP64bit]>;
+               MFC1_FM_MM<0xe0>, ISA_MIPS32R2, FGR_32;
 
 def MADD_S_MM : MMRel, MADDS_FT<"madd.s", FGR32Opnd, II_MADD_S, fadd>,
                 MADDS_FM_MM<0x1>;
