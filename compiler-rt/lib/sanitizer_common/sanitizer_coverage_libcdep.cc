@@ -931,4 +931,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 uptr __sanitizer_update_counter_bitset_and_clear_counters(u8 *bitset) {
   return coverage_data.Update8bitCounterBitsetAndClearCounters(bitset);
 }
+// Default empty implementation (weak). Users should redefine it.
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+void __sanitizer_cov_trace_cmp() {}
 }  // extern "C"
