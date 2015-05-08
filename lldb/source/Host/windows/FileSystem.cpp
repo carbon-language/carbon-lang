@@ -96,6 +96,15 @@ FileSystem::GetFileExists(const FileSpec &file_spec)
 }
 
 Error
+FileSystem::Hardlink(const char *linkname, const char *target)
+{
+    Error error;
+    if (!::CreateHardLink(linkname, target, nullptr))
+        error.SetError(::GetLastError(), lldb::eErrorTypeWin32);
+    return error;
+}
+
+Error
 FileSystem::Symlink(const char *linkname, const char *target)
 {
     Error error;

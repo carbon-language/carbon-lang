@@ -70,15 +70,6 @@ private:
          lldb::ModuleSP &cached_module_sp,
          bool *did_create_ptr);
 
-    static FileSpec
-    GetModuleDirectory (const FileSpec &root_dir_spec, const UUID &uuid);
-
-    static FileSpec
-    GetHostSysRootModulePath (const FileSpec &root_dir_spec, const char *hostname, const FileSpec &platform_module_spec);
-
-    static Error
-    CreateHostSysRootModuleSymLink (const FileSpec &sysroot_module_path_spec, const FileSpec &module_file_path);
-
     std::unordered_map<std::string, lldb::ModuleWP> m_loaded_modules;
 };
 

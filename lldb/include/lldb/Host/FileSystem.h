@@ -32,6 +32,7 @@ class FileSystem
     static lldb::user_id_t GetFileSize(const FileSpec &file_spec);
     static bool GetFileExists(const FileSpec &file_spec);
 
+    static Error Hardlink(const char *src, const char *dst);
     static Error Symlink(const char *src, const char *dst);
     static Error Readlink(const char *path, char *buf, size_t buf_len);
     static Error Unlink(const char *path);

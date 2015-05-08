@@ -53,6 +53,28 @@ MakeDirectory (const FileSpec &dir_path)
                                       eFilePermissionsDirectoryDefault);
 }
 
+FileSpec
+GetModuleDirectory (const FileSpec &root_dir_spec, const UUID &uuid)
+{
+    const auto modules_dir_spec = JoinPath (root_dir_spec, kModulesSubdir);
+    return JoinPath (modules_dir_spec, uuid.GetAsString ().c_str ());
+}
+
+Error
+CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname, const FileSpec &platform_module_spec, const FileSpec &local_module_spec)
+{
+    const auto sysroot_module_path_spec = JoinPath (
+        JoinPath (root_dir_spec, hostname), platform_module_spec.GetPath ().c_str ());
+    if (sysroot_module_path_spec.Exists())
+        return Error ();
+
+    const auto error = MakeDirectory (FileSpec (sysroot_module_path_spec.GetDirectory ().AsCString (), false));
+    if (error.Fail ())
+        return error;
+
+    return FileSystem::Hardlink (sysroot_module_path_spec.GetPath ().c_str (), local_module_spec.GetPath ().c_str ());
+}
+
 }  // namespace
 
 Error
@@ -70,9 +92,10 @@ ModuleCache::Put (const FileSpec &root_dir_spec,
         return Error ("Failed to rename file %s to %s: %s",
                       tmp_file_path.c_str (), module_file_path.GetPath ().c_str (), err_code.message ().c_str ());
 
-    // Create sysroot link to a module.
-    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
-    return CreateHostSysRootModuleSymLink (sysroot_module_path_spec, module_file_path);
+    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, module_spec.GetFileSpec(), module_file_path);
+    if (error.Fail ())
+        return Error ("Failed to create link to %s: %s", module_file_path.GetPath ().c_str (), error.AsCString ());
+    return Error ();
 }
 
 Error
@@ -91,7 +114,7 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
         m_loaded_modules.erase (find_it);
     }
 
-    const auto module_spec_dir = GetModuleDirectory (root_dir_spec,  module_spec.GetUUID ());
+    const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_spec.GetUUID ());
     const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
 
     if (!module_file_path.Exists ())
@@ -99,10 +122,10 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
     if (module_file_path.GetByteSize () != module_spec.GetObjectSize ())
         return Error ("Module %s has invalid file size", module_file_path.GetPath ().c_str ());
 
-    // We may have already cached module but downloaded from an another host - in this case let's create a symlink to it.
-    const auto sysroot_module_path_spec = GetHostSysRootModulePath (root_dir_spec, hostname, module_spec.GetFileSpec ());
-    if (!sysroot_module_path_spec.Exists ())
-        CreateHostSysRootModuleSymLink (sysroot_module_path_spec, module_spec.GetFileSpec ());
+    // We may have already cached module but downloaded from an another host - in this case let's create a link to it.
+    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, module_spec.GetFileSpec(), module_file_path);
+    if (error.Fail ())
+        return Error ("Failed to create link to %s: %s", module_file_path.GetPath().c_str(), error.AsCString());
 
     auto cached_module_spec (module_spec);
     cached_module_spec.GetUUID ().Clear ();  // Clear UUID since it may contain md5 content hash instead of real UUID.
@@ -161,29 +184,4 @@ ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
 
     tmp_file_remover.releaseFile ();
     return Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
-}
-
-FileSpec
-ModuleCache::GetModuleDirectory (const FileSpec &root_dir_spec, const UUID &uuid)
-{
-    const auto modules_dir_spec = JoinPath (root_dir_spec, kModulesSubdir);
-    return JoinPath (modules_dir_spec, uuid.GetAsString ().c_str ());
-}
-
-FileSpec
-ModuleCache::GetHostSysRootModulePath (const FileSpec &root_dir_spec, const char *hostname, const FileSpec &platform_module_spec)
-{
-    const auto sysroot_dir = JoinPath (root_dir_spec, hostname);
-    return JoinPath (sysroot_dir, platform_module_spec.GetPath ().c_str ());
-}
-
-Error
-ModuleCache::CreateHostSysRootModuleSymLink (const FileSpec &sysroot_module_path_spec, const FileSpec &module_file_path)
-{
-    const auto error = MakeDirectory (FileSpec (sysroot_module_path_spec.GetDirectory ().AsCString (), false));
-    if (error.Fail ())
-        return error;
-
-    return FileSystem::Symlink (sysroot_module_path_spec.GetPath ().c_str (),
-                                module_file_path.GetPath ().c_str ());
 }

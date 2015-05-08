@@ -149,6 +149,15 @@ FileSystem::GetFileExists(const FileSpec &file_spec)
 }
 
 Error
+FileSystem::Hardlink(const char *src, const char *dst)
+{
+    Error error;
+    if (::link(dst, src) == -1)
+        error.SetErrorToErrno();
+    return error;
+}
+
+Error
 FileSystem::Symlink(const char *src, const char *dst)
 {
     Error error;
