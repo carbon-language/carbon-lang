@@ -22,6 +22,7 @@ class CModulesTestCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD
+    @expectedFailureLinux('http://llvm.org/pr23456') # 'fopen' has unknown return type
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
@@ -33,9 +34,7 @@ class CModulesTestCase(TestBase):
         self.line = line_number('main.c', '// Set breakpoint 0 here.')
 
     def applies(self):
-        if platform.system() != "Darwin":
-            return False
-        if StrictVersion('12.0.0') > platform.release():
+        if platform.system() == "Darwin" and platform.release() < StrictVersion('12.0.0'):
             return False
 
         return True
