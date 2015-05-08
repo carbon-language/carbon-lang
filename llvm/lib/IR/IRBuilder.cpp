@@ -17,6 +17,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Statepoint.h"
 using namespace llvm;
 
 /// CreateGlobalString - Make a new global variable with an initializer that
@@ -252,8 +253,9 @@ static std::vector<Value *> getStatepointArgs(IRBuilderBase &B,
   std::vector<Value *> Args;
   Args.push_back(ActualCallee);
   Args.push_back(B.getInt32(CallArgs.size()));
-  Args.push_back(B.getInt32(0)); // unused
+  Args.push_back(B.getInt32((unsigned)StatepointFlags::None));
   Args.insert(Args.end(), CallArgs.begin(), CallArgs.end());
+  Args.push_back(B.getInt32(0 /* no transition args */));
   Args.push_back(B.getInt32(DeoptArgs.size()));
   Args.insert(Args.end(), DeoptArgs.begin(), DeoptArgs.end());
   Args.insert(Args.end(), GCArgs.begin(), GCArgs.end());

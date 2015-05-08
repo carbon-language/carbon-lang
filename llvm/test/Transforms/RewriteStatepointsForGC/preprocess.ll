@@ -16,7 +16,7 @@ next:
 ; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated)
 ; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated)
   %obj2 = phi i64 addrspace(1)* [ %obj, %entry ]
-  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0, i32 0)
   call void (...) @consume(i64 addrspace(1)* %obj2)
   call void (...) @consume(i64 addrspace(1)* %obj)
   ret void
@@ -32,7 +32,7 @@ define void @test7() gc "statepoint-example" {
 
 unreached:
   %obj = phi i64 addrspace(1)* [null, %unreached]
-  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0, i32 0)
   call void (...) @consume(i64 addrspace(1)* %obj)
   br label %unreached
 }
@@ -45,7 +45,7 @@ define void @test8() gc "statepoint-example" {
   ret void
 
 unreached:
-  invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+  invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0, i32 0)
           to label %normal_return unwind label %exceptional_return
 
 normal_return:                                    ; preds = %entry

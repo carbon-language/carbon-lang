@@ -969,6 +969,8 @@ namespace llvm {
     SDValue LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGC_TRANSITION_START(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGC_TRANSITION_END(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue
       LowerFormalArguments(SDValue Chain,

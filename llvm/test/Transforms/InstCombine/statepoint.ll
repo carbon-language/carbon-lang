@@ -7,8 +7,8 @@ declare void @func()
 
 define i1 @test_negative(i32 addrspace(1)* %p) gc "statepoint-example" {
 entry:
-  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 addrspace(1)* %p)
-  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
+  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 0, i32 addrspace(1)* %p)
+  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token,  i32 5, i32 5)
   %cmp = icmp eq i32 addrspace(1)* %pnew, null
   ret i1 %cmp
 ; CHECK-LABEL: test_negative
@@ -18,8 +18,8 @@ entry:
 
 define i1 @test_nonnull(i32 addrspace(1)* nonnull %p) gc "statepoint-example" {
 entry:
-  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 addrspace(1)* %p)
-  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
+  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 0, i32 addrspace(1)* %p)
+  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token,  i32 5, i32 5)
   %cmp = icmp eq i32 addrspace(1)* %pnew, null
   ret i1 %cmp
 ; CHECK-LABEL: test_nonnull
@@ -28,8 +28,8 @@ entry:
 
 define i1 @test_null() gc "statepoint-example" {
 entry:
-  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 addrspace(1)* null)
-  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
+  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 0, i32 addrspace(1)* null)
+  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token,  i32 5, i32 5)
   %cmp = icmp eq i32 addrspace(1)* %pnew, null
   ret i1 %cmp
 ; CHECK-LABEL: test_null
@@ -39,8 +39,8 @@ entry:
 
 define i1 @test_undef() gc "statepoint-example" {
 entry:
-  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 addrspace(1)* undef)
-  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
+  %safepoint_token = tail call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @func, i32 0, i32 0, i32 0, i32 0, i32 addrspace(1)* undef)
+  %pnew = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token,  i32 5, i32 5)
   %cmp = icmp eq i32 addrspace(1)* %pnew, null
   ret i1 %cmp
 ; CHECK-LABEL: test_undef

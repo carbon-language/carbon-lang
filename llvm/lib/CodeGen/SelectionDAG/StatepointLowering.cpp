@@ -585,24 +585,66 @@ void SelectionDAGBuilder::LowerStatepoint(
   SDNode *CallNode =
       lowerCallFromStatepoint(ISP, LandingPad, *this, PendingExports);
 
-  // Construct the actual STATEPOINT node with all the appropriate arguments
-  // and return values.
+  // Construct the actual GC_TRANSITION_START, STATEPOINT, and GC_TRANSITION_END
+  // nodes with all the appropriate arguments and return values.
 
   // TODO: Currently, all of these operands are being marked as read/write in
   // PrologEpilougeInserter.cpp, we should special case the VMState arguments
   // and flags to be read-only.
   SmallVector<SDValue, 40> Ops;
 
-  // Calculate and push starting position of vmstate arguments
   // Call Node: Chain, Target, {Args}, RegMask, [Glue]
+  SDValue Chain = CallNode->getOperand(0);
+
   SDValue Glue;
-  if (CallNode->getGluedNode()) {
+  bool CallHasIncomingGlue = CallNode->getGluedNode();
+  if (CallHasIncomingGlue) {
     // Glue is always last operand
     Glue = CallNode->getOperand(CallNode->getNumOperands() - 1);
   }
+
+  // Build the GC_TRANSITION_START node if necessary.
+  //
+  // The operands to the GC_TRANSITION_{START,END} nodes are laid out in the
+  // order in which they appear in the call to the statepoint intrinsic. If
+  // any of the operands is a pointer-typed, that operand is immediately
+  // followed by a SRCVALUE for the pointer that may be used during lowering
+  // (e.g. to form MachinePointerInfo values for loads/stores).
+  const bool IsGCTransition =
+      (ISP.getFlags() & (uint64_t)StatepointFlags::GCTransition) ==
+          (uint64_t)StatepointFlags::GCTransition;
+  if (IsGCTransition) {
+    SmallVector<SDValue, 8> TSOps;
+
+    // Add chain
+    TSOps.push_back(Chain);
+
+    // Add GC transition arguments
+    for (auto I = ISP.gc_transition_args_begin() + 1,
+              E = ISP.gc_transition_args_end();
+         I != E; ++I) {
+      TSOps.push_back(getValue(*I));
+      if ((*I)->getType()->isPointerTy())
+        TSOps.push_back(DAG.getSrcValue(*I));
+    }
+
+    // Add glue if necessary
+    if (CallHasIncomingGlue)
+      TSOps.push_back(Glue);
+
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+
+    SDValue GCTransitionStart =
+        DAG.getNode(ISD::GC_TRANSITION_START, getCurSDLoc(), NodeTys, TSOps);
+
+    Chain = GCTransitionStart.getValue(0);
+    Glue = GCTransitionStart.getValue(1);
+  }
+
+  // Calculate and push starting position of vmstate arguments
   // Get number of arguments incoming directly into call node
   unsigned NumCallRegArgs =
-      CallNode->getNumOperands() - (Glue.getNode() ? 4 : 3);
+      CallNode->getNumOperands() - (CallHasIncomingGlue ? 4 : 3);
   Ops.push_back(DAG.getTargetConstant(NumCallRegArgs, getCurSDLoc(), MVT::i32));
 
   // Add call target
@@ -612,7 +654,7 @@ void SelectionDAGBuilder::LowerStatepoint(
   // Add call arguments
   // Get position of register mask in the call
   SDNode::op_iterator RegMaskIt;
-  if (Glue.getNode())
+  if (CallHasIncomingGlue)
     RegMaskIt = CallNode->op_end() - 2;
   else
     RegMaskIt = CallNode->op_end() - 1;
@@ -621,11 +663,17 @@ void SelectionDAGBuilder::LowerStatepoint(
   // Add a leading constant argument with the Flags and the calling convention
   // masked together
   CallingConv::ID CallConv = CS.getCallingConv();
-  int Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
-  assert(Flags == 0 && "not expected to be used");
+  uint64_t Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
+  assert(
+      ((Flags & ~(uint64_t)StatepointFlags::MaskAll) == 0)
+          && "unknown flag used");
+  const int Shift = 1;
+  static_assert(
+      ((~(uint64_t)0 << Shift) & (uint64_t)StatepointFlags::MaskAll) == 0,
+      "shift width too small");
   Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, getCurSDLoc(),
                                       MVT::i64));
-  Ops.push_back(DAG.getTargetConstant(Flags | ((unsigned)CallConv << 1),
+  Ops.push_back(DAG.getTargetConstant(Flags | ((unsigned)CallConv << Shift),
                                       getCurSDLoc(), MVT::i64));
 
   // Insert all vmstate and gcstate arguments
@@ -635,7 +683,7 @@ void SelectionDAGBuilder::LowerStatepoint(
   Ops.push_back(*RegMaskIt);
 
   // Add chain
-  Ops.push_back(CallNode->getOperand(0));
+  Ops.push_back(Chain);
 
   // Same for the glue, but we add it only if original call had it
   if (Glue.getNode())
@@ -648,8 +696,40 @@ void SelectionDAGBuilder::LowerStatepoint(
   SDNode *StatepointMCNode =
       DAG.getMachineNode(TargetOpcode::STATEPOINT, getCurSDLoc(), NodeTys, Ops);
 
+  SDNode *SinkNode = StatepointMCNode;
+
+  // Build the GC_TRANSITION_END node if necessary.
+  //
+  // See the comment above regarding GC_TRANSITION_START for the layout of
+  // the operands to the GC_TRANSITION_END node.
+  if (IsGCTransition) {
+    SmallVector<SDValue, 8> TEOps;
+
+    // Add chain
+    TEOps.push_back(SDValue(StatepointMCNode, 0));
+
+    // Add GC transition arguments
+    for (auto I = ISP.gc_transition_args_begin() + 1,
+              E = ISP.gc_transition_args_end();
+         I != E; ++I) {
+      TEOps.push_back(getValue(*I));
+      if ((*I)->getType()->isPointerTy())
+        TEOps.push_back(DAG.getSrcValue(*I));
+    }
+
+    // Add glue
+    TEOps.push_back(SDValue(StatepointMCNode, 1));
+
+    SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+
+    SDValue GCTransitionStart =
+        DAG.getNode(ISD::GC_TRANSITION_END, getCurSDLoc(), NodeTys, TEOps);
+
+    SinkNode = GCTransitionStart.getNode();
+  }
+
   // Replace original call
-  DAG.ReplaceAllUsesWith(CallNode, StatepointMCNode); // This may update Root
+  DAG.ReplaceAllUsesWith(CallNode, SinkNode); // This may update Root
   // Remove originall call node
   DAG.DeleteNode(CallNode);
 

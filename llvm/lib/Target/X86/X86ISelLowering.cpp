@@ -513,6 +513,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
   setOperationAction(ISD::DYNAMIC_STACKALLOC, getPointerTy(), Custom);
 
+  // GC_TRANSITION_START and GC_TRANSITION_END need custom lowering.
+  setOperationAction(ISD::GC_TRANSITION_START, MVT::Other, Custom);
+  setOperationAction(ISD::GC_TRANSITION_END, MVT::Other, Custom);
+
   if (!TM.Options.UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
     // Set up the FP register classes.
@@ -17425,6 +17429,48 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget *Subtarget,
   return Op;
 }
 
+SDValue X86TargetLowering::LowerGC_TRANSITION_START(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  // TODO: Eventually, the lowering of these nodes should be informed by or
+  // deferred to the GC strategy for the function in which they appear. For
+  // now, however, they must be lowered to something. Since they are logically
+  // no-ops in the case of a null GC strategy (or a GC strategy which does not
+  // require special handling for these nodes), lower them as literal NOOPs for
+  // the time being.
+  SmallVector<SDValue, 2> Ops;
+
+  Ops.push_back(Op.getOperand(0));
+  if (Op->getGluedNode())
+    Ops.push_back(Op->getOperand(Op->getNumOperands() - 1));
+
+  SDLoc OpDL(Op);
+  SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue NOOP(DAG.getMachineNode(X86::NOOP, SDLoc(Op), VTs, Ops), 0);
+
+  return NOOP;
+}
+
+SDValue X86TargetLowering::LowerGC_TRANSITION_END(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  // TODO: Eventually, the lowering of these nodes should be informed by or
+  // deferred to the GC strategy for the function in which they appear. For
+  // now, however, they must be lowered to something. Since they are logically
+  // no-ops in the case of a null GC strategy (or a GC strategy which does not
+  // require special handling for these nodes), lower them as literal NOOPs for
+  // the time being.
+  SmallVector<SDValue, 2> Ops;
+
+  Ops.push_back(Op.getOperand(0));
+  if (Op->getGluedNode())
+    Ops.push_back(Op->getOperand(Op->getNumOperands() - 1));
+
+  SDLoc OpDL(Op);
+  SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue NOOP(DAG.getMachineNode(X86::NOOP, SDLoc(Op), VTs, Ops), 0);
+
+  return NOOP;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
@@ -17514,6 +17560,9 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FSINCOS:            return LowerFSINCOS(Op, Subtarget, DAG);
   case ISD::MGATHER:            return LowerMGATHER(Op, Subtarget, DAG);
   case ISD::MSCATTER:           return LowerMSCATTER(Op, Subtarget, DAG);
+  case ISD::GC_TRANSITION_START:
+                                return LowerGC_TRANSITION_START(Op, DAG);
+  case ISD::GC_TRANSITION_END:  return LowerGC_TRANSITION_END(Op, DAG);
   }
 }
 

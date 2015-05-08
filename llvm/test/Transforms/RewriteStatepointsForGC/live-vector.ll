@@ -9,7 +9,7 @@ define i64 addrspace(1)* @test(i64 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-NEXT: gc.relocate
 ; CHECK-NEXT: ret i64 addrspace(1)* %obj.relocated
 entry:
-  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
 }
 
@@ -25,7 +25,7 @@ define <2 x i64 addrspace(1)*> @test2(<2 x i64 addrspace(1)*> %obj) gc "statepoi
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %5
 entry:
-  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret <2 x i64 addrspace(1)*> %obj
 }
 
@@ -43,7 +43,7 @@ define <2 x i64 addrspace(1)*> @test3(<2 x i64 addrspace(1)*>* %ptr) gc "statepo
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %5
 entry:
   %obj = load <2 x i64 addrspace(1)*>, <2 x i64 addrspace(1)*>* %ptr
-  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret <2 x i64 addrspace(1)*> %obj
 }
 
@@ -58,7 +58,7 @@ define <2 x i64 addrspace(1)*> @test4(<2 x i64 addrspace(1)*>* %ptr) gc "statepo
 ; CHECK-NEXT: gc.statepoint
 entry:
   %obj = load <2 x i64 addrspace(1)*>, <2 x i64 addrspace(1)*>* %ptr
-  invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+  invoke i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
           to label %normal_return unwind label %exceptional_return
 
 ; CHECK-LABEL: normal_return:
