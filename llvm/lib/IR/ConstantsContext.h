@@ -211,19 +211,29 @@ public:
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 class GetElementPtrConstantExpr : public ConstantExpr {
+  Type *SrcElementTy;
   void anchor() override;
-  GetElementPtrConstantExpr(Constant *C, ArrayRef<Constant*> IdxList,
-                            Type *DestTy);
+  GetElementPtrConstantExpr(Type *SrcElementTy, Constant *C,
+                            ArrayRef<Constant *> IdxList, Type *DestTy);
+
 public:
   static GetElementPtrConstantExpr *Create(Constant *C,
                                            ArrayRef<Constant*> IdxList,
                                            Type *DestTy,
                                            unsigned Flags) {
-    GetElementPtrConstantExpr *Result =
-      new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
+    return Create(
+        cast<PointerType>(C->getType()->getScalarType())->getElementType(), C,
+        IdxList, DestTy, Flags);
+  }
+  static GetElementPtrConstantExpr *Create(Type *SrcElementTy, Constant *C,
+                                           ArrayRef<Constant *> IdxList,
+                                           Type *DestTy, unsigned Flags) {
+    GetElementPtrConstantExpr *Result = new (IdxList.size() + 1)
+        GetElementPtrConstantExpr(SrcElementTy, C, IdxList, DestTy);
     Result->SubclassOptionalData = Flags;
     return Result;
   }
+  Type *getSourceElementType() const;
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
@@ -420,13 +430,16 @@ struct ConstantExprKeyType {
   uint16_t SubclassData;
   ArrayRef<Constant *> Ops;
   ArrayRef<unsigned> Indexes;
+  Type *ExplicitTy;
 
   ConstantExprKeyType(unsigned Opcode, ArrayRef<Constant *> Ops,
                       unsigned short SubclassData = 0,
                       unsigned short SubclassOptionalData = 0,
-                      ArrayRef<unsigned> Indexes = None)
+                      ArrayRef<unsigned> Indexes = None,
+                      Type *ExplicitTy = nullptr)
       : Opcode(Opcode), SubclassOptionalData(SubclassOptionalData),
-        SubclassData(SubclassData), Ops(Ops), Indexes(Indexes) {}
+        SubclassData(SubclassData), Ops(Ops), Indexes(Indexes),
+        ExplicitTy(ExplicitTy) {}
   ConstantExprKeyType(ArrayRef<Constant *> Operands, const ConstantExpr *CE)
       : Opcode(CE->getOpcode()),
         SubclassOptionalData(CE->getRawSubclassOptionalData()),
@@ -497,8 +510,11 @@ struct ConstantExprKeyType {
     case Instruction::ExtractValue:
       return new ExtractValueConstantExpr(Ops[0], Indexes, Ty);
     case Instruction::GetElementPtr:
-      return GetElementPtrConstantExpr::Create(Ops[0], Ops.slice(1), Ty,
-                                               SubclassOptionalData);
+      return GetElementPtrConstantExpr::Create(
+          ExplicitTy ? ExplicitTy
+                     : cast<PointerType>(Ops[0]->getType()->getScalarType())
+                           ->getElementType(),
+          Ops[0], Ops.slice(1), Ty, SubclassOptionalData);
     case Instruction::ICmp:
       return new CompareConstantExpr(Ty, Instruction::ICmp, SubclassData,
                                      Ops[0], Ops[1]);

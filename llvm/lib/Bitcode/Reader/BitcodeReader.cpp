@@ -3523,10 +3523,12 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, BasePtr))
         return Error("Invalid record");
 
-      if (Ty &&
-          Ty !=
-              cast<SequentialType>(BasePtr->getType()->getScalarType())
-                  ->getElementType())
+      if (!Ty)
+        Ty = cast<SequentialType>(BasePtr->getType()->getScalarType())
+                 ->getElementType();
+      else if (Ty !=
+               cast<SequentialType>(BasePtr->getType()->getScalarType())
+                   ->getElementType())
         return Error(
             "Explicit gep type does not match pointee type of pointer operand");
 

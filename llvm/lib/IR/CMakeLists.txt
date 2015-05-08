@@ -34,6 +34,7 @@ add_llvm_library(LLVMCore
   Metadata.cpp
   MetadataTracking.cpp
   Module.cpp
+  Operator.cpp
   Pass.cpp
   PassManager.cpp
   PassRegistry.cpp
