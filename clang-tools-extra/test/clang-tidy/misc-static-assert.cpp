@@ -95,6 +95,12 @@ int main() {
   assert(NULL && "Report me!");
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be
   // CHECK-FIXES: {{^  }}static_assert(NULL , "Report me!");
+
+#define NULL __null
+  assert(__null == "Don't report me!");
+  // CHECK-FIXES: {{^  }}assert(__null == "Don't report me!");
+  assert(NULL == "Don't report me!");
+  // CHECK-FIXES: {{^  }}assert(NULL == "Don't report me!");
 #undef NULL
 
   assert(ZERO_MACRO && "Report me!");

@@ -29,7 +29,7 @@ StaticAssertCheck::StaticAssertCheck(StringRef Name, ClangTidyContext *Context)
 void StaticAssertCheck::registerMatchers(MatchFinder *Finder) {
   auto IsAlwaysFalse = expr(ignoringParenImpCasts(
       expr(anyOf(boolLiteral(equals(false)), integerLiteral(equals(0)),
-          nullPtrLiteralExpr())).bind("isAlwaysFalse")));
+          nullPtrLiteralExpr(), gnuNullExpr())).bind("isAlwaysFalse")));
   auto IsAlwaysFalseWithCast = ignoringParenImpCasts(anyOf(IsAlwaysFalse,
       cStyleCastExpr(has(IsAlwaysFalse)).bind("castExpr")));
   auto AssertExprRoot = anyOf(
