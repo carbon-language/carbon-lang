@@ -463,6 +463,7 @@ TEST_F(FormatTestJS, RegexLiteralClassification) {
 }
 
 TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
+  verifyFormat("var regex = /=/;");
   verifyFormat("var regex = /a*/;");
   verifyFormat("var regex = /a+/;");
   verifyFormat("var regex = /a?/;");

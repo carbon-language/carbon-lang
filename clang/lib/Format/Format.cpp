@@ -752,7 +752,7 @@ private:
     unsigned LastColumn = Tokens.back()->OriginalColumn;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
       ++TokenCount;
-      if (I[0]->is(tok::slash) && I + 1 != E &&
+      if (I[0]->isOneOf(tok::slash, tok::slashequal) && I + 1 != E &&
           (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace, tok::r_brace,
                          tok::exclaim, tok::l_square, tok::colon, tok::comma,
                          tok::question, tok::kw_return) ||
