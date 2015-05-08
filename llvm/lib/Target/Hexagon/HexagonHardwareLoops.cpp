@@ -369,10 +369,10 @@ bool HexagonHardwareLoops::findInductionRegister(MachineLoop *L,
   bool NotAnalyzed = TII->AnalyzeBranch(*Latch, TB, FB, Cond, false);
   if (NotAnalyzed)
     return false;
-
-  unsigned CSz = Cond.size();
-  assert (CSz == 1 || CSz == 2);
-  unsigned PredR = Cond[CSz-1].getReg();
+  
+  unsigned PredR, PredPos, PredRegFlags;
+  if (!TII->getPredReg(Cond, PredR, PredPos, PredRegFlags))
+    return false;
 
   MachineInstr *PredI = MRI->getVRegDef(PredR);
   if (!PredI->isCompare())
@@ -491,8 +491,10 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
   // to put imm(0), followed by P in the vector Cond.
   // If TB is not the header, it means that the "not-taken" path must lead
   // to the header.
-  bool Negated = (Cond.size() > 1) ^ (TB != Header);
-  unsigned PredReg = Cond[Cond.size()-1].getReg();
+  bool Negated = TII->predOpcodeHasNot(Cond) ^ (TB != Header);
+  unsigned PredReg, PredPos, PredRegFlags;
+  if (!TII->getPredReg(Cond, PredReg, PredPos, PredRegFlags))
+    return nullptr;
   MachineInstr *CondI = MRI->getVRegDef(PredReg);
   unsigned CondOpc = CondI->getOpcode();
 

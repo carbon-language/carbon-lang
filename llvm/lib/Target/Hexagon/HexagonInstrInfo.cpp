@@ -115,72 +115,172 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
+// Find the hardware loop instruction used to set-up the specified loop.
+// On Hexagon, we have two instructions used to set-up the hardware loop
+// (LOOP0, LOOP1) with corresponding endloop (ENDLOOP0, ENDLOOP1) instructions
+// to indicate the end of a loop.
+static MachineInstr *
+findLoopInstr(MachineBasicBlock *BB, int EndLoopOp,
+              SmallPtrSet<MachineBasicBlock *, 8> &Visited) {
+  int LOOPi;
+  int LOOPr;
+  if (EndLoopOp == Hexagon::ENDLOOP0) {
+    LOOPi = Hexagon::J2_loop0i;
+    LOOPr = Hexagon::J2_loop0r;
+  } else { // EndLoopOp == Hexagon::EndLOOP1
+    LOOPi = Hexagon::J2_loop1i;
+    LOOPr = Hexagon::J2_loop1r;
+  }
 
-unsigned
-HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
-                             MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond,
-                             DebugLoc DL) const{
-
-    int BOpc   = Hexagon::J2_jump;
-    int BccOpc = Hexagon::J2_jumpt;
-
-    assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-
-    int regPos = 0;
-    // Check if ReverseBranchCondition has asked to reverse this branch
-    // If we want to reverse the branch an odd number of times, we want
-    // JMP_f.
-    if (!Cond.empty() && Cond[0].isImm() && Cond[0].getImm() == 0) {
-      BccOpc = Hexagon::J2_jumpf;
-      regPos = 1;
+  // The loop set-up instruction will be in a predecessor block
+  for (MachineBasicBlock::pred_iterator PB = BB->pred_begin(),
+         PE = BB->pred_end(); PB != PE; ++PB) {
+    // If this has been visited, already skip it.
+    if (!Visited.insert(*PB).second)
+      continue;
+    if (*PB == BB)
+      continue;
+    for (MachineBasicBlock::reverse_instr_iterator I = (*PB)->instr_rbegin(),
+           E = (*PB)->instr_rend(); I != E; ++I) {
+      int Opc = I->getOpcode();
+      if (Opc == LOOPi || Opc == LOOPr)
+        return &*I;
+      // We've reached a different loop, which means the loop0 has been removed.
+      if (Opc == EndLoopOp)
+        return 0;
     }
+    // Check the predecessors for the LOOP instruction.
+    MachineInstr *loop = findLoopInstr(*PB, EndLoopOp, Visited);
+    if (loop)
+      return loop;
+  }
+  return 0;
+}
 
-    if (!FBB) {
-      if (Cond.empty()) {
-        // Due to a bug in TailMerging/CFG Optimization, we need to add a
-        // special case handling of a predicated jump followed by an
-        // unconditional jump. If not, Tail Merging and CFG Optimization go
-        // into an infinite loop.
-        MachineBasicBlock *NewTBB, *NewFBB;
-        SmallVector<MachineOperand, 4> Cond;
-        MachineInstr *Term = MBB.getFirstTerminator();
-        if (isPredicated(Term) && !AnalyzeBranch(MBB, NewTBB, NewFBB, Cond,
-                                                 false)) {
-          MachineBasicBlock *NextBB =
-            std::next(MachineFunction::iterator(&MBB));
-          if (NewTBB == NextBB) {
-            ReverseBranchCondition(Cond);
-            RemoveBranch(MBB);
-            return InsertBranch(MBB, TBB, nullptr, Cond, DL);
-          }
+unsigned HexagonInstrInfo::InsertBranch(
+    MachineBasicBlock &MBB,MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
+
+  Opcode_t BOpc   = Hexagon::J2_jump;
+  Opcode_t BccOpc = Hexagon::J2_jumpt;
+
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+
+  // Check if ReverseBranchCondition has asked to reverse this branch
+  // If we want to reverse the branch an odd number of times, we want
+  // J2_jumpf.
+  if (!Cond.empty() && Cond[0].isImm())
+    BccOpc = Cond[0].getImm();
+
+  if (!FBB) {
+    if (Cond.empty()) {
+      // Due to a bug in TailMerging/CFG Optimization, we need to add a
+      // special case handling of a predicated jump followed by an
+      // unconditional jump. If not, Tail Merging and CFG Optimization go
+      // into an infinite loop.
+      MachineBasicBlock *NewTBB, *NewFBB;
+      SmallVector<MachineOperand, 4> Cond;
+      MachineInstr *Term = MBB.getFirstTerminator();
+      if (Term != MBB.end() && isPredicated(Term) &&
+          !AnalyzeBranch(MBB, NewTBB, NewFBB, Cond, false)) {
+        MachineBasicBlock *NextBB =
+          std::next(MachineFunction::iterator(&MBB));
+        if (NewTBB == NextBB) {
+          ReverseBranchCondition(Cond);
+          RemoveBranch(MBB);
+          return InsertBranch(MBB, TBB, nullptr, Cond, DL);
         }
-        BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
-      } else {
-        // If Cond[0] is a basic block, insert ENDLOOP0.
-        if (Cond[0].isMBB())
-          BuildMI(&MBB, DL, get(Hexagon::ENDLOOP0)).addMBB(Cond[0].getMBB());
-        else
-          BuildMI(&MBB, DL,
-                  get(BccOpc)).addReg(Cond[regPos].getReg()).addMBB(TBB);
       }
-      return 1;
+      BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
+    } else if (isEndLoopN(Cond[0].getImm())) {
+      int EndLoopOp = Cond[0].getImm();
+      assert(Cond[1].isMBB());
+      // Since we're adding an ENDLOOP, there better be a LOOP instruction.
+      // Check for it, and change the BB target if needed.
+      SmallPtrSet<MachineBasicBlock *, 8> VisitedBBs;
+      MachineInstr *Loop = findLoopInstr(TBB, EndLoopOp, VisitedBBs);
+      assert(Loop != 0 && "Inserting an ENDLOOP without a LOOP");
+      Loop->getOperand(0).setMBB(TBB);
+      // Add the ENDLOOP after the finding the LOOP0.
+      BuildMI(&MBB, DL, get(EndLoopOp)).addMBB(TBB);
+    } else if (isNewValueJump(Cond[0].getImm())) {
+      assert((Cond.size() == 3) && "Only supporting rr/ri version of nvjump");
+      // New value jump
+      // (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset)
+      // (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset)
+      unsigned Flags1 = getUndefRegState(Cond[1].isUndef());
+      DEBUG(dbgs() << "\nInserting NVJump for BB#" << MBB.getNumber(););
+      if (Cond[2].isReg()) {
+        unsigned Flags2 = getUndefRegState(Cond[2].isUndef());
+        BuildMI(&MBB, DL, get(BccOpc)).addReg(Cond[1].getReg(), Flags1).
+          addReg(Cond[2].getReg(), Flags2).addMBB(TBB);
+      } else if(Cond[2].isImm()) {
+        BuildMI(&MBB, DL, get(BccOpc)).addReg(Cond[1].getReg(), Flags1).
+          addImm(Cond[2].getImm()).addMBB(TBB);
+      } else
+        llvm_unreachable("Invalid condition for branching");
+    } else {
+      assert((Cond.size() == 2) && "Malformed cond vector");
+      const MachineOperand &RO = Cond[1];
+      unsigned Flags = getUndefRegState(RO.isUndef());
+      BuildMI(&MBB, DL, get(BccOpc)).addReg(RO.getReg(), Flags).addMBB(TBB);
     }
+    return 1;
+  }
+  assert((!Cond.empty()) &&
+         "Cond. cannot be empty when multiple branchings are required");
+  assert((!isNewValueJump(Cond[0].getImm())) &&
+         "NV-jump cannot be inserted with another branch");
+  // Special case for hardware loops.  The condition is a basic block.
+  if (isEndLoopN(Cond[0].getImm())) {
+    int EndLoopOp = Cond[0].getImm();
+    assert(Cond[1].isMBB());
+    // Since we're adding an ENDLOOP, there better be a LOOP instruction.
+    // Check for it, and change the BB target if needed.
+    SmallPtrSet<MachineBasicBlock *, 8> VisitedBBs;
+    MachineInstr *Loop = findLoopInstr(TBB, EndLoopOp, VisitedBBs);
+    assert(Loop != 0 && "Inserting an ENDLOOP without a LOOP");
+    Loop->getOperand(0).setMBB(TBB);
+    // Add the ENDLOOP after the finding the LOOP0.
+    BuildMI(&MBB, DL, get(EndLoopOp)).addMBB(TBB);
+  } else {
+    const MachineOperand &RO = Cond[1];
+    unsigned Flags = getUndefRegState(RO.isUndef());
+    BuildMI(&MBB, DL, get(BccOpc)).addReg(RO.getReg(), Flags).addMBB(TBB);
+  }
+  BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB);
 
-    // We don't handle ENDLOOP0 with a conditional branch in AnalyzeBranch.
-    BuildMI(&MBB, DL, get(BccOpc)).addReg(Cond[regPos].getReg()).addMBB(TBB);
-    BuildMI(&MBB, DL, get(BOpc)).addMBB(FBB);
-    return 2;
+  return 2;
 }
 
 
+/// This function can analyze one/two way branching only and should (mostly) be
+/// called by target independent side.
+/// First entry is always the opcode of the branching instruction, except when
+/// the Cond vector is supposed to be empty, e.g., when AnalyzeBranch fails, a
+/// BB with only unconditional jump. Subsequent entries depend upon the opcode,
+/// e.g. Jump_c p will have
+/// Cond[0] = Jump_c
+/// Cond[1] = p
+/// HW-loop ENDLOOP:
+/// Cond[0] = ENDLOOP
+/// Cond[1] = MBB
+/// New value jump:
+/// Cond[0] = Hexagon::CMPEQri_f_Jumpnv_t_V4 -- specific opcode
+/// Cond[1] = R
+/// Cond[2] = Imm
+/// @note Related function is \fn findInstrPredicate which fills in
+/// Cond. vector when a predicated instruction is passed to it.
+/// We follow same protocol in that case too.
+///
 bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *&TBB,
-                                 MachineBasicBlock *&FBB,
-                                 SmallVectorImpl<MachineOperand> &Cond,
-                                 bool AllowModify) const {
+                                     MachineBasicBlock *&FBB,
+                                     SmallVectorImpl<MachineOperand> &Cond,
+                                     bool AllowModify) const {
   TBB = nullptr;
   FBB = nullptr;
+  Cond.clear();
 
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::instr_iterator I = MBB.instr_end();
@@ -202,6 +302,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   do {
     --I;
     if (I->isEHLabel())
+      // Don't analyze EH branches.
       return true;
   } while (I != MBB.instr_begin());
 
@@ -216,7 +317,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   
   bool JumpToBlock = I->getOpcode() == Hexagon::J2_jump &&
                      I->getOperand(0).isMBB();
-  // Delete the JMP if it's equivalent to a fall-through.
+  // Delete the J2_jump if it's equivalent to a fall-through.
   if (AllowModify && JumpToBlock &&
       MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
     DEBUG(dbgs()<< "\nErasing the jump to successor block\n";);
@@ -257,7 +358,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     return true;
 
   bool LastOpcodeHasJMP_c = PredOpcodeHasJMP_c(LastOpcode);
-  bool LastOpcodeHasNot = PredOpcodeHasNot(LastOpcode);
+  bool LastOpcodeHasNVJump = isNewValueJump(LastInst);
 
   // If there is only one terminator instruction, process it.
   if (LastInst && !SecondLastInst) {
@@ -265,30 +366,50 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
-    if (LastOpcode == Hexagon::ENDLOOP0) {
+    if (isEndLoopN(LastOpcode)) {
       TBB = LastInst->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
       Cond.push_back(LastInst->getOperand(0));
       return false;
     }
     if (LastOpcodeHasJMP_c) {
       TBB = LastInst->getOperand(1).getMBB();
-      if (LastOpcodeHasNot) {
-        Cond.push_back(MachineOperand::CreateImm(0));
-      }
+      Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
       Cond.push_back(LastInst->getOperand(0));
       return false;
     }
+    // Only supporting rr/ri versions of new-value jumps.
+    if (LastOpcodeHasNVJump && (LastInst->getNumExplicitOperands() == 3)) {
+      TBB = LastInst->getOperand(2).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
+      Cond.push_back(LastInst->getOperand(0));
+      Cond.push_back(LastInst->getOperand(1));
+      return false;
+    }
+    DEBUG(dbgs() << "\nCant analyze BB#" << MBB.getNumber()
+                 << " with one jump\n";);
     // Otherwise, don't know what this is.
     return true;
   }
 
   bool SecLastOpcodeHasJMP_c = PredOpcodeHasJMP_c(SecLastOpcode);
-  bool SecLastOpcodeHasNot = PredOpcodeHasNot(SecLastOpcode);
+  bool SecLastOpcodeHasNVJump = isNewValueJump(SecondLastInst);
   if (SecLastOpcodeHasJMP_c && (LastOpcode == Hexagon::J2_jump)) {
     TBB =  SecondLastInst->getOperand(1).getMBB();
-    if (SecLastOpcodeHasNot)
-      Cond.push_back(MachineOperand::CreateImm(0));
+    Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
     Cond.push_back(SecondLastInst->getOperand(0));
+    FBB = LastInst->getOperand(0).getMBB();
+    return false;
+  }
+
+  // Only supporting rr/ri versions of new-value jumps.
+  if (SecLastOpcodeHasNVJump &&
+      (SecondLastInst->getNumExplicitOperands() == 3) &&
+      (LastOpcode == Hexagon::J2_jump)) {
+    TBB = SecondLastInst->getOperand(2).getMBB();
+    Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
+    Cond.push_back(SecondLastInst->getOperand(0));
+    Cond.push_back(SecondLastInst->getOperand(1));
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
@@ -303,52 +424,39 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     return false;
   }
 
-  // If the block ends with an ENDLOOP, and JMP, handle it.
-  if (SecLastOpcode == Hexagon::ENDLOOP0 &&
-      LastOpcode == Hexagon::J2_jump) {
+  // If the block ends with an ENDLOOP, and J2_jump, handle it.
+  if (isEndLoopN(SecLastOpcode) && LastOpcode == Hexagon::J2_jump) {
     TBB = SecondLastInst->getOperand(0).getMBB();
+    Cond.push_back(MachineOperand::CreateImm(SecondLastInst->getOpcode()));
     Cond.push_back(SecondLastInst->getOperand(0));
     FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
-
+  DEBUG(dbgs() << "\nCant analyze BB#" << MBB.getNumber()
+               << " with two jumps";);
   // Otherwise, can't handle this.
   return true;
 }
 
-
 unsigned HexagonInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  DEBUG(dbgs() << "\nRemoving branches out of BB#" << MBB.getNumber());
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return 0;
-  --I;
-  unsigned Opc1 = I->getOpcode();
-  switch (Opc1) {
-    case Hexagon::J2_jump:
-    case Hexagon::J2_jumpt:
-    case Hexagon::J2_jumpf:
-    case Hexagon::ENDLOOP0:
-      I->eraseFromParent();
-      break;
-    default:
-      return 0;
+  unsigned Count = 0;
+  while (I != MBB.begin()) {
+    --I;
+    if (I->isDebugValue())
+      continue;
+    // Only removing branches from end of MBB.
+    if (!I->isBranch())
+      return Count;
+    if (Count && (I->getOpcode() == Hexagon::J2_jump))
+      llvm_unreachable("Malformed basic block: unconditional branch not last");
+    MBB.erase(&MBB.back());
+    I = MBB.end();
+    ++Count;
   }
-
-  I = MBB.end();
-
-  if (I == MBB.begin()) return 1;
-  --I;
-  unsigned Opc2 = I->getOpcode();
-  switch (Opc2) {
-    case Hexagon::J2_jumpt:
-    case Hexagon::J2_jumpf:
-    case Hexagon::ENDLOOP0:
-      I->eraseFromParent();
-      return 2;
-    default:
-      return 1;
-  }
+  return Count;
 }
-
 
 /// \brief For a comparison instruction, return the source registers in
 /// \p SrcReg and \p SrcReg2 if having two register operands, and the value it
@@ -361,31 +469,39 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
 
   // Set mask and the first source register.
   switch (Opc) {
-    case Hexagon::C2_cmpeqp:
-    case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpeq:
-    case Hexagon::C2_cmpgtp:
-    case Hexagon::C2_cmpgtup:
-    case Hexagon::C2_cmpgtui:
-    case Hexagon::C2_cmpgtu:
-    case Hexagon::C2_cmpgti:
+    case Hexagon::C2_cmpeqp:
     case Hexagon::C2_cmpgt:
+    case Hexagon::C2_cmpgtp:
+    case Hexagon::C2_cmpgtu:
+    case Hexagon::C2_cmpgtup:
+    case Hexagon::C4_cmpneq:
+    case Hexagon::C4_cmplte:
+    case Hexagon::C4_cmplteu:
+    case Hexagon::C2_cmpeqi:
+    case Hexagon::C2_cmpgti:
+    case Hexagon::C2_cmpgtui:
+    case Hexagon::C4_cmpneqi:
+    case Hexagon::C4_cmplteui:
+    case Hexagon::C4_cmpltei:
       SrcReg = MI->getOperand(1).getReg();
       Mask = ~0;
       break;
-    case Hexagon::A4_cmpbeqi:
     case Hexagon::A4_cmpbeq:
-    case Hexagon::A4_cmpbgtui:
-    case Hexagon::A4_cmpbgtu:
     case Hexagon::A4_cmpbgt:
+    case Hexagon::A4_cmpbgtu:
+    case Hexagon::A4_cmpbeqi:
+    case Hexagon::A4_cmpbgti:
+    case Hexagon::A4_cmpbgtui:
       SrcReg = MI->getOperand(1).getReg();
       Mask = 0xFF;
       break;
-    case Hexagon::A4_cmpheqi:
     case Hexagon::A4_cmpheq:
-    case Hexagon::A4_cmphgtui:
-    case Hexagon::A4_cmphgtu:
     case Hexagon::A4_cmphgt:
+    case Hexagon::A4_cmphgtu:
+    case Hexagon::A4_cmpheqi:
+    case Hexagon::A4_cmphgti:
+    case Hexagon::A4_cmphgtui:
       SrcReg = MI->getOperand(1).getReg();
       Mask = 0xFFFF;
       break;
@@ -393,27 +509,35 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
 
   // Set the value/second source register.
   switch (Opc) {
-    case Hexagon::C2_cmpeqp:
     case Hexagon::C2_cmpeq:
-    case Hexagon::C2_cmpgtp:
-    case Hexagon::C2_cmpgtup:
-    case Hexagon::C2_cmpgtu:
+    case Hexagon::C2_cmpeqp:
     case Hexagon::C2_cmpgt:
+    case Hexagon::C2_cmpgtp:
+    case Hexagon::C2_cmpgtu:
+    case Hexagon::C2_cmpgtup:
     case Hexagon::A4_cmpbeq:
-    case Hexagon::A4_cmpbgtu:
     case Hexagon::A4_cmpbgt:
+    case Hexagon::A4_cmpbgtu:
     case Hexagon::A4_cmpheq:
-    case Hexagon::A4_cmphgtu:
     case Hexagon::A4_cmphgt:
+    case Hexagon::A4_cmphgtu:
+    case Hexagon::C4_cmpneq:
+    case Hexagon::C4_cmplte:
+    case Hexagon::C4_cmplteu:
       SrcReg2 = MI->getOperand(2).getReg();
       return true;
 
     case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgti:
+    case Hexagon::C4_cmpneqi:
+    case Hexagon::C4_cmplteui:
+    case Hexagon::C4_cmpltei:
     case Hexagon::A4_cmpbeqi:
+    case Hexagon::A4_cmpbgti:
     case Hexagon::A4_cmpbgtui:
     case Hexagon::A4_cmpheqi:
+    case Hexagon::A4_cmphgti:
     case Hexagon::A4_cmphgtui:
       SrcReg2 = 0;
       Value = MI->getOperand(2).getImm();
@@ -731,6 +855,16 @@ bool HexagonInstrInfo::isNewValueInst(const MachineInstr *MI) const {
   return false;
 }
 
+bool HexagonInstrInfo::isNewValue(const MachineInstr* MI) const {
+  const uint64_t F = MI->getDesc().TSFlags;
+  return ((F >> HexagonII::NewValuePos) & HexagonII::NewValueMask);
+}
+
+bool HexagonInstrInfo::isNewValue(Opcode_t Opcode) const {
+  const uint64_t F = get(Opcode).TSFlags;
+  return ((F >> HexagonII::NewValuePos) & HexagonII::NewValueMask);
+}
+
 bool HexagonInstrInfo::isSaveCalleeSavedRegsCall(const MachineInstr *MI) const {
   return MI->getOpcode() == Hexagon::SAVE_REGISTERS_CALL_V4;
 }
@@ -881,148 +1015,51 @@ int HexagonInstrInfo::getCondOpcode(int Opc, bool invertPredicate) const {
 bool HexagonInstrInfo::
 PredicateInstruction(MachineInstr *MI,
                      const SmallVectorImpl<MachineOperand> &Cond) const {
+  if (Cond.empty() || isEndLoopN(Cond[0].getImm())) {
+    DEBUG(dbgs() << "\nCannot predicate:"; MI->dump(););
+    return false;
+  }
   int Opc = MI->getOpcode();
   assert (isPredicable(MI) && "Expected predicable instruction");
-  bool invertJump = (!Cond.empty() && Cond[0].isImm() &&
-                     (Cond[0].getImm() == 0));
+  bool invertJump = predOpcodeHasNot(Cond);
 
-  // This will change MI's opcode to its predicate version.
-  // However, its operand list is still the old one, i.e. the
-  // non-predicate one.
-  MI->setDesc(get(getCondOpcode(Opc, invertJump)));
+  // We have to predicate MI "in place", i.e. after this function returns,
+  // MI will need to be transformed into a predicated form. To avoid com-
+  // plicated manipulations with the operands (handling tied operands,
+  // etc.), build a new temporary instruction, then overwrite MI with it.
 
-  int oper = -1;
-  unsigned int GAIdx = 0;
-
-  // Indicates whether the current MI has a GlobalAddress operand
-  bool hasGAOpnd = false;
-  std::vector<MachineOperand> tmpOpnds;
-
-  // Indicates whether we need to shift operands to right.
-  bool needShift = true;
-
-  // The predicate is ALWAYS the FIRST input operand !!!
-  if (MI->getNumOperands() == 0) {
-    // The non-predicate version of MI does not take any operands,
-    // i.e. no outs and no ins. In this condition, the predicate
-    // operand will be directly placed at Operands[0]. No operand
-    // shift is needed.
-    // Example: BARRIER
-    needShift = false;
-    oper = -1;
-  }
-  else if (   MI->getOperand(MI->getNumOperands()-1).isReg()
-           && MI->getOperand(MI->getNumOperands()-1).isDef()
-           && !MI->getOperand(MI->getNumOperands()-1).isImplicit()) {
-    // The non-predicate version of MI does not have any input operands.
-    // In this condition, we extend the length of Operands[] by one and
-    // copy the original last operand to the newly allocated slot.
-    // At this moment, it is just a place holder. Later, we will put
-    // predicate operand directly into it. No operand shift is needed.
-    // Example: r0=BARRIER (this is a faked insn used here for illustration)
-    MI->addOperand(MI->getOperand(MI->getNumOperands()-1));
-    needShift = false;
-    oper = MI->getNumOperands() - 2;
-  }
-  else {
-    // We need to right shift all input operands by one. Duplicate the
-    // last operand into the newly allocated slot.
-    MI->addOperand(MI->getOperand(MI->getNumOperands()-1));
+  MachineBasicBlock &B = *MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned PredOpc = getCondOpcode(Opc, invertJump);
+  MachineInstrBuilder T = BuildMI(B, MI, DL, get(PredOpc));
+  unsigned NOp = 0, NumOps = MI->getNumOperands();
+  while (NOp < NumOps) {
+    MachineOperand &Op = MI->getOperand(NOp);
+    if (!Op.isReg() || !Op.isDef() || Op.isImplicit())
+      break;
+    T.addOperand(Op);
+    NOp++;
   }
 
-  if (needShift)
-  {
-    // Operands[ MI->getNumOperands() - 2 ] has been copied into
-    // Operands[ MI->getNumOperands() - 1 ], so we start from
-    // Operands[ MI->getNumOperands() - 3 ].
-    // oper is a signed int.
-    // It is ok if "MI->getNumOperands()-3" is -3, -2, or -1.
-    for (oper = MI->getNumOperands() - 3; oper >= 0; --oper)
-    {
-      MachineOperand &MO = MI->getOperand(oper);
+  unsigned PredReg, PredRegPos, PredRegFlags;
+  bool GotPredReg = getPredReg(Cond, PredReg, PredRegPos, PredRegFlags);
+  (void)GotPredReg;
+  assert(GotPredReg);
+  T.addReg(PredReg, PredRegFlags);
+  while (NOp < NumOps)
+    T.addOperand(MI->getOperand(NOp++));
 
-      // Opnd[0] Opnd[1] Opnd[2] Opnd[3] Opnd[4]   Opnd[5]   Opnd[6]   Opnd[7]
-      // <Def0>  <Def1>  <Use0>  <Use1>  <ImpDef0> <ImpDef1> <ImpUse0> <ImpUse1>
-      //               /\~
-      //              /||\~
-      //               ||
-      //        Predicate Operand here
-      if (MO.isReg() && !MO.isUse() && !MO.isImplicit()) {
-        break;
-      }
-      if (MO.isReg()) {
-        MI->getOperand(oper+1).ChangeToRegister(MO.getReg(), MO.isDef(),
-                                                MO.isImplicit(), MO.isKill(),
-                                                MO.isDead(), MO.isUndef(),
-                                                MO.isDebug());
-      }
-      else if (MO.isImm()) {
-        MI->getOperand(oper+1).ChangeToImmediate(MO.getImm());
-      }
-      else if (MO.isGlobal()) {
-        // MI can not have more than one GlobalAddress operand.
-        assert(hasGAOpnd == false && "MI can only have one GlobalAddress opnd");
+  MI->setDesc(get(PredOpc));
+  while (unsigned n = MI->getNumOperands())
+    MI->RemoveOperand(n-1);
+  for (unsigned i = 0, n = T->getNumOperands(); i < n; ++i)
+    MI->addOperand(T->getOperand(i));
 
-        // There is no member function called "ChangeToGlobalAddress" in the
-        // MachineOperand class (not like "ChangeToRegister" and
-        // "ChangeToImmediate"). So we have to remove them from Operands[] list
-        // first, and then add them back after we have inserted the predicate
-        // operand. tmpOpnds[] is to remember these operands before we remove
-        // them.
-        tmpOpnds.push_back(MO);
+  MachineBasicBlock::instr_iterator TI = &*T;
+  B.erase(TI);
 
-        // Operands[oper] is a GlobalAddress operand;
-        // Operands[oper+1] has been copied into Operands[oper+2];
-        hasGAOpnd = true;
-        GAIdx = oper;
-        continue;
-      }
-      else {
-        llvm_unreachable("Unexpected operand type");
-      }
-    }
-  }
-
-  int regPos = invertJump ? 1 : 0;
-  MachineOperand PredMO = Cond[regPos];
-
-  // [oper] now points to the last explicit Def. Predicate operand must be
-  // located at [oper+1]. See diagram above.
-  // This assumes that the predicate is always the first operand,
-  // i.e. Operands[0+numResults], in the set of inputs
-  // It is better to have an assert here to check this. But I don't know how
-  // to write this assert because findFirstPredOperandIdx() would return -1
-  if (oper < -1) oper = -1;
-
-  MI->getOperand(oper+1).ChangeToRegister(PredMO.getReg(), PredMO.isDef(),
-                                          PredMO.isImplicit(), false,
-                                          PredMO.isDead(), PredMO.isUndef(),
-                                          PredMO.isDebug());
-
-  MachineRegisterInfo &RegInfo = MI->getParent()->getParent()->getRegInfo();
-  RegInfo.clearKillFlags(PredMO.getReg());
-
-  if (hasGAOpnd)
-  {
-    unsigned int i;
-
-    // Operands[GAIdx] is the original GlobalAddress operand, which is
-    // already copied into tmpOpnds[0].
-    // Operands[GAIdx] now stores a copy of Operands[GAIdx-1]
-    // Operands[GAIdx+1] has already been copied into Operands[GAIdx+2],
-    // so we start from [GAIdx+2]
-    for (i = GAIdx + 2; i < MI->getNumOperands(); ++i)
-      tmpOpnds.push_back(MI->getOperand(i));
-
-    // Remove all operands in range [ (GAIdx+1) ... (MI->getNumOperands()-1) ]
-    // It is very important that we always remove from the end of Operands[]
-    // MI->getNumOperands() is at least 2 if program goes to here.
-    for (i = MI->getNumOperands() - 1; i > GAIdx; --i)
-      MI->RemoveOperand(i);
-
-    for (i = 0; i < tmpOpnds.size(); ++i)
-      MI->addOperand(tmpOpnds[i]);
-  }
+  MachineRegisterInfo &MRI = B.getParent()->getRegInfo();
+  MRI.clearKillFlags(PredReg);
 
   return true;
 }
@@ -1135,17 +1172,20 @@ SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
 
 //
 // We indicate that we want to reverse the branch by
-// inserting a 0 at the beginning of the Cond vector.
+// inserting the reversed branching opcode.
 //
-bool HexagonInstrInfo::
-ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
-  if (!Cond.empty() && Cond[0].isMBB())
+bool HexagonInstrInfo::ReverseBranchCondition(
+    SmallVectorImpl<MachineOperand> &Cond) const {
+  if (Cond.empty())
     return true;
-  if (!Cond.empty() && Cond[0].isImm() && Cond[0].getImm() == 0) {
-    Cond.erase(Cond.begin());
-  } else {
-    Cond.insert(Cond.begin(), MachineOperand::CreateImm(0));
-  }
+  assert(Cond[0].isImm() && "First entry in the cond vector not imm-val");
+  Opcode_t opcode = Cond[0].getImm();
+  //unsigned temp;
+  assert(get(opcode).isBranch() && "Should be a branching condition.");
+  if (isEndLoopN(opcode))
+    return true;
+  Opcode_t NewOpcode = getInvertedPredicatedOpcode(opcode);
+  Cond[0].setImm(NewOpcode);
   return false;
 }
 
@@ -1583,13 +1623,12 @@ bool HexagonInstrInfo::isNewValueJump(const MachineInstr *MI) const {
   return false;
 }
 
-bool HexagonInstrInfo::isPostIncrement (const MachineInstr* MI) const {
-  return (getAddrMode(MI) == HexagonII::PostInc);
+bool HexagonInstrInfo::isNewValueJump(Opcode_t Opcode) const {
+  return isNewValue(Opcode) && get(Opcode).isBranch() && isPredicated(Opcode);
 }
 
-bool HexagonInstrInfo::isNewValue(const MachineInstr* MI) const {
-  const uint64_t F = MI->getDesc().TSFlags;
-  return ((F >> HexagonII::NewValuePos) & HexagonII::NewValueMask);
+bool HexagonInstrInfo::isPostIncrement (const MachineInstr* MI) const {
+  return (getAddrMode(MI) == HexagonII::PostInc);
 }
 
 // Returns true, if any one of the operands is a dot new
@@ -1944,8 +1983,36 @@ bool HexagonInstrInfo::PredOpcodeHasJMP_c(Opcode_t Opcode) const {
          (Opcode == Hexagon::J2_jumpf);
 }
 
-bool HexagonInstrInfo::PredOpcodeHasNot(Opcode_t Opcode) const {
-  return (Opcode == Hexagon::J2_jumpf) ||
-         (Opcode == Hexagon::J2_jumpfnewpt) ||
-         (Opcode == Hexagon::J2_jumpfnew);
+bool HexagonInstrInfo::predOpcodeHasNot(
+    const SmallVectorImpl<MachineOperand> &Cond) const {
+  if (Cond.empty() || !isPredicated(Cond[0].getImm()))
+    return false;
+  return !isPredicatedTrue(Cond[0].getImm());
 }
+
+bool HexagonInstrInfo::isEndLoopN(Opcode_t Opcode) const {
+  return (Opcode == Hexagon::ENDLOOP0 ||
+          Opcode == Hexagon::ENDLOOP1);
+}
+
+bool HexagonInstrInfo::getPredReg(const SmallVectorImpl<MachineOperand> &Cond,
+                                  unsigned &PredReg, unsigned &PredRegPos,
+                                  unsigned &PredRegFlags) const {
+  if (Cond.empty())
+    return false;
+  assert(Cond.size() == 2);
+  if (isNewValueJump(Cond[0].getImm()) || Cond[1].isMBB()) {
+     DEBUG(dbgs() << "No predregs for new-value jumps/endloop");
+     return false;
+  }
+  PredReg = Cond[1].getReg();
+  PredRegPos = 1;
+  // See IfConversion.cpp why we add RegState::Implicit | RegState::Undef
+  PredRegFlags = 0;
+  if (Cond[1].isImplicit())
+    PredRegFlags = RegState::Implicit;
+  if (Cond[1].isUndef())
+    PredRegFlags |= RegState::Undef;
+  return true;
+}
+
