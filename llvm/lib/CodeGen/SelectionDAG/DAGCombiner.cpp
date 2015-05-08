@@ -10653,6 +10653,17 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
   return true;
 }
 
+static bool allowableAlignment(const SelectionDAG &DAG,
+                               const TargetLowering &TLI, EVT EVTTy,
+                               unsigned AS, unsigned Align) {
+  if (TLI.allowsMisalignedMemoryAccesses(EVTTy, AS, Align))
+    return true;
+
+  Type *Ty = EVTTy.getTypeForEVT(*DAG.getContext());
+  unsigned ABIAlignment = TLI.getDataLayout()->getPrefTypeAlignment(Ty);
+  return (Align >= ABIAlignment);
+}
+
 bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (OptLevel == CodeGenOpt::None)
     return false;
@@ -10719,10 +10730,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     if (!Ptr.equalBaseIndex(BasePtr))
       break;
 
-    // Check that the alignment is the same.
-    if (Index->getAlignment() != St->getAlignment())
-      break;
-
     // The memory operands must not be volatile.
     if (Index->isVolatile() || Index->isIndexed())
       break;
@@ -10734,11 +10741,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // The stored memory type must be the same.
     if (Index->getMemoryVT() != MemVT)
-      break;
-
-    // We do not allow unaligned stores because we want to prevent overriding
-    // stores.
-    if (Index->getAlignment()*8 != MemVT.getSizeInBits())
       break;
 
     // We found a potential memory operand to merge.
@@ -10814,6 +10816,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
   // The node with the lowest store address.
   LSBaseSDNode *FirstInChain = StoreNodes[0].MemNode;
+  unsigned FirstStoreAS = FirstInChain->getAddressSpace();
+  unsigned FirstStoreAlign = FirstInChain->getAlignment();
 
   // Store the constants into memory as one consecutive store.
   if (IsConstantSrc) {
@@ -10836,21 +10840,28 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       // Find a legal type for the constant store.
       unsigned StoreBW = (i+1) * ElementSizeBytes * 8;
       EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
-      if (TLI.isTypeLegal(StoreTy))
+      if (TLI.isTypeLegal(StoreTy) &&
+          allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS,
+                             FirstStoreAlign)) {
         LastLegalType = i+1;
       // Or check whether a truncstore is legal.
-      else if (TLI.getTypeAction(*DAG.getContext(), StoreTy) ==
-               TargetLowering::TypePromoteInteger) {
+      } else if (TLI.getTypeAction(*DAG.getContext(), StoreTy) ==
+                 TargetLowering::TypePromoteInteger) {
         EVT LegalizedStoredValueTy =
           TLI.getTypeToTransformTo(*DAG.getContext(), StoredVal.getValueType());
-        if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy))
-          LastLegalType = i+1;
+        if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
+            allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstStoreAS,
+                               FirstStoreAlign)) {
+          LastLegalType = i + 1;
+        }
       }
 
       // Find a legal type for the vector store.
       EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
-      if (TLI.isTypeLegal(Ty))
+      if (TLI.isTypeLegal(Ty) &&
+          allowableAlignment(DAG, TLI, Ty, FirstStoreAS, FirstStoreAlign)) {
         LastLegalVectorType = i + 1;
+      }
     }
 
     // We only use vectors if the constant is known to be zero and the
@@ -10886,7 +10897,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
       // Find a legal type for the vector store.
       EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
-      if (TLI.isTypeLegal(Ty))
+      if (TLI.isTypeLegal(Ty) &&
+          allowableAlignment(DAG, TLI, Ty, FirstStoreAS, FirstStoreAlign))
         NumElem = i + 1;
     }
 
@@ -10911,10 +10923,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // Loads must only have one use.
     if (!Ld->hasNUsesOfValue(1, 0))
-      break;
-
-    // Check that the alignment is the same as the stores.
-    if (Ld->getAlignment() != St->getAlignment())
       break;
 
     // The memory operands must not be volatile.
@@ -10954,6 +10962,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       St->getAlignment() >= RequiredAlignment)
     return false;
 
+  LoadSDNode *FirstLoad = cast<LoadSDNode>(LoadNodes[0].MemNode);
+  unsigned FirstLoadAS = FirstLoad->getAddressSpace();
+  unsigned FirstLoadAlign = FirstLoad->getAlignment();
+
   // Scan the memory operations on the chain and find the first non-consecutive
   // load memory address. These variables hold the index in the store node
   // array.
@@ -10962,7 +10974,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   unsigned LastLegalVectorType = 0;
   unsigned LastLegalIntegerType = 0;
   StartAddress = LoadNodes[0].OffsetFromBase;
-  SDValue FirstChain = LoadNodes[0].MemNode->getChain();
+  SDValue FirstChain = FirstLoad->getChain();
   for (unsigned i = 1; i < LoadNodes.size(); ++i) {
     // All loads much share the same chain.
     if (LoadNodes[i].MemNode->getChain() != FirstChain)
@@ -10975,13 +10987,18 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // Find a legal type for the vector store.
     EVT StoreTy = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
-    if (TLI.isTypeLegal(StoreTy))
+    if (TLI.isTypeLegal(StoreTy) &&
+        allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS, FirstStoreAlign) &&
+        allowableAlignment(DAG, TLI, StoreTy, FirstLoadAS, FirstLoadAlign)) {
       LastLegalVectorType = i + 1;
+    }
 
     // Find a legal type for the integer store.
     unsigned StoreBW = (i+1) * ElementSizeBytes * 8;
     StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
-    if (TLI.isTypeLegal(StoreTy))
+    if (TLI.isTypeLegal(StoreTy) &&
+        allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS, FirstStoreAlign) &&
+        allowableAlignment(DAG, TLI, StoreTy, FirstLoadAS, FirstLoadAlign))
       LastLegalIntegerType = i + 1;
     // Or check whether a truncstore and extload is legal.
     else if (TLI.getTypeAction(*DAG.getContext(), StoreTy) ==
@@ -10991,7 +11008,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
           TLI.isLoadExtLegal(ISD::ZEXTLOAD, LegalizedStoredValueTy, StoreTy) &&
           TLI.isLoadExtLegal(ISD::SEXTLOAD, LegalizedStoredValueTy, StoreTy) &&
-          TLI.isLoadExtLegal(ISD::EXTLOAD, LegalizedStoredValueTy, StoreTy))
+          TLI.isLoadExtLegal(ISD::EXTLOAD, LegalizedStoredValueTy, StoreTy) &&
+          allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstStoreAS,
+                             FirstStoreAlign) &&
+          allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstLoadAS,
+                             FirstLoadAlign))
         LastLegalIntegerType = i+1;
     }
   }
@@ -11035,18 +11056,13 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   SDLoc LoadDL(LoadNodes[0].MemNode);
   SDLoc StoreDL(StoreNodes[0].MemNode);
 
-  LoadSDNode *FirstLoad = cast<LoadSDNode>(LoadNodes[0].MemNode);
-  SDValue NewLoad = DAG.getLoad(JointMemOpVT, LoadDL,
-                                FirstLoad->getChain(),
-                                FirstLoad->getBasePtr(),
-                                FirstLoad->getPointerInfo(),
-                                false, false, false,
-                                FirstLoad->getAlignment());
+  SDValue NewLoad = DAG.getLoad(
+      JointMemOpVT, LoadDL, FirstLoad->getChain(), FirstLoad->getBasePtr(),
+      FirstLoad->getPointerInfo(), false, false, false, FirstLoadAlign);
 
-  SDValue NewStore = DAG.getStore(LatestOp->getChain(), StoreDL, NewLoad,
-                                  FirstInChain->getBasePtr(),
-                                  FirstInChain->getPointerInfo(), false, false,
-                                  FirstInChain->getAlignment());
+  SDValue NewStore = DAG.getStore(
+      LatestOp->getChain(), StoreDL, NewLoad, FirstInChain->getBasePtr(),
+      FirstInChain->getPointerInfo(), false, false, FirstStoreAlign);
 
   // Replace one of the loads with the new load.
   LoadSDNode *Ld = cast<LoadSDNode>(LoadNodes[0].MemNode);
