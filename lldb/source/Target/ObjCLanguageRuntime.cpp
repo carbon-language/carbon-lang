@@ -502,7 +502,11 @@ ObjCLanguageRuntime::GetDescriptorIteratorPair (bool update_if_needed)
 {
     if (update_if_needed)
         UpdateISAToDescriptorMapIfNeeded();
-    return {m_isa_to_descriptor.begin(),m_isa_to_descriptor.end()};
+    
+    return std::pair<ObjCLanguageRuntime::ISAToDescriptorIterator,
+                     ObjCLanguageRuntime::ISAToDescriptorIterator>(
+                        m_isa_to_descriptor.begin(),
+                        m_isa_to_descriptor.end());
 }
 
 
