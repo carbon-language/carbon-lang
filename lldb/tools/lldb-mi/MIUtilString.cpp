@@ -17,7 +17,6 @@
 
 // In-house headers:
 #include "MIUtilString.h"
-#include "Platform.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMIUtilString constructor.
@@ -804,54 +803,10 @@ CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
     for (MIuint nIndex(0); nIndex < nLen; ++nIndex)
     {
         const MIchar cUnescapedChar((*this)[nIndex]);
-        switch (cUnescapedChar)
-        {
-            case '\a':
-                strNew.append("\\a");
-                break;
-            case '\b':
-                strNew.append("\\b");
-                break;
-            case '\t':
-                strNew.append("\\t");
-                break;
-            case '\n':
-                strNew.append("\\n");
-                break;
-            case '\v':
-                strNew.append("\\v");
-                break;
-            case '\f':
-                strNew.append("\\f");
-                break;
-            case '\r':
-                strNew.append("\\r");
-                break;
-            case '\033':
-                strNew.append("\\e");
-                break;
-            case '\\':
-                strNew.append("\\\\");
-                break;
-            case '\"':
-                if (vbEscapeQuotes)
-                {
-                    strNew.append("\\\"");
-                    break;
-                }
-                // FALLTHROUGH
-            default:
-                if (::isprint(cUnescapedChar))
-                    strNew.push_back(cUnescapedChar);
-                else
-                {
-                    const size_t size = sizeof("\\xXX");
-                    char strEscapedChar[size];
-                    ::snprintf(strEscapedChar, size, "\\x%02" PRIx8, cUnescapedChar);
-                    strNew.append(strEscapedChar);
-                }
-                break;
-        }
+        if (cUnescapedChar == '"' && vbEscapeQuotes)
+            strNew.append("\\\"");
+        else
+            strNew.append(ConvertToPrintableASCII((char)cUnescapedChar));
     }
     return strNew;
 }
@@ -938,4 +893,58 @@ CMIUtilString::StripSlashes(void) const
     }
 
     return strNew;
+}
+
+CMIUtilString
+CMIUtilString::ConvertToPrintableASCII(const char vChar)
+{
+    switch (vChar)
+    {
+        case '\a':
+            return "\\a";
+        case '\b':
+            return "\\b";
+        case '\t':
+            return "\\t";
+        case '\n':
+            return "\\n";
+        case '\v':
+            return "\\v";
+        case '\f':
+            return "\\f";
+        case '\r':
+            return "\\r";
+        case '\033':
+            return "\\e";
+        case '\\':
+            return "\\\\";
+        default:
+            if (::isprint(vChar))
+                return Format("%c", vChar);
+            else
+                return Format("\\x%02" PRIx8, vChar);
+    }
+}
+
+CMIUtilString
+CMIUtilString::ConvertToPrintableASCII(const char16_t vChar16)
+{
+    if (vChar16 == (char16_t)(char)vChar16 && ::isprint(vChar16))
+        // Convert char16_t to char (if possible)
+        return Format("%c", vChar16);
+    else
+        return Format("\\u%02" PRIx8 "%02" PRIx8,
+                      (vChar16 >> 8) & 0xff, vChar16 & 0xff);
+}
+
+CMIUtilString
+CMIUtilString::ConvertToPrintableASCII(const char32_t vChar32)
+{
+    if (vChar32 == (char32_t)(char)vChar32 && ::isprint(vChar32))
+        // Convert char32_t to char (if possible)
+        return Format("%c", vChar32);
+    else
+        return Format("\\U%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8,
+                      (vChar32 >> 24) & 0xff, (vChar32 >> 16) & 0xff,
+                      (vChar32 >> 8) & 0xff, vChar32 & 0xff);
 }

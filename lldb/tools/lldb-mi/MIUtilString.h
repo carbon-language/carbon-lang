@@ -12,6 +12,7 @@
 // Third party headers:
 #include <string>
 #include <vector>
+#include <cinttypes>
 
 // In-house headers:
 #include "MIDataTypes.h"
@@ -36,6 +37,9 @@ class CMIUtilString : public std::string
     static CMIUtilString FormatValist(const CMIUtilString &vrFormating, va_list vArgs);
     static bool IsAllValidAlphaAndNumeric(const MIchar &vrText);
     static bool Compare(const CMIUtilString &vrLhs, const CMIUtilString &vrRhs);
+    static CMIUtilString ConvertToPrintableASCII(const char vChar);
+    static CMIUtilString ConvertToPrintableASCII(const char16_t vChar16);
+    static CMIUtilString ConvertToPrintableASCII(const char32_t vChar32);
 
     // Methods:
   public:

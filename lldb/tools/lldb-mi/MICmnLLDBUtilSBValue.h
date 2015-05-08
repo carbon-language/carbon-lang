@@ -36,8 +36,6 @@ class CMICmnLLDBUtilSBValue
     //
     CMIUtilString GetName(void) const;
     CMIUtilString GetValue(const bool vbExpandAggregates = false) const;
-    CMIUtilString GetValueCString(void) const;
-    CMIUtilString GetChildValueCString(void) const;
     CMIUtilString GetTypeName(void) const;
     CMIUtilString GetTypeNameDisplay(void) const;
     bool IsCharType(void) const;
@@ -53,8 +51,11 @@ class CMICmnLLDBUtilSBValue
 
     // Methods:
   private:
-    CMIUtilString ReadCStringFromHostMemory(const lldb::SBValue &vrValueObj) const;
+    template <typename charT> CMIUtilString ReadCStringFromHostMemory(lldb::SBValue &vrValue, const MIuint vnMaxLen = UINT32_MAX) const;
     bool GetSimpleValue(const bool vbHandleArrayType, CMIUtilString &vrValue) const;
+    CMIUtilString GetSimpleValueChar(void) const;
+    CMIUtilString GetSimpleValueCStringPointer(void) const;
+    CMIUtilString GetSimpleValueCStringArray(void) const;
     bool GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
 
     // Attributes:

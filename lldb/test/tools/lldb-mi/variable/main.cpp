@@ -47,8 +47,12 @@ var_list_children(void)
 void
 gdb_set_show_print_char_array_as_string_test(void)
 {
-    const char *string_ptr = "string - const char *";
-    const char string_arr[] = "string - char []";
+    const char *cp = "hello";
+    const char ca[] = "hello";
+    const char16_t *u16p = u"hello";
+    const char16_t u16a[] = u"hello";
+    const char32_t *u32p = U"hello";
+    const char32_t u32a[] = U"hello";
 
     // BP_gdb_set_show_print_char_array_as_string_test
 }
