@@ -656,7 +656,8 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
 
   bool BreakPHIEdge = false;
   MachineBasicBlock *ParentBlock = MI->getParent();
-  MachineBasicBlock *SuccToSinkTo = FindSuccToSinkTo(MI, ParentBlock, BreakPHIEdge);
+  MachineBasicBlock *SuccToSinkTo = FindSuccToSinkTo(MI, ParentBlock,
+                                                     BreakPHIEdge);
 
   // If there are no outputs, it must have side-effects.
   if (!SuccToSinkTo)
