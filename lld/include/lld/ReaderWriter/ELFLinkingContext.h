@@ -384,7 +384,7 @@ protected:
   bool _mipsPcRelEhRel = false;
   uint64_t _maxPageSize = 0x1000;
 
-  OutputMagic _outputMagic;
+  OutputMagic _outputMagic = OutputMagic::DEFAULT;
   StringRefVector _inputSearchPaths;
   std::unique_ptr<Writer> _writer;
   llvm::Optional<StringRef> _dynamicLinkerPath;
