@@ -1578,7 +1578,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     if (Left.is(tok::comma) && Left.NestingLevel == 0)
       return 3;
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
-    if (Right.is(Keywords.kw_function))
+    if (Right.is(Keywords.kw_function) && Left.isNot(tok::comma))
       return 100;
   }
 
