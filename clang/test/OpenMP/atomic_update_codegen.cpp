@@ -75,6 +75,9 @@ float2 float2x;
 register int rix __asm__("0");
 
 int main() {
+// CHECK-NOT: atomicrmw
+#pragma omp atomic
+  ++dv;
 // CHECK: atomicrmw add i8* @{{.+}}, i8 1 monotonic
 #pragma omp atomic
   bx++;
