@@ -705,6 +705,37 @@ TEST(TripleTest, getARMCPUForArch) {
     llvm::Triple Triple("arm--nacl");
     EXPECT_STREQ("cortex-a8", Triple.getARMCPUForArch("arm"));
   }
+  // armebv6 and armv6eb are permitted, but armebv6eb is not
+  {
+    llvm::Triple Triple("armebv6-non-eabi");
+    EXPECT_STREQ("arm1136jf-s", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armv6eb-none-eabi");
+    EXPECT_STREQ("arm1136jf-s", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armebv6eb-none-eabi");
+    EXPECT_EQ(nullptr, Triple.getARMCPUForArch());
+  }
+  // armeb is permitted, but armebeb is not
+  {
+    llvm::Triple Triple("armeb-none-eabi");
+    EXPECT_STREQ("arm7tdmi", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armebeb-none-eabi");
+    EXPECT_EQ(nullptr, Triple.getARMCPUForArch());
+  }
+  // xscaleeb is permitted, but armebxscale is not
+  {
+    llvm::Triple Triple("xscaleeb-none-eabi");
+    EXPECT_STREQ("xscale", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armebxscale-none-eabi");
+    EXPECT_EQ(nullptr, Triple.getARMCPUForArch());
+  }
 }
 
 TEST(TripleTest, NormalizeARM) {
