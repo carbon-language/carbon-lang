@@ -246,6 +246,11 @@ class MachineFrameInfo {
   /// True if this is a varargs function that contains a musttail call.
   bool HasMustTailInVarArgFunc;
 
+  /// True if this function contains a tail call. If so immutable objects like
+  /// function arguments are no longer so. A tail call *can* override fixed
+  /// stack objects like arguments so we can't treat them as immutable.
+  bool HasTailCall;
+
   /// Not null, if shrink-wrapping found a better place for the prologue.
   MachineBasicBlock *Save;
   /// Not null, if shrink-wrapping found a better place for the epilogue.
@@ -281,6 +286,7 @@ public:
     HasMustTailInVarArgFunc = false;
     Save = nullptr;
     Restore = nullptr;
+    HasTailCall = false;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this
@@ -508,6 +514,10 @@ public:
   bool hasMustTailInVarArgFunc() const { return HasMustTailInVarArgFunc; }
   void setHasMustTailInVarArgFunc(bool B) { HasMustTailInVarArgFunc = B; }
 
+  /// Returns true if the function contains a tail call.
+  bool hasTailCall() const { return HasTailCall; }
+  void setHasTailCall() { HasTailCall = true; }
+
   /// getMaxCallFrameSize - Return the maximum size of a call frame that must be
   /// allocated for an outgoing function call.  This is only available if
   /// CallFrameSetup/Destroy pseudo instructions are used by the target, and
@@ -545,6 +555,9 @@ public:
   /// isImmutableObjectIndex - Returns true if the specified index corresponds
   /// to an immutable object.
   bool isImmutableObjectIndex(int ObjectIdx) const {
+    // Tail calling functions can clobber their function arguments.
+    if (HasTailCall)
+      return false;
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].isImmutable;

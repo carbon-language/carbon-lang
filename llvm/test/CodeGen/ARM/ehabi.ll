@@ -146,8 +146,8 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP:   push   {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP:   .setfp r11, sp, #28
 ; CHECK-FP:   add    r11, sp, #28
-; CHECK-FP:   .pad   #28
-; CHECK-FP:   sub    sp, sp, #28
+; CHECK-FP:   .pad   #44
+; CHECK-FP:   sub    sp, sp, #44
 ; CHECK-FP:   .personality __gxx_personality_v0
 ; CHECK-FP:   .handlerdata
 ; CHECK-FP:   .fnend
@@ -156,8 +156,8 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   .save {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP-ELIM:   push  {r4, r5, r6, r7, r8, r9, r10, r11, lr}
-; CHECK-FP-ELIM:   .pad  #28
-; CHECK-FP-ELIM:   sub   sp, sp, #28
+; CHECK-FP-ELIM:   .pad  #36
+; CHECK-FP-ELIM:   sub   sp, sp, #36
 ; CHECK-FP-ELIM:   .personality __gxx_personality_v0
 ; CHECK-FP-ELIM:   .handlerdata
 ; CHECK-FP-ELIM:   .fnend
@@ -205,7 +205,7 @@ declare void @_ZSt9terminatev()
 ; DWARF-FP:    .cfi_offset r4, -36
 ; DWARF-FP:    add r11, sp, #28
 ; DWARF-FP:    .cfi_def_cfa r11, 8
-; DWARF-FP:    sub sp, sp, #28
+; DWARF-FP:    sub sp, sp, #44
 ; DWARF-FP:    sub sp, r11, #28
 ; DWARF-FP:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; DWARF-FP:    mov pc, lr
@@ -226,9 +226,9 @@ declare void @_ZSt9terminatev()
 ; DWARF-FP-ELIM:    .cfi_offset r6, -28
 ; DWARF-FP-ELIM:    .cfi_offset r5, -32
 ; DWARF-FP-ELIM:    .cfi_offset r4, -36
-; DWARF-FP-ELIM:    sub sp, sp, #28
-; DWARF-FP-ELIM:    .cfi_def_cfa_offset 64
-; DWARF-FP-ELIM:    add sp, sp, #28
+; DWARF-FP-ELIM:    sub sp, sp, #36
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 72
+; DWARF-FP-ELIM:    add sp, sp, #36
 ; DWARF-FP-ELIM:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; DWARF-FP-ELIM:    mov pc, lr
 ; DWARF-FP-ELIM:    .cfi_endproc

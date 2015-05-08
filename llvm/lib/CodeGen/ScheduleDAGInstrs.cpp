@@ -20,6 +20,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -143,6 +144,13 @@ static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
 
   if (const PseudoSourceValue *PSV =
       (*MI->memoperands_begin())->getPseudoValue()) {
+    // Function that contain tail calls don't have unique PseudoSourceValue
+    // objects. Two PseudoSourceValues might refer to the same or overlapping
+    // locations. The client code calling this function assumes this is not the
+    // case. So return a conservative answer of no known object.
+    if (MFI->hasTailCall())
+      return;
+
     // For now, ignore PseudoSourceValues which may alias LLVM IR values
     // because the code that uses this function has no way to cope with
     // such aliases.

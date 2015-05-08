@@ -637,8 +637,10 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
-  if (isTailCall)
+  if (isTailCall) {
+    MF.getFrameInfo()->setHasTailCall();
     return DAG.getNode(HexagonISD::TC_RETURN, dl, NodeTys, Ops);
+  }
 
   int OpCode = doesNotReturn ? HexagonISD::CALLv3nr : HexagonISD::CALLv3;
   Chain = DAG.getNode(OpCode, dl, NodeTys, Ops);
