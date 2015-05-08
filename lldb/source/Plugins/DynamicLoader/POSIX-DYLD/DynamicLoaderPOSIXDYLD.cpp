@@ -140,10 +140,6 @@ DynamicLoaderPOSIXDYLD::DidAttach()
         lldb_private::ObjectFile * obj = executable_sp->GetObjectFile();
         if (obj)
         {
-            // don't rebase if the module is not an executable
-            if (obj->GetType() != ObjectFile::Type::eTypeExecutable)
-                rebase_exec = false;
-
             // don't rebase if the module already has a load address
             Target & target = m_process->GetTarget ();
             Address addr = obj->GetImageInfoAddress (&target);
