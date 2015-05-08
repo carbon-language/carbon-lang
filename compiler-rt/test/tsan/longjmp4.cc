@@ -1,4 +1,8 @@
 // RUN: %clang_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+
+// Longjmp assembly has not been implemented for mips64 yet
+// XFAIL: mips64
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
