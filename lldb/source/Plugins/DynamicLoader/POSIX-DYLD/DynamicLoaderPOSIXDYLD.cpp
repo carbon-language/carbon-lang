@@ -567,9 +567,6 @@ DynamicLoaderPOSIXDYLD::ComputeLoadOffset()
     if (!exe)
         return LLDB_INVALID_ADDRESS;
 
-    if (exe->GetType() != ObjectFile::Type::eTypeExecutable)
-        return LLDB_INVALID_ADDRESS;
-
     Address file_entry = exe->GetEntryPointAddress();
 
     if (!file_entry.IsValid())
