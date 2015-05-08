@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - -O1 -disable-llvm-optzns | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - -O1 -disable-llvm-optzns | FileCheck %s --check-prefix=CHECK --check-prefix=CHECKOPT
 
 namespace Test1 {
 
@@ -361,6 +361,28 @@ namespace Test15 {
   // CHECK: declare void @_ZThn8_N6Test151C1fEiz
 }
 
+namespace Test16 {
+
+// Check that the thunk for 'B::f' has available_externally linkage
+// and is not in a comdat.
+
+template <class C>
+struct A {
+  virtual void f();
+};
+
+template <class D>
+struct B : virtual A<D> {
+  virtual void f() { }
+};
+
+extern template struct B<int>;
+
+void f(B<int> b) {
+  b.f();
+}
+}
+
 /**** The following has to go at the end of the file ****/
 
 // This is from Test5:
@@ -370,5 +392,8 @@ namespace Test15 {
 // This is from Test10:
 // CHECK-LABEL: define linkonce_odr void @_ZN6Test101C3fooEv
 // CHECK-LABEL: define linkonce_odr void @_ZThn8_N6Test101C3fooEv
+
+// CHECKOPT-LABEL: define available_externally void @_ZTv0_n24_N6Test161BIiE1fEv
+// CHECKOPT-NOT: comdat
 
 // CHECK: attributes [[NUW]] = { nounwind uwtable{{.*}} }

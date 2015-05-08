@@ -608,6 +608,7 @@ public:
   const llvm::Triple &getTriple() const;
   bool supportsCOMDAT() const;
   void maybeSetTrivialComdat(const Decl &D, llvm::GlobalObject &GO);
+  void maybeSetTrivialComdat(llvm::GlobalObject &GO);
 
   CGCXXABI &getCXXABI() const { return *ABI; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }

@@ -1328,8 +1328,7 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   // Set the correct linkage.
   VTable->setLinkage(Linkage);
 
-  if (CGM.supportsCOMDAT() && VTable->isWeakForLinker())
-    VTable->setComdat(CGM.getModule().getOrInsertComdat(VTable->getName()));
+  CGM.maybeSetTrivialComdat(*VTable);
 
   // Set the right visibility.
   CGM.setGlobalVisibility(VTable, RD);
@@ -1796,8 +1795,8 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     if (!D.isLocalVarDecl() && C) {
       guard->setComdat(C);
       CGF.CurFn->setComdat(C);
-    } else if (CGM.supportsCOMDAT() && guard->isWeakForLinker()) {
-      guard->setComdat(CGM.getModule().getOrInsertComdat(guard->getName()));
+    } else {
+      CGM.maybeSetTrivialComdat(*guard);
     }
 
     CGM.setStaticLocalDeclGuardAddress(&D, guard);
@@ -2803,8 +2802,7 @@ llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
       new llvm::GlobalVariable(M, Init->getType(),
                                /*Constant=*/true, Linkage, Init, Name);
 
-  if (CGM.supportsCOMDAT() && GV->isWeakForLinker())
-    GV->setComdat(M.getOrInsertComdat(GV->getName()));
+  CGM.maybeSetTrivialComdat(*GV);
 
   // If there's already an old global variable, replace it with the new one.
   if (OldGV) {
@@ -3598,8 +3596,7 @@ static llvm::Constant *getClangCallTerminateFn(CodeGenModule &CGM) {
     // we don't want it to turn into an exported symbol.
     fn->setLinkage(llvm::Function::LinkOnceODRLinkage);
     fn->setVisibility(llvm::Function::HiddenVisibility);
-    if (CGM.supportsCOMDAT())
-      fn->setComdat(CGM.getModule().getOrInsertComdat(fn->getName()));
+    CGM.maybeSetTrivialComdat(*fn);
 
     // Set up the function.
     llvm::BasicBlock *entry =
