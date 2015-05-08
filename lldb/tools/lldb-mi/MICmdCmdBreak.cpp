@@ -243,14 +243,19 @@ CMICmdCmdBreakInsert::Execute(void)
 
     if (bOk)
     {
+        if (!m_bBrkPtIsPending && (m_brkPt.GetNumLocations() == 0))
+        {
+            sbTarget.BreakpointDelete(m_brkPt.GetID());
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_LOCATION_NOT_FOUND), m_cmdData.strMiCmd.c_str(), m_brkName.c_str()));
+            return MIstatus::failure;
+        }
+
         m_brkPt.SetEnabled(m_bBrkPtEnabled);
         m_brkPt.SetIgnoreCount(m_nBrkPtIgnoreCount);
         if (m_bBrkPtCondition)
             m_brkPt.SetCondition(m_brkPtCondition.c_str());
         if (m_bBrkPtThreadId)
             m_brkPt.SetThreadID(m_nBrkPtThreadId);
-        if (!m_brkPt.IsValid())
-            m_bBrkPtIsPending = pArgPendingBrkPt->GetFound();
     }
 
     // CODETAG_LLDB_BREAKPOINT_CREATION

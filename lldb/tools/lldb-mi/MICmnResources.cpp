@@ -217,6 +217,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_NOT_IMPLEMENTED_DEPRECATED, "Command '%s'. Command not implemented as it has been deprecated"},
     {IDS_CMD_ERR_CREATE_TARGET, "Command '%s'. Create target failed: %s"},
     {IDS_CMD_ERR_BRKPT_LOCATION_FORMAT, "Command '%s'. Incorrect format for breakpoint location '%s'"},
+    {IDS_CMD_ERR_BRKPT_LOCATION_NOT_FOUND, "Command '%s'. Breakpoint location '%s' not found"},
     {IDS_CMD_ERR_BRKPT_INVALID, "Command '%s'. Breakpoint '%s' invalid"},
     {IDS_CMD_ERR_BRKPT_CNT_EXCEEDED, "Command '%s'. Number of valid breakpoint exceeded %d. Cannot create new breakpoint '%s'"},
     {IDS_CMD_ERR_SOME_ERROR, "Command '%s'. Error: %s"},
