@@ -350,11 +350,9 @@ bool
 ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                     const ELFYAML::RelocationSection &Section,
                                     ContiguousBlobAccumulator &CBA) {
-  if (Section.Type != llvm::ELF::SHT_REL &&
-      Section.Type != llvm::ELF::SHT_RELA) {
-    errs() << "error: Invalid relocation section type.\n";
-    return false;
-  }
+  assert((Section.Type == llvm::ELF::SHT_REL ||
+          Section.Type == llvm::ELF::SHT_RELA) &&
+         "Section type is not SHT_REL nor SHT_RELA");
 
   bool IsRela = Section.Type == llvm::ELF::SHT_RELA;
   SHeader.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
@@ -392,10 +390,8 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                          const ELFYAML::Group &Section,
                                          ContiguousBlobAccumulator &CBA) {
   typedef typename object::ELFFile<ELFT>::Elf_Word Elf_Word;
-  if (Section.Type != llvm::ELF::SHT_GROUP) {
-    errs() << "error: Invalid section type.\n";
-    return false;
-  }
+  assert(Section.Type == llvm::ELF::SHT_GROUP &&
+         "Section type is not SHT_GROUP");
 
   SHeader.sh_entsize = sizeof(Elf_Word);
   SHeader.sh_size = SHeader.sh_entsize * Section.Members.size();
@@ -423,10 +419,8 @@ template <class ELFT>
 bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                          const ELFYAML::MipsABIFlags &Section,
                                          ContiguousBlobAccumulator &CBA) {
-  if (Section.Type != llvm::ELF::SHT_MIPS_ABIFLAGS) {
-    errs() << "error: Invalid section type.\n";
-    return false;
-  }
+  assert(Section.Type == llvm::ELF::SHT_MIPS_ABIFLAGS &&
+         "Section type is not SHT_MIPS_ABIFLAGS");
 
   object::Elf_Mips_ABIFlags<ELFT> Flags;
   zero(Flags);
