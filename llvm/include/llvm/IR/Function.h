@@ -130,8 +130,8 @@ public:
   Type *getReturnType() const;           // Return the type of the ret val
   FunctionType *getFunctionType() const; // Return the FunctionType for me
 
-  /// getContext - Return a pointer to the LLVMContext associated with this
-  /// function, or NULL if this function is not bound to a context yet.
+  /// getContext - Return a reference to the LLVMContext associated with this
+  /// function.
   LLVMContext &getContext() const;
 
   /// isVarArg - Return true if this function takes a variable number of
