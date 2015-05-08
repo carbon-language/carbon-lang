@@ -18,9 +18,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = "%s" % self.myexe)
 
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
-
         # Test that the executable is loaded when file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % self.myexe)
         self.expect("\^done")
@@ -44,9 +41,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = "%s" % path)
 
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
-
         # Test that the executable isn't loaded when unknown file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % path)
         self.expect("\^error,msg=\"Command 'file-exec-and-symbols'. Target binary '%s' is invalid. error: unable to find executable for '%s'\"" % (path, path))
@@ -65,9 +59,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         path = os.path.join(os.getcwd(), self.myexe)
 
         self.spawnLldbMi(args = "%s" % path)
-
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
 
         # Test that the executable is loaded when file was specified using absolute path
         self.expect("-file-exec-and-symbols \"%s\"" % path)
@@ -92,9 +83,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = "%s" % path)
 
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
-
         # Test that the executable is loaded when file was specified using relative path
         self.expect("-file-exec-and-symbols \"%s\"" % path)
         self.expect("\^done")
@@ -117,9 +105,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         path = "unknown_dir/%s" % self.myexe
 
         self.spawnLldbMi(args = "%s" % path)
-
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
 
         # Test that the executable isn't loaded when file was specified using unknown path
         self.expect("-file-exec-and-symbols \"%s\"" % path)
@@ -241,9 +226,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         logDirectory = "."
         self.spawnLldbMi(args = "%s --log" % self.myexe)
 
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
-
         # Test that the executable is loaded when file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % self.myexe)
         self.expect("\^done")
@@ -278,9 +260,6 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         logDirectory = tempfile.gettempdir()
 
         self.spawnLldbMi(args = "%s --log --log-dir=%s" % (self.myexe,logDirectory))
-
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
 
         # Test that the executable is loaded when file was specified
         self.expect("-file-exec-and-symbols \"%s\"" % self.myexe)

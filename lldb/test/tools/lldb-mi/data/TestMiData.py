@@ -85,7 +85,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         """Test that -data-read-memory-bytes can access local buffers."""
 
         self.spawnLldbMi(args = None)
-        self.expect(self.child_prompt, exactly = True)
 
         # Load executable
         self.runCmd('-file-exec-and-symbols %s' % self.myexe)
