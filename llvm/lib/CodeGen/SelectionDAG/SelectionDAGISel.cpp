@@ -578,6 +578,13 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
         TargetRegisterInfo::isVirtualRegister(To))
       MRI.constrainRegClass(To, MRI.getRegClass(From));
     // Replace it.
+
+
+    // Replacing one register with another won't touch the kill flags.
+    // We need to conservatively clear the kill flags as a kill on the old
+    // register might dominate existing uses of the new register.
+    if (!MRI.use_empty(To))
+      MRI.clearKillFlags(From);
     MRI.replaceRegWith(From, To);
   }
 
