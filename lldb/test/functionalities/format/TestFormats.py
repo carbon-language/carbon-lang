@@ -11,6 +11,7 @@ class TestFormats(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureFreeBSD("llvm.org/pr22784: pexpect failing on the FreeBSD buildbot")
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_formats(self):
         """Test format string functionality."""
