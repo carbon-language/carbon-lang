@@ -40,6 +40,7 @@
 #undef __CLC_FPSIZE
 #undef __CLC_SCALAR_GENTYPE
 
+#ifndef __FLOAT_ONLY
 #ifdef cl_khr_fp64
 #define __CLC_SCALAR_GENTYPE double
 #define __CLC_FPSIZE 64
@@ -85,3 +86,4 @@
 #endif
 
 #undef __CLC_BODY
+#endif

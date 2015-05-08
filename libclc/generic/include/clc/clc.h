@@ -57,6 +57,7 @@
 #include <clc/math/fmin.h>
 #include <clc/math/fmod.h>
 #include <clc/math/fract.h>
+#include <clc/math/half_rsqrt.h>
 #include <clc/math/half_sqrt.h>
 #include <clc/math/hypot.h>
 #include <clc/math/ldexp.h>
