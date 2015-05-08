@@ -6223,9 +6223,18 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
       ExtraSpaces);
   verifyFormat(
       "std::vector<MyValues> aaaaaaaaaaaaaaaaaaa{\n"
-      "    aaaaaaa, aaaaaaaaaa, aaaaa, aaaaaaaaaaaaaaa, aaa, aaaaaaaaaa, a,\n"
-      "    aaaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaa,\n"
-      "    aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa, aaaaaaa, a};");
+      "    aaaaaaa,\n"
+      "    aaaaaaaaaa,\n"
+      "    aaaaa,\n"
+      "    aaaaaaaaaaaaaaa,\n"
+      "    aaa,\n"
+      "    aaaaaaaaaa,\n"
+      "    a,\n"
+      "    aaaaaaaaaaaaaaaaaaaaa,\n"
+      "    aaaaaaaaaaaa,\n"
+      "    aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
+      "    aaaaaaa,\n"
+      "    a};");
   verifyFormat("vector<int> foo = { ::SomeGlobalFunction() };", ExtraSpaces);
 }
 
@@ -6263,6 +6272,19 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
   verifyFormat("vector<int> aaaaaaaaaaaaaaaaaaaaaa = {\n"
                "    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};",
                getLLVMStyleWithColumns(43));
+  verifyFormat(
+      "static unsigned SomeValues[10][3] = {\n"
+      "    {1, 4, 0},  {4, 9, 0},  {4, 5, 9},  {8, 5, 4}, {1, 8, 4},\n"
+      "    {10, 1, 6}, {11, 0, 9}, {2, 11, 9}, {5, 2, 9}, {11, 2, 7}};");
+  verifyFormat("static auto fields = new vector<string>{\n"
+               "    \"aaaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaa\",\n"
+               "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
+               "};");
 
   // Trailing commas.
   verifyFormat("vector<int> x = {\n"
@@ -6277,15 +6299,15 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "                 1, 1, 1, 1,\n"
                "                 /**/ /**/};",
                getLLVMStyleWithColumns(39));
+
+  // With nested lists, we should either format one item per line or all nested
+  // lists one on line.
+  // FIXME: For some nested lists, we can do better.
   verifyFormat("return {{aaaaaaaaaaaaaaaaaaaaa},\n"
                "        {aaaaaaaaaaaaaaaaaaa},\n"
                "        {aaaaaaaaaaaaaaaaaaaaa},\n"
                "        {aaaaaaaaaaaaaaaaa}};",
                getLLVMStyleWithColumns(60));
-
-  // With nested lists, we should either format one item per line or all nested
-  // lists one one line.
-  // FIXME: For some nested lists, we can do better.
   verifyFormat(
       "SomeStruct my_struct_array = {\n"
       "    {aaaaaa, aaaaaaaa, aaaaaaaaaa, aaaaaaaaa, aaaaaaaaa, aaaaaaaaaa,\n"

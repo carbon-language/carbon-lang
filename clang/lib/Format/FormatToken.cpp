@@ -199,13 +199,14 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // create a column layout. If it has a nested list, column layout ensures one
   // list element per line. If the difference between the shortest and longest
   // element is too large, column layout would create too much whitespace.
-  if (HasNestedBracedList || Commas.size() < 5 || Token->NestingLevel != 0 ||
-      MaxItemLength - MinItemLength > 10)
+  if (Commas.size() < 5 || Token->NestingLevel != 0)
     return;
 
   // We can never place more than ColumnLimit / 3 items in a row (because of the
   // spaces and the comma).
-  for (unsigned Columns = 1; Columns <= Style.ColumnLimit / 3; ++Columns) {
+  unsigned MaxColumns =
+      MaxItemLength - MinItemLength > 10 ? 1 : Style.ColumnLimit / 3;
+  for (unsigned Columns = 1; Columns <= MaxColumns; ++Columns) {
     ColumnFormat Format;
     Format.Columns = Columns;
     Format.ColumnSizes.resize(Columns);
