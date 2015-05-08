@@ -264,7 +264,8 @@ class ALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
 
 class ALIGN_DESC : ALIGN_DESC_BASE<"align", GPR32Opnd, uimm2>;
 
-class ALUIPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class ALUIPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
+    : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rs);
   dag InOperandList = (ins simm16:$imm);
   string AsmString = !strconcat(instr_asm, "\t$rs, $imm");
@@ -647,9 +648,9 @@ class SDBBP_R6_DESC {
 
 def ADDIUPC : R6MMR6Rel, ADDIUPC_ENC, ADDIUPC_DESC, ISA_MIPS32R6;
 def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
-def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
+def ALUIPC : R6MMR6Rel, ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
-def AUIPC : AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
+def AUIPC : R6MMR6Rel, AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
 def BAL : BAL_ENC, BAL_DESC, ISA_MIPS32R6;
 def BALC : R6MMR6Rel, BALC_ENC, BALC_DESC, ISA_MIPS32R6;
 def BC1EQZ : BC1EQZ_ENC, BC1EQZ_DESC, ISA_MIPS32R6, HARDFLOAT;
