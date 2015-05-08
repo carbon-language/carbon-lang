@@ -31,6 +31,9 @@ void ARMSymbolTable::addDefinedAtom(Elf_Sym &sym, const DefinedAtom *da,
                                     int64_t addr) {
   SymbolTable::addDefinedAtom(sym, da, addr);
 
+  if (da->contentType() == DefinedAtom::typeARMExidx)
+    sym.st_value = addr;
+
   // Set zero bit to distinguish real symbols addressing Thumb instructions.
   // Don't care about mapping symbols like $t and others.
   if (DefinedAtom::codeARMThumb == da->codeModel())

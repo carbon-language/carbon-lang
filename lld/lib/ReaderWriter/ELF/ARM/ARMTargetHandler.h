@@ -20,9 +20,88 @@ class ELFLinkingContext;
 
 namespace elf {
 
+/// \brief ARM specific section (.ARM.exidx) with indexes to exception handlers
+class ARMExidxSection : public AtomSection<ELF32LE> {
+  typedef AtomSection<ELF32LE> Base;
+
+public:
+  ARMExidxSection(const ELFLinkingContext &ctx, StringRef sectionName,
+                  int32_t permissions, int32_t order)
+      : Base(ctx, sectionName, DefinedAtom::typeARMExidx, permissions, order) {
+    this->_type = SHT_ARM_EXIDX;
+    this->_isLoadedInMemory = true;
+  }
+
+  bool hasOutputSegment() const override { return true; }
+
+  const AtomLayout *appendAtom(const Atom *atom) override {
+    const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
+    assert(atom->contentType() == DefinedAtom::typeARMExidx &&
+           "atom content type for .ARM.exidx section has to be typeARMExidx");
+
+    DefinedAtom::Alignment atomAlign = definedAtom->alignment();
+    uint64_t fOffset = alignOffset(this->fileSize(), atomAlign);
+    uint64_t mOffset = alignOffset(this->memSize(), atomAlign);
+
+    _atoms.push_back(new (_alloc) AtomLayout(atom, fOffset, 0));
+    this->_fsize = fOffset + definedAtom->size();
+    this->_msize = mOffset + definedAtom->size();
+    DEBUG_WITH_TYPE("Section", llvm::dbgs()
+                                   << "[" << this->name() << " " << this << "] "
+                                   << "Adding atom: " << atom->name() << "@"
+                                   << fOffset << "\n");
+
+    uint64_t alignment = atomAlign.value;
+    if (this->_alignment < alignment)
+      this->_alignment = alignment;
+
+    return _atoms.back();
+  }
+};
+
 class ARMTargetLayout : public TargetLayout<ELF32LE> {
 public:
   ARMTargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
+
+  SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                               int32_t contentPermissions) override {
+    switch (contentType) {
+    case DefinedAtom::typeARMExidx:
+      return ORDER_ARM_EXIDX;
+    default:
+      return TargetLayout::getSectionOrder(name, contentType,
+                                           contentPermissions);
+    }
+  }
+
+  StringRef getOutputSectionName(StringRef archivePath, StringRef memberPath,
+                                 StringRef inputSectionName) const override {
+    return llvm::StringSwitch<StringRef>(inputSectionName)
+        .StartsWith(".ARM.exidx", ".ARM.exidx")
+        .StartsWith(".ARM.extab", ".ARM.extab")
+        .Default(TargetLayout::getOutputSectionName(archivePath, memberPath,
+                                                    inputSectionName));
+  }
+
+  SegmentType getSegmentType(Section<ELF32LE> *section) const override {
+    switch (section->order()) {
+    case ORDER_ARM_EXIDX:
+      return llvm::ELF::PT_ARM_EXIDX;
+    default:
+      return TargetLayout::getSegmentType(section);
+    }
+  }
+
+  AtomSection<ELF32LE> *
+  createSection(StringRef name, int32_t contentType,
+                DefinedAtom::ContentPermissions contentPermissions,
+                SectionOrder sectionOrder) override {
+    if (contentType == DefinedAtom::typeARMExidx)
+      return new ARMExidxSection(_ctx, name, contentPermissions, sectionOrder);
+
+    return TargetLayout::createSection(name, contentType, contentPermissions,
+                                       sectionOrder);
+  }
 
   uint64_t getGOTSymAddr() {
     std::call_once(_gotSymOnce, [this]() {

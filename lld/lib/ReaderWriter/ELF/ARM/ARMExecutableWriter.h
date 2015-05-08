@@ -67,7 +67,13 @@ void ARMExecutableWriter::finalizeDefaultAtomValues() {
     else
       gotAtom->_virtualAddr = 0;
   }
-  // TODO: resolve addresses of __exidx_start/_end atoms
+
+  // Set required by gcc libc __ehdr_start symbol with pointer to ELF header
+  if (auto ehdr = _armLayout.findAbsoluteAtom("__ehdr_start"))
+    ehdr->_virtualAddr = _elfHeader->virtualAddr();
+
+  // Set required by gcc libc symbols __exidx_start/__exidx_end
+  updateScopeAtomValues("exidx", ".ARM.exidx");
 }
 
 unique_bump_ptr<SymbolTable<ELF32LE>> ARMExecutableWriter::createSymbolTable() {
@@ -82,6 +88,8 @@ void ARMExecutableWriter::processUndefinedSymbol(
   } else if (symName.startswith("__exidx")) {
     file.addAbsoluteAtom("__exidx_start");
     file.addAbsoluteAtom("__exidx_end");
+  } else if (symName == "__ehdr_start") {
+    file.addAbsoluteAtom("__ehdr_start");
   }
 }
 
