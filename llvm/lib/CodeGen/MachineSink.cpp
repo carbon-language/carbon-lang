@@ -756,7 +756,13 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
 
   // Conservatively, clear any kill flags, since it's possible that they are no
   // longer correct.
-  MI->clearKillInfo();
+  // Note that we have to clear the kill flags for any register this instruction
+  // uses as we may sink over another instruction which currently kills the
+  // used registers.
+  for (MachineOperand &MO : MI->operands()) {
+    if (MO.isReg() && MO.isUse())
+      MRI->clearKillFlags(MO.getReg());
+  }
 
   return true;
 }
