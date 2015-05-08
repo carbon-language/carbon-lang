@@ -803,7 +803,9 @@ CMICmnLLDBDebugSessionInfo::GetBrkPtInfo(const lldb::SBBreakpoint &vBrkPt, SBrkP
     const MIchar *pFn = pUnkwn;
     const MIchar *pFilePath = pUnkwn;
     size_t nLine = 0;
-    const size_t nAddr = brkPtAddr.GetLoadAddress(GetTarget());
+    lldb::addr_t nAddr = brkPtAddr.GetLoadAddress(GetTarget());
+    if (nAddr == LLDB_INVALID_ADDRESS)
+        nAddr = brkPtAddr.GetFileAddress();
 
     lldb::SBCompileUnit rCmplUnit = symbolCntxt.GetCompileUnit();
     if (rCmplUnit.IsValid())

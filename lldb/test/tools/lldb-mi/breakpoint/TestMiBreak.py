@@ -46,12 +46,10 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         self.runCmd("-break-insert -f main")
-        #FIXME main wasn't resolved
-        #self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
-        self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
-        #FIXME main wasn't resolved, =breakpoint-created is treated as =breakpoint-modified
+        self.expect("\^done,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        #FIXME =breakpoint-created is treated as =breakpoint-modified
         #self.expect("=breakpoint-created,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
-        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"0xffffffffffffffff\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"(?!0xffffffffffffffff)0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\",pending=\[\"main\"\],times=\"0\",original-location=\"main\"}")
 
         self.runCmd("-exec-run")
         self.expect("\^running")
