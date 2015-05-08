@@ -8,13 +8,13 @@
 // RUN: ASAN_OPTIONS=verbosity=1:full_address_space=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%kernel_bits
 // RUN: ASAN_OPTIONS=verbosity=1:full_address_space=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-kernel-64-bits
 //
-// CHECK-kernel-32-bits: || `[0x38000000, 0xbfffffff]` || HighMem    ||
-// CHECK-kernel-32-bits: || `[0x27000000, 0x37ffffff]` || HighShadow ||
-// CHECK-kernel-32-bits: || `[0x24000000, 0x26ffffff]` || ShadowGap  ||
+// CHECK-kernel-32-bits: || `[0x38{{0+}}, 0xb{{f+}}]` || HighMem    ||
+// CHECK-kernel-32-bits: || `[0x27{{0+}}, 0x37{{f+}}]` || HighShadow ||
+// CHECK-kernel-32-bits: || `[0x24{{0+}}, 0x26{{f+}}]` || ShadowGap  ||
 //
-// CHECK-kernel-64-bits: || `[0x40000000, 0xffffffff]` || HighMem    ||
-// CHECK-kernel-64-bits: || `[0x28000000, 0x3fffffff]` || HighShadow ||
-// CHECK-kernel-64-bits: || `[0x24000000, 0x27ffffff]` || ShadowGap  ||
+// CHECK-kernel-64-bits: || `[0x4{{0+}}, 0x{{f+}}]` || HighMem    ||
+// CHECK-kernel-64-bits: || `[0x28{{0+}}, 0x3{{f+}}]` || HighShadow ||
+// CHECK-kernel-64-bits: || `[0x24{{0+}}, 0x27{{f+}}]` || ShadowGap  ||
 //
 // REQUIRES: asan-32-bits
 
