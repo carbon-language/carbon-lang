@@ -520,6 +520,23 @@ static bool enableEntrySafepoints(Function &F) { return !NoEntry; }
 static bool enableBackedgeSafepoints(Function &F) { return !NoBackedge; }
 static bool enableCallSafepoints(Function &F) { return !NoCall; }
 
+// Normalize basic block to make it ready to be target of invoke statepoint.
+// Ensure that 'BB' does not have phi nodes. It may require spliting it.
+static BasicBlock *normalizeForInvokeSafepoint(BasicBlock *BB,
+                                               BasicBlock *InvokeParent) {
+  BasicBlock *ret = BB;
+
+  if (!BB->getUniquePredecessor()) {
+    ret = SplitBlockPredecessors(BB, InvokeParent, "");
+  }
+
+  // Now that 'ret' has unique predecessor we can safely remove all phi nodes
+  // from it
+  FoldSingleEntryPHINodes(ret);
+  assert(!isa<PHINode>(ret->begin()));
+
+  return ret;
+}
 
 bool PlaceSafepoints::runOnFunction(Function &F) {
   if (F.isDeclaration() || F.empty()) {
@@ -673,6 +690,17 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   Results.reserve(ParsePointNeeded.size());
   for (size_t i = 0; i < ParsePointNeeded.size(); i++) {
     CallSite &CS = ParsePointNeeded[i];
+
+    // For invoke statepoints we need to remove all phi nodes at the normal
+    // destination block.
+    // Reason for this is that we can place gc_result only after last phi node
+    // in basic block. We will get malformed code after RAUW for the
+    // gc_result if one of this phi nodes uses result from the invoke.
+    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(CS.getInstruction())) {
+      normalizeForInvokeSafepoint(Invoke->getNormalDest(),
+                                  Invoke->getParent());
+    }
+
     Value *GCResult = ReplaceWithStatepoint(CS, nullptr);
     Results.push_back(GCResult);
   }
@@ -683,20 +711,8 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     CallSite &CS = ParsePointNeeded[i];
     Value *GCResult = Results[i];
     if (GCResult) {
-      // In case if we inserted result in a different basic block than the
-      // original safepoint (this can happen for invokes). We need to be sure
-      // that
-      // original result value was not used in any of the phi nodes at the
-      // beginning of basic block with gc result. Because we know that all such
-      // blocks will have single predecessor we can safely assume that all phi
-      // nodes have single entry (because of normalizeBBForInvokeSafepoint).
-      // Just remove them all here.
-      if (CS.isInvoke()) {
-        FoldSingleEntryPHINodes(cast<Instruction>(GCResult)->getParent(),
-                                nullptr);
-        assert(
-            !isa<PHINode>(cast<Instruction>(GCResult)->getParent()->begin()));
-      }
+      // Can not RAUW for the gc result in case of phi nodes preset.
+      assert(!isa<PHINode>(cast<Instruction>(GCResult)->getParent()->begin()));
 
       // Replace all uses with the new call
       CS.getInstruction()->replaceAllUsesWith(GCResult);
@@ -841,28 +857,6 @@ InsertSafepointPoll(DominatorTree &DT, Instruction *term,
   assert(ParsePointsNeeded.size() <= calls.size());
 }
 
-// Normalize basic block to make it ready to be target of invoke statepoint.
-// It means spliting it to have single predecessor. Return newly created BB
-// ready to be successor of invoke statepoint.
-static BasicBlock *normalizeBBForInvokeSafepoint(BasicBlock *BB,
-                                                 BasicBlock *InvokeParent) {
-  BasicBlock *ret = BB;
-
-  if (!BB->getUniquePredecessor()) {
-    ret = SplitBlockPredecessors(BB, InvokeParent, "");
-  }
-
-  // Another requirement for such basic blocks is to not have any phi nodes.
-  // Since we just ensured that new BB will have single predecessor,
-  // all phi nodes in it will have one value. Here it would be naturall place
-  // to
-  // remove them all. But we can not do this because we are risking to remove
-  // one of the values stored in liveset of another statepoint. We will do it
-  // later after placing all safepoints.
-
-  return ret;
-}
-
 /// Replaces the given call site (Call or Invoke) with a gc.statepoint
 /// intrinsic with an empty deoptimization arguments list.  This does
 /// NOT do explicit relocation for GC support.
@@ -937,9 +931,12 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     Token = Invoke;
 
     // We'll insert the gc.result into the normal block
-    BasicBlock *NormalDest = normalizeBBForInvokeSafepoint(
-        ToReplace->getNormalDest(), Invoke->getParent());
-    Builder.SetInsertPoint(NormalDest->getFirstInsertionPt());
+    BasicBlock *NormalDest = ToReplace->getNormalDest();
+    // Can not insert gc.result in case of phi nodes preset.
+    // Should have removed this cases prior to runnning this function
+    assert(!isa<PHINode>(NormalDest->begin()));
+    Instruction *IP = &*(NormalDest->getFirstInsertionPt());
+    Builder.SetInsertPoint(IP);
   } else {
     llvm_unreachable("unexpect type of CallSite");
   }
