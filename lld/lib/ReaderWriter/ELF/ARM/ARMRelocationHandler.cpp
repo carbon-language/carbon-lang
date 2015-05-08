@@ -76,7 +76,7 @@ static Reference::Addend readAddend_THM_JUMP11(const uint8_t *location) {
   const auto value = read16le(location);
   const uint16_t imm11 = value & 0x7FF;
 
-  return llvm::SignExtend32<12>(imm11 << 1);
+  return llvm::SignExtend64<12>(imm11 << 1);
 }
 
 static Reference::Addend readAddend(const uint8_t *location,
@@ -274,6 +274,9 @@ static std::error_code relocR_ARM_THM_JUMP11(uint8_t *location, uint64_t P,
         llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
         llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
         llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
+
+  if (!llvm::isInt<12>((int32_t)result))
+    return make_out_of_range_reloc_error();
 
   // we cut off first bit because it is always 1 according to p. 4.5.3
   result = (result & 0x0FFE) >> 1;
