@@ -323,7 +323,7 @@ bool
 HostInfoBase::ComputeProcessTempFileDirectory(FileSpec &file_spec)
 {
     FileSpec temp_file_spec;
-    if (!ComputeGlobalTempFileDirectory(temp_file_spec))
+    if (!HostInfo::ComputeGlobalTempFileDirectory(temp_file_spec))
         return false;
 
     std::string pid_str;
@@ -342,21 +342,33 @@ HostInfoBase::ComputeProcessTempFileDirectory(FileSpec &file_spec)
 }
 
 bool
-HostInfoBase::ComputeGlobalTempFileDirectory(FileSpec &file_spec)
+HostInfoBase::ComputeTempFileBaseDirectory(FileSpec &file_spec)
 {
     file_spec.Clear();
 
     const char *tmpdir_cstr = getenv("TMPDIR");
-    if (tmpdir_cstr == NULL)
+    if (tmpdir_cstr == nullptr)
     {
         tmpdir_cstr = getenv("TMP");
-        if (tmpdir_cstr == NULL)
+        if (tmpdir_cstr == nullptr)
             tmpdir_cstr = getenv("TEMP");
     }
     if (!tmpdir_cstr)
         return false;
 
-    FileSpec temp_file_spec(tmpdir_cstr, false);
+    file_spec = FileSpec(tmpdir_cstr, false);
+    return true;
+}
+
+bool
+HostInfoBase::ComputeGlobalTempFileDirectory(FileSpec &file_spec)
+{
+    file_spec.Clear();
+
+    FileSpec temp_file_spec;
+    if (!HostInfo::ComputeTempFileBaseDirectory(temp_file_spec))
+        return false;
+
     temp_file_spec.AppendPathComponent("lldb");
     if (!FileSystem::MakeDirectory(temp_file_spec.GetPath().c_str(), eFilePermissionsDirectoryDefault).Success())
         return false;
