@@ -3,9 +3,9 @@
 """
 Run the test suite using a separate process for each test file.
 
-Each test will run with a time limit of 5 minutes by default.
+Each test will run with a time limit of 10 minutes by default.
 
-Override the default time limit of 5 minutes by setting
+Override the default time limit of 10 minutes by setting
 the environment variable LLDB_TEST_TIMEOUT.
 
 E.g., export LLDB_TEST_TIMEOUT=10m
@@ -48,12 +48,7 @@ def get_timeout_command():
 
 timeout_command = get_timeout_command()
 
-# TestConcurrentEvents is a long test and it times out with default 5m timeout.
-# Increase its timeout if it hasn't been already set.
-if os.environ.get('LLDB_TEST_TIMEOUT') == None and os.environ.get('LLDB_TESTCONCURRENTEVENTS_TIMEOUT') == None:
-    os.environ['LLDB_TESTCONCURRENTEVENTS_TIMEOUT'] = "7m"
-
-default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "5m"
+default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "10m"
 
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
@@ -158,9 +153,9 @@ def main():
     parser = OptionParser(usage="""\
 Run lldb test suite using a separate process for each test file.
 
-       Each test will run with a time limit of 5 minutes by default.
+       Each test will run with a time limit of 10 minutes by default.
 
-       Override the default time limit of 5 minutes by setting
+       Override the default time limit of 10 minutes by setting
        the environment variable LLDB_TEST_TIMEOUT.
 
        E.g., export LLDB_TEST_TIMEOUT=10m
