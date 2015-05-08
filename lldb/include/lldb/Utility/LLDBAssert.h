@@ -20,7 +20,7 @@
 
 namespace lldb_private {
     void
-    lldb_assert (int expression,
+    lldb_assert (bool expression,
                  const char* expr_text,
                  const char* func,
                  const char* file,

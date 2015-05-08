@@ -17,7 +17,7 @@ using namespace llvm;
 using namespace lldb_private;
 
 void
-lldb_private::lldb_assert (int expression,
+lldb_private::lldb_assert (bool expression,
                            const char* expr_text,
                            const char* func,
                            const char* file,
