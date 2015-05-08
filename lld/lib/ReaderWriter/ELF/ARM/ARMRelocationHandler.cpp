@@ -313,6 +313,9 @@ static std::error_code relocR_ARM_CALL(uint8_t *location, uint64_t P,
   const bool switchMode = addressesThumb;
 
   uint32_t result = (uint32_t)(((S + A) | T) - P);
+  if (!llvm::isInt<26>((int32_t)result))
+    return make_out_of_range_reloc_error();
+
   const uint32_t imm24 = (result & 0x03FFFFFC) >> 2;
 
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
@@ -337,6 +340,9 @@ static std::error_code relocR_ARM_JUMP24(uint8_t *location, uint64_t P,
                                          bool addressesThumb) {
   uint64_t T = addressesThumb;
   uint32_t result = (uint32_t)(((S + A) | T) - P);
+  if (!llvm::isInt<26>((int32_t)result))
+    return make_out_of_range_reloc_error();
+
   const uint32_t imm24 = (result & 0x03FFFFFC) >> 2;
 
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
