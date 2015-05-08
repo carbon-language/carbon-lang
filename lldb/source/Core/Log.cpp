@@ -110,10 +110,6 @@ Log::VAPrintf(const char *format, va_list args)
     {
         static uint32_t g_sequence_id = 0;
         StreamString header;
-		// Enabling the thread safe logging actually deadlocks right now.
-		// Need to fix this at some point.
-//        static Mutex g_LogThreadedMutex(Mutex::eMutexTypeRecursive);
-//        Mutex::Locker locker (g_LogThreadedMutex);
 
         // Add a sequence ID if requested
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_SEQUENCE))
@@ -140,16 +136,28 @@ Log::VAPrintf(const char *format, va_list args)
         }
 
         header.PrintfVarArg (format, args);
-        stream_sp->Printf("%s\n", header.GetData());
-        
+        header.PutCString("\n");
+
         if (m_options.Test(LLDB_LOG_OPTION_BACKTRACE)) 
         {
             std::string back_trace;
             llvm::raw_string_ostream stream(back_trace);
             llvm::sys::PrintStackTrace(stream);
-            stream_sp->PutCString(back_trace.c_str());
+            header.PutCString(back_trace.c_str());
         }
-        stream_sp->Flush();
+
+        if (m_options.Test(LLDB_LOG_OPTION_THREADSAFE))
+        {
+            static Mutex g_LogThreadedMutex(Mutex::eMutexTypeRecursive);
+            Mutex::Locker locker(g_LogThreadedMutex);
+            stream_sp->PutCString(header.GetString().c_str());
+            stream_sp->Flush();
+        }
+        else
+        {
+            stream_sp->PutCString(header.GetString().c_str());
+            stream_sp->Flush();
+        }
     }
 }
 
