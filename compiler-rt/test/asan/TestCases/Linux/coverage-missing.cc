@@ -2,9 +2,7 @@
 
 // RUN: ASAN_OPTIONS=coverage=1:coverage_dir=%T/coverage-missing
 
-// First case: coverage from executable. main() is called on every code path;
-// other than that, the foo and bar code paths are complementary in terms of
-// PCs covered.
+// First case: coverage from executable. main() is called on every code path.
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t -DFOOBAR -DMAIN
 // RUN: rm -rf %T/coverage-missing
 // RUN: mkdir -p %T/coverage-missing
@@ -23,9 +21,12 @@
 // RUN: [ $(cat bar.txt | wc -l) == 4 ]
 // RUN: %sancov missing %t < foo.txt > foo-missing.txt
 // RUN: sort main.txt foo-missing.txt -o foo-missing-with-main.txt
-// RUN: diff bar.txt foo-missing-with-main.txt
+// The "missing from foo" set may contain a few bogus PCs from the sanitizer
+// runtime, but it must include the entire "bar" code path as a subset. Sorted
+// lists can be tested for set inclusion with diff + grep.
+// RUN: diff bar.txt foo-missing-with-main.txt | not grep "^<"
 
-// Second case: coverage from DSO. Strictly complementary code paths.
+// Second case: coverage from DSO.
 // cd %T
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %dynamiclib -DFOOBAR -shared -fPIC
 // RUN: %clangxx_asan -fsanitize-coverage=func %s %dynamiclib -o %t -DMAIN
@@ -42,7 +43,7 @@
 // RUN: rm *.sancov
 // RUN: [ $(cat bar.txt | wc -l) == 3 ]
 // RUN: %sancov missing %dynamiclib < foo.txt > foo-missing.txt
-// RUN: diff bar.txt foo-missing.txt
+// RUN: diff bar.txt foo-missing.txt | not grep "^<"
 
 // REQUIRES: x86_64-supported-target, i386-supported-target
 // XFAIL: android
