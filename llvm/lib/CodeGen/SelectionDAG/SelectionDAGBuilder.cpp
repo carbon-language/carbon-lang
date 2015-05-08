@@ -8012,10 +8012,12 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
 
   MachineBasicBlock *DefaultMBB = FuncInfo.MBBMap[SI.getDefaultDest()];
 
-  if (TM.getOptLevel() != CodeGenOpt::None) {
-    // Cluster adjacent cases with the same destination.
-    sortAndRangeify(Clusters);
+  // Cluster adjacent cases with the same destination. We do this at all
+  // optimization levels because it's cheap to do and will make codegen faster
+  // if there are many clusters.
+  sortAndRangeify(Clusters);
 
+  if (TM.getOptLevel() != CodeGenOpt::None) {
     // Replace an unreachable default with the most popular destination.
     // FIXME: Exploit unreachable default more aggressively.
     bool UnreachableDefault =

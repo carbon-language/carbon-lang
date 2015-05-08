@@ -9,17 +9,18 @@ entry:
     i32 3, label %bb0
     i32 1, label %bb1
     i32 4, label %bb1
-    i32 5, label %bb0
+    i32 5, label %bb2
   ]
 bb0: tail call void @g(i32 0) br label %return
 bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 1) br label %return
 return: ret void
 
 ; Should be lowered as straight compares in -O0 mode.
 ; NOOPT-LABEL: basic
-; NOOPT: subl $3, %eax
-; NOOPT: je
 ; NOOPT: subl $1, %eax
+; NOOPT: je
+; NOOPT: subl $3, %eax
 ; NOOPT: je
 ; NOOPT: subl $4, %eax
 ; NOOPT: je
@@ -58,6 +59,14 @@ return: ret void
 ; CHECK: jae
 ; CHECK: cmpl $3
 ; CHECK: ja
+
+; We do this even at -O0, because it's cheap and makes codegen faster.
+; NOOPT-LABEL: simple_ranges
+; NOOPT: subl $4
+; NOOPT: jb
+; NOOPT: addl $-100
+; NOOPT: subl $4
+; NOOPT: jb
 }
 
 
