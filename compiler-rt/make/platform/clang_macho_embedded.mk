@@ -176,7 +176,13 @@ COMMON_FUNCTIONS := \
 	udivsi3 \
 	umodsi3 \
 	unorddf2 \
-	unordsf2
+	unordsf2 \
+	atomic_flag_clear \
+	atomic_flag_clear_explicit \
+	atomic_flag_test_and_set \
+	atomic_flag_test_and_set_explicit \
+	atomic_signal_fence \
+	atomic_thread_fence
 
 ARM_FUNCTIONS := \
 	aeabi_cdcmpeq \

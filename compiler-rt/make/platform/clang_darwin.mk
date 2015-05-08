@@ -255,17 +255,26 @@ CFLAGS.ubsan_osx_dynamic += -isysroot $(OSX_SDK)
 LDFLAGS.ubsan_osx_dynamic += -isysroot $(OSX_SDK)
 endif
 
+ATOMIC_FUNCTIONS := \
+	atomic_flag_clear \
+	atomic_flag_clear_explicit \
+	atomic_flag_test_and_set \
+	atomic_flag_test_and_set_explicit \
+	atomic_signal_fence \
+	atomic_thread_fence
+
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
-FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4
+FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4 \
+                       $(ATOMIC_FUNCTIONS)
 # On x86, the divmod functions reference divsi.
 FUNCTIONS.ios.i386    := $(FUNCTIONS.ios) \
                          divsi3 udivsi3
 FUNCTIONS.ios.x86_64  := $(FUNCTIONS.ios.i386)
-FUNCTIONS.ios.arm64   := mulsc3 muldc3 divsc3 divdc3
+FUNCTIONS.ios.arm64   := mulsc3 muldc3 divsc3 divdc3 $(ATOMIC_FUNCTIONS)
 
-FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
+FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4 $(ATOMIC_FUNCTIONS)
 
 FUNCTIONS.profile_osx := GCDAProfiling InstrProfiling InstrProfilingBuffer \
                          InstrProfilingFile InstrProfilingPlatformDarwin \

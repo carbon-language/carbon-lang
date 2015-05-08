@@ -47,7 +47,10 @@ FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              mulodi4 muloti4 mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
              paritydi2 paritysi2 popcountdi2 popcountsi2 powidf2 \
              powisf2 subvdi3 subvsi3 ucmpdi2 udivdi3 \
-             udivmoddi4 umoddi3 apple_versioning eprintf atomic
+             udivmoddi4 umoddi3 apple_versioning eprintf atomic \
+             atomic_flag_clear atomic_flag_clear_explicit \
+             atomic_flag_test_and_set atomic_flag_test_and_set_explicit \
+             atomic_signal_fence atomic_thread_fence
 
 FUNCTIONS.i386 := $(FUNCTIONS) \
                 divxc3 fixunsxfdi fixunsxfsi fixxfdi floatdixf \
@@ -124,5 +127,8 @@ FUNCTIONS.arm64 :=  divti3 modti3 \
 					fixdfti fixsfti \
 					fixunsdfti fixunssfti fixunssfti \
 					floattidf floattisf floatuntidf floatuntisf \
-					gcc_personality_v0 atomic
-
+					gcc_personality_v0 atomic \
+					atomic_flag_clear atomic_flag_clear_explicit \
+					atomic_flag_test_and_set \
+					atomic_flag_test_and_set_explicit \
+					atomic_signal_fence atomic_thread_fence
