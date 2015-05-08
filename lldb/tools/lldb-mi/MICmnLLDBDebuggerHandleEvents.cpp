@@ -1526,19 +1526,38 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
     while (1)
     {
         const size_t nBytes = process.GetSTDOUT(apStdoutBuffer.get(), 1024);
-        if (nBytes == 0)
-            break;
-
         text.append(apStdoutBuffer.get(), nBytes);
+
+        while (1)
+        {
+            const size_t nNewLine = text.find('\n');
+            if (nNewLine == std::string::npos)
+                break;
+
+            const CMIUtilString line(text.substr(0, nNewLine + 1).c_str());
+            text.erase(0, nNewLine + 1);
+            const bool bEscapeQuotes(true);
+            CMICmnMIValueConst miValueConst(line.Escape(bEscapeQuotes));
+            CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
+            const bool bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+            if (!bOk)
+                return MIstatus::failure;
+        }
+
+        if (nBytes == 0)
+        {
+            if (!text.empty())
+            {
+                const bool bEscapeQuotes(true);
+                CMICmnMIValueConst miValueConst(text.Escape(bEscapeQuotes));
+                CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
+                return MiOutOfBandRecordToStdout(miOutOfBandRecord);
+            }
+            break;
+        }
     }
 
-    if (text.empty())
-        return MIstatus::success;
-
-    const bool bEscapeQuotes(true);
-    CMICmnMIValueConst miValueConst(text.Escape(bEscapeQuotes));
-    CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
-    return MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1560,19 +1579,37 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
     while (1)
     {
         const size_t nBytes = process.GetSTDERR(apStderrBuffer.get(), 1024);
-        if (nBytes == 0)
-            break;
-
         text.append(apStderrBuffer.get(), nBytes);
+
+        while (1)
+        {
+            const size_t nNewLine = text.find('\n');
+            if (nNewLine == std::string::npos)
+                break;
+
+            const CMIUtilString line(text.substr(0, nNewLine + 1).c_str());
+            const bool bEscapeQuotes(true);
+            CMICmnMIValueConst miValueConst(line.Escape(bEscapeQuotes));
+            CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
+            const bool bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+            if (!bOk)
+                return MIstatus::failure;
+        }
+
+        if (nBytes == 0)
+        {
+            if (!text.empty())
+            {
+                const bool bEscapeQuotes(true);
+                CMICmnMIValueConst miValueConst(text.Escape(bEscapeQuotes));
+                CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
+                return MiOutOfBandRecordToStdout(miOutOfBandRecord);
+            }
+            break;
+        }
     }
 
-    if (text.empty())
-        return MIstatus::success;
-
-    const bool bEscapeQuotes(true);
-    CMICmnMIValueConst miValueConst(text.Escape(bEscapeQuotes));
-    CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_TargetStreamOutput, miValueConst);
-    return MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------

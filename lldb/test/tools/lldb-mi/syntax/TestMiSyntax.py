@@ -75,7 +75,8 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # Test that a process output is wrapped correctly
-        self.expect("\@\"'\\\\r\\\\n` - it's \\\\\\\\n\\\\x12\\\\\"\\\\\\\\\\\\\"")
+        self.expect("\@\"'\\\\r\\\\n\"")
+        self.expect("\@\"` - it's \\\\\\\\n\\\\x12\\\\\"\\\\\\\\\\\\\"")
 
 if __name__ == '__main__':
     unittest2.main()
