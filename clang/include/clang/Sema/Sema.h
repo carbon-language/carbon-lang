@@ -7462,6 +7462,10 @@ public:
   void StartOpenMPDSABlock(OpenMPDirectiveKind K,
                            const DeclarationNameInfo &DirName, Scope *CurScope,
                            SourceLocation Loc);
+  /// \brief Start analysis of clauses.
+  void StartOpenMPClauses();
+  /// \brief End analysis of clauses.
+  void EndOpenMPClauses();
   /// \brief Called on end of data sharing attribute block.
   void EndOpenMPDSABlock(Stmt *CurDirective);
 

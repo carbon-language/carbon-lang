@@ -223,6 +223,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
     ParseScope OMPDirectiveScope(this, ScopeFlags);
     Actions.StartOpenMPDSABlock(DKind, DirName, Actions.getCurScope(), Loc);
 
+    Actions.StartOpenMPClauses();
     while (Tok.isNot(tok::annot_pragma_openmp_end)) {
       OpenMPClauseKind CKind =
           Tok.isAnnotation()
@@ -242,6 +243,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
       if (Tok.is(tok::comma))
         ConsumeToken();
     }
+    Actions.EndOpenMPClauses();
     // End location of the directive.
     EndLoc = Tok.getLocation();
     // Consume final annot_pragma_openmp_end.

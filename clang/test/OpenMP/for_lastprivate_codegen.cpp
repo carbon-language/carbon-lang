@@ -18,6 +18,7 @@ struct S {
 };
 
 volatile int g = 1212;
+float f;
 
 // CHECK: [[S_FLOAT_TY:%.+]] = type { float }
 // CHECK: [[CAP_MAIN_TY:%.+]] = type { i{{[0-9]+}}*, [2 x i{{[0-9]+}}]*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]* }
@@ -25,6 +26,7 @@ volatile int g = 1212;
 // CHECK: [[CAP_TMAIN_TY:%.+]] = type { i{{[0-9]+}}*, [2 x i{{[0-9]+}}]*, [2 x [[S_INT_TY]]]*, [[S_INT_TY]]* }
 // CHECK-DAG: [[IMPLICIT_BARRIER_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 66, i32 0, i32 0, i8*
 // CHECK-DAG: [[X:@.+]] = global double 0.0
+// CHECK-DAG: [[F:@.+]] = global float 0.0
 template <typename T>
 T tmain() {
   S<T> test;
@@ -167,7 +169,7 @@ int main() {
     s_arr[i] = var;
   }
 #pragma omp parallel
-#pragma omp for lastprivate(A::x, B::x)
+#pragma omp for lastprivate(A::x, B::x) firstprivate(f) lastprivate(f)
   for (int i = 0; i < 2; ++i) {
     A::x++;
   }
@@ -255,10 +257,16 @@ int main() {
 
 //
 // CHECK: define internal void [[MAIN_MICROTASK1]](i{{[0-9]+}}* [[GTID_ADDR:%.+]], i{{[0-9]+}}* %{{.+}}, %{{.+}}* %{{.+}})
+// CHECK: [[F_PRIV:%.+]] = alloca float,
+// CHECK-NOT: alloca float
 // CHECK: [[X_PRIV:%.+]] = alloca double,
+// CHECK-NOT: alloca float
 // CHECK-NOT: alloca double
 
 // Check for default initialization.
+// CHECK-NOT: [[X_PRIV]]
+// CHECK: [[F_VAL:%.+]] = load float, float* [[F]],
+// CHECK: store float [[F_VAL]], float* [[F_PRIV]],
 // CHECK-NOT: [[X_PRIV]]
 
 // CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_REF]]
@@ -277,6 +285,11 @@ int main() {
 // original x=private_x;
 // CHECK: [[X_VAL:%.+]] = load double, double* [[X_PRIV]],
 // CHECK: store double [[X_VAL]], double* [[X]],
+
+// original f=private_f;
+// CHECK: [[F_VAL:%.+]] = load float, float* [[F_PRIV]],
+// CHECK: store float [[F_VAL]], float* [[F]],
+
 // CHECK-NEXT: br label %[[LAST_DONE]]
 // CHECK: [[LAST_DONE]]
 
