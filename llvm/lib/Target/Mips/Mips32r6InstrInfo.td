@@ -243,7 +243,7 @@ multiclass CMP_CC_M <FIELD_CMP_FORMAT Format, string Typestr,
 //===----------------------------------------------------------------------===//
 
 class PCREL_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
-                      Operand ImmOpnd> {
+                      Operand ImmOpnd> : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rs);
   dag InOperandList = (ins ImmOpnd:$imm);
   string AsmString = !strconcat(instr_asm, "\t$rs, $imm");
@@ -645,7 +645,7 @@ class SDBBP_R6_DESC {
 //
 //===----------------------------------------------------------------------===//
 
-def ADDIUPC : ADDIUPC_ENC, ADDIUPC_DESC, ISA_MIPS32R6;
+def ADDIUPC : R6MMR6Rel, ADDIUPC_ENC, ADDIUPC_DESC, ISA_MIPS32R6;
 def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
 def ALUIPC : ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
 def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
@@ -694,7 +694,7 @@ def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
 def LL_R6 : LL_R6_ENC, LL_R6_DESC, ISA_MIPS32R6;
 def LSA_R6 : LSA_R6_ENC, LSA_R6_DESC, ISA_MIPS32R6;
 def LWC2_R6 : LWC2_R6_ENC, LWC2_R6_DESC, ISA_MIPS32R6;
-def LWPC : LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
+def LWPC : R6MMR6Rel, LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;
 def MADDF_S : MADDF_S_ENC, MADDF_S_DESC, ISA_MIPS32R6, HARDFLOAT;
 def MADDF_D : MADDF_D_ENC, MADDF_D_DESC, ISA_MIPS32R6, HARDFLOAT;
