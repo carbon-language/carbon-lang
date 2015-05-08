@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 
-/*! @mainpage Intel&reg;&nbsp; OpenMP* Runtime Library Interface
+/*! @mainpage LLVM&nbsp; OpenMP* Runtime Library Interface
 @section sec_intro Introduction
 
 This document describes the interface provided by the
-Intel&reg;&nbsp;OpenMP\other runtime library to the compiler.
+LLVM &nbsp;OpenMP\other runtime library to the compiler.
 Routines that are directly called as simple functions by user code are
 not currently described here, since their definition is in the OpenMP
 specification available from http://openmp.org
