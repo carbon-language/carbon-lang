@@ -166,11 +166,11 @@
 // RUN: %clang -target arm -march=armebv8a -mbig-endian -mthumb -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BE-V8A-THUMB %s
 // CHECK-BE-V8A-THUMB: "-cc1"{{.*}} "-triple" "thumbebv8-{{.*}}" "-target-cpu" "cortex-a53"
 
-// ================== Check default CPU on bogus architecture
+// ================== Check that a bogus architecture gives an error
 // RUN: %clang -target arm -march=armbogusv6 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS %s
-// CHECK-BOGUS: "-cc1"{{.*}} "-triple" "armv4t-{{.*}} "-target-cpu" "arm7tdmi"
+// CHECK-BOGUS: error: the clang compiler does not support '-march=armbogusv6' 
 // RUN: %clang -target arm---eabihf -march=armbogusv7 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS-HF %s
-// CHECK-BOGUS-HF: "-cc1"{{.*}} "-triple" "armv6k-{{.*}} "-target-cpu" "arm1176jzf-s"
+// CHECK-BOGUS-HF: error: the clang compiler does not support '-march=armbogusv7' 
 
 // ================== Check default Architecture on each ARM11 CPU
 // RUN: %clang -target arm-linux-gnueabi -mcpu=arm1136j-s -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-CPUV6 %s

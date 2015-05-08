@@ -743,6 +743,13 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (const Arg *A = Args.getLastArg(options::OPT_mhwdiv_EQ))
     getARMHWDivFeatures(D, A, Args, Features);
 
+  // -march is handled in getARMCPUForMarch by translating it into a CPU name,
+  // but it needs to return an empty string on invalid arguments. We therefore
+  // check and give an error here if the -march is invalid.
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
+    if (!Triple.getARMCPUForArch(A->getValue()))
+      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
   if (FloatABI == "soft") {
@@ -5619,7 +5626,13 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
     }
   }
 
-  return Triple.getARMCPUForArch(MArch);
+  // We need to return an empty string here on invalid MArch values as the
+  // various places that call this function can't cope with a null result.
+  const char *result = Triple.getARMCPUForArch(MArch);
+  if (result)
+    return result;
+  else
+    return "";
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
