@@ -85,6 +85,7 @@ add_llvm_library(LLVMSupport
   StringPool.cpp
   StringRef.cpp
   SystemUtils.cpp
+  TargetParser.cpp
   Timer.cpp
   ToolOutputFile.cpp
   Triple.cpp

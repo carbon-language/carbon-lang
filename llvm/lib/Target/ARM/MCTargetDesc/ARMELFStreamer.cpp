@@ -13,9 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMArchName.h"
-#include "ARMFPUName.h"
-#include "ARMArchExtName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOpAsm.h"
 #include "llvm/ADT/StringExtras.h"
@@ -41,6 +38,7 @@
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/ARMEHABI.h"
+#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FormattedStream.h"
@@ -54,69 +52,6 @@ static std::string GetAEABIUnwindPersonalityName(unsigned Index) {
   assert(Index < ARM::EHABI::NUM_PERSONALITY_INDEX &&
          "Invalid personality index");
   return (Twine("__aeabi_unwind_cpp_pr") + Twine(Index)).str();
-}
-
-static const char *GetFPUName(unsigned ID) {
-  switch (ID) {
-  default:
-    llvm_unreachable("Unknown FPU kind");
-    break;
-#define ARM_FPU_NAME(NAME, ID) case ARM::ID: return NAME;
-#include "ARMFPUName.def"
-  }
-  return nullptr;
-}
-
-static const char *GetArchName(unsigned ID) {
-  switch (ID) {
-  default:
-    llvm_unreachable("Unknown ARCH kind");
-    break;
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-  case ARM::ID: return NAME;
-#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
-#include "ARMArchName.def"
-  }
-  return nullptr;
-}
-
-static const char *GetArchDefaultCPUName(unsigned ID) {
-  switch (ID) {
-  default:
-    llvm_unreachable("Unknown ARCH kind");
-    break;
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-  case ARM::ID: return DEFAULT_CPU_NAME;
-#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
-#include "ARMArchName.def"
-  }
-  return nullptr;
-}
-
-static unsigned GetArchDefaultCPUArch(unsigned ID) {
-  switch (ID) {
-  default:
-    llvm_unreachable("Unknown ARCH kind");
-    break;
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-  case ARM::ID: return ARMBuildAttrs::DEFAULT_CPU_ARCH;
-#define ARM_ARCH_ALIAS(NAME, ID) /* empty */
-#include "ARMArchName.def"
-  }
-  return 0;
-}
-
-static const char *GetArchExtName(unsigned ID) {
-  switch (ID) {
-  default:
-    llvm_unreachable("Unknown ARCH Extension kind");
-    break;
-#define ARM_ARCHEXT_NAME(NAME, ID)                                             \
-  case ARM::ID:                                                                \
-    return NAME;
-#include "ARMArchExtName.def"
-  }
-  return nullptr;
 }
 
 namespace {
@@ -262,16 +197,16 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
   OS << "\n";
 }
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
-  OS << "\t.arch\t" << GetArchName(Arch) << "\n";
+  OS << "\t.arch\t" << ARMTargetParser::getArchName(Arch) << "\n";
 }
 void ARMTargetAsmStreamer::emitArchExtension(unsigned ArchExt) {
-  OS << "\t.arch_extension\t" << GetArchExtName(ArchExt) << "\n";
+  OS << "\t.arch_extension\t" << ARMTargetParser::getArchExtName(ArchExt) << "\n";
 }
 void ARMTargetAsmStreamer::emitObjectArch(unsigned Arch) {
-  OS << "\t.object_arch\t" << GetArchName(Arch) << '\n';
+  OS << "\t.object_arch\t" << ARMTargetParser::getArchName(Arch) << '\n';
 }
 void ARMTargetAsmStreamer::emitFPU(unsigned FPU) {
-  OS << "\t.fpu\t" << GetFPUName(FPU) << "\n";
+  OS << "\t.fpu\t" << ARMTargetParser::getFPUName(FPU) << "\n";
 }
 void ARMTargetAsmStreamer::finishAttributeSection() {
 }
@@ -753,11 +688,18 @@ void ARMTargetELFStreamer::emitObjectArch(unsigned Value) {
 void ARMTargetELFStreamer::emitArchDefaultAttributes() {
   using namespace ARMBuildAttrs;
 
-  setAttributeItem(CPU_name, GetArchDefaultCPUName(Arch), false);
+  setAttributeItem(CPU_name,
+                   ARMTargetParser::getArchDefaultCPUName(Arch),
+                   false);
+
   if (EmittedArch == ARM::INVALID_ARCH)
-    setAttributeItem(CPU_arch, GetArchDefaultCPUArch(Arch), false);
+    setAttributeItem(CPU_arch,
+                     ARMTargetParser::getArchDefaultCPUArch(Arch),
+                     false);
   else
-    setAttributeItem(CPU_arch, GetArchDefaultCPUArch(EmittedArch), false);
+    setAttributeItem(CPU_arch,
+                     ARMTargetParser::getArchDefaultCPUArch(EmittedArch),
+                     false);
 
   switch (Arch) {
   case ARM::ARMV2:

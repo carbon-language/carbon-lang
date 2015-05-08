@@ -7,10 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMFPUName.h"
 #include "ARMFeatures.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
-#include "MCTargetDesc/ARMArchName.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
@@ -39,6 +37,7 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/ARMEHABI.h"
+#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -9040,13 +9039,7 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
 bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
   StringRef Arch = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = StringSwitch<unsigned>(Arch)
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-    .Case(NAME, ARM::ID)
-#define ARM_ARCH_ALIAS(NAME, ID) \
-    .Case(NAME, ARM::ID)
-#include "MCTargetDesc/ARMArchName.def"
-    .Default(ARM::INVALID_ARCH);
+  unsigned ID = ARMTargetParser::parseArch(Arch);
 
   if (ID == ARM::INVALID_ARCH) {
     Error(L, "Unknown arch name");
@@ -9248,10 +9241,7 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
   SMLoc FPUNameLoc = getTok().getLoc();
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
-  unsigned ID = StringSwitch<unsigned>(FPU)
-#define ARM_FPU_NAME(NAME, ID) .Case(NAME, ARM::ID)
-#include "ARMFPUName.def"
-    .Default(ARM::INVALID_FPU);
+  unsigned ID = ARMTargetParser::parseFPU(FPU);
 
   if (ID == ARM::INVALID_FPU) {
     Error(FPUNameLoc, "Unknown FPU name");
@@ -9905,15 +9895,7 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
   SMLoc ArchLoc = Parser.getTok().getLoc();
   getLexer().Lex();
 
-  unsigned ID = StringSwitch<unsigned>(Arch)
-#define ARM_ARCH_NAME(NAME, ID, DEFAULT_CPU_NAME, DEFAULT_CPU_ARCH) \
-    .Case(NAME, ARM::ID)
-#define ARM_ARCH_ALIAS(NAME, ID) \
-    .Case(NAME, ARM::ID)
-#include "MCTargetDesc/ARMArchName.def"
-#undef ARM_ARCH_NAME
-#undef ARM_ARCH_ALIAS
-    .Default(ARM::INVALID_ARCH);
+  unsigned ID = ARMTargetParser::parseArch(Arch);
 
   if (ID == ARM::INVALID_ARCH) {
     Error(ArchLoc, "unknown architecture '" + Arch + "'");

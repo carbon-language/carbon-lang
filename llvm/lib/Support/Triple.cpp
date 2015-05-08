@@ -235,6 +235,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Default(UnknownArch);
 }
 
+// FIXME: Use ARMTargetParser. This would require Triple::arm/thumb
+// to be recogniseable universally.
 static Triple::ArchType parseARMArch(StringRef ArchName) {
   size_t offset = StringRef::npos;
   Triple::ArchType arch = Triple::UnknownArch;
@@ -404,6 +406,8 @@ static Triple::ObjectFormatType parseFormat(StringRef EnvironmentName) {
     .Default(Triple::UnknownObjectFormat);
 }
 
+// FIXME: Use ARMTargetParser. This would require using Triple::ARMSubArch*
+// in ARMBuildAttrs and in ARCHNames' DefaultArch fields.
 static Triple::SubArchType parseSubArch(StringRef SubArchName) {
   if (SubArchName.endswith("eb"))
     SubArchName = SubArchName.substr(0, SubArchName.size() - 2);
@@ -1070,7 +1074,8 @@ Triple Triple::get64BitArchVariant() const {
   return T;
 }
 
-// FIXME: tblgen this.
+// FIXME: Use ARMTargetParser. This would require ARCHNames to hold
+// specific CPU names, as well as default CPU arch.
 const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
