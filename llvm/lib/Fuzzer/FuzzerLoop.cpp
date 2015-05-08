@@ -86,6 +86,30 @@ void Fuzzer::PrintStats(const char *Where, size_t Cov, const char *End) {
       << End;
 }
 
+void Fuzzer::RereadOutputCorpus() {
+  if (Options.OutputCorpus.empty()) return;
+  std::vector<Unit> AdditionalCorpus;
+  ReadDirToVectorOfUnits(Options.OutputCorpus.c_str(), &AdditionalCorpus,
+                         &EpochOfLastReadOfOutputCorpus);
+  if (Corpus.empty()) {
+    Corpus = AdditionalCorpus;
+    return;
+  }
+  if (!Options.Reload) return;
+  for (auto &X : AdditionalCorpus) {
+    if (X.size() > (size_t)Options.MaxLen)
+      X.resize(Options.MaxLen);
+    if (UnitsAddedAfterInitialLoad.insert(X).second) {
+      Corpus.push_back(X);
+      CurrentUnit.clear();
+      CurrentUnit.insert(CurrentUnit.begin(), X.begin(), X.end());
+      size_t NewCoverage = RunOne(CurrentUnit);
+      if (NewCoverage && Options.Verbosity >= 1)
+        PrintStats("RELOAD", NewCoverage);
+    }
+  }
+}
+
 void Fuzzer::ShuffleAndMinimize() {
   size_t MaxCov = 0;
   bool PreferSmall =
@@ -268,6 +292,7 @@ void Fuzzer::SaveCorpus() {
 void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
   if (!NewCoverage) return;
   Corpus.push_back(U);
+  UnitsAddedAfterInitialLoad.insert(U);
   PrintStats("NEW   ", NewCoverage, "");
   if (Options.Verbosity) {
     std::cerr << " L: " << U.size();
@@ -299,6 +324,7 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
 void Fuzzer::Loop(size_t NumIterations) {
   for (size_t i = 1; i <= NumIterations; i++) {
     for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
+      RereadOutputCorpus();
       if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
         return;
       // First, simply mutate the unit w/o doing crosses.

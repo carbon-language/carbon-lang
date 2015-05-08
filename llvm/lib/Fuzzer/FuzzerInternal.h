@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <set>
 
 #include "FuzzerInterface.h"
 
@@ -25,7 +26,8 @@ using namespace std::chrono;
 
 std::string FileToString(const std::string &Path);
 Unit FileToVector(const std::string &Path);
-void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V);
+void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V,
+                            long *Epoch);
 void WriteToFile(const Unit &U, const std::string &Path);
 void CopyFileToErr(const std::string &Path);
 // Returns "Dir/FileName" or equivalent for the current OS.
@@ -54,6 +56,7 @@ class Fuzzer {
     bool UseFullCoverageSet  = false;
     bool UseCoveragePairs = false;
     bool UseDFSan = false;
+    bool Reload = true;
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;
     std::string OutputCorpus;
@@ -65,9 +68,10 @@ class Fuzzer {
   void ShuffleAndMinimize();
   void InitializeDFSan();
   size_t CorpusSize() const { return Corpus.size(); }
-  void ReadDir(const std::string &Path) {
-    ReadDirToVectorOfUnits(Path.c_str(), &Corpus);
+  void ReadDir(const std::string &Path, long *Epoch) {
+    ReadDirToVectorOfUnits(Path.c_str(), &Corpus, Epoch);
   }
+  void RereadOutputCorpus();
   // Save the current corpus to OutputCorpus.
   void SaveCorpus();
 
@@ -116,6 +120,7 @@ class Fuzzer {
   size_t TotalNumberOfRuns = 0;
 
   std::vector<Unit> Corpus;
+  std::set<Unit> UnitsAddedAfterInitialLoad;
   std::unordered_set<uintptr_t> FullCoverageSets;
   std::unordered_set<uint64_t>  CoveragePairs;
 
@@ -132,6 +137,7 @@ class Fuzzer {
   system_clock::time_point ProcessStartTime = system_clock::now();
   system_clock::time_point UnitStartTime;
   long TimeOfLongestUnitInSeconds = 0;
+  long EpochOfLastReadOfOutputCorpus = 0;
 };
 
 };  // namespace fuzzer

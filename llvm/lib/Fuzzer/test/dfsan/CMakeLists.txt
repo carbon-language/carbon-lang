@@ -1,7 +1,7 @@
 # These tests depend on both coverage and dfsan instrumentation.
 
 set(CMAKE_CXX_FLAGS_RELEASE
-  "${LIBFUZZER_FLAGS_BASE} -O0 -fno-sanitize=all -fsanitize=dataflow -mllvm -sanitizer-coverage-experimental-trace-compares=1")
+  "${LIBFUZZER_FLAGS_BASE} -O0 -fno-sanitize=all -fsanitize=dataflow")
 
 foreach(Test ${DFSanTests})
   add_executable(LLVMFuzzer-${Test}

@@ -207,6 +207,7 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
   Options.Tokens = ReadTokensFile(Flags.tokens);
+  Options.Reload = Flags.reload;
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())
@@ -235,8 +236,10 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   if (Flags.apply_tokens)
     return ApplyTokens(F, Flags.apply_tokens);
 
+  F.RereadOutputCorpus();
   for (auto &inp : inputs)
-    F.ReadDir(inp);
+    if (inp != Options.OutputCorpus)
+      F.ReadDir(inp, nullptr);
 
   if (F.CorpusSize() == 0)
     F.AddToCorpus(Unit());  // Can't fuzz empty corpus, so add an empty input.
