@@ -902,7 +902,7 @@ static std::string getAArch64TargetCPU(const ArgList &Args) {
   if ((A = Args.getLastArg(options::OPT_mtune_EQ))) {
     CPU = A->getValue();
   } else if ((A = Args.getLastArg(options::OPT_mcpu_EQ))) {
-    StringRef Mcpu = StringRef(A->getValue()).lower();
+    StringRef Mcpu = A->getValue();
     CPU = Mcpu.split("+").first;
   }
 
@@ -1795,7 +1795,6 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
 // decode CPU and feature.
 static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
                               std::vector<const char *> &Features) {
-  Mcpu = Mcpu.lower();
   std::pair<StringRef, StringRef> Split = Mcpu.split("+");
   CPU = Split.first;
   if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57" || CPU == "cortex-a72") {
@@ -5642,7 +5641,7 @@ StringRef arm::getARMTargetCPU(const ArgList &Args,
   // FIXME: Warn on inconsistent use of -mcpu and -march.
   // If we have -mcpu=, use that.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    StringRef MCPU = StringRef(A->getValue()).lower();
+    StringRef MCPU = A->getValue();
     // Handle -mcpu=native.
     if (MCPU == "native")
       return llvm::sys::getHostCPUName();
@@ -7510,7 +7509,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     // march from being picked in the absence of a cpu flag.
     Arg *A;
     if ((A = Args.getLastArg(options::OPT_mcpu_EQ)) &&
-      StringRef(A->getValue()).lower() == "krait")
+      StringRef(A->getValue()) == "krait")
         CmdArgs.push_back("-march=armv7-a");
     else
       Args.AddLastArg(CmdArgs, options::OPT_mcpu_EQ);
