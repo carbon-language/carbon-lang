@@ -197,7 +197,7 @@ CMICmdCmdVarCreate::Execute(void)
     if (!value.IsValid())
         value = frame.EvaluateExpression(rStrExpression.c_str());
 
-    if (value.IsValid())
+    if (value.IsValid() && value.GetError().Success())
     {
         CompleteSBValue(value);
         m_bValid = true;
