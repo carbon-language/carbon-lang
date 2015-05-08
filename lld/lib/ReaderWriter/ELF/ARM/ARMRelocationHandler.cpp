@@ -200,6 +200,10 @@ static std::error_code relocR_ARM_PREL31(uint8_t *location, uint64_t P,
 /// \brief Relocate B/BL instructions. useJs defines whether J1 & J2 are used
 static std::error_code relocR_ARM_THM_B_L(uint8_t *location, uint32_t result,
                                           bool useJs) {
+  if ((useJs && !llvm::isInt<25>((int32_t)result)) ||
+      (!useJs && !llvm::isInt<23>((int32_t)result)))
+    return make_out_of_range_reloc_error();
+
   result = (result & 0x01FFFFFE) >> 1;
 
   const uint16_t imm10 = (result >> 11) & 0x3FF;
