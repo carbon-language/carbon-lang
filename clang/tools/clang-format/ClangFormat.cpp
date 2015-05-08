@@ -226,7 +226,8 @@ static bool format(StringRef FileName) {
   FormatStyle FormatStyle = getStyle(
       Style, (FileName == "-") ? AssumeFilename : FileName, FallbackStyle);
   bool IncompleteFormat = false;
-  tooling::Replacements Replaces = reformat(FormatStyle, Sources, ID, Ranges, &IncompleteFormat);
+  tooling::Replacements Replaces =
+      reformat(FormatStyle, Sources, ID, Ranges, &IncompleteFormat);
   if (OutputXML) {
     llvm::outs() << "<?xml version='1.0'?>\n<replacements "
                     "xml:space='preserve' incomplete_format='"
@@ -255,12 +256,11 @@ static bool format(StringRef FileName) {
       else if (Rewrite.overwriteChangedFiles())
         return true;
     } else {
-      outs() << "{";
       if (Cursor.getNumOccurrences() != 0)
-        outs() << " \"Cursor\": "
-               << tooling::shiftedCodePosition(Replaces, Cursor) << ",";
-      outs() << " \"IncompleteFormat\": "
-             << (IncompleteFormat ? "true" : "false") << " }\n";
+        outs() << "{ \"Cursor\": "
+               << tooling::shiftedCodePosition(Replaces, Cursor)
+               << ", \"IncompleteFormat\": "
+               << (IncompleteFormat ? "true" : "false") << " }\n";
       Rewrite.getEditBuffer(ID).write(outs());
     }
   }
