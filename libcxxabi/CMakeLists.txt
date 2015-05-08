@@ -299,13 +299,38 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LIBCXXABI_C_FLAGS}")
 # Setup Source Code
 #===============================================================================
 
+set(LIBCXXABI_LIBUNWIND_INCLUDES "${LIBCXXABI_LIBUNWIND_INCLUDES}" CACHE PATH
+    "Specify path to libunwind includes." FORCE)
+set(LIBCXXABI_LIBUNWIND_PATH "${LIBCXXABI_LIBUNWIND_PATH}" CACHE PATH
+    "Specify path to libunwind source." FORCE)
+
 include_directories(include)
 if (LIBCXXABI_USE_LLVM_UNWINDER OR LLVM_NATIVE_ARCH MATCHES ARM)
-  include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/include)
-  # TODO: libunwind does not place libunwind_ext.h into include, so we need to
-  # reach into its source directory.  This is primarily for
-  # _Unwind_VRS_Interpret, which is part of ARM EHABI, and should be in unwind.h
-  include_directories(${LLVM_MAIN_SRC_DIR}/projects/libunwind/src)
+  find_path(
+    LIBCXXABI_LIBUNWIND_INCLUDES
+    libunwind.h
+    PATHS ${LIBCXXABI_LIBUNWIND_INCLUDES}
+          ${LIBCXXABI_LIBUNWIND_PATH}/include
+          ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBUNWIND_INCLUDES}
+          ${LLVM_MAIN_SRC_DIR}/projects/libunwind/include
+  )
+
+  find_path(
+    LIBCXXABI_LIBUNWIND_SOURCES
+    libunwind_ext.h
+    PATHS ${LIBCXXABI_LIBUNWIND_PATH}/src/
+          ${LIBCXXABI_LIBUNWIND_INCLUDES}/../src/
+          ${LLVM_MAIN_SRC_DIR}/projects/libunwind/src/
+    NO_DEFAULT_PATH
+  )
+
+  if (LIBCXXABI_LIBUNWIND_SOURCES STREQUAL "LIBCXXABI_LIBUNWIND_PATH-NOTFOUND")
+    message(WARNING "LIBCXXABI_LIBCXX_PATH was not specified and couldn't be infered.")
+    set(LIBCXXABI_LIBUNWIND_PATH "")
+  endif()
+
+  include_directories("${LIBCXXABI_LIBUNWIND_INCLUDES}")
+  include_directories("${LIBCXXABI_LIBUNWIND_SOURCES}")
 endif ()
 
 # Add source code. This also contains all of the logic for deciding linker flags
