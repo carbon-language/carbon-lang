@@ -263,20 +263,19 @@ class CMICmdCmdVarListChildren : public CMICmdBase
     // From CMICmnBase
     /* dtor */ virtual ~CMICmdCmdVarListChildren(void);
 
-    // Typedefs:
-  private:
-    typedef std::vector<CMICmnMIValueResult> VecMIValueResult_t;
-
     // Attributes:
   private:
-    bool m_bValueValid; // True = yes SBValue object is valid, false = not valid
-    VecMIValueResult_t m_vecMiValueResult;
-    MIuint m_nChildren;
     const CMIUtilString m_constStrArgPrintValues;
-    const CMIUtilString m_constStrArgName;
     const CMIUtilString m_constStrArgNoValues;
     const CMIUtilString m_constStrArgAllValues;
     const CMIUtilString m_constStrArgSimpleValues;
+    const CMIUtilString m_constStrArgName;
+    const CMIUtilString m_constStrArgFrom;
+    const CMIUtilString m_constStrArgTo;
+    bool m_bValueValid; // True = yes SBValue object is valid, false = not valid
+    MIuint m_nChildren;
+    CMICmnMIValueList m_miValueList;
+    bool m_bHasMore;
 };
 
 //++ ============================================================================

@@ -227,6 +227,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_VARIABLE_ENUM_INVALID, "Command '%s'. Invalid enumeration for variable '%s' formatted string '%s'"},
     {IDS_CMD_ERR_VARIABLE_EXPRESSIONPATH, "Command '%s'. Failed to get expression for variable '%s'"},
     {IDS_CMD_ERR_VARIABLE_CREATION_FAILED, "Failed to create variable object for '%s'"},
+    {IDS_CMD_ERR_VARIABLE_CHILD_RANGE_INVALID, "Command '%s'. Variable children range invalid"},
     {IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION, "<Error: Command run but command did not do anything useful. No MI response formed>"},
     {IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION, "<Error: Command run and event caught, did nothing useful. No MI Out-of-Bound formed>"},
     {IDS_CMD_ERR_DISASM_ADDR_START_INVALID, "Command '%s'. Invalid start value '%s'"},
