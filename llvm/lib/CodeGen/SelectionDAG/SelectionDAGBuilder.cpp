@@ -955,18 +955,18 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
 /// emit CopyFromReg of the specified type Ty. Return empty SDValue() otherwise.
 SDValue SelectionDAGBuilder::getCopyFromRegs(const Value *V, Type *Ty) {
   DenseMap<const Value *, unsigned>::iterator It = FuncInfo.ValueMap.find(V);
-  SDValue res;
+  SDValue Result;
 
   if (It != FuncInfo.ValueMap.end()) {
     unsigned InReg = It->second;
     RegsForValue RFV(*DAG.getContext(), DAG.getTargetLoweringInfo(), InReg,
                      Ty);
     SDValue Chain = DAG.getEntryNode();
-    res = RFV.getCopyFromRegs(DAG, FuncInfo, getCurSDLoc(), Chain, nullptr, V);
-    resolveDanglingDebugInfo(V, res);
+    Result = RFV.getCopyFromRegs(DAG, FuncInfo, getCurSDLoc(), Chain, nullptr, V);
+    resolveDanglingDebugInfo(V, Result);
   }
 
-  return res;
+  return Result;
 }
 
 /// getValue - Return an SDValue for the given Value.
