@@ -1537,6 +1537,17 @@ ObjectFileELF::GetSectionHeaderByIndex(lldb::user_id_t id)
     return NULL;
 }
 
+lldb::user_id_t
+ObjectFileELF::GetSectionIndexByName(const char* name)
+{
+    if (!name || !name[0] || !ParseSectionHeaders())
+        return 0;
+    for (size_t i = 1; i < m_section_headers.size(); ++i)
+        if (m_section_headers[i].section_name == ConstString(name))
+            return i;
+    return 0;
+}
+
 void
 ObjectFileELF::CreateSections(SectionList &unified_section_list)
 {
@@ -2108,6 +2119,36 @@ ObjectFileELF::PLTRelocationType()
     return 0;
 }
 
+// Returns the size of the normal plt entries and the offset of the first normal plt entry. The
+// 0th entry in the plt table is ususally a resolution entry which have different size in some
+// architectures then the rest of the plt entries.
+static std::pair<uint64_t, uint64_t>
+GetPltEntrySizeAndOffset(const ELFSectionHeader* rel_hdr, const ELFSectionHeader* plt_hdr)
+{
+    const elf_xword num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
+
+    // Clang 3.3 sets entsize to 4 for 32-bit binaries, but the plt entries are 16 bytes.
+    // So round the entsize up by the alignment if addralign is set.
+    elf_xword plt_entsize = plt_hdr->sh_addralign ?
+        llvm::RoundUpToAlignment (plt_hdr->sh_entsize, plt_hdr->sh_addralign) : plt_hdr->sh_entsize;
+
+    if (plt_entsize == 0)
+    {
+        // The linker haven't set the plt_hdr->sh_entsize field. Try to guess the size of the plt
+        // entries based on the number of entries and the size of the plt section with the
+        // asumption that the size of the 0th entry is at least as big as the size of the normal
+        // entries and it isn't mutch bigger then that.
+        if (plt_hdr->sh_addralign)
+            plt_entsize = plt_hdr->sh_size / plt_hdr->sh_addralign / (num_relocations + 1) * plt_hdr->sh_addralign;
+        else
+            plt_entsize = plt_hdr->sh_size / (num_relocations + 1);
+    }
+
+    elf_xword plt_offset = plt_hdr->sh_size - num_relocations * plt_entsize;
+
+    return std::make_pair(plt_entsize, plt_offset);
+}
+
 static unsigned
 ParsePLTRelocations(Symtab *symbol_table,
                     user_id_t start_id,
@@ -2124,10 +2165,9 @@ ParsePLTRelocations(Symtab *symbol_table,
     ELFRelocation rel(rel_type);
     ELFSymbol symbol;
     lldb::offset_t offset = 0;
-    // Clang 3.3 sets entsize to 4 for 32-bit binaries, but the plt entries are 16 bytes.
-    // So round the entsize up by the alignment if addralign is set.
-    const elf_xword plt_entsize = plt_hdr->sh_addralign ?
-        llvm::RoundUpToAlignment (plt_hdr->sh_entsize, plt_hdr->sh_addralign) : plt_hdr->sh_entsize;
+
+    uint64_t plt_offset, plt_entsize;
+    std::tie(plt_entsize, plt_offset) = GetPltEntrySizeAndOffset(rel_hdr, plt_hdr);
     const elf_xword num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
 
     typedef unsigned (*reloc_info_fn)(const ELFRelocation &rel);
@@ -2156,13 +2196,12 @@ ParsePLTRelocations(Symtab *symbol_table,
             continue;
 
         lldb::offset_t symbol_offset = reloc_symbol(rel) * sym_hdr->sh_entsize;
-        uint64_t plt_index = (i + 1) * plt_entsize;
-
         if (!symbol.Parse(symtab_data, &symbol_offset))
             break;
 
         const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
         bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
+        uint64_t plt_index = plt_offset + i * plt_entsize;
 
         Symbol jump_symbol(
             i + start_id,    // Symbol table index
@@ -2198,6 +2237,13 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
     // points to the section holding the plt.
     user_id_t symtab_id = rel_hdr->sh_link;
     user_id_t plt_id = rel_hdr->sh_info;
+
+    // If the link field doesn't point to the appropriate symbol name table then
+    // try to find it by name as some compiler don't fill in the link fields.
+    if (!symtab_id)
+        symtab_id = GetSectionIndexByName(".dynsym");
+    if (!plt_id)
+        plt_id = GetSectionIndexByName(".plt");
 
     if (!symtab_id || !plt_id)
         return 0;
