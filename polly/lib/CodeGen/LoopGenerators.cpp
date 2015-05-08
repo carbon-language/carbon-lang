@@ -196,7 +196,12 @@ void ParallelLoopGenerator::createCallSpawnThreads(Value *SubFn,
   }
 
   Value *NumberOfThreads = Builder.getInt32(PollyNumThreads);
-  Value *Args[] = {SubFn, SubFnParam, NumberOfThreads, LB, UB, Stride};
+  Value *Args[] = {SubFn,
+                   SubFnParam,
+                   NumberOfThreads,
+                   LB,
+                   UB,
+                   Stride};
 
   Builder.CreateCall(F, Args);
 }
