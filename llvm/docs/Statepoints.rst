@@ -250,7 +250,7 @@ to unmanaged code. The resulting relocation sequence is:
 During lowering, this will result in a instruction selection DAG that looks
 something like:
 
-.. code-block::
+::
 
   CALLSEQ_START
   ...
