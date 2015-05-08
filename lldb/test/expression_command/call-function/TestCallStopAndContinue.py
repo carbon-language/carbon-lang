@@ -30,7 +30,6 @@ class ExprCommandCallStopContinueTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
-    @expectedFailureFreeBSD("llvm.org/pr20274") # intermittent failure
     def test_with_dwarf(self):
         """Test gathering result from interrupted function call."""
         self.buildDwarf()
