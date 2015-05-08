@@ -36,7 +36,7 @@ public:
 
   const AtomLayout *appendAtom(const Atom *atom) override {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
-    assert(atom->contentType() == DefinedAtom::typeARMExidx &&
+    assert(definedAtom->contentType() == DefinedAtom::typeARMExidx &&
            "atom content type for .ARM.exidx section has to be typeARMExidx");
 
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
