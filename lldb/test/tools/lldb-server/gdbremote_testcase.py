@@ -159,8 +159,8 @@ class GdbRemoteTestCaseBase(TestBase):
             err = platform.Run(shell_command)
             if err.Fail():
                 raise Exception("remote_platform.RunShellCommand('readlink /proc/%d/exe') failed: %s" % (pid, err))
-            // If the binary has been deleted, the link name has " (deleted)" appended.
-            // Remove if it's there.
+            # If the binary has been deleted, the link name has " (deleted)" appended.
+            # Remove if it's there.
             self.debug_monitor_exe = re.sub(r' \(deleted\)$', '', shell_command.GetOutput().strip())
             dname = self.dbg.GetSelectedPlatform().GetWorkingDirectory()
         else:
