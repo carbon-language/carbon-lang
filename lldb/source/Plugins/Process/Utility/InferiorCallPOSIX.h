@@ -25,11 +25,6 @@ enum MmapProt {
   eMmapProtWrite = 4
 };
 
-enum MmapFlags {
-  eMmapFlagsPrivate = 1,
-  eMmapFlagsAnon = 2
-};
-
 bool InferiorCallMmap(Process *proc, lldb::addr_t &allocated_addr,
                       lldb::addr_t addr, lldb::addr_t length, unsigned prot,
                       unsigned flags, lldb::addr_t fd, lldb::addr_t offset);

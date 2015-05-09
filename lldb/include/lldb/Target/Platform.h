@@ -37,6 +37,11 @@ namespace lldb_private {
 
 class ModuleCache;
 
+    enum MmapFlags {
+      eMmapFlagsPrivate = 1,
+      eMmapFlagsAnon = 2
+    };
+
     class PlatformProperties : public Properties
     {
     public:
@@ -744,6 +749,9 @@ class ModuleCache;
         
         virtual Error
         Unlink (const char *path);
+
+        virtual uint64_t
+        ConvertMmapFlagsToPlatform(unsigned flags);
 
         virtual bool
         GetSupportsRSync ()

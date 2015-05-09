@@ -40,6 +40,11 @@
 
 #include "Utility/ModuleCache.h"
 
+// Define these constants from POSIX mman.h rather than include the file
+// so that they will be correct even when compiled on Linux.
+#define MAP_PRIVATE 2
+#define MAP_ANON 0x1000
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -1480,7 +1485,16 @@ Platform::Unlink (const char *path)
     return error;
 }
 
-
+uint64_t
+Platform::ConvertMmapFlagsToPlatform(unsigned flags)
+{
+    uint64_t flags_platform = 0;
+    if (flags & eMmapFlagsPrivate)
+        flags_platform |= MAP_PRIVATE;
+    if (flags & eMmapFlagsAnon)
+        flags_platform |= MAP_ANON;
+    return flags_platform;
+}
 
 lldb_private::Error
 Platform::RunShellCommand (const char *command,           // Shouldn't be NULL

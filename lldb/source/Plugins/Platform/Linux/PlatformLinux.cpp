@@ -14,6 +14,7 @@
 
 // C Includes
 #include <stdio.h>
+#include <vector>
 #ifndef LLDB_DISABLE_POSIX
 #include <sys/utsname.h>
 #endif
@@ -41,6 +42,11 @@
 #if defined(__linux__)
 #include "../../Process/Linux/NativeProcessLinux.h"
 #endif
+
+// Define these constants from Linux mman.h for use when targetting
+// remote linux systems even when host has different values.
+#define MAP_PRIVATE 2
+#define MAP_ANON 0x20
 
 using namespace lldb;
 using namespace lldb_private;
@@ -492,22 +498,14 @@ PlatformLinux::FindProcesses (const ProcessInstanceInfoMatch &match_info,
 bool
 PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    if (idx == 0)
-    {
-        arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
-        return arch.IsValid();
-    }
-    else if (idx == 1)
-    {
-        // If the default host architecture is 64-bit, look for a 32-bit variant
-        ArchSpec hostArch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
-        if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit())
-        {
-            arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
-            return arch.IsValid();
-        }
-    }
-    return false;
+    static std::vector<ArchSpec> architectures = {
+        ArchSpec("x86_64-unknown-linux-gnu"),
+        ArchSpec("i386-unknown-linux-gnu"),
+    };
+    if (idx >= architectures.size())
+        return false;
+    arch = architectures[idx];
+    return true;
 }
 
 void
@@ -910,4 +908,15 @@ PlatformLinux::AttachNativeProcess (lldb::pid_t pid,
     // Launch it for debugging
     return process_linux::NativeProcessLinux::AttachToProcess (pid, native_delegate, process_sp);
 #endif
+}
+
+uint64_t
+PlatformLinux::ConvertMmapFlagsToPlatform(unsigned flags)
+{
+    uint64_t flags_platform = 0;
+    if (flags & eMmapFlagsPrivate)
+        flags_platform |= MAP_PRIVATE;
+    if (flags & eMmapFlagsAnon)
+        flags_platform |= MAP_ANON;
+    return flags_platform;
 }

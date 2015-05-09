@@ -119,6 +119,9 @@ namespace platform_linux {
                              NativeProcessProtocol::NativeDelegate &native_delegate,
                              NativeProcessProtocolSP &process_sp) override;
 
+        uint64_t
+        ConvertMmapFlagsToPlatform(unsigned flags) override;
+
         static bool
         UseLlgsForLocalDebugging ();
 

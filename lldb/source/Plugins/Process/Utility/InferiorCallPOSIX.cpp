@@ -14,6 +14,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
@@ -27,8 +28,6 @@
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define PROT_EXEC 4
-#define MAP_PRIVATE 2
-#define MAP_ANON 0x1000
 #endif
 
 using namespace lldb;
@@ -87,10 +86,7 @@ lldb_private::InferiorCallMmap (Process *process,
                 prot_arg |= PROT_WRITE;
             }
 
-            if (flags & eMmapFlagsPrivate)
-              flags_arg |= MAP_PRIVATE;
-            if (flags & eMmapFlagsAnon)
-              flags_arg |= MAP_ANON;
+            flags_arg = process->GetTarget().GetPlatform()->ConvertMmapFlagsToPlatform(flags);
 
             AddressRange mmap_range;
             if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
