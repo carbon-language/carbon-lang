@@ -34,6 +34,7 @@ class WatchpointPythonCommandTestCase(TestBase):
         self.watchpoint_command()
 
     @dwarf_test
+    @skipIfFreeBSD # timing out on buildbot
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""
         self.buildDwarf(dictionary=self.d)

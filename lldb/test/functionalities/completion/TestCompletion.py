@@ -113,6 +113,7 @@ class CommandLineCompletionTestCase(TestBase):
         self.complete_from_to('settings append target.er', 'settings append target.error-path')
 
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # timing out on the FreeBSD buildbot
     def test_settings_insert_after_target_en(self):
         """Test that 'settings insert-after target.env' completes to 'settings insert-after target.env-vars'."""
         self.complete_from_to('settings insert-after target.env', 'settings insert-after target.env-vars')
