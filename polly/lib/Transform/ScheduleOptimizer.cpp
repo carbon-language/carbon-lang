@@ -18,6 +18,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/ScheduleOptimizer.h"
+#include "polly/CodeGen/CodeGeneration.h"
+#include "polly/DependenceInfo.h"
+#include "polly/LinkAllPasses.h"
+#include "polly/Options.h"
+#include "polly/ScopInfo.h"
+#include "polly/Support/GICHelper.h"
+#include "llvm/Support/Debug.h"
 #include "isl/aff.h"
 #include "isl/band.h"
 #include "isl/constraint.h"
@@ -26,13 +33,6 @@
 #include "isl/schedule.h"
 #include "isl/schedule_node.h"
 #include "isl/space.h"
-#include "polly/CodeGen/CodeGeneration.h"
-#include "polly/DependenceInfo.h"
-#include "polly/LinkAllPasses.h"
-#include "polly/Options.h"
-#include "polly/ScopInfo.h"
-#include "polly/Support/GICHelper.h"
-#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace polly;

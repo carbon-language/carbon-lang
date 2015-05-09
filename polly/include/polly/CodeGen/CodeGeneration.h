@@ -13,9 +13,8 @@
 #define POLLY_CODEGENERATION_H
 
 #include "polly/Config/config.h"
-
-#include "isl/set.h"
 #include "isl/map.h"
+#include "isl/set.h"
 
 namespace polly {
 enum VectorizerChoice {

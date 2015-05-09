@@ -13,9 +13,7 @@
 #define POLLY_ISL_EXPR_BUILDER_H
 
 #include "polly/CodeGen/IRBuilder.h"
-
 #include "llvm/ADT/MapVector.h"
-
 #include "isl/ast.h"
 
 namespace llvm {

@@ -1,11 +1,10 @@
 
 #include "polly/Support/SCEVValidator.h"
 #include "polly/ScopInfo.h"
+#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Support/Debug.h"
-
 #include <vector>
 
 using namespace llvm;

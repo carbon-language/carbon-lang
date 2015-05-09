@@ -13,10 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/IRBuilder.h"
-
 #include "polly/ScopInfo.h"
 #include "polly/Support/ScopHelper.h"
-
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Debug.h"
 

@@ -21,21 +21,17 @@
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
-
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
-
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-
 #include "isl/aff.h"
 #include "isl/ast.h"
-#include "isl/set.h"
 #include "isl/ast_build.h"
-
+#include "isl/set.h"
 #include <deque>
 
 using namespace llvm;

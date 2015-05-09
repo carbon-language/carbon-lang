@@ -37,8 +37,8 @@
 #include "polly/ScopInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "isl/flow.h"
-#include "isl/set.h"
 #include "isl/map.h"
+#include "isl/set.h"
 #include "isl/union_map.h"
 
 using namespace llvm;

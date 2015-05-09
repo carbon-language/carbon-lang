@@ -13,7 +13,6 @@
 #define RUNTIME_DEBUG_BUILDER_H
 
 #include "polly/CodeGen/IRBuilder.h"
-
 #include <string>
 
 namespace llvm {

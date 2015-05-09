@@ -20,18 +20,17 @@
 #ifndef POLLY_SCOP_DETECTION_DIAGNOSTIC_H
 #define POLLY_SCOP_DETECTION_DIAGNOSTIC_H
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Value.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
-
-#include <string>
 #include <memory>
+#include <string>
 
 using namespace llvm;
 

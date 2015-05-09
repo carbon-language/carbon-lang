@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/RuntimeDebugBuilder.h"
-
 #include "llvm/IR/Module.h"
 
 using namespace llvm;

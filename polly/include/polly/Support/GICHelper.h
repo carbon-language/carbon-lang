@@ -15,9 +15,8 @@
 #define POLLY_SUPPORT_GIC_HELPER_H
 
 #include "llvm/ADT/APInt.h"
-#include "isl/ctx.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "isl/ctx.h"
 #include <string>
 
 struct isl_map;

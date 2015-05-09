@@ -10,10 +10,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/IslExprBuilder.h"
-
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
-
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"

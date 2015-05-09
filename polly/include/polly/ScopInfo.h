@@ -21,10 +21,8 @@
 #define POLLY_SCOP_INFO_H
 
 #include "polly/ScopDetection.h"
-
-#include "llvm/Analysis/RegionPass.h"
 #include "llvm/ADT/MapVector.h"
-
+#include "llvm/Analysis/RegionPass.h"
 #include "isl/ctx.h"
 
 using namespace llvm;

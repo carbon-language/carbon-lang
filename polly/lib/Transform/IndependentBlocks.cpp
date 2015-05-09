@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 //
 #include "polly/LinkAllPasses.h"
-#include "polly/Options.h"
 #include "polly/CodeGen/BlockGenerators.h"
+#include "polly/Options.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
 #include "llvm/Analysis/DominanceFrontier.h"
@@ -22,10 +22,9 @@
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-
+#include "llvm/Transforms/Utils/Local.h"
 #include <vector>
 
 using namespace polly;

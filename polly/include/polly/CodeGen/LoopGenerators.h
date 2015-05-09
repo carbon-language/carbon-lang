@@ -15,9 +15,8 @@
 #define POLLY_LOOP_GENERATORS_H
 
 #include "polly/CodeGen/IRBuilder.h"
-
-#include "llvm/IR/ValueMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/IR/ValueMap.h"
 
 namespace llvm {
 class Value;

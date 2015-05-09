@@ -13,13 +13,11 @@
 #ifndef POLLY_ISL_NODE_BUILDER_H
 #define POLLY_ISL_NODE_BUILDER_H
 
-#include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/BlockGenerators.h"
+#include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/LoopGenerators.h"
-
-#include "isl/ctx.h"
-
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "isl/ctx.h"
 
 using namespace polly;
 using namespace llvm;

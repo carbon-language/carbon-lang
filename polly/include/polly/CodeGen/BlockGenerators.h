@@ -19,9 +19,7 @@
 #include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-
 #include "isl/map.h"
-
 #include <vector>
 
 struct isl_ast_build;

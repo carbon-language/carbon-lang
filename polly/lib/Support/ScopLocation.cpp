@@ -12,11 +12,10 @@
 //===----------------------------------------------------------------------===//
 //
 #include "polly/Support/ScopLocation.h"
-
+#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
-#include "llvm/Analysis/RegionInfo.h"
 
 using namespace llvm;
 

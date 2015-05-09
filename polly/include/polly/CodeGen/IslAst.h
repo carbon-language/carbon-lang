@@ -24,7 +24,6 @@
 
 #include "polly/Config/config.h"
 #include "polly/ScopPass.h"
-
 #include "isl/ast.h"
 
 namespace llvm {

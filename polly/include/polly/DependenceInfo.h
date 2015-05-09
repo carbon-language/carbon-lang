@@ -24,7 +24,6 @@
 #define POLLY_DEPENDENCE_INFO_H
 
 #include "polly/ScopPass.h"
-
 #include "isl/ctx.h"
 
 struct isl_pw_aff;

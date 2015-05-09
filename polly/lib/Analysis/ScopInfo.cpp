@@ -18,32 +18,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
-#include "polly/ScopInfo.h"
 #include "polly/Options.h"
+#include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/TempScopInfo.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/Debug.h"
-
-#include "isl/constraint.h"
-#include "isl/set.h"
-#include "isl/map.h"
-#include "isl/union_map.h"
 #include "isl/aff.h"
-#include "isl/printer.h"
+#include "isl/constraint.h"
 #include "isl/local_space.h"
+#include "isl/map.h"
 #include "isl/options.h"
+#include "isl/printer.h"
+#include "isl/set.h"
+#include "isl/union_map.h"
 #include "isl/val.h"
-
 #include <sstream>
 #include <string>
 #include <vector>

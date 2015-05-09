@@ -17,7 +17,6 @@
 #define POLLY_TEMP_SCOP_EXTRACTION_H
 
 #include "polly/ScopDetection.h"
-
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/Instructions.h"
 

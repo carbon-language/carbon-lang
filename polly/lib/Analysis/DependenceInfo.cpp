@@ -26,14 +26,13 @@
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
 #include "llvm/Support/Debug.h"
-
 #include <isl/aff.h>
 #include <isl/ctx.h>
 #include <isl/flow.h>
 #include <isl/map.h>
 #include <isl/options.h>
-#include <isl/set.h>
 #include <isl/schedule.h>
+#include <isl/set.h>
 
 using namespace polly;
 using namespace llvm;

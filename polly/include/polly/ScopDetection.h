@@ -47,16 +47,12 @@
 #ifndef POLLY_SCOP_DETECTION_H
 #define POLLY_SCOP_DETECTION_H
 
-#include "llvm/Pass.h"
+#include "polly/ScopDetectionDiagnostic.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasSetTracker.h"
-
-#include "polly/ScopDetectionDiagnostic.h"
-
-#include "llvm/ADT/SetVector.h"
-
-#include <set>
+#include "llvm/Pass.h"
 #include <map>
+#include <set>
 
 using namespace llvm;
 

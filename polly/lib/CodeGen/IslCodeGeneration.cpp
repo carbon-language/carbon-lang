@@ -27,10 +27,9 @@
 #include "polly/ScopInfo.h"
 #include "polly/Support/ScopHelper.h"
 #include "polly/TempScopInfo.h"
-
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/Debug.h"
 
 using namespace polly;
 using namespace llvm;

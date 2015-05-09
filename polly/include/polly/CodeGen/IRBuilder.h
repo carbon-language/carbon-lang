@@ -15,8 +15,8 @@
 #ifndef POLLY_CODEGEN_IRBUILDER_H
 #define POLLY_CODEGEN_IRBUILDER_H
 
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/IRBuilder.h"
 
 namespace llvm {
 class ScalarEvolution;
