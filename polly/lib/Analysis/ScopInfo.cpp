@@ -41,6 +41,7 @@
 #include "isl/printer.h"
 #include "isl/set.h"
 #include "isl/union_map.h"
+#include "isl/union_set.h"
 #include "isl/val.h"
 #include <sstream>
 #include <string>

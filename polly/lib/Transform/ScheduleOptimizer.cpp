@@ -33,6 +33,8 @@
 #include "isl/schedule.h"
 #include "isl/schedule_node.h"
 #include "isl/space.h"
+#include "isl/union_map.h"
+#include "isl/union_set.h"
 
 using namespace llvm;
 using namespace polly;

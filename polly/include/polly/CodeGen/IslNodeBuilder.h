@@ -18,6 +18,7 @@
 #include "polly/CodeGen/LoopGenerators.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "isl/ctx.h"
+#include "isl/union_map.h"
 
 using namespace polly;
 using namespace llvm;
