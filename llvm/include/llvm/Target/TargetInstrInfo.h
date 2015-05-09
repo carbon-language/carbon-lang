@@ -1235,6 +1235,14 @@ public:
     return false;
   }
 
+  /// \brief Return the value to use for the MachineCSE's LookAheadLimit,
+  /// which is a heuristic used for CSE'ing phys reg defs.
+  virtual unsigned getMachineCSELookAheadLimit () const {
+    // The default lookahead is small to prevent unprofitable quadratic
+    // behavior.
+    return 5;
+  }
+
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };

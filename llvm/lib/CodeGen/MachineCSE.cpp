@@ -48,7 +48,7 @@ namespace {
     MachineRegisterInfo *MRI;
   public:
     static char ID; // Pass identification
-    MachineCSE() : MachineFunctionPass(ID), LookAheadLimit(5), CurrVN(0) {
+    MachineCSE() : MachineFunctionPass(ID), LookAheadLimit(0), CurrVN(0) {
       initializeMachineCSEPass(*PassRegistry::getPassRegistry());
     }
 
@@ -69,7 +69,7 @@ namespace {
     }
 
   private:
-    const unsigned LookAheadLimit;
+    unsigned LookAheadLimit;
     typedef RecyclingAllocator<BumpPtrAllocator,
         ScopedHashTableVal<MachineInstr*, unsigned> > AllocatorTy;
     typedef ScopedHashTable<MachineInstr*, unsigned,
@@ -716,5 +716,6 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<MachineDominatorTree>();
+  LookAheadLimit = TII->getMachineCSELookAheadLimit();
   return PerformCSE(DT->getRootNode());
 }
