@@ -10673,6 +10673,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   bool NoVectors = DAG.getMachineFunction().getFunction()->hasFnAttribute(
       Attribute::NoImplicitFloat);
 
+  // This function cannot currently deal with non-byte-sized memory sizes.
+  if (ElementSizeBytes * 8 != MemVT.getSizeInBits())
+    return false;
+
   // Don't merge vectors into wider inputs.
   if (MemVT.isVector() || !MemVT.isSimple())
     return false;
