@@ -29,7 +29,8 @@ def sort_includes(f):
   headers_end = 0
   api_headers = []
   local_headers = []
-  project_headers = []
+  subproject_headers = []
+  llvm_headers = []
   system_headers = []
   for (i, l) in enumerate(lines):
     if l.strip() == '':
@@ -44,12 +45,16 @@ def sort_includes(f):
         api_headers.append(header)
         look_for_api_header = False
         continue
-      if header.startswith('<') or header.startswith('"gtest/'):
+      if (header.startswith('<') or header.startswith('"gtest/') or
+          header.startswith('"isl/') or header.startswith('"json/')):
         system_headers.append(header)
         continue
-      if (header.startswith('"llvm/') or header.startswith('"llvm-c/') or
-          header.startswith('"clang/') or header.startswith('"clang-c/')):
-        project_headers.append(header)
+      if (header.startswith('"clang/') or header.startswith('"clang-c/') or
+          header.startswith('"polly/')):
+        subproject_headers.append(header)
+        continue
+      if (header.startswith('"llvm/') or header.startswith('"llvm-c/')):
+        llvm_headers.append(header)
         continue
       local_headers.append(header)
       continue
@@ -65,9 +70,10 @@ def sort_includes(f):
     return
 
   local_headers = sorted(set(local_headers))
-  project_headers = sorted(set(project_headers))
+  subproject_headers = sorted(set(subproject_headers))
+  llvm_headers = sorted(set(llvm_headers))
   system_headers = sorted(set(system_headers))
-  headers = api_headers + local_headers + project_headers + system_headers
+  headers = api_headers + local_headers + subproject_headers + llvm_headers + system_headers
   header_lines = ['#include ' + h for h in headers]
   lines = lines[:headers_begin] + header_lines + lines[headers_end + 1:]
 
