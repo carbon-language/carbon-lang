@@ -27,6 +27,7 @@
 #include <pwd.h>
 #endif
 
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/RegularExpression.h"
@@ -199,6 +200,11 @@ FileSpec::FileSpec(const char *pathname, bool resolve_path, PathSyntax syntax) :
 {
     if (pathname && pathname[0])
         SetFile(pathname, resolve_path, syntax);
+}
+
+FileSpec::FileSpec(const char *pathname, bool resolve_path, ArchSpec arch) :
+    FileSpec(pathname, resolve_path, arch.GetTriple().isOSWindows() ? ePathSyntaxWindows : ePathSyntaxPosix)
+{
 }
 
 //------------------------------------------------------------------
@@ -605,11 +611,10 @@ FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &res
 void
 FileSpec::Dump(Stream *s) const
 {
-    static ConstString g_slash_only ("/");
     if (s)
     {
         m_directory.Dump(s);
-        if (m_directory && m_directory != g_slash_only)
+        if (m_directory && m_directory.GetStringRef().back() != '/')
             s->PutChar('/');
         m_filename.Dump(s);
     }
@@ -810,10 +815,9 @@ FileSpec::GetPath(bool denormalize) const
 void
 FileSpec::GetPath(llvm::SmallVectorImpl<char> &path, bool denormalize) const
 {
-    if (m_directory)
-        path.append(m_directory.GetCString(), m_directory.GetCString() + m_directory.GetLength());
-    if (m_filename)
-        llvm::sys::path::append(path, m_filename.GetCString());
+    StreamString stream;
+    Dump(&stream);
+    path.append(stream.GetString().begin(), stream.GetString().end());
     Normalize(path, m_syntax);
     if (denormalize && !path.empty())
         DeNormalize(path, m_syntax);

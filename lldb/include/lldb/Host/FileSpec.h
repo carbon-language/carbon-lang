@@ -78,6 +78,8 @@ public:
     //------------------------------------------------------------------
     explicit FileSpec (const char *path, bool resolve_path, PathSyntax syntax = ePathSyntaxHostNative);
 
+    explicit FileSpec (const char *path, bool resolve_path, ArchSpec arch);
+
     //------------------------------------------------------------------
     /// Copy constructor
     ///

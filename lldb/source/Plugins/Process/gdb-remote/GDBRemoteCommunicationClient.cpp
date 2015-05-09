@@ -1312,7 +1312,7 @@ GDBRemoteCommunicationClient::SendArgumentsPacket (const ProcessLaunchInfo &laun
     const char *arg = NULL;
     const Args &launch_args = launch_info.GetArguments();
     if (exe_file)
-        exe_path = exe_file.GetPath(false);
+        exe_path = exe_file.GetPath();
     else
     {
         arg = launch_args.GetArgumentAtIndex(0);
@@ -3744,8 +3744,8 @@ GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
     packet.PutCString("qModuleInfo:");
     packet.PutCStringAsRawHex8(module_path.c_str());
     packet.PutCString(";");
-    const auto& tripple = arch_spec.GetTriple().getTriple();
-    packet.PutBytesAsRawHex8(tripple.c_str(), tripple.size());
+    const auto& triple = arch_spec.GetTriple().getTriple();
+    packet.PutBytesAsRawHex8(triple.c_str(), triple.size());
 
     StringExtractorGDBRemote response;
     if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) != PacketResult::Success)
@@ -3795,7 +3795,7 @@ GDBRemoteCommunicationClient::GetModuleInfo (const FileSpec& module_file_spec,
             extractor.GetStringRef ().swap (value);
             extractor.SetFilePos (0);
             extractor.GetHexByteString (value);
-            module_spec.GetFileSpec () = FileSpec (value.c_str(), false);
+            module_spec.GetFileSpec() = FileSpec(value.c_str(), false, arch_spec);
         }
     }
 

@@ -2377,8 +2377,9 @@ Target::Install (ProcessLaunchInfo *launch_info)
                                 if (is_main_executable) // TODO: add setting for always installing main executable???
                                 {
                                     // Always install the main executable
+                                    remote_file = FileSpec(module_sp->GetFileSpec().GetFilename().AsCString(),
+                                                           false, module_sp->GetArchitecture());
                                     remote_file.GetDirectory() = platform_sp->GetWorkingDirectory();
-                                    remote_file.GetFilename() = module_sp->GetFileSpec().GetFilename();
                                 }
                             }
                             if (remote_file)
