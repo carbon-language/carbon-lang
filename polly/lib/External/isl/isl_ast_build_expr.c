@@ -10,6 +10,7 @@
  * B.P. 105 - 78153 Le Chesnay, France
  */
 
+#include <isl/constraint.h>
 #include <isl/ilp.h>
 #include <isl_ast_build_expr.h>
 #include <isl_ast_private.h>

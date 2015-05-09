@@ -181,8 +181,11 @@ static int solve_lp(struct tab_lp *lp)
 		isl_vec_free(sample);
 	}
 	isl_int_divexact_ui(lp->opt_denom, lp->opt_denom, 2);
-	if (res != isl_lp_ok)
+	if (res < 0)
 		return -1;
+	if (res != isl_lp_ok)
+		isl_die(lp->ctx, isl_error_internal,
+			"unexpected missing (bounded) solution", return -1);
 	return 0;
 }
 

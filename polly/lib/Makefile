@@ -48,7 +48,6 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_convex_hull.c \
            External/isl/isl_ctx.c \
            External/isl/isl_deprecated.c \
-           External/isl/isl_dim.c \
            External/isl/isl_dim_map.c \
            External/isl/isl_equalities.c \
            External/isl/isl_factorization.c \

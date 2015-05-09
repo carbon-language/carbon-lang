@@ -910,6 +910,4 @@ ISL_DECLARE_LIST_FN(union_pw_multi_aff)
 }
 #endif
 
-#include <isl/dim.h>
-
 #endif

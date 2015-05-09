@@ -18,6 +18,8 @@
 
 #include <isl/set.h>
 #include <isl/map.h>
+#include <isl/union_set.h>
+#include <isl/union_map.h>
 #include <isl/flow.h>
 #include <isl/schedule_node.h>
 #include <isl_sort.h>
@@ -1957,6 +1959,9 @@ static void isl_compute_flow_schedule_data_clear(
 	struct isl_compute_flow_schedule_data *data)
 {
 	int i;
+
+	if (!data->sink)
+		return;
 
 	for (i = 0; i < data->n_sink; ++i) {
 		isl_map_free(data->sink[i].access);

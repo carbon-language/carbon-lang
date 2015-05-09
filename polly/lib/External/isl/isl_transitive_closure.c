@@ -70,13 +70,15 @@ static __isl_give isl_map *set_path_length(__isl_take isl_map *map,
 	bmap = isl_basic_map_alloc_space(dim, 0, 1, 1);
 	if (exactly) {
 		k = isl_basic_map_alloc_equality(bmap);
+		if (k < 0)
+			goto error;
 		c = bmap->eq[k];
 	} else {
 		k = isl_basic_map_alloc_inequality(bmap);
+		if (k < 0)
+			goto error;
 		c = bmap->ineq[k];
 	}
-	if (k < 0)
-		goto error;
 	isl_seq_clr(c, 1 + isl_basic_map_total_dim(bmap));
 	isl_int_set_si(c[0], -length);
 	isl_int_set_si(c[1 + nparam + d - 1], -1);
@@ -474,13 +476,15 @@ static __isl_give isl_basic_map *add_delta_constraints(
 			continue;
 		if (eq && p != MIXED) {
 			k = isl_basic_map_alloc_equality(path);
+			if (k < 0)
+				goto error;
 			path_c = path->eq[k];
 		} else {
 			k = isl_basic_map_alloc_inequality(path);
+			if (k < 0)
+				goto error;
 			path_c = path->ineq[k];
 		}
-		if (k < 0)
-			goto error;
 		isl_seq_clr(path_c, 1 + isl_basic_map_total_dim(path));
 		if (p == PURE_VAR) {
 			isl_seq_cpy(path_c + off,
@@ -754,6 +758,9 @@ static __isl_give isl_map *construct_extended_path(__isl_take isl_space *dim,
 	unsigned d;
 	int i, j, n;
 
+	if (!map)
+		goto error;
+
 	d = isl_map_dim(map, isl_dim_in);
 
 	path = isl_map_identity(isl_space_copy(dim));
@@ -819,6 +826,9 @@ static int isl_set_overlaps(__isl_keep isl_set *set1, __isl_keep isl_set *set2)
 	isl_set *i;
 	int no_overlap;
 
+	if (!set1 || !set2)
+		return -1;
+
 	if (!isl_space_tuple_is_equal(set1->dim, isl_dim_set,
 					set2->dim, isl_dim_set))
 		return 0;
@@ -856,16 +866,20 @@ static __isl_give isl_map *construct_component(__isl_take isl_space *dim,
 	struct isl_set *range = NULL;
 	struct isl_map *app = NULL;
 	struct isl_map *path = NULL;
+	int overlaps;
 
 	domain = isl_map_domain(isl_map_copy(map));
 	domain = isl_set_coalesce(domain);
 	range = isl_map_range(isl_map_copy(map));
 	range = isl_set_coalesce(range);
-	if (!isl_set_overlaps(domain, range)) {
+	overlaps = isl_set_overlaps(domain, range);
+	if (overlaps < 0 || !overlaps) {
 		isl_set_free(domain);
 		isl_set_free(range);
 		isl_space_free(dim);
 
+		if (overlaps < 0)
+			map = NULL;
 		map = isl_map_copy(map);
 		map = isl_map_add_dims(map, isl_dim_in, 1);
 		map = isl_map_add_dims(map, isl_dim_out, 1);

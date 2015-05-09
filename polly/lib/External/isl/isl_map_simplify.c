@@ -1758,8 +1758,8 @@ static struct isl_basic_set *remove_shifted_constraints(
 	int k, h, l;
 	isl_ctx *ctx;
 
-	if (!bset)
-		return NULL;
+	if (!bset || !context)
+		return bset;
 
 	size = round_up(4 * (context->n_ineq+1) / 3 - 1);
 	if (size == 0)
@@ -3404,7 +3404,7 @@ static __isl_give isl_vec *normalize_constraint(__isl_take isl_vec *v,
  * opposite inequalities that can be replaced by an equality.
  * We therefore call isl_basic_map_detect_inequality_pairs,
  * which checks for such pairs of inequalities as well as eliminate_divs_eq
- * if such a pair was found.
+ * and isl_basic_map_gauss if such a pair was found.
  */
 __isl_give isl_basic_map *isl_basic_map_reduce_coefficients(
 	__isl_take isl_basic_map *bmap)
@@ -3465,8 +3465,10 @@ __isl_give isl_basic_map *isl_basic_map_reduce_coefficients(
 		int progress = 0;
 
 		bmap = isl_basic_map_detect_inequality_pairs(bmap, &progress);
-		if (progress)
+		if (progress) {
 			bmap = eliminate_divs_eq(bmap, &progress);
+			bmap = isl_basic_map_gauss(bmap, NULL);
+		}
 	}
 
 	return bmap;

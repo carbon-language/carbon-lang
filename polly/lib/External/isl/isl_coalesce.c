@@ -484,6 +484,8 @@ static enum isl_change check_facets(int i, int j,
 			if (info[j].ineq[l] != STATUS_CUT)
 				continue;
 			stat = status_in(info[j].bmap->ineq[l], info[i].tab);
+			if (stat < 0)
+				return isl_change_error;
 			if (stat != STATUS_VALID)
 				break;
 		}
@@ -519,9 +521,13 @@ static int contains(struct isl_coalesce_info *info, struct isl_tab *tab)
 		isl_seq_neg(bmap->eq[k], bmap->eq[k], 1 + dim);
 		stat = status_in(bmap->eq[k], tab);
 		isl_seq_neg(bmap->eq[k], bmap->eq[k], 1 + dim);
+		if (stat < 0)
+			return -1;
 		if (stat != STATUS_VALID)
 			return 0;
 		stat = status_in(bmap->eq[k], tab);
+		if (stat < 0)
+			return -1;
 		if (stat != STATUS_VALID)
 			return 0;
 	}
@@ -531,6 +537,8 @@ static int contains(struct isl_coalesce_info *info, struct isl_tab *tab)
 		if (info->ineq[k] == STATUS_REDUNDANT)
 			continue;
 		stat = status_in(bmap->ineq[k], tab);
+		if (stat < 0)
+			return -1;
 		if (stat != STATUS_VALID)
 			return 0;
 	}
@@ -582,6 +590,7 @@ static enum isl_change is_adj_ineq_extension(int i, int j,
 	unsigned n_eq = info[i].bmap->n_eq;
 	unsigned total = isl_basic_map_total_dim(info[i].bmap);
 	int r;
+	int super;
 
 	if (isl_tab_extend_cons(info[i].tab, 1 + info[j].bmap->n_ineq) < 0)
 		return isl_change_error;
@@ -614,7 +623,10 @@ static enum isl_change is_adj_ineq_extension(int i, int j,
 			return isl_change_error;
 	}
 
-	if (contains(&info[j], info[i].tab))
+	super = contains(&info[j], info[i].tab);
+	if (super < 0)
+		return isl_change_error;
+	if (super)
 		return fuse(i, j, info, NULL, 0, 0);
 
 	if (isl_tab_rollback(info[i].tab, snap) < 0)
@@ -725,6 +737,8 @@ static enum isl_change is_adj_eq_extension(int i, int j, int k,
 	if (isl_tab_select_facet(info[i].tab, n_eq + k) < 0)
 		return isl_change_error;
 	super = contains(&info[j], info[i].tab);
+	if (super < 0)
+		return isl_change_error;
 	if (super) {
 		int l;
 		unsigned total;
@@ -2119,6 +2133,7 @@ static __isl_give isl_aff_list *set_up_substitutions(
 
 	return list;
 error:
+	isl_aff_free(aff_nan);
 	isl_local_space_free(ls);
 	isl_basic_set_free(wrap_hull);
 	isl_aff_list_free(list);
@@ -2354,7 +2369,7 @@ static enum isl_change check_coalesce_into_eq(int i, int j,
 
 	list = set_up_substitutions(info[i].bmap, info[j].bmap, hull_j);
 	if (!list)
-		goto error;
+		return isl_change_error;
 	if (isl_aff_list_n_aff(list) < n_div_i)
 		change = isl_change_none;
 	else

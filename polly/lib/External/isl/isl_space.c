@@ -911,9 +911,9 @@ error:
 __isl_give isl_space *isl_space_add_dims(__isl_take isl_space *dim,
 	enum isl_dim_type type, unsigned n)
 {
+	dim = isl_space_reset(dim, type);
 	if (!dim)
 		return NULL;
-	dim = isl_space_reset(dim, type);
 	switch (type) {
 	case isl_dim_param:
 		dim = isl_space_extend(dim,

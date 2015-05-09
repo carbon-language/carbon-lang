@@ -22,6 +22,7 @@
 #include <isl_stream_private.h>
 #include <isl/obj.h>
 #include "isl_polynomial_private.h"
+#include <isl/union_set.h>
 #include <isl/union_map.h>
 #include <isl_mat_private.h>
 #include <isl_aff_private.h>

@@ -491,8 +491,24 @@ static __isl_give isl_map *basic_map_subtract(__isl_take isl_basic_map *bmap,
 	return sdc.diff;
 }
 
+/* Return an empty map living in the same space as "map1" and "map2".
+ */
+static __isl_give isl_map *replace_pair_by_empty( __isl_take isl_map *map1,
+	__isl_take isl_map *map2)
+{
+	isl_space *space;
+
+	space = isl_map_get_space(map1);
+	isl_map_free(map1);
+	isl_map_free(map2);
+	return isl_map_empty(space);
+}
+
 /* Return the set difference between map1 and map2.
  * (U_i A_i) \ (U_j B_j) is computed as U_i (A_i \ (U_j B_j))
+ *
+ * If "map1" and "map2" are obviously equal to each other,
+ * then return an empty map in the same space.
  *
  * If "map1" and "map2" are disjoint, then simply return "map1".
  */
@@ -500,13 +516,19 @@ static __isl_give isl_map *map_subtract( __isl_take isl_map *map1,
 	__isl_take isl_map *map2)
 {
 	int i;
-	int disjoint;
+	int equal, disjoint;
 	struct isl_map *diff;
 
 	if (!map1 || !map2)
 		goto error;
 
 	isl_assert(map1->ctx, isl_space_is_equal(map1->dim, map2->dim), goto error);
+
+	equal = isl_map_plain_is_equal(map1, map2);
+	if (equal < 0)
+		goto error;
+	if (equal)
+		return replace_pair_by_empty(map1, map2);
 
 	disjoint = isl_map_is_disjoint(map1, map2);
 	if (disjoint < 0)

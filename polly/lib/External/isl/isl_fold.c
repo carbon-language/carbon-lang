@@ -234,9 +234,22 @@ error:
 	return NULL;
 }
 
+/* Determine the sign of the constant quasipolynomial "qp".
+ *
+ * Return
+ *	-1 if qp <= 0
+ *	 1 if qp >= 0
+ *	 0 if unknown
+ *
+ * For qp == 0, we can return either -1 or 1.  In practice, we return 1.
+ * For qp == NaN, the sign is undefined, so we return 0.
+ */
 static int isl_qpolynomial_cst_sign(__isl_keep isl_qpolynomial *qp)
 {
 	struct isl_upoly_cst *cst;
+
+	if (isl_qpolynomial_is_nan(qp))
+		return 0;
 
 	cst = isl_upoly_as_cst(qp->upoly);
 	if (!cst)
@@ -438,7 +451,13 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_fold_on_domain(
 	for (i = 0; i < fold2->n; ++i) {
 		for (j = n1 - 1; j >= 0; --j) {
 			isl_qpolynomial *d;
-			int sgn;
+			int sgn, equal;
+			equal = isl_qpolynomial_plain_is_equal(res->qp[j],
+								fold2->qp[i]);
+			if (equal < 0)
+				goto error;
+			if (equal)
+				break;
 			d = isl_qpolynomial_sub(
 				isl_qpolynomial_copy(res->qp[j]),
 				isl_qpolynomial_copy(fold2->qp[i]));

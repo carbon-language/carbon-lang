@@ -1,3 +1,9 @@
+version: 0.14.1
+date: Thu Apr  9 12:57:23 CEST 2015
+changes:
+	- fix bug in affine expression normalization
+	- fix handling of conditional validity constraints
+---
 version: 0.14
 date: Sat Oct 25 16:08:47 CEST 2014
 changes:

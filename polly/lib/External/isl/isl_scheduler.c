@@ -22,6 +22,7 @@
 #include <isl_mat_private.h>
 #include <isl_vec_private.h>
 #include <isl/set.h>
+#include <isl/union_set.h>
 #include <isl_seq.h>
 #include <isl_tab.h>
 #include <isl_dim_map.h>

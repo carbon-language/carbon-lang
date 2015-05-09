@@ -564,9 +564,8 @@ static void sol_map_free_wrap(struct isl_sol *sol)
 static void sol_map_add_empty(struct isl_sol_map *sol,
 	struct isl_basic_set *bset)
 {
-	if (!bset)
+	if (!bset || !sol->empty)
 		goto error;
-	isl_assert(bset->ctx, sol->empty, goto error);
 
 	sol->empty = isl_set_grow(sol->empty, 1);
 	bset = isl_basic_set_simplify(bset);
@@ -2790,7 +2789,7 @@ static struct isl_vec *gbr_get_sample(struct isl_context_gbr *cgbr)
 
 		sample = isl_tab_sample(cgbr->tab);
 
-		if (isl_tab_rollback(cgbr->tab, snap) < 0) {
+		if (!sample || isl_tab_rollback(cgbr->tab, snap) < 0) {
 			isl_vec_free(sample);
 			return NULL;
 		}
@@ -3266,10 +3265,8 @@ static void context_gbr_restore(struct isl_context *context, void *save)
 	struct isl_gbr_tab_undo *snap = (struct isl_gbr_tab_undo *)save;
 	if (!snap)
 		goto error;
-	if (isl_tab_rollback(cgbr->tab, snap->tab_snap) < 0) {
-		isl_tab_free(cgbr->tab);
-		cgbr->tab = NULL;
-	}
+	if (isl_tab_rollback(cgbr->tab, snap->tab_snap) < 0)
+		goto error;
 
 	if (snap->shifted_snap) {
 		if (isl_tab_rollback(cgbr->shifted, snap->shifted_snap) < 0)
@@ -5253,9 +5250,8 @@ static void sol_pma_free(struct isl_sol_pma *sol_pma)
 static void sol_pma_add_empty(struct isl_sol_pma *sol,
 	__isl_take isl_basic_set *bset)
 {
-	if (!bset)
+	if (!bset || !sol->empty)
 		goto error;
-	isl_assert(bset->ctx, sol->empty, goto error);
 
 	sol->empty = isl_set_grow(sol->empty, 1);
 	bset = isl_basic_set_simplify(bset);

@@ -19,6 +19,7 @@
 #include <isl_ctx_private.h>
 #include <isl_map_private.h>
 #include <isl_blk.h>
+#include <isl/constraint.h>
 #include "isl_space_private.h"
 #include "isl_equalities.h"
 #include <isl_lp_private.h>
@@ -9065,6 +9066,9 @@ int isl_basic_map_plain_cmp(const __isl_keep isl_basic_map *bmap1,
 {
 	int i, cmp;
 	unsigned total;
+
+	if (!bmap1 || !bmap2)
+		return -1;
 
 	if (bmap1 == bmap2)
 		return 0;
