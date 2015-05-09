@@ -177,4 +177,3 @@ CodeGenVTables::getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
   
   return I->second;
 }
-
