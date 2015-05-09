@@ -40,6 +40,7 @@ geometric/distance.cl
 geometric/dot.cl
 geometric/fast_distance.cl
 geometric/fast_length.cl
+geometric/fast_normalize.cl
 geometric/length.cl
 geometric/normalize.cl
 integer/abs.cl

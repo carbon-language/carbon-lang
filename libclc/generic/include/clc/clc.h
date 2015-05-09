@@ -132,6 +132,7 @@
 #include <clc/geometric/dot.h>
 #include <clc/geometric/fast_distance.h>
 #include <clc/geometric/fast_length.h>
+#include <clc/geometric/fast_normalize.h>
 #include <clc/geometric/length.h>
 #include <clc/geometric/normalize.h>
 
