@@ -1684,10 +1684,13 @@ unsigned FastISel::fastEmit_ri_(MVT VT, unsigned Opcode, unsigned Op0,
     MaterialReg = getRegForValue(ConstantInt::get(ITy, Imm));
     if (!MaterialReg)
       return 0;
-    // If this constant was already materialized, then we don't want to kill it.
-    // In this case we will have a use.
-    if (!MRI.use_empty(MaterialReg))
-      IsImmKill = false;
+    // FIXME: If the materialized register here has no uses yet then this
+    // will be the first use and we should be able to mark it as killed.
+    // However, the local value area for materialising constant expressions
+    // grows down, not up, which means that any constant expressions we generate
+    // later which also use 'Imm' could be after this instruction and therefore
+    // after this kill.
+    IsImmKill = false;
   }
   return fastEmit_rr(VT, VT, Opcode, Op0, Op0IsKill, MaterialReg, IsImmKill);
 }
