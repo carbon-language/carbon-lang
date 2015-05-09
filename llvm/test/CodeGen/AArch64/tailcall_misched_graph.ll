@@ -1,6 +1,6 @@
 ; RUN: llc -mcpu=cyclone -debug-only=misched < %s 2>&1 | FileCheck %s
 
-; REQUIRE: asserts
+; REQUIRES: asserts
 
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
 target triple = "arm64-apple-ios7.0.0"
