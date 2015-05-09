@@ -22,9 +22,7 @@
 
 #include <clc/clc.h>
 
-#ifdef cl_khr_fp64
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-#endif
-
 #define __CLC_BODY <fast_distance.inc>
+#define __FLOAT_ONLY
 #include <clc/geometric/floatn.inc>
+#undef __FLOAT_ONLY

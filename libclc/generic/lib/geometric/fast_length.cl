@@ -37,24 +37,3 @@ _CLC_OVERLOAD _CLC_DEF float fast_length(float3 p) {
 _CLC_OVERLOAD _CLC_DEF float fast_length(float4 p) {
   return half_sqrt(dot(p, p));
 }
-
-#ifdef cl_khr_fp64
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-
-_CLC_OVERLOAD _CLC_DEF double fast_length(double p) {
-  return fabs(p);
-}
-
-_CLC_OVERLOAD _CLC_DEF double fast_length(double2 p) {
-  return half_sqrt(dot(p, p));
-}
-
-_CLC_OVERLOAD _CLC_DEF double fast_length(double3 p) {
-  return half_sqrt(dot(p, p));
-}
-
-_CLC_OVERLOAD _CLC_DEF double fast_length(double4 p) {
-  return half_sqrt(dot(p, p));
-}
-
-#endif
