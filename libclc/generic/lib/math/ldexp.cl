@@ -32,7 +32,7 @@ _CLC_DEFINE_BINARY_BUILTIN(float, ldexp, __clc_ldexp, float, int)
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-_CLC_DEFINE_BINARY_BUILTIN(float, ldexp, __clc_ldexp, float, int)
+_CLC_DEFINE_BINARY_BUILTIN(double, ldexp, __clc_ldexp, double, int)
 
 #endif
 
