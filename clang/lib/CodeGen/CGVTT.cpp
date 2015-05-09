@@ -94,7 +94,8 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
   // Set the correct linkage.
   VTT->setLinkage(Linkage);
 
-  CGM.maybeSetTrivialComdat(*VTT);
+  if (CGM.supportsCOMDAT() && VTT->isWeakForLinker())
+    VTT->setComdat(CGM.getModule().getOrInsertComdat(VTT->getName()));
 
   // Set the right visibility.
   CGM.setGlobalVisibility(VTT, RD);
@@ -176,3 +177,4 @@ CodeGenVTables::getSecondaryVirtualPointerIndex(const CXXRecordDecl *RD,
   
   return I->second;
 }
+
