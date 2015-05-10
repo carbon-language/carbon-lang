@@ -4876,6 +4876,10 @@ TEST_F(FormatTest, AlignsPipes) {
       "}");
   verifyFormat("llvm::outs() << \"aaaaaaaaaaaaaaaa: \"\n"
                "             << aaaaaaaa.aaaaaaaaaaaa(aaa)->aaaaaaaaaaaaaa();");
+  verifyFormat("llvm::errs() << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                    aaaaaaaaaaaaaaaaaaaaa)\n"
+               "             << aaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   // Breaking before the first "<<" is generally not desirable.
   verifyFormat(
