@@ -61,6 +61,7 @@ of the buffer."
   (unless (and (listp xml-node) (eq (xml-node-name xml-node) 'replacements))
     (error "Expected <replacements> node"))
   (let ((nodes (xml-node-children xml-node))
+        (incomplete-format (xml-get-attribute xml-node 'incomplete_format))
         replacements
         cursor)
     (dolist (node nodes)
@@ -89,7 +90,7 @@ of the buffer."
                                    (and (= (car a) (car b))
                                         (> (cadr a) (cadr b)))))))
 
-    (cons replacements cursor)))
+    (list replacements cursor (string= incomplete-format "true"))))
 
 (defun clang-format--replace (offset length &optional text)
   (let ((start (byte-to-position (1+ offset)))
@@ -142,20 +143,24 @@ is no active region.  If no style is given uses `clang-format-style'."
            ((stringp status)
             (error "(clang-format killed by signal %s%s)" status stderr))
            ((not (equal 0 status))
-            (error "(clang-format failed with code %d%s)" status stderr))
-           (t (message "(clang-format succeeded%s)" stderr)))
+            (error "(clang-format failed with code %d%s)" status stderr)))
 
           (with-current-buffer temp-buffer
             (setq operations (clang-format--extract (car (xml-parse-region)))))
 
-          (let ((replacements (car operations))
-                (cursor (cdr operations)))
+          (let ((replacements (nth 0 operations))
+                (cursor (nth 1 operations))
+                (incomplete-format (nth 2 operations)))
             (save-excursion
               (mapc (lambda (rpl)
                       (apply #'clang-format--replace rpl))
                     replacements))
             (when cursor
-              (goto-char (byte-to-position (1+ cursor))))))
+              (goto-char (byte-to-position (1+ cursor))))
+            (message "%s" incomplete-format)
+            (if incomplete-format
+                (message "(clang-format: incomplete (syntax errors)%s)" stderr)
+              (message "(clang-format: success%s)" stderr))))
       (delete-file temp-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
