@@ -736,7 +736,8 @@ private:
     // recovered from an error (e.g. failure to find the matching >).
     if (!CurrentToken->isOneOf(TT_LambdaLSquare, TT_ForEachMacro,
                                TT_FunctionLBrace, TT_ImplicitStringLiteral,
-                               TT_RegexLiteral, TT_TrailingReturnArrow))
+                               TT_InlineASMBrace, TT_RegexLiteral,
+                               TT_TrailingReturnArrow))
       CurrentToken->Type = TT_Unknown;
     CurrentToken->Role.reset();
     CurrentToken->MatchingParen = nullptr;
@@ -2006,6 +2007,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       Style.Language == FormatStyle::LK_Proto)
     // Don't put enums onto single lines in protocol buffers.
     return true;
+  if (Right.is(TT_InlineASMBrace))
+    return Right.HasUnescapedNewline;
   if (Style.Language == FormatStyle::LK_JavaScript && Right.is(tok::r_brace) &&
       Left.is(tok::l_brace) && !Left.Children.empty())
     // Support AllowShortFunctionsOnASingleLine for JavaScript.

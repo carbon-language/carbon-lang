@@ -48,6 +48,7 @@ enum TokenType {
   TT_ImplicitStringLiteral,
   TT_InheritanceColon,
   TT_InlineASMColon,
+  TT_InlineASMBrace,
   TT_JavaAnnotation,
   TT_JsTypeColon,
   TT_JsTypeOptionalQuestion,
