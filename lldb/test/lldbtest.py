@@ -965,6 +965,55 @@ class Base(unittest2.TestCase):
         else:
             return True
 
+    def enableLogChannelsForCurrentTest(self):
+        if len(lldbtest_config.channels) == 0:
+            return
+
+        # if debug channels are specified in lldbtest_config.channels,
+        # create a new set of log files for every test
+        log_basename = self.getLogBasenameForCurrentTest()
+
+        # confirm that the file is writeable
+        host_log_path = "{}-host.log".format(log_basename)
+        open(host_log_path, 'w').close()
+
+        log_enable = "log enable -Tpn -f {} ".format(host_log_path)
+        for channel_with_categories in lldbtest_config.channels:
+            channel_then_categories = channel_with_categories.split(' ', 1)
+            channel = channel_then_categories[0]
+            if len(channel_then_categories) > 1:
+                categories = channel_then_categories[1]
+            else:
+                categories = "default"
+
+            if channel == "gdb-remote":
+                # communicate gdb-remote categories to debugserver
+                os.environ["LLDB_DEBUGSERVER_LOG_FLAGS"] = categories
+
+            self.ci.HandleCommand(log_enable + channel_with_categories, self.res)
+            if not self.res.Succeeded():
+                raise Exception('log enable failed (check LLDB_LOG_OPTION env variable)')
+
+        # Communicate log path name to debugserver & lldb-server
+        server_log_path = "{}-server.log".format(log_basename)
+        open(server_log_path, 'w').close()
+        os.environ["LLDB_DEBUGSERVER_LOG_FILE"] = server_log_path
+
+        # Communicate channels to lldb-server
+        os.environ["LLDB_SERVER_LOG_CHANNELS"] = ":".join(lldbtest_config.channels)
+
+        if len(lldbtest_config.channels) == 0:
+            return
+
+    def disableLogChannelsForCurrentTest(self):
+        # close all log files that we opened
+        for channel_and_categories in lldbtest_config.channels:
+            # channel format - <channel-name> [<category0> [<category1> ...]]
+            channel = channel_and_categories.split(' ', 1)[0]
+            self.ci.HandleCommand("log disable " + channel, self.res)
+            if not self.res.Succeeded():
+                raise Exception('log disable failed (check LLDB_LOG_OPTION env variable)')
+
     def setUp(self):
         """Fixture for unittest test case setup.
 
@@ -1094,6 +1143,25 @@ class Base(unittest2.TestCase):
         if self.platformContext:
             # set environment variable names for finding shared libraries
             self.dylibPath = self.platformContext.shlib_environment_var
+
+        # Create the debugger instance if necessary.
+        try:
+            self.dbg = lldb.DBG
+        except AttributeError:
+            self.dbg = lldb.SBDebugger.Create()
+
+        if not self.dbg:
+            raise Exception('Invalid debugger instance')
+
+        # Retrieve the associated command interpreter instance.
+        self.ci = self.dbg.GetCommandInterpreter()
+        if not self.ci:
+            raise Exception('Could not get the command interpreter')
+
+        # And the result object.
+        self.res = lldb.SBCommandReturnObject()
+
+        self.enableLogChannelsForCurrentTest()
 
     def runHooks(self, child=None, child_prompt=None, use_cmd_api=False):
         """Perform the run hooks to bring lldb debugger to the desired state.
@@ -1867,55 +1935,6 @@ class TestBase(Base):
                         folder = os.path.dirname(folder)
                         continue
 
-    def enableLogChannelsForCurrentTest(self):
-        if len(lldbtest_config.channels) == 0:
-            return
-
-        # if debug channels are specified in lldbtest_config.channels,
-        # create a new set of log files for every test
-        log_basename = self.getLogBasenameForCurrentTest()
-
-        # confirm that the file is writeable
-        host_log_path = "{}-host.log".format(log_basename)
-        open(host_log_path, 'w').close()
-
-        log_enable = "log enable -Tpn -f {} ".format(host_log_path)
-        for channel_with_categories in lldbtest_config.channels:
-            channel_then_categories = channel_with_categories.split(' ', 1)
-            channel = channel_then_categories[0]
-            if len(channel_then_categories) > 1:
-                categories = channel_then_categories[1]
-            else:
-                categories = "default"
-
-            if channel == "gdb-remote":
-                # communicate gdb-remote categories to debugserver
-                os.environ["LLDB_DEBUGSERVER_LOG_FLAGS"] = categories
-
-            self.ci.HandleCommand(log_enable + channel_with_categories, self.res)
-            if not self.res.Succeeded():
-                raise Exception('log enable failed (check LLDB_LOG_OPTION env variable)')
-
-        # Communicate log path name to debugserver & lldb-server
-        server_log_path = "{}-server.log".format(log_basename)
-        open(server_log_path, 'w').close()
-        os.environ["LLDB_DEBUGSERVER_LOG_FILE"] = server_log_path
-
-        # Communicate channels to lldb-server
-        os.environ["LLDB_SERVER_LOG_CHANNELS"] = ":".join(lldbtest_config.channels)
-
-        if len(lldbtest_config.channels) == 0:
-            return
-
-    def disableLogChannelsForCurrentTest(self):
-        # close all log files that we opened
-        for channel_and_categories in lldbtest_config.channels:
-            # channel format - <channel-name> [<category0> [<category1> ...]]
-            channel = channel_and_categories.split(' ', 1)[0]
-            self.ci.HandleCommand("log disable " + channel, self.res)
-            if not self.res.Succeeded():
-                raise Exception('log disable failed (check LLDB_LOG_OPTION env variable)')
-
     def setUp(self):
         #import traceback
         #traceback.print_stack()
@@ -1942,42 +1961,6 @@ class TestBase(Base):
 
         if "LLDB_TIME_WAIT_NEXT_LAUNCH" in os.environ:
             self.timeWaitNextLaunch = float(os.environ["LLDB_TIME_WAIT_NEXT_LAUNCH"])
-
-        # Create the debugger instance if necessary.
-        try:
-            self.dbg = lldb.DBG
-        except AttributeError:
-            self.dbg = lldb.SBDebugger.Create()
-
-        if not self.dbg:
-            raise Exception('Invalid debugger instance')
-
-        # Retrieve the associated command interpreter instance.
-        self.ci = self.dbg.GetCommandInterpreter()
-        if not self.ci:
-            raise Exception('Could not get the command interpreter')
-
-        # And the result object.
-        self.res = lldb.SBCommandReturnObject()
-
-        # Create the debugger instance if necessary.
-        try:
-            self.dbg = lldb.DBG
-        except AttributeError:
-            self.dbg = lldb.SBDebugger.Create()
-
-        if not self.dbg:
-            raise Exception('Invalid debugger instance')
-
-        # Retrieve the associated command interpreter instance.
-        self.ci = self.dbg.GetCommandInterpreter()
-        if not self.ci:
-            raise Exception('Could not get the command interpreter')
-
-        # And the result object.
-        self.res = lldb.SBCommandReturnObject()
-
-        self.enableLogChannelsForCurrentTest()
 
         #
         # Warning: MAJOR HACK AHEAD!
