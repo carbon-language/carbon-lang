@@ -148,7 +148,9 @@ def walk_and_invoke(test_root, dotest_options, num_threads):
     return (timed_out, failed, passed)
 
 def main():
-    test_root = sys.path[0]
+    # We can't use sys.path[0] to determine the script directory
+    # because it doesn't work under a debugger
+    test_root = os.path.dirname(os.path.realpath(__file__))
 
     parser = OptionParser(usage="""\
 Run lldb test suite using a separate process for each test file.

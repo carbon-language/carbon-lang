@@ -253,7 +253,9 @@ verbose = 1
 progress_bar = False
 
 # By default, search from the script directory.
-testdirs = [ sys.path[0] ]
+# We can't use sys.path[0] to determine the script directory
+# because it doesn't work under a debugger
+testdirs = [ os.path.dirname(os.path.realpath(__file__)) ]
 
 # Separator string.
 separator = '-' * 70
@@ -375,6 +377,7 @@ o LLDB_LOG: if defined, specifies the log file pathname for the 'lldb' subsystem
 o GDB_REMOTE_LOG: if defined, specifies the log file pathname for the
   'process.gdb-remote' subsystem with a default option of 'packets' if
   GDB_REMOTE_LOG_OPTION is not defined.
+
 """
     sys.exit(0)
 
@@ -933,10 +936,10 @@ def setupSysPath():
     global lldbExecutablePath
 
     # Get the directory containing the current script.
-    if ("DOTEST_PROFILE" in os.environ or "DOTEST_PDB" in os.environ) and "DOTEST_SCRIPT_DIR" in os.environ:
+    if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
         scriptPath = os.environ["DOTEST_SCRIPT_DIR"]
     else:
-        scriptPath = sys.path[0]
+        scriptPath = os.path.dirname(os.path.realpath(__file__))
     if not scriptPath.endswith('test'):
         print "This script expects to reside in lldb's test directory."
         sys.exit(-1)
@@ -955,7 +958,7 @@ def setupSysPath():
 
     # Set up the LLDB_SRC environment variable, so that the tests can locate
     # the LLDB source code.
-    os.environ["LLDB_SRC"] = os.path.join(sys.path[0], os.pardir)
+    os.environ["LLDB_SRC"] = os.path.join(scriptPath, os.pardir)
 
     pluginPath = os.path.join(scriptPath, 'plugins')
     pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
