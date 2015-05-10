@@ -2872,11 +2872,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
         EVT InVT = BV->getValueType(0);
         EVT InSVT = InVT.getScalarType();
 
-        // Find legal integer scalar type for constant promotion.
+        // Find legal integer scalar type for constant promotion and
+        // ensure that its scalar size is at least as large as source.
         EVT LegalSVT = SVT;
         if (SVT.isInteger()) {
           LegalSVT = TLI->getTypeToTransformTo(*getContext(), SVT);
-          assert(LegalSVT.bitsGE(SVT) && "Unexpected legal scalar type size");
+          if (LegalSVT.bitsLT(SVT)) break;
         }
 
         // Let the above scalar folding handle the folding of each element.
