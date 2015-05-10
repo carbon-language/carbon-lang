@@ -4052,7 +4052,6 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
     initGenericErrorDefaultFunc (&func);
 
     GDBRemoteCommunicationClient & comm = m_gdb_comm;
-    GDBRemoteDynamicRegisterInfo & regInfo = m_register_info;
 
     // check that we have extended feature read support
     if (!comm.GetQXferLibrariesSVR4ReadSupported ())
@@ -4228,7 +4227,7 @@ ProcessGDBRemote::LoadModules ()
             continue;
 
         // hack (cleaner way to get file name only?) (win/unix compat?)
-        int marker = mod_name.rfind ('/');
+        size_t marker = mod_name.rfind ('/');
         if (marker == std::string::npos)
             marker = 0;
         else
