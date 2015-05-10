@@ -116,6 +116,7 @@ public:
     void insert(initializer_list<value_type> il);
 
     iterator  erase(const_iterator position);
+    iterator  erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
     void clear() noexcept;
@@ -297,6 +298,7 @@ public:
     void insert(initializer_list<value_type> il);
 
     iterator  erase(const_iterator position);
+    iterator  erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
     void clear() noexcept;

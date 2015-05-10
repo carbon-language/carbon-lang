@@ -123,6 +123,7 @@ public:
     void insert(initializer_list<value_type>);
 
     iterator erase(const_iterator position);
+    iterator erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator erase(const_iterator first, const_iterator last);
     void clear() noexcept;
@@ -287,6 +288,7 @@ public:
     void insert(initializer_list<value_type>);
 
     iterator erase(const_iterator position);
+    iterator erase(iterator position);  // C++14
     size_type erase(const key_type& k);
     iterator erase(const_iterator first, const_iterator last);
     void clear() noexcept;
@@ -943,6 +945,8 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p.__i_);}
+    _LIBCPP_INLINE_VISIBILITY
+    iterator erase(iterator __p)       {return __table_.erase(__p.__i_);}
     _LIBCPP_INLINE_VISIBILITY
     size_type erase(const key_type& __k) {return __table_.__erase_unique(__k);}
     _LIBCPP_INLINE_VISIBILITY
@@ -1643,6 +1647,8 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p.__i_);}
+    _LIBCPP_INLINE_VISIBILITY
+    iterator erase(iterator __p)       {return __table_.erase(__p.__i_);}
     _LIBCPP_INLINE_VISIBILITY
     size_type erase(const key_type& __k) {return __table_.__erase_multi(__k);}
     _LIBCPP_INLINE_VISIBILITY

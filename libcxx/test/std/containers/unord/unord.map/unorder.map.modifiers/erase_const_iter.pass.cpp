@@ -21,6 +21,15 @@
 
 #include "min_allocator.h"
 
+struct TemplateConstructor
+{
+    template<typename T>
+    TemplateConstructor (const T&) {}
+};
+
+bool operator==(const TemplateConstructor&, const TemplateConstructor&) { return false; }
+struct Hash { size_t operator() (const TemplateConstructor &) const { return 0; } };
+
 int main()
 {
     {
@@ -64,6 +73,20 @@ int main()
         assert(c.at(1) == "one");
         assert(c.at(3) == "three");
         assert(c.at(4) == "four");
+    }
+#endif
+#if __cplusplus >= 201402L
+    {
+    //  This is LWG #2059
+        typedef TemplateConstructor T;
+        typedef std::unordered_map<T, int, Hash> C;
+        typedef C::iterator I;
+
+        C m;
+        T a{0};
+        I it = m.find(a);
+        if (it != m.end())
+            m.erase(it);
     }
 #endif
 }

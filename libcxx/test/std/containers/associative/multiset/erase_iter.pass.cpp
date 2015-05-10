@@ -18,6 +18,14 @@
 
 #include "min_allocator.h"
 
+struct TemplateConstructor
+{
+    template<typename T>
+    TemplateConstructor (const T&) {}
+};
+
+bool operator<(const TemplateConstructor&, const TemplateConstructor&) { return false; }
+
 int main()
 {
     {
@@ -176,6 +184,20 @@ int main()
         assert(m.size() == 0);
         assert(i == m.begin());
         assert(i == m.end());
+    }
+#endif
+#if __cplusplus >= 201402L
+    {
+    //  This is LWG #2059
+        typedef TemplateConstructor T;
+        typedef std::multiset<T> C;
+        typedef C::iterator I;
+
+        C c;
+        T a{0};
+        I it = c.find(a);
+        if (it != c.end())
+            c.erase(it);
     }
 #endif
 }
