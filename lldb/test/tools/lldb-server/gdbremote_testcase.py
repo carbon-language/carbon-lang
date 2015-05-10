@@ -162,14 +162,12 @@ class GdbRemoteTestCaseBase(TestBase):
             # If the binary has been deleted, the link name has " (deleted)" appended.
             # Remove if it's there.
             self.debug_monitor_exe = re.sub(r' \(deleted\)$', '', shell_command.GetOutput().strip())
-            dname = self.dbg.GetSelectedPlatform().GetWorkingDirectory()
         else:
             self.debug_monitor_exe = get_lldb_server_exe()
             if not self.debug_monitor_exe:
                 self.skipTest("lldb-server exe not found")
-            dname = os.path.join(os.environ["LLDB_TEST"], os.environ["LLDB_SESSION_DIRNAME"])
 
-        self.debug_monitor_extra_args = ["gdbserver", "-c", "log enable -T -f {}/process-{}.log lldb break process thread".format(dname, self.id()), "-c", "log enable -T -f {}/packets-{}.log gdb-remote packets".format(dname, self.id())]
+        self.debug_monitor_extra_args = ["gdbserver"]
         if use_named_pipe:
             (self.named_pipe_path, self.named_pipe, self.named_pipe_fd) = self.create_named_pipe()
 
