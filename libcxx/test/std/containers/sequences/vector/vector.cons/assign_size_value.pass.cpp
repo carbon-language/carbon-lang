@@ -24,9 +24,7 @@ bool is6(int x) { return x == 6; }
 template <typename Vec>
 void test ( Vec &v )
 {
-    std::cout << "Size, cap: " << v.size() << " " << v.capacity() << std::endl;
     v.assign(5, 6);
-    std::cout << "Size, cap: " << v.size() << " " << v.capacity() << std::endl;
     assert(v.size() == 5);
     assert(is_contiguous_container_asan_correct(v)); 
     assert(std::all_of(v.begin(), v.end(), is6));
