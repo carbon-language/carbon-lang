@@ -1008,7 +1008,7 @@ private:
         // See whether there is an odd number of '\' before this.
         unsigned count = 0;
         for (; pos >= 0; --pos, ++count)
-          if (Text[count] != '\\')
+          if (Text[pos] != '\\')
             break;
         return count & 1;
       };
