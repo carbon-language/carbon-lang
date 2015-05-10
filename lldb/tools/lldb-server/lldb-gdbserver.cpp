@@ -23,6 +23,8 @@
 // C++ Includes
 
 // Other libraries and framework includes
+#include "llvm/ADT/StringRef.h"
+
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
@@ -48,6 +50,7 @@
 #define LLGS_VERSION_STR "local_build"
 #endif
 
+using namespace llvm;
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
@@ -73,9 +76,8 @@ static struct option g_long_options[] =
     { "debug",              no_argument,        &g_debug,           1   },
     { "platform",           required_argument,  NULL,               'p' },
     { "verbose",            no_argument,        &g_verbose,         1   },
-    { "lldb-command",       required_argument,  NULL,               'c' },
     { "log-file",           required_argument,  NULL,               'l' },
-    { "log-flags",          required_argument,  NULL,               'f' },
+    { "log-channels",       required_argument,  NULL,               'c' },
     { "attach",             required_argument,  NULL,               'a' },
     { "named-pipe",         required_argument,  NULL,               'N' },
     { "pipe",               required_argument,  NULL,               'U' },
@@ -158,21 +160,6 @@ dump_available_platforms (FILE *output_file)
         // the plugin name (e.g. 'host' doesn't show up as a
         // registered platform plugin even though it's the default).
         fprintf (output_file, "%s\tDefault platform for this host.\n", Platform::GetHostPlatform ()->GetPluginName ().AsCString ());
-    }
-}
-
-static void
-run_lldb_commands (const lldb::DebuggerSP &debugger_sp, const std::vector<std::string> &lldb_commands)
-{
-    for (const auto &lldb_command : lldb_commands)
-    {
-        printf("(lldb) %s\n", lldb_command.c_str ());
-
-        lldb_private::CommandReturnObject result;
-        debugger_sp->GetCommandInterpreter ().HandleCommand (lldb_command.c_str (), eLazyBoolNo, result);
-        const char *output = result.GetOutputData ();
-        if (output && output[0])
-            puts (output);
     }
 }
 
@@ -554,13 +541,14 @@ main_gdbserver (int argc, char *argv[])
     argc--;
     argv++;
     int long_option_index = 0;
-    StreamSP log_stream_sp;
     Args log_args;
     Error error;
     int ch;
     std::string platform_name;
     std::string attach_target;
     std::string named_pipe_path;
+    std::string log_file;
+    StringRef log_channels; // e.g. "lldb process threads:gdb-remote default:linux all"
     int unnamed_pipe_fd = -1;
     bool reverse_connect = false;
 
@@ -595,41 +583,12 @@ main_gdbserver (int argc, char *argv[])
 
         case 'l': // Set Log File
             if (optarg && optarg[0])
-            {
-                if ((strcasecmp(optarg, "stdout") == 0) || (strcmp(optarg, "/dev/stdout") == 0))
-                {
-                    log_stream_sp.reset (new StreamFile (stdout, false));
-                }
-                else if ((strcasecmp(optarg, "stderr") == 0) || (strcmp(optarg, "/dev/stderr") == 0))
-                {
-                    log_stream_sp.reset (new StreamFile (stderr, false));
-                }
-                else
-                {
-                    FILE *log_file = fopen(optarg, "w");
-                    if (log_file)
-                    {
-                        setlinebuf(log_file);
-                        log_stream_sp.reset (new StreamFile (log_file, true));
-                    }
-                    else
-                    {
-                        const char *errno_str = strerror(errno);
-                        fprintf (stderr, "Failed to open log file '%s' for writing: errno = %i (%s)", optarg, errno, errno_str ? errno_str : "unknown error");
-                    }
-
-                }
-            }
+                log_file.assign(optarg);
             break;
 
-        case 'f': // Log Flags
+        case 'c': // Log Channels
             if (optarg && optarg[0])
-                log_args.AppendArgument(optarg);
-            break;
-
-        case 'c': // lldb commands
-            if (optarg && optarg[0])
-                lldb_commands.push_back(optarg);
+                log_channels = StringRef(optarg);
             break;
 
         case 'p': // platform name
@@ -696,12 +655,29 @@ main_gdbserver (int argc, char *argv[])
         exit(option_error);
     }
 
-    if (log_stream_sp)
+    SmallVector<StringRef, 32> channel_array;
+    log_channels.split(channel_array, ":");
+    uint32_t log_options = 0;
+    for (auto channel_with_categories : channel_array)
     {
-        if (log_args.GetArgumentCount() == 0)
-            log_args.AppendArgument("default");
-        ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
+        StreamString error_stream;
+        Args channel_then_categories(channel_with_categories);
+        std::string channel(channel_then_categories.GetArgumentAtIndex(0));
+        channel_then_categories.Shift ();  // Shift off the channel
+        bool success = debugger_sp->EnableLog (channel.c_str(),
+                                               channel_then_categories.GetConstArgumentVector(),
+                                               log_file.c_str(),
+                                               log_options,
+                                               error_stream);
+        if (!success)
+        {
+            fprintf(stderr, "Unable to open log file '%s' for channel \"%s\"",
+                    log_file.c_str(),
+                    channel_with_categories.str().c_str());
+            return -1;
+        }
     }
+
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_VERBOSE));
     if (log)
     {
@@ -721,9 +697,6 @@ main_gdbserver (int argc, char *argv[])
         display_usage(progname, subcommand);
         exit(255);
     }
-
-    // Run any commands requested.
-    run_lldb_commands (debugger_sp, lldb_commands);
 
     // Setup the platform that GDBRemoteCommunicationServerLLGS will use.
     lldb::PlatformSP platform_sp = setup_platform (platform_name);

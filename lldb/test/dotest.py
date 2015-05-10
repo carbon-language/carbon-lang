@@ -32,6 +32,7 @@ import textwrap
 import time
 import inspect
 import unittest2
+import lldbtest_config
 
 if sys.version_info >= (2, 7):
     argparse = __import__('argparse')
@@ -337,7 +338,36 @@ notify the directory containing the session logs for test failures or errors.
 In case there is any test failure/error, a similar message is appended at the
 end of the stderr output for your convenience.
 
-Environment variables related to loggings:
+ENABLING LOGS FROM TESTS
+
+Option 1:
+
+Writing logs into different files per test case::
+
+This option is particularly useful when multiple dotest instances are created
+by dosep.py
+
+$ ./dotest.py --channel "lldb all"
+
+$ ./dotest.py --channel "lldb all" --channel "gdb-remote packets"
+
+These log files are written to:
+
+<session-dir>/<test-id>.log (logs from lldb host process)
+<session-dir>/<test-id>-server.log (logs from debugserver/lldb-server)
+<session-dir>/<test-id>-trace-<test-result>.log (console logs)
+
+By default, logs from successful runs are deleted.  Use the --log-success flag
+to create reference logs for debugging.
+
+$ ./dotest.py --log-success
+
+Option 2: (DEPRECATED)
+
+The following options can only enable logs from the host lldb process.
+Only categories from the "lldb" or "gdb-remote" channels can be enabled
+They also do not automatically enable logs in locally running debug servers.
+Also, logs from all test case are written into each log file
 
 o LLDB_LOG: if defined, specifies the log file pathname for the 'lldb' subsystem
   with a default option of 'event process' if LLDB_LOG_OPTION is not defined.
@@ -522,6 +552,8 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('-x', metavar='breakpoint-spec', help='Specify the breakpoint specification for the benchmark executable')
     group.add_argument('-y', type=int, metavar='count', help="Specify the iteration count used to collect our benchmarks. An example is the number of times to do 'thread step-over' to measure stepping speed.")
     group.add_argument('-#', type=int, metavar='sharp', dest='sharp', help='Repeat the test suite for a specified number of times')
+    group.add_argument('--channel', metavar='channel', dest='channels', action='append', help=textwrap.dedent("Specify the log channels (and optional categories) e.g. 'lldb all' or 'gdb-remote packets' if no categories are specified, 'default' is used"))
+    group.add_argument('--log-success', dest='log_success', action='store_true', help="Leave logs/traces even for successful test runs (useful for creating reference log files during debugging.)")
 
     # Configuration options
     group = parser.add_argument_group('Remote platform options')
@@ -588,6 +620,12 @@ def parseOptionsAndInitTestdirs():
             compilers = [commands.getoutput('xcrun -sdk "%s" -find clang 2> /dev/null' % (args.apple_sdk))]
         else:
             compilers = ['clang']
+
+    if args.channels:
+        lldbtest_config.channels = args.channels
+
+    if args.log_success:
+        lldbtest_config.log_success = args.log_success
 
     # Set SDKROOT if we are using an Apple SDK
     if platform_system == 'Darwin' and args.apple_sdk:

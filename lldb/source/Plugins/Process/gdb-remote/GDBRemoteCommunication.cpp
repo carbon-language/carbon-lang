@@ -850,12 +850,21 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             debugserver_args.AppendArgument(arg_cstr);
         }
         
+#if defined(__APPLE__)
         const char *env_debugserver_log_flags = getenv("LLDB_DEBUGSERVER_LOG_FLAGS");
         if (env_debugserver_log_flags)
         {
             ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-flags=%s", env_debugserver_log_flags);
             debugserver_args.AppendArgument(arg_cstr);
         }
+#else
+        const char *env_debugserver_log_channels = getenv("LLDB_SERVER_LOG_CHANNELS");
+        if (env_debugserver_log_channels)
+        {
+            ::snprintf (arg_cstr, sizeof(arg_cstr), "--log-channels=%s", env_debugserver_log_channels);
+            debugserver_args.AppendArgument(arg_cstr);
+        }
+#endif
 
         // Add additional args, starting with LLDB_DEBUGSERVER_EXTRA_ARG_1 until an env var doesn't come back.
         uint32_t env_var_index = 1;
