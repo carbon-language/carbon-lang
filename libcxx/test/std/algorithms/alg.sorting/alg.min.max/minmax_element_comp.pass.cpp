@@ -79,10 +79,26 @@ test()
     }
 }
 
+#if __cplusplus >= 201402L
+constexpr int il[] = { 2, 4, 6, 8, 7, 5, 3, 1 };
+struct less { constexpr bool operator ()( const int &x, const int &y) const { return x < y; }};
+#endif
+
+void constexpr_test()
+{
+#if __cplusplus >= 201402L
+    constexpr auto p = std::minmax_element(il, il+8, less());
+    static_assert ( *(p.first)  == 1, "" );
+    static_assert ( *(p.second) == 8, "" );
+#endif
+}
+
 int main()
 {
     test<forward_iterator<const int*> >();
     test<bidirectional_iterator<const int*> >();
     test<random_access_iterator<const int*> >();
     test<const int*>();
+    
+    constexpr_test();
 }

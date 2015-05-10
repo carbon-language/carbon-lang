@@ -521,11 +521,11 @@ template <class RandomAccessIterator, class Compare>
 
 template <class ForwardIterator>
     ForwardIterator
-    min_element(ForwardIterator first, ForwardIterator last);
+    min_element(ForwardIterator first, ForwardIterator last);  // constexpr in C++14
 
 template <class ForwardIterator, class Compare>
     ForwardIterator
-    min_element(ForwardIterator first, ForwardIterator last, Compare comp);
+    min_element(ForwardIterator first, ForwardIterator last, Compare comp);  // constexpr in C++14
 
 template <class T>
     const T&
@@ -545,11 +545,11 @@ template<class T, class Compare>
 
 template <class ForwardIterator>
     ForwardIterator
-    max_element(ForwardIterator first, ForwardIterator last);
+    max_element(ForwardIterator first, ForwardIterator last);  // constexpr in C++14
 
 template <class ForwardIterator, class Compare>
     ForwardIterator
-    max_element(ForwardIterator first, ForwardIterator last, Compare comp);
+    max_element(ForwardIterator first, ForwardIterator last, Compare comp);  // constexpr in C++14
 
 template <class T>
     const T&
@@ -569,11 +569,11 @@ template<class T, class Compare>
 
 template<class ForwardIterator>
     pair<ForwardIterator, ForwardIterator>
-    minmax_element(ForwardIterator first, ForwardIterator last);
+    minmax_element(ForwardIterator first, ForwardIterator last);   // constexpr in C++14
 
 template<class ForwardIterator, class Compare>
     pair<ForwardIterator, ForwardIterator>
-    minmax_element(ForwardIterator first, ForwardIterator last, Compare comp);
+    minmax_element(ForwardIterator first, ForwardIterator last, Compare comp);   // constexpr in C++14
 
 template<class T>
     pair<const T&, const T&>
@@ -2544,7 +2544,7 @@ rotate_copy(_ForwardIterator __first, _ForwardIterator __middle, _ForwardIterato
 template <class _ForwardIterator, class _Compare>
 inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _ForwardIterator
-__min_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
+min_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
 {
     if (__first != __last)
     {
@@ -2556,20 +2556,12 @@ __min_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp
     return __first;
 }
 
-template <class _ForwardIterator, class _Compare>
-inline _LIBCPP_INLINE_VISIBILITY
-_ForwardIterator
-min_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
-{
-    return __min_element(__first, __last, __comp);
-}
-
 template <class _ForwardIterator>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _ForwardIterator
 min_element(_ForwardIterator __first, _ForwardIterator __last)
 {
-    return __min_element(__first, __last,
+    return _VSTD::min_element(__first, __last,
               __less<typename iterator_traits<_ForwardIterator>::value_type>());
 }
 
@@ -2598,7 +2590,7 @@ inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp
 min(initializer_list<_Tp> __t, _Compare __comp)
 {
-    return *__min_element(__t.begin(), __t.end(), __comp);
+    return *_VSTD::min_element(__t.begin(), __t.end(), __comp);
 }
 
 template<class _Tp>
@@ -2606,7 +2598,7 @@ inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp
 min(initializer_list<_Tp> __t)
 {
-    return *__min_element(__t.begin(), __t.end(), __less<_Tp>());
+    return *_VSTD::min_element(__t.begin(), __t.end(), __less<_Tp>());
 }
 
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
@@ -2616,7 +2608,7 @@ min(initializer_list<_Tp> __t)
 template <class _ForwardIterator, class _Compare>
 inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _ForwardIterator
-__max_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
+max_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
 {
     if (__first != __last)
     {
@@ -2629,20 +2621,12 @@ __max_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp
 }
 
 
-template <class _ForwardIterator, class _Compare>
-inline _LIBCPP_INLINE_VISIBILITY
-_ForwardIterator
-max_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
-{
-    return __max_element(__first, __last, __comp);
-}
-
 template <class _ForwardIterator>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _ForwardIterator
 max_element(_ForwardIterator __first, _ForwardIterator __last)
 {
-    return __max_element(__first, __last,
+    return _VSTD::max_element(__first, __last,
               __less<typename iterator_traits<_ForwardIterator>::value_type>());
 }
 
@@ -2671,7 +2655,7 @@ inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp
 max(initializer_list<_Tp> __t, _Compare __comp)
 {
-    return *__max_element(__t.begin(), __t.end(), __comp);
+    return *_VSTD::max_element(__t.begin(), __t.end(), __comp);
 }
 
 template<class _Tp>
@@ -2679,7 +2663,7 @@ inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp
 max(initializer_list<_Tp> __t)
 {
-    return *__max_element(__t.begin(), __t.end(), __less<_Tp>());
+    return *_VSTD::max_element(__t.begin(), __t.end(), __less<_Tp>());
 }
 
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
@@ -2687,6 +2671,7 @@ max(initializer_list<_Tp> __t)
 // minmax_element
 
 template <class _ForwardIterator, class _Compare>
+_LIBCPP_CONSTEXPR_AFTER_CXX11
 std::pair<_ForwardIterator, _ForwardIterator>
 minmax_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)
 {
@@ -2734,7 +2719,7 @@ minmax_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __com
 }
 
 template <class _ForwardIterator>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 std::pair<_ForwardIterator, _ForwardIterator>
 minmax_element(_ForwardIterator __first, _ForwardIterator __last)
 {
