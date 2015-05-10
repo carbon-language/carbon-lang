@@ -496,7 +496,8 @@ private:
   llvm::Constant *EmitFullMemberPointer(llvm::Constant *FirstField,
                                         bool IsMemberFunction,
                                         const CXXRecordDecl *RD,
-                                        CharUnits NonVirtualBaseAdjustment);
+                                        CharUnits NonVirtualBaseAdjustment,
+                                        unsigned VBTableIndex);
 
   llvm::Constant *BuildMemberPointer(const CXXRecordDecl *RD,
                                      const CXXMethodDecl *MD,
@@ -2332,8 +2333,8 @@ llvm::Constant *
 MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
                                        bool IsMemberFunction,
                                        const CXXRecordDecl *RD,
-                                       CharUnits NonVirtualBaseAdjustment)
-{
+                                       CharUnits NonVirtualBaseAdjustment,
+                                       unsigned VBTableIndex) {
   MSInheritanceAttr::Spelling Inheritance = RD->getMSInheritanceModel();
 
   // Single inheritance class member pointer are represented as scalars instead
@@ -2357,7 +2358,7 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
 
   // The rest of the fields are adjusted by conversions to a more derived class.
   if (MSInheritanceAttr::hasVBTableOffsetField(Inheritance))
-    fields.push_back(getZeroInt());
+    fields.push_back(llvm::ConstantInt::get(CGM.IntTy, VBTableIndex));
 
   return llvm::ConstantStruct::getAnon(fields);
 }
@@ -2369,7 +2370,7 @@ MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
   llvm::Constant *FirstField =
     llvm::ConstantInt::get(CGM.IntTy, offset.getQuantity());
   return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/false, RD,
-                               CharUnits::Zero());
+                               CharUnits::Zero(), /*VBTableIndex=*/0);
 }
 
 llvm::Constant *MicrosoftCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
@@ -2405,6 +2406,7 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
   RD = RD->getMostRecentDecl();
   CodeGenTypes &Types = CGM.getTypes();
 
+  unsigned VBTableIndex = 0;
   llvm::Constant *FirstField;
   const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
   if (!MD->isVirtual()) {
@@ -2421,8 +2423,6 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
     FirstField = CGM.GetAddrOfFunction(MD, Ty);
     FirstField = llvm::ConstantExpr::getBitCast(FirstField, CGM.VoidPtrTy);
   } else {
-    MicrosoftVTableContext::MethodVFTableLocation ML =
-        CGM.getMicrosoftVTableContext().getMethodVFTableLocation(MD);
     if (!CGM.getTypes().isFuncTypeConvertible(
             MD->getType()->castAs<FunctionType>())) {
       CGM.ErrorUnsupported(MD, "pointer to virtual member function with "
@@ -2431,21 +2431,22 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
     } else if (FPT->getCallConv() == CC_X86FastCall) {
       CGM.ErrorUnsupported(MD, "pointer to fastcall virtual member function");
       FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
-    } else if (ML.VBase) {
-      CGM.ErrorUnsupported(MD, "pointer to virtual member function overriding "
-                               "member function in virtual base class");
-      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
     } else {
+      auto &VTableContext = CGM.getMicrosoftVTableContext();
+      MicrosoftVTableContext::MethodVFTableLocation ML =
+          VTableContext.getMethodVFTableLocation(MD);
       llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ML);
       FirstField = llvm::ConstantExpr::getBitCast(Thunk, CGM.VoidPtrTy);
       // Include the vfptr adjustment if the method is in a non-primary vftable.
       NonVirtualBaseAdjustment += ML.VFPtrOffset;
+      if (ML.VBase)
+        VBTableIndex = VTableContext.getVBTableIndex(RD, ML.VBase) * 4;
     }
   }
 
   // The rest of the fields are common with data member pointers.
   return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/true, RD,
-                               NonVirtualBaseAdjustment);
+                               NonVirtualBaseAdjustment, VBTableIndex);
 }
 
 /// Member pointers are the same if they're either bitwise identical *or* both
