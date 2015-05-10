@@ -308,3 +308,20 @@ define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
   %1 = sitofp <8 x i1> %cmpres to <8 x double>
   ret <8 x double> %1
 }
+
+; CHECK-LABEL: @uitofp_16i8
+; CHECK:  vpmovzxbd  
+; CHECK: vcvtudq2ps
+define <16 x float> @uitofp_16i8(<16 x i8>%a) {
+  %b = uitofp <16 x i8> %a to <16 x float>
+  ret <16 x float>%b
+}
+
+; CHECK-LABEL: @uitofp_16i16
+; CHECK: vpmovzxwd
+; CHECK: vcvtudq2ps
+define <16 x float> @uitofp_16i16(<16 x i16>%a) {
+  %b = uitofp <16 x i16> %a to <16 x float>
+  ret <16 x float>%b
+}
+
