@@ -1395,6 +1395,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // Custom lower several nodes.
     for (MVT VT : MVT::vector_valuetypes()) {
       unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+      if (EltSize == 1) {
+        setOperationAction(ISD::AND, VT, Legal);
+        setOperationAction(ISD::OR,  VT, Legal);
+        setOperationAction(ISD::XOR,  VT, Legal);
+      }
       if (EltSize >= 32 && VT.getSizeInBits() <= 512) {
         setOperationAction(ISD::MGATHER,  VT, Custom);
         setOperationAction(ISD::MSCATTER, VT, Custom);
@@ -18164,6 +18169,10 @@ bool
 X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
                                       EVT VT) const {
   if (!VT.isSimple())
+    return false;
+
+  // Not for i1 vectors
+  if (VT.getScalarType() == MVT::i1)
     return false;
 
   // Very little shuffling can be done for 64-bit vectors right now.

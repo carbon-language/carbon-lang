@@ -1864,7 +1864,7 @@ let Predicates = [HasBWI] in {
 
 
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
-let Predicates = [HasAVX512] in {
+let Predicates = [HasAVX512, NoDQI] in {
   // GR from/to 8-bit mask without native support
   def : Pat<(v8i1 (bitconvert (i8 GR8:$src))),
             (COPY_TO_REGCLASS
@@ -1874,7 +1874,8 @@ let Predicates = [HasAVX512] in {
             (EXTRACT_SUBREG
               (KMOVWrk (COPY_TO_REGCLASS VK8:$src, VK16)),
               sub_8bit)>;
-
+}
+let Predicates = [HasAVX512] in {
   def : Pat<(i1 (X86Vextract VK16:$src, (iPTR 0))),
             (COPY_TO_REGCLASS VK16:$src, VK1)>;
   def : Pat<(i1 (X86Vextract VK8:$src, (iPTR 0))),

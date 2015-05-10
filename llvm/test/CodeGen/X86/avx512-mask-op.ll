@@ -158,3 +158,52 @@ define <2 x i64> @test5(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1, <2 x i64> %y1
   %resse = sext <2 x i1>%res to <2 x i64>
   ret <2 x i64> %resse
 }
+
+; KNL-LABEL: test6
+; KNL: vpmovsxbd
+; KNL: vpandd
+; KNL: kmovw   %eax, %k1
+; KNL vptestmd {{.*}}, %k0 {%k1}
+
+; SKX-LABEL: test6
+; SKX: vpmovb2m
+; SKX: kmovw   %eax, %k1
+; SKX: kandw
+define void @test6(<16 x i1> %mask)  {
+allocas:
+  %a= and <16 x i1> %mask, <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>
+  %b = bitcast <16 x i1> %a to i16
+  %c = icmp eq i16 %b, 0
+  br i1 %c, label %true, label %false
+
+true:
+  ret void
+
+false:
+  ret void
+}
+
+; KNL-LABEL: test7
+; KNL: vpmovsxwq
+; KNL: vpandq
+; KNL: vptestmq {{.*}}, %k0
+; KNL: korw
+
+; SKX-LABEL: test7
+; SKX: vpmovw2m
+; SKX: kmovw   %eax, %k1
+; SKX: korb
+
+define void @test7(<8 x i1> %mask)  {
+allocas:
+  %a= or <8 x i1> %mask, <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>
+  %b = bitcast <8 x i1> %a to i8
+  %c = icmp eq i8 %b, 0
+  br i1 %c, label %true, label %false
+
+true:
+  ret void
+
+false:
+  ret void
+}
