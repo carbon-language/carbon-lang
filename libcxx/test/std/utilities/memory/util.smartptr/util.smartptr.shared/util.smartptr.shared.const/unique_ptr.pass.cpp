@@ -58,6 +58,9 @@ int A::count = 0;
 void fn ( const std::shared_ptr<int> &) {}
 void fn ( const std::shared_ptr<B> &) { assert (false); }
 
+template <typename T>
+void assert_deleter ( T * ) { assert(false); }
+
 int main()
 {
     {
@@ -100,4 +103,13 @@ int main()
     throw_next = false;
     fn(std::unique_ptr<int>(new int));
     }
+
+#if __cplusplus >= 201402L
+    // LWG 2415
+    {
+    std::unique_ptr<int, void (*)(int*)> p(nullptr, assert_deleter<int>);
+    std::shared_ptr<int> p2(std::move(p)); // should not call deleter when going out of scope
+    }
+#endif
+    
 }

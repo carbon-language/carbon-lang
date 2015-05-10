@@ -67,7 +67,7 @@ int main()
             pB = std::move(pA);
             assert(B::count == 0);
             assert(A::count == 0);
-            assert(pB.use_count() == 1);
+//          assert(pB.use_count() == 1); // no longer true due to LWG 2415
             assert(pA.get() == 0);
             assert(pB.get() == ptrA);
         }
@@ -101,7 +101,7 @@ int main()
             pB = std::move(pA);
             assert(B::count == 0);
             assert(A::count == 0);
-            assert(pB.use_count() == 1);
+//          assert(pB.use_count() == 1); // no longer true due to LWG 2415
             assert(pA.get() == 0);
             assert(pB.get() == ptrA);
         }
