@@ -1889,8 +1889,10 @@ public:
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
-  virtual const FunctionDecl *getCanonicalDecl() const;
   FunctionDecl *getCanonicalDecl() override;
+  const FunctionDecl *getCanonicalDecl() const {
+    return const_cast<FunctionDecl*>(this)->getCanonicalDecl();
+  }
 
   unsigned getBuiltinID() const;
 
