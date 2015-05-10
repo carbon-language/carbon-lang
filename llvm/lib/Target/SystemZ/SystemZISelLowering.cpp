@@ -2171,14 +2171,14 @@ static unsigned getVectorComparison(ISD::CondCode CC, bool IsFP) {
 
   case ISD::SETOGE:
   case ISD::SETGE:
-    return IsFP ? SystemZISD::VFCMPHE : 0;
+    return IsFP ? SystemZISD::VFCMPHE : static_cast<SystemZISD::NodeType>(0);
 
   case ISD::SETOGT:
   case ISD::SETGT:
     return IsFP ? SystemZISD::VFCMPH : SystemZISD::VICMPH;
 
   case ISD::SETUGT:
-    return IsFP ? 0 : SystemZISD::VICMPHL;
+    return IsFP ? static_cast<SystemZISD::NodeType>(0) : SystemZISD::VICMPHL;
 
   default:
     return 0;
