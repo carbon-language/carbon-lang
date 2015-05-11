@@ -15,8 +15,8 @@ class WatchpointSetErrorTestCase(TestBase):
     @expectedFailureFreeBSD('llvm.org/pr18832')
     def test_error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
+        self.buildDwarf()
+        self.setTearDownCleanup()
         self.error_cases_with_watchpoint_set()
 
     def setUp(self):
@@ -27,12 +27,10 @@ class WatchpointSetErrorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number(self.source, '// Set break point at this line.')
         # Build dictionary to have unique executable names for each test method.
-        self.exe_name = self.testMethodName
-        self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     def error_cases_with_watchpoint_set(self):
         """Test error cases with the 'watchpoint set' command."""
-        exe = os.path.join(os.getcwd(), self.exe_name)
+        exe = os.path.join(os.getcwd(), 'a.out')
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.

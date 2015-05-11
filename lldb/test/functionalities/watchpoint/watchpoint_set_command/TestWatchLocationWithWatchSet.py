@@ -16,16 +16,16 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
     @dsym_test
     def test_watchlocation_with_dsym_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -s size' option."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
+        self.buildDsym()
+        self.setTearDownCleanup()
         self.watchlocation_using_watchpoint_set()
 
     @expectedFailureFreeBSD('llvm.org/pr18832')
     @dwarf_test
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):
         """Test watching a location with 'watchpoint set expression -w write -s size' option."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
+        self.buildDwarf()
+        self.setTearDownCleanup()
         self.watchlocation_using_watchpoint_set()
 
     def setUp(self):
@@ -38,12 +38,10 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         # This is for verifying that watch location works.
         self.violating_func = "do_bad_thing_with_location";
         # Build dictionary to have unique executable names for each test method.
-        self.exe_name = self.testMethodName
-        self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     def watchlocation_using_watchpoint_set(self):
         """Test watching a location with '-s size' option."""
-        exe = os.path.join(os.getcwd(), self.exe_name)
+        exe = os.path.join(os.getcwd(), 'a.out')
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
