@@ -1059,49 +1059,49 @@ static AttributeSet legalizeCallAttributes(AttributeSet AS) {
 ///   statepointToken - statepoint instruction to which relocates should be
 ///   bound.
 ///   Builder - Llvm IR builder to be used to construct new calls.
-static void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
-                              const int liveStart,
-                              ArrayRef<llvm::Value *> basePtrs,
-                              Instruction *statepointToken,
+static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
+                              const int LiveStart,
+                              ArrayRef<llvm::Value *> BasePtrs,
+                              Instruction *StatepointToken,
                               IRBuilder<> Builder) {
   SmallVector<Instruction *, 64> NewDefs;
-  NewDefs.reserve(liveVariables.size());
+  NewDefs.reserve(LiveVariables.size());
 
-  Module *M = statepointToken->getParent()->getParent()->getParent();
+  Module *M = StatepointToken->getParent()->getParent()->getParent();
 
-  for (unsigned i = 0; i < liveVariables.size(); i++) {
+  for (unsigned i = 0; i < LiveVariables.size(); i++) {
     // We generate a (potentially) unique declaration for every pointer type
     // combination.  This results is some blow up the function declarations in
     // the IR, but removes the need for argument bitcasts which shrinks the IR
     // greatly and makes it much more readable.
-    SmallVector<Type *, 1> types;                 // one per 'any' type
+    SmallVector<Type *, 1> Types;                 // one per 'any' type
     // All gc_relocate are set to i8 addrspace(1)* type. This could help avoid
     // cases where the actual value's type mangling is not supported by llvm. A
     // bitcast is added later to convert gc_relocate to the actual value's type.
-    types.push_back(Type::getInt8PtrTy(M->getContext(), 1));
-    Value *gc_relocate_decl = Intrinsic::getDeclaration(
-        M, Intrinsic::experimental_gc_relocate, types);
+    Types.push_back(Type::getInt8PtrTy(M->getContext(), 1));
+    Value *GCRelocateDecl = Intrinsic::getDeclaration(
+        M, Intrinsic::experimental_gc_relocate, Types);
 
     // Generate the gc.relocate call and save the result
-    Value *baseIdx =
+    Value *BaseIdx =
         ConstantInt::get(Type::getInt32Ty(M->getContext()),
-                         liveStart + find_index(liveVariables, basePtrs[i]));
-    Value *liveIdx = ConstantInt::get(
+                         LiveStart + find_index(LiveVariables, BasePtrs[i]));
+    Value *LiveIdx = ConstantInt::get(
         Type::getInt32Ty(M->getContext()),
-        liveStart + find_index(liveVariables, liveVariables[i]));
+        LiveStart + find_index(LiveVariables, LiveVariables[i]));
 
     // only specify a debug name if we can give a useful one
-    Value *reloc = Builder.CreateCall3(
-        gc_relocate_decl, statepointToken, baseIdx, liveIdx,
-        liveVariables[i]->hasName() ? liveVariables[i]->getName() + ".relocated"
+    Value *Reloc = Builder.CreateCall3(
+        GCRelocateDecl, StatepointToken, BaseIdx, LiveIdx,
+        LiveVariables[i]->hasName() ? LiveVariables[i]->getName() + ".relocated"
                                     : "");
     // Trick CodeGen into thinking there are lots of free registers at this
     // fake call.
-    cast<CallInst>(reloc)->setCallingConv(CallingConv::Cold);
+    cast<CallInst>(Reloc)->setCallingConv(CallingConv::Cold);
 
-    NewDefs.push_back(cast<Instruction>(reloc));
+    NewDefs.push_back(cast<Instruction>(Reloc));
   }
-  assert(NewDefs.size() == liveVariables.size() &&
+  assert(NewDefs.size() == LiveVariables.size() &&
          "missing or extra redefinition at safepoint");
 }
 
@@ -1322,42 +1322,42 @@ makeStatepointExplicit(DominatorTree &DT, const CallSite &CS, Pass *P,
 // Add visited values into the visitedLiveValues set we will later use them
 // for sanity check.
 static void
-insertRelocationStores(iterator_range<Value::user_iterator> gcRelocs,
-                       DenseMap<Value *, Value *> &allocaMap,
-                       DenseSet<Value *> &visitedLiveValues) {
+insertRelocationStores(iterator_range<Value::user_iterator> GCRelocs,
+                       DenseMap<Value *, Value *> &AllocaMap,
+                       DenseSet<Value *> &VisitedLiveValues) {
 
-  for (User *U : gcRelocs) {
+  for (User *U : GCRelocs) {
     if (!isa<IntrinsicInst>(U))
       continue;
 
-    IntrinsicInst *relocatedValue = cast<IntrinsicInst>(U);
+    IntrinsicInst *RelocatedValue = cast<IntrinsicInst>(U);
 
     // We only care about relocates
-    if (relocatedValue->getIntrinsicID() !=
+    if (RelocatedValue->getIntrinsicID() !=
         Intrinsic::experimental_gc_relocate) {
       continue;
     }
 
-    GCRelocateOperands relocateOperands(relocatedValue);
-    Value *originalValue =
-        const_cast<Value *>(relocateOperands.getDerivedPtr());
-    assert(allocaMap.count(originalValue));
-    Value *alloca = allocaMap[originalValue];
+    GCRelocateOperands RelocateOperands(RelocatedValue);
+    Value *OriginalValue =
+        const_cast<Value *>(RelocateOperands.getDerivedPtr());
+    assert(AllocaMap.count(OriginalValue));
+    Value *Alloca = AllocaMap[OriginalValue];
 
     // Emit store into the related alloca
     // All gc_relocate are i8 addrspace(1)* typed, and it must be bitcasted to
     // the correct type according to alloca.
-    assert(relocatedValue->getNextNode() && "Should always have one since it's not a terminator");
-    IRBuilder<> Builder(relocatedValue->getNextNode());
+    assert(RelocatedValue->getNextNode() && "Should always have one since it's not a terminator");
+    IRBuilder<> Builder(RelocatedValue->getNextNode());
     Value *CastedRelocatedValue =
-        Builder.CreateBitCast(relocatedValue, cast<AllocaInst>(alloca)->getAllocatedType(),
-        relocatedValue->hasName() ? relocatedValue->getName() + ".casted" : "");
+        Builder.CreateBitCast(RelocatedValue, cast<AllocaInst>(Alloca)->getAllocatedType(),
+        RelocatedValue->hasName() ? RelocatedValue->getName() + ".casted" : "");
 
-    StoreInst *store = new StoreInst(CastedRelocatedValue, alloca);
-    store->insertAfter(cast<Instruction>(CastedRelocatedValue));
+    StoreInst *Store = new StoreInst(CastedRelocatedValue, Alloca);
+    Store->insertAfter(cast<Instruction>(CastedRelocatedValue));
 
 #ifndef NDEBUG
-    visitedLiveValues.insert(originalValue);
+    VisitedLiveValues.insert(OriginalValue);
 #endif
   }
 }

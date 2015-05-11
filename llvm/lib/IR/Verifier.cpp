@@ -3309,17 +3309,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
              "gc relocate on unwind path incorrectly linked to the statepoint",
              &CI);
 
-      const BasicBlock *invokeBB =
+      const BasicBlock *InvokeBB =
         ExtractValue->getParent()->getUniquePredecessor();
 
       // Landingpad relocates should have only one predecessor with invoke
       // statepoint terminator
-      Assert(invokeBB, "safepoints should have unique landingpads",
+      Assert(InvokeBB, "safepoints should have unique landingpads",
              ExtractValue->getParent());
-      Assert(invokeBB->getTerminator(), "safepoint block should be well formed",
-             invokeBB);
-      Assert(isStatepoint(invokeBB->getTerminator()),
-             "gc relocate should be linked to a statepoint", invokeBB);
+      Assert(InvokeBB->getTerminator(), "safepoint block should be well formed",
+             InvokeBB);
+      Assert(isStatepoint(InvokeBB->getTerminator()),
+             "gc relocate should be linked to a statepoint", InvokeBB);
     }
     else {
       // In all other cases relocate should be tied to the statepoint directly.
@@ -3332,8 +3332,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
     // Verify rest of the relocate arguments
 
-    GCRelocateOperands ops(&CI);
-    ImmutableCallSite StatepointCS(ops.getStatepoint());
+    GCRelocateOperands Ops(&CI);
+    ImmutableCallSite StatepointCS(Ops.getStatepoint());
 
     // Both the base and derived must be piped through the safepoint
     Value* Base = CI.getArgOperand(1);
