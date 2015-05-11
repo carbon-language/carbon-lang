@@ -453,7 +453,7 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
       auto Handlers =
           makeArrayRef(&PoppedCatches[LastTryLowIdx], I - LastTryLowIdx + 1);
       DEBUG(dbgs() << "createTryBlockMapEntry(" << TryLow << ", " << TryHigh);
-      for (int J = 0; J < Handlers.size(); ++J) {
+      for (size_t J = 0; J < Handlers.size(); ++J) {
         DEBUG(dbgs() << ", ");
         print_name(Handlers[J]->getHandlerBlockOrFunc());
       }
@@ -481,7 +481,7 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
   // The handler functions may have pushed actions onto the handler stack
   // that we expected to push here.  Compare the handler stack to our
   // actions again to check for that possibility.
-  if (HandlerStack.size() > FirstMismatch) {
+  if (HandlerStack.size() > (size_t)FirstMismatch) {
     for (int E = std::min(HandlerStack.size(), Actions.size());
          FirstMismatch < E; ++FirstMismatch) {
       if (HandlerStack[FirstMismatch]->getHandlerBlockOrFunc() !=
