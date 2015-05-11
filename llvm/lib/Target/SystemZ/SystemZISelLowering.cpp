@@ -3796,7 +3796,7 @@ static bool tryBuildVectorByteMask(BuildVectorSDNode *BVN, uint64_t &Mask) {
       for (unsigned J = 0; J < BytesPerElement; ++J) {
         uint64_t Byte = (Value >> (J * 8)) & 0xff;
         if (Byte == 0xff)
-          Mask |= 1 << ((E - I - 1) * BytesPerElement + J);
+          Mask |= 1ULL << ((E - I - 1) * BytesPerElement + J);
         else if (Byte != 0)
           return false;
       }
