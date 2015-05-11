@@ -543,7 +543,14 @@ namespace llvm {
 
   /// TargetRegistry - Generic interface to target specific features.
   struct TargetRegistry {
-    class iterator {
+    // FIXME: Make this a namespace, probably just move all the Register*
+    // functions into Target (currently they all just set members on the Target
+    // anyway, and Target friends this class so those functions can...
+    // function).
+    TargetRegistry() = delete;
+
+    class iterator
+        : public std::iterator<std::forward_iterator_tag, Target, ptrdiff_t> {
       const Target *Current;
       explicit iterator(Target *T) : Current(T) {}
       friend struct TargetRegistry;
@@ -586,9 +593,7 @@ namespace llvm {
     /// @name Registry Access
     /// @{
 
-    static iterator begin();
-
-    static iterator end() { return iterator(); }
+    static iterator_range<iterator> targets();
 
     /// lookupTarget - Lookup a target based on a target triple.
     ///

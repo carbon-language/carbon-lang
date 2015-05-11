@@ -18,8 +18,8 @@ using namespace llvm;
 // Clients are responsible for avoid race conditions in registration.
 static Target *FirstTarget = nullptr;
 
-TargetRegistry::iterator TargetRegistry::begin() {
-  return iterator(FirstTarget);
+iterator_range<TargetRegistry::iterator> TargetRegistry::targets() {
+  return make_range(iterator(FirstTarget), iterator());
 }
 
 const Target *TargetRegistry::lookupTarget(const std::string &ArchName,
@@ -30,18 +30,16 @@ const Target *TargetRegistry::lookupTarget(const std::string &ArchName,
   // name, because it might be a backend that has no mapping to a target triple.
   const Target *TheTarget = nullptr;
   if (!ArchName.empty()) {
-    for (TargetRegistry::iterator it = TargetRegistry::begin(),
-           ie = TargetRegistry::end(); it != ie; ++it) {
-      if (ArchName == it->getName()) {
-        TheTarget = &*it;
-        break;
-      }
-    }
+    auto I =
+        std::find_if(targets().begin(), targets().end(),
+                     [&](const Target &T) { return ArchName == T.getName(); });
 
-    if (!TheTarget) {
+    if (I == targets().end()) {
       Error = "error: invalid target '" + ArchName + "'.\n";
       return nullptr;
     }
+
+    TheTarget = &*I;
 
     // Adjust the triple to match (if known), otherwise stick with the
     // given triple.
@@ -66,30 +64,28 @@ const Target *TargetRegistry::lookupTarget(const std::string &ArchName,
 const Target *TargetRegistry::lookupTarget(const std::string &TT,
                                            std::string &Error) {
   // Provide special warning when no targets are initialized.
-  if (begin() == end()) {
+  if (targets().begin() == targets().end()) {
     Error = "Unable to find target for this triple (no targets are registered)";
     return nullptr;
   }
-  const Target *Matching = nullptr;
-  Triple::ArchType Arch =  Triple(TT).getArch();
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    if (it->ArchMatchFn(Arch)) {
-      if (Matching) {
-        Error = std::string("Cannot choose between targets \"") +
-          Matching->Name  + "\" and \"" + it->Name + "\"";
-        return nullptr;
-      }
-      Matching = &*it;
-    }
-  }
+  Triple::ArchType Arch = Triple(TT).getArch();
+  auto ArchMatch = [&](const Target &T) { return T.ArchMatchFn(Arch); };
+  auto I = std::find_if(targets().begin(), targets().end(), ArchMatch);
 
-  if (!Matching) {
+  if (I == targets().end()) {
     Error = "No available targets are compatible with this triple, "
       "see -version for the available targets.";
     return nullptr;
   }
 
-  return Matching;
+  auto J = std::find_if(std::next(I), targets().end(), ArchMatch);
+  if (J != targets().end()) {
+    Error = std::string("Cannot choose between targets \"") + I->Name +
+            "\" and \"" + J->Name + "\"";
+    return nullptr;
+  }
+
+  return &*I;
 }
 
 void TargetRegistry::RegisterTarget(Target &T,
@@ -123,10 +119,8 @@ static int TargetArraySortFn(const std::pair<StringRef, const Target *> *LHS,
 void TargetRegistry::printRegisteredTargetsForVersion() {
   std::vector<std::pair<StringRef, const Target*> > Targets;
   size_t Width = 0;
-  for (TargetRegistry::iterator I = TargetRegistry::begin(),
-       E = TargetRegistry::end();
-       I != E; ++I) {
-    Targets.push_back(std::make_pair(I->getName(), &*I));
+  for (const auto &T : TargetRegistry::targets()) {
+    Targets.push_back(std::make_pair(T.getName(), &T));
     Width = std::max(Width, Targets.back().first.size());
   }
   array_pod_sort(Targets.begin(), Targets.end(), TargetArraySortFn);
