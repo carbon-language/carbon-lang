@@ -151,8 +151,8 @@ private:
       return 0;
     if (1 + I[1]->Last->TotalLength > Limit)
       return 0;
-    if (I[1]->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for,
-                             tok::kw_while, TT_LineComment))
+    if (I[1]->First->isOneOf(tok::semi, tok::kw_if, tok::kw_for, tok::kw_while,
+                             TT_LineComment))
       return 0;
     // Only inline simple if's (no nested if or else).
     if (I + 2 != E && Line.First->is(tok::kw_if) &&
@@ -161,9 +161,10 @@ private:
     return 1;
   }
 
-  unsigned tryMergeShortCaseLabels(
-      SmallVectorImpl<AnnotatedLine *>::const_iterator I,
-      SmallVectorImpl<AnnotatedLine *>::const_iterator E, unsigned Limit) {
+  unsigned
+  tryMergeShortCaseLabels(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
+                          SmallVectorImpl<AnnotatedLine *>::const_iterator E,
+                          unsigned Limit) {
     if (Limit == 0 || I + 1 == E ||
         I[1]->First->isOneOf(tok::kw_case, tok::kw_default))
       return 0;
@@ -307,33 +308,6 @@ private:
   const AdditionalKeywords &Keywords;
 };
 
-class NoColumnLimitFormatter {
-public:
-  NoColumnLimitFormatter(ContinuationIndenter *Indenter,
-                         UnwrappedLineFormatter *Formatter)
-      : Indenter(Indenter), Formatter(Formatter) {}
-
-  /// \brief Formats the line starting at \p State, simply keeping all of the
-  /// input's line breaking decisions.
-  void format(unsigned FirstIndent, const AnnotatedLine *Line) {
-    LineState State =
-        Indenter->getInitialState(FirstIndent, Line, /*DryRun=*/false);
-    while (State.NextToken) {
-      bool Newline =
-          Indenter->mustBreak(State) ||
-          (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
-      unsigned Penalty = 0;
-      Formatter->formatChildren(State, Newline, /*DryRun=*/false, Penalty);
-      Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
-    }
-  }
-
-private:
-  ContinuationIndenter *Indenter;
-  UnwrappedLineFormatter *Formatter;
-};
-
-
 static void markFinalized(FormatToken *Tok) {
   for (; Tok; Tok = Tok->Next) {
     Tok->Finalized = true;
@@ -341,6 +315,339 @@ static void markFinalized(FormatToken *Tok) {
       markFinalized(Child->First);
   }
 }
+
+#ifndef NDEBUG
+static void printLineState(const LineState &State) {
+  llvm::dbgs() << "State: ";
+  for (const ParenState &P : State.Stack) {
+    llvm::dbgs() << P.Indent << "|" << P.LastSpace << "|" << P.NestedBlockIndent
+                 << " ";
+  }
+  llvm::dbgs() << State.NextToken->TokenText << "\n";
+}
+#endif
+
+/// \brief Base class for classes that format one \c AnnotatedLine.
+class LineFormatter {
+public:
+  LineFormatter(ContinuationIndenter *Indenter, WhitespaceManager *Whitespaces,
+                const FormatStyle &Style,
+                UnwrappedLineFormatter *BlockFormatter)
+      : Indenter(Indenter), Whitespaces(Whitespaces), Style(Style),
+        BlockFormatter(BlockFormatter) {}
+  virtual ~LineFormatter() {}
+
+  /// \brief Formats an \c AnnotatedLine and returns the penalty.
+  ///
+  /// If \p DryRun is \c false, directly applies the changes.
+  virtual unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
+                              bool DryRun) = 0;
+
+protected:
+  /// \brief If the \p State's next token is an r_brace closing a nested block,
+  /// format the nested block before it.
+  ///
+  /// Returns \c true if all children could be placed successfully and adapts
+  /// \p Penalty as well as \p State. If \p DryRun is false, also directly
+  /// creates changes using \c Whitespaces.
+  ///
+  /// The crucial idea here is that children always get formatted upon
+  /// encountering the closing brace right after the nested block. Now, if we
+  /// are currently trying to keep the "}" on the same line (i.e. \p NewLine is
+  /// \c false), the entire block has to be kept on the same line (which is only
+  /// possible if it fits on the line, only contains a single statement, etc.
+  ///
+  /// If \p NewLine is true, we format the nested block on separate lines, i.e.
+  /// break after the "{", format all lines with correct indentation and the put
+  /// the closing "}" on yet another new line.
+  ///
+  /// This enables us to keep the simple structure of the
+  /// \c UnwrappedLineFormatter, where we only have two options for each token:
+  /// break or don't break.
+  bool formatChildren(LineState &State, bool NewLine, bool DryRun,
+                      unsigned &Penalty) {
+    const FormatToken *LBrace = State.NextToken->getPreviousNonComment();
+    FormatToken &Previous = *State.NextToken->Previous;
+    if (!LBrace || LBrace->isNot(tok::l_brace) ||
+        LBrace->BlockKind != BK_Block || Previous.Children.size() == 0)
+      // The previous token does not open a block. Nothing to do. We don't
+      // assert so that we can simply call this function for all tokens.
+      return true;
+
+    if (NewLine) {
+      int AdditionalIndent = State.Stack.back().Indent -
+                             Previous.Children[0]->Level * Style.IndentWidth;
+
+      Penalty +=
+          BlockFormatter->format(Previous.Children, DryRun, AdditionalIndent,
+                                 /*FixBadIndentation=*/true);
+      return true;
+    }
+
+    if (Previous.Children[0]->First->MustBreakBefore)
+      return false;
+
+    // Cannot merge multiple statements into a single line.
+    if (Previous.Children.size() > 1)
+      return false;
+
+    // Cannot merge into one line if this line ends on a comment.
+    if (Previous.is(tok::comment))
+      return false;
+
+    // We can't put the closing "}" on a line with a trailing comment.
+    if (Previous.Children[0]->Last->isTrailingComment())
+      return false;
+
+    // If the child line exceeds the column limit, we wouldn't want to merge it.
+    // We add +2 for the trailing " }".
+    if (Style.ColumnLimit > 0 &&
+        Previous.Children[0]->Last->TotalLength + State.Column + 2 >
+            Style.ColumnLimit)
+      return false;
+
+    if (!DryRun) {
+      Whitespaces->replaceWhitespace(
+          *Previous.Children[0]->First,
+          /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1,
+          /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
+    }
+    Penalty += formatLine(*Previous.Children[0], State.Column + 1, DryRun);
+
+    State.Column += 1 + Previous.Children[0]->Last->TotalLength;
+    return true;
+  }
+
+  ContinuationIndenter *Indenter;
+
+private:
+  WhitespaceManager *Whitespaces;
+  const FormatStyle &Style;
+  UnwrappedLineFormatter *BlockFormatter;
+};
+
+/// \brief Formatter that keeps the existing line breaks.
+class NoColumnLimitLineFormatter : public LineFormatter {
+public:
+  NoColumnLimitLineFormatter(ContinuationIndenter *Indenter,
+                             WhitespaceManager *Whitespaces,
+                             const FormatStyle &Style,
+                             UnwrappedLineFormatter *BlockFormatter)
+      : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
+
+  /// \brief Formats the line, simply keeping all of the input's line breaking
+  /// decisions.
+  unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
+                      bool DryRun) override {
+    assert(!DryRun);
+    LineState State =
+        Indenter->getInitialState(FirstIndent, &Line, /*DryRun=*/false);
+    while (State.NextToken) {
+      bool Newline =
+          Indenter->mustBreak(State) ||
+          (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
+      unsigned Penalty = 0;
+      formatChildren(State, Newline, /*DryRun=*/false, Penalty);
+      Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
+    }
+    return 0;
+  }
+};
+
+/// \brief Formatter that puts all tokens into a single line without breaks.
+class NoLineBreakFormatter : public LineFormatter {
+public:
+  NoLineBreakFormatter(ContinuationIndenter *Indenter,
+                       WhitespaceManager *Whitespaces, const FormatStyle &Style,
+                       UnwrappedLineFormatter *BlockFormatter)
+      : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
+
+  /// \brief Puts all tokens into a single line.
+  unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
+                      bool DryRun) {
+    unsigned Penalty = 0;
+    LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
+    while (State.NextToken) {
+      formatChildren(State, /*Newline=*/false, DryRun, Penalty);
+      Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
+    }
+    return Penalty;
+  }
+};
+
+/// \brief Finds the best way to break lines.
+class OptimizingLineFormatter : public LineFormatter {
+public:
+  OptimizingLineFormatter(ContinuationIndenter *Indenter,
+                          WhitespaceManager *Whitespaces,
+                          const FormatStyle &Style,
+                          UnwrappedLineFormatter *BlockFormatter)
+      : LineFormatter(Indenter, Whitespaces, Style, BlockFormatter) {}
+
+  /// \brief Formats the line by finding the best line breaks with line lengths
+  /// below the column limit.
+  unsigned formatLine(const AnnotatedLine &Line, unsigned FirstIndent,
+                      bool DryRun) {
+    LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
+
+    // If the ObjC method declaration does not fit on a line, we should format
+    // it with one arg per line.
+    if (State.Line->Type == LT_ObjCMethodDecl)
+      State.Stack.back().BreakBeforeParameter = true;
+
+    // Find best solution in solution space.
+    return analyzeSolutionSpace(State, DryRun);
+  }
+
+private:
+  struct CompareLineStatePointers {
+    bool operator()(LineState *obj1, LineState *obj2) const {
+      return *obj1 < *obj2;
+    }
+  };
+
+  /// \brief A pair of <penalty, count> that is used to prioritize the BFS on.
+  ///
+  /// In case of equal penalties, we want to prefer states that were inserted
+  /// first. During state generation we make sure that we insert states first
+  /// that break the line as late as possible.
+  typedef std::pair<unsigned, unsigned> OrderedPenalty;
+
+  /// \brief An edge in the solution space from \c Previous->State to \c State,
+  /// inserting a newline dependent on the \c NewLine.
+  struct StateNode {
+    StateNode(const LineState &State, bool NewLine, StateNode *Previous)
+        : State(State), NewLine(NewLine), Previous(Previous) {}
+    LineState State;
+    bool NewLine;
+    StateNode *Previous;
+  };
+
+  /// \brief An item in the prioritized BFS search queue. The \c StateNode's
+  /// \c State has the given \c OrderedPenalty.
+  typedef std::pair<OrderedPenalty, StateNode *> QueueItem;
+
+  /// \brief The BFS queue type.
+  typedef std::priority_queue<QueueItem, std::vector<QueueItem>,
+                              std::greater<QueueItem>> QueueType;
+
+  /// \brief Analyze the entire solution space starting from \p InitialState.
+  ///
+  /// This implements a variant of Dijkstra's algorithm on the graph that spans
+  /// the solution space (\c LineStates are the nodes). The algorithm tries to
+  /// find the shortest path (the one with lowest penalty) from \p InitialState
+  /// to a state where all tokens are placed. Returns the penalty.
+  ///
+  /// If \p DryRun is \c false, directly applies the changes.
+  unsigned analyzeSolutionSpace(LineState &InitialState, bool DryRun) {
+    std::set<LineState *, CompareLineStatePointers> Seen;
+
+    // Increasing count of \c StateNode items we have created. This is used to
+    // create a deterministic order independent of the container.
+    unsigned Count = 0;
+    QueueType Queue;
+
+    // Insert start element into queue.
+    StateNode *Node =
+        new (Allocator.Allocate()) StateNode(InitialState, false, nullptr);
+    Queue.push(QueueItem(OrderedPenalty(0, Count), Node));
+    ++Count;
+
+    unsigned Penalty = 0;
+
+    // While not empty, take first element and follow edges.
+    while (!Queue.empty()) {
+      Penalty = Queue.top().first.first;
+      StateNode *Node = Queue.top().second;
+      if (!Node->State.NextToken) {
+        DEBUG(llvm::dbgs() << "\n---\nPenalty for line: " << Penalty << "\n");
+        break;
+      }
+      Queue.pop();
+
+      // Cut off the analysis of certain solutions if the analysis gets too
+      // complex. See description of IgnoreStackForComparison.
+      if (Count > 10000)
+        Node->State.IgnoreStackForComparison = true;
+
+      if (!Seen.insert(&Node->State).second)
+        // State already examined with lower penalty.
+        continue;
+
+      FormatDecision LastFormat = Node->State.NextToken->Decision;
+      if (LastFormat == FD_Unformatted || LastFormat == FD_Continue)
+        addNextStateToQueue(Penalty, Node, /*NewLine=*/false, &Count, &Queue);
+      if (LastFormat == FD_Unformatted || LastFormat == FD_Break)
+        addNextStateToQueue(Penalty, Node, /*NewLine=*/true, &Count, &Queue);
+    }
+
+    if (Queue.empty()) {
+      // We were unable to find a solution, do nothing.
+      // FIXME: Add diagnostic?
+      DEBUG(llvm::dbgs() << "Could not find a solution.\n");
+      return 0;
+    }
+
+    // Reconstruct the solution.
+    if (!DryRun)
+      reconstructPath(InitialState, Queue.top().second);
+
+    DEBUG(llvm::dbgs() << "Total number of analyzed states: " << Count << "\n");
+    DEBUG(llvm::dbgs() << "---\n");
+
+    return Penalty;
+  }
+
+  /// \brief Add the following state to the analysis queue \c Queue.
+  ///
+  /// Assume the current state is \p PreviousNode and has been reached with a
+  /// penalty of \p Penalty. Insert a line break if \p NewLine is \c true.
+  void addNextStateToQueue(unsigned Penalty, StateNode *PreviousNode,
+                           bool NewLine, unsigned *Count, QueueType *Queue) {
+    if (NewLine && !Indenter->canBreak(PreviousNode->State))
+      return;
+    if (!NewLine && Indenter->mustBreak(PreviousNode->State))
+      return;
+
+    StateNode *Node = new (Allocator.Allocate())
+        StateNode(PreviousNode->State, NewLine, PreviousNode);
+    if (!formatChildren(Node->State, NewLine, /*DryRun=*/true, Penalty))
+      return;
+
+    Penalty += Indenter->addTokenToState(Node->State, NewLine, true);
+
+    Queue->push(QueueItem(OrderedPenalty(Penalty, *Count), Node));
+    ++(*Count);
+  }
+
+  /// \brief Applies the best formatting by reconstructing the path in the
+  /// solution space that leads to \c Best.
+  void reconstructPath(LineState &State, StateNode *Best) {
+    std::deque<StateNode *> Path;
+    // We do not need a break before the initial token.
+    while (Best->Previous) {
+      Path.push_front(Best);
+      Best = Best->Previous;
+    }
+    for (std::deque<StateNode *>::iterator I = Path.begin(), E = Path.end();
+         I != E; ++I) {
+      unsigned Penalty = 0;
+      formatChildren(State, (*I)->NewLine, /*DryRun=*/false, Penalty);
+      Penalty += Indenter->addTokenToState(State, (*I)->NewLine, false);
+
+      DEBUG({
+        printLineState((*I)->Previous->State);
+        if ((*I)->NewLine) {
+          llvm::dbgs() << "Penalty for placing "
+                       << (*I)->Previous->State.NextToken->Tok.getName() << ": "
+                       << Penalty << "\n";
+        }
+      });
+    }
+  }
+
+  llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
+};
 
 } // namespace
 
@@ -431,17 +738,14 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
 
       if (TheLine.Last->TotalLength + Indent <= ColumnLimit ||
           TheLine.Type == LT_ImportStatement) {
-        LineState State = Indenter->getInitialState(Indent, &TheLine, DryRun);
-        while (State.NextToken) {
-          formatChildren(State, /*Newline=*/false, DryRun, Penalty);
-          Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
-        }
+        Penalty += NoLineBreakFormatter(Indenter, Whitespaces, Style, this)
+                       .formatLine(TheLine, Indent, DryRun);
       } else if (Style.ColumnLimit == 0) {
-        NoColumnLimitFormatter Formatter(Indenter, this);
-        if (!DryRun)
-          Formatter.format(Indent, &TheLine);
+        NoColumnLimitLineFormatter(Indenter, Whitespaces, Style, this)
+            .formatLine(TheLine, Indent, DryRun);
       } else {
-        Penalty += format(TheLine, Indent, DryRun);
+        Penalty += OptimizingLineFormatter(Indenter, Whitespaces, Style, this)
+                       .formatLine(TheLine, Indent, DryRun);
       }
 
       if (!TheLine.InPPDirective)
@@ -484,19 +788,6 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
   }
   PenaltyCache[CacheKey] = Penalty;
   return Penalty;
-}
-
-unsigned UnwrappedLineFormatter::format(const AnnotatedLine &Line,
-                                        unsigned FirstIndent, bool DryRun) {
-  LineState State = Indenter->getInitialState(FirstIndent, &Line, DryRun);
-
-  // If the ObjC method declaration does not fit on a line, we should format
-  // it with one arg per line.
-  if (State.Line->Type == LT_ObjCMethodDecl)
-    State.Stack.back().BreakBeforeParameter = true;
-
-  // Find best solution in solution space.
-  return analyzeSolutionSpace(State, DryRun);
 }
 
 void UnwrappedLineFormatter::formatFirstToken(FormatToken &RootToken,
@@ -565,175 +856,6 @@ void UnwrappedLineFormatter::join(AnnotatedLine &A, const AnnotatedLine &B) {
     Tok->TotalLength += LengthA;
     A.Last = Tok;
   }
-}
-
-unsigned UnwrappedLineFormatter::analyzeSolutionSpace(LineState &InitialState,
-                                                      bool DryRun) {
-  std::set<LineState *, CompareLineStatePointers> Seen;
-
-  // Increasing count of \c StateNode items we have created. This is used to
-  // create a deterministic order independent of the container.
-  unsigned Count = 0;
-  QueueType Queue;
-
-  // Insert start element into queue.
-  StateNode *Node =
-      new (Allocator.Allocate()) StateNode(InitialState, false, nullptr);
-  Queue.push(QueueItem(OrderedPenalty(0, Count), Node));
-  ++Count;
-
-  unsigned Penalty = 0;
-
-  // While not empty, take first element and follow edges.
-  while (!Queue.empty()) {
-    Penalty = Queue.top().first.first;
-    StateNode *Node = Queue.top().second;
-    if (!Node->State.NextToken) {
-      DEBUG(llvm::dbgs() << "\n---\nPenalty for line: " << Penalty << "\n");
-      break;
-    }
-    Queue.pop();
-
-    // Cut off the analysis of certain solutions if the analysis gets too
-    // complex. See description of IgnoreStackForComparison.
-    if (Count > 10000)
-      Node->State.IgnoreStackForComparison = true;
-
-    if (!Seen.insert(&Node->State).second)
-      // State already examined with lower penalty.
-      continue;
-
-    FormatDecision LastFormat = Node->State.NextToken->Decision;
-    if (LastFormat == FD_Unformatted || LastFormat == FD_Continue)
-      addNextStateToQueue(Penalty, Node, /*NewLine=*/false, &Count, &Queue);
-    if (LastFormat == FD_Unformatted || LastFormat == FD_Break)
-      addNextStateToQueue(Penalty, Node, /*NewLine=*/true, &Count, &Queue);
-  }
-
-  if (Queue.empty()) {
-    // We were unable to find a solution, do nothing.
-    // FIXME: Add diagnostic?
-    DEBUG(llvm::dbgs() << "Could not find a solution.\n");
-    return 0;
-  }
-
-  // Reconstruct the solution.
-  if (!DryRun)
-    reconstructPath(InitialState, Queue.top().second);
-
-  DEBUG(llvm::dbgs() << "Total number of analyzed states: " << Count << "\n");
-  DEBUG(llvm::dbgs() << "---\n");
-
-  return Penalty;
-}
-
-#ifndef NDEBUG
-static void printLineState(const LineState &State) {
-  llvm::dbgs() << "State: ";
-  for (const ParenState &P : State.Stack) {
-    llvm::dbgs() << P.Indent << "|" << P.LastSpace << "|" << P.NestedBlockIndent
-                 << " ";
-  }
-  llvm::dbgs() << State.NextToken->TokenText << "\n";
-}
-#endif
-
-void UnwrappedLineFormatter::reconstructPath(LineState &State,
-                                             StateNode *Current) {
-  std::deque<StateNode *> Path;
-  // We do not need a break before the initial token.
-  while (Current->Previous) {
-    Path.push_front(Current);
-    Current = Current->Previous;
-  }
-  for (std::deque<StateNode *>::iterator I = Path.begin(), E = Path.end();
-       I != E; ++I) {
-    unsigned Penalty = 0;
-    formatChildren(State, (*I)->NewLine, /*DryRun=*/false, Penalty);
-    Penalty += Indenter->addTokenToState(State, (*I)->NewLine, false);
-
-    DEBUG({
-      printLineState((*I)->Previous->State);
-      if ((*I)->NewLine) {
-        llvm::dbgs() << "Penalty for placing "
-                     << (*I)->Previous->State.NextToken->Tok.getName() << ": "
-                     << Penalty << "\n";
-      }
-    });
-  }
-}
-
-void UnwrappedLineFormatter::addNextStateToQueue(unsigned Penalty,
-                                                 StateNode *PreviousNode,
-                                                 bool NewLine, unsigned *Count,
-                                                 QueueType *Queue) {
-  if (NewLine && !Indenter->canBreak(PreviousNode->State))
-    return;
-  if (!NewLine && Indenter->mustBreak(PreviousNode->State))
-    return;
-
-  StateNode *Node = new (Allocator.Allocate())
-      StateNode(PreviousNode->State, NewLine, PreviousNode);
-  if (!formatChildren(Node->State, NewLine, /*DryRun=*/true, Penalty))
-    return;
-
-  Penalty += Indenter->addTokenToState(Node->State, NewLine, true);
-
-  Queue->push(QueueItem(OrderedPenalty(Penalty, *Count), Node));
-  ++(*Count);
-}
-
-bool UnwrappedLineFormatter::formatChildren(LineState &State, bool NewLine,
-                                            bool DryRun, unsigned &Penalty) {
-  const FormatToken *LBrace = State.NextToken->getPreviousNonComment();
-  FormatToken &Previous = *State.NextToken->Previous;
-  if (!LBrace || LBrace->isNot(tok::l_brace) || LBrace->BlockKind != BK_Block ||
-      Previous.Children.size() == 0)
-    // The previous token does not open a block. Nothing to do. We don't
-    // assert so that we can simply call this function for all tokens.
-    return true;
-
-  if (NewLine) {
-    int AdditionalIndent = State.Stack.back().Indent -
-                           Previous.Children[0]->Level * Style.IndentWidth;
-
-    Penalty += format(Previous.Children, DryRun, AdditionalIndent,
-                      /*FixBadIndentation=*/true);
-    return true;
-  }
-
-  if (Previous.Children[0]->First->MustBreakBefore)
-    return false;
-
-  // Cannot merge multiple statements into a single line.
-  if (Previous.Children.size() > 1)
-    return false;
-
-  // Cannot merge into one line if this line ends on a comment.
-  if (Previous.is(tok::comment))
-    return false;
-
-  // We can't put the closing "}" on a line with a trailing comment.
-  if (Previous.Children[0]->Last->isTrailingComment())
-    return false;
-
-  // If the child line exceeds the column limit, we wouldn't want to merge it.
-  // We add +2 for the trailing " }".
-  if (Style.ColumnLimit > 0 &&
-      Previous.Children[0]->Last->TotalLength + State.Column + 2 >
-          Style.ColumnLimit)
-    return false;
-
-  if (!DryRun) {
-    Whitespaces->replaceWhitespace(
-        *Previous.Children[0]->First,
-        /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1,
-        /*StartOfTokenColumn=*/State.Column, State.Line->InPPDirective);
-  }
-  Penalty += format(*Previous.Children[0], State.Column + 1, DryRun);
-
-  State.Column += 1 + Previous.Children[0]->Last->TotalLength;
-  return true;
 }
 
 } // namespace format
