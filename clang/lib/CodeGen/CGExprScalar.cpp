@@ -85,7 +85,7 @@ public:
     return CGF.EmitCheckedLValue(E, TCK);
   }
 
-  void EmitBinOpCheck(ArrayRef<std::pair<Value *, SanitizerKind>> Checks,
+  void EmitBinOpCheck(ArrayRef<std::pair<Value *, SanitizerMask>> Checks,
                       const BinOpInfo &Info);
 
   Value *EmitLoadOfLValue(LValue LV, SourceLocation Loc) {
@@ -916,7 +916,7 @@ Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
 /// operation). The check passes if all values in \p Checks (which are \c i1),
 /// are \c true.
 void ScalarExprEmitter::EmitBinOpCheck(
-    ArrayRef<std::pair<Value *, SanitizerKind>> Checks, const BinOpInfo &Info) {
+    ArrayRef<std::pair<Value *, SanitizerMask>> Checks, const BinOpInfo &Info) {
   assert(CGF.IsSanitizerScope);
   StringRef CheckName;
   SmallVector<llvm::Constant *, 4> StaticData;
@@ -2231,7 +2231,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
 void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
     const BinOpInfo &Ops, llvm::Value *Zero, bool isDiv) {
-  SmallVector<std::pair<llvm::Value *, SanitizerKind>, 2> Checks;
+  SmallVector<std::pair<llvm::Value *, SanitizerMask>, 2> Checks;
 
   if (CGF.SanOpts.has(SanitizerKind::IntegerDivideByZero)) {
     Checks.push_back(std::make_pair(Builder.CreateICmpNE(Ops.RHS, Zero),
@@ -2356,7 +2356,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     if (!isSigned || CGF.SanOpts.has(SanitizerKind::SignedIntegerOverflow)) {
       CodeGenFunction::SanitizerScope SanScope(&CGF);
       llvm::Value *NotOverflow = Builder.CreateNot(overflow);
-      SanitizerKind Kind = isSigned ? SanitizerKind::SignedIntegerOverflow
+      SanitizerMask Kind = isSigned ? SanitizerKind::SignedIntegerOverflow
                               : SanitizerKind::UnsignedIntegerOverflow;
       EmitBinOpCheck(std::make_pair(NotOverflow, Kind), Ops);
     } else
@@ -2721,7 +2721,7 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   else if ((SanitizeBase || SanitizeExponent) &&
            isa<llvm::IntegerType>(Ops.LHS->getType())) {
     CodeGenFunction::SanitizerScope SanScope(&CGF);
-    SmallVector<std::pair<Value *, SanitizerKind>, 2> Checks;
+    SmallVector<std::pair<Value *, SanitizerMask>, 2> Checks;
     llvm::Value *WidthMinusOne = GetWidthMinusOneValue(Ops.LHS, RHS);
     llvm::Value *ValidExponent = Builder.CreateICmpULE(RHS, WidthMinusOne);
 

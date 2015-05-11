@@ -329,11 +329,11 @@ static void parseSanitizerKinds(StringRef FlagName,
                                 const std::vector<std::string> &Sanitizers,
                                 DiagnosticsEngine &Diags, SanitizerSet &S) {
   for (const auto &Sanitizer : Sanitizers) {
-    SanitizerKind K = llvm::StringSwitch<SanitizerKind>(Sanitizer)
+    SanitizerMask K = llvm::StringSwitch<SanitizerMask>(Sanitizer)
 #define SANITIZER(NAME, ID) .Case(NAME, SanitizerKind::ID)
 #include "clang/Basic/Sanitizers.def"
-                          .Default(SanitizerKind::Unknown);
-    if (K == SanitizerKind::Unknown)
+                          .Default(0);
+    if (K == 0)
       Diags.Report(diag::err_drv_invalid_value) << FlagName << Sanitizer;
     else
       S.set(K, true);

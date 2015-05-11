@@ -2835,7 +2835,7 @@ public:
   /// \brief Create a basic block that will call a handler function in a
   /// sanitizer runtime with the provided arguments, and create a conditional
   /// branch to it.
-  void EmitCheck(ArrayRef<std::pair<llvm::Value *, SanitizerKind>> Checked,
+  void EmitCheck(ArrayRef<std::pair<llvm::Value *, SanitizerMask>> Checked,
                  StringRef CheckName, ArrayRef<llvm::Constant *> StaticArgs,
                  ArrayRef<llvm::Value *> DynamicArgs);
 

@@ -31,6 +31,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -499,7 +500,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   SanitizerScope SanScope(this);
 
-  SmallVector<std::pair<llvm::Value *, SanitizerKind>, 3> Checks;
+  SmallVector<std::pair<llvm::Value *, SanitizerMask>, 3> Checks;
   llvm::BasicBlock *Done = nullptr;
 
   bool AllowNullPointers = TCK == TCK_DowncastPointer || TCK == TCK_Upcast ||
@@ -1204,7 +1205,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
         EmitCheckSourceLocation(Loc),
         EmitCheckTypeDescriptor(Ty)
       };
-      SanitizerKind Kind = NeedsEnumCheck ? SanitizerKind::Enum : SanitizerKind::Bool;
+      SanitizerMask Kind = NeedsEnumCheck ? SanitizerKind::Enum : SanitizerKind::Bool;
       EmitCheck(std::make_pair(Check, Kind), "load_invalid_value", StaticArgs,
                 EmitCheckValue(Load));
     }
@@ -2243,7 +2244,8 @@ enum class CheckRecoverableKind {
 };
 }
 
-static CheckRecoverableKind getRecoverableKind(SanitizerKind Kind) {
+static CheckRecoverableKind getRecoverableKind(SanitizerMask Kind) {
+  assert(llvm::countPopulation(Kind) == 1);
   switch (Kind) {
   case SanitizerKind::Vptr:
     return CheckRecoverableKind::AlwaysRecoverable;
@@ -2290,7 +2292,7 @@ static void emitCheckHandlerCall(CodeGenFunction &CGF,
 }
 
 void CodeGenFunction::EmitCheck(
-    ArrayRef<std::pair<llvm::Value *, SanitizerKind>> Checked,
+    ArrayRef<std::pair<llvm::Value *, SanitizerMask>> Checked,
     StringRef CheckName, ArrayRef<llvm::Constant *> StaticArgs,
     ArrayRef<llvm::Value *> DynamicArgs) {
   assert(IsSanitizerScope);
