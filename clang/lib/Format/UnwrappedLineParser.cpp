@@ -672,6 +672,7 @@ void UnwrappedLineParser::parseStructuralElement() {
         if (FormatTok->is(tok::r_brace)) {
           FormatTok->Type = TT_InlineASMBrace;
           nextToken();
+          addUnwrappedLine();
           break;
         }
         FormatTok->Finalized = true;
