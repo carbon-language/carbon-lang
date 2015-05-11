@@ -180,21 +180,20 @@ multiclass AVX512_maskable_custom<bits<8> O, Format F,
                                   list<dag> Pattern,
                                   list<dag> MaskingPattern,
                                   list<dag> ZeroMaskingPattern,
-                                  string Round = "",
                                   string MaskingConstraint = "",
                                   InstrItinClass itin = NoItinerary,
                                   bit IsCommutable = 0> {
   let isCommutable = IsCommutable in
     def NAME: AVX512<O, F, Outs, Ins,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst "#Round#"|"#
-                                     "$dst "#Round#", "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst|"#
+                                     "$dst , "#IntelSrcAsm#"}",
                        Pattern, itin>;
 
   // Prefer over VMOV*rrk Pat<>
   let AddedComplexity = 20 in
     def NAME#k: AVX512<O, F, Outs, MaskingIns,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}"#Round#"|"#
-                                     "$dst {${mask}}"#Round#", "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}}|"#
+                                     "$dst {${mask}}, "#IntelSrcAsm#"}",
                        MaskingPattern, itin>,
               EVEX_K {
       // In case of the 3src subclass this is overridden with a let.
@@ -202,8 +201,8 @@ multiclass AVX512_maskable_custom<bits<8> O, Format F,
   }
   let AddedComplexity = 30 in // Prefer over VMOV*rrkz Pat<>
     def NAME#kz: AVX512<O, F, Outs, ZeroMaskingIns,
-                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}} {z}"#Round#"|"#
-                                     "$dst {${mask}} {z}"#Round#", "#IntelSrcAsm#"}",
+                       OpcodeStr#"\t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
+                                     "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
                        ZeroMaskingPattern,
                        itin>,
               EVEX_KZ;
@@ -217,7 +216,7 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
                                   string OpcodeStr,
                                   string AttSrcAsm, string IntelSrcAsm,
                                   dag RHS, dag MaskingRHS,
-                                  SDNode Select = vselect, string Round = "",
+                                  SDNode Select = vselect,
                                   string MaskingConstraint = "",
                                   InstrItinClass itin = NoItinerary,
                                   bit IsCommutable = 0> :
@@ -227,7 +226,7 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
                          [(set _.RC:$dst, MaskingRHS)],
                          [(set _.RC:$dst,
                                (Select _.KRCWM:$mask, RHS, _.ImmAllZerosV))],
-                         Round, MaskingConstraint, NoItinerary, IsCommutable>;
+                         MaskingConstraint, NoItinerary, IsCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the vector instruction.  In the masking case, the
@@ -235,7 +234,7 @@ multiclass AVX512_maskable_common<bits<8> O, Format F, X86VectorVTInfo _,
 multiclass AVX512_maskable<bits<8> O, Format F, X86VectorVTInfo _,
                            dag Outs, dag Ins, string OpcodeStr,
                            string AttSrcAsm, string IntelSrcAsm,
-                           dag RHS, string Round = "",
+                           dag RHS,
                            InstrItinClass itin = NoItinerary,
                            bit IsCommutable = 0> :
    AVX512_maskable_common<O, F, _, Outs, Ins,
@@ -243,14 +242,14 @@ multiclass AVX512_maskable<bits<8> O, Format F, X86VectorVTInfo _,
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
                           (vselect _.KRCWM:$mask, RHS, _.RC:$src0), vselect,
-                          Round, "$src0 = $dst", itin, IsCommutable>;
+                          "$src0 = $dst", itin, IsCommutable>;
 
 // This multiclass generates the unconditional/non-masking, the masking and
 // the zero-masking variant of the scalar instruction.
 multiclass AVX512_maskable_scalar<bits<8> O, Format F, X86VectorVTInfo _,
                            dag Outs, dag Ins, string OpcodeStr,
                            string AttSrcAsm, string IntelSrcAsm,
-                           dag RHS, string Round = "",
+                           dag RHS,
                            InstrItinClass itin = NoItinerary,
                            bit IsCommutable = 0> :
    AVX512_maskable_common<O, F, _, Outs, Ins,
@@ -258,7 +257,7 @@ multiclass AVX512_maskable_scalar<bits<8> O, Format F, X86VectorVTInfo _,
                           !con((ins _.KRCWM:$mask), Ins),
                           OpcodeStr, AttSrcAsm, IntelSrcAsm, RHS,
                           (X86select _.KRCWM:$mask, RHS, _.RC:$src0), X86select,
-                          Round, "$src0 = $dst", itin, IsCommutable>;
+                          "$src0 = $dst", itin, IsCommutable>;
 
 // Similar to AVX512_maskable but in this case one of the source operands
 // ($src1) is already tied to $dst so we just use that for the preserved
@@ -284,7 +283,7 @@ multiclass AVX512_maskable_in_asm<bits<8> O, Format F, X86VectorVTInfo _,
    AVX512_maskable_custom<O, F, Outs, Ins,
                           !con((ins _.RC:$src0, _.KRCWM:$mask), Ins),
                           !con((ins _.KRCWM:$mask), Ins),
-                          OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [], "",
+                          OpcodeStr, AttSrcAsm, IntelSrcAsm, Pattern, [], [],
                           "$src0 = $dst">;
 
 
@@ -2963,7 +2962,7 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                     (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
-                    "", itins.rr, IsCommutable>,
+                    itins.rr, IsCommutable>,
             AVX512BIBase, EVEX_4V;
 
   let mayLoad = 1 in
@@ -2972,7 +2971,7 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1,
                                   (bitconvert (_.LdFrag addr:$src2)))),
-                    "", itins.rm>,
+                    itins.rm>,
               AVX512BIBase, EVEX_4V;
 }
 
@@ -2988,7 +2987,7 @@ multiclass avx512_binop_rmb<bits<8> opc, string OpcodeStr, SDNode OpNode,
                     (_.VT (OpNode _.RC:$src1,
                                   (X86VBroadcast
                                       (_.ScalarLdFrag addr:$src2)))),
-                    "", itins.rm>,
+                    itins.rm>,
                AVX512BIBase, EVEX_4V, EVEX_B;
 }
 
@@ -3090,7 +3089,7 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, OpndItins itins,
                             (_Dst.VT (OpNode 
                                          (_Src.VT _Src.RC:$src1), 
                                          (_Src.VT _Src.RC:$src2))),
-                            "",itins.rr, IsCommutable>, 
+                            itins.rr, IsCommutable>, 
                             AVX512BIBase, EVEX_4V;
   let mayLoad = 1 in {
       defm rm : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
@@ -3098,7 +3097,7 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, OpndItins itins,
                             "$src2, $src1", "$src1, $src2",
                             (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1),
                                           (bitconvert (_Src.LdFrag addr:$src2)))),
-                            "", itins.rm>,
+                            itins.rm>,
                             AVX512BIBase, EVEX_4V;
 
       defm rmb : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
@@ -3109,7 +3108,7 @@ multiclass avx512_binop_rm2<bits<8> opc, string OpcodeStr, OpndItins itins,
                         (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bitconvert 
                                      (_Dst.VT (X86VBroadcast 
                                               (_Dst.ScalarLdFrag addr:$src2)))))),
-                        "", itins.rm>,
+                        itins.rm>,
                         AVX512BIBase, EVEX_4V, EVEX_B;
   }
 }
@@ -3165,8 +3164,7 @@ multiclass avx512_packs_rmb<bits<8> opc, string OpcodeStr, SDNode OpNode,
                          "$src1, ${src2}"##_Src.BroadcastStr,
                         (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1), (bitconvert 
                                      (_Src.VT (X86VBroadcast 
-                                              (_Src.ScalarLdFrag addr:$src2)))))),
-                        "">,
+                                              (_Src.ScalarLdFrag addr:$src2))))))>,
                         EVEX_4V, EVEX_B, EVEX_CD8<_Src.EltSize, CD8VF>;
   }
 }
@@ -3179,15 +3177,15 @@ multiclass avx512_packs_rm<bits<8> opc, string OpcodeStr,
                             "$src2, $src1","$src1, $src2", 
                             (_Dst.VT (OpNode 
                                          (_Src.VT _Src.RC:$src1), 
-                                         (_Src.VT _Src.RC:$src2))),
-                            "">,  EVEX_CD8<_Src.EltSize, CD8VF>, EVEX_4V;
+                                         (_Src.VT _Src.RC:$src2)))>,
+                            EVEX_CD8<_Src.EltSize, CD8VF>, EVEX_4V;
   let mayLoad = 1 in {
     defm rm : AVX512_maskable<opc, MRMSrcMem, _Dst, (outs _Dst.RC:$dst),
                           (ins _Src.RC:$src1, _Src.MemOp:$src2), OpcodeStr,
                           "$src2, $src1", "$src1, $src2",
                           (_Dst.VT (OpNode (_Src.VT _Src.RC:$src1),
-                                        (bitconvert (_Src.LdFrag addr:$src2)))),
-                            "">, EVEX_4V, EVEX_CD8<_Src.EltSize, CD8VF>;
+                                        (bitconvert (_Src.LdFrag addr:$src2))))>,
+                           EVEX_4V, EVEX_CD8<_Src.EltSize, CD8VF>;
   }
 }
 
@@ -3390,7 +3388,7 @@ multiclass avx512_fp_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
                            "$src2, $src1", "$src1, $src2",
                            (VecNode (_.VT _.RC:$src1), (_.VT _.RC:$src2),
                            (i32 FROUND_CURRENT)),
-                           "", itins.rr, IsCommutable>;
+                           itins.rr, IsCommutable>;
 
   defm rm_Int : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
@@ -3398,7 +3396,7 @@ multiclass avx512_fp_scalar<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
                          (VecNode (_.VT _.RC:$src1),
                           (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src2))),
                            (i32 FROUND_CURRENT)),
-                         "", itins.rm, IsCommutable>;
+                         itins.rm, IsCommutable>;
   let isCodeGenOnly = 1, isCommutable = IsCommutable,
       Predicates = [HasAVX512] in {
   def rr : I< opc, MRMSrcReg, (outs _.FRC:$dst),
@@ -3421,7 +3419,7 @@ multiclass avx512_fp_scalar_round<bits<8> opc, string OpcodeStr,X86VectorVTInfo 
                           (ins _.RC:$src1, _.RC:$src2, AVX512RC:$rc), OpcodeStr,
                           "$rc, $src2, $src1", "$src1, $src2, $rc",
                           (VecNode (_.VT _.RC:$src1), (_.VT _.RC:$src2),
-                          (i32 imm:$rc)), "", itins.rr, IsCommutable>,
+                          (i32 imm:$rc)), itins.rr, IsCommutable>,
                           EVEX_B, EVEX_RC;
 }
 multiclass avx512_fp_scalar_sae<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
@@ -3429,9 +3427,9 @@ multiclass avx512_fp_scalar_sae<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
 
   defm rrb : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                             (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
-                            "$src2, $src1", "$src1, $src2",
+                            "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                             (VecNode (_.VT _.RC:$src1), (_.VT _.RC:$src2),
-                            (i32 FROUND_NO_EXC)), "{sae}">, EVEX_B;
+                            (i32 FROUND_NO_EXC))>, EVEX_B;
 }
 
 multiclass avx512_binop_s_round<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -3500,6 +3498,16 @@ multiclass avx512_fp_round_packed<bits<8> opc, string OpcodeStr, SDNode OpNodeRn
                   EVEX_4V, EVEX_B, EVEX_RC;
 }
 
+
+multiclass avx512_fp_sae_packed<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd,
+                            X86VectorVTInfo _, bit IsCommutable> {
+  defm rb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                  (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
+                  "{sae}, $src2, $src1", "$src1, $src2, {sae}",
+                  (_.VT (OpNodeRnd _.RC:$src1, _.RC:$src2, (i32 FROUND_NO_EXC)))>,
+                  EVEX_4V, EVEX_B;
+}
+
 multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode, 
                              bit IsCommutable = 0> {
   defm PSZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v16f32_info,
@@ -3533,6 +3541,13 @@ multiclass avx512_fp_binop_p_round<bits<8> opc, string OpcodeStr, SDNode OpNodeR
                               EVEX_V512, PD, VEX_W,EVEX_CD8<64, CD8VF>;
 }
 
+multiclass avx512_fp_binop_p_sae<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd> {
+  defm PSZ : avx512_fp_sae_packed<opc, OpcodeStr, OpNodeRnd, v16f32_info, 0>,
+                              EVEX_V512, PS, EVEX_CD8<32, CD8VF>;
+  defm PDZ : avx512_fp_sae_packed<opc, OpcodeStr, OpNodeRnd, v8f64_info, 0>,
+                              EVEX_V512, PD, VEX_W,EVEX_CD8<64, CD8VF>;
+}
+
 defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, 1>,
             avx512_fp_binop_p_round<0x58, "vadd", X86faddRnd>;
 defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, 1>,
@@ -3541,33 +3556,17 @@ defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub>,
             avx512_fp_binop_p_round<0x5C, "vsub", X86fsubRnd>;
 defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv>,
             avx512_fp_binop_p_round<0x5E, "vdiv", X86fdivRnd>;
-defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, 1>;
-defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, 1>;
+defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, 1>,
+            avx512_fp_binop_p_sae<0x5D, "vmin", X86fminRnd>;
+defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, 1>,
+            avx512_fp_binop_p_sae<0x5F, "vmax", X86fmaxRnd>;
 let Predicates = [HasDQI] in {
   defm VAND  : avx512_fp_binop_p<0x54, "vand", X86fand, 1>;
   defm VANDN : avx512_fp_binop_p<0x55, "vandn", X86fandn, 0>;
   defm VOR   : avx512_fp_binop_p<0x56, "vor", X86for, 1>;
   defm VXOR  : avx512_fp_binop_p<0x57, "vxor", X86fxor, 1>;
 }
-def : Pat<(v16f32 (int_x86_avx512_mask_max_ps_512 (v16f32 VR512:$src1),
-                   (v16f32 VR512:$src2), (bc_v16f32 (v16i32 immAllZerosV)),
-                   (i16 -1), FROUND_CURRENT)),
-          (VMAXPSZrr VR512:$src1, VR512:$src2)>;
 
-def : Pat<(v8f64 (int_x86_avx512_mask_max_pd_512 (v8f64 VR512:$src1),
-                   (v8f64 VR512:$src2), (bc_v8f64 (v16i32 immAllZerosV)),
-                   (i8 -1), FROUND_CURRENT)),
-          (VMAXPDZrr VR512:$src1, VR512:$src2)>;
-
-def : Pat<(v16f32 (int_x86_avx512_mask_min_ps_512 (v16f32 VR512:$src1),
-                   (v16f32 VR512:$src2), (bc_v16f32 (v16i32 immAllZerosV)),
-                   (i16 -1), FROUND_CURRENT)),
-          (VMINPSZrr VR512:$src1, VR512:$src2)>;
-
-def : Pat<(v8f64 (int_x86_avx512_mask_min_pd_512 (v8f64 VR512:$src1),
-                   (v8f64 VR512:$src2), (bc_v8f64 (v16i32 immAllZerosV)),
-                   (i8 -1), FROUND_CURRENT)),
-          (VMINPDZrr VR512:$src1, VR512:$src2)>;
 //===----------------------------------------------------------------------===//
 // AVX-512  VPTESTM instructions
 //===----------------------------------------------------------------------===//
@@ -3667,14 +3666,14 @@ multiclass avx512_shift_rmi<bits<8> opc, Format ImmFormR, Format ImmFormM,
                    (ins _.RC:$src1, u8imm:$src2), OpcodeStr,
                       "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (i8 imm:$src2))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rr>, AVX512BIi8Base, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rr>, AVX512BIi8Base, EVEX_4V;
   let mayLoad = 1 in
   defm mi : AVX512_maskable<opc, ImmFormM, _, (outs _.RC:$dst),
                    (ins _.MemOp:$src1, u8imm:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode (_.VT (bitconvert (_.LdFrag addr:$src1))),
                           (i8 imm:$src2))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V;
 }
 
 multiclass avx512_shift_rmbi<bits<8> opc, Format ImmFormM,
@@ -3684,7 +3683,7 @@ multiclass avx512_shift_rmbi<bits<8> opc, Format ImmFormM,
                    (ins _.ScalarMemOp:$src1, u8imm:$src2), OpcodeStr,
       "$src2, ${src1}"##_.BroadcastStr, "${src1}"##_.BroadcastStr##", $src2",
      (_.VT (OpNode (X86VBroadcast (_.ScalarLdFrag addr:$src1)), (i8 imm:$src2))),
-     " ",  SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V, EVEX_B;
+     SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V, EVEX_B;
 }
 
 multiclass avx512_shift_rrm<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -3694,12 +3693,12 @@ multiclass avx512_shift_rrm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                    (ins _.RC:$src1, VR128X:$src2), OpcodeStr,
                       "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (SrcVT VR128X:$src2))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rr>, AVX512BIBase, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rr>, AVX512BIBase, EVEX_4V;
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                    (ins _.RC:$src1, i128mem:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (bc_frag (loadv2i64 addr:$src2)))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rm>, AVX512BIBase,
+                   SSE_INTSHIFT_ITINS_P.rm>, AVX512BIBase,
                    EVEX_4V;
 }
 
@@ -3798,13 +3797,13 @@ multiclass avx512_var_shift<bits<8> opc, string OpcodeStr, SDNode OpNode,
                    (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
                       "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (_.VT _.RC:$src2))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rr>, AVX5128IBase, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rr>, AVX5128IBase, EVEX_4V;
   let mayLoad = 1 in
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                    (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src2))),
-                   " ",  SSE_INTSHIFT_ITINS_P.rm>, AVX5128IBase, EVEX_4V,
+                   SSE_INTSHIFT_ITINS_P.rm>, AVX5128IBase, EVEX_4V,
                    EVEX_CD8<_.EltSize, CD8VF>;
 }
 
@@ -3817,7 +3816,7 @@ multiclass avx512_var_shift_mb<bits<8> opc, string OpcodeStr, SDNode OpNode,
                     "$src1, ${src2}"##_.BroadcastStr,
                     (_.VT (OpNode _.RC:$src1, (_.VT (X86VBroadcast
                                                 (_.ScalarLdFrag addr:$src2))))),
-                    " ",  SSE_INTSHIFT_ITINS_P.rm>, AVX5128IBase, EVEX_B,
+                    SSE_INTSHIFT_ITINS_P.rm>, AVX5128IBase, EVEX_B,
                     EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>;
 }
 multiclass avx512_var_shift_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -4775,9 +4774,9 @@ multiclass avx512_fp28_s<bits<8> opc, string OpcodeStr,X86VectorVTInfo _,
 
   defm rb : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                             (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
-                            "$src2, $src1", "$src1, $src2",
+                            "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                             (OpNode (_.VT _.RC:$src1), (_.VT _.RC:$src2),
-                            (i32 FROUND_NO_EXC)), "{sae}">, EVEX_B;
+                            (i32 FROUND_NO_EXC))>, EVEX_B;
 
   defm m : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
@@ -4809,9 +4808,8 @@ multiclass avx512_fp28_p<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
 
   defm rb : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                         (ins _.RC:$src), OpcodeStr,
-                        "$src", "$src",
-                        (OpNode (_.VT _.RC:$src), (i32 FROUND_NO_EXC)),
-                        "{sae}">, EVEX_B;
+                        "{sae}, $src", "$src, {sae}",
+                        (OpNode (_.VT _.RC:$src), (i32 FROUND_NO_EXC))>, EVEX_B;
 
   defm m : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
@@ -5051,9 +5049,9 @@ avx512_rndscale_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 
   defm rb : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3), OpcodeStr,
-                         "$src3, $src2, $src1", "$src1, $src2, $src3",
+                         "{sae}, $src3, $src2, $src1", "$src1, $src2, $src3, {sae}",
                          (_.VT (X86RndScale (_.VT _.RC:$src1), (_.VT _.RC:$src2),
-                         (i32 imm:$src3), (i32 FROUND_NO_EXC))), "{sae}">, EVEX_B;
+                         (i32 imm:$src3), (i32 FROUND_NO_EXC)))>, EVEX_B;
 
   let mayLoad = 1 in
   defm m : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),

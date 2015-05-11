@@ -205,6 +205,8 @@ namespace llvm {
       FSUB_RND,
       FMUL_RND,
       FDIV_RND,
+      FMAX_RND,
+      FMIN_RND,
       
       // Integer add/sub with unsigned saturation.
       ADDUS,

@@ -1,14 +1,14 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=knl --show-mc-encoding| FileCheck %s
 
 define <16 x float> @test_rsqrt28_ps(<16 x float> %a0) {
-  ; CHECK: vrsqrt28ps %zmm0, %zmm0 {sae} # encoding: [0x62,0xf2,0x7d,0x18,0xcc,0xc0]
+  ; CHECK: vrsqrt28ps {sae}, %zmm0, %zmm0 # encoding: [0x62,0xf2,0x7d,0x18,0xcc,0xc0]
   %res = call <16 x float> @llvm.x86.avx512.rsqrt28.ps(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 8)
   ret <16 x float> %res
 }
 
 define <16 x float> @test1_rsqrt28_ps(<16 x float> %a0, <16 x float> %a1) {
   ; CHECK: kmovw
-  ; CHECK: vrsqrt28ps %zmm0, %zmm1 {%k1}{sae} # encoding: [0x62,0xf2,0x7d,0x19,0xcc,0xc8]
+  ; CHECK: vrsqrt28ps {sae}, %zmm0, %zmm1 {%k1} # encoding: [0x62,0xf2,0x7d,0x19,0xcc,0xc8]
   %res = call <16 x float> @llvm.x86.avx512.rsqrt28.ps(<16 x float> %a0, <16 x float> %a1, i16 6, i32 8)
   ret <16 x float> %res
 }
@@ -27,7 +27,7 @@ define <16 x float> @test3_rsqrt28_ps(<16 x float> %a0) {
 }
 
 define <16 x float> @test4_rsqrt28_ps(<16 x float> %a0) {
-  ; CHECK: vrsqrt28ps %zmm0, %zmm0 {%k1} {z}{sae} # encoding: [0x62,0xf2,0x7d,0x99,0xcc,0xc0]
+  ; CHECK: vrsqrt28ps {sae}, %zmm0, %zmm0 {%k1} {z} # encoding: [0x62,0xf2,0x7d,0x99,0xcc,0xc0]
   %res = call <16 x float> @llvm.x86.avx512.rsqrt28.ps(<16 x float> %a0, <16 x float> undef, i16 6, i32 8) 
   ret <16 x float> %res
 }
@@ -36,61 +36,61 @@ define <16 x float> @test4_rsqrt28_ps(<16 x float> %a0) {
 declare <16 x float> @llvm.x86.avx512.rsqrt28.ps(<16 x float>, <16 x float>, i16, i32) nounwind readnone
 
 define <16 x float> @test_rcp28_ps_512(<16 x float> %a0) {
-  ; CHECK: vrcp28ps %zmm0, %zmm0 {sae} # encoding: [0x62,0xf2,0x7d,0x18,0xca,0xc0]
+  ; CHECK: vrcp28ps {sae}, %zmm0, %zmm0 # encoding: [0x62,0xf2,0x7d,0x18,0xca,0xc0]
   %res = call <16 x float> @llvm.x86.avx512.rcp28.ps(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 8)
   ret <16 x float> %res
 }
 declare <16 x float> @llvm.x86.avx512.rcp28.ps(<16 x float>, <16 x float>, i16, i32) nounwind readnone
 
 define <8 x double> @test_rcp28_pd_512(<8 x double> %a0) {
-  ; CHECK: vrcp28pd %zmm0, %zmm0 {sae} # encoding: [0x62,0xf2,0xfd,0x18,0xca,0xc0]
+  ; CHECK: vrcp28pd {sae}, %zmm0, %zmm0 # encoding: [0x62,0xf2,0xfd,0x18,0xca,0xc0]
   %res = call <8 x double> @llvm.x86.avx512.rcp28.pd(<8 x double> %a0, <8 x double> zeroinitializer, i8 -1, i32 8) 
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.avx512.rcp28.pd(<8 x double>, <8 x double>, i8, i32) nounwind readnone
 
 define <16 x float> @test_exp2_ps_512(<16 x float> %a0) {
-  ; CHECK: vexp2ps %zmm0, %zmm0 {sae}      # encoding: [0x62,0xf2,0x7d,0x18,0xc8,0xc0]
+  ; CHECK: vexp2ps {sae}, %zmm0, %zmm0     # encoding: [0x62,0xf2,0x7d,0x18,0xc8,0xc0]
   %res = call <16 x float> @llvm.x86.avx512.exp2.ps(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 8)
   ret <16 x float> %res
 }
 declare <16 x float> @llvm.x86.avx512.exp2.ps(<16 x float>, <16 x float>, i16, i32) nounwind readnone
 
 define <8 x double> @test_exp2_pd_512(<8 x double> %a0) {
-  ; CHECK: vexp2pd %zmm0, %zmm0 {sae}      # encoding: [0x62,0xf2,0xfd,0x18,0xc8,0xc0]
+  ; CHECK: vexp2pd {sae}, %zmm0, %zmm0      # encoding: [0x62,0xf2,0xfd,0x18,0xc8,0xc0]
   %res = call <8 x double> @llvm.x86.avx512.exp2.pd(<8 x double> %a0, <8 x double> zeroinitializer, i8 -1, i32 8)
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.avx512.exp2.pd(<8 x double>, <8 x double>, i8, i32) nounwind readnone
 
 define <4 x float> @test_rsqrt28_ss(<4 x float> %a0) {
-  ; CHECK: vrsqrt28ss %xmm0, %xmm0, %xmm0 {sae} # encoding: [0x62,0xf2,0x7d,0x18,0xcd,0xc0]
+  ; CHECK: vrsqrt28ss {sae}, %xmm0, %xmm0, %xmm0 # encoding: [0x62,0xf2,0x7d,0x18,0xcd,0xc0]
   %res = call <4 x float> @llvm.x86.avx512.rsqrt28.ss(<4 x float> %a0, <4 x float> %a0, <4 x float> zeroinitializer, i8 -1, i32 8) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
 declare <4 x float> @llvm.x86.avx512.rsqrt28.ss(<4 x float>, <4 x float>, <4 x float>, i8, i32) nounwind readnone
 
 define <4 x float> @test_rcp28_ss(<4 x float> %a0) {
-  ; CHECK: vrcp28ss %xmm0, %xmm0, %xmm0 {sae} # encoding: [0x62,0xf2,0x7d,0x18,0xcb,0xc0]
+  ; CHECK: vrcp28ss {sae}, %xmm0, %xmm0, %xmm0 # encoding: [0x62,0xf2,0x7d,0x18,0xcb,0xc0]
   %res = call <4 x float> @llvm.x86.avx512.rcp28.ss(<4 x float> %a0, <4 x float> %a0, <4 x float> zeroinitializer, i8 -1, i32 8) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }
 declare <4 x float> @llvm.x86.avx512.rcp28.ss(<4 x float>, <4 x float>, <4 x float>, i8, i32) nounwind readnone
 
 define <4 x float> @test_rsqrt28_ss_maskz(<4 x float> %a0) {
-  ; CHECK: vrsqrt28ss %xmm0, %xmm0, %xmm0 {%k1} {z}{sae} # encoding: [0x62,0xf2,0x7d,0x99,0xcd,0xc0]
+  ; CHECK: vrsqrt28ss {sae}, %xmm0, %xmm0, %xmm0 {%k1} {z} # encoding: [0x62,0xf2,0x7d,0x99,0xcd,0xc0]
   %res = call <4 x float> @llvm.x86.avx512.rsqrt28.ss(<4 x float> %a0, <4 x float> %a0, <4 x float> zeroinitializer, i8 7, i32 8) ; 
   ret <4 x float> %res
 }
 
 define <4 x float> @test_rsqrt28_ss_mask(<4 x float> %a0, <4 x float> %b0, <4 x float> %c0) {
-  ; CHECK: vrsqrt28ss %xmm1, %xmm0, %xmm2 {%k1}{sae} # encoding: [0x62,0xf2,0x7d,0x19,0xcd,0xd1]
+  ; CHECK: vrsqrt28ss {sae}, %xmm1, %xmm0, %xmm2 {%k1} # encoding: [0x62,0xf2,0x7d,0x19,0xcd,0xd1]
   %res = call <4 x float> @llvm.x86.avx512.rsqrt28.ss(<4 x float> %a0, <4 x float> %b0, <4 x float> %c0, i8 7, i32 8) ;
   ret <4 x float> %res
 }
 
 define <2 x double> @test_rsqrt28_sd_maskz(<2 x double> %a0) {
-  ; CHECK: vrsqrt28sd %xmm0, %xmm0, %xmm0 {%k1} {z}{sae} # encoding: [0x62,0xf2,0xfd,0x99,0xcd,0xc0]
+  ; CHECK: vrsqrt28sd {sae}, %xmm0, %xmm0, %xmm0 {%k1} {z} # encoding: [0x62,0xf2,0xfd,0x99,0xcd,0xc0]
   %res = call <2 x double> @llvm.x86.avx512.rsqrt28.sd(<2 x double> %a0, <2 x double> %a0, <2 x double> zeroinitializer, i8 7, i32 8) ; 
   ret <2 x double> %res
 }
