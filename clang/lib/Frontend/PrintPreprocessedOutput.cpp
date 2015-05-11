@@ -64,12 +64,11 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
     OS << ' ';
 
   SmallString<128> SpellingBuffer;
-  for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
-       I != E; ++I) {
-    if (I->hasLeadingSpace())
+  for (const auto &T : MI.tokens()) {
+    if (T.hasLeadingSpace())
       OS << ' ';
 
-    OS << PP.getSpelling(*I, SpellingBuffer);
+    OS << PP.getSpelling(T, SpellingBuffer);
   }
 }
 

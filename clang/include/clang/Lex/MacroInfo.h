@@ -245,6 +245,7 @@ public:
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   bool tokens_empty() const { return ReplacementTokens.empty(); }
+  ArrayRef<Token> tokens() const { return ReplacementTokens; }
 
   /// \brief Add the specified token to the replacement text for the macro.
   void AddTokenToBody(const Token &Tok) {
