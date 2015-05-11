@@ -225,7 +225,7 @@ public:
     GetInstructionAtIndex (size_t idx) const;
     
     uint32_t
-    GetIndexOfNextBranchInstruction(uint32_t start) const;
+    GetIndexOfNextBranchInstruction(uint32_t start, Target &target) const;
     
     uint32_t
     GetIndexOfInstructionAtLoadAddress (lldb::addr_t load_addr, Target &target);
