@@ -1171,12 +1171,6 @@ public:
     NumMemRefs = 0;
   }
 
-private:
-  /// getRegInfo - If this instruction is embedded into a MachineFunction,
-  /// return the MachineRegisterInfo object for the current function, otherwise
-  /// return null.
-  MachineRegisterInfo *getRegInfo();
-
   /// untieRegOperand - Break any tie involving OpIdx.
   void untieRegOperand(unsigned OpIdx) {
     MachineOperand &MO = getOperand(OpIdx);
@@ -1185,6 +1179,13 @@ private:
       MO.TiedTo = 0;
     }
   }
+
+
+private:
+  /// getRegInfo - If this instruction is embedded into a MachineFunction,
+  /// return the MachineRegisterInfo object for the current function, otherwise
+  /// return null.
+  MachineRegisterInfo *getRegInfo();
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
