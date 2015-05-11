@@ -474,7 +474,7 @@ invalidate-regs
             change depending on if the mode has changed. 
 
 //----------------------------------------------------------------------
-// "qPlatform_RunCommand"
+// "qPlatform_shell"
 //
 // BRIEF
 //  Run a command in a shell on the connected remote machine.
@@ -494,7 +494,7 @@ of captured program output.
 
 Below is an example communication from a client sending an "ls -la" command:
 
-send packet: $qPlatform_RunCommand:6c73202d6c61,00000002#ec
+send packet: $qPlatform_shell:6c73202d6c61,00000002#ec
 read packet: $F,00000000,00000000,total 4736
 drwxrwxr-x 16 username groupname    4096 Aug 15 21:36 .
 drwxr-xr-x 17 username groupname    4096 Aug 10 16:39 ..
