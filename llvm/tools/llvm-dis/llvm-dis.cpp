@@ -80,7 +80,8 @@ public:
     if (!V.getType()->isVoidTy()) {
       OS.PadToColumn(50);
       Padded = true;
-      OS << "; [#uses=" << V.getNumUses() << " type=" << *V.getType() << "]";  // Output # uses and type
+      // Output # uses and type
+      OS << "; [#uses=" << V.getNumUses() << " type=" << *V.getType() << "]";
     }
     if (const Instruction *I = dyn_cast<Instruction>(&V)) {
       if (const DebugLoc &DL = I->getDebugLoc()) {
@@ -158,6 +159,9 @@ int main(int argc, char **argv) {
         getStreamedBitcodeModule(DisplayFilename, Streamer, Context);
     M = std::move(*MOrErr);
     M->materializeAllPermanently();
+  } else {
+    errs() << argv[0] << ": " << ErrorMessage << '\n';
+    return 1;
   }
 
   // Just use stdout.  We won't actually print anything on it.
@@ -168,13 +172,9 @@ int main(int argc, char **argv) {
     if (InputFilename == "-") {
       OutputFilename = "-";
     } else {
-      const std::string &IFN = InputFilename;
-      int Len = IFN.length();
-      // If the source ends in .bc, strip it off.
-      if (IFN[Len-3] == '.' && IFN[Len-2] == 'b' && IFN[Len-1] == 'c')
-        OutputFilename = std::string(IFN.begin(), IFN.end()-3)+".ll";
-      else
-        OutputFilename = IFN+".ll";
+      StringRef IFN = InputFilename;
+      OutputFilename = (IFN.endswith(".bc") ? IFN.drop_back(3) : IFN).str();
+      OutputFilename += ".ll";
     }
   }
 
