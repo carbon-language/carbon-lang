@@ -10,8 +10,11 @@
 #ifndef LLVM_MC_MCPARSER_MCPARSEDASMOPERAND_H
 #define LLVM_MC_MCPARSER_MCPARSEDASMOPERAND_H
 
+#include <string>
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/SMLoc.h"
+
 namespace llvm {
-class SMLoc;
 class raw_ostream;
 
 /// MCParsedAsmOperand - This abstract class represents a source-level assembly
