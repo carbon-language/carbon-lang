@@ -15,6 +15,9 @@
 #ifndef LLVM_CLANG_BASIC_SANITIZERS_H
 #define LLVM_CLANG_BASIC_SANITIZERS_H
 
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/StringRef.h"
+
 #include <stdint.h>
 
 namespace clang {
@@ -61,6 +64,14 @@ struct SanitizerSet {
   /// \brief Bitmask of enabled sanitizers.
   SanitizerMask Mask;
 };
+
+/// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
+/// Returns a non-zero SanitizerMask, or \c 0 if \p Value is not known.
+SanitizerMask parseSanitizerValue(StringRef Value, bool AllowGroups);
+
+/// For each sanitizer group bit set in \p Kinds, set the bits for sanitizers
+/// this group enables.
+SanitizerMask expandSanitizerGroups(SanitizerMask Kinds);
 
 }  // end namespace clang
 
