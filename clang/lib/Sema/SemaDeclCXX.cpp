@@ -4791,16 +4791,16 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
       if (MD->isDeleted())
         continue;
 
-      if (MD->isMoveAssignmentOperator() && ClassImported && MD->isInlined()) {
-        // Current MSVC versions don't export the move assignment operators, so
-        // don't attempt to import them if we have a definition.
-        continue;
-      }
-
-      if (MD->isInlined() &&
-          !S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+      if (MD->isInlined()) {
         // MinGW does not import or export inline methods.
-        continue;
+        if (!S.Context.getTargetInfo().getCXXABI().isMicrosoft())
+          continue;
+
+        // MSVC versions before 2015 don't export the move assignment operators,
+        // so don't attempt to import them if we have a definition.
+        if (ClassImported && MD->isMoveAssignmentOperator() &&
+            !S.getLangOpts().isCompatibleWithMSVC(19))
+          continue;
       }
     }
 

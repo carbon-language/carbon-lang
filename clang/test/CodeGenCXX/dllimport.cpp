@@ -2,7 +2,8 @@
 // RUN: %clang_cc1 -triple x86_64-windows-msvc -fno-rtti -fno-threadsafe-statics -emit-llvm -std=c++1y -O0 -o - %s -DMSABI -w | FileCheck --check-prefix=MSC --check-prefix=M64 %s
 // RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -fno-threadsafe-statics -emit-llvm -std=c++1y -O0 -o - %s         -w | FileCheck --check-prefix=GNU --check-prefix=G32 %s
 // RUN: %clang_cc1 -triple x86_64-windows-gnu  -fno-rtti -fno-threadsafe-statics -emit-llvm -std=c++1y -O0 -o - %s         -w | FileCheck --check-prefix=GNU --check-prefix=G64 %s
-// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -fno-threadsafe-statics -emit-llvm -std=c++1y -O1 -o - %s -DMSABI -w | FileCheck --check-prefix=MO1 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -fno-threadsafe-statics -fms-compatibility-version=18.00 -emit-llvm -std=c++1y -O1 -o - %s -DMSABI -w | FileCheck --check-prefix=MO1 --check-prefix=M18 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -fno-threadsafe-statics -fms-compatibility-version=19.00 -emit-llvm -std=c++1y -O1 -o - %s -DMSABI -w | FileCheck --check-prefix=MO1 --check-prefix=M19 %s
 // RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -fno-threadsafe-statics -emit-llvm -std=c++1y -O1 -o - %s         -w | FileCheck --check-prefix=GO1 %s
 
 // CHECK-NOT doesn't play nice with CHECK-DAG, so use separate run lines.
@@ -557,7 +558,8 @@ struct __declspec(dllimport) T {
 
   T& operator=(T&&) = default;
   // Note: Don't mark inline move operators dllimport because current MSVC versions don't export them.
-  // MO1-DAG: define linkonce_odr x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@$$QAU0@@Z"
+  // M18-DAG: define linkonce_odr x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@$$QAU0@@Z"
+  // M19-DAG: define available_externally dllimport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@$$QAU0@@Z"
 };
 USEMEMFUNC(T, a)
 USEVAR(T::b)
