@@ -18,6 +18,6 @@ int main(int argc, char *argv[]) {
     printf("No network interfaces found.\n");
     return 0;
   }
-  assert(strlen(ifname) + 1 == __msan_test_shadow(ifname, sizeof(ifname)));
+  assert(strlen(ifname) + 1 <= __msan_test_shadow(ifname, sizeof(ifname)));
   return 0;
 }
