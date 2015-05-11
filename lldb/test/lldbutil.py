@@ -890,3 +890,16 @@ class RecursiveDecentFormatter(BasicFormatter):
                     BasicFormatter.format(self, child, buffer=output, indent=new_indent)
 
         return output.getvalue()
+
+# ===========================================================
+# Utility functions for path manipulation on remote platforms
+# ===========================================================
+
+def join_remote_paths(*paths):
+    # TODO: update with actual platform name for remote windows once it exists
+    if lldb.remote_platform.GetName() == 'remote-windows':
+        return os.path.join(*paths).replace(os.path.sep, '\\')
+    return os.path.join(*paths).replace(os.path.sep, '/')
+
+def append_to_remote_wd(*paths):
+    return join_remote_paths(lldb.remote_platform.GetWorkingDirectory(), *paths)

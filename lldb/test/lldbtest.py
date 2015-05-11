@@ -44,6 +44,7 @@ import types
 import unittest2
 import lldb
 import lldbtest_config
+import lldbutil
 from _pyio import __metaclass__
 
 # See also dotest.parseOptionsAndInitTestdirs(), where the environment variables
@@ -304,11 +305,9 @@ class _RemoteProcess(_BaseProcess):
         return self._pid
 
     def launch(self, executable, args):
-        remote_work_dir = lldb.remote_platform.GetWorkingDirectory()
-
         if self._install_remote:
             src_path = executable
-            dst_path = os.path.join(remote_work_dir, os.path.basename(executable))
+            dst_path = lldbutil.append_to_remote_wd(os.path.basename(executable))
 
             dst_file_spec = lldb.SBFileSpec(dst_path, False)
             err = lldb.remote_platform.Install(lldb.SBFileSpec(src_path, True), dst_file_spec)
@@ -320,7 +319,7 @@ class _RemoteProcess(_BaseProcess):
 
         launch_info = lldb.SBLaunchInfo(args)
         launch_info.SetExecutableFile(dst_file_spec, True)
-        launch_info.SetWorkingDirectory(remote_work_dir)
+        launch_info.SetWorkingDirectory(lldb.remote_platform.GetWorkingDirectory())
 
         # Redirect stdout and stderr to /dev/null
         launch_info.AddSuppressFileAction(1, False, True)
@@ -1389,7 +1388,7 @@ class Base(unittest2.TestCase):
             if bugnumber == None:
                 print >> sbuf, "expected failure"
             else:
-                print >> sbuf, "expected failure (problem id:" + str(bugnumber) + ")"	
+                print >> sbuf, "expected failure (problem id:" + str(bugnumber) + ")"
 
     def markSkippedTest(self):
         """Callback invoked when a test is skipped."""
@@ -1410,7 +1409,7 @@ class Base(unittest2.TestCase):
             if bugnumber == None:
                 print >> sbuf, "unexpected success"
             else:
-                print >> sbuf, "unexpected success (problem id:" + str(bugnumber) + ")"	
+                print >> sbuf, "unexpected success (problem id:" + str(bugnumber) + ")"
 
     def getRerunArgs(self):
         return " -f %s.%s" % (self.__class__.__name__, self._testMethodName)
@@ -2003,11 +2002,11 @@ class TestBase(Base):
             lldb.pre_flight(self)
 
         if lldb.remote_platform:
-            #remote_test_dir = os.path.join(lldb.remote_platform_working_dir, self.mydir)
-            remote_test_dir = os.path.join(lldb.remote_platform_working_dir, 
-                                           self.getArchitecture(), 
-                                           str(self.test_number), 
-                                           self.mydir)
+            remote_test_dir = lldbutil.join_remote_paths(
+                    lldb.remote_platform_working_dir,
+                    self.getArchitecture(),
+                    str(self.test_number),
+                    self.mydir)
             error = lldb.remote_platform.MakeDirectory(remote_test_dir, 0700)
             if error.Success():
                 lldb.remote_platform.SetWorkingDirectory(remote_test_dir)
@@ -2056,7 +2055,7 @@ class TestBase(Base):
             if lldb.remote_platform:
                 # We must set the remote install location if we want the shared library
                 # to get uploaded to the remote target
-                remote_shlib_path = os.path.join(lldb.remote_platform.GetWorkingDirectory(), os.path.basename(local_shlib_path))
+                remote_shlib_path = lldbutil.append_to_remote_wd(os.path.basename(local_shlib_path))
                 shlib_module.SetRemoteInstallFileSpec(lldb.SBFileSpec(remote_shlib_path, False))
 
         return environment
