@@ -16,6 +16,7 @@
 # error "UBSan is not supported on this platform!"
 #endif
 
+#include "sanitizer_common/sanitizer_internal_defs.h"
 #include "ubsan_init.h"
 
 #if SANITIZER_CAN_USE_PREINIT_ARRAY
