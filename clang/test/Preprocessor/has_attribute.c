@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm-unknown-linux -E %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple arm-unknown-linux -verify -E %s -o - | FileCheck %s
 
 // CHECK: always_inline
 #if __has_attribute(always_inline)
@@ -52,4 +52,7 @@ int has_no_volatile_attribute();
 // CHECK: does_not_have_uuid
 #if !__has_attribute(uuid)
   int does_not_have_uuid
+#endif
+
+#if __has_cpp_attribute(selectany) // expected-error {{token is not a valid binary operator in a preprocessor subexpression}}
 #endif
