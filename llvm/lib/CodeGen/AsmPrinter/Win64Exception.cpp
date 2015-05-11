@@ -299,6 +299,17 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
 
   // The parent function and the catch handlers contribute to the 'ip2state'
   // table.
+
+  // Include ip2state entries for the beginning of the main function and
+  // for catch handler functions.
+  if (F == ParentF) {
+    FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
+    LastEHState = -1;
+  } else if (FuncInfo.HandlerBaseState.count(F)) {
+    FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, 
+                                     FuncInfo.HandlerBaseState[F]));
+    LastEHState = FuncInfo.HandlerBaseState[F];
+  }
   for (const auto &MBB : *MF) {
     for (const auto &MI : MBB) {
       if (!MI.isEHLabel()) {
@@ -323,7 +334,8 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
              "Inconsistent landing pad map!");
 
-      if (SawPotentiallyThrowing) {
+      // FIXME: Should this be using FuncInfo.HandlerBaseState?
+      if (SawPotentiallyThrowing && LastEHState != -1) {
         FuncInfo.IPToStateList.push_back(std::make_pair(LastLabel, -1));
         SawPotentiallyThrowing = false;
         LastEHState = -1;

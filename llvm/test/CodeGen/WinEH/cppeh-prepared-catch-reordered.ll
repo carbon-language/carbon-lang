@@ -120,7 +120,7 @@ stub:                                             ; preds = %entry
 ; CHECK-NEXT:         .long   ($stateUnwindMap$main)@IMGREL
 ; CHECK-NEXT:         .long   1
 ; CHECK-NEXT:         .long   ($tryMap$main)@IMGREL
-; CHECK-NEXT:         .long   1
+; CHECK-NEXT:         .long   3
 ; CHECK-NEXT:         .long   ($ip2state$main)@IMGREL
 ; CHECK-NEXT:         .long   40
 ; CHECK-NEXT:         .long   0

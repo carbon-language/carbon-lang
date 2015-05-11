@@ -136,6 +136,7 @@ struct WinEHFuncInfo {
   DenseMap<const Function *, int> CatchHandlerParentFrameObjIdx;
   DenseMap<const Function *, int> CatchHandlerParentFrameObjOffset;
   DenseMap<const Function *, int> CatchHandlerMaxState;
+  DenseMap<const Function *, int> HandlerBaseState;
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
   SmallVector<std::pair<MCSymbol *, int>, 4> IPToStateList;

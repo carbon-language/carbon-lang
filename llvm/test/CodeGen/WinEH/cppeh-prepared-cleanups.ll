@@ -36,7 +36,7 @@ $_TI1H = comdat any
 ; CHECK-NEXT:        .long   ("$stateUnwindMap$?test1@@YAXXZ")@IMGREL
 ; CHECK-NEXT:        .long   0
 ; CHECK-NEXT:        .long   0
-; CHECK-NEXT:        .long   1
+; CHECK-NEXT:        .long   2
 ; CHECK-NEXT:        .long   ("$ip2state$?test1@@YAXXZ")@IMGREL
 ; CHECK-NEXT:        .long   32
 ; CHECK-NEXT:        .long   0
@@ -45,6 +45,8 @@ $_TI1H = comdat any
 ; CHECK-NEXT:        .long   -1
 ; CHECK-NEXT:        .long   "?test1@@YAXXZ.cleanup"@IMGREL
 ; CHECK-NEXT:"$ip2state$?test1@@YAXXZ":
+; CHECK-NEXT:        .long   .Lfunc_begin0@IMGREL
+; CHECK-NEXT:        .long   -1
 ; CHECK-NEXT:        .long   .Ltmp0@IMGREL
 ; CHECK-NEXT:        .long   0
 
