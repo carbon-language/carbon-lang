@@ -13062,8 +13062,8 @@ EmulateInstructionARM::CurrentCond (const uint32_t opcode)
             const uint32_t byte_size = m_opcode.GetByteSize();
             if (byte_size == 2)
             {
-                if (Bits32(opcode, 15, 12) == 0x0d && Bits32(opcode, 11, 7) != 0x0f)
-                    return Bits32(opcode, 11, 7);
+                if (Bits32(opcode, 15, 12) == 0x0d && Bits32(opcode, 11, 8) != 0x0f)
+                    return Bits32(opcode, 11, 8);
             }
             else if (byte_size == 4)
             {
