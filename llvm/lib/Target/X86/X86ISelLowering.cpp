@@ -750,6 +750,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       // them legal.
       if (VT.getVectorElementType() == MVT::i1)
         setLoadExtAction(ISD::EXTLOAD, InnerVT, VT, Expand);
+
+      // EXTLOAD for MVT::f16 vectors is not legal because f16 vectors are
+      // split/scalarized right now.
+      if (VT.getVectorElementType() == MVT::f16)
+        setLoadExtAction(ISD::EXTLOAD, InnerVT, VT, Expand);
     }
   }
 
@@ -17623,6 +17628,11 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::FP_TO_SINT:
+    // FP_TO_INT*_IN_MEM is not legal for f16 inputs.  Do not convert
+    // (FP_TO_SINT (load f16)) to FP_TO_INT*.
+    if (N->getOperand(0).getValueType() == MVT::f16)
+      break;
+    // fallthrough
   case ISD::FP_TO_UINT: {
     bool IsSigned = N->getOpcode() == ISD::FP_TO_SINT;
 
@@ -17666,6 +17676,13 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
         return;
     SDValue V = DAG.getNode(X86ISD::VFPROUND, dl, MVT::v4f32, N->getOperand(0));
     Results.push_back(V);
+    return;
+  }
+  case ISD::FP_EXTEND: {
+    // Right now, only MVT::v2f32 has OperationAction for FP_EXTEND.
+    // No other ValueType for FP_EXTEND should reach this point.
+    assert(N->getValueType(0) == MVT::v2f32 &&
+           "Do not know how to legalize this Node");
     return;
   }
   case ISD::INTRINSIC_W_CHAIN: {
@@ -24021,6 +24038,11 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
   if (Op0.getOpcode() == ISD::LOAD) {
     LoadSDNode *Ld = cast<LoadSDNode>(Op0.getNode());
     EVT VT = Ld->getValueType(0);
+
+    // This transformation is not supported if the result type is f16
+    if (N->getValueType(0) == MVT::f16)
+      return SDValue();
+
     if (!Ld->isVolatile() && !N->getValueType(0).isVector() &&
         ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
         !Subtarget->is64Bit() && VT == MVT::i64) {
