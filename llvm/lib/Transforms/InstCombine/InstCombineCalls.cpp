@@ -624,9 +624,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn PPC QPX qvlfs -> load if the pointer is known aligned.
     if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, DL, II, AC, DT) >=
         16) {
+      Type *VTy = VectorType::get(Builder->getFloatTy(),
+                                  II->getType()->getVectorNumElements());
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0),
-                                         PointerType::getUnqual(II->getType()));
-      return new LoadInst(Ptr);
+                                         PointerType::getUnqual(VTy));
+      Value *Load = Builder->CreateLoad(Ptr);
+      return new FPExtInst(Load, II->getType());
     }
     break;
   case Intrinsic::ppc_qpx_qvlfd:
@@ -642,10 +645,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn PPC QPX qvstfs -> store if the pointer is known aligned.
     if (getOrEnforceKnownAlignment(II->getArgOperand(1), 16, DL, II, AC, DT) >=
         16) {
-      Type *OpPtrTy =
-        PointerType::getUnqual(II->getArgOperand(0)->getType());
+      Type *VTy = VectorType::get(Builder->getFloatTy(),
+          II->getArgOperand(0)->getType()->getVectorNumElements());
+      Value *TOp = Builder->CreateFPTrunc(II->getArgOperand(0), VTy);
+      Type *OpPtrTy = PointerType::getUnqual(VTy);
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(1), OpPtrTy);
-      return new StoreInst(II->getArgOperand(0), Ptr);
+      return new StoreInst(TOp, Ptr);
     }
     break;
   case Intrinsic::ppc_qpx_qvstfd:

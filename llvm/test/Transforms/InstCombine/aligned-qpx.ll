@@ -28,6 +28,7 @@ entry:
 
 ; CHECK-LABEL: @test1a
 ; CHECK-NOT: @llvm.ppc.qpx.qvlfs
+; CHECK-NOT: load <4 x double>
 ; CHECK: ret <4 x double>
 
   %v0 = load <4 x float>, <4 x float>* %h, align 8
@@ -62,7 +63,9 @@ entry:
   ret <4 x float> %v0
 
 ; CHECK-LABEL: @test2
+; CHECK: fptrunc <4 x double> %d to <4 x float>
 ; CHECK-NOT: @llvm.ppc.qpx.qvstfs
+; CHECK-NOT: store <4 x double>
 ; CHECK: ret <4 x float>
 }
 
