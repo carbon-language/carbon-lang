@@ -600,6 +600,12 @@ TEST_F(FormatTestJS, Modules) {
   verifyFormat("export function fn() {\n"
                "  return 'fn';\n"
                "}");
+  verifyFormat("export function A() {\n"
+               "}\n"
+               "export default function B() {\n"
+               "}\n"
+               "export function C() {\n"
+               "}");
   verifyFormat("export const x = 12;");
   verifyFormat("export default class X {}");
   verifyFormat("export {X, Y} from 'some/module.js';");
