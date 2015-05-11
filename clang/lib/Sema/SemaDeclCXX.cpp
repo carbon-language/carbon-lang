@@ -4799,7 +4799,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         // MSVC versions before 2015 don't export the move assignment operators,
         // so don't attempt to import them if we have a definition.
         if (ClassImported && MD->isMoveAssignmentOperator() &&
-            !S.getLangOpts().isCompatibleWithMSVC(19))
+            !S.getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015))
           continue;
       }
     }

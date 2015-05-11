@@ -60,7 +60,7 @@ llvm::Constant *CodeGenModule::getTerminateFn() {
     name = "_ZSt9terminatev";
   } else if (getLangOpts().CPlusPlus &&
              getTarget().getCXXABI().isMicrosoft()) {
-    if (getLangOpts().isCompatibleWithMSVC(19))
+    if (getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015))
       name = "__std_terminate";
     else
       name = "\01?terminate@@YAXXZ";

@@ -810,7 +810,7 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
         OS << ',';
         // Visual Studio 2010 or earlier expects column number to be off by one
         if (LangOpts.MSCompatibilityVersion &&
-            LangOpts.MSCompatibilityVersion < 170000000)
+            !LangOpts.isCompatibleWithMSVC(LangOptions::MSVC2012))
           ColNo--;
       } else
         OS << ':';

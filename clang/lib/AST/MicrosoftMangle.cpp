@@ -1210,7 +1210,8 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
           isa<TemplateTemplateParmDecl>(Parm))
         // MSVC 2015 changed the mangling for empty expanded template packs,
         // use the old mangling for link compatibility for old versions.
-        Out << (Context.getASTContext().getLangOpts().isCompatibleWithMSVC(19)
+        Out << (Context.getASTContext().getLangOpts().isCompatibleWithMSVC(
+                    LangOptions::MSVC2015)
                     ? "$$V"
                     : "$$$V");
       else if (isa<NonTypeTemplateParmDecl>(Parm))

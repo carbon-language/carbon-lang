@@ -157,7 +157,7 @@ static void AddKeyword(StringRef Keyword,
 
   // Don't add this keyword under MSVCCompat.
   if (LangOpts.MSVCCompat && (Flags & KEYNOMS18) &&
-      !LangOpts.isCompatibleWithMSVC(19))
+      !LangOpts.isCompatibleWithMSVC(LangOptions::MSVC2015))
     return;
 
   // Don't add this keyword under OpenCL.

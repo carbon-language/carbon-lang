@@ -3450,8 +3450,9 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
 // We will pick our mangling number depending on which version of MSVC is being
 // targeted.
 static unsigned getMSManglingNumber(const LangOptions &LO, Scope *S) {
-  return LO.isCompatibleWithMSVC(19) ? S->getMSCurManglingNumber()
-                                     : S->getMSLastManglingNumber();
+  return LO.isCompatibleWithMSVC(LangOptions::MSVC2015)
+             ? S->getMSCurManglingNumber()
+             : S->getMSLastManglingNumber();
 }
 
 void Sema::handleTagNumbering(const TagDecl *Tag, Scope *TagScope) {
