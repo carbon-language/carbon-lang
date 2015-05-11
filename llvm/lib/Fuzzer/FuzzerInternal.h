@@ -53,6 +53,7 @@ class Fuzzer {
     int  MutateDepth = 5;
     bool ExitOnFirst = false;
     bool UseCounters = false;
+    bool UseTraces = false;
     bool UseFullCoverageSet  = false;
     bool UseCoveragePairs = false;
     bool UseDFSan = false;

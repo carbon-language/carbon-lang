@@ -201,6 +201,7 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   Options.MutateDepth = Flags.mutate_depth;
   Options.ExitOnFirst = Flags.exit_on_first;
   Options.UseCounters = Flags.use_counters;
+  Options.UseTraces = Flags.use_traces;
   Options.UseFullCoverageSet = Flags.use_full_coverage_set;
   Options.UseCoveragePairs = Flags.use_coverage_pairs;
   Options.UseDFSan = Flags.dfsan;
