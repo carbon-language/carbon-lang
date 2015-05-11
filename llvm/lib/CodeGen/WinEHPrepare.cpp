@@ -98,6 +98,8 @@ private:
                              SetVector<BasicBlock *> &EHReturnBlocks);
   void findCXXEHReturnPoints(Function &F,
                              SetVector<BasicBlock *> &EHReturnBlocks);
+  void getPossibleReturnTargets(Function *ParentF, Function *HandlerF,
+                                SetVector<BasicBlock*> &Targets);
   void completeNestedLandingPad(Function *ParentFn,
                                 LandingPadInst *OutlinedLPad,
                                 const LandingPadInst *OriginalLPad,
@@ -700,6 +702,14 @@ bool WinEHPrepare::prepareExceptionHandlers(
                        F.getEntryBlock().getFirstInsertionPt());
   }
 
+  // This container stores the llvm.eh.recover and IndirectBr instructions
+  // that make up the body of each landing pad after it has been outlined.
+  // We need to defer the population of the target list for the indirectbr
+  // until all landing pads have been outlined so that we can handle the
+  // case of blocks in the target that are reached only from nested
+  // landing pads.
+  SmallVector<std::pair<CallInst*, IndirectBrInst *>, 4> LPadImpls;
+
   for (LandingPadInst *LPad : LPads) {
     // Look for evidence that this landingpad has already been processed.
     bool LPadHasActionList = false;
@@ -819,18 +829,28 @@ bool WinEHPrepare::prepareExceptionHandlers(
     CallInst *Recover =
         CallInst::Create(ActionIntrin, ActionArgs, "recover", LPadBB);
 
-    // Add an indirect branch listing possible successors of the catch handlers.
-    SetVector<BasicBlock *> ReturnTargets;
-    for (ActionHandler *Action : Actions) {
-      if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
-        const auto &CatchTargets = CatchAction->getReturnTargets();
-        ReturnTargets.insert(CatchTargets.begin(), CatchTargets.end());
+    if (isAsynchronousEHPersonality(Personality)) {
+      // SEH can create the target list directly, since catch handlers
+      // are not outlined.
+      SetVector<BasicBlock *> ReturnTargets;
+      for (ActionHandler *Action : Actions) {
+        if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
+          const auto &CatchTargets = CatchAction->getReturnTargets();
+          ReturnTargets.insert(CatchTargets.begin(), CatchTargets.end());
+        }
       }
+      IndirectBrInst *Branch =
+          IndirectBrInst::Create(Recover, ReturnTargets.size(), LPadBB);
+      for (BasicBlock *Target : ReturnTargets)
+        Branch->addDestination(Target);
+    } else {
+      // C++ EH must defer populating the targets to handle the case of
+      // targets that are reached indirectly through nested landing pads.
+      IndirectBrInst *Branch =
+          IndirectBrInst::Create(Recover, 0, LPadBB);
+
+      LPadImpls.push_back(std::make_pair(Recover, Branch));
     }
-    IndirectBrInst *Branch =
-        IndirectBrInst::Create(Recover, ReturnTargets.size(), LPadBB);
-    for (BasicBlock *Target : ReturnTargets)
-      Branch->addDestination(Target);
   } // End for each landingpad
 
   // If nothing got outlined, there is no more processing to be done.
@@ -843,6 +863,44 @@ bool WinEHPrepare::prepareExceptionHandlers(
   for (auto &LPadPair : NestedLPtoOriginalLP)
     completeNestedLandingPad(&F, LPadPair.first, LPadPair.second, FrameVarInfo);
   NestedLPtoOriginalLP.clear();
+
+  // Populate the indirectbr instructions' target lists if we deferred
+  // doing so above.
+  SetVector<BasicBlock*> CheckedTargets;
+  for (auto &LPadImplPair : LPadImpls) {
+    IntrinsicInst *Recover = cast<IntrinsicInst>(LPadImplPair.first);
+    IndirectBrInst *Branch = LPadImplPair.second;
+
+    // Get a list of handlers called by 
+    SmallVector<ActionHandler *, 4> ActionList;
+    parseEHActions(Recover, ActionList);
+
+    // Add an indirect branch listing possible successors of the catch handlers.
+    SetVector<BasicBlock *> ReturnTargets;
+    for (ActionHandler *Action : ActionList) {
+      if (auto *CA = dyn_cast<CatchHandler>(Action)) {
+        Function *Handler = cast<Function>(CA->getHandlerBlockOrFunc());
+        getPossibleReturnTargets(&F, Handler, ReturnTargets);
+      }
+    }
+    for (BasicBlock *Target : ReturnTargets) {
+      Branch->addDestination(Target);
+      // The target may be a block that we excepted to get pruned.
+      // If it is, it may contain a call to llvm.eh.endcatch.
+      if (CheckedTargets.insert(Target)) {
+        // Earlier preparations guarantee that all calls to llvm.eh.endcatch
+        // will be followed by an unconditional branch.
+        auto *Br = dyn_cast<BranchInst>(Target->getTerminator());
+        if (Br && Br->isUnconditional() &&
+            Br != Target->getFirstNonPHIOrDbgOrLifetime()) {
+          Instruction *Prev = Br->getPrevNode();
+          if (match(cast<Value>(Prev), m_Intrinsic<Intrinsic::eh_endcatch>()))
+            Prev->eraseFromParent();
+        }
+      }
+    }
+  }
+  LPadImpls.clear();
 
   F.addFnAttr("wineh-parent", F.getName());
 
@@ -974,6 +1032,42 @@ void WinEHPrepare::promoteLandingPadValues(LandingPadInst *LPad) {
   SmallVector<Value *, 4> Users(LPad->user_begin(), LPad->user_end());
   for (auto *U : Users)
     RecursivelyDeleteTriviallyDeadInstructions(U);
+}
+
+void WinEHPrepare::getPossibleReturnTargets(Function *ParentF,
+                                            Function *HandlerF,
+                                            SetVector<BasicBlock*> &Targets) {
+  for (BasicBlock &BB : *HandlerF) {
+    // If the handler contains landing pads, check for any
+    // handlers that may return directly to a block in the
+    // parent function.
+    if (auto *LPI = BB.getLandingPadInst()) {
+      IntrinsicInst *Recover = cast<IntrinsicInst>(LPI->getNextNode());
+      SmallVector<ActionHandler *, 4> ActionList;
+      parseEHActions(Recover, ActionList);
+      for (auto *Action : ActionList) {
+        if (auto *CH = dyn_cast<CatchHandler>(Action)) {
+          Function *NestedF = cast<Function>(CH->getHandlerBlockOrFunc());
+          getPossibleReturnTargets(ParentF, NestedF, Targets);
+        }
+      }
+    }
+
+    auto *Ret = dyn_cast<ReturnInst>(BB.getTerminator());
+    if (!Ret)
+      continue;
+
+    // Handler functions must always return a block address.
+    BlockAddress *BA = cast<BlockAddress>(Ret->getReturnValue());
+
+    // If this is the handler for a nested landing pad, the
+    // return address may have been remapped to a block in the
+    // parent handler.  We're not interested in those.
+    if (BA->getFunction() != ParentF)
+      continue;
+
+    Targets.insert(BA->getBasicBlock());
+  }
 }
 
 void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
