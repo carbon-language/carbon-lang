@@ -14,6 +14,7 @@
 
 #include "llvm/TableGen/Error.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 
@@ -64,11 +65,15 @@ void PrintError(const Twine &Msg) {
 
 void PrintFatalError(const Twine &Msg) {
   PrintError(Msg);
+  // The following call runs the file cleanup handlers.
+  sys::RunInterruptHandlers();
   std::exit(1);
 }
 
 void PrintFatalError(ArrayRef<SMLoc> ErrorLoc, const Twine &Msg) {
   PrintError(ErrorLoc, Msg);
+  // The following call runs the file cleanup handlers.
+  sys::RunInterruptHandlers();
   std::exit(1);
 }
 

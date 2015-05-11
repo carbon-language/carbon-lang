@@ -575,10 +575,8 @@ void InstrInfoEmitter::emitEnums(raw_ostream &OS) {
   // We must emit the PHI opcode first...
   std::string Namespace = Target.getInstNamespace();
 
-  if (Namespace.empty()) {
-    fprintf(stderr, "No instructions defined!\n");
-    exit(1);
-  }
+  if (Namespace.empty())
+    PrintFatalError("No instructions defined!");
 
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();

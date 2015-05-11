@@ -411,9 +411,9 @@ ComplexPattern::ComplexPattern(Record *R) {
     } else if (PropList[i]->getName() == "SDNPWantParent") {
       Properties |= 1 << SDNPWantParent;
     } else {
-      errs() << "Unsupported SD Node property '" << PropList[i]->getName()
-             << "' on ComplexPattern '" << R->getName() << "'!\n";
-      exit(1);
+      PrintFatalError("Unsupported SD Node property '" +
+                      PropList[i]->getName() + "' on ComplexPattern '" +
+                      R->getName() + "'!");
     }
 }
 

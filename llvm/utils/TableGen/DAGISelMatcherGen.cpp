@@ -268,8 +268,10 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     // We can't model ComplexPattern uses that don't have their name taken yet.
     // The OPC_CheckComplexPattern operation implicitly records the results.
     if (N->getName().empty()) {
-      errs() << "We expect complex pattern uses to have names: " << *N << "\n";
-      exit(1);
+      std::string S;
+      raw_string_ostream OS(S);
+      OS << "We expect complex pattern uses to have names: " << *N;
+      PrintFatalError(OS.str());
     }
 
     // Remember this ComplexPattern so that we can emit it after all the other

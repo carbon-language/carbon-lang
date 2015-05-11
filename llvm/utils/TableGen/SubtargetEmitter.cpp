@@ -121,10 +121,8 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
   unsigned N = DefList.size();
   if (N == 0)
     return;
-  if (N > 64) {
-    errs() << "Too many (> 64) subtarget features!\n";
-    exit(1);
-  }
+  if (N > 64)
+    PrintFatalError("Too many (> 64) subtarget features!");
 
   OS << "namespace " << Target << " {\n";
 

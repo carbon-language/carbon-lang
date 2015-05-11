@@ -913,8 +913,7 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     x.SDTCisSameNumEltsAs_Info.OtherOperandNum =
       R->getValueAsInt("OtherOperandNum");
   } else {
-    errs() << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
-    exit(1);
+    PrintFatalError("Unrecognized SDTypeConstraint '" + R->getName() + "'!\n");
   }
 }
 
@@ -932,11 +931,12 @@ static TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
   OpNo -= NumResults;
 
   if (OpNo >= N->getNumChildren()) {
-    errs() << "Invalid operand number in type constraint "
+    std::string S;
+    raw_string_ostream OS(S);
+    OS << "Invalid operand number in type constraint "
            << (OpNo+NumResults) << " ";
-    N->dump();
-    errs() << '\n';
-    exit(1);
+    N->print(OS);
+    PrintFatalError(OS.str());
   }
 
   return N->getChild(OpNo);
@@ -1116,9 +1116,9 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
     } else if (PropList[i]->getName() == "SDNPVariadic") {
       Properties |= 1 << SDNPVariadic;
     } else {
-      errs() << "Unknown SD Node property '" << PropList[i]->getName()
-             << "' on node '" << R->getName() << "'!\n";
-      exit(1);
+      PrintFatalError("Unknown SD Node property '" +
+                      PropList[i]->getName() + "' on node '" +
+                      R->getName() + "'!");
     }
   }
 
@@ -1223,8 +1223,7 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
     return 1;
 
   Operator->dump();
-  errs() << "Unhandled node in GetNumNodeResults\n";
-  exit(1);
+  PrintFatalError("Unhandled node in GetNumNodeResults");
 }
 
 void TreePatternNode::print(raw_ostream &OS) const {
@@ -2373,10 +2372,9 @@ CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) :
 
 Record *CodeGenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
   Record *N = Records.getDef(Name);
-  if (!N || !N->isSubClassOf("SDNode")) {
-    errs() << "Error getting SDNode '" << Name << "'!\n";
-    exit(1);
-  }
+  if (!N || !N->isSubClassOf("SDNode"))
+    PrintFatalError("Error getting SDNode '" + Name + "'!");
+
   return N;
 }
 
