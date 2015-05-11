@@ -293,32 +293,27 @@ TargetList::CreateTargetInternal (Debugger &debugger,
         }
     }
 
-    if (!platform_sp)
+    // If we have a valid architecture, make sure the current platform is
+    // compatible with that architecture
+    if (!prefer_platform_arch && arch.IsValid())
     {
-        // Get the current platform and make sure it is compatible with the
-        // current architecture if we have a valid architecture.
-        platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
-        
-        if (!prefer_platform_arch && arch.IsValid())
+        if (!platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
         {
-            if (!platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
-            {
-                platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
-                if (platform_sp)
-                    debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
-            }
+            platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
+            if (platform_sp)
+                debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
         }
-        else if (platform_arch.IsValid())
+    }
+    else if (platform_arch.IsValid())
+    {
+        // if "arch" isn't valid, yet "platform_arch" is, it means we have an executable file with
+        // a single architecture which should be used
+        ArchSpec fixed_platform_arch;
+        if (!platform_sp->IsCompatibleArchitecture(platform_arch, false, &fixed_platform_arch))
         {
-            // if "arch" isn't valid, yet "platform_arch" is, it means we have an executable file with
-            // a single architecture which should be used
-            ArchSpec fixed_platform_arch;
-            if (!platform_sp->IsCompatibleArchitecture(platform_arch, false, &fixed_platform_arch))
-            {
-                platform_sp = Platform::GetPlatformForArchitecture(platform_arch, &fixed_platform_arch);
-                if (platform_sp)
-                    debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
-            }
+            platform_sp = Platform::GetPlatformForArchitecture(platform_arch, &fixed_platform_arch);
+            if (platform_sp)
+                debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
         }
     }
     
