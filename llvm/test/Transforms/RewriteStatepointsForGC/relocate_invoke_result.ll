@@ -23,7 +23,8 @@ unwind_dest:
 normal_dest:
 ;; CHECK-LABEL: normal_dest:
 ;; CHECK-NEXT: gc.statepoint
-;; CHECK-NEXT: %obj.relocated = call coldcc i64* addrspace(1)*                                      
+;; CHECK-NEXT: %obj.relocated = call coldcc i8 addrspace(1)*  
+;; CHECK-NEXT: bitcast                                    
   %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @gc_call, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   ret i64* addrspace(1)* %obj
 }

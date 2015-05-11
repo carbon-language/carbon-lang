@@ -14,7 +14,7 @@ entry:
 
 joint:
 ; CHECK-LABEL: joint:
-; CHECK: %phi1 = phi i64 addrspace(1)* [ %obj.relocated, %entry ], [ %obj3, %joint2 ]
+; CHECK: %phi1 = phi i64 addrspace(1)* [ %obj.relocated.casted, %entry ], [ %obj3, %joint2 ]
   %phi1 = phi i64 addrspace(1)* [ %obj, %entry ], [ %obj3, %joint2 ]
   br i1 %condition, label %use, label %joint2
 
@@ -23,8 +23,8 @@ use:
 
 joint2:
 ; CHECK-LABEL: joint2:
-; CHECK: %phi2 = phi i64 addrspace(1)* [ %obj.relocated, %use ], [ %obj2.relocated, %joint ]
-; CHECK: %obj3 = getelementptr i64, i64 addrspace(1)* %obj2.relocated, i32 1
+; CHECK: %phi2 = phi i64 addrspace(1)* [ %obj.relocated.casted, %use ], [ %obj2.relocated.casted, %joint ]
+; CHECK: %obj3 = getelementptr i64, i64 addrspace(1)* %obj2.relocated.casted, i32 1
   %phi2 = phi i64 addrspace(1)* [ %obj, %use ], [ %obj2, %joint ]
   %obj3 = getelementptr i64, i64 addrspace(1)* %obj2, i32 1
   br label %joint
@@ -45,9 +45,9 @@ entry:
 
 loop:
 ; CHECK: loop:
-; CHECK-DAG: [ %obj_init.relocated, %loop.backedge ]
+; CHECK-DAG: [ %obj_init.relocated.casted, %loop.backedge ]
 ; CHECK-DAG: [ %obj_init, %entry ]
-; CHECK-DAG: [ %obj.relocated, %loop.backedge ]
+; CHECK-DAG: [ %obj.relocated.casted, %loop.backedge ]
 ; CHECK-DAG: [ %obj, %entry ]
   %index = phi i32 [ 0, %entry ], [ %index.inc, %loop.backedge ]
 ; CHECK-NOT: %location = getelementptr i64, i64 addrspace(1)* %obj, i32 %index
@@ -108,6 +108,7 @@ entry:
 ; CHECK-LABEL: @test3
 ; CHECK: gc.statepoint
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.statepoint
   %safepoint_token = call i32 (void (i64)*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidi64f(void (i64)* undef, i32 1, i32 0, i64 undef, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
   %safepoint_token1 = call i32 (i32 (i64 addrspace(1)*)*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i32p1i64f(i32 (i64 addrspace(1)*)* undef, i32 1, i32 0, i64 addrspace(1)* %obj, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
@@ -262,10 +263,10 @@ callbb:
 
 join:
 ; CHECK-LABEL: join:
-; CHECK: phi i64 addrspace(1)* [ %obj.relocated, %callbb ], [ %obj, %entry ]
+; CHECK: phi i64 addrspace(1)* [ %obj.relocated.casted, %callbb ], [ %obj, %entry ]
 ; CHECK: phi i64 addrspace(1)* 
 ; CHECK-DAG: [ %obj, %entry ]
-; CHECK-DAG: [ %obj2.relocated, %callbb ]
+; CHECK-DAG: [ %obj2.relocated.casted, %callbb ]
   ; This is a phi outside the dominator region of the new defs inserted by
   ; the safepoint, BUT we can't stop the search here or we miss the second
   ; phi below.

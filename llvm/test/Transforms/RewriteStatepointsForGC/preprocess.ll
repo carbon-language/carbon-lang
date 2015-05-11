@@ -13,8 +13,9 @@ next:
 ; CHECK-LABEL: next:
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: gc.relocate
-; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated)
-; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated)
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated.casted)
+; CHECK-NEXT: @consume(i64 addrspace(1)* %obj.relocated.casted)
   %obj2 = phi i64 addrspace(1)* [ %obj, %entry ]
   call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0, i32 0)
   call void (...) @consume(i64 addrspace(1)* %obj2)

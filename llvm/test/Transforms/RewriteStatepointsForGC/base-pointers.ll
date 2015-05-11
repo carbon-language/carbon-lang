@@ -13,7 +13,7 @@ entry:
 
 loop:
 ; CHECK: phi i64 addrspace(1)* 
-; CHECK-DAG: [ %obj.relocated, %loop ]
+; CHECK-DAG: [ %obj.relocated.casted, %loop ]
 ; CHECK-DAG: [ %obj, %entry ]
   call void @use_obj(i64 addrspace(1)* %obj)
   %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
@@ -78,7 +78,7 @@ loop:                                             ; preds = %loop, %entry
 ; CHECK-DAG: [ %base_obj, %entry ]
 ; Given the two selects are equivelent, so are their base phis - ideally,
 ; we'd have commoned these, but that's a missed optimization, not correctness.
-; CHECK-DAG: [ [[DISCARD:%base_select.*.relocated]], %loop ]
+; CHECK-DAG: [ [[DISCARD:%base_select.*.relocated.casted]], %loop ]
 ; CHECK-NOT: base_phi2
 ; CHECK: next = select
 ; CHECK: base_select

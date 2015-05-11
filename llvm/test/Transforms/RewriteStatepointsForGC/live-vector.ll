@@ -7,7 +7,8 @@ define i64 addrspace(1)* @test(i64 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-LABEL: test
 ; CHECK: gc.statepoint
 ; CHECK-NEXT: gc.relocate
-; CHECK-NEXT: ret i64 addrspace(1)* %obj.relocated
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: ret i64 addrspace(1)* %obj.relocated.casted
 entry:
   %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret i64 addrspace(1)* %obj
@@ -20,10 +21,12 @@ define <2 x i64 addrspace(1)*> @test2(<2 x i64 addrspace(1)*> %obj) gc "statepoi
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
-; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %5
+; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %7
 entry:
   %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
   ret <2 x i64 addrspace(1)*> %obj
@@ -37,10 +40,12 @@ define <2 x i64 addrspace(1)*> @test3(<2 x i64 addrspace(1)*>* %ptr) gc "statepo
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: gc.statepoint
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
-; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %5
+; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %7
 entry:
   %obj = load <2 x i64 addrspace(1)*>, <2 x i64 addrspace(1)*>* %ptr
   %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
@@ -63,19 +68,23 @@ entry:
 
 ; CHECK-LABEL: normal_return:
 ; CHECK: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
-; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %6
+; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %8
 normal_return:                                    ; preds = %entry
   ret <2 x i64 addrspace(1)*> %obj
 
 ; CHECK-LABEL: exceptional_return:
 ; CHECK: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: insertelement
-; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %10
+; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %14
 exceptional_return:                               ; preds = %entry
   %landing_pad4 = landingpad { i8*, i32 } personality i32 ()* @fake_personality_function
           cleanup

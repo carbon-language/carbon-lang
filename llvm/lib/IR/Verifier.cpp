@@ -3384,10 +3384,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
            "'gc parameters' section of the statepoint call",
            &CI);
 
-    // Assert that the result type matches the type of the relocated pointer
-    GCRelocateOperands Operands(&CI);
-    Assert(Operands.getDerivedPtr()->getType() == CI.getType(),
-           "gc.relocate: relocating a pointer shouldn't change its type", &CI);
+    // gc_relocate does not need to be the same type as the relocated pointer.
+    // It can casted to the correct type later if it's desired
     break;
   }
   };

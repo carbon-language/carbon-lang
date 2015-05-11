@@ -1075,7 +1075,10 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
     // the IR, but removes the need for argument bitcasts which shrinks the IR
     // greatly and makes it much more readable.
     SmallVector<Type *, 1> types;                 // one per 'any' type
-    types.push_back(liveVariables[i]->getType()); // result type
+    // All gc_relocate are set to i8 addrspace(1)* type. This could help avoid
+    // cases where the actual value's type mangling is not supported by llvm. A
+    // bitcast is added later to convert gc_relocate to the actual value's type.
+    types.push_back(Type::getInt8PtrTy(M->getContext(), 1));
     Value *gc_relocate_decl = Intrinsic::getDeclaration(
         M, Intrinsic::experimental_gc_relocate, types);
 
@@ -1342,8 +1345,16 @@ insertRelocationStores(iterator_range<Value::user_iterator> gcRelocs,
     Value *alloca = allocaMap[originalValue];
 
     // Emit store into the related alloca
-    StoreInst *store = new StoreInst(relocatedValue, alloca);
-    store->insertAfter(relocatedValue);
+    // All gc_relocate are i8 addrspace(1)* typed, and it must be bitcasted to
+    // the correct type according to alloca.
+    assert(relocatedValue->getNextNode() && "Should always have one since it's not a terminator");
+    IRBuilder<> Builder(relocatedValue->getNextNode());
+    Value *CastedRelocatedValue =
+        Builder.CreateBitCast(relocatedValue, cast<AllocaInst>(alloca)->getAllocatedType(),
+        relocatedValue->hasName() ? relocatedValue->getName() + ".casted" : "");
+
+    StoreInst *store = new StoreInst(CastedRelocatedValue, alloca);
+    store->insertAfter(cast<Instruction>(CastedRelocatedValue));
 
 #ifndef NDEBUG
     visitedLiveValues.insert(originalValue);
