@@ -38,6 +38,7 @@ class StaticVariableTestCase(TestBase):
 
     @expectedFailureDarwin(9980907)
     @expectedFailureClang('Clang emits incomplete debug info.')
+    @expectedFailureFreeBSD('llvm.org/pr20550 failing on FreeBSD-11')
     @expectedFailureGcc('GCC emits incomplete debug info.')
     @python_api_test
     @dwarf_test
