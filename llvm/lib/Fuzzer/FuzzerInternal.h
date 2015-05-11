@@ -67,7 +67,7 @@ class Fuzzer {
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
   void Loop(size_t NumIterations);
   void ShuffleAndMinimize();
-  void InitializeDFSan();
+  void InitializeTraceState();
   size_t CorpusSize() const { return Corpus.size(); }
   void ReadDir(const std::string &Path, long *Epoch) {
     ReadDirToVectorOfUnits(Path.c_str(), &Corpus, Epoch);

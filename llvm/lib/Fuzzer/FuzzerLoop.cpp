@@ -22,7 +22,7 @@ static Fuzzer *F;
 Fuzzer::Fuzzer(UserCallback Callback, FuzzingOptions Options)
     : Callback(Callback), Options(Options) {
   SetDeathCallback();
-  InitializeDFSan();
+  InitializeTraceState();
   assert(!F);
   F = this;
 }
