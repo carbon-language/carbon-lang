@@ -518,6 +518,16 @@ static Instruction *unpackLoadToAggregate(InstCombiner &IC, LoadInst &LI) {
     }
   }
 
+  if (auto *AT = dyn_cast<ArrayType>(T)) {
+    // If the array only have one element, we unpack.
+    if (AT->getNumElements() == 1) {
+      LoadInst *NewLoad = combineLoadToNewType(IC, LI, AT->getElementType(),
+                                               ".unpack");
+      return IC.ReplaceInstUsesWith(LI, IC.Builder->CreateInsertValue(
+        UndefValue::get(T), NewLoad, 0, LI.getName()));
+    }
+  }
+
   return nullptr;
 }
 
