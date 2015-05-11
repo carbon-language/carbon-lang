@@ -126,6 +126,24 @@ define void @test_different_dst(i8* %dst2, i8* %src, i64 %src_size, i8* %dst, i6
   ret void
 }
 
+; Make sure we also take into account dependencies on the destination.
+
+; CHECK-LABEL: define i8 @test_intermediate_read
+; CHECK-NEXT: %ca = alloca [64 x i8], align 8
+; CHECK-NEXT: %c = getelementptr [64 x i8], [64 x i8]* %ca, i64 0, i64 0
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %a, i8 0, i64 64, i32 1, i1 false)
+; CHECK-NEXT: %r = load i8, i8* %a
+; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 24, i32 1, i1 false)
+; CHECK-NEXT: ret i8 %r
+define i8 @test_intermediate_read(i8* %a, i8* %b) #0 {
+  %ca = alloca [64 x i8], align 8
+  %c = getelementptr [64 x i8], [64 x i8]* %ca, i64 0, i64 0
+  call void @llvm.memset.p0i8.i64(i8* %a, i8 0, i64 64, i32 1, i1 false)
+  %r = load i8, i8* %a
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 24, i32 1, i1 false)
+  ret i8 %r
+}
+
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1)

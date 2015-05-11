@@ -927,14 +927,12 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
         return true;
       }
 
-  AliasAnalysis::Location SrcLoc = AliasAnalysis::getLocationForSource(M);
-  MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
-                                                         M, M->getParent());
+  MemDepResult DepInfo = MD->getDependency(M);
 
   // Try to turn a partially redundant memset + memcpy into
   // memcpy + smaller memset.  We don't need the memcpy size for this.
-  if (SrcDepInfo.isClobber())
-    if (MemSetInst *MDep = dyn_cast<MemSetInst>(SrcDepInfo.getInst()))
+  if (DepInfo.isClobber())
+    if (MemSetInst *MDep = dyn_cast<MemSetInst>(DepInfo.getInst()))
       if (processMemSetMemCpyDependence(M, MDep))
         return true;
 
@@ -948,7 +946,6 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   //   c) memcpy from freshly alloca'd space or space that has just started its
   //      lifetime copies undefined data, and we can therefore eliminate the
   //      memcpy in favor of the data that was already at the destination.
-  MemDepResult DepInfo = MD->getDependency(M);
   if (DepInfo.isClobber()) {
     if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
       if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
@@ -960,6 +957,10 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
       }
     }
   }
+
+  AliasAnalysis::Location SrcLoc = AliasAnalysis::getLocationForSource(M);
+  MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
+                                                         M, M->getParent());
 
   if (SrcDepInfo.isClobber()) {
     if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
