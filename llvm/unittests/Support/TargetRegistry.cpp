@@ -22,8 +22,7 @@ TEST(TargetRegistry, TargetHasArchType) {
 
   llvm::InitializeAllTargetInfos();
 
-  llvm::TargetRegistry RegistryRoot;
-  for (auto &I = TargetRegistry::begin(), &E = TargetRegistry::end();
+  for (auto I = TargetRegistry::begin(), E = TargetRegistry::end();
        I != E; ++I) {
     StringRef Name = I->getName();
     // There is really no way (at present) to ask a Target whether it targets
