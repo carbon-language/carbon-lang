@@ -21,6 +21,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <vector>
 
 namespace llvm {
 namespace PBQP {

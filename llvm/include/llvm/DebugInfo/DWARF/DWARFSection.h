@@ -11,6 +11,7 @@
 #define LLVM_LIB_DEBUGINFO_DWARFSECTION_H
 
 #include "llvm/DebugInfo/DWARF/DWARFRelocMap.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
