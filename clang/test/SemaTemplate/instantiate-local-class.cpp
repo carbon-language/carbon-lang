@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -verify -std=c++11 %s
+// RUN: %clang_cc1 -verify -std=c++11 -fdelayed-template-parsing %s
+
 template<typename T>
 void f0() {
   struct X;
@@ -341,4 +343,17 @@ namespace PR18653 {
     }
   };
   template struct S06<int>;
+}
+
+namespace PR20625 {
+template <typename T>
+void f() {
+  struct N {
+    static constexpr int get() { return 42; }
+  };
+  constexpr int n = N::get();
+  static_assert(n == 42, "n == 42");
+}
+
+void g() { f<void>(); }
 }
