@@ -598,7 +598,10 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
       continue;
 
     // Create a Builder and replace the target callsite with a gep
-    IRBuilder<> Builder(ToReplace);
+    assert(RelocatedBase->getNextNode() && "Should always have one since it's not a terminator");
+
+    // Insert after RelocatedBase
+    IRBuilder<> Builder(RelocatedBase->getNextNode());
     Builder.SetCurrentDebugLocation(ToReplace->getDebugLoc());
 
     // If gc_relocate does not match the actual type, cast it to the right type.
@@ -626,14 +629,10 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
     if (RelocatedBase->getType() != Base->getType()) {
       ActualRelocatedBase =
           cast<Instruction>(Builder.CreateBitCast(RelocatedBase, Base->getType()));
-      ActualRelocatedBase->removeFromParent();
-      ActualRelocatedBase->insertAfter(cast<Instruction>(RelocatedBase));
     }
     Value *Replacement = Builder.CreateGEP(
         Derived->getSourceElementType(), ActualRelocatedBase, makeArrayRef(OffsetV));
     Instruction *ReplacementInst = cast<Instruction>(Replacement);
-    ReplacementInst->removeFromParent();
-    ReplacementInst->insertAfter(ActualRelocatedBase);
     Replacement->takeName(ToReplace);
     // If the newly generated derived pointer's type does not match the original derived
     // pointer's type, cast the new derived pointer to match it. Same reasoning as above.
@@ -641,8 +640,6 @@ simplifyRelocatesOffABase(IntrinsicInst *RelocatedBase,
     if (ReplacementInst->getType() != ToReplace->getType()) {
       ActualReplacement =
           cast<Instruction>(Builder.CreateBitCast(ReplacementInst, ToReplace->getType()));
-      ActualReplacement->removeFromParent();
-      ActualReplacement->insertAfter(ReplacementInst);
     }
     ToReplace->replaceAllUsesWith(ActualReplacement);
     ToReplace->eraseFromParent();
