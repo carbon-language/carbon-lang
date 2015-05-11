@@ -3423,7 +3423,7 @@ For example,
     %2 = load float, float* %c, align 4, !alias.scope !5
     store float %2, float* %arrayidx.i2, align 4, !noalias !6
 
-    ; These two instructions don't alias (for domain !0, the set of scopes in
+    ; These two instructions may alias (for domain !0, the set of scopes in
     ; the !noalias list is not a superset of, or equal to, the scopes in the
     ; !alias.scope list):
     %2 = load float, float* %c, align 4, !alias.scope !6
