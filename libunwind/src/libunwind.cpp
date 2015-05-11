@@ -19,6 +19,7 @@
 #include <tuple>
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "libunwind_ext.h"
 #include "config.h"
