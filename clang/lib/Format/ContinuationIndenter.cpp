@@ -542,7 +542,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   if (Current.is(tok::identifier) && Current.Next &&
       Current.Next->is(TT_DictLiteral))
     return State.Stack.back().Indent;
-  if (NextNonComment->isStringLiteral() && State.StartOfStringLiteral != 0)
+  if ((NextNonComment->isStringLiteral() ||
+       NextNonComment->is(TT_ObjCStringLiteral)) &&
+      State.StartOfStringLiteral != 0)
     return State.StartOfStringLiteral;
   if (NextNonComment->is(tok::lessless) &&
       State.Stack.back().FirstLessLess != 0)
@@ -690,7 +692,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   moveStatePastScopeCloser(State);
   moveStatePastFakeRParens(State);
 
-  if (Current.isStringLiteral() && State.StartOfStringLiteral == 0) {
+  if ((Current.isStringLiteral() || Current.is(TT_ObjCStringLiteral)) &&
+      State.StartOfStringLiteral == 0) {
     State.StartOfStringLiteral = State.Column;
   } else if (!Current.isOneOf(tok::comment, tok::identifier, tok::hash) &&
              !Current.isStringLiteral()) {

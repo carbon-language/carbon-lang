@@ -63,6 +63,7 @@ enum TokenType {
   TT_ObjCMethodExpr,
   TT_ObjCMethodSpecifier,
   TT_ObjCProperty,
+  TT_ObjCStringLiteral,
   TT_OverloadedOperator,
   TT_OverloadedOperatorLParen,
   TT_PointerOrReference,
