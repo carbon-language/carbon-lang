@@ -150,9 +150,6 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
-  unsigned MinItemLength = Style.ColumnLimit;
-  unsigned MaxItemLength = 0;
-
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
     // Skip comments on their own line.
     while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
@@ -179,8 +176,6 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
       ItemEnd = Commas[i];
       // The comma is counted as part of the item when calculating the length.
       ItemLengths.push_back(CodePointsBetween(ItemBegin, ItemEnd));
-      MinItemLength = std::min(MinItemLength, ItemLengths.back());
-      MaxItemLength = std::max(MaxItemLength, ItemLengths.back());
 
       // Consume trailing comments so the are included in EndOfLineItemLength.
       if (ItemEnd->Next && !ItemEnd->Next->HasUnescapedNewline &&
@@ -197,19 +192,17 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
 
   // If this doesn't have a nested list, we require at least 6 elements in order
   // create a column layout. If it has a nested list, column layout ensures one
-  // list element per line. If the difference between the shortest and longest
-  // element is too large, column layout would create too much whitespace.
+  // list element per line.
   if (Commas.size() < 5 || Token->NestingLevel != 0)
     return;
 
   // We can never place more than ColumnLimit / 3 items in a row (because of the
   // spaces and the comma).
-  unsigned MaxColumns =
-      MaxItemLength - MinItemLength > 10 ? 1 : Style.ColumnLimit / 3;
-  for (unsigned Columns = 1; Columns <= MaxColumns; ++Columns) {
+  for (unsigned Columns = 1; Columns <= Style.ColumnLimit / 3; ++Columns) {
     ColumnFormat Format;
     Format.Columns = Columns;
     Format.ColumnSizes.resize(Columns);
+    std::vector<unsigned> MinSizeInColumn(Columns, UINT_MAX);
     Format.LineCount = 1;
     bool HasRowWithSufficientColumns = false;
     unsigned Column = 0;
@@ -221,9 +214,10 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
       }
       if (Column == Columns - 1)
         HasRowWithSufficientColumns = true;
-      unsigned length =
+      unsigned Length =
           (Column == Columns - 1) ? EndOfLineItemLength[i] : ItemLengths[i];
-      Format.ColumnSizes[Column] = std::max(Format.ColumnSizes[Column], length);
+      Format.ColumnSizes[Column] = std::max(Format.ColumnSizes[Column], Length);
+      MinSizeInColumn[Column] = std::min(MinSizeInColumn[Column], Length);
       ++Column;
     }
     // If all rows are terminated early (e.g. by trailing comments), we don't
@@ -231,9 +225,19 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     if (!HasRowWithSufficientColumns)
       break;
     Format.TotalWidth = Columns - 1; // Width of the N-1 spaces.
-    for (unsigned i = 0; i < Columns; ++i) {
+
+    for (unsigned i = 0; i < Columns; ++i)
       Format.TotalWidth += Format.ColumnSizes[i];
-    }
+
+    // Don't use this Format, if the difference between the longest and shortest
+    // element in a column exceeds a threshold to avoid excessive spaces.
+    if ([&] {
+          for (unsigned i = 0; i < Columns - 1; ++i)
+            if (Format.ColumnSizes[i] - MinSizeInColumn[i] > 10)
+              return true;
+          return false;
+        }())
+      continue;
 
     // Ignore layouts that are bound to violate the column limit.
     if (Format.TotalWidth > Style.ColumnLimit)

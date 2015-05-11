@@ -6305,6 +6305,11 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "    \"aaaaaaaaaaaa\",\n"
                "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
                "};");
+  verifyFormat("vector<int> x = {1, 2, 3, 4, aaaaaaaaaaaaaaaaa, 6};");
+  verifyFormat("vector<int> x = {1, aaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                 2, bbbbbbbbbbbbbbbbbbbbbb,\n"
+               "                 3, cccccccccccccccccccccc};",
+               getLLVMStyleWithColumns(60));
 
   // Trailing commas.
   verifyFormat("vector<int> x = {\n"
