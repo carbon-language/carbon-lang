@@ -272,13 +272,19 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
 #ifndef NDEBUG
     if (MBB->pred_empty()) {
       MBB->getParent()->verify();
+      errs() << "Use of " << PrintReg(PhysReg)
+             << " does not have a corresponding definition on every path:\n";
+      const MachineInstr *MI = Indexes->getInstructionFromIndex(Use);
+      if (MI != nullptr)
+        errs() << Use << " " << *MI;
       llvm_unreachable("Use not jointly dominated by defs.");
     }
 
     if (TargetRegisterInfo::isPhysicalRegister(PhysReg) &&
         !MBB->isLiveIn(PhysReg)) {
       MBB->getParent()->verify();
-      errs() << "The register needs to be live in to BB#" << MBB->getNumber()
+      errs() << "The register " << PrintReg(PhysReg)
+             << " needs to be live in to BB#" << MBB->getNumber()
              << ", but is missing from the live-in list.\n";
       llvm_unreachable("Invalid global physical register");
     }
