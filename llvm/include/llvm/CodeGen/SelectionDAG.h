@@ -652,6 +652,16 @@ public:
 
   /// Gets or creates the specified node.
   ///
+  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
+                  ArrayRef<SDUse> Ops);
+  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
+                  ArrayRef<SDValue> Ops);
+  SDValue getNode(unsigned Opcode, SDLoc DL, ArrayRef<EVT> ResultTys,
+                  ArrayRef<SDValue> Ops);
+  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
+                  ArrayRef<SDValue> Ops);
+
+  // Specialize based on number of operands.
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
@@ -662,25 +672,19 @@ public:
                   SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
                   SDValue N3, SDValue N4, SDValue N5);
-  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, ArrayRef<SDUse> Ops);
-  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
-                  ArrayRef<SDValue> Ops);
-  SDValue getNode(unsigned Opcode, SDLoc DL,
-                  ArrayRef<EVT> ResultTys,
-                  ArrayRef<SDValue> Ops);
-  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  ArrayRef<SDValue> Ops);
+  
+  // Specialize again based on number of operands for nodes with a VTList
+  // rather than a single VT.
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N);
-  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  SDValue N1, SDValue N2);
-  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  SDValue N1, SDValue N2, SDValue N3);
-  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  SDValue N1, SDValue N2, SDValue N3, SDValue N4);
-  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  SDValue N1, SDValue N2, SDValue N3, SDValue N4,
-                  SDValue N5);
+  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N1,
+                  SDValue N2);
+  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N1,
+                  SDValue N2, SDValue N3);
+  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N1,
+                  SDValue N2, SDValue N3, SDValue N4);
+  SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N1,
+                  SDValue N2, SDValue N3, SDValue N4, SDValue N5);
 
   /// Compute a TokenFactor to force all the incoming stack arguments to be
   /// loaded from the stack. This is used in tail call lowering to protect
