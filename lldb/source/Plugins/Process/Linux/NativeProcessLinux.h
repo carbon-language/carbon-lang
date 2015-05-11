@@ -28,6 +28,7 @@
 #include "lldb/Target/MemoryRegionInfo.h"
 
 #include "lldb/Host/common/NativeProcessProtocol.h"
+#include "NativeThreadLinux.h"
 
 namespace lldb_private {
     class Error;
@@ -345,7 +346,6 @@ namespace process_linux {
         Error
         SingleStep(lldb::tid_t tid, uint32_t signo);
 
-        // ThreadStateCoordinator helper methods.
         void
         NotifyThreadDeath (lldb::tid_t tid);
 
@@ -353,25 +353,12 @@ namespace process_linux {
         Detach(lldb::tid_t tid);
 
 
-    public:
         // Typedefs.
         typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
 
-        // Callback/block definitions.
-        typedef std::function<Error (lldb::tid_t tid, bool supress_signal)> ResumeThreadFunction;
-
-    private:
-        enum class ThreadState
-        {
-            Running,
-            Stopped
-        };
-
-        // Notify that a thread is created and/or starting to be
-        // tracked. The state parameter should reflect whether the thread is created in a running
-        // or stopped state.
+        // Notify that a thread is created and/or starting to be tracked.
         void
-        NotifyThreadCreate(lldb::tid_t tid, ThreadState state);
+        NotifyThreadCreate(lldb::tid_t tid);
 
 
         // Notify the delegate after a given set of threads stops. The triggering_tid will be set
@@ -403,14 +390,14 @@ namespace process_linux {
         // a thread that is already in a running state.
         Error
         RequestThreadResume (lldb::tid_t tid,
-                             const ResumeThreadFunction &request_thread_resume_function);
+                             const NativeThreadLinux::ResumeThreadFunction &request_thread_resume_function);
 
         // Request that the given thread id should have the request_thread_resume_function
         // called. This call ignores threads that are already running and
         // does not trigger an error in that case.
         Error
         RequestThreadResumeAsNeeded (lldb::tid_t tid,
-                                     const ResumeThreadFunction &request_thread_resume_function);
+                                     const NativeThreadLinux::ResumeThreadFunction &request_thread_resume_function);
 
         // Indicate the calling process did an exec and that the thread state
         // should be 100% cleared.
@@ -418,19 +405,6 @@ namespace process_linux {
         ResetForExec ();
 
     private:
-
-        struct ThreadContext
-        {
-            ThreadState m_state;
-            bool m_stop_requested = false;
-            ResumeThreadFunction m_request_resume_function;
-
-            explicit ThreadContext(ThreadState state)
-                : m_state(state)
-            {}
-        };
-        typedef std::unordered_map<lldb::tid_t, ThreadContext> TIDContextMap;
-
         struct PendingNotification
         {
             PendingNotification (lldb::tid_t triggering_tid,
@@ -470,35 +444,26 @@ namespace process_linux {
         void
         RequestStopOnAllRunningThreads();
 
-        Error
-        RequestThreadStop (lldb::tid_t tid, ThreadContext& context);
-
         std::mutex m_event_mutex; // Serializes execution of ProcessEvent. XXX
 
         Error
         ThreadDidStop(lldb::tid_t tid, bool initiated_by_llgs);
 
         Error
-        DoResume(lldb::tid_t tid, ResumeThreadFunction request_thread_resume_function,
+        DoResume(lldb::tid_t tid, NativeThreadLinux::ResumeThreadFunction request_thread_resume_function,
                 bool error_when_already_running);
 
         void
         DoStopThreads(PendingNotificationUP &&notification_up);
 
         void
-        ThreadWasCreated (lldb::tid_t tid, ThreadState state);
+        ThreadWasCreated (lldb::tid_t tid);
 
         void
         ThreadDidDie (lldb::tid_t tid);
 
-        bool
-        IsKnownThread(lldb::tid_t tid) const;
-
         // Member variables.
         PendingNotificationUP m_pending_notification_up;
-
-        // Maps known TIDs to ThreadContext.
-        TIDContextMap m_tid_map;
     };
 
 } // namespace process_linux

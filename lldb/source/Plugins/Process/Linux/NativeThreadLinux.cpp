@@ -37,6 +37,11 @@
 #include "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
 #include "Plugins/Process/Utility/RegisterInfoInterface.h"
 
+#include <sys/syscall.h>
+// Try to define a macro to encapsulate the tgkill syscall
+#define tgkill(pid, tid, sig) \
+    syscall(SYS_tgkill, static_cast<::pid_t>(pid), static_cast<::pid_t>(tid), sig)
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
@@ -477,6 +482,35 @@ NativeThreadLinux::SetExited ()
     m_state = new_state;
 
     m_stop_info.reason = StopReason::eStopReasonThreadExiting;
+}
+
+Error
+NativeThreadLinux::RequestStop ()
+{
+    Log* log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+
+    const auto process_sp = GetProcess();
+    if (! process_sp)
+        return Error("Process is null.");
+
+    lldb::pid_t pid = process_sp->GetID();
+    lldb::tid_t tid = GetID();
+
+    if (log)
+        log->Printf ("NativeThreadLinux::%s requesting thread stop(pid: %" PRIu64 ", tid: %" PRIu64 ")", __FUNCTION__, pid, tid);
+
+    Error err;
+    errno = 0;
+    if (::tgkill (pid, tid, SIGSTOP) != 0)
+    {
+        err.SetErrorToErrno ();
+        if (log)
+            log->Printf ("NativeThreadLinux::%s tgkill(%" PRIu64 ", %" PRIu64 ", SIGSTOP) failed: %s", __FUNCTION__, pid, tid, err.AsCString ());
+    }
+    else
+        m_thread_context.stop_requested = true;
+
+    return err;
 }
 
 void

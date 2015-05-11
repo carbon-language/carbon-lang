@@ -95,6 +95,19 @@ namespace process_linux {
         void
         SetExited ();
 
+        Error
+        RequestStop ();
+
+        typedef std::function<Error (lldb::tid_t tid, bool supress_signal)> ResumeThreadFunction;
+        struct ThreadContext
+        {
+            bool stop_requested = false;
+            ResumeThreadFunction request_resume_function;
+        };
+
+        ThreadContext &
+        GetThreadContext() { return m_thread_context; }
+
         // ---------------------------------------------------------------------
         // Private interface
         // ---------------------------------------------------------------------
@@ -110,6 +123,7 @@ namespace process_linux {
         std::string m_stop_description;
         using WatchpointIndexMap = std::map<lldb::addr_t, uint32_t>;
         WatchpointIndexMap m_watchpoint_index_map;
+        ThreadContext m_thread_context;
     };
 
 } // namespace process_linux
