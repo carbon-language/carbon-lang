@@ -45,7 +45,7 @@
 // RUN: %sancov missing %dynamiclib < foo.txt > foo-missing.txt
 // RUN: diff bar.txt foo-missing.txt | not grep "^<"
 
-// REQUIRES: x86_64-supported-target, i386-supported-target
+// REQUIRES: x86_64-supported-target, i386-supported-target, broken
 // XFAIL: android
 
 #include <stdio.h>
