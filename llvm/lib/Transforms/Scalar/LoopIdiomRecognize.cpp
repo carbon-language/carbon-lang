@@ -611,7 +611,9 @@ bool NclPopcountRecognize::recognize() {
 
 bool LoopIdiomRecognize::runOnCountableLoop() {
   const SCEV *BECount = SE->getBackedgeTakenCount(CurLoop);
-  if (isa<SCEVCouldNotCompute>(BECount)) return false;
+  assert(!isa<SCEVCouldNotCompute>(BECount) &&
+    "runOnCountableLoop() called on a loop without a predictable"
+    "backedge-taken count");
 
   // If this loop executes exactly one time, then it should be peeled, not
   // optimized by this pass.
