@@ -131,6 +131,14 @@
 // CHECK-SPARCV8: -Av8plusa
 // CHECK-SPARCV8: -o
 //
+// RUN: %clang -target sparcel-linux -mcpu=invalid-cpu -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-SPARCV8EL %s
+// CHECK-SPARCV8EL: as
+// CHECK-SPARCV8EL: -32
+// CHECK-SPARCV8EL: -Av8plusa
+// CHECK-SPARCV8EL: -o
+//
 // RUN: %clang -target s390x-linux -### -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-Z-DEFAULT-ARCH %s
 // CHECK-Z-DEFAULT-ARCH: as{{.*}} "-march=z10"

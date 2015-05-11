@@ -1676,6 +1676,39 @@
 // CHECK_PPC_CRYPTO_M64: #define __CRYPTO__
 //
 
+// Begin Sparc/GCC/Linux tests ----------------
+//
+// RUN: %clang -E -dM %s -o - 2>&1 \
+// RUN:     -target sparc-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SPARC
+//
+// CHECK_SPARC: #define __BIG_ENDIAN__ 1
+// CHECK_SPARC: #define __sparc 1
+// CHECK_SPARC: #define __sparc__ 1
+// CHECK_SPARC: #define __sparcv8 1
+
+//
+// RUN: %clang -E -dM %s -o - 2>&1 \
+// RUN:     -target sparcel-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SPARCEL
+//
+// CHECK_SPARCEL: #define __LITTLE_ENDIAN__ 1
+// CHECK_SPARCEL: #define __sparc 1
+// CHECK_SPARCEL: #define __sparc__ 1
+// CHECK_SPARCEL: #define __sparcv8 1
+//
+// RUN: %clang -E -dM %s -o - 2>&1 \
+// RUN:     -target sparcv9-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_SPARCV9
+//
+// CHECK_SPARCV9: #define __BIG_ENDIAN__ 1
+// CHECK_SPARCV9: #define __sparc 1
+// CHECK_SPARCV9: #define __sparc64__ 1
+// CHECK_SPARCV9: #define __sparc__ 1
+// CHECK_SPARCV9: #define __sparc_v9__ 1
+// CHECK_SPARCV9: #define __sparcv9 1
+// CHECK_SPARCV9: #define __sparcv9__ 1
+
 // Begin SystemZ/GCC/Linux tests ----------------
 //
 // RUN: %clang -march=z10 -E -dM %s -o - 2>&1 \

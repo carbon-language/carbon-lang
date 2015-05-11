@@ -756,14 +756,21 @@
 // CHECK-MIPS64EL-N32-NAN2008-NOT: "--hash-style={{gnu|both}}"
 //
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     --target=sparc-linux-gnu \
+// RUN:     --target=sparc-unknown-linux-gnu \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARCV8 %s
 // CHECK-SPARCV8: "{{.*}}ld{{(.exe)?}}"
 // CHECK-SPARCV8: "-m" "elf32_sparc"
 // CHECK-SPARCV8: "-dynamic-linker" "/lib/ld-linux.so.2"
 //
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     --target=sparcv9-linux-gnu \
+// RUN:     --target=sparcel-unknown-linux-gnu \
+// RUN:   | FileCheck --check-prefix=CHECK-SPARCV8EL %s
+// CHECK-SPARCV8EL: "{{.*}}ld{{(.exe)?}}"
+// CHECK-SPARCV8EL: "-m" "elf32_sparc"
+// CHECK-SPARCV8EL: "-dynamic-linker" "/lib/ld-linux.so.2"
+//
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     --target=sparcv9-unknown-linux-gnu \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARCV9 %s
 // CHECK-SPARCV9: "{{.*}}ld{{(.exe)?}}"
 // CHECK-SPARCV9: "-m" "elf64_sparc"

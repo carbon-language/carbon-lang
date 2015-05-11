@@ -2078,6 +2078,7 @@ bool Generic_GCC::IsIntegratedAssemblerDefault() const {
          getTriple().getArch() == llvm::Triple::ppc64 ||
          getTriple().getArch() == llvm::Triple::ppc64le ||
          getTriple().getArch() == llvm::Triple::sparc ||
+         getTriple().getArch() == llvm::Triple::sparcel ||
          getTriple().getArch() == llvm::Triple::sparcv9 ||
          getTriple().getArch() == llvm::Triple::systemz;
 }
