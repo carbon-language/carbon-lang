@@ -39,17 +39,6 @@ class DbgDeclareInst;
 class MemIntrinsic;
 class MemSetInst;
 
-/// \brief Specific patterns of select instructions we can match.
-enum SelectPatternFlavor {
-  SPF_UNKNOWN = 0,
-  SPF_SMIN,
-  SPF_UMIN,
-  SPF_SMAX,
-  SPF_UMAX,
-  SPF_ABS,
-  SPF_NABS
-};
-
 /// \brief Assign a complexity or rank value to LLVM Values.
 ///
 /// This routine maps IR values to various complexity ranks:

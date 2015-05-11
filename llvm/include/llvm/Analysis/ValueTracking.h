@@ -262,6 +262,21 @@ namespace llvm {
                                                AssumptionCache *AC,
                                                const Instruction *CxtI,
                                                const DominatorTree *DT);
+  
+  /// \brief Specific patterns of select instructions we can match.
+  enum SelectPatternFlavor {
+    SPF_UNKNOWN = 0,
+    SPF_SMIN,                   // Signed minimum
+    SPF_UMIN,                   // Unsigned minimum
+    SPF_SMAX,                   // Signed maximum
+    SPF_UMAX,                   // Unsigned maximum
+    SPF_ABS,                    // Absolute value
+    SPF_NABS                    // Negated absolute value
+  };
+  /// Pattern match integer [SU]MIN, [SU]MAX and ABS idioms, returning the kind
+  /// and providing the out parameter results if we successfully match.
+  SelectPatternFlavor matchSelectPattern(Value *V, Value *&LHS, Value *&RHS);
+
 } // end namespace llvm
 
 #endif
