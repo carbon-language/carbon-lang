@@ -4,7 +4,7 @@
 
 // Make sure that all parts of GPU code init/cleanup are there:
 // * constant unnamed string with the kernel name
-// CHECK: private unnamed_addr constant{{.*}}kernelfunc{{.*}}\00", align 1
+// CHECK: private unnamed_addr constant{{.*}}kernelfunc{{.*}}\00"
 // * constant unnamed string with GPU binary
 // CHECK: private unnamed_addr constant{{.*}}\00"
 // * constant struct that wraps GPU binary
@@ -29,7 +29,7 @@ __global__ void kernelfunc(int i, int j, int k) {}
 // Test that we've built correct kernel launch sequence.
 // CHECK: define{{.*}}hostfunc
 // CHECK: call{{.*}}cudaConfigureCall
-// CHEKC: call{{.*}}kernelfunc
+// CHECK: call{{.*}}kernelfunc
 void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
 
 // Test that we've built a function to register kernels
