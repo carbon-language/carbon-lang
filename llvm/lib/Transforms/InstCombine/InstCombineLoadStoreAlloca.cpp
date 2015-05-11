@@ -880,6 +880,15 @@ static bool unpackStoreToAggregate(InstCombiner &IC, StoreInst &SI) {
     }
   }
 
+  if (auto *AT = dyn_cast<ArrayType>(T)) {
+    // If the array only have one element, we unpack.
+    if (AT->getNumElements() == 1) {
+      V = IC.Builder->CreateExtractValue(V, 0);
+      combineStoreToNewValue(IC, SI, V);
+      return true;
+    }
+  }
+
   return false;
 }
 
