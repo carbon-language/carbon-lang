@@ -36,7 +36,7 @@ define void @storeArrayOfA() {
 body:
   %0 = tail call i8* @allocmemory(i64 32)
   %1 = bitcast i8* %0 to [1 x %A]*
-; CHECK-LABEL: storeStructOfA
+; CHECK-LABEL: storeArrayOfA
 ; CHECK: store %A__vtbl* @A__vtblZ
   store [1 x %A] [%A { %A__vtbl* @A__vtblZ }], [1 x %A]* %1, align 8
   ret void
