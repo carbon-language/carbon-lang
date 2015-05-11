@@ -191,6 +191,7 @@ class TraceState {
                            size_t DataSize);
 
   void StartTraceRecording() {
+    if (!Options.UseTraces) return;
     RecordingTraces = true;
     Mutations.clear();
   }
@@ -294,7 +295,7 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
 
 void TraceState::TraceCmpCallback(size_t CmpSize, size_t CmpType, uint64_t Arg1,
                         uint64_t Arg2) {
-  if (!Options.UseTraces) return;
+  if (!RecordingTraces) return;
   int Added = 0;
   if (Options.Verbosity >= 3)
     std::cerr << "TraceCmp: " << Arg1 << " " << Arg2 << "\n";
