@@ -669,6 +669,11 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
 
     SourceLocation StartLoc = Tok.getLocation();
     SourceLocation EndLoc;
+
+    // Check if GNU-style InlineAsm is disabled.
+    if (!getLangOpts().GNUAsm)
+      Diag(StartLoc, diag::err_gnu_inline_asm_disabled);
+
     ExprResult Result(ParseSimpleAsm(&EndLoc));
 
     ExpectAndConsume(tok::semi, diag::err_expected_after,
@@ -1252,10 +1257,6 @@ ExprResult Parser::ParseAsmStringLiteral() {
 ExprResult Parser::ParseSimpleAsm(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw_asm) && "Not an asm!");
   SourceLocation Loc = ConsumeToken();
-
-  // Check if GNU-style InlineAsm is disabled.
-  if (!getLangOpts().GNUAsm)
-    Diag(Loc, diag::err_gnu_inline_asm_disabled);
 
   if (Tok.is(tok::kw_volatile)) {
     // Remove from the end of 'asm' to the end of 'volatile'.
