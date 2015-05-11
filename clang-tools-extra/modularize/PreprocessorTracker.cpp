@@ -405,14 +405,13 @@ static std::string getMacroExpandedString(clang::Preprocessor &PP,
                                           const clang::MacroArgs *Args) {
   std::string Expanded;
   // Walk over the macro Tokens.
-  typedef clang::MacroInfo::tokens_iterator Iter;
-  for (Iter I = MI->tokens_begin(), E = MI->tokens_end(); I != E; ++I) {
-    clang::IdentifierInfo *II = I->getIdentifierInfo();
+  for (const auto &T : MI->tokens()) {
+    clang::IdentifierInfo *II = T.getIdentifierInfo();
     int ArgNo = (II && Args ? MI->getArgumentNum(II) : -1);
     if (ArgNo == -1) {
       // This isn't an argument, just add it.
       if (II == nullptr)
-        Expanded += PP.getSpelling((*I)); // Not an identifier.
+        Expanded += PP.getSpelling(T); // Not an identifier.
       else {
         // Token is for an identifier.
         std::string Name = II->getName().str();
