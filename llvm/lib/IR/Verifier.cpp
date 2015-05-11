@@ -3065,8 +3065,8 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
       dyn_cast<PointerType>(ThisArgVecTy->getVectorElementType());
     if (!ThisArgEltTy)
       return true;
-    return (!(ThisArgEltTy->getElementType() ==
-            ReferenceType->getVectorElementType()));
+    return ThisArgEltTy->getElementType() !=
+           ReferenceType->getVectorElementType();
   }
   }
   llvm_unreachable("unhandled");
@@ -3192,7 +3192,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
       Assert(AI, "llvm.gcroot parameter #1 must be an alloca.", &CI);
       Assert(isa<Constant>(CI.getArgOperand(1)),
              "llvm.gcroot parameter #2 must be a constant.", &CI);
-      if (!AI->getType()->getElementType()->isPointerTy()) {
+      if (!AI->getAllocatedType()->isPointerTy()) {
         Assert(!isa<ConstantPointerNull>(CI.getArgOperand(1)),
                "llvm.gcroot parameter #1 must either be a pointer alloca, "
                "or argument #2 must be a non-null constant.",
