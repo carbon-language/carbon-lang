@@ -13,6 +13,7 @@
 #include "FuzzerInternal.h"
 
 #include <cstring>
+#include <chrono>
 #include <unistd.h>
 #include <iostream>
 #include <thread>
@@ -122,9 +123,18 @@ static void ParseFlags(int argc, char **argv) {
   }
 }
 
+static std::mutex Mu;
+
+static void PulseThread() {
+  while (true) {
+    std::this_thread::sleep_for(std::chrono::seconds(600));
+    std::lock_guard<std::mutex> Lock(Mu);
+    std::cerr << "pulse...\n";
+  }
+}
+
 static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
                         int NumJobs, std::atomic<bool> *HasErrors) {
-  static std::mutex CerrMutex;
   while (true) {
     int C = (*Counter)++;
     if (C >= NumJobs) break;
@@ -135,7 +145,7 @@ static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
     int ExitCode = system(ToRun.c_str());
     if (ExitCode != 0)
       *HasErrors = true;
-    std::lock_guard<std::mutex> Lock(CerrMutex);
+    std::lock_guard<std::mutex> Lock(Mu);
     std::cerr << "================== Job " << C
               << " exited with exit code " << ExitCode
               << " =================\n";
@@ -154,10 +164,12 @@ static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
     Cmd += " ";
   }
   std::vector<std::thread> V;
+  std::thread Pulse(PulseThread);
   for (int i = 0; i < NumWorkers; i++)
     V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs, &HasErrors));
   for (auto &T : V)
     T.join();
+  Pulse.join();
   return HasErrors ? 1 : 0;
 }
 
