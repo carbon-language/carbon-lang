@@ -438,7 +438,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         const CMICmnMIValueConst miValueConst4(CMIUtilString::Format("%d", instrtSize));
         const CMICmnMIValueResult miValueResult4("size", miValueConst4);
         miValueTuple.Add(miValueResult4);
-        const CMICmnMIValueConst miValueConst5(CMIUtilString::Format("%s %s%s", pStrMnemonic, pStrOperands, strComment.c_str()));
+        const CMICmnMIValueConst miValueConst5(CMIUtilString::Format("%s %s%s", pStrMnemonic, pStrOperands, strComment.Escape(true).c_str()));
         const CMICmnMIValueResult miValueResult5("inst", miValueConst5);
         miValueTuple.Add(miValueResult5);
 

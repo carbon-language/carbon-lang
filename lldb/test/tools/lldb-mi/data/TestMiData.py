@@ -38,6 +38,27 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
         self.expect("\^done,asm_insns=\[{address=\"0x0*%x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+?\"}," % addr)
 
+        # Run to hello_world
+        self.runCmd("-break-insert -f hello_world")
+        self.expect("\^done,bkpt={number=\"2\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Get an address for disassembling: use hello_world
+        self.runCmd("-data-evaluate-expression hello_world")
+        self.expect("\^done,value=\"0x[0-9a-f]+\"")
+        addr = int(self.child.after.split("\"")[1], 16)
+
+        # Test -data-disassemble: try to disassemble some address
+        self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
+
+        # This matches a line similar to:
+        # {address="0x0000000100000f18",func-name="hello_world()",offset="8",size="7",inst="leaq 0x65(%rip), %rdi; \"Hello, World!\\n\""},
+        # To match the escaped characters in the ouptut, we must use four backslashes per matches backslash
+        # See https://docs.python.org/2/howto/regex.html#the-backslash-plague
+        self.expect("{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; \\\\\"Hello, World!\\\\\\\\n\\\\\"\"},")
+
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races

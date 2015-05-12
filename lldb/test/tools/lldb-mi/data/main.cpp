@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdio.h>
+
 const char g_CharArray[] = "\x10\x11\x12\x13";
 static const char s_CharArray[] = "\x20\x21\x22\x23";
 
@@ -28,9 +30,16 @@ local_array_test()
     return;
 }
 
+void
+hello_world()
+{
+    printf("Hello, World!\n"); // BP_hello_world
+}
+
 int
 main(int argc, char const *argv[])
 { // FUNC_main
     local_array_test();
+    hello_world();
     return 0;
 }
