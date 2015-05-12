@@ -30,8 +30,11 @@
 #include "sanitizer_procmaps.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
+#include <errno.h>
 #include <fcntl.h>
+#include <libkern/OSAtomic.h>
 #include <mach-o/dyld.h>
+#include <mach/mach.h>
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
@@ -42,8 +45,6 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <libkern/OSAtomic.h>
-#include <errno.h>
 
 namespace __sanitizer {
 
@@ -333,7 +334,15 @@ MacosVersion GetMacosVersion() {
 }
 
 uptr GetRSS() {
-  return 0;
+  struct task_basic_info info;
+  unsigned count = TASK_BASIC_INFO_COUNT;
+  kern_return_t result =
+      task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &count);
+  if (UNLIKELY(result != KERN_SUCCESS)) {
+    Report("Cannot get task info. Error: %d\n", result);
+    Die();
+  }
+  return info.resident_size;
 }
 
 void *internal_start_thread(void (*func)(void *arg), void *arg) { return 0; }
