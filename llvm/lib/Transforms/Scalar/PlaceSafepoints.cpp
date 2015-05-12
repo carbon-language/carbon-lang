@@ -110,9 +110,9 @@ static cl::opt<bool> TraceLSP("spp-trace", cl::Hidden, cl::init(false));
 
 namespace {
 
-/** An analysis pass whose purpose is to identify each of the backedges in
-    the function which require a safepoint poll to be inserted. */
-struct PlaceBackedgeSafepointsImpl : public LoopPass {
+/// An analysis pass whose purpose is to identify each of the backedges in
+/// the function which require a safepoint poll to be inserted.
+struct PlaceBackedgeSafepointsImpl : public FunctionPass {
   static char ID;
 
   /// The output of the pass - gives a list of each backedge (described by
@@ -122,16 +122,38 @@ struct PlaceBackedgeSafepointsImpl : public LoopPass {
   /// True unless we're running spp-no-calls in which case we need to disable
   /// the call dependend placement opts.
   bool CallSafepointsEnabled;
+
+  ScalarEvolution *SE = nullptr;
+  DominatorTree *DT = nullptr;
+  LoopInfo *LI = nullptr;
+  
   PlaceBackedgeSafepointsImpl(bool CallSafepoints = false)
-      : LoopPass(ID), CallSafepointsEnabled(CallSafepoints) {
+      : FunctionPass(ID), CallSafepointsEnabled(CallSafepoints) {
     initializePlaceBackedgeSafepointsImplPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnLoop(Loop *, LPPassManager &LPM) override;
-
+  bool runOnLoop(Loop *);
+  void runOnLoopAndSubLoops(Loop *L) {
+    // Visit all the subloops
+    for (auto I = L->begin(), E = L->end(); I != E; I++)
+      runOnLoopAndSubLoops(*I);
+    runOnLoop(L);
+  }
+  
+  bool runOnFunction(Function &F) {
+    SE = &getAnalysis<ScalarEvolution>();
+    DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+    for (auto I = LI->begin(), E = LI->end(); I != E; I++) {
+      runOnLoopAndSubLoops(*I);
+    }
+    return false;
+  }
+  
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<ScalarEvolution>();
+    AU.addRequired<LoopInfoWrapperPass>();
     // We no longer modify the IR at all in this pass.  Thus all
     // analysis are preserved.
     AU.setPreservesAll();
@@ -311,17 +333,13 @@ static void scanInlinedCode(Instruction *start, Instruction *end,
   }
 }
 
-bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
-  ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
-  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
+bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
   // Loop through all loop latches (branches controlling backedges).  We need
   // to place a safepoint on every backedge (potentially). 
   // Note: In common usage, there will be only one edge due to LoopSimplify
   // having run sometime earlier in the pipeline, but this code must be correct
   // w.r.t. loops with multiple backedges.
   BasicBlock *header = L->getHeader();
-
   SmallVector<BasicBlock*, 16> LoopLatches;
   L->getLoopLatches(LoopLatches);
   for (BasicBlock *pred : LoopLatches) {
@@ -744,6 +762,7 @@ INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "Place Backedge Safepoints", false, false)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(PlaceBackedgeSafepointsImpl,
                     "place-backedge-safepoints-impl",
                     "Place Backedge Safepoints", false, false)
