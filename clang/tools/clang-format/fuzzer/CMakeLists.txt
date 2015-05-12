@@ -8,4 +8,5 @@ add_clang_executable(clang-format-fuzzer
 target_link_libraries(clang-format-fuzzer
   ${CLANG_FORMAT_LIB_DEPS}
   LLVMFuzzer
+  crypto
   )

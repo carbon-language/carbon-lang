@@ -16,5 +16,6 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     clangStaticAnalyzerFrontend
     clangTooling
     LLVMFuzzer
+    crypto
     )
 endif()
