@@ -55,7 +55,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*)
-; CHECK:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch", i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
+; CHECK:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch", i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.1")
 ; CHECK:   indirectbr i8* [[RECOVER]], [label %try.cont10, label %try.cont]
 
 lpad:                                             ; preds = %entry
@@ -148,12 +148,12 @@ eh.resume:                                        ; %catch.dispatch3
 ; CHECK: [[LPAD1_LABEL]]:{{[ ]+}}; preds = %entry
 ; CHECK:   [[LPAD1_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*)
-; CHECK:   [[RECOVER1:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1")
+; CHECK:   [[RECOVER1:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0M@8" to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.1")
 ; CHECK:   indirectbr i8* [[RECOVER1]], []
 ;
 ; CHECK: }
 
-; CHECK: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
+; CHECK: define internal i8* @"\01?test@@YAXXZ.catch.1"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_F1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[F_PTR1:\%.+]] = bitcast i8* [[RECOVER_F1]] to float*

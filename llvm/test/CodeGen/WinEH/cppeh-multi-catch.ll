@@ -76,9 +76,9 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT:           catch i8* null
 ; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(
 ; CHECK-SAME:	     i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry.H to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch",
-; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1",
-; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2",
-; CHECK-SAME:        i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch3")
+; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @llvm.eh.handlermapentry._J to i8*), i32 1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.1",
+; CHECK-SAME:        i32 1, i8* bitcast (%eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.2",
+; CHECK-SAME:        i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.3")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %ret]
 
 lpad:                                             ; preds = %entry
@@ -168,7 +168,7 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch.1"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_LL:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[LL_PTR:\%.+]] = bitcast i8* [[RECOVER_LL]] to i64*
@@ -177,7 +177,7 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch.2"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[OBJ_PTR:\%.+]] = bitcast i8* [[RECOVER_OBJ]] to %class.SomeClass**
@@ -186,7 +186,7 @@ catch:                                            ; preds = %catch.fallthrough2
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)
 ; CHECK: }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch3"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch.3"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   call void @"\01?handle_exception@@YAXXZ"()
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %ret)

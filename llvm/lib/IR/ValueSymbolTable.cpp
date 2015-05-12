@@ -53,7 +53,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
   while (1) {
     // Trim any suffix off and append the next number.
     UniqueName.resize(BaseSize);
-    raw_svector_ostream(UniqueName) << ++LastUnique;
+    raw_svector_ostream(UniqueName) << "." << ++LastUnique;
 
     // Try insert the vmap entry with this suffix.
     auto IterBool = vmap.insert(std::make_pair(UniqueName, V));

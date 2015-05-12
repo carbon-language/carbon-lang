@@ -11,7 +11,7 @@ entry:
   ret i32 %add
 }
 
-; CHECK-LABEL: define internal i32 @foo1
+; CHECK-LABEL: define internal i32 @foo.1
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: ret i32 4
 

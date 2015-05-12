@@ -12,7 +12,7 @@
 
 ; CHECK-LABEL: f1:
 define void @f1(i32 %a1, i32 %a2) #0 {
-; CHECK-NEXT: adrp x8, [[SET1:__MergedGlobals[0-9]*]]@PAGE
+; CHECK-NEXT: adrp x8, [[SET1:__MergedGlobals.[0-9]*]]@PAGE
 ; CHECK-NEXT: add x8, x8, [[SET1]]@PAGEOFF
 ; CHECK-NEXT: stp w0, w1, [x8]
 ; CHECK-NEXT: ret
@@ -27,7 +27,7 @@ define void @f1(i32 %a1, i32 %a2) #0 {
 
 ; CHECK-LABEL: f2:
 define void @f2(i32 %a1, i32 %a2, i32 %a3) #0 {
-; CHECK-NEXT: adrp x8, [[SET2:__MergedGlobals[0-9]*]]@PAGE
+; CHECK-NEXT: adrp x8, [[SET2:__MergedGlobals.[0-9]*]]@PAGE
 ; CHECK-NEXT: add x8, x8, [[SET2]]@PAGEOFF
 ; CHECK-NEXT: stp w0, w1, [x8]
 ; CHECK-NEXT: str w2, [x8, #8]

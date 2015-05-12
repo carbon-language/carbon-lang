@@ -40,7 +40,7 @@ define <16 x i8> @test2(<16 x i8> %arg) {
 entry:
 ; PROMOTED-LABEL: test2:
 ; In stress mode, constant vector are promoted
-; PROMOTED: adrp [[PAGEADDR:x[0-9]+]], [[CSTV1:__PromotedConst[0-9]+]]@PAGE
+; PROMOTED: adrp [[PAGEADDR:x[0-9]+]], [[CSTV1:__PromotedConst.[0-9]+]]@PAGE
 ; PROMOTED: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTV1]]@PAGEOFF]
 ; Destination register is defined by ABI
 ; PROMOTED-NEXT: add.16b v0, v0, v[[REGNUM]]

@@ -94,15 +94,15 @@ catch2:                                           ; preds = %lpad1
   %exn3 = load i8*, i8** %exn.slot
   call void @llvm.eh.begincatch(i8* %exn3, i8* null) #1
   call void @llvm.eh.endcatch() #1
-  br label %try.cont4
+  br label %try.cont.4
 
 ; This block should not be eliminated.
-; CHECK: try.cont4:
-try.cont4:                                        ; preds = %catch2, %try.cont
+; CHECK: try.cont.4:
+try.cont.4:                                        ; preds = %catch2, %try.cont
   ret void
 
 try.cont:                                         ; No predecessors!
-  br label %try.cont4
+  br label %try.cont.4
 
 unreachable:                                      ; preds = %catch, %entry
   unreachable
@@ -170,9 +170,9 @@ catch2:                                           ; preds = %lpad1
 ; CHECK-NOT: call void @llvm.eh.endcatch()
 try.cont:                                         ; preds = %catch2
   call void @llvm.eh.endcatch() #1
-  br label %try.cont4
+  br label %try.cont.4
 
-try.cont4:                                        ; preds = %try.cont
+try.cont.4:                                        ; preds = %try.cont
   ret void
 
 unreachable:                                      ; preds = %catch, %entry
@@ -186,7 +186,7 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: }
 
 ; The outlined test1.catch1 handler should return to a valid block address.
-; CHECK-LABEL: define internal i8* @"\01?test1@@YAXXZ.catch1"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test1@@YAXXZ.catch.1"(i8*, i8*)
 ; WILL-CHECK:  ret i8* inttoptr (
 ; CHECK-NOT:  ret i8* inttoptr (i32 1 to i8*)
 ; CHECK: }
@@ -197,7 +197,7 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: }
 
 ; The outlined test2.catch1 handler should return to a valid block address.
-; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch2"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch.2"(i8*, i8*)
 ; WILL-CHECK:  ret i8* inttoptr (
 ; CHECK-NOT:  ret i8* inttoptr (i32 1 to i8*)
 ; CHECK: }

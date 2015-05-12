@@ -61,7 +61,7 @@
 @AConst = linkonce constant i32 123
 
 ; Renamed version of Intern1.
-; CHECK-DAG: @Intern1{{[0-9]+}} = internal constant i32 52
+; CHECK-DAG: @Intern1.{{[0-9]+}} = internal constant i32 52
 
 
 ; Globals linked from testlink2.

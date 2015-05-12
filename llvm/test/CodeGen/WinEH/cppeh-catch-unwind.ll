@@ -97,7 +97,7 @@ lpad1:                                            ; preds = %invoke.cont
 ; CHECK:   [[LPAD3_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
-; CHECK-NEXT:   [[RECOVER3:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch1", i32 0, void (i8*, i8*)* @"\01?test@@YAXXZ.cleanup")
+; CHECK-NEXT:   [[RECOVER3:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch.1", i32 0, void (i8*, i8*)* @"\01?test@@YAXXZ.cleanup")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER3]], [label %try.cont, label %try.cont15]
 
 lpad3:                                            ; preds = %invoke.cont2
@@ -191,7 +191,7 @@ eh.resume:                                        ; preds = %catch.dispatch7
 ; CHECK:   ret void
 ; CHECK: }
 
-; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*)
+; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch.1"(i8*, i8*)
 ; CHECK: entry:
 ; CHECK:   [[RECOVER_TMP0:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[TMP0_PTR:\%.+]] = bitcast i8* [[RECOVER_TMP0]] to i32*
