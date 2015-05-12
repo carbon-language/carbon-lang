@@ -84,7 +84,7 @@ public:
                    clang::PPCallbacks::FileChangeReason Reason,
                    clang::SrcMgr::CharacteristicKind FileType,
                    clang::FileID PrevFID = clang::FileID()) override;
-  void FileSkipped(const clang::FileEntry &ParentFile,
+  void FileSkipped(const clang::FileEntry &SkippedFile,
                    const clang::Token &FilenameTok,
                    clang::SrcMgr::CharacteristicKind FileType) override;
   bool FileNotFound(llvm::StringRef FileName,

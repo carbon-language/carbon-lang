@@ -111,11 +111,11 @@ void PPCallbacksTracker::FileChanged(
 // Callback invoked whenever a source file is skipped as the result
 // of header guard optimization.
 void
-PPCallbacksTracker::FileSkipped(const clang::FileEntry &ParentFile,
+PPCallbacksTracker::FileSkipped(const clang::FileEntry &SkippedFile,
                                 const clang::Token &FilenameTok,
                                 clang::SrcMgr::CharacteristicKind FileType) {
   beginCallback("FileSkipped");
-  appendArgument("ParentFile", &ParentFile);
+  appendArgument("ParentFile", &SkippedFile);
   appendArgument("FilenameTok", FilenameTok);
   appendArgument("FileType", FileType, CharacteristicKindStrings);
 }
