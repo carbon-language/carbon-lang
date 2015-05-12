@@ -41,6 +41,11 @@ int has_reference_qualified_functions();
 int has_rvalue_references();
 #endif
 
+// CHECK: has_variadic_templates
+#if __has_extension(cxx_variadic_templates)
+int has_variadic_templates();
+#endif
+
 // CHECK: has_local_type_template_args
 #if __has_extension(cxx_local_type_template_args)
 int has_local_type_template_args();
