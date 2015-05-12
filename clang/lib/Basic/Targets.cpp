@@ -6923,10 +6923,10 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
   case llvm::Triple::le32:
     switch (os) {
-      case llvm::Triple::NaCl:
-        return new NaClTargetInfo<PNaClTargetInfo>(Triple);
-      default:
-        return nullptr;
+    case llvm::Triple::NaCl:
+      return new NaClTargetInfo<PNaClTargetInfo>(Triple);
+    default:
+      return nullptr;
     }
 
   case llvm::Triple::le64:
@@ -7142,18 +7142,18 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new X86_64TargetInfo(Triple);
     }
 
-    case llvm::Triple::spir: {
-      if (Triple.getOS() != llvm::Triple::UnknownOS ||
-          Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
-        return nullptr;
-      return new SPIR32TargetInfo(Triple);
-    }
-    case llvm::Triple::spir64: {
-      if (Triple.getOS() != llvm::Triple::UnknownOS ||
-          Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
-        return nullptr;
-      return new SPIR64TargetInfo(Triple);
-    }
+  case llvm::Triple::spir: {
+    if (Triple.getOS() != llvm::Triple::UnknownOS ||
+        Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
+      return nullptr;
+    return new SPIR32TargetInfo(Triple);
+  }
+  case llvm::Triple::spir64: {
+    if (Triple.getOS() != llvm::Triple::UnknownOS ||
+        Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
+      return nullptr;
+    return new SPIR64TargetInfo(Triple);
+  }
   }
 }
 
