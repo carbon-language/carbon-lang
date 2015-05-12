@@ -354,7 +354,7 @@ void InstrProfiling::emitInitialization() {
     auto *SetNameTy = FunctionType::get(VoidTy, Int8PtrTy, false);
     auto *SetNameF =
         Function::Create(SetNameTy, GlobalValue::ExternalLinkage,
-                         "__llvm_profile_set_filename_env_override", M);
+                         "__llvm_profile_override_default_filename", M);
 
     // Create variable for profile name
     Constant *ProfileNameConst =
