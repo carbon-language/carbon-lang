@@ -14,7 +14,7 @@ using namespace llvm;
 
 Target llvm::ThePPC32Target, llvm::ThePPC64Target, llvm::ThePPC64LETarget;
 
-extern "C" void LLVMInitializePowerPCTargetInfo() { 
+extern "C" void LLVMInitializePowerPCTargetInfo() {
   RegisterTarget<Triple::ppc, /*HasJIT=*/true>
     X(ThePPC32Target, "ppc32", "PowerPC 32");
 

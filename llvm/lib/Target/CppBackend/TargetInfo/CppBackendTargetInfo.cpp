@@ -20,8 +20,8 @@ static bool CppBackend_TripleMatchQuality(Triple::ArchType Arch) {
   return false;
 }
 
-extern "C" void LLVMInitializeCppBackendTargetInfo() { 
-  TargetRegistry::RegisterTarget(TheCppBackendTarget, "cpp",    
+extern "C" void LLVMInitializeCppBackendTargetInfo() {
+  TargetRegistry::RegisterTarget(TheCppBackendTarget, "cpp",
                                   "C++ backend",
                                   &CppBackend_TripleMatchQuality);
 }
