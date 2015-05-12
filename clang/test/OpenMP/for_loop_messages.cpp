@@ -10,10 +10,10 @@ public:
 };
 
 static int sii;
-#pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
+#pragma omp threadprivate(sii)
 static int globalii;
 
-register int reg0 __asm__("0"); // expected-note {{defined as threadprivate or thread local}}
+register int reg0 __asm__("0");
 
 int test_iteration_spaces() {
   const int N = 100;
@@ -308,7 +308,6 @@ int test_iteration_spaces() {
 
 #pragma omp parallel
   {
-// expected-error@+2 {{loop iteration variable in the associated loop of 'omp for' directive may not be threadprivate or thread local, predetermined as private}}
 #pragma omp for
     for (sii = 0; sii < 10; sii += 1)
       c[sii] = a[sii];
@@ -316,7 +315,6 @@ int test_iteration_spaces() {
 
 #pragma omp parallel
   {
-// expected-error@+2 {{loop iteration variable in the associated loop of 'omp for' directive may not be threadprivate or thread local, predetermined as private}}
 #pragma omp for
     for (reg0 = 0; reg0 < 10; reg0 += 1)
       c[reg0] = a[reg0];

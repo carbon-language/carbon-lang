@@ -10,7 +10,7 @@ public:
 };
 
 static int sii;
-#pragma omp threadprivate(sii) // expected-note {{defined as threadprivate or thread local}}
+#pragma omp threadprivate(sii)
 static int globalii;
 
 int test_iteration_spaces() {
@@ -306,7 +306,6 @@ int test_iteration_spaces() {
 
 #pragma omp parallel
   {
-// expected-error@+2 {{loop iteration variable in the associated loop of 'omp for simd' directive may not be threadprivate or thread local, predetermined as linear}}
 #pragma omp for simd
     for (sii = 0; sii < 10; sii += 1)
       c[sii] = a[sii];
