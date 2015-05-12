@@ -5,6 +5,36 @@
 ; RUN:     -mips-fast-isel -relocation-model=pic -fast-isel-abort=1 < %s | \
 ; RUN:     FileCheck %s -check-prefix=ALL -check-prefix=32R2
 
+declare void @xb(i8)
+
+define void @cxb() {
+  ; ALL-LABEL:    cxb:
+
+  ; ALL:            addiu   $[[T0:[0-9]+]], $zero, 10
+
+  ; 32R1:           sll     $[[T1:[0-9]+]], $[[T0]], 24
+  ; 32R1:           sra     $4, $[[T1]], 24
+
+  ; 32R2:           seb     $4, $[[T0]]
+  call void @xb(i8 10)
+  ret void
+}
+
+declare void @xh(i16)
+
+define void @cxh() {
+  ; ALL-LABEL:    cxh:
+
+  ; ALL:            addiu   $[[T0:[0-9]+]], $zero, 10
+
+  ; 32R1:           sll     $[[T1:[0-9]+]], $[[T0]], 16
+  ; 32R1:           sra     $4, $[[T1]], 16
+
+  ; 32R2:           seh     $4, $[[T0]]
+  call void @xh(i16 10)
+  ret void
+}
+
 declare void @xi(i32)
 
 define void @cxi() {
@@ -14,6 +44,44 @@ define void @cxi() {
   ; ALL-DAG:        lw      $25, %got(xi)(${{[0-9]+}})
   ; ALL:            jalr    $25
   call void @xi(i32 10)
+  ret void
+}
+
+declare void @xbb(i8, i8)
+
+define void @cxbb() {
+  ; ALL-LABEL:    cxbb:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 76
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 101
+
+  ; 32R1-DAG:       sll     $[[T2:[0-9]+]], $[[T0]], 24
+  ; 32R1-DAG:       sra     $[[T3:[0-9]+]], $[[T2]], 24
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T1]], 24
+  ; 32R1-DAG:       sra     $[[T5:[0-9]+]], $[[T4]], 24
+
+  ; 32R2-DAG:       seb     $4, $[[T0]]
+  ; 32R2-DAG:       seb     $5, $[[T1]]
+  call void @xbb(i8 76, i8 101)
+  ret void
+}
+
+declare void @xhh(i16, i16)
+
+define void @cxhh() {
+  ; ALL-LABEL:    cxhh:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 76
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 101
+
+  ; 32R1-DAG:       sll     $[[T2:[0-9]+]], $[[T0]], 16
+  ; 32R1-DAG:       sra     $[[T3:[0-9]+]], $[[T2]], 16
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T1]], 16
+  ; 32R1-DAG:       sra     $[[T5:[0-9]+]], $[[T4]], 16
+
+  ; 32R2-DAG:       seh     $4, $[[T0]]
+  ; 32R2-DAG:       seh     $5, $[[T1]]
+  call void @xhh(i16 76, i16 101)
   ret void
 }
 
@@ -30,6 +98,52 @@ define void @cxii() {
   ret void
 }
 
+declare void @xccc(i8, i8, i8)
+
+define void @cxccc() {
+  ; ALL-LABEL:    cxccc:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 88
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 44
+  ; ALL-DAG:        addiu   $[[T2:[0-9]+]], $zero, 11
+
+  ; 32R1-DAG:       sll     $[[T3:[0-9]+]], $[[T0]], 24
+  ; 32R1-DAG:       sra     $4, $[[T3]], 24
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T1]], 24
+  ; 32R1-DAG:       sra     $5, $[[T4]], 24
+  ; 32R1-DAG:       sll     $[[T5:[0-9]+]], $[[T2]], 24
+  ; 32R1-DAG:       sra     $6, $[[T5]], 24
+
+  ; 32R2-DAG:       seb     $4, $[[T0]]
+  ; 32R2-DAG:       seb     $5, $[[T1]]
+  ; 32R2-DAG:       seb     $6, $[[T2]]
+  call void @xccc(i8 88, i8 44, i8 11)
+  ret void
+}
+
+declare void @xhhh(i16, i16, i16)
+
+define void @cxhhh() {
+  ; ALL-LABEL:    cxhhh:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 88
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 44
+  ; ALL-DAG:        addiu   $[[T2:[0-9]+]], $zero, 11
+
+  ; 32R1-DAG:       sll     $[[T3:[0-9]+]], $[[T0]], 16
+  ; 32R1-DAG:       sra     $4, $[[T3]], 16
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T1]], 16
+  ; 32R1-DAG:       sra     $5, $[[T4]], 16
+  ; 32R1-DAG:       sll     $[[T5:[0-9]+]], $[[T2]], 16
+  ; 32R1-DAG:       sra     $6, $[[T5]], 16
+
+  ; 32R2-DAG:       seh     $4, $[[T0]]
+  ; 32R2-DAG:       seh     $5, $[[T1]]
+  ; 32R2-DAG:       seh     $6, $[[T2]]
+  call void @xhhh(i16 88, i16 44, i16 11)
+  ret void
+}
+
 declare void @xiii(i32, i32, i32)
 
 define void @cxiii() {
@@ -41,6 +155,76 @@ define void @cxiii() {
   ; ALL-DAG:        lw      $25, %got(xiii)(${{[0-9]+}})
   ; ALL:            jalr    $25
   call void @xiii(i32 88, i32 44, i32 11)
+  ret void
+}
+
+declare void @xcccc(i8, i8, i8, i8)
+
+define void @cxcccc() {
+  ; ALL-LABEL:    cxcccc:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 88
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 44
+  ; ALL-DAG:        addiu   $[[T2:[0-9]+]], $zero, 11
+  ; ALL-DAG:        addiu   $[[T3:[0-9]+]], $zero, 33
+
+  ; FIXME: We should avoid the unnecessary spill/reload here.
+
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T0]], 24
+  ; 32R1-DAG:       sra     $[[T5:[0-9]+]], $[[T4]], 24
+  ; 32R1-DAG:       sw      $4, 16($sp)
+  ; 32R1-DAG:       move    $4, $[[T5]]
+  ; 32R1-DAG:       sll     $[[T6:[0-9]+]], $[[T1]], 24
+  ; 32R1-DAG:       sra     $5, $[[T6]], 24
+  ; 32R1-DAG:       sll     $[[T7:[0-9]+]], $[[T2]], 24
+  ; 32R1-DAG:       sra     $6, $[[T7]], 24
+  ; 32R1:           lw      $[[T8:[0-9]+]], 16($sp)
+  ; 32R1:           sll     $[[T9:[0-9]+]], $[[T8]], 24
+  ; 32R1:           sra     $7, $[[T9]], 24
+
+  ; 32R2-DAG:       seb     $[[T4:[0-9]+]], $[[T0]]
+  ; 32R2-DAG:       sw      $4, 16($sp)
+  ; 32R2-DAG:       move    $4, $[[T4]]
+  ; 32R2-DAG:       seb     $5, $[[T1]]
+  ; 32R2-DAG:       seb     $6, $[[T2]]
+  ; 32R2-DAG:       lw      $[[T5:[0-9]+]], 16($sp)
+  ; 32R2:           seb     $7, $[[T5]]
+  call void @xcccc(i8 88, i8 44, i8 11, i8 33)
+  ret void
+}
+
+declare void @xhhhh(i16, i16, i16, i16)
+
+define void @cxhhhh() {
+  ; ALL-LABEL:    cxhhhh:
+
+  ; ALL-DAG:        addiu   $[[T0:[0-9]+]], $zero, 88
+  ; ALL-DAG:        addiu   $[[T1:[0-9]+]], $zero, 44
+  ; ALL-DAG:        addiu   $[[T2:[0-9]+]], $zero, 11
+  ; ALL-DAG:        addiu   $[[T3:[0-9]+]], $zero, 33
+
+  ; FIXME: We should avoid the unnecessary spill/reload here.
+
+  ; 32R1-DAG:       sll     $[[T4:[0-9]+]], $[[T0]], 16
+  ; 32R1-DAG:       sra     $[[T5:[0-9]+]], $[[T4]], 16
+  ; 32R1-DAG:       sw      $4, 16($sp)
+  ; 32R1-DAG:       move    $4, $[[T5]]
+  ; 32R1-DAG:       sll     $[[T6:[0-9]+]], $[[T1]], 16
+  ; 32R1-DAG:       sra     $5, $[[T6]], 16
+  ; 32R1-DAG:       sll     $[[T7:[0-9]+]], $[[T2]], 16
+  ; 32R1-DAG:       sra     $6, $[[T7]], 16
+  ; 32R1:           lw      $[[T8:[0-9]+]], 16($sp)
+  ; 32R1:           sll     $[[T9:[0-9]+]], $[[T8]], 16
+  ; 32R1:           sra     $7, $[[T9]], 16
+
+  ; 32R2-DAG:       seh     $[[T4:[0-9]+]], $[[T0]]
+  ; 32R2-DAG:       sw      $4, 16($sp)
+  ; 32R2-DAG:       move    $4, $[[T4]]
+  ; 32R2-DAG:       seh     $5, $[[T1]]
+  ; 32R2-DAG:       seh     $6, $[[T2]]
+  ; 32R2-DAG:       lw      $[[T5:[0-9]+]], 16($sp)
+  ; 32R2:           seh     $7, $[[T5]]
+  call void @xhhhh(i16 88, i16 44, i16 11, i16 33)
   ret void
 }
 
