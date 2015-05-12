@@ -45,8 +45,6 @@ FUZZER_FLAG_INT(jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
                           " with stdout/stderr redirected to fuzz-JOB.log.")
 FUZZER_FLAG_INT(workers, 0,
             "Number of simultaneous worker processes to run the jobs.")
-FUZZER_FLAG_INT(dfsan, 1, "Use DFSan for taint-guided mutations. No-op unless "
-                           "the DFSan instrumentation was compiled in.")
 FUZZER_FLAG_INT(reload, 1,
                 "Reload the main corpus periodically to get new units"
                 "discovered by other processes.")

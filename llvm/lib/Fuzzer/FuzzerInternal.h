@@ -56,7 +56,6 @@ class Fuzzer {
     bool UseTraces = false;
     bool UseFullCoverageSet  = false;
     bool UseCoveragePairs = false;
-    bool UseDFSan = false;
     bool Reload = true;
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;

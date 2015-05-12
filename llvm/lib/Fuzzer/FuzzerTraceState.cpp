@@ -325,11 +325,11 @@ void Fuzzer::ApplyTraceBasedMutation(size_t Idx, Unit *U) {
 }
 
 void Fuzzer::InitializeTraceState() {
-  if (!Options.UseTraces && !Options.UseDFSan) return;
+  if (!Options.UseTraces) return;
   TS = new TraceState(Options, CurrentUnit);
   CurrentUnit.resize(Options.MaxLen);
   // The rest really requires DFSan.
-  if (!ReallyHaveDFSan() || !Options.UseDFSan) return;
+  if (!ReallyHaveDFSan()) return;
   for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++) {
     dfsan_label L = dfsan_create_label("input", (void*)(i + 1));
     // We assume that no one else has called dfsan_create_label before.
