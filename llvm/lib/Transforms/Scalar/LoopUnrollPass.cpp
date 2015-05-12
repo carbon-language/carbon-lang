@@ -340,8 +340,8 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
 
   struct SCEVGEPDescriptor {
     Value *BaseAddr;
-    APInt Start;
-    APInt Step;
+    unsigned Start;
+    unsigned Step;
   };
 
   /// \brief The loop we're going to analyze.
@@ -435,12 +435,12 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
     if (!CDS)
       return false;
 
-    // Check possible overflow.
-    if (GEPDesc.Start.getActiveBits() > 32 || GEPDesc.Step.getActiveBits() > 32)
-      return false;
-    unsigned ElemSize = CDS->getElementType()->getPrimitiveSizeInBits() / 8U;
-    uint64_t Index = (GEPDesc.Start.getLimitedValue() +
-                      GEPDesc.Step.getLimitedValue() * Iteration) /
+    // This calculation should never overflow because we bound Iteration quite
+    // low and both the start and step are 32-bit integers. We use signed
+    // integers so that UBSan will catch if a bug sneaks into the code.
+    int ElemSize = CDS->getElementType()->getPrimitiveSizeInBits() / 8U;
+    int64_t Index = ((int64_t)GEPDesc.Start +
+                      (int64_t)GEPDesc.Step * (int64_t)Iteration) /
                      ElemSize;
     if (Index >= CDS->getNumElements()) {
       // FIXME: For now we conservatively ignore out of bound accesses, but
@@ -495,8 +495,17 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
           if (!StepSE || !StartSE)
             continue;
 
-          SCEVCache[V] = {Visitor.BaseAddress, StartSE->getValue()->getValue(),
-                          StepSE->getValue()->getValue()};
+          // Check and skip caching if doing so would require lots of bits to
+          // avoid overflow.
+          APInt Start = StartSE->getValue()->getValue();
+          APInt Step = StepSE->getValue()->getValue();
+          if (Start.getActiveBits() > 32 || Step.getActiveBits() > 32)
+            continue;
+
+          // We found a cacheable SCEV model for the GEP.
+          SCEVCache[V] = {Visitor.BaseAddress,
+                          (unsigned)Start.getLimitedValue(),
+                          (unsigned)Step.getLimitedValue()};
         }
       }
     }
@@ -528,6 +537,13 @@ public:
   /// unrolling won't give anything. Otherwise, returns true.
   bool analyzeLoop() {
     SmallSetVector<BasicBlock *, 16> BBWorklist;
+
+    // We want to be able to scale offsets by the trip count and add more
+    // offsets to them without checking for overflows, and we already don't want
+    // to analyze *massive* trip counts, so we force the max to be reasonably
+    // small.
+    assert(UnrollMaxIterationsCountToAnalyze < (INT_MAX / 2) &&
+           "The unroll iterations max is too large!");
 
     // Don't simulate loops with a big or unknown tripcount
     if (!UnrollMaxIterationsCountToAnalyze || !TripCount ||
