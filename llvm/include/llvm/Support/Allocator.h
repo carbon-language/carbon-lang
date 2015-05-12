@@ -148,7 +148,7 @@ public:
       : CurPtr(nullptr), End(nullptr), BytesAllocated(0),
         Allocator(std::forward<T &&>(Allocator)) {}
 
-  // Manually implement a move constructor as we must clear the old allocators
+  // Manually implement a move constructor as we must clear the old allocator's
   // slabs as a matter of correctness.
   BumpPtrAllocatorImpl(BumpPtrAllocatorImpl &&Old)
       : CurPtr(Old.CurPtr), End(Old.End), Slabs(std::move(Old.Slabs)),
@@ -195,7 +195,7 @@ public:
     CurPtr = (char *)Slabs.front();
     End = CurPtr + SlabSize;
 
-    // Deallocate all but the first slab, and all custome sized slabs.
+    // Deallocate all but the first slab, and deallocate all custom-sized slabs.
     DeallocateSlabs(std::next(Slabs.begin()), Slabs.end());
     Slabs.erase(std::next(Slabs.begin()), Slabs.end());
     DeallocateCustomSizedSlabs();
