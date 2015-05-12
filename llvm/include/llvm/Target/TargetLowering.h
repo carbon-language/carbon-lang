@@ -2698,10 +2698,9 @@ public:
   /// If that's true, then return '0' as the number of RefinementSteps to avoid
   /// any further refinement of the estimate.
   /// An empty SDValue return means no estimate sequence can be created.
-  virtual SDValue getRsqrtEstimate(SDValue Operand,
-                              DAGCombinerInfo &DCI,
-                              unsigned &RefinementSteps,
-                              bool &UseOneConstNR) const {
+  virtual SDValue getRsqrtEstimate(SDValue Operand, DAGCombinerInfo &DCI,
+                                   unsigned &RefinementSteps,
+                                   bool &UseOneConstNR) const {
     return SDValue();
   }
 
@@ -2713,8 +2712,7 @@ public:
   /// If that's true, then return '0' as the number of RefinementSteps to avoid
   /// any further refinement of the estimate.
   /// An empty SDValue return means no estimate sequence can be created.
-  virtual SDValue getRecipEstimate(SDValue Operand,
-                                   DAGCombinerInfo &DCI,
+  virtual SDValue getRecipEstimate(SDValue Operand, DAGCombinerInfo &DCI,
                                    unsigned &RefinementSteps) const {
     return SDValue();
   }
