@@ -189,10 +189,13 @@ public:
   // CIEs (and FDEs) are simply container classes, so the only sensible way to
   // create them is by providing the full parsed contents in the constructor.
   CIE(uint64_t Offset, uint64_t Length, uint8_t Version,
-      SmallString<8> Augmentation, uint64_t CodeAlignmentFactor,
+      SmallString<8> Augmentation, uint8_t AddressSize,
+      uint8_t SegmentDescriptorSize, uint64_t CodeAlignmentFactor,
       int64_t DataAlignmentFactor, uint64_t ReturnAddressRegister)
       : FrameEntry(FK_CIE, Offset, Length), Version(Version),
         Augmentation(std::move(Augmentation)),
+        AddressSize(AddressSize),
+        SegmentDescriptorSize(SegmentDescriptorSize),
         CodeAlignmentFactor(CodeAlignmentFactor),
         DataAlignmentFactor(DataAlignmentFactor),
         ReturnAddressRegister(ReturnAddressRegister) {}
@@ -208,6 +211,12 @@ public:
        << "\n";
     OS << format("  Version:               %d\n", Version);
     OS << "  Augmentation:          \"" << Augmentation << "\"\n";
+    if (Version >= 4) {
+      OS << format("  Address size:          %u\n",
+                   (uint32_t)AddressSize);
+      OS << format("  Segment desc size:     %u\n",
+                   (uint32_t)SegmentDescriptorSize);
+    }
     OS << format("  Code alignment factor: %u\n",
                  (uint32_t)CodeAlignmentFactor);
     OS << format("  Data alignment factor: %d\n",
@@ -222,9 +231,11 @@ public:
   }
 
 private:
-  /// The following fields are defined in section 6.4.1 of the DWARF standard v3
+  /// The following fields are defined in section 6.4.1 of the DWARF standard v4
   uint8_t Version;
   SmallString<8> Augmentation;
+  uint8_t AddressSize;
+  uint8_t SegmentDescriptorSize;
   uint64_t CodeAlignmentFactor;
   int64_t DataAlignmentFactor;
   uint64_t ReturnAddressRegister;
@@ -461,18 +472,18 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
     bool IsCIE = ((IsDWARF64 && Id == DW64_CIE_ID) || Id == DW_CIE_ID);
 
     if (IsCIE) {
-      // Note: this is specifically DWARFv3 CIE header structure. It was
-      // changed in DWARFv4. We currently don't support reading DWARFv4
-      // here because LLVM itself does not emit it (and LLDB doesn't
-      // support it either).
       uint8_t Version = Data.getU8(&Offset);
       const char *Augmentation = Data.getCStr(&Offset);
+      uint8_t AddressSize = Version < 4 ? Data.getAddressSize() : Data.getU8(&Offset);
+      Data.setAddressSize(AddressSize);
+      uint8_t SegmentDescriptorSize = Version < 4 ? 0 : Data.getU8(&Offset);
       uint64_t CodeAlignmentFactor = Data.getULEB128(&Offset);
       int64_t DataAlignmentFactor = Data.getSLEB128(&Offset);
       uint64_t ReturnAddressRegister = Data.getULEB128(&Offset);
 
       auto Cie = make_unique<CIE>(StartOffset, Length, Version,
-                                  StringRef(Augmentation), CodeAlignmentFactor,
+                                  StringRef(Augmentation), AddressSize,
+                                  SegmentDescriptorSize, CodeAlignmentFactor,
                                   DataAlignmentFactor, ReturnAddressRegister);
       CIEs[StartOffset] = Cie.get();
       Entries.emplace_back(std::move(Cie));

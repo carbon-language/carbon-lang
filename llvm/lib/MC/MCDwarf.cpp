@@ -1302,6 +1302,14 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   }
   streamer.EmitIntValue(0, 1);
 
+  if (CIEVersion >= 4) {
+    // Address Size
+    streamer.EmitIntValue(context.getAsmInfo()->getPointerSize(), 1);
+
+    // Segment Descriptor Size
+    streamer.EmitIntValue(0, 1);
+  }
+
   // Code Alignment Factor
   streamer.EmitULEB128IntValue(context.getAsmInfo()->getMinInstAlignment());
 

@@ -39,11 +39,17 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 ; DWARF2:      .debug_frame contents:
 ; DWARF2:        Version:               1
 ; DWARF2-NEXT:   Augmentation:
+; DWARF2-NOT:    Address size:
+; DWARF2-NOT:    Segment desc size:
 
 ; DWARF3:      .debug_frame contents:
 ; DWARF3:        Version:               3
 ; DWARF3-NEXT:   Augmentation:
+; DWARF3-NOT:    Address size:
+; DWARF3-NOT:    Segment desc size:
 
 ; DWARF4:      .debug_frame contents:
 ; DWARF4:        Version:               4
 ; DWARF4-NEXT:   Augmentation:
+; DWARF4:        Address size:
+; DWARF4:        Segment desc size:

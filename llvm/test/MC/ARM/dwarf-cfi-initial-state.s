@@ -13,5 +13,8 @@ bx lr
 # When llvm-dwarfdump prints the full info for the DW_CFA_def_cfa
 # field, we can check that here too.
 # CHECK: DW_CFA_def_cfa:
+# The following 2 DW_CFA_nop instructions are "padding"
+# CHECK: DW_CFA_nop:
+# CHECK: DW_CFA_nop:
 # CHECK-NOT: DW_CFA
 # CHECK: FDE
