@@ -469,8 +469,7 @@ static Value *ThreadBinOpOverPHI(unsigned Opcode, Value *LHS, Value *RHS,
 
   // Evaluate the BinOp on the incoming phi values.
   Value *CommonValue = nullptr;
-  for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
-    Value *Incoming = PI->getIncomingValue(i);
+  for (Value *Incoming : PI->incoming_values()) {
     // If the incoming value is the phi node itself, it can safely be skipped.
     if (Incoming == PI) continue;
     Value *V = PI == LHS ?
@@ -510,8 +509,7 @@ static Value *ThreadCmpOverPHI(CmpInst::Predicate Pred, Value *LHS, Value *RHS,
 
   // Evaluate the BinOp on the incoming phi values.
   Value *CommonValue = nullptr;
-  for (unsigned i = 0, e = PI->getNumIncomingValues(); i != e; ++i) {
-    Value *Incoming = PI->getIncomingValue(i);
+  for (Value *Incoming : PI->incoming_values()) {
     // If the incoming value is the phi node itself, it can safely be skipped.
     if (Incoming == PI) continue;
     Value *V = SimplifyCmpInst(Pred, Incoming, RHS, Q, MaxRecurse);
@@ -3377,8 +3375,7 @@ static Value *SimplifyPHINode(PHINode *PN, const Query &Q) {
   // with the common value.
   Value *CommonValue = nullptr;
   bool HasUndefInput = false;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    Value *Incoming = PN->getIncomingValue(i);
+  for (Value *Incoming : PN->incoming_values()) {
     // If the incoming value is the phi node itself, it can safely be skipped.
     if (Incoming == PN) continue;
     if (isa<UndefValue>(Incoming)) {

@@ -375,8 +375,8 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   // and mark all the input loads as non-volatile.  If we don't do this, we will
   // insert a new volatile load and the old ones will not be deletable.
   if (isVolatile)
-    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-      cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
+    for (Value *IncValue : PN.incoming_values())
+      cast<LoadInst>(IncValue)->setVolatile(false);
 
   LoadInst *NewLI = new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
   NewLI->setDebugLoc(FirstLI->getDebugLoc());
@@ -539,8 +539,7 @@ static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
 
   // Scan the operands to see if they are either phi nodes or are equal to
   // the value.
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    Value *Op = PN->getIncomingValue(i);
+  for (Value *Op : PN->incoming_values()) {
     if (PHINode *OpPN = dyn_cast<PHINode>(Op)) {
       if (!PHIsEqualValue(OpPN, NonPhiInVal, ValueEqualPHIs))
         return false;

@@ -895,8 +895,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const DataLayout &DL,
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     Constant *CommonValue = nullptr;
 
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      Value *Incoming = PN->getIncomingValue(i);
+    for (Value *Incoming : PN->incoming_values()) {
       // If the incoming value is undef then skip it.  Note that while we could
       // skip the value if it is equal to the phi node itself we choose not to
       // because that would break the rule that constant folding only applies if

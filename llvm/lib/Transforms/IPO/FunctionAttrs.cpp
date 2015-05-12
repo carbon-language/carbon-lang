@@ -755,8 +755,8 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
         }
         case Instruction::PHI: {
           PHINode *PN = cast<PHINode>(RVI);
-          for (int i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-            FlowsToReturn.insert(PN->getIncomingValue(i));
+          for (Value *IncValue : PN->incoming_values())
+            FlowsToReturn.insert(IncValue);
           continue;
         }
 

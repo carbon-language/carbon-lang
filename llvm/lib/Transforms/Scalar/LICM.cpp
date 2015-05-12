@@ -491,8 +491,8 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
 /// This pattern occurs most often with LCSSA PHI nodes.
 ///
 static bool isTriviallyReplacablePHI(const PHINode &PN, const Instruction &I) {
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-    if (PN.getIncomingValue(i) != &I)
+  for (const Value *IncValue : PN.incoming_values())
+    if (IncValue != &I)
       return false;
 
   return true;

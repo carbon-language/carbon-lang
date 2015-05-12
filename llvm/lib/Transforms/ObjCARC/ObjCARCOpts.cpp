@@ -105,8 +105,8 @@ static inline bool AreAnyUnderlyingObjectsAnAlloca(const Value *V,
     }
 
     if (const PHINode *PN = dyn_cast<const PHINode>(P)) {
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-        Worklist.push_back(PN->getIncomingValue(i));
+      for (Value *IncValue : PN->incoming_values())
+        Worklist.push_back(IncValue);
       continue;
     }
   } while (!Worklist.empty());

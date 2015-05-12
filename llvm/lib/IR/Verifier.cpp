@@ -2132,8 +2132,8 @@ void Verifier::visitPHINode(PHINode &PN) {
 
   // Check that all of the values of the PHI node have the same type as the
   // result, and that the incoming blocks are really basic blocks.
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
-    Assert(PN.getType() == PN.getIncomingValue(i)->getType(),
+  for (Value *IncValue : PN.incoming_values()) {
+    Assert(PN.getType() == IncValue->getType(),
            "PHI node operands are not the same type as the result!", &PN);
   }
 

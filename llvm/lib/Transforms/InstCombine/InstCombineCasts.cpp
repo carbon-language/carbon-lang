@@ -418,8 +418,8 @@ static bool CanEvaluateTruncated(Value *V, Type *Ty, InstCombiner &IC,
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateTruncated(PN->getIncomingValue(i), Ty, IC, CxtI))
+    for (Value *IncValue : PN->incoming_values())
+      if (!CanEvaluateTruncated(IncValue, Ty, IC, CxtI))
         return false;
     return true;
   }
@@ -1029,8 +1029,8 @@ static bool CanEvaluateSExtd(Value *V, Type *Ty) {
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateSExtd(PN->getIncomingValue(i), Ty)) return false;
+    for (Value *IncValue : PN->incoming_values())
+      if (!CanEvaluateSExtd(IncValue, Ty)) return false;
     return true;
   }
   default:

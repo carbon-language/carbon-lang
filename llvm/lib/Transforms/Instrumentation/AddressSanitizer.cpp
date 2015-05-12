@@ -1940,8 +1940,7 @@ AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
   if (CastInst *CI = dyn_cast<CastInst>(V))
     Res = findAllocaForValue(CI->getOperand(0));
   else if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      Value *IncValue = PN->getIncomingValue(i);
+    for (Value *IncValue : PN->incoming_values()) {
       // Allow self-referencing phi-nodes.
       if (IncValue == PN) continue;
       AllocaInst *IncValueAI = findAllocaForValue(IncValue);

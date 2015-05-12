@@ -175,8 +175,8 @@ static bool CanEvaluateShifted(Value *V, unsigned NumBits, bool isLeftShift,
     // get into trouble with cyclic PHIs here because we only consider
     // instructions with a single use.
     PHINode *PN = cast<PHINode>(I);
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-      if (!CanEvaluateShifted(PN->getIncomingValue(i), NumBits, isLeftShift,
+    for (Value *IncValue : PN->incoming_values())
+      if (!CanEvaluateShifted(IncValue, NumBits, isLeftShift,
                               IC, PN))
         return false;
     return true;

@@ -3204,8 +3204,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
     // For a PHI node, push all of its incoming values.
     if (PHINode *P = dyn_cast<PHINode>(V)) {
-      for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i)
-        worklist.push_back(P->getIncomingValue(i));
+      for (Value *IncValue : P->incoming_values())
+        worklist.push_back(IncValue);
       continue;
     }
 
