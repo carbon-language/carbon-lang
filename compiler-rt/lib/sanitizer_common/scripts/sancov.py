@@ -180,8 +180,12 @@ def RawUnpack(files):
     UnpackOneRawFile(f, f_map)
 
 def GetInstrumentedPCs(binary):
+  # This looks scary, but all it does is extract all offsets where we call:
+  # - __sanitizer_cov() or __sanitizer_cov_with_check(),
+  # - with call or callq,
+  # - directly or via PLT.
   cmd = "objdump -d %s | " \
-        "grep '^\s\+[0-9a-f]\+:.*\scall\(q\|\)\s\+[0-9a-f]\+ <__sanitizer_cov\(@plt\|\)>' | " \
+        "grep '^\s\+[0-9a-f]\+:.*\scall\(q\|\)\s\+[0-9a-f]\+ <__sanitizer_cov\(_with_check\|\)\(@plt\|\)>' | " \
         "grep '^\s\+[0-9a-f]\+' -o" % binary
   proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                           shell=True)
