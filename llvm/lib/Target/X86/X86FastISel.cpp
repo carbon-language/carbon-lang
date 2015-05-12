@@ -2254,7 +2254,7 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
   default: return false;
   case Intrinsic::convert_from_fp16:
   case Intrinsic::convert_to_fp16: {
-    if (TM.Options.UseSoftFloat || !Subtarget->hasF16C())
+    if (Subtarget->useSoftFloat() || !Subtarget->hasF16C())
       return false;
 
     const Value *Op = II->getArgOperand(0);

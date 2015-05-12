@@ -3456,7 +3456,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     break;
   }
   case ISD::FP_TO_FP16: {
-    if (!TM.Options.UseSoftFloat && TM.Options.UnsafeFPMath) {
+    if (!TLI.useSoftFloat() && TM.Options.UnsafeFPMath) {
       SDValue Op = Node->getOperand(0);
       MVT SVT = Op.getSimpleValueType();
       if ((SVT == MVT::f64 || SVT == MVT::f80) &&

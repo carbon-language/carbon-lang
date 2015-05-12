@@ -281,9 +281,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     return 0;
 
   assert(M && "Should have exited if we didn't have a module!");
-
-  if (GenerateSoftFloatCalls)
-    FloatABIForCalls = FloatABI::Soft;
+  if (FloatABIForCalls != FloatABI::Default)
+    Options.FloatABIType = FloatABIForCalls;
 
   // Figure out where we are going to send the output.
   std::unique_ptr<tool_output_file> Out =

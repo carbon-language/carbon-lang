@@ -170,7 +170,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   if (Subtarget->isTargetMachO()) {
     // Uses VFP for Thumb libfuncs if available.
     if (Subtarget->isThumb() && Subtarget->hasVFP2() &&
-        Subtarget->hasARMOps() && !TM.Options.UseSoftFloat) {
+        Subtarget->hasARMOps() && !Subtarget->useSoftFloat()) {
       // Single-precision floating-point arithmetic.
       setLibcallName(RTLIB::ADD_F32, "__addsf3vfp");
       setLibcallName(RTLIB::SUB_F32, "__subsf3vfp");
@@ -401,7 +401,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     addRegisterClass(MVT::i32, &ARM::tGPRRegClass);
   else
     addRegisterClass(MVT::i32, &ARM::GPRRegClass);
-  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+  if (!Subtarget->useSoftFloat() && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
     addRegisterClass(MVT::f32, &ARM::SPRRegClass);
     addRegisterClass(MVT::f64, &ARM::DPRRegClass);
@@ -820,7 +820,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   }
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+  if (!Subtarget->useSoftFloat() && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
     // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR
     // iff target supports vfp2.
@@ -861,7 +861,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FSINCOS,   MVT::f32, Expand);
   setOperationAction(ISD::FREM,      MVT::f64, Expand);
   setOperationAction(ISD::FREM,      MVT::f32, Expand);
-  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+  if (!Subtarget->useSoftFloat() && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
@@ -875,7 +875,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   }
 
   // Various VFP goodness
-  if (!TM.Options.UseSoftFloat && !Subtarget->isThumb1Only()) {
+  if (!Subtarget->useSoftFloat() && !Subtarget->isThumb1Only()) {
     // FP-ARMv8 adds f64 <-> f16 conversion. Before that it should be expanded.
     if (!Subtarget->hasFPARMv8() || Subtarget->isFPOnlySP()) {
       setOperationAction(ISD::FP16_TO_FP, MVT::f64, Expand);
@@ -932,7 +932,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
-  if (TM.Options.UseSoftFloat || Subtarget->isThumb1Only() ||
+  if (Subtarget->useSoftFloat() || Subtarget->isThumb1Only() ||
       !Subtarget->hasVFP2())
     setSchedulingPreference(Sched::RegPressure);
   else
@@ -954,6 +954,10 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   PredictableSelectIsExpensive = Subtarget->isLikeA9();
 
   setMinFunctionAlignment(Subtarget->isThumb() ? 1 : 2);
+}
+
+bool ARMTargetLowering::useSoftFloat() const {
+  return Subtarget->useSoftFloat();
 }
 
 // FIXME: It might make sense to define the representative register class as the

@@ -231,6 +231,7 @@ namespace llvm {
                                const ARMSubtarget &STI);
 
     unsigned getJumpTableEncoding() const override;
+    bool useSoftFloat() const override;
 
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 

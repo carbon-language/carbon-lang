@@ -165,6 +165,7 @@ public:
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
+  virtual bool useSoftFloat() const { return false; }
 
   /// Return the pointer type for the given address space, defaults to
   /// the pointer type from the data layout.

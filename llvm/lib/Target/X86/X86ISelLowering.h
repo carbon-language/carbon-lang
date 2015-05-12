@@ -572,6 +572,7 @@ namespace llvm {
                                const X86Subtarget &STI);
 
     unsigned getJumpTableEncoding() const override;
+    bool useSoftFloat() const override;
 
     MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i8; }
 

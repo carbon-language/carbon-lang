@@ -145,6 +145,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasVMLxForwarding = false;
   SlowFPBrcc = false;
   InThumbMode = false;
+  UseSoftFloat = false;
   HasThumb2 = false;
   NoARM = false;
   IsR9Reserved = ReserveR9;

@@ -530,6 +530,7 @@ namespace llvm {
     bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
 
     unsigned getJumpTableEncoding() const override;
+    bool useSoftFloat() const override;
 
     /// Emit a sign-extension using sll/sra, seb, or seh appropriately.
     MachineBasicBlock *emitSignExtendToI32InReg(MachineInstr *MI,

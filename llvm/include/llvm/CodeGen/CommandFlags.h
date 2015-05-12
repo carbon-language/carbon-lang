@@ -126,11 +126,6 @@ EnableHonorSignDependentRoundingFPMath("enable-sign-dependent-rounding-fp-math",
       cl::desc("Force codegen to assume rounding mode can change dynamically"),
       cl::init(false));
 
-cl::opt<bool>
-GenerateSoftFloatCalls("soft-float",
-                    cl::desc("Generate software floating point library calls"),
-                    cl::init(false));
-
 cl::opt<llvm::FloatABI::ABIType>
 FloatABIForCalls("float-abi",
                  cl::desc("Choose float ABI type"),
@@ -241,7 +236,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.NoNaNsFPMath = EnableNoNaNsFPMath;
   Options.HonorSignDependentRoundingFPMathOption =
       EnableHonorSignDependentRoundingFPMath;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
   if (FloatABIForCalls != FloatABI::Default)
     Options.FloatABIType = FloatABIForCalls;
   Options.NoZerosInBSS = DontPlaceZerosInBSS;

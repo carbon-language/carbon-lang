@@ -3598,6 +3598,10 @@ unsigned MipsTargetLowering::getJumpTableEncoding() const {
   return TargetLowering::getJumpTableEncoding();
 }
 
+bool MipsTargetLowering::useSoftFloat() const {
+  return Subtarget.useSoftFloat();
+}
+
 void MipsTargetLowering::copyByValRegs(
     SDValue Chain, SDLoc DL, std::vector<SDValue> &OutChains, SelectionDAG &DAG,
     const ISD::ArgFlagsTy &Flags, SmallVectorImpl<SDValue> &InVals,

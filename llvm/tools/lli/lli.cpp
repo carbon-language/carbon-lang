@@ -465,11 +465,8 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setOptLevel(OLvl);
 
   TargetOptions Options;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
   if (FloatABIForCalls != FloatABI::Default)
     Options.FloatABIType = FloatABIForCalls;
-  if (GenerateSoftFloatCalls)
-    FloatABIForCalls = FloatABI::Soft;
 
   builder.setTargetOptions(Options);
 

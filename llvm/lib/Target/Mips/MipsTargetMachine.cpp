@@ -140,10 +140,9 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const {
   // FIXME: This is related to the code below to reset the target options,
   // we need to know whether or not the soft float flag is set on the
   // function, so we can enable it as a subtarget feature.
-  Attribute SFAttr = F.getFnAttribute("use-soft-float");
-  bool softFloat = !SFAttr.hasAttribute(Attribute::None)
-                       ? SFAttr.getValueAsString() == "true"
-                       : Options.UseSoftFloat;
+  bool softFloat =
+      F.hasFnAttribute("use-soft-float") &&
+      F.getFnAttribute("use-soft-float").getValueAsString() == "true";
 
   if (hasMips16Attr)
     FS += FS.empty() ? "+mips16" : ",+mips16";

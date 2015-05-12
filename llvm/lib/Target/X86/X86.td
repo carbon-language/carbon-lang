@@ -192,6 +192,9 @@ def FeatureUseSqrtEst : SubtargetFeature<"use-sqrt-est", "UseSqrtEst", "true",
                             "Use RSQRT* to optimize square root calculations">;
 def FeatureUseRecipEst : SubtargetFeature<"use-recip-est", "UseReciprocalEst",
                           "true", "Use RCP* to optimize division calculations">;
+def FeatureSoftFloat
+    : SubtargetFeature<"soft-float", "UseSoftFloat", "true",
+                       "Use software floating point features.">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
