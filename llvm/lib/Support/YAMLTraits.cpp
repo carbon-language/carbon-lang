@@ -75,7 +75,7 @@ bool Input::setCurrentDocument() {
   if (DocIterator != Strm->end()) {
     Node *N = DocIterator->getRoot();
     if (!N) {
-      assert(Strm->failed() && "Root is NULL if parsing failed");
+      assert(Strm->failed() && "Root is NULL iff parsing failed");
       EC = make_error_code(errc::invalid_argument);
       return false;
     }
@@ -102,7 +102,7 @@ bool Input::mapTag(StringRef Tag, bool Default) {
     // If no tag found and 'Tag' is the default, say it was found.
     return Default;
   }
-  // Return true if found tag matches supplied tag.
+  // Return true iff found tag matches supplied tag.
   return Tag.equals(foundTag);
 }
 
