@@ -110,6 +110,7 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_debugger.fuzz_obj(obj)
 
     @python_api_test
+    # darwin: This test passes with swig 3.0.2, fails w/3.0.5 other tests fail with 2.0.12 http://llvm.org/pr23488
     def test_SBError(self):
         obj = lldb.SBError()
         if self.TraceOn():
