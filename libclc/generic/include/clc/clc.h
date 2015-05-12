@@ -40,6 +40,7 @@
 #include <clc/math/asinpi.h>
 #include <clc/math/atan.h>
 #include <clc/math/atan2.h>
+#include <clc/math/atan2pi.h>
 #include <clc/math/atanh.h>
 #include <clc/math/atanpi.h>
 #include <clc/math/copysign.h>
