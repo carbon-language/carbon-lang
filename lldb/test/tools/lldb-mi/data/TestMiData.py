@@ -13,6 +13,7 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr23489: MiDataTestCase.test_lldbmi_data_disassemble test fails on Linux
     def test_lldbmi_data_disassemble(self):
         """Test that 'lldb-mi --interpreter' works for -data-disassemble."""
 
