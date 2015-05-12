@@ -165,11 +165,11 @@ static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
   }
   std::vector<std::thread> V;
   std::thread Pulse(PulseThread);
+  Pulse.detach();
   for (int i = 0; i < NumWorkers; i++)
     V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs, &HasErrors));
   for (auto &T : V)
     T.join();
-  Pulse.join();
   return HasErrors ? 1 : 0;
 }
 
