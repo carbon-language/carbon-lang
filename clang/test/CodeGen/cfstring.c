@@ -6,8 +6,8 @@
 // RUN: %clang_cc1 -fwritable-strings -emit-llvm %s -o - | FileCheck %s
 //
 // CHECK: @.str = private unnamed_addr constant [14 x i8] c"Hello, World!\00", section "__TEXT,__cstring,cstring_literals", align 1
-// CHECK: @.str1 = private unnamed_addr constant [7 x i8] c"yo joe\00", section "__TEXT,__cstring,cstring_literals", align 1
-// CHECK: @.str3 = private unnamed_addr constant [16 x i8] c"Goodbye, World!\00", section "__TEXT,__cstring,cstring_literals", align 1
+// CHECK: @.str.1 = private unnamed_addr constant [7 x i8] c"yo joe\00", section "__TEXT,__cstring,cstring_literals", align 1
+// CHECK: @.str.3 = private unnamed_addr constant [16 x i8] c"Goodbye, World!\00", section "__TEXT,__cstring,cstring_literals", align 1
 
 #define CFSTR __builtin___CFStringMakeConstantString
 

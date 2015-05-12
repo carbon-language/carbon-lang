@@ -84,7 +84,7 @@ void testva (int n, ...)
 // CHECK-PPC-NEXT:  [[TWENTYSEVEN:%[0-9]+]] = mul i8 [[GPR1]], 4
 // CHECK-PPC-NEXT:  [[TWENTYEIGHT:%[0-9]+]] = sext i8 [[TWENTYSEVEN]] to i32
 // CHECK-PPC-NEXT:  [[TWENTYNINE:%[0-9]+]] = add i32 [[TWENTYSIX]], [[TWENTYEIGHT]]
-// CHECK-PPC-NEXT:  br i1 [[COND1]], label [[USING_REGS1:%[a-z_0-9]+]], label [[USING_OVERFLOW1:%[a-z_0-9]+]]
+// CHECK-PPC-NEXT:  br i1 [[COND1]], label [[USING_REGS1:%[.a-z_0-9]+]], label [[USING_OVERFLOW1:%[.a-z_0-9]+]]
 //
 // CHECK-PPC1:[[USING_REGS1]]:
 // CHECK-PPC:  [[THIRTY:%[0-9]+]] = inttoptr i32 [[TWENTYNINE]] to i32*

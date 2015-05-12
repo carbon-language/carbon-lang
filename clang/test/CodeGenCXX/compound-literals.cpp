@@ -45,13 +45,13 @@ int *p = (Z){ {1, 2, 3} }.i;
 
 
 int *PR21912_1 = (int []){};
-// CHECK-LABEL: define {{.*}}__cxx_global_var_init1()
-// CHECK: store i32* getelementptr inbounds ([0 x i32], [0 x i32]* @.compoundliteral2, i32 0, i32 0), i32** @PR21912_1
+// CHECK-LABEL: define {{.*}}__cxx_global_var_init.1()
+// CHECK: store i32* getelementptr inbounds ([0 x i32], [0 x i32]* @.compoundliteral.2, i32 0, i32 0), i32** @PR21912_1
 
 union PR21912Ty {
   long long l;
   double d;
 };
 union PR21912Ty *PR21912_2 = (union PR21912Ty[]){{.d = 2.0}, {.l = 3}};
-// CHECK-LABEL: define {{.*}}__cxx_global_var_init3()
-// CHECK: store %union.PR21912Ty* getelementptr inbounds ([2 x %union.PR21912Ty], [2 x %union.PR21912Ty]* bitcast (<{ { double }, %union.PR21912Ty }>* @.compoundliteral4 to [2 x %union.PR21912Ty]*), i32 0, i32 0), %union.PR21912Ty** @PR21912_2
+// CHECK-LABEL: define {{.*}}__cxx_global_var_init.3()
+// CHECK: store %union.PR21912Ty* getelementptr inbounds ([2 x %union.PR21912Ty], [2 x %union.PR21912Ty]* bitcast (<{ { double }, %union.PR21912Ty }>* @.compoundliteral.4 to [2 x %union.PR21912Ty]*), i32 0, i32 0), %union.PR21912Ty** @PR21912_2

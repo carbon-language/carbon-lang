@@ -54,7 +54,7 @@ namespace test3 {
 // test that instead of an internal alias we just use the other destructor
 // directly.
 
-// CHECK1: define internal void @__cxx_global_var_init1()
+// CHECK1: define internal void @__cxx_global_var_init.1()
 // CHECK1: call i32 @__cxa_atexit{{.*}}_ZN5test312_GLOBAL__N_11AD2Ev
 // CHECK1: define internal void @_ZN5test312_GLOBAL__N_11AD2Ev(
 namespace {
@@ -73,13 +73,13 @@ namespace test4 {
   // guarantee that they will be present in every TU. Instead, we just call
   // A's destructor directly.
 
-  // CHECK1: define internal void @__cxx_global_var_init2()
+  // CHECK1: define internal void @__cxx_global_var_init.2()
   // CHECK1: call i32 @__cxa_atexit{{.*}}_ZN5test41AD2Ev
   // CHECK1: define linkonce_odr void @_ZN5test41AD2Ev({{.*}} comdat align
 
   // test that we don't do this optimization at -O0 so that the debugger can
   // see both destructors.
-  // NOOPT: define internal void @__cxx_global_var_init2()
+  // NOOPT: define internal void @__cxx_global_var_init.2()
   // NOOPT: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD2Ev
   // NOOPT: define linkonce_odr void @_ZN5test41BD2Ev({{.*}} comdat align
   struct A {
@@ -94,7 +94,7 @@ namespace test4 {
 namespace test5 {
   // similar to test4, but with an internal B.
 
-  // CHECK2: define internal void @__cxx_global_var_init3()
+  // CHECK2: define internal void @__cxx_global_var_init.3()
   // CHECK2: call i32 @__cxa_atexit{{.*}}_ZN5test51AD2Ev
   // CHECK2: define linkonce_odr void @_ZN5test51AD2Ev({{.*}} comdat align
   struct A {
@@ -120,7 +120,7 @@ namespace test6 {
   };
   }
   B X;
-  // CHECK3: define internal void @__cxx_global_var_init4()
+  // CHECK3: define internal void @__cxx_global_var_init.4()
   // CHECK3: call i32 @__cxa_atexit({{.*}}@_ZN5test61AD2Ev
 }
 
@@ -142,7 +142,7 @@ namespace test7 {
 namespace test8 {
   // Test that we replace ~zed with ~bar which is an alias to ~foo.
   // CHECK4: @_ZN5test83barD2Ev = alias {{.*}} @_ZN5test83fooD2Ev
-  // CHECK4: define internal void @__cxx_global_var_init5()
+  // CHECK4: define internal void @__cxx_global_var_init.5()
   // CHECK4: call i32 @__cxa_atexit({{.*}}@_ZN5test83barD2Ev
   struct foo {
     ~foo();

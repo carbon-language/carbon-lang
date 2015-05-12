@@ -39,7 +39,7 @@ void test1() {
   // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 0
   // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 1
   // CHECK-1:   store %struct.Foo* %f, %struct.Foo**
-  // CHECK-1:   call void @[[HelperName:[A-Za-z0-9_]+]](%[[Capture]]*
+  // CHECK-1:   call void @[[HelperName:[\.A-Za-z0-9_]+]](%[[Capture]]*
   // CHECK-1:   call {{.*}}FooD1Ev
   // CHECK-1:   ret
 }
@@ -94,7 +94,7 @@ void test4() {
     f.x = 5;
   }
   // CHECK-4-LABEL: define void @_Z5test4v
-  // CHECK-4:   call void @[[HelperName:["$_A-Za-z0-9]+]](%[[Capture:.*]]*
+  // CHECK-4:   call void @[[HelperName:[\."$_A-Za-z0-9]+]](%[[Capture:.*]]*
   // CHECK-4:   ret void
   //
   // CHECK-4: define internal void @[[HelperName]]

@@ -25,7 +25,7 @@ void test1() {
   // CHECK-1: alloca %struct.anon
   // CHECK-1: getelementptr inbounds %struct.anon, %struct.anon*
   // CHECK-1: store i32* %i
-  // CHECK-1: call void @[[HelperName:__captured_stmt[0-9]+]]
+  // CHECK-1: call void @[[HelperName:__captured_stmt[\.0-9]+]]
 }
 
 // CHECK-1: define internal void @[[HelperName]](%struct.anon
@@ -45,7 +45,7 @@ void test2(int x) {
   }
   // CHECK-2: test2
   // CHECK-2-NOT: %i
-  // CHECK-2: call void @[[HelperName:__captured_stmt[0-9]+]]
+  // CHECK-2: call void @[[HelperName:__captured_stmt[\.0-9]+]]
 }
 
 // CHECK-2: define internal void @[[HelperName]]
@@ -90,7 +90,7 @@ void dont_capture_global() {
   }
 
   // CHECK-GLOBALS: %[[Capture:struct\.anon[\.0-9]*]] = type {}
-  // CHECK-GLOBALS: call void @__captured_stmt[[HelperName:[0-9]+]](%[[Capture]]
+  // CHECK-GLOBALS: call void @__captured_stmt[[HelperName:[\.0-9]+]](%[[Capture]]
 }
 
 // CHECK-GLOBALS: define internal void @__captured_stmt[[HelperName]]

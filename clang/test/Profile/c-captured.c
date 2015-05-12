@@ -5,7 +5,7 @@
 
 // PGOGEN: @[[DCC:__llvm_profile_counters_debug_captured]] = private global [3 x i64] zeroinitializer
 // PGOGEN: @[[CSC:"__llvm_profile_counters_c-captured.c:__captured_stmt"]] = private global [2 x i64] zeroinitializer
-// PGOGEN: @[[C1C:"__llvm_profile_counters_c-captured.c:__captured_stmt1"]] = private global [3 x i64] zeroinitializer
+// PGOGEN: @[[C1C:"__llvm_profile_counters_c-captured.c:__captured_stmt.1"]] = private global [3 x i64] zeroinitializer
 
 // PGOALL-LABEL: define void @debug_captured()
 // PGOGEN: store {{.*}} @[[DCC]], i64 0, i64 0
@@ -31,7 +31,7 @@ void debug_captured() {
 
   if (x) {} // This is DC1. Checked above.
 
-  // PGOALL-LABEL: define internal void @__captured_stmt1(
+  // PGOALL-LABEL: define internal void @__captured_stmt.1(
   // PGOGEN: store {{.*}} @[[C1C]], i64 0, i64 0
   #pragma clang __debug captured
   {

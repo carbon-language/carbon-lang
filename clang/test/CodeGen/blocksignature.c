@@ -3,7 +3,7 @@
 
 // X64: @.str = private unnamed_addr constant [6 x i8] c"v8@?0\00" 
 // X64: @__block_literal_global = internal constant {{.*}} { i8** @_NSConcreteGlobalBlock, i32 1342177280,
-// X64: @.str1 = private unnamed_addr constant [12 x i8] c"i16@?0c8f12\00"
+// X64: @.str.1 = private unnamed_addr constant [12 x i8] c"i16@?0c8f12\00"
 // X64:   store i32 1073741824, i32*
 
 // X32: [[STR1:@.*]] = private unnamed_addr constant [6 x i8] c"v4@?0\00" 

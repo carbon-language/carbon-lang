@@ -17,7 +17,7 @@
 
 @implementation AllPointers
 @end
-// CHECK-LP64: L_OBJC_CLASS_NAME_1:
+// CHECK-LP64: L_OBJC_CLASS_NAME_.1:
 // CHECK-LP64-NEXT: .asciz	"\003"
 
 @class NSString, NSNumber;
@@ -40,7 +40,7 @@
 
 @implementation B @end
 
-// CHECK-LP64: L_OBJC_CLASS_NAME_15:
+// CHECK-LP64: L_OBJC_CLASS_NAME_.15:
 // CHECK-LP64-NEXT: .asciz	"\022"
 
 @interface UnsafePerson {
@@ -52,7 +52,7 @@
 @end
 
 @implementation UnsafePerson @end
-// CHECK-LP64: L_OBJC_CLASS_NAME_20:
+// CHECK-LP64: L_OBJC_CLASS_NAME_.20:
 // CHECK-LP64-NEXT: .asciz      "!"
 
 // rdar://16136439
@@ -61,5 +61,5 @@
 @end
 
 @implementation rdar16136439 @end
-// CHECK-LP64: L_OBJC_PROP_NAME_ATTR_29:
+// CHECK-LP64: L_OBJC_PROP_NAME_ATTR_.29:
 // CHECK-LP64-NEXT: .asciz  "T@,R,W,N,V_first"

@@ -25,7 +25,7 @@
 // CHECK: @"\01l_OBJC_$_CATEGORY_A_$_Cat" = private global {{.*}} section "__DATA, __objc_const", align 8
 // CHECK: @"OBJC_CLASSLIST_SUP_REFS_$_{{[0-9]*}}" = private global {{.*}} section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8
 // CHECK: @OBJC_SELECTOR_REFERENCES_ = private externally_initialized global {{.*}} section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
-// CHECK: @"OBJC_CLASSLIST_SUP_REFS_$_{{[0-9]*}}" = private global {{.*}} section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8
+// CHECK: @"OBJC_CLASSLIST_SUP_REFS_$_{{[\.0-9]*}}" = private global {{.*}} section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8
 // CHECK: @"OBJC_CLASS_$_B" = external global
 // CHECK: @"OBJC_CLASSLIST_REFERENCES_$_{{[0-9]*}}" = private global {{.*}} section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8
 // CHECK: @"\01l_objc_msgSend_fixup_alloc" = weak hidden global {{.*}} section "__DATA, __objc_msgrefs, coalesced", align 16

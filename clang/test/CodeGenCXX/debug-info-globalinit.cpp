@@ -22,13 +22,13 @@ int main(void) {}
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: store i32 %[[C0]], i32* @_ZL1i, align 4, !dbg
 // 
-// CHECK-LABEL: define internal void @__cxx_global_var_init1()
+// CHECK-LABEL: define internal void @__cxx_global_var_init.1()
 // CHECK-NOT: dbg
 // CHECK: %[[C1:.+]] = call i32 @_Z4testv()
 // CHECK-NOT: dbg
 // CHECK: store i32 %[[C1]], i32* @_ZL1j, align 4
 //
-// CHECK-LABEL: define internal void @__cxx_global_var_init2()
+// CHECK-LABEL: define internal void @__cxx_global_var_init.2()
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: %[[C2:.+]] = call i32 @_Z4testv(), !dbg ![[LINE2:.*]]
 // CHECK-NOT: __cxx_global_var_init

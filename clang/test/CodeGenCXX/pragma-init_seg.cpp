@@ -15,7 +15,7 @@ int x = f();
 #pragma init_seg(lib)
 int y = f();
 // CHECK: @"\01?y@simple_init@@3HA" = global i32 0, align 4
-// CHECK: @__cxx_init_fn_ptr1 = private constant void ()* @"\01??__Ey@simple_init@@YAXXZ", section ".CRT$XCL"
+// CHECK: @__cxx_init_fn_ptr.1 = private constant void ()* @"\01??__Ey@simple_init@@YAXXZ", section ".CRT$XCL"
 
 #pragma init_seg(user)
 int z = f();
@@ -29,14 +29,14 @@ namespace internal_init {
 namespace {
 int x = f();
 // CHECK: @"\01?x@?A@internal_init@@3HA" = internal global i32 0, align 4
-// CHECK: @__cxx_init_fn_ptr2 = private constant void ()* @"\01??__Ex@?A@internal_init@@YAXXZ", section ".asdf"
+// CHECK: @__cxx_init_fn_ptr.2 = private constant void ()* @"\01??__Ex@?A@internal_init@@YAXXZ", section ".asdf"
 }
 }
 
 namespace selectany_init {
 int __declspec(selectany) x = f();
 // CHECK: @"\01?x@selectany_init@@3HA" = weak_odr global i32 0, comdat, align 4
-// CHECK: @__cxx_init_fn_ptr3 = private constant void ()* @"\01??__Ex@selectany_init@@YAXXZ", section ".asdf", comdat($"\01?x@selectany_init@@3HA")
+// CHECK: @__cxx_init_fn_ptr.3 = private constant void ()* @"\01??__Ex@selectany_init@@YAXXZ", section ".asdf", comdat($"\01?x@selectany_init@@3HA")
 }
 
 namespace explicit_template_instantiation {
@@ -44,7 +44,7 @@ template <typename T> struct A { static const int x; };
 template <typename T> const int A<T>::x = f();
 template struct A<int>;
 // CHECK: @"\01?x@?$A@H@explicit_template_instantiation@@2HB" = weak_odr global i32 0, comdat, align 4
-// CHECK: @__cxx_init_fn_ptr4 = private constant void ()* @"\01??__Ex@?$A@H@explicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@explicit_template_instantiation@@2HB")
+// CHECK: @__cxx_init_fn_ptr.4 = private constant void ()* @"\01??__Ex@?$A@H@explicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@explicit_template_instantiation@@2HB")
 }
 
 namespace implicit_template_instantiation {
@@ -52,7 +52,7 @@ template <typename T> struct A { static const int x; };
 template <typename T> const int A<T>::x = f();
 int g() { return A<int>::x; }
 // CHECK: @"\01?x@?$A@H@implicit_template_instantiation@@2HB" = linkonce_odr global i32 0, comdat, align 4
-// CHECK: @__cxx_init_fn_ptr5 = private constant void ()* @"\01??__Ex@?$A@H@implicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@implicit_template_instantiation@@2HB")
+// CHECK: @__cxx_init_fn_ptr.5 = private constant void ()* @"\01??__Ex@?$A@H@implicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@implicit_template_instantiation@@2HB")
 }
 
 // ... and here's where we emitted user level ctors.
@@ -65,8 +65,8 @@ int g() { return A<int>::x; }
 //
 // CHECK: @llvm.used = appending global [6 x i8*]
 // CHECK: [i8* bitcast (void ()** @__cxx_init_fn_ptr to i8*),
-// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr1 to i8*),
-// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr2 to i8*),
-// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr3 to i8*),
-// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr4 to i8*),
-// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr5 to i8*)], section "llvm.metadata"
+// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr.1 to i8*),
+// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr.2 to i8*),
+// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr.3 to i8*),
+// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr.4 to i8*),
+// CHECK: i8* bitcast (void ()** @__cxx_init_fn_ptr.5 to i8*)], section "llvm.metadata"

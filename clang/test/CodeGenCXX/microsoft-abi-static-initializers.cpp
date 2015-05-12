@@ -102,7 +102,7 @@ void MultipleStatics() {
 // CHECK: and i32 {{.*}}, 16
 //   ...
 // CHECK: and i32 {{.*}}, -2147483648
-// CHECK: load i32, i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA1"
+// CHECK: load i32, i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA.1"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: and i32 {{.*}}, 2
 // CHECK: and i32 {{.*}}, 4

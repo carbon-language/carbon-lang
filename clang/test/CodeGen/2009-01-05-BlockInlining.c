@@ -5,8 +5,8 @@
 // and block literals are internal constants.
 // CHECK: @__block_descriptor_tmp = internal constant
 // CHECK: @__block_literal_global = internal constant
-// CHECK: @__block_descriptor_tmp2 = internal constant
-// CHECK: @__block_literal_global3 = internal constant
+// CHECK: @__block_descriptor_tmp.2 = internal constant
+// CHECK: @__block_literal_global.3 = internal constant
 static int fun(int x) {
 	return x+1;
 }

@@ -53,5 +53,5 @@ void FUNC1()
 }
 // CHECK-LP64: @ArrayRecurs = internal global
 // CHECK-LP64: @FUNC.ArrayRecurs = internal global
-// CHECK-LP64: @FUNC.ArrayRecurs3 = internal global
+// CHECK-LP64: @FUNC.ArrayRecurs.3 = internal global
 // CHECK-LP64: @FUNC1.ArrayRecurs = internal global

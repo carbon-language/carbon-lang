@@ -16,5 +16,5 @@
 @implementation AllPointers
 @end
 
-// CHECK-LP64: L_OBJC_CLASS_NAME_6:
+// CHECK-LP64: L_OBJC_CLASS_NAME_.6:
 // CHECK-LP64-NEXT: .asciz	"\004"

@@ -128,23 +128,23 @@ int (*StaticMembers<T>::f)() = []{return 5;};
 // CHECK: ret i32 2
 template float StaticMembers<float>::x;
 
-// CHECK-LABEL: define internal void @__cxx_global_var_init1()
+// CHECK-LABEL: define internal void @__cxx_global_var_init.1()
 // CHECK: call i32 @_ZNK13StaticMembersIfE1yMUlvE_clEv
 // CHECK-LABEL: define linkonce_odr i32 @_ZNK13StaticMembersIfE1yMUlvE_clEv
 // CHECK: ret i32 3
 template float StaticMembers<float>::y;
 
-// CHECK-LABEL: define internal void @__cxx_global_var_init2()
+// CHECK-LABEL: define internal void @__cxx_global_var_init.2()
 // CHECK: call i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_
 // CHECK: declare i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_()
 template float StaticMembers<float>::z;
 
-// CHECK-LABEL: define internal void @__cxx_global_var_init3()
+// CHECK-LABEL: define internal void @__cxx_global_var_init.3()
 // CHECK: call {{.*}} @_ZNK13StaticMembersIfE1fMUlvE_cvPFivEEv
 // CHECK-LABEL: define linkonce_odr i32 ()* @_ZNK13StaticMembersIfE1fMUlvE_cvPFivEEv
 template int (*StaticMembers<float>::f)();
 
-// CHECK-LABEL: define internal void @__cxx_global_var_init4
+// CHECK-LABEL: define internal void @__cxx_global_var_init.4
 // CHECK: call i32 @"_ZNK13StaticMembersIdE3$_2clEv"
 // CHECK-LABEL: define internal i32 @"_ZNK13StaticMembersIdE3$_2clEv"
 // CHECK: ret i32 42

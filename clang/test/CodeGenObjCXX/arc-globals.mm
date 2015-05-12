@@ -22,6 +22,6 @@ id global_obj2 = getObject();
 // CHECK-LABEL: define internal void @_GLOBAL__sub_I_arc_globals.mm
 // CHECK: call i8* @objc_autoreleasePoolPush()
 // CHECK-NEXT: call void @__cxx_global_var_init
-// CHECK-NEXT: call void @__cxx_global_var_init1
+// CHECK-NEXT: call void @__cxx_global_var_init.1
 // CHECK-NEXT: call void @objc_autoreleasePoolPop(
 // CHECK-NEXT: ret void
