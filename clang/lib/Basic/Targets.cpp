@@ -5349,11 +5349,13 @@ class SparcTargetInfo : public TargetInfo {
   static const char * const GCCRegNames[];
   bool SoftFloat;
 public:
-  SparcTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {}
+  SparcTargetInfo(const llvm::Triple &Triple)
+      : TargetInfo(Triple), SoftFloat(false) {}
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
-    SoftFloat = false;
+    // The backend doesn't actually handle soft float yet, but in case someone
+    // is using the support for the front end continue to support it.
     auto Feature = std::find(Features.begin(), Features.end(), "+soft-float");
     if (Feature != Features.end()) {
       SoftFloat = true;
