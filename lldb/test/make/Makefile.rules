@@ -128,7 +128,7 @@ else
 	endif
 endif
 
-CFLAGS ?= -g -O0
+CFLAGS ?= -g -O0 -fno-builtin
 ifeq "$(OS)" "Darwin"
 	CFLAGS += $(ARCHFLAG) $(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) -I$(LLDB_BASE_DIR)include
 else
