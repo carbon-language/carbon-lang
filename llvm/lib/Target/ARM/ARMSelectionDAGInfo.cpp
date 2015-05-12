@@ -24,6 +24,114 @@ ARMSelectionDAGInfo::ARMSelectionDAGInfo(const DataLayout &DL)
 ARMSelectionDAGInfo::~ARMSelectionDAGInfo() {
 }
 
+// Emit, if possible, a specialized version of the given Libcall. Typically this
+// means selecting the appropriately aligned version, but we also convert memset
+// of 0 into memclr.
+SDValue ARMSelectionDAGInfo::
+EmitSpecializedLibcall(SelectionDAG &DAG, SDLoc dl,
+                       SDValue Chain,
+                       SDValue Dst, SDValue Src,
+                       SDValue Size, unsigned Align,
+                       RTLIB::Libcall LC) const {
+  const ARMSubtarget &Subtarget =
+      DAG.getMachineFunction().getSubtarget<ARMSubtarget>();
+  const ARMTargetLowering *TLI = Subtarget.getTargetLowering();
+
+  // Only use a specialized AEABI function if the default version of this
+  // Libcall is an AEABI function.
+  if (std::strncmp(TLI->getLibcallName(LC), "__aeabi", 7) != 0)
+    return SDValue();
+
+  // Translate RTLIB::Libcall to AEABILibcall. We only do this in order to be
+  // able to translate memset to memclr and use the value to index the function
+  // name array.
+  enum {
+    AEABI_MEMCPY = 0,
+    AEABI_MEMMOVE,
+    AEABI_MEMSET,
+    AEABI_MEMCLR
+  } AEABILibcall;
+  switch (LC) {
+  case RTLIB::MEMCPY:
+    AEABILibcall = AEABI_MEMCPY;
+    break;
+  case RTLIB::MEMMOVE:
+    AEABILibcall = AEABI_MEMMOVE;
+    break;
+  case RTLIB::MEMSET: 
+    AEABILibcall = AEABI_MEMSET;
+    if (ConstantSDNode *ConstantSrc = dyn_cast<ConstantSDNode>(Src))
+      if (ConstantSrc->getZExtValue() == 0)
+        AEABILibcall = AEABI_MEMCLR;
+    break;
+  default:
+    return SDValue();
+  }
+
+  // Choose the most-aligned libcall variant that we can
+  enum {
+    ALIGN1 = 0,
+    ALIGN4,
+    ALIGN8
+  } AlignVariant;
+  if ((Align & 7) == 0)
+    AlignVariant = ALIGN8;
+  else if ((Align & 3) == 0)
+    AlignVariant = ALIGN4;
+  else
+    AlignVariant = ALIGN1;
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Ty = TLI->getDataLayout()->getIntPtrType(*DAG.getContext());
+  Entry.Node = Dst;
+  Args.push_back(Entry);
+  if (AEABILibcall == AEABI_MEMCLR) {
+    Entry.Node = Size;
+    Args.push_back(Entry);
+  } else if (AEABILibcall == AEABI_MEMSET) {
+    // Adjust parameters for memset, EABI uses format (ptr, size, value),
+    // GNU library uses (ptr, value, size)
+    // See RTABI section 4.3.4
+    Entry.Node = Size;
+    Args.push_back(Entry);
+
+    // Extend or truncate the argument to be an i32 value for the call.
+    if (Src.getValueType().bitsGT(MVT::i32))
+      Src = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Src);
+    else if (Src.getValueType().bitsLT(MVT::i32))
+      Src = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Src);
+
+    Entry.Node = Src; 
+    Entry.Ty = Type::getInt32Ty(*DAG.getContext());
+    Entry.isSExt = false;
+    Args.push_back(Entry);
+  } else {
+    Entry.Node = Src;
+    Args.push_back(Entry);
+    
+    Entry.Node = Size;
+    Args.push_back(Entry);
+  }
+
+  char const *FunctionNames[4][3] = {
+    { "__aeabi_memcpy",  "__aeabi_memcpy4",  "__aeabi_memcpy8"  },
+    { "__aeabi_memmove", "__aeabi_memmove4", "__aeabi_memmove8" },
+    { "__aeabi_memset",  "__aeabi_memset4",  "__aeabi_memset8"  },
+    { "__aeabi_memclr",  "__aeabi_memclr4",  "__aeabi_memclr8"  }
+  };
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(Chain)
+    .setCallee(TLI->getLibcallCallingConv(LC),
+               Type::getVoidTy(*DAG.getContext()),
+               DAG.getExternalSymbol(FunctionNames[AEABILibcall][AlignVariant],
+                                     TLI->getPointerTy()), std::move(Args), 0)
+    .setDiscardResult();
+  std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
+  
+  return CallResult.second;
+}
+
 SDValue
 ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                              SDValue Chain,
@@ -42,10 +150,12 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
   if (!ConstantSize)
-    return SDValue();
+    return EmitSpecializedLibcall(DAG, dl, Chain, Dst, Src, Size, Align,
+                                  RTLIB::MEMCPY);
   uint64_t SizeVal = ConstantSize->getZExtValue();
   if (!AlwaysInline && SizeVal > Subtarget.getMaxInlineSizeThreshold())
-    return SDValue();
+    return EmitSpecializedLibcall(DAG, dl, Chain, Dst, Src, Size, Align,
+                                  RTLIB::MEMCPY);
 
   unsigned BytesLeft = SizeVal & 3;
   unsigned NumMemOps = SizeVal >> 2;
@@ -142,59 +252,26 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                      makeArrayRef(TFOps, i));
 }
 
-// Adjust parameters for memset, EABI uses format (ptr, size, value),
-// GNU library uses (ptr, value, size)
-// See RTABI section 4.3.4
+
+SDValue ARMSelectionDAGInfo::
+EmitTargetCodeForMemmove(SelectionDAG &DAG, SDLoc dl,
+                         SDValue Chain,
+                         SDValue Dst, SDValue Src,
+                         SDValue Size, unsigned Align,
+                         bool isVolatile,
+                         MachinePointerInfo DstPtrInfo,
+                         MachinePointerInfo SrcPtrInfo) const {
+  return EmitSpecializedLibcall(DAG, dl, Chain, Dst, Src, Size, Align,
+                                RTLIB::MEMMOVE);
+}
+
+
 SDValue ARMSelectionDAGInfo::
 EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                         SDValue Chain, SDValue Dst,
                         SDValue Src, SDValue Size,
                         unsigned Align, bool isVolatile,
                         MachinePointerInfo DstPtrInfo) const {
-  const ARMSubtarget &Subtarget =
-      DAG.getMachineFunction().getSubtarget<ARMSubtarget>();
-  // Use default for non-AAPCS (or MachO) subtargets
-  if (!Subtarget.isAAPCS_ABI() || Subtarget.isTargetMachO() ||
-      Subtarget.isTargetWindows())
-    return SDValue();
-
-  const ARMTargetLowering &TLI = *Subtarget.getTargetLowering();
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-
-  // First argument: data pointer
-  Type *IntPtrTy = TLI.getDataLayout()->getIntPtrType(*DAG.getContext());
-  Entry.Node = Dst;
-  Entry.Ty = IntPtrTy;
-  Args.push_back(Entry);
-
-  // Second argument: buffer size
-  Entry.Node = Size;
-  Entry.Ty = IntPtrTy;
-  Entry.isSExt = false;
-  Args.push_back(Entry);
-
-  // Extend or truncate the argument to be an i32 value for the call.
-  if (Src.getValueType().bitsGT(MVT::i32))
-    Src = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Src);
-  else
-    Src = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Src);
-
-  // Third argument: value to fill
-  Entry.Node = Src;
-  Entry.Ty = Type::getInt32Ty(*DAG.getContext());
-  Entry.isSExt = true;
-  Args.push_back(Entry);
-
-  // Emit __eabi_memset call
-  TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(TLI.getLibcallCallingConv(RTLIB::MEMSET),
-               Type::getVoidTy(*DAG.getContext()),
-               DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
-                                     TLI.getPointerTy()), std::move(Args), 0)
-    .setDiscardResult();
-
-  std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
-  return CallResult.second;
+  return EmitSpecializedLibcall(DAG, dl, Chain, Dst, Src, Size, Align,
+                                RTLIB::MEMSET);
 }

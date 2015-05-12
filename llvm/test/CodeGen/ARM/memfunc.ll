@@ -18,13 +18,64 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %src, i32 500, i32 0, i1 false)
 
   ; EABI memset swaps arguments
+  ; CHECK-IOS: mov r1, #1
+  ; CHECK-IOS: memset
+  ; CHECK-DARWIN: movs r1, #1
+  ; CHECK-DARWIN: memset
+  ; CHECK-EABI: mov r2, #1
+  ; CHECK-EABI: __aeabi_memset
+  call void @llvm.memset.p0i8.i32(i8* %dest, i8 1, i32 500, i32 0, i1 false)
+
+  ; EABI uses memclr if value set to 0
   ; CHECK-IOS: mov r1, #0
   ; CHECK-IOS: memset
   ; CHECK-DARWIN: movs r1, #0
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
-  ; CHECK-EABI: __aeabi_memset
+  ; CHECK-EABI: __aeabi_memclr
   call void @llvm.memset.p0i8.i32(i8* %dest, i8 0, i32 500, i32 0, i1 false)
+  
+  ; EABI uses aligned function variants if possible
+
+  ; CHECK-IOS: memmove
+  ; CHECK-DARWIN: memmove
+  ; CHECK-EABI: __aeabi_memmove4
+  call void @llvm.memmove.p0i8.p0i8.i32(i8* %dest, i8* %src, i32 500, i32 4, i1 false)
+
+  ; CHECK-IOS: memcpy
+  ; CHECK-DARWIN: memcpy
+  ; CHECK-EABI: __aeabi_memcpy4
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %src, i32 500, i32 4, i1 false)
+
+  ; CHECK-IOS: memset
+  ; CHECK-DARWIN: memset
+  ; CHECK-EABI: __aeabi_memset4
+  call void @llvm.memset.p0i8.i32(i8* %dest, i8 1, i32 500, i32 4, i1 false)
+
+  ; CHECK-IOS: memset
+  ; CHECK-DARWIN: memset
+  ; CHECK-EABI: __aeabi_memclr4
+  call void @llvm.memset.p0i8.i32(i8* %dest, i8 0, i32 500, i32 4, i1 false)
+
+  ; CHECK-IOS: memmove
+  ; CHECK-DARWIN: memmove
+  ; CHECK-EABI: __aeabi_memmove8
+  call void @llvm.memmove.p0i8.p0i8.i32(i8* %dest, i8* %src, i32 500, i32 8, i1 false)
+
+  ; CHECK-IOS: memcpy
+  ; CHECK-DARWIN: memcpy
+  ; CHECK-EABI: __aeabi_memcpy8
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %src, i32 500, i32 8, i1 false)
+
+  ; CHECK-IOS: memset
+  ; CHECK-DARWIN: memset
+  ; CHECK-EABI: __aeabi_memset8
+  call void @llvm.memset.p0i8.i32(i8* %dest, i8 1, i32 500, i32 8, i1 false)
+
+  ; CHECK-IOS: memset
+  ; CHECK-DARWIN: memset
+  ; CHECK-EABI: __aeabi_memclr8
+  call void @llvm.memset.p0i8.i32(i8* %dest, i8 0, i32 500, i32 8, i1 false)
+
   unreachable
 }
 
@@ -53,17 +104,17 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK-IOS: mov r0, sp
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARINW: add r0, sp, #4
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: add r0, sp, #4
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
   ; CHECK-EABI: add r0, sp, #4
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [9 x i8], align 1
   %2 = bitcast [9 x i8]* %arr2 to i8*
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -90,15 +141,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r0, sp, #3}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [7 x i8], align 1
   %2 = bitcast [7 x i8]* %arr2 to i8*
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -125,15 +176,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r., sp, #(1|5)}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [9 x i8], align 1
   %2 = getelementptr inbounds [9 x i8], [9 x i8]* %arr2, i32 0, i32 4
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -160,15 +211,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r., sp, #(1|5)}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [13 x i8], align 1
   %2 = getelementptr inbounds [13 x i8], [13 x i8]* %arr2, i32 0, i32 1
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -195,15 +246,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r., sp, #(1|5)}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [13 x i8], align 1
   %2 = getelementptr inbounds [13 x i8], [13 x i8]* %arr2, i32 0, i32 %i
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -230,15 +281,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r., sp, #(1|5)}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [13 x i8], align 1
   %2 = getelementptr [13 x i8], [13 x i8]* %arr2, i32 0, i32 4
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
@@ -265,15 +316,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dest, i8* %1, i32 %n, i32 0, i1 false)
 
   ; CHECK: {{add(.w)? r., sp, #(1|5)}}
-  ; CHECK-IOS: mov r1, #0
+  ; CHECK-IOS: mov r1, #1
   ; CHECK-IOS: memset
-  ; CHECK-DARWIN: movs r1, #0
+  ; CHECK-DARWIN: movs r1, #1
   ; CHECK-DARWIN: memset
-  ; CHECK-EABI: mov r2, #0
+  ; CHECK-EABI: mov r2, #1
   ; CHECK-EABI: __aeabi_memset
   %arr2 = alloca [13 x i8], align 1
   %2 = getelementptr inbounds [13 x i8], [13 x i8]* %arr2, i32 0, i32 16
-  call void @llvm.memset.p0i8.i32(i8* %2, i8 0, i32 %n, i32 0, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* %2, i8 1, i32 %n, i32 0, i1 false)
 
   unreachable
 }
