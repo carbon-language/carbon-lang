@@ -562,53 +562,53 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
 
   // All other FPU types, valid or invalid.
   switch(llvm::ARMTargetParser::parseFPU(FPU)) {
-  case llvm::ARM::INVALID_FPU:
-  case llvm::ARM::SOFTVFP:
+  case llvm::ARM::FK_INVALID:
+  case llvm::ARM::FK_SOFTVFP:
     Features.push_back("-vfp2");
     Features.push_back("-vfp3");
     Features.push_back("-neon");
     break;
-  case llvm::ARM::VFP:
-  case llvm::ARM::VFPV2:
+  case llvm::ARM::FK_VFP:
+  case llvm::ARM::FK_VFPV2:
     Features.push_back("+vfp2");
     Features.push_back("-neon");
     break;
-  case llvm::ARM::VFPV3_D16:
+  case llvm::ARM::FK_VFPV3_D16:
     Features.push_back("+d16");
     // fall-through
-  case llvm::ARM::VFPV3:
+  case llvm::ARM::FK_VFPV3:
     Features.push_back("+vfp3");
     Features.push_back("-neon");
     break;
-  case llvm::ARM::VFPV4_D16:
+  case llvm::ARM::FK_VFPV4_D16:
     Features.push_back("+d16");
     // fall-through
-  case llvm::ARM::VFPV4:
+  case llvm::ARM::FK_VFPV4:
     Features.push_back("+vfp4");
     Features.push_back("-neon");
     break;
-  case llvm::ARM::FPV5_D16:
+  case llvm::ARM::FK_FPV5_D16:
     Features.push_back("+d16");
     // fall-through
-  case llvm::ARM::FP_ARMV8:
+  case llvm::ARM::FK_FP_ARMV8:
     Features.push_back("+fp-armv8");
     Features.push_back("-neon");
     Features.push_back("-crypto");
     break;
-  case llvm::ARM::NEON_FP_ARMV8:
+  case llvm::ARM::FK_NEON_FP_ARMV8:
     Features.push_back("+fp-armv8");
     Features.push_back("+neon");
     Features.push_back("-crypto");
     break;
-  case llvm::ARM::CRYPTO_NEON_FP_ARMV8:
+  case llvm::ARM::FK_CRYPTO_NEON_FP_ARMV8:
     Features.push_back("+fp-armv8");
     Features.push_back("+neon");
     Features.push_back("+crypto");
     break;
-  case llvm::ARM::NEON:
+  case llvm::ARM::FK_NEON:
     Features.push_back("+neon");
     break;
-  case llvm::ARM::NEON_VFPV4:
+  case llvm::ARM::FK_NEON_VFPV4:
     Features.push_back("+neon");
     Features.push_back("+vfp4");
     break;
