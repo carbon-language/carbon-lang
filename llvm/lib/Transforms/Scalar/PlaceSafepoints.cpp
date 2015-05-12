@@ -606,13 +606,11 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
                         PollLocations.end());
 
     // Insert a poll at each point the analysis pass identified
-    for (size_t i = 0; i < PollLocations.size(); i++) {
+    // The poll location must be the terminator of a loop latch block.
+    for (TerminatorInst *Term : PollLocations) {
       // We are inserting a poll, the function is modified
       modified = true;
-
-      // The poll location must be the terminator of a loop latch block.
-      TerminatorInst *Term = PollLocations[i];
-
+      
       std::vector<CallSite> ParsePoints;
       if (SplitBackedge) {
         // Split the backedge of the loop and insert the poll within that new
@@ -639,11 +637,8 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         // date and use a more natural merged loop.
         SetVector<BasicBlock *> SplitBackedges;
         for (BasicBlock *Header : Headers) {
-          BasicBlock *NewBB = SplitEdge(Term->getParent(), Header, nullptr);
-          SplitBackedges.insert(NewBB);
-        }
-        DT.recalculate(F);
-        for (BasicBlock *NewBB : SplitBackedges) {
+          BasicBlock *NewBB = SplitEdge(Term->getParent(), Header, &DT);
+          
           std::vector<CallSite> RuntimeCalls;
           InsertSafepointPoll(DT, NewBB->getTerminator(), RuntimeCalls);
           NumBackedgeSafepoints++;
