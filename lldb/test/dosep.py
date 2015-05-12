@@ -115,16 +115,20 @@ def process_dir_worker(arg_tuple):
     (root, files, test_root, dotest_options) = arg_tuple
     return process_dir(root, files, test_root, dotest_options)
 
-def walk_and_invoke(test_root, dotest_options, num_threads):
+def walk_and_invoke(test_directory, test_subdir, dotest_options, num_threads):
     """Look for matched files and invoke test driver on each one.
     In single-threaded mode, each test driver is invoked directly.
     In multi-threaded mode, submit each test driver to a worker
-    queue, and then wait for all to complete."""
+    queue, and then wait for all to complete.
+
+    test_directory - lldb/test/ directory
+    test_subdir - lldb/test/ or a subfolder with the tests we're interested in running
+    """
 
     # Collect the test files that we'll run.
     test_work_items = []
-    for root, dirs, files in os.walk(test_root, topdown=False):
-        test_work_items.append((root, files, test_root, dotest_options))
+    for root, dirs, files in os.walk(test_subdir, topdown=False):
+        test_work_items.append((root, files, test_directory, dotest_options))
 
     # Run the items, either in a pool (for multicore speedup) or
     # calling each individually.
@@ -179,8 +183,7 @@ def getExpectedTimeouts(dotest_options):
 def main():
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
-    test_root = os.path.dirname(os.path.realpath(__file__))
-
+    test_directory = os.path.dirname(os.path.realpath(__file__))
     parser = OptionParser(usage="""\
 Run lldb test suite using a separate process for each test file.
 
@@ -214,6 +217,12 @@ Run lldb test suite using a separate process for each test file.
     opts, args = parser.parse_args()
     dotest_options = opts.dotest_options
 
+    # The root directory was specified on the command line
+    if len(args) == 0:
+        test_subdir = test_directory
+    else:
+        test_subdir = os.path.join(test_directory, args[0])
+
     if opts.num_threads:
         num_threads = opts.num_threads
     else:
@@ -226,7 +235,7 @@ Run lldb test suite using a separate process for each test file.
         num_threads = 1
 
     system_info = " ".join(platform.uname())
-    (timed_out, failed, passed) = walk_and_invoke(test_root, dotest_options,
+    (timed_out, failed, passed) = walk_and_invoke(test_directory, test_subdir, dotest_options,
                                                   num_threads)
     timed_out = set(timed_out)
     num_tests = len(failed) + len(passed)
