@@ -1586,7 +1586,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::ANY_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND_INREG);
-  setTargetDAGCombine(ISD::TRUNCATE);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
   setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
@@ -20734,15 +20733,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformTruncateCombine - Converts truncate operation to
-/// a sequence of vector shuffle operations.
-/// It is possible when we truncate 256-bit vector to 128-bit vector
-static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
-                                      TargetLowering::DAGCombinerInfo &DCI,
-                                      const X86Subtarget *Subtarget)  {
-  return SDValue();
-}
-
 /// XFormVExtractWithShuffleIntoLoad - Check if a vector extract from a target
 /// specific shuffle of a load can be folded into a single element load.
 /// Similar handling for VECTOR_SHUFFLE is performed by DAGCombiner, but
@@ -24305,7 +24295,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SIGN_EXTEND:    return PerformSExtCombine(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND_INREG:
     return PerformSIGN_EXTEND_INREGCombine(N, DAG, Subtarget);
-  case ISD::TRUNCATE:       return PerformTruncateCombine(N, DAG,DCI,Subtarget);
   case ISD::SETCC:          return PerformISDSETCCCombine(N, DAG, Subtarget);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG, DCI, Subtarget);
   case X86ISD::BRCOND:      return PerformBrCondCombine(N, DAG, DCI, Subtarget);
