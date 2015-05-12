@@ -878,8 +878,12 @@ out_inc_files  = $(addprefix $(out_ptf_dir)include_compat/,iomp_lib.h)
 out_mod_files  = \
     $(addprefix $(out_ptf_dir)include/,omp_lib.mod omp_lib_kinds.mod)
 out_cmn_files  = \
-    $(addprefix $(out_cmn_dir)include/,omp.h ompt.h omp_lib.h omp_lib.f omp_lib.f90) \
+    $(addprefix $(out_cmn_dir)include/,omp.h omp_lib.h omp_lib.f omp_lib.f90) \
     $(addprefix $(out_cmn_dir)include_compat/,iomp.h)
+ifeq "$(OMPT_SUPPORT)" "on"
+    out_cmn_files  += $(addprefix $(out_cmn_dir)include/,ompt.h)
+endif
+
 ifneq "$(out_lib_fat_dir)" ""
     out_lib_fat_files  = $(addprefix $(out_lib_fat_dir),$(lib_file) $(imp_file))
 endif
