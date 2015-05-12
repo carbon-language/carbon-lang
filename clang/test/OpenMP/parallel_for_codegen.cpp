@@ -7,7 +7,31 @@
 #ifndef HEADER
 #define HEADER
 
-// CHECK: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
+// CHECK-DAG: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
+// CHECK-DAG: [[CAP_TY:%.+]] = type { i8* }
+
+// CHECK-LABEL: with_var_schedule
+void with_var_schedule() {
+  double a = 5;
+// CHECK: [[CHUNK_SIZE:%.+]] = fptosi double %{{.+}}to i8
+// CHECK: store i8 %{{.+}}, i8* [[CHUNK:%.+]],
+// CHECK: [[CHUNK_REF:%.+]] = getelementptr inbounds [[CAP_TY]], [[CAP_TY]]* [[CAP_ARG:%.+]], i{{.+}} 0, i{{.+}} 0
+// CHECK: store i8* [[CHUNK]], i8** [[CHUNK_REF]],
+// CHECK: [[BITCAST:%.+]] = bitcast [[CAP_TY]]* [[CAP_ARG]] to i8*
+// CHECK: call void {{.+}} @__kmpc_fork_call({{.+}}, i8* [[BITCAST]])
+
+// CHECK: [[CHUNK_REF:%.+]] = getelementptr inbounds [[CAP_TY]], [[CAP_TY]]* %{{.+}}, i{{.+}} 0, i{{.+}} 0
+// CHECK: [[CHUNK:%.+]] = load i8*, i8** [[CHUNK_REF]],
+// CHECK: [[CHUNK_VAL:%.+]] = load i8, i8* [[CHUNK]],
+// CHECK: [[CHUNK_SIZE:%.+]] = sext i8 [[CHUNK_VAL]] to i64
+// CHECK: call void @__kmpc_for_static_init_8u([[IDENT_T_TY]]* [[DEFAULT_LOC:@[^,]+]], i32 [[GTID:%[^,]+]], i32 33, i32* [[IS_LAST:%[^,]+]], i64* [[OMP_LB:%[^,]+]], i64* [[OMP_UB:%[^,]+]], i64* [[OMP_ST:%[^,]+]], i64 1, i64 [[CHUNK_SIZE]])
+// CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK: __kmpc_cancel_barrier
+#pragma omp parallel for schedule(static, char(a))
+  for (unsigned long long i = 1; i < 2; ++i) {
+  }
+}
+
 // CHECK-LABEL: define {{.*void}} @{{.*}}without_schedule_clause{{.*}}(float* {{.+}}, float* {{.+}}, float* {{.+}}, float* {{.+}})
 void without_schedule_clause(float *a, float *b, float *c, float *d) {
   #pragma omp parallel for

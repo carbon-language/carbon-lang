@@ -2465,6 +2465,7 @@ template <typename Derived>
 bool
 RecursiveASTVisitor<Derived>::VisitOMPScheduleClause(OMPScheduleClause *C) {
   TRY_TO(TraverseStmt(C->getChunkSize()));
+  TRY_TO(TraverseStmt(C->getHelperChunkSize()));
   return true;
 }
 

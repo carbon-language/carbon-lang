@@ -951,6 +951,38 @@ static LValue EmitOMPHelperVar(CodeGenFunction &CGF,
   return CGF.EmitLValue(Helper);
 }
 
+static std::pair<llvm::Value * /*Chunk*/, OpenMPScheduleClauseKind>
+emitScheduleClause(CodeGenFunction &CGF, const OMPLoopDirective &S,
+                   bool OuterRegion) {
+  // Detect the loop schedule kind and chunk.
+  auto ScheduleKind = OMPC_SCHEDULE_unknown;
+  llvm::Value *Chunk = nullptr;
+  if (auto *C =
+          cast_or_null<OMPScheduleClause>(S.getSingleClause(OMPC_schedule))) {
+    ScheduleKind = C->getScheduleKind();
+    if (const auto *Ch = C->getChunkSize()) {
+      if (auto *ImpRef = cast_or_null<DeclRefExpr>(C->getHelperChunkSize())) {
+        if (OuterRegion) {
+          const VarDecl *ImpVar = cast<VarDecl>(ImpRef->getDecl());
+          CGF.EmitVarDecl(*ImpVar);
+          CGF.EmitStoreThroughLValue(
+              CGF.EmitAnyExpr(Ch),
+              CGF.MakeNaturalAlignAddrLValue(CGF.GetAddrOfLocalVar(ImpVar),
+                                             ImpVar->getType()));
+        } else {
+          Ch = ImpRef;
+        }
+      }
+      if (!C->getHelperChunkSize() || !OuterRegion) {
+        Chunk = CGF.EmitScalarExpr(Ch);
+        Chunk = CGF.EmitScalarConversion(Chunk, Ch->getType(),
+                                         S.getIterationVariable()->getType());
+      }
+    }
+  }
+  return std::make_pair(Chunk, ScheduleKind);
+}
+
 bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
   // Emit the loop iteration variable.
   auto IVExpr = cast<DeclRefExpr>(S.getIterationVariable());
@@ -1013,17 +1045,12 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
       (void)LoopScope.Privatize();
 
       // Detect the loop schedule kind and chunk.
-      auto ScheduleKind = OMPC_SCHEDULE_unknown;
-      llvm::Value *Chunk = nullptr;
-      if (auto C = cast_or_null<OMPScheduleClause>(
-              S.getSingleClause(OMPC_schedule))) {
-        ScheduleKind = C->getScheduleKind();
-        if (auto Ch = C->getChunkSize()) {
-          Chunk = EmitScalarExpr(Ch);
-          Chunk = EmitScalarConversion(Chunk, Ch->getType(),
-                                       S.getIterationVariable()->getType());
-        }
-      }
+      llvm::Value *Chunk;
+      OpenMPScheduleClauseKind ScheduleKind;
+      auto ScheduleInfo =
+          emitScheduleClause(*this, S, /*OuterRegion=*/false);
+      Chunk = ScheduleInfo.first;
+      ScheduleKind = ScheduleInfo.second;
       const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
       const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();
       if (RT.isStaticNonchunked(ScheduleKind,
@@ -1329,6 +1356,7 @@ void CodeGenFunction::EmitOMPParallelForDirective(
   // Emit directive as a combined directive that consists of two implicit
   // directives: 'parallel' with 'for' directive.
   LexicalScope Scope(*this, S.getSourceRange());
+  (void)emitScheduleClause(*this, S, /*OuterRegion=*/true);
   auto &&CodeGen = [&S](CodeGenFunction &CGF) {
     CGF.EmitOMPWorksharingLoop(S);
     // Emit implicit barrier at the end of parallel region, but this barrier

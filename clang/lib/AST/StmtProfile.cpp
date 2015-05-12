@@ -298,8 +298,12 @@ void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 void OMPClauseProfiler::VisitOMPProcBindClause(const OMPProcBindClause *C) { }
 
 void OMPClauseProfiler::VisitOMPScheduleClause(const OMPScheduleClause *C) {
-  if (C->getChunkSize())
+  if (C->getChunkSize()) {
     Profiler->VisitStmt(C->getChunkSize());
+    if (C->getHelperChunkSize()) {
+      Profiler->VisitStmt(C->getChunkSize());
+    }
+  }
 }
 
 void OMPClauseProfiler::VisitOMPOrderedClause(const OMPOrderedClause *) {}

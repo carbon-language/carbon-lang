@@ -573,8 +573,10 @@ class OMPScheduleClause : public OMPClause {
   SourceLocation KindLoc;
   /// \brief Location of ',' (if any).
   SourceLocation CommaLoc;
-  /// \brief Chunk size.
-  Stmt *ChunkSize;
+  /// \brief Chunk size and a reference to pseudo variable for combined
+  /// directives.
+  enum { CHUNK_SIZE, HELPER_CHUNK_SIZE, NUM_EXPRS };
+  Stmt *ChunkSizes[NUM_EXPRS];
 
   /// \brief Set schedule kind.
   ///
@@ -600,7 +602,12 @@ class OMPScheduleClause : public OMPClause {
   ///
   /// \param E Chunk size.
   ///
-  void setChunkSize(Expr *E) { ChunkSize = E; }
+  void setChunkSize(Expr *E) { ChunkSizes[CHUNK_SIZE] = E; }
+  /// \brief Set helper chunk size.
+  ///
+  /// \param E Helper chunk size.
+  ///
+  void setHelperChunkSize(Expr *E) { ChunkSizes[HELPER_CHUNK_SIZE] = E; }
 
 public:
   /// \brief Build 'schedule' clause with schedule kind \a Kind and chunk size
@@ -613,19 +620,26 @@ public:
   /// \param EndLoc Ending location of the clause.
   /// \param Kind Schedule kind.
   /// \param ChunkSize Chunk size.
+  /// \param HelperChunkSize Helper chunk size for combined directives.
   ///
   OMPScheduleClause(SourceLocation StartLoc, SourceLocation LParenLoc,
                     SourceLocation KLoc, SourceLocation CommaLoc,
                     SourceLocation EndLoc, OpenMPScheduleClauseKind Kind,
-                    Expr *ChunkSize)
+                    Expr *ChunkSize, Expr *HelperChunkSize)
       : OMPClause(OMPC_schedule, StartLoc, EndLoc), LParenLoc(LParenLoc),
-        Kind(Kind), KindLoc(KLoc), CommaLoc(CommaLoc), ChunkSize(ChunkSize) {}
+        Kind(Kind), KindLoc(KLoc), CommaLoc(CommaLoc) {
+    ChunkSizes[CHUNK_SIZE] = ChunkSize;
+    ChunkSizes[HELPER_CHUNK_SIZE] = HelperChunkSize;
+  }
 
   /// \brief Build an empty clause.
   ///
   explicit OMPScheduleClause()
       : OMPClause(OMPC_schedule, SourceLocation(), SourceLocation()),
-        Kind(OMPC_SCHEDULE_unknown), ChunkSize(nullptr) {}
+        Kind(OMPC_SCHEDULE_unknown) {
+    ChunkSizes[CHUNK_SIZE] = nullptr;
+    ChunkSizes[HELPER_CHUNK_SIZE] = nullptr;
+  }
 
   /// \brief Get kind of the clause.
   ///
@@ -641,16 +655,30 @@ public:
   SourceLocation getCommaLoc() { return CommaLoc; }
   /// \brief Get chunk size.
   ///
-  Expr *getChunkSize() { return dyn_cast_or_null<Expr>(ChunkSize); }
+  Expr *getChunkSize() { return dyn_cast_or_null<Expr>(ChunkSizes[CHUNK_SIZE]); }
   /// \brief Get chunk size.
   ///
-  Expr *getChunkSize() const { return dyn_cast_or_null<Expr>(ChunkSize); }
+  Expr *getChunkSize() const {
+    return dyn_cast_or_null<Expr>(ChunkSizes[CHUNK_SIZE]);
+  }
+  /// \brief Get helper chunk size.
+  ///
+  Expr *getHelperChunkSize() {
+    return dyn_cast_or_null<Expr>(ChunkSizes[HELPER_CHUNK_SIZE]);
+  }
+  /// \brief Get helper chunk size.
+  ///
+  Expr *getHelperChunkSize() const {
+    return dyn_cast_or_null<Expr>(ChunkSizes[HELPER_CHUNK_SIZE]);
+  }
 
   static bool classof(const OMPClause *T) {
     return T->getClauseKind() == OMPC_schedule;
   }
 
-  StmtRange children() { return StmtRange(&ChunkSize, &ChunkSize + 1); }
+  StmtRange children() {
+    return StmtRange(&ChunkSizes[CHUNK_SIZE], &ChunkSizes[CHUNK_SIZE] + 1);
+  }
 };
 
 /// \brief This represents 'ordered' clause in the '#pragma omp ...' directive.

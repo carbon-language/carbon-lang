@@ -1280,15 +1280,24 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     ActOnCapturedRegionError();
     return StmtError();
   }
-  // Mark all variables in private list clauses as used in inner region. This is
-  // required for proper codegen.
+  // This is required for proper codegen.
   for (auto *Clause : Clauses) {
     if (isOpenMPPrivate(Clause->getClauseKind())) {
+      // Mark all variables in private list clauses as used in inner region.
       for (auto *VarRef : Clause->children()) {
         if (auto *E = cast_or_null<Expr>(VarRef)) {
           MarkDeclarationsReferencedInExpr(E);
         }
       }
+    } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective()) &&
+               Clause->getClauseKind() == OMPC_schedule) {
+      // Mark all variables in private list clauses as used in inner region.
+      // Required for proper codegen of combined directives.
+      // TODO: add processing for other clauses.
+      if (auto *E = cast_or_null<Expr>(
+              cast<OMPScheduleClause>(Clause)->getHelperChunkSize())) {
+          MarkDeclarationsReferencedInExpr(E);
+        }
     }
   }
   return ActOnCapturedRegionEnd(S.get());
@@ -4511,6 +4520,7 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
     return nullptr;
   }
   Expr *ValExpr = ChunkSize;
+  Expr *HelperValExpr = nullptr;
   if (ChunkSize) {
     if (!ChunkSize->isValueDependent() && !ChunkSize->isTypeDependent() &&
         !ChunkSize->isInstantiationDependent() &&
@@ -4527,17 +4537,25 @@ OMPClause *Sema::ActOnOpenMPScheduleClause(
       //  chunk_size must be a loop invariant integer expression with a positive
       //  value.
       llvm::APSInt Result;
-      if (ValExpr->isIntegerConstantExpr(Result, Context) &&
-          Result.isSigned() && !Result.isStrictlyPositive()) {
-        Diag(ChunkSizeLoc, diag::err_omp_negative_expression_in_clause)
-            << "schedule" << ChunkSize->getSourceRange();
-        return nullptr;
+      if (ValExpr->isIntegerConstantExpr(Result, Context)) {
+        if (Result.isSigned() && !Result.isStrictlyPositive()) {
+          Diag(ChunkSizeLoc, diag::err_omp_negative_expression_in_clause)
+              << "schedule" << ChunkSize->getSourceRange();
+          return nullptr;
+        }
+      } else if (isParallelOrTaskRegion(DSAStack->getCurrentDirective())) {
+        auto *ImpVar = buildVarDecl(*this, ChunkSize->getExprLoc(),
+                                    ChunkSize->getType(), ".chunk.");
+        auto *ImpVarRef = buildDeclRefExpr(*this, ImpVar, ChunkSize->getType(),
+                                           ChunkSize->getExprLoc(),
+                                           /*RefersToCapture=*/true);
+        HelperValExpr = ImpVarRef;
       }
     }
   }
 
   return new (Context) OMPScheduleClause(StartLoc, LParenLoc, KindLoc, CommaLoc,
-                                         EndLoc, Kind, ValExpr);
+                                         EndLoc, Kind, ValExpr, HelperValExpr);
 }
 
 OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
