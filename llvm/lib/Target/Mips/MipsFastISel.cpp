@@ -390,8 +390,10 @@ bool MipsFastISel::computeAddress(const Value *Obj, Address &Addr) {
       Opcode = I->getOpcode();
       U = I;
     }
-  } else if (isa<ConstantExpr>(Obj))
-    return false;
+  } else if (const ConstantExpr *C = dyn_cast<ConstantExpr>(Obj)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
   switch (Opcode) {
   default:
     break;
