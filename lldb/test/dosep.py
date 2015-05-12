@@ -24,6 +24,7 @@ or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 import multiprocessing
 import os
 import platform
+import re
 import shlex
 import subprocess
 import sys
@@ -147,6 +148,34 @@ def walk_and_invoke(test_root, dotest_options, num_threads):
 
     return (timed_out, failed, passed)
 
+def getExpectedTimeouts(dotest_options):
+    # returns a set of test filenames that might timeout
+    # are we running against a remote target?
+    m = re.search('\sremote-(\w+)', dotest_options)
+    if m:
+        target = m.group(1)
+        remote = True
+    else:
+        target = sys.platform
+        remote = False
+
+    expected_timeout = set()
+
+    if target.startswith("linux"):
+        expected_timeout |= {
+            "TestAttachResume.py",
+            "TestConnectRemote.py",
+            "TestCreateAfterAttach.py",
+            "TestExitDuringStep.py",
+            "TestThreadStepOut.py",
+        }
+    elif target.startswith("android"):
+        expected_timeout |= {
+            "TestExitDuringStep.py",
+            "TestHelloWorld.py",
+        }
+    return expected_timeout
+
 def main():
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
@@ -201,6 +230,13 @@ Run lldb test suite using a separate process for each test file.
                                                   num_threads)
     timed_out = set(timed_out)
     num_tests = len(failed) + len(passed)
+
+    # remove expected timeouts from failures
+    expected_timeout = getExpectedTimeouts(dotest_options)
+    for xtime in expected_timeout:
+        if xtime in timed_out:
+            timed_out.remove(xtime)
+            failed.remove(xtime)
 
     print "Ran %d tests." % num_tests
     if len(failed) > 0:
