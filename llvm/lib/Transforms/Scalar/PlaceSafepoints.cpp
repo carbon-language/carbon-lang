@@ -166,20 +166,13 @@ static cl::opt<bool> NoCall("spp-no-call", cl::Hidden, cl::init(false));
 static cl::opt<bool> NoBackedge("spp-no-backedge", cl::Hidden, cl::init(false));
 
 namespace {
-struct PlaceSafepoints : public ModulePass {
+struct PlaceSafepoints : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
 
-  PlaceSafepoints() : ModulePass(ID) {
+  PlaceSafepoints() : FunctionPass(ID) {
     initializePlaceSafepointsPass(*PassRegistry::getPassRegistry());
   }
-  bool runOnModule(Module &M) override {
-    bool modified = false;
-    for (Function &F : M) {
-      modified |= runOnFunction(F);
-    }
-    return modified;
-  }
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     // We modify the graph wholesale (inlining, block insertion, etc).  We
@@ -755,7 +748,9 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
 char PlaceBackedgeSafepointsImpl::ID = 0;
 char PlaceSafepoints::ID = 0;
 
-ModulePass *llvm::createPlaceSafepointsPass() { return new PlaceSafepoints(); }
+FunctionPass *llvm::createPlaceSafepointsPass() {
+  return new PlaceSafepoints();
+}
 
 INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "place-backedge-safepoints-impl",
