@@ -59,7 +59,7 @@ static inline uint64_t SPMagic() {
 
 static inline uint64_t SPVersion() { return 100; }
 
-/// \brief Represents the relative location of an instruction.
+/// Represents the relative location of an instruction.
 ///
 /// Instruction locations are specified by the line offset from the
 /// beginning of the function (marked by the line where the function
@@ -100,7 +100,7 @@ template <> struct DenseMapInfo<sampleprof::LineLocation> {
 
 namespace sampleprof {
 
-/// \brief Representation of a single sample record.
+/// Representation of a single sample record.
 ///
 /// A sample record is represented by a positive integer value, which
 /// indicates how frequently was the associated line location executed.
@@ -116,7 +116,7 @@ public:
 
   SampleRecord() : NumSamples(0), CallTargets() {}
 
-  /// \brief Increment the number of samples for this record by \p S.
+  /// Increment the number of samples for this record by \p S.
   ///
   /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
   /// around unsigned integers.
@@ -127,7 +127,7 @@ public:
       NumSamples = std::numeric_limits<unsigned>::max();
   }
 
-  /// \brief Add called function \p F with samples \p S.
+  /// Add called function \p F with samples \p S.
   ///
   /// Sample counts accumulate using saturating arithmetic, to avoid wrapping
   /// around unsigned integers.
@@ -139,13 +139,13 @@ public:
       TargetSamples = std::numeric_limits<unsigned>::max();
   }
 
-  /// \brief Return true if this sample record contains function calls.
+  /// Return true if this sample record contains function calls.
   bool hasCalls() const { return CallTargets.size() > 0; }
 
   unsigned getSamples() const { return NumSamples; }
   const CallTargetMap &getCallTargets() const { return CallTargets; }
 
-  /// \brief Merge the samples in \p Other into this record.
+  /// Merge the samples in \p Other into this record.
   void merge(const SampleRecord &Other) {
     addSamples(Other.getSamples());
     for (const auto &I : Other.getCallTargets())
@@ -159,7 +159,7 @@ private:
 
 typedef DenseMap<LineLocation, SampleRecord> BodySampleMap;
 
-/// \brief Representation of the samples collected for a function.
+/// Representation of the samples collected for a function.
 ///
 /// This data structure contains all the collected samples for the body
 /// of a function. Each sample corresponds to a LineLocation instance
@@ -187,13 +187,13 @@ public:
                                                                          Num);
   }
 
-  /// \brief Return the sample record at the given location.
+  /// Return the sample record at the given location.
   /// Each location is specified by \p LineOffset and \p Discriminator.
   SampleRecord &sampleRecordAt(const LineLocation &Loc) {
     return BodySamples[Loc];
   }
 
-  /// \brief Return the number of samples collected at the given location.
+  /// Return the number of samples collected at the given location.
   /// Each location is specified by \p LineOffset and \p Discriminator.
   unsigned samplesAt(int LineOffset, unsigned Discriminator) {
     return sampleRecordAt(LineLocation(LineOffset, Discriminator)).getSamples();
@@ -201,17 +201,17 @@ public:
 
   bool empty() const { return BodySamples.empty(); }
 
-  /// \brief Return the total number of samples collected inside the function.
+  /// Return the total number of samples collected inside the function.
   unsigned getTotalSamples() const { return TotalSamples; }
 
-  /// \brief Return the total number of samples collected at the head of the
+  /// Return the total number of samples collected at the head of the
   /// function.
   unsigned getHeadSamples() const { return TotalHeadSamples; }
 
-  /// \brief Return all the samples collected in the body of the function.
+  /// Return all the samples collected in the body of the function.
   const BodySampleMap &getBodySamples() const { return BodySamples; }
 
-  /// \brief Merge the samples in \p Other into this one.
+  /// Merge the samples in \p Other into this one.
   void merge(const FunctionSamples &Other) {
     addTotalSamples(Other.getTotalSamples());
     addHeadSamples(Other.getHeadSamples());
@@ -223,16 +223,18 @@ public:
   }
 
 private:
-  /// \brief Total number of samples collected inside this function.
+  /// Total number of samples collected inside this function.
   ///
   /// Samples are cumulative, they include all the samples collected
   /// inside this function and all its inlined callees.
   unsigned TotalSamples;
 
-  /// \brief Total number of samples collected at the head of the function.
+  /// Total number of samples collected at the head of the function.
+  /// This is an approximation of the number of calls made to this function
+  /// at runtime.
   unsigned TotalHeadSamples;
 
-  /// \brief Map instruction locations to collected samples.
+  /// Map instruction locations to collected samples.
   ///
   /// Each entry in this map contains the number of samples
   /// collected at the corresponding line offset. All line locations
