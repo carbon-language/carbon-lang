@@ -22,7 +22,7 @@ namespace llvm {
 class BasicBlock;
 class Constant;
 class Function;
-class GlobalValue;
+class GlobalVariable;
 class IntrinsicInst;
 class LandingPadInst;
 class MCSymbol;
