@@ -117,7 +117,7 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
     if (hostname.empty())
         hostname = "127.0.0.1";
     if (log)
-        log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);
+        log->Printf("Launching debugserver with: %s:%u...", hostname.c_str(), port);
 
     // Do not run in a new session so that it can not linger after the
     // platform closes.

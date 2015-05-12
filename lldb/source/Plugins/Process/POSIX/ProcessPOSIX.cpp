@@ -33,6 +33,8 @@
 #include "Plugins/Process/Linux/ProcessMonitor.h"
 #include "POSIXThread.h"
 
+#include "lldb/Host/posix/Fcntl.h"
+
 using namespace lldb;
 using namespace lldb_private;
 

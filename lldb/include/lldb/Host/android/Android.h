@@ -16,9 +16,6 @@
 
 #define _isatty			isatty
 #define SYS_tgkill		__NR_tgkill
-#define PT_DETACH		PTRACE_DETACH
-
-typedef int				__ptrace_request;
 
 namespace std
 {

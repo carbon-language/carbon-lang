@@ -104,6 +104,7 @@ else()
     if (__ANDROID_NDK__)
       add_host_subdirectory(android
         android/HostInfoAndroid.cpp
+        android/LibcGlue.cpp
         android/ProcessLauncherAndroid.cpp
         linux/Host.cpp
         linux/HostInfoLinux.cpp

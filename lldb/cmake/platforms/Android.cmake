@@ -85,11 +85,20 @@ if( NOT CMAKE_C_COMPILER )
  set( CMAKE_RANLIB       "${ANDROID_TOOLCHAIN_DIR}/bin/${ANDROID_TOOLCHAIN_NAME}-ranlib${EXECUTABLE_SUFFIX}"  CACHE PATH "ranlib" )
 endif()
 
-set( ANDROID_CXX_FLAGS "--sysroot=${ANDROID_SYSROOT} -pie -fPIE -funwind-tables -fsigned-char -no-canonical-prefixes" )
+set( ANDROID_CXX_FLAGS "--sysroot=${ANDROID_SYSROOT} -funwind-tables -fsigned-char -no-canonical-prefixes" )
 # TODO: different ARM abi have different flags such as neon, vfpv etc
 if( X86 )
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funswitch-loops -finline-limit=300" )
+elseif( ANDROID_ABI STREQUAL "armeabi" )
+ # 64 bit atomic operations used in c++ libraries require armv7-a instructions
+ # armv5te and armv6 were tried but do not work.
+ set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv7-a" )
 endif()
+
+# PIE is required for API 21+ so we enable it
+# unfortunately, it is not supported before API 14 so we need to do something else there
+# see http://llvm.org/pr23457
+set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -pie -fPIE" )
 
 # linker flags
 set( ANDROID_CXX_FLAGS    "${ANDROID_CXX_FLAGS} -fdata-sections -ffunction-sections" )

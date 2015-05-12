@@ -17,6 +17,7 @@
 
 #include <grp.h>
 #include <limits.h>
+#include <mutex>
 #include <netdb.h>
 #include <pwd.h>
 #include <sys/types.h>
@@ -47,9 +48,31 @@ HostInfoPosix::GetHostname(std::string &s)
     return false;
 }
 
+#ifdef __ANDROID_NDK__
+#include <android/api-level.h>
+#endif
+#if defined(__ANDROID_API__) && __ANDROID_API__ < 21
+#define USE_GETPWUID
+#endif
+
+#ifdef USE_GETPWUID
+static std::mutex s_getpwuid_lock;
+#endif
+
 const char *
 HostInfoPosix::LookupUserName(uint32_t uid, std::string &user_name)
 {
+#ifdef USE_GETPWUID
+    // getpwuid_r is missing from android-9
+    // make getpwuid thread safe with a mutex
+    std::lock_guard<std::mutex> lock(s_getpwuid_lock);
+    struct passwd *user_info_ptr = ::getpwuid(uid);
+    if (user_info_ptr)
+    {
+        user_name.assign(user_info_ptr->pw_name);
+        return user_name.c_str();
+    }
+#else
     struct passwd user_info;
     struct passwd *user_info_ptr = &user_info;
     char user_buffer[PATH_MAX];
@@ -62,8 +85,9 @@ HostInfoPosix::LookupUserName(uint32_t uid, std::string &user_name)
             return user_name.c_str();
         }
     }
+#endif
     user_name.clear();
-    return NULL;
+    return nullptr;
 }
 
 const char *

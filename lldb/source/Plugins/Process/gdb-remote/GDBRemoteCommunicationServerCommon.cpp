@@ -396,6 +396,10 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerCommon::Handle_qUserName (StringExtractorGDBRemote &packet)
 {
 #if !defined(LLDB_DISABLE_POSIX)
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf("GDBRemoteCommunicationServerCommon::%s begin", __FUNCTION__);
+
     // Packet format: "qUserName:%i" where %i is the uid
     packet.SetFilePos(::strlen ("qUserName:"));
     uint32_t uid = packet.GetU32 (UINT32_MAX);
@@ -409,6 +413,8 @@ GDBRemoteCommunicationServerCommon::Handle_qUserName (StringExtractorGDBRemote &
             return SendPacketNoLock (response.GetData(), response.GetSize());
         }
     }
+    if (log)
+        log->Printf("GDBRemoteCommunicationServerCommon::%s end", __FUNCTION__);
 #endif
     return SendErrorResponse (5);
 

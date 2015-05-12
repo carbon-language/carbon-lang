@@ -29,9 +29,12 @@
 #include "lldb/Utility/ProcessStructReader.h"
 
 #include <algorithm>
+
 #if __ANDROID_NDK__
 #include <sys/types.h>
 #endif
+
+#include "lldb/Host/Time.h"
 
 using namespace lldb;
 using namespace lldb_private;
