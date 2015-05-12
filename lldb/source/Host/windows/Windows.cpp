@@ -20,6 +20,13 @@
 #include <cerrno>
 #include <ctype.h>
 
+// These prototypes are defined in <direct.h>, but it also defines chdir() and getcwd(), giving multiply defined errors
+extern "C"
+{
+    char *_getcwd(char *buffer, int maxlen);
+    int _chdir(const char *path);
+}
+
 int vasprintf(char **ret, const char *fmt, va_list ap)
 {
     char *buf;
@@ -157,11 +164,16 @@ char* basename(char *path)
     return &l1[1];
 }
 
+// use _getcwd() instead of GetCurrentDirectory() because it updates errno
 char* getcwd(char* path, int max)
 {
-    if (GetCurrentDirectory(max, path) == 0)
-        return path;
-    return NULL;
+    return _getcwd(path, max);
+}
+
+// use _chdir() instead of SetCurrentDirectory() because it updates errno
+int chdir(const char* path)
+{
+    return _chdir(path);
 }
 
 char *dirname(char *path)

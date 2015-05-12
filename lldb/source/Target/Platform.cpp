@@ -875,17 +875,12 @@ Platform::SetWorkingDirectory (const ConstString &path)
         Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
         if (log)
             log->Printf("Platform::SetWorkingDirectory('%s')", path.GetCString());
-#ifdef _WIN32
-        // Not implemented on Windows
-        return false;
-#else
         if (path)
         {
             if (chdir(path.GetCString()) == 0)
                 return true;
         }
         return false;
-#endif
     }
     else
     {

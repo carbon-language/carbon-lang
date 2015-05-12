@@ -57,6 +57,7 @@ typedef uint32_t pid_t;
 int usleep(uint32_t useconds);
 
 char* getcwd(char* path, int max);
+int chdir(const char* path);
 char* basename(char *path);
 char *dirname(char *path);
 

@@ -217,15 +217,10 @@ GDBRemoteCommunicationServerPlatform::Handle_QSetWorkingDir (StringExtractorGDBR
     std::string path;
     packet.GetHexByteString (path);
 
-#ifdef _WIN32
-    // Not implemented on Windows
-    return SendUnimplementedResponse ("GDBRemoteCommunicationServerPlatform::Handle_QSetWorkingDir unimplemented");
-#else
     // If this packet is sent to a platform, then change the current working directory
     if (::chdir(path.c_str()) != 0)
         return SendErrorResponse (errno);
     return SendOKResponse ();
-#endif
 }
 
 GDBRemoteCommunication::PacketResult
