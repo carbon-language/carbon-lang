@@ -51,6 +51,7 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/SetOperations.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -129,12 +130,7 @@ struct PlaceBackedgeSafepointsImpl : public LoopPass {
   bool runOnLoop(Loop *, LPPassManager &LPM) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    // needed for determining if the loop is finite
     AU.addRequired<ScalarEvolution>();
-    // to ensure each edge has a single backedge
-    // TODO: is this still required?
-    AU.addRequiredID(LoopSimplifyID);
-
     // We no longer modify the IR at all in this pass.  Thus all
     // analysis are preserved.
     AU.setPreservesAll();
@@ -317,10 +313,11 @@ static void scanInlinedCode(Instruction *start, Instruction *end,
 bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
 
-  // Loop through all predecessors of the loop header and identify all
-  // backedges.  We need to place a safepoint on every backedge (potentially).
-  // Note: Due to LoopSimplify there should only be one.  Assert?  Or can we
-  // relax this?
+  // Loop through all loop latches (branches controlling backedges).  We need
+  // to place a safepoint on every backedge (potentially). 
+  // Note: In common usage, there will be only one edge due to LoopSimplify
+  // having run sometime earlier in the pipeline, but this code must be correct
+  // w.r.t. loops with multiple backedges.
   BasicBlock *header = L->getHeader();
 
   // TODO: Use the analysis pass infrastructure for this.  There is no reason
@@ -328,12 +325,10 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
   DominatorTree DT;
   DT.recalculate(*header->getParent());
 
-  bool modified = false;
-  for (BasicBlock *pred : predecessors(header)) {
-    if (!L->contains(pred)) {
-      // This is not a backedge, it's coming from outside the loop
-      continue;
-    }
+  SmallVector<BasicBlock*, 16> LoopLatches;
+  L->getLoopLatches(LoopLatches);
+  for (BasicBlock *pred : LoopLatches) {
+    assert(L->contains(pred));
 
     // Make a policy decision about whether this loop needs a safepoint or
     // not.  Note that this is about unburdening the optimizer in loops, not
@@ -362,9 +357,6 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
     // not help runtime performance that much, but it might help our ability to
     // optimize the inner loop.
 
-    // We're unconditionally going to modify this loop.
-    modified = true;
-
     // Safepoint insertion would involve creating a new basic block (as the
     // target of the current backedge) which does the safepoint (of all live
     // variables) and branches to the true header
@@ -378,7 +370,7 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
     PollLocations.push_back(term);
   }
 
-  return modified;
+  return false;
 }
 
 static Instruction *findLocationForEntrySafepoint(Function &F,
@@ -583,21 +575,35 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     PlaceBackedgeSafepointsImpl *PBS =
       new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
     FPM.add(PBS);
-    // Note: While the analysis pass itself won't modify the IR, LoopSimplify
-    // (which it depends on) may.  i.e. analysis must be recalculated after run
     FPM.run(F);
 
     // We preserve dominance information when inserting the poll, otherwise
     // we'd have to recalculate this on every insert
     DT.recalculate(F);
 
+    auto &PollLocations = PBS->PollLocations;
+
+    auto OrderByBBName = [](Instruction *a, Instruction *b) {
+      return a->getParent()->getName() < b->getParent()->getName();
+    };
+    // We need the order of list to be stable so that naming ends up stable
+    // when we split edges.  This makes test cases much easier to write.
+    std::sort(PollLocations.begin(), PollLocations.end(), OrderByBBName);
+
+    // We can sometimes end up with duplicate poll locations.  This happens if
+    // a single loop is visited more than once.   The fact this happens seems
+    // wrong, but it does happen for the split-backedge.ll test case.
+    PollLocations.erase(std::unique(PollLocations.begin(),
+                                    PollLocations.end()),
+                        PollLocations.end());
+
     // Insert a poll at each point the analysis pass identified
-    for (size_t i = 0; i < PBS->PollLocations.size(); i++) {
+    for (size_t i = 0; i < PollLocations.size(); i++) {
       // We are inserting a poll, the function is modified
       modified = true;
 
       // The poll location must be the terminator of a loop latch block.
-      TerminatorInst *Term = PBS->PollLocations[i];
+      TerminatorInst *Term = PollLocations[i];
 
       std::vector<CallSite> ParsePoints;
       if (SplitBackedge) {
@@ -610,8 +616,8 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         // Since this is a latch, at least one of the successors must dominate
         // it. Its possible that we have a) duplicate edges to the same header
         // and b) edges to distinct loop headers.  We need to insert pools on
-        // each. (Note: This still relies on LoopSimplify.)
-        DenseSet<BasicBlock *> Headers;
+        // each.
+        SetVector<BasicBlock *> Headers;
         for (unsigned i = 0; i < Term->getNumSuccessors(); i++) {
           BasicBlock *Succ = Term->getSuccessor(i);
           if (DT.dominates(Succ, Term->getParent())) {
@@ -623,21 +629,27 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         // The split loop structure here is so that we only need to recalculate
         // the dominator tree once.  Alternatively, we could just keep it up to
         // date and use a more natural merged loop.
-        DenseSet<BasicBlock *> SplitBackedges;
+        SetVector<BasicBlock *> SplitBackedges;
         for (BasicBlock *Header : Headers) {
           BasicBlock *NewBB = SplitEdge(Term->getParent(), Header, nullptr);
           SplitBackedges.insert(NewBB);
         }
         DT.recalculate(F);
         for (BasicBlock *NewBB : SplitBackedges) {
-          InsertSafepointPoll(DT, NewBB->getTerminator(), ParsePoints);
+          std::vector<CallSite> RuntimeCalls;
+          InsertSafepointPoll(DT, NewBB->getTerminator(), RuntimeCalls);
           NumBackedgeSafepoints++;
+          ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
+                                  RuntimeCalls.end());
         }
 
       } else {
         // Split the latch block itself, right before the terminator.
-        InsertSafepointPoll(DT, Term, ParsePoints);
+        std::vector<CallSite> RuntimeCalls;
+        InsertSafepointPoll(DT, Term, RuntimeCalls);
         NumBackedgeSafepoints++;
+        ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
+                                RuntimeCalls.end());
       }
 
       // Record the parse points for later use
@@ -734,7 +746,6 @@ INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "place-backedge-safepoints-impl",
                       "Place Backedge Safepoints", false, false)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(PlaceBackedgeSafepointsImpl,
                     "place-backedge-safepoints-impl",
                     "Place Backedge Safepoints", false, false)

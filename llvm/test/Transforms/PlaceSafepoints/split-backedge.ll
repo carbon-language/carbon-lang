@@ -22,12 +22,12 @@ exit:
 ; to be sure this keeps working.
 define void @test2(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test2
-; CHECK-LABE: loop.loopexit.split
-; CHECK: gc.statepoint
-; CHECK-NEXT: br label %loop
-; CHECK-LABEL: loop2.loop2_crit_edge
+; CHECK-LABEL: loop2.loop2_crit_edge:
 ; CHECK: gc.statepoint
 ; CHECK-NEXT: br label %loop2
+; CHECK-LABEL: loop2.loop_crit_edge:
+; CHECK: gc.statepoint
+; CHECK-NEXT: br label %loop
 entry:
   br label %loop
 
