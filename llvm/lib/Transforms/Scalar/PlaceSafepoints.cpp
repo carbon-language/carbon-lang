@@ -139,8 +139,8 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
       runOnLoopAndSubLoops(*I);
     runOnLoop(L);
   }
-  
-  bool runOnFunction(Function &F) {
+
+  bool runOnFunction(Function &F) override {
     SE = &getAnalysis<ScalarEvolution>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
