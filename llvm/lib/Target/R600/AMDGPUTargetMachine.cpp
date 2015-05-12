@@ -252,6 +252,15 @@ bool GCNPassConfig::addInstSelector() {
 
 void GCNPassConfig::addPreRegAlloc() {
   const AMDGPUSubtarget &ST = *getAMDGPUTargetMachine().getSubtargetImpl();
+
+  // This needs to be run directly before register allocation because
+  // earlier passes might recompute live intervals.
+  // TODO: handle CodeGenOpt::None; fast RA ignores spill weights set by the pass
+  if (getOptLevel() > CodeGenOpt::None) {
+    initializeSIFixControlFlowLiveIntervalsPass(*PassRegistry::getPassRegistry());
+    insertPass(&MachineSchedulerID, &SIFixControlFlowLiveIntervalsID);
+  }
+
   if (getOptLevel() > CodeGenOpt::None && ST.loadStoreOptEnabled()) {
     // Don't do this with no optimizations since it throws away debug info by
     // merging nonadjacent loads.
