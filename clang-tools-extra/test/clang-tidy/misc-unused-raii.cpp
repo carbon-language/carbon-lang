@@ -10,6 +10,10 @@ struct Foo {
 
 struct Bar {
   Bar();
+};
+
+struct FooBar {
+  FooBar();
   Foo f;
 };
 
@@ -46,6 +50,10 @@ void test() {
   TFoo<int>(23);
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?
 // CHECK-FIXES: TFoo<int> give_me_a_name(23);
+
+  FooBar();
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?
+// CHECK-FIXES: FooBar give_me_a_name;
 
   Bar();
   f();
