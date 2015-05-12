@@ -55,11 +55,12 @@ public:
   /// \brief Callback invoked whenever a source file is skipped as the result
   /// of header guard optimization.
   ///
-  /// \param ParentFile The file that \#included the skipped file.
+  /// \param SkippedFile The file that is skipped instead of entering \#include
   ///
-  /// \param FilenameTok The token in ParentFile that indicates the
-  /// skipped file.
-  virtual void FileSkipped(const FileEntry &ParentFile,
+  /// \param FilenameTok The file name token in \#include "FileName" directive
+  /// or macro expanded file name token from \#include MACRO(PARAMS) directive.
+  /// Note that FilenameTok contains corresponding quotes/angles symbols.
+  virtual void FileSkipped(const FileEntry &SkippedFile,
                            const Token &FilenameTok,
                            SrcMgr::CharacteristicKind FileType) {
   }
@@ -337,11 +338,11 @@ public:
     Second->FileChanged(Loc, Reason, FileType, PrevFID);
   }
 
-  void FileSkipped(const FileEntry &ParentFile,
+  void FileSkipped(const FileEntry &SkippedFile,
                    const Token &FilenameTok,
                    SrcMgr::CharacteristicKind FileType) override {
-    First->FileSkipped(ParentFile, FilenameTok, FileType);
-    Second->FileSkipped(ParentFile, FilenameTok, FileType);
+    First->FileSkipped(SkippedFile, FilenameTok, FileType);
+    Second->FileSkipped(SkippedFile, FilenameTok, FileType);
   }
 
   bool FileNotFound(StringRef FileName,
