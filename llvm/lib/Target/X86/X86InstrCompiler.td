@@ -518,6 +518,10 @@ let usesCustomInserter = 1, Uses = [EFLAGS] in {
   defm _V8I64  : CMOVrr_PSEUDO<VR512, v8i64>;
   defm _V8F64  : CMOVrr_PSEUDO<VR512, v8f64>;
   defm _V16F32 : CMOVrr_PSEUDO<VR512, v16f32>;
+  defm _V8I1   : CMOVrr_PSEUDO<VK8,  v8i1>;
+  defm _V16I1  : CMOVrr_PSEUDO<VK16, v16i1>;
+  defm _V32I1  : CMOVrr_PSEUDO<VK32, v32i1>;
+  defm _V64I1  : CMOVrr_PSEUDO<VK64, v64i1>;
 } // usesCustomInserter = 1, Uses = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
