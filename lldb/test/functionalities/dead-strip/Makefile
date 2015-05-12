@@ -2,6 +2,10 @@ LEVEL = ../../make
 
 C_SOURCES := main.c
 
+ifeq "$(OS)" ""
+    OS = $(shell uname -s)
+endif
+
 ifeq "$(OS)" "Darwin"
     LDFLAGS = $(CFLAGS) -Xlinker -dead_strip
 else

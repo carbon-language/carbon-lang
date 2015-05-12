@@ -696,6 +696,7 @@
 		26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */; };
 		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
 		33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C9B1A5C7A490033D415 /* UriParser.h */; };
+		332CCB181AFF41620034D4C4 /* SBLanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 3392EBB71AFF402200858B9F /* SBLanguageRuntime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8411A672A240024ED68 /* StringConvert.cpp */; };
 		33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8451A6736D30024ED68 /* StringConvert.h */; };
 		33E5E8471A674FB60024ED68 /* StringConvert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33E5E8411A672A240024ED68 /* StringConvert.cpp */; };
@@ -2209,6 +2210,7 @@
 		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
 		33064C991A5C7A330033D415 /* UriParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UriParser.cpp; path = source/Utility/UriParser.cpp; sourceTree = "<group>"; };
 		33064C9B1A5C7A490033D415 /* UriParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UriParser.h; path = source/Utility/UriParser.h; sourceTree = "<group>"; };
+		3392EBB71AFF402200858B9F /* SBLanguageRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBLanguageRuntime.h; path = include/lldb/API/SBLanguageRuntime.h; sourceTree = "<group>"; };
 		33E5E8411A672A240024ED68 /* StringConvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringConvert.cpp; sourceTree = "<group>"; };
 		33E5E8451A6736D30024ED68 /* StringConvert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringConvert.h; path = include/lldb/Host/StringConvert.h; sourceTree = SOURCE_ROOT; };
 		3F5E8AF31A40D4A500A73232 /* PipeBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PipeBase.h; path = include/lldb/Host/PipeBase.h; sourceTree = "<group>"; };
@@ -3326,6 +3328,7 @@
 				9AC703AE117675410086C050 /* SBInstruction.cpp */,
 				9AC7038F117675270086C050 /* SBInstructionList.h */,
 				9AC703B0117675490086C050 /* SBInstructionList.cpp */,
+				3392EBB71AFF402200858B9F /* SBLanguageRuntime.h */,
 				AF20F76C1AF18FC700751A6E /* SBLanguageRuntime.cpp */,
 				254FBB961A81B03100BD6378 /* SBLaunchInfo.h */,
 				254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */,
@@ -5326,6 +5329,7 @@
 				26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */,
 				26DE204311618ACA00A093E2 /* SBAddress.h in Headers */,
 				26DE205711618FC500A093E2 /* SBBlock.h in Headers */,
+				332CCB181AFF41620034D4C4 /* SBLanguageRuntime.h in Headers */,
 				26680219115FD13D008E1FE4 /* SBBreakpoint.h in Headers */,
 				2668021A115FD13D008E1FE4 /* SBBreakpointLocation.h in Headers */,
 				2668021B115FD13D008E1FE4 /* SBBroadcaster.h in Headers */,

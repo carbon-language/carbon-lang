@@ -10,7 +10,4 @@
    <FileRef
       location = "group:tools/lldb-perf/lldbperf.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:gtest/gtest.xcodeproj">
-   </FileRef>
 </Workspace>

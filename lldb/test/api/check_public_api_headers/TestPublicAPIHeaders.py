@@ -21,6 +21,7 @@ class SBDirCheckerCase(TestBase):
         self.exe_name = 'a.out'
 
     @skipIfNoSBHeaders
+    @expectedFailureDarwin # test passes but teardown command 'settings remove target.env-vars DYLD_LIBRARY_PATH' fails
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
 

@@ -24,6 +24,7 @@ class ObjCModulesAutoImportTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @skipIfLinux
+    @expectedFailureDarwin # clang: error: unknown argument: '-gmodules'
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()
