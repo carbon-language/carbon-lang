@@ -44,6 +44,8 @@ std::string Hash(const Unit &U);
 void SetTimer(int Seconds);
 void PrintFileAsBase64(const std::string &Path);
 
+int NumberOfCpuCores();
+
 class Fuzzer {
  public:
   struct FuzzingOptions {

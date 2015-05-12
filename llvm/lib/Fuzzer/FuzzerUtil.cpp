@@ -61,4 +61,12 @@ void SetTimer(int Seconds) {
   assert(Res == 0);
 }
 
+int NumberOfCpuCores() {
+  FILE *F = popen("nproc", "r");
+  int N = 0;
+  fscanf(F, "%d", &N);
+  fclose(F);
+  return N;
+}
+
 }  // namespace fuzzer

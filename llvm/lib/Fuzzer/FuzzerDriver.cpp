@@ -203,6 +203,12 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
     return 0;
   }
 
+  if (Flags.jobs > 0 && Flags.workers == 0) {
+    Flags.workers = std::min(NumberOfCpuCores() / 2, Flags.jobs);
+    if (Flags.workers > 1)
+      std::cerr << "Running " << Flags.workers << " workers\n";
+  }
+
   if (Flags.workers > 0 && Flags.jobs > 0)
     return RunInMultipleProcesses(argc, argv, Flags.workers, Flags.jobs);
 

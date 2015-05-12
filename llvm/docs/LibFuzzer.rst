@@ -156,13 +156,11 @@ You may run ``N`` independent fuzzer jobs in parallel on ``M`` CPUs::
 
   N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M
 
-This is useful when you already have an exhaustive test corpus.
-If you've just started fuzzing with no good corpus running independent
-jobs will create a corpus with too many duplicates.
-One way to avoid this and still use all of your CPUs is to use the flag ``-exit_on_first=1``
-which will cause the fuzzer to exit on the first new synthesised input::
+By default (``-reload=1``) the fuzzer processes will periodically scan the CORPUS directory
+and reload any new tests. This way the test inputs found by one process will be picked up
+by all others.
 
-  N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M -exit_on_first=1
+If ``-workers=$M`` is not supplied, ``min($N,NumberOfCpuCore/2)`` will be used.
 
 Heartbleed
 ----------
