@@ -1431,9 +1431,9 @@ class Base(unittest2.TestCase):
         if compiler[1] == ':':
             compiler = compiler[2:]
 
-        fname = "{}-{}-{}".format(self.getArchitecture(), "_".join(compiler.split(os.path.sep)), self.id())
+        fname = "{}-{}-{}".format(self.id(), self.getArchitecture(), "_".join(compiler.split(os.path.sep)))
         if len(fname) > 200:
-            fname = "{}-{}-{}".format(self.getArchitecture(), compiler.split(os.path.sep)[-1], self.id())
+            fname = "{}-{}-{}".format(self.id(), self.getArchitecture(), compiler.split(os.path.sep)[-1])
 
         if prefix is not None:
             fname = "{}-{}".format(prefix, fname)
