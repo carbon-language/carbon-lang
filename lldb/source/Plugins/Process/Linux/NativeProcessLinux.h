@@ -356,20 +356,9 @@ namespace process_linux {
         // Typedefs.
         typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
 
-        // Notify that a thread is created and/or starting to be tracked.
-        void
-        NotifyThreadCreate(lldb::tid_t tid);
-
-
-        // Notify the delegate after a given set of threads stops. The triggering_tid will be set
-        // as the current thread. The error_function will be fired if either the triggering tid
-        // or any of the wait_for_stop_tids are unknown.
-        void
-        StopThreads(lldb::tid_t triggering_tid, const ThreadIDSet &wait_for_stop_tids);
-
-        // Notify the delegate after all non-stopped threads stop. The triggering_tid will be set
-        // as the current thread. The error_function will be fired if the triggering tid
-        // is unknown.
+        // This method is requests a stop on all threads which are still running. It sets up a
+        // deferred delegate notification, which will fire once threads report as stopped. The
+        // triggerring_tid will be set as the current thread (main stop reason).
         void
         StopRunningThreads(lldb::tid_t triggering_tid);
 
@@ -379,30 +368,6 @@ namespace process_linux {
         // all non-stopped threads except skip_stop_request_tid.
         void
         StopRunningThreadsWithSkipTID(lldb::tid_t triggering_tid, lldb::tid_t skip_stop_request_tid);
-
-        // Notify the thread stopped.  Will trigger error at time of execution if we
-        // already think it is stopped.
-        Error
-        NotifyThreadStop(lldb::tid_t tid, bool initiated_by_llgs);
-
-        // Request that the given thread id should have the request_thread_resume_function
-        // called. This call signals an error if the thread resume is for
-        // a thread that is already in a running state.
-        Error
-        RequestThreadResume (lldb::tid_t tid,
-                             const NativeThreadLinux::ResumeThreadFunction &request_thread_resume_function);
-
-        // Request that the given thread id should have the request_thread_resume_function
-        // called. This call ignores threads that are already running and
-        // does not trigger an error in that case.
-        Error
-        RequestThreadResumeAsNeeded (lldb::tid_t tid,
-                                     const NativeThreadLinux::ResumeThreadFunction &request_thread_resume_function);
-
-        // Indicate the calling process did an exec and that the thread state
-        // should be 100% cleared.
-        void
-        ResetForExec ();
 
     private:
         struct PendingNotification
@@ -444,13 +409,14 @@ namespace process_linux {
         void
         RequestStopOnAllRunningThreads();
 
-        std::mutex m_event_mutex; // Serializes execution of ProcessEvent. XXX
-
         Error
         ThreadDidStop(lldb::tid_t tid, bool initiated_by_llgs);
 
+        // Resume the thread with the given thread id using the request_thread_resume_function
+        // called. If error_when_already_running is then then an error is raised if we think this
+        // thread is already running.
         Error
-        DoResume(lldb::tid_t tid, NativeThreadLinux::ResumeThreadFunction request_thread_resume_function,
+        ResumeThread(lldb::tid_t tid, NativeThreadLinux::ResumeThreadFunction request_thread_resume_function,
                 bool error_when_already_running);
 
         void
@@ -458,9 +424,6 @@ namespace process_linux {
 
         void
         ThreadWasCreated (lldb::tid_t tid);
-
-        void
-        ThreadDidDie (lldb::tid_t tid);
 
         // Member variables.
         PendingNotificationUP m_pending_notification_up;
