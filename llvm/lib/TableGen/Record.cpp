@@ -1903,13 +1903,11 @@ void RecordKeeper::dump() const { errs() << *this; }
 
 raw_ostream &llvm::operator<<(raw_ostream &OS, const RecordKeeper &RK) {
   OS << "------------- Classes -----------------\n";
-  const auto &Classes = RK.getClasses();
-  for (const auto &C : Classes)
+  for (const auto &C : RK.getClasses())
     OS << "class " << *C.second;
 
   OS << "------------- Defs -----------------\n";
-  const auto &Defs = RK.getDefs();
-  for (const auto &D : Defs)
+  for (const auto &D : RK.getDefs())
     OS << "def " << *D.second;
   return OS;
 }
