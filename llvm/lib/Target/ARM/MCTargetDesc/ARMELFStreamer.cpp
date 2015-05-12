@@ -386,8 +386,8 @@ private:
 
 public:
   ARMTargetELFStreamer(MCStreamer &S)
-    : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
-      Arch(ARM::INVALID_ARCH), EmittedArch(ARM::INVALID_ARCH),
+    : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::FK_INVALID),
+      Arch(ARM::AK_INVALID), EmittedArch(ARM::AK_INVALID),
       AttributeSection(nullptr) {}
 };
 
@@ -692,7 +692,7 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
                    ARMTargetParser::getArchDefaultCPUName(Arch),
                    false);
 
-  if (EmittedArch == ARM::INVALID_ARCH)
+  if (EmittedArch == ARM::AK_INVALID)
     setAttributeItem(CPU_arch,
                      ARMTargetParser::getArchDefaultCPUArch(Arch),
                      false);
@@ -702,64 +702,64 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
                      false);
 
   switch (Arch) {
-  case ARM::ARMV2:
-  case ARM::ARMV2A:
-  case ARM::ARMV3:
-  case ARM::ARMV3M:
-  case ARM::ARMV4:
-  case ARM::ARMV5:
+  case ARM::AK_ARMV2:
+  case ARM::AK_ARMV2A:
+  case ARM::AK_ARMV3:
+  case ARM::AK_ARMV3M:
+  case ARM::AK_ARMV4:
+  case ARM::AK_ARMV5:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     break;
 
-  case ARM::ARMV4T:
-  case ARM::ARMV5T:
-  case ARM::ARMV5TE:
-  case ARM::ARMV6:
-  case ARM::ARMV6J:
+  case ARM::AK_ARMV4T:
+  case ARM::AK_ARMV5T:
+  case ARM::AK_ARMV5TE:
+  case ARM::AK_ARMV6:
+  case ARM::AK_ARMV6J:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     break;
 
-  case ARM::ARMV6T2:
+  case ARM::AK_ARMV6T2:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::ARMV6K:
-  case ARM::ARMV6Z:
-  case ARM::ARMV6ZK:
+  case ARM::AK_ARMV6K:
+  case ARM::AK_ARMV6Z:
+  case ARM::AK_ARMV6ZK:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(Virtualization_use, AllowTZ, false);
     break;
 
-  case ARM::ARMV6M:
+  case ARM::AK_ARMV6M:
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     break;
 
-  case ARM::ARMV7:
+  case ARM::AK_ARMV7:
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::ARMV7A:
+  case ARM::AK_ARMV7A:
     setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::ARMV7R:
+  case ARM::AK_ARMV7R:
     setAttributeItem(CPU_arch_profile, RealTimeProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::ARMV7M:
+  case ARM::AK_ARMV7M:
     setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::ARMV8A:
-  case ARM::ARMV8_1A:
+  case ARM::AK_ARMV8A:
+  case ARM::AK_ARMV8_1A:
     setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
@@ -767,13 +767,13 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     setAttributeItem(Virtualization_use, AllowTZVirtualization, false);
     break;
 
-  case ARM::IWMMXT:
+  case ARM::AK_IWMMXT:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(WMMX_arch, AllowWMMXv1, false);
     break;
 
-  case ARM::IWMMXT2:
+  case ARM::AK_IWMMXT2:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(WMMX_arch, AllowWMMXv2, false);
@@ -789,38 +789,38 @@ void ARMTargetELFStreamer::emitFPU(unsigned Value) {
 }
 void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
   switch (FPU) {
-  case ARM::VFP:
-  case ARM::VFPV2:
+  case ARM::FK_VFP:
+  case ARM::FK_VFPV2:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv2,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::VFPV3:
+  case ARM::FK_VFPV3:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::VFPV3_D16:
+  case ARM::FK_VFPV3_D16:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3B,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::VFPV4:
+  case ARM::FK_VFPV4:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::VFPV4_D16:
+  case ARM::FK_VFPV4_D16:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4B,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::FP_ARMV8:
+  case ARM::FK_FP_ARMV8:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
@@ -828,13 +828,13 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
 
   // FPV5_D16 is identical to FP_ARMV8 except for the number of D registers, so
   // uses the FP_ARMV8_D16 build attribute.
-  case ARM::FPV5_D16:
+  case ARM::FK_FPV5_D16:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8B,
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::NEON:
+  case ARM::FK_NEON:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3A,
                      /* OverwriteExisting= */ false);
@@ -843,7 +843,7 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::NEON_VFPV4:
+  case ARM::FK_NEON_VFPV4:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv4A,
                      /* OverwriteExisting= */ false);
@@ -852,8 +852,8 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     break;
 
-  case ARM::NEON_FP_ARMV8:
-  case ARM::CRYPTO_NEON_FP_ARMV8:
+  case ARM::FK_NEON_FP_ARMV8:
+  case ARM::FK_CRYPTO_NEON_FP_ARMV8:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPARMv8A,
                      /* OverwriteExisting= */ false);
@@ -861,7 +861,7 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
     // ARMAsmPrinter::emitAttributes(), depending on hasV8Ops() and hasV8_1a()
     break;
 
-  case ARM::SOFTVFP:
+  case ARM::FK_SOFTVFP:
     break;
 
   default:
@@ -902,10 +902,10 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   //   ]+
   // ]*
 
-  if (FPU != ARM::INVALID_FPU)
+  if (FPU != ARM::FK_INVALID)
     emitFPUDefaultAttributes();
 
-  if (Arch != ARM::INVALID_ARCH)
+  if (Arch != ARM::AK_INVALID)
     emitArchDefaultAttributes();
 
   if (Contents.empty())
@@ -965,7 +965,7 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   }
 
   Contents.clear();
-  FPU = ARM::INVALID_FPU;
+  FPU = ARM::FK_INVALID;
 }
 
 void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
