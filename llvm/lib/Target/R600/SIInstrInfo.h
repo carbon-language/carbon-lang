@@ -216,6 +216,10 @@ public:
     return get(Opcode).TSFlags & SIInstrFlags::WQM;
   }
 
+  bool isVGPRSpill(uint16_t Opcode) const {
+    return get(Opcode).TSFlags & SIInstrFlags::VGPRSpill;
+  }
+
   bool isInlineConstant(const APInt &Imm) const;
   bool isInlineConstant(const MachineOperand &MO, unsigned OpSize) const;
   bool isLiteralConstant(const MachineOperand &MO, unsigned OpSize) const;
