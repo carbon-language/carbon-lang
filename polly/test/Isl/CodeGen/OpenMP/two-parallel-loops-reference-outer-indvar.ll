@@ -16,7 +16,7 @@
 ; AST:     Stmt_for_body35(c0);
 
 ; IR: @foo.polly.subfn
-; IR: @foo.polly.subfn1
+; IR: @foo.polly.subfn.1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
