@@ -2047,7 +2047,10 @@ multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
   } // End UseNamedOperandTable = 1
 }
 
-defm SI_SPILL_S32  : SI_SPILL_SGPR <SReg_32>;
+// It's unclear whether you can use M0 as the output of v_readlane_b32
+// instructions, so use SGPR_32 register class for spills to prevent
+// this from happening.
+defm SI_SPILL_S32  : SI_SPILL_SGPR <SGPR_32>;
 defm SI_SPILL_S64  : SI_SPILL_SGPR <SReg_64>;
 defm SI_SPILL_S128 : SI_SPILL_SGPR <SReg_128>;
 defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
