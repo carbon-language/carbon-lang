@@ -13,7 +13,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr23489: MiDataTestCase.test_lldbmi_data_disassemble test fails on Linux
     def test_lldbmi_data_disassemble(self):
         """Test that 'lldb-mi --interpreter' works for -data-disassemble."""
 
@@ -55,10 +54,12 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
 
         # This matches a line similar to:
-        # {address="0x0000000100000f18",func-name="hello_world()",offset="8",size="7",inst="leaq 0x65(%rip), %rdi; \"Hello, World!\\n\""},
+        # Darwin: {address="0x0000000100000f18",func-name="hello_world()",offset="8",size="7",inst="leaq 0x65(%rip), %rdi; \"Hello, World!\\n\""},
+        # Linux:  {address="0x0000000000400642",func-name="hello_world()",offset="18",size="5",inst="callq 0x4004d0; symbol stub for: printf"}
         # To match the escaped characters in the ouptut, we must use four backslashes per matches backslash
         # See https://docs.python.org/2/howto/regex.html#the-backslash-plague
-        self.expect("{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; \\\\\"Hello, World!\\\\\\\\n\\\\\"\"},")
+        self.expect([ "{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; \\\\\"Hello, World!\\\\\\\\n\\\\\"\"}",
+                      "{address=\"0x[0-9a-f]+\",func-name=\"hello_world\(\)\",offset=\"[0-9]+\",size=\"[0-9]+\",inst=\".+?; symbol stub for: printf\"}" ])
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
