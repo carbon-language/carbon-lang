@@ -528,7 +528,8 @@ def int_experimental_patchpoint_i64 : Intrinsic<[llvm_i64_ty],
 // These are documented in docs/Statepoint.rst
 
 def int_experimental_gc_statepoint : Intrinsic<[llvm_i32_ty],
-                               [llvm_anyptr_ty, llvm_i32_ty,
+                               [llvm_i64_ty, llvm_i32_ty,
+                                llvm_anyptr_ty, llvm_i32_ty,
                                 llvm_i32_ty, llvm_vararg_ty]>;
 
 def int_experimental_gc_result   : Intrinsic<[llvm_any_ty], [llvm_i32_ty]>;

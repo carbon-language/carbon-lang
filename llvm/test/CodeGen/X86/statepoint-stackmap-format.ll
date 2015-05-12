@@ -24,11 +24,11 @@ entry:
   %metadata1 = alloca i32 addrspace(1)*, i32 2, align 8
   store i32 addrspace(1)* null, i32 addrspace(1)** %metadata1
   %ptr_derived = getelementptr i32, i32 addrspace(1)* %ptr_base, i32 %arg
-  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
+  %safepoint_token = tail call i32 (i64, i32, i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i64 0, i32 0, i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
   %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
-  %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 7)
-  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 8)
-  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
+  %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
+  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 10)
+  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 11, i32 11)
 ; 
   ret i1 %call1
 }
@@ -52,17 +52,26 @@ define i1 @test_derived_arg(i32 addrspace(1)* %ptr_base,
 entry:
   %metadata1 = alloca i32 addrspace(1)*, i32 2, align 8
   store i32 addrspace(1)* null, i32 addrspace(1)** %metadata1
-  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
+  %safepoint_token = tail call i32 (i64, i32, i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i64 0, i32 0, i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
   %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
-  %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 7)
-  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 8)
-  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
+  %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
+  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 10)
+  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 11, i32 11)
 ; 
   ret i1 %call1
 }
 
+; Simple test case to check that we emit the ID field correctly
+define i1 @test_id() gc "statepoint-example" {
+; CHECK-LABEL: test_id
+entry:
+  %safepoint_token = tail call i32 (i64, i32, i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i64 237, i32 0, i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 0)
+  %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
+  ret i1 %call1
+}
 
-declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
+
+declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i64, i32, i1 ()*, i32, i32, ...)
 declare i1 @llvm.experimental.gc.result.i1(i32)
 declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 
@@ -73,11 +82,11 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; CHECK-NEXT:   .byte 0
 ; CHECK-NEXT:   .short 0
 ; Num Functions
-; CHECK-NEXT:   .long 2
+; CHECK-NEXT:   .long 3
 ; Num LargeConstants
 ; CHECK-NEXT:   .long 0
 ; Num Callsites
-; CHECK-NEXT:   .long 2
+; CHECK-NEXT:   .long 3
 
 ; Functions and stack size
 ; CHECK-NEXT:   .quad test
@@ -91,7 +100,7 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 
 ; Large Constants
 ; Statepoint ID only
-; CHECK: .quad	2882400000
+; CHECK: .quad	0
 
 ; Callsites
 ; Constant arguments
@@ -165,7 +174,7 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 
 ; Large Constants
 ; Statepoint ID only
-; CHECK: .quad	2882400000
+; CHECK: .quad	0
 
 ; Callsites
 ; Constant arguments
@@ -227,3 +236,45 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; CHECK: .short	0
 ; CHECK: .short	0
 ; CHECK: .align	8
+
+; Records for the test_id function:
+; No large constants
+
+; The Statepoint ID:
+; CHECK: .quad	237
+
+; Instruction Offset
+; CHECK: .long	.Ltmp5-test_id
+
+; Reserved:
+; CHECK: .short	0
+
+; NumLocations:
+; CHECK: .short	3
+
+; StkMapRecord[0]:
+; SmallConstant(0):
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+
+; StkMapRecord[1]:
+; SmallConstant(0):
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+
+; StkMapRecord[2]:
+; SmallConstant(0):
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+
+; No padding or LiveOuts
+; CHECK: .short	0
+; CHECK: .short	0
+; CHECK: .align	8
+

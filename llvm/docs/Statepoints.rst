@@ -142,7 +142,7 @@ resulting relocation sequence is:
 
   define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
          gc "statepoint-example" {
-    %0 = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj)
+    %0 = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj)
     %obj.relocated = call coldcc i8 addrspace(1)* @llvm.experimental.gc.relocate.p1i8(i32 %0, i32 4, i32 4)
     ret i8 addrspace(1)* %obj.relocated
   }
@@ -297,7 +297,8 @@ Syntax:
 ::
 
       declare i32
-        @llvm.experimental.gc.statepoint(func_type <target>, 
+        @llvm.experimental.gc.statepoint(i64 <id>, i32 <num patch bytes>,
+                       func_type <target>, 
                        i64 <#call args>. i64 <flags>,
                        ... (call parameters),
                        i64 <# transition args>, ... (transition parameters),
@@ -313,11 +314,31 @@ runtime.
 Operands:
 """""""""
 
+The 'id' operand is a constant integer that is reported as the ID
+field in the generated stackmap.  LLVM does not interpret this
+parameter in any way and its meaning is up to the statepoint user to
+decide.  Note that LLVM is free to duplicate code containing
+statepoint calls, and this may transform IR that had a unique 'id' per
+lexical call to statepoint to IR that does not.
+
+If 'num patch bytes' is non-zero then the call instruction
+corresponding to the statepoint is not emitted and LLVM emits 'num
+patch bytes' bytes of nops in its place.  LLVM will emit code to
+prepare the function arguments and retrieve the function return value
+in accordance to the calling convention; the former before the nop
+sequence and the latter after the nop sequence.  It is expected that
+the user will patch over the 'num patch bytes' bytes of nops with a
+calling sequence specific to their runtime before executing the
+generated machine code.  There are no guarantees with respect to the
+alignment of the nop sequence.  Unlike :doc:`StackMaps` statepoints do
+not have a concept of shadow bytes.
+
 The 'target' operand is the function actually being called.  The
 target can be specified as either a symbolic LLVM function, or as an
 arbitrary Value of appropriate function type.  Note that the function
 type must match the signature of the callee and the types of the 'call
-parameters' arguments.
+parameters' arguments.  If 'num patch bytes' is non-zero then 'target'
+has to be the constant pointer null of the appropriate function type.
 
 The '#call args' operand is the number of arguments to the actual
 call.  It must exactly match the number of arguments passed in the
@@ -505,9 +526,6 @@ Each statepoint generates the following Locations:
 Note that the Locations used in each section may describe the same
 physical location.  e.g. A stack slot may appear as a deopt location,
 a gc base pointer, and a gc derived pointer.
-
-The ID field of the 'StkMapRecord' for a statepoint is meaningless and
-it's value is explicitly unspecified.
 
 The LiveOut section of the StkMapRecord will be empty for a statepoint
 record.

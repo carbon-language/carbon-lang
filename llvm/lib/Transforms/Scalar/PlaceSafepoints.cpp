@@ -904,8 +904,8 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
     CallInst *Call = Builder.CreateGCStatepointCall(
-        CS.getCalledValue(), makeArrayRef(CS.arg_begin(), CS.arg_end()), None,
-        None, "safepoint_token");
+        0xABCDEF00, 0, CS.getCalledValue(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
+        None, None, "safepoint_token");
     Call->setTailCall(ToReplace->isTailCall());
     Call->setCallingConv(ToReplace->getCallingConv());
 
@@ -933,7 +933,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     // original block.
     Builder.SetInsertPoint(ToReplace->getParent());
     InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
-        CS.getCalledValue(), ToReplace->getNormalDest(),
+        0xABCDEF00, 0, CS.getCalledValue(), ToReplace->getNormalDest(),
         ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
         Builder.getInt32(0), None, "safepoint_token");
 

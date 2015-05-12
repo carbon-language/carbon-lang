@@ -583,11 +583,6 @@ void SelectionDAGBuilder::LowerStatepoint(
   // Construct the actual GC_TRANSITION_START, STATEPOINT, and GC_TRANSITION_END
   // nodes with all the appropriate arguments and return values.
 
-  // TODO: Currently, all of these operands are being marked as read/write in
-  // PrologEpilougeInserter.cpp, we should special case the VMState arguments
-  // and flags to be read-only.
-  SmallVector<SDValue, 40> Ops;
-
   // Call Node: Chain, Target, {Args}, RegMask, [Glue]
   SDValue Chain = CallNode->getOperand(0);
 
@@ -634,6 +629,16 @@ void SelectionDAGBuilder::LowerStatepoint(
     Glue = GCTransitionStart.getValue(1);
   }
 
+  // TODO: Currently, all of these operands are being marked as read/write in
+  // PrologEpilougeInserter.cpp, we should special case the VMState arguments
+  // and flags to be read-only.
+  SmallVector<SDValue, 40> Ops;
+
+  // Add the <id> and <numBytes> constants.
+  Ops.push_back(DAG.getTargetConstant(ISP.getID(), getCurSDLoc(), MVT::i64));
+  Ops.push_back(
+      DAG.getTargetConstant(ISP.getNumPatchBytes(), getCurSDLoc(), MVT::i32));
+
   // Calculate and push starting position of vmstate arguments
   // Get number of arguments incoming directly into call node
   unsigned NumCallRegArgs =
@@ -657,7 +662,7 @@ void SelectionDAGBuilder::LowerStatepoint(
   pushStackMapConstant(Ops, *this, CS.getCallingConv());
 
   // Add a constant argument for the flags
-  uint64_t Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
+  uint64_t Flags = ISP.getFlags();
   assert(
       ((Flags & ~(uint64_t)StatepointFlags::MaskAll) == 0)
           && "unknown flag used");

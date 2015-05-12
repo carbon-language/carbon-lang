@@ -812,43 +812,50 @@ void X86AsmPrinter::LowerSTATEPOINT(const MachineInstr &MI,
                                     X86MCInstLower &MCIL) {
   assert(Subtarget->is64Bit() && "Statepoint currently only supports X86-64");
 
-  // Lower call target and choose correct opcode
-  const MachineOperand &CallTarget = StatepointOpers(&MI).getCallTarget();
-  MCOperand CallTargetMCOp;
-  unsigned CallOpcode;
-  switch (CallTarget.getType()) {
-  case MachineOperand::MO_GlobalAddress:
-  case MachineOperand::MO_ExternalSymbol:
-    CallTargetMCOp = MCIL.LowerSymbolOperand(
-        CallTarget, MCIL.GetSymbolFromOperand(CallTarget));
-    CallOpcode = X86::CALL64pcrel32;
-    // Currently, we only support relative addressing with statepoints.
-    // Otherwise, we'll need a scratch register to hold the target
-    // address.  You'll fail asserts during load & relocation if this
-    // symbol is to far away. (TODO: support non-relative addressing)
-    break;
-  case MachineOperand::MO_Immediate:
-    CallTargetMCOp = MCOperand::CreateImm(CallTarget.getImm());
-    CallOpcode = X86::CALL64pcrel32;
-    // Currently, we only support relative addressing with statepoints.
-    // Otherwise, we'll need a scratch register to hold the target
-    // immediate.  You'll fail asserts during load & relocation if this
-    // address is to far away. (TODO: support non-relative addressing)
-    break;
-  case MachineOperand::MO_Register:
-    CallTargetMCOp = MCOperand::CreateReg(CallTarget.getReg());
-    CallOpcode = X86::CALL64r;
-    break;
-  default:
-    llvm_unreachable("Unsupported operand type in statepoint call target");
-    break;
-  }
+  StatepointOpers SOpers(&MI);
 
-  // Emit call
-  MCInst CallInst;
-  CallInst.setOpcode(CallOpcode);
-  CallInst.addOperand(CallTargetMCOp);
-  OutStreamer->EmitInstruction(CallInst, getSubtargetInfo());
+  if (unsigned PatchBytes = SOpers.getNumPatchBytes()) {
+    EmitNops(*OutStreamer, PatchBytes, Subtarget->is64Bit(),
+             getSubtargetInfo());
+  } else {
+    // Lower call target and choose correct opcode
+    const MachineOperand &CallTarget = SOpers.getCallTarget();
+    MCOperand CallTargetMCOp;
+    unsigned CallOpcode;
+    switch (CallTarget.getType()) {
+    case MachineOperand::MO_GlobalAddress:
+    case MachineOperand::MO_ExternalSymbol:
+      CallTargetMCOp = MCIL.LowerSymbolOperand(
+          CallTarget, MCIL.GetSymbolFromOperand(CallTarget));
+      CallOpcode = X86::CALL64pcrel32;
+      // Currently, we only support relative addressing with statepoints.
+      // Otherwise, we'll need a scratch register to hold the target
+      // address.  You'll fail asserts during load & relocation if this
+      // symbol is to far away. (TODO: support non-relative addressing)
+      break;
+    case MachineOperand::MO_Immediate:
+      CallTargetMCOp = MCOperand::CreateImm(CallTarget.getImm());
+      CallOpcode = X86::CALL64pcrel32;
+      // Currently, we only support relative addressing with statepoints.
+      // Otherwise, we'll need a scratch register to hold the target
+      // immediate.  You'll fail asserts during load & relocation if this
+      // address is to far away. (TODO: support non-relative addressing)
+      break;
+    case MachineOperand::MO_Register:
+      CallTargetMCOp = MCOperand::CreateReg(CallTarget.getReg());
+      CallOpcode = X86::CALL64r;
+      break;
+    default:
+      llvm_unreachable("Unsupported operand type in statepoint call target");
+      break;
+    }
+
+    // Emit call
+    MCInst CallInst;
+    CallInst.setOpcode(CallOpcode);
+    CallInst.addOperand(CallTargetMCOp);
+    OutStreamer->EmitInstruction(CallInst, getSubtargetInfo());
+  }
 
   // Record our statepoint node in the same section used by STACKMAP
   // and PATCHPOINT

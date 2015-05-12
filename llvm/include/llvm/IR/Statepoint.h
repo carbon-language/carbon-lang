@@ -74,16 +74,35 @@ public:
   typedef typename CallSiteTy::arg_iterator arg_iterator;
 
   enum {
-    ActualCalleePos = 0,
-    NumCallArgsPos = 1,
-    CallArgsBeginPos = 3,
+    IDPos = 0,
+    NumPatchBytesPos = 1,
+    ActualCalleePos = 2,
+    NumCallArgsPos = 3,
+    FlagsPos = 4,
+    CallArgsBeginPos = 5,
   };
 
   /// Return the underlying CallSite.
   CallSiteTy getCallSite() { return StatepointCS; }
 
   uint64_t getFlags() const {
-    return cast<ConstantInt>(StatepointCS.getArgument(2))->getZExtValue();
+    return cast<ConstantInt>(StatepointCS.getArgument(FlagsPos))
+        ->getZExtValue();
+  }
+
+  /// Return the ID associated with this statepoint.
+  uint64_t getID() {
+    const Value *IDVal = StatepointCS.getArgument(IDPos);
+    return cast<ConstantInt>(IDVal)->getZExtValue();
+  }
+
+  /// Return the number of patchable bytes associated with this statepoint.
+  uint32_t getNumPatchBytes() {
+    const Value *NumPatchBytesVal = StatepointCS.getArgument(NumPatchBytesPos);
+    uint64_t NumPatchBytes =
+      cast<ConstantInt>(NumPatchBytesVal)->getZExtValue();
+    assert(isInt<32>(NumPatchBytes) && "should fit in 32 bits!");
+    return NumPatchBytes;
   }
 
   /// Return the value actually being called or invoked.

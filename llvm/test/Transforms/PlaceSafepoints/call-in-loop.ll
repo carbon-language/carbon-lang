@@ -15,7 +15,7 @@ entry:
 
 loop:
 ; CHECK-LABEL: loop
-; CHECK: @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo
+; CHECK: @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 2882400000, i32 0, void ()* @foo
 ; CHECK-NOT: statepoint
   call void @foo()
   br label %loop
