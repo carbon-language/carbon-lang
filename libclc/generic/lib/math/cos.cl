@@ -52,14 +52,24 @@ _CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, cos, float);
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-#define __CLC_FUNCTION __clc_cos_intrinsic
-#define __CLC_INTRINSIC "llvm.cos"
-#include <clc/math/unary_intrin.inc>
-#undef __CLC_FUNCTION
-#undef __CLC_INTRINSIC
-
 _CLC_OVERLOAD _CLC_DEF double cos(double x) {
-    return __clc_cos_intrinsic(x);
+    x = fabs(x);
+
+    double r, rr;
+    int regn;
+
+    if (x < 0x1.0p+47)
+        __clc_remainder_piby2_medium(x, &r, &rr, &regn);
+    else
+        __clc_remainder_piby2_large(x, &r, &rr, &regn);
+
+    double2 sc = __clc_sincos_piby4(r, rr);
+    sc.lo = -sc.lo;
+
+    int2 c = as_int2(regn & 1 ? sc.lo : sc.hi);
+    c.hi ^= (regn > 1) << 31;
+
+    return isnan(x) | isinf(x) ? as_double(QNANBITPATT_DP64) : as_double(c);
 }
 
 _CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, double, cos, double);

@@ -40,6 +40,7 @@
 
 TABLE_FUNCTION_DECL(float2, loge_tbl);
 TABLE_FUNCTION_DECL(float, log_inv_tbl);
+TABLE_FUNCTION_DECL(uint4,  pibits_tbl);
 
 #ifdef cl_khr_fp64
 
