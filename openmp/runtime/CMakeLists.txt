@@ -380,12 +380,13 @@ set(lib_item "${lib_item}${version}")
 if(${WINDOWS})
     set(lib_item "${lib_item}md")
 endif()
+set(IOMP_LIB_NAME   "${lib_item}"   CACHE STRING "OMP library name")
 set(lib_ext "${dll}")
 # ${lib_file} is real library name:
 # libiomp5.so    for Linux
 # libiomp5.dylib for Mac
 # libiomp5md.dll for Windows
-set(lib_file "${lib_item}${lib_ext}")
+set(lib_file "${IOMP_LIB_NAME}${lib_ext}")
 
 ########################################
 # Setting export file names
