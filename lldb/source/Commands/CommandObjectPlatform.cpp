@@ -572,10 +572,7 @@ protected:
     GetOptions ()
     {
         if (m_options.DidFinalize() == false)
-        {
-            m_options.Append(new OptionPermissions());
             m_options.Finalize();
-        }
         return &m_options;
     }
 protected:
