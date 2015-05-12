@@ -94,3 +94,18 @@ class PCREL16_FM_MMR6<bits<5> funct> : MipsR6Inst {
   let Inst{20-16} = funct;
   let Inst{15-0}  = imm;
 }
+
+class POOL32A_FM_MMR6<bits<10> funct> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b000000;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-11} = rd;
+  let Inst{10}    = 0;
+  let Inst{9-0}   = funct;
+}
