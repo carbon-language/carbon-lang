@@ -139,6 +139,15 @@ NativeRegisterContextLinux_arm::GetRegisterSetCount () const
     return k_num_register_sets;
 }
 
+uint32_t
+NativeRegisterContextLinux_arm::GetUserRegisterCount() const
+{
+    uint32_t count = 0;
+    for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
+        count += g_reg_sets_arm[set_index].num_registers;
+    return count;
+}
+
 const RegisterSet *
 NativeRegisterContextLinux_arm::GetRegisterSet (uint32_t set_index) const
 {
