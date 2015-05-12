@@ -3,7 +3,7 @@ clang -g ExtendSuperclass.m -o ExtendSuperclass -framework Foundation -framework
 */
 #include <assert.h>
 #import <Foundation/Foundation.h>
-@class CKDatabase;
+#import <CloudKit/CloudKit.h>
 
 #define SuperClass CKDatabase
 
