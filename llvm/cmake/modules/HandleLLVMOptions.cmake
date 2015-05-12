@@ -88,6 +88,9 @@ elseif( uppercase_LLVM_ABI_BREAKING_CHECKS STREQUAL "FORCE_ON" )
   set( LLVM_ENABLE_ABI_BREAKING_CHECKS 1 )
 elseif( uppercase_LLVM_ABI_BREAKING_CHECKS STREQUAL "FORCE_OFF" )
   # We don't need to do anything special to turn off ABI breaking checks.
+elseif( NOT DEFINED LLVM_ABI_BREAKING_CHECKS )
+  # Treat LLVM_ABI_BREAKING_CHECKS like "FORCE_OFF" when it has not been
+  # defined.
 else()
   message(FATAL_ERROR "Unknown value for LLVM_ABI_BREAKING_CHECKS: \"${LLVM_ABI_BREAKING_CHECKS}\"!")
 endif()
