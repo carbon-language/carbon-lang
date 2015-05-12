@@ -670,11 +670,16 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     SourceLocation StartLoc = Tok.getLocation();
     SourceLocation EndLoc;
 
-    // Check if GNU-style InlineAsm is disabled.
-    if (!getLangOpts().GNUAsm)
-      Diag(StartLoc, diag::err_gnu_inline_asm_disabled);
-
     ExprResult Result(ParseSimpleAsm(&EndLoc));
+
+    // Check if GNU-style InlineAsm is disabled.
+    // Empty asm string is allowed because it will not introduce
+    // any assembly code.
+    if (!(getLangOpts().GNUAsm || Result.isInvalid())) {
+      const auto *SL = cast<StringLiteral>(Result.get());
+      if (!SL->getString().trim().empty())
+        Diag(StartLoc, diag::err_gnu_inline_asm_disabled);
+    }
 
     ExpectAndConsume(tok::semi, diag::err_expected_after,
                      "top-level asm block");

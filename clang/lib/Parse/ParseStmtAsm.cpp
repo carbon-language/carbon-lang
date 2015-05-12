@@ -616,10 +616,6 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     return ParseMicrosoftAsmStatement(AsmLoc);
   }
 
-  // Check if GNU-style inline Asm is disabled.
-  if (!getLangOpts().GNUAsm)
-    Diag(AsmLoc, diag::err_gnu_inline_asm_disabled);
-
   DeclSpec DS(AttrFactory);
   SourceLocation Loc = Tok.getLocation();
   ParseTypeQualifierListOpt(DS, AR_VendorAttributesParsed);
@@ -644,6 +640,15 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   T.consumeOpen();
 
   ExprResult AsmString(ParseAsmStringLiteral());
+
+  // Check if GNU-style InlineAsm is disabled.
+  // Error on anything other than empty string.
+  if (!(getLangOpts().GNUAsm || AsmString.isInvalid())) {
+    const auto *SL = cast<StringLiteral>(AsmString.get());
+    if (!SL->getString().trim().empty())
+      Diag(Loc, diag::err_gnu_inline_asm_disabled);
+  }
+
   if (AsmString.isInvalid()) {
     // Consume up to and including the closing paren.
     T.skipToEnd();
