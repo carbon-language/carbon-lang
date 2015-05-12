@@ -117,6 +117,7 @@ public:
   std::pair<unsigned, const TargetRegisterClass *> getRegForInlineAsmConstraint(
                                    const TargetRegisterInfo *TRI,
                                    const std::string &Constraint, MVT VT) const override;
+  SDValue copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL, SDValue V) const;
 };
 
 } // End namespace llvm

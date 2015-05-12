@@ -219,6 +219,10 @@ def AMDGPUmad_i24 : SDNode<"AMDGPUISD::MAD_I24", AMDGPUDTIntTernaryOp,
   []
 >;
 
+def AMDGPUsendmsg : SDNode<"AMDGPUISD::SENDMSG",
+                    SDTypeProfile<0, 1, [SDTCisInt<0>]>,
+                    [SDNPHasChain, SDNPInGlue]>;
+
 //===----------------------------------------------------------------------===//
 // Flow Control Profile Types
 //===----------------------------------------------------------------------===//

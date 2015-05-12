@@ -838,6 +838,23 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
   return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Lo, Hi);
 }
 
+SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL,
+                                   SDValue V) const {
+  // We can't use CopyToReg, because MachineCSE won't combine COPY instructions,
+  // so we will end up with redundant moves to m0.
+  //
+  // We can't use S_MOV_B32, because there is no way to specify m0 as the
+  // destination register.
+  //
+  // We have to use them both.  Machine cse will combine all the S_MOV_B32
+  // instructions and the register coalescer eliminate the extra copies.
+  SDNode *M0 = DAG.getMachineNode(AMDGPU::S_MOV_B32, DL, V.getValueType(), V);
+  return DAG.getCopyToReg(Chain, DL, DAG.getRegister(AMDGPU::M0, MVT::i32),
+                          SDValue(M0, 0), SDValue()); // Glue
+                                                      // A Null SDValue creates
+                                                      // a glue result.
+}
+
 SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                   SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -940,12 +957,18 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
                                               SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
+  SDLoc DL(Op);
   SDValue Chain = Op.getOperand(0);
   unsigned IntrinsicID = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
 
   switch (IntrinsicID) {
+  case AMDGPUIntrinsic::SI_sendmsg: {
+    Chain = copyToM0(DAG, Chain, DL, Op.getOperand(3));
+    SDValue Glue = Chain.getValue(1);
+    return DAG.getNode(AMDGPUISD::SENDMSG, DL, MVT::Other, Chain,
+                       Op.getOperand(2), Glue);
+  }
   case AMDGPUIntrinsic::SI_tbuffer_store: {
-    SDLoc DL(Op);
     SDValue Ops[] = {
       Chain,
       Op.getOperand(2),

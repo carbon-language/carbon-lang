@@ -488,13 +488,11 @@ def S_SETHALT : SOPP <0x0000000d, (ins i16imm:$simm16), "s_sethalt $simm16">;
 def S_SLEEP : SOPP <0x0000000e, (ins i16imm:$simm16), "s_sleep $simm16">;
 def S_SETPRIO : SOPP <0x0000000f, (ins i16imm:$sim16), "s_setprio $sim16">;
 
-let Uses = [EXEC] in {
-  def S_SENDMSG : SOPP <0x00000010, (ins SendMsgImm:$simm16, M0Reg:$m0), "s_sendmsg $simm16",
-      [(int_SI_sendmsg imm:$simm16, M0Reg:$m0)]
-  > {
-    let DisableEncoding = "$m0";
-  }
-} // End Uses = [EXEC]
+let Uses = [EXEC, M0] in {
+  def S_SENDMSG : SOPP <0x00000010, (ins SendMsgImm:$simm16), "s_sendmsg $simm16",
+      [(AMDGPUsendmsg (i32 imm:$simm16))]
+  >;
+} // End Uses = [EXEC, M0]
 
 def S_SENDMSGHALT : SOPP <0x00000011, (ins i16imm:$simm16), "s_sendmsghalt $simm16">;
 def S_TRAP : SOPP <0x00000012, (ins i16imm:$simm16), "s_trap $simm16">;
