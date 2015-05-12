@@ -948,7 +948,28 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   case AMDGPUIntrinsic::AMDIL_fraction: // Legacy name.
     return DAG.getNode(ISD::FSUB, DL, VT, Op.getOperand(1),
                        DAG.getNode(ISD::FFLOOR, DL, VT, Op.getOperand(1)));
-
+  case AMDGPUIntrinsic::SI_fs_constant: {
+    SDValue M0 = copyToM0(DAG, DAG.getEntryNode(), DL, Op.getOperand(3));
+    SDValue Glue = M0.getValue(1);
+    return DAG.getNode(AMDGPUISD::INTERP_MOV, DL, MVT::f32,
+                       DAG.getConstant(2, DL, MVT::i32), // P0
+                       Op.getOperand(1), Op.getOperand(2), Glue);
+  }
+  case AMDGPUIntrinsic::SI_fs_interp: {
+    SDValue IJ = Op.getOperand(4);
+    SDValue I = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i32, IJ,
+                            DAG.getConstant(0, DL, MVT::i32));
+    SDValue J = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i32, IJ,
+                            DAG.getConstant(1, DL, MVT::i32));
+    SDValue M0 = copyToM0(DAG, DAG.getEntryNode(), DL, Op.getOperand(3));
+    SDValue Glue = M0.getValue(1);
+    SDValue P1 = DAG.getNode(AMDGPUISD::INTERP_P1, DL,
+                             DAG.getVTList(MVT::f32, MVT::Glue),
+                             I, Op.getOperand(1), Op.getOperand(2), Glue);
+    Glue = SDValue(P1.getNode(), 1);
+    return DAG.getNode(AMDGPUISD::INTERP_P2, DL, MVT::f32, P1, J,
+                             Op.getOperand(1), Op.getOperand(2), Glue);
+  }
   default:
     return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   }

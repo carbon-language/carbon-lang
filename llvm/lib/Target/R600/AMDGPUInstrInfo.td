@@ -223,6 +223,18 @@ def AMDGPUsendmsg : SDNode<"AMDGPUISD::SENDMSG",
                     SDTypeProfile<0, 1, [SDTCisInt<0>]>,
                     [SDNPHasChain, SDNPInGlue]>;
 
+def AMDGPUinterp_mov : SDNode<"AMDGPUISD::INTERP_MOV",
+                        SDTypeProfile<1, 3, [SDTCisFP<0>]>,
+                        [SDNPInGlue]>;
+
+def AMDGPUinterp_p1 : SDNode<"AMDGPUISD::INTERP_P1",
+                      SDTypeProfile<1, 3, [SDTCisFP<0>]>,
+                      [SDNPInGlue, SDNPOutGlue]>;
+
+def AMDGPUinterp_p2 : SDNode<"AMDGPUISD::INTERP_P2",
+                      SDTypeProfile<1, 4, [SDTCisFP<0>]>,
+                      [SDNPInGlue]>;
+
 //===----------------------------------------------------------------------===//
 // Flow Control Profile Types
 //===----------------------------------------------------------------------===//

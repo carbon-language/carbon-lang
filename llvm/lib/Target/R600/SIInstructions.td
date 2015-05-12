@@ -1433,28 +1433,36 @@ defm V_RSQ_CLAMP_F64 : VOP1InstSI <vop1<0x32>, "v_rsq_clamp_f64",
 // VINTRP Instructions
 //===----------------------------------------------------------------------===//
 
+let Uses = [M0] in {
+
 // FIXME: Specify SchedRW for VINTRP insturctions.
 defm V_INTERP_P1_F32 : VINTRP_m <
   0x00000000, "v_interp_p1_f32",
   (outs VGPR_32:$dst),
-  (ins VGPR_32:$i, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "v_interp_p1_f32 $dst, $i, $attr_chan, $attr, [$m0]",
-  "$m0">;
+  (ins VGPR_32:$i, i32imm:$attr_chan, i32imm:$attr),
+  "v_interp_p1_f32 $dst, $i, $attr_chan, $attr, [m0]",
+  [(set f32:$dst, (AMDGPUinterp_p1 i32:$i, (i32 imm:$attr_chan),
+                                           (i32 imm:$attr)))]>;
 
 defm V_INTERP_P2_F32 : VINTRP_m <
   0x00000001, "v_interp_p2_f32",
   (outs VGPR_32:$dst),
-  (ins VGPR_32:$src0, VGPR_32:$j, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "v_interp_p2_f32 $dst, [$src0], $j, $attr_chan, $attr, [$m0]",
-  "$src0,$m0",
+  (ins VGPR_32:$src0, VGPR_32:$j, i32imm:$attr_chan, i32imm:$attr),
+  "v_interp_p2_f32 $dst, [$src0], $j, $attr_chan, $attr, [m0]",
+  [(set f32:$dst, (AMDGPUinterp_p2 f32:$src0, i32:$j, (i32 imm:$attr_chan),
+                                                     (i32 imm:$attr)))],
+  "$src0",
   "$src0 = $dst">;
 
 defm V_INTERP_MOV_F32 : VINTRP_m <
   0x00000002, "v_interp_mov_f32",
   (outs VGPR_32:$dst),
-  (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
-  "v_interp_mov_f32 $dst, $src0, $attr_chan, $attr, [$m0]",
-  "$m0">;
+  (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr),
+  "v_interp_mov_f32 $dst, $src0, $attr_chan, $attr, [m0]",
+  [(set f32:$dst, (AMDGPUinterp_mov (i32 imm:$src0), (i32 imm:$attr_chan),
+                                    (i32 imm:$attr)))]>;
+
+} // End Uses = [M0]
 
 //===----------------------------------------------------------------------===//
 // VOP2 Instructions
@@ -2722,27 +2730,6 @@ def : Pat <
 def : Pat <
   (f64 InlineFPImm<f64>:$imm),
   (S_MOV_B64 (f64 (bitcast_fpimm_to_i64 InlineFPImm<f64>:$imm)))
->;
-
-/********** ===================== **********/
-/********** Interpolation Paterns **********/
-/********** ===================== **********/
-
-// The value of $params is constant through out the entire kernel.
-// We need to use S_MOV_B32 $params, because CSE ignores copies, so
-// without it we end up with a lot of redundant moves.
-
-def : Pat <
-  (int_SI_fs_constant imm:$attr_chan, imm:$attr, i32:$params),
-  (V_INTERP_MOV_F32 INTERP.P0, imm:$attr_chan, imm:$attr, (S_MOV_B32 $params))
->;
-
-def : Pat <
-  (int_SI_fs_interp imm:$attr_chan, imm:$attr, i32:$params, v2i32:$ij),
-  (V_INTERP_P2_F32 (V_INTERP_P1_F32 (EXTRACT_SUBREG v2i32:$ij, sub0),
-                                    imm:$attr_chan, imm:$attr, (S_MOV_B32 $params)),
-                   (EXTRACT_SUBREG $ij, sub1),
-                   imm:$attr_chan, imm:$attr, (S_MOV_B32 $params))
 >;
 
 /********** ================== **********/
