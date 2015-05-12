@@ -2953,10 +2953,6 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     if (log)
         log->Printf ("NativeProcessLinux::%s called: pid %" PRIu64, __FUNCTION__, GetID ());
 
-    lldb::tid_t deferred_signal_tid = LLDB_INVALID_THREAD_ID;
-    lldb::tid_t deferred_signal_skip_tid = LLDB_INVALID_THREAD_ID;
-    int deferred_signo = 0;
-    NativeThreadProtocolSP deferred_signal_thread_sp;
     bool stepping = false;
     bool software_single_step = !SupportHardwareSingleStepping();
 
@@ -3049,26 +3045,13 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
 
         case eStateSuspended:
         case eStateStopped:
-            // if we haven't chosen a deferred signal tid yet, use this one.
-            if (deferred_signal_tid == LLDB_INVALID_THREAD_ID)
-            {
-                deferred_signal_tid = thread_sp->GetID ();
-                deferred_signal_thread_sp = thread_sp;
-                deferred_signo = SIGSTOP;
-            }
-            break;
+            lldbassert(0 && "Unexpected state");
 
         default:
             return Error ("NativeProcessLinux::%s (): unexpected state %s specified for pid %" PRIu64 ", tid %" PRIu64,
                     __FUNCTION__, StateAsCString (action->state), GetID (), thread_sp->GetID ());
         }
     }
-
-    // If we had any thread stopping, then do a deferred notification of the chosen stop thread id and signal
-    // after all other running threads have stopped.
-    // If there is a stepping thread involved we'll be eventually stopped by SIGTRAP trace signal.
-    if (deferred_signal_tid != LLDB_INVALID_THREAD_ID && !stepping)
-        StopRunningThreadsWithSkipTID(deferred_signal_tid, deferred_signal_skip_tid);
 
     return Error();
 }
@@ -4216,28 +4199,14 @@ NativeProcessLinux::ResumeThread(
     }
 
     // Before we do the resume below, first check if we have a pending
-    // stop notification this is currently or was previously waiting for
+    // stop notification that is currently waiting for
     // this thread to stop.  This is potentially a buggy situation since
     // we're ostensibly waiting for threads to stop before we send out the
     // pending notification, and here we are resuming one before we send
     // out the pending stop notification.
-    if (m_pending_notification_up && log)
+    if (m_pending_notification_up && log && m_pending_notification_up->wait_for_stop_tids.count (tid) > 0)
     {
-        if (m_pending_notification_up->wait_for_stop_tids.count (tid) > 0)
-        {
-            log->Printf("NativeProcessLinux::%s about to resume tid %" PRIu64 " per explicit request but we have a pending stop notification (tid %" PRIu64 ") that is actively waiting for this thread to stop. Valid sequence of events?", __FUNCTION__, tid, m_pending_notification_up->triggering_tid);
-        }
-        else if (m_pending_notification_up->original_wait_for_stop_tids.count (tid) > 0)
-        {
-            log->Printf("NativeProcessLinux::%s about to resume tid %" PRIu64 " per explicit request but we have a pending stop notification (tid %" PRIu64 ") that hasn't fired yet and this is one of the threads we had been waiting on (and already marked satisfied for this tid). Valid sequence of events?", __FUNCTION__, tid, m_pending_notification_up->triggering_tid);
-            for (auto tid : m_pending_notification_up->wait_for_stop_tids)
-            {
-                log->Printf("NativeProcessLinux::%s tid %" PRIu64 " deferred stop notification still waiting on tid  %" PRIu64,
-                                 __FUNCTION__,
-                                 m_pending_notification_up->triggering_tid,
-                                 tid);
-            }
-        }
+        log->Printf("NativeProcessLinux::%s about to resume tid %" PRIu64 " per explicit request but we have a pending stop notification (tid %" PRIu64 ") that is actively waiting for this thread to stop. Valid sequence of events?", __FUNCTION__, tid, m_pending_notification_up->triggering_tid);
     }
 
     // Request a resume.  We expect this to be synchronous and the system
@@ -4276,29 +4245,6 @@ NativeProcessLinux::StopRunningThreads(const lldb::tid_t triggering_tid)
 }
 
 void
-NativeProcessLinux::StopRunningThreadsWithSkipTID(lldb::tid_t triggering_tid,
-                                                  lldb::tid_t skip_stop_request_tid)
-{
-    Log *const log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD);
-
-    if (log)
-    {
-        log->Printf("NativeProcessLinux::%s about to process event: (triggering_tid: %" PRIu64 ", skip_stop_request_tid: %" PRIu64 ")",
-                __FUNCTION__, triggering_tid, skip_stop_request_tid);
-    }
-
-    DoStopThreads(PendingNotificationUP(new PendingNotification(
-                triggering_tid,
-                ThreadIDSet(),
-                skip_stop_request_tid != LLDB_INVALID_THREAD_ID ? NativeProcessLinux::ThreadIDSet {skip_stop_request_tid} : ThreadIDSet ())));
-
-    if (log)
-    {
-        log->Printf("NativeProcessLinux::%s event processing done", __FUNCTION__);
-    }
-}
-
-void
 NativeProcessLinux::SignalIfRequirementsSatisfied()
 {
     if (m_pending_notification_up && m_pending_notification_up->wait_for_stop_tids.empty ())
@@ -4307,37 +4253,6 @@ NativeProcessLinux::SignalIfRequirementsSatisfied()
         SetState(StateType::eStateStopped, true);
         m_pending_notification_up.reset();
     }
-}
-
-bool
-NativeProcessLinux::RequestStopOnAllSpecifiedThreads()
-{
-    // Request a stop for all the thread stops that need to be stopped
-    // and are not already known to be stopped.  Keep a list of all the
-    // threads from which we still need to hear a stop reply.
-
-    ThreadIDSet sent_tids;
-    for (auto tid : m_pending_notification_up->wait_for_stop_tids)
-    {
-        // Validate we know about all tids for which we must first receive a stop before
-        // triggering the deferred stop notification.
-        auto thread_sp = std::static_pointer_cast<NativeThreadLinux>(GetThreadByID(tid));
-        lldbassert(thread_sp != nullptr);
-
-        // If the pending stop thread is currently running, we need to send it a stop request.
-        if (StateIsRunningState(thread_sp->GetState()))
-        {
-            thread_sp->RequestStop();
-            sent_tids.insert (tid);
-        }
-    }
-    // We only need to wait for the sent_tids - so swap our wait set
-    // to the sent tids.  The rest are already stopped and we won't
-    // be receiving stop notifications for them.
-    m_pending_notification_up->wait_for_stop_tids.swap (sent_tids);
-
-    // Succeeded, keep running.
-    return true;
 }
 
 void
@@ -4354,16 +4269,8 @@ NativeProcessLinux::RequestStopOnAllRunningThreads()
         if (StateIsStoppedState(thread_sp->GetState(), true))
             continue;
 
-        const lldb::tid_t tid = thread_sp->GetID();
-
-        // Request this thread stop if the tid stop request is not explicitly ignored.
-        const bool skip_stop_request = m_pending_notification_up->skip_stop_request_tids.count (tid) > 0;
-        if (!skip_stop_request)
-            static_pointer_cast<NativeThreadLinux>(thread_sp)->RequestStop();
-
-        // Even if we skipped sending the stop request for other reasons (like stepping),
-        // we still need to wait for that stepping thread to notify completion/stop.
-        sent_tids.insert (tid);
+        static_pointer_cast<NativeThreadLinux>(thread_sp)->RequestStop();
+        sent_tids.insert (thread_sp->GetID());
     }
 
     // Set the wait list to the set of tids for which we requested stops.
@@ -4428,13 +4335,7 @@ NativeProcessLinux::DoStopThreads(PendingNotificationUP &&notification_up)
     }
     m_pending_notification_up = std::move(notification_up);
 
-    if (m_pending_notification_up->request_stop_on_all_unstopped_threads)
-        RequestStopOnAllRunningThreads();
-    else
-    {
-        if (!RequestStopOnAllSpecifiedThreads())
-            return;
-    }
+    RequestStopOnAllRunningThreads();
 
     SignalIfRequirementsSatisfied();
 }

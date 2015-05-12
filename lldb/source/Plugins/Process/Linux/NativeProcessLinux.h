@@ -362,49 +362,21 @@ namespace process_linux {
         void
         StopRunningThreads(lldb::tid_t triggering_tid);
 
-        // Notify the delegate after all non-stopped threads stop. The triggering_tid will be set
-        // as the current thread. The error_function will be fired if either the triggering tid
-        // or any of the wait_for_stop_tids are unknown.  This variant will send stop requests to
-        // all non-stopped threads except skip_stop_request_tid.
-        void
-        StopRunningThreadsWithSkipTID(lldb::tid_t triggering_tid, lldb::tid_t skip_stop_request_tid);
-
-    private:
         struct PendingNotification
         {
-            PendingNotification (lldb::tid_t triggering_tid,
-                                 const ThreadIDSet &wait_for_stop_tids,
-                                 const ThreadIDSet &skip_stop_request_tids):
-                triggering_tid (triggering_tid),
-                wait_for_stop_tids (wait_for_stop_tids),
-                original_wait_for_stop_tids (wait_for_stop_tids),
-                request_stop_on_all_unstopped_threads (false),
-                skip_stop_request_tids (skip_stop_request_tids)
-            {
-            }
-
             PendingNotification (lldb::tid_t triggering_tid):
                 triggering_tid (triggering_tid),
-                wait_for_stop_tids (),
-                original_wait_for_stop_tids (),
-                request_stop_on_all_unstopped_threads (true),
-                skip_stop_request_tids ()
+                wait_for_stop_tids ()
             {
             }
 
             const lldb::tid_t  triggering_tid;
             ThreadIDSet        wait_for_stop_tids;
-            const ThreadIDSet  original_wait_for_stop_tids;
-            const bool         request_stop_on_all_unstopped_threads;
-            ThreadIDSet        skip_stop_request_tids;
         };
         typedef std::unique_ptr<PendingNotification> PendingNotificationUP;
 
         // Fire pending notification if no pending thread stops remain.
         void SignalIfRequirementsSatisfied();
-
-        bool
-        RequestStopOnAllSpecifiedThreads();
 
         void
         RequestStopOnAllRunningThreads();
