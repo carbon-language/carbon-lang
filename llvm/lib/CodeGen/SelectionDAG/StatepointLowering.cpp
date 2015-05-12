@@ -38,6 +38,14 @@ STATISTIC(NumOfStatepoints, "Number of statepoint nodes encountered");
 STATISTIC(StatepointMaxSlotsRequired,
           "Maximum number of stack slots required for a singe statepoint");
 
+static void pushStackMapConstant(SmallVectorImpl<SDValue>& Ops,
+                                 SelectionDAGBuilder &Builder, uint64_t Value) {
+  SDLoc L = Builder.getCurSDLoc();
+  Ops.push_back(Builder.DAG.getTargetConstant(StackMaps::ConstantOp, L,
+                                              MVT::i64));
+  Ops.push_back(Builder.DAG.getTargetConstant(Value, L, MVT::i64));
+}
+
 void StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
   // Consistency check
   assert(PendingGCRelocateCalls.empty() &&
@@ -386,12 +394,7 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
     // such in the stackmap.  This is required so that the consumer can
     // parse any internal format to the deopt state.  It also handles null
     // pointers and other constant pointers in GC states
-    Ops.push_back(Builder.DAG.getTargetConstant(StackMaps::ConstantOp,
-                                                Builder.getCurSDLoc(),
-                                                MVT::i64));
-    Ops.push_back(Builder.DAG.getTargetConstant(C->getSExtValue(),
-                                                Builder.getCurSDLoc(),
-                                                MVT::i64));
+    pushStackMapConstant(Ops, Builder, C->getSExtValue());
   } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Incoming)) {
     // This handles allocas as arguments to the statepoint (this is only
     // really meaningful for a deopt value.  For GC, we'd be trying to
@@ -485,11 +488,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // lowered.  Note that this is the number of *Values* not the
   // number of SDValues required to lower them.
   const int NumVMSArgs = StatepointSite.getNumTotalVMSArgs();
-  Ops.push_back( Builder.DAG.getTargetConstant(StackMaps::ConstantOp,
-                                               Builder.getCurSDLoc(),
-                                               MVT::i64));
-  Ops.push_back(Builder.DAG.getTargetConstant(NumVMSArgs, Builder.getCurSDLoc(),
-                                              MVT::i64));
+  pushStackMapConstant(Ops, Builder, NumVMSArgs);
 
   assert(NumVMSArgs + 1 == std::distance(StatepointSite.vm_state_begin(),
                                          StatepointSite.vm_state_end()));
@@ -662,21 +661,15 @@ void SelectionDAGBuilder::LowerStatepoint(
     RegMaskIt = CallNode->op_end() - 1;
   Ops.insert(Ops.end(), CallNode->op_begin() + 2, RegMaskIt);
 
-  // Add a leading constant argument with the Flags and the calling convention
-  // masked together
-  CallingConv::ID CallConv = CS.getCallingConv();
+  // Add a constant argument for the calling convention
+  pushStackMapConstant(Ops, *this, CS.getCallingConv());
+
+  // Add a constant argument for the flags
   uint64_t Flags = cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
   assert(
       ((Flags & ~(uint64_t)StatepointFlags::MaskAll) == 0)
           && "unknown flag used");
-  const int Shift = 1;
-  static_assert(
-      ((~(uint64_t)0 << Shift) & (uint64_t)StatepointFlags::MaskAll) == 0,
-      "shift width too small");
-  Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, getCurSDLoc(),
-                                      MVT::i64));
-  Ops.push_back(DAG.getTargetConstant(Flags | ((unsigned)CallConv << Shift),
-                                      getCurSDLoc(), MVT::i64));
+  pushStackMapConstant(Ops, *this, Flags);
 
   // Insert all vmstate and gcstate arguments
   Ops.insert(Ops.end(), LoweredMetaArgs.begin(), LoweredMetaArgs.end());

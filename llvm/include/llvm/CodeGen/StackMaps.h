@@ -86,14 +86,25 @@ public:
 ///
 /// Statepoint operands take the form:
 ///   <num call arguments>, <call target>, [call arguments],
-///   <StackMaps::ConstantOp>, <flags>,
+///   <StackMaps::ConstantOp>, <calling convention>,
+///   <StackMaps::ConstantOp>, <statepoint flags>,
 ///   <StackMaps::ConstantOp>, <num other args>, [other args],
 ///   [gc values]
 class StatepointOpers {
 private:
+  // These values are aboolute offsets into the operands of the statepoint
+  // instruction.
   enum {
     NCallArgsPos = 0,
     CallTargetPos = 1
+  };
+
+  // These values are relative offests from the start of the statepoint meta
+  // arguments (i.e. the end of the call arguments).
+  enum {
+    CCOffset = 1,
+    FlagsOffset = 3,
+    NumVMSArgsOffset = 5
   };
 
 public:
@@ -101,7 +112,7 @@ public:
     MI(MI) { }
 
   /// Get starting index of non call related arguments
-  /// (statepoint flags, vm state and gc state).
+  /// (calling convention, statepoint flags, vm state and gc state).
   unsigned getVarIdx() const {
     return MI->getOperand(NCallArgsPos).getImm() + 2;
   }
@@ -109,7 +120,7 @@ public:
   /// Returns the index of the operand containing the number of non-gc non-call
   /// arguments. 
   unsigned getNumVMSArgsIdx() const {
-    return getVarIdx() + 3;
+    return getVarIdx() + NumVMSArgsOffset;
   }
 
   /// Returns the number of non-gc non-call arguments attached to the

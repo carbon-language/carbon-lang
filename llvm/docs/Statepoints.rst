@@ -483,6 +483,12 @@ the runtime or collector are provided via the :ref:`Stack Map format
 
 Each statepoint generates the following Locations:
 
+* Constant which describes the calling convention of the call target. This
+  constant is a valid :ref:`calling convention identifier <callingconv>` for
+  the version of LLVM used to generate the stackmap. No additional compatibility
+  guarantees are made for this constant over what LLVM provides elsewhere w.r.t.
+  these identifiers.
+* Constant which describes the flags passed to the statepoint intrinsic
 * Constant which describes number of following deopt *Locations* (not
   operands)
 * Variable number of Locations, one for each deopt parameter listed in

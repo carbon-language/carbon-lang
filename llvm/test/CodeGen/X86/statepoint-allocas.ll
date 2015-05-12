@@ -72,7 +72,12 @@ declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
 ; The GC one
 ; CHECK: .long	.Ltmp1-test
 ; CHECK: .short	0
-; CHECK: .short	3
+; CHECK: .short	4
+; SmallConstant (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
 ; SmallConstant (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8
@@ -96,7 +101,12 @@ declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
 ; The Deopt one
 ; CHECK: .long	.Ltmp3-test2
 ; CHECK: .short	0
-; CHECK: .short	3
+; CHECK: .short	4
+; SmallConstant (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
 ; SmallConstant (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8

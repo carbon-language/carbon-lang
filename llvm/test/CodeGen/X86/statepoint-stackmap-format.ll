@@ -97,7 +97,12 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; Constant arguments
 ; CHECK: .long	.Ltmp1-test
 ; CHECK: .short	0
-; CHECK: .short	10
+; CHECK: .short	11
+; SmallConstant (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
 ; SmallConstant (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8
@@ -166,7 +171,7 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; Constant arguments
 ; CHECK: .long	.Ltmp3-test_derived_arg
 ; CHECK: .short	0
-; CHECK: .short	10
+; CHECK: .short	11
 ; SmallConstant (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8
