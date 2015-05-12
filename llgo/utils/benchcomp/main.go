@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"debug/elf"
+	"debug/macho"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -23,6 +25,50 @@ func symsizes(path string) map[string]float64 {
 		if sym.Section < elf.SectionIndex(len(f.Sections)) && f.Sections[sym.Section].Name == ".text" {
 			m[sym.Name] = float64(sym.Size)
 		}
+	}
+	return m
+}
+
+type bySectionThenOffset []macho.Symbol
+
+func (syms bySectionThenOffset) Len() int {
+	return len(syms)
+}
+
+func (syms bySectionThenOffset) Less(i, j int) bool {
+	if syms[i].Sect < syms[j].Sect {
+		return true
+	}
+	if syms[i].Sect > syms[j].Sect {
+		return false
+	}
+	return syms[i].Value < syms[j].Value
+}
+
+func (syms bySectionThenOffset) Swap(i, j int) {
+	syms[i], syms[j] = syms[j], syms[i]
+}
+
+func macho_symsizes(path string) map[string]float64 {
+	m := make(map[string]float64)
+	f, err := macho.Open(path)
+	if err != nil {
+		panic(err.Error())
+	}
+	syms := make([]macho.Symbol, len(f.Symtab.Syms))
+	copy(syms, f.Symtab.Syms)
+	sort.Sort(bySectionThenOffset(syms))
+	for i, sym := range syms {
+		if sym.Sect == 0 {
+			continue
+		}
+		var nextOffset uint64
+		if i == len(syms)-1 || syms[i+1].Sect != sym.Sect {
+			nextOffset = f.Sections[sym.Sect-1].Size
+		} else {
+			nextOffset = syms[i+1].Value
+		}
+		m[sym.Name] = float64(nextOffset - sym.Value)
 	}
 	return m
 }
@@ -69,6 +115,9 @@ func main() {
 	switch os.Args[1] {
 	case "symsizes":
 		cmp = symsizes
+
+	case "macho_symsizes":
+		cmp = macho_symsizes
 
 	case "benchns":
 		cmp = func(path string) map[string]float64 {
