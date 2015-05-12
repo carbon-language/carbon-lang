@@ -21,6 +21,9 @@
 // RUN: [ $(cat bar.txt | wc -l) == 4 ]
 // RUN: %sancov missing %t < foo.txt > foo-missing.txt
 // RUN: sort main.txt foo-missing.txt -o foo-missing-with-main.txt
+// Next two lines are debug output.
+// RUN: tail -n +1 foo.txt bar.txt main.txt foo-missing.txt foo-missing-with-main.txt
+// RUN: echo; objdump -d %t | grep '__sanitizer_cov'
 // The "missing from foo" set may contain a few bogus PCs from the sanitizer
 // runtime, but it must include the entire "bar" code path as a subset. Sorted
 // lists can be tested for set inclusion with diff + grep.
@@ -43,9 +46,12 @@
 // RUN: rm *.sancov
 // RUN: [ $(cat bar.txt | wc -l) == 3 ]
 // RUN: %sancov missing %dynamiclib < foo.txt > foo-missing.txt
+// Next two lines are debug output.
+// RUN: tail -n +1 foo.txt bar.txt foo-missing.txt
+// RUN: echo; objdump -d %t | grep '__sanitizer_cov'
 // RUN: diff bar.txt foo-missing.txt | not grep "^<"
 
-// REQUIRES: x86_64-supported-target, i386-supported-target, broken
+// REQUIRES: x86_64-supported-target, i386-supported-target
 // XFAIL: android
 
 #include <stdio.h>
