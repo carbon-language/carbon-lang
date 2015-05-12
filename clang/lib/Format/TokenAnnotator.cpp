@@ -125,16 +125,16 @@ private:
          Left->Previous->is(TT_BinaryOperator))) {
       // static_assert, if and while usually contain expressions.
       Contexts.back().IsExpression = true;
-    } else if (Line.InPPDirective &&
-               (!Left->Previous ||
-                !Left->Previous->isOneOf(tok::identifier,
-                                         TT_OverloadedOperator))) {
-      Contexts.back().IsExpression = true;
     } else if (Left->Previous && Left->Previous->is(tok::r_square) &&
                Left->Previous->MatchingParen &&
                Left->Previous->MatchingParen->is(TT_LambdaLSquare)) {
       // This is a parameter list of a lambda expression.
       Contexts.back().IsExpression = false;
+    } else if (Line.InPPDirective &&
+               (!Left->Previous ||
+                !Left->Previous->isOneOf(tok::identifier,
+                                         TT_OverloadedOperator))) {
+      Contexts.back().IsExpression = true;
     } else if (Contexts[Contexts.size() - 2].CaretFound) {
       // This is the parameter list of an ObjC block.
       Contexts.back().IsExpression = false;
