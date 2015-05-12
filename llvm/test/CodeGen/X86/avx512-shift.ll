@@ -1,4 +1,5 @@
 ;RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+;RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck --check-prefix=SKX %s
 
 ;CHECK-LABEL: shift_16_i32
 ;CHECK: vpsrld
@@ -22,6 +23,18 @@ define <8 x i64> @shift_8_i64(<8 x i64> %a) {
    %c = shl <8 x i64> %b,  <i64 12, i64 12, i64 12, i64 12, i64 12, i64 12, i64 12, i64 12>
    %d = ashr <8 x i64> %c, <i64 12, i64 12, i64 12, i64 12, i64 12, i64 12, i64 12, i64 12>
    ret <8 x i64> %d;
+}
+
+;SKX-LABEL: shift_4_i64
+;SKX: vpsrlq
+;SKX: vpsllq
+;SKX: vpsraq
+;SKX: ret
+define <4 x i64> @shift_4_i64(<4 x i64> %a) {
+   %b = lshr <4 x i64> %a, <i64 1, i64 1, i64 1, i64 1>
+   %c = shl <4 x i64> %b,  <i64 12, i64 12, i64 12, i64 12>
+   %d = ashr <4 x i64> %c, <i64 12, i64 12, i64 12, i64 12>
+   ret <4 x i64> %d;
 }
 
 ; CHECK-LABEL: variable_shl4
@@ -70,6 +83,22 @@ define <16 x i32> @variable_sra1(<16 x i32> %x, <16 x i32> %y) {
 define <8 x i64> @variable_sra2(<8 x i64> %x, <8 x i64> %y) {
   %k = ashr <8 x i64> %x, %y
   ret <8 x i64> %k
+}
+
+; SKX-LABEL: variable_sra3
+; SKX: vpsravq %ymm
+; SKX: ret
+define <4 x i64> @variable_sra3(<4 x i64> %x, <4 x i64> %y) {
+  %k = ashr <4 x i64> %x, %y
+  ret <4 x i64> %k
+}
+
+; SKX-LABEL: variable_sra4
+; SKX: vpsravw %xmm
+; SKX: ret
+define <8 x i16> @variable_sra4(<8 x i16> %x, <8 x i16> %y) {
+  %k = ashr <8 x i16> %x, %y
+  ret <8 x i16> %k
 }
 
 ; CHECK-LABEL: variable_sra01_load
