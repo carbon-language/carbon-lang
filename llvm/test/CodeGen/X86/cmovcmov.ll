@@ -143,19 +143,19 @@ entry:
 ; NOCMOV-NEXT:   jp  [[TBB]]
 ; NOCMOV-NEXT:   leal  24(%esp), %eax
 ; NOCMOV-NEXT: [[TBB]]:
-; NOCMOV-NEXT:   movl  (%eax), %eax
-; NOCMOV-NEXT:   leal  44(%esp), %ecx
+; NOCMOV-NEXT:   movl  (%eax), %ecx
+; NOCMOV-NEXT:   leal  44(%esp), %edx
 ; NOCMOV-NEXT:   jne  [[TBB:.LBB[0-9_]+]]
 ; NOCMOV-NEXT:   jp  [[TBB]]
-; NOCMOV-NEXT:   leal  28(%esp), %ecx
+; NOCMOV-NEXT:   leal  28(%esp), %edx
 ; NOCMOV-NEXT: [[TBB]]:
-; NOCMOV-NEXT:   movl  (%ecx), %ecx
+; NOCMOV-NEXT:   movl  12(%esp), %eax
+; NOCMOV-NEXT:   movl  (%edx), %edx
 ; NOCMOV-NEXT:   leal  48(%esp), %esi
 ; NOCMOV-NEXT:   jne  [[TBB:.LBB[0-9_]+]]
 ; NOCMOV-NEXT:   jp  [[TBB]]
 ; NOCMOV-NEXT:   leal  32(%esp), %esi
 ; NOCMOV-NEXT: [[TBB]]:
-; NOCMOV-NEXT:   movl  12(%esp), %edx
 ; NOCMOV-NEXT:   movl  (%esi), %esi
 ; NOCMOV-NEXT:   leal  52(%esp), %edi
 ; NOCMOV-NEXT:   jne  [[TBB:.LBB[0-9_]+]]
@@ -163,10 +163,10 @@ entry:
 ; NOCMOV-NEXT:   leal  36(%esp), %edi
 ; NOCMOV-NEXT: [[TBB]]:
 ; NOCMOV-NEXT:   movl  (%edi), %edi
-; NOCMOV-NEXT:   movl  %edi, 12(%edx)
-; NOCMOV-NEXT:   movl  %esi, 8(%edx)
-; NOCMOV-NEXT:   movl  %ecx, 4(%edx)
-; NOCMOV-NEXT:   movl  %eax, (%edx)
+; NOCMOV-NEXT:   movl  %edi, 12(%eax)
+; NOCMOV-NEXT:   movl  %esi, 8(%eax)
+; NOCMOV-NEXT:   movl  %edx, 4(%eax)
+; NOCMOV-NEXT:   movl  %ecx, (%eax)
 ; NOCMOV-NEXT:   popl  %esi
 ; NOCMOV-NEXT:   popl  %edi
 ; NOCMOV-NEXT:   retl  $4
