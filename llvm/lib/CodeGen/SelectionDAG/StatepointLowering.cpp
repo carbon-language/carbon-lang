@@ -473,11 +473,12 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
     SDValue Incoming = Builder.getValue(V);
     reservePreviousStackSlotForValue(Incoming, Builder);
   }
-  for (unsigned i = 0; i < Bases.size() * 2; ++i) {
-    // Even elements will contain base, odd elements - derived ptr
-    const Value *V = i % 2 ? Bases[i / 2] : Ptrs[i / 2];
-    SDValue Incoming = Builder.getValue(V);
-    reservePreviousStackSlotForValue(Incoming, Builder);
+  for (unsigned i = 0; i < Bases.size(); ++i) {
+    const Value *Base = Bases[i];
+    reservePreviousStackSlotForValue(Builder.getValue(Base), Builder);
+
+    const Value *Ptr = Ptrs[i];
+    reservePreviousStackSlotForValue(Builder.getValue(Ptr), Builder);
   }
 
   // First, prefix the list with the number of unique values to be
@@ -512,11 +513,12 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // arrays interwoven with each (lowered) base pointer immediately followed by
   // it's (lowered) derived pointer.  i.e
   // (base[0], ptr[0], base[1], ptr[1], ...)
-  for (unsigned i = 0; i < Bases.size() * 2; ++i) {
-    // Even elements will contain base, odd elements - derived ptr
-    const Value *V = i % 2 ? Bases[i / 2] : Ptrs[i / 2];
-    SDValue Incoming = Builder.getValue(V);
-    lowerIncomingStatepointValue(Incoming, Ops, Builder);
+  for (unsigned i = 0; i < Bases.size(); ++i) {
+    const Value *Base = Bases[i];
+    lowerIncomingStatepointValue(Builder.getValue(Base), Ops, Builder);
+
+    const Value *Ptr = Ptrs[i];
+    lowerIncomingStatepointValue(Builder.getValue(Ptr), Ops, Builder);
   }
 
   // If there are any explicit spill slots passed to the statepoint, record

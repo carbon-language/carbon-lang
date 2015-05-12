@@ -8,31 +8,63 @@ target triple = "x86_64-pc-linux-gnu"
 
 declare zeroext i1 @return_i1()
 
-define i1 @test(i32 addrspace(1)* %ptr) gc "statepoint-example" {
+define i1 @test(i32 addrspace(1)* %ptr_base, i32 %arg)
+  gc "statepoint-example" {
 ; CHECK-LABEL: test
-; Do we see one spill for the local value and the store to the
+; Do we see two spills for the local values and the store to the
 ; alloca?
-; CHECK: subq	$24, %rsp
-; CHECK: movq	$0, 8(%rsp)
-; CHECK: movq	%rdi, (%rsp)
+; CHECK: subq	$40, %rsp
+; CHECK: movq	$0,   24(%rsp)
+; CHECK: movq	%rdi, 16(%rsp)
+; CHECK: movq	%rax, 8(%rsp)
 ; CHECK: callq return_i1
-; CHECK: addq	$24, %rsp
+; CHECK: addq	$40, %rsp
 ; CHECK: retq
 entry:
   %metadata1 = alloca i32 addrspace(1)*, i32 2, align 8
   store i32 addrspace(1)* null, i32 addrspace(1)** %metadata1
-  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr, i32 addrspace(1)* null, i32 addrspace(1)* %ptr, i32 addrspace(1)* null)
+  %ptr_derived = getelementptr i32, i32 addrspace(1)* %ptr_base, i32 %arg
+  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
   %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
   %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 7)
-  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 8, i32 8)
+  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 8)
+  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
 ; 
   ret i1 %call1
 }
 
+; This is similar to the previous test except that we have derived pointer as
+; argument to the function. Despite that this can not happen after the
+; RewriteSafepointForGC pass, lowering should be able to handle it anyway.
+define i1 @test_derived_arg(i32 addrspace(1)* %ptr_base,
+                            i32 addrspace(1)* %ptr_derived)
+  gc "statepoint-example" {
+; CHECK-LABEL: test_derived_arg
+; Do we see two spills for the local values and the store to the
+; alloca?
+; CHECK: subq	$40, %rsp
+; CHECK: movq	$0,   24(%rsp)
+; CHECK: movq	%rdi, 16(%rsp)
+; CHECK: movq	%rsi, 8(%rsp)
+; CHECK: callq return_i1
+; CHECK: addq	$40, %rsp
+; CHECK: retq
+entry:
+  %metadata1 = alloca i32 addrspace(1)*, i32 2, align 8
+  store i32 addrspace(1)* null, i32 addrspace(1)** %metadata1
+  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* null, i32 addrspace(1)* %ptr_base, i32 addrspace(1)* %ptr_derived, i32 addrspace(1)* null)
+  %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
+  %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 7)
+  %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 8)
+  %c = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 9, i32 9)
+; 
+  ret i1 %call1
+}
+
+
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
 declare i1 @llvm.experimental.gc.result.i1(i32)
 declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
-
 
 ; CHECK-LABEL: .section .llvm_stackmaps
 ; CHECK-NEXT:  __LLVM_StackMaps:
@@ -41,15 +73,21 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; CHECK-NEXT:   .byte 0
 ; CHECK-NEXT:   .short 0
 ; Num Functions
-; CHECK-NEXT:   .long 1
+; CHECK-NEXT:   .long 2
 ; Num LargeConstants
 ; CHECK-NEXT:   .long 0
 ; Num Callsites
-; CHECK-NEXT:   .long 1
+; CHECK-NEXT:   .long 2
 
 ; Functions and stack size
 ; CHECK-NEXT:   .quad test
-; CHECK-NEXT:   .quad 24
+; CHECK-NEXT:   .quad 40
+; CHECK-NEXT:   .quad test_derived_arg
+; CHECK-NEXT:   .quad 40
+
+;
+; test
+;
 
 ; Large Constants
 ; Statepoint ID only
@@ -59,7 +97,7 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; Constant arguments
 ; CHECK: .long	.Ltmp1-test
 ; CHECK: .short	0
-; CHECK: .short	8
+; CHECK: .short	10
 ; SmallConstant (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8
@@ -74,7 +112,7 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; CHECK: .byte	2
 ; CHECK: .byte	8
 ; CHECK: .short	7
-; CHECK: .long	0
+; CHECK: .long	16
 ; SmallConstant  (0)
 ; CHECK: .byte	4
 ; CHECK: .byte	8
@@ -90,20 +128,97 @@ declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 ; CHECK: .byte	8
 ; CHECK: .short	0
 ; CHECK: .long	0
-; Direct Spill Slot [RSP+0]
+; Direct Spill Slot [RSP+16]
 ; CHECK: .byte	2
 ; CHECK: .byte	8
 ; CHECK: .short	7
-; CHECK: .long	0
-; Direct Spill Slot [RSP+0]
+; CHECK: .long	16
+; Direct Spill Slot [RSP+8]
 ; CHECK: .byte	2
 ; CHECK: .byte	8
 ; CHECK: .short	7
-; CHECK: .long	0
+; CHECK: .long	8
+; Direct Spill Slot [RSP+16]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
+; Direct Spill Slot [RSP+16]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
 
 ; No Padding or LiveOuts
 ; CHECK: .short	0
 ; CHECK: .short	0
 ; CHECK: .align	8
 
+;
+; test_derived_arg
+;
 
+; Large Constants
+; Statepoint ID only
+; CHECK: .quad	2882400000
+
+; Callsites
+; Constant arguments
+; CHECK: .long	.Ltmp3-test_derived_arg
+; CHECK: .short	0
+; CHECK: .short	10
+; SmallConstant (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+; SmallConstant (2)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	2
+; Direct Spill Slot [RSP+0]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
+; SmallConstant  (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+; SmallConstant  (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+; SmallConstant  (0)
+; CHECK: .byte	4
+; CHECK: .byte	8
+; CHECK: .short	0
+; CHECK: .long	0
+; Direct Spill Slot [RSP+16]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
+; Direct Spill Slot [RSP+8]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	8
+; Direct Spill Slot [RSP+16]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
+; Direct Spill Slot [RSP+16]
+; CHECK: .byte	2
+; CHECK: .byte	8
+; CHECK: .short	7
+; CHECK: .long	16
+
+; No Padding or LiveOuts
+; CHECK: .short	0
+; CHECK: .short	0
+; CHECK: .align	8
