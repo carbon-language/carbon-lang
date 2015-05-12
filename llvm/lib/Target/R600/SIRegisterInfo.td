@@ -182,11 +182,10 @@ def SCCReg : RegisterClass<"AMDGPU", [i32, i1], 32, (add SCC)> {
 
 def VCCReg : RegisterClass<"AMDGPU", [i64, i1], 64, (add VCC)>;
 def EXECReg : RegisterClass<"AMDGPU", [i64, i1], 64, (add EXEC)>;
-def M0Reg : RegisterClass<"AMDGPU", [i32], 32, (add M0)>;
 
 // Register class for all scalar registers (SGPRs + Special Registers)
 def SReg_32 : RegisterClass<"AMDGPU", [i32, f32], 32,
-  (add SGPR_32, M0Reg, VCC_LO, VCC_HI, EXEC_LO, EXEC_HI, FLAT_SCR_LO, FLAT_SCR_HI)
+  (add SGPR_32, M0, VCC_LO, VCC_HI, EXEC_LO, EXEC_HI, FLAT_SCR_LO, FLAT_SCR_HI)
 >;
 
 def SGPR_64 : RegisterClass<"AMDGPU", [v2i32, i64, f64], 64, (add SGPR_64Regs)>;
