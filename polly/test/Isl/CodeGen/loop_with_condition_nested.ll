@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -basicaa -polly-ast -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -basicaa -polly-codegen-isl -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -basicaa -polly-codegen -loops -analyze < %s | FileCheck %s -check-prefix=LOOPS
 
 
 ;#include <string.h>

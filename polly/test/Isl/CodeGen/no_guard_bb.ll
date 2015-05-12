@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl -S -verify-dom-info < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -S -verify-dom-info < %s | FileCheck %s
 ;
 ; CHECK-NOT: br i1 true, label %polly.{{.*}}, label %polly.{{.*}}
 ;

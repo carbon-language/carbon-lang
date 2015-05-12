@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl -polly-vectorizer=polly -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -polly-vectorizer=polly -S < %s | FileCheck %s
 
 ; ModuleID = 'reverse.c'
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

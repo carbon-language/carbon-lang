@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-isl -polly-no-early-exit -polly-allow-nonaffine-branches -S -verify-dom-info < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -polly-no-early-exit -polly-allow-nonaffine-branches -S -verify-dom-info < %s | FileCheck %s
 ;
 ;    void f(float *A) {
 ;      for (int i = 0; i < 1024; i++)

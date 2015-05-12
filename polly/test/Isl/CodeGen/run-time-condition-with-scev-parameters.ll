@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -S -polly-delinearize < %s | FileCheck %s
 
 ; CHECK: polly.split_new_and_old:
 ; CHECK-NEXT: %1 = zext i32 %n to i64

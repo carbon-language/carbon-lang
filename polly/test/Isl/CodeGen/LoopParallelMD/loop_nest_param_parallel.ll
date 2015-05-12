@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl -polly-ast-detect-parallel -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen -polly-ast-detect-parallel -S < %s | FileCheck %s
 ;
 ; Check that we mark multiple parallel loops correctly including the memory instructions.
 ;

@@ -24,7 +24,7 @@ endif
 ISL_CODEGEN_FILES= CodeGen/IslAst.cpp \
                    CodeGen/IslExprBuilder.cpp \
                    CodeGen/IslNodeBuilder.cpp \
-                   CodeGen/IslCodeGeneration.cpp
+                   CodeGen/CodeGeneration.cpp
 
 POLLY_JSON_FILES= JSON/json_reader.cpp \
 		  JSON/json_value.cpp \

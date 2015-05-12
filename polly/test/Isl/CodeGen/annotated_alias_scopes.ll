@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen-isl -S < %s | FileCheck %s --check-prefix=SCOPES
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen -S < %s | FileCheck %s --check-prefix=SCOPES
 ;
 ; Check that we create alias scopes that indicate the accesses to A, B and C cannot alias in any way.
 ;

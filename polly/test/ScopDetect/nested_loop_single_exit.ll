@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-codegen-isl -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -polly-codegen -analyze < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i, j;

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-isl -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen -S < %s | FileCheck %s
 ; CHECK: polly
 target datalayout = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128"
 

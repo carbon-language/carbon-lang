@@ -125,7 +125,7 @@ static cl::opt<bool>
 
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
-  initializeIslCodeGenerationPass(Registry);
+  initializeCodeGenerationPass(Registry);
   initializeCodePreparationPass(Registry);
   initializeDeadCodeElimPass(Registry);
   initializeDependenceInfoPass(Registry);
@@ -205,7 +205,7 @@ void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
 
   switch (CodeGenerator) {
   case CODEGEN_ISL:
-    PM.add(polly::createIslCodeGenerationPass());
+    PM.add(polly::createCodeGenerationPass());
     break;
   case CODEGEN_NONE:
     break;

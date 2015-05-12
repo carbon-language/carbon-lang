@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-code-generator=isl -polly-codegen-isl < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-code-generator=isl -polly-codegen < %s | FileCheck %s
 ;
 ; We should only access (or compute the address of) "the first element" of %S
 ; as it is a single struct not a struct array. The maximal access to S, thus

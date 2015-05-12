@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-code-generator=isl -polly-codegen-isl < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-code-generator=isl -polly-codegen < %s | FileCheck %s
 ;
 ; Check that we do not crash as described here: http://llvm.org/PR21167
 ;

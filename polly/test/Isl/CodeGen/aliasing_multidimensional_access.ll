@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-codegen-isl -polly-code-generator=isl -polly-delinearize < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-codegen -polly-code-generator=isl -polly-delinearize < %s | FileCheck %s
 ;
 ; Check that we calculate the maximal access into array A correctly.
 ;

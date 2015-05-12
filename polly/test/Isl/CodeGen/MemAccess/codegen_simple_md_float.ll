@@ -1,7 +1,7 @@
-;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHCONST %s
-;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
-;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHCONST %s
-;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
+;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen < %s -S | FileCheck -check-prefix=WITHCONST %s
+;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
+;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen < %s -S | FileCheck -check-prefix=WITHCONST %s
+;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
 ;
 ;float A[1040];
 ;

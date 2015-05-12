@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl < %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen < %s
 
 ; We just check that this compilation does not crash.
 

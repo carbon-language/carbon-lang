@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-detect -polly-codegen-isl < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-detect -polly-codegen < %s | FileCheck %s
 ;
 ; When a region header is part of a loop, then all entering edges of this region
 ; should not come from the loop but outside the region.

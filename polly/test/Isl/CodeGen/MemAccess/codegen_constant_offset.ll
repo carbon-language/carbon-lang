@@ -1,4 +1,4 @@
-;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -polly-codegen-isl -instnamer < %s -S | FileCheck %s
+;RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -polly-codegen -instnamer < %s -S | FileCheck %s
 
 ;int A[100];
 ;

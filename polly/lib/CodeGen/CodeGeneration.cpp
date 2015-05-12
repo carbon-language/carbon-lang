@@ -1,4 +1,4 @@
-//===------ IslCodeGeneration.cpp - Code generate the Scops using ISL. ----===//
+//===------ CodeGeneration.cpp - Code generate the Scops using ISL. ----======//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// The IslCodeGeneration pass takes a Scop created by ScopInfo and translates it
+// The CodeGeneration pass takes a Scop created by ScopInfo and translates it
 // back to LLVM-IR using the ISL code generator.
 //
 // The Scop describes the high level memory behaviour of a control flow region.
@@ -34,14 +34,14 @@
 using namespace polly;
 using namespace llvm;
 
-#define DEBUG_TYPE "polly-codegen-isl"
+#define DEBUG_TYPE "polly-codegen"
 
 namespace {
-class IslCodeGeneration : public ScopPass {
+class CodeGeneration : public ScopPass {
 public:
   static char ID;
 
-  IslCodeGeneration() : ScopPass(ID) {}
+  CodeGeneration() : ScopPass(ID) {}
 
   /// @brief The datalayout used
   const DataLayout *DL;
@@ -165,11 +165,11 @@ public:
 };
 }
 
-char IslCodeGeneration::ID = 1;
+char CodeGeneration::ID = 1;
 
-Pass *polly::createIslCodeGenerationPass() { return new IslCodeGeneration(); }
+Pass *polly::createCodeGenerationPass() { return new CodeGeneration(); }
 
-INITIALIZE_PASS_BEGIN(IslCodeGeneration, "polly-codegen-isl",
+INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
                       "Polly - Create LLVM-IR from SCoPs", false, false);
 INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
@@ -177,5 +177,5 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
-INITIALIZE_PASS_END(IslCodeGeneration, "polly-codegen-isl",
+INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
                     "Polly - Create LLVM-IR from SCoPs", false, false)

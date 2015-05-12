@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen-isl < %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-codegen < %s
 ;
 ; Regression test for a bug in the runtime check generation.
 

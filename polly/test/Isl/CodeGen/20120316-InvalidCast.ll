@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-detect-scops-in-functions-without-loops -polly-detect-scops-in-regions-without-loops -polly-codegen-isl -polly-no-early-exit < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-detect-scops-in-functions-without-loops -polly-detect-scops-in-regions-without-loops -polly-codegen -polly-no-early-exit < %s | FileCheck %s
 
 ; CHECK: polly.start
 
