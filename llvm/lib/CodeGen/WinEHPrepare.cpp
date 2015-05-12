@@ -882,7 +882,9 @@ bool WinEHPrepare::prepareExceptionHandlers(
         Function *Handler = cast<Function>(CA->getHandlerBlockOrFunc());
         getPossibleReturnTargets(&F, Handler, ReturnTargets);
       }
+      delete Action;
     }
+    ActionList.clear();
     for (BasicBlock *Target : ReturnTargets) {
       Branch->addDestination(Target);
       // The target may be a block that we excepted to get pruned.
