@@ -25,11 +25,134 @@ bool startsExternCBlock(const AnnotatedLine &Line) {
          NextNext && NextNext->is(tok::l_brace);
 }
 
+/// \brief Tracks the indent level of \c AnnotatedLines across levels.
+///
+/// \c nextLine must be called for each \c AnnotatedLine, after which \c
+/// getIndent() will return the indent for the last line \c nextLine was called
+/// with.
+/// If the line is not formatted (and thus the indent does not change), calling
+/// \c adjustToUnmodifiedLine after the call to \c nextLine will cause
+/// subsequent lines on the same level to be indented at the same level as the
+/// given line.
+class LevelIndentTracker {
+public:
+  LevelIndentTracker(const FormatStyle &Style,
+                     const AdditionalKeywords &Keywords, unsigned StartLevel,
+                     int AdditionalIndent)
+      : Style(Style), Keywords(Keywords) {
+    for (unsigned i = 0; i != StartLevel; ++i)
+      IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
+  }
+
+  /// \brief Returns the indent for the current line.
+  unsigned getIndent() const { return Indent; }
+
+  /// \brief Update the indent state given that \p Line is going to be formatted
+  /// next.
+  void nextLine(const AnnotatedLine &Line) {
+    Offset = getIndentOffset(*Line.First);
+    if (Line.InPPDirective) {
+      Indent = Line.Level * Style.IndentWidth;
+    } else {
+      while (IndentForLevel.size() <= Line.Level)
+        IndentForLevel.push_back(-1);
+      IndentForLevel.resize(Line.Level + 1);
+      Indent = getIndent(IndentForLevel, Line.Level);
+    }
+    if (static_cast<int>(Indent) + Offset >= 0)
+      Indent += Offset;
+  }
+
+  /// \brief Update the level indent to adapt to the given \p Line.
+  ///
+  /// When a line is not formatted, we move the subsequent lines on the same
+  /// level to the same indent.
+  /// Note that \c nextLine must have been called before this method.
+  void adjustToUnmodifiedLine(const AnnotatedLine &Line) {
+    unsigned LevelIndent = Line.First->OriginalColumn;
+    if (static_cast<int>(LevelIndent) - Offset >= 0)
+      LevelIndent -= Offset;
+    if ((Line.First->isNot(tok::comment) || IndentForLevel[Line.Level] == -1) &&
+        !Line.InPPDirective)
+      IndentForLevel[Line.Level] = LevelIndent;
+  }
+
+private:
+  /// \brief Get the offset of the line relatively to the level.
+  ///
+  /// For example, 'public:' labels in classes are offset by 1 or 2
+  /// characters to the left from their level.
+  int getIndentOffset(const FormatToken &RootToken) {
+    if (Style.Language == FormatStyle::LK_Java ||
+        Style.Language == FormatStyle::LK_JavaScript)
+      return 0;
+    if (RootToken.isAccessSpecifier(false) ||
+        RootToken.isObjCAccessSpecifier() ||
+        (RootToken.is(Keywords.kw_signals) && RootToken.Next &&
+         RootToken.Next->is(tok::colon)))
+      return Style.AccessModifierOffset;
+    return 0;
+  }
+
+  /// \brief Get the indent of \p Level from \p IndentForLevel.
+  ///
+  /// \p IndentForLevel must contain the indent for the level \c l
+  /// at \p IndentForLevel[l], or a value < 0 if the indent for
+  /// that level is unknown.
+  unsigned getIndent(ArrayRef<int> IndentForLevel, unsigned Level) {
+    if (IndentForLevel[Level] != -1)
+      return IndentForLevel[Level];
+    if (Level == 0)
+      return 0;
+    return getIndent(IndentForLevel, Level - 1) + Style.IndentWidth;
+  }
+
+  const FormatStyle &Style;
+  const AdditionalKeywords &Keywords;
+
+  /// \brief The indent in characters for each level.
+  std::vector<int> IndentForLevel;
+
+  /// \brief Offset of the current line relative to the indent level.
+  ///
+  /// For example, the 'public' keywords is often indented with a negative
+  /// offset.
+  int Offset = 0;
+
+  /// \brief The current line's indent.
+  unsigned Indent = 0;
+};
+
 class LineJoiner {
 public:
-  LineJoiner(const FormatStyle &Style, const AdditionalKeywords &Keywords)
-      : Style(Style), Keywords(Keywords) {}
+  LineJoiner(const FormatStyle &Style, const AdditionalKeywords &Keywords,
+             const SmallVectorImpl<AnnotatedLine *> &Lines)
+      : Style(Style), Keywords(Keywords), End(Lines.end()),
+        Next(Lines.begin()) {}
 
+  /// \brief Returns the next line, merging multiple lines into one if possible.
+  const AnnotatedLine *getNextMergedLine(bool DryRun,
+                                         LevelIndentTracker &IndentTracker) {
+    if (Next == End)
+      return nullptr;
+    const AnnotatedLine *Current = *Next;
+    IndentTracker.nextLine(*Current);
+    unsigned MergedLines =
+        tryFitMultipleLinesInOne(IndentTracker.getIndent(), Next, End);
+    if (MergedLines > 0 && Style.ColumnLimit == 0)
+      // Disallow line merging if there is a break at the start of one of the
+      // input lines.
+      for (unsigned i = 0; i < MergedLines; ++i)
+        if (Next[i + 1]->First->NewlinesBefore > 0)
+          MergedLines = 0;
+    if (!DryRun)
+      for (unsigned i = 0; i < MergedLines; ++i)
+        join(*Next[i], *Next[i + 1]);
+    Next = Next + MergedLines + 1;
+    return Current;
+  }
+
+private:
   /// \brief Calculates how many lines can be merged into 1 starting at \p I.
   unsigned
   tryFitMultipleLinesInOne(unsigned Indent,
@@ -119,7 +242,6 @@ public:
     return 0;
   }
 
-private:
   unsigned
   tryMergeSimplePPDirective(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                             SmallVectorImpl<AnnotatedLine *>::const_iterator E,
@@ -304,8 +426,26 @@ private:
     return false;
   }
 
+  void join(AnnotatedLine &A, const AnnotatedLine &B) {
+    assert(!A.Last->Next);
+    assert(!B.First->Previous);
+    if (B.Affected)
+      A.Affected = true;
+    A.Last->Next = B.First;
+    B.First->Previous = A.Last;
+    B.First->CanBreakBefore = true;
+    unsigned LengthA = A.Last->TotalLength + B.First->SpacesRequiredBefore;
+    for (FormatToken *Tok = B.First; Tok; Tok = Tok->Next) {
+      Tok->TotalLength += LengthA;
+      A.Last = Tok;
+    }
+  }
+
   const FormatStyle &Style;
   const AdditionalKeywords &Keywords;
+  const SmallVectorImpl<AnnotatedLine*>::const_iterator End;
+
+  SmallVectorImpl<AnnotatedLine*>::const_iterator Next;
 };
 
 static void markFinalized(FormatToken *Tok) {
@@ -655,7 +795,7 @@ unsigned
 UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
                                bool DryRun, int AdditionalIndent,
                                bool FixBadIndentation) {
-  LineJoiner Joiner(Style, Keywords);
+  LineJoiner Joiner(Style, Keywords, Lines);
 
   // Try to look up already computed penalty in DryRun-mode.
   std::pair<const SmallVectorImpl<AnnotatedLine *> *, unsigned> CacheKey(
@@ -666,125 +806,77 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
 
   assert(!Lines.empty());
   unsigned Penalty = 0;
-  std::vector<int> IndentForLevel;
-  for (unsigned i = 0, e = Lines[0]->Level; i != e; ++i)
-    IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
+  LevelIndentTracker IndentTracker(Style, Keywords, Lines[0]->Level,
+                                   AdditionalIndent);
   const AnnotatedLine *PreviousLine = nullptr;
-  for (SmallVectorImpl<AnnotatedLine *>::const_iterator I = Lines.begin(),
-                                                        E = Lines.end();
-       I != E; ++I) {
-    const AnnotatedLine &TheLine = **I;
-    const FormatToken *FirstTok = TheLine.First;
-    int Offset = getIndentOffset(*FirstTok);
-
-    // Determine indent and try to merge multiple unwrapped lines.
-    unsigned Indent;
-    if (TheLine.InPPDirective) {
-      Indent = TheLine.Level * Style.IndentWidth;
-    } else {
-      while (IndentForLevel.size() <= TheLine.Level)
-        IndentForLevel.push_back(-1);
-      IndentForLevel.resize(TheLine.Level + 1);
-      Indent = getIndent(IndentForLevel, TheLine.Level);
-    }
-    unsigned LevelIndent = Indent;
-    if (static_cast<int>(Indent) + Offset >= 0)
-      Indent += Offset;
-
-    // Merge multiple lines if possible.
-    unsigned MergedLines = Joiner.tryFitMultipleLinesInOne(Indent, I, E);
-    if (MergedLines > 0 && Style.ColumnLimit == 0) {
-      // Disallow line merging if there is a break at the start of one of the
-      // input lines.
-      for (unsigned i = 0; i < MergedLines; ++i) {
-        if (I[i + 1]->First->NewlinesBefore > 0)
-          MergedLines = 0;
-      }
-    }
-    if (!DryRun) {
-      for (unsigned i = 0; i < MergedLines; ++i) {
-        join(*I[i], *I[i + 1]);
-      }
-    }
-    I += MergedLines;
-
+  const AnnotatedLine *NextLine = nullptr;
+  for (const AnnotatedLine *Line =
+           Joiner.getNextMergedLine(DryRun, IndentTracker);
+       Line; Line = NextLine) {
+    const AnnotatedLine &TheLine = *Line;
+    unsigned Indent = IndentTracker.getIndent();
     bool FixIndentation =
-        FixBadIndentation && (LevelIndent != FirstTok->OriginalColumn);
+        FixBadIndentation && (Indent != TheLine.First->OriginalColumn);
     bool ShouldFormat = TheLine.Affected || FixIndentation;
-    if (TheLine.First->is(tok::eof)) {
-      if (PreviousLine && PreviousLine->Affected && !DryRun) {
-        // Remove the file's trailing whitespace.
-        unsigned Newlines = std::min(FirstTok->NewlinesBefore, 1u);
-        Whitespaces->replaceWhitespace(*TheLine.First, Newlines,
-                                       /*IndentLevel=*/0, /*Spaces=*/0,
-                                       /*TargetColumn=*/0);
-      }
-    } else if (TheLine.Type != LT_Invalid && ShouldFormat) {
-      if (FirstTok->WhitespaceRange.isValid()) {
-        if (!DryRun)
-          formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level, Indent,
-                           TheLine.InPPDirective);
-      } else {
-        Indent = LevelIndent = FirstTok->OriginalColumn;
-      }
+    // We cannot format this line; if the reason is that the line had a
+    // parsing error, remember that.
+    if (ShouldFormat && TheLine.Type == LT_Invalid && IncompleteFormat)
+      *IncompleteFormat = true;
 
-      // If everything fits on a single line, just put it there.
-      unsigned ColumnLimit = Style.ColumnLimit;
-      if (I + 1 != E) {
-        AnnotatedLine *NextLine = I[1];
-        if (NextLine->InPPDirective && !NextLine->First->HasUnescapedNewline)
-          ColumnLimit = getColumnLimit(TheLine.InPPDirective);
-      }
+    if (ShouldFormat && TheLine.Type != LT_Invalid) {
+      if (!DryRun)
+        formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level, Indent,
+                         TheLine.InPPDirective);
 
-      if (TheLine.Last->TotalLength + Indent <= ColumnLimit ||
-          TheLine.Type == LT_ImportStatement) {
-        Penalty += NoLineBreakFormatter(Indenter, Whitespaces, Style, this)
-                       .formatLine(TheLine, Indent, DryRun);
-      } else if (Style.ColumnLimit == 0) {
+      NextLine = Joiner.getNextMergedLine(DryRun, IndentTracker);
+      unsigned ColumnLimit = getColumnLimit(TheLine.InPPDirective, NextLine);
+      bool FitsIntoOneLine =
+          TheLine.Last->TotalLength + Indent <= ColumnLimit ||
+          TheLine.Type == LT_ImportStatement;
+
+      if (Style.ColumnLimit == 0)
         NoColumnLimitLineFormatter(Indenter, Whitespaces, Style, this)
             .formatLine(TheLine, Indent, DryRun);
-      } else {
+      else if (FitsIntoOneLine)
+        Penalty += NoLineBreakFormatter(Indenter, Whitespaces, Style, this)
+                       .formatLine(TheLine, Indent, DryRun);
+      else
         Penalty += OptimizingLineFormatter(Indenter, Whitespaces, Style, this)
                        .formatLine(TheLine, Indent, DryRun);
-      }
-
-      if (!TheLine.InPPDirective)
-        IndentForLevel[TheLine.Level] = LevelIndent;
-    } else if (TheLine.ChildrenAffected) {
-      format(TheLine.Children, DryRun);
     } else {
-      // Format the first token if necessary, and notify the WhitespaceManager
-      // about the unchanged whitespace.
-      for (FormatToken *Tok = TheLine.First; Tok; Tok = Tok->Next) {
-        if (Tok == TheLine.First && (Tok->NewlinesBefore > 0 || Tok->IsFirst)) {
-          unsigned LevelIndent = Tok->OriginalColumn;
-          if (!DryRun) {
-            // Remove trailing whitespace of the previous line.
-            if ((PreviousLine && PreviousLine->Affected) ||
-                TheLine.LeadingEmptyLinesAffected) {
-              formatFirstToken(*Tok, PreviousLine, TheLine.Level, LevelIndent,
-                               TheLine.InPPDirective);
-            } else {
-              Whitespaces->addUntouchableToken(*Tok, TheLine.InPPDirective);
-            }
-          }
+      // If no token in the current line is affected, we still need to format
+      // affected children.
+      if (TheLine.ChildrenAffected)
+        format(TheLine.Children, DryRun);
 
-          if (static_cast<int>(LevelIndent) - Offset >= 0)
-            LevelIndent -= Offset;
-          if ((Tok->isNot(tok::comment) ||
-               IndentForLevel[TheLine.Level] == -1) &&
-              !TheLine.InPPDirective)
-            IndentForLevel[TheLine.Level] = LevelIndent;
-        } else if (!DryRun) {
+      // Adapt following lines on the current indent level to the same level
+      // unless the current \c AnnotatedLine is not at the beginning of a line.
+      bool StartsNewLine =
+          TheLine.First->NewlinesBefore > 0 || TheLine.First->IsFirst;
+      if (StartsNewLine)
+        IndentTracker.adjustToUnmodifiedLine(TheLine);
+      if (!DryRun) {
+        bool ReformatLeadingWhitespace =
+            StartsNewLine && ((PreviousLine && PreviousLine->Affected) ||
+                              TheLine.LeadingEmptyLinesAffected);
+        // Format the first token.
+        if (ReformatLeadingWhitespace)
+          formatFirstToken(*TheLine.First, PreviousLine, TheLine.Level,
+                           TheLine.First->OriginalColumn,
+                           TheLine.InPPDirective);
+        else
+          Whitespaces->addUntouchableToken(*TheLine.First,
+                                           TheLine.InPPDirective);
+
+        // Notify the WhitespaceManager about the unchanged whitespace.
+        for (FormatToken *Tok = TheLine.First->Next; Tok; Tok = Tok->Next)
           Whitespaces->addUntouchableToken(*Tok, TheLine.InPPDirective);
-        }
       }
+      NextLine = Joiner.getNextMergedLine(DryRun, IndentTracker);
     }
-    if (TheLine.Type == LT_Invalid && ShouldFormat && IncompleteFormat)
-      *IncompleteFormat = true;
     if (!DryRun)
       markFinalized(TheLine.First);
-    PreviousLine = *I;
+    PreviousLine = &TheLine;
   }
   PenaltyCache[CacheKey] = Penalty;
   return Penalty;
@@ -795,6 +887,12 @@ void UnwrappedLineFormatter::formatFirstToken(FormatToken &RootToken,
                                               unsigned IndentLevel,
                                               unsigned Indent,
                                               bool InPPDirective) {
+  if (RootToken.is(tok::eof)) {
+    unsigned Newlines = std::min(RootToken.NewlinesBefore, 1u);
+    Whitespaces->replaceWhitespace(RootToken, Newlines, /*IndentLevel=*/0,
+                                   /*Spaces=*/0, /*TargetColumn=*/0);
+    return;
+  }
   unsigned Newlines =
       std::min(RootToken.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
   // Remove empty lines before "}" where applicable.
@@ -829,33 +927,17 @@ void UnwrappedLineFormatter::formatFirstToken(FormatToken &RootToken,
                                              !RootToken.HasUnescapedNewline);
 }
 
-/// \brief Get the indent of \p Level from \p IndentForLevel.
-///
-/// \p IndentForLevel must contain the indent for the level \c l
-/// at \p IndentForLevel[l], or a value < 0 if the indent for
-/// that level is unknown.
-unsigned UnwrappedLineFormatter::getIndent(ArrayRef<int> IndentForLevel,
-                                           unsigned Level) {
-  if (IndentForLevel[Level] != -1)
-    return IndentForLevel[Level];
-  if (Level == 0)
-    return 0;
-  return getIndent(IndentForLevel, Level - 1) + Style.IndentWidth;
-}
-
-void UnwrappedLineFormatter::join(AnnotatedLine &A, const AnnotatedLine &B) {
-  assert(!A.Last->Next);
-  assert(!B.First->Previous);
-  if (B.Affected)
-    A.Affected = true;
-  A.Last->Next = B.First;
-  B.First->Previous = A.Last;
-  B.First->CanBreakBefore = true;
-  unsigned LengthA = A.Last->TotalLength + B.First->SpacesRequiredBefore;
-  for (FormatToken *Tok = B.First; Tok; Tok = Tok->Next) {
-    Tok->TotalLength += LengthA;
-    A.Last = Tok;
-  }
+unsigned
+UnwrappedLineFormatter::getColumnLimit(bool InPPDirective,
+                                       const AnnotatedLine *NextLine) const {
+  // In preprocessor directives reserve two chars for trailing " \" if the
+  // next line continues the preprocessor directive.
+  bool ContinuesPPDirective =
+      InPPDirective && NextLine && NextLine->InPPDirective &&
+      // If there is an unescaped newline between this line and the next, the
+      // next line starts a new preprocessor directive.
+      !NextLine->First->HasUnescapedNewline;
+  return Style.ColumnLimit - (ContinuesPPDirective ? 2 : 0);
 }
 
 } // namespace format

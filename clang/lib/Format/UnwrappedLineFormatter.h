@@ -44,41 +44,15 @@ public:
                   bool FixBadIndentation = false);
 
 private:
-  /// \brief Get the offset of the line relatively to the level.
-  ///
-  /// For example, 'public:' labels in classes are offset by 1 or 2
-  /// characters to the left from their level.
-  int getIndentOffset(const FormatToken &RootToken) {
-    if (Style.Language == FormatStyle::LK_Java ||
-        Style.Language == FormatStyle::LK_JavaScript)
-      return 0;
-    if (RootToken.isAccessSpecifier(false) ||
-        RootToken.isObjCAccessSpecifier() ||
-        (RootToken.is(Keywords.kw_signals) && RootToken.Next &&
-         RootToken.Next->is(tok::colon)))
-      return Style.AccessModifierOffset;
-    return 0;
-  }
-
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine if there was no structural parsing error.
   void formatFirstToken(FormatToken &RootToken,
                         const AnnotatedLine *PreviousLine, unsigned IndentLevel,
                         unsigned Indent, bool InPPDirective);
 
-  /// \brief Get the indent of \p Level from \p IndentForLevel.
-  ///
-  /// \p IndentForLevel must contain the indent for the level \c l
-  /// at \p IndentForLevel[l], or a value < 0 if the indent for
-  /// that level is unknown.
-  unsigned getIndent(ArrayRef<int> IndentForLevel, unsigned Level);
-
-  void join(AnnotatedLine &A, const AnnotatedLine &B);
-
-  unsigned getColumnLimit(bool InPPDirective) const {
-    // In preprocessor directives reserve two chars for trailing " \"
-    return Style.ColumnLimit - (InPPDirective ? 2 : 0);
-  }
+  /// \brief Returns the column limit for a line, taking into account whether we
+  /// need an escaped newline due to a continued preprocessor directive.
+  unsigned getColumnLimit(bool InPPDirective, const AnnotatedLine *NextLine) const;
 
   // Cache to store the penalty of formatting a vector of AnnotatedLines
   // starting from a specific additional offset. Improves performance if there

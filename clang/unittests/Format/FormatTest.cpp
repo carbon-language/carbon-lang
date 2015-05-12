@@ -2775,9 +2775,10 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
   verifyFormat("#d, = };");
   verifyFormat("#if \"a");
   verifyIncompleteFormat("({\n"
-                         "#define b }\\\n"
+                         "#define b     \\\n"
+                         "  }           \\\n"
                          "  a\n"
-                         "a");
+                         "a", getLLVMStyleWithColumns(15));
   verifyFormat("#define A     \\\n"
                "  {           \\\n"
                "    {\n"
@@ -3179,6 +3180,30 @@ TEST_F(FormatTest, LayoutBlockInsideParens) {
                "  if (a)\n"
                "    f();\n"
                "});");
+  EXPECT_EQ("int longlongname; // comment\n"
+            "int x = f({\n"
+            "  int x; // comment\n"
+            "  int y; // comment\n"
+            "});",
+            format("int longlongname; // comment\n"
+                   "int x = f({\n"
+                   "  int x; // comment\n"
+                   "  int y; // comment\n"
+                   "});",
+                   65, 0, getLLVMStyle()));
+  EXPECT_EQ("int s = f({\n"
+            "  class X {\n"
+            "  public:\n"
+            "    void f();\n"
+            "  };\n"
+            "});",
+            format("int s = f({\n"
+                   "  class X {\n"
+                   "    public:\n"
+                   "    void f();\n"
+                   "  };\n"
+                   "});",
+                   0, 0, getLLVMStyle()));
 }
 
 TEST_F(FormatTest, LayoutBlockInsideStatement) {
