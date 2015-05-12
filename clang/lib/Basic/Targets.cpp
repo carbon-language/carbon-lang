@@ -4271,12 +4271,10 @@ public:
       Features.push_back("-neonfp");
 
     // Remove front-end specific options which the backend handles differently.
-    const StringRef FrontEndFeatures[] = { "+soft-float", "+soft-float-abi" };
-    for (const auto &FEFeature : FrontEndFeatures) {
-      auto Feature = std::find(Features.begin(), Features.end(), FEFeature);
-      if (Feature != Features.end())
-        Features.erase(Feature);
-    }
+    auto Feature =
+        std::find(Features.begin(), Features.end(), "+soft-float-abi");
+    if (Feature != Features.end())
+      Features.erase(Feature);
 
     return true;
   }
@@ -6148,12 +6146,6 @@ public:
       else if (*it == "-nan2008")
         IsNan2008 = false;
     }
-
-    // Remove front-end specific options.
-    std::vector<std::string>::iterator it =
-      std::find(Features.begin(), Features.end(), "+soft-float");
-    if (it != Features.end())
-      Features.erase(it);
 
     setDescriptionString();
 
