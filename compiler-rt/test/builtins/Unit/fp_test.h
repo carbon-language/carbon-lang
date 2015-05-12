@@ -19,6 +19,11 @@ enum EXPECTED_RESULT {
     LESS_0, LESS_EQUAL_0, EQUAL_0, GREATER_0, GREATER_EQUAL_0, NEQUAL_0
 };
 
+static inline uint16_t fromRep16(uint16_t x)
+{
+    return x;
+}
+
 static inline float fromRep32(uint32_t x)
 {
     float ret;
@@ -41,6 +46,11 @@ static inline long double fromRep128(uint64_t hi, uint64_t lo)
     return ret;
 }
 
+static inline uint16_t toRep16(uint16_t x)
+{
+    return x;
+}
+
 static inline uint32_t toRep32(float x)
 {
     uint32_t ret;
@@ -60,6 +70,24 @@ static inline __uint128_t toRep128(long double x)
     __uint128_t ret;
     memcpy(&ret, &x, 16);
     return ret;
+}
+
+static inline int compareResultH(uint16_t result,
+                                 uint16_t expected)
+{
+    uint16_t rep = toRep16(result);
+
+    if (rep == expected){
+        return 0;
+    }
+    // test other posible NaN representation(signal NaN)
+    else if (expected == 0x7e00U){
+        if ((rep & 0x7c00U) == 0x7c00U &&
+            (rep & 0x3ffU) > 0){
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static inline int compareResultF(float result,
@@ -177,6 +205,11 @@ static inline char *expectedStr(enum EXPECTED_RESULT expected)
     return "";
 }
 
+static inline uint16_t makeQNaN16()
+{
+    return fromRep16(0x7e00U);
+}
+
 static inline float makeQNaN32()
 {
     return fromRep32(0x7fc00000U);
@@ -192,6 +225,11 @@ static inline long double makeQNaN128()
     return fromRep128(0x7fff800000000000UL, 0x0UL);
 }
 
+static inline uint16_t makeNaN16(uint16_t rand)
+{
+    return fromRep16(0x7c00U | (rand & 0x7fffU));
+}
+
 static inline float makeNaN32(uint32_t rand)
 {
     return fromRep32(0x7f800000U | (rand & 0x7fffffU));
@@ -205,6 +243,11 @@ static inline double makeNaN64(uint64_t rand)
 static inline long double makeNaN128(uint64_t rand)
 {
     return fromRep128(0x7fff000000000000UL | (rand & 0xffffffffffffUL), 0x0UL);
+}
+
+static inline uint16_t makeInf16()
+{
+    return fromRep16(0x7c00U);
 }
 
 static inline float makeInf32()

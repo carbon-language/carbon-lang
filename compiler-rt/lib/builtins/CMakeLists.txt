@@ -44,6 +44,7 @@ set(GENERIC_SOURCES
   enable_execute_stack.c
   eprintf.c
   extendsfdf2.c
+  extendhfsf2.c
   ffsdi2.c
   ffsti2.c
   fixdfdi.c
@@ -123,7 +124,9 @@ set(GENERIC_SOURCES
   subvti3.c
   subtf3.c
   trampoline_setup.c
+  truncdfhf2.c
   truncdfsf2.c
+  truncsfhf2.c
   ucmpdi2.c
   ucmpti2.c
   udivdi3.c
