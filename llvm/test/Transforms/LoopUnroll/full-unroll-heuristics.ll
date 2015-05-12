@@ -17,8 +17,8 @@
 ; optimizations to remove ~55% of the instructions, the loop body size is 9,
 ; and unrolled size is 65.
 
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=10  -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=30 | FileCheck %s -check-prefix=TEST1
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=30 | FileCheck %s -check-prefix=TEST2
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=10  -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=20 | FileCheck %s -check-prefix=TEST1
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=20 | FileCheck %s -check-prefix=TEST2
 ; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=80 | FileCheck %s -check-prefix=TEST3
 ; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=100 -unroll-percent-of-optimized-for-complete-unroll=80 | FileCheck %s -check-prefix=TEST4
 
