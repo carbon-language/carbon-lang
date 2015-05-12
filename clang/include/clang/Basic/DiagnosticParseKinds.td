@@ -170,6 +170,7 @@ def err_function_declared_typedef : Error<
   "function definition declared 'typedef'">;
 def err_at_defs_cxx : Error<"@defs is not supported in Objective-C++">;
 def err_at_in_class : Error<"unexpected '@' in member specification">;
+def err_unexpected_semi : Error<"unexpected ';' before %0">;
 
 def err_expected_fn_body : Error<
   "expected function body after function declarator">;

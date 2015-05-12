@@ -210,9 +210,9 @@ class X2 { a::a; }; // expected-error {{undeclared identifier 'a'}}
 
 class BadExceptionSpec {
   void f() throw(int; // expected-error {{expected ')'}} expected-note {{to match}}
-  void g() throw( // expected-note {{to match}}
-      int( // expected-note {{to match}}
-          ; // expected-error 2{{expected ')'}} expected-error {{unexpected end of exception specification}}
+  void g() throw(
+      int(
+          ; // expected-error {{unexpected ';' before ')'}}
           ));
 };
 

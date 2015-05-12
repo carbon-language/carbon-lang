@@ -429,7 +429,13 @@ namespace clang {
       if (P.Tok.is(Close)) {
         LClose = (P.*Consumer)();
         return false;
-      } 
+      } else if (P.Tok.is(tok::semi) && P.NextToken().is(Close)) {
+        SourceLocation SemiLoc = P.ConsumeToken();
+        P.Diag(SemiLoc, diag::err_unexpected_semi)
+            << Close << FixItHint::CreateRemoval(SourceRange(SemiLoc, SemiLoc));
+        LClose = (P.*Consumer)();
+        return false;
+      }
       
       return diagnoseMissingClose();
     }
