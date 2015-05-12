@@ -25,8 +25,15 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that lldb-mi is ready when executable was loaded
         self.expect(self.child_prompt, exactly = True)
 
-        # Run
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
         self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Continue
+        self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"exited-normally\"")
 
