@@ -9,8 +9,8 @@
 #//===----------------------------------------------------------------------===//
 #
 
-               Building libiomp5 using CMake
-               =============================
+         How to Build the LLVM* OpenMP* Runtime Library using CMake
+               ===========================================
 
    ---- Version of CMake required: v2.8.0 or above ----
  
@@ -91,9 +91,6 @@ Compiler options
 Unix* systems (Optional as compiler is default):
 This option is only needed when -Dcreate_fortran_modules is true
 
--DCMAKE_ASM_COMPILER=<Assembler name>
-This option isn't usually needed for Non-Windows* builds
-
 -DCMAKE_ASM_MASM_COMPILER=[ml | ml64 ]
 This option is Windows* Only
 
@@ -111,15 +108,12 @@ Build options
 ======================
 ==== Architecture ====
 ======================
--Darch=32|32e|arm|ppc64|aarch64|mic
+-Darch=32|32e|arm|ppc64|ppc64le|aarch64|mic
 * Architecture can be 32 (IA-32 architecture), 32e (Intel(R) 64 architecture),
-  arm (ARM architecture), aarch64 (ARMv8 architecture) or ppc64 (PPC64 architecture).
-  This option, by default is chosen based on the
-  CMake variable CMAKE_SIZEOF_VOID_P.  If it is 8, then Intel(R) 64 architecture
-  is assumed.  If it is 4, then IA-32 architecture is assumed.  If you want to
-  use a different architecture other than x86 based architecture, you must specify
-  it when calling cmake initially using this -Darch=<arch> option or by changing 
-  the arch value via CMakeCache.txt or the CMake GUI after the initial CMake run.
+  arm (ARM architecture), aarch64 (ARMv8 architecture), ppc64 (PPC64 architecture),
+  or ppc64le (little endian PPC64 architecture).
+* This option, by default is chosen based on the probing the compiler for 
+  architecture macros (e.g., is __x86_64__ predefined by compiler?).
 
 ---- First values listed are the default value ----
 -Dlib_type=normal|profile|stubs
@@ -145,34 +139,47 @@ Should the Fortran modules be created (requires Fortran compiler)
 -Dstats=off|on
 Should include stats-gathering code?
 
+-Dompt_support=off|on
+Should OMPT support be turned on?
+If ompt_support is off, then both ompt_blame and ompt_trace are ignored.
+
+-Dompt_blame=on|off
+should OMPT blame functionality be turned on?
+
+-Dompt_trace=on|off
+should OMPT trace functionality be turned on?
+
 =====================
 ==== Micro tests ====
 =====================
-After the library has been built, five microtests are performed.
-Some will be skipped based upon the platform.
+After the library has been built, there are five optional microtests that
+can be performed.  Some will be skipped based upon the platform.
 These tests can be turned on (default) or off with the following options:
 -Dtest_touch=on|off     -- Should the touch test be done?
 -Dtest_relo=on|off      -- Should the position independent code test be done?
 -Dtest_execstack=on|off -- Should the stack be checked for executability?
--Dtest_instr=on|off     -- Should the Intel(R) MIC Libraries be checked 
+-Dtest_instr=on|off     -- Should the Intel(R) MIC Libraries be checked
                             for correct instruction set?
 -Dtest_deps=on|off      -- Should libiomp5's dependencies be checked?
 -Dtests=off|on          -- Should any of the above tests be done?
+If -Dtests=on is specified, the user can then call:
+$ make libiomp-micro-tests
+which runs the tests.
 
 ============================================
 ==== How to append flags to compilation ====
 ============================================
 - These flags are *appended*.  They do not 
   overwrite any of the preset flags.
--DUSER_CPP_FLAGS=<space-separated flags>    -- Additional C Preprocessor flags
+-DLIBIOMP_CPPFLAGS=<space-separated flags>    -- Additional C Preprocessor flags
                                                (typically additional -Ddef=val flags)
--DUSER_C_FLAGS=<space-separated flags>      -- Additional C compiler flags
--DUSER_CXX_FLAGS=<space-separated flags>    -- Additional C++ compiler flags
--DUSER_ASM_FLAGS=<space-separated flags>    -- Additional assembly flags
--DUSER_LD_FLAGS=<space-separated flags>     -- Additional linker flags
--DUSER_LD_LIB_FLAGS=<space-separated flags> -- Additional libraries to link 
+-DLIBIOMP_CFLAGS=<space-separated flags>      -- Additional C compiler flags
+-DLIBIOMP_CXXFLAGS=<space-separated flags>    -- Additional C++ compiler flags
+-DLIBIOMP_ASMFLAGS=<space-separated flags>    -- Additional assembly flags
+-DLIBIOMP_LDFLAGS=<space-separated flags>     -- Additional linker flags
+-DLIBIOMP_LIBFLAGS=<space-separated flags> -- Additional libraries to link 
                                                to during link phase
--DUSER_F_FLAGS=<space-separated flags>  -- Additional Fortran compiler flags
+-DLIBIOMP_FFLAGS=<space-separated flags>  -- Additional Fortran compiler flags
 
 ===================================
 ==== Feature Based Compilation ====
@@ -217,12 +224,22 @@ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ ..
 cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
 
 ---- With Various Options ----
+- Build the 32 bit Linux library using GCC*
 cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Dos=lin -Darch=32 ..
-cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -Dos=mac -Darch=32 -DCMAKE_BUILD_TYPE=Debug ..
-cmake -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_Fortran_COMPILER=ifort -Dtests=on -Dcreate_fortran_modules=on -DUSE_BUILDPL_RULES=on ..
-cmake -DUSER_CFLAGS='Werror' -DUSER_CPP_FLAGS='-DNEW_FEATURE=1 -DOLD_FEATURE=0' -DUSER_CXX_FLAGS='-Werror -Wsign-compare' ..
 
----- Stubs library ----
+- Build the 32 bit debug Mac library using Clang*
+cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -Dos=mac -Darch=32 -DCMAKE_BUILD_TYPE=Debug ..
+
+- Build the library (architecture determined by probing compiler) using the
+  Intel(R) C Compiler and the Intel(R) C++ Compiler. Also, create the fortran modules using
+  the Intel(R) Fortran Compiler, enabling the libiomp-micro-tests target and using similar rules that build.pl 
+  would use to build the library.
+cmake -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_Fortran_COMPILER=ifort -Dtests=on -Dcreate_fortran_modules=on -DUSE_BUILDPL_RULES=on ..
+
+- Have CMake Find the C/C++ compiler, and specify additional flags for the C compiler, preprocessor, and C++ compiler.
+cmake -DLIBIOMP_CFLAGS='Werror' -DLIBIOMP_CPPFLAGS='-DNEW_FEATURE=1 -DOLD_FEATURE=0' -DLIBIOMP_CXXFLAGS='-Werror -Wsign-compare' ..
+
+---- Build the stubs library ----
 cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Dlib_type=stubs ..
 
 =========

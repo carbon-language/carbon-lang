@@ -1,6 +1,6 @@
 
-               README for Intel(R) OpenMP* Runtime Library
-               ===========================================
+               README for the LLVM* OpenMP* Runtime Library
+               ============================================
 
 How to Build Documentation
 ==========================
@@ -11,7 +11,7 @@ However, an HTML version can be built by executing:
 
 % doxygen doc/doxygen/config 
 
-in this directory.
+in the runtime directory.
 
 That will produce HTML documentation in the doc/doxygen/generated
 directory, which can be accessed by pointing a web browser at the
@@ -21,11 +21,23 @@ If you don't have Doxygen installed, you can download it from
 www.doxygen.org.
 
 
-How to Build the Intel(R) OpenMP* Runtime Library
-=================================================
+How to Build the LLVM* OpenMP* Runtime Library
+==============================================
 
+The library can be built either using Cmake, or using a makefile that
+in turn invokes various Perl scripts. For porting, non X86
+architectures, and for those already familiar with Cmake that may be
+an easier route to take than the one described here.
+
+Building with CMake
+===================
+The runtime/Build_With_CMake.txt file has a description of how to
+build with Cmake.
+
+Building with the Makefile
+==========================
 The Makefile at the top-level will attempt to detect what it needs to
-build the Intel(R) OpenMP* Runtime Library.  To see the default settings, 
+build the LLVM* OpenMP* Runtime Library.  To see the default settings, 
 type:
 
 make info
@@ -37,7 +49,7 @@ omp_root:    The path to the top-level directory containing the top-level
 	     current working directory.
 
 omp_os:      Operating system.  By default, the build will attempt to 
-	     detect this. Currently supports "linux", "freebsd", "macos", and 
+	     detect this. Currently supports "linux", "freebsd", "macos", and
 	     "windows".
 
 arch:        Architecture. By default, the build will attempt to 
@@ -46,6 +58,8 @@ arch:        Architecture. By default, the build will attempt to
                  "32" for IA-32 architecture 
                  "32e" for Intel(R) 64 architecture
                  "mic" for Intel(R) Many Integrated Core Architecture
+                 "arm" for ARM* architecture
+                 "aarch64" for Aarch64 (64-bit ARM) architecture
                  "ppc64" for IBM(R) Power architecture (big endian)
                  "ppc64le" for IBM(R) Power architecture (little endian)
 
@@ -73,10 +87,6 @@ To use any of the options above, simple add <option_name>=<value>.  For
 example, if you want to build with gcc instead of icc, type:
 
 make compiler=gcc
-
-There is also an experimental CMake build system. This is *not* yet
-supported for production use and resulting binaries have not been checked
-for compatibility.
 
 On OS X* machines, it is possible to build universal (or fat) libraries which
 include both IA-32 architecture and Intel(R) 64 architecture objects in a
@@ -121,7 +131,9 @@ Front-end Compilers that work with this RTL
 ===========================================
 
 The following compilers are known to do compatible code generation for
-this RTL:  icc/icl, gcc.  See the documentation for more detail.
+this RTL: clang (from the OpenMP development branch at
+http://clang-omp.github.io/ ), Intel compilers, GCC.  See the documentation
+for more details.
 
 -----------------------------------------------------------------------
 

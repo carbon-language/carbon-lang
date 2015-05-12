@@ -58,6 +58,10 @@ arch:        Architecture. By default, the build will attempt to
                  "32" for IA-32 architecture 
                  "32e" for Intel(R) 64 architecture
                  "mic" for Intel(R) Many Integrated Core Architecture
+                 "arm" for ARM* architecture
+                 "aarch64" for Aarch64 (64-bit ARM) architecture
+                 "ppc64" for IBM(R) Power architecture (big endian)
+                 "ppc64le" for IBM(R) Power architecture (little endian)
 
              If "mic" is specified then "icc" will be used as the
 	     compiler, and appropriate k1om binutils will be used. The
@@ -74,6 +78,10 @@ compiler:    Which compiler to use for the build.  Defaults to "icc"
 	     information on compiler versions.
 
 mode:        Library mode: default is "release".  Also supports "debug".
+
+jobs:        The number of parallel jobs for the underlying call to make.
+         This value is sent as the parameter to the -j flag for make.
+         This value defaults to "1", but can be set to any positive integer.
 
 To use any of the options above, simple add <option_name>=<value>.  For 
 example, if you want to build with gcc instead of icc, type:
