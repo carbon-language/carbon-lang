@@ -719,6 +719,15 @@ int FunctionComparator::cmpOperations(const Instruction *L,
                            R->getRawSubclassOptionalData()))
     return Res;
 
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(L)) {
+    if (int Res = cmpTypes(AI->getAllocatedType(),
+                           cast<AllocaInst>(R)->getAllocatedType()))
+      return Res;
+    if (int Res =
+            cmpNumbers(AI->getAlignment(), cast<AllocaInst>(R)->getAlignment()))
+      return Res;
+  }
+
   // We have two instructions of identical opcode and #operands.  Check to see
   // if all operands are the same type
   for (unsigned i = 0, e = L->getNumOperands(); i != e; ++i) {
