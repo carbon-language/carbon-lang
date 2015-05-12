@@ -55,14 +55,23 @@ _CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, sin, float);
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
-#define __CLC_FUNCTION __clc_sin_intrinsic
-#define __CLC_INTRINSIC "llvm.sin"
-#include <clc/math/unary_intrin.inc>
-#undef __CLC_FUNCTION
-#undef __CLC_INTRINSIC
-
 _CLC_OVERLOAD _CLC_DEF double sin(double x) {
-    return __clc_sin_intrinsic(x);
+    double y = fabs(x);
+
+    double r, rr;
+    int regn;
+
+    if (y < 0x1.0p+47)
+        __clc_remainder_piby2_medium(y, &r, &rr, &regn);
+    else
+        __clc_remainder_piby2_large(y, &r, &rr, &regn);
+
+    double2 sc = __clc_sincos_piby4(r, rr);
+
+    int2 s = as_int2(regn & 1 ? sc.hi : sc.lo);
+    s.hi ^= ((regn > 1) << 31) ^ ((x < 0.0) << 31);
+
+    return  isinf(x) | isnan(x) ? as_double(QNANBITPATT_DP64) : as_double(s);
 }
 
 _CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, double, sin, double);
