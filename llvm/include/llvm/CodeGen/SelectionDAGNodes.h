@@ -1086,7 +1086,7 @@ public:
   }
 };
 
-/// Abstact virtual class for operations for memory operations
+/// This is an abstract virtual class for memory operations.
 class MemSDNode : public SDNode {
 private:
   // VT of in-memory value.
@@ -1203,7 +1203,7 @@ public:
   }
 };
 
-/// A SDNode reprenting atomic operations.
+/// This is an SDNode representing atomic operations.
 class AtomicSDNode : public MemSDNode {
   SDUse Ops[4];
 
