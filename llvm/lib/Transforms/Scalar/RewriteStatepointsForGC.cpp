@@ -248,9 +248,14 @@ static void analyzeParsePointLiveness(
   result.liveset = liveset;
 }
 
-/// If we can trivially determine that this vector contains only base pointers,
-/// return the base instruction.
-static Value *findBaseOfVector(Value *I) {
+static Value *findBaseDefiningValue(Value *I);
+
+/// If we can trivially determine that the index specified in the given vector
+/// is a base pointer, return it.  In cases where the entire vector is known to
+/// consist of base pointers, the entire vector will be returned.  This
+/// indicates that the relevant extractelement is a valid base pointer and
+/// should be used directly.
+static Value *findBaseOfVector(Value *I, Value *Index) {
   assert(I->getType()->isVectorTy() &&
          cast<VectorType>(I->getType())->getElementType()->isPointerTy() &&
          "Illegal to ask for the base pointer of a non-pointer type");
@@ -285,6 +290,20 @@ static Value *findBaseOfVector(Value *I) {
   if (isa<LoadInst>(I))
     return I;
 
+  // For an insert element, we might be able to look through it if we know
+  // something about the indexes, but if the indices are arbitrary values, we
+  // can't without much more extensive scalarization. 
+  if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(I)) {
+    Value *InsertIndex = IEI->getOperand(2);
+    // This index is inserting the value, look for it's base
+    if (InsertIndex == Index)
+      return findBaseDefiningValue(IEI->getOperand(1));
+    // Both constant, and can't be equal per above. This insert is definitely
+    // not relevant, look back at the rest of the vector and keep trying.  
+    if (isa<ConstantInt>(Index) && isa<ConstantInt>(InsertIndex))
+      return findBaseOfVector(IEI->getOperand(0), Index);
+  }
+  
   // Note: This code is currently rather incomplete.  We are essentially only
   // handling cases where the vector element is trivially a base pointer.  We
   // need to update the entire base pointer construction algorithm to know how
@@ -301,14 +320,22 @@ static Value *findBaseDefiningValue(Value *I) {
          "Illegal to ask for the base pointer of a non-pointer type");
 
   // This case is a bit of a hack - it only handles extracts from vectors which
-  // trivially contain only base pointers.  See note inside the function for
-  // how to improve this.
+  // trivially contain only base pointers or cases where we can directly match
+  // the index of the original extract element to an insertion into the vector.
+  // See note inside the function for how to improve this.
   if (auto *EEI = dyn_cast<ExtractElementInst>(I)) {
     Value *VectorOperand = EEI->getVectorOperand();
-    Value *VectorBase = findBaseOfVector(VectorOperand);
-    (void)VectorBase;
-    assert(VectorBase && "extract element not known to be a trivial base");
-    return EEI;
+    Value *Index = EEI->getIndexOperand();
+    Value *VectorBase = findBaseOfVector(VectorOperand, Index);
+    // If the result returned is a vector, we know the entire vector must
+    // contain base pointers.  In that case, the extractelement is a valid base
+    // for this value.
+    if (VectorBase->getType()->isVectorTy())
+      return EEI;
+    // Otherwise, we needed to look through the vector to find the base for
+    // this particular element.
+    assert(VectorBase->getType()->isPointerTy());
+    return VectorBase;
   }
 
   if (isa<Argument>(I))

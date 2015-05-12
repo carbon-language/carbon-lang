@@ -91,6 +91,31 @@ exceptional_return:                               ; preds = %entry
   ret <2 x i64 addrspace(1)*> %obj
 }
 
+; Can we handle an insert element with a constant offset?  This effectively
+; tests both the equal and inequal case since we have to relocate both indices
+; in the vector.
+define <2 x i64 addrspace(1)*> @test5(i64 addrspace(1)* %p) 
+     gc "statepoint-example" {
+; CHECK-LABEL: test5
+; CHECK: insertelement
+; CHECK-NEXT: extractelement
+; CHECK-NEXT: extractelement
+; CHECK-NEXT: gc.statepoint
+; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: gc.relocate
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: insertelement
+; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %7
+entry:
+  %vec = insertelement <2 x i64 addrspace(1)*> undef, i64 addrspace(1)* %p, i32 0
+  %safepoint_token = call i32 (void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0, i32 0)
+  ret <2 x i64 addrspace(1)*> %vec
+}
+
 declare void @do_safepoint()
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()*, i32, i32, ...)
