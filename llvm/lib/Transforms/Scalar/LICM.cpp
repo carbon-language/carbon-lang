@@ -490,7 +490,7 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
 /// This is true when all incoming values are that instruction.
 /// This pattern occurs most often with LCSSA PHI nodes.
 ///
-static bool isTriviallyReplacablePHI(PHINode &PN, Instruction &I) {
+static bool isTriviallyReplacablePHI(const PHINode &PN, const Instruction &I) {
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
     if (PN.getIncomingValue(i) != &I)
       return false;
