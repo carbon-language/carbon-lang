@@ -130,6 +130,7 @@ struct PlaceBackedgeSafepointsImpl : public LoopPass {
   bool runOnLoop(Loop *, LPPassManager &LPM) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<ScalarEvolution>();
     // We no longer modify the IR at all in this pass.  Thus all
     // analysis are preserved.
@@ -312,6 +313,7 @@ static void scanInlinedCode(Instruction *start, Instruction *end,
 
 bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
+  DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   // Loop through all loop latches (branches controlling backedges).  We need
   // to place a safepoint on every backedge (potentially). 
@@ -319,11 +321,6 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
   // having run sometime earlier in the pipeline, but this code must be correct
   // w.r.t. loops with multiple backedges.
   BasicBlock *header = L->getHeader();
-
-  // TODO: Use the analysis pass infrastructure for this.  There is no reason
-  // to recalculate this here.
-  DominatorTree DT;
-  DT.recalculate(*header->getParent());
 
   SmallVector<BasicBlock*, 16> LoopLatches;
   L->getLoopLatches(LoopLatches);
@@ -341,7 +338,7 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
         continue;
       }
       if (CallSafepointsEnabled &&
-          containsUnconditionalCallSafepoint(L, header, pred, DT)) {
+          containsUnconditionalCallSafepoint(L, header, pred, *DT)) {
         // Note: This is only semantically legal since we won't do any further
         // IPO or inlining before the actual call insertion..  If we hadn't, we
         // might latter loose this call safepoint.
@@ -746,6 +743,7 @@ INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "place-backedge-safepoints-impl",
                       "Place Backedge Safepoints", false, false)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_END(PlaceBackedgeSafepointsImpl,
                     "place-backedge-safepoints-impl",
                     "Place Backedge Safepoints", false, false)
