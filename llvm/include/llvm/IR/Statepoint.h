@@ -110,9 +110,9 @@ public:
     return StatepointCS.arg_begin() + CallArgsBeginPos;
   }
   typename CallSiteTy::arg_iterator call_args_end() {
-    int Offset = CallArgsBeginPos + getNumCallArgs();
-    assert(Offset <= (int)StatepointCS.arg_size());
-    return StatepointCS.arg_begin() + Offset;
+    auto I = call_args_begin() + getNumCallArgs();
+    assert((StatepointCS.arg_end() - I) >= 0);
+    return I;
   }
 
   /// range adapter for call arguments
@@ -122,19 +122,18 @@ public:
 
   /// Number of GC transition args.
   int getNumTotalGCTransitionArgs() {
-    const Value *NumGCTransitionArgs = *gc_transition_args_begin();
+    const Value *NumGCTransitionArgs = *call_args_end();
     return cast<ConstantInt>(NumGCTransitionArgs)->getZExtValue();
   }
   typename CallSiteTy::arg_iterator gc_transition_args_begin() {
-    int Offset = call_args_end() - StatepointCS.arg_begin();
-    assert(Offset <= (int)StatepointCS.arg_size());
-    return StatepointCS.arg_begin() + Offset;
+    auto I = call_args_end() + 1;
+    assert((StatepointCS.arg_end() - I) >= 0);
+    return I;
   }
   typename CallSiteTy::arg_iterator gc_transition_args_end() {
-    int Offset = (gc_transition_args_begin() + 1 +
-                  getNumTotalGCTransitionArgs()) - StatepointCS.arg_begin();
-    assert(Offset <= (int)StatepointCS.arg_size());
-    return StatepointCS.arg_begin() + Offset;
+    auto I = gc_transition_args_begin() + getNumTotalGCTransitionArgs();
+    assert((StatepointCS.arg_end() - I) >= 0);
+    return I;
   }
 
   /// range adapter for GC transition arguments
@@ -146,18 +145,19 @@ public:
   /// Number of additional arguments excluding those intended
   /// for garbage collection.
   int getNumTotalVMSArgs() {
-    Value *NumVMSArgs = *vm_state_begin();
+    const Value *NumVMSArgs = *gc_transition_args_end();
     return cast<ConstantInt>(NumVMSArgs)->getZExtValue();
   }
 
   typename CallSiteTy::arg_iterator vm_state_begin() {
-    return gc_transition_args_end();
+    auto I = gc_transition_args_end() + 1;
+    assert((StatepointCS.arg_end() - I) >= 0);
+    return I;
   }
   typename CallSiteTy::arg_iterator vm_state_end() {
-    int Offset = (gc_transition_args_end() + 1 + getNumTotalVMSArgs()) -
-                 StatepointCS.arg_begin();
-    assert(Offset <= (int)StatepointCS.arg_size());
-    return StatepointCS.arg_begin() + Offset;
+    auto I = vm_state_begin() + getNumTotalVMSArgs();
+    assert((StatepointCS.arg_end() - I) >= 0);
+    return I;
   }
 
   /// range adapter for vm state arguments

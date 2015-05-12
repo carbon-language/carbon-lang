@@ -469,10 +469,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // particular value.  This is purely an optimization over the code below and
   // doesn't change semantics at all.  It is important for performance that we
   // reserve slots for both deopt and gc values before lowering either.
-  for (auto I = StatepointSite.vm_state_begin() + 1,
-            E = StatepointSite.vm_state_end();
-       I != E; ++I) {
-    Value *V = *I;
+  for (const Value *V : StatepointSite.vm_state_args()) {
     SDValue Incoming = Builder.getValue(V);
     reservePreviousStackSlotForValue(Incoming, Builder);
   }
@@ -490,8 +487,8 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   const int NumVMSArgs = StatepointSite.getNumTotalVMSArgs();
   pushStackMapConstant(Ops, Builder, NumVMSArgs);
 
-  assert(NumVMSArgs + 1 == std::distance(StatepointSite.vm_state_begin(),
-                                         StatepointSite.vm_state_end()));
+  assert(NumVMSArgs == std::distance(StatepointSite.vm_state_begin(),
+                                     StatepointSite.vm_state_end()));
 
   // The vm state arguments are lowered in an opaque manner.  We do
   // not know what type of values are contained within.  We skip the
@@ -499,10 +496,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // explicitly just above.  We could have left it in the loop and
   // not done it explicitly, but it's far easier to understand this
   // way.
-  for (auto I = StatepointSite.vm_state_begin() + 1,
-            E = StatepointSite.vm_state_end();
-       I != E; ++I) {
-    const Value *V = *I;
+  for (const Value *V : StatepointSite.vm_state_args()) {
     SDValue Incoming = Builder.getValue(V);
     lowerIncomingStatepointValue(Incoming, Ops, Builder);
   }
@@ -621,12 +615,10 @@ void SelectionDAGBuilder::LowerStatepoint(
     TSOps.push_back(Chain);
 
     // Add GC transition arguments
-    for (auto I = ISP.gc_transition_args_begin() + 1,
-              E = ISP.gc_transition_args_end();
-         I != E; ++I) {
-      TSOps.push_back(getValue(*I));
-      if ((*I)->getType()->isPointerTy())
-        TSOps.push_back(DAG.getSrcValue(*I));
+    for (const Value *V : ISP.gc_transition_args()) {
+      TSOps.push_back(getValue(V));
+      if (V->getType()->isPointerTy())
+        TSOps.push_back(DAG.getSrcValue(V));
     }
 
     // Add glue if necessary
@@ -704,12 +696,10 @@ void SelectionDAGBuilder::LowerStatepoint(
     TEOps.push_back(SDValue(StatepointMCNode, 0));
 
     // Add GC transition arguments
-    for (auto I = ISP.gc_transition_args_begin() + 1,
-              E = ISP.gc_transition_args_end();
-         I != E; ++I) {
-      TEOps.push_back(getValue(*I));
-      if ((*I)->getType()->isPointerTy())
-        TEOps.push_back(DAG.getSrcValue(*I));
+    for (const Value *V : ISP.gc_transition_args()) {
+      TEOps.push_back(getValue(V));
+      if (V->getType()->isPointerTy())
+        TEOps.push_back(DAG.getSrcValue(V));
     }
 
     // Add glue
