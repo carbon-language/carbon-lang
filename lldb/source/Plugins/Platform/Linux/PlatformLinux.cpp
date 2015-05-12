@@ -14,7 +14,6 @@
 
 // C Includes
 #include <stdio.h>
-#include <vector>
 #ifndef LLDB_DISABLE_POSIX
 #include <sys/utsname.h>
 #endif
@@ -477,14 +476,33 @@ PlatformLinux::FindProcesses (const ProcessInstanceInfoMatch &match_info,
 bool
 PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    static std::vector<ArchSpec> architectures = {
-        ArchSpec("x86_64-unknown-linux-gnu"),
-        ArchSpec("i386-unknown-linux-gnu"),
-    };
-    if (idx >= architectures.size())
-        return false;
-    arch = architectures[idx];
-    return true;
+    if (IsHost())
+    {
+        ArchSpec hostArch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
+        if (hostArch.GetTriple().isOSLinux())
+        {
+            if (idx == 0)
+            {
+                arch = hostArch;
+                return arch.IsValid();
+            }
+            else if (idx == 1)
+            {
+                // If the default host architecture is 64-bit, look for a 32-bit variant
+                if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit())
+                {
+                    arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
+                    return arch.IsValid();
+                }
+            }
+        }
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->GetSupportedArchitectureAtIndex(idx, arch);
+    }
+    return false;
 }
 
 void
