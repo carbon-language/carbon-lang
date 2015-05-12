@@ -2278,6 +2278,8 @@ public:
 
   op_range incoming_values() { return operands(); }
 
+  const_op_range incoming_values() const { return operands(); }
+
   /// getNumIncomingValues - Return the number of incoming edges
   ///
   unsigned getNumIncomingValues() const { return getNumOperands(); }
