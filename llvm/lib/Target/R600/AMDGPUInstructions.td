@@ -183,11 +183,14 @@ def constant_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
     return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
 
-def az_extload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+class AZExtLoadBase <SDPatternOperator ld_node>: PatFrag<(ops node:$ptr),
+                                              (ld_node node:$ptr), [{
   LoadSDNode *L = cast<LoadSDNode>(N);
   return L->getExtensionType() == ISD::ZEXTLOAD ||
          L->getExtensionType() == ISD::EXTLOAD;
 }]>;
+
+def az_extload : AZExtLoadBase <unindexedload>;
 
 def az_extloadi8 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{
   return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
@@ -361,22 +364,26 @@ def mskor_global : PatFrag<(ops node:$val, node:$ptr),
   return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
+multiclass AtomicCmpSwapLocal <SDNode cmp_swap_node> {
 
-def atomic_cmp_swap_32_local :
-  PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
-          (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  AtomicSDNode *AN = cast<AtomicSDNode>(N);
-  return AN->getMemoryVT() == MVT::i32 &&
-         AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
-}]>;
+  def _32_local : PatFrag <
+    (ops node:$ptr, node:$cmp, node:$swap),
+    (cmp_swap_node node:$ptr, node:$cmp, node:$swap), [{
+      AtomicSDNode *AN = cast<AtomicSDNode>(N);
+      return AN->getMemoryVT() == MVT::i32 &&
+             AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+  }]>;
 
-def atomic_cmp_swap_64_local :
-  PatFrag<(ops node:$ptr, node:$cmp, node:$swap),
-          (atomic_cmp_swap node:$ptr, node:$cmp, node:$swap), [{
-  AtomicSDNode *AN = cast<AtomicSDNode>(N);
-  return AN->getMemoryVT() == MVT::i64 &&
-         AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
-}]>;
+  def _64_local : PatFrag<
+    (ops node:$ptr, node:$cmp, node:$swap),
+    (cmp_swap_node node:$ptr, node:$cmp, node:$swap), [{
+      AtomicSDNode *AN = cast<AtomicSDNode>(N);
+      return AN->getMemoryVT() == MVT::i64 &&
+             AN->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
+  }]>;
+}
+
+defm atomic_cmp_swap : AtomicCmpSwapLocal <atomic_cmp_swap>;
 
 def flat_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
     return isFlatLoad(dyn_cast<LoadSDNode>(N));

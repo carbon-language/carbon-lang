@@ -69,8 +69,8 @@ define void @load_shl_base_lds_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
 ; pointer can be used with an offset into the second one.
 
 ; SI-LABEL: {{^}}load_shl_base_lds_2:
+; SI: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI: s_mov_b32 m0, -1
-; SI-NEXT: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
 ; SI-NEXT: ds_read2st64_b32 {{v\[[0-9]+:[0-9]+\]}}, [[PTR]] offset0:1 offset1:9
 ; SI: s_endpgm
 define void @load_shl_base_lds_2(float addrspace(1)* %out) #0 {

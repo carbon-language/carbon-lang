@@ -78,6 +78,8 @@ private:
   bool isLocalLoad(const LoadSDNode *N) const;
   bool isRegionLoad(const LoadSDNode *N) const;
 
+  SDNode *glueCopyToM0(SDNode *N) const;
+
   const TargetRegisterClass *getOperandRegClass(SDNode *N, unsigned OpNo) const;
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
   bool SelectGlobalValueVariableOffset(SDValue Addr, SDValue &BaseReg,
@@ -242,12 +244,41 @@ bool AMDGPUDAGToDAGISel::SelectADDR64(SDValue Addr, SDValue& R1, SDValue& R2) {
   return true;
 }
 
+SDNode *AMDGPUDAGToDAGISel::glueCopyToM0(SDNode *N) const {
+  if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
+      !checkType(cast<MemSDNode>(N)->getMemOperand()->getValue(),
+                 AMDGPUAS::LOCAL_ADDRESS))
+    return N;
+
+  const SITargetLowering& Lowering =
+      *static_cast<const SITargetLowering*>(getTargetLowering());
+
+  // Write max value to m0 before each load operation
+
+  SDValue M0 = Lowering.copyToM0(*CurDAG, CurDAG->getEntryNode(), SDLoc(N),
+                                 CurDAG->getTargetConstant(-1, SDLoc(N), MVT::i32));
+
+  SDValue Glue = M0.getValue(1);
+
+  SmallVector <SDValue, 8> Ops;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+     Ops.push_back(N->getOperand(i));
+  }
+  Ops.push_back(Glue);
+  CurDAG->MorphNodeTo(N, N->getOpcode(), N->getVTList(), Ops);
+
+  return N;
+}
+
 SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   unsigned int Opc = N->getOpcode();
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
     return nullptr;   // Already selected.
   }
+
+  if (isa<AtomicSDNode>(N))
+    N = glueCopyToM0(N);
 
   switch (Opc) {
   default: break;
@@ -423,23 +454,29 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(N);
+    SDLoc SL(N);
+    EVT VT = N->getValueType(0);
+
+    if (VT != MVT::i64 || LD->getExtensionType() != ISD::NON_EXTLOAD) {
+      N = glueCopyToM0(N);
+      break;
+    }
+
     // To simplify the TableGen patters, we replace all i64 loads with
     // v2i32 loads.  Alternatively, we could promote i64 loads to v2i32
     // during DAG legalization, however, so places (ExpandUnalignedLoad)
     // in the DAG legalizer assume that if i64 is legal, so doing this
     // promotion early can cause problems.
-    EVT VT = N->getValueType(0);
-    LoadSDNode *LD = cast<LoadSDNode>(N);
-    if (VT != MVT::i64 || LD->getExtensionType() != ISD::NON_EXTLOAD)
-      break;
 
     SDValue NewLoad = CurDAG->getLoad(MVT::v2i32, SDLoc(N), LD->getChain(),
-                                     LD->getBasePtr(), LD->getMemOperand());
-    SDValue BitCast = CurDAG->getNode(ISD::BITCAST, SDLoc(N),
+                                      LD->getBasePtr(), LD->getMemOperand());
+    SDValue BitCast = CurDAG->getNode(ISD::BITCAST, SL,
                                       MVT::i64, NewLoad);
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 1), NewLoad.getValue(1));
     CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), BitCast);
-    SelectCode(NewLoad.getNode());
+    SDNode *Load = glueCopyToM0(NewLoad.getNode());
+    SelectCode(Load);
     N = BitCast.getNode();
     break;
   }
@@ -448,24 +485,26 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     // Handle i64 stores here for the same reason mentioned above for loads.
     StoreSDNode *ST = cast<StoreSDNode>(N);
     SDValue Value = ST->getValue();
-    if (Value.getValueType() != MVT::i64 || ST->isTruncatingStore())
-      break;
+    if (Value.getValueType() == MVT::i64 && !ST->isTruncatingStore()) {
 
-    SDValue NewValue = CurDAG->getNode(ISD::BITCAST, SDLoc(N),
-                                      MVT::v2i32, Value);
-    SDValue NewStore = CurDAG->getStore(ST->getChain(), SDLoc(N), NewValue,
-                                        ST->getBasePtr(), ST->getMemOperand());
+      SDValue NewValue = CurDAG->getNode(ISD::BITCAST, SDLoc(N),
+                                        MVT::v2i32, Value);
+      SDValue NewStore = CurDAG->getStore(ST->getChain(), SDLoc(N), NewValue,
+                                          ST->getBasePtr(), ST->getMemOperand());
 
-    CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), NewStore);
+      CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), NewStore);
 
-    if (NewValue.getOpcode() == ISD::BITCAST) {
-      Select(NewStore.getNode());
-      return SelectCode(NewValue.getNode());
+      if (NewValue.getOpcode() == ISD::BITCAST) {
+        Select(NewStore.getNode());
+        return SelectCode(NewValue.getNode());
+      }
+
+      // getNode() may fold the bitcast if its input was another bitcast.  If that
+      // happens we should only select the new store.
+      N = NewStore.getNode();
     }
 
-    // getNode() may fold the bitcast if its input was another bitcast.  If that
-    // happens we should only select the new store.
-    N = NewStore.getNode();
+    N = glueCopyToM0(N);
     break;
   }
 

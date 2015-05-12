@@ -124,6 +124,107 @@ def SIconstdata_ptr : SDNode<
   "AMDGPUISD::CONST_DATA_PTR", SDTypeProfile <1, 0, [SDTCisVT<0, i64>]>
 >;
 
+//===----------------------------------------------------------------------===//
+// SDNodes and PatFrag for local loads and stores to enable s_mov_b32 m0, -1
+// to be glued to the memory instructions.
+//===----------------------------------------------------------------------===//
+
+def SIld_local : SDNode <"ISD::LOAD", SDTLoad,
+  [SDNPHasChain, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
+>;
+
+def si_ld_local : PatFrag <(ops node:$ptr), (SIld_local node:$ptr), [{
+  return isLocalLoad(cast<LoadSDNode>(N));
+}]>;
+
+def si_load_local : PatFrag <(ops node:$ptr), (si_ld_local node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED &&
+         cast<LoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
+}]>;
+
+def si_load_local_align8 : Aligned8Bytes <
+  (ops node:$ptr), (si_load_local node:$ptr)
+>;
+
+def si_sextload_local : PatFrag <(ops node:$ptr), (si_ld_local node:$ptr), [{
+  return cast<LoadSDNode>(N)->getExtensionType() == ISD::SEXTLOAD;
+}]>;
+def si_az_extload_local : AZExtLoadBase <si_ld_local>;
+
+multiclass SIExtLoadLocal <PatFrag ld_node> {
+
+  def _i8 : PatFrag <(ops node:$ptr), (ld_node node:$ptr),
+                     [{return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;}]
+  >;
+
+  def _i16 : PatFrag <(ops node:$ptr), (ld_node node:$ptr),
+                     [{return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;}]
+  >;
+}
+
+defm si_sextload_local : SIExtLoadLocal <si_sextload_local>;
+defm si_az_extload_local : SIExtLoadLocal <si_az_extload_local>;
+
+def SIst_local : SDNode <"ISD::STORE", SDTStore,
+  [SDNPHasChain, SDNPMayStore, SDNPMemOperand, SDNPInGlue]
+>;
+
+def si_st_local : PatFrag <
+  (ops node:$val, node:$ptr), (SIst_local node:$val, node:$ptr), [{
+  return isLocalStore(cast<StoreSDNode>(N));
+}]>;
+
+def si_store_local : PatFrag <
+  (ops node:$val, node:$ptr), (si_st_local node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAddressingMode() == ISD::UNINDEXED &&
+         !cast<StoreSDNode>(N)->isTruncatingStore();
+}]>;
+
+def si_store_local_align8 : Aligned8Bytes <
+  (ops node:$val, node:$ptr), (si_store_local node:$val, node:$ptr)
+>;
+
+def si_truncstore_local : PatFrag <
+  (ops node:$val, node:$ptr), (si_st_local node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->isTruncatingStore();
+}]>;
+
+def si_truncstore_local_i8 : PatFrag <
+  (ops node:$val, node:$ptr), (si_truncstore_local node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+
+def si_truncstore_local_i16 : PatFrag <
+  (ops node:$val, node:$ptr), (si_truncstore_local node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+
+multiclass SIAtomicM0Glue2 <string op_name> {
+
+  def _glue : SDNode <"ISD::ATOMIC_"#op_name, SDTAtomic2,
+    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
+  >;
+
+  def _local : local_binary_atomic_op <!cast<SDNode>(NAME#"_glue")>;
+}
+
+defm si_atomic_load_add : SIAtomicM0Glue2 <"LOAD_ADD">;
+defm si_atomic_load_and : SIAtomicM0Glue2 <"LOAD_AND">;
+defm si_atomic_load_min : SIAtomicM0Glue2 <"LOAD_MIN">;
+defm si_atomic_load_max : SIAtomicM0Glue2 <"LOAD_MAX">;
+defm si_atomic_load_or : SIAtomicM0Glue2 <"LOAD_OR">;
+defm si_atomic_load_sub : SIAtomicM0Glue2 <"LOAD_SUB">;
+defm si_atomic_load_xor : SIAtomicM0Glue2 <"LOAD_XOR">;
+defm si_atomic_load_umin : SIAtomicM0Glue2 <"LOAD_UMIN">;
+defm si_atomic_load_umax : SIAtomicM0Glue2 <"LOAD_UMAX">;
+defm si_atomic_swap : SIAtomicM0Glue2 <"SWAP">;
+
+def si_atomic_cmp_swap_glue : SDNode <"ISD::ATOMIC_CMP_SWAP", SDTAtomic3,
+  [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand, SDNPInGlue]
+>;
+
+defm si_atomic_cmp_swap : AtomicCmpSwapLocal <si_atomic_cmp_swap_glue>;
+
 // Transformation function, extract the lower 32bit of a 64bit immediate
 def LO32 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, SDLoc(N),
@@ -1726,7 +1827,7 @@ class DS_Off16_Real_vi <bits<8> op, string opName, dag outs, dag ins, string asm
 
 multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
-  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, gds:$gds, M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, gds:$gds),
   string asm = opName#" $vdst, $addr"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1740,7 +1841,7 @@ multiclass DS_1A_RET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs rc:$vdst),
   dag ins = (ins VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
-                 gds01:$gds, M0Reg:$m0),
+                 gds01:$gds),
   string asm = opName#" $vdst, $addr"#"$offset0"#"$offset1$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1753,8 +1854,7 @@ multiclass DS_1A_Off8_RET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
-  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds,
-                 M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds),
   string asm = opName#" $addr, $data0"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
@@ -1769,7 +1869,7 @@ multiclass DS_1A1D_NORET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
   dag outs = (outs),
   dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
-              ds_offset0:$offset0, ds_offset1:$offset1, gds01:$gds, M0Reg:$m0),
+              ds_offset0:$offset0, ds_offset1:$offset1, gds01:$gds),
   string asm = opName#" $addr, $data0, $data1"#"$offset0"#"$offset1"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1783,8 +1883,7 @@ multiclass DS_1A1D_Off8_NORET <bits<8> op, string opName, RegisterClass rc,
 multiclass DS_1A1D_RET <bits<8> op, string opName, RegisterClass rc,
                         string noRetOp = "",
   dag outs = (outs rc:$vdst),
-  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds,
-                 M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr, rc:$data0, ds_offset:$offset, gds:$gds),
   string asm = opName#" $vdst, $addr, $data0"#"$offset$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
@@ -1812,14 +1911,14 @@ multiclass DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc,
                         string noRetOp = "", RegisterClass src = rc> :
   DS_1A2D_RET_m <op, asm, rc, noRetOp,
                  (ins VGPR_32:$addr, src:$data0, src:$data1,
-                      ds_offset:$offset, gds:$gds, M0Reg:$m0)
+                      ds_offset:$offset, gds:$gds)
 >;
 
 multiclass DS_1A2D_NORET <bits<8> op, string opName, RegisterClass rc,
                           string noRetOp = opName,
   dag outs = (outs),
   dag ins = (ins VGPR_32:$addr, rc:$data0, rc:$data1,
-                 ds_offset:$offset, gds:$gds, M0Reg:$m0),
+                 ds_offset:$offset, gds:$gds),
   string asm = opName#" $addr, $data0, $data1"#"$offset"#"$gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>,
@@ -1833,7 +1932,7 @@ multiclass DS_1A2D_NORET <bits<8> op, string opName, RegisterClass rc,
 
 multiclass DS_0A_RET <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
-  dag ins = (ins ds_offset:$offset, gds:$gds, M0Reg:$m0),
+  dag ins = (ins ds_offset:$offset, gds:$gds),
   string asm = opName#" $vdst"#"$offset"#"$gds"> {
 
   let mayLoad = 1, mayStore = 1 in {
@@ -1848,7 +1947,7 @@ multiclass DS_0A_RET <bits<8> op, string opName,
 
 multiclass DS_1A_RET_GDS <bits<8> op, string opName,
   dag outs = (outs VGPR_32:$vdst),
-  dag ins = (ins VGPR_32:$addr, ds_offset_gds:$offset, M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr, ds_offset_gds:$offset),
   string asm = opName#" $vdst, $addr"#"$offset gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1861,7 +1960,7 @@ multiclass DS_1A_RET_GDS <bits<8> op, string opName,
 
 multiclass DS_1A_GDS <bits<8> op, string opName,
   dag outs = (outs),
-  dag ins = (ins VGPR_32:$addr, M0Reg:$m0),
+  dag ins = (ins VGPR_32:$addr),
   string asm = opName#" $addr gds"> {
 
   def "" : DS_Pseudo <opName, outs, ins, []>;
@@ -1874,7 +1973,7 @@ multiclass DS_1A_GDS <bits<8> op, string opName,
 
 multiclass DS_1A <bits<8> op, string opName,
   dag outs = (outs),
-  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0, gds:$gds),
+  dag ins = (ins VGPR_32:$addr, ds_offset:$offset, gds:$gds),
   string asm = opName#" $addr"#"$offset"#"$gds"> {
 
   let mayLoad = 1, mayStore = 1 in {

@@ -213,7 +213,6 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   // Be careful, since the addresses could be subregisters themselves in weird
   // cases, like vectors of pointers.
   const MachineOperand *AddrReg = TII->getNamedOperand(*I, AMDGPU::OpName::addr);
-  const MachineOperand *M0Reg = TII->getNamedOperand(*I, AMDGPU::OpName::m0);
 
   unsigned DestReg0 = TII->getNamedOperand(*I, AMDGPU::OpName::vdst)->getReg();
   unsigned DestReg1
@@ -254,11 +253,8 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
     .addImm(0) // gds
-    .addOperand(*M0Reg) // M0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
-
-  LIS->InsertMachineInstrInMaps(Read2);
 
   unsigned SubRegIdx0 = (EltSize == 4) ? AMDGPU::sub0 : AMDGPU::sub0_sub1;
   unsigned SubRegIdx1 = (EltSize == 4) ? AMDGPU::sub1 : AMDGPU::sub2_sub3;
@@ -266,24 +262,14 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   updateRegDefsUses(DestReg1, DestReg, SubRegIdx1);
 
   LIS->RemoveMachineInstrFromMaps(I);
-  LIS->RemoveMachineInstrFromMaps(Paired);
+  // Replacing Paired in the maps with Read2 allows us to avoid updating the
+  // live range for the m0 register.
+  LIS->ReplaceMachineInstrInMaps(Paired, Read2);
   I->eraseFromParent();
   Paired->eraseFromParent();
 
   LiveInterval &AddrRegLI = LIS->getInterval(AddrReg->getReg());
   LIS->shrinkToUses(&AddrRegLI);
-
-  LiveInterval &M0RegLI = LIS->getInterval(M0Reg->getReg());
-  LIS->shrinkToUses(&M0RegLI);
-
-  // Currently m0 is treated as a register class with one member instead of an
-  // implicit physical register. We are using the virtual register for the first
-  // one, but we still need to update the live range of the now unused second m0
-  // virtual register to avoid verifier errors.
-  const MachineOperand *PairedM0Reg
-    = TII->getNamedOperand(*Paired, AMDGPU::OpName::m0);
-  LiveInterval &PairedM0RegLI = LIS->getInterval(PairedM0Reg->getReg());
-  LIS->shrinkToUses(&PairedM0RegLI);
 
   LIS->getInterval(DestReg); // Create new LI
 
@@ -300,7 +286,6 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   // Be sure to use .addOperand(), and not .addReg() with these. We want to be
   // sure we preserve the subregister index and any register flags set on them.
   const MachineOperand *Addr = TII->getNamedOperand(*I, AMDGPU::OpName::addr);
-  const MachineOperand *M0Reg = TII->getNamedOperand(*I, AMDGPU::OpName::m0);
   const MachineOperand *Data0 = TII->getNamedOperand(*I, AMDGPU::OpName::data0);
   const MachineOperand *Data1
     = TII->getNamedOperand(*Paired, AMDGPU::OpName::data0);
@@ -331,6 +316,13 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
   const MCInstrDesc &Write2Desc = TII->get(Opc);
   DebugLoc DL = I->getDebugLoc();
 
+  // repairLiveintervalsInRange() doesn't handle physical register, so we have
+  // to update the M0 range manually.
+  SlotIndex PairedIndex = LIS->getInstructionIndex(Paired);
+  LiveRange &M0Range = LIS->getRegUnit(*MCRegUnitIterator(AMDGPU::M0, TRI));
+  LiveRange::Segment *M0Segment = M0Range.getSegmentContaining(PairedIndex);
+  bool UpdateM0Range = M0Segment->end == PairedIndex.getRegSlot();
+
   MachineInstrBuilder Write2
     = BuildMI(*MBB, I, DL, Write2Desc)
     .addOperand(*Addr) // addr
@@ -339,20 +331,24 @@ MachineBasicBlock::iterator SILoadStoreOptimizer::mergeWrite2Pair(
     .addImm(NewOffset0) // offset0
     .addImm(NewOffset1) // offset1
     .addImm(0) // gds
-    .addOperand(*M0Reg)  // m0
     .addMemOperand(*I->memoperands_begin())
     .addMemOperand(*Paired->memoperands_begin());
 
   // XXX - How do we express subregisters here?
-  unsigned OrigRegs[] = { Data0->getReg(), Data1->getReg(), Addr->getReg(),
-                          M0Reg->getReg()};
+  unsigned OrigRegs[] = { Data0->getReg(), Data1->getReg(), Addr->getReg() };
 
   LIS->RemoveMachineInstrFromMaps(I);
   LIS->RemoveMachineInstrFromMaps(Paired);
   I->eraseFromParent();
   Paired->eraseFromParent();
 
+  // This doesn't handle physical registers like M0
   LIS->repairIntervalsInRange(MBB, Write2, Write2, OrigRegs);
+
+  if (UpdateM0Range) {
+    SlotIndex Write2Index = LIS->getInstructionIndex(Write2);
+    M0Segment->end = Write2Index.getRegSlot();
+  }
 
   DEBUG(dbgs() << "Inserted write2 inst: " << *Write2 << '\n');
   return Write2.getInstr();

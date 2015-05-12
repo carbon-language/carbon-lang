@@ -604,7 +604,7 @@ class DS <dag outs, dag ins, string asm, list<dag> pattern> :
   let LGKM_CNT = 1;
   let DS = 1;
   let UseNamedOperandTable = 1;
-  let DisableEncoding = "$m0";
+  let Uses = [M0];
 
   // Most instruction load and store data, so set this as the default.
   let mayLoad = 1;
