@@ -109,8 +109,7 @@ private:
 
   const FormatStyle &Style;
   const AdditionalKeywords &Keywords;
-
-  unsigned AdditionalIndent;
+  const unsigned AdditionalIndent;
 
   /// \brief The indent in characters for each level.
   std::vector<int> IndentForLevel;
