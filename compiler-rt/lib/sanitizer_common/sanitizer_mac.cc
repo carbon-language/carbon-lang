@@ -132,6 +132,13 @@ int internal_sigaction(int signum, const void *act, void *oldact) {
                    (struct sigaction *)act, (struct sigaction *)oldact);
 }
 
+void internal_sigfillset(__sanitizer_sigset_t *set) { sigfillset(set); }
+
+uptr internal_sigprocmask(int how, __sanitizer_sigset_t *set,
+                          __sanitizer_sigset_t *oldset) {
+  return sigprocmask(how, set, oldset);
+}
+
 int internal_fork() {
   // TODO(glider): this may call user's pthread_atfork() handlers which is bad.
   return fork();
