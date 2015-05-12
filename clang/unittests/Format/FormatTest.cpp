@@ -3284,6 +3284,18 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
   verifyNoCrash("^{v^{a}}");
 }
 
+TEST_F(FormatTest, FormatNestedBlocksInMacros) {
+  EXPECT_EQ("#define MACRO()                     \\\n"
+            "  Debug(aaa, /* force line break */ \\\n"
+            "        {                           \\\n"
+            "          int i;                    \\\n"
+            "          int j;                    \\\n"
+            "        })",
+            format("#define   MACRO()   Debug(aaa,  /* force line break */ \\\n"
+                   "          {  int   i;  int  j;   })",
+                   getGoogleStyle()));
+}
+
 TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
   EXPECT_EQ("DEBUG({\n"
             "  int i;\n"

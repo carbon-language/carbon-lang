@@ -39,7 +39,7 @@ public:
   LevelIndentTracker(const FormatStyle &Style,
                      const AdditionalKeywords &Keywords, unsigned StartLevel,
                      int AdditionalIndent)
-      : Style(Style), Keywords(Keywords) {
+      : Style(Style), Keywords(Keywords), AdditionalIndent(AdditionalIndent) {
     for (unsigned i = 0; i != StartLevel; ++i)
       IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
   }
@@ -52,7 +52,7 @@ public:
   void nextLine(const AnnotatedLine &Line) {
     Offset = getIndentOffset(*Line.First);
     if (Line.InPPDirective) {
-      Indent = Line.Level * Style.IndentWidth;
+      Indent = Line.Level * Style.IndentWidth + AdditionalIndent;
     } else {
       while (IndentForLevel.size() <= Line.Level)
         IndentForLevel.push_back(-1);
@@ -109,6 +109,8 @@ private:
 
   const FormatStyle &Style;
   const AdditionalKeywords &Keywords;
+
+  unsigned AdditionalIndent;
 
   /// \brief The indent in characters for each level.
   std::vector<int> IndentForLevel;
