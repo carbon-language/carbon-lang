@@ -239,11 +239,6 @@ public:
                          bool IsEmbedded = false,
                          bool AddRPath = false) const;
 
-  /// Add any profiling runtime libraries that are needed. This is essentially a
-  /// MachO specific version of addProfileRT in Tools.cpp.
-  void addProfileRTLibs(const llvm::opt::ArgList &Args,
-                        llvm::opt::ArgStringList &CmdArgs) const;
-
   /// }
   /// @name ToolChain Implementation
   /// {

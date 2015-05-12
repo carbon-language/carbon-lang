@@ -6328,11 +6328,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_fnested_functions))
     CmdArgs.push_back("-allow_stack_execute");
 
-  // TODO: It would be nice to use addProfileRT() here, but darwin's compiler-rt
-  // paths are different enough from other toolchains that this needs a fair
-  // amount of refactoring done first.
-  getMachOToolChain().addProfileRTLibs(Args, CmdArgs);
-
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (getToolChain().getDriver().CCCIsCXX())
