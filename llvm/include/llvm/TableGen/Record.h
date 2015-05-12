@@ -26,7 +26,6 @@
 #include <map>
 
 namespace llvm {
-class raw_ostream;
 
 // RecTy subclasses.
 class BitRecTy;
