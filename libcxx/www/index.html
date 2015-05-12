@@ -244,12 +244,21 @@
   </p>
 
   <!--=====================================================================-->
-  <h3>Notes</h3>
+  <h3>Notes and Known Issues</h3>
   <!--=====================================================================-->
 
   <p>
-    Building libc++ with <code>-fno-rtti</code> is not supported.  However
-    linking against it with <code>-fno-rtti</code> is supported.
+    <ul>
+      <li>
+        Building libc++ with <code>-fno-rtti</code> is not supported. However
+        linking against it with <code>-fno-rtti</code> is supported.
+      </li>
+      <li>
+        On OS X v10.8 and older the CMake option
+        <code>-DLIBCXX_LIBCPPABI_VERSION=""</code> must be used during
+        configuration.
+      </li>
+    </ul>
   </p>
 
   <p>Send discussions to the
