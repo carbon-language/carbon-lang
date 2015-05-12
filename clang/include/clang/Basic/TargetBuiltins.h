@@ -16,6 +16,7 @@
 #ifndef LLVM_CLANG_BASIC_TARGETBUILTINS_H
 #define LLVM_CLANG_BASIC_TARGETBUILTINS_H
 
+#include <stdint.h>
 #include "clang/Basic/Builtins.h"
 #undef PPC
 
