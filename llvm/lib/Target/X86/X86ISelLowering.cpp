@@ -23315,7 +23315,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     SDValue OldExtract = St->getOperand(1);
     SDValue ExtOp0 = OldExtract.getOperand(0);
     unsigned VecSize = ExtOp0.getValueSizeInBits();
-    MVT VecVT = MVT::getVectorVT(MVT::f64, VecSize / 64);
+    EVT VecVT = EVT::getVectorVT(*DAG.getContext(), MVT::f64, VecSize / 64);
     SDValue BitCast = DAG.getNode(ISD::BITCAST, dl, VecVT, ExtOp0);
     SDValue NewExtract = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
                                      BitCast, OldExtract.getOperand(1));
