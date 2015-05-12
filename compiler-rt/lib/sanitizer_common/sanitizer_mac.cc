@@ -27,6 +27,7 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_mac.h"
 #include "sanitizer_placement_new.h"
+#include "sanitizer_platform_limits_posix.h"
 #include "sanitizer_procmaps.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
