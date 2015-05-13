@@ -733,7 +733,8 @@ public:
 
     // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
     // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
-    // setting, else we use the values passed in
+    // setting, else we use the values passed in.
+    // func_name_type_mask is or'ed values from the FunctionNameType enum.
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpecList *containingSourceFiles,
@@ -754,6 +755,7 @@ public:
     // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
     // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names
     // you already know.
+    // func_name_type_mask is or'ed values from the FunctionNameType enum.
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpecList *containingModules,
                       const FileSpecList *containingSourceFiles,
