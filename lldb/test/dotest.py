@@ -23,7 +23,6 @@ for available options.
 import commands
 import os
 import errno
-import lock
 import platform
 import progress
 import signal
@@ -439,6 +438,7 @@ def setupCrashInfoHook():
     global setCrashInfoHook
     setCrashInfoHook = setCrashInfoHook_NonMac # safe default
     if platform.system() == "Darwin":
+        import lock
         test_dir = os.environ['LLDB_TEST']
         if not test_dir or not os.path.exists(test_dir):
             return
