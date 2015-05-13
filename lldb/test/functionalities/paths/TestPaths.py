@@ -34,6 +34,12 @@ class TestPaths(TestBase):
         # file path if it doesn't exist in the current directory.
         self.assertTrue (file_only.GetDirectory() == None)
 
+    def test_directory_doesnt_end_with_slash(self):
+        current_directory_spec = lldb.SBFileSpec(os.path.curdir)
+        current_directory_string = current_directory_spec.GetDirectory()
+        self.assertNotEqual(current_directory_string[-1:], '/')
+        pass
+
     @skipUnlessPlatform(["windows"])
     def test_windows_double_slash (self):
         '''Test to check the path with double slash is handled correctly '''

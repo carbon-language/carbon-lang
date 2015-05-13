@@ -109,8 +109,7 @@ HostInfoWindows::ComputePythonDirectory(FileSpec &file_spec)
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
-    llvm::SmallString<64> path;
-    lldb_file_spec.GetPath(path);
+    llvm::SmallString<64> path(lldb_file_spec.GetDirectory().AsCString());
     llvm::sys::path::remove_filename(path);
     llvm::sys::path::append(path, "lib", "site-packages");
     std::replace(path.begin(), path.end(), '\\', '/');
