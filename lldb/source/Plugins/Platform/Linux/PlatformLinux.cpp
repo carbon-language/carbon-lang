@@ -501,6 +501,30 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
     {
         if (m_remote_platform_sp)
             return m_remote_platform_sp->GetSupportedArchitectureAtIndex(idx, arch);
+
+        llvm::Triple triple;
+        // Set the OS to linux
+        triple.setOS(llvm::Triple::Linux);
+        // Set the architecture
+        switch (idx)
+        {
+            case 0: triple.setArchName("x86_64"); break;
+            case 1: triple.setArchName("i386"); break;
+            case 2: triple.setArchName("arm"); break;
+            case 3: triple.setArchName("aarch64"); break;
+            case 4: triple.setArchName("mips64"); break;
+            case 5: triple.setArchName("hexagon"); break;
+            case 6: triple.setArchName("mips"); break;
+            default: return false;
+        }
+        // Leave the vendor as "llvm::Triple:UnknownVendor" and don't specify the vendor by
+        // calling triple.SetVendorName("unknown") so that it is a "unspecified unknown".
+        // This means when someone calls triple.GetVendorName() it will return an empty string
+        // which indicates that the vendor can be set when two architectures are merged
+
+        // Now set the triple into "arch" and return true
+        arch.SetTriple(triple);
+        return true;
     }
     return false;
 }
