@@ -1,4 +1,6 @@
-# RUN: yaml-bench -canonical %s
+# RUN: yaml-bench -canonical %s | FileCheck %s
+# CHECK: !!str "literal\n"
+# CHECK: !!str "folded\n"
 
 - |
  literal

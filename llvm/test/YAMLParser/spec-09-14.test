@@ -1,9 +1,6 @@
-# RUN: yaml-bench -canonical %s 2>&1 | FileCheck %s
+# RUN: not yaml-bench -canonical %s 2>&1 | FileCheck %s
 #
-# FIXME: This test should actually fail. Yaml bench should report an error that
-# says that the '---' and '...' document start/end markers must not be specified
-# as the first content line of a non-indented plain scalar.
-# CHECK: !!str
+# CHECK: error: Expected a line break after block scalar header
 
 ---
 --- ||| : foo

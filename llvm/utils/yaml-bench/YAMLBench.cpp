@@ -96,6 +96,8 @@ static void dumpNode( yaml::Node *n
     SmallString<32> Storage;
     StringRef Val = sn->getValue(Storage);
     outs() << prettyTag(n) << " \"" << yaml::escape(Val) << "\"";
+  } else if (yaml::BlockScalarNode *BN = dyn_cast<yaml::BlockScalarNode>(n)) {
+    outs() << prettyTag(n) << " \"" << yaml::escape(BN->getValue()) << "\"";
   } else if (yaml::SequenceNode *sn = dyn_cast<yaml::SequenceNode>(n)) {
     outs() << prettyTag(n) << " [\n";
     ++Indent;

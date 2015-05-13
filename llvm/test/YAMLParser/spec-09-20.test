@@ -1,4 +1,8 @@
-# RUN: yaml-bench -canonical %s
+# RUN: yaml-bench -canonical %s | FileCheck %s
+# CHECK: !!str "detected\n"
+# CHECK: !!str "\n\n# detected\n"
+# CHECK: !!str " explicit\n"
+# CHECK: !!str "\t\ndetected\n"
 
 - |
  detected

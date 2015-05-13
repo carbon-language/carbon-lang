@@ -107,6 +107,7 @@ public:
   enum NodeKind {
     NK_Null,
     NK_Scalar,
+    NK_BlockScalar,
     NK_KeyValue,
     NK_Mapping,
     NK_Sequence,
@@ -220,6 +221,36 @@ private:
   StringRef unescapeDoubleQuoted(StringRef UnquotedValue,
                                  StringRef::size_type Start,
                                  SmallVectorImpl<char> &Storage) const;
+};
+
+/// \brief A block scalar node is an opaque datum that can be presented as a
+///        series of zero or more Unicode scalar values.
+///
+/// Example:
+///   |
+///     Hello
+///     World
+class BlockScalarNode : public Node {
+  void anchor() override;
+
+public:
+  BlockScalarNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
+                  std::string &Value, StringRef RawVal)
+      : Node(NK_BlockScalar, D, Anchor, Tag), Value(std::move(Value)) {
+    SMLoc Start = SMLoc::getFromPointer(RawVal.begin());
+    SMLoc End = SMLoc::getFromPointer(RawVal.end());
+    SourceRange = SMRange(Start, End);
+  }
+
+  /// \brief Gets the value of this node as a StringRef.
+  StringRef getValue() const { return Value; }
+
+  static inline bool classof(const Node *N) {
+    return N->getType() == NK_BlockScalar;
+  }
+
+private:
+  std::string Value;
 };
 
 /// \brief A key and value pair. While not technically a Node under the YAML

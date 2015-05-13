@@ -9,4 +9,4 @@
 - |1
  text
 
-# CHECK: error
+# CHECK: 8:2: error: A text line is less indented than the block scalar

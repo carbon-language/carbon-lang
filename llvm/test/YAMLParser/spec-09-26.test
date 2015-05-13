@@ -1,4 +1,5 @@
-# RUN: yaml-bench -canonical %s
+# RUN: yaml-bench -canonical %s | FileCheck %s
+# CHECK: !!str "\n\nliteral\n\ntext\n"
 
 |
  

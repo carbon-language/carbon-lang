@@ -1,4 +1,8 @@
-# RUN: yaml-bench -canonical %s
+# RUN: yaml-bench -canonical %s | FileCheck %s
+# CHECK: !!str "literal\n"
+# CHECK: !!str " folded\n"
+# CHECK: !!str "keep\n\n"
+# CHECK: !!str " strip"
 
 - | # Just the style
  literal
