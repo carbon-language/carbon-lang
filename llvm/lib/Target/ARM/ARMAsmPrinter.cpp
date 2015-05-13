@@ -144,7 +144,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
-                                 raw_ostream &O, const char *Modifier) {
+                                 raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   unsigned TF = MO.getTargetFlags();
 
@@ -165,11 +165,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_Immediate: {
     int64_t Imm = MO.getImm();
     O << '#';
-    if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
-        (TF == ARMII::MO_LO16))
+    if (TF == ARMII::MO_LO16)
       O << ":lower16:";
-    else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
-             (TF == ARMII::MO_HI16))
+    else if (TF == ARMII::MO_HI16)
       O << ":upper16:";
     O << Imm;
     break;
@@ -179,11 +177,9 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    if ((Modifier && strcmp(Modifier, "lo16") == 0) ||
-        (TF & ARMII::MO_LO16))
+    if (TF & ARMII::MO_LO16)
       O << ":lower16:";
-    else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
-             (TF & ARMII::MO_HI16))
+    else if (TF & ARMII::MO_HI16)
       O << ":upper16:";
     O << *GetARMGVSymbol(GV, TF);
 
