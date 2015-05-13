@@ -788,12 +788,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       assert(LHSl->getSize() != 0 && "Empty list in cdr");
       // Note the +1.  We can't just pass the result of getValues()
       // directly.
-      ArrayRef<Init *>::iterator begin = LHSl->getValues().begin()+1;
-      ArrayRef<Init *>::iterator end   = LHSl->getValues().end();
-      ListInit *Result =
-        ListInit::get(ArrayRef<Init *>(begin, end - begin),
-                      LHSl->getType());
-      return Result;
+      return ListInit::get(LHSl->getValues().slice(1), LHSl->getType());
     }
     break;
   }
