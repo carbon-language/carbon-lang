@@ -424,6 +424,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 content_length = total_length = 1;  // The command is one byte long...
                 break;
 
+            case '%': // Async notify packet
             case '$':
                 // Look for a standard gdb packet?
                 {
@@ -466,6 +467,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                         case '+':
                         case '-':
                         case '\x03':
+                        case '%':
                         case '$':
                             done = true;
                             break;
@@ -586,7 +588,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 }
             }
 
-            if (m_bytes[0] == '$')
+            if (m_bytes[0] == '$' || m_bytes[0] == '%')
             {
                 assert (checksum_idx < m_bytes.size());
                 if (::isxdigit (m_bytes[checksum_idx+0]) || 

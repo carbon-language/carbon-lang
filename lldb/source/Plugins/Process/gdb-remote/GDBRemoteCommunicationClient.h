@@ -318,6 +318,9 @@ public:
 
     bool
     GetHostInfo (bool force = false);
+
+    bool
+    GetDefaultThreadId (lldb::tid_t &tid);
     
     bool
     GetOSVersion (uint32_t &major, 
@@ -392,6 +395,9 @@ public:
                                 bool insert,              // Insert or remove?
                                 lldb::addr_t addr,        // Address of breakpoint or watchpoint
                                 uint32_t length);         // Byte Size of breakpoint or watchpoint
+
+    bool
+    SetNonStopMode (const bool enable);
 
     void
     TestPacketSpeed (const uint32_t num_packets);

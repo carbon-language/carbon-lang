@@ -2978,6 +2978,7 @@ g_properties[] =
     { "display-expression-in-crashlogs"    , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Expressions that crash will show up in crash logs if the host system supports executable specific crash log strings and this setting is set to true." },
     { "trap-handler-names"                 , OptionValue::eTypeArray     , true,  OptionValue::eTypeString,   NULL, NULL, "A list of trap handler function names, e.g. a common Unix user process one is _sigtramp." },
     { "display-runtime-support-values"     , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "If true, LLDB will show variables that are meant to support the operation of a language's runtime support." },
+    { "non-stop-mode"                      , OptionValue::eTypeBoolean   , false, 0,                          NULL, NULL, "Disable lock-step debugging, instead control threads independently." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 
@@ -3016,7 +3017,8 @@ enum
     ePropertyMemoryModuleLoadLevel,
     ePropertyDisplayExpressionsInCrashlogs,
     ePropertyTrapHandlerNames,
-    ePropertyDisplayRuntimeSupportValues
+    ePropertyDisplayRuntimeSupportValues,
+    ePropertyNonStopModeEnabled
 };
 
 
@@ -3513,6 +3515,13 @@ TargetProperties::SetDisplayRuntimeSupportValues (bool b)
 {
     const uint32_t idx = ePropertyDisplayRuntimeSupportValues;
     m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+bool
+TargetProperties::GetNonStopModeEnabled () const
+{
+    const uint32_t idx = ePropertyNonStopModeEnabled;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, false);
 }
 
 const ProcessLaunchInfo &

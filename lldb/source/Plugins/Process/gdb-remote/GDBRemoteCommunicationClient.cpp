@@ -1621,6 +1621,22 @@ GDBRemoteCommunicationClient::GetGDBServerProgramVersion()
 }
 
 bool
+GDBRemoteCommunicationClient::GetDefaultThreadId (lldb::tid_t &tid)
+{
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse("qC",response,false) !=  PacketResult::Success)
+        return false;
+
+    if (!response.IsNormalResponse())
+        return false;
+
+    if (response.GetChar() == 'Q' && response.GetChar() == 'C')
+        tid = response.GetHexMaxU32(true, -1);
+
+    return true;
+}
+
+bool
 GDBRemoteCommunicationClient::GetHostInfo (bool force)
 {
     Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS));
@@ -2757,6 +2773,25 @@ GDBRemoteCommunicationClient::GetGroupName (uint32_t gid, std::string &name)
         }
     }
     return false;
+}
+
+bool
+GDBRemoteCommunicationClient::SetNonStopMode (const bool enable)
+{
+    // Form non-stop packet request
+    char packet[32];
+    const int packet_len = ::snprintf(packet, sizeof(packet), "QNonStop:%1d", (int)enable);
+    assert(packet_len < (int)sizeof(packet));
+
+    StringExtractorGDBRemote response;
+    // Send to target
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) == PacketResult::Success)
+        if (response.IsOKResponse())
+            return true;
+
+    // Failed or not supported
+    return false;
+
 }
 
 void

@@ -189,6 +189,9 @@ public:
 
     void
     SetUserSpecifiedTrapHandlerNames (const Args &args);
+
+    bool
+    GetNonStopModeEnabled () const;
     
     bool
     GetDisplayRuntimeSupportValues () const;

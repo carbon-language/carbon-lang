@@ -433,6 +433,12 @@ public:
             m_step_in_avoid_no_debug = eLazyBoolCalculate;
             m_step_out_avoid_no_debug = eLazyBoolCalculate;
             m_run_mode = eOnlyDuringStepping;
+
+            // Check if we are in Non-Stop mode
+            lldb::TargetSP target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
+            if (target_sp.get() != nullptr && target_sp->GetNonStopModeEnabled())
+                m_run_mode = eOnlyThisThread;
+
             m_avoid_regexp.clear();
             m_step_in_target.clear();
             m_class_name.clear();
