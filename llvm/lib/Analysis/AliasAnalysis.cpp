@@ -518,7 +518,7 @@ bool AliasAnalysis::canBasicBlockModify(const BasicBlock &BB,
 /// execution of the specified instructions to mod\ref (according to the
 /// mode) the location Loc. The instructions to consider are all
 /// of the instructions in the range of [I1,I2] INCLUSIVE.
-/// I1 and I2 must be in the same basic block.  
+/// I1 and I2 must be in the same basic block.
 bool AliasAnalysis::canInstructionRangeModRef(const Instruction &I1,
                                               const Instruction &I2,
                                               const Location &Loc,
