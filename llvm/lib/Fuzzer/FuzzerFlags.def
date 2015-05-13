@@ -32,7 +32,7 @@ FUZZER_FLAG_INT(help, 0, "Print help.")
 FUZZER_FLAG_INT(
     save_minimized_corpus, 0,
     "If 1, the minimized corpus is saved into the first input directory")
-FUZZER_FLAG_INT(use_counters, 0, "Use coverage counters")
+FUZZER_FLAG_INT(use_counters, 1, "Use coverage counters")
 FUZZER_FLAG_INT(use_traces, 0, "Experimental: use instruction traces")
 FUZZER_FLAG_INT(use_full_coverage_set, 0,
             "Experimental: Maximize the number of different full"
