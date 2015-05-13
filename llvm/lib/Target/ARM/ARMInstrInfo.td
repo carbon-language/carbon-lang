@@ -33,13 +33,12 @@ def SDT_ARMCMov    : SDTypeProfile<1, 3,
 def SDT_ARMBrcond  : SDTypeProfile<0, 2,
                                    [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>]>;
 
-def SDT_ARMBrJT    : SDTypeProfile<0, 3,
+def SDT_ARMBrJT    : SDTypeProfile<0, 2,
+                                  [SDTCisPtrTy<0>, SDTCisVT<1, i32>]>;
+
+def SDT_ARMBr2JT   : SDTypeProfile<0, 3,
                                   [SDTCisPtrTy<0>, SDTCisVT<1, i32>,
                                    SDTCisVT<2, i32>]>;
-
-def SDT_ARMBr2JT   : SDTypeProfile<0, 4,
-                                  [SDTCisPtrTy<0>, SDTCisVT<1, i32>,
-                                   SDTCisVT<2, i32>, SDTCisVT<3, i32>]>;
 
 def SDT_ARMBCC_i64 : SDTypeProfile<0, 6,
                                   [SDTCisVT<0, i32>,
@@ -96,7 +95,7 @@ def ARMSmlal         : SDNode<"ARMISD::SMLAL", SDT_ARM64bitmlal>;
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
-def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
+def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntUnaryOp>;
 
 def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
                               [SDNPHasChain, SDNPSideEffect, SDNPOutGlue]>;
@@ -2090,7 +2089,7 @@ def LEApcrel : ARMPseudoInst<(outs GPR:$Rd), (ins i32imm:$label, pred:$p),
                     4, IIC_iALUi, []>, Sched<[WriteALU, ReadALU]>;
 
 def LEApcrelJT : ARMPseudoInst<(outs GPR:$Rd),
-                      (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                      (ins i32imm:$label, pred:$p),
                       4, IIC_iALUi, []>, Sched<[WriteALU, ReadALU]>;
 }
 
@@ -2227,22 +2226,22 @@ let isBranch = 1, isTerminator = 1 in {
 
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
-                      (ins GPR:$target, i32imm:$jt, i32imm:$id),
+                      (ins GPR:$target, i32imm:$jt),
                       0, IIC_Br,
-                      [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>,
+                      [(ARMbrjt GPR:$target, tjumptable:$jt)]>,
                       Sched<[WriteBr]>;
     // FIXME: This shouldn't use the generic "addrmode2," but rather be split
     // into i12 and rs suffixed versions.
     def BR_JTm : ARMPseudoInst<(outs),
-                     (ins addrmode2:$target, i32imm:$jt, i32imm:$id),
+                     (ins addrmode2:$target, i32imm:$jt),
                      0, IIC_Br,
-                     [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
-                       imm:$id)]>, Sched<[WriteBrTbl]>;
+                     [(ARMbrjt (i32 (load addrmode2:$target)),
+                               tjumptable:$jt)]>, Sched<[WriteBrTbl]>;
     def BR_JTadd : ARMPseudoInst<(outs),
-                   (ins GPR:$target, GPR:$idx, i32imm:$jt, i32imm:$id),
+                   (ins GPR:$target, GPR:$idx, i32imm:$jt),
                    0, IIC_Br,
-                   [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
-                     imm:$id)]>, Sched<[WriteBrTbl]>;
+                   [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt)]>,
+                   Sched<[WriteBrTbl]>;
     } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 
@@ -5339,8 +5338,8 @@ def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
 def : ARMPat<(ARMWrapper  tconstpool  :$dst), (LEApcrel tconstpool  :$dst)>;
 def : ARMPat<(ARMWrapper  tglobaladdr :$dst), (MOVi32imm tglobaladdr :$dst)>,
             Requires<[IsARM, UseMovt]>;
-def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-             (LEApcrelJT tjumptable:$dst, imm:$id)>;
+def : ARMPat<(ARMWrapperJT tjumptable:$dst),
+             (LEApcrelJT tjumptable:$dst)>;
 
 // TODO: add,sub,and, 3-instr forms?
 

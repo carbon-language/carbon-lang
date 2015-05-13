@@ -522,9 +522,9 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
                           Sched<[WriteBrTbl]>;
 
   def tBR_JTr : tPseudoInst<(outs),
-                      (ins tGPR:$target, i32imm:$jt, i32imm:$id),
+                      (ins tGPR:$target, i32imm:$jt),
                       0, IIC_Br,
-                      [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>,
+                      [(ARMbrjt tGPR:$target, tjumptable:$jt)]>,
                       Sched<[WriteBrTbl]> {
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
@@ -1255,7 +1255,7 @@ def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
 
 let hasSideEffects = 1 in
 def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
-                              (ins i32imm:$label, nohash_imm:$id, pred:$p),
+                              (ins i32imm:$label, pred:$p),
                               2, IIC_iALUi, []>, Sched<[WriteALU]>;
 
 //===----------------------------------------------------------------------===//
@@ -1356,8 +1356,8 @@ def tLDRLIT_ga_abs : PseudoInst<(outs tGPR:$dst), (ins i32imm:$src),
 
 
 // JumpTable
-def : T1Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-            (tLEApcrelJT tjumptable:$dst, imm:$id)>;
+def : T1Pat<(ARMWrapperJT tjumptable:$dst),
+            (tLEApcrelJT tjumptable:$dst)>;
 
 // Direct calls
 def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>,

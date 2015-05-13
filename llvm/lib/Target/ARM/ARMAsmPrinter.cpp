@@ -201,11 +201,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 //===--------------------------------------------------------------------===//
 
 MCSymbol *ARMAsmPrinter::
-GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
+GetARMJTIPICJumpTableLabel(unsigned uid) const {
   const DataLayout *DL = TM.getDataLayout();
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
-    << getFunctionNumber() << '_' << uid << '_' << uid2;
+                            << getFunctionNumber() << '_' << uid;
   return OutContext.GetOrCreateSymbol(Name);
 }
 
@@ -935,11 +935,10 @@ void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
     OpNum = 3;
 
   const MachineOperand &MO1 = MI->getOperand(OpNum);
-  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
 
   // Emit a label for the jump table.
-  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel(JTI);
   OutStreamer->EmitLabel(JTISymbol);
 
   // Mark the jump table as data-in-code.
@@ -981,10 +980,9 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   unsigned Opcode = MI->getOpcode();
   int OpNum = (Opcode == ARM::t2BR_JT) ? 2 : 1;
   const MachineOperand &MO1 = MI->getOperand(OpNum);
-  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
 
-  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel2(JTI, MO2.getImm());
+  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel(JTI);
   OutStreamer->EmitLabel(JTISymbol);
 
   // Emit each entry of the table.
@@ -1228,8 +1226,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::tLEApcrelJT:
   case ARM::t2LEApcrelJT: {
     MCSymbol *JTIPICSymbol =
-      GetARMJTIPICJumpTableLabel2(MI->getOperand(1).getIndex(),
-                                  MI->getOperand(2).getImm());
+      GetARMJTIPICJumpTableLabel(MI->getOperand(1).getIndex());
     EmitToStreamer(*OutStreamer, MCInstBuilder(MI->getOpcode() ==
                                                ARM::t2LEApcrelJT ? ARM::t2ADR
                   : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
@@ -1237,8 +1234,8 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addReg(MI->getOperand(0).getReg())
       .addExpr(MCSymbolRefExpr::Create(JTIPICSymbol, OutContext))
       // Add predicate operands.
-      .addImm(MI->getOperand(3).getImm())
-      .addReg(MI->getOperand(4).getReg()));
+      .addImm(MI->getOperand(2).getImm())
+      .addReg(MI->getOperand(3).getReg()));
     return;
   }
   // Darwin call instructions are just normal call instructions with different

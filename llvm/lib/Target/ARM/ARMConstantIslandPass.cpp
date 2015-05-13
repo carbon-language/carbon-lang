@@ -1932,7 +1932,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
     MachineInstr *MI = T2JumpTables[i];
     const MCInstrDesc &MCID = MI->getDesc();
     unsigned NumOps = MCID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 3 : 2);
+    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 2 : 1);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());
@@ -1970,8 +1970,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       MachineInstr *NewJTMI =
         BuildMI(*MBB, MI_JT, MI->getDebugLoc(), TII->get(Opc))
         .addReg(IdxReg, getKillRegState(IdxRegKill))
-        .addJumpTableIndex(JTI, JTOP.getTargetFlags())
-        .addImm(MI->getOperand(JTOpIdx+1).getImm());
+        .addJumpTableIndex(JTI, JTOP.getTargetFlags());
       DEBUG(dbgs() << "BB#" << MBB->getNumber() << ": " << *NewJTMI);
       // FIXME: Insert an "ALIGN" instruction to ensure the next instruction
       // is 2-byte aligned. For now, asm printer will fix it up.
@@ -2005,7 +2004,7 @@ bool ARMConstantIslands::reorderThumb2JumpTables() {
     MachineInstr *MI = T2JumpTables[i];
     const MCInstrDesc &MCID = MI->getDesc();
     unsigned NumOps = MCID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 3 : 2);
+    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 2 : 1);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());

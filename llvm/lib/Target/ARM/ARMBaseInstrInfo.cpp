@@ -655,7 +655,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       ? 1 : ((Opc == ARM::t2TBH_JT) ? 2 : 4);
     unsigned NumOps = MCID.getNumOperands();
     MachineOperand JTOP =
-      MI->getOperand(NumOps - (MI->isPredicable() ? 3 : 2));
+      MI->getOperand(NumOps - (MI->isPredicable() ? 2 : 1));
     unsigned JTI = JTOP.getIndex();
     const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
     assert(MJTI != nullptr);
