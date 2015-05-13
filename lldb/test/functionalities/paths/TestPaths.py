@@ -28,12 +28,6 @@ class TestPaths(TestBase):
             # No directory path types should have the filename set
             self.assertTrue (f.GetFilename() == None);
 
-    def test_filespec_resolve_doesnt_prepend_cwd_if_file_doesnt_exist (self):
-        file_only = lldb.SBFileSpec("VeryUnlikelToExistInTheCurrentWorkingDirectory", True)
-        # SBFileSpec(path, True) should not prepend the current-working-directory to the
-        # file path if it doesn't exist in the current directory.
-        self.assertTrue (file_only.GetDirectory() == None)
-
     def test_directory_doesnt_end_with_slash(self):
         current_directory_spec = lldb.SBFileSpec(os.path.curdir)
         current_directory_string = current_directory_spec.GetDirectory()
