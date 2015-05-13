@@ -321,7 +321,7 @@ public:
       : MCTargetAsmParser(), STI(STI), MII(MII), Parser(_Parser),
         ForcedEncodingSize(0){
 
-    if (STI.getFeatureBits().none()) {
+    if (!STI.getFeatureBits()) {
       // Set default features.
       STI.ToggleFeature("SOUTHERN_ISLANDS");
     }

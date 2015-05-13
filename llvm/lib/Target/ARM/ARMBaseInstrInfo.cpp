@@ -4539,7 +4539,7 @@ breakPartialRegDependency(MachineBasicBlock::iterator MI,
 }
 
 bool ARMBaseInstrInfo::hasNOP() const {
-  return Subtarget.getFeatureBits()[ARM::HasV6KOps];
+  return (Subtarget.getFeatureBits() & ARM::HasV6KOps) != 0;
 }
 
 bool ARMBaseInstrInfo::isSwiftFastImmShift(const MachineInstr *MI) const {

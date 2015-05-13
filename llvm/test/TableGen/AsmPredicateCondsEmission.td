@@ -28,4 +28,4 @@ def foo : Instruction {
   let Predicates = [Pred1, Pred2];
 }
 
-// CHECK: return (Bits[arch::AssemblerCondition2]);
+// CHECK: return ((Bits & arch::AssemblerCondition2));

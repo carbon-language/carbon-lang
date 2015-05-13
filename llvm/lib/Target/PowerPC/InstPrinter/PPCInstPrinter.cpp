@@ -119,7 +119,7 @@ void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
       O << "t";
     O << " ";
 
-    bool IsBookE = STI.getFeatureBits()[PPC::FeatureBookE];
+    bool IsBookE = (STI.getFeatureBits() & PPC::FeatureBookE) != 0;
     if (IsBookE && TH != 0 && TH != 16)
       O << (unsigned int) TH << ", ";
 

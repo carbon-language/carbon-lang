@@ -63,19 +63,14 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef C, StringRef FS,
 
 /// ToggleFeature - Toggle a feature and returns the re-computed feature
 /// bits. This version does not change the implied bits.
-FeatureBitset MCSubtargetInfo::ToggleFeature(uint64_t FB) {
-  FeatureBits.flip(FB);
-  return FeatureBits;
-}
-
-FeatureBitset MCSubtargetInfo::ToggleFeature(const FeatureBitset &FB) {
+uint64_t MCSubtargetInfo::ToggleFeature(uint64_t FB) {
   FeatureBits ^= FB;
   return FeatureBits;
 }
 
 /// ToggleFeature - Toggle a feature and returns the re-computed feature
 /// bits. This version will also change all implied bits.
-FeatureBitset MCSubtargetInfo::ToggleFeature(StringRef FS) {
+uint64_t MCSubtargetInfo::ToggleFeature(StringRef FS) {
   SubtargetFeatures Features;
   FeatureBits = Features.ToggleFeature(FeatureBits, FS, ProcFeatures);
   return FeatureBits;

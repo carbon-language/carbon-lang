@@ -42,7 +42,7 @@ class MCSubtargetInfo {
   const InstrStage *Stages;            // Instruction itinerary stages
   const unsigned *OperandCycles;       // Itinerary operand cycles
   const unsigned *ForwardingPaths;     // Forwarding paths
-  FeatureBitset FeatureBits;           // Feature bits for current CPU + FS
+  uint64_t FeatureBits;                // Feature bits for current CPU + FS
 
 public:
   void InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
@@ -67,13 +67,13 @@ public:
 
   /// getFeatureBits - Return the feature bits.
   ///
-  const FeatureBitset& getFeatureBits() const {
+  uint64_t getFeatureBits() const {
     return FeatureBits;
   }
 
   /// setFeatureBits - Set the feature bits.
   ///
-  void setFeatureBits(FeatureBitset& FeatureBits_) { FeatureBits = FeatureBits_; }
+  void setFeatureBits(uint64_t FeatureBits_) { FeatureBits = FeatureBits_; }
 
   /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
   /// feature string). Recompute feature bits and scheduling model.
@@ -84,15 +84,11 @@ public:
 
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version does not change the implied bits.
-  FeatureBitset ToggleFeature(uint64_t FB);
+  uint64_t ToggleFeature(uint64_t FB);
 
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
-  /// bits. This version does not change the implied bits.
-  FeatureBitset ToggleFeature(const FeatureBitset& FB);
-
-  /// ToggleFeature - Toggle a set of features and returns the re-computed
-  /// feature bits. This version will also change all implied bits.
-  FeatureBitset ToggleFeature(StringRef FS);
+  /// bits. This version will also change all implied bits.
+  uint64_t ToggleFeature(StringRef FS);
 
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///

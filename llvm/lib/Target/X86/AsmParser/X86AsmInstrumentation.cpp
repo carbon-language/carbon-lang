@@ -261,13 +261,13 @@ protected:
                                               MCContext &Ctx, int64_t *Residue);
 
   bool is64BitMode() const {
-    return STI.getFeatureBits()[X86::Mode64Bit];
+    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
   }
   bool is32BitMode() const {
-    return STI.getFeatureBits()[X86::Mode32Bit];
+    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
   }
   bool is16BitMode() const {
-    return STI.getFeatureBits()[X86::Mode16Bit];
+    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
   }
 
   unsigned getPointerWidth() {
@@ -1072,9 +1072,9 @@ CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
   const bool hasCompilerRTSupport = T.isOSLinux();
   if (ClAsanInstrumentAssembly && hasCompilerRTSupport &&
       MCOptions.SanitizeAddress) {
-    if (STI.getFeatureBits()[X86::Mode32Bit] != 0)
+    if ((STI.getFeatureBits() & X86::Mode32Bit) != 0)
       return new X86AddressSanitizer32(STI);
-    if (STI.getFeatureBits()[X86::Mode64Bit] != 0)
+    if ((STI.getFeatureBits() & X86::Mode64Bit) != 0)
       return new X86AddressSanitizer64(STI);
   }
   return new X86AsmInstrumentation(STI);

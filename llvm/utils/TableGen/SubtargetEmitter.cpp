@@ -16,7 +16,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCInstrItineraries.h"
-#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/TableGen/Error.h"
@@ -63,7 +62,7 @@ class SubtargetEmitter {
   CodeGenSchedModels &SchedModels;
   std::string Target;
 
-  void Enumeration(raw_ostream &OS, const char *ClassName);
+  void Enumeration(raw_ostream &OS, const char *ClassName, bool isBits);
   unsigned FeatureKeyValues(raw_ostream &OS);
   unsigned CPUKeyValues(raw_ostream &OS);
   void FormItineraryStageString(const std::string &Names,
@@ -113,7 +112,8 @@ public:
 // Enumeration - Emit the specified class as an enumeration.
 //
 void SubtargetEmitter::Enumeration(raw_ostream &OS,
-                                   const char *ClassName) {
+                                   const char *ClassName,
+                                   bool isBits) {
   // Get all records of class and sort
   std::vector<Record*> DefList = Records.getAllDerivedDefinitions(ClassName);
   std::sort(DefList.begin(), DefList.end(), LessRecord());
@@ -121,8 +121,8 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
   unsigned N = DefList.size();
   if (N == 0)
     return;
-  if (N > MAX_SUBTARGET_FEATURES)
-    PrintFatalError("Too many subtarget features! Bump MAX_SUBTARGET_FEATURES.");
+  if (N > 64)
+    PrintFatalError("Too many (> 64) subtarget features!");
 
   OS << "namespace " << Target << " {\n";
 
@@ -135,14 +135,21 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
     Record *Def = DefList[i];
 
     // Get and emit name
-    OS << "  " << Def->getName() << " = " << i;
+    OS << "  " << Def->getName();
+
+    // If bit flags then emit expression (1 << i)
+    if (isBits)  OS << " = " << " 1ULL << " << i;
+
+    // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
 
     OS << "\n";
   }
 
-  // Close enumeration and namespace
-  OS << "};\n}\n";
+  // Close enumeration
+  OS << "};\n";
+
+  OS << "}\n";
 }
 
 //
@@ -176,24 +183,22 @@ unsigned SubtargetEmitter::FeatureKeyValues(raw_ostream &OS) {
 
     if (CommandLineName.empty()) continue;
 
-    // Emit as { "feature", "description", { featureEnum }, { i1 , i2 , ... , in } }
+    // Emit as { "feature", "description", featureEnum, i1 | i2 | ... | in }
     OS << "  { "
        << "\"" << CommandLineName << "\", "
        << "\"" << Desc << "\", "
-       << "{ " << Target << "::" << Name << " }, ";
+       << Target << "::" << Name << ", ";
 
     const std::vector<Record*> &ImpliesList =
       Feature->getValueAsListOfDefs("Implies");
 
     if (ImpliesList.empty()) {
-      OS << "{ }";
+      OS << "0ULL";
     } else {
-      OS << "{ ";
       for (unsigned j = 0, M = ImpliesList.size(); j < M;) {
         OS << Target << "::" << ImpliesList[j]->getName();
-        if (++j < M) OS << ", ";
+        if (++j < M) OS << " | ";
       }
-      OS << " }";
     }
 
     OS << " }";
@@ -235,24 +240,22 @@ unsigned SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
     const std::vector<Record*> &FeatureList =
       Processor->getValueAsListOfDefs("Features");
 
-    // Emit as { "cpu", "description", { f1 , f2 , ... fn } },
+    // Emit as { "cpu", "description", f1 | f2 | ... fn },
     OS << "  { "
        << "\"" << Name << "\", "
        << "\"Select the " << Name << " processor\", ";
 
     if (FeatureList.empty()) {
-      OS << "{ }";
+      OS << "0ULL";
     } else {
-      OS << "{ ";
       for (unsigned j = 0, M = FeatureList.size(); j < M;) {
         OS << Target << "::" << FeatureList[j]->getName();
-        if (++j < M) OS << ", ";
+        if (++j < M) OS << " | ";
       }
-      OS << " }";
     }
 
-    // The { } is for the "implies" section of this data structure.
-    OS << ", { } }";
+    // The "0" is for the "implies" section of this data structure.
+    OS << ", 0ULL }";
 
     // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
@@ -1380,7 +1383,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
   }
 
   OS << "  InitMCProcessorInfo(CPU, FS);\n"
-     << "  const FeatureBitset& Bits = getFeatureBits();\n";
+     << "  uint64_t Bits = getFeatureBits();\n";
 
   for (unsigned i = 0; i < Features.size(); i++) {
     // Next record
@@ -1390,12 +1393,12 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
     const std::string &Attribute = R->getValueAsString("Attribute");
 
     if (Value=="true" || Value=="false")
-      OS << "  if (Bits[" << Target << "::"
-         << Instance << "]) "
+      OS << "  if ((Bits & " << Target << "::"
+         << Instance << ") != 0) "
          << Attribute << " = " << Value << ";\n";
     else
-      OS << "  if (Bits[" << Target << "::"
-         << Instance << "] && "
+      OS << "  if ((Bits & " << Target << "::"
+         << Instance << ") != 0 && "
          << Attribute << " < " << Value << ") "
          << Attribute << " = " << Value << ";\n";
   }
@@ -1413,7 +1416,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_ENUM\n";
 
   OS << "namespace llvm {\n";
-  Enumeration(OS, "SubtargetFeature");
+  Enumeration(OS, "SubtargetFeature", true);
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_SUBTARGETINFO_ENUM\n\n";
 
