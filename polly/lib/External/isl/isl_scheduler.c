@@ -2794,43 +2794,6 @@ static __isl_give isl_union_set_list *extract_split(isl_ctx *ctx,
 	return filters;
 }
 
-/* Topologically sort statements mapped to the same schedule iteration
- * and add insert a sequence node in front of "node"
- * corresponding to this order.
- */
-static __isl_give isl_schedule_node *sort_statements(
-	__isl_take isl_schedule_node *node, struct isl_sched_graph *graph)
-{
-	isl_ctx *ctx;
-	isl_union_set_list *filters;
-
-	if (!node)
-		return NULL;
-
-	ctx = isl_schedule_node_get_ctx(node);
-	if (graph->n < 1)
-		isl_die(ctx, isl_error_internal,
-			"graph should have at least one node",
-			return isl_schedule_node_free(node));
-
-	if (graph->n == 1)
-		return node;
-
-	if (update_edges(ctx, graph) < 0)
-		return isl_schedule_node_free(node);
-
-	if (graph->n_edge == 0)
-		return node;
-
-	if (detect_sccs(ctx, graph) < 0)
-		return isl_schedule_node_free(node);
-
-	filters = extract_sccs(ctx, graph);
-	node = isl_schedule_node_insert_sequence(node, filters);
-
-	return node;
-}
-
 /* Copy nodes that satisfy node_pred from the src dependence graph
  * to the dst dependence graph.
  */
@@ -3785,6 +3748,52 @@ static __isl_give isl_schedule_node *carry_dependences(
 	return split_scaled(node, graph);
 }
 
+/* Topologically sort statements mapped to the same schedule iteration
+ * and add insert a sequence node in front of "node"
+ * corresponding to this order.
+ *
+ * If it turns out to be impossible to sort the statements apart,
+ * because different dependences impose different orderings
+ * on the statements, then we extend the schedule such that
+ * it carries at least one more dependence.
+ */
+static __isl_give isl_schedule_node *sort_statements(
+	__isl_take isl_schedule_node *node, struct isl_sched_graph *graph)
+{
+	isl_ctx *ctx;
+	isl_union_set_list *filters;
+
+	if (!node)
+		return NULL;
+
+	ctx = isl_schedule_node_get_ctx(node);
+	if (graph->n < 1)
+		isl_die(ctx, isl_error_internal,
+			"graph should have at least one node",
+			return isl_schedule_node_free(node));
+
+	if (graph->n == 1)
+		return node;
+
+	if (update_edges(ctx, graph) < 0)
+		return isl_schedule_node_free(node);
+
+	if (graph->n_edge == 0)
+		return node;
+
+	if (detect_sccs(ctx, graph) < 0)
+		return isl_schedule_node_free(node);
+
+	next_band(graph);
+	if (graph->scc < graph->n)
+		return carry_dependences(node, graph);
+
+	filters = extract_sccs(ctx, graph);
+	node = isl_schedule_node_insert_sequence(node, filters);
+
+	return node;
+}
+
 /* Are there any (non-empty) (conditional) validity edges in the graph?
  */
 static int has_validity_edges(struct isl_sched_graph *graph)
@@ -4082,6 +4091,7 @@ static __isl_give isl_schedule_node *compute_schedule_wcc(
 	int use_coincidence;
 	int force_coincidence = 0;
 	int check_conditional;
+	int insert;
 	isl_ctx *ctx;
 
 	if (!node)
@@ -4152,12 +4162,13 @@ static __isl_give isl_schedule_node *compute_schedule_wcc(
 		use_coincidence = has_coincidence;
 	}
 
-	if (graph->n_total_row > graph->band_start) {
+	insert = graph->n_total_row > graph->band_start;
+	if (insert) {
 		node = insert_current_band(node, graph, 1);
 		node = isl_schedule_node_child(node, 0);
 	}
 	node = sort_statements(node, graph);
-	if (graph->n_total_row > graph->band_start)
+	if (insert)
 		node = isl_schedule_node_parent(node);
 
 	return node;

@@ -4619,7 +4619,7 @@ static union isl_lex_res basic_map_partial_lexopt_symm(
 		if (isl_basic_map_drop_inequality(bmap, list[i]) < 0)
 			goto error;
 
-	bmap = isl_basic_map_add(bmap, isl_dim_in, 1);
+	bmap = isl_basic_map_add_dims(bmap, isl_dim_in, 1);
 	bmap = isl_basic_map_extend_constraints(bmap, 0, 1);
 	k = isl_basic_map_alloc_inequality(bmap);
 	if (k < 0)

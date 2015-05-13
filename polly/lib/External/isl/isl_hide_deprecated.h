@@ -26,7 +26,6 @@
 #define isl_basic_map_plain_is_fixed	isl_gmp_basic_map_plain_is_fixed
 #define isl_map_fix	isl_gmp_map_fix
 #define isl_map_plain_is_fixed	isl_gmp_map_plain_is_fixed
-#define isl_map_fast_is_fixed	isl_gmp_map_fast_is_fixed
 #define isl_map_fixed_power	isl_gmp_map_fixed_power
 #define isl_mat_get_element	isl_gmp_mat_get_element
 #define isl_mat_set_element	isl_gmp_mat_set_element

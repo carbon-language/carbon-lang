@@ -295,8 +295,6 @@ __isl_give isl_val *isl_basic_map_plain_get_val_if_fixed(
 int isl_basic_map_image_is_bounded(__isl_keep isl_basic_map *bmap);
 int isl_basic_map_is_universe(__isl_keep isl_basic_map *bmap);
 int isl_basic_map_plain_is_empty(__isl_keep isl_basic_map *bmap);
-ISL_DEPRECATED
-int isl_basic_map_fast_is_empty(__isl_keep isl_basic_map *bmap);
 __isl_export
 int isl_basic_map_is_empty(__isl_keep isl_basic_map *bmap);
 __isl_export
@@ -436,7 +434,7 @@ __isl_give isl_basic_map *isl_map_affine_hull(__isl_take isl_map *map);
 __isl_give isl_basic_map *isl_map_convex_hull(__isl_take isl_map *map);
 __isl_export
 __isl_give isl_basic_map *isl_map_polyhedral_hull(__isl_take isl_map *map);
-__isl_give isl_basic_map *isl_basic_map_add(__isl_take isl_basic_map *bmap,
+__isl_give isl_basic_map *isl_basic_map_add_dims(__isl_take isl_basic_map *bmap,
 		enum isl_dim_type type, unsigned n);
 __isl_give isl_map *isl_map_add_dims(__isl_take isl_map *map,
 		enum isl_dim_type type, unsigned n);
@@ -547,8 +545,6 @@ __isl_export
 __isl_give isl_basic_map *isl_map_sample(__isl_take isl_map *map);
 
 int isl_map_plain_is_empty(__isl_keep isl_map *map);
-ISL_DEPRECATED
-int isl_map_fast_is_empty(__isl_keep isl_map *map);
 int isl_map_plain_is_universe(__isl_keep isl_map *map);
 __isl_export
 int isl_map_is_empty(__isl_keep isl_map *map);
@@ -631,8 +627,6 @@ __isl_export
 __isl_give isl_map *isl_map_coalesce(__isl_take isl_map *map);
 
 int isl_map_plain_is_equal(__isl_keep isl_map *map1, __isl_keep isl_map *map2);
-ISL_DEPRECATED
-int isl_map_fast_is_equal(__isl_keep isl_map *map1, __isl_keep isl_map *map2);
 
 uint32_t isl_map_get_hash(__isl_keep isl_map *map);
 

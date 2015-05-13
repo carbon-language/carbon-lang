@@ -2761,11 +2761,6 @@ int isl_set_is_disjoint(__isl_keep isl_set *set1, __isl_keep isl_set *set2)
 	return isl_map_is_disjoint(set1, set2);
 }
 
-int isl_set_fast_is_disjoint(__isl_keep isl_set *set1, __isl_keep isl_set *set2)
-{
-	return isl_set_plain_is_disjoint(set1, set2);
-}
-
 /* Check if we can combine a given div with lower bound l and upper
  * bound u with some other div and if so return that other div.
  * Otherwise return -1.

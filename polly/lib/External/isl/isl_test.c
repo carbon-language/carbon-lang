@@ -3302,6 +3302,43 @@ static int test_conditional_schedule_constraints(isl_ctx *ctx)
 	return 0;
 }
 
+/* Check that the schedule computed for the given instance set and
+ * dependence relation strongly satisfies the dependences.
+ * In particular, check that no instance is scheduled before
+ * or together with an instance on which it depends.
+ * Earlier versions of isl would produce a schedule that
+ * only weakly satisfies the dependences.
+ */
+static int test_strongly_satisfying_schedule(isl_ctx *ctx)
+{
+	const char *domain, *dep;
+	isl_union_map *D, *schedule;
+	isl_map *map, *ge;
+	int empty;
+
+	domain = "{ B[i0, i1] : 0 <= i0 <= 1 and 0 <= i1 <= 11; "
+		    "A[i0] : 0 <= i0 <= 1 }";
+	dep = "{ B[i0, i1] -> B[i0, 1 + i1] : 0 <= i0 <= 1 and 0 <= i1 <= 10; "
+		"B[0, 11] -> A[1]; A[i0] -> B[i0, 0] : 0 <= i0 <= 1 }";
+	schedule = compute_schedule(ctx, domain, dep, dep);
+	D = isl_union_map_read_from_str(ctx, dep);
+	D = isl_union_map_apply_domain(D, isl_union_map_copy(schedule));
+	D = isl_union_map_apply_range(D, schedule);
+	map = isl_map_from_union_map(D);
+	ge = isl_map_lex_ge(isl_space_domain(isl_map_get_space(map)));
+	map = isl_map_intersect(map, ge);
+	empty = isl_map_is_empty(map);
+	isl_map_free(map);
+
+	if (empty < 0)
+		return -1;
+	if (!empty)
+		isl_die(ctx, isl_error_unknown,
+			"dependences not strongly satisfied", return -1);
+
+	return 0;
+}
+
 int test_schedule(isl_ctx *ctx)
 {
 	const char *D, *W, *R, *V, *P, *S;
@@ -3592,6 +3629,9 @@ int test_schedule(isl_ctx *ctx)
 	ctx->opt->schedule_algorithm = ISL_SCHEDULE_ALGORITHM_ISL;
 
 	if (test_conditional_schedule_constraints(ctx) < 0)
+		return -1;
+
+	if (test_strongly_satisfying_schedule(ctx) < 0)
 		return -1;
 
 	return 0;
