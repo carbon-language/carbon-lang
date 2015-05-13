@@ -7,5 +7,11 @@
   li $5, 0x100000000
   # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
   # 64-BIT: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  la $5, 0x100000000
+  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
+  # 64-BIT: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  la $5, 0x100000000($6)
+  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
+  # 64-BIT: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
   dli $5, 1
   # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 64-bit architecture

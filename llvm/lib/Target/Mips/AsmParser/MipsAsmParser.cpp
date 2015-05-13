@@ -179,13 +179,17 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
                          SmallVectorImpl<MCInst> &Instructions);
 
+  bool loadImmediate(int64_t ImmValue, unsigned DstReg, unsigned SrcReg,
+                     bool Is32BitImm, SMLoc IDLoc,
+                     SmallVectorImpl<MCInst> &Instructions);
+
   bool expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
-  bool expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
+  bool expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
 
-  bool expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
+  bool expandLoadAddressReg(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
   bool expandUncondBranchMMPseudo(MCInst &Inst, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions);
@@ -202,6 +206,9 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   void createNop(bool hasShortDelaySlot, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);
+
+  void createAddu(unsigned DstReg, unsigned SrcReg, unsigned TrgReg,
+                  SmallVectorImpl<MCInst> &Instructions);
 
   bool reportParseError(Twine ErrorMsg);
   bool reportParseError(SMLoc Loc, Twine ErrorMsg);
@@ -1615,9 +1622,9 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::LoadImm64:
     return expandLoadImm(Inst, false, IDLoc, Instructions);
   case Mips::LoadAddrImm32:
-    return expandLoadAddressImm(Inst, IDLoc, Instructions);
+    return expandLoadAddressImm(Inst, true, IDLoc, Instructions);
   case Mips::LoadAddrReg32:
-    return expandLoadAddressReg(Inst, IDLoc, Instructions);
+    return expandLoadAddressReg(Inst, true, IDLoc, Instructions);
   case Mips::B_MM_Pseudo:
     return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions);
   case Mips::SWM_MM:
@@ -1713,21 +1720,20 @@ bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
   return false;
 }
 
-bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
+bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
+                                  unsigned SrcReg, bool Is32BitImm, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions) {
   if (!Is32BitImm && !isGP64bit()) {
     Error(IDLoc, "instruction requires a 64-bit architecture");
     return true;
   }
 
-  MCInst tmpInst;
-  const MCOperand &ImmOp = Inst.getOperand(1);
-  assert(ImmOp.isImm() && "expected immediate operand kind");
-  const MCOperand &RegOp = Inst.getOperand(0);
-  assert(RegOp.isReg() && "expected register operand kind");
+  bool UseSrcReg = false;
+  if (SrcReg != Mips::NoRegister)
+    UseSrcReg = true;
 
-  int64_t ImmValue = ImmOp.getImm();
-  unsigned Reg = RegOp.getReg();
+  MCInst tmpInst;
+
   tmpInst.setLoc(IDLoc);
   // FIXME: gas has a special case for values that are 000...1111, which
   // becomes a li -1 and then a dsrl
@@ -1735,16 +1741,17 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
     // For unsigned and positive signed 16-bit values (0 <= j <= 65535):
     // li d,j => ori d,$zero,j
     tmpInst.setOpcode(Mips::ORi);
-    tmpInst.addOperand(MCOperand::CreateReg(Reg));
-    tmpInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    tmpInst.addOperand(MCOperand::CreateReg(DstReg));
+    tmpInst.addOperand(MCOperand::CreateReg(
+        UseSrcReg ? SrcReg : (isGP64bit() ? Mips::ZERO_64 : Mips::ZERO)));
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if (ImmValue < 0 && ImmValue >= -32768) {
     // For negative signed 16-bit values (-32768 <= j < 0):
     // li d,j => addiu d,$zero,j
     tmpInst.setOpcode(Mips::ADDiu);
-    tmpInst.addOperand(MCOperand::CreateReg(Reg));
-    tmpInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    tmpInst.addOperand(MCOperand::CreateReg(DstReg));
+    tmpInst.addOperand(MCOperand::CreateReg(UseSrcReg ? SrcReg : Mips::ZERO));
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if ((ImmValue & 0xffffffff) == ImmValue) {
@@ -1755,10 +1762,14 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::CreateReg(Reg));
+    tmpInst.addOperand(MCOperand::CreateReg(DstReg));
     tmpInst.addOperand(MCOperand::CreateImm(Bits31To16));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0>(Bits15To0, Reg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits15To0, DstReg, IDLoc, Instructions);
+
+    if (UseSrcReg)
+      createAddu(DstReg, DstReg, SrcReg, Instructions);
+
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (Is32BitImm) {
       Error(IDLoc, "instruction requires a 32-bit immediate");
@@ -1783,11 +1794,15 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::CreateReg(Reg));
+    tmpInst.addOperand(MCOperand::CreateReg(DstReg));
     tmpInst.addOperand(MCOperand::CreateImm(Bits47To32));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0>(Bits31To16, Reg, IDLoc, Instructions);
-    createLShiftOri<16>(Bits15To0, Reg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits31To16, DstReg, IDLoc, Instructions);
+    createLShiftOri<16>(Bits15To0, DstReg, IDLoc, Instructions);
+
+    if (UseSrcReg)
+      createAddu(DstReg, DstReg, SrcReg, Instructions);
+
   } else {
     if (Is32BitImm) {
       Error(IDLoc, "instruction requires a 32-bit immediate");
@@ -1814,27 +1829,43 @@ bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::CreateReg(Reg));
+    tmpInst.addOperand(MCOperand::CreateReg(DstReg));
     tmpInst.addOperand(MCOperand::CreateImm(Bits63To48));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0>(Bits47To32, Reg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits47To32, DstReg, IDLoc, Instructions);
 
     // When Bits31To16 is 0, do a left shift of 32 bits instead of doing
     // two left shifts of 16 bits.
     if (Bits31To16 == 0) {
-      createLShiftOri<32>(Bits15To0, Reg, IDLoc, Instructions);
+      createLShiftOri<32>(Bits15To0, DstReg, IDLoc, Instructions);
     } else {
-      createLShiftOri<16>(Bits31To16, Reg, IDLoc, Instructions);
-      createLShiftOri<16>(Bits15To0, Reg, IDLoc, Instructions);
+      createLShiftOri<16>(Bits31To16, DstReg, IDLoc, Instructions);
+      createLShiftOri<16>(Bits15To0, DstReg, IDLoc, Instructions);
     }
+
+    if (UseSrcReg)
+      createAddu(DstReg, DstReg, SrcReg, Instructions);
   }
   return false;
 }
 
+bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
+                                  SmallVectorImpl<MCInst> &Instructions) {
+  const MCOperand &ImmOp = Inst.getOperand(1);
+  assert(ImmOp.isImm() && "expected immediate operand kind");
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+
+  if (loadImmediate(ImmOp.getImm(), DstRegOp.getReg(), Mips::NoRegister,
+                    Is32BitImm, IDLoc, Instructions))
+    return true;
+
+  return false;
+}
+
 bool
-MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
+MipsAsmParser::expandLoadAddressReg(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(2);
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
@@ -1846,44 +1877,17 @@ MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
   assert(SrcRegOp.isReg() && "expected register operand kind");
   const MCOperand &DstRegOp = Inst.getOperand(0);
   assert(DstRegOp.isReg() && "expected register operand kind");
-  int ImmValue = ImmOp.getImm();
-  if (-32768 <= ImmValue && ImmValue <= 65535) {
-    // For -32768 <= j <= 65535.
-    // la d,j(s) => addiu d,s,j
-    tmpInst.setOpcode(Mips::ADDiu);
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(SrcRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
-    Instructions.push_back(tmpInst);
-  } else {
-    // For any other value of j that is representable as a 32-bit integer.
-    // la d,j(s) => lui d,hi16(j)
-    //              ori d,d,lo16(j)
-    //              addu d,d,s
-    tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
-    Instructions.push_back(tmpInst);
-    tmpInst.clear();
-    tmpInst.setOpcode(Mips::ORi);
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
-    Instructions.push_back(tmpInst);
-    tmpInst.clear();
-    tmpInst.setOpcode(Mips::ADDu);
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(DstRegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(SrcRegOp.getReg()));
-    Instructions.push_back(tmpInst);
-  }
+
+  if (loadImmediate(ImmOp.getImm(), DstRegOp.getReg(), SrcRegOp.getReg(),
+                    Is32BitImm, IDLoc, Instructions))
+    return true;
+
   return false;
 }
 
 bool
-MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
+MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
@@ -1891,32 +1895,13 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
     expandLoadAddressSym(Inst, IDLoc, Instructions);
     return false;
   }
-  const MCOperand &RegOp = Inst.getOperand(0);
-  assert(RegOp.isReg() && "expected register operand kind");
-  int ImmValue = ImmOp.getImm();
-  if (-32768 <= ImmValue && ImmValue <= 65535) {
-    // For -32768 <= j <= 65535.
-    // la d,j => addiu d,$zero,j
-    tmpInst.setOpcode(Mips::ADDiu);
-    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
-    tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
-    Instructions.push_back(tmpInst);
-  } else {
-    // For any other value of j that is representable as a 32-bit integer.
-    // la d,j => lui d,hi16(j)
-    //           ori d,d,lo16(j)
-    tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateImm((ImmValue & 0xffff0000) >> 16));
-    Instructions.push_back(tmpInst);
-    tmpInst.clear();
-    tmpInst.setOpcode(Mips::ORi);
-    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateReg(RegOp.getReg()));
-    tmpInst.addOperand(MCOperand::CreateImm(ImmValue & 0xffff));
-    Instructions.push_back(tmpInst);
-  }
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+
+  if (loadImmediate(ImmOp.getImm(), DstRegOp.getReg(), Mips::NoRegister,
+                    Is32BitImm, IDLoc, Instructions))
+    return true;
+
   return false;
 }
 
@@ -2177,6 +2162,17 @@ void MipsAsmParser::createNop(bool hasShortDelaySlot, SMLoc IDLoc,
     NopInst.addOperand(MCOperand::CreateImm(0));
   }
   Instructions.push_back(NopInst);
+}
+
+void MipsAsmParser::createAddu(unsigned DstReg, unsigned SrcReg,
+                               unsigned TrgReg,
+                               SmallVectorImpl<MCInst> &Instructions) {
+  MCInst AdduInst;
+  AdduInst.setOpcode(Mips::ADDu);
+  AdduInst.addOperand(MCOperand::CreateReg(DstReg));
+  AdduInst.addOperand(MCOperand::CreateReg(SrcReg));
+  AdduInst.addOperand(MCOperand::CreateReg(TrgReg));
+  Instructions.push_back(AdduInst);
 }
 
 unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
