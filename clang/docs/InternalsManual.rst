@@ -1621,192 +1621,304 @@ How to change Clang
 
 How to add an attribute
 -----------------------
+Attributes are a form of metadata that can be attached to a program construct,
+allowing the programmer to pass semantic information along to the compiler for
+various uses. For example, attributes may be used to alter the code generation
+for a program construct, or to provide extra semantic information for static
+analysis. This document explains how to add a custom attribute to Clang.
+Documentation on existing attributes can be found `here
+<//clang.llvm.org/docs/AttributeReference.html>`_.
 
 Attribute Basics
 ^^^^^^^^^^^^^^^^
+Attributes in Clang are handled in three stages: parsing into a parsed attribute
+representation, conversion from a parsed attribute into a semantic attribute,
+and then the semantic handling of the attribute.
 
-Attributes in clang come in two forms: parsed form, and semantic form. Both 
-forms are represented via a tablegen definition of the attribute, specified in
-Attr.td.
+Parsing of the attribute is determined by the various syntactic forms attributes
+can take, such as GNU, C++11, and Microsoft style attributes, as well as other
+information provided by the table definition of the attribute. Ultimately, the
+parsed representation of an attribute object is an ``AttributeList`` object.
+These parsed attributes chain together as a list of parsed attributes attached
+to a declarator or declaration specifier. The parsing of attributes is handled
+automatically by Clang, except for attributes spelled as keywords. When
+implementing a keyword attribute, the parsing of the keyword and creation of the
+``AttributeList`` object must be done manually.
+
+Eventually, ``Sema::ProcessDeclAttributeList()`` is called with a ``Decl`` and
+an ``AttributeList``, at which point the parsed attribute can be transformed
+into a semantic attribute. The process by which a parsed attribute is converted
+into a semantic attribute depends on the attribute definition and semantic
+requirements of the attribute. The end result, however, is that the semantic
+attribute object is attached to the ``Decl`` object, and can be obtained by a
+call to ``Decl::getAttr<T>()``.
+
+The structure of the semantic attribute is also governed by the attribute
+definition given in Attr.td. This definition is used to automatically generate
+functionality used for the implementation of the attribute, such as a class
+derived from ``clang::Attr``, information for the parser to use, automated
+semantic checking for some attributes, etc.
 
 
 ``include/clang/Basic/Attr.td``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The first step to adding a new attribute to Clang is to add its definition to
+`include/clang/Basic/Attr.td
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/Attr.td?view=markup>`_.
+This tablegen definition must derive from the ``Attr`` (tablegen, not
+semantic) type, or one of its derivatives. Most attributes will derive from the
+``InheritableAttr`` type, which specifies that the attribute can be inherited by
+later redeclarations of the ``Decl`` it is associated with.
+``InheritableParamAttr`` is similar to ``InheritableAttr``, except that the
+attribute is written on a parameter instead of a declaration. If the attribute
+is intended to apply to a type instead of a declaration, such an attribute
+should derive from ``TypeAttr``, and will generally not be given an AST
+representation. (Note that this document does not cover the creation of type
+attributes.) An attribute that inherits from ``IgnoredAttr`` is parsed, but will
+generate an ignored attribute diagnostic when used, which may be useful when an
+attribute is supported by another vendor but not supported by clang.
 
-First, add your attribute to the `include/clang/Basic/Attr.td 
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/Attr.td?view=markup>`_ 
-file.
+The definition will specify several key pieces of information, such as the
+semantic name of the attribute, the spellings the attribute supports, the
+arguments the attribute expects, and more. Most members of the ``Attr`` tablegen
+type do not require definitions in the derived definition as the default
+suffice. However, every attribute must specify at least a spelling list, a
+subject list, and a documentation list.
 
-Each attribute gets a ``def`` inheriting from ``Attr`` or one of its
-subclasses.  ``InheritableAttr`` means that the attribute also applies to
-subsequent declarations of the same name.  ``InheritableParamAttr`` is similar 
-to ``InheritableAttr``, except that the attribute is written on a parameter 
-instead of a declaration, type or statement.  Attributes inheriting from 
-``TypeAttr`` are pure type attributes which generally are not given a 
-representation in the AST.  Attributes inheriting from ``TargetSpecificAttr`` 
-are attributes specific to one or more target architectures.  An attribute that 
-inherits from ``IgnoredAttr`` is parsed, but will generate an ignored attribute 
-diagnostic when used.  The attribute type may be useful when an attribute is 
-supported by another vendor, but not supported by clang.
+Spellings
+~~~~~~~~~
+All attributes are required to specify a spelling list that denotes the ways in
+which the attribute can be spelled. For instance, a single semantic attribute
+may have a keyword spelling, as well as a C++11 spelling and a GNU spelling. An
+empty spelling list is also permissible and may be useful for attributes which
+are created implicitly. The following spellings are accepted:
 
-``Spellings`` lists the strings that can appear in ``__attribute__((here))`` or
-``[[here]]``.  All such strings will be synonymous.  Possible ``Spellings`` 
-are: ``GNU`` (for use with GNU-style __attribute__ spellings), ``Declspec`` 
-(for use with Microsoft Visual Studio-style __declspec spellings), ``CXX11` 
-(for use with C++11-style [[foo]] and [[foo::bar]] spellings), and ``Keyword`` 
-(for use with attributes that are implemented as keywords, like C++11's 
-``override`` or ``final``). If you want to allow the ``[[]]`` C++11 syntax, you 
-have to define a list of ``Namespaces``, which will let users write 
-``[[namespace::spelling]]``.  Using the empty string for a namespace will allow 
-users to write just the spelling with no "``::``".  Attributes which g++-4.8 
-or later accepts should also have a ``CXX11<"gnu", "spelling">`` spelling.
+  ============  ================================================================
+  Spelling      Description
+  ============  ================================================================
+  ``GNU``       Spelled with a GNU-style ``__attribute__((attr))`` syntax and
+                placement.
+  ``CXX11``     Spelled with a C++-style ``[[attr]]`` syntax. If the attribute
+                is meant to be used by Clang, it should set the namespace to
+                ``"clang"``.
+  ``Declspec``  Spelled with a Microsoft-style ``__declspec(attr)`` syntax.
+  ``Keyword``   The attribute is spelled as a keyword, and required custom
+                parsing.
+  ``GCC``       Specifies two spellings: the first is a GNU-style spelling, and
+                the second is a C++-style spelling with the ``gnu`` namespace.
+                Attributes should only specify this spelling for attributes
+                supported by GCC.
+  ``Pragma``    The attribute is spelled as a ``#pragma``, and requires custom
+                processing within the preprocessor. If the attribute is meant to
+                be used by Clang, it should set the namespace to ``"clang"``.
+                Note that this spelling is not used for declaration attributes.
+  ============  ================================================================
 
-``Subjects`` restricts what kinds of AST node to which this attribute can
-appertain (roughly, attach).  The subjects are specified via a ``SubjectList``, 
-which specify the list of subjects. Additionally, subject-related diagnostics 
-can be specified to be warnings or errors, with the default being a warning.  
-The diagnostics displayed to the user are automatically determined based on 
-the subjects in the list, but a custom diagnostic parameter can also be 
-specified in the ``SubjectList``.  The diagnostics generated for subject list 
-violations are either ``diag::warn_attribute_wrong_decl_type`` or
-``diag::err_attribute_wrong_decl_type``, and the parameter enumeration is 
-found in `include/clang/Sema/AttributeList.h 
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/AttributeList.h?view=markup>`_ 
-If you add new Decl nodes to the ``SubjectList``, you may need to update the 
-logic used to automatically determine the diagnostic parameter in `utils/TableGen/ClangAttrEmitter.cpp 
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/utils/TableGen/ClangAttrEmitter.cpp?view=markup>`_.
+Subjects
+~~~~~~~~
+Attributes appertain to one or more ``Decl`` subjects. If the attribute attempts
+to attach to a subject that is not in the subject list, a diagnostic is issued
+automatically. Whether the diagnostic is a warning or an error depends on how
+the attribute's ``SubjectList`` is defined, but the default behavior is to warn.
+The diagnostics displayed to the user are automatically determined based on the
+subjects in the list, but a custom diagnostic parameter can also be specified in
+the ``SubjectList``. The diagnostics generated for subject list violations are
+either ``diag::warn_attribute_wrong_decl_type`` or
+``diag::err_attribute_wrong_decl_type``, and the parameter enumeration is found
+in `include/clang/Sema/AttributeList.h
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/AttributeList.h?view=markup>`_
+If a previously unused Decl node is added to the ``SubjectList``, the logic used
+to automatically determine the diagnostic parameter in `utils/TableGen/ClangAttrEmitter.cpp
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/utils/TableGen/ClangAttrEmitter.cpp?view=markup>`_
+may need to be updated.
 
-Diagnostic checking for attribute subject lists is automated except when 
-``HasCustomParsing`` is set to ``1``.
-
-By default, all subjects in the SubjectList must either be a Decl node defined 
-in ``DeclNodes.td``, or a statement node defined in ``StmtNodes.td``.  However, 
-more complex subjects can be created by creating a ``SubsetSubject`` object.  
-Each such object has a base subject which it appertains to (which must be a 
-Decl or Stmt node, and not a SubsetSubject node), and some custom code which is 
-called when determining whether an attribute appertains to the subject.  For 
-instance, a ``NonBitField`` SubsetSubject appertains to a ``FieldDecl``, and 
-tests whether the given FieldDecl is a bit field.  When a SubsetSubject is 
+By default, all subjects in the SubjectList must either be a Decl node defined
+in ``DeclNodes.td``, or a statement node defined in ``StmtNodes.td``. However,
+more complex subjects can be created by creating a ``SubsetSubject`` object.
+Each such object has a base subject which it appertains to (which must be a
+Decl or Stmt node, and not a SubsetSubject node), and some custom code which is
+called when determining whether an attribute appertains to the subject. For
+instance, a ``NonBitField`` SubsetSubject appertains to a ``FieldDecl``, and
+tests whether the given FieldDecl is a bit field. When a SubsetSubject is
 specified in a SubjectList, a custom diagnostic parameter must also be provided.
 
-``Args`` names the arguments the attribute takes, in order.  If ``Args`` is
+Diagnostic checking for attribute subject lists is automated except when
+``HasCustomParsing`` is set to ``1``.
+
+Documentation
+~~~~~~~~~~~~~
+All attributes must have some form of documentation associated with them.
+Documentation is table generated on the public web server by a server-side
+process that runs daily. Generally, the documentation for an attribute is a
+stand-alone definition in `include/clang/Basic/AttrDocs.td 
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/AttdDocs.td?view=markup>`_
+that is named after the attribute being documented.
+
+If the attribute is not for public consumption, or is an implicitly-created
+attribute that has no visible spelling, the documentation list can specify the
+``Undocumented`` object. Otherwise, the attribute should have its documentation
+added to AttrDocs.td.
+
+Documentation derives from the ``Documentation`` tablegen type. All derived
+types must specify a documentation category and the actual documentation itself.
+Additionally, it can specify a custom heading for the attribute, though a
+default heading will be chosen when possible.
+
+There are four predefined documentation categories: ``DocCatFunction`` for
+attributes that appertain to function-like subjects, ``DocCatVariable`` for
+attributes that appertain to variable-like subjects, ``DocCatType`` for type
+attributes, and ``DocCatStmt`` for statement attributes. A custom documentation
+category should be used for groups of attributes with similar functionality. 
+Custom categories are good for providing overview information for the attributes
+grouped under it. For instance, the consumed annotation attributes define a
+custom category, ``DocCatConsumed``, that explains what consumed annotations are
+at a high level.
+
+Documentation content (whether it is for an attribute or a category) is written
+using reStructuredText (RST) syntax.
+
+After writing the documentation for the attribute, it should be locally tested
+to ensure that there are no issues generating the documentation on the server.
+Local testing requires a fresh build of clang-tblgen. To generate the attribute
+documentation, execute the following command::
+
+  clang-tblgen -gen-attr-docs -I /path/to/clang/include /path/to/clang/include/clang/Basic/Attr.td -o /path/to/clang/docs/AttributeReference.rst
+
+When testing locally, *do not* commit changes to ``AttributeReference.rst``.
+This file is generated by the server automatically, and any changes made to this
+file will be overwritten.
+
+Arguments
+~~~~~~~~~
+Attributes may optionally specify a list of arguments that can be passed to the
+attribute. Attribute arguments specify both the parsed form and the semantic
+form of the attribute. For example, if ``Args`` is
 ``[StringArgument<"Arg1">, IntArgument<"Arg2">]`` then
-``__attribute__((myattribute("Hello", 3)))`` will be a valid use.  Attribute 
-arguments specify both the parsed form and the semantic form of the attribute.  
-The previous example shows an attribute which requires two attributes while 
-parsing, and the Attr subclass' constructor for the attribute will require a 
-string and integer argument.
+``__attribute__((myattribute("Hello", 3)))`` will be a valid use; it requires
+two arguments while parsing, and the Attr subclass' constructor for the
+semantic attribute will require a string and integer argument.
 
-Diagnostic checking for argument counts is automated except when 
-``HasCustomParsing`` is set to ``1``, or when the attribute uses an optional or 
-variadic argument.  Diagnostic checking for argument semantics is not automated.
+All arguments have a name and a flag that specifies whether the argument is
+optional. The associated C++ type of the argument is determined by the argument
+definition type. If the existing argument types are insufficient, new types can
+be created, but it requires modifying `utils/TableGen/ClangAttrEmitter.cpp
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/utils/TableGen/ClangAttrEmitter.cpp?view=markup>`_
+to properly support the type.
 
-If the parsed form of the attribute is more complex, or differs from the 
-semantic form, the ``HasCustomParsing`` bit can be set to ``1`` for the class, 
-and the parsing code in `Parser::ParseGNUAttributeArgs 
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Parse/ParseDecl.cpp?view=markup>`_ 
-can be updated for the special case.  Note that this only applies to arguments 
-with a GNU spelling -- attributes with a __declspec spelling currently ignore 
+Other Properties
+~~~~~~~~~~~~~~~~
+The ``Attr`` definition has other members which control the behavior of the
+attribute. Many of them are special-purpose and beyond the scope of this
+document, however a few deserve mention.
+
+If the parsed form of the attribute is more complex, or differs from the
+semantic form, the ``HasCustomParsing`` bit can be set to ``1`` for the class,
+and the parsing code in `Parser::ParseGNUAttributeArgs()
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Parse/ParseDecl.cpp?view=markup>`_
+can be updated for the special case. Note that this only applies to arguments
+with a GNU spelling -- attributes with a __declspec spelling currently ignore
 this flag and are handled by ``Parser::ParseMicrosoftDeclSpec``.
 
-Custom accessors can be generated for an attribute based on the spelling list 
-for that attribute.  For instance, if an attribute has two different spellings: 
-'Foo' and 'Bar', accessors can be created: 
-``[Accessor<"isFoo", [GNU<"Foo">]>, Accessor<"isBar", [GNU<"Bar">]>]``
-These accessors will be generated on the semantic form of the attribute, 
-accepting no arguments and returning a Boolean.
+Note that setting this member to 1 will opt out of common attribute semantic
+handling, requiring extra implementation efforts to ensure the attribute
+appertains to the appropriate subject, etc.
 
-Attributes which do not require an AST node should set the ``ASTNode`` field to 
-``0`` to avoid polluting the AST.  Note that anything inheriting from 
-``TypeAttr`` or ``IgnoredAttr`` automatically do not generate an AST node.  All 
-other attributes generate an AST node by default.  The AST node is the semantic 
+If the attribute should not be propagated from from a template declaration to an
+instantiation of the template, set the ``Clone`` member to 0. By default, all
+attributes will be cloned to template instantiations.
+
+Attributes that do not require an AST node should set the ``ASTNode`` field to
+``0`` to avoid polluting the AST. Note that anything inheriting from
+``TypeAttr`` or ``IgnoredAttr`` automatically do not generate an AST node. All
+other attributes generate an AST node by default. The AST node is the semantic
 representation of the attribute.
 
-Attributes which do not require custom semantic handling should set the 
-``SemaHandler`` field to ``0``.  Note that anything inheriting from 
-``IgnoredAttr`` automatically do not get a semantic handler.  All other 
-attributes are assumed to use a semantic handler by default.  Attributes 
-without a semantic handler are not given a parsed attribute Kind enumeration.
+The ``LangOpts`` field specifies a list of language options required by the
+attribute.  For instance, all of the CUDA-specific attributes specify ``[CUDA]``
+for the ``LangOpts`` field, and when the CUDA language option is not enabled, an
+"attribute ignored" warning diagnostic is emitted. Since language options are
+not table generated nodes, new language options must be created manually and
+should specify the spelling used by ``LangOptions`` class.
 
-The ``LangOpts`` field can be used to specify a list of language options 
-required by the attribute.  For instance, all of the CUDA-specific attributes 
-specify ``[CUDA]`` for the ``LangOpts`` field, and when the CUDA language 
-option is not enabled, an "attribute ignored" warning diagnostic is emitted.  
-Since language options are not table generated nodes, new language options must 
-be created manually and should specify the spelling used by ``LangOptions`` class.
+Custom accessors can be generated for an attribute based on the spelling list
+for that attribute. For instance, if an attribute has two different spellings:
+'Foo' and 'Bar', accessors can be created:
+``[Accessor<"isFoo", [GNU<"Foo">]>, Accessor<"isBar", [GNU<"Bar">]>]``
+These accessors will be generated on the semantic form of the attribute,
+accepting no arguments and returning a ``bool``.
 
-Target-specific attribute sometimes share a spelling with other attributes in 
-different targets.  For instance, the ARM and MSP430 targets both have an 
-attribute spelled ``GNU<"interrupt">``, but with different parsing and semantic 
-requirements.  To support this feature, an attribute inheriting from 
-``TargetSpecificAttribute`` make specify a ``ParseKind`` field.  This field 
-should be the same value between all arguments sharing a spelling, and 
-corresponds to the parsed attribute's Kind enumeration.  This allows attributes 
-to share a parsed attribute kind, but have distinct semantic attribute classes.  
-For instance, ``AttributeList::AT_Interrupt`` is the shared parsed attribute 
-kind, but ARMInterruptAttr and MSP430InterruptAttr are the semantic attributes 
-generated.
+Attributes that do not require custom semantic handling should set the
+``SemaHandler`` field to ``0``. Note that anything inheriting from
+``IgnoredAttr`` automatically do not get a semantic handler. All other
+attributes are assumed to use a semantic handler by default. Attributes
+without a semantic handler are not given a parsed attribute ``Kind`` enumerator.
 
-By default, when declarations are merging attributes, an attribute will not be 
-duplicated. However, if an attribute can be duplicated during this merging 
-stage, set ``DuplicatesAllowedWhileMerging`` to ``1``, and the attribute will 
+Target-specific attributes may share a spelling with other attributes in
+different targets. For instance, the ARM and MSP430 targets both have an
+attribute spelled ``GNU<"interrupt">``, but with different parsing and semantic
+requirements. To support this feature, an attribute inheriting from
+``TargetSpecificAttribute`` may specify a ``ParseKind`` field. This field
+should be the same value between all arguments sharing a spelling, and
+corresponds to the parsed attribute's ``Kind`` enumerator. This allows
+attributes to share a parsed attribute kind, but have distinct semantic
+attribute classes. For instance, ``AttributeList::AT_Interrupt`` is the shared
+parsed attribute kind, but ARMInterruptAttr and MSP430InterruptAttr are the
+semantic attributes generated.
+
+By default, when declarations are merging attributes, an attribute will not be
+duplicated. However, if an attribute can be duplicated during this merging
+stage, set ``DuplicatesAllowedWhileMerging`` to ``1``, and the attribute will
 be merged.
 
-By default, attribute arguments are parsed in an evaluated context. If the 
-arguments for an attribute should be parsed in an unevaluated context (akin to 
-the way the argument to a ``sizeof`` expression is parsed), you can set 
+By default, attribute arguments are parsed in an evaluated context. If the
+arguments for an attribute should be parsed in an unevaluated context (akin to
+the way the argument to a ``sizeof`` expression is parsed), set
 ``ParseArgumentsAsUnevaluated`` to ``1``.
 
-If additional functionality is desired for the semantic form of the attribute, 
-the ``AdditionalMembers`` field specifies code to be copied verbatim into the 
-semantic attribute class object.
-
-All attributes must have one or more form of documentation, which is provided 
-in the ``Documentation`` list. Generally, the documentation for an attribute 
-is a stand-alone definition in `include/clang/Basic/AttrDocs.td 
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/AttdDocs.td?view=markup>`_
-that is named after the attribute being documented. Each documentation element 
-is given a ``Category`` (variable, function, or type) and ``Content``. A single 
-attribute may contain multiple documentation elements for distinct categories. 
-For instance, an attribute which can appertain to both function and types (such 
-as a calling convention attribute), should contain two documentation elements. 
-The ``Content`` for an attribute uses reStructuredText (RST) syntax.
-
-If an attribute is used internally by the compiler, but is not written by users 
-(such as attributes with an empty spelling list), it can use the 
-``Undocumented`` documentation element.
+If additional functionality is desired for the semantic form of the attribute,
+the ``AdditionalMembers`` field specifies code to be copied verbatim into the
+semantic attribute class object, with ``public`` access.
 
 Boilerplate
 ^^^^^^^^^^^
-
 All semantic processing of declaration attributes happens in `lib/Sema/SemaDeclAttr.cpp
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/SemaDeclAttr.cpp?view=markup>`_, 
-and generally starts in the ``ProcessDeclAttribute`` function.  If your 
-attribute is a "simple" attribute -- meaning that it requires no custom 
-semantic processing aside from what is automatically  provided for you, you can 
-add a call to ``handleSimpleAttribute<YourAttr>(S, D, Attr);`` to the switch 
-statement. Otherwise, write a new ``handleYourAttr()`` function, and add that 
-to the switch statement.
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/lib/Sema/SemaDeclAttr.cpp?view=markup>`_,
+and generally starts in the ``ProcessDeclAttribute()`` function. If the
+attribute is a "simple" attribute -- meaning that it requires no custom semantic
+processing aside from what is automatically  provided, add a call to
+``handleSimpleAttribute<YourAttr>(S, D, Attr);`` to the switch statement.
+Otherwise, write a new ``handleYourAttr()`` function, and add that to the switch
+statement. Please do not implement handling logic directly in the ``case`` for
+the attribute.
 
-If your attribute causes extra warnings to fire, define a ``DiagGroup`` in
+Unless otherwise specified by the attribute definition, common semantic checking
+of the parsed attribute is handled automatically. This includes diagnosing
+parsed attributes that do not appertain to the given ``Decl``, ensuring the
+correct minimum number of arguments are passed, etc.
+
+If the attribute adds additional warnings, define a ``DiagGroup`` in
 `include/clang/Basic/DiagnosticGroups.td
 <http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/DiagnosticGroups.td?view=markup>`_
-named after the attribute's ``Spelling`` with "_"s replaced by "-"s.  If you're
-only defining one diagnostic, you can skip ``DiagnosticGroups.td`` and use
-``InGroup<DiagGroup<"your-attribute">>`` directly in `DiagnosticSemaKinds.td
+named after the attribute's ``Spelling`` with "_"s replaced by "-"s. If there
+is only a single diagnostic, it is permissible to use ``InGroup<DiagGroup<"your-attribute">>``
+directly in `DiagnosticSemaKinds.td
 <http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Basic/DiagnosticSemaKinds.td?view=markup>`_
 
 All semantic diagnostics generated for your attribute, including automatically-
-generated ones (such as subjects and argument counts), should have a 
+generated ones (such as subjects and argument counts), should have a
 corresponding test case.
 
-The meat of your attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Semantic handling
+^^^^^^^^^^^^^^^^^
+Most attributes are implemented to have some effect on the compiler. For
+instance, to modify the way code is generated, or to add extra semantic checks
+for an analysis pass, etc. Having added the attribute definition and conversion
+to the semantic representation for the attribute, what remains is to implement
+the custom logic requiring use of the attribute.
 
-Find an appropriate place in Clang to do whatever your attribute needs to do.
-Check for the attribute's presence using ``Decl::getAttr<YourAttr>()``.
-
-Update the :doc:`LanguageExtensions` document to describe your new attribute.
+The ``clang::Decl`` object can be queried for the presence or absence of an
+attribute using ``hasAttr<T>()``. To obtain a pointer to the semantic
+representation of the attribute, ``getAttr<T>`` may be used.
 
 How to add an expression or statement
 -------------------------------------
