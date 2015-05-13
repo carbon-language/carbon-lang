@@ -9967,6 +9967,9 @@ TEST_F(FormatTest, FormatsLambdas) {
                "    : Field([] { // comment\n"
                "        int i;\n"
                "      }) {}");
+  verifyFormat("auto my_lambda = [](const string &some_parameter) {\n"
+               "  return some_parameter.size();\n"
+               "};");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");

@@ -1593,6 +1593,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.is(tok::l_square)) {
     if (Style.Language == FormatStyle::LK_Proto)
       return 1;
+    // Slightly prefer formatting local lambda definitions like functions.
+    if (Right.is(TT_LambdaLSquare) && Left.is(tok::equal))
+      return 50;
     if (!Right.isOneOf(TT_ObjCMethodExpr, TT_LambdaLSquare))
       return 500;
   }
