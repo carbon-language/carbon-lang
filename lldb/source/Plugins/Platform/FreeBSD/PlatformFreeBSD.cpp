@@ -591,6 +591,12 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
     default:
         assert(false && "Unhandled architecture in PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode()");
         break;
+    case llvm::Triple::arm:
+        {
+            static const uint8_t g_arm_opcode[] = { 0xfe, 0xde, 0xff, 0xe7 };
+            trap_opcode = g_arm_opcode;
+            trap_opcode_size = sizeof(g_arm_opcode);
+        }
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
         {

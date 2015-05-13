@@ -41,6 +41,7 @@
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextFreeBSD_arm.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_powerpc.h"
@@ -171,6 +172,9 @@ POSIXThread::GetRegisterContext()
             case llvm::Triple::FreeBSD:
                 switch (target_arch.GetMachine())
                 {
+                    case llvm::Triple::arm:
+                        reg_interface = new RegisterContextFreeBSD_arm(target_arch);
+                        break;
                     case llvm::Triple::ppc:
 #ifndef __powerpc64__
                         reg_interface = new RegisterContextFreeBSD_powerpc32(target_arch);
