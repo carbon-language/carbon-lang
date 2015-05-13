@@ -60,13 +60,13 @@ void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}
 unsigned CommaSeparatedList::formatAfterToken(LineState &State,
                                               ContinuationIndenter *Indenter,
                                               bool DryRun) {
-  if (State.NextToken == nullptr || !State.NextToken->Previous ||
-      !State.NextToken->Previous->Previous)
+  if (State.NextToken == nullptr || !State.NextToken->Previous)
     return 0;
 
   // Ensure that we start on the opening brace.
-  const FormatToken *LBrace = State.NextToken->Previous->Previous;
-  if (LBrace->isNot(tok::l_brace) || LBrace->BlockKind == BK_Block ||
+  const FormatToken *LBrace =
+      State.NextToken->Previous->getPreviousNonComment();
+  if (!LBrace || LBrace->isNot(tok::l_brace) || LBrace->BlockKind == BK_Block ||
       LBrace->Type == TT_DictLiteral ||
       LBrace->Next->Type == TT_DesignatedInitializerPeriod)
     return 0;
@@ -145,6 +145,8 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     return;
 
   FormatToken *ItemBegin = Token->Next;
+  while (ItemBegin->isTrailingComment())
+    ItemBegin = ItemBegin->Next;
   SmallVector<bool, 8> MustBreakBeforeItem;
 
   // The lengths of an item if it is put at the end of the line. This includes
