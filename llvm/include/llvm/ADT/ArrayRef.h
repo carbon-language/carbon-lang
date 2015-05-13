@@ -96,6 +96,25 @@ namespace llvm {
                  std::is_convertible<U *const *, T const *>::value>::type* = 0)
       : Data(A.data()), Length(A.size()) {}
 
+    /// Construct an ArrayRef<const T*> from a SmallVector<T*>. This is
+    /// templated in order to avoid instantiating SmallVectorTemplateCommon<T>
+    /// whenever we copy-construct an ArrayRef.
+    template<typename U, typename DummyT>
+    /*implicit*/ ArrayRef(const SmallVectorTemplateCommon<U*, DummyT> &Vec,
+                          typename std::enable_if<
+                              std::is_convertible<U *const *,
+                                                  T const *>::value>::type* = 0)
+      : Data(Vec.data()), Length(Vec.size()) {
+    }
+
+    /// Construct an ArrayRef<const T*> from std::vector<T*>. This uses SFINAE
+    /// to ensure that only vectors of pointers can be converted.
+    template<typename U, typename A>
+    ArrayRef(const std::vector<U *, A> &Vec,
+             typename std::enable_if<
+                 std::is_convertible<U *const *, T const *>::value>::type* = 0)
+      : Data(Vec.data()), Length(Vec.size()) {}
+
     /// @}
     /// @name Simple Operations
     /// @{

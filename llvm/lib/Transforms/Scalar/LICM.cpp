@@ -929,7 +929,7 @@ bool llvm::promoteLoopAccessesToScalars(AliasSet &AS,
   // We use the SSAUpdater interface to insert phi nodes as required.
   SmallVector<PHINode*, 16> NewPHIs;
   SSAUpdater SSA(&NewPHIs);
-  LoopPromoter Promoter(SomePtr, makeArrayRef(LoopUses), SSA,
+  LoopPromoter Promoter(SomePtr, LoopUses, SSA,
                         PointerMustAliases, ExitBlocks,
                         InsertPts, PIC, *CurAST, *LI, DL, Alignment, AATags);
 
