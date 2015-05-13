@@ -400,6 +400,8 @@ private:
                             bool isReturnValue, const Value *V);
   void VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
                            const Value *V);
+  void VerifyFunctionMetadata(
+      const SmallVector<std::pair<unsigned, MDNode *>, 4> MDs);
 
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
   void VerifyStatepoint(ImmutableCallSite CS);
@@ -1463,6 +1465,36 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
   }
 }
 
+void Verifier::VerifyFunctionMetadata(
+    const SmallVector<std::pair<unsigned, MDNode *>, 4> MDs) {
+  if (MDs.empty())
+    return;
+
+  for (unsigned i = 0; i < MDs.size(); i++) {
+    if (MDs[i].first == LLVMContext::MD_prof) {
+      MDNode *MD = MDs[i].second;
+      Assert(MD->getNumOperands() == 2,
+             "!prof annotations should have exactly 2 operands", MD);
+
+      // Check first operand.
+      Assert(MD->getOperand(0) != nullptr, "first operand should not be null",
+             MD);
+      Assert(isa<MDString>(MD->getOperand(0)),
+             "expected string with name of the !prof annotation", MD);
+      MDString *MDS = cast<MDString>(MD->getOperand(0));
+      StringRef ProfName = MDS->getString();
+      Assert(ProfName.equals("function_entry_count"),
+             "first operand should be 'function_entry_count'", MD);
+
+      // Check second operand.
+      Assert(MD->getOperand(1) != nullptr, "second operand should not be null",
+             MD);
+      Assert(isa<ConstantAsMetadata>(MD->getOperand(1)),
+             "expected integer argument to function_entry_count", MD);
+    }
+  }
+}
+
 void Verifier::VerifyConstantExprBitcastType(const ConstantExpr *CE) {
   if (CE->getOpcode() != Instruction::BitCast)
     return;
@@ -1713,6 +1745,7 @@ void Verifier::visitFunction(const Function &F) {
   SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
   F.getAllMetadata(MDs);
   assert(F.hasMetadata() != MDs.empty() && "Bit out-of-sync");
+  VerifyFunctionMetadata(MDs);
 
   if (F.isMaterializable()) {
     // Function has a body somewhere we can't see.

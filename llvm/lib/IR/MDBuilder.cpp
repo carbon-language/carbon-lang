@@ -53,6 +53,16 @@ MDNode *MDBuilder::createBranchWeights(ArrayRef<uint32_t> Weights) {
   return MDNode::get(Context, Vals);
 }
 
+MDNode *MDBuilder::createFunctionEntryCount(uint64_t Count) {
+  SmallVector<Metadata *, 2> Vals(2);
+  Vals[0] = createString("function_entry_count");
+
+  Type *Int64Ty = Type::getInt64Ty(Context);
+  Vals[1] = createConstant(ConstantInt::get(Int64Ty, Count));
+
+  return MDNode::get(Context, Vals);
+}
+
 MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {
   assert(Lo.getBitWidth() == Hi.getBitWidth() && "Mismatched bitwidths!");
 

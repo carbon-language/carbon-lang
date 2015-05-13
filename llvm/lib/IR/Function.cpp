@@ -19,10 +19,13 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/RWMutex.h"
@@ -985,4 +988,20 @@ void llvm::overrideFunctionAttribute(StringRef Kind, StringRef Value,
                                  AttrsToRemove);
   Attrs = Attrs.addAttribute(Ctx, AttributeSet::FunctionIndex, Kind, Value);
   F.setAttributes(Attrs);
+}
+
+void Function::setEntryCount(uint64_t Count) {
+  MDBuilder MDB(getContext());
+  setMetadata(LLVMContext::MD_prof, MDB.createFunctionEntryCount(Count));
+}
+
+Optional<uint64_t> Function::getEntryCount() const {
+  MDNode *MD = getMetadata(LLVMContext::MD_prof);
+  if (MD && MD->getOperand(0))
+    if (MDString *MDS = dyn_cast<MDString>(MD->getOperand(0)))
+      if (MDS->getString().equals("function_entry_count")) {
+        ConstantInt *CI = mdconst::extract<ConstantInt>(MD->getOperand(1));
+        return CI->getValue().getZExtValue();
+      }
+  return None;
 }

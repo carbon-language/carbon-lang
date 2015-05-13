@@ -115,3 +115,26 @@ CFG Modifications
 Branch Weight Metatada is not proof against CFG changes. If terminator operands'
 are changed some action should be taken. In other case some misoptimizations may
 occur due to incorrent branch prediction information.
+
+Function Entry Counts
+=====================
+
+To allow comparing different functions durint inter-procedural analysis and
+optimization, ``MD_prof`` nodes can also be assigned to a function definition.
+The first operand is a string indicating the name of the associated counter.
+
+Currently, one counter is supported: "function_entry_count". This is a 64-bit
+counter that indicates the number of times that this function was invoked (in
+the case of instrumentation-based profiles). In the case of sampling-based
+profiles, this counter is an approximation of how many times the function was
+invoked.
+
+For example, in the code below, the instrumentation for function foo()
+indicates that it was called 2,590 times at runtime.
+
+.. code-block:: llvm
+
+  define i32 @foo() !prof !1 {
+    ret i32 0
+  }
+  !1 = !{!"function_entry_count", i64 2590}

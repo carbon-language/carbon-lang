@@ -19,6 +19,7 @@
 #define LLVM_IR_FUNCTION_H
 
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
@@ -193,6 +194,12 @@ public:
       AttributeSets.addAttribute(getContext(),
                                  AttributeSet::FunctionIndex, Kind, Value));
   }
+
+  /// Set the entry count for this function.
+  void setEntryCount(uint64_t Count);
+
+  /// Get the entry count for this function.
+  Optional<uint64_t> getEntryCount() const;
 
   /// @brief Return true if the function has the attribute.
   bool hasFnAttribute(Attribute::AttrKind Kind) const {

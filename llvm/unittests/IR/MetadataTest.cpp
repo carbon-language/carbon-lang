@@ -2272,4 +2272,12 @@ TEST_F(FunctionAttachmentTest, Verifier) {
   EXPECT_FALSE(verifyFunction(*F));
 }
 
+TEST_F(FunctionAttachmentTest, EntryCount) {
+  Function *F = getFunction("foo");
+  EXPECT_FALSE(F->getEntryCount().hasValue());
+  F->setEntryCount(12304);
+  EXPECT_TRUE(F->getEntryCount().hasValue());
+  EXPECT_EQ(12304u, *F->getEntryCount());
+}
+
 }
