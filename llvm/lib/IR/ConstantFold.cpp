@@ -1385,7 +1385,7 @@ static ICmpInst::Predicate areGlobalsPotentiallyEqual(const GlobalValue *GV1,
     if (GV->hasExternalWeakLinkage() || GV->hasWeakAnyLinkage())
       return true;
     if (const auto *GVar = dyn_cast<GlobalVariable>(GV)) {
-      Type *Ty = GVar->getType()->getPointerElementType();
+      Type *Ty = GVar->getValueType();
       // A global with opaque type might end up being zero sized.
       if (!Ty->isSized())
         return true;
