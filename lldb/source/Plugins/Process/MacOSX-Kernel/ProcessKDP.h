@@ -97,9 +97,6 @@ public:
     DoConnectRemote (lldb_private::Stream *strm, const char *remote_url);
     
     virtual lldb_private::Error
-    DoAttachToProcessWithID (lldb::pid_t pid);
-    
-    virtual lldb_private::Error
     DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info);
     
     virtual lldb_private::Error

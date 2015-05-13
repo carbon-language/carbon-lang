@@ -51,9 +51,6 @@ public:
     WillLaunch(lldb_private::Module *module) override;
 
     lldb_private::Error
-    DoAttachToProcessWithID(lldb::pid_t pid) override;
-
-    lldb_private::Error
     DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info) override;
 
     lldb_private::Error

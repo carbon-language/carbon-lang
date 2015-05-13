@@ -105,9 +105,6 @@ public:
     
     Error
     WillLaunchOrAttach ();
-
-    Error
-    DoAttachToProcessWithID (lldb::pid_t pid) override;
     
     Error
     DoAttachToProcessWithID (lldb::pid_t pid, const ProcessAttachInfo &attach_info) override;

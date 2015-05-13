@@ -406,15 +406,6 @@ ProcessKDP::DoLaunch (Module *exe_module,
     return error;
 }
 
-
-Error
-ProcessKDP::DoAttachToProcessWithID (lldb::pid_t attach_pid)
-{
-    Error error;
-    error.SetErrorString ("attach to process by ID is not suppported in kdp remote debugging");
-    return error;
-}
-
 Error
 ProcessKDP::DoAttachToProcessWithID (lldb::pid_t attach_pid, const ProcessAttachInfo &attach_info)
 {

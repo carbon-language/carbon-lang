@@ -1453,31 +1453,14 @@ public:
     /// @param[in] pid
     ///     The process ID that we should attempt to attach to.
     ///
-    /// @return
-    ///     Returns \a pid if attaching was successful, or
-    ///     LLDB_INVALID_PROCESS_ID if attaching fails.
-    //------------------------------------------------------------------
-    virtual Error
-    DoAttachToProcessWithID (lldb::pid_t pid)
-    {
-        Error error;
-        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetPluginName().GetCString());
-        return error;
-    }
-
-    //------------------------------------------------------------------
-    /// Attach to an existing process using a process ID.
-    ///
-    /// @param[in] pid
-    ///     The process ID that we should attempt to attach to.
-    ///
     /// @param[in] attach_info
     ///     Information on how to do the attach. For example, GetUserID()
     ///     will return the uid to attach as.
     ///
     /// @return
-    ///     Returns \a pid if attaching was successful, or
-    ///     LLDB_INVALID_PROCESS_ID if attaching fails.
+    ///     Returns a successful Error attaching was successful, or
+    ///     an appropriate (possibly platform-specific) error code if
+    ///     attaching fails.
     /// hanming : need flag
     //------------------------------------------------------------------
     virtual Error
@@ -1499,7 +1482,9 @@ public:
     ///     will return the uid to attach as.
     ///
     /// @return
-    ///     Returns an error object.
+    ///     Returns a successful Error attaching was successful, or
+    ///     an appropriate (possibly platform-specific) error code if
+    ///     attaching fails.
     //------------------------------------------------------------------
     virtual Error
     DoAttachToProcessWithName (const char *process_name, const ProcessAttachInfo &attach_info)
