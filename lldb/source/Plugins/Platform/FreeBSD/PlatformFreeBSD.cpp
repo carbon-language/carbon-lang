@@ -123,27 +123,6 @@ PlatformFreeBSD::Terminate ()
     Platform::Terminate ();
 }
 
-//------------------------------------------------------------------
-/// Default Constructor
-//------------------------------------------------------------------
-PlatformFreeBSD::PlatformFreeBSD (bool is_host) :
-Platform(is_host),
-m_remote_platform_sp()
-{
-}
-
-//------------------------------------------------------------------
-/// Destructor.
-///
-/// The destructor is virtual since this class is designed to be
-/// inherited from by the plug-in instance.
-//------------------------------------------------------------------
-PlatformFreeBSD::~PlatformFreeBSD()
-{
-}
-
-//TODO:VK: inherit PlatformPOSIX
-
 bool
 PlatformFreeBSD::GetModuleSpec (const FileSpec& module_file_spec,
                                 const ArchSpec& arch,
@@ -173,7 +152,6 @@ PlatformFreeBSD::RunShellCommand (const char *command,
             return Error("unable to run a remote command without a platform");
     }
 }
-
 
 Error
 PlatformFreeBSD::ResolveExecutable (const ModuleSpec &module_spec,
@@ -295,40 +273,45 @@ PlatformFreeBSD::ResolveExecutable (const ModuleSpec &module_spec,
     return error;
 }
 
-size_t
-PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
+// From PlatformMacOSX only
+Error
+PlatformFreeBSD::GetFileWithUUID (const FileSpec &platform_file,
+                                  const UUID *uuid_ptr,
+                                  FileSpec &local_file)
 {
-    ArchSpec arch = target.GetArchitecture();
-    const uint8_t *trap_opcode = NULL;
-    size_t trap_opcode_size = 0;
-
-    switch (arch.GetMachine())
+    if (IsRemote())
     {
-    default:
-        assert(false && "Unhandled architecture in PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode()");
-        break;
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-        {
-            static const uint8_t g_i386_opcode[] = { 0xCC };
-            trap_opcode = g_i386_opcode;
-            trap_opcode_size = sizeof(g_i386_opcode);
-        }
-        break;
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-        {
-            static const uint8_t g_ppc_opcode[] = { 0x7f, 0xe0, 0x00, 0x08 };
-            trap_opcode = g_ppc_opcode;
-            trap_opcode_size = sizeof(g_ppc_opcode);
-        }
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->GetFileWithUUID (platform_file, uuid_ptr, local_file);
     }
 
-    if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
-        return trap_opcode_size;
-
-    return 0;
+    // Default to the local case
+    local_file = platform_file;
+    return Error();
 }
+
+
+//------------------------------------------------------------------
+/// Default Constructor
+//------------------------------------------------------------------
+PlatformFreeBSD::PlatformFreeBSD (bool is_host) :
+    Platform(is_host),
+    m_remote_platform_sp()
+{
+}
+
+//------------------------------------------------------------------
+/// Destructor.
+///
+/// The destructor is virtual since this class is designed to be
+/// inherited from by the plug-in instance.
+//------------------------------------------------------------------
+PlatformFreeBSD::~PlatformFreeBSD()
+{
+}
+
+//TODO:VK: inherit PlatformPOSIX
+
 
 bool
 PlatformFreeBSD::GetRemoteOSVersion ()
@@ -460,8 +443,6 @@ PlatformFreeBSD::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_i
     return success;
 }
 
-
-
 uint32_t
 PlatformFreeBSD::FindProcesses (const ProcessInstanceInfoMatch &match_info,
                                ProcessInstanceInfoList &process_infos)
@@ -479,71 +460,6 @@ PlatformFreeBSD::FindProcesses (const ProcessInstanceInfoMatch &match_info,
             match_count = m_remote_platform_sp->FindProcesses (match_info, process_infos);
     }
     return match_count;
-}
-
-Error
-PlatformFreeBSD::LaunchProcess (ProcessLaunchInfo &launch_info)
-{
-    Error error;
-    if (IsHost())
-    {
-        error = Platform::LaunchProcess (launch_info);
-    }
-    else
-    {
-        if (m_remote_platform_sp)
-            error = m_remote_platform_sp->LaunchProcess (launch_info);
-        else
-            error.SetErrorString ("the platform is not currently connected");
-    }
-    return error;
-}
-
-lldb::ProcessSP
-PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
-                        Debugger &debugger,
-                        Target *target,
-                        Error &error)
-{
-    lldb::ProcessSP process_sp;
-    if (IsHost())
-    {
-        if (target == NULL)
-        {
-            TargetSP new_target_sp;
-            ArchSpec emptyArchSpec;
-
-            error = debugger.GetTargetList().CreateTarget (debugger,
-                                                           NULL,
-                                                           emptyArchSpec,
-                                                           false,
-                                                           m_remote_platform_sp,
-                                                           new_target_sp);
-            target = new_target_sp.get();
-        }
-        else
-            error.Clear();
-
-        if (target && error.Success())
-        {
-            debugger.GetTargetList().SetSelectedTarget(target);
-            // The freebsd always currently uses the GDB remote debugger plug-in
-            // so even when debugging locally we are debugging remotely!
-            // Just like the darwin plugin.
-            process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
-
-            if (process_sp)
-                error = process_sp->Attach (attach_info);
-        }
-    }
-    else
-    {
-        if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
-        else
-            error.SetErrorString ("the platform is not currently connected");
-    }
-    return process_sp;
 }
 
 const char *
@@ -571,23 +487,6 @@ PlatformFreeBSD::GetGroupName (uint32_t gid)
     return NULL;
 }
 
-
-// From PlatformMacOSX only
-Error
-PlatformFreeBSD::GetFileWithUUID (const FileSpec &platform_file,
-                                  const UUID *uuid_ptr,
-                                  FileSpec &local_file)
-{
-    if (IsRemote())
-    {
-        if (m_remote_platform_sp)
-            return m_remote_platform_sp->GetFileWithUUID (platform_file, uuid_ptr, local_file);
-    }
-
-    // Default to the local case
-    local_file = platform_file;
-    return Error();
-}
 
 Error
 PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
@@ -680,8 +579,109 @@ PlatformFreeBSD::GetStatus (Stream &strm)
     Platform::GetStatus(strm);
 }
 
+size_t
+PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
+{
+    ArchSpec arch = target.GetArchitecture();
+    const uint8_t *trap_opcode = NULL;
+    size_t trap_opcode_size = 0;
+
+    switch (arch.GetMachine())
+    {
+    default:
+        assert(false && "Unhandled architecture in PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode()");
+        break;
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+        {
+            static const uint8_t g_i386_opcode[] = { 0xCC };
+            trap_opcode = g_i386_opcode;
+            trap_opcode_size = sizeof(g_i386_opcode);
+        }
+        break;
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
+        {
+            static const uint8_t g_ppc_opcode[] = { 0x7f, 0xe0, 0x00, 0x08 };
+            trap_opcode = g_ppc_opcode;
+            trap_opcode_size = sizeof(g_ppc_opcode);
+        }
+    }
+
+    if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
+        return trap_opcode_size;
+
+    return 0;
+}
+
+
 void
 PlatformFreeBSD::CalculateTrapHandlerSymbolNames ()
 {
     m_trap_handlers.push_back (ConstString ("_sigtramp"));
+}
+
+Error
+PlatformFreeBSD::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    if (IsHost())
+    {
+        error = Platform::LaunchProcess (launch_info);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            error = m_remote_platform_sp->LaunchProcess (launch_info);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return error;
+}
+
+lldb::ProcessSP
+PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
+                        Debugger &debugger,
+                        Target *target,
+                        Error &error)
+{
+    lldb::ProcessSP process_sp;
+    if (IsHost())
+    {
+        if (target == NULL)
+        {
+            TargetSP new_target_sp;
+            ArchSpec emptyArchSpec;
+
+            error = debugger.GetTargetList().CreateTarget (debugger,
+                                                           NULL,
+                                                           emptyArchSpec,
+                                                           false,
+                                                           m_remote_platform_sp,
+                                                           new_target_sp);
+            target = new_target_sp.get();
+        }
+        else
+            error.Clear();
+
+        if (target && error.Success())
+        {
+            debugger.GetTargetList().SetSelectedTarget(target);
+            // The freebsd always currently uses the GDB remote debugger plug-in
+            // so even when debugging locally we are debugging remotely!
+            // Just like the darwin plugin.
+            process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
+
+            if (process_sp)
+                error = process_sp->Attach (attach_info);
+        }
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return process_sp;
 }
