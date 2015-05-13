@@ -300,7 +300,7 @@ TargetList::CreateTargetInternal (Debugger &debugger,
         if (!platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
         {
             platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
-            if (platform_sp)
+            if (!is_dummy_target && platform_sp)
                 debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
         }
     }
@@ -312,7 +312,7 @@ TargetList::CreateTargetInternal (Debugger &debugger,
         if (!platform_sp->IsCompatibleArchitecture(platform_arch, false, &fixed_platform_arch))
         {
             platform_sp = Platform::GetPlatformForArchitecture(platform_arch, &fixed_platform_arch);
-            if (platform_sp)
+            if (!is_dummy_target && platform_sp)
                 debugger.GetPlatformList().SetSelectedPlatform(platform_sp);
         }
     }
