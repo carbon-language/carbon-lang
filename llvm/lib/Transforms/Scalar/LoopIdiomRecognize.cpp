@@ -639,13 +639,12 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
 
   bool MadeChange = false;
   // Scan all the blocks in the loop that are not in subloops.
-  for (Loop::block_iterator BI = CurLoop->block_begin(),
-         E = CurLoop->block_end(); BI != E; ++BI) {
+  for (auto BB : CurLoop->getBlocks()) {
     // Ignore blocks in subloops.
-    if (LI.getLoopFor(*BI) != CurLoop)
+    if (LI.getLoopFor(BB) != CurLoop)
       continue;
 
-    MadeChange |= runOnLoopBlock(*BI, BECount, ExitBlocks);
+    MadeChange |= runOnLoopBlock(BB, BECount, ExitBlocks);
   }
   return MadeChange;
 }
