@@ -182,12 +182,13 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
   return false;
 }
 
-bool AliasSet::aliasesUnknownInst(Instruction *Inst, AliasAnalysis &AA) const {
+bool AliasSet::aliasesUnknownInst(const Instruction *Inst,
+                                  AliasAnalysis &AA) const {
   if (!Inst->mayReadOrWriteMemory())
     return false;
 
   for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
-    CallSite C1(getUnknownInst(i)), C2(Inst);
+    ImmutableCallSite C1(getUnknownInst(i)), C2(Inst);
     if (!C1 || !C2 ||
         AA.getModRefInfo(C1, C2) != AliasAnalysis::NoModRef ||
         AA.getModRefInfo(C2, C1) != AliasAnalysis::NoModRef)
@@ -242,7 +243,7 @@ AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
 /// containsPointer - Return true if the specified location is represented by
 /// this alias set, false otherwise.  This does not modify the AST object or
 /// alias sets.
-bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
+bool AliasSetTracker::containsPointer(const Value *Ptr, uint64_t Size,
                                       const AAMDNodes &AAInfo) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (!I->Forward && I->aliasesPointer(Ptr, Size, AAInfo, AA))
@@ -250,7 +251,7 @@ bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
   return false;
 }
 
-bool AliasSetTracker::containsUnknown(Instruction *Inst) const {
+bool AliasSetTracker::containsUnknown(const Instruction *Inst) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (!I->Forward && I->aliasesUnknownInst(Inst, AA))
       return true;
