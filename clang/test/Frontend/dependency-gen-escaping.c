@@ -17,9 +17,10 @@
 #include "##.h"
 #include "normal.h"
 
-// Backslash followed by # or space is handled differently than GCC does,
-// because GCC doesn't emit this obscure corner case the way GNU Make wants it.
-// CHECK: a\b\\\#c\\\ d.h
+// Backslash followed by # or space should escape both characters, because
+// that's what GNU Make wants.  GCC does the right thing with space, but not
+// #, so Clang does too. (There should be 3 backslashes before the #.)
+// CHECK: a\b\\#c\\\ d.h
 // These combinations are just another case for NMAKE.
 // NMAKE: "a\b\#c\ d.h"
 

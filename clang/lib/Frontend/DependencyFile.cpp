@@ -310,37 +310,30 @@ void DFGImpl::AddFilename(StringRef Filename) {
 /// retry with the unmodified original string.
 ///
 /// GCC tries to accommodate both Make formats by escaping any space or #
-/// characters in the original filename, but not escaping any backslash
-/// characters.  That way, filenames with backslashes will be handled
+/// characters in the original filename, but not escaping backslashes.  The
+/// apparent intent is so that filenames with backslashes will be handled
 /// correctly by BSD Make, and by GNU Make in its fallback mode of using the
 /// unmodified original string; filenames with # or space characters aren't
 /// supported by BSD Make at all, but will be handled correctly by GNU Make
 /// due to the escaping.
 ///
-/// A corner case that GCC does not handle is when the original filename has
-/// a backslash immediately followed by # or space. It will therefore take a
-/// dependency from a directive such as
-///     #include "a\#b.h"
+/// A corner case that GCC gets only partly right is when the original filename
+/// has a backslash immediately followed by space or #.  GNU Make would expect
+/// this backslash to be escaped; however GCC escapes the original backslash
+/// only when followed by space, not #.  It will therefore take a dependency
+/// from a directive such as
+///     #include "a\ b\#c.h"
 /// and emit it as
-///     a\\#b.h
+///     a\\\ b\\#c.h
 /// which GNU Make will interpret as
-///     a\
+///     a\ b\
 /// followed by a comment. Failing to find this file, it will fall back to the
-/// original string, and look for
-///     a\\#b.h
-/// which probably doesn't exist either; in any case it won't find
-///     a\#b.h
+/// original string, which probably doesn't exist either; in any case it won't
+/// find
+///     a\ b\#c.h
 /// which is the actual filename specified by the include directive.
 ///
-/// Clang escapes space, # and $ like GCC does, but also handles the case of
-/// backslash immediately preceding space or # by doubling those backslashes.
-/// This means Clang will emit the dependency from
-///     #include "a\#b.h"
-/// as
-///     a\\\#b.h
-/// which GNU Make will un-escape into
-///     a\#b.h
-/// which is the correct original filename.
+/// Clang does what GCC does, rather than what GNU Make expects.
 ///
 /// NMake/Jom has a different set of scary characters, but wraps filespecs in
 /// double-quotes to avoid misinterpreting them; see
@@ -359,8 +352,11 @@ static void PrintFilename(raw_ostream &OS, StringRef Filename,
       OS << Filename;
     return;
   }
+  assert(OutputFormat == DependencyOutputFormat::Make);
   for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
-    if (Filename[i] == ' ' || Filename[i] == '#') {
+    if (Filename[i] == '#') // Handle '#' the broken gcc way.
+      OS << '\\';
+    else if (Filename[i] == ' ') { // Handle space correctly.
       OS << '\\';
       unsigned j = i;
       while (j > 0 && Filename[--j] == '\\')
