@@ -31,7 +31,6 @@
 CMICmnStreamStdin::CMICmnStreamStdin(void)
     : m_strPromptCurrent("(gdb)")
     , m_bShowPrompt(true)
-    , m_bRedrawPrompt(true)
     , m_pCmdBuffer(nullptr)
 {
 }

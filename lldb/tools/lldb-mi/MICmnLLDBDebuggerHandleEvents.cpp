@@ -1022,7 +1022,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
         const CMICmnMIValueResult miValueResult7("stopped-threads", miValueConst7);
         bOk = bOk && miOutOfBandRecord.Add(miValueResult7);
         bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
     else if (nStopReason == m_SIGSEGV)
     {
@@ -1090,7 +1090,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
         const CMICmnMIValueResult miValueResult4("stopped-threads", miValueConst4);
         bOk = bOk && miOutOfBandRecord.Add(miValueResult4);
         bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
     return bOk;
 }
@@ -1128,7 +1128,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopException(void)
     const CMICmnMIValueResult miValueResult4("stopped-threads", miValueConst4);
     bOk = bOk && miOutOfBandRecord.Add(miValueResult4);
     bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
-    bOk = bOk && TextToStdout("(gdb)");
+    bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
     return bOk;
 }
@@ -1248,7 +1248,7 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
         const CMICmnMIValueResult miValueResult6("stopped-threads", miValueConst6);
         bOk = bOk && miOutOfBandRecord.Add(miValueResult6);
         bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
         return bOk;
     }
 
@@ -1290,7 +1290,7 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
         const CMICmnMIValueResult miValueResult9("stopped-threads", miValueConst9);
         bOk = miOutOfBandRecord.Add(miValueResult9);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
 
     return MIstatus::success;
@@ -1321,7 +1321,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
         const CMICmnMIValueResult miValueResult2("stopped-threads", miValueConst2);
         bOk = miOutOfBandRecord.Add(miValueResult2);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
         return bOk;
     }
 
@@ -1355,7 +1355,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
         const CMICmnMIValueResult miValueResult9("stopped-threads", miValueConst9);
         bOk = miOutOfBandRecord.Add(miValueResult9);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
-        bOk = bOk && TextToStdout("(gdb)");
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
 
     return bOk;
@@ -1447,7 +1447,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateRunning(void)
     CMICmnMIValueResult miValueResult("thread-id", miValueConst);
     CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_Running, miValueResult);
     bool bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
-    bOk = bOk && TextToStdout("(gdb)");
+    bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
     return bOk;
 }
@@ -1491,7 +1491,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateExited(void)
         CMICmnMIOutOfBandRecord miOutOfBandRecord3(CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, miValueResult4);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord3);
     }
-    bOk = bOk && TextToStdout("(gdb)");
+    bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
     return bOk;
 }
@@ -1693,7 +1693,7 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
             ++it;
     }
 
-    return TextToStdout("(gdb)");
+    return CMICmnStreamStdout::WritePrompt();
 }
 
 //++ ------------------------------------------------------------------------------------

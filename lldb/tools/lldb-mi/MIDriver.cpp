@@ -576,8 +576,7 @@ CMIDriver::DoMainLoop(void)
                 }
 
                 // Draw prompt if desired
-                if (bOk && m_rStdin.GetEnablePrompt())
-                    bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+                bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
                 // Wait while the handler thread handles incoming events
                 CMICmnLLDBDebugger::Instance().WaitForHandleEvent();
@@ -1173,7 +1172,7 @@ CMIDriver::InitClientIDEToMIDriver(void) const
 bool
 CMIDriver::InitClientIDEEclipse(void) const
 {
-    return CMICmnStreamStdout::TextToStdout("(gdb)");
+    return CMICmnStreamStdout::WritePrompt();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1223,8 +1222,7 @@ CMIDriver::LocalDebugSessionStartupExecuteCommands(void)
     const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.AddSlashes().c_str()));
     bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
     bOk = bOk && InterpretCommand(strCmd);
-    if (bOk && m_rStdin.GetEnablePrompt())
-        bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+    bOk = bOk && CMICmnStreamStdout::WritePrompt();
     return bOk;
 }
 
@@ -1304,8 +1302,7 @@ CMIDriver::ExecuteCommandFile(const bool vbAsyncMode)
         }
 
         // Draw the prompt after command will be executed (if enabled)
-        if (bOk && m_rStdin.GetEnablePrompt())
-            bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
         // Exit if there is an error
         if (!bOk)

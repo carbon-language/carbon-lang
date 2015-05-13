@@ -216,9 +216,23 @@ CMICmnStreamStdout::Unlock(void)
 bool
 CMICmnStreamStdout::TextToStdout(const CMIUtilString &vrTxt)
 {
-    const bool bLock = CMICmnStreamStdout::Instance().Lock();
-    const bool bOk = bLock && CMICmnStreamStdout::Instance().WriteMIResponse(vrTxt);
-    bLock &&CMICmnStreamStdout::Instance().Unlock();
+    const bool bSendToLog = true;
+    return CMICmnStreamStdout::Instance().WriteMIResponse(vrTxt, bSendToLog);
+}
 
-    return bOk;
+//++ ------------------------------------------------------------------------------------
+// Details: Write prompt to stdout if it's enabled.
+// Type:    Static method.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmnStreamStdout::WritePrompt(void)
+{
+    const CMICmnStreamStdin &rStdinMan = CMICmnStreamStdin::Instance();
+    if (rStdinMan.GetEnablePrompt())
+        return TextToStdout(rStdinMan.GetPrompt());
+    return MIstatus::success;
 }

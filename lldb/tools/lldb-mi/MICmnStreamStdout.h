@@ -31,6 +31,7 @@ class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStream
     // Statics:
   public:
     static bool TextToStdout(const CMIUtilString &vrTxt);
+    static bool WritePrompt(void);
 
     // Methods:
   public:
