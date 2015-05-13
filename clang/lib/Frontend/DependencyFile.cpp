@@ -292,9 +292,58 @@ void DFGImpl::AddFilename(StringRef Filename) {
     Files.push_back(Filename);
 }
 
-/// PrintFilename - GCC escapes spaces, # and $, but apparently not ' or " or
-/// other scary characters. NMake/Jom has a different set of scary characters,
-/// but wraps filespecs in double-quotes to avoid misinterpreting them;
+/// Print the filename, with escaping or quoting that accommodates the three
+/// most likely tools that use dependency files: GNU Make, BSD Make, and
+/// NMake/Jom.
+///
+/// BSD Make is the simplest case: It does no escaping at all.  This means
+/// characters that are normally delimiters, i.e. space and # (the comment
+/// character) simply aren't supported in filenames.
+///
+/// GNU Make does allow space and # in filenames, but to avoid being treated
+/// as a delimiter or comment, these must be escaped with a backslash. Because
+/// backslash is itself the escape character, if a backslash appears in a
+/// filename, it should be escaped as well.  (As a special case, $ is escaped
+/// as $$, which is the normal Make way to handle the $ character.)
+/// For compatibility with BSD Make and historical practice, if GNU Make
+/// un-escapes characters in a filename but doesn't find a match, it will
+/// retry with the unmodified original string.
+///
+/// GCC tries to accommodate both Make formats by escaping any space or #
+/// characters in the original filename, but not escaping any backslash
+/// characters.  That way, filenames with backslashes will be handled
+/// correctly by BSD Make, and by GNU Make in its fallback mode of using the
+/// unmodified original string; filenames with # or space characters aren't
+/// supported by BSD Make at all, but will be handled correctly by GNU Make
+/// due to the escaping.
+///
+/// A corner case that GCC does not handle is when the original filename has
+/// a backslash immediately followed by # or space. It will therefore take a
+/// dependency from a directive such as
+///     #include "a\#b.h"
+/// and emit it as
+///     a\\#b.h
+/// which GNU Make will interpret as
+///     a\
+/// followed by a comment. Failing to find this file, it will fall back to the
+/// original string, and look for
+///     a\\#b.h
+/// which probably doesn't exist either; in any case it won't find
+///     a\#b.h
+/// which is the actual filename specified by the include directive.
+///
+/// Clang escapes space, # and $ like GCC does, but also handles the case of
+/// backslash immediately preceding space or # by doubling those backslashes.
+/// This means Clang will emit the dependency from
+///     #include "a\#b.h"
+/// as
+///     a\\\#b.h
+/// which GNU Make will un-escape into
+///     a\#b.h
+/// which is the correct original filename.
+///
+/// NMake/Jom has a different set of scary characters, but wraps filespecs in
+/// double-quotes to avoid misinterpreting them; see
 /// https://msdn.microsoft.com/en-us/library/dd9y37ha.aspx for NMake info,
 /// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
 /// for Windows file-naming info.
@@ -311,9 +360,12 @@ static void PrintFilename(raw_ostream &OS, StringRef Filename,
     return;
   }
   for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
-    if (Filename[i] == ' ' || Filename[i] == '#')
+    if (Filename[i] == ' ' || Filename[i] == '#') {
       OS << '\\';
-    else if (Filename[i] == '$') // $ is escaped by $$.
+      unsigned j = i;
+      while (j > 0 && Filename[--j] == '\\')
+        OS << '\\';
+    } else if (Filename[i] == '$') // $ is escaped by $$.
       OS << '$';
     OS << Filename[i];
   }

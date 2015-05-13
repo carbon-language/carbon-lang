@@ -16,3 +16,11 @@
 #include "$$.h"
 #include "##.h"
 #include "normal.h"
+
+// Backslash followed by # or space is handled differently than GCC does,
+// because GCC doesn't emit this obscure corner case the way GNU Make wants it.
+// CHECK: a\b\\\#c\\\ d.h
+// These combinations are just another case for NMAKE.
+// NMAKE: "a\b\#c\ d.h"
+
+#include "a\b\#c\ d.h"
