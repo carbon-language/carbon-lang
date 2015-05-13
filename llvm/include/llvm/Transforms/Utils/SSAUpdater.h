@@ -14,6 +14,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_SSAUPDATER_H
 #define LLVM_TRANSFORMS_UTILS_SSAUPDATER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 
@@ -135,7 +136,7 @@ protected:
   SSAUpdater &SSA;
 
 public:
-  LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
+  LoadAndStorePromoter(ArrayRef<const Instruction*> Insts,
                        SSAUpdater &S, StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
 

@@ -322,12 +322,12 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 //===----------------------------------------------------------------------===//
 
 LoadAndStorePromoter::
-LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
+LoadAndStorePromoter(ArrayRef<const Instruction*> Insts,
                      SSAUpdater &S, StringRef BaseName) : SSA(S) {
   if (Insts.empty()) return;
   
-  Value *SomeVal;
-  if (LoadInst *LI = dyn_cast<LoadInst>(Insts[0]))
+  const Value *SomeVal;
+  if (const LoadInst *LI = dyn_cast<LoadInst>(Insts[0]))
     SomeVal = LI;
   else
     SomeVal = cast<StoreInst>(Insts[0])->getOperand(0);

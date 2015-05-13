@@ -714,7 +714,8 @@ namespace {
     }
 
   public:
-    LoopPromoter(Value *SP, const SmallVectorImpl<Instruction *> &Insts,
+    LoopPromoter(Value *SP,
+                 ArrayRef<const Instruction *> Insts,
                  SSAUpdater &S, SmallPtrSetImpl<Value *> &PMA,
                  SmallVectorImpl<BasicBlock *> &LEB,
                  SmallVectorImpl<Instruction *> &LIP, PredIteratorCache &PIC,
@@ -920,7 +921,8 @@ bool llvm::promoteLoopAccessesToScalars(AliasSet &AS,
   // We use the SSAUpdater interface to insert phi nodes as required.
   SmallVector<PHINode*, 16> NewPHIs;
   SSAUpdater SSA(&NewPHIs);
-  LoopPromoter Promoter(SomePtr, LoopUses, SSA, PointerMustAliases, ExitBlocks,
+  LoopPromoter Promoter(SomePtr, makeArrayRef(LoopUses), SSA,
+                        PointerMustAliases, ExitBlocks,
                         InsertPts, PIC, *CurAST, *LI, DL, Alignment, AATags);
 
   // Set up the preheader to have a definition of the value.  It is the live-out

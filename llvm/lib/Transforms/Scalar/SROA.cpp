@@ -1088,7 +1088,8 @@ class AllocaPromoter : public LoadAndStorePromoter {
   SmallVector<DbgValueInst *, 4> DVIs;
 
 public:
-  AllocaPromoter(const SmallVectorImpl<Instruction *> &Insts, SSAUpdater &S,
+  AllocaPromoter(ArrayRef<const Instruction *> Insts,
+                 SSAUpdater &S,
                  AllocaInst &AI, DIBuilder &DIB)
       : LoadAndStorePromoter(Insts, S), AI(AI), DIB(DIB) {}
 
@@ -4418,7 +4419,7 @@ bool SROA::promoteAllocas(Function &F) {
       DeadInsts.push_back(I);
       enqueueUsersInWorklist(*I, Worklist, Visited);
     }
-    AllocaPromoter(Insts, SSA, *AI, DIB).run(Insts);
+    AllocaPromoter(makeArrayRef(Insts), SSA, *AI, DIB).run(Insts);
     while (!DeadInsts.empty())
       DeadInsts.pop_back_val()->eraseFromParent();
     AI->eraseFromParent();
