@@ -163,6 +163,8 @@ class ELFObjectWriter : public MCObjectWriter {
       LocalSymbolData.clear();
       ExternalSymbolData.clear();
       UndefinedSymbolData.clear();
+      NeedsGOT = false;
+      SectionTable.clear();
       MCObjectWriter::reset();
     }
 
