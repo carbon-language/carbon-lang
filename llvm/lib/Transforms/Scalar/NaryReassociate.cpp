@@ -217,10 +217,14 @@ Instruction *NaryReassociate::tryReassociateAdd(Value *LHS, Value *RHS,
     //   = (A + RHS) + B or (B + RHS) + A
     const SCEV *AExpr = SE->getSCEV(A), *BExpr = SE->getSCEV(B);
     const SCEV *RHSExpr = SE->getSCEV(RHS);
-    if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(AExpr, RHSExpr), B, I))
-      return NewI;
-    if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(BExpr, RHSExpr), A, I))
-      return NewI;
+    if (BExpr != RHSExpr) {
+      if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(AExpr, RHSExpr), B, I))
+        return NewI;
+    }
+    if (AExpr != RHSExpr) {
+      if (auto *NewI = tryReassociatedAdd(SE->getAddExpr(BExpr, RHSExpr), A, I))
+        return NewI;
+    }
   }
   return nullptr;
 }

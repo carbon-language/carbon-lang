@@ -196,3 +196,14 @@ define void @iterative(i32 %a, i32 %b, i32 %c) {
 
   ret void
 }
+
+define void @avoid_infinite_loop(i32 %a, i32 %b) {
+; CHECK-LABEL: @avoid_infinite_loop
+  %ab = add i32 %a, %b
+; CHECK-NEXT: %ab
+  %ab2 = add i32 %ab, %b
+; CHECK-NEXT: %ab2
+  call void @foo(i32 %ab2)
+; CHECK-NEXT: @foo(i32 %ab2)
+  ret void
+}
