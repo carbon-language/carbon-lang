@@ -3656,8 +3656,10 @@ SpecializeCorrespondingLambdaCallOperatorAndInvoker(
   FunctionTemplateDecl *InvokerTemplate = LambdaClass->
                   getLambdaStaticInvoker()->getDescribedFunctionTemplate();
 
-  Sema::TemplateDeductionResult LLVM_ATTRIBUTE_UNUSED Result
-    = S.FinishTemplateArgumentDeduction(InvokerTemplate, DeducedArguments, 0, 
+#ifndef NDEBUG
+  Sema::TemplateDeductionResult LLVM_ATTRIBUTE_UNUSED Result =
+#endif
+    S.FinishTemplateArgumentDeduction(InvokerTemplate, DeducedArguments, 0, 
           InvokerSpecialized, TDInfo);
   assert(Result == Sema::TDK_Success && 
     "If the call operator succeeded so should the invoker!");
