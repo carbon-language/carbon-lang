@@ -401,7 +401,7 @@ DynamicLoaderHexagonDYLD::RendezvousBreakpointHit(void *baton,
             dyld_instance->m_rendezvous.SetRendezvousAddress( structAddr );
 
             if ( log )
-                log->Printf( "Found _rtld_debug structure @ 0x%08lx", structAddr );
+                log->Printf( "Found _rtld_debug structure @ 0x%08" PRIx64, structAddr );
         }
         else
         {
