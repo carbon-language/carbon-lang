@@ -267,6 +267,7 @@ bool CodeGenFunction::EmitOMPLastprivateClauseInit(
   bool HasAtLeastOneLastprivate = false;
   llvm::DenseSet<const VarDecl *> AlreadyEmittedVars;
   for (auto &&I = D.getClausesOfKind(OMPC_lastprivate); I; ++I) {
+    HasAtLeastOneLastprivate = true;
     auto *C = cast<OMPLastprivateClause>(*I);
     auto IRef = C->varlist_begin();
     auto IDestRef = C->destination_exprs().begin();
@@ -287,17 +288,18 @@ bool CodeGenFunction::EmitOMPLastprivateClauseInit(
         // Check if the variable is also a firstprivate: in this case IInit is
         // not generated. Initialization of this variable will happen in codegen
         // for 'firstprivate' clause.
-        if (!IInit)
-          continue;
-        auto *VD = cast<VarDecl>(cast<DeclRefExpr>(IInit)->getDecl());
-        bool IsRegistered =
-            PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value *{
-              // Emit private VarDecl with copy init.
-              EmitDecl(*VD);
-              return GetAddrOfLocalVar(VD);
-            });
-        assert(IsRegistered && "lastprivate var already registered as private");
-        HasAtLeastOneLastprivate = HasAtLeastOneLastprivate || IsRegistered;
+        if (IInit) {
+          auto *VD = cast<VarDecl>(cast<DeclRefExpr>(IInit)->getDecl());
+          bool IsRegistered =
+              PrivateScope.addPrivate(OrigVD, [&]() -> llvm::Value *{
+                // Emit private VarDecl with copy init.
+                EmitDecl(*VD);
+                return GetAddrOfLocalVar(VD);
+              });
+          assert(IsRegistered &&
+                 "lastprivate var already registered as private");
+          (void)IsRegistered;
+        }
       }
       ++IRef, ++IDestRef;
     }
