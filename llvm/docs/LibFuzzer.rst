@@ -152,6 +152,12 @@ Now, interrupt the fuzzer and run it again the same way. You will see::
 This time you were running the fuzzer with a non-empty input corpus (564 items).
 As the first step, the fuzzer minimized the set to produce 344 interesting items (the ``INITED`` line)
 
+It is quite convenient to store test corpuses in git.
+As an example, here is a git repository with test inputs for the above PCRE2 fuzzer::
+
+  git clone https://github.com/kcc/fuzzing-with-sanitizers.git
+  ./pcre_fuzzer ./fuzzing-with-sanitizers/pcre2/C1/
+
 You may run ``N`` independent fuzzer jobs in parallel on ``M`` CPUs::
 
   N=100; M=4; ./pcre_fuzzer ./CORPUS -jobs=$N -workers=$M
@@ -297,6 +303,24 @@ The default behavior is very similar to ``clang-format-fuzzer``.
 Clang can also be fuzzed with Tokens_ using ``-tokens=$LLVM/lib/Fuzzer/cxx_fuzzer_tokens.txt`` option.
 
 Tracking bug: https://llvm.org/bugs/show_bug.cgi?id=23057
+
+Buildbot
+--------
+
+We have a buildbot that runs the above fuzzers for LLVM components
+24/7/365 at http://lab.llvm.org:8011/builders/sanitizer-x86_64-linux-fuzzer .
+
+Pre-fuzzed test inputs in git
+-----------------------------
+
+The buildbot occumulates large test corpuses over time.
+The corpuses are stored in git on github and can be used like this::
+
+  git clone https://github.com/kcc/fuzzing-with-sanitizers.git
+  bin/clang-format-fuzzer fuzzing-with-sanitizers/llvm/clang-format/C1
+  bin/clang-fuzzer        fuzzing-with-sanitizers/llvm/clang/C1/
+  bin/clang-fuzzer        fuzzing-with-sanitizers/llvm/clang/TOK1  -tokens=$LLVM/llvm/lib/Fuzzer/cxx_fuzzer_tokens.txt
+
 
 FAQ
 =========================
