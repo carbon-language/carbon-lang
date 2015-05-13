@@ -185,8 +185,8 @@ struct PlaceSafepoints : public FunctionPass {
 // Insert a safepoint poll immediately before the given instruction.  Does
 // not handle the parsability of state at the runtime call, that's the
 // callers job.
-static void
-InsertSafepointPoll(DominatorTree &DT, Instruction *after,
+static void 
+InsertSafepointPoll(Instruction *after,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
 static bool isGCLeafFunction(const CallSite &CS);
@@ -450,11 +450,7 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   }
 
   BasicBlock *BB = cursor->getParent();
-  SplitBlock(BB, cursor, nullptr);
-
-  // Note: SplitBlock modifies the DT.  Simply passing a Pass (which is a
-  // module pass) is not enough.
-  DT.recalculate(F);
+  SplitBlock(BB, cursor, &DT);
 
   // SplitBlock updates the DT
   DEBUG(DT.verifyDomTree());
@@ -567,10 +563,10 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   // actually insert parse points yet.  That will be done for all polls and
   // calls in a single pass.
 
-  // Note: With the migration, we need to recompute this for each 'pass'.  Once
-  // we merge these, we'll do it once before the analysis
   DominatorTree DT;
+  DT.recalculate(F);
 
+  SmallVector<Instruction *, 16> PollsNeeded;
   std::vector<CallSite> ParsePointNeeded;
 
   if (enableBackedgeSafepoints(F)) {
@@ -611,7 +607,6 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
       // We are inserting a poll, the function is modified
       modified = true;
       
-      std::vector<CallSite> ParsePoints;
       if (SplitBackedge) {
         // Split the backedge of the loop and insert the poll within that new
         // basic block.  This creates a loop with two latches per original
@@ -638,46 +633,42 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         SetVector<BasicBlock *> SplitBackedges;
         for (BasicBlock *Header : Headers) {
           BasicBlock *NewBB = SplitEdge(Term->getParent(), Header, &DT);
-          
-          std::vector<CallSite> RuntimeCalls;
-          InsertSafepointPoll(DT, NewBB->getTerminator(), RuntimeCalls);
+          PollsNeeded.push_back(NewBB->getTerminator());
           NumBackedgeSafepoints++;
-          ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
-                                  RuntimeCalls.end());
         }
-
       } else {
         // Split the latch block itself, right before the terminator.
-        std::vector<CallSite> RuntimeCalls;
-        InsertSafepointPoll(DT, Term, RuntimeCalls);
+        PollsNeeded.push_back(Term);
         NumBackedgeSafepoints++;
-        ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
-                                RuntimeCalls.end());
       }
-
-      // Record the parse points for later use
-      ParsePointNeeded.insert(ParsePointNeeded.end(), ParsePoints.begin(),
-                              ParsePoints.end());
     }
   }
 
   if (enableEntrySafepoints(F)) {
-    DT.recalculate(F);
-    Instruction *term = findLocationForEntrySafepoint(F, DT);
-    if (!term) {
+    Instruction *Location = findLocationForEntrySafepoint(F, DT);
+    if (!Location) {
       // policy choice not to insert?
     } else {
-      std::vector<CallSite> RuntimeCalls;
-      InsertSafepointPoll(DT, term, RuntimeCalls);
+      PollsNeeded.push_back(Location);
       modified = true;
       NumEntrySafepoints++;
-      ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
-                              RuntimeCalls.end());
     }
   }
 
+  // Now that we've identified all the needed safepoint poll locations, insert
+  // safepoint polls themselves.
+  for (Instruction *PollLocation : PollsNeeded) {
+    std::vector<CallSite> RuntimeCalls;
+    InsertSafepointPoll(PollLocation, RuntimeCalls);
+    ParsePointNeeded.insert(ParsePointNeeded.end(), RuntimeCalls.begin(),
+                            RuntimeCalls.end());
+  }
+  PollsNeeded.clear(); // make sure we don't accidentally use
+  // The dominator tree has been invalidated by the inlining performed in the
+  // above loop.  TODO: Teach the inliner how to update the dom tree?
+  DT.recalculate(F);
+  
   if (enableCallSafepoints(F)) {
-    DT.recalculate(F);
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);
     NumCallSafepoints += Calls.size();
@@ -692,7 +683,6 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   unique_unsorted(ParsePointNeeded);
 
   // Any parse point (no matter what source) will be handled here
-  DT.recalculate(F); // Needed?
 
   // We're about to start modifying the function
   if (!ParsePointNeeded.empty())
@@ -788,7 +778,7 @@ static bool isGCLeafFunction(const CallSite &CS) {
 }
 
 static void
-InsertSafepointPoll(DominatorTree &DT, Instruction *term,
+InsertSafepointPoll(Instruction *term,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/) {
   Module *M = term->getParent()->getParent()->getParent();
   assert(M);
@@ -818,7 +808,6 @@ InsertSafepointPoll(DominatorTree &DT, Instruction *term,
   }
   after++;
   assert(after != poll->getParent()->end() && "must have successor");
-  assert(DT.dominates(before, after) && "trivially true");
 
   // do the actual inlining
   InlineFunctionInfo IFI;
@@ -847,13 +836,6 @@ InsertSafepointPoll(DominatorTree &DT, Instruction *term,
          "malformed poll function");
 
   scanInlinedCode(&*(start), &*(after), calls, BBs);
-
-  // Recompute since we've invalidated cached data.  Conceptually we
-  // shouldn't need to do this, but implementation wise we appear to.  Needed
-  // so we can insert safepoints correctly.
-  // TODO: update more cheaply
-  DT.recalculate(*after->getParent()->getParent());
-
   assert(!calls.empty() && "slow path not found for safepoint poll");
 
   // Record the fact we need a parsable state at the runtime call contained in
