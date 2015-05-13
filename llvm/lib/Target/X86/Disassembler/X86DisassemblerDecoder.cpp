@@ -1366,16 +1366,17 @@ static int readModRM(struct InternalInstruction* insn) {
     switch (mod) {
     case 0x0:
       insn->eaDisplacement = EA_DISP_NONE; /* readSIB may override this */
-      switch (rm) {
-      case 0x14:
-      case 0x4:
-      case 0xc:   /* in case REXW.b is set */
+      // In determining whether RIP-relative mode is used (rm=5),
+      // or whether a SIB byte is present (rm=4),
+      // the extension bits (REX.b and EVEX.x) are ignored.
+      switch (rm & 7) {
+      case 0x4: // SIB byte is present
         insn->eaBase = (insn->addressSize == 4 ?
                         EA_BASE_sib : EA_BASE_sib64);
         if (readSIB(insn) || readDisplacement(insn))
           return -1;
         break;
-      case 0x5:
+      case 0x5: // RIP-relative
         insn->eaBase = EA_BASE_NONE;
         insn->eaDisplacement = EA_DISP_32;
         if (readDisplacement(insn))
@@ -1391,10 +1392,8 @@ static int readModRM(struct InternalInstruction* insn) {
       /* FALLTHROUGH */
     case 0x2:
       insn->eaDisplacement = (mod == 0x1 ? EA_DISP_8 : EA_DISP_32);
-      switch (rm) {
-      case 0x14:
-      case 0x4:
-      case 0xc:   /* in case REXW.b is set */
+      switch (rm & 7) {
+      case 0x4: // SIB byte is present
         insn->eaBase = EA_BASE_sib;
         if (readSIB(insn) || readDisplacement(insn))
           return -1;
