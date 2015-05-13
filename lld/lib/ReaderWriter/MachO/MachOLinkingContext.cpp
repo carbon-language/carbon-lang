@@ -705,6 +705,7 @@ void MachOLinkingContext::createImplicitFiles(
 
 void MachOLinkingContext::registerDylib(MachODylibFile *dylib,
                                         bool upward) const {
+  std::lock_guard<std::mutex> lock(_dylibsMutex);
   _allDylibs.insert(dylib);
   _pathToDylibMap[dylib->installName()] = dylib;
   // If path is different than install name, register path too.
