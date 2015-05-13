@@ -209,8 +209,9 @@ CoverageMapping::load(CoverageMappingReader &CoverageReader,
         continue;
       } else if (EC != instrprof_error::unknown_function)
         return EC;
-    } else
-      Ctx.setCounts(Counts);
+      Counts.assign(Record.MappingRegions.size(), 0);
+    }
+    Ctx.setCounts(Counts);
 
     assert(!Record.MappingRegions.empty() && "Function has no regions");
 
