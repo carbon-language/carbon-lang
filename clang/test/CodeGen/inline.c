@@ -49,6 +49,7 @@
 // CHECK3-NOT: unreferenced
 // CHECK3-LABEL: define void @_Z10gnu_inlinev()
 // CHECK3-LABEL: define available_externally void @_Z13gnu_ei_inlinev()
+// CHECK3-NOT: @_Z5testCv
 // CHECK3-LABEL: define linkonce_odr i32 @_Z2eiv()
 
 // RUN: echo "MS C Mode tests:"

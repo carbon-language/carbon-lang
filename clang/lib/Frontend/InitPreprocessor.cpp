@@ -790,7 +790,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__FINITE_MATH_ONLY__", "0");
 
   if (!LangOpts.MSVCCompat) {
-    if (LangOpts.GNUInline)
+    if (LangOpts.GNUInline || LangOpts.CPlusPlus)
       Builder.defineMacro("__GNUC_GNU_INLINE__");
     else
       Builder.defineMacro("__GNUC_STDC_INLINE__");
