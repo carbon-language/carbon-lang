@@ -58,32 +58,32 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     default:
       llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::CreateImm(MO.getImm());
+      MCOp = MCOperand::createImm(MO.getImm());
       break;
     case MachineOperand::MO_Register:
-      MCOp = MCOperand::CreateReg(MO.getReg());
+      MCOp = MCOperand::createReg(MO.getReg());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(
                                    MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress: {
       const GlobalValue *GV = MO.getGlobal();
       MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(GV->getName()));
-      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(Sym, Ctx));
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(Sym, Ctx));
       break;
     }
     case MachineOperand::MO_TargetIndex: {
       assert(MO.getIndex() == AMDGPU::TI_CONSTDATA_START);
       MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
       const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
-      MCOp = MCOperand::CreateExpr(Expr);
+      MCOp = MCOperand::createExpr(Expr);
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
       MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(MO.getSymbolName()));
       const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
-      MCOp = MCOperand::CreateExpr(Expr);
+      MCOp = MCOperand::createExpr(Expr);
       break;
     }
     }

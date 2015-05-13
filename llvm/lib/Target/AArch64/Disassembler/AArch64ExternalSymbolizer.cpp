@@ -214,7 +214,7 @@ bool AArch64ExternalSymbolizer::tryAddingSymbolicOperand(
       Expr = MCConstantExpr::Create(0, Ctx);
   }
 
-  MI.addOperand(MCOperand::CreateExpr(Expr));
+  MI.addOperand(MCOperand::createExpr(Expr));
 
   return true;
 }

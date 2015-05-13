@@ -94,9 +94,9 @@ private:
                 const MCSubtargetInfo &STI) {
     MCInst MaskInst;
     MaskInst.setOpcode(Mips::AND);
-    MaskInst.addOperand(MCOperand::CreateReg(AddrReg));
-    MaskInst.addOperand(MCOperand::CreateReg(AddrReg));
-    MaskInst.addOperand(MCOperand::CreateReg(MaskReg));
+    MaskInst.addOperand(MCOperand::createReg(AddrReg));
+    MaskInst.addOperand(MCOperand::createReg(AddrReg));
+    MaskInst.addOperand(MCOperand::createReg(MaskReg));
     MipsELFStreamer::EmitInstruction(MaskInst, STI);
   }
 

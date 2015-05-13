@@ -63,7 +63,7 @@ static MCOperand LowerSymbolOperand(const MachineInstr *MI,
                                                          AP.OutContext);
   const SparcMCExpr *expr = SparcMCExpr::Create(Kind, MCSym,
                                                 AP.OutContext);
-  return MCOperand::CreateExpr(expr);
+  return MCOperand::createExpr(expr);
 }
 
 static MCOperand LowerOperand(const MachineInstr *MI,
@@ -74,10 +74,10 @@ static MCOperand LowerOperand(const MachineInstr *MI,
   case MachineOperand::MO_Register:
     if (MO.isImplicit())
       break;
-    return MCOperand::CreateReg(MO.getReg());
+    return MCOperand::createReg(MO.getReg());
 
   case MachineOperand::MO_Immediate:
-    return MCOperand::CreateImm(MO.getImm());
+    return MCOperand::createImm(MO.getImm());
 
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_GlobalAddress:

@@ -1054,7 +1054,7 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
                           << "(MI, tmp, Address, Decoder)"
                           << Emitter->GuardPostfix << "\n";
   else
-    o.indent(Indentation) << "MI.addOperand(MCOperand::CreateImm(tmp));\n";
+    o.indent(Indentation) << "MI.addOperand(MCOperand::createImm(tmp));\n";
 
 }
 

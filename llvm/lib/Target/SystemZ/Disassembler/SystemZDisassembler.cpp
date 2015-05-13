@@ -52,7 +52,7 @@ static DecodeStatus decodeRegisterClass(MCInst &Inst, uint64_t RegNo,
   RegNo = Regs[RegNo];
   if (RegNo == 0)
     return MCDisassembler::Fail;
-  Inst.addOperand(MCOperand::CreateReg(RegNo));
+  Inst.addOperand(MCOperand::createReg(RegNo));
   return MCDisassembler::Success;
 }
 
@@ -126,7 +126,7 @@ template<unsigned N>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm) {
   if (!isUInt<N>(Imm))
     return MCDisassembler::Fail;
-  Inst.addOperand(MCOperand::CreateImm(Imm));
+  Inst.addOperand(MCOperand::createImm(Imm));
   return MCDisassembler::Success;
 }
 
@@ -134,7 +134,7 @@ template<unsigned N>
 static DecodeStatus decodeSImmOperand(MCInst &Inst, uint64_t Imm) {
   if (!isUInt<N>(Imm))
     return MCDisassembler::Fail;
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<N>(Imm)));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<N>(Imm)));
   return MCDisassembler::Success;
 }
 
@@ -208,7 +208,7 @@ template<unsigned N>
 static DecodeStatus decodePCDBLOperand(MCInst &Inst, uint64_t Imm,
                                        uint64_t Address) {
   assert(isUInt<N>(Imm) && "Invalid PC-relative offset");
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<N>(Imm) * 2 + Address));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<N>(Imm) * 2 + Address));
   return MCDisassembler::Success;
 }
 
@@ -229,8 +229,8 @@ static DecodeStatus decodeBDAddr12Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = Field >> 12;
   uint64_t Disp = Field & 0xfff;
   assert(Base < 16 && "Invalid BDAddr12");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(Disp));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(Disp));
   return MCDisassembler::Success;
 }
 
@@ -239,8 +239,8 @@ static DecodeStatus decodeBDAddr20Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = Field >> 20;
   uint64_t Disp = ((Field << 12) & 0xff000) | ((Field >> 8) & 0xfff);
   assert(Base < 16 && "Invalid BDAddr20");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<20>(Disp)));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<20>(Disp)));
   return MCDisassembler::Success;
 }
 
@@ -250,9 +250,9 @@ static DecodeStatus decodeBDXAddr12Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = (Field >> 12) & 0xf;
   uint64_t Disp = Field & 0xfff;
   assert(Index < 16 && "Invalid BDXAddr12");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(Disp));
-  Inst.addOperand(MCOperand::CreateReg(Index == 0 ? 0 : Regs[Index]));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(Disp));
+  Inst.addOperand(MCOperand::createReg(Index == 0 ? 0 : Regs[Index]));
   return MCDisassembler::Success;
 }
 
@@ -262,9 +262,9 @@ static DecodeStatus decodeBDXAddr20Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = (Field >> 20) & 0xf;
   uint64_t Disp = ((Field & 0xfff00) >> 8) | ((Field & 0xff) << 12);
   assert(Index < 16 && "Invalid BDXAddr20");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<20>(Disp)));
-  Inst.addOperand(MCOperand::CreateReg(Index == 0 ? 0 : Regs[Index]));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<20>(Disp)));
+  Inst.addOperand(MCOperand::createReg(Index == 0 ? 0 : Regs[Index]));
   return MCDisassembler::Success;
 }
 
@@ -274,9 +274,9 @@ static DecodeStatus decodeBDLAddr12Len8Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = (Field >> 12) & 0xf;
   uint64_t Disp = Field & 0xfff;
   assert(Length < 256 && "Invalid BDLAddr12Len8");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(Disp));
-  Inst.addOperand(MCOperand::CreateImm(Length + 1));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(Disp));
+  Inst.addOperand(MCOperand::createImm(Length + 1));
   return MCDisassembler::Success;
 }
 
@@ -286,9 +286,9 @@ static DecodeStatus decodeBDVAddr12Operand(MCInst &Inst, uint64_t Field,
   uint64_t Base = (Field >> 12) & 0xf;
   uint64_t Disp = Field & 0xfff;
   assert(Index < 32 && "Invalid BDVAddr12");
-  Inst.addOperand(MCOperand::CreateReg(Base == 0 ? 0 : Regs[Base]));
-  Inst.addOperand(MCOperand::CreateImm(Disp));
-  Inst.addOperand(MCOperand::CreateReg(SystemZMC::VR128Regs[Index]));
+  Inst.addOperand(MCOperand::createReg(Base == 0 ? 0 : Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(Disp));
+  Inst.addOperand(MCOperand::createReg(SystemZMC::VR128Regs[Index]));
   return MCDisassembler::Success;
 }
 

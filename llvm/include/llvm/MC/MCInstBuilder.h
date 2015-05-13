@@ -30,31 +30,31 @@ public:
 
   /// \brief Add a new register operand.
   MCInstBuilder &addReg(unsigned Reg) {
-    Inst.addOperand(MCOperand::CreateReg(Reg));
+    Inst.addOperand(MCOperand::createReg(Reg));
     return *this;
   }
 
   /// \brief Add a new integer immediate operand.
   MCInstBuilder &addImm(int64_t Val) {
-    Inst.addOperand(MCOperand::CreateImm(Val));
+    Inst.addOperand(MCOperand::createImm(Val));
     return *this;
   }
 
   /// \brief Add a new floating point immediate operand.
   MCInstBuilder &addFPImm(double Val) {
-    Inst.addOperand(MCOperand::CreateFPImm(Val));
+    Inst.addOperand(MCOperand::createFPImm(Val));
     return *this;
   }
 
   /// \brief Add a new MCExpr operand.
   MCInstBuilder &addExpr(const MCExpr *Val) {
-    Inst.addOperand(MCOperand::CreateExpr(Val));
+    Inst.addOperand(MCOperand::createExpr(Val));
     return *this;
   }
 
   /// \brief Add a new MCInst operand.
   MCInstBuilder &addInst(const MCInst *Val) {
-    Inst.addOperand(MCOperand::CreateInst(Val));
+    Inst.addOperand(MCOperand::createInst(Val));
     return *this;
   }
 

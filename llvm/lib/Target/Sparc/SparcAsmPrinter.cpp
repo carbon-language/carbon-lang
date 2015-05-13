@@ -81,7 +81,7 @@ static MCOperand createSparcMCOperand(SparcMCExpr::VariantKind Kind,
   const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Sym,
                                                          OutContext);
   const SparcMCExpr *expr = SparcMCExpr::Create(Kind, MCSym, OutContext);
-  return MCOperand::CreateExpr(expr);
+  return MCOperand::createExpr(expr);
 
 }
 static MCOperand createPCXCallOP(MCSymbol *Label,
@@ -104,7 +104,7 @@ static MCOperand createPCXRelExprOp(SparcMCExpr::VariantKind Kind,
   const MCBinaryExpr *Add = MCBinaryExpr::CreateAdd(GOT, Sub, OutContext);
   const SparcMCExpr *expr = SparcMCExpr::Create(Kind,
                                                 Add, OutContext);
-  return MCOperand::CreateExpr(expr);
+  return MCOperand::createExpr(expr);
 }
 
 static void EmitCall(MCStreamer &OutStreamer,
@@ -182,7 +182,7 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
   assert(MO.getReg() != SP::O7 &&
          "%o7 is assigned as destination for getpcx!");
 
-  MCOperand MCRegOP = MCOperand::CreateReg(MO.getReg());
+  MCOperand MCRegOP = MCOperand::createReg(MO.getReg());
 
 
   if (TM.getRelocationModel() != Reloc::PIC_) {
@@ -199,7 +199,7 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
       EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_H44, SparcMCExpr::VK_Sparc_M44,
                MCRegOP, OutContext, STI);
-      MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(12,
+      MCOperand imm = MCOperand::createExpr(MCConstantExpr::Create(12,
                                                                    OutContext));
       EmitSHL(*OutStreamer, MCRegOP, imm, MCRegOP, STI);
       MCOperand lo = createSparcMCOperand(SparcMCExpr::VK_Sparc_L44,
@@ -211,11 +211,11 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
       EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HH, SparcMCExpr::VK_Sparc_HM,
                MCRegOP, OutContext, STI);
-      MCOperand imm = MCOperand::CreateExpr(MCConstantExpr::Create(32,
+      MCOperand imm = MCOperand::createExpr(MCConstantExpr::Create(32,
                                                                    OutContext));
       EmitSHL(*OutStreamer, MCRegOP, imm, MCRegOP, STI);
       // Use register %o7 to load the lower 32 bits.
-      MCOperand RegO7 = MCOperand::CreateReg(SP::O7);
+      MCOperand RegO7 = MCOperand::createReg(SP::O7);
       EmitHiLo(*OutStreamer, GOTLabel,
                SparcMCExpr::VK_Sparc_HI, SparcMCExpr::VK_Sparc_LO,
                RegO7, OutContext, STI);
@@ -229,7 +229,7 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
   MCSymbol *EndLabel   = OutContext.CreateTempSymbol();
   MCSymbol *SethiLabel = OutContext.CreateTempSymbol();
 
-  MCOperand RegO7   = MCOperand::CreateReg(SP::O7);
+  MCOperand RegO7   = MCOperand::createReg(SP::O7);
 
   // <StartLabel>:
   //   call <EndLabel>

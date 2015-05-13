@@ -259,13 +259,13 @@ bool NVPTXAsmPrinter::lowerOperand(const MachineOperand &MO,
   switch (MO.getType()) {
   default: llvm_unreachable("unknown operand type");
   case MachineOperand::MO_Register:
-    MCOp = MCOperand::CreateReg(encodeVirtualRegister(MO.getReg()));
+    MCOp = MCOperand::createReg(encodeVirtualRegister(MO.getReg()));
     break;
   case MachineOperand::MO_Immediate:
-    MCOp = MCOperand::CreateImm(MO.getImm());
+    MCOp = MCOperand::createImm(MO.getImm());
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+    MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(
         MO.getMBB()->getSymbol(), OutContext));
     break;
   case MachineOperand::MO_ExternalSymbol:
@@ -281,11 +281,11 @@ bool NVPTXAsmPrinter::lowerOperand(const MachineOperand &MO,
     switch (Cnt->getType()->getTypeID()) {
     default: report_fatal_error("Unsupported FP type"); break;
     case Type::FloatTyID:
-      MCOp = MCOperand::CreateExpr(
+      MCOp = MCOperand::createExpr(
         NVPTXFloatMCExpr::CreateConstantFPSingle(Val, OutContext));
       break;
     case Type::DoubleTyID:
-      MCOp = MCOperand::CreateExpr(
+      MCOp = MCOperand::createExpr(
         NVPTXFloatMCExpr::CreateConstantFPDouble(Val, OutContext));
       break;
     }
@@ -335,7 +335,7 @@ MCOperand NVPTXAsmPrinter::GetSymbolRef(const MCSymbol *Symbol) {
   const MCExpr *Expr;
   Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
                                  OutContext);
-  return MCOperand::CreateExpr(Expr);
+  return MCOperand::createExpr(Expr);
 }
 
 void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {

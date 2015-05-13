@@ -199,7 +199,7 @@ template <std::size_t N>
 static DecodeStatus decodeRegisterClass(MCInst &Inst, uint64_t RegNo,
                                         const unsigned (&Regs)[N]) {
   assert(RegNo < N && "Invalid register number");
-  Inst.addOperand(MCOperand::CreateReg(Regs[RegNo]));
+  Inst.addOperand(MCOperand::createReg(Regs[RegNo]));
   return MCDisassembler::Success;
 }
 
@@ -291,7 +291,7 @@ template<unsigned N>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm,
                                       int64_t Address, const void *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
-  Inst.addOperand(MCOperand::CreateImm(Imm));
+  Inst.addOperand(MCOperand::createImm(Imm));
   return MCDisassembler::Success;
 }
 
@@ -299,7 +299,7 @@ template<unsigned N>
 static DecodeStatus decodeSImmOperand(MCInst &Inst, uint64_t Imm,
                                       int64_t Address, const void *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<N>(Imm)));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<N>(Imm)));
   return MCDisassembler::Success;
 }
 
@@ -322,19 +322,19 @@ static DecodeStatus decodeMemRIOperands(MCInst &Inst, uint64_t Imm,
   case PPC::LFSU:
   case PPC::LFDU:
     // Add the tied output operand.
-    Inst.addOperand(MCOperand::CreateReg(GP0Regs[Base]));
+    Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
     break;
   case PPC::STBU:
   case PPC::STHU:
   case PPC::STWU:
   case PPC::STFSU:
   case PPC::STFDU:
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(GP0Regs[Base]));
+    Inst.insert(Inst.begin(), MCOperand::createReg(GP0Regs[Base]));
     break;
   }
 
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<16>(Disp)));
-  Inst.addOperand(MCOperand::CreateReg(GP0Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<16>(Disp)));
+  Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
   return MCDisassembler::Success;
 }
 
@@ -350,12 +350,12 @@ static DecodeStatus decodeMemRIXOperands(MCInst &Inst, uint64_t Imm,
 
   if (Inst.getOpcode() == PPC::LDU)
     // Add the tied output operand.
-    Inst.addOperand(MCOperand::CreateReg(GP0Regs[Base]));
+    Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
   else if (Inst.getOpcode() == PPC::STDU)
-    Inst.insert(Inst.begin(), MCOperand::CreateReg(GP0Regs[Base]));
+    Inst.insert(Inst.begin(), MCOperand::createReg(GP0Regs[Base]));
 
-  Inst.addOperand(MCOperand::CreateImm(SignExtend64<16>(Disp << 2)));
-  Inst.addOperand(MCOperand::CreateReg(GP0Regs[Base]));
+  Inst.addOperand(MCOperand::createImm(SignExtend64<16>(Disp << 2)));
+  Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
   return MCDisassembler::Success;
 }
 
@@ -366,7 +366,7 @@ static DecodeStatus decodeCRBitMOperand(MCInst &Inst, uint64_t Imm,
   unsigned Zeros = countTrailingZeros(Imm);
   assert(Zeros < 8 && "Invalid CR bit value");
 
-  Inst.addOperand(MCOperand::CreateReg(CRRegs[7 - Zeros]));
+  Inst.addOperand(MCOperand::createReg(CRRegs[7 - Zeros]));
   return MCDisassembler::Success;
 }
 

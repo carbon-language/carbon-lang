@@ -2333,8 +2333,8 @@ static bool convertToSExti8(MCInst &Inst, unsigned Opcode, unsigned Reg,
   MCInst TmpInst;
   TmpInst.setOpcode(Opcode);
   if (!isCmp)
-    TmpInst.addOperand(MCOperand::CreateReg(Reg));
-  TmpInst.addOperand(MCOperand::CreateReg(Reg));
+    TmpInst.addOperand(MCOperand::createReg(Reg));
+  TmpInst.addOperand(MCOperand::createReg(Reg));
   TmpInst.addOperand(Inst.getOperand(0));
   Inst = TmpInst;
   return true;

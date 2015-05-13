@@ -69,7 +69,7 @@ Hexagon::P2, Hexagon::P3 };
 static DecodeStatus DecodeRegisterClass(MCInst &Inst, unsigned RegNo,
   const uint16_t Table[], size_t Size) {
   if (RegNo < Size) {
-    Inst.addOperand(MCOperand::CreateReg(Table[RegNo]));
+    Inst.addOperand(MCOperand::createReg(Table[RegNo]));
     return MCDisassembler::Success;
   }
   else
@@ -83,7 +83,7 @@ static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = IntRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
+  Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
 }
 
@@ -103,7 +103,7 @@ static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = CtrlRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
+  Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
 }
 
@@ -127,7 +127,7 @@ static DecodeStatus DecodeCtrRegs64RegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = CtrlReg64DecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
+  Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
 }
 
@@ -144,7 +144,7 @@ static DecodeStatus DecodeModRegsRegisterClass(MCInst &Inst, unsigned RegNo,
   default:
     return MCDisassembler::Fail;
   }
-  Inst.addOperand(MCOperand::CreateReg(Register));
+  Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
 }
 
@@ -169,7 +169,7 @@ static DecodeStatus DecodePredRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = PredRegDecoderTable[RegNo];
-  Inst.addOperand(MCOperand::CreateReg(Register));
+  Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
 }
 

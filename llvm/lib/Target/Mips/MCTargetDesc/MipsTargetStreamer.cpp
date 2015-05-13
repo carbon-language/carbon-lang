@@ -697,28 +697,28 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
 
   MCInst TmpInst;
   TmpInst.setOpcode(Mips::LUi);
-  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
   const MCSymbolRefExpr *HiSym = MCSymbolRefExpr::Create(
       "_gp_disp", MCSymbolRefExpr::VK_Mips_ABS_HI, MCA.getContext());
-  TmpInst.addOperand(MCOperand::CreateExpr(HiSym));
+  TmpInst.addOperand(MCOperand::createExpr(HiSym));
   getStreamer().EmitInstruction(TmpInst, STI);
 
   TmpInst.clear();
 
   TmpInst.setOpcode(Mips::ADDiu);
-  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
-  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
   const MCSymbolRefExpr *LoSym = MCSymbolRefExpr::Create(
       "_gp_disp", MCSymbolRefExpr::VK_Mips_ABS_LO, MCA.getContext());
-  TmpInst.addOperand(MCOperand::CreateExpr(LoSym));
+  TmpInst.addOperand(MCOperand::createExpr(LoSym));
   getStreamer().EmitInstruction(TmpInst, STI);
 
   TmpInst.clear();
 
   TmpInst.setOpcode(Mips::ADDu);
-  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
-  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
-  TmpInst.addOperand(MCOperand::CreateReg(RegNo));
+  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(RegNo));
   getStreamer().EmitInstruction(TmpInst, STI);
 
   forbidModuleDirective();
@@ -739,15 +739,15 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
   if (IsReg) {
     // move $save, $gpreg
     Inst.setOpcode(Mips::DADDu);
-    Inst.addOperand(MCOperand::CreateReg(RegOrOffset));
-    Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-    Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    Inst.addOperand(MCOperand::createReg(RegOrOffset));
+    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(Mips::ZERO));
   } else {
     // sd $gpreg, offset($sp)
     Inst.setOpcode(Mips::SD);
-    Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-    Inst.addOperand(MCOperand::CreateReg(Mips::SP));
-    Inst.addOperand(MCOperand::CreateImm(RegOrOffset));
+    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(Mips::SP));
+    Inst.addOperand(MCOperand::createImm(RegOrOffset));
   }
   getStreamer().EmitInstruction(Inst, STI);
   Inst.clear();
@@ -759,24 +759,24 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
 
   // lui $gp, %hi(%neg(%gp_rel(funcSym)))
   Inst.setOpcode(Mips::LUi);
-  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-  Inst.addOperand(MCOperand::CreateExpr(HiExpr));
+  Inst.addOperand(MCOperand::createReg(Mips::GP));
+  Inst.addOperand(MCOperand::createExpr(HiExpr));
   getStreamer().EmitInstruction(Inst, STI);
   Inst.clear();
 
   // addiu  $gp, $gp, %lo(%neg(%gp_rel(funcSym)))
   Inst.setOpcode(Mips::ADDiu);
-  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-  Inst.addOperand(MCOperand::CreateExpr(LoExpr));
+  Inst.addOperand(MCOperand::createReg(Mips::GP));
+  Inst.addOperand(MCOperand::createReg(Mips::GP));
+  Inst.addOperand(MCOperand::createExpr(LoExpr));
   getStreamer().EmitInstruction(Inst, STI);
   Inst.clear();
 
   // daddu  $gp, $gp, $funcreg
   Inst.setOpcode(Mips::DADDu);
-  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
-  Inst.addOperand(MCOperand::CreateReg(RegNo));
+  Inst.addOperand(MCOperand::createReg(Mips::GP));
+  Inst.addOperand(MCOperand::createReg(Mips::GP));
+  Inst.addOperand(MCOperand::createReg(RegNo));
   getStreamer().EmitInstruction(Inst, STI);
 
   forbidModuleDirective();

@@ -284,7 +284,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
       if (isStore)
         NewMI.addOperand(MI->getOperand(0));
-      NewReg = MCOperand::CreateReg(MRI.getMatchingSuperReg(
+      NewReg = MCOperand::createReg(MRI.getMatchingSuperReg(
           Reg, ARM::gsub_0, &MRI.getRegClass(ARM::GPRPairRegClassID)));
       NewMI.addOperand(NewReg);
 

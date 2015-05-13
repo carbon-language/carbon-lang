@@ -1475,7 +1475,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
           RegNum |= Val;
         }
       }
-      EmitImmediate(MCOperand::CreateImm(RegNum), MI.getLoc(), 1, FK_Data_1,
+      EmitImmediate(MCOperand::createImm(RegNum), MI.getLoc(), 1, FK_Data_1,
                     CurByte, OS, Fixups);
     } else {
       EmitImmediate(MI.getOperand(CurOp++), MI.getLoc(),

@@ -36,16 +36,16 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
 void ARMInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   if (hasNOP()) {
     NopInst.setOpcode(ARM::HINT);
-    NopInst.addOperand(MCOperand::CreateImm(0));
-    NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    NopInst.addOperand(MCOperand::CreateReg(0));
+    NopInst.addOperand(MCOperand::createImm(0));
+    NopInst.addOperand(MCOperand::createImm(ARMCC::AL));
+    NopInst.addOperand(MCOperand::createReg(0));
   } else {
     NopInst.setOpcode(ARM::MOVr);
-    NopInst.addOperand(MCOperand::CreateReg(ARM::R0));
-    NopInst.addOperand(MCOperand::CreateReg(ARM::R0));
-    NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    NopInst.addOperand(MCOperand::CreateReg(0));
-    NopInst.addOperand(MCOperand::CreateReg(0));
+    NopInst.addOperand(MCOperand::createReg(ARM::R0));
+    NopInst.addOperand(MCOperand::createReg(ARM::R0));
+    NopInst.addOperand(MCOperand::createImm(ARMCC::AL));
+    NopInst.addOperand(MCOperand::createReg(0));
+    NopInst.addOperand(MCOperand::createReg(0));
   }
 }
 

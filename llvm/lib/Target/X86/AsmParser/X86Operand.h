@@ -357,14 +357,14 @@ struct X86Operand : public MCParsedAsmOperand {
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+      Inst.addOperand(MCOperand::createImm(CE->getValue()));
     else
-      Inst.addOperand(MCOperand::CreateExpr(Expr));
+      Inst.addOperand(MCOperand::createExpr(Expr));
   }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getReg()));
+    Inst.addOperand(MCOperand::createReg(getReg()));
   }
 
   static unsigned getGR32FromGR64(unsigned RegNo) {
@@ -395,7 +395,7 @@ struct X86Operand : public MCParsedAsmOperand {
     unsigned RegNo = getReg();
     if (X86MCRegisterClasses[X86::GR64RegClassID].contains(RegNo))
       RegNo = getGR32FromGR64(RegNo);
-    Inst.addOperand(MCOperand::CreateReg(RegNo));
+    Inst.addOperand(MCOperand::createReg(RegNo));
   }
   void addAVX512RCOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
@@ -408,40 +408,40 @@ struct X86Operand : public MCParsedAsmOperand {
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 5) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
-    Inst.addOperand(MCOperand::CreateImm(getMemScale()));
-    Inst.addOperand(MCOperand::CreateReg(getMemIndexReg()));
+    Inst.addOperand(MCOperand::createReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::createImm(getMemScale()));
+    Inst.addOperand(MCOperand::createReg(getMemIndexReg()));
     addExpr(Inst, getMemDisp());
-    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+    Inst.addOperand(MCOperand::createReg(getMemSegReg()));
   }
 
   void addAbsMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 1) && "Invalid number of operands!");
     // Add as immediates when possible.
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+      Inst.addOperand(MCOperand::createImm(CE->getValue()));
     else
-      Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+      Inst.addOperand(MCOperand::createExpr(getMemDisp()));
   }
 
   void addSrcIdxOperands(MCInst &Inst, unsigned N) const {
     assert((N == 2) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
-    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+    Inst.addOperand(MCOperand::createReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::createReg(getMemSegReg()));
   }
   void addDstIdxOperands(MCInst &Inst, unsigned N) const {
     assert((N == 1) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseReg()));
+    Inst.addOperand(MCOperand::createReg(getMemBaseReg()));
   }
 
   void addMemOffsOperands(MCInst &Inst, unsigned N) const {
     assert((N == 2) && "Invalid number of operands!");
     // Add as immediates when possible.
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
-      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+      Inst.addOperand(MCOperand::createImm(CE->getValue()));
     else
-      Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
-    Inst.addOperand(MCOperand::CreateReg(getMemSegReg()));
+      Inst.addOperand(MCOperand::createExpr(getMemDisp()));
+    Inst.addOperand(MCOperand::createReg(getMemSegReg()));
   }
 
   static std::unique_ptr<X86Operand> CreateToken(StringRef Str, SMLoc Loc) {

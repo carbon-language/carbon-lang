@@ -467,7 +467,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case AArch64::TCRETURNri: {
     MCInst TmpInst;
     TmpInst.setOpcode(AArch64::BR);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
@@ -500,24 +500,24 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     MCInst Adrp;
     Adrp.setOpcode(AArch64::ADRP);
-    Adrp.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Adrp.addOperand(MCOperand::createReg(AArch64::X0));
     Adrp.addOperand(SymTLSDesc);
     EmitToStreamer(*OutStreamer, Adrp);
 
     MCInst Ldr;
     Ldr.setOpcode(AArch64::LDRXui);
-    Ldr.addOperand(MCOperand::CreateReg(AArch64::X1));
-    Ldr.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Ldr.addOperand(MCOperand::createReg(AArch64::X1));
+    Ldr.addOperand(MCOperand::createReg(AArch64::X0));
     Ldr.addOperand(SymTLSDescLo12);
-    Ldr.addOperand(MCOperand::CreateImm(0));
+    Ldr.addOperand(MCOperand::createImm(0));
     EmitToStreamer(*OutStreamer, Ldr);
 
     MCInst Add;
     Add.setOpcode(AArch64::ADDXri);
-    Add.addOperand(MCOperand::CreateReg(AArch64::X0));
-    Add.addOperand(MCOperand::CreateReg(AArch64::X0));
+    Add.addOperand(MCOperand::createReg(AArch64::X0));
+    Add.addOperand(MCOperand::createReg(AArch64::X0));
     Add.addOperand(SymTLSDescLo12);
-    Add.addOperand(MCOperand::CreateImm(AArch64_AM::getShiftValue(0)));
+    Add.addOperand(MCOperand::createImm(AArch64_AM::getShiftValue(0)));
     EmitToStreamer(*OutStreamer, Add);
 
     // Emit a relocation-annotation. This expands to no code, but requests
@@ -529,7 +529,7 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     MCInst Blr;
     Blr.setOpcode(AArch64::BLR);
-    Blr.addOperand(MCOperand::CreateReg(AArch64::X1));
+    Blr.addOperand(MCOperand::createReg(AArch64::X1));
     EmitToStreamer(*OutStreamer, Blr);
 
     return;

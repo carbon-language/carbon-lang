@@ -2366,7 +2366,7 @@ bool llvm::rewriteAArch64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 
 void AArch64InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(AArch64::HINT);
-  NopInst.addOperand(MCOperand::CreateImm(0));
+  NopInst.addOperand(MCOperand::createImm(0));
 }
 /// useMachineCombiner - return true when a target supports MachineCombiner
 bool AArch64InstrInfo::useMachineCombiner() const {

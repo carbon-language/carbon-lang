@@ -6113,7 +6113,7 @@ void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
 void X86InstrInfo::getUnconditionalBranch(
     MCInst &Branch, const MCSymbolRefExpr *BranchTarget) const {
   Branch.setOpcode(X86::JMP_1);
-  Branch.addOperand(MCOperand::CreateExpr(BranchTarget));
+  Branch.addOperand(MCOperand::createExpr(BranchTarget));
 }
 
 // This code must remain in sync with getJumpInstrTableEntryBound in this class!

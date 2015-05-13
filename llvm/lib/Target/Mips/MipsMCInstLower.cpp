@@ -104,14 +104,14 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Symbol, Kind, *Ctx);
 
   if (!Offset)
-    return MCOperand::CreateExpr(MCSym);
+    return MCOperand::createExpr(MCSym);
 
   // Assume offset is never negative.
   assert(Offset > 0);
 
   const MCConstantExpr *OffsetExpr =  MCConstantExpr::Create(Offset, *Ctx);
   const MCBinaryExpr *Add = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, *Ctx);
-  return MCOperand::CreateExpr(Add);
+  return MCOperand::createExpr(Add);
 }
 
 /*
@@ -135,9 +135,9 @@ MCOperand MipsMCInstLower::LowerOperand(const MachineOperand &MO,
   case MachineOperand::MO_Register:
     // Ignore all implicit register operands.
     if (MO.isImplicit()) break;
-    return MCOperand::CreateReg(MO.getReg());
+    return MCOperand::createReg(MO.getReg());
   case MachineOperand::MO_Immediate:
-    return MCOperand::CreateImm(MO.getImm() + offset);
+    return MCOperand::createImm(MO.getImm() + offset);
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
@@ -159,7 +159,7 @@ MCOperand MipsMCInstLower::createSub(MachineBasicBlock *BB1,
   const MCSymbolRefExpr *Sym2 = MCSymbolRefExpr::Create(BB2->getSymbol(), *Ctx);
   const MCBinaryExpr *Sub = MCBinaryExpr::CreateSub(Sym1, Sym2, *Ctx);
 
-  return MCOperand::CreateExpr(MipsMCExpr::Create(Kind, Sub, *Ctx));
+  return MCOperand::createExpr(MipsMCExpr::Create(Kind, Sub, *Ctx));
 }
 
 void MipsMCInstLower::

@@ -108,31 +108,31 @@ public:
     InstVal = Val;
   }
 
-  static MCOperand CreateReg(unsigned Reg) {
+  static MCOperand createReg(unsigned Reg) {
     MCOperand Op;
     Op.Kind = kRegister;
     Op.RegVal = Reg;
     return Op;
   }
-  static MCOperand CreateImm(int64_t Val) {
+  static MCOperand createImm(int64_t Val) {
     MCOperand Op;
     Op.Kind = kImmediate;
     Op.ImmVal = Val;
     return Op;
   }
-  static MCOperand CreateFPImm(double Val) {
+  static MCOperand createFPImm(double Val) {
     MCOperand Op;
     Op.Kind = kFPImmediate;
     Op.FPImmVal = Val;
     return Op;
   }
-  static MCOperand CreateExpr(const MCExpr *Val) {
+  static MCOperand createExpr(const MCExpr *Val) {
     MCOperand Op;
     Op.Kind = kExpr;
     Op.ExprVal = Val;
     return Op;
   }
-  static MCOperand CreateInst(const MCInst *Val) {
+  static MCOperand createInst(const MCInst *Val) {
     MCOperand Op;
     Op.Kind = kInst;
     Op.InstVal = Val;

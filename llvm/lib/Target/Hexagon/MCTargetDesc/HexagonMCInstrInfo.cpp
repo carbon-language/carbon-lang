@@ -16,8 +16,8 @@
 
 namespace llvm {
 void HexagonMCInstrInfo::AppendImplicitOperands(MCInst &MCI) {
-  MCI.addOperand(MCOperand::CreateImm(0));
-  MCI.addOperand(MCOperand::CreateInst(nullptr));
+  MCI.addOperand(MCOperand::createImm(0));
+  MCI.addOperand(MCOperand::createInst(nullptr));
 }
 
 HexagonII::MemAccessSize

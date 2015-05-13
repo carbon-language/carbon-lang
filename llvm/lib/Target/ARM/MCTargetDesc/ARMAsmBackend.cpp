@@ -238,9 +238,9 @@ void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   if ((Inst.getOpcode() == ARM::tCBZ || Inst.getOpcode() == ARM::tCBNZ) &&
       RelaxedOp == ARM::tHINT) {
     Res.setOpcode(RelaxedOp);
-    Res.addOperand(MCOperand::CreateImm(0));
-    Res.addOperand(MCOperand::CreateImm(14));
-    Res.addOperand(MCOperand::CreateReg(0));
+    Res.addOperand(MCOperand::createImm(0));
+    Res.addOperand(MCOperand::createImm(14));
+    Res.addOperand(MCOperand::createReg(0));
     return;
   }
 

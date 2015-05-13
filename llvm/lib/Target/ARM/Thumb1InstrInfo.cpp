@@ -27,10 +27,10 @@ Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI)
 /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
 void Thumb1InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(ARM::tMOVr);
-  NopInst.addOperand(MCOperand::CreateReg(ARM::R8));
-  NopInst.addOperand(MCOperand::CreateReg(ARM::R8));
-  NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-  NopInst.addOperand(MCOperand::CreateReg(0));
+  NopInst.addOperand(MCOperand::createReg(ARM::R8));
+  NopInst.addOperand(MCOperand::createReg(ARM::R8));
+  NopInst.addOperand(MCOperand::createImm(ARMCC::AL));
+  NopInst.addOperand(MCOperand::createReg(0));
 }
 
 unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {

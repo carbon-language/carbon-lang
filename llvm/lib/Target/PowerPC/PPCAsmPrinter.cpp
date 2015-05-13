@@ -512,7 +512,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     // Step 1: lwz %Rt, .L$poff - .L$pb(%Ri)
     TmpInst.getOperand(1) =
-        MCOperand::CreateExpr(MCBinaryExpr::CreateSub(Exp, PB, OutContext));
+        MCOperand::createExpr(MCBinaryExpr::CreateSub(Exp, PB, OutContext));
     TmpInst.getOperand(0) = TR;
     TmpInst.getOperand(2) = PICR;
     EmitToStreamer(*OutStreamer, TmpInst);
@@ -549,7 +549,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       const MCExpr *Exp =
         MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_GOT,
                                 OutContext);
-      TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+      TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
     } else {
       MCSymbol *TOCEntry = lookUpOrCreateTOCEntry(MOSymbol);
 
@@ -560,7 +560,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
         MCSymbolRefExpr::Create(OutContext.GetOrCreateSymbol(Twine(".LTOC")),
                                                              OutContext);
       Exp = MCBinaryExpr::CreateSub(Exp, PB, OutContext);
-      TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+      TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
     }
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
@@ -594,7 +594,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(TOCEntry, MCSymbolRefExpr::VK_PPC_TOC,
                               OutContext);
-    TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+    TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
@@ -641,7 +641,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC_HA,
                               OutContext);
-    TmpInst.getOperand(2) = MCOperand::CreateExpr(Exp);
+    TmpInst.getOperand(2) = MCOperand::createExpr(Exp);
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
@@ -683,7 +683,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC_LO,
                               OutContext);
-    TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+    TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
@@ -717,7 +717,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TOC_LO,
                               OutContext);
-    TmpInst.getOperand(2) = MCOperand::CreateExpr(Exp);
+    TmpInst.getOperand(2) = MCOperand::createExpr(Exp);
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
@@ -750,7 +750,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MCExpr *Exp =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TPREL_LO,
                               OutContext);
-    TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
+    TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }

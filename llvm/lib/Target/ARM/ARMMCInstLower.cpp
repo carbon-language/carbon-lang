@@ -61,7 +61,7 @@ MCOperand ARMAsmPrinter::GetSymbolRef(const MachineOperand &MO,
                                    MCConstantExpr::Create(MO.getOffset(),
                                                           OutContext),
                                    OutContext);
-  return MCOperand::CreateExpr(Expr);
+  return MCOperand::createExpr(Expr);
 
 }
 
@@ -74,13 +74,13 @@ bool ARMAsmPrinter::lowerOperand(const MachineOperand &MO,
     if (MO.isImplicit() && MO.getReg() != ARM::CPSR)
       return false;
     assert(!MO.getSubReg() && "Subregs should be eliminated!");
-    MCOp = MCOperand::CreateReg(MO.getReg());
+    MCOp = MCOperand::createReg(MO.getReg());
     break;
   case MachineOperand::MO_Immediate:
-    MCOp = MCOperand::CreateImm(MO.getImm());
+    MCOp = MCOperand::createImm(MO.getImm());
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+    MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(
         MO.getMBB()->getSymbol(), OutContext));
     break;
   case MachineOperand::MO_GlobalAddress: {
@@ -105,7 +105,7 @@ bool ARMAsmPrinter::lowerOperand(const MachineOperand &MO,
     APFloat Val = MO.getFPImm()->getValueAPF();
     bool ignored;
     Val.convert(APFloat::IEEEdouble, APFloat::rmTowardZero, &ignored);
-    MCOp = MCOperand::CreateFPImm(Val.convertToDouble());
+    MCOp = MCOperand::createFPImm(Val.convertToDouble());
     break;
   }
   case MachineOperand::MO_RegisterMask:

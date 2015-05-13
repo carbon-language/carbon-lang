@@ -136,7 +136,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
   if (!Expr)
     return false;
 
-  MI.addOperand(MCOperand::CreateExpr(Expr));
+  MI.addOperand(MCOperand::createExpr(Expr));
   return true;
 }
 
