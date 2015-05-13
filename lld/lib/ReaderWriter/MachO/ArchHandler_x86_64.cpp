@@ -168,6 +168,9 @@ private:
     ripRel32Minus2,        /// ex: movw $0x1234, _foo(%rip)
     ripRel32Minus4,        /// ex: movl $0x12345678, _foo(%rip)
     ripRel32Anon,          /// ex: movq L1(%rip), %rax
+    ripRel32Minus1Anon,    /// ex: movb $0x12, L1(%rip)
+    ripRel32Minus2Anon,    /// ex: movw $0x1234, L1(%rip)
+    ripRel32Minus4Anon,    /// ex: movw $0x12345678, L1(%rip)
     ripRel32GotLoad,       /// ex: movq  _foo@GOTPCREL(%rip), %rax
     ripRel32Got,           /// ex: pushq _foo@GOTPCREL(%rip)
     pointer64,             /// ex: .quad _foo
@@ -218,7 +221,11 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(invalid), LLD_KIND_STRING_ENTRY(branch32),
   LLD_KIND_STRING_ENTRY(ripRel32), LLD_KIND_STRING_ENTRY(ripRel32Minus1),
   LLD_KIND_STRING_ENTRY(ripRel32Minus2), LLD_KIND_STRING_ENTRY(ripRel32Minus4),
-  LLD_KIND_STRING_ENTRY(ripRel32Anon), LLD_KIND_STRING_ENTRY(ripRel32GotLoad),
+  LLD_KIND_STRING_ENTRY(ripRel32Anon),
+  LLD_KIND_STRING_ENTRY(ripRel32Minus1Anon),
+  LLD_KIND_STRING_ENTRY(ripRel32Minus2Anon),
+  LLD_KIND_STRING_ENTRY(ripRel32Minus4Anon),
+  LLD_KIND_STRING_ENTRY(ripRel32GotLoad),
   LLD_KIND_STRING_ENTRY(ripRel32GotLoadNowLea),
   LLD_KIND_STRING_ENTRY(ripRel32Got), LLD_KIND_STRING_ENTRY(lazyPointer),
   LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
@@ -301,10 +308,16 @@ ArchHandler_x86_64::kindFromReloc(const Relocation &reloc) {
     return ripRel32Anon;
   case X86_64_RELOC_SIGNED_1 | rPcRel | rExtern | rLength4:
     return ripRel32Minus1;
+  case X86_64_RELOC_SIGNED_1 | rPcRel |           rLength4:
+    return ripRel32Minus1Anon;
   case X86_64_RELOC_SIGNED_2 | rPcRel | rExtern | rLength4:
     return ripRel32Minus2;
+  case X86_64_RELOC_SIGNED_2 | rPcRel |           rLength4:
+    return ripRel32Minus2Anon;
   case X86_64_RELOC_SIGNED_4 | rPcRel | rExtern | rLength4:
     return ripRel32Minus4;
+  case X86_64_RELOC_SIGNED_4 | rPcRel |           rLength4:
+    return ripRel32Minus4Anon;
   case X86_64_RELOC_GOT_LOAD | rPcRel | rExtern | rLength4:
     return ripRel32GotLoad;
   case X86_64_RELOC_GOT      | rPcRel | rExtern | rLength4:
@@ -358,6 +371,15 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
     return std::error_code();
   case ripRel32Anon:
     targetAddress = fixupAddress + 4 + *(const little32_t *)fixupContent;
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+  case ripRel32Minus1Anon:
+    targetAddress = fixupAddress + 5 + *(const little32_t *)fixupContent;
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+  case ripRel32Minus2Anon:
+    targetAddress = fixupAddress + 6 + *(const little32_t *)fixupContent;
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+  case ripRel32Minus4Anon:
+    targetAddress = fixupAddress + 8 + *(const little32_t *)fixupContent;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ripRel32GotLoad:
   case ripRel32Got:
@@ -493,12 +515,15 @@ void ArchHandler_x86_64::applyFixupFinal(
     *loc64 = targetAddress + ref.addend();
     return;
   case ripRel32Minus1:
+  case ripRel32Minus1Anon:
     *loc32 = targetAddress - (fixupAddress + 5) + ref.addend();
     return;
   case ripRel32Minus2:
+  case ripRel32Minus2Anon:
     *loc32 = targetAddress - (fixupAddress + 6) + ref.addend();
     return;
   case ripRel32Minus4:
+  case ripRel32Minus4Anon:
     *loc32 = targetAddress - (fixupAddress + 8) + ref.addend();
     return;
   case delta32:
@@ -572,11 +597,20 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
   case ripRel32Minus1:
     *loc32 = ref.addend() - 1;
     return;
+  case ripRel32Minus1Anon:
+    *loc32 = (targetAddress - (fixupAddress + 5)) + ref.addend();
+    return;
   case ripRel32Minus2:
     *loc32 = ref.addend() - 2;
     return;
+  case ripRel32Minus2Anon:
+    *loc32 = (targetAddress - (fixupAddress + 6)) + ref.addend();
+    return;
   case ripRel32Minus4:
     *loc32 = ref.addend() - 4;
+    return;
+  case ripRel32Minus4Anon:
+    *loc32 = (targetAddress - (fixupAddress + 8)) + ref.addend();
     return;
   case delta32:
     *loc32 = ref.addend() + inAtomAddress - fixupAddress;
@@ -638,7 +672,7 @@ void ArchHandler_x86_64::appendSectionRelocations(
     return;
   case ripRel32Anon:
     appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
-                X86_64_RELOC_SIGNED | rPcRel          | rLength4 );
+                X86_64_RELOC_SIGNED | rPcRel           | rLength4 );
     return;
   case ripRel32Got:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
@@ -660,13 +694,25 @@ void ArchHandler_x86_64::appendSectionRelocations(
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_1 | rPcRel | rExtern | rLength4 );
     return;
+  case ripRel32Minus1Anon:
+    appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                X86_64_RELOC_SIGNED_1 | rPcRel           | rLength4 );
+    return;
   case ripRel32Minus2:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_2 | rPcRel | rExtern | rLength4 );
     return;
+  case ripRel32Minus2Anon:
+    appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                X86_64_RELOC_SIGNED_2 | rPcRel           | rLength4 );
+    return;
   case ripRel32Minus4:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_SIGNED_4 | rPcRel | rExtern | rLength4 );
+    return;
+  case ripRel32Minus4Anon:
+    appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                X86_64_RELOC_SIGNED_4 | rPcRel           | rLength4 );
     return;
   case delta32:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(atom), 0,

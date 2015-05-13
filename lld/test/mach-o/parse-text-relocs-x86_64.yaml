@@ -19,6 +19,9 @@
 #  movw  $0x1234, _foo(%rip)
 #  movl  $0x12345678, _foo(%rip)
 #  movl  L2(%rip), %eax
+#  movb  $0x12, L2(%rip)
+#  movw  $0x1234, L2(%rip)
+#  movl  $0x12345678, L2(%rip)
 #
 #  .data
 #L2: .long 0
@@ -41,9 +44,30 @@ sections:
                        0x00, 0x00, 0x00, 0xC6, 0x05, 0xFF, 0xFF, 0xFF,
                        0xFF, 0x12, 0x66, 0xC7, 0x05, 0xFE, 0xFF, 0xFF,
                        0xFF, 0x34, 0x12, 0xC7, 0x05, 0xFC, 0xFF, 0xFF,
-                       0xFF, 0x78, 0x56, 0x34, 0x12, 0x8B, 0x05, 0x00,
-                       0x00, 0x00, 0x00 ]
+                       0xFF, 0x78, 0x56, 0x34, 0x12, 0x8B, 0x05, 0x1A,
+                       0x00, 0x00, 0x00, 0xc6, 0x05, 0x13, 0x00, 0x00,
+		       0x00, 0x12, 0x66, 0xc7, 0x05, 0x0a, 0x00, 0x00,
+		       0x00, 0x34, 0x12, 0xc7, 0x05, 0x00, 0x00, 0x00,
+		       0x00, 0x78, 0x56, 0x34, 0x12 ]
     relocations:
+      - offset:          0x00000055
+        type:            X86_64_RELOC_SIGNED_4
+        length:          2
+        pc-rel:          true
+        extern:          false
+        symbol:          2
+      - offset:          0x0000004d
+        type:            X86_64_RELOC_SIGNED_2
+        length:          2
+        pc-rel:          true
+        extern:          false
+        symbol:          2
+      - offset:          0x00000045
+        type:            X86_64_RELOC_SIGNED_1
+        length:          2
+        pc-rel:          true
+        extern:          false
+        symbol:          2
       - offset:          0x0000003F
         type:            X86_64_RELOC_SIGNED
         length:          2
@@ -108,7 +132,7 @@ sections:
     section:         __data
     type:            S_REGULAR
     attributes:      [  ]
-    address:         0x0000000000000043
+    address:         0x000000000000005D
     content:         [ 0x00, 0x00, 0x00, 0x00 ]
 local-symbols:
   - name:            _test
@@ -164,5 +188,17 @@ undefined-symbols:
 # CHECK-NOT:    addend:
 # CHECK:      - kind:            ripRel32Anon
 # CHECK:        offset:          63
+# CHECK:        target:          [[LABEL]]
+# CHECK-NOT:    addend:
+# CHECK:      - kind:            ripRel32Minus1Anon
+# CHECK:        offset:          69
+# CHECK:        target:          [[LABEL]]
+# CHECK-NOT:    addend:
+# CHECK:      - kind:            ripRel32Minus2Anon
+# CHECK:        offset:          77
+# CHECK:        target:          [[LABEL]]
+# CHECK-NOT:    addend:
+# CHECK:      - kind:            ripRel32Minus4Anon
+# CHECK:        offset:          85
 # CHECK:        target:          [[LABEL]]
 # CHECK-NOT:    addend:
