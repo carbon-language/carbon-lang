@@ -555,7 +555,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
 
   SmallVector<MachineOperand,2> Cond;
   MachineBasicBlock *TB = nullptr, *FB = nullptr;
-  bool NotAnalyzed = TII->AnalyzeBranch(*Latch, TB, FB, Cond, false);
+  bool NotAnalyzed = TII->AnalyzeBranch(*ExitingBlock, TB, FB, Cond, false);
   if (NotAnalyzed)
     return nullptr;
 
@@ -563,7 +563,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
   // TB must be non-null.  If FB is also non-null, one of them must be
   // the header.  Otherwise, branch to TB could be exiting the loop, and
   // the fall through can go to the header.
-  assert (TB && "Latch block without a branch?");
+  assert (TB && "Exit block without a branch?");
   if (ExitingBlock != Latch && (TB == Latch || FB == Latch)) {
     MachineBasicBlock *LTB = 0, *LFB = 0;
     SmallVector<MachineOperand,2> LCond;
@@ -571,9 +571,9 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
     if (NotAnalyzed)
       return nullptr;
     if (TB == Latch)
-      (LTB == Header) ? TB = LTB: TB = LFB;
-    else // FB == Latch
-      (LTB == Header) ? FB = LTB: FB = LFB;
+      TB = (LTB == Header) ? LTB : LFB;
+    else
+      FB = (LTB == Header) ? LTB: LFB;
   }
   assert ((!FB || TB == Header || FB == Header) && "Branches not to header?");
   if (!TB || (FB && TB != Header && FB != Header))
@@ -1347,17 +1347,38 @@ bool HexagonHardwareLoops::fixupInductionVariable(MachineLoop *L) {
   MachineBasicBlock *TB = nullptr, *FB = nullptr;
   SmallVector<MachineOperand,2> Cond;
   // AnalyzeBranch returns true if it fails to analyze branch.
-  bool NotAnalyzed = TII->AnalyzeBranch(*Latch, TB, FB, Cond, false);
-  if (NotAnalyzed)
+  bool NotAnalyzed = TII->AnalyzeBranch(*ExitingBlock, TB, FB, Cond, false);
+  if (NotAnalyzed || Cond.empty())
     return false;
 
-  // Check if the latch branch is unconditional.
-  if (Cond.empty())
-    return false;
+  if (ExitingBlock != Latch && (TB == Latch || FB == Latch)) {
+    MachineBasicBlock *LTB = 0, *LFB = 0;
+    SmallVector<MachineOperand,2> LCond;
+    bool NotAnalyzed = TII->AnalyzeBranch(*Latch, LTB, LFB, LCond, false);
+    if (NotAnalyzed)
+      return false;
 
-  if (TB != Header && FB != Header)
-    // The latch does not go back to the header.  Not a latch we know and love.
-    return false;
+    // Since latch is not the exiting block, the latch branch should be an
+    // unconditional branch to the loop header.
+    if (TB == Latch)
+      TB = (LTB == Header) ? LTB : LFB;
+    else
+      FB = (LTB == Header) ? LTB : LFB;
+  }
+  if (TB != Header) {
+    if (FB != Header) {
+      // The latch/exit block does not go back to the header.
+      return false;
+    }
+    // FB is the header (i.e., uncond. jump to branch header)
+    // In this case, the LoopBody -> TB should not be a back edge otherwise
+    // it could result in an infinite loop after conversion to hw_loop.
+    // This case can happen when the Latch has two jumps like this:
+    // Jmp_c OuterLoopHeader <-- TB
+    // Jmp   InnerLoopHeader <-- FB
+    if (MDT->dominates(TB, FB))
+      return false;
+  }
 
   // Expecting a predicate register as a condition.  It won't be a hardware
   // predicate register at this point yet, just a vreg.
@@ -1366,6 +1387,9 @@ bool HexagonHardwareLoops::fixupInductionVariable(MachineLoop *L) {
   // it's just the register.
   unsigned CSz = Cond.size();
   if (CSz != 1 && CSz != 2)
+    return false;
+
+  if (!Cond[CSz-1].isReg())
     return false;
 
   unsigned P = Cond[CSz-1].getReg();
