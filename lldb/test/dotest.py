@@ -23,6 +23,7 @@ for available options.
 import commands
 import os
 import errno
+import lock
 import platform
 import progress
 import signal
@@ -441,11 +442,23 @@ def setupCrashInfoHook():
         test_dir = os.environ['LLDB_TEST']
         if not test_dir or not os.path.exists(test_dir):
             return
+        dylib_lock = os.path.join(test_dir,"crashinfo.lock")
         dylib_src = os.path.join(test_dir,"crashinfo.c")
         dylib_dst = os.path.join(test_dir,"crashinfo.so")
-        cmd = "SDKROOT= xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
-        if subprocess.call(cmd,shell=True) == 0 and os.path.exists(dylib_dst):
-            setCrashInfoHook = setCrashInfoHook_Mac
+        try:
+            compile_lock = lock.Lock(dylib_lock)
+            compile_lock.acquire()
+            if not os.path.isfile(dylib_dst) or os.path.getmtime(dylib_dst) < os.path.getmtime(dylib_src):
+                # we need to compile
+                cmd = "SDKROOT= xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
+                if subprocess.call(cmd,shell=True) != 0 or not os.path.isfile(dylib_dst):
+                    raise Exception('command failed: "{}"'.format(cmd))
+        finally:
+            compile_lock.release()
+            del compile_lock
+
+        setCrashInfoHook = setCrashInfoHook_Mac
+
     else:
         pass
 
