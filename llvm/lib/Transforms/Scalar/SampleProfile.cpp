@@ -580,6 +580,10 @@ void SampleProfileLoader::propagateWeights(Function &F) {
   bool Changed = true;
   unsigned i = 0;
 
+  // Add an entry count to the function using the samples gathered
+  // at the function entry.
+  F.setEntryCount(Samples->getHeadSamples());
+
   // Before propagation starts, build, for each block, a list of
   // unique predecessors and successors. This is necessary to handle
   // identical edges in multiway branches. Since we visit all blocks and all
