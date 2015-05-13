@@ -3521,6 +3521,9 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
     //   c = fcmp [?gt, ?ge, ?lt, ?le] a, b
     //   select c, a, b
     // In NoNaNsFPMath the CC will have been changed from, e.g., 'ogt' to 'gt'.
+    // FIXME: There is similar code that allows some extensions in
+    // AArch64TargetLowering::LowerSELECT_CC that should be shared with this
+    // code.
     bool swapSides = false;
     if (!getTargetMachine().Options.NoNaNsFPMath) {
       // transformability may depend on which way around we compare

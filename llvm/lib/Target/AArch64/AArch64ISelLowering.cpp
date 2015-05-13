@@ -491,7 +491,6 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
 
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::VSELECT);
-  setTargetDAGCombine(ISD::SELECT_CC);
 
   setTargetDAGCombine(ISD::INTRINSIC_VOID);
   setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
@@ -3702,6 +3701,46 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(ISD::CondCode CC, SDValue LHS,
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
   assert(LHS.getValueType() == RHS.getValueType());
   EVT VT = TVal.getValueType();
+
+  // Try to match this select into a max/min operation, which have dedicated
+  // opcode in the instruction set.
+  // FIXME: This is not correct in the presence of NaNs, so we only enable this
+  // in no-NaNs mode.
+  if (getTargetMachine().Options.NoNaNsFPMath) {
+    SDValue MinMaxLHS = TVal, MinMaxRHS = FVal;
+    if (selectCCOpsAreFMaxCompatible(LHS, MinMaxRHS) &&
+        selectCCOpsAreFMaxCompatible(RHS, MinMaxLHS)) {
+      CC = ISD::getSetCCSwappedOperands(CC);
+      std::swap(MinMaxLHS, MinMaxRHS);
+    }
+
+    if (selectCCOpsAreFMaxCompatible(LHS, MinMaxLHS) &&
+        selectCCOpsAreFMaxCompatible(RHS, MinMaxRHS)) {
+      switch (CC) {
+      default:
+        break;
+      case ISD::SETGT:
+      case ISD::SETGE:
+      case ISD::SETUGT:
+      case ISD::SETUGE:
+      case ISD::SETOGT:
+      case ISD::SETOGE:
+        return DAG.getNode(AArch64ISD::FMAX, dl, VT, MinMaxLHS, MinMaxRHS);
+        break;
+      case ISD::SETLT:
+      case ISD::SETLE:
+      case ISD::SETULT:
+      case ISD::SETULE:
+      case ISD::SETOLT:
+      case ISD::SETOLE:
+        return DAG.getNode(AArch64ISD::FMIN, dl, VT, MinMaxLHS, MinMaxRHS);
+        break;
+      }
+    }
+  }
+
+  // If that fails, we'll need to perform an FCMP + CSEL sequence.  Go ahead
+  // and do the comparison.
   SDValue Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
 
   // Unfortunately, the mapping of LLVM FP CC's onto AArch64 CC's isn't totally
@@ -8696,75 +8735,6 @@ static SDValue performSelectCombine(SDNode *N,
   return DAG.getSelect(DL, ResVT, Mask, N->getOperand(1), N->getOperand(2));
 }
 
-/// performSelectCCCombine - Target-specific DAG combining for ISD::SELECT_CC
-/// to match FMIN/FMAX patterns.
-static SDValue performSelectCCCombine(SDNode *N, SelectionDAG &DAG) {
-  // Try to use FMIN/FMAX instructions for FP selects like "x < y ? x : y".
-  // Unless the NoNaNsFPMath option is set, be careful about NaNs:
-  // vmax/vmin return NaN if either operand is a NaN;
-  // only do the transformation when it matches that behavior.
-
-  SDValue CondLHS = N->getOperand(0);
-  SDValue CondRHS = N->getOperand(1);
-  SDValue LHS = N->getOperand(2);
-  SDValue RHS = N->getOperand(3);
-  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
-
-  unsigned Opcode;
-  bool IsReversed;
-  if (selectCCOpsAreFMaxCompatible(CondLHS, LHS) &&
-      selectCCOpsAreFMaxCompatible(CondRHS, RHS)) {
-    IsReversed = false; // x CC y ? x : y
-  } else if (selectCCOpsAreFMaxCompatible(CondRHS, LHS) &&
-             selectCCOpsAreFMaxCompatible(CondLHS, RHS)) {
-    IsReversed = true ; // x CC y ? y : x
-  } else {
-    return SDValue();
-  }
-
-  bool IsUnordered = false, IsOrEqual;
-  switch (CC) {
-  default:
-    return SDValue();
-  case ISD::SETULT:
-  case ISD::SETULE:
-    IsUnordered = true;
-  case ISD::SETOLT:
-  case ISD::SETOLE:
-  case ISD::SETLT:
-  case ISD::SETLE:
-    IsOrEqual = (CC == ISD::SETLE || CC == ISD::SETOLE || CC == ISD::SETULE);
-    Opcode = IsReversed ? AArch64ISD::FMAX : AArch64ISD::FMIN;
-    break;
-
-  case ISD::SETUGT:
-  case ISD::SETUGE:
-    IsUnordered = true;
-  case ISD::SETOGT:
-  case ISD::SETOGE:
-  case ISD::SETGT:
-  case ISD::SETGE:
-    IsOrEqual = (CC == ISD::SETGE || CC == ISD::SETOGE || CC == ISD::SETUGE);
-    Opcode = IsReversed ? AArch64ISD::FMIN : AArch64ISD::FMAX;
-    break;
-  }
-
-  // If LHS is NaN, an ordered comparison will be false and the result will be
-  // the RHS, but FMIN(NaN, RHS) = FMAX(NaN, RHS) = NaN. Avoid this by checking
-  // that LHS != NaN. Likewise, for unordered comparisons, check for RHS != NaN.
-  if (!DAG.isKnownNeverNaN(IsUnordered ? RHS : LHS))
-    return SDValue();
-
-  // For xxx-or-equal comparisons, "+0 <= -0" and "-0 >= +0" will both be true,
-  // but FMIN will return -0, and FMAX will return +0. So FMIN/FMAX can only be
-  // used for unsafe math or if one of the operands is known to be nonzero.
-  if (IsOrEqual && !DAG.getTarget().Options.UnsafeFPMath &&
-      !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
-    return SDValue();
-
-  return DAG.getNode(Opcode, SDLoc(N), N->getValueType(0), LHS, RHS);
-}
-
 SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -8797,8 +8767,6 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performSelectCombine(N, DCI);
   case ISD::VSELECT:
     return performVSelectCombine(N, DCI.DAG);
-  case ISD::SELECT_CC:
-    return performSelectCCCombine(N, DCI.DAG);
   case ISD::STORE:
     return performSTORECombine(N, DCI, DAG, Subtarget);
   case AArch64ISD::BRCOND:
