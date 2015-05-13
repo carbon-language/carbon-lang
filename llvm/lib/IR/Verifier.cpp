@@ -1539,7 +1539,7 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
   Assert(isa<ConstantInt>(NumPatchBytesV),
          "gc.statepoint number of patchable bytes must be a constant integer",
          &CI);
-  const uint64_t NumPatchBytes =
+  const int64_t NumPatchBytes =
       cast<ConstantInt>(NumPatchBytesV)->getSExtValue();
   assert(isInt<32>(NumPatchBytes) && "NumPatchBytesV is an i32!");
   Assert(NumPatchBytes >= 0, "gc.statepoint number of patchable bytes must be "
