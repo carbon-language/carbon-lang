@@ -191,7 +191,7 @@ DWARFFormValue::ExtractValue(const DWARFDataExtractor& data, lldb::offset_t* off
                                 // Set the string value to also be the data for inlined cstr form values only
                                 // so we can tell the difference between DW_FORM_string and DW_FORM_strp form
                                 // values;
-                                m_value.data = (uint8_t*)m_value.value.cstr;                            break;
+                                m_value.data = (const uint8_t*)m_value.value.cstr;                      break;
         case DW_FORM_exprloc:
         case DW_FORM_block:     m_value.value.uval = data.GetULEB128(offset_ptr); is_block = true;      break;
         case DW_FORM_block1:    m_value.value.uval = data.GetU8(offset_ptr); is_block = true;           break;

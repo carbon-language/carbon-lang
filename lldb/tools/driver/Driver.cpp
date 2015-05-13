@@ -867,7 +867,6 @@ PrepareCommandsForSourcing (const char *commands_data, size_t commands_size, int
 {
     enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 
-    bool success = true;
     ::FILE *commands_file = NULL;
     fds[0] = -1;
     fds[1] = -1;
@@ -885,7 +884,6 @@ PrepareCommandsForSourcing (const char *commands_data, size_t commands_size, int
             fprintf(stderr, "error: write(%i, %p, %" PRIu64 ") failed (errno = %i) "
                             "when trying to open LLDB commands pipe\n",
                     fds[WRITE], commands_data, static_cast<uint64_t>(commands_size), errno);
-            success = false;
         }
         else if (static_cast<size_t>(nrwr) == commands_size)
         {
@@ -911,14 +909,12 @@ PrepareCommandsForSourcing (const char *commands_data, size_t commands_size, int
                         "error: fdopen(%i, \"r\") failed (errno = %i) when "
                         "trying to open LLDB commands pipe\n",
                         fds[READ], errno);
-                success = false;
             }
         }
     }
     else
     {
         fprintf(stderr, "error: can't create pipe file descriptors for LLDB commands\n");
-        success = false;
     }
 
     return commands_file;

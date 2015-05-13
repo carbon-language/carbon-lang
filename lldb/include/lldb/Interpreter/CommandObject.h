@@ -195,7 +195,7 @@ public:
     static lldb::CommandArgumentType
     LookupArgumentName (const char *arg_name);
 
-    static ArgumentTableEntry *
+    static const ArgumentTableEntry *
     FindArgumentDataByType (lldb::CommandArgumentType arg_type);
 
     int

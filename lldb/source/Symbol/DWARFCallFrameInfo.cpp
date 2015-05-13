@@ -804,7 +804,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         // the DWARF expression.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        const uint8_t *block_data = (uint8_t *)m_cfi_data.GetData(&offset, block_len);
+                        const uint8_t *block_data = (const uint8_t *)m_cfi_data.GetData(&offset, block_len);
 
                         reg_location.SetAtDWARFExpression(block_data, block_len);
                         row->SetRegisterInfo (reg_num, reg_location);
@@ -858,7 +858,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         // evaluation stack prior to execution of the DWARF expression.
                         reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        const uint8_t* block_data = (uint8_t*)m_cfi_data.GetData(&offset, block_len);
+                        const uint8_t* block_data = (const uint8_t*)m_cfi_data.GetData(&offset, block_len);
 //#if defined(__i386__) || defined(__x86_64__)
 //                      // The EH frame info for EIP and RIP contains code that looks for traps to
 //                      // be a specific type and increments the PC.

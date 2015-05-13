@@ -101,7 +101,7 @@ namespace lldb_private {
         UNWIND_X86_64_REG_R15        = 5,
         UNWIND_X86_64_REG_RBP        = 6,
     };
-};
+}
 
 
 #ifndef UNWIND_SECOND_LEVEL_REGULAR

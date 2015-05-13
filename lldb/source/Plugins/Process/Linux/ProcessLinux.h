@@ -53,7 +53,7 @@ public:
     //------------------------------------------------------------------
     ProcessLinux(Target& target,
                  Listener &listener,
-                 FileSpec *core_file);
+                 const FileSpec *core_file);
 
     Error
     DoDetach(bool keep_stopped) override;
@@ -98,7 +98,7 @@ public:
 
 private:
 
-    FileSpec *m_core_file;
+    const FileSpec *m_core_file;
 
     // Flag to avoid recursion when stopping all threads.
     bool m_stopping_threads;

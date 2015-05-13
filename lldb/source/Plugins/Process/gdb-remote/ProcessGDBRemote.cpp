@@ -4094,18 +4094,18 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
         if (!child->name)
             continue;
 
-        if (strcmp ((char*)child->name, "library") != 0)
+        if (strcmp ((const char*)child->name, "library") != 0)
             continue;
 
         GDBLoadedModuleInfoList::LoadedModuleInfo module;
 
         for (xmlAttrPtr prop = child->properties; prop; prop=prop->next)
         {
-            if (strcmp ((char*)prop->name, "name") == 0)
+            if (strcmp ((const char*)prop->name, "name") == 0)
                 module.set_name (xmlExGetTextContent (prop));
 
             // the address of the link_map struct.
-            if (strcmp ((char*)prop->name, "lm") == 0)
+            if (strcmp ((const char*)prop->name, "lm") == 0)
             {
                 std::string val = xmlExGetTextContent (prop);
                 if (val.length() > 2)
@@ -4116,7 +4116,7 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
             }
 
             // the displacement as read from the field 'l_addr' of the link_map struct.
-            if (strcmp ((char*)prop->name, "l_addr") == 0)
+            if (strcmp ((const char*)prop->name, "l_addr") == 0)
             {
                 std::string val = xmlExGetTextContent (prop);
                 if (val.length() > 2)
@@ -4127,7 +4127,7 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
             }
 
             // the memory address of the libraries PT_DYAMIC section.
-            if (strcmp ((char*)prop->name, "l_ld") == 0)
+            if (strcmp ((const char*)prop->name, "l_ld") == 0)
             {
                 std::string val = xmlExGetTextContent (prop);
                 if (val.length() > 2)

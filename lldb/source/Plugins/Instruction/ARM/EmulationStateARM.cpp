@@ -233,7 +233,7 @@ EmulationStateARM::WritePseudoMemory (EmulateInstruction *instruction,
         
     bool success;
     EmulationStateARM *pseudo_state = (EmulationStateARM *) baton;
-    uint64_t value = *((uint64_t *) dst);
+    uint64_t value = *((const uint64_t *) dst);
     success = pseudo_state->StoreToPseudoAddress (addr, value, length);
     if (success)
         return length;

@@ -178,7 +178,7 @@ AdbClient::ReadMessage (std::string &message)
     if (error.Fail ())
         return error;
 
-    int packet_len = 0;
+    unsigned int packet_len = 0;
     sscanf (buffer, "%x", &packet_len);
     std::string result (packet_len, 0);
     m_conn.Read (&result[0], packet_len, kConnTimeout, status, &error);

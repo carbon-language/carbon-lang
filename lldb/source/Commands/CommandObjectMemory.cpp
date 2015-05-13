@@ -534,7 +534,7 @@ protected:
                 clang::TypeDecl *tdecl = target->GetPersistentVariables().GetPersistentType(ConstString(lookup_type_name));
                 if (tdecl)
                 {
-                    clang_ast_type.SetClangType(&tdecl->getASTContext(),(lldb::clang_type_t)tdecl->getTypeForDecl());
+                    clang_ast_type.SetClangType(&tdecl->getASTContext(),(const lldb::clang_type_t)tdecl->getTypeForDecl());
                 }
             }
             

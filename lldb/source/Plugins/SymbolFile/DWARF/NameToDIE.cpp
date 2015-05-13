@@ -69,7 +69,7 @@ NameToDIE::Dump (Stream *s)
     for (uint32_t i=0; i<size; ++i)
     {
         const char *cstr = m_map.GetCStringAtIndex(i);
-        s->Printf("%p: {0x%8.8x} \"%s\"\n", (void *)cstr, m_map.GetValueAtIndexUnchecked(i), cstr);
+        s->Printf("%p: {0x%8.8x} \"%s\"\n", (const void *)cstr, m_map.GetValueAtIndexUnchecked(i), cstr);
     }
 }
 

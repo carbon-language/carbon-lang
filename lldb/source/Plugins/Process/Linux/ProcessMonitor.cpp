@@ -351,7 +351,7 @@ DoWriteMemory(lldb::pid_t pid,
                  (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
                   size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
                  log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
-                              (void*)vm_addr, *(unsigned long*)src, *(unsigned long*)buff);
+                              (void*)vm_addr, *(const unsigned long*)src, *(const unsigned long*)buff);
         }
 
         vm_addr += word_size;

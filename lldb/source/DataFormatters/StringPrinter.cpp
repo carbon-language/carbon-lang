@@ -181,12 +181,13 @@ GetPrintableImpl<StringElementType::ASCII> (uint8_t* buffer, uint8_t* buffer_end
             break;
         default:
           if (isprint(*buffer))
-            retval = {buffer,1};
+              retval = {buffer,1};
           else
           {
-            retval = { new uint8_t[5],4,[] (const uint8_t* c) {delete[] c;} };
-            sprintf((char*)retval.GetBytes(),"\\x%02x",*buffer);
-            break;
+              uint8_t* data = new uint8_t[5];
+              sprintf((char*)data,"\\x%02x",*buffer);
+              retval = {data, 4, [] (const uint8_t* c) {delete[] c;} };
+              break;
           }
     }
     
@@ -288,8 +289,9 @@ GetPrintableImpl<StringElementType::UTF8> (uint8_t* buffer, uint8_t* buffer_end,
                     retval = {buffer,utf8_encoded_len};
                 else
                 {
-                    retval = { new uint8_t[11],10,[] (const uint8_t* c) {delete[] c;} };
-                    sprintf((char*)retval.GetBytes(),"\\U%08x",codepoint);
+                    uint8_t* data = new uint8_t[11];
+                    sprintf((char*)data,"\\U%08x",codepoint);
+                    retval = { data,10,[] (const uint8_t* c) {delete[] c;} };
                     break;
                 }
         }
@@ -352,8 +354,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             sourceSize = bufferSPSize/(origin_encoding / 4);
         }
         
-        SourceDataType *data_ptr = (SourceDataType*)data.GetDataStart();
-        SourceDataType *data_end_ptr = data_ptr + sourceSize;
+        const SourceDataType *data_ptr = (const SourceDataType*)data.GetDataStart();
+        const SourceDataType *data_end_ptr = data_ptr + sourceSize;
         
         while (data_ptr < data_end_ptr)
         {
@@ -365,7 +367,7 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             data_ptr++;
         }
         
-        data_ptr = (SourceDataType*)data.GetDataStart();
+        data_ptr = (const SourceDataType*)data.GetDataStart();
         
         lldb::DataBufferSP utf8_data_buffer_sp;
         UTF8* utf8_data_ptr = nullptr;
@@ -376,7 +378,7 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             utf8_data_buffer_sp.reset(new DataBufferHeap(4*bufferSPSize,0));
             utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
             utf8_data_end_ptr = utf8_data_ptr + utf8_data_buffer_sp->GetByteSize();
-            ConvertFunction ( (const SourceDataType**)&data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
+            ConvertFunction ( &data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
             utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes(); // needed because the ConvertFunction will change the value of the data_ptr
         }
         else
@@ -449,7 +451,6 @@ ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOp
 {
     assert(options.GetStream() && "need a Stream to print the string to");
     Error my_error;
-    size_t my_data_read;
 
     ProcessSP process_sp(options.GetProcessSP());
 
@@ -467,7 +468,7 @@ ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOp
 
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
 
-    my_data_read = process_sp->ReadCStringFromMemory(options.GetLocation(), (char*)buffer_sp->GetBytes(), size, my_error);
+    process_sp->ReadCStringFromMemory(options.GetLocation(), (char*)buffer_sp->GetBytes(), size, my_error);
 
     if (my_error.Fail())
         return false;
@@ -568,11 +569,10 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
     Error error;
     char *buffer = reinterpret_cast<char *>(buffer_sp->GetBytes());
 
-    size_t data_read = 0;
     if (needs_zero_terminator)
-        data_read = process_sp->ReadStringFromMemory(options.GetLocation(), buffer, bufferSPSize, error, type_width);
+        process_sp->ReadStringFromMemory(options.GetLocation(), buffer, bufferSPSize, error, type_width);
     else
-        data_read = process_sp->ReadMemoryFromInferior(options.GetLocation(), (char*)buffer_sp->GetBytes(), bufferSPSize, error);
+        process_sp->ReadMemoryFromInferior(options.GetLocation(), (char*)buffer_sp->GetBytes(), bufferSPSize, error);
 
     if (error.Fail())
     {

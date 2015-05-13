@@ -1299,13 +1299,11 @@ FormatEntity::Format (const Entry &entry,
                         // Watch for the special "tid" format...
                         if (entry.printf_format == "tid")
                         {
-                            bool handled = false;
                             Target &target = thread->GetProcess()->GetTarget();
                             ArchSpec arch (target.GetArchitecture ());
                             llvm::Triple::OSType ostype = arch.IsValid() ? arch.GetTriple().getOS() : llvm::Triple::UnknownOS;
                             if ((ostype == llvm::Triple::FreeBSD) || (ostype == llvm::Triple::Linux))
                             {
-                                handled = true;
                                 format = "%" PRIu64;
                             }
                         }

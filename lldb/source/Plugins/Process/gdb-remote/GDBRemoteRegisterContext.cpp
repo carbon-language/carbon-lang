@@ -677,15 +677,16 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                         // This means buffer will be a little more than 2x larger than necessary but we resize
                         // it down once we've extracted all hex ascii chars from the packet.
                         DataBufferHeap buffer (G_packet_len, 0);
+
+                        const uint32_t bytes_extracted = response.GetHexBytes (buffer.GetBytes(),
+                                                                               buffer.GetByteSize(),
+                                                                               '\xcc');
+
                         DataExtractor restore_data (buffer.GetBytes(),
                                                     buffer.GetByteSize(),
                                                     m_reg_data.GetByteOrder(),
                                                     m_reg_data.GetAddressByteSize());
-    
-                        const uint32_t bytes_extracted = response.GetHexBytes ((void *)restore_data.GetDataStart(),
-                                                                               restore_data.GetByteSize(),
-                                                                               '\xcc');
-    
+
                         if (bytes_extracted < restore_data.GetByteSize())
                             restore_data.SetData(restore_data.GetDataStart(), bytes_extracted, m_reg_data.GetByteOrder());
     

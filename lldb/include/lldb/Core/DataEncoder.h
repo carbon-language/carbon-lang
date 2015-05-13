@@ -357,7 +357,7 @@ public:
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
     uint32_t
-    SetData (const void *bytes, uint32_t length, lldb::ByteOrder byte_order);
+    SetData (void *bytes, uint32_t length, lldb::ByteOrder byte_order);
 
     //------------------------------------------------------------------
     /// Adopt a subset of shared data in \a data_sp.

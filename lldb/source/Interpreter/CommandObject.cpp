@@ -506,14 +506,14 @@ CommandObject::GetArgumentEntryAtIndex (int idx)
     return nullptr;
 }
 
-CommandObject::ArgumentTableEntry *
+const CommandObject::ArgumentTableEntry *
 CommandObject::FindArgumentDataByType (CommandArgumentType arg_type)
 {
     const ArgumentTableEntry *table = CommandObject::GetArgumentTable();
 
     for (int i = 0; i < eArgTypeLastArg; ++i)
         if (table[i].arg_type == arg_type)
-            return (ArgumentTableEntry *) &(table[i]);
+            return &(table[i]);
 
     return nullptr;
 }
@@ -522,7 +522,7 @@ void
 CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, CommandInterpreter &interpreter)
 {
     const ArgumentTableEntry* table = CommandObject::GetArgumentTable();
-    ArgumentTableEntry *entry = (ArgumentTableEntry *) &(table[arg_type]);
+    const ArgumentTableEntry *entry = &(table[arg_type]);
     
     // The table is *supposed* to be kept in arg_type order, but someone *could* have messed it up...
 
@@ -556,7 +556,7 @@ CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, Comma
 const char *
 CommandObject::GetArgumentName (CommandArgumentType arg_type)
 {
-    ArgumentTableEntry *entry = (ArgumentTableEntry *) &(CommandObject::GetArgumentTable()[arg_type]);
+    const ArgumentTableEntry *entry = &(CommandObject::GetArgumentTable()[arg_type]);
 
     // The table is *supposed* to be kept in arg_type order, but someone *could* have messed it up...
 

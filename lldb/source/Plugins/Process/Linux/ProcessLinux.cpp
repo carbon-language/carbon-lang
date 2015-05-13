@@ -49,7 +49,7 @@ namespace
 ProcessSP
 ProcessLinux::CreateInstance(Target &target, Listener &listener, const FileSpec *core_file)
 {
-    return ProcessSP(new ProcessLinux(target, listener, (FileSpec *)core_file));
+    return ProcessSP(new ProcessLinux(target, listener, core_file));
 }
 
 void
@@ -68,7 +68,7 @@ ProcessLinux::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessLinux::ProcessLinux(Target& target, Listener &listener, FileSpec *core_file)
+ProcessLinux::ProcessLinux(Target& target, Listener &listener, const FileSpec *core_file)
     : ProcessPOSIX(target, listener, GetStaticLinuxSignalsSP ()), m_core_file(core_file), m_stopping_threads(false)
 {
 #if 0

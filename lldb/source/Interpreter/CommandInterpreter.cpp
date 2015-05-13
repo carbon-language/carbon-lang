@@ -2247,7 +2247,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
         }
 
         cmd_args.Clear();
-        cmd_args.SetArguments (new_args.GetArgumentCount(), (const char **) new_args.GetArgumentVector());
+        cmd_args.SetArguments (new_args.GetArgumentCount(), new_args.GetConstArgumentVector());
     }
     else
     {
@@ -2258,7 +2258,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
         if (wants_raw_input)
         {
             cmd_args.Clear();
-            cmd_args.SetArguments (new_args.GetArgumentCount(), (const char **) new_args.GetArgumentVector());
+            cmd_args.SetArguments (new_args.GetArgumentCount(), new_args.GetConstArgumentVector());
         }
         return;
     }
@@ -2274,7 +2274,7 @@ CommandInterpreter::GetOptionArgumentPosition (const char *in_string)
     int position = 0;   // Any string that isn't an argument position, i.e. '%' followed by an integer, gets a position
                         // of zero.
 
-    char *cptr = (char *) in_string;
+    const char *cptr = in_string;
 
     // Does it start with '%'
     if (cptr[0] == '%')

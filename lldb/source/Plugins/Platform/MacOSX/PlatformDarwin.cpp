@@ -1174,7 +1174,7 @@ PlatformDarwin::GetResumeCountForLaunchInfo (ProcessLaunchInfo &launch_info)
         // /bin/sh re-exec's itself as /bin/bash requiring another resume.
         // But it only does this if the COMMAND_MODE environment variable
         // is set to "legacy".
-        char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+        const char **envp = launch_info.GetEnvironmentEntries().GetConstArgumentVector();
         if (envp != NULL)
         {
             for (int i = 0; envp[i] != NULL; i++)
@@ -1346,7 +1346,7 @@ PlatformDarwin::DirectoryEnumerator(void *baton,
     }
     
     return FileSpec::EnumerateDirectoryResult::eEnumerateDirectoryResultNext;
-};
+}
 
 FileSpec
 PlatformDarwin::FindSDKInXcodeForModules (SDKType sdk_type,

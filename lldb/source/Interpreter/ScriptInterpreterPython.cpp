@@ -382,6 +382,13 @@ ScriptInterpreterPython::LeaveSession ()
     m_session_is_active = false;
 }
 
+static PyObject *
+PyFile_FromFile_Const(FILE *fp, const char *name, const char *mode, int (*close)(FILE *))
+{
+    // Read through the Python source, doesn't seem to modify these strings
+    return PyFile_FromFile(fp, const_cast<char*>(name), const_cast<char*>(mode), close);
+}
+
 bool
 ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
                                        FILE *in,
@@ -447,7 +454,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
             {
                 m_saved_stdin.Reset(sys_module_dict.GetItemForKey("stdin"));
                 // This call can deadlock your process if the file is locked
-                PyObject *new_file = PyFile_FromFile (in, (char *) "", (char *) "r", nullptr);
+                PyObject *new_file = PyFile_FromFile_Const (in, "", "r", nullptr);
                 sys_module_dict.SetItemForKey ("stdin", new_file);
                 Py_DECREF (new_file);
             }
@@ -459,7 +466,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         {
             m_saved_stdout.Reset(sys_module_dict.GetItemForKey("stdout"));
 
-            PyObject *new_file = PyFile_FromFile (out, (char *) "", (char *) "w", nullptr);
+            PyObject *new_file = PyFile_FromFile_Const (out, "", "w", nullptr);
             sys_module_dict.SetItemForKey ("stdout", new_file);
             Py_DECREF (new_file);
         }
@@ -472,7 +479,7 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         {
             m_saved_stderr.Reset(sys_module_dict.GetItemForKey("stderr"));
 
-            PyObject *new_file = PyFile_FromFile (err, (char *) "", (char *) "w", nullptr);
+            PyObject *new_file = PyFile_FromFile_Const (err, "", "w", nullptr);
             sys_module_dict.SetItemForKey ("stderr", new_file);
             Py_DECREF (new_file);
         }

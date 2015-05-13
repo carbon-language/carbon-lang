@@ -21,36 +21,36 @@ using namespace lldb;
 using namespace lldb_private;
 
 static inline void
-WriteInt16(const unsigned char* ptr, unsigned offset, uint16_t value) 
+WriteInt16(unsigned char* ptr, unsigned offset, uint16_t value)
 {
     *(uint16_t *)(ptr + offset) = value;
 }
 static inline void
-WriteInt32 (const unsigned char* ptr, unsigned offset, uint32_t value) 
+WriteInt32 (unsigned char* ptr, unsigned offset, uint32_t value)
 {
     *(uint32_t *)(ptr + offset) = value;
 }
 
 static inline void
-WriteInt64(const unsigned char* ptr, unsigned offset, uint64_t value) 
+WriteInt64(unsigned char* ptr, unsigned offset, uint64_t value)
 {
     *(uint64_t *)(ptr + offset) = value;
 }
 
 static inline void
-WriteSwappedInt16(const unsigned char* ptr, unsigned offset, uint16_t value) 
+WriteSwappedInt16(unsigned char* ptr, unsigned offset, uint16_t value)
 {
     *(uint16_t *)(ptr + offset) = llvm::ByteSwap_16(value);
 }
 
 static inline void
-WriteSwappedInt32 (const unsigned char* ptr, unsigned offset, uint32_t value) 
+WriteSwappedInt32 (unsigned char* ptr, unsigned offset, uint32_t value)
 {
     *(uint32_t *)(ptr + offset) = llvm::ByteSwap_32(value);
 }
 
 static inline void 
-WriteSwappedInt64(const unsigned char* ptr, unsigned offset, uint64_t value) 
+WriteSwappedInt64(unsigned char* ptr, unsigned offset, uint64_t value)
 {
     *(uint64_t *)(ptr + offset) = llvm::ByteSwap_64(value);
 }
@@ -153,7 +153,7 @@ DataEncoder::GetSharedDataOffset () const
 // any data extracted will be endian swapped.
 //----------------------------------------------------------------------
 uint32_t
-DataEncoder::SetData (const void *bytes, uint32_t length, ByteOrder endian)
+DataEncoder::SetData (void *bytes, uint32_t length, ByteOrder endian)
 {
     m_byte_order = endian;
     m_data_sp.reset();

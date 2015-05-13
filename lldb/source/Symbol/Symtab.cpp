@@ -210,8 +210,8 @@ Symtab::DumpSymbolHeader (Stream *s)
 static int
 CompareSymbolID (const void *key, const void *p)
 {
-    const user_id_t match_uid = *(user_id_t*) key;
-    const user_id_t symbol_uid = ((Symbol *)p)->GetID();
+    const user_id_t match_uid = *(const user_id_t*) key;
+    const user_id_t symbol_uid = ((const Symbol *)p)->GetID();
     if (match_uid < symbol_uid)
         return -1;
     if (match_uid > symbol_uid)
@@ -227,7 +227,7 @@ Symtab::FindSymbolByID (lldb::user_id_t symbol_uid) const
     Symbol *symbol = (Symbol*)::bsearch (&symbol_uid, 
                                          &m_symbols[0], 
                                          m_symbols.size(), 
-                                         (uint8_t *)&m_symbols[1] - (uint8_t *)&m_symbols[0], 
+                                         sizeof(m_symbols[0]),
                                          CompareSymbolID);
     return symbol;
 }

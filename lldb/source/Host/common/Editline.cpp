@@ -711,7 +711,7 @@ Editline::BreakLineCommand (int ch)
 unsigned char
 Editline::DeleteNextCharCommand (int ch)
 {
-    LineInfoW * info = (LineInfoW *)el_wline (m_editline);
+    LineInfoW * info = const_cast<LineInfoW *>(el_wline (m_editline));
     
     // Just delete the next character normally if possible
     if (info->cursor < info->lastchar) 
@@ -755,7 +755,7 @@ Editline::DeleteNextCharCommand (int ch)
 unsigned char
 Editline::DeletePreviousCharCommand (int ch)
 {
-    LineInfoW * info = (LineInfoW *)el_wline (m_editline);
+    LineInfoW * info = const_cast<LineInfoW *>(el_wline (m_editline));
     
     // Just delete the previous character normally when not at the start of a line
     if (info->cursor > info->buffer) 
@@ -861,7 +861,7 @@ Editline::FixIndentationCommand (int ch)
     StringList lines = GetInputAsStringList (m_current_line_index + 1);
 
     // Determine the cursor position
-    LineInfoW * info = (LineInfoW *)el_wline (m_editline);
+    LineInfoW * info = const_cast<LineInfoW *>(el_wline (m_editline));
     int cursor_position = info->cursor - info->buffer;
     
     int indent_correction = m_fix_indentation_callback (this, lines, cursor_position, m_fix_indentation_callback_baton);
@@ -887,7 +887,7 @@ Editline::RevertLineCommand (int ch)
     el_winsertstr (m_editline, m_input_lines[m_current_line_index].c_str());
     if (m_revert_cursor_index >= 0)
     {
-        LineInfoW * info = (LineInfoW *)el_wline (m_editline);
+        LineInfoW * info = const_cast<LineInfoW *>(el_wline (m_editline));
         info->cursor = info->buffer + m_revert_cursor_index;
         if (info->cursor > info->lastchar)
         {

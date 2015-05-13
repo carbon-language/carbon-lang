@@ -1428,7 +1428,7 @@ DynamicLoaderMacOSXDYLD::DYLDImageInfo::PutToLog (Log *log) const
 {
     if (log == NULL)
         return;
-    uint8_t *u = (uint8_t *)uuid.GetBytes();
+    const uint8_t *u = (const uint8_t *)uuid.GetBytes();
 
     if (address == LLDB_INVALID_ADDRESS)
     {

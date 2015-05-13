@@ -136,7 +136,7 @@ LocateExecutableSymbolFileDsym (const ModuleSpec &module_spec)
                         "LocateExecutableSymbolFileDsym (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
                         arch ? arch->GetArchitectureName() : "<NULL>",
-                        uuid);
+                        (void*)uuid);
 
     FileSpec symbol_fspec;
     // First try and find the dSYM in the same directory as the executable or in
@@ -159,7 +159,7 @@ Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
                         "LocateExecutableObjectFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
                         arch ? arch->GetArchitectureName() : "<NULL>",
-                        uuid);
+                        (void*)uuid);
 
     FileSpec objfile_fspec;
     ModuleSpecList module_specs;

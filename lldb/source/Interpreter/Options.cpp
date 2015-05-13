@@ -944,7 +944,7 @@ Options::HandleOptionArgumentCompletion
         lldb::CommandArgumentType option_arg_type = opt_defs[opt_defs_index].argument_type;
         if (option_arg_type != eArgTypeNone)
         {
-            CommandObject::ArgumentTableEntry *arg_entry = CommandObject::FindArgumentDataByType (opt_defs[opt_defs_index].argument_type);
+            const CommandObject::ArgumentTableEntry *arg_entry = CommandObject::FindArgumentDataByType (opt_defs[opt_defs_index].argument_type);
             if (arg_entry)
                 completion_mask = arg_entry->completion_type;
         }

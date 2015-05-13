@@ -263,9 +263,8 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
 
         // update the argument with the target pointer
         //XXX: This is a gross hack for getting around the const
-        *((size_t*)(&arg.value)) = sp;
+        *const_cast<lldb::addr_t*>(&arg.value) = sp;
     }
-
 
 #if HEX_ABI_DEBUG
     // print the original stack pointer

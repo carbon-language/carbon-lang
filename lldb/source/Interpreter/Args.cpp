@@ -1138,7 +1138,7 @@ Args::IsPositionalArgument (const char *arg)
         return false;
         
     bool is_positional = true;
-    char *cptr = (char *) arg;
+    const char *cptr = arg;
     
     if (cptr[0] == '%')
     {
