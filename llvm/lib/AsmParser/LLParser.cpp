@@ -776,7 +776,7 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                             Name, nullptr, GlobalVariable::NotThreadLocal,
                             AddrSpace);
   } else {
-    if (GVal->getType()->getElementType() != Ty)
+    if (GVal->getValueType() != Ty)
       return Error(TyLoc,
             "forward reference and definition of global have different types");
 
