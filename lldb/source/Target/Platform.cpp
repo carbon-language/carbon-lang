@@ -20,6 +20,7 @@
 // Project includes
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -1252,10 +1253,27 @@ Platform::KillProcess (const lldb::pid_t pid)
     if (log)
         log->Printf ("Platform::%s, pid %" PRIu64, __FUNCTION__, pid);
 
-    if (!IsHost ())
-        return Error ("base lldb_private::Platform class can't launch remote processes");
+    // Try to find a process plugin to handle this Kill request.  If we can't, fall back to
+    // the default OS implementation.
+    size_t num_debuggers = Debugger::GetNumDebuggers();
+    for (size_t didx = 0; didx < num_debuggers; ++didx)
+    {
+        DebuggerSP debugger = Debugger::GetDebuggerAtIndex(didx);
+        lldb_private::TargetList &targets = debugger->GetTargetList();
+        for (int tidx = 0; tidx < targets.GetNumTargets(); ++tidx)
+        {
+            ProcessSP process = targets.GetTargetAtIndex(tidx)->GetProcessSP();
+            if (process->GetID() == pid)
+                return process->Destroy(true);
+        }
+    }
 
-    Host::Kill (pid, SIGTERM);
+    if (!IsHost())
+    {
+        return Error("base lldb_private::Platform class can't kill remote processes unless "
+                     "they are controlled by a process plugin");
+    }
+    Host::Kill(pid, SIGTERM);
     return Error();
 }
 
