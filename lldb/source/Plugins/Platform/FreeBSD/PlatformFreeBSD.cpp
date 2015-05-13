@@ -597,12 +597,14 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode = g_aarch64_opcode;
             trap_opcode_size = sizeof(g_aarch64_opcode);
         }
+        break;
     case llvm::Triple::arm:
         {
             static const uint8_t g_arm_opcode[] = { 0xfe, 0xde, 0xff, 0xe7 };
             trap_opcode = g_arm_opcode;
             trap_opcode_size = sizeof(g_arm_opcode);
         }
+        break;
     case llvm::Triple::mips64:
         {
             static const uint8_t g_hex_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
@@ -617,6 +619,7 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode = g_ppc_opcode;
             trap_opcode_size = sizeof(g_ppc_opcode);
         }
+        break;
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
         {
