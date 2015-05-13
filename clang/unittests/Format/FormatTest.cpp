@@ -7299,6 +7299,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];");
   verifyFormat("[aaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];");
+  verifyFormat("[aaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaa[aaaaaaaaaaaaaaaaaaaaa]\n"
+               "    aaaaaaaaaaaaaaaaaaaaaa];");
 
   verifyFormat(
       "scoped_nsobject<NSTextField> message(\n"

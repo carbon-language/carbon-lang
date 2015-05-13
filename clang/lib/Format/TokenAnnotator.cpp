@@ -2111,7 +2111,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::colon) && (Left.isOneOf(TT_DictLiteral, TT_ObjCMethodExpr)))
     return true;
-  if (Right.is(TT_SelectorName))
+  if (Right.is(TT_SelectorName) || (Right.is(tok::identifier) && Right.Next &&
+                                    Right.Next->is(TT_ObjCMethodExpr)))
     return true;
   if (Left.is(tok::r_paren) && Line.Type == LT_ObjCProperty)
     return true;
