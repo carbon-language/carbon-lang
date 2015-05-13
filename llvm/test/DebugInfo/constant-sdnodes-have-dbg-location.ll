@@ -1,7 +1,5 @@
 ; RUN: llc -debug < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
-; XFAIL: *
-; disabled until constant coalescing is resolved
 
 ; CHECK: 0x{{[0-9,a-f]+}}: i32 = Constant<-1>test.c:4:5
 

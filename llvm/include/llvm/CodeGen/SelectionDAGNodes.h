@@ -1406,11 +1406,10 @@ public:
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
   friend class SelectionDAG;
-  // XXX: DebugLoc is unused intentionally until constant coalescing is resolved
   ConstantSDNode(bool isTarget, bool isOpaque, const ConstantInt *val,
-                 DebugLoc, EVT VT)
+                 DebugLoc DL, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant,
-             0, DebugLoc(), getSDVTList(VT)), Value(val) {
+             0, DL, getSDVTList(VT)), Value(val) {
     SubclassData |= (uint16_t)isOpaque;
   }
 public:
@@ -1435,9 +1434,9 @@ public:
 class ConstantFPSDNode : public SDNode {
   const ConstantFP *Value;
   friend class SelectionDAG;
-  ConstantFPSDNode(bool isTarget, const ConstantFP *val, EVT VT)
+  ConstantFPSDNode(bool isTarget, const ConstantFP *val, DebugLoc DL, EVT VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             0, DebugLoc(), getSDVTList(VT)), Value(val) {
+             0, DL, getSDVTList(VT)), Value(val) {
   }
 public:
 

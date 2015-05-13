@@ -1,0 +1,24 @@
+; RUN: llc -debug < %s 2>&1 | FileCheck %s
+; REQUIRES: asserts
+
+; CHECK: 0x{{[0-9,a-f]+}}: f64 = ConstantFP<1.500000e+00>test.c:3:5
+
+define double @f() {
+entry:
+  ret double 1.500000e+00, !dbg !10
+}
+
+!llvm.dbg.cu = !{!0}
+!llvm.module.flags = !{!8, !9}
+
+!0 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false, subprograms: !3)
+!1 = !DIFile(filename: "test.c", directory: "/home/user/clang-llvm/build")
+!2 = !{}
+!3 = !{!4}
+!4 = !DISubprogram(name: "f", scope: !1, file: !1, line: 1, type: !5, isLocal: false, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: false, function: double ()* @f, variables: !2)
+!5 = !DISubroutineType(types: !6)
+!6 = !{!7}
+!7 = !DIBasicType(name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!8 = !{i32 2, !"Dwarf Version", i32 4}
+!9 = !{i32 2, !"Debug Info Version", i32 3}
+!10 = !DILocation(line: 3, column: 5, scope: !4)

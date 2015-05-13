@@ -1243,6 +1243,18 @@ private:
                                 SDValue N1, SDValue N2,
                                 const SDNodeFlags *Flags = nullptr);
 
+  /// Look up the node specified by ID in CSEMap.  If it exists, return it.  If
+  /// not, return the insertion token that will make insertion faster.  This
+  /// overload is for nodes other than Constant or ConstantFP, use the other one
+  /// for those.
+  SDNode *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos);
+
+  /// Look up the node specified by ID in CSEMap.  If it exists, return it.  If
+  /// not, return the insertion token that will make insertion faster.  Performs
+  /// additional processing for constant nodes.
+  SDNode *FindNodeOrInsertPos(const FoldingSetNodeID &ID, DebugLoc DL,
+                              void *&InsertPos);
+
   /// List of non-single value types.
   FoldingSet<SDVTListNode> VTListMap;
 
