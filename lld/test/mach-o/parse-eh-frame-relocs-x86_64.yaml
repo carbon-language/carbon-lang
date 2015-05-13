@@ -1,0 +1,107 @@
+# RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t | FileCheck %s
+#
+# Test parsing of x86_64 __eh_frame (dwarf unwind) relocations.
+#
+#_catchMyException:
+# pushq   %rbp
+# movq    %rsp, %rbp
+# callq   _foo
+# popq    %rbp
+# retq
+# movq    %rax, %rdi
+# callq   ___cxa_begin_catch
+# popq    %rbp
+# jmp     ___cxa_end_catch
+
+--- !mach-o
+arch:            x86_64
+file-type:       MH_OBJECT
+flags:           [  ]
+sections:
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [0x55, 0x48, 0x89, 0xe5, 0xe8, 0x00, 0x00, 0x00,
+                      0x00, 0x5d, 0xc3, 0x48, 0x89, 0xc7, 0xe8, 0x00,
+                      0x00, 0x00, 0x00, 0x5d, 0xe9, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00 ]
+    relocations:
+      - offset:          0x00000015
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          2
+      - offset:          0x0000000f
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          1
+      - offset:          0x00000005
+        type:            X86_64_RELOC_BRANCH
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          0
+  - segment:         __TEXT
+    section:         __gcc_except_tab
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x000000000000001c
+    content:         [ 0x00, 0x00, 0x00, 0x00 ]
+  - segment:         __TEXT
+    section:         __eh_frame
+    type:            S_COALESCED
+    attributes:      [  ]
+    address:         0x0000000000000020
+    content:         [ 0x1c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x01, 0x7a, 0x50, 0x4c, 0x52, 0x00, 0x01, 0x78,
+                       0x10, 0x07, 0x9b, 0x04, 0x00, 0x00, 0x00, 0x10,
+                       0x10, 0x0c, 0x07, 0x08, 0x90, 0x01, 0x00, 0x00,
+                       0x2c, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00,
+                       0xB8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                       0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x08, 0xc3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                       0xff, 0x41, 0x0e, 0x10, 0x86, 0x02, 0x43, 0x0d,
+                       0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]
+  - segment:         __DATA
+    section:         __data
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x0000000000000068
+    content:         [ 0x00, 0x00, 0x00, 0x00 ]
+local-symbols:
+  - name:            _catchMyException
+    type:            N_SECT
+    sect:            1
+    value:           0x0000000000000000
+undefined-symbols:
+  - name:            _foo
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+  - name:            ___cxa_begin_catch
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+  - name:            ___cxa_end_catch
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+...
+
+# CHECK:       - type:            unwind-cfi
+# CHECK-NOT:   - type:
+# CHECK:         references:
+# CHECK-NEXT:      - kind:            negDelta32
+# CHECK-NEXT:        offset:          4
+# CHECK-NEXT:        target:          L000
+# CHECK-NEXT:      - kind:            unwindFDEToFunction
+# CHECK-NEXT:        offset:          8
+# CHECK-NEXT:        target:          _catchMyException
+# CHECK-NEXT:      - kind:            unwindFDEToFunction
+# CHECK-NEXT:        offset:          25
+# CHECK-NEXT:        target:          L001
