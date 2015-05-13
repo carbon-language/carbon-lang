@@ -408,8 +408,8 @@ void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForMul(
     Value *LHS, Value *RHS, Instruction *I) {
   Value *B = nullptr;
   ConstantInt *Idx = nullptr;
-  // Only handle the canonical operand ordering.
-  if (match(LHS, m_Add(m_Value(B), m_ConstantInt(Idx)))) {
+  if (match(LHS, m_Add(m_Value(B), m_ConstantInt(Idx))) ||
+      match(LHS, m_Add(m_ConstantInt(Idx), m_Value(B)))) {
     // If LHS is in the form of "Base + Index", then I is in the form of
     // "(Base + Index) * RHS".
     allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(B), Idx, RHS, I);

@@ -23,6 +23,27 @@ define void @slsr1(i32 %b, i32 %s) {
   ret void
 }
 
+define void @non_canonicalized(i32 %b, i32 %s) {
+; CHECK-LABEL: @non_canonicalized(
+  ; foo(b * s);
+  %mul0 = mul i32 %b, %s
+; CHECK: mul i32
+; CHECK-NOT: mul i32
+  call void @foo(i32 %mul0)
+
+  ; foo((1 + b) * s);
+  %b1 = add i32 1, %b
+  %mul1 = mul i32 %b1, %s
+  call void @foo(i32 %mul1)
+
+  ; foo((2 + b) * s);
+  %b2 = add i32 2, %b
+  %mul2 = mul i32 %b2, %s
+  call void @foo(i32 %mul2)
+
+  ret void
+}
+
 ; foo(a * b)
 ; foo((a + 1) * b)
 ; foo(a * (b + 1))
