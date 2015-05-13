@@ -677,6 +677,21 @@ of this function is inserted at each poll site desired.  While calls or invokes
 inside this method are transformed to a ``gc.statepoints``, recursive poll 
 insertion is not performed.
 
+By default PlaceSafepoints passes in ``0xABCDEF00`` as the statepoint
+ID and ``0`` as the number of patchable bytes to the newly constructed
+``gc.statepoint``.  These values can be configured on a per-callsite
+basis using the attributes ``"statepoint-id"`` and
+``"statepoint-num-patch-bytes"``.  If a call site is marked with a
+``"statepoint-id"`` function attribute and its value is a positive
+integer (represented as a string), then that value is used as the ID
+of the newly constructed ``gc.statepoint``.  If a call site is marked
+with a ``"statepoint-num-patch-bytes"`` function attribute and its
+value is a positive integer, then that value is used as the 'num patch
+bytes' parameter of the newly constructed ``gc.statepoint``.  The
+``"statepoint-id"`` and ``"statepoint-num-patch-bytes"`` attributes
+are not propagated to the ``gc.statepoint`` call or invoke if they
+could be successfully parsed.
+
 If you are scheduling the RewriteStatepointsForGC pass late in the pass order,
 you should probably schedule this pass immediately before it.  The exception 
 would be if you need to preserve abstract frame information (e.g. for

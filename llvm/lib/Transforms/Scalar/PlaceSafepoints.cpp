@@ -881,19 +881,51 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
   // Create the statepoint given all the arguments
   Instruction *Token = nullptr;
-  AttributeSet OriginalAttrs;
+
+  uint64_t ID;
+  uint32_t NumPatchBytes;
+
+  AttributeSet OriginalAttrs = CS.getAttributes();
+  Attribute AttrID =
+      OriginalAttrs.getAttribute(AttributeSet::FunctionIndex, "statepoint-id");
+  Attribute AttrNumPatchBytes = OriginalAttrs.getAttribute(
+      AttributeSet::FunctionIndex, "statepoint-num-patch-bytes");
+
+  AttrBuilder AttrsToRemove;
+  bool HasID = AttrID.isStringAttribute() &&
+               !AttrID.getValueAsString().getAsInteger(10, ID);
+
+  if (HasID)
+    AttrsToRemove.addAttribute("statepoint-id");
+  else
+    ID = 0xABCDEF00;
+
+  bool HasNumPatchBytes =
+      AttrNumPatchBytes.isStringAttribute() &&
+      !AttrNumPatchBytes.getValueAsString().getAsInteger(10, NumPatchBytes);
+
+  if (HasNumPatchBytes)
+    AttrsToRemove.addAttribute("statepoint-num-patch-bytes");
+  else
+    NumPatchBytes = 0;
+
+  OriginalAttrs = OriginalAttrs.removeAttributes(
+      CS.getInstruction()->getContext(), AttributeSet::FunctionIndex,
+      AttrsToRemove);
+
+  Value *StatepointTarget = NumPatchBytes == 0
+                                ? CS.getCalledValue()
+                                : ConstantPointerNull::get(cast<PointerType>(
+                                      CS.getCalledValue()->getType()));
 
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
     CallInst *Call = Builder.CreateGCStatepointCall(
-        0xABCDEF00, 0, CS.getCalledValue(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
-        None, None, "safepoint_token");
+        ID, NumPatchBytes, StatepointTarget,
+        makeArrayRef(CS.arg_begin(), CS.arg_end()), None, None,
+        "safepoint_token");
     Call->setTailCall(ToReplace->isTailCall());
     Call->setCallingConv(ToReplace->getCallingConv());
-
-    // Before we have to worry about GC semantics, all attributes are legal
-    // TODO: handle param attributes
-    OriginalAttrs = ToReplace->getAttributes();
 
     // In case if we can handle this set of attributes - set up function
     // attributes directly on statepoint and return attributes later for
@@ -915,13 +947,9 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     // original block.
     Builder.SetInsertPoint(ToReplace->getParent());
     InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
-        0xABCDEF00, 0, CS.getCalledValue(), ToReplace->getNormalDest(),
+        ID, NumPatchBytes, StatepointTarget, ToReplace->getNormalDest(),
         ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
         Builder.getInt32(0), None, "safepoint_token");
-
-    // Currently we will fail on parameter attributes and on certain
-    // function attributes.
-    OriginalAttrs = ToReplace->getAttributes();
 
     // In case if we can handle this set of attributes - set up function
     // attributes directly on statepoint and return attributes later for
