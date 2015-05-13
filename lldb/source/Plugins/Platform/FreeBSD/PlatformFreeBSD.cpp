@@ -591,18 +591,23 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
     default:
         assert(false && "Unhandled architecture in PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode()");
         break;
+    case llvm::Triple::aarch64:
+        {
+            static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
+            trap_opcode = g_aarch64_opcode;
+            trap_opcode_size = sizeof(g_aarch64_opcode);
+        }
     case llvm::Triple::arm:
         {
             static const uint8_t g_arm_opcode[] = { 0xfe, 0xde, 0xff, 0xe7 };
             trap_opcode = g_arm_opcode;
             trap_opcode_size = sizeof(g_arm_opcode);
         }
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
+    case llvm::Triple::mips64:
         {
-            static const uint8_t g_i386_opcode[] = { 0xCC };
-            trap_opcode = g_i386_opcode;
-            trap_opcode_size = sizeof(g_i386_opcode);
+            static const uint8_t g_hex_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
+            trap_opcode = g_hex_opcode;
+            trap_opcode_size = sizeof(g_hex_opcode);
         }
         break;
     case llvm::Triple::ppc:
@@ -612,11 +617,18 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode = g_ppc_opcode;
             trap_opcode_size = sizeof(g_ppc_opcode);
         }
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+        {
+            static const uint8_t g_i386_opcode[] = { 0xCC };
+            trap_opcode = g_i386_opcode;
+            trap_opcode_size = sizeof(g_i386_opcode);
+        }
+        break;
     }
 
     if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
         return trap_opcode_size;
-
     return 0;
 }
 
