@@ -863,7 +863,13 @@ void UnwrappedLineParser::parseStructuralElement() {
         bool FunctionLike = FormatTok->is(tok::l_paren);
         if (FunctionLike)
           parseParens();
-        if (FormatTok->NewlinesBefore > 0 &&
+
+        bool FollowedByNewline =
+            CommentsBeforeNextToken.empty()
+                ? FormatTok->NewlinesBefore > 0
+                : CommentsBeforeNextToken.front()->NewlinesBefore > 0;
+
+        if (FollowedByNewline &&
             (Text.size() >= 5 || FunctionLike) &&
             tokenCanStartNewLine(FormatTok->Tok) && Text == Text.upper()) {
           addUnwrappedLine();
@@ -1748,14 +1754,12 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
            I = CommentsBeforeNextToken.begin(),
            E = CommentsBeforeNextToken.end();
        I != E; ++I) {
-    if (isOnNewLine(**I) && JustComments) {
+    if (isOnNewLine(**I) && JustComments)
       addUnwrappedLine();
-    }
     pushToken(*I);
   }
-  if (NewlineBeforeNext && JustComments) {
+  if (NewlineBeforeNext && JustComments)
     addUnwrappedLine();
-  }
   CommentsBeforeNextToken.clear();
 }
 

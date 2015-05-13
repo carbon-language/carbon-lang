@@ -2804,6 +2804,10 @@ TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
                    "\n"
                    "  A() {\n}\n"
                    "}  ;"));
+  EXPECT_EQ("MACRO\n"
+            "/*static*/ int i;",
+            format("MACRO\n"
+                   " /*static*/ int   i;"));
   EXPECT_EQ("SOME_MACRO\n"
             "namespace {\n"
             "void f();\n"
