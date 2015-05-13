@@ -65,11 +65,7 @@ bool Loop::isLoopInvariant(const Value *V) const {
 /// hasLoopInvariantOperands - Return true if all the operands of the
 /// specified instruction are loop invariant.
 bool Loop::hasLoopInvariantOperands(const Instruction *I) const {
-  for (auto &Op : I->operands())
-    if (!isLoopInvariant(Op))
-      return false;
-
-  return true;
+  return all_of(I->operands(), [this](Value *V) { return isLoopInvariant(V); });
 }
 
 /// makeLoopInvariant - If the given value is an instruciton inside of the

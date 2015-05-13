@@ -18,6 +18,7 @@
 #define LLVM_ADT_STLEXTRAS_H
 
 #include "llvm/Support/Compiler.h"
+#include <algorithm> // for std::all_of
 #include <cassert>
 #include <cstddef> // for std::size_t
 #include <cstdlib> // for qsort
@@ -325,6 +326,14 @@ void DeleteContainerSeconds(Container &C) {
   for (typename Container::iterator I = C.begin(), E = C.end(); I != E; ++I)
     delete I->second;
   C.clear();
+}
+
+/// Provide wrappers to std::all_of which take ranges instead of having to pass
+/// being/end explicitly.
+template<typename R, class UnaryPredicate>
+bool all_of(R &&Range, UnaryPredicate &&P) {
+  return std::all_of(Range.begin(), Range.end(),
+                     std::forward<UnaryPredicate>(P));
 }
 
 //===----------------------------------------------------------------------===//
