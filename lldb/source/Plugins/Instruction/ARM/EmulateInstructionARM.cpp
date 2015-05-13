@@ -2642,7 +2642,11 @@ EmulateInstructionARM::EmulateADDImmARM (const uint32_t opcode, const ARMEncodin
         AddWithCarryResult res = AddWithCarry(val1, imm32, 0);
 
         EmulateInstruction::Context context;
-        context.type = eContextArithmetic;
+        if (Rd == 13)
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
+
         RegisterInfo dwarf_reg;
         GetRegisterInfo (eRegisterKindDWARF, Rn, dwarf_reg);
         context.SetRegisterPlusOffset (dwarf_reg, imm32);
@@ -9165,46 +9169,55 @@ EmulateInstructionARM::EmulateSUBImmARM (const uint32_t opcode, const ARMEncodin
 
     bool success = false;
 
-    uint32_t Rd; // the destination register
-    uint32_t Rn; // the first operand
-    bool setflags;
-    uint32_t imm32; // the immediate value to be subtracted from the value obtained from Rn
-    switch (encoding) {
-    case eEncodingA1:
-        Rd = Bits32(opcode, 15, 12);
-        Rn = Bits32(opcode, 19, 16);
-        setflags = BitIsSet(opcode, 20);
-        imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+    if (ConditionPassed(opcode))
+    {
+        uint32_t Rd; // the destination register
+        uint32_t Rn; // the first operand
+        bool setflags;
+        uint32_t imm32; // the immediate value to be subtracted from the value obtained from Rn
+        switch (encoding) {
+        case eEncodingA1:
+            Rd = Bits32(opcode, 15, 12);
+            Rn = Bits32(opcode, 19, 16);
+            setflags = BitIsSet(opcode, 20);
+            imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
 
-        // if Rn == '1111' && S == '0' then SEE ADR;
-        if (Rn == 15 && !setflags)
-            return EmulateADR (opcode, eEncodingA2);
+            // if Rn == '1111' && S == '0' then SEE ADR;
+            if (Rn == 15 && !setflags)
+                return EmulateADR (opcode, eEncodingA2);
 
-        // if Rn == '1101' then SEE SUB (SP minus immediate);
-        if (Rn == 13)
-            return EmulateSUBSPImm (opcode, eEncodingA1);
+            // if Rn == '1101' then SEE SUB (SP minus immediate);
+            if (Rn == 13)
+                return EmulateSUBSPImm (opcode, eEncodingA1);
 
-        // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        if (Rd == 15 && setflags)
-            return EmulateSUBSPcLrEtc (opcode, encoding);
-        break;
-    default:
-        return false;
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
+            if (Rd == 15 && setflags)
+                return EmulateSUBSPcLrEtc (opcode, encoding);
+            break;
+        default:
+            return false;
+        }
+        // Read the register value from the operand register Rn.
+        uint32_t reg_val = ReadCoreReg(Rn, &success);
+        if (!success)
+            return false;
+
+        AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
+
+        EmulateInstruction::Context context;
+        if (Rd == 13)
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
+
+        RegisterInfo dwarf_reg;
+        GetRegisterInfo (eRegisterKindDWARF, Rn, dwarf_reg);
+        int64_t imm32_signed = imm32;
+        context.SetRegisterPlusOffset (dwarf_reg, -imm32_signed);
+
+        if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
+            return false;
     }
-    // Read the register value from the operand register Rn.
-    uint32_t reg_val = ReadCoreReg(Rn, &success);
-    if (!success)
-        return false;
-                  
-    AddWithCarryResult res = AddWithCarry(reg_val, ~imm32, 1);
-
-    EmulateInstruction::Context context;
-    context.type = EmulateInstruction::eContextImmediate;
-    context.SetNoArgs ();
-
-    if (!WriteCoreRegOptionalFlags(context, res.result, Rd, setflags, res.carry_out, res.overflow))
-        return false;
-
     return true;
 }
 
