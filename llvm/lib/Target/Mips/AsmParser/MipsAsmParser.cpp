@@ -78,15 +78,7 @@ public:
   // The full table can be found in MipsGenSubtargetInfo.inc (MipsFeatureKV[]).
   // The reason we need this mask is explained in the selectArch function.
   // FIXME: Ideally we would like TableGen to generate this information.
-  static const uint64_t AllArchRelatedMask =
-      Mips::FeatureMips1 | Mips::FeatureMips2 | Mips::FeatureMips3 |
-      Mips::FeatureMips3_32 | Mips::FeatureMips3_32r2 | Mips::FeatureMips4 |
-      Mips::FeatureMips4_32 | Mips::FeatureMips4_32r2 | Mips::FeatureMips5 |
-      Mips::FeatureMips5_32r2 | Mips::FeatureMips32 | Mips::FeatureMips32r2 |
-      Mips::FeatureMips32r3 | Mips::FeatureMips32r5 | Mips::FeatureMips32r6 |
-      Mips::FeatureMips64 | Mips::FeatureMips64r2 | Mips::FeatureMips64r3 |
-      Mips::FeatureMips64r5 | Mips::FeatureMips64r6 | Mips::FeatureCnMips |
-      Mips::FeatureFP64Bit | Mips::FeatureGP64Bit | Mips::FeatureNaN2008;
+  static const FeatureBitset AllArchRelatedMask;
 
 private:
   unsigned ATReg;
@@ -95,6 +87,17 @@ private:
   uint64_t Features;
 };
 }
+
+const FeatureBitset MipsAssemblerOptions::AllArchRelatedMask = {
+    Mips::FeatureMips1, Mips::FeatureMips2, Mips::FeatureMips3,
+    Mips::FeatureMips3_32, Mips::FeatureMips3_32r2, Mips::FeatureMips4,
+    Mips::FeatureMips4_32, Mips::FeatureMips4_32r2, Mips::FeatureMips5,
+    Mips::FeatureMips5_32r2, Mips::FeatureMips32, Mips::FeatureMips32r2,
+    Mips::FeatureMips32r3, Mips::FeatureMips32r5, Mips::FeatureMips32r6,
+    Mips::FeatureMips64, Mips::FeatureMips64r2, Mips::FeatureMips64r3,
+    Mips::FeatureMips64r5, Mips::FeatureMips64r6, Mips::FeatureCnMips,
+    Mips::FeatureFP64Bit, Mips::FeatureGP64Bit, Mips::FeatureNaN2008
+};
 
 namespace {
 class MipsAsmParser : public MCTargetAsmParser {
@@ -309,7 +312,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   // FeatureMipsGP64 | FeatureMips1)
   // Clearing Mips3 is equivalent to clear (FeatureMips3 | FeatureMips4).
   void selectArch(StringRef ArchFeature) {
-    uint64_t FeatureBits = STI.getFeatureBits();
+    FeatureBitset FeatureBits = STI.getFeatureBits();
     FeatureBits &= ~MipsAssemblerOptions::AllArchRelatedMask;
     STI.setFeatureBits(FeatureBits);
     setAvailableFeatures(
@@ -318,7 +321,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   }
 
   void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
-    if (!(STI.getFeatureBits() & Feature)) {
+    if (!(STI.getFeatureBits()[Feature])) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
     }
@@ -326,7 +329,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   }
 
   void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
-    if (STI.getFeatureBits() & Feature) {
+    if (STI.getFeatureBits()[Feature]) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
     }
@@ -373,69 +376,70 @@ public:
   /// True if all of $fcc0 - $fcc7 exist for the current ISA.
   bool hasEightFccRegisters() const { return hasMips4() || hasMips32(); }
 
-  bool isGP64bit() const { return STI.getFeatureBits() & Mips::FeatureGP64Bit; }
-  bool isFP64bit() const { return STI.getFeatureBits() & Mips::FeatureFP64Bit; }
+  bool isGP64bit() const { return STI.getFeatureBits()[Mips::FeatureGP64Bit]; }
+  bool isFP64bit() const { return STI.getFeatureBits()[Mips::FeatureFP64Bit]; }
   const MipsABIInfo &getABI() const { return ABI; }
   bool isABI_N32() const { return ABI.IsN32(); }
   bool isABI_N64() const { return ABI.IsN64(); }
   bool isABI_O32() const { return ABI.IsO32(); }
-  bool isABI_FPXX() const { return STI.getFeatureBits() & Mips::FeatureFPXX; }
+  bool isABI_FPXX() const { return STI.getFeatureBits()[Mips::FeatureFPXX]; }
 
   bool useOddSPReg() const {
-    return !(STI.getFeatureBits() & Mips::FeatureNoOddSPReg);
+    return !(STI.getFeatureBits()[Mips::FeatureNoOddSPReg]);
   }
 
   bool inMicroMipsMode() const {
-    return STI.getFeatureBits() & Mips::FeatureMicroMips;
+    return STI.getFeatureBits()[Mips::FeatureMicroMips];
   }
-  bool hasMips1() const { return STI.getFeatureBits() & Mips::FeatureMips1; }
-  bool hasMips2() const { return STI.getFeatureBits() & Mips::FeatureMips2; }
-  bool hasMips3() const { return STI.getFeatureBits() & Mips::FeatureMips3; }
-  bool hasMips4() const { return STI.getFeatureBits() & Mips::FeatureMips4; }
-  bool hasMips5() const { return STI.getFeatureBits() & Mips::FeatureMips5; }
+  bool hasMips1() const { return STI.getFeatureBits()[Mips::FeatureMips1]; }
+  bool hasMips2() const { return STI.getFeatureBits()[Mips::FeatureMips2]; }
+  bool hasMips3() const { return STI.getFeatureBits()[Mips::FeatureMips3]; }
+  bool hasMips4() const { return STI.getFeatureBits()[Mips::FeatureMips4]; }
+  bool hasMips5() const { return STI.getFeatureBits()[Mips::FeatureMips5]; }
   bool hasMips32() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips32);
+    return STI.getFeatureBits()[Mips::FeatureMips32];
   }
   bool hasMips64() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips64);
+    return STI.getFeatureBits()[Mips::FeatureMips64];
   }
   bool hasMips32r2() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips32r2);
+    return STI.getFeatureBits()[Mips::FeatureMips32r2];
   }
   bool hasMips64r2() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips64r2);
+    return STI.getFeatureBits()[Mips::FeatureMips64r2];
   }
   bool hasMips32r3() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips32r3);
+    return (STI.getFeatureBits()[Mips::FeatureMips32r3]);
   }
   bool hasMips64r3() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips64r3);
+    return (STI.getFeatureBits()[Mips::FeatureMips64r3]);
   }
   bool hasMips32r5() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips32r5);
+    return (STI.getFeatureBits()[Mips::FeatureMips32r5]);
   }
   bool hasMips64r5() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips64r5);
+    return (STI.getFeatureBits()[Mips::FeatureMips64r5]);
   }
   bool hasMips32r6() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips32r6);
+    return STI.getFeatureBits()[Mips::FeatureMips32r6];
   }
   bool hasMips64r6() const {
-    return (STI.getFeatureBits() & Mips::FeatureMips64r6);
+    return STI.getFeatureBits()[Mips::FeatureMips64r6];
   }
+
+  bool hasDSP() const { return STI.getFeatureBits()[Mips::FeatureDSP]; }
+  bool hasDSPR2() const { return STI.getFeatureBits()[Mips::FeatureDSPR2]; }
+  bool hasMSA() const { return STI.getFeatureBits()[Mips::FeatureMSA]; }
   bool hasCnMips() const {
-    return (STI.getFeatureBits() & Mips::FeatureCnMips);
+    return (STI.getFeatureBits()[Mips::FeatureCnMips]);
   }
-  bool hasDSP() const { return (STI.getFeatureBits() & Mips::FeatureDSP); }
-  bool hasDSPR2() const { return (STI.getFeatureBits() & Mips::FeatureDSPR2); }
-  bool hasMSA() const { return (STI.getFeatureBits() & Mips::FeatureMSA); }
 
   bool inMips16Mode() const {
-    return STI.getFeatureBits() & Mips::FeatureMips16;
+    return STI.getFeatureBits()[Mips::FeatureMips16];
   }
 
   bool useSoftFloat() const {
-    return (STI.getFeatureBits() & Mips::FeatureSoftFloat);
+    return STI.getFeatureBits()[Mips::FeatureSoftFloat];
   }
 
   /// Warn if RegIndex is the same as the current AT.
