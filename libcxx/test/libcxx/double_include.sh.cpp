@@ -49,6 +49,7 @@
 #include <cwctype>
 #include <deque>
 #include <exception>
+#include <experimental/algorithm>
 #include <experimental/chrono>
 #include <experimental/dynarray>
 #include <experimental/optional>
