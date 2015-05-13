@@ -1740,18 +1740,21 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
   if (0 <= ImmValue && ImmValue <= 65535) {
     // For unsigned and positive signed 16-bit values (0 <= j <= 65535):
     // li d,j => ori d,$zero,j
+    if (!UseSrcReg)
+      SrcReg = isGP64bit() ? Mips::ZERO_64 : Mips::ZERO;
     tmpInst.setOpcode(Mips::ORi);
     tmpInst.addOperand(MCOperand::CreateReg(DstReg));
-    tmpInst.addOperand(MCOperand::CreateReg(
-        UseSrcReg ? SrcReg : (isGP64bit() ? Mips::ZERO_64 : Mips::ZERO)));
+    tmpInst.addOperand(MCOperand::CreateReg(SrcReg));
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if (ImmValue < 0 && ImmValue >= -32768) {
     // For negative signed 16-bit values (-32768 <= j < 0):
     // li d,j => addiu d,$zero,j
+    if (!UseSrcReg)
+      SrcReg = Mips::ZERO;
     tmpInst.setOpcode(Mips::ADDiu);
     tmpInst.addOperand(MCOperand::CreateReg(DstReg));
-    tmpInst.addOperand(MCOperand::CreateReg(UseSrcReg ? SrcReg : Mips::ZERO));
+    tmpInst.addOperand(MCOperand::CreateReg(SrcReg));
     tmpInst.addOperand(MCOperand::CreateImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if ((ImmValue & 0xffffffff) == ImmValue) {
