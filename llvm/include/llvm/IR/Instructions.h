@@ -3090,15 +3090,30 @@ class InvokeInst : public TerminatorInst {
   FunctionType *FTy;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-            ArrayRef<Value *> Args, const Twine &NameStr);
+            ArrayRef<Value *> Args, const Twine &NameStr) {
+    init(cast<FunctionType>(
+             cast<PointerType>(Func->getType())->getElementType()),
+         Func, IfNormal, IfException, Args, NameStr);
+  }
+  void init(FunctionType *FTy, Value *Func, BasicBlock *IfNormal,
+            BasicBlock *IfException, ArrayRef<Value *> Args,
+            const Twine &NameStr);
 
   /// Construct an InvokeInst given a range of arguments.
   ///
   /// \brief Construct an InvokeInst from a range of arguments
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
                     ArrayRef<Value *> Args, unsigned Values,
-                    const Twine &NameStr, Instruction *InsertBefore);
+                    const Twine &NameStr, Instruction *InsertBefore)
+      : InvokeInst(cast<FunctionType>(
+                       cast<PointerType>(Func->getType())->getElementType()),
+                   Func, IfNormal, IfException, Args, Values, NameStr,
+                   InsertBefore) {}
 
+  inline InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                    BasicBlock *IfException, ArrayRef<Value *> Args,
+                    unsigned Values, const Twine &NameStr,
+                    Instruction *InsertBefore);
   /// Construct an InvokeInst given a range of arguments.
   ///
   /// \brief Construct an InvokeInst from a range of arguments
@@ -3112,9 +3127,17 @@ public:
                             BasicBlock *IfNormal, BasicBlock *IfException,
                             ArrayRef<Value *> Args, const Twine &NameStr = "",
                             Instruction *InsertBefore = nullptr) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, NameStr, InsertBefore);
+  }
+  static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr = "",
+                            Instruction *InsertBefore = nullptr) {
     unsigned Values = unsigned(Args.size()) + 3;
-    return new(Values) InvokeInst(Func, IfNormal, IfException, Args,
-                                  Values, NameStr, InsertBefore);
+    return new (Values) InvokeInst(Ty, Func, IfNormal, IfException, Args,
+                                   Values, NameStr, InsertBefore);
   }
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
@@ -3357,16 +3380,14 @@ template <>
 struct OperandTraits<InvokeInst> : public VariadicOperandTraits<InvokeInst, 3> {
 };
 
-InvokeInst::InvokeInst(Value *Func,
-                       BasicBlock *IfNormal, BasicBlock *IfException,
-                       ArrayRef<Value *> Args, unsigned Values,
-                       const Twine &NameStr, Instruction *InsertBefore)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                      ->getElementType())->getReturnType(),
-                   Instruction::Invoke,
-                   OperandTraits<InvokeInst>::op_end(this) - Values,
-                   Values, InsertBefore) {
-  init(Func, IfNormal, IfException, Args, NameStr);
+InvokeInst::InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                       BasicBlock *IfException, ArrayRef<Value *> Args,
+                       unsigned Values, const Twine &NameStr,
+                       Instruction *InsertBefore)
+    : TerminatorInst(Ty->getReturnType(), Instruction::Invoke,
+                     OperandTraits<InvokeInst>::op_end(this) - Values, Values,
+                     InsertBefore) {
+  init(Ty, Func, IfNormal, IfException, Args, NameStr);
 }
 InvokeInst::InvokeInst(Value *Func,
                        BasicBlock *IfNormal, BasicBlock *IfException,
