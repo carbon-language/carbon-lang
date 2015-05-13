@@ -5486,6 +5486,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("Constructor() : a(a), area(a, width * height) {}");
   verifyGoogleFormat("MACRO Constructor(const int& i) : a(a), b(b) {}");
   verifyFormat("void f() { f(a, c * d); }");
+  verifyFormat("void f() { f(new a(), c * d); }");
 
   verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 

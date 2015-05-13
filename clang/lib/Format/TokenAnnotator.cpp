@@ -234,6 +234,10 @@ private:
         MightBeObjCForRangeLoop = false;
       if (MightBeObjCForRangeLoop && CurrentToken->is(Keywords.kw_in))
         CurrentToken->Type = TT_ObjCForIn;
+      // When we discover a 'new', we set CanBeExpression to 'false' in order to
+      // parse the type correctly. Reset that after a comma.
+      if (CurrentToken->is(tok::comma))
+        Contexts.back().CanBeExpression = true;
 
       FormatToken *Tok = CurrentToken;
       if (!consumeToken())
