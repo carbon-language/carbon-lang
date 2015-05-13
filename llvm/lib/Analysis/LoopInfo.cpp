@@ -56,15 +56,15 @@ static const char *const LoopMDName = "llvm.loop";
 
 /// isLoopInvariant - Return true if the specified value is loop invariant
 ///
-bool Loop::isLoopInvariant(Value *V) const {
-  if (Instruction *I = dyn_cast<Instruction>(V))
+bool Loop::isLoopInvariant(const Value *V) const {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
     return !contains(I);
   return true;  // All non-instructions are loop invariant
 }
 
 /// hasLoopInvariantOperands - Return true if all the operands of the
 /// specified instruction are loop invariant.
-bool Loop::hasLoopInvariantOperands(Instruction *I) const {
+bool Loop::hasLoopInvariantOperands(const Instruction *I) const {
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (!isLoopInvariant(I->getOperand(i)))
       return false;

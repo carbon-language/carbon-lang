@@ -361,11 +361,11 @@ public:
 
   /// isLoopInvariant - Return true if the specified value is loop invariant
   ///
-  bool isLoopInvariant(Value *V) const;
+  bool isLoopInvariant(const Value *V) const;
 
   /// hasLoopInvariantOperands - Return true if all the operands of the
   /// specified instruction are loop invariant.
-  bool hasLoopInvariantOperands(Instruction *I) const;
+  bool hasLoopInvariantOperands(const Instruction *I) const;
 
   /// makeLoopInvariant - If the given value is an instruction inside of the
   /// loop and it can be hoisted, do so to make it trivially loop-invariant.
