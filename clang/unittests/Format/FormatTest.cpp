@@ -6863,6 +6863,21 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
                "                  outRange8:(NSRange)out_range8\n"
                "                  outRange9:(NSRange)out_range9;");
 
+  // When the function name has to be wrapped.
+  FormatStyle Style = getLLVMStyle();
+  Style.IndentWrappedFunctionNames = false;
+  verifyFormat("- (SomeLooooooooooooooooooooongType *)\n"
+               "veryLooooooooooongName:(NSString)aaaaaaaaaaaaaa\n"
+               "           anotherName:(NSString)bbbbbbbbbbbbbb {\n"
+               "}",
+               Style);
+  Style.IndentWrappedFunctionNames = true;
+  verifyFormat("- (SomeLooooooooooooooooooooongType *)\n"
+               "    veryLooooooooooongName:(NSString)aaaaaaaaaaaaaa\n"
+               "               anotherName:(NSString)bbbbbbbbbbbbbb {\n"
+               "}",
+               Style);
+
   verifyFormat("- (int)sum:(vector<int>)numbers;");
   verifyGoogleFormat("- (void)setDelegate:(id<Protocol>)delegate;");
   // FIXME: In LLVM style, there should be a space in front of a '<' for ObjC
