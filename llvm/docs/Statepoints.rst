@@ -299,7 +299,7 @@ Syntax:
       declare i32
         @llvm.experimental.gc.statepoint(i64 <id>, i32 <num patch bytes>,
                        func_type <target>, 
-                       i64 <#call args>. i64 <flags>,
+                       i64 <#call args>, i64 <flags>,
                        ... (call parameters),
                        i64 <# transition args>, ... (transition parameters),
                        i64 <# deopt args>, ... (deopt parameters),
