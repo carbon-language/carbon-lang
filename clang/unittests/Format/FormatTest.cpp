@@ -9992,6 +9992,14 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("auto my_lambda = [](const string &some_parameter) {\n"
                "  return some_parameter.size();\n"
                "};");
+  verifyFormat("int i = aaaaaa ? 1 //\n"
+               "               : [] {\n"
+               "                   return 2; //\n"
+               "                 }();");
+  verifyFormat("llvm::errs() << \"number of twos is \"\n"
+               "             << std::count_if(v.begin(), v.end(), [](int x) {\n"
+               "                  return x == 2; // force break\n"
+               "                });");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");

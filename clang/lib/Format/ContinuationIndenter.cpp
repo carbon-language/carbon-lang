@@ -667,6 +667,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       State.Stack.back().AvoidBinPacking = true;
     State.Stack.back().BreakBeforeParameter = false;
   }
+  if (Current.isOneOf(TT_BinaryOperator, TT_ConditionalExpr) && Newline)
+    State.Stack.back().NestedBlockIndent =
+        State.Column + Current.ColumnWidth + 1;
 
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
