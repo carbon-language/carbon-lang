@@ -20,5 +20,4 @@
  * THE SOFTWARE.
  */
 
-#define __CLC_BODY <clc/math/exp2.inc>
-#include <clc/math/gentype.inc>
+_CLC_OVERLOAD _CLC_DECL __CLC_GENTYPE exp2(__CLC_GENTYPE x);
