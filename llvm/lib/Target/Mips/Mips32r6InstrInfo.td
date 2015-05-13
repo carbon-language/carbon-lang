@@ -615,7 +615,8 @@ class SC_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
 
 class SC_R6_DESC : SC_R6_DESC_BASE<"sc", GPR32Opnd>;
 
-class CLO_CLZ_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class CLO_CLZ_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
+    : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs");
@@ -683,8 +684,8 @@ def BOVC : BOVC_ENC, BOVC_DESC, ISA_MIPS32R6;
 def CACHE_R6 : R6MMR6Rel, CACHE_ENC, CACHE_DESC, ISA_MIPS32R6;
 def CLASS_D : CLASS_D_ENC, CLASS_D_DESC, ISA_MIPS32R6, HARDFLOAT;
 def CLASS_S : CLASS_S_ENC, CLASS_S_DESC, ISA_MIPS32R6, HARDFLOAT;
-def CLO_R6 : CLO_R6_ENC, CLO_R6_DESC, ISA_MIPS32R6;
-def CLZ_R6 : CLZ_R6_ENC, CLZ_R6_DESC, ISA_MIPS32R6;
+def CLO_R6 : R6MMR6Rel, CLO_R6_ENC, CLO_R6_DESC, ISA_MIPS32R6;
+def CLZ_R6 : R6MMR6Rel, CLZ_R6_ENC, CLZ_R6_DESC, ISA_MIPS32R6;
 defm S : CMP_CC_M<FIELD_CMP_FORMAT_S, "s", FGR32Opnd>;
 defm D : CMP_CC_M<FIELD_CMP_FORMAT_D, "d", FGR64Opnd>;
 def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
