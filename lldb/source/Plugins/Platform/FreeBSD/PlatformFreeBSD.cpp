@@ -612,6 +612,13 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode_size = sizeof(g_hex_opcode);
         }
         break;
+    case llvm::Triple::mips64el:
+        {
+            static const uint8_t g_hex_opcode[] = { 0x0d, 0x00, 0x00, 0x00 };
+            trap_opcode = g_hex_opcode;
+            trap_opcode_size = sizeof(g_hex_opcode);
+        }
+        break;
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
         {
