@@ -55,10 +55,9 @@ static cl::opt<bool> DistributeNonIfConvertible(
 
 STATISTIC(NumLoopsDistributed, "Number of loops distributed");
 
-namespace {
 /// \brief Remaps instructions in a loop including the preheader.
-void remapInstructionsInLoop(const SmallVectorImpl<BasicBlock *> &Blocks,
-                             ValueToValueMapTy &VMap) {
+static void remapInstructionsInLoop(const SmallVectorImpl<BasicBlock *> &Blocks,
+                                    ValueToValueMapTy &VMap) {
   // Rewrite the code to refer to itself.
   for (auto *BB : Blocks)
     for (auto &Inst : *BB)
@@ -120,6 +119,7 @@ static Loop *cloneLoopWithPreheader(BasicBlock *Before, BasicBlock *LoopDomBB,
   return NewLoop;
 }
 
+namespace {
 /// \brief Maintains the set of instructions of the loop for a partition before
 /// cloning.  After cloning, it hosts the new loop.
 class InstPartition {
