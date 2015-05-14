@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <linux/limits.h>
+
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
@@ -22,10 +24,13 @@
 
 bool writePid (const char* file_name, const pid_t pid)
 {
-    int fd = open (file_name, O_WRONLY);
+    char tmp_file_name[PATH_MAX];
+    strcpy(tmp_file_name, file_name);
+    strcat(tmp_file_name, "_tmp");
+    int fd = open (tmp_file_name, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
-        fprintf (stderr, "open(%s) failed: %s\n", file_name, strerror (errno));
+        fprintf (stderr, "open(%s) failed: %s\n", tmp_file_name, strerror (errno));
         return false;
     }
     char buffer[64];
@@ -38,6 +43,13 @@ bool writePid (const char* file_name, const pid_t pid)
         res = false;
     }
     close (fd);
+
+    if (rename (tmp_file_name, file_name) == -1)
+    {
+        fprintf (stderr, "rename(%s, %s) failed: %s\n", tmp_file_name, file_name, strerror (errno));
+        res = false;
+    }
+
     return res;
 }
 

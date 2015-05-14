@@ -18,7 +18,7 @@ class AttachDeniedTestCase(TestBase):
         platform = self.dbg.GetSelectedPlatform()
         shell_command = lldb.SBPlatformShellCommand(cmd)
         err = platform.Run(shell_command)
-        return (err, shell_command.GetOutput())
+        return (err, shell_command.GetStatus(), shell_command.GetOutput())
 
     @skipIfWindows
     def test_attach_to_process_by_id_denied(self):
@@ -27,26 +27,30 @@ class AttachDeniedTestCase(TestBase):
         self.buildDefault()
         exe = os.path.join(os.getcwd(), exe_name)
 
-        # Use named pipe as a synchronization point between test and inferior.
-        pid_pipe_path = os.path.join(self.get_process_working_directory(),
-                                     "pid_pipe_%d" % (int(time.time())))
-
-        triple = self.dbg.GetSelectedPlatform().GetTriple()
-        if re.match(".*-.*-.*-android", triple):
-            err, _ = self.run_platform_command("mknod %s p" % (pid_pipe_path))
-        else:
-            err, _ = self.run_platform_command("mkfifo %s" % (pid_pipe_path))
-
-        self.assertTrue(err.Success(), "Failed to create FIFO %s: %s" % (pid_pipe_path, err.GetCString()))
-
-        self.addTearDownHook(lambda: self.run_platform_command("rm %s" % (pid_pipe_path)))
+        # Use a file as a synchronization point between test and inferior.
+        pid_file_path = os.path.join(self.get_process_working_directory(),
+                                     "pid_file_%d" % (int(time.time())))
+        self.addTearDownHook(lambda: self.run_platform_command("rm %s" % (pid_file_path)))
 
         # Spawn a new process
-        popen = self.spawnSubprocess(exe, [pid_pipe_path])
+        popen = self.spawnSubprocess(exe, [pid_file_path])
         self.addTearDownHook(self.cleanupSubprocesses)
 
-        err, pid = self.run_platform_command("cat %s" % (pid_pipe_path))
-        self.assertTrue(err.Success(), "Failed to read FIFO %s: %s" % (pid_pipe_path, err.GetCString()))
+        max_attempts = 5
+        for i in range(max_attempts):
+            err, retcode, msg = self.run_platform_command("ls %s" % pid_file_path)
+            if err.Success() and retcode == 0:
+                break
+            else:
+                print msg
+            if i < max_attempts:
+                # Exponential backoff!
+                time.sleep(pow(2, i) * 0.25)
+        else:
+            self.fail("Child PID file %s not found even after %d attempts." % (pid_file_path, max_attempts))
+        err, retcode, pid = self.run_platform_command("cat %s" % (pid_file_path))
+        self.assertTrue(err.Success() and retcode == 0,
+                        "Failed to read file %s: %s, retcode: %d" % (pid_file_path, err.GetCString(), retcode))
 
         self.expect('process attach -p ' + pid,
                     startstr = 'error: attach failed:',
