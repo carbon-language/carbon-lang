@@ -1096,35 +1096,31 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     VarInit *RHSv = dyn_cast<VarInit>(RHS);
     StringInit *RHSs = dyn_cast<StringInit>(RHS);
 
-    if ((LHSd && MHSd && RHSd) ||
-        (LHSv && MHSv && RHSv) ||
-        (LHSs && MHSs && RHSs)) {
-      if (RHSd) {
-        Record *Val = RHSd->getDef();
-        if (LHSd->getAsString() == RHSd->getAsString())
-          Val = MHSd->getDef();
-        return DefInit::get(Val);
-      }
-      if (RHSv) {
-        std::string Val = RHSv->getName();
-        if (LHSv->getAsString() == RHSv->getAsString())
-          Val = MHSv->getName();
-        return VarInit::get(Val, getType());
-      }
-      if (RHSs) {
-        std::string Val = RHSs->getValue();
+    if (LHSd && MHSd && RHSd) {
+      Record *Val = RHSd->getDef();
+      if (LHSd->getAsString() == RHSd->getAsString())
+        Val = MHSd->getDef();
+      return DefInit::get(Val);
+    }
+    if (LHSv && MHSv && RHSv) {
+      std::string Val = RHSv->getName();
+      if (LHSv->getAsString() == RHSv->getAsString())
+        Val = MHSv->getName();
+      return VarInit::get(Val, getType());
+    }
+    if (LHSs && MHSs && RHSs) {
+      std::string Val = RHSs->getValue();
 
-        std::string::size_type found;
-        std::string::size_type idx = 0;
-        do {
-          found = Val.find(LHSs->getValue(), idx);
-          if (found != std::string::npos)
-            Val.replace(found, LHSs->getValue().size(), MHSs->getValue());
-          idx = found +  MHSs->getValue().size();
-        } while (found != std::string::npos);
+      std::string::size_type found;
+      std::string::size_type idx = 0;
+      do {
+        found = Val.find(LHSs->getValue(), idx);
+        if (found != std::string::npos)
+          Val.replace(found, LHSs->getValue().size(), MHSs->getValue());
+        idx = found +  MHSs->getValue().size();
+      } while (found != std::string::npos);
 
-        return StringInit::get(Val);
-      }
+      return StringInit::get(Val);
     }
     break;
   }
