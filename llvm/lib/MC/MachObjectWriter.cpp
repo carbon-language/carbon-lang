@@ -637,7 +637,7 @@ void MachObjectWriter::ComputeSymbolTable(
       unsigned Index = Rel.Sym->getIndex();
       assert(isInt<24>(Index));
       if (IsLittleEndian)
-        Rel.MRE.r_word1 = (Rel.MRE.r_word1 & (-1 << 24)) | Index | (1 << 27);
+        Rel.MRE.r_word1 = (Rel.MRE.r_word1 & (~0U << 24)) | Index | (1 << 27);
       else
         Rel.MRE.r_word1 = (Rel.MRE.r_word1 & 0xff) | Index << 8 | (1 << 4);
     }
