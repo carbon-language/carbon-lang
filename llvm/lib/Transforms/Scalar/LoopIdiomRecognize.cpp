@@ -639,7 +639,7 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
 
   bool MadeChange = false;
   // Scan all the blocks in the loop that are not in subloops.
-  for (auto BB : CurLoop->getBlocks()) {
+  for (auto *BB : CurLoop->getBlocks()) {
     // Ignore blocks in subloops.
     if (LI.getLoopFor(BB) != CurLoop)
       continue;
