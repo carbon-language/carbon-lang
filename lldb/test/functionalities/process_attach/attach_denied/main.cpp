@@ -2,10 +2,9 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <linux/limits.h>
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -24,13 +23,14 @@
 
 bool writePid (const char* file_name, const pid_t pid)
 {
-    char tmp_file_name[PATH_MAX];
+    char *tmp_file_name = (char *)malloc(strlen(file_name) + 16);
     strcpy(tmp_file_name, file_name);
     strcat(tmp_file_name, "_tmp");
     int fd = open (tmp_file_name, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         fprintf (stderr, "open(%s) failed: %s\n", tmp_file_name, strerror (errno));
+        free(tmp_file_name);
         return false;
     }
     char buffer[64];
@@ -49,6 +49,7 @@ bool writePid (const char* file_name, const pid_t pid)
         fprintf (stderr, "rename(%s, %s) failed: %s\n", tmp_file_name, file_name, strerror (errno));
         res = false;
     }
+    free(tmp_file_name);
 
     return res;
 }
