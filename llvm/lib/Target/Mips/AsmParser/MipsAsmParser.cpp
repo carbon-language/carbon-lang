@@ -3434,6 +3434,7 @@ bool MipsAsmParser::parseSetMacroDirective() {
     return false;
   }
   AssemblerOptions.back()->setMacro();
+  getTargetStreamer().emitDirectiveSetMacro();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -3451,6 +3452,7 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
     return false;
   }
   AssemblerOptions.back()->setNoMacro();
+  getTargetStreamer().emitDirectiveSetNoMacro();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }

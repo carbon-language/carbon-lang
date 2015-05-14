@@ -17,6 +17,7 @@ $BB0_2:
 # CHECK-NOT: nop
 # CHECK:   jal 1328             # encoding: [0x0c,0x00,0x01,0x4c]
 # CHECK-NOT: nop
+# CHECK: .set nomacro
 
     .set    noreorder
      b 1332
@@ -33,6 +34,7 @@ $JTI0_0:
 # CHECK:     .4byte    2013265916
     .set  at=$12
     .set macro
+# CHECK:   .set macro
 # CHECK:   .set reorder
 # CHECK:   b 1332               # encoding: [0x10,0x00,0x01,0x4d]
 # CHECK:   nop                  # encoding: [0x00,0x00,0x00,0x00]
