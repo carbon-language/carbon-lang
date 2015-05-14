@@ -2128,6 +2128,30 @@ std::string Hexagon_TC::GetGnuDir(const std::string &InstalledDir,
   return InstallRelDir;
 }
 
+const char *Hexagon_TC::GetSmallDataThreshold(const ArgList &Args)
+{
+  Arg *A;
+
+  A = Args.getLastArg(options::OPT_G,
+                      options::OPT_G_EQ,
+                      options::OPT_msmall_data_threshold_EQ);
+  if (A)
+    return A->getValue();
+
+  A = Args.getLastArg(options::OPT_shared,
+                      options::OPT_fpic,
+                      options::OPT_fPIC);
+  if (A)
+    return "0";
+
+  return 0;
+}
+
+bool Hexagon_TC::UsesG0(const char* smallDataThreshold)
+{
+  return smallDataThreshold && smallDataThreshold[0] == '0';
+}
+
 static void GetHexagonLibraryPaths(
   const ArgList &Args,
   const std::string &Ver,

@@ -724,6 +724,10 @@ public:
                                const llvm::opt::ArgList &Args);
 
   static StringRef GetTargetCPU(const llvm::opt::ArgList &Args);
+
+  static const char *GetSmallDataThreshold(const llvm::opt::ArgList &Args);
+
+  static bool UsesG0(const char* smallDataThreshold);
 };
 
 class LLVM_LIBRARY_VISIBILITY NaCl_TC : public Generic_ELF {

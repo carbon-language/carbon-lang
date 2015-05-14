@@ -1734,34 +1734,17 @@ static inline bool HasPICArg(const ArgList &Args) {
     || Args.hasArg(options::OPT_fpic);
 }
 
-static Arg *GetLastSmallDataThresholdArg(const ArgList &Args) {
-  return Args.getLastArg(options::OPT_G,
-                         options::OPT_G_EQ,
-                         options::OPT_msmall_data_threshold_EQ);
-}
-
-static std::string GetHexagonSmallDataThresholdValue(const ArgList &Args) {
-  std::string value;
-  if (HasPICArg(Args))
-    value = "0";
-  else if (Arg *A = GetLastSmallDataThresholdArg(Args)) {
-    value = A->getValue();
-    A->claim();
-  }
-  return value;
-}
-
 void Clang::AddHexagonTargetArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-fno-signed-char");
   CmdArgs.push_back("-mqdsp6-compat");
   CmdArgs.push_back("-Wreturn-type");
 
-  std::string SmallDataThreshold = GetHexagonSmallDataThresholdValue(Args);
-  if (!SmallDataThreshold.empty()) {
+  if (const char* v = toolchains::Hexagon_TC::GetSmallDataThreshold(Args)) {
+    std::string SmallDataThreshold="-hexagon-small-data-threshold=";
+    SmallDataThreshold += v;
     CmdArgs.push_back ("-mllvm");
-    CmdArgs.push_back(Args.MakeArgString(
-                        "-hexagon-small-data-threshold=" + SmallDataThreshold));
+    CmdArgs.push_back(Args.MakeArgString(SmallDataThreshold));
   }
 
   if (!Args.hasArg(options::OPT_fno_short_enums))
@@ -5408,10 +5391,8 @@ void hexagon::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fsyntax-only");
   }
 
-  std::string SmallDataThreshold = GetHexagonSmallDataThresholdValue(Args);
-  if (!SmallDataThreshold.empty())
-    CmdArgs.push_back(
-      Args.MakeArgString(std::string("-G") + SmallDataThreshold));
+  if (const char* v = toolchains::Hexagon_TC::GetSmallDataThreshold(Args))
+    CmdArgs.push_back(Args.MakeArgString(std::string("-G") + v));
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);
@@ -5474,6 +5455,7 @@ static void constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
   bool incStdLib = !Args.hasArg(options::OPT_nostdlib);
   bool incStartFiles = !Args.hasArg(options::OPT_nostartfiles);
   bool incDefLibs = !Args.hasArg(options::OPT_nodefaultlibs);
+  bool useG0 = false;
   bool useShared = buildingLib && !hasStaticArg;
 
   //----------------------------------------------------------------------------
@@ -5507,10 +5489,9 @@ static void constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
   if (buildPIE && !buildingLib)
     CmdArgs.push_back("-pie");
 
-  std::string SmallDataThreshold = GetHexagonSmallDataThresholdValue(Args);
-  if (!SmallDataThreshold.empty()) {
-    CmdArgs.push_back(
-      Args.MakeArgString(std::string("-G") + SmallDataThreshold));
+  if (const char* v = toolchains::Hexagon_TC::GetSmallDataThreshold(Args)) {
+    CmdArgs.push_back(Args.MakeArgString(std::string("-G") + v));
+    useG0 = toolchains::Hexagon_TC::UsesG0(v);
   }
 
   //----------------------------------------------------------------------------
@@ -5526,8 +5507,7 @@ static void constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
       toolchains::Hexagon_TC::GetGnuDir(D.InstalledDir, Args) + "/";
   const std::string StartFilesDir = RootDir
                                     + "hexagon/lib"
-                                    + (buildingLib
-                                       ? MarchG0Suffix : MarchSuffix);
+                                    + (useG0 ? MarchG0Suffix : MarchSuffix);
 
   //----------------------------------------------------------------------------
   // moslib

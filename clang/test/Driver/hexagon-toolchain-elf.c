@@ -497,13 +497,6 @@
 // RUN:   -fPIC \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK024 %s
-// RUN: %clang -### -target hexagon-unknown-elf     \
-// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
-// RUN:   --gcc-toolchain="" \
-// RUN:   -fPIC \
-// RUN:   -msmall-data-threshold=8 \
-// RUN:   %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK024 %s
 // CHECK024:      "-cc1"
 // CHECK024-NOT:    "-mrelocation-model" "static"
 // CHECK024:        "-pic-level" "{{[12]}}"

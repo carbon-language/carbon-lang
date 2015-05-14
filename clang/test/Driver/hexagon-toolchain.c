@@ -490,18 +490,11 @@
 // RUN:   --gcc-toolchain="" \
 // RUN:   -fpic \
 // RUN:   %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK024 %s
+// RUN:   | sed -e "s/\.exe//" -e "s/\.EXE//" | FileCheck -check-prefix=CHECK024 %s
 // RUN: %clang -### -target hexagon-unknown-linux     \
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
 // RUN:   --gcc-toolchain="" \
 // RUN:   -fPIC \
-// RUN:   %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK024 %s
-// RUN: %clang -### -target hexagon-unknown-linux     \
-// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
-// RUN:   --gcc-toolchain="" \
-// RUN:   -fPIC \
-// RUN:   -msmall-data-threshold=8 \
 // RUN:   %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK024 %s
 // CHECK024:      "-cc1"
