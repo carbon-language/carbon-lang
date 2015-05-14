@@ -1729,11 +1729,6 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 }
 
-static inline bool HasPICArg(const ArgList &Args) {
-  return Args.hasArg(options::OPT_fPIC)
-    || Args.hasArg(options::OPT_fpic);
-}
-
 void Clang::AddHexagonTargetArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-fno-signed-char");
