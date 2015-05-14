@@ -13,6 +13,7 @@
 // C++ Includes
 #include <list>
 #include <mutex>
+#include <set>
 #include <vector>
 
 // Other libraries and framework includes
@@ -78,7 +79,7 @@ class ProcessWindowsData
     HANDLE m_initial_stop_event;
     bool m_initial_stop_received;
     std::map<lldb::tid_t, HostThread> m_new_threads;
-    std::map<lldb::tid_t, HostThread> m_exited_threads;
+    std::set<lldb::tid_t> m_exited_threads;
 };
 }
 //------------------------------------------------------------------------------
@@ -425,11 +426,11 @@ ProcessWindows::RefreshStateAfterStop()
     }
 
     StopInfoSP stop_info;
+    m_thread_list.SetSelectedThreadByID(active_exception->GetThreadID());
     ThreadSP stop_thread = m_thread_list.GetSelectedThread();
     RegisterContextSP register_context = stop_thread->GetRegisterContext();
 
     // The current EIP is AFTER the BP opcode, which is one byte.
-    // TODO(zturner): Can't we just use active_exception->GetExceptionAddress()?
     uint64_t pc = register_context->GetPC() - 1;
     if (active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT)
     {
@@ -445,7 +446,8 @@ ProcessWindows::RefreshStateAfterStop()
             if (site->ValidForThisThread(stop_thread.get()))
             {
                 WINLOG_IFALL(WINDOWS_LOG_BREAKPOINTS | WINDOWS_LOG_EXCEPTION,
-                             "Breakpoint site %d is valid for this thread, creating stop info.", site->GetID());
+                             "Breakpoint site %d is valid for this thread (0x%I64x), creating stop info.",
+                             site->GetID(), stop_thread->GetID());
 
                 stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(
                     *stop_thread, site->GetID());
@@ -471,8 +473,8 @@ ProcessWindows::RefreshStateAfterStop()
     {
         std::string desc;
         llvm::raw_string_ostream desc_stream(desc);
-        desc_stream << "Exception 0x" << llvm::format_hex(active_exception->GetExceptionCode(), 8)
-                    << " encountered at address 0x" << llvm::format_hex(pc, 8);
+        desc_stream << "Exception " << llvm::format_hex(active_exception->GetExceptionCode(), 8)
+                    << " encountered at address " << llvm::format_hex(pc, 8);
         stop_info = StopInfo::CreateStopReasonWithException(*stop_thread, desc_stream.str().c_str());
         stop_thread->SetStopInfo(stop_info);
         WINLOG_IFALL(WINDOWS_LOG_EXCEPTION, desc_stream.str().c_str());
@@ -701,7 +703,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
     if (!m_session_data)
     {
         WINERR_IFANY(WINDOWS_LOG_EXCEPTION,
-                     "Debugger thread reported exception 0x%u at address 0x%I64x, but there is no session.",
+                     "Debugger thread reported exception 0x%x at address 0x%I64x, but there is no session.",
                      record.GetExceptionCode(), record.GetExceptionAddress());
         return ExceptionResult::SendToApplication;
     }
@@ -732,7 +734,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
             break;
         default:
             WINLOG_IFANY(WINDOWS_LOG_EXCEPTION,
-                         "Debugger thread reported exception 0x%u at address 0x%I64x (first_chance=%s)",
+                         "Debugger thread reported exception 0x%x at address 0x%I64x (first_chance=%s)",
                          record.GetExceptionCode(), record.GetExceptionAddress(), BOOL_STR(first_chance));
             // For non-breakpoints, give the application a chance to handle the exception first.
             if (first_chance)
@@ -753,18 +755,22 @@ ProcessWindows::OnCreateThread(const HostThread &new_thread)
 }
 
 void
-ProcessWindows::OnExitThread(const HostThread &exited_thread)
+ProcessWindows::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
+    // On a forced termination, we may get exit thread events after the session
+    // data has been cleaned up.
+    if (!m_session_data)
+        return;
+
     // A thread may have started and exited before the debugger stopped allowing a refresh.
     // Just remove it from the new threads list in that case.
-    const HostThreadWindows &wexited_thread = exited_thread.GetNativeThread();
-    auto iter = m_session_data->m_new_threads.find(wexited_thread.GetThreadId());
+    auto iter = m_session_data->m_new_threads.find(thread_id);
     if (iter != m_session_data->m_new_threads.end())
         m_session_data->m_new_threads.erase(iter);
     else
-        m_session_data->m_exited_threads[wexited_thread.GetThreadId()] = exited_thread;
+        m_session_data->m_exited_threads.insert(thread_id);
 }
 
 void
