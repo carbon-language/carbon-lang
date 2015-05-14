@@ -3076,7 +3076,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
     // null_frag operator is as-if no pattern were specified. Normally this
     // is from a multiclass expansion w/ a SDPatternOperator passed in as
     // null_frag.
-    if (!LI || LI->getSize() == 0 || hasNullFragReference(LI)) {
+    if (!LI || LI->empty() || hasNullFragReference(LI)) {
       std::vector<Record*> Results;
       std::vector<Record*> Operands;
 
@@ -3399,7 +3399,7 @@ void CodeGenDAGPatterns::ParsePatterns() {
     Pattern->InlinePatternFragments();
 
     ListInit *LI = CurPattern->getValueAsListInit("ResultInstrs");
-    if (LI->getSize() == 0) continue;  // no pattern.
+    if (LI->empty()) continue;  // no pattern.
 
     // Parse the instruction.
     TreePattern Result(CurPattern, LI, false, *this);

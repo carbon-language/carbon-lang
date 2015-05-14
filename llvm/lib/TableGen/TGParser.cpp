@@ -841,7 +841,7 @@ Init *TGParser::ParseOperation(Record *CurRec, RecTy *ItemType) {
           return nullptr;
         }
 
-        if (LHSl && LHSl->getSize() == 0) {
+        if (LHSl && LHSl->empty()) {
           TokError("empty list argument in unary operator");
           return nullptr;
         }
