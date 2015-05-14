@@ -1941,11 +1941,11 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     else if (VA.getLocInfo() == CCValAssign::ZExt)
       ValToCopy = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), ValToCopy);
     else if (VA.getLocInfo() == CCValAssign::AExt) {
-      if (ValVT.getScalarType() == MVT::i1)
+      if (ValVT.isVector() && ValVT.getScalarType() == MVT::i1)
         ValToCopy = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), ValToCopy);
       else
         ValToCopy = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), ValToCopy);
-    }   
+    }
     else if (VA.getLocInfo() == CCValAssign::BCvt)
       ValToCopy = DAG.getNode(ISD::BITCAST, dl, VA.getLocVT(), ValToCopy);
 
@@ -2133,6 +2133,9 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                         // This truncation won't change the value.
                         DAG.getIntPtrConstant(1, dl));
 
+    if (VA.isExtInLoc() && VA.getValVT().getScalarType() == MVT::i1)
+      Val = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Val);
+
     InFlag = Chain.getValue(2);
     InVals.push_back(Val);
   }
@@ -2248,7 +2251,10 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
 
   // If value is passed by pointer we have address passed instead of the value
   // itself.
-  if (VA.getLocInfo() == CCValAssign::Indirect)
+  bool ExtendedInMem = VA.isExtInLoc() &&
+    VA.getValVT().getScalarType() == MVT::i1;
+
+  if (VA.getLocInfo() == CCValAssign::Indirect || ExtendedInMem)
     ValVT = VA.getLocVT();
   else
     ValVT = VA.getValVT();
@@ -2266,9 +2272,11 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
     int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                     VA.getLocMemOffset(), isImmutable);
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-    return DAG.getLoad(ValVT, dl, Chain, FIN,
-                       MachinePointerInfo::getFixedStack(FI),
-                       false, false, false, 0);
+    SDValue Val =  DAG.getLoad(ValVT, dl, Chain, FIN,
+                               MachinePointerInfo::getFixedStack(FI),
+                               false, false, false, 0);
+    return ExtendedInMem ?
+      DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Val) : Val;
   }
 }
 
@@ -2857,7 +2865,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, RegVT, Arg);
       break;
     case CCValAssign::AExt:
-      if (Arg.getValueType().getScalarType() == MVT::i1)
+      if (Arg.getValueType().isVector() &&
+          Arg.getValueType().getScalarType() == MVT::i1)
         Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, RegVT, Arg);
       else if (RegVT.is128BitVector()) {
         // Special case: passing MMX values in XMM registers.

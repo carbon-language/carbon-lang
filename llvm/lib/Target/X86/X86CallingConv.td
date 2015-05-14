@@ -34,6 +34,7 @@ def RetCC_X86Common : CallingConv<[
   //
   // For code that doesn't care about the ABI, we allow returning more than two
   // integer values in registers.
+  CCIfType<[i1],  CCPromoteToType<i8>>,
   CCIfType<[i8] , CCAssignToReg<[AL, DL, CL]>>,
   CCIfType<[i16], CCAssignToReg<[AX, DX, CX]>>,
   CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>,
@@ -251,8 +252,8 @@ def CC_X86_64_C : CallingConv<[
   // Handles byval parameters.
   CCIfByVal<CCPassByVal<8, 8>>,
 
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in R10.
   CCIfNest<CCIfSubtarget<"isTarget64BitILP32()", CCAssignToReg<[R10D]>>>,
@@ -323,8 +324,8 @@ def CC_X86_Win64_C : CallingConv<[
   // FIXME: Handle byval stuff.
   // FIXME: Handle varargs.
 
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in R10.
   CCIfNest<CCAssignToReg<[R10]>>,
@@ -511,8 +512,8 @@ def CC_X86_32_Common : CallingConv<[
   CCIfType<[x86mmx], CCAssignToStack<8, 4>>]>;
 
 def CC_X86_32_C : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in ECX.
   CCIfNest<CCAssignToReg<[ECX]>>,
@@ -526,8 +527,8 @@ def CC_X86_32_C : CallingConv<[
 ]>;
 
 def CC_X86_32_FastCall : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in EAX.
   CCIfNest<CCAssignToReg<[EAX]>>,
@@ -572,15 +573,15 @@ def CC_X86_32_ThisCall_Common : CallingConv<[
 ]>;
 
 def CC_X86_32_ThisCall_Mingw : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   CCDelegateTo<CC_X86_32_ThisCall_Common>
 ]>;
 
 def CC_X86_32_ThisCall_Win : CallingConv<[
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // Pass sret arguments indirectly through stack.
   CCIfSRet<CCAssignToStack<4, 4>>,
@@ -599,8 +600,8 @@ def CC_X86_32_FastCC : CallingConv<[
   // puts arguments in registers.
   CCIfByVal<CCPassByVal<4, 4>>,
 
-  // Promote i8/i16 arguments to i32.
-  CCIfType<[i8, i16], CCPromoteToType<i32>>,
+  // Promote i1/i8/i16 arguments to i32.
+  CCIfType<[i1, i8, i16], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in EAX.
   CCIfNest<CCAssignToReg<[EAX]>>,

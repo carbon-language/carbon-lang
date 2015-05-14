@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s --check-prefix=KNL
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck %s --check-prefix=SKX
-; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=knl | FileCheck %s --check-prefix=KNL
+; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=knl | FileCheck %s --check-prefix=KNL_X32
 
 ; KNL-LABEL: test1
 ; KNL: vxorps
@@ -84,4 +84,71 @@ define <4 x i32> @test7(<4 x i32>%a, <4 x i32>%b) {
   %resi = call <4 x i1> @func4xi1(<4 x i1> %cmpRes)
   %res = sext <4 x i1>%resi to <4 x i32>
   ret <4 x i32> %res
+}
+
+; SKX-LABEL: test7a
+; SKX: call
+; SKX: vpmovw2m  %xmm0, %k0
+; SKX: kandb
+define <8 x i1> @test7a(<8 x i32>%a, <8 x i32>%b) {
+  %cmpRes = icmp sgt <8 x i32>%a, %b
+  %resi = call <8 x i1> @func8xi1(<8 x i1> %cmpRes)
+  %res = and <8 x i1>%resi,  <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>
+  ret <8 x i1> %res
+}
+
+
+; KNL_X32-LABEL: test8
+; KNL_X32: testb $1, 4(%esp)
+; KNL_X32:jne
+
+; KNL-LABEL: test8
+; KNL: testb   $1, %dil
+; KNL:jne
+
+define <16 x i8> @test8(<16 x i8> %a1, <16 x i8> %a2, i1 %cond) {
+  %res = select i1 %cond, <16 x i8> %a1, <16 x i8> %a2
+  ret <16 x i8> %res
+}
+
+; KNL-LABEL: test9
+; KNL: vucomisd
+; KNL: setb
+define i1 @test9(double %a, double %b) {
+  %c = fcmp ugt double %a, %b
+  ret i1 %c
+}
+
+; KNL_X32-LABEL: test10
+; KNL_X32: testb $1, 12(%esp)
+; KNL_X32: cmovnel
+
+; KNL-LABEL: test10
+; KNL: testb   $1, %dl
+; KNL: cmovel
+define i32 @test10(i32 %a, i32 %b, i1 %cond) {
+  %c = select i1 %cond, i32 %a, i32 %b
+  ret i32 %c
+}
+
+; KNL-LABEL: test11
+; KNL: cmp
+; KNL: setg
+define i1 @test11(i32 %a, i32 %b) {
+  %c = icmp sgt i32 %a, %b
+  ret i1 %c
+}
+
+; KNL-LABEL: test12
+; KNL: callq _test11
+;; return value in %al
+; KNL: movzbl	%al, %ebx
+; KNL: callq _test10
+; KNL: testb   $1, %bl
+
+define i32 @test12(i32 %a1, i32 %a2, i32 %b1) {
+  %cond = call i1 @test11(i32 %a1, i32 %b1)
+  %res = call i32 @test10(i32 %a1, i32 %a2, i1 %cond)
+  %res1 = select i1 %cond, i32 %res, i32 0
+  ret i32 %res1
 }
