@@ -97,11 +97,9 @@ void testShouldReportDoubleFreeNotMismatched() {
   free(p);
   delete globalPtr; // expected-warning {{Attempt to free released memory}}
 }
-int *allocIntArray(unsigned c) {
-  return new int[c];
-}
+
 void testMismatchedChangePointeeThroughAssignment() {
-  int *arr = allocIntArray(4);
+  int *arr = new int[4];
   globalPtr = arr;
   delete arr; // expected-warning{{Memory allocated by 'new[]' should be deallocated by 'delete[]', not 'delete'}}
 }
