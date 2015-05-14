@@ -230,7 +230,7 @@ Init *IntRecTy::convertValue(BitsInit *BI) {
   int64_t Result = 0;
   for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
     if (BitInit *Bit = dyn_cast<BitInit>(BI->getBit(i)))
-      Result |= Bit->getValue() << i;
+      Result |= static_cast<int64_t>(Bit->getValue()) << i;
     else
       return nullptr;
   return IntInit::get(Result);
