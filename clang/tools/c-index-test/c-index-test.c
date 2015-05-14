@@ -5,6 +5,7 @@
 #include "clang-c/CXCompilationDatabase.h"
 #include "clang-c/BuildSystem.h"
 #include "clang-c/Documentation.h"
+#include "llvm/Support/DataTypes.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -824,7 +825,7 @@ static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
               }
               break;
             case CXTemplateArgumentKind_Integral:
-              printf(" [Template arg %d: kind: %d, intval: %lld]",
+              printf(" [Template arg %d: kind: %d, intval: %" PRId64 "]",
                      I, TAK, clang_Cursor_getTemplateArgumentValue(Cursor, I));
               break;
             default:
@@ -1361,14 +1362,14 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
   {
     long long Size = clang_Type_getSizeOf(T);
     if (Size >= 0 || Size < -1 ) {
-      printf(" [sizeof=%lld]", Size);
+      printf(" [sizeof=%" PRId64 "]", Size);
     }
   }
   /* Print the type alignof if applicable. */
   {
     long long Align = clang_Type_getAlignOf(T);
     if (Align >= 0 || Align < -1) {
-      printf(" [alignof=%lld]", Align);
+      printf(" [alignof=%" PRId64 "]", Align);
     }
   }
   /* Print the record field offset if applicable. */
@@ -1393,10 +1394,10 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
                                                   FieldName);
         long long Offset2 = clang_Cursor_getOffsetOfField(cursor);
         if (Offset == Offset2){
-            printf(" [offsetof=%lld]", Offset);
+            printf(" [offsetof=%" PRId64 "]", Offset);
         } else {
             /* Offsets will be different in anonymous records. */
-            printf(" [offsetof=%lld/%lld]", Offset, Offset2);
+            printf(" [offsetof=%" PRId64 "/%" PRId64 "]", Offset, Offset2);
         }
       }
     }
@@ -3999,7 +4000,7 @@ static int read_diagnostics(const char *filename) {
 }
 
 static int perform_print_build_session_timestamp(void) {
-  printf("%lld\n", clang_getBuildSessionTimestamp());
+  printf("%" PRId64 "\n", clang_getBuildSessionTimestamp());
   return 0;
 }
 
