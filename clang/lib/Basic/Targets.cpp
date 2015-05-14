@@ -4207,7 +4207,11 @@ public:
     } else if (CPU == "cortex-r5" || CPU == "cortex-r7" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
-               ArchName == "armv8a" || ArchName == "armv8" ||
+               // FIXME: Use ARMTargetParser. This would require Triple::arm/thumb
+               // to be recogniseable universally.
+               ArchName == "armv8a.1a"  || ArchName == "thumbv8a.1a" || //v8.1a
+               ArchName == "armebv8.1a" || ArchName == "thumbebv8.1a" ||
+               ArchName == "armv8a" || ArchName == "armv8" ||           //v8a
                ArchName == "armebv8a" || ArchName == "armebv8" ||
                ArchName == "thumbv8a" || ArchName == "thumbv8" ||
                ArchName == "thumbebv8a" || ArchName == "thumbebv8") {
@@ -4290,7 +4294,18 @@ public:
         .Default(false);
   }
   // FIXME: Should we actually have some table instead of these switches?
-  static const char *getCPUDefineSuffix(StringRef Name) {
+  const char *getCPUDefineSuffix(StringRef Name) const {
+    // FIXME: Use ARMTargetParser
+    if(Name == "generic") {
+      auto subarch = getTriple().getSubArch();
+      switch (subarch) {
+        case llvm::Triple::SubArchType::ARMSubArch_v8_1a: 
+          return "8_1A";
+        default:
+          break;
+      }
+    }
+
     return llvm::StringSwitch<const char *>(Name)
         .Cases("arm8", "arm810", "4")
         .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110",
@@ -4320,7 +4335,18 @@ public:
         .Cases("cortex-a53", "cortex-a57", "cortex-a72", "8A")
         .Default(nullptr);
   }
-  static const char *getCPUProfile(StringRef Name) {
+  const char *getCPUProfile(StringRef Name) const {
+    if(Name == "generic") {
+      auto subarch = getTriple().getSubArch();
+      switch (subarch) {
+        case llvm::Triple::SubArchType::ARMSubArch_v8_1a: 
+          return "A";
+        default:
+          break;
+      }
+    }
+
+    // FIXME: Use ARMTargetParser
     return llvm::StringSwitch<const char *>(Name)
         .Cases("cortex-a5", "cortex-a7", "cortex-a8", "A")
         .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
@@ -4356,6 +4382,7 @@ public:
     // We check both CPUArchVer and ArchName because when only triple is
     // specified, the default CPU is arm1136j-s.
     return ArchName.endswith("v6t2") || ArchName.endswith("v7") ||
+           ArchName.endswith("v8.1a") ||
            ArchName.endswith("v8") || CPUArch == "6T2" || CPUArchVer >= 7;
   }
   void getTargetDefines(const LangOptions &Opts,

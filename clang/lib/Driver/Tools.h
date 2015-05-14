@@ -226,9 +226,11 @@ namespace hexagon {
 namespace arm {
   StringRef getARMTargetCPU(const llvm::opt::ArgList &Args,
                             const llvm::Triple &Triple);
+  const StringRef getARMArch(const llvm::opt::ArgList &Args,
+                             const llvm::Triple &Triple);
   const char* getARMCPUForMArch(const llvm::opt::ArgList &Args,
                                 const llvm::Triple &Triple);
-  const char* getLLVMArchSuffixForARM(StringRef CPU);
+  const char* getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch);
 
   void appendEBLinkFlags(const llvm::opt::ArgList &Args, ArgStringList &CmdArgs, const llvm::Triple &Triple);
 }
