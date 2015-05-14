@@ -310,6 +310,30 @@ public:
         std::unordered_set<std::string> m_class_names;
     };
     
+    class TaggedPointerVendor
+    {
+    public:
+        virtual bool
+        IsPossibleTaggedPointer (lldb::addr_t ptr) = 0;
+        
+        virtual ObjCLanguageRuntime::ClassDescriptorSP
+        GetClassDescriptor (lldb::addr_t ptr) = 0;
+        
+        virtual
+        ~TaggedPointerVendor () { }
+    protected:
+        TaggedPointerVendor () = default;
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN(TaggedPointerVendor);
+    };
+    
+    virtual TaggedPointerVendor*
+    GetTaggedPointerVendor ()
+    {
+        return nullptr;
+    }
+    
     typedef std::shared_ptr<EncodingToType> EncodingToTypeSP;
     
     virtual EncodingToTypeSP
