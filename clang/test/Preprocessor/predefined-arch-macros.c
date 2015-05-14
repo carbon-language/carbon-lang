@@ -1675,6 +1675,19 @@
 //
 // CHECK_PPC_CRYPTO_M64: #define __CRYPTO__
 //
+// RUN: %clang -mcpu=pwr8 -E -dM %s -o - 2>&1 \
+// RUN:     -target powerpc64-unknown-unknown \
+// RUN:   | FileCheck %s -check-prefix=CHECK_PPC_GCC_ATOMICS
+// RUN: %clang -E -dM %s -o - 2>&1 \
+// RUN:     -target powerpc64le-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_PPC_GCC_ATOMICS
+//
+// CHECK_PPC_GCC_ATOMICS: #define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_1
+// CHECK_PPC_GCC_ATOMICS: #define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_2
+// CHECK_PPC_GCC_ATOMICS: #define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+// CHECK_PPC_GCC_ATOMICS: #define __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+//
+// End PPC/GCC/Linux tests ------------------
 
 // Begin Sparc/GCC/Linux tests ----------------
 //
