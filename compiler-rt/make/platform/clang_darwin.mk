@@ -333,6 +333,7 @@ CCKEXT_COMMON_FUNCTIONS := \
 	udivmodsi4 \
 	do_global_dtors \
 	eprintf \
+	extendhfsf2 \
 	ffsdi2 \
 	fixdfdi \
 	fixsfdi \
@@ -363,6 +364,8 @@ CCKEXT_COMMON_FUNCTIONS := \
 	powisf2 \
 	subvdi3 \
 	subvsi3 \
+	truncdfhf2 \
+	truncsfhf2 \
 	ucmpdi2 \
 	udiv_w_sdiv \
 	udivdi3 \
