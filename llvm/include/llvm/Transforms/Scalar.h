@@ -463,6 +463,12 @@ FunctionPass *createFloat2IntPass();
 //
 FunctionPass *createNaryReassociatePass();
 
+//===----------------------------------------------------------------------===//
+//
+// LoopDistribute - Distribute loops.
+//
+FunctionPass *createLoopDistributePass();
+
 } // End llvm namespace
 
 #endif
