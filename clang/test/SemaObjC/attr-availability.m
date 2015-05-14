@@ -190,3 +190,19 @@ void partialinter1(PartialI2* p) {
 
 void partialinter2(PartialI2* p) { // no warning
 }
+
+
+// Test that both the use of the 'typedef' and the enum constant
+// produces an error. rdar://problem/20903588
+#define UNAVAILABLE __attribute__((unavailable("not available")))
+
+typedef enum MyEnum : int MyEnum;
+enum MyEnum : int { // expected-note {{'MyEnum' has been explicitly marked unavailable here}}
+  MyEnum_Blah UNAVAILABLE, // expected-note {{'MyEnum_Blah' has been explicitly marked unavailable here}}
+} UNAVAILABLE;
+
+void use_myEnum() {
+  // expected-error@+2 {{'MyEnum' is unavailable: not available}}
+  // expected-error@+1 {{MyEnum_Blah' is unavailable: not available}}
+  MyEnum e = MyEnum_Blah; 
+}
