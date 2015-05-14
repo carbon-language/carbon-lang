@@ -4209,7 +4209,7 @@ public:
                // default.
                // FIXME: Use ARMTargetParser. This would require Triple::arm/thumb
                // to be recogniseable universally.
-               ArchName == "armv8a.1a"  || ArchName == "thumbv8a.1a" || //v8.1a
+               ArchName == "armv8.1a"  || ArchName == "thumbv8.1a" || //v8.1a
                ArchName == "armebv8.1a" || ArchName == "thumbebv8.1a" ||
                ArchName == "armv8a" || ArchName == "armv8" ||           //v8a
                ArchName == "armebv8a" || ArchName == "armebv8" ||
