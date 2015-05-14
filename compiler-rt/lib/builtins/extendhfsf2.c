@@ -12,10 +12,12 @@
 #define DST_SINGLE
 #include "fp_extend_impl.inc"
 
-COMPILER_RT_ABI float __extendhfsf2(uint16_t a) {
+// Use a forwarding definition and noinline to implement a poor man's alias,
+// as there isn't a good cross-platform way of defining one.
+COMPILER_RT_ABI __attribute__((noinline)) float __extendhfsf2(uint16_t a) {
     return __extendXfYf2__(a);
 }
 
 COMPILER_RT_ABI float __gnu_h2f_ieee(uint16_t a) {
-    return __extendXfYf2__(a);
+    return __extendhfsf2(a);
 }
