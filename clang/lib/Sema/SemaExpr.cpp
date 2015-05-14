@@ -108,7 +108,7 @@ DiagnoseAvailabilityOfDecl(Sema &S, NamedDecl *D, SourceLocation Loc,
 
   // For typedefs, if the typedef declaration appears available look
   // to the underlying type to see if it is more restrictive.
-  while (const TypedefNameDecl *TD = TD = dyn_cast<TypedefNameDecl>(D)) {
+  while (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     if (Result == AR_Available) {
       if (const TagType *TT = TD->getUnderlyingType()->getAs<TagType>()) {
         D = TT->getDecl();
