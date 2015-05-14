@@ -14,6 +14,7 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
@@ -309,6 +310,8 @@ void Input::scalarString(StringRef &S, bool) {
   }
 }
 
+void Input::blockScalarString(StringRef &S) { scalarString(S, false); }
+
 void Input::setError(HNode *hnode, const Twine &message) {
   assert(hnode && "HNode must not be NULL");
   this->setError(hnode->_node, message);
@@ -331,6 +334,11 @@ std::unique_ptr<Input::HNode> Input::createHNodes(Node *N) {
       KeyStr = StringRef(Buf, Len);
     }
     return llvm::make_unique<ScalarHNode>(N, KeyStr);
+  } else if (BlockScalarNode *BSN = dyn_cast<BlockScalarNode>(N)) {
+    StringRef Value = BSN->getValue();
+    char *Buf = StringAllocator.Allocate<char>(Value.size());
+    memcpy(Buf, Value.data(), Value.size());
+    return llvm::make_unique<ScalarHNode>(N, StringRef(Buf, Value.size()));
   } else if (SequenceNode *SQ = dyn_cast<SequenceNode>(N)) {
     auto SQHNode = llvm::make_unique<SequenceHNode>(N);
     for (Node &SN : *SQ) {
@@ -607,6 +615,24 @@ void Output::scalarString(StringRef &S, bool MustQuote) {
   }
   output(StringRef(&Base[i], j - i));
   this->outputUpToEndOfLine("'"); // Ending single quote.
+}
+
+void Output::blockScalarString(StringRef &S) {
+  if (!StateStack.empty())
+    newLineCheck();
+  output(" |");
+  outputNewLine();
+
+  unsigned Indent = StateStack.empty() ? 1 : StateStack.size();
+
+  auto Buffer = MemoryBuffer::getMemBuffer(S, "", false);
+  for (line_iterator Lines(*Buffer, false); !Lines.is_at_end(); ++Lines) {
+    for (unsigned I = 0; I < Indent; ++I) {
+      output("  ");
+    }
+    output(*Lines);
+    outputNewLine();
+  }
 }
 
 void Output::setError(const Twine &message) {

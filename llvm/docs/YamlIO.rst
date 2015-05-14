@@ -467,6 +467,56 @@ looks like:
       // Determine if this scalar needs quotes.
       static bool mustQuote(StringRef) { return true; }
     };
+
+Block Scalars
+-------------
+
+YAML block scalars are string literals that are represented in YAML using the
+literal block notation, just like the example shown below:
+
+.. code-block:: yaml
+
+    text: |
+      First line
+      Second line
+
+The YAML I/O library provides support for translating between YAML block scalars
+and specific C++ types by allowing you to specialize BlockScalarTraits<> on
+your data type. The library doesn't provide any built-in support for block
+scalar I/O for types like std::string and llvm::StringRef as they are already
+supported by YAML I/O and use the ordinary scalar notation by default.
+
+BlockScalarTraits specializations are very similar to the
+ScalarTraits specialization - YAML I/O will provide the native type and your
+specialization must create a temporary llvm::StringRef when writing, and
+it will also provide an llvm::StringRef that has the value of that block scalar
+and your specialization must convert that to your native data type when reading.
+An example of a custom type with an appropriate specialization of
+BlockScalarTraits is shown below:
+
+.. code-block:: c++
+
+    using llvm::yaml::BlockScalarTraits;
+    using llvm::yaml::IO;
+
+    struct MyStringType {
+      std::string Str;
+    };
+
+    template <>
+    struct BlockScalarTraits<MyStringType> {
+      static void output(const MyStringType &Value, void *Ctxt,
+                         llvm::raw_ostream &OS) {
+        OS << Value.Str;
+      }
+
+      static StringRef input(StringRef Scalar, void *Ctxt,
+                             MyStringType &Value) {
+        Value.Str = Scalar.str();
+        return StringRef();
+      }
+    };
+
     
 
 Mappings

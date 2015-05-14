@@ -780,6 +780,146 @@ TEST(YAMLIO, TestReadWriteMyCustomType) {
 
 
 //===----------------------------------------------------------------------===//
+//  Test BlockScalarTraits
+//===----------------------------------------------------------------------===//
+
+struct MultilineStringType {
+  std::string str;
+};
+
+struct MultilineStringTypeMap {
+  MultilineStringType name;
+  MultilineStringType description;
+  MultilineStringType ingredients;
+  MultilineStringType recipes;
+  MultilineStringType warningLabels;
+  MultilineStringType documentation;
+  int price;
+};
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<MultilineStringTypeMap> {
+    static void mapping(IO &io, MultilineStringTypeMap& s) {
+      io.mapRequired("name", s.name);
+      io.mapRequired("description", s.description);
+      io.mapRequired("ingredients", s.ingredients);
+      io.mapRequired("recipes", s.recipes);
+      io.mapRequired("warningLabels", s.warningLabels);
+      io.mapRequired("documentation", s.documentation);
+      io.mapRequired("price", s.price);
+     }
+  };
+
+  // MultilineStringType is formatted as a yaml block literal scalar. A value of
+  // "Hello\nWorld" would be represented in yaml as
+  //  |
+  //    Hello
+  //    World
+  template <>
+  struct BlockScalarTraits<MultilineStringType> {
+    static void output(const MultilineStringType &value, void *ctxt,
+                       llvm::raw_ostream &out) {
+      out << value.str;
+    }
+    static StringRef input(StringRef scalar, void *ctxt,
+                           MultilineStringType &value) {
+      value.str = scalar.str();
+      return StringRef();
+    }
+  };
+}
+}
+
+LLVM_YAML_IS_DOCUMENT_LIST_VECTOR(MultilineStringType)
+
+//
+// Test writing then reading back custom values
+//
+TEST(YAMLIO, TestReadWriteMultilineStringType) {
+  std::string intermediate;
+  {
+    MultilineStringTypeMap map;
+    map.name.str = "An Item";
+    map.description.str = "Hello\nWorld";
+    map.ingredients.str = "SubItem 1\nSub Item 2\n\nSub Item 3\n";
+    map.recipes.str = "\n\nTest 1\n\n\n";
+    map.warningLabels.str = "";
+    map.documentation.str = "\n\n";
+    map.price = 350;
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << map;
+  }
+  {
+    Input yin(intermediate);
+    MultilineStringTypeMap map2;
+    yin >> map2;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(map2.name.str, "An Item\n");
+    EXPECT_EQ(map2.description.str, "Hello\nWorld\n");
+    EXPECT_EQ(map2.ingredients.str, "SubItem 1\nSub Item 2\n\nSub Item 3\n");
+    EXPECT_EQ(map2.recipes.str, "\n\nTest 1\n");
+    EXPECT_TRUE(map2.warningLabels.str.empty());
+    EXPECT_TRUE(map2.documentation.str.empty());
+    EXPECT_EQ(map2.price, 350);
+  }
+}
+
+//
+// Test writing then reading back custom values
+//
+TEST(YAMLIO, TestReadWriteBlockScalarDocuments) {
+  std::string intermediate;
+  {
+    std::vector<MultilineStringType> documents;
+    MultilineStringType doc;
+    doc.str = "Hello\nWorld";
+    documents.push_back(doc);
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << documents;
+
+    // Verify that the block scalar header was written out on the same line
+    // as the document marker.
+    EXPECT_NE(llvm::StringRef::npos, llvm::StringRef(ostr.str()).find("--- |"));
+  }
+  {
+    Input yin(intermediate);
+    std::vector<MultilineStringType> documents2;
+    yin >> documents2;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(documents2.size(), size_t(1));
+    EXPECT_EQ(documents2[0].str, "Hello\nWorld\n");
+  }
+}
+
+TEST(YAMLIO, TestReadWriteBlockScalarValue) {
+  std::string intermediate;
+  {
+    MultilineStringType doc;
+    doc.str = "Just a block\nscalar doc";
+
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << doc;
+  }
+  {
+    Input yin(intermediate);
+    MultilineStringType doc;
+    yin >> doc;
+
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(doc.str, "Just a block\nscalar doc\n");
+  }
+}
+
+//===----------------------------------------------------------------------===//
 //  Test flow sequences
 //===----------------------------------------------------------------------===//
 

@@ -121,6 +121,35 @@ struct ScalarTraits {
 };
 
 
+/// This class should be specialized by type that requires custom conversion
+/// to/from a YAML literal block scalar. For example:
+///
+///    template <>
+///    struct BlockScalarTraits<MyType> {
+///      static void output(const MyType &Value, void*, llvm::raw_ostream &Out)
+///      {
+///        // stream out custom formatting
+///        Out << Val;
+///      }
+///      static StringRef input(StringRef Scalar, void*, MyType &Value) {
+///        // parse scalar and set `value`
+///        // return empty string on success, or error string
+///        return StringRef();
+///      }
+///    };
+template <typename T>
+struct BlockScalarTraits {
+  // Must provide:
+  //
+  // Function to write the value as a string:
+  // static void output(const T &Value, void *ctx, llvm::raw_ostream &Out);
+  //
+  // Function to convert a string to a value.  Returns the empty
+  // StringRef on success or an error string if string is malformed:
+  // static StringRef input(StringRef Scalar, void *ctxt, T &Value);
+};
+
+
 /// This class should be specialized by any type that needs to be converted
 /// to/from a YAML sequence.  For example:
 ///
@@ -221,6 +250,26 @@ struct has_ScalarTraits
 public:
   static bool const value =
       (sizeof(test<ScalarTraits<T>>(nullptr, nullptr, nullptr)) == 1);
+};
+
+
+// Test if BlockScalarTraits<T> is defined on type T.
+template <class T>
+struct has_BlockScalarTraits
+{
+  typedef StringRef (*Signature_input)(StringRef, void *, T &);
+  typedef void (*Signature_output)(const T &, void *, llvm::raw_ostream &);
+
+  template <typename U>
+  static char test(SameType<Signature_input, &U::input> *,
+                   SameType<Signature_output, &U::output> *);
+
+  template <typename U>
+  static double test(...);
+
+public:
+  static bool const value =
+      (sizeof(test<BlockScalarTraits<T>>(nullptr, nullptr)) == 1);
 };
 
 
@@ -410,6 +459,7 @@ struct missingTraits : public std::integral_constant<bool,
                                          !has_ScalarEnumerationTraits<T>::value
                                       && !has_ScalarBitSetTraits<T>::value
                                       && !has_ScalarTraits<T>::value
+                                      && !has_BlockScalarTraits<T>::value
                                       && !has_MappingTraits<T>::value
                                       && !has_SequenceTraits<T>::value
                                       && !has_DocumentListTraits<T>::value >  {};
@@ -462,6 +512,7 @@ public:
   virtual void endBitSetScalar() = 0;
 
   virtual void scalarString(StringRef &, bool) = 0;
+  virtual void blockScalarString(StringRef &) = 0;
 
   virtual void setError(const Twine &) = 0;
 
@@ -646,6 +697,24 @@ yamlize(IO &io, T &Val, bool) {
   }
 }
 
+template <typename T>
+typename std::enable_if<has_BlockScalarTraits<T>::value, void>::type
+yamlize(IO &YamlIO, T &Val, bool) {
+  if (YamlIO.outputting()) {
+    std::string Storage;
+    llvm::raw_string_ostream Buffer(Storage);
+    BlockScalarTraits<T>::output(Val, YamlIO.getContext(), Buffer);
+    StringRef Str = Buffer.str();
+    YamlIO.blockScalarString(Str);
+  } else {
+    StringRef Str;
+    YamlIO.blockScalarString(Str);
+    StringRef Result =
+        BlockScalarTraits<T>::input(Str, YamlIO.getContext(), Val);
+    if (!Result.empty())
+      YamlIO.setError(llvm::Twine(Result));
+  }
+}
 
 template<typename T>
 typename std::enable_if<validatedMappingTraits<T>::value, void>::type
@@ -937,6 +1006,7 @@ private:
   bool bitSetMatch(const char *, bool ) override;
   void endBitSetScalar() override;
   void scalarString(StringRef &, bool) override;
+  void blockScalarString(StringRef &) override;
   void setError(const Twine &message) override;
   bool canElideEmptySequence() override;
 
@@ -968,7 +1038,8 @@ private:
     StringRef value() const { return _value; }
 
     static inline bool classof(const HNode *n) {
-      return ScalarNode::classof(n->_node);
+      return ScalarNode::classof(n->_node) ||
+             BlockScalarNode::classof(n->_node);
     }
     static inline bool classof(const ScalarHNode *) { return true; }
   protected:
@@ -1067,6 +1138,7 @@ public:
   bool bitSetMatch(const char *, bool ) override;
   void endBitSetScalar() override;
   void scalarString(StringRef &, bool) override;
+  void blockScalarString(StringRef &) override;
   void setError(const Twine &message) override;
   bool canElideEmptySequence() override;
 public:
@@ -1208,6 +1280,16 @@ operator>>(Input &yin, T &docSeq) {
   return yin;
 }
 
+// Define non-member operator>> so that Input can stream in a block scalar.
+template <typename T>
+inline
+typename std::enable_if<has_BlockScalarTraits<T>::value, Input &>::type
+operator>>(Input &In, T &Val) {
+  if (In.setCurrentDocument())
+    yamlize(In, Val, true);
+  return In;
+}
+
 // Provide better error message about types missing a trait specialization
 template <typename T>
 inline
@@ -1261,6 +1343,20 @@ operator<<(Output &yout, T &seq) {
   }
   yout.endDocuments();
   return yout;
+}
+
+// Define non-member operator<< so that Output can stream out a block scalar.
+template <typename T>
+inline
+typename std::enable_if<has_BlockScalarTraits<T>::value, Output &>::type
+operator<<(Output &Out, T &Val) {
+  Out.beginDocuments();
+  if (Out.preflightDocument(0)) {
+    yamlize(Out, Val, true);
+    Out.postflightDocument();
+  }
+  Out.endDocuments();
+  return Out;
 }
 
 // Provide better error message about types missing a trait specialization
