@@ -738,7 +738,7 @@ void WinCOFFObjectWriter::RecordRelocation(
     int64_t OffsetOfRelocation =
         Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
-    FixedValue = OffsetOfRelocation - OffsetOfB;
+    FixedValue = (OffsetOfRelocation - OffsetOfB) + Target.getConstant();
   } else {
     FixedValue = Target.getConstant();
   }
