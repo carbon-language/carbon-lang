@@ -688,6 +688,33 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
   state.setCurrentChunkIndex(declarator.getNumTypeObjects());
 }
 
+void diagnoseAndRemoveTypeQualifiers(Sema &S, const DeclSpec &DS,
+                                     unsigned &TypeQuals, QualType TypeSoFar,
+                                     unsigned RemoveTQs, unsigned DiagID) {
+  // If this occurs outside a template instantiation, warn the user about
+  // it; they probably didn't mean to specify a redundant qualifier.
+  typedef std::pair<DeclSpec::TQ, SourceLocation> QualLoc;
+  QualLoc Quals[] = {
+    QualLoc(DeclSpec::TQ_const, DS.getConstSpecLoc()),
+    QualLoc(DeclSpec::TQ_volatile, DS.getVolatileSpecLoc()),
+    QualLoc(DeclSpec::TQ_atomic, DS.getAtomicSpecLoc())
+  };
+
+  for (unsigned I = 0, N = llvm::array_lengthof(Quals); I != N; ++I) {
+    if (!(RemoveTQs & Quals[I].first))
+      continue;
+
+    if (S.ActiveTemplateInstantiations.empty()) {
+      if (TypeQuals & Quals[I].first)
+        S.Diag(Quals[I].second, DiagID)
+          << DeclSpec::getSpecifierName(Quals[I].first) << TypeSoFar
+          << FixItHint::CreateRemoval(Quals[I].second);
+    }
+
+    TypeQuals &= ~Quals[I].first;
+  }
+}
+
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
 /// \param state Specifies the declarator containing the declaration specifier
@@ -1117,24 +1144,22 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
 
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
-
-    // Warn about CV qualifiers on functions: C99 6.7.3p8: "If the specification
-    // of a function type includes any type qualifiers, the behavior is
-    // undefined."
-    if (Result->isFunctionType() && TypeQuals) {
-      if (TypeQuals & DeclSpec::TQ_const)
-        S.Diag(DS.getConstSpecLoc(), diag::warn_typecheck_function_qualifiers)
-          << Result << DS.getSourceRange();
-      else if (TypeQuals & DeclSpec::TQ_volatile)
-        S.Diag(DS.getVolatileSpecLoc(),
-               diag::warn_typecheck_function_qualifiers)
-            << Result << DS.getSourceRange();
-      else {
-        assert((TypeQuals & (DeclSpec::TQ_restrict | DeclSpec::TQ_atomic)) &&
-               "Has CVRA quals but not C, V, R, or A?");
-        // No diagnostic; we'll diagnose 'restrict' or '_Atomic' applied to a
-        // function type later, in BuildQualifiedType.
-      }
+    // Warn about CV qualifiers on function types.
+    // C99 6.7.3p8:
+    //   If the specification of a function type includes any type qualifiers,
+    //   the behavior is undefined.
+    // C++11 [dcl.fct]p7:
+    //   The effect of a cv-qualifier-seq in a function declarator is not the
+    //   same as adding cv-qualification on top of the function type. In the
+    //   latter case, the cv-qualifiers are ignored.
+    if (TypeQuals && Result->isFunctionType()) {
+      diagnoseAndRemoveTypeQualifiers(
+          S, DS, TypeQuals, Result, DeclSpec::TQ_const | DeclSpec::TQ_volatile,
+          S.getLangOpts().CPlusPlus
+              ? diag::warn_typecheck_function_qualifiers_ignored
+              : diag::warn_typecheck_function_qualifiers_unspecified);
+      // No diagnostic for 'restrict' or '_Atomic' applied to a
+      // function type; we'll diagnose those later, in BuildQualifiedType.
     }
 
     // C++11 [dcl.ref]p1:
@@ -1145,25 +1170,11 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // There don't appear to be any other contexts in which a cv-qualified
     // reference type could be formed, so the 'ill-formed' clause here appears
     // to never happen.
-    if (DS.getTypeSpecType() == DeclSpec::TST_typename &&
-        TypeQuals && Result->isReferenceType()) {
-      // If this occurs outside a template instantiation, warn the user about
-      // it; they probably didn't mean to specify a redundant qualifier.
-      typedef std::pair<DeclSpec::TQ, SourceLocation> QualLoc;
-      QualLoc Quals[] = {
-        QualLoc(DeclSpec::TQ_const, DS.getConstSpecLoc()),
-        QualLoc(DeclSpec::TQ_volatile, DS.getVolatileSpecLoc()),
-        QualLoc(DeclSpec::TQ_atomic, DS.getAtomicSpecLoc())
-      };
-      for (unsigned I = 0, N = llvm::array_lengthof(Quals); I != N; ++I) {
-        if (S.ActiveTemplateInstantiations.empty()) {
-          if (TypeQuals & Quals[I].first)
-            S.Diag(Quals[I].second, diag::warn_typecheck_reference_qualifiers)
-              << DeclSpec::getSpecifierName(Quals[I].first) << Result
-              << FixItHint::CreateRemoval(Quals[I].second);
-        }
-        TypeQuals &= ~Quals[I].first;
-      }
+    if (TypeQuals && Result->isReferenceType()) {
+      diagnoseAndRemoveTypeQualifiers(
+          S, DS, TypeQuals, Result,
+          DeclSpec::TQ_const | DeclSpec::TQ_volatile | DeclSpec::TQ_atomic,
+          diag::warn_typecheck_reference_qualifiers);
     }
 
     // C90 6.5.3 constraints: "The same type qualifier shall not appear more

@@ -4155,8 +4155,11 @@ def err_typecheck_negative_array_size : Error<"array size is negative">;
 def warn_typecheck_negative_array_new_size : Warning<"array size is negative">,
   // FIXME PR11644: ", will throw std::bad_array_new_length at runtime"
   InGroup<BadArrayNewLength>;
-def warn_typecheck_function_qualifiers : Warning<
-  "qualifier on function type %0 has unspecified behavior">;
+def warn_typecheck_function_qualifiers_ignored : Warning<
+  "'%0' qualifier on function type %1 has no effect">,
+  InGroup<IgnoredQualifiers>;
+def warn_typecheck_function_qualifiers_unspecified : Warning<
+  "'%0' qualifier on function type %1 has unspecified behavior">;
 def warn_typecheck_reference_qualifiers : Warning<
   "'%0' qualifier on reference type %1 has no effect">,
   InGroup<IgnoredQualifiers>;
