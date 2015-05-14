@@ -10,6 +10,7 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     FuzzerLoop.cpp
     FuzzerMutate.cpp
     FuzzerSanitizerOptions.cpp
+    FuzzerSHA1.cpp
     FuzzerUtil.cpp
     )
   add_library(LLVMFuzzer STATIC

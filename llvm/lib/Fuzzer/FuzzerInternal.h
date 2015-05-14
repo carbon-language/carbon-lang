@@ -44,6 +44,11 @@ std::string Hash(const Unit &U);
 void SetTimer(int Seconds);
 void PrintFileAsBase64(const std::string &Path);
 
+// Private copy of SHA1 implementation.
+static const int kSHA1NumBytes = 20;
+// Computes SHA1 hash of 'Len' bytes in 'Data', writes kSHA1NumBytes to 'Out'.
+void ComputeSHA1(const uint8_t *Data, size_t Len, uint8_t *Out);
+
 int NumberOfCpuCores();
 
 class Fuzzer {

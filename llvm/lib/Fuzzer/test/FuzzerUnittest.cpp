@@ -60,3 +60,11 @@ TEST(Fuzzer, CrossOver) {
     EXPECT_EQ(ExpectedUnitsWitThisLength, FoundUnits);
   }
 }
+
+TEST(Fuzzer, Hash) {
+  uint8_t A[] = {'a', 'b', 'c'};
+  fuzzer::Unit U(A, A + sizeof(A));
+  EXPECT_EQ("a9993e364706816aba3e25717850c26c9cd0d89d", fuzzer::Hash(U));
+  U.push_back('d');
+  EXPECT_EQ("81fe8bfe87576c3ecb22426f8e57847382917acf", fuzzer::Hash(U));
+}
