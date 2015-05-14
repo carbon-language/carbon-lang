@@ -210,6 +210,12 @@ def _SLASH_o : CLJoinedOrSeparate<"o">,
   HelpText<"Set output file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_P : CLFlag<"P">, HelpText<"Preprocess to file">;
+def _SLASH_Qvec : CLFlag<"Qvec">,
+                  HelpText<"Enable the loop vectorization passes">,
+                  Alias<fvectorize>;
+def _SLASH_Qvec_ : CLFlag<"Qvec-">,
+                   HelpText<"Disable the loop vectorization passes">,
+                   Alias<fno_vectorize>;
 def _SLASH_Tc : CLCompileJoinedOrSeparate<"Tc">,
   HelpText<"Specify a C source file">, MetaVarName<"<filename>">;
 def _SLASH_TC : CLCompileFlag<"TC">, HelpText<"Treat all source files as C">;
