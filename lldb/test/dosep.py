@@ -179,6 +179,11 @@ def getExpectedTimeouts(dotest_options):
             "TestExitDuringStep.py",
             "TestHelloWorld.py",
         }
+    elif target.startswith("freebsd"):
+        expected_timeout |= {
+            "TestBreakpointConditions.py",
+            "TestWatchpointConditionAPI.py",
+        }
     return expected_timeout
 
 def main():
