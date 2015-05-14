@@ -136,6 +136,8 @@ else()
     check_variable(cmake_build_type_lowercase  "${build_type_possible_values}")
 endif()
 
+# Allow user to choose a suffix for the installation directory, or if part of
+# LLVM build then just use LLVM_LIBDIR_SUFFIX
 if(${LIBIOMP_STANDALONE_BUILD})
     set(LIBIOMP_LIBDIR_SUFFIX "" CACHE STRING "suffix of lib installation directory e.g., 64 => lib64")
 else()
