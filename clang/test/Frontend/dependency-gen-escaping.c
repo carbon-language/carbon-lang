@@ -24,7 +24,7 @@
 // SEP2F: a\b\\#c\\\ d.h
 // With -fms-compatibility, Backslashes in #include are treated as path separators.
 // Backslashes are given in the emission for special characters, like 0x20 or 0x23.
-// SEP5C: a{{[/\\]}}b{{[/\\]}}\#c{{[/\\]}}\ d.h
+// SEP5C: a{{[/\\]}}b{{[/\\]}}\#c{{/|\\\\}}\ d.h
 // These combinations are just another case for NMAKE.
 // NMAKE: "a{{[/\\]}}b{{[/\\]}}#c{{[/\\]}} d.h"
 
