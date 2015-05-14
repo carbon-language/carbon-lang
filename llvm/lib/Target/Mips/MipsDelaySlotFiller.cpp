@@ -315,6 +315,14 @@ void RegDefsUses::init(const MachineInstr &MI) {
 void RegDefsUses::setCallerSaved(const MachineInstr &MI) {
   assert(MI.isCall());
 
+  // Add RA/RA_64 to Defs to prevent users of RA/RA_64 from going into
+  // the delay slot. The reason is that RA/RA_64 must not be changed
+  // in the delay slot so that the callee can return to the caller.
+  if (MI.definesRegister(Mips::RA) || MI.definesRegister(Mips::RA_64)) {
+    Defs.set(Mips::RA);
+    Defs.set(Mips::RA_64);
+  }
+
   // If MI is a call, add all caller-saved registers to Defs.
   BitVector CallerSavedRegs(TRI.getNumRegs(), true);
 
