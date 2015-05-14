@@ -153,8 +153,8 @@ debugger to interpret the information.
 To provide basic functionality, the LLVM debugger does have to make some
 assumptions about the source-level language being debugged, though it keeps
 these to a minimum.  The only common features that the LLVM debugger assumes
-exist are `source files <LangRef.html#DIFile>`_, and `program objects
-<LangRef.html#DIGlobalVariable>`_.  These abstract objects are used by a
+exist are `source files <LangRef.html#difile>`_, and `program objects
+<LangRef.html#diglobalvariable>`_.  These abstract objects are used by a
 debugger to form stack traces, show information about local variables, etc.
 
 This section of the documentation first describes the representation aspects
@@ -177,27 +177,27 @@ provide debug information at various points in generated code.
 
 .. code-block:: llvm
 
-  void %llvm.dbg.declare(metadata, metadata, metadata)
+  void @llvm.dbg.declare(metadata, metadata, metadata)
 
 This intrinsic provides information about a local element (e.g., variable).
 The first argument is metadata holding the alloca for the variable.  The second
-argument is a `local variable <LangRef.html#DILocalVariable>`_ containing a
+argument is a `local variable <LangRef.html#dilocalvariable>`_ containing a
 description of the variable.  The third argument is a `complex expression
-<LangRef.html#DIExpression>`_.
+<LangRef.html#diexpression>`_.
 
 ``llvm.dbg.value``
 ^^^^^^^^^^^^^^^^^^
 
 .. code-block:: llvm
 
-  void %llvm.dbg.value(metadata, i64, metadata, metadata)
+  void @llvm.dbg.value(metadata, i64, metadata, metadata)
 
 This intrinsic provides information when a user source variable is set to a new
 value.  The first argument is the new value (wrapped as metadata).  The second
 argument is the offset in the user source variable where the new value is
 written.  The third argument is a `local variable
-<LangRef.html#DILocalVariable>`_ containing a description of the variable.  The
-third argument is a `complex expression <LangRef.html#DIExpression>`_.
+<LangRef.html#dilocalvariable>`_ containing a description of the variable.  The
+third argument is a `complex expression <LangRef.html#diexpression>`_.
 
 Object lifetimes and scoping
 ============================
@@ -310,8 +310,8 @@ scope information for the variable ``X``.
                      variables: !2)
 
 Here ``!14`` is metadata providing `location information
-<LangRef.html#DILocation>`_.  In this example, scope is encoded by ``!4``, a
-`subprogram descriptor <LangRef.html#DISubprogram>`_.  This way the location
+<LangRef.html#dilocation>`_.  In this example, scope is encoded by ``!4``, a
+`subprogram descriptor <LangRef.html#disubprogram>`_.  This way the location
 information attached to the intrinsics indicates that the variable ``X`` is
 declared at line number 2 at a function level scope in function ``foo``.
 

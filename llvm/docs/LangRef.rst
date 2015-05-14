@@ -2961,7 +2961,7 @@ DIFile
 Files are sometimes used in ``scope:`` fields, and are the only valid target
 for ``file:`` fields.
 
-.. _DILocation:
+.. _DIBasicType:
 
 DIBasicType
 """""""""""
@@ -3224,6 +3224,8 @@ discriminate between control flow within a single block in the source language.
     !0 = !DILexicalBlock(scope: !3, file: !4, line: 7, column: 35)
     !1 = !DILexicalBlockFile(scope: !0, file: !4, discriminator: 0)
     !2 = !DILexicalBlockFile(scope: !0, file: !4, discriminator: 1)
+
+.. _DILocation:
 
 DILocation
 """"""""""
