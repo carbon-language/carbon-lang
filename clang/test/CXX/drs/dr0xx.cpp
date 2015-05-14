@@ -994,7 +994,7 @@ namespace dr91 { // dr91: yes
   int k = f(U());
 }
 
-namespace dr92 { // dr92: yes
+namespace dr92 { // FIXME: Issue is still open.
   void f() throw(int, float);
   void (*p)() throw(int) = &f; // expected-error {{target exception specification is not superset of source}}
   void (*q)() throw(int);
