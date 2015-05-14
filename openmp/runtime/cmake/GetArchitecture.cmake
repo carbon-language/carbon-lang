@@ -48,10 +48,10 @@ function(get_architecture return_arch)
     "
     )
     # Write out ${detect_arch_src_txt} to a file within the cmake/ subdirectory
-    file(WRITE "${LIBOMP_WORK}/cmake/detect_arch.c" ${detect_arch_src_txt}) 
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/detect_arch.c" ${detect_arch_src_txt}) 
 
     # Try to compile using the C Compiler.  It will always error out with an #error directive, so store error output to ${local_architecture}
-    try_run(run_dummy compile_dummy "${CMAKE_CURRENT_BINARY_DIR}" "${LIBOMP_WORK}/cmake/detect_arch.c" COMPILE_OUTPUT_VARIABLE local_architecture)
+    try_run(run_dummy compile_dummy "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/detect_arch.c" COMPILE_OUTPUT_VARIABLE local_architecture)
 
     # Match the important architecture line and store only that matching string in ${local_architecture}
     string(REGEX MATCH "ARCHITECTURE=([a-zA-Z0-9_]+)" local_architecture "${local_architecture}")
@@ -63,5 +63,5 @@ function(get_architecture return_arch)
     set(${return_arch} "${local_architecture}" PARENT_SCOPE)
 
     # Remove ${detect_arch_src_txt} from cmake/ subdirectory
-    file(REMOVE "${LIBOMP_WORK}/cmake/detect_arch.c")
+    file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/detect_arch.c")
 endfunction()

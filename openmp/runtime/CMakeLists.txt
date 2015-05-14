@@ -20,10 +20,6 @@ set(GLOBAL_DEBUG 0)
 # Add cmake directory to search for custom cmake functions
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-# Set base libomp directory (directory with exports/ , src/ , tools/ , etc.)
-# The top-level CMakeLists.txt should define this variable.
-set(LIBOMP_WORK ${CMAKE_CURRENT_SOURCE_DIR})
-
 #######################################################################
 # Standalone build or part of LLVM?
 set(LIBIOMP_STANDALONE_BUILD FALSE)
@@ -118,6 +114,10 @@ set(LIBIOMP_LDFLAGS     "" CACHE STRING "Appended user specified linker flags." 
 set(LIBIOMP_LIBFLAGS    "" CACHE STRING "Appended user specified linked libs flags. (e.g., -lm)")
 set(LIBIOMP_FFLAGS      "" CACHE STRING "Appended user specified Fortran compiler flags.  These are only used if create_fortran_modules==true."       )
 
+# Should the libiomp5 library and generated headers be copied into the original source exports/ directory
+# Turning this to false aids parallel builds to not interfere with each other.
+set(LIBIOMP_COPY_EXPORTS true CACHE STRING "Should exports be copied into source exports/ directory?")
+
 # - Allow three build types: Release, Debug, RelWithDebInfo (these relate to build.pl's release, debug, and diag settings respectively)
 # - default is Release (when CMAKE_BUILD_TYPE is not defined)
 # - CMAKE_BUILD_TYPE affects the -O and -g flags (CMake magically includes correct version of them on per compiler basis)
@@ -151,7 +151,7 @@ if("${arch}" STREQUAL "mic")
     check_variable(mic_arch "${mic_arch_possible_values}"  )
 endif()
 # Get the build number from kmp_version.c
-get_build_number("${LIBOMP_WORK}" build_number)
+get_build_number("${CMAKE_CURRENT_SOURCE_DIR}" build_number)
 
 # Getting time and date 
 # As of now, no timestamp will be created.
@@ -350,9 +350,9 @@ else()
     set(platform       "${real_os}_${arch}"            ) # e.g., lin_32e, mac_32
 endif()
 set(build_dir      "${CMAKE_CURRENT_BINARY_DIR}"       ) # build directory (Where CMakeCache.txt is created, build files generated)
-set(src_dir        "${LIBOMP_WORK}/src"                )
-set(tools_dir      "${LIBOMP_WORK}/tools"              ) 
-set(export_dir     "${LIBOMP_WORK}/exports"            ) 
+set(src_dir        "${CMAKE_CURRENT_SOURCE_DIR}/src"   )
+set(tools_dir      "${CMAKE_CURRENT_SOURCE_DIR}/tools" ) 
+set(export_dir     "${CMAKE_CURRENT_SOURCE_DIR}/exports") 
 set(export_ptf_dir "${export_dir}/${platform}${suffix}")
 set(export_cmn_dir1 "${export_dir}/common${suffix}/include") 
 set(export_cmn_dir2 "${export_dir}/common${suffix}/include_compat") 
@@ -365,7 +365,7 @@ if(${MAC})
     # macs use lib/ subdirectory for fat libraries that contain both IA-32 architecture and Intel(R) 64 architecture code.
     _export_lib_fat_dir(${platform} export_lib_fat_dir)
 endif()
-set(inc_dir        "${LIBOMP_WORK}/src/include/${omp_version}")
+set(inc_dir        "${src_dir}/include/${omp_version}")
 
 ############################
 # Setting final library name
@@ -528,7 +528,6 @@ endif()
 debug_say_var(CMAKE_ASM_COMPILE_OBJECT)
 debug_say_var(CMAKE_RC_COMPILER)
 debug_say_var(CMAKE_C_COMPILER_ID)
-debug_say_var(LIBOMP_WORK)
 debug_say_var(date)
 debug_say_var(stats)
 debug_say_var(lib_file)
@@ -574,31 +573,33 @@ add_custom_target(common ALL DEPENDS ${export_cmn_files})
 add_custom_target(clean-common COMMAND ${CMAKE_COMMAND} -E remove -f ${export_cmn_files})
 
 # --- Put headers in convenient locations post build ---
-add_custom_command(TARGET common POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir2}
-    COMMAND ${CMAKE_COMMAND} -E copy omp.h ${export_cmn_dir1}
-    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.h ${export_cmn_dir1}
-    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f ${export_cmn_dir1}
-    COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f90 ${export_cmn_dir1}
-    COMMAND ${CMAKE_COMMAND} -E copy iomp.h ${export_cmn_dir2}
-)
-if(${OMPT_SUPPORT})
-    add_custom_command(TARGET common POST_BUILD
+if(${LIBIOMP_COPY_EXPORTS})
+    add_custom_command(TARGET common POST_BUILD 
         COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E copy ompt.h ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir2}
+        COMMAND ${CMAKE_COMMAND} -E copy omp.h ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.h ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f90 ${export_cmn_dir1}
+        COMMAND ${CMAKE_COMMAND} -E copy iomp.h ${export_cmn_dir2}
     )
-endif()
-add_custom_command(TARGET inc POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_inc_dir}
-    COMMAND ${CMAKE_COMMAND} -E copy iomp_lib.h ${export_inc_dir}
-)
-if(${create_fortran_modules})
-    add_custom_command(TARGET mod POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_mod_dir}
-        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.mod ${export_mod_dir}
-        COMMAND ${CMAKE_COMMAND} -E copy omp_lib_kinds.mod ${export_mod_dir}
+    if(${OMPT_SUPPORT})
+        add_custom_command(TARGET common POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
+            COMMAND ${CMAKE_COMMAND} -E copy ompt.h ${export_cmn_dir1}
+        )
+    endif()
+    add_custom_command(TARGET inc POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_inc_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy iomp_lib.h ${export_inc_dir}
     )
+    if(${create_fortran_modules})
+        add_custom_command(TARGET mod POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_mod_dir}
+            COMMAND ${CMAKE_COMMAND} -E copy omp_lib.mod ${export_mod_dir}
+            COMMAND ${CMAKE_COMMAND} -E copy omp_lib_kinds.mod ${export_mod_dir}
+        )
+    endif()
 endif()
 
 ######################################################
@@ -643,10 +644,12 @@ if(NOT LIBIOMP_OUTPUT_DIRECTORY)
     set(LIBIOMP_OUTPUT_DIRECTORY ${build_dir})
 endif()
 
-add_custom_command(TARGET iomp5 POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
-    COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMP_OUTPUT_DIRECTORY}/${lib_file} ${export_lib_dir}
-)
+if(${LIBIOMP_COPY_EXPORTS})
+    add_custom_command(TARGET iomp5 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMP_OUTPUT_DIRECTORY}/${lib_file} ${export_lib_dir}
+    )
+endif()
 
 # Linking command will include libraries in LD_LIB_FLAGS
 target_link_libraries(iomp5 ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
@@ -740,10 +743,12 @@ if(${WINDOWS})
         if(NOT LIBIOMPIMP_OUTPUT_DIRECTORY)
             set(LIBIOMPIMP_OUTPUT_DIRECTORY ${build_dir})
         endif()
-        add_custom_command(TARGET iomp5imp POST_BUILD 
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
-            COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMPIMP_OUTPUT_DIRECTORY}/${imp_file} ${export_lib_dir}
-        )
+        if(${LIBIOMP_COPY_EXPORTS})
+            add_custom_command(TARGET iomp5imp POST_BUILD 
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
+                COMMAND ${CMAKE_COMMAND} -E copy ${LIBIOMPIMP_OUTPUT_DIRECTORY}/${imp_file} ${export_lib_dir}
+            )
+        endif()
     endif()
 
     # --- Create $(def_file) ---
