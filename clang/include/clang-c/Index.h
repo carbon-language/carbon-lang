@@ -5736,9 +5736,6 @@ CINDEX_LINKAGE unsigned clang_Type_visitFields(CXType T,
  * @}
  */
 
-/* Include the comment API for compatibility. This will eventually go away. */
-#include "clang-c/Documentation.h"
-
 #ifdef __cplusplus
 }
 #endif
