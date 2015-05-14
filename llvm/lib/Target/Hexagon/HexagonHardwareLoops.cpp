@@ -670,6 +670,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
     MachineBasicBlock *DefBB = MRI->getVRegDef(R)->getParent();
     if (!MDT->properlyDominates(DefBB, Header))
       return nullptr;
+    OldInsts.push_back(MRI->getVRegDef(R));
   }
 
   return computeCount(L, InitialValue, EndValue, IVReg, IVBump, Cmp);
@@ -693,12 +694,14 @@ CountValue *HexagonHardwareLoops::computeCount(MachineLoop *Loop,
   // If so, use the immediate value rather than the register.
   if (Start->isReg()) {
     const MachineInstr *StartValInstr = MRI->getVRegDef(Start->getReg());
-    if (StartValInstr && StartValInstr->getOpcode() == Hexagon::A2_tfrsi)
+    if (StartValInstr && (StartValInstr->getOpcode() == Hexagon::A2_tfrsi ||
+                          StartValInstr->getOpcode() == Hexagon::A2_tfrpi))
       Start = &StartValInstr->getOperand(1);
   }
   if (End->isReg()) {
     const MachineInstr *EndValInstr = MRI->getVRegDef(End->getReg());
-    if (EndValInstr && EndValInstr->getOpcode() == Hexagon::A2_tfrsi)
+    if (EndValInstr && (EndValInstr->getOpcode() == Hexagon::A2_tfrsi ||
+                        EndValInstr->getOpcode() == Hexagon::A2_tfrpi))
       End = &EndValInstr->getOperand(1);
   }
 
@@ -1832,11 +1835,14 @@ MachineBasicBlock *HexagonHardwareLoops::createPreheaderForLoop(
       // created PHI node in the preheader.
       for (unsigned i = 1, n = PN->getNumOperands(); i < n; i += 2) {
         unsigned PredR = PN->getOperand(i).getReg();
+        unsigned PredRSub = PN->getOperand(i).getSubReg();
         MachineBasicBlock *PredB = PN->getOperand(i+1).getMBB();
         if (PredB == Latch)
           continue;
 
-        NewPN->addOperand(MachineOperand::CreateReg(PredR, false));
+        MachineOperand MO = MachineOperand::CreateReg(PredR, false);
+        MO.setSubReg(PredRSub);
+        NewPN->addOperand(MO);
         NewPN->addOperand(MachineOperand::CreateMBB(PredB));
       }
 
