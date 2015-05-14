@@ -134,18 +134,23 @@ public:
                            : SM.getIncludeLoc(SM.getFileID(Loc));
   }
 
-  /// \brief Get the start of \c S ignoring macro arguments and system macros.
+  /// \brief Return true if \c Loc is a location in a built-in macro.
+  bool isInBuiltin(SourceLocation Loc) {
+    return strcmp(SM.getBufferName(SM.getSpellingLoc(Loc)), "<built-in>") == 0;
+  }
+
+  /// \brief Get the start of \c S ignoring macro arguments and builtin macros.
   SourceLocation getStart(const Stmt *S) {
     SourceLocation Loc = S->getLocStart();
-    while (SM.isMacroArgExpansion(Loc) || SM.isInSystemMacro(Loc))
+    while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).first;
     return Loc;
   }
 
-  /// \brief Get the end of \c S ignoring macro arguments and system macros.
+  /// \brief Get the end of \c S ignoring macro arguments and builtin macros.
   SourceLocation getEnd(const Stmt *S) {
     SourceLocation Loc = S->getLocEnd();
-    while (SM.isMacroArgExpansion(Loc) || SM.isInSystemMacro(Loc))
+    while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).first;
     return getPreciseTokenLocEnd(Loc);
   }
