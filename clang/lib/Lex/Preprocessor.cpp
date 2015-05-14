@@ -775,7 +775,7 @@ void Preprocessor::makeModuleVisible(Module *M, SourceLocation Loc) {
       });
 
   // Add this module to the imports list of the currently-built submodule.
-  if (!BuildingSubmoduleStack.empty())
+  if (!BuildingSubmoduleStack.empty() && M != BuildingSubmoduleStack.back().M)
     BuildingSubmoduleStack.back().M->Imports.insert(M);
 }
 

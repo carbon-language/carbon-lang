@@ -636,6 +636,9 @@ void Preprocessor::EnterSubmodule(Module *M, SourceLocation ImportLoc) {
 void Preprocessor::LeaveSubmodule() {
   auto &Info = BuildingSubmoduleStack.back();
 
+  Module *LeavingMod = Info.M;
+  SourceLocation ImportLoc = Info.ImportLoc;
+
   // Create ModuleMacros for any macros defined in this submodule.
   for (auto &Macro : Macros) {
     auto *II = const_cast<IdentifierInfo*>(Macro.first);
@@ -665,7 +668,7 @@ void Preprocessor::LeaveSubmodule() {
       // visibility, since there can be no such directives in our list.
       if (!getLangOpts().ModulesLocalVisibility) {
         Module *Mod = getModuleContainingLocation(MD->getLocation());
-        if (Mod != Info.M)
+        if (Mod != LeavingMod)
           break;
       }
 
@@ -688,8 +691,8 @@ void Preprocessor::LeaveSubmodule() {
         // Don't bother creating a module macro if it would represent a #undef
         // that doesn't override anything.
         if (Def || !Macro.second.getOverriddenMacros().empty())
-          addModuleMacro(Info.M, II, Def, Macro.second.getOverriddenMacros(),
-                         IsNew);
+          addModuleMacro(LeavingMod, II, Def,
+                         Macro.second.getOverriddenMacros(), IsNew);
         break;
       }
     }
@@ -706,9 +709,9 @@ void Preprocessor::LeaveSubmodule() {
   if (getLangOpts().ModulesLocalVisibility)
     VisibleModules = std::move(Info.VisibleModules);
 
-  // A nested #include makes the included submodule visible.
-  if (BuildingSubmoduleStack.size() > 1)
-    makeModuleVisible(Info.M, Info.ImportLoc);
-
   BuildingSubmoduleStack.pop_back();
+
+  // A nested #include makes the included submodule visible.
+  if (!BuildingSubmoduleStack.empty() || !getLangOpts().ModulesLocalVisibility)
+    makeModuleVisible(LeavingMod, ImportLoc);
 }

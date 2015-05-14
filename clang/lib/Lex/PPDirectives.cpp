@@ -1439,6 +1439,8 @@ bool Preprocessor::ConcatenateIncludeName(SmallString<128> &FilenameBuffer,
 static void EnterAnnotationToken(Preprocessor &PP,
                                  SourceLocation Begin, SourceLocation End,
                                  tok::TokenKind Kind, void *AnnotationVal) {
+  // FIXME: Produce this as the current token directly, rather than
+  // allocating a new token for it.
   Token *Tok = new Token[1];
   Tok[0].startToken();
   Tok[0].setKind(Kind);
@@ -1558,8 +1560,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       Callbacks ? &SearchPath : nullptr, Callbacks ? &RelativePath : nullptr,
       HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule : nullptr);
 
-  if (Callbacks) {
-    if (!File) {
+  if (!File) {
+    if (Callbacks) {
       // Give the clients a chance to recover.
       SmallString<128> RecoveryPath;
       if (Callbacks->FileNotFound(Filename, RecoveryPath)) {
@@ -1579,18 +1581,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
         }
       }
     }
-    
-    if (!SuggestedModule || !getLangOpts().Modules) {
-      // Notify the callback object that we've seen an inclusion directive.
-      Callbacks->InclusionDirective(HashLoc, IncludeTok,
-                                    LangOpts.MSVCCompat ? NormalizedPath.c_str()
-                                                        : Filename,
-                                    isAngled, FilenameRange, File, SearchPath,
-                                    RelativePath, /*ImportedModule=*/nullptr);
-    }
-  }
 
-  if (!File) {
     if (!SuppressIncludeNotFoundError) {
       // If the file could not be located and it was included via angle 
       // brackets, we can attempt a lookup as though it were a quoted path to
@@ -1611,19 +1602,34 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
             FixItHint::CreateReplacement(Range, "\"" + Filename.str() + "\"");
         }
       }
+
       // If the file is still not found, just go with the vanilla diagnostic
       if (!File)
         Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     }
-    if (!File)
-      return;
   }
+
+  bool IsModuleImport = SuggestedModule && getLangOpts().Modules &&
+                        SuggestedModule.getModule()->getTopLevelModuleName() !=
+                            getLangOpts().ImplementationOfModule;
+
+  if (Callbacks && !IsModuleImport) {
+    // Notify the callback object that we've seen an inclusion directive.
+    // For a module import, we delay this until we've loaded the module.
+    // FIXME: Why?
+    Callbacks->InclusionDirective(HashLoc, IncludeTok,
+                                  LangOpts.MSVCCompat ? NormalizedPath.c_str()
+                                                      : Filename,
+                                  isAngled, FilenameRange, File, SearchPath,
+                                  RelativePath, /*ImportedModule=*/nullptr);
+  }
+
+  if (!File)
+    return;
 
   // If we are supposed to import a module rather than including the header,
   // do so now.
-  if (SuggestedModule && getLangOpts().Modules &&
-      SuggestedModule.getModule()->getTopLevelModuleName() !=
-      getLangOpts().ImplementationOfModule) {
+  if (IsModuleImport) {
     // Compute the module access path corresponding to this module.
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?
@@ -1682,11 +1688,11 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     
     // Load the module to import its macros. We'll make the declarations
     // visible when the parser gets here.
+    // FIXME: Pass SuggestedModule in here rather than converting it to a path
+    // and making the module loader convert it back again.
     ModuleLoadResult Imported = TheModuleLoader.loadModule(
         IncludeTok.getLocation(), Path, Module::Hidden,
         /*IsIncludeDirective=*/true);
-    if (Imported)
-      makeModuleVisible(Imported, IncludeTok.getLocation());
     assert((Imported == nullptr || Imported == SuggestedModule.getModule()) &&
            "the imported module is different than the suggested one");
 
@@ -1712,11 +1718,12 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
                                       SearchPath, RelativePath, Imported);
       }
 
+      // Make the macros from this module visible now.
+      makeModuleVisible(Imported, IncludeTok.getLocation());
+
       if (IncludeKind != 3) {
         // Let the parser know that we hit a module import, and it should
         // make the module visible.
-        // FIXME: Produce this as the current token directly, rather than
-        // allocating a new token for it.
         EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include,
                              Imported);
       }
@@ -1731,7 +1738,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     }
   }
 
-  if (Callbacks && SuggestedModule) {
+  if (Callbacks && IsModuleImport) {
     // We didn't notify the callback object that we've seen an inclusion
     // directive before. Now that we are parsing the include normally and not
     // turning it to a module import, notify the callback object.
@@ -1753,6 +1760,16 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   if (!HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport)) {
     if (Callbacks)
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);
+
+    // If this is a module import, make it visible if needed.
+    if (IsModuleImport) {
+      makeModuleVisible(SuggestedModule.getModule(), HashLoc);
+
+      if (IncludeTok.getIdentifierInfo()->getPPKeywordID() !=
+          tok::pp___include_macros)
+        EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include,
+                             SuggestedModule.getModule());
+    }
     return;
   }
 
