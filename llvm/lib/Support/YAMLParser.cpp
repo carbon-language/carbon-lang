@@ -168,7 +168,7 @@ struct ilist_node_traits<Token> {
   Token *createNode(const Token &V) {
     return new (Alloc.Allocate<Token>()) Token(V);
   }
-  static void deleteNode(Token *V) {}
+  static void deleteNode(Token *V) { V->~Token(); }
 
   void addNodeToList(Token *) {}
   void removeNodeFromList(Token *) {}
