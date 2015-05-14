@@ -325,9 +325,9 @@ Below are some guidelines about the format of the message itself:
   and in-code comments, ex. capitalization, full stop, etc.
 
 * If the commit is a bug fix on top of another recently committed patch, or a
-revert or reapply of a patch, include the svn revision number of the prior
-related commit. This could be as simple as "Revert rNNNN because it caused
-PR#".
+  revert or reapply of a patch, include the svn revision number of the prior
+  related commit. This could be as simple as "Revert rNNNN because it caused
+  PR#".
 
 For minor violations of these recommendations, the community normally favors
 reminding the contributor of this policy over reverting. Minor corrections and
