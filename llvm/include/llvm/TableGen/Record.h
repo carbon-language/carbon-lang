@@ -842,7 +842,6 @@ public:
   inline const_iterator begin() const { return Values.begin(); }
   inline const_iterator end  () const { return Values.end();   }
 
-  inline size_t         size () const { return Values.size();  }
   inline bool           empty() const { return Values.empty(); }
 
   /// resolveListElementReference - This method is used to implement
