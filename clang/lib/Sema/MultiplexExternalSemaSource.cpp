@@ -212,7 +212,15 @@ void MultiplexExternalSemaSource::ReadUndefinedButUsed(
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadUndefinedButUsed(Undefined);
 }
-  
+
+void MultiplexExternalSemaSource::ReadMismatchingDeleteExpressions(
+    llvm::MapVector<FieldDecl *,
+                    llvm::SmallVector<std::pair<SourceLocation, bool>, 4>> &
+        Exprs) {
+  for (auto &Source : Sources)
+    Source->ReadMismatchingDeleteExpressions(Exprs);
+}
+
 bool MultiplexExternalSemaSource::LookupUnqualified(LookupResult &R, Scope *S){ 
   for(size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->LookupUnqualified(R, S);

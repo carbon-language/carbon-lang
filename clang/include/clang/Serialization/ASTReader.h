@@ -756,6 +756,9 @@ private:
   /// SourceLocation of a matching ODR-use.
   SmallVector<uint64_t, 8> UndefinedButUsed;
 
+  /// \brief Delete expressions to analyze at the end of translation unit.
+  SmallVector<uint64_t, 8> DelayedDeleteExprs;
+
   // \brief A list of late parsed template function data.
   SmallVector<uint64_t, 1> LateParsedTemplates;
 
@@ -1735,6 +1738,10 @@ public:
 
   void ReadUndefinedButUsed(
                llvm::DenseMap<NamedDecl *, SourceLocation> &Undefined) override;
+
+  void ReadMismatchingDeleteExpressions(llvm::MapVector<
+      FieldDecl *, llvm::SmallVector<std::pair<SourceLocation, bool>, 4>> &
+                                            Exprs);
 
   void ReadTentativeDefinitions(
                             SmallVectorImpl<VarDecl *> &TentativeDefs) override;

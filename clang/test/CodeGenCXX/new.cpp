@@ -321,14 +321,14 @@ namespace N3664 {
   // CHECK-LABEL: define void @_ZN5N36641fEv
   void f() {
     // CHECK: call noalias i8* @_Znwm(i64 4) [[ATTR_BUILTIN_NEW:#[^ ]*]]
-    int *p = new int;
+    int *p = new int; // expected-note {{allocated with 'new' here}}
     // CHECK: call void @_ZdlPv({{.*}}) [[ATTR_BUILTIN_DELETE:#[^ ]*]]
     delete p;
 
     // CHECK: call noalias i8* @_Znam(i64 12) [[ATTR_BUILTIN_NEW]]
     int *q = new int[3];
     // CHECK: call void @_ZdaPv({{.*}}) [[ATTR_BUILTIN_DELETE]]
-    delete [] p;
+    delete[] p; // expected-warning {{'delete[]' applied to a pointer that was allocated with 'new'; did you mean 'delete'?}}
 
     // CHECK: call i8* @_ZnamRKSt9nothrow_t(i64 3, {{.*}}) [[ATTR_BUILTIN_NOTHROW_NEW:#[^ ]*]]
     (void) new (nothrow) S[3];

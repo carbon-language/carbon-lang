@@ -5507,7 +5507,12 @@ def err_delete_explicit_conversion : Error<
   "conversion function">;
 def note_delete_conversion : Note<"conversion to pointer type %0">;
 def warn_delete_array_type : Warning<
-  "'delete' applied to a pointer-to-array type %0 treated as delete[]">;
+  "'delete' applied to a pointer-to-array type %0 treated as 'delete[]'">;
+def warn_mismatched_delete_new : Warning<
+  "'delete%select{|[]}0' applied to a pointer that was allocated with "
+  "'new%select{[]|}0'; did you mean 'delete%select{[]|}0'?">,
+  InGroup<DiagGroup<"mismatched-new-delete">>;
+def note_allocated_here : Note<"allocated with 'new%select{[]|}0' here">;
 def err_no_suitable_delete_member_function_found : Error<
   "no suitable member %0 in %1">;
 def err_ambiguous_suitable_delete_member_function_found : Error<

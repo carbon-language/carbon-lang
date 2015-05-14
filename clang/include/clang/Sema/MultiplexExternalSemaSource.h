@@ -230,6 +230,10 @@ public:
   void ReadUndefinedButUsed(
                 llvm::DenseMap<NamedDecl*, SourceLocation> &Undefined) override;
 
+  void ReadMismatchingDeleteExpressions(llvm::MapVector<
+      FieldDecl *, llvm::SmallVector<std::pair<SourceLocation, bool>, 4>> &
+                                            Exprs) override;
+
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.
   ///

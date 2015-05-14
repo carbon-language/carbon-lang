@@ -95,8 +95,11 @@ void testNew6() {
   realloc(p, sizeof(long)); // expected-warning{{Memory allocated by 'new[]' should be deallocated by 'delete[]', not realloc()}}
 }
 
+int *allocInt() {
+  return new int;
+}
 void testNew7() {
-  int *p = new int;
+  int *p = allocInt();
   delete[] p; // expected-warning{{Memory allocated by 'new' should be deallocated by 'delete', not 'delete[]'}}
 }
 
@@ -105,8 +108,12 @@ void testNew8() {
   delete[] p; // expected-warning{{Memory allocated by operator new should be deallocated by 'delete', not 'delete[]'}}
 }
 
+int *allocIntArray(unsigned c) {
+  return new int[c];
+}
+
 void testNew9() {
-  int *p = new int[1];
+  int *p = allocIntArray(1);
   delete p; // expected-warning{{Memory allocated by 'new[]' should be deallocated by 'delete[]', not 'delete'}}
 }
 
