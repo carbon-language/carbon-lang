@@ -30,7 +30,7 @@ define void @test_bitcast_to_half(half* %addr, i16 %in) {
 define float @test_extend32(half* %addr) {
 ; CHECK-LABEL: test_extend32:
 
-; CHECK-OLD: b.w ___gnu_h2f_ieee
+; CHECK-OLD: b.w ___extendhfsf2
 ; CHECK-F16: vcvtb.f32.f16
 ; CHECK-V8: vcvtb.f32.f16
   %val16 = load half, half* %addr
@@ -41,7 +41,7 @@ define float @test_extend32(half* %addr) {
 define double @test_extend64(half* %addr) {
 ; CHECK-LABEL: test_extend64:
 
-; CHECK-OLD: blx ___gnu_h2f_ieee
+; CHECK-OLD: blx ___extendhfsf2
 ; CHECK-OLD: vcvt.f64.f32
 ; CHECK-F16: vcvtb.f32.f16
 ; CHECK-F16: vcvt.f64.f32
@@ -54,7 +54,7 @@ define double @test_extend64(half* %addr) {
 define void @test_trunc32(float %in, half* %addr) {
 ; CHECK-LABEL: test_trunc32:
 
-; CHECK-OLD: blx ___gnu_f2h_ieee
+; CHECK-OLD: blx ___truncsfhf2
 ; CHECK-F16: vcvtb.f16.f32
 ; CHECK-V8: vcvtb.f16.f32
   %val16 = fptrunc float %in to half
