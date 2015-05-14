@@ -242,13 +242,11 @@ unsigned TargetSchedModel::computeInstrLatency(unsigned Opcode) const {
 
   unsigned SCIdx = TII->get(Opcode).getSchedClass();
   const MCSchedClassDesc *SCDesc = SchedModel.getSchedClassDesc(SCIdx);
-  unsigned Latency = 0;
 
   if (SCDesc->isValid() && !SCDesc->isVariant())
     return computeInstrLatency(*SCDesc);
 
-  assert(Latency && "No MI sched latency");
-  return 0;
+  llvm_unreachable("No MI sched latency");
 }
 
 unsigned
