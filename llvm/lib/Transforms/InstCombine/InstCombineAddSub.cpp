@@ -1160,20 +1160,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, V);
 
   // A+B --> A|B iff A and B have no bits set in common.
-  if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
-    APInt LHSKnownOne(IT->getBitWidth(), 0);
-    APInt LHSKnownZero(IT->getBitWidth(), 0);
-    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, &I);
-    if (LHSKnownZero != 0) {
-      APInt RHSKnownOne(IT->getBitWidth(), 0);
-      APInt RHSKnownZero(IT->getBitWidth(), 0);
-      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, &I);
-
-      // No bits in common -> bitwise or.
-      if ((LHSKnownZero|RHSKnownZero).isAllOnesValue())
-        return BinaryOperator::CreateOr(LHS, RHS);
-    }
-  }
+  if (haveNoCommonBitsSet(LHS, RHS, DL, AC, &I, DT))
+    return BinaryOperator::CreateOr(LHS, RHS);
 
   if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
     Value *X;

@@ -47,6 +47,11 @@ namespace llvm {
   /// \p KnownZero the set of bits that are known to be zero
   void computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
                                          APInt &KnownZero);
+  /// Returns true if LHS and RHS have no common bits set.
+  bool haveNoCommonBitsSet(Value *LHS, Value *RHS, const DataLayout &DL,
+                           AssumptionCache *AC = nullptr,
+                           const Instruction *CxtI = nullptr,
+                           const DominatorTree *DT = nullptr);
 
   /// ComputeSignBit - Determine whether the sign bit is known to be zero or
   /// one.  Convenience wrapper around computeKnownBits.

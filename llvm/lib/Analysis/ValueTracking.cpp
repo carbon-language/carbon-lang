@@ -138,6 +138,21 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
                      Query(AC, safeCxtI(V, CxtI), DT));
 }
 
+bool llvm::haveNoCommonBitsSet(Value *LHS, Value *RHS, const DataLayout &DL,
+                               AssumptionCache *AC, const Instruction *CxtI,
+                               const DominatorTree *DT) {
+  assert(LHS->getType() == RHS->getType() &&
+         "LHS and RHS should have the same type");
+  assert(LHS->getType()->isIntOrIntVectorTy() &&
+         "LHS and RHS should be integers");
+  IntegerType *IT = cast<IntegerType>(LHS->getType()->getScalarType());
+  APInt LHSKnownZero(IT->getBitWidth(), 0), LHSKnownOne(IT->getBitWidth(), 0);
+  APInt RHSKnownZero(IT->getBitWidth(), 0), RHSKnownOne(IT->getBitWidth(), 0);
+  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, DL, 0, AC, CxtI, DT);
+  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, DL, 0, AC, CxtI, DT);
+  return (LHSKnownZero | RHSKnownZero).isAllOnesValue();
+}
+
 static void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                            const DataLayout &DL, unsigned Depth,
                            const Query &Q);
