@@ -794,14 +794,10 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   }
   case EMPTY: {
     if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      if (LHSl->empty())
-        return IntInit::get(1);
-      return IntInit::get(0);
+      return IntInit::get(!!LHSl->empty());
     }
     if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
-      if (LHSs->getValue().empty())
-        return IntInit::get(1);
-      return IntInit::get(0);
+      return IntInit::get(!!LHSs->getValue().empty());
     }
 
     break;
@@ -1134,9 +1130,8 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   }
 
   case FOREACH: {
-    Init *Result = ForeachHelper(LHS, MHS, RHS, getType(),
-                                 CurRec, CurMultiClass);
-    if (Result)
+    if (Init *Result = ForeachHelper(LHS, MHS, RHS, getType(),
+                                     CurRec, CurMultiClass))
       return Result;
     break;
   }
