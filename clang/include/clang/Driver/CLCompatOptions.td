@@ -139,6 +139,12 @@ def _SLASH_wd4996 : CLFlag<"wd4996">, Alias<W_Joined>,
   AliasArgs<["no-deprecated-declarations"]>;
 def _SLASH_vd : CLJoined<"vd">, HelpText<"Control vtordisp placement">,
   Alias<vtordisp_mode_EQ>;
+def _SLASH_Zc_sizedDealloc : CLFlag<"Zc:sizedDealloc">,
+  HelpText<"Enable C++14 sized global deallocation functions">,
+  Alias<fsized_deallocation>;
+def _SLASH_Zc_sizedDealloc_ : CLFlag<"Zc:sizedDealloc-">,
+  HelpText<"Disable C++14 sized global deallocation functions">,
+  Alias<fno_sized_deallocation>;
 def _SLASH_Zc_strictStrings : CLFlag<"Zc:strictStrings">,
   HelpText<"Treat string literals as const">, Alias<W_Joined>,
   AliasArgs<["error=c++11-compat-deprecated-writable-strings"]>;
