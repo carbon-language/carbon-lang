@@ -623,7 +623,10 @@ static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context,
   case NeonTypeFlags::Poly16:
     return IsPolyUnsigned ? Context.UnsignedShortTy : Context.ShortTy;
   case NeonTypeFlags::Poly64:
-    return Context.UnsignedLongTy;
+    if (IsInt64Long)
+      return Context.UnsignedLongTy;
+    else
+      return Context.UnsignedLongLongTy;
   case NeonTypeFlags::Poly128:
     break;
   case NeonTypeFlags::Float16:
