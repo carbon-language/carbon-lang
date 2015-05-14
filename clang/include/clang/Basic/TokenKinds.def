@@ -10,7 +10,7 @@
 // This file defines the TokenKind database.  This includes normal tokens like
 // tok::ampamp (corresponding to the && token) as well as keywords for various
 // languages.  Users of this file must optionally #define the TOK, KEYWORD,
-// ALIAS, or PPKEYWORD macros to make use of this file.
+// CXX11_KEYWORD, ALIAS, or PPKEYWORD macros to make use of this file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,6 +22,9 @@
 #endif
 #ifndef KEYWORD
 #define KEYWORD(X,Y) TOK(kw_ ## X)
+#endif
+#ifndef CXX11_KEYWORD
+#define CXX11_KEYWORD(X,Y) KEYWORD(X,KEYCXX11|(Y))
 #endif
 #ifndef TYPE_TRAIT
 #define TYPE_TRAIT(N,I,K) KEYWORD(I,K)
@@ -330,16 +333,16 @@ CXX_KEYWORD_OPERATOR(xor     , caret)
 CXX_KEYWORD_OPERATOR(xor_eq  , caretequal)
 
 // C++11 keywords
-KEYWORD(alignas                     , KEYCXX11)
-KEYWORD(alignof                     , KEYCXX11)
-KEYWORD(char16_t                    , KEYCXX11|KEYNOMS18)
-KEYWORD(char32_t                    , KEYCXX11|KEYNOMS18)
-KEYWORD(constexpr                   , KEYCXX11)
-KEYWORD(decltype                    , KEYCXX11)
-KEYWORD(noexcept                    , KEYCXX11)
-KEYWORD(nullptr                     , KEYCXX11)
-KEYWORD(static_assert               , KEYCXX11)
-KEYWORD(thread_local                , KEYCXX11)
+CXX11_KEYWORD(alignas               , 0)
+CXX11_KEYWORD(alignof               , 0)
+CXX11_KEYWORD(char16_t              , KEYNOMS18)
+CXX11_KEYWORD(char32_t              , KEYNOMS18)
+CXX11_KEYWORD(constexpr             , 0)
+CXX11_KEYWORD(decltype              , 0)
+CXX11_KEYWORD(noexcept              , 0)
+CXX11_KEYWORD(nullptr               , 0)
+CXX11_KEYWORD(static_assert         , 0)
+CXX11_KEYWORD(thread_local          , 0)
 
 // GNU Extensions (in impl-reserved namespace)
 KEYWORD(_Decimal32                  , KEYALL)
@@ -735,6 +738,7 @@ ANNOTATION(module_end)
 #undef TYPE_TRAIT_2
 #undef TYPE_TRAIT_1
 #undef TYPE_TRAIT
+#undef CXX11_KEYWORD
 #undef KEYWORD
 #undef PUNCTUATOR
 #undef TOK

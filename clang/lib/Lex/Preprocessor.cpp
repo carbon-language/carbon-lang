@@ -584,6 +584,23 @@ void Preprocessor::HandlePoisonedIdentifier(Token & Identifier) {
     Diag(Identifier,it->second) << Identifier.getIdentifierInfo();
 }
 
+/// \brief Returns a diagnostic message kind for reporting a future keyword as
+/// appropriate for the identifier and specified language.
+static diag::kind getFutureCompatDiagKind(const IdentifierInfo &II,
+                                          const LangOptions &LangOpts) {
+  assert(II.isFutureCompatKeyword() && "diagnostic should not be needed");
+
+  if (LangOpts.CPlusPlus)
+    return llvm::StringSwitch<diag::kind>(II.getName())
+#define CXX11_KEYWORD(NAME, FLAGS)                                             \
+        .Case(#NAME, diag::warn_cxx11_keyword)
+#include "clang/Basic/TokenKinds.def"
+        ;
+
+  llvm_unreachable(
+      "Keyword not known to come from a newer Standard or proposed Standard");
+}
+
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
@@ -642,15 +659,16 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
     }
   }
 
-  // If this identifier is a keyword in C++11, produce a warning. Don't warn if
-  // we're not considering macro expansion, since this identifier might be the
-  // name of a macro.
+  // If this identifier is a keyword in a newer Standard or proposed Standard,
+  // produce a warning. Don't warn if we're not considering macro expansion,
+  // since this identifier might be the name of a macro.
   // FIXME: This warning is disabled in cases where it shouldn't be, like
   //   "#define constexpr constexpr", "int constexpr;"
-  if (II.isCXX11CompatKeyword() && !DisableMacroExpansion) {
-    Diag(Identifier, diag::warn_cxx11_keyword) << II.getName();
+  if (II.isFutureCompatKeyword() && !DisableMacroExpansion) {
+    Diag(Identifier, getFutureCompatDiagKind(II, getLangOpts()))
+        << II.getName();
     // Don't diagnose this keyword again in this translation unit.
-    II.setIsCXX11CompatKeyword(false);
+    II.setIsFutureCompatKeyword(false);
   }
 
   // C++ 2.11p2: If this is an alternative representation of a C++ operator,

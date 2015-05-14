@@ -53,7 +53,8 @@ class IdentifierInfo {
   bool HasMacro               : 1; // True if there is a #define for this.
   bool HadMacro               : 1; // True if there was a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
-  bool IsCXX11CompatKeyword   : 1; // True if identifier is a keyword in C++11.
+  bool IsFutureCompatKeyword  : 1; // True if identifier is a keyword in a
+                                   // newer Standard or proposed Standard.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool NeedsHandleIdentifier  : 1; // See "RecomputeNeedsHandleIdentifier".
@@ -213,13 +214,14 @@ public:
       RecomputeNeedsHandleIdentifier();
   }
 
-  /// is/setIsCXX11CompatKeyword - Initialize information about whether or not
-  /// this language token is a keyword in C++11. This controls compatibility
-  /// warnings, and is only true when not parsing C++11. Once a compatibility
-  /// problem has been diagnosed with this keyword, the flag will be cleared.
-  bool isCXX11CompatKeyword() const { return IsCXX11CompatKeyword; }
-  void setIsCXX11CompatKeyword(bool Val) {
-    IsCXX11CompatKeyword = Val;
+  /// is/setIsFutureCompatKeyword - Initialize information about whether or not
+  /// this language token is a keyword in a newer or proposed Standard. This
+  /// controls compatibility warnings, and is only true when not parsing the
+  /// corresponding Standard. Once a compatibility problem has been diagnosed
+  /// with this keyword, the flag will be cleared.
+  bool isFutureCompatKeyword() const { return IsFutureCompatKeyword; }
+  void setIsFutureCompatKeyword(bool Val) {
+    IsFutureCompatKeyword = Val;
     if (Val)
       NeedsHandleIdentifier = 1;
     else
@@ -325,7 +327,7 @@ private:
   void RecomputeNeedsHandleIdentifier() {
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
-       isExtensionToken() | isCXX11CompatKeyword() || isOutOfDate() ||
+       isExtensionToken() | isFutureCompatKeyword() || isOutOfDate() ||
        isModulesImport());
   }
 };
