@@ -50,7 +50,8 @@ FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              udivmoddi4 umoddi3 apple_versioning eprintf atomic \
              atomic_flag_clear atomic_flag_clear_explicit \
              atomic_flag_test_and_set atomic_flag_test_and_set_explicit \
-             atomic_signal_fence atomic_thread_fence
+             atomic_signal_fence atomic_thread_fence \
+             extendhfsf2 truncdfhf2 truncsfhf2 
 
 FUNCTIONS.i386 := $(FUNCTIONS) \
                 divxc3 fixunsxfdi fixunsxfsi fixxfdi floatdixf \

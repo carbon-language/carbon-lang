@@ -263,18 +263,23 @@ ATOMIC_FUNCTIONS := \
 	atomic_signal_fence \
 	atomic_thread_fence
 
+FP16_FUNCTIONS := \
+	extendhfsf2 \
+	truncdfhf2 \
+	truncsfhf2
+
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
 FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4 \
-                       $(ATOMIC_FUNCTIONS)
+                       $(ATOMIC_FUNCTIONS) $(FP16_FUNCTIONS)
 # On x86, the divmod functions reference divsi.
 FUNCTIONS.ios.i386    := $(FUNCTIONS.ios) \
                          divsi3 udivsi3
 FUNCTIONS.ios.x86_64  := $(FUNCTIONS.ios.i386)
 FUNCTIONS.ios.arm64   := mulsc3 muldc3 divsc3 divdc3 $(ATOMIC_FUNCTIONS)
 
-FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4 $(ATOMIC_FUNCTIONS)
+FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4 $(ATOMIC_FUNCTIONS) $(FP16_FUNCTIONS)
 
 FUNCTIONS.profile_osx := GCDAProfiling InstrProfiling InstrProfilingBuffer \
                          InstrProfilingFile InstrProfilingPlatformDarwin \

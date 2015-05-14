@@ -156,6 +156,7 @@ COMMON_FUNCTIONS := \
 	divsf3 \
 	divsi3 \
 	extendsfdf2 \
+	extendhfsf2 \
 	ffssi2 \
 	fixdfsi \
 	fixsfsi \
@@ -172,7 +173,9 @@ COMMON_FUNCTIONS := \
 	negsf2 \
 	subdf3 \
 	subsf3 \
+	truncdfhf2 \
 	truncdfsf2 \
+	truncsfhf2 \
 	udivsi3 \
 	umodsi3 \
 	unorddf2 \
