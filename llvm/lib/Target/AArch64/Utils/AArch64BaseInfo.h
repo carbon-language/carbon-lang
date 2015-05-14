@@ -280,15 +280,16 @@ struct AArch64NamedImmMapper {
   struct Mapping {
     const char *Name;
     uint32_t Value;
-    uint64_t AvailableForFeatures;
-    // empty AvailableForFeatures means "always-on"
+    uint64_t FeatureBitSet;  // Set of features this mapping is available for
+    // Zero value of FeatureBitSet means the mapping is always available
+
     bool isNameEqual(std::string Other, uint64_t FeatureBits=~0ULL) const {
-      if (AvailableForFeatures && !(AvailableForFeatures & FeatureBits))
+      if (FeatureBitSet && !(FeatureBitSet & FeatureBits))
         return false;
       return Name == Other;
     }
     bool isValueEqual(uint32_t Other, uint64_t FeatureBits=~0ULL) const {
-      if (AvailableForFeatures && !(AvailableForFeatures & FeatureBits))
+      if (FeatureBitSet && !(FeatureBitSet & FeatureBits))
         return false;
       return Value == Other;
     }
@@ -298,7 +299,9 @@ struct AArch64NamedImmMapper {
   AArch64NamedImmMapper(const Mapping (&Mappings)[N], uint32_t TooBigImm)
     : Mappings(&Mappings[0]), NumMappings(N), TooBigImm(TooBigImm) {}
 
+  // Maps value to string, depending on availability for FeatureBits given
   StringRef toString(uint32_t Value, uint64_t FeatureBits, bool &Valid) const;
+  // Maps string to value, depending on availability for FeatureBits given
   uint32_t fromString(StringRef Name, uint64_t FeatureBits, bool &Valid) const;
 
   /// Many of the instructions allow an alternative assembly form consisting of
