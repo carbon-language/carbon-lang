@@ -17,6 +17,7 @@
 namespace clang {
 
 class IdentifierInfo;
+class Module;
 
 /// \brief Abstract interface for external sources of preprocessor 
 /// information.
