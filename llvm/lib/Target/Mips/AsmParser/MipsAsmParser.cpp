@@ -1759,6 +1759,9 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     tmpInst.addOperand(MCOperand::createImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if ((ImmValue & 0xffffffff) == ImmValue) {
+    if (!AssemblerOptions.back()->isMacro())
+      Warning(IDLoc, "macro instruction expanded into multiple instructions");
+
     // For all other values which are representable as a 32-bit integer:
     // li d,j => lui d,hi16(j)
     //           ori d,d,lo16(j)
@@ -1779,6 +1782,8 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
+    if (!AssemblerOptions.back()->isMacro())
+      Warning(IDLoc, "macro instruction expanded into multiple instructions");
 
     //            <-------  lo32 ------>
     // <-------  hi32 ------>
@@ -1812,6 +1817,8 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
+    if (!AssemblerOptions.back()->isMacro())
+      Warning(IDLoc, "macro instruction expanded into multiple instructions");
 
     // <-------  hi32 ------> <-------  lo32 ------>
     // <- hi16 ->                        <- lo16 ->
@@ -1914,6 +1921,9 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
 void MipsAsmParser::expandLoadAddressSym(
     const MCOperand &DstRegOp, const MCOperand &SymOp, bool Is32BitSym,
     SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  if (!AssemblerOptions.back()->isMacro())
+    Warning(IDLoc, "macro instruction expanded into multiple instructions");
+
   if (Is32BitSym && isABI_N64())
     Warning(IDLoc, "instruction loads the 32-bit address of a 64-bit symbol");
 
