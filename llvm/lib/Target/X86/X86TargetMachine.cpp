@@ -98,10 +98,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                         RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
       Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
-  // default to hard float ABI
-  if (Options.FloatABIType == FloatABI::Default)
-    this->Options.FloatABIType = FloatABI::Hard;
-
   // Windows stack unwinder gets confused when execution flow "falls through"
   // after a call to 'noreturn' function.
   // To prevent that, we emit a trap for 'unreachable' IR instructions.
