@@ -15,8 +15,24 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+; Please keep these as one per line so that out-of-tree merges
+; will typically require only insertion of a line.
 [common]
-subdirectories = ARM AArch64 BPF CppBackend Hexagon MSP430 NVPTX Mips PowerPC R600 Sparc SystemZ X86 XCore
+subdirectories =
+ ARM
+ AArch64
+ BPF
+ CppBackend
+ Hexagon
+ MSP430
+ NVPTX
+ Mips
+ PowerPC
+ R600
+ Sparc
+ SystemZ
+ X86
+ XCore
 
 ; This is a special group whose required libraries are extended (by llvm-build)
 ; with the best execution engine (the native JIT, if available, or the
