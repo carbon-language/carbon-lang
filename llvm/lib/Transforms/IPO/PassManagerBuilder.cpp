@@ -382,6 +382,9 @@ void PassManagerBuilder::populateModulePassManager(
   if (!DisableUnrollLoops) {
     MPM.add(createLoopUnrollPass());    // Unroll small loops
 
+    // LoopUnroll may generate some redundency to cleanup.
+    MPM.add(createInstructionCombiningPass());
+
     // This is a barrier pass to avoid combine LICM pass and loop unroll pass
     // within same loop pass manager.
     MPM.add(createInstructionSimplifierPass());
