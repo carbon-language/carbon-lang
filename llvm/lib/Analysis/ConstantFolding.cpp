@@ -1543,8 +1543,8 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         APFloat Val(APFloat::IEEEhalf, Op->getValue());
 
         bool lost = false;
-        APFloat::opStatus status =
-          Val.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven, &lost);
+        APFloat::opStatus status = Val.convert(
+            Ty->getFltSemantics(), APFloat::rmNearestTiesToEven, &lost);
 
         // Conversion is always precise.
         (void)status;
