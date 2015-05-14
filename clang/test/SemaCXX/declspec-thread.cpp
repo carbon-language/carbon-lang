@@ -23,7 +23,7 @@ struct HasDtor { ~HasDtor(); int x; };
 #if _MSC_VER >= 1900
 __declspec(thread) HasDtor g;
 #else
-__declspec(thread) HasCtor f; // expected-error {{must be a constant expression}} expected-note {{thread_local}}
+__declspec(thread) HasCtor g; // expected-error {{must be a constant expression}} expected-note {{thread_local}}
 #endif
 
 struct HasDefaultedDefaultCtor {
