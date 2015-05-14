@@ -3077,10 +3077,18 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // If the call returns a temporary with struct return, create a temporary
   // alloca to hold the result, unless one is given to us.
   llvm::Value *SRetPtr = nullptr;
+  size_t UnusedReturnSize = 0;
   if (RetAI.isIndirect() || RetAI.isInAlloca()) {
     SRetPtr = ReturnValue.getValue();
-    if (!SRetPtr)
+    if (!SRetPtr) {
       SRetPtr = CreateMemTemp(RetTy);
+      if (HaveInsertPoint()) {
+        uint64_t size =
+            CGM.getDataLayout().getTypeAllocSize(ConvertTypeForMem(RetTy));
+        if (EmitLifetimeStart(size, SRetPtr))
+          UnusedReturnSize = size;
+      }
+    }
     if (IRFunctionArgs.hasSRetArg()) {
       IRCallArgs[IRFunctionArgs.getSRetArgNo()] = SRetPtr;
     } else {
@@ -3412,6 +3420,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // insertion point; this allows the rest of IRgen to discard
   // unreachable code.
   if (CS.doesNotReturn()) {
+    if (UnusedReturnSize)
+      EmitLifetimeEnd(llvm::ConstantInt::get(Int64Ty, UnusedReturnSize),
+                      SRetPtr);
+
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
 
@@ -3440,8 +3452,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   RValue Ret = [&] {
     switch (RetAI.getKind()) {
     case ABIArgInfo::InAlloca:
-    case ABIArgInfo::Indirect:
-      return convertTempToRValue(SRetPtr, RetTy, SourceLocation());
+    case ABIArgInfo::Indirect: {
+      RValue ret = convertTempToRValue(SRetPtr, RetTy, SourceLocation());
+      if (UnusedReturnSize)
+        EmitLifetimeEnd(llvm::ConstantInt::get(Int64Ty, UnusedReturnSize),
+                        SRetPtr);
+      return ret;
+    }
 
     case ABIArgInfo::Ignore:
       // If we are ignoring an argument that had a result, make sure to
