@@ -64,6 +64,9 @@ public:
     void
     SetDefaultArchitecture (const ArchSpec& arch);
 
+    bool
+    GetMoveToNearestCode () const;
+
     lldb::DynamicValueType
     GetPreferDynamicValue() const;
     
@@ -698,7 +701,8 @@ public:
                       LazyBool check_inlines,
                       LazyBool skip_prologue,
                       bool internal,
-                      bool request_hardware);
+                      bool request_hardware,
+                      LazyBool move_to_nearest_code);
 
     // Use this to create breakpoint that matches regex against the source lines in files given in source_file_list:
     lldb::BreakpointSP
@@ -706,7 +710,8 @@ public:
                                  const FileSpecList *source_file_list,
                                  RegularExpression &source_regex,
                                  bool internal,
-                                 bool request_hardware);
+                                 bool request_hardware,
+                                 LazyBool move_to_nearest_code);
 
     // Use this to create a breakpoint from a load address
     lldb::BreakpointSP
