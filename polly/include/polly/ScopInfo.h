@@ -206,6 +206,12 @@ private:
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
 
+  /// @brief A unique identifier for this memory access.
+  ///
+  /// The identifier is unique between all memory accesses belonging to the same
+  /// scop statement.
+  isl_id *Id;
+
   void assumeNoOutOfBound(const IRAccess &Access);
 
   /// @brief Compute bounds on an over approximated  access relation.
@@ -257,12 +263,14 @@ private:
 public:
   /// @brief Create a memory access from an access in LLVM-IR.
   ///
-  /// @param Access    The memory access.
-  /// @param AccInst   The access instruction.
-  /// @param Statement The statement that contains the access.
-  /// @param SAI       The ScopArrayInfo object for this base pointer.
+  /// @param Access     The memory access.
+  /// @param AccInst    The access instruction.
+  /// @param Statement  The statement that contains the access.
+  /// @param SAI        The ScopArrayInfo object for this base pointer.
+  /// @param Identifier An identifier that is unique for all memory accesses
+  ///                   belonging to the same scop statement.
   MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-               ScopStmt *Statement, const ScopArrayInfo *SAI);
+               ScopStmt *Statement, const ScopArrayInfo *SAI, int Identifier);
 
   ~MemoryAccess();
 
@@ -368,6 +376,12 @@ public:
 
   /// @brief Align the parameters in the access relation to the scop context
   void realignParams();
+
+  /// @brief Get identifier for the memory access.
+  ///
+  /// This identifier is unique for all accesses that belong to the same scop
+  /// statement.
+  __isl_give isl_id *getId() const;
 
   /// @brief Print the MemoryAccess.
   ///

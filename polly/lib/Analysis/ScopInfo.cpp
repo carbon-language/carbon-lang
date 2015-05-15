@@ -418,6 +418,7 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
 //===----------------------------------------------------------------------===//
 
 MemoryAccess::~MemoryAccess() {
+  isl_id_free(Id);
   isl_map_free(AccessRelation);
   isl_map_free(newAccessRelation);
 }
@@ -624,7 +625,8 @@ __isl_give isl_map *MemoryAccess::foldAccess(const IRAccess &Access,
 }
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
-                           ScopStmt *Statement, const ScopArrayInfo *SAI)
+                           ScopStmt *Statement, const ScopArrayInfo *SAI,
+                           int Identifier)
     : AccType(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
       newAccessRelation(nullptr) {
 
@@ -633,6 +635,12 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
   BaseName = getIslCompatibleName("MemRef_", getBaseAddr(), "");
 
   isl_id *BaseAddrId = SAI->getBasePtrId();
+
+  std::string IdName;
+  raw_string_ostream IdNameStream(IdName);
+  IdNameStream << "__polly_array_ref_ " << Identifier;
+  IdNameStream.flush();
+  this->Id = isl_id_alloc(Ctx, IdName.c_str(), nullptr);
 
   if (!Access.isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
@@ -693,6 +701,8 @@ void MemoryAccess::realignParams() {
 const std::string MemoryAccess::getReductionOperatorStr() const {
   return MemoryAccess::getReductionOperatorStr(getReductionType());
 }
+
+__isl_give isl_id *MemoryAccess::getId() const { return isl_id_copy(Id); }
 
 raw_ostream &polly::operator<<(raw_ostream &OS,
                                MemoryAccess::ReductionType RT) {
@@ -868,6 +878,8 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
   if (!AFS)
     return;
 
+  int Identifier = 0;
+
   for (auto &AccessPair : *AFS) {
     IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
@@ -879,7 +891,9 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
     if (isApproximated && Access.isWrite())
       Access.setMayWrite();
 
-    MemAccs.push_back(new MemoryAccess(Access, AccessInst, this, SAI));
+    MemAccs.push_back(
+        new MemoryAccess(Access, AccessInst, this, SAI, Identifier));
+    Identifier++;
 
     // We do not track locations for scalar memory accesses at the moment.
     //
