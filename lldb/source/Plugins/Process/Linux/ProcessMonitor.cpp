@@ -548,7 +548,96 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 #endif
 }
 
-//------------------------------------------------------------------------------
+#if defined (__arm64__) || defined (__aarch64__)
+    //------------------------------------------------------------------------------
+    /// @class ReadDBGROperation
+    /// @brief Implements NativeProcessLinux::ReadDBGR.
+    class ReadDBGROperation : public Operation
+    {
+    public:
+        ReadDBGROperation(lldb::tid_t tid, unsigned int &count_wp, unsigned int &count_bp)
+            : m_tid(tid),
+              m_count_wp(count_wp),
+              m_count_bp(count_bp)
+            { }
+
+        void Execute(ProcessMonitor *monitor) override;
+
+    private:
+        lldb::tid_t m_tid;
+        unsigned int &m_count_wp;
+        unsigned int &m_count_bp;
+    };
+
+    void
+    ReadDBGROperation::Execute(ProcessMonitor *monitor)
+    {
+       int regset = NT_ARM_HW_WATCH;
+       struct iovec ioVec;
+       struct user_hwdebug_state dreg_state;
+
+       ioVec.iov_base = &dreg_state;
+       ioVec.iov_len = sizeof (dreg_state);
+
+       PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, ioVec.iov_len);
+
+       m_count_wp = dreg_state.dbg_info & 0xff;
+       regset = NT_ARM_HW_BREAK;
+
+       PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, ioVec.iov_len);
+       m_count_bp = dreg_state.dbg_info & 0xff;
+    }
+#endif
+
+#if defined (__arm64__) || defined (__aarch64__)
+    //------------------------------------------------------------------------------
+    /// @class WriteDBGROperation
+    /// @brief Implements NativeProcessLinux::WriteFPR.
+    class WriteDBGROperation : public Operation
+    {
+    public:
+        WriteDBGROperation(lldb::tid_t tid, lldb::addr_t *addr_buf, uint32_t *cntrl_buf, int type, int count)
+            : m_tid(tid),
+              m_addr_buf(addr_buf),
+              m_cntrl_buf(cntrl_buf),
+              m_type(type),
+              m_count(count)
+            { }
+
+        void Execute(ProcessMonitor *monitor) override;
+
+    private:
+        lldb::tid_t m_tid;
+        lldb::addr_t *m_addr_buf;
+        uint32_t *m_cntrl_buf;
+        int m_type;
+        int m_count;
+    };
+
+    void
+    WriteDBGROperation::Execute(ProcessMonitor *monitor)
+    {
+        struct iovec ioVec;
+        struct user_hwdebug_state dreg_state;
+
+        memset (&dreg_state, 0, sizeof (dreg_state));
+        ioVec.iov_len = (__builtin_offsetof (struct user_hwdebug_state, dbg_regs[m_count - 1])
+                      + sizeof (dreg_state.dbg_regs [m_count - 1]));
+
+        if (m_type == 0)
+            m_type = NT_ARM_HW_WATCH;
+        else
+            m_type = NT_ARM_HW_BREAK;
+
+        for (int i = 0; i < m_count; i++)
+        {
+            dreg_state.dbg_regs[i].addr = m_addr_buf[i];
+            dreg_state.dbg_regs[i].ctrl = m_cntrl_buf[i];
+        }
+
+        PTRACE(PTRACE_SETREGSET, m_tid, &m_type, &ioVec, ioVec.iov_len);
+    }
+#endif//------------------------------------------------------------------------------
 /// @class WriteRegOperation
 /// @brief Implements ProcessMonitor::WriteRegisterValue.
 class WriteRegOperation : public Operation
@@ -2159,6 +2248,27 @@ ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char* 
     return result;
 }
 
+#if defined (__arm64__) || defined (__aarch64__)
+
+bool
+ProcessMonitor::ReadHardwareDebugInfo (lldb::tid_t tid, unsigned int &watch_count , unsigned int &break_count)
+{
+    bool result = true;
+    ReadDBGROperation op(tid, watch_count, break_count);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::WriteHardwareDebugRegs (lldb::tid_t tid, lldb::addr_t *addr_buf, uint32_t *cntrl_buf, int type, int count)
+{
+    bool result = true;
+    WriteDBGROperation op(tid, addr_buf, cntrl_buf, type, count);
+    DoOperation(&op);
+    return result;
+}
+
+#endif
 bool
 ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
                                    const char* reg_name, const RegisterValue &value)

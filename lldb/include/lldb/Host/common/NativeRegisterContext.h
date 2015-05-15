@@ -103,7 +103,7 @@ public:
     IsWatchpointHit(uint32_t wp_index, bool &is_hit);
 
     virtual Error
-    GetWatchpointHitIndex(uint32_t &wp_index);
+    GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr);
 
     virtual Error
     IsWatchpointVacant (uint32_t wp_index, bool &is_vacant);

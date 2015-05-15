@@ -309,7 +309,7 @@ NativeRegisterContext::IsWatchpointHit(uint32_t wp_index, bool &is_hit)
 }
 
 Error
-NativeRegisterContext::GetWatchpointHitIndex(uint32_t &wp_index)
+NativeRegisterContext::GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr)
 {
     wp_index = LLDB_INVALID_INDEX32;
     return Error ("not implemented");

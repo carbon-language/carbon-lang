@@ -50,7 +50,7 @@ namespace process_linux {
         IsWatchpointHit(uint32_t wp_index, bool &is_hit) override;
 
         Error
-        GetWatchpointHitIndex(uint32_t &wp_index) override;
+        GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr) override;
 
         Error
         IsWatchpointVacant(uint32_t wp_index, bool &is_vacant) override;

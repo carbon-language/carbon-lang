@@ -12,10 +12,12 @@
 #include "lldb/lldb-private-forward.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
+#include "lldb/Core/Log.h"
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + sizeof (m_fpr))
 
@@ -149,6 +151,12 @@ NativeRegisterContextLinux_arm64::NativeRegisterContextLinux_arm64 (
 
     ::memset(&m_fpr, 0, sizeof (m_fpr));
     ::memset(&m_gpr_arm64, 0, sizeof (m_gpr_arm64));
+    ::memset(&m_hwp_regs, 0, sizeof (m_hwp_regs));
+
+    // 16 is just a maximum value, query hardware for actual watchpoint count
+    m_max_hwp_supported = 16;
+    m_max_hbp_supported = 16;
+    m_refresh_hwdebug_info = true;
 }
 
 uint32_t
@@ -535,4 +543,357 @@ size_t
 NativeRegisterContextLinux_arm64::GetGPRSize() const
 {
     return GetRegisterInfoInterface().GetGPRSize();
+}
+
+uint32_t
+NativeRegisterContextLinux_arm64::SetHardwareBreakpoint (lldb::addr_t addr, size_t size)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
+    if (!process_sp)
+        return false;
+
+    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
+    // Check if our hardware breakpoint and watchpoint information is updated.
+    if (m_refresh_hwdebug_info)
+    {
+        process_p->ReadHardwareDebugInfo (m_thread.GetID (), m_max_hwp_supported,
+                                          m_max_hbp_supported);
+        m_refresh_hwdebug_info = false;
+    }
+
+    uint32_t control_value, bp_index;
+
+    // Check if size has a valid hardware breakpoint length.
+    if (size != 4)
+        return LLDB_INVALID_INDEX32;  // Invalid size for a AArch64 hardware breakpoint
+
+    // Check 4-byte alignment for hardware breakpoint target address.
+    if (addr & 0x03)
+        return LLDB_INVALID_INDEX32; // Invalid address, should be 4-byte aligned.
+
+    // Setup control value
+    control_value = 0;
+    control_value |= ((1 << size) - 1) << 5;
+    control_value |= (2 << 1) | 1;
+
+    // Iterate over stored hardware breakpoints
+    // Find a free bp_index or update reference count if duplicate.
+    bp_index = LLDB_INVALID_INDEX32;
+    for (uint32_t i = 0; i < m_max_hbp_supported; i++)
+    {
+        if ((m_hbr_regs[i].control & 1) == 0)
+        {
+            bp_index = i;  // Mark last free slot
+        }
+        else if (m_hbr_regs[i].address == addr && m_hbr_regs[i].control == control_value)
+        {
+            bp_index = i;  // Mark duplicate index
+            break;  // Stop searching here
+        }
+    }
+
+     if (bp_index == LLDB_INVALID_INDEX32)
+        return LLDB_INVALID_INDEX32;
+
+    // Add new or update existing watchpoint
+    if ((m_hbr_regs[bp_index].control & 1) == 0)
+    {
+        m_hbr_regs[bp_index].address = addr;
+        m_hbr_regs[bp_index].control = control_value;
+        m_hbr_regs[bp_index].refcount = 1;
+
+        //TODO: PTRACE CALL HERE for an UPDATE
+    }
+    else
+        m_hbr_regs[bp_index].refcount++;
+
+    return bp_index;
+}
+
+bool
+NativeRegisterContextLinux_arm64::ClearHardwareBreakpoint (uint32_t hw_idx)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    if (hw_idx >= m_max_hbp_supported)
+        return false;
+
+    // Update reference count if multiple references.
+    if (m_hbr_regs[hw_idx].refcount > 1)
+    {
+        m_hbr_regs[hw_idx].refcount--;
+        return true;
+    }
+    else if (m_hbr_regs[hw_idx].refcount == 1)
+    {
+        m_hbr_regs[hw_idx].control &= ~1;
+        m_hbr_regs[hw_idx].address = 0;
+        m_hbr_regs[hw_idx].refcount = 0;
+
+        //TODO: PTRACE CALL HERE for an UPDATE
+        return true;
+    }
+
+    return false;
+}
+
+uint32_t
+NativeRegisterContextLinux_arm64::NumSupportedHardwareWatchpoints ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    return m_max_hwp_supported;
+}
+
+uint32_t
+NativeRegisterContextLinux_arm64::SetHardwareWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
+    if (!process_sp)
+        return false;
+
+    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
+    // Check if our hardware breakpoint and watchpoint information is updated.
+    if (m_refresh_hwdebug_info)
+    {
+        process_p->ReadHardwareDebugInfo (m_thread.GetID (), m_max_hwp_supported,
+                                          m_max_hbp_supported);
+        m_refresh_hwdebug_info = false;
+    }
+		
+    uint32_t control_value, wp_index;
+
+
+    if (watch_flags != 0x1 && watch_flags != 0x2 && watch_flags != 0x3)
+        return 0;//Error ("Invalid read/write bits for watchpoint");
+
+    // Check if size has a valid hardware watchpoint length.
+    if (size != 1 && size != 2 && size != 4 && size != 8)
+        return 0;//Error ("Invalid size for watchpoint");
+
+    // Check 8-byte alignment for hardware watchpoint target address.
+    // TODO: Add support for watching un-aligned addresses
+    if (addr & 0x07)
+        return 0;//Error ("LLDB for AArch64 currently supports 8-byte alignment for hardware watchpoint target address.");
+
+    // Setup control value
+    control_value = watch_flags << 3;
+    control_value |= ((1 << size) - 1) << 5;
+    control_value |= (2 << 1) | 1;
+
+    // Iterate over stored watchpoints
+    // Find a free wp_index or update reference count if duplicate.
+    wp_index = LLDB_INVALID_INDEX32;
+    for (uint32_t i = 0; i < m_max_hwp_supported; i++)
+    {
+        if ((m_hwp_regs[i].control & 1) == 0)
+        {
+            wp_index = i; // Mark last free slot
+        }
+        else if (m_hwp_regs[i].address == addr && m_hwp_regs[i].control == control_value)
+        {
+            wp_index = i; // Mark duplicate index
+            break; // Stop searching here
+        }
+    }
+
+     if (wp_index == LLDB_INVALID_INDEX32)
+        return LLDB_INVALID_INDEX32;
+
+    // Add new or update existing watchpoint
+    if ((m_hwp_regs[wp_index].control & 1) == 0)
+    {
+        m_hwp_regs[wp_index].address = addr;
+        m_hwp_regs[wp_index].control = control_value;
+        m_hwp_regs[wp_index].refcount = 1;
+
+        // PTRACE call to set corresponding watchpoint register.
+        process_p->WriteHardwareDebugRegs(m_thread.GetID (), &addr,
+                                          &control_value, 0, wp_index);
+    }
+    else
+        m_hwp_regs[wp_index].refcount++;
+
+    return wp_index;
+}
+
+bool
+NativeRegisterContextLinux_arm64::ClearHardwareWatchpoint (uint32_t wp_index)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
+    if (!process_sp)
+        return false;
+
+    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
+
+    if (wp_index >= m_max_hwp_supported)
+        return false;
+
+    // Update reference count if multiple references.
+    if (m_hwp_regs[wp_index].refcount > 1)
+    {
+        m_hwp_regs[wp_index].refcount--;
+        return true;
+    }
+    else if (m_hwp_regs[wp_index].refcount == 1)
+    {
+        m_hwp_regs[wp_index].control &= ~1;
+        m_hwp_regs[wp_index].address = 0;
+        m_hwp_regs[wp_index].refcount = 0;
+
+        //TODO: PTRACE CALL HERE for an UPDATE
+        process_p->WriteHardwareDebugRegs(m_thread.GetID (),
+                                          &m_hwp_regs[wp_index].address,
+                                          &m_hwp_regs[wp_index].control,
+                                          0, wp_index);
+        return true;
+    }
+
+    return false;
+}
+
+Error
+NativeRegisterContextLinux_arm64::ClearAllHardwareWatchpoints ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
+
+    Error ml_error;
+    ml_error.SetErrorToErrno();
+    if (!process_sp)
+        return ml_error;
+
+    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
+
+    for (uint32_t i = 0; i < m_max_hwp_supported; i++)
+    {
+        if (m_hwp_regs[i].control & 0x01)
+        {
+            m_hwp_regs[i].control &= ~1;
+            m_hwp_regs[i].address = 0;
+            m_hwp_regs[i].refcount = 0;
+
+            process_p->WriteHardwareDebugRegs(m_thread.GetID (),
+                                          &m_hwp_regs[i].address,
+                                          &m_hwp_regs[i].control,
+                                          0, i);
+        }
+    }
+
+    return Error();
+}
+
+uint32_t
+NativeRegisterContextLinux_arm64::GetWatchpointSize(uint32_t wp_index)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+    switch ((m_hwp_regs[wp_index].control >> 5) & 0xff)
+    {
+        case 0x01:
+            return 1;
+        case 0x03:
+            return 2;
+        case 0x0f:
+            return 4;
+        case 0xff:
+            return 8;
+        default:
+            return 0;
+    }
+}
+bool
+NativeRegisterContextLinux_arm64::WatchpointIsEnabled(uint32_t wp_index)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    if ((m_hwp_regs[wp_index].control & 0x1) == 0x1)
+        return true;
+    else
+        return false;
+}
+
+Error
+NativeRegisterContextLinux_arm64::GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    uint32_t watch_size;
+    lldb::addr_t watch_addr;
+
+    for (wp_index = 0; wp_index < m_max_hwp_supported; ++wp_index)
+    {
+        watch_size = GetWatchpointSize (wp_index);
+        watch_addr = m_hwp_regs[wp_index].address;
+
+        if (m_hwp_regs[wp_index].refcount >= 1 && WatchpointIsEnabled(wp_index)
+            && trap_addr >= watch_addr && trap_addr < watch_addr + watch_size)
+        {
+            return Error();
+        }
+    }
+
+    wp_index = LLDB_INVALID_INDEX32;
+    return Error();
+}
+
+lldb::addr_t
+NativeRegisterContextLinux_arm64::GetWatchpointAddress (uint32_t wp_index)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    if (wp_index >= m_max_hwp_supported)
+        return LLDB_INVALID_ADDRESS;
+
+    if (WatchpointIsEnabled(wp_index))
+        return m_hwp_regs[wp_index].address;
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
+bool
+NativeRegisterContextLinux_arm64::HardwareSingleStep (bool enable)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_arm64::%s()", __FUNCTION__);
+
+    return false;
 }

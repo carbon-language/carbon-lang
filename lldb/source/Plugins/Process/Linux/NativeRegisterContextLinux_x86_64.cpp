@@ -1069,7 +1069,7 @@ NativeRegisterContextLinux_x86_64::IsWatchpointHit(uint32_t wp_index, bool &is_h
 }
 
 Error
-NativeRegisterContextLinux_x86_64::GetWatchpointHitIndex(uint32_t &wp_index) {
+NativeRegisterContextLinux_x86_64::GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr) {
     uint32_t num_hw_wps = NumSupportedHardwareWatchpoints();
     for (wp_index = 0; wp_index < num_hw_wps; ++wp_index)
     {

@@ -44,6 +44,43 @@ namespace process_linux {
         Error
         WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
+        //------------------------------------------------------------------
+        // Hardware breakpoints/watchpoint mangement functions
+        //------------------------------------------------------------------
+
+        uint32_t
+        SetHardwareBreakpoint (lldb::addr_t addr, size_t size) override;
+
+        bool
+        ClearHardwareBreakpoint (uint32_t hw_idx) override;
+
+        uint32_t
+        NumSupportedHardwareWatchpoints () override;
+
+        uint32_t
+        SetHardwareWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags) override;
+
+        bool
+        ClearHardwareWatchpoint (uint32_t hw_index) override;
+
+        Error
+        ClearAllHardwareWatchpoints () override;
+
+        Error
+        GetWatchpointHitIndex(uint32_t &wp_index, lldb::addr_t trap_addr) override;
+
+        lldb::addr_t
+        GetWatchpointAddress (uint32_t wp_index) override;
+
+        bool
+        HardwareSingleStep (bool enable) override;
+
+        uint32_t
+        GetWatchpointSize(uint32_t wp_index);
+
+        bool
+        WatchpointIsEnabled(uint32_t wp_index);
+
     private:
         struct RegInfo
         {
@@ -78,6 +115,21 @@ namespace process_linux {
         uint64_t m_gpr_arm64[k_num_gpr_registers_arm64]; // 64-bit general purpose registers.
         RegInfo  m_reg_info;
         FPU m_fpr; // floating-point registers including extended register sets.
+
+        // Debug register info for hardware breakpoints and watchpoints management.
+        struct DREG
+        {
+            lldb::addr_t address;  // Breakpoint/watchpoint address value.
+            uint32_t control;  // Breakpoint/watchpoint control value.
+            uint32_t refcount;  // Serves as enable/disable and refernce counter.
+        };
+
+        struct DREG m_hbr_regs[16];  // Arm native linux hardware breakpoints
+        struct DREG m_hwp_regs[16];  // Arm native linux hardware watchpoints
+
+        uint32_t m_max_hwp_supported;
+        uint32_t m_max_hbp_supported;
+        bool m_refresh_hwdebug_info;
 
         bool
         IsGPR(unsigned reg) const;
