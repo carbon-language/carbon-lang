@@ -2483,15 +2483,9 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
     case (SIGTRAP | (PTRACE_EVENT_EXIT << 8)):
     {
         // The inferior process or one of its threads is about to exit.
-        if (! thread_sp)
-            break;
-
-        // This thread is currently stopped.  It's not actually dead yet, just about to be.
-        ThreadDidStop (pid, false);
-        // The actual stop reason does not matter much, as we are going to resume the thread a
-        // few lines down. If we ever want to report this state to the debugger, then we should
-        // invent a new stop reason.
-        std::static_pointer_cast<NativeThreadLinux>(thread_sp)->SetStoppedBySignal(LLDB_INVALID_SIGNAL_NUMBER);
+        // We don't want to do anything with the thread so we just resume it. In case we
+        // want to implement "break on thread exit" functionality, we would need to stop
+        // here.
 
         unsigned long data = 0;
         if (GetEventMessage(pid, &data).Fail())
@@ -2511,14 +2505,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
             SetExitStatus (convert_pid_status_to_exit_type (data), convert_pid_status_to_return_code (data), nullptr, true);
         }
 
-        const int signo = static_cast<int> (data);
-        ResumeThread(pid,
-                [=](lldb::tid_t tid_to_resume, bool supress_signal)
-                {
-                    std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetRunning ();
-                    return Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
-                },
-                true);
+        Resume(pid, LLDB_INVALID_SIGNAL_NUMBER);
 
         break;
     }
@@ -2556,26 +2543,15 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         if (log)
             log->Printf ("NativeProcessLinux::%s() received unknown SIGTRAP system call stop event, pid %" PRIu64 "tid %" PRIu64 ", resuming", __FUNCTION__, GetID (), pid);
 
-        // This thread is currently stopped.
-        ThreadDidStop (pid, false);
-        if (thread_sp)
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedBySignal (SIGTRAP);
-
-            
         // Ignore these signals until we know more about them.
-        ResumeThread(pid,
-                [=](lldb::tid_t tid_to_resume, bool supress_signal)
-                {
-                    std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetRunning ();
-                    return Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
-                },
-                true);
+        Resume(pid, LLDB_INVALID_SIGNAL_NUMBER);
         break;
 
     default:
         assert(false && "Unexpected SIGTRAP code!");
         if (log)
-            log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 "tid %" PRIu64 " received unhandled SIGTRAP code: 0x%" PRIx64, __FUNCTION__, GetID (), pid, static_cast<uint64_t> (SIGTRAP | (PTRACE_EVENT_CLONE << 8)));
+            log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 "tid %" PRIu64 " received unhandled SIGTRAP code: 0x%d",
+                    __FUNCTION__, GetID (), pid, info->si_code);
         break;
         
     }
