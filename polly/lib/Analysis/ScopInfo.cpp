@@ -636,11 +636,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
 
   isl_id *BaseAddrId = SAI->getBasePtrId();
 
-  std::string IdName;
-  raw_string_ostream IdNameStream(IdName);
-  IdNameStream << "__polly_array_ref_ " << Identifier;
-  IdNameStream.flush();
-  this->Id = isl_id_alloc(Ctx, IdName.c_str(), nullptr);
+  auto IdName = "__polly_array_ref_ " + std::to_string(Identifier);
+  Id = isl_id_alloc(Ctx, IdName.c_str(), nullptr);
 
   if (!Access.isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
