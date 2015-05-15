@@ -423,6 +423,13 @@ createSeparateConstOffsetFromGEPPass(const TargetMachine *TM = nullptr,
 
 //===----------------------------------------------------------------------===//
 //
+// SpeculativeExecution - Aggressively hoist instructions to enable
+// speculative execution on targets where branches are expensive.
+//
+FunctionPass *createSpeculativeExecutionPass();
+
+//===----------------------------------------------------------------------===//
+//
 // LoadCombine - Combine loads into bigger loads.
 //
 BasicBlockPass *createLoadCombinePass();

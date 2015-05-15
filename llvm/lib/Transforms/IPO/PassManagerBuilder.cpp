@@ -231,6 +231,7 @@ void PassManagerBuilder::populateModulePassManager(
     MPM.add(createSROAPass(/*RequiresDomTree*/ false));
   else
     MPM.add(createScalarReplAggregatesPass(-1, false));
+
   MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
   MPM.add(createJumpThreadingPass());         // Thread jumps.
   MPM.add(createCorrelatedValuePropagationPass()); // Propagate conditionals

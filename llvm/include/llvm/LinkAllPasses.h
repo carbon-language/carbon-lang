@@ -170,6 +170,7 @@ namespace {
       (void) llvm::createPartiallyInlineLibCallsPass();
       (void) llvm::createScalarizerPass();
       (void) llvm::createSeparateConstOffsetFromGEPPass();
+      (void) llvm::createSpeculativeExecutionPass();
       (void) llvm::createRewriteSymbolsPass();
       (void) llvm::createStraightLineStrengthReducePass();
       (void) llvm::createMemDerefPrinter();

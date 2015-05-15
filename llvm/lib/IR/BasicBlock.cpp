@@ -238,6 +238,14 @@ BasicBlock *BasicBlock::getUniquePredecessor() {
   return PredBB;
 }
 
+BasicBlock *BasicBlock::getSingleSuccessor() {
+  succ_iterator SI = succ_begin(this), E = succ_end(this);
+  if (SI == E) return nullptr; // no successors
+  BasicBlock *TheSucc = *SI;
+  ++SI;
+  return (SI == E) ? TheSucc : nullptr /* multiple successors */;
+}
+
 BasicBlock *BasicBlock::getUniqueSuccessor() {
   succ_iterator SI = succ_begin(this), E = succ_end(this);
   if (SI == E) return NULL; // No successors

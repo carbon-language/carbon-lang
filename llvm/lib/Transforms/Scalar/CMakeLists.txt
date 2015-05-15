@@ -45,6 +45,7 @@ add_llvm_library(LLVMScalarOpts
   SeparateConstOffsetFromGEP.cpp
   SimplifyCFGPass.cpp
   Sink.cpp
+  SpeculativeExecution.cpp
   StraightLineStrengthReduce.cpp
   StructurizeCFG.cpp
   TailRecursionElimination.cpp

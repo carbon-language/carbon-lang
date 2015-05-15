@@ -256,6 +256,7 @@ void initializeSinkingPass(PassRegistry&);
 void initializeSeparateConstOffsetFromGEPPass(PassRegistry &);
 void initializeSlotIndexesPass(PassRegistry&);
 void initializeSpillPlacementPass(PassRegistry&);
+void initializeSpeculativeExecutionPass(PassRegistry&);
 void initializeStackProtectorPass(PassRegistry&);
 void initializeStackColoringPass(PassRegistry&);
 void initializeStackSlotColoringPass(PassRegistry&);

@@ -74,6 +74,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeSinkingPass(Registry);
   initializeTailCallElimPass(Registry);
   initializeSeparateConstOffsetFromGEPPass(Registry);
+  initializeSpeculativeExecutionPass(Registry);
   initializeStraightLineStrengthReducePass(Registry);
   initializeLoadCombinePass(Registry);
   initializePlaceBackedgeSafepointsImplPass(Registry);
