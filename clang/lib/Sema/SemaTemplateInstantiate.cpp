@@ -2788,9 +2788,14 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
       isa<TemplateTemplateParmDecl>(D))
     return nullptr;
 
-  // Tag type may be referenced prior to definition, in this case it does not
-  // have instantiation yet.
-  if (isa<TagDecl>(D))
+  // Local types referenced prior to definition may require instantiation.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
+    if (RD->isLocalClass())
+      return nullptr;
+
+  // Enumeration types referenced prior to definition may appear as a result of
+  // error recovery.
+  if (isa<EnumDecl>(D))
     return nullptr;
 
   // If we didn't find the decl, then we either have a sema bug, or we have a

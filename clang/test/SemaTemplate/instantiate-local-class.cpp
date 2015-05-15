@@ -225,6 +225,12 @@ namespace PR18653 {
   }
   template void f1<int>();
 
+  template<typename T> void f1a() {
+    void g1(union x1);
+    union x1 {};
+  }
+  template void f1a<int>();
+
   template<typename T> void f2() {
     void g2(enum x2);  // expected-error{{ISO C++ forbids forward references to 'enum' types}}
     enum x2 { nothing };
@@ -243,11 +249,17 @@ namespace PR18653 {
   }
   template void f4<int>();
 
+  template<typename T> void f4a() {
+    void g4(union x4 {} x);  // expected-error{{'x4' cannot be defined in a parameter type}}
+  }
+  template void f4a<int>();
+
 
   template <class T> void f();
   template <class T> struct S1 {
     void m() {
       f<class newclass>();
+      f<union newunion>();
     }
   };
   template struct S1<int>;
@@ -273,6 +285,14 @@ namespace PR18653 {
     }
   };
   template struct S4<int>;
+
+  template <class T> struct S4a {
+    union local {};
+    void m() {
+      f<local>();
+    }
+  };
+  template struct S4a<int>;
 
   template <class T> struct S5 {
     enum local { nothing };
@@ -301,6 +321,15 @@ namespace PR18653 {
   };
   template struct S01<int>;
 
+  template <class T> struct S01a {
+    union local { };
+    void m() {
+      local x;
+      fff(&x);
+    }
+  };
+  template struct S01a<int>;
+
   template <class T> struct S02 {
     enum local { nothing };
     void m() {
@@ -327,6 +356,14 @@ namespace PR18653 {
     }
   };
   template struct S04<int>;
+
+  template <class T> struct S04a {
+    void m() {
+      union { } x;
+      fff(&x);
+    }
+  };
+  template struct S04a<int>;
 
   template <class T> struct S05 {
     void m() {
