@@ -3604,8 +3604,6 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
 
         if (!IsStruct && !IsArray)
           return Error("INSERTVAL: Invalid type");
-        if (!CurTy->isStructTy() && !CurTy->isArrayTy())
-          return Error("Invalid type");
         if ((unsigned)Index != Index)
           return Error("Invalid value");
         if (IsStruct && Index >= CurTy->subtypes().size())
