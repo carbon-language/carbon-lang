@@ -273,13 +273,10 @@ Target::CreateSourceRegexBreakpoint (const FileSpecList *containingModules,
                                      const FileSpecList *source_file_spec_list,
                                      RegularExpression &source_regex,
                                      bool internal,
-                                     bool hardware,
-                                     LazyBool move_to_nearest_code)
+                                     bool hardware)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, source_file_spec_list));
-    if (move_to_nearest_code == eLazyBoolCalculate)
-        move_to_nearest_code = GetMoveToNearestCode() ? eLazyBoolYes : eLazyBoolNo;
-    BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, source_regex, !static_cast<bool>(move_to_nearest_code)));
+    BreakpointResolverSP resolver_sp(new BreakpointResolverFileRegex (NULL, source_regex));
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);
 }
 
@@ -291,8 +288,7 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
                           LazyBool check_inlines,
                           LazyBool skip_prologue,
                           bool internal,
-                          bool hardware,
-                          LazyBool move_to_nearest_code)
+                          bool hardware)
 {
     if (check_inlines == eLazyBoolCalculate)
     {
@@ -329,15 +325,12 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     }
     if (skip_prologue == eLazyBoolCalculate)
         skip_prologue = GetSkipPrologue() ? eLazyBoolYes : eLazyBoolNo;
-    if (move_to_nearest_code == eLazyBoolCalculate)
-        move_to_nearest_code = GetMoveToNearestCode() ? eLazyBoolYes : eLazyBoolNo;
 
     BreakpointResolverSP resolver_sp(new BreakpointResolverFileLine (NULL,
                                                                      file,
                                                                      line_no,
                                                                      check_inlines,
-                                                                     skip_prologue,
-                                                                     !static_cast<bool>(move_to_nearest_code)));
+                                                                     skip_prologue));
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);
 }
 
@@ -2935,7 +2928,6 @@ static PropertyDefinition
 g_properties[] =
 {
     { "default-arch"                       , OptionValue::eTypeArch      , true , 0                         , NULL, NULL, "Default architecture to choose, when there's a choice." },
-    { "move-to-nearest-code"               , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Move breakpoints to nearest code." },
     { "expr-prefix"                        , OptionValue::eTypeFileSpec  , false, 0                         , NULL, NULL, "Path to a file containing expressions to be prepended to all expressions." },
     { "prefer-dynamic-value"               , OptionValue::eTypeEnum      , false, eDynamicDontRunTarget     , NULL, g_dynamic_value_types, "Should printed values be shown as their dynamic value." },
     { "enable-synthetic-value"             , OptionValue::eTypeBoolean   , false, true                      , NULL, NULL, "Should synthetic values be used by default whenever available." },
@@ -2993,7 +2985,6 @@ g_properties[] =
 enum
 {
     ePropertyDefaultArch,
-    ePropertyMoveToNearestCode,
     ePropertyExprPrefix,
     ePropertyPreferDynamic,
     ePropertyEnableSynthetic,
@@ -3200,13 +3191,6 @@ TargetProperties::SetDefaultArchitecture (const ArchSpec& arch)
     OptionValueArch *value = m_collection_sp->GetPropertyAtIndexAsOptionValueArch (NULL, ePropertyDefaultArch);
     if (value)
         return value->SetCurrentValue(arch, true);
-}
-
-bool
-TargetProperties::GetMoveToNearestCode() const
-{
-    const uint32_t idx = ePropertyMoveToNearestCode;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 lldb::DynamicValueType

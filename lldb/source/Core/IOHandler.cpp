@@ -5326,8 +5326,7 @@ public:
                                                                                       eLazyBoolCalculate,        // Check inlines using global setting
                                                                                       eLazyBoolCalculate,        // Skip prologue using global setting,
                                                                                       false,                     // internal
-                                                                                      false,                     // request_hardware
-                                                                                      eLazyBoolCalculate);       // move_to_nearest_code
+                                                                                      false);                    // request_hardware
                         // Make breakpoint one shot
                         bp_sp->GetOptions()->SetOneShot(true);
                         exe_ctx.GetProcessRef().Resume();
@@ -5362,8 +5361,7 @@ public:
                                                                                       eLazyBoolCalculate,        // Check inlines using global setting
                                                                                       eLazyBoolCalculate,        // Skip prologue using global setting,
                                                                                       false,                     // internal
-                                                                                      false,                     // request_hardware
-                                                                                      eLazyBoolCalculate);       // move_to_nearest_code
+                                                                                      false);                    // request_hardware
                     }
                 }
                 else if (m_selected_line < GetNumDisassemblyLines())

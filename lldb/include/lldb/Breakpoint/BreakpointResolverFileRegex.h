@@ -29,8 +29,7 @@ class BreakpointResolverFileRegex :
 {
 public:
     BreakpointResolverFileRegex (Breakpoint *bkpt,
-                                 RegularExpression &regex,
-                                 bool exact_match);
+                                RegularExpression &regex);
 
     virtual
     ~BreakpointResolverFileRegex ();
@@ -62,7 +61,6 @@ public:
 protected:
     friend class Breakpoint;
     RegularExpression m_regex; // This is the line expression that we are looking for.
-    bool m_exact_match;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolverFileRegex);

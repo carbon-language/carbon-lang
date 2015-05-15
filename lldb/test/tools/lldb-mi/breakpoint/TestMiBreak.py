@@ -159,52 +159,5 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-    @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    def test_lldbmi_break_insert_settings(self):
-        """Test that 'lldb-mi --interpreter' can set breakpoints accoridng to global options."""
-
-        self.spawnLldbMi(args = None)
-
-        # Load executable
-        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
-        self.expect("\^done")
-
-        # Set target.move-to-nearest-code=off and try to set BP #1 that shouldn't be hit
-        self.runCmd("-interpreter-exec console \"settings set target.move-to-nearest-code off\"")
-        self.expect("\^done")
-        line = line_number('main.cpp', '// BP_before_main')
-        self.runCmd("-break-insert -f main.cpp:%d" % line)
-        self.expect("\^done,bkpt={number=\"1\"")
-
-        # Set target.move-to-nearest-code=on and target.skip-prologue=on and set BP #2
-        self.runCmd("-interpreter-exec console \"settings set target.move-to-nearest-code on\"")
-        self.runCmd("-interpreter-exec console \"settings set target.skip-prologue on\"")
-        self.expect("\^done")
-        self.runCmd("-break-insert main.cpp:%d" % line)
-        self.expect("\^done,bkpt={number=\"2\"")
-
-        # Set target.skip-prologue=off and set BP #3
-        self.runCmd("-interpreter-exec console \"settings set target.skip-prologue off\"")
-        self.expect("\^done")
-        self.runCmd("-break-insert main.cpp:%d" % line)
-        self.expect("\^done,bkpt={number=\"3\"")
-
-        # Test that BP #3 is located before BP #2
-        self.runCmd("-exec-run")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"3\"")
-
-        # Test that BP #2 is hit
-        self.runCmd("-exec-continue")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"2\"")
-
-        # Test that BP #1 wasn't set
-        self.runCmd("-exec-continue")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"exited-normally\"")
-
 if __name__ == '__main__':
     unittest2.main()
