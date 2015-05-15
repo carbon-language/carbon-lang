@@ -13,8 +13,6 @@
 #ifndef LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 #define LLVM_CLANG_AST_ASTMUTATIONLISTENER_H
 
-#include "clang/Basic/SourceLocation.h"
-
 namespace clang {
   class ClassTemplateDecl;
   class ClassTemplateSpecializationDecl;
@@ -24,6 +22,7 @@ namespace clang {
   class DeclContext;
   class FunctionDecl;
   class FunctionTemplateDecl;
+  class Module;
   class NamedDecl;
   class ObjCCategoryDecl;
   class ObjCContainerDecl;
@@ -117,8 +116,9 @@ public:
   /// \brief A definition has been made visible by being redefined locally.
   ///
   /// \param D The definition that was previously not visible.
-  virtual void RedefinedHiddenDefinition(const NamedDecl *D,
-                                         SourceLocation Loc) {}
+  /// \param M The containing module in which the definition was made visible,
+  ///        if any.
+  virtual void RedefinedHiddenDefinition(const NamedDecl *D, Module *M) {}
 
   // NOTE: If new methods are added they should also be added to
   // MultiplexASTMutationListener.

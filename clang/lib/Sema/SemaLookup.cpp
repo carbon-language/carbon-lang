@@ -25,6 +25,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Overload.h"
@@ -1172,7 +1173,8 @@ static Decl *getInstantiatedFrom(Decl *D, MemberSpecializationInfo *MSInfo) {
 
 void Sema::makeMergedDefinitionVisible(NamedDecl *ND, SourceLocation Loc) {
   if (auto *Listener = getASTMutationListener())
-    Listener->RedefinedHiddenDefinition(ND, Loc);
+    Listener->RedefinedHiddenDefinition(ND,
+                                        PP.getModuleContainingLocation(Loc));
   ND->setHidden(false);
 }
 

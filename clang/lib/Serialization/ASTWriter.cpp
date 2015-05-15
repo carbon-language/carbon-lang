@@ -4598,7 +4598,7 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         break;
 
       case UPD_DECL_EXPORTED:
-        Record.push_back(inferSubmoduleIDFromLocation(Update.getLoc()));
+        Record.push_back(getSubmoduleID(Update.getModule()));
         break;
       }
     }
@@ -5743,10 +5743,9 @@ void ASTWriter::DeclarationMarkedOpenMPThreadPrivate(const Decl *D) {
   DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_MARKED_OPENMP_THREADPRIVATE));
 }
 
-void ASTWriter::RedefinedHiddenDefinition(const NamedDecl *D,
-                                          SourceLocation Loc) {
+void ASTWriter::RedefinedHiddenDefinition(const NamedDecl *D, Module *M) {
   assert(!WritingAST && "Already writing the AST!");
   assert(D->isHidden() && "expected a hidden declaration");
   assert(D->isFromASTFile() && "hidden decl not from AST file");
-  DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_EXPORTED, Loc));
+  DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_EXPORTED, M));
 }
