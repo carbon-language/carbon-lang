@@ -752,7 +752,7 @@ def skipIfHostIncompatibleWithRemote(func):
         host_arch = self.getLldbArchitecture()
         host_platform = getHostPlatform()
         target_arch = self.getArchitecture()
-        target_platform = 'darwin' if self.getPlatform() in getDarwinOSTriples() else self.getPlatform()
+        target_platform = 'darwin' if self.platformIsDarwin() else self.getPlatform()
         if not (target_arch == 'x86_64' and host_arch == 'i386') and host_arch != target_arch:
             self.skipTest("skipping because target %s is not compatible with host architecture %s" % (target_arch, host_arch))
         elif target_platform != host_platform:
@@ -1684,7 +1684,7 @@ class Base(unittest2.TestCase):
 
     def getstdlibFlag(self):
         """ Returns the proper -stdlib flag, or empty if not required."""
-        if sys.platform.startswith("darwin") or sys.platform.startswith("freebsd"):
+        if self.platformIsDarwin() or self.getPlatform() == "freebsd":
             stdlibflag = "-stdlib=libc++"
         else:
             stdlibflag = ""
@@ -1734,7 +1734,7 @@ class Base(unittest2.TestCase):
 
         stdflag = self.getstdFlag()
 
-        if sys.platform.startswith("darwin"):
+        if self.platformIsDarwin():
             dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
@@ -1742,12 +1742,12 @@ class Base(unittest2.TestCase):
                  'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
                  'LD_EXTRAS' : "%s -Wl,-rpath,%s -dynamiclib" % (dsym, self.lib_dir),
                 }
-        elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
+        elif self.getPlatform() == 'freebsd' or self.getPlatform() == 'linux' or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
                  'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
                  'LD_EXTRAS' : "-shared -L%s -llldb" % self.lib_dir}
-        elif sys.platform.startswith("win"):
+        elif self.getPlatform() == 'windows':
             d = {'DYLIB_CXX_SOURCES' : sources,
                  'DYLIB_NAME' : lib_name,
                  'CFLAGS_EXTRAS' : "%s -I%s -fPIC" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
@@ -1821,7 +1821,7 @@ class Base(unittest2.TestCase):
         ldflags = ""
 
         # On Mac OS X, unless specifically requested to use libstdc++, use libc++
-        if not use_libstdcxx and sys.platform.startswith('darwin'):
+        if not use_libstdcxx and self.platformIsDarwin():
             use_libcxx = True
 
         if use_libcxx and self.libcxxPath:
@@ -1838,7 +1838,7 @@ class Base(unittest2.TestCase):
                 cflags += "c++0x"
             else:
                 cflags += "c++11"
-        if sys.platform.startswith("darwin") or sys.platform.startswith("freebsd"):
+        if self.platformIsDarwin() or self.getPlatform() == "freebsd":
             cflags += " -stdlib=libc++"
         elif "clang" in self.getCompiler():
             cflags += " -stdlib=libstdc++"
