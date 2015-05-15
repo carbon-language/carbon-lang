@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
@@ -657,7 +658,7 @@ public:
 };
 
 // FIXME: Same concerns as with SectionData.
-class MCSymbolData : public ilist_node<MCSymbolData> {
+class MCSymbolData {
   const MCSymbol *Symbol;
 
   /// Fragment - The fragment this symbol's value is relative to, if any. Also
@@ -798,13 +799,14 @@ class MCAssembler {
 
 public:
   typedef iplist<MCSectionData> SectionDataListType;
-  typedef iplist<MCSymbolData> SymbolDataListType;
+  typedef std::vector<std::unique_ptr<MCSymbolData>> SymbolDataListType;
 
   typedef SectionDataListType::const_iterator const_iterator;
   typedef SectionDataListType::iterator iterator;
 
-  typedef SymbolDataListType::const_iterator const_symbol_iterator;
-  typedef SymbolDataListType::iterator symbol_iterator;
+  typedef pointee_iterator<SymbolDataListType::const_iterator>
+  const_symbol_iterator;
+  typedef pointee_iterator<SymbolDataListType::iterator> symbol_iterator;
 
   typedef iterator_range<symbol_iterator> symbol_range;
   typedef iterator_range<const_symbol_iterator> const_symbol_range;
@@ -846,7 +848,7 @@ private:
 
   iplist<MCSectionData> Sections;
 
-  iplist<MCSymbolData> Symbols;
+  SymbolDataListType Symbols;
 
   DenseSet<const MCSymbol *> LocalsUsedInReloc;
 
@@ -1181,8 +1183,8 @@ public:
     if (Created)
       *Created = !Entry;
     if (!Entry) {
-      Entry = new MCSymbolData(Symbol, nullptr, 0);
-      Symbols.push_back(Entry);
+      Symbols.emplace_back(new MCSymbolData(Symbol, nullptr, 0));
+      Entry = Symbols.back().get();
     }
 
     return *Entry;
