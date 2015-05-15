@@ -7216,6 +7216,8 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("for (id foo in [self getStuffFor:bla]) {\n"
                "}");
   verifyFormat("[self aaaaa:MACRO(a, b:, c:)];");
+  verifyFormat("[self aaaaa:(1 + 2) bbbbb:3];");
+  verifyFormat("[self aaaaa:(Type)a bbbbb:3];");
 
   verifyFormat("[self stuffWithInt:(4 + 2) float:4.5];");
   verifyFormat("[self stuffWithInt:a ? b : c float:4.5];");

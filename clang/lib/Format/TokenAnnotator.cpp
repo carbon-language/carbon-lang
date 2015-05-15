@@ -1922,8 +1922,13 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   }
   if (Left.is(TT_UnaryOperator))
     return Right.is(TT_BinaryOperator);
+
+  // If the next token is a binary operator or a selector name, we have
+  // incorrectly classified the parenthesis as a cast. FIXME: Detect correctly.
   if (Left.is(TT_CastRParen))
-    return Style.SpaceAfterCStyleCast || Right.is(TT_BinaryOperator);
+    return Style.SpaceAfterCStyleCast ||
+           Right.isOneOf(TT_BinaryOperator, TT_SelectorName);
+
   if (Left.is(tok::greater) && Right.is(tok::greater)) {
     return Right.is(TT_TemplateCloser) && Left.is(TT_TemplateCloser) &&
            (Style.Standard != FormatStyle::LS_Cpp11 || Style.SpacesInAngles);
