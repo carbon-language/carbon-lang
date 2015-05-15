@@ -19,33 +19,33 @@
 
 namespace llvm {
 
-  class MCCodeGenInfo {
-    /// RelocationModel - Relocation model: static, pic, etc.
-    ///
-    Reloc::Model RelocationModel;
+class MCCodeGenInfo {
+  /// RelocationModel - Relocation model: static, pic, etc.
+  ///
+  Reloc::Model RelocationModel;
 
-    /// CMModel - Code model.
-    ///
-    CodeModel::Model CMModel;
+  /// CMModel - Code model.
+  ///
+  CodeModel::Model CMModel;
 
-    /// OptLevel - Optimization level.
-    ///
-    CodeGenOpt::Level OptLevel;
+  /// OptLevel - Optimization level.
+  ///
+  CodeGenOpt::Level OptLevel;
 
-  public:
-    void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
-                           CodeModel::Model CM = CodeModel::Default,
-                           CodeGenOpt::Level OL = CodeGenOpt::Default);
+public:
+  void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
+                         CodeModel::Model CM = CodeModel::Default,
+                         CodeGenOpt::Level OL = CodeGenOpt::Default);
 
-    Reloc::Model getRelocationModel() const { return RelocationModel; }
+  Reloc::Model getRelocationModel() const { return RelocationModel; }
 
-    CodeModel::Model getCodeModel() const { return CMModel; }
+  CodeModel::Model getCodeModel() const { return CMModel; }
 
-    CodeGenOpt::Level getOptLevel() const { return OptLevel; }
+  CodeGenOpt::Level getOptLevel() const { return OptLevel; }
 
-    // Allow overriding OptLevel on a per-function basis.
-    void setOptLevel(CodeGenOpt::Level Level) { OptLevel = Level; }
-  };
+  // Allow overriding OptLevel on a per-function basis.
+  void setOptLevel(CodeGenOpt::Level Level) { OptLevel = Level; }
+};
 } // namespace llvm
 
 #endif
