@@ -38,8 +38,8 @@ bool GlobalValue::isDematerializable() const {
 std::error_code GlobalValue::materialize() {
   return getParent()->materialize(this);
 }
-void GlobalValue::Dematerialize() {
-  getParent()->Dematerialize(this);
+void GlobalValue::dematerialize() {
+  getParent()->dematerialize(this);
 }
 
 /// Override destroyConstant to make sure it doesn't get called on

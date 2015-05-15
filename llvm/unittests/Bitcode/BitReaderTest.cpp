@@ -75,7 +75,7 @@ TEST(BitReaderTest, DematerializeFunctionPreservesLinkageType) {
               GlobalValue::InternalLinkage);
 
   // Check that the linkage type is preserved after dematerialization.
-  M->getFunction("func")->Dematerialize();
+  M->getFunction("func")->dematerialize();
   EXPECT_TRUE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("func")->getLinkage() ==
               GlobalValue::InternalLinkage);
@@ -160,7 +160,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Try (and fail) to dematerialize @func.
-  M->getFunction("func")->Dematerialize();
+  M->getFunction("func")->dematerialize();
   EXPECT_FALSE(M->getFunction("func")->empty());
 }
 
@@ -191,7 +191,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionBefore) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Try (and fail) to dematerialize @func.
-  M->getFunction("func")->Dematerialize();
+  M->getFunction("func")->dematerialize();
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }
@@ -223,7 +223,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionAfter) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Try (and fail) to dematerialize @func.
-  M->getFunction("func")->Dematerialize();
+  M->getFunction("func")->dematerialize();
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }

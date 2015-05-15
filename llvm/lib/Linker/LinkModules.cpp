@@ -1227,7 +1227,7 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
   for (Argument &Arg : Src.args())
     ValueMap.erase(&Arg);
 
-  Src.Dematerialize();
+  Src.dematerialize();
   return false;
 }
 

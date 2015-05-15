@@ -47,11 +47,11 @@ public:
   /// lazily. If the Materializer doesn't support this capability, this method
   /// is a noop.
   ///
-  virtual void Dematerialize(GlobalValue *) {}
+  virtual void dematerialize(GlobalValue *) {}
 
   /// Make sure the entire Module has been completely read.
   ///
-  virtual std::error_code MaterializeModule(Module *M) = 0;
+  virtual std::error_code materializeModule(Module *M) = 0;
 
   virtual std::error_code materializeMetadata() = 0;
   virtual void setStripDebugInfo() = 0;

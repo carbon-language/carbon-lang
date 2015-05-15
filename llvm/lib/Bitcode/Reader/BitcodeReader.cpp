@@ -240,9 +240,9 @@ public:
 
   bool isDematerializable(const GlobalValue *GV) const override;
   std::error_code materialize(GlobalValue *GV) override;
-  std::error_code MaterializeModule(Module *M) override;
+  std::error_code materializeModule(Module *M) override;
   std::vector<StructType *> getIdentifiedStructTypes() const override;
-  void Dematerialize(GlobalValue *GV) override;
+  void dematerialize(GlobalValue *GV) override;
 
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
@@ -4447,7 +4447,7 @@ bool BitcodeReader::isDematerializable(const GlobalValue *GV) const {
   return DeferredFunctionInfo.count(const_cast<Function*>(F));
 }
 
-void BitcodeReader::Dematerialize(GlobalValue *GV) {
+void BitcodeReader::dematerialize(GlobalValue *GV) {
   Function *F = dyn_cast<Function>(GV);
   // If this function isn't dematerializable, this is a noop.
   if (!F || !isDematerializable(F))
@@ -4460,7 +4460,7 @@ void BitcodeReader::Dematerialize(GlobalValue *GV) {
   F->setIsMaterializable(true);
 }
 
-std::error_code BitcodeReader::MaterializeModule(Module *M) {
+std::error_code BitcodeReader::materializeModule(Module *M) {
   assert(M == TheModule &&
          "Can only Materialize the Module this BitcodeReader is attached to.");
 

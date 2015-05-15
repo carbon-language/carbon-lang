@@ -317,7 +317,7 @@ public:
   /// If this GlobalValue is read in, and if the GVMaterializer supports it,
   /// release the memory for the function, and set it up to be materialized
   /// lazily. If !isDematerializable(), this method is a noop.
-  void Dematerialize();
+  void dematerialize();
 
 /// @}
 

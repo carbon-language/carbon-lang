@@ -492,7 +492,7 @@ public:
   /// If the GlobalValue is read in, and if the GVMaterializer supports it,
   /// release the memory for the function, and set it up to be materialized
   /// lazily. If !isDematerializable(), this method is a no-op.
-  void Dematerialize(GlobalValue *GV);
+  void dematerialize(GlobalValue *GV);
 
   /// Make sure all GlobalValues in this Module are fully read.
   std::error_code materializeAll();
