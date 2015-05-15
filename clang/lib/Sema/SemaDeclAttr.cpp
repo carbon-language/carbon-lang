@@ -4381,13 +4381,11 @@ static void handleNoSanitizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleNoSanitizeSpecificAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   std::string SanitizerName =
-      llvm::StringSwitch<const char *>(Attr.getName()->getName())
+      llvm::StringSwitch<std::string>(Attr.getName()->getName())
           .Case("no_address_safety_analysis", "address")
           .Case("no_sanitize_address", "address")
           .Case("no_sanitize_thread", "thread")
-          .Case("no_sanitize_memory", "memory")
-          .Default("");
-  assert(!SanitizerName.empty());
+          .Case("no_sanitize_memory", "memory");
   D->addAttr(::new (S.Context)
                  NoSanitizeAttr(Attr.getRange(), S.Context, &SanitizerName, 1,
                                 Attr.getAttributeSpellingListIndex()));
