@@ -151,7 +151,6 @@ namespace process_linux {
         Error
         ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
-#if defined (__arm64__) || defined (__aarch64__)
         /// Reads hardware breakpoints and watchpoints capability information.
         Error
         ReadHardwareDebugInfo (lldb::tid_t tid, unsigned int &watch_count ,
@@ -161,7 +160,7 @@ namespace process_linux {
         Error
         WriteHardwareDebugRegs (lldb::tid_t tid, lldb::addr_t *addr_buf,
                                 uint32_t *cntrl_buf, int type, int count);
-#endif
+
         /// Reads the specified register set into the specified buffer.
         /// For instance, the extended floating-point register set.
         Error

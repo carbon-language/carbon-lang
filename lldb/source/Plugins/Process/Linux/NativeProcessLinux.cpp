@@ -762,10 +762,9 @@ namespace
 #endif
     }
 
-#if defined (__arm64__) || defined (__aarch64__)
     //------------------------------------------------------------------------------
     /// @class ReadDBGROperation
-    /// @brief Implements NativeProcessLinux::ReadDBGR.
+    /// @brief Implements NativeProcessLinux::ReadHardwareDebugInfo.
     class ReadDBGROperation : public Operation
     {
     public:
@@ -786,6 +785,7 @@ namespace
     void
     ReadDBGROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
        int regset = NT_ARM_HW_WATCH;
        struct iovec ioVec;
        struct user_hwdebug_state dreg_state;
@@ -800,8 +800,9 @@ namespace
 
        PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, ioVec.iov_len, m_error);
        m_count_bp = dreg_state.dbg_info & 0xff;
-    }
 #endif
+    }
+
 
     //------------------------------------------------------------------------------
     /// @class ReadRegisterSetOperation
@@ -894,10 +895,9 @@ namespace
 #endif
     }
 
-#if defined (__arm64__) || defined (__aarch64__)
     //------------------------------------------------------------------------------
     /// @class WriteDBGROperation
-    /// @brief Implements NativeProcessLinux::WriteFPR.
+    /// @brief Implements NativeProcessLinux::WriteHardwareDebugRegs.
     class WriteDBGROperation : public Operation
     {
     public:
@@ -923,6 +923,7 @@ namespace
     void
     WriteDBGROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
         struct iovec ioVec;
         struct user_hwdebug_state dreg_state;
 
@@ -942,8 +943,9 @@ namespace
         }
 
         PTRACE(PTRACE_SETREGSET, m_tid, &m_type, &ioVec, ioVec.iov_len, m_error);
-    }
 #endif
+    }
+
 
     //------------------------------------------------------------------------------
     /// @class WriteRegisterSetOperation
@@ -3933,8 +3935,6 @@ NativeProcessLinux::ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size,
     return op.GetError();
 }
 
-#if defined (__arm64__) || defined (__aarch64__)
-
 Error
 NativeProcessLinux::ReadHardwareDebugInfo (lldb::tid_t tid, unsigned int &watch_count , unsigned int &break_count)
 {
@@ -3950,8 +3950,6 @@ NativeProcessLinux::WriteHardwareDebugRegs (lldb::tid_t tid, lldb::addr_t *addr_
     m_monitor_up->DoOperation(&op);
     return op.GetError();
 }
-
-#endif
 
 Error
 NativeProcessLinux::WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size)
