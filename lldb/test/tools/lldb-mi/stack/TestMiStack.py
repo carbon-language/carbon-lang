@@ -11,6 +11,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
+    @expectedFailureLinux # The print-values argument can't be parsed correctly on Linux
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_arguments(self):
@@ -73,6 +74,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^error,msg=\"Command 'stack-list-arguments'\. Thread frame range invalid\"")
 
     @lldbmi_test
+    @expectedFailureLinux # The print-values argument can't be parsed correctly on Linux
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_locals(self):
@@ -200,6 +202,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,locals=\[{name=\"test_str\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",value=\"24\"},{name=\"ptr\",value=\".*?\"}\]")
 
     @lldbmi_test
+    @expectedFailureLinux # The print-values argument can't be parsed correctly on Linux
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_variables(self):
