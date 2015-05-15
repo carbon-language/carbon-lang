@@ -20,8 +20,8 @@ class PluginCommandTestCase(TestBase):
         self.implib_dir = os.environ["LLDB_IMPLIB_DIR"]
 
     @expectedFailureFreeBSD('llvm.org/pr17430')
-    @skipIfi386 # This test links against liblldb.so. Thus, the test requires a 32-bit liblldb.so.
     @skipIfNoSBHeaders
+    @skipIfHostIncompatibleWithRemote # Requires a compatible arch and platform to link against the host's built lldb lib.
     def test_load_plugin(self):
         """Test that plugins that load commands work correctly."""
 
