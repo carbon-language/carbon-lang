@@ -64,13 +64,13 @@ CMICmdArgValPrintValues::Validate(CMICmdArgContext &vwArgContext)
     if (vwArgContext.IsEmpty())
         return MIstatus::success;
 
-    const CMIUtilString &rArg(vwArgContext.GetArgs()[0]);
-    if (IsArgPrintValues(rArg) && ExtractPrintValues(rArg))
+    const CMIUtilString strArg(vwArgContext.GetArgs()[0]);
+    if (IsArgPrintValues(strArg) && ExtractPrintValues(strArg))
     {
         m_bFound = true;
         m_bValid = true;
         m_argValue = GetPrintValues();
-        vwArgContext.RemoveArg(rArg);
+        vwArgContext.RemoveArg(strArg);
         return MIstatus::success;
     }
 
