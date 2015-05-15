@@ -82,10 +82,7 @@ class TranslationUnitDecl : public Decl, public DeclContext {
   /// translation unit, if one has been created.
   NamespaceDecl *AnonymousNamespace;
 
-  explicit TranslationUnitDecl(ASTContext &ctx)
-    : Decl(TranslationUnit, nullptr, SourceLocation()),
-      DeclContext(TranslationUnit),
-      Ctx(ctx), AnonymousNamespace(nullptr) {}
+  explicit TranslationUnitDecl(ASTContext &ctx);
 public:
   ASTContext &getASTContext() const { return Ctx; }
 
@@ -2590,7 +2587,10 @@ public:
 
   /// Retrieves the tag declaration for which this is the typedef name for
   /// linkage purposes, if any.
-  TagDecl *getAnonDeclWithTypedefName() const;
+  ///
+  /// \param AnyRedecl Look for the tag declaration in any redeclaration of
+  /// this typedef declaration.
+  TagDecl *getAnonDeclWithTypedefName(bool AnyRedecl = false) const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

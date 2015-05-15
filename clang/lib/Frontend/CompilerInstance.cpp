@@ -1637,6 +1637,11 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 void CompilerInstance::makeModuleVisible(Module *Mod,
                                          Module::NameVisibilityKind Visibility,
                                          SourceLocation ImportLoc) {
+  if (!ModuleManager)
+    createModuleManager();
+  if (!ModuleManager)
+    return;
+
   ModuleManager->makeModuleVisible(Mod, Visibility, ImportLoc);
 }
 

@@ -238,7 +238,7 @@ void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
       llvm::errs() << " active";
     else if (!VisibleModules.isVisible(MM->getOwningModule()))
       llvm::errs() << " hidden";
-    else
+    else if (MM->getMacroInfo())
       llvm::errs() << " overridden";
 
     if (!MM->overrides().empty()) {

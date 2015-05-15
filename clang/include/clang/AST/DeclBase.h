@@ -317,7 +317,7 @@ protected:
     : NextInContextAndBits(), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      Access(AS_none), FromASTFile(0), Hidden(0),
+      Access(AS_none), FromASTFile(0), Hidden(DC && cast<Decl>(DC)->Hidden),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       CacheValidAndLinkage(0)
   {
@@ -639,11 +639,26 @@ private:
   Module *getOwningModuleSlow() const;
 
 public:
-  Module *getOwningModule() const {
+  /// \brief Get the imported owning module, if this decl is from an imported
+  /// (non-local) module.
+  Module *getImportedOwningModule() const {
     if (!isFromASTFile())
       return nullptr;
 
     return getOwningModuleSlow();
+  }
+
+  /// \brief Get the local owning module, if known. Returns nullptr if owner is
+  /// not yet known or declaration is not from a module.
+  Module *getLocalOwningModule() const {
+    if (isFromASTFile() || !Hidden)
+      return nullptr;
+    return reinterpret_cast<Module *const *>(this)[-1];
+  }
+  void setLocalOwningModule(Module *M) {
+    assert(!isFromASTFile() && Hidden &&
+           "should not have a cached owning module");
+    reinterpret_cast<Module **>(this)[-1] = M;
   }
 
   unsigned getIdentifierNamespace() const {

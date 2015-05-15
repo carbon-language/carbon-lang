@@ -541,8 +541,14 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     return false;
 
   case tok::annot_module_begin:
+    Actions.ActOnModuleBegin(Tok.getLocation(), reinterpret_cast<Module *>(
+                                                    Tok.getAnnotationValue()));
+    ConsumeToken();
+    return false;
+
   case tok::annot_module_end:
-    // FIXME: Update visibility based on the submodule we're in.
+    Actions.ActOnModuleEnd(Tok.getLocation(), reinterpret_cast<Module *>(
+                                                  Tok.getAnnotationValue()));
     ConsumeToken();
     return false;
 

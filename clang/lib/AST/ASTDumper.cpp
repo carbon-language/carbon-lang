@@ -977,8 +977,10 @@ void ASTDumper::dumpDecl(const Decl *D) {
     dumpSourceRange(D->getSourceRange());
     OS << ' ';
     dumpLocation(D->getLocation());
-    if (Module *M = D->getOwningModule())
+    if (Module *M = D->getImportedOwningModule())
       OS << " in " << M->getFullModuleName();
+    else if (Module *M = D->getLocalOwningModule())
+      OS << " in (local) " << M->getFullModuleName();
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
       if (ND->isHidden())
         OS << " hidden";

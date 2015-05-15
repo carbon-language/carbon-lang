@@ -1784,11 +1784,11 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
 /// should not consider because they are not permitted to conflict, e.g.,
 /// because they come from hidden sub-modules and do not refer to the same
 /// entity.
-static void filterNonConflictingPreviousDecls(ASTContext &context,
+static void filterNonConflictingPreviousDecls(Sema &S,
                                               NamedDecl *decl,
                                               LookupResult &previous){
   // This is only interesting when modules are enabled.
-  if (!context.getLangOpts().Modules)
+  if (!S.getLangOpts().Modules)
     return;
 
   // Empty sets are uninteresting.
@@ -1800,7 +1800,7 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
     NamedDecl *old = filter.next();
 
     // Non-hidden declarations are never ignored.
-    if (!old->isHidden())
+    if (S.isVisible(old))
       continue;
 
     if (!old->isExternallyVisible())
@@ -1814,11 +1814,11 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
 /// entity if their types are the same.
 /// FIXME: This is notionally doing the same thing as ASTReaderDecl's
 /// isSameEntity.
-static void filterNonConflictingPreviousTypedefDecls(ASTContext &Context,
+static void filterNonConflictingPreviousTypedefDecls(Sema &S,
                                                      TypedefNameDecl *Decl,
                                                      LookupResult &Previous) {
   // This is only interesting when modules are enabled.
-  if (!Context.getLangOpts().Modules)
+  if (!S.getLangOpts().Modules)
     return;
 
   // Empty sets are uninteresting.
@@ -1830,19 +1830,19 @@ static void filterNonConflictingPreviousTypedefDecls(ASTContext &Context,
     NamedDecl *Old = Filter.next();
 
     // Non-hidden declarations are never ignored.
-    if (!Old->isHidden())
+    if (S.isVisible(Old))
       continue;
 
     // Declarations of the same entity are not ignored, even if they have
     // different linkages.
     if (auto *OldTD = dyn_cast<TypedefNameDecl>(Old)) {
-      if (Context.hasSameType(OldTD->getUnderlyingType(),
-                              Decl->getUnderlyingType()))
+      if (S.Context.hasSameType(OldTD->getUnderlyingType(),
+                                Decl->getUnderlyingType()))
         continue;
 
       // If both declarations give a tag declaration a typedef name for linkage
       // purposes, then they declare the same entity.
-      if (OldTD->getAnonDeclWithTypedefName() &&
+      if (OldTD->getAnonDeclWithTypedefName(/*AnyRedecl*/true) &&
           Decl->getAnonDeclWithTypedefName())
         continue;
     }
@@ -1957,7 +1957,7 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
     return New->setInvalidDecl();
 
   if (auto *OldTD = dyn_cast<TypedefNameDecl>(Old)) {
-    auto *OldTag = OldTD->getAnonDeclWithTypedefName();
+    auto *OldTag = OldTD->getAnonDeclWithTypedefName(/*AnyRedecl*/true);
     auto *NewTag = New->getAnonDeclWithTypedefName();
     NamedDecl *Hidden = nullptr;
     if (getLangOpts().CPlusPlus && OldTag && NewTag &&
@@ -5065,7 +5065,7 @@ Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
   // in an outer scope, it isn't the same thing.
   FilterLookupForScope(Previous, DC, S, /*ConsiderLinkage*/false,
                        /*AllowInlineNamespace*/false);
-  filterNonConflictingPreviousTypedefDecls(Context, NewTD, Previous);
+  filterNonConflictingPreviousTypedefDecls(*this, NewTD, Previous);
   if (!Previous.empty()) {
     Redeclaration = true;
     MergeTypedefNameDecl(NewTD, Previous);
@@ -6381,7 +6381,7 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous) {
     Previous.setShadowed();
 
   // Filter out any non-conflicting previous declarations.
-  filterNonConflictingPreviousDecls(Context, NewVD, Previous);
+  filterNonConflictingPreviousDecls(*this, NewVD, Previous);
 
   if (!Previous.empty()) {
     MergeVarDecl(NewVD, Previous);
@@ -7930,7 +7930,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                !Previous.isShadowed();
 
   // Filter out any non-conflicting previous declarations.
-  filterNonConflictingPreviousDecls(Context, NewFD, Previous);
+  filterNonConflictingPreviousDecls(*this, NewFD, Previous);
 
   bool Redeclaration = false;
   NamedDecl *OldDecl = nullptr;
@@ -7985,7 +7985,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   // Check for a previous extern "C" declaration with this name.
   if (!Redeclaration &&
       checkForConflictWithNonVisibleExternC(*this, NewFD, Previous)) {
-    filterNonConflictingPreviousDecls(Context, NewFD, Previous);
+    filterNonConflictingPreviousDecls(*this, NewFD, Previous);
     if (!Previous.empty()) {
       // This is an extern "C" declaration with the same name as a previous
       // declaration, and thus redeclares that entity...
@@ -14076,6 +14076,8 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
   if (!Mod)
     return true;
 
+  VisibleModules.setVisible(Mod, ImportLoc);
+
   checkModuleImportContext(*this, Mod, ImportLoc, CurContext);
 
   // FIXME: we should support importing a submodule within a different submodule
@@ -14113,6 +14115,25 @@ void Sema::ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
 
   // FIXME: Should we synthesize an ImportDecl here?
   getModuleLoader().makeModuleVisible(Mod, Module::AllVisible, DirectiveLoc);
+  VisibleModules.setVisible(Mod, DirectiveLoc);
+}
+
+void Sema::ActOnModuleBegin(SourceLocation DirectiveLoc, Module *Mod) {
+  checkModuleImportContext(*this, Mod, DirectiveLoc, CurContext);
+
+  if (getLangOpts().ModulesLocalVisibility)
+    VisibleModulesStack.push_back(std::move(VisibleModules));
+  VisibleModules.setVisible(Mod, DirectiveLoc);
+}
+
+void Sema::ActOnModuleEnd(SourceLocation DirectiveLoc, Module *Mod) {
+  checkModuleImportContext(*this, Mod, DirectiveLoc, CurContext);
+
+  if (getLangOpts().ModulesLocalVisibility) {
+    VisibleModules = std::move(VisibleModulesStack.back());
+    VisibleModulesStack.pop_back();
+    VisibleModules.setVisible(Mod, DirectiveLoc);
+  }
 }
 
 void Sema::createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
@@ -14130,6 +14151,7 @@ void Sema::createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
 
   // Make the module visible.
   getModuleLoader().makeModuleVisible(Mod, Module::AllVisible, Loc);
+  VisibleModules.setVisible(Mod, Loc);
 }
 
 void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,

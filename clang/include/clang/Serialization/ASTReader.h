@@ -516,6 +516,10 @@ private:
   /// \brief Functions or methods that have bodies that will be attached.
   PendingBodiesMap PendingBodies;
 
+  /// \brief Definitions for which we have added merged definitions but not yet
+  /// performed deduplication.
+  llvm::SetVector<NamedDecl*> PendingMergedDefinitionsToDeduplicate;
+
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(ModuleFile &M,
                               llvm::BitstreamCursor &Cursor,

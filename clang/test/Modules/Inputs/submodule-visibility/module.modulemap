@@ -1,0 +1,1 @@
+module x { module a { header "a.h" } module b { header "b.h" } }

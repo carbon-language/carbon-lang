@@ -5148,7 +5148,11 @@ bool Sema::hasVisibleDefinition(NamedDecl *D, NamedDecl **Suggested) {
 
   // If this definition was instantiated from a template, map back to the
   // pattern from which it was instantiated.
-  if (auto *RD = dyn_cast<CXXRecordDecl>(D)) {
+  if (isa<TagDecl>(D) && cast<TagDecl>(D)->isBeingDefined()) {
+    // We're in the middle of defining it; this definition should be treated
+    // as visible.
+    return true;
+  } else if (auto *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (auto *Pattern = RD->getTemplateInstantiationPattern())
       RD = Pattern;
     D = RD->getDefinition();
@@ -5231,7 +5235,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
       // repeating the diagnostic.
       // FIXME: Add a Fix-It that imports the corresponding module or includes
       // the header.
-      Module *Owner = SuggestedDef->getOwningModule();
+      Module *Owner = getOwningModule(SuggestedDef);
       Diag(Loc, diag::err_module_private_definition)
         << T << Owner->getFullModuleName();
       Diag(SuggestedDef->getLocation(), diag::note_previous_definition);
