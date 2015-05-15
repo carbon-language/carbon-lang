@@ -875,8 +875,6 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
   if (!AFS)
     return;
 
-  int Identifier = 0;
-
   for (auto &AccessPair : *AFS) {
     IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
@@ -889,8 +887,7 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
       Access.setMayWrite();
 
     MemAccs.push_back(
-        new MemoryAccess(Access, AccessInst, this, SAI, Identifier));
-    Identifier++;
+        new MemoryAccess(Access, AccessInst, this, SAI, MemAccs.size()));
 
     // We do not track locations for scalar memory accesses at the moment.
     //
