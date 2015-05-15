@@ -19,7 +19,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O \
 	ObjectFile/JIT SymbolFile/DWARF SymbolFile/Symtab Process/Utility \
 	DynamicLoader/Static Platform Process/gdb-remote \
-	Instruction/ARM Instruction/ARM64 Instruction/MIPS64 \
+	Instruction/ARM Instruction/ARM64 Instruction/MIPS Instruction/MIPS64 \
 	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \

@@ -18,6 +18,7 @@
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
+#include "Plugins/Instruction/MIPS/EmulateInstructionMIPS.h"
 #include "Plugins/Instruction/MIPS64/EmulateInstructionMIPS64.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
 #include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
@@ -113,6 +114,7 @@ SystemInitializerCommon::Initialize()
     platform_android::PlatformAndroid::Initialize();
 
     EmulateInstructionARM::Initialize();
+    EmulateInstructionMIPS::Initialize();
     EmulateInstructionMIPS64::Initialize();
 
     //----------------------------------------------------------------------
@@ -163,6 +165,7 @@ SystemInitializerCommon::Terminate()
     PlatformiOSSimulator::Terminate();
 
     EmulateInstructionARM::Terminate();
+    EmulateInstructionMIPS::Terminate();
     EmulateInstructionMIPS64::Terminate();
 
 #if defined(__APPLE__)
