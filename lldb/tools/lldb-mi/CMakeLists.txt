@@ -11,6 +11,7 @@ set(LLDB_MI_SOURCES
   MICmdArgValNumber.cpp
   MICmdArgValOptionLong.cpp
   MICmdArgValOptionShort.cpp
+  MICmdArgValPrintValues.cpp
   MICmdArgValString.cpp
   MICmdArgValThreadGrp.cpp
   MICmdBase.cpp

@@ -166,9 +166,6 @@ class CMICmdCmdStackListArguments : public CMICmdBase
     CMICmnMIValueList m_miValueList;
     const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgPrintValues;
-    const CMIUtilString m_constStrArgNoValues;
-    const CMIUtilString m_constStrArgAllValues;
-    const CMIUtilString m_constStrArgSimpleValues;
     const CMIUtilString m_constStrArgFrameLow;
     const CMIUtilString m_constStrArgFrameHigh;
 };
@@ -207,9 +204,6 @@ class CMICmdCmdStackListLocals : public CMICmdBase
     const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgFrame;       // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgPrintValues;
-    const CMIUtilString m_constStrArgNoValues;
-    const CMIUtilString m_constStrArgAllValues;
-    const CMIUtilString m_constStrArgSimpleValues;
 };
 
 //++ ============================================================================
@@ -243,9 +237,6 @@ private:
     const CMIUtilString m_constStrArgThread;
     const CMIUtilString m_constStrArgFrame;
     const CMIUtilString m_constStrArgPrintValues;
-    const CMIUtilString m_constStrArgNoValues;
-    const CMIUtilString m_constStrArgAllValues;
-    const CMIUtilString m_constStrArgSimpleValues;
 };
 
 //++ ============================================================================

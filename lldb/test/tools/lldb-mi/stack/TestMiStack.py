@@ -43,16 +43,14 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that -stack-list-arguments lists stack arguments with all values
         self.runCmd("-stack-list-arguments 1 0 0")
         self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}\]")
-        # FIXME: first 0 is treated as --no-values
         self.runCmd("-stack-list-arguments --all-values 0 0")
-        #self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}\]")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}\]")
 
         # Test that -stack-list-arguments lists stack arguments with simple values
         self.runCmd("-stack-list-arguments 2 0 1")
         self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
-        # FIXME: first 0 is treated as --no-values
         self.runCmd("-stack-list-arguments --simple-values 0 1")
-        #self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
 
         # Test that an invalid low-frame is handled 
         # FIXME: -1 is treated as unsigned int
