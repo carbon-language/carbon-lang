@@ -63,10 +63,10 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent);
     bool HandleProcessEventStateRunning(void);
     bool HandleProcessEventStateExited(void);
-    bool HandleProcessEventStateStopped(bool &vwrbShouldBrk);
+    bool HandleProcessEventStateStopped(const lldb::SBEvent &vrEvent, bool &vwrbShouldBrk);
     bool HandleProcessEventStopReasonTrace(void);
     bool HandleProcessEventStopReasonBreakpoint(void);
-    bool HandleProcessEventStopSignal(bool &vwrbShouldBrk);
+    bool HandleProcessEventStopSignal(const lldb::SBEvent &vrEvent);
     bool HandleProcessEventStopException(void);
     bool HandleProcessEventStateSuspended(const lldb::SBEvent &vEvent);
     bool HandleTargetEventBroadcastBitModulesLoaded(const lldb::SBEvent &vEvent);

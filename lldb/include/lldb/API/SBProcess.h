@@ -260,6 +260,9 @@ public:
 
     static lldb::SBProcess
     GetProcessFromEvent (const lldb::SBEvent &event);
+
+    static bool
+    GetInterruptedFromEvent (const lldb::SBEvent &event);
     
     static bool
     EventIsProcessEvent (const lldb::SBEvent &event);

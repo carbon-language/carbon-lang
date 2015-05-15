@@ -999,6 +999,12 @@ SBProcess::GetProcessFromEvent (const SBEvent &event)
 }
 
 bool
+SBProcess::GetInterruptedFromEvent (const SBEvent &event)
+{
+    return Process::ProcessEventData::GetInterruptedFromEvent(event.get());
+}
+
+bool
 SBProcess::EventIsProcessEvent (const SBEvent &event)
 {
     return event.GetBroadcasterClass() == SBProcess::GetBroadcasterClass();
