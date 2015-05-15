@@ -26,6 +26,7 @@
 
 #include "llvm/Support/Casting.h"
 
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
@@ -4036,14 +4037,21 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
             // functions debugging FreeBSD and Linux binaries.
             // If we didn't find any functions in the global namespace try
             // looking in the basename index but ignore any returned
-            // functions that have a namespace (ie. mangled names starting with 
-            // '_ZN') but keep functions which have an anonymous namespace
+            // functions that have a namespace but keep functions which
+            // have an anonymous namespace
+            // TODO: The arch in the object file isn't correct for MSVC
+            // binaries on windows, we should find a way to make it
+            // correct and handle those symbols as well.
             if (sc_list.GetSize() == 0)
             {
-                SymbolContextList temp_sc_list;
-                FindFunctions (name, m_function_basename_index, include_inlines, temp_sc_list);
-                if (!namespace_decl)
+                ArchSpec arch;
+                if (!namespace_decl &&
+                    GetObjectFile()->GetArchitecture(arch) &&
+                    (arch.GetTriple().isOSFreeBSD() || arch.GetTriple().isOSLinux() ||
+                     arch.GetMachine() == llvm::Triple::hexagon))
                 {
+                    SymbolContextList temp_sc_list;
+                    FindFunctions (name, m_function_basename_index, include_inlines, temp_sc_list);
                     SymbolContext sc;
                     for (uint32_t i = 0; i < temp_sc_list.GetSize(); i++)
                     {
@@ -4051,6 +4059,8 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         {
                             ConstString mangled_name = sc.GetFunctionName(Mangled::ePreferMangled);
                             ConstString demangled_name = sc.GetFunctionName(Mangled::ePreferDemangled);
+                            // Mangled names on Linux and FreeBSD are of the form:
+                            // _ZN18function_namespace13function_nameEv.
                             if (strncmp(mangled_name.GetCString(), "_ZN", 3) ||
                                 !strncmp(demangled_name.GetCString(), "(anonymous namespace)", 21))
                             {
