@@ -44,6 +44,29 @@ define void @non_canonicalized(i32 %b, i32 %s) {
   ret void
 }
 
+define void @or(i32 %a, i32 %s) {
+  %b = shl i32 %a, 1
+; CHECK-LABEL: @or(
+  ; foo(b * s);
+  %mul0 = mul i32 %b, %s
+; CHECK: [[base:[^ ]+]] = mul i32
+  call void @foo(i32 %mul0)
+
+  ; foo((b | 1) * s);
+  %b1 = or i32 %b, 1
+  %mul1 = mul i32 %b1, %s
+; CHECK: add i32 [[base]], %s
+  call void @foo(i32 %mul1)
+
+  ; foo((b | 2) * s);
+  %b2 = or i32 %b, 2
+  %mul2 = mul i32 %b2, %s
+; CHECK: mul i32 %b2, %s
+  call void @foo(i32 %mul2)
+
+  ret void
+}
+
 ; foo(a * b)
 ; foo((a + 1) * b)
 ; foo(a * (b + 1))

@@ -61,6 +61,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
@@ -404,20 +405,37 @@ void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForAdd(
   }
 }
 
+// Returns true if A matches B + C where C is constant.
+static bool matchesAdd(Value *A, Value *&B, ConstantInt *&C) {
+  return (match(A, m_Add(m_Value(B), m_ConstantInt(C))) ||
+          match(A, m_Add(m_ConstantInt(C), m_Value(B))));
+}
+
+// Returns true if A matches B | C where C is constant.
+static bool matchesOr(Value *A, Value *&B, ConstantInt *&C) {
+  return (match(A, m_Or(m_Value(B), m_ConstantInt(C))) ||
+          match(A, m_Or(m_ConstantInt(C), m_Value(B))));
+}
+
 void StraightLineStrengthReduce::allocateCandidatesAndFindBasisForMul(
     Value *LHS, Value *RHS, Instruction *I) {
   Value *B = nullptr;
   ConstantInt *Idx = nullptr;
-  if (match(LHS, m_Add(m_Value(B), m_ConstantInt(Idx))) ||
-      match(LHS, m_Add(m_ConstantInt(Idx), m_Value(B)))) {
+  if (matchesAdd(LHS, B, Idx)) {
     // If LHS is in the form of "Base + Index", then I is in the form of
     // "(Base + Index) * RHS".
+    allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(B), Idx, RHS, I);
+  } else if (matchesOr(LHS, B, Idx) && haveNoCommonBitsSet(B, Idx, *DL)) {
+    // If LHS is in the form of "Base | Index" and Base and Index have no common
+    // bits set, then
+    //   Base | Index = Base + Index
+    // and I is thus in the form of "(Base + Index) * RHS".
     allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(B), Idx, RHS, I);
   } else {
     // Otherwise, at least try the form (LHS + 0) * RHS.
     ConstantInt *Zero = ConstantInt::get(cast<IntegerType>(I->getType()), 0);
     allocateCandidatesAndFindBasis(Candidate::Mul, SE->getSCEV(LHS), Zero, RHS,
-                                  I);
+                                   I);
   }
 }
 
