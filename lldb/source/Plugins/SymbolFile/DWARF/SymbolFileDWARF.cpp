@@ -1103,7 +1103,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
                 func_name.SetValue(ConstString(mangled), true);
             else if (die->GetParent()->Tag() == DW_TAG_compile_unit &&
                      LanguageRuntime::LanguageIsCPlusPlus(dwarf_cu->GetLanguageType()) &&
-                     strcmp(name, "main") != 0)
+                     name && strcmp(name, "main") != 0)
             {
                 // If the mangled name is not present in the DWARF, generate the demangled name
                 // using the decl context. We skip if the function is "main" as its name is
