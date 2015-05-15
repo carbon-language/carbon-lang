@@ -1548,10 +1548,24 @@ Process::UpdateThreadListIfNeeded ()
                         for (size_t i=0; i<num_old_threads; ++i)
                             old_thread_list.GetThreadAtIndex(i, false)->ClearBackingThread();
 
+                        // Turn off dynamic types to ensure we don't run any expressions. Objective C
+                        // can run an expression to determine if a SBValue is a dynamic type or not
+                        // and we need to avoid this. OperatingSystem plug-ins can't run expressions
+                        // that require running code...
+
+                        Target &target = GetTarget();
+                        const lldb::DynamicValueType saved_prefer_dynamic = target.GetPreferDynamicValue ();
+                        if (saved_prefer_dynamic != lldb::eNoDynamicValues)
+                            target.SetPreferDynamicValue(lldb::eNoDynamicValues);
+
                         // Now let the OperatingSystem plug-in update the thread list
+
                         os->UpdateThreadList (old_thread_list,  // Old list full of threads created by OS plug-in
                                               real_thread_list, // The actual thread list full of threads created by each lldb_private::Process subclass
                                               new_thread_list); // The new thread list that we will show to the user that gets filled in
+
+                        if (saved_prefer_dynamic != lldb::eNoDynamicValues)
+                            target.SetPreferDynamicValue(saved_prefer_dynamic);
                     }
                     else
                     {

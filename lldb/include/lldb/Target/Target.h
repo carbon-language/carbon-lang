@@ -69,7 +69,10 @@ public:
 
     lldb::DynamicValueType
     GetPreferDynamicValue() const;
-    
+
+    bool
+    SetPreferDynamicValue (lldb::DynamicValueType d);
+
     bool
     GetDisableASLR () const;
     

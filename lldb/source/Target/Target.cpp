@@ -3217,6 +3217,14 @@ TargetProperties::GetPreferDynamicValue() const
 }
 
 bool
+TargetProperties::SetPreferDynamicValue (lldb::DynamicValueType d)
+{
+    const uint32_t idx = ePropertyPreferDynamic;
+    return m_collection_sp->SetPropertyAtIndexAsEnumeration(NULL, idx, d);
+}
+
+
+bool
 TargetProperties::GetDisableASLR () const
 {
     const uint32_t idx = ePropertyDisableASLR;
