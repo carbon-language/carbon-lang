@@ -951,6 +951,8 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
         ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
         None, None, "safepoint_token");
 
+    Invoke->setCallingConv(ToReplace->getCallingConv());
+
     // In case if we can handle this set of attributes - set up function
     // attributes directly on statepoint and return attributes later for
     // gc_result intrinsic.
