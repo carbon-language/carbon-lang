@@ -83,10 +83,22 @@ ELF-MIPS-NEXT: AddressSize: 32bit
 ELF-MIPS-NEXT: LoadName:
 ELF-MIPS-NEXT: ProgramHeaders [
 ELF-MIPS-NEXT:   ProgramHeader {
+ELF-MIPS-NEXT:     Type: PT_MIPS_ABIFLAGS (0x70000003)
+ELF-MIPS-NEXT:     Offset: 0x98
+ELF-MIPS-NEXT:     VirtualAddress: 0x400098
+ELF-MIPS-NEXT:     PhysicalAddress: 0x400098
+ELF-MIPS-NEXT:     FileSize: 24
+ELF-MIPS-NEXT:     MemSize: 24
+ELF-MIPS-NEXT:     Flags [ (0x4)
+ELF-MIPS-NEXT:       PF_R (0x4)
+ELF-MIPS-NEXT:     ]
+ELF-MIPS-NEXT:     Alignment: 8
+ELF-MIPS-NEXT:   }
+ELF-MIPS-NEXT:   ProgramHeader {
 ELF-MIPS-NEXT:     Type: PT_MIPS_REGINFO (0x70000000)
-ELF-MIPS-NEXT:     Offset: 0x74
-ELF-MIPS-NEXT:     VirtualAddress: 0x400074
-ELF-MIPS-NEXT:     PhysicalAddress: 0x400074
+ELF-MIPS-NEXT:     Offset: 0xB0
+ELF-MIPS-NEXT:     VirtualAddress: 0x4000B0
+ELF-MIPS-NEXT:     PhysicalAddress: 0x4000B0
 ELF-MIPS-NEXT:     FileSize: 24
 ELF-MIPS-NEXT:     MemSize: 24
 ELF-MIPS-NEXT:     Flags [ (0x4)
@@ -99,8 +111,8 @@ ELF-MIPS-NEXT:     Type: PT_LOAD (0x1)
 ELF-MIPS-NEXT:     Offset: 0x0
 ELF-MIPS-NEXT:     VirtualAddress: 0x400000
 ELF-MIPS-NEXT:     PhysicalAddress: 0x400000
-ELF-MIPS-NEXT:     FileSize: 160
-ELF-MIPS-NEXT:     MemSize: 160
+ELF-MIPS-NEXT:     FileSize: 224
+ELF-MIPS-NEXT:     MemSize: 224
 ELF-MIPS-NEXT:     Flags [ (0x5)
 ELF-MIPS-NEXT:       PF_R (0x4)
 ELF-MIPS-NEXT:       PF_X (0x1)
