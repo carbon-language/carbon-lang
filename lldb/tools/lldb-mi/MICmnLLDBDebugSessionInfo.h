@@ -110,10 +110,9 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     //--
     enum VariableInfoFormat_e
     {
-        eVariableInfoFormat_NoValues,
-        eVariableInfoFormat_AllValues,
-        eVariableInfoFormat_SimpleValues,
-        kNumVariableInfoFormats
+        eVariableInfoFormat_NoValues     = 0,
+        eVariableInfoFormat_AllValues    = 1,
+        eVariableInfoFormat_SimpleValues = 2
     };
 
     //++ ===================================================================
