@@ -6313,11 +6313,9 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "                 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
                "                 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
                "                 1, 22, 333, 4444, 55555, 666666, 7777777};");
-  verifyFormat("vector<int> x = {1, 22, 333, 4444, 55555, 666666, 7777777,\n"
-               "                 // line comment\n"
+  verifyFormat("vector<int> x = {1, 22, 333, 4444, 55555, 666666, 7777777, //\n"
                "                 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
-               "                 1, 22, 333, 4444, 55555,\n"
-               "                 // line comment\n"
+               "                 1, 22, 333, 4444, 55555, //\n"
                "                 1, 22, 333, 4444, 55555, 666666, 7777777,\n"
                "                 1, 22, 333, 4444, 55555, 666666, 7777777};");
   verifyFormat(
@@ -6329,6 +6327,14 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
       "                 7777777, 1,  22,  333,  4444,  55555,  666666,\n"
       "                 7777777};");
   verifyFormat("static const uint16_t CallerSavedRegs64Bittttt[] = {\n"
+               "    X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,\n"
+               "    X86::R8,  X86::R9,  X86::R10, X86::R11, 0};");
+  verifyFormat("static const uint16_t CallerSavedRegs64Bittttt[] = {\n"
+               "    X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,\n"
+               "    // Separating comment.\n"
+               "    X86::R8, X86::R9, X86::R10, X86::R11, 0};");
+  verifyFormat("static const uint16_t CallerSavedRegs64Bittttt[] = {\n"
+               "    // Leading comment\n"
                "    X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,\n"
                "    X86::R8,  X86::R9,  X86::R10, X86::R11, 0};");
   verifyFormat("vector<int> x = {1, 1, 1, 1,\n"

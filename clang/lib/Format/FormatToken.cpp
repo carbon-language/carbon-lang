@@ -153,10 +153,13 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   // trailing comments which are otherwise ignored for column alignment.
   SmallVector<unsigned, 8> EndOfLineItemLength;
 
+  bool HasSeparatingComment = false;
   for (unsigned i = 0, e = Commas.size() + 1; i != e; ++i) {
     // Skip comments on their own line.
-    while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment())
+    while (ItemBegin->HasUnescapedNewline && ItemBegin->isTrailingComment()) {
       ItemBegin = ItemBegin->Next;
+      HasSeparatingComment = i > 0;
+    }
 
     MustBreakBeforeItem.push_back(ItemBegin->MustBreakBefore);
     if (ItemBegin->is(tok::l_brace))
@@ -193,10 +196,9 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     ItemBegin = ItemEnd->Next;
   }
 
-  // If this doesn't have a nested list, we require at least 6 elements in order
-  // create a column layout. If it has a nested list, column layout ensures one
-  // list element per line.
-  if (Commas.size() < 5 || Token->NestingLevel != 0)
+  // Don't use column layout for nested lists, lists with few elements and in
+  // presence of separating comments.
+  if (Token->NestingLevel != 0 || Commas.size() < 5 || HasSeparatingComment)
     return;
 
   // We can never place more than ColumnLimit / 3 items in a row (because of the
