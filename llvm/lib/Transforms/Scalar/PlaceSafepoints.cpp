@@ -949,7 +949,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
         ID, NumPatchBytes, StatepointTarget, ToReplace->getNormalDest(),
         ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
-        Builder.getInt32(0), None, "safepoint_token");
+        None, None, "safepoint_token");
 
     // In case if we can handle this set of attributes - set up function
     // attributes directly on statepoint and return attributes later for
