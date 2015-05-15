@@ -1758,7 +1758,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     tmpInst.addOperand(MCOperand::createReg(SrcReg));
     tmpInst.addOperand(MCOperand::createImm(ImmValue));
     Instructions.push_back(tmpInst);
-  } else if ((ImmValue & 0xffffffff) == ImmValue) {
+  } else if (isInt<32>(ImmValue) || isUInt<32>(ImmValue)) {
     if (!AssemblerOptions.back()->isMacro())
       Warning(IDLoc, "macro instruction expanded into multiple instructions");
 
@@ -1768,10 +1768,23 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
-    tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
-    tmpInst.addOperand(MCOperand::createImm(Bits31To16));
-    Instructions.push_back(tmpInst);
+    if (!Is32BitImm && !isInt<32>(ImmValue)) {
+      // For DLI, expand to an ORi instead of a LUi to avoid sign-extending the
+      // upper 32 bits.
+      tmpInst.setOpcode(Mips::ORi);
+      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createReg(Mips::ZERO));
+      tmpInst.addOperand(MCOperand::createImm(Bits31To16));
+      tmpInst.setLoc(IDLoc);
+      Instructions.push_back(tmpInst);
+      // Move the value to the upper 16 bits by doing a 16-bit left shift.
+      createLShiftOri<16>(0, DstReg, IDLoc, Instructions);
+    } else {
+      tmpInst.setOpcode(Mips::LUi);
+      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createImm(Bits31To16));
+      Instructions.push_back(tmpInst);
+    }
     createLShiftOri<0>(Bits15To0, DstReg, IDLoc, Instructions);
 
     if (UseSrcReg)

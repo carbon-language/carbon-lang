@@ -178,3 +178,18 @@
 # CHECK: ori    $8, $8, 65534       # encoding: [0xfe,0xff,0x08,0x35]
 # CHECK: dsll   $8, $8, 16          # encoding: [0x38,0x44,0x08,0x00]
 # CHECK: ori    $8, $8, 65535       # encoding: [0xff,0xff,0x08,0x35]
+
+# Check that signed negative 32-bit immediates are loaded correctly:
+  li $10, ~(0x101010)
+# CHECK: lui $10, 65519        # encoding: [0xef,0xff,0x0a,0x3c]
+# CHECK: ori $10, $10, 61423   # encoding: [0xef,0xef,0x4a,0x35]
+# CHECK-NOT: dsll
+
+  dli $10, ~(0x202020)
+# CHECK: lui $10, 65503        # encoding: [0xdf,0xff,0x0a,0x3c]
+# CHECK: ori $10, $10, 57311   # encoding: [0xdf,0xdf,0x4a,0x35]
+# CHECK-NOT: dsll
+
+  dli $9, 0x80000000
+# CHECK: ori  $9, $zero, 32768 # encoding: [0x00,0x80,0x09,0x34]
+# CHECK: dsll $9, $9, 16       # encoding: [0x38,0x4c,0x09,0x00]
