@@ -11,6 +11,7 @@
 #define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIFLAGSSECTION_H
 
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MipsABIFlags.h"
 
 namespace llvm {

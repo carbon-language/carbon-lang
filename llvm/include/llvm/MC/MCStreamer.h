@@ -16,12 +16,12 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCWinEH.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/SMLoc.h"
 #include <string>
 
 namespace llvm {
