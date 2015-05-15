@@ -385,8 +385,8 @@ namespace process_linux {
         };
         typedef std::unique_ptr<PendingNotification> PendingNotificationUP;
 
-        // Fire pending notification if no pending thread stops remain.
-        void SignalIfRequirementsSatisfied();
+        // Notify the delegate if all threads have stopped.
+        void SignalIfAllThreadsStopped();
 
         void
         RequestStopOnAllRunningThreads();

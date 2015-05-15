@@ -2601,18 +2601,8 @@ NativeProcessLinux::MonitorBreakpoint(lldb::pid_t pid, NativeThreadProtocolSP th
                 log->Printf("NativeProcessLinux::%s() pid = %" PRIu64 " fixup: %s",
                         __FUNCTION__, pid, error.AsCString());
 
-        auto it = m_threads_stepping_with_breakpoint.find(pid);
-        if (it != m_threads_stepping_with_breakpoint.end())
-        {
-            Error error = RemoveBreakpoint (it->second);
-            if (error.Fail())
-                if (log)
-                    log->Printf("NativeProcessLinux::%s() pid = %" PRIu64 " remove stepping breakpoint: %s",
-                            __FUNCTION__, pid, error.AsCString());
-
-            m_threads_stepping_with_breakpoint.erase(it);
+        if (m_threads_stepping_with_breakpoint.find(pid) != m_threads_stepping_with_breakpoint.end())
             std::static_pointer_cast<NativeThreadLinux>(thread_sp)->SetStoppedByTrace();
-        }
     }
     else
         if (log)
@@ -3023,7 +3013,6 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     if (log)
         log->Printf ("NativeProcessLinux::%s called: pid %" PRIu64, __FUNCTION__, GetID ());
 
-    bool stepping = false;
     bool software_single_step = !SupportHardwareSingleStepping();
 
     Monitor::ScopedOperationLock monitor_lock(*m_monitor_up);
@@ -3109,7 +3098,6 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                         return step_result;
                     },
                     false);
-            stepping = true;
             break;
         }
 
@@ -4081,7 +4069,7 @@ NativeProcessLinux::StopTrackingThread (lldb::tid_t thread_id)
     if (m_pending_notification_up)
     {
         m_pending_notification_up->wait_for_stop_tids.erase(thread_id);
-        SignalIfRequirementsSatisfied();
+        SignalIfAllThreadsStopped();
     }
 
     return found;
@@ -4331,10 +4319,24 @@ NativeProcessLinux::StopRunningThreads(const lldb::tid_t triggering_tid)
 }
 
 void
-NativeProcessLinux::SignalIfRequirementsSatisfied()
+NativeProcessLinux::SignalIfAllThreadsStopped()
 {
     if (m_pending_notification_up && m_pending_notification_up->wait_for_stop_tids.empty ())
     {
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_BREAKPOINTS));
+
+        // Clear any temporary breakpoints we used to implement software single stepping.
+        for (const auto &thread_info: m_threads_stepping_with_breakpoint)
+        {
+            Error error = RemoveBreakpoint (thread_info.second);
+            if (error.Fail())
+                if (log)
+                    log->Printf("NativeProcessLinux::%s() pid = %" PRIu64 " remove stepping breakpoint: %s",
+                            __FUNCTION__, thread_info.first, error.AsCString());
+        }
+        m_threads_stepping_with_breakpoint.clear();
+
+        // Notify the delegate about the stop
         SetCurrentThreadID(m_pending_notification_up->triggering_tid);
         SetState(StateType::eStateStopped, true);
         m_pending_notification_up.reset();
@@ -4386,7 +4388,7 @@ NativeProcessLinux::ThreadDidStop (lldb::tid_t tid, bool initiated_by_llgs)
     if (m_pending_notification_up)
     {
         m_pending_notification_up->wait_for_stop_tids.erase(tid);
-        SignalIfRequirementsSatisfied();
+        SignalIfAllThreadsStopped();
     }
 
     Error error;
@@ -4423,7 +4425,7 @@ NativeProcessLinux::DoStopThreads(PendingNotificationUP &&notification_up)
 
     RequestStopOnAllRunningThreads();
 
-    SignalIfRequirementsSatisfied();
+    SignalIfAllThreadsStopped();
 }
 
 void
