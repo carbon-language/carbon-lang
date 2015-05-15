@@ -75,7 +75,7 @@ class MCFixup {
   /// The source location which gave rise to the fixup, if any.
   SMLoc Loc;
 public:
-  static MCFixup Create(uint32_t Offset, const MCExpr *Value,
+  static MCFixup create(uint32_t Offset, const MCExpr *Value,
                         MCFixupKind Kind, SMLoc Loc = SMLoc()) {
     assert(unsigned(Kind) < MaxTargetFixupKind && "Kind out of range!");
     MCFixup FI;

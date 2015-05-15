@@ -494,7 +494,7 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
   }
 
   MCFixup fixup =
-      MCFixup::Create(*Addend, MO.getExpr(), MCFixupKind(FixupKind));
+      MCFixup::create(*Addend, MO.getExpr(), MCFixupKind(FixupKind));
   Fixups.push_back(fixup);
   // All of the information is in the fixup.
   return (0);

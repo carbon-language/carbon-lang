@@ -355,7 +355,7 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
                                    Ctx);
 
   // Emit a symbolic constant as a fixup and 4 zeros.
-  Fixups.push_back(MCFixup::Create(CurByte, Expr, FixupKind, Loc));
+  Fixups.push_back(MCFixup::create(CurByte, Expr, FixupKind, Loc));
   EmitConstant(0, Size, CurByte, OS);
 }
 

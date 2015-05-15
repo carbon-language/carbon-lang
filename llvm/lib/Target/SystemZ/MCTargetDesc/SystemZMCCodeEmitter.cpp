@@ -227,12 +227,12 @@ SystemZMCCodeEmitter::getPCRelEncoding(const MCInst &MI, unsigned OpNum,
       Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
     }
   }
-  Fixups.push_back(MCFixup::Create(Offset, Expr, (MCFixupKind)Kind));
+  Fixups.push_back(MCFixup::create(Offset, Expr, (MCFixupKind)Kind));
 
   // Output the fixup for the TLS marker if present.
   if (AllowTLS && OpNum + 1 < MI.getNumOperands()) {
     const MCOperand &MOTLS = MI.getOperand(OpNum + 1);
-    Fixups.push_back(MCFixup::Create(0, MOTLS.getExpr(),
+    Fixups.push_back(MCFixup::create(0, MOTLS.getExpr(),
                                      (MCFixupKind)SystemZ::FK_390_TLS_CALL));
   }
   return 0;
