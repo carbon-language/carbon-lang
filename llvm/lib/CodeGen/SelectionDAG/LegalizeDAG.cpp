@@ -3299,6 +3299,26 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Results.push_back(Tmp1);
     break;
   }
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX: {
+    // Expand Y = MAX(A, B) -> Y = (A > B) ? A : B
+    ISD::CondCode Pred;
+    switch (Node->getOpcode()) {
+    default: llvm_unreachable("How did we get here?");
+    case ISD::SMAX: Pred = ISD::SETGT; break;
+    case ISD::SMIN: Pred = ISD::SETLT; break;
+    case ISD::UMAX: Pred = ISD::SETUGT; break;
+    case ISD::UMIN: Pred = ISD::SETULT; break;
+    }
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = Node->getOperand(1);
+    Tmp1 = DAG.getSelectCC(dl, Tmp1, Tmp2, Tmp1, Tmp2, Pred);
+    Results.push_back(Tmp1);
+    break;
+  }
+    
   case ISD::FMINNUM:
     Results.push_back(ExpandFPLibCall(Node, RTLIB::FMIN_F32, RTLIB::FMIN_F64,
                                       RTLIB::FMIN_F80, RTLIB::FMIN_F128,

@@ -671,6 +671,10 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UREM:
   case ISD::SREM:
   case ISD::FREM:
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX:
     SplitVecRes_BinOp(N, Lo, Hi);
     break;
   case ISD::FMA:

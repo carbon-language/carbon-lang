@@ -71,6 +71,10 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::VSELECT:     Res = PromoteIntRes_VSELECT(N); break;
   case ISD::SELECT_CC:   Res = PromoteIntRes_SELECT_CC(N); break;
   case ISD::SETCC:       Res = PromoteIntRes_SETCC(N); break;
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX:        Res = PromoteIntRes_SimpleIntBinOp(N); break;
   case ISD::SHL:         Res = PromoteIntRes_SHL(N); break;
   case ISD::SIGN_EXTEND_INREG:
                          Res = PromoteIntRes_SIGN_EXTEND_INREG(N); break;

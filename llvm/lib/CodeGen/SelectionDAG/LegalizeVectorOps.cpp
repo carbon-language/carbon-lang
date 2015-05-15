@@ -322,6 +322,10 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::ANY_EXTEND_VECTOR_INREG:
   case ISD::SIGN_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND_VECTOR_INREG:
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX:
     QueryType = Node->getValueType(0);
     break;
   case ISD::FP_ROUND_INREG:

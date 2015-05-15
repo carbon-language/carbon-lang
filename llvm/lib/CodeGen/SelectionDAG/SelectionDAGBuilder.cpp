@@ -2257,19 +2257,47 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
 
   SmallVector<SDValue, 4> Values(NumValues);
   SDValue Cond     = getValue(I.getOperand(0));
-  SDValue TrueVal  = getValue(I.getOperand(1));
-  SDValue FalseVal = getValue(I.getOperand(2));
+  SDValue LHSVal   = getValue(I.getOperand(1));
+  SDValue RHSVal   = getValue(I.getOperand(2));
+  auto BaseOps = {Cond};
   ISD::NodeType OpCode = Cond.getValueType().isVector() ?
     ISD::VSELECT : ISD::SELECT;
 
-  for (unsigned i = 0; i != NumValues; ++i)
+  // Min/max matching is only viable if all output VTs are the same.
+  if (std::equal(ValueVTs.begin(), ValueVTs.end(), ValueVTs.begin())) {
+    Value *LHS, *RHS;
+    SelectPatternFlavor SPF = matchSelectPattern(const_cast<User*>(&I), LHS, RHS);
+    ISD::NodeType Opc = ISD::DELETED_NODE;
+    switch (SPF) {
+    case SPF_UMAX: Opc = ISD::UMAX; break;
+    case SPF_UMIN: Opc = ISD::UMIN; break;
+    case SPF_SMAX: Opc = ISD::SMAX; break;
+    case SPF_SMIN: Opc = ISD::SMIN; break;
+    default: break;
+    }
+
+    EVT VT = ValueVTs[0];
+    LLVMContext &Ctx = *DAG.getContext();
+    while (DAG.getTargetLoweringInfo().getTypeToTransformTo(Ctx, VT) != VT)
+      VT = DAG.getTargetLoweringInfo().getTypeToTransformTo(Ctx, VT);
+
+    if (Opc != ISD::DELETED_NODE &&
+        DAG.getTargetLoweringInfo().isOperationLegalOrCustom(Opc, VT)) {
+      OpCode = Opc;
+      LHSVal = getValue(LHS);
+      RHSVal = getValue(RHS);
+      BaseOps = {};
+    }
+  }
+
+  for (unsigned i = 0; i != NumValues; ++i) {
+    SmallVector<SDValue, 3> Ops(BaseOps.begin(), BaseOps.end());
+    Ops.push_back(SDValue(LHSVal.getNode(), LHSVal.getResNo() + i));
+    Ops.push_back(SDValue(RHSVal.getNode(), RHSVal.getResNo() + i));
     Values[i] = DAG.getNode(OpCode, getCurSDLoc(),
-                            TrueVal.getNode()->getValueType(TrueVal.getResNo()+i),
-                            Cond,
-                            SDValue(TrueVal.getNode(),
-                                    TrueVal.getResNo() + i),
-                            SDValue(FalseVal.getNode(),
-                                    FalseVal.getResNo() + i));
+                            LHSVal.getNode()->getValueType(LHSVal.getResNo()+i),
+                            Ops);
+  }
 
   setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurSDLoc(),
                            DAG.getVTList(ValueVTs), Values));

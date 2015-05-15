@@ -811,6 +811,10 @@ void TargetLoweringBase::initActions() {
     setOperationAction(ISD::FMINNUM, VT, Expand);
     setOperationAction(ISD::FMAXNUM, VT, Expand);
     setOperationAction(ISD::FMAD, VT, Expand);
+    setOperationAction(ISD::SMIN, VT, Expand);
+    setOperationAction(ISD::SMAX, VT, Expand);
+    setOperationAction(ISD::UMIN, VT, Expand);
+    setOperationAction(ISD::UMAX, VT, Expand);
 
     // Overflow operations default to expand
     setOperationAction(ISD::SADDO, VT, Expand);

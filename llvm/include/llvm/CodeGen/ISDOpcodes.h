@@ -308,6 +308,10 @@ namespace ISD {
     /// part.
     MULHU, MULHS,
 
+    /// [US]{MIN/MAX} - Binary minimum or maximum or signed or unsigned
+    /// integers.
+    SMIN, SMAX, UMIN, UMAX,
+
     /// Bitwise operators - logical and, logical or, logical xor.
     AND, OR, XOR,
 
