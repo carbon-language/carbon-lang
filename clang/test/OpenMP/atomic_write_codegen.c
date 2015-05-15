@@ -265,21 +265,18 @@ int main() {
 // CHECK-DAG: load i8, i8*
 // CHECK-DAG: [[VEC_ITEM_VAL:%.+]] = zext i1 %{{.+}} to i32
 // CHECK: [[I128VAL:%.+]] = load atomic i128, i128* bitcast (<4 x i32>* [[DEST:@.+]] to i128*) monotonic
-// CHECK: [[LD:%.+]] = bitcast i128 [[I128VAL]] to <4 x i32>
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[OLD_VEC_VAL:%.+]] = phi <4 x i32> [ [[LD]], %{{.+}} ], [ [[FAILED_OLD_VAL:%.+]], %[[CONT]] ]
-// CHECK: store <4 x i32> [[OLD_VEC_VAL]], <4 x i32>* [[LDTEMP:%.+]],
+// CHECK: [[OLD_I128:%.+]] = phi i128 [ [[I128VAL]], %{{.+}} ], [ [[FAILED_I128_OLD_VAL:%.+]], %[[CONT]] ]
+// CHECK: [[BITCAST:%.+]] = bitcast <4 x i32>* [[LDTEMP:%.+]] to i128*
+// CHECK: store i128 [[OLD_I128]], i128* [[BITCAST]],
 // CHECK: [[VEC_VAL:%.+]] = load <4 x i32>, <4 x i32>* [[LDTEMP]]
 // CHECK: [[NEW_VEC_VAL:%.+]] = insertelement <4 x i32> [[VEC_VAL]], i32 [[VEC_ITEM_VAL]], i16 [[IDX]]
 // CHECK: store <4 x i32> [[NEW_VEC_VAL]], <4 x i32>* [[LDTEMP]]
-// CHECK: [[NEW_VEC_VAL:%.+]] = load <4 x i32>, <4 x i32>* [[LDTEMP]]
-// CHECK: [[OLD_I128:%.+]] = bitcast <4 x i32> [[OLD_VEC_VAL]] to i128
-// CHECK: [[NEW_I128:%.+]] = bitcast <4 x i32> [[NEW_VEC_VAL]] to i128
+// CHECK: [[NEW_I128:%.+]] = load i128, i128* [[BITCAST]]
 // CHECK: [[RES:%.+]] = cmpxchg i128* bitcast (<4 x i32>* [[DEST]] to i128*), i128 [[OLD_I128]], i128 [[NEW_I128]] monotonic monotonic
 // CHECK: [[FAILED_I128_OLD_VAL:%.+]] = extractvalue { i128, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i128, i1 } [[RES]], 1
-// CHECK: [[FAILED_OLD_VAL]] = bitcast i128 [[FAILED_I128_OLD_VAL]] to <4 x i32>
 // CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
@@ -306,21 +303,18 @@ int main() {
 // CHECK: [[NEW_VAL:%.+]] = fptosi x86_fp80 %{{.+}} to i32
 // CHECK: [[BITCAST:%.+]] = bitcast i32* [[LDTEMP:%.+]] to i8*
 // CHECK: call void @__atomic_load(i64 4, i8* getelementptr (i8, i8* bitcast (%struct.BitFields_packed* @{{.+}} to i8*), i64 4), i8* [[BITCAST]], i32 0)
-// CHECK: [[PREV_VALUE:%.+]] = load i32, i32* [[LDTEMP]]
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[OLD_BF_VALUE:%.+]] = phi i32 [ [[PREV_VALUE]], %[[EXIT]] ], [ [[FAILED_OLD_VAL:%.+]], %[[CONT]] ]
+// CHECK: [[OLD_BF_VALUE:%.+]] = load i32, i32* [[LDTEMP]],
+// CHECK: store i32 [[OLD_BF_VALUE]], i32* [[LDTEMP1:%.+]],
+// CHECK: [[OLD_BF_VALUE:%.+]] = load i32, i32* [[LDTEMP1]],
 // CHECK: [[BF_VALUE:%.+]] = and i32 [[NEW_VAL]], 2147483647
-// CHECK: [[BF_CLEAR:%.+]] = and i32 %{{.+}}, -2147483648
+// CHECK: [[BF_CLEAR:%.+]] = and i32 [[OLD_BF_VALUE]], -2147483648
 // CHECK: or i32 [[BF_CLEAR]], [[BF_VALUE]]
-// CHECK: store i32 %{{.+}}, i32* [[LDTEMP:%.+]]
-// CHECK: [[NEW_BF_VALUE:%.+]] = load i32, i32* [[LDTEMP]]
-// CHECK: store i32 [[OLD_BF_VALUE]], i32* [[TEMP_OLD_BF_ADDR:%.+]],
-// CHECK: store i32 [[NEW_BF_VALUE]], i32* [[TEMP_NEW_BF_ADDR:%.+]],
-// CHECK: [[BITCAST_TEMP_OLD_BF_ADDR:%.+]] = bitcast i32* [[TEMP_OLD_BF_ADDR]] to i8*
-// CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i32* [[TEMP_NEW_BF_ADDR]] to i8*
+// CHECK: store i32 %{{.+}}, i32* [[LDTEMP1]]
+// CHECK: [[BITCAST_TEMP_OLD_BF_ADDR:%.+]] = bitcast i32* [[LDTEMP]] to i8*
+// CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i32* [[LDTEMP1]] to i8*
 // CHECK: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i64 4, i8* getelementptr (i8, i8* bitcast (%struct.BitFields_packed* @{{.+}} to i8*), i64 4), i8* [[BITCAST_TEMP_OLD_BF_ADDR]], i8* [[BITCAST_TEMP_NEW_BF_ADDR]], i32 0, i32 0)
-// CHECK: [[FAILED_OLD_VAL]] = load i32, i32* [[TEMP_OLD_BF_ADDR]]
 // CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
@@ -388,25 +382,19 @@ int main() {
 // CHECK: [[LDTEMP:%.+]] = bitcast i32* %{{.+}} to i24*
 // CHECK: [[BITCAST:%.+]] = bitcast i24* %{{.+}} to i8*
 // CHECK: call void @__atomic_load(i64 3, i8* getelementptr (i8, i8* bitcast (%struct.BitFields3_packed* @{{.+}} to i8*), i64 1), i8* [[BITCAST]], i32 0)
-// CHECK: [[PREV_VALUE:%.+]] = load i24, i24* [[LDTEMP]]
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[OLD_BF_VALUE:%.+]] = phi i24 [ [[PREV_VALUE]], %[[EXIT]] ], [ [[FAILED_OLD_VAL:%.+]], %[[CONT]] ]
+// CHECK: [[OLD_VAL:%.+]] = load i24, i24* %{{.+}},
+// CHECK: store i24 [[OLD_VAL]], i24* [[TEMP:%.+]],
 // CHECK: [[TRUNC:%.+]] = trunc i32 [[NEW_VAL]] to i24
 // CHECK: [[BF_AND:%.+]] = and i24 [[TRUNC]], 16383
 // CHECK: [[BF_VALUE:%.+]] = shl i24 [[BF_AND]], 3
 // CHECK: [[BF_CLEAR:%.+]] = and i24 %{{.+}}, -131065
 // CHECK: or i24 [[BF_CLEAR]], [[BF_VALUE]]
-// CHECK: store i24 %{{.+}}, i24* [[LDTEMP:%.+]]
-// CHECK: [[NEW_BF_VALUE:%.+]] = load i24, i24* [[LDTEMP]]
-// CHECK: [[TEMP_OLD_BF_ADDR:%.+]] = bitcast i32* %{{.+}} to i24*
-// CHECK: store i24 [[OLD_BF_VALUE]], i24* [[TEMP_OLD_BF_ADDR]]
-// CHECK: [[TEMP_NEW_BF_ADDR:%.+]] = bitcast i32* %{{.+}} to i24*
-// CHECK: store i24 [[NEW_BF_VALUE]], i24* [[TEMP_NEW_BF_ADDR]]
-// CHECK: [[BITCAST_TEMP_OLD_BF_ADDR:%.+]] = bitcast i24* [[TEMP_OLD_BF_ADDR]] to i8*
-// CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i24* [[TEMP_NEW_BF_ADDR]] to i8*
+// CHECK: store i24 %{{.+}}, i24* [[TEMP]]
+// CHECK: [[BITCAST_TEMP_OLD_BF_ADDR:%.+]] = bitcast i24* [[LDTEMP]] to i8*
+// CHECK: [[BITCAST_TEMP_NEW_BF_ADDR:%.+]] = bitcast i24* [[TEMP]] to i8*
 // CHECK: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i64 3, i8* getelementptr (i8, i8* bitcast (%struct.BitFields3_packed* @{{.+}} to i8*), i64 1), i8* [[BITCAST_TEMP_OLD_BF_ADDR]], i8* [[BITCAST_TEMP_NEW_BF_ADDR]], i32 0, i32 0)
-// CHECK: [[FAILED_OLD_VAL]] = load i24, i24* [[TEMP_OLD_BF_ADDR]]
 // CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write
@@ -492,21 +480,18 @@ int main() {
 // CHECK: load i64, i64*
 // CHECK: [[VEC_ITEM_VAL:%.+]] = uitofp i64 %{{.+}} to float
 // CHECK: [[I64VAL:%.+]] = load atomic i64, i64* bitcast (<2 x float>* [[DEST:@.+]] to i64*) monotonic
-// CHECK: [[LD:%.+]] = bitcast i64 [[I64VAL]] to <2 x float>
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[OLD_VEC_VAL:%.+]] = phi <2 x float> [ [[LD]], %{{.+}} ], [ [[FAILED_OLD_VAL:%.+]], %[[CONT]] ]
-// CHECK: store <2 x float> [[OLD_VEC_VAL]], <2 x float>* [[LDTEMP:%.+]],
+// CHECK: [[OLD_I64:%.+]] = phi i64 [ [[I64VAL]], %{{.+}} ], [ [[FAILED_I64_OLD_VAL:%.+]], %[[CONT]] ]
+// CHECK: [[BITCAST:%.+]] = bitcast <2 x float>* [[LDTEMP:%.+]] to i64*
+// CHECK: store i64 [[OLD_I64]], i64* [[BITCAST]],
 // CHECK: [[VEC_VAL:%.+]] = load <2 x float>, <2 x float>* [[LDTEMP]]
 // CHECK: [[NEW_VEC_VAL:%.+]] = insertelement <2 x float> [[VEC_VAL]], float [[VEC_ITEM_VAL]], i64 0
 // CHECK: store <2 x float> [[NEW_VEC_VAL]], <2 x float>* [[LDTEMP]]
-// CHECK: [[NEW_VEC_VAL:%.+]] = load <2 x float>, <2 x float>* [[LDTEMP]]
-// CHECK: [[OLD_I64:%.+]] = bitcast <2 x float> [[OLD_VEC_VAL]] to i64
-// CHECK: [[NEW_I64:%.+]] = bitcast <2 x float> [[NEW_VEC_VAL]] to i64
+// CHECK: [[NEW_I64:%.+]] = load i64, i64* [[BITCAST]]
 // CHECK: [[RES:%.+]] = cmpxchg i64* bitcast (<2 x float>* [[DEST]] to i64*), i64 [[OLD_I64]], i64 [[NEW_I64]] monotonic monotonic
 // CHECK: [[FAILED_I64_OLD_VAL:%.+]] = extractvalue { i64, i1 } [[RES]], 0
 // CHECK: [[FAIL_SUCCESS:%.+]] = extractvalue { i64, i1 } [[RES]], 1
-// CHECK: [[FAILED_OLD_VAL]] = bitcast i64 [[FAILED_I64_OLD_VAL]] to <2 x float>
 // CHECK: br i1 [[FAIL_SUCCESS]], label %[[EXIT:.+]], label %[[CONT]]
 // CHECK: [[EXIT]]
 #pragma omp atomic write

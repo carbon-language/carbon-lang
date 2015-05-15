@@ -298,19 +298,16 @@ int main() {
 // t_var += t_var_reduction;
 // CHECK: load float, float* [[T_VAR_PRIV]]
 // CHECK: [[T_VAR_REF_INT:%.+]] = bitcast float* [[T_VAR_REF]] to i32*
-// CHECK: load atomic i32, i32* [[T_VAR_REF_INT]] monotonic,
-// CHECK: [[OLD1:%.+]] = bitcast i32 %{{.+}} to float
+// CHECK: [[OLD1:%.+]] = load atomic i32, i32* [[T_VAR_REF_INT]] monotonic,
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[ORIG_OLD:%.+]] = phi float [ [[OLD1]], %{{.+}} ], [ [[OLD2:%.+]], %[[CONT]] ]
-// CHECK: [[UP:%.+]] = fadd float
-// CHECK: [[ORIG_OLD_INT:%.+]] = bitcast float [[ORIG_OLD]] to i32
-// CHECK: [[UP_INT:%.+]] = bitcast float [[UP]] to i32
+// CHECK: [[ORIG_OLD_INT:%.+]] = phi i32 [ [[OLD1]], %{{.+}} ], [ [[OLD2:%.+]], %[[CONT]] ]
+// CHECK: fadd float
+// CHECK: [[UP_INT:%.+]] = load i32
 // CHECK: [[T_VAR_REF_INT:%.+]] = bitcast float* [[T_VAR_REF]] to i32*
 // CHECK: [[RES:%.+]] = cmpxchg i32* [[T_VAR_REF_INT]], i32 [[ORIG_OLD_INT]], i32 [[UP_INT]] monotonic monotonic
-// CHECK: [[OLD_VAL_INT:%.+]] = extractvalue { i32, i1 } [[RES]], 0
+// CHECK: [[OLD2:%.+]] = extractvalue { i32, i1 } [[RES]], 0
 // CHECK: [[SUCCESS_FAIL:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: [[OLD2]] = bitcast i32 [[OLD_VAL_INT]] to float
 // CHECK: br i1 [[SUCCESS_FAIL]], label %[[ATOMIC_DONE:.+]], label %[[CONT]]
 // CHECK: [[ATOMIC_DONE]]
 
@@ -343,21 +340,18 @@ int main() {
 // t_var1 = min(t_var1, t_var1_reduction);
 // CHECK: load float, float* [[T_VAR1_PRIV]]
 // CHECK: [[T_VAR1_REF_INT:%.+]] = bitcast float* [[T_VAR1_REF]] to i32*
-// CHECK: load atomic i32, i32* [[T_VAR1_REF_INT]] monotonic,
-// CHECK: [[OLD1:%.+]] = bitcast i32 %{{.+}} to float
+// CHECK: [[OLD1:%.+]] = load atomic i32, i32* [[T_VAR1_REF_INT]] monotonic,
 // CHECK: br label %[[CONT:.+]]
 // CHECK: [[CONT]]
-// CHECK: [[ORIG_OLD:%.+]] = phi float [ [[OLD1]], %{{.+}} ], [ [[OLD2:%.+]], %{{.+}} ]
+// CHECK: [[ORIG_OLD_INT:%.+]] = phi i32 [ [[OLD1]], %{{.+}} ], [ [[OLD2:%.+]], %{{.+}} ]
 // CHECK: [[CMP:%.+]] = fcmp olt float
 // CHECK: br i1 [[CMP]]
 // CHECK: [[UP:%.+]] = phi float
-// CHECK: [[ORIG_OLD_INT:%.+]] = bitcast float [[ORIG_OLD]] to i32
-// CHECK: [[UP_INT:%.+]] = bitcast float [[UP]] to i32
+// CHECK: [[UP_INT:%.+]] = load i32
 // CHECK: [[T_VAR1_REF_INT:%.+]] = bitcast float* [[T_VAR1_REF]] to i32*
 // CHECK: [[RES:%.+]] = cmpxchg i32* [[T_VAR1_REF_INT]], i32 [[ORIG_OLD_INT]], i32 [[UP_INT]] monotonic monotonic
-// CHECK: [[OLD_VAL_INT:%.+]] = extractvalue { i32, i1 } [[RES]], 0
+// CHECK: [[OLD2:%.+]] = extractvalue { i32, i1 } [[RES]], 0
 // CHECK: [[SUCCESS_FAIL:%.+]] = extractvalue { i32, i1 } [[RES]], 1
-// CHECK: [[OLD2]] = bitcast i32 [[OLD_VAL_INT]] to float
 // CHECK: br i1 [[SUCCESS_FAIL]], label %[[ATOMIC_DONE:.+]], label %[[CONT]]
 // CHECK: [[ATOMIC_DONE]]
 

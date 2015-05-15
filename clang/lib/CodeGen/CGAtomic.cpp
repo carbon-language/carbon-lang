@@ -215,6 +215,17 @@ namespace {
         llvm::AtomicOrdering Failure = llvm::SequentiallyConsistent,
         bool IsWeak = false);
 
+    /// \brief Emits atomic update.
+    /// \brief AO Atomic ordering.
+    /// \brief UpdateOp Update operation for the current lvalue.
+    void EmitAtomicUpdate(llvm::AtomicOrdering AO,
+                          const llvm::function_ref<RValue(RValue)> &UpdateOp,
+                          bool IsVolatile);
+    /// \brief Emits atomic update.
+    /// \brief AO Atomic ordering.
+    void EmitAtomicUpdate(llvm::AtomicOrdering AO, RValue UpdateRVal,
+                          bool IsVolatile);
+
     /// Materialize an atomic r-value in atomic-layout memory.
     llvm::Value *materializeRValue(RValue rvalue) const;
 
@@ -235,16 +246,31 @@ namespace {
     /// \brief Emits atomic load as LLVM instruction.
     llvm::Value *EmitAtomicLoadOp(llvm::AtomicOrdering AO, bool IsVolatile);
     /// \brief Emits atomic compare-and-exchange op as a libcall.
-    std::pair<RValue, llvm::Value *> EmitAtomicCompareExchangeLibcall(
-        RValue Expected, RValue DesiredAddr,
+    llvm::Value *EmitAtomicCompareExchangeLibcall(
+        llvm::Value *ExpectedAddr, llvm::Value *DesiredAddr,
         llvm::AtomicOrdering Success = llvm::SequentiallyConsistent,
         llvm::AtomicOrdering Failure = llvm::SequentiallyConsistent);
     /// \brief Emits atomic compare-and-exchange op as LLVM instruction.
-    std::pair<RValue, llvm::Value *> EmitAtomicCompareExchangeOp(
-        RValue Expected, RValue Desired,
+    std::pair<llvm::Value *, llvm::Value *> EmitAtomicCompareExchangeOp(
+        llvm::Value *ExpectedVal, llvm::Value *DesiredVal,
         llvm::AtomicOrdering Success = llvm::SequentiallyConsistent,
         llvm::AtomicOrdering Failure = llvm::SequentiallyConsistent,
         bool IsWeak = false);
+    /// \brief Emit atomic update as libcalls.
+    void
+    EmitAtomicUpdateLibcall(llvm::AtomicOrdering AO,
+                            const llvm::function_ref<RValue(RValue)> &UpdateOp,
+                            bool IsVolatile);
+    /// \brief Emit atomic update as LLVM instructions.
+    void EmitAtomicUpdateOp(llvm::AtomicOrdering AO,
+                            const llvm::function_ref<RValue(RValue)> &UpdateOp,
+                            bool IsVolatile);
+    /// \brief Emit atomic update as libcalls.
+    void EmitAtomicUpdateLibcall(llvm::AtomicOrdering AO, RValue UpdateRVal,
+                                 bool IsVolatile);
+    /// \brief Emit atomic update as LLVM instructions.
+    void EmitAtomicUpdateOp(llvm::AtomicOrdering AO, RValue UpdateRal,
+                            bool IsVolatile);
   };
 }
 
@@ -1313,12 +1339,10 @@ llvm::Value *AtomicInfo::convertRValueToInt(RValue RVal) const {
                                        getAtomicAlignment().getQuantity());
 }
 
-std::pair<RValue, llvm::Value *> AtomicInfo::EmitAtomicCompareExchangeOp(
-    RValue Expected, RValue Desired, llvm::AtomicOrdering Success,
-    llvm::AtomicOrdering Failure, bool IsWeak) {
+std::pair<llvm::Value *, llvm::Value *> AtomicInfo::EmitAtomicCompareExchangeOp(
+    llvm::Value *ExpectedVal, llvm::Value *DesiredVal,
+    llvm::AtomicOrdering Success, llvm::AtomicOrdering Failure, bool IsWeak) {
   // Do the atomic store.
-  auto *ExpectedVal = convertRValueToInt(Expected);
-  auto *DesiredVal = convertRValueToInt(Desired);
   auto *Addr = emitCastToAtomicIntPointer(getAtomicAddress());
   auto *Inst = CGF.Builder.CreateAtomicCmpXchg(Addr, ExpectedVal, DesiredVal,
                                                Success, Failure);
@@ -1329,20 +1353,16 @@ std::pair<RValue, llvm::Value *> AtomicInfo::EmitAtomicCompareExchangeOp(
   // Okay, turn that back into the original value type.
   auto *PreviousVal = CGF.Builder.CreateExtractValue(Inst, /*Idxs=*/0);
   auto *SuccessFailureVal = CGF.Builder.CreateExtractValue(Inst, /*Idxs=*/1);
-  return std::make_pair(
-      ConvertIntToValueOrAtomic(PreviousVal, AggValueSlot::ignored(),
-                                SourceLocation(), /*AsValue=*/false),
-      SuccessFailureVal);
+  return std::make_pair(PreviousVal, SuccessFailureVal);
 }
 
-std::pair<RValue, llvm::Value *>
-AtomicInfo::EmitAtomicCompareExchangeLibcall(RValue Expected, RValue Desired,
+llvm::Value *
+AtomicInfo::EmitAtomicCompareExchangeLibcall(llvm::Value *ExpectedAddr,
+                                             llvm::Value *DesiredAddr,
                                              llvm::AtomicOrdering Success,
                                              llvm::AtomicOrdering Failure) {
   // bool __atomic_compare_exchange(size_t size, void *obj, void *expected,
   // void *desired, int success, int failure);
-  auto *ExpectedAddr = materializeRValue(Expected);
-  auto *DesiredAddr = materializeRValue(Desired);
   CallArgList Args;
   Args.add(RValue::get(getAtomicSizeValue()), CGF.getContext().getSizeType());
   Args.add(RValue::get(CGF.EmitCastToVoidPtr(getAtomicAddress())),
@@ -1360,10 +1380,7 @@ AtomicInfo::EmitAtomicCompareExchangeLibcall(RValue Expected, RValue Desired,
   auto SuccessFailureRVal = emitAtomicLibcall(CGF, "__atomic_compare_exchange",
                                               CGF.getContext().BoolTy, Args);
 
-  return std::make_pair(
-      convertTempToRValue(ExpectedAddr, AggValueSlot::ignored(),
-                          SourceLocation(), /*AsValue=*/false),
-      SuccessFailureRVal.getScalarVal());
+  return SuccessFailureRVal.getScalarVal();
 }
 
 std::pair<RValue, llvm::Value *> AtomicInfo::EmitAtomicCompareExchange(
@@ -1376,14 +1393,247 @@ std::pair<RValue, llvm::Value *> AtomicInfo::EmitAtomicCompareExchange(
   // Check whether we should use a library call.
   if (shouldUseLibcall()) {
     // Produce a source address.
-    return EmitAtomicCompareExchangeLibcall(Expected, Desired, Success,
-                                            Failure);
+    auto *ExpectedAddr = materializeRValue(Expected);
+    auto *DesiredAddr = materializeRValue(Desired);
+    auto *Res = EmitAtomicCompareExchangeLibcall(ExpectedAddr, DesiredAddr,
+                                                 Success, Failure);
+    return std::make_pair(
+        convertTempToRValue(ExpectedAddr, AggValueSlot::ignored(),
+                            SourceLocation(), /*AsValue=*/false),
+        Res);
   }
 
   // If we've got a scalar value of the right size, try to avoid going
   // through memory.
-  return EmitAtomicCompareExchangeOp(Expected, Desired, Success, Failure,
-                                     IsWeak);
+  auto *ExpectedVal = convertRValueToInt(Expected);
+  auto *DesiredVal = convertRValueToInt(Desired);
+  auto Res = EmitAtomicCompareExchangeOp(ExpectedVal, DesiredVal, Success,
+                                         Failure, IsWeak);
+  return std::make_pair(
+      ConvertIntToValueOrAtomic(Res.first, AggValueSlot::ignored(),
+                                SourceLocation(), /*AsValue=*/false),
+      Res.second);
+}
+
+static void
+EmitAtomicUpdateValue(CodeGenFunction &CGF, AtomicInfo &Atomics, RValue OldRVal,
+                      const llvm::function_ref<RValue(RValue)> &UpdateOp,
+                      llvm::Value *DesiredAddr) {
+  llvm::Value *Ptr = nullptr;
+  LValue UpdateLVal;
+  RValue UpRVal;
+  LValue AtomicLVal = Atomics.getAtomicLValue();
+  LValue DesiredLVal;
+  if (AtomicLVal.isSimple()) {
+    UpRVal = OldRVal;
+    DesiredLVal =
+        LValue::MakeAddr(DesiredAddr, AtomicLVal.getType(),
+                         AtomicLVal.getAlignment(), CGF.CGM.getContext());
+  } else {
+    // Build new lvalue for temp address
+    Ptr = Atomics.materializeRValue(OldRVal);
+    if (AtomicLVal.isBitField()) {
+      UpdateLVal =
+          LValue::MakeBitfield(Ptr, AtomicLVal.getBitFieldInfo(),
+                               AtomicLVal.getType(), AtomicLVal.getAlignment());
+      DesiredLVal =
+          LValue::MakeBitfield(DesiredAddr, AtomicLVal.getBitFieldInfo(),
+                               AtomicLVal.getType(), AtomicLVal.getAlignment());
+    } else if (AtomicLVal.isVectorElt()) {
+      UpdateLVal = LValue::MakeVectorElt(Ptr, AtomicLVal.getVectorIdx(),
+                                         AtomicLVal.getType(),
+                                         AtomicLVal.getAlignment());
+      DesiredLVal = LValue::MakeVectorElt(
+          DesiredAddr, AtomicLVal.getVectorIdx(), AtomicLVal.getType(),
+          AtomicLVal.getAlignment());
+    } else {
+      assert(AtomicLVal.isExtVectorElt());
+      UpdateLVal = LValue::MakeExtVectorElt(Ptr, AtomicLVal.getExtVectorElts(),
+                                            AtomicLVal.getType(),
+                                            AtomicLVal.getAlignment());
+      DesiredLVal = LValue::MakeExtVectorElt(
+          DesiredAddr, AtomicLVal.getExtVectorElts(), AtomicLVal.getType(),
+          AtomicLVal.getAlignment());
+    }
+    UpdateLVal.setTBAAInfo(AtomicLVal.getTBAAInfo());
+    DesiredLVal.setTBAAInfo(AtomicLVal.getTBAAInfo());
+    UpRVal = CGF.EmitLoadOfLValue(UpdateLVal, SourceLocation());
+  }
+  // Store new value in the corresponding memory area
+  RValue NewRVal = UpdateOp(UpRVal);
+  if (NewRVal.isScalar()) {
+    CGF.EmitStoreThroughLValue(NewRVal, DesiredLVal);
+  } else {
+    assert(NewRVal.isComplex());
+    CGF.EmitStoreOfComplex(NewRVal.getComplexVal(), DesiredLVal,
+                           /*isInit=*/false);
+  }
+}
+
+void AtomicInfo::EmitAtomicUpdateLibcall(
+    llvm::AtomicOrdering AO, const llvm::function_ref<RValue(RValue)> &UpdateOp,
+    bool IsVolatile) {
+  auto Failure = llvm::AtomicCmpXchgInst::getStrongestFailureOrdering(AO);
+
+  llvm::Value *ExpectedAddr = CreateTempAlloca();
+
+  EmitAtomicLoadLibcall(ExpectedAddr, AO, IsVolatile);
+  auto *ContBB = CGF.createBasicBlock("atomic_cont");
+  auto *ExitBB = CGF.createBasicBlock("atomic_exit");
+  CGF.EmitBlock(ContBB);
+  auto *DesiredAddr = CreateTempAlloca();
+  if ((LVal.isBitField() && BFI.Size != ValueSizeInBits) ||
+      requiresMemSetZero(
+          getAtomicAddress()->getType()->getPointerElementType())) {
+    auto *OldVal = CGF.Builder.CreateAlignedLoad(
+        ExpectedAddr, getAtomicAlignment().getQuantity());
+    CGF.Builder.CreateAlignedStore(OldVal, DesiredAddr,
+                                   getAtomicAlignment().getQuantity());
+  }
+  auto OldRVal = convertTempToRValue(ExpectedAddr, AggValueSlot::ignored(),
+                                    SourceLocation(), /*AsValue=*/false);
+  EmitAtomicUpdateValue(CGF, *this, OldRVal, UpdateOp, DesiredAddr);
+  auto *Res =
+      EmitAtomicCompareExchangeLibcall(ExpectedAddr, DesiredAddr, AO, Failure);
+  CGF.Builder.CreateCondBr(Res, ExitBB, ContBB);
+  CGF.EmitBlock(ExitBB, /*IsFinished=*/true);
+}
+
+void AtomicInfo::EmitAtomicUpdateOp(
+    llvm::AtomicOrdering AO, const llvm::function_ref<RValue(RValue)> &UpdateOp,
+    bool IsVolatile) {
+  auto Failure = llvm::AtomicCmpXchgInst::getStrongestFailureOrdering(AO);
+
+  // Do the atomic load.
+  auto *OldVal = EmitAtomicLoadOp(AO, IsVolatile);
+  // For non-simple lvalues perform compare-and-swap procedure.
+  auto *ContBB = CGF.createBasicBlock("atomic_cont");
+  auto *ExitBB = CGF.createBasicBlock("atomic_exit");
+  auto *CurBB = CGF.Builder.GetInsertBlock();
+  CGF.EmitBlock(ContBB);
+  llvm::PHINode *PHI = CGF.Builder.CreatePHI(OldVal->getType(),
+                                             /*NumReservedValues=*/2);
+  PHI->addIncoming(OldVal, CurBB);
+  auto *NewAtomicAddr = CreateTempAlloca();
+  auto *NewAtomicIntAddr = emitCastToAtomicIntPointer(NewAtomicAddr);
+  if ((LVal.isBitField() && BFI.Size != ValueSizeInBits) ||
+      requiresMemSetZero(
+          getAtomicAddress()->getType()->getPointerElementType())) {
+    CGF.Builder.CreateAlignedStore(PHI, NewAtomicIntAddr,
+                                   getAtomicAlignment().getQuantity());
+  }
+  auto OldRVal = ConvertIntToValueOrAtomic(PHI, AggValueSlot::ignored(),
+                                           SourceLocation(), /*AsValue=*/false);
+  EmitAtomicUpdateValue(CGF, *this, OldRVal, UpdateOp, NewAtomicAddr);
+  auto *DesiredVal = CGF.Builder.CreateAlignedLoad(
+      NewAtomicIntAddr, getAtomicAlignment().getQuantity());
+  // Try to write new value using cmpxchg operation
+  auto Res = EmitAtomicCompareExchangeOp(PHI, DesiredVal, AO, Failure);
+  PHI->addIncoming(Res.first, CGF.Builder.GetInsertBlock());
+  CGF.Builder.CreateCondBr(Res.second, ExitBB, ContBB);
+  CGF.EmitBlock(ExitBB, /*IsFinished=*/true);
+}
+
+static void EmitAtomicUpdateValue(CodeGenFunction &CGF, AtomicInfo &Atomics,
+                                  RValue UpdateRVal, llvm::Value *DesiredAddr) {
+  LValue AtomicLVal = Atomics.getAtomicLValue();
+  LValue DesiredLVal;
+  // Build new lvalue for temp address
+  if (AtomicLVal.isBitField()) {
+    DesiredLVal =
+        LValue::MakeBitfield(DesiredAddr, AtomicLVal.getBitFieldInfo(),
+                             AtomicLVal.getType(), AtomicLVal.getAlignment());
+  } else if (AtomicLVal.isVectorElt()) {
+    DesiredLVal =
+        LValue::MakeVectorElt(DesiredAddr, AtomicLVal.getVectorIdx(),
+                              AtomicLVal.getType(), AtomicLVal.getAlignment());
+  } else {
+    assert(AtomicLVal.isExtVectorElt());
+    DesiredLVal = LValue::MakeExtVectorElt(
+        DesiredAddr, AtomicLVal.getExtVectorElts(), AtomicLVal.getType(),
+        AtomicLVal.getAlignment());
+  }
+  DesiredLVal.setTBAAInfo(AtomicLVal.getTBAAInfo());
+  // Store new value in the corresponding memory area
+  assert(UpdateRVal.isScalar());
+  CGF.EmitStoreThroughLValue(UpdateRVal, DesiredLVal);
+}
+
+void AtomicInfo::EmitAtomicUpdateLibcall(llvm::AtomicOrdering AO,
+                                         RValue UpdateRVal, bool IsVolatile) {
+  auto Failure = llvm::AtomicCmpXchgInst::getStrongestFailureOrdering(AO);
+
+  llvm::Value *ExpectedAddr = CreateTempAlloca();
+
+  EmitAtomicLoadLibcall(ExpectedAddr, AO, IsVolatile);
+  auto *ContBB = CGF.createBasicBlock("atomic_cont");
+  auto *ExitBB = CGF.createBasicBlock("atomic_exit");
+  CGF.EmitBlock(ContBB);
+  auto *DesiredAddr = CreateTempAlloca();
+  if ((LVal.isBitField() && BFI.Size != ValueSizeInBits) ||
+      requiresMemSetZero(
+          getAtomicAddress()->getType()->getPointerElementType())) {
+    auto *OldVal = CGF.Builder.CreateAlignedLoad(
+        ExpectedAddr, getAtomicAlignment().getQuantity());
+    CGF.Builder.CreateAlignedStore(OldVal, DesiredAddr,
+                                   getAtomicAlignment().getQuantity());
+  }
+  EmitAtomicUpdateValue(CGF, *this, UpdateRVal, DesiredAddr);
+  auto *Res =
+      EmitAtomicCompareExchangeLibcall(ExpectedAddr, DesiredAddr, AO, Failure);
+  CGF.Builder.CreateCondBr(Res, ExitBB, ContBB);
+  CGF.EmitBlock(ExitBB, /*IsFinished=*/true);
+}
+
+void AtomicInfo::EmitAtomicUpdateOp(llvm::AtomicOrdering AO, RValue UpdateRVal,
+                                    bool IsVolatile) {
+  auto Failure = llvm::AtomicCmpXchgInst::getStrongestFailureOrdering(AO);
+
+  // Do the atomic load.
+  auto *OldVal = EmitAtomicLoadOp(AO, IsVolatile);
+  // For non-simple lvalues perform compare-and-swap procedure.
+  auto *ContBB = CGF.createBasicBlock("atomic_cont");
+  auto *ExitBB = CGF.createBasicBlock("atomic_exit");
+  auto *CurBB = CGF.Builder.GetInsertBlock();
+  CGF.EmitBlock(ContBB);
+  llvm::PHINode *PHI = CGF.Builder.CreatePHI(OldVal->getType(),
+                                             /*NumReservedValues=*/2);
+  PHI->addIncoming(OldVal, CurBB);
+  auto *NewAtomicAddr = CreateTempAlloca();
+  auto *NewAtomicIntAddr = emitCastToAtomicIntPointer(NewAtomicAddr);
+  if ((LVal.isBitField() && BFI.Size != ValueSizeInBits) ||
+      requiresMemSetZero(
+          getAtomicAddress()->getType()->getPointerElementType())) {
+    CGF.Builder.CreateAlignedStore(PHI, NewAtomicIntAddr,
+                                   getAtomicAlignment().getQuantity());
+  }
+  EmitAtomicUpdateValue(CGF, *this, UpdateRVal, NewAtomicAddr);
+  auto *DesiredVal = CGF.Builder.CreateAlignedLoad(
+      NewAtomicIntAddr, getAtomicAlignment().getQuantity());
+  // Try to write new value using cmpxchg operation
+  auto Res = EmitAtomicCompareExchangeOp(PHI, DesiredVal, AO, Failure);
+  PHI->addIncoming(Res.first, CGF.Builder.GetInsertBlock());
+  CGF.Builder.CreateCondBr(Res.second, ExitBB, ContBB);
+  CGF.EmitBlock(ExitBB, /*IsFinished=*/true);
+}
+
+void AtomicInfo::EmitAtomicUpdate(
+    llvm::AtomicOrdering AO, const llvm::function_ref<RValue(RValue)> &UpdateOp,
+    bool IsVolatile) {
+  if (shouldUseLibcall()) {
+    EmitAtomicUpdateLibcall(AO, UpdateOp, IsVolatile);
+  } else {
+    EmitAtomicUpdateOp(AO, UpdateOp, IsVolatile);
+  }
+}
+
+void AtomicInfo::EmitAtomicUpdate(llvm::AtomicOrdering AO, RValue UpdateRVal,
+                                  bool IsVolatile) {
+  if (shouldUseLibcall()) {
+    EmitAtomicUpdateLibcall(AO, UpdateRVal, IsVolatile);
+  } else {
+    EmitAtomicUpdateOp(AO, UpdateRVal, IsVolatile);
+  }
 }
 
 void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue lvalue,
@@ -1465,46 +1715,8 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
     return;
   }
 
-  // Atomic load of prev value.
-  RValue OldRVal =
-      atomics.EmitAtomicLoad(AggValueSlot::ignored(), SourceLocation(),
-                             /*AsValue=*/false, AO, IsVolatile);
-  // For non-simple lvalues perform compare-and-swap procedure.
-  auto *ContBB = createBasicBlock("atomic_cont");
-  auto *ExitBB = createBasicBlock("atomic_exit");
-  auto *CurBB = Builder.GetInsertBlock();
-  EmitBlock(ContBB);
-  llvm::PHINode *PHI = Builder.CreatePHI(OldRVal.getScalarVal()->getType(),
-                                         /*NumReservedValues=*/2);
-  PHI->addIncoming(OldRVal.getScalarVal(), CurBB);
-  RValue OriginalRValue = RValue::get(PHI);
-  // Build new lvalue for temp address
-  auto *Ptr = atomics.materializeRValue(OriginalRValue);
-  // Build new lvalue for temp address
-  LValue UpdateLVal;
-  if (LVal.isBitField())
-    UpdateLVal = LValue::MakeBitfield(Ptr, LVal.getBitFieldInfo(),
-                                      LVal.getType(), LVal.getAlignment());
-  else if (LVal.isVectorElt())
-    UpdateLVal = LValue::MakeVectorElt(Ptr, LVal.getVectorIdx(), LVal.getType(),
-                                       LVal.getAlignment());
-  else {
-    assert(LVal.isExtVectorElt());
-    UpdateLVal = LValue::MakeExtVectorElt(Ptr, LVal.getExtVectorElts(),
-                                          LVal.getType(), LVal.getAlignment());
-  }
-  UpdateLVal.setTBAAInfo(LVal.getTBAAInfo());
-  // Store new value in the corresponding memory area
-  EmitStoreThroughLValue(rvalue, UpdateLVal);
-  // Load new value
-  RValue NewRValue = RValue::get(EmitLoadOfScalar(
-      Ptr, LVal.isVolatile(), atomics.getAtomicAlignment().getQuantity(),
-      atomics.getAtomicType(), SourceLocation()));
-  // Try to write new value using cmpxchg operation
-  auto Pair = atomics.EmitAtomicCompareExchange(OriginalRValue, NewRValue, AO);
-  PHI->addIncoming(Pair.first.getScalarVal(), Builder.GetInsertBlock());
-  Builder.CreateCondBr(Pair.second, ExitBB, ContBB);
-  EmitBlock(ExitBB, /*IsFinished=*/true);
+  // Emit simple atomic update operation.
+  atomics.EmitAtomicUpdate(AO, rvalue, IsVolatile);
 }
 
 /// Emit a compare-and-exchange op for atomic type.
@@ -1529,72 +1741,9 @@ std::pair<RValue, llvm::Value *> CodeGenFunction::EmitAtomicCompareExchange(
 
 void CodeGenFunction::EmitAtomicUpdate(
     LValue LVal, llvm::AtomicOrdering AO,
-    const std::function<RValue(RValue)> &UpdateOp, bool IsVolatile) {
+    const llvm::function_ref<RValue(RValue)> &UpdateOp, bool IsVolatile) {
   AtomicInfo Atomics(*this, LVal);
-  LValue AtomicLVal = Atomics.getAtomicLValue();
-
-  // Atomic load of prev value.
-  RValue OldRVal =
-      Atomics.EmitAtomicLoad(AggValueSlot::ignored(), SourceLocation(),
-                             /*AsValue=*/false, AO, IsVolatile);
-  bool IsScalar = OldRVal.isScalar();
-  auto *OldVal =
-      IsScalar ? OldRVal.getScalarVal() : Atomics.convertRValueToInt(OldRVal);
-  // For non-simple lvalues perform compare-and-swap procedure.
-  auto *ContBB = createBasicBlock("atomic_cont");
-  auto *ExitBB = createBasicBlock("atomic_exit");
-  auto *CurBB = Builder.GetInsertBlock();
-  EmitBlock(ContBB);
-  llvm::PHINode *PHI = Builder.CreatePHI(OldVal->getType(),
-                                         /*NumReservedValues=*/2);
-  PHI->addIncoming(OldVal, CurBB);
-  RValue OriginalRValue =
-      IsScalar ? RValue::get(PHI) : Atomics.ConvertIntToValueOrAtomic(
-                                        PHI, AggValueSlot::ignored(),
-                                        SourceLocation(), /*AsValue=*/false);
-  // Build new lvalue for temp address
-  LValue UpdateLVal;
-  llvm::Value *Ptr = nullptr;
-  RValue UpRVal;
-  if (AtomicLVal.isSimple()) {
-    UpRVal = OriginalRValue;
-  } else {
-    // Build new lvalue for temp address
-    Ptr = Atomics.materializeRValue(OriginalRValue);
-    if (AtomicLVal.isBitField())
-      UpdateLVal =
-          LValue::MakeBitfield(Ptr, AtomicLVal.getBitFieldInfo(),
-                               AtomicLVal.getType(), AtomicLVal.getAlignment());
-    else if (AtomicLVal.isVectorElt())
-      UpdateLVal = LValue::MakeVectorElt(Ptr, AtomicLVal.getVectorIdx(),
-                                         AtomicLVal.getType(),
-                                         AtomicLVal.getAlignment());
-    else {
-      assert(AtomicLVal.isExtVectorElt());
-      UpdateLVal = LValue::MakeExtVectorElt(Ptr, AtomicLVal.getExtVectorElts(),
-                                            AtomicLVal.getType(),
-                                            AtomicLVal.getAlignment());
-    }
-    UpdateLVal.setTBAAInfo(LVal.getTBAAInfo());
-    UpRVal = EmitLoadOfLValue(UpdateLVal, SourceLocation());
-  }
-  // Store new value in the corresponding memory area
-  RValue NewRVal = UpdateOp(UpRVal);
-  if (!AtomicLVal.isSimple()) {
-    EmitStoreThroughLValue(NewRVal, UpdateLVal);
-    // Load new value
-    NewRVal = RValue::get(
-        EmitLoadOfScalar(Ptr, AtomicLVal.isVolatile(),
-                         Atomics.getAtomicAlignment().getQuantity(),
-                         Atomics.getAtomicType(), SourceLocation()));
-  }
-  // Try to write new value using cmpxchg operation
-  auto Pair = Atomics.EmitAtomicCompareExchange(OriginalRValue, NewRVal, AO);
-  OldVal = IsScalar ? Pair.first.getScalarVal()
-                    : Atomics.convertRValueToInt(Pair.first);
-  PHI->addIncoming(OldVal, Builder.GetInsertBlock());
-  Builder.CreateCondBr(Pair.second, ExitBB, ContBB);
-  EmitBlock(ExitBB, /*IsFinished=*/true);
+  Atomics.EmitAtomicUpdate(AO, UpdateOp, IsVolatile);
 }
 
 void CodeGenFunction::EmitAtomicInit(Expr *init, LValue dest) {
