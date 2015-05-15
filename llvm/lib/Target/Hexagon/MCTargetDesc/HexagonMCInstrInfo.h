@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H
 #define LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H
 
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 
 #include <bitset>

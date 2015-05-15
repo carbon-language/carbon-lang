@@ -20,6 +20,8 @@
 #include "X86GenRegisterInfo.inc"
 
 namespace llvm {
+  class Triple;
+
 class X86RegisterInfo final : public X86GenRegisterInfo {
 private:
   /// Is64Bit - Is the target 64-bits.

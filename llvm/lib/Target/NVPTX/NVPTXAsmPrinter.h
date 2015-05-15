@@ -40,6 +40,7 @@
 // (subclass of MCStreamer).
 
 namespace llvm {
+  class MCOperand;
 
 class LineReader {
 private:

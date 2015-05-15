@@ -12,8 +12,11 @@
 
 #include "X86AsmParserCommon.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/ADT/STLExtras.h"
+#include "MCTargetDesc/X86MCTargetDesc.h"
 
 namespace llvm {
 

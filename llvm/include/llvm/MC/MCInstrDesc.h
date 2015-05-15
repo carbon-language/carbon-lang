@@ -15,12 +15,13 @@
 #ifndef LLVM_MC_MCINSTRDESC_H
 #define LLVM_MC_MCINSTRDESC_H
 
-#include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/DataTypes.h"
+#include <string>
 
 namespace llvm {
+  class MCInst;
+  class MCRegisterInfo;
+  class MCSubtargetInfo;
 
 //===----------------------------------------------------------------------===//
 // Machine Operand Flags and Description
