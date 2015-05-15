@@ -842,6 +842,11 @@ ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
                                         reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
                                     }
                                 }
+                                // Don't allow us to try and resolve a re-exported symbol if it is the same
+                                // as the current symbol
+                                if (name == symbol->GetReExportedSymbolName() && module == reexport_module_sp.get())
+                                    return NULL;
+
                                 return FindGlobalDataSymbol(target, symbol->GetReExportedSymbolName(), reexport_module_sp.get());
                             }
                         }
