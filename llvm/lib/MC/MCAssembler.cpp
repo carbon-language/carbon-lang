@@ -361,12 +361,9 @@ void MCSectionData::setBundleLockState(BundleLockStateType NewState) {
 MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
 
 MCSymbolData::MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment,
-                           uint64_t Offset, MCAssembler *A)
+                           uint64_t Offset)
     : Symbol(&Symbol), Fragment(Fragment), Offset(Offset), SymbolSize(nullptr),
-      CommonAlign(-1U), Flags(0), Index(0) {
-  if (A)
-    A->getSymbolList().push_back(this);
-}
+      CommonAlign(-1U), Flags(0), Index(0) {}
 
 /* *** */
 

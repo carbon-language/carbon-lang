@@ -693,8 +693,7 @@ class MCSymbolData : public ilist_node<MCSymbolData> {
 public:
   // Only for use as sentinel.
   MCSymbolData();
-  MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset,
-               MCAssembler *A = nullptr);
+  MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset);
 
   /// \name Accessors
   /// @{
@@ -1058,10 +1057,6 @@ public:
   /// @}
   /// \name Symbol List Access
   /// @{
-
-  const SymbolDataListType &getSymbolList() const { return Symbols; }
-  SymbolDataListType &getSymbolList() { return Symbols; }
-
   symbol_iterator symbol_begin() { return Symbols.begin(); }
   const_symbol_iterator symbol_begin() const { return Symbols.begin(); }
 
@@ -1185,8 +1180,10 @@ public:
 
     if (Created)
       *Created = !Entry;
-    if (!Entry)
-      Entry = new MCSymbolData(Symbol, nullptr, 0, this);
+    if (!Entry) {
+      Entry = new MCSymbolData(Symbol, nullptr, 0);
+      Symbols.push_back(Entry);
+    }
 
     return *Entry;
   }
