@@ -773,7 +773,7 @@ FTN_GET_NUM_DEVICES( void )
 #if ! KMP_OS_LINUX
 
 int FTN_STDCALL
-FTN_IS_INITIAL_DEVICE( void )
+xexpand(FTN_IS_INITIAL_DEVICE)( void )
 {
     return 1;
 }
