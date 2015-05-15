@@ -18,7 +18,7 @@ include $(LEVEL)/Makefile.config
 
 # Enable optional source files
 ifeq ($(GPU_CODEGEN), yes)
-GPGPU_CODEGEN_FILES= CodeGen/PTXGenerator.cpp
+GPGPU_CODEGEN_FILES=""
 endif
 
 ISL_CODEGEN_FILES= CodeGen/IslAst.cpp \

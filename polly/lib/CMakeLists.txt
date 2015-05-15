@@ -13,8 +13,7 @@ set(ISL_CODEGEN_FILES
     CodeGen/CodeGeneration.cpp)
 
 if (GPU_CODEGEN)
-  set (GPGPU_CODEGEN_FILES
-       CodeGen/PTXGenerator.cpp)
+  set (GPGPU_CODEGEN_FILES)
 endif (GPU_CODEGEN)
 
 set (ISL_FILES
