@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_VALUETRACKING_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -280,7 +281,21 @@ namespace llvm {
   };
   /// Pattern match integer [SU]MIN, [SU]MAX and ABS idioms, returning the kind
   /// and providing the out parameter results if we successfully match.
-  SelectPatternFlavor matchSelectPattern(Value *V, Value *&LHS, Value *&RHS);
+  ///
+  /// If CastOp is not nullptr, also match MIN/MAX idioms where the type does
+  /// not match that of the original select. If this is the case, the cast
+  /// operation (one of Trunc,SExt,Zext) that must be done to transform the
+  /// type of LHS and RHS into the type of V is returned in CastOp.
+  ///
+  /// For example:
+  ///   %1 = icmp slt i32 %a, i32 4
+  ///   %2 = sext i32 %a to i64
+  ///   %3 = select i1 %1, i64 %2, i64 4
+  ///
+  /// -> LHS = %a, RHS = i32 4, *CastOp = Instruction::SExt
+  ///
+  SelectPatternFlavor matchSelectPattern(Value *V, Value *&LHS, Value *&RHS,
+                                         Instruction::CastOps *CastOp = nullptr);
 
 } // end namespace llvm
 
