@@ -2278,11 +2278,11 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
 
     EVT VT = ValueVTs[0];
     LLVMContext &Ctx = *DAG.getContext();
-    while (DAG.getTargetLoweringInfo().getTypeToTransformTo(Ctx, VT) != VT)
-      VT = DAG.getTargetLoweringInfo().getTypeToTransformTo(Ctx, VT);
+    auto &TLI = DAG.getTargetLoweringInfo();
+    while (TLI.getTypeAction(Ctx, VT) == TargetLoweringBase::TypeSplitVector)
+      VT = TLI.getTypeToTransformTo(Ctx, VT);
 
-    if (Opc != ISD::DELETED_NODE &&
-        DAG.getTargetLoweringInfo().isOperationLegalOrCustom(Opc, VT)) {
+    if (Opc != ISD::DELETED_NODE && TLI.isOperationLegalOrCustom(Opc, VT)) {
       OpCode = Opc;
       LHSVal = getValue(LHS);
       RHSVal = getValue(RHS);
