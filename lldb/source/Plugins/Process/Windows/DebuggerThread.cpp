@@ -283,9 +283,9 @@ DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thr
 {
     bool first_chance = (info.dwFirstChance != 0);
 
-    m_active_exception.reset(new ExceptionRecord(info.ExceptionRecord, thread_id));
+    m_active_exception.reset(new ExceptionRecord(info.ExceptionRecord));
     WINLOG_IFANY(WINDOWS_LOG_EVENT | WINDOWS_LOG_EXCEPTION,
-                 "HandleExceptionEvent encountered %s chance exception 0x%x on thread 0x%x",
+                 "HandleExceptionEvent encountered %s chance exception 0x%x on thread %u",
                  first_chance ? "first" : "second", info.ExceptionRecord.ExceptionCode, thread_id);
 
     ExceptionResult result = m_debug_delegate->OnDebugException(first_chance,
@@ -308,11 +308,9 @@ DWORD
 DebuggerThread::HandleCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO &info, DWORD thread_id)
 {
     WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_THREAD,
-        "HandleCreateThreadEvent Thread 0x%x spawned in process %I64u",
-        thread_id, m_process.GetProcessId());
-    HostThread thread(info.hThread);
-    thread.GetNativeThread().SetOwnsHandle(false);
-    m_debug_delegate->OnCreateThread(thread);
+        "HandleCreateThreadEvent Thread %u spawned in process %I64u",
+        m_process.GetProcessId(), thread_id);
+
     return DBG_CONTINUE;
 }
 
@@ -349,7 +347,7 @@ DebuggerThread::HandleExitThreadEvent(const EXIT_THREAD_DEBUG_INFO &info, DWORD 
     WINLOG_IFANY(WINDOWS_LOG_EVENT|WINDOWS_LOG_THREAD,
         "HandleExitThreadEvent Thread %u exited with code %u in process %I64u",
         thread_id, info.dwExitCode, m_process.GetProcessId());
-    m_debug_delegate->OnExitThread(thread_id, info.dwExitCode);
+
     return DBG_CONTINUE;
 }
 
@@ -360,9 +358,9 @@ DebuggerThread::HandleExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO &info, DWOR
         "HandleExitProcessEvent process %I64u exited with code %u",
         m_process.GetProcessId(), info.dwExitCode);
 
-    m_debug_delegate->OnExitProcess(info.dwExitCode);
-
     FreeProcessHandles();
+
+    m_debug_delegate->OnExitProcess(info.dwExitCode);
     return DBG_CONTINUE;
 }
 

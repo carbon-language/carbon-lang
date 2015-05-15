@@ -35,7 +35,7 @@ class IDebugDelegate
     virtual void OnDebuggerConnected(lldb::addr_t image_base) = 0;
     virtual ExceptionResult OnDebugException(bool first_chance, const ExceptionRecord &record) = 0;
     virtual void OnCreateThread(const HostThread &thread) = 0;
-    virtual void OnExitThread(lldb::tid_t thread_id, uint32_t exit_code) = 0;
+    virtual void OnExitThread(const HostThread &thread) = 0;
     virtual void OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_addr) = 0;
     virtual void OnUnloadDll(lldb::addr_t module_addr) = 0;
     virtual void OnDebugString(const std::string &string) = 0;
