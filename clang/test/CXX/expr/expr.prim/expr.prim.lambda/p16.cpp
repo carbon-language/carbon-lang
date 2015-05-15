@@ -24,16 +24,16 @@ void test_capture(X x) {
   int a; 
   [=]{ 
     [&] { 
-      int &x = a;  // expected-error{{binding of reference to type 'int' to a value of type 'const int' drops qualifiers}}
-      int &x2 = a;  // expected-error{{binding of reference to type 'int' to a value of type 'const int' drops qualifiers}}
+      int &x = a;  // expected-error{{binding value of type 'const int' to reference of type 'int' drops qualifiers}}
+      int &x2 = a;  // expected-error{{binding value of type 'const int' to reference of type 'int' drops qualifiers}}
     }(); 
   }(); 
 
   [=]{ 
     [&a] { 
       [&] { 
-        int &x = a;  // expected-error{{binding of reference to type 'int' to a value of type 'const int' drops qualifiers}}
-        int &x2 = a;  // expected-error{{binding of reference to type 'int' to a value of type 'const int' drops qualifiers}}
+        int &x = a;  // expected-error{{binding value of type 'const int' to reference of type 'int' drops qualifiers}}
+        int &x2 = a;  // expected-error{{binding value of type 'const int' to reference of type 'int' drops qualifiers}}
       }();
     }(); 
   }(); 

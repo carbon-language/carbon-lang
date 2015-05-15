@@ -64,10 +64,10 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
                        volatile const int ivc) {
   volatile Base &bvr1 = b;
   volatile Base &bvr2 = d;
-  volatile Base &bvr3 = bvc; // expected-error{{binding of reference to type 'volatile Base' to a value of type 'const volatile Base' drops qualifiers}}
-  volatile Base &bvr4 = dvc; // expected-error{{binding of reference to type 'volatile Base' to a value of type 'const volatile Derived' drops qualifiers}}
+  volatile Base &bvr3 = bvc; // expected-error{{binding value of type 'const volatile Base' to reference of type 'volatile Base' drops qualifiers}}
+  volatile Base &bvr4 = dvc; // expected-error{{binding value of type 'const volatile Derived' to reference of type 'volatile Base' drops qualifiers}}
   
-  volatile int &ir = ivc; // expected-error{{binding of reference to type 'volatile int' to a value of type 'const volatile int' drops qualifiers}}
+  volatile int &ir = ivc; // expected-error{{binding value of type 'const volatile int' to reference of type 'volatile int' drops qualifiers}}
 
   const volatile Base &bcvr1 = b;
   const volatile Base &bcvr2 = d;
@@ -118,8 +118,8 @@ void bind_const_lvalue_to_rvalue() {
   const Base &br3 = create<const Base>();
   const Base &br4 = create<const Derived>();
 
-  const Base &br5 = create<const volatile Base>(); // expected-error{{binding of reference to type 'const Base' to a value of type 'const volatile Base' drops qualifiers}}
-  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding of reference to type 'const Base' to a value of type 'const volatile Derived' drops qualifiers}}
+  const Base &br5 = create<const volatile Base>(); // expected-error{{binding value of type 'const volatile Base' to reference of type 'const Base' drops qualifiers}}
+  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding value of type 'const volatile Derived' to reference of type 'const Base' drops qualifiers}}
 
   const int &ir = create<int>();
 }

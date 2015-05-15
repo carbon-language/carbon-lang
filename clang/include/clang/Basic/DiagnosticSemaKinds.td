@@ -1490,8 +1490,8 @@ def err_lvalue_reference_bind_to_unrelated : Error<
   "%diff{to type $ cannot bind to a value of unrelated type $|"
   "cannot bind to a value of unrelated type}1,2">;
 def err_reference_bind_drops_quals : Error<
-  "binding of reference %diff{to type $ to a value of type $ drops qualifiers|"
-  "drops qualifiers}0,1">;
+  "binding value %diff{of type $ to reference of type $ drops qualifiers|"
+  "to reference drops qualifiers}0,1">;
 def err_reference_bind_failed : Error<
   "reference %diff{to type $ could not bind to an %select{rvalue|lvalue}1 of "
   "type $|could not bind to %select{rvalue|lvalue}1 of incompatible type}0,2">;

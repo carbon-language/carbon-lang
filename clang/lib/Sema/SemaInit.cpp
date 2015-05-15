@@ -6854,8 +6854,8 @@ bool InitializationSequence::Diagnose(Sema &S,
 
   case FK_ReferenceInitDropsQualifiers:
     S.Diag(Kind.getLocation(), diag::err_reference_bind_drops_quals)
-      << DestType.getNonReferenceType()
       << Args[0]->getType()
+      << DestType.getNonReferenceType()
       << Args[0]->getSourceRange();
     break;
 
