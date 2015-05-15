@@ -204,7 +204,7 @@ static MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM,
     CM = CodeModel::Small;
   else if (CM == CodeModel::JITDefault)
     CM = RM == Reloc::PIC_ ? CodeModel::Small : CodeModel::Medium;
-  X->InitMCCodeGenInfo(RM, CM, OL);
+  X->initMCCodeGenInfo(RM, CM, OL);
   return X;
 }
 

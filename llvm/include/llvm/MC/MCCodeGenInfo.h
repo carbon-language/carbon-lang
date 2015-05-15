@@ -33,7 +33,7 @@ class MCCodeGenInfo {
   CodeGenOpt::Level OptLevel;
 
 public:
-  void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
+  void initMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
                          CodeModel::Model CM = CodeModel::Default,
                          CodeGenOpt::Level OL = CodeGenOpt::Default);
 

@@ -305,7 +305,7 @@ static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
     // Default relocation model on Darwin is PIC, not DynamicNoPIC.
     RM = TheTriple.isOSDarwin() ? Reloc::PIC_ : Reloc::DynamicNoPIC;
   }
-  X->InitMCCodeGenInfo(RM, CM, OL);
+  X->initMCCodeGenInfo(RM, CM, OL);
   return X;
 }
 

@@ -15,7 +15,7 @@
 #include "llvm/MC/MCCodeGenInfo.h"
 using namespace llvm;
 
-void MCCodeGenInfo::InitMCCodeGenInfo(Reloc::Model RM, CodeModel::Model CM,
+void MCCodeGenInfo::initMCCodeGenInfo(Reloc::Model RM, CodeModel::Model CM,
                                       CodeGenOpt::Level OL) {
   RelocationModel = RM;
   CMModel = CM;

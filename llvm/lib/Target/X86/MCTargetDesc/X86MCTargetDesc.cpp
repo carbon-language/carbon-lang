@@ -203,7 +203,7 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
     // 64-bit JIT places everything in the same buffer except external funcs.
     CM = is64Bit ? CodeModel::Large : CodeModel::Small;
 
-  X->InitMCCodeGenInfo(RM, CM, OL);
+  X->initMCCodeGenInfo(RM, CM, OL);
   return X;
 }
 
