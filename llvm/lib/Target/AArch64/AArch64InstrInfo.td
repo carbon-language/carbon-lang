@@ -2809,6 +2809,55 @@ defm ORN : SIMDLogicalThreeVector<0, 0b11, "orn",
                                   BinOpFrag<(or node:$LHS, (vnot node:$RHS))> >;
 defm ORR : SIMDLogicalThreeVector<0, 0b10, "orr", or>;
 
+def : Pat<(v8i8 (smin V64:$Rn, V64:$Rm)),
+          (SMINv8i8 V64:$Rn, V64:$Rm)>;
+def : Pat<(v4i16 (smin V64:$Rn, V64:$Rm)),
+          (SMINv4i16 V64:$Rn, V64:$Rm)>;
+def : Pat<(v2i32 (smin V64:$Rn, V64:$Rm)),
+          (SMINv2i32 V64:$Rn, V64:$Rm)>;
+def : Pat<(v16i8 (smin V128:$Rn, V128:$Rm)),
+          (SMINv16i8 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i16 (smin V128:$Rn, V128:$Rm)),
+          (SMINv8i16 V128:$Rn, V128:$Rm)>;
+def : Pat<(v4i32 (smin V128:$Rn, V128:$Rm)),
+          (SMINv4i32 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i8 (smax V64:$Rn, V64:$Rm)),
+          (SMAXv8i8 V64:$Rn, V64:$Rm)>;
+def : Pat<(v4i16 (smax V64:$Rn, V64:$Rm)),
+          (SMAXv4i16 V64:$Rn, V64:$Rm)>;
+def : Pat<(v2i32 (smax V64:$Rn, V64:$Rm)),
+          (SMAXv2i32 V64:$Rn, V64:$Rm)>;
+def : Pat<(v16i8 (smax V128:$Rn, V128:$Rm)),
+          (SMAXv16i8 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i16 (smax V128:$Rn, V128:$Rm)),
+          (SMAXv8i16 V128:$Rn, V128:$Rm)>;
+def : Pat<(v4i32 (smax V128:$Rn, V128:$Rm)),
+          (SMAXv4i32 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i8 (umin V64:$Rn, V64:$Rm)),
+          (UMINv8i8 V64:$Rn, V64:$Rm)>;
+def : Pat<(v4i16 (umin V64:$Rn, V64:$Rm)),
+          (UMINv4i16 V64:$Rn, V64:$Rm)>;
+def : Pat<(v2i32 (umin V64:$Rn, V64:$Rm)),
+          (UMINv2i32 V64:$Rn, V64:$Rm)>;
+def : Pat<(v16i8 (umin V128:$Rn, V128:$Rm)),
+          (UMINv16i8 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i16 (umin V128:$Rn, V128:$Rm)),
+          (UMINv8i16 V128:$Rn, V128:$Rm)>;
+def : Pat<(v4i32 (umin V128:$Rn, V128:$Rm)),
+          (UMINv4i32 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i8 (umax V64:$Rn, V64:$Rm)),
+          (UMAXv8i8 V64:$Rn, V64:$Rm)>;
+def : Pat<(v4i16 (umax V64:$Rn, V64:$Rm)),
+          (UMAXv4i16 V64:$Rn, V64:$Rm)>;
+def : Pat<(v2i32 (umax V64:$Rn, V64:$Rm)),
+          (UMAXv2i32 V64:$Rn, V64:$Rm)>;
+def : Pat<(v16i8 (umax V128:$Rn, V128:$Rm)),
+          (UMAXv16i8 V128:$Rn, V128:$Rm)>;
+def : Pat<(v8i16 (umax V128:$Rn, V128:$Rm)),
+          (UMAXv8i16 V128:$Rn, V128:$Rm)>;
+def : Pat<(v4i32 (umax V128:$Rn, V128:$Rm)),
+          (UMAXv4i32 V128:$Rn, V128:$Rm)>;
+
 def : Pat<(AArch64bsl (v8i8 V64:$Rd), V64:$Rn, V64:$Rm),
           (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
 def : Pat<(AArch64bsl (v4i16 V64:$Rd), V64:$Rn, V64:$Rm),
