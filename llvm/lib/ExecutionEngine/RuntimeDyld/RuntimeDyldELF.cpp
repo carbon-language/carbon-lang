@@ -249,7 +249,7 @@ void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
   case ELF::R_X86_64_PC32: {
     uint64_t FinalAddress = Section.LoadAddress + Offset;
     int64_t RealOffset = Value + Addend - FinalAddress;
-    assert(RealOffset <= INT32_MAX && RealOffset >= INT32_MIN);
+    assert(isInt<32>(RealOffset));
     int32_t TruncOffset = (RealOffset & 0xFFFFFFFF);
     support::ulittle32_t::ref(Section.Address + Offset) = TruncOffset;
     break;
@@ -322,8 +322,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     uint64_t BranchImm = Value + Addend - FinalAddress;
 
     // "Check that -2^27 <= result < 2^27".
-    assert(-(1LL << 27) <= static_cast<int64_t>(BranchImm) &&
-           static_cast<int64_t>(BranchImm) < (1LL << 27));
+    assert(isInt<28>(BranchImm));
 
     // AArch64 code is emitted with .rela relocations. The data already in any
     // bits affected by the relocation on entry is garbage.
@@ -386,9 +385,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
         ((Value + Addend) & ~0xfffULL) - (FinalAddress & ~0xfffULL);
 
     // Check that -2^32 <= X < 2^32
-    assert(static_cast<int64_t>(Result) >= (-1LL << 32) &&
-           static_cast<int64_t>(Result) < (1LL << 32) &&
-           "overflow check failed for relocation");
+    assert(isInt<33>(Result) && "overflow check failed for relocation");
 
     // AArch64 code is emitted with .rela relocations. The data already in any
     // bits affected by the relocation on entry is garbage.
