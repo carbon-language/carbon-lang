@@ -1609,7 +1609,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
     if (Left.is(TT_StartOfName))
-      return 20;
+      return 110;
     if (InFunctionDecl && Right.NestingLevel == 0)
       return Style.PenaltyReturnTypeOnItsOwnLine;
     return 200;
