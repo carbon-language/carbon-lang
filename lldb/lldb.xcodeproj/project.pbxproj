@@ -338,6 +338,7 @@
 		26780C611867C33D00234593 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
+		267DFB461B06752A00000FB7 /* MICmdArgValPrintValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267DFB441B06752A00000FB7 /* MICmdArgValPrintValues.cpp */; };
 		268648C416531BF800F04704 /* com.apple.debugserver.posix.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = 268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */; };
 		268648C516531BF800F04704 /* com.apple.debugserver.applist.internal.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = 268648C216531BF800F04704 /* com.apple.debugserver.applist.internal.plist */; };
 		268648C616531BF800F04704 /* com.apple.debugserver.internal.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = 268648C316531BF800F04704 /* com.apple.debugserver.internal.plist */; };
@@ -1738,6 +1739,8 @@
 		2676A094119C93C8008A98EF /* StringExtractorGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractorGDBRemote.h; path = source/Utility/StringExtractorGDBRemote.h; sourceTree = "<group>"; };
 		267C0128136880C7006E963E /* OptionGroupValueObjectDisplay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupValueObjectDisplay.h; path = include/lldb/Interpreter/OptionGroupValueObjectDisplay.h; sourceTree = "<group>"; };
 		267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupValueObjectDisplay.cpp; path = source/Interpreter/OptionGroupValueObjectDisplay.cpp; sourceTree = "<group>"; };
+		267DFB441B06752A00000FB7 /* MICmdArgValPrintValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValPrintValues.cpp; path = "tools/lldb-mi/MICmdArgValPrintValues.cpp"; sourceTree = SOURCE_ROOT; };
+		267DFB451B06752A00000FB7 /* MICmdArgValPrintValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValPrintValues.h; path = "tools/lldb-mi/MICmdArgValPrintValues.h"; sourceTree = SOURCE_ROOT; };
 		2682100C143A59AE004BCF2D /* MappedHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MappedHash.h; path = include/lldb/Core/MappedHash.h; sourceTree = "<group>"; };
 		2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PseudoTerminal.cpp; path = source/Utility/PseudoTerminal.cpp; sourceTree = "<group>"; };
 		2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PseudoTerminal.h; path = include/lldb/Utility/PseudoTerminal.h; sourceTree = "<group>"; };
@@ -3629,6 +3632,8 @@
 				266941711A6DC2AC0063BE93 /* MICmdArgValOptionLong.h */,
 				266941721A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp */,
 				266941731A6DC2AC0063BE93 /* MICmdArgValOptionShort.h */,
+				267DFB441B06752A00000FB7 /* MICmdArgValPrintValues.cpp */,
+				267DFB451B06752A00000FB7 /* MICmdArgValPrintValues.h */,
 				266941741A6DC2AC0063BE93 /* MICmdArgValString.cpp */,
 				266941751A6DC2AC0063BE93 /* MICmdArgValString.h */,
 				266941761A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp */,
@@ -6597,6 +6602,7 @@
 				266942341A6DC2AC0063BE93 /* MICmnMIValueResult.cpp in Sources */,
 				266942181A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp in Sources */,
 				266942311A6DC2AC0063BE93 /* MICmnMIValue.cpp in Sources */,
+				267DFB461B06752A00000FB7 /* MICmdArgValPrintValues.cpp in Sources */,
 				266942081A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp in Sources */,
 				2669420D1A6DC2AC0063BE93 /* MICmdCmd.cpp in Sources */,
 				2669422C1A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp in Sources */,
