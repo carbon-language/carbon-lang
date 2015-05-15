@@ -524,6 +524,7 @@ ThreadPlanStepInRange::DoPlanExplainsStop (Event *event_ptr)
 bool
 ThreadPlanStepInRange::DoWillResume (lldb::StateType resume_state, bool current_plan)
 {
+    m_virtual_step = false;
     if (resume_state == eStateStepping && current_plan)
     {
         // See if we are about to step over a virtual inlined call.
