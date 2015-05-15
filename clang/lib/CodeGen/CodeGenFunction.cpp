@@ -608,6 +608,20 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   if (CGM.isInSanitizerBlacklist(Fn, Loc))
     SanOpts.clear();
 
+  if (D) {
+    // Apply the no_sanitize* attributes to SanOpts.
+    for (auto Attr : D->specific_attrs<NoSanitizeAttr>())
+      SanOpts.Mask &= ~Attr->getMask();
+  }
+
+  // Apply sanitizer attributes to the function.
+  if (SanOpts.has(SanitizerKind::Address))
+    Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
+  if (SanOpts.has(SanitizerKind::Thread))
+    Fn->addFnAttr(llvm::Attribute::SanitizeThread);
+  if (SanOpts.has(SanitizerKind::Memory))
+    Fn->addFnAttr(llvm::Attribute::SanitizeMemory);
+
   // Pass inline keyword to optimizer if it appears explicitly on any
   // declaration. Also, in the case of -fno-inline attach NoInline
   // attribute to all function that are not marked AlwaysInline.

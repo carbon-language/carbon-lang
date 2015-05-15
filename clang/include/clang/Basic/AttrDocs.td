@@ -920,6 +920,22 @@ This attribute accepts a single parameter that must be one of the following:
   }];
 }
 
+def NoSanitizeDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Use the ``no_sanitize`` attribute on a function declaration to specify
+that a particular instrumentation or set of instrumentations should not be
+applied to that function. The attribute takes a list of string literals,
+which have the same meaning as values accepted by the ``-fno-sanitize=``
+flag. For example, ``__attribute__((no_sanitize("address", "thread")))``
+specifies that AddressSanitizer and ThreadSanitizer should not be applied
+to the function.
+
+See :ref:`Controlling Code Generation <controlling-code-generation>` for a
+full list of supported sanitizer flags.
+  }];
+}
+
 def NoSanitizeAddressDocs : Documentation {
   let Category = DocCatFunction;
   // This function has multiple distinct spellings, and so it requires a custom
@@ -936,6 +952,7 @@ not be applied to that function.
 
 def NoSanitizeThreadDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "no_sanitize_thread";
   let Content = [{
 .. _langext-thread_sanitizer:
 
@@ -948,6 +965,7 @@ tool to avoid false positives and provide meaningful stack traces.
 
 def NoSanitizeMemoryDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "no_sanitize_memory";
   let Content = [{
 .. _langext-memory_sanitizer:
 

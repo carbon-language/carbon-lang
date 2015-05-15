@@ -82,6 +82,7 @@ static std::string ReadPCHRecord(StringRef type) {
     .Case("TypeSourceInfo *", "GetTypeSourceInfo(F, Record, Idx)")
     .Case("Expr *", "ReadExpr(F)")
     .Case("IdentifierInfo *", "GetIdentifierInfo(F, Record, Idx)")
+    .Case("std::string", "ReadString(Record, Idx)")
     .Default("Record[Idx++]");
 }
 
@@ -95,6 +96,7 @@ static std::string WritePCHRecord(StringRef type, StringRef name) {
     .Case("Expr *", "AddStmt(" + std::string(name) + ");\n")
     .Case("IdentifierInfo *", 
           "AddIdentifierRef(" + std::string(name) + ", Record);\n")
+    .Case("std::string", "AddString(" + std::string(name) + ", Record);\n")
     .Default("Record.push_back(" + std::string(name) + ");\n");
 }
 
@@ -983,6 +985,16 @@ namespace {
     }
   };
 
+  class VariadicStringArgument : public VariadicArgument {
+  public:
+    VariadicStringArgument(const Record &Arg, StringRef Attr)
+      : VariadicArgument(Arg, Attr, "std::string")
+    {}
+    void writeValueImpl(raw_ostream &OS) const override {
+      OS << "    OS << \"\\\"\" << Val << \"\\\"\";\n";
+    }
+  };
+
   class TypeArgument : public SimpleArgument {
   public:
     TypeArgument(const Record &Arg, StringRef Attr)
@@ -1044,6 +1056,8 @@ createArgument(const Record &Arg, StringRef Attr,
     Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = llvm::make_unique<VariadicArgument>(Arg, Attr, "unsigned");
+  else if (ArgName == "VariadicStringArgument")
+    Ptr = llvm::make_unique<VariadicStringArgument>(Arg, Attr);
   else if (ArgName == "VariadicEnumArgument")
     Ptr = llvm::make_unique<VariadicEnumArgument>(Arg, Attr);
   else if (ArgName == "VariadicExprArgument")

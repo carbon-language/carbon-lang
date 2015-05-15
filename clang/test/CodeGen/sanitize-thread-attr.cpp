@@ -22,6 +22,12 @@ __attribute__((no_sanitize_thread))
 int NoTSAN2(int *a);
 int NoTSAN2(int *a) { return *a; }
 
+// WITHOUT:  NoTSAN3{{.*}}) [[NOATTR:#[0-9]+]]
+// BL:  NoTSAN3{{.*}}) [[NOATTR:#[0-9]+]]
+// TSAN:  NoTSAN3{{.*}}) [[NOATTR:#[0-9]+]]
+__attribute__((no_sanitize("thread")))
+int NoTSAN3(int *a) { return *a; }
+
 // WITHOUT:  TSANOk{{.*}}) [[NOATTR]]
 // BL:  TSANOk{{.*}}) [[NOATTR]]
 // TSAN: TSANOk{{.*}}) [[WITH:#[0-9]+]]

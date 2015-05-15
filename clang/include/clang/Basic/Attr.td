@@ -144,6 +144,7 @@ class TypeArgument<string name, bit opt = 0> : Argument<name, opt>;
 class UnsignedArgument<string name, bit opt = 0> : Argument<name, opt>;
 class VariadicUnsignedArgument<string name> : Argument<name, 1>;
 class VariadicExprArgument<string name> : Argument<name, 1>;
+class VariadicStringArgument<string name> : Argument<name, 1>;
 
 // A version of the form major.minor[.subminor].
 class VersionArgument<string name, bit opt = 0> : Argument<name, opt>;
@@ -1386,26 +1387,35 @@ def X86ForceAlignArgPointer : InheritableAttr, TargetSpecificAttr<TargetX86> {
   let Documentation = [Undocumented];
 }
 
-// Attribute to disable AddressSanitizer (or equivalent) checks.
-def NoSanitizeAddress : InheritableAttr {
+def NoSanitize : InheritableAttr {
+  let Spellings = [GNU<"no_sanitize">, CXX11<"clang", "no_sanitize">];
+  let Args = [VariadicStringArgument<"Sanitizers">];
+  let Subjects = SubjectList<[Function, ObjCMethod], ErrorDiag>;
+  let Documentation = [NoSanitizeDocs];
+  let AdditionalMembers = [{
+    SanitizerMask getMask() const {
+      SanitizerMask Mask = 0;
+      for (auto SanitizerName : sanitizers()) {
+        SanitizerMask ParsedMask =
+            parseSanitizerValue(SanitizerName, /*AllowGroups=*/true);
+        Mask |= expandSanitizerGroups(ParsedMask);
+      }
+      return Mask;
+    }
+  }];
+}
+
+// Attributes to disable a specific sanitizer. No new sanitizers should be added
+// to this list; the no_sanitize attribute should be extended instead.
+def NoSanitizeSpecific : InheritableAttr {
   let Spellings = [GCC<"no_address_safety_analysis">,
-                   GCC<"no_sanitize_address">];
+                   GCC<"no_sanitize_address">,
+                   GCC<"no_sanitize_thread">,
+                   GNU<"no_sanitize_memory">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
-  let Documentation = [NoSanitizeAddressDocs];
-}
-
-// Attribute to disable ThreadSanitizer checks.
-def NoSanitizeThread : InheritableAttr {
-  let Spellings = [GNU<"no_sanitize_thread">];
-  let Subjects = SubjectList<[Function], ErrorDiag>;
-  let Documentation = [NoSanitizeThreadDocs];
-}
-
-// Attribute to disable MemorySanitizer checks.
-def NoSanitizeMemory : InheritableAttr {
-  let Spellings = [GNU<"no_sanitize_memory">];
-  let Subjects = SubjectList<[Function], ErrorDiag>;
-  let Documentation = [NoSanitizeMemoryDocs];
+  let Documentation = [NoSanitizeAddressDocs, NoSanitizeThreadDocs,
+                       NoSanitizeMemoryDocs];
+  let ASTNode = 0;
 }
 
 // C/C++ Thread safety attributes (e.g. for deadlock, data race checking)

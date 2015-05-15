@@ -2519,6 +2519,10 @@ def warn_param_typestate_mismatch : Warning<
   "argument not in expected state; expected '%0', observed '%1'">,
   InGroup<Consumed>, DefaultIgnore;
 
+// no_sanitize attribute
+def warn_unknown_sanitizer_ignored : Warning<
+  "unknown sanitizer '%0' ignored">, InGroup<UnknownSanitizers>;
+
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
   InGroup<Conversion>, DefaultIgnore;

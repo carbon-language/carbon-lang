@@ -930,6 +930,8 @@ number of cases where the compilation environment is tightly controlled
 and the precompiled header cannot be generated after headers have been
 installed.
 
+.. _controlling-code-generation:
+
 Controlling Code Generation
 ---------------------------
 
