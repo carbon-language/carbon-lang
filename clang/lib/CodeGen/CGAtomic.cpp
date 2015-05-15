@@ -216,13 +216,13 @@ namespace {
         bool IsWeak = false);
 
     /// \brief Emits atomic update.
-    /// \brief AO Atomic ordering.
-    /// \brief UpdateOp Update operation for the current lvalue.
+    /// \param AO Atomic ordering.
+    /// \param UpdateOp Update operation for the current lvalue.
     void EmitAtomicUpdate(llvm::AtomicOrdering AO,
                           const llvm::function_ref<RValue(RValue)> &UpdateOp,
                           bool IsVolatile);
     /// \brief Emits atomic update.
-    /// \brief AO Atomic ordering.
+    /// \param AO Atomic ordering.
     void EmitAtomicUpdate(llvm::AtomicOrdering AO, RValue UpdateRVal,
                           bool IsVolatile);
 
