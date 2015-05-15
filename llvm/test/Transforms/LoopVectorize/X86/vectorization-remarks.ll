@@ -5,7 +5,7 @@
 ; This code has all the !dbg annotations needed to track source line information,
 ; but is missing the llvm.dbg.cu annotation. This prevents code generation from
 ; emitting debug info in the final output.
-; RUN: llc -mtriple x86_64-pc-linux-gnu %s -o - | FileCheck -check-prefix=DEBUG-OUTPUT %s
+; RUN: llc < %s -mtriple x86_64-pc-linux-gnu -o - | FileCheck -check-prefix=DEBUG-OUTPUT %s
 ; DEBUG-OUTPUT-NOT: .loc
 ; DEBUG-OUTPUT-NOT: {{.*}}.debug_info
 
