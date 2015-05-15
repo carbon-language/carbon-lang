@@ -2091,7 +2091,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
                         if (stop_info_sp)
                         {
-                            stop_info_sp->SetDescription (description.c_str());
+                            const char *stop_info_desc = stop_info_sp->GetDescription();
+                            if (!stop_info_desc || !stop_info_desc[0])
+                                stop_info_sp->SetDescription (description.c_str());
                         }
                         else
                         {
