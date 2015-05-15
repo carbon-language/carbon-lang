@@ -1858,7 +1858,7 @@ GDBRemoteCommunicationServerLLGS::Handle_m (StringExtractorGDBRemote &packet)
     if (bytes_read == 0)
     {
         if (log)
-            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " mem 0x%" PRIx64 ": read %" PRIu64 " of %" PRIu64 " requested bytes", __FUNCTION__, m_debugged_process_sp->GetID (), read_addr, bytes_read, byte_count);
+            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " mem 0x%" PRIx64 ": read 0 of %" PRIu64 " requested bytes", __FUNCTION__, m_debugged_process_sp->GetID (), read_addr, byte_count);
         return SendErrorResponse (0x08);
     }
 
@@ -1938,7 +1938,7 @@ GDBRemoteCommunicationServerLLGS::Handle_M (StringExtractorGDBRemote &packet)
     if (bytes_written == 0)
     {
         if (log)
-            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " mem 0x%" PRIx64 ": wrote %" PRIu64 " of %" PRIu64 " requested bytes", __FUNCTION__, m_debugged_process_sp->GetID (), write_addr, bytes_written, byte_count);
+            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " mem 0x%" PRIx64 ": wrote 0 of %" PRIu64 " requested bytes", __FUNCTION__, m_debugged_process_sp->GetID (), write_addr, byte_count);
         return SendErrorResponse (0x09);
     }
 

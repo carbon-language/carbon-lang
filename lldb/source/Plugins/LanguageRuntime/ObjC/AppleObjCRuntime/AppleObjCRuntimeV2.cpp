@@ -559,7 +559,7 @@ protected:
             ObjCLanguageRuntime::TaggedPointerVendor *tagged_ptr_vendor = objc_runtime->GetTaggedPointerVendor();
             if (tagged_ptr_vendor)
             {
-                for (auto i = 0;
+                for (size_t i = 0;
                      i < command.GetArgumentCount();
                      i++)
                 {
