@@ -53,6 +53,7 @@ class MCSection;
 class MCStreamer;
 class MCSubtargetInfo;
 class MCSymbol;
+class MCTargetOptions;
 class MDNode;
 class DwarfDebug;
 class Mangler;
@@ -498,6 +499,7 @@ private:
   /// Emit a blob of inline asm to the output streamer.
   void
   EmitInlineAsm(StringRef Str, const MCSubtargetInfo &STI,
+                const MCTargetOptions &MCOptions,
                 const MDNode *LocMDNode = nullptr,
                 InlineAsm::AsmDialect AsmDialect = InlineAsm::AD_ATT) const;
 
