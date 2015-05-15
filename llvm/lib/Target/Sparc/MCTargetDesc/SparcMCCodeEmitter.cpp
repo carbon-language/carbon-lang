@@ -41,7 +41,7 @@ public:
 
   ~SparcMCCodeEmitter() override {}
 
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
@@ -79,7 +79,7 @@ MCCodeEmitter *llvm::createSparcMCCodeEmitter(const MCInstrInfo &MCII,
   return new SparcMCCodeEmitter(Ctx);
 }
 
-void SparcMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+void SparcMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                            SmallVectorImpl<MCFixup> &Fixups,
                                            const MCSubtargetInfo &STI) const {
   unsigned Bits = getBinaryCodeForInstr(MI, Fixups, STI);
@@ -154,7 +154,7 @@ getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
 
   if (MI.getOpcode() == SP::TLS_CALL) {
     // No fixups for __tls_get_addr. Will emit for fixups for tls_symbol in
-    // EncodeInstruction.
+    // encodeInstruction.
 #ifndef NDEBUG
     // Verify that the callee is actually __tls_get_addr.
     const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(MO.getExpr());

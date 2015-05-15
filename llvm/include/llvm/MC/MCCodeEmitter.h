@@ -35,7 +35,7 @@ public:
 
   /// EncodeInstruction - Encode the given \p Inst to bytes on the output
   /// stream \p OS.
-  virtual void EncodeInstruction(const MCInst &Inst, raw_ostream &OS,
+  virtual void encodeInstruction(const MCInst &Inst, raw_ostream &OS,
                                  SmallVectorImpl<MCFixup> &Fixups,
                                  const MCSubtargetInfo &STI) const = 0;
 };

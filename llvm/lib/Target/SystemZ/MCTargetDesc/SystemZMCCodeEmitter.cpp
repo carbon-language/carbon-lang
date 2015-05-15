@@ -35,7 +35,7 @@ public:
   ~SystemZMCCodeEmitter() override {}
 
   // OVerride MCCodeEmitter.
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
@@ -118,7 +118,7 @@ MCCodeEmitter *llvm::createSystemZMCCodeEmitter(const MCInstrInfo &MCII,
 }
 
 void SystemZMCCodeEmitter::
-EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+encodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups,
                   const MCSubtargetInfo &STI) const {
   uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);

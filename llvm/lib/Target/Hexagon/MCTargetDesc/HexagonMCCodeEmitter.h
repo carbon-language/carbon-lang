@@ -41,7 +41,7 @@ public:
 
   MCSubtargetInfo const &getSubtargetInfo() const;
 
-  void EncodeInstruction(MCInst const &MI, raw_ostream &OS,
+  void encodeInstruction(MCInst const &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          MCSubtargetInfo const &STI) const override;
 

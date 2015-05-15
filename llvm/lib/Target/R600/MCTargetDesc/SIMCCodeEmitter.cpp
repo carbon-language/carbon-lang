@@ -52,7 +52,7 @@ public:
   ~SIMCCodeEmitter() override {}
 
   /// \brief Encode the instruction and write it to the OS.
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
@@ -179,7 +179,7 @@ uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO,
   return getLit64Encoding(static_cast<uint64_t>(MO.getImm()));
 }
 
-void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+void SIMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups,
                                        const MCSubtargetInfo &STI) const {
 

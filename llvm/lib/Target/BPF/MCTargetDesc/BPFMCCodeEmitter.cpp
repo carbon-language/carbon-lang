@@ -52,7 +52,7 @@ public:
                             SmallVectorImpl<MCFixup> &Fixups,
                             const MCSubtargetInfo &STI) const;
 
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 };
@@ -117,7 +117,7 @@ void EmitBEConstant(uint64_t Val, unsigned Size, unsigned &CurByte,
     EmitByte((Val >> i) & 255, CurByte, OS);
 }
 
-void BPFMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+void BPFMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
   unsigned Opcode = MI.getOpcode();

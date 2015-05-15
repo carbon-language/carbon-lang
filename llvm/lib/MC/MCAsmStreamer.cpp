@@ -1167,7 +1167,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
   SmallString<256> Code;
   SmallVector<MCFixup, 4> Fixups;
   raw_svector_ostream VecOS(Code);
-  Emitter->EncodeInstruction(Inst, VecOS, Fixups, STI);
+  Emitter->encodeInstruction(Inst, VecOS, Fixups, STI);
   VecOS.flush();
 
   // If we are showing fixups, create symbolic markers in the encoded

@@ -141,10 +141,10 @@ void MipsMCCodeEmitter::EmitInstruction(uint64_t Val, unsigned Size,
   }
 }
 
-/// EncodeInstruction - Emit the instruction.
+/// encodeInstruction - Emit the instruction.
 /// Size the instruction with Desc.getSize().
 void MipsMCCodeEmitter::
-EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+encodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups,
                   const MCSubtargetInfo &STI) const
 {
@@ -177,7 +177,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   unsigned Opcode = TmpInst.getOpcode();
   if ((Opcode != Mips::NOP) && (Opcode != Mips::SLL) &&
       (Opcode != Mips::SLL_MM) && !Binary)
-    llvm_unreachable("unimplemented opcode in EncodeInstruction()");
+    llvm_unreachable("unimplemented opcode in encodeInstruction()");
 
   int NewOpcode = -1;
   if (isMicroMips(STI)) {

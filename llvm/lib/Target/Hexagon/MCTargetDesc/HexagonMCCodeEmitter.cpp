@@ -55,7 +55,7 @@ HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
     : MCT(aMCT), MCII(aMII), Addend(new unsigned(0)),
       Extended(new bool(false)) {}
 
-void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
+void HexagonMCCodeEmitter::encodeInstruction(MCInst const &MI, raw_ostream &OS,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              MCSubtargetInfo const &STI) const {
   uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI) | getPacketBits(MI);

@@ -41,7 +41,7 @@ public:
     : MCII(mcii), MRI(mri) { }
 
   /// \brief Encode the instruction and write it to the OS.
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
@@ -86,7 +86,7 @@ MCCodeEmitter *llvm::createR600MCCodeEmitter(const MCInstrInfo &MCII,
   return new R600MCCodeEmitter(MCII, MRI);
 }
 
-void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+void R600MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                        SmallVectorImpl<MCFixup> &Fixups,
                                        const MCSubtargetInfo &STI) const {
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
