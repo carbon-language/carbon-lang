@@ -2333,8 +2333,15 @@ SymbolFileDWARF::ParseChildMembers
                     }
 
                     Type *base_class_type = ResolveTypeUID(encoding_uid);
-                    assert(base_class_type);
-                    
+                    if (base_class_type == NULL)
+                    {
+                        GetObjectFile()->GetModule()->ReportError("0x%8.8x: DW_TAG_inheritance failed to resolve a the base class at 0x%8.8" PRIx64 " from enclosing type 0x%8.8x. \nPlease file a bug and attach the file at the start of this error message",
+                                                                  die->GetOffset(),
+                                                                  encoding_uid,
+                                                                  parent_die->GetOffset());
+                        break;
+                    }
+
                     ClangASTType base_class_clang_type = base_class_type->GetClangFullType();
                     assert (base_class_clang_type);
                     if (class_language == eLanguageTypeObjC)
