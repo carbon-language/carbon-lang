@@ -1154,18 +1154,30 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
 
   // See if we can fold the select into one of our operands.
-  if (SI.getType()->isIntegerTy()) {
+  if (SI.getType()->isIntOrIntVectorTy()) {
     if (Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal))
       return FoldI;
 
     Value *LHS, *RHS, *LHS2, *RHS2;
-    SelectPatternFlavor SPF = matchSelectPattern(&SI, LHS, RHS);
+    Instruction::CastOps CastOp;
+    SelectPatternFlavor SPF = matchSelectPattern(&SI, LHS, RHS, &CastOp);
 
-    // MAX(MAX(a, b), a) -> MAX(a, b)
-    // MIN(MIN(a, b), a) -> MIN(a, b)
-    // MAX(MIN(a, b), a) -> a
-    // MIN(MAX(a, b), a) -> a
     if (SPF) {
+      // Canonicalize so that type casts are outside select patterns.
+      if (LHS->getType()->getPrimitiveSizeInBits() !=
+          SI.getType()->getPrimitiveSizeInBits()) {
+        CmpInst::Predicate Pred = getICmpPredicateForMinMax(SPF);
+        Value *Cmp = Builder->CreateICmp(Pred, LHS, RHS);
+        Value *NewSI = Builder->CreateCast(CastOp,
+                                           Builder->CreateSelect(Cmp, LHS, RHS),
+                                           SI.getType());
+        return ReplaceInstUsesWith(SI, NewSI);
+      }
+
+      // MAX(MAX(a, b), a) -> MAX(a, b)
+      // MIN(MIN(a, b), a) -> MIN(a, b)
+      // MAX(MIN(a, b), a) -> a
+      // MIN(MAX(a, b), a) -> a
       if (SelectPatternFlavor SPF2 = matchSelectPattern(LHS, LHS2, RHS2))
         if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2,
                                           SI, SPF, RHS))
