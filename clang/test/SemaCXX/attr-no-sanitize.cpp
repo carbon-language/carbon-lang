@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
-// RUN: not %clang_cc1 -std=c++11 -ast-dump %s 2>&1 | FileCheck --check-prefix=DUMP %s
-// RUN: not %clang_cc1 -std=c++11 -ast-print %s 2>&1 | FileCheck --check-prefix=PRINT %s
+// RUN: not %clang_cc1 -std=c++11 -ast-dump %s | FileCheck --check-prefix=DUMP %s
+// RUN: not %clang_cc1 -std=c++11 -ast-print %s | FileCheck --check-prefix=PRINT %s
 
 int v1 __attribute__((no_sanitize("address"))); // expected-error{{'no_sanitize' attribute only applies to functions and methods}}
 
