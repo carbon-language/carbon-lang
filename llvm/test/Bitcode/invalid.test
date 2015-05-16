@@ -127,3 +127,13 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-GCTable-overflow.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=GCTABLE-OFLOW %s
 
 GCTABLE-OFLOW: Invalid ID
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-insert-0-indices.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INSERT-0-IDXS %s
+
+INSERT-0-IDXS: INSERTVAL: Invalid instruction with 0 indices
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-extract-0-indices.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=EXTRACT-0-IDXS %s
+
+EXTRACT-0-IDXS: EXTRACTVAL: Invalid instruction with 0 indices

@@ -3555,10 +3555,13 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Agg))
         return Error("Invalid record");
 
+      unsigned RecSize = Record.size();
+      if (OpNum == RecSize)
+        return Error("EXTRACTVAL: Invalid instruction with 0 indices");
+
       SmallVector<unsigned, 4> EXTRACTVALIdx;
       Type *CurTy = Agg->getType();
-      for (unsigned RecSize = Record.size();
-           OpNum != RecSize; ++OpNum) {
+      for (; OpNum != RecSize; ++OpNum) {
         bool IsArray = CurTy->isArrayTy();
         bool IsStruct = CurTy->isStructTy();
         uint64_t Index = Record[OpNum];
@@ -3594,10 +3597,13 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Val))
         return Error("Invalid record");
 
+      unsigned RecSize = Record.size();
+      if (OpNum == RecSize)
+        return Error("INSERTVAL: Invalid instruction with 0 indices");
+
       SmallVector<unsigned, 4> INSERTVALIdx;
       Type *CurTy = Agg->getType();
-      for (unsigned RecSize = Record.size();
-           OpNum != RecSize; ++OpNum) {
+      for (; OpNum != RecSize; ++OpNum) {
         bool IsArray = CurTy->isArrayTy();
         bool IsStruct = CurTy->isStructTy();
         uint64_t Index = Record[OpNum];
