@@ -65,6 +65,9 @@ public:
 
   /// \brief The umbrella header or directory.
   llvm::PointerUnion<const DirectoryEntry *, const FileEntry *> Umbrella;
+
+  /// \brief The name of the umbrella entry, as written in the module map.
+  std::string UmbrellaAsWritten;
   
 private:
   /// \brief The submodules of this module, indexed by name.
@@ -105,6 +108,17 @@ public:
   struct Header {
     std::string NameAsWritten;
     const FileEntry *Entry;
+
+    explicit operator bool() { return Entry; }
+  };
+
+  /// \brief Information about a directory name as found in the module map
+  /// file.
+  struct DirectoryName {
+    std::string NameAsWritten;
+    const DirectoryEntry *Entry;
+
+    explicit operator bool() { return Entry; }
   };
 
   /// \brief The headers that are part of this module.
@@ -370,12 +384,14 @@ public:
 
   /// \brief Retrieve the directory for which this module serves as the
   /// umbrella.
-  const DirectoryEntry *getUmbrellaDir() const;
+  DirectoryName getUmbrellaDir() const;
 
   /// \brief Retrieve the header that serves as the umbrella header for this
   /// module.
-  const FileEntry *getUmbrellaHeader() const {
-    return Umbrella.dyn_cast<const FileEntry *>();
+  Header getUmbrellaHeader() const {
+    if (auto *E = Umbrella.dyn_cast<const FileEntry *>())
+      return Header{UmbrellaAsWritten, E};
+    return Header{};
   }
 
   /// \brief Determine whether this module has an umbrella directory that is

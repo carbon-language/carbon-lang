@@ -2439,16 +2439,16 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     }
 
     // Emit the umbrella header, if there is one.
-    if (const FileEntry *UmbrellaHeader = Mod->getUmbrellaHeader()) {
+    if (auto UmbrellaHeader = Mod->getUmbrellaHeader()) {
       Record.clear();
       Record.push_back(SUBMODULE_UMBRELLA_HEADER);
-      Stream.EmitRecordWithBlob(UmbrellaAbbrev, Record, 
-                                UmbrellaHeader->getName());
-    } else if (const DirectoryEntry *UmbrellaDir = Mod->getUmbrellaDir()) {
+      Stream.EmitRecordWithBlob(UmbrellaAbbrev, Record,
+                                UmbrellaHeader.NameAsWritten);
+    } else if (auto UmbrellaDir = Mod->getUmbrellaDir()) {
       Record.clear();
       Record.push_back(SUBMODULE_UMBRELLA_DIR);
       Stream.EmitRecordWithBlob(UmbrellaDirAbbrev, Record, 
-                                UmbrellaDir->getName());      
+                                UmbrellaDir.NameAsWritten);
     }
 
     // Emit the headers.

@@ -138,11 +138,11 @@ std::string Module::getFullModuleName() const {
   return Result;
 }
 
-const DirectoryEntry *Module::getUmbrellaDir() const {
-  if (const FileEntry *Header = getUmbrellaHeader())
-    return Header->getDir();
+Module::DirectoryName Module::getUmbrellaDir() const {
+  if (Header U = getUmbrellaHeader())
+    return {"", U.Entry->getDir()};
   
-  return Umbrella.dyn_cast<const DirectoryEntry *>();
+  return {UmbrellaAsWritten, Umbrella.dyn_cast<const DirectoryEntry *>()};
 }
 
 ArrayRef<const FileEntry *> Module::getTopHeaders(FileManager &FileMgr) {
@@ -334,15 +334,15 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
     OS << "\n";
   }
   
-  if (const FileEntry *UmbrellaHeader = getUmbrellaHeader()) {
+  if (Header H = getUmbrellaHeader()) {
     OS.indent(Indent + 2);
     OS << "umbrella header \"";
-    OS.write_escaped(UmbrellaHeader->getName());
+    OS.write_escaped(H.NameAsWritten);
     OS << "\"\n";
-  } else if (const DirectoryEntry *UmbrellaDir = getUmbrellaDir()) {
+  } else if (DirectoryName D = getUmbrellaDir()) {
     OS.indent(Indent + 2);
     OS << "umbrella \"";
-    OS.write_escaped(UmbrellaDir->getName());
+    OS.write_escaped(D.NameAsWritten);
     OS << "\"\n";    
   }
 

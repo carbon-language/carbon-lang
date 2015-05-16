@@ -474,7 +474,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       if (!getDiagnostics().isIgnored(diag::warn_uncovered_module_header,
                                       StartLoc)) {
         ModuleMap &ModMap = getHeaderSearchInfo().getModuleMap();
-        const DirectoryEntry *Dir = Mod->getUmbrellaDir();
+        const DirectoryEntry *Dir = Mod->getUmbrellaDir().Entry;
         vfs::FileSystem &FS = *FileMgr.getVirtualFileSystem();
         std::error_code EC;
         for (vfs::recursive_directory_iterator Entry(FS, Dir->getName(), EC), End;

@@ -152,22 +152,6 @@ static std::error_code addHeaderInclude(StringRef HeaderName,
   return std::error_code();
 }
 
-static std::error_code addHeaderInclude(const FileEntry *Header,
-                                        SmallVectorImpl<char> &Includes,
-                                        const LangOptions &LangOpts,
-                                        bool IsExternC) {
-  // Use an absolute path if we don't have a filename as written in the module
-  // map file; this ensures that we will identify the right file independent of
-  // header search paths.
-  if (llvm::sys::path::is_absolute(Header->getName()))
-    return addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
-
-  SmallString<256> AbsName(Header->getName());
-  if (std::error_code Err = llvm::sys::fs::make_absolute(AbsName))
-    return Err;
-  return addHeaderInclude(AbsName, Includes, LangOpts, IsExternC);
-}
-
 /// \brief Collect the set of header includes needed to construct the given 
 /// module and update the TopHeaders file set of the module.
 ///
@@ -196,20 +180,20 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
   }
   // Note that Module->PrivateHeaders will not be a TopHeader.
 
-  if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
-    // FIXME: Track the name as written here.
-    Module->addTopHeader(UmbrellaHeader);
+  if (Module::Header UmbrellaHeader = Module->getUmbrellaHeader()) {
+    Module->addTopHeader(UmbrellaHeader.Entry);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
-      if (std::error_code Err = addHeaderInclude(UmbrellaHeader, Includes,
-                                                 LangOpts, Module->IsExternC))
+      if (std::error_code Err = addHeaderInclude(UmbrellaHeader.NameAsWritten,
+                                                 Includes, LangOpts,
+                                                 Module->IsExternC))
         return Err;
     }
-  } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
+  } else if (Module::DirectoryName UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
     std::error_code EC;
     SmallString<128> DirNative;
-    llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
+    llvm::sys::path::native(UmbrellaDir.Entry->getName(), DirNative);
     for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative, EC), 
                                                      DirEnd;
          Dir != DirEnd && !EC; Dir.increment(EC)) {
@@ -231,11 +215,20 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
       if (ModMap.isHeaderUnavailableInModule(Header, Module))
         continue;
 
+      // Compute the relative path from the directory to this file.
+      SmallVector<StringRef, 16> Components;
+      auto PathIt = llvm::sys::path::rbegin(Dir->path());
+      for (int I = 0; I != Dir.level() + 1; ++I, ++PathIt)
+        Components.push_back(*PathIt);
+      SmallString<128> RelativeHeader(UmbrellaDir.NameAsWritten);
+      for (auto It = Components.rbegin(), End = Components.rend(); It != End;
+           ++It)
+        llvm::sys::path::append(RelativeHeader, *It);
+
       // Include this header as part of the umbrella directory.
-      // FIXME: Track the name as written through to here.
       Module->addTopHeader(Header);
-      if (std::error_code Err =
-              addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC))
+      if (std::error_code Err = addHeaderInclude(RelativeHeader, Includes,
+                                                 LangOpts, Module->IsExternC))
         return Err;
     }
 
@@ -327,10 +320,9 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
   std::error_code Err = std::error_code();
-  if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
-    // FIXME: Track the file name as written.
-    Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
-                           Module->IsExternC);
+  if (Module::Header UmbrellaHeader = Module->getUmbrellaHeader())
+    Err = addHeaderInclude(UmbrellaHeader.NameAsWritten, HeaderContents,
+                           CI.getLangOpts(), Module->IsExternC);
   if (!Err)
     Err = collectModuleHeaderIncludes(
         CI.getLangOpts(), FileMgr,
