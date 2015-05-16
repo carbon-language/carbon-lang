@@ -14,15 +14,139 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class MCExpr;
+class MCSymbol;
+class MCFragment;
 class MCSection;
 class MCContext;
 class raw_ostream;
+
+// FIXME: Same concerns as with SectionData.
+class MCSymbolData {
+  const MCSymbol *Symbol;
+
+  /// Fragment - The fragment this symbol's value is relative to, if any. Also
+  /// stores if this symbol is visible outside this translation unit (bit 0) or
+  /// if it is private extern (bit 1).
+  PointerIntPair<MCFragment *, 2> Fragment;
+
+  union {
+    /// Offset - The offset to apply to the fragment address to form this
+    /// symbol's value.
+    uint64_t Offset;
+
+    /// CommonSize - The size of the symbol, if it is 'common'.
+    uint64_t CommonSize;
+  };
+
+  /// SymbolSize - An expression describing how to calculate the size of
+  /// a symbol. If a symbol has no size this field will be NULL.
+  const MCExpr *SymbolSize;
+
+  /// CommonAlign - The alignment of the symbol, if it is 'common', or -1.
+  //
+  // FIXME: Pack this in with other fields?
+  unsigned CommonAlign;
+
+  /// Flags - The Flags field is used by object file implementations to store
+  /// additional per symbol information which is not easily classified.
+  uint32_t Flags;
+
+  /// Index - Index field, for use by the object file implementation.
+  uint64_t Index;
+
+public:
+  // Only for use as sentinel.
+  MCSymbolData();
+  MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset);
+
+  /// \name Accessors
+  /// @{
+
+  const MCSymbol &getSymbol() const { return *Symbol; }
+
+  MCFragment *getFragment() const { return Fragment.getPointer(); }
+  void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
+
+  uint64_t getOffset() const {
+    assert(!isCommon());
+    return Offset;
+  }
+  void setOffset(uint64_t Value) {
+    assert(!isCommon());
+    Offset = Value;
+  }
+
+  /// @}
+  /// \name Symbol Attributes
+  /// @{
+
+  bool isExternal() const { return Fragment.getInt() & 1; }
+  void setExternal(bool Value) {
+    Fragment.setInt((Fragment.getInt() & ~1) | unsigned(Value));
+  }
+
+  bool isPrivateExtern() const { return Fragment.getInt() & 2; }
+  void setPrivateExtern(bool Value) {
+    Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
+  }
+
+  /// isCommon - Is this a 'common' symbol.
+  bool isCommon() const { return CommonAlign != -1U; }
+
+  /// setCommon - Mark this symbol as being 'common'.
+  ///
+  /// \param Size - The size of the symbol.
+  /// \param Align - The alignment of the symbol.
+  void setCommon(uint64_t Size, unsigned Align) {
+    assert(getOffset() == 0);
+    CommonSize = Size;
+    CommonAlign = Align;
+  }
+
+  /// getCommonSize - Return the size of a 'common' symbol.
+  uint64_t getCommonSize() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonSize;
+  }
+
+  void setSize(const MCExpr *SS) { SymbolSize = SS; }
+
+  const MCExpr *getSize() const { return SymbolSize; }
+
+  /// getCommonAlignment - Return the alignment of a 'common' symbol.
+  unsigned getCommonAlignment() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonAlign;
+  }
+
+  /// getFlags - Get the (implementation defined) symbol flags.
+  uint32_t getFlags() const { return Flags; }
+
+  /// setFlags - Set the (implementation defined) symbol flags.
+  void setFlags(uint32_t Value) { Flags = Value; }
+
+  /// modifyFlags - Modify the flags via a mask
+  void modifyFlags(uint32_t Value, uint32_t Mask) {
+    Flags = (Flags & ~Mask) | Value;
+  }
+
+  /// getIndex - Get the (implementation defined) index.
+  uint64_t getIndex() const { return Index; }
+
+  /// setIndex - Set the (implementation defined) index.
+  void setIndex(uint64_t Value) { Index = Value; }
+
+  /// @}
+
+  void dump() const;
+};
 
 /// MCSymbol - Instances of this class represent a symbol name in the MC file,
 /// and MCSymbols are created and uniqued by the MCContext class.  MCSymbols
