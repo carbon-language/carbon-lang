@@ -23,6 +23,7 @@ config.gcc_toolchain            = "@LIBCXX_GCC_TOOLCHAIN@"
 config.generate_coverage        = "@LIBCXX_GENERATE_COVERAGE@"
 config.target_info              = "@LIBCXX_TARGET_INFO@"
 config.executor                 = "@LIBCXX_EXECUTOR@"
+config.llvm_unwinder            = "@LIBCXXABI_USE_LLVM_UNWINDER@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")

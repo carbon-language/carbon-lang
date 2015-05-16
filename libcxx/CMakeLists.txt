@@ -100,6 +100,10 @@ set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
     "Specify C++ ABI library to use." FORCE)
 set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
+# Build libc++abi with libunwind. We need this option to determine whether to
+# link with libunwind or libgcc_s while running the test cases.
+option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
+
 # TODO(ericwf): Remove these options by March/25/2015.
 # These CMake options have been removed in favor of a generic option
 # "LIBCXX_CXX_ABI_INCLUDE_PATHS". Issue an explicit error message explaining
