@@ -344,8 +344,7 @@ namespace {
     bool processMemMove(MemMoveInst *M);
     bool performCallSlotOptzn(Instruction *cpy, Value *cpyDst, Value *cpySrc,
                               uint64_t cpyLen, unsigned cpyAlign, CallInst *C);
-    bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
-                                       uint64_t MSize);
+    bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep);
     bool processMemSetMemCpyDependence(MemCpyInst *M, MemSetInst *MDep);
     bool processByValArgument(CallSite CS, unsigned ArgNo);
     Instruction *tryMergingIntoMemset(Instruction *I, Value *StartPtr,
@@ -765,10 +764,9 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
 
 /// processMemCpyMemCpyDependence - We've found that the (upward scanning)
 /// memory dependence of memcpy 'M' is the memcpy 'MDep'.  Try to simplify M to
-/// copy from MDep's input if we can.  MSize is the size of M's copy.
+/// copy from MDep's input if we can.
 ///
-bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
-                                              uint64_t MSize) {
+bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep) {
   // We can only transforms memcpy's where the dest of one is the source of the
   // other.
   if (M->getSource() != MDep->getDest() || MDep->isVolatile())
@@ -964,7 +962,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
 
   if (SrcDepInfo.isClobber()) {
     if (MemCpyInst *MDep = dyn_cast<MemCpyInst>(SrcDepInfo.getInst()))
-      return processMemCpyMemCpyDependence(M, MDep, CopySize->getZExtValue());
+      return processMemCpyMemCpyDependence(M, MDep);
   } else if (SrcDepInfo.isDef()) {
     Instruction *I = SrcDepInfo.getInst();
     bool hasUndefContents = false;
