@@ -2738,8 +2738,9 @@ VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
     CharUnits ThisOffset = Overrider.Offset;
     CharUnits LastVBaseOffset;
 
-    // For each path from the overrider to the parents of the overridden methods,
-    // traverse the path, calculating the this offset in the most derived class.
+    // For each path from the overrider to the parents of the overridden
+    // methods, traverse the path, calculating the this offset in the most
+    // derived class.
     for (int J = 0, F = Path.size(); J != F; ++J) {
       const CXXBasePathElement &Element = Path[J];
       QualType CurTy = Element.Base->getType();
@@ -2971,7 +2972,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   // See if this class expands a vftable of the base we look at, which is either
-  // the one defined by the vfptr base path or the primary base of the current class.
+  // the one defined by the vfptr base path or the primary base of the current
+  // class.
   const CXXRecordDecl *NextBase = nullptr, *NextLastVBase = LastVBase;
   CharUnits NextBaseOffset;
   if (BaseDepth < WhichVFPtr.PathToBaseWithVPtr.size()) {
@@ -3029,7 +3031,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
                                   ThisAdjustmentOffset);
 
     if (OverriddenMD) {
-      // If MD overrides anything in this vftable, we need to update the entries.
+      // If MD overrides anything in this vftable, we need to update the
+      // entries.
       MethodInfoMapTy::iterator OverriddenMDIterator =
           MethodInfoMap.find(OverriddenMD);
 
