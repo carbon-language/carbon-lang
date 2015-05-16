@@ -74,8 +74,8 @@ define float @t6(i32 %a) {
 
 ; CHECK-LABEL: @t7
 ; CHECK-NEXT: icmp
-; CHECK-NEXT: trunc
 ; CHECK-NEXT: select
+; CHECK-NEXT: trunc
 define i16 @t7(i32 %a) {
   %1 = icmp slt i32 %a, -32768
   %2 = trunc i32 %a to i16
