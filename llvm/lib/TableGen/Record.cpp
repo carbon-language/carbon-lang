@@ -778,14 +778,14 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   }
   case HEAD: {
     if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      assert(!LHSl->empty() && "Empty list in car");
+      assert(!LHSl->empty() && "Empty list in head");
       return LHSl->getElement(0);
     }
     break;
   }
   case TAIL: {
     if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      assert(!LHSl->empty() && "Empty list in cdr");
+      assert(!LHSl->empty() && "Empty list in tail");
       // Note the +1.  We can't just pass the result of getValues()
       // directly.
       return ListInit::get(LHSl->getValues().slice(1), LHSl->getType());
