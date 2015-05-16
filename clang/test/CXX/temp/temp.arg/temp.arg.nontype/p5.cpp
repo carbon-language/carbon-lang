@@ -114,7 +114,7 @@ namespace reference_parameters {
     }
   
     template<typename T, const T &ref> void bind() {
-      T &ref2 = ref; // expected-error{{drops qualifiers}}
+      T &ref2 = ref; // expected-error{{drops 'const' qualifier}}
     }
     
     int counter;

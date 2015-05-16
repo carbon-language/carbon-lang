@@ -6852,12 +6852,19 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->getSourceRange();
     break;
 
-  case FK_ReferenceInitDropsQualifiers:
+  case FK_ReferenceInitDropsQualifiers: {
+    QualType SourceType = Args[0]->getType();
+    QualType NonRefType = DestType.getNonReferenceType();
+    Qualifiers DroppedQualifiers =
+        SourceType.getQualifiers() - NonRefType.getQualifiers();
+
     S.Diag(Kind.getLocation(), diag::err_reference_bind_drops_quals)
-      << Args[0]->getType()
-      << DestType.getNonReferenceType()
+      << SourceType
+      << NonRefType
+      << DroppedQualifiers.getCVRQualifiers()
       << Args[0]->getSourceRange();
     break;
+  }
 
   case FK_ReferenceInitFailed:
     S.Diag(Kind.getLocation(), diag::err_reference_bind_failed)
