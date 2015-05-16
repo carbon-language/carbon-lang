@@ -396,7 +396,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned Index = 0;
   unsigned Type = 0;
-  const MCSymbolData *RelSymbol = nullptr;
+  const MCSymbol *RelSymbol = nullptr;
 
   if (Target.isAbsolute()) { // constant
     // FIXME!
@@ -416,7 +416,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     // Check whether we need an external or internal relocation.
     if (requiresExternRelocation(Writer, Asm, *Fragment, RelocType, SD,
                                  FixedValue)) {
-      RelSymbol = SD;
+      RelSymbol = &SD->getSymbol();
 
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was

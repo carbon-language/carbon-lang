@@ -96,9 +96,9 @@ class MachObjectWriter : public MCObjectWriter {
   /// @{
 
   struct RelAndSymbol {
-    const MCSymbolData *Sym;
+    const MCSymbol *Sym;
     MachO::any_relocation_info MRE;
-    RelAndSymbol(const MCSymbolData *Sym, const MachO::any_relocation_info &MRE)
+    RelAndSymbol(const MCSymbol *Sym, const MachO::any_relocation_info &MRE)
         : Sym(Sym), MRE(MRE) {}
   };
 
@@ -223,7 +223,7 @@ public:
   // to a symbol it should be passed as \p RelSymbol so that it can be updated
   // afterwards. If the relocation doesn't refer to a symbol, nullptr should be
   // used.
-  void addRelocation(const MCSymbolData *RelSymbol, const MCSectionData *SD,
+  void addRelocation(const MCSymbol *RelSymbol, const MCSectionData *SD,
                      MachO::any_relocation_info &MRE) {
     RelAndSymbol P(RelSymbol, MRE);
     Relocations[SD].push_back(P);

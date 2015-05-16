@@ -199,8 +199,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     MRE.r_word0 = FixupOffset;
     MRE.r_word1 =
         (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-    Writer->addRelocation(A_Base ? &A_Base->getData() : nullptr,
-                          Fragment->getParent(), MRE);
+    Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
 
     if (B_Base)
       RelSymbol = B_Base;
@@ -339,8 +338,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
   MRE.r_word0 = FixupOffset;
   MRE.r_word1 = (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) |
                 (IsExtern << 27) | (Type << 28);
-  Writer->addRelocation(RelSymbol ? &RelSymbol->getData() : nullptr,
-                        Fragment->getParent(), MRE);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
@@ -453,9 +451,6 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   uint32_t Value = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned IsPCRel = 0;
 
-  // Get the symbol data.
-  const MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
-
   // We're only going to have a second symbol in pic mode and it'll be a
   // subtraction from the picbase. For 32-bit pic the addend is the difference
   // between the picbase and the next address.  For 32-bit static the addend is
@@ -479,7 +474,8 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   MRE.r_word0 = Value;
   MRE.r_word1 =
       (IsPCRel << 24) | (Log2Size << 25) | (MachO::GENERIC_RELOC_TLV << 28);
-  Writer->addRelocation(SD_A, Fragment->getParent(), MRE);
+  Writer->addRelocation(&Target.getSymA()->getSymbol(), Fragment->getParent(),
+                        MRE);
 }
 
 void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
@@ -531,7 +527,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned Index = 0;
   unsigned Type = 0;
-  const MCSymbolData *RelSymbol = nullptr;
+  const MCSymbol *RelSymbol = nullptr;
 
   if (Target.isAbsolute()) { // constant
     // SymbolNum of 0 indicates the absolute section.
@@ -552,7 +548,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
 
     // Check whether we need an external or internal relocation.
     if (Writer->doesSymbolRequireExternRelocation(SD)) {
-      RelSymbol = SD;
+      RelSymbol = &SD->getSymbol();
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
