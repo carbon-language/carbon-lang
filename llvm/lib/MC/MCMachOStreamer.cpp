@@ -478,11 +478,11 @@ void MCMachOStreamer::FinishImpl() {
   // symbol.
   for (MCAssembler::iterator it = getAssembler().begin(),
          ie = getAssembler().end(); it != ie; ++it) {
-    MCSymbolData *CurrentAtom = nullptr;
+    const MCSymbol *CurrentAtom = nullptr;
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
       if (MCSymbolData *SD = DefiningSymbolMap.lookup(it2))
-        CurrentAtom = SD;
+        CurrentAtom = &SD->getSymbol();
       it2->setAtom(CurrentAtom);
     }
   }

@@ -70,7 +70,7 @@ private:
 
   /// Atom - The atom this fragment is in, as represented by it's defining
   /// symbol.
-  MCSymbolData *Atom;
+  const MCSymbol *Atom;
 
   /// \name Assembler Backend Data
   /// @{
@@ -99,8 +99,8 @@ public:
   MCSectionData *getParent() const { return Parent; }
   void setParent(MCSectionData *Value) { Parent = Value; }
 
-  MCSymbolData *getAtom() const { return Atom; }
-  void setAtom(MCSymbolData *Value) { Atom = Value; }
+  const MCSymbol *getAtom() const { return Atom; }
+  void setAtom(const MCSymbol *Value) { Atom = Value; }
 
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
@@ -834,7 +834,7 @@ public:
 
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
-  const MCSymbolData *getAtom(const MCSymbolData *Symbol) const;
+  const MCSymbol *getAtom(const MCSymbolData *Symbol) const;
 
   /// Check whether a particular symbol is visible to the linker and is required
   /// in the symbol table, or whether it can be discarded by the assembler. This

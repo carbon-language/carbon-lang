@@ -679,8 +679,6 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   //   - addr(atom(B)) - offset(B)
   // and the offsets are not relocatable, so the fixup is fully resolved when
   //  addr(atom(A)) - addr(atom(B)) == 0.
-  const MCSymbolData *A_Base = nullptr, *B_Base = nullptr;
-
   const MCSymbol &SA = findAliasedSymbol(DataA.getSymbol());
   const MCSection &SecA = SA.getSection();
   const MCSection &SecB = FB.getParent()->getSection();
@@ -733,11 +731,8 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   if (!FA)
     return false;
 
-  A_Base = FA->getAtom();
-  B_Base = FB.getAtom();
-
   // If the atoms are the same, they are guaranteed to have the same address.
-  if (A_Base == B_Base)
+  if (FA->getAtom() == FB.getAtom())
     return true;
 
   // Otherwise, we can't prove this is fully resolved.

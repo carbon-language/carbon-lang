@@ -113,7 +113,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
   unsigned Index = 0;
   unsigned IsExtern = 0;
   unsigned Type = 0;
-  const MCSymbolData *RelSymbol = nullptr;
+  const MCSymbol *RelSymbol = nullptr;
 
   Value = Target.getConstant();
 
@@ -143,13 +143,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     if (A->isTemporary())
       A = &Writer->findAliasedSymbol(*A);
     const MCSymbolData &A_SD = Asm.getSymbolData(*A);
-    const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
+    const MCSymbol *A_Base = Asm.getAtom(&A_SD);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     if (B->isTemporary())
       B = &Writer->findAliasedSymbol(*B);
     const MCSymbolData &B_SD = Asm.getSymbolData(*B);
-    const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
+    const MCSymbol *B_Base = Asm.getAtom(&B_SD);
 
     // Neither symbol can be modified.
     if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
@@ -184,10 +184,12 @@ void X86MachObjectWriter::RecordX86_64Relocation(
         Name + "' can not be undefined in a subtraction expression");
     }
 
-    Value += Writer->getSymbolAddress(&A_SD, Layout) -
-      (!A_Base ? 0 : Writer->getSymbolAddress(A_Base, Layout));
-    Value -= Writer->getSymbolAddress(&B_SD, Layout) -
-      (!B_Base ? 0 : Writer->getSymbolAddress(B_Base, Layout));
+    Value +=
+        Writer->getSymbolAddress(&A_SD, Layout) -
+        (!A_Base ? 0 : Writer->getSymbolAddress(&A_Base->getData(), Layout));
+    Value -=
+        Writer->getSymbolAddress(&B_SD, Layout) -
+        (!B_Base ? 0 : Writer->getSymbolAddress(&B_Base->getData(), Layout));
 
     if (!A_Base)
       Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
@@ -197,7 +199,8 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     MRE.r_word0 = FixupOffset;
     MRE.r_word1 =
         (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-    Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
+    Writer->addRelocation(A_Base ? &A_Base->getData() : nullptr,
+                          Fragment->getParent(), MRE);
 
     if (B_Base)
       RelSymbol = B_Base;
@@ -230,9 +233,9 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     // non-local symbol).
     if (RelSymbol) {
       // Add the local offset, if needed.
-      if (RelSymbol != &SD)
-        Value +=
-            Layout.getSymbolOffset(&SD) - Layout.getSymbolOffset(RelSymbol);
+      if (&RelSymbol->getData() != &SD)
+        Value += Layout.getSymbolOffset(&SD) -
+                 Layout.getSymbolOffset(&RelSymbol->getData());
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
       Index = SD.getFragment()->getParent()->getOrdinal() + 1;
@@ -336,7 +339,8 @@ void X86MachObjectWriter::RecordX86_64Relocation(
   MRE.r_word0 = FixupOffset;
   MRE.r_word1 = (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) |
                 (IsExtern << 27) | (Type << 28);
-  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
+  Writer->addRelocation(RelSymbol ? &RelSymbol->getData() : nullptr,
+                        Fragment->getParent(), MRE);
 }
 
 bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
