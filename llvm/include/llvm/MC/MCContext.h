@@ -533,10 +533,10 @@ namespace llvm {
 /// this ever changes, this operator will have to be changed, too.)
 /// Usage looks like this (assuming there's an MCContext 'Context' in scope):
 /// \code
-/// // Default alignment (16)
+/// // Default alignment (8)
 /// IntegerLiteral *Ex = new (Context) IntegerLiteral(arguments);
 /// // Specific alignment
-/// IntegerLiteral *Ex2 = new (Context, 8) IntegerLiteral(arguments);
+/// IntegerLiteral *Ex2 = new (Context, 4) IntegerLiteral(arguments);
 /// \endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
@@ -548,7 +548,7 @@ namespace llvm {
 ///                  allocator supports it).
 /// \return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, llvm::MCContext &C,
-                          size_t Alignment = 16) throw () {
+                          size_t Alignment = 8) throw() {
   return C.Allocate(Bytes, Alignment);
 }
 /// \brief Placement delete companion to the new above.
@@ -567,10 +567,10 @@ inline void operator delete(void *Ptr, llvm::MCContext &C, size_t)
 /// null on error.
 /// Usage looks like this (assuming there's an MCContext 'Context' in scope):
 /// \code
-/// // Default alignment (16)
+/// // Default alignment (8)
 /// char *data = new (Context) char[10];
 /// // Specific alignment
-/// char *data = new (Context, 8) char[10];
+/// char *data = new (Context, 4) char[10];
 /// \endcode
 /// Please note that you cannot use delete on the pointer; it must be
 /// deallocated using an explicit destructor call followed by
@@ -582,7 +582,7 @@ inline void operator delete(void *Ptr, llvm::MCContext &C, size_t)
 ///                  allocator supports it).
 /// \return The allocated memory. Could be NULL.
 inline void *operator new[](size_t Bytes, llvm::MCContext& C,
-                            size_t Alignment = 16) throw () {
+                            size_t Alignment = 8) throw() {
   return C.Allocate(Bytes, Alignment);
 }
 
