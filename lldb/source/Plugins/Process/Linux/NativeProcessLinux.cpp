@@ -928,8 +928,8 @@ namespace
         struct user_hwdebug_state dreg_state;
 
         memset (&dreg_state, 0, sizeof (dreg_state));
-        ioVec.iov_len = (__builtin_offsetof (struct user_hwdebug_state, dbg_regs[m_count - 1])
-                      + sizeof (dreg_state.dbg_regs [m_count - 1]));
+        ioVec.iov_base = &dreg_state;
+        ioVec.iov_len = sizeof (dreg_state);
 
         if (m_type == 0)
             m_type = NT_ARM_HW_WATCH;
