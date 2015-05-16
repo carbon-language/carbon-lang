@@ -285,18 +285,19 @@ public:
         SetUpdated ();
         
         bool
-        NeedsUpdating()
+        NeedsUpdating(bool accept_invalid_exe_ctx)
         {
-            SyncWithProcessState();
+            SyncWithProcessState(accept_invalid_exe_ctx);
             return m_needs_update;
         }
         
         bool
         IsValid ()
         {
+            const bool accept_invalid_exe_ctx = false;
             if (!m_mod_id.IsValid())
                 return false;
-            else if (SyncWithProcessState ())
+            else if (SyncWithProcessState (accept_invalid_exe_ctx))
             {
                 if (!m_mod_id.IsValid())
                     return false;
@@ -318,7 +319,7 @@ public:
         
     private:
         bool
-        SyncWithProcessState ();
+        SyncWithProcessState (bool accept_invalid_exe_ctx);
                 
         ProcessModID m_mod_id; // This is the stop id when this ValueObject was last evaluated.
         ExecutionContextRef m_exe_ctx_ref;
@@ -851,10 +852,17 @@ public:
     virtual bool
     SetData (DataExtractor &data, Error &error);
 
-    bool
+    virtual bool
     GetIsConstant () const
     {
         return m_update_point.IsConstant();
+    }
+    
+    virtual bool
+    NeedsUpdating ()
+    {
+        const bool accept_invalid_exe_ctx = false;
+        return m_update_point.NeedsUpdating(accept_invalid_exe_ctx);
     }
     
     void
