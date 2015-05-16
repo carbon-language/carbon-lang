@@ -676,7 +676,7 @@ class MCAssembler {
 
 public:
   typedef iplist<MCSectionData> SectionDataListType;
-  typedef std::vector<MCSymbolData *> SymbolDataListType;
+  typedef std::vector<const MCSymbol *> SymbolDataListType;
 
   typedef SectionDataListType::const_iterator const_iterator;
   typedef SectionDataListType::iterator iterator;
@@ -1052,7 +1052,7 @@ public:
       *Created = !hasSymbolData(Symbol);
     if (!hasSymbolData(Symbol)) {
       Symbol.getUnsafeData().initialize(Symbol, nullptr, 0);
-      Symbols.push_back(&Symbol.getData());
+      Symbols.push_back(&Symbol);
     }
     return Symbol.getData();
   }

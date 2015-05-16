@@ -642,9 +642,9 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   for (const auto &Section : Asm)
     DefineSection(Section);
 
-  for (MCSymbolData &SD : Asm.symbols())
-    if (ExportSymbol(SD.getSymbol(), Asm))
-      DefineSymbol(SD, Asm, Layout);
+  for (const MCSymbol &Symbol : Asm.symbols())
+    if (ExportSymbol(Symbol, Asm))
+      DefineSymbol(Symbol.getData(), Asm, Layout);
 }
 
 bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(

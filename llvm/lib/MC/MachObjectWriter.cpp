@@ -548,8 +548,7 @@ void MachObjectWriter::ComputeSymbolTable(
   assert(Index <= 256 && "Too many sections!");
 
   // Build the string table.
-  for (MCSymbolData &SD : Asm.symbols()) {
-    const MCSymbol &Symbol = SD.getSymbol();
+  for (const MCSymbol &Symbol : Asm.symbols()) {
     if (!Asm.isSymbolLinkerVisible(Symbol))
       continue;
 
@@ -562,8 +561,8 @@ void MachObjectWriter::ComputeSymbolTable(
   // The particular order that we collect and then sort the symbols is chosen to
   // match 'as'. Even though it doesn't matter for correctness, this is
   // important for letting us diff .o files.
-  for (MCSymbolData &SD : Asm.symbols()) {
-    const MCSymbol &Symbol = SD.getSymbol();
+  for (const MCSymbol &Symbol : Asm.symbols()) {
+    MCSymbolData &SD = Symbol.getData();
 
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))
@@ -590,8 +589,8 @@ void MachObjectWriter::ComputeSymbolTable(
   }
 
   // Now add the data for local symbols.
-  for (MCSymbolData &SD : Asm.symbols()) {
-    const MCSymbol &Symbol = SD.getSymbol();
+  for (const MCSymbol &Symbol : Asm.symbols()) {
+    MCSymbolData &SD = Symbol.getData();
 
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))

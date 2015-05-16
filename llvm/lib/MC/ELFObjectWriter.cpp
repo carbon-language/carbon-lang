@@ -422,8 +422,8 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // The presence of symbol versions causes undefined symbols and
   // versions declared with @@@ to be renamed.
 
-  for (MCSymbolData &OriginalData : Asm.symbols()) {
-    const MCSymbol &Alias = OriginalData.getSymbol();
+  for (const MCSymbol &Alias : Asm.symbols()) {
+    MCSymbolData &OriginalData = Alias.getData();
 
     // Not an alias.
     if (!Alias.isVariable())
@@ -936,8 +936,8 @@ void ELFObjectWriter::computeSymbolTable(
   }
 
   // Add the data for the symbols.
-  for (MCSymbolData &SD : Asm.symbols()) {
-    const MCSymbol &Symbol = SD.getSymbol();
+  for (const MCSymbol &Symbol : Asm.symbols()) {
+    MCSymbolData &SD = Symbol.getData();
 
     bool Used = UsedInReloc.count(&Symbol);
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
