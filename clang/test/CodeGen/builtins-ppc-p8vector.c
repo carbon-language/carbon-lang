@@ -5,6 +5,7 @@
 
 vector int vi = { -1, 2, -3, 4 };
 vector unsigned int vui = { 1, 2, 3, 4 };
+vector bool int vbi = {0, -1, -1, 0};
 vector bool long long vbll = { 1, 0 };
 vector long long vll = { 1, 2 };
 vector unsigned long long vull = { 1, 2 };
@@ -12,6 +13,7 @@ vector unsigned long long vull = { 1, 2 };
 int res_i;
 vector int res_vi;
 vector unsigned int res_vui;
+vector bool int res_vbi;
 vector long long res_vll;
 vector unsigned long long res_vull;
 vector bool long long res_vbll;
@@ -558,6 +560,28 @@ void test1() {
 // CHECK-LE: @llvm.ppc.altivec.vmuleuw
 // CHECK-PPC: error: call to 'vec_mulo' is ambiguous
 
+  /* vec_packs */
+  res_vi = vec_packs(vll, vll);
+// CHECK: @llvm.ppc.altivec.vpksdss
+// CHECK-LE: @llvm.ppc.altivec.vpksdss
+// CHECK-PPC: error: call to 'vec_packs' is ambiguous
+
+  res_vui = vec_packs(vull, vull);
+// CHECK: @llvm.ppc.altivec.vpkudus
+// CHECK-LE: @llvm.ppc.altivec.vpkudus
+// CHECK-PPC: error: call to 'vec_packs' is ambiguous
+
+  /* vec_packsu */
+  res_vui = vec_packsu(vll, vll);
+// CHECK: @llvm.ppc.altivec.vpksdus
+// CHECK-LE: @llvm.ppc.altivec.vpksdus
+// CHECK-PPC: error: call to 'vec_packsu' is ambiguous
+
+  res_vui = vec_packsu(vull, vull);
+// CHECK: @llvm.ppc.altivec.vpkudus
+// CHECK-LE: @llvm.ppc.altivec.vpkudus
+// CHECK-PPC: error: call to 'vec_packsu' is ambiguous
+
   /* vec_rl */
   res_vll = vec_rl(vll, vull);
 // CHECK: @llvm.ppc.altivec.vrld
@@ -601,5 +625,74 @@ void test1() {
 // CHECK: ashr <2 x i64>
 // CHECK-LE: ashr <2 x i64>
 // CHECK-PPC: error: call to 'vec_sra' is ambiguous
+
+  /* vec_unpackh */
+  res_vll = vec_unpackh(vi);
+// CHECK: llvm.ppc.altivec.vupkhsw
+// CHECK-LE: llvm.ppc.altivec.vupklsw
+// CHECK-PPC: error: call to 'vec_unpackh' is ambiguous
+
+  res_vbll = vec_unpackh(vbi);
+// CHECK: llvm.ppc.altivec.vupkhsw
+// CHECK-LE: llvm.ppc.altivec.vupklsw
+// CHECK-PPC: error: call to 'vec_unpackh' is ambiguous
+
+  /* vec_unpackl */
+  res_vll = vec_unpackl(vi);
+// CHECK: llvm.ppc.altivec.vupklsw
+// CHECK-LE: llvm.ppc.altivec.vupkhsw
+// CHECK-PPC: error: call to 'vec_unpackl' is ambiguous
+
+  res_vbll = vec_unpackl(vbi);
+// CHECK: llvm.ppc.altivec.vupklsw
+// CHECK-LE: llvm.ppc.altivec.vupkhsw
+// CHECK-PPC: error: call to 'vec_unpackl' is ambiguous
+
+  /* vec_vpksdss */
+  res_vi = vec_vpksdss(vll, vll);
+// CHECK: llvm.ppc.altivec.vpksdss
+// CHECK-LE: llvm.ppc.altivec.vpksdss
+// CHECK-PPC: warning: implicit declaration of function 'vec_vpksdss'
+
+  /* vec_vpksdus */
+  res_vui = vec_vpksdus(vll, vll);
+// CHECK: llvm.ppc.altivec.vpksdus
+// CHECK-LE: llvm.ppc.altivec.vpksdus
+// CHECK-PPC: warning: implicit declaration of function 'vec_vpksdus'
+
+  /* vec_vpkudum */
+  res_vi = vec_vpkudum(vll, vll);
+// CHECK: vperm
+// CHECK-LE: vperm
+// CHECK-PPC: warning: implicit declaration of function 'vec_vpkudum'
+
+  res_vui = vec_vpkudum(vull, vull);
+// CHECK: vperm
+// CHECK-LE: vperm
+
+  res_vui = vec_vpkudus(vull, vull);
+// CHECK: llvm.ppc.altivec.vpkudus
+// CHECK-LE: llvm.ppc.altivec.vpkudus
+// CHECK-PPC: warning: implicit declaration of function 'vec_vpkudus'
+
+  /* vec_vupkhsw */
+  res_vll = vec_vupkhsw(vi);
+// CHECK: llvm.ppc.altivec.vupkhsw
+// CHECK-LE: llvm.ppc.altivec.vupklsw
+// CHECK-PPC: warning: implicit declaration of function 'vec_vupkhsw'
+
+  res_vbll = vec_vupkhsw(vbi);
+// CHECK: llvm.ppc.altivec.vupkhsw
+// CHECK-LE: llvm.ppc.altivec.vupklsw
+
+  /* vec_vupklsw */
+  res_vll = vec_vupklsw(vi);
+// CHECK: llvm.ppc.altivec.vupklsw
+// CHECK-LE: llvm.ppc.altivec.vupkhsw
+// CHECK-PPC: warning: implicit declaration of function 'vec_vupklsw'
+
+  res_vbll = vec_vupklsw(vbi);
+// CHECK: llvm.ppc.altivec.vupklsw
+// CHECK-LE: llvm.ppc.altivec.vupkhsw
 
 }

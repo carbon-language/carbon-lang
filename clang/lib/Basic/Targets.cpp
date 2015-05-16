@@ -1028,6 +1028,7 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "power8-vector") {
       HasP8Vector = true;
+      HasVSX = true;
       continue;
     }
 
@@ -1038,6 +1039,7 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "direct-move") {
       HasDirectMove = true;
+      HasVSX = true;
       continue;
     }
 
