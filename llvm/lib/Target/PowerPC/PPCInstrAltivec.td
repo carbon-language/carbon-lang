@@ -43,6 +43,10 @@ def vpkuwum_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                               (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), 0, *CurDAG);
 }]>;
+def vpkudum_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                              (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVPKUDUMShuffleMask(cast<ShuffleVectorSDNode>(N), 0, *CurDAG);
+}]>;
 def vpkuhum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                     (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isVPKUHUMShuffleMask(cast<ShuffleVectorSDNode>(N), 1, *CurDAG);
@@ -50,6 +54,10 @@ def vpkuhum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 def vpkuwum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                     (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), 1, *CurDAG);
+}]>;
+def vpkudum_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                    (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVPKUDUMShuffleMask(cast<ShuffleVectorSDNode>(N), 1, *CurDAG);
 }]>;
 
 // These fragments are provided for little-endian, where the inputs must be
@@ -61,6 +69,10 @@ def vpkuhum_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 def vpkuwum_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
                                       (vector_shuffle node:$lhs, node:$rhs), [{
   return PPC::isVPKUWUMShuffleMask(cast<ShuffleVectorSDNode>(N), 2, *CurDAG);
+}]>;
+def vpkudum_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                      (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVPKUDUMShuffleMask(cast<ShuffleVectorSDNode>(N), 2, *CurDAG);
 }]>;
 
 def vmrglb_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
@@ -1090,6 +1102,29 @@ def VPMSUMD : VX1_Int_Ty<1224, "vpmsumd",
                          int_ppc_altivec_crypto_vpmsumd, v2i64>;
 def VPERMXOR : VA1a_Int_Ty<45, "vpermxor",
                          int_ppc_altivec_crypto_vpermxor, v16i8>;
+
+// Vector doubleword integer pack and unpack.
+def VPKSDSS : VX1_Int_Ty2<1486, "vpksdss", int_ppc_altivec_vpksdss,
+                          v4i32, v2i64>;
+def VPKSDUS : VX1_Int_Ty2<1358, "vpksdus", int_ppc_altivec_vpksdus,
+                          v4i32, v2i64>;
+def VPKUDUM : VXForm_1<1102, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vpkudum $vD, $vA, $vB", IIC_VecFP,
+                       [(set v16i8:$vD,
+                         (vpkudum_shuffle v16i8:$vA, v16i8:$vB))]>;
+def VPKUDUS : VX1_Int_Ty2<1230, "vpkudus", int_ppc_altivec_vpkudus,
+                          v4i32, v2i64>;
+def VUPKHSW : VX2_Int_Ty2<1614, "vupkhsw", int_ppc_altivec_vupkhsw,
+                          v2i64, v4i32>;
+def VUPKLSW : VX2_Int_Ty2<1742, "vupklsw", int_ppc_altivec_vupklsw,
+                          v2i64, v4i32>;
+
+// Shuffle patterns for unary and swapped (LE) vector pack modulo.
+def:Pat<(vpkudum_unary_shuffle v16i8:$vA, undef),
+        (VPKUDUM $vA, $vA)>;
+def:Pat<(vpkudum_swapped_shuffle v16i8:$vA, v16i8:$vB),
+        (VPKUDUM $vB, $vA)>;
+
 
 } // end HasP8Altivec
 

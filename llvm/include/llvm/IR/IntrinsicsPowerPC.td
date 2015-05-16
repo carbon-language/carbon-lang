@@ -480,6 +480,12 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   def int_ppc_altivec_vpkswus : GCCBuiltin<"__builtin_altivec_vpkswus">,
             Intrinsic<[llvm_v8i16_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
                       [IntrNoMem]>;
+  def int_ppc_altivec_vpksdss : GCCBuiltin<"__builtin_altivec_vpksdss">,
+            Intrinsic<[llvm_v4i32_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
+                      [IntrNoMem]>;
+  def int_ppc_altivec_vpksdus : GCCBuiltin<"__builtin_altivec_vpksdus">,
+            Intrinsic<[llvm_v4i32_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
+                      [IntrNoMem]>;
   // vpkuhum is lowered to a shuffle.
   def int_ppc_altivec_vpkuhus : GCCBuiltin<"__builtin_altivec_vpkuhus">,
             Intrinsic<[llvm_v16i8_ty], [llvm_v8i16_ty, llvm_v8i16_ty],
@@ -487,6 +493,10 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   // vpkuwum is lowered to a shuffle.
   def int_ppc_altivec_vpkuwus : GCCBuiltin<"__builtin_altivec_vpkuwus">,
             Intrinsic<[llvm_v8i16_ty], [llvm_v4i32_ty, llvm_v4i32_ty],
+                      [IntrNoMem]>;
+  // vpkudum is lowered to a shuffle.
+  def int_ppc_altivec_vpkudus : GCCBuiltin<"__builtin_altivec_vpkudus">,
+            Intrinsic<[llvm_v4i32_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
                       [IntrNoMem]>;
 
   // Unpacks.
@@ -496,12 +506,16 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
             Intrinsic<[llvm_v8i16_ty], [llvm_v16i8_ty], [IntrNoMem]>;
   def int_ppc_altivec_vupkhsh : GCCBuiltin<"__builtin_altivec_vupkhsh">,
             Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_ppc_altivec_vupkhsw : GCCBuiltin<"__builtin_altivec_vupkhsw">,
+            Intrinsic<[llvm_v2i64_ty], [llvm_v4i32_ty], [IntrNoMem]>;
   def int_ppc_altivec_vupklpx : GCCBuiltin<"__builtin_altivec_vupklpx">,
             Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty], [IntrNoMem]>;
   def int_ppc_altivec_vupklsb : GCCBuiltin<"__builtin_altivec_vupklsb">,
             Intrinsic<[llvm_v8i16_ty], [llvm_v16i8_ty], [IntrNoMem]>;
   def int_ppc_altivec_vupklsh : GCCBuiltin<"__builtin_altivec_vupklsh">,
             Intrinsic<[llvm_v4i32_ty], [llvm_v8i16_ty], [IntrNoMem]>;
+  def int_ppc_altivec_vupklsw : GCCBuiltin<"__builtin_altivec_vupklsw">,
+            Intrinsic<[llvm_v2i64_ty], [llvm_v4i32_ty], [IntrNoMem]>;
 
 
   // FP <-> integer conversion.

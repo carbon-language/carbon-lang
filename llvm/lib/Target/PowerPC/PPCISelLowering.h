@@ -357,6 +357,11 @@ namespace llvm {
     bool isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
                               SelectionDAG &DAG);
 
+    /// isVPKUDUMShuffleMask - Return true if this is the shuffle mask for a
+    /// VPKUDUM instruction.
+    bool isVPKUDUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
+                              SelectionDAG &DAG);
+
     /// isVMRGLShuffleMask - Return true if this is a shuffle mask suitable for
     /// a VRGL* instruction with the specified unit size (1,2 or 4 bytes).
     bool isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,

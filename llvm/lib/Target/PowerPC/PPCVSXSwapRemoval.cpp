@@ -382,8 +382,12 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       case PPC::VPKPX:
       case PPC::VPKSHSS:
       case PPC::VPKSHUS:
+      case PPC::VPKSDSS:
+      case PPC::VPKSDUS:
       case PPC::VPKSWSS:
       case PPC::VPKSWUS:
+      case PPC::VPKUDUM:
+      case PPC::VPKUDUS:
       case PPC::VPKUHUM:
       case PPC::VPKUHUS:
       case PPC::VPKUWUM:
@@ -412,9 +416,11 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       case PPC::VUPKHPX:
       case PPC::VUPKHSB:
       case PPC::VUPKHSH:
+      case PPC::VUPKHSW:
       case PPC::VUPKLPX:
       case PPC::VUPKLSB:
       case PPC::VUPKLSH:
+      case PPC::VUPKLSW:
       case PPC::XXMRGHW:
       case PPC::XXMRGLW:
       case PPC::XXSPLTW:
