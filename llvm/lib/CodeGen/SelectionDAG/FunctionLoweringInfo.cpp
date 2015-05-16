@@ -89,7 +89,7 @@ struct WinEHNumbering {
   int CurrentBaseState;
   int NextState;
 
-  SmallVector<ActionHandler *, 4> HandlerStack;
+  SmallVector<std::unique_ptr<ActionHandler>, 4> HandlerStack;
   SmallPtrSet<const Function *, 4> VisitedHandlers;
 
   int currentEHNumber() const {
@@ -99,7 +99,8 @@ struct WinEHNumbering {
   void createUnwindMapEntry(int ToState, ActionHandler *AH);
   void createTryBlockMapEntry(int TryLow, int TryHigh,
                               ArrayRef<CatchHandler *> Handlers);
-  void processCallSite(ArrayRef<ActionHandler *> Actions, ImmutableCallSite CS);
+  void processCallSite(MutableArrayRef<std::unique_ptr<ActionHandler>> Actions,
+                       ImmutableCallSite CS);
   void calculateStateNumbers(const Function &F);
 };
 }
@@ -324,13 +325,13 @@ void FunctionLoweringInfo::addSEHHandlersForLPads(
 
     // Parse the llvm.eh.actions call we found.
     MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
-    SmallVector<ActionHandler *, 4> Actions;
+    SmallVector<std::unique_ptr<ActionHandler>, 4> Actions;
     parseEHActions(ActionsCall, Actions);
 
     // Iterate EH actions from most to least precedence, which means
     // iterating in reverse.
     for (auto I = Actions.rbegin(), E = Actions.rend(); I != E; ++I) {
-      ActionHandler *Action = *I;
+      ActionHandler *Action = I->get();
       if (auto *CH = dyn_cast<CatchHandler>(Action)) {
         const auto *Filter =
             dyn_cast<Function>(CH->getSelector()->stripPointerCasts());
@@ -345,7 +346,6 @@ void FunctionLoweringInfo::addSEHHandlersForLPads(
         MMI.addSEHCleanupHandler(LPadMBB, Fini);
       }
     }
-    DeleteContainerPointers(Actions);
   }
 }
 
@@ -401,8 +401,9 @@ static void print_name(const Value *V) {
 #endif
 }
 
-void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
-                                     ImmutableCallSite CS) {
+void WinEHNumbering::processCallSite(
+    MutableArrayRef<std::unique_ptr<ActionHandler>> Actions,
+    ImmutableCallSite CS) {
   DEBUG(dbgs() << "processCallSite (EH state = " << currentEHNumber()
                << ") for: ");
   print_name(CS ? CS.getCalledValue() : nullptr);
@@ -426,21 +427,15 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
     if (HandlerStack[FirstMismatch]->getHandlerBlockOrFunc() !=
         Actions[FirstMismatch]->getHandlerBlockOrFunc())
       break;
-    // Delete any actions that are already represented on the handler stack.
-    delete Actions[FirstMismatch];
   }
 
   // Don't recurse while we are looping over the handler stack.  Instead, defer
   // the numbering of the catch handlers until we are done popping.
   SmallVector<CatchHandler *, 4> PoppedCatches;
   for (int I = HandlerStack.size() - 1; I >= FirstMismatch; --I) {
-    if (auto *CH = dyn_cast<CatchHandler>(HandlerStack.back())) {
-      PoppedCatches.push_back(CH);
-    } else {
-      // Delete cleanup handlers
-      delete HandlerStack.back();
-    }
-    HandlerStack.pop_back();
+    std::unique_ptr<ActionHandler> Handler = HandlerStack.pop_back_val();
+    if (isa<CatchHandler>(Handler.get()))
+      PoppedCatches.push_back(cast<CatchHandler>(Handler.release()));
   }
 
   int TryHigh = NextState - 1;
@@ -487,7 +482,6 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
       if (HandlerStack[FirstMismatch]->getHandlerBlockOrFunc() !=
           Actions[FirstMismatch]->getHandlerBlockOrFunc())
         break;
-      delete Actions[FirstMismatch];
     }
   }
 
@@ -498,7 +492,7 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
   bool LastActionWasCatch = false;
   for (size_t I = FirstMismatch; I != Actions.size(); ++I) {
     // We can reuse eh states when pushing two catches for the same invoke.
-    bool CurrActionIsCatch = isa<CatchHandler>(Actions[I]);
+    bool CurrActionIsCatch = isa<CatchHandler>(Actions[I].get());
     // FIXME: Reenable this optimization!
     if (CurrActionIsCatch && LastActionWasCatch && false) {
       DEBUG(dbgs() << "setEHState for handler to " << currentEHNumber()
@@ -508,12 +502,12 @@ void WinEHNumbering::processCallSite(ArrayRef<ActionHandler *> Actions,
       DEBUG(dbgs() << "createUnwindMapEntry(" << currentEHNumber() << ", ");
       print_name(Actions[I]->getHandlerBlockOrFunc());
       DEBUG(dbgs() << ")\n");
-      createUnwindMapEntry(currentEHNumber(), Actions[I]);
+      createUnwindMapEntry(currentEHNumber(), Actions[I].get());
       DEBUG(dbgs() << "setEHState for handler to " << NextState << "\n");
       Actions[I]->setEHState(NextState);
       NextState++;
     }
-    HandlerStack.push_back(Actions[I]);
+    HandlerStack.push_back(std::move(Actions[I]));
     LastActionWasCatch = CurrActionIsCatch;
   }
 
@@ -533,7 +527,7 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
   }
 
   DEBUG(dbgs() << "Calculating state numbers for: " << F.getName() << '\n');
-  SmallVector<ActionHandler *, 4> ActionList;
+  SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
   for (const BasicBlock &BB : F) {
     for (const Instruction &I : BB) {
       const auto *CI = dyn_cast<CallInst>(&I);

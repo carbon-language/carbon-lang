@@ -867,22 +867,21 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // Populate the indirectbr instructions' target lists if we deferred
   // doing so above.
   SetVector<BasicBlock*> CheckedTargets;
+  SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
   for (auto &LPadImplPair : LPadImpls) {
     IntrinsicInst *Recover = cast<IntrinsicInst>(LPadImplPair.first);
     IndirectBrInst *Branch = LPadImplPair.second;
 
     // Get a list of handlers called by 
-    SmallVector<ActionHandler *, 4> ActionList;
     parseEHActions(Recover, ActionList);
 
     // Add an indirect branch listing possible successors of the catch handlers.
     SetVector<BasicBlock *> ReturnTargets;
-    for (ActionHandler *Action : ActionList) {
-      if (auto *CA = dyn_cast<CatchHandler>(Action)) {
+    for (const auto &Action : ActionList) {
+      if (auto *CA = dyn_cast<CatchHandler>(Action.get())) {
         Function *Handler = cast<Function>(CA->getHandlerBlockOrFunc());
         getPossibleReturnTargets(&F, Handler, ReturnTargets);
       }
-      delete Action;
     }
     ActionList.clear();
     for (BasicBlock *Target : ReturnTargets) {
@@ -1045,10 +1044,10 @@ void WinEHPrepare::getPossibleReturnTargets(Function *ParentF,
     // parent function.
     if (auto *LPI = BB.getLandingPadInst()) {
       IntrinsicInst *Recover = cast<IntrinsicInst>(LPI->getNextNode());
-      SmallVector<ActionHandler *, 4> ActionList;
+      SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
       parseEHActions(Recover, ActionList);
-      for (auto *Action : ActionList) {
-        if (auto *CH = dyn_cast<CatchHandler>(Action)) {
+      for (const auto &Action : ActionList) {
+        if (auto *CH = dyn_cast<CatchHandler>(Action.get())) {
           Function *NestedF = cast<Function>(CH->getHandlerBlockOrFunc());
           getPossibleReturnTargets(ParentF, NestedF, Targets);
         }
@@ -1101,10 +1100,10 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
 
   // Remap the exception variables into the outlined function.
   SmallVector<BlockAddress *, 4> ActionTargets;
-  SmallVector<ActionHandler *, 4> ActionList;
+  SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
   parseEHActions(EHActions, ActionList);
-  for (auto *Action : ActionList) {
-    auto *Catch = dyn_cast<CatchHandler>(Action);
+  for (const auto &Action : ActionList) {
+    auto *Catch = dyn_cast<CatchHandler>(Action.get());
     if (!Catch)
       continue;
     // The dyn_cast to function here selects C++ catch handlers and skips
@@ -1142,7 +1141,6 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
       ActionTargets.push_back(NewBA);
     }
   }
-  DeleteContainerPointers(ActionList);
   ActionList.clear();
   OutlinedBB->getInstList().push_back(EHActions);
 
@@ -2322,8 +2320,9 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
 
 // This is a public function, declared in WinEHFuncInfo.h and is also
 // referenced by WinEHNumbering in FunctionLoweringInfo.cpp.
-void llvm::parseEHActions(const IntrinsicInst *II,
-                          SmallVectorImpl<ActionHandler *> &Actions) {
+void llvm::parseEHActions(
+    const IntrinsicInst *II,
+    SmallVectorImpl<std::unique_ptr<ActionHandler>> &Actions) {
   for (unsigned I = 0, E = II->getNumArgOperands(); I != E;) {
     uint64_t ActionKind =
         cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
@@ -2333,16 +2332,17 @@ void llvm::parseEHActions(const IntrinsicInst *II,
       int64_t EHObjIndexVal = EHObjIndex->getSExtValue();
       Constant *Handler = cast<Constant>(II->getArgOperand(I + 3));
       I += 4;
-      auto *CH = new CatchHandler(/*BB=*/nullptr, Selector, /*NextBB=*/nullptr);
+      auto CH = make_unique<CatchHandler>(/*BB=*/nullptr, Selector,
+                                          /*NextBB=*/nullptr);
       CH->setHandlerBlockOrFunc(Handler);
       CH->setExceptionVarIndex(EHObjIndexVal);
-      Actions.push_back(CH);
+      Actions.push_back(std::move(CH));
     } else if (ActionKind == 0) {
       Constant *Handler = cast<Constant>(II->getArgOperand(I + 1));
       I += 2;
-      auto *CH = new CleanupHandler(/*BB=*/nullptr);
+      auto CH = make_unique<CleanupHandler>(/*BB=*/nullptr);
       CH->setHandlerBlockOrFunc(Handler);
-      Actions.push_back(CH);
+      Actions.push_back(std::move(CH));
     } else {
       llvm_unreachable("Expected either a catch or cleanup handler!");
     }

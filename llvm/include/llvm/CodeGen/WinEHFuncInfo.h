@@ -107,8 +107,7 @@ public:
 };
 
 void parseEHActions(const IntrinsicInst *II,
-  SmallVectorImpl<ActionHandler *> &Actions);
-
+                    SmallVectorImpl<std::unique_ptr<ActionHandler>> &Actions);
 
 // The following structs respresent the .xdata for functions using C++
 // exceptions on Windows.
