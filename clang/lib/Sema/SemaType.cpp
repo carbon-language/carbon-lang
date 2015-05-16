@@ -688,30 +688,28 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
   state.setCurrentChunkIndex(declarator.getNumTypeObjects());
 }
 
-void diagnoseAndRemoveTypeQualifiers(Sema &S, const DeclSpec &DS,
-                                     unsigned &TypeQuals, QualType TypeSoFar,
-                                     unsigned RemoveTQs, unsigned DiagID) {
+static void diagnoseAndRemoveTypeQualifiers(Sema &S, const DeclSpec &DS,
+                                            unsigned &TypeQuals,
+                                            QualType TypeSoFar,
+                                            unsigned RemoveTQs,
+                                            unsigned DiagID) {
   // If this occurs outside a template instantiation, warn the user about
   // it; they probably didn't mean to specify a redundant qualifier.
   typedef std::pair<DeclSpec::TQ, SourceLocation> QualLoc;
-  QualLoc Quals[] = {
-    QualLoc(DeclSpec::TQ_const, DS.getConstSpecLoc()),
-    QualLoc(DeclSpec::TQ_volatile, DS.getVolatileSpecLoc()),
-    QualLoc(DeclSpec::TQ_atomic, DS.getAtomicSpecLoc())
-  };
-
-  for (unsigned I = 0, N = llvm::array_lengthof(Quals); I != N; ++I) {
-    if (!(RemoveTQs & Quals[I].first))
+  for (QualLoc Qual : {QualLoc(DeclSpec::TQ_const, DS.getConstSpecLoc()),
+                       QualLoc(DeclSpec::TQ_volatile, DS.getVolatileSpecLoc()),
+                       QualLoc(DeclSpec::TQ_atomic, DS.getAtomicSpecLoc())}) {
+    if (!(RemoveTQs & Qual.first))
       continue;
 
     if (S.ActiveTemplateInstantiations.empty()) {
-      if (TypeQuals & Quals[I].first)
-        S.Diag(Quals[I].second, DiagID)
-          << DeclSpec::getSpecifierName(Quals[I].first) << TypeSoFar
-          << FixItHint::CreateRemoval(Quals[I].second);
+      if (TypeQuals & Qual.first)
+        S.Diag(Qual.second, DiagID)
+          << DeclSpec::getSpecifierName(Qual.first) << TypeSoFar
+          << FixItHint::CreateRemoval(Qual.second);
     }
 
-    TypeQuals &= ~Quals[I].first;
+    TypeQuals &= ~Qual.first;
   }
 }
 
