@@ -272,10 +272,6 @@ protected:
         P->getSecond().~ValueT();
       P->getFirst().~KeyT();
     }
-
-#ifndef NDEBUG
-    memset((void*)getBuckets(), 0x5a, sizeof(BucketT)*getNumBuckets());
-#endif
   }
 
   void initEmpty() {
@@ -312,12 +308,6 @@ protected:
       }
       B->getFirst().~KeyT();
     }
-
-#ifndef NDEBUG
-    if (OldBucketsBegin != OldBucketsEnd)
-      memset((void*)OldBucketsBegin, 0x5a,
-             sizeof(BucketT) * (OldBucketsEnd - OldBucketsBegin));
-#endif
   }
 
   template <typename OtherBaseT>
