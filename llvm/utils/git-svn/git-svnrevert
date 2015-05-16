@@ -14,8 +14,13 @@ fi
 
 COMMIT=$1
 OTHER=$(git svn find-rev "$COMMIT")
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] || [ "$OTHER" = "" ]; then
     echo "Error! Could not find an svn/git revision for commit $COMMIT!"
+    echo
+    echo "Possible problems are:"
+    echo "  * Your revision number ($COMMIT) is wrong"
+    echo "  * This tree is not up to date (before that commit)"
+    echo "  * This commit in in another three (llvm, clang, compiler-rt, etc)"
     exit 1
 fi
 
