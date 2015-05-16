@@ -793,12 +793,10 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     break;
   }
   case EMPTY: {
-    if (ListInit *LHSl = dyn_cast<ListInit>(LHS)) {
-      return IntInit::get(!!LHSl->empty());
-    }
-    if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
-      return IntInit::get(!!LHSs->getValue().empty());
-    }
+    if (ListInit *LHSl = dyn_cast<ListInit>(LHS))
+      return IntInit::get(LHSl->empty());
+    if (StringInit *LHSs = dyn_cast<StringInit>(LHS))
+      return IntInit::get(LHSs->getValue().empty());
 
     break;
   }
