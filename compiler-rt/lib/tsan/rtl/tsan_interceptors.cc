@@ -2285,6 +2285,14 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
   HandleRecvmsg(((TsanInterceptorContext *)ctx)->thr, \
       ((TsanInterceptorContext *)ctx)->pc, msg)
 
+#define COMMON_INTERCEPTOR_GET_TLS_RANGE(begin, end)                           \
+  if (TsanThread *t = GetCurrentThread()) {                                    \
+    *begin = t->tls_begin();                                                   \
+    *end = t->tls_end();                                                       \
+  } else {                                                                     \
+    *begin = *end = 0;                                                         \
+  }
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define TSAN_SYSCALL() \

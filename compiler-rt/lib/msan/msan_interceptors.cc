@@ -1397,6 +1397,14 @@ int OnExit() {
     if (map) ForEachMappedRegion(map, __msan_unpoison);      \
   } while (false)
 
+#define COMMON_INTERCEPTOR_GET_TLS_RANGE(begin, end)                           \
+  if (MsanThread *t = GetCurrentThread()) {                                    \
+    *begin = t->tls_begin();                                                   \
+    *end = t->tls_end();                                                       \
+  } else {                                                                     \
+    *begin = *end = 0;                                                         \
+  }
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)

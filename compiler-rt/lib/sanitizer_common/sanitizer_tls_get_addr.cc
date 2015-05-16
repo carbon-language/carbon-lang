@@ -78,7 +78,8 @@ void DTLS_Destroy() {
   DTLS_Deallocate(dtls.dtv, s);
 }
 
-DTLS::DTV *DTLS_on_tls_get_addr(void *arg_void, void *res) {
+DTLS::DTV *DTLS_on_tls_get_addr(void *arg_void, void *res,
+                                uptr static_tls_begin, uptr static_tls_end) {
   if (!common_flags()->intercept_tls_get_addr) return 0;
   TlsGetAddrParam *arg = reinterpret_cast<TlsGetAddrParam *>(arg_void);
   uptr dso_id = arg->dso_id;
@@ -95,6 +96,11 @@ DTLS::DTV *DTLS_on_tls_get_addr(void *arg_void, void *res) {
     tls_size = dtls.last_memalign_size;
     VPrintf(2, "__tls_get_addr: glibc <=2.18 suspected; tls={%p,%p}\n",
         tls_beg, tls_size);
+  } else if (tls_beg >= static_tls_begin && tls_beg < static_tls_end) {
+    // This is the static TLS block which was initialized / unpoisoned at thread
+    // creation.
+    VPrintf(2, "__tls_get_addr: static tls: %p\n", tls_beg);
+    tls_size = 0;
   } else if ((tls_beg % 4096) == sizeof(Glibc_2_19_tls_header)) {
     // We may want to check gnu_get_libc_version().
     Glibc_2_19_tls_header *header = (Glibc_2_19_tls_header *)tls_beg - 1;

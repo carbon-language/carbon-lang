@@ -114,6 +114,10 @@
 #define COMMON_INTERCEPTOR_ON_DLOPEN(filename, flag) {}
 #endif
 
+#ifndef COMMON_INTERCEPTOR_GET_TLS_RANGE
+#define COMMON_INTERCEPTOR_GET_TLS_RANGE(begin, end) *begin = *end = 0;
+#endif
+
 struct FileMetadata {
   // For open_memstream().
   char **addr;
@@ -3996,7 +4000,9 @@ INTERCEPTOR(void *, __tls_get_addr, void *arg) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, __tls_get_addr, arg);
   void *res = REAL(__tls_get_addr)(arg);
-  DTLS::DTV *dtv = DTLS_on_tls_get_addr(arg, res);
+  uptr tls_begin, tls_end;
+  COMMON_INTERCEPTOR_GET_TLS_RANGE(&tls_begin, &tls_end);
+  DTLS::DTV *dtv = DTLS_on_tls_get_addr(arg, res, tls_begin, tls_end);
   if (dtv) {
     // New DTLS block has been allocated.
     COMMON_INTERCEPTOR_INITIALIZE_RANGE((void *)dtv->beg, dtv->size);

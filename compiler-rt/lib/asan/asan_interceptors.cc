@@ -182,6 +182,13 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   CoverageUpdateMapping()
 #define COMMON_INTERCEPTOR_LIBRARY_UNLOADED() CoverageUpdateMapping()
 #define COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED (!asan_inited)
+#define COMMON_INTERCEPTOR_GET_TLS_RANGE(begin, end)                           \
+  if (AsanThread *t = GetCurrentThread()) {                                    \
+    *begin = t->tls_begin();                                                   \
+    *end = t->tls_end();                                                       \
+  } else {                                                                     \
+    *begin = *end = 0;                                                         \
+  }
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 // Syscall interceptors don't have contexts, we don't support suppressions
