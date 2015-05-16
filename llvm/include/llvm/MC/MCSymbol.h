@@ -27,7 +27,7 @@ class MCSection;
 class MCContext;
 class raw_ostream;
 
-// FIXME: Same concerns as with SectionData.
+// TODO: Merge completely with MCSymbol.
 class MCSymbolData {
   const MCSymbol *Symbol;
 
@@ -64,10 +64,12 @@ class MCSymbolData {
 public:
   // Only for use as sentinel.
   MCSymbolData();
-  MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment, uint64_t Offset);
+  void initialize(const MCSymbol &Symbol, MCFragment *Fragment,
+                  uint64_t Offset);
 
   /// \name Accessors
   /// @{
+  bool isInitialized() const { return Symbol; }
 
   const MCSymbol &getSymbol() const { return *Symbol; }
 
@@ -185,6 +187,8 @@ class MCSymbol {
   /// IsUsed - True if this symbol has been used.
   mutable unsigned IsUsed : 1;
 
+  mutable MCSymbolData Data;
+
 private: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
@@ -203,6 +207,17 @@ private: // MCContext creates and uniques these.
 public:
   /// getName - Get the symbol name.
   StringRef getName() const { return Name; }
+
+  /// Get associated symbol data.
+  MCSymbolData &getData() const {
+    assert(Data.isInitialized() && "Missing symbol data!");
+    return Data;
+  }
+
+  /// Get unsafe symbol data (even if uninitialized).
+  ///
+  /// Don't assert on uninitialized data; just return it.
+  MCSymbolData &getUnsafeData() const { return Data; }
 
   /// \name Accessors
   /// @{

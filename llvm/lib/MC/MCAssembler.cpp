@@ -360,10 +360,18 @@ void MCSectionData::setBundleLockState(BundleLockStateType NewState) {
 
 MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
 
-MCSymbolData::MCSymbolData(const MCSymbol &Symbol, MCFragment *Fragment,
-                           uint64_t Offset)
-    : Symbol(&Symbol), Fragment(Fragment), Offset(Offset), SymbolSize(nullptr),
-      CommonAlign(-1U), Flags(0), Index(0) {}
+void MCSymbolData::initialize(const MCSymbol &Symbol, MCFragment *Fragment,
+                              uint64_t Offset) {
+  assert(!isInitialized() && "Expected uninitialized symbol");
+
+  this->Symbol = &Symbol;
+  this->Fragment.setPointer(Fragment);
+  this->Offset = Offset;
+  this->SymbolSize = nullptr;
+  this->CommonAlign = -1U;
+  this->Flags = 0;
+  this->Index = 0;
+}
 
 /* *** */
 
@@ -383,7 +391,6 @@ void MCAssembler::reset() {
   Sections.clear();
   Symbols.clear();
   SectionMap.clear();
-  SymbolMap.clear();
   IndirectSymbols.clear();
   DataRegions.clear();
   LinkerOptions.clear();

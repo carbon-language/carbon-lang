@@ -676,7 +676,7 @@ class MCAssembler {
 
 public:
   typedef iplist<MCSectionData> SectionDataListType;
-  typedef std::vector<std::unique_ptr<MCSymbolData>> SymbolDataListType;
+  typedef std::vector<MCSymbolData *> SymbolDataListType;
 
   typedef SectionDataListType::const_iterator const_iterator;
   typedef SectionDataListType::iterator iterator;
@@ -733,11 +733,6 @@ private:
   //
   // FIXME: Avoid this indirection?
   DenseMap<const MCSection *, MCSectionData *> SectionMap;
-
-  /// The map of symbols to their associated assembler backend data.
-  //
-  // FIXME: Avoid this indirection?
-  DenseMap<const MCSymbol *, MCSymbolData *> SymbolMap;
 
   std::vector<IndirectSymbolData> IndirectSymbols;
 
@@ -1039,7 +1034,7 @@ public:
   }
 
   bool hasSymbolData(const MCSymbol &Symbol) const {
-    return SymbolMap.lookup(&Symbol) != nullptr;
+    return Symbol.getUnsafeData().isInitialized();
   }
 
   MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
@@ -1048,23 +1043,18 @@ public:
   }
 
   const MCSymbolData &getSymbolData(const MCSymbol &Symbol) const {
-    MCSymbolData *Entry = SymbolMap.lookup(&Symbol);
-    assert(Entry && "Missing symbol data!");
-    return *Entry;
+    return Symbol.getData();
   }
 
   MCSymbolData &getOrCreateSymbolData(const MCSymbol &Symbol,
                                       bool *Created = nullptr) {
-    MCSymbolData *&Entry = SymbolMap[&Symbol];
-
     if (Created)
-      *Created = !Entry;
-    if (!Entry) {
-      Symbols.emplace_back(new MCSymbolData(Symbol, nullptr, 0));
-      Entry = Symbols.back().get();
+      *Created = !hasSymbolData(Symbol);
+    if (!hasSymbolData(Symbol)) {
+      Symbol.getUnsafeData().initialize(Symbol, nullptr, 0);
+      Symbols.push_back(&Symbol.getData());
     }
-
-    return *Entry;
+    return Symbol.getData();
   }
 
   const_file_name_iterator file_names_begin() const {
