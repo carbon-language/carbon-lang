@@ -346,6 +346,7 @@ namespace {
                               uint64_t cpyLen, unsigned cpyAlign, CallInst *C);
     bool processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep);
     bool processMemSetMemCpyDependence(MemCpyInst *M, MemSetInst *MDep);
+    bool performMemCpyToMemSetOptzn(MemCpyInst *M, MemSetInst *MDep);
     bool processByValArgument(CallSite CS, unsigned ArgNo);
     Instruction *tryMergingIntoMemset(Instruction *I, Value *StartPtr,
                                       Value *ByteVal);
@@ -896,6 +897,39 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
   return true;
 }
 
+/// Transform memcpy to memset when its source was just memset.
+/// In other words, turn:
+/// \code
+///   memset(dst1, c, dst1_size);
+///   memcpy(dst2, dst1, dst2_size);
+/// \endcode
+/// into:
+/// \code
+///   memset(dst1, c, dst1_size);
+///   memset(dst2, c, dst2_size);
+/// \endcode
+/// When dst2_size <= dst1_size.
+///
+/// The \p MemCpy must have a Constant length.
+bool MemCpyOpt::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
+                                           MemSetInst *MemSet) {
+  // This only makes sense on memcpy(..., memset(...), ...).
+  if (MemSet->getRawDest() != MemCpy->getRawSource())
+    return false;
+
+  ConstantInt *CopySize = cast<ConstantInt>(MemCpy->getLength());
+  ConstantInt *MemSetSize = dyn_cast<ConstantInt>(MemSet->getLength());
+  // Make sure the memcpy doesn't read any more than what the memset wrote.
+  // Don't worry about sizes larger than i64.
+  if (!MemSetSize || CopySize->getZExtValue() > MemSetSize->getZExtValue())
+    return false;
+
+  IRBuilder<> Builder(MemCpy->getNextNode());
+  Builder.CreateMemSet(MemCpy->getRawDest(), MemSet->getOperand(1),
+                       CopySize, MemCpy->getAlignment());
+  return true;
+}
+
 /// processMemCpy - perform simplification of memcpy's.  If we have memcpy A
 /// which copies X to Y, and memcpy B which copies Y to Z, then we can rewrite
 /// B to be a memcpy from X to Z (or potentially a memmove, depending on
@@ -938,12 +972,13 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   ConstantInt *CopySize = dyn_cast<ConstantInt>(M->getLength());
   if (!CopySize) return false;
 
-  // The are three possible optimizations we can do for memcpy:
+  // There are four possible optimizations we can do for memcpy:
   //   a) memcpy-memcpy xform which exposes redundance for DSE.
   //   b) call-memcpy xform for return slot optimization.
   //   c) memcpy from freshly alloca'd space or space that has just started its
   //      lifetime copies undefined data, and we can therefore eliminate the
   //      memcpy in favor of the data that was already at the destination.
+  //   d) memcpy from a just-memset'd source can be turned into memset.
   if (DepInfo.isClobber()) {
     if (CallInst *C = dyn_cast<CallInst>(DepInfo.getInst())) {
       if (performCallSlotOptzn(M, M->getDest(), M->getSource(),
@@ -983,6 +1018,15 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
       return true;
     }
   }
+
+  if (SrcDepInfo.isClobber())
+    if (MemSetInst *MDep = dyn_cast<MemSetInst>(SrcDepInfo.getInst()))
+      if (performMemCpyToMemSetOptzn(M, MDep)) {
+        MD->removeInstruction(M);
+        M->eraseFromParent();
+        ++NumCpyToSet;
+        return true;
+      }
 
   return false;
 }
