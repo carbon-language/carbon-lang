@@ -321,8 +321,8 @@ void MachineOperand::print(raw_ostream &OS,
         if (isUndef() && getSubReg())
           OS << ",read-undef";
       } else if (isImplicit()) {
-          OS << "imp-use";
-          NeedComma = true;
+        OS << "imp-use";
+        NeedComma = true;
       }
 
       if (isKill()) {
