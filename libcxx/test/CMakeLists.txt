@@ -48,6 +48,7 @@ if (LIT_EXECUTABLE)
   pythonize_bool(LIBCXX_ENABLE_THREADS)
   pythonize_bool(LIBCXX_ENABLE_MONOTONIC_CLOCK)
   pythonize_bool(LIBCXX_GENERATE_COVERAGE)
+  pythonize_bool(LIBCXXABI_USE_LLVM_UNWINDER)
 
   # The tests shouldn't link to any ABI library when it has been linked into
   # libc++ statically.
