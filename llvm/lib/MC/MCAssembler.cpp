@@ -506,9 +506,8 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
       if (A->getKind() != MCSymbolRefExpr::VK_None || SA.isUndefined()) {
         IsResolved = false;
       } else {
-        const MCSymbolData &DataA = getSymbolData(SA);
         IsResolved = getWriter().IsSymbolRefDifferenceFullyResolvedImpl(
-            *this, DataA, *DF, false, true);
+            *this, SA, *DF, false, true);
       }
     }
   } else {

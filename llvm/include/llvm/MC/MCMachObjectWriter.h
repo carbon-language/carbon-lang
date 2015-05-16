@@ -263,9 +263,8 @@ public:
                                 const MCAsmLayout &Layout) override;
 
   bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                              const MCSymbolData &DataA,
-                                              const MCFragment &FB,
-                                              bool InSet,
+                                              const MCSymbol &SymA,
+                                              const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
   void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;

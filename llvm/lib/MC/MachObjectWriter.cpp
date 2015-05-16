@@ -669,7 +669,7 @@ void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 }
 
 bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-    const MCAssembler &Asm, const MCSymbolData &DataA, const MCFragment &FB,
+    const MCAssembler &Asm, const MCSymbol &SymA, const MCFragment &FB,
     bool InSet, bool IsPCRel) const {
   if (InSet)
     return true;
@@ -679,7 +679,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   //   - addr(atom(B)) - offset(B)
   // and the offsets are not relocatable, so the fixup is fully resolved when
   //  addr(atom(A)) - addr(atom(B)) == 0.
-  const MCSymbol &SA = findAliasedSymbol(DataA.getSymbol());
+  const MCSymbol &SA = findAliasedSymbol(SymA);
   const MCSection &SecA = SA.getSection();
   const MCSection &SecB = FB.getParent()->getSection();
 

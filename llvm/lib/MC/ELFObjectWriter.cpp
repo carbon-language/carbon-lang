@@ -244,12 +244,11 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void writeRelocations(const MCAssembler &Asm, const MCSectionELF &Sec);
 
-    bool
-    IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                           const MCSymbolData &DataA,
-                                           const MCFragment &FB,
-                                           bool InSet,
-                                           bool IsPCRel) const override;
+    bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                                const MCSymbol &SymA,
+                                                const MCFragment &FB,
+                                                bool InSet,
+                                                bool IsPCRel) const override;
 
     bool isWeak(const MCSymbolData &SD) const override;
 
@@ -1469,14 +1468,14 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 }
 
 bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
-    const MCAssembler &Asm, const MCSymbolData &DataA, const MCFragment &FB,
+    const MCAssembler &Asm, const MCSymbol &SymA, const MCFragment &FB,
     bool InSet, bool IsPCRel) const {
   if (IsPCRel) {
     assert(!InSet);
-    if (::isWeak(DataA))
+    if (::isWeak(SymA.getData()))
       return false;
   }
-  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, DataA, FB,
+  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
                                                                 InSet, IsPCRel);
 }
 
