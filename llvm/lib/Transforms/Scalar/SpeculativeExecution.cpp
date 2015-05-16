@@ -74,6 +74,7 @@ static cl::opt<unsigned> SpecExecMaxNotHoisted(
              "number of instructions that would not be speculatively executed "
              "exceeds this limit."));
 
+namespace {
 class SpeculativeExecution : public FunctionPass {
  public:
   static char ID;
@@ -88,6 +89,7 @@ class SpeculativeExecution : public FunctionPass {
 
   const TargetTransformInfo *TTI = nullptr;
 };
+} // namespace
 
 char SpeculativeExecution::ID = 0;
 INITIALIZE_PASS_BEGIN(SpeculativeExecution, "speculative-execution",
