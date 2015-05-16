@@ -64,10 +64,10 @@ void bind_lvalue_quals(volatile Base b, volatile Derived d,
                        volatile const int ivc) {
   volatile Base &bvr1 = b;
   volatile Base &bvr2 = d;
-  volatile Base &bvr3 = bvc; // expected-error{{binding value of type 'const volatile Base' to reference of type 'volatile Base' drops 'const' qualifier}}
-  volatile Base &bvr4 = dvc; // expected-error{{binding value of type 'const volatile Derived' to reference of type 'volatile Base' drops 'const' qualifier}}
+  volatile Base &bvr3 = bvc; // expected-error{{binding value of type 'const volatile Base' to reference to type 'volatile Base' drops 'const' qualifier}}
+  volatile Base &bvr4 = dvc; // expected-error{{binding value of type 'const volatile Derived' to reference to type 'volatile Base' drops 'const' qualifier}}
   
-  volatile int &ir = ivc; // expected-error{{binding value of type 'const volatile int' to reference of type 'volatile int' drops 'const' qualifier}}
+  volatile int &ir = ivc; // expected-error{{binding value of type 'const volatile int' to reference to type 'volatile int' drops 'const' qualifier}}
 
   const volatile Base &bcvr1 = b;
   const volatile Base &bcvr2 = d;
@@ -118,8 +118,8 @@ void bind_const_lvalue_to_rvalue() {
   const Base &br3 = create<const Base>();
   const Base &br4 = create<const Derived>();
 
-  const Base &br5 = create<const volatile Base>(); // expected-error{{binding value of type 'const volatile Base' to reference of type 'const Base' drops 'volatile' qualifier}}
-  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding value of type 'const volatile Derived' to reference of type 'const Base' drops 'volatile' qualifier}}
+  const Base &br5 = create<const volatile Base>(); // expected-error{{binding value of type 'const volatile Base' to reference to type 'const Base' drops 'volatile' qualifier}}
+  const Base &br6 = create<const volatile Derived>(); // expected-error{{binding value of type 'const volatile Derived' to reference to type 'const Base' drops 'volatile' qualifier}}
 
   const int &ir = create<int>();
 }

@@ -1258,7 +1258,7 @@ using T = condition<(is_const())>;
 void foo(const T &t) {
   T &t2 = t;
 }
-// CHECK-ELIDE-NOTREE: binding value of type 'const condition<[...]>' to reference of type 'condition<[...]>' drops 'const' qualifier
+// CHECK-ELIDE-NOTREE: binding value of type 'const condition<[...]>' to reference to type 'condition<[...]>' drops 'const' qualifier
 }
 
 namespace BoolArgumentBitExtended {
