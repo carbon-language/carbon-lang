@@ -24,6 +24,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureFreeBSD('llvm.org/pr17946')
+    @expectedFailureLinux # failed 1/365 test runs, line 61, thread.IsValid()
     def test_with_dwarf_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
         self.buildDwarf()

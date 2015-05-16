@@ -151,6 +151,7 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
+    @expectedFailureLinux('http://llvm.org/pr23545') # build failure 1/365 dosep builds
     def test_auxv_keys_look_valid_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
