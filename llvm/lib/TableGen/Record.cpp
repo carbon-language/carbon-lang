@@ -1113,12 +1113,13 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
 
       std::string::size_type found;
       std::string::size_type idx = 0;
-      do {
+      while (true) {
         found = Val.find(LHSs->getValue(), idx);
-        if (found != std::string::npos)
-          Val.replace(found, LHSs->getValue().size(), MHSs->getValue());
-        idx = found +  MHSs->getValue().size();
-      } while (found != std::string::npos);
+        if (found == std::string::npos)
+          break;
+        Val.replace(found, LHSs->getValue().size(), MHSs->getValue());
+        idx = found + MHSs->getValue().size();
+      }
 
       return StringInit::get(Val);
     }
