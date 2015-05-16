@@ -2877,10 +2877,16 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
   SDValue Op0, Op1, Op2, Op3, Op4;
   switch (ConstraintID) {
+  default:
+    llvm_unreachable("Unexpected asm memory constraint");
+  case InlineAsm::Constraint_i:
+    // FIXME: It seems strange that 'i' is needed here since it's supposed to
+    //        be an immediate and not a memory constraint.
+    // Fallthrough.
   case InlineAsm::Constraint_o: // offsetable        ??
   case InlineAsm::Constraint_v: // not offsetable    ??
-  default: return true;
   case InlineAsm::Constraint_m: // memory
+  case InlineAsm::Constraint_X:
     if (!SelectAddr(nullptr, Op, Op0, Op1, Op2, Op3, Op4))
       return true;
     break;

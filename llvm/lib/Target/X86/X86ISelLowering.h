@@ -704,8 +704,15 @@ namespace llvm {
 
     unsigned getInlineAsmMemConstraint(
         const std::string &ConstraintCode) const override {
-      // FIXME: Map different constraints differently.
-      return InlineAsm::Constraint_m;
+      if (ConstraintCode == "i")
+        return InlineAsm::Constraint_i;
+      else if (ConstraintCode == "o")
+        return InlineAsm::Constraint_o;
+      else if (ConstraintCode == "v")
+        return InlineAsm::Constraint_v;
+      else if (ConstraintCode == "X")
+        return InlineAsm::Constraint_X;
+      return TargetLowering::getInlineAsmMemConstraint(ConstraintCode);
     }
 
     /// Given a physical register constraint

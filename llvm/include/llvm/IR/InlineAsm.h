@@ -248,6 +248,7 @@ public:
     Constraint_R,
     Constraint_S,
     Constraint_T,
+    Constraint_X,
     Constraint_Z,
     Constraint_ZC,
     Constraint_Zy,
