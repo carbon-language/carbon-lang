@@ -14022,8 +14022,8 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
          "Can only lower sext loads with a single scalar load!");
 
   unsigned loadRegZize = RegSz;
-  if (Ext == ISD::SEXTLOAD && RegSz == 256)
-    loadRegZize /= 2;
+  if (Ext == ISD::SEXTLOAD && RegSz >= 256)
+    loadRegZize = 128;
 
   // Represent our vector as a sequence of elements which are the
   // largest scalar that we can load.
