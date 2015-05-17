@@ -9,6 +9,8 @@
 // CHECK: __tls_get_addr: static tls
 // CHECK: after
 
+// XFAIL: powerpc64
+
 #ifndef SHARED
 #include <stdio.h>
 
