@@ -38,6 +38,26 @@ public:
     return false;
   }
 };
+
+/// \brief RAIIObject to destroy the contents of a SmallVector of
+/// TemplateIdAnnotation pointers and clear the vector.
+class DestroyTemplateIdAnnotationsRAIIObj {
+  SmallVectorImpl<TemplateIdAnnotation *> &Container;
+
+public:
+  DestroyTemplateIdAnnotationsRAIIObj(
+      SmallVectorImpl<TemplateIdAnnotation *> &Container)
+      : Container(Container) {}
+
+  ~DestroyTemplateIdAnnotationsRAIIObj() {
+    for (SmallVectorImpl<TemplateIdAnnotation *>::iterator I =
+             Container.begin(),
+                                                           E = Container.end();
+         I != E; ++I)
+      (*I)->Destroy();
+    Container.clear();
+  }
+};
 } // end anonymous namespace
 
 IdentifierInfo *Parser::getSEHExceptKeyword() {
@@ -414,6 +434,15 @@ Parser::~Parser() {
 
   PP.clearCodeCompletionHandler();
 
+  if (getLangOpts().DelayedTemplateParsing &&
+      !PP.isIncrementalProcessingEnabled() && !TemplateIds.empty()) {
+    // If an ASTConsumer parsed delay-parsed templates in their
+    // HandleTranslationUnit() method, TemplateIds created there were not
+    // guarded by a DestroyTemplateIdAnnotationsRAIIObj object in
+    // ParseTopLevelDecl(). Destroy them here.
+    DestroyTemplateIdAnnotationsRAIIObj CleanupRAII(TemplateIds);
+  }
+
   assert(TemplateIds.empty() && "Still alive TemplateIdAnnotations around?");
 }
 
@@ -488,26 +517,6 @@ void Parser::Initialize() {
 
   // Prime the lexer look-ahead.
   ConsumeToken();
-}
-
-namespace {
-  /// \brief RAIIObject to destroy the contents of a SmallVector of
-  /// TemplateIdAnnotation pointers and clear the vector.
-  class DestroyTemplateIdAnnotationsRAIIObj {
-    SmallVectorImpl<TemplateIdAnnotation *> &Container;
-  public:
-    DestroyTemplateIdAnnotationsRAIIObj(SmallVectorImpl<TemplateIdAnnotation *>
-                                       &Container)
-      : Container(Container) {}
-
-    ~DestroyTemplateIdAnnotationsRAIIObj() {
-      for (SmallVectorImpl<TemplateIdAnnotation *>::iterator I =
-           Container.begin(), E = Container.end();
-           I != E; ++I)
-        (*I)->Destroy();
-      Container.clear();
-    }
-  };
 }
 
 void Parser::LateTemplateParserCleanupCallback(void *P) {
