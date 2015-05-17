@@ -21,6 +21,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
+    @expectedFailureDarwin # failed 1/134 runs, line 83, value.IsValid() 
     def test_with_dsym(self):
         """Test calling std::String member function."""
         self.buildDsym()

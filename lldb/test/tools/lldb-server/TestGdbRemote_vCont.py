@@ -106,6 +106,7 @@ class TestGdbRemote_vCont(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     @dsym_test
+    @expectedFailureDarwin('http://llvm.org/pr23550') # failed 6/134 dosep runs
     def test_single_step_only_steps_one_instruction_with_vCont_s_thread_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
