@@ -102,7 +102,6 @@ endif()
 option(LIBUNWIND_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBUNWIND_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBUNWIND_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
-option(LIBUNWIND_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBUNWIND_ENABLE_SHARED "Build libunwind as a shared library." ON)
 
 set(LIBUNWIND_GCC_TOOLCHAIN "" CACHE STRING "GCC toolchain for cross compiling.")
