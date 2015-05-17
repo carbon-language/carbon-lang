@@ -2611,8 +2611,7 @@ void GenericScheduler::tryCandidate(SchedCandidate &Cand,
                  TryCand, Cand, PhysRegCopy))
     return;
 
-  // Avoid exceeding the target's limit. If signed PSetID is negative, it is
-  // invalid; convert it to INT_MAX to give it lowest priority.
+  // Avoid exceeding the target's limit.
   if (DAG->isTrackingPressure() && tryPressure(TryCand.RPDelta.Excess,
                                                Cand.RPDelta.Excess,
                                                TryCand, Cand, RegExcess))
