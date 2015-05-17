@@ -315,8 +315,8 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
     RunOneAndUpdateCorpus(*U);
     size_t NumTraceBasedMutations = StopTraceRecording();
     for (size_t j = 0; j < NumTraceBasedMutations; j++) {
-        ApplyTraceBasedMutation(j, U);
-        RunOneAndUpdateCorpus(*U);
+      ApplyTraceBasedMutation(j, U);
+      RunOneAndUpdateCorpus(*U);
     }
   }
 }
