@@ -108,19 +108,24 @@ std::string replacementExpression(const MatchFinder::MatchResult &Result,
       StringRef NegatedOperator = negatedOperator(BinOp);
       if (!NegatedOperator.empty()) {
         return (getText(Result, *BinOp->getLHS()) + " " + NegatedOperator +
-                " " + getText(Result, *BinOp->getRHS()))
-            .str();
+                " " + getText(Result, *BinOp->getRHS())).str();
       }
     }
   }
   StringRef Text = getText(Result, *E);
   return (Negated ? (needsParensAfterUnaryNegation(E) ? "!(" + Text + ")"
                                                       : "!" + Text)
-                  : Text)
-      .str();
+                  : Text).str();
 }
 
 } // namespace
+
+SimplifyBooleanExprCheck::SimplifyBooleanExprCheck(StringRef Name,
+                                                   ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      ChainedConditionalReturn(Options.get("ChainedConditionalReturn", 0U)),
+      ChainedConditionalAssignment(
+          Options.get("ChainedConditionalAssignment", 0U)) {}
 
 void SimplifyBooleanExprCheck::matchBoolBinOpExpr(MatchFinder *Finder,
                                                   bool Value,
@@ -199,10 +204,18 @@ void SimplifyBooleanExprCheck::matchTernaryResult(MatchFinder *Finder,
 
 void SimplifyBooleanExprCheck::matchIfReturnsBool(MatchFinder *Finder,
                                                   bool Value, StringRef Id) {
-  Finder->addMatcher(ifStmt(isExpansionInMainFile(),
-                            hasThen(ReturnsBool(Value, ThenLiteralId)),
-                            hasElse(ReturnsBool(!Value))).bind(Id),
-                     this);
+  if (ChainedConditionalReturn) {
+    Finder->addMatcher(ifStmt(isExpansionInMainFile(),
+                              hasThen(ReturnsBool(Value, ThenLiteralId)),
+                              hasElse(ReturnsBool(!Value))).bind(Id),
+                       this);
+  } else {
+    Finder->addMatcher(ifStmt(isExpansionInMainFile(),
+                              unless(hasParent(ifStmt())),
+                              hasThen(ReturnsBool(Value, ThenLiteralId)),
+                              hasElse(ReturnsBool(!Value))).bind(Id),
+                       this);
+  }
 }
 
 void SimplifyBooleanExprCheck::matchIfAssignsBool(MatchFinder *Finder,
@@ -220,9 +233,22 @@ void SimplifyBooleanExprCheck::matchIfAssignsBool(MatchFinder *Finder,
       hasRHS(boolLiteral(equals(!Value))));
   auto Else = anyOf(SimpleElse, compoundStmt(statementCountIs(1),
                                              hasAnySubstatement(SimpleElse)));
-  Finder->addMatcher(
-      ifStmt(isExpansionInMainFile(), hasThen(Then), hasElse(Else)).bind(Id),
-      this);
+  if (ChainedConditionalAssignment) {
+    Finder->addMatcher(
+        ifStmt(isExpansionInMainFile(), hasThen(Then), hasElse(Else)).bind(Id),
+        this);
+  } else {
+    Finder->addMatcher(ifStmt(isExpansionInMainFile(),
+                              unless(hasParent(ifStmt())), hasThen(Then),
+                              hasElse(Else)).bind(Id),
+                       this);
+  }
+}
+
+void SimplifyBooleanExprCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "ChainedConditionalReturn", ChainedConditionalReturn);
+  Options.store(Opts, "ChainedConditionalAssignment",
+                ChainedConditionalAssignment);
 }
 
 void SimplifyBooleanExprCheck::registerMatchers(MatchFinder *Finder) {

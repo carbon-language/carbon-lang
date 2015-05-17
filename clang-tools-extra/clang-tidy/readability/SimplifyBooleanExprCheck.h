@@ -30,15 +30,25 @@ namespace readability {
 /// `e ? false : true`                         becomes `!e`
 /// `if (true) t(); else f();`                 becomes `t();`
 /// `if (false) t(); else f();`                becomes `f();`
-/// `if (e) return true; else return false;`   becomes `return (e);`
-/// `if (e) return false; else return true;`   becomes `return !(e);`
+/// `if (e) return true; else return false;`   becomes `return e;`
+/// `if (e) return false; else return true;`   becomes `return !e;`
 /// `if (e) b = true; else b = false;`         becomes `b = e;`
-/// `if (e) b = false; else b = true;`         becomes `b = !(e);`
+/// `if (e) b = false; else b = true;`         becomes `b = !e;`
+///
+/// Parenthesis from the resulting expression `e` are removed whenever
+/// possible.
+///
+/// When a conditional boolean return or assignment appears at the end of a
+/// chain of `if`, `else if` statements, the conditional statement is left
+/// unchanged unless the option `ChainedConditionalReturn` or
+/// `ChainedConditionalAssignment`, respectively, is specified as non-zero.
+/// The default value for both options is zero.
 ///
 class SimplifyBooleanExprCheck : public ClangTidyCheck {
 public:
-  SimplifyBooleanExprCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context) {}
+  SimplifyBooleanExprCheck(StringRef Name, ClangTidyContext *Context);
+
+  void storeOptions(ClangTidyOptions::OptionMap &Options) override;
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
@@ -92,6 +102,9 @@ private:
   void
   replaceWithAssignment(const ast_matchers::MatchFinder::MatchResult &Result,
                         const IfStmt *If, bool Negated = false);
+
+  const bool ChainedConditionalReturn;
+  const bool ChainedConditionalAssignment;
 };
 
 } // namespace readability

@@ -541,3 +541,55 @@ void complex_conditional_assignment_statements(int i) {
   } else
     f = false;
 }
+
+// unchanged: chained return statements, but ChainedConditionalReturn not set
+bool chained_conditional_compound_return(int i) {
+  if (i < 0) {
+    return true;
+  } else if (i < 10) {
+    return false;
+  } else if (i > 20) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// unchanged: chained return statements, but ChainedConditionalReturn not set
+bool chained_conditional_return(int i) {
+  if (i < 0)
+    return true;
+  else if (i < 10)
+    return false;
+  else if (i > 20)
+    return true;
+  else
+    return false;
+}
+
+// unchanged: chained assignments, but ChainedConditionalAssignment not set
+void chained_conditional_compound_assignment(int i) {
+  bool b;
+  if (i < 0) {
+    b = true;
+  } else if (i < 10) {
+    b = false;
+  } else if (i > 20) {
+    b = true;
+  } else {
+    b = false;
+  }
+}
+
+// unchanged: chained return statements, but ChainedConditionalReturn not set
+void chained_conditional_assignment(int i) {
+  bool b;
+  if (i < 0)
+    b = true;
+  else if (i < 10)
+    b = false;
+  else if (i > 20)
+    b = true;
+  else
+    b = false;
+}
