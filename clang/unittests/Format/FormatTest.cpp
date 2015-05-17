@@ -4768,7 +4768,11 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("f(@\"a\"\n"
                "  @\"b\");");
   verifyFormat("NSString s = @\"a\"\n"
-               "             @\"b\";");
+               "             @\"b\"\n"
+               "             @\"c\";");
+  verifyFormat("NSString s = @\"a\"\n"
+               "              \"b\"\n"
+               "              \"c\";");
 }
 
 TEST_F(FormatTest, AlwaysBreakAfterDefinitionReturnType) {
