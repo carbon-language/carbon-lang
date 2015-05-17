@@ -1685,7 +1685,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 50;
 
   if (Right.is(tok::lessless)) {
-    if (Left.is(tok::string_literal)) {
+    if (Left.is(tok::string_literal) &&
+        (!Right.LastOperator || Right.OperatorIndex != 1)) {
       StringRef Content = Left.TokenText;
       if (Content.startswith("\""))
         Content = Content.drop_front(1);
