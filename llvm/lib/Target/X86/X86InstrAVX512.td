@@ -2156,8 +2156,8 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v4i1 immAllOnesV),  (COPY_TO_REGCLASS (KSET1W), VK4)>;
   def : Pat<(v2i1 immAllOnesV),  (COPY_TO_REGCLASS (KSET1W), VK2)>;
   def : Pat<(i1 0), (COPY_TO_REGCLASS (KSET0W), VK1)>;
-  def : Pat<(i1 1), (COPY_TO_REGCLASS (KSET1W), VK1)>;
-  def : Pat<(i1 -1), (COPY_TO_REGCLASS (KSET1W), VK1)>;
+  def : Pat<(i1 1), (COPY_TO_REGCLASS (KSHIFTRWri (KSET1W), (i8 15)), VK1)>;
+  def : Pat<(i1 -1), (COPY_TO_REGCLASS (KSHIFTRWri (KSET1W), (i8 15)), VK1)>;
 }
 def : Pat<(v8i1 (extract_subvector (v16i1 VK16:$src), (iPTR 0))),
           (v8i1 (COPY_TO_REGCLASS VK16:$src, VK8))>;
