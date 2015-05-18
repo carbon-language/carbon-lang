@@ -9155,24 +9155,25 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   // a copy of the original base pointer.
   SmallVector<SDNode *, 16> OtherUses;
   if (isa<ConstantSDNode>(Offset))
-    for (SDNode *Use : BasePtr.getNode()->uses()) {
-      if (Use == Ptr.getNode())
+    for (SDNode::use_iterator UI = BasePtr.getNode()->use_begin(),
+                              UE = BasePtr.getNode()->use_end();
+         UI != UE; ++UI) {
+      SDUse &Use = UI.getUse();
+      // Skip the use that is Ptr and uses of other results from BasePtr's
+      // node (important for nodes that return multiple results).
+      if (Use.getUser() == Ptr.getNode() || Use != BasePtr)
         continue;
 
-      if (Use->isPredecessorOf(N))
+      if (Use.getUser()->isPredecessorOf(N))
         continue;
 
-      if (Use->getOpcode() != ISD::ADD && Use->getOpcode() != ISD::SUB) {
+      if (Use.getUser()->getOpcode() != ISD::ADD &&
+          Use.getUser()->getOpcode() != ISD::SUB) {
         OtherUses.clear();
         break;
       }
 
-      SDValue Op0 = Use->getOperand(0), Op1 = Use->getOperand(1);
-      if (Op1.getNode() == BasePtr.getNode())
-        std::swap(Op0, Op1);
-      assert(Op0.getNode() == BasePtr.getNode() &&
-             "Use of ADD/SUB but not an operand");
-
+      SDValue Op1 = Use.getUser()->getOperand((UI.getOperandNo() + 1) & 1);
       if (!isa<ConstantSDNode>(Op1)) {
         OtherUses.clear();
         break;
@@ -9184,7 +9185,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
         break;
       }
 
-      OtherUses.push_back(Use);
+      OtherUses.push_back(Use.getUser());
     }
 
   if (Swapped)
