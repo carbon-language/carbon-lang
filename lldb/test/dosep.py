@@ -184,6 +184,10 @@ def getExpectedTimeouts(dotest_options):
             "TestBreakpointConditions.py",
             "TestWatchpointConditionAPI.py",
         }
+    elif target.startswith("darwin"):
+        expected_timeout |= {
+            "TestThreadSpecificBreakpoint.py", # times out on MBP Retina, Mid 2012
+        }
     return expected_timeout
 
 def main():
