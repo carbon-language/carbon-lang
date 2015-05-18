@@ -4040,6 +4040,14 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaa;");
 }
 
+TEST_F(FormatTest, FunctionAnnotations) {
+  verifyFormat("DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
+               "string OldFunction(const string &parameter) {}");
+  verifyFormat("template <typename T>\n"
+               "DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
+               "string OldFunction(const string &parameter) {}");
+}
+
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
                "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
