@@ -166,3 +166,20 @@ class AUI_FM_MMR6 : MipsR6Inst {
   let Inst{20-16} = rs;
   let Inst{15-0} = imm;
 }
+
+class POOL32A_LSA_FM<bits<6> funct> : MipsR6Inst {
+  bits<5> rd;
+  bits<5> rs;
+  bits<5> rt;
+  bits<2> imm2;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0b000000;
+  let Inst{25-21} = rt;
+  let Inst{20-16} = rs;
+  let Inst{15-11} = rd;
+  let Inst{10-9}  = imm2;
+  let Inst{8-6}   = 0b000;
+  let Inst{5-0}   = funct;
+}

@@ -586,7 +586,7 @@ class SDC2_R6_DESC : COP2ST_DESC_BASE<"sdc2", COP2Opnd>;
 class SWC2_R6_DESC : COP2ST_DESC_BASE<"swc2", COP2Opnd>;
 
 class LSA_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
-                       Operand ImmOpnd> {
+                       Operand ImmOpnd> : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$imm2);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $imm2");
@@ -696,7 +696,7 @@ def JIC : R6MMR6Rel, JIC_ENC, JIC_DESC, ISA_MIPS32R6;
 def JR_HB_R6 : JR_HB_R6_ENC, JR_HB_R6_DESC, ISA_MIPS32R6;
 def LDC2_R6 : LDC2_R6_ENC, LDC2_R6_DESC, ISA_MIPS32R6;
 def LL_R6 : LL_R6_ENC, LL_R6_DESC, ISA_MIPS32R6;
-def LSA_R6 : LSA_R6_ENC, LSA_R6_DESC, ISA_MIPS32R6;
+def LSA_R6 : R6MMR6Rel, LSA_R6_ENC, LSA_R6_DESC, ISA_MIPS32R6;
 def LWC2_R6 : LWC2_R6_ENC, LWC2_R6_DESC, ISA_MIPS32R6;
 def LWPC : R6MMR6Rel, LWPC_ENC, LWPC_DESC, ISA_MIPS32R6;
 def LWUPC : LWUPC_ENC, LWUPC_DESC, ISA_MIPS32R6;

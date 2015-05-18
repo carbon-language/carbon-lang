@@ -32,6 +32,7 @@ class CLO_MMR6_ENC : POOL32A_2R_FM_MMR6<0b0100101100>;
 class CLZ_MMR6_ENC : SPECIAL_2R_FM_MMR6<0b010000>;
 class JIALC_MMR6_ENC : JMP_IDX_COMPACT_FM<0b100000>;
 class JIC_MMR6_ENC   : JMP_IDX_COMPACT_FM<0b101000>;
+class LSA_MMR6_ENC : POOL32A_LSA_FM<0b001111>;
 class LWPC_MMR6_ENC  : PCREL19_FM_MMR6<0b01>;
 class MUL_MMR6_ENC : ARITH_FM_MMR6<"mul", 0x18>;
 class MUH_MMR6_ENC : ARITH_FM_MMR6<"muh", 0x58>;
@@ -158,6 +159,16 @@ class ALUIPC_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
 class ALUIPC_MMR6_DESC : ALUIPC_MMR6_DESC_BASE<"aluipc", GPR32Opnd>;
 class AUIPC_MMR6_DESC : ALUIPC_MMR6_DESC_BASE<"auipc", GPR32Opnd>;
 
+class LSA_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                         Operand ImmOpnd> : MMR6Arch<instr_asm> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$imm2);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $rd, $imm2");
+  list<dag> Pattern = [];
+}
+
+class LSA_MMR6_DESC : LSA_MMR6_DESC_BASE<"lsa", GPR32Opnd, uimm2>;
+
 class PCREL_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
                            Operand ImmOpnd> : MMR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rt);
@@ -206,6 +217,7 @@ def CLO_MMR6 : R6MMR6Rel, CLO_MMR6_ENC, CLO_MMR6_DESC, ISA_MICROMIPS32R6;
 def CLZ_MMR6 : R6MMR6Rel, CLZ_MMR6_ENC, CLZ_MMR6_DESC, ISA_MICROMIPS32R6;
 def JIALC_MMR6 : R6MMR6Rel, JIALC_MMR6_ENC, JIALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def JIC_MMR6 : R6MMR6Rel, JIC_MMR6_ENC, JIC_MMR6_DESC, ISA_MICROMIPS32R6;
+def LSA_MMR6 : R6MMR6Rel, LSA_MMR6_ENC, LSA_MMR6_DESC, ISA_MICROMIPS32R6;
 def LWPC_MMR6 : R6MMR6Rel, LWPC_MMR6_ENC, LWPC_MMR6_DESC, ISA_MICROMIPS32R6;
 def MUL_MMR6 : R6MMR6Rel, MUL_MMR6_DESC, MUL_MMR6_ENC, ISA_MICROMIPS32R6;
 def MUH_MMR6 : R6MMR6Rel, MUH_MMR6_DESC, MUH_MMR6_ENC, ISA_MICROMIPS32R6;
