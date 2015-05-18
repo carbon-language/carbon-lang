@@ -300,3 +300,31 @@ entry:
   %vecinit7.i = insertelement <8 x double> %vecinit6.i, double %0, i32 7
   ret <8 x double> %vecinit7.i
 }
+
+; CHECK-LABEL: test1
+; CHECK: vbroadcastss
+define <16 x float> @test1(<8 x float>%a)  {
+  %res = shufflevector <8 x float> %a, <8 x float> undef, <16 x i32> zeroinitializer
+  ret <16 x float>%res
+}
+
+; CHECK-LABEL: test2
+; CHECK: vbroadcastsd
+define <8 x double> @test2(<4 x double>%a)  {
+  %res = shufflevector <4 x double> %a, <4 x double> undef, <8 x i32> zeroinitializer
+  ret <8 x double>%res
+}
+
+; CHECK-LABEL: test3
+; CHECK: vpbroadcastd
+define <16 x i32> @test3(<8 x i32>%a)  {
+  %res = shufflevector <8 x i32> %a, <8 x i32> undef, <16 x i32> zeroinitializer
+  ret <16 x i32>%res
+}
+
+; CHECK-LABEL: test4
+; CHECK: vpbroadcastq
+define <8 x i64> @test4(<4 x i64>%a)  {
+  %res = shufflevector <4 x i64> %a, <4 x i64> undef, <8 x i32> zeroinitializer
+  ret <8 x i64>%res
+}
