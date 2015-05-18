@@ -17,7 +17,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -55,7 +54,7 @@ namespace {
 
   public:
     SimplifyIndvar(Loop *Loop, ScalarEvolution *SE, LoopInfo *LI,
-                   SmallVectorImpl<WeakVH> &Dead, IVUsers *IVU = nullptr)
+                   SmallVectorImpl<WeakVH> &Dead)
         : L(Loop), LI(LI), SE(SE), DeadInsts(Dead), Changed(false) {
       assert(LI && "IV simplification requires LoopInfo");
     }

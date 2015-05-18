@@ -622,9 +622,8 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
         }
       }
 
-      // If we were unable to completely replace the PHI node, clone the PHI
-      // and delete the original one. This lets IVUsers and any other maps
-      // purge the original user from their records.
+      // If we were unable to completely replace the PHI node, clone the PHI and
+      // delete the original one. This purges the original phi.
       if (!LCSSASafePhiForRAUW) {
         PHINode *NewPN = cast<PHINode>(PN->clone());
         NewPN->takeName(PN);
@@ -915,8 +914,8 @@ const SCEVAddRecExpr* WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
   return AddRec;
 }
 
-/// GetWideRecurrence - Is this instruction potentially interesting from
-/// IVUsers' perspective after widening it's type? In other words, can the
+/// GetWideRecurrence - Is this instruction potentially interesting for further
+/// simplification after widening it's type? In other words, can the
 /// extend be safely hoisted out of the loop with SCEV reducing the value to a
 /// recurrence on the same loop. If so, return the sign or zero extended
 /// recurrence. Otherwise return NULL.
