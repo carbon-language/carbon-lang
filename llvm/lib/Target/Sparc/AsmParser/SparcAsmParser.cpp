@@ -631,6 +631,15 @@ SparcAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     Operands.push_back(SparcOperand::CreateToken("]",
                                                  Parser.getTok().getLoc()));
     Parser.Lex(); // Eat the ]
+
+    // Parse an optional address-space identifier after the address.
+    if (getLexer().is(AsmToken::Integer)) {
+      std::unique_ptr<SparcOperand> Op;
+      ResTy = parseSparcAsmOperand(Op, false);
+      if (ResTy != MatchOperand_Success || !Op)
+        return MatchOperand_ParseFail;
+      Operands.push_back(std::move(Op));
+    }
     return MatchOperand_Success;
   }
 

@@ -279,6 +279,8 @@ static DecodeStatus DecodeMem(MCInst &MI, unsigned insn, uint64_t Address,
   unsigned rd = fieldFromInstruction(insn, 25, 5);
   unsigned rs1 = fieldFromInstruction(insn, 14, 5);
   bool isImm = fieldFromInstruction(insn, 13, 1);
+  bool hasAsi = fieldFromInstruction(insn, 23, 1); // (in op3 field)
+  unsigned asi = fieldFromInstruction(insn, 5, 8);
   unsigned rs2 = 0;
   unsigned simm13 = 0;
   if (isImm)
@@ -306,6 +308,9 @@ static DecodeStatus DecodeMem(MCInst &MI, unsigned insn, uint64_t Address,
     if (status != MCDisassembler::Success)
       return status;
   }
+
+  if (hasAsi)
+    MI.addOperand(MCOperand::createImm(asi));
 
   if (!isLoad) {
     status = DecodeRD(MI, rd, Address, Decoder);
@@ -457,6 +462,8 @@ static DecodeStatus DecodeSWAP(MCInst &MI, unsigned insn, uint64_t Address,
   unsigned rd = fieldFromInstruction(insn, 25, 5);
   unsigned rs1 = fieldFromInstruction(insn, 14, 5);
   unsigned isImm = fieldFromInstruction(insn, 13, 1);
+  bool hasAsi = fieldFromInstruction(insn, 23, 1); // (in op3 field)
+  unsigned asi = fieldFromInstruction(insn, 5, 8);
   unsigned rs2 = 0;
   unsigned simm13 = 0;
   if (isImm)
@@ -482,5 +489,9 @@ static DecodeStatus DecodeSWAP(MCInst &MI, unsigned insn, uint64_t Address,
     if (status != MCDisassembler::Success)
       return status;
   }
+
+  if (hasAsi)
+    MI.addOperand(MCOperand::createImm(asi));
+
   return MCDisassembler::Success;
 }

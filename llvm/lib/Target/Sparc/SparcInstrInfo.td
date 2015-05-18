@@ -283,6 +283,17 @@ multiclass Load<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
                  [(set Ty:$dst, (OpNode ADDRri:$addr))]>;
 }
 
+// LoadA multiclass - As above, but also define alternate address space variant
+multiclass LoadA<string OpcStr, bits<6> Op3Val, bits<6> LoadAOp3Val,
+                 SDPatternOperator OpNode, RegisterClass RC, ValueType Ty> :
+             Load<OpcStr, Op3Val, OpNode, RC, Ty> {
+  // TODO: The LD*Arr instructions are currently asm only; hooking up
+  // CodeGen's address spaces to use these is a future task.
+  def Arr  : F3_1_asi<3, LoadAOp3Val, (outs RC:$dst), (ins MEMrr:$addr, i8imm:$asi),
+                !strconcat(OpcStr, "a [$addr] $asi, $dst"),
+                []>;
+}
+
 // Store multiclass - Define both Reg+Reg/Reg+Imm patterns in one shot.
 multiclass Store<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
            RegisterClass RC, ValueType Ty> {
@@ -294,6 +305,16 @@ multiclass Store<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
                  (outs), (ins MEMri:$addr, RC:$rd),
                  !strconcat(OpcStr, " $rd, [$addr]"),
                  [(OpNode Ty:$rd, ADDRri:$addr)]>;
+}
+
+multiclass StoreA<string OpcStr, bits<6> Op3Val, bits<6> StoreAOp3Val,
+                  SDPatternOperator OpNode, RegisterClass RC, ValueType Ty> :
+             Store<OpcStr, Op3Val, OpNode, RC, Ty> {
+  // TODO: The ST*Arr instructions are currently asm only; hooking up
+  // CodeGen's address spaces to use these is a future task.
+  def Arr  : F3_1_asi<3, StoreAOp3Val, (outs), (ins MEMrr:$addr, RC:$rd, i8imm:$asi),
+                  !strconcat(OpcStr, "a $rd, [$addr] $asi"),
+                  []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -417,11 +438,11 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1,
 
 // Section B.1 - Load Integer Instructions, p. 90
 let DecoderMethod = "DecodeLoadInt" in {
-  defm LDSB : Load<"ldsb", 0b001001, sextloadi8,  IntRegs, i32>;
-  defm LDSH : Load<"ldsh", 0b001010, sextloadi16, IntRegs, i32>;
-  defm LDUB : Load<"ldub", 0b000001, zextloadi8,  IntRegs, i32>;
-  defm LDUH : Load<"lduh", 0b000010, zextloadi16, IntRegs, i32>;
-  defm LD   : Load<"ld",   0b000000, load,        IntRegs, i32>;
+  defm LDSB : LoadA<"ldsb", 0b001001, 0b011001, sextloadi8,  IntRegs, i32>;
+  defm LDSH : LoadA<"ldsh", 0b001010, 0b011010, sextloadi16, IntRegs, i32>;
+  defm LDUB : LoadA<"ldub", 0b000001, 0b010001, zextloadi8,  IntRegs, i32>;
+  defm LDUH : LoadA<"lduh", 0b000010, 0b010010, zextloadi16, IntRegs, i32>;
+  defm LD   : LoadA<"ld",   0b000000, 0b010000, load,        IntRegs, i32>;
 }
 
 // Section B.2 - Load Floating-point Instructions, p. 92
@@ -435,9 +456,9 @@ let DecoderMethod = "DecodeLoadQFP" in
 
 // Section B.4 - Store Integer Instructions, p. 95
 let DecoderMethod = "DecodeStoreInt" in {
-  defm STB   : Store<"stb", 0b000101, truncstorei8,  IntRegs, i32>;
-  defm STH   : Store<"sth", 0b000110, truncstorei16, IntRegs, i32>;
-  defm ST    : Store<"st",  0b000100, store,         IntRegs, i32>;
+  defm STB   : StoreA<"stb", 0b000101, 0b010101, truncstorei8,  IntRegs, i32>;
+  defm STH   : StoreA<"sth", 0b000110, 0b010110, truncstorei16, IntRegs, i32>;
+  defm ST    : StoreA<"st",  0b000100, 0b010100, store,         IntRegs, i32>;
 }
 
 // Section B.5 - Store Floating-point Instructions, p. 97
@@ -1116,10 +1137,20 @@ let Constraints = "$val = $dst", DecoderMethod = "DecodeSWAP" in {
                  (outs IntRegs:$dst), (ins MEMri:$addr, IntRegs:$val),
                  "swap [$addr], $dst",
                  [(set i32:$dst, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
+  def SWAPArr : F3_1_asi<3, 0b011111,
+                 (outs IntRegs:$dst), (ins MEMrr:$addr, i8imm:$asi, IntRegs:$val),
+                 "swapa [$addr] $asi, $dst",
+                 [/*FIXME: pattern?*/]>;
 }
 
-let Predicates = [HasV9], Constraints = "$swap = $rd" in
-  def CASrr: F3_1_asi<3, 0b111100, 0b10000000,
+// TODO: Should add a CASArr variant. In fact, the CAS instruction,
+// unlike other instructions, only comes in a form which requires an
+// ASI be provided. The ASI value hardcoded here is ASI_PRIMARY, the
+// default unprivileged ASI for SparcV9.  (Also of note: some modern
+// SparcV8 implementations provide CASA as an extension, but require
+// the use of SparcV8's default ASI, 0xA ("User Data") instead.)
+let Predicates = [HasV9], Constraints = "$swap = $rd", asi = 0b10000000 in
+  def CASrr: F3_1_asi<3, 0b111100,
                 (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
                                      IntRegs:$swap),
                  "cas [$rs1], $rs2, $rd",
