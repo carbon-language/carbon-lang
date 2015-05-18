@@ -67,7 +67,7 @@ def get_lldb_server_exe():
     if "LLDB_DEBUGSERVER_PATH" in os.environ:
         return os.environ["LLDB_DEBUGSERVER_PATH"]
 
-    return _get_debug_monitor_from_lldb(lldb_exe, "lldb-server")
+    return _get_debug_monitor_from_lldb(lldbtest_config.lldbExec, "lldb-server")
 
 def get_debugserver_exe():
     """Return the debugserver exe path.
