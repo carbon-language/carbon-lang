@@ -22,6 +22,8 @@ class ADDU_MMR6_ENC : ARITH_FM_MMR6<"addu", 0x150>;
 class ADDIUPC_MMR6_ENC : PCREL19_FM_MMR6<0b00>;
 class ALUIPC_MMR6_ENC : PCREL16_FM_MMR6<0b11111>;
 class AUIPC_MMR6_ENC  : PCREL16_FM_MMR6<0b11110>;
+class ALIGN_MMR6_ENC : POOL32A_ALIGN_FM_MMR6<0b011111>;
+class AUI_MMR6_ENC : AUI_FM_MMR6;
 class BALC_MMR6_ENC  : BRANCH_OFF26_FM<0b101101>;
 class BC_MMR6_ENC : BRANCH_OFF26_FM<0b100101>;
 class BITSWAP_MMR6_ENC : POOL32A_BITSWAP_FM_MMR6<0b101100>;
@@ -125,6 +127,26 @@ class JIC_MMR6_DESC : JMP_MMR6_IDX_COMPACT_DESC_BASE<"jic", jmpoffset16,
   list<Register> Defs = [AT];
 }
 
+class ALIGN_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
+                      Operand ImmOpnd>  : MMR6Arch<instr_asm> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$bp);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $bp");
+  list<dag> Pattern = [];
+}
+
+class ALIGN_MMR6_DESC : ALIGN_MMR6_DESC_BASE<"align", GPR32Opnd, uimm2>;
+
+class AUI_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
+    : MMR6Arch<instr_asm> {
+  dag OutOperandList = (outs GPROpnd:$rt);
+  dag InOperandList = (ins GPROpnd:$rs, simm16:$imm);
+  string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $imm");
+  list<dag> Pattern = [];
+}
+
+class AUI_MMR6_DESC : AUI_MMR6_DESC_BASE<"aui", GPR32Opnd>;
+
 class ALUIPC_MMR6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
     : MMR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rt);
@@ -173,6 +195,8 @@ def ADDIUPC_MMR6 : R6MMR6Rel, ADDIUPC_MMR6_ENC, ADDIUPC_MMR6_DESC,
 def ALUIPC_MMR6 : R6MMR6Rel, ALUIPC_MMR6_ENC, ALUIPC_MMR6_DESC,
                   ISA_MICROMIPS32R6;
 def AUIPC_MMR6 : R6MMR6Rel, AUIPC_MMR6_ENC, AUIPC_MMR6_DESC, ISA_MICROMIPS32R6;
+def ALIGN_MMR6 : R6MMR6Rel, ALIGN_MMR6_ENC, ALIGN_MMR6_DESC, ISA_MICROMIPS32R6;
+def AUI_MMR6 : R6MMR6Rel, AUI_MMR6_ENC, AUI_MMR6_DESC, ISA_MICROMIPS32R6;
 def BALC_MMR6 : R6MMR6Rel, BALC_MMR6_ENC, BALC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BC_MMR6 : R6MMR6Rel, BC_MMR6_ENC, BC_MMR6_DESC, ISA_MICROMIPS32R6;
 def BITSWAP_MMR6 : R6MMR6Rel, BITSWAP_MMR6_ENC, BITSWAP_MMR6_DESC,

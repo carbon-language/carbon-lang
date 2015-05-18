@@ -255,7 +255,7 @@ class LWPC_DESC: PCREL_DESC_BASE<"lwpc", GPR32Opnd, simm19_lsl2>;
 class LWUPC_DESC: PCREL_DESC_BASE<"lwupc", GPR32Opnd, simm19_lsl2>;
 
 class ALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
-                      Operand ImmOpnd> {
+                      Operand ImmOpnd>  : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rd);
   dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt, ImmOpnd:$bp);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt, $bp");
@@ -275,7 +275,8 @@ class ALUIPC_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
 class ALUIPC_DESC : ALUIPC_DESC_BASE<"aluipc", GPR32Opnd>;
 class AUIPC_DESC : ALUIPC_DESC_BASE<"auipc", GPR32Opnd>;
 
-class AUI_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+class AUI_DESC_BASE<string instr_asm, RegisterOperand GPROpnd>
+    : MipsR6Arch<instr_asm> {
   dag OutOperandList = (outs GPROpnd:$rs);
   dag InOperandList = (ins GPROpnd:$rt, simm16:$imm);
   string AsmString = !strconcat(instr_asm, "\t$rs, $rt, $imm");
@@ -649,9 +650,9 @@ class SDBBP_R6_DESC {
 //===----------------------------------------------------------------------===//
 
 def ADDIUPC : R6MMR6Rel, ADDIUPC_ENC, ADDIUPC_DESC, ISA_MIPS32R6;
-def ALIGN : ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
+def ALIGN : R6MMR6Rel, ALIGN_ENC, ALIGN_DESC, ISA_MIPS32R6;
 def ALUIPC : R6MMR6Rel, ALUIPC_ENC, ALUIPC_DESC, ISA_MIPS32R6;
-def AUI : AUI_ENC, AUI_DESC, ISA_MIPS32R6;
+def AUI : R6MMR6Rel, AUI_ENC, AUI_DESC, ISA_MIPS32R6;
 def AUIPC : R6MMR6Rel, AUIPC_ENC, AUIPC_DESC, ISA_MIPS32R6;
 def BAL : BAL_ENC, BAL_DESC, ISA_MIPS32R6;
 def BALC : R6MMR6Rel, BALC_ENC, BALC_DESC, ISA_MIPS32R6;
