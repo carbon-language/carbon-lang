@@ -12,7 +12,7 @@
 /// which represent the different flavors of constant values that live in LLVM.
 /// Note that Constants are immutable (once created they never change) and are
 /// fully shared by structural equivalence.  This means that two structurally
-/// equivalent constants will always have the same address.  Constant's are
+/// equivalent constants will always have the same address.  Constants are
 /// created on demand as needed and never deleted: thus clients don't have to
 /// worry about the lifetime of the objects.
 //
@@ -1055,7 +1055,7 @@ public:
                            bool OnlyIfReduced = false);
 
   /// Getelementptr form.  Value* is only accepted for convenience;
-  /// all elements must be Constant's.
+  /// all elements must be Constants.
   ///
   /// \param OnlyIfReducedTy see \a getWithOperands() docs.
   static Constant *getGetElementPtr(Type *Ty, Constant *C,
