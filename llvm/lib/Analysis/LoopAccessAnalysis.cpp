@@ -235,7 +235,12 @@ public:
   bool isRTCheckNeeded() { return IsRTCheckNeeded; }
 
   bool isDependencyCheckNeeded() { return !CheckDeps.empty(); }
-  void resetDepChecks() { CheckDeps.clear(); }
+
+  /// We decided that no dependence analysis would be used.  Reset the state.
+  void resetDepChecks(MemoryDepChecker &DepChecker) {
+    CheckDeps.clear();
+    DepChecker.clearInterestingDependences();
+  }
 
   MemAccessInfoSet &getDependenciesToCheck() { return CheckDeps; }
 
@@ -1161,7 +1166,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       NeedRTCheck = true;
 
       // Clear the dependency checks. We assume they are not needed.
-      Accesses.resetDepChecks();
+      Accesses.resetDepChecks(DepChecker);
 
       PtrRtCheck.reset();
       PtrRtCheck.Need = true;
