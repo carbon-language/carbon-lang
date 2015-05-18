@@ -2581,3 +2581,192 @@ define <16 x float> @test_mm512_max_round_ps_current(<16 x float> %a0, <16 x flo
   ret <16 x float> %res
 }
 declare <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32)
+
+declare <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>, <4 x float>, <4 x float>, i8, i32) nounwind readnone
+
+define <4 x float> @test_mask_add_ss_rn(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_rn
+; CHECK: vaddss  {rn-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 0)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_mask_add_ss_rd(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_rd
+; CHECK: vaddss  {rd-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 1)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_mask_add_ss_ru(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_ru
+; CHECK: vaddss  {ru-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 2)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_mask_add_ss_rz(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_rz
+; CHECK: vaddss  {rz-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 3)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_mask_add_ss_current(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_current
+; CHECK: vaddss %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 4)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_maskz_add_ss_rn(<4 x float> %a0, <4 x float> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_add_ss_rn
+; CHECK: vaddss  {rn-sae}, %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 %mask, i32 0)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_add_ss_rn(<4 x float> %a0, <4 x float> %a1) {
+; CHECK-LABEL: test_add_ss_rn
+; CHECK: vaddss  {rn-sae}, %xmm1, %xmm0, %xmm0
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 -1, i32 0)
+  ret <4 x float> %res
+}
+
+declare <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>, <2 x double>, <2 x double>, i8, i32) nounwind readnone
+
+define <2 x double> @test_mask_add_sd_rn(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_rn
+; CHECK: vaddsd  {rn-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 0)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_add_sd_rd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_rd
+; CHECK: vaddsd  {rd-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 1)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_add_sd_ru(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_ru
+; CHECK: vaddsd  {ru-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 2)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_add_sd_rz(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_rz
+; CHECK: vaddsd  {rz-sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 3)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_add_sd_current(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_current
+; CHECK: vaddsd %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 4)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_maskz_add_sd_rn(<2 x double> %a0, <2 x double> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_add_sd_rn
+; CHECK: vaddsd  {rn-sae}, %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 %mask, i32 0)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_add_sd_rn(<2 x double> %a0, <2 x double> %a1) {
+; CHECK-LABEL: test_add_sd_rn
+; CHECK: vaddsd  {rn-sae}, %xmm1, %xmm0, %xmm0
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 0)
+  ret <2 x double> %res
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>, <4 x float>, <4 x float>, i8, i32) nounwind readnone
+
+define <4 x float> @test_mask_max_ss_sae(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_max_ss_sae
+; CHECK: vmaxss  {sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 8)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_maskz_max_ss_sae(<4 x float> %a0, <4 x float> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_max_ss_sae
+; CHECK: vmaxss  {sae}, %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 %mask, i32 8)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_max_ss_sae(<4 x float> %a0, <4 x float> %a1) {
+; CHECK-LABEL: test_max_ss_sae
+; CHECK: vmaxss  {sae}, %xmm1, %xmm0, %xmm0
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 -1, i32 8)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_mask_max_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_max_ss
+; CHECK: vmaxss  %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> %a2, i8 %mask, i32 4)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_maskz_max_ss(<4 x float> %a0, <4 x float> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_max_ss
+; CHECK: vmaxss  %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 %mask, i32 4)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_max_ss(<4 x float> %a0, <4 x float> %a1) {
+; CHECK-LABEL: test_max_ss
+; CHECK: vmaxss  %xmm1, %xmm0, %xmm0
+  %res = call <4 x float> @llvm.x86.avx512.mask.max.ss.round(<4 x float>%a0, <4 x float> %a1, <4 x float> zeroinitializer, i8 -1, i32 4)
+  ret <4 x float> %res
+}
+declare <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>, <2 x double>, <2 x double>, i8, i32) nounwind readnone
+
+define <2 x double> @test_mask_max_sd_sae(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_max_sd_sae
+; CHECK: vmaxsd  {sae}, %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 8)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_maskz_max_sd_sae(<2 x double> %a0, <2 x double> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_max_sd_sae
+; CHECK: vmaxsd  {sae}, %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 %mask, i32 8)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_max_sd_sae(<2 x double> %a0, <2 x double> %a1) {
+; CHECK-LABEL: test_max_sd_sae
+; CHECK: vmaxsd  {sae}, %xmm1, %xmm0, %xmm0
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 8)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_max_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_max_sd
+; CHECK: vmaxsd  %xmm1, %xmm0, %xmm2 {%k1}
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> %a2, i8 %mask, i32 4)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_maskz_max_sd(<2 x double> %a0, <2 x double> %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_max_sd
+; CHECK: vmaxsd  %xmm1, %xmm0, %xmm0 {%k1} {z}
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 %mask, i32 4)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_max_sd(<2 x double> %a0, <2 x double> %a1) {
+; CHECK-LABEL: test_max_sd
+; CHECK: vmaxsd  %xmm1, %xmm0, %xmm0
+  %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 4)
+  ret <2 x double> %res
+}
