@@ -595,7 +595,13 @@ const FileEntry *HeaderSearch::LookupFile(
       RelativePath->append(Filename.begin(), Filename.end());
     }
     // Otherwise, just return the file.
-    return FileMgr.getFile(Filename, /*openFile=*/true);
+    const FileEntry *File = FileMgr.getFile(Filename, /*openFile=*/true);
+    if (File && SuggestedModule) {
+      // If there is a module that corresponds to this header, suggest it.
+      hasModuleMap(Filename, File->getDir(), /*SystemHeaderDir*/false);
+      *SuggestedModule = findModuleForHeader(File);
+    }
+    return File;
   }
 
   // This is the header that MSVC's header search would have found.
@@ -1070,7 +1076,7 @@ StringRef HeaderSearch::getUniqueFrameworkName(StringRef Framework) {
 bool HeaderSearch::hasModuleMap(StringRef FileName, 
                                 const DirectoryEntry *Root,
                                 bool IsSystem) {
-  if (!enabledModules() || !LangOpts.ModulesImplicitMaps)
+  if (!HSOpts->ModuleMaps || !LangOpts.ModulesImplicitMaps)
     return false;
 
   SmallVector<const DirectoryEntry *, 2> FixUpDirectories;

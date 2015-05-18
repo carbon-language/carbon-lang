@@ -1762,13 +1762,12 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);
 
     // If this is a module import, make it visible if needed.
-    if (IsModuleImport) {
-      makeModuleVisible(SuggestedModule.getModule(), HashLoc);
+    if (auto *M = SuggestedModule.getModule()) {
+      makeModuleVisible(M, HashLoc);
 
       if (IncludeTok.getIdentifierInfo()->getPPKeywordID() !=
           tok::pp___include_macros)
-        EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include,
-                             SuggestedModule.getModule());
+        EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include, M);
     }
     return;
   }
@@ -1782,31 +1781,27 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   FileID FID = SourceMgr.createFileID(File, IncludePos, FileCharacter);
   assert(!FID.isInvalid() && "Expected valid file ID");
 
-  // Determine if we're switching to building a new submodule, and which one.
-  //
-  // FIXME: If we've already processed this header, just make it visible rather
-  // than entering it again.
-  ModuleMap::KnownHeader BuildingModule;
-  if (getLangOpts().Modules && !getLangOpts().CurrentModule.empty()) {
-    Module *RequestingModule = getModuleForLocation(FilenameLoc);
-    BuildingModule =
-        HeaderInfo.getModuleMap().findModuleForHeader(File, RequestingModule);
-  }
-
   // If all is good, enter the new file!
   if (EnterSourceFile(FID, CurDir, FilenameTok.getLocation()))
     return;
 
-  // If we're walking into another part of the same module, let the parser
-  // know that any future declarations are within that other submodule.
-  if (BuildingModule) {
+  // Determine if we're switching to building a new submodule, and which one.
+  //
+  // FIXME: If we've already processed this header, just make it visible rather
+  // than entering it again.
+  if (auto *M = SuggestedModule.getModule()) {
     assert(!CurSubmodule && "should not have marked this as a module yet");
-    CurSubmodule = BuildingModule.getModule();
+    CurSubmodule = M;
 
-    EnterSubmodule(CurSubmodule, HashLoc);
+    // Let the macro handling code know that any future macros are within
+    // the new submodule.
+    EnterSubmodule(M, HashLoc);
 
-    EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_begin,
-                         CurSubmodule);
+    // Let the parser know that any future declarations are within the new
+    // submodule.
+    // FIXME: There's no point doing this if we're handling a #__include_macros
+    // directive.
+    EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_begin, M);
   }
 }
 

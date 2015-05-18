@@ -2,6 +2,7 @@
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/submodule-visibility -verify %s -DALLOW_NAME_LEAKAGE
 // RUN: %clang_cc1 -fmodules -fmodules-local-submodule-visibility -fmodules-cache-path=%t -I%S/Inputs/submodule-visibility -verify %s -DIMPORT
 // RUN: %clang_cc1 -fmodules -fmodules-local-submodule-visibility -fmodules-cache-path=%t -fmodule-name=x -I%S/Inputs/submodule-visibility -verify %s
+// RUN: %clang_cc1 -fmodule-maps -fmodules-local-submodule-visibility -fmodules-cache-path=%t -I%S/Inputs/submodule-visibility -verify %s
 
 #include "a.h"
 #include "b.h"

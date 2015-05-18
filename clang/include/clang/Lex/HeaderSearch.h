@@ -479,9 +479,6 @@ public:
   /// FileEntry, uniquing them through the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
 
-  /// Returns true if modules are enabled.
-  bool enabledModules() const { return LangOpts.Modules; }
-
   /// \brief Retrieve the name of the module file that should be used to 
   /// load the given module.
   ///
