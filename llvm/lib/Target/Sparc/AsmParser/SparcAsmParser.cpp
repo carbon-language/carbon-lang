@@ -77,6 +77,10 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool parseDirectiveWord(unsigned Size, SMLoc L);
 
   bool is64Bit() const { return STI.getTargetTriple().startswith("sparcv9"); }
+
+  void expandSET(MCInst &Inst, SMLoc IDLoc,
+                 SmallVectorImpl<MCInst> &Instructions);
+
 public:
   SparcAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII,
@@ -392,6 +396,49 @@ public:
 
 } // end namespace
 
+void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
+                               SmallVectorImpl<MCInst> &Instructions) {
+  MCOperand MCRegOp = Inst.getOperand(0);
+  MCOperand MCValOp = Inst.getOperand(1);
+  assert(MCRegOp.isReg());
+  assert(MCValOp.isImm() || MCValOp.isExpr());
+
+  // the imm operand can be either an expression or an immediate.
+  bool IsImm = Inst.getOperand(1).isImm();
+  uint64_t ImmValue = IsImm ? MCValOp.getImm() : 0;
+  const MCExpr *ValExpr;
+  if (IsImm)
+    ValExpr = MCConstantExpr::Create(ImmValue, getContext());
+  else
+    ValExpr = MCValOp.getExpr();
+
+  MCOperand PrevReg = MCOperand::createReg(Sparc::G0);
+
+  if (!IsImm || (ImmValue & ~0x1fff)) {
+    MCInst TmpInst;
+    const MCExpr *Expr =
+        SparcMCExpr::Create(SparcMCExpr::VK_Sparc_HI, ValExpr, getContext());
+    TmpInst.setLoc(IDLoc);
+    TmpInst.setOpcode(SP::SETHIi);
+    TmpInst.addOperand(MCRegOp);
+    TmpInst.addOperand(MCOperand::createExpr(Expr));
+    Instructions.push_back(TmpInst);
+    PrevReg = MCRegOp;
+  }
+
+  if (!IsImm || ((ImmValue & 0x1fff) != 0 || ImmValue == 0)) {
+    MCInst TmpInst;
+    const MCExpr *Expr =
+        SparcMCExpr::Create(SparcMCExpr::VK_Sparc_LO, ValExpr, getContext());
+    TmpInst.setLoc(IDLoc);
+    TmpInst.setOpcode(SP::ORri);
+    TmpInst.addOperand(MCRegOp);
+    TmpInst.addOperand(PrevReg);
+    TmpInst.addOperand(MCOperand::createExpr(Expr));
+    Instructions.push_back(TmpInst);
+  }
+}
+
 bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                              OperandVector &Operands,
                                              MCStreamer &Out,
@@ -403,8 +450,19 @@ bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                               MatchingInlineAsm);
   switch (MatchResult) {
   case Match_Success: {
-    Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst, STI);
+    switch (Inst.getOpcode()) {
+    default:
+      Inst.setLoc(IDLoc);
+      Instructions.push_back(Inst);
+      break;
+    case SP::SET:
+      expandSET(Inst, IDLoc, Instructions);
+      break;
+    }
+
+    for (const MCInst &I : Instructions) {
+      Out.EmitInstruction(I, STI);
+    }
     return false;
   }
 

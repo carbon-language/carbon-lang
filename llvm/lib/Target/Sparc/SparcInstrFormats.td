@@ -331,3 +331,11 @@ class TRAPSPri<bits<6> op3Val, dag outs, dag ins, string asmstr,
    let Inst{10-8} = 0;
    let Inst{7-0}  = imm;
 }
+
+// Pseudo-instructions for alternate assembly syntax (never used by codegen).
+// These are aliases that require C++ handling to convert to the target
+// instruction, while InstAliases can be handled directly by tblgen.
+class AsmPseudoInst<dag outs, dag ins, string asm>
+  : InstSP<outs, ins, asm, []> {
+  let isPseudo = 1;
+}

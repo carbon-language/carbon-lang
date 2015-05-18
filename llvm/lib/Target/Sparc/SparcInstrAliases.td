@@ -306,6 +306,11 @@ def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
 // mov simm13, rd -> or %g0, simm13, rd
 def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
 
+// set value, rd
+// (turns into a sequence of sethi+or, depending on the value)
+// def : InstAlias<"set $val, $rd", (ORri IntRegs:$rd, (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
+def SET : AsmPseudoInst<(outs IntRegs:$rd), (ins i32imm:$val), "set $val, $rd">;
+
 // restore -> restore %g0, %g0, %g0
 def : InstAlias<"restore", (RESTORErr G0, G0, G0)>;
 
@@ -329,3 +334,4 @@ def : InstAlias<"fcmped $rs1, $rs2", (V9FCMPED FCC0, DFPRegs:$rs1,
 def : InstAlias<"fcmpeq $rs1, $rs2", (V9FCMPEQ FCC0, QFPRegs:$rs1,
                                                      QFPRegs:$rs2)>,
                 Requires<[HasHardQuad]>;
+
