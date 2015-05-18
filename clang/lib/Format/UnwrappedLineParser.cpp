@@ -325,6 +325,7 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
 
     switch (Tok->Tok.getKind()) {
     case tok::l_brace:
+      Tok->BlockKind = BK_Unknown;
       LBraceStack.push_back(Tok);
       break;
     case tok::r_brace:
@@ -1017,9 +1018,9 @@ void UnwrappedLineParser::tryToParseJSFunction() {
   parseChildBlock();
 }
 
-bool UnwrappedLineParser::tryToParseBracedList(bool ExpectClassBody) {
+bool UnwrappedLineParser::tryToParseBracedList() {
   if (FormatTok->BlockKind == BK_Unknown)
-    calculateBraceTypes(ExpectClassBody);
+    calculateBraceTypes();
   assert(FormatTok->BlockKind != BK_Unknown);
   if (FormatTok->BlockKind == BK_Block)
     return false;
@@ -1573,9 +1574,11 @@ void UnwrappedLineParser::parseRecord() {
   // and class declarations).
   if (FormatTok->isOneOf(tok::colon, tok::less)) {
     while (!eof()) {
-      if (FormatTok->is(tok::l_brace) &&
-          !tryToParseBracedList(/*ExpectClassBody=*/true))
-        break;
+      if (FormatTok->is(tok::l_brace)) {
+        calculateBraceTypes(/*ExpectClassBody=*/true);
+        if (!tryToParseBracedList())
+          break;
+      }
       if (FormatTok->Tok.is(tok::semi))
         return;
       nextToken();

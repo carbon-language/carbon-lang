@@ -82,7 +82,7 @@ private:
   void parsePPEndIf();
   void parsePPUnknown();
   void parseStructuralElement();
-  bool tryToParseBracedList(bool ExpectClassBody = false);
+  bool tryToParseBracedList();
   bool parseBracedList(bool ContinueOnSemicolons = false);
   void parseParens();
   void parseSquare();
@@ -113,7 +113,7 @@ private:
   void readToken();
   void flushComments(bool NewlineBeforeNext);
   void pushToken(FormatToken *Tok);
-  void calculateBraceTypes(bool ExpectClassBody);
+  void calculateBraceTypes(bool ExpectClassBody = false);
 
   // Marks a conditional compilation edge (for example, an '#if', '#ifdef',
   // '#else' or merge conflict marker). If 'Unreachable' is true, assumes

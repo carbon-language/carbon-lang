@@ -6195,6 +6195,11 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("class C : public D {\n"
                "  SomeClass SC{2};\n"
                "};");
+  verifyFormat("class C : public A {\n"
+               "  class D : public B {\n"
+               "    void f() { int i{2}; }\n"
+               "  };\n"
+               "};");
 
   // In combination with BinPackParameters = false.
   FormatStyle NoBinPacking = getLLVMStyle();
