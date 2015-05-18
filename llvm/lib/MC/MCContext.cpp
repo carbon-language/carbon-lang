@@ -62,7 +62,7 @@ MCContext::~MCContext() {
   // we don't need to free them here.
 
   // If the stream for the .secure_log_unique directive was created free it.
-  delete (raw_ostream*)SecureLog;
+  delete (raw_ostream *)SecureLog;
 }
 
 //===----------------------------------------------------------------------===//
@@ -81,7 +81,7 @@ void MCContext::reset() {
   MCGenDwarfLabelEntries.clear();
   DwarfDebugFlags = StringRef();
   DwarfCompileUnitID = 0;
-  CurrentDwarfLoc = MCDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0);
+  CurrentDwarfLoc = MCDwarfLoc(0, 0, 0, DWARF2_FLAG_IS_STMT, 0, 0);
 
   MachOUniquingMap.clear();
   ELFUniquingMap.clear();
@@ -275,9 +275,10 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
       ELFSectionKey{Section->getSectionName(), GroupName, UniqueID});
   auto I = ELFUniquingMap.insert(std::make_pair(
                                      ELFSectionKey{Name, GroupName, UniqueID},
-                                     Section)).first;
+                                     Section))
+               .first;
   StringRef CachedName = I->first.SectionName;
-  const_cast<MCSectionELF*>(Section)->setSectionName(CachedName);
+  const_cast<MCSectionELF *>(Section)->setSectionName(CachedName);
 }
 
 const MCSectionELF *
@@ -424,8 +425,8 @@ unsigned MCContext::getDwarfFile(StringRef Directory, StringRef FileName,
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it
 /// currently is assigned and false otherwise.
 bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
-  const SmallVectorImpl<MCDwarfFile>& MCDwarfFiles = getMCDwarfFiles(CUID);
-  if(FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
+  const SmallVectorImpl<MCDwarfFile> &MCDwarfFiles = getMCDwarfFiles(CUID);
+  if (FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
     return false;
 
   return !MCDwarfFiles[FileNumber].Name.empty();
@@ -447,8 +448,8 @@ void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
       sec->second.second = SectionEndSym;
       ++sec;
     } else {
-      MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *> >::iterator
-        to_erase = sec;
+      MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *>>::iterator
+          to_erase = sec;
       sec = SectionStartEndSyms.erase(to_erase);
     }
   }
