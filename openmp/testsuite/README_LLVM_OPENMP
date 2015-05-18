@@ -8,7 +8,7 @@
 
 Two new files have been added to openmp/runtime: check-openmp.pl and check-openmp-test.pl 
 Go to /openmp/runtime, run:
-make test
+make test compiler=clang
 make test-clean  
 
 ------------------------------------------------------------------------------
