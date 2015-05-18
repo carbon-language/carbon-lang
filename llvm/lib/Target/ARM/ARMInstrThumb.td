@@ -526,6 +526,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
                       0, IIC_Br,
                       [(ARMbrjt tGPR:$target, tjumptable:$jt)]>,
                       Sched<[WriteBrTbl]> {
+    let Size = 2;
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
 }

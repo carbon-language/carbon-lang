@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabihf -O1 %s -o - | FileCheck %s
 
 ; CHECK-LABEL: test_jump_table:
-; CHECK: b .LBB
+; CHECK: b{{.*}} .LBB
 ; CHECK-NOT: tbh
 
 define i32 @test_jump_table(i32 %x, float %in) {
