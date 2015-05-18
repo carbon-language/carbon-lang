@@ -51,7 +51,7 @@ MCSymbol *TargetLoweringObjectFileELF::getCFIPersonalitySymbol(
     MachineModuleInfo *MMI) const {
   unsigned Encoding = getPersonalityEncoding();
   if ((Encoding & 0x80) == dwarf::DW_EH_PE_indirect)
-    return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
+    return getContext().getOrCreateSymbol(StringRef("DW.ref.") +
                                           TM.getSymbol(GV, Mang)->getName());
   if ((Encoding & 0x70) == dwarf::DW_EH_PE_absptr)
     return TM.getSymbol(GV, Mang);
@@ -63,7 +63,7 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
                                                        const MCSymbol *Sym) const {
   SmallString<64> NameData("DW.ref.");
   NameData += Sym->getName();
-  MCSymbol *Label = getContext().GetOrCreateSymbol(NameData);
+  MCSymbol *Label = getContext().getOrCreateSymbol(NameData);
   Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
   Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
   StringRef Prefix = ".data.";
@@ -525,7 +525,7 @@ emitModuleFlags(MCStreamer &Streamer,
                                  SectionKind::getDataNoRel());
   Streamer.SwitchSection(S);
   Streamer.EmitLabel(getContext().
-                     GetOrCreateSymbol(StringRef("L_OBJC_IMAGE_INFO")));
+                     getOrCreateSymbol(StringRef("L_OBJC_IMAGE_INFO")));
   Streamer.EmitIntValue(VersionVal, 4);
   Streamer.EmitIntValue(ImageInfoFlags, 4);
   Streamer.AddBlankLine();
@@ -758,7 +758,7 @@ const MCExpr *TargetLoweringObjectFileMachO::getIndirectSymViaGOTPCRel(
   Name += DL->getPrivateGlobalPrefix();
   Name += Sym->getName();
   Name += Suffix;
-  MCSymbol *Stub = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Stub = Ctx.getOrCreateSymbol(Name);
 
   MachineModuleInfoImpl::StubValueTy &StubSym = MachOMMI.getGVStubEntry(Stub);
   if (!StubSym.getPointer())

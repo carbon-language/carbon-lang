@@ -60,7 +60,7 @@ static void EmitCamlGlobal(const Module &M, AsmPrinter &AP, const char *Id) {
   SmallString<128> TmpStr;
   AP.Mang->getNameWithPrefix(TmpStr, SymName);
 
-  MCSymbol *Sym = AP.OutContext.GetOrCreateSymbol(TmpStr);
+  MCSymbol *Sym = AP.OutContext.getOrCreateSymbol(TmpStr);
 
   AP.OutStreamer->EmitSymbolAttribute(Sym, MCSA_Global);
   AP.OutStreamer->EmitLabel(Sym);

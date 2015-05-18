@@ -163,7 +163,7 @@ void MCMachOStreamer::ChangeSection(const MCSection *Section,
   // Output a linker-local symbol so we don't need section-relative local
   // relocations. The linker hates us when we do that.
   if (LabelSections && !HasSectionLabel[Section]) {
-    MCSymbol *Label = getContext().CreateLinkerPrivateTempSymbol();
+    MCSymbol *Label = getContext().createLinkerPrivateTempSymbol();
     EmitLabel(Label);
     HasSectionLabel[Section] = true;
   }
@@ -208,7 +208,7 @@ void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
   if (!getAssembler().getBackend().hasDataInCodeSupport())
     return;
   // Create a temporary label to mark the start of the data region.
-  MCSymbol *Start = getContext().CreateTempSymbol();
+  MCSymbol *Start = getContext().createTempSymbol();
   EmitLabel(Start);
   // Record the region for the object writer to use.
   DataRegionData Data = { Kind, Start, nullptr };
@@ -224,7 +224,7 @@ void MCMachOStreamer::EmitDataRegionEnd() {
   DataRegionData &Data = Regions.back();
   assert(!Data.End && "Mismatched .end_data_region!");
   // Create a temporary label to mark the end of the data region.
-  Data.End = getContext().CreateTempSymbol();
+  Data.End = getContext().createTempSymbol();
   EmitLabel(Data.End);
 }
 

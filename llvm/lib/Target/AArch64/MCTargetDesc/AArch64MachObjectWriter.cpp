@@ -92,7 +92,7 @@ bool AArch64MachObjectWriter::getAArch64FixupKindMachOInfo(
     // This encompasses the relocation for the whole 21-bit value.
     switch (Sym->getKind()) {
     default:
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "ADR/ADRP relocations must be GOT relative");
     case MCSymbolRefExpr::VK_PAGE:
       RelocType = unsigned(MachO::ARM64_RELOC_PAGE21);
@@ -172,7 +172,7 @@ void AArch64MachObjectWriter::RecordRelocation(
   // assembler local symbols. If we got here, that's not what we have,
   // so complain loudly.
   if (Kind == AArch64::fixup_aarch64_pcrel_branch19) {
-    Asm.getContext().FatalError(Fixup.getLoc(),
+    Asm.getContext().reportFatalError(Fixup.getLoc(),
                                 "conditional branch requires assembler-local"
                                 " label. '" +
                                     Target.getSymA()->getSymbol().getName() +
@@ -183,14 +183,14 @@ void AArch64MachObjectWriter::RecordRelocation(
   // 14-bit branch relocations should only target internal labels, and so
   // should never get here.
   if (Kind == AArch64::fixup_aarch64_pcrel_branch14) {
-    Asm.getContext().FatalError(Fixup.getLoc(),
+    Asm.getContext().reportFatalError(Fixup.getLoc(),
                                 "Invalid relocation on conditional branch!");
     return;
   }
 
   if (!getAArch64FixupKindMachOInfo(Fixup, Type, Target.getSymA(), Log2Size,
                                   Asm)) {
-    Asm.getContext().FatalError(Fixup.getLoc(), "unknown AArch64 fixup kind!");
+    Asm.getContext().reportFatalError(Fixup.getLoc(), "unknown AArch64 fixup kind!");
     return;
   }
 
@@ -202,7 +202,7 @@ void AArch64MachObjectWriter::RecordRelocation(
     Type = MachO::ARM64_RELOC_UNSIGNED;
 
     if (IsPCRel) {
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "PC relative absolute relocation!");
 
       // FIXME: x86_64 sets the type to a branch reloc here. Should we do
@@ -235,12 +235,12 @@ void AArch64MachObjectWriter::RecordRelocation(
     } else if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
                Target.getSymB()->getKind() != MCSymbolRefExpr::VK_None)
       // Otherwise, neither symbol can be modified.
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "unsupported relocation of modified symbol");
 
     // We don't support PCrel relocations of differences.
     if (IsPCRel)
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "unsupported pc-relative relocation of "
                                   "difference");
 
@@ -251,18 +251,18 @@ void AArch64MachObjectWriter::RecordRelocation(
     // FIXME: We should probably just synthesize an external symbol and use
     // that.
     if (!A_Base)
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           "unsupported relocation of local symbol '" + A->getName() +
               "'. Must have non-local symbol earlier in section.");
     if (!B_Base)
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           "unsupported relocation of local symbol '" + B->getName() +
               "'. Must have non-local symbol earlier in section.");
 
     if (A_Base == B_Base && A_Base)
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "unsupported relocation with identical base");
 
     Value +=
@@ -319,7 +319,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       // the FixedValue?
       if (!Symbol->getVariableValue()->EvaluateAsRelocatable(Target, &Layout,
                                                              &Fixup))
-        Asm.getContext().FatalError(Fixup.getLoc(),
+        Asm.getContext().reportFatalError(Fixup.getLoc(),
                                     "unable to resolve variable '" +
                                         Symbol->getName() + "'");
       return RecordRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
@@ -347,7 +347,7 @@ void AArch64MachObjectWriter::RecordRelocation(
                  Layout.getSymbolOffset(&Base->getData());
     } else if (Symbol->isInSection()) {
       if (!CanUseLocalRelocation)
-        Asm.getContext().FatalError(
+        Asm.getContext().reportFatalError(
             Fixup.getLoc(),
             "unsupported relocation of local symbol '" + Symbol->getName() +
                 "'. Must have non-local symbol earlier in section.");
@@ -371,7 +371,7 @@ void AArch64MachObjectWriter::RecordRelocation(
           return;
         }
       }
-      Asm.getContext().FatalError(Fixup.getLoc(),
+      Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "unsupported relocation of variable '" +
                                       Symbol->getName() + "'");
     }

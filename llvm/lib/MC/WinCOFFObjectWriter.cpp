@@ -687,7 +687,7 @@ void WinCOFFObjectWriter::RecordRelocation(
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
   const MCSymbol &A = Symbol;
   if (!Asm.hasSymbolData(A))
-    Asm.getContext().FatalError(
+    Asm.getContext().reportFatalError(
         Fixup.getLoc(),
         Twine("symbol '") + A.getName() + "' can not be undefined");
 
@@ -710,13 +710,13 @@ void WinCOFFObjectWriter::RecordRelocation(
     const MCSymbol *B = &SymB->getSymbol();
     const MCSymbolData &B_SD = Asm.getSymbolData(*B);
     if (!B_SD.getFragment())
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           Twine("symbol '") + B->getName() +
               "' can not be undefined in a subtraction expression");
 
     if (!A_SD.getFragment())
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           Twine("symbol '") + Symbol.getName() +
               "' can not be undefined in a subtraction expression");

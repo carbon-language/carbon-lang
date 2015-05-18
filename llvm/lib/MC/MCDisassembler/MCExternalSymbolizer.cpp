@@ -87,7 +87,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
   if (SymbolicOp.AddSymbol.Present) {
     if (SymbolicOp.AddSymbol.Name) {
       StringRef Name(SymbolicOp.AddSymbol.Name);
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
       Add = MCSymbolRefExpr::Create(Sym, Ctx);
     } else {
       Add = MCConstantExpr::Create((int)SymbolicOp.AddSymbol.Value, Ctx);
@@ -98,7 +98,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
   if (SymbolicOp.SubtractSymbol.Present) {
       if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
       Sub = MCSymbolRefExpr::Create(Sym, Ctx);
     } else {
       Sub = MCConstantExpr::Create((int)SymbolicOp.SubtractSymbol.Value, Ctx);

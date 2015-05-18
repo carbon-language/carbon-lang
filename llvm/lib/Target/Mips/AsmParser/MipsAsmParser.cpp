@@ -2495,7 +2495,7 @@ bool MipsAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
       return true;
 
     SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-    MCSymbol *Sym = getContext().GetOrCreateSymbol("$" + Identifier);
+    MCSymbol *Sym = getContext().getOrCreateSymbol("$" + Identifier);
     // Otherwise create a symbol reference.
     const MCExpr *Res =
         MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
@@ -2796,7 +2796,7 @@ MipsAsmParser::parseMemOperand(OperandVector &Operands) {
 
 bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
-  MCSymbol *Sym = getContext().LookupSymbol(Parser.getTok().getIdentifier());
+  MCSymbol *Sym = getContext().lookupSymbol(Parser.getTok().getIdentifier());
   if (Sym) {
     SMLoc S = Parser.getTok().getLoc();
     const MCExpr *Expr;
@@ -3629,7 +3629,7 @@ bool MipsAsmParser::parseSetAssignment() {
   if (Parser.parseExpression(Value))
     return reportParseError("expected valid expression after comma");
 
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
   Sym->setVariableValue(Value);
 
   return false;
@@ -4291,7 +4291,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
       return false;
     }
 
-    MCSymbol *Sym = getContext().GetOrCreateSymbol(SymbolName);
+    MCSymbol *Sym = getContext().getOrCreateSymbol(SymbolName);
 
     getTargetStreamer().emitDirectiveEnt(*Sym);
     CurrentFn = Sym;

@@ -165,7 +165,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   unsigned OrigLen = Name.size() - PrefixLen;
 
   Name += Suffix;
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
 
   StringRef OrigName = StringRef(Name).substr(PrefixLen, OrigLen);
 
@@ -212,7 +212,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     } else {
       StubSym =
         MachineModuleInfoImpl::
-        StubValueTy(Ctx.GetOrCreateSymbol(OrigName), false);
+        StubValueTy(Ctx.getOrCreateSymbol(OrigName), false);
     }
     break;
   }
@@ -275,7 +275,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       // relocations the assembler will generate for differences between
       // local labels. This is only safe when the symbols are in the same
       // section so we are restricting it to jumptable references.
-      MCSymbol *Label = Ctx.CreateTempSymbol();
+      MCSymbol *Label = Ctx.createTempSymbol();
       AsmPrinter.OutStreamer->EmitAssignment(Label, Expr);
       Expr = MCSymbolRefExpr::Create(Label, Ctx);
     }
@@ -747,7 +747,7 @@ void X86AsmPrinter::LowerTlsAddr(X86MCInstLower &MCInstLowering,
   }
 
   StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
-  MCSymbol *tlsGetAddr = context.GetOrCreateSymbol(name);
+  MCSymbol *tlsGetAddr = context.getOrCreateSymbol(name);
   const MCSymbolRefExpr *tlsRef =
     MCSymbolRefExpr::Create(tlsGetAddr,
                             MCSymbolRefExpr::VK_PLT,
@@ -1094,7 +1094,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //   MYGLOBAL + (. - PICBASE)
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.
-    MCSymbol *DotSym = OutContext.CreateTempSymbol();
+    MCSymbol *DotSym = OutContext.createTempSymbol();
     OutStreamer->EmitLabel(DotSym);
 
     // Now that we have emitted the label, lower the complex operand expression.

@@ -127,12 +127,12 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
 void MCObjectStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
   // We need to create a local symbol to avoid relocations.
-  Frame.Begin = getContext().CreateTempSymbol();
+  Frame.Begin = getContext().createTempSymbol();
   EmitLabel(Frame.Begin);
 }
 
 void MCObjectStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
-  Frame.End = getContext().CreateTempSymbol();
+  Frame.End = getContext().createTempSymbol();
   EmitLabel(Frame.End);
 }
 
@@ -375,7 +375,7 @@ bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
     return false;
   }
 
-  MCSymbol *CurrentPos = getContext().CreateTempSymbol();
+  MCSymbol *CurrentPos = getContext().createTempSymbol();
   EmitLabel(CurrentPos);
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   const MCExpr *Ref =

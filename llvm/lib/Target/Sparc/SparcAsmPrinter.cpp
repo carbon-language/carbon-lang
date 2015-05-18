@@ -176,7 +176,7 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
                                                 const MCSubtargetInfo &STI)
 {
   MCSymbol *GOTLabel   =
-    OutContext.GetOrCreateSymbol(Twine("_GLOBAL_OFFSET_TABLE_"));
+    OutContext.getOrCreateSymbol(Twine("_GLOBAL_OFFSET_TABLE_"));
 
   const MachineOperand &MO = MI->getOperand(0);
   assert(MO.getReg() != SP::O7 &&
@@ -225,9 +225,9 @@ void SparcAsmPrinter::LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
     return;
   }
 
-  MCSymbol *StartLabel = OutContext.CreateTempSymbol();
-  MCSymbol *EndLabel   = OutContext.CreateTempSymbol();
-  MCSymbol *SethiLabel = OutContext.CreateTempSymbol();
+  MCSymbol *StartLabel = OutContext.createTempSymbol();
+  MCSymbol *EndLabel   = OutContext.createTempSymbol();
+  MCSymbol *SethiLabel = OutContext.createTempSymbol();
 
   MCOperand RegO7   = MCOperand::createReg(SP::O7);
 

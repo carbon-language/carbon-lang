@@ -167,10 +167,10 @@ private:
   }
 
   void EmitMappingSymbol(StringRef Name) {
-    MCSymbol *Start = getContext().CreateTempSymbol();
+    MCSymbol *Start = getContext().createTempSymbol();
     EmitLabel(Start);
 
-    MCSymbol *Symbol = getContext().GetOrCreateSymbol(
+    MCSymbol *Symbol = getContext().getOrCreateSymbol(
         Name + "." + Twine(MappingSymbolCounter++));
 
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);

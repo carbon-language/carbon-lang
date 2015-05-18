@@ -19,7 +19,7 @@ void PPCFunctionInfo::anchor() { }
 
 MCSymbol *PPCFunctionInfo::getPICOffsetSymbol() const {
   const DataLayout *DL = MF.getTarget().getDataLayout();
-  return MF.getContext().GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix()) +
+  return MF.getContext().getOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix()) +
                                            Twine(MF.getFunctionNumber()) +
                                            "$poff");
 }

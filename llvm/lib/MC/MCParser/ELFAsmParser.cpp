@@ -174,7 +174,7 @@ bool ELFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
       if (getParser().parseIdentifier(Name))
         return TokError("expected identifier in directive");
 
-      MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+      MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
 
       getStreamer().EmitSymbolAttribute(Sym, Attr);
 
@@ -209,7 +209,7 @@ bool ELFAsmParser::ParseDirectiveSize(StringRef, SMLoc) {
   StringRef Name;
   if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma))
     return TokError("unexpected token in directive");
@@ -539,7 +539,7 @@ EndStmt:
       if (getContext().getDwarfVersion() <= 2)
         Warning(loc, "DWARF2 only supports one section per compilation unit");
 
-      MCSymbol *SectionStartSymbol = getContext().CreateTempSymbol();
+      MCSymbol *SectionStartSymbol = getContext().createTempSymbol();
       getStreamer().EmitLabel(SectionStartSymbol);
       InsertResult.first->second.first = SectionStartSymbol;
     }
@@ -582,7 +582,7 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
     return TokError("expected identifier in directive");
 
   // Handle the identifier as the key symbol.
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
 
   // NOTE the comma is optional in all cases.  It is only documented as being
   // optional in the first case, however, GAS will silently treat the comma as
@@ -661,8 +661,8 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   if (AliasName.find('@') == StringRef::npos)
     return TokError("expected a '@' in the name");
 
-  MCSymbol *Alias = getContext().GetOrCreateSymbol(AliasName);
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Alias = getContext().getOrCreateSymbol(AliasName);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
   const MCExpr *Value = MCSymbolRefExpr::Create(Sym, getContext());
 
   getStreamer().EmitAssignment(Alias, Value);
@@ -711,9 +711,9 @@ bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
   if (getParser().parseIdentifier(Name))
     return TokError("expected identifier in directive");
 
-  MCSymbol *Alias = getContext().GetOrCreateSymbol(AliasName);
+  MCSymbol *Alias = getContext().getOrCreateSymbol(AliasName);
 
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
 
   getStreamer().EmitWeakReference(Alias, Sym);
   return false;

@@ -66,7 +66,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   unsigned OrigLen = Name.size() - PrefixLen;
 
   Name += Suffix;
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+  MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
   StringRef OrigName = StringRef(Name).substr(PrefixLen, OrigLen);
 
   // If the target flags on the operand changes the name of the symbol, do that
@@ -85,7 +85,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
     } else {
       StubSym =
       MachineModuleInfoImpl::
-      StubValueTy(Ctx.GetOrCreateSymbol(OrigName), false);
+      StubValueTy(Ctx.getOrCreateSymbol(OrigName), false);
     }
     return Sym;
   }

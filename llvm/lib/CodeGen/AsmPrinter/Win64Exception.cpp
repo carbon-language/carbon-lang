@@ -274,7 +274,7 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       GlobalValue::getRealLinkageName(ParentF->getName());
 
   MCSymbol *FuncInfoXData =
-      Asm->OutContext.GetOrCreateSymbol(Twine("$cppxdata$", ParentLinkageName));
+      Asm->OutContext.getOrCreateSymbol(Twine("$cppxdata$", ParentLinkageName));
   OS.EmitValue(createImageRel32(FuncInfoXData), 4);
 
   // The Itanium LSDA table sorts similar landing pads together to simplify the
@@ -362,13 +362,13 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   MCSymbol *TryBlockMapXData = nullptr;
   MCSymbol *IPToStateXData = nullptr;
   if (!FuncInfo.UnwindMap.empty())
-    UnwindMapXData = Asm->OutContext.GetOrCreateSymbol(
+    UnwindMapXData = Asm->OutContext.getOrCreateSymbol(
         Twine("$stateUnwindMap$", ParentLinkageName));
   if (!FuncInfo.TryBlockMap.empty())
-    TryBlockMapXData = Asm->OutContext.GetOrCreateSymbol(
+    TryBlockMapXData = Asm->OutContext.getOrCreateSymbol(
         Twine("$tryMap$", ParentLinkageName));
   if (!FuncInfo.IPToStateList.empty())
-    IPToStateXData = Asm->OutContext.GetOrCreateSymbol(
+    IPToStateXData = Asm->OutContext.getOrCreateSymbol(
         Twine("$ip2state$", ParentLinkageName));
 
   // FuncInfo {
@@ -426,7 +426,7 @@ void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
 
       if (!TBME.HandlerArray.empty())
         HandlerMapXData =
-            Asm->OutContext.GetOrCreateSymbol(Twine("$handlerMap$")
+            Asm->OutContext.getOrCreateSymbol(Twine("$handlerMap$")
                                                   .concat(Twine(I))
                                                   .concat("$")
                                                   .concat(ParentLinkageName));

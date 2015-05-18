@@ -274,7 +274,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
                                     bool recordResult) {
 
   MCContext &OutContext = AP.OutStreamer->getContext();
-  MCSymbol *MILabel = OutContext.CreateTempSymbol();
+  MCSymbol *MILabel = OutContext.createTempSymbol();
   AP.OutStreamer->EmitLabel(MILabel);
 
   LocationVec Locations;
@@ -529,7 +529,7 @@ void StackMaps::serializeToStackMapSection() {
   OS.SwitchSection(StackMapSection);
 
   // Emit a dummy symbol to force section inclusion.
-  OS.EmitLabel(OutContext.GetOrCreateSymbol(Twine("__LLVM_StackMaps")));
+  OS.EmitLabel(OutContext.getOrCreateSymbol(Twine("__LLVM_StackMaps")));
 
   // Serialize data.
   DEBUG(dbgs() << "********** Stack Map Output **********\n");

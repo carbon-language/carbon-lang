@@ -252,7 +252,7 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     const MCSymbolRefExpr *Expr = cast<MCSymbolRefExpr>(MO.getExpr());
     MCFixupKind Kind;
     const MCSymbol *Sym =
-        Ctx.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+        Ctx.getOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
 
     if (&Expr->getSymbol() == Sym) {
       // Add the offset to the beginning of the constant values.

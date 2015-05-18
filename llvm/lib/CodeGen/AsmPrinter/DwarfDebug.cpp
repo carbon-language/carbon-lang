@@ -997,7 +997,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
     return;
 
   if (!PrevLabel) {
-    PrevLabel = MMI->getContext().CreateTempSymbol();
+    PrevLabel = MMI->getContext().createTempSymbol();
     Asm->OutStreamer->EmitLabel(PrevLabel);
   }
   I->second = PrevLabel;
@@ -1025,7 +1025,7 @@ void DwarfDebug::endInstruction() {
 
   // We need a label after this instruction.
   if (!PrevLabel) {
-    PrevLabel = MMI->getContext().CreateTempSymbol();
+    PrevLabel = MMI->getContext().createTempSymbol();
     Asm->OutStreamer->EmitLabel(PrevLabel);
   }
   I->second = PrevLabel;

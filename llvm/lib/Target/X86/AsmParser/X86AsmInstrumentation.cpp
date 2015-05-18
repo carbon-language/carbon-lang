@@ -613,7 +613,7 @@ private:
         Out, MCInstBuilder(X86::PUSH32r).addReg(RegCtx.AddressReg(MVT::i32)));
 
     const std::string &Fn = FuncName(AccessSize, IsWrite);
-    MCSymbol *FnSym = Ctx.GetOrCreateSymbol(StringRef(Fn));
+    MCSymbol *FnSym = Ctx.getOrCreateSymbol(StringRef(Fn));
     const MCSymbolRefExpr *FnExpr =
         MCSymbolRefExpr::Create(FnSym, MCSymbolRefExpr::VK_PLT, Ctx);
     EmitInstruction(Out, MCInstBuilder(X86::CALLpcrel32).addExpr(FnExpr));
@@ -653,7 +653,7 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
 
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST8rr).addReg(ShadowRegI8).addReg(ShadowRegI8));
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
@@ -728,7 +728,7 @@ void X86AddressSanitizer32::InstrumentMemOperandLarge(
     Inst.addOperand(MCOperand::createImm(0));
     EmitInstruction(Out, Inst);
   }
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
@@ -742,7 +742,7 @@ void X86AddressSanitizer32::InstrumentMOVSImpl(unsigned AccessSize,
   StoreFlags(Out);
 
   // No need to test when ECX is equals to zero.
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST32rr).addReg(X86::ECX).addReg(X86::ECX));
@@ -883,7 +883,7 @@ private:
                                RegCtx.AddressReg(MVT::i64)));
     }
     const std::string &Fn = FuncName(AccessSize, IsWrite);
-    MCSymbol *FnSym = Ctx.GetOrCreateSymbol(StringRef(Fn));
+    MCSymbol *FnSym = Ctx.getOrCreateSymbol(StringRef(Fn));
     const MCSymbolRefExpr *FnExpr =
         MCSymbolRefExpr::Create(FnSym, MCSymbolRefExpr::VK_PLT, Ctx);
     EmitInstruction(Out, MCInstBuilder(X86::CALL64pcrel32).addExpr(FnExpr));
@@ -924,7 +924,7 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
 
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST8rr).addReg(ShadowRegI8).addReg(ShadowRegI8));
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
@@ -1000,7 +1000,7 @@ void X86AddressSanitizer64::InstrumentMemOperandLarge(
     EmitInstruction(Out, Inst);
   }
 
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
@@ -1014,7 +1014,7 @@ void X86AddressSanitizer64::InstrumentMOVSImpl(unsigned AccessSize,
   StoreFlags(Out);
 
   // No need to test when RCX is equals to zero.
-  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  MCSymbol *DoneSym = Ctx.createTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST64rr).addReg(X86::RCX).addReg(X86::RCX));

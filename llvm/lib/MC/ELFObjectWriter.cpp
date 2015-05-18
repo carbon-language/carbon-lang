@@ -782,14 +782,14 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
     // or (A + C - R). If B = R + K and the relocation is not pcrel, we can
     // replace B to implement it: (A - R - K + C)
     if (IsPCRel)
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           "No relocation available to represent this relative expression");
 
     const MCSymbol &SymB = RefB->getSymbol();
 
     if (SymB.isUndefined())
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(),
           Twine("symbol '") + SymB.getName() +
               "' can not be undefined in a subtraction expression");
@@ -797,12 +797,12 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
     assert(!SymB.isAbsolute() && "Should have been folded");
     const MCSection &SecB = SymB.getSection();
     if (&SecB != &FixupSection)
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(), "Cannot represent a difference across sections");
 
     const MCSymbolData &SymBD = Asm.getSymbolData(SymB);
     if (::isWeak(SymBD))
-      Asm.getContext().FatalError(
+      Asm.getContext().reportFatalError(
           Fixup.getLoc(), "Cannot represent a subtraction with a weak symbol");
 
     uint64_t SymBOffset = Layout.getSymbolOffset(&SymBD);
@@ -928,7 +928,7 @@ void ELFObjectWriter::computeSymbolTable(
   // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
   if (NeedsGOT) {
     StringRef Name = "_GLOBAL_OFFSET_TABLE_";
-    MCSymbol *Sym = Asm.getContext().GetOrCreateSymbol(Name);
+    MCSymbol *Sym = Asm.getContext().getOrCreateSymbol(Name);
     MCSymbolData &Data = Asm.getOrCreateSymbolData(*Sym);
     Data.setExternal(true);
     MCELF::SetBinding(Data, ELF::STB_GLOBAL);

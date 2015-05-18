@@ -96,7 +96,7 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   if (ArrayType *ATy = dyn_cast<ArrayType>(
                         cast<PointerType>(GV->getType())->getElementType())) {
 
-    MCSymbol *SymGlob = OutContext.GetOrCreateSymbol(
+    MCSymbol *SymGlob = OutContext.getOrCreateSymbol(
                           Twine(Sym->getName() + StringRef(".globound")));
     OutStreamer->EmitSymbolAttribute(SymGlob, MCSA_Global);
     OutStreamer->EmitAssignment(SymGlob,

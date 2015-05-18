@@ -95,7 +95,7 @@ void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
   const TargetLoweringObjectFile &TLOF = getObjFileLowering();
   OutStreamer->SwitchSection(TLOF.getTextSection());
   MCSymbol *EndOfTextLabel =
-      OutContext.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+      OutContext.getOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
   OutStreamer->EmitLabel(EndOfTextLabel);
 }
 

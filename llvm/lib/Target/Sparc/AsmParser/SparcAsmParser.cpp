@@ -772,7 +772,7 @@ SparcAsmParser::parseSparcAsmOperand(std::unique_ptr<SparcOperand> &Op,
     StringRef Identifier;
     if (!getParser().parseIdentifier(Identifier)) {
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-      MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
+      MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
 
       const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                                   getContext());

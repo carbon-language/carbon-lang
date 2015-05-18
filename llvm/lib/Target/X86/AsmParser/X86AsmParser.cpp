@@ -1191,7 +1191,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
         StringRef IDVal = getTok().getString();
         if (IDVal == "f" || IDVal == "b") {
           MCSymbol *Sym =
-              getContext().GetDirectionalLocalSymbol(IntVal, IDVal == "b");
+              getContext().getDirectionalLocalSymbol(IntVal, IDVal == "b");
           MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
           const MCExpr *Val =
 	    MCSymbolRefExpr::Create(Sym, Variant, getContext());
@@ -1351,7 +1351,7 @@ bool X86AsmParser::ParseIntelIdentifier(const MCExpr *&Val,
   }
 
   // Create the symbol reference.
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   Val = MCSymbolRefExpr::Create(Sym, Variant, getParser().getContext());
   return false;

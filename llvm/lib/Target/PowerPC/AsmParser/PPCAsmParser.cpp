@@ -1861,7 +1861,7 @@ bool PPCAsmParser::ParseDirectiveLocalEntry(SMLoc L) {
     Error(L, "expected identifier in directive");
     return false;
   }
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
 
   if (getLexer().isNot(AsmToken::Comma)) {
     Error(L, "unexpected token in directive");

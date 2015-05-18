@@ -468,14 +468,14 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
   SmallString<60> Name;
   raw_svector_ostream(Name)
     << Prefix << "JTI" << getFunctionNumber() << '_' << JTI;
-  return Ctx.GetOrCreateSymbol(Name);
+  return Ctx.getOrCreateSymbol(Name);
 }
 
 /// getPICBaseSymbol - Return a function-local symbol to represent the PIC
 /// base.
 MCSymbol *MachineFunction::getPICBaseSymbol() const {
   const DataLayout *DL = getTarget().getDataLayout();
-  return Ctx.GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
+  return Ctx.getOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
                                Twine(getFunctionNumber())+"$pb");
 }
 

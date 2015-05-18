@@ -37,7 +37,7 @@ void ConstantPool::emitEntries(MCStreamer &Streamer) {
 
 const MCExpr *ConstantPool::addEntry(const MCExpr *Value, MCContext &Context,
                                      unsigned Size) {
-  MCSymbol *CPEntryLabel = Context.CreateTempSymbol();
+  MCSymbol *CPEntryLabel = Context.createTempSymbol();
 
   Entries.push_back(ConstantPoolEntry(CPEntryLabel, Value, Size));
   return MCSymbolRefExpr::Create(CPEntryLabel, Context);

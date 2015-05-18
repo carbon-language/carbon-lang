@@ -202,7 +202,7 @@ GetARMJTIPICJumpTableLabel(unsigned uid) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
                             << getFunctionNumber() << '_' << uid;
-  return OutContext.GetOrCreateSymbol(Name);
+  return OutContext.getOrCreateSymbol(Name);
 }
 
 
@@ -211,7 +211,7 @@ MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();
-  return OutContext.GetOrCreateSymbol(Name);
+  return OutContext.getOrCreateSymbol(Name);
 }
 
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
@@ -806,7 +806,7 @@ void ARMAsmPrinter::emitAttributes() {
 static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
                              unsigned LabelId, MCContext &Ctx) {
 
-  MCSymbol *Label = Ctx.GetOrCreateSymbol(Twine(Prefix)
+  MCSymbol *Label = Ctx.getOrCreateSymbol(Twine(Prefix)
                        + "PC" + Twine(FunctionNumber) + "_" + Twine(LabelId));
   return Label;
 }
@@ -856,7 +856,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
     Name = "__imp_";
     getNameWithPrefix(Name, GV);
 
-    return OutContext.GetOrCreateSymbol(Name);
+    return OutContext.getOrCreateSymbol(Name);
   } else if (Subtarget->isTargetELF()) {
     return getSymbol(GV);
   }
@@ -912,7 +912,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     if (ACPV->mustAddCurrentAddress()) {
       // We want "(<expr> - .)", but MC doesn't have a concept of the '.'
       // label, so just emit a local label end reference that instead.
-      MCSymbol *DotSym = OutContext.CreateTempSymbol();
+      MCSymbol *DotSym = OutContext.createTempSymbol();
       OutStreamer->EmitLabel(DotSym);
       const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
       PCRelExpr = MCBinaryExpr::CreateSub(PCRelExpr, DotExpr, OutContext);
@@ -1281,7 +1281,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
 
     if (!TRegSym) {
-      TRegSym = OutContext.CreateTempSymbol();
+      TRegSym = OutContext.createTempSymbol();
       ThumbIndirectPads.push_back(std::make_pair(TReg, TRegSym));
     }
 

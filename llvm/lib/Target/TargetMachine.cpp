@@ -189,5 +189,5 @@ MCSymbol *TargetMachine::getSymbol(const GlobalValue *GV, Mangler &Mang) const {
   SmallString<60> NameStr;
   getNameWithPrefix(NameStr, GV, Mang);
   const TargetLoweringObjectFile *TLOF = getObjFileLowering();
-  return TLOF->getContext().GetOrCreateSymbol(NameStr);
+  return TLOF->getContext().getOrCreateSymbol(NameStr);
 }

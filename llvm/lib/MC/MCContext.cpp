@@ -98,7 +98,7 @@ void MCContext::reset() {
 // Symbol Manipulation
 //===----------------------------------------------------------------------===//
 
-MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
+MCSymbol *MCContext::getOrCreateSymbol(const Twine &Name) {
   SmallString<128> NameSV;
   StringRef NameRef = Name.toStringRef(NameSV);
 
@@ -135,12 +135,12 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
 
 MCSymbol *MCContext::getOrCreateFrameAllocSymbol(StringRef FuncName,
                                                  unsigned Idx) {
-  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + FuncName +
+  return getOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + FuncName +
                            "$frame_escape_" + Twine(Idx));
 }
 
 MCSymbol *MCContext::getOrCreateParentFrameOffsetSymbol(StringRef FuncName) {
-  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + FuncName +
+  return getOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + FuncName +
                            "$parent_frame_offset");
 }
 
@@ -181,13 +181,13 @@ MCSymbol *MCContext::createTempSymbol(const Twine &Name, bool AlwaysAddSuffix) {
   return CreateSymbol(NameSV, AlwaysAddSuffix);
 }
 
-MCSymbol *MCContext::CreateLinkerPrivateTempSymbol() {
+MCSymbol *MCContext::createLinkerPrivateTempSymbol() {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV) << MAI->getLinkerPrivateGlobalPrefix() << "tmp";
   return CreateSymbol(NameSV, true);
 }
 
-MCSymbol *MCContext::CreateTempSymbol() {
+MCSymbol *MCContext::createTempSymbol() {
   return createTempSymbol("tmp", true);
 }
 
@@ -209,16 +209,16 @@ MCSymbol *MCContext::getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                        unsigned Instance) {
   MCSymbol *&Sym = LocalSymbols[std::make_pair(LocalLabelVal, Instance)];
   if (!Sym)
-    Sym = CreateTempSymbol();
+    Sym = createTempSymbol();
   return Sym;
 }
 
-MCSymbol *MCContext::CreateDirectionalLocalSymbol(unsigned LocalLabelVal) {
+MCSymbol *MCContext::createDirectionalLocalSymbol(unsigned LocalLabelVal) {
   unsigned Instance = NextInstance(LocalLabelVal);
   return getOrCreateDirectionalLocalSymbol(LocalLabelVal, Instance);
 }
 
-MCSymbol *MCContext::GetDirectionalLocalSymbol(unsigned LocalLabelVal,
+MCSymbol *MCContext::getDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                bool Before) {
   unsigned Instance = GetInstance(LocalLabelVal);
   if (!Before)
@@ -226,7 +226,7 @@ MCSymbol *MCContext::GetDirectionalLocalSymbol(unsigned LocalLabelVal,
   return getOrCreateDirectionalLocalSymbol(LocalLabelVal, Instance);
 }
 
-MCSymbol *MCContext::LookupSymbol(const Twine &Name) const {
+MCSymbol *MCContext::lookupSymbol(const Twine &Name) const {
   SmallString<128> NameSV;
   StringRef NameRef = Name.toStringRef(NameSV);
   return Symbols.lookup(NameRef);
@@ -299,7 +299,7 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                              const char *BeginSymName) {
   MCSymbol *GroupSym = nullptr;
   if (!Group.empty())
-    GroupSym = GetOrCreateSymbol(Group);
+    GroupSym = getOrCreateSymbol(Group);
 
   return getELFSection(Section, Type, Flags, EntrySize, GroupSym, UniqueID,
                        BeginSymName, nullptr);
@@ -353,7 +353,7 @@ MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
                           int Selection, const char *BeginSymName) {
   MCSymbol *COMDATSymbol = nullptr;
   if (!COMDATSymName.empty()) {
-    COMDATSymbol = GetOrCreateSymbol(COMDATSymName);
+    COMDATSymbol = getOrCreateSymbol(COMDATSymName);
     COMDATSymName = COMDATSymbol->getName();
   }
 
@@ -411,11 +411,11 @@ MCContext::getAssociativeCOFFSection(const MCSectionCOFF *Sec,
 // Dwarf Management
 //===----------------------------------------------------------------------===//
 
-/// GetDwarfFile - takes a file name an number to place in the dwarf file and
+/// getDwarfFile - takes a file name an number to place in the dwarf file and
 /// directory tables.  If the file number has already been allocated it is an
 /// error and zero is returned and the client reports the error, else the
 /// allocated file number is returned.  The file numbers may be in any order.
-unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
+unsigned MCContext::getDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
   MCDwarfLineTable &Table = MCDwarfLineTablesCUMap[CUID];
   return Table.getFile(Directory, FileName, FileNumber);
@@ -442,7 +442,7 @@ void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
     assert(sec->second.first && "Start symbol must be set by now");
     MCOS.SwitchSection(sec->first);
     if (MCOS.mayHaveInstructions()) {
-      MCSymbol *SectionEndSym = context.CreateTempSymbol();
+      MCSymbol *SectionEndSym = context.createTempSymbol();
       MCOS.EmitLabel(SectionEndSym);
       sec->second.second = SectionEndSym;
       ++sec;
@@ -454,7 +454,7 @@ void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
   }
 }
 
-void MCContext::FatalError(SMLoc Loc, const Twine &Msg) const {
+void MCContext::reportFatalError(SMLoc Loc, const Twine &Msg) const {
   // If we have a source manager and a location, use it. Otherwise just
   // use the generic report_fatal_error().
   if (!SrcMgr || Loc == SMLoc())

@@ -153,7 +153,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info) {
     return;
 
   MCContext &context = streamer.getContext();
-  MCSymbol *Label = context.CreateTempSymbol();
+  MCSymbol *Label = context.createTempSymbol();
 
   streamer.EmitValueToAlignment(4);
   streamer.EmitLabel(Label);

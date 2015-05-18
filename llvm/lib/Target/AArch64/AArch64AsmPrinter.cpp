@@ -172,11 +172,11 @@ MCSymbol *AArch64AsmPrinter::GetCPISymbol(unsigned CPID) const {
   // avoid addends on the relocation?), ELF has no such concept and
   // uses a normal private symbol.
   if (getDataLayout().getLinkerPrivateGlobalPrefix()[0])
-    return OutContext.GetOrCreateSymbol(
+    return OutContext.getOrCreateSymbol(
         Twine(getDataLayout().getLinkerPrivateGlobalPrefix()) + "CPI" +
         Twine(getFunctionNumber()) + "_" + Twine(CPID));
 
-  return OutContext.GetOrCreateSymbol(
+  return OutContext.getOrCreateSymbol(
       Twine(getDataLayout().getPrivateGlobalPrefix()) + "CPI" +
       Twine(getFunctionNumber()) + "_" + Twine(CPID));
 }

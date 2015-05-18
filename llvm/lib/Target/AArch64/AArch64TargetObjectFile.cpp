@@ -41,7 +41,7 @@ const MCExpr *AArch64_MachoTargetObjectFile::getTTypeGlobalReference(
     const MCSymbol *Sym = TM.getSymbol(GV, Mang);
     const MCExpr *Res =
         MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
-    MCSymbol *PCSym = getContext().CreateTempSymbol();
+    MCSymbol *PCSym = getContext().createTempSymbol();
     Streamer.EmitLabel(PCSym);
     const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
     return MCBinaryExpr::CreateSub(Res, PC, getContext());
@@ -66,7 +66,7 @@ const MCExpr *AArch64_MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
   // is an indirect pc-relative reference.
   const MCExpr *Res =
       MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
-  MCSymbol *PCSym = getContext().CreateTempSymbol();
+  MCSymbol *PCSym = getContext().createTempSymbol();
   Streamer.EmitLabel(PCSym);
   const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
   return MCBinaryExpr::CreateSub(Res, PC, getContext());

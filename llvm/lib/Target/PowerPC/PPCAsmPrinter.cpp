@@ -406,7 +406,7 @@ void PPCAsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
 void PPCAsmPrinter::EmitTlsCall(const MachineInstr *MI,
                                 MCSymbolRefExpr::VariantKind VK) {
   StringRef Name = "__tls_get_addr";
-  MCSymbol *TlsGetAddr = OutContext.GetOrCreateSymbol(Name);
+  MCSymbol *TlsGetAddr = OutContext.getOrCreateSymbol(Name);
   MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
 
   assert(MI->getOperand(0).isReg() &&
@@ -462,7 +462,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     //      blrl
     // This will return the pointer to _GLOBAL_OFFSET_TABLE_@local
     MCSymbol *GOTSymbol =
-      OutContext.GetOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
+      OutContext.getOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
     const MCExpr *OffsExpr =
       MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(GOTSymbol,
                                                       MCSymbolRefExpr::VK_PPC_LOCAL,
@@ -557,7 +557,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
         MCSymbolRefExpr::Create(TOCEntry, MCSymbolRefExpr::VK_None,
                                 OutContext);
       const MCExpr *PB =
-        MCSymbolRefExpr::Create(OutContext.GetOrCreateSymbol(Twine(".LTOC")),
+        MCSymbolRefExpr::Create(OutContext.getOrCreateSymbol(Twine(".LTOC")),
                                                              OutContext);
       Exp = MCBinaryExpr::CreateSub(Exp, PB, OutContext);
       TmpInst.getOperand(1) = MCOperand::createExpr(Exp);
@@ -756,9 +756,9 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   case PPC::PPC32PICGOT: {
-    MCSymbol *GOTSymbol = OutContext.GetOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
-    MCSymbol *GOTRef = OutContext.CreateTempSymbol();
-    MCSymbol *NextInstr = OutContext.CreateTempSymbol();
+    MCSymbol *GOTSymbol = OutContext.getOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
+    MCSymbol *GOTRef = OutContext.createTempSymbol();
+    MCSymbol *NextInstr = OutContext.createTempSymbol();
 
     EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::BL)
       // FIXME: We would like an efficient form for this, so we don't have to do
@@ -784,7 +784,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   case PPC::PPC32GOT: {
-    MCSymbol *GOTSymbol = OutContext.GetOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
+    MCSymbol *GOTSymbol = OutContext.getOrCreateSymbol(StringRef("_GLOBAL_OFFSET_TABLE_"));
     const MCExpr *SymGotTlsL =
       MCSymbolRefExpr::Create(GOTSymbol, MCSymbolRefExpr::VK_PPC_LO,
                               OutContext);
@@ -1004,8 +1004,8 @@ void PPCLinuxAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer->SwitchSection(OutContext.getELFSection(
       ".got2", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC));
 
-  MCSymbol *TOCSym = OutContext.GetOrCreateSymbol(Twine(".LTOC"));
-  MCSymbol *CurrentPos = OutContext.CreateTempSymbol();
+  MCSymbol *TOCSym = OutContext.getOrCreateSymbol(Twine(".LTOC"));
+  MCSymbol *CurrentPos = OutContext.createTempSymbol();
 
   OutStreamer->EmitLabel(CurrentPos);
 
@@ -1037,7 +1037,7 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
 
       const MCExpr *OffsExpr =
         MCBinaryExpr::CreateSub(
-          MCSymbolRefExpr::Create(OutContext.GetOrCreateSymbol(Twine(".LTOC")),
+          MCSymbolRefExpr::Create(OutContext.getOrCreateSymbol(Twine(".LTOC")),
                                                                OutContext),
                                   MCSymbolRefExpr::Create(PICBase, OutContext),
           OutContext);
@@ -1064,7 +1064,7 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   // entry point.
   OutStreamer->EmitValue(MCSymbolRefExpr::Create(Symbol1, OutContext),
                          8 /*size*/);
-  MCSymbol *Symbol2 = OutContext.GetOrCreateSymbol(StringRef(".TOC."));
+  MCSymbol *Symbol2 = OutContext.getOrCreateSymbol(StringRef(".TOC."));
   // Generates a R_PPC64_TOC relocation for TOC base insertion.
   OutStreamer->EmitValue(
     MCSymbolRefExpr::Create(Symbol2, MCSymbolRefExpr::VK_PPC_TOCBASE, OutContext),
@@ -1130,12 +1130,12 @@ void PPCLinuxAsmPrinter::EmitFunctionBodyStart() {
       // Only do all that if the function uses r2 in the first place.
       && !MF->getRegInfo().use_empty(PPC::X2)) {
 
-    MCSymbol *GlobalEntryLabel = OutContext.CreateTempSymbol();
+    MCSymbol *GlobalEntryLabel = OutContext.createTempSymbol();
     OutStreamer->EmitLabel(GlobalEntryLabel);
     const MCSymbolRefExpr *GlobalEntryLabelExp =
       MCSymbolRefExpr::Create(GlobalEntryLabel, OutContext);
 
-    MCSymbol *TOCSymbol = OutContext.GetOrCreateSymbol(StringRef(".TOC."));
+    MCSymbol *TOCSymbol = OutContext.getOrCreateSymbol(StringRef(".TOC."));
     const MCExpr *TOCDeltaExpr =
       MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(TOCSymbol, OutContext),
                               GlobalEntryLabelExp, OutContext);
@@ -1154,7 +1154,7 @@ void PPCLinuxAsmPrinter::EmitFunctionBodyStart() {
                                  .addReg(PPC::X2)
                                  .addExpr(TOCDeltaLo));
 
-    MCSymbol *LocalEntryLabel = OutContext.CreateTempSymbol();
+    MCSymbol *LocalEntryLabel = OutContext.createTempSymbol();
     OutStreamer->EmitLabel(LocalEntryLabel);
     const MCSymbolRefExpr *LocalEntryLabelExp =
        MCSymbolRefExpr::Create(LocalEntryLabel, OutContext);
@@ -1259,12 +1259,12 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
 static MCSymbol *GetLazyPtr(MCSymbol *Sym, MCContext &Ctx) {
   // Remove $stub suffix, add $lazy_ptr.
   StringRef NoStub = Sym->getName().substr(0, Sym->getName().size()-5);
-  return Ctx.GetOrCreateSymbol(NoStub + "$lazy_ptr");
+  return Ctx.getOrCreateSymbol(NoStub + "$lazy_ptr");
 }
 
 static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
   // Add $tmp suffix to $stub, yielding $stub$tmp.
-  return Ctx.GetOrCreateSymbol(Sym->getName() + "$tmp");
+  return Ctx.getOrCreateSymbol(Sym->getName() + "$tmp");
 }
 
 void PPCDarwinAsmPrinter::
@@ -1344,7 +1344,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
       OutStreamer->EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
 
       MCSymbol *DyldStubBindingHelper =
-        OutContext.GetOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
+        OutContext.getOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
       if (isPPC64) {
         // .quad dyld_stub_binding_helper
         OutStreamer->EmitSymbolValue(DyldStubBindingHelper, 8);
@@ -1399,7 +1399,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     OutStreamer->EmitSymbolAttribute(RawSym, MCSA_IndirectSymbol);
 
     MCSymbol *DyldStubBindingHelper =
-      OutContext.GetOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
+      OutContext.getOrCreateSymbol(StringRef("dyld_stub_binding_helper"));
     if (isPPC64) {
       // .quad dyld_stub_binding_helper
       OutStreamer->EmitSymbolValue(DyldStubBindingHelper, 8);

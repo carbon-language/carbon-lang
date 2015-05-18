@@ -69,7 +69,7 @@ void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
     return;
 
   // Create a symbol at in the current section for use in the line entry.
-  MCSymbol *LineSym = MCOS->getContext().CreateTempSymbol();
+  MCSymbol *LineSym = MCOS->getContext().createTempSymbol();
   // Set the value of the symbol to use for the MCLineEntry.
   MCOS->EmitLabel(LineSym);
 
@@ -80,7 +80,7 @@ void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
   MCLineEntry LineEntry(LineSym, DwarfLoc);
 
   // clear DwarfLocSeen saying the current .loc info is now used.
-  MCOS->getContext().ClearDwarfLocSeen();
+  MCOS->getContext().clearDwarfLocSeen();
 
   // Add the line entry to this section's entries.
   MCOS->getContext()
@@ -245,7 +245,7 @@ static const MCExpr *forceExpAbs(MCStreamer &OS, const MCExpr* Expr) {
   if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
     return Expr;
 
-  MCSymbol *ABS = Context.CreateTempSymbol();
+  MCSymbol *ABS = Context.createTempSymbol();
   OS.EmitAssignment(ABS, Expr);
   return MCSymbolRefExpr::Create(ABS, Context);
 }
@@ -264,12 +264,12 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   // Create a symbol at the beginning of the line table.
   MCSymbol *LineStartSym = Label;
   if (!LineStartSym)
-    LineStartSym = context.CreateTempSymbol();
+    LineStartSym = context.createTempSymbol();
   // Set the value of the symbol, as we are at the start of the line table.
   MCOS->EmitLabel(LineStartSym);
 
   // Create a symbol for the end of the section (to be set when we get there).
-  MCSymbol *LineEndSym = context.CreateTempSymbol();
+  MCSymbol *LineEndSym = context.createTempSymbol();
 
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
@@ -280,7 +280,7 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   MCOS->EmitIntValue(2, 2);
 
   // Create a symbol for the end of the prologue (to be set when we get there).
-  MCSymbol *ProEndSym = context.CreateTempSymbol(); // Lprologue_end
+  MCSymbol *ProEndSym = context.createTempSymbol(); // Lprologue_end
 
   // Length of the prologue, is the next 4 bytes.  Which is the start of the
   // section to the end of the prologue.  Not including the 4 bytes for the
@@ -640,9 +640,9 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 
   // Create a symbol at the start and end of this section used in here for the
   // expression to calculate the length in the header.
-  MCSymbol *InfoStart = context.CreateTempSymbol();
+  MCSymbol *InfoStart = context.createTempSymbol();
   MCOS->EmitLabel(InfoStart);
-  MCSymbol *InfoEnd = context.CreateTempSymbol();
+  MCSymbol *InfoEnd = context.createTempSymbol();
 
   // First part: the header.
 
@@ -863,18 +863,18 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
   if (CreateDwarfSectionSymbols) {
-    InfoSectionSymbol = context.CreateTempSymbol();
+    InfoSectionSymbol = context.createTempSymbol();
     MCOS->EmitLabel(InfoSectionSymbol);
   }
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
   if (CreateDwarfSectionSymbols) {
-    AbbrevSectionSymbol = context.CreateTempSymbol();
+    AbbrevSectionSymbol = context.createTempSymbol();
     MCOS->EmitLabel(AbbrevSectionSymbol);
   }
   if (UseRangesSection) {
     MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfRangesSection());
     if (CreateDwarfSectionSymbols) {
-      RangesSectionSymbol = context.CreateTempSymbol();
+      RangesSectionSymbol = context.createTempSymbol();
       MCOS->EmitLabel(RangesSectionSymbol);
     }
   }
@@ -932,7 +932,7 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
   // values so that they don't have things like an ARM thumb bit from the
   // original symbol. So when used they won't get a low bit set after
   // relocation.
-  MCSymbol *Label = context.CreateTempSymbol();
+  MCSymbol *Label = context.createTempSymbol();
   MCOS->EmitLabel(Label);
 
   // Create and entry for the info and add it to the other entries.
@@ -1269,10 +1269,10 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   const MCRegisterInfo *MRI = context.getRegisterInfo();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
 
-  MCSymbol *sectionStart = context.CreateTempSymbol();
+  MCSymbol *sectionStart = context.createTempSymbol();
   streamer.EmitLabel(sectionStart);
 
-  MCSymbol *sectionEnd = context.CreateTempSymbol();
+  MCSymbol *sectionEnd = context.createTempSymbol();
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *sectionStart,
@@ -1380,8 +1380,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
                                     const MCSymbol &cieStart,
                                     const MCDwarfFrameInfo &frame) {
   MCContext &context = streamer.getContext();
-  MCSymbol *fdeStart = context.CreateTempSymbol();
-  MCSymbol *fdeEnd = context.CreateTempSymbol();
+  MCSymbol *fdeStart = context.createTempSymbol();
+  MCSymbol *fdeEnd = context.createTempSymbol();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
 
   CFAOffset = InitialCFAOffset;
@@ -1524,7 +1524,7 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
            *MOFI->getDwarfFrameSection();
 
   Streamer.SwitchSection(&Section);
-  MCSymbol *SectionStart = Context.CreateTempSymbol();
+  MCSymbol *SectionStart = Context.createTempSymbol();
   Streamer.EmitLabel(SectionStart);
   Emitter.setSectionStart(SectionStart);
 

@@ -6749,7 +6749,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       // Turn PC-relative expression into absolute expression.
       // Reading PC provides the start of the current instruction + 8 and
       // the transform to adr is biased by that.
-      MCSymbol *Dot = getContext().CreateTempSymbol();
+      MCSymbol *Dot = getContext().createTempSymbol();
       Out.EmitLabel(Dot);
       const MCExpr *OpExpr = Inst.getOperand(2).getExpr();
       const MCExpr *InstPC = MCSymbolRefExpr::Create(Dot,
@@ -8896,7 +8896,7 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
       }
 
       MCSymbol *Func =
-          getParser().getContext().GetOrCreateSymbol(Tok.getIdentifier());
+          getParser().getContext().getOrCreateSymbol(Tok.getIdentifier());
       getParser().getStreamer().EmitThumbFunc(Func);
       Parser.Lex(); // Consume the identifier token.
       return false;
@@ -9362,7 +9362,7 @@ bool ARMAsmParser::parseDirectivePersonality(SMLoc L) {
   StringRef Name(Parser.getTok().getIdentifier());
   Parser.Lex();
 
-  MCSymbol *PR = getParser().getContext().GetOrCreateSymbol(Name);
+  MCSymbol *PR = getParser().getContext().getOrCreateSymbol(Name);
   getTargetStreamer().emitPersonality(PR);
   return false;
 }
@@ -9963,7 +9963,7 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
   }
   Lex();
 
-  MCSymbol *Alias = getContext().GetOrCreateSymbol(Name);
+  MCSymbol *Alias = getContext().getOrCreateSymbol(Name);
   getTargetStreamer().emitThumbSet(Alias, Value);
   return false;
 }

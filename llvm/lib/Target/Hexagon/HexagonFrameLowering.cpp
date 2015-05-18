@@ -472,7 +472,7 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB) const {
 
   if (needsFrameMoves) {
     std::vector<MCCFIInstruction> Instructions = MMI.getFrameInstructions();
-    MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
+    MCSymbol *FrameLabel = MMI.getContext().createTempSymbol();
 
     // Advance CFA. DW_CFA_def_cfa
     unsigned DwFPReg = HRI.getDwarfRegNum(HRI.getFrameRegister(), true);

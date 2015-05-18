@@ -508,7 +508,7 @@ public:
                      const SMLoc &Loc) override {
     if (const MCSymbolRefExpr *SRE = dyn_cast_or_null<MCSymbolRefExpr>(Value))
       if (SRE->getKind() == MCSymbolRefExpr::VK_ARM_SBREL && !(Size == 4))
-        getContext().FatalError(Loc, "relocated expression must be 32-bit");
+        getContext().reportFatalError(Loc, "relocated expression must be 32-bit");
 
     EmitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size);
@@ -560,11 +560,11 @@ private:
   }
 
   void EmitMappingSymbol(StringRef Name) {
-    MCSymbol *Start = getContext().CreateTempSymbol();
+    MCSymbol *Start = getContext().createTempSymbol();
     EmitLabel(Start);
 
     MCSymbol *Symbol =
-      getContext().GetOrCreateSymbol(Name + "." +
+      getContext().getOrCreateSymbol(Name + "." +
                                      Twine(MappingSymbolCounter++));
 
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
@@ -1078,7 +1078,7 @@ void ARMELFStreamer::Reset() {
 
 void ARMELFStreamer::emitFnStart() {
   assert(FnStart == nullptr);
-  FnStart = getContext().CreateTempSymbol();
+  FnStart = getContext().createTempSymbol();
   EmitLabel(FnStart);
 }
 
@@ -1137,7 +1137,7 @@ void ARMELFStreamer::emitCantUnwind() { CantUnwind = true; }
 
 // Add the R_ARM_NONE fixup at the same position
 void ARMELFStreamer::EmitPersonalityFixup(StringRef Name) {
-  const MCSymbol *PersonalitySym = getContext().GetOrCreateSymbol(Name);
+  const MCSymbol *PersonalitySym = getContext().getOrCreateSymbol(Name);
 
   const MCSymbolRefExpr *PersonalityRef = MCSymbolRefExpr::Create(
       PersonalitySym, MCSymbolRefExpr::VK_ARM_NONE, getContext());
@@ -1181,7 +1181,7 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
 
   // Create .ARM.extab label for offset in .ARM.exidx
   assert(!ExTab);
-  ExTab = getContext().CreateTempSymbol();
+  ExTab = getContext().createTempSymbol();
   EmitLabel(ExTab);
 
   // Emit personality

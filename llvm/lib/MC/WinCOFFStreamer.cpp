@@ -269,7 +269,7 @@ void MCWinCOFFStreamer::FinishImpl() {
 
 LLVM_ATTRIBUTE_NORETURN
 void MCWinCOFFStreamer::FatalError(const Twine &Msg) const {
-  getContext().FatalError(SMLoc(), Msg);
+  getContext().reportFatalError(SMLoc(), Msg);
 }
 }
 

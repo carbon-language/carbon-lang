@@ -302,7 +302,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     AFI->setLocalStackSize(NumBytes);
 
     // Label used to tie together the PROLOG_LABEL and the MachineMoves.
-    MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
+    MCSymbol *FrameLabel = MMI.getContext().createTempSymbol();
 
     // REDZONE: If the stack size is less than 128 bytes, we don't need
     // to actually allocate.

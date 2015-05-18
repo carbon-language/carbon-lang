@@ -165,7 +165,7 @@ bool AArch64ExternalSymbolizer::tryAddingSymbolicOperand(
   if (SymbolicOp.AddSymbol.Present) {
     if (SymbolicOp.AddSymbol.Name) {
       StringRef Name(SymbolicOp.AddSymbol.Name);
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
       MCSymbolRefExpr::VariantKind Variant = getVariant(SymbolicOp.VariantKind);
       if (Variant != MCSymbolRefExpr::VK_None)
         Add = MCSymbolRefExpr::Create(Sym, Variant, Ctx);
@@ -180,7 +180,7 @@ bool AArch64ExternalSymbolizer::tryAddingSymbolicOperand(
   if (SymbolicOp.SubtractSymbol.Present) {
     if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
       Sub = MCSymbolRefExpr::Create(Sym, Ctx);
     } else {
       Sub = MCConstantExpr::Create(SymbolicOp.SubtractSymbol.Value, Ctx);

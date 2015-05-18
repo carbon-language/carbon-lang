@@ -462,7 +462,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (GVKind.isThreadLocal() && MAI->hasMachoTBSSDirective()) {
     // Emit the .tbss symbol
     MCSymbol *MangSym =
-      OutContext.GetOrCreateSymbol(GVSym->getName() + Twine("$tlv$init"));
+      OutContext.getOrCreateSymbol(GVSym->getName() + Twine("$tlv$init"));
 
     if (GVKind.isThreadBSS()) {
       TheSection = getObjFileLowering().getTLSBSSSection();
@@ -563,7 +563,7 @@ void AsmPrinter::EmitFunctionHeader() {
 
   if (CurrentFnBegin) {
     if (MAI->useAssignmentForEHBegin()) {
-      MCSymbol *CurPos = OutContext.CreateTempSymbol();
+      MCSymbol *CurPos = OutContext.createTempSymbol();
       OutStreamer->EmitLabel(CurPos);
       OutStreamer->EmitAssignment(CurrentFnBegin,
                                  MCSymbolRefExpr::Create(CurPos, OutContext));
@@ -1128,7 +1128,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     OutStreamer->SwitchSection(ReadOnlySection);
 
     MCSymbol *AddrSymbol =
-        OutContext.GetOrCreateSymbol(StringRef("__morestack_addr"));
+        OutContext.getOrCreateSymbol(StringRef("__morestack_addr"));
     OutStreamer->EmitLabel(AddrSymbol);
 
     unsigned PtrSize = TM.getDataLayout()->getPointerSize(0);
@@ -1443,7 +1443,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     if (TM.getRelocationModel() == Reloc::Static &&
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
       StringRef Sym(".constructors_used");
-      OutStreamer->EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
+      OutStreamer->EmitSymbolAttribute(OutContext.getOrCreateSymbol(Sym),
                                        MCSA_Reference);
     }
     return true;
@@ -1455,7 +1455,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     if (TM.getRelocationModel() == Reloc::Static &&
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
       StringRef Sym(".destructors_used");
-      OutStreamer->EmitSymbolAttribute(OutContext.GetOrCreateSymbol(Sym),
+      OutStreamer->EmitSymbolAttribute(OutContext.getOrCreateSymbol(Sym),
                                        MCSA_Reference);
     }
     return true;
@@ -2293,7 +2293,7 @@ MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BasicBlock *BB) const {
 /// GetCPISymbol - Return the symbol for the specified constant pool entry.
 MCSymbol *AsmPrinter::GetCPISymbol(unsigned CPID) const {
   const DataLayout *DL = TM.getDataLayout();
-  return OutContext.GetOrCreateSymbol
+  return OutContext.getOrCreateSymbol
     (Twine(DL->getPrivateGlobalPrefix()) + "CPI" + Twine(getFunctionNumber())
      + "_" + Twine(CPID));
 }
@@ -2307,7 +2307,7 @@ MCSymbol *AsmPrinter::GetJTISymbol(unsigned JTID, bool isLinkerPrivate) const {
 /// FIXME: privatize to AsmPrinter.
 MCSymbol *AsmPrinter::GetJTSetSymbol(unsigned UID, unsigned MBBID) const {
   const DataLayout *DL = TM.getDataLayout();
-  return OutContext.GetOrCreateSymbol
+  return OutContext.getOrCreateSymbol
   (Twine(DL->getPrivateGlobalPrefix()) + Twine(getFunctionNumber()) + "_" +
    Twine(UID) + "_set_" + Twine(MBBID));
 }
@@ -2323,7 +2323,7 @@ MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
 MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
   SmallString<60> NameStr;
   Mang->getNameWithPrefix(NameStr, Sym);
-  return OutContext.GetOrCreateSymbol(NameStr);
+  return OutContext.getOrCreateSymbol(NameStr);
 }
 
 

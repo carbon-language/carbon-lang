@@ -863,7 +863,7 @@ SystemZAsmParser::parsePCRel(OperandVector &Operands, int64_t MinVal,
       Error(StartLoc, "offset out of range");
       return MatchOperand_ParseFail;
     }
-    MCSymbol *Sym = Ctx.CreateTempSymbol();
+    MCSymbol *Sym = Ctx.createTempSymbol();
     Out.EmitLabel(Sym);
     const MCExpr *Base = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                                  Ctx);
@@ -904,7 +904,7 @@ SystemZAsmParser::parsePCRel(OperandVector &Operands, int64_t MinVal,
     }
 
     StringRef Identifier = Parser.getTok().getString();
-    Sym = MCSymbolRefExpr::Create(Ctx.GetOrCreateSymbol(Identifier),
+    Sym = MCSymbolRefExpr::Create(Ctx.getOrCreateSymbol(Identifier),
                                   Kind, Ctx);
     Parser.Lex();
   }

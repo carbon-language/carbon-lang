@@ -53,7 +53,7 @@ MCSymbol *MachineBasicBlock::getSymbol() const {
     const MachineFunction *MF = getParent();
     MCContext &Ctx = MF->getContext();
     const char *Prefix = Ctx.getAsmInfo()->getPrivateLabelPrefix();
-    CachedMCSymbol = Ctx.GetOrCreateSymbol(Twine(Prefix) + "BB" +
+    CachedMCSymbol = Ctx.getOrCreateSymbol(Twine(Prefix) + "BB" +
                                            Twine(MF->getFunctionNumber()) +
                                            "_" + Twine(getNumber()));
   }
