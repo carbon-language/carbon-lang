@@ -2122,7 +2122,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   // fold (sdiv c1, c2) -> c1/c2
   ConstantSDNode *N0C = isConstOrConstSplat(N0);
   ConstantSDNode *N1C = isConstOrConstSplat(N1);
-  if (N0C && N1C && N1C->isNullValue())
+  if (N0C && N1C && !N1C->isNullValue())
     return DAG.FoldConstantArithmetic(ISD::SDIV, SDLoc(N), VT, N0C, N1C);
   // fold (sdiv X, 1) -> X
   if (N1C && N1C->getAPIntValue() == 1LL)
