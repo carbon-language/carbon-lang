@@ -5509,7 +5509,8 @@ public:
                                    SourceLocation ModulePrivateLoc,
                                    TemplateIdAnnotation &TemplateId,
                                    AttributeList *Attr,
-                                 MultiTemplateParamsArg TemplateParameterLists);
+                                 MultiTemplateParamsArg TemplateParameterLists,
+                                   SkipBodyInfo *SkipBody = nullptr);
 
   Decl *ActOnTemplateDeclarator(Scope *S,
                                 MultiTemplateParamsArg TemplateParameterLists,

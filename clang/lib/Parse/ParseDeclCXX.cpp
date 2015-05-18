@@ -1640,7 +1640,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
           *TemplateId, attrs.getList(),
           MultiTemplateParamsArg(TemplateParams ? &(*TemplateParams)[0]
                                                 : nullptr,
-                                 TemplateParams ? TemplateParams->size() : 0));
+                                 TemplateParams ? TemplateParams->size() : 0),
+          &SkipBody);
     }
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
              TUK == Sema::TUK_Declaration) {

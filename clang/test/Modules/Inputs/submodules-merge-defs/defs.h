@@ -29,6 +29,11 @@ template<typename T> struct F {
 };
 template<typename T> int F<T>::f() { return 0; }
 template<typename T> template<typename U> int F<T>::g() { return 0; }
+template<> template<typename U> int F<char>::g() { return 0; }
+template<> struct F<void> { int h(); };
+inline int F<void>::h() { return 0; }
+template<typename T> struct F<T *> { int i(); };
+template<typename T> int F<T*>::i() { return 0; }
 
 namespace G {
   enum A { a, b, c, d, e };
