@@ -4046,6 +4046,10 @@ TEST_F(FormatTest, FunctionAnnotations) {
   verifyFormat("template <typename T>\n"
                "DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
                "string OldFunction(const string &parameter) {}");
+
+  // Not function annotations.
+  verifyFormat("ASSERT(\"aaaaa\") << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "                << bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {

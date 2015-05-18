@@ -42,7 +42,7 @@ enum TokenType {
   TT_DesignatedInitializerPeriod,
   TT_DictLiteral,
   TT_ForEachMacro,
-  TT_FunctionAnnotation,
+  TT_FunctionAnnotationRParen,
   TT_FunctionDeclarationName,
   TT_FunctionLBrace,
   TT_FunctionTypeLParen,

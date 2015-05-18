@@ -493,8 +493,7 @@ private:
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
           !Contexts.back().IsExpression && Line.First->isNot(TT_ObjCProperty) &&
           (!Tok->Previous ||
-           !Tok->Previous->isOneOf(tok::kw_decltype, TT_LeadingJavaAnnotation,
-                                   TT_FunctionAnnotation)))
+           !Tok->Previous->isOneOf(tok::kw_decltype, TT_LeadingJavaAnnotation)))
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
@@ -916,16 +915,18 @@ private:
       } else {
         Current.Type = TT_LineComment;
       }
-    } else if (Current.is(tok::l_paren) && Current.Previous &&
-               Current.Previous->is(TT_FunctionAnnotation)) {
-      Current.Type = TT_FunctionAnnotation;
     } else if (Current.is(tok::r_paren)) {
       if (rParenEndsCast(Current))
         Current.Type = TT_CastRParen;
-      if (Current.MatchingParen &&
-          Current.MatchingParen->is(TT_FunctionAnnotation) && Current.Next &&
+      if (Current.MatchingParen && Current.Next &&
+          !Current.Next->isBinaryOperator() &&
           !Current.Next->isOneOf(tok::semi, tok::colon))
-        Current.Type = TT_FunctionAnnotation;
+        if (FormatToken *BeforeParen = Current.MatchingParen->Previous)
+          if (BeforeParen->is(tok::identifier) &&
+              BeforeParen->TokenText == BeforeParen->TokenText.upper() &&
+              (!BeforeParen->Previous ||
+               BeforeParen->Previous->ClosesTemplateDeclaration))
+            Current.Type = TT_FunctionAnnotationRParen;
     } else if (Current.is(tok::at) && Current.Next) {
       if (Current.Next->isStringLiteral()) {
         Current.Type = TT_ObjCStringLiteral;
@@ -976,11 +977,6 @@ private:
                                            TT_LeadingJavaAnnotation)) {
         Current.Type = Current.Previous->Type;
       }
-    } else if (Current.is(tok::identifier) &&
-               Current.TokenText == Current.TokenText.upper() &&
-               (!Current.Previous ||
-                Current.Previous->ClosesTemplateDeclaration)) {
-      Current.Type = TT_FunctionAnnotation;
     }
   }
 

@@ -213,7 +213,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     // different LineFormatter would be used otherwise.
     if (Previous.ClosesTemplateDeclaration)
       return true;
-    if (Previous.is(TT_FunctionAnnotation) && Previous.is(tok::r_paren))
+    if (Previous.is(TT_FunctionAnnotationRParen))
       return true;
     if (Previous.is(TT_LeadingJavaAnnotation) && Current.isNot(tok::l_paren) &&
         Current.isNot(TT_LeadingJavaAnnotation))
@@ -492,9 +492,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
       (PreviousNonComment->isNot(TT_TemplateCloser) ||
        Current.NestingLevel != 0) &&
-      !PreviousNonComment->isOneOf(TT_BinaryOperator, TT_FunctionAnnotation,
-                                   TT_JavaAnnotation,
-                                   TT_LeadingJavaAnnotation) &&
+      !PreviousNonComment->isOneOf(
+          TT_BinaryOperator, TT_FunctionAnnotationRParen, TT_JavaAnnotation,
+          TT_LeadingJavaAnnotation) &&
       Current.isNot(TT_BinaryOperator) && !PreviousNonComment->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
@@ -574,9 +574,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return State.Stack.back().VariablePos;
   if ((PreviousNonComment &&
        (PreviousNonComment->ClosesTemplateDeclaration ||
-        PreviousNonComment->isOneOf(TT_AttributeParen, TT_FunctionAnnotation,
-                                    TT_JavaAnnotation,
-                                    TT_LeadingJavaAnnotation))) ||
+        PreviousNonComment->isOneOf(
+            TT_AttributeParen, TT_FunctionAnnotationRParen, TT_JavaAnnotation,
+            TT_LeadingJavaAnnotation))) ||
       (!Style.IndentWrappedFunctionNames &&
        NextNonComment->isOneOf(tok::kw_operator, TT_FunctionDeclarationName)))
     return std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
