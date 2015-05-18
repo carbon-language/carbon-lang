@@ -1745,7 +1745,7 @@ public:
 
   void ReadMismatchingDeleteExpressions(llvm::MapVector<
       FieldDecl *, llvm::SmallVector<std::pair<SourceLocation, bool>, 4>> &
-                                            Exprs);
+                                            Exprs) override;
 
   void ReadTentativeDefinitions(
                             SmallVectorImpl<VarDecl *> &TentativeDefs) override;
