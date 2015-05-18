@@ -1450,6 +1450,51 @@ static void EnterAnnotationToken(Preprocessor &PP,
   PP.EnterTokenStream(Tok, 1, true, true);
 }
 
+/// \brief Produce a diagnostic informing the user that a #include or similar
+/// was implicitly treated as a module import.
+static void diagnoseAutoModuleImport(
+    Preprocessor &PP, SourceLocation HashLoc, Token &IncludeTok,
+    ArrayRef<std::pair<IdentifierInfo *, SourceLocation>> Path,
+    SourceLocation PathEnd) {
+  assert(PP.getLangOpts().ObjC2 && "no import syntax available");
+
+  SmallString<128> PathString;
+  for (unsigned I = 0, N = Path.size(); I != N; ++I) {
+    if (I)
+      PathString += '.';
+    PathString += Path[I].first->getName();
+  }
+  int IncludeKind = 0;
+  
+  switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {
+  case tok::pp_include:
+    IncludeKind = 0;
+    break;
+    
+  case tok::pp_import:
+    IncludeKind = 1;
+    break;        
+      
+  case tok::pp_include_next:
+    IncludeKind = 2;
+    break;
+      
+  case tok::pp___include_macros:
+    IncludeKind = 3;
+    break;
+      
+  default:
+    llvm_unreachable("unknown include directive kind");
+  }
+
+  CharSourceRange ReplaceRange(SourceRange(HashLoc, PathEnd),
+                               /*IsTokenRange=*/false);
+  PP.Diag(HashLoc, diag::warn_auto_module_import)
+      << IncludeKind << PathString
+      << FixItHint::CreateReplacement(ReplaceRange,
+                                      ("@import " + PathString + ";").str());
+}
+
 /// HandleIncludeDirective - The "\#include" tokens have just been read, read
 /// the file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between \#include, \#include_next and
@@ -1609,27 +1654,20 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     }
   }
 
-  bool IsModuleImport = SuggestedModule && getLangOpts().Modules &&
-                        SuggestedModule.getModule()->getTopLevelModuleName() !=
-                            getLangOpts().ImplementationOfModule;
+  // Should we enter the source file? Set to false if either the source file is
+  // known to have no effect beyond its effect on module visibility -- that is,
+  // if it's got an include guard that is already defined or is a modular header
+  // we've imported or already built.
+  bool ShouldEnter = true;
 
-  if (Callbacks && !IsModuleImport) {
-    // Notify the callback object that we've seen an inclusion directive.
-    // For a module import, we delay this until we've loaded the module.
-    // FIXME: Why?
-    Callbacks->InclusionDirective(HashLoc, IncludeTok,
-                                  LangOpts.MSVCCompat ? NormalizedPath.c_str()
-                                                      : Filename,
-                                  isAngled, FilenameRange, File, SearchPath,
-                                  RelativePath, /*ImportedModule=*/nullptr);
-  }
-
-  if (!File)
-    return;
-
-  // If we are supposed to import a module rather than including the header,
-  // do so now.
-  if (IsModuleImport) {
+  // Determine whether we should try to import the module for this #include, if
+  // there is one. Don't do so if precompiled module support is disabled or we
+  // are processing this module textually (because we're building the module).
+  if (File && SuggestedModule && getLangOpts().Modules &&
+      SuggestedModule.getModule()->getTopLevelModuleName() !=
+          getLangOpts().CurrentModule &&
+      SuggestedModule.getModule()->getTopLevelModuleName() !=
+          getLangOpts().ImplementationOfModule) {
     // Compute the module access path corresponding to this module.
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?
@@ -1640,51 +1678,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     std::reverse(Path.begin(), Path.end());
 
     // Warn that we're replacing the include/import with a module import.
-    SmallString<128> PathString;
-    for (unsigned I = 0, N = Path.size(); I != N; ++I) {
-      if (I)
-        PathString += '.';
-      PathString += Path[I].first->getName();
-    }
-    int IncludeKind = 0;
-    
-    switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {
-    case tok::pp_include:
-      IncludeKind = 0;
-      break;
-      
-    case tok::pp_import:
-      IncludeKind = 1;
-      break;        
-        
-    case tok::pp_include_next:
-      IncludeKind = 2;
-      break;
-        
-    case tok::pp___include_macros:
-      IncludeKind = 3;
-      break;
-        
-    default:
-      llvm_unreachable("unknown include directive kind");
-    }
-
-    // Determine whether we are actually building the module that this
-    // include directive maps to.
-    bool BuildingImportedModule
-      = Path[0].first->getName() == getLangOpts().CurrentModule;
-
-    if (!BuildingImportedModule && getLangOpts().ObjC2) {
-      // If we're not building the imported module, warn that we're going
-      // to automatically turn this inclusion directive into a module import.
-      // We only do this in Objective-C, where we have a module-import syntax.
-      CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
-                                   /*IsTokenRange=*/false);
-      Diag(HashLoc, diag::warn_auto_module_import)
-          << IncludeKind << PathString
-          << FixItHint::CreateReplacement(
-                 ReplaceRange, ("@import " + PathString + ";").str());
-    }
+    // We only do this in Objective-C, where we have a module-import syntax.
+    if (getLangOpts().ObjC2)
+      diagnoseAutoModuleImport(*this, HashLoc, IncludeTok, Path, CharEnd);
     
     // Load the module to import its macros. We'll make the declarations
     // visible when the parser gets here.
@@ -1696,57 +1692,43 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     assert((Imported == nullptr || Imported == SuggestedModule.getModule()) &&
            "the imported module is different than the suggested one");
 
-    if (!Imported && hadModuleLoaderFatalFailure()) {
-      // With a fatal failure in the module loader, we abort parsing.
-      Token &Result = IncludeTok;
-      if (CurLexer) {
-        Result.startToken();
-        CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd, tok::eof);
-        CurLexer->cutOffLexing();
-      } else {
-        assert(CurPTHLexer && "#include but no current lexer set!");
-        CurPTHLexer->getEOF(Result);
+    if (Imported)
+      ShouldEnter = false;
+    else if (Imported.isMissingExpected()) {
+      // We failed to find a submodule that we assumed would exist (because it
+      // was in the directory of an umbrella header, for instance), but no
+      // actual module exists for it (because the umbrella header is
+      // incomplete).  Treat this as a textual inclusion.
+      SuggestedModule = ModuleMap::KnownHeader();
+    } else {
+      // We hit an error processing the import. Bail out.
+      if (hadModuleLoaderFatalFailure()) {
+        // With a fatal failure in the module loader, we abort parsing.
+        Token &Result = IncludeTok;
+        if (CurLexer) {
+          Result.startToken();
+          CurLexer->FormTokenWithChars(Result, CurLexer->BufferEnd, tok::eof);
+          CurLexer->cutOffLexing();
+        } else {
+          assert(CurPTHLexer && "#include but no current lexer set!");
+          CurPTHLexer->getEOF(Result);
+        }
       }
-      return;
-    }
-
-    // If this header isn't part of the module we're building, we're done.
-    if (!BuildingImportedModule && Imported) {
-      if (Callbacks) {
-        Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
-                                      FilenameRange, File,
-                                      SearchPath, RelativePath, Imported);
-      }
-
-      // Make the macros from this module visible now.
-      makeModuleVisible(Imported, IncludeTok.getLocation());
-
-      if (IncludeKind != 3) {
-        // Let the parser know that we hit a module import, and it should
-        // make the module visible.
-        EnterAnnotationToken(*this, HashLoc, End, tok::annot_module_include,
-                             Imported);
-      }
-      return;
-    }
-
-    // If we failed to find a submodule that we expected to find, we can
-    // continue. Otherwise, there's an error in the included file, so we
-    // don't want to include it.
-    if (!BuildingImportedModule && !Imported.isMissingExpected()) {
       return;
     }
   }
 
-  if (Callbacks && IsModuleImport) {
-    // We didn't notify the callback object that we've seen an inclusion
-    // directive before. Now that we are parsing the include normally and not
-    // turning it to a module import, notify the callback object.
-    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
-                                  FilenameRange, File,
-                                  SearchPath, RelativePath,
-                                  /*ImportedModule=*/nullptr);
+  if (Callbacks) {
+    // Notify the callback object that we've seen an inclusion directive.
+    Callbacks->InclusionDirective(
+        HashLoc, IncludeTok,
+        LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename, isAngled,
+        FilenameRange, File, SearchPath, RelativePath,
+        ShouldEnter ? nullptr : SuggestedModule.getModule());
   }
+
+  if (!File)
+    return;
   
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
@@ -1755,12 +1737,20 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     std::max(HeaderInfo.getFileDirFlavor(File),
              SourceMgr.getFileCharacteristic(FilenameTok.getLocation()));
 
+  // FIXME: If we have a suggested module, and we've already visited this file,
+  // don't bother entering it again. We know it has no further effect.
+
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
-  if (!HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport)) {
+  if (ShouldEnter &&
+      !HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport)) {
+    ShouldEnter = false;
     if (Callbacks)
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);
+  }
 
+  // If we don't need to enter the file, stop now.
+  if (!ShouldEnter) {
     // If this is a module import, make it visible if needed.
     if (auto *M = SuggestedModule.getModule()) {
       makeModuleVisible(M, HashLoc);
@@ -1786,9 +1776,6 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
 
   // Determine if we're switching to building a new submodule, and which one.
-  //
-  // FIXME: If we've already processed this header, just make it visible rather
-  // than entering it again.
   if (auto *M = SuggestedModule.getModule()) {
     assert(!CurSubmodule && "should not have marked this as a module yet");
     CurSubmodule = M;
