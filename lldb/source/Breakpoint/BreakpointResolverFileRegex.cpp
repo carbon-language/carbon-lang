@@ -29,10 +29,12 @@ using namespace lldb_private;
 BreakpointResolverFileRegex::BreakpointResolverFileRegex
 (
     Breakpoint *bkpt,
-    RegularExpression &regex
+    RegularExpression &regex,
+    bool exact_match
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::FileLineResolver),
-    m_regex (regex)
+    m_regex (regex),
+    m_exact_match (exact_match)
 {
 }
 
@@ -64,9 +66,8 @@ BreakpointResolverFileRegex::SearchCallback
     {
         SymbolContextList sc_list;
         const bool search_inlines = false;
-        const bool exact = false;
         
-        cu->ResolveSymbolContext (cu_file_spec, line_matches[i], search_inlines, exact, eSymbolContextEverything, sc_list);
+        cu->ResolveSymbolContext (cu_file_spec, line_matches[i], search_inlines, m_exact_match, eSymbolContextEverything, sc_list);
         const bool skip_prologue = true;
         
         BreakpointResolver::SetSCMatchesByLine (filter, sc_list, skip_prologue, m_regex.GetText());
@@ -85,7 +86,7 @@ BreakpointResolverFileRegex::GetDepth()
 void
 BreakpointResolverFileRegex::GetDescription (Stream *s)
 {
-    s->Printf ("source regex = \"%s\"", m_regex.GetText());
+    s->Printf ("source regex = \"%s\", exact_match = %d", m_regex.GetText(), m_exact_match);
 }
 
 void
@@ -97,7 +98,7 @@ BreakpointResolverFileRegex::Dump (Stream *s) const
 lldb::BreakpointResolverSP
 BreakpointResolverFileRegex::CopyForBreakpoint (Breakpoint &breakpoint)
 {
-    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverFileRegex(&breakpoint, m_regex));
+    lldb::BreakpointResolverSP ret_sp(new BreakpointResolverFileRegex(&breakpoint, m_regex, m_exact_match));
     return ret_sp;
 }
 

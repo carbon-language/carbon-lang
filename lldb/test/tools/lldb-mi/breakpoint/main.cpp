@@ -9,6 +9,8 @@
 
 #include <cstdio>
 
+// BP_before_main
+
 int
 main(int argc, char const *argv[])
 {

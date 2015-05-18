@@ -115,7 +115,8 @@ public:
             m_exception_language (eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate),
             m_one_shot (false),
-            m_all_files (false)
+            m_all_files (false),
+            m_move_to_nearest_code (eLazyBoolCalculate)
         {
         }
 
@@ -249,6 +250,22 @@ public:
                         error.SetErrorStringWithFormat ("invalid line number: %s.", option_arg);
                     break;
                 }
+
+                case 'm':
+                {
+                    bool success;
+                    bool value;
+                    value = Args::StringToBoolean (option_arg, true, &success);
+                    if (value)
+                        m_move_to_nearest_code = eLazyBoolYes;
+                    else
+                        m_move_to_nearest_code = eLazyBoolNo;
+                        
+                    if (!success)
+                        error.SetErrorStringWithFormat ("Invalid boolean value for move-to-nearest-code option: '%s'", option_arg);
+                    break;
+                }
+
                 case 'M':
                     m_func_names.push_back (option_arg);
                     m_func_name_type_mask |= eFunctionNameTypeMethod;
@@ -361,6 +378,7 @@ public:
             m_breakpoint_names.clear();
             m_all_files = false;
             m_exception_extra_args.Clear();
+            m_move_to_nearest_code = eLazyBoolCalculate;
         }
     
         const OptionDefinition*
@@ -400,6 +418,7 @@ public:
         bool m_use_dummy;
         bool m_all_files;
         Args m_exception_extra_args;
+        LazyBool m_move_to_nearest_code;
 
     };
 
@@ -477,7 +496,8 @@ protected:
                                                    check_inlines,
                                                    m_options.m_skip_prologue,
                                                    internal,
-                                                   m_options.m_hardware).get();
+                                                   m_options.m_hardware,
+                                                   m_options.m_move_to_nearest_code).get();
                 }
                 break;
 
@@ -558,7 +578,8 @@ protected:
                                                               &(m_options.m_filenames),
                                                               regexp,
                                                               internal,
-                                                              m_options.m_hardware).get();
+                                                              m_options.m_hardware,
+                                                              m_options.m_move_to_nearest_code).get();
                 }
                 break;
             case eSetTypeException:
@@ -689,6 +710,7 @@ private:
 #define LLDB_OPT_FILE ( LLDB_OPT_SET_FROM_TO(1, 9) & ~LLDB_OPT_SET_2 )
 #define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_FROM_TO(1, 10) & ~LLDB_OPT_SET_10 )
 #define LLDB_OPT_SKIP_PROLOGUE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_FROM_TO(3,8) )
+#define LLDB_OPT_MOVE_TO_NEAREST_CODE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_9 )
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
@@ -788,6 +810,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 
     { LLDB_OPT_SET_ALL, false, "breakpoint-name", 'N', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBreakpointName,
         "Adds this to the list of names for this breakopint."},
+
+    { LLDB_OPT_MOVE_TO_NEAREST_CODE, false, "move-to-nearest-code", 'm', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
+        "Move breakpoints to nearest code. If not set the target.move-to-nearest-code setting is used." },
 
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };

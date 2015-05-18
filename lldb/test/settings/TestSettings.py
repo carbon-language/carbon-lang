@@ -450,6 +450,7 @@ class SettingsCommandTestCase(TestBase):
                                  "thread-format",
                                  "use-external-editor",
                                  "target.default-arch",
+                                 "target.move-to-nearest-code",
                                  "target.expr-prefix",
                                  "target.prefer-dynamic-value",
                                  "target.enable-synthetic-value",
