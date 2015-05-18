@@ -35,7 +35,7 @@ BAD-TYPE-TABLE-FORWARD-REF: Invalid TYPE table: Only named structs can be forwar
 BAD-BITWIDTH: Bitwidth for integer type out of range
 BAD-ALIGN: Invalid alignment value
 MISMATCHED-EXPLICIT-GEP: Explicit gep type does not match pointee type of pointer operand
-MISMATCHED-EXPLICIT-LOAD: Explicit load type does not match pointee type of pointer operand
+MISMATCHED-EXPLICIT-LOAD: Explicit load/store type does not match pointee type of pointer operand
 MISMATCHED-EXPLICIT-GEP-OPERATOR: Explicit gep operator type does not match pointee type of pointer operand
 MISMATCHED-EXPLICIT-CALL: Explicit call type does not match pointee type of callee operand
 NON-FUNCTION-EXPLICIT-CALL: Explicit call type is not a function type
@@ -121,7 +121,7 @@ HUGE-FWDREF: Invalid record
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-load-pointer-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=LOAD-BAD-TYPE %s
 
-LOAD-BAD-TYPE: Load operand is not a pointer type
+LOAD-BAD-TYPE: Load/Store operand is not a pointer type
 
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-GCTable-overflow.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=GCTABLE-OFLOW %s
@@ -137,3 +137,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-extract-0-indices.bc 2>&1 | 
 RUN:   FileCheck --check-prefix=EXTRACT-0-IDXS %s
 
 EXTRACT-0-IDXS: EXTRACTVAL: Invalid instruction with 0 indices
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-load-ptr-type.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=BAD-LOAD-PTR-TYPE %s
+
+BAD-LOAD-PTR-TYPE: Cannot load/store from pointer

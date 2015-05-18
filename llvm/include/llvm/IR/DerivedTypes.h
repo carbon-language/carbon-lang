@@ -464,6 +464,9 @@ public:
   /// element type.
   static bool isValidElementType(Type *ElemTy);
 
+  /// Return true if we can load or store from a pointer to this type.
+  static bool isLoadableOrStorableType(Type *ElemTy);
+
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return getSubclassData(); }
 
