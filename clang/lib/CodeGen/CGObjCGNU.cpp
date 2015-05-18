@@ -2570,8 +2570,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
             true);
        if (TheClass) {
          TheClass = llvm::ConstantExpr::getBitCast(TheClass, PtrTy);
-         Builder.CreateCall2(RegisterAlias, TheClass,
-            MakeConstantString(iter->second));
+         Builder.CreateCall(RegisterAlias,
+                            {TheClass, MakeConstantString(iter->second)});
        }
     }
     // Jump to end:
@@ -2695,7 +2695,7 @@ void CGObjCGNU::EmitObjCWeakAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  B.CreateCall2(WeakAssignFn, src, dst);
+  B.CreateCall(WeakAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitObjCGlobalAssign(CodeGenFunction &CGF,
@@ -2704,11 +2704,9 @@ void CGObjCGNU::EmitObjCGlobalAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  if (!threadlocal)
-    B.CreateCall2(GlobalAssignFn, src, dst);
-  else
-    // FIXME. Add threadloca assign API
-    llvm_unreachable("EmitObjCGlobalAssign - Threal Local API NYI");
+  // FIXME. Add threadloca assign API
+  assert(!threadlocal && "EmitObjCGlobalAssign - Threal Local API NYI");
+  B.CreateCall(GlobalAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitObjCIvarAssign(CodeGenFunction &CGF,
@@ -2717,7 +2715,7 @@ void CGObjCGNU::EmitObjCIvarAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, IdTy);
-  B.CreateCall3(IvarAssignFn, src, dst, ivarOffset);
+  B.CreateCall(IvarAssignFn, {src, dst, ivarOffset});
 }
 
 void CGObjCGNU::EmitObjCStrongCastAssign(CodeGenFunction &CGF,
@@ -2725,7 +2723,7 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  B.CreateCall2(StrongCastAssignFn, src, dst);
+  B.CreateCall(StrongCastAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitGCMemmoveCollectable(CodeGenFunction &CGF,
@@ -2736,7 +2734,7 @@ void CGObjCGNU::EmitGCMemmoveCollectable(CodeGenFunction &CGF,
   DestPtr = EnforceType(B, DestPtr, PtrTy);
   SrcPtr = EnforceType(B, SrcPtr, PtrTy);
 
-  B.CreateCall3(MemMoveFn, DestPtr, SrcPtr, Size);
+  B.CreateCall(MemMoveFn, {DestPtr, SrcPtr, Size});
 }
 
 llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(

@@ -783,11 +783,11 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, const Stmt *S) {
 
   unsigned Counter = (*RegionCounterMap)[S];
   auto *I8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  Builder.CreateCall4(CGM.getIntrinsic(llvm::Intrinsic::instrprof_increment),
-                      llvm::ConstantExpr::getBitCast(FuncNameVar, I8PtrTy),
+  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::instrprof_increment),
+                     {llvm::ConstantExpr::getBitCast(FuncNameVar, I8PtrTy),
                       Builder.getInt64(FunctionHash),
                       Builder.getInt32(NumRegionCounters),
-                      Builder.getInt32(Counter));
+                      Builder.getInt32(Counter)});
 }
 
 void CodeGenPGO::loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,

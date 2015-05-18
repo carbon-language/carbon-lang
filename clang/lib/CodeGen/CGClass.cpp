@@ -780,9 +780,9 @@ void CodeGenFunction::EmitAsanPrologueOrEpilogue(bool Prologue) {
     if (PoisonSize < AsanAlignment || !SSV[i].Size ||
         (NextField % AsanAlignment) != 0)
       continue;
-    Builder.CreateCall2(
-        F, Builder.CreateAdd(ThisPtr, Builder.getIntN(PtrSize, EndOffset)),
-        Builder.getIntN(PtrSize, PoisonSize));
+    Builder.CreateCall(
+        F, {Builder.CreateAdd(ThisPtr, Builder.getIntN(PtrSize, EndOffset)),
+            Builder.getIntN(PtrSize, PoisonSize)});
   }
 }
 
@@ -2205,9 +2205,9 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
   llvm::Value *BitSetName = llvm::MetadataAsValue::get(
       getLLVMContext(), llvm::MDString::get(getLLVMContext(), Out.str()));
 
-  llvm::Value *BitSetTest = Builder.CreateCall2(
+  llvm::Value *BitSetTest = Builder.CreateCall(
       CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
-      Builder.CreateBitCast(VTable, CGM.Int8PtrTy), BitSetName);
+      {Builder.CreateBitCast(VTable, CGM.Int8PtrTy), BitSetName});
 
   llvm::BasicBlock *ContBlock = createBasicBlock("vtable.check.cont");
   llvm::BasicBlock *TrapBlock = createBasicBlock("vtable.check.trap");
@@ -2215,7 +2215,7 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
   Builder.CreateCondBr(BitSetTest, ContBlock, TrapBlock);
 
   EmitBlock(TrapBlock);
-  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
+  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap), {});
   Builder.CreateUnreachable();
 
   EmitBlock(ContBlock);

@@ -160,7 +160,7 @@ namespace {
 
     void Emit(CodeGenFunction &CGF, Flags flags) override {
       if (!MightThrow) {
-        CGF.Builder.CreateCall(Fn)->setDoesNotThrow();
+        CGF.Builder.CreateCall(Fn, {})->setDoesNotThrow();
         return;
       }
 

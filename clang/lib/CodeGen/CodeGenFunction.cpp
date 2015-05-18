@@ -929,7 +929,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
                 "missing_return", EmitCheckSourceLocation(FD->getLocation()),
                 None);
     } else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
-      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
+      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap), {});
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
   }

@@ -1413,9 +1413,9 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
         InsertPair.first->second = ParentCGF.EscapedLocals.size() - 1;
       int FrameEscapeIdx = InsertPair.first->second;
       // call i8* @llvm.framerecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
-      RecoverCall =
-          Builder.CreateCall3(FrameRecoverFn, ParentI8Fn, ParentFP,
-                              llvm::ConstantInt::get(Int32Ty, FrameEscapeIdx));
+      RecoverCall = Builder.CreateCall(
+          FrameRecoverFn, {ParentI8Fn, ParentFP,
+                           llvm::ConstantInt::get(Int32Ty, FrameEscapeIdx)});
 
     } else {
       // If the parent didn't have an alloca, we're doing some nested outlining.

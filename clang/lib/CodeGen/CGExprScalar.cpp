@@ -2343,7 +2343,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   llvm::Function *intrinsic = CGF.CGM.getIntrinsic(IID, opTy);
 
-  Value *resultAndOverflow = Builder.CreateCall2(intrinsic, Ops.LHS, Ops.RHS);
+  Value *resultAndOverflow = Builder.CreateCall(intrinsic, {Ops.LHS, Ops.RHS});
   Value *result = Builder.CreateExtractValue(resultAndOverflow, 0);
   Value *overflow = Builder.CreateExtractValue(resultAndOverflow, 1);
 
@@ -2523,10 +2523,9 @@ static Value* buildFMulAdd(llvm::BinaryOperator *MulOp, Value *Addend,
         "neg");
   }
 
-  Value *FMulAdd =
-    Builder.CreateCall3(
+  Value *FMulAdd = Builder.CreateCall(
       CGF.CGM.getIntrinsic(llvm::Intrinsic::fmuladd, Addend->getType()),
-                           MulOp0, MulOp1, Addend);
+      {MulOp0, MulOp1, Addend});
    MulOp->eraseFromParent();
 
    return FMulAdd;
@@ -2904,7 +2903,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
 
       Value *CR6Param = Builder.getInt32(CR6);
       llvm::Function *F = CGF.CGM.getIntrinsic(ID);
-      Result = Builder.CreateCall3(F, CR6Param, FirstVecArg, SecondVecArg, "");
+      Result = Builder.CreateCall(F, {CR6Param, FirstVecArg, SecondVecArg});
       return EmitScalarConversion(Result, CGF.getContext().BoolTy, E->getType());
     }
 

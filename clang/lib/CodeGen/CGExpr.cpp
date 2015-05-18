@@ -535,7 +535,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     llvm::Value *Min = Builder.getFalse();
     llvm::Value *CastAddr = Builder.CreateBitCast(Address, Int8PtrTy);
     llvm::Value *LargeEnough =
-        Builder.CreateICmpUGE(Builder.CreateCall2(F, CastAddr, Min),
+        Builder.CreateICmpUGE(Builder.CreateCall(F, {CastAddr, Min}),
                               llvm::ConstantInt::get(IntPtrTy, Size));
     Checks.push_back(std::make_pair(LargeEnough, SanitizerKind::ObjectSize));
   }
@@ -1720,8 +1720,8 @@ void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
   llvm::Value *Value = Src.getScalarVal();
   if (OrigTy->isPointerTy())
     Value = Builder.CreatePtrToInt(Value, Ty);
-  Builder.CreateCall2(F, llvm::MetadataAsValue::get(Ty->getContext(), RegName),
-                      Value);
+  Builder.CreateCall(
+      F, {llvm::MetadataAsValue::get(Ty->getContext(), RegName), Value});
 }
 
 // setObjCGCLValueClass - sets class of the lvalue for the purpose of
@@ -2404,7 +2404,7 @@ void CodeGenFunction::EmitTrapCheck(llvm::Value *Checked) {
     Builder.CreateCondBr(Checked, Cont, TrapBB);
     EmitBlock(TrapBB);
     llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
-    llvm::CallInst *TrapCall = Builder.CreateCall(F);
+    llvm::CallInst *TrapCall = Builder.CreateCall(F, {});
     TrapCall->setDoesNotReturn();
     TrapCall->setDoesNotThrow();
     Builder.CreateUnreachable();
