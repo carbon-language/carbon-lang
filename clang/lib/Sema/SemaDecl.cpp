@@ -14113,7 +14113,26 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
 void Sema::ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
   checkModuleImportContext(*this, Mod, DirectiveLoc, CurContext);
 
-  // FIXME: Should we synthesize an ImportDecl here?
+  // Determine whether we're in the #include buffer for a module. The #includes
+  // in that buffer do not qualify as module imports; they're just an
+  // implementation detail of us building the module.
+  //
+  // FIXME: Should we even get ActOnModuleInclude calls for those?
+  bool IsInModuleIncludes =
+      TUKind == TU_Module &&
+      getSourceManager().isWrittenInMainFile(DirectiveLoc);
+
+  // If this module import was due to an inclusion directive, create an 
+  // implicit import declaration to capture it in the AST.
+  if (!IsInModuleIncludes) {
+    TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
+    ImportDecl *ImportD = ImportDecl::CreateImplicit(getASTContext(), TU,
+                                                     DirectiveLoc, Mod,
+                                                     DirectiveLoc);
+    TU->addDecl(ImportD);
+    Consumer.HandleImplicitImportDecl(ImportD);
+  }
+  
   getModuleLoader().makeModuleVisible(Mod, Module::AllVisible, DirectiveLoc);
   VisibleModules.setVisible(Mod, DirectiveLoc);
 }

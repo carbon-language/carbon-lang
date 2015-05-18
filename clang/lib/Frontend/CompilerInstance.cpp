@@ -1612,25 +1612,6 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
                      Module, ImportLoc);
   }
 
-  // Determine whether we're in the #include buffer for a module. The #includes
-  // in that buffer do not qualify as module imports; they're just an
-  // implementation detail of us building the module.
-  bool IsInModuleIncludes = !getLangOpts().CurrentModule.empty() &&
-                            getSourceManager().getFileID(ImportLoc) ==
-                                getSourceManager().getMainFileID();
-
-  // If this module import was due to an inclusion directive, create an 
-  // implicit import declaration to capture it in the AST.
-  if (IsInclusionDirective && hasASTContext() && !IsInModuleIncludes) {
-    TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
-    ImportDecl *ImportD = ImportDecl::CreateImplicit(getASTContext(), TU,
-                                                     ImportLoc, Module,
-                                                     Path.back().second);
-    TU->addDecl(ImportD);
-    if (Consumer)
-      Consumer->HandleImplicitImportDecl(ImportD);
-  }
-  
   LastModuleImportLoc = ImportLoc;
   LastModuleImportResult = ModuleLoadResult(Module, false);
   return LastModuleImportResult;
