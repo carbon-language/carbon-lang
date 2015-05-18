@@ -1330,10 +1330,6 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
       OS.indent(Depth) << "Memory dependences are safe\n";
   }
 
-  OS.indent(Depth) << "Store to invariant address was "
-                   << (StoreToLoopInvariantAddress ? "" : "not ")
-                   << "found in loop.\n";
-
   if (Report)
     OS.indent(Depth) << "Report: " << Report->str() << "\n";
 
@@ -1349,6 +1345,10 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   // List the pair of accesses need run-time checks to prove independence.
   PtrRtCheck.print(OS, Depth);
   OS << "\n";
+
+  OS.indent(Depth) << "Store to invariant address was "
+                   << (StoreToLoopInvariantAddress ? "" : "not ")
+                   << "found in loop.\n";
 }
 
 const LoopAccessInfo &

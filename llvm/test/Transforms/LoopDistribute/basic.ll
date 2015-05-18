@@ -44,7 +44,6 @@ entry:
 ; ANALYSIS: for.body:
 ; ANALYSIS-NEXT: Memory dependences are safe{{$}}
 ; ANALYSIS: for.body.ldist1:
-; ANALYSIS-NEXT: Store to invariant address was not found in loop
 ; ANALYSIS-NEXT: Report: unsafe dependent memory operations in loop
 
 
