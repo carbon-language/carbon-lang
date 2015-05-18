@@ -30,13 +30,14 @@ namespace lldb_private
 class ExceptionRecord
 {
   public:
-    explicit ExceptionRecord(const EXCEPTION_RECORD &record)
+    ExceptionRecord(const EXCEPTION_RECORD &record, lldb::tid_t thread_id)
     {
         m_code = record.ExceptionCode;
         m_continuable = (record.ExceptionFlags == 0);
         if (record.ExceptionRecord)
-            m_next_exception.reset(new ExceptionRecord(*record.ExceptionRecord));
+            m_next_exception.reset(new ExceptionRecord(*record.ExceptionRecord, thread_id));
         m_exception_addr = reinterpret_cast<lldb::addr_t>(record.ExceptionAddress);
+        m_thread_id = thread_id;
         m_arguments.assign(record.ExceptionInformation, record.ExceptionInformation + record.NumberParameters);
     }
     virtual ~ExceptionRecord() {}
@@ -62,11 +63,18 @@ class ExceptionRecord
         return m_exception_addr;
     }
 
+    lldb::tid_t
+    GetThreadID() const
+    {
+        return m_thread_id;
+    }
+
   private:
     DWORD m_code;
     bool m_continuable;
     std::shared_ptr<ExceptionRecord> m_next_exception;
     lldb::addr_t m_exception_addr;
+    lldb::tid_t m_thread_id;
     std::vector<ULONG_PTR> m_arguments;
 };
 }

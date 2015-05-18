@@ -43,9 +43,9 @@ LocalDebugDelegate::OnCreateThread(const HostThread &thread)
 }
 
 void
-LocalDebugDelegate::OnExitThread(const HostThread &thread)
+LocalDebugDelegate::OnExitThread(lldb::tid_t thread_id, uint32_t exit_code)
 {
-    ((ProcessWindows &)*m_process).OnExitThread(thread);
+    ((ProcessWindows &)*m_process).OnExitThread(thread_id, exit_code);
 }
 
 void
