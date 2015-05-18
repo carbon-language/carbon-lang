@@ -344,6 +344,7 @@ bool AccessAnalysis::canCheckPtrAtRT(
 
         DEBUG(dbgs() << "LAA: Found a runtime check ptr:" << *Ptr << '\n');
       } else {
+        DEBUG(dbgs() << "LAA: Can't find bounds for ptr:" << *Ptr << '\n');
         CanDoRT = false;
       }
     }
