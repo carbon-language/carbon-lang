@@ -25,6 +25,7 @@ import multiprocessing
 import os
 import platform
 import re
+import dotest_args
 import shlex
 import subprocess
 import sys
@@ -152,16 +153,16 @@ def walk_and_invoke(test_directory, test_subdir, dotest_options, num_threads):
 
     return (timed_out, failed, passed)
 
-def getExpectedTimeouts(dotest_options):
+def getExpectedTimeouts(platform_name):
     # returns a set of test filenames that might timeout
     # are we running against a remote target?
-    m = re.search('\sremote-(\w+)', dotest_options)
-    if m:
-        target = m.group(1)
-        remote = True
-    else:
+    if platform_name is None:
         target = sys.platform
         remote = False
+    else:
+        m = re.search('remote-(\w+)', platform_name)
+        target = m.group(1)
+        remote = True
 
     expected_timeout = set()
 
@@ -225,7 +226,10 @@ Run lldb test suite using a separate process for each test file.
                       help="""The number of threads to use when running tests separately.""")
 
     opts, args = parser.parse_args()
-    dotest_options = opts.dotest_options
+    dotest_option_string = opts.dotest_options
+
+    dotest_argv = shlex.split(dotest_option_string)
+    dotest_options = dotest_args.getArguments(dotest_argv)
 
     # The root directory was specified on the command line
     if len(args) == 0:
@@ -245,13 +249,13 @@ Run lldb test suite using a separate process for each test file.
         num_threads = 1
 
     system_info = " ".join(platform.uname())
-    (timed_out, failed, passed) = walk_and_invoke(test_directory, test_subdir, dotest_options,
+    (timed_out, failed, passed) = walk_and_invoke(test_directory, test_subdir, dotest_option_string,
                                                   num_threads)
     timed_out = set(timed_out)
     num_tests = len(failed) + len(passed)
 
     # remove expected timeouts from failures
-    expected_timeout = getExpectedTimeouts(dotest_options)
+    expected_timeout = getExpectedTimeouts(dotest_options.lldb_platform_name)
     for xtime in expected_timeout:
         if xtime in timed_out:
             timed_out.remove(xtime)
