@@ -12624,7 +12624,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode, uint
         { 0xf800d001, 0xf000c000, ARMV5_ABOVE,   eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
-        { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
+        { 0xffffff87, 0x00004700, ARMvAll,       eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
         // bxj
         { 0xfff0ffff, 0xf3c08f00, ARMV5J_ABOVE,  eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
         // compare and branch
