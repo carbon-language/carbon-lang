@@ -523,7 +523,12 @@ def parseOptionsAndInitTestdirs():
         if platform_system == 'Darwin' and args.apple_sdk:
             compilers = [commands.getoutput('xcrun -sdk "%s" -find clang 2> /dev/null' % (args.apple_sdk))]
         else:
-            compilers = ['clang']
+            # 'clang' on ubuntu 14.04 is 3.4 so we try clang-3.5 first
+            candidateCompilers = ['clang-3.5', 'clang', 'gcc']
+            for candidate in candidateCompilers:
+                if which(candidate):
+                    compilers = [candidate]
+                    break
 
     if args.channels:
         lldbtest_config.channels = args.channels
@@ -845,13 +850,18 @@ def getOutputPaths(lldbRootDirectory):
     result = []
 
     if sys.platform == 'darwin':
-        result.extend(getXcodeOutputPaths(lldbRootDirectory))
+        result.append(getXcodeOutputPaths(lldbRootDirectory))
 
     # cmake builds?  look for build or build/host folder next to llvm directory
-    # lldb is located in llvm/tools/lldb
+    # lldb is located in llvm/tools/lldb so we need to go up three levels
     llvmParentDir = os.path.abspath(os.path.join(lldbRootDirectory, os.pardir, os.pardir, os.pardir))
-    result.extend(os.path.join(llvmParentDir, 'build', 'bin'))
-    result.extend(os.path.join(llvmParentDir, 'build', 'host', 'bin'))
+    result.append(os.path.join(llvmParentDir, 'build', 'bin'))
+    result.append(os.path.join(llvmParentDir, 'build', 'host', 'bin'))
+
+    # some cmake developers keep their build directory beside their lldb directory
+    lldbParentDir = os.path.abspath(os.path.join(lldbRootDirectory, os.pardir))
+    result.append(os.path.join(lldbParentDir, 'build', 'bin'))
+    result.append(os.path.join(lldbParentDir, 'build', 'host', 'bin'))
 
     return result
 
