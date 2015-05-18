@@ -928,6 +928,40 @@ def parseOptionsAndInitTestdirs():
         #print "sys.stderr:", sys.stderr
         #print "sys.stdout:", sys.stdout
 
+def getXcodeOutputPaths(lldbRootDirectory):
+    result = []
+
+    # These are for xcode build directories.
+    xcode3_build_dir = ['build']
+    xcode4_build_dir = ['build', 'lldb', 'Build', 'Products']
+
+    configurations = [['Debug'], ['DebugClang'], ['Release'], ['BuildAndIntegration']]
+    xcode_build_dirs = [xcode3_build_dir, xcode4_build_dir]
+    for configuration in configurations:
+        for xcode_build_dir in xcode_build_dirs:
+            outputPath = os.path.join(lldbRootDirectory, *(xcode_build_dir+configuration) )
+            result.append(outputPath)
+
+    return result
+
+def getOutputPaths(lldbRootDirectory):
+    """
+    Returns typical build output paths for the lldb executable
+
+    lldbDirectory - path to the root of the lldb svn/git repo
+    """
+    result = []
+
+    if sys.platform == 'darwin':
+        result.extend(getXcodeOutputPaths(lldbRootDirectory))
+
+    # cmake builds?  look for build or build/host folder next to llvm directory
+    # lldb is located in llvm/tools/lldb
+    llvmParentDir = os.path.abspath(os.path.join(lldbRootDirectory, os.pardir, os.pardir, os.pardir))
+    result.extend(os.path.join(llvmParentDir, 'build', 'bin'))
+    result.extend(os.path.join(llvmParentDir, 'build', 'host', 'bin'))
+
+    return result
 
 def setupSysPath():
     """
@@ -985,17 +1019,8 @@ def setupSysPath():
     sys.path.insert(0, toolsLLDBServerPath)  # Adding test/tools/lldb-server to the path makes it easy
                                              # to "import lldbgdbserverutils" from the lldb-server tests
 
-    # This is our base name component.
-    base = os.path.abspath(os.path.join(scriptPath, os.pardir))
-
-    # These are for xcode build directories.
-    xcode3_build_dir = ['build']
-    xcode4_build_dir = ['build', 'lldb', 'Build', 'Products']
-    dbg = ['Debug']
-    dbc = ['DebugClang']
-    rel = ['Release']
-    bai = ['BuildAndIntegration']
-    python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
+    # This is the root of the lldb git/svn checkout
+    lldbRootDirectory = os.path.abspath(os.path.join(scriptPath, os.pardir))
 
     # Some of the tests can invoke the 'lldb' command directly.
     # We'll try to locate the appropriate executable right here.
@@ -1012,35 +1037,12 @@ def setupSysPath():
             lldbtest_config.lldbExec = os.environ["LLDB_EXEC"]
 
     if not lldbtest_config.lldbExec:
-        executable = ['lldb']
-        dbgExec  = os.path.join(base, *(xcode3_build_dir + dbg + executable))
-        dbgExec2 = os.path.join(base, *(xcode4_build_dir + dbg + executable))
-        dbcExec  = os.path.join(base, *(xcode3_build_dir + dbc + executable))
-        dbcExec2 = os.path.join(base, *(xcode4_build_dir + dbc + executable))
-        relExec  = os.path.join(base, *(xcode3_build_dir + rel + executable))
-        relExec2 = os.path.join(base, *(xcode4_build_dir + rel + executable))
-        baiExec  = os.path.join(base, *(xcode3_build_dir + bai + executable))
-        baiExec2 = os.path.join(base, *(xcode4_build_dir + bai + executable))
-    
-        # The 'lldb' executable built here in the source tree.
-        if is_exe(dbgExec):
-            lldbtest_config.lldbExec = dbgExec
-        elif is_exe(dbgExec2):
-            lldbtest_config.lldbExec = dbgExec2
-        elif is_exe(dbcExec):
-            lldbtest_config.lldbExec = dbcExec
-        elif is_exe(dbcExec2):
-            lldbtest_config.lldbExec = dbcExec2
-        elif is_exe(relExec):
-            lldbtest_config.lldbExec = relExec
-        elif is_exe(relExec2):
-            lldbtest_config.lldbExec = relExec2
-        elif is_exe(baiExec):
-            lldbtest_config.lldbExec = baiExec
-        elif is_exe(baiExec2):
-            lldbtest_config.lldbExec = baiExec2
-        elif lldbtest_config.lldbExec:
-            lldbtest_config.lldbExec = lldbtest_config.lldbExec
+        outputPaths = getOutputPaths(lldbRootDirectory)
+        for outputPath in outputPaths:
+            candidatePath = os.path.join(outputPath, 'lldb')
+            if is_exe(candidatePath):
+                lldbtest_config.lldbExec = candidatePath
+                break
 
     if not lldbtest_config.lldbExec:
         # Last, check the path
@@ -1079,23 +1081,23 @@ def setupSysPath():
 
     # Skip printing svn/git information when running in parsable (lit-test compatibility) mode
     if not svn_silent and not parsable:
-        if os.path.isdir(os.path.join(base, '.svn')) and which("svn") is not None:
-            pipe = subprocess.Popen([which("svn"), "info", base], stdout = subprocess.PIPE)
+        if os.path.isdir(os.path.join(lldbRootDirectory, '.svn')) and which("svn") is not None:
+            pipe = subprocess.Popen([which("svn"), "info", lldbRootDirectory], stdout = subprocess.PIPE)
             svn_info = pipe.stdout.read()
-        elif os.path.isdir(os.path.join(base, '.git')) and which("git") is not None:
-            pipe = subprocess.Popen([which("git"), "svn", "info", base], stdout = subprocess.PIPE)
+        elif os.path.isdir(os.path.join(lldbRootDirectory, '.git')) and which("git") is not None:
+            pipe = subprocess.Popen([which("git"), "svn", "info", lldbRootDirectory], stdout = subprocess.PIPE)
             svn_info = pipe.stdout.read()
         if not noHeaders:
             print svn_info
 
     global ignore
 
-    lldbPath = None
+    lldbPythonDir = None # The directory that contains 'lldb/__init__.py'
     if lldbFrameworkPath:
         candidatePath = os.path.join(lldbFrameworkPath, 'Resources', 'Python')
         if os.path.isfile(os.path.join(candidatePath, 'lldb/__init__.py')):
-            lldbPath = candidatePath
-        if not lldbPath:
+            lldbPythonDir = candidatePath
+        if not lldbPythonDir:
             print 'Resources/Python/lldb/__init__.py was not found in ' + lldbFrameworkPath
             sys.exit(-1)
     else:
@@ -1123,40 +1125,25 @@ def setupSysPath():
             if len(lines) >= 1 and lines[0].startswith("bind: Invalid command"):
                 lines.pop(0)
 
-            if len(lines) >= 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
-                lldbPath = lines[0]
+            # Taking the last line because lldb outputs
+            # 'Cannot read termcap database;\nusing dumb terminal settings.\n'
+            # before the path
+            if len(lines) >= 1 and os.path.isfile(os.path.join(lines[-1], init_in_python_dir)):
+                lldbPythonDir = lines[-1]
                 if "freebsd" in sys.platform or "linux" in sys.platform:
-                    os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')
+                    os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPythonDir, '..', '..')
         
-        if not lldbPath:
+        if not lldbPythonDir:
             if platform.system() == "Darwin":
-                dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))
-                dbgPath2 = os.path.join(base, *(xcode4_build_dir + dbg + python_resource_dir))
-                dbcPath  = os.path.join(base, *(xcode3_build_dir + dbc + python_resource_dir))
-                dbcPath2 = os.path.join(base, *(xcode4_build_dir + dbc + python_resource_dir))
-                relPath  = os.path.join(base, *(xcode3_build_dir + rel + python_resource_dir))
-                relPath2 = os.path.join(base, *(xcode4_build_dir + rel + python_resource_dir))
-                baiPath  = os.path.join(base, *(xcode3_build_dir + bai + python_resource_dir))
-                baiPath2 = os.path.join(base, *(xcode4_build_dir + bai + python_resource_dir))
+                python_resource_dir = ['LLDB.framework', 'Resources', 'Python']
+                outputPaths = getXcodeOutputPaths()
+                for outputPath in outputPaths:
+                    candidatePath = os.path.join(outputPath, python_resource_dir)
+                    if os.path.isfile(os.path.join(candidatePath, init_in_python_dir)):
+                        lldbPythonDir = candidatePath
+                        break
 
-                if os.path.isfile(os.path.join(dbgPath, init_in_python_dir)):
-                    lldbPath = dbgPath
-                elif os.path.isfile(os.path.join(dbgPath2, init_in_python_dir)):
-                    lldbPath = dbgPath2
-                elif os.path.isfile(os.path.join(dbcPath, init_in_python_dir)):
-                    lldbPath = dbcPath
-                elif os.path.isfile(os.path.join(dbcPath2, init_in_python_dir)):
-                    lldbPath = dbcPath2
-                elif os.path.isfile(os.path.join(relPath, init_in_python_dir)):
-                    lldbPath = relPath
-                elif os.path.isfile(os.path.join(relPath2, init_in_python_dir)):
-                    lldbPath = relPath2
-                elif os.path.isfile(os.path.join(baiPath, init_in_python_dir)):
-                    lldbPath = baiPath
-                elif os.path.isfile(os.path.join(baiPath2, init_in_python_dir)):
-                    lldbPath = baiPath2
-
-                if not lldbPath:
+                if not lldbPythonDir:
                     print 'This script requires lldb.py to be in either ' + dbgPath + ',',
                     print relPath + ', or ' + baiPath + '. Some tests might fail.'
             else:
@@ -1171,21 +1158,21 @@ def setupSysPath():
                 print "  4) The executable '%s' could not be found.  Please check " % lldbExecutable
                 print "     that it exists and is executable."
 
-    if lldbPath:
-        lldbPath = os.path.normpath(lldbPath)
+    if lldbPythonDir:
+        lldbPythonDir = os.path.normpath(lldbPythonDir)
         # Some of the code that uses this path assumes it hasn't resolved the Versions... link.  
         # If the path we've constructed looks like that, then we'll strip out the Versions/A part.
-        (before, frameWithVersion, after) = lldbPath.rpartition("LLDB.framework/Versions/A")
+        (before, frameWithVersion, after) = lldbPythonDir.rpartition("LLDB.framework/Versions/A")
         if frameWithVersion != "" :
-            lldbPath = before + "LLDB.framework" + after
+            lldbPythonDir = before + "LLDB.framework" + after
 
-        lldbPath = os.path.abspath(lldbPath)
+        lldbPythonDir = os.path.abspath(lldbPythonDir)
 
         # If tests need to find LLDB_FRAMEWORK, now they can do it
-        os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPath))
+        os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPythonDir))
 
         # This is to locate the lldb.py module.  Insert it right after sys.path[0].
-        sys.path[1:1] = [lldbPath]
+        sys.path[1:1] = [lldbPythonDir]
         if dumpSysPath:
             print "sys.path:", sys.path
 
