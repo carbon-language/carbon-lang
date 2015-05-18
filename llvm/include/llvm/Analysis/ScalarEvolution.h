@@ -657,6 +657,15 @@ namespace llvm {
       SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
       return getAddRecExpr(NewOp, L, Flags);
     }
+    /// \brief Returns an expression for a GEP
+    ///
+    /// \p PointeeType The type used as the basis for the pointer arithmetics
+    /// \p BaseExpr The expression for the pointer operand.
+    /// \p IndexExprs The expressions for the indices.
+    /// \p InBounds Whether the GEP is in bounds.
+    const SCEV *getGEPExpr(Type *PointeeType, const SCEV *BaseExpr,
+                           const SmallVectorImpl<const SCEV *> &IndexExprs,
+                           bool InBounds = false);
     const SCEV *getSMaxExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getSMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
     const SCEV *getUMaxExpr(const SCEV *LHS, const SCEV *RHS);
