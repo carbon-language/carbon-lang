@@ -61,6 +61,13 @@ TEST(AllocatorTest, ThreeSlabs) {
 // again.
 TEST(AllocatorTest, TestReset) {
   BumpPtrAllocator Alloc;
+
+  // Allocate something larger than the SizeThreshold=4096.
+  (void)Alloc.Allocate(5000, 1);
+  Alloc.Reset();
+  // Calling Reset should free all CustomSizedSlabs.
+  EXPECT_EQ(0u, Alloc.GetNumSlabs());
+
   Alloc.Allocate(3000, 1);
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
   Alloc.Allocate(3000, 1);

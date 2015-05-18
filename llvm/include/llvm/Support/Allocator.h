@@ -187,6 +187,9 @@ public:
   /// \brief Deallocate all but the current slab and reset the current pointer
   /// to the beginning of it, freeing all memory allocated so far.
   void Reset() {
+    DeallocateCustomSizedSlabs();
+    CustomSizedSlabs.clear();
+
     if (Slabs.empty())
       return;
 
@@ -198,8 +201,6 @@ public:
     // Deallocate all but the first slab, and deallocate all custom-sized slabs.
     DeallocateSlabs(std::next(Slabs.begin()), Slabs.end());
     Slabs.erase(std::next(Slabs.begin()), Slabs.end());
-    DeallocateCustomSizedSlabs();
-    CustomSizedSlabs.clear();
   }
 
   /// \brief Allocate space at the specified alignment.
