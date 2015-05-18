@@ -38,9 +38,9 @@ General Command Line Options
   ``<build-path>`` is the directory containing a *compilation databasefile*, a
   file named ``compile_commands.json``, which provides compiler arguments for
   building each source file. CMake can generate this file by specifying
-  ``-DCMAKE_EXPORT_COMPILE_COMMANDS`` when running CMake. Ninja_, since v1.2 can
-  also generate this file with ``ninja -t compdb``. If the compilation database
-  cannot be used for any reason, an error is reported.
+  ``-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`` when running CMake. Ninja_, since v1.2
+  can also generate this file with ``ninja -t compdb``. If the compilation
+  database cannot be used for any reason, an error is reported.
 
   This option is ignored if ``--`` is present.
 

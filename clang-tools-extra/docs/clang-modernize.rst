@@ -51,7 +51,7 @@ args, it's probably best to use a *compilation database*.
 A `compilation database`_ contains the command-line arguments for multiple
 files. If the code you want to transform can be built with CMake, you can
 generate this database easily by running CMake with the
-``-DCMAKE_EXPORT_COMPILE_COMMANDS`` option. The Ninja_ build system, since
+``-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`` option. The Ninja_ build system, since
 v1.2, can create this file too using the *compdb* tool: ``ninja -t compdb``. If
 you're not already using either of these tools or cannot easily make use of
 them you might consider looking into Bear_.
