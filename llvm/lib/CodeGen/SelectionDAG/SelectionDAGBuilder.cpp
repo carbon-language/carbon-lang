@@ -4054,10 +4054,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::write_register: {
     Value *Reg = I.getArgOperand(0);
     Value *RegValue = I.getArgOperand(1);
-    SDValue Chain = getValue(RegValue).getOperand(0);
     SDValue RegName =
         DAG.getMDNode(cast<MDNode>(cast<MetadataAsValue>(Reg)->getMetadata()));
-    DAG.setRoot(DAG.getNode(ISD::WRITE_REGISTER, sdl, MVT::Other, Chain,
+    DAG.setRoot(DAG.getNode(ISD::WRITE_REGISTER, sdl, MVT::Other, getRoot(),
                             RegName, getValue(RegValue)));
     return nullptr;
   }

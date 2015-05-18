@@ -4064,7 +4064,8 @@ unsigned AArch64TargetLowering::getRegisterByName(const char* RegName,
                        .Default(0);
   if (Reg)
     return Reg;
-  report_fatal_error("Invalid register name global variable");
+  report_fatal_error(Twine("Invalid register name \""
+                              + StringRef(RegName)  + "\"."));
 }
 
 SDValue AArch64TargetLowering::LowerRETURNADDR(SDValue Op,

@@ -426,6 +426,9 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::ConstantFP, MVT::f32, Custom);
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
 
+  setOperationAction(ISD::READ_REGISTER, MVT::i64, Custom);
+  setOperationAction(ISD::WRITE_REGISTER, MVT::i64, Custom);
+
   if (Subtarget->hasNEON()) {
     addDRTypeForNEON(MVT::v2f32);
     addDRTypeForNEON(MVT::v8i8);
@@ -2379,6 +2382,24 @@ bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   return !Subtarget->isThumb1Only();
 }
 
+// Trying to write a 64 bit value so need to split into two 32 bit values first,
+// and pass the lower and high parts through.
+static SDValue LowerWRITE_REGISTER(SDValue Op, SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  SDValue WriteValue = Op->getOperand(2);
+
+  // This function is only supposed to be called for i64 type argument.
+  assert(WriteValue.getValueType() == MVT::i64
+          && "LowerWRITE_REGISTER called for non-i64 type argument.");
+
+  SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, WriteValue,
+                           DAG.getConstant(0, DL, MVT::i32));
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, WriteValue,
+                           DAG.getConstant(1, DL, MVT::i32));
+  SDValue Ops[] = { Op->getOperand(0), Op->getOperand(1), Lo, Hi };
+  return DAG.getNode(ISD::WRITE_REGISTER, DL, MVT::Other, Ops);
+}
+
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
 // their target counterpart wrapped in the ARMISD::Wrapper node. Suppose N is
 // one of the above mentioned nodes. It has to be wrapped because otherwise
@@ -4086,8 +4107,26 @@ unsigned ARMTargetLowering::getRegisterByName(const char* RegName,
                        .Default(0);
   if (Reg)
     return Reg;
-  report_fatal_error("Invalid register name global variable");
+  report_fatal_error(Twine("Invalid register name \""
+                              + StringRef(RegName)  + "\"."));
 }
+
+// Result is 64 bit value so split into two 32 bit values and return as a
+// pair of values.
+static SDValue ExpandREAD_REGISTER(SDNode *N, SelectionDAG &DAG) {
+  SDLoc DL(N);
+  SDValue Op = N->getOperand(0);
+
+  // This function is only supposed to be called for i64 type destination.
+  assert(N->getValueType(0) == MVT::i64
+          && "ExpandREAD_REGISTER called for non-i64 type result.");
+
+  SDValue Read = DAG.getNode(ISD::READ_REGISTER, DL,
+                             DAG.getVTList(MVT::i32, MVT::i32), Op);
+  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Read.getValue(0),
+                     Read.getValue(1));
+}
+
 
 /// ExpandBITCAST - If the target supports VFP, this function is called to
 /// expand a bit convert where either the source or destination type is i64 to
@@ -6356,6 +6395,7 @@ static void ReplaceREADCYCLECOUNTER(SDNode *N,
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
+  case ISD::WRITE_REGISTER: return LowerWRITE_REGISTER(Op, DAG);
   case ISD::ConstantPool:  return LowerConstantPool(Op, DAG);
   case ISD::BlockAddress:  return LowerBlockAddress(Op, DAG);
   case ISD::GlobalAddress:
@@ -6440,6 +6480,9 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this!");
+  case ISD::READ_REGISTER:
+    Res = ExpandREAD_REGISTER(N, DAG);
+    break;
   case ISD::BITCAST:
     Res = ExpandBITCAST(N, DAG);
     break;
@@ -7914,7 +7957,7 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
   // Get widened type and narrowed type.
   MVT widenType;
   unsigned numElem = VT.getVectorNumElements();
-  
+
   EVT inputLaneType = Vec.getValueType().getVectorElementType();
   switch (inputLaneType.getSimpleVT().SimpleTy) {
     case MVT::i8: widenType = MVT::getVectorVT(MVT::i16, numElem); break;
