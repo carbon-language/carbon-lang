@@ -729,7 +729,7 @@ bool Type::isSignedIntegerType() const {
 bool Type::isSignedIntegerOrEnumerationType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Char_S &&
-    BT->getKind() <= BuiltinType::Int128;
+           BT->getKind() <= BuiltinType::Int128;
   }
   
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
