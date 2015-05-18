@@ -3591,6 +3591,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // If a std is supplied, only add -trigraphs if it follows the
   // option.
+  bool ImplyVCPPCXXVer = false;
   if (Arg *Std = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
     if (Std->getOption().matches(options::OPT_ansi))
       if (types::isCXX(InputType))
@@ -3617,7 +3618,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.AddAllArgsTranslated(CmdArgs, options::OPT_std_default_EQ,
                                 "-std=", /*Joined=*/true);
     else if (IsWindowsMSVC)
-      CmdArgs.push_back("-std=c++11");
+      ImplyVCPPCXXVer = true;
 
     Args.AddLastArg(CmdArgs, options::OPT_ftrigraphs,
                     options::OPT_fno_trigraphs);
@@ -4199,6 +4200,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         Args.MakeArgString("-fms-compatibility-version=" + MSVT.getAsString()));
   }
 
+  bool IsMSVC2015Compatible = MSVT.getMajor() >= 19;
+  if (ImplyVCPPCXXVer) {
+    if (IsMSVC2015Compatible)
+      CmdArgs.push_back("-std=c++14");
+    else
+      CmdArgs.push_back("-std=c++11");
+  }
+
   // -fno-borland-extensions is default.
   if (Args.hasFlag(options::OPT_fborland_extensions,
                    options::OPT_fno_borland_extensions, false))
@@ -4208,7 +4217,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // than 19.
   if (!Args.hasFlag(options::OPT_fthreadsafe_statics,
                     options::OPT_fno_threadsafe_statics,
-                    !IsWindowsMSVC || MSVT.getMajor() >= 19))
+                    !IsWindowsMSVC || IsMSVC2015Compatible))
     CmdArgs.push_back("-fno-threadsafe-statics");
 
   // -fno-delayed-template-parsing is default, except for Windows where MSVC STL
