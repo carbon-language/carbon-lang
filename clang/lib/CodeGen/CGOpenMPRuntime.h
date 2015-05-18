@@ -232,6 +232,16 @@ private:
   /// \brief Type typedef kmp_int32 (* kmp_routine_entry_t)(kmp_int32, void *);
   llvm::Type *KmpRoutineEntryPtrTy;
   QualType KmpRoutineEntryPtrQTy;
+  /// \brief Type typedef struct kmp_task {
+  ///    void *              shareds; /**< pointer to block of pointers to
+  ///    shared vars   */
+  ///    kmp_routine_entry_t routine; /**< pointer to routine to call for
+  ///    executing task */
+  ///    kmp_int32           part_id; /**< part id for the task */
+  ///    kmp_routine_entry_t destructors; /* pointer to function to invoke
+  ///    deconstructors of firstprivate C++ objects */
+  /// } kmp_task_t;
+  QualType KmpTaskTQTy;
 
   /// \brief Build type kmp_routine_entry_t (if not built yet).
   void emitKmpRoutineEntryT(QualType KmpInt32Ty);

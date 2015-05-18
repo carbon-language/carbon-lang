@@ -1605,9 +1605,6 @@ enum KmpTaskTFields {
   KmpTaskTPartId,
   /// \brief Function with call of destructors for private variables.
   KmpTaskTDestructors,
-  /// \brief Record with list of all private/firstprivate copies for the task
-  /// directive.
-  KmpTaskTPrivates,
 };
 } // namespace
 
@@ -1660,7 +1657,6 @@ createPrivatesRecordDecl(CodeGenModule &CGM,
       addFieldToRecordDecl(
           C, RD, Pair.second.Original->getType().getNonReferenceType());
     }
-    // TODO: add firstprivate fields.
     RD->completeDefinition();
     return RD;
   }
@@ -1669,15 +1665,13 @@ createPrivatesRecordDecl(CodeGenModule &CGM,
 
 static RecordDecl *
 createKmpTaskTRecordDecl(CodeGenModule &CGM, QualType KmpInt32Ty,
-                         QualType KmpRoutineEntryPointerQTy,
-                         const ArrayRef<PrivateDataTy> Privates) {
+                         QualType KmpRoutineEntryPointerQTy) {
   auto &C = CGM.getContext();
   // Build struct kmp_task_t {
   //         void *              shareds;
   //         kmp_routine_entry_t routine;
   //         kmp_int32           part_id;
   //         kmp_routine_entry_t destructors;
-  //         /*  private vars  */
   //       };
   auto *RD = C.buildImplicitRecord("kmp_task_t");
   RD->startDefinition();
@@ -1685,6 +1679,21 @@ createKmpTaskTRecordDecl(CodeGenModule &CGM, QualType KmpInt32Ty,
   addFieldToRecordDecl(C, RD, KmpRoutineEntryPointerQTy);
   addFieldToRecordDecl(C, RD, KmpInt32Ty);
   addFieldToRecordDecl(C, RD, KmpRoutineEntryPointerQTy);
+  RD->completeDefinition();
+  return RD;
+}
+
+static RecordDecl *
+createKmpTaskTWithPrivatesRecordDecl(CodeGenModule &CGM, QualType KmpTaskTQTy,
+                                     const ArrayRef<PrivateDataTy> Privates) {
+  auto &C = CGM.getContext();
+  // Build struct kmp_task_t_with_privates {
+  //         kmp_task_t task_data;
+  //         .kmp_privates_t. privates;
+  //       };
+  auto *RD = C.buildImplicitRecord("kmp_task_t_with_privates");
+  RD->startDefinition();
+  addFieldToRecordDecl(C, RD, KmpTaskTQTy);
   if (auto *PrivateRD = createPrivatesRecordDecl(CGM, Privates)) {
     addFieldToRecordDecl(C, RD, C.getRecordType(PrivateRD));
   }
@@ -1702,14 +1711,14 @@ createKmpTaskTRecordDecl(CodeGenModule &CGM, QualType KmpInt32Ty,
 /// \endcode
 static llvm::Value *
 emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
-                      QualType KmpInt32Ty, QualType KmpTaskTPtrQTy,
-                      QualType SharedsPtrTy, llvm::Value *TaskFunction,
-                      llvm::Type *KmpTaskTTy) {
+                      QualType KmpInt32Ty, QualType KmpTaskTWithPrivatesPtrQTy,
+                      QualType KmpTaskTWithPrivatesQTy, QualType KmpTaskTQTy,
+                      QualType SharedsPtrTy, llvm::Value *TaskFunction) {
   auto &C = CGM.getContext();
   FunctionArgList Args;
   ImplicitParamDecl GtidArg(C, /*DC=*/nullptr, Loc, /*Id=*/nullptr, KmpInt32Ty);
   ImplicitParamDecl TaskTypeArg(C, /*DC=*/nullptr, Loc,
-                                /*Id=*/nullptr, KmpTaskTPtrQTy);
+                                /*Id=*/nullptr, KmpTaskTWithPrivatesPtrQTy);
   Args.push_back(&GtidArg);
   Args.push_back(&TaskTypeArg);
   FunctionType::ExtInfo Info;
@@ -1725,23 +1734,27 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, TaskEntry, TaskEntryFnInfo, Args);
 
-  // TaskFunction(gtid, tt->part_id, tt->shareds);
+  // TaskFunction(gtid, tt->task_data.part_id, tt->task_data.shareds);
   auto *GtidParam = CGF.EmitLoadOfScalar(
       CGF.GetAddrOfLocalVar(&GtidArg), /*Volatile=*/false,
       C.getTypeAlignInChars(KmpInt32Ty).getQuantity(), KmpInt32Ty, Loc);
-  auto TaskTypeArgAddr = CGF.EmitLoadOfScalar(
-      CGF.GetAddrOfLocalVar(&TaskTypeArg), /*Volatile=*/false,
-      CGM.PointerAlignInBytes, KmpTaskTPtrQTy, Loc);
-  auto *PartidPtr = CGF.Builder.CreateStructGEP(KmpTaskTTy, TaskTypeArgAddr,
-                                                /*Idx=*/KmpTaskTPartId);
-  auto *PartidParam = CGF.EmitLoadOfScalar(
-      PartidPtr, /*Volatile=*/false,
-      C.getTypeAlignInChars(KmpInt32Ty).getQuantity(), KmpInt32Ty, Loc);
-  auto *SharedsPtr = CGF.Builder.CreateStructGEP(KmpTaskTTy, TaskTypeArgAddr,
-                                                 /*Idx=*/KmpTaskTShareds);
+  auto *TaskTypeArgAddr = CGF.Builder.CreateAlignedLoad(
+      CGF.GetAddrOfLocalVar(&TaskTypeArg), CGM.PointerAlignInBytes);
+  LValue Base =
+      CGF.MakeNaturalAlignAddrLValue(TaskTypeArgAddr, KmpTaskTWithPrivatesQTy);
+  auto *KmpTaskTWithPrivatesQTyRD =
+      cast<RecordDecl>(KmpTaskTWithPrivatesQTy->getAsTagDecl());
+  Base =
+      CGF.EmitLValueForField(Base, *KmpTaskTWithPrivatesQTyRD->field_begin());
+  auto *KmpTaskTQTyRD = cast<RecordDecl>(KmpTaskTQTy->getAsTagDecl());
+  auto PartIdFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTPartId);
+  auto PartIdLVal = CGF.EmitLValueForField(Base, *PartIdFI);
+  auto *PartidParam = CGF.EmitLoadOfLValue(PartIdLVal, Loc).getScalarVal();
+
+  auto SharedsFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTShareds);
+  auto SharedsLVal = CGF.EmitLValueForField(Base, *SharedsFI);
   auto *SharedsParam = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-      CGF.EmitLoadOfScalar(SharedsPtr, /*Volatile=*/false,
-                           CGM.PointerAlignInBytes, C.VoidPtrTy, Loc),
+      CGF.EmitLoadOfLValue(SharedsLVal, Loc).getScalarVal(),
       CGF.ConvertTypeForMem(SharedsPtrTy));
 
   llvm::Value *CallArgs[] = {GtidParam, PartidParam, SharedsParam};
@@ -1753,15 +1766,16 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   return TaskEntry;
 }
 
-static llvm::Value *
-emitDestructorsFunction(CodeGenModule &CGM, SourceLocation Loc,
-                        QualType KmpInt32Ty, QualType KmpTaskTPtrQTy,
-                        QualType KmpTaskQTy, RecordDecl *KmpTaskQTyRD) {
+static llvm::Value *emitDestructorsFunction(CodeGenModule &CGM,
+                                            SourceLocation Loc,
+                                            QualType KmpInt32Ty,
+                                            QualType KmpTaskTWithPrivatesPtrQTy,
+                                            QualType KmpTaskTWithPrivatesQTy) {
   auto &C = CGM.getContext();
   FunctionArgList Args;
   ImplicitParamDecl GtidArg(C, /*DC=*/nullptr, Loc, /*Id=*/nullptr, KmpInt32Ty);
   ImplicitParamDecl TaskTypeArg(C, /*DC=*/nullptr, Loc,
-                                /*Id=*/nullptr, KmpTaskTPtrQTy);
+                                /*Id=*/nullptr, KmpTaskTWithPrivatesPtrQTy);
   Args.push_back(&GtidArg);
   Args.push_back(&TaskTypeArg);
   FunctionType::ExtInfo Info;
@@ -1778,11 +1792,13 @@ emitDestructorsFunction(CodeGenModule &CGM, SourceLocation Loc,
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, DestructorFn, DestructorFnInfo,
                     Args);
 
-  auto *TaskTypeArgAddr = CGF.EmitLoadOfScalar(
-      CGF.GetAddrOfLocalVar(&TaskTypeArg), /*Volatile=*/false,
-      CGM.PointerAlignInBytes, KmpTaskTPtrQTy, Loc);
-  LValue Base = CGF.MakeNaturalAlignAddrLValue(TaskTypeArgAddr, KmpTaskQTy);
-  auto FI = std::next(KmpTaskQTyRD->field_begin(), KmpTaskTPrivates);
+  auto *TaskTypeArgAddr = CGF.Builder.CreateAlignedLoad(
+      CGF.GetAddrOfLocalVar(&TaskTypeArg), CGM.PointerAlignInBytes);
+  LValue Base =
+      CGF.MakeNaturalAlignAddrLValue(TaskTypeArgAddr, KmpTaskTWithPrivatesQTy);
+  auto *KmpTaskTWithPrivatesQTyRD =
+      cast<RecordDecl>(KmpTaskTWithPrivatesQTy->getAsTagDecl());
+  auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
   Base = CGF.EmitLValueForField(Base, *FI);
   for (auto *Field :
        cast<RecordDecl>(FI->getType()->getAsTagDecl())->fields()) {
@@ -1837,21 +1853,29 @@ void CGOpenMPRuntime::emitTaskCall(
   auto KmpInt32Ty = C.getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/1);
   // Build type kmp_routine_entry_t (if not built yet).
   emitKmpRoutineEntryT(KmpInt32Ty);
+  // Build type kmp_task_t (if not built yet).
+  if (KmpTaskTQTy.isNull()) {
+    KmpTaskTQTy = C.getRecordType(
+        createKmpTaskTRecordDecl(CGM, KmpInt32Ty, KmpRoutineEntryPtrQTy));
+  }
+  auto *KmpTaskTQTyRD = cast<RecordDecl>(KmpTaskTQTy->getAsTagDecl());
   // Build particular struct kmp_task_t for the given task.
-  auto *KmpTaskQTyRD = createKmpTaskTRecordDecl(
-      CGM, KmpInt32Ty, KmpRoutineEntryPtrQTy, Privates);
-  auto KmpTaskQTy = C.getRecordType(KmpTaskQTyRD);
-  QualType KmpTaskTPtrQTy = C.getPointerType(KmpTaskQTy);
-  auto *KmpTaskTTy = CGF.ConvertType(KmpTaskQTy);
-  auto *KmpTaskTPtrTy = KmpTaskTTy->getPointerTo();
-  auto KmpTaskTySize = CGM.getSize(C.getTypeSizeInChars(KmpTaskQTy));
+  auto *KmpTaskTWithPrivatesQTyRD =
+      createKmpTaskTWithPrivatesRecordDecl(CGM, KmpTaskTQTy, Privates);
+  auto KmpTaskTWithPrivatesQTy = C.getRecordType(KmpTaskTWithPrivatesQTyRD);
+  QualType KmpTaskTWithPrivatesPtrQTy =
+      C.getPointerType(KmpTaskTWithPrivatesQTy);
+  auto *KmpTaskTWithPrivatesTy = CGF.ConvertType(KmpTaskTWithPrivatesQTy);
+  auto *KmpTaskTWithPrivatesPtrTy = KmpTaskTWithPrivatesTy->getPointerTo();
+  auto KmpTaskTWithPrivatesTySize =
+      CGM.getSize(C.getTypeSizeInChars(KmpTaskTWithPrivatesQTy));
   QualType SharedsPtrTy = C.getPointerType(SharedsTy);
 
   // Build a proxy function kmp_int32 .omp_task_entry.(kmp_int32 gtid,
   // kmp_task_t *tt);
-  auto *TaskEntry =
-      emitProxyTaskFunction(CGM, Loc, KmpInt32Ty, KmpTaskTPtrQTy, SharedsPtrTy,
-                            TaskFunction, KmpTaskTTy);
+  auto *TaskEntry = emitProxyTaskFunction(
+      CGM, Loc, KmpInt32Ty, KmpTaskTWithPrivatesPtrQTy, KmpTaskTWithPrivatesQTy,
+      KmpTaskTQTy, SharedsPtrTy, TaskFunction);
 
   // Build call kmp_task_t * __kmpc_omp_task_alloc(ident_t *, kmp_int32 gtid,
   // kmp_int32 flags, size_t sizeof_kmp_task_t, size_t sizeof_shareds,
@@ -1870,29 +1894,34 @@ void CGOpenMPRuntime::emitTaskCall(
           : CGF.Builder.getInt32(Final.getInt() ? FinalFlag : 0);
   TaskFlags = CGF.Builder.CreateOr(TaskFlags, CGF.Builder.getInt32(Flags));
   auto SharedsSize = C.getTypeSizeInChars(SharedsTy);
-  llvm::Value *AllocArgs[] = {emitUpdateLocation(CGF, Loc),
-                              getThreadID(CGF, Loc), TaskFlags, KmpTaskTySize,
-                              CGM.getSize(SharedsSize),
-                              CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-                                  TaskEntry, KmpRoutineEntryPtrTy)};
+  llvm::Value *AllocArgs[] = {
+      emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc), TaskFlags,
+      KmpTaskTWithPrivatesTySize, CGM.getSize(SharedsSize),
+      CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(TaskEntry,
+                                                      KmpRoutineEntryPtrTy)};
   auto *NewTask = CGF.EmitRuntimeCall(
       createRuntimeFunction(OMPRTL__kmpc_omp_task_alloc), AllocArgs);
-  auto *NewTaskNewTaskTTy =
-      CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(NewTask, KmpTaskTPtrTy);
+  auto *NewTaskNewTaskTTy = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      NewTask, KmpTaskTWithPrivatesPtrTy);
+  LValue Base = CGF.MakeNaturalAlignAddrLValue(NewTaskNewTaskTTy,
+                                               KmpTaskTWithPrivatesQTy);
+  LValue TDBase =
+      CGF.EmitLValueForField(Base, *KmpTaskTWithPrivatesQTyRD->field_begin());
   // Fill the data in the resulting kmp_task_t record.
   // Copy shareds if there are any.
-  auto *KmpTaskSharedsPtr = CGF.EmitLoadOfScalar(
-      CGF.Builder.CreateStructGEP(KmpTaskTTy, NewTaskNewTaskTTy,
-                                  /*Idx=*/KmpTaskTShareds),
-      /*Volatile=*/false, CGM.PointerAlignInBytes, SharedsPtrTy, Loc);
-  if (!SharedsTy->getAsStructureType()->getDecl()->field_empty())
+  llvm::Value *KmpTaskSharedsPtr = nullptr;
+  if (!SharedsTy->getAsStructureType()->getDecl()->field_empty()) {
+    KmpTaskSharedsPtr = CGF.EmitLoadOfScalar(
+        CGF.EmitLValueForField(
+            TDBase, *std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTShareds)),
+        Loc);
     CGF.EmitAggregateCopy(KmpTaskSharedsPtr, Shareds, SharedsTy);
+  }
   // Emit initial values for private copies (if any).
   bool NeedsCleanup = false;
   if (!Privates.empty()) {
-    LValue Base = CGF.MakeNaturalAlignAddrLValue(NewTaskNewTaskTTy, KmpTaskQTy);
-    auto FI = std::next(KmpTaskQTyRD->field_begin(), KmpTaskTPrivates);
-    Base = CGF.EmitLValueForField(Base, *FI);
+    auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
+    auto PrivatesBase = CGF.EmitLValueForField(Base, *FI);
     FI = cast<RecordDecl>(FI->getType()->getAsTagDecl())->field_begin();
     LValue SharedsBase = CGF.MakeNaturalAlignAddrLValue(
         CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
@@ -1903,7 +1932,7 @@ void CGOpenMPRuntime::emitTaskCall(
     for (auto &&Pair : Privates) {
       auto *VD = Pair.second.PrivateCopy;
       auto *Init = VD->getAnyInitializer();
-      LValue PrivateLValue = CGF.EmitLValueForField(Base, *FI);
+      LValue PrivateLValue = CGF.EmitLValueForField(PrivatesBase, *FI);
       if (Init) {
         if (auto *Elem = Pair.second.PrivateElemInit) {
           auto *OriginalVD = Pair.second.Original;
@@ -1974,17 +2003,16 @@ void CGOpenMPRuntime::emitTaskCall(
   }
   // Provide pointer to function with destructors for privates.
   llvm::Value *DestructorFn =
-      NeedsCleanup
-          ? emitDestructorsFunction(CGM, Loc, KmpInt32Ty, KmpTaskTPtrQTy,
-                                    KmpTaskQTy, KmpTaskQTyRD)
-          : llvm::ConstantPointerNull::get(
-                cast<llvm::PointerType>(KmpRoutineEntryPtrTy));
-  CGF.Builder.CreateAlignedStore(
-      CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(DestructorFn,
-                                                      KmpRoutineEntryPtrTy),
-      CGF.Builder.CreateStructGEP(KmpTaskTTy, NewTaskNewTaskTTy,
-                                  /*Idx=*/KmpTaskTDestructors),
-      CGM.PointerAlignInBytes);
+      NeedsCleanup ? emitDestructorsFunction(CGM, Loc, KmpInt32Ty,
+                                             KmpTaskTWithPrivatesPtrQTy,
+                                             KmpTaskTWithPrivatesQTy)
+                   : llvm::ConstantPointerNull::get(
+                         cast<llvm::PointerType>(KmpRoutineEntryPtrTy));
+  LValue Destructor = CGF.EmitLValueForField(
+      TDBase, *std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTDestructors));
+  CGF.EmitStoreOfScalar(CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+                            DestructorFn, KmpRoutineEntryPtrTy),
+                        Destructor);
   // NOTE: routine and part_id fields are intialized by __kmpc_omp_task_alloc()
   // libcall.
   // Build kmp_int32 __kmpc_omp_task(ident_t *, kmp_int32 gtid, kmp_task_t
