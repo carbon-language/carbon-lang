@@ -82,6 +82,7 @@ static bool isGuaranteedToExecute(const Instruction &Inst,
                                   const LICMSafetyInfo *SafetyInfo);
 static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
                                            const DominatorTree *DT,
+                                           const TargetLibraryInfo *TLI,
                                            const Loop *CurLoop,
                                            const LICMSafetyInfo *SafetyInfo);
 static bool pointerInvalidatedByLoop(Value *V, uint64_t Size,
@@ -92,8 +93,8 @@ static Instruction *CloneInstructionInExitBlock(const Instruction &I,
                                                 PHINode &PN,
                                                 const LoopInfo *LI);
 static bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA,
-                               DominatorTree *DT, Loop *CurLoop,
-                               AliasSetTracker *CurAST,
+                               DominatorTree *DT, TargetLibraryInfo *TLI,
+                               Loop *CurLoop, AliasSetTracker *CurAST,
                                LICMSafetyInfo *SafetyInfo);
 
 namespace {
@@ -337,7 +338,7 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
     // operands of the instruction are loop invariant.
     //
     if (isNotUsedInLoop(I, CurLoop) &&
-        canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo)) {
+        canSinkOrHoistInst(I, AA, DT, TLI, CurLoop, CurAST, SafetyInfo)) {
       ++II;
       Changed |= sink(I, LI, DT, CurLoop, CurAST);
     }
@@ -386,8 +387,8 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       // is safe to hoist the instruction.
       //
       if (CurLoop->hasLoopInvariantOperands(&I) &&
-          canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo) &&
-          isSafeToExecuteUnconditionally(I, DT, CurLoop, SafetyInfo))
+          canSinkOrHoistInst(I, AA, DT, TLI, CurLoop, CurAST, SafetyInfo) &&
+          isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo))
         Changed |= hoist(I, CurLoop->getLoopPreheader());
     }
 
@@ -425,8 +426,8 @@ void llvm::computeLICMSafetyInfo(LICMSafetyInfo * SafetyInfo, Loop * CurLoop) {
 /// instruction.
 ///
 bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
-                        Loop *CurLoop, AliasSetTracker *CurAST,
-                        LICMSafetyInfo *SafetyInfo) {
+                        TargetLibraryInfo *TLI, Loop *CurLoop,
+                        AliasSetTracker *CurAST, LICMSafetyInfo *SafetyInfo) {
   // Loads have extra constraints we have to verify before we can hoist them.
   if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
     if (!LI->isUnordered())
@@ -486,7 +487,7 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
       !isa<InsertValueInst>(I))
     return false;
 
-  return isSafeToExecuteUnconditionally(I, DT, CurLoop, SafetyInfo);
+  return isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo);
 }
 
 /// Returns true if a PHINode is a trivially replaceable with an
@@ -639,15 +640,16 @@ static bool hoist(Instruction &I, BasicBlock *Preheader) {
   return true;
 }
 
-/// Only sink or hoist an instruction if it is not a trapping instruction
+/// Only sink or hoist an instruction if it is not a trapping instruction,
+/// or if the instruction is known not to trap when moved to the preheader.
 /// or if it is a trapping instruction and is guaranteed to execute.
-///
-static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
+static bool isSafeToExecuteUnconditionally(const Instruction &Inst, 
                                            const DominatorTree *DT,
+                                           const TargetLibraryInfo *TLI,
                                            const Loop *CurLoop,
                                            const LICMSafetyInfo *SafetyInfo) {
-  // If it is not a trapping instruction, it is always safe to hoist.
-  if (isSafeToSpeculativelyExecute(&Inst))
+  const Instruction *CtxI = CurLoop->getLoopPreheader()->getTerminator();
+  if (isSafeToSpeculativelyExecute(&Inst, CtxI, DT, TLI))
     return true;
 
   return isGuaranteedToExecute(Inst, DT, CurLoop, SafetyInfo);

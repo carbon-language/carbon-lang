@@ -219,12 +219,14 @@ namespace llvm {
   /// are lifetime markers.
   bool onlyUsedByLifetimeMarkers(const Value *V);
 
-  /// isDereferenceablePointer - Return true if this is always a dereferenceable 
-  /// pointer.
-  ///
-  /// Test if this value is always a pointer to allocated and suitably aligned
-  /// memory for a simple load or store.
-  bool isDereferenceablePointer(const Value *V, const DataLayout &DL);
+  /// isDereferenceablePointer - Return true if this is always a dereferenceable
+  /// pointer. If the context instruction is specified perform context-sensitive
+  /// analysis and return true if the pointer is dereferenceable at the
+  /// specified instruction.
+  bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
+                                const Instruction *CtxI = nullptr,
+                                const DominatorTree *DT = nullptr,
+                                const TargetLibraryInfo *TLI = nullptr);
   
   /// isSafeToSpeculativelyExecute - Return true if the instruction does not
   /// have any effects besides calculating the result and does not have
@@ -239,17 +241,35 @@ namespace llvm {
   /// memory leak. It also returns false for instructions related to control
   /// flow, specifically terminators and PHI nodes.
   ///
-  /// This method only looks at the instruction itself and its operands, so if
-  /// this method returns true, it is safe to move the instruction as long as
-  /// the correct dominance relationships for the operands and users hold.
-  /// However, this method can return true for instructions that read memory;
+  /// If the CtxI is specified this method performs context-sensitive analysis
+  /// and returns true if it is safe to execute the instruction immediately
+  /// before the CtxI.
+  ///
+  /// If the CtxI is NOT specified this method only looks at the instruction
+  /// itself and its operands, so if this method returns true, it is safe to
+  /// move the instruction as long as the correct dominance relationships for
+  /// the operands and users hold.
+  ///
+  /// This method can return true for instructions that read memory;
   /// for such instructions, moving them may change the resulting value.
-  bool isSafeToSpeculativelyExecute(const Value *V);
+  bool isSafeToSpeculativelyExecute(const Value *V,
+                                    const Instruction *CtxI = nullptr,
+                                    const DominatorTree *DT = nullptr,
+                                    const TargetLibraryInfo *TLI = nullptr);
 
   /// isKnownNonNull - Return true if this pointer couldn't possibly be null by
   /// its definition.  This returns true for allocas, non-extern-weak globals
   /// and byval arguments.
   bool isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI = nullptr);
+
+  /// isKnownNonNullAt - Return true if this pointer couldn't possibly be null.
+  /// If the context instruction is specified perform context-sensitive analysis
+  /// and return true if the pointer couldn't possibly be null at the specified
+  /// instruction.
+  bool isKnownNonNullAt(const Value *V,
+                        const Instruction *CtxI = nullptr,
+                        const DominatorTree *DT  = nullptr,
+                        const TargetLibraryInfo *TLI = nullptr);
 
   /// Return true if it is valid to use the assumptions provided by an
   /// assume intrinsic, I, at the point in the control-flow identified by the

@@ -226,13 +226,13 @@ bool sinkRegion(DomTreeNode *, AliasAnalysis *, LoopInfo *, DominatorTree *,
 /// first order w.r.t the DominatorTree.  This allows us to visit definitions
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 /// Takes DomTreeNode, AliasAnalysis, LoopInfo, DominatorTree, DataLayout,
-/// TargetLibraryInfo, Loop, AliasSet information for all instructions of the 
+/// TargetLibraryInfo, Loop, AliasSet information for all instructions of the
 /// loop and loop safety information as arguments. It returns changed status.
 bool hoistRegion(DomTreeNode *, AliasAnalysis *, LoopInfo *, DominatorTree *,
                  TargetLibraryInfo *, Loop *, AliasSetTracker *,
                  LICMSafetyInfo *);
 
-/// \brief Try to promote memory values to scalars by sinking stores out of 
+/// \brief Try to promote memory values to scalars by sinking stores out of
 /// the loop and moving loads to before the loop.  We do this by looping over
 /// the stores in the loop, looking for stores to Must pointers which are 
 /// loop invariant. It takes AliasSet, Loop exit blocks vector, loop exit blocks

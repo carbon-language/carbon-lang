@@ -2864,33 +2864,48 @@ bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
 }
 
 static bool isDereferenceableFromAttribute(const Value *BV, APInt Offset,
-                                           Type *Ty, const DataLayout &DL) {
+                                           Type *Ty, const DataLayout &DL,
+                                           const Instruction *CtxI,
+                                           const DominatorTree *DT,
+                                           const TargetLibraryInfo *TLI) {
   assert(Offset.isNonNegative() && "offset can't be negative");
   assert(Ty->isSized() && "must be sized");
   
   APInt DerefBytes(Offset.getBitWidth(), 0);
+  bool CheckForNonNull = false;
   if (const Argument *A = dyn_cast<Argument>(BV)) {
     DerefBytes = A->getDereferenceableBytes();
+    if (!DerefBytes.getBoolValue()) {
+      DerefBytes = A->getDereferenceableOrNullBytes();
+      CheckForNonNull = true;
+    }
   } else if (auto CS = ImmutableCallSite(BV)) {
     DerefBytes = CS.getDereferenceableBytes(0);
+    if (!DerefBytes.getBoolValue()) {
+      DerefBytes = CS.getDereferenceableOrNullBytes(0);
+      CheckForNonNull = true;
+    }
   }
   
   if (DerefBytes.getBoolValue())
     if (DerefBytes.uge(Offset + DL.getTypeStoreSize(Ty)))
-      return true;
-  
+      if (!CheckForNonNull || isKnownNonNullAt(BV, CtxI, DT, TLI))
+        return true;
+
   return false;
 }
 
-static bool isDereferenceableFromAttribute(const Value *V, 
-                                           const DataLayout &DL) {
+static bool isDereferenceableFromAttribute(const Value *V, const DataLayout &DL,
+                                           const Instruction *CtxI,
+                                           const DominatorTree *DT,
+                                           const TargetLibraryInfo *TLI) {
   Type *VTy = V->getType();
   Type *Ty = VTy->getPointerElementType();
   if (!Ty->isSized())
     return false;
   
   APInt Offset(DL.getTypeStoreSizeInBits(VTy), 0);
-  return isDereferenceableFromAttribute(V, Offset, Ty, DL);
+  return isDereferenceableFromAttribute(V, Offset, Ty, DL, CtxI, DT, TLI);
 }
 
 /// Return true if Value is always a dereferenceable pointer.
@@ -2898,6 +2913,9 @@ static bool isDereferenceableFromAttribute(const Value *V,
 /// Test if V is always a pointer to allocated and suitably aligned memory for
 /// a simple load or store.
 static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
+                                     const Instruction *CtxI,
+                                     const DominatorTree *DT,
+                                     const TargetLibraryInfo *TLI,
                                      SmallPtrSetImpl<const Value *> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
@@ -2918,7 +2936,8 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
     if (STy->isSized() && DTy->isSized() &&
         (DL.getTypeStoreSize(STy) >= DL.getTypeStoreSize(DTy)) &&
         (DL.getABITypeAlignment(STy) >= DL.getABITypeAlignment(DTy)))
-      return isDereferenceablePointer(BC->getOperand(0), DL, Visited);
+      return isDereferenceablePointer(BC->getOperand(0), DL, CtxI,
+                                      DT, TLI, Visited);
   }
 
   // Global variables which can't collapse to null are ok.
@@ -2930,7 +2949,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
     if (A->hasByValAttr())
       return true;
     
-  if (isDereferenceableFromAttribute(V, DL))
+  if (isDereferenceableFromAttribute(V, DL, CtxI, DT, TLI))
     return true;
 
   // For GEPs, determine if the indexing lands within the allocated object.
@@ -2938,7 +2957,8 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
     // Conservatively require that the base pointer be fully dereferenceable.
     if (!Visited.insert(GEP->getOperand(0)).second)
       return false;
-    if (!isDereferenceablePointer(GEP->getOperand(0), DL, Visited))
+    if (!isDereferenceablePointer(GEP->getOperand(0), DL, CtxI,
+                                  DT, TLI, Visited))
       return false;
     // Check the indices.
     gep_type_iterator GTI = gep_type_begin(GEP);
@@ -2972,18 +2992,22 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
   if (const IntrinsicInst *I = dyn_cast<IntrinsicInst>(V))
     if (I->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
       GCRelocateOperands RelocateInst(I);
-      return isDereferenceablePointer(RelocateInst.getDerivedPtr(), DL,
-                                      Visited);
+      return isDereferenceablePointer(RelocateInst.getDerivedPtr(), DL, CtxI,
+                                      DT, TLI, Visited);
     }
 
   if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
-    return isDereferenceablePointer(ASC->getOperand(0), DL, Visited);
+    return isDereferenceablePointer(ASC->getOperand(0), DL, CtxI,
+                                    DT, TLI, Visited);
 
   // If we don't know, assume the worst.
   return false;
 }
 
-bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL) {
+bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL,
+                                    const Instruction *CtxI,
+                                    const DominatorTree *DT,
+                                    const TargetLibraryInfo *TLI) {
   // When dereferenceability information is provided by a dereferenceable
   // attribute, we know exactly how many bytes are dereferenceable. If we can
   // determine the exact offset to the attributed variable, we can use that
@@ -2995,15 +3019,19 @@ bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL) {
     const Value *BV = V->stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
     
     if (Offset.isNonNegative())
-      if (isDereferenceableFromAttribute(BV, Offset, Ty, DL))
+      if (isDereferenceableFromAttribute(BV, Offset, Ty, DL,
+                                         CtxI, DT, TLI))
         return true;
   }
 
   SmallPtrSet<const Value *, 32> Visited;
-  return ::isDereferenceablePointer(V, DL, Visited);
+  return ::isDereferenceablePointer(V, DL, CtxI, DT, TLI, Visited);
 }
 
-bool llvm::isSafeToSpeculativelyExecute(const Value *V) {
+bool llvm::isSafeToSpeculativelyExecute(const Value *V,
+                                        const Instruction *CtxI,
+                                        const DominatorTree *DT,
+                                        const TargetLibraryInfo *TLI) {
   const Operator *Inst = dyn_cast<Operator>(V);
   if (!Inst)
     return false;
@@ -3050,7 +3078,7 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V) {
         LI->getParent()->getParent()->hasFnAttribute(Attribute::SanitizeThread))
       return false;
     const DataLayout &DL = LI->getModule()->getDataLayout();
-    return isDereferenceablePointer(LI->getPointerOperand(), DL);
+    return isDereferenceablePointer(LI->getPointerOperand(), DL, CtxI, DT, TLI);
   }
   case Instruction::Call: {
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
@@ -3139,6 +3167,60 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
     return true;
 
   return false;
+}
+
+static bool isKnownNonNullFromDominatingCondition(const Value *V,
+                                                  const Instruction *CtxI,
+                                                  const DominatorTree *DT) {
+  unsigned NumUsesExplored = 0;
+  for (auto U : V->users()) {
+    // Avoid massive lists
+    if (NumUsesExplored >= DomConditionsMaxUses)
+      break;
+    NumUsesExplored++;
+    // Consider only compare instructions uniquely controlling a branch
+    const ICmpInst *Cmp = dyn_cast<ICmpInst>(U);
+    if (!Cmp)
+      continue;
+
+    if (DomConditionsSingleCmpUse && !Cmp->hasOneUse())
+      continue;
+
+    for (auto *CmpU : Cmp->users()) {
+      const BranchInst *BI = dyn_cast<BranchInst>(CmpU);
+      if (!BI)
+        continue;
+      
+      assert(BI->isConditional() && "uses a comparison!");
+
+      BasicBlock *NonNullSuccessor = nullptr;
+      CmpInst::Predicate Pred;
+
+      if (match(const_cast<ICmpInst*>(Cmp),
+                m_c_ICmp(Pred, m_Specific(V), m_Zero()))) {
+        if (Pred == ICmpInst::ICMP_EQ)
+          NonNullSuccessor = BI->getSuccessor(1);
+        else if (Pred == ICmpInst::ICMP_NE)
+          NonNullSuccessor = BI->getSuccessor(0);
+      }
+
+      if (NonNullSuccessor) {
+        BasicBlockEdge Edge(BI->getParent(), NonNullSuccessor);
+        if (Edge.isSingleEdge() && DT->dominates(Edge, CtxI->getParent()))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool llvm::isKnownNonNullAt(const Value *V, const Instruction *CtxI,
+                   const DominatorTree *DT, const TargetLibraryInfo *TLI) {
+  if (isKnownNonNull(V, TLI))
+    return true;
+
+  return CtxI ? ::isKnownNonNullFromDominatingCondition(V, CtxI, DT) : false;
 }
 
 OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
