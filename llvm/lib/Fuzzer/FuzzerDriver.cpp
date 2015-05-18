@@ -230,6 +230,9 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())
     Options.OutputCorpus = inputs[0];
+  if (Flags.sync_command)
+    Options.SyncCommand = Flags.sync_command;
+  Options.SyncTimeout = Flags.sync_timeout;
   Fuzzer F(Callback, Options);
 
   unsigned seed = Flags.seed;

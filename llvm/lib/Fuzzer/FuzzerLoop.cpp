@@ -324,6 +324,7 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
 void Fuzzer::Loop(size_t NumIterations) {
   for (size_t i = 1; i <= NumIterations; i++) {
     for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
+      SyncCorpus();
       RereadOutputCorpus();
       if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
         return;
@@ -340,6 +341,16 @@ void Fuzzer::Loop(size_t NumIterations) {
       }
     }
   }
+}
+
+void Fuzzer::SyncCorpus() {
+  if (Options.SyncCommand.empty() || Options.OutputCorpus.empty()) return;
+  auto Now = system_clock::now();
+  if (duration_cast<seconds>(Now - LastExternalSync).count() <
+      Options.SyncTimeout)
+    return;
+  LastExternalSync = Now;
+  ExecuteCommand(Options.SyncCommand + " " + Options.OutputCorpus);
 }
 
 }  // namespace fuzzer

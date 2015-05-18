@@ -83,7 +83,7 @@ std::string DirPlusFile(const std::string &DirPath,
 
 void PrintFileAsBase64(const std::string &Path) {
   std::string Cmd = "base64 -w 0 < " + Path + "; echo";
-  system(Cmd.c_str());
+  ExecuteCommand(Cmd);
 }
 
 }  // namespace fuzzer

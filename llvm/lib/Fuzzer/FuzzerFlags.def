@@ -53,3 +53,7 @@ FUZZER_FLAG_STRING(tokens, "Use the file with tokens (one token per line) to"
                            " fuzz a token based input language.")
 FUZZER_FLAG_STRING(apply_tokens, "Read the given input file, substitute bytes "
                                  " with tokens and write the result to stdout.")
+FUZZER_FLAG_STRING(sync_command, "Execute an external command "
+                                 "\"<sync_command> <test_corpus>\" "
+                                 "to synchronize the test corpus.")
+FUZZER_FLAG_INT(sync_timeout, 600, "Minimal timeout between syncs.")

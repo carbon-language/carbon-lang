@@ -70,4 +70,8 @@ int NumberOfCpuCores() {
   return N;
 }
 
+void ExecuteCommand(const std::string &Command) {
+  system(Command.c_str());
+}
+
 }  // namespace fuzzer
