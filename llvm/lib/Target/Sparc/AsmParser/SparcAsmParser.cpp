@@ -144,9 +144,9 @@ public:
     rk_FloatReg,
     rk_DoubleReg,
     rk_QuadReg,
-    rk_CCReg,
-    rk_ASRReg
+    rk_Special,
   };
+
 private:
   enum KindTy {
     k_Token,
@@ -679,7 +679,15 @@ SparcAsmParser::parseSparcAsmOperand(std::unique_ptr<SparcOperand> &Op,
       default:
         Op = SparcOperand::CreateReg(RegNo, RegKind, S, E);
         break;
-
+      case Sparc::PSR:
+        Op = SparcOperand::CreateToken("%psr", S);
+        break;
+      case Sparc::WIM:
+        Op = SparcOperand::CreateToken("%wim", S);
+        break;
+      case Sparc::TBR:
+        Op = SparcOperand::CreateToken("%tbr", S);
+        break;
       case Sparc::ICC:
         if (name == "xcc")
           Op = SparcOperand::CreateToken("%xcc", S);
@@ -768,7 +776,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
 
     if (name.equals("y")) {
       RegNo = Sparc::Y;
-      RegKind = SparcOperand::rk_ASRReg;
+      RegKind = SparcOperand::rk_Special;
       return true;
     }
 
@@ -776,20 +784,38 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(3).getAsInteger(10, intVal)
         && intVal > 0 && intVal < 32) {
       RegNo = ASRRegs[intVal];
-      RegKind = SparcOperand::rk_ASRReg;
+      RegKind = SparcOperand::rk_Special;
       return true;
     }
 
     if (name.equals("icc")) {
       RegNo = Sparc::ICC;
-      RegKind = SparcOperand::rk_CCReg;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+
+    if (name.equals("psr")) {
+      RegNo = Sparc::PSR;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+
+    if (name.equals("wim")) {
+      RegNo = Sparc::WIM;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+
+    if (name.equals("tbr")) {
+      RegNo = Sparc::TBR;
+      RegKind = SparcOperand::rk_Special;
       return true;
     }
 
     if (name.equals("xcc")) {
       // FIXME:: check 64bit.
       RegNo = Sparc::ICC;
-      RegKind = SparcOperand::rk_CCReg;
+      RegKind = SparcOperand::rk_Special;
       return true;
     }
 
@@ -799,7 +825,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && intVal < 4) {
       // FIXME: check 64bit and  handle %fcc1 - %fcc3
       RegNo = Sparc::FCC0 + intVal;
-      RegKind = SparcOperand::rk_CCReg;
+      RegKind = SparcOperand::rk_Special;
       return true;
     }
 

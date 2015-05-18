@@ -731,6 +731,24 @@ let rs2 = 0 in
                  (outs IntRegs:$rd), (ins ASRRegs:$rs1),
                  "rd $rs1, $rd", []>;
 
+// PSR, WIM, and TBR don't exist on the SparcV9, only the V8.
+let Predicates = [HasNoV9] in {
+  let rs2 = 0, rs1 = 0, Uses=[PSR] in
+    def RDPSR : F3_1<2, 0b101001,
+		     (outs IntRegs:$rd), (ins),
+		     "rd %psr, $rd", []>;
+
+  let rs2 = 0, rs1 = 0, Uses=[WIM] in
+    def RDWIM : F3_1<2, 0b101010,
+		     (outs IntRegs:$rd), (ins),
+		     "rd %wim, $rd", []>;
+
+  let rs2 = 0, rs1 = 0, Uses=[TBR] in
+    def RDTBR : F3_1<2, 0b101011,
+		     (outs IntRegs:$rd), (ins),
+		     "rd %tbr, $rd", []>;
+}
+
 // Section B.29 - Write State Register Instructions
 def WRASRrr : F3_1<2, 0b110000,
                  (outs ASRRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
@@ -738,6 +756,36 @@ def WRASRrr : F3_1<2, 0b110000,
 def WRASRri : F3_2<2, 0b110000,
                  (outs ASRRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                  "wr $rs1, $simm13, $rd", []>;
+
+// PSR, WIM, and TBR don't exist on the SparcV9, only the V8.
+let Predicates = [HasNoV9] in {
+  let Defs = [PSR], rd=0 in {
+    def WRPSRrr : F3_1<2, 0b110001,
+		     (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+		     "wr $rs1, $rs2, %psr", []>;
+    def WRPSRri : F3_2<2, 0b110001,
+		     (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
+		     "wr $rs1, $simm13, %psr", []>;
+  }
+
+  let Defs = [WIM], rd=0 in {
+    def WRWIMrr : F3_1<2, 0b110010,
+		     (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+		     "wr $rs1, $rs2, %wim", []>;
+    def WRWIMri : F3_2<2, 0b110010,
+		     (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
+		     "wr $rs1, $simm13, %wim", []>;
+  }
+
+  let Defs = [TBR], rd=0 in {
+    def WRTBRrr : F3_1<2, 0b110011,
+		     (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+		     "wr $rs1, $rs2, %tbr", []>;
+    def WRTBRri : F3_2<2, 0b110011,
+		     (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
+		     "wr $rs1, $simm13, %tbr", []>;
+  }
+}
 
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3u<2, 0b110100, 0b011000100,

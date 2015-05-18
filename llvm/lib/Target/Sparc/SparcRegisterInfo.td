@@ -89,6 +89,11 @@ def ASR29 : SparcCtrlReg<29, "ASR29">;
 def ASR30 : SparcCtrlReg<30, "ASR30">;
 def ASR31 : SparcCtrlReg<31, "ASR31">;
 
+// Note that PSR, WIM, and TBR don't exist on the SparcV9, only the V8.
+def PSR : SparcCtrlReg<0, "PSR">;
+def WIM : SparcCtrlReg<0, "WIM">;
+def TBR : SparcCtrlReg<0, "TBR">;
+
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
 def G1 : Ri< 1, "G1">, DwarfRegNum<[1]>;
