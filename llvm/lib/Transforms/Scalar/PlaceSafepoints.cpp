@@ -716,8 +716,8 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     CallSite &CS = ParsePointNeeded[i];
     Value *GCResult = Results[i];
     if (GCResult) {
-      // Can not RAUW for the gc result in case of phi nodes preset.
-      assert(!isa<PHINode>(cast<Instruction>(GCResult)->getParent()->begin()));
+      // Can not RAUW for the invoke gc result in case of phi nodes preset.
+      assert(CS.isCall() || !isa<PHINode>(cast<Instruction>(GCResult)->getParent()->begin()));
 
       // Replace all uses with the new call
       CS.getInstruction()->replaceAllUsesWith(GCResult);
