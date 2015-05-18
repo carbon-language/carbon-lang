@@ -52,16 +52,12 @@ void* operator new(std::size_t size, const std::nothrow_t&) noexcept;   // repla
 void  operator delete(void* ptr) noexcept;                              // replaceable
 void  operator delete(void* ptr, std::size_t size) noexcept;            // replaceable, C++14
 void  operator delete(void* ptr, const std::nothrow_t&) noexcept;       // replaceable
-void  operator delete(void* ptr, std::size_t size,
-                      const std::nothrow_t&) noexcept;                  // replaceable, C++14
 
 void* operator new[](std::size_t size);                                 // replaceable
 void* operator new[](std::size_t size, const std::nothrow_t&) noexcept; // replaceable
 void  operator delete[](void* ptr) noexcept;                            // replaceable
 void  operator delete[](void* ptr, std::size_t size) noexcept;          // replaceable, C++14
 void  operator delete[](void* ptr, const std::nothrow_t&) noexcept;     // replaceable
-void  operator delete[](void* ptr, std::size_t size,
-                        const std::nothrow_t&) noexcept;                // replaceable, C++14
 
 void* operator new  (std::size_t size, void* ptr) noexcept;
 void* operator new[](std::size_t size, void* ptr) noexcept;
@@ -142,7 +138,6 @@ _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p) _NOEXCEPT;
 _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
 #if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14
 _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, std::size_t __sz) _NOEXCEPT;
-_LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
 #endif
 
 _LIBCPP_NEW_DELETE_VIS void* operator new[](std::size_t __sz)
@@ -155,7 +150,6 @@ _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p) _NOEXCEPT;
 _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
 #if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14
 _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, std::size_t __sz) _NOEXCEPT;
-_LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
 #endif
 
 inline _LIBCPP_INLINE_VISIBILITY void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
