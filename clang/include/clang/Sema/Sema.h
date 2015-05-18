@@ -78,6 +78,7 @@ namespace clang {
   typedef SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
   class CXXConstructorDecl;
   class CXXConversionDecl;
+  class CXXDeleteExpr;
   class CXXDestructorDecl;
   class CXXFieldCollector;
   class CXXMemberCallExpr;
@@ -403,6 +404,15 @@ public:
   /// \brief Set containing all typedefs that are likely unused.
   llvm::SmallSetVector<const TypedefNameDecl *, 4>
       UnusedLocalTypedefNameCandidates;
+
+  /// \brief Delete-expressions to be analyzed at the end of translation unit
+  ///
+  /// This list contains class members, and locations of delete-expressions
+  /// that could not be proven as to whether they mismatch with new-expression
+  /// used in initializer of the field.
+  typedef std::pair<SourceLocation, bool> DeleteExprLoc;
+  typedef llvm::SmallVector<DeleteExprLoc, 4> DeleteLocs;
+  llvm::MapVector<FieldDecl *, DeleteLocs> DeleteExprs;
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl*, 8> RecordDeclSetTy;
 
@@ -887,6 +897,11 @@ public:
   /// Obtain a sorted list of functions that are undefined but ODR-used.
   void getUndefinedButUsed(
       SmallVectorImpl<std::pair<NamedDecl *, SourceLocation> > &Undefined);
+
+  /// Retrieves list of suspicious delete-expressions that will be checked at
+  /// the end of translation unit.
+  const llvm::MapVector<FieldDecl *, DeleteLocs> &
+  getMismatchingDeleteExpressions() const;
 
   typedef std::pair<ObjCMethodList, ObjCMethodList> GlobalMethods;
   typedef llvm::DenseMap<Selector, GlobalMethods> GlobalMethodPool;
@@ -8663,6 +8678,9 @@ private:
   /// attempts to add itself into the container
   void CheckObjCCircularContainer(ObjCMessageExpr *Message);
 
+  void AnalyzeDeleteExprMismatch(const CXXDeleteExpr *DE);
+  void AnalyzeDeleteExprMismatch(FieldDecl *Field, SourceLocation DeleteLoc,
+                                 bool DeleteWasArrayForm);
 public:
   /// \brief Register a magic integral constant to be used as a type tag.
   void RegisterTypeTagForDatatype(const IdentifierInfo *ArgumentKind,

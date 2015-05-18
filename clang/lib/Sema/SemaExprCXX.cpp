@@ -2339,6 +2339,261 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   return false;
 }
 
+namespace {
+/// \brief Checks whether delete-expression, and new-expression used for
+///  initializing deletee have the same array form.
+class MismatchingNewDeleteDetector {
+public:
+  enum MismatchResult {
+    /// Indicates that there is no mismatch or a mismatch cannot be proven.
+    NoMismatch,
+    /// Indicates that variable is initialized with mismatching form of \a new.
+    VarInitMismatches,
+    /// Indicates that member is initialized with mismatching form of \a new.
+    MemberInitMismatches,
+    /// Indicates that 1 or more constructors' definitions could not been
+    /// analyzed, and they will be checked again at the end of translation unit.
+    AnalyzeLater
+  };
+
+  /// \param EndOfTU True, if this is the final analysis at the end of
+  /// translation unit. False, if this is the initial analysis at the point
+  /// delete-expression was encountered.
+  explicit MismatchingNewDeleteDetector(bool EndOfTU)
+      : IsArrayForm(false), Field(nullptr), EndOfTU(EndOfTU),
+        HasUndefinedConstructors(false) {}
+
+  /// \brief Checks whether pointee of a delete-expression is initialized with
+  /// matching form of new-expression.
+  ///
+  /// If return value is \c VarInitMismatches or \c MemberInitMismatches at the
+  /// point where delete-expression is encountered, then a warning will be
+  /// issued immediately. If return value is \c AnalyzeLater at the point where
+  /// delete-expression is seen, then member will be analyzed at the end of
+  /// translation unit. \c AnalyzeLater is returned iff at least one constructor
+  /// couldn't be analyzed. If at least one constructor initializes the member
+  /// with matching type of new, the return value is \c NoMismatch.
+  MismatchResult analyzeDeleteExpr(const CXXDeleteExpr *DE);
+  /// \brief Analyzes a class member.
+  /// \param Field Class member to analyze.
+  /// \param DeleteWasArrayForm Array form-ness of the delete-expression used
+  /// for deleting the \p Field.
+  MismatchResult analyzeField(FieldDecl *Field, bool DeleteWasArrayForm);
+  /// List of mismatching new-expressions used for initialization of the pointee
+  llvm::SmallVector<const CXXNewExpr *, 4> NewExprs;
+  /// Indicates whether delete-expression was in array form.
+  bool IsArrayForm;
+  FieldDecl *Field;
+
+private:
+  const bool EndOfTU;
+  /// \brief Indicates that there is at least one constructor without body.
+  bool HasUndefinedConstructors;
+  /// \brief Returns \c CXXNewExpr from given initialization expression.
+  /// \param E Expression used for initializing pointee in delete-expression.
+  /// \param E can be a single-element \c InitListExpr consisting of
+  /// \param E new-expression.
+  const CXXNewExpr *getNewExprFromInitListOrExpr(const Expr *E);
+  /// \brief Returns whether member is initialized with mismatching form of
+  /// \c new either by the member initializer or in-class initialization.
+  ///
+  /// If bodies of all constructors are not visible at the end of translation
+  /// unit or at least one constructor initializes member with the matching
+  /// form of \c new, mismatch cannot be proven, and this function will return
+  /// \c NoMismatch.
+  MismatchResult analyzeMemberExpr(const MemberExpr *ME);
+  /// \brief Returns whether variable is initialized with mismatching form of
+  /// \c new.
+  ///
+  /// If variable is initialized with matching form of \c new or variable is not
+  /// initialized with a \c new expression, this function will return true.
+  /// If variable is initialized with mismatching form of \c new, returns false.
+  /// \param D Variable to analyze.
+  bool hasMatchingVarInit(const DeclRefExpr *D);
+  /// \brief Checks whether the constructor initializes pointee with mismatching
+  /// form of \c new.
+  ///
+  /// Returns true, if member is initialized with matching form of \c new in
+  /// member initializer list. Returns false, if member is initialized with the
+  /// matching form of \c new in this constructor's initializer or given
+  /// constructor isn't defined at the point where delete-expression is seen, or
+  /// member isn't initialized by the constructor.
+  bool hasMatchingNewInCtor(const CXXConstructorDecl *CD);
+  /// \brief Checks whether member is initialized with matching form of
+  /// \c new in member initializer list.
+  bool hasMatchingNewInCtorInit(const CXXCtorInitializer *CI);
+  /// Checks whether member is initialized with mismatching form of \c new by
+  /// in-class initializer.
+  MismatchResult analyzeInClassInitializer();
+};
+}
+
+MismatchingNewDeleteDetector::MismatchResult
+MismatchingNewDeleteDetector::analyzeDeleteExpr(const CXXDeleteExpr *DE) {
+  NewExprs.clear();
+  assert(DE && "Expected delete-expression");
+  IsArrayForm = DE->isArrayForm();
+  const Expr *E = DE->getArgument()->IgnoreParenImpCasts();
+  if (const MemberExpr *ME = dyn_cast<const MemberExpr>(E)) {
+    return analyzeMemberExpr(ME);
+  } else if (const DeclRefExpr *D = dyn_cast<const DeclRefExpr>(E)) {
+    if (!hasMatchingVarInit(D))
+      return VarInitMismatches;
+  }
+  return NoMismatch;
+}
+
+const CXXNewExpr *
+MismatchingNewDeleteDetector::getNewExprFromInitListOrExpr(const Expr *E) {
+  assert(E != nullptr && "Expected a valid initializer expression");
+  E = E->IgnoreParenImpCasts();
+  if (const InitListExpr *ILE = dyn_cast<const InitListExpr>(E)) {
+    if (ILE->getNumInits() == 1)
+      E = dyn_cast<const CXXNewExpr>(ILE->getInit(0)->IgnoreParenImpCasts());
+  }
+
+  return dyn_cast_or_null<const CXXNewExpr>(E);
+}
+
+bool MismatchingNewDeleteDetector::hasMatchingNewInCtorInit(
+    const CXXCtorInitializer *CI) {
+  const CXXNewExpr *NE = nullptr;
+  if (Field == CI->getMember() &&
+      (NE = getNewExprFromInitListOrExpr(CI->getInit()))) {
+    if (NE->isArray() == IsArrayForm)
+      return true;
+    else
+      NewExprs.push_back(NE);
+  }
+  return false;
+}
+
+bool MismatchingNewDeleteDetector::hasMatchingNewInCtor(
+    const CXXConstructorDecl *CD) {
+  if (CD->isImplicit())
+    return false;
+  const FunctionDecl *Definition = CD;
+  if (!CD->isThisDeclarationADefinition() && !CD->isDefined(Definition)) {
+    HasUndefinedConstructors = true;
+    return EndOfTU;
+  }
+  for (const auto *CI : cast<const CXXConstructorDecl>(Definition)->inits()) {
+    if (hasMatchingNewInCtorInit(CI))
+      return true;
+  }
+  return false;
+}
+
+MismatchingNewDeleteDetector::MismatchResult
+MismatchingNewDeleteDetector::analyzeInClassInitializer() {
+  assert(Field != nullptr && "This should be called only for members");
+  if (const CXXNewExpr *NE =
+          getNewExprFromInitListOrExpr(Field->getInClassInitializer())) {
+    if (NE->isArray() != IsArrayForm) {
+      NewExprs.push_back(NE);
+      return MemberInitMismatches;
+    }
+  }
+  return NoMismatch;
+}
+
+MismatchingNewDeleteDetector::MismatchResult
+MismatchingNewDeleteDetector::analyzeField(FieldDecl *Field,
+                                           bool DeleteWasArrayForm) {
+  assert(Field != nullptr && "Analysis requires a valid class member.");
+  this->Field = Field;
+  IsArrayForm = DeleteWasArrayForm;
+  const CXXRecordDecl *RD = cast<const CXXRecordDecl>(Field->getParent());
+  for (const auto *CD : RD->ctors()) {
+    if (hasMatchingNewInCtor(CD))
+      return NoMismatch;
+  }
+  if (HasUndefinedConstructors)
+    return EndOfTU ? NoMismatch : AnalyzeLater;
+  if (!NewExprs.empty())
+    return MemberInitMismatches;
+  return Field->hasInClassInitializer() ? analyzeInClassInitializer()
+                                        : NoMismatch;
+}
+
+MismatchingNewDeleteDetector::MismatchResult
+MismatchingNewDeleteDetector::analyzeMemberExpr(const MemberExpr *ME) {
+  assert(ME != nullptr && "Expected a member expression");
+  if (FieldDecl *F = dyn_cast<FieldDecl>(ME->getMemberDecl()))
+    return analyzeField(F, IsArrayForm);
+  return NoMismatch;
+}
+
+bool MismatchingNewDeleteDetector::hasMatchingVarInit(const DeclRefExpr *D) {
+  const CXXNewExpr *NE = nullptr;
+  if (const VarDecl *VD = dyn_cast<const VarDecl>(D->getDecl())) {
+    if (VD->hasInit() && (NE = getNewExprFromInitListOrExpr(VD->getInit())) &&
+        NE->isArray() != IsArrayForm) {
+      NewExprs.push_back(NE);
+    }
+  }
+  return NewExprs.empty();
+}
+
+static void
+DiagnoseMismatchedNewDelete(Sema &SemaRef, SourceLocation DeleteLoc,
+                            const MismatchingNewDeleteDetector &Detector) {
+  SourceLocation EndOfDelete = SemaRef.getLocForEndOfToken(DeleteLoc);
+  FixItHint H;
+  if (!Detector.IsArrayForm)
+    H = FixItHint::CreateInsertion(EndOfDelete, "[]");
+  else {
+    SourceLocation RSquare = Lexer::findLocationAfterToken(
+        DeleteLoc, tok::l_square, SemaRef.getSourceManager(),
+        SemaRef.getLangOpts(), true);
+    if (RSquare.isValid())
+      H = FixItHint::CreateRemoval(SourceRange(EndOfDelete, RSquare));
+  }
+  SemaRef.Diag(DeleteLoc, diag::warn_mismatched_delete_new)
+      << Detector.IsArrayForm << H;
+
+  for (const auto *NE : Detector.NewExprs)
+    SemaRef.Diag(NE->getExprLoc(), diag::note_allocated_here)
+        << Detector.IsArrayForm;
+}
+
+void Sema::AnalyzeDeleteExprMismatch(const CXXDeleteExpr *DE) {
+  if (Diags.isIgnored(diag::warn_mismatched_delete_new, SourceLocation()))
+    return;
+  MismatchingNewDeleteDetector Detector(/*EndOfTU=*/false);
+  switch (Detector.analyzeDeleteExpr(DE)) {
+  case MismatchingNewDeleteDetector::VarInitMismatches:
+  case MismatchingNewDeleteDetector::MemberInitMismatches: {
+    DiagnoseMismatchedNewDelete(*this, DE->getLocStart(), Detector);
+    break;
+  }
+  case MismatchingNewDeleteDetector::AnalyzeLater: {
+    DeleteExprs[Detector.Field].push_back(
+        std::make_pair(DE->getLocStart(), DE->isArrayForm()));
+    break;
+  }
+  case MismatchingNewDeleteDetector::NoMismatch:
+    break;
+  }
+}
+
+void Sema::AnalyzeDeleteExprMismatch(FieldDecl *Field, SourceLocation DeleteLoc,
+                                     bool DeleteWasArrayForm) {
+  MismatchingNewDeleteDetector Detector(/*EndOfTU=*/true);
+  switch (Detector.analyzeField(Field, DeleteWasArrayForm)) {
+  case MismatchingNewDeleteDetector::VarInitMismatches:
+    llvm_unreachable("This analysis should have been done for class members.");
+  case MismatchingNewDeleteDetector::AnalyzeLater:
+    llvm_unreachable("Analysis cannot be postponed any point beyond end of "
+                     "translation unit.");
+  case MismatchingNewDeleteDetector::MemberInitMismatches:
+    DiagnoseMismatchedNewDelete(*this, DeleteLoc, Detector);
+    break;
+  case MismatchingNewDeleteDetector::NoMismatch:
+    break;
+  }
+}
+
 /// ActOnCXXDelete - Parsed a C++ 'delete' expression (C++ 5.3.5), as in:
 /// @code ::delete ptr; @endcode
 /// or
@@ -2454,12 +2709,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       }
     }
 
-    // C++ [expr.delete]p2:
-    //   [Note: a pointer to a const type can be the operand of a
-    //   delete-expression; it is not necessary to cast away the constness
-    //   (5.2.11) of the pointer expression before it is used as the operand
-    //   of the delete-expression. ]
-
     if (Pointee->isArrayType() && !ArrayForm) {
       Diag(StartLoc, diag::warn_delete_array_type)
           << Type << Ex.get()->getSourceRange()
@@ -2534,7 +2783,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
           DeleteName);
 
     MarkFunctionReferenced(StartLoc, OperatorDelete);
-    
+
     // Check access and ambiguity of operator delete and destructor.
     if (PointeeRD) {
       if (CXXDestructorDecl *Dtor = LookupDestructor(PointeeRD)) {
@@ -2544,9 +2793,11 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  return new (Context) CXXDeleteExpr(
+  CXXDeleteExpr *Result = new (Context) CXXDeleteExpr(
       Context.VoidTy, UseGlobal, ArrayForm, ArrayFormAsWritten,
       UsualArrayDeleteWantsSize, OperatorDelete, Ex.get(), StartLoc);
+  AnalyzeDeleteExprMismatch(Result);
+  return Result;
 }
 
 /// \brief Check the use of the given variable as a C++ condition in an if,

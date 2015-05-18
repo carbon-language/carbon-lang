@@ -561,6 +561,9 @@ namespace clang {
       /// \brief Record code for the table of offsets to CXXCtorInitializers
       /// lists.
       CXX_CTOR_INITIALIZERS_OFFSETS = 53,
+
+      /// \brief Delete expressions that will be analyzed later.
+      DELETE_EXPRS_TO_ANALYZE = 54
     };
 
     /// \brief Record types used within a source manager block.
