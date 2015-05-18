@@ -1926,12 +1926,12 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
 SDNode
 *SelectionDAGISel::Select_READ_REGISTER(SDNode *Op) {
   SDLoc dl(Op);
-  MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(0));
+  MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(1));
   const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
   unsigned Reg =
       TLI->getRegisterByName(RegStr->getString().data(), Op->getValueType(0));
   SDValue New = CurDAG->getCopyFromReg(
-                        CurDAG->getEntryNode(), dl, Reg, Op->getValueType(0));
+                        Op->getOperand(0), dl, Reg, Op->getValueType(0));
   New->setNodeId(-1);
   return New.getNode();
 }
@@ -1944,7 +1944,7 @@ SDNode
   unsigned Reg = TLI->getRegisterByName(RegStr->getString().data(),
                                         Op->getOperand(2).getValueType());
   SDValue New = CurDAG->getCopyToReg(
-                        CurDAG->getEntryNode(), dl, Reg, Op->getOperand(2));
+                        Op->getOperand(0), dl, Reg, Op->getOperand(2));
   New->setNodeId(-1);
   return New.getNode();
 }
