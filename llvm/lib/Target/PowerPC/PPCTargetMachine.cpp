@@ -52,6 +52,11 @@ EnablePrefetch("enable-ppc-prefetching",
                   cl::desc("disable software prefetching on PPC"),
                   cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+EnableExtraTOCRegDeps("enable-ppc-extra-toc-reg-deps",
+                      cl::desc("Add extra TOC register dependencies"),
+                      cl::init(true), cl::Hidden);
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
@@ -326,6 +331,8 @@ void PPCPassConfig::addPreRegAlloc() {
              &PPCVSXFMAMutateID);
   if (getPPCTargetMachine().getRelocationModel() == Reloc::PIC_)
     addPass(createPPCTLSDynamicCallPass());
+  if (EnableExtraTOCRegDeps)
+    addPass(createPPCTOCRegDepsPass());
 }
 
 void PPCPassConfig::addPreSched2() {
