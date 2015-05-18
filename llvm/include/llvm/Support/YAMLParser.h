@@ -235,8 +235,8 @@ class BlockScalarNode : public Node {
 
 public:
   BlockScalarNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
-                  std::string &Value, StringRef RawVal)
-      : Node(NK_BlockScalar, D, Anchor, Tag), Value(std::move(Value)) {
+                  StringRef Value, StringRef RawVal)
+      : Node(NK_BlockScalar, D, Anchor, Tag), Value(Value) {
     SMLoc Start = SMLoc::getFromPointer(RawVal.begin());
     SMLoc End = SMLoc::getFromPointer(RawVal.end());
     SourceRange = SMRange(Start, End);
@@ -250,7 +250,7 @@ public:
   }
 
 private:
-  std::string Value;
+  StringRef Value;
 };
 
 /// \brief A key and value pair. While not technically a Node under the YAML
