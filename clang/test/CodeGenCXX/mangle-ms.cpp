@@ -380,3 +380,9 @@ void TypedefNewDelete::operator delete[](void *) { }
 
 void __vectorcall vector_func() { }
 // CHECK-DAG: @"\01?vector_func@@YQXXZ"
+
+template <void (*)(void)>
+void fn_tmpl() {}
+
+template void fn_tmpl<extern_c_func>();
+// CHECK-DAG: @"\01??$fn_tmpl@$1?extern_c_func@@YAXXZ@@YAXXZ"
