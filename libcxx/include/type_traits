@@ -19,8 +19,13 @@ namespace std
 
     // helper class:
     template <class T, T v> struct integral_constant;
-    typedef integral_constant<bool, true>  true_type;
-    typedef integral_constant<bool, false> false_type;
+    typedef integral_constant<bool, true>  true_type;   // C++11
+    typedef integral_constant<bool, false> false_type;  // C++11
+    
+    template <bool B>                                   // C++14
+    using bool_constant = integral_constant<bool, B>;   // C++14
+    typedef bool_constant<true> true_type;              // C++14
+    typedef bool_constant<false> false_type;            // C++14
 
     // helper traits
     template <bool, class T = void> struct enable_if;
@@ -260,8 +265,16 @@ struct _LIBCPP_TYPE_VIS_ONLY integral_constant
 template <class _Tp, _Tp __v>
 _LIBCPP_CONSTEXPR const _Tp integral_constant<_Tp, __v>::value;
 
-typedef integral_constant<bool, true>  true_type;
-typedef integral_constant<bool, false> false_type;
+#if _LIBCPP_STD_VER > 14
+template <bool __b>
+using bool_constant = integral_constant<bool, __b>;
+#define	_LIBCPP_BOOL_CONSTANT(__b) bool_constant<(__b)>
+#else
+#define	_LIBCPP_BOOL_CONSTANT(__b) integral_constant<bool,(__b)>
+#endif
+
+typedef _LIBCPP_BOOL_CONSTANT(true)  true_type;
+typedef _LIBCPP_BOOL_CONSTANT(false) false_type;
 
 // is_const
 
@@ -679,7 +692,7 @@ template <class _Tp> using add_pointer_t = typename add_pointer<_Tp>::type;
 // is_signed
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct __libcpp_is_signed_impl : public integral_constant<bool, _Tp(-1) < _Tp(0)> {};
+struct __libcpp_is_signed_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(-1) < _Tp(0)) {};
 
 template <class _Tp>
 struct __libcpp_is_signed_impl<_Tp, false> : public true_type {};  // floating point
@@ -694,7 +707,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_signed : public __libcpp_is
 // is_unsigned
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct __libcpp_is_unsigned_impl : public integral_constant<bool, _Tp(0) < _Tp(-1)> {};
+struct __libcpp_is_unsigned_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(0) < _Tp(-1)) {};
 
 template <class _Tp>
 struct __libcpp_is_unsigned_impl<_Tp, false> : public false_type {};  // floating point
