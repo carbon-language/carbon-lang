@@ -1146,8 +1146,9 @@ public:
   Constant *getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
                             bool OnlyIfReduced = false) const;
 
-  /// getAsInstruction - Returns an Instruction which implements the same operation
-  /// as this ConstantExpr. The instruction is not linked to any basic block.
+  /// getAsInstruction - Returns an Instruction which implements the same
+  /// operation as this ConstantExpr. The instruction is not linked to any basic
+  /// block.
   ///
   /// A better approach to this could be to have a constructor for Instruction
   /// which would take a ConstantExpr parameter, but that would have spread
