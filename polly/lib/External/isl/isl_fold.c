@@ -406,6 +406,14 @@ static int isl_qpolynomial_sign(__isl_keep isl_set *set,
 	return sgn;
 }
 
+/* Combine "fold1" and "fold2" into a single reduction, eliminating
+ * those elements of one reduction that are already covered by the other
+ * reduction on "set".
+ *
+ * If "fold1" or "fold2" is an empty reduction, then return
+ * the other reduction.
+ * If "fold1" or "fold2" is a NaN, then return this NaN.
+ */
 __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_fold_on_domain(
 	__isl_keep isl_set *set,
 	__isl_take isl_qpolynomial_fold *fold1,
@@ -425,12 +433,14 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_fold_on_domain(
 
 	better = fold1->type == isl_fold_max ? -1 : 1;
 
-	if (isl_qpolynomial_fold_is_empty(fold1)) {
+	if (isl_qpolynomial_fold_is_empty(fold1) ||
+	    isl_qpolynomial_fold_is_nan(fold2)) {
 		isl_qpolynomial_fold_free(fold1);
 		return fold2;
 	}
 
-	if (isl_qpolynomial_fold_is_empty(fold2)) {
+	if (isl_qpolynomial_fold_is_empty(fold2) ||
+	    isl_qpolynomial_fold_is_nan(fold1)) {
 		isl_qpolynomial_fold_free(fold2);
 		return fold1;
 	}
@@ -773,6 +783,17 @@ int isl_qpolynomial_fold_is_empty(__isl_keep isl_qpolynomial_fold *fold)
 		return -1;
 
 	return fold->n == 0;
+}
+
+/* Does "fold" represent max(NaN) or min(NaN)?
+ */
+int isl_qpolynomial_fold_is_nan(__isl_keep isl_qpolynomial_fold *fold)
+{
+	if (!fold)
+		return -1;
+	if (fold->n != 1)
+		return 0;
+	return isl_qpolynomial_is_nan(fold->qp[0]);
 }
 
 __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_fold(

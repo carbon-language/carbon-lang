@@ -2576,10 +2576,9 @@ static int foreach_iteration(__isl_take isl_set *domain,
 
 	lower = find_unroll_lower_bound(build, domain, depth, bmap, &n);
 	if (!lower)
-		domain = isl_set_free(domain);
-
-	if (init && init(n, user) < 0)
-		domain = isl_set_free(domain);
+		n = -1;
+	else if (init && init(n, user) < 0)
+		n = -1;
 	for (i = 0; i < n; ++i) {
 		isl_set *set;
 		isl_basic_set *bset;
@@ -2600,7 +2599,7 @@ static int foreach_iteration(__isl_take isl_set *domain,
 	isl_set_free(domain);
 	isl_basic_map_free(bmap);
 
-	return i < n ? -1 : 0;
+	return n < 0 || i < n ? -1 : 0;
 }
 
 /* Data structure for storing the results and the intermediate objects
@@ -3263,7 +3262,7 @@ error:
 
 /* Generate code for a single component, after shifting (if any)
  * has been applied, in case the schedule was specified as a schedule tree.
- * In particular, do so for the specified subset of the schedule domsain.
+ * In particular, do so for the specified subset of the schedule domain.
  */
 static __isl_give isl_ast_graft_list *generate_shifted_component_tree_part(
 	__isl_keep isl_union_map *executed, __isl_take isl_set *domain,
@@ -3295,8 +3294,8 @@ error:
 /* Generate code for a single component, after shifting (if any)
  * has been applied, in case the schedule was specified as a schedule tree.
  *
- * We first check if the user has specified a (non-empty) isolated
- * schedule domain.
+ * We first check if the user has specified an isolated schedule domain
+ * and that we are not already outside of this isolated schedule domain.
  * If so, we break up the schedule domain into iterations that
  * precede the isolated domain, the isolated domain itself,
  * the iterations that follow the isolated domain and
@@ -3315,7 +3314,7 @@ static __isl_give isl_ast_graft_list *generate_shifted_component_tree(
 	isl_union_set *schedule_domain;
 	isl_set *domain;
 	isl_basic_set *hull;
-	isl_set *isolated, *before, *after;
+	isl_set *isolated, *before, *after, *test;
 	isl_map *gt, *lt;
 	isl_ast_graft_list *list, *res;
 
@@ -3331,7 +3330,9 @@ static __isl_give isl_ast_graft_list *generate_shifted_component_tree(
 
 	isolated = isl_ast_build_get_isolated(build);
 	isolated = isl_set_intersect(isolated, isl_set_copy(domain));
-	empty = isl_set_is_empty(isolated);
+	test = isl_ast_build_specialize(build, isl_set_copy(isolated));
+	empty = isl_set_is_empty(test);
+	isl_set_free(test);
 	if (empty < 0)
 		goto error;
 	if (empty) {
@@ -5224,8 +5225,6 @@ static int before_each_mark(__isl_keep isl_id *mark,
 }
 
 /* Call the after_each_mark callback, if requested by the user.
- *
- * Return 0 on success and -1 on error.
  *
  * The caller is responsible for recording the current inverse schedule
  * in "build".

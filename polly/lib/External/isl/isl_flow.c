@@ -935,7 +935,7 @@ static __isl_give isl_flow *compute_val_based_dependences(
 
 	depth = 2 * isl_map_dim(acc->sink.map, isl_dim_in) + 1;
 	mustdo = isl_map_domain(isl_map_copy(acc->sink.map));
-	maydo = isl_set_empty_like(mustdo);
+	maydo = isl_set_empty(isl_set_get_space(mustdo));
 	if (!mustdo || !maydo)
 		goto error;
 	if (isl_set_plain_is_empty(mustdo))
@@ -948,7 +948,9 @@ static __isl_give isl_flow *compute_val_based_dependences(
 
 	for (level = depth; level >= 1; --level) {
 		for (j = acc->n_must-1; j >=0; --j) {
-			must_rel[j] = isl_map_empty_like(res->dep[2 * j].map);
+			isl_space *space;
+			space = isl_map_get_space(res->dep[2 * j].map);
+			must_rel[j] = isl_map_empty(space);
 			may_rel[j] = isl_map_copy(must_rel[j]);
 		}
 

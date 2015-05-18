@@ -119,7 +119,6 @@ struct isl_basic_map *isl_basic_map_alloc(struct isl_ctx *ctx,
 		unsigned nparam, unsigned in, unsigned out, unsigned extra,
 		unsigned n_eq, unsigned n_ineq);
 __isl_give isl_basic_map *isl_basic_map_identity(__isl_take isl_space *dim);
-struct isl_basic_map *isl_basic_map_identity_like(struct isl_basic_map *model);
 struct isl_basic_map *isl_basic_map_finalize(struct isl_basic_map *bmap);
 __isl_null isl_basic_map *isl_basic_map_free(__isl_take isl_basic_map *bmap);
 __isl_give isl_basic_map *isl_basic_map_copy(__isl_keep isl_basic_map *bmap);
@@ -135,12 +134,8 @@ __isl_give isl_basic_map *isl_basic_map_less_at(__isl_take isl_space *dim,
 __isl_give isl_basic_map *isl_basic_map_more_at(__isl_take isl_space *dim,
 	unsigned pos);
 __isl_give isl_basic_map *isl_basic_map_empty(__isl_take isl_space *dim);
-struct isl_basic_map *isl_basic_map_empty_like(struct isl_basic_map *model);
-struct isl_basic_map *isl_basic_map_empty_like_map(struct isl_map *model);
 __isl_give isl_basic_map *isl_basic_map_universe(__isl_take isl_space *dim);
 __isl_give isl_basic_map *isl_basic_map_nat_universe(__isl_take isl_space *dim);
-__isl_give isl_basic_map *isl_basic_map_universe_like(
-		__isl_keep isl_basic_map *bmap);
 __isl_give isl_basic_map *isl_basic_map_remove_redundancies(
 	__isl_take isl_basic_map *bmap);
 __isl_give isl_map *isl_map_remove_redundancies(__isl_take isl_map *map);
@@ -309,14 +304,10 @@ struct isl_map *isl_map_alloc(struct isl_ctx *ctx,
 __isl_give isl_map *isl_map_universe(__isl_take isl_space *dim);
 __isl_give isl_map *isl_map_nat_universe(__isl_take isl_space *dim);
 __isl_give isl_map *isl_map_empty(__isl_take isl_space *dim);
-struct isl_map *isl_map_empty_like(struct isl_map *model);
-struct isl_map *isl_map_empty_like_basic_map(struct isl_basic_map *model);
 struct isl_map *isl_map_dup(struct isl_map *map);
 __isl_give isl_map *isl_map_add_basic_map(__isl_take isl_map *map,
 						__isl_take isl_basic_map *bmap);
 __isl_give isl_map *isl_map_identity(__isl_take isl_space *dim);
-struct isl_map *isl_map_identity_like(struct isl_map *model);
-struct isl_map *isl_map_identity_like_basic_map(struct isl_basic_map *model);
 __isl_give isl_map *isl_map_lex_lt_first(__isl_take isl_space *dim, unsigned n);
 __isl_give isl_map *isl_map_lex_le_first(__isl_take isl_space *dim, unsigned n);
 __isl_give isl_map *isl_map_lex_lt(__isl_take isl_space *set_dim);

@@ -1211,11 +1211,8 @@ __isl_give isl_basic_map *isl_basic_map_sample(__isl_take isl_basic_map *bmap)
 	if (!sample_vec)
 		goto error;
 	if (sample_vec->size == 0) {
-		struct isl_basic_map *sample;
-		sample = isl_basic_map_empty_like(bmap);
 		isl_vec_free(sample_vec);
-		isl_basic_map_free(bmap);
-		return sample;
+		return isl_basic_map_set_to_empty(bmap);
 	}
 	bset = isl_basic_set_from_vec(sample_vec);
 	return isl_basic_map_overlying_set(bset, bmap);
@@ -1246,7 +1243,7 @@ __isl_give isl_basic_map *isl_map_sample(__isl_take isl_map *map)
 		isl_basic_map_free(sample);
 	}
 	if (i == map->n)
-		sample = isl_basic_map_empty_like_map(map);
+		sample = isl_basic_map_empty(isl_map_get_space(map));
 	isl_map_free(map);
 	return sample;
 error:

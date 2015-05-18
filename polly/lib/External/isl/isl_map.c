@@ -5260,36 +5260,6 @@ __isl_give isl_basic_set *isl_basic_set_empty(__isl_take isl_space *dim)
 	return bset;
 }
 
-struct isl_basic_map *isl_basic_map_empty_like(struct isl_basic_map *model)
-{
-	struct isl_basic_map *bmap;
-	if (!model)
-		return NULL;
-	bmap = isl_basic_map_alloc_space(isl_space_copy(model->dim), 0, 1, 0);
-	bmap = isl_basic_map_set_to_empty(bmap);
-	return bmap;
-}
-
-struct isl_basic_map *isl_basic_map_empty_like_map(struct isl_map *model)
-{
-	struct isl_basic_map *bmap;
-	if (!model)
-		return NULL;
-	bmap = isl_basic_map_alloc_space(isl_space_copy(model->dim), 0, 1, 0);
-	bmap = isl_basic_map_set_to_empty(bmap);
-	return bmap;
-}
-
-struct isl_basic_set *isl_basic_set_empty_like(struct isl_basic_set *model)
-{
-	struct isl_basic_set *bset;
-	if (!model)
-		return NULL;
-	bset = isl_basic_set_alloc_space(isl_space_copy(model->dim), 0, 1, 0);
-	bset = isl_basic_set_set_to_empty(bset);
-	return bset;
-}
-
 __isl_give isl_basic_map *isl_basic_map_universe(__isl_take isl_space *dim)
 {
 	struct isl_basic_map *bmap;
@@ -5341,58 +5311,14 @@ __isl_give isl_set *isl_set_nat_universe(__isl_take isl_space *dim)
 	return isl_map_nat_universe(dim);
 }
 
-__isl_give isl_basic_map *isl_basic_map_universe_like(
-		__isl_keep isl_basic_map *model)
-{
-	if (!model)
-		return NULL;
-	return isl_basic_map_alloc_space(isl_space_copy(model->dim), 0, 0, 0);
-}
-
-struct isl_basic_set *isl_basic_set_universe_like(struct isl_basic_set *model)
-{
-	if (!model)
-		return NULL;
-	return isl_basic_set_alloc_space(isl_space_copy(model->dim), 0, 0, 0);
-}
-
-__isl_give isl_basic_set *isl_basic_set_universe_like_set(
-	__isl_keep isl_set *model)
-{
-	if (!model)
-		return NULL;
-	return isl_basic_set_alloc_space(isl_space_copy(model->dim), 0, 0, 0);
-}
-
 __isl_give isl_map *isl_map_empty(__isl_take isl_space *dim)
 {
 	return isl_map_alloc_space(dim, 0, ISL_MAP_DISJOINT);
 }
 
-struct isl_map *isl_map_empty_like(struct isl_map *model)
-{
-	if (!model)
-		return NULL;
-	return isl_map_alloc_space(isl_space_copy(model->dim), 0, ISL_MAP_DISJOINT);
-}
-
-struct isl_map *isl_map_empty_like_basic_map(struct isl_basic_map *model)
-{
-	if (!model)
-		return NULL;
-	return isl_map_alloc_space(isl_space_copy(model->dim), 0, ISL_MAP_DISJOINT);
-}
-
 __isl_give isl_set *isl_set_empty(__isl_take isl_space *dim)
 {
 	return isl_set_alloc_space(dim, 0, ISL_MAP_DISJOINT);
-}
-
-struct isl_set *isl_set_empty_like(struct isl_set *model)
-{
-	if (!model)
-		return NULL;
-	return isl_set_empty(isl_space_copy(model->dim));
 }
 
 __isl_give isl_map *isl_map_universe(__isl_take isl_space *dim)
@@ -5413,13 +5339,6 @@ __isl_give isl_set *isl_set_universe(__isl_take isl_space *dim)
 	set = isl_set_alloc_space(isl_space_copy(dim), 1, ISL_MAP_DISJOINT);
 	set = isl_set_add_basic_set(set, isl_basic_set_universe(dim));
 	return set;
-}
-
-__isl_give isl_set *isl_set_universe_like(__isl_keep isl_set *model)
-{
-	if (!model)
-		return NULL;
-	return isl_set_universe(isl_space_copy(model->dim));
 }
 
 struct isl_map *isl_map_dup(struct isl_map *map)
@@ -7681,30 +7600,9 @@ error:
 	return NULL;
 }
 
-struct isl_basic_map *isl_basic_map_identity_like(struct isl_basic_map *model)
-{
-	if (!model || !model->dim)
-		return NULL;
-	return isl_basic_map_identity(isl_space_copy(model->dim));
-}
-
 __isl_give isl_map *isl_map_identity(__isl_take isl_space *dim)
 {
 	return isl_map_from_basic_map(isl_basic_map_identity(dim));
-}
-
-struct isl_map *isl_map_identity_like(struct isl_map *model)
-{
-	if (!model || !model->dim)
-		return NULL;
-	return isl_map_identity(isl_space_copy(model->dim));
-}
-
-struct isl_map *isl_map_identity_like_basic_map(struct isl_basic_map *model)
-{
-	if (!model || !model->dim)
-		return NULL;
-	return isl_map_identity(isl_space_copy(model->dim));
 }
 
 __isl_give isl_map *isl_set_identity(__isl_take isl_set *set)

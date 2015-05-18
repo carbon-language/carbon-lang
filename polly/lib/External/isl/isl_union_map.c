@@ -3577,7 +3577,7 @@ int isl_union_map_involves_dims(__isl_keep isl_union_map *umap,
 
 	if (type != isl_dim_param)
 		isl_die(isl_union_map_get_ctx(umap), isl_error_invalid,
-			"can only reference parameters", return 0);
+			"can only reference parameters", return -1);
 
 	excludes = union_map_forall_user(umap, &map_excludes, &data);
 

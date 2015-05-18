@@ -1892,6 +1892,10 @@ error:
 	return NULL;
 }
 
+/* Is "qp1" obviously equal to "qp2"?
+ *
+ * NaN is not equal to anything, not even to another NaN.
+ */
 int isl_qpolynomial_plain_is_equal(__isl_keep isl_qpolynomial *qp1,
 	__isl_keep isl_qpolynomial *qp2)
 {
@@ -1899,6 +1903,9 @@ int isl_qpolynomial_plain_is_equal(__isl_keep isl_qpolynomial *qp1,
 
 	if (!qp1 || !qp2)
 		return -1;
+
+	if (isl_qpolynomial_is_nan(qp1) || isl_qpolynomial_is_nan(qp2))
+		return 0;
 
 	equal = isl_space_is_equal(qp1->dim, qp2->dim);
 	if (equal < 0 || !equal)

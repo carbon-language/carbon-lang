@@ -1005,11 +1005,11 @@ static struct isl_basic_set *uset_affine_hull(struct isl_basic_set *bset)
 	if (!cone)
 		goto error;
 	if (cone->n_eq == 0) {
-		struct isl_basic_set *hull;
+		isl_space *space;
+		space = isl_basic_set_get_space(bset);
 		isl_basic_set_free(cone);
-		hull = isl_basic_set_universe_like(bset);
 		isl_basic_set_free(bset);
-		return hull;
+		return isl_basic_set_universe(space);
 	}
 
 	if (cone->n_eq < isl_basic_set_total_dim(cone))
@@ -1346,6 +1346,18 @@ static __isl_give isl_set *isl_set_local_affine_hull(__isl_take isl_set *set)
 	return isl_map_local_affine_hull(set);
 }
 
+/* Return an empty basic map living in the same space as "map".
+ */
+static __isl_give isl_basic_map *replace_map_by_empty_basic_map(
+	__isl_take isl_map *map)
+{
+	isl_space *space;
+
+	space = isl_map_get_space(map);
+	isl_map_free(map);
+	return isl_basic_map_empty(space);
+}
+
 /* Compute the affine hull of "map".
  *
  * We first compute the affine hull of each basic map separately.
@@ -1381,11 +1393,8 @@ __isl_give isl_basic_map *isl_map_affine_hull(__isl_take isl_map *map)
 	if (!map)
 		return NULL;
 
-	if (map->n == 0) {
-		hull = isl_basic_map_empty_like_map(map);
-		isl_map_free(map);
-		return hull;
-	}
+	if (map->n == 0)
+		return replace_map_by_empty_basic_map(map);
 
 	model = isl_basic_map_copy(map->p[0]);
 	set = isl_map_underlying_set(map);

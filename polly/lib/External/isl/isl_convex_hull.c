@@ -1914,6 +1914,18 @@ error:
 	return NULL;
 }
 
+/* Return an empty basic map living in the same space as "map".
+ */
+static __isl_give isl_basic_map *replace_map_by_empty_basic_map(
+	__isl_take isl_map *map)
+{
+	isl_space *space;
+
+	space = isl_map_get_space(map);
+	isl_map_free(map);
+	return isl_basic_map_empty(space);
+}
+
 /* Compute the convex hull of a map.
  *
  * The implementation was inspired by "Extended Convex Hull" by Fukuda et al.,
@@ -1932,11 +1944,8 @@ struct isl_basic_map *isl_map_convex_hull(struct isl_map *map)
 	if (!map)
 		goto error;
 
-	if (map->n == 0) {
-		convex_hull = isl_basic_map_empty_like_map(map);
-		isl_map_free(map);
-		return convex_hull;
-	}
+	if (map->n == 0)
+		return replace_map_by_empty_basic_map(map);
 
 	model = isl_basic_map_copy(map->p[0]);
 	set = isl_map_underlying_set(map);
@@ -2330,11 +2339,8 @@ static __isl_give isl_basic_map *map_simple_hull(__isl_take isl_map *map,
 
 	if (!map)
 		return NULL;
-	if (map->n == 0) {
-		hull = isl_basic_map_empty_like_map(map);
-		isl_map_free(map);
-		return hull;
-	}
+	if (map->n == 0)
+		return replace_map_by_empty_basic_map(map);
 	if (map->n == 1) {
 		hull = isl_basic_map_copy(map->p[0]);
 		isl_map_free(map);

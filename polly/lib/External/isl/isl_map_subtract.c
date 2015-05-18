@@ -483,7 +483,7 @@ static __isl_give isl_map *basic_map_subtract(__isl_take isl_basic_map *bmap,
 {
 	struct isl_subtract_diff_collector sdc;
 	sdc.dc.add = &basic_map_subtract_add;
-	sdc.diff = isl_map_empty_like_basic_map(bmap);
+	sdc.diff = isl_map_empty(isl_basic_map_get_space(bmap));
 	if (basic_map_collect_diff(bmap, map, &sdc.dc) < 0) {
 		isl_map_free(sdc.diff);
 		sdc.diff = NULL;
@@ -546,7 +546,7 @@ static __isl_give isl_map *map_subtract( __isl_take isl_map *map1,
 	map1 = isl_map_remove_empty_parts(map1);
 	map2 = isl_map_remove_empty_parts(map2);
 
-	diff = isl_map_empty_like(map1);
+	diff = isl_map_empty(isl_map_get_space(map1));
 	for (i = 0; i < map1->n; ++i) {
 		struct isl_map *d;
 		d = basic_map_subtract(isl_basic_map_copy(map1->p[i]),
@@ -775,7 +775,7 @@ error:
 	return NULL;
 }
 
-/* Return 1 is the singleton map "map1" is a subset of "map2",
+/* Return 1 if the singleton map "map1" is a subset of "map2",
  * i.e., if the single element of "map1" is also an element of "map2".
  * Assumes "map2" has known divs.
  */
@@ -789,7 +789,8 @@ static int map_is_singleton_subset(__isl_keep isl_map *map1,
 	if (!map1 || !map2)
 		return -1;
 	if (map1->n != 1)
-		return -1;
+		isl_die(isl_map_get_ctx(map1), isl_error_internal,
+			"expecting single-disjunct input", return -1);
 
 	point = singleton_extract_point(map1->p[0]);
 	if (!point)

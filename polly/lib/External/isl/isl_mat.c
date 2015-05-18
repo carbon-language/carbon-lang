@@ -1035,6 +1035,11 @@ struct isl_mat *isl_mat_swap_rows(struct isl_mat *mat, unsigned i, unsigned j)
 	return mat;
 }
 
+/* Calculate the product of two matrices.
+ *
+ * This function is optimized for operand matrices that contain many zeros and
+ * skips multiplications where we know one of the operands is zero.
+ */
 __isl_give isl_mat *isl_mat_product(__isl_take isl_mat *left,
 	__isl_take isl_mat *right)
 {
@@ -1055,10 +1060,13 @@ __isl_give isl_mat *isl_mat_product(__isl_take isl_mat *left,
 		return prod;
 	}
 	for (i = 0; i < prod->n_row; ++i) {
-		for (j = 0; j < prod->n_col; ++j) {
+		for (j = 0; j < prod->n_col; ++j)
 			isl_int_mul(prod->row[i][j],
 				    left->row[i][0], right->row[0][j]);
-			for (k = 1; k < left->n_col; ++k)
+		for (k = 1; k < left->n_col; ++k) {
+			if (isl_int_is_zero(left->row[i][k]))
+				continue;
+			for (j = 0; j < prod->n_col; ++j)
 				isl_int_addmul(prod->row[i][j],
 					    left->row[i][k], right->row[k][j]);
 		}

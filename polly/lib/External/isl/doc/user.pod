@@ -3606,6 +3606,7 @@ is already known to be empty.
 	int isl_basic_set_is_universe(__isl_keep isl_basic_set *bset);
 	int isl_basic_map_is_universe(__isl_keep isl_basic_map *bmap);
 	int isl_set_plain_is_universe(__isl_keep isl_set *set);
+	int isl_map_plain_is_universe(__isl_keep isl_map *map);
 
 =item * Single-valuedness
 
@@ -3815,6 +3816,10 @@ Check whether the given expression is a constant.
 	int isl_aff_is_nan(__isl_keep isl_aff *aff);
 	int isl_pw_aff_involves_nan(__isl_keep isl_pw_aff *pa);
 
+	#include <isl/polynomial.h>
+	int isl_qpolynomial_fold_is_nan(
+		__isl_keep isl_qpolynomial_fold *fold);
+
 Check whether the given expression is equal to or involves NaN.
 
 	#include <isl/aff.h>
@@ -3839,6 +3844,9 @@ return true if the objects are not the same.
 
 	#include <isl/set.h>
 	int isl_basic_set_plain_is_equal(
+		__isl_keep isl_basic_set *bset1,
+		__isl_keep isl_basic_set *bset2);
+	int isl_basic_set_is_equal(
 		__isl_keep isl_basic_set *bset1,
 		__isl_keep isl_basic_set *bset2);
 	int isl_set_plain_is_equal(__isl_keep isl_set *set1,

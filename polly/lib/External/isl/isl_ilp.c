@@ -41,9 +41,9 @@ static struct isl_basic_set *unit_box_base_points(struct isl_basic_set *bset)
 		goto error;
 
 	if (bset->n_eq != 0) {
-		unit_box = isl_basic_set_empty_like(bset);
+		isl_space *space = isl_basic_set_get_space(bset);
 		isl_basic_set_free(bset);
-		return unit_box;
+		return isl_basic_set_empty(space);
 	}
 
 	total = isl_basic_set_total_dim(bset);

@@ -279,6 +279,7 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_copy(
 void isl_qpolynomial_fold_free(__isl_take isl_qpolynomial_fold *fold);
 
 int isl_qpolynomial_fold_is_empty(__isl_keep isl_qpolynomial_fold *fold);
+int isl_qpolynomial_fold_is_nan(__isl_keep isl_qpolynomial_fold *fold);
 int isl_qpolynomial_fold_plain_is_equal(__isl_keep isl_qpolynomial_fold *fold1,
 	__isl_keep isl_qpolynomial_fold *fold2);
 
