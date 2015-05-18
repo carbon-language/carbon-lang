@@ -386,3 +386,6 @@ void fn_tmpl() {}
 
 template void fn_tmpl<extern_c_func>();
 // CHECK-DAG: @"\01??$fn_tmpl@$1?extern_c_func@@YAXXZ@@YAXXZ"
+
+extern "C" void __attribute__((overloadable)) overloaded_fn() {}
+// CHECK-DAG: @"\01?overloaded_fn@@$$J0YAXXZ"

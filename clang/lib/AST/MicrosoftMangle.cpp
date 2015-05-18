@@ -413,7 +413,13 @@ void MicrosoftCXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD,
   // As it stands, these functions still need to get expressed in the full
   // external name.  They have their class and type omitted, replaced with '9'.
   if (ShouldMangle) {
-    // First, the function class.
+    // We would like to mangle all extern "C" functions using this additional
+    // component but this would break compatibility with MSVC's behavior.
+    // Instead, do this when we know that compatibility isn't important (in
+    // other words, when it is an overloaded extern "C" funciton).
+    if (FD->isExternC() && FD->hasAttr<OverloadableAttr>())
+      Out << "$$J0";
+
     mangleFunctionClass(FD);
 
     mangleFunctionType(FT, FD);
@@ -1762,8 +1768,9 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
         else
           Out << 'Q';
     }
-  } else
+  } else {
     Out << 'Y';
+  }
 }
 void MicrosoftCXXNameMangler::mangleCallingConvention(CallingConv CC) {
   // <calling-convention> ::= A # __cdecl
