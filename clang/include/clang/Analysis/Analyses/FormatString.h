@@ -657,9 +657,9 @@ public:
 bool ParsePrintfString(FormatStringHandler &H,
                        const char *beg, const char *end, const LangOptions &LO,
                        const TargetInfo &Target, bool isFreeBSDKPrintf);
-  
-bool ParseFormatStringHasSArg(const char *beg, const char *end, const LangOptions &LO,
-                              const TargetInfo &Target);
+
+bool ParseFormatStringHasSArg(const char *beg, const char *end,
+                              const LangOptions &LO, const TargetInfo &Target);
 
 bool ParseScanfString(FormatStringHandler &H,
                       const char *beg, const char *end, const LangOptions &LO,

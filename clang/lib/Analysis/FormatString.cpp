@@ -799,7 +799,8 @@ bool FormatSpecifier::hasStandardLengthModifier() const {
   llvm_unreachable("Invalid LengthModifier Kind!");
 }
 
-bool FormatSpecifier::hasStandardConversionSpecifier(const LangOptions &LangOpt) const {
+bool FormatSpecifier::hasStandardConversionSpecifier(
+    const LangOptions &LangOpt) const {
   switch (CS.getKind()) {
     case ConversionSpecifier::cArg:
     case ConversionSpecifier::dArg:
