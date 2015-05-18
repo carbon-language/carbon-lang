@@ -279,6 +279,9 @@ def X86VPermiv3   : SDNode<"X86ISD::VPERMIV3",  SDTShuff3Op>;
 
 def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 
+def X86SubVBroadcast : SDNode<"X86ISD::SUBV_BROADCAST",
+                    SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                         SDTCisSubVecOfVec<1, 0>]>, []>;
 def X86VBroadcast : SDNode<"X86ISD::VBROADCAST", SDTVBroadcast>;
 def X86Vinsert   : SDNode<"X86ISD::VINSERT",  SDTypeProfile<1, 3,
                               [SDTCisSameAs<0, 1>, SDTCisPtrTy<3>]>, []>;

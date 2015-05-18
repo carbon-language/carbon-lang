@@ -374,7 +374,10 @@ namespace llvm {
       VPERMIV3,
       VPERMI,
       VPERM2X128,
+      // Broadcast scalar to vector
       VBROADCAST,
+      // Broadcast subvector to vector
+      SUBV_BROADCAST,
       // Insert/Extract vector element
       VINSERT,
       VEXTRACT,

@@ -869,27 +869,70 @@ defm VPBROADCASTQZ  : avx512_int_broadcast_rm<0x59, "vpbroadcastq", i64mem,
                       loadi64, VR512, v8i64, v2i64, VK8WM>,  EVEX_V512, VEX_W,
                       EVEX_CD8<64, CD8VT1>;
 
-multiclass avx512_int_subvec_broadcast_rm<bits<8> opc, string OpcodeStr,
-                          X86MemOperand x86memop, PatFrag ld_frag,
-                          RegisterClass KRC> {
+multiclass avx512_subvec_broadcast_rm<bits<8> opc, string OpcodeStr,
+                          X86VectorVTInfo _Dst, X86VectorVTInfo _Src> {
   let mayLoad = 1 in {
-  def rm : AVX5128I<opc, MRMSrcMem, (outs VR512:$dst), (ins x86memop:$src),
+  def rm : AVX5128I<opc, MRMSrcMem, (outs _Dst.RC:$dst), (ins _Src.MemOp:$src),
                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                  []>, EVEX;
-  def krm : AVX5128I<opc, MRMSrcMem, (outs VR512:$dst), (ins KRC:$mask,
-                                                         x86memop:$src),
+                  [(set _Dst.RC:$dst, 
+                    (_Dst.VT (X86SubVBroadcast 
+                    (_Src.VT (bitconvert (_Src.LdFrag addr:$src))))))]>, EVEX;
+  def rmk : AVX5128I<opc, MRMSrcMem, (outs _Dst.RC:$dst), (ins _Dst.KRCWM:$mask,
+                                                         _Src.MemOp:$src),
                   !strconcat(OpcodeStr,
-                      "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
+                      "\t{$src, ${dst} {${mask}}|${dst} {${mask}}, $src}"),
+                  []>, EVEX, EVEX_K;
+  def rmkz : AVX5128I<opc, MRMSrcMem, (outs _Dst.RC:$dst), (ins _Dst.KRCWM:$mask,
+                                                         _Src.MemOp:$src),
+                  !strconcat(OpcodeStr,
+                    "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
                   []>, EVEX, EVEX_KZ;
   }
 }
 
-defm VBROADCASTI32X4 : avx512_int_subvec_broadcast_rm<0x5a, "vbroadcasti32x4",
-                       i128mem, loadv2i64, VK16WM>,
+defm VBROADCASTI32X4 : avx512_subvec_broadcast_rm<0x5a, "vbroadcasti32x4",
+                       v16i32_info, v4i32x_info>,
                        EVEX_V512, EVEX_CD8<32, CD8VT4>;
-defm VBROADCASTI64X4 : avx512_int_subvec_broadcast_rm<0x5b, "vbroadcasti64x4",
-                       i256mem, loadv4i64, VK16WM>, VEX_W,
+defm VBROADCASTF32X4 : avx512_subvec_broadcast_rm<0x1a, "vbroadcastf32x4",
+                       v16f32_info, v4f32x_info>,
+                       EVEX_V512, EVEX_CD8<32, CD8VT4>;
+defm VBROADCASTI64X4 : avx512_subvec_broadcast_rm<0x5b, "vbroadcasti64x4",
+                       v8i64_info, v4i64x_info>, VEX_W,
                        EVEX_V512, EVEX_CD8<64, CD8VT4>;
+defm VBROADCASTF64X4 : avx512_subvec_broadcast_rm<0x1b, "vbroadcastf64x4",
+                       v8f64_info, v4f64x_info>, VEX_W,
+                       EVEX_V512, EVEX_CD8<64, CD8VT4>;
+
+let Predicates = [HasVLX] in {
+defm VBROADCASTI32X4Z256 : avx512_subvec_broadcast_rm<0x5a, "vbroadcasti32x4",
+                           v8i32x_info, v4i32x_info>,
+                           EVEX_V256, EVEX_CD8<32, CD8VT4>;
+defm VBROADCASTF32X4Z256 : avx512_subvec_broadcast_rm<0x1a, "vbroadcastf32x4",
+                           v8f32x_info, v4f32x_info>,
+                           EVEX_V256, EVEX_CD8<32, CD8VT4>;
+}
+let Predicates = [HasVLX, HasDQI] in {
+defm VBROADCASTI64X2Z128 : avx512_subvec_broadcast_rm<0x5a, "vbroadcasti64x2",
+                           v4i64x_info, v2i64x_info>, VEX_W,
+                           EVEX_V256, EVEX_CD8<64, CD8VT2>;
+defm VBROADCASTF64X2Z128 : avx512_subvec_broadcast_rm<0x1a, "vbroadcastf64x2",
+                           v4f64x_info, v2f64x_info>, VEX_W,
+                           EVEX_V256, EVEX_CD8<64, CD8VT2>;
+}
+let Predicates = [HasDQI] in {
+defm VBROADCASTI64X2 : avx512_subvec_broadcast_rm<0x5a, "vbroadcasti64x2",
+                       v8i64_info, v2i64x_info>, VEX_W,
+                       EVEX_V512, EVEX_CD8<64, CD8VT2>;
+defm VBROADCASTI32X8 : avx512_subvec_broadcast_rm<0x5b, "vbroadcasti32x8",
+                       v16i32_info, v8i32x_info>,
+                       EVEX_V512, EVEX_CD8<32, CD8VT8>;
+defm VBROADCASTF64X2 : avx512_subvec_broadcast_rm<0x1a, "vbroadcastf64x2",
+                       v8f64_info, v2f64x_info>, VEX_W,
+                       EVEX_V512, EVEX_CD8<64, CD8VT2>;
+defm VBROADCASTF32X8 : avx512_subvec_broadcast_rm<0x1b, "vbroadcastf32x8",
+                       v16f32_info, v8f32x_info>,
+                       EVEX_V512, EVEX_CD8<32, CD8VT8>;
+}
 
 def : Pat<(v16i32 (int_x86_avx512_pbroadcastd_512 (v4i32 VR128X:$src))),
           (VPBROADCASTDZrr VR128X:$src)>;
