@@ -20,7 +20,7 @@ class CommandRegexTestCase(TestBase):
         regex_prompt = "Enter one of more sed substitution commands in the form: 's/<regex>/<subst>/'.\r\nTerminate the substitution list with an empty line.\r\n"
         regex_prompt1 = "\r\n"
 
-        child = pexpect.spawn('%s %s' % (self.lldbHere, self.lldbOption))
+        child = pexpect.spawn('%s %s' % (lldbtest_config.lldbExec, self.lldbOption))
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             child.logfile_read = sys.stdout

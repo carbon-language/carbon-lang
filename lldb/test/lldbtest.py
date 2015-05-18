@@ -1060,19 +1060,12 @@ class Base(unittest2.TestCase):
         else:
             self.libcxxPath = None
 
-        if "LLDB_EXEC" in os.environ:
-            self.lldbExec = os.environ["LLDB_EXEC"]
-        else:
-            self.lldbExec = None
         if "LLDBMI_EXEC" in os.environ:
             self.lldbMiExec = os.environ["LLDBMI_EXEC"]
         else:
             self.lldbMiExec = None
             self.dont_do_lldbmi_test = True
-        if "LLDB_HERE" in os.environ:
-            self.lldbHere = os.environ["LLDB_HERE"]
-        else:
-            self.lldbHere = None
+
         # If we spawn an lldb process for test (via pexpect), do not load the
         # init file unless told otherwise.
         if "NO_LLDBINIT" in os.environ and "NO" == os.environ["NO_LLDBINIT"]:
@@ -1564,9 +1557,9 @@ class Base(unittest2.TestCase):
 
             # spawn local process
             command = [
-                self.lldbHere,
+                lldbtest_config.lldbExec,
                 "-o",
-                "file " + self.lldbHere,
+                "file " + lldbtest_config.lldbExec,
                 "-o",
                 "quit"
             ]
@@ -1807,7 +1800,7 @@ class Base(unittest2.TestCase):
                 return path
 
         # Tries to find clang at the same folder as the lldb
-        path = os.path.join(os.path.dirname(self.lldbExec), "clang")
+        path = os.path.join(os.path.dirname(lldbtest_config.lldbExec), "clang")
         if os.path.exists(path):
             return path
         

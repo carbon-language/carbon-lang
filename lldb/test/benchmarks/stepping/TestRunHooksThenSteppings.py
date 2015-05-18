@@ -29,7 +29,7 @@ class RunHooksThenSteppingsBench(BenchBase):
         self.child_prompt = '(lldb) '
         prompt = self.child_prompt
 
-        self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.lldbOption))
+        self.child = pexpect.spawn('%s %s' % (lldbtest_config.lldbExec, self.lldbOption))
         self.child.expect_exact(prompt)
         # So that the child gets torn down after the test.
         child = self.child

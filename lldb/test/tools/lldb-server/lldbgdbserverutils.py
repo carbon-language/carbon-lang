@@ -34,6 +34,8 @@ def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
         returns None.
 
     """
+    if not lldb_exe:
+        return None
 
     exe_dir = os.path.dirname(lldb_exe)
     exe_base = os.path.basename(lldb_exe)
@@ -46,27 +48,26 @@ def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
     debug_monitor_exe = os.path.join(exe_dir, new_base)
     if os.path.exists(debug_monitor_exe):
         return debug_monitor_exe
-    else:
-        return None
+
+    new_base = regex.sub( 'LLDB.framework/Versions/A/Resources/' + debug_monitor_basename, exe_base)
+    debug_monitor_exe = os.path.join(exe_dir, new_base)
+    if os.path.exists(debug_monitor_exe):
+        return debug_monitor_exe
+
+    return None
 
 
 def get_lldb_server_exe():
     """Return the lldb-server exe path.
 
     Returns:
-        A path to the lldb-gdbserver exe if it is found to exist; otherwise,
+        A path to the lldb-server exe if it is found to exist; otherwise,
         returns None.
     """
     if "LLDB_DEBUGSERVER_PATH" in os.environ:
         return os.environ["LLDB_DEBUGSERVER_PATH"]
-    elif "LLDB_EXEC" in os.environ:
-        lldb_exe = os.environ["LLDB_EXEC"]
-        if not lldb_exe:
-            return None
-        else:
-            return _get_debug_monitor_from_lldb(lldb_exe, "lldb-server")
-    else:
-        return None
+
+    return _get_debug_monitor_from_lldb(lldb_exe, "lldb-server")
 
 def get_debugserver_exe():
     """Return the debugserver exe path.
@@ -77,15 +78,8 @@ def get_debugserver_exe():
     """
     if "LLDB_DEBUGSERVER_PATH" in os.environ:
         return os.environ["LLDB_DEBUGSERVER_PATH"]
-    elif "LLDB_EXEC" in os.environ:
-        lldb_exe = os.environ["LLDB_EXEC"]
-        if not lldb_exe:
-            return None
-        else:
-            return _get_debug_monitor_from_lldb(lldb_exe, "debugserver")
-    else:
-        return None
 
+    return _get_debug_monitor_from_lldb(lldbtest_config.lldbExec, "debugserver")
 
 _LOG_LINE_REGEX = re.compile(r'^(lldb-server|debugserver)\s+<\s*(\d+)>' +
     '\s+(read|send)\s+packet:\s+(.+)$')

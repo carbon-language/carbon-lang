@@ -63,7 +63,7 @@ class CommandLineCompletionTestCase(TestBase):
         child.logfile_read = None
 
         # Invoke the lldb command.
-        child.sendline('%s %s' % (self.lldbHere, self.lldbOption))
+        child.sendline('%s %s' % (lldbtest_config.lldbExec, self.lldbOption))
         child.expect_exact(lldb_prompt)
 
         # Immediately quit.

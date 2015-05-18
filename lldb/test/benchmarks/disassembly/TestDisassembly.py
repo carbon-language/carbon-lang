@@ -15,7 +15,7 @@ class DisassembleDriverMainLoop(BenchBase):
 
     def setUp(self):
         """
-        Note that lldbExec can be specified with the LLDB_EXEC env variable (see
+        Note that lldbtest_config.lldbExec can be specified with the LLDB_EXEC env variable (see
         dotest.py), and gdbExec can be specified with the GDB_EXEC env variable.
         This provides a flexibility in specifying different versions of gdb for
         comparison purposes.
@@ -28,7 +28,7 @@ class DisassembleDriverMainLoop(BenchBase):
         else:
             self.gdbExec = "gdb"
 
-        self.exe = self.lldbHere
+        self.exe = lldbtest_config.lldbExec
         self.function = 'Driver::MainLoop()'
         self.lldb_avg = None
         self.gdb_avg = None
@@ -41,7 +41,7 @@ class DisassembleDriverMainLoop(BenchBase):
     def test_run_lldb_then_gdb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
         print
-        print "lldb path: %s" % self.lldbExec
+        print "lldb path: %s" % lldbtest_config.lldbExec
         print "gdb path: %s" % self.gdbExec
 
         print
@@ -56,7 +56,7 @@ class DisassembleDriverMainLoop(BenchBase):
     def test_run_gdb_then_lldb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
         print
-        print "lldb path: %s" % self.lldbExec
+        print "lldb path: %s" % lldbtest_config.lldbExec
         print "gdb path: %s" % self.gdbExec
 
         print
@@ -73,7 +73,7 @@ class DisassembleDriverMainLoop(BenchBase):
         prompt = self.child_prompt
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s %s' % (self.lldbExec, self.lldbOption, exe))
+        self.child = pexpect.spawn('%s %s %s' % (lldbtest_config.lldbExec, self.lldbOption, exe))
         child = self.child
 
         # Turn on logging for what the child sends back.

@@ -148,9 +148,6 @@ failuresPerCategory = {}
 # The path to LLDB.framework is optional.
 lldbFrameworkPath = None
 
-# The path to lldb is optional
-lldbExecutablePath = None
-
 # The config file is optional.
 configFile = None
 
@@ -482,7 +479,6 @@ def parseOptionsAndInitTestdirs():
     global useCategories
     global skipCategories
     global lldbFrameworkPath
-    global lldbExecutablePath
     global configFile
     global archs
     global compilers
@@ -755,7 +751,7 @@ def parseOptionsAndInitTestdirs():
         lldbFrameworkPath = args.framework
 
     if args.executable:
-        lldbExecutablePath = args.executable
+        lldbtest_config.lldbExec = args.executable
 
     if args.libcxx:
         os.environ["LIBCXX_PATH"] = args.libcxx
@@ -946,7 +942,6 @@ def setupSysPath():
     global svn_info
     global svn_silent
     global lldbFrameworkPath
-    global lldbExecutablePath
 
     # Get the directory containing the current script.
     if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
@@ -1005,23 +1000,18 @@ def setupSysPath():
     # Some of the tests can invoke the 'lldb' command directly.
     # We'll try to locate the appropriate executable right here.
 
-    lldbExec = None
     lldbMiExec = None
-    lldbHere = None
-    if lldbExecutablePath:
-        if is_exe(lldbExecutablePath):
-            lldbExec = lldbExecutablePath
-            lldbHere = lldbExec
-        else:
-            print lldbExecutablePath + " is not an executable, lldb tests will fail."
-    else:
+
+    # The lldb executable can be set from the command line
+    # if it's not set, we try to find it now
+    # first, we try the environment
+    if not lldbtest_config.lldbExec:
         # First, you can define an environment variable LLDB_EXEC specifying the
         # full pathname of the lldb executable.
-        if "LLDB_EXEC" in os.environ and is_exe(os.environ["LLDB_EXEC"]):
-            lldbExec = os.environ["LLDB_EXEC"]
-        else:
-            lldbExec = None
-    
+        if "LLDB_EXEC" in os.environ:
+            lldbtest_config.lldbExec = os.environ["LLDB_EXEC"]
+
+    if not lldbtest_config.lldbExec:
         executable = ['lldb']
         dbgExec  = os.path.join(base, *(xcode3_build_dir + dbg + executable))
         dbgExec2 = os.path.join(base, *(xcode4_build_dir + dbg + executable))
@@ -1034,54 +1024,50 @@ def setupSysPath():
     
         # The 'lldb' executable built here in the source tree.
         if is_exe(dbgExec):
-            lldbHere = dbgExec
+            lldbtest_config.lldbExec = dbgExec
         elif is_exe(dbgExec2):
-            lldbHere = dbgExec2
+            lldbtest_config.lldbExec = dbgExec2
         elif is_exe(dbcExec):
-            lldbHere = dbcExec
+            lldbtest_config.lldbExec = dbcExec
         elif is_exe(dbcExec2):
-            lldbHere = dbcExec2
+            lldbtest_config.lldbExec = dbcExec2
         elif is_exe(relExec):
-            lldbHere = relExec
+            lldbtest_config.lldbExec = relExec
         elif is_exe(relExec2):
-            lldbHere = relExec2
+            lldbtest_config.lldbExec = relExec2
         elif is_exe(baiExec):
-            lldbHere = baiExec
+            lldbtest_config.lldbExec = baiExec
         elif is_exe(baiExec2):
-            lldbHere = baiExec2
-        elif lldbExec:
-            lldbHere = lldbExec
+            lldbtest_config.lldbExec = baiExec2
+        elif lldbtest_config.lldbExec:
+            lldbtest_config.lldbExec = lldbtest_config.lldbExec
 
-        # One last chance to locate the 'lldb' executable.
-        if not lldbExec:
-            lldbExec = which('lldb')
-            if lldbHere and not lldbExec:
-                lldbExec = lldbHere
-            if lldbExec and not lldbHere:
-                lldbHere = lldbExec
-    
-    if lldbHere:
-        os.environ["LLDB_HERE"] = lldbHere
-        lldbLibDir = os.path.split(lldbHere)[0]  # confusingly, this is the "bin" directory
-        os.environ["LLDB_LIB_DIR"] = lldbLibDir
-        lldbImpLibDir = os.path.join(lldbLibDir, '..', 'lib') if sys.platform.startswith('win32') else lldbLibDir
-        os.environ["LLDB_IMPLIB_DIR"] = lldbImpLibDir
-        if not noHeaders:
-            print "LLDB library dir:", os.environ["LLDB_LIB_DIR"]
-            print "LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"]
-            os.system('%s -v' % lldbHere)
+    if not lldbtest_config.lldbExec:
+        # Last, check the path
+        lldbtest_config.lldbExec = which('lldb')
 
-    if not lldbExec:
+    if lldbtest_config.lldbExec and not is_exe(lldbtest_config.lldbExec):
+        print "'{}' is not a path to a valid executable"
+        del lldbtest_config.lldbExec
+
+    if not lldbtest_config.lldbExec:
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
-    else:
-        os.environ["LLDB_EXEC"] = lldbExec
-        #print "The 'lldb' from PATH env variable", lldbExec
+        sys.exit(-1)
+
+    lldbLibDir = os.path.dirname(lldbtest_config.lldbExec)  # confusingly, this is the "bin" directory
+    os.environ["LLDB_LIB_DIR"] = lldbLibDir
+    lldbImpLibDir = os.path.join(lldbLibDir, '..', 'lib') if sys.platform.startswith('win32') else lldbLibDir
+    os.environ["LLDB_IMPLIB_DIR"] = lldbImpLibDir
+    if not noHeaders:
+        print "LLDB library dir:", os.environ["LLDB_LIB_DIR"]
+        print "LLDB import library dir:", os.environ["LLDB_IMPLIB_DIR"]
+        os.system('%s -v' % lldbtest_config.lldbExec)
 
     # Assume lldb-mi is in same place as lldb
     # If not found, disable the lldb-mi tests
     global dont_do_lldbmi_test
-    if lldbExec and is_exe(lldbExec + "-mi"):
-        lldbMiExec = lldbExec + "-mi"
+    if lldbtest_config.lldbExec and is_exe(lldbtest_config.lldbExec + "-mi"):
+        lldbMiExec = lldbtest_config.lldbExec + "-mi"
     if not lldbMiExec:
         dont_do_lldbmi_test = True
         if just_do_lldbmi_test:
@@ -1119,11 +1105,8 @@ def setupSysPath():
         
         # If our lldb supports the -P option, use it to find the python path:
         init_in_python_dir = os.path.join('lldb', '__init__.py')
-        lldb_dash_p_result = None
 
-        lldbExecutable = lldbHere if lldbHere else lldbExec
-        if lldbExecutable:
-            lldb_dash_p_result = subprocess.check_output([lldbExecutable, "-P"], stderr=subprocess.STDOUT)
+        lldb_dash_p_result = subprocess.check_output([lldbtest_config.lldbExec, "-P"], stderr=subprocess.STDOUT)
 
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")) \
 							  and not lldb_dash_p_result.startswith("Traceback"):

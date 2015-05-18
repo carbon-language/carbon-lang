@@ -11,7 +11,7 @@ class CompileRunToBreakpointBench(BenchBase):
 
     def setUp(self):
         BenchBase.setUp(self)
-        self.exe = self.lldbHere
+        self.exe = lldbtest_config.lldbExec
         self.function = 'Driver::MainLoop()'
 
         self.count = lldb.bmIterationCount
@@ -38,7 +38,7 @@ class CompileRunToBreakpointBench(BenchBase):
             prompt = self.child_prompt
 
             # So that the child gets torn down after the test.
-            self.child = pexpect.spawn('%s %s %s' % (self.lldbExec, self.lldbOption, exe))
+            self.child = pexpect.spawn('%s %s %s' % (lldbtest_config.lldbExec, self.lldbOption, exe))
             child = self.child
 
             # Turn on logging for what the child sends back.

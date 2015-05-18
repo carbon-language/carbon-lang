@@ -15,3 +15,7 @@ channels = []
 
 # leave logs/traces even for successful test runs
 log_success = False
+
+# path to the lldb command line executable tool
+lldbExec = None
+

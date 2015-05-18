@@ -34,7 +34,7 @@ class SingleQuoteInCommandLineTestCase(TestBase):
         prompt = "(lldb) "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s "%s"' % (self.lldbHere, self.lldbOption, self.myexe))
+        self.child = pexpect.spawn('%s %s "%s"' % (lldbtest_config.lldbExec, self.lldbOption, self.myexe))
         child = self.child
         child.setecho(True)
         # Turn on logging for input/output to/from the child.

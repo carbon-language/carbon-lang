@@ -236,7 +236,7 @@ class CommandLineCompletionTestCase(TestBase):
         prompt = "(lldb) "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn(self.lldbHere,
+        self.child = pexpect.spawn(lldbtest_config.lldbExec,
                                    [self.lldbOption] + ['--no-use-colors'])
         child = self.child
         # Turn on logging for input/output to/from the child.

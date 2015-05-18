@@ -16,7 +16,7 @@ class AttachThenDisassemblyBench(BenchBase):
         if lldb.bmExecutable:
             self.exe = lldb.bmExecutable
         else:
-            self.exe = self.lldbHere
+            self.exe = lldbtest_config.lldbExec
         self.count = lldb.bmIterationCount
         if self.count <= 0:
             self.count = 10

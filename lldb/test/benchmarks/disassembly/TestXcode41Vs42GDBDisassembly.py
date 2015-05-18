@@ -13,7 +13,7 @@ class XCode41Vs42GDBDisassembly(BenchBase):
         BenchBase.setUp(self)
         self.gdb_41_exe = '/Xcode41/usr/bin/gdb'
         self.gdb_42_exe = '/Developer/usr/bin/gdb'
-        self.exe = self.lldbHere
+        self.exe = lldbtest_config.lldbExec
         self.function = 'Driver::MainLoop()'
         self.gdb_41_avg = None
         self.gdb_42_avg = None
