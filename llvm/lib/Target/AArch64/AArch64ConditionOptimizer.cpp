@@ -92,7 +92,7 @@ class AArch64ConditionOptimizer : public MachineFunctionPass {
 public:
   // Stores immediate, compare instruction opcode and branch condition (in this
   // order) of adjusted comparison.
-  typedef std::tuple<int, int, AArch64CC::CondCode> CmpInfo;
+  typedef std::tuple<int, unsigned, AArch64CC::CondCode> CmpInfo;
 
   static char ID;
   AArch64ConditionOptimizer() : MachineFunctionPass(ID) {}
@@ -215,7 +215,7 @@ static AArch64CC::CondCode getAdjustedCmp(AArch64CC::CondCode Cmp) {
 // operator and condition code.
 AArch64ConditionOptimizer::CmpInfo AArch64ConditionOptimizer::adjustCmp(
     MachineInstr *CmpMI, AArch64CC::CondCode Cmp) {
-  int Opc = CmpMI->getOpcode();
+  unsigned Opc = CmpMI->getOpcode();
 
   // CMN (compare with negative immediate) is an alias to ADDS (as
   // "operand - negative" == "operand + positive")
@@ -244,7 +244,7 @@ AArch64ConditionOptimizer::CmpInfo AArch64ConditionOptimizer::adjustCmp(
 void AArch64ConditionOptimizer::modifyCmp(MachineInstr *CmpMI,
     const CmpInfo &Info) {
   int Imm;
-  int Opc;
+  unsigned Opc;
   AArch64CC::CondCode Cmp;
   std::tie(Imm, Opc, Cmp) = Info;
 

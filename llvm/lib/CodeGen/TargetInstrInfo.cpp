@@ -652,8 +652,8 @@ int TargetInstrInfo::getSPAdjust(const MachineInstr *MI) const {
   bool StackGrowsDown =
     TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
 
-  int FrameSetupOpcode = getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = getCallFrameDestroyOpcode();
+  unsigned FrameSetupOpcode = getCallFrameSetupOpcode();
+  unsigned FrameDestroyOpcode = getCallFrameDestroyOpcode();
 
   if (MI->getOpcode() != FrameSetupOpcode &&
       MI->getOpcode() != FrameDestroyOpcode)

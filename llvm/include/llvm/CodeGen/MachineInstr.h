@@ -271,9 +271,8 @@ public:
   /// MachineInstr.
   const MCInstrDesc &getDesc() const { return *MCID; }
 
-  /// getOpcode - Returns the opcode of this MachineInstr.
-  ///
-  int getOpcode() const { return MCID->Opcode; }
+  /// Returns the opcode of this MachineInstr.
+  unsigned getOpcode() const { return MCID->Opcode; }
 
   /// Access to explicit operands of the instruction.
   ///

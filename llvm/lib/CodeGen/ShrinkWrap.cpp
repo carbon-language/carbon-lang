@@ -106,9 +106,9 @@ class ShrinkWrap : public MachineFunctionPass {
   /// Frequency of the Entry block.
   uint64_t EntryFreq;
   /// Current opcode for frame setup.
-  int FrameSetupOpcode;
+  unsigned FrameSetupOpcode;
   /// Current opcode for frame destroy.
-  int FrameDestroyOpcode;
+  unsigned FrameDestroyOpcode;
   /// Entry block.
   const MachineBasicBlock *Entry;
 

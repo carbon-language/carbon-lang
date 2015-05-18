@@ -103,7 +103,7 @@ namespace {
                            DebugLoc dl, unsigned Base, unsigned WordOffset,
                            ARMCC::CondCodes Pred, unsigned PredReg);
     bool MergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                  int Offset, unsigned Base, bool BaseKill, int Opcode,
+                  int Offset, unsigned Base, bool BaseKill, unsigned Opcode,
                   ARMCC::CondCodes Pred, unsigned PredReg, unsigned Scratch,
                   DebugLoc dl,
                   ArrayRef<std::pair<unsigned, bool> > Regs,
@@ -116,14 +116,14 @@ namespace {
                         int Offset,
                         unsigned Base,
                         bool BaseKill,
-                        int Opcode,
+                        unsigned Opcode,
                         ARMCC::CondCodes Pred,
                         unsigned PredReg,
                         unsigned Scratch,
                         DebugLoc dl,
                         SmallVectorImpl<MachineBasicBlock::iterator> &Merges);
     void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
-                      int Opcode, unsigned Size,
+                      unsigned Opcode, unsigned Size,
                       ARMCC::CondCodes Pred, unsigned PredReg,
                       unsigned Scratch, MemOpQueue &MemOps,
                       SmallVectorImpl<MachineBasicBlock::iterator> &Merges);
@@ -159,7 +159,7 @@ static bool definesCPSR(const MachineInstr *MI) {
 }
 
 static int getMemoryOpOffset(const MachineInstr *MI) {
-  int Opcode = MI->getOpcode();
+  unsigned Opcode = MI->getOpcode();
   bool isAM3 = Opcode == ARM::LDRD || Opcode == ARM::STRD;
   unsigned NumOperands = MI->getDesc().getNumOperands();
   unsigned OffField = MI->getOperand(NumOperands-3).getImm();
@@ -186,7 +186,7 @@ static int getMemoryOpOffset(const MachineInstr *MI) {
   return Offset;
 }
 
-static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
+static int getLoadStoreMultipleOpcode(unsigned Opcode, ARM_AM::AMSubMode Mode) {
   switch (Opcode) {
   default: llvm_unreachable("Unhandled opcode!");
   case ARM::LDRi12:
@@ -274,7 +274,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
 namespace llvm {
   namespace ARM_AM {
 
-AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
+AMSubMode getLoadStoreMultipleSubMode(unsigned Opcode) {
   switch (Opcode) {
   default: llvm_unreachable("Unhandled opcode!");
   case ARM::LDMIA_RET:
@@ -478,7 +478,7 @@ bool
 ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI,
                           int Offset, unsigned Base, bool BaseKill,
-                          int Opcode, ARMCC::CondCodes Pred,
+                          unsigned Opcode, ARMCC::CondCodes Pred,
                           unsigned PredReg, unsigned Scratch, DebugLoc dl,
                           ArrayRef<std::pair<unsigned, bool> > Regs,
                           ArrayRef<unsigned> ImpDefs) {
@@ -730,7 +730,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
                                      unsigned memOpsBegin, unsigned memOpsEnd,
                                      unsigned insertAfter, int Offset,
                                      unsigned Base, bool BaseKill,
-                                     int Opcode,
+                                     unsigned Opcode,
                                      ARMCC::CondCodes Pred, unsigned PredReg,
                                      unsigned Scratch,
                                      DebugLoc dl,
@@ -829,7 +829,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
 /// load / store multiple instructions.
 void
 ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
-                         unsigned Base, int Opcode, unsigned Size,
+                         unsigned Base, unsigned Opcode, unsigned Size,
                          ARMCC::CondCodes Pred, unsigned PredReg,
                          unsigned Scratch, MemOpQueue &MemOps,
                          SmallVectorImpl<MachineBasicBlock::iterator> &Merges) {
@@ -1110,7 +1110,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   unsigned Bytes = getLSMultipleTransferSize(MI);
   unsigned PredReg = 0;
   ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
-  int Opcode = MI->getOpcode();
+  unsigned Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
 
   // Can't use an updating ld/st if the base register is also a dest
@@ -1248,7 +1248,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   unsigned Base = MI->getOperand(1).getReg();
   bool BaseKill = MI->getOperand(1).isKill();
   unsigned Bytes = getLSMultipleTransferSize(MI);
-  int Opcode = MI->getOpcode();
+  unsigned Opcode = MI->getOpcode();
   DebugLoc dl = MI->getDebugLoc();
   bool isAM5 = (Opcode == ARM::VLDRD || Opcode == ARM::VLDRS ||
                 Opcode == ARM::VSTRD || Opcode == ARM::VSTRS);
@@ -1406,7 +1406,7 @@ static bool isMemoryOp(const MachineInstr *MI) {
       MI->getOperand(1).isUndef())
     return false;
 
-  int Opcode = MI->getOpcode();
+  unsigned Opcode = MI->getOpcode();
   switch (Opcode) {
   default: break;
   case ARM::VLDRS:
@@ -1597,7 +1597,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   unsigned NumMemOps = 0;
   MemOpQueue MemOps;
   unsigned CurrBase = 0;
-  int CurrOpc = -1;
+  unsigned CurrOpc = ~0u;
   unsigned CurrSize = 0;
   ARMCC::CondCodes CurrPred = ARMCC::AL;
   unsigned CurrPredReg = 0;
@@ -1616,7 +1616,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
     bool isMemOp = isMemoryOp(MBBI);
     if (isMemOp) {
-      int Opcode = MBBI->getOpcode();
+      unsigned Opcode = MBBI->getOpcode();
       unsigned Size = getLSMultipleTransferSize(MBBI);
       const MachineOperand &MO = MBBI->getOperand(0);
       unsigned Reg = MO.getReg();
@@ -1753,7 +1753,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       }
 
       CurrBase = 0;
-      CurrOpc = -1;
+      CurrOpc = ~0u;
       CurrSize = 0;
       CurrPred = ARMCC::AL;
       CurrPredReg = 0;

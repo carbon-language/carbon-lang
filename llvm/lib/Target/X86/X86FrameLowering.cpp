@@ -1986,7 +1986,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   const X86RegisterInfo &RegInfo = *STI.getRegisterInfo();
   unsigned StackPtr = RegInfo.getStackRegister();
   bool reserveCallFrame = hasReservedCallFrame(MF);
-  int Opcode = I->getOpcode();
+  unsigned Opcode = I->getOpcode();
   bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
   bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL = I->getDebugLoc();

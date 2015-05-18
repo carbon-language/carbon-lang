@@ -439,7 +439,7 @@ static inline bool isPushOpcode(int Opc) {
 /// register by reference.
 ARMCC::CondCodes getInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
-int getMatchingCondBranchOpcode(int Opc);
+unsigned getMatchingCondBranchOpcode(unsigned Opc);
 
 /// Determine if MI can be folded into an ARM MOVCC instruction, and return the
 /// opcode of the SSA instruction representing the conditional MI.

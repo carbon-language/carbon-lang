@@ -423,7 +423,7 @@ static MachineInstr *getDef(unsigned Reg,
 }
 
 // Return true if MI is a shift of type Opcode by Imm bits.
-static bool isShift(MachineInstr *MI, int Opcode, int64_t Imm) {
+static bool isShift(MachineInstr *MI, unsigned Opcode, int64_t Imm) {
   return (MI->getOpcode() == Opcode &&
           !MI->getOperand(2).getReg() &&
           MI->getOperand(3).getImm() == Imm);

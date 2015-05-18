@@ -128,8 +128,8 @@ bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
   // This is bad, and breaks SP adjustment.
   // So, check that all of the frames in the function are closed inside
   // the same block, and, for good measure, that there are no nested frames.
-  int FrameSetupOpcode = TII->getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
+  unsigned FrameSetupOpcode = TII->getCallFrameSetupOpcode();
+  unsigned FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
   for (MachineBasicBlock &BB : MF) {
     bool InsideFrameSequence = false;
     for (MachineInstr &MI : BB) {
@@ -214,7 +214,7 @@ bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
   if (!isLegal(MF))
     return false;
 
-  int FrameSetupOpcode = TII->getCallFrameSetupOpcode();
+  unsigned FrameSetupOpcode = TII->getCallFrameSetupOpcode();
 
   bool Changed = false;
 
@@ -246,7 +246,7 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
                                        MF.getSubtarget().getRegisterInfo());
   unsigned StackPtr = RegInfo.getStackRegister();
-  int FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
+  unsigned FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
 
   // We expect to enter this at the beginning of a call sequence
   assert(I->getOpcode() == TII->getCallFrameSetupOpcode());

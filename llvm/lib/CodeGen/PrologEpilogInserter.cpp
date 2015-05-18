@@ -248,12 +248,12 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
   bool AdjustsStack = MFI->adjustsStack();
 
   // Get the function call frame set-up and tear-down instruction opcode
-  int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
+  unsigned FrameSetupOpcode = TII.getCallFrameSetupOpcode();
+  unsigned FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   // Early exit for targets which have no call frame setup/destroy pseudo
   // instructions.
-  if (FrameSetupOpcode == -1 && FrameDestroyOpcode == -1)
+  if (FrameSetupOpcode == ~0u && FrameDestroyOpcode == ~0u)
     return;
 
   std::vector<MachineBasicBlock::iterator> FrameSDOps;
@@ -864,8 +864,8 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
   const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *Fn.getSubtarget().getRegisterInfo();
   const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
-  int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
+  unsigned FrameSetupOpcode = TII.getCallFrameSetupOpcode();
+  unsigned FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 

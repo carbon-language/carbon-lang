@@ -158,7 +158,7 @@ static unsigned getSrcFromCopy(const MachineInstr *MI,
 // getTransformOpcode - For any opcode for which there is an AdvSIMD equivalent
 // that we're considering transforming to, return that AdvSIMD opcode. For all
 // others, return the original opcode.
-static int getTransformOpcode(unsigned Opc) {
+static unsigned getTransformOpcode(unsigned Opc) {
   switch (Opc) {
   default:
     break;
@@ -179,7 +179,7 @@ static int getTransformOpcode(unsigned Opc) {
 }
 
 static bool isTransformable(const MachineInstr *MI) {
-  int Opc = MI->getOpcode();
+  unsigned Opc = MI->getOpcode();
   return Opc != getTransformOpcode(Opc);
 }
 
@@ -286,8 +286,8 @@ void AArch64AdvSIMDScalar::transformInstruction(MachineInstr *MI) {
   DEBUG(dbgs() << "Scalar transform: " << *MI);
 
   MachineBasicBlock *MBB = MI->getParent();
-  int OldOpc = MI->getOpcode();
-  int NewOpc = getTransformOpcode(OldOpc);
+  unsigned OldOpc = MI->getOpcode();
+  unsigned NewOpc = getTransformOpcode(OldOpc);
   assert(OldOpc != NewOpc && "transform an instruction to itself?!");
 
   // Check if we need a copy for the source registers.

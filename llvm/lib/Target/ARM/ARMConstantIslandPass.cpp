@@ -240,8 +240,8 @@ namespace {
       MachineInstr *MI;
       unsigned MaxDisp : 31;
       bool isCond : 1;
-      int UncondBr;
-      ImmBranch(MachineInstr *mi, unsigned maxdisp, bool cond, int ubr)
+      unsigned UncondBr;
+      ImmBranch(MachineInstr *mi, unsigned maxdisp, bool cond, unsigned ubr)
         : MI(mi), MaxDisp(maxdisp), isCond(cond), UncondBr(ubr) {}
     };
 
@@ -746,7 +746,7 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
       if (I->isDebugValue())
         continue;
 
-      int Opc = I->getOpcode();
+      unsigned Opc = I->getOpcode();
       if (I->isBranch()) {
         bool isCond = false;
         unsigned Bits = 0;

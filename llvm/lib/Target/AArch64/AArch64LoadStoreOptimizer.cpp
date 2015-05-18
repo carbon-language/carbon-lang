@@ -494,7 +494,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   MachineInstr *FirstMI = I;
   ++MBBI;
 
-  int Opc = FirstMI->getOpcode();
+  unsigned Opc = FirstMI->getOpcode();
   bool MayLoad = FirstMI->mayLoad();
   bool IsUnscaled = isUnscaledLdst(Opc);
   unsigned Reg = FirstMI->getOperand(0).getReg();
@@ -954,7 +954,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
     MachineInstr *MI = MBBI;
     // Do update merging. It's simpler to keep this separate from the above
     // switch, though not strictly necessary.
-    int Opc = MI->getOpcode();
+    unsigned Opc = MI->getOpcode();
     switch (Opc) {
     default:
       // Just move on to the next instruction.

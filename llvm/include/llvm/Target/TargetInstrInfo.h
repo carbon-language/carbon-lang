@@ -53,7 +53,7 @@ class TargetInstrInfo : public MCInstrInfo {
   TargetInstrInfo(const TargetInstrInfo &) = delete;
   void operator=(const TargetInstrInfo &) = delete;
 public:
-  TargetInstrInfo(int CFSetupOpcode = -1, int CFDestroyOpcode = -1)
+  TargetInstrInfo(unsigned CFSetupOpcode = ~0u, unsigned CFDestroyOpcode = ~0u)
     : CallFrameSetupOpcode(CFSetupOpcode),
       CallFrameDestroyOpcode(CFDestroyOpcode) {
   }
@@ -109,8 +109,8 @@ public:
   /// between operating with a frame pointer and operating without, through the
   /// use of these two instructions.
   ///
-  int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
-  int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
+  unsigned getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
+  unsigned getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
 
   /// Returns the actual stack pointer adjustment made by an instruction
   /// as part of a call sequence. By default, only call frame setup/destroy
@@ -1244,7 +1244,7 @@ public:
   }
 
 private:
-  int CallFrameSetupOpcode, CallFrameDestroyOpcode;
+  unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
 
 } // End llvm namespace
