@@ -3644,6 +3644,9 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
           CurTy = CurTy->subtypes()[0];
       }
 
+      if (CurTy != Val->getType())
+        return Error("Inserted value type doesn't match aggregate type");
+
       I = InsertValueInst::Create(Agg, Val, INSERTVALIdx);
       InstructionList.push_back(I);
       break;

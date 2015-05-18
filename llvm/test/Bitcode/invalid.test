@@ -142,3 +142,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-load-ptr-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=BAD-LOAD-PTR-TYPE %s
 
 BAD-LOAD-PTR-TYPE: Cannot load/store from pointer
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-inserted-value-type-mismatch.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INSERT-TYPE-MISMATCH %s
+
+INSERT-TYPE-MISMATCH: Inserted value type doesn't match aggregate type
