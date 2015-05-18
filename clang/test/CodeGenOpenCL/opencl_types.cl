@@ -37,4 +37,4 @@ kernel void foo(image1d_t img) {
 }
 
 void __attribute__((overloadable)) bad1(image1d_t *b, image2d_t *c, image2d_t *d) {}
-// CHECK-LABEL: @{{_Z4bad1P11ocl_image1dP11ocl_image2dS2_|"\\01\?bad1@@YAXPE?APAUocl_image1d@@PE?APAUocl_image2d@@1@Z"}}
+// CHECK-LABEL: @{{_Z4bad1P11ocl_image1dP11ocl_image2dS2_|"\\01\?bad1@@\$\$J0YAXPE?APAUocl_image1d@@PE?APAUocl_image2d@@1@Z"}}
