@@ -5831,6 +5831,9 @@ static void CheckMoveOnConstruction(Sema &S, const Expr *InitExpr,
     if (!VD || !VD->hasLocalStorage())
       return;
 
+    if (!VD->getType()->isRecordType())
+      return;
+
     if (DiagID == 0) {
       DiagID = S.Context.hasSameUnqualifiedType(DestType, VD->getType())
                    ? diag::warn_pessimizing_move_on_return

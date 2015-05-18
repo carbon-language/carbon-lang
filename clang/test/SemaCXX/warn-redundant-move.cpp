@@ -17,8 +17,8 @@ struct B : public A {};
 
 A test1(B b1) {
   B b2;
-  //return b1;
-  //return b2;
+  return b1;
+  return b2;
   return std::move(b1);
   // expected-warning@-1{{redundant move}}
   // expected-note@-2{{remove std::move call}}
@@ -65,4 +65,28 @@ C test2(A a1, B b1) {
   // expected-note@-2{{remove std::move call}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:10-[[@LINE-3]]:20}:""
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:22-[[@LINE-4]]:23}:""
+}
+
+// Copy of tests above with types changed to reference types.
+A test3(B& b1) {
+  B& b2 = b1;
+  return b1;
+  return b2;
+  return std::move(b1);
+  return std::move(b2);
+}
+
+C test4(A& a1, B& b1) {
+  A& a2 = a1;
+  B& b2 = b1;
+
+  return a1;
+  return a2;
+  return b1;
+  return b2;
+
+  return std::move(a1);
+  return std::move(a2);
+  return std::move(b1);
+  return std::move(b2);
 }
