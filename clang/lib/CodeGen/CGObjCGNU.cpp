@@ -49,51 +49,51 @@ class LazyRuntimeFunction {
   std::vector<llvm::Type*> ArgTys;
   const char *FunctionName;
   llvm::Constant *Function;
-  public:
-    /// Constructor leaves this class uninitialized, because it is intended to
-    /// be used as a field in another class and not all of the types that are
-    /// used as arguments will necessarily be available at construction time.
-    LazyRuntimeFunction()
+
+public:
+  /// Constructor leaves this class uninitialized, because it is intended to
+  /// be used as a field in another class and not all of the types that are
+  /// used as arguments will necessarily be available at construction time.
+  LazyRuntimeFunction()
       : CGM(nullptr), FunctionName(nullptr), Function(nullptr) {}
 
-    /// Initialises the lazy function with the name, return type, and the types
-    /// of the arguments.
-    LLVM_END_WITH_NULL
-    void init(CodeGenModule *Mod, const char *name,
-        llvm::Type *RetTy, ...) {
-       CGM =Mod;
-       FunctionName = name;
-       Function = nullptr;
-       ArgTys.clear();
-       va_list Args;
-       va_start(Args, RetTy);
-         while (llvm::Type *ArgTy = va_arg(Args, llvm::Type*))
-           ArgTys.push_back(ArgTy);
-       va_end(Args);
-       // Push the return type on at the end so we can pop it off easily
-       ArgTys.push_back(RetTy);
-   }
-   /// Overloaded cast operator, allows the class to be implicitly cast to an
-   /// LLVM constant.
-   operator llvm::Constant*() {
-     if (!Function) {
-       if (!FunctionName) return nullptr;
-       // We put the return type on the end of the vector, so pop it back off
-       llvm::Type *RetTy = ArgTys.back();
-       ArgTys.pop_back();
-       llvm::FunctionType *FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
-       Function =
-         cast<llvm::Constant>(CGM->CreateRuntimeFunction(FTy, FunctionName));
-       // We won't need to use the types again, so we may as well clean up the
-       // vector now
-       ArgTys.resize(0);
-     }
-     return Function;
-   }
-   operator llvm::Function*() {
-     return cast<llvm::Function>((llvm::Constant*)*this);
-   }
-
+  /// Initialises the lazy function with the name, return type, and the types
+  /// of the arguments.
+  LLVM_END_WITH_NULL
+  void init(CodeGenModule *Mod, const char *name, llvm::Type *RetTy, ...) {
+    CGM = Mod;
+    FunctionName = name;
+    Function = nullptr;
+    ArgTys.clear();
+    va_list Args;
+    va_start(Args, RetTy);
+    while (llvm::Type *ArgTy = va_arg(Args, llvm::Type *))
+      ArgTys.push_back(ArgTy);
+    va_end(Args);
+    // Push the return type on at the end so we can pop it off easily
+    ArgTys.push_back(RetTy);
+  }
+  /// Overloaded cast operator, allows the class to be implicitly cast to an
+  /// LLVM constant.
+  operator llvm::Constant *() {
+    if (!Function) {
+      if (!FunctionName)
+        return nullptr;
+      // We put the return type on the end of the vector, so pop it back off
+      llvm::Type *RetTy = ArgTys.back();
+      ArgTys.pop_back();
+      llvm::FunctionType *FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
+      Function =
+          cast<llvm::Constant>(CGM->CreateRuntimeFunction(FTy, FunctionName));
+      // We won't need to use the types again, so we may as well clean up the
+      // vector now
+      ArgTys.resize(0);
+    }
+    return Function;
+  }
+  operator llvm::Function *() {
+    return cast<llvm::Function>((llvm::Constant *)*this);
+  }
 };
 
 
