@@ -705,20 +705,19 @@ let Uses = [O6],
 }
 
 // Section B.28 - Read State Register Instructions
-let Uses = [Y], rs1 = 0, rs2 = 0 in
-  def RDY : F3_1<2, 0b101000,
-                 (outs IntRegs:$dst), (ins),
-                 "rd %y, $dst", []>;
+let rs2 = 0 in
+  def RDASR : F3_1<2, 0b101000,
+                 (outs IntRegs:$rd), (ins ASRRegs:$rs1),
+                 "rd $rs1, $rd", []>;
 
 // Section B.29 - Write State Register Instructions
-let Defs = [Y], rd = 0 in {
-  def WRYrr : F3_1<2, 0b110000,
-                   (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
-                   "wr $rs1, $rs2, %y", []>;
-  def WRYri : F3_2<2, 0b110000,
-                   (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
-                   "wr $rs1, $simm13, %y", []>;
-}
+def WRASRrr : F3_1<2, 0b110000,
+                 (outs ASRRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
+                 "wr $rs1, $rs2, $rd", []>;
+def WRASRri : F3_2<2, 0b110000,
+                 (outs ASRRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
+                 "wr $rs1, $simm13, $rd", []>;
+
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3u<2, 0b110100, 0b011000100,
                  (outs FPRegs:$rd), (ins FPRegs:$rs2),

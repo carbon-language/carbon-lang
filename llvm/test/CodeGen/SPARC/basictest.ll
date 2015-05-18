@@ -36,3 +36,51 @@ entry:
   ret i32 0
 }
 
+; CHECK-LABEL: signed_divide:
+; CHECK: sra %o0, 31, %o2
+; CHECK: wr %o2, %g0, %y
+; CHECK: sdiv %o0, %o1, %o0
+define i32 @signed_divide(i32 %a, i32 %b) {
+  %r = sdiv i32 %a, %b
+  ret i32 %r
+}
+
+; CHECK-LABEL: unsigned_divide:
+; CHECK: wr %g0, %g0, %y
+; CHECK: udiv %o0, %o1, %o0
+define i32 @unsigned_divide(i32 %a, i32 %b) {
+  %r = udiv i32 %a, %b
+  ret i32 %r
+}
+
+; CHECK-LABEL: multiply_32x32:
+; CHECK: smul %o0, %o1, %o0
+define i32 @multiply_32x32(i32 %a, i32 %b) {
+  %r = mul i32 %a, %b
+  ret i32 %r
+}
+
+; CHECK-LABEL: signed_multiply_32x32_64:
+; CHECK: smul %o0, %o1, %o1
+; CHECK: rd %y, %o0
+define i64 @signed_multiply_32x32_64(i32 %a, i32 %b) {
+  %xa = sext i32 %a to i64
+  %xb = sext i32 %b to i64
+  %r = mul i64 %xa, %xb
+  ret i64 %r
+}
+
+; CHECK-LABEL: unsigned_multiply_32x32_64:
+; CHECK: umul %o0, %o1, %o2
+; CHECK: rd %y, %o2
+;FIXME: the smul in the output is totally redundant and should not there.
+; CHECK: smul %o0, %o1, %o1
+; CHECK: retl
+; CHECK: mov      %o2, %o0
+define i64 @unsigned_multiply_32x32_64(i32 %a, i32 %b) {
+  %xa = zext i32 %a to i64
+  %xb = zext i32 %b to i64
+  %r = mul i64 %xa, %xb
+  ret i64 %r
+}
+

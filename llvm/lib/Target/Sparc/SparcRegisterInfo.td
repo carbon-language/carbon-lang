@@ -56,6 +56,38 @@ foreach I = 0-3 in
 
 // Y register
 def Y : SparcCtrlReg<0, "Y">, DwarfRegNum<[64]>;
+// Ancillary state registers (implementation defined)
+def ASR1 : SparcCtrlReg<1, "ASR1">;
+def ASR2 : SparcCtrlReg<2, "ASR2">;
+def ASR3 : SparcCtrlReg<3, "ASR3">;
+def ASR4 : SparcCtrlReg<4, "ASR4">;
+def ASR5 : SparcCtrlReg<5, "ASR5">;
+def ASR6 : SparcCtrlReg<6, "ASR6">;
+def ASR7 : SparcCtrlReg<7, "ASR7">;
+def ASR8 : SparcCtrlReg<8, "ASR8">;
+def ASR9 : SparcCtrlReg<9, "ASR9">;
+def ASR10 : SparcCtrlReg<10, "ASR10">;
+def ASR11 : SparcCtrlReg<11, "ASR11">;
+def ASR12 : SparcCtrlReg<12, "ASR12">;
+def ASR13 : SparcCtrlReg<13, "ASR13">;
+def ASR14 : SparcCtrlReg<14, "ASR14">;
+def ASR15 : SparcCtrlReg<15, "ASR15">;
+def ASR16 : SparcCtrlReg<16, "ASR16">;
+def ASR17 : SparcCtrlReg<17, "ASR17">;
+def ASR18 : SparcCtrlReg<18, "ASR18">;
+def ASR19 : SparcCtrlReg<19, "ASR19">;
+def ASR20 : SparcCtrlReg<20, "ASR20">;
+def ASR21 : SparcCtrlReg<21, "ASR21">;
+def ASR22 : SparcCtrlReg<22, "ASR22">;
+def ASR23 : SparcCtrlReg<23, "ASR23">;
+def ASR24 : SparcCtrlReg<24, "ASR24">;
+def ASR25 : SparcCtrlReg<25, "ASR25">;
+def ASR26 : SparcCtrlReg<26, "ASR26">;
+def ASR27 : SparcCtrlReg<27, "ASR27">;
+def ASR28 : SparcCtrlReg<28, "ASR28">;
+def ASR29 : SparcCtrlReg<29, "ASR29">;
+def ASR30 : SparcCtrlReg<30, "ASR30">;
+def ASR31 : SparcCtrlReg<31, "ASR31">;
 
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
@@ -209,3 +241,7 @@ def QFPRegs : RegisterClass<"SP", [f128], 128, (sequence "Q%u", 0, 15)>;
 
 // Floating point control register classes.
 def FCCRegs : RegisterClass<"SP", [i1], 1, (sequence "FCC%u", 0, 3)>;
+
+// Ancillary state registers
+def ASRRegs : RegisterClass<"SP", [i32], 32,
+                            (add Y, (sequence "ASR%u", 1, 31))>;

@@ -107,6 +107,16 @@ static const unsigned QFPRegDecoderTable[] = {
 static const unsigned FCCRegDecoderTable[] = {
   SP::FCC0, SP::FCC1, SP::FCC2, SP::FCC3 };
 
+static const unsigned ASRRegDecoderTable[] = {
+  SP::Y,     SP::ASR1,  SP::ASR2,  SP::ASR3,
+  SP::ASR4,  SP::ASR5,  SP::ASR6,  SP::ASR7,
+  SP::ASR8,  SP::ASR9,  SP::ASR10, SP::ASR11,
+  SP::ASR12, SP::ASR13, SP::ASR14, SP::ASR15,
+  SP::ASR16, SP::ASR17, SP::ASR18, SP::ASR19,
+  SP::ASR20, SP::ASR21, SP::ASR22, SP::ASR23,
+  SP::ASR24, SP::ASR25, SP::ASR26, SP::ASR27,
+  SP::ASR28, SP::ASR29, SP::ASR30, SP::ASR31};
+
 static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
                                                uint64_t Address,
@@ -174,6 +184,15 @@ static DecodeStatus DecodeFCCRegsRegisterClass(MCInst &Inst, unsigned RegNo,
   if (RegNo > 3)
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::createReg(FCCRegDecoderTable[RegNo]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeASRRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  if (RegNo > 31)
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::createReg(ASRRegDecoderTable[RegNo]));
   return MCDisassembler::Success;
 }
 

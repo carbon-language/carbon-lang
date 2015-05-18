@@ -124,6 +124,15 @@ public:
     Sparc::Q8,  Sparc::Q9,  Sparc::Q10, Sparc::Q11,
     Sparc::Q12, Sparc::Q13, Sparc::Q14, Sparc::Q15 };
 
+  static unsigned ASRRegs[32] = {
+    SP::Y,     SP::ASR1,  SP::ASR2,  SP::ASR3,
+    SP::ASR4,  SP::ASR5,  SP::ASR6, SP::ASR7,
+    SP::ASR8,  SP::ASR9,  SP::ASR10, SP::ASR11,
+    SP::ASR12, SP::ASR13, SP::ASR14, SP::ASR15,
+    SP::ASR16, SP::ASR17, SP::ASR18, SP::ASR19,
+    SP::ASR20, SP::ASR21, SP::ASR22, SP::ASR23,
+    SP::ASR24, SP::ASR25, SP::ASR26, SP::ASR27,
+    SP::ASR28, SP::ASR29, SP::ASR30, SP::ASR31};
 
 /// SparcOperand - Instances of this class represent a parsed Sparc machine
 /// instruction.
@@ -136,7 +145,7 @@ public:
     rk_DoubleReg,
     rk_QuadReg,
     rk_CCReg,
-    rk_Y
+    rk_ASRReg
   };
 private:
   enum KindTy {
@@ -661,9 +670,6 @@ SparcAsmParser::parseSparcAsmOperand(std::unique_ptr<SparcOperand> &Op,
       default:
         Op = SparcOperand::CreateReg(RegNo, RegKind, S, E);
         break;
-      case Sparc::Y:
-        Op = SparcOperand::CreateToken("%y", S);
-        break;
 
       case Sparc::ICC:
         if (name == "xcc")
@@ -753,7 +759,15 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
 
     if (name.equals("y")) {
       RegNo = Sparc::Y;
-      RegKind = SparcOperand::rk_Y;
+      RegKind = SparcOperand::rk_ASRReg;
+      return true;
+    }
+
+    if (name.substr(0, 3).equals_lower("asr")
+        && !name.substr(3).getAsInteger(10, intVal)
+        && intVal > 0 && intVal < 32) {
+      RegNo = ASRRegs[intVal];
+      RegKind = SparcOperand::rk_ASRReg;
       return true;
     }
 
