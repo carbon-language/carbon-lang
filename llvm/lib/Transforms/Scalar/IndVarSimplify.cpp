@@ -621,16 +621,6 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
           PN->eraseFromParent();
         }
       }
-
-      // If we were unable to completely replace the PHI node, clone the PHI and
-      // delete the original one. This purges the original phi.
-      if (!LCSSASafePhiForRAUW) {
-        PHINode *NewPN = cast<PHINode>(PN->clone());
-        NewPN->takeName(PN);
-        NewPN->insertBefore(PN);
-        PN->replaceAllUsesWith(NewPN);
-        PN->eraseFromParent();
-      }
     }
   }
 
