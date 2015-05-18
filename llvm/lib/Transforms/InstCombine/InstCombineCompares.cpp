@@ -2097,7 +2097,7 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
 
   Value *TruncA = Builder->CreateTrunc(A, NewType, A->getName()+".trunc");
   Value *TruncB = Builder->CreateTrunc(B, NewType, B->getName()+".trunc");
-  CallInst *Call = Builder->CreateCall2(F, TruncA, TruncB, "sadd");
+  CallInst *Call = Builder->CreateCall(F, {TruncA, TruncB}, "sadd");
   Value *Add = Builder->CreateExtractValue(Call, 0, "sadd.result");
   Value *ZExt = Builder->CreateZExt(Add, OrigAdd->getType());
 
@@ -2384,7 +2384,7 @@ static Instruction *ProcessUMulZExtIdiom(ICmpInst &I, Value *MulVal,
     MulB = Builder->CreateZExt(B, MulType);
   Value *F =
       Intrinsic::getDeclaration(M, Intrinsic::umul_with_overflow, MulType);
-  CallInst *Call = Builder->CreateCall2(F, MulA, MulB, "umul");
+  CallInst *Call = Builder->CreateCall(F, {MulA, MulB}, "umul");
   IC.Worklist.Add(MulInstr);
 
   // If there are uses of mul result other than the comparison, we know that

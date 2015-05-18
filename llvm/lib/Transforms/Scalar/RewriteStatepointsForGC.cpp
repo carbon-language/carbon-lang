@@ -1118,8 +1118,8 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
         LiveStart + find_index(LiveVariables, LiveVariables[i]));
 
     // only specify a debug name if we can give a useful one
-    Value *Reloc = Builder.CreateCall3(
-        GCRelocateDecl, StatepointToken, BaseIdx, LiveIdx,
+    Value *Reloc = Builder.CreateCall(
+        GCRelocateDecl, {StatepointToken, BaseIdx, LiveIdx},
         LiveVariables[i]->hasName() ? LiveVariables[i]->getName() + ".relocated"
                                     : "");
     // Trick CodeGen into thinking there are lots of free registers at this

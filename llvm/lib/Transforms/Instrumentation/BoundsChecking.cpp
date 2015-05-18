@@ -82,7 +82,7 @@ BasicBlock *BoundsChecking::getTrapBB() {
   Builder->SetInsertPoint(TrapBB);
 
   llvm::Value *F = Intrinsic::getDeclaration(Fn->getParent(), Intrinsic::trap);
-  CallInst *TrapCall = Builder->CreateCall(F);
+  CallInst *TrapCall = Builder->CreateCall(F, {});
   TrapCall->setDoesNotReturn();
   TrapCall->setDoesNotThrow();
   TrapCall->setDebugLoc(Inst->getDebugLoc());

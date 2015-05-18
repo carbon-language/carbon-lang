@@ -232,7 +232,7 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     // FIXME: We can skip this in -GS- mode, when we figure that out.
     // SavedESP = llvm.stacksave()
     Value *SP = Builder.CreateCall(
-        Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave));
+        Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave), {});
     Builder.CreateStore(SP, Builder.CreateStructGEP(RegNodeTy, RegNode, 0));
     // TryLevel = -1
     Builder.CreateStore(Builder.getInt32(-1),
@@ -258,7 +258,7 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     Value *RegNode = Builder.CreateAlloca(RegNodeTy);
     // SavedESP = llvm.stacksave()
     Value *SP = Builder.CreateCall(
-        Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave));
+        Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave), {});
     Builder.CreateStore(SP, Builder.CreateStructGEP(RegNodeTy, RegNode, 0));
     // TryLevel = -2
     Builder.CreateStore(Builder.getInt32(-2),

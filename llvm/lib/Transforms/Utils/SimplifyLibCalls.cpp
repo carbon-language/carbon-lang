@@ -1150,7 +1150,7 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
       Value *Callee =
           M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
                                  Op->getType(), B.getInt32Ty(), nullptr);
-      CallInst *CI = B.CreateCall2(Callee, One, LdExpArg);
+      CallInst *CI = B.CreateCall(Callee, {One, LdExpArg});
       if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
         CI->setCallingConv(F->getCallingConv());
 
@@ -1436,7 +1436,7 @@ Value *LibCallSimplifier::optimizeFFS(CallInst *CI, IRBuilder<> &B) {
   Type *ArgType = Op->getType();
   Value *F =
       Intrinsic::getDeclaration(Callee->getParent(), Intrinsic::cttz, ArgType);
-  Value *V = B.CreateCall2(F, Op, B.getFalse(), "cttz");
+  Value *V = B.CreateCall(F, {Op, B.getFalse()}, "cttz");
   V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
   V = B.CreateIntCast(V, B.getInt32Ty(), false);
 

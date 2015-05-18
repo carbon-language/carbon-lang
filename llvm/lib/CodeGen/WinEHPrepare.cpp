@@ -1208,7 +1208,7 @@ static BasicBlock *createStubLandingPad(Function *Handler,
   // Insert a call to llvm.eh.actions so that we don't try to outline this lpad.
   Function *ActionIntrin =
       Intrinsic::getDeclaration(Handler->getParent(), Intrinsic::eh_actions);
-  Builder.CreateCall(ActionIntrin, "recover");
+  Builder.CreateCall(ActionIntrin, {}, "recover");
   LPad->setCleanup(true);
   Builder.CreateUnreachable();
   return StubBB;
@@ -1453,7 +1453,7 @@ void WinEHPrepare::processSEHCatchHandler(CatchHandler *CatchAction,
   IRBuilder<> Builder(HandlerBB->getFirstInsertionPt());
   Function *EHCodeFn = Intrinsic::getDeclaration(
       StartBB->getParent()->getParent(), Intrinsic::eh_exceptioncode);
-  Value *Code = Builder.CreateCall(EHCodeFn, "sehcode");
+  Value *Code = Builder.CreateCall(EHCodeFn, {}, "sehcode");
   Code = Builder.CreateIntToPtr(Code, SEHExceptionCodeSlot->getAllocatedType());
   Builder.CreateStore(Code, SEHExceptionCodeSlot);
   CatchAction->setHandlerBlockOrFunc(BlockAddress::get(HandlerBB));

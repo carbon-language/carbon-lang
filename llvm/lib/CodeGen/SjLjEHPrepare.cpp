@@ -235,7 +235,7 @@ Value *SjLjEHPrepare::setupFunctionContext(Function &F,
       PersonalityFieldPtr, /*isVolatile=*/true);
 
   // LSDA address
-  Value *LSDA = Builder.CreateCall(LSDAAddrFn, "lsda_addr");
+  Value *LSDA = Builder.CreateCall(LSDAAddrFn, {}, "lsda_addr");
   Value *LSDAFieldPtr =
       Builder.CreateConstGEP2_32(FunctionContextTy, FuncCtx, 0, 4, "lsda_gep");
   Builder.CreateStore(LSDA, LSDAFieldPtr, /*isVolatile=*/true);
@@ -420,7 +420,7 @@ bool SjLjEHPrepare::setupEntryBlockAndCallSites(Function &F) {
   Value *StackPtr = Builder.CreateConstGEP2_32(doubleUnderJBufTy, JBufPtr, 0, 2,
                                                "jbuf_sp_gep");
 
-  Val = Builder.CreateCall(StackAddrFn, "sp");
+  Val = Builder.CreateCall(StackAddrFn, {}, "sp");
   Builder.CreateStore(Val, StackPtr, /*isVolatile=*/true);
 
   // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.

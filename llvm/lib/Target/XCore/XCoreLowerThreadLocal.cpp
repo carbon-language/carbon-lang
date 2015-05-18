@@ -209,7 +209,7 @@ bool XCoreLowerThreadLocal::lowerGlobal(GlobalVariable *GV) {
     IRBuilder<> Builder(Inst);
     Function *GetID = Intrinsic::getDeclaration(GV->getParent(),
                                                 Intrinsic::xcore_getid);
-    Value *ThreadID = Builder.CreateCall(GetID);
+    Value *ThreadID = Builder.CreateCall(GetID, {});
     SmallVector<Value *, 2> Indices;
     Indices.push_back(Constant::getNullValue(Type::getInt64Ty(Ctx)));
     Indices.push_back(ThreadID);

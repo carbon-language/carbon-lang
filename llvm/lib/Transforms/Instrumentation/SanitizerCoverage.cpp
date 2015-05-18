@@ -341,9 +341,9 @@ void SanitizerCoverageModule::InjectCoverageForIndirectCalls(
         *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
         Constant::getNullValue(Ty), "__sancov_gen_callee_cache");
     CalleeCache->setAlignment(kCacheAlignment);
-    IRB.CreateCall2(SanCovIndirCallFunction,
-                    IRB.CreatePointerCast(Callee, IntptrTy),
-                    IRB.CreatePointerCast(CalleeCache, IntptrTy));
+    IRB.CreateCall(SanCovIndirCallFunction,
+                   {IRB.CreatePointerCast(Callee, IntptrTy),
+                    IRB.CreatePointerCast(CalleeCache, IntptrTy)});
   }
 }
 
@@ -357,11 +357,11 @@ void SanitizerCoverageModule::InjectTraceForCmp(
       if (!A0->getType()->isIntegerTy()) continue;
       uint64_t TypeSize = DL->getTypeStoreSizeInBits(A0->getType());
       // __sanitizer_cov_trace_cmp((type_size << 32) | predicate, A0, A1);
-      IRB.CreateCall3(
+      IRB.CreateCall(
           SanCovTraceCmpFunction,
-          ConstantInt::get(Int64Ty, (TypeSize << 32) | ICMP->getPredicate()),
-          IRB.CreateIntCast(A0, Int64Ty, true),
-          IRB.CreateIntCast(A1, Int64Ty, true));
+          {ConstantInt::get(Int64Ty, (TypeSize << 32) | ICMP->getPredicate()),
+           IRB.CreateIntCast(A0, Int64Ty, true),
+           IRB.CreateIntCast(A1, Int64Ty, true)});
     }
   }
 }
@@ -410,7 +410,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
     IRB.SetCurrentDebugLocation(EntryLoc);
     // __sanitizer_cov gets the PC of the instruction using GET_CALLER_PC.
     IRB.CreateCall(SanCovFunction, GuardP);
-    IRB.CreateCall(EmptyAsm);  // Avoids callback merge.
+    IRB.CreateCall(EmptyAsm, {}); // Avoids callback merge.
   }
 
   if (Options.Use8bitCounters) {

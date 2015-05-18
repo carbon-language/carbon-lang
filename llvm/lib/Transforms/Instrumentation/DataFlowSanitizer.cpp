@@ -850,7 +850,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         BranchInst *BI = cast<BranchInst>(SplitBlockAndInsertIfThen(
             Ne, Pos, /*Unreachable=*/false, ColdCallWeights));
         IRBuilder<> ThenIRB(BI);
-        ThenIRB.CreateCall(DFSF.DFS.DFSanNonzeroLabelFn);
+        ThenIRB.CreateCall(DFSF.DFS.DFSanNonzeroLabelFn, {});
       }
     }
   }
@@ -865,7 +865,7 @@ Value *DFSanFunction::getArgTLSPtr() {
     return ArgTLSPtr = DFS.ArgTLS;
 
   IRBuilder<> IRB(F->getEntryBlock().begin());
-  return ArgTLSPtr = IRB.CreateCall(DFS.GetArgTLS);
+  return ArgTLSPtr = IRB.CreateCall(DFS.GetArgTLS, {});
 }
 
 Value *DFSanFunction::getRetvalTLS() {
@@ -875,7 +875,7 @@ Value *DFSanFunction::getRetvalTLS() {
     return RetvalTLSPtr = DFS.RetvalTLS;
 
   IRBuilder<> IRB(F->getEntryBlock().begin());
-  return RetvalTLSPtr = IRB.CreateCall(DFS.GetRetvalTLS);
+  return RetvalTLSPtr = IRB.CreateCall(DFS.GetRetvalTLS, {});
 }
 
 Value *DFSanFunction::getArgTLS(unsigned Idx, Instruction *Pos) {
@@ -972,7 +972,7 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
 
   IRBuilder<> IRB(Pos);
   if (AvoidNewBlocks) {
-    CallInst *Call = IRB.CreateCall2(DFS.DFSanCheckedUnionFn, V1, V2);
+    CallInst *Call = IRB.CreateCall(DFS.DFSanCheckedUnionFn, {V1, V2});
     Call->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
     Call->addAttribute(1, Attribute::ZExt);
     Call->addAttribute(2, Attribute::ZExt);
@@ -985,7 +985,7 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
     BranchInst *BI = cast<BranchInst>(SplitBlockAndInsertIfThen(
         Ne, Pos, /*Unreachable=*/false, DFS.ColdCallWeights, &DT));
     IRBuilder<> ThenIRB(BI);
-    CallInst *Call = ThenIRB.CreateCall2(DFS.DFSanUnionFn, V1, V2);
+    CallInst *Call = ThenIRB.CreateCall(DFS.DFSanUnionFn, {V1, V2});
     Call->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
     Call->addAttribute(1, Attribute::ZExt);
     Call->addAttribute(2, Attribute::ZExt);
@@ -1087,8 +1087,9 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
     // shadow is non-equal.
     BasicBlock *FallbackBB = BasicBlock::Create(*DFS.Ctx, "", F);
     IRBuilder<> FallbackIRB(FallbackBB);
-    CallInst *FallbackCall = FallbackIRB.CreateCall2(
-        DFS.DFSanUnionLoadFn, ShadowAddr, ConstantInt::get(DFS.IntptrTy, Size));
+    CallInst *FallbackCall = FallbackIRB.CreateCall(
+        DFS.DFSanUnionLoadFn,
+        {ShadowAddr, ConstantInt::get(DFS.IntptrTy, Size)});
     FallbackCall->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
 
     // Compare each of the shadows stored in the loaded 64 bits to each other,
@@ -1144,8 +1145,8 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
   }
 
   IRBuilder<> IRB(Pos);
-  CallInst *FallbackCall = IRB.CreateCall2(
-      DFS.DFSanUnionLoadFn, ShadowAddr, ConstantInt::get(DFS.IntptrTy, Size));
+  CallInst *FallbackCall = IRB.CreateCall(
+      DFS.DFSanUnionLoadFn, {ShadowAddr, ConstantInt::get(DFS.IntptrTy, Size)});
   FallbackCall->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
   return FallbackCall;
 }
@@ -1332,10 +1333,10 @@ void DFSanVisitor::visitSelectInst(SelectInst &I) {
 void DFSanVisitor::visitMemSetInst(MemSetInst &I) {
   IRBuilder<> IRB(&I);
   Value *ValShadow = DFSF.getShadow(I.getValue());
-  IRB.CreateCall3(
-      DFSF.DFS.DFSanSetLabelFn, ValShadow,
-      IRB.CreateBitCast(I.getDest(), Type::getInt8PtrTy(*DFSF.DFS.Ctx)),
-      IRB.CreateZExtOrTrunc(I.getLength(), DFSF.DFS.IntptrTy));
+  IRB.CreateCall(DFSF.DFS.DFSanSetLabelFn,
+                 {ValShadow, IRB.CreateBitCast(I.getDest(), Type::getInt8PtrTy(
+                                                                *DFSF.DFS.Ctx)),
+                  IRB.CreateZExtOrTrunc(I.getLength(), DFSF.DFS.IntptrTy)});
 }
 
 void DFSanVisitor::visitMemTransferInst(MemTransferInst &I) {
@@ -1357,8 +1358,8 @@ void DFSanVisitor::visitMemTransferInst(MemTransferInst &I) {
   Type *Int8Ptr = Type::getInt8PtrTy(*DFSF.DFS.Ctx);
   DestShadow = IRB.CreateBitCast(DestShadow, Int8Ptr);
   SrcShadow = IRB.CreateBitCast(SrcShadow, Int8Ptr);
-  IRB.CreateCall5(I.getCalledValue(), DestShadow, SrcShadow, LenShadow,
-                  AlignShadow, I.getVolatileCst());
+  IRB.CreateCall(I.getCalledValue(), {DestShadow, SrcShadow, LenShadow,
+                                      AlignShadow, I.getVolatileCst()});
 }
 
 void DFSanVisitor::visitReturnInst(ReturnInst &RI) {

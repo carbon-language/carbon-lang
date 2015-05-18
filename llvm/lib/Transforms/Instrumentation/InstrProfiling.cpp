@@ -348,7 +348,7 @@ void InstrProfiling::emitInitialization() {
   // Add the basic block and the necessary calls.
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", F));
   if (RegisterF)
-    IRB.CreateCall(RegisterF);
+    IRB.CreateCall(RegisterF, {});
   if (!InstrProfileOutput.empty()) {
     auto *Int8PtrTy = Type::getInt8PtrTy(M->getContext());
     auto *SetNameTy = FunctionType::get(VoidTy, Int8PtrTy, false);

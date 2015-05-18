@@ -169,7 +169,7 @@ TEST_F(MCJITTest, multiple_functions) {
     std::stringstream funcName;
     funcName << "level_" << i;
     Outer = startFunction<int32_t(void)>(M.get(), funcName.str());
-    Value *innerResult = Builder.CreateCall(Inner);
+    Value *innerResult = Builder.CreateCall(Inner, {});
     endFunctionWithRet(Outer, innerResult);
 
     Inner = Outer;

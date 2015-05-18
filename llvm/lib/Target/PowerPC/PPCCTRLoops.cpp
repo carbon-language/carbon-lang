@@ -553,7 +553,7 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   IRBuilder<> CondBuilder(CountedExitBranch);
   Value *DecFunc =
     Intrinsic::getDeclaration(M, Intrinsic::ppc_is_decremented_ctr_nonzero);
-  Value *NewCond = CondBuilder.CreateCall(DecFunc);
+  Value *NewCond = CondBuilder.CreateCall(DecFunc, {});
   Value *OldCond = CountedExitBranch->getCondition();
   CountedExitBranch->setCondition(NewCond);
 

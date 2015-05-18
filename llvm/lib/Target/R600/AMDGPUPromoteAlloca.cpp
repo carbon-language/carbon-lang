@@ -316,12 +316,11 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   Value *ReadTIDIGZ = Mod->getOrInsertFunction(
       "llvm.r600.read.tidig.z", FTy, AttrSet);
 
-
-  Value *TCntY = Builder.CreateCall(ReadLocalSizeY);
-  Value *TCntZ = Builder.CreateCall(ReadLocalSizeZ);
-  Value *TIdX  = Builder.CreateCall(ReadTIDIGX);
-  Value *TIdY  = Builder.CreateCall(ReadTIDIGY);
-  Value *TIdZ  = Builder.CreateCall(ReadTIDIGZ);
+  Value *TCntY = Builder.CreateCall(ReadLocalSizeY, {});
+  Value *TCntZ = Builder.CreateCall(ReadLocalSizeZ, {});
+  Value *TIdX = Builder.CreateCall(ReadTIDIGX, {});
+  Value *TIdY = Builder.CreateCall(ReadTIDIGY, {});
+  Value *TIdZ = Builder.CreateCall(ReadTIDIGZ, {});
 
   Value *Tmp0 = Builder.CreateMul(TCntY, TCntZ);
   Tmp0 = Builder.CreateMul(Tmp0, TIdX);

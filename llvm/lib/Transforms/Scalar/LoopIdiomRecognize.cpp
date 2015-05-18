@@ -1001,7 +1001,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     GV->setUnnamedAddr(true); // Ok to merge these.
     GV->setAlignment(16);
     Value *PatternPtr = ConstantExpr::getBitCast(GV, Int8PtrTy);
-    NewCall = Builder.CreateCall3(MSP, BasePtr, PatternPtr, NumBytes);
+    NewCall = Builder.CreateCall(MSP, {BasePtr, PatternPtr, NumBytes});
   }
 
   DEBUG(dbgs() << "  Formed memset: " << *NewCall << "\n"

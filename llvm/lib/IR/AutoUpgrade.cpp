@@ -416,13 +416,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         llvm_unreachable("Unknown condition");
 
       Function *VPCOM = Intrinsic::getDeclaration(F->getParent(), intID);
-      Rep = Builder.CreateCall3(VPCOM, CI->getArgOperand(0),
-                                CI->getArgOperand(1), Builder.getInt8(Imm));
+      Rep =
+          Builder.CreateCall(VPCOM, {CI->getArgOperand(0), CI->getArgOperand(1),
+                                     Builder.getInt8(Imm)});
     } else if (Name == "llvm.x86.sse42.crc32.64.8") {
       Function *CRC32 = Intrinsic::getDeclaration(F->getParent(),
                                                Intrinsic::x86_sse42_crc32_32_8);
       Value *Trunc0 = Builder.CreateTrunc(CI->getArgOperand(0), Type::getInt32Ty(C));
-      Rep = Builder.CreateCall2(CRC32, Trunc0, CI->getArgOperand(1));
+      Rep = Builder.CreateCall(CRC32, {Trunc0, CI->getArgOperand(1)});
       Rep = Builder.CreateZExt(Rep, CI->getType(), "");
     } else if (Name.startswith("llvm.x86.avx.vbroadcast")) {
       // Replace broadcasts with a series of insertelements.
@@ -630,29 +631,27 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::cttz:
     assert(CI->getNumArgOperands() == 1 &&
            "Mismatch between function args and call args");
-    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
-                                               Builder.getFalse(), Name));
+    CI->replaceAllUsesWith(Builder.CreateCall(
+        NewFn, {CI->getArgOperand(0), Builder.getFalse()}, Name));
     CI->eraseFromParent();
     return;
 
   case Intrinsic::objectsize:
-    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn,
-                                               CI->getArgOperand(0),
-                                               CI->getArgOperand(1),
-                                               Name));
+    CI->replaceAllUsesWith(Builder.CreateCall(
+        NewFn, {CI->getArgOperand(0), CI->getArgOperand(1)}, Name));
     CI->eraseFromParent();
     return;
 
   case Intrinsic::ctpop: {
-    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, CI->getArgOperand(0)));
+    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, {CI->getArgOperand(0)}));
     CI->eraseFromParent();
     return;
   }
 
   case Intrinsic::x86_xop_vfrcz_ss:
   case Intrinsic::x86_xop_vfrcz_sd:
-    CI->replaceAllUsesWith(Builder.CreateCall(NewFn, CI->getArgOperand(1),
-                                              Name));
+    CI->replaceAllUsesWith(
+        Builder.CreateCall(NewFn, {CI->getArgOperand(1)}, Name));
     CI->eraseFromParent();
     return;
 
@@ -675,9 +674,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     Value *BC0 = Builder.CreateBitCast(Arg0, NewVecTy, "cast");
     Value *BC1 = Builder.CreateBitCast(Arg1, NewVecTy, "cast");
 
-    Type *Ty[] = {NewVecTy, NewVecTy};
-    CallInst *NewCall = Builder.CreateCall2(
-        FunctionType::get(CI->getType(), Ty, false), NewFn, BC0, BC1, Name);
+    CallInst *NewCall = Builder.CreateCall(NewFn, {BC0, BC1}, Name);
     CI->replaceAllUsesWith(NewCall);
     CI->eraseFromParent();
     return;

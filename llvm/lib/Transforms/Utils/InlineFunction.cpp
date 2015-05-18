@@ -1202,7 +1202,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // Insert the llvm.stacksave.
     CallInst *SavedPtr = IRBuilder<>(FirstNewBlock, FirstNewBlock->begin())
-      .CreateCall(StackSave, "savedstack");
+                             .CreateCall(StackSave, {}, "savedstack");
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.

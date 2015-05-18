@@ -654,8 +654,8 @@ bool GCOVProfiler::emitProfileArcs() {
 
           // Build code to increment the counter.
           InsertIndCounterIncrCode = true;
-          Builder.CreateCall2(getIncrementIndirectCounterFunc(),
-                              EdgeState, CounterPtrArray);
+          Builder.CreateCall(getIncrementIndirectCounterFunc(),
+                             {EdgeState, CounterPtrArray});
         }
       }
     }
@@ -688,7 +688,7 @@ bool GCOVProfiler::emitProfileArcs() {
     // Initialize the environment and register the local writeout and flush
     // functions.
     Constant *GCOVInit = M->getOrInsertFunction("llvm_gcov_init", FTy);
-    Builder.CreateCall2(GCOVInit, WriteoutF, FlushF);
+    Builder.CreateCall(GCOVInit, {WriteoutF, FlushF});
     Builder.CreateRetVoid();
 
     appendToGlobalCtors(*M, F, 0);
@@ -850,31 +850,31 @@ Function *GCOVProfiler::insertCounterWriteout(
       auto *CU = cast<DICompileUnit>(CU_Nodes->getOperand(i));
       std::string FilenameGcda = mangleName(CU, "gcda");
       uint32_t CfgChecksum = FileChecksums.empty() ? 0 : FileChecksums[i];
-      Builder.CreateCall3(StartFile,
-                          Builder.CreateGlobalStringPtr(FilenameGcda),
+      Builder.CreateCall(StartFile,
+                         {Builder.CreateGlobalStringPtr(FilenameGcda),
                           Builder.CreateGlobalStringPtr(ReversedVersion),
-                          Builder.getInt32(CfgChecksum));
+                          Builder.getInt32(CfgChecksum)});
       for (unsigned j = 0, e = CountersBySP.size(); j != e; ++j) {
         auto *SP = cast_or_null<DISubprogram>(CountersBySP[j].second);
         uint32_t FuncChecksum = Funcs.empty() ? 0 : Funcs[j]->getFuncChecksum();
-        Builder.CreateCall5(
-            EmitFunction, Builder.getInt32(j),
-            Options.FunctionNamesInData ?
-              Builder.CreateGlobalStringPtr(getFunctionName(SP)) :
-              Constant::getNullValue(Builder.getInt8PtrTy()),
-            Builder.getInt32(FuncChecksum),
-            Builder.getInt8(Options.UseCfgChecksum),
-            Builder.getInt32(CfgChecksum));
+        Builder.CreateCall(
+            EmitFunction,
+            {Builder.getInt32(j),
+             Options.FunctionNamesInData
+                 ? Builder.CreateGlobalStringPtr(getFunctionName(SP))
+                 : Constant::getNullValue(Builder.getInt8PtrTy()),
+             Builder.getInt32(FuncChecksum),
+             Builder.getInt8(Options.UseCfgChecksum),
+             Builder.getInt32(CfgChecksum)});
 
         GlobalVariable *GV = CountersBySP[j].first;
         unsigned Arcs =
           cast<ArrayType>(GV->getType()->getElementType())->getNumElements();
-        Builder.CreateCall2(EmitArcs,
-                            Builder.getInt32(Arcs),
-                            Builder.CreateConstGEP2_64(GV, 0, 0));
+        Builder.CreateCall(EmitArcs, {Builder.getInt32(Arcs),
+                                      Builder.CreateConstGEP2_64(GV, 0, 0)});
       }
-      Builder.CreateCall(SummaryInfo);
-      Builder.CreateCall(EndFile);
+      Builder.CreateCall(SummaryInfo, {});
+      Builder.CreateCall(EndFile, {});
     }
   }
 
@@ -954,7 +954,7 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   assert(WriteoutF && "Need to create the writeout function first!");
 
   IRBuilder<> Builder(Entry);
-  Builder.CreateCall(WriteoutF);
+  Builder.CreateCall(WriteoutF, {});
 
   // Zero out the counters.
   for (ArrayRef<std::pair<GlobalVariable *, MDNode *> >::iterator

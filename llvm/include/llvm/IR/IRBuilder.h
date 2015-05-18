@@ -1461,39 +1461,6 @@ public:
     return Insert(PHINode::Create(Ty, NumReservedValues), Name);
   }
 
-  CallInst *CreateCall(Value *Callee, const Twine &Name = "") {
-    return Insert(CallInst::Create(Callee), Name);
-  }
-  CallInst *CreateCall(Value *Callee, Value *Arg, const Twine &Name = "") {
-    return Insert(CallInst::Create(Callee, Arg), Name);
-  }
-  CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
-                        const Twine &Name = "") {
-    return CreateCall2(cast<FunctionType>(cast<PointerType>(Callee->getType())
-                                              ->getElementType()),
-                       Callee, Arg1, Arg2, Name);
-  }
-  CallInst *CreateCall2(FunctionType *Ty, Value *Callee, Value *Arg1,
-                        Value *Arg2, const Twine &Name = "") {
-    Value *Args[] = { Arg1, Arg2 };
-    return Insert(CallInst::Create(Ty, Callee, Args), Name);
-  }
-  CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
-                        const Twine &Name = "") {
-    Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(CallInst::Create(Callee, Args), Name);
-  }
-  CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
-                        Value *Arg4, const Twine &Name = "") {
-    Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
-    return Insert(CallInst::Create(Callee, Args), Name);
-  }
-  CallInst *CreateCall5(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
-                        Value *Arg4, Value *Arg5, const Twine &Name = "") {
-    Value *Args[] = { Arg1, Arg2, Arg3, Arg4, Arg5 };
-    return Insert(CallInst::Create(Callee, Args), Name);
-  }
-
   CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
                        const Twine &Name = "") {
     return Insert(CallInst::Create(Callee, Args), Name);

@@ -16985,21 +16985,21 @@ X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   // otherwise, we might be able to be more agressive on relaxed idempotent
   // rmw. In practice, they do not look useful, so we don't try to be
   // especially clever.
-  if (SynchScope == SingleThread) {
+  if (SynchScope == SingleThread)
     // FIXME: we could just insert an X86ISD::MEMBARRIER here, except we are at
     // the IR level, so we must wrap it in an intrinsic.
     return nullptr;
-  } else if (hasMFENCE(*Subtarget)) {
-    Function *MFence = llvm::Intrinsic::getDeclaration(M,
-            Intrinsic::x86_sse2_mfence);
-    Builder.CreateCall(MFence);
-  } else {
+
+  if (!hasMFENCE(*Subtarget))
     // FIXME: it might make sense to use a locked operation here but on a
     // different cache-line to prevent cache-line bouncing. In practice it
     // is probably a small win, and x86 processors without mfence are rare
     // enough that we do not bother.
     return nullptr;
-  }
+
+  Function *MFence =
+      llvm::Intrinsic::getDeclaration(M, Intrinsic::x86_sse2_mfence);
+  Builder.CreateCall(MFence, {});
 
   // Finally we can emit the atomic load.
   LoadInst *Loaded = Builder.CreateAlignedLoad(Ptr,

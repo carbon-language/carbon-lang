@@ -252,8 +252,8 @@ static Value *generateUnsignedDivisionCode(Value *Dividend, Value *Divisor,
   Value *Ret0_1      = Builder.CreateICmpEQ(Divisor, Zero);
   Value *Ret0_2      = Builder.CreateICmpEQ(Dividend, Zero);
   Value *Ret0_3      = Builder.CreateOr(Ret0_1, Ret0_2);
-  Value *Tmp0        = Builder.CreateCall2(CTLZ, Divisor, True);
-  Value *Tmp1        = Builder.CreateCall2(CTLZ, Dividend, True);
+  Value *Tmp0 = Builder.CreateCall(CTLZ, {Divisor, True});
+  Value *Tmp1 = Builder.CreateCall(CTLZ, {Dividend, True});
   Value *SR          = Builder.CreateSub(Tmp0, Tmp1);
   Value *Ret0_4      = Builder.CreateICmpUGT(SR, MSB);
   Value *Ret0        = Builder.CreateOr(Ret0_3, Ret0_4);

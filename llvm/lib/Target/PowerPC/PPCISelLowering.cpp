@@ -7880,7 +7880,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
 static Instruction* callIntrinsic(IRBuilder<> &Builder, Intrinsic::ID Id) {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
   Function *Func = Intrinsic::getDeclaration(M, Id);
-  return Builder.CreateCall(Func);
+  return Builder.CreateCall(Func, {});
 }
 
 // The mappings for emitLeading/TrailingFence is taken from
@@ -7890,10 +7890,9 @@ Instruction* PPCTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
                                          bool IsLoad) const {
   if (Ord == SequentiallyConsistent)
     return callIntrinsic(Builder, Intrinsic::ppc_sync);
-  else if (isAtLeastRelease(Ord))
+  if (isAtLeastRelease(Ord))
     return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
-  else
-    return nullptr;
+  return nullptr;
 }
 
 Instruction* PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
@@ -7905,8 +7904,7 @@ Instruction* PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
   // See http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html and
   // http://www.rdrop.com/users/paulmck/scalability/paper/N2745r.2011.03.04a.html
   // and http://www.cl.cam.ac.uk/~pes20/cppppc/ for justification.
-  else
-    return nullptr;
+  return nullptr;
 }
 
 MachineBasicBlock *

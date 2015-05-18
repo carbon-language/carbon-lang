@@ -789,17 +789,17 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
 void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   IRBuilder<> IRB(MI);
   if (isa<MemTransferInst>(MI)) {
-    IRB.CreateCall3(
+    IRB.CreateCall(
         isa<MemMoveInst>(MI) ? AsanMemmove : AsanMemcpy,
-        IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
-        IRB.CreatePointerCast(MI->getOperand(1), IRB.getInt8PtrTy()),
-        IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false));
+        {IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
+         IRB.CreatePointerCast(MI->getOperand(1), IRB.getInt8PtrTy()),
+         IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false)});
   } else if (isa<MemSetInst>(MI)) {
-    IRB.CreateCall3(
+    IRB.CreateCall(
         AsanMemset,
-        IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
-        IRB.CreateIntCast(MI->getOperand(1), IRB.getInt32Ty(), false),
-        IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false));
+        {IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
+         IRB.CreateIntCast(MI->getOperand(1), IRB.getInt32Ty(), false),
+         IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false)});
   }
   MI->eraseFromParent();
 }
@@ -906,7 +906,7 @@ void AddressSanitizer::instrumentPointerComparisonOrSubtraction(
     if (Param[i]->getType()->isPointerTy())
       Param[i] = IRB.CreatePointerCast(Param[i], IntptrTy);
   }
-  IRB.CreateCall2(F, Param[0], Param[1]);
+  IRB.CreateCall(F, Param);
 }
 
 void AddressSanitizer::instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis,
@@ -978,24 +978,24 @@ Instruction *AddressSanitizer::generateCrashCode(Instruction *InsertBefore,
   CallInst *Call = nullptr;
   if (SizeArgument) {
     if (Exp == 0)
-      Call = IRB.CreateCall2(AsanErrorCallbackSized[IsWrite][0], Addr,
-                             SizeArgument);
+      Call = IRB.CreateCall(AsanErrorCallbackSized[IsWrite][0],
+                            {Addr, SizeArgument});
     else
-      Call = IRB.CreateCall3(AsanErrorCallbackSized[IsWrite][1], Addr,
-                             SizeArgument, ExpVal);
+      Call = IRB.CreateCall(AsanErrorCallbackSized[IsWrite][1],
+                            {Addr, SizeArgument, ExpVal});
   } else {
     if (Exp == 0)
       Call =
           IRB.CreateCall(AsanErrorCallback[IsWrite][0][AccessSizeIndex], Addr);
     else
-      Call = IRB.CreateCall2(AsanErrorCallback[IsWrite][1][AccessSizeIndex],
-                             Addr, ExpVal);
+      Call = IRB.CreateCall(AsanErrorCallback[IsWrite][1][AccessSizeIndex],
+                            {Addr, ExpVal});
   }
 
   // We don't do Call->setDoesNotReturn() because the BB already has
   // UnreachableInst at the end.
   // This EmptyAsm is required to avoid callback merge.
-  IRB.CreateCall(EmptyAsm);
+  IRB.CreateCall(EmptyAsm, {});
   return Call;
 }
 
@@ -1031,8 +1031,8 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
       IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][0][AccessSizeIndex],
                      AddrLong);
     else
-      IRB.CreateCall2(AsanMemoryAccessCallback[IsWrite][1][AccessSizeIndex],
-                      AddrLong, ConstantInt::get(IRB.getInt32Ty(), Exp));
+      IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][1][AccessSizeIndex],
+                     {AddrLong, ConstantInt::get(IRB.getInt32Ty(), Exp)});
     return;
   }
 
@@ -1083,11 +1083,11 @@ void AddressSanitizer::instrumentUnusualSizeOrAlignment(
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
   if (UseCalls) {
     if (Exp == 0)
-      IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite][0], AddrLong,
-                      Size);
+      IRB.CreateCall(AsanMemoryAccessCallbackSized[IsWrite][0],
+                     {AddrLong, Size});
     else
-      IRB.CreateCall3(AsanMemoryAccessCallbackSized[IsWrite][1], AddrLong, Size,
-                      ConstantInt::get(IRB.getInt32Ty(), Exp));
+      IRB.CreateCall(AsanMemoryAccessCallbackSized[IsWrite][1],
+                     {AddrLong, Size, ConstantInt::get(IRB.getInt32Ty(), Exp)});
   } else {
     Value *LastByte = IRB.CreateIntToPtr(
         IRB.CreateAdd(AddrLong, ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
@@ -1347,9 +1347,9 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   // Create calls for poisoning before initializers run and unpoisoning after.
   if (HasDynamicallyInitializedGlobals)
     createInitializerPoisonCalls(M, ModuleName);
-  IRB.CreateCall2(AsanRegisterGlobals,
-                  IRB.CreatePointerCast(AllGlobals, IntptrTy),
-                  ConstantInt::get(IntptrTy, n));
+  IRB.CreateCall(AsanRegisterGlobals,
+                 {IRB.CreatePointerCast(AllGlobals, IntptrTy),
+                  ConstantInt::get(IntptrTy, n)});
 
   // We also need to unregister globals at the end, e.g. when a shared library
   // gets closed.
@@ -1358,9 +1358,9 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
                        GlobalValue::InternalLinkage, kAsanModuleDtorName, &M);
   BasicBlock *AsanDtorBB = BasicBlock::Create(*C, "", AsanDtorFunction);
   IRBuilder<> IRB_Dtor(ReturnInst::Create(*C, AsanDtorBB));
-  IRB_Dtor.CreateCall2(AsanUnregisterGlobals,
-                       IRB.CreatePointerCast(AllGlobals, IntptrTy),
-                       ConstantInt::get(IntptrTy, n));
+  IRB_Dtor.CreateCall(AsanUnregisterGlobals,
+                      {IRB.CreatePointerCast(AllGlobals, IntptrTy),
+                       ConstantInt::get(IntptrTy, n)});
   appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndDtorPriority);
 
   DEBUG(dbgs() << M);
@@ -1473,7 +1473,7 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   // instrumented functions.
   if (F.getName().find(" load]") != std::string::npos) {
     IRBuilder<> IRB(F.begin()->begin());
-    IRB.CreateCall(AsanInitFunction);
+    IRB.CreateCall(AsanInitFunction, {});
     return true;
   }
   return false;
@@ -1573,7 +1573,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   // See e.g. http://code.google.com/p/address-sanitizer/issues/detail?id=37
   for (auto CI : NoReturnCalls) {
     IRBuilder<> IRB(CI);
-    IRB.CreateCall(AsanHandleNoReturnFunc);
+    IRB.CreateCall(AsanHandleNoReturnFunc, {});
   }
 
   for (auto Inst : PointerComparisonsOrSubtracts) {
@@ -1887,8 +1887,9 @@ void FunctionStackPoisoner::poisonStack() {
             IRBPoison.CreateIntToPtr(SavedFlagPtr, IRBPoison.getInt8PtrTy()));
       } else {
         // For larger frames call __asan_stack_free_*.
-        IRBPoison.CreateCall2(AsanStackFreeFunc[StackMallocIdx], FakeStack,
-                              ConstantInt::get(IntptrTy, LocalStackSize));
+        IRBPoison.CreateCall(
+            AsanStackFreeFunc[StackMallocIdx],
+            {FakeStack, ConstantInt::get(IntptrTy, LocalStackSize)});
       }
 
       IRBuilder<> IRBElse(ElseTerm);
@@ -1911,9 +1912,9 @@ void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
   // For now just insert the call to ASan runtime.
   Value *AddrArg = IRB.CreatePointerCast(V, IntptrTy);
   Value *SizeArg = ConstantInt::get(IntptrTy, Size);
-  IRB.CreateCall2(
-      DoPoison ? AsanPoisonStackMemoryFunc : AsanUnpoisonStackMemoryFunc,
-      AddrArg, SizeArg);
+  IRB.CreateCall(DoPoison ? AsanPoisonStackMemoryFunc
+                          : AsanUnpoisonStackMemoryFunc,
+                 {AddrArg, SizeArg});
 }
 
 // Handling llvm.lifetime intrinsics for a given %alloca:

@@ -11295,17 +11295,17 @@ Value *ARMTargetLowering::emitStoreConditional(IRBuilder<> &Builder, Value *Val,
     if (!Subtarget->isLittle())
       std::swap (Lo, Hi);
     Addr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(M->getContext()));
-    return Builder.CreateCall3(Strex, Lo, Hi, Addr);
+    return Builder.CreateCall(Strex, {Lo, Hi, Addr});
   }
 
   Intrinsic::ID Int = IsRelease ? Intrinsic::arm_stlex : Intrinsic::arm_strex;
   Type *Tys[] = { Addr->getType() };
   Function *Strex = Intrinsic::getDeclaration(M, Int, Tys);
 
-  return Builder.CreateCall2(
-      Strex, Builder.CreateZExtOrBitCast(
-                 Val, Strex->getFunctionType()->getParamType(0)),
-      Addr);
+  return Builder.CreateCall(
+      Strex, {Builder.CreateZExtOrBitCast(
+                  Val, Strex->getFunctionType()->getParamType(0)),
+              Addr});
 }
 
 enum HABaseType {

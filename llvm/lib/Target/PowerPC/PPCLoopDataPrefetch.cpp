@@ -217,9 +217,11 @@ bool PPCLoopDataPrefetch::runOnLoop(Loop *L) {
       Module *M = (*I)->getParent()->getParent();
       Type *I32 = Type::getInt32Ty((*I)->getContext());
       Value *PrefetchFunc = Intrinsic::getDeclaration(M, Intrinsic::prefetch);
-      Builder.CreateCall4(PrefetchFunc, PrefPtrValue,
-        ConstantInt::get(I32, MemI->mayReadFromMemory() ? 0 : 1),
-        ConstantInt::get(I32, 3), ConstantInt::get(I32, 1));
+      Builder.CreateCall(
+          PrefetchFunc,
+          {PrefPtrValue,
+           ConstantInt::get(I32, MemI->mayReadFromMemory() ? 0 : 1),
+           ConstantInt::get(I32, 3), ConstantInt::get(I32, 1)});
 
       MadeChange = true;
     }
