@@ -1139,7 +1139,7 @@ class ModuleCache;
                              const FileSpecList *module_search_paths_ptr,
                              Platform &remote_platform);
 
-        Error
+        virtual Error
         DownloadModuleSlice (const FileSpec& src_file_spec,
                              const uint64_t src_offset,
                              const uint64_t src_size,

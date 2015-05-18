@@ -68,6 +68,12 @@ namespace platform_android {
         const char *
         GetCacheHostname () override;
 
+        Error
+        DownloadModuleSlice (const FileSpec &src_file_spec,
+                             const uint64_t src_offset,
+                             const uint64_t src_size,
+                             const FileSpec &dst_file_spec) override;
+
     private:
         std::string m_device_id;
         DISALLOW_COPY_AND_ASSIGN (PlatformAndroid);

@@ -212,3 +212,16 @@ PlatformAndroid::GetCacheHostname ()
 {
     return m_device_id.c_str ();
 }
+
+Error
+PlatformAndroid::DownloadModuleSlice (const FileSpec &src_file_spec,
+                                      const uint64_t src_offset,
+                                      const uint64_t src_size,
+                                      const FileSpec &dst_file_spec)
+{
+    if (src_offset != 0)
+        return Error ("Invalid offset - %" PRIu64, src_offset);
+
+    AdbClient adb (m_device_id);
+    return adb.PullFile (src_file_spec.GetPath (false).c_str (), dst_file_spec.GetPath ().c_str ());
+}
