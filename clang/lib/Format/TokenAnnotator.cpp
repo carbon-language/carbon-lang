@@ -2132,7 +2132,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Right.is(TT_SelectorName) || (Right.is(tok::identifier) && Right.Next &&
                                     Right.Next->is(TT_ObjCMethodExpr)))
-    return true;
+    return Left.isNot(tok::period); // FIXME: Properly parse ObjC calls.
   if (Left.is(tok::r_paren) && Line.Type == LT_ObjCProperty)
     return true;
   if (Left.ClosesTemplateDeclaration)

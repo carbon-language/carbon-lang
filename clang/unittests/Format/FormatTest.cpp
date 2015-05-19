@@ -7340,6 +7340,9 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa];");
   verifyFormat("[aaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaa[aaaaaaaaaaaaaaaaaaaaa]\n"
                "    aaaaaaaaaaaaaaaaaaaaaa];");
+  verifyFormat("[call aaaaaaaa.aaaaaa.aaaaaaaa.aaaaaaaa.aaaaaaaa.aaaaaaaa\n"
+               "        .aaaaaaaa];", // FIXME: Indentation seems off.
+               getLLVMStyleWithColumns(60));
 
   verifyFormat(
       "scoped_nsobject<NSTextField> message(\n"
