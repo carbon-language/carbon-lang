@@ -22,49 +22,49 @@
 int main()
 {
     {
-        std::atomic_flag f;
+        std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear();
         assert(f.test_and_set() == 0);
     }
     {
-        std::atomic_flag f;
+        std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_relaxed);
         assert(f.test_and_set() == 0);
     }
     {
-        std::atomic_flag f;
+        std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_release);
         assert(f.test_and_set() == 0);
     }
     {
-        std::atomic_flag f;
+        std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_seq_cst);
         assert(f.test_and_set() == 0);
     }
     {
-        volatile std::atomic_flag f;
+        volatile std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear();
         assert(f.test_and_set() == 0);
     }
     {
-        volatile std::atomic_flag f;
+        volatile std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_relaxed);
         assert(f.test_and_set() == 0);
     }
     {
-        volatile std::atomic_flag f;
+        volatile std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_release);
         assert(f.test_and_set() == 0);
     }
     {
-        volatile std::atomic_flag f;
+        volatile std::atomic_flag f = ATOMIC_FLAG_INIT;
         f.test_and_set();
         f.clear(std::memory_order_seq_cst);
         assert(f.test_and_set() == 0);
