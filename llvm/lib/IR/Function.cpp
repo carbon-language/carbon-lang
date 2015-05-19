@@ -433,6 +433,19 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
     setPrologueData(nullptr);
 }
 
+/// \brief This does the actual lookup of an intrinsic ID which
+/// matches the given function name.
+static Intrinsic::ID lookupIntrinsicID(const ValueName *ValName) {
+  unsigned Len = ValName->getKeyLength();
+  const char *Name = ValName->getKeyData();
+
+#define GET_FUNCTION_RECOGNIZER
+#include "llvm/IR/Intrinsics.gen"
+#undef GET_FUNCTION_RECOGNIZER
+
+  return Intrinsic::not_intrinsic;
+}
+
 /// getIntrinsicID - This method returns the ID number of the specified
 /// function, or Intrinsic::not_intrinsic if the function is not an
 /// intrinsic, or if the pointer is null.  This value is always defined to be
@@ -449,25 +462,11 @@ unsigned Function::getIntrinsicID() const {
   LLVMContextImpl::IntrinsicIDCacheTy &IntrinsicIDCache =
     getContext().pImpl->IntrinsicIDCache;
   if (!IntrinsicIDCache.count(this)) {
-    unsigned Id = lookupIntrinsicID();
+    unsigned Id = lookupIntrinsicID(ValName);
     IntrinsicIDCache[this]=Id;
     return Id;
   }
   return IntrinsicIDCache[this];
-}
-
-/// This private method does the actual lookup of an intrinsic ID when the query
-/// could not be answered from the cache.
-unsigned Function::lookupIntrinsicID() const {
-  const ValueName *ValName = this->getValueName();
-  unsigned Len = ValName->getKeyLength();
-  const char *Name = ValName->getKeyData();
-
-#define GET_FUNCTION_RECOGNIZER
-#include "llvm/IR/Intrinsics.gen"
-#undef GET_FUNCTION_RECOGNIZER
-
-  return 0;
 }
 
 /// Returns a stable mangling for the type specified for use in the name

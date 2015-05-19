@@ -109,10 +109,6 @@ private:
   Function(const Function&) = delete;
   void operator=(const Function&) = delete;
 
-  /// Do the actual lookup of an intrinsic ID when the query could not be
-  /// answered from the cache.
-  unsigned lookupIntrinsicID() const LLVM_READONLY;
-
   /// Function ctor - If the (optional) Module argument is specified, the
   /// function is automatically inserted into the end of the function list for
   /// the module.
