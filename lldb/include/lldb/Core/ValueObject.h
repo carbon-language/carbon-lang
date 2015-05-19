@@ -858,10 +858,10 @@ public:
         return m_update_point.IsConstant();
     }
     
-    virtual bool
+    bool
     NeedsUpdating ()
     {
-        const bool accept_invalid_exe_ctx = false;
+        const bool accept_invalid_exe_ctx = CanUpdateWithInvalidExecutionContext();
         return m_update_point.NeedsUpdating(accept_invalid_exe_ctx);
     }
     
@@ -1137,6 +1137,7 @@ protected:
                         m_did_calculate_complete_objc_class_type:1,
                         m_is_synthetic_children_generated:1;
     
+    friend class ValueObjectChild;
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName
     friend class Target;                  // For SetName
@@ -1171,6 +1172,12 @@ protected:
     virtual bool
     UpdateValue () = 0;
 
+    virtual bool
+    CanUpdateWithInvalidExecutionContext ()
+    {
+        return false;
+    }
+    
     virtual void
     CalculateDynamicValue (lldb::DynamicValueType use_dynamic);
     

@@ -110,6 +110,14 @@ ValueObjectChild::GetDisplayTypeName()
 }
 
 bool
+ValueObjectChild::CanUpdateWithInvalidExecutionContext ()
+{
+    if (m_parent)
+        return m_parent->CanUpdateWithInvalidExecutionContext();
+    return this->ValueObject::CanUpdateWithInvalidExecutionContext();
+}
+
+bool
 ValueObjectChild::UpdateValue ()
 {
     m_error.Clear();

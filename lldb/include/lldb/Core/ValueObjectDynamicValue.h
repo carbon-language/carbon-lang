@@ -62,13 +62,6 @@ public:
         return false;
     }
     
-    virtual bool
-    NeedsUpdating ()
-    {
-        const bool accept_invalid_exe_ctx = true;
-        return m_update_point.NeedsUpdating(accept_invalid_exe_ctx);
-    }
-    
     virtual ValueObject *
     GetParent()
     {
@@ -115,6 +108,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual bool
+    CanUpdateWithInvalidExecutionContext ()
+    {
+        return true;
+    }
     
     virtual lldb::DynamicValueType
     GetDynamicValueTypeImpl ()

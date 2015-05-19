@@ -83,6 +83,9 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual bool
+    CanUpdateWithInvalidExecutionContext ();
 
     virtual ClangASTType
     GetClangTypeImpl ()
