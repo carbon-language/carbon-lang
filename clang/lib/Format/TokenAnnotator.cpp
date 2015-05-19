@@ -825,6 +825,9 @@ private:
             Previous->Type = TT_PointerOrReference;
         }
       }
+    } else if (Current.is(tok::lessless) &&
+               (!Current.Previous || !Current.Previous->is(tok::kw_operator))) {
+      Contexts.back().IsExpression = true;
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw)) {
       Contexts.back().IsExpression = true;
     } else if (Current.is(TT_TrailingReturnArrow)) {
