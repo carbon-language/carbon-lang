@@ -235,7 +235,7 @@ void ParallelLoopGenerator::createCallJoinThreads() {
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Builder.CreateCall(F);
+  Builder.CreateCall(F, {});
 }
 
 void ParallelLoopGenerator::createCallCleanupThread() {
@@ -251,7 +251,7 @@ void ParallelLoopGenerator::createCallCleanupThread() {
     F = Function::Create(Ty, Linkage, Name, M);
   }
 
-  Builder.CreateCall(F);
+  Builder.CreateCall(F, {});
 }
 
 Function *ParallelLoopGenerator::createSubFnDefinition() {

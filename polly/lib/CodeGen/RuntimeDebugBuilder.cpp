@@ -74,6 +74,6 @@ void RuntimeDebugBuilder::createValuePrinter(PollyIRBuilder &Builder,
   assert(Format && Ty->getPrimitiveSizeInBits() <= 64 && "Bad type to print.");
 
   Value *FormatString = Builder.CreateGlobalStringPtr(Format);
-  Builder.CreateCall2(getPrintF(Builder), FormatString, V);
+  Builder.CreateCall(getPrintF(Builder), {FormatString, V});
   createFlush(Builder);
 }
