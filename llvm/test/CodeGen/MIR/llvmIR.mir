@@ -3,9 +3,6 @@
 # correctly.
 
 --- |
-  target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
-  target triple = "x86_64-apple-darwin14.3.0"
-  
   ; CHECK: define i32 @foo(i32 %x, i32 %y)
   ; CHECK: %z = alloca i32, align 4
   ; CHECK: store i32 %x, i32* %z, align 4
