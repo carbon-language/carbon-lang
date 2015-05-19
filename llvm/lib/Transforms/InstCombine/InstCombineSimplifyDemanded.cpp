@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombineInternal.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/PatternMatch.h"
 
@@ -407,12 +406,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     break;
   }
   case Instruction::Select:
-    // If this is a select as part of a min/max pattern, don't simplify any
-    // further in case we break the structure.
-    Value *LHS, *RHS;
-    if (matchSelectPattern(I, LHS, RHS) != SPF_UNKNOWN)
-      return nullptr;
-      
     if (SimplifyDemandedBits(I->getOperandUse(2), DemandedMask, RHSKnownZero,
                              RHSKnownOne, Depth + 1) ||
         SimplifyDemandedBits(I->getOperandUse(1), DemandedMask, LHSKnownZero,

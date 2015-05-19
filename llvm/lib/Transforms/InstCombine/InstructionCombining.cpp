@@ -714,22 +714,6 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
         return nullptr;
     }
 
-    // Test if a CmpInst instruction is used exclusively by a select as
-    // part of a minimum or maximum operation. If so, refrain from doing
-    // any other folding. This helps out other analyses which understand
-    // non-obfuscated minimum and maximum idioms, such as ScalarEvolution
-    // and CodeGen. And in this case, at least one of the comparison
-    // operands has at least one user besides the compare (the select),
-    // which would often largely negate the benefit of folding anyway.
-    if (auto *CI = dyn_cast<CmpInst>(SI->getCondition())) {
-      if (CI->hasOneUse()) {
-        Value *Op0 = CI->getOperand(0), *Op1 = CI->getOperand(1);
-        if ((SI->getOperand(1) == Op0 && SI->getOperand(2) == Op1) ||
-            (SI->getOperand(2) == Op0 && SI->getOperand(1) == Op1))
-          return nullptr;
-      }
-    }
-
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, this);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, this);
 
@@ -738,6 +722,7 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
   }
   return nullptr;
 }
+
 
 /// FoldOpIntoPhi - Given a binary operator, cast instruction, or select which
 /// has a PHI node as operand #0, see if we can fold the instruction into the
