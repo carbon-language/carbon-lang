@@ -41,6 +41,15 @@
 // Later passes sink back much of the speculated code that did not enable
 // further optimization.
 //
+// This pass is more aggressive than the function SpeculativeyExecuteBB in
+// SimplifyCFG. SimplifyCFG will not speculate if no selects are introduced and
+// it will speculate at most one instruction. It also will not speculate if
+// there is a value defined in the if-block that is only used in the then-block.
+// These restrictions make sense since the speculation in SimplifyCFG seems
+// aimed at introducing cheap selects, while this pass is intended to do more
+// aggressive speculation while counting on later passes to either capitalize on
+// that or clean it up.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallSet.h"
