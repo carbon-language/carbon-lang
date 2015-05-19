@@ -432,7 +432,16 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointAdded(const lldb::SBEvent
         return MIstatus::failure;
     }
 
-    if (!bBrkPtExistAlready)
+    bool bOk = MIstatus::success;
+    if (bBrkPtExistAlready)
+    {
+        // MI print
+        // "=breakpoint-modified,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%016" PRIx64 "\",func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",times=\"%d\",original-location=\"%s\"}"
+        const CMICmnMIValueResult miValueResult("bkpt", miValueTuple);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult);
+        bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    }
+    else
     {
         // CODETAG_LLDB_BRKPT_ID_MAX
         if (brkPt.GetID() > (lldb::break_id_t)rSessionInfo.m_nBrkPointCntMax)
@@ -447,13 +456,15 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointAdded(const lldb::SBEvent
                 CMIUtilString::Format(MIRSRC(IDS_LLDBOUTOFBAND_ERR_BRKPT_INFO_SET), "HandleEventSBBreakpointAdded()", sBrkPtInfo.m_id));
             return MIstatus::failure;
         }
+
+        // MI print
+        // "=breakpoint-created,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%016" PRIx64 "\",func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",times=\"%d\",original-location=\"%s\"}"
+        const CMICmnMIValueResult miValueResult("bkpt", miValueTuple);
+        const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointCreated, miValueResult);
+        bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
     }
 
-    // MI print
-    // "=breakpoint-created,bkpt={number=\"%d\",type=\"breakpoint\",disp=\"%s\",enabled=\"%c\",addr=\"0x%016" PRIx64 "\",func=\"%s\",file=\"%s\",fullname=\"%s/%s\",line=\"%d\",times=\"%d\",original-location=\"%s\"}"
-    const CMICmnMIValueResult miValueResult("bkpt", miValueTuple);
-    const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointCreated, miValueResult);
-    return MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------

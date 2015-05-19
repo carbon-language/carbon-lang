@@ -45,10 +45,12 @@ class MiCliSupportTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that "breakpoint set" sets a breakpoint
         self.runCmd("breakpoint set --name main")
         self.expect("\^done")
+        self.expect("=breakpoint-created,bkpt={number=\"1\"")
 
         # Test that breakpoint was set properly
         self.runCmd("-exec-run")
         self.expect("\^running")
+        self.expect("=breakpoint-modified,bkpt={number=\"1\"")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
