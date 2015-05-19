@@ -136,7 +136,8 @@ _LIBCPP_NEW_DELETE_VIS void* operator new(std::size_t __sz)
 _LIBCPP_NEW_DELETE_VIS void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
 _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p) _NOEXCEPT;
 _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
-#if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14
+#if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14 || \
+    (defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309)
 _LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, std::size_t __sz) _NOEXCEPT;
 #endif
 
@@ -148,7 +149,8 @@ _LIBCPP_NEW_DELETE_VIS void* operator new[](std::size_t __sz)
 _LIBCPP_NEW_DELETE_VIS void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
 _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p) _NOEXCEPT;
 _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
-#if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14
+#if defined(_LIBCPP_BUILDING_NEW) || _LIBCPP_STD_VER >= 14 || \
+    (defined(__cpp_sized_deallocation) && __cpp_sized_deallocation >= 201309)
 _LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, std::size_t __sz) _NOEXCEPT;
 #endif
 
