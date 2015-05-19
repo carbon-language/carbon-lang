@@ -6195,6 +6195,17 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
       }
     }
 
+    // Variably modified types are not supported.
+    if (Type->isVariablyModifiedType()) {
+      Diag(ELoc, diag::err_omp_variably_modified_type_not_supported)
+          << getOpenMPClauseName(OMPC_copyprivate) << Type;
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
     // OpenMP [2.14.4.1, Restrictions, C/C++, p.2]
     //  A variable of class type (or array thereof) that appears in a
     //  copyin clause requires an accessible, unambiguous copy assignment

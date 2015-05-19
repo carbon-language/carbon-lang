@@ -7418,6 +7418,8 @@ def err_omp_no_dsa_for_variable : Error<
   "variable %0 must have explicitly specified data sharing attributes">;
 def err_omp_wrong_dsa : Error<
   "%0 variable cannot be %1">;
+def err_omp_variably_modified_type_not_supported : Error<
+  "arguments of OpenMP clause '%0' cannot be of variably-modified type %1">;
 def note_omp_explicit_dsa : Note<
   "defined as %0">;
 def note_omp_predetermined_dsa : Note<

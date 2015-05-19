@@ -105,8 +105,8 @@ T tmain(T argc, C **argv) {
   return T();
 }
 
-void bar(S4 a[2]) {
-#pragma omp single copyprivate(a) // expected-error {{'operator=' is a private member of 'S4'}}
+void bar(S4 a[2], int n, int b[n]) { // expected-note {{'b' defined here}}
+#pragma omp single copyprivate(a, b) // expected-error {{'operator=' is a private member of 'S4'}} expected-error {{arguments of OpenMP clause 'copyprivate' cannot be of variably-modified type 'int [n]'}}
     foo();
 }
 
