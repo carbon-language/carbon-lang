@@ -29,11 +29,12 @@ public:
   uint64_t readBytes(uint8_t *Buf, uint64_t Size,
                      uint64_t Address) const override;
   const uint8_t *getPointer(uint64_t address, uint64_t size) const override {
-    // This could be fixed by ensuring the bytes are fetched and making a copy,
-    // requiring that the bitcode size be known, or otherwise ensuring that
-    // the memory doesn't go away/get reallocated, but it's
-    // not currently necessary. Users that need the pointer don't stream.
-    llvm_unreachable("getPointer in streaming memory objects not allowed");
+    // FIXME: This could be fixed by ensuring the bytes are fetched and
+    // making a copy, requiring that the bitcode size be known, or
+    // otherwise ensuring that the memory doesn't go away/get reallocated,
+    // but it's not currently necessary. Users that need the pointer (any
+    // that need Blobs) don't stream.
+    report_fatal_error("getPointer in streaming memory objects not allowed");
     return nullptr;
   }
   bool isValidAddress(uint64_t address) const override;
