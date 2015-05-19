@@ -30,7 +30,7 @@ class Module;
 
 namespace Intrinsic {
   enum ID : unsigned;
-};
+}
 
 class GlobalValue : public Constant {
   GlobalValue(const GlobalValue &) = delete;
