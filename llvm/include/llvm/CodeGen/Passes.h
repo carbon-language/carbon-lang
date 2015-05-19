@@ -374,10 +374,6 @@ namespace llvm {
   createMachineFunctionPrinterPass(raw_ostream &OS,
                                    const std::string &Banner ="");
 
-  /// MIRPrinting pass - this pass prints out the LLVM IR into the given stream
-  /// using the MIR serialization format.
-  MachineFunctionPass *createPrintMIRPass(raw_ostream &OS);
-
   /// createCodeGenPreparePass - Transform the code to expose more pattern
   /// matching during instruction selection.
   FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = nullptr);
@@ -491,10 +487,6 @@ namespace llvm {
 
   /// MachineFunctionPrinterPass - This pass prints out MachineInstr's.
   extern char &MachineFunctionPrinterPassID;
-
-  /// MIRPrintingPass - this pass prints out the LLVM IR using the MIR
-  /// serialization format.
-  extern char &MIRPrintingPassID;
 
   /// TailDuplicate - Duplicate blocks with unconditional branches
   /// into tails of their predecessors.

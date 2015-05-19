@@ -128,4 +128,3 @@ add_dependencies(LLVMCodeGen intrinsics_gen)
 
 add_subdirectory(SelectionDAG)
 add_subdirectory(AsmPrinter)
-add_subdirectory(MIR)
