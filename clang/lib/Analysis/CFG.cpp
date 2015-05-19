@@ -203,9 +203,9 @@ int LocalScope::const_iterator::distance(LocalScope::const_iterator L) {
   return D;
 }
 
-/// BlockScopePosPair - Structure for specifying position in CFG during its
-/// build process. It consists of CFGBlock that specifies position in CFG graph
-/// and  LocalScope::const_iterator that specifies position in LocalScope graph.
+/// Structure for specifying position in CFG during its build process. It
+/// consists of CFGBlock that specifies position in CFG and
+/// LocalScope::const_iterator that specifies position in LocalScope graph.
 struct BlockScopePosPair {
   BlockScopePosPair() : block(nullptr) {}
   BlockScopePosPair(CFGBlock *b, LocalScope::const_iterator scopePos)
