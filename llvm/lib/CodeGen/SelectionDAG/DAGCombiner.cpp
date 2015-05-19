@@ -8294,11 +8294,11 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
       SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
 
       // Dividend / Divisor -> Dividend * Reciprocal
-      for (auto I = Users.begin(), E = Users.end(); I != E; ++I) {
-        if ((*I)->getOperand(0) != FPOne) {
-          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(*I), VT,
-                                        (*I)->getOperand(0), Reciprocal);
-          DAG.ReplaceAllUsesWith(*I, NewNode.getNode());
+      for (auto &U : Users) {
+        if (U->getOperand(0) != FPOne) {
+          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT,
+                                        U->getOperand(0), Reciprocal);
+          DAG.ReplaceAllUsesWith(U, NewNode.getNode());
         }
       }
       return SDValue();
