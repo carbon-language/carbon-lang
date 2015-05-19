@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
-#include <set>
 
 #include "FuzzerInterface.h"
 
@@ -132,7 +131,7 @@ class Fuzzer {
   size_t TotalNumberOfRuns = 0;
 
   std::vector<Unit> Corpus;
-  std::set<Unit> UnitsAddedAfterInitialLoad;
+  std::unordered_set<std::string> UnitHashesAddedToCorpus;
   std::unordered_set<uintptr_t> FullCoverageSets;
   std::unordered_set<uint64_t>  CoveragePairs;
 
