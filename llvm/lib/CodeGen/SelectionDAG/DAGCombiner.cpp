@@ -8286,15 +8286,15 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
     }
 
     if (TLI.combineRepeatedFPDivisors(Users.size())) {
-      SDLoc DL(N);
-      SDValue FPOne = DAG.getConstantFP(1.0, DL, VT); // floating point 1.0
+      SDValue FPOne = DAG.getConstantFP(1.0, DL, VT);
       SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
 
       // Dividend / Divisor -> Dividend * Reciprocal
       for (auto U : Users) {
-        if (U->getOperand(0) != FPOne) {
-          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT,
-                                        U->getOperand(0), Reciprocal);
+        SDValue Dividend = U->getOperand(0);
+        if (Dividend != FPOne) {
+          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT, Dividend,
+                                        Reciprocal);
           DAG.ReplaceAllUsesWith(U, NewNode.getNode());
         }
       }
