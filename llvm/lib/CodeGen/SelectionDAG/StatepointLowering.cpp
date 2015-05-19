@@ -565,9 +565,6 @@ void SelectionDAGBuilder::LowerStatepoint(
   ISP.verify();
 
   // Check that the associated GCStrategy expects to encounter statepoints.
-  // TODO: This if should become an assert.  For now, we allow the GCStrategy
-  // to be optional for backwards compatibility.  This will only last a short
-  // period (i.e. a couple of weeks).
   assert(GFI->getStrategy().useStatepoints() &&
          "GCStrategy does not expect to encounter statepoints");
 #endif
