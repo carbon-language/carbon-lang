@@ -1996,27 +1996,27 @@ struct __mu_return
 };
 
 template <class _Fp, class _BoundArgs, class _TupleUj>
-struct _is_valid_bind_return
+struct __is_valid_bind_return
 {
     static const bool value = false;
 };
 
 template <class _Fp, class ..._BoundArgs, class _TupleUj>
-struct _is_valid_bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
+struct __is_valid_bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
 {
     static const bool value = __invokable<_Fp,
                     typename __mu_return<_BoundArgs, _TupleUj>::type...>::value;
 };
 
 template <class _Fp, class ..._BoundArgs, class _TupleUj>
-struct _is_valid_bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj>
+struct __is_valid_bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj>
 {
     static const bool value = __invokable<_Fp,
                     typename __mu_return<const _BoundArgs, _TupleUj>::type...>::value;
 };
 
 template <class _Fp, class _BoundArgs, class _TupleUj,
-          bool = _is_valid_bind_return<_Fp, _BoundArgs, _TupleUj>::value>
+          bool = __is_valid_bind_return<_Fp, _BoundArgs, _TupleUj>::value>
 struct __bind_return;
 
 template <class _Fp, class ..._BoundArgs, class _TupleUj>
