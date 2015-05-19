@@ -333,9 +333,9 @@ $ ./dotest.py --channel "lldb all" --channel "gdb-remote packets"
 
 These log files are written to:
 
-<session-dir>/<test-id>.log (logs from lldb host process)
+<session-dir>/<test-id>-host.log (logs from lldb host process)
 <session-dir>/<test-id>-server.log (logs from debugserver/lldb-server)
-<session-dir>/<test-id>-trace-<test-result>.log (console logs)
+<session-dir>/<test-id>-<test-result>.log (console logs)
 
 By default, logs from successful runs are deleted.  Use the --log-success flag
 to create reference logs for debugging.
