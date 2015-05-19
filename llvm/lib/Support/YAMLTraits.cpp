@@ -97,6 +97,10 @@ bool Input::nextDocument() {
   return ++DocIterator != Strm->end();
 }
 
+const Node *Input::getCurrentNode() const {
+  return CurrentNode ? CurrentNode->_node : nullptr;
+}
+
 bool Input::mapTag(StringRef Tag, bool Default) {
   std::string foundTag = CurrentNode->_node->getVerbatimTag();
   if (foundTag.empty()) {
