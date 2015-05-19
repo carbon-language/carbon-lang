@@ -8280,7 +8280,7 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
 
     SmallVector<SDNode *, 4> Users;
     // Find all FDIV users of the same divisor.
-    for (auto U : N1->uses()) {
+    for (auto *U : N1->uses()) {
       if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
         Users.push_back(U);
     }
@@ -8290,7 +8290,7 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
       SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
 
       // Dividend / Divisor -> Dividend * Reciprocal
-      for (auto U : Users) {
+      for (auto *U : Users) {
         SDValue Dividend = U->getOperand(0);
         if (Dividend != FPOne) {
           SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT, Dividend,
