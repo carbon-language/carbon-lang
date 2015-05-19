@@ -1472,6 +1472,11 @@ public:
     return Insert(CallInst::Create(FTy, Callee, Args), Name);
   }
 
+  CallInst *CreateCall(Function *Callee, ArrayRef<Value *> Args,
+                       const Twine &Name = "") {
+    return CreateCall(Callee->getFunctionType(), Callee, Args, Name);
+  }
+
   Value *CreateSelect(Value *C, Value *True, Value *False,
                       const Twine &Name = "") {
     if (Constant *CC = dyn_cast<Constant>(C))
