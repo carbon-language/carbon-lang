@@ -61,7 +61,6 @@
 // Tests that the CFI enforcement detects bad casts.
 
 #include <stdio.h>
-#include <utility>
 #include "utils.h"
 
 struct A {
