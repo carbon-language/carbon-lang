@@ -473,7 +473,8 @@ bool MipsSEDAGToDAGISel::selectIntAddrMSA(SDValue Addr, SDValue &Base,
 // Returns true and sets Imm if:
 // * MSA is enabled
 // * N is a ISD::BUILD_VECTOR representing a constant splat
-bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
+bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm,
+                                      unsigned MinSizeInBits) const {
   if (!Subtarget->hasMSA())
     return false;
 
@@ -486,9 +487,8 @@ bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
   unsigned SplatBitSize;
   bool HasAnyUndefs;
 
-  if (!Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
-                             HasAnyUndefs, 8,
-                             !Subtarget->isLittle()))
+  if (!Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize, HasAnyUndefs,
+                             MinSizeInBits, !Subtarget->isLittle()))
     return false;
 
   Imm = SplatValue;
@@ -521,8 +521,9 @@ selectVSplatCommon(SDValue N, SDValue &Imm, bool Signed,
   if (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0);
 
-  if (selectVSplat (N.getNode(), ImmValue) &&
+  if (selectVSplat(N.getNode(), ImmValue, EltTy.getSizeInBits()) &&
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
+
     if (( Signed && ImmValue.isSignedIntN(ImmBitSize)) ||
         (!Signed && ImmValue.isIntN(ImmBitSize))) {
       Imm = CurDAG->getTargetConstant(ImmValue, SDLoc(N), EltTy);
@@ -596,7 +597,7 @@ bool MipsSEDAGToDAGISel::selectVSplatUimmPow2(SDValue N, SDValue &Imm) const {
   if (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0);
 
-  if (selectVSplat (N.getNode(), ImmValue) &&
+  if (selectVSplat(N.getNode(), ImmValue, EltTy.getSizeInBits()) &&
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
     int32_t Log2 = ImmValue.exactLogBase2();
 
@@ -627,7 +628,7 @@ bool MipsSEDAGToDAGISel::selectVSplatMaskL(SDValue N, SDValue &Imm) const {
   if (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0);
 
-  if (selectVSplat(N.getNode(), ImmValue) &&
+  if (selectVSplat(N.getNode(), ImmValue, EltTy.getSizeInBits()) &&
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
     // Extract the run of set bits starting with bit zero from the bitwise
     // inverse of ImmValue, and test that the inverse of this is the same
@@ -661,7 +662,7 @@ bool MipsSEDAGToDAGISel::selectVSplatMaskR(SDValue N, SDValue &Imm) const {
   if (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0);
 
-  if (selectVSplat(N.getNode(), ImmValue) &&
+  if (selectVSplat(N.getNode(), ImmValue, EltTy.getSizeInBits()) &&
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
     // Extract the run of set bits starting with bit zero, and test that the
     // result is the same as the original value
@@ -683,7 +684,7 @@ bool MipsSEDAGToDAGISel::selectVSplatUimmInvPow2(SDValue N,
   if (N->getOpcode() == ISD::BITCAST)
     N = N->getOperand(0);
 
-  if (selectVSplat(N.getNode(), ImmValue) &&
+  if (selectVSplat(N.getNode(), ImmValue, EltTy.getSizeInBits()) &&
       ImmValue.getBitWidth() == EltTy.getSizeInBits()) {
     int32_t Log2 = (~ImmValue).exactLogBase2();
 

@@ -2410,7 +2410,7 @@ SDValue MipsSETargetLowering::lowerBUILD_VECTOR(SDValue Op,
 // It is therefore possible to lower into SHF when the mask takes the form:
 //   <a, b, c, d, a+4, b+4, c+4, d+4, a+8, b+8, c+8, d+8, ...>
 // When undef's appear they are treated as if they were whatever value is
-// necessary in order to fit the above form.
+// necessary in order to fit the above forms.
 //
 // For example:
 //   %2 = shufflevector <8 x i16> %0, <8 x i16> undef,
@@ -2469,177 +2469,326 @@ static SDValue lowerVECTOR_SHUFFLE_SHF(SDValue Op, EVT ResTy,
                      DAG.getConstant(Imm, DL, MVT::i32), Op->getOperand(0));
 }
 
+/// Determine whether a range fits a regular pattern of values.
+/// This function accounts for the possibility of jumping over the End iterator.
+template <typename ValType>
+static bool
+fitsRegularPattern(typename SmallVectorImpl<ValType>::const_iterator Begin,
+                   unsigned CheckStride,
+                   typename SmallVectorImpl<ValType>::const_iterator End,
+                   ValType ExpectedIndex, unsigned ExpectedIndexStride) {
+  auto &I = Begin;
+
+  while (I != End) {
+    if (*I != -1 && *I != ExpectedIndex)
+      return false;
+    ExpectedIndex += ExpectedIndexStride;
+
+    // Incrementing past End is undefined behaviour so we must increment one
+    // step at a time and check for End at each step.
+    for (unsigned n = 0; n < CheckStride && I != End; ++n, ++I)
+      ; // Empty loop body.
+  }
+  return true;
+}
+
+// Determine whether VECTOR_SHUFFLE is a SPLATI.
+//
+// It is a SPLATI when the mask is:
+//   <x, x, x, ...>
+// where x is any valid index.
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above form.
+static bool isVECTOR_SHUFFLE_SPLATI(SDValue Op, EVT ResTy,
+                                    SmallVector<int, 16> Indices,
+                                    SelectionDAG &DAG) {
+  assert((Indices.size() % 2) == 0);
+
+  int SplatIndex = -1;
+  for (const auto &V : Indices) {
+    if (V != -1) {
+      SplatIndex = V;
+      break;
+    }
+  }
+
+  return fitsRegularPattern<int>(Indices.begin(), 1, Indices.end(), SplatIndex,
+                                 0);
+}
+
 // Lower VECTOR_SHUFFLE into ILVEV (if possible).
 //
 // ILVEV interleaves the even elements from each vector.
 //
-// It is possible to lower into ILVEV when the mask takes the form:
-//   <0, n, 2, n+2, 4, n+4, ...>
+// It is possible to lower into ILVEV when the mask consists of two of the
+// following forms interleaved:
+//   <0, 2, 4, ...>
+//   <n, n+2, n+4, ...>
 // where n is the number of elements in the vector.
+// For example:
+//   <0, 0, 2, 2, 4, 4, ...>
+//   <0, n, 2, n+2, 4, n+4, ...>
 //
 // When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
+// value is necessary in order to fit the above forms.
 static SDValue lowerVECTOR_SHUFFLE_ILVEV(SDValue Op, EVT ResTy,
                                          SmallVector<int, 16> Indices,
                                          SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  int WsIdx = 0;
-  int WtIdx = ResTy.getVectorNumElements();
+  assert((Indices.size() % 2) == 0);
 
-  for (unsigned i = 0; i < Indices.size(); i += 2) {
-    if (Indices[i] != -1 && Indices[i] != WsIdx)
-      return SDValue();
-    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
-      return SDValue();
-    WsIdx += 2;
-    WtIdx += 2;
-  }
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &End = Indices.end();
 
-  return DAG.getNode(MipsISD::ILVEV, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
+  // Check even elements are taken from the even elements of one half or the
+  // other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin, 2, End, 0, 2))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 2, End, Indices.size(), 2))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
+
+  // Check odd elements are taken from the even elements of one half or the
+  // other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin + 1, 2, End, 0, 2))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin + 1, 2, End, Indices.size(), 2))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
+
+  return DAG.getNode(MipsISD::ILVEV, SDLoc(Op), ResTy, Ws, Wt);
 }
 
 // Lower VECTOR_SHUFFLE into ILVOD (if possible).
 //
 // ILVOD interleaves the odd elements from each vector.
 //
-// It is possible to lower into ILVOD when the mask takes the form:
-//   <1, n+1, 3, n+3, 5, n+5, ...>
+// It is possible to lower into ILVOD when the mask consists of two of the
+// following forms interleaved:
+//   <1, 3, 5, ...>
+//   <n+1, n+3, n+5, ...>
 // where n is the number of elements in the vector.
+// For example:
+//   <1, 1, 3, 3, 5, 5, ...>
+//   <1, n+1, 3, n+3, 5, n+5, ...>
 //
 // When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
+// value is necessary in order to fit the above forms.
 static SDValue lowerVECTOR_SHUFFLE_ILVOD(SDValue Op, EVT ResTy,
                                          SmallVector<int, 16> Indices,
                                          SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  int WsIdx = 1;
-  int WtIdx = ResTy.getVectorNumElements() + 1;
+  assert((Indices.size() % 2) == 0);
 
-  for (unsigned i = 0; i < Indices.size(); i += 2) {
-    if (Indices[i] != -1 && Indices[i] != WsIdx)
-      return SDValue();
-    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
-      return SDValue();
-    WsIdx += 2;
-    WtIdx += 2;
-  }
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &End = Indices.end();
 
-  return DAG.getNode(MipsISD::ILVOD, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
-}
+  // Check even elements are taken from the odd elements of one half or the
+  // other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin, 2, End, 1, 2))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 2, End, Indices.size() + 1, 2))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
 
-// Lower VECTOR_SHUFFLE into ILVL (if possible).
-//
-// ILVL interleaves consecutive elements from the left half of each vector.
-//
-// It is possible to lower into ILVL when the mask takes the form:
-//   <0, n, 1, n+1, 2, n+2, ...>
-// where n is the number of elements in the vector.
-//
-// When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
-static SDValue lowerVECTOR_SHUFFLE_ILVL(SDValue Op, EVT ResTy,
-                                        SmallVector<int, 16> Indices,
-                                        SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  int WsIdx = 0;
-  int WtIdx = ResTy.getVectorNumElements();
+  // Check odd elements are taken from the odd elements of one half or the
+  // other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin + 1, 2, End, 1, 2))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin + 1, 2, End, Indices.size() + 1, 2))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
 
-  for (unsigned i = 0; i < Indices.size(); i += 2) {
-    if (Indices[i] != -1 && Indices[i] != WsIdx)
-      return SDValue();
-    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
-      return SDValue();
-    WsIdx ++;
-    WtIdx ++;
-  }
-
-  return DAG.getNode(MipsISD::ILVL, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
+  return DAG.getNode(MipsISD::ILVOD, SDLoc(Op), ResTy, Wt, Ws);
 }
 
 // Lower VECTOR_SHUFFLE into ILVR (if possible).
 //
-// ILVR interleaves consecutive elements from the right half of each vector.
+// ILVR interleaves consecutive elements from the right (lowest-indexed) half of
+// each vector.
 //
-// It is possible to lower into ILVR when the mask takes the form:
-//   <x, n+x, x+1, n+x+1, x+2, n+x+2, ...>
-// where n is the number of elements in the vector and x is half n.
+// It is possible to lower into ILVR when the mask consists of two of the
+// following forms interleaved:
+//   <0, 1, 2, ...>
+//   <n, n+1, n+2, ...>
+// where n is the number of elements in the vector.
+// For example:
+//   <0, 0, 1, 1, 2, 2, ...>
+//   <0, n, 1, n+1, 2, n+2, ...>
 //
 // When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
+// value is necessary in order to fit the above forms.
 static SDValue lowerVECTOR_SHUFFLE_ILVR(SDValue Op, EVT ResTy,
                                         SmallVector<int, 16> Indices,
                                         SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  unsigned NumElts = ResTy.getVectorNumElements();
-  int WsIdx = NumElts / 2;
-  int WtIdx = NumElts + NumElts / 2;
+  assert((Indices.size() % 2) == 0);
 
-  for (unsigned i = 0; i < Indices.size(); i += 2) {
-    if (Indices[i] != -1 && Indices[i] != WsIdx)
-      return SDValue();
-    if (Indices[i+1] != -1 && Indices[i+1] != WtIdx)
-      return SDValue();
-    WsIdx ++;
-    WtIdx ++;
-  }
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &End = Indices.end();
 
-  return DAG.getNode(MipsISD::ILVR, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
+  // Check even elements are taken from the right (lowest-indexed) elements of
+  // one half or the other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin, 2, End, 0, 1))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 2, End, Indices.size(), 1))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
+
+  // Check odd elements are taken from the right (lowest-indexed) elements of
+  // one half or the other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin + 1, 2, End, 0, 1))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin + 1, 2, End, Indices.size(), 1))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
+
+  return DAG.getNode(MipsISD::ILVR, SDLoc(Op), ResTy, Ws, Wt);
+}
+
+// Lower VECTOR_SHUFFLE into ILVL (if possible).
+//
+// ILVL interleaves consecutive elements from the left (highest-indexed) half
+// of each vector.
+//
+// It is possible to lower into ILVL when the mask consists of two of the
+// following forms interleaved:
+//   <x, x+1, x+2, ...>
+//   <n+x, n+x+1, n+x+2, ...>
+// where n is the number of elements in the vector and x is half n.
+// For example:
+//   <x, x, x+1, x+1, x+2, x+2, ...>
+//   <x, n+x, x+1, n+x+1, x+2, n+x+2, ...>
+//
+// When undef's appear in the mask they are treated as if they were whatever
+// value is necessary in order to fit the above forms.
+static SDValue lowerVECTOR_SHUFFLE_ILVL(SDValue Op, EVT ResTy,
+                                        SmallVector<int, 16> Indices,
+                                        SelectionDAG &DAG) {
+  assert((Indices.size() % 2) == 0);
+
+  unsigned HalfSize = Indices.size() / 2;
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &End = Indices.end();
+
+  // Check even elements are taken from the left (highest-indexed) elements of
+  // one half or the other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin, 2, End, HalfSize, 1))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 2, End, Indices.size() + HalfSize, 1))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
+
+  // Check odd elements are taken from the left (highest-indexed) elements of
+  // one half or the other and pick an operand accordingly.
+  if (fitsRegularPattern<int>(Begin + 1, 2, End, HalfSize, 1))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin + 1, 2, End, Indices.size() + HalfSize,
+                                   1))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
+
+  return DAG.getNode(MipsISD::ILVL, SDLoc(Op), ResTy, Ws, Wt);
 }
 
 // Lower VECTOR_SHUFFLE into PCKEV (if possible).
 //
 // PCKEV copies the even elements of each vector into the result vector.
 //
-// It is possible to lower into PCKEV when the mask takes the form:
-//   <0, 2, 4, ..., n, n+2, n+4, ...>
+// It is possible to lower into PCKEV when the mask consists of two of the
+// following forms concatenated:
+//   <0, 2, 4, ...>
+//   <n, n+2, n+4, ...>
 // where n is the number of elements in the vector.
+// For example:
+//   <0, 2, 4, ..., 0, 2, 4, ...>
+//   <0, 2, 4, ..., n, n+2, n+4, ...>
 //
 // When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
+// value is necessary in order to fit the above forms.
 static SDValue lowerVECTOR_SHUFFLE_PCKEV(SDValue Op, EVT ResTy,
                                          SmallVector<int, 16> Indices,
                                          SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  int Idx = 0;
+  assert((Indices.size() % 2) == 0);
 
-  for (unsigned i = 0; i < Indices.size(); ++i) {
-    if (Indices[i] != -1 && Indices[i] != Idx)
-      return SDValue();
-    Idx += 2;
-  }
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &Mid = Indices.begin() + Indices.size() / 2;
+  const auto &End = Indices.end();
 
-  return DAG.getNode(MipsISD::PCKEV, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
+  if (fitsRegularPattern<int>(Begin, 1, Mid, 0, 2))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 1, Mid, Indices.size(), 2))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
+
+  if (fitsRegularPattern<int>(Mid, 1, End, 0, 2))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Mid, 1, End, Indices.size(), 2))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
+
+  return DAG.getNode(MipsISD::PCKEV, SDLoc(Op), ResTy, Ws, Wt);
 }
 
 // Lower VECTOR_SHUFFLE into PCKOD (if possible).
 //
 // PCKOD copies the odd elements of each vector into the result vector.
 //
-// It is possible to lower into PCKOD when the mask takes the form:
-//   <1, 3, 5, ..., n+1, n+3, n+5, ...>
+// It is possible to lower into PCKOD when the mask consists of two of the
+// following forms concatenated:
+//   <1, 3, 5, ...>
+//   <n+1, n+3, n+5, ...>
 // where n is the number of elements in the vector.
+// For example:
+//   <1, 3, 5, ..., 1, 3, 5, ...>
+//   <1, 3, 5, ..., n+1, n+3, n+5, ...>
 //
 // When undef's appear in the mask they are treated as if they were whatever
-// value is necessary in order to fit the above form.
+// value is necessary in order to fit the above forms.
 static SDValue lowerVECTOR_SHUFFLE_PCKOD(SDValue Op, EVT ResTy,
                                          SmallVector<int, 16> Indices,
                                          SelectionDAG &DAG) {
-  assert ((Indices.size() % 2) == 0);
-  int Idx = 1;
+  assert((Indices.size() % 2) == 0);
 
-  for (unsigned i = 0; i < Indices.size(); ++i) {
-    if (Indices[i] != -1 && Indices[i] != Idx)
-      return SDValue();
-    Idx += 2;
-  }
+  SDValue Wt;
+  SDValue Ws;
+  const auto &Begin = Indices.begin();
+  const auto &Mid = Indices.begin() + Indices.size() / 2;
+  const auto &End = Indices.end();
 
-  return DAG.getNode(MipsISD::PCKOD, SDLoc(Op), ResTy, Op->getOperand(0),
-                     Op->getOperand(1));
+  if (fitsRegularPattern<int>(Begin, 1, Mid, 1, 2))
+    Wt = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Begin, 1, Mid, Indices.size() + 1, 2))
+    Wt = Op->getOperand(1);
+  else
+    return SDValue();
+
+  if (fitsRegularPattern<int>(Mid, 1, End, 1, 2))
+    Ws = Op->getOperand(0);
+  else if (fitsRegularPattern<int>(Mid, 1, End, Indices.size() + 1, 2))
+    Ws = Op->getOperand(1);
+  else
+    return SDValue();
+
+  return DAG.getNode(MipsISD::PCKOD, SDLoc(Op), ResTy, Ws, Wt);
 }
 
 // Lower VECTOR_SHUFFLE into VSHF.
@@ -2715,10 +2864,11 @@ SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
   for (int i = 0; i < ResTyNumElts; ++i)
     Indices.push_back(Node->getMaskElt(i));
 
-  SDValue Result = lowerVECTOR_SHUFFLE_SHF(Op, ResTy, Indices, DAG);
-  if (Result.getNode())
-    return Result;
-  Result = lowerVECTOR_SHUFFLE_ILVEV(Op, ResTy, Indices, DAG);
+  // splati.[bhwd] is preferable to the others but is matched from
+  // MipsISD::VSHF.
+  if (isVECTOR_SHUFFLE_SPLATI(Op, ResTy, Indices, DAG))
+    return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);
+  SDValue Result = lowerVECTOR_SHUFFLE_ILVEV(Op, ResTy, Indices, DAG);
   if (Result.getNode())
     return Result;
   Result = lowerVECTOR_SHUFFLE_ILVOD(Op, ResTy, Indices, DAG);
@@ -2734,6 +2884,9 @@ SDValue MipsSETargetLowering::lowerVECTOR_SHUFFLE(SDValue Op,
   if (Result.getNode())
     return Result;
   Result = lowerVECTOR_SHUFFLE_PCKOD(Op, ResTy, Indices, DAG);
+  if (Result.getNode())
+    return Result;
+  Result = lowerVECTOR_SHUFFLE_SHF(Op, ResTy, Indices, DAG);
   if (Result.getNode())
     return Result;
   return lowerVECTOR_SHUFFLE_VSHF(Op, ResTy, Indices, DAG);

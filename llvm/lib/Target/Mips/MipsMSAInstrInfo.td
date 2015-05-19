@@ -375,7 +375,7 @@ def vsplat_imm_eq_1 : PatLeaf<(build_vector), [{
   APInt Imm;
   EVT EltTy = N->getValueType(0).getVectorElementType();
 
-  return selectVSplat (N, Imm) &&
+  return selectVSplat(N, Imm, EltTy.getSizeInBits()) &&
          Imm.getBitWidth() == EltTy.getSizeInBits() && Imm == 1;
 }]>;
 
@@ -384,7 +384,7 @@ def vsplati64_imm_eq_1 : PatLeaf<(bitconvert (v4i32 (build_vector))), [{
   SDNode *BV = N->getOperand(0).getNode();
   EVT EltTy = N->getValueType(0).getVectorElementType();
 
-  return selectVSplat (BV, Imm) &&
+  return selectVSplat(BV, Imm, EltTy.getSizeInBits()) &&
          Imm.getBitWidth() == EltTy.getSizeInBits() && Imm == 1;
 }]>;
 

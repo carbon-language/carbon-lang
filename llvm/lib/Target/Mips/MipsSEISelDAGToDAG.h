@@ -78,7 +78,8 @@ private:
                         SDValue &Offset) const override;
 
   /// \brief Select constant vector splats.
-  bool selectVSplat(SDNode *N, APInt &Imm) const override;
+  bool selectVSplat(SDNode *N, APInt &Imm,
+                    unsigned MinSizeInBits) const override;
   /// \brief Select constant vector splats whose value fits in a given integer.
   bool selectVSplatCommon(SDValue N, SDValue &Imm, bool Signed,
                                   unsigned ImmBitSize) const;

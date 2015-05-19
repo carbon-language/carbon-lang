@@ -113,7 +113,8 @@ bool MipsDAGToDAGISel::selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
   return false;
 }
 
-bool MipsDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
+bool MipsDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm,
+                                    unsigned MinSizeInBits) const {
   llvm_unreachable("Unimplemented function.");
   return false;
 }
