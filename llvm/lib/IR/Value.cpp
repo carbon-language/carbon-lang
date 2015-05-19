@@ -166,7 +166,7 @@ StringRef Value::getName() const {
   return getValueName()->getKey();
 }
 
-void Value::setName(const Twine &NewName) {
+void Value::setNameImpl(const Twine &NewName) {
   // Fast path for common IRBuilder case of setName("") when there is no name.
   if (NewName.isTriviallyEmpty() && !hasName())
     return;
@@ -186,9 +186,6 @@ void Value::setName(const Twine &NewName) {
   ValueSymbolTable *ST;
   if (getSymTab(this, ST))
     return;  // Cannot set a name on this value (e.g. constant).
-
-  if (Function *F = dyn_cast<Function>(this))
-    getContext().pImpl->IntrinsicIDCache.erase(F);
 
   if (!ST) { // No symbol table to update?  Just do the change.
     if (NameRef.empty()) {
@@ -220,6 +217,12 @@ void Value::setName(const Twine &NewName) {
 
   // Name is changing to something new.
   setValueName(ST->createValueName(NameRef, this));
+}
+
+void Value::setName(const Twine &NewName) {
+  setNameImpl(NewName);
+  if (Function *F = dyn_cast<Function>(this))
+    F->recalculateIntrinsicID();
 }
 
 void Value::takeName(Value *V) {

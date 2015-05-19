@@ -143,12 +143,16 @@ public:
   /// intrinsic, or if the pointer is null.  This value is always defined to be
   /// zero to allow easy checking for whether a function is intrinsic or not.
   /// The particular intrinsic functions which correspond to this value are
-  /// defined in llvm/Intrinsics.h.  Results are cached in the LLVM context,
-  /// subsequent requests for the same ID return results much faster from the
-  /// cache.
-  ///
-  unsigned getIntrinsicID() const LLVM_READONLY;
+  /// defined in llvm/Intrinsics.h.
+  unsigned getIntrinsicID() const LLVM_READONLY { return IntID; }
   bool isIntrinsic() const { return getName().startswith("llvm."); }
+
+  /// \brief Recalculate the ID for this function if it is an Intrinsic defined
+  /// in llvm/Intrinsics.h.  Sets the intrinsic ID to Intrinsic::not_intrinsic
+  /// if the name of this function does not match an intrinsic in that header.
+  /// Note, this method does not need to be called directly, as it is called
+  /// from Value::setName() whenever the name of this function changes.
+  void recalculateIntrinsicID();
 
   /// getCallingConv()/setCallingConv(CC) - These method get and set the
   /// calling convention of this function.  The enum values for the known

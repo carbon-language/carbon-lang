@@ -266,9 +266,10 @@ Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
     ParentModule->getFunctionList().push_back(this);
 
   // Ensure intrinsics have the right parameter attributes.
-  if (unsigned IID = getIntrinsicID())
-    setAttributes(Intrinsic::getAttributes(getContext(), Intrinsic::ID(IID)));
-
+  // Note, the IntID field will have been set in Value::setName if this function
+  // name is a valid intrinsic ID.
+  if (IntID)
+    setAttributes(Intrinsic::getAttributes(getContext(), IntID));
 }
 
 Function::~Function() {
@@ -280,10 +281,6 @@ Function::~Function() {
 
   // Remove the function from the on-the-side GC table.
   clearGC();
-
-  // Remove the intrinsicID from the Cache.
-  if (getValueName() && isIntrinsic())
-    getContext().pImpl->IntrinsicIDCache.erase(this);
 }
 
 void Function::BuildLazyArguments() const {
@@ -446,27 +443,13 @@ static Intrinsic::ID lookupIntrinsicID(const ValueName *ValName) {
   return Intrinsic::not_intrinsic;
 }
 
-/// getIntrinsicID - This method returns the ID number of the specified
-/// function, or Intrinsic::not_intrinsic if the function is not an
-/// intrinsic, or if the pointer is null.  This value is always defined to be
-/// zero to allow easy checking for whether a function is intrinsic or not.  The
-/// particular intrinsic functions which correspond to this value are defined in
-/// llvm/Intrinsics.h.  Results are cached in the LLVM context, subsequent
-/// requests for the same ID return results much faster from the cache.
-///
-unsigned Function::getIntrinsicID() const {
+void Function::recalculateIntrinsicID() {
   const ValueName *ValName = this->getValueName();
-  if (!ValName || !isIntrinsic())
-    return 0;
-
-  LLVMContextImpl::IntrinsicIDCacheTy &IntrinsicIDCache =
-    getContext().pImpl->IntrinsicIDCache;
-  if (!IntrinsicIDCache.count(this)) {
-    unsigned Id = lookupIntrinsicID(ValName);
-    IntrinsicIDCache[this]=Id;
-    return Id;
+  if (!ValName || !isIntrinsic()) {
+    IntID = Intrinsic::not_intrinsic;
+    return;
   }
-  return IntrinsicIDCache[this];
+  IntID = lookupIntrinsicID(ValName);
 }
 
 /// Returns a stable mangling for the type specified for use in the name

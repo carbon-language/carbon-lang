@@ -1000,11 +1000,6 @@ public:
   /// instructions in different blocks at the same location.
   DenseMap<std::pair<const char *, unsigned>, unsigned> DiscriminatorTable;
 
-  /// IntrinsicIDCache - Cache of intrinsic name (string) to numeric ID mappings
-  /// requested in this context
-  typedef DenseMap<const Function*, unsigned> IntrinsicIDCacheTy;
-  IntrinsicIDCacheTy IntrinsicIDCache;
-
   /// \brief Mapping from a function to its prefix data, which is stored as the
   /// operand of an unparented ReturnInst so that the prefix data has a Use.
   typedef DenseMap<const Function *, ReturnInst *> PrefixDataMapTy;

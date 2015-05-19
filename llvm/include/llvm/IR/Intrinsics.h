@@ -32,7 +32,7 @@ class AttributeSet;
 /// function known by LLVM. The enum values are returned by
 /// Function::getIntrinsicID().
 namespace Intrinsic {
-  enum ID {
+  enum ID : unsigned {
     not_intrinsic = 0,   // Must be zero
 
     // Get the intrinsic enums generated from Intrinsics.td
