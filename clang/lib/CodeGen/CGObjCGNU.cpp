@@ -46,7 +46,7 @@ namespace {
 /// avoids constructing the type more than once if it's used more than once.
 class LazyRuntimeFunction {
   CodeGenModule *CGM;
-  std::vector<llvm::Type*> ArgTys;
+  llvm::FunctionType *FTy;
   const char *FunctionName;
   llvm::Constant *Function;
 
@@ -64,30 +64,25 @@ public:
     CGM = Mod;
     FunctionName = name;
     Function = nullptr;
-    ArgTys.clear();
+    std::vector<llvm::Type *> ArgTys;
     va_list Args;
     va_start(Args, RetTy);
     while (llvm::Type *ArgTy = va_arg(Args, llvm::Type *))
       ArgTys.push_back(ArgTy);
     va_end(Args);
-    // Push the return type on at the end so we can pop it off easily
-    ArgTys.push_back(RetTy);
+    FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
   }
+
+  llvm::FunctionType *getType() { return FTy; }
+
   /// Overloaded cast operator, allows the class to be implicitly cast to an
   /// LLVM constant.
   operator llvm::Constant *() {
     if (!Function) {
       if (!FunctionName)
         return nullptr;
-      // We put the return type on the end of the vector, so pop it back off
-      llvm::Type *RetTy = ArgTys.back();
-      ArgTys.pop_back();
-      llvm::FunctionType *FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
       Function =
           cast<llvm::Constant>(CGM->CreateRuntimeFunction(FTy, FunctionName));
-      // We won't need to use the types again, so we may as well clean up the
-      // vector now
-      ArgTys.resize(0);
     }
     return Function;
   }
@@ -2687,7 +2682,7 @@ llvm::Value * CGObjCGNU::EmitObjCWeakRead(CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj) {
   CGBuilderTy &B = CGF.Builder;
   AddrWeakObj = EnforceType(B, AddrWeakObj, PtrToIdTy);
-  return B.CreateCall(WeakReadFn, AddrWeakObj);
+  return B.CreateCall(WeakReadFn.getType(), WeakReadFn, AddrWeakObj);
 }
 
 void CGObjCGNU::EmitObjCWeakAssign(CodeGenFunction &CGF,
@@ -2695,7 +2690,7 @@ void CGObjCGNU::EmitObjCWeakAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  B.CreateCall(WeakAssignFn, {src, dst});
+  B.CreateCall(WeakAssignFn.getType(), WeakAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitObjCGlobalAssign(CodeGenFunction &CGF,
@@ -2706,7 +2701,7 @@ void CGObjCGNU::EmitObjCGlobalAssign(CodeGenFunction &CGF,
   dst = EnforceType(B, dst, PtrToIdTy);
   // FIXME. Add threadloca assign API
   assert(!threadlocal && "EmitObjCGlobalAssign - Threal Local API NYI");
-  B.CreateCall(GlobalAssignFn, {src, dst});
+  B.CreateCall(GlobalAssignFn.getType(), GlobalAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitObjCIvarAssign(CodeGenFunction &CGF,
@@ -2715,7 +2710,7 @@ void CGObjCGNU::EmitObjCIvarAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, IdTy);
-  B.CreateCall(IvarAssignFn, {src, dst, ivarOffset});
+  B.CreateCall(IvarAssignFn.getType(), IvarAssignFn, {src, dst, ivarOffset});
 }
 
 void CGObjCGNU::EmitObjCStrongCastAssign(CodeGenFunction &CGF,
@@ -2723,7 +2718,7 @@ void CGObjCGNU::EmitObjCStrongCastAssign(CodeGenFunction &CGF,
   CGBuilderTy &B = CGF.Builder;
   src = EnforceType(B, src, IdTy);
   dst = EnforceType(B, dst, PtrToIdTy);
-  B.CreateCall(StrongCastAssignFn, {src, dst});
+  B.CreateCall(StrongCastAssignFn.getType(), StrongCastAssignFn, {src, dst});
 }
 
 void CGObjCGNU::EmitGCMemmoveCollectable(CodeGenFunction &CGF,
@@ -2734,7 +2729,7 @@ void CGObjCGNU::EmitGCMemmoveCollectable(CodeGenFunction &CGF,
   DestPtr = EnforceType(B, DestPtr, PtrTy);
   SrcPtr = EnforceType(B, SrcPtr, PtrTy);
 
-  B.CreateCall(MemMoveFn, {DestPtr, SrcPtr, Size});
+  B.CreateCall(MemMoveFn.getType(), MemMoveFn, {DestPtr, SrcPtr, Size});
 }
 
 llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
