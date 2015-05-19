@@ -385,10 +385,6 @@ void PassManagerBuilder::populateModulePassManager(
     // LoopUnroll may generate some redundency to cleanup.
     MPM.add(createInstructionCombiningPass());
 
-    // This is a barrier pass to avoid combine LICM pass and loop unroll pass
-    // within same loop pass manager.
-    MPM.add(createInstructionSimplifierPass());
-
     // Runtime unrolling will introduce runtime check in loop prologue. If the
     // unrolled loop is a inner loop, then the prologue will be inside the
     // outer loop. LICM pass can help to promote the runtime check out if the
