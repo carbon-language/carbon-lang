@@ -147,3 +147,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-inserted-value-type-mismatch
 RUN:   FileCheck --check-prefix=INSERT-TYPE-MISMATCH %s
 
 INSERT-TYPE-MISMATCH: Inserted value type doesn't match aggregate type
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-code-len-width.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-CODELENWIDTH %s
+
+INVALID-CODELENWIDTH: Malformed block

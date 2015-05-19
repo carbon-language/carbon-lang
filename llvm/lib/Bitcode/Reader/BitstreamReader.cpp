@@ -39,6 +39,10 @@ bool BitstreamCursor::EnterSubBlock(unsigned BlockID, unsigned *NumWordsP) {
 
   // Get the codesize of this block.
   CurCodeSize = ReadVBR(bitc::CodeLenWidth);
+  // We can't read more than MaxChunkSize at a time
+  if (CurCodeSize > MaxChunkSize)
+    return true;
+
   SkipToFourByteBoundary();
   unsigned NumWords = Read(bitc::BlockSizeWidth);
   if (NumWordsP) *NumWordsP = NumWords;
