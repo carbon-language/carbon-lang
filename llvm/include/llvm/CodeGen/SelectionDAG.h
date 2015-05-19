@@ -1128,6 +1128,10 @@ public:
   SDValue FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
                                  SDNode *Cst1, SDNode *Cst2);
 
+  SDValue FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
+                                 const ConstantSDNode *Cst1,
+                                 const ConstantSDNode *Cst2);
+
   /// Constant fold a setcc to true or false.
   SDValue FoldSetCC(EVT VT, SDValue N1,
                     SDValue N2, ISD::CondCode Cond, SDLoc dl);
