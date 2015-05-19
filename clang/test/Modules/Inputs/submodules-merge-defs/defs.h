@@ -26,9 +26,11 @@ template<typename T> int E(T t) { return t; }
 template<typename T> struct F {
   int f();
   template<typename U> int g();
+  static int n;
 };
 template<typename T> int F<T>::f() { return 0; }
 template<typename T> template<typename U> int F<T>::g() { return 0; }
+template<typename T> int F<T>::n = 0;
 template<> template<typename U> int F<char>::g() { return 0; }
 template<> struct F<void> { int h(); };
 inline int F<void>::h() { return 0; }

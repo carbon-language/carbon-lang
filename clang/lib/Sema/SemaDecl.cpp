@@ -3404,14 +3404,23 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
 
   // C++ doesn't have tentative definitions, so go right ahead and check here.
-  const VarDecl *Def;
+  VarDecl *Def;
   if (getLangOpts().CPlusPlus &&
       New->isThisDeclarationADefinition() == VarDecl::Definition &&
       (Def = Old->getDefinition())) {
-    Diag(New->getLocation(), diag::err_redefinition) << New;
-    Diag(Def->getLocation(), diag::note_previous_definition);
-    New->setInvalidDecl();
-    return;
+    NamedDecl *Hidden = nullptr;
+    if (!hasVisibleDefinition(Def, &Hidden) && 
+        (New->getDescribedVarTemplate() ||
+         New->getNumTemplateParameterLists() ||
+         New->getDeclContext()->isDependentContext())) {
+      // The previous definition is hidden, and multiple definitions are
+      // permitted (in separate TUs). Form another definition of it.
+    } else {
+      Diag(New->getLocation(), diag::err_redefinition) << New;
+      Diag(Def->getLocation(), diag::note_previous_definition);
+      New->setInvalidDecl();
+      return;
+    }
   }
 
   if (haveIncompatibleLanguageLinkages(Old, New)) {
@@ -8883,16 +8892,24 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       VDecl->setInvalidDecl();
   }
 
-  const VarDecl *Def;
+  VarDecl *Def;
   if ((Def = VDecl->getDefinition()) && Def != VDecl) {
-    Diag(VDecl->getLocation(), diag::err_redefinition)
-      << VDecl->getDeclName();
-    Diag(Def->getLocation(), diag::note_previous_definition);
-    VDecl->setInvalidDecl();
-    return;
+    NamedDecl *Hidden = nullptr;
+    if (!hasVisibleDefinition(Def, &Hidden) && 
+        (VDecl->getDescribedVarTemplate() ||
+         VDecl->getNumTemplateParameterLists() ||
+         VDecl->getDeclContext()->isDependentContext())) {
+      // The previous definition is hidden, and multiple definitions are
+      // permitted (in separate TUs). Form another definition of it.
+    } else {
+      Diag(VDecl->getLocation(), diag::err_redefinition)
+        << VDecl->getDeclName();
+      Diag(Def->getLocation(), diag::note_previous_definition);
+      VDecl->setInvalidDecl();
+      return;
+    }
   }
 
-  const VarDecl *PrevInit = nullptr;
   if (getLangOpts().CPlusPlus) {
     // C++ [class.static.data]p4
     //   If a static data member is of const integral or const
@@ -8906,10 +8923,12 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // We already performed a redefinition check above, but for static
     // data members we also need to check whether there was an in-class
     // declaration with an initializer.
-    if (VDecl->isStaticDataMember() && VDecl->getAnyInitializer(PrevInit)) {
+    if (VDecl->isStaticDataMember() && VDecl->getCanonicalDecl()->hasInit()) {
       Diag(Init->getExprLoc(), diag::err_static_data_member_reinitialization)
           << VDecl->getDeclName();
-      Diag(PrevInit->getInit()->getExprLoc(), diag::note_previous_initializer) << 0;
+      Diag(VDecl->getCanonicalDecl()->getInit()->getExprLoc(),
+           diag::note_previous_initializer)
+          << 0;
       return;
     }  
 
