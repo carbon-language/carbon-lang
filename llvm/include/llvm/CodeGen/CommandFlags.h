@@ -273,6 +273,7 @@ static inline std::string getFeaturesStr() {
   // If user asked for the 'native' CPU, we need to autodetect features.
   // This is necessary for x86 where the CPU might not support all the
   // features the autodetected CPU name lists in the target. For example,
+  // not all Sandybridge processors support AVX.
   if (MCPU == "native") {
     StringMap<bool> HostFeatures;
     if (sys::getHostCPUFeatures(HostFeatures))
