@@ -1067,8 +1067,7 @@ public:
   /// isSafeToMove - Return true if it is safe to move this instruction. If
   /// SawStore is set to true, it means that there is a store (or call) between
   /// the instruction's location and its intended destination.
-  bool isSafeToMove(const TargetInstrInfo *TII, AliasAnalysis *AA,
-                    bool &SawStore) const;
+  bool isSafeToMove(AliasAnalysis *AA, bool &SawStore) const;
 
   /// hasOrderedMemoryRef - Return true if this instruction may have an ordered
   /// or volatile memory reference, or if the information describing the memory

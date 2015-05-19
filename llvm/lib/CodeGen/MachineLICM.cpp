@@ -934,7 +934,7 @@ static bool isLoadFromGOTOrConstantPool(MachineInstr &MI) {
 bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   // Check if it's safe to move the instruction.
   bool DontMoveAcrossStore = true;
-  if (!I.isSafeToMove(TII, AA, DontMoveAcrossStore))
+  if (!I.isSafeToMove(AA, DontMoveAcrossStore))
     return false;
 
   // If it is load then check if it is guaranteed to execute by making sure that

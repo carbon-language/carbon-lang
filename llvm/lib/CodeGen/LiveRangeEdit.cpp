@@ -196,7 +196,7 @@ bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
   // We also need to make sure it is safe to move the load.
   // Assume there are stores between DefMI and UseMI.
   bool SawStore = true;
-  if (!DefMI->isSafeToMove(&TII, nullptr, SawStore))
+  if (!DefMI->isSafeToMove(nullptr, SawStore))
     return false;
 
   DEBUG(dbgs() << "Try to fold single def: " << *DefMI
@@ -235,7 +235,7 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
 
   // Use the same criteria as DeadMachineInstructionElim.
   bool SawStore = false;
-  if (!MI->isSafeToMove(&TII, nullptr, SawStore)) {
+  if (!MI->isSafeToMove(nullptr, SawStore)) {
     DEBUG(dbgs() << "Can't delete: " << Idx << '\t' << *MI);
     return;
   }

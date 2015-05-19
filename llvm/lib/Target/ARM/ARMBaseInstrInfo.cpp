@@ -1807,8 +1807,7 @@ static MachineInstr *canFoldIntoMOVCC(unsigned Reg,
       return nullptr;
   }
   bool DontMoveAcrossStores = true;
-  if (!MI->isSafeToMove(TII, /* AliasAnalysis = */ nullptr,
-                        DontMoveAcrossStores))
+  if (!MI->isSafeToMove(/* AliasAnalysis = */ nullptr, DontMoveAcrossStores))
     return nullptr;
   return MI;
 }

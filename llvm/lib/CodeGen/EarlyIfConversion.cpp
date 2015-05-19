@@ -220,7 +220,7 @@ bool SSAIfConv::canSpeculateInstrs(MachineBasicBlock *MBB) {
 
     // We never speculate stores, so an AA pointer isn't necessary.
     bool DontMoveAcrossStore = true;
-    if (!I->isSafeToMove(TII, nullptr, DontMoveAcrossStore)) {
+    if (!I->isSafeToMove(nullptr, DontMoveAcrossStore)) {
       DEBUG(dbgs() << "Can't speculate: " << *I);
       return false;
     }

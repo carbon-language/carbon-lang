@@ -652,7 +652,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     return false;
 
   // Check if it's safe to move the instruction.
-  if (!MI->isSafeToMove(TII, AA, SawStore))
+  if (!MI->isSafeToMove(AA, SawStore))
     return false;
 
   // FIXME: This should include support for sinking instructions within the
@@ -694,7 +694,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     // other code paths.
     bool TryBreak = false;
     bool store = true;
-    if (!MI->isSafeToMove(TII, AA, store)) {
+    if (!MI->isSafeToMove(AA, store)) {
       DEBUG(dbgs() << " *** NOTE: Won't sink load along critical edge.\n");
       TryBreak = true;
     }

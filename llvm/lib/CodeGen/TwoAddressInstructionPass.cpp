@@ -189,7 +189,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
 
   // Check if it's safe to move this instruction.
   bool SeenStore = true; // Be conservative.
-  if (!MI->isSafeToMove(TII, AA, SeenStore))
+  if (!MI->isSafeToMove(AA, SeenStore))
     return false;
 
   unsigned DefReg = 0;
@@ -861,7 +861,7 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
     return false;
 
   bool SeenStore = true;
-  if (!MI->isSafeToMove(TII, AA, SeenStore))
+  if (!MI->isSafeToMove(AA, SeenStore))
     return false;
 
   if (TII->getInstrLatency(InstrItins, MI) > 1)
@@ -1048,7 +1048,7 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
     return false;
 
   bool SeenStore = true;
-  if (!KillMI->isSafeToMove(TII, AA, SeenStore))
+  if (!KillMI->isSafeToMove(AA, SeenStore))
     return false;
 
   SmallSet<unsigned, 2> Uses;

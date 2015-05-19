@@ -1683,8 +1683,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
   // Also avoid moving code above predicated instruction since it's hard to
   // reason about register liveness with predicated instruction.
   bool DontMoveAcrossStore = true;
-  if (!PI->isSafeToMove(TII, nullptr, DontMoveAcrossStore) ||
-      TII->isPredicated(PI))
+  if (!PI->isSafeToMove(nullptr, DontMoveAcrossStore) || TII->isPredicated(PI))
     return MBB->end();
 
 
@@ -1822,7 +1821,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       break;
 
     bool DontMoveAcrossStore = true;
-    if (!TIB->isSafeToMove(TII, nullptr, DontMoveAcrossStore))
+    if (!TIB->isSafeToMove(nullptr, DontMoveAcrossStore))
       break;
 
     // Remove kills from LocalDefsSet, these registers had short live ranges.
