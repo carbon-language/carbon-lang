@@ -1,6 +1,8 @@
 ; RUN: llc < %s -march=x86 -mcpu=corei7 | FileCheck %s
 ; RUN: llc < %s -march=x86 -mcpu=core-avx-i | FileCheck %s --check-prefix=AVX
 
+target triple = "i686-pc-linux-gnu"
+
 define <1 x float> @test1(<1 x double> %x) nounwind {
 ; CHECK-LABEL: test1:
 ; CHECK:       # BB#0:
@@ -59,12 +61,14 @@ define <4 x float> @test3(<4 x double> %x) nounwind {
 define <8 x float> @test4(<8 x double> %x) nounwind {
 ; CHECK-LABEL: test4:
 ; CHECK:       # BB#0:
+; CHECK-NEXT:    subl $12, %esp
 ; CHECK-NEXT:    cvtpd2ps %xmm1, %xmm1
 ; CHECK-NEXT:    cvtpd2ps %xmm0, %xmm0
 ; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
-; CHECK-NEXT:    cvtpd2ps %xmm3, %xmm3
 ; CHECK-NEXT:    cvtpd2ps %xmm2, %xmm1
-; CHECK-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm3[0]
+; CHECK-NEXT:    cvtpd2ps 16(%esp), %xmm2
+; CHECK-NEXT:    unpcklpd {{.*#+}} xmm1 = xmm1[0],xmm2[0]
+; CHECK-NEXT:    addl $12, %esp
 ; CHECK-NEXT:    retl
 ;
 ; AVX-LABEL: test4:

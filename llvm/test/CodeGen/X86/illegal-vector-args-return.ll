@@ -3,6 +3,8 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep "addps	%xmm3, %xmm1"
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=nehalem | grep "addps	%xmm2, %xmm0"
 
+target triple = "i686-apple-darwin8"
+
 define <4 x double> @foo(<4 x double> %x, <4 x double> %z) {
   %y = fmul <4 x double> %x, %z
   ret <4 x double> %y
