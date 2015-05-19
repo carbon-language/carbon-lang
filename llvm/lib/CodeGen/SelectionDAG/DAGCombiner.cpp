@@ -1585,6 +1585,11 @@ static bool isNullConstant(SDValue V) {
   return Const != nullptr && Const->isNullValue();
 }
 
+static bool isAllOnesConstant(SDValue V) {
+  ConstantSDNode *Const = dyn_cast<ConstantSDNode>(V);
+  return Const != nullptr && Const->isAllOnesValue();
+}
+
 SDValue DAGCombiner::visitADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -1855,7 +1860,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
                        DAG.getConstant(-N1C->getAPIntValue(), DL, VT));
   }
   // Canonicalize (sub -1, x) -> ~x, i.e. (xor x, -1)
-  if (N0C && N0C->isAllOnesValue())
+  if (isAllOnesConstant(N0))
     return DAG.getNode(ISD::XOR, SDLoc(N), VT, N1, N0);
   // fold A-(A-B) -> B
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(0))
@@ -1951,13 +1956,12 @@ SDValue DAGCombiner::visitSUBC(SDNode *N) {
   }
 
   // fold (subc x, 0) -> x + no borrow
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   if (isNullConstant(N1))
     return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE, SDLoc(N),
                                         MVT::Glue));
 
   // Canonicalize (sub -1, x) -> ~x, i.e. (xor x, -1) + no borrow
-  if (N0C && N0C->isAllOnesValue())
+  if (isAllOnesConstant(N0))
     return CombineTo(N, DAG.getNode(ISD::XOR, SDLoc(N), VT, N1, N0),
                      DAG.getNode(ISD::CARRY_FALSE, SDLoc(N),
                                  MVT::Glue));
@@ -2753,28 +2757,28 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
         AddToWorklist(ORNode.getNode());
         return DAG.getSetCC(SDLoc(LocReference), VT, ORNode, LR, Op1);
       }
-      // fold (and (seteq X, -1), (seteq Y, -1)) -> (seteq (and X, Y), -1)
-      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETEQ) {
-        SDValue ANDNode = DAG.getNode(ISD::AND, SDLoc(N0),
-                                      LR.getValueType(), LL, RL);
-        AddToWorklist(ANDNode.getNode());
-        return DAG.getSetCC(SDLoc(LocReference), VT, ANDNode, LR, Op1);
-      }
-      // fold (and (setgt X,  -1), (setgt Y,  -1)) -> (setgt (or X, Y), -1)
-      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETGT) {
-        SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
-                                     LR.getValueType(), LL, RL);
-        AddToWorklist(ORNode.getNode());
-        return DAG.getSetCC(SDLoc(LocReference), VT, ORNode, LR, Op1);
+      if (isAllOnesConstant(LR)) {
+        // fold (and (seteq X, -1), (seteq Y, -1)) -> (seteq (and X, Y), -1)
+        if (Op1 == ISD::SETEQ) {
+          SDValue ANDNode = DAG.getNode(ISD::AND, SDLoc(N0),
+                                        LR.getValueType(), LL, RL);
+          AddToWorklist(ANDNode.getNode());
+          return DAG.getSetCC(SDLoc(LocReference), VT, ANDNode, LR, Op1);
+        }
+        // fold (and (setgt X, -1), (setgt Y, -1)) -> (setgt (or X, Y), -1)
+        if (Op1 == ISD::SETGT) {
+          SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
+                                       LR.getValueType(), LL, RL);
+          AddToWorklist(ORNode.getNode());
+          return DAG.getSetCC(SDLoc(LocReference), VT, ORNode, LR, Op1);
+        }
       }
     }
     // Simplify (and (setne X, 0), (setne X, -1)) -> (setuge (add X, 1), 2)
     if (LL == RL && isa<ConstantSDNode>(LR) && isa<ConstantSDNode>(RR) &&
         Op0 == Op1 && LL.getValueType().isInteger() &&
-      Op0 == ISD::SETNE && ((isNullConstant(LR) &&
-                                 cast<ConstantSDNode>(RR)->isAllOnesValue()) ||
-                                (cast<ConstantSDNode>(LR)->isAllOnesValue() &&
-                                 isNullConstant(RR)))) {
+      Op0 == ISD::SETNE && ((isNullConstant(LR) && isAllOnesConstant(RR)) ||
+                            (isAllOnesConstant(LR) && isNullConstant(RR)))) {
       SDLoc DL(N0);
       SDValue ADDNode = DAG.getNode(ISD::ADD, DL, LL.getValueType(),
                                     LL, DAG.getConstant(1, DL,
@@ -2875,7 +2879,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
      !isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::AND, SDLoc(N), VT, N1, N0);
   // fold (and x, -1) -> x
-  if (N1C && N1C->isAllOnesValue())
+  if (isAllOnesConstant(N1))
     return N0;
   // if (and x, c) is known to be zero, return 0
   unsigned BitWidth = VT.getScalarType().getSizeInBits();
@@ -3425,8 +3429,7 @@ SDValue DAGCombiner::visitORLike(SDValue N0, SDValue N1, SDNode *LocReference) {
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
     ISD::CondCode Op1 = cast<CondCodeSDNode>(CC1)->get();
 
-    if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
-        LL.getValueType().isInteger()) {
+    if (LR == RR && Op0 == Op1 && LL.getValueType().isInteger()) {
       // fold (or (setne X, 0), (setne Y, 0)) -> (setne (or X, Y), 0)
       // fold (or (setlt X, 0), (setlt Y, 0)) -> (setne (or X, Y), 0)
       if (isNullConstant(LR) && (Op1 == ISD::SETNE || Op1 == ISD::SETLT)) {
@@ -3437,8 +3440,7 @@ SDValue DAGCombiner::visitORLike(SDValue N0, SDValue N1, SDNode *LocReference) {
       }
       // fold (or (setne X, -1), (setne Y, -1)) -> (setne (and X, Y), -1)
       // fold (or (setgt X, -1), (setgt Y  -1)) -> (setgt (and X, Y), -1)
-      if (cast<ConstantSDNode>(LR)->isAllOnesValue() &&
-          (Op1 == ISD::SETNE || Op1 == ISD::SETGT)) {
+      if (isAllOnesConstant(LR) && (Op1 == ISD::SETNE || Op1 == ISD::SETGT)) {
         SDValue ANDNode = DAG.getNode(ISD::AND, SDLoc(LR),
                                       LR.getValueType(), LL, RL);
         AddToWorklist(ANDNode.getNode());
@@ -3601,7 +3603,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   if (isNullConstant(N1))
     return N0;
   // fold (or x, -1) -> -1
-  if (N1C && N1C->isAllOnesValue())
+  if (isAllOnesConstant(N1))
     return N1;
   // fold (or x, c) -> c iff (x & ~c) == 0
   if (N1C && DAG.MaskedValueIsZero(N0, ~N1C->getAPIntValue()))
@@ -3994,7 +3996,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     }
   }
   // fold (not (or x, y)) -> (and (not x), (not y)) iff x or y are constants
-  if (N1C && N1C->isAllOnesValue() &&
+  if (isAllOnesConstant(N1) &&
       (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
     SDValue LHS = N0.getOperand(0), RHS = N0.getOperand(1);
     if (isa<ConstantSDNode>(RHS) || isa<ConstantSDNode>(LHS)) {
@@ -4053,14 +4055,13 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   // - Pushing the zero left requires shifting one bits in from the right.
   // A rotate left of ~1 is a nice way of achieving the desired result.
   if (TLI.isOperationLegalOrCustom(ISD::ROTL, VT))
-    if (auto *N1C = dyn_cast<ConstantSDNode>(N1.getNode()))
-      if (N0.getOpcode() == ISD::SHL)
-        if (auto *ShlLHS = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
-          if (N1C->isAllOnesValue() && ShlLHS->isOne()) {
-            SDLoc DL(N);
-            return DAG.getNode(ISD::ROTL, DL, VT, DAG.getConstant(~1, DL, VT),
-                               N0.getOperand(1));
-          }
+    if (N0.getOpcode() == ISD::SHL)
+      if (auto *ShlLHS = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
+        if (isAllOnesConstant(N1) && ShlLHS->isOne()) {
+          SDLoc DL(N);
+          return DAG.getNode(ISD::ROTL, DL, VT, DAG.getConstant(~1, DL, VT),
+                             N0.getOperand(1));
+        }
 
   // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
@@ -4403,7 +4404,7 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   if (isNullConstant(N0))
     return N0;
   // fold (sra -1, x) -> -1
-  if (N0C && N0C->isAllOnesValue())
+  if (isAllOnesConstant(N0))
     return N0;
   // fold (sra x, (setge c, size(x))) -> undef
   if (N1C && N1C->getZExtValue() >= OpSizeInBits)
@@ -12892,16 +12893,12 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
 
     for (unsigned i = 0; i != NumElts; ++i) {
       SDValue Elt = RHS.getOperand(i);
-      if (const ConstantSDNode *EltC = dyn_cast<const ConstantSDNode>(Elt)) {
-        if (EltC->isAllOnesValue())
-          Indices.push_back(i);
-        else if (EltC->isNullValue())
-          Indices.push_back(NumElts+i);
-        else
-          return SDValue();
-      } else {
+      if (isAllOnesConstant(Elt))
+        Indices.push_back(i);
+      else if (isNullConstant(Elt))
+        Indices.push_back(NumElts+i);
+      else
         return SDValue();
-      }
     }
 
     // Let's see if the target supports this vector_shuffle.
@@ -13436,7 +13433,7 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
                                          getShiftAmountTy(XType)));
     }
     // fold (setgt X, -1) -> (xor (srl (X, size(X)-1), 1))
-    if (N1C && N1C->isAllOnesValue() && CC == ISD::SETGT) {
+    if (isAllOnesConstant(N1) && CC == ISD::SETGT) {
       SDLoc DL(N0);
       SDValue Sign = DAG.getNode(ISD::SRL, DL, XType, N0,
                                  DAG.getConstant(XType.getSizeInBits() - 1, DL,
