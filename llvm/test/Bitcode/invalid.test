@@ -152,3 +152,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-code-len-width.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=INVALID-CODELENWIDTH %s
 
 INVALID-CODELENWIDTH: Malformed block
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-function-argument-type.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-ARGUMENT-TYPE %s
+
+INVALID-ARGUMENT-TYPE: Invalid function argument type

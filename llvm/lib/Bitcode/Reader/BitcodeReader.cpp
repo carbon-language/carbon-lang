@@ -1402,8 +1402,11 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
         return Error("Invalid record");
       SmallVector<Type*, 8> ArgTys;
       for (unsigned i = 2, e = Record.size(); i != e; ++i) {
-        if (Type *T = getTypeByID(Record[i]))
+        if (Type *T = getTypeByID(Record[i])) {
+          if (!FunctionType::isValidArgumentType(T))
+            return Error("Invalid function argument type");
           ArgTys.push_back(T);
+        }
         else
           break;
       }
