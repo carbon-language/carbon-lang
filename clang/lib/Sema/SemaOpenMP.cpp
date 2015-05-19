@@ -4803,6 +4803,20 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
       continue;
     }
 
+    // Variably modified types are not supported for tasks.
+    if (Type->isVariablyModifiedType() &&
+        DSAStack->getCurrentDirective() == OMPD_task) {
+      Diag(ELoc, diag::err_omp_variably_modified_type_not_supported)
+          << getOpenMPClauseName(OMPC_private) << Type
+          << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
     // OpenMP [2.9.3.3, Restrictions, C/C++, p.1]
     //  A variable of class type (or array thereof) that appears in a private
     //  clause requires an accessible, unambiguous default constructor for the
@@ -5018,6 +5032,20 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
           continue;
         }
       }
+    }
+
+    // Variably modified types are not supported for tasks.
+    if (Type->isVariablyModifiedType() &&
+        DSAStack->getCurrentDirective() == OMPD_task) {
+      Diag(ELoc, diag::err_omp_variably_modified_type_not_supported)
+          << getOpenMPClauseName(OMPC_firstprivate) << Type
+          << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
     }
 
     Type = Type.getUnqualifiedType();
@@ -6198,7 +6226,8 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     // Variably modified types are not supported.
     if (Type->isVariablyModifiedType()) {
       Diag(ELoc, diag::err_omp_variably_modified_type_not_supported)
-          << getOpenMPClauseName(OMPC_copyprivate) << Type;
+          << getOpenMPClauseName(OMPC_copyprivate) << Type
+          << getOpenMPDirectiveName(DSAStack->getCurrentDirective());
       bool IsDecl =
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
       Diag(VD->getLocation(),
@@ -6206,6 +6235,7 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
           << VD;
       continue;
     }
+
     // OpenMP [2.14.4.1, Restrictions, C/C++, p.2]
     //  A variable of class type (or array thereof) that appears in a
     //  copyin clause requires an accessible, unambiguous copy assignment
