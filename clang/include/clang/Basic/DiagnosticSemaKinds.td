@@ -5030,7 +5030,7 @@ def err_typecheck_unary_expr : Error<
   "invalid argument type %0 to unary expression">;
 def err_typecheck_indirection_requires_pointer : Error<
   "indirection requires pointer operand (%0 invalid)">;
-def ext_typecheck_indirection_through_void_pointer : Extension<
+def ext_typecheck_indirection_through_void_pointer : ExtWarn<
   "ISO C++ does not allow indirection on operand of type %0">,
   InGroup<DiagGroup<"void-ptr-dereference">>;
 def warn_indirection_through_null : Warning<
