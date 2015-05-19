@@ -5987,6 +5987,7 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include \"string.h\"\n"
                "#include <a-a>\n"
                "#include < path with space >\n"
+               "#include_next <test.h>"
                "#include \"abc.h\" // this is included for ABC\n"
                "#include \"some long include\" // with a comment\n"
                "#include \"some very long include paaaaaaaaaaaaaaaaaaaaaaath\"",

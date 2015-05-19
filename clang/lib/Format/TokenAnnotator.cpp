@@ -633,6 +633,7 @@ private:
       return Type;
     switch (CurrentToken->Tok.getIdentifierInfo()->getPPKeywordID()) {
     case tok::pp_include:
+    case tok::pp_include_next:
     case tok::pp_import:
       next();
       parseIncludeDirective();
