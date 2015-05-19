@@ -161,14 +161,15 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   // We have dumped the attribute raw value. For some attributes
   // having both the raw value and the pretty-printed value is
   // interesting. These attributes are handled below.
-  if ((attr == DW_AT_specification || attr == DW_AT_abstract_origin) &&
-      // The signature references aren't handled.
-      formValue.getForm() != DW_FORM_ref_sig8) {
-    uint32_t Ref = formValue.getAsReference(u).getValue();
-    DWARFDebugInfoEntryMinimal DIE;
-    if (const DWARFUnit *RefU = findUnitAndExtractFast(DIE, u, &Ref))
-      if (const char *Ref = DIE.getName(RefU, DINameKind::LinkageName))
-        OS << " \"" << Ref << '\"';
+  if (attr == DW_AT_specification || attr == DW_AT_abstract_origin) {
+    Optional<uint64_t> Ref = formValue.getAsReference(u);
+    if (Ref.hasValue()) {
+      uint32_t RefOffset = Ref.getValue();
+      DWARFDebugInfoEntryMinimal DIE;
+      if (const DWARFUnit *RefU = findUnitAndExtractFast(DIE, u, &RefOffset))
+        if (const char *Name = DIE.getName(RefU, DINameKind::LinkageName))
+          OS << " \"" << Name << '\"';
+    }
   } else if (attr == DW_AT_APPLE_property_attribute) {
     if (Optional<uint64_t> OptVal = formValue.getAsUnsignedConstant())
       dumpApplePropertyAttribute(OS, *OptVal);

@@ -87,6 +87,8 @@ public:
 
   static ArrayRef<uint8_t> getFixedFormSizes(uint8_t AddrSize,
                                              uint16_t Version);
+private:
+  void dumpString(raw_ostream &OS, const DWARFUnit *U) const;
 };
 
 }

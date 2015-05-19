@@ -233,6 +233,10 @@ const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
     // DWARF5 Fission Extension Forms
   case DW_FORM_GNU_addr_index:           return "DW_FORM_GNU_addr_index";
   case DW_FORM_GNU_str_index:            return "DW_FORM_GNU_str_index";
+
+  // Alternate debug sections proposal (output of "dwz" tool).
+  case DW_FORM_GNU_ref_alt:              return "DW_FORM_GNU_ref_alt";
+  case DW_FORM_GNU_strp_alt:             return "DW_FORM_GNU_strp_alt";
   }
   return nullptr;
 }
