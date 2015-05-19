@@ -8280,12 +8280,9 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
 
     SmallVector<SDNode *, 4> Users;
     // Find all FDIV users of the same divisor.
-    for (SDNode::use_iterator UI = N1.getNode()->use_begin(),
-                              UE = N1.getNode()->use_end();
-         UI != UE; ++UI) {
-      SDNode *User = UI.getUse().getUser();
-      if (User->getOpcode() == ISD::FDIV && User->getOperand(1) == N1)
-        Users.push_back(User);
+    for (auto U : N1->uses()) {
+      if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
+        Users.push_back(U);
     }
 
     if (TLI.combineRepeatedFPDivisors(Users.size())) {
@@ -8294,7 +8291,7 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
       SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
 
       // Dividend / Divisor -> Dividend * Reciprocal
-      for (auto &U : Users) {
+      for (auto U : Users) {
         if (U->getOperand(0) != FPOne) {
           SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT,
                                         U->getOperand(0), Reciprocal);
