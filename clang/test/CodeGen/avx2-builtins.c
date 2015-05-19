@@ -611,6 +611,11 @@ __m128 test_mm_broadcastss_ps(__m128 a) {
   return _mm_broadcastss_ps(a);
 }
 
+__m128d test_mm_broadcastsd_pd(__m128d a) {
+  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> %{{.*}}, <2 x i32> zeroinitializer
+  return _mm_broadcastsd_pd(a);
+}
+
 __m256 test_mm256_broadcastss_ps(__m128 a) {
   // CHECK: @llvm.x86.avx2.vbroadcast.ss.ps.256
   return _mm256_broadcastss_ps(a);

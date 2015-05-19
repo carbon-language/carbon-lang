@@ -760,6 +760,12 @@ _mm_broadcastss_ps(__m128 __X)
   return (__m128)__builtin_ia32_vbroadcastss_ps((__v4sf)__X);
 }
 
+static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
+_mm_broadcastsd_pd(__m128d __a)
+{
+  return __builtin_shufflevector(__a, __a, 0, 0);
+}
+
 static __inline__ __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_broadcastss_ps(__m128 __X)
 {
