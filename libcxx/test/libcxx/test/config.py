@@ -325,6 +325,11 @@ class Configuration(object):
         if self.long_tests:
             self.config.available_features.add('long_tests')
 
+        # Run a compile test for the -fsized-deallocation flag. This is needed
+        # in test/std/language.support/support.dynamic/new.delete
+        if self.cxx.hasCompileFlag('-fsized-deallocation'):
+            self.config.available_features.add('fsized-deallocation')
+
     def configure_compile_flags(self):
         no_default_flags = self.get_lit_bool('no_default_flags', False)
         if not no_default_flags:
@@ -530,7 +535,15 @@ class Configuration(object):
         if use_color != '':
             self.lit_config.fatal('Invalid value for color_diagnostics "%s".'
                                   % use_color)
-        self.cxx.flags += ['-fdiagnostics-color=always']
+        color_flag = '-fdiagnostics-color=always'
+        # Check if the compiler support the color diagnostics flag. Issue a
+        # warning if it does not since color diagnostics have been requested.
+        if not self.cxx.hasCompileFlag(color_flag):
+            self.lit_config.warning(
+                'color diagnostics have been requested but are not supported '
+                'by the compiler')
+        else:
+            self.cxx.flags += [color_flag]
 
     def configure_debug_mode(self):
         debug_level = self.get_lit_conf('debug_level', None)

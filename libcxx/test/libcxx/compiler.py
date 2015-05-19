@@ -137,3 +137,13 @@ class CXXCompiler(object):
     def getTriple(self):
         cmd = [self.path] + self.flags + ['-dumpmachine']
         return lit.util.capture(cmd).strip()
+
+    def hasCompileFlag(self, flag):
+        flags = [flag]
+        # Add -Werror to ensure that an unrecognized flag causes a non-zero
+        # exit code. -Werror is supported on all known compiler types.
+        if self.type is not None:
+            flags += ['-Werror']
+        cmd, out, err, rc = self.compile(os.devnull, out=os.devnull,
+                                         flags=flags)
+        return rc == 0
