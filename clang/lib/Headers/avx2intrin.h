@@ -542,6 +542,8 @@ _mm256_sign_epi32(__m256i __a, __m256i __b)
   __m256i __a = (a); \
   (__m256i)__builtin_ia32_pslldqi256(__a, (count)*8); })
 
+#define _mm256_bslli_epi128(a, count) _mm256_slli_si256((a), (count))
+
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_slli_epi16(__m256i __a, int __count)
 {
@@ -605,6 +607,8 @@ _mm256_sra_epi32(__m256i __a, __m128i __count)
 #define _mm256_srli_si256(a, count) __extension__ ({ \
   __m256i __a = (a); \
   (__m256i)__builtin_ia32_psrldqi256(__a, (count)*8); })
+
+#define _mm256_bsrli_epi128(a, count) _mm256_srli_si256((a), (count))
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_srli_epi16(__m256i __a, int __count)
