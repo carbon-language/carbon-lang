@@ -99,10 +99,10 @@ public:
   /// \brief Get the offset of the given symbol, as computed in the current
   /// layout.
   /// \return True on success.
-  bool getSymbolOffset(const MCSymbolData *SD, uint64_t &Val) const;
+  bool getSymbolOffset(const MCSymbol &S, uint64_t &Val) const;
 
   /// \brief Variant that reports a fatal error if the offset is not computable.
-  uint64_t getSymbolOffset(const MCSymbolData *SD) const;
+  uint64_t getSymbolOffset(const MCSymbol &S) const;
 
   /// \brief If this symbol is equivalent to A + Constant, return A.
   const MCSymbol *getBaseSymbol(const MCSymbol &Symbol) const;

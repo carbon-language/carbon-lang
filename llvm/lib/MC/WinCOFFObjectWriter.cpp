@@ -355,7 +355,7 @@ static uint64_t getSymbolValue(const MCSymbolData &Data,
     return Data.getCommonSize();
 
   uint64_t Res;
-  if (!Layout.getSymbolOffset(&Data, Res))
+  if (!Layout.getSymbolOffset(Data.getSymbol(), Res))
     return 0;
 
   return Res;
@@ -724,13 +724,13 @@ void WinCOFFObjectWriter::RecordRelocation(
     CrossSection = &Symbol.getSection() != &B->getSection();
 
     // Offset of the symbol in the section
-    int64_t OffsetOfB = Layout.getSymbolOffset(&B_SD);
+    int64_t OffsetOfB = Layout.getSymbolOffset(*B);
 
     // In the case where we have SymbA and SymB, we just need to store the delta
     // between the two symbols.  Update FixedValue to account for the delta, and
     // skip recording the relocation.
     if (!CrossSection) {
-      int64_t OffsetOfA = Layout.getSymbolOffset(&A_SD);
+      int64_t OffsetOfA = Layout.getSymbolOffset(A);
       FixedValue = (OffsetOfA - OffsetOfB) + Target.getConstant();
       return;
     }

@@ -221,7 +221,7 @@ void AArch64MachObjectWriter::RecordRelocation(
     //    ... _foo@got - Ltmp0
     if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_GOT &&
         Target.getSymB()->getKind() == MCSymbolRefExpr::VK_None &&
-        Layout.getSymbolOffset(&B_SD) ==
+        Layout.getSymbolOffset(*B) ==
             Layout.getFragmentOffset(Fragment) + Fixup.getOffset()) {
       // SymB is the PC, so use a PC-rel pointer-to-GOT relocation.
       Type = MachO::ARM64_RELOC_POINTER_TO_GOT;
@@ -341,9 +341,9 @@ void AArch64MachObjectWriter::RecordRelocation(
       RelSymbol = Base;
 
       // Add the local offset, if needed.
-      if (&Base->getData() != &SD)
-        Value += Layout.getSymbolOffset(&SD) -
-                 Layout.getSymbolOffset(&Base->getData());
+      if (Base != Symbol)
+        Value +=
+            Layout.getSymbolOffset(*Symbol) - Layout.getSymbolOffset(*Base);
     } else if (Symbol->isInSection()) {
       if (!CanUseLocalRelocation)
         Asm.getContext().reportFatalError(

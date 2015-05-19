@@ -232,9 +232,9 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     // non-local symbol).
     if (RelSymbol) {
       // Add the local offset, if needed.
-      if (&RelSymbol->getData() != &SD)
-        Value += Layout.getSymbolOffset(&SD) -
-                 Layout.getSymbolOffset(&RelSymbol->getData());
+      if (RelSymbol != Symbol)
+        Value += Layout.getSymbolOffset(*Symbol) -
+                 Layout.getSymbolOffset(*RelSymbol);
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
       Index = SD.getFragment()->getParent()->getOrdinal() + 1;
@@ -553,7 +553,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
       if (!SD->getSymbol().isUndefined())
-        FixedValue -= Layout.getSymbolOffset(SD);
+        FixedValue -= Layout.getSymbolOffset(SD->getSymbol());
     } else {
       // The index is the section ordinal (1-based).
       const MCSectionData &SymSD = Asm.getSectionData(

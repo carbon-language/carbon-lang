@@ -422,7 +422,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
       if (!SD->getSymbol().isUndefined())
-        FixedValue -= Layout.getSymbolOffset(SD);
+        FixedValue -= Layout.getSymbolOffset(SD->getSymbol());
     } else {
       // The index is the section ordinal (1-based).
       const MCSectionData &SymSD = Asm.getSectionData(

@@ -132,13 +132,10 @@ static bool getLabelOffset(const MCAsmLayout &Layout, const MCSymbolData &SD,
   return true;
 }
 
-static bool getSymbolOffsetImpl(const MCAsmLayout &Layout,
-                                const MCSymbolData *SD, bool ReportError,
-                                uint64_t &Val) {
-  const MCSymbol &S = SD->getSymbol();
-
+static bool getSymbolOffsetImpl(const MCAsmLayout &Layout, const MCSymbol &S,
+                                bool ReportError, uint64_t &Val) {
   if (!S.isVariable())
-    return getLabelOffset(Layout, *SD, ReportError, Val);
+    return getLabelOffset(Layout, S.getData(), ReportError, Val);
 
   // If SD is a variable, evaluate it.
   MCValue Target;
@@ -172,13 +169,13 @@ static bool getSymbolOffsetImpl(const MCAsmLayout &Layout,
   return true;
 }
 
-bool MCAsmLayout::getSymbolOffset(const MCSymbolData *SD, uint64_t &Val) const {
-  return getSymbolOffsetImpl(*this, SD, false, Val);
+bool MCAsmLayout::getSymbolOffset(const MCSymbol &S, uint64_t &Val) const {
+  return getSymbolOffsetImpl(*this, S, false, Val);
 }
 
-uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
+uint64_t MCAsmLayout::getSymbolOffset(const MCSymbol &S) const {
   uint64_t Val;
-  getSymbolOffsetImpl(*this, SD, true, Val);
+  getSymbolOffsetImpl(*this, S, true, Val);
   return Val;
 }
 
@@ -519,12 +516,12 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     const MCSymbol &Sym = A->getSymbol();
     if (Sym.isDefined())
-      Value += Layout.getSymbolOffset(&getSymbolData(Sym));
+      Value += Layout.getSymbolOffset(Sym);
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     const MCSymbol &Sym = B->getSymbol();
     if (Sym.isDefined())
-      Value -= Layout.getSymbolOffset(&getSymbolData(Sym));
+      Value -= Layout.getSymbolOffset(Sym);
   }
 
 

@@ -407,7 +407,7 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
     return Data.getCommonAlignment();
 
   uint64_t Res;
-  if (!Layout.getSymbolOffset(&Data, Res))
+  if (!Layout.getSymbolOffset(Data.getSymbol(), Res))
     return 0;
 
   if (Layout.getAssembler().isThumbFunc(&Data.getSymbol()))
@@ -800,12 +800,11 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
       Asm.getContext().reportFatalError(
           Fixup.getLoc(), "Cannot represent a difference across sections");
 
-    const MCSymbolData &SymBD = Asm.getSymbolData(SymB);
-    if (::isWeak(SymBD))
+    if (::isWeak(SymB.getData()))
       Asm.getContext().reportFatalError(
           Fixup.getLoc(), "Cannot represent a subtraction with a weak symbol");
 
-    uint64_t SymBOffset = Layout.getSymbolOffset(&SymBD);
+    uint64_t SymBOffset = Layout.getSymbolOffset(SymB);
     uint64_t K = SymBOffset - FixupOffset;
     IsPCRel = true;
     C -= K;
@@ -819,7 +818,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
   unsigned Type = GetRelocType(Target, Fixup, IsPCRel);
   bool RelocateWithSymbol = shouldRelocateWithSymbol(Asm, RefA, SymAD, C, Type);
   if (!RelocateWithSymbol && SymA && !SymA->isUndefined())
-    C += Layout.getSymbolOffset(SymAD);
+    C += Layout.getSymbolOffset(*SymA);
 
   uint64_t Addend = 0;
   if (hasRelocationAddend()) {

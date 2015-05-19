@@ -108,7 +108,7 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbolData* SD,
   }
 
   return getSectionAddress(SD->getFragment()->getParent()) +
-    Layout.getSymbolOffset(SD);
+         Layout.getSymbolOffset(S);
 }
 
 uint64_t MachObjectWriter::getPaddingSize(const MCSectionData *SD,
