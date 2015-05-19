@@ -254,5 +254,139 @@ for.end:                                          ; preds = %for.inc, %entry
   ret i1 %not_null
 }
 
-attributes #0 = { nounwind uwtable }
+; This test represents the following function:
+; void test1(int * __restrict__ a, int *b, int **cptr, int n) {
+;   c = *cptr;
+;   for (int i = 0; i < n; ++i)
+;     if (a[i] > 0)
+;       a[i] = (*c)*b[i];
+; }
+; and we want to hoist the load of %c out of the loop. This can be done only
+; because the dereferenceable meatdata on the c = *cptr load.
 
+; CHECK-LABEL: @test7
+; CHECK: load i32, i32* %c, align 4
+; CHECK: for.body:
+
+define void @test7(i32* noalias %a, i32* %b, i32** %cptr, i32 %n) #0 {
+entry:
+  %c = load i32*, i32** %cptr, !dereferenceable !0
+  %cmp11 = icmp sgt i32 %n, 0
+  br i1 %cmp11, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.inc
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  %cmp1 = icmp sgt i32 %0, 0
+  br i1 %cmp1, label %if.then, label %for.inc
+
+if.then:                                          ; preds = %for.body
+  %1 = load i32, i32* %c, align 4
+  %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
+  %2 = load i32, i32* %arrayidx3, align 4
+  %mul = mul nsw i32 %2, %1
+  store i32 %mul, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body, %if.then
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.inc, %entry
+  ret void
+}
+
+; This test represents the following function:
+; void test1(int * __restrict__ a, int *b, int **cptr, int n) {
+;   c = *cptr;
+;   if (c != null)
+;     for (int i = 0; i < n; ++i)
+;       if (a[i] > 0)
+;         a[i] = (*c)*b[i];
+; }
+; and we want to hoist the load of %c out of the loop. This can be done only
+; because the dereferenceable_or_null meatdata on the c = *cptr load and there 
+; is a null check on %c.
+
+; CHECK-LABEL: @test8
+; CHECK: load i32, i32* %c, align 4
+; CHECK: for.body:
+
+define void @test8(i32* noalias %a, i32* %b, i32** %cptr, i32 %n) #0 {
+entry:
+  %c = load i32*, i32** %cptr, !dereferenceable_or_null !0
+  %not_null = icmp ne i32* %c, null
+  br i1 %not_null, label %not.null, label %for.end
+
+not.null:
+  %cmp11 = icmp sgt i32 %n, 0
+  br i1 %cmp11, label %for.body, label %for.end
+
+for.body:                                         ; preds = %not.null, %for.inc
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %not.null ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  %cmp1 = icmp sgt i32 %0, 0
+  br i1 %cmp1, label %if.then, label %for.inc
+
+if.then:                                          ; preds = %for.body
+  %1 = load i32, i32* %c, align 4
+  %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
+  %2 = load i32, i32* %arrayidx3, align 4
+  %mul = mul nsw i32 %2, %1
+  store i32 %mul, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body, %if.then
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.inc, %entry, %not.null
+  ret void
+}
+
+; This is the same as @test8, but without the null check on %c.
+; Without this check, we should not hoist the load of %c.
+
+; CHECK-LABEL: @test9
+; CHECK: if.then:
+; CHECK: load i32, i32* %c, align 4
+
+define void @test9(i32* noalias %a, i32* %b, i32** %cptr, i32 %n) #0 {
+entry:
+  %c = load i32*, i32** %cptr, !dereferenceable_or_null !0
+  %cmp11 = icmp sgt i32 %n, 0
+  br i1 %cmp11, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.inc
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  %cmp1 = icmp sgt i32 %0, 0
+  br i1 %cmp1, label %if.then, label %for.inc
+
+if.then:                                          ; preds = %for.body
+  %1 = load i32, i32* %c, align 4
+  %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
+  %2 = load i32, i32* %arrayidx3, align 4
+  %mul = mul nsw i32 %2, %1
+  store i32 %mul, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body, %if.then
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.inc, %entry
+  ret void
+}
+
+attributes #0 = { nounwind uwtable }
+!0 = !{i64 4}
