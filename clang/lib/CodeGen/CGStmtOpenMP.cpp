@@ -132,7 +132,11 @@ bool CodeGenFunction::EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
                 OrigVD) != nullptr,
             (*IRef)->getType(), VK_LValue, (*IRef)->getExprLoc());
         auto *OriginalAddr = EmitLValue(&DRE).getAddress();
-        if (OrigVD->getType()->isArrayType()) {
+        QualType Type = OrigVD->getType();
+        if (auto *PVD = dyn_cast<ParmVarDecl>(OrigVD)) {
+          Type = PVD->getOriginalType();
+        }
+        if (Type->isArrayType()) {
           // Emit VarDecl with copy init for arrays.
           // Get the address of the original variable captured in current
           // captured region.
@@ -142,11 +146,10 @@ bool CodeGenFunction::EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
             if (!isa<CXXConstructExpr>(Init) || isTrivialInitializer(Init)) {
               // Perform simple memcpy.
               EmitAggregateAssign(Emission.getAllocatedAddress(), OriginalAddr,
-                                  (*IRef)->getType());
+                                  Type);
             } else {
               EmitOMPAggregateAssign(
-                  Emission.getAllocatedAddress(), OriginalAddr,
-                  (*IRef)->getType(),
+                  Emission.getAllocatedAddress(), OriginalAddr, Type,
                   [this, VDInit, Init](llvm::Value *DestElement,
                                        llvm::Value *SrcElement) {
                     // Clean up any temporaries needed by the initialization.
@@ -225,6 +228,10 @@ bool CodeGenFunction::EmitOMPCopyinClause(const OMPExecutableDirective &D) {
     auto IDestRef = C->destination_exprs().begin();
     for (auto *AssignOp : C->assignment_ops()) {
       auto *VD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      QualType Type = VD->getType();
+      if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+        Type = PVD->getOriginalType();
+      }
       if (CopiedVars.insert(VD->getCanonicalDecl()).second) {
         // Get the address of the master variable.
         auto *MasterAddr = VD->isStaticLocal()
@@ -246,8 +253,8 @@ bool CodeGenFunction::EmitOMPCopyinClause(const OMPExecutableDirective &D) {
         }
         auto *SrcVD = cast<VarDecl>(cast<DeclRefExpr>(*ISrcRef)->getDecl());
         auto *DestVD = cast<VarDecl>(cast<DeclRefExpr>(*IDestRef)->getDecl());
-        EmitOMPCopy(*this, (*IRef)->getType(), PrivateAddr, MasterAddr, DestVD,
-                    SrcVD, AssignOp);
+        EmitOMPCopy(*this, Type, PrivateAddr, MasterAddr, DestVD, SrcVD,
+                    AssignOp);
       }
       ++IRef;
       ++ISrcRef;
@@ -328,6 +335,10 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
       auto IDestRef = C->destination_exprs().begin();
       for (auto *AssignOp : C->assignment_ops()) {
         auto *PrivateVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+        QualType Type = PrivateVD->getType();
+        if (auto *PVD = dyn_cast<ParmVarDecl>(PrivateVD)) {
+          Type = PVD->getOriginalType();
+        }
         if (AlreadyEmittedVars.insert(PrivateVD->getCanonicalDecl()).second) {
           auto *SrcVD = cast<VarDecl>(cast<DeclRefExpr>(*ISrcRef)->getDecl());
           auto *DestVD = cast<VarDecl>(cast<DeclRefExpr>(*IDestRef)->getDecl());
@@ -335,8 +346,8 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
           auto *OriginalAddr = GetAddrOfLocalVar(DestVD);
           // Get the address of the private variable.
           auto *PrivateAddr = GetAddrOfLocalVar(PrivateVD);
-          EmitOMPCopy(*this, (*IRef)->getType(), OriginalAddr, PrivateAddr,
-                      DestVD, SrcVD, AssignOp);
+          EmitOMPCopy(*this, Type, OriginalAddr, PrivateAddr, DestVD, SrcVD,
+                      AssignOp);
         }
         ++IRef;
         ++ISrcRef;

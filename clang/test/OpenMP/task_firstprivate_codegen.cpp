@@ -3,10 +3,12 @@
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-apple-darwin10 -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DLAMBDA -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck -check-prefix=LAMBDA %s
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -fblocks -DBLOCKS -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck -check-prefix=BLOCKS %s
+// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DARRAY -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck -check-prefix=ARRAY %s
 // expected-no-diagnostics
 
 // It doesn't pass on win32.
 // REQUIRES: shell
+#ifndef ARRAY
 #ifndef HEADER
 #define HEADER
 
@@ -396,5 +398,27 @@ int main() {
 // CHECK: br i1
 // CHECK: ret i32
 
+#endif
+#else
+// ARRAY-LABEL: array_func
+struct St {
+  int a, b;
+  St() : a(0), b(0) {}
+  St(const St &) {}
+  ~St() {}
+};
+
+void array_func(int a[3], St s[2]) {
+// ARRAY: call i8* @__kmpc_omp_task_alloc(
+// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 12, i32 4, i1 false)
+// ARRAY: call void @_ZN2StC1ERKS_(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}})
+// ARRAY: store i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[DESTRUCTORS:@.+]] to i32 (i32, i8*)*), i32 (i32, i8*)** %{{.+}},
+// ARRAY: call i32 @__kmpc_omp_task(
+// ARRAY: define internal i32 [[DESTRUCTORS]](i32,
+// ARRAY: call void @_ZN2StD1Ev(%struct.St* %{{.+}})
+// ARRAY: br i1
+#pragma omp task firstprivate(a, s)
+  ;
+}
 #endif
 

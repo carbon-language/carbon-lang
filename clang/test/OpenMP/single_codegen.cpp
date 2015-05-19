@@ -2,8 +2,10 @@
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -std=c++11 -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -emit-pch -o %t %s
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -fopenmp=libiomp5 -fexceptions -fcxx-exceptions -gline-tables-only -x c++ -emit-llvm %s -o - | FileCheck %s --check-prefix=TERM_DEBUG
+// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DARRAY -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck -check-prefix=ARRAY %s
 // expected-no-diagnostics
 
+#ifndef ARRAY
 #ifndef HEADER
 #define HEADER
 
@@ -166,5 +168,22 @@ void parallel_single() {
 }
 // TERM_DEBUG-DAG: [[DBG_LOC_START]] = !DILocation(line: [[@LINE-12]],
 // TERM_DEBUG-DAG: [[DBG_LOC_END]] = !DILocation(line: [[@LINE-3]],
+#endif
+#else
+// ARRAY-LABEL: array_func
+struct St {
+  int a, b;
+  St() : a(0), b(0) {}
+  St &operator=(const St &) { return *this; };
+  ~St() {}
+};
 
+void array_func(int a[3], St s[2]) {
+// ARRAY: call void @__kmpc_copyprivate(%ident_t* @{{.+}}, i32 %{{.+}}, i64 16, i8* %{{.+}}, void (i8*, i8*)* [[CPY:@.+]], i32 %{{.+}})
+#pragma omp single copyprivate(a, s)
+  ;
+}
+// ARRAY: define internal void [[CPY]]
+// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 12, i32 4, i1 false)
+// ARRAY: call dereferenceable(8) %struct.St* @_ZN2StaSERKS_(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}})
 #endif

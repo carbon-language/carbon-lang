@@ -3,7 +3,9 @@
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple %itanium_abi_triple -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DLAMBDA -triple %itanium_abi_triple -emit-llvm %s -o - | FileCheck -check-prefix=LAMBDA %s
 // RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -fblocks -DBLOCKS -triple %itanium_abi_triple -emit-llvm %s -o - | FileCheck -check-prefix=BLOCKS %s
+// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -x c++ -std=c++11 -DARRAY -triple x86_64-apple-darwin10 -emit-llvm %s -o - | FileCheck -check-prefix=ARRAY %s
 // expected-no-diagnostics
+#ifndef ARRAY
 #ifndef HEADER
 #define HEADER
 
@@ -269,4 +271,26 @@ int main() {
 // CHECK: ret void
 
 #endif
+#else
+// ARRAY-LABEL: array_func
+struct St {
+  int a, b;
+  St() : a(0), b(0) {}
+  St &operator=(const St &) { return *this; };
+  ~St() {}
+};
+
+void array_func() {
+  static int a[2];
+  static St s[2];
+// ARRAY: @__kmpc_fork_call(
+// ARRAY: call i8* @__kmpc_threadprivate_cached(
+// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* bitcast ([2 x i32]* @{{.+}} to i8*), i64 8, i32 4, i1 false)
+// ARRAY: call dereferenceable(8) %struct.St* @{{.+}}(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}})
+#pragma omp threadprivate(a, s)
+#pragma omp parallel copyin(a, s)
+  ;
+}
+#endif
+
 

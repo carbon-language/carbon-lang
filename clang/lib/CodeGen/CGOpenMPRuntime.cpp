@@ -1287,7 +1287,12 @@ static llvm::Value *emitCopyprivateCopyFunction(
             CGF.Builder.CreateStructGEP(nullptr, RHS, I),
             CGM.PointerAlignInBytes),
         CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
-    CGF.EmitOMPCopy(CGF, CopyprivateVars[I]->getType(), DestAddr, SrcAddr,
+    auto *VD = cast<DeclRefExpr>(CopyprivateVars[I])->getDecl();
+    QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
+    CGF.EmitOMPCopy(CGF, Type, DestAddr, SrcAddr,
                     cast<VarDecl>(cast<DeclRefExpr>(DestExprs[I])->getDecl()),
                     cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
                     AssignmentOps[I]);
@@ -1654,8 +1659,12 @@ createPrivatesRecordDecl(CodeGenModule &CGM,
     auto *RD = C.buildImplicitRecord(".kmp_privates.t");
     RD->startDefinition();
     for (auto &&Pair : Privates) {
-      addFieldToRecordDecl(
-          C, RD, Pair.second.Original->getType().getNonReferenceType());
+      auto Type = Pair.second.Original->getType();
+      if (auto *PVD = dyn_cast<ParmVarDecl>(Pair.second.Original)) {
+        Type = PVD->getOriginalType();
+      }
+      Type = Type.getNonReferenceType();
+      addFieldToRecordDecl(C, RD, Type);
     }
     RD->completeDefinition();
     return RD;
@@ -1939,22 +1948,24 @@ void CGOpenMPRuntime::emitTaskCall(
           auto *SharedField = CapturesInfo.lookup(OriginalVD);
           auto SharedRefLValue =
               CGF.EmitLValueForField(SharedsBase, SharedField);
-          if (OriginalVD->getType()->isArrayType()) {
+          QualType Type = OriginalVD->getType();
+          if (auto *PVD = dyn_cast<ParmVarDecl>(OriginalVD)) {
+            Type = PVD->getOriginalType();
+          }
+          if (Type->isArrayType()) {
             // Initialize firstprivate array.
             if (!isa<CXXConstructExpr>(Init) ||
                 CGF.isTrivialInitializer(Init)) {
               // Perform simple memcpy.
               CGF.EmitAggregateAssign(PrivateLValue.getAddress(),
-                                      SharedRefLValue.getAddress(),
-                                      OriginalVD->getType());
+                                      SharedRefLValue.getAddress(), Type);
             } else {
               // Initialize firstprivate array using element-by-element
               // intialization.
               CGF.EmitOMPAggregateAssign(
                   PrivateLValue.getAddress(), SharedRefLValue.getAddress(),
-                  OriginalVD->getType(),
-                  [&CGF, Elem, Init, &CapturesInfo](llvm::Value *DestElement,
-                                                    llvm::Value *SrcElement) {
+                  Type, [&CGF, Elem, Init, &CapturesInfo](
+                            llvm::Value *DestElement, llvm::Value *SrcElement) {
                     // Clean up any temporaries needed by the initialization.
                     CodeGenFunction::OMPPrivateScope InitScope(CGF);
                     InitScope.addPrivate(Elem, [SrcElement]() -> llvm::Value *{
@@ -1996,8 +2007,12 @@ void CGOpenMPRuntime::emitTaskCall(
       auto *SharedField = CapturesInfo.lookup(OriginalVD);
       auto SharedRefLValue =
           CGF.EmitLValueForFieldInitialization(SharedsBase, SharedField);
-      CGF.EmitStoreThroughLValue(RValue::get(PrivateLValue.getAddress()),
-                                 SharedRefLValue);
+      CGF.EmitStoreThroughLValue(
+          RValue::get(CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+              PrivateLValue.getAddress(), SharedRefLValue.getAddress()
+                                              ->getType()
+                                              ->getPointerElementType())),
+          SharedRefLValue);
       ++FI, ++I;
     }
   }
