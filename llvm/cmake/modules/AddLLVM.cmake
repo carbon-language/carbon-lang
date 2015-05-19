@@ -91,7 +91,7 @@ function(add_llvm_symbol_exports target_name export_file)
 
     set(CAT "cat")
     set(export_file_nativeslashes ${export_file})
-    if(WIN32 AND NOT CYGWIN)
+    if(WIN32 AND NOT CYGWIN AND NOT MSYS)
       set(CAT "type")
       # Convert ${export_file} to native format (backslashes) for "type"
       # Does not use file(TO_NATIVE_PATH) as it doesn't create a native
