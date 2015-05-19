@@ -381,6 +381,32 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
   return false;
 }
 
+/// Returns true if an entry safepoint is not required before this callsite in
+/// the caller function.  
+static bool doesNotRequireEntrySafepointBefore(const CallSite &CS) {
+  Instruction *Inst = CS.getInstruction();
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    switch (II->getIntrinsicID()) {
+    case Intrinsic::experimental_gc_statepoint:
+    case Intrinsic::experimental_patchpoint_void:
+    case Intrinsic::experimental_patchpoint_i64:
+      // The can wrap an actual call which may grow the stack by an unbounded
+      // amount or run forever.
+      return false;
+    default:
+      // Most LLVM intrinsics are things which do not expand to actual calls, or
+      // at least if they do, are leaf functions that cause only finite stack
+      // growth.  In particular, the optimizer likes to form things like memsets
+      // out of stores in the original IR.  Another important example is
+      // llvm.frameescape which must occur in the entry block.  Inserting a
+      // safepoint before it is not legal since it could push the frameescape
+      // out of the entry block.
+      return true;
+    }
+  }
+  return false;
+}
+
 static Instruction *findLocationForEntrySafepoint(Function &F,
                                                   DominatorTree &DT) {
 
@@ -421,23 +447,16 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   for (cursor = F.getEntryBlock().begin(); hasNextInstruction(cursor);
        cursor = nextInstruction(cursor)) {
 
-    // We need to stop going forward as soon as we see a call that can
-    // grow the stack (i.e. the call target has a non-zero frame
-    // size).
-    if (CallSite(cursor)) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(cursor)) {
-        // llvm.assume(...) are not really calls.
-        if (II->getIntrinsicID() == Intrinsic::assume) {
-          continue;
-        }
-        // llvm.frameescape() intrinsic is not a real call. The intrinsic can 
-        // exist only in the entry block.
-        // Inserting a statepoint before llvm.frameescape() may split the 
-        // entry block, and push the intrinsic out of the entry block.
-        if (II->getIntrinsicID() == Intrinsic::frameescape) {
-          continue;
-        }
-      }
+    // We need to ensure a safepoint poll occurs before any 'real' call.  The
+    // easiest way to ensure finite execution between safepoints in the face of
+    // recursive and mutually recursive functions is to enforce that each take
+    // a safepoint.  Additionally, we need to ensure a poll before any call
+    // which can grow the stack by an unbounded amount.  This isn't required
+    // for GC semantics per se, but is a common requirement for languages
+    // which detect stack overflow via guard pages and then throw exceptions.
+    if (auto CS = CallSite(cursor)) {
+      if (doesNotRequireEntrySafepointBefore(CS))
+        continue;
       break;
     }
   }
