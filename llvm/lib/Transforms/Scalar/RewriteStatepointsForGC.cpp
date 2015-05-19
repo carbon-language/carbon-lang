@@ -14,6 +14,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CFG.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
@@ -56,6 +57,12 @@ static cl::opt<bool> PrintLiveSetSize("spp-print-liveset-size", cl::Hidden,
 static cl::opt<bool> PrintBasePointers("spp-print-base-pointers", cl::Hidden,
                                        cl::init(false));
 
+// Cost threshold measuring when it is profitable to rematerialize value instead
+// of relocating it
+static cl::opt<unsigned>
+RematerializationThreshold("spp-rematerialization-threshold", cl::Hidden,
+                           cl::init(6));
+
 #ifdef XDEBUG
 static bool ClobberNonLive = true;
 #else
@@ -78,6 +85,7 @@ struct RewriteStatepointsForGC : public FunctionPass {
     // We add and rewrite a bunch of instructions, but don't really do much
     // else.  We could in theory preserve a lot more analyses here.
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 };
 } // namespace
@@ -123,6 +131,7 @@ struct GCPtrLivenessData {
 // types, then update all the second type to the first type
 typedef DenseMap<Value *, Value *> DefiningValueMapTy;
 typedef DenseSet<llvm::Value *> StatepointLiveSetTy;
+typedef DenseMap<Instruction *, Value *> RematerializedValueMapTy;
 
 struct PartiallyConstructedSafepointRecord {
   /// The set of values known to be live accross this safepoint
@@ -138,6 +147,11 @@ struct PartiallyConstructedSafepointRecord {
   /// Instruction to which exceptional gc relocates are attached
   /// Makes it easier to iterate through them during relocationViaAlloca.
   Instruction *UnwindToken;
+
+  /// Record live values we are rematerialized instead of relocating.
+  /// They are not included into 'liveset' field.
+  /// Maps rematerialized copy to it's original value.
+  RematerializedValueMapTy RematerializedValues;
 };
 }
 
@@ -1389,6 +1403,31 @@ insertRelocationStores(iterator_range<Value::user_iterator> GCRelocs,
   }
 }
 
+// Helper function for the "relocationViaAlloca". Similar to the
+// "insertRelocationStores" but works for rematerialized values.
+static void
+insertRematerializationStores(
+  RematerializedValueMapTy RematerializedValues,
+  DenseMap<Value *, Value *> &AllocaMap,
+  DenseSet<Value *> &VisitedLiveValues) {
+
+  for (auto RematerializedValuePair: RematerializedValues) {
+    Instruction *RematerializedValue = RematerializedValuePair.first;
+    Value *OriginalValue = RematerializedValuePair.second;
+
+    assert(AllocaMap.count(OriginalValue) &&
+           "Can not find alloca for rematerialized value");
+    Value *Alloca = AllocaMap[OriginalValue];
+
+    StoreInst *Store = new StoreInst(RematerializedValue, Alloca);
+    Store->insertAfter(RematerializedValue);
+
+#ifndef NDEBUG
+    VisitedLiveValues.insert(OriginalValue);
+#endif
+  }
+}
+
 /// do all the relocation update via allocas and mem2reg
 static void relocationViaAlloca(
     Function &F, DominatorTree &DT, ArrayRef<Value *> live,
@@ -1406,17 +1445,38 @@ static void relocationViaAlloca(
   // TODO-PERF: change data structures, reserve
   DenseMap<Value *, Value *> allocaMap;
   SmallVector<AllocaInst *, 200> PromotableAllocas;
+  // Used later to chack that we have enough allocas to store all values
+  std::size_t NumRematerializedValues = 0;
   PromotableAllocas.reserve(live.size());
+
+  // Emit alloca for "LiveValue" and record it in "allocaMap" and
+  // "PromotableAllocas"
+  auto emitAllocaFor = [&](Value *LiveValue) {
+    AllocaInst *Alloca = new AllocaInst(LiveValue->getType(), "",
+                                        F.getEntryBlock().getFirstNonPHI());
+    allocaMap[LiveValue] = Alloca;
+    PromotableAllocas.push_back(Alloca);
+  };
 
   // emit alloca for each live gc pointer
   for (unsigned i = 0; i < live.size(); i++) {
-    Value *liveValue = live[i];
-    AllocaInst *alloca = new AllocaInst(liveValue->getType(), "",
-                                        F.getEntryBlock().getFirstNonPHI());
-    allocaMap[liveValue] = alloca;
-    PromotableAllocas.push_back(alloca);
+    emitAllocaFor(live[i]);
   }
 
+  // emit allocas for rematerialized values
+  for (size_t i = 0; i < records.size(); i++) {
+    const struct PartiallyConstructedSafepointRecord &Info = records[i];
+
+    for (auto RematerializedValuePair: Info.RematerializedValues) {
+      Value *OriginalValue = RematerializedValuePair.second;
+      if (allocaMap.count(OriginalValue) != 0)
+        continue;
+
+      emitAllocaFor(OriginalValue);
+      ++NumRematerializedValues;
+    }
+  }
+  
   // The next two loops are part of the same conceptual operation.  We need to
   // insert a store to the alloca after the original def and at each
   // redefinition.  We need to insert a load before each use.  These are split
@@ -1443,6 +1503,10 @@ static void relocationViaAlloca(
       insertRelocationStores(info.UnwindToken->users(), allocaMap,
                              visitedLiveValues);
     }
+
+    // Do similar thing with rematerialized values
+    insertRematerializationStores(info.RematerializedValues, allocaMap,
+                                  visitedLiveValues);
 
     if (ClobberNonLive) {
       // As a debuging aid, pretend that an unrelocated pointer becomes null at
@@ -1548,7 +1612,7 @@ static void relocationViaAlloca(
     }
   }
 
-  assert(PromotableAllocas.size() == live.size() &&
+  assert(PromotableAllocas.size() == live.size() + NumRematerializedValues &&
          "we must have the same allocas with lives");
   if (!PromotableAllocas.empty()) {
     // apply mem2reg to promote alloca to SSA
@@ -1732,6 +1796,201 @@ static void splitVectorValues(Instruction *StatepointInst,
   PromoteMemToReg(Allocas, DT);
 }
 
+// Helper function for the "rematerializeLiveValues". It walks use chain
+// starting from the "CurrentValue" until it meets "BaseValue". Only "simple"
+// values are visited (currently it is GEP's and casts). Returns true if it
+// sucessfully reached "BaseValue" and false otherwise.
+// Fills "ChainToBase" array with all visited values. "BaseValue" is not
+// recorded.
+static bool findRematerializableChainToBasePointer(
+  SmallVectorImpl<Instruction*> &ChainToBase,
+  Value *CurrentValue, Value *BaseValue) {
+
+  // We have found a base value
+  if (CurrentValue == BaseValue) {
+    return true;
+  }
+
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurrentValue)) {
+    ChainToBase.push_back(GEP);
+    return findRematerializableChainToBasePointer(ChainToBase,
+                                                  GEP->getPointerOperand(),
+                                                  BaseValue);
+  }
+
+  if (CastInst *CI = dyn_cast<CastInst>(CurrentValue)) {
+    Value *Def = CI->stripPointerCasts();
+
+    // This two checks are basically similar. First one is here for the
+    // consistency with findBasePointers logic.
+    assert(!isa<CastInst>(Def) && "not a pointer cast found");
+    if (!CI->isNoopCast(CI->getModule()->getDataLayout()))
+      return false;
+
+    ChainToBase.push_back(CI);
+    return findRematerializableChainToBasePointer(ChainToBase, Def, BaseValue);
+  }
+
+  // Not supported instruction in the chain
+  return false;
+}
+
+// Helper function for the "rematerializeLiveValues". Compute cost of the use
+// chain we are going to rematerialize.
+static unsigned
+chainToBasePointerCost(SmallVectorImpl<Instruction*> &Chain,
+                       TargetTransformInfo &TTI) {
+  unsigned Cost = 0;
+
+  for (Instruction *Instr : Chain) {
+    if (CastInst *CI = dyn_cast<CastInst>(Instr)) {
+      assert(CI->isNoopCast(CI->getModule()->getDataLayout()) &&
+             "non noop cast is found during rematerialization");
+
+      Type *SrcTy = CI->getOperand(0)->getType();
+      Cost += TTI.getCastInstrCost(CI->getOpcode(), CI->getType(), SrcTy);
+
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Instr)) {
+      // Cost of the address calculation
+      Type *ValTy = GEP->getPointerOperandType()->getPointerElementType();
+      Cost += TTI.getAddressComputationCost(ValTy);
+
+      // And cost of the GEP itself
+      // TODO: Use TTI->getGEPCost here (it exists, but appears to be not
+      //       allowed for the external usage)
+      if (!GEP->hasAllConstantIndices())
+        Cost += 2;
+
+    } else {
+      llvm_unreachable("unsupported instruciton type during rematerialization");
+    }
+  }
+
+  return Cost;
+}
+
+// From the statepoint liveset pick values that are cheaper to recompute then to
+// relocate. Remove this values from the liveset, rematerialize them after
+// statepoint and record them in "Info" structure. Note that similar to
+// relocated values we don't do any user adjustments here.
+static void rematerializeLiveValues(CallSite CS,
+                                    PartiallyConstructedSafepointRecord &Info,
+                                    TargetTransformInfo &TTI) {
+  const int ChainLengthThreshold = 10;
+  
+  // Record values we are going to delete from this statepoint live set.
+  // We can not di this in following loop due to iterator invalidation.
+  SmallVector<Value *, 32> LiveValuesToBeDeleted;
+
+  for (Value *LiveValue: Info.liveset) {
+    // For each live pointer find it's defining chain
+    SmallVector<Instruction *, 3> ChainToBase;
+    assert(Info.PointerToBase.find(LiveValue) != Info.PointerToBase.end());
+    bool FoundChain =
+      findRematerializableChainToBasePointer(ChainToBase,
+                                             LiveValue,
+                                             Info.PointerToBase[LiveValue]);
+    // Nothing to do, or chain is too long
+    if (!FoundChain ||
+        ChainToBase.size() == 0 ||
+        ChainToBase.size() > ChainLengthThreshold)
+      continue;
+
+    // Compute cost of this chain
+    unsigned Cost = chainToBasePointerCost(ChainToBase, TTI);
+    // TODO: We can also account for cases when we will be able to remove some
+    //       of the rematerialized values by later optimization passes. I.e if
+    //       we rematerialized several intersecting chains. Or if original values
+    //       don't have any uses besides this statepoint.
+
+    // For invokes we need to rematerialize each chain twice - for normal and
+    // for unwind basic blocks. Model this by multiplying cost by two.
+    if (CS.isInvoke()) {
+      Cost *= 2;
+    }
+    // If it's too expensive - skip it
+    if (Cost >= RematerializationThreshold)
+      continue;
+
+    // Remove value from the live set
+    LiveValuesToBeDeleted.push_back(LiveValue);
+
+    // Clone instructions and record them inside "Info" structure
+
+    // Walk backwards to visit top-most instructions first
+    std::reverse(ChainToBase.begin(), ChainToBase.end());
+
+    // Utility function which clones all instructions from "ChainToBase"
+    // and inserts them before "InsertBefore". Returns rematerialized value
+    // which should be used after statepoint.
+    auto rematerializeChain = [&ChainToBase](Instruction *InsertBefore) {
+      Instruction *LastClonedValue = nullptr;
+      Instruction *LastValue = nullptr;
+      for (Instruction *Instr: ChainToBase) {
+        // Only GEP's and casts are suported as we need to be careful to not
+        // introduce any new uses of pointers not in the liveset.
+        // Note that it's fine to introduce new uses of pointers which were
+        // otherwise not used after this statepoint.
+        assert(isa<GetElementPtrInst>(Instr) || isa<CastInst>(Instr));
+
+        Instruction *ClonedValue = Instr->clone();
+        ClonedValue->insertBefore(InsertBefore);
+        ClonedValue->setName(Instr->getName() + ".remat");
+
+        // If it is not first instruction in the chain then it uses previously
+        // cloned value. We should update it to use cloned value.
+        if (LastClonedValue) {
+          assert(LastValue);
+          ClonedValue->replaceUsesOfWith(LastValue, LastClonedValue);
+#ifndef NDEBUG
+          // Assert that cloned instruction does not use any instructions
+          // other than LastClonedValue
+          for (auto OpValue: ClonedValue->operand_values()) {
+            if (isa<Instruction>(OpValue))
+              assert(OpValue == LastClonedValue &&
+                     "unexpected use found in rematerialized value");
+          }
+#endif
+        }
+
+        LastClonedValue = ClonedValue;
+        LastValue = Instr;
+      }
+      assert(LastClonedValue);
+      return LastClonedValue;
+    };
+
+    // Different cases for calls and invokes. For invokes we need to clone
+    // instructions both on normal and unwind path.
+    if (CS.isCall()) {
+      Instruction *InsertBefore = CS.getInstruction()->getNextNode();
+      assert(InsertBefore);
+      Instruction *RematerializedValue = rematerializeChain(InsertBefore);
+      Info.RematerializedValues[RematerializedValue] = LiveValue;
+    } else {
+      InvokeInst *Invoke = cast<InvokeInst>(CS.getInstruction());
+
+      Instruction *NormalInsertBefore =
+          Invoke->getNormalDest()->getFirstInsertionPt();
+      Instruction *UnwindInsertBefore =
+          Invoke->getUnwindDest()->getFirstInsertionPt();
+
+      Instruction *NormalRematerializedValue =
+          rematerializeChain(NormalInsertBefore);
+      Instruction *UnwindRematerializedValue =
+          rematerializeChain(UnwindInsertBefore);
+
+      Info.RematerializedValues[NormalRematerializedValue] = LiveValue;
+      Info.RematerializedValues[UnwindRematerializedValue] = LiveValue;
+    }
+  }
+
+  // Remove rematerializaed values from the live set
+  for (auto LiveValue: LiveValuesToBeDeleted) {
+    Info.liveset.erase(LiveValue);
+  }
+}
+
 static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
                               SmallVectorImpl<CallSite> &toUpdate) {
 #ifndef NDEBUG
@@ -1866,6 +2125,19 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     holders[i] = nullptr;
   }
   holders.clear();
+
+  // In order to reduce live set of statepoint we might choose to rematerialize
+  // some values instead of relocating them. This is purelly an optimization and
+  // does not influence correctness.
+  TargetTransformInfo &TTI =
+    P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+
+  for (size_t i = 0; i < records.size(); i++) { 
+    struct PartiallyConstructedSafepointRecord &info = records[i];
+    CallSite &CS = toUpdate[i];
+
+    rematerializeLiveValues(CS, info, TTI);
+  }
 
   // Now run through and replace the existing statepoints with new ones with
   // the live variables listed.  We do not yet update uses of the values being

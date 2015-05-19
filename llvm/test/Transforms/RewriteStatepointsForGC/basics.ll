@@ -1,5 +1,5 @@
 ; This is a collection of really basic tests for gc.statepoint rewriting.
-; RUN:  opt %s -rewrite-statepoints-for-gc -S | FileCheck %s
+; RUN:  opt %s -rewrite-statepoints-for-gc -spp-rematerialization-threshold=0 -S | FileCheck %s
 
 declare void @foo()
 
