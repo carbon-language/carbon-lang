@@ -22,6 +22,7 @@ foreach(arch ${UBSAN_SUPPORTED_ARCH})
     set(UBSAN_TEST_TARGET_CFLAGS ${COMPILER_RT_TEST_COMPILER_CFLAGS})
   else()
     get_target_flags_for_arch(${arch} UBSAN_TEST_TARGET_CFLAGS)
+    string(REPLACE ";" " " UBSAN_TEST_TARGET_CFLAGS "${UBSAN_TEST_TARGET_CFLAGS}")
   endif()
   add_ubsan_testsuite("Standalone" ubsan ${arch})
 

@@ -28,6 +28,7 @@ foreach(tool ${SUPPORTED_TOOLS})
           ${COMPILER_RT_TEST_COMPILER_CFLAGS})
     else()
       get_target_flags_for_arch(${arch} SANITIZER_COMMON_TEST_TARGET_CFLAGS)
+      string(REPLACE ";" " " SANITIZER_COMMON_TEST_TARGET_CFLAGS "${SANITIZER_COMMON_TEST_TARGET_CFLAGS}")
     endif()
     set(CONFIG_NAME ${tool}-${arch}-${OS_NAME})
     configure_lit_site_cfg(

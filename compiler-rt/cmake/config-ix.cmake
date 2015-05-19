@@ -196,11 +196,11 @@ else()
     # FIXME: Ideally, we would build the N32 library too.
     if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
       # regex for mipsel, mips64el
-      test_target_arch(mipsel "" "-mips32r2")
-      test_target_arch(mips64el "" "-mips64r2 -mabi=n64")
+      test_target_arch(mipsel "" "-mips32r2" "--target=mipsel-linux-gnu")
+      test_target_arch(mips64el "" "-mips64r2" "-mabi=n64")
     else()
-      test_target_arch(mips "" "-mips32r2")
-      test_target_arch(mips64 "" "-mips64r2 -mabi=n64")
+      test_target_arch(mips "" "-mips32r2" "--target=mips-linux-gnu")
+      test_target_arch(mips64 "" "-mips64r2" "-mabi=n64")
     endif()
   elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm")
     test_target_arch(arm "" "-march=armv7-a")
@@ -226,6 +226,7 @@ function(filter_available_targets out_var)
   set(${out_var} ${archs} PARENT_SCOPE)
 endfunction()
 
+# Returns a list of architecture specific target cflags in @out_var list.
 function(get_target_flags_for_arch arch out_var)
   list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
   if(ARCH_INDEX EQUAL -1)
