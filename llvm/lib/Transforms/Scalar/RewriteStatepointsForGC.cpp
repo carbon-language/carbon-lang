@@ -1430,8 +1430,8 @@ insertRematerializationStores(
 
 /// do all the relocation update via allocas and mem2reg
 static void relocationViaAlloca(
-    Function &F, DominatorTree &DT, ArrayRef<Value *> live,
-    ArrayRef<struct PartiallyConstructedSafepointRecord> records) {
+    Function &F, DominatorTree &DT, ArrayRef<Value *> Live,
+    ArrayRef<struct PartiallyConstructedSafepointRecord> Records) {
 #ifndef NDEBUG
   // record initial number of (static) allocas; we'll check we have the same
   // number when we get done.
@@ -1443,40 +1443,40 @@ static void relocationViaAlloca(
 #endif
 
   // TODO-PERF: change data structures, reserve
-  DenseMap<Value *, Value *> allocaMap;
+  DenseMap<Value *, Value *> AllocaMap;
   SmallVector<AllocaInst *, 200> PromotableAllocas;
   // Used later to chack that we have enough allocas to store all values
   std::size_t NumRematerializedValues = 0;
-  PromotableAllocas.reserve(live.size());
+  PromotableAllocas.reserve(Live.size());
 
   // Emit alloca for "LiveValue" and record it in "allocaMap" and
   // "PromotableAllocas"
   auto emitAllocaFor = [&](Value *LiveValue) {
     AllocaInst *Alloca = new AllocaInst(LiveValue->getType(), "",
                                         F.getEntryBlock().getFirstNonPHI());
-    allocaMap[LiveValue] = Alloca;
+    AllocaMap[LiveValue] = Alloca;
     PromotableAllocas.push_back(Alloca);
   };
 
   // emit alloca for each live gc pointer
-  for (unsigned i = 0; i < live.size(); i++) {
-    emitAllocaFor(live[i]);
+  for (unsigned i = 0; i < Live.size(); i++) {
+    emitAllocaFor(Live[i]);
   }
 
   // emit allocas for rematerialized values
-  for (size_t i = 0; i < records.size(); i++) {
-    const struct PartiallyConstructedSafepointRecord &Info = records[i];
+  for (size_t i = 0; i < Records.size(); i++) {
+    const struct PartiallyConstructedSafepointRecord &Info = Records[i];
 
-    for (auto RematerializedValuePair: Info.RematerializedValues) {
+    for (auto RematerializedValuePair : Info.RematerializedValues) {
       Value *OriginalValue = RematerializedValuePair.second;
-      if (allocaMap.count(OriginalValue) != 0)
+      if (AllocaMap.count(OriginalValue) != 0)
         continue;
 
       emitAllocaFor(OriginalValue);
       ++NumRematerializedValues;
     }
   }
-  
+
   // The next two loops are part of the same conceptual operation.  We need to
   // insert a store to the alloca after the original def and at each
   // redefinition.  We need to insert a load before each use.  These are split
@@ -1487,26 +1487,26 @@ static void relocationViaAlloca(
   // this gc pointer and it is not a gc_result)
   // this must happen before we update the statepoint with load of alloca
   // otherwise we lose the link between statepoint and old def
-  for (size_t i = 0; i < records.size(); i++) {
-    const struct PartiallyConstructedSafepointRecord &info = records[i];
-    Value *Statepoint = info.StatepointToken;
+  for (size_t i = 0; i < Records.size(); i++) {
+    const struct PartiallyConstructedSafepointRecord &Info = Records[i];
+    Value *Statepoint = Info.StatepointToken;
 
     // This will be used for consistency check
-    DenseSet<Value *> visitedLiveValues;
+    DenseSet<Value *> VisitedLiveValues;
 
     // Insert stores for normal statepoint gc relocates
-    insertRelocationStores(Statepoint->users(), allocaMap, visitedLiveValues);
+    insertRelocationStores(Statepoint->users(), AllocaMap, VisitedLiveValues);
 
     // In case if it was invoke statepoint
     // we will insert stores for exceptional path gc relocates.
     if (isa<InvokeInst>(Statepoint)) {
-      insertRelocationStores(info.UnwindToken->users(), allocaMap,
-                             visitedLiveValues);
+      insertRelocationStores(Info.UnwindToken->users(), AllocaMap,
+                             VisitedLiveValues);
     }
 
     // Do similar thing with rematerialized values
-    insertRematerializationStores(info.RematerializedValues, allocaMap,
-                                  visitedLiveValues);
+    insertRematerializationStores(Info.RematerializedValues, AllocaMap,
+                                  VisitedLiveValues);
 
     if (ClobberNonLive) {
       // As a debuging aid, pretend that an unrelocated pointer becomes null at
@@ -1515,12 +1515,12 @@ static void relocationViaAlloca(
       // lots of gc.statepoints this is extremely costly both memory and time
       // wise.
       SmallVector<AllocaInst *, 64> ToClobber;
-      for (auto Pair : allocaMap) {
+      for (auto Pair : AllocaMap) {
         Value *Def = Pair.first;
         AllocaInst *Alloca = cast<AllocaInst>(Pair.second);
 
         // This value was relocated
-        if (visitedLiveValues.count(Def)) {
+        if (VisitedLiveValues.count(Def)) {
           continue;
         }
         ToClobber.push_back(Alloca);
@@ -1531,8 +1531,8 @@ static void relocationViaAlloca(
           auto AIType = cast<PointerType>(AI->getType());
           auto PT = cast<PointerType>(AIType->getElementType());
           Constant *CPN = ConstantPointerNull::get(PT);
-          StoreInst *store = new StoreInst(CPN, AI);
-          store->insertBefore(IP);
+          StoreInst *Store = new StoreInst(CPN, AI);
+          Store->insertBefore(IP);
         }
       };
 
@@ -1549,70 +1549,70 @@ static void relocationViaAlloca(
     }
   }
   // update use with load allocas and add store for gc_relocated
-  for (auto Pair : allocaMap) {
-    Value *def = Pair.first;
-    Value *alloca = Pair.second;
+  for (auto Pair : AllocaMap) {
+    Value *Def = Pair.first;
+    Value *Alloca = Pair.second;
 
     // we pre-record the uses of allocas so that we dont have to worry about
     // later update
     // that change the user information.
-    SmallVector<Instruction *, 20> uses;
+    SmallVector<Instruction *, 20> Uses;
     // PERF: trade a linear scan for repeated reallocation
-    uses.reserve(std::distance(def->user_begin(), def->user_end()));
-    for (User *U : def->users()) {
+    Uses.reserve(std::distance(Def->user_begin(), Def->user_end()));
+    for (User *U : Def->users()) {
       if (!isa<ConstantExpr>(U)) {
         // If the def has a ConstantExpr use, then the def is either a
         // ConstantExpr use itself or null.  In either case
         // (recursively in the first, directly in the second), the oop
         // it is ultimately dependent on is null and this particular
         // use does not need to be fixed up.
-        uses.push_back(cast<Instruction>(U));
+        Uses.push_back(cast<Instruction>(U));
       }
     }
 
-    std::sort(uses.begin(), uses.end());
-    auto last = std::unique(uses.begin(), uses.end());
-    uses.erase(last, uses.end());
+    std::sort(Uses.begin(), Uses.end());
+    auto Last = std::unique(Uses.begin(), Uses.end());
+    Uses.erase(Last, Uses.end());
 
-    for (Instruction *use : uses) {
-      if (isa<PHINode>(use)) {
-        PHINode *phi = cast<PHINode>(use);
-        for (unsigned i = 0; i < phi->getNumIncomingValues(); i++) {
-          if (def == phi->getIncomingValue(i)) {
-            LoadInst *load = new LoadInst(
-                alloca, "", phi->getIncomingBlock(i)->getTerminator());
-            phi->setIncomingValue(i, load);
+    for (Instruction *Use : Uses) {
+      if (isa<PHINode>(Use)) {
+        PHINode *Phi = cast<PHINode>(Use);
+        for (unsigned i = 0; i < Phi->getNumIncomingValues(); i++) {
+          if (Def == Phi->getIncomingValue(i)) {
+            LoadInst *Load = new LoadInst(
+                Alloca, "", Phi->getIncomingBlock(i)->getTerminator());
+            Phi->setIncomingValue(i, Load);
           }
         }
       } else {
-        LoadInst *load = new LoadInst(alloca, "", use);
-        use->replaceUsesOfWith(def, load);
+        LoadInst *Load = new LoadInst(Alloca, "", Use);
+        Use->replaceUsesOfWith(Def, Load);
       }
     }
 
     // emit store for the initial gc value
     // store must be inserted after load, otherwise store will be in alloca's
     // use list and an extra load will be inserted before it
-    StoreInst *store = new StoreInst(def, alloca);
-    if (Instruction *inst = dyn_cast<Instruction>(def)) {
-      if (InvokeInst *invoke = dyn_cast<InvokeInst>(inst)) {
+    StoreInst *Store = new StoreInst(Def, Alloca);
+    if (Instruction *Inst = dyn_cast<Instruction>(Def)) {
+      if (InvokeInst *Invoke = dyn_cast<InvokeInst>(Inst)) {
         // InvokeInst is a TerminatorInst so the store need to be inserted
         // into its normal destination block.
-        BasicBlock *normalDest = invoke->getNormalDest();
-        store->insertBefore(normalDest->getFirstNonPHI());
+        BasicBlock *NormalDest = Invoke->getNormalDest();
+        Store->insertBefore(NormalDest->getFirstNonPHI());
       } else {
-        assert(!inst->isTerminator() &&
+        assert(!Inst->isTerminator() &&
                "The only TerminatorInst that can produce a value is "
                "InvokeInst which is handled above.");
-        store->insertAfter(inst);
+        Store->insertAfter(Inst);
       }
     } else {
-      assert(isa<Argument>(def));
-      store->insertAfter(cast<Instruction>(alloca));
+      assert(isa<Argument>(Def));
+      Store->insertAfter(cast<Instruction>(Alloca));
     }
   }
 
-  assert(PromotableAllocas.size() == live.size() + NumRematerializedValues &&
+  assert(PromotableAllocas.size() == Live.size() + NumRematerializedValues &&
          "we must have the same allocas with lives");
   if (!PromotableAllocas.empty()) {
     // apply mem2reg to promote alloca to SSA
