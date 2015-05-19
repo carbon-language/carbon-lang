@@ -609,12 +609,13 @@ FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &res
 // directory delimiter, and the filename.
 //------------------------------------------------------------------
 void
-FileSpec::Dump(Stream *s) const
+FileSpec::Dump(Stream *s, bool trailing_slash) const
 {
     if (s)
     {
         m_directory.Dump(s);
-        if (m_directory && m_directory.GetStringRef().back() != '/')
+        if ((m_filename || trailing_slash) && m_directory &&
+                !m_directory.GetStringRef().endswith("/"))
             s->PutChar('/');
         m_filename.Dump(s);
     }
@@ -816,7 +817,7 @@ void
 FileSpec::GetPath(llvm::SmallVectorImpl<char> &path, bool denormalize) const
 {
     StreamString stream;
-    Dump(&stream);
+    Dump(&stream, false);
     path.append(stream.GetString().begin(), stream.GetString().end());
     Normalize(path, m_syntax);
     if (denormalize && !path.empty())

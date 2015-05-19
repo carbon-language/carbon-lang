@@ -259,9 +259,13 @@ public:
     ///
     /// @param[in] s
     ///     The stream to which to dump the object description.
+    ///
+    /// @param[in] trailing_slash
+    ///     If true and the file is a non root directory, then a trailing slash
+    ///     will be added.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump(Stream *s, bool trailing_slash = true) const;
 
     //------------------------------------------------------------------
     /// Existence test.
