@@ -16,26 +16,41 @@
 // void detach();
 
 #include <thread>
-#include <new>
-#include <cstdlib>
+#include <atomic>
 #include <cassert>
+
+std::atomic_bool done = ATOMIC_VAR_INIT(false);
 
 class G
 {
     int alive_;
+    bool done_;
 public:
     static int n_alive;
     static bool op_run;
 
-    G() : alive_(1) {++n_alive;}
-    G(const G& g) : alive_(g.alive_) {++n_alive;}
-    ~G() {alive_ = 0; --n_alive;}
+    G() : alive_(1), done_(false)
+    {
+        ++n_alive;
+    }
+
+    G(const G& g) : alive_(g.alive_), done_(false)
+    {
+        ++n_alive;
+    }
+    ~G()
+    {
+        alive_ = 0;
+        --n_alive;
+        if (done_) done = true;
+    }
 
     void operator()()
     {
         assert(alive_ == 1);
         assert(n_alive >= 1);
         op_run = true;
+        done_ = true;
     }
 };
 
@@ -45,12 +60,14 @@ bool G::op_run = false;
 int main()
 {
     {
-        std::thread t0((G()));
+        G g;
+        std::thread t0(g);
         assert(t0.joinable());
         t0.detach();
         assert(!t0.joinable());
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        while (!done) {}
         assert(G::op_run);
-        assert(G::n_alive == 0);
+        assert(G::n_alive == 1);
     }
+    assert(G::n_alive == 0);
 }
