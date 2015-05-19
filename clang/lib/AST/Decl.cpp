@@ -1775,6 +1775,8 @@ VarDecl::VarDecl(Kind DK, ASTContext &C, DeclContext *DC,
                 "VarDeclBitfields too large!");
   static_assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned),
                 "ParmVarDeclBitfields too large!");
+  static_assert(sizeof(NonParmVarDeclBitfields) <= sizeof(unsigned),
+                "NonParmVarDeclBitfields too large!");
   AllBits = 0;
   VarDeclBits.SClass = SC;
   // Everything else is implicitly initialized to false.

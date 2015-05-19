@@ -39,6 +39,7 @@ class LabelStmt;
 class MemberSpecializationInfo;
 class Module;
 class NestedNameSpecifier;
+class ParmVarDecl;
 class Stmt;
 class StringLiteral;
 class TemplateArgumentList;
@@ -747,37 +748,8 @@ private:
     unsigned SClass : 3;
     unsigned TSCSpec : 2;
     unsigned InitStyle : 2;
-
-    /// \brief Whether this variable is the exception variable in a C++ catch
-    /// or an Objective-C @catch statement.
-    unsigned ExceptionVar : 1;
-
-    /// \brief Whether this local variable could be allocated in the return
-    /// slot of its function, enabling the named return value optimization
-    /// (NRVO).
-    unsigned NRVOVariable : 1;
-
-    /// \brief Whether this variable is the for-range-declaration in a C++0x
-    /// for-range statement.
-    unsigned CXXForRangeDecl : 1;
-
-    /// \brief Whether this variable is an ARC pseudo-__strong
-    /// variable;  see isARCPseudoStrong() for details.
-    unsigned ARCPseudoStrong : 1;
-
-    /// \brief Whether this variable is (C++0x) constexpr.
-    unsigned IsConstexpr : 1;
-
-    /// \brief Whether this variable is the implicit variable for a lambda
-    /// init-capture.
-    unsigned IsInitCapture : 1;
-
-    /// \brief Whether this local extern variable's previous declaration was
-    /// declared in the same block scope. This controls whether we should merge
-    /// the type of this declaration with its previous declaration.
-    unsigned PreviousDeclInSameBlockScope : 1;
   };
-  enum { NumVarDeclBits = 14 };
+  enum { NumVarDeclBits = 7 };
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -813,10 +785,47 @@ protected:
     unsigned ParameterIndex : NumParameterIndexBits;
   };
 
+  class NonParmVarDeclBitfields {
+    friend class VarDecl;
+    friend class ASTDeclReader;
+
+    unsigned : NumVarDeclBits;
+
+    /// \brief Whether this variable is the exception variable in a C++ catch
+    /// or an Objective-C @catch statement.
+    unsigned ExceptionVar : 1;
+
+    /// \brief Whether this local variable could be allocated in the return
+    /// slot of its function, enabling the named return value optimization
+    /// (NRVO).
+    unsigned NRVOVariable : 1;
+
+    /// \brief Whether this variable is the for-range-declaration in a C++0x
+    /// for-range statement.
+    unsigned CXXForRangeDecl : 1;
+
+    /// \brief Whether this variable is an ARC pseudo-__strong
+    /// variable;  see isARCPseudoStrong() for details.
+    unsigned ARCPseudoStrong : 1;
+
+    /// \brief Whether this variable is (C++0x) constexpr.
+    unsigned IsConstexpr : 1;
+
+    /// \brief Whether this variable is the implicit variable for a lambda
+    /// init-capture.
+    unsigned IsInitCapture : 1;
+
+    /// \brief Whether this local extern variable's previous declaration was
+    /// declared in the same block scope. This controls whether we should merge
+    /// the type of this declaration with its previous declaration.
+    unsigned PreviousDeclInSameBlockScope : 1;
+  };
+
   union {
     unsigned AllBits;
     VarDeclBitfields VarDeclBits;
     ParmVarDeclBitfields ParmVarDeclBits;
+    NonParmVarDeclBitfields NonParmVarDeclBits;
   };
 
   VarDecl(Kind DK, ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
@@ -1169,9 +1178,12 @@ public:
   /// \brief Determine whether this variable is the exception variable in a
   /// C++ catch statememt or an Objective-C \@catch statement.
   bool isExceptionVariable() const {
-    return VarDeclBits.ExceptionVar;
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.ExceptionVar;
   }
-  void setExceptionVariable(bool EV) { VarDeclBits.ExceptionVar = EV; }
+  void setExceptionVariable(bool EV) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.ExceptionVar = EV;
+  }
 
   /// \brief Determine whether this local variable can be used with the named
   /// return value optimization (NRVO).
@@ -1183,36 +1195,64 @@ public:
   /// return slot when returning from the function. Within the function body,
   /// each return that returns the NRVO object will have this variable as its
   /// NRVO candidate.
-  bool isNRVOVariable() const { return VarDeclBits.NRVOVariable; }
-  void setNRVOVariable(bool NRVO) { VarDeclBits.NRVOVariable = NRVO; }
+  bool isNRVOVariable() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.NRVOVariable;
+  }
+  void setNRVOVariable(bool NRVO) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.NRVOVariable = NRVO;
+  }
 
   /// \brief Determine whether this variable is the for-range-declaration in
   /// a C++0x for-range statement.
-  bool isCXXForRangeDecl() const { return VarDeclBits.CXXForRangeDecl; }
-  void setCXXForRangeDecl(bool FRD) { VarDeclBits.CXXForRangeDecl = FRD; }
+  bool isCXXForRangeDecl() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.CXXForRangeDecl;
+  }
+  void setCXXForRangeDecl(bool FRD) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.CXXForRangeDecl = FRD;
+  }
 
   /// \brief Determine whether this variable is an ARC pseudo-__strong
   /// variable.  A pseudo-__strong variable has a __strong-qualified
   /// type but does not actually retain the object written into it.
   /// Generally such variables are also 'const' for safety.
-  bool isARCPseudoStrong() const { return VarDeclBits.ARCPseudoStrong; }
-  void setARCPseudoStrong(bool ps) { VarDeclBits.ARCPseudoStrong = ps; }
+  bool isARCPseudoStrong() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.ARCPseudoStrong;
+  }
+  void setARCPseudoStrong(bool ps) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.ARCPseudoStrong = ps;
+  }
 
   /// Whether this variable is (C++11) constexpr.
-  bool isConstexpr() const { return VarDeclBits.IsConstexpr; }
-  void setConstexpr(bool IC) { VarDeclBits.IsConstexpr = IC; }
+  bool isConstexpr() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.IsConstexpr;
+  }
+  void setConstexpr(bool IC) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.IsConstexpr = IC;
+  }
 
   /// Whether this variable is the implicit variable for a lambda init-capture.
-  bool isInitCapture() const { return VarDeclBits.IsInitCapture; }
-  void setInitCapture(bool IC) { VarDeclBits.IsInitCapture = IC; }
+  bool isInitCapture() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.IsInitCapture;
+  }
+  void setInitCapture(bool IC) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.IsInitCapture = IC;
+  }
 
   /// Whether this local extern variable declaration's previous declaration
   /// was declared in the same block scope. Only correct in C++.
   bool isPreviousDeclInSameBlockScope() const {
-    return VarDeclBits.PreviousDeclInSameBlockScope;
+    return isa<ParmVarDecl>(this)
+               ? false
+               : NonParmVarDeclBits.PreviousDeclInSameBlockScope;
   }
   void setPreviousDeclInSameBlockScope(bool Same) {
-    VarDeclBits.PreviousDeclInSameBlockScope = Same;
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.PreviousDeclInSameBlockScope = Same;
   }
 
   /// \brief If this variable is an instantiated static data member of a

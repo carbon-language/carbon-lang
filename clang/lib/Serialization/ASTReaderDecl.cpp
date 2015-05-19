@@ -1063,13 +1063,15 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   VD->VarDeclBits.SClass = (StorageClass)Record[Idx++];
   VD->VarDeclBits.TSCSpec = Record[Idx++];
   VD->VarDeclBits.InitStyle = Record[Idx++];
-  VD->VarDeclBits.ExceptionVar = Record[Idx++];
-  VD->VarDeclBits.NRVOVariable = Record[Idx++];
-  VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
-  VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
-  VD->VarDeclBits.IsConstexpr = Record[Idx++];
-  VD->VarDeclBits.IsInitCapture = Record[Idx++];
-  VD->VarDeclBits.PreviousDeclInSameBlockScope = Record[Idx++];
+  if (!isa<ParmVarDecl>(VD)) {
+    VD->NonParmVarDeclBits.ExceptionVar = Record[Idx++];
+    VD->NonParmVarDeclBits.NRVOVariable = Record[Idx++];
+    VD->NonParmVarDeclBits.CXXForRangeDecl = Record[Idx++];
+    VD->NonParmVarDeclBits.ARCPseudoStrong = Record[Idx++];
+    VD->NonParmVarDeclBits.IsConstexpr = Record[Idx++];
+    VD->NonParmVarDeclBits.IsInitCapture = Record[Idx++];
+    VD->NonParmVarDeclBits.PreviousDeclInSameBlockScope = Record[Idx++];
+  }
   Linkage VarLinkage = Linkage(Record[Idx++]);
   VD->setCachedLinkage(VarLinkage);
 
