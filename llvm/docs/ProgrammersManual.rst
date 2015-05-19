@@ -1105,10 +1105,10 @@ If you have a set-like data structure that is usually small and whose elements
 are reasonably small, a ``SmallSet<Type, N>`` is a good choice.  This set has
 space for N elements in place (thus, if the set is dynamically smaller than N,
 no malloc traffic is required) and accesses them with a simple linear search.
-When the set grows beyond 'N' elements, it allocates a more expensive
+When the set grows beyond N elements, it allocates a more expensive
 representation that guarantees efficient access (for most types, it falls back
-to std::set, but for pointers it uses something far better, :ref:`SmallPtrSet
-<dss_smallptrset>`.
+to :ref:`std::set <dss_set>`, but for pointers it uses something far better,
+:ref:`SmallPtrSet <dss_smallptrset>`.
 
 The magic of this class is that it handles small sets extremely efficiently, but
 gracefully handles extremely large sets without loss of efficiency.  The
@@ -1120,16 +1120,31 @@ and erasing, but does not support iteration.
 llvm/ADT/SmallPtrSet.h
 ^^^^^^^^^^^^^^^^^^^^^^
 
-SmallPtrSet has all the advantages of ``SmallSet`` (and a ``SmallSet`` of
+``SmallPtrSet`` has all the advantages of ``SmallSet`` (and a ``SmallSet`` of
 pointers is transparently implemented with a ``SmallPtrSet``), but also supports
-iterators.  If more than 'N' insertions are performed, a single quadratically
+iterators.  If more than N insertions are performed, a single quadratically
 probed hash table is allocated and grows as needed, providing extremely
 efficient access (constant time insertion/deleting/queries with low constant
 factors) and is very stingy with malloc traffic.
 
-Note that, unlike ``std::set``, the iterators of ``SmallPtrSet`` are invalidated
-whenever an insertion occurs.  Also, the values visited by the iterators are not
-visited in sorted order.
+Note that, unlike :ref:`std::set <dss_set>`, the iterators of ``SmallPtrSet``
+are invalidated whenever an insertion occurs.  Also, the values visited by the
+iterators are not visited in sorted order.
+
+.. _dss_stringset:
+
+llvm/ADT/StringSet.h
+^^^^^^^^^^^^^^^^^^^^
+
+``StringSet`` is a thin wrapper around :ref:`StringMap\<char\> <dss_stringmap>`,
+and it allows efficient storage and retrieval of unique strings.
+
+Functionally analogous to ``SmallSet<StringRef>``, ``StringSet`` also suports
+iteration. (The iterator dereferences to a ``StringMapEntry<char>``, so you
+need to call ``i->getKey()`` to access the item of the StringSet.)  On the
+other hand, ``StringSet`` doesn't support range-insertion and
+copy-construction, which :ref:`SmallSet <dss_smallset>` and :ref:`SmallPtrSet
+<dss_smallptrset>` do support.
 
 .. _dss_denseset:
 
@@ -1297,8 +1312,9 @@ never use hash_set and unordered_set because they are generally very expensive
 (each insertion requires a malloc) and very non-portable.
 
 std::multiset is useful if you're not interested in elimination of duplicates,
-but has all the drawbacks of std::set.  A sorted vector (where you don't delete
-duplicate entries) or some other approach is almost always better.
+but has all the drawbacks of :ref:`std::set <dss_set>`.  A sorted vector
+(where you don't delete duplicate entries) or some other approach is almost
+always better.
 
 .. _ds_map:
 
