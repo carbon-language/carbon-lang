@@ -2391,8 +2391,7 @@ private:
   bool HasUndefinedConstructors;
   /// \brief Returns \c CXXNewExpr from given initialization expression.
   /// \param E Expression used for initializing pointee in delete-expression.
-  /// \param E can be a single-element \c InitListExpr consisting of
-  /// \param E new-expression.
+  /// E can be a single-element \c InitListExpr consisting of new-expression.
   const CXXNewExpr *getNewExprFromInitListOrExpr(const Expr *E);
   /// \brief Returns whether member is initialized with mismatching form of
   /// \c new either by the member initializer or in-class initialization.
