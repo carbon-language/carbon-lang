@@ -1082,7 +1082,8 @@ private:
         }
 
         for (; Prev != Tok.MatchingParen; Prev = Prev->Previous) {
-          if (!Prev || !Prev->isOneOf(tok::kw_const, tok::identifier)) {
+          if (!Prev ||
+              !Prev->isOneOf(tok::kw_const, tok::identifier, tok::coloncolon)) {
             IsCast = false;
             break;
           }
