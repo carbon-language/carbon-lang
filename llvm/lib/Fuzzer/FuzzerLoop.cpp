@@ -60,16 +60,20 @@ void Fuzzer::StaticAlarmCallback() {
 }
 
 void Fuzzer::AlarmCallback() {
+  assert(Options.UnitTimeoutSec > 0);
   size_t Seconds =
       duration_cast<seconds>(system_clock::now() - UnitStartTime).count();
-  std::cerr << "ALARM: working on the last Unit for " << Seconds << " seconds"
-            << std::endl;
-  if (Seconds >= 3) {
+  if (Seconds == 0) return;
+  if (Options.Verbosity >= 2)
+    std::cerr << "AlarmCallback " << Seconds << "\n";
+  if (Seconds >= (size_t)Options.UnitTimeoutSec) {
+    std::cerr << "ALARM: working on the last Unit for " << Seconds << " seconds"
+              << std::endl;
     Print(CurrentUnit, "\n");
     PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
     WriteToCrash(CurrentUnit, "timeout-");
+    exit(1);
   }
-  exit(1);
 }
 
 void Fuzzer::PrintStats(const char *Where, size_t Cov, const char *End) {
@@ -96,6 +100,8 @@ void Fuzzer::RereadOutputCorpus() {
     return;
   }
   if (!Options.Reload) return;
+  if (Options.Verbosity >= 2)
+    std::cerr << "Reload: read " << AdditionalCorpus.size() << " new units.\n";
   for (auto &X : AdditionalCorpus) {
     if (X.size() > (size_t)Options.MaxLen)
       X.resize(Options.MaxLen);

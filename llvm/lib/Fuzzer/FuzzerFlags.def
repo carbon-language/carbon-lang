@@ -27,7 +27,10 @@ FUZZER_FLAG_INT(
     " If 0, never do that. If -1, do it sometimes.")
 FUZZER_FLAG_INT(exit_on_first, 0,
             "If 1, exit after the first new interesting input is found.")
-FUZZER_FLAG_INT(timeout, -1, "Timeout in seconds (if positive).")
+FUZZER_FLAG_INT(
+    timeout, -1,
+    "Timeout in seconds (if positive). "
+    "If one unit runs more than this number of seconds the process will abort.")
 FUZZER_FLAG_INT(help, 0, "Print help.")
 FUZZER_FLAG_INT(
     save_minimized_corpus, 0,

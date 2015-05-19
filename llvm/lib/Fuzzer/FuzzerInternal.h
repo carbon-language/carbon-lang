@@ -56,6 +56,7 @@ class Fuzzer {
   struct FuzzingOptions {
     int Verbosity = 1;
     int MaxLen = 0;
+    int UnitTimeoutSec = 300;
     bool DoCrossOver = true;
     int  MutateDepth = 5;
     bool ExitOnFirst = false;
