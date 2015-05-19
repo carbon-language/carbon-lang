@@ -22,9 +22,10 @@ void DWARFCompileUnit::dump(raw_ostream &OS) {
      << " (next unit at " << format("0x%08x", getNextUnitOffset())
      << ")\n";
 
-  const DWARFDebugInfoEntryMinimal *CU = getCompileUnitDIE(false);
-  assert(CU && "Null Compile Unit?");
-  CU->dump(OS, this, -1U);
+  if (const DWARFDebugInfoEntryMinimal *CU = getUnitDIE(false))
+    CU->dump(OS, this, -1U);
+  else
+    OS << "<compile unit can't be parsed!>\n\n";
 }
 
 // VTable anchor.

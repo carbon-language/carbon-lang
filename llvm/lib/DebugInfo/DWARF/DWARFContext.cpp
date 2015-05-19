@@ -140,9 +140,11 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     OS << "\n.debug_line contents:\n";
     for (const auto &CU : compile_units()) {
       savedAddressByteSize = CU->getAddressByteSize();
-      unsigned stmtOffset =
-          CU->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
-              CU.get(), DW_AT_stmt_list, -1U);
+      const auto *CUDIE = CU->getUnitDIE();
+      if (CUDIE == nullptr)
+        continue;
+      unsigned stmtOffset = CUDIE->getAttributeValueAsSectionOffset(
+          CU.get(), DW_AT_stmt_list, -1U);
       if (stmtOffset != -1U) {
         DataExtractor lineData(getLineSection().Data, isLittleEndian(),
                                savedAddressByteSize);
@@ -321,13 +323,14 @@ const DWARFDebugFrame *DWARFContext::getDebugFrame() {
 }
 
 const DWARFLineTable *
-DWARFContext::getLineTableForUnit(DWARFUnit *cu) {
+DWARFContext::getLineTableForUnit(DWARFUnit *U) {
   if (!Line)
     Line.reset(new DWARFDebugLine(&getLineSection().Relocs));
-
+  const auto *UnitDIE = U->getUnitDIE();
+  if (UnitDIE == nullptr)
+    return nullptr;
   unsigned stmtOffset =
-      cu->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
-          cu, DW_AT_stmt_list, -1U);
+      UnitDIE->getAttributeValueAsSectionOffset(U, DW_AT_stmt_list, -1U);
   if (stmtOffset == -1U)
     return nullptr; // No line table for this compile unit.
 
@@ -337,7 +340,7 @@ DWARFContext::getLineTableForUnit(DWARFUnit *cu) {
 
   // We have to parse it first.
   DataExtractor lineData(getLineSection().Data, isLittleEndian(),
-                         cu->getAddressByteSize());
+                         U->getAddressByteSize());
   return Line->getOrParseLineTable(lineData, stmtOffset);
 }
 

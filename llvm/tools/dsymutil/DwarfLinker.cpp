@@ -729,7 +729,7 @@ void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
   const DWARFSection &InputSec = Dwarf.getLocSection();
   DataExtractor Data(InputSec.Data, Dwarf.isLittleEndian(), AddressSize);
   DWARFUnit &OrigUnit = Unit.getOrigUnit();
-  const auto *OrigUnitDie = OrigUnit.getCompileUnitDIE(false);
+  const auto *OrigUnitDie = OrigUnit.getUnitDIE(false);
   int64_t UnitPcOffset = 0;
   uint64_t OrigLowPc = OrigUnitDie->getAttributeValueAsAddress(
       &OrigUnit, dwarf::DW_AT_low_pc, -1ULL);
@@ -2203,7 +2203,7 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
                                OrigDwarf.isLittleEndian(), AddressSize);
   auto InvalidRange = FunctionRanges.end(), CurrRange = InvalidRange;
   DWARFUnit &OrigUnit = Unit.getOrigUnit();
-  const auto *OrigUnitDie = OrigUnit.getCompileUnitDIE(false);
+  const auto *OrigUnitDie = OrigUnit.getUnitDIE(false);
   uint64_t OrigLowPc = OrigUnitDie->getAttributeValueAsAddress(
       &OrigUnit, dwarf::DW_AT_low_pc, -1ULL);
   // Ranges addresses are based on the unit's low_pc. Compute the
@@ -2287,7 +2287,7 @@ static void insertLineSequence(std::vector<DWARFDebugLine::Row> &Seq,
 void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
                                         DWARFContext &OrigDwarf) {
   const DWARFDebugInfoEntryMinimal *CUDie =
-      Unit.getOrigUnit().getCompileUnitDIE();
+      Unit.getOrigUnit().getUnitDIE();
   uint64_t StmtList = CUDie->getAttributeValueAsSectionOffset(
       &Unit.getOrigUnit(), dwarf::DW_AT_stmt_list, -1ULL);
   if (StmtList == -1ULL)
@@ -2461,7 +2461,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     // In a first phase, just read in the debug info and store the DIE
     // parent links that we will use during the next phase.
     for (const auto &CU : DwarfContext.compile_units()) {
-      auto *CUDie = CU->getCompileUnitDIE(false);
+      auto *CUDie = CU->getUnitDIE(false);
       if (Options.Verbose) {
         outs() << "Input compilation unit:";
         CUDie->dump(outs(), CU.get(), 0);
@@ -2476,7 +2476,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     // references require the ParentIdx to be setup for every CU in
     // the object file before calling this.
     for (auto &CurrentUnit : Units)
-      lookForDIEsToKeep(*CurrentUnit.getOrigUnit().getCompileUnitDIE(), *Obj,
+      lookForDIEsToKeep(*CurrentUnit.getOrigUnit().getUnitDIE(), *Obj,
                         CurrentUnit, 0);
 
     // The calls to applyValidRelocs inside cloneDIE will walk the
@@ -2489,7 +2489,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     // to clone/emit.
     if (!ValidRelocs.empty())
       for (auto &CurrentUnit : Units) {
-        const auto *InputDIE = CurrentUnit.getOrigUnit().getCompileUnitDIE();
+        const auto *InputDIE = CurrentUnit.getOrigUnit().getUnitDIE();
         CurrentUnit.setStartOffset(OutputDebugInfoSize);
         DIE *OutputDIE = cloneDIE(*InputDIE, CurrentUnit, 0 /* PCOffset */,
                                   11 /* Unit Header size */);
