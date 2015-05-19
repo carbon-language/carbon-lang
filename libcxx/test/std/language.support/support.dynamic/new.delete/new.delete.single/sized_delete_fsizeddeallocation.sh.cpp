@@ -14,8 +14,11 @@
 
 // UNSUPPORTED: sanitizer-new-delete
 
-// TODO: -fsized-deallocation was only added to GCC in 5.1.
-// XFAIL: gcc-4.8, gcc-4.9
+// NOTE: -fsized-deallocation was only added in clang 3.7
+// XFAIL: clang-3.4, clang-3.5, clang-3.6
+
+// NOTE: -fsized-deallocation was only added to GCC in 5.1.
+// XFAIL: gcc-4.7, gcc-4.8, gcc-4.9
 
 // RUN: %build -fsized-deallocation
 // RUN: %run

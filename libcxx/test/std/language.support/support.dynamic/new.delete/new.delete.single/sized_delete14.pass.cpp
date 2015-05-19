@@ -13,11 +13,13 @@
 
 // TODO: Clang does not enable sized-deallocation in c++14 and behond by
 // default. It is only enabled when -fsized-deallocation is given.
-// XFAIL: clang
+// (except clang-3.6 which temporarly enabled sized-deallocation)
+// XFAIL: clang-3.4, clang-3.5, clang-3.7
+// XFAIL: apple-clang
 
-// TODO: GCC 4.9.1 does not support sized-deallocation in c++14. However
+// NOTE: GCC 4.9.1 does not support sized-deallocation in c++14. However
 // GCC 5.1 does.
-// XFAIL: gcc-4.8, gcc-4.9
+// XFAIL: gcc-4.7, gcc-4.8, gcc-4.9
 
 #include <new>
 #include <cstddef>
