@@ -21,7 +21,7 @@ public:
 class S4 {
   int a;
   S4();
-  S4 &operator=(const S4 &s4); // expected-note 3 {{implicitly declared private here}}
+  S4 &operator=(const S4 &s4); // expected-note 4 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
@@ -103,6 +103,11 @@ T tmain(T argc, C **argv) {
   }
 
   return T();
+}
+
+void bar(S4 a[2]) {
+#pragma omp single copyprivate(a) // expected-error {{'operator=' is a private member of 'S4'}}
+    foo();
 }
 
 namespace A {

@@ -36,7 +36,7 @@ const S3 ca[5];     // expected-note {{global variable is predetermined as share
 extern const int f; // expected-note {{global variable is predetermined as shared}}
 class S4 {
   int a;
-  S4();             // expected-note 3 {{implicitly declared private here}}
+  S4();             // expected-note 4 {{implicitly declared private here}}
   S4(const S4 &s4);
 
 public:
@@ -140,6 +140,13 @@ int foomain(int argc, char **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
   return 0;
+}
+
+void bar(S4 a[2]) {
+#pragma omp parallel
+#pragma omp for lastprivate(a) // expected-error {{calling a private constructor of class 'S4'}}
+  for (int i = 0; i < 2; ++i)
+    foo();
 }
 
 namespace A {

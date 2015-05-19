@@ -505,11 +505,11 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
   }
 
   QualType Type = D->getType().getNonReferenceType().getCanonicalType();
-  bool IsConstant = Type.isConstant(SemaRef.getASTContext());
-  while (Type->isArrayType()) {
-    QualType ElemType = cast<ArrayType>(Type.getTypePtr())->getElementType();
-    Type = ElemType.getNonReferenceType().getCanonicalType();
+  if (auto *PVD = dyn_cast<ParmVarDecl>(D)) {
+    Type = PVD->getOriginalType().getNonReferenceType().getCanonicalType();
   }
+  bool IsConstant = Type.isConstant(SemaRef.getASTContext());
+  Type = SemaRef.getASTContext().getBaseElementType(Type);
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
   // in a Construct, C/C++, predetermined, p.6]
   //  Variables with const qualified type having no mutable member are
@@ -663,6 +663,10 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             continue;
           }
           auto *VD = cast<VarDecl>(cast<DeclRefExpr>(DE)->getDecl());
+          QualType Type = VD->getType();
+          if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+            Type = PVD->getOriginalType();
+          }
           auto DVar = DSAStack->getTopDSA(VD, false);
           if (DVar.CKind == OMPC_lastprivate) {
             // Generate helper private variable and initialize it with the
@@ -671,8 +675,8 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             // variable is not added to IdResolver, so the code in the OpenMP
             // region uses original variable for proper diagnostics.
             auto *VDPrivate =
-                buildVarDecl(*this, DE->getExprLoc(),
-                             VD->getType().getUnqualifiedType(), VD->getName());
+                buildVarDecl(*this, DE->getExprLoc(), Type.getUnqualifiedType(),
+                             VD->getName());
             ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
             if (VDPrivate->isInvalidDecl())
               continue;
@@ -4756,6 +4760,9 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -4781,14 +4788,6 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
       continue;
     }
 
-    // OpenMP [2.9.3.3, Restrictions, C/C++, p.1]
-    //  A variable of class type (or array thereof) that appears in a private
-    //  clause requires an accessible, unambiguous default constructor for the
-    //  class type.
-    while (Type->isArrayType()) {
-      Type = cast<ArrayType>(Type.getTypePtr())->getElementType();
-    }
-
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct]
     //  Variables with the predetermined data-sharing attributes may not be
@@ -4804,19 +4803,22 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
       continue;
     }
 
+    // OpenMP [2.9.3.3, Restrictions, C/C++, p.1]
+    //  A variable of class type (or array thereof) that appears in a private
+    //  clause requires an accessible, unambiguous default constructor for the
+    //  class type.
     // Generate helper private variable and initialize it with the default
     // value. The address of the original variable is replaced by the address of
     // the new private variable in CodeGen. This new variable is not added to
     // IdResolver, so the code in the OpenMP region uses original variable for
     // proper diagnostics.
-    auto VDPrivate =
-        buildVarDecl(*this, DE->getExprLoc(),
-                     VD->getType().getUnqualifiedType(), VD->getName());
+    Type = Type.getUnqualifiedType();
+    auto VDPrivate = buildVarDecl(*this, DE->getExprLoc(), Type, VD->getName());
     ActOnUninitializedDecl(VDPrivate, /*TypeMayContainAuto=*/false);
     if (VDPrivate->isInvalidDecl())
       continue;
-    auto VDPrivateRefExpr =
-        buildDeclRefExpr(*this, VDPrivate, DE->getType(), DE->getExprLoc());
+    auto VDPrivateRefExpr = buildDeclRefExpr(
+        *this, VDPrivate, DE->getType().getUnqualifiedType(), DE->getExprLoc());
 
     DSAStack->addDSA(VD, DE, OMPC_private);
     Vars.push_back(DE);
@@ -4890,6 +4892,9 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -4927,14 +4932,12 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     //  A variable of class type (or array thereof) that appears in a private
     //  clause requires an accessible, unambiguous copy constructor for the
     //  class type.
-    Type = Context.getBaseElementType(Type).getNonReferenceType();
+    auto ElemType = Context.getBaseElementType(Type).getNonReferenceType();
 
     // If an implicit firstprivate variable found it was checked already.
     if (!IsImplicitClause) {
       DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD, false);
-      Type = Type.getNonReferenceType().getCanonicalType();
-      bool IsConstant = Type.isConstant(Context);
-      Type = Context.getBaseElementType(Type);
+      bool IsConstant = ElemType.isConstant(Context);
       // OpenMP [2.4.13, Data-sharing Attribute Clauses]
       //  A list item that specifies a given variable may not appear in more
       // than one clause on the same directive, except that a variable may be
@@ -5017,8 +5020,8 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
       }
     }
 
-    auto VDPrivate = buildVarDecl(
-        *this, ELoc, VD->getType().getUnqualifiedType(), VD->getName());
+    Type = Type.getUnqualifiedType();
+    auto VDPrivate = buildVarDecl(*this, ELoc, Type, VD->getName());
     // Generate helper private variable and initialize it with the value of the
     // original variable. The address of the original variable is replaced by
     // the address of the new private variable in the CodeGen. This new variable
@@ -5027,13 +5030,14 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     Expr *VDInitRefExpr = nullptr;
     // For arrays generate initializer for single element and replace it by the
     // original array element in CodeGen.
-    if (DE->getType()->isArrayType()) {
-      auto VDInit = buildVarDecl(*this, DE->getExprLoc(), Type, VD->getName());
-      VDInitRefExpr = buildDeclRefExpr(*this, VDInit, Type, ELoc);
+    if (Type->isArrayType()) {
+      auto VDInit =
+          buildVarDecl(*this, DE->getExprLoc(), ElemType, VD->getName());
+      VDInitRefExpr = buildDeclRefExpr(*this, VDInit, ElemType, ELoc);
       auto Init = DefaultLvalueConversion(VDInitRefExpr).get();
-      auto *VDInitTemp =
-          buildVarDecl(*this, DE->getLocStart(), Type.getUnqualifiedType(),
-                       ".firstprivate.temp");
+      ElemType = ElemType.getUnqualifiedType();
+      auto *VDInitTemp = buildVarDecl(*this, DE->getLocStart(), ElemType,
+                                      ".firstprivate.temp");
       InitializedEntity Entity =
           InitializedEntity::InitializeVariable(VDInitTemp);
       InitializationKind Kind = InitializationKind::CreateCopy(ELoc, ELoc);
@@ -5047,7 +5051,8 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
     } else {
       auto *VDInit =
           buildVarDecl(*this, DE->getLocStart(), Type, ".firstprivate.temp");
-      VDInitRefExpr = buildDeclRefExpr(*this, VDInit, Type, DE->getExprLoc());
+      VDInitRefExpr =
+          buildDeclRefExpr(*this, VDInit, DE->getType(), DE->getExprLoc());
       AddInitializerToDecl(VDPrivate,
                            DefaultLvalueConversion(VDInitRefExpr).get(),
                            /*DirectInit=*/false, /*TypeMayContainAuto=*/false);
@@ -5109,6 +5114,9 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -5243,6 +5251,9 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -5452,6 +5463,9 @@ OMPClause *Sema::ActOnOpenMPReductionClause(
     auto D = DE->getDecl();
     auto VD = cast<VarDecl>(D);
     auto Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     // OpenMP [2.9.3.3, Restrictions, C/C++, p.3]
     //  A variable that appears in a private clause must not have an incomplete
     //  type or a reference type.
@@ -5782,6 +5796,9 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
     }
 
     QualType QType = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      QType = PVD->getOriginalType();
+    }
     if (QType->isDependentType() || QType->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -5832,11 +5849,11 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
     }
 
     // Build var to save initial value.
-    VarDecl *Init = buildVarDecl(*this, ELoc, DE->getType(), ".linear.start");
+    VarDecl *Init = buildVarDecl(*this, ELoc, QType, ".linear.start");
     AddInitializerToDecl(Init, DefaultLvalueConversion(DE).get(),
                          /*DirectInit*/ false, /*TypeMayContainAuto*/ false);
-    auto InitRef =
-        buildDeclRefExpr(*this, Init, DE->getType(), DE->getExprLoc());
+    auto InitRef = buildDeclRefExpr(
+        *this, Init, DE->getType().getUnqualifiedType(), DE->getExprLoc());
     DSAStack->addDSA(VD, DE, OMPC_linear);
     Vars.push_back(DE);
     Inits.push_back(InitRef);
@@ -5904,8 +5921,9 @@ static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
     // Build privatized reference to the current linear var.
     auto DE = cast<DeclRefExpr>(RefExpr);
     auto PrivateRef =
-        buildDeclRefExpr(SemaRef, cast<VarDecl>(DE->getDecl()), DE->getType(),
-                         DE->getExprLoc(), /*RefersToCapture=*/true);
+        buildDeclRefExpr(SemaRef, cast<VarDecl>(DE->getDecl()),
+                         DE->getType().getUnqualifiedType(), DE->getExprLoc(),
+                         /*RefersToCapture=*/true);
 
     // Build update: Var = InitExpr + IV * Step
     ExprResult Update =
@@ -5960,10 +5978,11 @@ OMPClause *Sema::ActOnOpenMPAlignedClause(
     // OpenMP  [2.8.1, simd construct, Restrictions]
     // The type of list items appearing in the aligned clause must be
     // array, pointer, reference to array, or reference to pointer.
-    QualType QType = DE->getType()
-                         .getNonReferenceType()
-                         .getUnqualifiedType()
-                         .getCanonicalType();
+    QualType QType = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      QType = PVD->getOriginalType();
+    }
+    QType = QType.getNonReferenceType().getUnqualifiedType().getCanonicalType();
     const Type *Ty = QType.getTypePtrOrNull();
     if (!Ty || (!Ty->isDependentType() && !Ty->isArrayType() &&
                 !Ty->isPointerType())) {
@@ -6042,6 +6061,9 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
@@ -6064,14 +6086,15 @@ OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,
     //  A variable of class type (or array thereof) that appears in a
     //  copyin clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
-    Type = Context.getBaseElementType(Type).getNonReferenceType();
+    auto ElemType = Context.getBaseElementType(Type).getNonReferenceType();
     auto *SrcVD = buildVarDecl(*this, DE->getLocStart(),
-                               Type.getUnqualifiedType(), ".copyin.src");
+                               ElemType.getUnqualifiedType(), ".copyin.src");
     auto *PseudoSrcExpr = buildDeclRefExpr(
-        *this, SrcVD, Type.getUnqualifiedType(), DE->getExprLoc());
-    auto *DstVD = buildVarDecl(*this, DE->getLocStart(), Type, ".copyin.dst");
+        *this, SrcVD, ElemType.getUnqualifiedType(), DE->getExprLoc());
+    auto *DstVD =
+        buildVarDecl(*this, DE->getLocStart(), ElemType, ".copyin.dst");
     auto *PseudoDstExpr =
-        buildDeclRefExpr(*this, DstVD, Type, DE->getExprLoc());
+        buildDeclRefExpr(*this, DstVD, ElemType, DE->getExprLoc());
     // For arrays generate assignment operation for single element and replace
     // it by the original array element in CodeGen.
     auto AssignmentOp = BuildBinOp(/*S=*/nullptr, DE->getExprLoc(), BO_Assign,
@@ -6131,6 +6154,9 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     VarDecl *VD = cast<VarDecl>(D);
 
     QualType Type = VD->getType();
+    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
+      Type = PVD->getOriginalType();
+    }
     if (Type->isDependentType() || Type->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);

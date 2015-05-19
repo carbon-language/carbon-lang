@@ -26,7 +26,7 @@ public:
 const S3 ca[5];
 class S4 {
   int a;
-  S4(); // expected-note {{implicitly declared private here}}
+  S4(); // expected-note 2 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
@@ -106,6 +106,13 @@ int foomain(I argc, C **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
   return 0;
+}
+
+void bar(S4 a[2]) {
+#pragma omp parallel
+#pragma omp for private(a) // expected-error {{calling a private constructor of class 'S4'}}
+  for (int i = 0; i < 2; ++i)
+    foo();
 }
 
 namespace A {
