@@ -1702,24 +1702,18 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   }
 
   // fold (add x, shl(0 - y, n)) -> sub(x, shl(y, n))
-  if (N1.getOpcode() == ISD::SHL &&
-      N1.getOperand(0).getOpcode() == ISD::SUB)
-    if (ConstantSDNode *C =
-          dyn_cast<ConstantSDNode>(N1.getOperand(0).getOperand(0)))
-      if (C->getAPIntValue() == 0)
-        return DAG.getNode(ISD::SUB, SDLoc(N), VT, N0,
-                           DAG.getNode(ISD::SHL, SDLoc(N), VT,
-                                       N1.getOperand(0).getOperand(1),
-                                       N1.getOperand(1)));
-  if (N0.getOpcode() == ISD::SHL &&
-      N0.getOperand(0).getOpcode() == ISD::SUB)
-    if (ConstantSDNode *C =
-          dyn_cast<ConstantSDNode>(N0.getOperand(0).getOperand(0)))
-      if (C->getAPIntValue() == 0)
-        return DAG.getNode(ISD::SUB, SDLoc(N), VT, N1,
-                           DAG.getNode(ISD::SHL, SDLoc(N), VT,
-                                       N0.getOperand(0).getOperand(1),
-                                       N0.getOperand(1)));
+  if (N1.getOpcode() == ISD::SHL && N1.getOperand(0).getOpcode() == ISD::SUB &&
+      isNullConstant(N1.getOperand(0).getOperand(0)))
+    return DAG.getNode(ISD::SUB, SDLoc(N), VT, N0,
+                       DAG.getNode(ISD::SHL, SDLoc(N), VT,
+                                   N1.getOperand(0).getOperand(1),
+                                   N1.getOperand(1)));
+  if (N0.getOpcode() == ISD::SHL && N0.getOperand(0).getOpcode() == ISD::SUB &&
+      isNullConstant(N0.getOperand(0).getOperand(0)))
+    return DAG.getNode(ISD::SUB, SDLoc(N), VT, N1,
+                       DAG.getNode(ISD::SHL, SDLoc(N), VT,
+                                   N0.getOperand(0).getOperand(1),
+                                   N0.getOperand(1)));
 
   if (N1.getOpcode() == ISD::AND) {
     SDValue AndOp0 = N1.getOperand(0);
@@ -4898,7 +4892,7 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     return DAG.getNode(ISD::OR, SDLoc(N), VT, N0, N2);
   // fold (select X, Y, X) -> (and X, Y)
   // fold (select X, Y, 0) -> (and X, Y)
-  if (VT == MVT::i1 && (N0 == N2 || (N2C && N2C->getAPIntValue() == 0)))
+  if (VT == MVT::i1 && (N0 == N2 || isNullConstant(N2)))
     return DAG.getNode(ISD::AND, SDLoc(N), VT, N0, N1);
 
   // If we can fold this based on the true/false value, do so.
