@@ -1057,8 +1057,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
 
           if (GVAlign > 1) {
             unsigned DstWidth = CI2->getType()->getBitWidth();
-            unsigned SrcWidth =
-                std::min(DstWidth, static_cast<unsigned>(Log2_32(GVAlign)));
+            unsigned SrcWidth = std::min(DstWidth, Log2_32(GVAlign));
             APInt BitsNotSet(APInt::getLowBitsSet(DstWidth, SrcWidth));
 
             // If checking bits we know are clear, return zero.
