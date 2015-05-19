@@ -172,6 +172,7 @@ def getExpectedTimeouts(platform_name):
             "TestAttachResume.py",
             "TestConnectRemote.py",
             "TestCreateAfterAttach.py",
+            "TestEvents.py",
             "TestExitDuringStep.py",
             "TestThreadStepOut.py",
         }
