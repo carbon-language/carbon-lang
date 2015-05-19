@@ -21,6 +21,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/ConstantFolder.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -1464,6 +1465,11 @@ public:
   CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
                        const Twine &Name = "") {
     return Insert(CallInst::Create(Callee, Args), Name);
+  }
+
+  CallInst *CreateCall(llvm::FunctionType *FTy, Value *Callee,
+                       ArrayRef<Value *> Args, const Twine &Name = "") {
+    return Insert(CallInst::Create(FTy, Callee, Args), Name);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
