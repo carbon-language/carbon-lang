@@ -536,7 +536,7 @@ class Configuration(object):
             self.lit_config.fatal('Invalid value for color_diagnostics "%s".'
                                   % use_color)
         color_flag = '-fdiagnostics-color=always'
-        # Check if the compiler support the color diagnostics flag. Issue a
+        # Check if the compiler supports the color diagnostics flag. Issue a
         # warning if it does not since color diagnostics have been requested.
         if not self.cxx.hasCompileFlag(color_flag):
             self.lit_config.warning(
