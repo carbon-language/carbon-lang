@@ -3527,8 +3527,8 @@ uninitialized_copy(_InputIterator __f, _InputIterator __l, _ForwardIterator __r)
     try
     {
 #endif
-        for (; __f != __l; ++__f, ++__r)
-            ::new(&*__r) value_type(*__f);
+        for (; __f != __l; ++__f, (void) ++__r)
+            ::new (static_cast<void*>(_VSTD::addressof(*__r))) value_type(*__f);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
@@ -3551,8 +3551,8 @@ uninitialized_copy_n(_InputIterator __f, _Size __n, _ForwardIterator __r)
     try
     {
 #endif
-        for (; __n > 0; ++__f, ++__r, --__n)
-            ::new(&*__r) value_type(*__f);
+        for (; __n > 0; ++__f, (void) ++__r, (void) --__n)
+            ::new (static_cast<void*>(_VSTD::addressof(*__r))) value_type(*__f);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
@@ -3576,7 +3576,7 @@ uninitialized_fill(_ForwardIterator __f, _ForwardIterator __l, const _Tp& __x)
     {
 #endif
         for (; __f != __l; ++__f)
-            ::new(&*__f) value_type(__x);
+            ::new (static_cast<void*>(_VSTD::addressof(*__f))) value_type(__x);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
@@ -3598,8 +3598,8 @@ uninitialized_fill_n(_ForwardIterator __f, _Size __n, const _Tp& __x)
     try
     {
 #endif
-        for (; __n > 0; ++__f, --__n)
-            ::new(&*__f) value_type(__x);
+        for (; __n > 0; ++__f, (void) --__n)
+            ::new (static_cast<void*>(_VSTD::addressof(*__f))) value_type(__x);
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)

@@ -28,8 +28,19 @@ struct B
 
 int B::count_ = 0;
 
+struct Nasty
+{
+    Nasty() : i_ ( counter_++ ) {}
+    Nasty * operator &() const { return NULL; }
+    int i_;
+    static int counter_; 
+};
+
+int Nasty::counter_ = 0;
+
 int main()
 {
+    {
     const int N = 5;
     char pool[sizeof(B)*N] = {0};
     B* bp = (B*)pool;
@@ -48,4 +59,17 @@ int main()
     std::uninitialized_copy(b, b+2, bp);
     for (int i = 0; i < 2; ++i)
         assert(bp[i].data_ == 1);
+    }
+    {
+    const int N = 5;
+    char pool[sizeof(Nasty)*N] = {0};
+    Nasty * p = (Nasty *) pool;
+    Nasty arr[N];
+    std::uninitialized_copy(arr, arr+N, p);
+    for (int i = 0; i < N; ++i) {
+        assert(arr[i].i_ == i);
+        assert(  p[i].i_ == i);
+        }
+    }
+    
 }
