@@ -1737,12 +1737,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     std::max(HeaderInfo.getFileDirFlavor(File),
              SourceMgr.getFileCharacteristic(FilenameTok.getLocation()));
 
+  // FIXME: If we have a suggested module, and we've already visited this file,
+  // don't bother entering it again. We know it has no further effect.
+
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
-  // this file will have no effect. We treat any textual inclusion of a modular
-  // header as a #import here.
+  // this file will have no effect.
   if (ShouldEnter &&
-      !HeaderInfo.ShouldEnterIncludeFile(
-          *this, File, isImport || SuggestedModule.getModule())) {
+      !HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport)) {
     ShouldEnter = false;
     if (Callbacks)
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);

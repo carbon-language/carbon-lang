@@ -23,9 +23,9 @@
 // CHECK-B: {{^}}Inputs/malformed/b1.h:1:{{.*}} note: to match this '{'
 // CHECK-B: {{^}}Inputs/malformed/b1.h:3:{{.*}} error: extraneous closing brace ('}')
 //
-// We don't see another definition of 'g' because we don't re-enter b2.h
-// (even though it has no include guards).
-// CHECK-B-NOT: redefinition of 'g'
+// CHECK-B: While building module 'malformed_b'
+// CHECK-B: {{^}}Inputs/malformed/b2.h:1:{{.*}} error: redefinition of 'g'
+// CHECK-B: {{^}}Inputs/malformed/b2.h:1:{{.*}} note: previous definition is here
 
 void test() { f<int>(); }
 // Test that we use relative paths to name files within an imported module.
