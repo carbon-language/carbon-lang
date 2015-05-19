@@ -61,7 +61,7 @@ test: omp
         if [ -d "$(omp_root)$(SLASH)..$(SLASH)testsuite$(SLASH)LLVM-IR" ] ; then \
 			export TESTSUITE_TEMP=$(realpath $(omp_root))$(SLASH)tmp ; \
 			export LIBRARY_PATH=$(libiomp5_path):$(LIBRARY_PATH) ; \
-			export INCLUDE_PATH=$(libiomp5_path)$(SLASH)..$(SLASH)..$(SLASH)common$(CLASH)include:$(INCLUDE_PATH) ; \
+			export C_INCLUDE_PATH=$(libiomp5_path)$(SLASH)..$(SLASH)..$(SLASH)common$(SLASH)include:$(C_INCLUDE_PATH) ; \
 			export LD_LIBRARY_PATH=$(libiomp5_path):$(LD_LIBRARY_PATH) ; \
 			export DYLD_LIBRARY_PATH=$(libiomp5_path):$(DYLD_LIBRARY_PATH) ; \
 			cd $(omp_root)$(SLASH)..$(SLASH)testsuite ; \
