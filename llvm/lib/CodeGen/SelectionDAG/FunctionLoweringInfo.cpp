@@ -101,7 +101,9 @@ struct WinEHNumbering {
                               ArrayRef<CatchHandler *> Handlers);
   void processCallSite(MutableArrayRef<std::unique_ptr<ActionHandler>> Actions,
                        ImmutableCallSite CS);
+  void popUnmatchedActions(int FirstMismatch);
   void calculateStateNumbers(const Function &F);
+  void findActionRootLPads(const Function &F);
 };
 }
 
@@ -297,9 +299,16 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     EHInfo = &MMI.getWinEHFuncInfo(WinEHParentFn);
     if (EHInfo->LandingPadStateMap.empty()) {
       WinEHNumbering Num(*EHInfo);
+      Num.findActionRootLPads(*WinEHParentFn);
+      // The VisitedHandlers list is used by both findActionRootLPads and
+      // calculateStateNumbers, but both functions need to visit all handlers.
+      Num.VisitedHandlers.clear();
       Num.calculateStateNumbers(*WinEHParentFn);
       // Pop everything on the handler stack.
-      Num.processCallSite(None, ImmutableCallSite());
+      // It may be necessary to call this more than once because a handler can
+      // be pushed on the stack as a result of clearing the stack.
+      while (!Num.HandlerStack.empty())
+        Num.processCallSite(None, ImmutableCallSite());
     }
 
     // Copy the state numbers to LandingPadInfo for the current function, which
@@ -361,6 +370,45 @@ void WinEHNumbering::createUnwindMapEntry(int ToState, ActionHandler *AH) {
 
 void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
                                             ArrayRef<CatchHandler *> Handlers) {
+  // See if we already have an entry for this set of handlers.
+  // This is using iterators rather than a range-based for loop because
+  // if we find the entry we're looking for we'll need the iterator to erase it.
+  int NumHandlers = Handlers.size();
+  auto I = FuncInfo.TryBlockMap.begin();
+  auto E = FuncInfo.TryBlockMap.end();
+  for ( ; I != E; ++I) {
+    auto &Entry = *I;
+    if (Entry.HandlerArray.size() != NumHandlers)
+      continue;
+    int N;
+    for (N = 0; N < NumHandlers; ++N) {
+      if (Entry.HandlerArray[N].Handler != Handlers[N]->getHandlerBlockOrFunc())
+        break; // breaks out of inner loop
+    }
+    // If all the handlers match, this is what we were looking for.
+    if (N == NumHandlers) {
+      break;
+    }
+  }
+
+  // If we found an existing entry for this set of handlers, extend the range
+  // but move the entry to the end of the map vector.  The order of entries
+  // in the map is critical to the way that the runtime finds handlers.
+  // FIXME: Depending on what has happened with block ordering, this may
+  //        incorrectly combine entries that should remain separate.
+  if (I != E) {
+    // Copy the existing entry.
+    WinEHTryBlockMapEntry Entry = *I;
+    Entry.TryLow = std::min(TryLow, Entry.TryLow);
+    Entry.TryHigh = std::max(TryHigh, Entry.TryHigh);
+    assert(Entry.TryLow <= Entry.TryHigh);
+    // Erase the old entry and add this one to the back.
+    FuncInfo.TryBlockMap.erase(I);
+    FuncInfo.TryBlockMap.push_back(Entry);
+    return;
+  }
+
+  // If we didn't find an entry, create a new one.
   WinEHTryBlockMapEntry TBME;
   TBME.TryLow = TryLow;
   TBME.TryHigh = TryHigh;
@@ -429,6 +477,65 @@ void WinEHNumbering::processCallSite(
       break;
   }
 
+  // Remove unmatched actions from the stack and process their EH states.
+  popUnmatchedActions(FirstMismatch);
+
+  DEBUG(dbgs() << "Pushing actions for CallSite: ");
+  print_name(CS ? CS.getCalledValue() : nullptr);
+  DEBUG(dbgs() << '\n');
+
+  bool LastActionWasCatch = false;
+  const LandingPadInst *LastRootLPad = nullptr;
+  for (size_t I = FirstMismatch; I != Actions.size(); ++I) {
+    // We can reuse eh states when pushing two catches for the same invoke.
+    bool CurrActionIsCatch = isa<CatchHandler>(Actions[I].get());
+    auto *Handler = cast<Function>(Actions[I]->getHandlerBlockOrFunc());
+    // Various conditions can lead to a handler being popped from the
+    // stack and re-pushed later.  That shouldn't create a new state.
+    // FIXME: Can code optimization lead to re-used handlers?
+    if (FuncInfo.HandlerEnclosedState.count(Handler)) {
+      // If we already assigned the state enclosed by this handler re-use it.
+      Actions[I]->setEHState(FuncInfo.HandlerEnclosedState[Handler]);
+      continue;
+    }
+    const LandingPadInst* RootLPad = FuncInfo.RootLPad[Handler];
+    if (CurrActionIsCatch && LastActionWasCatch && RootLPad == LastRootLPad) {
+      DEBUG(dbgs() << "setEHState for handler to " << currentEHNumber() << "\n");
+      Actions[I]->setEHState(currentEHNumber());
+    } else {
+      DEBUG(dbgs() << "createUnwindMapEntry(" << currentEHNumber() << ", ");
+      print_name(Actions[I]->getHandlerBlockOrFunc());
+      DEBUG(dbgs() << ") with EH state " << NextState << "\n");
+      createUnwindMapEntry(currentEHNumber(), Actions[I].get());
+      DEBUG(dbgs() << "setEHState for handler to " << NextState << "\n");
+      Actions[I]->setEHState(NextState);
+      NextState++;
+    }
+    HandlerStack.push_back(std::move(Actions[I]));
+    LastActionWasCatch = CurrActionIsCatch;
+    LastRootLPad = RootLPad;
+  }
+
+  // This is used to defer numbering states for a handler until after the
+  // last time it appears in an invoke action list.
+  if (CS.isInvoke()) {
+    for (int I = 0, E = HandlerStack.size(); I < E; ++I) {
+      auto *Handler = cast<Function>(HandlerStack[I]->getHandlerBlockOrFunc());
+      if (FuncInfo.LastInvoke[Handler] != cast<InvokeInst>(CS.getInstruction()))
+        continue;
+      FuncInfo.LastInvokeVisited[Handler] = true;
+      DEBUG(dbgs() << "Last invoke of ");
+      print_name(Handler);
+      DEBUG(dbgs() << " has been visited.\n");
+    }
+  }
+
+  DEBUG(dbgs() << "In EHState " << currentEHNumber() << " for CallSite: ");
+  print_name(CS ? CS.getCalledValue() : nullptr);
+  DEBUG(dbgs() << '\n');
+}
+
+void WinEHNumbering::popUnmatchedActions(int FirstMismatch) {
   // Don't recurse while we are looping over the handler stack.  Instead, defer
   // the numbering of the catch handlers until we are done popping.
   SmallVector<CatchHandler *, 4> PoppedCatches;
@@ -460,60 +567,25 @@ void WinEHNumbering::processCallSite(
 
   for (CatchHandler *CH : PoppedCatches) {
     if (auto *F = dyn_cast<Function>(CH->getHandlerBlockOrFunc())) {
-      DEBUG(dbgs() << "Assigning base state " << NextState << " to ");
-      print_name(F);
-      DEBUG(dbgs() << '\n');
-      FuncInfo.HandlerBaseState[F] = NextState;
-      DEBUG(dbgs() << "createUnwindMapEntry(" << currentEHNumber() 
-                   << ", null)\n");
-      createUnwindMapEntry(currentEHNumber(), nullptr);
-      ++NextState;
-      calculateStateNumbers(*F);
+      if (FuncInfo.LastInvokeVisited[F]) {
+        DEBUG(dbgs() << "Assigning base state " << NextState << " to ");
+        print_name(F);
+        DEBUG(dbgs() << '\n');
+        FuncInfo.HandlerBaseState[F] = NextState;
+        DEBUG(dbgs() << "createUnwindMapEntry(" << currentEHNumber() 
+                     << ", null)\n");
+        createUnwindMapEntry(currentEHNumber(), nullptr);
+        ++NextState;
+        calculateStateNumbers(*F);
+      }
+      else {
+        DEBUG(dbgs() << "Deferring handling of ");
+        print_name(F);
+        DEBUG(dbgs() << " until last invoke visited.\n");
+      }
     }
     delete CH;
   }
-
-  // The handler functions may have pushed actions onto the handler stack
-  // that we expected to push here.  Compare the handler stack to our
-  // actions again to check for that possibility.
-  if (HandlerStack.size() > (size_t)FirstMismatch) {
-    for (int E = std::min(HandlerStack.size(), Actions.size());
-         FirstMismatch < E; ++FirstMismatch) {
-      if (HandlerStack[FirstMismatch]->getHandlerBlockOrFunc() !=
-          Actions[FirstMismatch]->getHandlerBlockOrFunc())
-        break;
-    }
-  }
-
-  DEBUG(dbgs() << "Pushing actions for CallSite: ");
-  print_name(CS ? CS.getCalledValue() : nullptr);
-  DEBUG(dbgs() << '\n');
-
-  bool LastActionWasCatch = false;
-  for (size_t I = FirstMismatch; I != Actions.size(); ++I) {
-    // We can reuse eh states when pushing two catches for the same invoke.
-    bool CurrActionIsCatch = isa<CatchHandler>(Actions[I].get());
-    // FIXME: Reenable this optimization!
-    if (CurrActionIsCatch && LastActionWasCatch && false) {
-      DEBUG(dbgs() << "setEHState for handler to " << currentEHNumber()
-                   << "\n");
-      Actions[I]->setEHState(currentEHNumber());
-    } else {
-      DEBUG(dbgs() << "createUnwindMapEntry(" << currentEHNumber() << ", ");
-      print_name(Actions[I]->getHandlerBlockOrFunc());
-      DEBUG(dbgs() << ")\n");
-      createUnwindMapEntry(currentEHNumber(), Actions[I].get());
-      DEBUG(dbgs() << "setEHState for handler to " << NextState << "\n");
-      Actions[I]->setEHState(NextState);
-      NextState++;
-    }
-    HandlerStack.push_back(std::move(Actions[I]));
-    LastActionWasCatch = CurrActionIsCatch;
-  }
-
-  DEBUG(dbgs() << "In EHState " << currentEHNumber() << " for CallSite: ");
-  print_name(CS ? CS.getCalledValue() : nullptr);
-  DEBUG(dbgs() << '\n');
 }
 
 void WinEHNumbering::calculateStateNumbers(const Function &F) {
@@ -525,6 +597,8 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
   if (FuncInfo.HandlerBaseState.count(&F)) {
     CurrentBaseState = FuncInfo.HandlerBaseState[&F];
   }
+
+  size_t SavedHandlerStackSize = HandlerStack.size();
 
   DEBUG(dbgs() << "Calculating state numbers for: " << F.getName() << '\n');
   SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
@@ -554,9 +628,62 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
                   << '\n');
   }
 
+  // Pop any actions that were pushed on the stack for this function.
+  popUnmatchedActions(SavedHandlerStackSize);
+
+  DEBUG(dbgs() << "Assigning max state " << NextState - 1
+               << " to " << F.getName() << '\n');
   FuncInfo.CatchHandlerMaxState[&F] = NextState - 1;
 
   CurrentBaseState = OldBaseState;
+}
+
+// This function follows the same basic traversal as calculateStateNumbers
+// but it is necessary to identify the root landing pad associated
+// with each action before we start assigning state numbers.
+void WinEHNumbering::findActionRootLPads(const Function &F) {
+  auto I = VisitedHandlers.insert(&F);
+  if (!I.second)
+    return; // We've already visited this handler, don't revisit it.
+
+  SmallVector<std::unique_ptr<ActionHandler>, 4> ActionList;
+  for (const BasicBlock &BB : F) {
+    const auto *II = dyn_cast<InvokeInst>(BB.getTerminator());
+    if (!II)
+      continue;
+    const LandingPadInst *LPI = II->getLandingPadInst();
+    auto *ActionsCall = dyn_cast<IntrinsicInst>(LPI->getNextNode());
+    if (!ActionsCall)
+      continue;
+
+    assert(ActionsCall->getIntrinsicID() == Intrinsic::eh_actions);
+    parseEHActions(ActionsCall, ActionList);
+    if (ActionList.empty())
+      continue;
+    for (int I = 0, E = ActionList.size(); I < E; ++I) {
+      if (auto *Handler
+              = dyn_cast<Function>(ActionList[I]->getHandlerBlockOrFunc())) {
+        FuncInfo.LastInvoke[Handler] = II;
+        // Don't replace the root landing pad if we previously saw this
+        // handler in a different function.
+        if (FuncInfo.RootLPad.count(Handler) &&
+            FuncInfo.RootLPad[Handler]->getParent()->getParent() != &F)
+          continue;
+        DEBUG(dbgs() << "Setting root lpad for ");
+        print_name(Handler);
+        DEBUG(dbgs() << " to " << LPI->getParent()->getName() << '\n');
+        FuncInfo.RootLPad[Handler] = LPI;
+      }
+    }
+    // Walk the actions again and look for nested handlers.  This has to
+    // happen after all of the actions have been processed in the current
+    // function.
+    for (int I = 0, E = ActionList.size(); I < E; ++I)
+      if (auto *Handler
+              = dyn_cast<Function>(ActionList[I]->getHandlerBlockOrFunc()))
+        findActionRootLPads(*Handler);
+    ActionList.clear();
+  }
 }
 
 /// clear - Clear out all the function-specific state. This returns this

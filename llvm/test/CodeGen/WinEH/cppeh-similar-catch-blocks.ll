@@ -86,7 +86,7 @@ $"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@" = comdat any
 ; This is just a minimal check to verify that main was handled by WinEHPrepare.
 ; CHECK: define i32 @main()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape(i8* [[C_PTR:\%.+]], i32* [[X_PTR:\%.+]], i8* [[C2_PTR:\%.+]], i32* [[X2_PTR:\%.+]], i8* [[C3_PTR:\%.+]])
+; CHECK:   call void (...) @llvm.frameescape(i32* [[X_PTR:\%.+]], i32* [[X2_PTR:\%.+]], i8* [[C2_PTR:\%.+]], i8* [[C3_PTR:\%.+]], i8* [[C_PTR:\%.+]])
 ; CHECK:   invoke void @_CxxThrowException
 ; CHECK: }
 

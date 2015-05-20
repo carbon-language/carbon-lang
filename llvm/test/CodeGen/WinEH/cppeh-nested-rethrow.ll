@@ -180,26 +180,24 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: }
 }
 
-; The outlined test1.catch handler should not contain a return instruction.
+; The outlined test1.catch handler should return to a valid block address.
 ; CHECK-LABEL: define internal i8* @"\01?test1@@YAXXZ.catch"(i8*, i8*)
-; CHECK-NOT: ret
+; CHECK-NOT:  ret i8* inttoptr (i32 1 to i8*)
 ; CHECK: }
 
-; The outlined test1.catch1 handler should return to a valid block address.
+; The outlined test1.catch1 handler should not contain a return instruction.
 ; CHECK-LABEL: define internal i8* @"\01?test1@@YAXXZ.catch.1"(i8*, i8*)
-; WILL-CHECK:  ret i8* inttoptr (
-; CHECK-NOT:  ret i8* inttoptr (i32 1 to i8*)
-; CHECK: }
-
-; The outlined test2.catch handler should not contain a return instruction.
-; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch"(i8*, i8*)
 ; CHECK-NOT: ret
 ; CHECK: }
 
-; The outlined test2.catch1 handler should return to a valid block address.
-; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch.2"(i8*, i8*)
-; WILL-CHECK:  ret i8* inttoptr (
+; The outlined test2.catch handler should return to a valid block address.
+; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch"(i8*, i8*)
 ; CHECK-NOT:  ret i8* inttoptr (i32 1 to i8*)
+; CHECK: }
+
+; The outlined test2.catch2 handler should not contain a return instruction.
+; CHECK-LABEL: define internal i8* @"\01?test2@@YAXXZ.catch.2"(i8*, i8*)
+; CHECK-NOT: ret
 ; CHECK: }
 
 
