@@ -71,8 +71,6 @@ public:
   inline bool ArePtrs64bit() const { return IsN64(); }
 
   unsigned GetEhDataReg(unsigned I) const;
-
-  const char *GetPrivateLabelPrefix() const;
 };
 }
 

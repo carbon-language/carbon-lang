@@ -18,15 +18,11 @@
 
 namespace llvm {
   class StringRef;
-  class MipsABIInfo;
-  class LLVMTargetMachine;
 
   class MipsMCAsmInfo : public MCAsmInfoELF {
     void anchor() override;
   public:
     explicit MipsMCAsmInfo(StringRef TT);
-
-    void finishInit(const LLVMTargetMachine &TM) override;
   };
 
 } // namespace llvm

@@ -122,6 +122,3 @@ unsigned MipsABIInfo::GetEhDataReg(unsigned I) const {
   return IsN64() ? EhDataReg64[I] : EhDataReg[I];
 }
 
-const char *MipsABIInfo::GetPrivateLabelPrefix() const {
-  return IsO32() ? "$" : ".L";
-}

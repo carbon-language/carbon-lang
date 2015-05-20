@@ -24,7 +24,6 @@
 #include "MipsSEISelLowering.h"
 #include "MipsSEInstrInfo.h"
 #include "MipsTargetObjectFile.h"
-#include "MCTargetDesc/MipsMCAsmInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/LegacyPassManager.h"
