@@ -63,6 +63,8 @@ def _SLASH_fp_except_ : CLFlag<"fp:except-">, HelpText<"">, Alias<fno_trapping_m
 def _SLASH_fp_fast : CLFlag<"fp:fast">, HelpText<"">, Alias<ffast_math>;
 def _SLASH_fp_precise : CLFlag<"fp:precise">, HelpText<"">, Alias<fno_fast_math>;
 def _SLASH_fp_strict : CLFlag<"fp:strict">, HelpText<"">, Alias<fno_fast_math>;
+def _SLASH_GA : CLFlag<"GA">, Alias<ftlsmodel_EQ>, AliasArgs<["local-exec"]>,
+  HelpText<"Assume thread-local variables are defined in the executable">;
 def _SLASH_GR : CLFlag<"GR">, HelpText<"Enable emission of RTTI data">;
 def _SLASH_GR_ : CLFlag<"GR-">, HelpText<"Disable emission of RTTI data">;
 def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
@@ -281,7 +283,6 @@ def _SLASH_FU : CLJoinedOrSeparate<"FU">;
 def _SLASH_Fx : CLFlag<"Fx">;
 def _SLASH_G1 : CLFlag<"G1">;
 def _SLASH_G2 : CLFlag<"G2">;
-def _SLASH_GA : CLFlag<"GA">;
 def _SLASH_Ge : CLFlag<"Ge">;
 def _SLASH_Gh : CLFlag<"Gh">;
 def _SLASH_GH : CLFlag<"GH">;

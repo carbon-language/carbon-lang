@@ -48,6 +48,9 @@
 // fpstrict-NOT: -menable-unsafe-fp-math
 // fpstrict-NOT: -ffast-math
 
+// RUN: %clang_cl /GA -### -- %s 2>&1 | FileCheck -check-prefix=GA %s
+// GA: -ftls-model=local-exec
+
 // RTTI is on by default; just check that we don't error.
 // RUN: %clang_cl /Zs /GR -- %s 2>&1
 
