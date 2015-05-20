@@ -319,7 +319,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
     AssignSection(Symbol, Section);
 
-    struct LocalCommon L = {&SD, Size, ByteAlignment};
+    struct LocalCommon L = {Symbol, Size, ByteAlignment};
     LocalCommons.push_back(L);
   } else {
     SD.setCommon(Size, ByteAlignment);
@@ -630,17 +630,16 @@ void MCELFStreamer::Flush() {
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
                                                 e = LocalCommons.end();
        i != e; ++i) {
-    MCSymbolData *SD = i->SD;
+    const MCSymbol &Symbol = *i->Symbol;
     uint64_t Size = i->Size;
     unsigned ByteAlignment = i->ByteAlignment;
-    const MCSymbol &Symbol = SD->getSymbol();
     const MCSection &Section = Symbol.getSection();
 
     MCSectionData &SectData = getAssembler().getOrCreateSectionData(Section);
     new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &SectData);
 
     MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
-    SD->setFragment(F);
+    Symbol.getData().setFragment(F);
 
     // Update the maximum alignment of the section if necessary.
     if (ByteAlignment > SectData.getAlignment())

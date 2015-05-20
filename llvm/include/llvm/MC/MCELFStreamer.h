@@ -101,7 +101,7 @@ private:
   bool SeenIdent;
 
   struct LocalCommon {
-    MCSymbolData *SD;
+    const MCSymbol *Symbol;
     uint64_t Size;
     unsigned ByteAlignment;
   };
