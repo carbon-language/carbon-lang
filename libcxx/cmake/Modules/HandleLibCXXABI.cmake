@@ -88,7 +88,7 @@ elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi")
     # Assume c++abi is installed in the system, rely on -lc++abi link flag.
     set(CXXABI_LIBNAME "c++abi")
   endif()
-  setup_abi_lib(""
+  setup_abi_lib("-DLIBCXX_BUILDING_LIBCXXABI"
     ${CXXABI_LIBNAME} "cxxabi.h;__cxxabi_config.h" ""
     )
 elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxrt")

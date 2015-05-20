@@ -247,8 +247,11 @@ public:
     typedef ratio<num, den> type;
 };
 
-template <intmax_t _Num, intmax_t _Den> const intmax_t ratio<_Num, _Den>::num;
-template <intmax_t _Num, intmax_t _Den> const intmax_t ratio<_Num, _Den>::den;
+template <intmax_t _Num, intmax_t _Den>
+_LIBCPP_CONSTEXPR const intmax_t ratio<_Num, _Den>::num;
+
+template <intmax_t _Num, intmax_t _Den>
+_LIBCPP_CONSTEXPR const intmax_t ratio<_Num, _Den>::den;
 
 template <class _Tp>                    struct __is_ratio                     : false_type {};
 template <intmax_t _Num, intmax_t _Den> struct __is_ratio<ratio<_Num, _Den> > : true_type  {};
