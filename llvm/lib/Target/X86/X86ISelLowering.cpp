@@ -12737,7 +12737,6 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
       SDValue New = DAG.getNode(ISD::AND, dl, VT, Op->getOperand(0),
                                 DAG.getConstant(Mask, dl, VT));
       DAG.ReplaceAllUsesWith(Op, New);
-      DAG.RemoveDeadNode(Op.getNode());
       Op = New;
     }
     break;
