@@ -1238,8 +1238,8 @@ public:
         const char* dst = args.GetArgumentAtIndex(1);
 
         FileSpec src_fs(src, true);
-        FileSpec dst_fs(dst, false);
-        
+        FileSpec dst_fs(dst ? dst : src_fs.GetFilename().GetCString(), false);
+
         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (platform_sp)
         {
