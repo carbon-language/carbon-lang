@@ -23,7 +23,6 @@ class MCSymbol;
 /// Stores a unified stream of .debug_loc entries.  There's \a List for each
 /// variable/inlined-at pair, and an \a Entry for each \a DebugLocEntry.
 ///
-/// FIXME: Why do we have comments even when it's an object stream?
 /// FIXME: Do we need all these temp symbols?
 /// FIXME: Why not output directly to the output stream?
 class DebugLocStream {
@@ -52,7 +51,12 @@ private:
   SmallString<256> DWARFBytes;
   SmallVector<std::string, 32> Comments;
 
+  /// \brief Only verbose textual output needs comments.  This will be set to
+  /// true for that case, and false otherwise.
+  bool GenerateComments;
+
 public:
+  DebugLocStream(bool GenerateComments) : GenerateComments(GenerateComments) { }
   size_t getNumLists() const { return Lists.size(); }
   const List &getList(size_t LI) const { return Lists[LI]; }
   ArrayRef<List> getLists() const { return Lists; }
@@ -78,7 +82,7 @@ public:
   }
 
   BufferByteStreamer getStreamer() {
-    return BufferByteStreamer(DWARFBytes, Comments);
+    return BufferByteStreamer(DWARFBytes, Comments, GenerateComments);
   }
 
   ArrayRef<Entry> getEntries(const List &L) const {

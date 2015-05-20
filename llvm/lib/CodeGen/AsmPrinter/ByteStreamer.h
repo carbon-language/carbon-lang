@@ -72,26 +72,34 @@ class HashingByteStreamer : public ByteStreamer {
 class BufferByteStreamer : public ByteStreamer {
 private:
   SmallVectorImpl<char> &Buffer;
-  // FIXME: This is actually only needed for textual asm output.
   SmallVectorImpl<std::string> &Comments;
+
+  /// \brief Only verbose textual output needs comments.  This will be set to
+  /// true for that case, and false otherwise.  If false, comments passed in to
+  /// the emit methods will be ignored.
+  bool GenerateComments;
 
 public:
   BufferByteStreamer(SmallVectorImpl<char> &Buffer,
-                     SmallVectorImpl<std::string> &Comments)
-  : Buffer(Buffer), Comments(Comments) {}
+                     SmallVectorImpl<std::string> &Comments,
+                     bool GenerateComments)
+  : Buffer(Buffer), Comments(Comments), GenerateComments(GenerateComments) {}
   void EmitInt8(uint8_t Byte, const Twine &Comment) override {
     Buffer.push_back(Byte);
-    Comments.push_back(Comment.str());
+    if (GenerateComments)
+      Comments.push_back(Comment.str());
   }
   void EmitSLEB128(uint64_t DWord, const Twine &Comment) override {
     raw_svector_ostream OSE(Buffer);
     encodeSLEB128(DWord, OSE);
-    Comments.push_back(Comment.str());
+    if (GenerateComments)
+      Comments.push_back(Comment.str());
   }
   void EmitULEB128(uint64_t DWord, const Twine &Comment) override {
     raw_svector_ostream OSE(Buffer);
     encodeULEB128(DWord, OSE);
-    Comments.push_back(Comment.str());
+    if (GenerateComments)
+      Comments.push_back(Comment.str());
   }
 };
 
