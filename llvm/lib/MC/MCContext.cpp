@@ -144,6 +144,11 @@ MCSymbol *MCContext::getOrCreateParentFrameOffsetSymbol(StringRef FuncName) {
                            "$parent_frame_offset");
 }
 
+MCSymbol *MCContext::getOrCreateLSDASymbol(StringRef FuncName) {
+  return getOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) + "__ehtable$" +
+                           FuncName);
+}
+
 MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool IsTemporary = false;

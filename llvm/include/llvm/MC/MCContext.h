@@ -275,6 +275,8 @@ namespace llvm {
 
     MCSymbol *getOrCreateParentFrameOffsetSymbol(StringRef FuncName);
 
+    MCSymbol *getOrCreateLSDASymbol(StringRef FuncName);
+
     /// Get the symbol for \p Name, or null.
     MCSymbol *lookupSymbol(const Twine &Name) const;
 

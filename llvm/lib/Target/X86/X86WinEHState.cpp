@@ -63,6 +63,10 @@ private:
                                  Value *Handler);
   void unlinkExceptionRegistration(IRBuilder<> &Builder, Value *RegNode);
 
+  Value *emitEHLSDA(IRBuilder<> &Builder, Function *F);
+
+  Function *generateLSDAInEAXThunk(Function *ParentFunc);
+
   // Module-level type getters.
   Type *getEHRegistrationType();
   Type *getSEH3RegistrationType();
@@ -108,6 +112,13 @@ void WinEHStatePass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool WinEHStatePass::runOnFunction(Function &F) {
+  // If this is an outlined handler, don't do anything. We'll do state insertion
+  // for it in the parent.
+  StringRef WinEHParentName =
+      F.getFnAttribute("wineh-parent").getValueAsString();
+  if (WinEHParentName != F.getName() && !WinEHParentName.empty())
+    return false;
+
   // Check the personality. Do nothing if this is not an MSVC personality.
   LandingPadInst *LP = nullptr;
   for (BasicBlock &BB : F) {
@@ -135,9 +146,11 @@ bool WinEHStatePass::runOnFunction(Function &F) {
 }
 
 /// Get the common EH registration subobject:
+///   typedef _EXCEPTION_DISPOSITION (*PEXCEPTION_ROUTINE)(
+///       _EXCEPTION_RECORD *, void *, _CONTEXT *, void *);
 ///   struct EHRegistrationNode {
 ///     EHRegistrationNode *Next;
-///     EXCEPTION_DISPOSITION (*Handler)(...);
+///     PEXCEPTION_ROUTINE Handler;
 ///   };
 Type *WinEHStatePass::getEHRegistrationType() {
   if (EHRegistrationTy)
@@ -237,20 +250,19 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     // TryLevel = -1
     Builder.CreateStore(Builder.getInt32(-1),
                         Builder.CreateStructGEP(RegNodeTy, RegNode, 2));
-    // FIXME: 'Personality' is incorrect here. We need to generate a trampoline
-    // that effectively gets the LSDA.
+    // Handler = __ehhandler$F
+    Function *Trampoline = generateLSDAInEAXThunk(F);
     SubRecord = Builder.CreateStructGEP(RegNodeTy, RegNode, 1);
-    linkExceptionRegistration(Builder, SubRecord, PersonalityFn);
+    linkExceptionRegistration(Builder, SubRecord, Trampoline);
   } else if (PersonalityName == "_except_handler3") {
     Type *RegNodeTy = getSEH3RegistrationType();
     Value *RegNode = Builder.CreateAlloca(RegNodeTy);
     // TryLevel = -1
     Builder.CreateStore(Builder.getInt32(-1),
                         Builder.CreateStructGEP(RegNodeTy, RegNode, 2));
-    // FIXME: Generalize llvm.eh.sjljl.lsda for this.
-    // ScopeTable = nullptr
-    Builder.CreateStore(Constant::getNullValue(Int8PtrType),
-                        Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
+    // ScopeTable = llvm.x86.seh.lsda(F)
+    Value *LSDA = emitEHLSDA(Builder, F);
+    Builder.CreateStore(LSDA, Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
     SubRecord = Builder.CreateStructGEP(RegNodeTy, RegNode, 0);
     linkExceptionRegistration(Builder, SubRecord, PersonalityFn);
   } else if (PersonalityName == "_except_handler4") {
@@ -263,11 +275,12 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     // TryLevel = -2
     Builder.CreateStore(Builder.getInt32(-2),
                         Builder.CreateStructGEP(RegNodeTy, RegNode, 4));
-    // FIXME: Generalize llvm.eh.sjljl.lsda for this, and then do the stack
-    // cookie xor.
-    // ScopeTable = nullptr
-    Builder.CreateStore(Builder.getInt32(0),
-                        Builder.CreateStructGEP(RegNodeTy, RegNode, 3));
+    // FIXME: XOR the LSDA with __security_cookie.
+    // ScopeTable = llvm.x86.seh.lsda(F)
+    Value *FI8 = Builder.CreateBitCast(F, Int8PtrType);
+    Value *LSDA = Builder.CreateCall(
+        Intrinsic::getDeclaration(TheModule, Intrinsic::x86_seh_lsda), FI8);
+    Builder.CreateStore(LSDA, Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
     SubRecord = Builder.CreateStructGEP(RegNodeTy, RegNode, 2);
     linkExceptionRegistration(Builder, SubRecord, PersonalityFn);
   } else {
@@ -282,6 +295,50 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     Builder.SetInsertPoint(T);
     unlinkExceptionRegistration(Builder, SubRecord);
   }
+}
+
+Value *WinEHStatePass::emitEHLSDA(IRBuilder<> &Builder, Function *F) {
+  Value *FI8 = Builder.CreateBitCast(F, Type::getInt8PtrTy(F->getContext()));
+  return Builder.CreateCall(
+      Intrinsic::getDeclaration(TheModule, Intrinsic::x86_seh_lsda), FI8);
+}
+
+/// Generate a thunk that puts the LSDA of ParentFunc in EAX and then calls
+/// PersonalityFn, forwarding the parameters passed to PEXCEPTION_ROUTINE:
+///   typedef _EXCEPTION_DISPOSITION (*PEXCEPTION_ROUTINE)(
+///       _EXCEPTION_RECORD *, void *, _CONTEXT *, void *);
+/// We essentially want this code:
+///   movl $lsda, %eax
+///   jmpl ___CxxFrameHandler3
+Function *WinEHStatePass::generateLSDAInEAXThunk(Function *ParentFunc) {
+  LLVMContext &Context = ParentFunc->getContext();
+  Type *Int32Ty = Type::getInt32Ty(Context);
+  Type *Int8PtrType = Type::getInt8PtrTy(Context);
+  Type *ArgTys[5] = {Int8PtrType, Int8PtrType, Int8PtrType, Int8PtrType,
+                     Int8PtrType};
+  FunctionType *TrampolineTy =
+      FunctionType::get(Int32Ty, makeArrayRef(&ArgTys[0], 4),
+                        /*isVarArg=*/false);
+  FunctionType *TargetFuncTy =
+      FunctionType::get(Int32Ty, makeArrayRef(&ArgTys[0], 5),
+                        /*isVarArg=*/false);
+  Function *Trampoline = Function::Create(
+      TrampolineTy, GlobalValue::InternalLinkage,
+      Twine("__ehhandler$") + ParentFunc->getName(), TheModule);
+  BasicBlock *EntryBB = BasicBlock::Create(Context, "entry", Trampoline);
+  IRBuilder<> Builder(EntryBB);
+  Value *LSDA = emitEHLSDA(Builder, ParentFunc);
+  Value *CastPersonality =
+      Builder.CreateBitCast(PersonalityFn, TargetFuncTy->getPointerTo());
+  auto AI = Trampoline->arg_begin();
+  Value *Args[5] = {LSDA, AI++, AI++, AI++, AI++};
+  CallInst *Call = Builder.CreateCall(CastPersonality, Args);
+  // Can't use musttail due to prototype mismatch, but we can use tail.
+  Call->setTailCall(true);
+  // Set inreg so we pass it in EAX.
+  Call->addAttribute(1, Attribute::InReg);
+  Builder.CreateRet(Call);
+  return Trampoline;
 }
 
 void WinEHStatePass::linkExceptionRegistration(IRBuilder<> &Builder,
