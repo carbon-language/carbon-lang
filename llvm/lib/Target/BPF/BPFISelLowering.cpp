@@ -510,7 +510,7 @@ SDValue BPFTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 
 const char *BPFTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((BPFISD::NodeType)Opcode) {
-  case BPFISD::FIRST_TYPE:
+  case BPFISD::FIRST_NUMBER:
     break;
   case BPFISD::RET_FLAG:
     return "BPFISD::RET_FLAG";
