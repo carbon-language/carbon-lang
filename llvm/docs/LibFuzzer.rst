@@ -15,7 +15,7 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   Note that the Fuzzer contains the main() function.
   Preferably do *not* use sanitizers while building the Fuzzer.
 * Build the library you are going to test with
-  `-fsanitize-coverage={bb,edge}[,indirect-calls]`
+  `-fsanitize-coverage={bb,edge}[,indirect-calls,8bit-counters]`
   and one of the sanitizers. We recommend to build the library in several
   different modes (e.g. asan, msan, lsan, ubsan, etc) and even using different
   optimizations options (e.g. -O0, -O1, -O2) to diversify testing.
@@ -28,13 +28,15 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   fuzzer (a directory with test inputs, one file per input).
   The better your inputs are the faster you will find something interesting.
   Also try to keep your inputs small, otherwise the Fuzzer will run too slow.
+  By default, the Fuzzer limits the size of every input by 64 bytes
+  (use ``-max_len=N`` to override).
 * Run the fuzzer with the test corpus. As new interesting test cases are
   discovered they will be added to the corpus. If a bug is discovered by
   the sanitizer (asan, etc) it will be reported as usual and the reproducer
   will be written to disk.
   Each Fuzzer process is single-threaded (unless the library starts its own
   threads). You can run the Fuzzer on the same corpus in multiple processes
-  in parallel. For run-time options run the Fuzzer binary with '-help=1'.
+  in parallel.
 
 
 The Fuzzer is similar in concept to AFL_,
@@ -47,6 +49,27 @@ The code resides in the LLVM repository, requires the fresh Clang compiler to bu
 and is used to fuzz various parts of LLVM,
 but the Fuzzer itself does not (and should not) depend on any
 part of LLVM and can be used for other projects w/o requiring the rest of LLVM.
+
+Flags
+=====
+The most important flags are::
+
+  seed                               	0	Random seed. If 0, seed is generated.
+  runs                               	-1	Number of individual test runs (-1 for infinite runs).
+  max_len                            	64	Maximal length of the test input.
+  cross_over                         	1	If 1, cross over inputs.
+  mutate_depth                       	5	Apply this number of consecutive mutations to each input.
+  timeout                            	-1	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
+  help                               	0	Print help.
+  save_minimized_corpus              	0	If 1, the minimized corpus is saved into the first input directory
+  jobs                               	0	Number of jobs to run. If jobs >= 1 we spawn this number of jobs in separate worker processes with stdout/stderr redirected to fuzz-JOB.log.
+  workers                            	0	Number of simultaneous worker processes to run the jobs. If zero, "min(jobs,NumberOfCpuCores()/2)" is used.
+  tokens                             	0	Use the file with tokens (one token per line) to fuzz a token based input language.
+  apply_tokens                       	0	Read the given input file, substitute bytes  with tokens and write the result to stdout.
+  sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
+  sync_timeout                       	600	Minimal timeout between syncs.
+
+For the full list of flags run the fuzzer binary with ``-help=1``.
 
 Usage examples
 ==============
