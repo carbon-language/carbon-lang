@@ -441,6 +441,11 @@ if(CLANG_ENABLE_STATIC_ANALYZER)
   add_definitions(-DCLANG_ENABLE_STATIC_ANALYZER)
 endif()
 
+set(OPENMP_DEFAULT_LIB "" CACHE STRING "OpenMP library used by default for -fopenmp.")
+if(OPENMP_DEFAULT_LIB)
+  add_definitions(-DOPENMP_DEFAULT_LIB=${OPENMP_DEFAULT_LIB})
+endif()
+
 # Clang version information
 set(CLANG_EXECUTABLE_VERSION
      "${CLANG_VERSION_MAJOR}.${CLANG_VERSION_MINOR}" CACHE STRING

@@ -6221,6 +6221,27 @@ enum LibOpenMP {
   LibIOMP5
 };
 
+/// Map a -fopenmp=<blah> macro to the corresponding library.
+static LibOpenMP getOpenMPLibByName(StringRef Name) {
+  return llvm::StringSwitch<LibOpenMP>(Name).Case("libgomp", LibGOMP)
+                                            .Case("libiomp5", LibIOMP5)
+                                            .Default(LibUnknown);
+}
+
+/// Get the default -l<blah> flag to use for -fopenmp, if no library is
+/// specified. This can be overridden at configure time.
+static const char *getDefaultOpenMPLibFlag() {
+#ifndef OPENMP_DEFAULT_LIB
+#define OPENMP_DEFAULT_LIB iomp5
+#endif
+
+#define STR2(lib) #lib
+#define STR(lib) STR2(lib)
+  return "-l" STR(OPENMP_DEFAULT_LIB);
+#undef STR
+#undef STR2
+}
+
 void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                 const InputInfo &Output,
                                 const InputInfoList &Inputs,
@@ -6278,27 +6299,21 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  LibOpenMP UsedOpenMPLib = LibUnknown;
   if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
-    UsedOpenMPLib = llvm::StringSwitch<LibOpenMP>(A->getValue())
-        .Case("libgomp",  LibGOMP)
-        .Case("libiomp5", LibIOMP5)
-        .Default(LibUnknown);
-    if (UsedOpenMPLib == LibUnknown)
+    switch (getOpenMPLibByName(A->getValue())) {
+    case LibGOMP:
+      CmdArgs.push_back("-lgomp");
+      break;
+    case LibIOMP5:
+      CmdArgs.push_back("-liomp5");
+      break;
+    case LibUnknown:
       getToolChain().getDriver().Diag(diag::err_drv_unsupported_option_argument)
         << A->getOption().getName() << A->getValue();
+      break;
+    }
   } else if (Args.hasArg(options::OPT_fopenmp)) {
-    UsedOpenMPLib = LibIOMP5;
-  }
-  switch (UsedOpenMPLib) {
-  case LibGOMP:
-    CmdArgs.push_back("-lgomp");
-    break;
-  case LibIOMP5:
-    CmdArgs.push_back("-liomp5");
-    break;
-  case LibUnknown:
-    break;
+    CmdArgs.push_back(getDefaultOpenMPLibFlag());
   }
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
@@ -8003,37 +8018,33 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       if (NeedsSanitizerDeps)
         linkSanitizerRuntimeDeps(ToolChain, CmdArgs);
 
-      LibOpenMP UsedOpenMPLib = LibUnknown;
+      bool WantPthread = true;
       if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
-        UsedOpenMPLib = llvm::StringSwitch<LibOpenMP>(A->getValue())
-                            .Case("libgomp", LibGOMP)
-                            .Case("libiomp5", LibIOMP5)
-                            .Default(LibUnknown);
-        if (UsedOpenMPLib == LibUnknown)
+        switch (getOpenMPLibByName(A->getValue())) {
+        case LibGOMP:
+          CmdArgs.push_back("-lgomp");
+
+          // FIXME: Exclude this for platforms with libgomp that don't require
+          // librt. Most modern Linux platforms require it, but some may not.
+          CmdArgs.push_back("-lrt");
+          break;
+        case LibIOMP5:
+          CmdArgs.push_back("-liomp5");
+          break;
+        case LibUnknown:
           D.Diag(diag::err_drv_unsupported_option_argument)
               << A->getOption().getName() << A->getValue();
+          break;
+        }
       } else if (Args.hasArg(options::OPT_fopenmp)) {
-        UsedOpenMPLib = LibIOMP5;
-      }
-      switch (UsedOpenMPLib) {
-      case LibGOMP:
-        CmdArgs.push_back("-lgomp");
-
-        // FIXME: Exclude this for platforms with libgomp that don't require
-        // librt. Most modern Linux platforms require it, but some may not.
-        CmdArgs.push_back("-lrt");
-        break;
-      case LibIOMP5:
-        CmdArgs.push_back("-liomp5");
-        break;
-      case LibUnknown:
-        break;
+        CmdArgs.push_back(getDefaultOpenMPLibFlag());
+      } else {
+        WantPthread = Args.hasArg(options::OPT_pthread) ||
+                      Args.hasArg(options::OPT_pthreads);
       }
       AddRunTimeLibs(ToolChain, D, CmdArgs, Args);
 
-      if ((Args.hasArg(options::OPT_pthread) ||
-           Args.hasArg(options::OPT_pthreads) || UsedOpenMPLib != LibUnknown) &&
-          !isAndroid)
+      if (WantPthread && !isAndroid)
         CmdArgs.push_back("-lpthread");
 
       CmdArgs.push_back("-lc");
