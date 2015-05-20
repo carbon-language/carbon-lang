@@ -13,6 +13,7 @@ endfunction()
 
 add_subdirectory(ADT)
 add_subdirectory(Analysis)
+add_subdirectory(AsmParser)
 add_subdirectory(Bitcode)
 add_subdirectory(CodeGen)
 add_subdirectory(DebugInfo)
