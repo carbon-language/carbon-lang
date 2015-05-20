@@ -159,7 +159,7 @@ protected:
 
   void operator delete(void *) throw() {}
 
-  virtual ~Node() {}
+  ~Node() = default;
 
 private:
   unsigned int TypeID;
@@ -172,7 +172,7 @@ private:
 ///
 /// Example:
 ///   !!null null
-class NullNode : public Node {
+class NullNode final : public Node {
   void anchor() override;
 
 public:
@@ -187,7 +187,7 @@ public:
 ///
 /// Example:
 ///   Adena
-class ScalarNode : public Node {
+class ScalarNode final : public Node {
   void anchor() override;
 
 public:
@@ -230,7 +230,7 @@ private:
 ///   |
 ///     Hello
 ///     World
-class BlockScalarNode : public Node {
+class BlockScalarNode final : public Node {
   void anchor() override;
 
 public:
@@ -260,7 +260,7 @@ private:
 ///
 /// Example:
 ///   Section: .text
-class KeyValueNode : public Node {
+class KeyValueNode final : public Node {
   void anchor() override;
 
 public:
@@ -371,7 +371,7 @@ template <class CollectionType> void skip(CollectionType &C) {
 /// Example:
 ///   Name: _main
 ///   Scope: Global
-class MappingNode : public Node {
+class MappingNode final : public Node {
   void anchor() override;
 
 public:
@@ -418,7 +418,7 @@ private:
 /// Example:
 ///   - Hello
 ///   - World
-class SequenceNode : public Node {
+class SequenceNode final : public Node {
   void anchor() override;
 
 public:
@@ -471,7 +471,7 @@ private:
 ///
 /// Example:
 ///   *AnchorName
-class AliasNode : public Node {
+class AliasNode final : public Node {
   void anchor() override;
 
 public:
