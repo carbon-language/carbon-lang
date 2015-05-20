@@ -6,7 +6,9 @@
 # RUN:   -- %t.obj %p/Inputs/resource.res
 
 # Check if the binary contains UTF-16LE string "Hello" copied from resource.res.
-# RUN: cat %t.exe | grep 'H.e.l.l.o'
+# RUN: FileCheck --check-prefix=EXE %s < %t.exe
+
+EXE: {{H.e.l.l.o}}
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start /opt:noref \
 # RUN:   /manifest:embed -- %t.obj %p/Inputs/resource.res
