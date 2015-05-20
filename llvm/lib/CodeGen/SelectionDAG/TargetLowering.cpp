@@ -1730,7 +1730,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           ShiftBits = C1.countTrailingZeros();
         }
         NewC = NewC.lshr(ShiftBits);
-        if (ShiftBits && isLegalICmpImmediate(NewC.getSExtValue())) {
+        if (ShiftBits && NewC.getMinSignedBits() <= 64 &&
+          isLegalICmpImmediate(NewC.getSExtValue())) {
           EVT ShiftTy = DCI.isBeforeLegalize() ?
             getPointerTy() : getShiftAmountTy(N0.getValueType());
           EVT CmpTy = N0.getValueType();
