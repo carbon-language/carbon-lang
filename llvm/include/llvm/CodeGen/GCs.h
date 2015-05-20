@@ -21,6 +21,9 @@ class GCMetadataPrinter;
 /// FIXME: Collector instances are not useful on their own. These no longer
 ///        serve any purpose except to link in the plugins.
 
+/// Creates a CoreCLR-compatible garbage collector.
+void linkCoreCLRGC();
+
 /// Creates an ocaml-compatible garbage collector.
 void linkOcamlGC();
 

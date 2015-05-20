@@ -9,6 +9,7 @@ add_llvm_library(LLVMCodeGen
   CallingConvLower.cpp
   CodeGen.cpp
   CodeGenPrepare.cpp
+  CoreCLRGC.cpp
   CriticalAntiDepBreaker.cpp
   DFAPacketizer.cpp
   DeadMachineInstructionElim.cpp

@@ -19,6 +19,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Dominators.h"
@@ -2201,9 +2202,13 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
 static bool shouldRewriteStatepointsIn(Function &F) {
   // TODO: This should check the GCStrategy
   if (F.hasGC()) {
-    const std::string StatepointExampleName("statepoint-example");
-    return StatepointExampleName == F.getGC();
-  } else
+    const char *FunctionGCName = F.getGC();
+    const StringRef StatepointExampleName("statepoint-example");
+    const StringRef CoreCLRName("coreclr");
+    return (StatepointExampleName == FunctionGCName) ||
+      (CoreCLRName == FunctionGCName);
+  }
+  else
     return false;
 }
 

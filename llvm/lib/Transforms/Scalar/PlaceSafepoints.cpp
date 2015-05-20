@@ -53,6 +53,7 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -523,8 +524,11 @@ static bool isGCSafepointPoll(Function &F) {
 static bool shouldRewriteFunction(Function &F) {
   // TODO: This should check the GCStrategy
   if (F.hasGC()) {
-    const std::string StatepointExampleName("statepoint-example");
-    return StatepointExampleName == F.getGC();
+    const char *FunctionGCName = F.getGC();
+    const StringRef StatepointExampleName("statepoint-example");
+    const StringRef CoreCLRName("coreclr");
+    return (StatepointExampleName == FunctionGCName) ||
+      (CoreCLRName == FunctionGCName);
   } else
     return false;
 }
