@@ -144,8 +144,7 @@ public:
   uint64_t getSectionAddress(const MCSectionData* SD) const {
     return SectionAddress.lookup(SD);
   }
-  uint64_t getSymbolAddress(const MCSymbolData* SD,
-                            const MCAsmLayout &Layout) const;
+  uint64_t getSymbolAddress(const MCSymbol &S, const MCAsmLayout &Layout) const;
 
   uint64_t getFragmentAddress(const MCFragment *Fragment,
                               const MCAsmLayout &Layout) const;

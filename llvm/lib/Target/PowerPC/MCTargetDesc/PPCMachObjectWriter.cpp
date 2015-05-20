@@ -212,7 +212,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     report_fatal_error("symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
-  uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
+  uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint64_t SecAddr =
       Writer->getSectionAddress(A_SD->getFragment()->getParent());
   FixedValue += SecAddr;
@@ -226,7 +226,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
                          "' can not be undefined in a subtraction expression");
 
     // FIXME: is Type correct? see include/llvm/Support/MachO.h
-    Value2 = Writer->getSymbolAddress(B_SD, Layout);
+    Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
   // FIXME: does FixedValue get used??

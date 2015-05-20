@@ -159,7 +159,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
                        "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
-  uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
+  uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint32_t Value2 = 0;
   uint64_t SecAddr =
     Writer->getSectionAddress(A_SD->getFragment()->getParent());
@@ -175,7 +175,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_HALF_SECTDIFF;
-    Value2 = Writer->getSymbolAddress(B_SD, Layout);
+    Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
 
@@ -262,7 +262,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                        "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
-  uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
+  uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint64_t SecAddr = Writer->getSectionAddress(A_SD->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
@@ -278,7 +278,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_SECTDIFF;
-    Value2 = Writer->getSymbolAddress(B_SD, Layout);
+    Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
 

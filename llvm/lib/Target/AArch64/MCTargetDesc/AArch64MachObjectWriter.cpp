@@ -264,16 +264,14 @@ void AArch64MachObjectWriter::RecordRelocation(
       Asm.getContext().reportFatalError(Fixup.getLoc(),
                                   "unsupported relocation with identical base");
 
-    Value +=
-        (!A_SD.getFragment() ? 0 : Writer->getSymbolAddress(&A_SD, Layout)) -
-        (!A_Base || !A_Base->getData().getFragment()
-             ? 0
-             : Writer->getSymbolAddress(&A_Base->getData(), Layout));
-    Value -=
-        (!B_SD.getFragment() ? 0 : Writer->getSymbolAddress(&B_SD, Layout)) -
-        (!B_Base || !B_Base->getData().getFragment()
-             ? 0
-             : Writer->getSymbolAddress(&B_Base->getData(), Layout));
+    Value += (!A_SD.getFragment() ? 0 : Writer->getSymbolAddress(*A, Layout)) -
+             (!A_Base || !A_Base->getData().getFragment()
+                  ? 0
+                  : Writer->getSymbolAddress(*A_Base, Layout));
+    Value -= (!B_SD.getFragment() ? 0 : Writer->getSymbolAddress(*B, Layout)) -
+             (!B_Base || !B_Base->getData().getFragment()
+                  ? 0
+                  : Writer->getSymbolAddress(*B_Base, Layout));
 
     Type = MachO::ARM64_RELOC_UNSIGNED;
 
@@ -355,7 +353,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       const MCSectionData &SymSD =
           Asm.getSectionData(SD.getSymbol().getSection());
       Index = SymSD.getOrdinal() + 1;
-      Value += Writer->getSymbolAddress(&SD, Layout);
+      Value += Writer->getSymbolAddress(SD.getSymbol(), Layout);
 
       if (IsPCRel)
         Value -= Writer->getFragmentAddress(Fragment, Layout) +

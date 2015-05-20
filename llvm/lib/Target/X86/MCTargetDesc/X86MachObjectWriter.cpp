@@ -184,12 +184,10 @@ void X86MachObjectWriter::RecordX86_64Relocation(
         Name + "' can not be undefined in a subtraction expression");
     }
 
-    Value +=
-        Writer->getSymbolAddress(&A_SD, Layout) -
-        (!A_Base ? 0 : Writer->getSymbolAddress(&A_Base->getData(), Layout));
-    Value -=
-        Writer->getSymbolAddress(&B_SD, Layout) -
-        (!B_Base ? 0 : Writer->getSymbolAddress(&B_Base->getData(), Layout));
+    Value += Writer->getSymbolAddress(*A, Layout) -
+             (!A_Base ? 0 : Writer->getSymbolAddress(*A_Base, Layout));
+    Value -= Writer->getSymbolAddress(*B, Layout) -
+             (!B_Base ? 0 : Writer->getSymbolAddress(*B_Base, Layout));
 
     if (!A_Base)
       Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
@@ -238,7 +236,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
       Index = SD.getFragment()->getParent()->getOrdinal() + 1;
-      Value += Writer->getSymbolAddress(&SD, Layout);
+      Value += Writer->getSymbolAddress(*Symbol, Layout);
 
       if (IsPCRel)
         Value -= FixupAddress + (1 << Log2Size);
@@ -363,7 +361,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                        "' can not be undefined in a subtraction expression",
                        false);
 
-  uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
+  uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint64_t SecAddr = Writer->getSectionAddress(A_SD->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
@@ -383,7 +381,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
     // pedantic compatibility with 'as'.
     Type = A_SD->isExternal() ? (unsigned)MachO::GENERIC_RELOC_SECTDIFF :
       (unsigned)MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
-    Value2 = Writer->getSymbolAddress(B_SD, Layout);
+    Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
     FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
 
@@ -459,11 +457,11 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
     // If this is a subtraction then we're pcrel.
     uint32_t FixupAddress =
       Writer->getFragmentAddress(Fragment, Layout) + Fixup.getOffset();
-    const MCSymbolData *SD_B =
-        &Asm.getSymbolData(Target.getSymB()->getSymbol());
     IsPCRel = 1;
-    FixedValue = (FixupAddress - Writer->getSymbolAddress(SD_B, Layout) +
-                  Target.getConstant());
+    FixedValue =
+        FixupAddress -
+        Writer->getSymbolAddress(Target.getSymB()->getSymbol(), Layout) +
+        Target.getConstant();
     FixedValue += 1ULL << Log2Size;
   } else {
     FixedValue = 0;

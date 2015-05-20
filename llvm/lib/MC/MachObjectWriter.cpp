@@ -73,10 +73,8 @@ uint64_t MachObjectWriter::getFragmentAddress(const MCFragment *Fragment,
     Layout.getFragmentOffset(Fragment);
 }
 
-uint64_t MachObjectWriter::getSymbolAddress(const MCSymbolData* SD,
+uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
                                             const MCAsmLayout &Layout) const {
-  const MCSymbol &S = SD->getSymbol();
-
   // If this is a variable, then recursively evaluate now.
   if (S.isVariable()) {
     if (const MCConstantExpr *C =
@@ -99,15 +97,13 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbolData* SD,
 
     uint64_t Address = Target.getConstant();
     if (Target.getSymA())
-      Address += getSymbolAddress(&Layout.getAssembler().getSymbolData(
-                                    Target.getSymA()->getSymbol()), Layout);
+      Address += getSymbolAddress(Target.getSymA()->getSymbol(), Layout);
     if (Target.getSymB())
-      Address += getSymbolAddress(&Layout.getAssembler().getSymbolData(
-                                    Target.getSymB()->getSymbol()), Layout);
+      Address += getSymbolAddress(Target.getSymB()->getSymbol(), Layout);
     return Address;
   }
 
-  return getSectionAddress(SD->getFragment()->getParent()) +
+  return getSectionAddress(S.getData().getFragment()->getParent()) +
          Layout.getSymbolOffset(S);
 }
 
@@ -377,7 +373,9 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
   if (IsAlias && Symbol->isUndefined())
     Address = AliaseeInfo->StringIndex;
   else if (Symbol->isDefined())
-    Address = getSymbolAddress(&Data, Layout);
+    // FIXME: Should Data.getSymbol() always be *Symbol?  It doesn't look like
+    // that's true.
+    Address = getSymbolAddress(Data.getSymbol(), Layout);
   else if (Data.isCommon()) {
     // Common symbols are encoded with the size in the address
     // field, and their alignment in the flags.
@@ -940,12 +938,8 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
          it = Asm.data_region_begin(), ie = Asm.data_region_end();
          it != ie; ++it) {
     const DataRegionData *Data = &(*it);
-    uint64_t Start =
-      getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->Start),
-                       Layout);
-    uint64_t End =
-      getSymbolAddress(&Layout.getAssembler().getSymbolData(*Data->End),
-                       Layout);
+    uint64_t Start = getSymbolAddress(*Data->Start, Layout);
+    uint64_t End = getSymbolAddress(*Data->End, Layout);
     DEBUG(dbgs() << "data in code region-- kind: " << Data->Kind
                  << "  start: " << Start << "(" << Data->Start->getName() << ")"
                  << "  end: " << End << "(" << Data->End->getName() << ")"
