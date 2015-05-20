@@ -94,6 +94,8 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     New->File = Entry;
     New->ImportLoc = ImportLoc;
     Chain.push_back(New);
+    if (!ImportedBy)
+      Roots.push_back(New);
     NewModule = true;
     ModuleEntry = New;
 
@@ -155,7 +157,12 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
         // invalidate the file cache for Entry, and that is not safe if this
         // module is *itself* up to date, but has an out-of-date importer.
         Modules.erase(Entry);
+        assert(Chain.back() == ModuleEntry);
         Chain.pop_back();
+        if (Roots.back() == ModuleEntry)
+          Roots.pop_back();
+        else
+          assert(ImportedBy);
         delete ModuleEntry;
       }
       return OutOfDate;
@@ -186,12 +193,15 @@ void ModuleManager::removeModules(
   // Collect the set of module file pointers that we'll be removing.
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
 
+  auto IsVictim = [&](ModuleFile *MF) {
+    return victimSet.count(MF);
+  };
   // Remove any references to the now-destroyed modules.
   for (unsigned i = 0, n = Chain.size(); i != n; ++i) {
-    Chain[i]->ImportedBy.remove_if([&](ModuleFile *MF) {
-      return victimSet.count(MF);
-    });
+    Chain[i]->ImportedBy.remove_if(IsVictim);
   }
+  Roots.erase(std::remove_if(Roots.begin(), Roots.end(), IsVictim),
+              Roots.end());
 
   // Delete the modules and erase them from the various structures.
   for (ModuleIterator victim = first; victim != last; ++victim) {
@@ -398,16 +408,38 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
   returnVisitState(State);
 }
 
+static void markVisitedDepthFirst(ModuleFile &M,
+                                  SmallVectorImpl<bool> &Visited) {
+  for (llvm::SetVector<ModuleFile *>::iterator IM = M.Imports.begin(),
+                                               IMEnd = M.Imports.end();
+       IM != IMEnd; ++IM) {
+    if (Visited[(*IM)->Index])
+      continue;
+    Visited[(*IM)->Index] = true;
+    if (!M.DirectlyImported)
+      markVisitedDepthFirst(**IM, Visited);
+  }
+}
+
 /// \brief Perform a depth-first visit of the current module.
-static bool visitDepthFirst(ModuleFile &M, 
-                            bool (*Visitor)(ModuleFile &M, bool Preorder, 
-                                            void *UserData), 
-                            void *UserData,
-                            SmallVectorImpl<bool> &Visited) {
-  // Preorder visitation
-  if (Visitor(M, /*Preorder=*/true, UserData))
-    return true;
-  
+static bool visitDepthFirst(
+    ModuleFile &M,
+    ModuleManager::DFSPreorderControl (*PreorderVisitor)(ModuleFile &M,
+                                                         void *UserData),
+    bool (*PostorderVisitor)(ModuleFile &M, void *UserData), void *UserData,
+    SmallVectorImpl<bool> &Visited) {
+  if (PreorderVisitor) {
+    switch (PreorderVisitor(M, UserData)) {
+    case ModuleManager::Abort:
+      return true;
+    case ModuleManager::SkipImports:
+      markVisitedDepthFirst(M, Visited);
+      return false;
+    case ModuleManager::Continue:
+      break;
+    }
+  }
+
   // Visit children
   for (llvm::SetVector<ModuleFile *>::iterator IM = M.Imports.begin(),
                                             IMEnd = M.Imports.end();
@@ -416,24 +448,27 @@ static bool visitDepthFirst(ModuleFile &M,
       continue;
     Visited[(*IM)->Index] = true;
 
-    if (visitDepthFirst(**IM, Visitor, UserData, Visited))
+    if (visitDepthFirst(**IM, PreorderVisitor, PostorderVisitor, UserData, Visited))
       return true;
   }  
   
-  // Postorder visitation
-  return Visitor(M, /*Preorder=*/false, UserData);
+  if (PostorderVisitor)
+    return PostorderVisitor(M, UserData);
+
+  return false;
 }
 
-void ModuleManager::visitDepthFirst(bool (*Visitor)(ModuleFile &M, bool Preorder, 
-                                                    void *UserData), 
-                                    void *UserData) {
+void ModuleManager::visitDepthFirst(
+    ModuleManager::DFSPreorderControl (*PreorderVisitor)(ModuleFile &M,
+                                                         void *UserData),
+    bool (*PostorderVisitor)(ModuleFile &M, void *UserData), void *UserData) {
   SmallVector<bool, 16> Visited(size(), false);
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Visited[Chain[I]->Index])
+  for (unsigned I = 0, N = Roots.size(); I != N; ++I) {
+    if (Visited[Roots[I]->Index])
       continue;
-    Visited[Chain[I]->Index] = true;
+    Visited[Roots[I]->Index] = true;
 
-    if (::visitDepthFirst(*Chain[I], Visitor, UserData, Visited))
+    if (::visitDepthFirst(*Roots[I], PreorderVisitor, PostorderVisitor, UserData, Visited))
       return;
   }
 }

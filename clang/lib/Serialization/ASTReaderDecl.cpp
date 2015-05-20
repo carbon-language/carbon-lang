@@ -3311,11 +3311,13 @@ namespace {
       addToChain(Reader.GetDecl(CanonID));
     }
 
-    static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
-      if (Preorder)
-        return false;
+    static ModuleManager::DFSPreorderControl
+    visitPreorder(ModuleFile &M, void *UserData) {
+      return static_cast<RedeclChainVisitor *>(UserData)->visitPreorder(M);
+    }
 
-      return static_cast<RedeclChainVisitor *>(UserData)->visit(M);
+    static bool visitPostorder(ModuleFile &M, void *UserData) {
+      return static_cast<RedeclChainVisitor *>(UserData)->visitPostorder(M);
     }
 
     void addToChain(Decl *D) {
@@ -3368,8 +3370,36 @@ namespace {
       for (unsigned I = 0; I != N; ++I)
         addToChain(Reader.GetLocalDecl(M, M.RedeclarationChains[Offset++]));
     }
-    
-    bool visit(ModuleFile &M) {
+
+    bool needsToVisitImports(ModuleFile &M, GlobalDeclID GlobalID) {
+      DeclID ID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
+      if (!ID)
+        return false;
+
+      const LocalRedeclarationsInfo Compare = {ID, 0};
+      const LocalRedeclarationsInfo *Result = std::lower_bound(
+          M.RedeclarationsMap,
+          M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, Compare);
+      if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
+          Result->FirstID != ID) {
+        return true;
+      }
+      unsigned Offset = Result->Offset;
+      unsigned N = M.RedeclarationChains[Offset];
+      // We don't need to visit a module or any of its imports if we've already
+      // deserialized the redecls from this module.
+      return N != 0;
+    }
+
+    ModuleManager::DFSPreorderControl visitPreorder(ModuleFile &M) {
+      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I) {
+        if (needsToVisitImports(M, SearchDecls[I]))
+          return ModuleManager::Continue;
+      }
+      return ModuleManager::SkipImports;
+    }
+
+    bool visitPostorder(ModuleFile &M) {
       // Visit each of the declarations.
       for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
         searchForID(M, SearchDecls[I]);
@@ -3401,11 +3431,12 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
 
   // Build up the list of redeclarations.
   RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized, CanonID);
-  ModuleMgr.visitDepthFirst(&RedeclChainVisitor::visit, &Visitor);
+  ModuleMgr.visitDepthFirst(&RedeclChainVisitor::visitPreorder,
+                            &RedeclChainVisitor::visitPostorder, &Visitor);
 
   // Retrieve the chains.
   ArrayRef<Decl *> Chain = Visitor.getChain();
-  if (Chain.empty())
+  if (Chain.empty() || (Chain.size() == 1 && Chain[0] == CanonDecl))
     return;
 
   // Hook up the chains.
