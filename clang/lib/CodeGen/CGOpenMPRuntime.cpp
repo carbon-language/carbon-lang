@@ -1449,51 +1449,61 @@ enum OpenMPSchedType {
   OMP_sch_auto = 38,
   /// \brief Lower bound for 'ordered' versions.
   OMP_ord_lower = 64,
-  /// \brief Lower bound for 'nomerge' versions.
-  OMP_nm_lower = 160,
+  OMP_ord_static_chunked = 65,
+  OMP_ord_static = 66,
+  OMP_ord_dynamic_chunked = 67,
+  OMP_ord_guided_chunked = 68,
+  OMP_ord_runtime = 69,
+  OMP_ord_auto = 70,
+  OMP_sch_default = OMP_sch_static,
 };
 
 /// \brief Map the OpenMP loop schedule to the runtime enumeration.
 static OpenMPSchedType getRuntimeSchedule(OpenMPScheduleClauseKind ScheduleKind,
-                                          bool Chunked) {
+                                          bool Chunked, bool Ordered) {
   switch (ScheduleKind) {
   case OMPC_SCHEDULE_static:
-    return Chunked ? OMP_sch_static_chunked : OMP_sch_static;
+    return Chunked ? (Ordered ? OMP_ord_static_chunked : OMP_sch_static_chunked)
+                   : (Ordered ? OMP_ord_static : OMP_sch_static);
   case OMPC_SCHEDULE_dynamic:
-    return OMP_sch_dynamic_chunked;
+    return Ordered ? OMP_ord_dynamic_chunked : OMP_sch_dynamic_chunked;
   case OMPC_SCHEDULE_guided:
-    return OMP_sch_guided_chunked;
-  case OMPC_SCHEDULE_auto:
-    return OMP_sch_auto;
+    return Ordered ? OMP_ord_guided_chunked : OMP_sch_guided_chunked;
   case OMPC_SCHEDULE_runtime:
-    return OMP_sch_runtime;
+    return Ordered ? OMP_ord_runtime : OMP_sch_runtime;
+  case OMPC_SCHEDULE_auto:
+    return Ordered ? OMP_ord_auto : OMP_sch_auto;
   case OMPC_SCHEDULE_unknown:
     assert(!Chunked && "chunk was specified but schedule kind not known");
-    return OMP_sch_static;
+    return Ordered ? OMP_ord_static : OMP_sch_static;
   }
   llvm_unreachable("Unexpected runtime schedule");
 }
 
 bool CGOpenMPRuntime::isStaticNonchunked(OpenMPScheduleClauseKind ScheduleKind,
                                          bool Chunked) const {
-  auto Schedule = getRuntimeSchedule(ScheduleKind, Chunked);
+  auto Schedule = getRuntimeSchedule(ScheduleKind, Chunked, /*Ordered=*/false);
   return Schedule == OMP_sch_static;
 }
 
 bool CGOpenMPRuntime::isDynamic(OpenMPScheduleClauseKind ScheduleKind) const {
-  auto Schedule = getRuntimeSchedule(ScheduleKind, /* Chunked */ false);
+  auto Schedule =
+      getRuntimeSchedule(ScheduleKind, /*Chunked=*/false, /*Ordered=*/false);
   assert(Schedule != OMP_sch_static_chunked && "cannot be chunked here");
   return Schedule != OMP_sch_static;
 }
 
 void CGOpenMPRuntime::emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
                                   OpenMPScheduleClauseKind ScheduleKind,
-                                  unsigned IVSize, bool IVSigned,
+                                  unsigned IVSize, bool IVSigned, bool Ordered,
                                   llvm::Value *IL, llvm::Value *LB,
                                   llvm::Value *UB, llvm::Value *ST,
                                   llvm::Value *Chunk) {
-  OpenMPSchedType Schedule = getRuntimeSchedule(ScheduleKind, Chunk != nullptr);
-  if (Schedule != OMP_sch_static && Schedule != OMP_sch_static_chunked) {
+  OpenMPSchedType Schedule =
+      getRuntimeSchedule(ScheduleKind, Chunk != nullptr, Ordered);
+  if (Ordered ||
+      (Schedule != OMP_sch_static && Schedule != OMP_sch_static_chunked &&
+       Schedule != OMP_ord_static && Schedule != OMP_ord_static_chunked)) {
     // Call __kmpc_dispatch_init(
     //          ident_t *loc, kmp_int32 tid, kmp_int32 schedule,
     //          kmp_int[32|64] lower, kmp_int[32|64] upper,
@@ -1518,12 +1528,13 @@ void CGOpenMPRuntime::emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
     //          kmp_int[32|64] *p_upper, kmp_int[32|64] *p_stride,
     //          kmp_int[32|64] incr, kmp_int[32|64] chunk);
     if (Chunk == nullptr) {
-      assert(Schedule == OMP_sch_static &&
+      assert((Schedule == OMP_sch_static || Schedule == OMP_ord_static) &&
              "expected static non-chunked schedule");
       // If the Chunk was not specified in the clause - use default value 1.
       Chunk = CGF.Builder.getIntN(IVSize, 1);
     } else
-      assert(Schedule == OMP_sch_static_chunked &&
+      assert((Schedule == OMP_sch_static_chunked ||
+              Schedule == OMP_ord_static_chunked) &&
              "expected static chunked schedule");
     llvm::Value *Args[] = { emitUpdateLocation(CGF, Loc, OMP_IDENT_KMPC),
                             getThreadID(CGF, Loc),
@@ -1548,10 +1559,10 @@ void CGOpenMPRuntime::emitForStaticFinish(CodeGenFunction &CGF,
                       Args);
 }
 
-void CGOpenMPRuntime::emitForOrderedDynamicIterationEnd(CodeGenFunction &CGF,
-                                                        SourceLocation Loc,
-                                                        unsigned IVSize,
-                                                        bool IVSigned) {
+void CGOpenMPRuntime::emitForOrderedIterationEnd(CodeGenFunction &CGF,
+                                                 SourceLocation Loc,
+                                                 unsigned IVSize,
+                                                 bool IVSigned) {
   // Call __kmpc_for_dynamic_fini_(4|8)[u](ident_t *loc, kmp_int32 tid);
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc, OMP_IDENT_KMPC),
                          getThreadID(CGF, Loc)};

@@ -439,6 +439,7 @@ public:
   /// \param SchedKind Schedule kind, specified by the 'schedule' clause.
   /// \param IVSize Size of the iteration variable in bits.
   /// \param IVSigned Sign of the interation variable.
+  /// \param Ordered true if loop is ordered, false otherwise.
   /// \param IL Address of the output variable in which the flag of the
   /// last iteration is returned.
   /// \param LB Address of the output variable in which the lower iteration
@@ -452,8 +453,8 @@ public:
   ///
   virtual void emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
                            OpenMPScheduleClauseKind SchedKind, unsigned IVSize,
-                           bool IVSigned, llvm::Value *IL, llvm::Value *LB,
-                           llvm::Value *UB, llvm::Value *ST,
+                           bool IVSigned, bool Ordered, llvm::Value *IL,
+                           llvm::Value *LB, llvm::Value *UB, llvm::Value *ST,
                            llvm::Value *Chunk = nullptr);
 
   /// \brief Call the appropriate runtime routine to notify that we finished
@@ -464,10 +465,9 @@ public:
   /// \param IVSize Size of the iteration variable in bits.
   /// \param IVSigned Sign of the interation variable.
   ///
-  virtual void emitForOrderedDynamicIterationEnd(CodeGenFunction &CGF,
-                                                 SourceLocation Loc,
-                                                 unsigned IVSize,
-                                                 bool IVSigned);
+  virtual void emitForOrderedIterationEnd(CodeGenFunction &CGF,
+                                          SourceLocation Loc, unsigned IVSize,
+                                          bool IVSigned);
 
   /// \brief Call the appropriate runtime routine to notify that we finished
   /// all the work with current loop.
