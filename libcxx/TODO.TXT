@@ -1,0 +1,12 @@
+This is meant to be a general place to list things that should be done "someday"
+
+* Find all sequences of >2 underscores and eradicate them.
+* run clang-tidy on libc++
+* future should use <atomic> for synchronization.
+* Audit shared_ptr use of <atomic>
+* Look at test/std/utilities/meta/meta.trans/meta.trans.other/result_of.pass.cpp; why are the tests duplicated?
+* Document the "conditionally-supported" bits of libc++
+* Look at basic_string's move assignment operator, re LWG 2063 and POCMA
+* libc++ is missing try_emplace
+* Put a static_assert in std::allocator to deny const/volatile types (LWG 2447)
+
