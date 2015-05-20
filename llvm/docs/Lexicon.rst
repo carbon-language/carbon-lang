@@ -46,6 +46,15 @@ B
 C
 -
 
+**CFI**
+    Call Frame Information. Used in DWARF debug info and in C++ unwind info
+    to show how the function prolog lays out the stack frame.
+
+**CIE**
+    Common Information Entry.  A kind of CFI used to reduce the size of FDEs.
+    The compiler creates a CIE which contains the information common across all
+    the FDEs.  Each FDE then points to its CIE.
+
 **CSE**
     Common Subexpression Elimination. An optimization that removes common
     subexpression compuation. For example ``(a+b)*(a+b)`` has two subexpressions
@@ -81,6 +90,10 @@ F
 
 **FCA**
     First Class Aggregate
+
+**FDE**
+    Frame Description Entry. A kind of CFI used to describe the stack frame of
+    one function.
 
 G
 -
@@ -120,6 +133,14 @@ L
 
 **LICM**
     Loop Invariant Code Motion
+
+**LSDA**
+    Language Specific Data Area.  C++ "zero cost" unwinding is built on top a
+    generic unwinding mechanism.  As the unwinder walks each frame, it calls
+    a "personality" function to do language specific analysis.  Each function's
+    FDE points to an optional LSDA which is passed to the personality function.
+    For C++, the LSDA contain info about the type and location of catch
+    statements in that function.
 
 **Load-VN**
     Load Value Numbering
