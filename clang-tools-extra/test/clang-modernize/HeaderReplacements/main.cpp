@@ -26,6 +26,8 @@
 // COMMON_CPP:     {{^common.cpp_.*.yaml$}}
 // COMMON_CPP-NOT: {{common.cpp_.*.yaml}}
 
+// REQUIRES: shell
+
 #include "common.h"
 
 void test_header_replacement() {
