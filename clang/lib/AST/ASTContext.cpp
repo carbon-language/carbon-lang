@@ -4931,7 +4931,7 @@ CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) const {
 bool ASTContext::isMSStaticDataMemberInlineDefinition(const VarDecl *VD) const {
   return getLangOpts().MSVCCompat && VD->isStaticDataMember() &&
          VD->getType()->isIntegralOrEnumerationType() &&
-         !VD->getFirstDecl()->isOutOfLine() && VD->getFirstDecl()->hasInit();
+         VD->isFirstDecl() && !VD->isOutOfLine() && VD->hasInit();
 }
 
 static inline 
