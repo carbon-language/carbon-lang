@@ -402,6 +402,9 @@ void ARMPassConfig::addPreEmitPass() {
   if (getARMSubtarget().isThumb2())
     addPass(&UnpackMachineBundlesID);
 
-  addPass(createARMOptimizeBarriersPass());
+  // Don't optimize barriers at -O0.
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createARMOptimizeBarriersPass());
+
   addPass(createARMConstantIslandPass());
 }

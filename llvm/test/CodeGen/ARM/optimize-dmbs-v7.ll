@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7 -mattr=+db | FileCheck %s
+; RUN: llc -O1 < %s -mtriple=armv7 -mattr=+db | FileCheck %s
 
 @x1 = global i32 0, align 4
 @x2 = global i32 0, align 4
