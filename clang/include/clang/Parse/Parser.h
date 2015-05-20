@@ -2087,7 +2087,16 @@ private:
   }
   void ParseMicrosoftAttributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc = nullptr);
-  void ParseMicrosoftDeclSpec(ParsedAttributes &Attrs);
+  void MaybeParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
+                                    SourceLocation *End = nullptr) {
+    // TODO: the __declspec keyword is parsed as a keyword for all languages,
+    // but this is a Microsoft extension. Investigate whether this should be
+    // protected by MicrosoftExt or not.
+    if (Tok.is(tok::kw___declspec))
+      ParseMicrosoftDeclSpecs(Attrs, End);
+  }
+  void ParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
+                               SourceLocation *End = nullptr);
   bool ParseMicrosoftDeclSpecArgs(IdentifierInfo *AttrName,
                                   SourceLocation AttrNameLoc,
                                   ParsedAttributes &Attrs);

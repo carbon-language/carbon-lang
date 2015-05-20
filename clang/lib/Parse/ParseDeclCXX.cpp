@@ -1229,10 +1229,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   ParsedAttributesWithRange attrs(AttrFactory);
   // If attributes exist after tag, parse them.
   MaybeParseGNUAttributes(attrs);
-
-  // If declspecs exist after tag, parse them.
-  while (Tok.is(tok::kw___declspec))
-    ParseMicrosoftDeclSpec(attrs);
+  MaybeParseMicrosoftDeclSpecs(attrs);
 
   // Parse inheritance specifiers.
   if (Tok.is(tok::kw___single_inheritance) ||

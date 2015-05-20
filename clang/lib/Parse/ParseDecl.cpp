@@ -529,64 +529,69 @@ bool Parser::ParseMicrosoftDeclSpecArgs(IdentifierInfo *AttrName,
 /// [MS] extended-decl-modifier-seq:
 ///             extended-decl-modifier[opt]
 ///             extended-decl-modifier extended-decl-modifier-seq
-void Parser::ParseMicrosoftDeclSpec(ParsedAttributes &Attrs) {
+void Parser::ParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
+                                     SourceLocation *End) {
   assert(Tok.is(tok::kw___declspec) && "Not a declspec!");
 
-  ConsumeToken();
-  BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen_after, "__declspec",
-                         tok::r_paren))
-    return;
-
-  // An empty declspec is perfectly legal and should not warn.  Additionally,
-  // you can specify multiple attributes per declspec.
-  while (Tok.isNot(tok::r_paren)) {
-    // Attribute not present.
-    if (TryConsumeToken(tok::comma))
-      continue;
-
-    // We expect either a well-known identifier or a generic string.  Anything
-    // else is a malformed declspec.
-    bool IsString = Tok.getKind() == tok::string_literal;
-    if (!IsString && Tok.getKind() != tok::identifier &&
-        Tok.getKind() != tok::kw_restrict) {
-      Diag(Tok, diag::err_ms_declspec_type);
-      T.skipToEnd();
+  while (Tok.is(tok::kw___declspec)) {
+    ConsumeToken();
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    if (T.expectAndConsume(diag::err_expected_lparen_after, "__declspec",
+                           tok::r_paren))
       return;
-    }
 
-    IdentifierInfo *AttrName;
-    SourceLocation AttrNameLoc;
-    if (IsString) {
-      SmallString<8> StrBuffer;
-      bool Invalid = false;
-      StringRef Str = PP.getSpelling(Tok, StrBuffer, &Invalid);
-      if (Invalid) {
+    // An empty declspec is perfectly legal and should not warn.  Additionally,
+    // you can specify multiple attributes per declspec.
+    while (Tok.isNot(tok::r_paren)) {
+      // Attribute not present.
+      if (TryConsumeToken(tok::comma))
+        continue;
+
+      // We expect either a well-known identifier or a generic string.  Anything
+      // else is a malformed declspec.
+      bool IsString = Tok.getKind() == tok::string_literal;
+      if (!IsString && Tok.getKind() != tok::identifier &&
+          Tok.getKind() != tok::kw_restrict) {
+        Diag(Tok, diag::err_ms_declspec_type);
         T.skipToEnd();
         return;
       }
-      AttrName = PP.getIdentifierInfo(Str);
-      AttrNameLoc = ConsumeStringToken();
-    } else {
-      AttrName = Tok.getIdentifierInfo();
-      AttrNameLoc = ConsumeToken();
+
+      IdentifierInfo *AttrName;
+      SourceLocation AttrNameLoc;
+      if (IsString) {
+        SmallString<8> StrBuffer;
+        bool Invalid = false;
+        StringRef Str = PP.getSpelling(Tok, StrBuffer, &Invalid);
+        if (Invalid) {
+          T.skipToEnd();
+          return;
+        }
+        AttrName = PP.getIdentifierInfo(Str);
+        AttrNameLoc = ConsumeStringToken();
+      } else {
+        AttrName = Tok.getIdentifierInfo();
+        AttrNameLoc = ConsumeToken();
+      }
+
+      bool AttrHandled = false;
+
+      // Parse attribute arguments.
+      if (Tok.is(tok::l_paren))
+        AttrHandled = ParseMicrosoftDeclSpecArgs(AttrName, AttrNameLoc, Attrs);
+      else if (AttrName->getName() == "property")
+        // The property attribute must have an argument list.
+        Diag(Tok.getLocation(), diag::err_expected_lparen_after)
+            << AttrName->getName();
+
+      if (!AttrHandled)
+        Attrs.addNew(AttrName, AttrNameLoc, nullptr, AttrNameLoc, nullptr, 0,
+                     AttributeList::AS_Declspec);
     }
-
-    bool AttrHandled = false;
-
-    // Parse attribute arguments.
-    if (Tok.is(tok::l_paren))
-      AttrHandled = ParseMicrosoftDeclSpecArgs(AttrName, AttrNameLoc, Attrs);
-    else if (AttrName->getName() == "property")
-      // The property attribute must have an argument list.
-      Diag(Tok.getLocation(), diag::err_expected_lparen_after)
-          << AttrName->getName();
-
-    if (!AttrHandled)
-      Attrs.addNew(AttrName, AttrNameLoc, nullptr, AttrNameLoc, nullptr, 0,
-                   AttributeList::AS_Declspec);
+    T.consumeClose();
+    if (End)
+      *End = T.getCloseLocation();
   }
-  T.consumeClose();
 }
 
 void Parser::ParseMicrosoftTypeAttributes(ParsedAttributes &attrs) {
@@ -2996,7 +3001,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // Microsoft declspec support.
     case tok::kw___declspec:
-      ParseMicrosoftDeclSpec(DS.getAttributes());
+      ParseMicrosoftDeclSpecs(DS.getAttributes());
       continue;
 
     // Microsoft single token adornments.
@@ -3640,10 +3645,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
   MaybeParseCXX11Attributes(attrs);
-
-  // If declspecs exist after tag, parse them.
-  while (Tok.is(tok::kw___declspec))
-    ParseMicrosoftDeclSpec(attrs);
+  MaybeParseMicrosoftDeclSpecs(attrs);
 
   SourceLocation ScopedEnumKWLoc;
   bool IsScopedUsingClassTag = false;
@@ -3662,8 +3664,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     // They are allowed afterwards, though.
     MaybeParseGNUAttributes(attrs);
     MaybeParseCXX11Attributes(attrs);
-    while (Tok.is(tok::kw___declspec))
-      ParseMicrosoftDeclSpec(attrs);
+    MaybeParseMicrosoftDeclSpecs(attrs);
   }
 
   // C++11 [temp.explicit]p12:
