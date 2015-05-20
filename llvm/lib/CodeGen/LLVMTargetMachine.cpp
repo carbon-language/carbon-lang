@@ -67,6 +67,7 @@ void LLVMTargetMachine::initAsmInfo() {
   if (Options.CompressDebugSections)
     TmpAsmInfo->setCompressDebugSections(true);
 
+  TmpAsmInfo->finishInit(*this);
   AsmInfo = TmpAsmInfo;
 }
 

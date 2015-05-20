@@ -17,12 +17,12 @@ define i32 @br(i8 *%addr) {
 ; NOT-R6:        jr $4 # <MCInst #{{[0-9]+}} JR
 ; R6:            jr $4 # <MCInst #{{[0-9]+}} JALR
 
-; ALL: $BB0_1: # %L1
+; ALL: {{(\$|.L)BB0_1}}: # %L1
 ; NOT-R6:        jr $ra # <MCInst #{{[0-9]+}} JR
 ; R6:            jr $ra # <MCInst #{{[0-9]+}} JALR
 ; ALL:           addiu $2, $zero, 0
 
-; ALL: $BB0_2: # %L2
+; ALL: {{(\$|.L)BB0_2}}: # %L2
 ; NOT-R6:        jr $ra # <MCInst #{{[0-9]+}} JR
 ; R6:            jr $ra # <MCInst #{{[0-9]+}} JALR
 ; ALL:           addiu $2, $zero, 1

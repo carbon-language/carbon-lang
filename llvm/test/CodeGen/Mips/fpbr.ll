@@ -11,14 +11,14 @@ entry:
 
 ; 32-FCC:        c.eq.s $f12, $f14
 ; 64-FCC:        c.eq.s $f12, $f13
-; FCC:           bc1f   $BB0_2
+; FCC:           bc1f   {{(\$|.L)BB0_2}}
 
 ; 32-GPR:        cmp.eq.s $[[FGRCC:f[0-9]+]], $f12, $f14
 ; 64-GPR:        cmp.eq.s $[[FGRCC:f[0-9]+]], $f12, $f13
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; FIXME: We ought to be able to transform not+bnez -> beqz
 ; GPR:           not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           bnez     $[[GPRCC]], $BB0_2
+; GPR:           bnez     $[[GPRCC]], {{(\$|.L)BB0_2}}
 
   %cmp = fcmp oeq float %f2, %f3
   br i1 %cmp, label %if.then, label %if.else
@@ -45,13 +45,13 @@ entry:
 
 ; 32-FCC:        c.olt.s $f12, $f14
 ; 64-FCC:        c.olt.s $f12, $f13
-; FCC:           bc1f    $BB1_2
+; FCC:           bc1f    {{(\$|.L)BB1_2}}
 
 ; 32-GPR:        cmp.ule.s $[[FGRCC:f[0-9]+]], $f14, $f12
 ; 64-GPR:        cmp.ule.s $[[FGRCC:f[0-9]+]], $f13, $f12
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; GPR-NOT:       not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           bnez     $[[GPRCC]], $BB1_2
+; GPR:           bnez     $[[GPRCC]], {{(\$|.L)BB1_2}}
 
   %cmp = fcmp olt float %f2, %f3
   br i1 %cmp, label %if.then, label %if.else
@@ -74,13 +74,13 @@ entry:
 
 ; 32-FCC:        c.ole.s $f12, $f14
 ; 64-FCC:        c.ole.s $f12, $f13
-; FCC:           bc1t    $BB2_2
+; FCC:           bc1t    {{(\$|.L)BB2_2}}
 
 ; 32-GPR:        cmp.ult.s $[[FGRCC:f[0-9]+]], $f14, $f12
 ; 64-GPR:        cmp.ult.s $[[FGRCC:f[0-9]+]], $f13, $f12
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; GPR-NOT:       not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           beqz     $[[GPRCC]], $BB2_2
+; GPR:           beqz     $[[GPRCC]], {{(\$|.L)BB2_2}}
 
   %cmp = fcmp ugt float %f2, %f3
   br i1 %cmp, label %if.else, label %if.then
@@ -103,14 +103,14 @@ entry:
 
 ; 32-FCC:        c.eq.d $f12, $f14
 ; 64-FCC:        c.eq.d $f12, $f13
-; FCC:           bc1f $BB3_2
+; FCC:           bc1f {{(\$|.L)BB3_2}}
 
 ; 32-GPR:        cmp.eq.d $[[FGRCC:f[0-9]+]], $f12, $f14
 ; 64-GPR:        cmp.eq.d $[[FGRCC:f[0-9]+]], $f12, $f13
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; FIXME: We ought to be able to transform not+bnez -> beqz
 ; GPR:           not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           bnez     $[[GPRCC]], $BB3_2
+; GPR:           bnez     $[[GPRCC]], {{(\$|.L)BB3_2}}
 
   %cmp = fcmp oeq double %f2, %f3
   br i1 %cmp, label %if.then, label %if.else
@@ -133,13 +133,13 @@ entry:
 
 ; 32-FCC:        c.olt.d $f12, $f14
 ; 64-FCC:        c.olt.d $f12, $f13
-; FCC:           bc1f $BB4_2
+; FCC:           bc1f {{(\$|.L)BB4_2}}
 
 ; 32-GPR:        cmp.ule.d $[[FGRCC:f[0-9]+]], $f14, $f12
 ; 64-GPR:        cmp.ule.d $[[FGRCC:f[0-9]+]], $f13, $f12
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; GPR-NOT:       not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           bnez     $[[GPRCC]], $BB4_2
+; GPR:           bnez     $[[GPRCC]], {{(\$|.L)BB4_2}}
 
   %cmp = fcmp olt double %f2, %f3
   br i1 %cmp, label %if.then, label %if.else
@@ -162,13 +162,13 @@ entry:
 
 ; 32-FCC:        c.ole.d $f12, $f14
 ; 64-FCC:        c.ole.d $f12, $f13
-; FCC:           bc1t $BB5_2
+; FCC:           bc1t {{(\$|.L)BB5_2}}
 
 ; 32-GPR:        cmp.ult.d $[[FGRCC:f[0-9]+]], $f14, $f12
 ; 64-GPR:        cmp.ult.d $[[FGRCC:f[0-9]+]], $f13, $f12
 ; GPR:           mfc1     $[[GPRCC:[0-9]+]], $[[FGRCC:f[0-9]+]]
 ; GPR-NOT:       not      $[[GPRCC]], $[[GPRCC]]
-; GPR:           beqz     $[[GPRCC]], $BB5_2
+; GPR:           beqz     $[[GPRCC]], {{(\$|.L)BB5_2}}
 
   %cmp = fcmp ugt double %f2, %f3
   br i1 %cmp, label %if.else, label %if.then

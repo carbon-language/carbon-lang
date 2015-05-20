@@ -27,6 +27,7 @@ class MCSection;
 class MCStreamer;
 class MCSymbol;
 class MCContext;
+class LLVMTargetMachine;
 
 namespace WinEH {
 enum class EncodingType {
@@ -545,6 +546,11 @@ public:
   }
 
   bool shouldUseLogicalShr() const { return UseLogicalShr; }
+
+  /// Finish initialization of this object. Few targets will need to use this
+  /// but it's useful when the assembly syntax is ABI dependant as is the case
+  /// for Mips.
+  virtual void finishInit(const LLVMTargetMachine &) {}
 };
 }
 

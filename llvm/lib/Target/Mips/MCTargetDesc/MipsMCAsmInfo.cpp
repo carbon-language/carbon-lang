@@ -12,7 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsMCAsmInfo.h"
+#include "MCTargetDesc/MipsABIInfo.h"
+#include "MipsTargetMachine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
@@ -29,12 +32,14 @@ MipsMCAsmInfo::MipsMCAsmInfo(StringRef TT) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
 
+  // These two are overridden in finishInit()
+  PrivateGlobalPrefix = "$";
+  PrivateLabelPrefix  = "$";
+
   AlignmentIsInBytes          = false;
   Data16bitsDirective         = "\t.2byte\t";
   Data32bitsDirective         = "\t.4byte\t";
   Data64bitsDirective         = "\t.8byte\t";
-  PrivateGlobalPrefix         = "$";
-  PrivateLabelPrefix          = "$";
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
   GPRel32Directive            = "\t.gpword\t";
@@ -43,4 +48,10 @@ MipsMCAsmInfo::MipsMCAsmInfo(StringRef TT) {
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
   DwarfRegNumForCFI = true;
+}
+
+void MipsMCAsmInfo::finishInit(const LLVMTargetMachine &TM) {
+  const MipsABIInfo &ABI = static_cast<const MipsTargetMachine &>(TM).getABI();
+  PrivateGlobalPrefix = ABI.GetPrivateLabelPrefix();
+  PrivateLabelPrefix  = ABI.GetPrivateLabelPrefix();
 }

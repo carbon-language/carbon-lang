@@ -35,10 +35,10 @@ entry:
   ; ALL-LABEL: tst_select_i1_i1:
 
   ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
-  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:  nop
   ; M2-M3:  move    $5, $6
-  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  [[BB0]]:
   ; M2-M3:  jr      $ra
   ; M2-M3:  move    $2, $5
 
@@ -60,10 +60,10 @@ entry:
   ; ALL-LABEL: tst_select_i1_i8:
 
   ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
-  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:  nop
   ; M2-M3:  move    $5, $6
-  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  [[BB0]]:
   ; M2-M3:  jr      $ra
   ; M2-M3:  move    $2, $5
 
@@ -85,10 +85,10 @@ entry:
   ; ALL-LABEL: tst_select_i1_i32:
 
   ; M2-M3:  andi    $[[T0:[0-9]+]], $4, 1
-  ; M2-M3:  bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:  bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:  nop
   ; M2-M3:  move    $5, $6
-  ; M2-M3:  $[[BB0]]:
+  ; M2-M3:  [[BB0]]:
   ; M2-M3:  jr      $ra
   ; M2-M3:  move    $2, $5
 
@@ -110,10 +110,10 @@ entry:
   ; ALL-LABEL: tst_select_i1_i64:
 
   ; M2:     andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:     bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2:     bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2:     nop
   ; M2:     lw      $[[T1:[0-9]+]], 16($sp)
-  ; M2:     $[[BB0]]:
+  ; M2:     [[BB0]]:
   ; FIXME: This branch is redundant
   ; M2:     bnez    $[[T0]], $[[BB1:BB[0-9_]+]]
   ; M2:     nop
@@ -140,10 +140,10 @@ entry:
   ; SEL-32:     or      $3, $[[T4]], $[[T6]]
 
   ; M3:         andi    $[[T0:[0-9]+]], $4, 1
-  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M3:         nop
   ; M3:         move    $5, $6
-  ; M3:         $[[BB0]]:
+  ; M3:         [[BB0]]:
   ; M3:         jr      $ra
   ; M3:         move    $2, $5
 
@@ -166,12 +166,12 @@ entry:
   ; ALL-LABEL: tst_select_i1_float:
 
   ; M2-M3:      andi    $[[T0:[0-9]+]], $4, 1
-  ; M2-M3:      bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         jr      $ra
   ; M2:         mtc1    $6, $f0
   ; M3:         mov.s   $f13, $f14
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr      $ra
   ; M2:         mtc1    $5, $f0
   ; M3:         mov.s   $f0, $f13
@@ -202,11 +202,11 @@ entry:
   ; ALL-LABEL: tst_select_i1_float_reordered:
 
   ; M2-M3:      andi    $[[T0:[0-9]+]], $6, 1
-  ; M2-M3:      bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s   $f12, $f14
   ; M3:         mov.s   $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr      $ra
   ; M2-M3:      mov.s   $f0, $f12
 
@@ -232,12 +232,12 @@ entry:
   ; ALL-LABEL: tst_select_i1_double:
 
   ; M2:         andi    $[[T0:[0-9]+]], $4, 1
-  ; M2:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M2:         bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2:         nop
   ; M2:         ldc1    $f0, 16($sp)
   ; M2:         jr      $ra
   ; M2:         nop
-  ; M2:         $[[BB0]]:
+  ; M2:         [[BB0]]:
   ; M2:         mtc1    $7, $f0
   ; M2:         jr      $ra
   ; M2:         mtc1    $6, $f1
@@ -256,10 +256,10 @@ entry:
   ; SEL-32:     sel.d   $f0, $[[F1]], $[[F0]]
 
   ; M3:         andi    $[[T0:[0-9]+]], $4, 1
-  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M3:         nop
   ; M3:         mov.d   $f13, $f14
-  ; M3:         $[[BB0]]:
+  ; M3:         [[BB0]]:
   ; M3:         jr      $ra
   ; M3:         mov.d   $f0, $f13
 
@@ -280,10 +280,10 @@ entry:
 
   ; M2:         lw      $[[T0:[0-9]+]], 16($sp)
   ; M2:         andi    $[[T1:[0-9]+]], $[[T0]], 1
-  ; M2:         bnez    $[[T1]], $[[BB0:BB[0-9_]+]]
+  ; M2:         bnez    $[[T1]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2:         nop
   ; M2:         mov.d   $f12, $f14
-  ; M2:         $[[BB0]]:
+  ; M2:         [[BB0]]:
   ; M2:         jr      $ra
   ; M2:         mov.d   $f0, $f12
 
@@ -297,10 +297,10 @@ entry:
   ; SEL-32:     sel.d   $f0, $f14, $f12
 
   ; M3:         andi    $[[T0:[0-9]+]], $6, 1
-  ; M3:         bnez    $[[T0]], $[[BB0:BB[0-9_]+]]
+  ; M3:         bnez    $[[T0]], [[BB0:(\$|.L)BB[0-9_]+]]
   ; M3:         nop
   ; M3:         mov.d   $f12, $f13
-  ; M3:         $[[BB0]]:
+  ; M3:         [[BB0]]:
   ; M3:         jr      $ra
   ; M3:         mov.d   $f0, $f12
 
@@ -320,11 +320,11 @@ entry:
 
   ; M2:         c.olt.s   $f12, $f14
   ; M3:         c.olt.s   $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -352,11 +352,11 @@ entry:
 
   ; M2:         c.ole.s   $f12, $f14
   ; M3:         c.ole.s   $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -384,11 +384,11 @@ entry:
 
   ; M2:         c.ule.s   $f12, $f14
   ; M3:         c.ule.s   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -416,11 +416,11 @@ entry:
 
   ; M2:         c.ult.s   $f12, $f14
   ; M3:         c.ult.s   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -448,11 +448,11 @@ entry:
 
   ; M2:         c.eq.s    $f12, $f14
   ; M3:         c.eq.s    $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -480,11 +480,11 @@ entry:
 
   ; M2:         c.ueq.s   $f12, $f14
   ; M3:         c.ueq.s   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.s     $f12, $f14
   ; M3:         mov.s     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.s     $f0, $f12
 
@@ -519,11 +519,11 @@ entry:
 
   ; M2:         c.olt.d   $f12, $f14
   ; M3:         c.olt.d   $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
@@ -551,11 +551,11 @@ entry:
 
   ; M2:         c.ole.d   $f12, $f14
   ; M3:         c.ole.d   $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
@@ -583,11 +583,11 @@ entry:
 
   ; M2:         c.ule.d   $f12, $f14
   ; M3:         c.ule.d   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
@@ -615,11 +615,11 @@ entry:
 
   ; M2:         c.ult.d   $f12, $f14
   ; M3:         c.ult.d   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
@@ -647,11 +647,11 @@ entry:
 
   ; M2:         c.eq.d    $f12, $f14
   ; M3:         c.eq.d    $f12, $f13
-  ; M2-M3:      bc1t      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1t      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
@@ -679,11 +679,11 @@ entry:
 
   ; M2:         c.ueq.d   $f12, $f14
   ; M3:         c.ueq.d   $f12, $f13
-  ; M2-M3:      bc1f      $[[BB0:BB[0-9_]+]]
+  ; M2-M3:      bc1f      [[BB0:(\$|.L)BB[0-9_]+]]
   ; M2-M3:      nop
   ; M2:         mov.d     $f12, $f14
   ; M3:         mov.d     $f12, $f13
-  ; M2-M3:      $[[BB0]]:
+  ; M2-M3:      [[BB0]]:
   ; M2-M3:      jr        $ra
   ; M2-M3:      mov.d     $f0, $f12
 
