@@ -51,7 +51,6 @@ void StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
   assert(PendingGCRelocateCalls.empty() &&
          "Trying to visit statepoint before finished processing previous one");
   Locations.clear();
-  RelocLocations.clear();
   NextSlotToAllocate = 0;
   // Need to resize this on each safepoint - we need the two to stay in
   // sync and the clear patterns of a SelectionDAGBuilder have no relation
@@ -61,9 +60,9 @@ void StatepointLoweringState::startNewStatepoint(SelectionDAGBuilder &Builder) {
     AllocatedStackSlots[i] = false;
   }
 }
+
 void StatepointLoweringState::clear() {
   Locations.clear();
-  RelocLocations.clear();
   AllocatedStackSlots.clear();
   assert(PendingGCRelocateCalls.empty() &&
          "cleared before statepoint sequence completed");
@@ -527,6 +526,41 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
                                                     Incoming.getValueType()));
     }
   }
+
+  // Record computed locations for all lowered values.
+  // This can not be embedded in lowering loops as we need to record *all*
+  // values, while previous loops account only values with unique SDValues.
+  const Instruction *StatepointInstr =
+    StatepointSite.getCallSite().getInstruction();
+  FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
+    Builder.FuncInfo.StatepointRelocatedValues[StatepointInstr];
+
+  for (GCRelocateOperands RelocateOpers :
+       StatepointSite.getRelocates(StatepointSite)) {
+    const Value *V = RelocateOpers.getDerivedPtr();
+    SDValue SDV = Builder.getValue(V);
+    SDValue Loc = Builder.StatepointLowering.getLocation(SDV);
+
+    if (Loc.getNode()) {
+      SpillMap[V] = cast<FrameIndexSDNode>(Loc)->getIndex();
+    } else {
+      // Record value as visited, but not spilled. This is case for allocas
+      // and constants. For this values we can avoid emiting spill load while
+      // visiting corresponding gc_relocate.
+      // Actually we do not need to record them in this map at all.
+      // We do this only to check that we are not relocating any unvisited value.
+      SpillMap[V] = None;
+
+      // Default llvm mechanisms for exporting values which are used in
+      // different basic blocks does not work for gc relocates.
+      // Note that it would be incorrect to teach llvm that all relocates are
+      // uses of the corresponging values so that it would automatically
+      // export them. Relocates of the spilled values does not use original
+      // value.
+      if (StatepointSite.getCallSite().isInvoke())
+        Builder.ExportFromCurrentBlock(V);
+    }
+  }
 }
 
 void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
@@ -550,11 +584,14 @@ void SelectionDAGBuilder::LowerStatepoint(
   ImmutableCallSite CS(ISP.getCallSite());
 
 #ifndef NDEBUG
-  // Consistency check
-  for (const User *U : CS->users()) {
-    const CallInst *Call = cast<CallInst>(U);
-    if (isGCRelocate(Call))
-      StatepointLowering.scheduleRelocCall(*Call);
+  // Consistency check. Don't do this for invokes. It would be too
+  // expensive to preserve this information across different basic blocks
+  if (!CS.isInvoke()) {
+    for (const User *U : CS->users()) {
+      const CallInst *Call = cast<CallInst>(U);
+      if (isGCRelocate(Call))
+        StatepointLowering.scheduleRelocCall(*Call);
+    }
   }
 #endif
 
@@ -756,42 +793,50 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
 }
 
 void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {
+  GCRelocateOperands RelocateOpers(&CI);
+
 #ifndef NDEBUG
   // Consistency check
-  StatepointLowering.relocCallVisited(CI);
+  // We skip this check for invoke statepoints. It would be too expensive to
+  // preserve validation info through different basic blocks.
+  if (!RelocateOpers.isTiedToInvoke()) {
+    StatepointLowering.relocCallVisited(CI);
+  }
 #endif
 
-  GCRelocateOperands relocateOpers(&CI);
-  SDValue SD = getValue(relocateOpers.getDerivedPtr());
+  const Value *DerivedPtr = RelocateOpers.getDerivedPtr();
+  SDValue SD = getValue(DerivedPtr);
 
-  if (isa<ConstantSDNode>(SD) || isa<FrameIndexSDNode>(SD)) {
-    // We didn't need to spill these special cases (constants and allocas).
-    // See the handling in spillIncomingValueForStatepoint for detail.
+  FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
+    FuncInfo.StatepointRelocatedValues[RelocateOpers.getStatepoint()];
+
+  // We should have recorded location for this pointer
+  assert(SpillMap.count(DerivedPtr) && "Relocating not lowered gc value");
+  Optional<int> DerivedPtrLocation = SpillMap[DerivedPtr];
+
+  // We didn't need to spill these special cases (constants and allocas).
+  // See the handling in spillIncomingValueForStatepoint for detail.
+  if (!DerivedPtrLocation) {
     setValue(&CI, SD);
     return;
   }
 
-  SDValue Loc = StatepointLowering.getRelocLocation(SD);
-  // Emit new load if we did not emit it before
-  if (!Loc.getNode()) {
-    SDValue SpillSlot = StatepointLowering.getLocation(SD);
-    int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
+  SDValue SpillSlot = DAG.getTargetFrameIndex(*DerivedPtrLocation,
+                                              SD.getValueType());
 
-    // Be conservative: flush all pending loads
-    // TODO: Probably we can be less restrictive on this,
-    // it may allow more scheduling opprtunities
-    SDValue Chain = getRoot();
+  // Be conservative: flush all pending loads
+  // TODO: Probably we can be less restrictive on this,
+  // it may allow more scheduling opprtunities
+  SDValue Chain = getRoot();
 
-    Loc = DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain, SpillSlot,
-                      MachinePointerInfo::getFixedStack(FI), false, false,
-                      false, 0);
+  SDValue SpillLoad =
+    DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain, SpillSlot,
+                MachinePointerInfo::getFixedStack(*DerivedPtrLocation),
+                false, false, false, 0);
 
-    StatepointLowering.setRelocLocation(SD, Loc);
+  // Again, be conservative, don't emit pending loads
+  DAG.setRoot(SpillLoad.getValue(1));
 
-    // Again, be conservative, don't emit pending loads
-    DAG.setRoot(Loc.getValue(1));
-  }
-
-  assert(Loc.getNode());
-  setValue(&CI, Loc);
+  assert(SpillLoad.getNode());
+  setValue(&CI, SpillLoad);
 }

@@ -18,6 +18,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -72,6 +73,16 @@ public:
   /// we must remember which virtual registers hold the values for
   /// cross-basic-block values.
   DenseMap<const Value*, unsigned> ValueMap;
+
+  // Keep track of frame indices allocated for statepoints as they could be used
+  // across basic block boundaries.
+  // Key of the map is statepoint instruction, value is a map from spilled
+  // llvm Value to the optional stack stack slot index.
+  // If optional is unspecified it means that we have visited this value
+  // but didn't spill it.
+  typedef DenseMap<const Value*, Optional<int>> StatepointSpilledValueMapTy;
+  DenseMap<const Instruction*, StatepointSpilledValueMapTy>
+    StatepointRelocatedValues;
 
   /// StaticAllocaMap - Keep track of frame indices for fixed sized allocas in
   /// the entry block.  This allows the allocas to be efficiently referenced
