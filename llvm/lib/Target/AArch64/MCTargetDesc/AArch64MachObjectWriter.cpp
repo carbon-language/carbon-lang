@@ -295,7 +295,6 @@ void AArch64MachObjectWriter::RecordRelocation(
         Asm.addLocalUsedInReloc(*Symbol);
     }
 
-    const MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbol *Base = Asm.getAtom(*Symbol);
 
     // If the symbol is a variable and we weren't able to get a Base for it
@@ -305,7 +304,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       // If the evaluation is an absolute value, just use that directly
       // to keep things easy.
       int64_t Res;
-      if (SD.getSymbol().getVariableValue()->EvaluateAsAbsolute(
+      if (Symbol->getVariableValue()->EvaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;
@@ -350,19 +349,18 @@ void AArch64MachObjectWriter::RecordRelocation(
                 "'. Must have non-local symbol earlier in section.");
       // Adjust the relocation to be section-relative.
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD =
-          Asm.getSectionData(SD.getSymbol().getSection());
+      const MCSectionData &SymSD = Asm.getSectionData(Symbol->getSection());
       Index = SymSD.getOrdinal() + 1;
-      Value += Writer->getSymbolAddress(SD.getSymbol(), Layout);
+      Value += Writer->getSymbolAddress(*Symbol, Layout);
 
       if (IsPCRel)
         Value -= Writer->getFragmentAddress(Fragment, Layout) +
                  Fixup.getOffset() + (1ULL << Log2Size);
     } else {
       // Resolve constant variables.
-      if (SD.getSymbol().isVariable()) {
+      if (Symbol->isVariable()) {
         int64_t Res;
-        if (SD.getSymbol().getVariableValue()->EvaluateAsAbsolute(
+        if (Symbol->getVariableValue()->EvaluateAsAbsolute(
                 Res, Layout, Writer->getSectionAddressMap())) {
           FixedValue = Res;
           return;

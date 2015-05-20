@@ -464,13 +464,13 @@ void MCMachOStreamer::FinishImpl() {
 
   // First, scan the symbol table to build a lookup table from fragments to
   // defining symbols.
-  DenseMap<const MCFragment*, MCSymbolData*> DefiningSymbolMap;
+  DenseMap<const MCFragment *, const MCSymbol *> DefiningSymbolMap;
   for (const MCSymbol &Symbol : getAssembler().symbols()) {
     MCSymbolData &SD = Symbol.getData();
     if (getAssembler().isSymbolLinkerVisible(Symbol) && SD.getFragment()) {
       // An atom defining symbol should never be internal to a fragment.
       assert(SD.getOffset() == 0 && "Invalid offset in atom defining symbol!");
-      DefiningSymbolMap[SD.getFragment()] = &SD;
+      DefiningSymbolMap[SD.getFragment()] = &Symbol;
     }
   }
 
@@ -481,8 +481,8 @@ void MCMachOStreamer::FinishImpl() {
     const MCSymbol *CurrentAtom = nullptr;
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
-      if (MCSymbolData *SD = DefiningSymbolMap.lookup(it2))
-        CurrentAtom = &SD->getSymbol();
+      if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(it2))
+        CurrentAtom = Symbol;
       it2->setAtom(CurrentAtom);
     }
   }
