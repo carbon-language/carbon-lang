@@ -184,3 +184,14 @@ void f17() {
   extfunc(x);
 // CHECK: add nsw i128 %{{.}}, -1
 }
+
+// PR23597: We should evaluate union cast operands even if the cast is unused.
+typedef union u {
+    int i;
+} strct;
+int returns_int(void);
+void f18() {
+  (strct)returns_int();
+}
+// CHECK-LABEL: define void @f18()
+// CHECK: call i32 @returns_int()

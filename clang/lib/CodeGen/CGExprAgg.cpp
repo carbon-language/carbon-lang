@@ -584,7 +584,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
       
   case CK_ToUnion: {
-    if (Dest.isIgnored()) break;
+    // Evaluate even if the destination is ignored.
+    if (Dest.isIgnored()) {
+      CGF.EmitAnyExpr(E->getSubExpr(), AggValueSlot::ignored(),
+                      /*ignoreResult=*/true);
+      break;
+    }
 
     // GCC union extension
     QualType Ty = E->getSubExpr()->getType();
