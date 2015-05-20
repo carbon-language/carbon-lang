@@ -211,3 +211,20 @@ define zeroext i1 @test15(i32 %bf.load, i32 %n) {
 ; CHECK:  shrl	$16, %edi
 ; CHECK:  cmpl	%esi, %edi
 }
+
+; PR23353
+define i1 @test16(i32* %a, i1* %b) {
+  %load = load i32, i32* %a
+  %trunc = trunc i32 %load to i8
+  %mul = mul i8 %trunc, 2
+  %icmp1 = icmp ne i8 %mul, 0
+  store i1 %icmp1, i1* %b
+  %and = and i8 %trunc, 127
+  %icmp2 = icmp ne i8 %and, 0
+  ret i1 %icmp2
+
+; CHECK-LABEL: test16:
+; CHECK-NOT: addb
+; CHECK-NOT: andb
+; CHECK: testb $127
+}
