@@ -12,7 +12,7 @@
 ###############################################################################
 # This file contains additional build rules that correspond to build.pl's rules.
 # Building libiomp5.dbg is linux only, Windows will build libiomp5md.dll.pdb
-# This file is only active if ${USE_BUILDPL_RULES} is true.
+# This file is only active if ${LIBOMP_USE_BUILDPL_RULES} is true.
 #
 #                        ######### BUILD DEPENDENCIES ##########
 #

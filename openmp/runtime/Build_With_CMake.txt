@@ -25,15 +25,15 @@ How to call cmake initially, then repeatedly
 - Example of configuring, building, reconfiguring, rebuilding:
   $ mkdir build
   $ cd build
-  $ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Darch=32 ..  # Initial configuration
+  $ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DLIBOMP_ARCH=32 ..  # Initial configuration
   $ make all common
   ...
   $ make clean
-  $ cmake -Darch=32e -DCMAKE_BUILD_TYPE=Debug ..                        # Second configuration
+  $ cmake -DLIBOMP_ARCH=32e -DCMAKE_BUILD_TYPE=Debug ..                        # Second configuration
   $ make all common
   ...
   $ rm -rf *
-  $ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Darch=32e .. # Third configuration
+  $ cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DLIBOMP_ARCH=32e .. # Third configuration
   $ make all common
 - Notice in the example how the compiler definitions are only specified
   for an empty build directory, but other Build options are used at any time.
@@ -58,7 +58,7 @@ Instructions to Build
  $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> ..
 
  [ Intel(R) Many Integrated Core Library (Intel(R) MIC Library) ]
- $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -Darch=mic ..
+ $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -DLIBOMP_ARCH=mic ..
 
  [ Windows Libraries ]
  $ cmake -G "Unix Makefiles" -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_ASM_MASM_COMPILER=[ml | ml64] -DCMAKE_BUILD_TYPE=Release ..
@@ -71,13 +71,13 @@ Mac* Fat Libraries
 On OS X* machines, it is possible to build universal (or fat) libraries which
 include both IA-32 architecture and Intel(R) 64 architecture objects in a
 single archive; just build the 32 and 32e libraries separately:
- $ cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -Darch=32 ..
+ $ cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIBOMP_ARCH=32 ..
  $ make
- $ cmake -Darch=32e ..
+ $ cmake -DLIBOMP_ARCH=32e ..
  $ make
 then invoke make again with a special argument as follows:
  $ make fat
-- The fat target is only available for the arch=32e configuration.
+- The fat target is only available for the LIBOMP_ARCH=32e configuration.
 - The fat libraries will be put in exports/mac_32e/lib while the "thin" libraries
   will be in exports/mac_32e/lib.thin and exports/mac_32/lib.thin
 
@@ -89,7 +89,7 @@ Compiler options
 
 -DCMAKE_Fortran_COMPILER=<Fortran compiler name>
 Unix* systems (Optional as compiler is default):
-This option is only needed when -Dcreate_fortran_modules is true
+This option is only needed when -DLIBOMP_FORTRAN_MODULES is true
 
 -DCMAKE_ASM_MASM_COMPILER=[ml | ml64 ]
 This option is Windows* Only
@@ -101,14 +101,14 @@ Build options
 ==========================
 ==== Operating System ====
 ==========================
--Dos=lin|mac|win
+-DLIBOMP_OS=lin|mac|win
 * Operating system can be lin (Linux*), mac (Mac*), or win (Windows*). 
   If not specified, cmake will try to determine your current operating system.
 
 ======================
 ==== Architecture ====
 ======================
--Darch=32|32e|arm|ppc64|ppc64le|aarch64|mic
+-DLIBOMP_ARCH=32|32e|arm|ppc64|ppc64le|aarch64|mic
 * Architecture can be 32 (IA-32 architecture), 32e (Intel(R) 64 architecture),
   arm (ARM architecture), aarch64 (ARMv8 architecture), ppc64 (PPC64 architecture),
   or ppc64le (little endian PPC64 architecture).
@@ -116,37 +116,36 @@ Build options
   architecture macros (e.g., is __x86_64__ predefined by compiler?).
 
 ---- First values listed are the default value ----
--Dlib_type=normal|profile|stubs
+-DLIBOMP_LIB_TYPE=normal|profile|stubs
 Library type can be normal, profile, or stubs.
 
 -DCMAKE_BUILD_TYPE=Release|Debug|RelWithDebInfo
 Build type can be Release, Debug, or RelWithDebInfo.
-See below for interaction when -DUSE_BUILDPL_RULES is on.
 
--Dversion=5|4
+-DLIBOMP_VERSION=5|4
 libiomp5 version can be 5 or 4.
 
--Domp_version=40|30
+-DLIBOMP_OMP_VERSION=40|30
 OpenMP version can be either 40 or 30.
 
--Dmic_arch=knc|knf
+-DLIBOMP_MIC_ARCH=knc|knf
 Intel(R) MIC Architecture, can be knf or knc.
-This value is ignored if os != mic
+This value is ignored if LIBOMP_ARCH != mic
   
--Dcreate_fortran_modules=off|on
+-DLIBOMP_FORTRAN_MODULES=off|on
 Should the Fortran modules be created (requires Fortran compiler)
 
--Dstats=off|on
+-DLIBOMP_STATS=off|on
 Should include stats-gathering code?
 
--Dompt_support=off|on
+-DLIBOMP_OMPT_SUPPORT=off|on
 Should OMPT support be turned on?
 If ompt_support is off, then both ompt_blame and ompt_trace are ignored.
 
--Dompt_blame=on|off
+-DLIBOMP_OMPT_BLAME=on|off
 should OMPT blame functionality be turned on?
 
--Dompt_trace=on|off
+-DLIBOMP_OMPT_TRACE=on|off
 should OMPT trace functionality be turned on?
 
 =====================
@@ -155,14 +154,14 @@ should OMPT trace functionality be turned on?
 After the library has been built, there are five optional microtests that
 can be performed.  Some will be skipped based upon the platform.
 These tests can be turned on (default) or off with the following options:
--Dtest_touch=on|off     -- Should the touch test be done?
--Dtest_relo=on|off      -- Should the position independent code test be done?
--Dtest_execstack=on|off -- Should the stack be checked for executability?
--Dtest_instr=on|off     -- Should the Intel(R) MIC Libraries be checked
+-DLIBOMP_TEST_TOUCH=on|off     -- Should the touch test be done?
+-DLIBOMP_TEST_RELO=on|off      -- Should the position independent code test be done?
+-DLIBOMP_TEST_EXECSTACK=on|off -- Should the stack be checked for executability?
+-DLIBOMP_TEST_INSTR=on|off     -- Should the Intel(R) MIC Libraries be checked
                             for correct instruction set?
--Dtest_deps=on|off      -- Should libiomp5's dependencies be checked?
--Dtests=off|on          -- Should any of the above tests be done?
-If -Dtests=on is specified, the user can then call:
+-DLIBOMP_TEST_DEPS=on|off      -- Should libiomp5's dependencies be checked?
+-DLIBOMP_MICRO_TESTS=off|on          -- Should any of the above tests be done?
+If -DLIBOMP_MICRO_TESTS=on is specified, the user can then call:
 $ make libiomp-micro-tests
 which runs the tests.
 
@@ -171,45 +170,45 @@ which runs the tests.
 ============================================
 - These flags are *appended*.  They do not 
   overwrite any of the preset flags.
--DLIBIOMP_CPPFLAGS=<space-separated flags>    -- Additional C Preprocessor flags
+-DLIBOMP_CPPFLAGS=<space-separated flags>    -- Additional C Preprocessor flags
                                                (typically additional -Ddef=val flags)
--DLIBIOMP_CFLAGS=<space-separated flags>      -- Additional C compiler flags
--DLIBIOMP_CXXFLAGS=<space-separated flags>    -- Additional C++ compiler flags
--DLIBIOMP_ASMFLAGS=<space-separated flags>    -- Additional assembly flags
--DLIBIOMP_LDFLAGS=<space-separated flags>     -- Additional linker flags
--DLIBIOMP_LIBFLAGS=<space-separated flags> -- Additional libraries to link 
+-DLIBOMP_CFLAGS=<space-separated flags>      -- Additional C compiler flags
+-DLIBOMP_CXXFLAGS=<space-separated flags>    -- Additional C++ compiler flags
+-DLIBOMP_ASMFLAGS=<space-separated flags>    -- Additional assembly flags
+-DLIBOMP_LDFLAGS=<space-separated flags>     -- Additional linker flags
+-DLIBOMP_LIBFLAGS=<space-separated flags> -- Additional libraries to link 
                                                to during link phase
--DLIBIOMP_FFLAGS=<space-separated flags>  -- Additional Fortran compiler flags
+-DLIBOMP_FFLAGS=<space-separated flags>  -- Additional Fortran compiler flags
 
 ===================================
 ==== Feature Based Compilation ====
 ===================================
--DUSE_BUILDPL_RULES=false|true
+-DLIBOMP_USE_BUILDPL_RULES=false|true
 Should the build imitate build.pl's build process.
 When this is true, the Unix* Release builds will build libiomp5
 with -O2 and -g flags activated (same as RelWithDebInfo). Then,
 the debug info is stripped out of the library and put into libiomp5.dbg
 This is done for interaction with Intel(R) Parallel Amplifier.
 
--DUSE_ADAPTIVE_LOCKS=true|false       
+-DLIBOMP_USE_ADAPTIVE_LOCKS=true|false       
 Should adaptive (TSX-based) locks be included?  
 These are x86 specific.  This feature is turned on by default 
 for IA-32 architecture and Intel(R) 64 architecture. 
 Otherwise, it is turned off.
 
--DUSE_INTERNODE_ALIGNMENT=false|true
+-DLIBOMP_USE_INTERNODE_ALIGNMENT=false|true
 Should 4096-byte alignment be used for certain data structures?
 This option is useful on multinode systems where a small CACHE_LINE
 setting leads to false sharing.  This option is off by default.
 
--DUSE_VERSION_SYMBOLS=true|false
+-DLIBOMP_USE_VERSION_SYMBOLS=true|false
 Should versioned symbols be used for building the library?
 This option only makes sense for ELF based libraries where version
 symbols are supported (Linux, some BSD* variants).  It is off
 by default for Windows and Mac, but on for other Unix based operating
 systems.
 
--DUSE_PREDEFINED_LINKER_FLAGS=true|false
+-DLIBOMP_USE_PREDEFINED_LINKER_FLAGS=true|false
 Should the predefined linker flags in CommonFlags.cmake be included
 in the link command? This is true by default and should work for
 Linux*, Mac*, and Windows*.  The --version-script flag on Unix* based
@@ -225,22 +224,22 @@ cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
 
 ---- With Various Options ----
 - Build the 32 bit Linux library using GCC*
-cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Dos=lin -Darch=32 ..
+cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DLIBOMP_OS=lin -DLIBOMP_ARCH=32 ..
 
 - Build the 32 bit debug Mac library using Clang*
-cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -Dos=mac -Darch=32 -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIBOMP_OS=mac -DLIBOMP_ARCH=32 -DCMAKE_BUILD_TYPE=Debug ..
 
 - Build the library (architecture determined by probing compiler) using the
   Intel(R) C Compiler and the Intel(R) C++ Compiler. Also, create the fortran modules using
   the Intel(R) Fortran Compiler, enabling the libiomp-micro-tests target and using similar rules that build.pl 
   would use to build the library.
-cmake -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_Fortran_COMPILER=ifort -Dtests=on -Dcreate_fortran_modules=on -DUSE_BUILDPL_RULES=on ..
+cmake -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_Fortran_COMPILER=ifort -DLIBOMP_MICRO_TESTS=on -DLIBOMP_FORTRAN_MODULES=on -DLIBOMP_USE_BUILDPL_RULES=on ..
 
 - Have CMake Find the C/C++ compiler, and specify additional flags for the C compiler, preprocessor, and C++ compiler.
-cmake -DLIBIOMP_CFLAGS='Werror' -DLIBIOMP_CPPFLAGS='-DNEW_FEATURE=1 -DOLD_FEATURE=0' -DLIBIOMP_CXXFLAGS='-Werror -Wsign-compare' ..
+cmake -DLIBOMP_CFLAGS='Werror' -DLIBOMP_CPPFLAGS='-DNEW_FEATURE=1 -DOLD_FEATURE=0' -DLIBOMP_CXXFLAGS='-Werror -Wsign-compare' ..
 
 ---- Build the stubs library ----
-cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -Dlib_type=stubs ..
+cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DLIBOMP_LIB_TYPE=stubs ..
 
 =========
 Footnotes

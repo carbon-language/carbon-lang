@@ -53,7 +53,7 @@ function(append_compiler_specific_linker_flags input_ld_flags input_ld_flags_lib
     set(local_ld_flags)
     set(local_ld_flags_libs)
     append_linker_flags("-WX:NO")
-    append_linker_flags("-version:${version}.0")
+    append_linker_flags("-version:${LIBOMP_VERSION}.0")
     append_linker_flags("-NXCompat")
     append_linker_flags("-DynamicBase") # This option modifies the header of an executable to indicate 
                                            # whether the application should be randomly rebased at load time.

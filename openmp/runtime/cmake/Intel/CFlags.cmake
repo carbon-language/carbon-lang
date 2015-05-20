@@ -104,7 +104,7 @@ function(append_compiler_specific_linker_flags input_ld_flags input_ld_flags_lib
         append_linker_flags("-dll") 
         append_linker_flags("-WX:NO")
         append_linker_flags("-incremental:no")
-        append_linker_flags("-version:${version}.0")
+        append_linker_flags("-version:${LIBOMP_VERSION}.0")
         append_linker_flags("-NXCompat")
         append_linker_flags("-DynamicBase") # This option modifies the header of an executable to indicate 
                                                # whether the application should be randomly rebased at load time.
@@ -138,7 +138,7 @@ function(append_compiler_specific_linker_flags input_ld_flags input_ld_flags_lib
             append_linker_flags_library("-pthread") # link in pthread library
             append_linker_flags_library("-ldl") # link in libdl (dynamic loader library)
         endif()
-        if(${STATS_GATHERING})
+        if(${LIBOMP_STATS})
             append_linker_flags_library("-Wl,-lstdc++") # link in standard c++ library (stats-gathering needs it)
         endif()
     else()
