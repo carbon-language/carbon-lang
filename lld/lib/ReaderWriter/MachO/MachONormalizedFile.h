@@ -235,6 +235,7 @@ struct NormalizedFile {
   bool                        hasUUID;
   std::vector<StringRef>      rpaths;
   Hex64                       entryAddress;
+  Hex64                       stackSize;
   MachOLinkingContext::OS     os;
   Hex64                       sourceVersion;
   PackedVersion               minOSverson;

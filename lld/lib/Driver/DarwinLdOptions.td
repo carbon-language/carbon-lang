@@ -67,6 +67,10 @@ def pie : Flag<["-"], "pie">,
 def no_pie : Flag<["-"], "no_pie">,
      HelpText<"Do not create Position Independent Executable">,
      Group<grp_main>;
+def stack_size : Separate<["-"], "stack_size">,
+     HelpText<"Specifies the maximum stack size for the main thread in a program. "
+              "Must be a page-size multiple. (default=8Mb)">,
+     Group<grp_main>;
 
 // dylib executable options
 def grp_dylib : OptionGroup<"opts">, HelpText<"DYLIB EXECUTABLE OPTIONS">;

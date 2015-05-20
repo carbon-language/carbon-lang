@@ -20,6 +20,7 @@
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
@@ -411,7 +412,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       return false;
     } else if (baseAddress % ctx.pageSize()) {
       diagnostics << "error: image_base must be a multiple of page size ("
-                  << llvm::format("0x%" PRIx64, ctx.pageSize()) << ")\n";
+                  << "0x" << llvm::utohexstr(ctx.pageSize()) << ")\n";
       return false;
     }
 
@@ -718,6 +719,22 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       return false;
       break;
     }
+  }
+
+  // Handle stack_size
+  if (llvm::opt::Arg *stackSize = parsedArgs->getLastArg(OPT_stack_size)) {
+    uint64_t stackSizeVal;
+    if (parseNumberBase16(stackSize->getValue(), stackSizeVal)) {
+      diagnostics << "error: stack_size expects a hex number\n";
+      return false;
+    }
+    if ((stackSizeVal % ctx.pageSize()) != 0) {
+      diagnostics << "error: stack_size must be a multiple of page size ("
+                  << "0x" << llvm::utohexstr(ctx.pageSize()) << ")\n";
+      return false;
+    }
+
+    ctx.setStackSize(stackSizeVal);
   }
 
   // Handle debug info handling options: -S

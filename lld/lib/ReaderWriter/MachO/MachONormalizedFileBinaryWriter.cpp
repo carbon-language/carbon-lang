@@ -829,7 +829,7 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       ep->cmd       = LC_MAIN;
       ep->cmdsize   = sizeof(entry_point_command);
       ep->entryoff  = _file.entryAddress - _seg1addr;
-      ep->stacksize = 0;
+      ep->stacksize = _file.stackSize;
       if (_swap)
         swapStruct(*ep);
       lc += sizeof(entry_point_command);

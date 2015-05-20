@@ -688,6 +688,7 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("has-UUID",         file.hasUUID,        true);
     io.mapOptional("rpaths",           file.rpaths);
     io.mapOptional("entry-point",      file.entryAddress,   Hex64(0));
+    io.mapOptional("stack-size",       file.stackSize,      Hex64(0x800000));
     io.mapOptional("source-version",   file.sourceVersion,  Hex64(0));
     io.mapOptional("OS",               file.os);
     io.mapOptional("min-os-version",   file.minOSverson,    PackedVersion(0));

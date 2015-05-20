@@ -142,9 +142,9 @@ MachOLinkingContext::MachOLinkingContext()
     : _outputMachOType(MH_EXECUTE), _outputMachOTypeStatic(false),
       _doNothing(false), _pie(false), _arch(arch_unknown), _os(OS::macOSX),
       _osMinVersion(0), _pageZeroSize(0), _pageSize(4096), _baseAddress(0),
-      _compatibilityVersion(0), _currentVersion(0), _deadStrippableDylib(false),
-      _printAtoms(false), _testingFileUsage(false), _keepPrivateExterns(false),
-      _demangle(false), _archHandler(nullptr),
+      _stackSize(0x800000), _compatibilityVersion(0), _currentVersion(0),
+      _deadStrippableDylib(false), _printAtoms(false), _testingFileUsage(false),
+      _keepPrivateExterns(false), _demangle(false), _archHandler(nullptr),
       _exportMode(ExportMode::globals),
       _debugInfoMode(DebugInfoMode::addDebugMap), _orderFileEntries(0) {}
 

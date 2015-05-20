@@ -1197,6 +1197,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   normFile.arch = context.arch();
   normFile.fileType = context.outputMachOType();
   normFile.flags = util.fileFlags();
+  normFile.stackSize = context.stackSize();
   normFile.installName = context.installName();
   normFile.currentVersion = context.currentVersion();
   normFile.compatVersion = context.compatibilityVersion();

@@ -129,6 +129,9 @@ public:
   bool PIE() const { return _pie; }
   void setPIE(bool pie) { _pie = pie; }
 
+  uint64_t stackSize() const { return _stackSize; }
+  void setStackSize(uint64_t stackSize) { _stackSize = stackSize; }
+
   uint64_t baseAddress() const { return _baseAddress; }
   void setBaseAddress(uint64_t baseAddress) { _baseAddress = baseAddress; }
 
@@ -332,6 +335,7 @@ private:
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
   bool _pie;
+  uint64_t _stackSize;
   Arch _arch;
   OS _os;
   uint32_t _osMinVersion;
