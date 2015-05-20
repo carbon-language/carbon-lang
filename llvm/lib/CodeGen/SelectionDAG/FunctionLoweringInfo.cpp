@@ -378,7 +378,7 @@ void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
   auto E = FuncInfo.TryBlockMap.end();
   for ( ; I != E; ++I) {
     auto &Entry = *I;
-    if (Entry.HandlerArray.size() != NumHandlers)
+    if (Entry.HandlerArray.size() != (size_t)NumHandlers)
       continue;
     int N;
     for (N = 0; N < NumHandlers; ++N) {
