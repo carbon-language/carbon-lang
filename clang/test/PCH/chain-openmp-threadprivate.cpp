@@ -1,7 +1,7 @@
 // no PCH
-// RUN: %clang_cc1 -fopenmp=libiomp5 -emit-llvm -include %s -include %s %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fopenmp -emit-llvm -include %s -include %s %s -o - | FileCheck %s
 // with PCH
-// RUN: %clang_cc1 -fopenmp=libiomp5 -emit-llvm -chain-include %s -chain-include %s %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fopenmp -emit-llvm -chain-include %s -chain-include %s %s -o - | FileCheck %s
 #if !defined(PASS1)
 #define PASS1
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -std=c++11 -verify -fopenmp=libiomp5 %s
+// RUN: %clang_cc1 -x c++ -std=c++11 -verify -fopenmp %s
 
 struct B {
   static int ib[20]; // expected-note 0 {{'B::ib' declared here}}

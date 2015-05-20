@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fopenmp=libiomp5 -triple x86_64-unknown-unknown -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fopenmp -triple x86_64-unknown-unknown -verify %s
 
 // expected-error@+1 {{unexpected OpenMP directive '#pragma omp for'}}
 #pragma omp for

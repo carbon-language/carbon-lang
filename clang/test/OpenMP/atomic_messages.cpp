@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fopenmp=libiomp5 -ferror-limit 100 %s
+// RUN: %clang_cc1 -verify -fopenmp -ferror-limit 100 %s
 
 int foo() {
 L1:

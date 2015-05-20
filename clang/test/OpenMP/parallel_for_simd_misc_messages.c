@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fopenmp=libiomp5 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fopenmp -verify %s
 
 // expected-error@+1 {{unexpected OpenMP directive '#pragma omp parallel for simd'}}
 #pragma omp parallel for simd

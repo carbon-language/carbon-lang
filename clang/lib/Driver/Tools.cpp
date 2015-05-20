@@ -3793,6 +3793,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_show_template_tree);
   Args.AddLastArg(CmdArgs, options::OPT_fno_elide_type);
 
+  // Forward flags for OpenMP
+  if (Args.hasArg(options::OPT_fopenmp_EQ) ||
+      Args.hasArg(options::OPT_fopenmp)) {
+    CmdArgs.push_back("-fopenmp");
+  }
+
   const SanitizerArgs &Sanitize = getToolChain().getSanitizerArgs();
   Sanitize.addArgs(Args, CmdArgs);
 
@@ -6273,9 +6279,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
   LibOpenMP UsedOpenMPLib = LibUnknown;
-  if (Args.hasArg(options::OPT_fopenmp)) {
-    UsedOpenMPLib = LibGOMP;
-  } else if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
+  if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
     UsedOpenMPLib = llvm::StringSwitch<LibOpenMP>(A->getValue())
         .Case("libgomp",  LibGOMP)
         .Case("libiomp5", LibIOMP5)
@@ -6283,6 +6287,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (UsedOpenMPLib == LibUnknown)
       getToolChain().getDriver().Diag(diag::err_drv_unsupported_option_argument)
         << A->getOption().getName() << A->getValue();
+  } else if (Args.hasArg(options::OPT_fopenmp)) {
+    UsedOpenMPLib = LibIOMP5;
   }
   switch (UsedOpenMPLib) {
   case LibGOMP:
@@ -7998,16 +8004,16 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
         linkSanitizerRuntimeDeps(ToolChain, CmdArgs);
 
       LibOpenMP UsedOpenMPLib = LibUnknown;
-      if (Args.hasArg(options::OPT_fopenmp)) {
-        UsedOpenMPLib = LibGOMP;
-      } else if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
+      if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
         UsedOpenMPLib = llvm::StringSwitch<LibOpenMP>(A->getValue())
-            .Case("libgomp",  LibGOMP)
-            .Case("libiomp5", LibIOMP5)
-            .Default(LibUnknown);
+                            .Case("libgomp", LibGOMP)
+                            .Case("libiomp5", LibIOMP5)
+                            .Default(LibUnknown);
         if (UsedOpenMPLib == LibUnknown)
           D.Diag(diag::err_drv_unsupported_option_argument)
-            << A->getOption().getName() << A->getValue();
+              << A->getOption().getName() << A->getValue();
+      } else if (Args.hasArg(options::OPT_fopenmp)) {
+        UsedOpenMPLib = LibIOMP5;
       }
       switch (UsedOpenMPLib) {
       case LibGOMP:

@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fopenmp=libiomp5 -triple x86_64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
-// RUN: %clang_cc1 -fopenmp=libiomp5 -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
-// RUN: %clang_cc1 -fopenmp=libiomp5 -triple powerpc64-unknown-unknown -target-abi elfv1-qpx -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=QPX
+// RUN: %clang_cc1 -fopenmp -triple x86_64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
+// RUN: %clang_cc1 -fopenmp -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=NORMAL
+// RUN: %clang_cc1 -fopenmp -triple powerpc64-unknown-unknown -target-abi elfv1-qpx -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=QPX
 
 void h1(float *c, float *a, double b[], int size)
 {
