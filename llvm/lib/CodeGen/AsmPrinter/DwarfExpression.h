@@ -34,10 +34,15 @@ protected:
   const TargetRegisterInfo &TRI;
   unsigned DwarfVersion;
 
+  /// \brief Set to true if we want comments to be emitted.  This is usually
+  /// only the case when the AsmPrinter is emitting to a text stream with
+  /// comments enabled.
+  bool PrintComments;
+
 public:
   DwarfExpression(const TargetRegisterInfo &TRI,
-                  unsigned DwarfVersion)
-    : TRI(TRI), DwarfVersion(DwarfVersion) {}
+                  unsigned DwarfVersion, bool PrintComments)
+    : TRI(TRI), DwarfVersion(DwarfVersion), PrintComments(PrintComments) {}
   virtual ~DwarfExpression() {}
 
   /// Output a dwarf operand and an optional assembler comment.
@@ -109,8 +114,9 @@ class DebugLocDwarfExpression : public DwarfExpression {
 
 public:
   DebugLocDwarfExpression(const TargetRegisterInfo &TRI,
-                          unsigned DwarfVersion, ByteStreamer &BS)
-    : DwarfExpression(TRI, DwarfVersion), BS(BS) {}
+                          unsigned DwarfVersion, bool PrintComments,
+                          ByteStreamer &BS)
+    : DwarfExpression(TRI, DwarfVersion, PrintComments), BS(BS) {}
 
   void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
   void EmitSigned(int64_t Value) override;

@@ -47,7 +47,7 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
 DIEDwarfExpression::DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU,
                                        DIELoc &DIE)
     : DwarfExpression(*AP.MF->getSubtarget().getRegisterInfo(),
-                      AP.getDwarfDebug()->getDwarfVersion()),
+                      AP.getDwarfDebug()->getDwarfVersion(), false),
       AP(AP), DU(DU), DIE(DIE) {}
 
 void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
