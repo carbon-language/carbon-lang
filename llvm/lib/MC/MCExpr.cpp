@@ -608,8 +608,7 @@ static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm, bool InSet) {
     return true;
   if (!Asm)
     return false;
-  const MCSymbolData &SD = Asm->getSymbolData(Sym);
-  return !Asm->getWriter().isWeak(SD);
+  return !Asm->getWriter().isWeak(Sym);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,

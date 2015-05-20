@@ -175,7 +175,7 @@ public:
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
-  bool isWeak(const MCSymbolData &SD) const override;
+  bool isWeak(const MCSymbol &Sym) const override;
 
   void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
@@ -661,11 +661,11 @@ bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                                 InSet, IsPCRel);
 }
 
-bool WinCOFFObjectWriter::isWeak(const MCSymbolData &SD) const {
+bool WinCOFFObjectWriter::isWeak(const MCSymbol &Sym) const {
+  const MCSymbolData &SD = Sym.getData();
   if (!SD.isExternal())
     return false;
 
-  const MCSymbol &Sym = SD.getSymbol();
   if (!Sym.isInSection())
     return false;
 

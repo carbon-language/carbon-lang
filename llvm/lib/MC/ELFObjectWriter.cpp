@@ -250,7 +250,7 @@ class ELFObjectWriter : public MCObjectWriter {
                                                 bool InSet,
                                                 bool IsPCRel) const override;
 
-    bool isWeak(const MCSymbolData &SD) const override;
+    bool isWeak(const MCSymbol &Sym) const override;
 
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
     void writeSection(MCAssembler &Asm,
@@ -1478,7 +1478,8 @@ bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
                                                                 InSet, IsPCRel);
 }
 
-bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {
+bool ELFObjectWriter::isWeak(const MCSymbol &Sym) const {
+  const MCSymbolData &SD = Sym.getData();
   if (::isWeak(SD))
     return true;
 
@@ -1491,7 +1492,6 @@ bool ELFObjectWriter::isWeak(const MCSymbolData &SD) const {
   if (MCELF::GetBinding(SD) != ELF::STB_GLOBAL)
     return false;
 
-  const MCSymbol &Sym = SD.getSymbol();
   if (!Sym.isInSection())
     return false;
 

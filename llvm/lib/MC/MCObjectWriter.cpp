@@ -48,4 +48,4 @@ bool MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   return &SecA == &SecB;
 }
 
-bool MCObjectWriter::isWeak(const MCSymbolData &SD) const { return false; }
+bool MCObjectWriter::isWeak(const MCSymbol &) const { return false; }

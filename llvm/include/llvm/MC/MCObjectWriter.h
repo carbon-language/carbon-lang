@@ -101,7 +101,7 @@ public:
   /// \brief True if this symbol (which is a variable) is weak. This is not
   /// just STB_WEAK, but more generally whether or not we can evaluate
   /// past it.
-  virtual bool isWeak(const MCSymbolData &SD) const;
+  virtual bool isWeak(const MCSymbol &Sym) const;
 
   /// \brief Write the object file.
   ///
