@@ -178,8 +178,10 @@ AddressSanitizerRuntime::RetrieveReportData()
         return StructuredData::ObjectSP();
         
     addr_t pc = return_value_sp->GetValueForExpressionPath(".pc")->GetValueAsUnsigned(0);
+    /* commented out because rdar://problem/18533301
     addr_t bp = return_value_sp->GetValueForExpressionPath(".bp")->GetValueAsUnsigned(0);
     addr_t sp = return_value_sp->GetValueForExpressionPath(".sp")->GetValueAsUnsigned(0);
+    */
     addr_t address = return_value_sp->GetValueForExpressionPath(".address")->GetValueAsUnsigned(0);
     addr_t access_type = return_value_sp->GetValueForExpressionPath(".access_type")->GetValueAsUnsigned(0);
     addr_t access_size = return_value_sp->GetValueForExpressionPath(".access_size")->GetValueAsUnsigned(0);
@@ -192,8 +194,10 @@ AddressSanitizerRuntime::RetrieveReportData()
     dict->AddStringItem("instrumentation_class", "AddressSanitizer");
     dict->AddStringItem("stop_type", "fatal_error");
     dict->AddIntegerItem("pc", pc);
+    /* commented out because rdar://problem/18533301
     dict->AddIntegerItem("bp", bp);
     dict->AddIntegerItem("sp", sp);
+    */
     dict->AddIntegerItem("address", address);
     dict->AddIntegerItem("access_type", access_type);
     dict->AddIntegerItem("access_size", access_size);
