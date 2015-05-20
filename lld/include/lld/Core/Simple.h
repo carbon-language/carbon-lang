@@ -23,6 +23,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include <atomic>
 
 namespace lld {
 
@@ -206,7 +207,7 @@ namespace lld {
 class SimpleDefinedAtom : public DefinedAtom {
 public:
   explicit SimpleDefinedAtom(const File &f) : _file(f) {
-    static uint32_t lastOrdinal = 0;
+    static std::atomic<uint32_t> lastOrdinal(0);
     _ordinal = lastOrdinal++;
     _references.setAllocator(&f.allocator());
   }
