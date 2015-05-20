@@ -859,11 +859,10 @@ static void setLinkageAndVisibilityForGV(llvm::GlobalValue *GV,
 void CodeGenModule::SetFunctionAttributes(GlobalDecl GD, llvm::Function *F,
                                           bool IsIncompleteFunction,
                                           bool IsThunk) {
-  if (unsigned IID = F->getIntrinsicID()) {
+  if (llvm::Intrinsic::ID IID = F->getIntrinsicID()) {
     // If this is an intrinsic function, set the function's attributes
     // to the intrinsic's attributes.
-    F->setAttributes(llvm::Intrinsic::getAttributes(getLLVMContext(),
-                                                    (llvm::Intrinsic::ID)IID));
+    F->setAttributes(llvm::Intrinsic::getAttributes(getLLVMContext(), IID));
     return;
   }
 
