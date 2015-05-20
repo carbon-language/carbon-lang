@@ -115,8 +115,8 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   assert(Base->getType()->isPointerTy() && "Access base should be a pointer");
   StringRef BaseName = Base->getName();
 
-  if (Base->getType() != SAI->getType())
-    Base = Builder.CreateBitCast(Base, SAI->getType(),
+  if (Base->getType() != SAI->getElementType()->getPointerTo())
+    Base = Builder.CreateBitCast(Base, SAI->getElementType()->getPointerTo(),
                                  "polly.access.cast." + BaseName);
 
   IndexOp = nullptr;

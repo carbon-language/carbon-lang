@@ -327,27 +327,31 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
     return isl_set_intersect(SLB, SUB);
 }
 
-ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *AccessType, isl_ctx *Ctx,
+ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
                              const SmallVector<const SCEV *, 4> &DimensionSizes)
-    : BasePtr(BasePtr), AccessType(AccessType), DimensionSizes(DimensionSizes) {
+    : BasePtr(BasePtr), ElementType(ElementType),
+      DimensionSizes(DimensionSizes) {
   const std::string BasePtrName = getIslCompatibleName("MemRef_", BasePtr, "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
 }
 
 ScopArrayInfo::~ScopArrayInfo() { isl_id_free(Id); }
 
+std::string ScopArrayInfo::getName() const { return isl_id_get_name(Id); }
+
+int ScopArrayInfo::getElemSizeInBytes() const {
+  return ElementType->getPrimitiveSizeInBits() / 8;
+}
+
 isl_id *ScopArrayInfo::getBasePtrId() const { return isl_id_copy(Id); }
 
 void ScopArrayInfo::dump() const { print(errs()); }
 
 void ScopArrayInfo::print(raw_ostream &OS) const {
-  OS << "ScopArrayInfo:\n";
-  OS << "  Base: " << *getBasePtr() << "\n";
-  OS << "  Type: " << *getType() << "\n";
-  OS << "  Dimension Sizes:\n";
+  OS.indent(8) << *getElementType() << " " << getName() << "[*]";
   for (unsigned u = 0; u < getNumberOfDimensions(); u++)
-    OS << "    " << u << ") " << *DimensionSizes[u] << "\n";
-  OS << "\n";
+    OS << "[" << *DimensionSizes[u] << "]";
+  OS << " // Element size " << getElemSizeInBytes() << "\n";
 }
 
 const ScopArrayInfo *
@@ -879,9 +883,9 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
     IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
 
-    Type *AccessType = getAccessInstType(AccessInst)->getPointerTo();
+    Type *ElementType = getAccessInstType(AccessInst);
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
-        Access.getBase(), AccessType, Access.Sizes);
+        Access.getBase(), ElementType, Access.Sizes);
 
     if (isApproximated && Access.isWrite())
       Access.setMayWrite();
@@ -1843,12 +1847,22 @@ void Scop::printStatements(raw_ostream &OS) const {
   OS.indent(4) << "}\n";
 }
 
+void Scop::printArrayInfo(raw_ostream &OS) const {
+  OS << "Arrays {\n";
+
+  for (auto Array : arrays())
+    Array.second->print(OS);
+
+  OS.indent(4) << "}\n";
+}
+
 void Scop::print(raw_ostream &OS) const {
   OS.indent(4) << "Function: " << getRegion().getEntry()->getParent()->getName()
                << "\n";
   OS.indent(4) << "Region: " << getNameStr() << "\n";
   OS.indent(4) << "Max Loop Depth:  " << getMaxLoopDepth() << "\n";
   printContext(OS.indent(4));
+  printArrayInfo(OS.indent(4));
   printAliasAssumptions(OS);
   printStatements(OS.indent(4));
 }

@@ -69,10 +69,10 @@ public:
   /// @brief Construct a ScopArrayInfo object.
   ///
   /// @param BasePtr        The array base pointer.
-  /// @param AccessType     The type used to access this array.
+  /// @param ElementType    The type of the elements stored in the array.
   /// @param IslCtx         The isl context used to create the base pointer id.
   /// @param DimensionSizes A vector containing the size of each dimension.
-  ScopArrayInfo(Value *BasePtr, Type *AccessType, isl_ctx *IslCtx,
+  ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
                 const SmallVector<const SCEV *, 4> &DimensionSizes);
 
   /// @brief Destructor to free the isl id of the base pointer.
@@ -90,8 +90,14 @@ public:
     return DimensionSizes[dim];
   }
 
-  /// @brief Return the type used to access this array in the SCoP.
-  Type *getType() const { return AccessType; }
+  /// @brief Get the type of the elements stored in this array.
+  Type *getElementType() const { return ElementType; }
+
+  /// @brief Get element size in bytes.
+  int getElemSizeInBytes() const;
+
+  /// @brief Get the name of this memory reference.
+  std::string getName() const;
 
   /// @brief Return the isl id for the base pointer.
   __isl_give isl_id *getBasePtrId() const;
@@ -113,8 +119,8 @@ private:
   /// @brief The base pointer.
   Value *BasePtr;
 
-  /// @brief The type used to access this array.
-  Type *AccessType;
+  /// @brief The type of the elements stored in this array.
+  Type *ElementType;
 
   /// @brief The isl id for the base pointer.
   isl_id *Id;
@@ -838,6 +844,7 @@ private:
   ///
   ///{
   void printContext(raw_ostream &OS) const;
+  void printArrayInfo(raw_ostream &OS) const;
   void printStatements(raw_ostream &OS) const;
   void printAliasAssumptions(raw_ostream &OS) const;
   ///}
@@ -1006,8 +1013,10 @@ public:
   //@}
 
   /// @brief Return the (possibly new) ScopArrayInfo object for @p Access.
+  ///
+  /// @param ElementType The type of the elements stored in this array.
   const ScopArrayInfo *
-  getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
+  getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
                            const SmallVector<const SCEV *, 4> &Sizes);
 
   /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
