@@ -733,7 +733,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // outline the landing pad which encloses it.
   if (!isAsynchronousEHPersonality(Personality)) 
     std::sort(LPads.begin(), LPads.end(), 
-              [this](LandingPadInst* &L, LandingPadInst* &R) {
+              [this](LandingPadInst* const &L, LandingPadInst* const &R) {
                 return DT->dominates(R->getParent(), L->getParent());
               });
 
