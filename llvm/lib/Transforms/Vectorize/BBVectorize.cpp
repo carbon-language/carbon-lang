@@ -662,7 +662,7 @@ namespace {
       Function *F = I->getCalledFunction();
       if (!F) return false;
 
-      Intrinsic::ID IID = (Intrinsic::ID) F->getIntrinsicID();
+      Intrinsic::ID IID = F->getIntrinsicID();
       if (!IID) return false;
 
       switch(IID) {
@@ -1098,7 +1098,7 @@ namespace {
     CallInst *CI = dyn_cast<CallInst>(I);
     Function *FI;
     if (CI && (FI = CI->getCalledFunction())) {
-      Intrinsic::ID IID = (Intrinsic::ID) FI->getIntrinsicID();
+      Intrinsic::ID IID = FI->getIntrinsicID();
       if (IID == Intrinsic::powi || IID == Intrinsic::ctlz ||
           IID == Intrinsic::cttz) {
         Value *A1I = CI->getArgOperand(1),
@@ -2770,7 +2770,7 @@ namespace {
         continue;
       } else if (isa<CallInst>(I)) {
         Function *F = cast<CallInst>(I)->getCalledFunction();
-        Intrinsic::ID IID = (Intrinsic::ID) F->getIntrinsicID();
+        Intrinsic::ID IID = F->getIntrinsicID();
         if (o == NumOperands-1) {
           BasicBlock &BB = *I->getParent();
 

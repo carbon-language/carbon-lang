@@ -365,7 +365,7 @@ public:
       // function.
       NumArgs = F->arg_size();
 
-    if (Intrinsic::ID IID = (Intrinsic::ID)F->getIntrinsicID()) {
+    if (Intrinsic::ID IID = F->getIntrinsicID()) {
       FunctionType *FTy = F->getFunctionType();
       SmallVector<Type *, 8> ParamTys(FTy->param_begin(), FTy->param_end());
       return static_cast<T *>(this)

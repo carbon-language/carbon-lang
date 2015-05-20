@@ -3269,7 +3269,7 @@ bool AArch64FastISel::foldXALUIntrinsic(AArch64CC::CondCode &CC,
     std::swap(LHS, RHS);
 
   // Simplify multiplies.
-  unsigned IID = II->getIntrinsicID();
+  Intrinsic::ID IID = II->getIntrinsicID();
   switch (IID) {
   default:
     break;
@@ -3537,7 +3537,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
       std::swap(LHS, RHS);
 
     // Simplify multiplies.
-    unsigned IID = II->getIntrinsicID();
+    Intrinsic::ID IID = II->getIntrinsicID();
     switch (IID) {
     default:
       break;

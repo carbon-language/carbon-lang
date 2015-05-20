@@ -259,7 +259,7 @@ private:
   // Special helper function to delegate to CallInst subclass visitors.
   RetTy delegateCallInst(CallInst &I) {
     if (const Function *F = I.getCalledFunction()) {
-      switch ((Intrinsic::ID)F->getIntrinsicID()) {
+      switch (F->getIntrinsicID()) {
       default:                     DELEGATE(IntrinsicInst);
       case Intrinsic::dbg_declare: DELEGATE(DbgDeclareInst);
       case Intrinsic::dbg_value:   DELEGATE(DbgValueInst);

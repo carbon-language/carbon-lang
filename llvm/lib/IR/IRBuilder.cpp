@@ -235,13 +235,13 @@ CallInst *IRBuilderBase::CreateMaskedStore(Value *Val, Value *Ptr,
 
 /// Create a call to a Masked intrinsic, with given intrinsic Id,
 /// an array of operands - Ops, and one overloaded type - DataTy
-CallInst *IRBuilderBase::CreateMaskedIntrinsic(unsigned Id,
+CallInst *IRBuilderBase::CreateMaskedIntrinsic(Intrinsic::ID Id,
                                                ArrayRef<Value *> Ops,
                                                Type *DataTy,
                                                const Twine &Name) {
   Module *M = BB->getParent()->getParent();
   Type *OverloadedTypes[] = { DataTy };
-  Value *TheFn = Intrinsic::getDeclaration(M, (Intrinsic::ID)Id, OverloadedTypes);
+  Value *TheFn = Intrinsic::getDeclaration(M, Id, OverloadedTypes);
   return createCallHelper(TheFn, Ops, this, Name);
 }
 

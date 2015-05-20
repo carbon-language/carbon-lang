@@ -42,7 +42,7 @@ namespace llvm {
     /// getIntrinsicID - Return the intrinsic ID of this intrinsic.
     ///
     Intrinsic::ID getIntrinsicID() const {
-      return (Intrinsic::ID)getCalledFunction()->getIntrinsicID();
+      return getCalledFunction()->getIntrinsicID();
     }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:

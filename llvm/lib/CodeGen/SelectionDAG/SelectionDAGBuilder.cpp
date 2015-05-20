@@ -5450,7 +5450,7 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
             return;
         }
       }
-      if (unsigned IID = F->getIntrinsicID()) {
+      if (Intrinsic::ID IID = F->getIntrinsicID()) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)
           return;

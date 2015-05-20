@@ -2390,7 +2390,7 @@ void Verifier::visitCallInst(CallInst &CI) {
     verifyMustTailCall(CI);
 
   if (Function *F = CI.getCalledFunction())
-    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
+    if (Intrinsic::ID ID = F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
 }
 

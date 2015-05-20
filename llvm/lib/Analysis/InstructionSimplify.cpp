@@ -3587,9 +3587,9 @@ static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
   if (!F)
     return nullptr;
 
-  if (unsigned IID = F->getIntrinsicID())
+  if (Intrinsic::ID IID = F->getIntrinsicID())
     if (Value *Ret =
-        SimplifyIntrinsic((Intrinsic::ID) IID, ArgBegin, ArgEnd, Q, MaxRecurse))
+        SimplifyIntrinsic(IID, ArgBegin, ArgEnd, Q, MaxRecurse))
       return Ret;
 
   if (!canConstantFoldCallTo(F))

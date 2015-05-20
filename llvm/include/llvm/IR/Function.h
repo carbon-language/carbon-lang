@@ -144,7 +144,7 @@ public:
   /// zero to allow easy checking for whether a function is intrinsic or not.
   /// The particular intrinsic functions which correspond to this value are
   /// defined in llvm/Intrinsics.h.
-  unsigned getIntrinsicID() const LLVM_READONLY { return IntID; }
+  Intrinsic::ID getIntrinsicID() const LLVM_READONLY { return IntID; }
   bool isIntrinsic() const { return getName().startswith("llvm."); }
 
   /// \brief Recalculate the ID for this function if it is an Intrinsic defined

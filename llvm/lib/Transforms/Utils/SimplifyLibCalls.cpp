@@ -973,7 +973,7 @@ Value *LibCallSimplifier::optimizeUnaryDoubleFP(CallInst *CI, IRBuilder<> &B,
   // floor((double)floatval) -> (double)floorf(floatval)
   if (Callee->isIntrinsic()) {
     Module *M = CI->getParent()->getParent()->getParent();
-    Intrinsic::ID IID = (Intrinsic::ID) Callee->getIntrinsicID();
+    Intrinsic::ID IID = Callee->getIntrinsicID();
     Function *F = Intrinsic::getDeclaration(M, IID, B.getFloatTy());
     V = B.CreateCall(F, V);
   } else {
