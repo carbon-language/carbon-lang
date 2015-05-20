@@ -325,7 +325,7 @@ Init *DagRecTy::convertValue(UnOpInit *BO) {
     Init *L = BO->getOperand()->convertInitializerTo(this);
     if (!L) return nullptr;
     if (L != BO->getOperand())
-      return UnOpInit::get(UnOpInit::CAST, L, new DagRecTy);
+      return UnOpInit::get(UnOpInit::CAST, L, DagRecTy::get());
     return BO;
   }
   return nullptr;
@@ -337,7 +337,7 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
     Init *R = BO->getRHS()->convertInitializerTo(this);
     if (!L || !R) return nullptr;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::get(BinOpInit::CONCAT, L, R, new DagRecTy);
+      return BinOpInit::get(BinOpInit::CONCAT, L, R, DagRecTy::get());
     return BO;
   }
   return nullptr;
