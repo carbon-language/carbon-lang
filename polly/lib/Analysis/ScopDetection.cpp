@@ -740,9 +740,6 @@ Region *ScopDetection::expandRegion(Region &R) {
       if (!allBlocksValid(Context) || Context.Log.hasErrors())
         break;
 
-      if (Context.Log.hasErrors())
-        break;
-
       // Delete unnecessary regions (allocated by getExpandedRegion)
       if (LastValidRegion)
         delete LastValidRegion;
