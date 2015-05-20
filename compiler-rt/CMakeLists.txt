@@ -38,6 +38,12 @@ else()
   if(POLICY CMP0022)
     cmake_policy(SET CMP0022 NEW) # automatic when 2.8.12 is required
   endif()
+  # PR23595: We use add_custom_command with the same MAIN_DEPENDENCY source file
+  # multiple times to compile for multiple architectures. CMake 3.3+ will error
+  # on this because it breaks some generators, but it hasn't been a problem yet.
+  if(POLICY CMP0057)
+    cmake_policy(SET CMP0057 OLD)
+  endif()
 endif()
 
 # Top level target used to build all compiler-rt libraries.

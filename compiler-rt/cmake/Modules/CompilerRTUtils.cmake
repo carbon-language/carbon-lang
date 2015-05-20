@@ -52,7 +52,7 @@ endmacro()
 
 macro(append_have_file_definition filename varname list)
   check_include_file("${filename}" "${varname}")
-  if (NOT "${varname}")
+  if (NOT ${varname})
     set("${varname}" 0)
   endif()
   list(APPEND ${list} "${varname}=${${varname}}")
