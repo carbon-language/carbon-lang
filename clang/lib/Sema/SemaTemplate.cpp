@@ -1310,6 +1310,9 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       // Merge default arguments for template type parameters.
       TemplateTypeParmDecl *OldTypeParm
           = OldParams? cast<TemplateTypeParmDecl>(*OldParam) : nullptr;
+      // FIXME: There might be a visible declaration of this template parameter.
+      if (OldTypeParm && !LookupResult::isVisible(*this, OldTypeParm))
+        OldTypeParm = nullptr;
 
       if (NewTypeParm->isParameterPack()) {
         assert(!NewTypeParm->hasDefaultArgument() &&

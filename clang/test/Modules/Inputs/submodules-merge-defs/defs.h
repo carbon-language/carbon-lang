@@ -43,3 +43,5 @@ namespace G {
   typedef enum { i, j } k;
   typedef enum {} l;
 }
+
+template<typename T = int> int H(int a = 1);

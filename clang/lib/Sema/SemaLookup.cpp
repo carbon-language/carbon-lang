@@ -1304,7 +1304,12 @@ bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
   DeclContext *DC = D->getLexicalDeclContext();
   if (!D->isModulePrivate() &&
       DC && !DC->isFileContext() && !isa<LinkageSpecDecl>(DC)) {
-    if (SemaRef.hasVisibleDefinition(cast<NamedDecl>(DC))) {
+    // For a parameter, check whether our current template declaration's
+    // lexical context is visible, not whether there's some other visible
+    // definition of it, because parameters aren't "within" the definition.
+    if ((D->isTemplateParameter() || isa<ParmVarDecl>(D))
+            ? isVisible(SemaRef, cast<NamedDecl>(DC))
+            : SemaRef.hasVisibleDefinition(cast<NamedDecl>(DC))) {
       if (SemaRef.ActiveTemplateInstantiations.empty() &&
           // FIXME: Do something better in this case.
           !SemaRef.getLangOpts().ModulesLocalVisibility) {
