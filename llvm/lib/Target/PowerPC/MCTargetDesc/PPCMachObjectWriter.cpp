@@ -324,9 +324,9 @@ void PPCMachObjectWriter::RecordPPCRelocation(
 
   // this doesn't seem right for RIT_PPC_BR24
   // Get the symbol data, if any.
-  const MCSymbolData *SD = nullptr;
+  const MCSymbol *A = nullptr;
   if (Target.getSymA())
-    SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+    A = &Target.getSymA()->getSymbol();
 
   // See <reloc.h>.
   const uint32_t FixupOffset = getFixupOffset(Layout, Fragment, Fixup);
@@ -344,9 +344,9 @@ void PPCMachObjectWriter::RecordPPCRelocation(
     // the above line stolen from ARM, not sure
   } else {
     // Resolve constant variables.
-    if (SD->getSymbol().isVariable()) {
+    if (A->isVariable()) {
       int64_t Res;
-      if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
+      if (A->getVariableValue()->EvaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;
@@ -354,17 +354,16 @@ void PPCMachObjectWriter::RecordPPCRelocation(
     }
 
     // Check whether we need an external or internal relocation.
-    if (Writer->doesSymbolRequireExternRelocation(SD)) {
-      RelSymbol = &SD->getSymbol();
+    if (Writer->doesSymbolRequireExternRelocation(*A)) {
+      RelSymbol = A;
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
-      if (!SD->getSymbol().isUndefined())
-        FixedValue -= Layout.getSymbolOffset(SD->getSymbol());
+      if (!A->isUndefined())
+        FixedValue -= Layout.getSymbolOffset(*A);
     } else {
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD =
-          Asm.getSectionData(SD->getSymbol().getSection());
+      const MCSectionData &SymSD = Asm.getSectionData(A->getSection());
       Index = SymSD.getOrdinal() + 1;
       FixedValue += Writer->getSectionAddress(&SymSD);
     }

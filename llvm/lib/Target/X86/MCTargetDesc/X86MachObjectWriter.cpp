@@ -504,9 +504,9 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   }
 
   // Get the symbol data, if any.
-  const MCSymbolData *SD = nullptr;
+  const MCSymbol *A = nullptr;
   if (Target.getSymA())
-    SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+    A = &Target.getSymA()->getSymbol();
 
   // If this is an internal relocation with an offset, it also needs a scattered
   // relocation entry.
@@ -516,9 +516,9 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // Try to record the scattered relocation if needed. Fall back to non
   // scattered if necessary (see comments in RecordScatteredRelocation()
   // for details).
-  if (Offset && SD && !Writer->doesSymbolRequireExternRelocation(SD) &&
-      RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
-                                Target, Log2Size, FixedValue))
+  if (Offset && A && !Writer->doesSymbolRequireExternRelocation(*A) &&
+      RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
+                                Log2Size, FixedValue))
     return;
 
   // See <reloc.h>.
@@ -535,27 +535,26 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
     Type = MachO::GENERIC_RELOC_VANILLA;
   } else {
     // Resolve constant variables.
-    if (SD->getSymbol().isVariable()) {
+    if (A->isVariable()) {
       int64_t Res;
-      if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
-            Res, Layout, Writer->getSectionAddressMap())) {
+      if (A->getVariableValue()->EvaluateAsAbsolute(
+              Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;
       }
     }
 
     // Check whether we need an external or internal relocation.
-    if (Writer->doesSymbolRequireExternRelocation(SD)) {
-      RelSymbol = &SD->getSymbol();
+    if (Writer->doesSymbolRequireExternRelocation(*A)) {
+      RelSymbol = A;
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
-      if (!SD->getSymbol().isUndefined())
-        FixedValue -= Layout.getSymbolOffset(SD->getSymbol());
+      if (!A->isUndefined())
+        FixedValue -= Layout.getSymbolOffset(*A);
     } else {
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD = Asm.getSectionData(
-        SD->getSymbol().getSection());
+      const MCSectionData &SymSD = Asm.getSectionData(A->getSection());
       Index = SymSD.getOrdinal() + 1;
       FixedValue += Writer->getSectionAddress(&SymSD);
     }

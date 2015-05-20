@@ -81,7 +81,7 @@ class MachObjectWriter : public MCObjectWriter {
   /// MachSymbolData - Helper struct for containing some precomputed information
   /// on symbols.
   struct MachSymbolData {
-    MCSymbolData *SymbolData;
+    const MCSymbol *Symbol;
     uint64_t StringIndex;
     uint8_t SectionIndex;
 
@@ -152,7 +152,7 @@ public:
   uint64_t getPaddingSize(const MCSectionData *SD,
                           const MCAsmLayout &Layout) const;
 
-  bool doesSymbolRequireExternRelocation(const MCSymbolData *SD);
+  bool doesSymbolRequireExternRelocation(const MCSymbol &S);
 
   /// @}
 
