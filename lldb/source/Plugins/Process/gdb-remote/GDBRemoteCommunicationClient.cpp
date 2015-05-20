@@ -2694,6 +2694,9 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &mat
             }
         }
         StringExtractorGDBRemote response;
+        // Increase timeout as the first qfProcessInfo packet takes a long time
+        // on Android. The value of 1min was arrived at empirically.
+        GDBRemoteCommunication::ScopedTimeout timeout (*this, 60);
         if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success)
         {
             do
