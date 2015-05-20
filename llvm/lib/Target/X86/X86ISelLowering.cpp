@@ -11289,7 +11289,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
   if (Subtarget->isTargetELF()) {
     TLSModel::Model model = DAG.getTarget().getTLSModel(GV);
-
     switch (model) {
       case TLSModel::GeneralDynamic:
         if (Subtarget->is64Bit())
@@ -11388,21 +11387,27 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
         DAG.getLoad(getPointerTy(), dl, Chain, TlsArray,
                     MachinePointerInfo(Ptr), false, false, false, 0);
 
-    // Load the _tls_index variable
-    SDValue IDX = DAG.getExternalSymbol("_tls_index", getPointerTy());
-    if (Subtarget->is64Bit())
-      IDX = DAG.getExtLoad(ISD::ZEXTLOAD, dl, getPointerTy(), Chain,
-                           IDX, MachinePointerInfo(), MVT::i32,
-                           false, false, false, 0);
-    else
-      IDX = DAG.getLoad(getPointerTy(), dl, Chain, IDX, MachinePointerInfo(),
-                        false, false, false, 0);
+    SDValue res;
+    if (GV->getThreadLocalMode() == GlobalVariable::LocalExecTLSModel) {
+      res = ThreadPointer;
+    } else {
+      // Load the _tls_index variable
+      SDValue IDX = DAG.getExternalSymbol("_tls_index", getPointerTy());
+      if (Subtarget->is64Bit())
+        IDX = DAG.getExtLoad(ISD::ZEXTLOAD, dl, getPointerTy(), Chain, IDX,
+                             MachinePointerInfo(), MVT::i32, false, false,
+                             false, 0);
+      else
+        IDX = DAG.getLoad(getPointerTy(), dl, Chain, IDX, MachinePointerInfo(),
+                          false, false, false, 0);
 
-    SDValue Scale = DAG.getConstant(Log2_64_Ceil(TD->getPointerSize()), dl,
-                                    getPointerTy());
-    IDX = DAG.getNode(ISD::SHL, dl, getPointerTy(), IDX, Scale);
+      SDValue Scale = DAG.getConstant(Log2_64_Ceil(TD->getPointerSize()), dl,
+                                      getPointerTy());
+      IDX = DAG.getNode(ISD::SHL, dl, getPointerTy(), IDX, Scale);
 
-    SDValue res = DAG.getNode(ISD::ADD, dl, getPointerTy(), ThreadPointer, IDX);
+      res = DAG.getNode(ISD::ADD, dl, getPointerTy(), ThreadPointer, IDX);
+    }
+
     res = DAG.getLoad(getPointerTy(), dl, Chain, res, MachinePointerInfo(),
                       false, false, false, 0);
 
