@@ -1366,6 +1366,10 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CurGD.getDecl());
   CXXDtorType DtorType = CurGD.getDtorType();
 
+  Stmt *Body = Dtor->getBody();
+  if (Body)
+    incrementProfileCounter(Body);
+
   // The call to operator delete in a deleting destructor happens
   // outside of the function-try-block, which means it's always
   // possible to delegate the destructor body to the complete
@@ -1377,8 +1381,6 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     PopCleanupBlock();
     return;
   }
-
-  Stmt *Body = Dtor->getBody();
 
   // If the body is a function-try-block, enter the try before
   // anything else.
@@ -1417,8 +1419,6 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
 
   case Dtor_Base:
     assert(Body);
-
-    incrementProfileCounter(Body);
 
     // Enter the cleanup scopes for fields and non-virtual bases.
     EnterDtorCleanups(Dtor, Dtor_Base);
