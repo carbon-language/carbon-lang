@@ -448,6 +448,8 @@ public:
 
   /// Warn if RegIndex is the same as the current AT.
   void warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc);
+
+  void warnIfNoMacro(SMLoc Loc);
 };
 }
 
@@ -1759,8 +1761,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     tmpInst.addOperand(MCOperand::createImm(ImmValue));
     Instructions.push_back(tmpInst);
   } else if (isInt<32>(ImmValue) || isUInt<32>(ImmValue)) {
-    if (!AssemblerOptions.back()->isMacro())
-      Warning(IDLoc, "macro instruction expanded into multiple instructions");
+    warnIfNoMacro(IDLoc);
 
     // For all other values which are representable as a 32-bit integer:
     // li d,j => lui d,hi16(j)
@@ -1795,8 +1796,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
-    if (!AssemblerOptions.back()->isMacro())
-      Warning(IDLoc, "macro instruction expanded into multiple instructions");
+    warnIfNoMacro(IDLoc);
 
     //            <-------  lo32 ------>
     // <-------  hi32 ------>
@@ -1830,8 +1830,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       Error(IDLoc, "instruction requires a 32-bit immediate");
       return true;
     }
-    if (!AssemblerOptions.back()->isMacro())
-      Warning(IDLoc, "macro instruction expanded into multiple instructions");
+    warnIfNoMacro(IDLoc);
 
     // <-------  hi32 ------> <-------  lo32 ------>
     // <- hi16 ->                        <- lo16 ->
@@ -1934,8 +1933,7 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
 void MipsAsmParser::expandLoadAddressSym(
     const MCOperand &DstRegOp, const MCOperand &SymOp, bool Is32BitSym,
     SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
-  if (!AssemblerOptions.back()->isMacro())
-    Warning(IDLoc, "macro instruction expanded into multiple instructions");
+  warnIfNoMacro(IDLoc);
 
   if (Is32BitSym && isABI_N64())
     Warning(IDLoc, "instruction loads the 32-bit address of a 64-bit symbol");
@@ -2254,6 +2252,11 @@ void MipsAsmParser::warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc) {
   if (RegIndex != 0 && AssemblerOptions.back()->getATRegIndex() == RegIndex)
     Warning(Loc, "used $at (currently $" + Twine(RegIndex) +
                      ") without \".set noat\"");
+}
+
+void MipsAsmParser::warnIfNoMacro(SMLoc Loc) {
+  if (!AssemblerOptions.back()->isMacro())
+    Warning(Loc, "macro instruction expanded into multiple instructions");
 }
 
 void
