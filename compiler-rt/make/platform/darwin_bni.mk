@@ -32,7 +32,7 @@ endif
 CFLAGS := -Wall -Os -fomit-frame-pointer -g $(DEPLOYMENT_FLAGS)
 CFLAGS.Static := $(CFLAGS) -static  
 DYLIB_FLAGS := $(DEPLOYMENT_FLAGS) \
-		-Xarch_arm -Wl,-alias_list,$(SRCROOT)/lib/arm/softfloat-alias.list
+		-Xarch_arm -Wl,-alias_list,$(SRCROOT)/lib/builtins/arm/softfloat-alias.list
 
 VISIBILITY_HIDDEN := 0
 VISIBILITY_HIDDEN.Static  := 1
