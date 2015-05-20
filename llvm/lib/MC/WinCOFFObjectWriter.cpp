@@ -70,7 +70,7 @@ public:
   COFFSection     *Section;
   int              Relocations;
 
-  MCSymbolData const *MCData;
+  const MCSymbol *MC;
 
   COFFSymbol(StringRef name);
   void set_name_offset(uint32_t Offset);
@@ -147,7 +147,7 @@ public:
   object_t *createCOFFEntity(StringRef Name, list_t &List);
 
   void DefineSection(MCSectionData const &SectionData);
-  void DefineSymbol(MCSymbolData const &SymbolData, MCAssembler &Assembler,
+  void DefineSymbol(const MCSymbol &Symbol, MCAssembler &Assembler,
                     const MCAsmLayout &Layout);
 
   void SetSymbolName(COFFSymbol &S);
@@ -195,11 +195,8 @@ static inline void write_uint32_le(void *Data, uint32_t Value) {
 // Symbol class implementation
 
 COFFSymbol::COFFSymbol(StringRef name)
-  : Name(name.begin(), name.end())
-  , Other(nullptr)
-  , Section(nullptr)
-  , Relocations(0)
-  , MCData(nullptr) {
+    : Name(name.begin(), name.end()), Other(nullptr), Section(nullptr),
+      Relocations(0), MC(nullptr) {
   memset(&Data, 0, sizeof(Data));
 }
 
@@ -232,8 +229,8 @@ bool COFFSymbol::should_keep() const {
     return true;
 
   // if its temporary, drop it
-  if (MCData && MCData->getSymbol().isTemporary())
-      return false;
+  if (MC && MC->isTemporary())
+    return false;
 
   // otherwise, keep it
   return true;
@@ -349,13 +346,14 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   SectionMap[&SectionData.getSection()] = coff_section;
 }
 
-static uint64_t getSymbolValue(const MCSymbolData &Data,
+static uint64_t getSymbolValue(const MCSymbol &Symbol,
                                const MCAsmLayout &Layout) {
+  const MCSymbolData &Data = Symbol.getData();
   if (Data.isCommon() && Data.isExternal())
     return Data.getCommonSize();
 
   uint64_t Res;
-  if (!Layout.getSymbolOffset(Data.getSymbol(), Res))
+  if (!Layout.getSymbolOffset(Symbol, Res))
     return 0;
 
   return Res;
@@ -363,14 +361,13 @@ static uint64_t getSymbolValue(const MCSymbolData &Data,
 
 /// This function takes a symbol data object from the assembler
 /// and creates the associated COFF symbol staging object.
-void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
+void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
                                        MCAssembler &Assembler,
                                        const MCAsmLayout &Layout) {
-  MCSymbol const &Symbol = SymbolData.getSymbol();
   COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
   SymbolMap[&Symbol] = coff_symbol;
 
-  if (SymbolData.getFlags() & COFF::SF_WeakExternal) {
+  if (Symbol.getData().getFlags() & COFF::SF_WeakExternal) {
     coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
 
     if (Symbol.isVariable()) {
@@ -399,20 +396,19 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
     coff_symbol->Aux[0].Aux.WeakExternal.Characteristics =
       COFF::IMAGE_WEAK_EXTERN_SEARCH_LIBRARY;
 
-    coff_symbol->MCData = &SymbolData;
+    coff_symbol->MC = &Symbol;
   } else {
     const MCSymbolData &ResSymData = Assembler.getSymbolData(Symbol);
     const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
-    coff_symbol->Data.Value = getSymbolValue(ResSymData, Layout);
+    coff_symbol->Data.Value = getSymbolValue(Symbol, Layout);
 
     coff_symbol->Data.Type         = (ResSymData.getFlags() & 0x0000FFFF) >>  0;
     coff_symbol->Data.StorageClass = (ResSymData.getFlags() & 0x00FF0000) >> 16;
 
     // If no storage class was specified in the streamer, define it here.
     if (coff_symbol->Data.StorageClass == 0) {
-      bool IsExternal =
-          ResSymData.isExternal() ||
-          (!ResSymData.getFragment() && !ResSymData.getSymbol().isVariable());
+      bool IsExternal = ResSymData.isExternal() ||
+                        (!ResSymData.getFragment() && !Symbol.isVariable());
 
       coff_symbol->Data.StorageClass = IsExternal
                                            ? COFF::IMAGE_SYM_CLASS_EXTERNAL
@@ -434,7 +430,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
       }
     }
 
-    coff_symbol->MCData = &ResSymData;
+    coff_symbol->MC = &Symbol;
   }
 }
 
@@ -644,7 +640,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 
   for (const MCSymbol &Symbol : Asm.symbols())
     if (ExportSymbol(Symbol, Asm))
-      DefineSymbol(Symbol.getData(), Asm, Layout);
+      DefineSymbol(Symbol, Asm, Layout);
 }
 
 bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
@@ -698,11 +694,11 @@ void WinCOFFObjectWriter::RecordRelocation(
   // Mark this symbol as requiring an entry in the symbol table.
   assert(SectionMap.find(&SectionData->getSection()) != SectionMap.end() &&
          "Section must already have been defined in ExecutePostLayoutBinding!");
-  assert(SymbolMap.find(&A_SD.getSymbol()) != SymbolMap.end() &&
+  assert(SymbolMap.find(&A) != SymbolMap.end() &&
          "Symbol must already have been defined in ExecutePostLayoutBinding!");
 
   COFFSection *coff_section = SectionMap[&SectionData->getSection()];
-  COFFSymbol *coff_symbol = SymbolMap[&A_SD.getSymbol()];
+  COFFSymbol *coff_symbol = SymbolMap[&A];
   const MCSymbolRefExpr *SymB = Target.getSymB();
   bool CrossSection = false;
 
@@ -750,10 +746,11 @@ void WinCOFFObjectWriter::RecordRelocation(
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
 
   // Turn relocations for temporary symbols into section relocations.
-  if (coff_symbol->MCData->getSymbol().isTemporary() || CrossSection) {
+  if (coff_symbol->MC->isTemporary() || CrossSection) {
     Reloc.Symb = coff_symbol->Section->Symbol;
-    FixedValue += Layout.getFragmentOffset(coff_symbol->MCData->getFragment()) +
-                  coff_symbol->MCData->getOffset();
+    FixedValue +=
+        Layout.getFragmentOffset(coff_symbol->MC->getData().getFragment()) +
+        coff_symbol->MC->getData().getOffset();
   } else
     Reloc.Symb = coff_symbol;
 
