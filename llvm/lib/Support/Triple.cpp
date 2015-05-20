@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetParser.h"
 #include <cstring>
 using namespace llvm;
 
@@ -1080,9 +1081,11 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
 
+  // Some defaults are forced.
   switch (getOS()) {
   case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
+    // FIXME: This doesn't work on BE/thumb variants.
     if (MArch == "armv6")
       return "arm1176jzf-s";
     break;
@@ -1093,77 +1096,38 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
     break;
   }
 
-  // MArch is expected to be of the form (arm|thumb)?(eb)?(v.+)?(eb)?
-  // Only the (v.+) part is relevant for determining the CPU, as it determines
-  // the architecture version, so we first remove the surrounding parts.
-  // (ep9312|iwmmxt|xscale)(eb)? is also permitted, so we have to be a bit
-  // careful when removing the leading (arm|thumb)?(eb)? as we don't want to
-  // permit things like armep9312.
-  const char *result = nullptr;
-  size_t offset = StringRef::npos;
-  if (MArch.startswith("arm"))
-    offset = 3;
-  else if (MArch.startswith("thumb"))
-    offset = 5;
-  if (offset != StringRef::npos && MArch.substr(offset, 2) == "eb")
-    offset += 2;
-  else if (MArch.endswith("eb"))
-    MArch = MArch.substr(0, MArch.size() - 2);
-  if (offset != StringRef::npos && (offset == MArch.size() || MArch[offset] == 'v'))
-    MArch = MArch.substr(offset);
+  MArch = ARMTargetParser::getCanonicalArchName(MArch);
+  if (MArch.empty())
+    return nullptr;
 
-  if (MArch == "") {
-    // If no specific architecture version is requested, return the minimum CPU
-    // required by the OS and environment.
-    switch (getOS()) {
-    case llvm::Triple::NetBSD:
-      switch (getEnvironment()) {
-      case llvm::Triple::GNUEABIHF:
-      case llvm::Triple::GNUEABI:
-      case llvm::Triple::EABIHF:
-      case llvm::Triple::EABI:
-        return "arm926ej-s";
-      default:
-        return "strongarm";
-      }
-    case llvm::Triple::NaCl:
-      return "cortex-a8";
+  const char *CPU = ARMTargetParser::getDefaultCPU(MArch);
+  if (CPU)
+    return CPU;
+
+  // If no specific architecture version is requested, return the minimum CPU
+  // required by the OS and environment.
+  switch (getOS()) {
+  case llvm::Triple::NetBSD:
+    switch (getEnvironment()) {
+    case llvm::Triple::GNUEABIHF:
+    case llvm::Triple::GNUEABI:
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::EABI:
+      return "arm926ej-s";
     default:
-      switch (getEnvironment()) {
-      case llvm::Triple::EABIHF:
-      case llvm::Triple::GNUEABIHF:
-        return "arm1176jzf-s";
-      default:
-        return "arm7tdmi";
-      }
+      return "strongarm";
     }
-  } else {
-    result = llvm::StringSwitch<const char *>(MArch)
-      .Cases("v2", "v2a", "arm2")
-      .Case("v3", "arm6")
-      .Case("v3m", "arm7m")
-      .Case("v4", "strongarm")
-      .Case("v4t", "arm7tdmi")
-      .Cases("v5", "v5t", "arm10tdmi")
-      .Cases("v5e", "v5te", "arm1022e")
-      .Case("v5tej", "arm926ej-s")
-      .Case("v6", "arm1136jf-s")
-      .Case("v6j", "arm1136j-s")
-      .Cases("v6k", "v6z", "v6zk", "arm1176jzf-s")
-      .Case("v6t2", "arm1156t2-s")
-      .Cases("v6m", "v6-m", "v6sm", "v6s-m", "cortex-m0")
-      .Cases("v7", "v7a", "v7-a", "v7l", "v7-l", "cortex-a8")
-      .Cases("v7s", "v7-s", "swift")
-      .Cases("v7r", "v7-r", "cortex-r4")
-      .Cases("v7m", "v7-m", "cortex-m3")
-      .Cases("v7em", "v7e-m", "cortex-m4")
-      .Cases("v8", "v8a", "v8-a", "cortex-a53")
-      .Cases("v8.1a", "v8.1-a", "generic")
-      .Case("ep9312", "ep9312")
-      .Case("iwmmxt", "iwmmxt")
-      .Case("xscale", "xscale")
-      .Default(nullptr);
+  case llvm::Triple::NaCl:
+    return "cortex-a8";
+  default:
+    switch (getEnvironment()) {
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::GNUEABIHF:
+      return "arm1176jzf-s";
+    default:
+      return "arm7tdmi";
+    }
   }
 
-  return result;
+  llvm_unreachable("invalid arch name");
 }

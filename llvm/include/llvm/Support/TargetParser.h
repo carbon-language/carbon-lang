@@ -69,8 +69,16 @@ namespace ARM {
     AK_ARMV7M,
     AK_ARMV8A,
     AK_ARMV8_1A,
+    // Non-standard Arch names.
     AK_IWMMXT,
     AK_IWMMXT2,
+    AK_XSCALE,
+    AK_ARMV5E,
+    AK_ARMV5TEJ,
+    AK_ARMV6SM,
+    AK_ARMV7L,
+    AK_ARMV7S,
+    AK_ARMV7EM,
     AK_LAST
   };
 
@@ -95,17 +103,21 @@ class ARMTargetParser {
   static StringRef getArchSynonym(StringRef Arch);
 
 public:
+  static StringRef getCanonicalArchName(StringRef Arch);
+
   // Information by ID
-  static const char * getFPUName(unsigned ID);
-  static const char * getArchName(unsigned ID);
-  static unsigned getArchDefaultCPUArch(unsigned ID);
-  static const char * getArchDefaultCPUName(unsigned ID);
-  static const char * getArchExtName(unsigned ID);
+  static const char * getFPUName(unsigned FPUKind);
+  static const char * getArchName(unsigned ArchKind);
+  static unsigned getArchDefaultCPUArch(unsigned ArchKind);
+  static const char * getArchDefaultCPUName(unsigned ArchKind);
+  static const char * getArchExtName(unsigned ArchExtKind);
+  static const char * getDefaultCPU(StringRef Arch);
 
   // Parser
   static unsigned parseFPU(StringRef FPU);
   static unsigned parseArch(StringRef Arch);
   static unsigned parseArchExt(StringRef ArchExt);
+  static unsigned parseCPUArch(StringRef CPU);
 };
 
 } // namespace llvm
