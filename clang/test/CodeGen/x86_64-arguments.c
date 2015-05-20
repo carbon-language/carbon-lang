@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s| FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx | FileCheck %s -check-prefix=AVX
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
+// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=SSE
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx | \
+// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX
 #include <stdarg.h>
 
 // CHECK-LABEL: define signext i8 @f0()
@@ -288,8 +290,8 @@ v2i32 f36(v2i32 arg) { return arg; }
 
 // AVX: declare void @f38(<8 x float>)
 // AVX: declare void @f37(<8 x float>)
-// CHECK: declare void @f38(%struct.s256* byval align 32)
-// CHECK: declare void @f37(<8 x float>* byval align 32)
+// SSE: declare void @f38(%struct.s256* byval align 32)
+// SSE: declare void @f37(<8 x float>* byval align 32)
 typedef float __m256 __attribute__ ((__vector_size__ (32)));
 typedef struct {
   __m256 m;
