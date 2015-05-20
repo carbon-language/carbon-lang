@@ -191,7 +191,7 @@ false:
 
 ; SKX-LABEL: test7
 ; SKX: vpmovw2m
-; SKX: kmovw   %eax, %k1
+; SKX: kmovb   %eax, %k1
 ; SKX: korb
 
 define void @test7(<8 x i1> %mask)  {
@@ -282,3 +282,114 @@ define <4 x i1> @test11(<4 x i1>%a, <4 x i1>%b, i32 %a1, i32 %b1) {
   ret <4 x i1>%c
 }
 
+; KNL-LABEL: test12
+; KNL: movl    %edi, %eax
+define i32 @test12(i32 %x, i32 %y)  {
+  %a = bitcast i16 21845 to <16 x i1>
+  %b = extractelement <16 x i1> %a, i32 0
+  %c = select i1 %b, i32 %x, i32 %y
+  ret i32 %c
+}
+
+; KNL-LABEL: test13
+; KNL: movl    %esi, %eax
+define i32 @test13(i32 %x, i32 %y)  {
+  %a = bitcast i16 21845 to <16 x i1>
+  %b = extractelement <16 x i1> %a, i32 3
+  %c = select i1 %b, i32 %x, i32 %y
+  ret i32 %c
+}
+
+; SKX-LABEL: test14
+; SKX: movb     $11, %al
+; SKX: kmovb    %eax, %k0
+; SKX: vpmovm2d %k0, %xmm0
+
+define <4 x i1> @test14()  {
+  %a = bitcast i16 21845 to <16 x i1>
+  %b = extractelement <16 x i1> %a, i32 2
+  %c = insertelement <4 x i1> <i1 true, i1 false, i1 false, i1 true>, i1 %b, i32 1
+  ret <4 x i1> %c
+}
+
+; KNL-LABEL: test15
+; KNL: cmovgw
+define <16 x i1> @test15(i32 %x, i32 %y)  {
+  %a = bitcast i16 21845 to <16 x i1>
+  %b = bitcast i16 1 to <16 x i1>
+  %mask = icmp sgt i32 %x, %y
+  %c = select i1 %mask, <16 x i1> %a, <16 x i1> %b
+  ret <16 x i1> %c
+}
+
+; SKX-LABEL: test16
+; SKX: kxnorw  %k1, %k1, %k1
+; SKX: kshiftrw        $15, %k1, %k1
+; SKX: kshiftlq        $5, %k1, %k1
+; SKX: korq    %k1, %k0, %k0
+; SKX: vpmovm2b        %k0, %zmm0
+define <64 x i8> @test16(i64 %x) {
+  %a = bitcast i64 %x to <64 x i1>
+  %b = insertelement <64 x i1>%a, i1 true, i32 5
+  %c = sext <64 x i1>%b to <64 x i8>
+  ret <64 x i8>%c
+}
+
+; SKX-LABEL: test17
+; SKX: setg    %al
+; SKX: andl    $1, %eax
+; SKX: kmovw   %eax, %k1
+; SKX: kshiftlq        $5, %k1, %k1
+; SKX: korq    %k1, %k0, %k0
+; SKX: vpmovm2b        %k0, %zmm0
+define <64 x i8> @test17(i64 %x, i32 %y, i32 %z) {
+  %a = bitcast i64 %x to <64 x i1>
+  %b = icmp sgt i32 %y, %z
+  %c = insertelement <64 x i1>%a, i1 %b, i32 5
+  %d = sext <64 x i1>%c to <64 x i8>
+  ret <64 x i8>%d
+}
+
+; KNL-LABEL: test18
+define <8 x i1> @test18(i8 %a, i16 %y) {
+  %b = bitcast i8 %a to <8 x i1>
+  %b1 = bitcast i16 %y to <16 x i1>
+  %el1 = extractelement <16 x i1>%b1, i32 8
+  %el2 = extractelement <16 x i1>%b1, i32 9
+  %c = insertelement <8 x i1>%b, i1 %el1, i32 7
+  %d = insertelement <8 x i1>%c, i1 %el2, i32 6
+  ret <8 x i1>%d
+}
+
+; KNL-LABEL: test19
+; KNL: movzbl  %dil, %eax
+; KNL: kmovw   %eax, %k0
+; KNL: kshiftlw        $13, %k0, %k0
+; KNL: kshiftrw        $15, %k0, %k0
+; KNL: kmovw   %k0, %eax
+; KNL: andl    $1, %eax
+; KNL: testb   %al, %al
+
+define <8 x i1> @test19(i8 %a) {
+  %b = bitcast i8 %a to <8 x i1>
+  %c = shufflevector < 8 x i1>%b, <8 x i1>undef, <8 x i32> <i32 undef, i32 2, i32 undef, i32 undef, i32 2, i32 undef, i32 2, i32 undef>
+  ret <8 x i1> %c
+}
+
+; KNL-LABEL: test20
+; KNL: movzbl  %dil, %eax
+; KNL: kmovw   %eax, %k0
+; KNL: kshiftlw        $13, %k0, %k1
+; KNL: kshiftrw        $15, %k1, %k1
+; KNL: kshiftlw        $12, %k0, %k0
+; KNL: kshiftrw        $15, %k0, %k0
+; KNL: kshiftlw        $4, %k0, %k0
+; KNL: kshiftlw        $1, %k1, %k2
+; KNL: korw    %k0, %k2, %k0
+; KNL: kshiftlw        $6, %k1, %k1
+; KNL: korw    %k1, %k0, %k1
+define <8 x i1> @test20(i8 %a, i16 %y) {
+  %b = bitcast i8 %a to <8 x i1>
+  %c = shufflevector < 8 x i1>%b, <8 x i1>undef, <8 x i32> <i32 undef, i32 2, i32 undef, i32 undef, i32 3, i32 undef, i32 2, i32 undef>
+  ret <8 x i1> %c
+}

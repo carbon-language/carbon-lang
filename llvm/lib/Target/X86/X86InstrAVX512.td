@@ -1855,7 +1855,9 @@ let Predicates = [HasAVX512] in {
   def : Pat<(store (i16 (bitconvert (v16i1 VK16:$src))), addr:$dst),
             (KMOVWmk addr:$dst, VK16:$src)>;
   def : Pat<(i1 (load addr:$src)),
-            (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK1)>;
+            (COPY_TO_REGCLASS (AND16ri (i16 (SUBREG_TO_REG (i32 0),
+                                              (MOV8rm addr:$src), sub_8bit)),
+                                (i16 1)), VK1)>;
   def : Pat<(v16i1 (bitconvert (i16 (load addr:$src)))),
             (KMOVWkm addr:$src)>;
 }
@@ -1920,13 +1922,13 @@ let Predicates = [HasAVX512, NoDQI] in {
   // GR from/to 8-bit mask without native support
   def : Pat<(v8i1 (bitconvert (i8 GR8:$src))),
             (COPY_TO_REGCLASS
-              (KMOVWkr (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit)),
-              VK8)>;
+             (KMOVWkr (MOVZX32rr8 GR8 :$src)), VK8)>;
   def : Pat<(i8 (bitconvert (v8i1 VK8:$src))),
             (EXTRACT_SUBREG
               (KMOVWrk (COPY_TO_REGCLASS VK8:$src, VK16)),
               sub_8bit)>;
 }
+
 let Predicates = [HasAVX512] in {
   def : Pat<(i1 (X86Vextract VK16:$src, (iPTR 0))),
             (COPY_TO_REGCLASS VK16:$src, VK1)>;

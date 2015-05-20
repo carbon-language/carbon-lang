@@ -50,8 +50,10 @@ define <16 x double> @select04(<16 x double> %a, <16 x double> %b) {
 }
 
 ; CHECK-LABEL: select05
-; CHECK: kmovw   %esi, %k0
-; CHECK-NEXT: kmovw   %edi, %k1
+; CHECK: movzbl  %sil, %eax
+; CHECK: kmovw   %eax, %k0
+; CHECK: movzbl  %dil, %eax
+; CHECK: kmovw   %eax, %k1
 ; CHECK-NEXT: korw    %k1, %k0, %k0
 ; CHECK-NEXT: kmovw   %k0, %eax
 define i8 @select05(i8 %a.0, i8 %m) {
@@ -63,8 +65,10 @@ define i8 @select05(i8 %a.0, i8 %m) {
 }
 
 ; CHECK-LABEL: select06
-; CHECK: kmovw   %esi, %k0
-; CHECK-NEXT: kmovw   %edi, %k1
+; CHECK: movzbl  %sil, %eax
+; CHECK: kmovw   %eax, %k0
+; CHECK: movzbl  %dil, %eax
+; CHECK: kmovw   %eax, %k1
 ; CHECK-NEXT: kandw    %k1, %k0, %k0
 ; CHECK-NEXT: kmovw   %k0, %eax
 define i8 @select06(i8 %a.0, i8 %m) {
@@ -76,9 +80,12 @@ define i8 @select06(i8 %a.0, i8 %m) {
 }
 
 ; CHECK-LABEL: select07
-; CHECK-DAG:  kmovw   %edx, %k0
-; CHECK-DAG:  kmovw   %edi, %k1
-; CHECK-DAG:  kmovw   %esi, %k2
+; CHECK-DAG: movzbl  %dl, %eax
+; CHECK-DAG: kmovw   %eax, %k0
+; CHECK-DAG: movzbl  %dil, %eax
+; CHECK-DAG: kmovw   %eax, %k1
+; CHECK-DAG: movzbl  %sil, %eax
+; CHECK-DAG: kmovw   %eax, %k2
 ; CHECK: kandw %k0, %k1, %k1
 ; CHECK-NEXT: knotw    %k0, %k0
 ; CHECK-NEXT: kandw    %k0, %k2, %k0
