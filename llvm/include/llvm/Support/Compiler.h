@@ -29,6 +29,10 @@
 # define __has_attribute(x) 0
 #endif
 
+#ifndef __has_cpp_attribute
+# define __has_cpp_attribute(x) 0
+#endif
+
 #ifndef __has_builtin
 # define __has_builtin(x) 0
 #endif
@@ -399,6 +403,14 @@
 // If threading is disabled entirely, this compiles to nothing and you get
 // a normal global variable.
 #define LLVM_THREAD_LOCAL
+#endif
+
+/// \macro LLVM_FALLTHROUGH
+/// \brief Marks an empty statement preceding a deliberate switch fallthrough.
+#if __has_cpp_attribute(clang::fallthrough)
+#define LLVM_FALLTHROUGH [[clang::fallthrough]]
+#else
+#define LLVM_FALLTHROUGH
 #endif
 
 #endif
