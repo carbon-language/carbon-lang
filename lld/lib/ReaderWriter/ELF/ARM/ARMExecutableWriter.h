@@ -17,6 +17,7 @@
 
 namespace {
 const char *gotSymbol = "_GLOBAL_OFFSET_TABLE_";
+const char *dynamicSymbol = "_DYNAMIC";
 }
 
 namespace lld {
@@ -53,6 +54,13 @@ ARMExecutableWriter::ARMExecutableWriter(ARMLinkingContext &ctx,
 void ARMExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter::createImplicitFiles(result);
+  // Add default atoms for ARM.
+  if (_ctx.isDynamic()) {
+    auto file = llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "ARM exec file");
+    file->addAbsoluteAtom(gotSymbol);
+    file->addAbsoluteAtom(dynamicSymbol);
+    result.push_back(std::move(file));
+  }
 }
 
 void ARMExecutableWriter::finalizeDefaultAtomValues() {
@@ -66,6 +74,13 @@ void ARMExecutableWriter::finalizeDefaultAtomValues() {
       gotAtom->_virtualAddr = gotSection->virtualAddr();
     else
       gotAtom->_virtualAddr = 0;
+  }
+
+  if (auto *dynamicAtom = _armLayout.findAbsoluteAtom(dynamicSymbol)) {
+    if (auto dynamicSection = _armLayout.findOutputSection(".dynamic"))
+      dynamicAtom->_virtualAddr = dynamicSection->virtualAddr();
+    else
+      dynamicAtom->_virtualAddr = 0;
   }
 
   // Set required by gcc libc __ehdr_start symbol with pointer to ELF header
