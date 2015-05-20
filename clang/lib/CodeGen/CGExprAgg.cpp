@@ -1447,7 +1447,34 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   if (alignment.isZero())
     alignment = TypeInfo.second;
 
-  // FIXME: Handle variable sized types.
+  llvm::Value *SizeVal = nullptr;
+  if (TypeInfo.first.isZero()) {
+    // But note that getTypeInfo returns 0 for a VLA.
+    if (auto *VAT = dyn_cast_or_null<VariableArrayType>(
+            getContext().getAsArrayType(Ty))) {
+      QualType BaseEltTy;
+      SizeVal = emitArrayLength(VAT, BaseEltTy, DestPtr);
+      TypeInfo = getContext().getTypeInfoDataSizeInChars(BaseEltTy);
+      std::pair<CharUnits, CharUnits> LastElementTypeInfo;
+      if (!isAssignment)
+        LastElementTypeInfo = getContext().getTypeInfoInChars(BaseEltTy);
+      assert(!TypeInfo.first.isZero());
+      SizeVal = Builder.CreateNUWMul(
+          SizeVal,
+          llvm::ConstantInt::get(SizeTy, TypeInfo.first.getQuantity()));
+      if (!isAssignment) {
+        SizeVal = Builder.CreateNUWSub(
+            SizeVal,
+            llvm::ConstantInt::get(SizeTy, TypeInfo.first.getQuantity()));
+        SizeVal = Builder.CreateNUWAdd(
+            SizeVal, llvm::ConstantInt::get(
+                         SizeTy, LastElementTypeInfo.first.getQuantity()));
+      }
+    }
+  }
+  if (!SizeVal) {
+    SizeVal = llvm::ConstantInt::get(SizeTy, TypeInfo.first.getQuantity());
+  }
 
   // FIXME: If we have a volatile struct, the optimizer can remove what might
   // appear to be `extra' memory ops:
@@ -1478,9 +1505,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   } else if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
     RecordDecl *Record = RecordTy->getDecl();
     if (Record->hasObjectMember()) {
-      CharUnits size = TypeInfo.first;
-      llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-      llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
       CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
                                                     SizeVal);
       return;
@@ -1489,10 +1513,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     QualType BaseType = getContext().getBaseElementType(Ty);
     if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
       if (RecordTy->getDecl()->hasObjectMember()) {
-        CharUnits size = TypeInfo.first;
-        llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-        llvm::Value *SizeVal = 
-          llvm::ConstantInt::get(SizeTy, size.getQuantity());
         CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
                                                       SizeVal);
         return;
@@ -1505,9 +1525,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // the optimizer wishes to expand it in to scalar memory operations.
   llvm::MDNode *TBAAStructTag = CGM.getTBAAStructInfo(Ty);
 
-  Builder.CreateMemCpy(DestPtr, SrcPtr,
-                       llvm::ConstantInt::get(IntPtrTy, 
-                                              TypeInfo.first.getQuantity()),
-                       alignment.getQuantity(), isVolatile,
-                       /*TBAATag=*/nullptr, TBAAStructTag);
+  Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal, alignment.getQuantity(),
+                       isVolatile, /*TBAATag=*/nullptr, TBAAStructTag);
 }

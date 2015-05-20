@@ -1286,7 +1286,8 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
   }
   // This is required for proper codegen.
   for (auto *Clause : Clauses) {
-    if (isOpenMPPrivate(Clause->getClauseKind())) {
+    if (isOpenMPPrivate(Clause->getClauseKind()) ||
+        Clause->getClauseKind() == OMPC_copyprivate) {
       // Mark all variables in private list clauses as used in inner region.
       for (auto *VarRef : Clause->children()) {
         if (auto *E = cast_or_null<Expr>(VarRef)) {
