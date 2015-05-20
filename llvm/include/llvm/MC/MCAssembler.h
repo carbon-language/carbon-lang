@@ -834,7 +834,7 @@ public:
 
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
-  const MCSymbol *getAtom(const MCSymbolData *Symbol) const;
+  const MCSymbol *getAtom(const MCSymbol &S) const;
 
   /// Check whether a particular symbol is visible to the linker and is required
   /// in the symbol table, or whether it can be discarded by the assembler. This
