@@ -108,8 +108,6 @@ static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
 void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
-  if (!PrintComments)
-    return BS.EmitInt8(Op, Twine());
   BS.EmitInt8(
       Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
                   : dwarf::OperationEncodingString(Op));
@@ -1479,7 +1477,6 @@ static void emitDebugLocValue(const AsmPrinter &AP, const DIBasicType *BT,
                               unsigned PieceOffsetInBits) {
   DebugLocDwarfExpression DwarfExpr(*AP.MF->getSubtarget().getRegisterInfo(),
                                     AP.getDwarfDebug()->getDwarfVersion(),
-                                    AP.OutStreamer->hasRawTextSupport(),
                                     Streamer);
   // Regular entry.
   if (Value.isInt()) {
@@ -1533,7 +1530,6 @@ void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
         // The DWARF spec seriously mandates pieces with no locations for gaps.
         DebugLocDwarfExpression Expr(*AP.MF->getSubtarget().getRegisterInfo(),
                                      AP.getDwarfDebug()->getDwarfVersion(),
-                                     AP.OutStreamer->hasRawTextSupport(),
                                      Streamer);
         Expr.AddOpPiece(PieceOffset-Offset, 0);
         Offset += PieceOffset-Offset;

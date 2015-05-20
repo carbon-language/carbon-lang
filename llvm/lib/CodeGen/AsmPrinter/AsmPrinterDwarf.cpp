@@ -185,8 +185,7 @@ void AsmPrinter::emitSectionOffset(const MCSymbol *Label) const {
 void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                                 const MachineLocation &MLoc) const {
   DebugLocDwarfExpression Expr(*MF->getSubtarget().getRegisterInfo(),
-                               getDwarfDebug()->getDwarfVersion(),
-                               OutStreamer->hasRawTextSupport(), Streamer);
+                               getDwarfDebug()->getDwarfVersion(), Streamer);
   const MCRegisterInfo *MRI = MMI->getContext().getRegisterInfo();
   int Reg = MRI->getDwarfRegNum(MLoc.getReg(), false);
   if (Reg < 0) {
