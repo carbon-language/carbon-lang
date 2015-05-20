@@ -107,14 +107,14 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue(   IntInit *II) { return nullptr; }
   virtual Init *convertValue(StringInit *SI) { return nullptr; }
   virtual Init *convertValue(  ListInit *LI) { return nullptr; }
-  virtual Init *convertValue( UnOpInit *UI) {
-    return convertValue((TypedInit*)UI);
+  virtual Init *convertValue( UnOpInit *UO) {
+    return convertValue((TypedInit*)UO);
   }
-  virtual Init *convertValue( BinOpInit *UI) {
-    return convertValue((TypedInit*)UI);
+  virtual Init *convertValue( BinOpInit *BO) {
+    return convertValue((TypedInit*)BO);
   }
-  virtual Init *convertValue( TernOpInit *UI) {
-    return convertValue((TypedInit*)UI);
+  virtual Init *convertValue( TernOpInit *TO) {
+    return convertValue((TypedInit*)TO);
   }
   virtual Init *convertValue(VarBitInit *VB) { return nullptr; }
   virtual Init *convertValue(   DefInit *DI) { return nullptr; }
@@ -240,7 +240,7 @@ public:
   using RecTy::convertValue;
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
   Init *convertValue(StringInit *SI) override { return (Init*)SI; }
-  Init *convertValue(  UnOpInit *BO) override;
+  Init *convertValue(  UnOpInit *UO) override;
   Init *convertValue( BinOpInit *BO) override;
   Init *convertValue( TypedInit *TI) override;
 
@@ -296,9 +296,9 @@ public:
 
   using RecTy::convertValue;
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(  UnOpInit *BO) override;
+  Init *convertValue(  UnOpInit *UO) override;
   Init *convertValue( BinOpInit *BO) override;
-  Init *convertValue(   DagInit *CI) override { return (Init*)CI; }
+  Init *convertValue(   DagInit *DI) override { return (Init*)DI; }
   Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override { return "dag"; }
@@ -328,7 +328,7 @@ public:
   using RecTy::convertValue;
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
   Init *convertValue(   DefInit *DI) override;
-  Init *convertValue( TypedInit *VI) override;
+  Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override;
 
