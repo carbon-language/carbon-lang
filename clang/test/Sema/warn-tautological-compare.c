@@ -84,3 +84,12 @@ void _HTTPClientErrorHandler(int me)
   int *result;
   SAVE_READ(&me);
 }
+
+void test_conditional_operator() {
+  int x;
+  x = b ? 1 : 0;     // expected-warning {{address of array}}
+  x = c.x ? 1 : 0;   // expected-warning {{address of array}}
+  x = str ? 1 : 0;   // expected-warning {{address of array}}
+  x = array ? 1 : 0; // expected-warning {{address of array}}
+  x = &x ? 1 : 0;    // expected-warning {{address of 'x'}}
+}
