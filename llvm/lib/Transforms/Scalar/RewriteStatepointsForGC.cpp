@@ -1877,7 +1877,7 @@ chainToBasePointerCost(SmallVectorImpl<Instruction*> &Chain,
 static void rematerializeLiveValues(CallSite CS,
                                     PartiallyConstructedSafepointRecord &Info,
                                     TargetTransformInfo &TTI) {
-  const int ChainLengthThreshold = 10;
+  const unsigned int ChainLengthThreshold = 10;
   
   // Record values we are going to delete from this statepoint live set.
   // We can not di this in following loop due to iterator invalidation.
