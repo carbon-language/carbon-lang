@@ -3394,8 +3394,15 @@ static Constant *lookThroughCast(ICmpInst *CmpI, Value *V1, Value *V2,
     return nullptr;
   *CastOp = CI->getOpcode();
 
-  if ((isa<SExtInst>(CI) && CmpI->isSigned()) ||
-      (isa<ZExtInst>(CI) && CmpI->isUnsigned()))
+  if (isa<SExtInst>(CI) && CmpI->isSigned()) {
+    Constant *T = ConstantExpr::getTrunc(C, CI->getSrcTy());
+    // This is only valid if the truncated value can be sign-extended
+    // back to the original value.
+    if (ConstantExpr::getSExt(T, C->getType()) == C)
+      return T;
+    return nullptr;
+  }
+  if (isa<ZExtInst>(CI) && CmpI->isUnsigned())
     return ConstantExpr::getTrunc(C, CI->getSrcTy());
 
   if (isa<TruncInst>(CI))
