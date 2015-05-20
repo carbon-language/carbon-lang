@@ -1,5 +1,5 @@
 LEVEL = ../../make
 
-C_SOURCES := main.c
+CXX_SOURCES := main.cpp
 ENABLE_THREADS := YES
 include $(LEVEL)/Makefile.rules
