@@ -1270,4 +1270,34 @@ _mm256_storeu2_m128i(__m128i *__addr_hi, __m128i *__addr_lo, __m256i __a)
   __builtin_ia32_storedqu((char *)__addr_hi, (__v16qi)__v128);
 }
 
+static __inline __m256 __attribute__((__always_inline__, __nodebug__))
+_mm256_set_m128 (__m128 __hi, __m128 __lo) {
+  return (__m256) __builtin_shufflevector(__lo, __hi, 0, 1, 2, 3, 4, 5, 6, 7);
+}
+
+static __inline __m256d __attribute__((__always_inline__, __nodebug__))
+_mm256_set_m128d (__m128d __hi, __m128d __lo) {
+  return (__m256d)_mm256_set_m128((__m128)__hi, (__m128)__lo);
+}
+
+static __inline __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_set_m128i (__m128i __hi, __m128i __lo) {
+  return (__m256i)_mm256_set_m128((__m128)__hi, (__m128)__lo);
+}
+
+static __inline __m256 __attribute__((__always_inline__, __nodebug__))
+_mm256_setr_m128 (__m128 __lo, __m128 __hi) {
+  return _mm256_set_m128(__hi, __lo);
+}
+
+static __inline __m256d __attribute__((__always_inline__, __nodebug__))
+_mm256_setr_m128d (__m128d __lo, __m128d __hi) {
+  return (__m256d)_mm256_set_m128((__m128)__hi, (__m128)__lo);
+}
+
+static __inline __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_setr_m128i (__m128i __lo, __m128i __hi) {
+  return (__m256i)_mm256_set_m128((__m128)__hi, (__m128)__lo);
+}
+
 #endif /* __AVXINTRIN_H */
