@@ -874,7 +874,7 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
     if (ConstantInt *SrcSizeC = dyn_cast<ConstantInt>(SrcSize))
       Align = MinAlign(SrcSizeC->getZExtValue(), DestAlign);
 
-  IRBuilder<> Builder(MemCpy->getNextNode());
+  IRBuilder<> Builder(MemSet->getNextNode());
 
   // If the sizes have different types, zext the smaller one.
   if (DestSize->getType() != SrcSize->getType()) {
