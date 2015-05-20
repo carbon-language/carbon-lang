@@ -1086,9 +1086,19 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
   // If we know the value of all of the demanded bits, return this as a
   // constant.
-  if ((NewMask & (KnownZero|KnownOne)) == NewMask)
+  if ((NewMask & (KnownZero|KnownOne)) == NewMask) {
+    // Avoid folding to a constant if any OpaqueConstant is involved.
+    const SDNode *N = Op.getNode();
+    for (SDNodeIterator I = SDNodeIterator::begin(N),
+         E = SDNodeIterator::end(N); I != E; ++I) {
+      SDNode *Op = *I;
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op))
+        if (C->isOpaque())
+          return false;
+    }
     return TLO.CombineTo(Op,
                          TLO.DAG.getConstant(KnownOne, dl, Op.getValueType()));
+  }
 
   return false;
 }
