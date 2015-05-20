@@ -823,10 +823,14 @@ CMIDriver::GetId(void) const
 bool
 CMIDriver::InterpretCommand(const CMIUtilString &vTextLine)
 {
+    const bool bNeedToRebroadcastStopEvent = m_rLldbDebugger.CheckIfNeedToRebroadcastStopEvent();
     bool bCmdYesValid = false;
     bool bOk = InterpretCommandThisDriver(vTextLine, bCmdYesValid);
     if (bOk && !bCmdYesValid)
         bOk = InterpretCommandFallThruDriver(vTextLine, bCmdYesValid);
+
+    if (bNeedToRebroadcastStopEvent)
+        m_rLldbDebugger.RebroadcastStopEvent();
 
     return bOk;
 }

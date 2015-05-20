@@ -244,6 +244,51 @@ CMICmnLLDBDebugger::WaitForHandleEvent(void)
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Check if need to rebroadcast stop event. This function will return true if
+//          debugger is in synchronouse mode. In such case the
+//          CMICmnLLDBDebugger::RebroadcastStopEvent should be called to rebroadcast
+//          a new stop event (if any).
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Need to rebroadcast stop event, false = otherwise.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebugger::CheckIfNeedToRebroadcastStopEvent(void)
+{
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    if (!rSessionInfo.GetDebugger().GetAsync())
+    {
+        const bool include_expression_stops = false;
+        m_nLastStopId = CMICmnLLDBDebugSessionInfo::Instance().GetProcess().GetStopID(include_expression_stops);
+        return true;
+    }
+
+    return false;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Rebroadcast stop event if needed. This function should be called only if the
+//          CMICmnLLDBDebugger::CheckIfNeedToRebroadcastStopEvent() returned true.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMICmnLLDBDebugger::RebroadcastStopEvent(void)
+{
+    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    const bool include_expression_stops = false;
+    const uint32_t nStopId = process.GetStopID(include_expression_stops);
+    if (m_nLastStopId != nStopId)
+    {
+        lldb::SBEvent event = process.GetStopEventForStopID(nStopId);
+        process.GetBroadcaster().BroadcastEvent(event);
+    }
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Initialize the LLDB Debugger object.
 // Type:    Method.
 // Args:    None.

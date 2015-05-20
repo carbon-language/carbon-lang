@@ -143,6 +143,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # After '-exec-run'
         self.expect("-exec-run")
         self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
         # After '-break-insert main.cpp:BP_return'
         line = line_number('main.cpp', '//BP_return')
@@ -152,6 +153,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # After '-exec-continue'
         self.expect("-exec-continue")
         self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
         # Test that lldb-mi is ready after execution of --source start_script
         self.expect(self.child_prompt, exactly = True)
@@ -184,6 +186,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # After '-exec-run'
         self.expect("-exec-run")
         self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
         # After '-break-insert main.cpp:BP_return'
         line = line_number('main.cpp', '//BP_return')
@@ -193,6 +196,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # After '-exec-continue'
         self.expect("-exec-continue")
         self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
         # After '-data-evaluate-expression a'
         self.expect("-data-evaluate-expression a")
@@ -201,6 +205,7 @@ class MiStartupOptionsTestCase(lldbmi_testcase.MiTestCaseBase):
         # After '-gdb-exit'
         self.expect("-gdb-exit")
         self.expect("\^exit")
+        self.expect("\*stopped,reason=\"exited-normally\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

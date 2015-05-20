@@ -229,7 +229,22 @@ public:
     
     uint32_t
     GetStopID(bool include_expression_stops = false);
-    
+
+    //------------------------------------------------------------------
+    /// Gets the stop event corresponding to stop ID.
+    //
+    /// Note that it wasn't fully implemented and tracks only the stop
+    /// event for the last natural stop ID.
+    ///
+    /// @param [in] stop_id
+    ///   The ID of the stop event to return.
+    ///
+    /// @return
+    ///   The stop event corresponding to stop ID.
+    //------------------------------------------------------------------
+    lldb::SBEvent
+    GetStopEventForStopID(uint32_t stop_id);
+
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
 

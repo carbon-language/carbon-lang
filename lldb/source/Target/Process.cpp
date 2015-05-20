@@ -1796,6 +1796,7 @@ Process::SetPrivateState (StateType new_state)
     if (state_changed)
     {
         m_private_state.SetValueNoLock (new_state);
+        EventSP event_sp (new Event (eBroadcastBitStateChanged, new ProcessEventData (shared_from_this(), new_state)));
         if (StateIsStoppedState(new_state, false))
         {
             // Note, this currently assumes that all threads in the list
@@ -1812,15 +1813,18 @@ Process::SetPrivateState (StateType new_state)
             m_thread_list.DidStop();
 
             m_mod_id.BumpStopID();
+            if (!m_mod_id.IsLastResumeForUserExpression())
+                m_mod_id.SetStopEventForLastNaturalStopID(event_sp);
             m_memory_cache.Clear();
             if (log)
                 log->Printf("Process::SetPrivateState (%s) stop_id = %u", StateAsCString(new_state), m_mod_id.GetStopID());
         }
+
         // Use our target to get a shared pointer to ourselves...
         if (m_finalize_called && PrivateStateThreadIsValid() == false)
-            BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (shared_from_this(), new_state));
+            BroadcastEvent (event_sp);
         else
-            m_private_state_broadcaster.BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (shared_from_this(), new_state));
+            m_private_state_broadcaster.BroadcastEvent (event_sp);
     }
     else
     {

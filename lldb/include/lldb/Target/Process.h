@@ -685,7 +685,20 @@ public:
         else
             m_running_user_expression--;
     }
-    
+
+    void
+    SetStopEventForLastNaturalStopID (lldb::EventSP event_sp)
+    {
+        m_last_natural_stop_event = event_sp;
+    }
+
+    lldb::EventSP GetStopEventForStopID (uint32_t stop_id) const
+    {
+        if (stop_id == m_last_natural_stop_id)
+            return m_last_natural_stop_event;
+        return lldb::EventSP();
+    }
+
 private:
     uint32_t m_stop_id;
     uint32_t m_last_natural_stop_id;
@@ -693,6 +706,7 @@ private:
     uint32_t m_memory_id;
     uint32_t m_last_user_expression_resume;
     uint32_t m_running_user_expression;
+    lldb::EventSP m_last_natural_stop_event;
 };
 inline bool operator== (const ProcessModID &lhs, const ProcessModID &rhs)
 {
@@ -1954,11 +1968,17 @@ public:
     }
     
     uint32_t
-    GetLastNaturalStopID()
+    GetLastNaturalStopID() const
     {
         return m_mod_id.GetLastNaturalStopID();
     }
-    
+
+    lldb::EventSP
+    GetStopEventForStopID (uint32_t stop_id) const
+    {
+        return m_mod_id.GetStopEventForStopID(stop_id);
+    }
+
     //------------------------------------------------------------------
     /// Set accessor for the process exit status (return code).
     ///

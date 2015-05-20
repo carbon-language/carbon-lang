@@ -2617,7 +2617,6 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
     {
         if (synchronous_execution || launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == false)
         {
-            EventSP event_sp;
             ListenerSP hijack_listener_sp (launch_info.GetHijackListener());
             if (!hijack_listener_sp)
             {
@@ -2626,7 +2625,7 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                 m_process_sp->HijackProcessEvents(hijack_listener_sp.get());
             }
 
-            StateType state = m_process_sp->WaitForProcessToStop (NULL, &event_sp, false, hijack_listener_sp.get(), NULL);
+            StateType state = m_process_sp->WaitForProcessToStop (NULL, NULL, false, hijack_listener_sp.get(), NULL);
             
             if (state == eStateStopped)
             {
@@ -2656,14 +2655,6 @@ Target::Launch (ProcessLaunchInfo &launch_info, Stream *stream)
                         error2.SetErrorStringWithFormat("process resume at entry point failed: %s", error.AsCString());
                         error = error2;
                     }
-                }
-                else
-                {
-                    assert(synchronous_execution && launch_info.GetFlags().Test(eLaunchFlagStopAtEntry));
-
-                    // Target was stopped at entry as was intended. Need to notify the listeners about it.
-                    m_process_sp->RestoreProcessEvents();
-                    m_process_sp->HandlePrivateEvent(event_sp);
                 }
             }
             else if (state == eStateExited)

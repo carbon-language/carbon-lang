@@ -50,6 +50,8 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     lldb::SBDebugger &GetTheDebugger(void);
     lldb::SBListener &GetTheListener(void);
     void WaitForHandleEvent(void);
+    bool CheckIfNeedToRebroadcastStopEvent(void);
+    void RebroadcastStopEvent(void);
 
     // MI Commands can use these functions to listen for events they require
     bool RegisterForEvent(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass, const MIuint vEventMask);
@@ -110,4 +112,5 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     MapIdToEventMask_t m_mapIdToEventMask;
     std::mutex m_mutexEventQueue;
     std::condition_variable m_conditionEventQueueEmpty;
+    uint32_t m_nLastStopId;
 };
