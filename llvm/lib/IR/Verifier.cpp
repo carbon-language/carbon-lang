@@ -494,7 +494,7 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
                        GV.getName() == "llvm.compiler.used")) {
     Assert(!GV.hasInitializer() || GV.hasAppendingLinkage(),
            "invalid linkage for intrinsic global variable", &GV);
-    Type *GVType = GV.getType()->getElementType();
+    Type *GVType = GV.getValueType();
     if (ArrayType *ATy = dyn_cast<ArrayType>(GVType)) {
       PointerType *PTy = dyn_cast<PointerType>(ATy->getElementType());
       Assert(PTy, "wrong type for intrinsic global variable", &GV);

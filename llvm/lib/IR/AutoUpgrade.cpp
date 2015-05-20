@@ -431,7 +431,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned EltNum = VecTy->getVectorNumElements();
       Value *Cast = Builder.CreateBitCast(CI->getArgOperand(0),
                                           EltTy->getPointerTo());
-      Value *Load = Builder.CreateLoad(Cast);
+      Value *Load = Builder.CreateLoad(EltTy, Cast);
       Type *I32Ty = Type::getInt32Ty(C);
       Rep = UndefValue::get(VecTy);
       for (unsigned I = 0; I < EltNum; ++I)
@@ -439,10 +439,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                           ConstantInt::get(I32Ty, I));
     } else if (Name == "llvm.x86.avx2.vbroadcasti128") {
       // Replace vbroadcasts with a vector shuffle.
-      Value *Op = Builder.CreatePointerCast(
-          CI->getArgOperand(0),
-          PointerType::getUnqual(VectorType::get(Type::getInt64Ty(C), 2)));
-      Value *Load = Builder.CreateLoad(Op);
+      Type *VT = VectorType::get(Type::getInt64Ty(C), 2);
+      Value *Op = Builder.CreatePointerCast(CI->getArgOperand(0),
+                                            PointerType::getUnqual(VT));
+      Value *Load = Builder.CreateLoad(VT, Op);
       const int Idxs[4] = { 0, 1, 0, 1 };
       Rep = Builder.CreateShuffleVector(Load, UndefValue::get(Load->getType()),
                                         Idxs);

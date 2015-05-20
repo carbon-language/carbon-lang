@@ -931,9 +931,9 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, Instruction *InsertBef)
 LoadInst::LoadInst(Value *Ptr, const Twine &Name, BasicBlock *InsertAE)
     : LoadInst(Ptr, Name, /*isVolatile=*/false, InsertAE) {}
 
-LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
+LoadInst::LoadInst(Type *Ty, Value *Ptr, const Twine &Name, bool isVolatile,
                    Instruction *InsertBef)
-    : LoadInst(Ptr, Name, isVolatile, /*Align=*/0, InsertBef) {}
+    : LoadInst(Ty, Ptr, Name, isVolatile, /*Align=*/0, InsertBef) {}
 
 LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                    BasicBlock *InsertAE)
@@ -994,10 +994,10 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
   if (Name && Name[0]) setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+LoadInst::LoadInst(Type *Ty, Value *Ptr, const char *Name, bool isVolatile,
                    Instruction *InsertBef)
-: UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
-                   Load, Ptr, InsertBef) {
+    : UnaryInstruction(Ty, Load, Ptr, InsertBef) {
+  assert(Ty == cast<PointerType>(Ptr->getType())->getElementType());
   setVolatile(isVolatile);
   setAlignment(0);
   setAtomic(NotAtomic);

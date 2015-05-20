@@ -177,8 +177,12 @@ protected:
 public:
   LoadInst(Value *Ptr, const Twine &NameStr, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile = false,
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile = false,
            Instruction *InsertBefore = nullptr);
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile = false,
+           Instruction *InsertBefore = nullptr)
+      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
+                 NameStr, isVolatile, InsertBefore) {}
   LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
            BasicBlock *InsertAtEnd);
   LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
@@ -205,9 +209,13 @@ public:
 
   LoadInst(Value *Ptr, const char *NameStr, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const char *NameStr, BasicBlock *InsertAtEnd);
+  LoadInst(Type *Ty, Value *Ptr, const char *NameStr = nullptr,
+           bool isVolatile = false, Instruction *InsertBefore = nullptr);
   explicit LoadInst(Value *Ptr, const char *NameStr = nullptr,
                     bool isVolatile = false,
-                    Instruction *InsertBefore = nullptr);
+                    Instruction *InsertBefore = nullptr)
+      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
+                 NameStr, isVolatile, InsertBefore) {}
   LoadInst(Value *Ptr, const char *NameStr, bool isVolatile,
            BasicBlock *InsertAtEnd);
 
