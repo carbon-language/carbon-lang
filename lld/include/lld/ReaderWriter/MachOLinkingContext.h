@@ -335,13 +335,13 @@ private:
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
   bool _pie;
+  uint64_t _stackSize;
   Arch _arch;
   OS _os;
   uint32_t _osMinVersion;
   uint64_t _pageZeroSize;
   uint64_t _pageSize;
   uint64_t _baseAddress;
-  uint64_t _stackSize;
   uint32_t _compatibilityVersion;
   uint32_t _currentVersion;
   StringRef _installName;
