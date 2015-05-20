@@ -526,51 +526,88 @@ PlatformWindows::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
+ProcessSP
+PlatformWindows::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger, Target *target, Error &error)
+{
+    // Windows has special considerations that must be followed when launching or attaching to a process.  The
+    // key requirement is that when launching or attaching to a process, you must do it from the same the thread
+    // that will go into a permanent loop which will then receive debug events from the process.  In particular,
+    // this means we can't use any of LLDB's generic mechanisms to do it for us, because it doesn't have the
+    // special knowledge required for setting up the background thread or passing the right flags.  
+    //
+    // Another problem is that that LLDB's standard model for debugging a process is to first launch it, have
+    // it stop at the entry point, and then attach to it.  In Windows this doesn't quite work, you have to 
+    // specify as an argument to CreateProcess() that you're going to debug the process.  So we override DebugProcess
+    // here to handle this.  Launch operations go directly to the process plugin, and attach operations almost go
+    // directly to the process plugin (but we hijack the events first).  In essence, we encapsulate all the logic
+    // of Launching and Attaching in the process plugin, and PlatformWindows::DebugProcess is just a pass-through
+    // to get to the process plugin.
+
+    if (launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
+    {
+        // This is a process attach.  Don't need to launch anything.
+        ProcessAttachInfo attach_info(launch_info);
+        return Attach(attach_info, debugger, target, error);
+    }
+    else
+    {
+        ProcessSP process_sp = target->CreateProcess(launch_info.GetListenerForProcess(debugger),
+                                                     launch_info.GetProcessPluginName(),
+                                                     nullptr);
+
+        // We need to launch and attach to the process.
+        launch_info.GetFlags().Set(eLaunchFlagDebug);
+        if (process_sp)
+            error = process_sp->Launch(launch_info);
+
+        return process_sp;
+    }
+}
+
 lldb::ProcessSP
 PlatformWindows::Attach(ProcessAttachInfo &attach_info,
                         Debugger &debugger,
                         Target *target,
                         Error &error)
 {
+    error.Clear();
     lldb::ProcessSP process_sp;
-    if (IsHost())
-    {
-        if (target == NULL)
-        {
-            TargetSP new_target_sp;
-            FileSpec emptyFileSpec;
-            ArchSpec emptyArchSpec;
-
-            error = debugger.GetTargetList().CreateTarget (debugger,
-                                                           NULL,
-                                                           NULL,
-                                                           false,
-                                                           NULL,
-                                                           new_target_sp);
-            target = new_target_sp.get();
-        }
-        else
-            error.Clear();
-
-        if (target && error.Success())
-        {
-            debugger.GetTargetList().SetSelectedTarget(target);
-            // The Windows platform always currently uses the GDB remote debugger plug-in
-            // so even when debugging locally we are debugging remotely!
-            // Just like the darwin plugin.
-            process_sp = target->CreateProcess (attach_info.GetListenerForProcess(debugger), "gdb-remote", NULL);
-
-            if (process_sp)
-                error = process_sp->Attach (attach_info);
-        }
-    }
-    else
+    if (!IsHost())
     {
         if (m_remote_platform_sp)
             process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, error);
         else
             error.SetErrorString ("the platform is not currently connected");
+        return process_sp;
     }
+
+    if (target == NULL)
+    {
+        TargetSP new_target_sp;
+        FileSpec emptyFileSpec;
+        ArchSpec emptyArchSpec;
+
+        error = debugger.GetTargetList().CreateTarget (debugger,
+                                                        NULL,
+                                                        NULL,
+                                                        false,
+                                                        NULL,
+                                                        new_target_sp);
+        target = new_target_sp.get();
+    }
+
+    if (!target || error.Fail())
+        return process_sp;
+
+    debugger.GetTargetList().SetSelectedTarget(target);
+
+    const char *plugin_name = attach_info.GetProcessPluginName();
+    process_sp = target->CreateProcess(attach_info.GetListenerForProcess(debugger), plugin_name, NULL);
+
+    process_sp->HijackProcessEvents(attach_info.GetHijackListener().get());
+    if (process_sp)
+        error = process_sp->Attach (attach_info);
+
     return process_sp;
 }
 
@@ -686,4 +723,10 @@ PlatformWindows::GetStatus (Stream &strm)
          << '.' << minor
          << " Build: " << update << '\n';
 #endif
+}
+
+bool
+PlatformWindows::CanDebugProcess()
+{
+    return true;
 }

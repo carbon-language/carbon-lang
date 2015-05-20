@@ -30,6 +30,7 @@ class ProcessMonitor;
 
 namespace lldb_private
 {
+class HostProcess;
 class ProcessWindowsData;
 }
 
@@ -77,11 +78,14 @@ public:
 
     lldb_private::Error DoDetach(bool keep_stopped) override;
     lldb_private::Error DoLaunch(lldb_private::Module *exe_module, lldb_private::ProcessLaunchInfo &launch_info) override;
+    lldb_private::Error DoAttachToProcessWithID(lldb::pid_t pid,
+                                                const lldb_private::ProcessAttachInfo &attach_info) override;
     lldb_private::Error DoResume() override;
     lldb_private::Error DoDestroy() override;
     lldb_private::Error DoHalt(bool &caused_stop) override;
 
     void DidLaunch() override;
+    void DidAttach(lldb_private::ArchSpec &arch_spec) override;
 
     void RefreshStateAfterStop() override;
     lldb::addr_t GetImageInfoAddress() override;
@@ -116,6 +120,9 @@ public:
     void OnDebuggerError(const lldb_private::Error &error, uint32_t type) override;
 
   private:
+    lldb_private::Error WaitForDebuggerConnection(lldb_private::DebuggerThreadSP debugger,
+                                                  lldb_private::HostProcess &process);
+
     llvm::sys::Mutex m_mutex;
 
     // Data for the active debugging session.

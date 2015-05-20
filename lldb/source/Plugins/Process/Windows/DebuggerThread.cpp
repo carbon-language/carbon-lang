@@ -22,6 +22,7 @@
 #include "lldb/Host/windows/HostThreadWindows.h"
 #include "lldb/Host/windows/ProcessLauncherWindows.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
+#include "lldb/Target/Process.h"
 
 #include "Plugins/Process/Windows/ProcessWindowsLog.h"
 
@@ -42,6 +43,19 @@ struct DebugLaunchContext
     }
     DebuggerThread *m_thread;
     ProcessLaunchInfo m_launch_info;
+};
+
+struct DebugAttachContext
+{
+    DebugAttachContext(DebuggerThread *thread, lldb::pid_t pid, const ProcessAttachInfo &attach_info)
+        : m_thread(thread)
+        , m_pid(pid)
+        , m_attach_info(attach_info)
+    {
+    }
+    DebuggerThread *m_thread;
+    lldb::pid_t m_pid;
+    ProcessAttachInfo m_attach_info;
 };
 }
 
@@ -64,7 +78,7 @@ DebuggerThread::DebugLaunch(const ProcessLaunchInfo &launch_info)
     Error error;
     DebugLaunchContext *context = new DebugLaunchContext(this, launch_info);
     HostThread slave_thread(ThreadLauncher::LaunchThread("lldb.plugin.process-windows.slave[?]",
-                            DebuggerThreadRoutine, context, &error));
+                                                         DebuggerThreadLaunchRoutine, context, &error));
 
     if (!error.Success())
     {
@@ -75,25 +89,53 @@ DebuggerThread::DebugLaunch(const ProcessLaunchInfo &launch_info)
     return error;
 }
 
+Error
+DebuggerThread::DebugAttach(lldb::pid_t pid, const ProcessAttachInfo &attach_info)
+{
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DebuggerThread::DebugAttach attaching to '%u'", (DWORD)pid);
+
+    Error error;
+    DebugAttachContext *context = new DebugAttachContext(this, pid, attach_info);
+    HostThread slave_thread(ThreadLauncher::LaunchThread("lldb.plugin.process-windows.slave[?]",
+                                                         DebuggerThreadAttachRoutine, context, &error));
+
+    if (!error.Success())
+    {
+        WINERR_IFALL(WINDOWS_LOG_PROCESS, "DebugAttach couldn't attach to process '%u'.  %s", (DWORD)pid,
+                     error.AsCString());
+    }
+
+    return error;
+}
+
 lldb::thread_result_t
-DebuggerThread::DebuggerThreadRoutine(void *data)
+DebuggerThread::DebuggerThreadLaunchRoutine(void *data)
 {
     DebugLaunchContext *context = static_cast<DebugLaunchContext *>(data);
-    lldb::thread_result_t result = context->m_thread->DebuggerThreadRoutine(context->m_launch_info);
+    lldb::thread_result_t result = context->m_thread->DebuggerThreadLaunchRoutine(context->m_launch_info);
     delete context;
     return result;
 }
 
 lldb::thread_result_t
-DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
+DebuggerThread::DebuggerThreadAttachRoutine(void *data)
+{
+    DebugAttachContext *context = static_cast<DebugAttachContext *>(data);
+    lldb::thread_result_t result =
+        context->m_thread->DebuggerThreadAttachRoutine(context->m_pid, context->m_attach_info);
+    delete context;
+    return result;
+}
+
+lldb::thread_result_t
+DebuggerThread::DebuggerThreadLaunchRoutine(const ProcessLaunchInfo &launch_info)
 {
     // Grab a shared_ptr reference to this so that we know it won't get deleted until after the
     // thread routine has exited.
     std::shared_ptr<DebuggerThread> this_ref(shared_from_this());
 
-    WINLOG_IFALL(WINDOWS_LOG_PROCESS,
-        "DebuggerThread preparing to launch '%s'.",
-        launch_info.GetExecutableFile().GetPath().c_str());
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DebuggerThread preparing to launch '%s' on background thread.",
+                 launch_info.GetExecutableFile().GetPath().c_str());
 
     Error error;
     ProcessLauncherWindows launcher;
@@ -107,6 +149,31 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
         DebugLoop();
     else
         m_debug_delegate->OnDebuggerError(error, 0);
+
+    return 0;
+}
+
+lldb::thread_result_t
+DebuggerThread::DebuggerThreadAttachRoutine(lldb::pid_t pid, const ProcessAttachInfo &attach_info)
+{
+    // Grab a shared_ptr reference to this so that we know it won't get deleted until after the
+    // thread routine has exited.
+    std::shared_ptr<DebuggerThread> this_ref(shared_from_this());
+
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DebuggerThread preparing to attach to process '%u' on background thread.",
+                 (DWORD)pid);
+
+    if (!DebugActiveProcess((DWORD)pid))
+    {
+        Error error(::GetLastError(), eErrorTypeWin32);
+        m_debug_delegate->OnDebuggerError(error, 0);
+        return 0;
+    }
+
+    // The attach was successful, enter the debug loop.  From here on out, this is no different than
+    // a create process operation, so all the same comments in DebugLaunch should apply from this
+    // point out.
+    DebugLoop();
 
     return 0;
 }

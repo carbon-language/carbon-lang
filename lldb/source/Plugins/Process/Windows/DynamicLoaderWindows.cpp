@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DynamicLoaderWindows.h"
+#include "ProcessWindowsLog.h"
 
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/Process.h"
@@ -65,6 +66,7 @@ DynamicLoader *DynamicLoaderWindows::CreateInstance(Process *process, bool force
 
     if (should_create)
         return new DynamicLoaderWindows (process);
+
     return nullptr;
 }
 

@@ -122,10 +122,12 @@ public:
     LaunchProcess(lldb_private::ProcessLaunchInfo &launch_info) override;
 
     lldb::ProcessSP
-    Attach(lldb_private::ProcessAttachInfo &attach_info,
-           lldb_private::Debugger &debugger,
-           lldb_private::Target *target,
-           lldb_private::Error &error) override;
+    DebugProcess(lldb_private::ProcessLaunchInfo &launch_info, lldb_private::Debugger &debugger,
+                 lldb_private::Target *target, lldb_private::Error &error) override;
+
+    lldb::ProcessSP
+    Attach(lldb_private::ProcessAttachInfo &attach_info, lldb_private::Debugger &debugger,
+           lldb_private::Target *target, lldb_private::Error &error) override;
 
     lldb_private::Error
     GetFileWithUUID(const lldb_private::FileSpec &platform_file,
@@ -145,12 +147,7 @@ public:
     void
     GetStatus(lldb_private::Stream &strm) override;
 
-    // Local debugging not yet supported
-    bool
-    CanDebugProcess(void) override
-    {
-        return false;
-    }
+    bool CanDebugProcess() override;
 
     // FIXME not sure what the _sigtramp equivalent would be on this platform
     void

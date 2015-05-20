@@ -3336,6 +3336,9 @@ Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)
 
     switch (state)
     {
+        case eStateAttaching:
+            return eEventActionSuccess;
+
         case eStateRunning:
         case eStateConnected:
             return eEventActionRetry;
@@ -4457,7 +4460,8 @@ Process::HandlePrivateEvent (EventSP &event_sp)
             // Only push the input handler if we aren't fowarding events,
             // as this means the curses GUI is in use...
             // Or don't push it if we are launching since it will come up stopped.
-            if (!GetTarget().GetDebugger().IsForwardingEvents() && new_state != eStateLaunching)
+            if (!GetTarget().GetDebugger().IsForwardingEvents() && new_state != eStateLaunching &&
+                new_state != eStateAttaching)
                 PushProcessIOHandler ();
             m_iohandler_sync.SetValue(true, eBroadcastAlways);
         }

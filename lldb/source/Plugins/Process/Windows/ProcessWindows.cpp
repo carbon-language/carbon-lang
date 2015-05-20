@@ -62,8 +62,8 @@ namespace lldb_private
 class ProcessWindowsData
 {
   public:
-    ProcessWindowsData(const ProcessLaunchInfo &launch_info)
-        : m_launch_info(launch_info)
+    ProcessWindowsData(bool stop_at_entry)
+        : m_stop_at_entry(stop_at_entry)
         , m_initial_stop_event(nullptr)
         , m_initial_stop_received(false)
     {
@@ -72,11 +72,11 @@ class ProcessWindowsData
 
     ~ProcessWindowsData() { ::CloseHandle(m_initial_stop_event); }
 
-    ProcessLaunchInfo m_launch_info;
     lldb_private::Error m_launch_error;
     lldb_private::DebuggerThreadSP m_debugger;
     StopInfoSP m_pending_stop_info;
     HANDLE m_initial_stop_event;
+    bool m_stop_at_entry;
     bool m_initial_stop_received;
     std::map<lldb::tid_t, HostThread> m_new_threads;
     std::set<lldb::tid_t> m_exited_threads;
@@ -257,7 +257,8 @@ ProcessWindows::DoLaunch(Module *exe_module,
         return result;
     }
 
-    m_session_data.reset(new ProcessWindowsData(launch_info));
+    bool stop_at_entry = launch_info.GetFlags().Test(eLaunchFlagStopAtEntry);
+    m_session_data.reset(new ProcessWindowsData(stop_at_entry));
 
     SetPrivateState(eStateLaunching);
     DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
@@ -266,42 +267,92 @@ ProcessWindows::DoLaunch(Module *exe_module,
 
     // Kick off the DebugLaunch asynchronously and wait for it to complete.
     result = debugger->DebugLaunch(launch_info);
-
-    HostProcess process;
-    if (result.Success())
-    {
-        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoLaunch started asynchronous launch of '%s'.  Waiting for initial stop.",
-                     launch_info.GetExecutableFile().GetPath().c_str());
-
-        // Block this function until we receive the initial stop from the process.
-        if (::WaitForSingleObject(m_session_data->m_initial_stop_event, INFINITE) == WAIT_OBJECT_0)
-        {
-            process = debugger->GetProcess();
-            if (m_session_data->m_launch_error.Fail())
-                result = m_session_data->m_launch_error;
-        }
-        else
-            result.SetError(::GetLastError(), eErrorTypeWin32);
-    }
-
-    if (result.Success())
-    {
-        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoLaunch successfully launched '%s'",
-                     launch_info.GetExecutableFile().GetPath().c_str());
-    }
-    else
+    if (result.Fail())
     {
         WINERR_IFALL(WINDOWS_LOG_PROCESS, "DoLaunch failed launching '%s'.  %s",
                      launch_info.GetExecutableFile().GetPath().c_str(), result.AsCString());
         return result;
     }
 
-    // We've hit the initial stop.  The private state should already be set to stopped as a result
-    // of encountering the breakpoint exception in ProcessWindows::OnDebugException.
+    HostProcess process;
+    Error error = WaitForDebuggerConnection(debugger, process);
+    if (error.Fail())
+    {
+        WINERR_IFALL(WINDOWS_LOG_PROCESS, "DoLaunch failed launching '%s'.  %s",
+                     launch_info.GetExecutableFile().GetPath().c_str(), error.AsCString());
+        return error;
+    }
+
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoLaunch successfully launched '%s'",
+                 launch_info.GetExecutableFile().GetPath().c_str());
+
+    // We've hit the initial stop.  If eLaunchFlagsStopAtEntry was specified, the private state
+    // should already be set to eStateStopped as a result of hitting the initial breakpoint.  If
+    // it was not set, the breakpoint should have already been resumed from and the private state
+    // should already be eStateRunning.
     launch_info.SetProcessID(process.GetProcessId());
     SetID(process.GetProcessId());
 
     return result;
+}
+
+Error
+ProcessWindows::DoAttachToProcessWithID(lldb::pid_t pid, const ProcessAttachInfo &attach_info)
+{
+    m_session_data.reset(new ProcessWindowsData(!attach_info.GetContinueOnceAttached()));
+
+    DebugDelegateSP delegate(new LocalDebugDelegate(shared_from_this()));
+    DebuggerThreadSP debugger(new DebuggerThread(delegate));
+
+    m_session_data->m_debugger = debugger;
+
+    DWORD process_id = static_cast<DWORD>(pid);
+    Error error = debugger->DebugAttach(process_id, attach_info);
+    if (error.Fail())
+    {
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+                     "DoAttachToProcessWithID encountered an error occurred initiating the asynchronous attach.  %s",
+                     error.AsCString());
+        return error;
+    }
+
+    HostProcess process;
+    error = WaitForDebuggerConnection(debugger, process);
+    if (error.Fail())
+    {
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS,
+                     "DoAttachToProcessWithID encountered an error waiting for the debugger to connect.  %s",
+                     error.AsCString());
+        return error;
+    }
+
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoAttachToProcessWithID successfully attached to process with pid=%u",
+                 process_id);
+
+    // We've hit the initial stop.  If eLaunchFlagsStopAtEntry was specified, the private state
+    // should already be set to eStateStopped as a result of hitting the initial breakpoint.  If
+    // it was not set, the breakpoint should have already been resumed from and the private state
+    // should already be eStateRunning.
+    SetID(process.GetProcessId());
+    return error;
+}
+
+Error
+ProcessWindows::WaitForDebuggerConnection(DebuggerThreadSP debugger, HostProcess &process)
+{
+    Error result;
+    WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_BREAKPOINTS, "WaitForDebuggerConnection Waiting for loader breakpoint.");
+
+    // Block this function until we receive the initial stop from the process.
+    if (::WaitForSingleObject(m_session_data->m_initial_stop_event, INFINITE) == WAIT_OBJECT_0)
+    {
+        WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_BREAKPOINTS, "WaitForDebuggerConnection hit loader breakpoint, returning.");
+
+        process = debugger->GetProcess();
+        return m_session_data->m_launch_error;
+    }
+    else
+        return Error(::GetLastError(), eErrorTypeWin32);
 }
 
 Error
@@ -521,11 +572,16 @@ ProcessWindows::DoHalt(bool &caused_stop)
 
 void ProcessWindows::DidLaunch()
 {
+    DidAttach(ArchSpec());
+}
+
+void
+ProcessWindows::DidAttach(ArchSpec &arch_spec)
+{
     llvm::sys::ScopedLock lock(m_mutex);
 
     // The initial stop won't broadcast the state change event, so account for that here.
-    if (m_session_data && GetPrivateState() == eStateStopped &&
-            m_session_data->m_launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
+    if (m_session_data && GetPrivateState() == eStateStopped && m_session_data->m_stop_at_entry)
         RefreshStateAfterStop();
 }
 
@@ -557,11 +613,13 @@ size_t
 ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
 {
     llvm::sys::ScopedLock lock(m_mutex);
+    WINLOG_IFALL(WINDOWS_LOG_MEMORY, "DoWriteMemory attempting to write %u bytes into address 0x%I64x", size, vm_addr);
 
     if (!m_session_data)
+    {
+        WINERR_IFANY(WINDOWS_LOG_MEMORY, "DoWriteMemory cannot write, there is no active debugger connection.");
         return 0;
-
-    WINLOG_IFALL(WINDOWS_LOG_MEMORY, "DoWriteMemory attempting to write %u bytes into address 0x%I64x", size, vm_addr);
+    }
 
     HostProcess process = m_session_data->m_debugger->GetProcess();
     void *addr = reinterpret_cast<void *>(vm_addr);
@@ -672,20 +730,18 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
     WINLOG_IFALL(WINDOWS_LOG_PROCESS, "Debugger established connected to process %I64u.  Image base = 0x%I64x",
                  debugger->GetProcess().GetProcessId(), image_base);
 
-    // Either we successfully attached to an existing process, or we successfully launched a new
-    // process under the debugger.
     ModuleSP module = GetTarget().GetExecutableModule();
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
 
-    // Notify the target that the executable module has loaded.  This will cause any pending
-    // breakpoints to be resolved to explicit brekapoint sites.
     ModuleList loaded_modules;
     loaded_modules.Append(module);
     GetTarget().ModulesDidLoad(loaded_modules);
 
+    // Add the main executable module to the list of pending module loads.  We can't call
+    // GetTarget().ModulesDidLoad() here because we still haven't returned from DoLaunch() / DoAttach() yet
+    // so the target may not have set the process instance to `this` yet.
     llvm::sys::ScopedLock lock(m_mutex);
-
     const HostThreadWindows &wmain_thread = debugger->GetMainThread().GetNativeThread();
     m_session_data->m_new_threads[wmain_thread.GetThreadId()] = debugger->GetMainThread();
 }
@@ -723,8 +779,17 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
 
             if (!m_session_data->m_initial_stop_received)
             {
+                WINLOG_IFANY(WINDOWS_LOG_BREAKPOINTS,
+                             "Hit loader breakpoint at address 0x%I64x, setting initial stop event.",
+                             record.GetExceptionAddress());
                 m_session_data->m_initial_stop_received = true;
                 ::SetEvent(m_session_data->m_initial_stop_event);
+            }
+            else
+            {
+                WINLOG_IFANY(WINDOWS_LOG_BREAKPOINTS,
+                             "Hit non-loader breakpoint at address 0x%I64x.",
+                             record.GetExceptionAddress());
             }
             SetPrivateState(eStateStopped);
             break;
