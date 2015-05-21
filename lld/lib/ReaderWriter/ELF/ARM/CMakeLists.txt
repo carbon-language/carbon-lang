@@ -3,7 +3,6 @@ add_llvm_library(lldARMELFTarget
   ARMTargetHandler.cpp
   ARMRelocationHandler.cpp
   ARMRelocationPass.cpp
-  ARMELFWriters.cpp
   LINK_LIBS
     lldELF
     lldReaderWriter
