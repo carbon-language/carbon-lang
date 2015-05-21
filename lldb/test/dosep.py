@@ -190,6 +190,10 @@ def getExpectedTimeouts(platform_name):
         }
     return expected_timeout
 
+def touch(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
+
 def main():
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
@@ -238,6 +242,9 @@ Run lldb test suite using a separate process for each test file.
         timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
         dotest_argv.append('-s')
         dotest_argv.append(timestamp_started)
+        dotest_options.s = timestamp_started
+
+    session_dir = os.path.join(os.getcwd(), dotest_options.s)
 
     # The root directory was specified on the command line
     if len(args) == 0:
@@ -268,6 +275,15 @@ Run lldb test suite using a separate process for each test file.
         if xtime in timed_out:
             timed_out.remove(xtime)
             failed.remove(xtime)
+            result = "ExpectedTimeout"
+        elif xtime in passed:
+            result = "UnexpectedCompletion"
+        else:
+            result = None  # failed
+
+        if result:
+            test_name = os.path.splitext(xtime)[0]
+            touch(os.path.join(session_dir, "{}-{}".format(result, test_name)))
 
     print "Ran %d tests." % num_tests
     if len(failed) > 0:
