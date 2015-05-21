@@ -193,7 +193,7 @@ class ELFObjectWriter : public MCObjectWriter {
     typedef std::map<const MCSectionELF *, std::pair<uint64_t, uint64_t>>
         SectionOffsetsTy;
 
-    void WriteSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
+    void writeSymbolTable(MCContext &Ctx, const MCAsmLayout &Layout,
                           SectionOffsetsTy &SectionOffsets);
 
     bool shouldRelocateWithSymbol(const MCAssembler &Asm,
@@ -538,19 +538,15 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                      MSD.SectionIndex, IsReserved);
 }
 
-void ELFObjectWriter::WriteSymbolTable(MCAssembler &Asm,
+void ELFObjectWriter::writeSymbolTable(MCContext &Ctx,
                                        const MCAsmLayout &Layout,
                                        SectionOffsetsTy &SectionOffsets) {
-
-  MCContext &Ctx = Asm.getContext();
-
   unsigned EntrySize = is64Bit() ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
   // Symbol table
   MCSectionELF *SymtabSection =
       Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0, EntrySize, "");
-  MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
-  SymtabSD.setAlignment(is64Bit() ? 8 : 4);
+  SymtabSection->setAlignment(is64Bit() ? 8 : 4);
   SymbolTableIndex = addToSectionTable(SymtabSection);
 
   // The string table must be emitted first because we need the index
@@ -558,7 +554,8 @@ void ELFObjectWriter::WriteSymbolTable(MCAssembler &Asm,
 
   SymbolTableWriter Writer(*this, is64Bit());
 
-  uint64_t Padding = OffsetToAlignment(OS.tell(), SymtabSD.getAlignment());
+  uint64_t Padding =
+      OffsetToAlignment(OS.tell(), SymtabSection->getAlignment());
   WriteZeros(Padding);
 
   uint64_t SecStart = OS.tell();
@@ -609,9 +606,7 @@ void ELFObjectWriter::WriteSymbolTable(MCAssembler &Asm,
   MCSectionELF *SymtabShndxSection =
       Ctx.getELFSection(".symtab_shndxr", ELF::SHT_SYMTAB_SHNDX, 0, 4, "");
   addToSectionTable(SymtabShndxSection);
-  MCSectionData *SymtabShndxSD =
-      &Asm.getOrCreateSectionData(*SymtabShndxSection);
-  SymtabShndxSD->setAlignment(4);
+  SymtabShndxSection->setAlignment(4);
   for (uint32_t Index : ShndxIndexes)
     write(Index);
   SecEnd = OS.tell();
@@ -1412,7 +1407,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     ComputedSymtab = true;
   }
 
-  WriteSymbolTable(Asm, Layout, SectionOffsets);
+  writeSymbolTable(Ctx, Layout, SectionOffsets);
 
   {
     uint64_t SecStart = OS.tell();
