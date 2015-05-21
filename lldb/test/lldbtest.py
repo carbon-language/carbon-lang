@@ -1145,11 +1145,11 @@ class Base(unittest2.TestCase):
 
         # Create a string buffer to record the session info, to be dumped into a
         # test case specific file if test failure is encountered.
-        log_basename = self.getLogBasenameForCurrentTest()
+        self.log_basename = self.getLogBasenameForCurrentTest()
 
-        session_file = "{}.log".format(log_basename)
+        session_file = "{}.log".format(self.log_basename)
         unbuffered = 0 # 0 is the constant for unbuffered
-        self.session = open(log_basename, "w", unbuffered)
+        self.session = open(session_file, "w", unbuffered)
 
         # Optimistically set __errored__, __failed__, __expected__ to False
         # initially.  If the test errored/failed, the session info
@@ -1532,14 +1532,13 @@ class Base(unittest2.TestCase):
         del self.session
 
         # process the log files
-        src_log_basename = self.getLogBasenameForCurrentTest()
-        log_files_for_this_test = glob.glob(src_log_basename + "*")
+        log_files_for_this_test = glob.glob(self.log_basename + "*")
 
         if prefix != 'Success' or lldbtest_config.log_success:
             # keep all log files, rename them to include prefix
             dst_log_basename = self.getLogBasenameForCurrentTest(prefix)
             for src in log_files_for_this_test:
-                dst = src.replace(src_log_basename, dst_log_basename)
+                dst = src.replace(self.log_basename, dst_log_basename)
                 os.rename(src, dst)
         else:
             # success!  (and we don't want log files) delete log files
