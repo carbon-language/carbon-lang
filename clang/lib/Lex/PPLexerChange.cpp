@@ -627,8 +627,7 @@ void Preprocessor::EnterSubmodule(Module *M, SourceLocation ImportLoc) {
   ModMap.resolveConflicts(M, /*Complain=*/false);
 
   // If this is the first time we've entered this module, set up its state.
-  auto R = Submodules.emplace(std::piecewise_construct, std::make_tuple(M),
-                              std::make_tuple());
+  auto R = Submodules.insert(std::make_pair(M, SubmoduleState()));
   auto &State = R.first->second;
   bool FirstTime = R.second;
   if (FirstTime) {
