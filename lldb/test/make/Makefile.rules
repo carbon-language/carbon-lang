@@ -150,7 +150,7 @@ LDFLAGS ?= $(CFLAGS)
 LDFLAGS += $(LD_EXTRAS)
 ifeq (,$(filter $(OS), Windows_NT Android))
 	ifneq (,$(filter YES,$(ENABLE_THREADS) $(ENABLE_STD_THREADS)))
-		LDFLAGS += -lpthread
+		LDFLAGS += -pthread
 	endif
 endif
 OBJECTS =
