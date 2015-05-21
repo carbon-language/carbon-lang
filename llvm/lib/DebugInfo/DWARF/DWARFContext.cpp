@@ -540,7 +540,8 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
   return true;
 }
 
-DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
+DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
+    const LoadedObjectInfo *L)
     : IsLittleEndian(Obj.isLittleEndian()),
       AddressSize(Obj.getBytesInAddress()) {
   for (const SectionRef &Section : Obj.sections()) {
@@ -554,7 +555,12 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
     if (IsVirtual)
       continue;
     StringRef data;
-    Section.getContents(data);
+
+    // Try to obtain an already relocated version of this section.
+    // Else use the unrelocated section from the object file. We'll have to
+    // apply relocations ourselves later.
+    if (!L || !L->getLoadedSectionContents(name,data))
+      Section.getContents(data);
 
     name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
 
@@ -622,7 +628,15 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
       continue;
 
     StringRef RelSecName;
+    StringRef RelSecData;
     RelocatedSection->getName(RelSecName);
+
+    // If the section we're relocating was relocated already by the JIT,
+    // then we used the relocated version above, so we do not need to process
+    // relocations for it now.
+    if (L && L->getLoadedSectionContents(RelSecName,RelSecData))
+      continue;
+
     RelSecName = RelSecName.substr(
         RelSecName.find_first_not_of("._")); // Skip . and _ prefixes.
 
@@ -658,9 +672,33 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj)
         uint64_t Type;
         Reloc.getType(Type);
         uint64_t SymAddr = 0;
+        uint64_t SectionLoadAddress = 0;
         object::symbol_iterator Sym = Reloc.getSymbol();
-        if (Sym != Obj.symbol_end())
+        object::section_iterator RSec = Reloc.getSection();
+
+        // First calculate the address of the symbol or section as it appears
+        // in the objct file
+        if (Sym != Obj.symbol_end()) {
           Sym->getAddress(SymAddr);
+          // Also remember what section this symbol is in for later
+          Sym->getSection(RSec);
+        } else if (RSec != Obj.section_end())
+          SymAddr = RSec->getAddress();
+
+        // If we are given load addresses for the sections, we need to adjust:
+        // SymAddr = (Address of Symbol Or Section in File) -
+        //           (Address of Section in File) +
+        //           (Load Address of Section)
+        if (L != nullptr && RSec != Obj.section_end()) {
+          // RSec is now either the section being targetted or the section
+          // containing the symbol being targetted. In either case,
+          // we need to perform the same computation.
+          StringRef SecName;
+          RSec->getName(SecName);
+          SectionLoadAddress = L->getSectionLoadAddress(SecName);
+          if (SectionLoadAddress != 0)
+            SymAddr += SectionLoadAddress - RSec->getAddress();
+        }
 
         object::RelocVisitor V(Obj);
         object::RelocToApply R(V.visit(Type, Reloc, SymAddr));

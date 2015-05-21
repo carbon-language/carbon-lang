@@ -112,6 +112,8 @@ public:
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override;
+
+  RuntimeDyld::LoadedObjectInfo *clone() const { return new LoadedELFObjectInfo(*this); }
 };
 
 template <typename ELFT>

@@ -710,6 +710,11 @@ MachOObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   return symbol_iterator(SymbolRef(Sym, this));
 }
 
+section_iterator
+MachOObjectFile::getRelocationSection(DataRefImpl Rel) const {
+  return section_iterator(getAnyRelocationSection(getRelocation(Rel)));
+}
+
 std::error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
                                                    uint64_t &Res) const {
   MachO::any_relocation_info RE = getRelocation(Rel);
@@ -2224,7 +2229,7 @@ MachOObjectFile::getAnyRelocationType(
 }
 
 SectionRef
-MachOObjectFile::getRelocationSection(
+MachOObjectFile::getAnyRelocationSection(
                                    const MachO::any_relocation_info &RE) const {
   if (isRelocationScattered(RE) || getPlainRelocationExternal(RE))
     return *section_end();

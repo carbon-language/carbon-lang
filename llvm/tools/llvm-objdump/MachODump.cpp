@@ -6484,7 +6484,7 @@ static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
   }
 
   auto RE = Obj->getRelocation(Reloc.getRawDataRefImpl());
-  SectionRef RelocSection = Obj->getRelocationSection(RE);
+  SectionRef RelocSection = Obj->getAnyRelocationSection(RE);
 
   uint64_t SectionAddr = RelocSection.getAddress();
 

@@ -235,6 +235,7 @@ public:
   std::error_code getRelocationOffset(DataRefImpl Rel,
                                       uint64_t &Res) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
+  section_iterator getRelocationSection(DataRefImpl Rel) const override;
   std::error_code getRelocationType(DataRefImpl Rel,
                                     uint64_t &Res) const override;
   std::error_code
@@ -326,7 +327,7 @@ public:
   unsigned getAnyRelocationPCRel(const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationLength(const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationType(const MachO::any_relocation_info &RE) const;
-  SectionRef getRelocationSection(const MachO::any_relocation_info &RE) const;
+  SectionRef getAnyRelocationSection(const MachO::any_relocation_info &RE) const;
 
   // Walk load commands.
   LoadCommandInfo getFirstLoadCommandInfo() const;

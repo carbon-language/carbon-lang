@@ -136,6 +136,43 @@ private:
   const DIContextKind Kind;
 };
 
+/// An inferface for inquiring the load address of a loaded object file
+/// to be used by the DIContext implementations when applying relocations
+/// on the fly.
+class LoadedObjectInfo {
+public:
+  LoadedObjectInfo() {}
+  virtual ~LoadedObjectInfo() {}
+
+  /// Obtain the Load Address of a section by Name.
+  ///
+  /// Calculate the address of the section identified by the passed in Name.
+  /// The section need not be present in the local address space. The addresses
+  /// need to be consistent with the addresses used to query the DIContext and
+  /// the output of this function should be deterministic, i.e. repeated calls with
+  /// the same Name should give the same address.
+  virtual uint64_t getSectionLoadAddress(StringRef Name) const = 0;
+
+  /// If conveniently available, return the content of the given Section.
+  ///
+  /// When the section is available in the local address space, in relocated (loaded)
+  /// form, e.g. because it was relocated by a JIT for execution, this function
+  /// should provide the contents of said section in `Data`. If the loaded section
+  /// is not available, or the cost of retrieving it would be prohibitive, this
+  /// function should return false. In that case, relocations will be read from the
+  /// local (unrelocated) object file and applied on the fly. Note that this method
+  /// is used purely for optimzation purposes in the common case of JITting in the
+  /// local address space, so returning false should always be correct.
+  virtual bool getLoadedSectionContents(StringRef Name, StringRef &Data) const {
+    return false;
+  }
+
+  /// Obtain a copy of this LoadedObjectInfo.
+  ///
+  /// The caller is responsible for deallocation once the copy is no longer required.
+  virtual LoadedObjectInfo *clone() const = 0;
+};
+
 }
 
 #endif

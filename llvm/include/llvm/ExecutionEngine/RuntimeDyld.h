@@ -17,6 +17,7 @@
 #include "JITSymbolFlags.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Memory.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include <memory>
 
 namespace llvm {
@@ -54,7 +55,7 @@ public:
   };
 
   /// \brief Information about the loaded object.
-  class LoadedObjectInfo {
+  class LoadedObjectInfo : public llvm::LoadedObjectInfo {
     friend class RuntimeDyldImpl;
   public:
     LoadedObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,

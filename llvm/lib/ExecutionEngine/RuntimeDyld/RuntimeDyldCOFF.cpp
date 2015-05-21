@@ -34,6 +34,8 @@ public:
   getObjectForDebug(const ObjectFile &Obj) const override {
     return OwningBinary<ObjectFile>();
   }
+
+  RuntimeDyld::LoadedObjectInfo *clone() const { return new LoadedCOFFObjectInfo(*this); }
 };
 }
 

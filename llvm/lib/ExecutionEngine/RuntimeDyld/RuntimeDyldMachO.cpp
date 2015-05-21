@@ -36,6 +36,8 @@ public:
   getObjectForDebug(const ObjectFile &Obj) const override {
     return OwningBinary<ObjectFile>();
   }
+
+  RuntimeDyld::LoadedObjectInfo *clone() const { return new LoadedMachOObjectInfo(*this); }
 };
 
 }
@@ -75,7 +77,7 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
       Value.Offset = RE.Addend;
     }
   } else {
-    SectionRef Sec = Obj.getRelocationSection(RelInfo);
+    SectionRef Sec = Obj.getAnyRelocationSection(RelInfo);
     bool IsCode = Sec.isText();
     Value.SectionID = findOrEmitSection(Obj, Sec, IsCode, ObjSectionToID);
     uint64_t Addr = Sec.getAddress();

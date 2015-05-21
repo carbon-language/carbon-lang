@@ -1,6 +1,10 @@
 RUN: llvm-rtdyld -printline %p/Inputs/test-inline.o \
 RUN:   | FileCheck %s -check-prefix TEST_INLINE
+RUN: llvm-rtdyld -printdebugline %p/Inputs/test-inline.o \
+RUN:   | FileCheck %s -check-prefix TEST_INLINE
 RUN: llvm-rtdyld -printline %p/Inputs/test-parameters.o \
+RUN:   | FileCheck %s -check-prefix TEST_PARAMETERS
+RUN: llvm-rtdyld -printdebugline %p/Inputs/test-parameters.o \
 RUN:   | FileCheck %s -check-prefix TEST_PARAMETERS
 
 ; This test verifies that relocations are correctly applied to the

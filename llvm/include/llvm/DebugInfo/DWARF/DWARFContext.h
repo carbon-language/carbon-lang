@@ -255,7 +255,8 @@ class DWARFContextInMemory : public DWARFContext {
   SmallVector<SmallString<32>, 4> UncompressedSections;
 
 public:
-  DWARFContextInMemory(const object::ObjectFile &Obj);
+  DWARFContextInMemory(const object::ObjectFile &Obj,
+    const LoadedObjectInfo *L = nullptr);
   bool isLittleEndian() const override { return IsLittleEndian; }
   uint8_t getAddressSize() const override { return AddressSize; }
   const DWARFSection &getInfoSection() override { return InfoSection; }
