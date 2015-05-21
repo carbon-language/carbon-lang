@@ -37,7 +37,7 @@ class MCSymbolData {
   union {
     /// Offset - The offset to apply to the fragment address to form this
     /// symbol's value.
-    uint64_t Offset = 0;
+    uint64_t Offset;
 
     /// CommonSize - The size of the symbol, if it is 'common'.
     uint64_t CommonSize;
@@ -60,6 +60,8 @@ class MCSymbolData {
   uint64_t Index = 0;
 
 public:
+  MCSymbolData() { Offset = 0; }
+
   MCFragment *getFragment() const { return Fragment.getPointer(); }
   void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
 
