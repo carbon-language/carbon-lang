@@ -112,7 +112,6 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @expectedFailureLinux('llvm.org/pr22930') # fails 2/34 builds on lldb-x86_64-ubuntu-14.04-cmake
     def test_auxv_data_is_correct_size_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -153,7 +152,6 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @expectedFailureLinux('http://llvm.org/pr23545') # build failure 1/365 dosep builds
     def test_auxv_keys_look_valid_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -201,7 +199,6 @@ class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @expectedFailureLinux('llvm.org/pr22930') # fails 1/34 builds on lldb-x86_64-ubuntu-14.04-cmake
     def test_auxv_chunked_reads_work_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()

@@ -81,7 +81,6 @@ class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @debugserver_test
     @dsym_test
-    @expectedFailureDarwin # failed 1/134 dosep runs, make MAKE_DSYM=YES ARCH=x86_64 CC="clang" failed
     def test_qThreadStopInfo_works_for_multiple_threads_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()

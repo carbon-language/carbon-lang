@@ -50,7 +50,6 @@ class TestGdbRemoteAttach(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.set_inferior_startup_attach_manually()
         self.attach_with_vAttach()
 
-    @expectedFailureLinux("https://llvm.org/bugs/show_bug.cgi?id=23250") #intermittent failure on the linux build bot
     @llgs_test
     @dwarf_test
     def test_attach_with_vAttach_llgs_dwarf(self):

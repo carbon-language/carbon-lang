@@ -879,7 +879,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @expectedFailureLinux('llvm.org/pr22928') # failed once on builder x86_64-ubuntu-14.04-cmake over 34 builds
     def test_Hc_then_Csignal_signals_correct_thread_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
