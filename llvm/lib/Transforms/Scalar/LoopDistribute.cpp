@@ -234,7 +234,7 @@ public:
     }
   }
 
-  void print() {
+  void print() const {
     if (DepCycle)
       dbgs() << "  (cycle)\n";
     for (auto *I : Set)
@@ -287,11 +287,10 @@ public:
   /// contain cycles.  Otherwise start a new partition for it.
   void addToCyclicPartition(Instruction *Inst) {
     // If the current partition is non-cyclic.  Start a new one.
-    if (PartitionContainer.empty() || !PartitionContainer.back()->hasDepCycle())
-      PartitionContainer.push_back(
-          llvm::make_unique<InstPartition>(Inst, L, true));
+    if (PartitionContainer.empty() || !PartitionContainer.back().hasDepCycle())
+      PartitionContainer.emplace_back(Inst, L, /*DepCycle=*/true);
     else
-      PartitionContainer.back()->add(Inst);
+      PartitionContainer.back().add(Inst);
   }
 
   /// \brief Adds \p Inst into a partition that is not marked to contain
@@ -300,7 +299,7 @@ public:
   //  Initially we isolate memory instructions into as many partitions as
   //  possible, then later we may merge them back together.
   void addToNewNonCyclicPartition(Instruction *Inst) {
-    PartitionContainer.push_back(llvm::make_unique<InstPartition>(Inst, L));
+    PartitionContainer.emplace_back(Inst, L);
   }
 
   /// \brief Merges adjacent non-cyclic partitions.
@@ -360,7 +359,7 @@ public:
     for (PartitionContainerT::iterator I = PartitionContainer.begin(),
                                        E = PartitionContainer.end();
          I != E; ++I) {
-      auto *PartI = I->get();
+      auto *PartI = &*I;
 
       // If a load occurs in two partitions PartI and PartJ, merge all
       // partitions (PartI, PartJ] into PartI.
@@ -379,8 +378,8 @@ public:
             auto PartJ = I;
             do {
               --PartJ;
-              ToBeMerged.unionSets(PartI, PartJ->get());
-            } while (PartJ->get() != LoadToPart->second);
+              ToBeMerged.unionSets(PartI, &*PartJ);
+            } while (&*PartJ != LoadToPart->second);
           }
         }
     }
@@ -402,13 +401,8 @@ public:
     }
 
     // Remove the empty partitions.
-    for (PartitionContainerT::iterator PartI = PartitionContainer.begin(),
-                                       E = PartitionContainer.end();
-         PartI != E;)
-      if ((*PartI)->empty())
-        PartI = PartitionContainer.erase(PartI);
-      else
-        ++PartI;
+    PartitionContainer.remove_if(
+        [](const InstPartition &P) { return P.empty(); });
 
     return true;
   }
@@ -417,8 +411,8 @@ public:
   /// instruction is duplicated across multiple partitions, set the entry to -1.
   void setupPartitionIdOnInstructions() {
     int PartitionID = 0;
-    for (auto &PartitionPtr : PartitionContainer) {
-      for (Instruction *Inst : *PartitionPtr) {
+    for (const auto &Partition : PartitionContainer) {
+      for (Instruction *Inst : Partition) {
         bool NewElt;
         InstToPartitionIdT::iterator Iter;
 
@@ -435,7 +429,7 @@ public:
   /// instructions require.
   void populateUsedSet() {
     for (auto &P : PartitionContainer)
-      P->populateUsedSet();
+      P.populateUsedSet();
   }
 
   /// \brief This performs the main chunk of the work of cloning the loops for
@@ -461,10 +455,10 @@ public:
     // update PH to point to the newly added preheader.
     BasicBlock *TopPH = OrigPH;
     unsigned Index = getSize() - 1;
-    for (auto I = std::next(PartitionContainer.crbegin()),
-              E = PartitionContainer.crend();
+    for (auto I = std::next(PartitionContainer.rbegin()),
+              E = PartitionContainer.rend();
          I != E; ++I, --Index, TopPH = NewLoop->getLoopPreheader()) {
-      auto &Part = *I;
+      auto *Part = &*I;
 
       NewLoop = Part->cloneLoopWithPreheader(TopPH, Pred, Index, LI, DT);
 
@@ -481,14 +475,14 @@ public:
               E = PartitionContainer.cend();
          Next != E; ++Curr, ++Next)
       DT->changeImmediateDominator(
-          (*Next)->getDistributedLoop()->getLoopPreheader(),
-          (*Curr)->getDistributedLoop()->getExitingBlock());
+          Next->getDistributedLoop()->getLoopPreheader(),
+          Curr->getDistributedLoop()->getExitingBlock());
   }
 
   /// \brief Removes the dead instructions from the cloned loops.
   void removeUnusedInsts() {
-    for (auto &PartitionPtr : PartitionContainer)
-      PartitionPtr->removeUnusedInsts();
+    for (auto &Partition : PartitionContainer)
+      Partition.removeUnusedInsts();
   }
 
   /// \brief For each memory pointer, it computes the partitionId the pointer is
@@ -532,9 +526,9 @@ public:
 
   void print(raw_ostream &OS) const {
     unsigned Index = 0;
-    for (auto &P : PartitionContainer) {
-      OS << "Partition " << Index++ << " (" << P.get() << "):\n";
-      P->print();
+    for (const auto &P : PartitionContainer) {
+      OS << "Partition " << Index++ << " (" << &P << "):\n";
+      P.print();
     }
   }
 
@@ -550,14 +544,14 @@ public:
 
   void printBlocks() const {
     unsigned Index = 0;
-    for (auto &P : PartitionContainer) {
-      dbgs() << "\nPartition " << Index++ << " (" << P.get() << "):\n";
-      P->printBlocks();
+    for (const auto &P : PartitionContainer) {
+      dbgs() << "\nPartition " << Index++ << " (" << &P << "):\n";
+      P.printBlocks();
     }
   }
 
 private:
-  typedef std::list<std::unique_ptr<InstPartition>> PartitionContainerT;
+  typedef std::list<InstPartition> PartitionContainerT;
 
   /// \brief List of partitions.
   PartitionContainerT PartitionContainer;
@@ -576,12 +570,12 @@ private:
   void mergeAdjacentPartitionsIf(UnaryPredicate Predicate) {
     InstPartition *PrevMatch = nullptr;
     for (auto I = PartitionContainer.begin(); I != PartitionContainer.end();) {
-      auto DoesMatch = Predicate(I->get());
+      auto DoesMatch = Predicate(&*I);
       if (PrevMatch == nullptr && DoesMatch) {
-        PrevMatch = I->get();
+        PrevMatch = &*I;
         ++I;
       } else if (PrevMatch != nullptr && DoesMatch) {
-        (*I)->moveTo(*PrevMatch);
+        I->moveTo(*PrevMatch);
         I = PartitionContainer.erase(I);
       } else {
         PrevMatch = nullptr;
@@ -616,9 +610,7 @@ public:
   MemoryInstructionDependences(
       const SmallVectorImpl<Instruction *> &Instructions,
       const SmallVectorImpl<Dependence> &InterestingDependences) {
-    std::transform(Instructions.begin(), Instructions.end(),
-                   std::back_inserter(Accesses),
-                   [](Instruction *Inst) { return Entry(Inst); });
+    Accesses.append(Instructions.begin(), Instructions.end());
 
     DEBUG(dbgs() << "Backward dependences:\n");
     for (auto &Dep : InterestingDependences)
@@ -710,11 +702,10 @@ public:
     for (auto *Inst : DefsUsedOutside) {
       auto *NonDistInst = cast<Instruction>(VMap[Inst]);
       PHINode *PN;
-      BasicBlock::iterator I;
 
       // First see if we have a single-operand PHI with the value defined by the
       // original loop.
-      for (I = PHIBlock->begin(); (PN = dyn_cast<PHINode>(I)); ++I) {
+      for (auto I = PHIBlock->begin(); (PN = dyn_cast<PHINode>(I)); ++I) {
         assert(PN->getNumOperands() == 1 &&
                "Exit block should only have on predecessor");
         if (PN->getIncomingValue(0) == Inst)
