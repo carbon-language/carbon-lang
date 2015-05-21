@@ -2379,7 +2379,8 @@ parse_property:
                 , T.Range);
   case Token::TK_BlockScalar: {
     getNext();
-    StringRef StrCopy = StringRef(T.Value).copy(NodeAllocator);
+    StringRef NullTerminatedStr(T.Value.c_str(), T.Value.length() + 1);
+    StringRef StrCopy = NullTerminatedStr.copy(NodeAllocator).drop_back();
     return new (NodeAllocator)
         BlockScalarNode(stream.CurrentDoc, AnchorInfo.Range.substr(1),
                         TagInfo.Range, StrCopy, T.Range);

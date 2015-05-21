@@ -157,6 +157,18 @@ TEST(YAMLParser, ParsesBlockLiteralScalars) {
   ExpectParseError("Long leading space line", "test: |\n   \n  Test\n");
 }
 
+TEST(YAMLParser, NullTerminatedBlockScalars) {
+  SourceMgr SM;
+  yaml::Stream Stream("test: |\n  Hello\n  World\n", SM);
+  yaml::Document &Doc = *Stream.begin();
+  yaml::MappingNode *Map = cast<yaml::MappingNode>(Doc.getRoot());
+  StringRef Value =
+      cast<yaml::BlockScalarNode>(Map->begin()->getValue())->getValue();
+
+  EXPECT_EQ(Value, "Hello\nWorld\n");
+  EXPECT_EQ(Value.data()[Value.size()], '\0');
+}
+
 TEST(YAMLParser, HandlesEndOfFileGracefully) {
   ExpectParseError("In string starting with EOF", "[\"");
   ExpectParseError("In string hitting EOF", "[\"   ");
