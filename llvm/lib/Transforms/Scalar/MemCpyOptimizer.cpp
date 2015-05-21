@@ -874,7 +874,7 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
     if (ConstantInt *SrcSizeC = dyn_cast<ConstantInt>(SrcSize))
       Align = MinAlign(SrcSizeC->getZExtValue(), DestAlign);
 
-  IRBuilder<> Builder(MemSet->getNextNode());
+  IRBuilder<> Builder(MemSet);
 
   // If the sizes have different types, zext the smaller one.
   if (DestSize->getType() != SrcSize->getType()) {
@@ -924,7 +924,7 @@ bool MemCpyOpt::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
   if (!MemSetSize || CopySize->getZExtValue() > MemSetSize->getZExtValue())
     return false;
 
-  IRBuilder<> Builder(MemCpy->getNextNode());
+  IRBuilder<> Builder(MemCpy);
   Builder.CreateMemSet(MemCpy->getRawDest(), MemSet->getOperand(1),
                        CopySize, MemCpy->getAlignment());
   return true;
