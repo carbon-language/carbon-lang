@@ -26,7 +26,7 @@ public:
 const S3 ca[5];
 class S4 {
   int a;
-  S4(); // expected-note 2 {{implicitly declared private here}}
+  S4(); // expected-note {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
@@ -110,7 +110,7 @@ int foomain(I argc, C **argv) {
 
 void bar(S4 a[2]) {
 #pragma omp parallel
-#pragma omp for private(a) // expected-error {{calling a private constructor of class 'S4'}}
+#pragma omp for private(a)
   for (int i = 0; i < 2; ++i)
     foo();
 }

@@ -133,9 +133,6 @@ bool CodeGenFunction::EmitOMPFirstprivateClause(const OMPExecutableDirective &D,
             (*IRef)->getType(), VK_LValue, (*IRef)->getExprLoc());
         auto *OriginalAddr = EmitLValue(&DRE).getAddress();
         QualType Type = OrigVD->getType();
-        if (auto *PVD = dyn_cast<ParmVarDecl>(OrigVD)) {
-          Type = PVD->getOriginalType();
-        }
         if (Type->isArrayType()) {
           // Emit VarDecl with copy init for arrays.
           // Get the address of the original variable captured in current
@@ -229,9 +226,6 @@ bool CodeGenFunction::EmitOMPCopyinClause(const OMPExecutableDirective &D) {
     for (auto *AssignOp : C->assignment_ops()) {
       auto *VD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
       QualType Type = VD->getType();
-      if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
-        Type = PVD->getOriginalType();
-      }
       if (CopiedVars.insert(VD->getCanonicalDecl()).second) {
         // Get the address of the master variable.
         auto *MasterAddr = VD->isStaticLocal()
@@ -355,9 +349,6 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
       for (auto *AssignOp : C->assignment_ops()) {
         auto *PrivateVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
         QualType Type = PrivateVD->getType();
-        if (auto *PVD = dyn_cast<ParmVarDecl>(PrivateVD)) {
-          Type = PVD->getOriginalType();
-        }
         auto *CanonicalVD = PrivateVD->getCanonicalDecl();
         if (AlreadyEmittedVars.insert(CanonicalVD).second) {
           // If lastprivate variable is a loop control variable for loop-based

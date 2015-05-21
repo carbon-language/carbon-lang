@@ -45,8 +45,8 @@ public:
 int threadvar;
 #pragma omp threadprivate(threadvar) // expected-note {{defined as threadprivate or thread local}}
 
-void bar(int n, int b[n]) { // expected-note {{'b' defined here}}
-#pragma omp task private(b) // expected-error {{arguments of OpenMP clause 'private' in '#pragma omp task' directive cannot be of variably-modified type 'int [n]'}}
+void bar(int n, int b[n]) {
+#pragma omp task private(b)
     foo();
 }
 

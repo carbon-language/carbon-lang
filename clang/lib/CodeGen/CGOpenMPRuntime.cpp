@@ -1289,9 +1289,6 @@ static llvm::Value *emitCopyprivateCopyFunction(
         CGF.ConvertTypeForMem(C.getPointerType(SrcExprs[I]->getType())));
     auto *VD = cast<DeclRefExpr>(CopyprivateVars[I])->getDecl();
     QualType Type = VD->getType();
-    if (auto *PVD = dyn_cast<ParmVarDecl>(VD)) {
-      Type = PVD->getOriginalType();
-    }
     CGF.EmitOMPCopy(CGF, Type, DestAddr, SrcAddr,
                     cast<VarDecl>(cast<DeclRefExpr>(DestExprs[I])->getDecl()),
                     cast<VarDecl>(cast<DeclRefExpr>(SrcExprs[I])->getDecl()),
@@ -1671,9 +1668,6 @@ createPrivatesRecordDecl(CodeGenModule &CGM,
     RD->startDefinition();
     for (auto &&Pair : Privates) {
       auto Type = Pair.second.Original->getType();
-      if (auto *PVD = dyn_cast<ParmVarDecl>(Pair.second.Original)) {
-        Type = PVD->getOriginalType();
-      }
       Type = Type.getNonReferenceType();
       addFieldToRecordDecl(C, RD, Type);
     }
@@ -1960,9 +1954,6 @@ void CGOpenMPRuntime::emitTaskCall(
           auto SharedRefLValue =
               CGF.EmitLValueForField(SharedsBase, SharedField);
           QualType Type = OriginalVD->getType();
-          if (auto *PVD = dyn_cast<ParmVarDecl>(OriginalVD)) {
-            Type = PVD->getOriginalType();
-          }
           if (Type->isArrayType()) {
             // Initialize firstprivate array.
             if (!isa<CXXConstructExpr>(Init) ||

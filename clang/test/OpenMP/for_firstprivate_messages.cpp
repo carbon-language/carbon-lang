@@ -35,7 +35,7 @@ extern const int f;
 class S4 {
   int a;
   S4();
-  S4(const S4 &s4); // expected-note 3 {{implicitly declared private here}}
+  S4(const S4 &s4); // expected-note 2 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
@@ -154,7 +154,7 @@ int foomain(int argc, char **argv) {
 
 void bar(S4 a[2]) {
 #pragma omp parallel
-#pragma omp for firstprivate(a) // expected-error {{calling a private constructor of class 'S4'}}
+#pragma omp for firstprivate(a)
   for (int i = 0; i < 2; ++i)
     foo();
 }

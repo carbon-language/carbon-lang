@@ -178,12 +178,12 @@ struct St {
   ~St() {}
 };
 
-void array_func(int a[3], St s[2]) {
+void array_func(int n, int a[n], St s[2]) {
 // ARRAY: call void @__kmpc_copyprivate(%ident_t* @{{.+}}, i32 %{{.+}}, i64 16, i8* %{{.+}}, void (i8*, i8*)* [[CPY:@.+]], i32 %{{.+}})
 #pragma omp single copyprivate(a, s)
   ;
 }
 // ARRAY: define internal void [[CPY]]
-// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 12, i32 4, i1 false)
-// ARRAY: call dereferenceable(8) %struct.St* @_ZN2StaSERKS_(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}})
+// ARRAY: store i32* %{{.+}}, i32** %{{.+}},
+// ARRAY: store %struct.St* %{{.+}}, %struct.St** %{{.+}},
 #endif

@@ -51,8 +51,8 @@ public:
 S3 h;
 #pragma omp threadprivate(h) // expected-note {{defined as threadprivate or thread local}}
 
-void bar(int n, int b[n]) { // expected-note {{'b' defined here}}
-#pragma omp task firstprivate(b) // expected-error {{arguments of OpenMP clause 'firstprivate' in '#pragma omp task' directive cannot be of variably-modified type 'int [n]'}}
+void bar(int n, int b[n]) {
+#pragma omp task firstprivate(b)
     foo();
 }
 

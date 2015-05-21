@@ -21,7 +21,7 @@ public:
 class S4 {
   int a;
   S4();
-  S4 &operator=(const S4 &s4); // expected-note 4 {{implicitly declared private here}}
+  S4 &operator=(const S4 &s4); // expected-note 3 {{implicitly declared private here}}
 
 public:
   S4(int v) : a(v) {}
@@ -105,8 +105,8 @@ T tmain(T argc, C **argv) {
   return T();
 }
 
-void bar(S4 a[2], int n, int b[n]) { // expected-note {{'b' defined here}}
-#pragma omp single copyprivate(a, b) // expected-error {{'operator=' is a private member of 'S4'}} expected-error {{arguments of OpenMP clause 'copyprivate' in '#pragma omp single' directive cannot be of variably-modified type 'int [n]'}}
+void bar(S4 a[2], int n, int b[n]) {
+#pragma omp single copyprivate(a, b)
     foo();
 }
 

@@ -250,19 +250,19 @@ struct St {
   ~St() {}
 };
 
-void array_func(int a[3], St s[2], int n, long double vla1[n]) {
+void array_func(float a[3], St s[2], int n, long double vla1[n]) {
   double vla2[n];
 // ARRAY: @__kmpc_fork_call(
-// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 12, i32 4, i1 false)
-// ARRAY: call void @_ZN2StC1ERKS_(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}}
+// ARRAY: [[PRIV_A:%.+]] = alloca float*
+// ARRAY: [[PRIV_S:%.+]] = alloca %struct.St*
+// ARRAY: [[PRIV_VLA1:%.+]] = alloca x86_fp80*
+// ARRAY: store float* %{{.+}}, float** [[PRIV_A]],
+// ARRAY: store %struct.St* %{{.+}}, %struct.St** [[PRIV_S]],
+// ARRAY: store x86_fp80* %{{.+}}, x86_fp80** [[PRIV_VLA1]],
 // ARRAY: call i8* @llvm.stacksave()
-// ARRAY: [[SIZE:%.+]] = mul nuw i64 %{{.+}}, 16
-// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 [[SIZE]], i32 16, i1 false)
 // ARRAY: [[SIZE:%.+]] = mul nuw i64 %{{.+}}, 8
 // ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 [[SIZE]], i32 8, i1 false)
 // ARRAY: call void @llvm.stackrestore(i8*
-// ARRAY: call void @_ZN2StD1Ev(%struct.St* %{{.+}})
-// ARRAY: br i1
 #pragma omp parallel firstprivate(a, s, vla1, vla2)
   ;
 }

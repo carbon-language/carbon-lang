@@ -408,15 +408,11 @@ struct St {
   ~St() {}
 };
 
-void array_func(int a[3], St s[2]) {
+void array_func(int n, float a[n], St s[2]) {
 // ARRAY: call i8* @__kmpc_omp_task_alloc(
-// ARRAY: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %{{.+}}, i8* %{{.+}}, i64 12, i32 4, i1 false)
-// ARRAY: call void @_ZN2StC1ERKS_(%struct.St* %{{.+}}, %struct.St* dereferenceable(8) %{{.+}})
-// ARRAY: store i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[DESTRUCTORS:@.+]] to i32 (i32, i8*)*), i32 (i32, i8*)** %{{.+}},
+// ARRAY: store float** %{{.+}}, float*** %{{.+}},
+// ARRAY: store %struct.St** %{{.+}}, %struct.St*** %{{.+}},
 // ARRAY: call i32 @__kmpc_omp_task(
-// ARRAY: define internal i32 [[DESTRUCTORS]](i32,
-// ARRAY: call void @_ZN2StD1Ev(%struct.St* %{{.+}})
-// ARRAY: br i1
 #pragma omp task firstprivate(a, s)
   ;
 }
