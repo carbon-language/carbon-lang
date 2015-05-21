@@ -154,6 +154,11 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   SanitizerMask AllRemove = 0;  // During the loop below, the accumulated set of
                                 // sanitizers disabled by the current sanitizer
                                 // argument or any argument after it.
+  SanitizerMask AllAddedKinds = 0;  // Mask of all sanitizers ever enabled by
+                                    // -fsanitize= flags (directly or via group
+                                    // expansion), some of which may be disabled
+                                    // later. Used to carefully prune
+                                    // unused-argument diagnostics.
   SanitizerMask DiagnosedKinds = 0;  // All Kinds we have diagnosed up to now.
                                      // Used to deduplicate diagnostics.
   SanitizerMask Kinds = 0;
@@ -167,6 +172,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     if (Arg->getOption().matches(options::OPT_fsanitize_EQ)) {
       Arg->claim();
       SanitizerMask Add = parseArgValues(D, Arg, true);
+      AllAddedKinds |= expandSanitizerGroups(Add);
 
       // Avoid diagnosing any sanitizer which is disabled later.
       Add &= ~AllRemove;
@@ -330,7 +336,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -f[no-]sanitize-memory-track-origins[=level] options.
-  if (Kinds & Memory) {
+  if (AllAddedKinds & Memory) {
     if (Arg *A =
             Args.getLastArg(options::OPT_fsanitize_memory_track_origins_EQ,
                             options::OPT_fsanitize_memory_track_origins,
@@ -352,7 +358,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
 
   // Parse -f(no-)?sanitize-coverage flags if coverage is supported by the
   // enabled sanitizers.
-  if (Kinds & SupportsCoverage) {
+  if (AllAddedKinds & SupportsCoverage) {
     for (const auto *Arg : Args) {
       if (Arg->getOption().matches(options::OPT_fsanitize_coverage)) {
         Arg->claim();
@@ -415,7 +421,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         << "-fsanitize-coverage=8bit-counters"
         << "-fsanitize-coverage=(func|bb|edge)";
 
-  if (Kinds & Address) {
+  if (AllAddedKinds & Address) {
     AsanSharedRuntime =
         Args.hasArg(options::OPT_shared_libasan) ||
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);

@@ -28,6 +28,9 @@
 // RUN: %clang -target x86_64-linux-gnu                     -fsanitize-coverage=1 %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANITIZE-COVERAGE-UNUSED
 // CHECK-SANITIZE-COVERAGE-UNUSED: argument unused during compilation: '-fsanitize-coverage=1'
 
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-coverage=1 -fno-sanitize=address %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANITIZE-COVERAGE-SAN-DISABLED
+// CHECK-SANITIZE-COVERAGE-SAN-DISABLED-NOT: argument unused
+
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize-coverage=edge,indirect-calls,trace-bb,trace-cmp,8bit-counters %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANITIZE-COVERAGE-FEATURES
 // CHECK-SANITIZE-COVERAGE-FEATURES: -fsanitize-coverage-type=3
 // CHECK-SANITIZE-COVERAGE-FEATURES: -fsanitize-coverage-indirect-calls
