@@ -1164,13 +1164,20 @@ bool PPC::isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
 }
 
 /// isVPKUDUMShuffleMask - Return true if this is the shuffle mask for a
-/// VPKUDUM instruction.
+/// VPKUDUM instruction, AND the VPKUDUM instruction exists for the
+/// current subtarget.
+///
 /// The ShuffleKind distinguishes between big-endian operations with
 /// two different inputs (0), either-endian operations with two identical
 /// inputs (1), and little-endian operations with two different inputs (2).
 /// For the latter, the input operands are swapped (see PPCInstrAltivec.td).
 bool PPC::isVPKUDUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
                                SelectionDAG &DAG) {
+  const PPCSubtarget& Subtarget =
+    static_cast<const PPCSubtarget&>(DAG.getSubtarget());
+  if (!Subtarget.hasP8Vector())
+    return false;
+
   bool IsLE = DAG.getTarget().getDataLayout()->isLittleEndian();
   if (ShuffleKind == 0) {
     if (IsLE)
