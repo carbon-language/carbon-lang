@@ -2221,7 +2221,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Type *PointeeTy, Constant *C,
   if (!NewIdxs.empty()) {
     for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
       if (!NewIdxs[i]) NewIdxs[i] = cast<Constant>(Idxs[i]);
-    return ConstantExpr::getGetElementPtr(nullptr, C, NewIdxs, inBounds);
+    return ConstantExpr::getGetElementPtr(PointeeTy, C, NewIdxs, inBounds);
   }
 
   // If all indices are known integers and normalized, we can do a simple
