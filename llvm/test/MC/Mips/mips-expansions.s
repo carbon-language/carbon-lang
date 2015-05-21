@@ -22,9 +22,9 @@
 # CHECK: ori     $7, $7, 2           # encoding: [0x02,0x00,0xe7,0x34]
 # CHECK: addu    $7, $7, $8          # encoding: [0x21,0x38,0xe8,0x00]
 # CHECK: lui     $8, %hi(symbol)     # encoding: [A,A,0x08,0x3c]
-                                     #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
+# CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
 # CHECK: ori     $8, $8, %lo(symbol) # encoding: [A,A,0x08,0x35]
-                                     #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
+# CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
 # CHECK: lui     $10, %hi(symbol)        # encoding: [A,A,0x0a,0x3c]
 # CHECK:                                 #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
 # CHECK: addu    $10, $10, $4            # encoding: [0x21,0x50,0x44,0x01]
