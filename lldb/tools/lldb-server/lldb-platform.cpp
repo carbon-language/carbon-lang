@@ -93,7 +93,8 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname, const char *subcommand)
 {
-    fprintf(stderr, "Usage:\n  %s %s [--log-file log-file-path] [--log-flags flags] --listen port\n", progname, subcommand);
+    fprintf(stderr, "Usage:\n  %s %s [--server] --listen port\n",
+            progname, subcommand);
     exit(0);
 }
 
