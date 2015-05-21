@@ -850,7 +850,7 @@ def getOutputPaths(lldbRootDirectory):
     result = []
 
     if sys.platform == 'darwin':
-        result.append(getXcodeOutputPaths(lldbRootDirectory))
+        result.extend(getXcodeOutputPaths(lldbRootDirectory))
 
     # cmake builds?  look for build or build/host folder next to llvm directory
     # lldb is located in llvm/tools/lldb so we need to go up three levels
