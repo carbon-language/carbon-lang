@@ -1944,12 +1944,12 @@ static void rematerializeLiveValues(CallSite CS,
           assert(LastValue);
           ClonedValue->replaceUsesOfWith(LastValue, LastClonedValue);
 #ifndef NDEBUG
-          // Assert that cloned instruction does not use any instructions
-          // other than LastClonedValue
-          for (auto OpValue: ClonedValue->operand_values()) {
-            if (isa<Instruction>(OpValue))
-              assert(OpValue == LastClonedValue &&
-                     "unexpected use found in rematerialized value");
+          // Assert that cloned instruction does not use any instructions from
+          // this chain other than LastClonedValue
+          for (auto OpValue : ClonedValue->operand_values()) {
+            assert(std::find(ChainToBase.begin(), ChainToBase.end(), OpValue) ==
+                       ChainToBase.end() &&
+                   "incorrect use in rematerialization chain");
           }
 #endif
         }
