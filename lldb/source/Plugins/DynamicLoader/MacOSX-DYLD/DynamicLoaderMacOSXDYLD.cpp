@@ -242,7 +242,7 @@ DynamicLoaderMacOSXDYLD::Clear (bool clear_process)
 {
     Mutex::Locker locker(m_mutex);
 
-    if (m_process->IsAlive() && LLDB_BREAK_ID_IS_VALID(m_break_id))
+    if (LLDB_BREAK_ID_IS_VALID(m_break_id))
         m_process->GetTarget().RemoveBreakpointByID (m_break_id);
 
     if (clear_process)
@@ -607,11 +607,16 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
     // will do so and return true.  In the course of initializing the all_image_infos it will read the complete
     // current state, so we don't need to figure out what has changed from the data passed in to us.
     
+    ExecutionContext exe_ctx (context->exe_ctx_ref);
+    Process *process = exe_ctx.GetProcessPtr();
+
+    // This is a sanity check just in case this dyld_instance is an old dyld plugin's breakpoint still lying around.
+    if (process != dyld_instance->m_process)
+        return false;
+
     if (dyld_instance->InitializeFromAllImageInfos())
         return dyld_instance->GetStopWhenImagesChange(); 
 
-    ExecutionContext exe_ctx (context->exe_ctx_ref);
-    Process *process = exe_ctx.GetProcessPtr();
     const lldb::ABISP &abi = process->GetABI();
     if (abi)
     {
