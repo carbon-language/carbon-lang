@@ -10,11 +10,15 @@ class Lock:
     def __init__(self, filename):
         self.filename = filename
         # This will create it if it does not exist already
-        self.handle = open(filename, 'w')
+        unbuffered = 0
+        self.handle = open(filename, 'a+', unbuffered)
 
-    # Bitwise OR fcntl.LOCK_NB if you need a non-blocking lock
     def acquire(self):
         fcntl.flock(self.handle, fcntl.LOCK_EX)
+
+    # will throw IOError if unavailable
+    def try_acquire(self):
+        fcntl.flock(self.handle, fcntl.LOCK_NB | fcntl.LOCK_EX)
 
     def release(self):
         fcntl.flock(self.handle, fcntl.LOCK_UN)
