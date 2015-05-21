@@ -2141,13 +2141,11 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
   case OCF_SIGNED_ADD: {
     // X + undef -> undef
     if (isa<UndefValue>(RHS))
-      return SetResult(UndefValue::get(RHS->getType()),
-                       UndefValue::get(Builder->getInt1Ty()), false);
+      return SetResult(RHS, UndefValue::get(Builder->getInt1Ty()), false);
 
-    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS))
-      // X + 0 -> {X, false}
-      if (ConstRHS->isZero())
-        return SetResult(LHS, Builder->getFalse(), false);
+    // X + 0 -> {X, false}
+    if (match(RHS, m_Zero()))
+      return SetResult(LHS, Builder->getFalse(), false);
 
     // We can strength reduce this signed add into a regular add if we can prove
     // that it will never overflow.
@@ -2160,16 +2158,16 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
   case OCF_UNSIGNED_SUB:
   case OCF_SIGNED_SUB: {
     // undef - X -> undef
-    // X - undef -> undef
-    if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS))
-      return SetResult(UndefValue::get(LHS->getType()),
-                       UndefValue::get(Builder->getInt1Ty()), false);
+    if (isa<UndefValue>(LHS))
+      return SetResult(LHS, UndefValue::get(Builder->getInt1Ty()), false);
 
-    if (ConstantInt *ConstRHS = dyn_cast<ConstantInt>(RHS))
-      // X - 0 -> {X, false}
-      if (ConstRHS->isZero())
-        return SetResult(UndefValue::get(LHS->getType()), Builder->getFalse(),
-                         false);
+    // X - undef -> undef
+    if (isa<UndefValue>(RHS))
+      return SetResult(RHS, UndefValue::get(Builder->getInt1Ty()), false);
+
+    // X - 0 -> {X, false}
+    if (match(RHS, m_Zero()))
+      return SetResult(LHS, Builder->getFalse(), false);
 
     if (OCF == OCF_SIGNED_SUB) {
       if (WillNotOverflowSignedSub(LHS, RHS, OrigI))
@@ -2194,19 +2192,15 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
   case OCF_SIGNED_MUL:
     // X * undef -> undef
     if (isa<UndefValue>(RHS))
-      return SetResult(UndefValue::get(LHS->getType()),
-                       UndefValue::get(Builder->getInt1Ty()), false);
+      return SetResult(RHS, UndefValue::get(Builder->getInt1Ty()), false);
 
-    if (ConstantInt *RHSI = dyn_cast<ConstantInt>(RHS)) {
-      // X * 0 -> {0, false}
-      if (RHSI->isZero())
-        return SetResult(Constant::getNullValue(RHS->getType()),
-                         Builder->getFalse(), false);
+    // X * 0 -> {0, false}
+    if (match(RHS, m_Zero()))
+      return SetResult(RHS, Builder->getFalse(), false);
 
-      // X * 1 -> {X, false}
-      if (RHSI->equalsInt(1))
-        return SetResult(LHS, Builder->getFalse(), false);
-    }
+    // X * 1 -> {X, false}
+    if (match(RHS, m_One()))
+      return SetResult(LHS, Builder->getFalse(), false);
 
     if (OCF == OCF_SIGNED_MUL)
       if (WillNotOverflowSignedMul(LHS, RHS, OrigI))
