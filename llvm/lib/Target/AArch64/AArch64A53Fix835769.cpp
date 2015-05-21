@@ -48,7 +48,7 @@ static bool isFirstInstructionInSequence(MachineInstr *MI) {
   case AArch64::PRFUMi:
     return true;
   default:
-    return (MI->mayLoad() || MI->mayStore());
+    return MI->mayLoadOrStore();
   }
 }
 

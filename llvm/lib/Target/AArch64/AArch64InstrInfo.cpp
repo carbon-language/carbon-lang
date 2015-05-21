@@ -617,10 +617,8 @@ AArch64InstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
   int OffsetA = 0, OffsetB = 0;
   int WidthA = 0, WidthB = 0;
 
-  assert(MIa && (MIa->mayLoad() || MIa->mayStore()) &&
-         "MIa must be a store or a load");
-  assert(MIb && (MIb->mayLoad() || MIb->mayStore()) &&
-         "MIb must be a store or a load");
+  assert(MIa && MIa->mayLoadOrStore() && "MIa must be a load or store.");
+  assert(MIb && MIb->mayLoadOrStore() && "MIb must be a load or store.");
 
   if (MIa->hasUnmodeledSideEffects() || MIb->hasUnmodeledSideEffects() ||
       MIa->hasOrderedMemoryRef() || MIb->hasOrderedMemoryRef())
