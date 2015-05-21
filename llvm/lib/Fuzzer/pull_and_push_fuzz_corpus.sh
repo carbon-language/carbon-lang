@@ -8,10 +8,10 @@
 cd $1
 git add *
 git commit -m "fuzz test corpus"
-git pull --no-edit
+git pull --rebase --no-edit
 for((attempt=0; attempt<5; attempt++)); do
   echo GIT PUSH $1 ATTEMPT $attempt
   if $(git push); then break; fi
-  git pull --no-edit
+  git pull --rebase --no-edit
 done
 

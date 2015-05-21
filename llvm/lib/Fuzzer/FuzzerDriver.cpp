@@ -75,6 +75,8 @@ static void PrintHelp() {
     std::cerr << "\t";
     std::cerr << D.Default << "\t" << D.Description << "\n";
   }
+  std::cerr << "\nFlags starting with '--' will be ignored and "
+            "will be passed verbatim to subprocesses.\n";
 }
 
 static const char *FlagValue(const char *Param, const char *Name) {
@@ -87,6 +89,14 @@ static const char *FlagValue(const char *Param, const char *Name) {
 
 static bool ParseOneFlag(const char *Param) {
   if (Param[0] != '-') return false;
+  if (Param[1] == '-') {
+    static bool PrintedWarning = false;
+    if (!PrintedWarning) {
+      PrintedWarning = true;
+      std::cerr << "WARNING: libFuzzer ignores flags that start with '--'\n";
+    }
+    return true;
+  }
   for (size_t F = 0; F < kNumFlags; F++) {
     const char *Name = FlagDescriptions[F].Name;
     const char *Str = FlagValue(Param, Name);
