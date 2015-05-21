@@ -159,7 +159,7 @@ public:
 /// of the symbol as external.
 class MCSymbolRefExpr : public MCExpr {
 public:
-  enum VariantKind {
+  enum VariantKind : uint16_t {
     VK_None,
     VK_Invalid,
 
@@ -295,7 +295,7 @@ public:
 
 private:
   /// The symbol reference modifier.
-  const unsigned Kind : 16;
+  const VariantKind Kind;
 
   /// Specifies how the variant kind should be printed.
   const unsigned UseParensForSymbolVariant : 1;
@@ -328,7 +328,7 @@ public:
 
   const MCSymbol &getSymbol() const { return *Symbol; }
 
-  VariantKind getKind() const { return static_cast<VariantKind>(Kind); }
+  VariantKind getKind() const { return Kind; }
 
   void printVariantKind(raw_ostream &OS) const;
 
