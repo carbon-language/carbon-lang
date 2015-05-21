@@ -71,8 +71,6 @@ public:
   /// @{
   bool isInitialized() const { return Symbol; }
 
-  const MCSymbol &getSymbol() const { return *Symbol; }
-
   MCFragment *getFragment() const { return Fragment.getPointer(); }
   void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
 
