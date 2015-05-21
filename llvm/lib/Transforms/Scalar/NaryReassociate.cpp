@@ -85,6 +85,7 @@
 
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
@@ -104,6 +105,10 @@ public:
     initializeNaryReassociatePass(*PassRegistry::getPassRegistry());
   }
 
+  bool doInitialization(Module &M) override {
+    DL = &M.getDataLayout();
+    return false;
+  }
   bool runOnFunction(Function &F) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -113,6 +118,7 @@ public:
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
 
@@ -120,16 +126,49 @@ private:
   // Runs only one iteration of the dominator-based algorithm. See the header
   // comments for why we need multiple iterations.
   bool doOneIteration(Function &F);
-  // Reasssociates I to a better form.
-  Instruction *tryReassociateAdd(Instruction *I);
+
+  // Reassociates I for better CSE.
+  Instruction *tryReassociate(Instruction *I);
+
+  // Reassociate GEP for better CSE.
+  Instruction *tryReassociateGEP(GetElementPtrInst *GEP);
+  // Try splitting GEP at the I-th index and see whether either part can be
+  // CSE'ed. This is a helper function for tryReassociateGEP.
+  //
+  // \p IndexedType The element type indexed by GEP's I-th index. This is
+  //                equivalent to
+  //                  GEP->getIndexedType(GEP->getPointerOperand(), 0-th index,
+  //                                      ..., i-th index).
+  GetElementPtrInst *tryReassociateGEPAtIndex(GetElementPtrInst *GEP,
+                                              unsigned I, Type *IndexedType);
+  // Given GEP's I-th index = LHS + RHS, see whether &Base[..][LHS][..] or
+  // &Base[..][RHS][..] can be CSE'ed and rewrite GEP accordingly.
+  GetElementPtrInst *tryReassociateGEPAtIndex(GetElementPtrInst *GEP,
+                                              unsigned I, Value *LHS,
+                                              Value *RHS, Type *IndexedType);
+
+  // Reassociate Add for better CSE.
+  Instruction *tryReassociateAdd(BinaryOperator *I);
   // A helper function for tryReassociateAdd. LHS and RHS are explicitly passed.
   Instruction *tryReassociateAdd(Value *LHS, Value *RHS, Instruction *I);
   // Rewrites I to LHS + RHS if LHS is computed already.
   Instruction *tryReassociatedAdd(const SCEV *LHS, Value *RHS, Instruction *I);
 
+  // Returns the closest dominator of \c Dominatee that computes
+  // \c CandidateExpr. Returns null if not found.
+  Instruction *findClosestMatchingDominator(const SCEV *CandidateExpr,
+                                            Instruction *Dominatee);
+  // GetElementPtrInst implicitly sign-extends an index if the index is shorter
+  // than the pointer size. This function returns whether Index is shorter than
+  // GEP's pointer size, i.e., whether Index needs to be sign-extended in order
+  // to be an index of GEP.
+  bool requiresSignExtension(Value *Index, GetElementPtrInst *GEP);
+
   DominatorTree *DT;
   ScalarEvolution *SE;
   TargetLibraryInfo *TLI;
+  TargetTransformInfo *TTI;
+  const DataLayout *DL;
   // A lookup table quickly telling which instructions compute the given SCEV.
   // Note that there can be multiple instructions at different locations
   // computing to the same SCEV, so we map a SCEV to an instruction list.  For
@@ -149,6 +188,7 @@ INITIALIZE_PASS_BEGIN(NaryReassociate, "nary-reassociate", "Nary reassociation",
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(NaryReassociate, "nary-reassociate", "Nary reassociation",
                     false, false)
 
@@ -163,6 +203,7 @@ bool NaryReassociate::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
 
   bool Changed = false, ChangedInThisIteration;
   do {
@@ -172,26 +213,36 @@ bool NaryReassociate::runOnFunction(Function &F) {
   return Changed;
 }
 
+// Whitelist the instruction types NaryReassociate handles for now.
+static bool isPotentiallyNaryReassociable(Instruction *I) {
+  switch (I->getOpcode()) {
+  case Instruction::Add:
+  case Instruction::GetElementPtr:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool NaryReassociate::doOneIteration(Function &F) {
   bool Changed = false;
   SeenExprs.clear();
-  // Traverse the dominator tree in the depth-first order. This order makes sure
-  // all bases of a candidate are in Candidates when we process it.
+  // Process the basic blocks in pre-order of the dominator tree. This order
+  // ensures that all bases of a candidate are in Candidates when we process it.
   for (auto Node = GraphTraits<DominatorTree *>::nodes_begin(DT);
        Node != GraphTraits<DominatorTree *>::nodes_end(DT); ++Node) {
     BasicBlock *BB = Node->getBlock();
     for (auto I = BB->begin(); I != BB->end(); ++I) {
-      // Skip vector types which are not SCEVable.
-      if (I->getOpcode() == Instruction::Add && !I->getType()->isVectorTy()) {
-        if (Instruction *NewI = tryReassociateAdd(I)) {
+      if (SE->isSCEVable(I->getType()) && isPotentiallyNaryReassociable(I)) {
+        if (Instruction *NewI = tryReassociate(I)) {
           Changed = true;
           SE->forgetValue(I);
           I->replaceAllUsesWith(NewI);
           RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
           I = NewI;
         }
-        // We should add the rewritten instruction because tryReassociateAdd may
-        // have invalidated the original one.
+        // Add the rewritten instruction to SeenExprs; the original instruction
+        // is deleted.
         SeenExprs[SE->getSCEV(I)].push_back(I);
       }
     }
@@ -199,7 +250,168 @@ bool NaryReassociate::doOneIteration(Function &F) {
   return Changed;
 }
 
-Instruction *NaryReassociate::tryReassociateAdd(Instruction *I) {
+Instruction *NaryReassociate::tryReassociate(Instruction *I) {
+  switch (I->getOpcode()) {
+  case Instruction::Add:
+    return tryReassociateAdd(cast<BinaryOperator>(I));
+  case Instruction::GetElementPtr:
+    return tryReassociateGEP(cast<GetElementPtrInst>(I));
+  default:
+    llvm_unreachable("should be filtered out by isPotentiallyNaryReassociable");
+  }
+}
+
+// FIXME: extract this method into TTI->getGEPCost.
+static bool isGEPFoldable(GetElementPtrInst *GEP,
+                          const TargetTransformInfo *TTI,
+                          const DataLayout *DL) {
+  GlobalVariable *BaseGV = nullptr;
+  int64_t BaseOffset = 0;
+  bool HasBaseReg = false;
+  int64_t Scale = 0;
+
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GEP->getPointerOperand()))
+    BaseGV = GV;
+  else
+    HasBaseReg = true;
+
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (auto I = GEP->idx_begin(); I != GEP->idx_end(); ++I, ++GTI) {
+    if (isa<SequentialType>(*GTI)) {
+      int64_t ElementSize = DL->getTypeAllocSize(GTI.getIndexedType());
+      if (ConstantInt *ConstIdx = dyn_cast<ConstantInt>(*I)) {
+        BaseOffset += ConstIdx->getSExtValue() * ElementSize;
+      } else {
+        // Needs scale register.
+        if (Scale != 0) {
+          // No addressing mode takes two scale registers.
+          return false;
+        }
+        Scale = ElementSize;
+      }
+    } else {
+      StructType *STy = cast<StructType>(*GTI);
+      uint64_t Field = cast<ConstantInt>(*I)->getZExtValue();
+      BaseOffset += DL->getStructLayout(STy)->getElementOffset(Field);
+    }
+  }
+  return TTI->isLegalAddressingMode(GEP->getType()->getElementType(), BaseGV,
+                                    BaseOffset, HasBaseReg, Scale);
+}
+
+Instruction *NaryReassociate::tryReassociateGEP(GetElementPtrInst *GEP) {
+  // Not worth reassociating GEP if it is foldable.
+  if (isGEPFoldable(GEP, TTI, DL))
+    return nullptr;
+
+  gep_type_iterator GTI = gep_type_begin(*GEP);
+  for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I) {
+    if (isa<SequentialType>(*GTI++)) {
+      if (auto *NewGEP = tryReassociateGEPAtIndex(GEP, I - 1, *GTI)) {
+        return NewGEP;
+      }
+    }
+  }
+  return nullptr;
+}
+
+bool NaryReassociate::requiresSignExtension(Value *Index,
+                                            GetElementPtrInst *GEP) {
+  unsigned PointerSizeInBits =
+      DL->getPointerSizeInBits(GEP->getType()->getPointerAddressSpace());
+  return cast<IntegerType>(Index->getType())->getBitWidth() < PointerSizeInBits;
+}
+
+GetElementPtrInst *
+NaryReassociate::tryReassociateGEPAtIndex(GetElementPtrInst *GEP, unsigned I,
+                                          Type *IndexedType) {
+  Value *IndexToSplit = GEP->getOperand(I + 1);
+  if (SExtInst *SExt = dyn_cast<SExtInst>(IndexToSplit))
+    IndexToSplit = SExt->getOperand(0);
+
+  if (AddOperator *AO = dyn_cast<AddOperator>(IndexToSplit)) {
+    // If the I-th index needs sext and the underlying add is not equipped with
+    // nsw, we cannot split the add because
+    //   sext(LHS + RHS) != sext(LHS) + sext(RHS).
+    if (requiresSignExtension(IndexToSplit, GEP) && !AO->hasNoSignedWrap())
+      return nullptr;
+    Value *LHS = AO->getOperand(0), *RHS = AO->getOperand(1);
+    // IndexToSplit = LHS + RHS.
+    if (auto *NewGEP = tryReassociateGEPAtIndex(GEP, I, LHS, RHS, IndexedType))
+      return NewGEP;
+    // Symmetrically, try IndexToSplit = RHS + LHS.
+    if (LHS != RHS) {
+      if (auto *NewGEP =
+              tryReassociateGEPAtIndex(GEP, I, RHS, LHS, IndexedType))
+        return NewGEP;
+    }
+  }
+  return nullptr;
+}
+
+GetElementPtrInst *
+NaryReassociate::tryReassociateGEPAtIndex(GetElementPtrInst *GEP, unsigned I,
+                                          Value *LHS, Value *RHS,
+                                          Type *IndexedType) {
+  // Look for GEP's closest dominator that has the same SCEV as GEP except that
+  // the I-th index is replaced with LHS.
+  SmallVector<const SCEV *, 4> IndexExprs;
+  for (auto Index = GEP->idx_begin(); Index != GEP->idx_end(); ++Index)
+    IndexExprs.push_back(SE->getSCEV(*Index));
+  // Replace the I-th index with LHS.
+  IndexExprs[I] = SE->getSCEV(LHS);
+  const SCEV *CandidateExpr = SE->getGEPExpr(
+      GEP->getSourceElementType(), SE->getSCEV(GEP->getPointerOperand()),
+      IndexExprs, GEP->isInBounds());
+
+  auto *Candidate = findClosestMatchingDominator(CandidateExpr, GEP);
+  if (Candidate == nullptr)
+    return nullptr;
+
+  PointerType *TypeOfCandidate = dyn_cast<PointerType>(Candidate->getType());
+  // Pretty rare but theoretically possible when a numeric value happens to
+  // share CandidateExpr.
+  if (TypeOfCandidate == nullptr)
+    return nullptr;
+
+  // NewGEP = (char *)Candidate + RHS * sizeof(IndexedType)
+  uint64_t IndexedSize = DL->getTypeAllocSize(IndexedType);
+  Type *ElementType = TypeOfCandidate->getElementType();
+  uint64_t ElementSize = DL->getTypeAllocSize(ElementType);
+  // Another less rare case: because I is not necessarily the last index of the
+  // GEP, the size of the type at the I-th index (IndexedSize) is not
+  // necessarily divisible by ElementSize. For example,
+  //
+  // #pragma pack(1)
+  // struct S {
+  //   int a[3];
+  //   int64 b[8];
+  // };
+  // #pragma pack()
+  //
+  // sizeof(S) = 100 is indivisible by sizeof(int64) = 8.
+  //
+  // TODO: bail out on this case for now. We could emit uglygep.
+  if (IndexedSize % ElementSize != 0)
+    return nullptr;
+
+  // NewGEP = &Candidate[RHS * (sizeof(IndexedType) / sizeof(Candidate[0])));
+  IRBuilder<> Builder(GEP);
+  Type *IntPtrTy = DL->getIntPtrType(TypeOfCandidate);
+  if (RHS->getType() != IntPtrTy)
+    RHS = Builder.CreateSExtOrTrunc(RHS, IntPtrTy);
+  if (IndexedSize != ElementSize) {
+    RHS = Builder.CreateMul(
+        RHS, ConstantInt::get(IntPtrTy, IndexedSize / ElementSize));
+  }
+  GetElementPtrInst *NewGEP =
+      cast<GetElementPtrInst>(Builder.CreateGEP(Candidate, RHS));
+  NewGEP->setIsInBounds(GEP->isInBounds());
+  NewGEP->takeName(GEP);
+  return NewGEP;
+}
+
+Instruction *NaryReassociate::tryReassociateAdd(BinaryOperator *I) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
   if (auto *NewI = tryReassociateAdd(LHS, RHS, I))
     return NewI;
@@ -236,22 +448,34 @@ Instruction *NaryReassociate::tryReassociatedAdd(const SCEV *LHSExpr,
   if (Pos == SeenExprs.end())
     return nullptr;
 
-  auto &LHSCandidates = Pos->second;
   // Look for the closest dominator LHS of I that computes LHSExpr, and replace
   // I with LHS + RHS.
-  //
-  // Because we traverse the dominator tree in the pre-order, a
+  auto *LHS = findClosestMatchingDominator(LHSExpr, I);
+  if (LHS == nullptr)
+    return nullptr;
+
+  Instruction *NewI = BinaryOperator::CreateAdd(LHS, RHS, "", I);
+  NewI->takeName(I);
+  return NewI;
+}
+
+Instruction *
+NaryReassociate::findClosestMatchingDominator(const SCEV *CandidateExpr,
+                                              Instruction *Dominatee) {
+  auto Pos = SeenExprs.find(CandidateExpr);
+  if (Pos == SeenExprs.end())
+    return nullptr;
+
+  auto &Candidates = Pos->second;
+  // Because we process the basic blocks in pre-order of the dominator tree, a
   // candidate that doesn't dominate the current instruction won't dominate any
   // future instruction either. Therefore, we pop it out of the stack. This
   // optimization makes the algorithm O(n).
-  while (!LHSCandidates.empty()) {
-    Instruction *LHS = LHSCandidates.back();
-    if (DT->dominates(LHS, I)) {
-      Instruction *NewI = BinaryOperator::CreateAdd(LHS, RHS, "", I);
-      NewI->takeName(I);
-      return NewI;
-    }
-    LHSCandidates.pop_back();
+  while (!Candidates.empty()) {
+    Instruction *Candidate = Candidates.back();
+    if (DT->dominates(Candidate, Dominatee))
+      return Candidate;
+    Candidates.pop_back();
   }
   return nullptr;
 }
