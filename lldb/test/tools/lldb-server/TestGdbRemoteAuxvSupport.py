@@ -5,6 +5,8 @@ from lldbtest import *
 
 class TestGdbRemoteAuxvSupport(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     AUXV_SUPPORT_FEATURE_NAME = "qXfer:auxv:read"
 
     def has_auxv_support(self):

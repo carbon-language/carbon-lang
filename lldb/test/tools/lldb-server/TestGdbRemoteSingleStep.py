@@ -5,6 +5,8 @@ from lldbtest import *
 
 class TestGdbRemoteSingleStep(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     @debugserver_test
     @dsym_test
     def test_single_step_only_steps_one_instruction_with_s_debugserver_dsym(self):

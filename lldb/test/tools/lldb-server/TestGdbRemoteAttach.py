@@ -6,6 +6,8 @@ from lldbtest import *
 
 class TestGdbRemoteAttach(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     def attach_with_vAttach(self):
         # Start the inferior, start the debug monitor, nothing is attached yet.
         procs = self.prep_debug_monitor_and_inferior(inferior_args=["sleep:60"])

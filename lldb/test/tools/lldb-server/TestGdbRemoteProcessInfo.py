@@ -7,6 +7,8 @@ from lldbtest import *
 
 class TestGdbRemoteProcessInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     def qProcessInfo_returns_running_process(self):
         procs = self.prep_debug_monitor_and_inferior()
         self.add_process_info_collection_packets()

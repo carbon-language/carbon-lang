@@ -6,6 +6,9 @@ import lldbgdbserverutils
 from lldbtest import *
 
 class TestGdbRemoteKill(gdbremote_testcase.GdbRemoteTestCaseBase):
+
+    mydir = TestBase.compute_mydir(__file__)
+
     def attach_commandline_kill_after_initial_stop(self):
         procs = self.prep_debug_monitor_and_inferior()
         self.test_sequence.add_log_lines([

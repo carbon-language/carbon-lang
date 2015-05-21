@@ -6,6 +6,7 @@ from lldbtest import *
 
 class TestGdbRemote_qThreadStopInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
     THREAD_COUNT = 5
 
     def gather_stop_replies_via_qThreadStopInfo(self, thread_count):

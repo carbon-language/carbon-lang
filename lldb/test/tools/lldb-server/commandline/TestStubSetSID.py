@@ -9,6 +9,9 @@ import time
 from lldbtest import *
 
 class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
+
+    mydir = TestBase.compute_mydir(__file__)
+
     def get_stub_sid(self, extra_stub_args=None):
         # Launch debugserver
         if extra_stub_args:

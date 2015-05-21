@@ -7,6 +7,9 @@ import time
 from lldbtest import *
 
 class TestStubReverseConnect(gdbremote_testcase.GdbRemoteTestCaseBase):
+
+    mydir = TestBase.compute_mydir(__file__)
+
     _DEFAULT_TIMEOUT = 20
 
     def setUp(self):

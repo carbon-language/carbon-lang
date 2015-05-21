@@ -19,6 +19,8 @@ from lldbtest import *
 
 class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     @debugserver_test
     def test_exe_starts_debugserver(self):
         self.init_debugserver_test()
