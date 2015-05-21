@@ -731,10 +731,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
   // to a block within another outlined catch handler that would otherwise
   // be unreachable, we need to outline the nested landing pad before we
   // outline the landing pad which encloses it.
-  if (!isAsynchronousEHPersonality(Personality)) 
-    std::sort(LPads.begin(), LPads.end(), 
-              [this](LandingPadInst* const &L, LandingPadInst* const &R) {
-                return DT->dominates(R->getParent(), L->getParent());
+  if (!isAsynchronousEHPersonality(Personality))
+    std::sort(LPads.begin(), LPads.end(),
+              [this](LandingPadInst *const &L, LandingPadInst *const &R) {
+                return DT->properlyDominates(R->getParent(), L->getParent());
               });
 
   // This container stores the llvm.eh.recover and IndirectBr instructions
