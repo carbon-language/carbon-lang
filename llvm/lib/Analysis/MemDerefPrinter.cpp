@@ -24,7 +24,7 @@ namespace {
   struct MemDerefPrinter : public FunctionPass {
     SmallVector<Value *, 4> Vec;
 
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     MemDerefPrinter() : FunctionPass(ID) {
       initializeMemDerefPrinterPass(*PassRegistry::getPassRegistry());
     }
