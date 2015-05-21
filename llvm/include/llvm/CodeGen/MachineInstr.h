@@ -560,7 +560,6 @@ public:
     return hasProperty(MCID::MayLoad, Type);
   }
 
-
   /// Return true if this instruction could possibly modify memory.
   /// Instructions with this flag set are not necessarily simple store
   /// instructions, they may store a modified value based on their operands, or
@@ -572,6 +571,11 @@ public:
         return true;
     }
     return hasProperty(MCID::MayStore, Type);
+  }
+
+  /// Return true if this instruction could possibly read or modify memory.
+  bool mayLoadOrStore(QueryType Type = AnyInBundle) const {
+    return mayLoad(Type) || mayStore(Type);
   }
 
   //===--------------------------------------------------------------------===//
