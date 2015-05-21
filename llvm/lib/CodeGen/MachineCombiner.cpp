@@ -366,7 +366,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
           continue;
         // Substitute when we optimize for codesize and the new sequence has
         // fewer instructions OR
-        // the new sequence neither lenghten the critical path nor increases
+        // the new sequence neither lengthens the critical path nor increases
         // resource pressure.
         if (doSubstitute(InsInstrs.size(), DelInstrs.size()) ||
             (preservesCriticalPathLen(MBB, &MI, BlockTrace, InsInstrs,
