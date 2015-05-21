@@ -532,9 +532,7 @@ EndStmt:
   getStreamer().SwitchSection(ELFSection, Subsection);
 
   if (getContext().getGenDwarfForAssembly()) {
-    auto &Sections = getContext().getGenDwarfSectionSyms();
-    auto InsertResult = Sections.insert(
-        std::make_pair(ELFSection, std::make_pair(nullptr, nullptr)));
+    auto InsertResult = getContext().addGenDwarfSection(ELFSection);
     if (InsertResult.second) {
       if (getContext().getDwarfVersion() <= 2)
         Warning(loc, "DWARF2 only supports one section per compilation unit");
