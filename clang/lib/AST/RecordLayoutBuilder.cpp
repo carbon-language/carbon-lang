@@ -2976,11 +2976,11 @@ void ASTContext::setNonKeyFunction(const CXXMethodDecl *Method) {
   // Look up the cache entry.  Since we're working with the first
   // declaration, its parent must be the class definition, which is
   // the correct key for the KeyFunctions hash.
-  llvm::DenseMap<const CXXRecordDecl*, LazyDeclPtr>::iterator
-    I = KeyFunctions.find(Method->getParent());
+  const auto &Map = KeyFunctions;
+  auto I = Map.find(Method->getParent());
 
   // If it's not cached, there's nothing to do.
-  if (I == KeyFunctions.end()) return;
+  if (I == Map.end()) return;
 
   // If it is cached, check whether it's the target method, and if so,
   // remove it from the cache. Note, the call to 'get' might invalidate
