@@ -1145,7 +1145,11 @@ class Base(unittest2.TestCase):
 
         # Create a string buffer to record the session info, to be dumped into a
         # test case specific file if test failure is encountered.
-        self.session = StringIO.StringIO()
+        log_basename = self.getLogBasenameForCurrentTest()
+
+        session_file = "{}.log".format(log_basename)
+        unbuffered = 0 # 0 is the constant for unbuffered
+        self.session = open(log_basename, "w", unbuffered)
 
         # Optimistically set __errored__, __failed__, __expected__ to False
         # initially.  If the test errored/failed, the session info
@@ -1487,8 +1491,8 @@ class Base(unittest2.TestCase):
         # formatted tracebacks.
         #
         # See http://docs.python.org/library/unittest.html#unittest.TestResult.
-        src_log_basename = self.getLogBasenameForCurrentTest()
 
+        # output tracebacks into session
         pairs = []
         if self.__errored__:
             pairs = lldb.test_result.errors
@@ -1502,41 +1506,45 @@ class Base(unittest2.TestCase):
         elif self.__skipped__:
             prefix = 'SkippedTest'
         elif self.__unexpected__:
-            prefix = "UnexpectedSuccess"
+            prefix = 'UnexpectedSuccess'
         else:
-            prefix = "Success"
-            if not lldbtest_config.log_success:
-                # delete log files, return (don't output trace)
-                for i in glob.glob(src_log_basename + "*"):
-                    os.unlink(i)
-                return
-
-        # rename all log files - prepend with result
-        dst_log_basename = self.getLogBasenameForCurrentTest(prefix)
-        for src in glob.glob(self.getLogBasenameForCurrentTest() + "*"):
-            dst = src.replace(src_log_basename, dst_log_basename)
-            os.rename(src, dst)
+            prefix = 'Success'
 
         if not self.__unexpected__ and not self.__skipped__:
             for test, traceback in pairs:
                 if test is self:
                     print >> self.session, traceback
 
+        # put footer (timestamp/rerun instructions) into session
         testMethod = getattr(self, self._testMethodName)
         if getattr(testMethod, "__benchmarks_test__", False):
             benchmarks = True
         else:
             benchmarks = False
 
-        pname = "{}.log".format(dst_log_basename)
-        with open(pname, "w") as f:
-            import datetime
-            print >> f, "Session info generated @", datetime.datetime.now().ctime()
-            print >> f, self.session.getvalue()
-            print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "./dotest.py %s -v %s %s" % (self.getRunOptions(),
-                                                     ('+b' if benchmarks else '-t'),
-                                                     self.getRerunArgs())
+        import datetime
+        print >> self.session, "Session info generated @", datetime.datetime.now().ctime()
+        print >> self.session, "To rerun this test, issue the following command from the 'test' directory:\n"
+        print >> self.session, "./dotest.py %s -v %s %s" % (self.getRunOptions(),
+                                                 ('+b' if benchmarks else '-t'),
+                                                 self.getRerunArgs())
+        self.session.close()
+        del self.session
+
+        # process the log files
+        src_log_basename = self.getLogBasenameForCurrentTest()
+        log_files_for_this_test = glob.glob(src_log_basename + "*")
+
+        if prefix != 'Success' or lldbtest_config.log_success:
+            # keep all log files, rename them to include prefix
+            dst_log_basename = self.getLogBasenameForCurrentTest(prefix)
+            for src in log_files_for_this_test:
+                dst = src.replace(src_log_basename, dst_log_basename)
+                os.rename(src, dst)
+        else:
+            # success!  (and we don't want log files) delete log files
+            for log_file in log_files_for_this_test:
+                os.unlink(log_file)
 
     # ====================================================
     # Config. methods supported through a plugin interface
