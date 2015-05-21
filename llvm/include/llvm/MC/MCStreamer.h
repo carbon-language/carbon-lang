@@ -728,7 +728,7 @@ public:
   /// \brief Finish emission of machine code.
   void Finish();
 
-  virtual bool mayHaveInstructions() const { return true; }
+  virtual bool mayHaveInstructions(const MCSection &Sec) const { return true; }
 };
 
 /// Create a dummy machine code streamer, which does nothing. This is useful for

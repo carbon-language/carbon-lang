@@ -147,8 +147,8 @@ public:
   bool emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
                               unsigned Size) override;
 
-  bool mayHaveInstructions() const override {
-    return getCurrentSectionData()->hasInstructions();
+  bool mayHaveInstructions(const MCSection &Sec) const override {
+    return Assembler->getOrCreateSectionData(Sec).hasInstructions();
   }
 };
 

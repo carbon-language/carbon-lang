@@ -442,8 +442,7 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
 void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
   std::vector<const MCSection *> Keep;
   for (const MCSection *Sec : SectionsForRanges) {
-    MCOS.SwitchSection(Sec); // FIXME: pass the section to mayHaveInstructions
-    if (MCOS.mayHaveInstructions())
+    if (MCOS.mayHaveInstructions(*Sec))
       Keep.push_back(Sec);
   }
   SectionsForRanges.clear();
