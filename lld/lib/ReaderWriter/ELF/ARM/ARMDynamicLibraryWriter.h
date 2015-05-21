@@ -25,15 +25,22 @@ public:
 protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
+
+private:
+  ARMLinkingContext &_ctx;
 };
 
 ARMDynamicLibraryWriter::ARMDynamicLibraryWriter(ARMLinkingContext &ctx,
                                                  ARMTargetLayout &layout)
-    : ARMELFWriter(ctx, layout) {}
+    : ARMELFWriter(ctx, layout), _ctx(ctx) {}
 
 void ARMDynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   DynamicLibraryWriter::createImplicitFiles(result);
+  auto file = llvm::make_unique<RuntimeFile<ELF32LE>>(_ctx, "ARM dynamic file");
+  file->addAbsoluteAtom(gotSymbol);
+  file->addAbsoluteAtom(dynamicSymbol);
+  result.push_back(std::move(file));
 }
 
 } // namespace elf

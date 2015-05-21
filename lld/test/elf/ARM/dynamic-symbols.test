@@ -14,19 +14,39 @@
 # RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=EXEC-DYN %s
 
 # EXEC-DYN:   Name: _GLOBAL_OFFSET_TABLE_
-# EXEC-DYN-NEXT:   Value: {{[0-9]+}}
+# EXEC-DYN-NEXT:   Value: 0x401000
 # EXEC-DYN-NEXT:   Size: 0
 # EXEC-DYN-NEXT:   Binding: Global (0x1)
 # EXEC-DYN-NEXT:   Type: Object (0x1)
 # EXEC-DYN-NEXT:   Other: 0
 # EXEC-DYN-NEXT:   Section: Absolute (0xFFF1)
 # EXEC-DYN:   Name: _DYNAMIC
-# EXEC-DYN-NEXT:   Value: {{[0-9]+}}
+# EXEC-DYN-NEXT:   Value: 0x400130
 # EXEC-DYN-NEXT:   Size: 0
 # EXEC-DYN-NEXT:   Binding: Global (0x1)
 # EXEC-DYN-NEXT:   Type: Object (0x1)
 # EXEC-DYN-NEXT:   Other: 0
 # EXEC-DYN-NEXT:   Section: Absolute (0xFFF1)
+
+# RUN: yaml2obj -format=elf %s > %t-o.o
+# RUN: lld -flavor gnu -target arm-linux-gnu \
+# RUN: -shared --noinhibit-exec %t-o.o -o %t
+# RUN: llvm-readobj -symbols %t | FileCheck -check-prefix=SHARED %s
+
+# SHARED:   Name: _GLOBAL_OFFSET_TABLE_
+# SHARED-NEXT:   Value: 0x401000
+# SHARED-NEXT:   Size: 0
+# SHARED-NEXT:   Binding: Global (0x1)
+# SHARED-NEXT:   Type: Object (0x1)
+# SHARED-NEXT:   Other: 0
+# SHARED-NEXT:   Section: Absolute (0xFFF1)
+# SHARED:   Name: _DYNAMIC
+# SHARED-NEXT:   Value: 0x4000EC
+# SHARED-NEXT:   Size: 0
+# SHARED-NEXT:   Binding: Global (0x1)
+# SHARED-NEXT:   Type: Object (0x1)
+# SHARED-NEXT:   Other: 0
+# SHARED-NEXT:   Section: Absolute (0xFFF1)
 
 ---
 FileHeader:
@@ -51,6 +71,11 @@ Sections:
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
     Content:         ''
+  - Name:            .got
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000004
+    Content:         0000
 Symbols:
   Global:
     - Name:            main
