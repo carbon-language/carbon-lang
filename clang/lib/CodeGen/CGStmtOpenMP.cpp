@@ -326,8 +326,27 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
   auto *DoneBB = createBasicBlock(".omp.lastprivate.done");
   Builder.CreateCondBr(IsLastIterCond, ThenBB, DoneBB);
   EmitBlock(ThenBB);
+  llvm::DenseMap<const Decl *, const Expr *> LoopCountersAndUpdates;
+  const Expr *LastIterVal = nullptr;
+  const Expr *IVExpr = nullptr;
+  const Expr *IncExpr = nullptr;
+  if (auto *LoopDirective = dyn_cast<OMPLoopDirective>(&D)) {
+    LastIterVal =
+        cast<VarDecl>(cast<DeclRefExpr>(LoopDirective->getUpperBoundVariable())
+                          ->getDecl())
+            ->getAnyInitializer();
+    IVExpr = LoopDirective->getIterationVariable();
+    IncExpr = LoopDirective->getInc();
+    auto IUpdate = LoopDirective->updates().begin();
+    for (auto *E : LoopDirective->counters()) {
+      auto *D = cast<DeclRefExpr>(E)->getDecl()->getCanonicalDecl();
+      LoopCountersAndUpdates[D] = *IUpdate;
+      ++IUpdate;
+    }
+  }
   {
     llvm::DenseSet<const VarDecl *> AlreadyEmittedVars;
+    bool FirstLCV = true;
     for (auto &&I = D.getClausesOfKind(OMPC_lastprivate); I; ++I) {
       auto *C = cast<OMPLastprivateClause>(*I);
       auto IRef = C->varlist_begin();
@@ -339,7 +358,21 @@ void CodeGenFunction::EmitOMPLastprivateClauseFinal(
         if (auto *PVD = dyn_cast<ParmVarDecl>(PrivateVD)) {
           Type = PVD->getOriginalType();
         }
-        if (AlreadyEmittedVars.insert(PrivateVD->getCanonicalDecl()).second) {
+        auto *CanonicalVD = PrivateVD->getCanonicalDecl();
+        if (AlreadyEmittedVars.insert(CanonicalVD).second) {
+          // If lastprivate variable is a loop control variable for loop-based
+          // directive, update its value before copyin back to original
+          // variable.
+          if (auto *UpExpr = LoopCountersAndUpdates.lookup(CanonicalVD)) {
+            if (FirstLCV) {
+              EmitAnyExprToMem(LastIterVal, EmitLValue(IVExpr).getAddress(),
+                               IVExpr->getType().getQualifiers(),
+                               /*IsInitializer=*/false);
+              EmitIgnoredExpr(IncExpr);
+              FirstLCV = false;
+            }
+            EmitIgnoredExpr(UpExpr);
+          }
           auto *SrcVD = cast<VarDecl>(cast<DeclRefExpr>(*ISrcRef)->getDecl());
           auto *DestVD = cast<VarDecl>(cast<DeclRefExpr>(*IDestRef)->getDecl());
           // Get the address of the original variable.
@@ -753,8 +786,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
 
     // Emit the iterations count variable.
     // If it is not a variable, Sema decided to calculate iterations count on
-    // each
-    // iteration (e.g., it is foldable into a constant).
+    // each iteration (e.g., it is foldable into a constant).
     if (auto LIExpr = dyn_cast<DeclRefExpr>(S.getLastIteration())) {
       CGF.EmitVarDecl(*cast<VarDecl>(LIExpr->getDecl()));
       // Emit calculation of the iterations count.

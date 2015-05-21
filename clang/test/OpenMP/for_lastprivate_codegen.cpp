@@ -19,6 +19,7 @@ struct S {
 
 volatile int g = 1212;
 float f;
+char cnt;
 
 // CHECK: [[S_FLOAT_TY:%.+]] = type { float }
 // CHECK: [[CAP_MAIN_TY:%.+]] = type { i{{[0-9]+}}*, [2 x i{{[0-9]+}}]*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]* }
@@ -27,6 +28,7 @@ float f;
 // CHECK-DAG: [[IMPLICIT_BARRIER_LOC:@.+]] = private unnamed_addr constant %{{.+}} { i32 0, i32 66, i32 0, i32 0, i8*
 // CHECK-DAG: [[X:@.+]] = global double 0.0
 // CHECK-DAG: [[F:@.+]] = global float 0.0
+// CHECK-DAG: [[CNT:@.+]] = global i8 0
 template <typename T>
 T tmain() {
   S<T> test;
@@ -178,6 +180,11 @@ int main() {
   for (int i = 0; i < 2; ++i) {
     A::x++;
   }
+#pragma omp parallel
+#pragma omp for lastprivate(cnt)
+  for (cnt = 0; cnt < 2; ++cnt) {
+    A::x++;
+  }
   return tmain<int>();
 #endif
 }
@@ -189,6 +196,7 @@ int main() {
 // CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, [[CAP_MAIN_TY]]*)* [[MAIN_MICROTASK:@.+]] to void
 // CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, %{{.+}}*)* [[MAIN_MICROTASK1:@.+]] to void
 // CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, %{{.+}}*)* [[MAIN_MICROTASK2:@.+]] to void
+// CHECK: call void (%{{.+}}*, i{{[0-9]+}}, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)*, ...) @__kmpc_fork_call(%{{.+}}* @{{.+}}, i{{[0-9]+}} 1, void (i{{[0-9]+}}*, i{{[0-9]+}}*, ...)* bitcast (void (i{{[0-9]+}}*, i{{[0-9]+}}*, %{{.+}}*)* [[MAIN_MICROTASK3:@.+]] to void
 // CHECK: = call {{.+}} [[TMAIN_INT:@.+]]()
 // CHECK: call void [[S_FLOAT_TY_DESTR:@.+]]([[S_FLOAT_TY]]*
 // CHECK: ret
@@ -327,6 +335,53 @@ int main() {
 // original f=private_f;
 // CHECK: [[F_VAL:%.+]] = load float, float* [[F_PRIV]],
 // CHECK: store float [[F_VAL]], float* [[F]],
+
+// CHECK-NEXT: br label %[[LAST_DONE]]
+// CHECK: [[LAST_DONE]]
+
+// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_LOC]], i{{[0-9]+}} [[GTID]])
+// CHECK: ret void
+
+// CHECK: define internal void [[MAIN_MICROTASK3]](i{{[0-9]+}}* [[GTID_ADDR:%.+]], i{{[0-9]+}}* %{{.+}}, %{{.+}}* %{{.+}})
+// CHECK: [[CNT_PRIV:%.+]] = alloca i8,
+
+// CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_REF]]
+// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_REF]]
+// CHECK: call {{.+}} @__kmpc_for_static_init_4(%{{.+}}* @{{.+}}, i32 [[GTID]], i32 34, i32* [[IS_LAST_ADDR:%.+]], i32* [[OMP_LB:%[^,]+]], i32* [[OMP_UB:%[^,]+]], i32* [[OMP_ST:%[^,]+]], i32 1, i32 1)
+// UB = min(UB, GlobalUB)
+// CHECK-NEXT: [[UB:%.+]] = load i32, i32* [[OMP_UB]]
+// CHECK-NEXT: [[UBCMP:%.+]] = icmp sgt i32 [[UB]], 1
+// CHECK-NEXT: br i1 [[UBCMP]], label [[UB_TRUE:%[^,]+]], label [[UB_FALSE:%[^,]+]]
+// CHECK: [[UBRESULT:%.+]] = phi i32 [ 1, [[UB_TRUE]] ], [ [[UBVAL:%[^,]+]], [[UB_FALSE]] ]
+// CHECK-NEXT: store i32 [[UBRESULT]], i32* [[OMP_UB]]
+// CHECK-NEXT: [[LB:%.+]] = load i32, i32* [[OMP_LB]]
+// CHECK-NEXT: store i32 [[LB]], i32* [[OMP_IV:[^,]+]]
+// <Skip loop body>
+// CHECK: call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
+
+// Check for final copying of private values back to original vars.
+// CHECK: [[IS_LAST_VAL:%.+]] = load i32, i32* [[IS_LAST_ADDR]],
+// CHECK: [[IS_LAST_ITER:%.+]] = icmp ne i32 [[IS_LAST_VAL]], 0
+// CHECK: br i1 [[IS_LAST_ITER:%.+]], label %[[LAST_THEN:.+]], label %[[LAST_DONE:.+]]
+// CHECK: [[LAST_THEN]]
+
+// Calculate last iter count
+// CHECK: store i32 1, i32* [[OMP_IV]]
+// CHECK: [[IV1_1:%.+]] = load i32, i32* [[OMP_IV]]
+// CHECK-NEXT: [[CALC_I_2:%.+]] = add nsw i32 [[IV1_1]], 1
+// CHECK-NEXT: store i32 [[CALC_I_2]], i32* [[OMP_IV]]
+// Actual copying.
+
+// original cnt=private_cnt;
+// Calculate private cnt value.
+// CHECK: [[IV1_1:%.+]] = load i32, i32* [[OMP_IV]]
+// CHECK: [[MUL:%.+]] = mul nsw i32 [[IV1_1]], 1
+// CHECK: [[ADD:%.+]] = add nsw i32 0, [[MUL]]
+// CHECK: [[CONV:%.+]] = trunc i32 [[ADD]] to i8
+// CHECK: store i8 [[CONV]], i8* [[CNT_PRIV]]
+// CHECK: [[CNT_VAL:%.+]] = load i8, i8* [[CNT_PRIV]],
+// CHECK: store i8 [[CNT_VAL]], i8* [[CNT]],
 
 // CHECK-NEXT: br label %[[LAST_DONE]]
 // CHECK: [[LAST_DONE]]
