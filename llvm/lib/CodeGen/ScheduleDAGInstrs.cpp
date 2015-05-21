@@ -167,10 +167,7 @@ static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
   SmallVector<Value *, 4> Objs;
   getUnderlyingObjects(V, Objs, DL);
 
-  for (SmallVectorImpl<Value *>::iterator I = Objs.begin(), IE = Objs.end();
-         I != IE; ++I) {
-    V = *I;
-
+  for (Value *V : Objs) {
     if (!isIdentifiedObject(V)) {
       Objects.clear();
       return;
