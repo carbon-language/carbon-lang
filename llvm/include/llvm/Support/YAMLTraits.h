@@ -1090,6 +1090,9 @@ public:
   bool setCurrentDocument();
   bool nextDocument();
 
+  /// Returns the current node that's being parsed by the YAML Parser.
+  const Node *getCurrentNode() const;
+
 private:
   llvm::SourceMgr                     SrcMgr; // must be before Strm
   std::unique_ptr<llvm::yaml::Stream> Strm;
