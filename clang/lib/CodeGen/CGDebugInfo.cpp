@@ -379,6 +379,7 @@ void CGDebugInfo::CreateCompileUnit() {
       DebugKind <= CodeGenOptions::DebugLineTablesOnly
           ? llvm::DIBuilder::LineTablesOnly
           : llvm::DIBuilder::FullDebug,
+      0 /* DWOid */,
       DebugKind != CodeGenOptions::LocTrackingOnly);
 }
 
