@@ -253,8 +253,7 @@ class ELFObjectWriter : public MCObjectWriter {
     bool isWeak(const MCSymbol &Sym) const override;
 
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
-    void writeSection(MCAssembler &Asm,
-                      const SectionIndexMapTy &SectionIndexMap,
+    void writeSection(const SectionIndexMapTy &SectionIndexMap,
                       uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                       const MCSectionELF &Section);
   };
@@ -1250,11 +1249,9 @@ const MCSectionELF *ELFObjectWriter::createStringTable(MCContext &Ctx) {
   return StrtabSection;
 }
 
-void ELFObjectWriter::writeSection(MCAssembler &Asm,
-                                   const SectionIndexMapTy &SectionIndexMap,
-                                   uint32_t GroupSymbolIndex,
-                                   uint64_t Offset, uint64_t Size,
-                                   const MCSectionELF &Section) {
+void ELFObjectWriter::writeSection(const SectionIndexMapTy &SectionIndexMap,
+                                   uint32_t GroupSymbolIndex, uint64_t Offset,
+                                   uint64_t Size, const MCSectionELF &Section) {
   uint64_t sh_link = 0;
   uint64_t sh_info = 0;
 
@@ -1326,7 +1323,7 @@ void ELFObjectWriter::writeSectionHeader(
     uint64_t Size = Type == ELF::SHT_NOBITS ? Layout.getSectionAddressSize(&SD)
                                             : Offsets.second - Offsets.first;
 
-    writeSection(Asm, SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
+    writeSection(SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
                  *Section);
   }
 }
