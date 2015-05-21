@@ -16,12 +16,12 @@ define void @test(i32 addrspace(1)* dereferenceable(8) %dparam) gc "statepoint-e
 ; CHECK: %alloca
 ; CHECK: %dparam
 ; CHECK: %relocate
-; CHECK: %d4_load
-; CHECK: %d_or_null_non_null_load
 ; CHECK-NOT: %nparam
 ; CHECK-NOT: %nd_load
+; CHECK: %d4_load
 ; CHECK-NOT: %d2_load
 ; CHECK-NOT: %d_or_null_load
+; CHECK: %d_or_null_non_null_load
 entry:
     %globalptr = getelementptr inbounds [6 x i8], [6 x i8]* @globalstr, i32 0, i32 0
     %load1 = load i8, i8* %globalptr
@@ -35,7 +35,7 @@ entry:
     %load5 = load i32, i32 addrspace(1)* %nparam
 
     ; Load from a non-dereferenceable load
-    %nd_load = load i32*, i32** @globali32ptr, !dereferenceable !0
+    %nd_load = load i32*, i32** @globali32ptr
     %load6 = load i32, i32* %nd_load
 
     ; Load from a dereferenceable load
