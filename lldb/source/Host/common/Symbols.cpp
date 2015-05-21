@@ -57,6 +57,26 @@ LocateMacOSXFilesUsingDebugSymbols
 #endif
 
 static bool
+FileAtPathContainsArchAndUUID (const FileSpec &file_fspec, const ArchSpec *arch, const lldb_private::UUID *uuid)
+{
+    ModuleSpecList module_specs;
+    if (ObjectFile::GetModuleSpecifications(file_fspec, 0, 0, module_specs))
+    {
+        ModuleSpec spec;
+        for (size_t i = 0; i < module_specs.GetSize(); ++i)
+        {
+            assert(module_specs.GetModuleSpecAtIndex(i, spec));
+            if ((uuid == NULL || (spec.GetUUIDPtr() && spec.GetUUID() == *uuid)) &&
+                (arch == NULL || (spec.GetArchitecturePtr() && spec.GetArchitecture().IsCompatibleMatch(*arch))))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static bool
 LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym_fspec)
 {
     const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
@@ -77,8 +97,7 @@ LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym
                 ModuleSpecList module_specs;
                 ModuleSpec matched_module_spec;
                 if (dsym_fspec.Exists() &&
-                    ObjectFile::GetModuleSpecifications(dsym_fspec, 0, 0, module_specs) &&
-                    module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
+                    FileAtPathContainsArchAndUUID(dsym_fspec, module_spec.GetArchitecturePtr(), module_spec.GetUUIDPtr()))
                 {
                     return true;
                 }
@@ -97,8 +116,7 @@ LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym
                             ::strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path) - strlen(path) - 1);
                             dsym_fspec.SetFile(path, false);
                             if (dsym_fspec.Exists() &&
-                                ObjectFile::GetModuleSpecifications(dsym_fspec, 0, 0, module_specs) &&
-                                module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
+                                FileAtPathContainsArchAndUUID(dsym_fspec, module_spec.GetArchitecturePtr(), module_spec.GetUUIDPtr()))
                             {
                                 return true;
                             }
