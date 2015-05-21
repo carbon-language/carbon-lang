@@ -18,7 +18,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Type.h"
 
@@ -447,36 +446,7 @@ public:
   /// undefined (it is *not* preserved!). The APInt passed into this routine
   /// must be at exactly as wide as the IntPtr type for the address space of the
   /// base GEP pointer.
-  bool accumulateConstantOffset(const DataLayout &DL, APInt &Offset) const {
-    assert(Offset.getBitWidth() ==
-           DL.getPointerSizeInBits(getPointerAddressSpace()) &&
-           "The offset must have exactly as many bits as our pointer.");
-
-    for (gep_type_iterator GTI = gep_type_begin(this), GTE = gep_type_end(this);
-         GTI != GTE; ++GTI) {
-      ConstantInt *OpC = dyn_cast<ConstantInt>(GTI.getOperand());
-      if (!OpC)
-        return false;
-      if (OpC->isZero())
-        continue;
-
-      // Handle a struct index, which adds its field offset to the pointer.
-      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-        unsigned ElementIdx = OpC->getZExtValue();
-        const StructLayout *SL = DL.getStructLayout(STy);
-        Offset += APInt(Offset.getBitWidth(),
-                        SL->getElementOffset(ElementIdx));
-        continue;
-      }
-
-      // For array or vector indices, scale the index by the size of the type.
-      APInt Index = OpC->getValue().sextOrTrunc(Offset.getBitWidth());
-      Offset += Index * APInt(Offset.getBitWidth(),
-                              DL.getTypeAllocSize(GTI.getIndexedType()));
-    }
-    return true;
-  }
-
+  bool accumulateConstantOffset(const DataLayout &DL, APInt &Offset) const;
 };
 
 class PtrToIntOperator
