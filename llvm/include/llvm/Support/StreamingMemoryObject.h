@@ -59,26 +59,27 @@ private:
   mutable size_t ObjectSize; // 0 if unknown, set if wrapper seen or EOF reached
   mutable bool EOFReached;
 
-  // Fetch enough bytes such that Pos can be read or EOF is reached
-  // (i.e. BytesRead > Pos). Return true if Pos can be read.
-  // Unlike most of the functions in BitcodeReader, returns true on success.
-  // Most of the requests will be small, but we fetch at kChunkSize bytes
-  // at a time to avoid making too many potentially expensive GetBytes calls
+  // Fetch enough bytes such that Pos can be read (i.e. BytesRead >
+  // Pos). Returns true if Pos can be read.  Unlike most of the
+  // functions in BitcodeReader, returns true on success.  Most of the
+  // requests will be small, but we fetch at kChunkSize bytes at a
+  // time to avoid making too many potentially expensive GetBytes
+  // calls.
   bool fetchToPos(size_t Pos) const {
-    if (EOFReached)
-      return Pos < ObjectSize;
     while (Pos >= BytesRead) {
+      if (EOFReached)
+        return false;
       Bytes.resize(BytesRead + BytesSkipped + kChunkSize);
       size_t bytes = Streamer->GetBytes(&Bytes[BytesRead + BytesSkipped],
                                         kChunkSize);
       BytesRead += bytes;
-      if (bytes != kChunkSize) { // reached EOF/ran out of bytes
-        ObjectSize = BytesRead;
+      if (bytes == 0) { // reached EOF/ran out of bytes
+        if (ObjectSize == 0)
+          ObjectSize = BytesRead;
         EOFReached = true;
-        break;
       }
     }
-    return Pos < BytesRead;
+    return !ObjectSize || Pos < ObjectSize;
   }
 
   StreamingMemoryObject(const StreamingMemoryObject&) = delete;

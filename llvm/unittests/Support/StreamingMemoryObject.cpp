@@ -27,3 +27,12 @@ TEST(StreamingMemoryObject, Test) {
   StreamingMemoryObject O(DS);
   EXPECT_TRUE(O.isValidAddress(32 * 1024));
 }
+
+TEST(StreamingMemoryObject, TestSetKnownObjectSize) {
+  auto *DS = new NullDataStreamer();
+  StreamingMemoryObject O(DS);
+  uint8_t Buf[32];
+  EXPECT_EQ((uint64_t) 16, O.readBytes(Buf, 16, 0));
+  O.setKnownObjectSize(24);
+  EXPECT_EQ((uint64_t) 8, O.readBytes(Buf, 16, 16));
+}
