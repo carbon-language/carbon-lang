@@ -131,26 +131,34 @@ AddressSanitizerRuntime::IsActive()
 
 const char *
 address_sanitizer_retrieve_report_data_command = R"(
-    struct {
-        int present;
-        void *pc, *bp, *sp, *address;
-        int access_type;
-        size_t access_size;
-        const char *description;
-    } t;
+int __asan_report_present();
+void *__asan_get_report_pc();
+void *__asan_get_report_bp();
+void *__asan_get_report_sp();
+void *__asan_get_report_address();
+const char *__asan_get_report_description();
+int __asan_get_report_access_type();
+size_t __asan_get_report_access_size();
+struct {
+    int present;
+    int access_type;
+    void *pc;
+    void *bp;
+    void *sp;
+    void *address;
+    size_t access_size;
+    const char *description;
+} t;
 
-    t.present = ((int (*) ())__asan_report_present)();
-    t.pc = ((void * (*) ())__asan_get_report_pc)();
-    /* commented out because rdar://problem/18533301
-    t.bp = ((void * (*) ())__asan_get_report_bp)();
-    t.sp = ((void * (*) ())__asan_get_report_sp)();
-    */
-    t.address = ((void * (*) ())__asan_get_report_address)();
-    t.description = ((const char * (*) ())__asan_get_report_description)();
-    t.access_type = ((int (*) ())__asan_get_report_access_type)();
-    t.access_size = ((size_t (*) ())__asan_get_report_access_size)();
-
-    t;
+t.present = __asan_report_present();
+t.access_type = __asan_get_report_access_type();
+t.pc = __asan_get_report_pc();
+t.bp = __asan_get_report_bp();
+t.sp = __asan_get_report_sp();
+t.address = __asan_get_report_address();
+t.access_size = __asan_get_report_access_size();
+t.description = __asan_get_report_description();
+t
 )";
 
 StructuredData::ObjectSP
