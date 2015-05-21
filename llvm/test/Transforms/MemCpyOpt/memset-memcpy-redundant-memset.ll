@@ -1,4 +1,4 @@
-; RUN: opt -memcpyopt -S %s | FileCheck %s
+; RUN: opt -basicaa -memcpyopt -S %s | FileCheck %s
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
@@ -138,6 +138,26 @@ define i8 @test_intermediate_read(i8* %a, i8* %b) #0 {
   %r = load i8, i8* %a
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 24, i32 1, i1 false)
   ret i8 %r
+}
+
+%struct = type { [8 x i8], [8 x i8] }
+
+; CHECK-LABEL: define void @test_intermediate_write
+; CHECK-NEXT: %a = alloca %struct
+; CHECK-NEXT: %a0 = getelementptr %struct, %struct* %a, i32 0, i32 0, i32 0
+; CHECK-NEXT: %a1 = getelementptr %struct, %struct* %a, i32 0, i32 1, i32 0
+; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %a0, i8 0, i64 16, i32 1, i1 false)
+; CHECK-NEXT: store i8 1, i8* %a1
+; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a0, i8* %b, i64 8, i32 1, i1 false)
+; CHECK-NEXT: ret void
+define void @test_intermediate_write(i8* %b) #0 {
+  %a = alloca %struct
+  %a0 = getelementptr %struct, %struct* %a, i32 0, i32 0, i32 0
+  %a1 = getelementptr %struct, %struct* %a, i32 0, i32 1, i32 0
+  call void @llvm.memset.p0i8.i64(i8* %a0, i8 0, i64 16, i32 1, i1 false)
+  store i8 1, i8* %a1
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a0, i8* %b, i64 8, i32 1, i1 false)
+  ret void
 }
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1)
