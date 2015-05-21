@@ -922,13 +922,16 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   OutStreamer->EmitValue(Expr, Size);
 }
 
-void ARMAsmPrinter::EmitJumpTableAddrs(const MachineInstr *MI) {
-  const MachineOperand &MO1 = MI->getOperand(1);
-  unsigned JTI = MO1.getIndex();
+void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
+  unsigned Opcode = MI->getOpcode();
+  int OpNum = 1;
+  if (Opcode == ARM::BR_JTadd)
+    OpNum = 2;
+  else if (Opcode == ARM::BR_JTm)
+    OpNum = 3;
 
-  // Make sure the Thumb jump table is 4-byte aligned. This will be a nop for
-  // ARM mode tables.
-  EmitAlignment(2);
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  unsigned JTI = MO1.getIndex();
 
   // Emit a label for the jump table.
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel(JTI);
@@ -969,8 +972,10 @@ void ARMAsmPrinter::EmitJumpTableAddrs(const MachineInstr *MI) {
   OutStreamer->EmitDataRegion(MCDR_DataRegionEnd);
 }
 
-void ARMAsmPrinter::EmitJumpTableInsts(const MachineInstr *MI) {
-  const MachineOperand &MO1 = MI->getOperand(1);
+void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
+  unsigned Opcode = MI->getOpcode();
+  int OpNum = (Opcode == ARM::t2BR_JT) ? 2 : 1;
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
   unsigned JTI = MO1.getIndex();
 
   MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel(JTI);
@@ -980,56 +985,42 @@ void ARMAsmPrinter::EmitJumpTableInsts(const MachineInstr *MI) {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+  unsigned OffsetWidth = 4;
+  if (MI->getOpcode() == ARM::t2TBB_JT) {
+    OffsetWidth = 1;
+    // Mark the jump table as data-in-code.
+    OutStreamer->EmitDataRegion(MCDR_DataRegionJT8);
+  } else if (MI->getOpcode() == ARM::t2TBH_JT) {
+    OffsetWidth = 2;
+    // Mark the jump table as data-in-code.
+    OutStreamer->EmitDataRegion(MCDR_DataRegionJT16);
+  }
 
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
                                                           OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
-    EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::t2B)
+    if (OffsetWidth == 4) {
+      EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::t2B)
         .addExpr(MBBSymbolExpr)
         .addImm(ARMCC::AL)
         .addReg(0));
-  }
-}
-
-void ARMAsmPrinter::EmitJumpTableTBInst(const MachineInstr *MI,
-                                        unsigned OffsetWidth) {
-  assert((OffsetWidth == 1 || OffsetWidth == 2) && "invalid tbb/tbh width");
-  const MachineOperand &MO1 = MI->getOperand(1);
-  unsigned JTI = MO1.getIndex();
-
-  MCSymbol *JTISymbol = GetARMJTIPICJumpTableLabel(JTI);
-  OutStreamer->EmitLabel(JTISymbol);
-
-  // Emit each entry of the table.
-  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
-
-  // Mark the jump table as data-in-code.
-  OutStreamer->EmitDataRegion(OffsetWidth == 1 ? MCDR_DataRegionJT8
-                                               : MCDR_DataRegionJT16);
-
-  for (auto MBB : JTBBs) {
-    const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
-                                                          OutContext);
+      continue;
+    }
     // Otherwise it's an offset from the dispatch instruction. Construct an
     // MCExpr for the entry. We want a value of the form:
-    // (BasicBlockAddr - TBBInstAddr + 4) / 2
+    // (BasicBlockAddr - TableBeginAddr) / 2
     //
     // For example, a TBB table with entries jumping to basic blocks BB0 and BB1
     // would look like:
     // LJTI_0_0:
-    //    .byte (LBB0 - (LCPI0_0 + 4)) / 2
-    //    .byte (LBB1 - (LCPI0_0 + 4)) / 2
-    // where LCPI0_0 is a label defined just before the TBB instruction using
-    // this table.
-    MCSymbol *TBInstPC = GetCPISymbol(MI->getOperand(0).getImm());
-    const MCExpr *Expr = MCBinaryExpr::CreateAdd(
-        MCSymbolRefExpr::Create(TBInstPC, OutContext),
-        MCConstantExpr::Create(4, OutContext), OutContext);
-    Expr = MCBinaryExpr::CreateSub(MBBSymbolExpr, Expr, OutContext);
+    //    .byte (LBB0 - LJTI_0_0) / 2
+    //    .byte (LBB1 - LJTI_0_0) / 2
+    const MCExpr *Expr =
+      MCBinaryExpr::CreateSub(MBBSymbolExpr,
+                              MCSymbolRefExpr::Create(JTISymbol, OutContext),
+                              OutContext);
     Expr = MCBinaryExpr::CreateDiv(Expr, MCConstantExpr::Create(2, OutContext),
                                    OutContext);
     OutStreamer->EmitValue(Expr, OffsetWidth);
@@ -1037,10 +1028,8 @@ void ARMAsmPrinter::EmitJumpTableTBInst(const MachineInstr *MI,
   // Mark the end of jump table data-in-code region. 32-bit offsets use
   // actual branch instructions here, so we don't mark those as a data-region
   // at all.
-  OutStreamer->EmitDataRegion(MCDR_DataRegionEnd);
-
-  // Make sure the next instruction is 2-byte aligned.
-  EmitAlignment(1);
+  if (OffsetWidth != 4)
+    OutStreamer->EmitDataRegion(MCDR_DataRegionEnd);
 }
 
 void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
@@ -1512,16 +1501,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       EmitGlobalConstant(MCPE.Val.ConstVal);
     return;
   }
-  case ARM::JUMPTABLE_ADDRS:
-    EmitJumpTableAddrs(MI);
-    return;
-  case ARM::JUMPTABLE_INSTS:
-    EmitJumpTableInsts(MI);
-    return;
-  case ARM::JUMPTABLE_TBB:
-  case ARM::JUMPTABLE_TBH:
-    EmitJumpTableTBInst(MI, MI->getOpcode() == ARM::JUMPTABLE_TBB ? 1 : 2);
-    return;
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::tMOVr)
@@ -1530,19 +1509,37 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       // Add predicate operands.
       .addImm(ARMCC::AL)
       .addReg(0));
+
+    // Output the data for the jump table itself
+    EmitJump2Table(MI);
     return;
   }
-  case ARM::t2TBB_JT:
+  case ARM::t2TBB_JT: {
+    // Lower and emit the instruction itself, then the jump table following it.
+    EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::t2TBB)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0));
+
+    // Output the data for the jump table itself
+    EmitJump2Table(MI);
+    // Make sure the next instruction is 2-byte aligned.
+    EmitAlignment(1);
+    return;
+  }
   case ARM::t2TBH_JT: {
-    unsigned Opc = MI->getOpcode() == ARM::t2TBB_JT ? ARM::t2TBB : ARM::t2TBH;
-    // Lower and emit the PC label, then the instruction itself.
-    OutStreamer->EmitLabel(GetCPISymbol(MI->getOperand(3).getImm()));
-    EmitToStreamer(*OutStreamer, MCInstBuilder(Opc)
-                                     .addReg(MI->getOperand(0).getReg())
-                                     .addReg(MI->getOperand(1).getReg())
-                                     // Add predicate operands.
-                                     .addImm(ARMCC::AL)
-                                     .addReg(0));
+    // Lower and emit the instruction itself, then the jump table following it.
+    EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::t2TBH)
+      .addReg(ARM::PC)
+      .addReg(MI->getOperand(0).getReg())
+      // Add predicate operands.
+      .addImm(ARMCC::AL)
+      .addReg(0));
+
+    // Output the data for the jump table itself
+    EmitJump2Table(MI);
     return;
   }
   case ARM::tBR_JTr:
@@ -1562,6 +1559,13 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     if (Opc == ARM::MOVr)
       TmpInst.addOperand(MCOperand::createReg(0));
     EmitToStreamer(*OutStreamer, TmpInst);
+
+    // Make sure the Thumb jump table is 4-byte aligned.
+    if (Opc == ARM::tMOVr)
+      EmitAlignment(2);
+
+    // Output the data for the jump table itself
+    EmitJumpTable(MI);
     return;
   }
   case ARM::BR_JTm: {
@@ -1585,6 +1589,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::createImm(ARMCC::AL));
     TmpInst.addOperand(MCOperand::createReg(0));
     EmitToStreamer(*OutStreamer, TmpInst);
+
+    // Output the data for the jump table itself
+    EmitJumpTable(MI);
     return;
   }
   case ARM::BR_JTadd: {
@@ -1599,6 +1606,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addReg(0)
       // Add 's' bit operand (always reg0 for this)
       .addReg(0));
+
+    // Output the data for the jump table itself
+    EmitJumpTable(MI);
     return;
   }
   case ARM::SPACE:
