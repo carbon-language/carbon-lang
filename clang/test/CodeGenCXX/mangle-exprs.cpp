@@ -329,3 +329,15 @@ namespace test7 {
     fF2(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fF2IiEEDTcmcvNS_1FEilLi1ELi2EEcvT__EES2_
   }
 }
+
+
+namespace test8 {
+  template <class>
+  struct X {
+    template<typename T> T foo() const { return 0; }
+    template <class T> auto bar() const -> decltype(foo<T>()) { return 0; }
+  };
+
+  // CHECK-LABEL: define weak_odr i32 @_ZNK5test81XIiE3barIiEEDTcl3fooIT_EEEv
+  template int X<int>::bar<int>() const;
+}
