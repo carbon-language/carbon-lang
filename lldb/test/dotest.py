@@ -951,7 +951,7 @@ def setupSysPath():
         lldbtest_config.lldbExec = which('lldb')
 
     if lldbtest_config.lldbExec and not is_exe(lldbtest_config.lldbExec):
-        print "'{}' is not a path to a valid executable"
+        print "'{}' is not a path to a valid executable".format(lldbtest_config.lldbExec)
         del lldbtest_config.lldbExec
 
     if not lldbtest_config.lldbExec:
