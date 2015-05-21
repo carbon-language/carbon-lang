@@ -33,7 +33,6 @@ $
 
 import abc
 import glob
-import lock
 import os, sys, traceback
 import os.path
 import re
@@ -961,6 +960,7 @@ class Base(unittest2.TestCase):
             os.chdir(os.path.join(os.environ["LLDB_TEST"], cls.mydir))
 
         if debug_confirm_directory_exclusivity:
+            import lock
             cls.dir_lock = lock.Lock(os.path.join(full_dir, ".dirlock"))
             try:
                 cls.dir_lock.try_acquire()
