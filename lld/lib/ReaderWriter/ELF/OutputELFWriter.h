@@ -115,6 +115,9 @@ protected:
   virtual void processUndefinedSymbol(StringRef symName,
                                       RuntimeFile<ELFT> &file) const {}
 
+  /// \brief Assign addresses to atoms marking section's start and end.
+  void updateScopeAtomValues(StringRef sym, StringRef sec);
+
   llvm::BumpPtrAllocator _alloc;
 
   ELFLinkingContext &_ctx;

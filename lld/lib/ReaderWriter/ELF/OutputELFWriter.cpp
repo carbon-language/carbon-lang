@@ -447,6 +447,26 @@ std::error_code OutputELFWriter<ELFT>::writeFile(const File &file,
   return writeOutput(file, path);
 }
 
+template <class ELFT>
+void OutputELFWriter<ELFT>::updateScopeAtomValues(StringRef sym,
+                                                  StringRef sec) {
+  std::string start = ("__" + sym + "_start").str();
+  std::string end = ("__" + sym + "_end").str();
+  AtomLayout *s = _layout.findAbsoluteAtom(start);
+  AtomLayout *e = _layout.findAbsoluteAtom(end);
+  OutputSection<ELFT> *section = _layout.findOutputSection(sec);
+  if (!s || !e)
+    return;
+
+  if (section) {
+    s->_virtualAddr = section->virtualAddr();
+    e->_virtualAddr = section->virtualAddr() + section->memSize();
+  } else {
+    s->_virtualAddr = 0;
+    e->_virtualAddr = 0;
+  }
+}
+
 template class OutputELFWriter<ELF32LE>;
 template class OutputELFWriter<ELF32BE>;
 template class OutputELFWriter<ELF64LE>;

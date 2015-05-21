@@ -26,7 +26,6 @@ public:
       : OutputELFWriter<ELFT>(ctx, layout) {}
 
 protected:
-  void updateScopeAtomValues(StringRef sym, StringRef sec);
   void buildDynamicSymbolTable(const File &file) override;
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
   void finalizeDefaultAtomValues() override;
@@ -45,25 +44,6 @@ private:
 //===----------------------------------------------------------------------===//
 //  ExecutableWriter
 //===----------------------------------------------------------------------===//
-template <class ELFT>
-void ExecutableWriter<ELFT>::updateScopeAtomValues(StringRef sym,
-                                                   StringRef sec) {
-  std::string start = ("__" + sym + "_start").str();
-  std::string end = ("__" + sym + "_end").str();
-  AtomLayout *s = this->_layout.findAbsoluteAtom(start);
-  AtomLayout *e = this->_layout.findAbsoluteAtom(end);
-  OutputSection<ELFT> *section = this->_layout.findOutputSection(sec);
-  if (!s || !e)
-    return;
-  if (section) {
-    s->_virtualAddr = section->virtualAddr();
-    e->_virtualAddr = section->virtualAddr() + section->memSize();
-  } else {
-    s->_virtualAddr = 0;
-    e->_virtualAddr = 0;
-  }
-}
-
 template<class ELFT>
 void ExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   for (auto sec : this->_layout.sections())
@@ -147,13 +127,13 @@ template <class ELFT> void ExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   assert((bssStartAtom || bssEndAtom || underScoreEndAtom || endAtom) &&
          "Unable to find the absolute atoms that have been added by lld");
 
-  updateScopeAtomValues("preinit_array", ".preinit_array");
-  updateScopeAtomValues("init_array", ".init_array");
+  this->updateScopeAtomValues("preinit_array", ".preinit_array");
+  this->updateScopeAtomValues("init_array", ".init_array");
   if (this->_ctx.isRelaOutputFormat())
-    updateScopeAtomValues("rela_iplt", ".rela.plt");
+    this->updateScopeAtomValues("rela_iplt", ".rela.plt");
   else
-    updateScopeAtomValues("rel_iplt", ".rel.plt");
-  updateScopeAtomValues("fini_array", ".fini_array");
+    this->updateScopeAtomValues("rel_iplt", ".rel.plt");
+  this->updateScopeAtomValues("fini_array", ".fini_array");
 
   auto bssSection = this->_layout.findOutputSection(".bss");
 
