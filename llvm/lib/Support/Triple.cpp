@@ -236,60 +236,54 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Default(UnknownArch);
 }
 
-// FIXME: Use ARMTargetParser. This would require Triple::arm/thumb
-// to be recogniseable universally.
 static Triple::ArchType parseARMArch(StringRef ArchName) {
-  size_t offset = StringRef::npos;
+  unsigned ISA = ARMTargetParser::parseArchISA(ArchName);
+  unsigned ENDIAN = ARMTargetParser::parseArchEndian(ArchName);
+
   Triple::ArchType arch = Triple::UnknownArch;
-  bool isThumb = ArchName.startswith("thumb");
-
-  if (ArchName.equals("arm"))
-    return Triple::arm;
-  if (ArchName.equals("armeb"))
-    return Triple::armeb;
-  if (ArchName.equals("thumb"))
-    return Triple::thumb;
-  if (ArchName.equals("thumbeb"))
-    return Triple::thumbeb;
-  if (ArchName.equals("arm64") || ArchName.equals("aarch64"))
-    return Triple::aarch64;
-  if (ArchName.equals("aarch64_be"))
-    return Triple::aarch64_be;
-
-  if (ArchName.startswith("armv")) {
-    offset = 3;
-    if (ArchName.endswith("eb")) {
-      arch = Triple::armeb;
-      ArchName = ArchName.substr(0, ArchName.size() - 2);
-    } else
+  switch (ENDIAN) {
+  case ARM::EK_LITTLE: {
+    switch (ISA) {
+    case ARM::IK_ARM:
       arch = Triple::arm;
-  } else if (ArchName.startswith("armebv")) {
-    offset = 5;
-    arch = Triple::armeb;
-  } else if (ArchName.startswith("thumbv")) {
-    offset = 5;
-    if (ArchName.endswith("eb")) {
-      arch = Triple::thumbeb;
-      ArchName = ArchName.substr(0, ArchName.size() - 2);
-    } else
+      break;
+    case ARM::IK_THUMB:
       arch = Triple::thumb;
-  } else if (ArchName.startswith("thumbebv")) {
-    offset = 7;
-    arch = Triple::thumbeb;
+      break;
+    case ARM::IK_AARCH64:
+      arch = Triple::aarch64;
+      break;
+    }
+    break;
   }
-  return StringSwitch<Triple::ArchType>(ArchName.substr(offset))
-    .Cases("v2", "v2a", isThumb ? Triple::UnknownArch : arch)
-    .Cases("v3", "v3m", isThumb ? Triple::UnknownArch : arch)
-    .Cases("v4", "v4t", arch)
-    .Cases("v5", "v5e", "v5t", "v5te", "v5tej", arch)
-    .Cases("v6", "v6hl", "v6j", "v6k", arch)
-    .Cases("v6m", "v6sm", arch)
-    .Cases("v6t2", "v6z", "v6zk", arch)
-    .Cases("v7", "v7a", "v7em", "v7hl", "v7l", arch)
-    .Cases("v7m", "v7r", "v7s", arch)
-    .Cases("v8", "v8a", arch)
-    .Cases("v8.1", "v8.1a", arch)
-    .Default(Triple::UnknownArch);
+  case ARM::EK_BIG: {
+    switch (ISA) {
+    case ARM::IK_ARM:
+      arch = Triple::armeb;
+      break;
+    case ARM::IK_THUMB:
+      arch = Triple::thumbeb;
+      break;
+    case ARM::IK_AARCH64:
+      arch = Triple::aarch64_be;
+      break;
+    }
+    break;
+  }
+  }
+
+  ArchName = ARMTargetParser::getCanonicalArchName(ArchName);
+  if (ArchName.empty())
+    return Triple::UnknownArch;
+
+  // Thumb only exists in v4+
+  if (ISA == ARM::IK_THUMB &&
+      (ArchName.startswith("v2") || ArchName.startswith("v3")))
+    return Triple::UnknownArch;
+
+  // FIXME: Add isMProfile to ARMTargetParser and
+  // either change armv6m to thumb or UnknownArch.
+  return arch;
 }
 
 static Triple::ArchType parseArch(StringRef ArchName) {

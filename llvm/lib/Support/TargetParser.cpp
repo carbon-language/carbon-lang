@@ -80,8 +80,10 @@ struct {
   { "armv5e",    ARM::AK_ARMV5E,   "5E",      ARMBuildAttrs::CPUArch::v5TE },
   { "armv5tej",  ARM::AK_ARMV5TEJ, "5TE",     ARMBuildAttrs::CPUArch::v5TE },
   { "armv6sm",   ARM::AK_ARMV6SM,  "6-M",     ARMBuildAttrs::CPUArch::v6_M },
+  { "armv6hl",   ARM::AK_ARMV6HL,  "6-M",     ARMBuildAttrs::CPUArch::v6_M },
   { "armv7e-m",  ARM::AK_ARMV7EM,  "7E-M",    ARMBuildAttrs::CPUArch::v7E_M },
   { "armv7l",    ARM::AK_ARMV7L,   "7-L",     ARMBuildAttrs::CPUArch::v7 },
+  { "armv7hl",   ARM::AK_ARMV7HL,  "7H-L",    ARMBuildAttrs::CPUArch::v7 },
   { "armv7s",    ARM::AK_ARMV7S,   "7-S",     ARMBuildAttrs::CPUArch::v7 }
 };
 // List of canonical ARCH names (use getARCHSynonym)
@@ -179,7 +181,9 @@ struct {
   { "arm1022e",      ARM::AK_ARMV5E,   true },
   { "arm926ej-s",    ARM::AK_ARMV5TEJ, true },
   { "cortex-m0",     ARM::AK_ARMV6SM,  true },
+  { "arm1176jzf-s",  ARM::AK_ARMV6HL,  true },
   { "cortex-a8",     ARM::AK_ARMV7L,   true },
+  { "cortex-a8",     ARM::AK_ARMV7HL,  true },
   { "cortex-m4",     ARM::AK_ARMV7EM,  true },
   { "swift",         ARM::AK_ARMV7S,   true },
   // Invalid CPU
@@ -269,6 +273,7 @@ StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
     .Cases("armv8",    "v8",    "armv8-a")
     .Cases("armv8a",   "v8a",   "armv8-a")
     .Cases("armv8.1a", "v8.1a", "armv8.1-a")
+    .Cases("aarch64",  "arm64", "armv8-a")
     .Default(Arch);
 }
 
@@ -278,12 +283,22 @@ StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
 StringRef ARMTargetParser::getCanonicalArchName(StringRef Arch) {
   size_t offset = StringRef::npos;
   StringRef A = Arch;
+  StringRef Error = "";
 
   // Begins with "arm" / "thumb", move past it.
   if (A.startswith("arm"))
     offset = 3;
   else if (A.startswith("thumb"))
     offset = 5;
+  else if (A.startswith("aarch64")) {
+    offset = 7;
+    // AArch64 uses "_be", not "eb" suffix.
+    if (A.find("eb") != StringRef::npos)
+      return Error;
+    if (A.substr(offset,3) == "_be")
+      offset += 3;
+  }
+
   // Ex. "armebv7", move past the "eb".
   if (offset != StringRef::npos && A.substr(offset, 2) == "eb")
     offset += 2;
@@ -301,7 +316,7 @@ StringRef ARMTargetParser::getCanonicalArchName(StringRef Arch) {
 
   // If can't find the arch, return an empty StringRef.
   if (parseArch(A) == ARM::AK_INVALID)
-    A = A.substr(A.size());
+    return Error;
 
   // Arch will either be a 'v' name (v7a) or a marketing name (xscale)
   // or empty, if invalid.
@@ -341,6 +356,36 @@ unsigned ARMTargetParser::parseCPUArch(StringRef CPU) {
       return C.ArchID;
   }
   return ARM::AK_INVALID;
+}
+
+// ARM, Thumb, AArch64
+unsigned ARMTargetParser::parseArchISA(StringRef Arch) {
+  return StringSwitch<unsigned>(Arch)
+      .StartsWith("aarch64", ARM::IK_AARCH64)
+      .StartsWith("arm64",   ARM::IK_AARCH64)
+      .StartsWith("thumb",   ARM::IK_THUMB)
+      .StartsWith("arm",     ARM::IK_ARM)
+      .Default(ARM::EK_INVALID);
+}
+
+// Little/Big endian
+unsigned ARMTargetParser::parseArchEndian(StringRef Arch) {
+  if (Arch.startswith("armeb") ||
+      Arch.startswith("thumbeb") ||
+      Arch.startswith("aarch64_be"))
+    return ARM::EK_BIG;
+
+  if (Arch.startswith("arm") || Arch.startswith("thumb")) {
+    if (Arch.endswith("eb"))
+      return ARM::EK_BIG;
+    else
+      return ARM::EK_LITTLE;
+  }
+
+  if (Arch.startswith("aarch64"))
+    return ARM::EK_LITTLE;
+
+  return ARM::EK_INVALID;
 }
 
 } // namespace llvm

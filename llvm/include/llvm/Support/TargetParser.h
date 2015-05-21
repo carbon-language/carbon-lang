@@ -76,7 +76,9 @@ namespace ARM {
     AK_ARMV5E,
     AK_ARMV5TEJ,
     AK_ARMV6SM,
+    AK_ARMV6HL,
     AK_ARMV7L,
+    AK_ARMV7HL,
     AK_ARMV7S,
     AK_ARMV7EM,
     AK_LAST
@@ -95,6 +97,21 @@ namespace ARM {
     AEK_LAST
   };
 
+  // ISA kinds.
+  enum ISAKind {
+    IK_INVALID = 0,
+    IK_ARM,
+    IK_THUMB,
+    IK_AARCH64
+  };
+
+  // Endianness
+  // FIXME: BE8 vs. BE32?
+  enum EndianKind {
+    EK_INVALID = 0,
+    EK_LITTLE,
+    EK_BIG
+  };
 } // namespace ARM
 
 // Target Parsers, one per architecture.
@@ -118,6 +135,9 @@ public:
   static unsigned parseArch(StringRef Arch);
   static unsigned parseArchExt(StringRef ArchExt);
   static unsigned parseCPUArch(StringRef CPU);
+  static unsigned parseArchISA(StringRef Arch);
+  static unsigned parseArchEndian(StringRef Arch);
+
 };
 
 } // namespace llvm
