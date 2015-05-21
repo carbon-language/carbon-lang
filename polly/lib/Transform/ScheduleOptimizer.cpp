@@ -213,17 +213,12 @@ IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
 
   // Create an identity map for everything except DimToVectorize and map
   // DimToVectorize to the point loop at the innermost dimension.
-  for (int i = 0; i < ScheduleDimensions; i++) {
-    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-    c = isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
-
+  for (int i = 0; i < ScheduleDimensions; i++)
     if (i == DimToVectorize)
-      c = isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
+      TilingMap =
+          isl_map_equate(TilingMap, isl_dim_in, i, isl_dim_out, PointDimension);
     else
-      c = isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-
-    TilingMap = isl_map_add_constraint(TilingMap, c);
-  }
+      TilingMap = isl_map_equate(TilingMap, isl_dim_in, i, isl_dim_out, i);
 
   // it % 'VectorWidth' = 0
   LocalSpaceRange = isl_local_space_range(isl_local_space_copy(LocalSpace));
@@ -236,10 +231,8 @@ IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   TilingMap = isl_map_intersect_range(TilingMap, Modulo);
 
   // it <= ip
-  c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-  isl_constraint_set_coefficient_si(c, isl_dim_out, TileDimension, -1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
-  TilingMap = isl_map_add_constraint(TilingMap, c);
+  TilingMap = isl_map_order_le(TilingMap, isl_dim_out, TileDimension,
+                               isl_dim_out, PointDimension);
 
   // ip <= it + ('VectorWidth' - 1)
   c = isl_inequality_alloc(LocalSpace);

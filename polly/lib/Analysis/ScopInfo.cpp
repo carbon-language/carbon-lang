@@ -747,8 +747,7 @@ void MemoryAccess::dump() const { print(errs()); }
 //
 static isl_map *getEqualAndLarger(isl_space *setDomain) {
   isl_space *Space = isl_space_map_from_set(setDomain);
-  isl_map *Map = isl_map_universe(isl_space_copy(Space));
-  isl_local_space *MapLocalSpace = isl_local_space_from_space(Space);
+  isl_map *Map = isl_map_universe(Space);
   unsigned lastDimension = isl_map_dim(Map, isl_dim_in) - 1;
 
   // Set all but the last dimension to be equal for the input and output
@@ -762,20 +761,8 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   // last dimension of the output.
   //
   //   input[?,?,?,...,iX] -> output[?,?,?,...,oX] : iX < oX
-  //
-  isl_val *v;
-  isl_ctx *Ctx = isl_map_get_ctx(Map);
-  isl_constraint *c = isl_inequality_alloc(isl_local_space_copy(MapLocalSpace));
-  v = isl_val_int_from_si(Ctx, -1);
-  c = isl_constraint_set_coefficient_val(c, isl_dim_in, lastDimension, v);
-  v = isl_val_int_from_si(Ctx, 1);
-  c = isl_constraint_set_coefficient_val(c, isl_dim_out, lastDimension, v);
-  v = isl_val_int_from_si(Ctx, -1);
-  c = isl_constraint_set_constant_val(c, v);
-
-  Map = isl_map_add_constraint(Map, c);
-
-  isl_local_space_free(MapLocalSpace);
+  Map = isl_map_order_lt(Map, isl_dim_in, lastDimension, isl_dim_out,
+                         lastDimension);
   return Map;
 }
 
