@@ -400,7 +400,7 @@ ABISysV_arm::GetArgumentValues (Thread &thread,
 
 ValueObjectSP
 ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
-                                         lldb_private::ClangASTType &clang_type) const
+                                       lldb_private::ClangASTType &clang_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
@@ -427,10 +427,10 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
     // when reading data
     
     const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
+    size_t bit_width = clang_type.GetBitSize(&thread);
+
     if (clang_type.IsIntegerType (is_signed))
-    {
-        size_t bit_width = clang_type.GetBitSize(&thread);
-        
+    {       
         switch (bit_width)
         {
             default:
@@ -476,7 +476,6 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
     {
         if (float_count == 1 && !is_complex)
         {
-            size_t bit_width = clang_type.GetBitSize(&thread);
             switch (bit_width)
             {
                 default:
@@ -505,6 +504,30 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
         {
             // not handled yet
             return return_valobj_sp;
+        }
+    }
+    else if (clang_type.IsAggregateType())
+    {
+        size_t byte_size = clang_type.GetByteSize(&thread);
+        if (byte_size <= 4)
+        {
+            RegisterValue r0_reg_value;
+            uint32_t raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+            value.SetBytes(&raw_value, byte_size);
+        }
+        else
+        {
+            RegisterValue r0_reg_value;
+            uint32_t address = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+
+            Error error;
+            DataBufferHeap buffer(byte_size, 0);
+            thread.GetProcess()->ReadMemory(address, buffer.GetBytes(), buffer.GetByteSize(), error);
+
+            if (error.Success())
+                value.SetBytes(buffer.GetBytes(), buffer.GetByteSize());
+            else
+                return return_valobj_sp;
         }
     }
     else
