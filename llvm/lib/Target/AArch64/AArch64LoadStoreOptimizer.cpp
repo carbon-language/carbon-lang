@@ -16,6 +16,7 @@
 #include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -483,6 +484,29 @@ static int alignTo(int Num, int PowOf2) {
   return (Num + PowOf2 - 1) & ~(PowOf2 - 1);
 }
 
+static bool mayAlias(MachineInstr *MIa, MachineInstr *MIb,
+                     const AArch64InstrInfo *TII) {
+  // One of the instructions must modify memory.
+  if (!MIa->mayStore() && !MIb->mayStore())
+    return false;
+
+  // Both instructions must be memory operations.
+  if (!MIa->mayLoadOrStore() && !MIb->mayLoadOrStore())
+    return false;
+
+  return !TII->areMemAccessesTriviallyDisjoint(MIa, MIb);
+}
+
+static bool mayAlias(MachineInstr *MIa,
+                     SmallVectorImpl<MachineInstr *> &MemInsns,
+                     const AArch64InstrInfo *TII) {
+  for (auto &MIb : MemInsns)
+    if (mayAlias(MIa, MIb, TII))
+      return true;
+
+  return false;
+}
+
 /// findMatchingInsn - Scan the instructions looking for a load/store that can
 /// be combined with the current instruction into a load/store pair.
 MachineBasicBlock::iterator
@@ -518,6 +542,10 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   BitVector ModifiedRegs, UsedRegs;
   ModifiedRegs.resize(TRI->getNumRegs());
   UsedRegs.resize(TRI->getNumRegs());
+
+  // Remember any instructions that read/write memory between FirstMI and MI.
+  SmallVector<MachineInstr *, 4> MemInsns;
+
   for (unsigned Count = 0; MBBI != E && Count < Limit; ++MBBI) {
     MachineInstr *MI = MBBI;
     // Skip DBG_VALUE instructions. Otherwise debug info can affect the
@@ -566,6 +594,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         bool MIIsUnscaled = isUnscaledLdst(MI->getOpcode());
         if (!inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
+          if (MI->mayLoadOrStore())
+            MemInsns.push_back(MI);
           continue;
         }
         // If the alignment requirements of the paired (scaled) instruction
@@ -574,6 +604,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         if (IsUnscaled && EnableAArch64UnscaledMemOp &&
             (alignTo(MinOffset, OffsetStride) != MinOffset)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
+          if (MI->mayLoadOrStore())
+            MemInsns.push_back(MI);
           continue;
         }
         // If the destination register of the loads is the same register, bail
@@ -581,22 +613,29 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // registers the same is UNPREDICTABLE and will result in an exception.
         if (MayLoad && Reg == MI->getOperand(0).getReg()) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
+          if (MI->mayLoadOrStore())
+            MemInsns.push_back(MI);
           continue;
         }
 
         // If the Rt of the second instruction was not modified or used between
-        // the two instructions, we can combine the second into the first.
+        // the two instructions and none of the instructions between the second
+        // and first alias with the second, we can combine the second into the
+        // first.
         if (!ModifiedRegs[MI->getOperand(0).getReg()] &&
-            !UsedRegs[MI->getOperand(0).getReg()]) {
+            !UsedRegs[MI->getOperand(0).getReg()] &&
+            !mayAlias(MI, MemInsns, TII)) {
           MergeForward = false;
           return MBBI;
         }
 
         // Likewise, if the Rt of the first instruction is not modified or used
-        // between the two instructions, we can combine the first into the
-        // second.
+        // between the two instructions and none of the instructions between the
+        // first and the second alias with the first, we can combine the first
+        // into the second.
         if (!ModifiedRegs[FirstMI->getOperand(0).getReg()] &&
-            !UsedRegs[FirstMI->getOperand(0).getReg()]) {
+            !UsedRegs[FirstMI->getOperand(0).getReg()] &&
+            !mayAlias(FirstMI, MemInsns, TII)) {
           MergeForward = true;
           return MBBI;
         }
@@ -605,21 +644,9 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
       }
     }
 
-    // If the instruction wasn't a matching load or store, but does (or can)
-    // modify memory, stop searching, as we don't have alias analysis or
-    // anything like that to tell us whether the access is tromping on the
-    // locations we care about. The big one we want to catch is calls.
-    //
-    // FIXME: Theoretically, we can do better than that for SP and FP based
-    // references since we can effectively know where those are touching. It's
-    // unclear if it's worth the extra code, though. Most paired instructions
-    // will be sequential, perhaps with a few intervening non-memory related
-    // instructions.
-    if (MI->mayStore() || MI->isCall())
-      return E;
-    // Likewise, if we're matching a store instruction, we don't want to
-    // move across a load, as it may be reading the same location.
-    if (FirstMI->mayStore() && MI->mayLoad())
+    // If the instruction wasn't a matching load or store.  Stop searching if we
+    // encounter a call instruction that might modify memory.
+    if (MI->isCall())
       return E;
 
     // Update modified / uses register lists.
@@ -629,6 +656,10 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     // return early.
     if (ModifiedRegs[BaseReg])
       return E;
+
+    // Update list of instructions that read/write memory.
+    if (MI->mayLoadOrStore())
+      MemInsns.push_back(MI);
   }
   return E;
 }
