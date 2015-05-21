@@ -27,53 +27,34 @@ public:
   void createDefaultEntries() override {
     DynamicTable<ELFT>::createDefaultEntries();
 
-    typename DynamicTable<ELFT>::Elf_Dyn dyn;
-
     // Version id for the Runtime Linker Interface.
-    dyn.d_un.d_val = 1;
-    dyn.d_tag = DT_MIPS_RLD_VERSION;
-    this->addEntry(dyn);
+    this->addEntry(DT_MIPS_RLD_VERSION, 1);
 
     // MIPS flags.
-    dyn.d_un.d_val = RHF_NOTPOT;
-    dyn.d_tag = DT_MIPS_FLAGS;
-    this->addEntry(dyn);
+    this->addEntry(DT_MIPS_FLAGS, RHF_NOTPOT);
 
     // The base address of the segment.
-    dyn.d_un.d_ptr = 0;
-    dyn.d_tag = DT_MIPS_BASE_ADDRESS;
-    _dt_baseaddr = this->addEntry(dyn);
+    _dt_baseaddr = this->addEntry(DT_MIPS_BASE_ADDRESS, 0);
 
     // Number of local global offset table entries.
-    dyn.d_un.d_val = 0;
-    dyn.d_tag = DT_MIPS_LOCAL_GOTNO;
-    _dt_localgot = this->addEntry(dyn);
+    _dt_localgot = this->addEntry(DT_MIPS_LOCAL_GOTNO, 0);
 
     // Number of entries in the .dynsym section.
-    dyn.d_un.d_val = 0;
-    dyn.d_tag = DT_MIPS_SYMTABNO;
-    _dt_symtabno = this->addEntry(dyn);
+    _dt_symtabno = this->addEntry(DT_MIPS_SYMTABNO, 0);
 
     // The index of the first dynamic symbol table entry that corresponds
     // to an entry in the global offset table.
-    dyn.d_un.d_val = 0;
-    dyn.d_tag = DT_MIPS_GOTSYM;
-    _dt_gotsym = this->addEntry(dyn);
+    _dt_gotsym = this->addEntry(DT_MIPS_GOTSYM, 0);
 
     // Address of the .got section.
-    dyn.d_un.d_val = 0;
-    dyn.d_tag = DT_PLTGOT;
-    _dt_pltgot = this->addEntry(dyn);
+    _dt_pltgot = this->addEntry(DT_PLTGOT, 0);
   }
 
   void doPreFlight() override {
     DynamicTable<ELFT>::doPreFlight();
 
     if (_targetLayout.findOutputSection(".MIPS.options")) {
-      typename DynamicTable<ELFT>::Elf_Dyn dyn;
-      dyn.d_un.d_val = 0;
-      dyn.d_tag = DT_MIPS_OPTIONS;
-      _dt_options = this->addEntry(dyn);
+      _dt_options = this->addEntry(DT_MIPS_OPTIONS, 0);
     }
   }
 

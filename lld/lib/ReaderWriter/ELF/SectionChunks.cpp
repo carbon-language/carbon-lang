@@ -694,8 +694,12 @@ DynamicTable<ELFT>::DynamicTable(const ELFLinkingContext &ctx,
   this->_flags = SHF_ALLOC;
 }
 
-template <class ELFT> std::size_t DynamicTable<ELFT>::addEntry(Elf_Dyn e) {
-  _entries.push_back(e);
+template <class ELFT>
+std::size_t DynamicTable<ELFT>::addEntry(int64_t tag, uint64_t val) {
+  Elf_Dyn dyn;
+  dyn.d_tag = tag;
+  dyn.d_un.d_val = val;
+  _entries.push_back(dyn);
   this->_fsize = (_entries.size() * sizeof(Elf_Dyn)) + sizeof(Elf_Dyn);
   this->_msize = this->_fsize;
   return _entries.size() - 1;
@@ -716,72 +720,41 @@ void DynamicTable<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
 
 template <class ELFT> void DynamicTable<ELFT>::createDefaultEntries() {
   bool isRela = this->_ctx.isRelaOutputFormat();
-
-  Elf_Dyn dyn;
-  dyn.d_un.d_val = 0;
-
-  dyn.d_tag = DT_HASH;
-  _dt_hash = addEntry(dyn);
-  dyn.d_tag = DT_STRTAB;
-  _dt_strtab = addEntry(dyn);
-  dyn.d_tag = DT_SYMTAB;
-  _dt_symtab = addEntry(dyn);
-  dyn.d_tag = DT_STRSZ;
-  _dt_strsz = addEntry(dyn);
-  dyn.d_tag = DT_SYMENT;
-  _dt_syment = addEntry(dyn);
+  _dt_hash = addEntry(DT_HASH, 0);
+  _dt_strtab = addEntry(DT_STRTAB, 0);
+  _dt_symtab = addEntry(DT_SYMTAB, 0);
+  _dt_strsz = addEntry(DT_STRSZ, 0);
+  _dt_syment = addEntry(DT_SYMENT, 0);
   if (_layout.hasDynamicRelocationTable()) {
-    dyn.d_tag = isRela ? DT_RELA : DT_REL;
-    _dt_rela = addEntry(dyn);
-    dyn.d_tag = isRela ? DT_RELASZ : DT_RELSZ;
-    _dt_relasz = addEntry(dyn);
-    dyn.d_tag = isRela ? DT_RELAENT : DT_RELENT;
-    _dt_relaent = addEntry(dyn);
-
-    if (_layout.getDynamicRelocationTable()->canModifyReadonlySection()) {
-      dyn.d_tag = DT_TEXTREL;
-      _dt_textrel = addEntry(dyn);
-    }
+    _dt_rela = addEntry(isRela ? DT_RELA : DT_REL, 0);
+    _dt_relasz = addEntry(isRela ? DT_RELASZ : DT_RELSZ, 0);
+    _dt_relaent = addEntry(isRela ? DT_RELAENT : DT_RELENT, 0);
+    if (_layout.getDynamicRelocationTable()->canModifyReadonlySection())
+      _dt_textrel = addEntry(DT_TEXTREL, 0);
   }
   if (_layout.hasPLTRelocationTable()) {
-    dyn.d_tag = DT_PLTRELSZ;
-    _dt_pltrelsz = addEntry(dyn);
-    dyn.d_tag = getGotPltTag();
-    _dt_pltgot = addEntry(dyn);
-    dyn.d_tag = DT_PLTREL;
-    dyn.d_un.d_val = isRela ? DT_RELA : DT_REL;
-    _dt_pltrel = addEntry(dyn);
-    dyn.d_un.d_val = 0;
-    dyn.d_tag = DT_JMPREL;
-    _dt_jmprel = addEntry(dyn);
+    _dt_pltrelsz = addEntry(DT_PLTRELSZ, 0);
+    _dt_pltgot = addEntry(getGotPltTag(), 0);
+    _dt_pltrel = addEntry(DT_PLTREL, isRela ? DT_RELA : DT_REL);
+    _dt_jmprel = addEntry(DT_JMPREL, 0);
   }
 }
 
 template <class ELFT> void DynamicTable<ELFT>::doPreFlight() {
-  Elf_Dyn dyn;
-  dyn.d_un.d_val = 0;
   auto initArray = _layout.findOutputSection(".init_array");
   auto finiArray = _layout.findOutputSection(".fini_array");
   if (initArray) {
-    dyn.d_tag = DT_INIT_ARRAY;
-    _dt_init_array = addEntry(dyn);
-    dyn.d_tag = DT_INIT_ARRAYSZ;
-    _dt_init_arraysz = addEntry(dyn);
+    _dt_init_array = addEntry(DT_INIT_ARRAY, 0);
+    _dt_init_arraysz = addEntry(DT_INIT_ARRAYSZ, 0);
   }
   if (finiArray) {
-    dyn.d_tag = DT_FINI_ARRAY;
-    _dt_fini_array = addEntry(dyn);
-    dyn.d_tag = DT_FINI_ARRAYSZ;
-    _dt_fini_arraysz = addEntry(dyn);
+    _dt_fini_array = addEntry(DT_FINI_ARRAY, 0);
+    _dt_fini_arraysz = addEntry(DT_FINI_ARRAYSZ, 0);
   }
-  if (getInitAtomLayout()) {
-    dyn.d_tag = DT_INIT;
-    _dt_init = addEntry(dyn);
-  }
-  if (getFiniAtomLayout()) {
-    dyn.d_tag = DT_FINI;
-    _dt_fini = addEntry(dyn);
-  }
+  if (getInitAtomLayout())
+    _dt_init = addEntry(DT_INIT, 0);
+  if (getFiniAtomLayout())
+    _dt_fini = addEntry(DT_FINI, 0);
 }
 
 template <class ELFT> void DynamicTable<ELFT>::finalize() {

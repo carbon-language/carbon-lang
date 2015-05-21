@@ -126,28 +126,20 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   }
   // Never mark the dynamic linker as DT_NEEDED
   _soNeeded.erase(sys::path::filename(_ctx.getInterpreter()));
-  for (const auto &loadName : _soNeeded) {
-    Elf_Dyn dyn;
-    dyn.d_tag = DT_NEEDED;
-    dyn.d_un.d_val = _dynamicStringTable->addString(loadName.getKey());
-    _dynamicTable->addEntry(dyn);
-  }
+  for (const auto &loadName : _soNeeded)
+    _dynamicTable->addEntry(DT_NEEDED,
+                            _dynamicStringTable->addString(loadName.getKey()));
   const auto &rpathList = _ctx.getRpathList();
   if (!rpathList.empty()) {
     auto rpath =
         new (_alloc) std::string(join(rpathList.begin(), rpathList.end(), ":"));
-    Elf_Dyn dyn;
-    dyn.d_tag = _ctx.getEnableNewDtags() ? DT_RUNPATH : DT_RPATH;
-    dyn.d_un.d_val = _dynamicStringTable->addString(*rpath);
-    _dynamicTable->addEntry(dyn);
+    _dynamicTable->addEntry(_ctx.getEnableNewDtags() ? DT_RUNPATH : DT_RPATH,
+                            _dynamicStringTable->addString(*rpath));
   }
   StringRef soname = _ctx.sharedObjectName();
-  if (!soname.empty() && _ctx.getOutputELFType() == llvm::ELF::ET_DYN) {
-    Elf_Dyn dyn;
-    dyn.d_tag = DT_SONAME;
-    dyn.d_un.d_val = _dynamicStringTable->addString(soname);
-    _dynamicTable->addEntry(dyn);
-  }
+  if (!soname.empty() && _ctx.getOutputELFType() == llvm::ELF::ET_DYN)
+    _dynamicTable->addEntry(DT_SONAME, _dynamicStringTable->addString(soname));
+
   // The dynamic symbol table need to be sorted earlier because the hash
   // table needs to be built using the dynamic symbol table. It would be
   // late to sort the symbols due to that in finalize. In the dynamic symbol

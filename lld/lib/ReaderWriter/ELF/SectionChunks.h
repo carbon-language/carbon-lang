@@ -458,7 +458,7 @@ public:
   range<typename EntriesT::iterator> entries() { return _entries; }
 
   /// \returns the index of the entry.
-  std::size_t addEntry(Elf_Dyn e);
+  std::size_t addEntry(int64_t tag, uint64_t val);
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer) override;
