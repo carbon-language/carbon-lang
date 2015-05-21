@@ -16,13 +16,9 @@ define <8 x float> @foo1_8(<8 x i8> %src) {
 ;
 ; CHECK-WIDE-LABEL: foo1_8:
 ; CHECK-WIDE:       ## BB#0:
-; CHECK-WIDE-NEXT:    vpmovzxbd {{.*#+}} xmm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; CHECK-WIDE-NEXT:    vpslld $24, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpsrad $24, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
-; CHECK-WIDE-NEXT:    vpunpckhwd {{.*#+}} xmm0 = xmm0[4,4,5,5,6,6,7,7]
-; CHECK-WIDE-NEXT:    vpslld $24, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vpsrad $24, %xmm0, %xmm0
+; CHECK-WIDE-NEXT:    vpmovsxbd %xmm0, %xmm1
+; CHECK-WIDE-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; CHECK-WIDE-NEXT:    vpmovsxbd %xmm0, %xmm0
 ; CHECK-WIDE-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; CHECK-WIDE-NEXT:    vcvtdq2ps %ymm0, %ymm0
 ; CHECK-WIDE-NEXT:    retl
@@ -40,9 +36,7 @@ define <4 x float> @foo1_4(<4 x i8> %src) {
 ;
 ; CHECK-WIDE-LABEL: foo1_4:
 ; CHECK-WIDE:       ## BB#0:
-; CHECK-WIDE-NEXT:    vpmovzxbd {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[2],zero,zero,zero,xmm0[3],zero,zero,zero
-; CHECK-WIDE-NEXT:    vpslld $24, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vpsrad $24, %xmm0, %xmm0
+; CHECK-WIDE-NEXT:    vpmovsxbd %xmm0, %xmm0
 ; CHECK-WIDE-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; CHECK-WIDE-NEXT:    retl
   %res = sitofp <4 x i8> %src to <4 x float>

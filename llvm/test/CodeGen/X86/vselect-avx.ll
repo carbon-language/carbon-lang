@@ -14,8 +14,8 @@ target triple = "x86_64-apple-macosx"
 ; <rdar://problem/18675020>
 
 ; CHECK-LABEL: test:
-; CHECK: vmovdqa {{.*#+}} xmm0 = [65535,0,0,65535]
-; CHECK: vmovdqa {{.*#+}} xmm2 = [65533,124,125,14807]
+; CHECK: vmovdqa {{.*#+}} xmm1 = [65533,124,125,14807]
+; CHECK: vmovdqa {{.*#+}} xmm1 = [65535,0,0,65535]
 ; CHECK: ret
 define void @test(<4 x i16>* %a, <4 x i16>* %b) {
 body:
@@ -33,13 +33,14 @@ body:
 ; of the condition.
 ;
 ; CHECK-LABEL: test2:
-; CHECK:	vpslld	$31, %xmm0, %xmm0
-; CHECK-NEXT:	vpmovsxdq	%xmm0, %xmm1
-; CHECK-NEXT:	vpshufd	$78, %xmm0, %xmm0       ## xmm0 = xmm0[2,3,0,1]
-; CHECK-NEXT:	vpmovsxdq	%xmm0, %xmm0
-; CHECK-NEXT:	vinsertf128	$1, %xmm0, %ymm1, [[MASK:%ymm[0-9]+]]
-; CHECK: vblendvpd	[[MASK]]
-; CHECK: retq
+; CHECK:       vpslld $31, %xmm0, %xmm0
+; CHECK-NEXT:  vpsrad $31, %xmm0, %xmm0
+; CHECK-NEXT:  vpmovsxdq %xmm0, %xmm1
+; CHECK-NEXT:  vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-NEXT:  vpmovsxdq %xmm0, %xmm0
+; CHECK-NEXT:  vinsertf128 $1, %xmm0, %ymm1, [[MASK:%ymm[0-9]+]]
+; CHECK:       vblendvpd [[MASK]]
+; CHECK:       retq
 define void @test2(double** %call1559, i64 %indvars.iv4198, <4 x i1> %tmp1895) {
 bb:
   %arrayidx1928 = getelementptr inbounds double*, double** %call1559, i64 %indvars.iv4198
