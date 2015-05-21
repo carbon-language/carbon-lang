@@ -14,12 +14,14 @@ class RaiseTestCase(TestBase):
     @skipIfWindows # signals do not exist on Windows
     @skipUnlessDarwin
     @dsym_test
+    @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
     def test_sigstop_with_dsym(self):
         self.buildDsym()
         self.sigstop()
 
     @skipIfWindows # signals do not exist on Windows
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
     def test_sigstop_with_dwarf(self):
         self.buildDwarf()
         self.sigstop()
