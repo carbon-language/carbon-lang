@@ -13926,9 +13926,8 @@ static SDValue LowerSIGN_EXTEND_VECTOR_INREG(SDValue Op,
   MVT InVT = In.getSimpleValueType();
   assert(VT.getSizeInBits() == InVT.getSizeInBits());
 
-  MVT SVT = VT.getScalarType();
   MVT InSVT = InVT.getScalarType();
-  assert(SVT.getScalarSizeInBits() > InSVT.getScalarSizeInBits());
+  assert(VT.getScalarType().getScalarSizeInBits() > InSVT.getScalarSizeInBits());
 
   if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
     return SDValue();
