@@ -971,13 +971,15 @@ class DICompileUnit : public DIScope {
   bool IsOptimized;
   unsigned RuntimeVersion;
   unsigned EmissionKind;
+  uint64_t DWOId;
 
   DICompileUnit(LLVMContext &C, StorageType Storage, unsigned SourceLanguage,
                 bool IsOptimized, unsigned RuntimeVersion,
-                unsigned EmissionKind, ArrayRef<Metadata *> Ops)
+                unsigned EmissionKind, uint64_t DWOId, ArrayRef<Metadata *> Ops)
       : DIScope(C, DICompileUnitKind, Storage, dwarf::DW_TAG_compile_unit, Ops),
         SourceLanguage(SourceLanguage), IsOptimized(IsOptimized),
-        RuntimeVersion(RuntimeVersion), EmissionKind(EmissionKind) {}
+        RuntimeVersion(RuntimeVersion), EmissionKind(EmissionKind),
+        DWOId(DWOId) {}
   ~DICompileUnit() = default;
 
   static DICompileUnit *
@@ -987,14 +989,15 @@ class DICompileUnit : public DIScope {
           unsigned EmissionKind, DICompositeTypeArray EnumTypes,
           DITypeArray RetainedTypes, DISubprogramArray Subprograms,
           DIGlobalVariableArray GlobalVariables,
-          DIImportedEntityArray ImportedEntities, StorageType Storage,
-          bool ShouldCreate = true) {
-    return getImpl(
-        Context, SourceLanguage, File, getCanonicalMDString(Context, Producer),
-        IsOptimized, getCanonicalMDString(Context, Flags), RuntimeVersion,
-        getCanonicalMDString(Context, SplitDebugFilename), EmissionKind,
-        EnumTypes.get(), RetainedTypes.get(), Subprograms.get(),
-        GlobalVariables.get(), ImportedEntities.get(), Storage, ShouldCreate);
+          DIImportedEntityArray ImportedEntities, uint64_t DWOId,
+          StorageType Storage, bool ShouldCreate = true) {
+    return getImpl(Context, SourceLanguage, File,
+                   getCanonicalMDString(Context, Producer), IsOptimized,
+                   getCanonicalMDString(Context, Flags), RuntimeVersion,
+                   getCanonicalMDString(Context, SplitDebugFilename),
+                   EmissionKind, EnumTypes.get(), RetainedTypes.get(),
+                   Subprograms.get(), GlobalVariables.get(),
+                   ImportedEntities.get(), DWOId, Storage, ShouldCreate);
   }
   static DICompileUnit *
   getImpl(LLVMContext &Context, unsigned SourceLanguage, Metadata *File,
@@ -1002,7 +1005,7 @@ class DICompileUnit : public DIScope {
           unsigned RuntimeVersion, MDString *SplitDebugFilename,
           unsigned EmissionKind, Metadata *EnumTypes, Metadata *RetainedTypes,
           Metadata *Subprograms, Metadata *GlobalVariables,
-          Metadata *ImportedEntities, StorageType Storage,
+          Metadata *ImportedEntities, uint64_t DWOId, StorageType Storage,
           bool ShouldCreate = true);
 
   TempDICompileUnit cloneImpl() const {
@@ -1010,7 +1013,7 @@ class DICompileUnit : public DIScope {
         getContext(), getSourceLanguage(), getFile(), getProducer(),
         isOptimized(), getFlags(), getRuntimeVersion(), getSplitDebugFilename(),
         getEmissionKind(), getEnumTypes(), getRetainedTypes(), getSubprograms(),
-        getGlobalVariables(), getImportedEntities());
+        getGlobalVariables(), getImportedEntities(), DWOId);
   }
 
 public:
@@ -1021,22 +1024,21 @@ public:
                      DICompositeTypeArray EnumTypes, DITypeArray RetainedTypes,
                      DISubprogramArray Subprograms,
                      DIGlobalVariableArray GlobalVariables,
-                     DIImportedEntityArray ImportedEntities),
+                     DIImportedEntityArray ImportedEntities, uint64_t DWOId),
                     (SourceLanguage, File, Producer, IsOptimized, Flags,
                      RuntimeVersion, SplitDebugFilename, EmissionKind,
                      EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
-                     ImportedEntities))
-  DEFINE_MDNODE_GET(DICompileUnit,
-                    (unsigned SourceLanguage, Metadata *File,
-                     MDString *Producer, bool IsOptimized, MDString *Flags,
-                     unsigned RuntimeVersion, MDString *SplitDebugFilename,
-                     unsigned EmissionKind, Metadata *EnumTypes,
-                     Metadata *RetainedTypes, Metadata *Subprograms,
-                     Metadata *GlobalVariables, Metadata *ImportedEntities),
-                    (SourceLanguage, File, Producer, IsOptimized, Flags,
-                     RuntimeVersion, SplitDebugFilename, EmissionKind,
-                     EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
-                     ImportedEntities))
+                     ImportedEntities, DWOId))
+  DEFINE_MDNODE_GET(
+      DICompileUnit,
+      (unsigned SourceLanguage, Metadata *File, MDString *Producer,
+       bool IsOptimized, MDString *Flags, unsigned RuntimeVersion,
+       MDString *SplitDebugFilename, unsigned EmissionKind, Metadata *EnumTypes,
+       Metadata *RetainedTypes, Metadata *Subprograms,
+       Metadata *GlobalVariables, Metadata *ImportedEntities, uint64_t DWOId),
+      (SourceLanguage, File, Producer, IsOptimized, Flags, RuntimeVersion,
+       SplitDebugFilename, EmissionKind, EnumTypes, RetainedTypes, Subprograms,
+       GlobalVariables, ImportedEntities, DWOId))
 
   TempDICompileUnit clone() const { return cloneImpl(); }
 
@@ -1062,6 +1064,7 @@ public:
   DIImportedEntityArray getImportedEntities() const {
     return cast_or_null<MDTuple>(getRawImportedEntities());
   }
+  unsigned getDWOId() const { return DWOId; }
 
   MDString *getRawProducer() const { return getOperandAs<MDString>(1); }
   MDString *getRawFlags() const { return getOperandAs<MDString>(2); }

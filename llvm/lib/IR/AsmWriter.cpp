@@ -1624,6 +1624,7 @@ static void writeDICompileUnit(raw_ostream &Out, const DICompileUnit *N,
   Printer.printMetadata("subprograms", N->getRawSubprograms());
   Printer.printMetadata("globals", N->getRawGlobalVariables());
   Printer.printMetadata("imports", N->getRawImportedEntities());
+  Printer.printInt("dwoId", N->getDWOId());
   Out << ")";
 }
 

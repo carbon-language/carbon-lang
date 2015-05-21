@@ -12,17 +12,17 @@
 !5 = distinct !{}
 !6 = distinct !{}
 
-; CHECK: !7 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang", isOptimized: true, flags: "-O2", runtimeVersion: 2, splitDebugFilename: "abc.debug", emissionKind: 3, enums: !2, retainedTypes: !3, subprograms: !4, globals: !5, imports: !6)
+; CHECK: !7 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang", isOptimized: true, flags: "-O2", runtimeVersion: 2, splitDebugFilename: "abc.debug", emissionKind: 3, enums: !2, retainedTypes: !3, subprograms: !4, globals: !5, imports: !6, dwoId: 42)
 !7 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang",
                     isOptimized: true, flags: "-O2", runtimeVersion: 2,
                     splitDebugFilename: "abc.debug", emissionKind: 3,
                     enums: !2, retainedTypes: !3, subprograms: !4,
-                    globals: !5, imports: !6)
+                    globals: !5, imports: !6, dwoId: 42)
 !8 = !DICompileUnit(language: 12, file: !1, producer: "clang",
                     isOptimized: true, flags: "-O2", runtimeVersion: 2,
                     splitDebugFilename: "abc.debug", emissionKind: 3,
                     enums: !2, retainedTypes: !3, subprograms: !4,
-                    globals: !5, imports: !6)
+                    globals: !5, imports: !6, dwoId: 42)
 
 ; CHECK: !8 = !DICompileUnit(language: DW_LANG_C99, file: !1, isOptimized: false, runtimeVersion: 0, emissionKind: 0)
 !9 = !DICompileUnit(language: 12, file: !1, producer: "",

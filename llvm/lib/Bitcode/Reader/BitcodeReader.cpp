@@ -1844,7 +1844,7 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_COMPILE_UNIT: {
-      if (Record.size() != 14)
+      if (Record.size() < 14 || Record.size() > 15)
         return Error("Invalid record");
 
       MDValueList.AssignValue(
@@ -1855,7 +1855,8 @@ std::error_code BitcodeReader::ParseMetadata() {
                            getMDString(Record[7]), Record[8],
                            getMDOrNull(Record[9]), getMDOrNull(Record[10]),
                            getMDOrNull(Record[11]), getMDOrNull(Record[12]),
-                           getMDOrNull(Record[13]))),
+                           getMDOrNull(Record[13]),
+                           Record.size() == 14 ? 0 : Record[14])),
           NextMDValueNo++);
       break;
     }

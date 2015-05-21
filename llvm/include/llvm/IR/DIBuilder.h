@@ -95,6 +95,7 @@ namespace llvm {
     /// @param SplitName The name of the file that we'll split debug info out
     ///                  into.
     /// @param Kind     The kind of debug information to generate.
+    /// @param DWOId    The DWOId if this is a split skeleton compile unit.
     /// @param EmitDebugInfo   A boolean flag which indicates whether debug
     ///                        information should be written to the final
     ///                        output or not. When this is false, debug
@@ -104,12 +105,12 @@ namespace llvm {
     ///                        source location information in the back end
     ///                        without actually changing the output (e.g.,
     ///                        when using optimization remarks).
-    DICompileUnit *createCompileUnit(unsigned Lang, StringRef File,
-                                     StringRef Dir, StringRef Producer,
-                                     bool isOptimized, StringRef Flags,
-                                     unsigned RV, StringRef SplitName = "",
-                                     DebugEmissionKind Kind = FullDebug,
-                                     bool EmitDebugInfo = true);
+    DICompileUnit *
+    createCompileUnit(unsigned Lang, StringRef File, StringRef Dir,
+                      StringRef Producer, bool isOptimized, StringRef Flags,
+                      unsigned RV, StringRef SplitName = StringRef(),
+                      DebugEmissionKind Kind = FullDebug, uint64_t DWOId = 0,
+                      bool EmitDebugInfo = true);
 
     /// createFile - Create a file descriptor to hold debugging information
     /// for a file.

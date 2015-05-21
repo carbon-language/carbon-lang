@@ -472,19 +472,20 @@ template <> struct MDNodeKeyImpl<DICompileUnit> {
   Metadata *Subprograms;
   Metadata *GlobalVariables;
   Metadata *ImportedEntities;
+  uint64_t DWOId;
 
   MDNodeKeyImpl(unsigned SourceLanguage, Metadata *File, StringRef Producer,
                 bool IsOptimized, StringRef Flags, unsigned RuntimeVersion,
                 StringRef SplitDebugFilename, unsigned EmissionKind,
                 Metadata *EnumTypes, Metadata *RetainedTypes,
                 Metadata *Subprograms, Metadata *GlobalVariables,
-                Metadata *ImportedEntities)
+                Metadata *ImportedEntities, uint64_t DWOId)
       : SourceLanguage(SourceLanguage), File(File), Producer(Producer),
         IsOptimized(IsOptimized), Flags(Flags), RuntimeVersion(RuntimeVersion),
         SplitDebugFilename(SplitDebugFilename), EmissionKind(EmissionKind),
         EnumTypes(EnumTypes), RetainedTypes(RetainedTypes),
         Subprograms(Subprograms), GlobalVariables(GlobalVariables),
-        ImportedEntities(ImportedEntities) {}
+        ImportedEntities(ImportedEntities), DWOId(DWOId) {}
   MDNodeKeyImpl(const DICompileUnit *N)
       : SourceLanguage(N->getSourceLanguage()), File(N->getRawFile()),
         Producer(N->getProducer()), IsOptimized(N->isOptimized()),
@@ -494,7 +495,7 @@ template <> struct MDNodeKeyImpl<DICompileUnit> {
         RetainedTypes(N->getRawRetainedTypes()),
         Subprograms(N->getRawSubprograms()),
         GlobalVariables(N->getRawGlobalVariables()),
-        ImportedEntities(N->getRawImportedEntities()) {}
+        ImportedEntities(N->getRawImportedEntities()), DWOId(N->getDWOId()) {}
 
   bool isKeyOf(const DICompileUnit *RHS) const {
     return SourceLanguage == RHS->getSourceLanguage() &&
@@ -507,13 +508,14 @@ template <> struct MDNodeKeyImpl<DICompileUnit> {
            RetainedTypes == RHS->getRawRetainedTypes() &&
            Subprograms == RHS->getRawSubprograms() &&
            GlobalVariables == RHS->getRawGlobalVariables() &&
-           ImportedEntities == RHS->getRawImportedEntities();
+           ImportedEntities == RHS->getRawImportedEntities() &&
+           DWOId == RHS->getDWOId();
   }
   unsigned getHashValue() const {
     return hash_combine(SourceLanguage, File, Producer, IsOptimized, Flags,
                         RuntimeVersion, SplitDebugFilename, EmissionKind,
                         EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
-                        ImportedEntities);
+                        ImportedEntities, DWOId);
   }
 };
 

@@ -311,7 +311,8 @@ DICompileUnit *DICompileUnit::getImpl(
     unsigned RuntimeVersion, MDString *SplitDebugFilename,
     unsigned EmissionKind, Metadata *EnumTypes, Metadata *RetainedTypes,
     Metadata *Subprograms, Metadata *GlobalVariables,
-    Metadata *ImportedEntities, StorageType Storage, bool ShouldCreate) {
+    Metadata *ImportedEntities, uint64_t DWOId,
+    StorageType Storage, bool ShouldCreate) {
   assert(isCanonical(Producer) && "Expected canonical MDString");
   assert(isCanonical(Flags) && "Expected canonical MDString");
   assert(isCanonical(SplitDebugFilename) && "Expected canonical MDString");
@@ -319,13 +320,13 @@ DICompileUnit *DICompileUnit::getImpl(
       DICompileUnit,
       (SourceLanguage, File, getString(Producer), IsOptimized, getString(Flags),
        RuntimeVersion, getString(SplitDebugFilename), EmissionKind, EnumTypes,
-       RetainedTypes, Subprograms, GlobalVariables, ImportedEntities));
+       RetainedTypes, Subprograms, GlobalVariables, ImportedEntities, DWOId));
   Metadata *Ops[] = {File, Producer, Flags, SplitDebugFilename, EnumTypes,
                      RetainedTypes, Subprograms, GlobalVariables,
                      ImportedEntities};
   DEFINE_GETIMPL_STORE(
       DICompileUnit,
-      (SourceLanguage, IsOptimized, RuntimeVersion, EmissionKind), Ops);
+      (SourceLanguage, IsOptimized, RuntimeVersion, EmissionKind, DWOId), Ops);
 }
 
 DISubprogram *DILocalScope::getSubprogram() const {
