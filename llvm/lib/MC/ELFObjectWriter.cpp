@@ -230,7 +230,7 @@ class ELFObjectWriter : public MCObjectWriter {
     void ExecutePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
 
-    void writeSectionHeader(MCAssembler &Asm, const MCAsmLayout &Layout,
+    void writeSectionHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetsTy &SectionOffsets);
 
@@ -1299,7 +1299,7 @@ void ELFObjectWriter::writeSection(const SectionIndexMapTy &SectionIndexMap,
 }
 
 void ELFObjectWriter::writeSectionHeader(
-    MCAssembler &Asm, const MCAsmLayout &Layout,
+    const MCAssembler &Asm, const MCAsmLayout &Layout,
     const SectionIndexMapTy &SectionIndexMap,
     const SectionOffsetsTy &SectionOffsets) {
   const unsigned NumSections = SectionTable.size();
@@ -1310,7 +1310,6 @@ void ELFObjectWriter::writeSectionHeader(
   WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, 0, 0, 0, 0);
 
   for (MCSectionELF *Section : SectionTable) {
-    const MCSectionData &SD = Asm.getOrCreateSectionData(*Section);
     uint32_t GroupSymbolIndex;
     unsigned Type = Section->getType();
     if (Type != ELF::SHT_GROUP)
@@ -1320,8 +1319,13 @@ void ELFObjectWriter::writeSectionHeader(
 
     const std::pair<uint64_t, uint64_t> &Offsets =
         SectionOffsets.find(Section)->second;
-    uint64_t Size = Type == ELF::SHT_NOBITS ? Layout.getSectionAddressSize(&SD)
-                                            : Offsets.second - Offsets.first;
+    uint64_t Size;
+    if (Type == ELF::SHT_NOBITS) {
+      const MCSectionData &SD = Asm.getSectionData(*Section);
+      Size = Layout.getSectionAddressSize(&SD);
+    } else {
+      Size = Offsets.second - Offsets.first;
+    }
 
     writeSection(SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
                  *Section);
