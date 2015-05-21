@@ -635,6 +635,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     const MCSection *Sec = getStreamer().getCurrentSection().first;
     bool InsertResult = getContext().addGenDwarfSection(Sec);
     assert(InsertResult && ".text section should not have debug info yet");
+    (void)InsertResult;
     Sec->setBeginSymbol(SectionStartSym);
     getContext().setGenDwarfFileNumber(getStreamer().EmitDwarfFileDirective(
         0, StringRef(), getContext().getMainFileName()));
