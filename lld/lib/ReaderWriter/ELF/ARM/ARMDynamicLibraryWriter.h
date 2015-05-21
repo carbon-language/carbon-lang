@@ -23,15 +23,11 @@ public:
 protected:
   // Add any runtime files and their atoms to the output
   void createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
-
-private:
-  ARMLinkingContext &_ctx;
-  ARMTargetLayout &_armLayout;
 };
 
 ARMDynamicLibraryWriter::ARMDynamicLibraryWriter(ARMLinkingContext &ctx,
                                                  ARMTargetLayout &layout)
-    : DynamicLibraryWriter(ctx, layout), _ctx(ctx), _armLayout(layout) {}
+    : DynamicLibraryWriter(ctx, layout) {}
 
 void ARMDynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
