@@ -37,15 +37,16 @@ MacroDirective *
 Preprocessor::getLocalMacroDirectiveHistory(const IdentifierInfo *II) const {
   if (!II->hadMacroDefinition())
     return nullptr;
-  auto Pos = Macros.find(II);
-  return Pos == Macros.end() ? nullptr : Pos->second.getLatest();
+  auto Pos = CurSubmoduleState->Macros.find(II);
+  return Pos == CurSubmoduleState->Macros.end() ? nullptr
+                                                : Pos->second.getLatest();
 }
 
 void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
   assert(MD && "MacroDirective should be non-zero!");
   assert(!MD->getPrevious() && "Already attached to a MacroDirective history.");
 
-  MacroState &StoredMD = Macros[II];
+  MacroState &StoredMD = CurSubmoduleState->Macros[II];
   auto *OldMD = StoredMD.getLatest();
   MD->setPrevious(OldMD);
   StoredMD.setLatest(MD);
@@ -62,7 +63,7 @@ void Preprocessor::appendMacroDirective(IdentifierInfo *II, MacroDirective *MD){
 void Preprocessor::setLoadedMacroDirective(IdentifierInfo *II,
                                            MacroDirective *MD) {
   assert(II && MD);
-  MacroState &StoredMD = Macros[II];
+  MacroState &StoredMD = CurSubmoduleState->Macros[II];
   assert(!StoredMD.getLatest() &&
          "the macro history was modified before initializing it from a pch");
   StoredMD = MD;
@@ -124,9 +125,11 @@ ModuleMacro *Preprocessor::getModuleMacro(Module *Mod, IdentifierInfo *II) {
 
 void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
                                          ModuleMacroInfo &Info) {
-  assert(Info.ActiveModuleMacrosGeneration != VisibleModules.getGeneration() &&
+  assert(Info.ActiveModuleMacrosGeneration !=
+             CurSubmoduleState->VisibleModules.getGeneration() &&
          "don't need to update this macro name info");
-  Info.ActiveModuleMacrosGeneration = VisibleModules.getGeneration();
+  Info.ActiveModuleMacrosGeneration =
+      CurSubmoduleState->VisibleModules.getGeneration();
 
   auto Leaf = LeafModuleMacros.find(II);
   if (Leaf == LeafModuleMacros.end()) {
@@ -146,7 +149,7 @@ void Preprocessor::updateModuleMacroInfo(const IdentifierInfo *II,
                                                 Leaf->second.end());
   while (!Worklist.empty()) {
     auto *MM = Worklist.pop_back_val();
-    if (VisibleModules.isVisible(MM->getOwningModule())) {
+    if (CurSubmoduleState->VisibleModules.isVisible(MM->getOwningModule())) {
       // We only care about collecting definitions; undefinitions only act
       // to override other definitions.
       if (MM->getMacroInfo())
@@ -200,8 +203,8 @@ void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
   if (LeafIt != LeafModuleMacros.end())
     Leaf = LeafIt->second;
   const MacroState *State = nullptr;
-  auto Pos = Macros.find(II);
-  if (Pos != Macros.end())
+  auto Pos = CurSubmoduleState->Macros.find(II);
+  if (Pos != CurSubmoduleState->Macros.end())
     State = &Pos->second;
 
   llvm::errs() << "MacroState " << State << " " << II->getNameStart();
@@ -236,7 +239,8 @@ void Preprocessor::dumpMacroInfo(const IdentifierInfo *II) {
 
     if (Active.count(MM))
       llvm::errs() << " active";
-    else if (!VisibleModules.isVisible(MM->getOwningModule()))
+    else if (!CurSubmoduleState->VisibleModules.isVisible(
+                 MM->getOwningModule()))
       llvm::errs() << " hidden";
     else if (MM->getMacroInfo())
       llvm::errs() << " overridden";

@@ -73,7 +73,8 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
       ModuleImportExpectsIdentifier(false), CodeCompletionReached(0),
       MainFileDir(nullptr), SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
       CurDirLookup(nullptr), CurLexerKind(CLK_Lexer), CurSubmodule(nullptr),
-      Callbacks(nullptr), MacroArgCache(nullptr), Record(nullptr),
+      Callbacks(nullptr), CurSubmoduleState(&NullSubmoduleState),
+      MacroArgCache(nullptr), Record(nullptr),
       MIChainHead(nullptr), DeserialMIChainHead(nullptr) {
   OwnsHeaderSearch = OwnsHeaders;
   
@@ -266,7 +267,9 @@ void Preprocessor::PrintStats() {
   llvm::errs() << "\n  Macro Expanded Tokens: "
                << llvm::capacity_in_bytes(MacroExpandedTokens);
   llvm::errs() << "\n  Predefines Buffer: " << Predefines.capacity();
-  llvm::errs() << "\n  Macros: " << llvm::capacity_in_bytes(Macros);
+  // FIXME: List information for all submodules.
+  llvm::errs() << "\n  Macros: "
+               << llvm::capacity_in_bytes(CurSubmoduleState->Macros);
   llvm::errs() << "\n  #pragma push_macro Info: "
                << llvm::capacity_in_bytes(PragmaPushMacroInfo);
   llvm::errs() << "\n  Poison Reasons: "
@@ -283,14 +286,16 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
     ExternalSource->ReadDefinedMacros();
   }
 
-  return Macros.begin();
+  return CurSubmoduleState->Macros.begin();
 }
 
 size_t Preprocessor::getTotalMemory() const {
   return BP.getTotalMemory()
     + llvm::capacity_in_bytes(MacroExpandedTokens)
     + Predefines.capacity() /* Predefines buffer. */
-    + llvm::capacity_in_bytes(Macros)
+    // FIXME: Include sizes from all submodules, and include MacroInfo sizes,
+    // and ModuleMacros.
+    + llvm::capacity_in_bytes(CurSubmoduleState->Macros)
     + llvm::capacity_in_bytes(PragmaPushMacroInfo)
     + llvm::capacity_in_bytes(PoisonReasons)
     + llvm::capacity_in_bytes(CommentHandlers);
@@ -304,7 +309,7 @@ Preprocessor::macro_end(bool IncludeExternalMacros) const {
     ExternalSource->ReadDefinedMacros();
   }
 
-  return Macros.end();
+  return CurSubmoduleState->Macros.end();
 }
 
 /// \brief Compares macro tokens with a specified token value sequence.
@@ -781,7 +786,7 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
 }
 
 void Preprocessor::makeModuleVisible(Module *M, SourceLocation Loc) {
-  VisibleModules.setVisible(
+  CurSubmoduleState->VisibleModules.setVisible(
       M, Loc, [](Module *) {},
       [&](ArrayRef<Module *> Path, Module *Conflict, StringRef Message) {
         // FIXME: Include the path in the diagnostic.
