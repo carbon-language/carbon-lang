@@ -617,6 +617,44 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
   }
 }
 
+// FIXME: Move to ARMTargetParser.
+static int getARMSubArchVersionNumber(const llvm::Triple &Triple) {
+  switch (Triple.getSubArch()) {
+  case llvm::Triple::ARMSubArch_v8_1a:
+  case llvm::Triple::ARMSubArch_v8:
+    return 8;
+  case llvm::Triple::ARMSubArch_v7:
+  case llvm::Triple::ARMSubArch_v7em:
+  case llvm::Triple::ARMSubArch_v7m:
+  case llvm::Triple::ARMSubArch_v7s:
+    return 7;
+  case llvm::Triple::ARMSubArch_v6:
+  case llvm::Triple::ARMSubArch_v6m:
+  case llvm::Triple::ARMSubArch_v6k:
+  case llvm::Triple::ARMSubArch_v6t2:
+    return 6;
+  case llvm::Triple::ARMSubArch_v5:
+  case llvm::Triple::ARMSubArch_v5te:
+    return 5;
+  case llvm::Triple::ARMSubArch_v4t:
+    return 4;
+  default:
+    return 0;
+  }
+}
+
+// FIXME: Move to ARMTargetParser.
+static bool isARMMProfile(const llvm::Triple &Triple) {
+  switch (Triple.getSubArch()) {
+  case llvm::Triple::ARMSubArch_v7em:
+  case llvm::Triple::ARMSubArch_v7m:
+  case llvm::Triple::ARMSubArch_v6m:
+    return true;
+  default:
+    return false;
+  }
+}
+
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
 // -mfloat-abi=.
 StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
@@ -647,12 +685,8 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
     case llvm::Triple::IOS: {
       // Darwin defaults to "softfp" for v6 and v7.
       //
-      // FIXME: Factor out an ARM class so we can cache the arch somewhere.
-      std::string ArchName =
-        arm::getLLVMArchSuffixForARM(arm::getARMTargetCPU(Args, Triple),
-                                     arm::getARMArch(Args, Triple));
-      if (StringRef(ArchName).startswith("v6") ||
-          StringRef(ArchName).startswith("v7"))
+      if (getARMSubArchVersionNumber(Triple) == 6 ||
+          getARMSubArchVersionNumber(Triple) == 7)
         FloatABI = "softfp";
       else
         FloatABI = "soft";
@@ -692,10 +726,7 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
         FloatABI = "softfp";
         break;
       case llvm::Triple::Android: {
-        std::string ArchName =
-          arm::getLLVMArchSuffixForARM(arm::getARMTargetCPU(Args, Triple),
-                                       arm::getARMArch(Args, Triple));
-        if (StringRef(ArchName).startswith("v7"))
+        if (getARMSubArchVersionNumber(Triple) == 7)
           FloatABI = "softfp";
         else
           FloatABI = "soft";
@@ -748,12 +779,24 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (const Arg *A = Args.getLastArg(options::OPT_mhwdiv_EQ))
     getARMHWDivFeatures(D, A, Args, Features);
 
-  // -march is handled in getARMCPUForMarch by translating it into a CPU name,
-  // but it needs to return an empty string on invalid arguments. We therefore
-  // check and give an error here if the -march is invalid.
-  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
-    if (!Triple.getARMCPUForArch(A->getValue()))
+  // Check if -march is valid by checking if it can be canonicalised. getARMArch
+  // is used here instead of just checking the -march value in order to handle
+  // -march=native correctly.
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    StringRef Arch = arm::getARMArch(Args, Triple);
+    if (llvm::ARMTargetParser::getCanonicalArchName(Arch).empty())
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
+
+  // We do a similar thing with -mcpu, but here things are complicated because
+  // the only function we have to check if a cpu is valid is
+  // getLLVMArchSuffixForARM which also needs an architecture.
+  if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+    StringRef CPU = arm::getARMTargetCPU(Args, Triple);
+    StringRef Arch = arm::getARMArch(Args, Triple);
+    if (strcmp(arm::getLLVMArchSuffixForARM(CPU, Arch), "") == 0)
+      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
@@ -783,7 +826,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   // Get the effective triple, which takes into account the deployment target.
   std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   llvm::Triple Triple(TripleStr);
-  std::string CPUName = arm::getARMTargetCPU(Args, Triple);
 
   // Select the ABI to use.
   //
@@ -797,7 +839,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     // the frontend matches that.
     if (Triple.getEnvironment() == llvm::Triple::EABI ||
         Triple.getOS() == llvm::Triple::UnknownOS ||
-        StringRef(CPUName).startswith("cortex-m")) {
+        isARMMProfile(Triple)) {
       ABIName = "aapcs";
     } else {
       ABIName = "apcs-gnu";
@@ -3209,9 +3251,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Add the target cpu
-  std::string ETripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
-  llvm::Triple ETriple(ETripleStr);
-  std::string CPU = getCPUName(Args, ETriple);
+  std::string CPU = getCPUName(Args, Triple);
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(Args.MakeArgString(CPU));
@@ -3223,7 +3263,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Add the target features
-  getTargetFeatures(D, ETriple, Args, CmdArgs, false);
+  getTargetFeatures(D, Triple, Args, CmdArgs, false);
 
   // Add target specific flags.
   switch(getToolChain().getArch()) {
@@ -5105,7 +5145,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Clang::getBaseInputName(Args, Input));
 
   // Add the target cpu
-  const llvm::Triple &Triple = getToolChain().getTriple();
+  const llvm::Triple Triple(TripleStr);
   std::string CPU = getCPUName(Args, Triple);
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
@@ -5630,23 +5670,32 @@ const StringRef arm::getARMArch(const ArgList &Args,
     // Otherwise, use the Arch from the triple.
     MArch = Triple.getArchName();
   }
+
+  // Handle -march=native.
+  if (MArch == "native") {
+    std::string CPU = llvm::sys::getHostCPUName();
+    if (CPU != "generic") {
+      // Translate the native cpu into the architecture suffix for that CPU.
+      const char *Suffix = arm::getLLVMArchSuffixForARM(CPU, MArch);
+      // If there is no valid architecture suffix for this CPU we don't know how
+      // to handle it, so return no architecture.
+      if (strcmp(Suffix,"") == 0)
+        MArch = "";
+      else
+        MArch = std::string("arm") + Suffix;
+    }
+  }
+
   return MArch;
 }
 /// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
 const char *arm::getARMCPUForMArch(const ArgList &Args,
                                    const llvm::Triple &Triple) {
   StringRef MArch = getARMArch(Args, Triple);
-
-  // Handle -march=native.
-  if (MArch == "native") {
-    std::string CPU = llvm::sys::getHostCPUName();
-    if (CPU != "generic") {
-      // Translate the native cpu into the architecture. The switch below will
-      // then chose the minimum cpu for that arch.
-      MArch = std::string("arm") + 
-        arm::getLLVMArchSuffixForARM(CPU, arm::getARMArch(Args, Triple));
-    }
-  }
+  // getARMCPUForArch defaults to the triple if MArch is empty, but empty MArch
+  // here means an -march=native that we can't handle, so instead return no CPU.
+  if (MArch.empty())
+    return "";
 
   // We need to return an empty string here on invalid MArch values as the
   // various places that call this function can't cope with a null result.
@@ -5689,8 +5738,10 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
     }
   }
 
+  // FIXME: Use ARMTargetParser
   return llvm::StringSwitch<const char *>(CPU)
-    .Case("strongarm", "v4")
+    .Cases("arm8", "arm810", "v4")
+    .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110", "v4")
     .Cases("arm7tdmi", "arm7tdmi-s", "arm710t", "v4t")
     .Cases("arm720t", "arm9", "arm9tdmi", "v4t")
     .Cases("arm920", "arm920t", "arm922t", "v4t")
@@ -5720,15 +5771,10 @@ void arm::appendEBLinkFlags(const ArgList &Args, ArgStringList &CmdArgs,
   if (Args.hasArg(options::OPT_r))
     return;
 
-  StringRef Suffix = getLLVMArchSuffixForARM(getARMCPUForMArch(Args, Triple), 
-                                             getARMArch(Args, Triple));
-  const char *LinkFlag = llvm::StringSwitch<const char *>(Suffix)
-    .Cases("v4", "v4t", "v5", "v5e", nullptr)
-    .Cases("v6", "v6k", "v6t2", nullptr)
-    .Default("--be8");
-
-  if (LinkFlag)
-    CmdArgs.push_back(LinkFlag);
+  // ARMv7 (and later) and ARMv6-M do not support BE-32, so instruct the linker
+  // to generate BE-8 executables.
+  if (getARMSubArchVersionNumber(Triple) >= 7 || isARMMProfile(Triple))
+    CmdArgs.push_back("--be8");
 }
 
 mips::NanEncoding mips::getSupportedNanEncoding(StringRef &CPU) {
@@ -7329,7 +7375,8 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     break;
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
-    arm::appendEBLinkFlags(Args, CmdArgs, getToolChain().getTriple());
+    arm::appendEBLinkFlags(Args, CmdArgs,
+        llvm::Triple(getToolChain().ComputeEffectiveClangTriple(Args)));
     CmdArgs.push_back("-m");
     switch (getToolChain().getTriple().getEnvironment()) {
     case llvm::Triple::EABI:
@@ -7905,7 +7952,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (ToolChain.getArch() == llvm::Triple::armeb ||
       ToolChain.getArch() == llvm::Triple::thumbeb)
-    arm::appendEBLinkFlags(Args, CmdArgs, getToolChain().getTriple());
+    arm::appendEBLinkFlags(Args, CmdArgs,
+        llvm::Triple(getToolChain().ComputeEffectiveClangTriple(Args)));
 
   for (const auto &Opt : ToolChain.ExtraOpts)
     CmdArgs.push_back(Opt.c_str());
