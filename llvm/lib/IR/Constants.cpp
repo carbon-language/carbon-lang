@@ -2388,7 +2388,7 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr(
                        (IdxList.size() + 1),
                    IdxList.size() + 1),
       SrcElementTy(SrcElementTy) {
-  OperandList[0] = C;
+  Op<0>() = C;
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
     OperandList[i+1] = IdxList[i];
 }

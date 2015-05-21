@@ -227,7 +227,7 @@ void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
   ReservedSpace = NumReservedValues;
   NumOperands = 1;
   OperandList = allocHungoffUses(ReservedSpace);
-  OperandList[0] = PersFn;
+  Op<0>() = PersFn;
   setName(NameStr);
   setCleanup(false);
 }
@@ -1239,7 +1239,7 @@ FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering,
 void GetElementPtrInst::init(Value *Ptr, ArrayRef<Value *> IdxList,
                              const Twine &Name) {
   assert(NumOperands == 1 + IdxList.size() && "NumOperands not initialized?");
-  OperandList[0] = Ptr;
+  Op<0>() = Ptr;
   std::copy(IdxList.begin(), IdxList.end(), op_begin() + 1);
   setName(Name);
 }
@@ -3298,8 +3298,8 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumReserved) {
   NumOperands = 2;
   OperandList = allocHungoffUses(ReservedSpace);
 
-  OperandList[0] = Value;
-  OperandList[1] = Default;
+  Op<0>() = Value;
+  Op<1>() = Default;
 }
 
 /// SwitchInst ctor - Create a new switch instruction, specifying a value to
@@ -3417,7 +3417,7 @@ void IndirectBrInst::init(Value *Address, unsigned NumDests) {
   NumOperands = 1;
   OperandList = allocHungoffUses(ReservedSpace);
   
-  OperandList[0] = Address;
+  Op<0>() = Address;
 }
 
 
