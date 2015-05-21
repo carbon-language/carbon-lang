@@ -882,6 +882,17 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     }
     case tok::equal:
+      // Fat arrows (=>) have tok::TokenKind tok::equal but TokenType
+      // TT_JsFatArrow. The always start an expression or a child block if
+      // followed by a curly.
+      if (FormatTok->is(TT_JsFatArrow)) {
+        nextToken();
+        if (FormatTok->is(tok::l_brace)) {
+          parseChildBlock();
+        }
+        break;
+      }
+
       nextToken();
       if (FormatTok->Tok.is(tok::l_brace)) {
         parseBracedList();
@@ -1006,16 +1017,42 @@ void UnwrappedLineParser::tryToParseJSFunction() {
 
   if (FormatTok->isNot(tok::l_paren))
     return;
+
+  // Parse formal parameter list.
+  parseBalanced(tok::l_paren, tok::r_paren);
+
+  if (FormatTok->is(tok::colon)) {
+    // Parse a type definition.
+    nextToken();
+
+    // Eat the type declaration. For braced inline object types, balance braces,
+    // otherwise just parse until finding an l_brace for the function body.
+    if (FormatTok->is(tok::l_brace)) {
+      parseBalanced(tok::l_brace, tok::r_brace);
+    } else {
+      while(FormatTok->isNot(tok::l_brace) && !eof()) {
+        nextToken();
+      }
+    }
+  }
+
+  parseChildBlock();
+}
+
+void UnwrappedLineParser::parseBalanced(tok::TokenKind OpenKind,
+                                        tok::TokenKind CloseKind) {
+  assert(FormatTok->is(OpenKind));
   nextToken();
-  while (FormatTok->isNot(tok::l_brace)) {
-    // Err on the side of caution in order to avoid consuming the full file in
-    // case of incomplete code.
-    if (!FormatTok->isOneOf(tok::identifier, tok::comma, tok::r_paren,
-                            tok::comment))
-      return;
+  int Depth = 1;
+  while (Depth > 0 && !eof()) {
+    // Parse the formal parameter list.
+    if (FormatTok->is(OpenKind)) {
+      ++Depth;
+    } else if (FormatTok->is(CloseKind)) {
+      --Depth;
+    }
     nextToken();
   }
-  parseChildBlock();
 }
 
 bool UnwrappedLineParser::tryToParseBracedList() {
@@ -1035,10 +1072,19 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
   // FIXME: Once we have an expression parser in the UnwrappedLineParser,
   // replace this by using parseAssigmentExpression() inside.
   do {
-    if (Style.Language == FormatStyle::LK_JavaScript &&
-        FormatTok->is(Keywords.kw_function)) {
-      tryToParseJSFunction();
-      continue;
+    if (Style.Language == FormatStyle::LK_JavaScript) {
+      if (FormatTok->is(Keywords.kw_function)) {
+        tryToParseJSFunction();
+        continue;
+      } else if (FormatTok->is(TT_JsFatArrow)) {
+        nextToken();
+        // Fat arrows can be followed by simple expressions or by child blocks
+        // in curly braces.
+        if (FormatTok->is(tok::l_brace)){
+          parseChildBlock();
+          continue;
+        }
+      }
     }
     switch (FormatTok->Tok.getKind()) {
     case tok::caret:

@@ -650,15 +650,14 @@ private:
       static const tok::TokenKind JSShiftEqual[] = {tok::greater, tok::greater,
                                                     tok::greaterequal};
       static const tok::TokenKind JSRightArrow[] = {tok::equal, tok::greater};
-      // FIXME: We probably need to change token type to mimic operator with the
-      // correct priority.
-      if (tryMergeTokens(JSIdentity))
+      // FIXME: Investigate what token type gives the correct operator priority.
+      if (tryMergeTokens(JSIdentity, TT_BinaryOperator))
         return;
-      if (tryMergeTokens(JSNotIdentity))
+      if (tryMergeTokens(JSNotIdentity, TT_BinaryOperator))
         return;
-      if (tryMergeTokens(JSShiftEqual))
+      if (tryMergeTokens(JSShiftEqual, TT_BinaryOperator))
         return;
-      if (tryMergeTokens(JSRightArrow))
+      if (tryMergeTokens(JSRightArrow, TT_JsFatArrow))
         return;
     }
   }
@@ -689,7 +688,7 @@ private:
     return true;
   }
 
-  bool tryMergeTokens(ArrayRef<tok::TokenKind> Kinds) {
+  bool tryMergeTokens(ArrayRef<tok::TokenKind> Kinds, TokenType NewType) {
     if (Tokens.size() < Kinds.size())
       return false;
 
@@ -709,6 +708,7 @@ private:
     First[0]->TokenText = StringRef(First[0]->TokenText.data(),
                                     First[0]->TokenText.size() + AddLength);
     First[0]->ColumnWidth += AddLength;
+    First[0]->Type = NewType;
     return true;
   }
 
