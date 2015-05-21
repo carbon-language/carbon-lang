@@ -33,7 +33,7 @@ public:
   void EmitLabel(MCSymbol *Symbol) override;
   void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
   bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+  void EmitZerofill(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                     unsigned ByteAlignment) override;
   void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                         unsigned ByteAlignment) override;

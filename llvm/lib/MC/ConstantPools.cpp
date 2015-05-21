@@ -48,8 +48,7 @@ bool ConstantPool::empty() { return Entries.empty(); }
 //
 // AssemblerConstantPools implementation
 //
-ConstantPool *
-AssemblerConstantPools::getConstantPool(const MCSection *Section) {
+ConstantPool *AssemblerConstantPools::getConstantPool(MCSection *Section) {
   ConstantPoolMapTy::iterator CP = ConstantPools.find(Section);
   if (CP == ConstantPools.end())
     return nullptr;
@@ -58,11 +57,11 @@ AssemblerConstantPools::getConstantPool(const MCSection *Section) {
 }
 
 ConstantPool &
-AssemblerConstantPools::getOrCreateConstantPool(const MCSection *Section) {
+AssemblerConstantPools::getOrCreateConstantPool(MCSection *Section) {
   return ConstantPools[Section];
 }
 
-static void emitConstantPool(MCStreamer &Streamer, const MCSection *Section,
+static void emitConstantPool(MCStreamer &Streamer, MCSection *Section,
                              ConstantPool &CP) {
   if (!CP.empty()) {
     Streamer.SwitchSection(Section);
@@ -75,7 +74,7 @@ void AssemblerConstantPools::emitAll(MCStreamer &Streamer) {
   for (ConstantPoolMapTy::iterator CPI = ConstantPools.begin(),
                                    CPE = ConstantPools.end();
        CPI != CPE; ++CPI) {
-    const MCSection *Section = CPI->first;
+    MCSection *Section = CPI->first;
     ConstantPool &CP = CPI->second;
 
     emitConstantPool(Streamer, Section, CP);
@@ -83,7 +82,7 @@ void AssemblerConstantPools::emitAll(MCStreamer &Streamer) {
 }
 
 void AssemblerConstantPools::emitForCurrentSection(MCStreamer &Streamer) {
-  const MCSection *Section = Streamer.getCurrentSection().first;
+  MCSection *Section = Streamer.getCurrentSection().first;
   if (ConstantPool *CP = getConstantPool(Section)) {
     emitConstantPool(Streamer, Section, *CP);
   }
@@ -92,7 +91,7 @@ void AssemblerConstantPools::emitForCurrentSection(MCStreamer &Streamer) {
 const MCExpr *AssemblerConstantPools::addEntry(MCStreamer &Streamer,
                                                const MCExpr *Expr,
                                                unsigned Size) {
-  const MCSection *Section = Streamer.getCurrentSection().first;
+  MCSection *Section = Streamer.getCurrentSection().first;
   return getOrCreateConstantPool(Section).addEntry(Expr, Streamer.getContext(),
                                                    Size);
 }

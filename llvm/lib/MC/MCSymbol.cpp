@@ -14,8 +14,7 @@
 using namespace llvm;
 
 // Sentinel value for the absolute pseudo section.
-const MCSection *MCSymbol::AbsolutePseudoSection =
-  reinterpret_cast<const MCSection *>(1);
+MCSection *MCSymbol::AbsolutePseudoSection = reinterpret_cast<MCSection *>(1);
 
 static bool isAcceptableChar(char C) {
   if ((C < 'a' || C > 'z') &&

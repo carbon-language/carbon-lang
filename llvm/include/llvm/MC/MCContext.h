@@ -137,7 +137,7 @@ namespace llvm {
     unsigned GenDwarfFileNumber;
 
     /// Sections for generating the .debug_ranges and .debug_aranges sections.
-    SetVector<const MCSection *> SectionsForRanges;
+    SetVector<MCSection *> SectionsForRanges;
 
     /// The information gathered from labels that will have dwarf label
     /// entries when generating dwarf assembly source files.
@@ -197,9 +197,9 @@ namespace llvm {
       }
     };
 
-    StringMap<const MCSectionMachO *> MachOUniquingMap;
-    std::map<ELFSectionKey, const MCSectionELF *> ELFUniquingMap;
-    std::map<COFFSectionKey, const MCSectionCOFF *> COFFUniquingMap;
+    StringMap<MCSectionMachO *> MachOUniquingMap;
+    std::map<ELFSectionKey, MCSectionELF *> ELFUniquingMap;
+    std::map<COFFSectionKey, MCSectionCOFF *> COFFUniquingMap;
     StringMap<bool> ELFRelSecNames;
 
     /// Do automatic reset in destructor
@@ -291,90 +291,85 @@ namespace llvm {
 
     /// Return the MCSection for the specified mach-o section.  This requires
     /// the operands to be valid.
-    const MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
-                                          unsigned TypeAndAttributes,
-                                          unsigned Reserved2, SectionKind K,
-                                          const char *BeginSymName = nullptr);
+    MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
+                                    unsigned TypeAndAttributes,
+                                    unsigned Reserved2, SectionKind K,
+                                    const char *BeginSymName = nullptr);
 
-    const MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
-                                          unsigned TypeAndAttributes,
-                                          SectionKind K,
-                                          const char *BeginSymName = nullptr) {
+    MCSectionMachO *getMachOSection(StringRef Segment, StringRef Section,
+                                    unsigned TypeAndAttributes, SectionKind K,
+                                    const char *BeginSymName = nullptr) {
       return getMachOSection(Segment, Section, TypeAndAttributes, 0, K,
                              BeginSymName);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags) {
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags) {
       return getELFSection(Section, Type, Flags, nullptr);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags,
-                                      const char *BeginSymName) {
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, const char *BeginSymName) {
       return getELFSection(Section, Type, Flags, 0, "", BeginSymName);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags, unsigned EntrySize,
-                                      StringRef Group) {
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, unsigned EntrySize,
+                                StringRef Group) {
       return getELFSection(Section, Type, Flags, EntrySize, Group, nullptr);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags, unsigned EntrySize,
-                                      StringRef Group,
-                                      const char *BeginSymName) {
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, unsigned EntrySize,
+                                StringRef Group, const char *BeginSymName) {
       return getELFSection(Section, Type, Flags, EntrySize, Group, ~0,
                            BeginSymName);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags, unsigned EntrySize,
-                                      StringRef Group, unsigned UniqueID) {
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, unsigned EntrySize,
+                                StringRef Group, unsigned UniqueID) {
       return getELFSection(Section, Type, Flags, EntrySize, Group, UniqueID,
                            nullptr);
     }
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
-                                      unsigned Flags, unsigned EntrySize,
-                                      StringRef Group, unsigned UniqueID,
-                                      const char *BeginSymName);
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, unsigned EntrySize,
+                                StringRef Group, unsigned UniqueID,
+                                const char *BeginSymName);
 
-    const MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+    MCSectionELF *getELFSection(StringRef Section, unsigned Type,
+                                unsigned Flags, unsigned EntrySize,
+                                const MCSymbol *Group, unsigned UniqueID,
+                                const char *BeginSymName,
+                                const MCSectionELF *Associated);
+
+    MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
-                                      const MCSymbol *Group, unsigned UniqueID,
-                                      const char *BeginSymName,
+                                      const MCSymbol *Group,
                                       const MCSectionELF *Associated);
 
-    const MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
-                                            unsigned Flags, unsigned EntrySize,
-                                            const MCSymbol *Group,
-                                            const MCSectionELF *Associated);
+    void renameELFSection(MCSectionELF *Section, StringRef Name);
 
-    void renameELFSection(const MCSectionELF *Section, StringRef Name);
+    MCSectionELF *createELFGroupSection(const MCSymbol *Group);
 
-    const MCSectionELF *createELFGroupSection(const MCSymbol *Group);
+    MCSectionCOFF *getCOFFSection(StringRef Section, unsigned Characteristics,
+                                  SectionKind Kind, StringRef COMDATSymName,
+                                  int Selection,
+                                  const char *BeginSymName = nullptr);
 
-    const MCSectionCOFF *getCOFFSection(StringRef Section,
-                                        unsigned Characteristics,
-                                        SectionKind Kind,
-                                        StringRef COMDATSymName, int Selection,
-                                        const char *BeginSymName = nullptr);
+    MCSectionCOFF *getCOFFSection(StringRef Section, unsigned Characteristics,
+                                  SectionKind Kind,
+                                  const char *BeginSymName = nullptr);
 
-    const MCSectionCOFF *getCOFFSection(StringRef Section,
-                                        unsigned Characteristics,
-                                        SectionKind Kind,
-                                        const char *BeginSymName = nullptr);
-
-    const MCSectionCOFF *getCOFFSection(StringRef Section);
+    MCSectionCOFF *getCOFFSection(StringRef Section);
 
     /// Gets or creates a section equivalent to Sec that is associated with the
     /// section containing KeySym. For example, to create a debug info section
     /// associated with an inline function, pass the normal debug info section
     /// as Sec and the function symbol as KeySym.
-    const MCSectionCOFF *getAssociativeCOFFSection(const MCSectionCOFF *Sec,
-                                                   const MCSymbol *KeySym);
+    MCSectionCOFF *getAssociativeCOFFSection(MCSectionCOFF *Sec,
+                                             const MCSymbol *KeySym);
 
     /// @}
 
@@ -467,10 +462,10 @@ namespace llvm {
     void setGenDwarfFileNumber(unsigned FileNumber) {
       GenDwarfFileNumber = FileNumber;
     }
-    const SetVector<const MCSection *> &getGenDwarfSectionSyms() {
+    const SetVector<MCSection *> &getGenDwarfSectionSyms() {
       return SectionsForRanges;
     }
-    bool addGenDwarfSection(const MCSection *Sec) {
+    bool addGenDwarfSection(MCSection *Sec) {
       return SectionsForRanges.insert(Sec);
     }
 

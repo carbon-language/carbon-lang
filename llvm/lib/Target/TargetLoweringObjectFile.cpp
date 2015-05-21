@@ -255,12 +255,13 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
   llvm_unreachable("Invalid relocation");
 }
 
-/// SectionForGlobal - This method computes the appropriate section to emit
-/// the specified global variable or function definition.  This should not
-/// be passed external (or available externally) globals.
-const MCSection *TargetLoweringObjectFile::
-SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
-                 const TargetMachine &TM) const {
+/// This method computes the appropriate section to emit the specified global
+/// variable or function definition.  This should not be passed external (or
+/// available externally) globals.
+MCSection *
+TargetLoweringObjectFile::SectionForGlobal(const GlobalValue *GV,
+                                           SectionKind Kind, Mangler &Mang,
+                                           const TargetMachine &TM) const {
   // Select section name.
   if (GV->hasSection())
     return getExplicitSectionGlobal(GV, Kind, Mang, TM);
@@ -270,7 +271,7 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
-const MCSection *TargetLoweringObjectFile::getSectionForJumpTable(
+MCSection *TargetLoweringObjectFile::getSectionForJumpTable(
     const Function &F, Mangler &Mang, const TargetMachine &TM) const {
   return getSectionForConstant(SectionKind::getReadOnly(), /*C=*/nullptr);
 }
@@ -293,10 +294,9 @@ bool TargetLoweringObjectFile::shouldPutJumpTableInFunctionSection(
   return false;
 }
 
-/// getSectionForConstant - Given a mergable constant with the
-/// specified size and relocation information, return a section that it
-/// should be placed in.
-const MCSection *
+/// Given a mergable constant with the specified size and relocation
+/// information, return a section that it should be placed in.
+MCSection *
 TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind,
                                                 const Constant *C) const {
   if (Kind.isReadOnly() && ReadOnlySection != nullptr)

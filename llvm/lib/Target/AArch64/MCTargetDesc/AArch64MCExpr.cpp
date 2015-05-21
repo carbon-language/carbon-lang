@@ -86,7 +86,7 @@ void AArch64MCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }
 
-const MCSection *AArch64MCExpr::FindAssociatedSection() const {
+MCSection *AArch64MCExpr::FindAssociatedSection() const {
   llvm_unreachable("FIXME: what goes here?");
 }
 

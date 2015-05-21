@@ -768,7 +768,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
   }
 }
 
-const MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
+MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
   return Ctx->getELFSection(".debug_types", ELF::SHT_PROGBITS, ELF::SHF_GROUP,
                             0, utostr(Hash));
 }

@@ -557,16 +557,13 @@ public:
 
 private:
   FragmentListType Fragments;
-  const MCSection *Section;
+  MCSection *Section;
 
   /// Ordinal - The section index in the assemblers section list.
   unsigned Ordinal;
 
   /// LayoutOrder - The index of this section in the layout order.
   unsigned LayoutOrder;
-
-  /// Alignment - The maximum alignment seen in this section.
-  unsigned Alignment;
 
   /// \brief Keeping track of bundle-locked state.
   BundleLockStateType BundleLockState;
@@ -596,12 +593,12 @@ private:
 public:
   // Only for use as sentinel.
   MCSectionData();
-  MCSectionData(const MCSection &Section, MCAssembler *A = nullptr);
+  MCSectionData(MCSection &Section, MCAssembler *A = nullptr);
 
-  const MCSection &getSection() const { return *Section; }
+  MCSection &getSection() const { return *Section; }
 
-  unsigned getAlignment() const { return Alignment; }
-  void setAlignment(unsigned Value) { Alignment = Value; }
+  unsigned getAlignment() const;
+  void setAlignment(unsigned Value);
 
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
@@ -1021,7 +1018,7 @@ public:
     return *Entry;
   }
 
-  MCSectionData &getOrCreateSectionData(const MCSection &Section,
+  MCSectionData &getOrCreateSectionData(MCSection &Section,
                                         bool *Created = nullptr) {
     MCSectionData *&Entry = SectionMap[&Section];
 

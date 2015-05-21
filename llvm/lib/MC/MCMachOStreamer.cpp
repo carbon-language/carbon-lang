@@ -68,7 +68,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  void ChangeSection(const MCSection *Sect, const MCExpr *Subsect) override;
+  void ChangeSection(MCSection *Sect, const MCExpr *Subsect) override;
   void EmitLabel(MCSymbol *Symbol) override;
   void EmitEHSymAttributes(const MCSymbol *Symbol, MCSymbol *EHSymbol) override;
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
@@ -98,9 +98,9 @@ public:
   }
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
+  void EmitZerofill(MCSection *Section, MCSymbol *Symbol = nullptr,
                     uint64_t Size = 0, unsigned ByteAlignment = 0) override;
-  void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+  void EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                       unsigned ByteAlignment = 0) override;
 
   void EmitFileDirective(StringRef Filename) override {
@@ -149,7 +149,7 @@ static bool canGoAfterDWARF(const MCSectionMachO &MSec) {
   return false;
 }
 
-void MCMachOStreamer::ChangeSection(const MCSection *Section,
+void MCMachOStreamer::ChangeSection(MCSection *Section,
                                     const MCExpr *Subsection) {
   // Change the section normally.
   bool Created = MCObjectStreamer::changeSectionImpl(Section, Subsection);
@@ -401,7 +401,7 @@ void MCMachOStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                       Symbol, Size, ByteAlignment);
 }
 
-void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
+void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
                                    uint64_t Size, unsigned ByteAlignment) {
   MCSectionData &SectData = getAssembler().getOrCreateSectionData(*Section);
 
@@ -432,7 +432,7 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 
 // This should always be called with the thread local bss section.  Like the
 // .zerofill directive this doesn't actually switch sections on us.
-void MCMachOStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+void MCMachOStreamer::EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
                                      uint64_t Size, unsigned ByteAlignment) {
   EmitZerofill(Section, Symbol, Size, ByteAlignment);
   return;

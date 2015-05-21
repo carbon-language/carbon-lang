@@ -116,7 +116,7 @@ public:
   /// currently defined as the absolute section for constants, or
   /// otherwise the section associated with the first defined symbol in the
   /// expression.
-  const MCSection *FindAssociatedSection() const;
+  MCSection *FindAssociatedSection() const;
 
   /// @}
 };
@@ -558,7 +558,7 @@ public:
                                          const MCAsmLayout *Layout,
                                          const MCFixup *Fixup) const = 0;
   virtual void visitUsedExpr(MCStreamer& Streamer) const = 0;
-  virtual const MCSection *FindAssociatedSection() const = 0;
+  virtual MCSection *FindAssociatedSection() const = 0;
 
   virtual void fixELFSymbolsInTLSFixups(MCAssembler &) const = 0;
 

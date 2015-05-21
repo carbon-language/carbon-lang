@@ -755,7 +755,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
   llvm_unreachable("Invalid assembly expression kind!");
 }
 
-const MCSection *MCExpr::FindAssociatedSection() const {
+MCSection *MCExpr::FindAssociatedSection() const {
   switch (getKind()) {
   case Target:
     // We never look through target specific expressions.
@@ -779,8 +779,8 @@ const MCSection *MCExpr::FindAssociatedSection() const {
 
   case Binary: {
     const MCBinaryExpr *BE = cast<MCBinaryExpr>(this);
-    const MCSection *LHS_S = BE->getLHS()->FindAssociatedSection();
-    const MCSection *RHS_S = BE->getRHS()->FindAssociatedSection();
+    MCSection *LHS_S = BE->getLHS()->FindAssociatedSection();
+    MCSection *RHS_S = BE->getRHS()->FindAssociatedSection();
 
     // If either section is absolute, return the other.
     if (LHS_S == MCSymbol::AbsolutePseudoSection)

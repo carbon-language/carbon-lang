@@ -632,7 +632,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   if (getContext().getGenDwarfForAssembly()) {
     MCSymbol *SectionStartSym = getContext().createTempSymbol();
     getStreamer().EmitLabel(SectionStartSym);
-    const MCSection *Sec = getStreamer().getCurrentSection().first;
+    MCSection *Sec = getStreamer().getCurrentSection().first;
     bool InsertResult = getContext().addGenDwarfSection(Sec);
     assert(InsertResult && ".text section should not have debug info yet");
     (void)InsertResult;

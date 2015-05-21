@@ -388,7 +388,7 @@ public:
   /// Targets can implement this method to specify a section to switch to if the
   /// translation unit doesn't have any trampolines that require an executable
   /// stack.
-  virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const {
+  virtual MCSection *getNonexecutableStackSection(MCContext &Ctx) const {
     return nullptr;
   }
 

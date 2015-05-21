@@ -405,8 +405,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
     // Handle local BSS symbols.
     if (MAI->hasMachoZeroFillDirective()) {
-      const MCSection *TheSection =
-        getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
+      MCSection *TheSection =
+          getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
       // .zerofill __DATA, __bss, _foo, 400, 5
       OutStreamer->EmitZerofill(TheSection, GVSym, Size, Align);
       return;
@@ -434,8 +434,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     return;
   }
 
-  const MCSection *TheSection =
-    getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
+  MCSection *TheSection =
+      getObjFileLowering().SectionForGlobal(GV, GVKind, *Mang, TM);
 
   // Handle the zerofill directive on darwin, which is a special form of BSS
   // emission.
@@ -479,8 +479,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     OutStreamer->AddBlankLine();
 
     // Emit the variable struct for the runtime.
-    const MCSection *TLVSect
-      = getObjFileLowering().getTLSExtraDataSection();
+    MCSection *TLVSect = getObjFileLowering().getTLSExtraDataSection();
 
     OutStreamer->SwitchSection(TLVSect);
     // Emit the linkage here.
@@ -1122,7 +1121,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   // Emit __morestack address if needed for indirect calls.
   if (MMI->usesMorestackAddr()) {
-    const MCSection *ReadOnlySection =
+    MCSection *ReadOnlySection =
         getObjFileLowering().getSectionForConstant(SectionKind::getReadOnly(),
                                                    /*C=*/nullptr);
     OutStreamer->SwitchSection(ReadOnlySection);
@@ -1140,7 +1139,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   // to be executable. Some targets have a directive to declare this.
   Function *InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
   if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
-    if (const MCSection *S = MAI->getNonexecutableStackSection(OutContext))
+    if (MCSection *S = MAI->getNonexecutableStackSection(OutContext))
       OutStreamer->SwitchSection(S);
 
   // Allow the target to emit any magic that it wants at the end of the file,
@@ -1182,12 +1181,12 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 }
 
 namespace {
-  // SectionCPs - Keep track the alignment, constpool entries per Section.
+// Keep track the alignment, constpool entries per Section.
   struct SectionCPs {
-    const MCSection *S;
+    MCSection *S;
     unsigned Alignment;
     SmallVector<unsigned, 4> CPEs;
-    SectionCPs(const MCSection *s, unsigned a) : S(s), Alignment(a) {}
+    SectionCPs(MCSection *s, unsigned a) : S(s), Alignment(a) {}
   };
 }
 
@@ -1215,7 +1214,7 @@ void AsmPrinter::EmitConstantPool() {
     if (!CPE.isMachineConstantPoolEntry())
       C = CPE.Val.ConstVal;
 
-    const MCSection *S = getObjFileLowering().getSectionForConstant(Kind, C);
+    MCSection *S = getObjFileLowering().getSectionForConstant(Kind, C);
 
     // The number of sections are small, just do a linear search from the
     // last section to the first.
@@ -1294,8 +1293,7 @@ void AsmPrinter::EmitJumpTableInfo() {
       *F);
   if (JTInDiffSection) {
     // Drop it in the readonly section.
-    const MCSection *ReadOnlySection =
-        TLOF.getSectionForJumpTable(*F, *Mang, TM);
+    MCSection *ReadOnlySection = TLOF.getSectionForJumpTable(*F, *Mang, TM);
     OutStreamer->SwitchSection(ReadOnlySection);
   }
 
@@ -1539,7 +1537,7 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
 
       KeySym = getSymbol(GV);
     }
-    const MCSection *OutputSection =
+    MCSection *OutputSection =
         (isCtor ? Obj.getStaticCtorSection(S.Priority, KeySym)
                 : Obj.getStaticDtorSection(S.Priority, KeySym));
     OutStreamer->SwitchSection(OutputSection);

@@ -24,7 +24,7 @@ unsigned AddressPool::getIndex(const MCSymbol *Sym, bool TLS) {
 }
 
 // Emit addresses into the section given.
-void AddressPool::emit(AsmPrinter &Asm, const MCSection *AddrSection) {
+void AddressPool::emit(AsmPrinter &Asm, MCSection *AddrSection) {
   if (Pool.empty())
     return;
 

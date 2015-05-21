@@ -115,7 +115,7 @@ protected:
   DIEInteger *DIEIntegerOne;
 
   /// The section this unit will be emitted in.
-  const MCSection *Section;
+  MCSection *Section;
 
   DwarfUnit(unsigned UID, dwarf::Tag, const DICompileUnit *CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
@@ -132,9 +132,9 @@ protected:
 public:
   virtual ~DwarfUnit();
 
-  void initSection(const MCSection *Section);
+  void initSection(MCSection *Section);
 
-  const MCSection *getSection() const {
+  MCSection *getSection() const {
     assert(Section);
     return Section;
   }

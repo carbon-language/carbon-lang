@@ -527,8 +527,8 @@ EndStmt:
       }
   }
 
-  const MCSection *ELFSection = getContext().getELFSection(
-      SectionName, Type, Flags, Size, GroupName, UniqueID);
+  MCSection *ELFSection = getContext().getELFSection(SectionName, Type, Flags,
+                                                     Size, GroupName, UniqueID);
   getStreamer().SwitchSection(ELFSection, Subsection);
 
   if (getContext().getGenDwarfForAssembly()) {
@@ -677,7 +677,7 @@ bool ELFAsmParser::ParseDirectiveVersion(StringRef, SMLoc) {
 
   Lex();
 
-  const MCSection *Note = getContext().getELFSection(".note", ELF::SHT_NOTE, 0);
+  MCSection *Note = getContext().getELFSection(".note", ELF::SHT_NOTE, 0);
 
   getStreamer().PushSection();
   getStreamer().SwitchSection(Note);

@@ -96,8 +96,7 @@ public:
 
   ~AArch64ELFStreamer() override {}
 
-  void ChangeSection(const MCSection *Section,
-                     const MCExpr *Subsection) override {
+  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.

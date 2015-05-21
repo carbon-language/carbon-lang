@@ -50,7 +50,7 @@ void DwarfFile::addUnit(std::unique_ptr<DwarfUnit> U) {
 void DwarfFile::emitUnits(bool UseOffsets) {
   for (const auto &TheU : CUs) {
     DIE &Die = TheU->getUnitDie();
-    const MCSection *USection = TheU->getSection();
+    MCSection *USection = TheU->getSection();
     Asm->OutStreamer->SwitchSection(USection);
 
     TheU->emitHeader(UseOffsets);
@@ -120,7 +120,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
   return Offset;
 }
 
-void DwarfFile::emitAbbrevs(const MCSection *Section) {
+void DwarfFile::emitAbbrevs(MCSection *Section) {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
@@ -130,8 +130,7 @@ void DwarfFile::emitAbbrevs(const MCSection *Section) {
 }
 
 // Emit strings into a string section.
-void DwarfFile::emitStrings(const MCSection *StrSection,
-                            const MCSection *OffsetSection) {
+void DwarfFile::emitStrings(MCSection *StrSection, MCSection *OffsetSection) {
   StrPool.emit(*Asm, StrSection, OffsetSection);
 }
 

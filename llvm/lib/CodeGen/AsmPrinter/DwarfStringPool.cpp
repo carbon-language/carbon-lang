@@ -32,8 +32,8 @@ unsigned DwarfStringPool::getIndex(AsmPrinter &Asm, StringRef Str) {
   return getEntry(Asm, Pool, Prefix, Str).second;
 }
 
-void DwarfStringPool::emit(AsmPrinter &Asm, const MCSection *StrSection,
-                           const MCSection *OffsetSection) {
+void DwarfStringPool::emit(AsmPrinter &Asm, MCSection *StrSection,
+                           MCSection *OffsetSection) {
   if (Pool.empty())
     return;
 

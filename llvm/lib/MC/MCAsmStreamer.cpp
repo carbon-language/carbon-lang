@@ -114,8 +114,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  void ChangeSection(const MCSection *Section,
-                     const MCExpr *Subsection) override;
+  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override;
 
   void EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) override;
   void EmitLabel(MCSymbol *Symbol) override;
@@ -150,11 +149,11 @@ public:
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
 
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
+  void EmitZerofill(MCSection *Section, MCSymbol *Symbol = nullptr,
                     uint64_t Size = 0, unsigned ByteAlignment = 0) override;
 
-  void EmitTBSSSymbol (const MCSection *Section, MCSymbol *Symbol,
-                       uint64_t Size, unsigned ByteAlignment = 0) override;
+  void EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+                      unsigned ByteAlignment = 0) override;
 
   void EmitBytes(StringRef Data) override;
 
@@ -297,7 +296,7 @@ void MCAsmStreamer::emitRawComment(const Twine &T, bool TabPrefix) {
   EmitEOL();
 }
 
-void MCAsmStreamer::ChangeSection(const MCSection *Section,
+void MCAsmStreamer::ChangeSection(MCSection *Section,
                                   const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
   Section->PrintSwitchToSection(*MAI, OS, Subsection);
@@ -542,7 +541,7 @@ void MCAsmStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
+void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
                                  uint64_t Size, unsigned ByteAlignment) {
   if (Symbol)
     AssignSection(Symbol, Section);
@@ -565,7 +564,7 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
 // .tbss sym, size, align
 // This depends that the symbol has already been mangled from the original,
 // e.g. _a.
-void MCAsmStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+void MCAsmStreamer::EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
                                    uint64_t Size, unsigned ByteAlignment) {
   AssignSection(Symbol, Section);
 
@@ -1102,7 +1101,7 @@ void MCAsmStreamer::EmitWinEHHandlerData() {
   // We only do this so the section switch that terminates the handler
   // data block is visible.
   WinEH::FrameInfo *CurFrame = getCurrentWinFrameInfo();
-  if (const MCSection *XData = WinEH::UnwindEmitter::getXDataSection(
+  if (MCSection *XData = WinEH::UnwindEmitter::getXDataSection(
           CurFrame->Function, getContext()))
     SwitchSectionNoChange(XData);
 

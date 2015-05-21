@@ -150,17 +150,16 @@ class MCSymbol {
   // Special sentinal value for the absolute pseudo section.
   //
   // FIXME: Use a PointerInt wrapper for this?
-  static const MCSection *AbsolutePseudoSection;
+  static MCSection *AbsolutePseudoSection;
 
   /// Name - The name of the symbol.  The referred-to string data is actually
   /// held by the StringMap that lives in MCContext.
   StringRef Name;
 
-  /// Section - The section the symbol is defined in. This is null for
-  /// undefined symbols, and the special AbsolutePseudoSection value for
-  /// absolute symbols. If this is a variable symbol, this caches the
-  /// variable value's section.
-  mutable const MCSection *Section;
+  /// The section the symbol is defined in. This is null for undefined symbols,
+  /// and the special AbsolutePseudoSection value for absolute symbols. If this
+  /// is a variable symbol, this caches the variable value's section.
+  mutable MCSection *Section;
 
   /// Value - If non-null, the value for a variable symbol.
   const MCExpr *Value;
@@ -188,7 +187,7 @@ private: // MCContext creates and uniques these.
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
-  const MCSection *getSectionPtr() const {
+  MCSection *getSectionPtr() const {
     if (Section || !Value)
       return Section;
     return Section = Value->FindAssociatedSection();
@@ -255,15 +254,14 @@ public:
   /// isAbsolute - Check if this is an absolute symbol.
   bool isAbsolute() const { return getSectionPtr() == AbsolutePseudoSection; }
 
-  /// getSection - Get the section associated with a defined, non-absolute
-  /// symbol.
-  const MCSection &getSection() const {
+  /// Get the section associated with a defined, non-absolute symbol.
+  MCSection &getSection() const {
     assert(isInSection() && "Invalid accessor!");
     return *getSectionPtr();
   }
 
-  /// setSection - Mark the symbol as defined in the section \p S.
-  void setSection(const MCSection &S) {
+  /// Mark the symbol as defined in the section \p S.
+  void setSection(MCSection &S) {
     assert(!isVariable() && "Cannot set section of variable");
     Section = &S;
   }

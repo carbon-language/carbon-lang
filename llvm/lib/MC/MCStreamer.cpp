@@ -188,7 +188,7 @@ void MCStreamer::InitSections(bool NoExecStack) {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 
-void MCStreamer::AssignSection(MCSymbol *Symbol, const MCSection *Section) {
+void MCStreamer::AssignSection(MCSymbol *Symbol, MCSection *Section) {
   if (Section)
     Symbol->setSection(*Section);
   else
@@ -640,9 +640,9 @@ void MCStreamer::EmitCOFFSymbolType(int Type) {}
 void MCStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
 void MCStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                        unsigned ByteAlignment) {}
-void MCStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+void MCStreamer::EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
                                 uint64_t Size, unsigned ByteAlignment) {}
-void MCStreamer::ChangeSection(const MCSection *, const MCExpr *) {}
+void MCStreamer::ChangeSection(MCSection *, const MCExpr *) {}
 void MCStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
 void MCStreamer::EmitBytes(StringRef Data) {}
 void MCStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
@@ -664,8 +664,7 @@ void MCStreamer::EmitBundleLock(bool AlignToEnd) {}
 void MCStreamer::FinishImpl() {}
 void MCStreamer::EmitBundleUnlock() {}
 
-void MCStreamer::SwitchSection(const MCSection *Section,
-                               const MCExpr *Subsection) {
+void MCStreamer::SwitchSection(MCSection *Section, const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
   MCSectionSubPair curSection = SectionStack.back().first;
   SectionStack.back().second = curSection;
@@ -679,7 +678,7 @@ void MCStreamer::SwitchSection(const MCSection *Section,
   }
 }
 
-MCSymbol *MCStreamer::endSection(const MCSection *Section) {
+MCSymbol *MCStreamer::endSection(MCSection *Section) {
   // TODO: keep track of the last subsection so that this symbol appears in the
   // correct place.
   MCSymbol *Sym = Section->getEndSymbol(Context);

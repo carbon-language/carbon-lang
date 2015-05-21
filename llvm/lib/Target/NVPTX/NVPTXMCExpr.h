@@ -68,9 +68,7 @@ public:
     return false;
   }
   void visitUsedExpr(MCStreamer &Streamer) const override {};
-  const MCSection *FindAssociatedSection() const override {
-    return nullptr;
-  }
+  MCSection *FindAssociatedSection() const override { return nullptr; }
 
   // There are no TLS NVPTXMCExprs at the moment.
   void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const override {}
@@ -112,9 +110,7 @@ public:
     return false;
   }
   void visitUsedExpr(MCStreamer &Streamer) const override {};
-  const MCSection *FindAssociatedSection() const override {
-    return nullptr;
-  }
+  MCSection *FindAssociatedSection() const override { return nullptr; }
 
   // There are no TLS NVPTXMCExprs at the moment.
   void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const override {}

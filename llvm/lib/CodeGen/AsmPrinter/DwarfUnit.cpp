@@ -1513,7 +1513,7 @@ void DwarfUnit::emitHeader(bool UseOffsets) {
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
 
-void DwarfUnit::initSection(const MCSection *Section) {
+void DwarfUnit::initSection(MCSection *Section) {
   assert(!this->Section);
   this->Section = Section;
 }

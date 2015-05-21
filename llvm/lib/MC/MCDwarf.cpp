@@ -64,7 +64,7 @@ static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
 // and if there is information from the last .loc directive that has yet to have
 // a line entry made for it is made.
 //
-void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
+void MCLineEntry::Make(MCObjectStreamer *MCOS, MCSection *Section) {
   if (!MCOS->getContext().getDwarfLocSeen())
     return;
 
@@ -115,7 +115,7 @@ static inline const MCExpr *MakeStartMinusEndExpr(const MCStreamer &MCOS,
 // in the LineSection.
 //
 static inline void
-EmitDwarfLineTable(MCObjectStreamer *MCOS, const MCSection *Section,
+EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
                    const MCLineSection::MCLineEntryCollection &LineEntries) {
   unsigned FileNum = 1;
   unsigned LastLine = 1;
@@ -610,8 +610,8 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
 
   // Now emit the table of pairs of PointerSize'ed values for the section
   // addresses and sizes.
-  for (const MCSection *Sec : Sections) {
-    MCSymbol *StartSymbol = Sec->getBeginSymbol();
+  for (MCSection *Sec : Sections) {
+    const MCSymbol *StartSymbol = Sec->getBeginSymbol();
     MCSymbol *EndSymbol = Sec->getEndSymbol(context);
     assert(StartSymbol && "StartSymbol must not be NULL");
     assert(EndSymbol && "EndSymbol must not be NULL");
@@ -805,8 +805,8 @@ static void EmitGenDwarfRanges(MCStreamer *MCOS) {
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfRangesSection());
 
-  for (const MCSection *Sec : Sections) {
-    MCSymbol *StartSymbol = Sec->getBeginSymbol();
+  for (MCSection *Sec : Sections) {
+    const MCSymbol *StartSymbol = Sec->getBeginSymbol();
     MCSymbol *EndSymbol = Sec->getEndSymbol(context);
     assert(StartSymbol && "StartSymbol must not be NULL");
     assert(EndSymbol && "EndSymbol must not be NULL");
@@ -1520,9 +1520,9 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
 
   if (!NeedsEHFrameSection) return;
 
-  const MCSection &Section =
-    IsEH ? *const_cast<MCObjectFileInfo*>(MOFI)->getEHFrameSection() :
-           *MOFI->getDwarfFrameSection();
+  MCSection &Section =
+      IsEH ? *const_cast<MCObjectFileInfo *>(MOFI)->getEHFrameSection()
+           : *MOFI->getDwarfFrameSection();
 
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.createTempSymbol();

@@ -25,9 +25,10 @@ namespace WinEH {
 /// associated with that comdat. If the code described is not in the main .text
 /// section, make a new section for it. Otherwise use the main unwind info
 /// section.
-static const MCSection *getUnwindInfoSection(
-    StringRef SecName, const MCSectionCOFF *UnwindSec, const MCSymbol *Function,
-    MCContext &Context) {
+static MCSection *getUnwindInfoSection(StringRef SecName,
+                                       MCSectionCOFF *UnwindSec,
+                                       const MCSymbol *Function,
+                                       MCContext &Context) {
   if (Function && Function->isInSection()) {
     // If Function is in a COMDAT, get or create an unwind info section in that
     // COMDAT group.
@@ -59,16 +60,16 @@ static const MCSection *getUnwindInfoSection(
 
 }
 
-const MCSection *UnwindEmitter::getPDataSection(const MCSymbol *Function,
-                                                MCContext &Context) {
-  const MCSectionCOFF *PData =
+MCSection *UnwindEmitter::getPDataSection(const MCSymbol *Function,
+                                          MCContext &Context) {
+  MCSectionCOFF *PData =
       cast<MCSectionCOFF>(Context.getObjectFileInfo()->getPDataSection());
   return getUnwindInfoSection(".pdata", PData, Function, Context);
 }
 
-const MCSection *UnwindEmitter::getXDataSection(const MCSymbol *Function,
-                                                MCContext &Context) {
-  const MCSectionCOFF *XData =
+MCSection *UnwindEmitter::getXDataSection(const MCSymbol *Function,
+                                          MCContext &Context) {
+  MCSectionCOFF *XData =
       cast<MCSectionCOFF>(Context.getObjectFileInfo()->getXDataSection());
   return getUnwindInfoSection(".xdata", XData, Function, Context);
 }

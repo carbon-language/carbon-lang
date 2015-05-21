@@ -62,8 +62,8 @@ public:
                                  const MCFixup *Fixup) const override {
     return false;
   }
-  void visitUsedExpr(MCStreamer &Streamer) const override; 
-  const MCSection *FindAssociatedSection() const override {
+  void visitUsedExpr(MCStreamer &Streamer) const override;
+  MCSection *FindAssociatedSection() const override {
     return getSubExpr()->FindAssociatedSection();
   }
 

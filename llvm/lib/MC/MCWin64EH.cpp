@@ -224,16 +224,14 @@ void UnwindEmitter::Emit(MCStreamer &Streamer) const {
 
   // Emit the unwind info structs first.
   for (const auto &CFI : Streamer.getWinFrameInfos()) {
-    const MCSection *XData =
-        getXDataSection(CFI->Function, Context);
+    MCSection *XData = getXDataSection(CFI->Function, Context);
     Streamer.SwitchSection(XData);
     EmitUnwindInfo(Streamer, CFI);
   }
 
   // Now emit RUNTIME_FUNCTION entries.
   for (const auto &CFI : Streamer.getWinFrameInfos()) {
-    const MCSection *PData =
-        getPDataSection(CFI->Function, Context);
+    MCSection *PData = getPDataSection(CFI->Function, Context);
     Streamer.SwitchSection(PData);
     EmitRuntimeFunction(Streamer, CFI);
   }
@@ -244,8 +242,7 @@ void UnwindEmitter::EmitUnwindInfo(MCStreamer &Streamer,
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = Streamer.getContext();
-  const MCSection *xdataSect =
-    getXDataSection(info->Function, context);
+  MCSection *xdataSect = getXDataSection(info->Function, context);
   Streamer.SwitchSection(xdataSect);
 
   llvm::EmitUnwindInfo(Streamer, info);

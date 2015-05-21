@@ -143,7 +143,7 @@ public:
   // This is called when an instruction is assembled into the specified
   // section and if there is information from the last .loc directive that
   // has yet to have a line entry made for it is made.
-  static void Make(MCObjectStreamer *MCOS, const MCSection *Section);
+  static void Make(MCObjectStreamer *MCOS, MCSection *Section);
 };
 
 /// \brief Instances of this class represent the line information for a compile
@@ -153,14 +153,14 @@ public:
 class MCLineSection {
 public:
   // \brief Add an entry to this MCLineSection's line entries.
-  void addLineEntry(const MCLineEntry &LineEntry, const MCSection *Sec) {
+  void addLineEntry(const MCLineEntry &LineEntry, MCSection *Sec) {
     MCLineDivisions[Sec].push_back(LineEntry);
   }
 
   typedef std::vector<MCLineEntry> MCLineEntryCollection;
   typedef MCLineEntryCollection::iterator iterator;
   typedef MCLineEntryCollection::const_iterator const_iterator;
-  typedef MapVector<const MCSection *, MCLineEntryCollection> MCLineDivisionMap;
+  typedef MapVector<MCSection *, MCLineEntryCollection> MCLineDivisionMap;
 
 private:
   // A collection of MCLineEntry for each section.

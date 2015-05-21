@@ -107,7 +107,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
   MCContext &Context = getObjFileLowering().getContext();
-  const MCSectionELF *ConfigSection =
+  MCSectionELF *ConfigSection =
       Context.getELFSection(".AMDGPU.config", ELF::SHT_PROGBITS, 0);
   OutStreamer->SwitchSection(ConfigSection);
 
@@ -131,7 +131,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitFunctionBody();
 
   if (isVerbose()) {
-    const MCSectionELF *CommentSection =
+    MCSectionELF *CommentSection =
         Context.getELFSection(".AMDGPU.csdata", ELF::SHT_PROGBITS, 0);
     OutStreamer->SwitchSection(CommentSection);
 
@@ -509,7 +509,7 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
 
   header.wavefront_size = STM.getWavefrontSize();
 
-  const MCSectionELF *VersionSection =
+  MCSectionELF *VersionSection =
       OutContext.getELFSection(".hsa.version", ELF::SHT_PROGBITS, 0);
   OutStreamer->SwitchSection(VersionSection);
   OutStreamer->EmitBytes(Twine("HSA Code Unit:" +

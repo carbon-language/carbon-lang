@@ -48,8 +48,7 @@ public:
   /// @{
 
   void InitSections(bool NoExecStack) override;
-  void ChangeSection(const MCSection *Section,
-                     const MCExpr *Subsection) override;
+  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override;
   void EmitLabel(MCSymbol *Symbol) override;
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitThumbFunc(MCSymbol *Func) override;
@@ -68,10 +67,10 @@ public:
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
 
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
+  void EmitZerofill(MCSection *Section, MCSymbol *Symbol = nullptr,
                     uint64_t Size = 0, unsigned ByteAlignment = 0) override;
-  void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                      uint64_t Size, unsigned ByteAlignment = 0) override;
+  void EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+                      unsigned ByteAlignment = 0) override;
   void EmitValueImpl(const MCExpr *Value, unsigned Size,
                      const SMLoc &Loc = SMLoc()) override;
 

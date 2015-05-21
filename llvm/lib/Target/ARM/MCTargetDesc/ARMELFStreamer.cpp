@@ -275,7 +275,7 @@ private:
   unsigned EmittedArch;
   SmallVector<AttributeItem, 64> Contents;
 
-  const MCSection *AttributeSection;
+  MCSection *AttributeSection;
 
   AttributeItem *getAttributeItem(unsigned Attribute) {
     for (size_t i = 0; i < Contents.size(); ++i)
@@ -431,8 +431,7 @@ public:
   void emitRegSave(const SmallVectorImpl<unsigned> &RegList, bool isVector);
   void emitUnwindRaw(int64_t Offset, const SmallVectorImpl<uint8_t> &Opcodes);
 
-  void ChangeSection(const MCSection *Section,
-                     const MCExpr *Subsection) override {
+  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.
@@ -1028,7 +1027,7 @@ inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
   const MCSymbol *Group = FnSection.getGroup();
   if (Group)
     Flags |= ELF::SHF_GROUP;
-  const MCSectionELF *EHSection =
+  MCSectionELF *EHSection =
       getContext().getELFSection(EHSecName, Type, Flags, 0, Group,
                                  FnSection.getUniqueID(), nullptr, &FnSection);
 

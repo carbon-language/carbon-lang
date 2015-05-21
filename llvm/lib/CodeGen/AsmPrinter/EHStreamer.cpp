@@ -388,7 +388,7 @@ void EHStreamer::emitExceptionTable() {
   }
 
   // Type infos.
-  const MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
+  MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
   unsigned TTypeEncoding;
   unsigned TypeFormatSize;
 

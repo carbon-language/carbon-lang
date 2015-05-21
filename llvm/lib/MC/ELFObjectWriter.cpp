@@ -133,8 +133,8 @@ class ELFObjectWriter : public MCObjectWriter {
     unsigned ShstrtabIndex;
 
     // Sections in the order they are to be output in the section table.
-    std::vector<const MCSectionELF *> SectionTable;
-    unsigned addToSectionTable(const MCSectionELF *Sec);
+    std::vector<MCSectionELF *> SectionTable;
+    unsigned addToSectionTable(MCSectionELF *Sec);
 
     // TargetObjectWriter wrappers.
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
@@ -221,8 +221,8 @@ class ELFObjectWriter : public MCObjectWriter {
                             const SectionIndexMapTy &SectionIndexMap,
                             const RevGroupMapTy &RevGroupMap);
 
-    const MCSectionELF *createRelocationSection(MCAssembler &Asm,
-                                                const MCSectionELF &Sec);
+    MCSectionELF *createRelocationSection(MCAssembler &Asm,
+                                          const MCSectionELF &Sec);
 
     const MCSectionELF *createSectionHeaderStringTable();
     const MCSectionELF *createStringTable(MCContext &Ctx);
@@ -261,7 +261,7 @@ class ELFObjectWriter : public MCObjectWriter {
   };
 }
 
-unsigned ELFObjectWriter::addToSectionTable(const MCSectionELF *Sec) {
+unsigned ELFObjectWriter::addToSectionTable(MCSectionELF *Sec) {
   SectionTable.push_back(Sec);
   ShStrTabBuilder.add(Sec->getSectionName());
   return SectionTable.size();
@@ -549,7 +549,7 @@ void ELFObjectWriter::WriteSymbolTable(MCAssembler &Asm,
   unsigned EntrySize = is64Bit() ? ELF::SYMENTRY_SIZE64 : ELF::SYMENTRY_SIZE32;
 
   // Symbol table
-  const MCSectionELF *SymtabSection =
+  MCSectionELF *SymtabSection =
       Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0, EntrySize, "");
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
   SymtabSD.setAlignment(is64Bit() ? 8 : 4);
@@ -608,7 +608,7 @@ void ELFObjectWriter::WriteSymbolTable(MCAssembler &Asm,
     return;
 
   SecStart = OS.tell();
-  const MCSectionELF *SymtabShndxSection =
+  MCSectionELF *SymtabShndxSection =
       Ctx.getELFSection(".symtab_shndxr", ELF::SHT_SYMTAB_SHNDX, 0, 4, "");
   addToSectionTable(SymtabShndxSection);
   MCSectionData *SymtabShndxSD =
@@ -1064,7 +1064,7 @@ void ELFObjectWriter::computeSymbolTable(
     UndefinedSymbolData[i].Symbol->getData().setIndex(Index++);
 }
 
-const MCSectionELF *
+MCSectionELF *
 ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
                                          const MCSectionELF &Sec) {
   if (Relocations[&Sec].empty())
@@ -1085,7 +1085,7 @@ ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
   if (Sec.getFlags() & ELF::SHF_GROUP)
     Flags = ELF::SHF_GROUP;
 
-  const MCSectionELF *RelaSection = Ctx.createELFRelSection(
+  MCSectionELF *RelaSection = Ctx.createELFRelSection(
       RelaSectionName, hasRelocationAddend() ? ELF::SHT_RELA : ELF::SHT_REL,
       Flags, EntrySize, Sec.getGroup(), &Sec);
   MCSectionData &RelSD = Asm.getOrCreateSectionData(*RelaSection);
@@ -1141,8 +1141,7 @@ prependCompressionHeader(uint64_t Size,
 void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
                                        const MCSectionData &SD,
                                        const MCAsmLayout &Layout) {
-  const MCSectionELF &Section =
-      static_cast<const MCSectionELF &>(SD.getSection());
+  MCSectionELF &Section = static_cast<MCSectionELF &>(SD.getSection());
   StringRef SectionName = Section.getSectionName();
 
   // Compressing debug_frame requires handling alignment fragments which is
@@ -1245,7 +1244,7 @@ const MCSectionELF *ELFObjectWriter::createSectionHeaderStringTable() {
 }
 
 const MCSectionELF *ELFObjectWriter::createStringTable(MCContext &Ctx) {
-  const MCSectionELF *StrtabSection =
+  MCSectionELF *StrtabSection =
       Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0);
   StringTableIndex = addToSectionTable(StrtabSection);
   OS << StrTabBuilder.data();
@@ -1315,7 +1314,7 @@ void ELFObjectWriter::writeSectionHeader(
       (NumSections + 1) >= ELF::SHN_LORESERVE ? NumSections + 1 : 0;
   WriteSecHdrEntry(0, 0, 0, 0, 0, FirstSectionSize, 0, 0, 0, 0);
 
-  for (const MCSectionELF *Section : SectionTable) {
+  for (MCSectionELF *Section : SectionTable) {
     const MCSectionData &SD = Asm.getOrCreateSectionData(*Section);
     uint32_t GroupSymbolIndex;
     unsigned Type = Section->getType();
@@ -1337,7 +1336,7 @@ void ELFObjectWriter::writeSectionHeader(
 void ELFObjectWriter::WriteObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
   MCContext &Ctx = Asm.getContext();
-  const MCSectionELF *ShstrtabSection =
+  MCSectionELF *ShstrtabSection =
       Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
   ShstrtabIndex = addToSectionTable(ShstrtabSection);
 
@@ -1353,8 +1352,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   SectionOffsetsTy SectionOffsets;
   bool ComputedSymtab = false;
   for (const MCSectionData &SD : Asm) {
-    const MCSectionELF &Section =
-        static_cast<const MCSectionELF &>(SD.getSection());
+    MCSectionELF &Section = static_cast<MCSectionELF &>(SD.getSection());
 
     uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
     WriteZeros(Padding);
@@ -1388,13 +1386,13 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     if (Type == ELF::SHT_GROUP || Type == ELF::SHT_REL || Type == ELF::SHT_RELA)
       continue;
 
-    const MCSectionELF *RelSection = createRelocationSection(Asm, Section);
+    MCSectionELF *RelSection = createRelocationSection(Asm, Section);
 
     if (SignatureSymbol) {
       Asm.getOrCreateSymbolData(*SignatureSymbol);
       unsigned &GroupIdx = RevGroupMap[SignatureSymbol];
       if (!GroupIdx) {
-        const MCSectionELF *Group = Ctx.createELFGroupSection(SignatureSymbol);
+        MCSectionELF *Group = Ctx.createELFGroupSection(SignatureSymbol);
         GroupIdx = addToSectionTable(Group);
         MCSectionData *GroupD = &Asm.getOrCreateSectionData(*Group);
         GroupD->setAlignment(4);

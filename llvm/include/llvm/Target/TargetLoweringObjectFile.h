@@ -77,8 +77,8 @@ public:
 
   /// Given a constant with the SectionKind, return a section that it should be
   /// placed in.
-  virtual const MCSection *getSectionForConstant(SectionKind Kind,
-                                                 const Constant *C) const;
+  virtual MCSection *getSectionForConstant(SectionKind Kind,
+                                           const Constant *C) const;
 
   /// Classify the specified global variable into a set of target independent
   /// categories embodied in SectionKind.
@@ -88,16 +88,14 @@ public:
   /// This method computes the appropriate section to emit the specified global
   /// variable or function definition. This should not be passed external (or
   /// available externally) globals.
-  const MCSection *SectionForGlobal(const GlobalValue *GV,
-                                    SectionKind Kind, Mangler &Mang,
-                                    const TargetMachine &TM) const;
+  MCSection *SectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                              Mangler &Mang, const TargetMachine &TM) const;
 
   /// This method computes the appropriate section to emit the specified global
   /// variable or function definition. This should not be passed external (or
   /// available externally) globals.
-  const MCSection *SectionForGlobal(const GlobalValue *GV,
-                                    Mangler &Mang,
-                                    const TargetMachine &TM) const {
+  MCSection *SectionForGlobal(const GlobalValue *GV, Mangler &Mang,
+                              const TargetMachine &TM) const {
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
 
@@ -106,9 +104,8 @@ public:
                                  bool CannotUsePrivateLabel, Mangler &Mang,
                                  const TargetMachine &TM) const;
 
-  virtual const MCSection *
-  getSectionForJumpTable(const Function &F, Mangler &Mang,
-                         const TargetMachine &TM) const;
+  virtual MCSection *getSectionForJumpTable(const Function &F, Mangler &Mang,
+                                            const TargetMachine &TM) const;
 
   virtual bool shouldPutJumpTableInFunctionSection(bool UsesLabelDifference,
                                                    const Function &F) const;
@@ -116,7 +113,7 @@ public:
   /// Targets should implement this method to assign a section to globals with
   /// an explicit section specfied. The implementation of this method can
   /// assume that GV->hasSection() is true.
-  virtual const MCSection *
+  virtual MCSection *
   getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
                            Mangler &Mang, const TargetMachine &TM) const = 0;
 
@@ -150,13 +147,13 @@ public:
   getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
                     MCStreamer &Streamer) const;
 
-  virtual const MCSection *getStaticCtorSection(unsigned Priority,
-                                                const MCSymbol *KeySym) const {
+  virtual MCSection *getStaticCtorSection(unsigned Priority,
+                                          const MCSymbol *KeySym) const {
     return StaticCtorSection;
   }
 
-  virtual const MCSection *getStaticDtorSection(unsigned Priority,
-                                                const MCSymbol *KeySym) const {
+  virtual MCSection *getStaticDtorSection(unsigned Priority,
+                                          const MCSymbol *KeySym) const {
     return StaticDtorSection;
   }
 
@@ -192,9 +189,9 @@ public:
   }
 
 protected:
-  virtual const MCSection *
-  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         Mangler &Mang, const TargetMachine &TM) const = 0;
+  virtual MCSection *SelectSectionForGlobal(const GlobalValue *GV,
+                                            SectionKind Kind, Mangler &Mang,
+                                            const TargetMachine &TM) const = 0;
 };
 
 } // end namespace llvm

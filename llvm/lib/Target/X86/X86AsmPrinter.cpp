@@ -615,12 +615,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
     Stubs = MMIMacho.GetFnStubList();
     if (!Stubs.empty()) {
-      const MCSection *TheSection =
-        OutContext.getMachOSection("__IMPORT", "__jump_table",
-                                   MachO::S_SYMBOL_STUBS |
-                                   MachO::S_ATTR_SELF_MODIFYING_CODE |
-                                   MachO::S_ATTR_PURE_INSTRUCTIONS,
-                                   5, SectionKind::getMetadata());
+      MCSection *TheSection = OutContext.getMachOSection(
+          "__IMPORT", "__jump_table",
+          MachO::S_SYMBOL_STUBS | MachO::S_ATTR_SELF_MODIFYING_CODE |
+              MachO::S_ATTR_PURE_INSTRUCTIONS,
+          5, SectionKind::getMetadata());
       OutStreamer->SwitchSection(TheSection);
 
       for (const auto &Stub : Stubs) {
@@ -641,10 +640,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // Output stubs for external and common global variables.
     Stubs = MMIMacho.GetGVStubList();
     if (!Stubs.empty()) {
-      const MCSection *TheSection =
-        OutContext.getMachOSection("__IMPORT", "__pointers",
-                                   MachO::S_NON_LAZY_SYMBOL_POINTERS,
-                                   SectionKind::getMetadata());
+      MCSection *TheSection = OutContext.getMachOSection(
+          "__IMPORT", "__pointers", MachO::S_NON_LAZY_SYMBOL_POINTERS,
+          SectionKind::getMetadata());
       OutStreamer->SwitchSection(TheSection);
 
       for (auto &Stub : Stubs)
@@ -656,10 +654,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
 
     Stubs = MMIMacho.GetHiddenGVStubList();
     if (!Stubs.empty()) {
-      const MCSection *TheSection =
-        OutContext.getMachOSection("__IMPORT", "__pointers",
-                                   MachO::S_NON_LAZY_SYMBOL_POINTERS,
-                                   SectionKind::getMetadata());
+      MCSection *TheSection = OutContext.getMachOSection(
+          "__IMPORT", "__pointers", MachO::S_NON_LAZY_SYMBOL_POINTERS,
+          SectionKind::getMetadata());
       OutStreamer->SwitchSection(TheSection);
 
       for (auto &Stub : Stubs)

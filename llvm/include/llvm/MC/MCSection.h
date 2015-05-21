@@ -35,12 +35,14 @@ private:
   MCSection(const MCSection &) = delete;
   void operator=(const MCSection &) = delete;
 
-  mutable MCSymbol *Begin;
-  mutable MCSymbol *End;
+  MCSymbol *Begin;
+  MCSymbol *End;
+  /// The alignment requirement of this section.
+  unsigned Alignment;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), End(nullptr), Variant(V), Kind(K) {}
+      : Begin(Begin), End(nullptr), Alignment(1), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -51,13 +53,19 @@ public:
 
   SectionVariant getVariant() const { return Variant; }
 
-  MCSymbol *getBeginSymbol() const { return Begin; }
-  void setBeginSymbol(MCSymbol *Sym) const {
+  MCSymbol *getBeginSymbol() { return Begin; }
+  const MCSymbol *getBeginSymbol() const {
+    return const_cast<MCSection *>(this)->getBeginSymbol();
+  }
+  void setBeginSymbol(MCSymbol *Sym) {
     assert(!Begin);
     Begin = Sym;
   }
-  MCSymbol *getEndSymbol(MCContext &Ctx) const;
+  MCSymbol *getEndSymbol(MCContext &Ctx);
   bool hasEnded() const;
+
+  unsigned getAlignment() const { return Alignment; }
+  void setAlignment(unsigned Value) { Alignment = Value; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

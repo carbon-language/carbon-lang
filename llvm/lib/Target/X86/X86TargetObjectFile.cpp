@@ -149,7 +149,7 @@ static std::string scalarConstantToHexString(const Constant *C) {
   return APIntToHexString(AI);
 }
 
-const MCSection *
+MCSection *
 X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
                                                   const Constant *C) const {
   if (Kind.isReadOnly()) {

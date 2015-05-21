@@ -58,7 +58,7 @@ void MipsELFStreamer::EmitLabel(MCSymbol *Symbol) {
   Labels.push_back(Symbol);
 }
 
-void MipsELFStreamer::SwitchSection(const MCSection * Section,
+void MipsELFStreamer::SwitchSection(MCSection *Section,
                                     const MCExpr *Subsection) {
   MCELFStreamer::SwitchSection(Section, Subsection);
   Labels.clear();

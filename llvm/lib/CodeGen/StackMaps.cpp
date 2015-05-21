@@ -524,8 +524,8 @@ void StackMaps::serializeToStackMapSection() {
   MCStreamer &OS = *AP.OutStreamer;
 
   // Create the section.
-  const MCSection *StackMapSection =
-    OutContext.getObjectFileInfo()->getStackMapSection();
+  MCSection *StackMapSection =
+      OutContext.getObjectFileInfo()->getStackMapSection();
   OS.SwitchSection(StackMapSection);
 
   // Emit a dummy symbol to force section inclusion.

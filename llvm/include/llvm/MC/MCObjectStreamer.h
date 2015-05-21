@@ -80,7 +80,7 @@ protected:
   /// fragment is not a data fragment.
   MCDataFragment *getOrCreateDataFragment();
 
-  bool changeSectionImpl(const MCSection *Section, const MCExpr *Subsection);
+  bool changeSectionImpl(MCSection *Section, const MCExpr *Subsection);
 
   /// If any labels have been emitted but not assigned fragments, ensure that
   /// they get assigned, either to F if possible or to a new data fragment.
@@ -103,8 +103,7 @@ public:
   void EmitULEB128Value(const MCExpr *Value) override;
   void EmitSLEB128Value(const MCExpr *Value) override;
   void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) override;
-  void ChangeSection(const MCSection *Section,
-                     const MCExpr *Subsection) override;
+  void ChangeSection(MCSection *Section, const MCExpr *Subsection) override;
   void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo& STI) override;
 
   /// \brief Emit an instruction to a special fragment, because this instruction
@@ -147,7 +146,7 @@ public:
   bool emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
                               unsigned Size) override;
 
-  bool mayHaveInstructions(const MCSection &Sec) const override {
+  bool mayHaveInstructions(MCSection &Sec) const override {
     return Assembler->getOrCreateSectionData(Sec).hasInstructions();
   }
 };

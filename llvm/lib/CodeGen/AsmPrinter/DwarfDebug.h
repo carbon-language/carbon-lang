@@ -371,7 +371,7 @@ class DwarfDebug : public AsmPrinterHandler {
   void emitAbbreviations();
 
   /// \brief Emit a specified accelerator table.
-  void emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
+  void emitAccel(DwarfAccelTable &Accel, MCSection *Section,
                  StringRef TableName);
 
   /// \brief Emit visible names into a hashed accelerator table section.
@@ -400,7 +400,7 @@ class DwarfDebug : public AsmPrinterHandler {
   void emitDebugPubTypes(bool GnuStyle = false);
 
   void emitDebugPubSection(
-      bool GnuStyle, const MCSection *PSec, StringRef Name,
+      bool GnuStyle, MCSection *PSec, StringRef Name,
       const StringMap<const DIE *> &(DwarfCompileUnit::*Accessor)() const);
 
   /// \brief Emit visible names into a debug str section.

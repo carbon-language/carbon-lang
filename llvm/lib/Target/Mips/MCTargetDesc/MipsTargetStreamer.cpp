@@ -564,8 +564,8 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   MCContext &Context = MCA.getContext();
   MCStreamer &OS = getStreamer();
 
-  const MCSectionELF *Sec = Context.getELFSection(
-      ".pdr", ELF::SHT_PROGBITS, ELF::SHF_ALLOC | ELF::SHT_REL);
+  MCSectionELF *Sec = Context.getELFSection(".pdr", ELF::SHT_PROGBITS,
+                                            ELF::SHF_ALLOC | ELF::SHT_REL);
 
   const MCSymbolRefExpr *ExprRef =
       MCSymbolRefExpr::Create(Name, MCSymbolRefExpr::VK_None, Context);
@@ -786,7 +786,7 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   MCAssembler &MCA = getStreamer().getAssembler();
   MCContext &Context = MCA.getContext();
   MCStreamer &OS = getStreamer();
-  const MCSectionELF *Sec = Context.getELFSection(
+  MCSectionELF *Sec = Context.getELFSection(
       ".MIPS.abiflags", ELF::SHT_MIPS_ABIFLAGS, ELF::SHF_ALLOC, 24, "");
   MCSectionData &ABIShndxSD = MCA.getOrCreateSectionData(*Sec);
   ABIShndxSD.setAlignment(8);

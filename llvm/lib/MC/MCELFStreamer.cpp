@@ -141,7 +141,7 @@ static void setSectionAlignmentForBundling(
     Section->setAlignment(Assembler.getBundleAlignSize());
 }
 
-void MCELFStreamer::ChangeSection(const MCSection *Section,
+void MCELFStreamer::ChangeSection(MCSection *Section,
                                   const MCExpr *Subsection) {
   MCSectionData *CurSection = getCurrentSectionData();
   if (CurSection && CurSection->isBundleLocked())
@@ -314,7 +314,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   MCELF::SetType(SD, ELF::STT_OBJECT);
 
   if (MCELF::GetBinding(SD) == ELF_STB_Local) {
-    const MCSection *Section = getAssembler().getContext().getELFSection(
+    MCSection *Section = getAssembler().getContext().getELFSection(
         ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
 
     AssignSection(Symbol, Section);
@@ -369,7 +369,7 @@ void MCELFStreamer::EmitFileDirective(StringRef Filename) {
 }
 
 void MCELFStreamer::EmitIdent(StringRef IdentString) {
-  const MCSection *Comment = getAssembler().getContext().getELFSection(
+  MCSection *Comment = getAssembler().getContext().getELFSection(
       ".comment", ELF::SHT_PROGBITS, ELF::SHF_MERGE | ELF::SHF_STRINGS, 1, "");
   PushSection();
   SwitchSection(Comment);
@@ -633,7 +633,7 @@ void MCELFStreamer::Flush() {
     const MCSymbol &Symbol = *i->Symbol;
     uint64_t Size = i->Size;
     unsigned ByteAlignment = i->ByteAlignment;
-    const MCSection &Section = Symbol.getSection();
+    MCSection &Section = Symbol.getSection();
 
     MCSectionData &SectData = getAssembler().getOrCreateSectionData(Section);
     new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &SectData);
@@ -693,12 +693,12 @@ void MCELFStreamer::EndCOFFSymbolDef() {
   llvm_unreachable("ELF doesn't support this directive");
 }
 
-void MCELFStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
+void MCELFStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
                                  uint64_t Size, unsigned ByteAlignment) {
   llvm_unreachable("ELF doesn't support this directive");
 }
 
-void MCELFStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+void MCELFStreamer::EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
                                    uint64_t Size, unsigned ByteAlignment) {
   llvm_unreachable("ELF doesn't support this directive");
 }

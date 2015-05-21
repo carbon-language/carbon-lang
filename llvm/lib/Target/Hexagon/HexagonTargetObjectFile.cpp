@@ -81,7 +81,7 @@ IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
   return false;
 }
 
-const MCSection *
+MCSection *
 HexagonTargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
                                                 SectionKind Kind, Mangler &Mang,
                                                 const TargetMachine &TM) const {

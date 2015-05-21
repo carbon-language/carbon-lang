@@ -32,8 +32,8 @@ public:
   DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix)
       : Pool(A), Prefix(Prefix) {}
 
-  void emit(AsmPrinter &Asm, const MCSection *StrSection,
-            const MCSection *OffsetSection = nullptr);
+  void emit(AsmPrinter &Asm, MCSection *StrSection,
+            MCSection *OffsetSection = nullptr);
 
   /// \brief Returns an entry into the string pool with the given
   /// string text.

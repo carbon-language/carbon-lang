@@ -22,7 +22,7 @@ Initialize(MCContext &Ctx, const TargetMachine &TM) {
   InitializeELF(TM.Options.UseInitArray);
 }
 
-const MCSection *PPC64LinuxTargetObjectFile::SelectSectionForGlobal(
+MCSection *PPC64LinuxTargetObjectFile::SelectSectionForGlobal(
     const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     const TargetMachine &TM) const {
   // Here override ReadOnlySection to DataRelROSection for PPC64 SVR4 ABI

@@ -390,7 +390,7 @@ class DwarfStreamer {
 
   /// \brief Emit the pubnames or pubtypes section contribution for \p
   /// Unit into \p Sec. The data is provided in \p Names.
-  void emitPubSectionForUnit(const MCSection *Sec, StringRef Name,
+  void emitPubSectionForUnit(MCSection *Sec, StringRef Name,
                              const CompileUnit &Unit,
                              const std::vector<CompileUnit::AccelInfo> &Names);
 
@@ -913,7 +913,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
 /// \brief Emit the pubnames or pubtypes section contribution for \p
 /// Unit into \p Sec. The data is provided in \p Names.
 void DwarfStreamer::emitPubSectionForUnit(
-    const MCSection *Sec, StringRef SecName, const CompileUnit &Unit,
+    MCSection *Sec, StringRef SecName, const CompileUnit &Unit,
     const std::vector<CompileUnit::AccelInfo> &Names) {
   if (Names.empty())
     return;

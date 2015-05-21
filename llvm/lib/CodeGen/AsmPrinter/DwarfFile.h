@@ -82,11 +82,10 @@ public:
   void emitUnits(bool UseOffsets);
 
   /// \brief Emit a set of abbreviations to the specific section.
-  void emitAbbrevs(const MCSection *);
+  void emitAbbrevs(MCSection *);
 
   /// \brief Emit all of the strings to the section given.
-  void emitStrings(const MCSection *StrSection,
-                   const MCSection *OffsetSection = nullptr);
+  void emitStrings(MCSection *StrSection, MCSection *OffsetSection = nullptr);
 
   /// \brief Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }

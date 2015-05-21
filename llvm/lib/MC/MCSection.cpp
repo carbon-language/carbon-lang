@@ -18,7 +18,7 @@ using namespace llvm;
 // MCSection
 //===----------------------------------------------------------------------===//
 
-MCSymbol *MCSection::getEndSymbol(MCContext &Ctx) const {
+MCSymbol *MCSection::getEndSymbol(MCContext &Ctx) {
   if (!End)
     End = Ctx.createTempSymbol("sec_end", true);
   return End;

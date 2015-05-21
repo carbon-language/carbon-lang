@@ -40,7 +40,7 @@ public:
   /// label/symbol.
   unsigned getIndex(const MCSymbol *Sym, bool TLS = false);
 
-  void emit(AsmPrinter &Asm, const MCSection *AddrSection);
+  void emit(AsmPrinter &Asm, MCSection *AddrSection);
 
   bool isEmpty() { return Pool.empty(); }
 

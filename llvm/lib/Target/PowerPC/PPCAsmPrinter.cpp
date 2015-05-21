@@ -1054,7 +1054,7 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
 
   // Emit an official procedure descriptor.
   MCSectionSubPair Current = OutStreamer->getCurrentSection();
-  const MCSectionELF *Section = OutStreamer->getContext().getELFSection(
+  MCSectionELF *Section = OutStreamer->getContext().getELFSection(
       ".opd", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
   OutStreamer->SwitchSection(Section);
   OutStreamer->EmitLabel(CurrentFnSym);
@@ -1084,8 +1084,8 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
       static_cast<PPCTargetStreamer &>(*OutStreamer->getTargetStreamer());
 
   if (!TOC.empty()) {
-    const MCSectionELF *Section;
-    
+    MCSectionELF *Section;
+
     if (isPPC64)
       Section = OutStreamer->getContext().getELFSection(
           ".toc", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
@@ -1285,15 +1285,14 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
 
   // .lazy_symbol_pointer
-  const MCSection *LSPSection = TLOFMacho.getLazySymbolPointerSection();
-  
+  MCSection *LSPSection = TLOFMacho.getLazySymbolPointerSection();
+
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    const MCSection *StubSection = 
-    OutContext.getMachOSection("__TEXT", "__picsymbolstub1",
-                               MachO::S_SYMBOL_STUBS |
-                               MachO::S_ATTR_PURE_INSTRUCTIONS,
-                               32, SectionKind::getText());
+    MCSection *StubSection = OutContext.getMachOSection(
+        "__TEXT", "__picsymbolstub1",
+        MachO::S_SYMBOL_STUBS | MachO::S_ATTR_PURE_INSTRUCTIONS, 32,
+        SectionKind::getText());
     for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
       OutStreamer->SwitchSection(StubSection);
       EmitAlignment(4);
@@ -1356,12 +1355,11 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
     OutStreamer->AddBlankLine();
     return;
   }
-  
-  const MCSection *StubSection =
-    OutContext.getMachOSection("__TEXT","__symbol_stub1",
-                               MachO::S_SYMBOL_STUBS |
-                               MachO::S_ATTR_PURE_INSTRUCTIONS,
-                               16, SectionKind::getText());
+
+  MCSection *StubSection = OutContext.getMachOSection(
+      "__TEXT", "__symbol_stub1",
+      MachO::S_SYMBOL_STUBS | MachO::S_ATTR_PURE_INSTRUCTIONS, 16,
+      SectionKind::getText());
   for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
     MCSymbol *Stub = Stubs[i].first;
     MCSymbol *RawSym = Stubs[i].second.getPointer();

@@ -1285,7 +1285,7 @@ void DwarfDebug::emitAbbreviations() {
   Holder.emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection());
 }
 
-void DwarfDebug::emitAccel(DwarfAccelTable &Accel, const MCSection *Section,
+void DwarfDebug::emitAccel(DwarfAccelTable &Accel, MCSection *Section,
                            StringRef TableName) {
   Accel.FinalizeTable(Asm, TableName);
   Asm->OutStreamer->SwitchSection(Section);
@@ -1379,16 +1379,16 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(DwarfUnit *CU,
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
-  const MCSection *PSec =
-      GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
-               : Asm->getObjFileLowering().getDwarfPubNamesSection();
+  MCSection *PSec = GnuStyle
+                        ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
+                        : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
   emitDebugPubSection(GnuStyle, PSec, "Names",
                       &DwarfCompileUnit::getGlobalNames);
 }
 
 void DwarfDebug::emitDebugPubSection(
-    bool GnuStyle, const MCSection *PSec, StringRef Name,
+    bool GnuStyle, MCSection *PSec, StringRef Name,
     const StringMap<const DIE *> &(DwarfCompileUnit::*Accessor)() const) {
   for (const auto &NU : CUMap) {
     DwarfCompileUnit *TheU = NU.second;
@@ -1448,9 +1448,9 @@ void DwarfDebug::emitDebugPubSection(
 }
 
 void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
-  const MCSection *PSec =
-      GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
-               : Asm->getObjFileLowering().getDwarfPubTypesSection();
+  MCSection *PSec = GnuStyle
+                        ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
+                        : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
   emitDebugPubSection(GnuStyle, PSec, "Types",
                       &DwarfCompileUnit::getGlobalTypes);
@@ -1611,13 +1611,13 @@ struct ArangeSpan {
 // address we can tie back to a CU.
 void DwarfDebug::emitDebugARanges() {
   // Provides a unique id per text section.
-  MapVector<const MCSection *, SmallVector<SymbolCU, 8>> SectionMap;
+  MapVector<MCSection *, SmallVector<SymbolCU, 8>> SectionMap;
 
   // Filter labels by section.
   for (const SymbolCU &SCU : ArangeLabels) {
     if (SCU.Sym->isInSection()) {
       // Make a note of this symbol and it's section.
-      const MCSection *Section = &SCU.Sym->getSection();
+      MCSection *Section = &SCU.Sym->getSection();
       if (!Section->getKind().isMetadata())
         SectionMap[Section].push_back(SCU);
     } else {
@@ -1630,7 +1630,7 @@ void DwarfDebug::emitDebugARanges() {
 
   // Add terminating symbols for each section.
   for (const auto &I : SectionMap) {
-    const MCSection *Section = I.first;
+    MCSection *Section = I.first;
     MCSymbol *Sym = nullptr;
 
     if (Section)
@@ -1873,8 +1873,7 @@ void DwarfDebug::emitDebugLineDWO() {
 // sections.
 void DwarfDebug::emitDebugStrDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  const MCSection *OffSec =
-      Asm->getObjFileLowering().getDwarfStrOffDWOSection();
+  MCSection *OffSec = Asm->getObjFileLowering().getDwarfStrOffDWOSection();
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec);
 }

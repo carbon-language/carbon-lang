@@ -57,9 +57,9 @@ public:
                         unsigned ByteAlignment) override;
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+  void EmitZerofill(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                     unsigned ByteAlignment) override;
-  void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+  void EmitTBSSSymbol(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                       unsigned ByteAlignment) override;
   void EmitFileDirective(StringRef Filename) override;
   void EmitIdent(StringRef IdentString) override;

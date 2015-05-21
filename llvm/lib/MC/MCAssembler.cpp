@@ -292,12 +292,18 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
-MCSectionData::MCSectionData(const MCSection &Section, MCAssembler *A)
-    : Section(&Section), Ordinal(~UINT32_C(0)), Alignment(1),
+MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
+    : Section(&Section), Ordinal(~UINT32_C(0)),
       BundleLockState(NotBundleLocked), BundleLockNestingDepth(0),
       BundleGroupBeforeFirstInst(false), HasInstructions(false) {
   if (A)
     A->getSectionList().push_back(this);
+}
+
+unsigned MCSectionData::getAlignment() const { return Section->getAlignment(); }
+
+void MCSectionData::setAlignment(unsigned Value) {
+  Section->setAlignment(Value);
 }
 
 MCSectionData::iterator

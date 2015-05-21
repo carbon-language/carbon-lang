@@ -241,10 +241,10 @@ MCSymbol *MCContext::lookupSymbol(const Twine &Name) const {
 // Section Management
 //===----------------------------------------------------------------------===//
 
-const MCSectionMachO *
-MCContext::getMachOSection(StringRef Segment, StringRef Section,
-                           unsigned TypeAndAttributes, unsigned Reserved2,
-                           SectionKind Kind, const char *BeginSymName) {
+MCSectionMachO *MCContext::getMachOSection(StringRef Segment, StringRef Section,
+                                           unsigned TypeAndAttributes,
+                                           unsigned Reserved2, SectionKind Kind,
+                                           const char *BeginSymName) {
 
   // We unique sections by their segment/section pair.  The returned section
   // may not have the same flags as the requested section, if so this should be
@@ -257,7 +257,7 @@ MCContext::getMachOSection(StringRef Segment, StringRef Section,
   Name += Section;
 
   // Do the lookup, if we have a hit, return it.
-  const MCSectionMachO *&Entry = MachOUniquingMap[Name];
+  MCSectionMachO *&Entry = MachOUniquingMap[Name];
   if (Entry)
     return Entry;
 
@@ -270,7 +270,7 @@ MCContext::getMachOSection(StringRef Segment, StringRef Section,
                                             Reserved2, Kind, Begin);
 }
 
-void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
+void MCContext::renameELFSection(MCSectionELF *Section, StringRef Name) {
   StringRef GroupName;
   if (const MCSymbol *Group = Section->getGroup())
     GroupName = Group->getName();
@@ -286,10 +286,10 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   const_cast<MCSectionELF *>(Section)->setSectionName(CachedName);
 }
 
-const MCSectionELF *
-MCContext::createELFRelSection(StringRef Name, unsigned Type, unsigned Flags,
-                               unsigned EntrySize, const MCSymbol *Group,
-                               const MCSectionELF *Associated) {
+MCSectionELF *MCContext::createELFRelSection(StringRef Name, unsigned Type,
+                                             unsigned Flags, unsigned EntrySize,
+                                             const MCSymbol *Group,
+                                             const MCSectionELF *Associated) {
   StringMap<bool>::iterator I;
   bool Inserted;
   std::tie(I, Inserted) = ELFRelSecNames.insert(std::make_pair(Name, true));
@@ -299,10 +299,10 @@ MCContext::createELFRelSection(StringRef Name, unsigned Type, unsigned Flags,
                    EntrySize, Group, true, nullptr, Associated);
 }
 
-const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
-                                             unsigned Flags, unsigned EntrySize,
-                                             StringRef Group, unsigned UniqueID,
-                                             const char *BeginSymName) {
+MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
+                                       unsigned Flags, unsigned EntrySize,
+                                       StringRef Group, unsigned UniqueID,
+                                       const char *BeginSymName) {
   MCSymbol *GroupSym = nullptr;
   if (!Group.empty())
     GroupSym = getOrCreateSymbol(Group);
@@ -311,12 +311,12 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                        BeginSymName, nullptr);
 }
 
-const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
-                                             unsigned Flags, unsigned EntrySize,
-                                             const MCSymbol *GroupSym,
-                                             unsigned UniqueID,
-                                             const char *BeginSymName,
-                                             const MCSectionELF *Associated) {
+MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
+                                       unsigned Flags, unsigned EntrySize,
+                                       const MCSymbol *GroupSym,
+                                       unsigned UniqueID,
+                                       const char *BeginSymName,
+                                       const MCSectionELF *Associated) {
   StringRef Group = "";
   if (GroupSym)
     Group = GroupSym->getName();
@@ -346,17 +346,18 @@ const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
   return Result;
 }
 
-const MCSectionELF *MCContext::createELFGroupSection(const MCSymbol *Group) {
+MCSectionELF *MCContext::createELFGroupSection(const MCSymbol *Group) {
   MCSectionELF *Result = new (*this)
       MCSectionELF(".group", ELF::SHT_GROUP, 0, SectionKind::getReadOnly(), 4,
                    Group, ~0, nullptr, nullptr);
   return Result;
 }
 
-const MCSectionCOFF *
-MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
-                          SectionKind Kind, StringRef COMDATSymName,
-                          int Selection, const char *BeginSymName) {
+MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
+                                         unsigned Characteristics,
+                                         SectionKind Kind,
+                                         StringRef COMDATSymName, int Selection,
+                                         const char *BeginSymName) {
   MCSymbol *COMDATSymbol = nullptr;
   if (!COMDATSymName.empty()) {
     COMDATSymbol = getOrCreateSymbol(COMDATSymName);
@@ -382,14 +383,14 @@ MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
   return Result;
 }
 
-const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
-                                               unsigned Characteristics,
-                                               SectionKind Kind,
-                                               const char *BeginSymName) {
+MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
+                                         unsigned Characteristics,
+                                         SectionKind Kind,
+                                         const char *BeginSymName) {
   return getCOFFSection(Section, Characteristics, Kind, "", 0, BeginSymName);
 }
 
-const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
+MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
   COFFSectionKey T{Section, "", 0};
   auto Iter = COFFUniquingMap.find(T);
   if (Iter == COFFUniquingMap.end())
@@ -397,9 +398,8 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
   return Iter->second;
 }
 
-const MCSectionCOFF *
-MCContext::getAssociativeCOFFSection(const MCSectionCOFF *Sec,
-                                     const MCSymbol *KeySym) {
+MCSectionCOFF *MCContext::getAssociativeCOFFSection(MCSectionCOFF *Sec,
+                                                    const MCSymbol *KeySym) {
   // Return the normal section if we don't have to be associative.
   if (!KeySym)
     return Sec;
@@ -440,8 +440,8 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
 /// Remove empty sections from SectionStartEndSyms, to avoid generating
 /// useless debug info for them.
 void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
-  std::vector<const MCSection *> Keep;
-  for (const MCSection *Sec : SectionsForRanges) {
+  std::vector<MCSection *> Keep;
+  for (MCSection *Sec : SectionsForRanges) {
     if (MCOS.mayHaveInstructions(*Sec))
       Keep.push_back(Sec);
   }

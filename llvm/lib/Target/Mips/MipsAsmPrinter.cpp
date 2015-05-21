@@ -963,7 +963,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   //
   // .section mips16.call.fpxxxx,"ax",@progbits
   //
-  const MCSectionELF *M = OutContext.getELFSection(
+  MCSectionELF *M = OutContext.getELFSection(
       ".mips16.call.fp." + std::string(Symbol), ELF::SHT_PROGBITS,
       ELF::SHF_ALLOC | ELF::SHF_EXECINSTR);
   OutStreamer->SwitchSection(M, nullptr);

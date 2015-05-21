@@ -201,12 +201,12 @@ void MCObjectStreamer::EmitWeakReference(MCSymbol *Alias,
   report_fatal_error("This file format doesn't support weak aliases.");
 }
 
-void MCObjectStreamer::ChangeSection(const MCSection *Section,
+void MCObjectStreamer::ChangeSection(MCSection *Section,
                                      const MCExpr *Subsection) {
   changeSectionImpl(Section, Subsection);
 }
 
-bool MCObjectStreamer::changeSectionImpl(const MCSection *Section,
+bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
                                          const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
   flushPendingLabels(nullptr);
