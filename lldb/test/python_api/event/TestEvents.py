@@ -54,7 +54,7 @@ class EventAPITestCase(TestBase):
     @skipIfFreeBSD # llvm.org/pr21325
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux
+    @expectedFailureLinux("llvm.org/pr23617") # Flaky, fails ~1/10 cases
     def test_add_listener_to_broadcaster_with_dwarf(self):
         """Exercise some SBBroadcaster APIs."""
         self.buildDwarf()
