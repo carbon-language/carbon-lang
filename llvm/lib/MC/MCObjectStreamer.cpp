@@ -53,6 +53,29 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
   }
 }
 
+bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
+                                              const MCSymbol *Lo,
+                                              unsigned Size) {
+  // Must have symbol data.
+  if (!Assembler->hasSymbolData(*Hi) || !Assembler->hasSymbolData(*Lo))
+    return false;
+  auto &HiD = Assembler->getSymbolData(*Hi);
+  auto &LoD = Assembler->getSymbolData(*Lo);
+
+  // Must both be assigned to the same (valid) fragment.
+  if (!HiD.getFragment() || HiD.getFragment() != LoD.getFragment())
+    return false;
+
+  // Must be a data fragment.
+  if (!isa<MCDataFragment>(HiD.getFragment()))
+    return false;
+
+  assert(HiD.getOffset() >= LoD.getOffset() &&
+         "Expected Hi to be greater than Lo");
+  EmitIntValue(HiD.getOffset() - LoD.getOffset(), Size);
+  return true;
+}
+
 void MCObjectStreamer::reset() {
   if (Assembler)
     Assembler->reset();

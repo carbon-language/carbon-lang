@@ -1591,6 +1591,10 @@ void AsmPrinter::EmitInt32(int Value) const {
 /// .set if it avoids relocations.
 void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                                      unsigned Size) const {
+  if (!MAI->doesDwarfUseRelocationsAcrossSections())
+    if (OutStreamer->emitAbsoluteSymbolDiff(Hi, Lo, Size))
+      return;
+
   // Get the Hi-Lo expression.
   const MCExpr *Diff =
     MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(Hi, OutContext),
