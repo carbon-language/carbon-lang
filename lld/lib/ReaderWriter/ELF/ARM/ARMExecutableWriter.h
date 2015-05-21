@@ -30,12 +30,11 @@ protected:
 
 private:
   ARMLinkingContext &_ctx;
-  ARMTargetLayout &_armLayout;
 };
 
 ARMExecutableWriter::ARMExecutableWriter(ARMLinkingContext &ctx,
                                          ARMTargetLayout &layout)
-    : ARMELFWriter(ctx, layout), _ctx(ctx), _armLayout(layout) {}
+    : ARMELFWriter(ctx, layout), _ctx(ctx) {}
 
 void ARMExecutableWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
