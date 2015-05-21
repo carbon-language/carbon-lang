@@ -135,10 +135,9 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 // needs to be aligned to at least the bundle size.
 static void setSectionAlignmentForBundling(
     const MCAssembler &Assembler, MCSectionData *Section) {
-  if (Assembler.isBundlingEnabled() && Section &&
-      Section->hasInstructions() &&
-      Section->getAlignment() < Assembler.getBundleAlignSize())
-    Section->setAlignment(Assembler.getBundleAlignSize());
+  if (Assembler.isBundlingEnabled() && Section && Section->hasInstructions() &&
+      Section->getSection().getAlignment() < Assembler.getBundleAlignSize())
+    Section->getSection().setAlignment(Assembler.getBundleAlignSize());
 }
 
 void MCELFStreamer::ChangeSection(MCSection *Section,
@@ -642,8 +641,8 @@ void MCELFStreamer::Flush() {
     Symbol.getData().setFragment(F);
 
     // Update the maximum alignment of the section if necessary.
-    if (ByteAlignment > SectData.getAlignment())
-      SectData.setAlignment(ByteAlignment);
+    if (ByteAlignment > Section.getAlignment())
+      Section.setAlignment(ByteAlignment);
   }
 
   LocalCommons.clear();

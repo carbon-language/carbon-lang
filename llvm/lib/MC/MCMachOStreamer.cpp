@@ -426,8 +426,8 @@ void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
   AssignSection(Symbol, Section);
 
   // Update the maximum alignment on the zero fill section if necessary.
-  if (ByteAlignment > SectData.getAlignment())
-    SectData.setAlignment(ByteAlignment);
+  if (ByteAlignment > Section->getAlignment())
+    Section->setAlignment(ByteAlignment);
 }
 
 // This should always be called with the thread local bss section.  Like the

@@ -459,16 +459,16 @@ void MipsTargetELFStreamer::finish() {
   const MCObjectFileInfo &OFI = *MCA.getContext().getObjectFileInfo();
 
   // .bss, .text and .data are always at least 16-byte aligned.
-  MCSectionData &TextSectionData =
-      MCA.getOrCreateSectionData(*OFI.getTextSection());
-  MCSectionData &DataSectionData =
-      MCA.getOrCreateSectionData(*OFI.getDataSection());
-  MCSectionData &BSSSectionData =
-      MCA.getOrCreateSectionData(*OFI.getBSSSection());
+  MCSection &TextSection = *OFI.getTextSection();
+  MCA.getOrCreateSectionData(TextSection);
+  MCSection &DataSection = *OFI.getDataSection();
+  MCA.getOrCreateSectionData(DataSection);
+  MCSection &BSSSection = *OFI.getBSSSection();
+  MCA.getOrCreateSectionData(BSSSection);
 
-  TextSectionData.setAlignment(std::max(16u, TextSectionData.getAlignment()));
-  DataSectionData.setAlignment(std::max(16u, DataSectionData.getAlignment()));
-  BSSSectionData.setAlignment(std::max(16u, BSSSectionData.getAlignment()));
+  TextSection.setAlignment(std::max(16u, TextSection.getAlignment()));
+  DataSection.setAlignment(std::max(16u, DataSection.getAlignment()));
+  BSSSection.setAlignment(std::max(16u, BSSSection.getAlignment()));
 
   uint64_t Features = STI.getFeatureBits();
 
@@ -570,8 +570,8 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   const MCSymbolRefExpr *ExprRef =
       MCSymbolRefExpr::Create(Name, MCSymbolRefExpr::VK_None, Context);
 
-  MCSectionData &SecData = MCA.getOrCreateSectionData(*Sec);
-  SecData.setAlignment(4);
+  MCA.getOrCreateSectionData(*Sec);
+  Sec->setAlignment(4);
 
   OS.PushSection();
 
@@ -788,8 +788,8 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   MCStreamer &OS = getStreamer();
   MCSectionELF *Sec = Context.getELFSection(
       ".MIPS.abiflags", ELF::SHT_MIPS_ABIFLAGS, ELF::SHF_ALLOC, 24, "");
-  MCSectionData &ABIShndxSD = MCA.getOrCreateSectionData(*Sec);
-  ABIShndxSD.setAlignment(8);
+  MCA.getOrCreateSectionData(*Sec);
+  Sec->setAlignment(8);
   OS.SwitchSection(Sec);
 
   OS << ABIFlagsSection;

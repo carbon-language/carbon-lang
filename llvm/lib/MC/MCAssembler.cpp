@@ -300,12 +300,6 @@ MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
     A->getSectionList().push_back(this);
 }
 
-unsigned MCSectionData::getAlignment() const { return Section->getAlignment(); }
-
-void MCSectionData::setAlignment(unsigned Value) {
-  Section->setAlignment(Value);
-}
-
 MCSectionData::iterator
 MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
   if (Subsection == 0 && SubsectionFragmentMap.empty())
@@ -1259,8 +1253,7 @@ void MCSectionData::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCSectionData";
-  OS << " Alignment:" << getAlignment()
-     << " Fragments:[\n      ";
+  OS << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();

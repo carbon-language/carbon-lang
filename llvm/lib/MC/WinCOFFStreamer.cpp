@@ -221,8 +221,8 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
   MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
-  if (SectionData.getAlignment() < ByteAlignment)
-    SectionData.setAlignment(ByteAlignment);
+  if (Section->getAlignment() < ByteAlignment)
+    Section->setAlignment(ByteAlignment);
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   SD.setExternal(false);

@@ -597,9 +597,6 @@ public:
 
   MCSection &getSection() const { return *Section; }
 
-  unsigned getAlignment() const;
-  void setAlignment(unsigned Value);
-
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
 

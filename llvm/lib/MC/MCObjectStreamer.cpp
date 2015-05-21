@@ -380,8 +380,9 @@ void MCObjectStreamer::EmitValueToAlignment(unsigned ByteAlignment,
   insert(new MCAlignFragment(ByteAlignment, Value, ValueSize, MaxBytesToEmit));
 
   // Update the maximum alignment on the current section if necessary.
-  if (ByteAlignment > getCurrentSectionData()->getAlignment())
-    getCurrentSectionData()->setAlignment(ByteAlignment);
+  MCSection *CurSec = getCurrentSection().first;
+  if (ByteAlignment > CurSec->getAlignment())
+    CurSec->setAlignment(ByteAlignment);
 }
 
 void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,

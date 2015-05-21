@@ -1347,7 +1347,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   for (const MCSectionData &SD : Asm) {
     MCSectionELF &Section = static_cast<MCSectionELF &>(SD.getSection());
 
-    uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
+    uint64_t Padding = OffsetToAlignment(OS.tell(), Section.getAlignment());
     WriteZeros(Padding);
 
     // Remember the offset into the file for this section.

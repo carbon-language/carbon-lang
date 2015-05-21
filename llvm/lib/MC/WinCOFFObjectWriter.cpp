@@ -322,7 +322,7 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   coff_section->Header.Characteristics = Sec.getCharacteristics();
 
   uint32_t &Characteristics = coff_section->Header.Characteristics;
-  switch (SectionData.getAlignment()) {
+  switch (Sec.getAlignment()) {
   case 1:    Characteristics |= COFF::IMAGE_SCN_ALIGN_1BYTES;    break;
   case 2:    Characteristics |= COFF::IMAGE_SCN_ALIGN_2BYTES;    break;
   case 4:    Characteristics |= COFF::IMAGE_SCN_ALIGN_4BYTES;    break;

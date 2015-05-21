@@ -115,7 +115,7 @@ uint64_t MachObjectWriter::getPaddingSize(const MCSectionData *SD,
   const MCSectionData &NextSD = *Layout.getSectionOrder()[Next];
   if (NextSD.getSection().isVirtualSection())
     return 0;
-  return OffsetToAlignment(EndAddr, NextSD.getAlignment());
+  return OffsetToAlignment(EndAddr, NextSD.getSection().getAlignment());
 }
 
 void MachObjectWriter::WriteHeader(unsigned NumLoadCommands,
@@ -199,9 +199,10 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
                                     uint64_t RelocationsStart,
                                     unsigned NumRelocations) {
   uint64_t SectionSize = Layout.getSectionAddressSize(&SD);
+  const MCSectionMachO &Section = cast<MCSectionMachO>(SD.getSection());
 
   // The offset is unused for virtual sections.
-  if (SD.getSection().isVirtualSection()) {
+  if (Section.isVirtualSection()) {
     assert(Layout.getSectionFileSize(&SD) == 0 && "Invalid file size!");
     FileOffset = 0;
   }
@@ -212,7 +213,6 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   uint64_t Start = OS.tell();
   (void) Start;
 
-  const MCSectionMachO &Section = cast<MCSectionMachO>(SD.getSection());
   WriteBytes(Section.getSectionName(), 16);
   WriteBytes(Section.getSegmentName(), 16);
   if (is64Bit()) {
@@ -228,8 +228,8 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   if (SD.hasInstructions())
     Flags |= MachO::S_ATTR_SOME_INSTRUCTIONS;
 
-  assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
-  Write32(Log2_32(SD.getAlignment()));
+  assert(isPowerOf2_32(Section.getAlignment()) && "Invalid alignment!");
+  Write32(Log2_32(Section.getAlignment()));
   Write32(NumRelocations ? RelocationsStart : 0);
   Write32(NumRelocations);
   Write32(Flags);
@@ -645,7 +645,8 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
   const SmallVectorImpl<MCSectionData*> &Order = Layout.getSectionOrder();
   for (int i = 0, n = Order.size(); i != n ; ++i) {
     const MCSectionData *SD = Order[i];
-    StartAddress = RoundUpToAlignment(StartAddress, SD->getAlignment());
+    StartAddress =
+        RoundUpToAlignment(StartAddress, SD->getSection().getAlignment());
     SectionAddress[SD] = StartAddress;
     StartAddress += Layout.getSectionAddressSize(SD);
 
