@@ -1075,8 +1075,6 @@ Triple Triple::get64BitArchVariant() const {
   return T;
 }
 
-// FIXME: Use ARMTargetParser. This would require ARCHNames to hold
-// specific CPU names, as well as default CPU arch.
 const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
