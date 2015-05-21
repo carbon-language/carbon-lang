@@ -338,12 +338,14 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
   uint64_t Address = 0;
   bool IsAlias = Symbol != AliasedSymbol;
 
+  const MCSymbol &OrigSymbol = *Symbol;
   MachSymbolData *AliaseeInfo;
   if (IsAlias) {
     AliaseeInfo = findSymbolData(*AliasedSymbol);
     if (AliaseeInfo)
       SectionIndex = AliaseeInfo->SectionIndex;
     Symbol = AliasedSymbol;
+    // FIXME: Should this update Data as well?  Do we need OrigSymbol at all?
   }
 
   // Set the N_TYPE bits. See <mach-o/nlist.h>.
@@ -371,9 +373,7 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
   if (IsAlias && Symbol->isUndefined())
     Address = AliaseeInfo->StringIndex;
   else if (Symbol->isDefined())
-    // FIXME: Should Data.getSymbol() always be *Symbol?  It doesn't look like
-    // that's true.
-    Address = getSymbolAddress(Data.getSymbol(), Layout);
+    Address = getSymbolAddress(OrigSymbol, Layout);
   else if (Data.isCommon()) {
     // Common symbols are encoded with the size in the address
     // field, and their alignment in the flags.
