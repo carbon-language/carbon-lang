@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=-avx,+sse | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=knl | FileCheck %s
 
 define <4 x float> @test_x86_sse_add_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: addss

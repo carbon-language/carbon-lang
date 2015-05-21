@@ -442,12 +442,29 @@ class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
                   asm));
 }
 
-// SIi8 - SSE 1 & 2 scalar instructions
+// SI - SSE 1 & 2 scalar intrinsics - vex form available on AVX512
+class SI_Int<bits<8> o, Format F, dag outs, dag ins, string asm,
+         list<dag> pattern, InstrItinClass itin = NoItinerary,
+         Domain d = GenericDomain>
+      : I<o, F, outs, ins, asm, pattern, itin, d> {
+  let Predicates = !if(!eq(OpEnc.Value, EncEVEX.Value), [HasAVX512],
+                   !if(!eq(OpEnc.Value, EncVEX.Value), [HasAVX],
+                   !if(!eq(OpPrefix.Value, XS.Value), [UseSSE1],
+                   !if(!eq(OpPrefix.Value, XD.Value), [UseSSE2],
+                   !if(!eq(OpPrefix.Value, PD.Value), [UseSSE2],
+                   [UseSSE1])))));
+
+  // AVX instructions have a 'v' prefix in the mnemonic
+  let AsmString = !if(!eq(OpEnc.Value, EncEVEX.Value), !strconcat("v", asm),
+                  !if(!eq(OpEnc.Value, EncVEX.Value), !strconcat("v", asm),
+                  asm));
+}
+// SIi8 - SSE 1 & 2 scalar instructions - vex form available on AVX512
 class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin> {
   let Predicates = !if(!eq(OpEnc.Value, EncEVEX.Value), [HasAVX512],
-                   !if(!eq(OpEnc.Value, EncVEX.Value), [UseAVX],
+                   !if(!eq(OpEnc.Value, EncVEX.Value), [HasAVX],
                    !if(!eq(OpPrefix.Value, XS.Value), [UseSSE1],
                    [UseSSE2])));
 

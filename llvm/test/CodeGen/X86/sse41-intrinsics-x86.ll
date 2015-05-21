@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=-avx,+sse4.1 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=knl | FileCheck %s
 
 define <2 x double> @test_x86_sse41_blendpd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: blendpd
