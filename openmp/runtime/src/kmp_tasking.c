@@ -992,7 +992,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
     // GEH - Note we serialize the task if the team is serialized to make sure implicit parallel region
     //       tasks are not left until program termination to execute.  Also, it helps locality to execute
     //       immediately.
-    taskdata->td_flags.task_serial = ( taskdata->td_flags.final
+    taskdata->td_flags.task_serial = ( parent_task->td_flags.final
       || taskdata->td_flags.team_serial || taskdata->td_flags.tasking_ser );
 
     taskdata->td_flags.started     = 0;
