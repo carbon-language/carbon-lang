@@ -29,8 +29,6 @@ class raw_ostream;
 
 // TODO: Merge completely with MCSymbol.
 class MCSymbolData {
-  const MCSymbol *Symbol;
-
   /// Fragment - The fragment this symbol's value is relative to, if any. Also
   /// stores if this symbol is visible outside this translation unit (bit 0) or
   /// if it is private extern (bit 1).
@@ -39,7 +37,7 @@ class MCSymbolData {
   union {
     /// Offset - The offset to apply to the fragment address to form this
     /// symbol's value.
-    uint64_t Offset;
+    uint64_t Offset = 0;
 
     /// CommonSize - The size of the symbol, if it is 'common'.
     uint64_t CommonSize;
@@ -47,30 +45,21 @@ class MCSymbolData {
 
   /// SymbolSize - An expression describing how to calculate the size of
   /// a symbol. If a symbol has no size this field will be NULL.
-  const MCExpr *SymbolSize;
+  const MCExpr *SymbolSize = nullptr;
 
   /// CommonAlign - The alignment of the symbol, if it is 'common', or -1.
   //
   // FIXME: Pack this in with other fields?
-  unsigned CommonAlign;
+  unsigned CommonAlign = -1U;
 
   /// Flags - The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
-  uint32_t Flags;
+  uint32_t Flags = 0;
 
   /// Index - Index field, for use by the object file implementation.
-  uint64_t Index;
+  uint64_t Index = 0;
 
 public:
-  // Only for use as sentinel.
-  MCSymbolData();
-  void initialize(const MCSymbol &Symbol, MCFragment *Fragment,
-                  uint64_t Offset);
-
-  /// \name Accessors
-  /// @{
-  bool isInitialized() const { return Symbol; }
-
   MCFragment *getFragment() const { return Fragment.getPointer(); }
   void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
 
@@ -185,6 +174,7 @@ class MCSymbol {
   /// IsUsed - True if this symbol has been used.
   mutable unsigned IsUsed : 1;
 
+  mutable bool HasData : 1;
   mutable MCSymbolData Data;
 
 private: // MCContext creates and uniques these.
@@ -192,7 +182,7 @@ private: // MCContext creates and uniques these.
   friend class MCContext;
   MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false) {}
+        IsRedefinable(false), IsUsed(false), HasData(false) {}
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
@@ -206,16 +196,20 @@ public:
   /// getName - Get the symbol name.
   StringRef getName() const { return Name; }
 
+  bool hasData() const { return HasData; }
+
   /// Get associated symbol data.
   MCSymbolData &getData() const {
-    assert(Data.isInitialized() && "Missing symbol data!");
+    assert(HasData && "Missing symbol data!");
     return Data;
   }
 
-  /// Get unsafe symbol data (even if uninitialized).
+  /// Initialize symbol data.
   ///
-  /// Don't assert on uninitialized data; just return it.
-  MCSymbolData &getUnsafeData() const { return Data; }
+  /// Nothing really to do here, but this is enables an assertion that \a
+  /// MCAssembler::getOrCreateSymbolData() has actually been called before
+  /// anyone calls \a getData().
+  void initializeData() const { HasData = true; }
 
   /// \name Accessors
   /// @{

@@ -352,23 +352,6 @@ void MCSectionData::setBundleLockState(BundleLockStateType NewState) {
 
 /* *** */
 
-MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
-
-void MCSymbolData::initialize(const MCSymbol &Symbol, MCFragment *Fragment,
-                              uint64_t Offset) {
-  assert(!isInitialized() && "Expected uninitialized symbol");
-
-  this->Symbol = &Symbol;
-  this->Fragment.setPointer(Fragment);
-  this->Offset = Offset;
-  this->SymbolSize = nullptr;
-  this->CommonAlign = -1U;
-  this->Flags = 0;
-  this->Index = 0;
-}
-
-/* *** */
-
 MCAssembler::MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
                          MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
                          raw_ostream &OS_)

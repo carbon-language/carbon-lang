@@ -1033,9 +1033,7 @@ public:
     return *Entry;
   }
 
-  bool hasSymbolData(const MCSymbol &Symbol) const {
-    return Symbol.getUnsafeData().isInitialized();
-  }
+  bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
 
   MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
     return const_cast<MCSymbolData &>(
@@ -1051,7 +1049,7 @@ public:
     if (Created)
       *Created = !hasSymbolData(Symbol);
     if (!hasSymbolData(Symbol)) {
-      Symbol.getUnsafeData().initialize(Symbol, nullptr, 0);
+      Symbol.initializeData();
       Symbols.push_back(&Symbol);
     }
     return Symbol.getData();
