@@ -400,7 +400,7 @@ public:
     SetNonStopMode (const bool enable);
 
     void
-    TestPacketSpeed (const uint32_t num_packets);
+    TestPacketSpeed (const uint32_t num_packets, uint32_t max_send, uint32_t max_recv, bool json, Stream &strm);
 
     // This packet is for testing the speed of the interface only. Both
     // the client and server need to support it, but this allows us to

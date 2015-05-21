@@ -11,10 +11,12 @@
 #include "GDBRemoteCommunicationClient.h"
 
 // C Includes
+#include <math.h>
 #include <sys/stat.h>
 
 // C++ Includes
 #include <sstream>
+#include <numeric>
 
 // Other libraries and framework includes
 #include "llvm/ADT/STLExtras.h"
@@ -154,11 +156,6 @@ GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
         // a live connection to a remote GDB server...
         if (QueryNoAckModeSupported())
         {
-#if 0
-            // Set above line to "#if 1" to test packet speed if remote GDB server
-            // supports the qSpeedTest packet...
-            TestPacketSpeed(10000);
-#endif
             return true;
         }
         else
@@ -2797,87 +2794,165 @@ GDBRemoteCommunicationClient::SetNonStopMode (const bool enable)
 
 }
 
+static void
+MakeSpeedTestPacket(StreamString &packet, uint32_t send_size, uint32_t recv_size)
+{
+    packet.Clear();
+    packet.Printf ("qSpeedTest:response_size:%i;data:", recv_size);
+    uint32_t bytes_left = send_size;
+    while (bytes_left > 0)
+    {
+        if (bytes_left >= 26)
+        {
+            packet.PutCString("abcdefghijklmnopqrstuvwxyz");
+            bytes_left -= 26;
+        }
+        else
+        {
+            packet.Printf ("%*.*s;", bytes_left, bytes_left, "abcdefghijklmnopqrstuvwxyz");
+            bytes_left = 0;
+        }
+    }
+}
+
+template<typename T>
+T calculate_standard_deviation(const std::vector<T> &v)
+{
+    T sum = std::accumulate(std::begin(v), std::end(v), T(0));
+    T mean =  sum / (T)v.size();
+    T accum = T(0);
+    std::for_each (std::begin(v), std::end(v), [&](const T d) {
+        T delta = d - mean;
+        accum += delta * delta;
+    });
+
+    T stdev = sqrt(accum / (v.size()-1));
+    return stdev;
+}
+
 void
-GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets)
+GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets, uint32_t max_send, uint32_t max_recv, bool json, Stream &strm)
 {
     uint32_t i;
     TimeValue start_time, end_time;
     uint64_t total_time_nsec;
     if (SendSpeedTestPacket (0, 0))
     {
-        static uint32_t g_send_sizes[] = { 0, 64, 128, 512, 1024 };
-        static uint32_t g_recv_sizes[] = { 0, 64, 128, 512, 1024 }; //, 4*1024, 8*1024, 16*1024, 32*1024, 48*1024, 64*1024, 96*1024, 128*1024 };
-        const size_t k_num_send_sizes = llvm::array_lengthof(g_send_sizes);
-        const size_t k_num_recv_sizes = llvm::array_lengthof(g_recv_sizes);
-        const uint64_t k_recv_amount = 4*1024*1024; // Receive 4MB
-        for (uint32_t send_idx = 0; send_idx < k_num_send_sizes; ++send_idx)
-        {
-            const uint32_t send_size = g_send_sizes[send_idx];
-            for (uint32_t recv_idx = 0; recv_idx < k_num_recv_sizes; ++recv_idx)
-            {
-                const uint32_t recv_size = g_recv_sizes[recv_idx];
-                StreamString packet;
-                packet.Printf ("qSpeedTest:response_size:%i;data:", recv_size);
-                uint32_t bytes_left = send_size;
-                while (bytes_left > 0)
-                {
-                    if (bytes_left >= 26)
-                    {
-                        packet.PutCString("abcdefghijklmnopqrstuvwxyz");
-                        bytes_left -= 26;
-                    }
-                    else
-                    {
-                        packet.Printf ("%*.*s;", bytes_left, bytes_left, "abcdefghijklmnopqrstuvwxyz");
-                        bytes_left = 0;
-                    }
-                }
+        StreamString packet;
+        if (json)
+            strm.Printf("{ \"packet_speeds\" : {\n    \"num_packets\" : %u,\n    \"results\" : [", num_packets);
+        else
+            strm.Printf("Testing sending %u packets of various sizes:\n", num_packets);
+        strm.Flush();
 
+        uint32_t result_idx = 0;
+        uint32_t send_size;
+        std::vector<float> packet_times;
+
+        for (send_size = 0; send_size <= max_send; send_size ? send_size *= 2 : send_size = 4)
+        {
+            for (uint32_t recv_size = 0; recv_size <= max_recv; recv_size ? recv_size *= 2 : recv_size = 4)
+            {
+                MakeSpeedTestPacket (packet, send_size, recv_size);
+
+                packet_times.clear();
+                // Test how long it takes to send 'num_packets' packets
                 start_time = TimeValue::Now();
-                if (recv_size == 0)
+                for (i=0; i<num_packets; ++i)
                 {
-                    for (i=0; i<num_packets; ++i)
-                    {
-                        StringExtractorGDBRemote response;
-                        SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false);
-                    }
-                }
-                else
-                {
-                    uint32_t bytes_read = 0;
-                    while (bytes_read < k_recv_amount)
-                    {
-                        StringExtractorGDBRemote response;
-                        SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false);
-                        bytes_read += recv_size;
-                    }
+                    TimeValue packet_start_time = TimeValue::Now();
+                    StringExtractorGDBRemote response;
+                    SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false);
+                    TimeValue packet_end_time = TimeValue::Now();
+                    uint64_t packet_time_nsec = packet_end_time.GetAsNanoSecondsSinceJan1_1970() - packet_start_time.GetAsNanoSecondsSinceJan1_1970();
+                    packet_times.push_back((float)packet_time_nsec);
                 }
                 end_time = TimeValue::Now();
                 total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
-                if (recv_size == 0)
+
+                float packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec;
+                float total_ms = (float)total_time_nsec/(float)TimeValue::NanoSecPerMilliSec;
+                float average_ms_per_packet = total_ms / num_packets;
+                const float standard_deviation = calculate_standard_deviation<float>(packet_times);
+                if (json)
                 {
-                    float packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec;
-                    printf ("%u qSpeedTest(send=%-7u, recv=%-7u) in %" PRIu64 ".%9.9" PRIu64 " sec for %f packets/sec.\n",
-                            num_packets, 
-                            send_size,
-                            recv_size,
-                            total_time_nsec / TimeValue::NanoSecPerSec,
-                            total_time_nsec % TimeValue::NanoSecPerSec, 
-                            packets_per_second);
+                    strm.Printf ("%s\n     {\"send_size\" : %6" PRIu32 ", \"recv_size\" : %6" PRIu32 ", \"total_time_nsec\" : %12" PRIu64 ", \"standard_deviation_nsec\" : %9" PRIu64 " }", result_idx > 0 ? "," : "", send_size, recv_size, total_time_nsec, (uint64_t)standard_deviation);
+                    ++result_idx;
                 }
                 else
                 {
-                    float mb_second = ((((float)k_recv_amount)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec) / (1024.0*1024.0);
-                    printf ("%u qSpeedTest(send=%-7u, recv=%-7u) sent 4MB in %" PRIu64 ".%9.9" PRIu64 " sec for %f MB/sec.\n",
-                            num_packets,
-                            send_size,
-                            recv_size,
-                            total_time_nsec / TimeValue::NanoSecPerSec,
-                            total_time_nsec % TimeValue::NanoSecPerSec,
-                            mb_second);
+                    strm.Printf ("qSpeedTest(send=%-7u, recv=%-7u) in %" PRIu64 ".%9.9" PRIu64 " sec for %9.2f packets/sec (%10.6f ms per packet) with standard deviation of %10.6f ms\n",
+                                 send_size,
+                                 recv_size,
+                                 total_time_nsec / TimeValue::NanoSecPerSec,
+                                 total_time_nsec % TimeValue::NanoSecPerSec,
+                                 packets_per_second,
+                                 average_ms_per_packet,
+                                 standard_deviation/(float)TimeValue::NanoSecPerMilliSec);
                 }
+                strm.Flush();
             }
         }
+
+        const uint64_t k_recv_amount = 4*1024*1024; // Receive amount in bytes
+
+        const float k_recv_amount_mb = (float)k_recv_amount/(1024.0f*1024.0f);
+        if (json)
+            strm.Printf("\n    ]\n  },\n  \"download_speed\" : {\n    \"byte_size\" : %" PRIu64 ",\n    \"results\" : [", k_recv_amount);
+        else
+            strm.Printf("Testing receiving %2.1fMB of data using varying receive packet sizes:\n", k_recv_amount_mb);
+        strm.Flush();
+        send_size = 0;
+        result_idx = 0;
+        for (uint32_t recv_size = 32; recv_size <= max_recv; recv_size *= 2)
+        {
+            MakeSpeedTestPacket (packet, send_size, recv_size);
+
+            // If we have a receive size, test how long it takes to receive 4MB of data
+            if (recv_size > 0)
+            {
+                start_time = TimeValue::Now();
+                uint32_t bytes_read = 0;
+                uint32_t packet_count = 0;
+                while (bytes_read < k_recv_amount)
+                {
+                    StringExtractorGDBRemote response;
+                    SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false);
+                    bytes_read += recv_size;
+                    ++packet_count;
+                }
+                end_time = TimeValue::Now();
+                total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
+                float mb_second = ((((float)k_recv_amount)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec) / (1024.0*1024.0);
+                float packets_per_second = (((float)packet_count)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec;
+                float total_ms = (float)total_time_nsec/(float)TimeValue::NanoSecPerMilliSec;
+                float average_ms_per_packet = total_ms / packet_count;
+
+                if (json)
+                {
+                    strm.Printf ("%s\n     {\"send_size\" : %6" PRIu32 ", \"recv_size\" : %6" PRIu32 ", \"total_time_nsec\" : %12" PRIu64 " }", result_idx > 0 ? "," : "", send_size, recv_size, total_time_nsec);
+                    ++result_idx;
+                }
+                else
+                {
+                    strm.Printf ("qSpeedTest(send=%-7u, recv=%-7u) %6u packets needed to receive %2.1fMB in %" PRIu64 ".%9.9" PRIu64 " sec for %f MB/sec for %9.2f packets/sec (%10.6f ms per packet)\n",
+                                 send_size,
+                                 recv_size,
+                                 packet_count,
+                                 k_recv_amount_mb,
+                                 total_time_nsec / TimeValue::NanoSecPerSec,
+                                 total_time_nsec % TimeValue::NanoSecPerSec,
+                                 mb_second,
+                                 packets_per_second,
+                                 average_ms_per_packet);
+                }
+                strm.Flush();
+            }
+        }
+        if (json)
+            strm.Printf("\n    ]\n  }\n}\n");
+        else
+            strm.EOL();
     }
 }
 

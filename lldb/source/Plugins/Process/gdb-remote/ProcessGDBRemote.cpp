@@ -55,6 +55,9 @@
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupBoolean.h"
+#include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/Property.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -4311,6 +4314,80 @@ ProcessGDBRemote::LoadModules ()
     return new_modules.GetSize();
 }
 
+class CommandObjectProcessGDBRemoteSpeedTest: public CommandObjectParsed
+{
+public:
+    CommandObjectProcessGDBRemoteSpeedTest(CommandInterpreter &interpreter) :
+        CommandObjectParsed (interpreter,
+                             "process plugin packet speed-test",
+                             "Tests packet speeds of various sizes to determine the performance characteristics of the GDB remote connection. ",
+                             NULL),
+        m_option_group (interpreter),
+        m_num_packets (LLDB_OPT_SET_1, false, "count",       'c', 0, eArgTypeCount, "The number of packets to send of each varying size (default is 1000).", 1000),
+        m_max_send    (LLDB_OPT_SET_1, false, "max-send",    's', 0, eArgTypeCount, "The maximum number of bytes to send in a packet. Sizes increase in powers of 2 while the size is less than or equal to this option value. (default 1024).", 1024),
+        m_max_recv    (LLDB_OPT_SET_1, false, "max-receive", 'r', 0, eArgTypeCount, "The maximum number of bytes to receive in a packet. Sizes increase in powers of 2 while the size is less than or equal to this option value. (default 1024).", 1024),
+        m_json        (LLDB_OPT_SET_1, false, "json",        'j', "Print the output as JSON data for easy parsing.", false, true)
+    {
+        m_option_group.Append (&m_num_packets, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_max_send, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_max_recv, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_json, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Finalize();
+    }
+
+    ~CommandObjectProcessGDBRemoteSpeedTest ()
+    {
+    }
+
+
+    Options *
+    GetOptions () override
+    {
+        return &m_option_group;
+    }
+
+    bool
+    DoExecute (Args& command, CommandReturnObject &result) override
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc == 0)
+        {
+            ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
+            if (process)
+            {
+                StreamSP output_stream_sp (m_interpreter.GetDebugger().GetAsyncOutputStream());
+                result.SetImmediateOutputStream (output_stream_sp);
+
+                const uint32_t num_packets = (uint32_t)m_num_packets.GetOptionValue().GetCurrentValue();
+                const uint64_t max_send = m_max_send.GetOptionValue().GetCurrentValue();
+                const uint64_t max_recv = m_max_recv.GetOptionValue().GetCurrentValue();
+                const bool json = m_json.GetOptionValue().GetCurrentValue();
+                if (output_stream_sp)
+                    process->GetGDBRemote().TestPacketSpeed (num_packets, max_send, max_recv, json, *output_stream_sp);
+                else
+                {
+                    process->GetGDBRemote().TestPacketSpeed (num_packets, max_send, max_recv, json, result.GetOutputStream());
+                }
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+                return true;
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("'%s' takes no arguments", m_cmd_name.c_str());
+        }
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+protected:
+    OptionGroupOptions m_option_group;
+    OptionGroupUInt64 m_num_packets;
+    OptionGroupUInt64 m_max_send;
+    OptionGroupUInt64 m_max_recv;
+    OptionGroupBoolean m_json;
+
+};
+
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
 private:
@@ -4524,6 +4601,7 @@ public:
         LoadSubCommand ("send", CommandObjectSP (new CommandObjectProcessGDBRemotePacketSend (interpreter)));
         LoadSubCommand ("monitor", CommandObjectSP (new CommandObjectProcessGDBRemotePacketMonitor (interpreter)));
         LoadSubCommand ("xfer-size", CommandObjectSP (new CommandObjectProcessGDBRemotePacketXferSize (interpreter)));
+        LoadSubCommand ("speed-test", CommandObjectSP (new CommandObjectProcessGDBRemoteSpeedTest (interpreter)));
     }
     
     ~CommandObjectProcessGDBRemotePacket ()

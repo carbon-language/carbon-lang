@@ -626,6 +626,7 @@ namespace lldb_private {
         bool m_multi_line;
         bool m_color_prompts;
         bool m_interrupt_exits;
+        bool m_editing; // Set to true when fetching a line manually (not using libedit)
     };
     
     // The order of base classes is important. Look at the constructor of IOHandlerConfirm
