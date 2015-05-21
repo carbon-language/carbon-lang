@@ -255,8 +255,7 @@ class ELFObjectWriter : public MCObjectWriter {
     void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
     void writeSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
-                      uint32_t GroupSymbolIndex,
-                      uint64_t Offset, uint64_t Size, uint64_t Alignment,
+                      uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                       const MCSectionELF &Section);
   };
 }
@@ -1255,7 +1254,6 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
                                    const SectionIndexMapTy &SectionIndexMap,
                                    uint32_t GroupSymbolIndex,
                                    uint64_t Offset, uint64_t Size,
-                                   uint64_t Alignment,
                                    const MCSectionELF &Section) {
   uint64_t sh_link = 0;
   uint64_t sh_info = 0;
@@ -1298,9 +1296,9 @@ void ELFObjectWriter::writeSection(MCAssembler &Asm,
     sh_link = SectionIndexMap.lookup(Section.getAssociatedSection());
 
   WriteSecHdrEntry(ShStrTabBuilder.getOffset(Section.getSectionName()),
-                   Section.getType(),
-                   Section.getFlags(), 0, Offset, Size, sh_link, sh_info,
-                   Alignment, Section.getEntrySize());
+                   Section.getType(), Section.getFlags(), 0, Offset, Size,
+                   sh_link, sh_info, Section.getAlignment(),
+                   Section.getEntrySize());
 }
 
 void ELFObjectWriter::writeSectionHeader(
@@ -1329,7 +1327,7 @@ void ELFObjectWriter::writeSectionHeader(
                                             : Offsets.second - Offsets.first;
 
     writeSection(Asm, SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
-                 SD.getAlignment(), *Section);
+                 *Section);
   }
 }
 
