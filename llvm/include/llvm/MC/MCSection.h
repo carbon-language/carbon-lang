@@ -35,7 +35,7 @@ private:
   MCSection(const MCSection &) = delete;
   void operator=(const MCSection &) = delete;
 
-  MCSymbol *Begin;
+  mutable MCSymbol *Begin;
   mutable MCSymbol *End;
 
 protected:
@@ -52,6 +52,10 @@ public:
   SectionVariant getVariant() const { return Variant; }
 
   MCSymbol *getBeginSymbol() const { return Begin; }
+  void setBeginSymbol(MCSymbol *Sym) const {
+    assert(!Begin);
+    Begin = Sym;
+  }
   MCSymbol *getEndSymbol(MCContext &Ctx) const;
   bool hasEnded() const;
 

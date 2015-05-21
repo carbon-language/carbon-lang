@@ -632,10 +632,10 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
   if (getContext().getGenDwarfForAssembly()) {
     MCSymbol *SectionStartSym = getContext().createTempSymbol();
     getStreamer().EmitLabel(SectionStartSym);
-    auto InsertResult = getContext().addGenDwarfSection(
-        getStreamer().getCurrentSection().first);
-    assert(InsertResult.second && ".text section should not have debug info yet");
-    InsertResult.first->second.first = SectionStartSym;
+    const MCSection *Sec = getStreamer().getCurrentSection().first;
+    bool InsertResult = getContext().addGenDwarfSection(Sec);
+    assert(InsertResult && ".text section should not have debug info yet");
+    Sec->setBeginSymbol(SectionStartSym);
     getContext().setGenDwarfFileNumber(getStreamer().EmitDwarfFileDirective(
         0, StringRef(), getContext().getMainFileName()));
   }

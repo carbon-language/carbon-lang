@@ -136,10 +136,8 @@ namespace llvm {
     /// assembly source files.
     unsigned GenDwarfFileNumber;
 
-    /// Symbols created for the start and end of each section, used for
-    /// generating the .debug_ranges and .debug_aranges sections.
-    MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *>>
-        SectionStartEndSyms;
+    /// Sections for generating the .debug_ranges and .debug_aranges sections.
+    SetVector<const MCSection *> SectionsForRanges;
 
     /// The information gathered from labels that will have dwarf label
     /// entries when generating dwarf assembly source files.
@@ -469,17 +467,13 @@ namespace llvm {
     void setGenDwarfFileNumber(unsigned FileNumber) {
       GenDwarfFileNumber = FileNumber;
     }
-    const MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *>> &
-    getGenDwarfSectionSyms() {
-      return SectionStartEndSyms;
+    const SetVector<const MCSection *> &getGenDwarfSectionSyms() {
+      return SectionsForRanges;
     }
-    std::pair<MapVector<const MCSection *,
-                        std::pair<MCSymbol *, MCSymbol *>>::iterator,
-              bool>
-    addGenDwarfSection(const MCSection *Sec) {
-      return SectionStartEndSyms.insert(
-          std::make_pair(Sec, std::make_pair(nullptr, nullptr)));
+    bool addGenDwarfSection(const MCSection *Sec) {
+      return SectionsForRanges.insert(Sec);
     }
+
     void finalizeDwarfSections(MCStreamer &MCOS);
     const std::vector<MCGenDwarfLabelEntry> &getMCGenDwarfLabelEntries() const {
       return MCGenDwarfLabelEntries;

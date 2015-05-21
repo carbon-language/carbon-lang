@@ -532,14 +532,14 @@ EndStmt:
   getStreamer().SwitchSection(ELFSection, Subsection);
 
   if (getContext().getGenDwarfForAssembly()) {
-    auto InsertResult = getContext().addGenDwarfSection(ELFSection);
-    if (InsertResult.second) {
+    bool InsertResult = getContext().addGenDwarfSection(ELFSection);
+    if (InsertResult) {
       if (getContext().getDwarfVersion() <= 2)
         Warning(loc, "DWARF2 only supports one section per compilation unit");
 
       MCSymbol *SectionStartSymbol = getContext().createTempSymbol();
       getStreamer().EmitLabel(SectionStartSymbol);
-      InsertResult.first->second.first = SectionStartSymbol;
+      ELFSection->setBeginSymbol(SectionStartSymbol);
     }
   }
 

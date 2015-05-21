@@ -77,7 +77,7 @@ void MCContext::reset() {
   CompilationDir.clear();
   MainFileName.clear();
   MCDwarfLineTablesCUMap.clear();
-  SectionStartEndSyms.clear();
+  SectionsForRanges.clear();
   MCGenDwarfLabelEntries.clear();
   DwarfDebugFlags = StringRef();
   DwarfCompileUnitID = 0;
@@ -437,27 +437,17 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
   return !MCDwarfFiles[FileNumber].Name.empty();
 }
 
-/// finalizeDwarfSections - Emit end symbols for each non-empty code section.
-/// Also remove empty sections from SectionStartEndSyms, to avoid generating
+/// Remove empty sections from SectionStartEndSyms, to avoid generating
 /// useless debug info for them.
 void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
-  MCContext &context = MCOS.getContext();
-
-  auto sec = SectionStartEndSyms.begin();
-  while (sec != SectionStartEndSyms.end()) {
-    assert(sec->second.first && "Start symbol must be set by now");
-    MCOS.SwitchSection(sec->first);
-    if (MCOS.mayHaveInstructions()) {
-      MCSymbol *SectionEndSym = context.createTempSymbol();
-      MCOS.EmitLabel(SectionEndSym);
-      sec->second.second = SectionEndSym;
-      ++sec;
-    } else {
-      MapVector<const MCSection *, std::pair<MCSymbol *, MCSymbol *>>::iterator
-          to_erase = sec;
-      sec = SectionStartEndSyms.erase(to_erase);
-    }
+  std::vector<const MCSection *> Keep;
+  for (const MCSection *Sec : SectionsForRanges) {
+    MCOS.SwitchSection(Sec); // FIXME: pass the section to mayHaveInstructions
+    if (MCOS.mayHaveInstructions())
+      Keep.push_back(Sec);
   }
+  SectionsForRanges.clear();
+  SectionsForRanges.insert(Keep.begin(), Keep.end());
 }
 
 void MCContext::reportFatalError(SMLoc Loc, const Twine &Msg) const {
