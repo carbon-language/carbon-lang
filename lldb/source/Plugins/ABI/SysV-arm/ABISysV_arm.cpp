@@ -420,6 +420,8 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
         return return_valobj_sp;
         
     bool is_signed;
+    bool is_complex;
+    uint32_t float_count;
     
     // Get the pointer to the first stack argument so we have a place to start 
     // when reading data
@@ -469,6 +471,41 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
     {
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
+    }
+    else if (clang_type.IsFloatingPointType(float_count, is_complex))
+    {
+        if (float_count == 1 && !is_complex)
+        {
+            size_t bit_width = clang_type.GetBitSize(&thread);
+            switch (bit_width)
+            {
+                default:
+                    return return_valobj_sp;
+                case 64:
+                {
+                    static_assert(sizeof(double) == sizeof(uint64_t), "");
+                    const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG2);
+                    uint64_t raw_value;
+                    raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+                    raw_value |= ((uint64_t)(reg_ctx->ReadRegisterAsUnsigned(r1_reg_info, 0) & UINT32_MAX)) << 32;
+                    value.GetScalar() = *reinterpret_cast<double*>(&raw_value);
+                    break;
+                }
+                case 16: // Half precision returned after a conversion to single precision
+                case 32:
+                {
+                    static_assert(sizeof(float) == sizeof(uint32_t), "");
+                    uint32_t raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+                    value.GetScalar() = *reinterpret_cast<float*>(&raw_value);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // not handled yet
+            return return_valobj_sp;
+        }
     }
     else
     {
