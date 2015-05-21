@@ -143,6 +143,9 @@ public:
   /// \brief Should be called when starting to process new translation unit.
   void setCurrentFile(StringRef File);
 
+  /// \brief Returns the main file name of the current translation unit.
+  StringRef getCurrentFile() const { return CurrentFile; }
+
   /// \brief Sets ASTContext for the current translation unit.
   void setASTContext(ASTContext *Context);
 

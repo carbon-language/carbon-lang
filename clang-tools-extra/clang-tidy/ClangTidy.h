@@ -156,6 +156,8 @@ private:
 
 protected:
   OptionsView Options;
+  /// \brief Returns the main file name of the current translation unit.
+  StringRef getCurrentMainFile() const { return Context->getCurrentFile(); }
 };
 
 class ClangTidyCheckFactories;

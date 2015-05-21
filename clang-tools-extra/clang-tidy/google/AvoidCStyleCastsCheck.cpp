@@ -93,6 +93,11 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   if (!match(expr(hasAncestor(linkageSpecDecl())), *CastExpr, *Result.Context)
            .empty())
     return;
+  // Ignore code in .c files and headers included from them, even if they are
+  // compiled as C++.
+  if (getCurrentMainFile().endswith(".c"))
+    return;
+
 
   // Leave type spelling exactly as it was (unlike
   // getTypeAsWritten().getAsString() which would spell enum types 'enum X').
