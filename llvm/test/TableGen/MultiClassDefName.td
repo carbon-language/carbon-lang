@@ -39,3 +39,45 @@ multiclass MC2<string name> {
 
 defm : MC2<"bar">;
 
+multiclass MC3<string s> {
+  def ZFizz#s : C<s>;
+}
+
+defm : MC3<"Buzz">;
+
+// CHECK: def ZFizzBuzz
+// CHECK: string name = "Buzz";
+// CHECK-NOT: MC3::s
+
+multiclass MC4<string s> {
+  def NAME#s : C<s>;
+}
+
+defm ZTagazok : MC4<"AToi">;
+
+// CHECK: def ZTagazokAToi
+// CHECK: string name = "AToi";
+// CHECK-NOT: MC4::s
+
+multiclass MC5<C c> {
+  def NAME#c.name : C<c.name>;
+}
+
+def CTiger : C<"Tiger">;
+defm Zebra : MC5<CTiger>;
+
+// CHECK: def ZebraTiger
+// CHECK: string name = "Tiger";
+// CHECK-NOT: MC5::c
+
+multiclass MC6<C c> {
+  def NAME#Tiger#c.name : C<c.name>;
+}
+
+def CAligator : C<"Aligator">;
+defm Zebra : MC6<CAligator>;
+
+// CHECK: def ZebraTigerAligator
+// CHECK: string name = "Aligator";
+// CHECK-NOT: MC6::c
+
