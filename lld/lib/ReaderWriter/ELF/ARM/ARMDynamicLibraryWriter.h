@@ -10,13 +10,15 @@
 #define LLD_READER_WRITER_ELF_ARM_ARM_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
+#include "ARMELFWriters.h"
 #include "ARMLinkingContext.h"
 #include "ARMTargetHandler.h"
 
 namespace lld {
 namespace elf {
 
-class ARMDynamicLibraryWriter : public DynamicLibraryWriter<ELF32LE> {
+class ARMDynamicLibraryWriter
+    : public ARMELFWriter<DynamicLibraryWriter<ELF32LE>> {
 public:
   ARMDynamicLibraryWriter(ARMLinkingContext &ctx, ARMTargetLayout &layout);
 
@@ -27,7 +29,7 @@ protected:
 
 ARMDynamicLibraryWriter::ARMDynamicLibraryWriter(ARMLinkingContext &ctx,
                                                  ARMTargetLayout &layout)
-    : DynamicLibraryWriter(ctx, layout) {}
+    : ARMELFWriter(ctx, layout) {}
 
 void ARMDynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {

@@ -10,6 +10,9 @@
 #ifndef LLD_READER_WRITER_ELF_ARM_ARM_SYMBOL_TABLE_H
 #define LLD_READER_WRITER_ELF_ARM_ARM_SYMBOL_TABLE_H
 
+#include "SectionChunks.h"
+#include "TargetLayout.h"
+
 namespace lld {
 namespace elf {
 
