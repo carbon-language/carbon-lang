@@ -81,6 +81,9 @@ class DebuggerThread : public std::enable_shared_from_this<DebuggerThread>
                                                  // is finished processing and the debug loop can be
                                                  // continued.
 
+    HANDLE m_debugging_ended_event; // An event which gets signalled by the debugger thread when it
+                                    // exits the debugger loop and is detached from the inferior.
+
     static lldb::thread_result_t DebuggerThreadLaunchRoutine(void *data);
     lldb::thread_result_t DebuggerThreadLaunchRoutine(const ProcessLaunchInfo &launch_info);
     static lldb::thread_result_t DebuggerThreadAttachRoutine(void *data);

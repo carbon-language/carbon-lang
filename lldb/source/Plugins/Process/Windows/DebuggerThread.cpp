@@ -62,11 +62,14 @@ struct DebugAttachContext
 DebuggerThread::DebuggerThread(DebugDelegateSP debug_delegate)
     : m_debug_delegate(debug_delegate)
     , m_image_file(nullptr)
+    , m_debugging_ended_event(nullptr)
 {
+    m_debugging_ended_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
 }
 
 DebuggerThread::~DebuggerThread()
 {
+    ::CloseHandle(m_debugging_ended_event);
 }
 
 Error
@@ -150,6 +153,7 @@ DebuggerThread::DebuggerThreadLaunchRoutine(const ProcessLaunchInfo &launch_info
     else
         m_debug_delegate->OnDebuggerError(error, 0);
 
+    SetEvent(m_debugging_ended_event);
     return 0;
 }
 
@@ -203,10 +207,9 @@ DebuggerThread::StopDebugging(bool terminate)
             "StopDebugging called TerminateProcess(0x%p, 0) (inferior=%I64u), success='%s'",
             handle, pid, (terminate_suceeded ? "true" : "false"));
 
-
-        // If we're stuck waiting for an exception to continue, continue it now.  But only
-        // AFTER setting the termination event, to make sure that we don't race and enter
-        // another wait for another debug event.
+        // If we're stuck waiting for an exception to continue (e.g. the user is at a breakpoint
+        // messing around in the debugger), continue it now.  But only AFTER calling TerminateProcess
+        // to make sure that the very next call to WaitForDebugEvent is an exit process event.
         if (m_active_exception.get())
         {
             WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_EXCEPTION,
@@ -215,23 +218,19 @@ DebuggerThread::StopDebugging(bool terminate)
             ContinueAsyncException(ExceptionResult::MaskException);
         }
 
-        // Don't return until the process has exited.
-        if (terminate_suceeded)
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging waiting for detach from process %u to complete.", pid);
+
+        DWORD wait_result = WaitForSingleObject(m_debugging_ended_event, 5000);
+        if (wait_result != WAIT_OBJECT_0)
         {
-            WINLOG_IFALL(WINDOWS_LOG_PROCESS,
-                "StopDebugging waiting for termination of process %u to complete.", pid);
-
-            DWORD wait_result = ::WaitForSingleObject(handle, 5000);
-            if (wait_result != WAIT_OBJECT_0)
-                terminate_suceeded = false;
-
-            WINLOG_IFALL(WINDOWS_LOG_PROCESS,
-                "StopDebugging WaitForSingleObject(0x%p, 5000) returned %u",
-                handle, wait_result);
-        }
-
-        if (!terminate_suceeded)
             error.SetError(GetLastError(), eErrorTypeWin32);
+            WINERR_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging WaitForSingleObject(0x%p, 5000) returned %u",
+                         m_debugging_ended_event, wait_result);
+        }
+        else
+        {
+            WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging detach from process %u completed successfully.", pid);
+        }
     }
     else
     {
@@ -343,6 +342,8 @@ DebuggerThread::DebugLoop()
         }
     }
     FreeProcessHandles();
+
+    WINLOG_IFALL(WINDOWS_LOG_EVENT, "WaitForDebugEvent loop completed, exiting.");
 }
 
 ExceptionResult

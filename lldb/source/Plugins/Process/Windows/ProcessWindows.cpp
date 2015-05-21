@@ -424,30 +424,43 @@ ProcessWindows::DoDetach(bool keep_stopped)
 Error
 ProcessWindows::DoDestroy()
 {
-    llvm::sys::ScopedLock lock(m_mutex);
-
-    Error error;
-    StateType private_state = GetPrivateState();
-    if (!m_session_data)
+    DebuggerThreadSP debugger_thread;
+    StateType private_state;
     {
-        WINWARN_IFALL(WINDOWS_LOG_PROCESS, "DoDestroy called while state = %u, but there is no active session.",
-                      private_state);
-        return error;
+        // Acquire this lock inside an inner scope, only long enough to get the DebuggerThread.
+        // StopDebugging() will trigger a call back into ProcessWindows which will acquire the lock
+        // again, so we need to not deadlock.
+        llvm::sys::ScopedLock lock(m_mutex);
+
+        private_state = GetPrivateState();
+
+        if (!m_session_data)
+        {
+            WINWARN_IFALL(WINDOWS_LOG_PROCESS, "DoDestroy called while state = %u, but there is no active session.",
+                          private_state);
+            return Error();
+        }
+
+        debugger_thread = m_session_data->m_debugger;
     }
 
-    DebuggerThread &debugger = *m_session_data->m_debugger;
+    Error error;
     if (private_state != eStateExited && private_state != eStateDetached)
     {
-        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoDestroy called for process 0x%I64u while state = %u.  Shutting down...",
-                     debugger.GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
-        error = debugger.StopDebugging(true);
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoDestroy called for process %I64u while state = %u.  Shutting down...",
+                     debugger_thread->GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
+        error = debugger_thread->StopDebugging(true);
+
+        // By the time StopDebugging returns, there is no more debugger thread, so we can be assured that no other
+        // thread
+        // will race for the session data.  So it's safe to reset it without holding a lock.
         m_session_data.reset();
     }
     else
     {
         WINERR_IFALL(WINDOWS_LOG_PROCESS,
                      "DoDestroy called for process %I64u while state = %u, but cannot destroy in this state.",
-                     debugger.GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
+                     debugger_thread->GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
     }
 
     return error;
