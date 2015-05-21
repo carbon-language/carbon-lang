@@ -281,8 +281,8 @@ template <class T, class E>
 typename std::enable_if<std::is_error_code_enum<E>::value ||
                             std::is_error_condition_enum<E>::value,
                         bool>::type
-operator==(ErrorOr<T> &Err, E Code) {
-  return std::error_code(Err) == Code;
+operator==(const ErrorOr<T> &Err, E Code) {
+  return Err.getError() == Code;
 }
 } // end namespace llvm
 

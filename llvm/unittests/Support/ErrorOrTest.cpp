@@ -66,6 +66,11 @@ TEST(ErrorOr, Covariant) {
   ErrorOr<std::unique_ptr<int>> b4(b3);
 }
 
+TEST(ErrorOr, Comparison) {
+  ErrorOr<int> x(std::errc::no_such_file_or_directory);
+  EXPECT_EQ(x, std::errc::no_such_file_or_directory);
+}
+
 // ErrorOr<int*> x(nullptr);
 // ErrorOr<std::unique_ptr<int>> y = x; // invalid conversion
 static_assert(
