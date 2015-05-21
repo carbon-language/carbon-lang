@@ -5060,6 +5060,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 for (f=0;  f < team->t.t_nproc; ++f) {
                     __kmp_initialize_info( team->t.t_threads[ f ], team, f, __kmp_gtid_from_tid( f, team ) );
                     team->t.t_threads[f]->th.th_task_state = old_state;
+                    team->t.t_threads[f]->th.th_task_team = team->t.t_task_team[old_state];
                 }
             }
 
