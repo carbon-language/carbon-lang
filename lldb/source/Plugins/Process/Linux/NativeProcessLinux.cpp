@@ -2266,9 +2266,16 @@ NativeProcessLinux::MonitorCallback(lldb::pid_t pid,
         if (err.GetError() == EINVAL)
         {
             // This is a group stop reception for this tid.
+            // We can reach here if we reinject SIGSTOP, SIGSTP, SIGTTIN or SIGTTOU into the
+            // tracee, triggering the group-stop mechanism. Normally receiving these would stop
+            // the process, pending a SIGCONT. Simulating this state in a debugger is hard and is
+            // generally not needed (one use case is debugging background task being managed by a
+            // shell). For general use, it is sufficient to stop the process in a signal-delivery
+            // stop which happens before the group stop. This done by MonitorSignal and works
+            // correctly for all signals.
             if (log)
-                log->Printf ("NativeProcessLinux::%s received a group stop for pid %" PRIu64 " tid %" PRIu64, __FUNCTION__, GetID (), pid);
-            ThreadDidStop(pid, false);
+                log->Printf("NativeProcessLinux::%s received a group stop for pid %" PRIu64 " tid %" PRIu64 ". Transparent handling of group stops not supported, resuming the thread.", __FUNCTION__, GetID (), pid);
+            Resume(pid, signal);
         }
         else
         {
@@ -2776,29 +2783,6 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
 
     switch (signo)
     {
-    case SIGSTOP:
-        {
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedBySignal (signo);
-            if (log)
-            {
-                if (is_from_llgs)
-                    log->Printf ("NativeProcessLinux::%s pid = %" PRIu64 " tid %" PRIu64 " received SIGSTOP from llgs, most likely an interrupt", __FUNCTION__, GetID (), pid);
-                else
-                    log->Printf ("NativeProcessLinux::%s pid = %" PRIu64 " tid %" PRIu64 " received SIGSTOP from outside of debugger", __FUNCTION__, GetID (), pid);
-            }
-
-            // Resume this thread to get the group-stop mechanism to fire off the true group stops.
-            // This thread will get stopped again as part of the group-stop completion.
-            ResumeThread(pid,
-                    [=](lldb::tid_t tid_to_resume, bool supress_signal)
-                    {
-                        std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetRunning ();
-                        // Pass this signal number on to the inferior to handle.
-                        return Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
-                    },
-                    true);
-        }
-        break;
     case SIGSEGV:
     case SIGILL:
     case SIGFPE:
