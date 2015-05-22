@@ -26,17 +26,18 @@ using namespace llvm::object;
 
 namespace {
 
-class LoadedMachOObjectInfo
-    : public RuntimeDyld::LoadedObjectInfoHelper<LoadedMachOObjectInfo> {
+class LoadedMachOObjectInfo : public RuntimeDyld::LoadedObjectInfo {
 public:
   LoadedMachOObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
                         unsigned EndIdx)
-      : LoadedObjectInfoHelper(RTDyld, BeginIdx, EndIdx) {}
+    : RuntimeDyld::LoadedObjectInfo(RTDyld, BeginIdx, EndIdx) {}
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override {
     return OwningBinary<ObjectFile>();
   }
+
+  RuntimeDyld::LoadedObjectInfo *clone() const { return new LoadedMachOObjectInfo(*this); }
 };
 
 }
