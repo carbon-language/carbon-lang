@@ -233,7 +233,10 @@ Run lldb test suite using a separate process for each test file.
 
     is_posix = (os.name == "posix")
     dotest_argv = shlex.split(dotest_option_string, posix=is_posix) if dotest_option_string else []
-    dotest_options = dotest_args.getArguments(dotest_argv)
+
+    parser = dotest_args.create_parser()
+    dotest_options = dotest_args.parse_args(parser, dotest_argv)
+
     if not dotest_options.s:
         # no session log directory, we need to add this to prevent
         # every dotest invocation from creating its own directory

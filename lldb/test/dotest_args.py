@@ -26,8 +26,7 @@ def parse_args(parser, argv):
     else:
         return parser.parse_args(args=argv)
 
-def getArguments(argv):
-
+def create_parser():
     parser = argparse.ArgumentParser(description='description', prefix_chars='+-', add_help=False)
     group = None
 
@@ -114,4 +113,4 @@ def getArguments(argv):
     group = parser.add_argument_group('Test directories')
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
 
-    return parse_args(parser, argv)
+    return parser
