@@ -28,13 +28,6 @@ RUN:      | FileCheck -check-prefix NAME-PAST-EOF %s
 RUN: not llvm-nm %p/Inputs/macho-invalid-section-index-getSectionRawName 2>&1 \
 RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SYMBOL-SEC %s
 
-RUN: not llvm-objdump -t %p/Inputs/macho-invalid-getsection-index 2>&1 \
-RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-GETSECT %s
-
-RUN: not llvm-objdump -t %p/Inputs/macho64-invalid-getsection-index 2>&1 \
-RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-GETSECT64 %s
-
-
 SMALL-LOADC-SIZE: Load command with size < 8 bytes
 SMALL-SEGLOADC-SIZE: Segment load command size is too small
 INCOMPLETE-LOADC: Malformed MachO file
@@ -43,5 +36,3 @@ BAD-SYMBOL: Requested symbol index is out of range
 NAME-PAST-EOF: Symbol name entry points before beginning or past end of file
 
 INVALID-SECTION-IDX-SYMBOL-SEC: getSymbolSection: Invalid section index
-INVALID-SECTION-IDX-GETSECT: getSection: Invalid section index
-INVALID-SECTION-IDX-GETSECT64: getSection64: Invalid section index
