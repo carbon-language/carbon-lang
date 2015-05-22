@@ -22,7 +22,7 @@ import lldbutil
 signal_names = dict((getattr(signal, n), n) \
         for n in dir(signal) if n.startswith('SIG') and '_' not in n )
 
-
+@skipIfWindows
 class ConcurrentEventsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
