@@ -187,7 +187,6 @@ public:
   void addPreRegAlloc() override;
   void addPostRegAlloc() override;
   void addPreEmitPass() override;
-  void addPreSched2() override;
 };
 } // namespace
 
@@ -235,8 +234,6 @@ void X86PassConfig::addPreRegAlloc() {
 void X86PassConfig::addPostRegAlloc() {
   addPass(createX86FloatingPointStackifierPass());
 }
-
-void X86PassConfig::addPreSched2() { addPass(createX86ExpandPseudoPass()); }
 
 void X86PassConfig::addPreEmitPass() {
   if (getOptLevel() != CodeGenOpt::None)
