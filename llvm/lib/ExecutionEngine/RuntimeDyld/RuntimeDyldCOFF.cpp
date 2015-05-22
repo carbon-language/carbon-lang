@@ -24,18 +24,17 @@ using namespace llvm::object;
 
 namespace {
 
-class LoadedCOFFObjectInfo : public RuntimeDyld::LoadedObjectInfo {
+class LoadedCOFFObjectInfo
+    : public RuntimeDyld::LoadedObjectInfoHelper<LoadedCOFFObjectInfo> {
 public:
   LoadedCOFFObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
                        unsigned EndIdx)
-      : RuntimeDyld::LoadedObjectInfo(RTDyld, BeginIdx, EndIdx) {}
+      : LoadedObjectInfoHelper(RTDyld, BeginIdx, EndIdx) {}
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override {
     return OwningBinary<ObjectFile>();
   }
-
-  RuntimeDyld::LoadedObjectInfo *clone() const { return new LoadedCOFFObjectInfo(*this); }
 };
 }
 
