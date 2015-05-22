@@ -4,6 +4,8 @@ RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm -a -S - \
 RUN:         | FileCheck %s -check-prefix COFF64
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
+RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 -S \
+RUN:         | FileCheck %s -check-prefix ELF-SIZE
 RUN: llvm-nm -o %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF-o
 RUN: llvm-nm -u %p/Inputs/trivial-object-test.elf-i386 \
@@ -48,34 +50,39 @@ RUN: cp %p/Inputs/trivial-object-test.macho-i386 a.out
 RUN: llvm-nm | FileCheck %s -check-prefix A-OUT
 
 
-COFF32: 00000000 {{.*}} d .data
-COFF32-NEXT: 00000000 {{.*}} t .text
-COFF32-NEXT: 00000000 0000000d d L_.str
+COFF32: 00000000 d .data
+COFF32-NEXT: 00000000 t .text
+COFF32-NEXT: 00000000 d L_.str
 COFF32-NEXT:          U _SomeOtherFunction
-COFF32-NEXT: 00000000 {{.*}} T _main
+COFF32-NEXT: 00000000 T _main
 COFF32-NEXT:          U _puts
 
-COFF64: 00000000 {{.*}} d .data
-COFF64-NEXT: 00000000 {{.*}} t .text
-COFF64-NEXT: 00000000 00000008 r ??__Ex@@YAXXZ
-COFF64-NEXT: 00000000 0000000d d L.str
+COFF64: 00000000 d .data
+COFF64-NEXT: 00000000 t .text
+COFF64-NEXT: 00000000 r ??__Ex@@YAXXZ
+COFF64-NEXT: 00000000 d L.str
 COFF64-NEXT:          U SomeOtherFunction
-COFF64-NEXT: 00000000 {{.*}} T main
+COFF64-NEXT: 00000000 T main
 COFF64-NEXT:          U puts
 
-COFF-COMMON: 00000000 00000000 b .bss
-COFF-COMMON-NEXT: 00000000 00000000 d .data
-COFF-COMMON-NEXT: 00000000 00000014 d .drectve
-COFF-COMMON-NEXT: 00000000 00000000 n .file
-COFF-COMMON-NEXT: 00000000 00000014 r .rdata$zzz
-COFF-COMMON-NEXT: 00000000 00000000 t .text
-COFF-COMMON-NEXT:          00000004 C _a
+COFF-COMMON: 00000000 b .bss
+COFF-COMMON-NEXT: 00000000 d .data
+COFF-COMMON-NEXT: 00000000 d .drectve
+COFF-COMMON-NEXT: 00000000 n .file
+COFF-COMMON-NEXT: 00000000 r .rdata$zzz
+COFF-COMMON-NEXT: 00000000 t .text
+COFF-COMMON-NEXT:          C _a
 
 
 ELF-NOT:      U
 ELF:          U SomeOtherFunction
 ELF: 00000000 T main
 ELF:          U puts
+
+FIXME: we should not print the size of undefined symbols.
+ELF-SIZE:               00000000 U SomeOtherFunction
+ELF-SIZE-NEXT: 00000000 00000024 T main
+ELF-SIZE-NEXT:          00000000 U puts
 
 ELF-o: {{.*}}/trivial-object-test.elf-i386:          U SomeOtherFunction
 ELF-o: {{.*}}/trivial-object-test.elf-i386: 00000000 T main
