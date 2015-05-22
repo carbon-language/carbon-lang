@@ -1,32 +1,46 @@
 ; RUN: llc < %s -march=arm64 -verify-machineinstrs -mcpu=cyclone | FileCheck %s
 
-define i32 @val_compare_and_swap(i32* %p) {
+define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) {
 ; CHECK-LABEL: val_compare_and_swap:
-; CHECK: orr    [[NEWVAL_REG:w[0-9]+]], wzr, #0x4
+; CHECK: ubfx   x[[NEWVAL_REG:[0-9]+]], x2, #0, #32
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
-; CHECK: ldaxr   [[RESULT:w[0-9]+]], [x0]
-; CHECK: cmp    [[RESULT]], #7
+; CHECK: ldaxr  [[RESULT:w[0-9]+]], [x0]
+; CHECK: cmp    [[RESULT]], w1
 ; CHECK: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], [[NEWVAL_REG]], [x0]
+; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], w[[NEWVAL_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: [[LABEL2]]:
-  %pair = cmpxchg i32* %p, i32 7, i32 4 acquire acquire
+  %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acquire acquire
   %val = extractvalue { i32, i1 } %pair, 0
   ret i32 %val
 }
 
-define i64 @val_compare_and_swap_64(i64* %p) {
-; CHECK-LABEL: val_compare_and_swap_64:
-; CHECK: orr    w[[NEWVAL_REG:[0-9]+]], wzr, #0x4
+define i32 @val_compare_and_swap_rel(i32* %p, i32 %cmp, i32 %new) {
+; CHECK-LABEL: val_compare_and_swap_rel:
+; CHECK: ubfx   x[[NEWVAL_REG:[0-9]+]], x2, #0, #32
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
-; CHECK: ldxr   [[RESULT:x[0-9]+]], [x0]
-; CHECK: cmp    [[RESULT]], #7
+; CHECK: ldaxr  [[RESULT:w[0-9]+]], [x0]
+; CHECK: cmp    [[RESULT]], w1
 ; CHECK: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NOT: stxr x[[NEWVAL_REG]], x[[NEWVAL_REG]]
-; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], x[[NEWVAL_REG]], [x0]
+; CHECK: stlxr  [[SCRATCH_REG:w[0-9]+]], w[[NEWVAL_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: [[LABEL2]]:
-  %pair = cmpxchg i64* %p, i64 7, i64 4 monotonic monotonic
+  %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acq_rel monotonic
+  %val = extractvalue { i32, i1 } %pair, 0
+  ret i32 %val
+}
+
+define i64 @val_compare_and_swap_64(i64* %p, i64 %cmp, i64 %new) {
+; CHECK-LABEL: val_compare_and_swap_64:
+; CHECK: mov    x[[ADDR:[0-9]+]], x0
+; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK: ldxr   [[RESULT:x[0-9]+]], [x[[ADDR]]]
+; CHECK: cmp    [[RESULT]], x1
+; CHECK: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
+; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], x2, [x[[ADDR]]]
+; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK: [[LABEL2]]:
+  %pair = cmpxchg i64* %p, i64 %cmp, i64 %new monotonic monotonic
   %val = extractvalue { i64, i1 } %pair, 0
   ret i64 %val
 }
