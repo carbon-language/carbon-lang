@@ -84,7 +84,8 @@ static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
                                            const DominatorTree *DT,
                                            const TargetLibraryInfo *TLI,
                                            const Loop *CurLoop,
-                                           const LICMSafetyInfo *SafetyInfo);
+                                           const LICMSafetyInfo *SafetyInfo,
+                                           const Instruction *CtxI = nullptr);
 static bool pointerInvalidatedByLoop(Value *V, uint64_t Size,
                                      const AAMDNodes &AAInfo, 
                                      AliasSetTracker *CurAST);
@@ -388,7 +389,8 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       //
       if (CurLoop->hasLoopInvariantOperands(&I) &&
           canSinkOrHoistInst(I, AA, DT, TLI, CurLoop, CurAST, SafetyInfo) &&
-          isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo))
+          isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo,
+                                 CurLoop->getLoopPreheader()->getTerminator()))
         Changed |= hoist(I, CurLoop->getLoopPreheader());
     }
 
@@ -487,7 +489,11 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
       !isa<InsertValueInst>(I))
     return false;
 
-  return isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo);
+  // TODO: Plumb the context instruction through to make hoisting and sinking
+  // more powerful. Hoisting of loads already works due to the special casing
+  // above. 
+  return isSafeToExecuteUnconditionally(I, DT, TLI, CurLoop, SafetyInfo,
+                                        nullptr);
 }
 
 /// Returns true if a PHINode is a trivially replaceable with an
@@ -647,8 +653,8 @@ static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
                                            const DominatorTree *DT,
                                            const TargetLibraryInfo *TLI,
                                            const Loop *CurLoop,
-                                           const LICMSafetyInfo *SafetyInfo) {
-  const Instruction *CtxI = CurLoop->getLoopPreheader()->getTerminator();
+                                           const LICMSafetyInfo *SafetyInfo,
+                                           const Instruction *CtxI) {
   if (isSafeToSpeculativelyExecute(&Inst, CtxI, DT, TLI))
     return true;
 
