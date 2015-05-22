@@ -199,7 +199,7 @@ thread_func (void *arg)
 		pthread_mutex_unlock (&g_print_mutex);
 	}
 
-	int sleep_seconds_remaining = 5;
+	int sleep_seconds_remaining = 60;
 	while (sleep_seconds_remaining > 0)
 	{
 		sleep_seconds_remaining = sleep (sleep_seconds_remaining);
