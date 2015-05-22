@@ -33,9 +33,10 @@ void CopyFileToErr(const std::string &Path);
 std::string DirPlusFile(const std::string &DirPath,
                         const std::string &FileName);
 
-void Mutate(Unit *U, size_t MaxLen);
+size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
 
-void CrossOver(const Unit &A, const Unit &B, Unit *U, size_t MaxLen);
+size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
+                 size_t Size2, uint8_t *Out, size_t MaxOutSize);
 
 void Print(const Unit &U, const char *PrintAfter = "");
 void PrintASCII(const Unit &U, const char *PrintAfter = "");
@@ -72,7 +73,7 @@ class Fuzzer {
     std::string SyncCommand;
     std::vector<std::string> Tokens;
   };
-  Fuzzer(UserCallback Callback, FuzzingOptions Options);
+  Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options);
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
   void Loop(size_t NumIterations);
   void ShuffleAndMinimize();
@@ -144,13 +145,24 @@ class Fuzzer {
     return Res;
   }
 
-  UserCallback Callback;
+  UserSuppliedFuzzer &USF;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
   system_clock::time_point LastExternalSync = system_clock::now();
   system_clock::time_point UnitStartTime;
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;
+};
+
+class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {
+ public:
+  SimpleUserSuppliedFuzzer(UserCallback Callback) : Callback(Callback) {}
+  virtual void TargetFunction(const uint8_t *Data, size_t Size) {
+    return Callback(Data, Size);
+  }
+
+ private:
+  UserCallback Callback;
 };
 
 };  // namespace fuzzer

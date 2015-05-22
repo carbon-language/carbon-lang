@@ -9,39 +9,42 @@
 // Cross over test inputs.
 //===----------------------------------------------------------------------===//
 
+#include <cstring>
+
 #include "FuzzerInternal.h"
-#include <algorithm>
 
 namespace fuzzer {
 
-// Cross A and B, store the result (ap to MaxLen bytes) in U.
-void CrossOver(const Unit &A, const Unit &B, Unit *U, size_t MaxLen) {
-  size_t Size = rand() % MaxLen + 1;
-  U->clear();
-  const Unit *V = &A;
-  size_t PosA = 0;
-  size_t PosB = 0;
-  size_t *Pos = &PosA;
-  while (U->size() < Size && (PosA < A.size() || PosB < B.size())) {
-    // Merge a part of V into U.
-    size_t SizeLeftU = Size - U->size();
-    if (*Pos < V->size()) {
-      size_t SizeLeftV = V->size() - *Pos;
-      size_t MaxExtraSize = std::min(SizeLeftU, SizeLeftV);
+// Cross Data1 and Data2, store the result (up to MaxOutSize bytes) in Out.
+size_t CrossOver(const uint8_t *Data1, size_t Size1,
+                 const uint8_t *Data2, size_t Size2,
+                 uint8_t *Out, size_t MaxOutSize) {
+  MaxOutSize = rand() % MaxOutSize + 1;
+  size_t OutPos = 0;
+  size_t Pos1 = 0;
+  size_t Pos2 = 0;
+  size_t *InPos = &Pos1;
+  size_t InSize = Size1;
+  const uint8_t *Data = Data1;
+  bool CurrentlyUsingFirstData = true;
+  while (OutPos < MaxOutSize && (Pos1 < Size1 || Pos2 < Size2)) {
+    // Merge a part of Data into Out.
+    size_t OutSizeLeft = MaxOutSize - OutPos;
+    if (*InPos < InSize) {
+      size_t InSizeLeft = InSize - *InPos;
+      size_t MaxExtraSize = std::min(OutSizeLeft, InSizeLeft);
       size_t ExtraSize = rand() % MaxExtraSize + 1;
-      U->insert(U->end(), V->begin() + *Pos, V->begin() + *Pos + ExtraSize);
-      (*Pos) += ExtraSize;
+      memcpy(Out + OutPos, Data + *InPos, ExtraSize);
+      OutPos += ExtraSize;
+      (*InPos) += ExtraSize;
     }
-
-    // Use the other Unit on the next iteration.
-    if (Pos == &PosA) {
-      Pos = &PosB;
-      V = &B;
-    } else {
-      Pos = &PosA;
-      V = &A;
-    }
+    // Use the other input data on the next iteration.
+    InPos  = CurrentlyUsingFirstData ? &Pos2 : &Pos1;
+    InSize = CurrentlyUsingFirstData ? Size2 : Size1;
+    Data   = CurrentlyUsingFirstData ? Data2 : Data1;
+    CurrentlyUsingFirstData = !CurrentlyUsingFirstData;
   }
+  return OutPos;
 }
 
 }  // namespace fuzzer

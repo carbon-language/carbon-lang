@@ -21,6 +21,10 @@ set(Tests
   ${DFSanTests}
   )
 
+set(CustomMainTests
+  UserSuppliedFuzzerTest
+  )
+
 
 set(TestBinaries)
 
@@ -33,6 +37,17 @@ foreach(Test ${Tests})
     )
   set(TestBinaries ${TestBinaries} LLVMFuzzer-${Test})
 endforeach()
+
+foreach(Test ${CustomMainTests})
+  add_executable(LLVMFuzzer-${Test}
+    ${Test}.cpp
+    )
+  target_link_libraries(LLVMFuzzer-${Test}
+    LLVMFuzzerNoMain
+    )
+  set(TestBinaries ${TestBinaries} LLVMFuzzer-${Test})
+endforeach()
+
 
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
@@ -49,7 +64,7 @@ include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
 
 add_executable(LLVMFuzzer-Unittest
   FuzzerUnittest.cpp
-  $<TARGET_OBJECTS:LLVMFuzzerNoMain>
+  $<TARGET_OBJECTS:LLVMFuzzerNoMainObjects>
   )
 
 target_link_libraries(LLVMFuzzer-Unittest

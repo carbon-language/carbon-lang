@@ -19,8 +19,8 @@ namespace fuzzer {
 // Only one Fuzzer per process.
 static Fuzzer *F;
 
-Fuzzer::Fuzzer(UserCallback Callback, FuzzingOptions Options)
-    : Callback(Callback), Options(Options) {
+Fuzzer::Fuzzer(UserSuppliedFuzzer &USF, FuzzingOptions Options)
+    : USF(USF), Options(Options) {
   SetDeathCallback();
   InitializeTraceState();
   assert(!F);
@@ -207,10 +207,10 @@ Unit Fuzzer::SubstituteTokens(const Unit &U) const {
 
 void Fuzzer::ExecuteCallback(const Unit &U) {
   if (Options.Tokens.empty()) {
-    Callback(U.data(), U.size());
+    USF.TargetFunction(U.data(), U.size());
   } else {
     auto T = SubstituteTokens(U);
-    Callback(T.data(), T.size());
+    USF.TargetFunction(T.data(), T.size());
   }
 }
 
@@ -321,7 +321,11 @@ void Fuzzer::ReportNewCoverage(size_t NewCoverage, const Unit &U) {
 void Fuzzer::MutateAndTestOne(Unit *U) {
   for (int i = 0; i < Options.MutateDepth; i++) {
     StartTraceRecording();
-    Mutate(U, Options.MaxLen);
+    size_t Size = U->size();
+    U->resize(Options.MaxLen);
+    size_t NewSize = USF.Mutate(U->data(), Size, U->size());
+    assert(NewSize > 0 && NewSize <= Options.MaxLen);
+    U->resize(NewSize);
     RunOneAndUpdateCorpus(*U);
     size_t NumTraceBasedMutations = StopTraceRecording();
     for (size_t j = 0; j < NumTraceBasedMutations; j++) {
@@ -344,8 +348,12 @@ void Fuzzer::Loop(size_t NumIterations) {
       // Now, cross with others.
       if (Options.DoCrossOver) {
         for (size_t J2 = 0; J2 < Corpus.size(); J2++) {
-          CurrentUnit.clear();
-          CrossOver(Corpus[J1], Corpus[J2], &CurrentUnit, Options.MaxLen);
+          CurrentUnit.resize(Options.MaxLen);
+          size_t NewSize = USF.CrossOver(
+              Corpus[J1].data(), Corpus[J1].size(), Corpus[J2].data(),
+              Corpus[J2].size(), CurrentUnit.data(), CurrentUnit.size());
+          assert(NewSize > 0 && NewSize <= Options.MaxLen);
+          CurrentUnit.resize(NewSize);
           MutateAndTestOne(&CurrentUnit);
         }
       }

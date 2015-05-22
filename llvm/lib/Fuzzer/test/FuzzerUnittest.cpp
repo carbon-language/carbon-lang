@@ -51,7 +51,10 @@ TEST(Fuzzer, CrossOver) {
   for (size_t Len = 1; Len < 8; Len++) {
     std::set<Unit> FoundUnits, ExpectedUnitsWitThisLength;
     for (int Iter = 0; Iter < 3000; Iter++) {
-      CrossOver(A, B, &C, Len);
+      C.resize(Len);
+      size_t NewSize = CrossOver(A.data(), A.size(), B.data(), B.size(),
+                                 C.data(), C.size());
+      C.resize(NewSize);
       FoundUnits.insert(C);
     }
     for (const Unit &U : Expected)

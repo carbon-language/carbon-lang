@@ -204,6 +204,11 @@ int ApplyTokens(const Fuzzer &F, const char *InputFilePath) {
 }
 
 int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
+  SimpleUserSuppliedFuzzer SUSF(Callback);
+  return FuzzerDriver(argc, argv, SUSF);
+}
+
+int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   using namespace fuzzer;
 
   ProgName = argv[0];
@@ -244,7 +249,7 @@ int FuzzerDriver(int argc, char **argv, UserCallback Callback) {
   if (Flags.sync_command)
     Options.SyncCommand = Flags.sync_command;
   Options.SyncTimeout = Flags.sync_timeout;
-  Fuzzer F(Callback, Options);
+  Fuzzer F(USF, Options);
 
   unsigned seed = Flags.seed;
   // Initialize seed.

@@ -26,3 +26,5 @@ RUN: not ./LLVMFuzzer-DFSanMemcmpTest-DFSan -use_traces=1 -seed=1 -runs=100 -tim
 
 RUN: not ./LLVMFuzzer-CxxTokensTest -seed=1 -timeout=15 -tokens=%S/../cxx_fuzzer_tokens.txt 2>&1 | FileCheck %s
 
+RUN: not ./LLVMFuzzer-UserSuppliedFuzzerTest -seed=1 -timeout=15 2>&1 | FileCheck %s
+
