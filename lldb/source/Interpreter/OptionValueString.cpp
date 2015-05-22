@@ -70,7 +70,7 @@ OptionValueString::SetValueFromString (llvm::StringRef value,
                     error.SetErrorString("mismatched quotes");
                     return error;
                 }
-                value = value.drop_front().drop_back().str();
+                value = value.drop_front().drop_back();
             }
             break;
         }
