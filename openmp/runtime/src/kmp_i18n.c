@@ -142,7 +142,7 @@ __kmp_i18n_do_catopen(
 
     if ( status == KMP_I18N_ABSENT ) {
       if (__kmp_generate_warnings > kmp_warnings_low) { // AC: only issue warning in case explicitly asked to
-        int    error   = errno; // Save errno immediatelly.
+        int    error   = errno; // Save errno immediately.
 	char * nlspath = __kmp_env_get( "NLSPATH" );
         char * lang    = __kmp_env_get( "LANG" );
 

@@ -2698,7 +2698,7 @@ static bool __kmp_give_task ( kmp_info_t *thread, kmp_int32 tid, kmp_task_t * ta
     TCW_4(thread_data -> td.td_deque_ntasks, TCR_4(thread_data -> td.td_deque_ntasks) + 1);
 
     result = true;
-    KA_TRACE(30, ("__kmp_give_task: succesfully gave task %p to thread %d.\n", taskdata, tid ) );
+    KA_TRACE(30, ("__kmp_give_task: successfully gave task %p to thread %d.\n", taskdata, tid ) );
 
 release_and_exit:
     __kmp_release_bootstrap_lock( & thread_data-> td.td_deque_lock );
@@ -2811,7 +2811,7 @@ void __kmpc_proxy_task_completed_ooo ( kmp_task_t *ptask )
     kmp_int32 k = 0;
 
     do {
-        //This should be similiar to k = __kmp_get_random( thread ) % nthreads but we cannot use __kmp_get_random here
+        //This should be similar to k = __kmp_get_random( thread ) % nthreads but we cannot use __kmp_get_random here
         //For now we're just linearly trying to find a thread
         k = (k+1) % nthreads;
         thread = team->t.t_threads[k];

@@ -874,7 +874,7 @@ __kmp_runtime_initialize( void )
             foreign tread.
 
             Setting __kmp_tls_gtid_min to 0 workarounds this problem: __kmp_get_global_thread_id()
-            does not search through stacks, but get gtid from TLS immediatelly.
+            does not search through stacks, but get gtid from TLS immediately.
 
             --ln
         */

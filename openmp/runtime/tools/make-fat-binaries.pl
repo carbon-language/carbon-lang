@@ -218,7 +218,7 @@ directory keeps files for one architecture (e. g. i386), another directory conta
 another architecture (e. g. x86_64), etc. All input directories must contain the same set of files.
 The script issues an error if sets of files in input directories differ.
 
-If the script finishes successfuly, output directory will contain the set universal binaries
+If the script finishes successfully, output directory will contain the set universal binaries
 built from files with the same name in input directories.
 
 =head1 EXAMPLES

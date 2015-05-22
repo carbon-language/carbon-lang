@@ -210,7 +210,7 @@ double __kmps_get_wtime( void ) {
             }; // if
         }; // if
     #else
-        // gettimeofday() returns seconds and microseconds sinse the Epoch.
+        // gettimeofday() returns seconds and microseconds since the Epoch.
         struct timeval  tval;
         int             rc;
         rc = gettimeofday( & tval, NULL );

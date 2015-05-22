@@ -18,7 +18,7 @@
 #    - Compile and run a small program using newly created libiomp5 library
 #    - Fails if test-touch.c does not compile or if test-touch.c does not run after compilation
 #    - Program dependencies: gcc or g++, grep, bourne shell
-#    - Available for all Linux,Mac,Windows builds.  Not availble on Intel(R) MIC Architecture builds.
+#    - Available for all Linux,Mac,Windows builds.  Not available on Intel(R) MIC Architecture builds.
 # (2) test-relo
 #    - Tests dynamic libraries for position-dependent code (can not have any position dependent code)
 #    - Fails if TEXTREL is in output of readelf -d libiomp5.so command

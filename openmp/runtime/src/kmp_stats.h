@@ -52,7 +52,7 @@ class stats_flags_e {
  * @param macro a user defined macro that takes three arguments - macro(COUNTER_NAME, flags, arg)
  * @param arg a user defined argument to send to the user defined macro
  *
- * \details A counter counts the occurence of some event.
+ * \details A counter counts the occurrence of some event.
  * Each thread accumulates its own count, at the end of execution the counts are aggregated treating each thread
  * as a separate measurement. (Unless onlyInMaster is set, in which case there's only a single measurement).
  * The min,mean,max are therefore the values for the threads.
@@ -336,7 +336,7 @@ Begin -------------------------------------------------------------> Time
 
        Then A, B, C will have a nest level of 1, 2, 3 respectively.
        These values are then used to calculate the barwidth so you can
-       see that inside A, B has occured, and inside B, C has occured.
+       see that inside A, B has occurred, and inside B, C has occurred.
        Currently, this is shown with A's bar width being larger than B's
        bar width, and B's bar width being larger than C's bar width.
 
