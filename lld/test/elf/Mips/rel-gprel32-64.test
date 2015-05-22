@@ -2,11 +2,25 @@
 
 # RUN: yaml2obj -format=elf %s > %t.o
 # RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t.o
+# RUN: llvm-readobj -r %t.exe | FileCheck --check-prefix=REL-EXE %s
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
+# RUN: llvm-nm %t.exe | FileCheck --check-prefix=SYM %s
+
+# REL-EXE:      Relocations [
+# REL-EXE-NEXT: ]
 
 # CHECK:      Contents of section .text:
-# CHECK-NEXT:  1200001a0 c871ffff ffffffff c871ffff c871ffff  .q.......q...q..
-# CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000  .q..............
+# CHECK-NEXT:  1200001a0 c871ffff ffffffff c871ffff c871ffff
+# CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000
+
+# SYM: 00000001200001b8 T LT1
+# SYM: 0000000120001000 ? _GLOBAL_OFFSET_TABLE_
+
+# RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
+# RUN: llvm-readobj -r %t.so | FileCheck --check-prefix=REL-SO %s
+
+# REL-SO:      Relocations [
+# REL-SO-NEXT: ]
 
 ---
 FileHeader:

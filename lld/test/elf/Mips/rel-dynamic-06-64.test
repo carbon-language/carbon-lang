@@ -8,48 +8,46 @@
 #
 # RUN: yaml2obj -format=elf %s > %t.o
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
-# RUN: llvm-readobj -dt -r -s %t.so | FileCheck -check-prefix=CHECK %s
+# RUN: llvm-readobj -dt -r -s %t.so | FileCheck -check-prefix=SYM %s
 # RUN: llvm-readobj -mips-plt-got %t.so | FileCheck -check-prefix=GOT %s
 
-# CHECK:     Sections [
-# CHECK:       Section {
-# CHECK-NOT:     Name: .plt ({{[0-9]+}})
+# SYM:     Sections [
+# SYM:       Section {
+# SYM-NOT:     Name: .plt ({{[0-9]+}})
 
-# CHECK:      Relocations [
-# CHECK-NEXT:   Section (4) .rel.dyn {
-# CHECK-NEXT:     0x170 R_MIPS_REL32/R_MIPS_64/R_MIPS_NONE T0 0x0
-# CHECK-NEXT:   }
-# CHECK-NEXT: ]
+# SYM:      Relocations [
+# SYM-NEXT:   Section (4) .rel.dyn {
+# SYM-NEXT:     0x[[ADDR:[0-9A-Z]+]] R_MIPS_REL32/R_MIPS_64/R_MIPS_NONE T0 0x0
+# SYM-NEXT:   }
+# SYM-NEXT: ]
 
-# CHECK:      DynamicSymbols [
-# CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: @ (0)
-# CHECK-NEXT:     Value: 0x0
-# CHECK-NEXT:     Size: 0
-# CHECK-NEXT:     Binding: Local (0x0)
-# CHECK-NEXT:     Type: None (0x0)
-# CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: Undefined (0x0)
-# CHECK-NEXT:   }
-# CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: T1@ (4)
-# CHECK-NEXT:     Value: 0x174
-# CHECK-NEXT:     Size: 4
-# CHECK-NEXT:     Binding: Global (0x1)
-# CHECK-NEXT:     Type: Function (0x2)
-# CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .text (0x5)
-# CHECK-NEXT:   }
-# CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: T0@ (1)
-# CHECK-NEXT:     Value: 0x170
-# CHECK-NEXT:     Size: 4
-# CHECK-NEXT:     Binding: Global (0x1)
-# CHECK-NEXT:     Type: Function (0x2)
-# CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .text (0x5)
-# CHECK-NEXT:   }
-# CHECK-NEXT: ]
+# SYM:      Symbol {
+# SYM:        Name: @ (0)
+# SYM-NEXT:   Value: 0x0
+# SYM-NEXT:   Size: 0
+# SYM-NEXT:   Binding: Local (0x0)
+# SYM-NEXT:   Type: None (0x0)
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: Undefined (0x0)
+# SYM-NEXT: }
+# SYM:      Symbol {
+# SYM:        Name: T1@ (4)
+# SYM-NEXT:   Value: 0x174
+# SYM-NEXT:   Size: 4
+# SYM-NEXT:   Binding: Global (0x1)
+# SYM-NEXT:   Type: Function (0x2)
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: .text (0x5)
+# SYM-NEXT: }
+# SYM:      Symbol {
+# SYM:        Name: T0@ (1)
+# SYM-NEXT:   Value: 0x[[ADDR]]
+# SYM-NEXT:   Size: 4
+# SYM-NEXT:   Binding: Global (0x1)
+# SYM-NEXT:   Type: Function (0x2)
+# SYM-NEXT:   Other: 0
+# SYM-NEXT:   Section: .text (0x5)
+# SYM-NEXT: }
 
 # GOT:      Local entries [
 # GOT-NEXT: ]

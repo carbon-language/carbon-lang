@@ -5,78 +5,97 @@
 #   a) Emitting R_MIPS_REL32 relocations for both undefined symbols.
 #   b) There should be no PLT entries.
 #
-# RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t1-so %t-obj
-# RUN: llvm-readobj -dt -r -s %t1-so | FileCheck -check-prefix=PLT-SYM %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t.so %t.o
+# RUN: llvm-readobj -dt -r -s %t.so | FileCheck %s
 
-# PLT-SYM:     Sections [
-# PLT-SYM:       Section {
-# PLT-SYM-NOT:     Name: .plt ({{[0-9]+}})
+# CHECK:     Sections [
+# CHECK:       Section {
+# CHECK-NOT:     Name: .plt ({{[0-9]+}})
 #
-# PLT-SYM:      Relocations [
-# PLT-SYM-NEXT:   Section (4) .rel.dyn {
-# PLT-SYM-NEXT:     0x140 R_MIPS_REL32 T1 0x0
-# PLT-SYM-NEXT:     0x2000 R_MIPS_REL32 T1 0x0
-# PLT-SYM-NEXT:   }
-# PLT-SYM-NEXT: ]
+# CHECK:      Relocations [
+# CHECK-NEXT:   Section (4) .rel.dyn {
+# CHECK-NEXT:     0x[[ADDR1:[0-9A-Z]+]] R_MIPS_REL32 T1 0x0
+# CHECK-NEXT:     0x[[ADDR2:[0-9A-Z]+]] R_MIPS_REL32 T1 0x0
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
 #
-# PLT-SYM:      Name: T1@ (7)
-# PLT-SYM-NEXT: Value: 0x0
-# PLT-SYM-NEXT: Size: 0
-# PLT-SYM-NEXT: Binding: Global (0x1)
-# PLT-SYM-NEXT: Type: None (0x0)
-# PLT-SYM-NEXT: Other: 0
-# PLT-SYM-NEXT: Section: Undefined (0x0)
+# CHECK:      Symbol {
+# CHECK:        Name: T0@
+# CHECK-NEXT:   Value: 0x[[ADDR1]]
+# CHECK-NEXT:   Size: 8
+# CHECK-NEXT:   Binding: Global
+# CHECK-NEXT:   Type: Function
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: .text
+# CHECK-NEXT: }
+# CHECK:      Symbol {
+# CHECK:        Name: D0@
+# CHECK-NEXT:   Value: 0x[[ADDR2]]
+# CHECK-NEXT:   Size: 8
+# CHECK-NEXT:   Binding: Global
+# CHECK-NEXT:   Type: Object
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: .data
+# CHECK-NEXT: }
+# CHECK:      Symbol {
+# CHECK:        Name: T1@
+# CHECK-NEXT:   Value: 0x0
+# CHECK-NEXT:   Size: 0
+# CHECK-NEXT:   Binding: Global
+# CHECK-NEXT:   Type: None
+# CHECK-NEXT:   Other: 0
+# CHECK-NEXT:   Section: Undefined
+# CHECK-NEXT: }
 
-!ELF
-FileHeader: !FileHeader
-  Class: ELFCLASS32
-  Data: ELFDATA2LSB
-  Type: ET_REL
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
   Machine: EM_MIPS
-  Flags: [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
 
 Sections:
-- Name: .text
-  Type: SHT_PROGBITS
-  Content:  "0000000000000000"
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         8
   AddressAlign: 16
-  Flags: [SHF_EXECINSTR, SHF_ALLOC]
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
 
-- Name: .data
-  Type: SHT_PROGBITS
-  Content:  "0000000000000000"
+- Name:         .data
+  Type:         SHT_PROGBITS
+  Size:         8
   AddressAlign: 16
-  Flags: [SHF_WRITE, SHF_ALLOC]
+  Flags:        [SHF_WRITE, SHF_ALLOC]
 
-- Name: .rel.text
-  Type: SHT_REL
-  Info: .text
+- Name:         .rel.text
+  Type:         SHT_REL
+  Info:         .text
   AddressAlign: 4
   Relocations:
-    - Offset: 0x00
+    - Offset: 0
       Symbol: T1
-      Type: R_MIPS_32
+      Type:   R_MIPS_32
 
-- Name: .rel.data
-  Type: SHT_REL
-  Info: .data
+- Name:         .rel.data
+  Type:         SHT_REL
+  Info:         .data
   AddressAlign: 4
   Relocations:
-    - Offset: 0x00
+    - Offset: 0
       Symbol: T1
-      Type: R_MIPS_32
+      Type:   R_MIPS_32
 
 Symbols:
   Global:
-    - Name: T0
+    - Name:    T0
       Section: .text
-      Type: STT_FUNC
-      Value: 0x0
-      Size: 4
-    - Name: T1
-    - Name: D0
+      Type:    STT_FUNC
+      Value:   0
+      Size:    4
+    - Name:    T1
+    - Name:    D0
       Section: .data
-      Type: STT_OBJECT
-      Value: 0x0
-      Size: 8
+      Type:    STT_OBJECT
+      Value:   0
+      Size:    8
