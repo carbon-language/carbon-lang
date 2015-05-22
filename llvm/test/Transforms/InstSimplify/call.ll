@@ -1,6 +1,9 @@
 ; RUN: opt < %s -instsimplify -S | FileCheck %s
 
 declare {i8, i1} @llvm.uadd.with.overflow.i8(i8 %a, i8 %b)
+declare {i8, i1} @llvm.usub.with.overflow.i8(i8 %a, i8 %b)
+declare {i8, i1} @llvm.ssub.with.overflow.i8(i8 %a, i8 %b)
+declare {i8, i1} @llvm.umul.with.overflow.i8(i8 %a, i8 %b)
 
 define i1 @test_uadd1() {
 ; CHECK-LABEL: @test_uadd1(
@@ -16,6 +19,27 @@ define i8 @test_uadd2() {
   %result = extractvalue {i8, i1} %x, 0
   ret i8 %result
 ; CHECK-NEXT: ret i8 42
+}
+
+define {i8, i1} @test_usub1(i8 %V) {
+; CHECK-LABEL: @test_usub1(
+  %x = call {i8, i1} @llvm.usub.with.overflow.i8(i8 %V, i8 %V)
+  ret {i8, i1} %x
+; CHECK-NEXT: ret { i8, i1 } zeroinitializer
+}
+
+define {i8, i1} @test_ssub1(i8 %V) {
+; CHECK-LABEL: @test_ssub1(
+  %x = call {i8, i1} @llvm.ssub.with.overflow.i8(i8 %V, i8 %V)
+  ret {i8, i1} %x
+; CHECK-NEXT: ret { i8, i1 } zeroinitializer
+}
+
+define {i8, i1} @test_umul1(i8 %V) {
+; CHECK-LABEL: @test_umul1(
+  %x = call {i8, i1} @llvm.umul.with.overflow.i8(i8 %V, i8 0)
+  ret {i8, i1} %x
+; CHECK-NEXT: ret { i8, i1 } zeroinitializer
 }
 
 declare i256 @llvm.cttz.i256(i256 %src, i1 %is_zero_undef)

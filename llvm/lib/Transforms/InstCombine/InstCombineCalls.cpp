@@ -13,6 +13,7 @@
 
 #include "InstCombineInternal.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Dominators.h"
@@ -323,6 +324,11 @@ static Value *SimplifyX86vperm2(const IntrinsicInst &II,
 /// the heavy lifting.
 ///
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  auto Args = CI.arg_operands();
+  if (Value *V = SimplifyCall(CI.getCalledValue(), Args.begin(), Args.end(), DL,
+                              TLI, DT, AC))
+    return ReplaceInstUsesWith(CI, V);
+
   if (isFreeCall(&CI, TLI))
     return visitFree(CI);
 

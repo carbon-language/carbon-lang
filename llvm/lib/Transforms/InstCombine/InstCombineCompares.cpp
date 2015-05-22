@@ -2139,10 +2139,6 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
   }
   // FALL THROUGH uadd into sadd
   case OCF_SIGNED_ADD: {
-    // X + undef -> undef
-    if (isa<UndefValue>(RHS))
-      return SetResult(RHS, UndefValue::get(Builder->getInt1Ty()), false);
-
     // X + 0 -> {X, false}
     if (match(RHS, m_Zero()))
       return SetResult(LHS, Builder->getFalse(), false);
@@ -2157,14 +2153,6 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
 
   case OCF_UNSIGNED_SUB:
   case OCF_SIGNED_SUB: {
-    // undef - X -> undef
-    if (isa<UndefValue>(LHS))
-      return SetResult(LHS, UndefValue::get(Builder->getInt1Ty()), false);
-
-    // X - undef -> undef
-    if (isa<UndefValue>(RHS))
-      return SetResult(RHS, UndefValue::get(Builder->getInt1Ty()), false);
-
     // X - 0 -> {X, false}
     if (match(RHS, m_Zero()))
       return SetResult(LHS, Builder->getFalse(), false);

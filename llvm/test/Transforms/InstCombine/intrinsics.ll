@@ -418,10 +418,10 @@ define %ov.result.32 @ssubtest_reorder(i8 %a) {
 ; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
-define %ov.result.32 @never_overflows_ssub(i32 %a) {
+define %ov.result.32 @never_overflows_ssub_test0(i32 %a) {
   %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 %a, i32 0)
   ret %ov.result.32 %x
-; CHECK-LABEL: @never_overflows_ssub
+; CHECK-LABEL: @never_overflows_ssub_test0
 ; CHECK-NEXT: %[[x:.*]] = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %a, 0
 ; CHECK-NEXT:  ret %ov.result.32 %[[x]]
 }
