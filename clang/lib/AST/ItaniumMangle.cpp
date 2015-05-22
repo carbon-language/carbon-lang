@@ -221,7 +221,7 @@ class CXXNameMangler {
   const NamedDecl *Structor;
   unsigned StructorType;
 
-  /// SeqID - The next subsitution sequence number.
+  /// SeqID - The next substitution sequence number.
   unsigned SeqID;
 
   class FunctionTypeDepthState {
