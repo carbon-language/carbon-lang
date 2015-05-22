@@ -828,7 +828,8 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD) {
     // - it shall not be virtual;
     const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(NewFD);
     if (Method && Method->isVirtual()) {
-      Diag(NewFD->getLocation(), diag::err_constexpr_virtual);
+      Method = Method->getCanonicalDecl();
+      Diag(Method->getLocation(), diag::err_constexpr_virtual);
 
       // If it's not obvious why this function is virtual, find an overridden
       // function which uses the 'virtual' keyword.
