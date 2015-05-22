@@ -43,7 +43,7 @@ public:
   const X86Subtarget *STI;
   const X86InstrInfo *TII;
   const X86RegisterInfo *TRI;
-  const X86FrameLowering *X86FrameLowering;
+  const X86FrameLowering *X86FL;
 
   bool runOnMachineFunction(MachineFunction &Fn) override;
 
@@ -89,7 +89,7 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       const bool Uses64BitFramePtr =
           STI->isTarget64BitLP64() || STI->isTargetNaCl64();
       bool UseLEAForSP =
-          X86FrameLowering->useLEAForSPInProlog(*MBB.getParent());
+          X86FL->useLEAForSPInProlog(*MBB.getParent());
       unsigned StackPtr = TRI->getStackRegister();
       // Check for possible merge with preceding ADD instruction.
       StackAdj += X86FrameLowering::mergeSPUpdates(MBB, MBBI, StackPtr, true);
@@ -174,7 +174,7 @@ bool X86ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   STI = &static_cast<const X86Subtarget &>(MF.getSubtarget());
   TII = STI->getInstrInfo();
   TRI = STI->getRegisterInfo();
-  X86FrameLowering = STI->getFrameLowering();
+  X86FL = STI->getFrameLowering();
 
   bool Modified = false;
   for (MachineBasicBlock &MBB : MF)
