@@ -35,6 +35,7 @@
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/MemoryRegionInfo.h"
+#include "lldb/Target/UnixSignals.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
@@ -45,10 +46,6 @@
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
-
-#if defined(LLDB_DISABLE_POSIX) && !defined(SIGSTOP)
-#define SIGSTOP 17
-#endif
 
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationClient constructor
@@ -866,7 +863,10 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     // Set the starting continue packet into "continue_packet". This packet
     // may change if we are interrupted and we continue after an async packet...
     std::string continue_packet(payload, packet_length);
-    
+
+    const auto sigstop_signo = process->GetUnixSignals().GetSignalNumberFromName("SIGSTOP");
+    const auto sigint_signo = process->GetUnixSignals().GetSignalNumberFromName("SIGINT");
+
     bool got_async_packet = false;
     
     while (state == eStateRunning)
@@ -936,7 +936,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             // packet. If we don't do this, then the reply for our
                             // async packet will be the repeat stop reply packet and cause
                             // a lot of trouble for us!
-                            if (signo != SIGINT && signo != SIGSTOP)
+                            if (signo != sigint_signo && signo != sigstop_signo)
                             {
                                 continue_after_async = false;
 
