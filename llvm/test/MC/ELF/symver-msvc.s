@@ -21,7 +21,7 @@
 
 // CHECK:       Symbols [
 // CHECK:         Symbol {
-// CHECK:           Name: ??_R0?AVexception@std@@@8 (102)
+// CHECK:           Name: ??_R0?AVexception@std@@@8
 // CHECK-NEXT:      Value: 0x0
 // CHECK-NEXT:      Size: 0
 // CHECK-NEXT:      Binding: Global (0x1)
@@ -30,7 +30,7 @@
 // CHECK-NEXT:      Section: Undefined (0x0)
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Symbol {
-// CHECK-NEXT:      Name: @??_R0?AVinvalid_argument@std@@@8 (1)
+// CHECK-NEXT:      Name: @??_R0?AVinvalid_argument@std@@@8
 // CHECK-NEXT:      Value: 0x0
 // CHECK-NEXT:      Size: 0
 // CHECK-NEXT:      Binding: Global (0x1)
@@ -39,7 +39,7 @@
 // CHECK-NEXT:      Section: Undefined (0x0)
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Symbol {
-// CHECK-NEXT:      Name: __imp_??_R0?AVlogic_error@std@@@8 (35)
+// CHECK-NEXT:      Name: __imp_??_R0?AVlogic_error@std@@@8
 // CHECK-NEXT:      Value: 0x0
 // CHECK-NEXT:      Size: 0
 // CHECK-NEXT:      Binding: Global (0x1)
@@ -48,7 +48,7 @@
 // CHECK-NEXT:      Section: Undefined (0x0)
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Symbol {
-// CHECK-NEXT:      Name: __imp_@??_R0PAVexception@std@@@8 (69)
+// CHECK-NEXT:      Name: __imp_@??_R0PAVexception@std@@@8
 // CHECK-NEXT:      Value: 0x0
 // CHECK-NEXT:      Size: 0
 // CHECK-NEXT:      Binding: Global (0x1)

@@ -311,7 +311,7 @@ alias12:
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: zed (32)
+// CHECK-NEXT:     Name: zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Unique (0xA)

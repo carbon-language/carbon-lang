@@ -16,7 +16,7 @@
 
 // CHECK:      Symbols [
 // CHECK:        Symbol {
-// CHECK:          Name: _GLOBAL_OFFSET_TABLE_ (9)
+// CHECK:          Name: _GLOBAL_OFFSET_TABLE_
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -25,7 +25,7 @@
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: foo (1)
+// CHECK-NEXT:     Name: foo
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak
@@ -34,7 +34,7 @@
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: zed (5)
+// CHECK-NEXT:     Name: zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global

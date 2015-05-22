@@ -7,10 +7,10 @@
 .section	.note.GNU-,"",@progbits
 .section	-.note.GNU,"","progbits"
 
-// CHECK: Name: .note.GNU-stack (56)
-// CHECK: Name: .note.GNU-stack2 (153)
-// CHECK: Name: .note.GNU- (170)
-// CHECK: Name: -.note.GNU (142)
+// CHECK: Name: .note.GNU-stack
+// CHECK: Name: .note.GNU-stack2
+// CHECK: Name: .note.GNU-
+// CHECK: Name: -.note.GNU
 
 // Test that the defaults are used
 
@@ -142,6 +142,6 @@ bar:
 .section "foo"
 
 // CHECK:        Section {
-// CHECK:          Name: bar-"foo" (181)
+// CHECK:          Name: bar-"foo"
 // CHECK:        Section {
-// CHECK:          Name: foo (52)
+// CHECK:          Name: foo

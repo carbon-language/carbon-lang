@@ -48,7 +48,7 @@
 
 # CHECK:      Sections [
 # CHECK:        Section {
-# CHECK:          Name: test1 (68)
+# CHECK:          Name: test1
 # CHECK-NEXT:     Type: SHT_PROGBITS
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -64,7 +64,7 @@
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
 # CHECK:        Section {
-# CHECK:          Name: test2 (62)
+# CHECK:          Name: test2
 # CHECK-NEXT:     Type: SHT_PROGBITS
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -80,7 +80,7 @@
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
 # CHECK:        Section {
-# CHECK:          Name: test3 (56)
+# CHECK:          Name: test3
 # CHECK-NEXT:     Type: SHT_PROGBITS
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -96,7 +96,7 @@
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
 # CHECK:        Section {
-# CHECK:          Name: test4 (50)
+# CHECK:          Name: test4
 # CHECK-NEXT:     Type: SHT_PROGBITS
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -112,7 +112,7 @@
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
 # CHECK:        Section {
-# CHECK:          Name: test5 (44)
+# CHECK:          Name: test5
 # CHECK-NEXT:     Type: SHT_PROGBITS
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
