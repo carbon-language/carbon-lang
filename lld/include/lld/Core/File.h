@@ -86,6 +86,11 @@ public:
   /// Sets the command line order of the file.
   void setOrdinal(uint64_t ordinal) const { _ordinal = ordinal; }
 
+  /// Returns the ordinal for the next atom to be defined in this file.
+  uint64_t getNextAtomOrdinalAndIncrement() const {
+    return _nextAtomOrdinal++;
+  }
+
   /// For allocating any objects owned by this File.
   llvm::BumpPtrAllocator &allocator() const {
     return _allocator;
@@ -152,7 +157,8 @@ public:
 protected:
   /// \brief only subclasses of File can be instantiated
   File(StringRef p, Kind kind)
-      : _path(p), _kind(kind), _ordinal(UINT64_MAX) {}
+    : _path(p), _kind(kind), _ordinal(UINT64_MAX),
+      _nextAtomOrdinal(0) {}
 
   /// \brief Subclasses should override this method to parse the
   /// memory buffer passed to this file's constructor.
@@ -170,6 +176,7 @@ private:
   mutable std::string _archiveMemberPath;
   Kind              _kind;
   mutable uint64_t  _ordinal;
+  mutable uint64_t _nextAtomOrdinal;
   std::shared_ptr<MemoryBuffer> _sharedMemoryBuffer;
   llvm::Optional<std::error_code> _lastError;
   std::mutex _parseMutex;
