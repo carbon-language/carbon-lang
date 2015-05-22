@@ -38,6 +38,7 @@ public:
       return false;
     assert(r.kindArch() == Reference::KindArch::ARM);
     switch (r.kindValue()) {
+    case llvm::ELF::R_ARM_GLOB_DAT:
     case llvm::ELF::R_ARM_TLS_TPOFF32:
     case llvm::ELF::R_ARM_COPY:
       return true;

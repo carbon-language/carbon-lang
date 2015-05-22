@@ -945,9 +945,15 @@ public:
     return _plt0;
   }
 
+  const GOTAtom *getSharedGOTEntry(const SharedLibraryAtom *sla) {
+    return getGOT<R_ARM_GLOB_DAT>(sla);
+  }
+
   std::error_code handleGOT(const Reference &ref) {
-    assert(!isa<const SharedLibraryAtom>(ref.target()) &&
-           "Shared GOT entries aren't handled yet");
+    if (const auto sla = dyn_cast<const SharedLibraryAtom>(ref.target())) {
+      const_cast<Reference &>(ref).setTarget(getSharedGOTEntry(sla));
+      return std::error_code();
+    }
     return ARMRelocationPass::handleGOT(ref);
   }
 };

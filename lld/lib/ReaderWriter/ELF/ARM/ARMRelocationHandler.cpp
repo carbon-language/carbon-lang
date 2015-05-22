@@ -665,6 +665,7 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
   case R_ARM_LDR_PC_G2:
     return relocR_ARM_LDR_PC_G2(loc, reloc, target, addend);
   case R_ARM_JUMP_SLOT:
+  case R_ARM_GLOB_DAT:
   case R_ARM_IRELATIVE:
     // Runtime only relocations. Ignore here.
     return std::error_code();
