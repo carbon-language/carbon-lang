@@ -299,6 +299,12 @@ and dump covered PCs to disk before exiting.
 Then you can subtract the set of covered PCs from the set of all instrumented PCs in the binary,
 see SanitizerCoverage_ for details.
 
+User-supplied mutators
+----------------------
+
+LibFuzzer allows to use custom (user-supplied) mutators,
+see FuzzerInterface.h_
+
 Fuzzing components of LLVM
 ==========================
 
@@ -408,3 +414,5 @@ Examples: regular expression matchers, text or binary format parsers.
 .. _SanitizerCoverage: http://clang.llvm.org/docs/SanitizerCoverage.html
 
 .. _Heartbleed: http://en.wikipedia.org/wiki/Heartbleed
+
+.. _FuzzerInterface.h: https://github.com/llvm-mirror/llvm/blob/master/lib/Fuzzer/FuzzerInterface.h
