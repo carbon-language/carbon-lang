@@ -1290,6 +1290,10 @@ If you are not using Linux Perf to collect profiles, you will need to
 write a conversion tool from your profiler to LLVM's format. This section
 explains the file format expected by the backend.
 
+NOTE: This format is not intended to be used for code coverage. For that,
+you need to use Clang's instrumentation based profiling
+(``-fprofile-instr-generate``).
+
 Sample profiles are written as ASCII text. The file is divided into sections,
 which correspond to each of the functions executed at runtime. Each
 section has the following format (taken from
