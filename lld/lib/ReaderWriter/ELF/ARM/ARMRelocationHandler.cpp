@@ -112,8 +112,8 @@ static Reference::Addend readAddend(const uint8_t *location,
   }
 }
 
-static inline std::error_code make_unsupported_range_group_reloc_error() {
-  return make_dynamic_error_code(
+static inline void report_unsupported_range_group_reloc_error() {
+  llvm::report_fatal_error(
       "Negative offsets for group relocations are not implemented");
 }
 
@@ -497,7 +497,7 @@ static std::error_code relocR_ARM_ALU_PC_G0_NC(uint8_t *location, uint64_t P,
                                                uint64_t S, int64_t A) {
   int32_t result = (int32_t)(S + A - P);
   if (result < 0)
-    return make_unsupported_range_group_reloc_error();
+    report_unsupported_range_group_reloc_error();
 
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
         llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
@@ -514,7 +514,7 @@ static std::error_code relocR_ARM_ALU_PC_G1_NC(uint8_t *location, uint64_t P,
                                                uint64_t S, int64_t A) {
   int32_t result = (int32_t)(S + A - P);
   if (result < 0)
-    return make_unsupported_range_group_reloc_error();
+    report_unsupported_range_group_reloc_error();
 
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
         llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
@@ -531,7 +531,7 @@ static std::error_code relocR_ARM_LDR_PC_G2(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
   int32_t result = (int32_t)(S + A - P);
   if (result < 0)
-    return make_unsupported_range_group_reloc_error();
+    report_unsupported_range_group_reloc_error();
 
   DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
         llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
