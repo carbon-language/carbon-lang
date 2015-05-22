@@ -716,8 +716,6 @@ namespace {
     void verifyRemoved(const Instruction *I) const;
     bool splitCriticalEdges();
     BasicBlock *splitCriticalEdges(BasicBlock *Pred, BasicBlock *Succ);
-    unsigned replaceAllDominatedUsesWith(Value *From, Value *To,
-                                         const BasicBlockEdge &Root);
     bool propagateEquality(Value *LHS, Value *RHS, const BasicBlockEdge &Root);
     bool processFoldableCondBr(BranchInst *BI);
     void addDeadBlock(BasicBlock *BB);
@@ -2033,23 +2031,6 @@ Value *GVN::findLeader(const BasicBlock *BB, uint32_t num) {
   return Val;
 }
 
-/// Replace all uses of 'From' with 'To' if the use is dominated by the given
-/// basic block.  Returns the number of uses that were replaced.
-unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
-                                          const BasicBlockEdge &Root) {
-  unsigned Count = 0;
-  for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
-       UI != UE; ) {
-    Use &U = *UI++;
-
-    if (DT->dominates(Root, U)) {
-      U.set(To);
-      ++Count;
-    }
-  }
-  return Count;
-}
-
 /// There is an edge from 'Src' to 'Dst'.  Return
 /// true if every path from the entry block to 'Dst' passes via this edge.  In
 /// particular 'Dst' must not be reachable via another edge from 'Src'.
@@ -2126,7 +2107,7 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
     // LHS always has at least one use that is not dominated by Root, this will
     // never do anything if LHS has only one use.
     if (!LHS->hasOneUse()) {
-      unsigned NumReplacements = replaceAllDominatedUsesWith(LHS, RHS, Root);
+      unsigned NumReplacements = replaceDominatedUsesWith(LHS, RHS, *DT, Root);
       Changed |= NumReplacements > 0;
       NumGVNEqProp += NumReplacements;
     }
@@ -2198,7 +2179,7 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
         Value *NotCmp = findLeader(Root.getEnd(), Num);
         if (NotCmp && isa<Instruction>(NotCmp)) {
           unsigned NumReplacements =
-            replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
+            replaceDominatedUsesWith(NotCmp, NotVal, *DT, Root);
           Changed |= NumReplacements > 0;
           NumGVNEqProp += NumReplacements;
         }
