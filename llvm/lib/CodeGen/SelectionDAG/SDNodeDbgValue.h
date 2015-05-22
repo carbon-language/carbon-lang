@@ -35,7 +35,6 @@ public:
     FRAMEIX = 2             // value is contents of a stack location
   };
 private:
-  enum DbgValueKind kind;
   union {
     struct {
       SDNode *Node;         // valid for expressions
@@ -46,17 +45,18 @@ private:
   } u;
   MDNode *Var;
   MDNode *Expr;
-  bool IsIndirect;
   uint64_t Offset;
   DebugLoc DL;
   unsigned Order;
-  bool Invalid;
+  enum DbgValueKind kind;
+  bool IsIndirect;
+  bool Invalid = false;
+
 public:
   // Constructor for non-constants.
   SDDbgValue(MDNode *Var, MDNode *Expr, SDNode *N, unsigned R, bool indir,
              uint64_t off, DebugLoc dl, unsigned O)
-      : Var(Var), Expr(Expr), IsIndirect(indir), Offset(off), DL(dl), Order(O),
-        Invalid(false) {
+      : Var(Var), Expr(Expr), Offset(off), DL(dl), Order(O), IsIndirect(indir) {
     kind = SDNODE;
     u.s.Node = N;
     u.s.ResNo = R;
@@ -65,8 +65,7 @@ public:
   // Constructor for constants.
   SDDbgValue(MDNode *Var, MDNode *Expr, const Value *C, uint64_t off,
              DebugLoc dl, unsigned O)
-      : Var(Var), Expr(Expr), IsIndirect(false), Offset(off), DL(dl), Order(O),
-        Invalid(false) {
+      : Var(Var), Expr(Expr), Offset(off), DL(dl), Order(O), IsIndirect(false) {
     kind = CONST;
     u.Const = C;
   }
@@ -74,8 +73,7 @@ public:
   // Constructor for frame indices.
   SDDbgValue(MDNode *Var, MDNode *Expr, unsigned FI, uint64_t off, DebugLoc dl,
              unsigned O)
-      : Var(Var), Expr(Expr), IsIndirect(false), Offset(off), DL(dl), Order(O),
-        Invalid(false) {
+      : Var(Var), Expr(Expr), Offset(off), DL(dl), Order(O), IsIndirect(false) {
     kind = FRAMEIX;
     u.FrameIx = FI;
   }
