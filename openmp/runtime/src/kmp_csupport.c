@@ -84,7 +84,7 @@ This function can be called in any context.
 
 If the runtime has ony been entered at the outermost level from a
 single (necessarily non-OpenMP<sup>*</sup>) thread, then the thread number is that
-which would be returned by @ref omp_get_thread_num() in the outermost
+which would be returned by omp_get_thread_num() in the outermost
 active parallel construct. (Or zero if there is no active parallel
 construct, since the master thread is necessarily thread zero).
 
@@ -336,6 +336,7 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 @param loc source location information
 @param global_tid global thread number
 @param num_teams number of teams requested for the teams construct
+@param num_threads number of threads per team requested for the teams construct
 
 Set the number of teams to be used by the teams construct.
 This call is only required if the teams construct has a `num_teams` clause
@@ -2176,7 +2177,7 @@ __kmpc_test_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     int rc;
     int tag = DYNA_EXTRACT_D_TAG(user_lock);
 # if USE_ITT_BUILD
-    __kmp_itt_lock_acquiring((kmp_user_lock_p)user_lock); 
+    __kmp_itt_lock_acquiring((kmp_user_lock_p)user_lock);
 # endif
 # if DYNA_USE_FAST_TAS
     if (tag == locktag_tas && !__kmp_env_consistency_check) {

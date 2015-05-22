@@ -782,17 +782,14 @@ __kmpc_for_static_init_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype, km
 @ingroup WORK_SHARING
 @param    loc       Source code location
 @param    gtid      Global thread id of this thread
-@param    scheduleD Scheduling type for the distribute
-@param    scheduleL Scheduling type for the parallel loop
+@param    schedule  Scheduling type for the parallel loop
 @param    plastiter Pointer to the "last iteration" flag
 @param    plower    Pointer to the lower bound
 @param    pupper    Pointer to the upper bound of loop chunk
 @param    pupperD   Pointer to the upper bound of dist_chunk
-@param    pstrideD  Pointer to the stride for distribute
-@param    pstrideL  Pointer to the stride for parallel loop
+@param    pstride   Pointer to the stride for parallel loop
 @param    incr      Loop increment
-@param    chunkD    The chunk size for the distribute
-@param    chunkL    The chunk size for the parallel loop
+@param    chunk     The chunk size for the parallel loop
 
 Each of the four functions here are identical apart from the argument types.
 
