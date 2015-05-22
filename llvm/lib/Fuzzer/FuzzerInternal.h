@@ -64,7 +64,6 @@ class Fuzzer {
     bool UseCounters = false;
     bool UseTraces = false;
     bool UseFullCoverageSet  = false;
-    bool UseCoveragePairs = false;
     bool Reload = true;
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;
@@ -135,7 +134,6 @@ class Fuzzer {
   std::vector<Unit> Corpus;
   std::unordered_set<std::string> UnitHashesAddedToCorpus;
   std::unordered_set<uintptr_t> FullCoverageSets;
-  std::unordered_set<uint64_t>  CoveragePairs;
 
   // For UseCounters
   std::vector<uint8_t> CounterBitmap;

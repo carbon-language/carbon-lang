@@ -15,7 +15,7 @@ NullDerefTest: CRASHED; file written to crash-
 
 RUN: not ./LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s
 
-RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_coverage_pairs=1 2>&1 | FileCheck %s
+RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_full_coverage_set=1 2>&1 | FileCheck %s
 
 RUN: not ./LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s
 

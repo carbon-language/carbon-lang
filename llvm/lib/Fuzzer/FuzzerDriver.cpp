@@ -237,7 +237,6 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   Options.UseCounters = Flags.use_counters;
   Options.UseTraces = Flags.use_traces;
   Options.UseFullCoverageSet = Flags.use_full_coverage_set;
-  Options.UseCoveragePairs = Flags.use_coverage_pairs;
   Options.PreferSmallDuringInitialShuffle =
       Flags.prefer_small_during_initial_shuffle;
   Options.Tokens = ReadTokensFile(Flags.tokens);

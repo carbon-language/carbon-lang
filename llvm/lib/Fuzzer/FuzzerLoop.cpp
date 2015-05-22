@@ -161,8 +161,6 @@ size_t Fuzzer::RunOne(const Unit &U) {
   size_t Res = 0;
   if (Options.UseFullCoverageSet)
     Res = RunOneMaximizeFullCoverageSet(U);
-  else if (Options.UseCoveragePairs)
-    Res = RunOneMaximizeCoveragePairs(U);
   else
     Res = RunOneMaximizeTotalCoverage(U);
   auto UnitStopTime = system_clock::now();
@@ -212,28 +210,6 @@ void Fuzzer::ExecuteCallback(const Unit &U) {
     auto T = SubstituteTokens(U);
     USF.TargetFunction(T.data(), T.size());
   }
-}
-
-// Experimental. Does not yet scale.
-// Fuly reset the current coverage state, run a single unit,
-// collect all coverage pairs and return non-zero if a new pair is observed.
-size_t Fuzzer::RunOneMaximizeCoveragePairs(const Unit &U) {
-  __sanitizer_reset_coverage();
-  ExecuteCallback(U);
-  uintptr_t *PCs;
-  uintptr_t NumPCs = __sanitizer_get_coverage_guards(&PCs);
-  bool HasNewPairs = false;
-  for (uintptr_t i = 0; i < NumPCs; i++) {
-    if (!PCs[i]) continue;
-    for (uintptr_t j = 0; j < NumPCs; j++) {
-      if (!PCs[j]) continue;
-      uint64_t Pair = (i << 32) | j;
-      HasNewPairs |= CoveragePairs.insert(Pair).second;
-    }
-  }
-  if (HasNewPairs)
-    return CoveragePairs.size();
-  return 0;
 }
 
 // Experimental.
