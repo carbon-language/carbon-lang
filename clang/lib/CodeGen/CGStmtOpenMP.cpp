@@ -1434,11 +1434,84 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   auto *PartId = std::next(I);
   // The first function argument for tasks is a thread id, the second one is a
   // part id (0 for tied tasks, >=0 for untied task).
-  auto &&CodeGen = [PartId, &S](CodeGenFunction &CGF) {
+  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
+  // Get list of private variables.
+  llvm::SmallVector<const Expr *, 8> PrivateVars;
+  llvm::SmallVector<const Expr *, 8> PrivateCopies;
+  for (auto &&I = S.getClausesOfKind(OMPC_private); I; ++I) {
+    auto *C = cast<OMPPrivateClause>(*I);
+    auto IRef = C->varlist_begin();
+    for (auto *IInit : C->private_copies()) {
+      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
+        PrivateVars.push_back(*IRef);
+        PrivateCopies.push_back(IInit);
+      }
+      ++IRef;
+    }
+  }
+  EmittedAsPrivate.clear();
+  // Get list of firstprivate variables.
+  llvm::SmallVector<const Expr *, 8> FirstprivateVars;
+  llvm::SmallVector<const Expr *, 8> FirstprivateCopies;
+  llvm::SmallVector<const Expr *, 8> FirstprivateInits;
+  for (auto &&I = S.getClausesOfKind(OMPC_firstprivate); I; ++I) {
+    auto *C = cast<OMPFirstprivateClause>(*I);
+    auto IRef = C->varlist_begin();
+    auto IElemInitRef = C->inits().begin();
+    for (auto *IInit : C->private_copies()) {
+      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
+      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
+        FirstprivateVars.push_back(*IRef);
+        FirstprivateCopies.push_back(IInit);
+        FirstprivateInits.push_back(*IElemInitRef);
+      }
+      ++IRef, ++IElemInitRef;
+    }
+  }
+  auto &&CodeGen = [PartId, &S, &PrivateVars, &FirstprivateVars](
+      CodeGenFunction &CGF) {
+    // Set proper addresses for generated private copies.
+    auto *CS = cast<CapturedStmt>(S.getAssociatedStmt());
+    OMPPrivateScope Scope(CGF);
+    if (!PrivateVars.empty() || !FirstprivateVars.empty()) {
+      auto *CopyFn = CGF.Builder.CreateAlignedLoad(
+          CGF.GetAddrOfLocalVar(CS->getCapturedDecl()->getParam(3)),
+          CGF.PointerAlignInBytes);
+      auto *PrivatesPtr = CGF.Builder.CreateAlignedLoad(
+          CGF.GetAddrOfLocalVar(CS->getCapturedDecl()->getParam(2)),
+          CGF.PointerAlignInBytes);
+      // Map privates.
+      llvm::SmallVector<std::pair<const VarDecl *, llvm::Value *>, 16>
+          PrivatePtrs;
+      llvm::SmallVector<llvm::Value *, 16> CallArgs;
+      CallArgs.push_back(PrivatesPtr);
+      for (auto *E : PrivateVars) {
+        auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+        auto *PrivatePtr =
+            CGF.CreateMemTemp(CGF.getContext().getPointerType(E->getType()));
+        PrivatePtrs.push_back(std::make_pair(VD, PrivatePtr));
+        CallArgs.push_back(PrivatePtr);
+      }
+      for (auto *E : FirstprivateVars) {
+        auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+        auto *PrivatePtr =
+            CGF.CreateMemTemp(CGF.getContext().getPointerType(E->getType()));
+        PrivatePtrs.push_back(std::make_pair(VD, PrivatePtr));
+        CallArgs.push_back(PrivatePtr);
+      }
+      CGF.EmitRuntimeCall(CopyFn, CallArgs);
+      for (auto &&Pair : PrivatePtrs) {
+        auto *Replacement =
+            CGF.Builder.CreateAlignedLoad(Pair.second, CGF.PointerAlignInBytes);
+        Scope.addPrivate(Pair.first, [Replacement]() { return Replacement; });
+      }
+    }
+    (void)Scope.Privatize();
     if (*PartId) {
       // TODO: emit code for untied tasks.
     }
-    CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    CGF.EmitStmt(CS->getCapturedStmt());
   };
   auto OutlinedFn =
       CGM.getOpenMPRuntime().emitTaskOutlinedFunction(S, *I, CodeGen);
@@ -1464,44 +1537,9 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   if (auto C = S.getSingleClause(OMPC_if)) {
     IfCond = cast<OMPIfClause>(C)->getCondition();
   }
-  llvm::DenseSet<const VarDecl *> EmittedAsPrivate;
-  // Get list of private variables.
-  llvm::SmallVector<const Expr *, 8> Privates;
-  llvm::SmallVector<const Expr *, 8> PrivateCopies;
-  for (auto &&I = S.getClausesOfKind(OMPC_private); I; ++I) {
-    auto *C = cast<OMPPrivateClause>(*I);
-    auto IRef = C->varlist_begin();
-    for (auto *IInit : C->private_copies()) {
-      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
-      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
-        Privates.push_back(*IRef);
-        PrivateCopies.push_back(IInit);
-      }
-      ++IRef;
-    }
-  }
-  EmittedAsPrivate.clear();
-  // Get list of firstprivate variables.
-  llvm::SmallVector<const Expr *, 8> FirstprivateVars;
-  llvm::SmallVector<const Expr *, 8> FirstprivateCopies;
-  llvm::SmallVector<const Expr *, 8> FirstprivateInits;
-  for (auto &&I = S.getClausesOfKind(OMPC_firstprivate); I; ++I) {
-    auto *C = cast<OMPFirstprivateClause>(*I);
-    auto IRef = C->varlist_begin();
-    auto IElemInitRef = C->inits().begin();
-    for (auto *IInit : C->private_copies()) {
-      auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>(*IRef)->getDecl());
-      if (EmittedAsPrivate.insert(OrigVD->getCanonicalDecl()).second) {
-        FirstprivateVars.push_back(*IRef);
-        FirstprivateCopies.push_back(IInit);
-        FirstprivateInits.push_back(*IElemInitRef);
-      }
-      ++IRef, ++IElemInitRef;
-    }
-  }
   CGM.getOpenMPRuntime().emitTaskCall(
       *this, S.getLocStart(), S, Tied, Final, OutlinedFn, SharedsTy,
-      CapturedStruct, IfCond, Privates, PrivateCopies, FirstprivateVars,
+      CapturedStruct, IfCond, PrivateVars, PrivateCopies, FirstprivateVars,
       FirstprivateCopies, FirstprivateInits);
 }
 

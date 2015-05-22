@@ -1719,7 +1719,8 @@ createKmpTaskTWithPrivatesRecordDecl(CodeGenModule &CGM, QualType KmpTaskTQTy,
 /// argument.
 /// \code
 /// kmp_int32 .omp_task_entry.(kmp_int32 gtid, kmp_task_t *tt) {
-///   TaskFunction(gtid, tt->part_id, tt->shareds);
+///   TaskFunction(gtid, tt->part_id, &tt->privates, task_privates_map,
+///   tt->shareds);
 ///   return 0;
 /// }
 /// \endcode
@@ -1727,7 +1728,8 @@ static llvm::Value *
 emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
                       QualType KmpInt32Ty, QualType KmpTaskTWithPrivatesPtrQTy,
                       QualType KmpTaskTWithPrivatesQTy, QualType KmpTaskTQTy,
-                      QualType SharedsPtrTy, llvm::Value *TaskFunction) {
+                      QualType SharedsPtrTy, llvm::Value *TaskFunction,
+                      llvm::Value *TaskPrivatesMap) {
   auto &C = CGM.getContext();
   FunctionArgList Args;
   ImplicitParamDecl GtidArg(C, /*DC=*/nullptr, Loc, /*Id=*/nullptr, KmpInt32Ty);
@@ -1748,18 +1750,19 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
   CGF.disableDebugInfo();
   CGF.StartFunction(GlobalDecl(), KmpInt32Ty, TaskEntry, TaskEntryFnInfo, Args);
 
-  // TaskFunction(gtid, tt->task_data.part_id, tt->task_data.shareds);
+  // TaskFunction(gtid, tt->task_data.part_id, &tt->privates, task_privates_map,
+  // tt->task_data.shareds);
   auto *GtidParam = CGF.EmitLoadOfScalar(
       CGF.GetAddrOfLocalVar(&GtidArg), /*Volatile=*/false,
       C.getTypeAlignInChars(KmpInt32Ty).getQuantity(), KmpInt32Ty, Loc);
   auto *TaskTypeArgAddr = CGF.Builder.CreateAlignedLoad(
       CGF.GetAddrOfLocalVar(&TaskTypeArg), CGM.PointerAlignInBytes);
-  LValue Base =
+  LValue TDBase =
       CGF.MakeNaturalAlignAddrLValue(TaskTypeArgAddr, KmpTaskTWithPrivatesQTy);
   auto *KmpTaskTWithPrivatesQTyRD =
       cast<RecordDecl>(KmpTaskTWithPrivatesQTy->getAsTagDecl());
-  Base =
-      CGF.EmitLValueForField(Base, *KmpTaskTWithPrivatesQTyRD->field_begin());
+  LValue Base =
+      CGF.EmitLValueForField(TDBase, *KmpTaskTWithPrivatesQTyRD->field_begin());
   auto *KmpTaskTQTyRD = cast<RecordDecl>(KmpTaskTQTy->getAsTagDecl());
   auto PartIdFI = std::next(KmpTaskTQTyRD->field_begin(), KmpTaskTPartId);
   auto PartIdLVal = CGF.EmitLValueForField(Base, *PartIdFI);
@@ -1771,7 +1774,18 @@ emitProxyTaskFunction(CodeGenModule &CGM, SourceLocation Loc,
       CGF.EmitLoadOfLValue(SharedsLVal, Loc).getScalarVal(),
       CGF.ConvertTypeForMem(SharedsPtrTy));
 
-  llvm::Value *CallArgs[] = {GtidParam, PartidParam, SharedsParam};
+  auto PrivatesFI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin(), 1);
+  llvm::Value *PrivatesParam;
+  if (PrivatesFI != KmpTaskTWithPrivatesQTyRD->field_end()) {
+    auto PrivatesLVal = CGF.EmitLValueForField(TDBase, *PrivatesFI);
+    PrivatesParam = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+        PrivatesLVal.getAddress(), CGF.VoidPtrTy);
+  } else {
+    PrivatesParam = llvm::ConstantPointerNull::get(CGF.VoidPtrTy);
+  }
+
+  llvm::Value *CallArgs[] = {GtidParam, PartidParam, PrivatesParam,
+                             TaskPrivatesMap, SharedsParam};
   CGF.EmitCallOrInvoke(TaskFunction, CallArgs);
   CGF.EmitStoreThroughLValue(
       RValue::get(CGF.Builder.getInt32(/*C=*/0)),
@@ -1825,6 +1839,90 @@ static llvm::Value *emitDestructorsFunction(CodeGenModule &CGM,
   return DestructorFn;
 }
 
+/// \brief Emit a privates mapping function for correct handling of private and
+/// firstprivate variables.
+/// \code
+/// void .omp_task_privates_map.(const .privates. *noalias privs, <ty1>
+/// **noalias priv1,...,  <tyn> **noalias privn) {
+///   *priv1 = &.privates.priv1;
+///   ...;
+///   *privn = &.privates.privn;
+/// }
+/// \endcode
+static llvm::Value *
+emitTaskPrivateMappingFunction(CodeGenModule &CGM, SourceLocation Loc,
+                               const ArrayRef<const Expr *> PrivateVars,
+                               const ArrayRef<const Expr *> FirstprivateVars,
+                               QualType PrivatesQTy,
+                               const ArrayRef<PrivateDataTy> Privates) {
+  auto &C = CGM.getContext();
+  FunctionArgList Args;
+  ImplicitParamDecl TaskPrivatesArg(
+      C, /*DC=*/nullptr, Loc, /*Id=*/nullptr,
+      C.getPointerType(PrivatesQTy).withConst().withRestrict());
+  Args.push_back(&TaskPrivatesArg);
+  llvm::DenseMap<const VarDecl *, unsigned> PrivateVarsPos;
+  unsigned Counter = 1;
+  for (auto *E: PrivateVars) {
+    Args.push_back(ImplicitParamDecl::Create(
+        C, /*DC=*/nullptr, Loc,
+        /*Id=*/nullptr, C.getPointerType(C.getPointerType(E->getType()))
+                            .withConst()
+                            .withRestrict()));
+    auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+    PrivateVarsPos[VD] = Counter;
+    ++Counter;
+  }
+  for (auto *E : FirstprivateVars) {
+    Args.push_back(ImplicitParamDecl::Create(
+        C, /*DC=*/nullptr, Loc,
+        /*Id=*/nullptr, C.getPointerType(C.getPointerType(E->getType()))
+                            .withConst()
+                            .withRestrict()));
+    auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+    PrivateVarsPos[VD] = Counter;
+    ++Counter;
+  }
+  FunctionType::ExtInfo Info;
+  auto &TaskPrivatesMapFnInfo =
+      CGM.getTypes().arrangeFreeFunctionDeclaration(C.VoidTy, Args, Info,
+                                                    /*isVariadic=*/false);
+  auto *TaskPrivatesMapTy =
+      CGM.getTypes().GetFunctionType(TaskPrivatesMapFnInfo);
+  auto *TaskPrivatesMap = llvm::Function::Create(
+      TaskPrivatesMapTy, llvm::GlobalValue::InternalLinkage,
+      ".omp_task_privates_map.", &CGM.getModule());
+  CGM.SetLLVMFunctionAttributes(/*D=*/nullptr, TaskPrivatesMapFnInfo,
+                                TaskPrivatesMap);
+  TaskPrivatesMap->addFnAttr(llvm::Attribute::AlwaysInline);
+  CodeGenFunction CGF(CGM);
+  CGF.disableDebugInfo();
+  CGF.StartFunction(GlobalDecl(), C.VoidTy, TaskPrivatesMap,
+                    TaskPrivatesMapFnInfo, Args);
+
+  // *privi = &.privates.privi;
+  auto *TaskPrivatesArgAddr = CGF.Builder.CreateAlignedLoad(
+      CGF.GetAddrOfLocalVar(&TaskPrivatesArg), CGM.PointerAlignInBytes);
+  LValue Base =
+      CGF.MakeNaturalAlignAddrLValue(TaskPrivatesArgAddr, PrivatesQTy);
+  auto *PrivatesQTyRD = cast<RecordDecl>(PrivatesQTy->getAsTagDecl());
+  Counter = 0;
+  for (auto *Field : PrivatesQTyRD->fields()) {
+    auto FieldLVal = CGF.EmitLValueForField(Base, Field);
+    auto *VD = Args[PrivateVarsPos[Privates[Counter].second.Original]];
+    auto RefLVal = CGF.MakeNaturalAlignAddrLValue(CGF.GetAddrOfLocalVar(VD),
+                                                  VD->getType());
+    auto RefLoadRVal = CGF.EmitLoadOfLValue(RefLVal, Loc);
+    CGF.EmitStoreOfScalar(
+        FieldLVal.getAddress(),
+        CGF.MakeNaturalAlignAddrLValue(RefLoadRVal.getScalarVal(),
+                                       RefLVal.getType()->getPointeeType()));
+    ++Counter;
+  }
+  CGF.FinishFunction();
+  return TaskPrivatesMap;
+}
+
 static int array_pod_sort_comparator(const PrivateDataTy *P1,
                                      const PrivateDataTy *P2) {
   return P1->first < P2->first ? 1 : (P2->first < P1->first ? -1 : 0);
@@ -1841,7 +1939,7 @@ void CGOpenMPRuntime::emitTaskCall(
     const ArrayRef<const Expr *> FirstprivateInits) {
   auto &C = CGM.getContext();
   llvm::SmallVector<PrivateDataTy, 8> Privates;
-  // Aggeregate privates and sort them by the alignment.
+  // Aggregate privates and sort them by the alignment.
   auto I = PrivateCopies.begin();
   for (auto *E : PrivateVars) {
     auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
@@ -1885,11 +1983,27 @@ void CGOpenMPRuntime::emitTaskCall(
       CGM.getSize(C.getTypeSizeInChars(KmpTaskTWithPrivatesQTy));
   QualType SharedsPtrTy = C.getPointerType(SharedsTy);
 
+  // Emit initial values for private copies (if any).
+  llvm::Value *TaskPrivatesMap = nullptr;
+  auto *TaskPrivatesMapTy =
+      std::next(cast<llvm::Function>(TaskFunction)->getArgumentList().begin(),
+                3)
+          ->getType();
+  if (!Privates.empty()) {
+    auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
+    TaskPrivatesMap = emitTaskPrivateMappingFunction(
+        CGM, Loc, PrivateVars, FirstprivateVars, FI->getType(), Privates);
+    TaskPrivatesMap = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+        TaskPrivatesMap, TaskPrivatesMapTy);
+  } else {
+    TaskPrivatesMap = llvm::ConstantPointerNull::get(
+        cast<llvm::PointerType>(TaskPrivatesMapTy));
+  }
   // Build a proxy function kmp_int32 .omp_task_entry.(kmp_int32 gtid,
   // kmp_task_t *tt);
   auto *TaskEntry = emitProxyTaskFunction(
       CGM, Loc, KmpInt32Ty, KmpTaskTWithPrivatesPtrQTy, KmpTaskTWithPrivatesQTy,
-      KmpTaskTQTy, SharedsPtrTy, TaskFunction);
+      KmpTaskTQTy, SharedsPtrTy, TaskFunction, TaskPrivatesMap);
 
   // Build call kmp_task_t * __kmpc_omp_task_alloc(ident_t *, kmp_int32 gtid,
   // kmp_int32 flags, size_t sizeof_kmp_task_t, size_t sizeof_shareds,
@@ -1937,10 +2051,13 @@ void CGOpenMPRuntime::emitTaskCall(
     auto FI = std::next(KmpTaskTWithPrivatesQTyRD->field_begin());
     auto PrivatesBase = CGF.EmitLValueForField(Base, *FI);
     FI = cast<RecordDecl>(FI->getType()->getAsTagDecl())->field_begin();
-    LValue SharedsBase = CGF.MakeNaturalAlignAddrLValue(
-        CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-            KmpTaskSharedsPtr, CGF.ConvertTypeForMem(SharedsPtrTy)),
-        SharedsTy);
+    LValue SharedsBase;
+    if (!FirstprivateVars.empty()) {
+      SharedsBase = CGF.MakeNaturalAlignAddrLValue(
+          CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+              KmpTaskSharedsPtr, CGF.ConvertTypeForMem(SharedsPtrTy)),
+          SharedsTy);
+    }
     CodeGenFunction::CGCapturedStmtInfo CapturesInfo(
         cast<CapturedStmt>(*D.getAssociatedStmt()));
     for (auto &&Pair : Privates) {
@@ -2000,22 +2117,7 @@ void CGOpenMPRuntime::emitTaskCall(
         }
       }
       NeedsCleanup = NeedsCleanup || FI->getType().isDestructedType();
-      // Copy addresses of privates to corresponding references in the list of
-      // captured variables.
-      //   ...
-      //   tt->shareds.var_addr = &tt->privates.private_var;
-      //   ...
-      auto *OriginalVD = Pair.second.Original;
-      auto *SharedField = CapturesInfo.lookup(OriginalVD);
-      auto SharedRefLValue =
-          CGF.EmitLValueForFieldInitialization(SharedsBase, SharedField);
-      CGF.EmitStoreThroughLValue(
-          RValue::get(CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-              PrivateLValue.getAddress(), SharedRefLValue.getAddress()
-                                              ->getType()
-                                              ->getPointerElementType())),
-          SharedRefLValue);
-      ++FI, ++I;
+      ++FI;
     }
   }
   // Provide pointer to function with destructors for privates.
