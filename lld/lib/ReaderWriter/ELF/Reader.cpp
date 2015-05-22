@@ -29,7 +29,7 @@ namespace lld {
 void Registry::addSupportELFObjects(ELFLinkingContext &ctx) {
 
   // Tell registry about the ELF object file parser.
-  add(std::move(ctx.getTargetHandler().getObjReader()));
+  add(ctx.getTargetHandler().getObjReader());
 
   // Tell registry about the relocation name to number mapping for this arch.
   ctx.registerRelocationNames(*this);

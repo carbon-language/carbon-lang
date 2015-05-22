@@ -113,7 +113,7 @@ template <class ELFT>
 void MipsExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
-  result.push_back(std::move(_writeHelper.createRuntimeFile()));
+  result.push_back(_writeHelper.createRuntimeFile());
 }
 
 template <class ELFT>

@@ -242,7 +242,7 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   // Don't create .symtab and .strtab sections if we're going to
   // strip all the symbols.
   if (!_ctx.stripSymbols()) {
-    _symtab = std::move(this->createSymbolTable());
+    _symtab = this->createSymbolTable();
     _strtab.reset(new (_alloc) StringTable<ELFT>(
         _ctx, ".strtab", TargetLayout<ELFT>::ORDER_STRING_TABLE));
     _layout.addSection(_symtab.get());
@@ -270,10 +270,10 @@ template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
   }
 
   if (_ctx.isDynamic()) {
-    _dynamicTable = std::move(createDynamicTable());
+    _dynamicTable = createDynamicTable();
     _dynamicStringTable.reset(new (_alloc) StringTable<ELFT>(
         _ctx, ".dynstr", TargetLayout<ELFT>::ORDER_DYNAMIC_STRINGS, true));
-    _dynamicSymbolTable = std::move(createDynamicSymbolTable());
+    _dynamicSymbolTable = createDynamicSymbolTable();
     _hashTable.reset(new (_alloc) HashSection<ELFT>(
         _ctx, ".hash", TargetLayout<ELFT>::ORDER_HASH));
     // Set the hash table in the dynamic symbol table so that the entries in the
