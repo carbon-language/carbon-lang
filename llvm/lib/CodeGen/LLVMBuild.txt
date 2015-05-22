@@ -16,10 +16,10 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = AsmPrinter SelectionDAG MIR
+subdirectories = AsmPrinter SelectionDAG
 
 [component_0]
 type = Library
 name = CodeGen
 parent = Libraries
-required_libraries = Analysis Core MC Scalar Support Target TransformUtils MIR
+required_libraries = Analysis Core MC Scalar Support Target TransformUtils

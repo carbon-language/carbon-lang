@@ -1,5 +1,0 @@
-# RUN: llc -start-after branch-folder -stop-after branch-folder -o /dev/null %s
-# This test ensures that the MIR parser accepts files without the LLVM IR.
-
----
-...
