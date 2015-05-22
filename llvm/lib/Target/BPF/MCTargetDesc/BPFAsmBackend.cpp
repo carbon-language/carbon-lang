@@ -68,7 +68,9 @@ void BPFAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
     return;
   }
   assert(Fixup.getKind() == FK_PCRel_2);
-  *(uint16_t *)&Data[Fixup.getOffset() + 2] = (uint16_t)((Value - 8) / 8);
+  Value = (uint16_t)((Value - 8) / 8);
+  Data[Fixup.getOffset() + 2] = Value & 0xFF;
+  Data[Fixup.getOffset() + 3] = Value >> 8;
 }
 
 MCObjectWriter *BPFAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
