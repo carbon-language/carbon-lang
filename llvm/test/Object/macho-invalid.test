@@ -25,11 +25,8 @@ RUN:      | FileCheck -check-prefix BAD-SYMBOL %s
 RUN: not llvm-objdump -t %p/Inputs/macho-invalid-symbol-name-past-eof 2>&1 \
 RUN:      | FileCheck -check-prefix NAME-PAST-EOF %s
 
-RUN: not llvm-objdump -t %p/Inputs/macho-invalid-section-index-getSectionRawFinalSegmentName 2>&1 \
-RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SEG-NAME %s
-
 RUN: not llvm-nm %p/Inputs/macho-invalid-section-index-getSectionRawName 2>&1 \
-RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SECT-NAME %s
+RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SYMBOL-SEC %s
 
 RUN: not llvm-objdump -t %p/Inputs/macho-invalid-getsection-index 2>&1 \
 RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-GETSECT %s
@@ -45,7 +42,6 @@ TOO-MANY-SECTS: Number of sections too large for size of load command
 BAD-SYMBOL: Requested symbol index is out of range
 NAME-PAST-EOF: Symbol name entry points before beginning or past end of file
 
-INVALID-SECTION-IDX-SEG-NAME: getSectionRawFinalSegmentName: Invalid section index
-INVALID-SECTION-IDX-SECT-NAME: getSectionRawName: Invalid section index
+INVALID-SECTION-IDX-SYMBOL-SEC: getSymbolSection: Invalid section index
 INVALID-SECTION-IDX-GETSECT: getSection: Invalid section index
 INVALID-SECTION-IDX-GETSECT64: getSection64: Invalid section index

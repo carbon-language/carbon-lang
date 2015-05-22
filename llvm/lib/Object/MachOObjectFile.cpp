@@ -537,6 +537,8 @@ std::error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
   } else {
     DataRefImpl DRI;
     DRI.d.a = index - 1;
+    if (DRI.d.a >= Sections.size())
+      report_fatal_error("getSymbolSection: Invalid section index.");
     Res = section_iterator(SectionRef(DRI, this));
   }
 
@@ -2146,8 +2148,7 @@ MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec) const {
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawName(DataRefImpl Sec) const {
-  if (Sec.d.a >= Sections.size())
-    report_fatal_error("getSectionRawName: Invalid section index");
+  assert(Sec.d.a < Sections.size() && "Should have detected this earlier");
   const section_base *Base =
     reinterpret_cast<const section_base *>(Sections[Sec.d.a]);
   return makeArrayRef(Base->sectname);
@@ -2155,8 +2156,7 @@ MachOObjectFile::getSectionRawName(DataRefImpl Sec) const {
 
 ArrayRef<char>
 MachOObjectFile::getSectionRawFinalSegmentName(DataRefImpl Sec) const {
-  if (Sec.d.a >= Sections.size())
-    report_fatal_error("getSectionRawFinalSegmentName: Invalid section index");
+  assert(Sec.d.a < Sections.size() && "Should have detected this earlier");
   const section_base *Base =
     reinterpret_cast<const section_base *>(Sections[Sec.d.a]);
   return makeArrayRef(Base->segname);
