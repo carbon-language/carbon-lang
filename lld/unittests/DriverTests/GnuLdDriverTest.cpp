@@ -31,7 +31,7 @@ class LinkerScriptTest : public testing::Test {
 protected:
   void SetUp() override {
     llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
-    _ctx = std::move(GnuLdDriver::createELFLinkingContext(triple));
+    _ctx = GnuLdDriver::createELFLinkingContext(triple);
   }
 
   void parse(StringRef script, bool nostdlib = false) {
