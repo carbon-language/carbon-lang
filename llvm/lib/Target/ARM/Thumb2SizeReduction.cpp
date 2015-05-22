@@ -569,7 +569,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   if (Entry.LowRegs1 && !VerifyLowRegs(MI))
     return false;
 
-  if (MI->mayLoad() || MI->mayStore())
+  if (MI->mayLoadOrStore())
     return ReduceLoadStore(MBB, MI, Entry);
 
   switch (Opc) {
