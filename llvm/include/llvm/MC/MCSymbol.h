@@ -167,17 +167,18 @@ class MCSymbol {
   mutable unsigned IsUsed : 1;
 
   mutable bool HasData : 1;
-  mutable MCSymbolData Data;
 
   /// Index field, for use by the object file implementation.
-  mutable uint64_t Index = 0;
+  mutable uint64_t Index : 60;
+
+  mutable MCSymbolData Data;
 
 private: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
   MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), HasData(false) {}
+        IsRedefinable(false), IsUsed(false), HasData(false), Index(0) {}
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
@@ -290,6 +291,7 @@ public:
   /// Set the (implementation defined) index.
   void setIndex(uint64_t Value) const {
     assert(HasData && "Uninitialized symbol data");
+    assert(!(Value >> 60) && "Not enough bits for value");
     Index = Value;
   }
 
