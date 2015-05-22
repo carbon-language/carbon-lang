@@ -688,12 +688,12 @@ public:
 
   /// When hasPattern() finds a pattern this function generates the instructions
   /// that could replace the original code sequence. The client has to decide
-  /// whether the actual replacementment is beneficial or not.
+  /// whether the actual replacement is beneficial or not.
   /// \param Root - Instruction that could be combined with one of its operands
   /// \param P - Combination pattern for Root
   /// \param InsInstrs - Vector of new instructions that implement P
-  /// \param DelInstrs - Old instructions, including Root, that could be replaced
-  /// by InsInstr
+  /// \param DelInstrs - Old instructions, including Root, that could be
+  /// replaced by InsInstr
   /// \param InstrIdxForVirtReg - map of virtual register to instruction in
   /// InsInstr that defines it
   virtual void genAlternativeCodeSequence(
