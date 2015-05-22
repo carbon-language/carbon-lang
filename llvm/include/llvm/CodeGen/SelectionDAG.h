@@ -112,6 +112,7 @@ private:
 /// motion, and debug info for them is potentially useful even if the parameter
 /// is unused.  Right now only byval parameters are handled separately.
 class SDDbgInfo {
+  BumpPtrAllocator Alloc;
   SmallVector<SDDbgValue*, 32> DbgValues;
   SmallVector<SDDbgValue*, 32> ByvalParmDbgValues;
   typedef DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMapType;
@@ -138,7 +139,10 @@ public:
     DbgValMap.clear();
     DbgValues.clear();
     ByvalParmDbgValues.clear();
+    Alloc.Reset();
   }
+
+  BumpPtrAllocator &getAlloc() { return Alloc; }
 
   bool empty() const {
     return DbgValues.empty() && ByvalParmDbgValues.empty();
