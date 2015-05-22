@@ -857,6 +857,9 @@ implementation.
 
     // Assert that is mutex is currently held for read operations.
     void AssertReaderHeld() ASSERT_SHARED_CAPABILITY(this);
+    
+    // For negative capabilities.
+    const Mutex& operator!() const { return *this; }
   };
 
 
