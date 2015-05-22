@@ -32,6 +32,7 @@ class RaiseTestCase(TestBase):
     @skipIfWindows # signals do not exist on Windows
     @dwarf_test
     @skipIfDarwin # darwin does not support real time signals
+    @skipIfTargetAndroid
     def test_sigsigrtmin_with_dwarf(self):
         self.buildDwarf()
         self.signal_test('SIGRTMIN', True)
