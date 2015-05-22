@@ -27,6 +27,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -877,19 +878,11 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
     if (isApproximated && Access.isWrite())
       Access.setMayWrite();
 
-    MemAccs.push_back(
-        new MemoryAccess(Access, AccessInst, this, SAI, MemAccs.size()));
-
-    // We do not track locations for scalar memory accesses at the moment.
-    //
-    // We do not have a use for this information at the moment. If we need this
-    // at some point, the "instruction -> access" mapping needs to be enhanced
-    // as a single instruction could then possibly perform multiple accesses.
-    if (!Access.isScalar()) {
-      assert(!InstructionToAccess.count(AccessInst) &&
-             "Unexpected 1-to-N mapping on instruction to access map!");
-      InstructionToAccess[AccessInst] = MemAccs.back();
-    }
+    MemoryAccessList *&MAL = InstructionToAccess[AccessInst];
+    if (!MAL)
+      MAL = new MemoryAccessList();
+    MAL->emplace_front(Access, AccessInst, this, SAI, MemAccs.size());
+    MemAccs.push_back(&MAL->front());
   }
 }
 
@@ -1258,11 +1251,7 @@ __isl_give isl_id *ScopStmt::getDomainId() const {
 }
 
 ScopStmt::~ScopStmt() {
-  while (!MemAccs.empty()) {
-    delete MemAccs.back();
-    MemAccs.pop_back();
-  }
-
+  DeleteContainerSeconds(InstructionToAccess);
   isl_set_free(Domain);
   isl_map_free(Schedule);
 }

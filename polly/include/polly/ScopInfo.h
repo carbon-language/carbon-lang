@@ -25,6 +25,8 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "isl/ctx.h"
 
+#include <forward_list>
+
 using namespace llvm;
 
 namespace llvm {
@@ -410,7 +412,11 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
 /// accesses.
 /// At the moment every statement represents a single basic block of LLVM-IR.
 class ScopStmt {
-  //===-------------------------------------------------------------------===//
+public:
+  /// @brief List to hold all (scalar) memory accesses mapped to an instruction.
+  using MemoryAccessList = std::forward_list<MemoryAccess>;
+
+private:
   ScopStmt(const ScopStmt &) = delete;
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
@@ -476,7 +482,9 @@ class ScopStmt {
   /// The only side effects of a statement are its memory accesses.
   typedef SmallVector<MemoryAccess *, 8> MemoryAccessVec;
   MemoryAccessVec MemAccs;
-  std::map<const Instruction *, MemoryAccess *> InstructionToAccess;
+
+  /// @brief Mapping from instructions to (scalar) memory accesses.
+  DenseMap<const Instruction *, MemoryAccessList *> InstructionToAccess;
 
   //@}
 
@@ -628,16 +636,31 @@ public:
   /// @brief Return true if this statement represents a whole region.
   bool isRegionStmt() const { return R != nullptr; }
 
-  const MemoryAccess &getAccessFor(const Instruction *Inst) const {
-    MemoryAccess *A = lookupAccessFor(Inst);
-    assert(A && "Cannot get memory access because it does not exist!");
-    return *A;
+  /// @brief Return the (scalar) memory accesses for @p Inst.
+  const MemoryAccessList &getAccessesFor(const Instruction *Inst) const {
+    MemoryAccessList *MAL = lookupAccessesFor(Inst);
+    assert(MAL && "Cannot get memory accesses because they do not exist!");
+    return *MAL;
   }
 
+  /// @brief Return the (scalar) memory accesses for @p Inst if any.
+  MemoryAccessList *lookupAccessesFor(const Instruction *Inst) const {
+    auto It = InstructionToAccess.find(Inst);
+    return It == InstructionToAccess.end() ? nullptr : It->getSecond();
+  }
+
+  /// @brief Return the __first__ (scalar) memory access for @p Inst.
+  const MemoryAccess &getAccessFor(const Instruction *Inst) const {
+    MemoryAccess *MA = lookupAccessFor(Inst);
+    assert(MA && "Cannot get memory access because it does not exist!");
+    return *MA;
+  }
+
+  /// @brief Return the __first__ (scalar) memory access for @p Inst if any.
   MemoryAccess *lookupAccessFor(const Instruction *Inst) const {
-    std::map<const Instruction *, MemoryAccess *>::const_iterator at =
-        InstructionToAccess.find(Inst);
-    return at == InstructionToAccess.end() ? NULL : at->second;
+    auto It = InstructionToAccess.find(Inst);
+    return It == InstructionToAccess.end() ? nullptr
+                                           : &It->getSecond()->front();
   }
 
   void setBasicBlock(BasicBlock *Block) {

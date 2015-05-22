@@ -81,8 +81,13 @@ bool polly::isIgnoredIntrinsic(const Value *V) {
 
 BlockGenerator::BlockGenerator(PollyIRBuilder &B, LoopInfo &LI,
                                ScalarEvolution &SE, DominatorTree &DT,
+                               ScalarAllocaMapTy &ScalarMap,
+                               ScalarAllocaMapTy &PHIOpMap,
+                               EscapeUsersAllocaMapTy &EscapeMap,
                                IslExprBuilder *ExprBuilder)
-    : Builder(B), LI(LI), SE(SE), ExprBuilder(ExprBuilder), DT(DT) {}
+    : Builder(B), LI(LI), SE(SE), ExprBuilder(ExprBuilder), DT(DT),
+      EntryBB(nullptr), PHIOpMap(PHIOpMap), ScalarMap(ScalarMap),
+      EscapeMap(EscapeMap) {}
 
 Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
                                    ValueMapT &BBMap, ValueMapT &GlobalMap,
@@ -242,13 +247,22 @@ Value *BlockGenerator::generateScalarStore(ScopStmt &Stmt,
 void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
                                      ValueMapT &BBMap, ValueMapT &GlobalMap,
                                      LoopToScevMapT &LTS) {
+
+  // First check for possible scalar dependences for this instruction.
+  generateScalarLoads(Stmt, Inst, BBMap);
+
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion()))
+  Loop *L = getLoopForInst(Inst);
+  if ((Stmt.isBlockStmt() || !Stmt.getRegion()->contains(L)) &&
+      canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion())) {
+    Value *NewValue = getNewValue(Stmt, Inst, BBMap, GlobalMap, LTS, L);
+    BBMap[Inst] = NewValue;
     return;
+  }
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     Value *NewLoad = generateScalarLoad(Stmt, Load, BBMap, GlobalMap, LTS);
@@ -263,6 +277,11 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
     // Compute NewStore before its insertion in BBMap to make the insertion
     // deterministic.
     BBMap[Store] = NewStore;
+    return;
+  }
+
+  if (const PHINode *PHI = dyn_cast<PHINode>(Inst)) {
+    copyPHIInstruction(Stmt, PHI, BBMap, GlobalMap, LTS);
     return;
   }
 
@@ -323,8 +342,329 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
                             ValueMapT &BBMap, ValueMapT &GlobalMap,
                             LoopToScevMapT &LTS) {
   Builder.SetInsertPoint(CopyBB->begin());
+  EntryBB = &CopyBB->getParent()->getEntryBlock();
+
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, BBMap, GlobalMap, LTS);
+
+  // After a basic block was copied store all scalars that escape this block
+  // in their alloca. First the scalars that have dependences inside the SCoP,
+  // then the ones that might escape the SCoP.
+  generateScalarStores(Stmt, BB, BBMap, GlobalMap);
+
+  const Region &R = Stmt.getParent()->getRegion();
+  for (Instruction &Inst : *BB)
+    handleOutsideUsers(R, &Inst, BBMap[&Inst]);
+}
+
+AllocaInst *BlockGenerator::getOrCreateAlloca(Instruction *ScalarBase,
+                                              ScalarAllocaMapTy &Map,
+                                              const char *NameExt,
+                                              bool *IsNew) {
+
+  // Check if an alloca was cached for the base instruction.
+  AllocaInst *&Addr = Map[ScalarBase];
+
+  // If needed indicate if it was found already or will be created.
+  if (IsNew)
+    *IsNew = (Addr == nullptr);
+
+  // If no alloca was found create one and insert it in the entry block.
+  if (!Addr) {
+    auto *Ty = ScalarBase->getType();
+    Addr = new AllocaInst(Ty, ScalarBase->getName() + NameExt);
+    Addr->insertBefore(EntryBB->getFirstInsertionPt());
+  }
+
+  return Addr;
+}
+
+void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
+                                        Value *InstCopy) {
+  BasicBlock *ExitBB = R.getExit();
+
+  EscapeUserVectorTy EscapeUsers;
+  for (User *U : Inst->users()) {
+
+    // Non-instruction user will never escape.
+    Instruction *UI = dyn_cast<Instruction>(U);
+    if (!UI)
+      continue;
+
+    if (R.contains(UI) && ExitBB != UI->getParent())
+      continue;
+
+    EscapeUsers.push_back(UI);
+  }
+
+  // Exit if no escape uses were found.
+  if (EscapeUsers.empty())
+    return;
+
+  // If there are escape users we get the alloca for this instruction and put
+  // it in the EscapeMap for later finalization. However, if the alloca was not
+  // created by an already handled scalar dependence we have to initialize it
+  // also. Lastly, if the instruction was copied multiple times we already did
+  // this and can exit.
+  if (EscapeMap.count(Inst))
+    return;
+
+  // Get or create an escape alloca for this instruction.
+  bool IsNew;
+  AllocaInst *ScalarAddr =
+      getOrCreateAlloca(Inst, ScalarMap, ".escape", &IsNew);
+
+  // Remember that this instruction has escape uses and the escape alloca.
+  EscapeMap[Inst] = std::make_pair(ScalarAddr, std::move(EscapeUsers));
+
+  // If the escape alloca was just created store the instruction in there,
+  // otherwise that happened already.
+  if (IsNew) {
+    assert(InstCopy && "Except PHIs every instruction should have a copy!");
+    Builder.CreateStore(InstCopy, ScalarAddr);
+  }
+}
+
+void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
+                                         const Instruction *Inst,
+                                         ValueMapT &BBMap) {
+
+  // Iterate over all memory accesses for the given instruction and handle all
+  // scalar reads.
+  if (ScopStmt::MemoryAccessList *MAL = Stmt.lookupAccessesFor(Inst)) {
+    for (MemoryAccess &MA : *MAL) {
+      if (!MA.isScalar() || !MA.isRead())
+        continue;
+
+      Instruction *ScalarBase = cast<Instruction>(MA.getBaseAddr());
+      Instruction *ScalarInst = MA.getAccessInstruction();
+
+      PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
+
+      // This is either a common scalar use (second case) or the use of a phi
+      // operand by the PHI node (first case).
+      if (ScalarBasePHI == ScalarInst) {
+        AllocaInst *PHIOpAddr =
+            getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+        LoadInst *LI =
+            Builder.CreateLoad(PHIOpAddr, PHIOpAddr->getName() + ".reload");
+        BBMap[ScalarBase] = LI;
+      } else {
+        // For non-PHI operand uses we look up the alloca in the ScalarMap,
+        // reload it and add the mapping to the ones in the current basic block.
+        AllocaInst *ScalarAddr =
+            getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+        LoadInst *LI =
+            Builder.CreateLoad(ScalarAddr, ScalarAddr->getName() + ".reload");
+        BBMap[ScalarBase] = LI;
+      }
+    }
+  }
+}
+
+Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
+                                         ScalarAllocaMapTy &ReloadMap,
+                                         ValueMapT &BBMap,
+                                         ValueMapT &GlobalMap) {
+  // If the value we want to store is an instruction we might have demoted it
+  // in order to make it accessible here. In such a case a reload is
+  // necessary. If it is no instruction it will always be a value that
+  // dominates the current point and we can just use it. In total there are 4
+  // options:
+  //  (1) The value is no instruction ==> use the value.
+  //  (2) The value is an instruction that was split out of the region prior to
+  //      code generation  ==> use the instruction as it dominates the region.
+  //  (3) The value is an instruction:
+  //      (a) The value was defined in the current block, thus a copy is in
+  //          the BBMap ==> use the mapped value.
+  //      (b) The value was defined in a previous block, thus we demoted it
+  //          earlier ==> use the reloaded value.
+  Instruction *ScalarValueInst = dyn_cast<Instruction>(ScalarValue);
+  if (!ScalarValueInst)
+    return ScalarValue;
+
+  if (!R.contains(ScalarValueInst)) {
+    if (Value *ScalarValueCopy = GlobalMap.lookup(ScalarValueInst))
+      return /* Case (3a) */ ScalarValueCopy;
+    else
+      return /* Case 2 */ ScalarValue;
+  }
+
+  if (Value *ScalarValueCopy = BBMap.lookup(ScalarValueInst))
+    return /* Case (3a) */ ScalarValueCopy;
+
+  // Case (3b)
+  assert(ReloadMap.count(ScalarValueInst) &&
+         "ScalarInst not mapped in the block and not in the given reload map!");
+  Value *ReloadAddr = ReloadMap[ScalarValueInst];
+  ScalarValue =
+      Builder.CreateLoad(ReloadAddr, ReloadAddr->getName() + ".reload");
+
+  return ScalarValue;
+}
+
+void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
+                                          ValueMapT &BBMap,
+                                          ValueMapT &GlobalMap) {
+  const Region &R = Stmt.getParent()->getRegion();
+
+  assert(Stmt.isBlockStmt() && BB == Stmt.getBasicBlock() &&
+         "Region statements need to use the generateScalarStores() "
+         "function in the RegionGenerator");
+
+  // Set to remember a store to the phiops alloca of a PHINode. It is needed as
+  // we might have multiple write accesses to the same PHI and while one is the
+  // self write of the PHI (to the ScalarMap alloca) the other is the write to
+  // the operand alloca (PHIOpMap).
+  SmallPtrSet<PHINode *, 4> SeenPHIs;
+
+  // Iterate over all accesses in the given statement.
+  for (MemoryAccess *MA : Stmt) {
+
+    // Skip non-scalar and read accesses.
+    if (!MA->isScalar() || MA->isRead())
+      continue;
+
+    Instruction *ScalarBase = cast<Instruction>(MA->getBaseAddr());
+    Instruction *ScalarInst = MA->getAccessInstruction();
+    PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
+
+    // Get the alloca node for the base instruction and the value we want to
+    // store. In total there are 4 options:
+    //  (1) The base is no PHI, hence it is a simple scalar def-use chain.
+    //  (2) The base is a PHI,
+    //      (a) and the write is caused by an operand in the block.
+    //      (b) and it is the PHI self write (same as case (1)).
+    //      (c) (2a) and (2b) are not distinguishable.
+    // For case (1) and (2b) we get the alloca from the scalar map and the value
+    // we want to store is initialized with the instruction attached to the
+    // memory access. For case (2a) we get the alloca from the PHI operand map
+    // and the value we want to store is initialized with the incoming value for
+    // this block. The tricky case (2c) is when both (2a) and (2b) match. This
+    // happens if the PHI operand is in the same block as the PHI. To handle
+    // that we choose the alloca of (2a) first and (2b) for the next write
+    // access to that PHI (there must be 2).
+    Value *ScalarValue = nullptr;
+    AllocaInst *ScalarAddr = nullptr;
+
+    if (!ScalarBasePHI) {
+      // Case (1)
+      ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+      ScalarValue = ScalarInst;
+    } else {
+      int PHIIdx = ScalarBasePHI->getBasicBlockIndex(BB);
+      if (ScalarBasePHI != ScalarInst) {
+        // Case (2a)
+        assert(PHIIdx >= 0 && "Bad scalar write to PHI operand");
+        SeenPHIs.insert(ScalarBasePHI);
+        ScalarAddr = getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+        ScalarValue = ScalarBasePHI->getIncomingValue(PHIIdx);
+      } else if (PHIIdx < 0) {
+        // Case (2b)
+        ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+        ScalarValue = ScalarInst;
+      } else {
+        // Case (2c)
+        if (SeenPHIs.insert(ScalarBasePHI).second) {
+          // First access ==> same as (2a)
+          ScalarAddr = getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+          ScalarValue = ScalarBasePHI->getIncomingValue(PHIIdx);
+        } else {
+          // Second access ==> same as (2b)
+          ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+          ScalarValue = ScalarInst;
+        }
+      }
+    }
+
+    ScalarValue =
+        getNewScalarValue(ScalarValue, R, ScalarMap, BBMap, GlobalMap);
+    Builder.CreateStore(ScalarValue, ScalarAddr);
+  }
+}
+
+void BlockGenerator::createScalarInitialization(Region &R,
+                                                ValueMapT &GlobalMap) {
+  // The split block __just before__ the region and optimized region.
+  BasicBlock *SplitBB = R.getEnteringBlock();
+  BranchInst *SplitBBTerm = cast<BranchInst>(SplitBB->getTerminator());
+  assert(SplitBBTerm->getNumSuccessors() == 2 && "Bad region entering block!");
+
+  // Get the start block of the __optimized__ region.
+  BasicBlock *StartBB = SplitBBTerm->getSuccessor(0);
+  if (StartBB == R.getEntry())
+    StartBB = SplitBBTerm->getSuccessor(1);
+
+  // For each PHI predecessor outside the region store the incoming operand
+  // value prior to entering the optimized region.
+  Builder.SetInsertPoint(StartBB->getTerminator());
+
+  ScalarAllocaMapTy EmptyMap;
+  for (const auto &PHIOpMapping : PHIOpMap) {
+    const PHINode *PHI = cast<PHINode>(PHIOpMapping.getFirst());
+
+    // Check if this PHI has the split block as predecessor (that is the only
+    // possible predecessor outside the SCoP).
+    int idx = PHI->getBasicBlockIndex(SplitBB);
+    if (idx < 0)
+      continue;
+
+    Value *ScalarValue = PHI->getIncomingValue(idx);
+    ScalarValue =
+        getNewScalarValue(ScalarValue, R, EmptyMap, GlobalMap, GlobalMap);
+
+    // If the split block is the predecessor initialize the PHI operator alloca.
+    Builder.CreateStore(ScalarValue, PHIOpMapping.getSecond());
+  }
+}
+
+void BlockGenerator::createScalarFinalization(Region &R) {
+  // The exit block of the __unoptimized__ region.
+  BasicBlock *ExitBB = R.getExitingBlock();
+  // The merge block __just after__ the region and the optimized region.
+  BasicBlock *MergeBB = R.getExit();
+
+  // The exit block of the __optimized__ region.
+  BasicBlock *OptExitBB = *(pred_begin(MergeBB));
+  if (OptExitBB == ExitBB)
+    OptExitBB = *(++pred_begin(MergeBB));
+
+  Builder.SetInsertPoint(OptExitBB->getTerminator());
+  for (const auto &EscapeMapping : EscapeMap) {
+    // Extract the escaping instruction and the escaping users as well as the
+    // alloca the instruction was demoted to.
+    Instruction *EscapeInst = EscapeMapping.getFirst();
+    const auto &EscapeMappingValue = EscapeMapping.getSecond();
+    const EscapeUserVectorTy &EscapeUsers = EscapeMappingValue.second;
+    AllocaInst *ScalarAddr = EscapeMappingValue.first;
+
+    // Reload the demoted instruction in the optimized version of the SCoP.
+    Instruction *EscapeInstReload =
+        Builder.CreateLoad(ScalarAddr, EscapeInst->getName() + ".final_reload");
+
+    // Create the merge PHI that merges the optimized and unoptimized version.
+    PHINode *MergePHI = PHINode::Create(EscapeInst->getType(), 2,
+                                        EscapeInst->getName() + ".merge");
+    MergePHI->insertBefore(MergeBB->getFirstInsertionPt());
+
+    // Add the respective values to the merge PHI.
+    MergePHI->addIncoming(EscapeInstReload, OptExitBB);
+    MergePHI->addIncoming(EscapeInst, ExitBB);
+
+    // The information of scalar evolution about the escaping instruction needs
+    // to be revoked so the new merged instruction will be used.
+    if (SE.isSCEVable(EscapeInst->getType()))
+      SE.forgetValue(EscapeInst);
+
+    // Replace all uses of the demoted instruction with the merge PHI.
+    for (Instruction *EUser : EscapeUsers)
+      EUser->replaceUsesOfWith(EscapeInst, MergePHI);
+  }
+}
+
+void BlockGenerator::finalizeSCoP(Scop &S, ValueMapT &GlobalMap) {
+  createScalarInitialization(S.getRegion(), GlobalMap);
+  createScalarFinalization(S.getRegion());
 }
 
 VectorBlockGenerator::VectorBlockGenerator(BlockGenerator &BlockGen,
@@ -679,9 +1019,8 @@ void VectorBlockGenerator::copyStmt(ScopStmt &Stmt) {
     copyInstruction(Stmt, &Inst, VectorBlockMap, ScalarBlockMap);
 }
 
-BasicBlock *RegionGenerator::repairDominance(
-    BasicBlock *BB, BasicBlock *BBCopy,
-    DenseMap<BasicBlock *, BasicBlock *> &BlockMap) {
+BasicBlock *RegionGenerator::repairDominance(BasicBlock *BB,
+                                             BasicBlock *BBCopy) {
 
   BasicBlock *BBIDom = DT.getNode(BB)->getIDom()->getBlock();
   BasicBlock *BBCopyIDom = BlockMap.lookup(BBIDom);
@@ -697,20 +1036,31 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
   assert(Stmt.isRegionStmt() &&
          "Only region statements can be copied by the block generator");
 
+  // Forget all old mappings.
+  BlockMap.clear();
+  RegionMaps.clear();
+  IncompletePHINodeMap.clear();
+
   // The region represented by the statement.
   Region *R = Stmt.getRegion();
 
-  // The "BBMaps" for the whole region.
-  DenseMap<BasicBlock *, ValueMapT> RegionMaps;
+  // Create a dedicated entry for the region where we can reload all demoted
+  // inputs.
+  BasicBlock *EntryBB = R->getEntry();
+  BasicBlock *EntryBBCopy =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  EntryBBCopy->setName("polly.stmt." + EntryBB->getName() + ".entry");
+  Builder.SetInsertPoint(EntryBBCopy->begin());
 
-  // A map from old to new blocks in the region
-  DenseMap<BasicBlock *, BasicBlock *> BlockMap;
+  for (auto PI = pred_begin(EntryBB), PE = pred_end(EntryBB); PI != PE; ++PI)
+    if (!R->contains(*PI))
+      BlockMap[*PI] = EntryBBCopy;
 
   // Iterate over all blocks in the region in a breadth-first search.
   std::deque<BasicBlock *> Blocks;
   SmallPtrSet<BasicBlock *, 8> SeenBlocks;
-  Blocks.push_back(R->getEntry());
-  SeenBlocks.insert(R->getEntry());
+  Blocks.push_back(EntryBB);
+  SeenBlocks.insert(EntryBB);
 
   while (!Blocks.empty()) {
     BasicBlock *BB = Blocks.front();
@@ -718,7 +1068,10 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
 
     // First split the block and update dominance information.
     BasicBlock *BBCopy = splitBB(BB);
-    BasicBlock *BBCopyIDom = repairDominance(BB, BBCopy, BlockMap);
+    BasicBlock *BBCopyIDom = repairDominance(BB, BBCopy);
+
+    // In order to remap PHI nodes we store also basic block mappings.
+    BlockMap[BB] = BBCopy;
 
     // Get the mapping for this block and initialize it with the mapping
     // available at its immediate dominator (in the new region).
@@ -728,22 +1081,28 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
     // Copy the block with the BlockGenerator.
     copyBB(Stmt, BB, BBCopy, RegionMap, GlobalMap, LTS);
 
+    // In order to remap PHI nodes we store also basic block mappings.
+    BlockMap[BB] = BBCopy;
+
+    // Add values to incomplete PHI nodes waiting for this block to be copied.
+    for (const PHINodePairTy &PHINodePair : IncompletePHINodeMap[BB])
+      addOperandToPHI(Stmt, PHINodePair.first, PHINodePair.second, BB,
+                      GlobalMap, LTS);
+    IncompletePHINodeMap[BB].clear();
+
     // And continue with new successors inside the region.
     for (auto SI = succ_begin(BB), SE = succ_end(BB); SI != SE; SI++)
       if (R->contains(*SI) && SeenBlocks.insert(*SI).second)
         Blocks.push_back(*SI);
-
-    // In order to remap PHI nodes we store also basic block mappings.
-    BlockMap[BB] = BBCopy;
   }
 
   // Now create a new dedicated region exit block and add it to the region map.
   BasicBlock *ExitBBCopy =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
-  ExitBBCopy->setName("polly.stmt." + R->getExit()->getName() + ".as.exit");
+  ExitBBCopy->setName("polly.stmt." + R->getExit()->getName() + ".exit");
   BlockMap[R->getExit()] = ExitBBCopy;
 
-  repairDominance(R->getExit(), ExitBBCopy, BlockMap);
+  repairDominance(R->getExit(), ExitBBCopy);
 
   // As the block generator doesn't handle control flow we need to add the
   // region control flow by hand after all blocks have been copied.
@@ -762,6 +1121,178 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
     BICopy->eraseFromParent();
   }
 
+  // Add counting PHI nodes to all loops in the region that can be used as
+  // replacement for SCEVs refering to the old loop.
+  for (BasicBlock *BB : SeenBlocks) {
+    Loop *L = LI.getLoopFor(BB);
+    if (L == nullptr || L->getHeader() != BB)
+      continue;
+
+    BasicBlock *BBCopy = BlockMap[BB];
+    Value *NullVal = Builder.getInt32(0);
+    PHINode *LoopPHI =
+        PHINode::Create(Builder.getInt32Ty(), 2, "polly.subregion.iv");
+    Instruction *LoopPHIInc = BinaryOperator::CreateAdd(
+        LoopPHI, Builder.getInt32(1), "polly.subregion.iv.inc");
+    LoopPHI->insertBefore(BBCopy->begin());
+    LoopPHIInc->insertBefore(BBCopy->getTerminator());
+
+    for (auto *PredBB : make_range(pred_begin(BB), pred_end(BB))) {
+      if (!R->contains(PredBB))
+        continue;
+      if (L->contains(PredBB))
+        LoopPHI->addIncoming(LoopPHIInc, BlockMap[PredBB]);
+      else
+        LoopPHI->addIncoming(NullVal, BlockMap[PredBB]);
+    }
+
+    for (auto *PredBBCopy : make_range(pred_begin(BBCopy), pred_end(BBCopy)))
+      if (LoopPHI->getBasicBlockIndex(PredBBCopy) < 0)
+        LoopPHI->addIncoming(NullVal, PredBBCopy);
+
+    LTS[L] = SE.getUnknown(LoopPHI);
+  }
+
+  // Add all mappings from the region to the global map so outside uses will use
+  // the copied instructions.
+  for (auto &BBMap : RegionMaps)
+    GlobalMap.insert(BBMap.second.begin(), BBMap.second.end());
+
   // Reset the old insert point for the build.
   Builder.SetInsertPoint(ExitBBCopy->begin());
+}
+
+void RegionGenerator::generateScalarLoads(ScopStmt &Stmt,
+                                          const Instruction *Inst,
+                                          ValueMapT &BBMap) {
+
+  // Inside a non-affine region PHI nodes are copied not demoted. Once the
+  // phi is copied it will reload all inputs from outside the region, hence
+  // we do not need to generate code for the read access of the operands of a
+  // PHI.
+  if (isa<PHINode>(Inst))
+    return;
+
+  return BlockGenerator::generateScalarLoads(Stmt, Inst, BBMap);
+}
+
+void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
+                                           ValueMapT &BBMap,
+                                           ValueMapT &GlobalMap) {
+  const Region &R = Stmt.getParent()->getRegion();
+
+  Region *StmtR = Stmt.getRegion();
+  assert(StmtR && "Block statements need to use the generateScalarStores() "
+                  "function in the BlockGenerator");
+
+  BasicBlock *ExitBB = StmtR->getExit();
+
+  // For region statements three kinds of scalar stores exists:
+  //  (1) A definition used by a non-phi instruction outside the region.
+  //  (2) A phi-instruction in the region entry.
+  //  (3) A write to a phi instruction in the region exit.
+  // The last case is the tricky one since we do not know anymore which
+  // predecessor of the exit needs to store the operand value that doesn't
+  // have a definition in the region. Therefore, we have to check in each
+  // block in the region if we should store the value or not.
+
+  // Iterate over all accesses in the given statement.
+  for (MemoryAccess *MA : Stmt) {
+
+    // Skip non-scalar and read accesses.
+    if (!MA->isScalar() || MA->isRead())
+      continue;
+
+    Instruction *ScalarBase = cast<Instruction>(MA->getBaseAddr());
+    Instruction *ScalarInst = MA->getAccessInstruction();
+    PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
+
+    Value *ScalarValue = nullptr;
+    AllocaInst *ScalarAddr = nullptr;
+
+    if (!ScalarBasePHI) {
+      // Case (1)
+      ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+      ScalarValue = ScalarInst;
+    } else if (ScalarBasePHI->getParent() != ExitBB) {
+      // Case (2)
+      assert(ScalarBasePHI->getParent() == StmtR->getEntry() &&
+             "Bad PHI self write in non-affine region");
+      assert(ScalarBase == ScalarInst &&
+             "Bad PHI self write in non-affine region");
+      ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
+      ScalarValue = ScalarInst;
+    } else {
+      int PHIIdx = ScalarBasePHI->getBasicBlockIndex(BB);
+      // Skip accesses we will not handle in this basic block but in another one
+      // in the statement region.
+      if (PHIIdx < 0)
+        continue;
+
+      // Case (3)
+      ScalarAddr = getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
+      ScalarValue = ScalarBasePHI->getIncomingValue(PHIIdx);
+    }
+
+    ScalarValue =
+        getNewScalarValue(ScalarValue, R, ScalarMap, BBMap, GlobalMap);
+    Builder.CreateStore(ScalarValue, ScalarAddr);
+  }
+}
+
+void RegionGenerator::addOperandToPHI(ScopStmt &Stmt, const PHINode *PHI,
+                                      PHINode *PHICopy, BasicBlock *IncomingBB,
+                                      ValueMapT &GlobalMap,
+                                      LoopToScevMapT &LTS) {
+  Region *StmtR = Stmt.getRegion();
+
+  // If the incoming block was not yet copied mark this PHI as incomplete.
+  // Once the block will be copied the incoming value will be added.
+  BasicBlock *BBCopy = BlockMap[IncomingBB];
+  if (!BBCopy) {
+    assert(StmtR->contains(IncomingBB) &&
+           "Bad incoming block for PHI in non-affine region");
+    IncompletePHINodeMap[IncomingBB].push_back(std::make_pair(PHI, PHICopy));
+    return;
+  }
+
+  Value *OpCopy = nullptr;
+  if (StmtR->contains(IncomingBB)) {
+    assert(RegionMaps.count(BBCopy) &&
+           "Incoming PHI block did not have a BBMap");
+    ValueMapT &BBCopyMap = RegionMaps[BBCopy];
+
+    Value *Op = PHI->getIncomingValueForBlock(IncomingBB);
+    OpCopy =
+        getNewValue(Stmt, Op, BBCopyMap, GlobalMap, LTS, getLoopForInst(PHI));
+  } else {
+
+    if (PHICopy->getBasicBlockIndex(BBCopy) >= 0)
+      return;
+
+    AllocaInst *PHIOpAddr =
+        getOrCreateAlloca(const_cast<PHINode *>(PHI), PHIOpMap, ".phiops");
+    OpCopy = new LoadInst(PHIOpAddr, PHIOpAddr->getName() + ".reload",
+                          BlockMap[IncomingBB]->getTerminator());
+  }
+
+  assert(OpCopy && "Incoming PHI value was not copied properly");
+  assert(BBCopy && "Incoming PHI block was not copied properly");
+  PHICopy->addIncoming(OpCopy, BBCopy);
+}
+
+Value *RegionGenerator::copyPHIInstruction(ScopStmt &Stmt, const PHINode *PHI,
+                                           ValueMapT &BBMap,
+                                           ValueMapT &GlobalMap,
+                                           LoopToScevMapT &LTS) {
+  unsigned NumIncoming = PHI->getNumIncomingValues();
+  PHINode *PHICopy =
+      Builder.CreatePHI(PHI->getType(), NumIncoming, "polly." + PHI->getName());
+  PHICopy->moveBefore(PHICopy->getParent()->getFirstNonPHI());
+  BBMap[PHI] = PHICopy;
+
+  for (unsigned u = 0; u < NumIncoming; u++)
+    addOperandToPHI(Stmt, PHI, PHICopy, PHI->getIncomingBlock(u), GlobalMap,
+                    LTS);
+  return PHICopy;
 }

@@ -32,13 +32,20 @@ public:
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, DL, "polly"),
         ExprBuilder(Builder, IDToValue, Rewriter, DT, LI),
-        BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen), P(P),
-        DL(DL), LI(LI), SE(SE), DT(DT) {}
+        BlockGen(Builder, LI, SE, DT, ScalarMap, PHIOpMap, EscapeMap,
+                 &ExprBuilder),
+        RegionGen(BlockGen), P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}
 
   ~IslNodeBuilder() {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
+
+  /// @brief Finalize code generation for the SCoP @p S.
+  ///
+  /// @see BlockGenerator::finalizeSCoP(Scop &S)
+  void finalizeSCoP(Scop &S) { BlockGen.finalizeSCoP(S, ValueMap); }
+
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
 
 private:
@@ -50,9 +57,26 @@ private:
   SCEVExpander Rewriter;
 
   IslExprBuilder ExprBuilder;
+
+  /// @brief Maps used by the block and region generator to demote scalars.
+  ///
+  ///@{
+
+  /// @brief See BlockGenerator::ScalarMap.
+  BlockGenerator::ScalarAllocaMapTy ScalarMap;
+
+  /// @brief See BlockGenerator::PhiOpMap.
+  BlockGenerator::ScalarAllocaMapTy PHIOpMap;
+
+  /// @brief See BlockGenerator::EscapeMap.
+  BlockGenerator::EscapeUsersAllocaMapTy EscapeMap;
+
+  ///@}
+
+  /// @brief The generator used to copy a basic block.
   BlockGenerator BlockGen;
 
-  /// @brief Generator for region statements.
+  /// @brief The generator used to copy a non-affine region.
   RegionGenerator RegionGen;
 
   Pass *const P;

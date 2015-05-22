@@ -131,6 +131,8 @@ public:
 
     NodeBuilder.create(AstRoot);
 
+    NodeBuilder.finalizeSCoP(S);
+
     assert(!verifyGeneratedFunction(S, *EnteringBB->getParent()) &&
            "Verification of generated function failed");
     return true;
