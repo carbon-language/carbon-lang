@@ -15,6 +15,7 @@ add_llvm_library(lldELF
     lldReaderWriter
     lldCore
     lldYAML
+    LLVMObject
     LLVMSupport
   )
 
