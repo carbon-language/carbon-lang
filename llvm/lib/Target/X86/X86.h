@@ -75,6 +75,11 @@ FunctionPass *createX86CallFrameOptimization();
 /// preparation.
 FunctionPass *createX86WinEHStatePass();
 
+/// Return a Machine IR pass that expands X86-specific pseudo
+/// instructions into a sequence of actual instructions. This pass
+/// must run after prologue/epilogue insertion and before lowering
+/// the MachineInstr to MC.
+FunctionPass *createX86ExpandPseudoPass();
 } // End llvm namespace
 
 #endif
