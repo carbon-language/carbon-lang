@@ -1,7 +1,7 @@
 RUN: yaml2obj %p/Inputs/COFF/i386.yaml | llvm-nm -a -S - \
-RUN:         | FileCheck %s -check-prefix COFF
+RUN:         | FileCheck %s -check-prefix COFF32
 RUN: yaml2obj %p/Inputs/COFF/x86-64.yaml | llvm-nm -a -S - \
-RUN:         | FileCheck %s -check-prefix COFF
+RUN:         | FileCheck %s -check-prefix COFF64
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
 RUN: llvm-nm -o %p/Inputs/trivial-object-test.elf-i386 \
@@ -48,12 +48,20 @@ RUN: cp %p/Inputs/trivial-object-test.macho-i386 a.out
 RUN: llvm-nm | FileCheck %s -check-prefix A-OUT
 
 
-COFF: 00000000 {{.*}} d .data
-COFF: 00000000 {{.*}} t .text
-COFF: 00000000 0000000d d L{{_?}}.str
-COFF:          U {{_?}}SomeOtherFunction
-COFF: 00000000 {{.*}} T {{_?}}main
-COFF:          U {{_?}}puts
+COFF32: 00000000 {{.*}} d .data
+COFF32-NEXT: 00000000 {{.*}} t .text
+COFF32-NEXT: 00000000 0000000d d L_.str
+COFF32-NEXT:          U _SomeOtherFunction
+COFF32-NEXT: 00000000 {{.*}} T _main
+COFF32-NEXT:          U _puts
+
+COFF64: 00000000 {{.*}} d .data
+COFF64-NEXT: 00000000 {{.*}} t .text
+COFF64-NEXT: 00000000 00000008 r ??__Ex@@YAXXZ
+COFF64-NEXT: 00000000 0000000d d L.str
+COFF64-NEXT:          U SomeOtherFunction
+COFF64-NEXT: 00000000 {{.*}} T main
+COFF64-NEXT:          U puts
 
 COFF-COMMON: 00000000 00000000 b .bss
 COFF-COMMON-NEXT: 00000000 00000000 d .data
