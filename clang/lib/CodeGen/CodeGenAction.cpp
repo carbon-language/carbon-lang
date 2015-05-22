@@ -56,17 +56,17 @@ namespace clang {
     std::unique_ptr<llvm::Module> TheModule, LinkModule;
 
   public:
-    BackendConsumer(BackendAction action, DiagnosticsEngine &_Diags,
-                    const CodeGenOptions &compopts,
-                    const TargetOptions &targetopts,
-                    const LangOptions &langopts, bool TimePasses,
-                    const std::string &infile, llvm::Module *LinkModule,
+    BackendConsumer(BackendAction Action, DiagnosticsEngine &Diags,
+                    const CodeGenOptions &CodeGenOpts,
+                    const TargetOptions &TargetOpts,
+                    const LangOptions &LangOpts, bool TimePasses,
+                    const std::string &InFile, llvm::Module *LinkModule,
                     raw_pwrite_stream *OS, LLVMContext &C,
                     CoverageSourceInfo *CoverageInfo = nullptr)
-        : Diags(_Diags), Action(action), CodeGenOpts(compopts),
-          TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
+        : Diags(Diags), Action(Action), CodeGenOpts(CodeGenOpts),
+          TargetOpts(TargetOpts), LangOpts(LangOpts), AsmOutStream(OS),
           Context(nullptr), LLVMIRGeneration("LLVM IR Generation Time"),
-          Gen(CreateLLVMCodeGen(Diags, infile, compopts, C, CoverageInfo)),
+          Gen(CreateLLVMCodeGen(Diags, InFile, CodeGenOpts, C, CoverageInfo)),
           LinkModule(LinkModule) {
       llvm::TimePassesIsEnabled = TimePasses;
     }
