@@ -16,7 +16,6 @@
 
 #include "JITSymbolFlags.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include <memory>
@@ -81,8 +80,8 @@ public:
     LoadedObjectInfoHelper(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
                            unsigned EndIdx)
         : LoadedObjectInfo(RTDyld, BeginIdx, EndIdx) {}
-    std::unique_ptr<llvm::LoadedObjectInfo> clone() const override {
-      return llvm::make_unique<Derived>(static_cast<const Derived &>(*this));
+    llvm::LoadedObjectInfo *clone() const override {
+      return new Derived(static_cast<const Derived &>(*this));
     }
   };
 
