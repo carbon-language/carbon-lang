@@ -11,16 +11,16 @@
 // WINDOWS-NEXT: Arch: x86_64
 
 // Test that like gnu as we create text, data and bss by default. Also test
-// that shstrtab, symtab and strtab are listed.
+// that symtab and strtab are listed.
 
 // CHECK:        Section {
-// CHECK:          Name: .shstrtab
+// CHECK:          Name: .strtab
 // CHECK-NEXT:     Type: SHT_STRTAB
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset:
-// CHECK-NEXT:     Size: 44
+// CHECK-NEXT:     Size: 34
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 1
@@ -83,17 +83,4 @@
 // CHECK-NEXT:     Info: 4
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
-// CHECK-NEXT:   }
-// CHECK:        Section {
-// CHECK:          Name: .strtab
-// CHECK-NEXT:     Type: SHT_STRTAB
-// CHECK-NEXT:     Flags [
-// CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x0
-// CHECK-NEXT:     Offset:
-// CHECK-NEXT:     Size: 1
-// CHECK-NEXT:     Link: 0
-// CHECK-NEXT:     Info: 0
-// CHECK-NEXT:     AddressAlignment: 1
-// CHECK-NEXT:     EntrySize: 0
 // CHECK-NEXT:   }

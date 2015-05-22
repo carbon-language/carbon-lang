@@ -16,6 +16,6 @@ foobar:
 .Ltmp3:
 	.size	foobar, .Ltmp3-foobar
 
-// CHECK:     Name: foobar (1)
-// CHECK:     Name: bar (4)
-// CHECK:     Name: foo (8)
+// CHECK:     Name: foobar (16)
+// CHECK:     Name: bar (19)
+// CHECK:     Name: foo (23)
