@@ -617,42 +617,15 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
   }
 }
 
-// FIXME: Move to ARMTargetParser.
 static int getARMSubArchVersionNumber(const llvm::Triple &Triple) {
-  switch (Triple.getSubArch()) {
-  case llvm::Triple::ARMSubArch_v8_1a:
-  case llvm::Triple::ARMSubArch_v8:
-    return 8;
-  case llvm::Triple::ARMSubArch_v7:
-  case llvm::Triple::ARMSubArch_v7em:
-  case llvm::Triple::ARMSubArch_v7m:
-  case llvm::Triple::ARMSubArch_v7s:
-    return 7;
-  case llvm::Triple::ARMSubArch_v6:
-  case llvm::Triple::ARMSubArch_v6m:
-  case llvm::Triple::ARMSubArch_v6k:
-  case llvm::Triple::ARMSubArch_v6t2:
-    return 6;
-  case llvm::Triple::ARMSubArch_v5:
-  case llvm::Triple::ARMSubArch_v5te:
-    return 5;
-  case llvm::Triple::ARMSubArch_v4t:
-    return 4;
-  default:
-    return 0;
-  }
+  llvm::StringRef Arch = Triple.getArchName();
+  return llvm::ARMTargetParser::parseArchVersion(Arch);
 }
 
-// FIXME: Move to ARMTargetParser.
 static bool isARMMProfile(const llvm::Triple &Triple) {
-  switch (Triple.getSubArch()) {
-  case llvm::Triple::ARMSubArch_v7em:
-  case llvm::Triple::ARMSubArch_v7m:
-  case llvm::Triple::ARMSubArch_v6m:
-    return true;
-  default:
-    return false;
-  }
+  llvm::StringRef Arch = Triple.getArchName();
+  unsigned Profile = llvm::ARMTargetParser::parseArchProfile(Arch);
+  return Profile == llvm::ARM::PK_M;
 }
 
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
