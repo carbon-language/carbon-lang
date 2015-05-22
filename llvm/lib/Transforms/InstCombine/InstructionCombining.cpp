@@ -452,6 +452,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
   if (!A || !C || !B || !D)
     return nullptr;
 
+  Value *V = nullptr;
   Value *SimplifiedInst = nullptr;
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   Instruction::BinaryOps TopLevelOpcode = I.getOpcode();
@@ -468,7 +469,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
         std::swap(C, D);
       // Consider forming "A op' (B op D)".
       // If "B op D" simplifies then it can be formed with no cost.
-      Value *V = SimplifyBinOp(TopLevelOpcode, B, D, DL);
+      V = SimplifyBinOp(TopLevelOpcode, B, D, DL);
       // If "B op D" doesn't simplify then only go on if both of the existing
       // operations "A op' B" and "C op' D" will be zapped as no longer used.
       if (!V && LHS->hasOneUse() && RHS->hasOneUse())
@@ -487,7 +488,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
         std::swap(C, D);
       // Consider forming "(A op C) op' B".
       // If "A op C" simplifies then it can be formed with no cost.
-      Value *V = SimplifyBinOp(TopLevelOpcode, A, C, DL);
+      V = SimplifyBinOp(TopLevelOpcode, A, C, DL);
 
       // If "A op C" doesn't simplify then only go on if both of the existing
       // operations "A op' B" and "C op' D" will be zapped as no longer used.
@@ -517,7 +518,19 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
         if (BinaryOperator *Op1 = dyn_cast<BinaryOperator>(RHS))
           if (isa<OverflowingBinaryOperator>(Op1))
             HasNSW &= Op1->hasNoSignedWrap();
-        BO->setHasNoSignedWrap(HasNSW);
+
+        // We can propogate 'nsw' if we know that
+        //  %Y = mul nsw i16 %X, C
+        //  %Z = add nsw i16 %Y, %X
+        // =>
+        //  %Z = mul nsw i16 %X, C+1
+        //
+        // iff C+1 isn't INT_MIN
+        const APInt *CInt;
+        if (TopLevelOpcode == Instruction::Add &&
+            InnerOpcode == Instruction::Mul)
+          if (match(V, m_APInt(CInt)) && !CInt->isMinSignedValue())
+            BO->setHasNoSignedWrap(HasNSW);
       }
     }
   }

@@ -273,6 +273,35 @@ define i32 @mul_add_to_mul_6(i32 %x, i32 %y) {
 ; CHECK-NEXT: ret i32 %add
 }
 
+define i16 @mul_add_to_mul_7(i16 %x) {
+  %mul1 = mul nsw i16 %x, 32767
+  %add2 = add nsw i16 %x, %mul1
+  ret i16 %add2
+; CHECK-LABEL: @mul_add_to_mul_7(
+; CHECK-NEXT: %add2 = shl i16 %x, 15
+; CHECK-NEXT: ret i16 %add2
+}
+
+define i16 @mul_add_to_mul_8(i16 %a) {
+  %mul1 = mul nsw i16 %a, 16383
+  %mul2 = mul nsw i16 %a, 16384
+  %add = add nsw i16 %mul1, %mul2
+  ret i16 %add
+; CHECK-LABEL: @mul_add_to_mul_8(
+; CHECK-NEXT: %add = mul nsw i16 %a, 32767
+; CHECK-NEXT: ret i16 %add
+}
+
+define i16 @mul_add_to_mul_9(i16 %a) {
+  %mul1 = mul nsw i16 %a, 16384
+  %mul2 = mul nsw i16 %a, 16384
+  %add = add nsw i16 %mul1, %mul2
+  ret i16 %add
+; CHECK-LABEL: @mul_add_to_mul_9(
+; CHECK-NEXT: %add = shl i16 %a, 15
+; CHECK-NEXT: ret i16 %add
+}
+
 ; This test and the next test verify that when a range metadata is attached to
 ; llvm.cttz, ValueTracking correctly intersects the range specified by the
 ; metadata and the range implied by the intrinsic.
@@ -352,4 +381,17 @@ define i32 @add_nuw_nsw_or_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @add_nuw_nsw_or_and(
 ; CHECK-NEXT: add nuw nsw i32 %x, %y
 ; CHECK-NEXT: ret i32
+}
+
+; A *nsw B + A *nsw C != A *nsw (B + C)
+; e.g. A = -1, B = 1, C = INT_SMAX
+
+define i8 @add_of_mul(i8 %x, i8 %y, i8 %z) {
+; CHECK-LABEL: @add_of_mul(
+ entry:
+  %mA = mul nsw i8 %x, %y
+  %mB = mul nsw i8 %x, %z
+; CHECK: %sum = mul i8
+  %sum = add nsw i8 %mA, %mB
+  ret i8 %sum
 }
