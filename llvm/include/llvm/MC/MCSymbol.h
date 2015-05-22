@@ -15,7 +15,7 @@
 #define LLVM_MC_MCSYMBOL_H
 
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Compiler.h"
 
@@ -145,7 +145,7 @@ class MCSymbol {
 
   /// Name - The name of the symbol.  The referred-to string data is actually
   /// held by the StringMap that lives in MCContext.
-  StringRef Name;
+  const StringMapEntry<bool> *Name;
 
   /// The section the symbol is defined in. This is null for undefined symbols,
   /// and the special AbsolutePseudoSection value for absolute symbols. If this
@@ -176,8 +176,8 @@ class MCSymbol {
 private: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
-  MCSymbol(StringRef name, bool isTemporary)
-      : Name(name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
+  MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
+      : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), HasData(false), Index(0) {}
 
   MCSymbol(const MCSymbol &) = delete;
@@ -190,7 +190,7 @@ private: // MCContext creates and uniques these.
 
 public:
   /// getName - Get the symbol name.
-  StringRef getName() const { return Name; }
+  StringRef getName() const { return Name ? Name->first() : ""; }
 
   bool hasData() const { return HasData; }
 

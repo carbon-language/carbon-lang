@@ -125,7 +125,7 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
   }
 
   auto NameIter = UsedNames.insert(std::make_pair(Name, true)).first;
-  Sym = new (*this) MCSymbol(NameIter->getKey(), /*isTemporary*/ false);
+  Sym = new (*this) MCSymbol(&*NameIter, /*isTemporary*/ false);
 
   if (!OldSym)
     OldSym = Sym;
@@ -156,7 +156,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
     IsTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
   if (IsTemporary && AlwaysAddSuffix && !UseNamesOnTempLabels)
-    return new (*this) MCSymbol("", true);
+    return new (*this) MCSymbol(nullptr, true);
 
   SmallString<128> NewName = Name;
   bool AddSuffix = AlwaysAddSuffix;
@@ -170,8 +170,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
     if (NameEntry.second) {
       // Ok, we found a name. Have the MCSymbol object itself refer to the copy
       // of the string that is embedded in the UsedNames entry.
-      MCSymbol *Result =
-          new (*this) MCSymbol(NameEntry.first->getKey(), IsTemporary);
+      MCSymbol *Result = new (*this) MCSymbol(&*NameEntry.first, IsTemporary);
       return Result;
     }
     assert(IsTemporary && "Cannot rename non-temporary symbols");
