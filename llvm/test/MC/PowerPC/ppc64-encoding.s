@@ -112,6 +112,18 @@
 # CHECK-LE: sc                              # encoding: [0x02,0x00,0x00,0x44]
             sc
 
+# Branch history rolling buffer
+
+# CHECK-BE: clrbhrb                         # encoding: [0x7c,0x00,0x03,0x5c]
+# CHECK-LE: clrbhrb                         # encoding: [0x5c,0x03,0x00,0x7c]
+            clrbhrb
+# CHECK-BE: mfbhrbe 9, 983                  # encoding: [0x7d,0x3e,0xba,0x5c]
+# CHECK-LE: mfbhrbe 9, 983                  # encoding: [0x5c,0xba,0x3e,0x7d]
+            mfbhrbe 9, 983
+# CHECK-BE: rfebb 1                         # encoding: [0x4c,0x00,0x09,0x24]
+# CHECK-LE: rfebb 1                         # encoding: [0x24,0x09,0x00,0x4c]
+            rfebb 1
+
 # Fixed-point facility
 
 # Fixed-point load instructions

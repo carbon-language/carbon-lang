@@ -201,6 +201,12 @@ def SDT_PPCsc     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def PPCsc         : SDNode<"PPCISD::SC", SDT_PPCsc,
                            [SDNPHasChain, SDNPSideEffect]>;
 
+def PPCclrbhrb    : SDNode<"PPCISD::CLRBHRB", SDTNone,
+                           [SDNPHasChain, SDNPSideEffect]>;
+def PPCmfbhrbe    : SDNode<"PPCISD::MFBHRBE", SDTIntBinOp, [SDNPHasChain]>;
+def PPCrfebb      : SDNode<"PPCISD::RFEBB", SDT_PPCsc,
+                           [SDNPHasChain, SDNPSideEffect]>;
+
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutGlue]>;
 
@@ -498,6 +504,15 @@ def u6imm   : Operand<i32> {
   let PrintMethod = "printU6ImmOperand";
   let ParserMatchClass = PPCU6ImmAsmOperand;
   let DecoderMethod = "decodeUImmOperand<6>";
+}
+def PPCU10ImmAsmOperand : AsmOperandClass {
+  let Name = "U10Imm"; let PredicateMethod = "isU10Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u10imm  : Operand<i32> {
+  let PrintMethod = "printU10ImmOperand";
+  let ParserMatchClass = PPCU10ImmAsmOperand;
+  let DecoderMethod = "decodeUImmOperand<10>";
 }
 def PPCU12ImmAsmOperand : AsmOperandClass {
   let Name = "U12Imm"; let PredicateMethod = "isU12Imm";
@@ -1356,6 +1371,24 @@ let PPC970_Unit = 7 in {
   def SC     : SCForm<17, 1, (outs), (ins i32imm:$lev),
                       "sc $lev", IIC_BrB, [(PPCsc (i32 imm:$lev))]>;
 }
+
+// Branch history rolling buffer.
+def CLRBHRB : XForm_0<31, 430, (outs), (ins), "clrbhrb", IIC_BrB,
+                      [(PPCclrbhrb)]>,
+                      PPC970_DGroup_Single;
+// The $dmy argument used for MFBHRBE is not needed; however, including
+// it avoids automatic generation of PPCFastISel::fastEmit_i(), which
+// interferes with necessary special handling (see PPCFastISel.cpp).
+def MFBHRBE : XFXForm_3p<31, 302, (outs gprc:$rD),
+                         (ins u10imm:$imm, u10imm:$dmy),
+                         "mfbhrbe $rD, $imm", IIC_BrB,
+                         [(set i32:$rD,
+                               (PPCmfbhrbe imm:$imm, imm:$dmy))]>,
+                         PPC970_DGroup_First;
+
+def RFEBB : XLForm_S<19, 146, (outs), (ins u1imm:$imm), "rfebb $imm",
+                     IIC_BrB, [(PPCrfebb (i32 imm:$imm))]>,
+                     PPC970_DGroup_Single;
 
 // DCB* instructions.
 def DCBA   : DCB_Form<758, 0, (outs), (ins memrr:$dst), "dcba $dst",
