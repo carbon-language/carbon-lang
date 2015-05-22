@@ -112,6 +112,14 @@ namespace ARM {
     EK_LITTLE,
     EK_BIG
   };
+
+  // v6/v7/v8 Profile
+  enum ProfileKind {
+    PK_INVALID = 0,
+    PK_A,
+    PK_R,
+    PK_M
+  };
 } // namespace ARM
 
 // Target Parsers, one per architecture.
@@ -137,6 +145,8 @@ public:
   static unsigned parseCPUArch(StringRef CPU);
   static unsigned parseArchISA(StringRef Arch);
   static unsigned parseArchEndian(StringRef Arch);
+  static unsigned parseArchProfile(StringRef Arch);
+  static unsigned parseArchVersion(StringRef Arch);
 
 };
 

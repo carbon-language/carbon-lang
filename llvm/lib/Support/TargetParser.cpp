@@ -388,4 +388,74 @@ unsigned ARMTargetParser::parseArchEndian(StringRef Arch) {
   return ARM::EK_INVALID;
 }
 
+// Profile A/R/M
+unsigned ARMTargetParser::parseArchProfile(StringRef Arch) {
+  // FIXME: We're running parseArch twice.
+  Arch = getCanonicalArchName(Arch);
+  switch(parseArch(Arch)) {
+  case ARM::AK_ARMV6M:
+  case ARM::AK_ARMV7M:
+  case ARM::AK_ARMV6SM:
+  case ARM::AK_ARMV7EM:
+    return ARM::PK_M;
+  case ARM::AK_ARMV7R:
+    return ARM::PK_R;
+  case ARM::AK_ARMV7:
+  case ARM::AK_ARMV7A:
+  case ARM::AK_ARMV8A:
+  case ARM::AK_ARMV8_1A:
+    return ARM::PK_A;
+  }
+  return ARM::PK_INVALID;
+}
+
+// Version number 4 ~ 8 (ex. v7 = 7).
+unsigned ARMTargetParser::parseArchVersion(StringRef Arch) {
+  // FIXME: We're running parseArch twice.
+  Arch = getCanonicalArchName(Arch);
+  switch(parseArch(Arch)) {
+  case ARM::AK_ARMV2:
+  case ARM::AK_ARMV2A:
+    return 2;
+  case ARM::AK_ARMV3:
+  case ARM::AK_ARMV3M:
+    return 3;
+  case ARM::AK_ARMV4:
+  case ARM::AK_ARMV4T:
+    return 4;
+  case ARM::AK_ARMV5:
+  case ARM::AK_ARMV5T:
+  case ARM::AK_ARMV5TE:
+  case ARM::AK_IWMMXT:
+  case ARM::AK_IWMMXT2:
+  case ARM::AK_XSCALE:
+  case ARM::AK_ARMV5E:
+  case ARM::AK_ARMV5TEJ:
+    return 5;
+  case ARM::AK_ARMV6:
+  case ARM::AK_ARMV6J:
+  case ARM::AK_ARMV6K:
+  case ARM::AK_ARMV6T2:
+  case ARM::AK_ARMV6Z:
+  case ARM::AK_ARMV6ZK:
+  case ARM::AK_ARMV6M:
+  case ARM::AK_ARMV6SM:
+  case ARM::AK_ARMV6HL:
+    return 6;
+  case ARM::AK_ARMV7:
+  case ARM::AK_ARMV7A:
+  case ARM::AK_ARMV7R:
+  case ARM::AK_ARMV7M:
+  case ARM::AK_ARMV7L:
+  case ARM::AK_ARMV7HL:
+  case ARM::AK_ARMV7S:
+  case ARM::AK_ARMV7EM:
+    return 7;
+  case ARM::AK_ARMV8A:
+  case ARM::AK_ARMV8_1A:
+    return 8;
+  }
+  return 0;
+}
+
 } // namespace llvm

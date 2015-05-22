@@ -281,8 +281,16 @@ static Triple::ArchType parseARMArch(StringRef ArchName) {
       (ArchName.startswith("v2") || ArchName.startswith("v3")))
     return Triple::UnknownArch;
 
-  // FIXME: Add isMProfile to ARMTargetParser and
-  // either change armv6m to thumb or UnknownArch.
+  // Thumb only for v6m
+  unsigned Profile = ARMTargetParser::parseArchProfile(ArchName);
+  unsigned Version = ARMTargetParser::parseArchVersion(ArchName);
+  if (Profile == ARM::PK_M && Version == 6) {
+    if (ENDIAN == ARM::EK_BIG)
+      return Triple::thumbeb;
+    else
+      return Triple::thumb;
+  }
+
   return arch;
 }
 
