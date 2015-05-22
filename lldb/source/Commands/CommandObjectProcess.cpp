@@ -1729,8 +1729,8 @@ public:
     void
     PrintSignalHeader (Stream &str)
     {
-        str.Printf ("NAME        PASS   STOP   NOTIFY\n");
-        str.Printf ("==========  =====  =====  ======\n");
+        str.Printf ("NAME         PASS   STOP   NOTIFY\n");
+        str.Printf ("===========  =====  =====  ======\n");
     }  
 
     void
@@ -1740,7 +1740,7 @@ public:
         bool suppress;
         bool notify;
 
-        str.Printf ("%-10s  ", sig_name);
+        str.Printf ("%-11s  ", sig_name);
         if (signals.GetSignalInfo (signo, suppress, stop, notify))
         {
             bool pass = !suppress;
