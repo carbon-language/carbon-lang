@@ -423,17 +423,6 @@ Host::GetSignalAsCString (int signo)
 
 #endif
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__) // see macosx/Host.mm
-
-size_t
-Host::GetEnvironment (StringList &env)
-{
-    // TODO: Is there a way to the host environment for this process on other systems?
-    return 0;
-}
-
-#endif // #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined (__linux__)
-
 #ifndef _WIN32
 
 lldb::thread_key_t

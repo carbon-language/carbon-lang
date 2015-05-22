@@ -287,7 +287,7 @@ public:
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, 
                               uint32_t line_no);
-    
+
     static size_t
     GetEnvironment (StringList &env);
 };

@@ -14,6 +14,7 @@
 
 #include "lldb/Core/STLUtils.h"
 #include "lldb/lldb-forward.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace lldb_private {
 
@@ -41,6 +42,9 @@ public:
 
     void
     AppendString (const char *str, size_t str_len);
+
+    void
+    AppendString(llvm::StringRef str);
 
     void
     AppendList (const char ** strv, int strc);

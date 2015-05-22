@@ -306,3 +306,21 @@ Host::ShellExpandArguments (ProcessLaunchInfo &launch_info)
     
     return error;
 }
+
+size_t
+Host::GetEnvironment(StringList &env)
+{
+    // The environment block on Windows is a contiguous buffer of NULL terminated strings,
+    // where the end of the environment block is indicated by two consecutive NULLs.
+    LPCH environment_block = ::GetEnvironmentStrings();
+    env.Clear();
+    while (*environment_block != '\0')
+    {
+        llvm::StringRef current_var(environment_block);
+        if (current_var[0] != '=')
+            env.AppendString(current_var);
+
+        environment_block += current_var.size()+1;
+    }
+    return env.GetSize();
+}
