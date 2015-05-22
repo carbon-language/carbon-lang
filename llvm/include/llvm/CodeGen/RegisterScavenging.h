@@ -9,7 +9,7 @@
 //
 // This file declares the machine register scavenger class. It can provide
 // information such as unused register at any point in a machine basic block.
-// It also provides a mechanism to make registers availbale by evicting them
+// It also provides a mechanism to make registers available by evicting them
 // to spill slots.
 //
 //===----------------------------------------------------------------------===//
