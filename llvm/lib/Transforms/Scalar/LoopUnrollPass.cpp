@@ -414,32 +414,21 @@ namespace {
 //   v = b[0]* 0 + b[1]* 1 + b[2]* 0
 // And finally:
 //   v = b[1]
-class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
-  typedef InstVisitor<UnrollAnalyzer, bool> Base;
-  friend class InstVisitor<UnrollAnalyzer, bool>;
+class UnrolledInstAnalyzer : private InstVisitor<UnrolledInstAnalyzer, bool> {
+  typedef InstVisitor<UnrolledInstAnalyzer, bool> Base;
+  friend class InstVisitor<UnrolledInstAnalyzer, bool>;
 
-  /// \brief The loop we're going to analyze.
-  const Loop *L;
+public:
+  UnrolledInstAnalyzer(unsigned Iteration,
+                       DenseMap<Value *, Constant *> &SimplifiedValues,
+                       SmallDenseMap<Value *, SCEVGEPDescriptor> &SCEVGEPCache)
+      : Iteration(Iteration), SimplifiedValues(SimplifiedValues),
+        SCEVGEPCache(SCEVGEPCache) {}
 
-  /// \brief TripCount of the given loop.
-  unsigned TripCount;
+  // Allow access to the initial visit method.
+  using Base::visit;
 
-  ScalarEvolution &SE;
-
-  const TargetTransformInfo &TTI;
-
-  // While we walk the loop instructions, we we build up and maintain a mapping
-  // of simplified values specific to this iteration.  The idea is to propagate
-  // any special information we have about loads that can be replaced with
-  // constants after complete unrolling, and account for likely simplifications
-  // post-unrolling.
-  DenseMap<Value *, Constant *> SimplifiedValues;
-
-  // To avoid requesting SCEV info on every iteration, request it once, and
-  // for each value that would become ConstAddress+Constant after loop
-  // unrolling, save the corresponding data.
-  SmallDenseMap<Value *, SCEVGEPDescriptor> SCEVGEPCache;
-
+private:
   /// \brief Number of currently simulated iteration.
   ///
   /// If an expression is ConstAddress+Constant, then the Constant is
@@ -447,8 +436,17 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
   /// SCEVGEPCache.
   unsigned Iteration;
 
-  /// \brief Upper threshold for complete unrolling.
-  unsigned MaxUnrolledLoopSize;
+  // While we walk the loop instructions, we we build up and maintain a mapping
+  // of simplified values specific to this iteration.  The idea is to propagate
+  // any special information we have about loads that can be replaced with
+  // constants after complete unrolling, and account for likely simplifications
+  // post-unrolling.
+  DenseMap<Value *, Constant *> &SimplifiedValues;
+
+  // To avoid requesting SCEV info on every iteration, request it once, and
+  // for each value that would become ConstAddress+Constant after loop
+  // unrolling, save the corresponding data.
+  SmallDenseMap<Value *, SCEVGEPDescriptor> &SCEVGEPCache;
 
   /// Base case for the instruction visitor.
   bool visitInstruction(Instruction &I) { return false; };
@@ -524,95 +522,102 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
 
     return true;
   }
+};
+} // namespace
 
-public:
-  UnrollAnalyzer(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
-                 const TargetTransformInfo &TTI, unsigned MaxUnrolledLoopSize)
-      : L(L), TripCount(TripCount), SE(SE), TTI(TTI),
-        MaxUnrolledLoopSize(MaxUnrolledLoopSize),
-        NumberOfOptimizedInstructions(0), UnrolledLoopSize(0) {}
 
+namespace {
+struct EstimatedUnrollCost {
   /// \brief Count the number of optimized instructions.
   unsigned NumberOfOptimizedInstructions;
 
   /// \brief Count the total number of instructions.
   unsigned UnrolledLoopSize;
+};
+}
 
-  /// \brief Figure out if the loop is worth full unrolling.
-  ///
-  /// Complete loop unrolling can make some loads constant, and we need to know
-  /// if that would expose any further optimization opportunities.  This routine
-  /// estimates this optimization.  It assigns computed number of instructions,
-  /// that potentially might be optimized away, to
-  /// NumberOfOptimizedInstructions, and total number of instructions to
-  /// UnrolledLoopSize (not counting blocks that won't be reached, if we were
-  /// able to compute the condition).
-  /// \returns false if we can't analyze the loop, or if we discovered that
-  /// unrolling won't give anything. Otherwise, returns true.
-  bool analyzeLoop() {
-    SmallSetVector<BasicBlock *, 16> BBWorklist;
+/// \brief Figure out if the loop is worth full unrolling.
+///
+/// Complete loop unrolling can make some loads constant, and we need to know
+/// if that would expose any further optimization opportunities.  This routine
+/// estimates this optimization.  It assigns computed number of instructions,
+/// that potentially might be optimized away, to
+/// NumberOfOptimizedInstructions, and total number of instructions to
+/// UnrolledLoopSize (not counting blocks that won't be reached, if we were
+/// able to compute the condition).
+/// \returns false if we can't analyze the loop, or if we discovered that
+/// unrolling won't give anything. Otherwise, returns true.
+Optional<EstimatedUnrollCost>
+analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
+                      const TargetTransformInfo &TTI,
+                      unsigned MaxUnrolledLoopSize) {
+  // We want to be able to scale offsets by the trip count and add more offsets
+  // to them without checking for overflows, and we already don't want to
+  // analyze *massive* trip counts, so we force the max to be reasonably small.
+  assert(UnrollMaxIterationsCountToAnalyze < (INT_MAX / 2) &&
+         "The unroll iterations max is too large!");
 
-    // We want to be able to scale offsets by the trip count and add more
-    // offsets to them without checking for overflows, and we already don't want
-    // to analyze *massive* trip counts, so we force the max to be reasonably
-    // small.
-    assert(UnrollMaxIterationsCountToAnalyze < (INT_MAX / 2) &&
-           "The unroll iterations max is too large!");
+  // Don't simulate loops with a big or unknown tripcount
+  if (!UnrollMaxIterationsCountToAnalyze || !TripCount ||
+      TripCount > UnrollMaxIterationsCountToAnalyze)
+    return None;
 
-    // Don't simulate loops with a big or unknown tripcount
-    if (!UnrollMaxIterationsCountToAnalyze || !TripCount ||
-        TripCount > UnrollMaxIterationsCountToAnalyze)
-      return false;
+  // To avoid compute SCEV-expressions on every iteration, compute them once
+  // and store interesting to us in SCEVGEPCache.
+  SmallDenseMap<Value *, SCEVGEPDescriptor> SCEVGEPCache =
+      buildSCEVGEPCache(*L, SE);
 
-    // To avoid compute SCEV-expressions on every iteration, compute them once
-    // and store interesting to us in SCEVGEPCache.
-    SCEVGEPCache = buildSCEVGEPCache(*L, SE);
+  SmallSetVector<BasicBlock *, 16> BBWorklist;
+  DenseMap<Value *, Constant *> SimplifiedValues;
 
-    // Simulate execution of each iteration of the loop counting instructions,
-    // which would be simplified.
-    // Since the same load will take different values on different iterations,
-    // we literally have to go through all loop's iterations.
-    for (Iteration = 0; Iteration < TripCount; ++Iteration) {
-      SimplifiedValues.clear();
-      BBWorklist.clear();
-      BBWorklist.insert(L->getHeader());
-      // Note that we *must not* cache the size, this loop grows the worklist.
-      for (unsigned Idx = 0; Idx != BBWorklist.size(); ++Idx) {
-        BasicBlock *BB = BBWorklist[Idx];
+  unsigned NumberOfOptimizedInstructions = 0;
+  unsigned UnrolledLoopSize = 0;
 
-        // Visit all instructions in the given basic block and try to simplify
-        // it.  We don't change the actual IR, just count optimization
-        // opportunities.
-        for (Instruction &I : *BB) {
-          UnrolledLoopSize += TTI.getUserCost(&I);
+  // Simulate execution of each iteration of the loop counting instructions,
+  // which would be simplified.
+  // Since the same load will take different values on different iterations,
+  // we literally have to go through all loop's iterations.
+  for (unsigned Iteration = 0; Iteration < TripCount; ++Iteration) {
+    SimplifiedValues.clear();
+    UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, SCEVGEPCache);
 
-          // Visit the instruction to analyze its loop cost after unrolling,
-          // and if the visitor returns true, then we can optimize this
-          // instruction away.
-          if (Base::visit(I))
-            NumberOfOptimizedInstructions += TTI.getUserCost(&I);
+    BBWorklist.clear();
+    BBWorklist.insert(L->getHeader());
+    // Note that we *must not* cache the size, this loop grows the worklist.
+    for (unsigned Idx = 0; Idx != BBWorklist.size(); ++Idx) {
+      BasicBlock *BB = BBWorklist[Idx];
 
-          // If unrolled body turns out to be too big, bail out.
-          if (UnrolledLoopSize - NumberOfOptimizedInstructions >
-              MaxUnrolledLoopSize)
-            return false;
-        }
+      // Visit all instructions in the given basic block and try to simplify
+      // it.  We don't change the actual IR, just count optimization
+      // opportunities.
+      for (Instruction &I : *BB) {
+        UnrolledLoopSize += TTI.getUserCost(&I);
 
-        // Add BB's successors to the worklist.
-        for (BasicBlock *Succ : successors(BB))
-          if (L->contains(Succ))
-            BBWorklist.insert(Succ);
+        // Visit the instruction to analyze its loop cost after unrolling,
+        // and if the visitor returns true, then we can optimize this
+        // instruction away.
+        if (Analyzer.visit(I))
+          NumberOfOptimizedInstructions += TTI.getUserCost(&I);
+
+        // If unrolled body turns out to be too big, bail out.
+        if (UnrolledLoopSize - NumberOfOptimizedInstructions >
+            MaxUnrolledLoopSize)
+          return None;
       }
 
-      // If we found no optimization opportunities on the first iteration, we
-      // won't find them on later ones too.
-      if (!NumberOfOptimizedInstructions)
-        return false;
+      // Add BB's successors to the worklist.
+      for (BasicBlock *Succ : successors(BB))
+        if (L->contains(Succ))
+          BBWorklist.insert(Succ);
     }
-    return true;
+
+    // If we found no optimization opportunities on the first iteration, we
+    // won't find them on later ones too.
+    if (!NumberOfOptimizedInstructions)
+      return None;
   }
-};
-} // namespace
+  return {{NumberOfOptimizedInstructions, UnrolledLoopSize}};
+}
 
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
@@ -886,14 +891,14 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       // The loop isn't that small, but we still can fully unroll it if that
       // helps to remove a significant number of instructions.
       // To check that, run additional analysis on the loop.
-      UnrollAnalyzer UA(L, TripCount, *SE, TTI, AbsoluteThreshold);
-      if (UA.analyzeLoop() &&
-          canUnrollCompletely(L, Threshold, AbsoluteThreshold,
-                              UA.UnrolledLoopSize,
-                              UA.NumberOfOptimizedInstructions,
-                              PercentOfOptimizedForCompleteUnroll)) {
-        Unrolling = Full;
-      }
+      if (Optional<EstimatedUnrollCost> Cost =
+              analyzeLoopUnrollCost(L, TripCount, *SE, TTI, AbsoluteThreshold))
+        if (canUnrollCompletely(L, Threshold, AbsoluteThreshold,
+                                Cost->UnrolledLoopSize,
+                                Cost->NumberOfOptimizedInstructions,
+                                PercentOfOptimizedForCompleteUnroll)) {
+          Unrolling = Full;
+        }
     }
   } else if (TripCount && Count < TripCount) {
     Unrolling = Partial;
