@@ -2,12 +2,11 @@
 
 define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap:
-; CHECK-NEXT: ubfx   x[[NEWVAL_REG:[0-9]+]], x2, #0, #32
 ; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
 ; CHECK-NEXT: cmp    [[RESULT]], w1
 ; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], w[[NEWVAL_REG]], [x0]
+; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], w2, [x0]
 ; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK-NEXT: [[LABEL2]]:
   %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acquire acquire
@@ -17,12 +16,11 @@ define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) #0 {
 
 define i32 @val_compare_and_swap_rel(i32* %p, i32 %cmp, i32 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap_rel:
-; CHECK-NEXT: ubfx   x[[NEWVAL_REG:[0-9]+]], x2, #0, #32
 ; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
 ; CHECK-NEXT: cmp    [[RESULT]], w1
 ; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NEXT: stlxr  [[SCRATCH_REG:w[0-9]+]], w[[NEWVAL_REG]], [x0]
+; CHECK-NEXT: stlxr  [[SCRATCH_REG:w[0-9]+]], w2, [x0]
 ; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK-NEXT: [[LABEL2]]:
   %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acq_rel monotonic

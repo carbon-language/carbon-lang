@@ -1397,6 +1397,16 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       }
       return false;
     }
+    case Intrinsic::aarch64_stlxr:
+    case Intrinsic::aarch64_stxr: {
+      ZExtInst *ExtVal = dyn_cast<ZExtInst>(CI->getArgOperand(0));
+      if (!ExtVal || !ExtVal->hasOneUse() ||
+          ExtVal->getParent() == CI->getParent())
+        return false;
+      // Sink a zext feeding stlxr/stxr before it, so it can be folded into it.
+      ExtVal->moveBefore(CI);
+      return true;
+    }
     }
 
     if (TLI) {
