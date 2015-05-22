@@ -365,6 +365,8 @@ def fmodules_local_submodule_visibility :
   Flag<["-"], "fmodules-local-submodule-visibility">,
   HelpText<"Enforce name visibility rules across submodules of the same "
            "top-level module.">;
+def fconcepts_ts : Flag<["-"], "fconcepts-ts">,
+  HelpText<"Enable C++ Extensions for Concepts.">;
 
 let Group = Action_Group in {
 

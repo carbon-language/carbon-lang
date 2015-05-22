@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -std=c++98 -verify %s
 // RUN: %clang_cc1 -std=c++11 -verify %s
 // RUN: %clang_cc1 -std=c++1y -fsized-deallocation -verify %s
+// RUN: %clang_cc1 -std=c++1y -fsized-deallocation -fconcepts-ts -DCONCEPTS_TS=1 -verify %s
 
 // expected-no-diagnostics
 
@@ -122,4 +123,8 @@
 
 #if check(alias_templates, 0, 200704, 200704)
 #error "wrong value for __cpp_alias_templates"
+#endif
+
+#if check(experimental_concepts, 0, 0, CONCEPTS_TS)
+#error "wrong value for __cpp_experimental_concepts"
 #endif
