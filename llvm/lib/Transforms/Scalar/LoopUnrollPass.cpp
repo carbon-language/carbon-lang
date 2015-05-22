@@ -402,14 +402,10 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
     else
       SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS, DL);
 
-    if (SimpleV)
-      NumberOfOptimizedInstructions += TTI.getUserCost(&I);
-
-    if (Constant *C = dyn_cast_or_null<Constant>(SimpleV)) {
+    if (Constant *C = dyn_cast_or_null<Constant>(SimpleV))
       SimplifiedValues[&I] = C;
-      return true;
-    }
-    return false;
+
+    return SimpleV;
   }
 
   /// Try to fold load I.
@@ -452,7 +448,6 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
     assert(CV && "Constant expected.");
     SimplifiedValues[&I] = CV;
 
-    NumberOfOptimizedInstructions += TTI.getUserCost(&I);
     return true;
   }
 
@@ -571,7 +566,13 @@ public:
         // opportunities.
         for (Instruction &I : *BB) {
           UnrolledLoopSize += TTI.getUserCost(&I);
-          Base::visit(I);
+
+          // Visit the instruction to analyze its loop cost after unrolling,
+          // and if the visitor returns true, then we can optimize this
+          // instruction away.
+          if (Base::visit(I))
+            NumberOfOptimizedInstructions += TTI.getUserCost(&I);
+
           // If unrolled body turns out to be too big, bail out.
           if (UnrolledLoopSize - NumberOfOptimizedInstructions >
               MaxUnrolledLoopSize)
