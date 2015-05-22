@@ -117,8 +117,8 @@ private:
   // This transformation requires dominator postdominator info
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
-    AU.addRequired<MemoryDependenceAnalysis>();
     AU.addRequired<AliasAnalysis>();
+    AU.addPreserved<MemoryDependenceAnalysis>();
     AU.addPreserved<AliasAnalysis>();
   }
 
@@ -580,7 +580,7 @@ bool MergedLoadStoreMotion::mergeStores(BasicBlock *T) {
 /// \brief Run the transformation for each function
 ///
 bool MergedLoadStoreMotion::runOnFunction(Function &F) {
-  MD = &getAnalysis<MemoryDependenceAnalysis>();
+  MD = getAnalysisIfAvailable<MemoryDependenceAnalysis>();
   AA = &getAnalysis<AliasAnalysis>();
 
   bool Changed = false;
