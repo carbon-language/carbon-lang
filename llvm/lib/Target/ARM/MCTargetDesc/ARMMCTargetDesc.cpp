@@ -177,7 +177,7 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
     if (NoCPU)
       // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
       //       FeatureT2XtPk, FeatureMClass
-      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
+      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,+t2xtpk,+mclass";
     else
       // Use CPU to figure out the exact features.
       ARMArchFeature = "+v7";
