@@ -349,9 +349,14 @@ buildSCEVGEPCache(const Loop &L, ScalarEvolution &SE) {
         if (!SE.isSCEVable(V->getType()))
             continue;
         const SCEV *S = SE.getSCEV(V);
-        // FIXME: Hoist the initialization out of the loop.
+
+        // FIXME: It'd be nice if the worklist and set used by the
+        // SCEVTraversal could be re-used between loop iterations, but the
+        // interface doesn't support that. There is no way to clear the visited
+        // sets between uses.
         FindConstantPointers Visitor(&L, SE);
         SCEVTraversal<FindConstantPointers> T(Visitor);
+
         // Try to find (BaseAddress+Step+Offset) tuple.
         // If succeeded, save it to the cache - it might help in folding
         // loads.
