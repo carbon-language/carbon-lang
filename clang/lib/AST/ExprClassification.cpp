@@ -606,7 +606,7 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   if (CT.isConstQualified())
     return Cl::CM_ConstQualified;
   if (CT.getQualifiers().getAddressSpace() == LangAS::opencl_constant)
-    return Cl::CM_ConstQualified;
+    return Cl::CM_ConstAddrSpace;
 
   // Arrays are not modifiable, only their elements are.
   if (CT->isArrayType())
@@ -672,6 +672,7 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
     llvm_unreachable("CM_LValueCast and CL_LValue don't match");
   case Cl::CM_NoSetterProperty: return MLV_NoSetterProperty;
   case Cl::CM_ConstQualified: return MLV_ConstQualified;
+  case Cl::CM_ConstAddrSpace: return MLV_ConstAddrSpace;
   case Cl::CM_ArrayType: return MLV_ArrayType;
   case Cl::CM_IncompleteType: return MLV_IncompleteType;
   }
