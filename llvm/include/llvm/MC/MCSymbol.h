@@ -56,9 +56,6 @@ class MCSymbolData {
   /// additional per symbol information which is not easily classified.
   uint32_t Flags = 0;
 
-  /// Index - Index field, for use by the object file implementation.
-  uint64_t Index = 0;
-
 public:
   MCSymbolData() { Offset = 0; }
 
@@ -128,12 +125,6 @@ public:
     Flags = (Flags & ~Mask) | Value;
   }
 
-  /// getIndex - Get the (implementation defined) index.
-  uint64_t getIndex() const { return Index; }
-
-  /// setIndex - Set the (implementation defined) index.
-  void setIndex(uint64_t Value) { Index = Value; }
-
   /// @}
 
   void dump() const;
@@ -177,6 +168,9 @@ class MCSymbol {
 
   mutable bool HasData : 1;
   mutable MCSymbolData Data;
+
+  /// Index field, for use by the object file implementation.
+  mutable uint64_t Index = 0;
 
 private: // MCContext creates and uniques these.
   friend class MCExpr;
@@ -286,6 +280,18 @@ public:
   void setVariableValue(const MCExpr *Value);
 
   /// @}
+
+  /// Get the (implementation defined) index.
+  uint64_t getIndex() const {
+    assert(HasData && "Uninitialized symbol data");
+    return Index;
+  }
+
+  /// Set the (implementation defined) index.
+  void setIndex(uint64_t Value) const {
+    assert(HasData && "Uninitialized symbol data");
+    Index = Value;
+  }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;

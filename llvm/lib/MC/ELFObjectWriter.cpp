@@ -858,8 +858,8 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
 uint64_t
 ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                              const MCSymbol *S) {
-  const MCSymbolData &SD = Asm.getSymbolData(*S);
-  return SD.getIndex();
+  assert(S->hasData());
+  return S->getIndex();
 }
 
 bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
@@ -1049,12 +1049,12 @@ void ELFObjectWriter::computeSymbolTable(
   // symbols with non-local bindings.
   unsigned Index = FileSymbolData.size() + 1;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-    LocalSymbolData[i].Symbol->getData().setIndex(Index++);
+    LocalSymbolData[i].Symbol->setIndex(Index++);
 
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-    ExternalSymbolData[i].Symbol->getData().setIndex(Index++);
+    ExternalSymbolData[i].Symbol->setIndex(Index++);
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-    UndefinedSymbolData[i].Symbol->getData().setIndex(Index++);
+    UndefinedSymbolData[i].Symbol->setIndex(Index++);
 }
 
 MCSectionELF *

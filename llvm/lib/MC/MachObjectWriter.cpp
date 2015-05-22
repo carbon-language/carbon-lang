@@ -616,11 +616,11 @@ void MachObjectWriter::ComputeSymbolTable(
   // Set the symbol indices.
   Index = 0;
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-    LocalSymbolData[i].Symbol->getData().setIndex(Index++);
+    LocalSymbolData[i].Symbol->setIndex(Index++);
   for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-    ExternalSymbolData[i].Symbol->getData().setIndex(Index++);
+    ExternalSymbolData[i].Symbol->setIndex(Index++);
   for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-    UndefinedSymbolData[i].Symbol->getData().setIndex(Index++);
+    UndefinedSymbolData[i].Symbol->setIndex(Index++);
 
   for (const MCSectionData &SD : Asm) {
     std::vector<RelAndSymbol> &Relocs = Relocations[&SD];
@@ -629,7 +629,7 @@ void MachObjectWriter::ComputeSymbolTable(
         continue;
 
       // Set the Index and the IsExtern bit.
-      unsigned Index = Rel.Sym->getData().getIndex();
+      unsigned Index = Rel.Sym->getIndex();
       assert(isInt<24>(Index));
       if (IsLittleEndian)
         Rel.MRE.r_word1 = (Rel.MRE.r_word1 & (~0U << 24)) | Index | (1 << 27);
@@ -982,7 +982,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
         }
       }
 
-      Write32(Asm.getSymbolData(*it->Symbol).getIndex());
+      Write32(it->Symbol->getIndex());
     }
 
     // FIXME: Check that offsets match computed ones.
