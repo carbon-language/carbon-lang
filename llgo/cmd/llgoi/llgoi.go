@@ -14,7 +14,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -35,6 +34,7 @@ import (
 	"llvm.org/llgo/driver"
 	"llvm.org/llgo/irgen"
 	"llvm.org/llgo/third_party/gotools/go/types"
+	"llvm.org/llgo/third_party/liner"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 
@@ -69,6 +69,7 @@ type line struct {
 type interp struct {
 	engine llvm.ExecutionEngine
 
+	liner       *liner.State
 	pendingLine line
 
 	copts irgen.CompilerOptions
@@ -109,6 +110,7 @@ func (in *interp) makeCompilerOptions() error {
 }
 
 func (in *interp) init() error {
+	in.liner = liner.NewLiner()
 	in.scope = make(map[string]types.Object)
 	in.pkgmap = make(map[string]*types.Package)
 
@@ -121,6 +123,7 @@ func (in *interp) init() error {
 }
 
 func (in *interp) dispose() {
+	in.liner.Close()
 	in.engine.Dispose()
 }
 
@@ -435,6 +438,8 @@ func (in *interp) loadPackage(pkgpath string) (*types.Package, error) {
 	return in.loadSourcePackage(fset, files, pkgpath, in.copts)
 }
 
+// readLine accumulates lines of input, including trailing newlines,
+// executing statements as they are completed.
 func (in *interp) readLine(line string) error {
 	if !in.pendingLine.ready() {
 		return in.readExprLine(line, nil)
@@ -482,6 +487,40 @@ func (in *interp) readLine(line string) error {
 	}
 }
 
+// formatHistory reformats the provided Go source by collapsing all lines
+// and adding semicolons where required, suitable for adding to line history.
+func formatHistory(input []byte) string {
+	var buf bytes.Buffer
+	var s scanner.Scanner
+	fset := token.NewFileSet()
+	file := fset.AddFile("", fset.Base(), len(input))
+	s.Init(file, input, nil, 0)
+	pos, tok, lit := s.Scan()
+	for tok != token.EOF {
+		if int(pos)-1 > buf.Len() {
+			n := int(pos) - 1 - buf.Len()
+			buf.WriteString(strings.Repeat(" ", n))
+		}
+		var semicolon bool
+		if tok == token.SEMICOLON {
+			semicolon = true
+		} else if lit != "" {
+			buf.WriteString(lit)
+		} else {
+			buf.WriteString(tok.String())
+		}
+		pos, tok, lit = s.Scan()
+		if semicolon {
+			switch tok {
+			case token.RBRACE, token.RPAREN, token.EOF:
+			default:
+				buf.WriteRune(';')
+			}
+		}
+	}
+	return buf.String()
+}
+
 func main() {
 	llvm.LinkInMCJIT()
 	llvm.InitializeNativeTarget()
@@ -494,31 +533,34 @@ func main() {
 	}
 	defer in.dispose()
 
-	tty := isatty(os.Stdin)
-
-	r := bufio.NewReader(os.Stdin)
+	var buf bytes.Buffer
 	for {
-		if tty {
-			if in.pendingLine.ready() {
-				os.Stdout.WriteString("(llgo) ")
-			} else {
-				os.Stdout.WriteString("       ")
-			}
+		if in.pendingLine.ready() && buf.Len() > 0 {
+			history := formatHistory(buf.Bytes())
+			in.liner.AppendHistory(history)
+			buf.Reset()
 		}
-		line, err := r.ReadString('\n')
+		prompt := "(llgo) "
+		if !in.pendingLine.ready() {
+			prompt = strings.Repeat(" ", len(prompt))
+		}
+		line, err := in.liner.Prompt(prompt)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			panic(err)
 		}
-
-		err = in.readLine(line)
+		if line == "" {
+			continue
+		}
+		buf.WriteString(line + "\n")
+		err = in.readLine(line + "\n")
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 
-	if tty {
-		os.Stdout.WriteString("\n")
+	if liner.TerminalSupported() {
+		fmt.Println()
 	}
 }

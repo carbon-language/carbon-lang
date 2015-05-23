@@ -1,5 +1,9 @@
 #!/bin/sh -e
 
+scriptpath=$(readlink -f "$0")
+llgosrcdir=$(dirname "$scriptpath")
+cd $llgosrcdir
+
 gofrontendrepo=https://code.google.com/p/gofrontend
 gofrontendrev=15a24202fa42
 
@@ -9,9 +13,13 @@ gccrev=219477
 gotoolsrepo=https://go.googlesource.com/tools
 gotoolsrev=d4e70101500b43ffe705d4c45e50dd4f1c8e3b2e
 
+linerrepo=https://github.com/peterh/liner.git
+linerrev=1bb0d1c1a25ed393d8feb09bab039b2b1b1fbced
+
 tempdir=$(mktemp -d /tmp/update_third_party.XXXXXX)
 gofrontenddir=$tempdir/gofrontend
 gotoolsdir=$tempdir/go.tools
+linerdir=third_party/liner
 
 rm -rf third_party
 mkdir -p third_party/gofrontend third_party/gotools
@@ -51,6 +59,7 @@ cp include/dwarf2.h third_party/gofrontend/include/
 cp include/filenames.h third_party/gofrontend/include/
 cp include/unwind-pe.h third_party/gofrontend/libgcc/
 
+# Note: this expects the llgo source tree to be located at llvm/tools/llgo.
 cp ../../autoconf/config.guess third_party/gofrontend/
 cp ../../autoconf/config.sub third_party/gofrontend/
 
@@ -87,6 +96,11 @@ cp -r $gotoolsdir/LICENSE $gotoolsdir/go third_party/gotools
 # Vendor the go.tools repository.
 find third_party/gotools -name '*.go' | xargs sed -i -e \
   's,"golang.org/x/tools/,"llvm.org/llgo/third_party/gotools/,g'
+
+# --------------------- peterh/liner -----------------
+
+git clone $linerrepo $linerdir
+(cd $linerdir && git checkout $linerrev && rm -rf .git)
 
 # --------------------- license check ---------------------
 

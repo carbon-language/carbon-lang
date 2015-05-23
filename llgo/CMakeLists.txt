@@ -131,7 +131,6 @@ llvm_add_go_executable(llgoi llvm.org/llgo/cmd/llgoi
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
           ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo
           ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
-          cmd/llgoi/isatty_posix.go
           cmd/llgoi/llgoi.go
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
           "cxx=${CMAKE_BINARY_DIR}/bin/clang++"

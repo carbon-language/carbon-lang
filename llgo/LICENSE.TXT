@@ -73,9 +73,9 @@ THE SOFTWARE.
 
 ==============================================================================
 The LLVM software contains code written by third parties.  Such software will
-have its own individual LICENSE.TXT file in the directory in which it appears.
-This file will describe the copyrights, license, and restrictions which apply
-to that code.
+have its own individual LICENSE or COPYING file in the directory in which it
+appears. This file will describe the copyrights, license, and restrictions
+which apply to that code.
 
 The disclaimer of warranty in the University of Illinois Open Source License
 applies to all code in the LLVM Distribution, and nothing in any of the
@@ -90,4 +90,5 @@ Program             Directory
 -------             ---------
 go.tools            third_party/gotools
 gofrontend          third_party/gofrontend
+liner               third_party/liner
 
