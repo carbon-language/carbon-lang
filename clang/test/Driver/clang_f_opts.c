@@ -383,6 +383,17 @@
 // CHECK-NO-WARNING1-NOT: optimization flag '-finline-limit=1000' is not supported
 // CHECK-NO-WARNING2-NOT: optimization flag '-finline-limit' is not supported
 
+// RUN: %clang -### -S -fsigned-char %s 2>&1 | FileCheck -check-prefix=CHAR-SIGN1 %s
+// CHAR-SIGN1-NOT: -fno-signed-char
+
+// RUN: %clang -### -S -funsigned-char %s 2>&1 | FileCheck -check-prefix=CHAR-SIGN2 %s
+// CHAR-SIGN2: -fno-signed-char
+
+// RUN: %clang -### -S -fno-signed-char %s 2>&1 | FileCheck -check-prefix=CHAR-SIGN3 %s
+// CHAR-SIGN3: -fno-signed-char
+
+// RUN: %clang -### -S -fno-unsigned-char %s 2>&1 | FileCheck -check-prefix=CHAR-SIGN4 %s
+// CHAR-SIGN4-NOT: -fno-signed-char
 
 // RUN: %clang -### -fshort-wchar -fno-short-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR1 -check-prefix=DELIMITERS %s
 // RUN: %clang -### -fno-short-wchar -fshort-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR2 -check-prefix=DELIMITERS %s
