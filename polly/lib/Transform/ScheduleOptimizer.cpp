@@ -467,7 +467,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   S.markAsOptimized();
 
-  for (ScopStmt *Stmt : S) {
+  for (auto &Stmt : S) {
     isl_map *StmtSchedule;
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;

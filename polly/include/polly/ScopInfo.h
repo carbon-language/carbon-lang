@@ -766,7 +766,7 @@ private:
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
-  typedef std::vector<ScopStmt *> StmtSet;
+  typedef std::vector<std::unique_ptr<ScopStmt>> StmtSet;
   /// The statements in this Scop.
   StmtSet Stmts;
 

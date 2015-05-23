@@ -59,7 +59,7 @@ void ScopAnnotator::buildAliasScopes(Scop &S) {
   OtherAliasScopeListMap.clear();
 
   SetVector<Value *> BasePtrs;
-  for (ScopStmt *Stmt : S)
+  for (auto &Stmt : S)
     for (MemoryAccess *MA : *Stmt)
       BasePtrs.insert(MA->getBaseAddr());
 
