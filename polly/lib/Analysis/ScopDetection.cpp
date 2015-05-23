@@ -170,7 +170,7 @@ static cl::opt<bool, true> XPollyModelPHINodes(
     "polly-model-phi-nodes",
     cl::desc("Allow PHI nodes in the input [Unsafe with code-generation!]."),
     cl::location(PollyModelPHINodes), cl::Hidden, cl::ZeroOrMore,
-    cl::init(false), cl::cat(PollyCategory));
+    cl::init(true), cl::cat(PollyCategory));
 
 bool polly::PollyModelPHINodes = false;
 bool polly::PollyTrackFailures = false;

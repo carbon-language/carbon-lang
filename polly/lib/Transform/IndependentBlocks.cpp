@@ -35,7 +35,7 @@ using namespace llvm;
 static cl::opt<bool> DisableIntraScopScalarToArray(
     "disable-polly-intra-scop-scalar-to-array",
     cl::desc("Do not rewrite scalar to array to generate independent blocks"),
-    cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+    cl::Hidden, cl::init(true), cl::cat(PollyCategory));
 
 namespace {
 struct IndependentBlocks : public FunctionPass {
