@@ -3065,23 +3065,9 @@ bool ARMFastISel::fastLowerArguments() {
 namespace llvm {
   FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo,
                                 const TargetLibraryInfo *libInfo) {
-    const TargetMachine &TM = funcInfo.MF->getTarget();
-    const ARMSubtarget &STI =
-        static_cast<const ARMSubtarget &>(funcInfo.MF->getSubtarget());
-    // Thumb2 support on iOS; ARM support on iOS, Linux and NaCl.
-    bool UseFastISel = false;
-    UseFastISel |= STI.isTargetMachO() && !STI.isThumb1Only();
-    UseFastISel |= STI.isTargetLinux() && !STI.isThumb();
-    UseFastISel |= STI.isTargetNaCl() && !STI.isThumb();
-
-    if (UseFastISel) {
-      // iOS always has a FP for backtracking, force other targets
-      // to keep their FP when doing FastISel. The emitted code is
-      // currently superior, and in cases like test-suite's lencod
-      // FastISel isn't quite correct when FP is eliminated.
-      TM.Options.NoFramePointerElim = true;
+    if (funcInfo.MF->getSubtarget<ARMSubtarget>().useFastISel())
       return new ARMFastISel(funcInfo, libInfo);
-    }
+
     return nullptr;
   }
 }

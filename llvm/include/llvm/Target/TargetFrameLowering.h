@@ -173,6 +173,9 @@ public:
     return false;
   }
 
+  /// Return true if the target needs to disable frame pointer elimination.
+  virtual bool noFramePointerElim(const MachineFunction &MF) const;
+
   /// hasFP - Return true if the specified function should have a dedicated
   /// frame pointer register. For most targets this is true only if the function
   /// has variable sized allocas or if frame pointer elimination is disabled.

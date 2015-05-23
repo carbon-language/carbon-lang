@@ -450,6 +450,8 @@ public:
   /// symbol.
   bool GVIsIndirectSymbol(const GlobalValue *GV, Reloc::Model RelocM) const;
 
+  /// True if fast-isel is used.
+  bool useFastISel() const;
 };
 } // End llvm namespace
 

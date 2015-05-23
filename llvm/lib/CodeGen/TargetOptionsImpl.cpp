@@ -12,23 +12,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 /// DisableFramePointerElim - This returns true if frame pointer elimination
 /// optimization should be disabled for the given machine function.
 bool TargetOptions::DisableFramePointerElim(const MachineFunction &MF) const {
-  // Check to see if we should eliminate non-leaf frame pointers and then
-  // check to see if we should eliminate all frame pointers.
-  if (MF.getFunction()->hasFnAttribute("no-frame-pointer-elim-non-leaf") &&
-      !NoFramePointerElim) {
-    const MachineFrameInfo *MFI = MF.getFrameInfo();
-    return MFI->hasCalls();
-  }
+  // Check to see if we should eliminate all frame pointers.
+  if (MF.getSubtarget().getFrameLowering()->noFramePointerElim(MF))
+    return true;
 
-  return NoFramePointerElim;
+  // Check to see if we should eliminate non-leaf frame pointers.
+  if (MF.getFunction()->hasFnAttribute("no-frame-pointer-elim-non-leaf"))
+    return MF.getFrameInfo()->hasCalls();
+
+  return false;
 }
 
 /// LessPreciseFPMAD - This flag return true when -enable-fp-mad option
@@ -53,7 +56,9 @@ StringRef TargetOptions::getTrapFunctionName() const {
 }
 
 
-void llvm::setFunctionAttributes(StringRef CPU, StringRef Features, Module &M) {
+void llvm::setFunctionAttributes(StringRef CPU, StringRef Features,
+                                 const TargetOptions &Options, Module &M,
+                                 bool AlwaysRecordAttrs) {
   for (auto &F : M) {
     auto &Ctx = F.getContext();
     AttributeSet Attrs = F.getAttributes(), NewAttrs;
@@ -65,6 +70,11 @@ void llvm::setFunctionAttributes(StringRef CPU, StringRef Features, Module &M) {
     if (!Features.empty())
       NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
                                        "target-features", Features);
+
+    if (Options.NoFramePointerElimOverride || AlwaysRecordAttrs)
+      NewAttrs = NewAttrs.addAttribute(
+          Ctx, AttributeSet::FunctionIndex, "no-frame-pointer-elim",
+          Options.NoFramePointerElim ? "true" : "false");
 
     // Let NewAttrs override Attrs.
     NewAttrs = Attrs.addAttributes(Ctx, AttributeSet::FunctionIndex, NewAttrs);

@@ -1,0 +1,25 @@
+; RUN: llc < %s -mtriple armv7-none-linux-gnueabi -O1 | FileCheck %s --check-prefix=DISABLE-FP-ELIM
+; RUN: llc < %s -mtriple armv7-none-linux-gnueabi -disable-fp-elim -O1 | FileCheck %s --check-prefix=DISABLE-FP-ELIM
+; RUN: llc < %s -mtriple armv7-none-linux-gnueabi -disable-fp-elim=false -O1 | FileCheck %s --check-prefix=ENABLE-FP-ELIM
+; RUN: llc < %s -mtriple armv7-none-linux-gnueabi -disable-fp-elim=false -O0 | FileCheck %s --check-prefix=DISABLE-FP-ELIM
+
+; Check that command line option "-disable-fp-elim" overrides function attribute
+; "no-frame-pointer-elim". Also, check frame pointer elimination is disabled
+; when fast-isel is used.
+
+; ENABLE-FP-ELIM-NOT: .setfp
+; DISABLE-FP-ELIM: .setfp r11, sp
+
+define i32 @foo1(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) #0 {
+entry:
+  %call = tail call i32 @foo2(i32 %a)
+  %add = add i32 %c, %b
+  %add1 = add i32 %add, %d
+  %add2 = add i32 %add1, %e
+  %add3 = add i32 %add2, %call
+  ret i32 %add3
+}
+
+declare i32 @foo2(i32)
+
+attributes #0 = { nounwind "no-frame-pointer-elim"="true" }

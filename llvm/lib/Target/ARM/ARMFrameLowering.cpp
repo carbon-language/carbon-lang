@@ -43,6 +43,14 @@ ARMFrameLowering::ARMFrameLowering(const ARMSubtarget &sti)
     : TargetFrameLowering(StackGrowsDown, sti.getStackAlignment(), 0, 4),
       STI(sti) {}
 
+bool ARMFrameLowering::noFramePointerElim(const MachineFunction &MF) const {
+  // iOS always has a FP for backtracking, force other targets to keep their FP
+  // when doing FastISel. The emitted code is currently superior, and in cases
+  // like test-suite's lencod FastISel isn't quite correct when FP is eliminated.
+  return TargetFrameLowering::noFramePointerElim(MF) ||
+         MF.getSubtarget<ARMSubtarget>().useFastISel();
+}
+
 /// hasFP - Return true if the specified function should have a dedicated frame
 /// pointer register.  This is true if the function has variable sized allocas
 /// or if frame pointer elimination is disabled.

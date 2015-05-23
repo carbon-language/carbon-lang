@@ -304,8 +304,11 @@ static int compileModule(char **argv, LLVMContext &Context) {
   if (const DataLayout *DL = Target->getDataLayout())
     M->setDataLayout(*DL);
 
-  // Override function attributes based on CPUStr and FeaturesStr.
-  setFunctionAttributes(CPUStr, FeaturesStr, *M);
+  // Override function attributes based on CPUStr, FeaturesStr, and Options.
+  // Pass AlwaysRecordAttrs=false as we want to override an attribute only when
+  // the corresponding cl::opt has been provided on llc's command line.
+  setFunctionAttributes(CPUStr, FeaturesStr, Options, *M,
+                        /* AlwaysRecordAttrs */ false);
 
   if (RelaxAll.getNumOccurrences() > 0 &&
       FileType != TargetMachine::CGFT_ObjectFile)

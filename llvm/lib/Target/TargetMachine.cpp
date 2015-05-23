@@ -66,7 +66,6 @@ void TargetMachine::resetTargetOptions(const Function &F) const {
       Options.X = (F.getFnAttribute(Y).getValueAsString() == "true");          \
   } while (0)
 
-  RESET_OPTION(NoFramePointerElim, "no-frame-pointer-elim");
   RESET_OPTION(LessPreciseFPMADOption, "less-precise-fpmad");
   RESET_OPTION(UnsafeFPMath, "unsafe-fp-math");
   RESET_OPTION(NoInfsFPMath, "no-infs-fp-math");

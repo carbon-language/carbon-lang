@@ -14,12 +14,19 @@
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <cstdlib>
 using namespace llvm;
 
 TargetFrameLowering::~TargetFrameLowering() {
+}
+
+/// The default implementation just looks at attribute "no-frame-pointer-elim".
+bool TargetFrameLowering::noFramePointerElim(const MachineFunction &MF) const {
+  auto Attr = MF.getFunction()->getFnAttribute("no-frame-pointer-elim");
+  return Attr.getValueAsString() == "true";
 }
 
 /// getFrameIndexOffset - Returns the displacement from the frame register to

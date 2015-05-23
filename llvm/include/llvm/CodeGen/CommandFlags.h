@@ -230,6 +230,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   TargetOptions Options;
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.NoFramePointerElim = DisableFPElim;
+  Options.NoFramePointerElimOverride = DisableFPElim.getNumOccurrences() > 0;
   Options.AllowFPOpFusion = FuseFPOps;
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;

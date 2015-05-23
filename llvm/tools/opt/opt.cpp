@@ -265,7 +265,8 @@ static CodeGenOpt::Level GetCodeGenOptLevel() {
 
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(Triple TheTriple, StringRef CPUStr,
-                                       StringRef FeaturesStr) {
+                                       StringRef FeaturesStr,
+                                       const TargetOptions &Options) {
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
                                                          Error);
@@ -275,8 +276,7 @@ static TargetMachine* GetTargetMachine(Triple TheTriple, StringRef CPUStr,
   }
 
   return TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                        CPUStr, FeaturesStr,
-                                        InitTargetOptionsFromCodeGenFlags(),
+                                        CPUStr, FeaturesStr, Options,
                                         RelocModel, CMModel,
                                         GetCodeGenOptLevel());
 }
@@ -386,17 +386,21 @@ int main(int argc, char **argv) {
   Triple ModuleTriple(M->getTargetTriple());
   std::string CPUStr, FeaturesStr;
   TargetMachine *Machine = nullptr;
+  const TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
 
   if (ModuleTriple.getArch()) {
     CPUStr = getCPUStr();
     FeaturesStr = getFeaturesStr();
-    Machine = GetTargetMachine(ModuleTriple, CPUStr, FeaturesStr);
+    Machine = GetTargetMachine(ModuleTriple, CPUStr, FeaturesStr, Options);
   }
 
   std::unique_ptr<TargetMachine> TM(Machine);
 
-  // Override function attributes based on CPUStr and FeaturesStr.
-  setFunctionAttributes(CPUStr, FeaturesStr, *M);
+  // Override function attributes based on CPUStr, FeaturesStr, and Options.
+  // Pass AlwaysRecordAttrs=false as we want to override an attribute only when
+  // the corresponding cl::opt has been provided on opt's command line.
+  setFunctionAttributes(CPUStr, FeaturesStr, Options, *M,
+                        /* AlwaysRecordAttrs */ false);
 
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't
