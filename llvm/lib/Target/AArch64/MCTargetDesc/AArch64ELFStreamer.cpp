@@ -60,7 +60,7 @@ AArch64TargetAsmStreamer::AArch64TargetAsmStreamer(MCStreamer &S,
   : AArch64TargetStreamer(S), OS(OS) {}
 
 void AArch64TargetAsmStreamer::emitInst(uint32_t Inst) {
-  OS << "\t.inst\t0x" << utohexstr(Inst) << "\n";
+  OS << "\t.inst\t0x" << Twine::utohexstr(Inst) << "\n";
 }
 
 class AArch64TargetELFStreamer : public AArch64TargetStreamer {
@@ -95,8 +95,6 @@ public:
       : MCELFStreamer(Context, TAB, OS, Emitter), MappingSymbolCounter(0),
         LastEMS(EMS_None) {}
 
-  ~AArch64ELFStreamer() override {}
-
   void ChangeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
@@ -117,15 +115,8 @@ public:
   }
 
   void emitInst(uint32_t Inst) {
-    char Buffer[4];
-    const bool LittleEndian = getContext().getAsmInfo()->isLittleEndian();
-
     EmitA64MappingSymbol();
-    for (unsigned II = 0; II != 4; ++II) {
-      const unsigned I = LittleEndian ? (4 - II - 1) : II;
-      Buffer[4 - II - 1] = uint8_t(Inst >> I * CHAR_BIT);
-    }
-    MCELFStreamer::EmitBytes(StringRef(Buffer, 4));
+    MCELFStreamer::EmitIntValue(Inst, 4);
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the
@@ -189,8 +180,6 @@ private:
 
   DenseMap<const MCSection *, ElfMappingSymbol> LastMappingSymbols;
   ElfMappingSymbol LastEMS;
-
-  /// @}
 };
 } // end anonymous namespace
 

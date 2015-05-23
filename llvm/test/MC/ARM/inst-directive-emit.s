@@ -15,6 +15,6 @@ emit_asm:
 @ CHECK: 	.globl	emit_asm
 @ CHECK: 	.type	emit_asm,%function
 @ CHECK: emit_asm:
-@ CHECK: 	inst.w 0xF2400000
-@ CHECK: 	inst.w 0xF2C00000
+@ CHECK: 	inst.w 0xf2400000
+@ CHECK: 	inst.w 0xf2c00000
 

@@ -15,7 +15,7 @@ aarch64_inst:
 // CHECK-ASM:        .globl  aarch64_inst
 // CHECK-ASM:        .type   aarch64_inst,@function
 // CHECK-ASM: aarch64_inst:
-// CHECK-ASM:        .inst   0x5E104020
+// CHECK-ASM:        .inst   0x5e104020
 
 // CHECK-OBJ: Section {
 // CHECK-OBJ:   Name: .inst.aarch64_inst
