@@ -12,7 +12,6 @@
 #include "FuzzerInternal.h"
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 #include <sys/time.h>
 #include <cassert>
 #include <cstring>
@@ -23,18 +22,18 @@ namespace fuzzer {
 
 void Print(const Unit &v, const char *PrintAfter) {
   for (auto x : v)
-    std::cerr << "0x" << std::hex << (unsigned) x << std::dec << ",";
-  std::cerr << PrintAfter;
+    Printf("0x%x,", (unsigned) x);
+  Printf("%s", PrintAfter);
 }
 
 void PrintASCII(const Unit &U, const char *PrintAfter) {
   for (auto X : U) {
     if (isprint(X))
-      std::cerr << X;
+      Printf("%c", X);
     else
-      std::cerr << "\\x" << std::hex << (int)(unsigned)X << std::dec;
+      Printf("\\x%x", (unsigned)X);
   }
-  std::cerr << PrintAfter;
+  Printf("%s", PrintAfter);
 }
 
 std::string Hash(const Unit &U) {
@@ -52,7 +51,7 @@ static void AlarmHandler(int, siginfo_t *, void *) {
 
 void SetTimer(int Seconds) {
   struct itimerval T {{Seconds, 0}, {Seconds, 0}};
-  std::cerr << "SetTimer " << Seconds << "\n";
+  Printf("SetTimer %d\n", Seconds);
   int Res = setitimer(ITIMER_REAL, &T, nullptr);
   assert(Res == 0);
   struct sigaction sigact;
