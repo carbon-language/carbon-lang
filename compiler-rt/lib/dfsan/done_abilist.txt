@@ -267,11 +267,9 @@ fun:reflect.makeFuncStub=discard
 fun:__sanitizer_cov_trace_cmp=custom
 fun:__sanitizer_cov_trace_cmp=uninstrumented
 
-# Ignores coverage callbacks.
-fun:__sanitizer_cov=uninstrumented
-fun:__sanitizer_cov=discard
-fun:__sanitizer_cov_module_init=uninstrumented
-fun:__sanitizer_cov_module_init=discard
+# Ignores all other __sanitizer callbacks.
+fun:__sanitizer_*=uninstrumented
+fun:__sanitizer_*=discard
 
 # Don't add extra parameters to the Fuzzer callback.
 fun:LLVMFuzzerTestOneInput=uninstrumented
