@@ -9,13 +9,13 @@
 // IO functions.
 //===----------------------------------------------------------------------===//
 #include "FuzzerInternal.h"
-#include <iostream>
 #include <iterator>
 #include <fstream>
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstdio>
 
 namespace fuzzer {
 
@@ -56,9 +56,7 @@ std::string FileToString(const std::string &Path) {
 }
 
 void CopyFileToErr(const std::string &Path) {
-  std::ifstream T(Path);
-  std::copy(std::istreambuf_iterator<char>(T), std::istreambuf_iterator<char>(),
-            std::ostream_iterator<char>(std::cerr, ""));
+  Printf("%s", FileToString(Path).c_str());
 }
 
 void WriteToFile(const Unit &U, const std::string &Path) {
@@ -84,6 +82,13 @@ std::string DirPlusFile(const std::string &DirPath,
 void PrintFileAsBase64(const std::string &Path) {
   std::string Cmd = "base64 -w 0 < " + Path + "; echo";
   ExecuteCommand(Cmd);
+}
+
+void Printf(const char *Fmt, ...) {
+  va_list ap;
+  va_start(ap, Fmt);
+  vfprintf(stderr, Fmt, ap);
+  va_end(ap);
 }
 
 }  // namespace fuzzer

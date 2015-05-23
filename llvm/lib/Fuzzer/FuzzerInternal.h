@@ -38,6 +38,7 @@ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize);
 size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
                  size_t Size2, uint8_t *Out, size_t MaxOutSize);
 
+void Printf(const char *Fmt, ...);
 void Print(const Unit &U, const char *PrintAfter = "");
 void PrintASCII(const Unit &U, const char *PrintAfter = "");
 std::string Hash(const Unit &U);

@@ -165,10 +165,6 @@ struct LabelRange {
   }
 };
 
-std::ostream &operator<<(std::ostream &os, const LabelRange &LR) {
-  return os << "[" << LR.Beg << "," << LR.End << ")";
-}
-
 // For now, very simple: put Size bytes of Data at position Pos.
 struct TraceBasedMutation {
   size_t Pos;
@@ -231,7 +227,7 @@ void TraceState::ApplyTraceBasedMutation(size_t Idx, fuzzer::Unit *U) {
   assert(Idx < Mutations.size());
   auto &M = Mutations[Idx];
   if (Options.Verbosity >= 3)
-    std::cerr << "TBM " << M.Pos << " " << M.Size << " " << M.Data << "\n";
+    Printf("TBM %zd %zd %zd\n", M.Pos, M.Size, M.Data);
   if (M.Pos + M.Size > U->size()) return;
   memcpy(U->data() + M.Pos, &M.Data, M.Size);
 }
@@ -260,16 +256,8 @@ void TraceState::DFSanCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
 
 
   if (Options.Verbosity >= 3)
-    std::cerr << "DFSAN:"
-              << " PC " << std::hex << PC << std::dec
-              << " S " << CmpSize
-              << " T " << CmpType
-              << " A1 " << Arg1 << " A2 " << Arg2 << " R " << Res
-              << " L" << L1
-              << " L" << L2
-              << " R"  << LR
-              << " MU " << Mutations.size()
-              << "\n";
+    Printf("DFSAN: PC %lx S %zd T %zd A1 %llx A2 %llx R %d L1 %d L2 %d MU %zd\n",
+           PC, CmpSize, CmpType, Arg1, Arg2, Res, L1, L2, Mutations.size());
 }
 
 int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
@@ -281,7 +269,6 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
     Cur = (uint8_t *)memmem(Cur, End - Cur, &PresentData, DataSize);
     if (!Cur)
       break;
-    // std::cerr << "Cur " << (void*)Cur << "\n";
     size_t Pos = Cur - Beg;
     assert(Pos < CurrentUnit.size());
     Mutations.push_back({Pos, DataSize, DesiredData});
@@ -298,7 +285,7 @@ void TraceState::TraceCmpCallback(size_t CmpSize, size_t CmpType, uint64_t Arg1,
   if (!RecordingTraces) return;
   int Added = 0;
   if (Options.Verbosity >= 3)
-    std::cerr << "TraceCmp: " << Arg1 << " " << Arg2 << "\n";
+    Printf("TraceCmp: %zd %zd\n", Arg1, Arg2);
   Added += TryToAddDesiredData(Arg1, Arg2, CmpSize);
   Added += TryToAddDesiredData(Arg2, Arg1, CmpSize);
   if (!Added && CmpSize == 4 && IsTwoByteData(Arg1) && IsTwoByteData(Arg2)) {
