@@ -4847,6 +4847,7 @@ LSRInstance::LSRInstance(Loop *L, Pass *P)
   unsigned NumUsers = 0;
   for (const IVStrideUse &U : IU) {
     if (++NumUsers > MaxIVUsers) {
+      (void)U;
       DEBUG(dbgs() << "LSR skipping loop, too many IV Users in " << U << "\n");
       return;
     }
