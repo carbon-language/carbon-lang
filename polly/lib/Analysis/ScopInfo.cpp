@@ -1724,10 +1724,7 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
 }
 
 const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr) {
-  const SCEV *PtrSCEV = SE->getSCEV(BasePtr);
-  const SCEVUnknown *PtrBaseSCEV =
-      cast<SCEVUnknown>(SE->getPointerBase(PtrSCEV));
-  const ScopArrayInfo *SAI = ScopArrayInfoMap[PtrBaseSCEV->getValue()].get();
+  const ScopArrayInfo *SAI = ScopArrayInfoMap[BasePtr].get();
   assert(SAI && "No ScopArrayInfo available for this base pointer");
   return SAI;
 }
