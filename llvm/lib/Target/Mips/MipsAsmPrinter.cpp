@@ -22,7 +22,6 @@
 #include "MipsTargetMachine.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -448,12 +447,12 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     case 'X': // hex const int
       if ((MO.getType()) != MachineOperand::MO_Immediate)
         return true;
-      O << "0x" << StringRef(utohexstr(MO.getImm())).lower();
+      O << "0x" << Twine::utohexstr(MO.getImm());
       return false;
     case 'x': // hex const int (low 16 bits)
       if ((MO.getType()) != MachineOperand::MO_Immediate)
         return true;
-      O << "0x" << StringRef(utohexstr(MO.getImm() & 0xffff)).lower();
+      O << "0x" << Twine::utohexstr(MO.getImm() & 0xffff);
       return false;
     case 'd': // decimal const int
       if ((MO.getType()) != MachineOperand::MO_Immediate)
