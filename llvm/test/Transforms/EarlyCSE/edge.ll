@@ -1,8 +1,7 @@
 ; RUN: opt -early-cse -S < %s | FileCheck %s
 ; Same as GVN/edge.ll, but updated to reflect EarlyCSE's less powerful
-; implementation.  EarlyCSE doesn't yet handle uses on edges where the
-; source is dominated, but the dest is not.  Nor does it reason about 
-; fcmps. This file can basically be seen as a list of TODOs.
+; implementation.  EarlyCSE currently doesn't exploit equality comparisons
+; against constants.
 
 define i32 @f1(i32 %x) {
   ; CHECK-LABEL: define i32 @f1(
