@@ -67,6 +67,12 @@ static cl::opt<bool> ExperimentalVectorWideningLegalization(
              "rather than promotion."),
     cl::Hidden);
 
+static cl::opt<int> ReciprocalEstimateRefinementSteps(
+    "x86-recip-refinement-steps", cl::init(1),
+    cl::desc("Specify the number of Newton-Raphson iterations applied to the "
+             "result of the hardware reciprocal estimate instruction."),
+    cl::NotHidden);
+
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
@@ -12895,31 +12901,29 @@ SDValue X86TargetLowering::getRsqrtEstimate(SDValue Op,
                                             DAGCombinerInfo &DCI,
                                             unsigned &RefinementSteps,
                                             bool &UseOneConstNR) const {
-  EVT VT = Op.getValueType();
-  const char *RecipOp;
+  // FIXME: We should use instruction latency models to calculate the cost of
+  // each potential sequence, but this is very hard to do reliably because
+  // at least Intel's Core* chips have variable timing based on the number of
+  // significant digits in the divisor and/or sqrt operand.
+  if (!Subtarget->useSqrtEst())
+    return SDValue();
 
-  // SSE1 has rsqrtss and rsqrtps. AVX adds a 256-bit variant for rsqrtps.
+  EVT VT = Op.getValueType();
+
+  // SSE1 has rsqrtss and rsqrtps.
   // TODO: Add support for AVX512 (v16f32).
   // It is likely not profitable to do this for f64 because a double-precision
   // rsqrt estimate with refinement on x86 prior to FMA requires at least 16
   // instructions: convert to single, rsqrtss, convert back to double, refine
   // (3 steps = at least 13 insts). If an 'rsqrtsd' variant was added to the ISA
   // along with FMA, this could be a throughput win.
-  if (VT == MVT::f32 && Subtarget->hasSSE1())
-    RecipOp = "sqrtf";
-  else if ((VT == MVT::v4f32 && Subtarget->hasSSE1()) ||
-           (VT == MVT::v8f32 && Subtarget->hasAVX()))
-    RecipOp = "vec-sqrtf";
-  else
-    return SDValue();
-  
-  TargetRecip Recips = DCI.DAG.getTarget().Options.Reciprocals;
-  if (!Recips.isEnabled(RecipOp))
-    return SDValue();
-  
-  RefinementSteps = Recips.getRefinementSteps(RecipOp);
-  UseOneConstNR = false;
-  return DCI.DAG.getNode(X86ISD::FRSQRT, SDLoc(Op), VT, Op);
+  if ((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
+      (Subtarget->hasAVX() && VT == MVT::v8f32)) {
+    RefinementSteps = 1;
+    UseOneConstNR = false;
+    return DCI.DAG.getNode(X86ISD::FRSQRT, SDLoc(Op), VT, Op);
+  }
+  return SDValue();
 }
 
 /// The minimum architected relative accuracy is 2^-12. We need one
@@ -12927,9 +12931,15 @@ SDValue X86TargetLowering::getRsqrtEstimate(SDValue Op,
 SDValue X86TargetLowering::getRecipEstimate(SDValue Op,
                                             DAGCombinerInfo &DCI,
                                             unsigned &RefinementSteps) const {
+  // FIXME: We should use instruction latency models to calculate the cost of
+  // each potential sequence, but this is very hard to do reliably because
+  // at least Intel's Core* chips have variable timing based on the number of
+  // significant digits in the divisor.
+  if (!Subtarget->useReciprocalEst())
+    return SDValue();
+
   EVT VT = Op.getValueType();
-  const char *RecipOp;
-  
+
   // SSE1 has rcpss and rcpps. AVX adds a 256-bit variant for rcpps.
   // TODO: Add support for AVX512 (v16f32).
   // It is likely not profitable to do this for f64 because a double-precision
@@ -12937,20 +12947,12 @@ SDValue X86TargetLowering::getRecipEstimate(SDValue Op,
   // 15 instructions: convert to single, rcpss, convert back to double, refine
   // (3 steps = 12 insts). If an 'rcpsd' variant was added to the ISA
   // along with FMA, this could be a throughput win.
-  if (VT == MVT::f32 && Subtarget->hasSSE1())
-    RecipOp = "divf";
-  else if ((VT == MVT::v4f32 && Subtarget->hasSSE1()) ||
-           (VT == MVT::v8f32 && Subtarget->hasAVX()))
-    RecipOp = "vec-divf";
-  else
-    return SDValue();
-  
-  TargetRecip Recips = DCI.DAG.getTarget().Options.Reciprocals;
-  if (!Recips.isEnabled(RecipOp))
-    return SDValue();
-
-  RefinementSteps = Recips.getRefinementSteps(RecipOp);
-  return DCI.DAG.getNode(X86ISD::FRCP, SDLoc(Op), VT, Op);
+  if ((Subtarget->hasSSE1() && (VT == MVT::f32 || VT == MVT::v4f32)) ||
+      (Subtarget->hasAVX() && VT == MVT::v8f32)) {
+    RefinementSteps = ReciprocalEstimateRefinementSteps;
+    return DCI.DAG.getNode(X86ISD::FRCP, SDLoc(Op), VT, Op);
+  }
+  return SDValue();
 }
 
 /// If we have at least two divisions that use the same divisor, convert to
