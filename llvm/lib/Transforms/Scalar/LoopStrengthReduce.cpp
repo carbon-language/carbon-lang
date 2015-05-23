@@ -185,8 +185,8 @@ RegUseTracker::SwapAndDropUse(size_t LUIdx, size_t LastLUIdx) {
 
   // Update RegUses. The data structure is not optimized for this purpose;
   // we must iterate through it and update each of the bit vectors.
-  for (auto &I : RegUsesMap) {
-    SmallBitVector &UsedByIndices = I.second.UsedByIndices;
+  for (auto &Pair : RegUsesMap) {
+    SmallBitVector &UsedByIndices = Pair.second.UsedByIndices;
     if (LUIdx < UsedByIndices.size())
       UsedByIndices[LUIdx] =
         LastLUIdx < UsedByIndices.size() ? UsedByIndices[LastLUIdx] : 0;
@@ -3845,8 +3845,8 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
           // If the new formula has a constant in a register, and adding the
           // constant value to the immediate would produce a value closer to
           // zero than the immediate itself, then the formula isn't worthwhile.
-          for (const SCEV *J : NewF.BaseRegs)
-            if (const SCEVConstant *C = dyn_cast<SCEVConstant>(J))
+          for (const SCEV *NewReg : NewF.BaseRegs)
+            if (const SCEVConstant *C = dyn_cast<SCEVConstant>(NewReg))
               if ((C->getValue()->getValue() + NewF.BaseOffset).abs().slt(
                    std::abs(NewF.BaseOffset)) &&
                   (C->getValue()->getValue() +
@@ -4011,8 +4011,8 @@ static const size_t ComplexityLimit = UINT16_MAX;
 /// isn't always sufficient.
 size_t LSRInstance::EstimateSearchSpaceComplexity() const {
   size_t Power = 1;
-  for (const LSRUse &I : Uses) {
-    size_t FSize = I.Formulae.size();
+  for (const LSRUse &LU : Uses) {
+    size_t FSize = LU.Formulae.size();
     if (FSize >= ComplexityLimit) {
       Power = ComplexityLimit;
       break;
@@ -4934,16 +4934,16 @@ void LSRInstance::print_factors_and_types(raw_ostream &OS) const {
   OS << "LSR has identified the following interesting factors and types: ";
   bool First = true;
 
-  for (int64_t I : Factors) {
+  for (int64_t Factor : Factors) {
     if (!First) OS << ", ";
     First = false;
-    OS << '*' << I;
+    OS << '*' << Factor;
   }
 
-  for (Type *I : Types) {
+  for (Type *Ty : Types) {
     if (!First) OS << ", ";
     First = false;
-    OS << '(' << *I << ')';
+    OS << '(' << *Ty << ')';
   }
   OS << '\n';
 }
