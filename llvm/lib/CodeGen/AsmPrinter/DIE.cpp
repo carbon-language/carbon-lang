@@ -228,6 +228,7 @@ unsigned DIEValue::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
     SIZE_OF_IMPL(LocList)
 #undef SIZE_OF_IMPL
   }
+  llvm_unreachable("Unknown DIE kind");
 }
 
 #ifndef NDEBUG
