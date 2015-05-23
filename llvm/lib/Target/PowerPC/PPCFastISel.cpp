@@ -144,6 +144,7 @@ class PPCFastISel final : public FastISel {
   private:
     bool isTypeLegal(Type *Ty, MVT &VT);
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
+    bool isValueAvailable(const Value *V) const;
     bool isVSFRCRegister(unsigned Register) const {
       return MRI.getRegClass(Register)->getID() == PPC::VSFRCRegClassID;
     }
@@ -279,6 +280,17 @@ bool PPCFastISel::isLoadTypeLegal(Type *Ty, MVT &VT) {
   if (VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32) {
     return true;
   }
+
+  return false;
+}
+
+bool PPCFastISel::isValueAvailable(const Value *V) const {
+  if (!isa<Instruction>(V))
+    return true;
+
+  const auto *I = cast<Instruction>(V);
+  if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
+    return true;
 
   return false;
 }
@@ -731,30 +743,31 @@ bool PPCFastISel::SelectBranch(const Instruction *I) {
 
   // For now, just try the simplest case where it's fed by a compare.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
-    Optional<PPC::Predicate> OptPPCPred = getComparePred(CI->getPredicate());
-    if (!OptPPCPred)
-      return false;
+    if (isValueAvailable(CI)) {
+      Optional<PPC::Predicate> OptPPCPred = getComparePred(CI->getPredicate());
+      if (!OptPPCPred)
+        return false;
 
-    PPC::Predicate PPCPred = OptPPCPred.getValue();
+      PPC::Predicate PPCPred = OptPPCPred.getValue();
 
-    // Take advantage of fall-through opportunities.
-    if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
-      std::swap(TBB, FBB);
-      PPCPred = PPC::InvertPredicate(PPCPred);
+      // Take advantage of fall-through opportunities.
+      if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
+        std::swap(TBB, FBB);
+        PPCPred = PPC::InvertPredicate(PPCPred);
+      }
+
+      unsigned CondReg = createResultReg(&PPC::CRRCRegClass);
+
+      if (!PPCEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(),
+                      CondReg))
+        return false;
+
+      BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::BCC))
+        .addImm(PPCPred).addReg(CondReg).addMBB(TBB);
+      fastEmitBranch(FBB, DbgLoc);
+      FuncInfo.MBB->addSuccessor(TBB);
+      return true;
     }
-
-    unsigned CondReg = createResultReg(&PPC::CRRCRegClass);
-
-    if (!PPCEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(),
-                    CondReg))
-      return false;
-
-    BuildMI(*BrBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::BCC))
-      .addImm(PPCPred).addReg(CondReg).addMBB(TBB);
-    fastEmitBranch(FBB, DbgLoc);
-    FuncInfo.MBB->addSuccessor(TBB);
-    return true;
-
   } else if (const ConstantInt *CI =
              dyn_cast<ConstantInt>(BI->getCondition())) {
     uint64_t Imm = CI->getZExtValue();
