@@ -19,3 +19,8 @@ void f(_Atomic(int) a, _Atomic(int) b) {
   if (!a > b)     {} // no warning
   if (!a > -1)    {} // expected-warning {{comparison of constant -1 with boolean expression is always true}}
 }
+
+typedef _Atomic(int) Ty;
+void PR23638(Ty *a) {
+  if (*a == 1) {} // no warning
+}
