@@ -1168,7 +1168,16 @@ enum {
   DF_1_CONFALT    = 0x00002000, // Configuration alternative created.
   DF_1_ENDFILTEE  = 0x00004000, // Filtee terminates filters search.
   DF_1_DISPRELDNE = 0x00008000, // Disp reloc applied at build time.
-  DF_1_DISPRELPND = 0x00010000  // Disp reloc applied at run-time.
+  DF_1_DISPRELPND = 0x00010000, // Disp reloc applied at run-time.
+  DF_1_NODIRECT   = 0x00020000, // Object has no-direct binding.
+  DF_1_IGNMULDEF  = 0x00040000,
+  DF_1_NOKSYMS    = 0x00080000,
+  DF_1_NOHDR      = 0x00100000,
+  DF_1_EDITED     = 0x00200000, // Object is modified after built.
+  DF_1_NORELOC    = 0x00400000,
+  DF_1_SYMINTPOSE = 0x00800000, // Object has individual interposers.
+  DF_1_GLOBAUDIT  = 0x01000000, // Global auditing required.
+  DF_1_SINGLETON  = 0x02000000  // Singleton symbols are used.
 };
 
 // DT_MIPS_FLAGS values.
