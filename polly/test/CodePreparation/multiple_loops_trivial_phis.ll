@@ -1,6 +1,7 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-prepare < %s | FileCheck %s
-; ModuleID = 'multiple_loops_trivial_phis.ll'
-;
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-prepare -polly-model-phi-nodes=true < %s | FileCheck %s -check-prefix=PHI
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-prepare -polly-model-phi-nodes=false < %s | FileCheck %s
+
+
 ; int f(int * __restrict__ A) {
 ;   int i, j, sum = 0;
 ;   for (i = 0; i < 100; i++) {
@@ -22,8 +23,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc5
   %sum.04 = phi i32 [ 0, %entry ], [ %add4.lcssa, %for.inc5 ]
   %indvars.iv23 = phi i64 [ 0, %entry ], [ %2, %for.inc5 ]
-  %mul = shl nsw i32 %sum.04, 1
-  br label %for.inc
+  %mul = shl nsw i32 %sum.04, 1 br label %for.inc
 
 for.inc:                                          ; preds = %for.body, %for.inc
   %sum.12 = phi i32 [ %mul, %for.body ], [ %add4, %for.inc ]
@@ -53,3 +53,5 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 ; CHECK: alloca
 ; CHECK: alloca
 ; CHECK-NOT: alloca
+
+; PHI-NOT: alloca

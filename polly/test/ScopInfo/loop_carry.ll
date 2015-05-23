@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-prepare -polly-scops -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-prepare -polly-scops -analyze -polly-model-phi-nodes=false -disable-polly-intra-scop-scalar-to-array=false < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-prepare -polly-scops -analyze -polly-model-phi-nodes=true -disable-polly-intra-scop-scalar-to-array=true < %s | FileCheck %s -check-prefix=SCALAR
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
@@ -78,3 +79,35 @@ bb2:                                              ; preds = %bb, %entry
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05_reg2mem[0] };
 ; CHECK:             MustWriteAccess :=
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
+
+; SCALAR: Stmt_bb_nph
+; SCALAR:       Domain :=
+; SCALAR:           [n] -> { Stmt_bb_nph[] : n >= 2 };
+; SCALAR:       Schedule :=
+; SCALAR:           [n] -> { Stmt_bb_nph[] -> [0, 0] };
+; SCALAR:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; SCALAR:           [n] -> { Stmt_bb_nph[] -> MemRef_a[0] };
+; SCALAR:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb_nph[] -> MemRef_1[] };
+; SCALAR:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb_nph[] -> MemRef_k_05[] };
+; SCALAR: Stmt_bb
+; SCALAR:       Domain :=
+; SCALAR:           [n] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -2 + n and n >= 2 };
+; SCALAR:       Schedule :=
+; SCALAR:           [n] -> { Stmt_bb[i0] -> [1, i0] };
+; SCALAR:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_1[] };
+; SCALAR:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_k_05[] };
+; SCALAR:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_1[] };
+; SCALAR:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_k_05[] };
+; SCALAR:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_a[1 + i0] };
+; SCALAR:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_a[2 + 2i0] };
+; SCALAR:       ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]
+; SCALAR:           [n] -> { Stmt_bb[i0] -> MemRef_a[4 + i0] };
+

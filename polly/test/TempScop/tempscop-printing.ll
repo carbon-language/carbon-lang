@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array=false < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array=true < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;

@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-detect -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-detect -polly-model-phi-nodes=true -disable-polly-intra-scop-scalar-to-array=true -analyze  < %s | FileCheck %s -check-prefix=PHI
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-detect -polly-model-phi-nodes=false -disable-polly-intra-scop-scalar-to-array=false -analyze  < %s | FileCheck %s
 
 ; void f(long A[], long N, long *init_ptr) {
 ;   long i, j;
@@ -47,4 +48,5 @@ return:
   ret void
 }
 
+; PHI: Valid Region for Scop: for.i => return
 ; CHECK: Valid Region for Scop: for.j => for.i.end
