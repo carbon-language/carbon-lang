@@ -435,8 +435,6 @@ void DIETypeSignature::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const 
 void DIETypeSignature::print(raw_ostream &O) const {
   O << format("Type Unit: 0x%lx", Unit.getTypeSignature());
 }
-
-void DIETypeSignature::dump() const { print(dbgs()); }
 #endif
 
 //===----------------------------------------------------------------------===//

@@ -466,7 +466,6 @@ public:
   }
 #ifndef NDEBUG
   void print(raw_ostream &O) const override;
-  void dump() const;
 #endif
 };
 
