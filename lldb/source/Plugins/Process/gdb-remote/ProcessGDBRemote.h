@@ -225,10 +225,10 @@ public:
     SendEventData(const char *data) override;
 
     //----------------------------------------------------------------------
-    // Override SetExitStatus so we can disconnect from the remote GDB server
+    // Override DidExit so we can disconnect from the remote GDB server
     //----------------------------------------------------------------------
-    bool
-    SetExitStatus (int exit_status, const char *cstr) override;
+    void
+    DidExit () override;
 
     void
     SetUserSpecifiedMaxMemoryTransferSize (uint64_t user_specified_max);

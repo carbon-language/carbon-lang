@@ -1466,9 +1466,24 @@ Process::SetExitStatus (int status, const char *cstr)
             m_exit_string.clear();
     }
 
-    DidExit ();
+    // When we exit, we no longer need to the communication channel
+    m_stdio_communication.StopReadThread();
+    m_stdio_communication.Disconnect();
+    m_stdin_forward = false;
+
+    // And we don't need the input reader anymore as well
+    if (m_process_input_reader)
+    {
+        m_process_input_reader->SetIsDone(true);
+        m_process_input_reader->Cancel();
+        m_process_input_reader.reset();
+    }
 
     SetPrivateState (eStateExited);
+
+    // Allow subclasses to do some cleanup
+    DidExit ();
+
     return true;
 }
 

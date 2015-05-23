@@ -1401,12 +1401,11 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, const Pro
     return error;
 }
 
-
-bool
-ProcessGDBRemote::SetExitStatus (int exit_status, const char *cstr)
+void
+ProcessGDBRemote::DidExit ()
 {
+    // When we exit, disconnect from the GDB server communications
     m_gdb_comm.Disconnect();
-    return Process::SetExitStatus (exit_status, cstr);
 }
 
 void

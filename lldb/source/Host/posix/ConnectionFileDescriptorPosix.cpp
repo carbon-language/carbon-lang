@@ -372,6 +372,9 @@ ConnectionFileDescriptor::Disconnect(Error *error_ptr)
     if (error_ptr)
         *error_ptr = error.Fail() ? error : error2;
 
+    // Close any pipes we were using for async interrupts
+    m_pipe.Close();
+
     m_uri.clear();
     m_shutting_down = false;
     return status;
