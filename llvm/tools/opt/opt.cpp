@@ -386,6 +386,7 @@ int main(int argc, char **argv) {
   Triple ModuleTriple(M->getTargetTriple());
   std::string CPUStr, FeaturesStr;
   TargetMachine *Machine = nullptr;
+
   if (ModuleTriple.getArch()) {
     CPUStr = getCPUStr();
     FeaturesStr = getFeaturesStr();
@@ -394,8 +395,8 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<TargetMachine> TM(Machine);
 
-  // Override function attributes.
-  overrideFunctionAttributes(CPUStr, FeaturesStr, *M);
+  // Override function attributes based on CPUStr and FeaturesStr.
+  setFunctionAttributes(CPUStr, FeaturesStr, *M);
 
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't

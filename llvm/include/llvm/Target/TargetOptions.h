@@ -222,6 +222,10 @@ namespace llvm {
     MCTargetOptions MCOptions;
   };
 
+/// \brief Set function attributes of functions in Module M based on CPU and
+/// Features.
+void setFunctionAttributes(StringRef CPU, StringRef Features, Module &M);
+
 // Comparison operators:
 
 

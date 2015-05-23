@@ -591,9 +591,6 @@ ilist_traits<Argument>::getSymTab(Function *F) {
   return F ? &F->getValueSymbolTable() : nullptr;
 }
 
-/// \brief Overwrite attribute Kind in function F.
-void overrideFunctionAttribute(StringRef Kind, StringRef Value, Function &F);
-
 } // End llvm namespace
 
 #endif

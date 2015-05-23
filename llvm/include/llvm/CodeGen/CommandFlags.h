@@ -287,15 +287,4 @@ static inline std::string getFeaturesStr() {
   return Features.getString();
 }
 
-static inline void overrideFunctionAttributes(StringRef CPU, StringRef Features,
-                                              Module &M) {
-  for (auto &F : M) {
-    if (!CPU.empty())
-      llvm::overrideFunctionAttribute("target-cpu", CPU, F);
-
-    if (!Features.empty())
-      llvm::overrideFunctionAttribute("target-features", Features, F);
-  }
-}
-
 #endif
