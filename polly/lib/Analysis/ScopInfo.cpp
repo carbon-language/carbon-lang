@@ -1704,10 +1704,6 @@ Scop::~Scop() {
   isl_set_free(Context);
   isl_set_free(AssumedContext);
 
-  // Free the ScopArrayInfo objects.
-  for (auto &ScopArrayInfoPair : arrays())
-    delete ScopArrayInfoPair.second;
-
   // Free the alias groups
   for (MinMaxVectorTy *MinMaxAccesses : MinMaxAliasGroups) {
     for (MinMaxAccessTy &MMA : *MinMaxAccesses) {
@@ -1721,17 +1717,17 @@ Scop::~Scop() {
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                const SmallVector<const SCEV *, 4> &Sizes) {
-  const ScopArrayInfo *&SAI = ScopArrayInfoMap[BasePtr];
+  auto &SAI = ScopArrayInfoMap[BasePtr];
   if (!SAI)
-    SAI = new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes);
-  return SAI;
+    SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes));
+  return SAI.get();
 }
 
 const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr) {
   const SCEV *PtrSCEV = SE->getSCEV(BasePtr);
   const SCEVUnknown *PtrBaseSCEV =
       cast<SCEVUnknown>(SE->getPointerBase(PtrSCEV));
-  const ScopArrayInfo *SAI = ScopArrayInfoMap[PtrBaseSCEV->getValue()];
+  const ScopArrayInfo *SAI = ScopArrayInfoMap[PtrBaseSCEV->getValue()].get();
   assert(SAI && "No ScopArrayInfo available for this base pointer");
   return SAI;
 }
@@ -1822,7 +1818,7 @@ void Scop::printStatements(raw_ostream &OS) const {
 void Scop::printArrayInfo(raw_ostream &OS) const {
   OS << "Arrays {\n";
 
-  for (auto Array : arrays())
+  for (auto &Array : arrays())
     Array.second->print(OS);
 
   OS.indent(4) << "}\n";

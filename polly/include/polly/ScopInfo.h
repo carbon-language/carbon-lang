@@ -787,7 +787,8 @@ private:
   /// Constraints on parameters.
   isl_set *Context;
 
-  typedef MapVector<const Value *, const ScopArrayInfo *> ArrayInfoMapTy;
+  typedef MapVector<const Value *, std::unique_ptr<ScopArrayInfo>>
+      ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
   ArrayInfoMapTy ScopArrayInfoMap;
 
