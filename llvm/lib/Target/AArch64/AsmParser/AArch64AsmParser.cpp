@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
+#include "MCTargetDesc/AArch64TargetStreamer.h"
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
