@@ -21,8 +21,12 @@
 
 namespace fuzzer {
 
-// Simple C-like interface with a single user-supplied callback.
-/* Usage: ---------------------------------------------------------------------
+typedef void (*UserCallback)(const uint8_t *Data, size_t Size);
+/** Simple C-like interface with a single user-supplied callback.
+
+Usage:
+
+#\code
 #include "FuzzerInterface.h"
 
 void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
@@ -34,12 +38,15 @@ int main(int argc, char **argv) {
   InitializeMeIfNeeded();
   return fuzzer::FuzzerDriver(argc, argv, LLVMFuzzerTestOneInput);
 }
------------------------------------------------------------------------------ */
-typedef void (*UserCallback)(const uint8_t *Data, size_t Size);
+#\endcode
+*/
 int FuzzerDriver(int argc, char **argv, UserCallback Callback);
 
-// An abstract class that allows to use user-supplied mutators with libFuzzer.
-/* Usage: ---------------------------------------------------------------------
+/** An abstract class that allows to use user-supplied mutators with libFuzzer.
+
+Usage:
+
+#\code
 #include "FuzzerInterface.h"
 class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
  public:
@@ -55,18 +62,19 @@ int main(int argc, char **argv) {
   MyFuzzer F;
   fuzzer::FuzzerDriver(argc, argv, F);
 }
------------------------------------------------------------------------------ */
+#\endcode
+*/
 class UserSuppliedFuzzer {
  public:
-  // Executes the target function on 'Size' bytes of 'Data'.
+  /// Executes the target function on 'Size' bytes of 'Data'.
   virtual void TargetFunction(const uint8_t *Data, size_t Size) = 0;
-  // Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
-  // returns the new size of the data.
+  /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
+  /// returns the new size of the data.
   virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
     return BasicMutate(Data, Size, MaxSize);
   }
-  // Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
-  // returns the number of bytes written.
+  /// Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
+  /// returns the number of bytes written.
   virtual size_t CrossOver(const uint8_t *Data1, size_t Size1,
                            const uint8_t *Data2, size_t Size2,
                            uint8_t *Out, size_t MaxOutSize) {
@@ -75,13 +83,14 @@ class UserSuppliedFuzzer {
   virtual ~UserSuppliedFuzzer() {}
 
  protected:
-  // These can be called internally by Mutate and CrossOver.
+  /// These can be called internally by Mutate and CrossOver.
   size_t BasicMutate(uint8_t *Data, size_t Size, size_t MaxSize);
   size_t BasicCrossOver(const uint8_t *Data1, size_t Size1,
                         const uint8_t *Data2, size_t Size2,
                         uint8_t *Out, size_t MaxOutSize);
 };
 
+/// Runs the fuzzing with the UserSuppliedFuzzer.
 int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF);
 
 }  // namespace fuzzer
