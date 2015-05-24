@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/Support/Allocator.h"
 #include <utility>
 
@@ -25,16 +26,14 @@ class StringRef;
 // A String->Symbol mapping of strings used by indirect
 // references.
 class DwarfStringPool {
-  struct EntryTy {
-    MCSymbol *Symbol;
-    unsigned Offset;
-    unsigned Index;
-  };
+  typedef DwarfStringPoolEntry EntryTy;
   StringMap<EntryTy, BumpPtrAllocator &> Pool;
   StringRef Prefix;
   unsigned NumBytes = 0;
 
 public:
+  typedef DwarfStringPoolEntryRef EntryRef;
+
   DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix)
       : Pool(A), Prefix(Prefix) {}
 
@@ -44,24 +43,24 @@ public:
   /// \brief Returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getSymbol(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).Symbol;
+    return getEntry(Asm, Str).getSymbol();
   }
 
   /// Get a byte offset into the string pool with the given text.
   unsigned getOffset(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).Offset;
+    return getEntry(Asm, Str).getOffset();
   }
 
   /// \brief Returns the index into the string pool with the given
   /// string text.
   unsigned getIndex(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).Index;
+    return getEntry(Asm, Str).getIndex();
   }
 
   bool empty() const { return Pool.empty(); }
 
-private:
-  EntryTy &getEntry(AsmPrinter &Asm, StringRef Str);
+  /// Get a reference to an entry in the string pool.
+  EntryRef getEntry(AsmPrinter &Asm, StringRef Str);
 };
 }
 #endif

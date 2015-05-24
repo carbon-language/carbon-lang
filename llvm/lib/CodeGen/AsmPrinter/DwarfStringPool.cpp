@@ -12,10 +12,11 @@
 
 using namespace llvm;
 
-DwarfStringPool::EntryTy &DwarfStringPool::getEntry(AsmPrinter &Asm,
+DwarfStringPool::EntryRef DwarfStringPool::getEntry(AsmPrinter &Asm,
                                                     StringRef Str) {
-  auto &Entry = Pool[Str];
-  if (!Entry.Symbol) {
+  auto I = Pool.insert(std::make_pair(Str, EntryTy()));
+  if (I.second) {
+    auto &Entry = I.first->second;
     Entry.Index = Pool.size() - 1;
     Entry.Offset = NumBytes;
     Entry.Symbol = Asm.createTempSymbol(Prefix);
@@ -23,7 +24,7 @@ DwarfStringPool::EntryTy &DwarfStringPool::getEntry(AsmPrinter &Asm,
     NumBytes += Str.size() + 1;
     assert(NumBytes > Entry.Offset && "Unexpected overflow");
   }
-  return Entry;
+  return EntryRef(*I.first);
 }
 
 void DwarfStringPool::emit(AsmPrinter &Asm, MCSection *StrSection,
