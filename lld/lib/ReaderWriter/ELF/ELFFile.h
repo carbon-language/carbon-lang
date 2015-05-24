@@ -345,10 +345,10 @@ protected:
   /// list of relocations references.  In ELF, if a section named, ".text" has
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries.
-  std::unordered_map<StringRef, range<Elf_Rela_Iter>>
+  std::unordered_map<const Elf_Shdr *, range<Elf_Rela_Iter>>
   _relocationAddendReferences;
   MergedSectionMapT _mergedSectionMap;
-  std::unordered_map<StringRef, range<Elf_Rel_Iter>> _relocationReferences;
+  std::unordered_map<const Elf_Shdr *, range<Elf_Rel_Iter>> _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
   llvm::DenseMap<const ELFReference<ELFT> *, const Elf_Sym *>

@@ -143,7 +143,7 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       auto rai(_objFile->begin_rela(&section));
       auto rae(_objFile->end_rela(&section));
 
-      _relocationAddendReferences[*sectionName] = make_range(rai, rae);
+      _relocationAddendReferences[sHdr] = make_range(rai, rae);
       totalRelocs += std::distance(rai, rae);
     } else if (section.sh_type == llvm::ELF::SHT_REL) {
       auto sHdr = _objFile->getSection(section.sh_info);
@@ -155,7 +155,7 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       auto ri(_objFile->begin_rel(&section));
       auto re(_objFile->end_rel(&section));
 
-      _relocationReferences[*sectionName] = make_range(ri, re);
+      _relocationReferences[sHdr] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
     } else {
       _sectionSymbols[&section];
@@ -554,12 +554,12 @@ ELFDefinedAtom<ELFT> *ELFFile<ELFT>::createDefinedAtomAndAssignRelocations(
   unsigned int referenceStart = _references.size();
 
   // Add Rela (those with r_addend) references:
-  auto rari = _relocationAddendReferences.find(sectionName);
+  auto rari = _relocationAddendReferences.find(section);
   if (rari != _relocationAddendReferences.end())
     createRelocationReferences(symbol, symContent, rari->second);
 
   // Add Rel references.
-  auto rri = _relocationReferences.find(sectionName);
+  auto rri = _relocationReferences.find(section);
   if (rri != _relocationReferences.end())
     createRelocationReferences(symbol, symContent, secContent, rri->second);
 
