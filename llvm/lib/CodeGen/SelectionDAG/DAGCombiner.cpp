@@ -10892,10 +10892,17 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       }
     }
 
-    // We only use vectors if the constant is known to be zero and the
-    // function is not marked with the noimplicitfloat attribute.
-    if (NonZero || NoVectors)
+
+    // We only use vectors if the constant is known to be zero or the target
+    // allows it and the function is not marked with the noimplicitfloat
+    // attribute.
+    if (NoVectors) {
       LastLegalVectorType = 0;
+    } else if (NonZero && !TLI.storeOfVectorConstantIsCheap(MemVT,
+                                                            LastLegalVectorType,
+                                                            FirstStoreAS)) {
+      LastLegalVectorType = 0;
+    }
 
     // Check if we found a legal integer type to store.
     if (LastLegalType == 0 && LastLegalVectorType == 0)

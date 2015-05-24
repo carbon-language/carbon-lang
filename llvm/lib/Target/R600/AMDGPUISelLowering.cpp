@@ -509,6 +509,12 @@ bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {
   return VT == MVT::f32 || VT == MVT::f64;
 }
 
+bool AMDGPUTargetLowering:: storeOfVectorConstantIsCheap(EVT MemVT,
+                                                         unsigned NumElem,
+                                                         unsigned AS) const {
+  return true;
+}
+
 bool AMDGPUTargetLowering::isTruncateFree(EVT Source, EVT Dest) const {
   // Truncate is just accessing a subregister.
   return Dest.bitsLT(Source) && (Dest.getSizeInBits() % 32 == 0);

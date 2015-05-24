@@ -267,6 +267,15 @@ public:
     return true;
   }
 
+  /// Return true if it is expected to be cheaper to do a store of a non-zero
+  /// vector constant with the given size and type for the address space than to
+  /// store the individual scalar element constants.
+  virtual bool storeOfVectorConstantIsCheap(EVT MemVT,
+                                            unsigned NumElem,
+                                            unsigned AddrSpace) const {
+    return false;
+  }
+
   /// \brief Return true if it is cheap to speculate a call to intrinsic cttz.
   virtual bool isCheapToSpeculateCttz() const {
     return false;

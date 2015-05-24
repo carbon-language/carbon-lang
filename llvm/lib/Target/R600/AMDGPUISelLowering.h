@@ -133,6 +133,10 @@ public:
                              EVT ExtVT) const override;
 
   bool isLoadBitCastBeneficial(EVT, EVT) const override;
+
+  bool storeOfVectorConstantIsCheap(EVT MemVT,
+                                    unsigned NumElem,
+                                    unsigned AS) const override;
   bool isCheapToSpeculateCttz() const override;
   bool isCheapToSpeculateCtlz() const override;
 

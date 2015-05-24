@@ -355,8 +355,7 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 ; CM: STORE_DWORD
 ; CM: STORE_DWORD
 ; CM: STORE_DWORD
-; SI: buffer_store_dwordx2
-; SI: buffer_store_dwordx2
+; SI: buffer_store_dwordx4
 define void @i128-const-store(i32 addrspace(1)* %out) {
 entry:
   store i32 1, i32 addrspace(1)* %out, align 4
