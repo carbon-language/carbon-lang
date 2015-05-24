@@ -40,23 +40,6 @@ public:
   void emit(AsmPrinter &Asm, MCSection *StrSection,
             MCSection *OffsetSection = nullptr);
 
-  /// \brief Returns an entry into the string pool with the given
-  /// string text.
-  MCSymbol *getSymbol(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).getSymbol();
-  }
-
-  /// Get a byte offset into the string pool with the given text.
-  unsigned getOffset(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).getOffset();
-  }
-
-  /// \brief Returns the index into the string pool with the given
-  /// string text.
-  unsigned getIndex(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).getIndex();
-  }
-
   bool empty() const { return Pool.empty(); }
 
   /// Get a reference to an entry in the string pool.
