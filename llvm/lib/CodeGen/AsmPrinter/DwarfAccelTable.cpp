@@ -30,14 +30,14 @@ DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList)
     : Header(8 + (atomList.size() * 4)), HeaderData(atomList),
       Entries(Allocator) {}
 
-void DwarfAccelTable::AddName(StringRef Name, MCSymbol *StrSym, const DIE *die,
+void DwarfAccelTable::AddName(DwarfStringPoolEntryRef Name, const DIE *die,
                               char Flags) {
   assert(Data.empty() && "Already finalized!");
   // If the string is in the list already then add this die to the list
   // otherwise add a new one.
-  DataArray &DIEs = Entries[Name];
-  assert(!DIEs.StrSym || DIEs.StrSym == StrSym);
-  DIEs.StrSym = StrSym;
+  DataArray &DIEs = Entries[Name.getString()];
+  assert(!DIEs.Name || DIEs.Name == Name);
+  DIEs.Name = Name;
   DIEs.Values.push_back(new (Allocator) HashDataContents(die, Flags));
 }
 
@@ -216,7 +216,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
       // Remember to emit the label for our offset.
       Asm->OutStreamer->EmitLabel((*HI)->Sym);
       Asm->OutStreamer->AddComment((*HI)->Str);
-      Asm->emitSectionOffset((*HI)->Data.StrSym);
+      Asm->emitSectionOffset((*HI)->Data.Name.getSymbol());
       Asm->OutStreamer->AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.Values.size());
       for (HashDataContents *HD : (*HI)->Data.Values) {
