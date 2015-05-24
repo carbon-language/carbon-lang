@@ -420,19 +420,49 @@ void DIEDelta::printImpl(raw_ostream &O) const {
 /// EmitValue - Emit string value.
 ///
 void DIEString::EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const {
-  Access->EmitValue(AP, Form);
+  assert(
+      (Form == dwarf::DW_FORM_strp || Form == dwarf::DW_FORM_GNU_str_index) &&
+      "Expected valid string form");
+
+  // Index of string in symbol table.
+  if (Form == dwarf::DW_FORM_GNU_str_index) {
+    DIEInteger(S.getIndex()).EmitValue(AP, Form);
+    return;
+  }
+
+  // Relocatable symbol.
+  assert(Form == dwarf::DW_FORM_strp);
+  if (AP->MAI->doesDwarfUseRelocationsAcrossSections()) {
+    DIELabel(S.getSymbol()).EmitValue(AP, Form);
+    return;
+  }
+
+  // Offset into symbol table.
+  DIEInteger(S.getOffset()).EmitValue(AP, Form);
 }
 
 /// SizeOf - Determine size of delta value in bytes.
 ///
 unsigned DIEString::SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const {
-  return Access->SizeOf(AP, Form);
+  assert(
+      (Form == dwarf::DW_FORM_strp || Form == dwarf::DW_FORM_GNU_str_index) &&
+      "Expected valid string form");
+
+  // Index of string in symbol table.
+  if (Form == dwarf::DW_FORM_GNU_str_index)
+    return DIEInteger(S.getIndex()).SizeOf(AP, Form);
+
+  // Relocatable symbol.
+  if (AP->MAI->doesDwarfUseRelocationsAcrossSections())
+    return DIELabel(S.getSymbol()).SizeOf(AP, Form);
+
+  // Offset into symbol table.
+  return DIEInteger(S.getOffset()).SizeOf(AP, Form);
 }
 
 #ifndef NDEBUG
 void DIEString::printImpl(raw_ostream &O) const {
-  O << "String: " << Str << "\tSymbol: ";
-  Access->print(O);
+  O << "String: " << S.getString();
 }
 #endif
 

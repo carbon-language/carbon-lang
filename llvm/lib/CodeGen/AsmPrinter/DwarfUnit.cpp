@@ -223,31 +223,10 @@ void DwarfUnit::addSInt(DIELoc &Die, Optional<dwarf::Form> Form,
 
 void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
                           StringRef String) {
-  if (!isDwoUnit())
-    return addLocalString(Die, Attribute, String);
-
-  addIndexedString(Die, Attribute, String);
-}
-
-void DwarfUnit::addIndexedString(DIE &Die, dwarf::Attribute Attribute,
-                                 StringRef String) {
-  unsigned idx = DU->getStringPool().getIndex(*Asm, String);
-  DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
-  DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
-  Die.addValue(Attribute, dwarf::DW_FORM_GNU_str_index, Str);
-}
-
-void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
-                               StringRef String) {
-  DIEValue *Value;
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    Value = new (DIEValueAllocator)
-        DIELabel(DU->getStringPool().getSymbol(*Asm, String));
-  else
-    Value = new (DIEValueAllocator)
-        DIEInteger(DU->getStringPool().getOffset(*Asm, String));
-  DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
-  Die.addValue(Attribute, dwarf::DW_FORM_strp, Str);
+  Die.addValue(Attribute,
+               isDwoUnit() ? dwarf::DW_FORM_GNU_str_index : dwarf::DW_FORM_strp,
+               new (DIEValueAllocator)
+               DIEString(DU->getStringPool().getEntry(*Asm, String)));
 }
 
 void DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,

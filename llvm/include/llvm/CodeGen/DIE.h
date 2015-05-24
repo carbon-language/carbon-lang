@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/Support/Dwarf.h"
 #include <vector>
 
@@ -373,15 +374,13 @@ private:
 class DIEString : public DIEValue {
   friend class DIEValue;
 
-  const DIEValue *Access;
-  StringRef Str;
+  DwarfStringPoolEntryRef S;
 
 public:
-  DIEString(const DIEValue *Acc, StringRef S)
-      : DIEValue(isString), Access(Acc), Str(S) {}
+  DIEString(DwarfStringPoolEntryRef S) : DIEValue(isString), S(S) {}
 
   /// getString - Grab the string out of the object.
-  StringRef getString() const { return Str; }
+  StringRef getString() const { return S.getString(); }
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *D) { return D->getType() == isString; }
