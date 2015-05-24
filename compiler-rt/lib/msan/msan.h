@@ -125,7 +125,7 @@ extern bool msan_init_is_running;
 extern int msan_report_count;
 
 bool ProtectRange(uptr beg, uptr end);
-bool InitShadow(bool map_shadow, bool init_origins);
+bool InitShadow(bool init_origins);
 char *GetProcSelfMaps();
 void InitializeInterceptors();
 
