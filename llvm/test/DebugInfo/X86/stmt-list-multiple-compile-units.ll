@@ -51,11 +51,13 @@
 
 ; PR15408
 ; ASM: Lcu_begin0:
-; ASM: Lset3 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
-; ASM-NEXT: .long   Lset3
+; ASM-NOT: Lcu_begin
+; ASM: Lset[[LT:[0-9]+]] = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
+; ASM-NEXT: .long   Lset[[LT]]
 ; ASM: Lcu_begin1:
-; ASM: Lset13 = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
-; ASM-NEXT: .long   Lset13
+; ASM-NOT: Lcu_begin
+; ASM: Lset[[LT:[0-9]+]] = Lline_table_start0-Lsection_line ## DW_AT_stmt_list
+; ASM-NEXT: .long   Lset[[LT]]
 define i32 @test(i32 %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca i32, align 4
