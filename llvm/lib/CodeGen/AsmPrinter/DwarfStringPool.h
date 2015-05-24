@@ -37,13 +37,20 @@ public:
 
   /// \brief Returns an entry into the string pool with the given
   /// string text.
-  MCSymbol *getSymbol(AsmPrinter &Asm, StringRef Str);
+  MCSymbol *getSymbol(AsmPrinter &Asm, StringRef Str) {
+    return getEntry(Asm, Str).first;
+  }
 
   /// \brief Returns the index into the string pool with the given
   /// string text.
-  unsigned getIndex(AsmPrinter &Asm, StringRef Str);
+  unsigned getIndex(AsmPrinter &Asm, StringRef Str) {
+    return getEntry(Asm, Str).second;
+  }
 
   bool empty() const { return Pool.empty(); }
+
+private:
+  std::pair<MCSymbol *, unsigned> &getEntry(AsmPrinter &Asm, StringRef Str);
 };
 }
 #endif
