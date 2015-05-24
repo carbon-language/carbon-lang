@@ -456,7 +456,7 @@ inline unsigned countPopulation(T Value) {
 /// Log2 - This function returns the log base 2 of the specified value
 inline double Log2(double Value) {
 #if defined(__ANDROID_API__) && __ANDROID_API__ < 18
-  return (double)__builtin_log2l(Value);
+  return __builtin_log(Value) / __builtin_log(2.0);
 #else
   return log2(Value);
 #endif
