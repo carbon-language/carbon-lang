@@ -19,6 +19,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -421,6 +422,13 @@ public:
   /// be done with a special directive if the target supports it (e.g. cygwin)
   /// or by emitting it as an offset from a label at the start of the section.
   void emitSectionOffset(const MCSymbol *Label) const;
+
+  /// Emit the 4-byte offset of a string from the start of its section.
+  ///
+  /// When possible, emit a DwarfStringPool section offset without any
+  /// relocations, and without using the symbol.  Otherwise, defers to \a
+  /// emitSectionOffset().
+  void emitDwarfStringOffset(DwarfStringPoolEntryRef S) const;
 
   /// Get the value for DW_AT_APPLE_isa. Zero if no isa encoding specified.
   virtual unsigned getISAEncoding() { return 0; }

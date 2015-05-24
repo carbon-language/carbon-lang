@@ -181,6 +181,16 @@ void AsmPrinter::emitSectionOffset(const MCSymbol *Label) const {
   EmitLabelDifference(Label, Label->getSection().getBeginSymbol(), 4);
 }
 
+void AsmPrinter::emitDwarfStringOffset(DwarfStringPoolEntryRef S) const {
+  if (MAI->doesDwarfUseRelocationsAcrossSections()) {
+    emitSectionOffset(S.getSymbol());
+    return;
+  }
+
+  // Just emit the offset directly; no need for symbol math.
+  EmitInt32(S.getOffset());
+}
+
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                                 const MachineLocation &MLoc) const {
