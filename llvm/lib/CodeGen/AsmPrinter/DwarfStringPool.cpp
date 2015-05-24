@@ -9,9 +9,15 @@
 
 #include "DwarfStringPool.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
 
 using namespace llvm;
+
+DwarfStringPool::DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm,
+                                 StringRef Prefix)
+    : Pool(A), Prefix(Prefix),
+      ShouldCreateSymbols(Asm.MAI->doesDwarfUseRelocationsAcrossSections()) {}
 
 DwarfStringPool::EntryRef DwarfStringPool::getEntry(AsmPrinter &Asm,
                                                     StringRef Str) {
@@ -20,7 +26,7 @@ DwarfStringPool::EntryRef DwarfStringPool::getEntry(AsmPrinter &Asm,
     auto &Entry = I.first->second;
     Entry.Index = Pool.size() - 1;
     Entry.Offset = NumBytes;
-    Entry.Symbol = Asm.createTempSymbol(Prefix);
+    Entry.Symbol = ShouldCreateSymbols ? Asm.createTempSymbol(Prefix) : nullptr;
 
     NumBytes += Str.size() + 1;
     assert(NumBytes > Entry.Offset && "Unexpected overflow");
@@ -44,8 +50,12 @@ void DwarfStringPool::emit(AsmPrinter &Asm, MCSection *StrSection,
     Entries[E.getValue().Index] = &E;
 
   for (const auto &Entry : Entries) {
+    assert(ShouldCreateSymbols == static_cast<bool>(Entry->getValue().Symbol) &&
+           "Mismatch between setting and entry");
+
     // Emit a label for reference from debug information entries.
-    Asm.OutStreamer->EmitLabel(Entry->getValue().Symbol);
+    if (ShouldCreateSymbols)
+      Asm.OutStreamer->EmitLabel(Entry->getValue().Symbol);
 
     // Emit the string itself with a terminating null byte.
     Asm.OutStreamer->AddComment("string offset=" +

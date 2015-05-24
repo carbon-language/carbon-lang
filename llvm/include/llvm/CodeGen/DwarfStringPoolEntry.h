@@ -34,7 +34,10 @@ public:
       : I(&I) {}
 
   explicit operator bool() const { return I; }
-  MCSymbol *getSymbol() const { return I->second.Symbol; }
+  MCSymbol *getSymbol() const {
+    assert(I->second.Symbol && "No symbol available!");
+    return I->second.Symbol;
+  }
   unsigned getOffset() const { return I->second.Offset; }
   unsigned getIndex() const { return I->second.Index; }
   StringRef getString() const { return I->first(); }

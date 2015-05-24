@@ -30,12 +30,12 @@ class DwarfStringPool {
   StringMap<EntryTy, BumpPtrAllocator &> Pool;
   StringRef Prefix;
   unsigned NumBytes = 0;
+  bool ShouldCreateSymbols;
 
 public:
   typedef DwarfStringPoolEntryRef EntryRef;
 
-  DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix)
-      : Pool(A), Prefix(Prefix) {}
+  DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix);
 
   void emit(AsmPrinter &Asm, MCSection *StrSection,
             MCSection *OffsetSection = nullptr);
