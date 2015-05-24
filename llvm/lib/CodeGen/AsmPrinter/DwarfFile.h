@@ -32,6 +32,7 @@ class LexicalScope;
 class StringRef;
 class DwarfDebug;
 class MCSection;
+class MDNode;
 class DwarfFile {
   // Target of Dwarf emission, used for sizing of abbreviations.
   AsmPrinter *Asm;

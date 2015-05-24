@@ -11,13 +11,13 @@
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFSTRINGPOOL_H
 
 #include "llvm/ADT/StringMap.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfStringPoolEntry.h"
 #include "llvm/Support/Allocator.h"
 #include <utility>
 
 namespace llvm {
 
+class AsmPrinter;
 class MCSymbol;
 class MCSection;
 class StringRef;

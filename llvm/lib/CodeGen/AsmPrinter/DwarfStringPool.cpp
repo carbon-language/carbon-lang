@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DwarfStringPool.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCStreamer.h"
 
 using namespace llvm;
