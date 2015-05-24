@@ -409,37 +409,65 @@ static Triple::ObjectFormatType parseFormat(StringRef EnvironmentName) {
     .Default(Triple::UnknownObjectFormat);
 }
 
-// FIXME: Use ARMTargetParser. This would require using Triple::ARMSubArch*
-// in ARMBuildAttrs and in ARCHNames' DefaultArch fields.
 static Triple::SubArchType parseSubArch(StringRef SubArchName) {
-  if (SubArchName.endswith("eb"))
-    SubArchName = SubArchName.substr(0, SubArchName.size() - 2);
+  StringRef ARMSubArch = ARMTargetParser::getCanonicalArchName(SubArchName);
 
-  return StringSwitch<Triple::SubArchType>(SubArchName)
-    .EndsWith("v8.1a", Triple::ARMSubArch_v8_1a)
-    .EndsWith("v8", Triple::ARMSubArch_v8)
-    .EndsWith("v8a", Triple::ARMSubArch_v8)
-    .EndsWith("v7", Triple::ARMSubArch_v7)
-    .EndsWith("v7a", Triple::ARMSubArch_v7)
-    .EndsWith("v7em", Triple::ARMSubArch_v7em)
-    .EndsWith("v7l", Triple::ARMSubArch_v7)
-    .EndsWith("v7m", Triple::ARMSubArch_v7m)
-    .EndsWith("v7r", Triple::ARMSubArch_v7)
-    .EndsWith("v7s", Triple::ARMSubArch_v7s)
-    .EndsWith("v6", Triple::ARMSubArch_v6)
-    .EndsWith("v6m", Triple::ARMSubArch_v6m)
-    .EndsWith("v6sm", Triple::ARMSubArch_v6m)
-    .EndsWith("v6k", Triple::ARMSubArch_v6k)
-    .EndsWith("v6t2", Triple::ARMSubArch_v6t2)
-    .EndsWith("v5", Triple::ARMSubArch_v5)
-    .EndsWith("v5e", Triple::ARMSubArch_v5)
-    .EndsWith("v5t", Triple::ARMSubArch_v5)
-    .EndsWith("v5te", Triple::ARMSubArch_v5te)
-    .EndsWith("v4t", Triple::ARMSubArch_v4t)
-    .EndsWith("kalimba3", Triple::KalimbaSubArch_v3)
-    .EndsWith("kalimba4", Triple::KalimbaSubArch_v4)
-    .EndsWith("kalimba5", Triple::KalimbaSubArch_v5)
-    .Default(Triple::NoSubArch);
+  // For now, this is the small part. Early return.
+  if (ARMSubArch.empty())
+    return StringSwitch<Triple::SubArchType>(SubArchName)
+      .EndsWith("kalimba3", Triple::KalimbaSubArch_v3)
+      .EndsWith("kalimba4", Triple::KalimbaSubArch_v4)
+      .EndsWith("kalimba5", Triple::KalimbaSubArch_v5)
+      .Default(Triple::NoSubArch);
+
+  // ARM sub arch.
+  switch(ARMTargetParser::parseArch(ARMSubArch)) {
+  case ARM::AK_ARMV4:
+    return Triple::NoSubArch;
+  case ARM::AK_ARMV4T:
+    return Triple::ARMSubArch_v4t;
+  case ARM::AK_ARMV5:
+  case ARM::AK_ARMV5T:
+  case ARM::AK_ARMV5E:
+    return Triple::ARMSubArch_v5;
+  case ARM::AK_ARMV5TE:
+  case ARM::AK_IWMMXT:
+  case ARM::AK_IWMMXT2:
+  case ARM::AK_XSCALE:
+  case ARM::AK_ARMV5TEJ:
+    return Triple::ARMSubArch_v5te;
+  case ARM::AK_ARMV6:
+  case ARM::AK_ARMV6J:
+  case ARM::AK_ARMV6Z:
+    return Triple::ARMSubArch_v6;
+  case ARM::AK_ARMV6K:
+  case ARM::AK_ARMV6ZK:
+  case ARM::AK_ARMV6HL:
+    return Triple::ARMSubArch_v6k;
+  case ARM::AK_ARMV6T2:
+    return Triple::ARMSubArch_v6t2;
+  case ARM::AK_ARMV6M:
+  case ARM::AK_ARMV6SM:
+    return Triple::ARMSubArch_v6m;
+  case ARM::AK_ARMV7:
+  case ARM::AK_ARMV7A:
+  case ARM::AK_ARMV7R:
+  case ARM::AK_ARMV7L:
+  case ARM::AK_ARMV7HL:
+    return Triple::ARMSubArch_v7;
+  case ARM::AK_ARMV7M:
+    return Triple::ARMSubArch_v7m;
+  case ARM::AK_ARMV7S:
+    return Triple::ARMSubArch_v7s;
+  case ARM::AK_ARMV7EM:
+    return Triple::ARMSubArch_v7em;
+  case ARM::AK_ARMV8A:
+    return Triple::ARMSubArch_v8;
+  case ARM::AK_ARMV8_1A:
+    return Triple::ARMSubArch_v8_1a;
+  default:
+    return Triple::NoSubArch;
+  }
 }
 
 static const char *getObjectFormatTypeName(Triple::ObjectFormatType Kind) {
