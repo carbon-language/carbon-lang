@@ -215,11 +215,12 @@ public:
     isLocList,
   };
 
-protected:
+private:
   /// Ty - Type of data stored in the value.
   ///
   Type Ty;
 
+protected:
   explicit DIEValue(Type T) : Ty(T) {}
   ~DIEValue() {}
 
