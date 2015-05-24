@@ -3,7 +3,7 @@
 
 ; CHECK: section_info
 ; CHECK:	DW_TAG_structure_type
-; CHECK-NEXT:	info_string
+; CHECK-NEXT:	DW_AT_name
 
 
 @i = common global i32 0                          ; <i32*> [#uses=2]

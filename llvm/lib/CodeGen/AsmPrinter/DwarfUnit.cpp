@@ -239,14 +239,13 @@ void DwarfUnit::addIndexedString(DIE &Die, dwarf::Attribute Attribute,
 
 void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
                                StringRef String) {
-  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-  MCSymbol *Symb = DU->getStringPool().getSymbol(*Asm, String);
   DIEValue *Value;
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    Value = new (DIEValueAllocator) DIELabel(Symb);
+    Value = new (DIEValueAllocator)
+        DIELabel(DU->getStringPool().getSymbol(*Asm, String));
   else
     Value = new (DIEValueAllocator)
-        DIEDelta(Symb, TLOF.getDwarfStrSection()->getBeginSymbol());
+        DIEInteger(DU->getStringPool().getOffset(*Asm, String));
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
   Die.addValue(Attribute, dwarf::DW_FORM_strp, Str);
 }

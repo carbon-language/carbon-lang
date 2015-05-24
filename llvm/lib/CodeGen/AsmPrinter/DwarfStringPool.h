@@ -25,8 +25,14 @@ class StringRef;
 // A String->Symbol mapping of strings used by indirect
 // references.
 class DwarfStringPool {
-  StringMap<std::pair<MCSymbol *, unsigned>, BumpPtrAllocator &> Pool;
+  struct EntryTy {
+    MCSymbol *Symbol;
+    unsigned Offset;
+    unsigned Index;
+  };
+  StringMap<EntryTy, BumpPtrAllocator &> Pool;
   StringRef Prefix;
+  unsigned NumBytes = 0;
 
 public:
   DwarfStringPool(BumpPtrAllocator &A, AsmPrinter &Asm, StringRef Prefix)
@@ -38,19 +44,24 @@ public:
   /// \brief Returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getSymbol(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).first;
+    return getEntry(Asm, Str).Symbol;
+  }
+
+  /// Get a byte offset into the string pool with the given text.
+  unsigned getOffset(AsmPrinter &Asm, StringRef Str) {
+    return getEntry(Asm, Str).Offset;
   }
 
   /// \brief Returns the index into the string pool with the given
   /// string text.
   unsigned getIndex(AsmPrinter &Asm, StringRef Str) {
-    return getEntry(Asm, Str).second;
+    return getEntry(Asm, Str).Index;
   }
 
   bool empty() const { return Pool.empty(); }
 
 private:
-  std::pair<MCSymbol *, unsigned> &getEntry(AsmPrinter &Asm, StringRef Str);
+  EntryTy &getEntry(AsmPrinter &Asm, StringRef Str);
 };
 }
 #endif

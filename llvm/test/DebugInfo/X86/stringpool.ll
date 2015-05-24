@@ -18,7 +18,7 @@
 ; LINUX: .section .debug_str,"MS",@progbits,1
 ; LINUX: yyyy
 ; DARWIN: .section __DWARF,__debug_str,regular,debug
-; DARWIN: yyyy
+; DARWIN: .asciz "yyyy" ## string offset=[[YYYY:[0-9]+]]
 
 ; Verify that we refer to 'yyyy' with a relocation.
 ; LINUX:      .long   .Linfo_string3          # DW_AT_name
@@ -30,9 +30,8 @@
 ; LINUX-NEXT: .byte   3
 ; LINUX-NEXT: .quad   yyyy
 
-; Verify that we refer to 'yyyy' without a relocation.
-; DARWIN: Lset[[ID:[0-9]+]] = Linfo_string3-Linfo_string ## DW_AT_name
-; DARWIN-NEXT:        .long   Lset[[ID]]
+; Verify that we refer to 'yyyy' with a direct offset.
+; DARWIN:             .long   [[YYYY]]
 ; DARWIN-NEXT:        .long   {{[0-9]+}}              ## DW_AT_type
 ; DARWIN-NEXT:                                        ## DW_AT_external
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_decl_file
