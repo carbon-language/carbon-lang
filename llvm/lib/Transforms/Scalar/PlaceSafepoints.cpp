@@ -16,7 +16,7 @@
 // return PC of the call.  A runtime can determine where values listed in the
 // deopt arguments and (after RewriteStatepointsForGC) gc arguments are located
 // on the stack when the code is suspended inside such a call.  Every parse
-// point is represented by a call wrapped in an gc.statepoint intrinsic.  
+// point is represented by a call wrapped in an gc.statepoint intrinsic.
 // - A "poll" is an explicit check in the generated code to determine if the
 // runtime needs the generated code to cooperate by calling a helper routine
 // and thus suspending its execution at a known state. The call to the helper
@@ -127,7 +127,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
   ScalarEvolution *SE = nullptr;
   DominatorTree *DT = nullptr;
   LoopInfo *LI = nullptr;
-  
+
   PlaceBackedgeSafepointsImpl(bool CallSafepoints = false)
       : FunctionPass(ID), CallSafepointsEnabled(CallSafepoints) {
     initializePlaceBackedgeSafepointsImplPass(*PassRegistry::getPassRegistry());
@@ -150,7 +150,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
     }
     return false;
   }
-  
+
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<ScalarEvolution>();
@@ -186,7 +186,7 @@ struct PlaceSafepoints : public FunctionPass {
 // Insert a safepoint poll immediately before the given instruction.  Does
 // not handle the parsability of state at the runtime call, that's the
 // callers job.
-static void 
+static void
 InsertSafepointPoll(Instruction *after,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
@@ -329,7 +329,7 @@ static void scanInlinedCode(Instruction *start, Instruction *end,
 
 bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
   // Loop through all loop latches (branches controlling backedges).  We need
-  // to place a safepoint on every backedge (potentially). 
+  // to place a safepoint on every backedge (potentially).
   // Note: In common usage, there will be only one edge due to LoopSimplify
   // having run sometime earlier in the pipeline, but this code must be correct
   // w.r.t. loops with multiple backedges.
@@ -383,7 +383,7 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L) {
 }
 
 /// Returns true if an entry safepoint is not required before this callsite in
-/// the caller function.  
+/// the caller function.
 static bool doesNotRequireEntrySafepointBefore(const CallSite &CS) {
   Instruction *Inst = CS.getInstruction();
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
@@ -520,7 +520,7 @@ static bool isGCSafepointPoll(Function &F) {
 
 /// Returns true if this function should be rewritten to include safepoint
 /// polls and parseable call sites.  The main point of this function is to be
-/// an extension point for custom logic. 
+/// an extension point for custom logic.
 static bool shouldRewriteFunction(Function &F) {
   // TODO: This should check the GCStrategy
   if (F.hasGC()) {
@@ -567,7 +567,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   if (isGCSafepointPoll(F)) {
     // Given we're inlining this inside of safepoint poll insertion, this
     // doesn't make any sense.  Note that we do make any contained calls
-    // parseable after we inline a poll.  
+    // parseable after we inline a poll.
     return false;
   }
 
@@ -629,7 +629,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     for (TerminatorInst *Term : PollLocations) {
       // We are inserting a poll, the function is modified
       modified = true;
-      
+
       if (SplitBackedge) {
         // Split the backedge of the loop and insert the poll within that new
         // basic block.  This creates a loop with two latches per original
@@ -690,7 +690,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
   // The dominator tree has been invalidated by the inlining performed in the
   // above loop.  TODO: Teach the inliner how to update the dom tree?
   DT.recalculate(F);
-  
+
   if (enableCallSafepoints(F)) {
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);

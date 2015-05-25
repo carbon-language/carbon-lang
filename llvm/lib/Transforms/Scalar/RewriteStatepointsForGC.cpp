@@ -307,18 +307,18 @@ static Value *findBaseOfVector(Value *I, Value *Index) {
 
   // For an insert element, we might be able to look through it if we know
   // something about the indexes, but if the indices are arbitrary values, we
-  // can't without much more extensive scalarization. 
+  // can't without much more extensive scalarization.
   if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(I)) {
     Value *InsertIndex = IEI->getOperand(2);
     // This index is inserting the value, look for it's base
     if (InsertIndex == Index)
       return findBaseDefiningValue(IEI->getOperand(1));
     // Both constant, and can't be equal per above. This insert is definitely
-    // not relevant, look back at the rest of the vector and keep trying.  
+    // not relevant, look back at the rest of the vector and keep trying.
     if (isa<ConstantInt>(Index) && isa<ConstantInt>(InsertIndex))
       return findBaseOfVector(IEI->getOperand(0), Index);
   }
-  
+
   // Note: This code is currently rather incomplete.  We are essentially only
   // handling cases where the vector element is trivially a base pointer.  We
   // need to update the entire base pointer construction algorithm to know how
@@ -1878,7 +1878,7 @@ static void rematerializeLiveValues(CallSite CS,
                                     PartiallyConstructedSafepointRecord &Info,
                                     TargetTransformInfo &TTI) {
   const unsigned int ChainLengthThreshold = 10;
-  
+
   // Record values we are going to delete from this statepoint live set.
   // We can not di this in following loop due to iterator invalidation.
   SmallVector<Value *, 32> LiveValuesToBeDeleted;
@@ -2133,7 +2133,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   TargetTransformInfo &TTI =
     P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
 
-  for (size_t i = 0; i < records.size(); i++) { 
+  for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     CallSite &CS = toUpdate[i];
 
