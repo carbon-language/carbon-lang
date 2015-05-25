@@ -868,6 +868,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::FP16_TO_FP:
   case ISD::UINT_TO_FP:   Res = PromoteIntOp_UINT_TO_FP(N); break;
   case ISD::ZERO_EXTEND:  Res = PromoteIntOp_ZERO_EXTEND(N); break;
+  case ISD::EXTRACT_SUBVECTOR: Res = PromoteIntOp_EXTRACT_SUBVECTOR(N); break;
 
   case ISD::SHL:
   case ISD::SRA:
@@ -3116,6 +3117,16 @@ SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   // element types. If this is the case then we need to expand the outgoing
   // value and not truncate it.
   return DAG.getAnyExtOrTrunc(Ext, dl, N->getValueType(0));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_SUBVECTOR(SDNode *N) {
+  SDLoc dl(N);
+  SDValue V0 = GetPromotedInteger(N->getOperand(0));
+  MVT InVT = V0.getValueType().getSimpleVT();
+  MVT OutVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                               N->getValueType(0).getVectorNumElements());
+  SDValue Ext = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, OutVT, V0, N->getOperand(1));
+  return DAG.getNode(ISD::TRUNCATE, dl, N->getValueType(0), Ext);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_CONCAT_VECTORS(SDNode *N) {

@@ -393,3 +393,17 @@ define <8 x i1> @test20(i8 %a, i16 %y) {
   %c = shufflevector < 8 x i1>%b, <8 x i1>undef, <8 x i32> <i32 undef, i32 2, i32 undef, i32 undef, i32 3, i32 undef, i32 2, i32 undef>
   ret <8 x i1> %c
 }
+
+; KNL-LABEL: test21
+; KNL: vpand %ymm
+; KNL: vextracti128    $1, %ymm2
+; KNL: vpand %ymm
+
+; SKX-LABEL: test21
+; SKX: vpmovb2m
+; SKX: vmovdqu16 {{.*}}%k1
+
+define <32 x i16> @test21(<32 x i16> %x , <32 x i1> %mask) nounwind readnone {
+  %ret = select <32 x i1> %mask, <32 x i16> %x, <32 x i16> zeroinitializer
+  ret <32 x i16> %ret
+}
