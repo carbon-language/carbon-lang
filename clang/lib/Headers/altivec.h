@@ -257,6 +257,20 @@ vec_add(vector unsigned int __a, vector bool int __b)
   return __a + (vector unsigned int)__b;
 }
 
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+static vector signed __int128 __ATTRS_o_ai
+vec_add(vector signed __int128 __a, vector signed __int128 __b)
+{
+  return __a + __b;
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_add(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{
+  return __a + __b;
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+
 static vector float __ATTRS_o_ai
 vec_add(vector float __a, vector float __b)
 {
@@ -395,11 +409,23 @@ vec_vaddfp(vector float __a, vector float __b)
 
 /* vec_addc */
 
-static vector unsigned int __attribute__((__always_inline__))
+static vector unsigned int __ATTRS_o_ai
 vec_addc(vector unsigned int __a, vector unsigned int __b)
 {
   return __builtin_altivec_vaddcuw(__a, __b);
 }
+
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+static vector signed __int128 __ATTRS_o_ai
+vec_addc(vector signed __int128 __a, vector signed __int128 __b) {
+  return __builtin_altivec_vaddcuq(__a, __b);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_addc(vector unsigned __int128 __a, vector unsigned __int128 __b) {
+  return __builtin_altivec_vaddcuq(__a, __b);
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
 
 /* vec_vaddcuw */
 
@@ -638,6 +664,64 @@ vec_vadduws(vector unsigned int __a, vector bool int __b)
 {
   return __builtin_altivec_vadduws(__a, (vector unsigned int)__b);
 }
+
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+/* vec_vadduqm */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vadduqm(vector signed __int128 __a, vector signed __int128 __b)
+{
+  return __a + __b;
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vadduqm(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{
+  return __a + __b;
+}
+
+/* vec_vaddeuqm */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vaddeuqm(vector signed __int128 __a, vector signed __int128 __b,
+             vector signed __int128 __c) {
+  return __builtin_altivec_vaddeuqm(__a, __b, __c);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vaddeuqm(vector unsigned __int128 __a, vector unsigned __int128 __b,
+             vector unsigned __int128 __c) {
+  return __builtin_altivec_vaddeuqm(__a, __b, __c);
+}
+
+/* vec_vaddcuq */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vaddcuq(vector signed __int128 __a, vector signed __int128 __b)
+{
+  return __builtin_altivec_vaddcuq(__a, __b);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vaddcuq(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{
+  return __builtin_altivec_vaddcuq(__a, __b);
+}
+
+/* vec_vaddecuq */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vaddecuq(vector signed __int128 __a, vector signed __int128 __b,
+             vector signed __int128 __c) {
+  return __builtin_altivec_vaddecuq(__a, __b, __c);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vaddecuq(vector unsigned __int128 __a, vector unsigned __int128 __b,
+             vector unsigned __int128 __c) {
+  return __builtin_altivec_vaddecuq(__a, __b, __c);
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
 
 /* vec_and */
 
@@ -8531,6 +8615,20 @@ vec_sub(vector unsigned int __a, vector bool int __b)
   return __a - (vector unsigned int)__b;
 }
 
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+static vector signed __int128 __ATTRS_o_ai
+vec_sub(vector signed __int128 __a, vector signed __int128 __b)
+{
+  return __a - __b;
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_sub(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{
+  return __a - __b;
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+
 static vector float __ATTRS_o_ai
 vec_sub(vector float __a, vector float __b)
 {
@@ -8669,11 +8767,25 @@ vec_vsubfp(vector float __a, vector float __b)
 
 /* vec_subc */
 
-static vector unsigned int __attribute__((__always_inline__))
+static vector unsigned int __ATTRS_o_ai
 vec_subc(vector unsigned int __a, vector unsigned int __b)
 {
   return __builtin_altivec_vsubcuw(__a, __b);
 }
+
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+static vector unsigned __int128 __ATTRS_o_ai
+vec_subc(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{
+  return __builtin_altivec_vsubcuq(__a, __b);
+}
+
+static vector signed __int128 __ATTRS_o_ai
+vec_subc(vector signed __int128 __a, vector signed __int128 __b)
+{
+  return __builtin_altivec_vsubcuq(__a, __b);
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
 
 /* vec_vsubcuw */
 
@@ -8912,6 +9024,68 @@ vec_vsubuws(vector unsigned int __a, vector bool int __b)
 {
   return __builtin_altivec_vsubuws(__a, (vector unsigned int)__b);
 }
+
+#if defined(__POWER8_VECTOR__) && defined(__powerpc64__)
+/* vec_vsubuqm */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vsubuqm(vector signed __int128 __a, vector signed __int128 __b)
+{  
+  return __a - __b;
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vsubuqm(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{  
+  return __a - __b;
+}
+
+/* vec_vsubeuqm */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vsubeuqm(vector signed __int128 __a, vector signed __int128 __b,
+             vector signed __int128 __c)
+{  
+  return __builtin_altivec_vsubeuqm(__a, __b, __c);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vsubeuqm(vector unsigned __int128 __a, vector unsigned __int128 __b,
+             vector unsigned __int128 __c)
+{  
+  return __builtin_altivec_vsubeuqm(__a, __b, __c);
+}
+
+/* vec_vsubcuq */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vsubcuq(vector signed __int128 __a, vector signed __int128 __b)
+{  
+  return __builtin_altivec_vsubcuq(__a, __b);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vsubcuq(vector unsigned __int128 __a, vector unsigned __int128 __b)
+{  
+  return __builtin_altivec_vsubcuq(__a, __b);
+}
+
+/* vec_vsubecuq */
+
+static vector signed __int128 __ATTRS_o_ai
+vec_vsubecuq(vector signed __int128 __a, vector signed __int128 __b,
+             vector signed __int128 __c)
+{  
+  return __builtin_altivec_vsubecuq(__a, __b, __c);
+}
+
+static vector unsigned __int128 __ATTRS_o_ai
+vec_vsubecuq(vector unsigned __int128 __a, vector unsigned __int128 __b,
+             vector unsigned __int128 __c)
+{  
+  return __builtin_altivec_vsubecuq(__a, __b, __c);
+}
+#endif // defined(__POWER8_VECTOR__) && defined(__powerpc64__)
 
 /* vec_sum4s */
 
