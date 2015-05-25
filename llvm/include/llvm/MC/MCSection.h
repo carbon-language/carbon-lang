@@ -39,10 +39,13 @@ private:
   MCSymbol *End;
   /// The alignment requirement of this section.
   unsigned Alignment;
+  /// The section index in the assemblers section list.
+  unsigned Ordinal;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), End(nullptr), Alignment(1), Variant(V), Kind(K) {}
+      : Begin(Begin), End(nullptr), Alignment(1), Ordinal(~UINT32_C(0)),
+        Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -66,6 +69,9 @@ public:
 
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Value) { Alignment = Value; }
+
+  unsigned getOrdinal() const { return Ordinal; }
+  void setOrdinal(unsigned Value) { Ordinal = Value; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

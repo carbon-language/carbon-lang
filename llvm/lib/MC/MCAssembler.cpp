@@ -293,12 +293,15 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
 MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
-    : Section(&Section), Ordinal(~UINT32_C(0)),
-      BundleLockState(NotBundleLocked), BundleLockNestingDepth(0),
-      BundleGroupBeforeFirstInst(false), HasInstructions(false) {
+    : Section(&Section), BundleLockState(NotBundleLocked),
+      BundleLockNestingDepth(0), BundleGroupBeforeFirstInst(false),
+      HasInstructions(false) {
   if (A)
     A->getSectionList().push_back(this);
 }
+
+unsigned MCSectionData::getOrdinal() const { return Section->getOrdinal(); }
+void MCSectionData::setOrdinal(unsigned Value) { Section->setOrdinal(Value); }
 
 MCSectionData::iterator
 MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
