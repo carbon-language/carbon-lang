@@ -115,8 +115,8 @@ SoftwareBreakpoint::EnableSoftwareBreakpoint (NativeProcessProtocol &process, ll
     if (bytes_read != bp_opcode_size)
     {
         if (log)
-            log->Printf ("SoftwareBreakpoint::%s failed to read memory while attempting to set breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, bytes_read);
-        return Error ("SoftwareBreakpoint::%s failed to read memory while attempting to set breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, bytes_read);
+            log->Printf ("SoftwareBreakpoint::%s failed to read memory while attempting to set breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, (uint64_t)bytes_read);
+        return Error ("SoftwareBreakpoint::%s failed to read memory while attempting to set breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, (uint64_t)bytes_read);
     }
 
     // Log what we read.
@@ -144,7 +144,7 @@ SoftwareBreakpoint::EnableSoftwareBreakpoint (NativeProcessProtocol &process, ll
     // Ensure we wrote as many bytes as we expected.
     if (bytes_written != bp_opcode_size)
     {
-        error.SetErrorStringWithFormat("SoftwareBreakpoint::%s failed write memory while attempting to set breakpoint: attempted to write %lu bytes but only wrote %" PRIu64, __FUNCTION__, bp_opcode_size, bytes_written);
+        error.SetErrorStringWithFormat("SoftwareBreakpoint::%s failed write memory while attempting to set breakpoint: attempted to write %lu bytes but only wrote %" PRIu64, __FUNCTION__, bp_opcode_size, (uint64_t)bytes_written);
         if (log)
             log->PutCString (error.AsCString ());
         return error;
@@ -164,8 +164,8 @@ SoftwareBreakpoint::EnableSoftwareBreakpoint (NativeProcessProtocol &process, ll
     if (verify_bytes_read != bp_opcode_size)
     {
         if (log)
-            log->Printf ("SoftwareBreakpoint::%s failed to read memory while attempting to verify breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, verify_bytes_read);
-        return Error ("SoftwareBreakpoint::%s failed to read memory while attempting to verify breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, verify_bytes_read);
+            log->Printf ("SoftwareBreakpoint::%s failed to read memory while attempting to verify breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, (uint64_t)verify_bytes_read);
+        return Error ("SoftwareBreakpoint::%s failed to read memory while attempting to verify breakpoint: attempted to read %lu bytes but only read %" PRIu64, __FUNCTION__, bp_opcode_size, (uint64_t)verify_bytes_read);
     }
 
     if (::memcmp(bp_opcode_bytes, verify_bp_opcode_bytes, bp_opcode_size) != 0)
@@ -229,7 +229,7 @@ SoftwareBreakpoint::DoDisable ()
         error = m_process.ReadMemory (m_addr, curr_break_op, m_opcode_size, bytes_read);
         if (error.Success() && bytes_read < m_opcode_size)
         {
-            error.SetErrorStringWithFormat ("SoftwareBreakpointr::%s addr=0x%" PRIx64 ": tried to read %lu bytes but only read %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, bytes_read);
+            error.SetErrorStringWithFormat ("SoftwareBreakpointr::%s addr=0x%" PRIx64 ": tried to read %lu bytes but only read %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, (uint64_t)bytes_read);
         }
         if (error.Success ())
         {
@@ -244,7 +244,7 @@ SoftwareBreakpoint::DoDisable ()
                 error = m_process.WriteMemory (m_addr, m_saved_opcodes, m_opcode_size, bytes_written);
                 if (error.Success() && bytes_written < m_opcode_size)
                 {
-                    error.SetErrorStringWithFormat ("SoftwareBreakpoint::%s addr=0x%" PRIx64 ": tried to write %lu bytes but only wrote %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, bytes_written);
+                    error.SetErrorStringWithFormat ("SoftwareBreakpoint::%s addr=0x%" PRIx64 ": tried to write %lu bytes but only wrote %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, (uint64_t)bytes_written);
                 }
                 if (error.Success ())
                 {
@@ -268,7 +268,7 @@ SoftwareBreakpoint::DoDisable ()
                 error = m_process.ReadMemory (m_addr, verify_opcode, m_opcode_size, verify_bytes_read);
                 if (error.Success() && verify_bytes_read < m_opcode_size)
                 {
-                    error.SetErrorStringWithFormat ("SoftwareBreakpoint::%s addr=0x%" PRIx64 ": tried to read %lu verification bytes but only read %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, verify_bytes_read);
+                    error.SetErrorStringWithFormat ("SoftwareBreakpoint::%s addr=0x%" PRIx64 ": tried to read %lu verification bytes but only read %" PRIu64, __FUNCTION__, m_addr, m_opcode_size, (uint64_t)verify_bytes_read);
                 }
                 if (error.Success ())
                 {
