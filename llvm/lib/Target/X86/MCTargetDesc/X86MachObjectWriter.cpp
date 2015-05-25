@@ -190,7 +190,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
              (!B_Base ? 0 : Writer->getSymbolAddress(*B_Base, Layout));
 
     if (!A_Base)
-      Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = A_SD.getFragment()->getParent()->getSection().getOrdinal() + 1;
     Type = MachO::X86_64_RELOC_UNSIGNED;
 
     MachO::any_relocation_info MRE;
@@ -202,7 +202,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     if (B_Base)
       RelSymbol = B_Base;
     else
-      Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = B_SD.getFragment()->getParent()->getSection().getOrdinal() + 1;
     Type = MachO::X86_64_RELOC_SUBTRACTOR;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
@@ -235,7 +235,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
                  Layout.getSymbolOffset(*RelSymbol);
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
-      Index = SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = SD.getFragment()->getParent()->getSection().getOrdinal() + 1;
       Value += Writer->getSymbolAddress(*Symbol, Layout);
 
       if (IsPCRel)
@@ -554,8 +554,9 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
         FixedValue -= Layout.getSymbolOffset(*A);
     } else {
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD = Asm.getSectionData(A->getSection());
-      Index = SymSD.getOrdinal() + 1;
+      const MCSection &Sec = A->getSection();
+      const MCSectionData &SymSD = Asm.getSectionData(Sec);
+      Index = Sec.getOrdinal() + 1;
       FixedValue += Writer->getSectionAddress(&SymSD);
     }
     if (IsPCRel)

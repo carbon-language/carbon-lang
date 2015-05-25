@@ -349,8 +349,8 @@ void AArch64MachObjectWriter::RecordRelocation(
                 "'. Must have non-local symbol earlier in section.");
       // Adjust the relocation to be section-relative.
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD = Asm.getSectionData(Symbol->getSection());
-      Index = SymSD.getOrdinal() + 1;
+      const MCSection &Sec = Symbol->getSection();
+      Index = Sec.getOrdinal() + 1;
       Value += Writer->getSymbolAddress(*Symbol, Layout);
 
       if (IsPCRel)

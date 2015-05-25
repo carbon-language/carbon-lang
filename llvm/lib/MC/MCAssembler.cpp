@@ -300,9 +300,6 @@ MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
     A->getSectionList().push_back(this);
 }
 
-unsigned MCSectionData::getOrdinal() const { return Section->getOrdinal(); }
-void MCSectionData::setOrdinal(unsigned Value) { Section->setOrdinal(Value); }
-
 MCSectionData::iterator
 MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
   if (Subsection == 0 && SubsectionFragmentMap.empty())
@@ -892,7 +889,7 @@ void MCAssembler::Finish() {
     if (it->getFragmentList().empty())
       new MCDataFragment(it);
 
-    it->setOrdinal(SectionIndex++);
+    it->getSection().setOrdinal(SectionIndex++);
   }
 
   // Assign layout order indices to sections and fragments.

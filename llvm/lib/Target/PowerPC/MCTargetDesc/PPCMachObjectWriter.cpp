@@ -363,8 +363,9 @@ void PPCMachObjectWriter::RecordPPCRelocation(
         FixedValue -= Layout.getSymbolOffset(*A);
     } else {
       // The index is the section ordinal (1-based).
-      const MCSectionData &SymSD = Asm.getSectionData(A->getSection());
-      Index = SymSD.getOrdinal() + 1;
+      const MCSection &Sec = A->getSection();
+      const MCSectionData &SymSD = Asm.getSectionData(Sec);
+      Index = Sec.getOrdinal() + 1;
       FixedValue += Writer->getSectionAddress(&SymSD);
     }
     if (IsPCRel)

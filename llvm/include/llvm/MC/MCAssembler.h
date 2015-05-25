@@ -597,9 +597,6 @@ public:
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
 
-  unsigned getOrdinal() const;
-  void setOrdinal(unsigned Value);
-
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
