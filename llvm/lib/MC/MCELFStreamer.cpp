@@ -38,6 +38,10 @@
 
 using namespace llvm;
 
+bool MCELFStreamer::isBundleLocked() const {
+  return getCurrentSectionData()->isBundleLocked();
+}
+
 MCELFStreamer::~MCELFStreamer() {
 }
 
@@ -143,7 +147,7 @@ static void setSectionAlignmentForBundling(
 void MCELFStreamer::ChangeSection(MCSection *Section,
                                   const MCExpr *Subsection) {
   MCSectionData *CurSection = getCurrentSectionData();
-  if (CurSection && CurSection->isBundleLocked())
+  if (CurSection && isBundleLocked())
     report_fatal_error("Unterminated .bundle_lock when changing a section");
 
   MCAssembler &Asm = getAssembler();
@@ -344,7 +348,7 @@ void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
 void MCELFStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                   const SMLoc &Loc) {
-  if (getCurrentSectionData()->isBundleLocked())
+  if (isBundleLocked())
     report_fatal_error("Emitting values inside a locked bundle is forbidden");
   fixSymbolsInTLSFixups(Value);
   MCObjectStreamer::EmitValueImpl(Value, Size, Loc);
@@ -354,7 +358,7 @@ void MCELFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
                                          int64_t Value,
                                          unsigned ValueSize,
                                          unsigned MaxBytesToEmit) {
-  if (getCurrentSectionData()->isBundleLocked())
+  if (isBundleLocked())
     report_fatal_error("Emitting values inside a locked bundle is forbidden");
   MCObjectStreamer::EmitValueToAlignment(ByteAlignment, Value,
                                          ValueSize, MaxBytesToEmit);
@@ -503,20 +507,20 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
 
   if (Assembler.isBundlingEnabled()) {
     MCSectionData *SD = getCurrentSectionData();
-    if (Assembler.getRelaxAll() && SD->isBundleLocked())
+    if (Assembler.getRelaxAll() && isBundleLocked())
       // If the -mc-relax-all flag is used and we are bundle-locked, we re-use
       // the current bundle group.
       DF = BundleGroups.back();
-    else if (Assembler.getRelaxAll() && !SD->isBundleLocked())
+    else if (Assembler.getRelaxAll() && !isBundleLocked())
       // When not in a bundle-locked group and the -mc-relax-all flag is used,
       // we create a new temporary fragment which will be later merged into
       // the current fragment.
       DF = new MCDataFragment();
-    else if (SD->isBundleLocked() && !SD->isBundleGroupBeforeFirstInst())
+    else if (isBundleLocked() && !SD->isBundleGroupBeforeFirstInst())
       // If we are bundle-locked, we re-use the current fragment.
       // The bundle-locking directive ensures this is a new data fragment.
       DF = cast<MCDataFragment>(getCurrentFragment());
-    else if (!SD->isBundleLocked() && Fixups.size() == 0) {
+    else if (!isBundleLocked() && Fixups.size() == 0) {
       // Optimize memory usage by emitting the instruction to a
       // MCCompactEncodedInstFragment when not in a bundle-locked group and
       // there are no fixups registered.
@@ -552,8 +556,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
   DF->getContents().append(Code.begin(), Code.end());
 
   if (Assembler.isBundlingEnabled() && Assembler.getRelaxAll()) {
-    MCSectionData *SD = getCurrentSectionData();
-    if (!SD->isBundleLocked()) {
+    if (!isBundleLocked()) {
       mergeFragment(getOrCreateDataFragment(), DF);
       delete DF;
     }
@@ -578,10 +581,10 @@ void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_lock forbidden when bundling is disabled");
 
-  if (!SD->isBundleLocked())
+  if (!isBundleLocked())
     SD->setBundleGroupBeforeFirstInst(true);
 
-  if (getAssembler().getRelaxAll() && !SD->isBundleLocked()) {
+  if (getAssembler().getRelaxAll() && !isBundleLocked()) {
     // TODO: drop the lock state and set directly in the fragment
     MCDataFragment *DF = new MCDataFragment();
     BundleGroups.push_back(DF);
@@ -597,7 +600,7 @@ void MCELFStreamer::EmitBundleUnlock() {
   // Sanity checks
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_unlock forbidden when bundling is disabled");
-  else if (!SD->isBundleLocked())
+  else if (!isBundleLocked())
     report_fatal_error(".bundle_unlock without matching lock");
   else if (SD->isBundleGroupBeforeFirstInst())
     report_fatal_error("Empty bundle-locked group is forbidden");
@@ -612,8 +615,8 @@ void MCELFStreamer::EmitBundleUnlock() {
     // FIXME: Use BundleGroups to track the lock state instead.
     SD->setBundleLockState(MCSectionData::NotBundleLocked);
 
-    // FIXME: Use more separate fragments for nested groups. 
-    if (!SD->isBundleLocked()) {
+    // FIXME: Use more separate fragments for nested groups.
+    if (!isBundleLocked()) {
       mergeFragment(getOrCreateDataFragment(), DF);
       BundleGroups.pop_back();
       delete DF;

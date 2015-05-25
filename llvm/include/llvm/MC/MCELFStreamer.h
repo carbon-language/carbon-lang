@@ -89,6 +89,7 @@ public:
   void EmitBundleUnlock() override;
 
 private:
+  bool isBundleLocked() const;
   void EmitInstToFragment(const MCInst &Inst, const MCSubtargetInfo &) override;
   void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &) override;
 
