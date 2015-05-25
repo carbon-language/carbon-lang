@@ -40,7 +40,7 @@ private:
   /// The alignment requirement of this section.
   unsigned Alignment = 1;
   /// The section index in the assemblers section list.
-  unsigned Ordinal = ~UINT32_C(0);
+  unsigned Ordinal = 0;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
