@@ -559,9 +559,6 @@ private:
   FragmentListType Fragments;
   MCSection *Section;
 
-  /// LayoutOrder - The index of this section in the layout order.
-  unsigned LayoutOrder;
-
   /// \brief Keeping track of bundle-locked state.
   BundleLockStateType BundleLockState;
 
@@ -596,9 +593,6 @@ public:
 
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
-
-  unsigned getLayoutOrder() const { return LayoutOrder; }
-  void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
   /// \name Fragment Access
   /// @{

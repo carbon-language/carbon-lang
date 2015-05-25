@@ -895,7 +895,7 @@ void MCAssembler::Finish() {
   // Assign layout order indices to sections and fragments.
   for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
     MCSectionData *SD = Layout.getSectionOrder()[i];
-    SD->setLayoutOrder(i);
+    SD->getSection().setLayoutOrder(i);
 
     unsigned FragmentIndex = 0;
     for (MCSectionData::iterator iFrag = SD->begin(), iFragEnd = SD->end();

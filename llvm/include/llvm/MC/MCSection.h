@@ -41,6 +41,8 @@ private:
   unsigned Alignment = 1;
   /// The section index in the assemblers section list.
   unsigned Ordinal = 0;
+  /// The index of this section in the layout order.
+  unsigned LayoutOrder;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
@@ -71,6 +73,9 @@ public:
 
   unsigned getOrdinal() const { return Ordinal; }
   void setOrdinal(unsigned Value) { Ordinal = Value; }
+
+  unsigned getLayoutOrder() const { return LayoutOrder; }
+  void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

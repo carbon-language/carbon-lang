@@ -108,7 +108,7 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
 uint64_t MachObjectWriter::getPaddingSize(const MCSectionData *SD,
                                           const MCAsmLayout &Layout) const {
   uint64_t EndAddr = getSectionAddress(SD) + Layout.getSectionAddressSize(SD);
-  unsigned Next = SD->getLayoutOrder() + 1;
+  unsigned Next = SD->getSection().getLayoutOrder() + 1;
   if (Next >= Layout.getSectionOrder().size())
     return 0;
 
