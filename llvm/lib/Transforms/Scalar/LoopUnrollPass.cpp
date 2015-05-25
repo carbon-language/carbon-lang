@@ -320,81 +320,110 @@ struct FindConstantPointers {
 } // End anonymous namespace.
 
 namespace {
-/// \brief Struct to represent a GEP whose start and step are known fixed
-/// offsets from a base address due to SCEV's analysis.
-struct SCEVGEPDescriptor {
-  Value *BaseAddr;
-  unsigned Start;
-  unsigned Step;
+/// \brief A cache of SCEV results used to optimize repeated queries to SCEV on
+/// the same set of instructions.
+///
+/// The primary cost this saves is the cost of checking the validity of a SCEV
+/// every time it is looked up. However, in some cases we can provide a reduced
+/// and especially useful model for an instruction based upon SCEV that is
+/// non-trivial to compute but more useful to clients.
+class SCEVCache {
+public:
+  /// \brief Struct to represent a GEP whose start and step are known fixed
+  /// offsets from a base address due to SCEV's analysis.
+  struct GEPDescriptor {
+    Value *BaseAddr = nullptr;
+    unsigned Start = 0;
+    unsigned Step = 0;
+  };
+
+  Optional<GEPDescriptor> getGEPDescriptor(GetElementPtrInst *GEP);
+
+  SCEVCache(const Loop &L, ScalarEvolution &SE) : L(L), SE(SE) {}
+
+private:
+  const Loop &L;
+  ScalarEvolution &SE;
+
+  SmallDenseMap<GetElementPtrInst *, GEPDescriptor> GEPDescriptors;
 };
 } // End anonymous namespace.
 
-/// \brief Build a cache of all the GEP instructions which SCEV can describe.
+/// \brief Get a simplified descriptor for a GEP instruction.
 ///
-/// Visit all GEPs in the loop and find those which after complete loop
-/// unrolling would become a constant, or BaseAddress+Constant. For those where
-/// we can identify small constant starts and steps from a base address, return
-/// a map from the GEP to the base, start, and step relevant for that GEP. This
-/// is essentially a simplified and fast to query form of the SCEV analysis
-/// which we can afford to look into repeatedly for different iterations of the
-/// loop.
-static SmallDenseMap<Value *, SCEVGEPDescriptor>
-buildSCEVGEPCache(const Loop &L, ScalarEvolution &SE) {
-  SmallDenseMap<Value *, SCEVGEPDescriptor> Cache;
+/// Where possible, this produces a simplified descriptor for a GEP instruction
+/// using SCEV analysis of the containing loop. If this isn't possible, it
+/// returns an empty optional.
+///
+/// The model is a base address, an initial offset, and a per-iteration step.
+/// This fits very common patterns of GEPs inside loops and is something we can
+/// use to simulate the behavior of a particular iteration of a loop.
+///
+/// This is a cached interface. The first call may do non-trivial work to
+/// compute the result, but all subsequent calls will return a fast answer
+/// based on a cached result. This includes caching negative results.
+Optional<SCEVCache::GEPDescriptor>
+SCEVCache::getGEPDescriptor(GetElementPtrInst *GEP) {
+  decltype(GEPDescriptors)::iterator It;
+  bool Inserted;
 
-  for (auto BB : L.getBlocks()) {
-    for (Instruction &I : *BB) {
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
-        Value *V = cast<Value>(GEP);
-        if (!SE.isSCEVable(V->getType()))
-            continue;
-        const SCEV *S = SE.getSCEV(V);
+  std::tie(It, Inserted) = GEPDescriptors.insert({GEP, {}});
 
-        // FIXME: It'd be nice if the worklist and set used by the
-        // SCEVTraversal could be re-used between loop iterations, but the
-        // interface doesn't support that. There is no way to clear the visited
-        // sets between uses.
-        FindConstantPointers Visitor(&L, SE);
-        SCEVTraversal<FindConstantPointers> T(Visitor);
+  if (!Inserted) {
+    if (!It->second.BaseAddr)
+      return None;
 
-        // Try to find (BaseAddress+Step+Offset) tuple.
-        // If succeeded, save it to the cache - it might help in folding
-        // loads.
-        T.visitAll(S);
-        if (!Visitor.IndexIsConstant || !Visitor.BaseAddress)
-          continue;
-
-        const SCEV *BaseAddrSE = SE.getSCEV(Visitor.BaseAddress);
-        if (BaseAddrSE->getType() != S->getType())
-          continue;
-        const SCEV *OffSE = SE.getMinusSCEV(S, BaseAddrSE);
-        const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(OffSE);
-
-        if (!AR)
-          continue;
-
-        const SCEVConstant *StepSE =
-            dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE));
-        const SCEVConstant *StartSE = dyn_cast<SCEVConstant>(AR->getStart());
-        if (!StepSE || !StartSE)
-          continue;
-
-        // Check and skip caching if doing so would require lots of bits to
-        // avoid overflow.
-        APInt Start = StartSE->getValue()->getValue();
-        APInt Step = StepSE->getValue()->getValue();
-        if (Start.getActiveBits() > 32 || Step.getActiveBits() > 32)
-          continue;
-
-        // We found a cacheable SCEV model for the GEP.
-        Cache[V] = {Visitor.BaseAddress,
-                    (unsigned)Start.getLimitedValue(),
-                    (unsigned)Step.getLimitedValue()};
-      }
-    }
+    return It->second;
   }
 
-  return Cache;
+  // We've inserted a new record into the cache, so compute the GEP descriptor
+  // if possible.
+  Value *V = cast<Value>(GEP);
+  if (!SE.isSCEVable(V->getType()))
+    return None;
+  const SCEV *S = SE.getSCEV(V);
+
+  // FIXME: It'd be nice if the worklist and set used by the
+  // SCEVTraversal could be re-used between loop iterations, but the
+  // interface doesn't support that. There is no way to clear the visited
+  // sets between uses.
+  FindConstantPointers Visitor(&L, SE);
+  SCEVTraversal<FindConstantPointers> T(Visitor);
+
+  // Try to find (BaseAddress+Step+Offset) tuple.
+  // If succeeded, save it to the cache - it might help in folding
+  // loads.
+  T.visitAll(S);
+  if (!Visitor.IndexIsConstant || !Visitor.BaseAddress)
+    return None;
+
+  const SCEV *BaseAddrSE = SE.getSCEV(Visitor.BaseAddress);
+  if (BaseAddrSE->getType() != S->getType())
+    return None;
+  const SCEV *OffSE = SE.getMinusSCEV(S, BaseAddrSE);
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(OffSE);
+
+  if (!AR)
+    return None;
+
+  const SCEVConstant *StepSE =
+      dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE));
+  const SCEVConstant *StartSE = dyn_cast<SCEVConstant>(AR->getStart());
+  if (!StepSE || !StartSE)
+    return None;
+
+  // Check and skip caching if doing so would require lots of bits to
+  // avoid overflow.
+  APInt Start = StartSE->getValue()->getValue();
+  APInt Step = StepSE->getValue()->getValue();
+  if (Start.getActiveBits() > 32 || Step.getActiveBits() > 32)
+    return None;
+
+  // We found a cacheable SCEV model for the GEP.
+  It->second.BaseAddr = Visitor.BaseAddress;
+  It->second.Start = Start.getLimitedValue();
+  It->second.Step = Step.getLimitedValue();
+  return It->second;
 }
 
 namespace {
@@ -421,9 +450,8 @@ class UnrolledInstAnalyzer : private InstVisitor<UnrolledInstAnalyzer, bool> {
 public:
   UnrolledInstAnalyzer(unsigned Iteration,
                        DenseMap<Value *, Constant *> &SimplifiedValues,
-                       SmallDenseMap<Value *, SCEVGEPDescriptor> &SCEVGEPCache)
-      : Iteration(Iteration), SimplifiedValues(SimplifiedValues),
-        SCEVGEPCache(SCEVGEPCache) {}
+                       SCEVCache &SC)
+      : Iteration(Iteration), SimplifiedValues(SimplifiedValues), SC(SC) {}
 
   // Allow access to the initial visit method.
   using Base::visit;
@@ -443,10 +471,8 @@ private:
   // post-unrolling.
   DenseMap<Value *, Constant *> &SimplifiedValues;
 
-  // To avoid requesting SCEV info on every iteration, request it once, and
-  // for each value that would become ConstAddress+Constant after loop
-  // unrolling, save the corresponding data.
-  SmallDenseMap<Value *, SCEVGEPDescriptor> &SCEVGEPCache;
+  // We use a cache to wrap all our SCEV queries.
+  SCEVCache &SC;
 
   /// Base case for the instruction visitor.
   bool visitInstruction(Instruction &I) { return false; };
@@ -487,12 +513,14 @@ private:
       if (Constant *SimplifiedAddrOp = SimplifiedValues.lookup(AddrOp))
         AddrOp = SimplifiedAddrOp;
 
-    auto It = SCEVGEPCache.find(AddrOp);
-    if (It == SCEVGEPCache.end())
+    auto *GEP = dyn_cast<GetElementPtrInst>(AddrOp);
+    if (!GEP)
       return false;
-    SCEVGEPDescriptor GEPDesc = It->second;
+    auto OptionalGEPDesc = SC.getGEPDescriptor(GEP);
+    if (!OptionalGEPDesc)
+      return false;
 
-    auto GV = dyn_cast<GlobalVariable>(GEPDesc.BaseAddr);
+    auto GV = dyn_cast<GlobalVariable>(OptionalGEPDesc->BaseAddr);
     // We're only interested in loads that can be completely folded to a
     // constant.
     if (!GV || !GV->hasInitializer())
@@ -507,9 +535,9 @@ private:
     // low and both the start and step are 32-bit integers. We use signed
     // integers so that UBSan will catch if a bug sneaks into the code.
     int ElemSize = CDS->getElementType()->getPrimitiveSizeInBits() / 8U;
-    int64_t Index = ((int64_t)GEPDesc.Start +
-                      (int64_t)GEPDesc.Step * (int64_t)Iteration) /
-                     ElemSize;
+    int64_t Index = ((int64_t)OptionalGEPDesc->Start +
+                     (int64_t)OptionalGEPDesc->Step * (int64_t)Iteration) /
+                    ElemSize;
     if (Index >= CDS->getNumElements()) {
       // FIXME: For now we conservatively ignore out of bound accesses, but
       // we're allowed to perform the optimization in this case.
@@ -562,13 +590,12 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
       TripCount > UnrollMaxIterationsCountToAnalyze)
     return None;
 
-  // To avoid compute SCEV-expressions on every iteration, compute them once
-  // and store interesting to us in SCEVGEPCache.
-  SmallDenseMap<Value *, SCEVGEPDescriptor> SCEVGEPCache =
-      buildSCEVGEPCache(*L, SE);
-
   SmallSetVector<BasicBlock *, 16> BBWorklist;
   DenseMap<Value *, Constant *> SimplifiedValues;
+
+  // Use a cache to access SCEV expressions so that we don't pay the cost on
+  // each iteration. This cache is lazily self-populating.
+  SCEVCache SC(*L, SE);
 
   unsigned NumberOfOptimizedInstructions = 0;
   unsigned UnrolledLoopSize = 0;
@@ -579,7 +606,7 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
   // we literally have to go through all loop's iterations.
   for (unsigned Iteration = 0; Iteration < TripCount; ++Iteration) {
     SimplifiedValues.clear();
-    UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, SCEVGEPCache);
+    UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, SC);
 
     BBWorklist.clear();
     BBWorklist.insert(L->getHeader());
