@@ -1437,7 +1437,7 @@ let Uses = [M0] in {
 
 // FIXME: Specify SchedRW for VINTRP insturctions.
 defm V_INTERP_P1_F32 : VINTRP_m <
-  0x00000000, "v_interp_p1_f32",
+  0x00000000, 
   (outs VGPR_32:$dst),
   (ins VGPR_32:$i, i32imm:$attr_chan, i32imm:$attr),
   "v_interp_p1_f32 $dst, $i, $attr_chan, $attr, [m0]",
@@ -1445,7 +1445,7 @@ defm V_INTERP_P1_F32 : VINTRP_m <
                                            (i32 imm:$attr)))]>;
 
 defm V_INTERP_P2_F32 : VINTRP_m <
-  0x00000001, "v_interp_p2_f32",
+  0x00000001,
   (outs VGPR_32:$dst),
   (ins VGPR_32:$src0, VGPR_32:$j, i32imm:$attr_chan, i32imm:$attr),
   "v_interp_p2_f32 $dst, [$src0], $j, $attr_chan, $attr, [m0]",
@@ -1455,7 +1455,7 @@ defm V_INTERP_P2_F32 : VINTRP_m <
   "$src0 = $dst">;
 
 defm V_INTERP_MOV_F32 : VINTRP_m <
-  0x00000002, "v_interp_mov_f32",
+  0x00000002,
   (outs VGPR_32:$dst),
   (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr),
   "v_interp_mov_f32 $dst, $src0, $attr_chan, $attr, [m0]",

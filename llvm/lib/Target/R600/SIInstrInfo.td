@@ -1770,16 +1770,16 @@ class VINTRP_Real_vi <bits <2> op, string opName, dag outs, dag ins,
   VINTRPe_vi <op>,
   SIMCInstr<opName, SISubtarget.VI>;
 
-multiclass VINTRP_m <bits <2> op, string opName, dag outs, dag ins, string asm,
+multiclass VINTRP_m <bits <2> op, dag outs, dag ins, string asm,
                      list<dag> pattern = [],
                      string disableEncoding = "", string constraints = ""> {
   let DisableEncoding = disableEncoding,
       Constraints = constraints in {
-    def "" : VINTRP_Pseudo <opName, outs, ins, pattern>;
+    def "" : VINTRP_Pseudo <NAME, outs, ins, pattern>;
 
-    def _si : VINTRP_Real_si <op, opName, outs, ins, asm>;
+    def _si : VINTRP_Real_si <op, NAME, outs, ins, asm>;
 
-    def _vi : VINTRP_Real_vi <op, opName, outs, ins, asm>;
+    def _vi : VINTRP_Real_vi <op, NAME, outs, ins, asm>;
   }
 }
 
