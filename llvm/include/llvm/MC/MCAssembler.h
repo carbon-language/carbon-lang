@@ -861,9 +861,6 @@ public:
   /// \name Section List Access
   /// @{
 
-  const SectionDataListType &getSectionList() const { return Sections; }
-  SectionDataListType &getSectionList() { return Sections; }
-
   iterator begin() { return Sections.begin(); }
   const_iterator begin() const { return Sections.begin(); }
 
