@@ -703,10 +703,14 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
     }
 
     if (ReadAttr != Attribute::None) {
-      AttrBuilder B;
+      AttrBuilder B, R;
       B.addAttribute(ReadAttr);
+      R.addAttribute(Attribute::ReadOnly)
+        .addAttribute(Attribute::ReadNone);
       for (unsigned i = 0, e = ArgumentSCC.size(); i != e; ++i) {
         Argument *A = ArgumentSCC[i]->Definition;
+        // Clear out existing readonly/readnone attributes
+        A->removeAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1, R));
         A->addAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1, B));
         ReadAttr == Attribute::ReadOnly ? ++NumReadOnlyArg : ++NumReadNoneArg;
         Changed = true;
