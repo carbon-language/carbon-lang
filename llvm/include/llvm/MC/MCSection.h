@@ -36,16 +36,15 @@ private:
   void operator=(const MCSection &) = delete;
 
   MCSymbol *Begin;
-  MCSymbol *End;
+  MCSymbol *End = nullptr;
   /// The alignment requirement of this section.
-  unsigned Alignment;
+  unsigned Alignment = 1;
   /// The section index in the assemblers section list.
-  unsigned Ordinal;
+  unsigned Ordinal = ~UINT32_C(0);
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), End(nullptr), Alignment(1), Ordinal(~UINT32_C(0)),
-        Variant(V), Kind(K) {}
+      : Begin(Begin), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
