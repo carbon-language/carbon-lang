@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify -fms-extensions
+// RUN: not %clang_cc1 %s -fms-extensions -E | FileCheck %s
 // REQUIRES: non-ps4-sdk
 
 // rdar://6495941
@@ -7,27 +8,41 @@
 #define BAR "2"
 
 #pragma comment(linker,"foo=" FOO) // expected-error {{pragma comment requires parenthesized identifier and optional string}}
+// CHECK: #pragma comment(linker,"foo=" 1)
 #pragma comment(linker," bar=" BAR)
+// CHECK: #pragma comment(linker," bar=" "2")
 
 #pragma comment( user, "Compiled on " __DATE__ " at " __TIME__ ) 
+// CHECK: {{#pragma comment\( user, \"Compiled on \".*\" at \".*\" \)}}
 
 #pragma comment(foo)    // expected-error {{unknown kind of pragma comment}}
+// CHECK: #pragma comment(foo)
 #pragma comment(compiler,)     // expected-error {{expected string literal in pragma comment}}
+// CHECK: #pragma comment(compiler,)
 #define foo compiler
 #pragma comment(foo)   // macro expand kind.
+// CHECK: #pragma comment(compiler)
 #pragma comment(foo) x // expected-error {{pragma comment requires}}
+// CHECK: #pragma comment(compiler) x
 
 #pragma comment(user, "foo\abar\nbaz\tsome	thing")
+// CHECK: #pragma comment(user, "foo\abar\nbaz\tsome	thing")
 
 #pragma detect_mismatch("test", "1")
+// CHECK: #pragma detect_mismatch("test", "1")
 #pragma detect_mismatch()  // expected-error {{expected string literal in pragma detect_mismatch}}
+// CHECK: #pragma detect_mismatch()
 #pragma detect_mismatch("test") // expected-error {{pragma detect_mismatch is malformed; it requires two comma-separated string literals}}
+// CHECK: #pragma detect_mismatch("test")
 #pragma detect_mismatch("test", 1) // expected-error {{expected string literal in pragma detect_mismatch}}
+// CHECK: #pragma detect_mismatch("test", 1)
 #pragma detect_mismatch("test", BAR)
+// CHECK: #pragma detect_mismatch("test", "2")
 
 // __pragma
 
-__pragma(comment(linker," bar=" BAR))                                            
+__pragma(comment(linker," bar=" BAR))
+// CHECK: #pragma comment(linker," bar=" "2")
 
 #define MACRO_WITH__PRAGMA { \
   __pragma(warning(push)); \
@@ -39,11 +54,16 @@ __pragma(comment(linker," bar=" BAR))
 void f()
 {
   __pragma()
+// CHECK: #pragma
 
   // If we ever actually *support* __pragma(warning(disable: x)),
   // this warning should go away.
   MACRO_WITH__PRAGMA // expected-warning {{lower precedence}} \
                      // expected-note 2 {{place parentheses}}
+// CHECK: #pragma warning(push)
+// CHECK: #pragma warning(disable: 10000)
+// CHECK: ; 1 + (2 > 3) ? 4 : 5;
+// CHECK: #pragma warning(pop)
 }
 
 
@@ -91,26 +111,49 @@ void g() {}
 
 // Test that we ignore pragma warning.
 #pragma warning(push)
+// CHECK: #pragma warning(push)
 #pragma warning(push, 1)
+// CHECK: #pragma warning(push, 1)
 #pragma warning(disable : 4705)
+// CHECK: #pragma warning(disable: 4705)
 #pragma warning(disable : 123 456 789 ; error : 321)
+// CHECK: #pragma warning(disable: 123 456 789)
+// CHECK: #pragma warning(error: 321)
 #pragma warning(once : 321)
+// CHECK: #pragma warning(once: 321)
 #pragma warning(suppress : 321)
+// CHECK: #pragma warning(suppress: 321)
 #pragma warning(default : 321)
+// CHECK: #pragma warning(default: 321)
 #pragma warning(pop)
+// CHECK: #pragma warning(pop)
+#pragma warning(1: 123)
+// CHECK: #pragma warning(1: 123)
+#pragma warning(2: 234 567)
+// CHECK: #pragma warning(2: 234 567)
+#pragma warning(3: 123; 4: 678)
+// CHECK: #pragma warning(3: 123)
+// CHECK: #pragma warning(4: 678)
+#pragma warning(5: 123) // expected-warning {{expected 'push', 'pop', 'default', 'disable', 'error', 'once', 'suppress', 1, 2, 3, or 4}}
 
 #pragma warning(push, 0)
+// CHECK: #pragma warning(push, 0)
 // FIXME: We could probably support pushing warning level 0.
 #pragma warning(pop)
+// CHECK: #pragma warning(pop)
 
 #pragma warning  // expected-warning {{expected '('}}
 #pragma warning(   // expected-warning {{expected 'push', 'pop', 'default', 'disable', 'error', 'once', 'suppress', 1, 2, 3, or 4}}
 #pragma warning()   // expected-warning {{expected 'push', 'pop', 'default', 'disable', 'error', 'once', 'suppress', 1, 2, 3, or 4}}
 #pragma warning(push 4)  // expected-warning {{expected ')'}}
+// CHECK: #pragma warning(push)
 #pragma warning(push  // expected-warning {{expected ')'}}
+// CHECK: #pragma warning(push)
 #pragma warning(push, 5)  // expected-warning {{requires a level between 0 and 4}}
 #pragma warning(pop, 1)  // expected-warning {{expected ')'}}
+// CHECK: #pragma warning(pop)
 #pragma warning(push, 1) asdf // expected-warning {{extra tokens at end of #pragma warning directive}}
+// CHECK: #pragma warning(push, 1)
 #pragma warning(disable 4705) // expected-warning {{expected ':'}}
 #pragma warning(disable : 0) // expected-warning {{expected a warning number}}
 #pragma warning(default 321) // expected-warning {{expected ':'}}
