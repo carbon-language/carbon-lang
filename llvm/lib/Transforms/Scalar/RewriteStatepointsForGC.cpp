@@ -2206,9 +2206,8 @@ static bool shouldRewriteStatepointsIn(Function &F) {
     const StringRef StatepointExampleName("statepoint-example");
     const StringRef CoreCLRName("coreclr");
     return (StatepointExampleName == FunctionGCName) ||
-      (CoreCLRName == FunctionGCName);
-  }
-  else
+           (CoreCLRName == FunctionGCName);
+  } else
     return false;
 }
 

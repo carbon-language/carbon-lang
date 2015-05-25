@@ -35,7 +35,7 @@ void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned CountS = (Imm >> 6) & 3;
 
   // CountS selects which input element to use.
-  unsigned InVal = 4+CountS;
+  unsigned InVal = 4 + CountS;
   // CountD specifies which element of destination to update.
   ShuffleMask[CountD] = InVal;
   // ZMask zaps values, potentially overriding the CountD elt.
@@ -47,20 +47,20 @@ void DecodeINSERTPSMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
 
 // <3,1> or <6,7,2,3>
 void DecodeMOVHLPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
-  for (unsigned i = NElts/2; i != NElts; ++i)
-    ShuffleMask.push_back(NElts+i);
+  for (unsigned i = NElts / 2; i != NElts; ++i)
+    ShuffleMask.push_back(NElts + i);
 
-  for (unsigned i = NElts/2; i != NElts; ++i)
+  for (unsigned i = NElts / 2; i != NElts; ++i)
     ShuffleMask.push_back(i);
 }
 
 // <0,2> or <0,1,4,5>
 void DecodeMOVLHPSMask(unsigned NElts, SmallVectorImpl<int> &ShuffleMask) {
-  for (unsigned i = 0; i != NElts/2; ++i)
+  for (unsigned i = 0; i != NElts / 2; ++i)
     ShuffleMask.push_back(i);
 
-  for (unsigned i = 0; i != NElts/2; ++i)
-    ShuffleMask.push_back(NElts+i);
+  for (unsigned i = 0; i != NElts / 2; ++i)
+    ShuffleMask.push_back(NElts + i);
 }
 
 void DecodeMOVSLDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
@@ -203,8 +203,8 @@ void DecodeSHUFPMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NewImm = Imm;
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
     // each half of a lane comes from different source
-    for (unsigned s = 0; s != NumElts*2; s += NumElts) {
-      for (unsigned i = 0; i != NumLaneElts/2; ++i) {
+    for (unsigned s = 0; s != NumElts * 2; s += NumElts) {
+      for (unsigned i = 0; i != NumLaneElts / 2; ++i) {
         ShuffleMask.push_back(NewImm % NumLaneElts + s + l);
         NewImm /= NumLaneElts;
       }
@@ -226,9 +226,9 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumLaneElts = NumElts / NumLanes;
 
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
-    for (unsigned i = l + NumLaneElts/2, e = l + NumLaneElts; i != e; ++i) {
-      ShuffleMask.push_back(i);          // Reads from dest/src1
-      ShuffleMask.push_back(i+NumElts);  // Reads from src/src2
+    for (unsigned i = l + NumLaneElts / 2, e = l + NumLaneElts; i != e; ++i) {
+      ShuffleMask.push_back(i);           // Reads from dest/src1
+      ShuffleMask.push_back(i + NumElts); // Reads from src/src2
     }
   }
 }
@@ -246,9 +246,9 @@ void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
   unsigned NumLaneElts = NumElts / NumLanes;
 
   for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
-    for (unsigned i = l, e = l + NumLaneElts/2; i != e; ++i) {
-      ShuffleMask.push_back(i);          // Reads from dest/src1
-      ShuffleMask.push_back(i+NumElts);  // Reads from src/src2
+    for (unsigned i = l, e = l + NumLaneElts / 2; i != e; ++i) {
+      ShuffleMask.push_back(i);           // Reads from dest/src1
+      ShuffleMask.push_back(i + NumElts); // Reads from src/src2
     }
   }
 }
@@ -258,11 +258,11 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
   if (Imm & 0x88)
     return; // Not a shuffle
 
-  unsigned HalfSize = VT.getVectorNumElements()/2;
+  unsigned HalfSize = VT.getVectorNumElements() / 2;
 
   for (unsigned l = 0; l != 2; ++l) {
-    unsigned HalfBegin = ((Imm >> (l*4)) & 0x3) * HalfSize;
-    for (unsigned i = HalfBegin, e = HalfBegin+HalfSize; i != e; ++i)
+    unsigned HalfBegin = ((Imm >> (l * 4)) & 0x3) * HalfSize;
+    for (unsigned i = HalfBegin, e = HalfBegin + HalfSize; i != e; ++i)
       ShuffleMask.push_back(i);
   }
 }
@@ -355,7 +355,7 @@ void DecodeBLENDMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
 /// No VT provided since it only works on 256-bit, 4 element vectors.
 void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   for (unsigned i = 0; i != 4; ++i) {
-    ShuffleMask.push_back((Imm >> (2*i)) & 3);
+    ShuffleMask.push_back((Imm >> (2 * i)) & 3);
   }
 }
 

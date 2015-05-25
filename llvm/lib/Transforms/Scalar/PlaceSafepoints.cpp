@@ -528,7 +528,7 @@ static bool shouldRewriteFunction(Function &F) {
     const StringRef StatepointExampleName("statepoint-example");
     const StringRef CoreCLRName("coreclr");
     return (StatepointExampleName == FunctionGCName) ||
-      (CoreCLRName == FunctionGCName);
+           (CoreCLRName == FunctionGCName);
   } else
     return false;
 }

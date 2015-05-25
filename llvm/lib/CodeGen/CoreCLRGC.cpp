@@ -47,8 +47,7 @@ public:
 };
 }
 
-static GCRegistry::Add<CoreCLRGC> X("coreclr",
-                                    "CoreCLR-compatible GC");
+static GCRegistry::Add<CoreCLRGC> X("coreclr", "CoreCLR-compatible GC");
 
 namespace llvm {
 void linkCoreCLRGC() {}

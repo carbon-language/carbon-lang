@@ -119,8 +119,7 @@ void Twine::printOneChildRepr(raw_ostream &OS, Child Ptr,
        << Ptr.stringRef << "\"";
     break;
   case Twine::SmallStringKind:
-    OS << "smallstring:\""
-       << *Ptr.smallString << "\"";
+    OS << "smallstring:\"" << *Ptr.smallString << "\"";
     break;
   case Twine::CharKind:
     OS << "char:\"" << Ptr.character << "\"";
