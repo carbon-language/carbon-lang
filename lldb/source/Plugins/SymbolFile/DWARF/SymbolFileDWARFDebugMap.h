@@ -53,46 +53,46 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-                            SymbolFileDWARFDebugMap (lldb_private::ObjectFile* ofile);
-    virtual               ~ SymbolFileDWARFDebugMap ();
+    SymbolFileDWARFDebugMap (lldb_private::ObjectFile* ofile);
+    ~SymbolFileDWARFDebugMap () override;
 
-    virtual uint32_t        CalculateAbilities ();
+    uint32_t        CalculateAbilities () override;
 
-    virtual void            InitializeObject();
+    void            InitializeObject() override;
 
     //------------------------------------------------------------------
     // Compile Unit function calls
     //------------------------------------------------------------------
-    virtual uint32_t        GetNumCompileUnits ();
-    virtual lldb::CompUnitSP ParseCompileUnitAtIndex (uint32_t index);
+    uint32_t        GetNumCompileUnits () override;
+    lldb::CompUnitSP ParseCompileUnitAtIndex (uint32_t index) override;
 
-    virtual lldb::LanguageType ParseCompileUnitLanguage (const lldb_private::SymbolContext& sc);
-    virtual size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc);
-    virtual bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc);
-    virtual bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files);
-    virtual bool            ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules) override;
-    virtual size_t          ParseFunctionBlocks (const lldb_private::SymbolContext& sc);
-    virtual size_t          ParseTypes (const lldb_private::SymbolContext& sc);
-    virtual size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc);
+    lldb::LanguageType ParseCompileUnitLanguage (const lldb_private::SymbolContext& sc) override;
+    size_t          ParseCompileUnitFunctions (const lldb_private::SymbolContext& sc) override;
+    bool            ParseCompileUnitLineTable (const lldb_private::SymbolContext& sc) override;
+    bool            ParseCompileUnitSupportFiles (const lldb_private::SymbolContext& sc, lldb_private::FileSpecList &support_files) override;
+    bool            ParseImportedModules (const lldb_private::SymbolContext &sc, std::vector<lldb_private::ConstString> &imported_modules) override;
+    size_t          ParseFunctionBlocks (const lldb_private::SymbolContext& sc) override;
+    size_t          ParseTypes (const lldb_private::SymbolContext& sc) override;
+    size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc) override;
 
-    virtual lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid);
-    virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid);
-    virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid);
-    virtual bool            ResolveClangOpaqueTypeDefinition (lldb_private::ClangASTType& clang_type);
-    virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
-    virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
-    virtual uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
-    virtual uint32_t        FindGlobalVariables (const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
-    virtual uint32_t        FindFunctions (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list);
-    virtual uint32_t        FindFunctions (const lldb_private::RegularExpression& regex, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list);
-    virtual uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types);
-    virtual lldb_private::ClangNamespaceDecl
-                            FindNamespace (const lldb_private::SymbolContext& sc,
-                                           const lldb_private::ConstString &name,
-                                           const lldb_private::ClangNamespaceDecl *parent_namespace_decl);
-    virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
-                                      uint32_t type_mask,
-                                      lldb_private::TypeList &type_list);
+    lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid) override;
+    clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid) override;
+    clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid) override;
+    bool            ResolveClangOpaqueTypeDefinition (lldb_private::ClangASTType& clang_type) override;
+    uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc) override;
+    uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list) override;
+    uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::VariableList& variables) override;
+    uint32_t        FindGlobalVariables (const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables) override;
+    uint32_t        FindFunctions (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list) override;
+    uint32_t        FindFunctions (const lldb_private::RegularExpression& regex, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list) override;
+    uint32_t        FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types) override;
+    lldb_private::ClangNamespaceDecl
+                    FindNamespace (const lldb_private::SymbolContext& sc,
+                                   const lldb_private::ConstString &name,
+                                   const lldb_private::ClangNamespaceDecl *parent_namespace_decl) override;
+    size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
+                              uint32_t type_mask,
+                              lldb_private::TypeList &type_list) override;
 
 
     //------------------------------------------------------------------
@@ -112,11 +112,11 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion();
+    uint32_t
+    GetPluginVersion() override;
 
 protected:
     enum
