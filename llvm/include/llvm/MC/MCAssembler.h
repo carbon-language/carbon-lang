@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
@@ -551,11 +552,11 @@ class MCAssembler {
   friend class MCAsmLayout;
 
 public:
-  typedef iplist<MCSectionData> SectionDataListType;
+  typedef SetVector<MCSection *> SectionListType;
   typedef std::vector<const MCSymbol *> SymbolDataListType;
 
-  typedef SectionDataListType::const_iterator const_iterator;
-  typedef SectionDataListType::iterator iterator;
+  typedef pointee_iterator<SectionListType::const_iterator> const_iterator;
+  typedef pointee_iterator<SectionListType::iterator> iterator;
 
   typedef pointee_iterator<SymbolDataListType::const_iterator>
   const_symbol_iterator;
@@ -599,16 +600,11 @@ private:
 
   raw_ostream &OS;
 
-  iplist<MCSectionData> Sections;
+  SectionListType Sections;
 
   SymbolDataListType Symbols;
 
   DenseSet<const MCSymbol *> LocalsUsedInReloc;
-
-  /// The map of sections to their associated assembler backend data.
-  //
-  // FIXME: Avoid this indirection?
-  DenseMap<const MCSection *, MCSectionData *> SectionMap;
 
   std::vector<IndirectSymbolData> IndirectSymbols;
 
@@ -888,24 +884,22 @@ public:
   /// \name Backend Data Access
   /// @{
 
-  MCSectionData &getSectionData(const MCSection &Section) const {
-    MCSectionData *Entry = SectionMap.lookup(&Section);
-    assert(Entry && "Missing section data!");
-    return *Entry;
+  MCSectionData &getSectionData(MCSection &Section) {
+    assert(Sections.count(&Section) && "Unknown Seciton");
+    return Section.getSectionData();
+  }
+
+  const MCSectionData &getSectionData(const MCSection &Section) const {
+    return const_cast<MCAssembler *>(this)
+        ->getSectionData(const_cast<MCSection &>(Section));
   }
 
   MCSectionData &getOrCreateSectionData(MCSection &Section,
                                         bool *Created = nullptr) {
-    MCSectionData *&Entry = SectionMap[&Section];
-
+    bool C = Sections.insert(&Section);
     if (Created)
-      *Created = !Entry;
-    if (!Entry) {
-      Entry = new MCSectionData(Section);
-      Sections.push_back(Entry);
-    }
-
-    return *Entry;
+      *Created = C;
+    return Section.getSectionData();
   }
 
   bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }

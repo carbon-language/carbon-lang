@@ -69,11 +69,11 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
  {
   // Compute the section layout order. Virtual sections must go last.
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
-    if (!it->getSection().isVirtualSection())
-      SectionOrder.push_back(&*it);
+    if (!it->isVirtualSection())
+      SectionOrder.push_back(&it->getSectionData());
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
-    if (it->getSection().isVirtualSection())
-      SectionOrder.push_back(&*it);
+    if (it->isVirtualSection())
+      SectionOrder.push_back(&it->getSectionData());
 }
 
 bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
@@ -290,8 +290,6 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 
 /* *** */
 
-MCSectionData::MCSectionData() : Section(nullptr) {}
-
 MCSectionData::MCSectionData(MCSection &Section) : Section(&Section) {}
 
 MCSectionData::iterator
@@ -342,7 +340,6 @@ MCAssembler::~MCAssembler() {
 void MCAssembler::reset() {
   Sections.clear();
   Symbols.clear();
-  SectionMap.clear();
   IndirectSymbols.clear();
   DataRegions.clear();
   LinkerOptions.clear();
@@ -862,9 +859,9 @@ void MCAssembler::Finish() {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
     if (it->getFragmentList().empty())
-      new MCDataFragment(it);
+      new MCDataFragment(&it->getSectionData());
 
-    it->getSection().setOrdinal(SectionIndex++);
+    it->setOrdinal(SectionIndex++);
   }
 
   // Assign layout order indices to sections and fragments.
@@ -1084,8 +1081,8 @@ bool MCAssembler::layoutOnce(MCAsmLayout &Layout) {
 
   bool WasRelaxed = false;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    MCSectionData &SD = *it;
-    while (layoutSectionOnce(Layout, SD))
+    MCSection &Sec = *it;
+    while (layoutSectionOnce(Layout, Sec.getSectionData()))
       WasRelaxed = true;
   }
 
@@ -1261,7 +1258,7 @@ void MCAssembler::dump() {
   OS << "  Sections:[\n    ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n    ";
-    it->dump();
+    it->getSectionData().dump();
   }
   OS << "],\n";
   OS << "  Symbols:[";

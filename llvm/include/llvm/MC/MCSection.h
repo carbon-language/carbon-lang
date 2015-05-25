@@ -31,7 +31,7 @@ class MCSection;
 class MCSymbol;
 class raw_ostream;
 
-class MCSectionData : public ilist_node<MCSectionData> {
+class MCSectionData {
   friend class MCAsmLayout;
 
   MCSectionData(const MCSectionData &) = delete;
@@ -62,9 +62,7 @@ private:
   /// @}
 
 public:
-  // Only for use as sentinel.
-  MCSectionData();
-  MCSectionData(MCSection &Section);
+  explicit MCSectionData(MCSection &Section);
 
   MCSection &getSection() const { return *Section; }
 
@@ -144,9 +142,10 @@ private:
   /// Whether this section has had instructions emitted into it.
   unsigned HasInstructions : 1;
 
+  MCSectionData Data;
+
 protected:
-  MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), HasInstructions(false), Variant(V), Kind(K) {}
+  MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin);
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -190,6 +189,31 @@ public:
 
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
+
+  MCSectionData &getSectionData() { return Data; }
+  const MCSectionData &getSectionData() const {
+    return const_cast<MCSection *>(this)->getSectionData();
+  }
+
+  MCSectionData::FragmentListType &getFragmentList();
+  const MCSectionData::FragmentListType &getFragmentList() const {
+    return const_cast<MCSection *>(this)->getFragmentList();
+  }
+
+  MCSectionData::iterator begin();
+  MCSectionData::const_iterator begin() const {
+    return const_cast<MCSection *>(this)->begin();
+  }
+
+  MCSectionData::iterator end();
+  MCSectionData::const_iterator end() const {
+    return const_cast<MCSection *>(this)->end();
+  }
+
+  MCSectionData::reverse_iterator rend();
+  MCSectionData::const_reverse_iterator rend() const {
+    return const_cast<MCSection *>(this)->rend();
+  }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

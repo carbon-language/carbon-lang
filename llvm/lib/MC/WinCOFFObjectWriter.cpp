@@ -636,7 +636,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
   for (const auto &Section : Asm)
-    DefineSection(Section);
+    DefineSection(Section.getSectionData());
 
   for (const MCSymbol &Symbol : Asm.symbols())
     if (ExportSymbol(Symbol, Asm))
@@ -946,12 +946,13 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   offset += COFF::SectionSize * Header.NumberOfSections;
 
   for (const auto &Section : Asm) {
-    COFFSection *Sec = SectionMap[&Section.getSection()];
+    COFFSection *Sec = SectionMap[&Section];
 
     if (Sec->Number == -1)
       continue;
 
-    Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(&Section);
+    Sec->Header.SizeOfRawData =
+        Layout.getSectionAddressSize(&Section.getSectionData());
 
     if (IsPhysicalSection(Sec)) {
       // Align the section data to a four byte boundary.
@@ -1035,7 +1036,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
         WriteZeros(SectionDataPadding);
 
-        Asm.writeSectionData(j, Layout);
+        Asm.writeSectionData(&j->getSectionData(), Layout);
       }
 
       if ((*i)->Relocations.size() > 0) {

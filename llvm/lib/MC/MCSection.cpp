@@ -19,6 +19,9 @@ using namespace llvm;
 // MCSection
 //===----------------------------------------------------------------------===//
 
+MCSection::MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
+    : Begin(Begin), HasInstructions(false), Data(*this), Variant(V), Kind(K) {}
+
 MCSymbol *MCSection::getEndSymbol(MCContext &Ctx) {
   if (!End)
     End = Ctx.createTempSymbol("sec_end", true);
@@ -47,6 +50,14 @@ void MCSection::setBundleLockState(BundleLockStateType NewState) {
     BundleLockState = NewState;
   }
   ++BundleLockNestingDepth;
+}
+
+MCSectionData::iterator MCSection::begin() { return Data.begin(); }
+
+MCSectionData::iterator MCSection::end() { return Data.end(); }
+
+MCSectionData::FragmentListType &MCSection::getFragmentList() {
+  return Data.getFragmentList();
 }
 
 MCSectionData::iterator MCSectionData::begin() { return Fragments.begin(); }

@@ -1348,8 +1348,9 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   SectionOffsetsTy SectionOffsets;
   std::vector<MCSectionELF *> Groups;
   std::vector<MCSectionELF *> Relocations;
-  for (const MCSectionData &SD : Asm) {
-    const MCSectionELF &Section = static_cast<MCSectionELF &>(SD.getSection());
+  for (const MCSection &Sec : Asm) {
+    const MCSectionELF &Section = static_cast<const MCSectionELF &>(Sec);
+    const MCSectionData &SD = Section.getSectionData();
 
     uint64_t Padding = OffsetToAlignment(OS.tell(), Section.getAlignment());
     WriteZeros(Padding);
