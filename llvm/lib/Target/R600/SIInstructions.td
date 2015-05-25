@@ -34,6 +34,9 @@ def isSI : Predicate<"Subtarget->getGeneration() "
 
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;
 
+def has16BankLDS : Predicate<"Subtarget->getLDSBankCount() == 16">;
+def has32BankLDS : Predicate<"Subtarget->getLDSBankCount() == 32">;
+
 def SWaitMatchClass : AsmOperandClass {
   let Name = "SWaitCnt";
   let RenderMethod = "addImmOperands";
@@ -1436,13 +1439,27 @@ defm V_RSQ_CLAMP_F64 : VOP1InstSI <vop1<0x32>, "v_rsq_clamp_f64",
 let Uses = [M0] in {
 
 // FIXME: Specify SchedRW for VINTRP insturctions.
-defm V_INTERP_P1_F32 : VINTRP_m <
-  0x00000000, 
+
+multiclass V_INTERP_P1_F32_m : VINTRP_m <
+  0x00000000,
   (outs VGPR_32:$dst),
   (ins VGPR_32:$i, i32imm:$attr_chan, i32imm:$attr),
   "v_interp_p1_f32 $dst, $i, $attr_chan, $attr, [m0]",
   [(set f32:$dst, (AMDGPUinterp_p1 i32:$i, (i32 imm:$attr_chan),
-                                           (i32 imm:$attr)))]>;
+                                           (i32 imm:$attr)))]
+>;
+
+let OtherPredicates = [has32BankLDS] in {
+
+defm V_INTERP_P1_F32 : V_INTERP_P1_F32_m;
+
+} // End OtherPredicates = [has32BankLDS]
+
+let OtherPredicates = [has16BankLDS], Constraints = "@earlyclobber $dst" in {
+
+defm V_INTERP_P1_F32_16bank : V_INTERP_P1_F32_m;
+
+} // End OtherPredicates = [has32BankLDS], Constraints = "@earlyclobber $dst"
 
 defm V_INTERP_P2_F32 : VINTRP_m <
   0x00000001,
