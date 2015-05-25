@@ -566,7 +566,7 @@ private:
 public:
   // Only for use as sentinel.
   MCSectionData();
-  MCSectionData(MCSection &Section, MCAssembler *A = nullptr);
+  MCSectionData(MCSection &Section);
 
   MCSection &getSection() const { return *Section; }
 
@@ -971,8 +971,10 @@ public:
 
     if (Created)
       *Created = !Entry;
-    if (!Entry)
-      Entry = new MCSectionData(Section, this);
+    if (!Entry) {
+      Entry = new MCSectionData(Section);
+      Sections.push_back(Entry);
+    }
 
     return *Entry;
   }

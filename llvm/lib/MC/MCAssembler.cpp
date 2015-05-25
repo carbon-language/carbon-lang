@@ -292,11 +292,7 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
-MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
-    : Section(&Section) {
-  if (A)
-    A->getSectionList().push_back(this);
-}
+MCSectionData::MCSectionData(MCSection &Section) : Section(&Section) {}
 
 MCSectionData::iterator
 MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
