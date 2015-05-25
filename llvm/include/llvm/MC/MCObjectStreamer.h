@@ -146,9 +146,7 @@ public:
   bool emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
                               unsigned Size) override;
 
-  bool mayHaveInstructions(MCSection &Sec) const override {
-    return Assembler->getOrCreateSectionData(Sec).hasInstructions();
-  }
+  bool mayHaveInstructions(MCSection &Sec) const override;
 };
 
 } // end namespace llvm

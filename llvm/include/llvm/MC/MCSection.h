@@ -61,9 +61,12 @@ private:
   /// yet.
   bool BundleGroupBeforeFirstInst = false;
 
+  /// Whether this section has had instructions emitted into it.
+  unsigned HasInstructions : 1;
+
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-      : Begin(Begin), Variant(V), Kind(K) {}
+      : Begin(Begin), HasInstructions(false), Variant(V), Kind(K) {}
   SectionVariant Variant;
   SectionKind Kind;
 
@@ -104,6 +107,9 @@ public:
   void setBundleGroupBeforeFirstInst(bool IsFirst) {
     BundleGroupBeforeFirstInst = IsFirst;
   }
+
+  bool hasInstructions() const { return HasInstructions; }
+  void setHasInstructions(bool Value) { HasInstructions = Value; }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

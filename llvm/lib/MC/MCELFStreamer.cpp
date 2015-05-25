@@ -137,11 +137,14 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 
 // If bundle aligment is used and there are any instructions in the section, it
 // needs to be aligned to at least the bundle size.
-static void setSectionAlignmentForBundling(
-    const MCAssembler &Assembler, MCSectionData *Section) {
-  if (Assembler.isBundlingEnabled() && Section && Section->hasInstructions() &&
-      Section->getSection().getAlignment() < Assembler.getBundleAlignSize())
-    Section->getSection().setAlignment(Assembler.getBundleAlignSize());
+static void setSectionAlignmentForBundling(const MCAssembler &Assembler,
+                                           MCSectionData *SD) {
+  if (!SD)
+    return;
+  MCSection &Section = SD->getSection();
+  if (Assembler.isBundlingEnabled() && Section.hasInstructions() &&
+      Section.getAlignment() < Assembler.getBundleAlignSize())
+    Section.setAlignment(Assembler.getBundleAlignSize());
 }
 
 void MCELFStreamer::ChangeSection(MCSection *Section,

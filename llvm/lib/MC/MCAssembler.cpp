@@ -293,7 +293,7 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
 MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
-    : Section(&Section), HasInstructions(false) {
+    : Section(&Section) {
   if (A)
     A->getSectionList().push_back(this);
 }

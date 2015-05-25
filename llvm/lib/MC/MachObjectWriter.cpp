@@ -225,7 +225,7 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   Write32(FileOffset);
 
   unsigned Flags = Section.getTypeAndAttributes();
-  if (SD.hasInstructions())
+  if (Section.hasInstructions())
     Flags |= MachO::S_ATTR_SOME_INSTRUCTIONS;
 
   assert(isPowerOf2_32(Section.getAlignment()) && "Invalid alignment!");

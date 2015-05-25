@@ -557,10 +557,6 @@ private:
   //
   // FIXME: This could all be kept private to the assembler implementation.
 
-  /// HasInstructions - Whether this section has had instructions emitted into
-  /// it.
-  unsigned HasInstructions : 1;
-
   /// Mapping from subsection number to insertion point for subsection numbers
   /// below that number.
   SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
@@ -573,9 +569,6 @@ public:
   MCSectionData(MCSection &Section, MCAssembler *A = nullptr);
 
   MCSection &getSection() const { return *Section; }
-
-  bool hasInstructions() const { return HasInstructions; }
-  void setHasInstructions(bool Value) { HasInstructions = Value; }
 
   /// \name Fragment Access
   /// @{
