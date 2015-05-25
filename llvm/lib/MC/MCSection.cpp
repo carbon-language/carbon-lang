@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
@@ -47,3 +48,19 @@ void MCSection::setBundleLockState(BundleLockStateType NewState) {
   }
   ++BundleLockNestingDepth;
 }
+
+MCSectionData::iterator MCSectionData::begin() { return Fragments.begin(); }
+
+MCSectionData::iterator MCSectionData::end() { return Fragments.end(); }
+
+MCSectionData::reverse_iterator MCSectionData::rbegin() {
+  return Fragments.rbegin();
+}
+
+MCSectionData::reverse_iterator MCSectionData::rend() {
+  return Fragments.rend();
+}
+
+size_t MCSectionData::size() const { return Fragments.size(); }
+
+bool MCSectionData::empty() const { return Fragments.empty(); }

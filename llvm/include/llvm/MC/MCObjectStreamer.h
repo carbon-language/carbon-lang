@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {

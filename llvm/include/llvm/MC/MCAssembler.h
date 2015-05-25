@@ -21,6 +21,7 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
@@ -528,75 +529,6 @@ public:
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_DwarfFrame;
   }
-};
-
-// FIXME: Should this be a separate class, or just merged into MCSection? Since
-// we anticipate the fast path being through an MCAssembler, the only reason to
-// keep it out is for API abstraction.
-class MCSectionData : public ilist_node<MCSectionData> {
-  friend class MCAsmLayout;
-
-  MCSectionData(const MCSectionData &) = delete;
-  void operator=(const MCSectionData &) = delete;
-
-public:
-  typedef iplist<MCFragment> FragmentListType;
-
-  typedef FragmentListType::const_iterator const_iterator;
-  typedef FragmentListType::iterator iterator;
-
-  typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
-  typedef FragmentListType::reverse_iterator reverse_iterator;
-
-private:
-  FragmentListType Fragments;
-  MCSection *Section;
-
-  /// \name Assembler Backend Data
-  /// @{
-  //
-  // FIXME: This could all be kept private to the assembler implementation.
-
-  /// Mapping from subsection number to insertion point for subsection numbers
-  /// below that number.
-  SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
-
-  /// @}
-
-public:
-  // Only for use as sentinel.
-  MCSectionData();
-  MCSectionData(MCSection &Section);
-
-  MCSection &getSection() const { return *Section; }
-
-  /// \name Fragment Access
-  /// @{
-
-  const FragmentListType &getFragmentList() const { return Fragments; }
-  FragmentListType &getFragmentList() { return Fragments; }
-
-  iterator begin() { return Fragments.begin(); }
-  const_iterator begin() const { return Fragments.begin(); }
-
-  iterator end() { return Fragments.end(); }
-  const_iterator end() const { return Fragments.end(); }
-
-  reverse_iterator rbegin() { return Fragments.rbegin(); }
-  const_reverse_iterator rbegin() const { return Fragments.rbegin(); }
-
-  reverse_iterator rend() { return Fragments.rend(); }
-  const_reverse_iterator rend() const { return Fragments.rend(); }
-
-  size_t size() const { return Fragments.size(); }
-
-  bool empty() const { return Fragments.empty(); }
-
-  iterator getSubsectionInsertionPoint(unsigned Subsection);
-
-  void dump();
-
-  /// @}
 };
 
 // FIXME: This really doesn't belong here. See comments below.

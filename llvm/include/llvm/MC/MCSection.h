@@ -14,16 +14,96 @@
 #ifndef LLVM_MC_MCSECTION_H
 #define LLVM_MC_MCSECTION_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+class MCAssembler;
 class MCAsmInfo;
 class MCContext;
 class MCExpr;
+class MCFragment;
+class MCSection;
 class MCSymbol;
 class raw_ostream;
+
+class MCSectionData : public ilist_node<MCSectionData> {
+  friend class MCAsmLayout;
+
+  MCSectionData(const MCSectionData &) = delete;
+  void operator=(const MCSectionData &) = delete;
+
+public:
+  typedef iplist<MCFragment> FragmentListType;
+
+  typedef FragmentListType::const_iterator const_iterator;
+  typedef FragmentListType::iterator iterator;
+
+  typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
+  typedef FragmentListType::reverse_iterator reverse_iterator;
+
+private:
+  FragmentListType Fragments;
+  MCSection *Section;
+
+  /// \name Assembler Backend Data
+  /// @{
+  //
+  // FIXME: This could all be kept private to the assembler implementation.
+
+  /// Mapping from subsection number to insertion point for subsection numbers
+  /// below that number.
+  SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
+
+  /// @}
+
+public:
+  // Only for use as sentinel.
+  MCSectionData();
+  MCSectionData(MCSection &Section);
+
+  MCSection &getSection() const { return *Section; }
+
+  /// \name Fragment Access
+  /// @{
+
+  const FragmentListType &getFragmentList() const { return Fragments; }
+  FragmentListType &getFragmentList() { return Fragments; }
+
+  iterator begin();
+  const_iterator begin() const {
+    return const_cast<MCSectionData *>(this)->begin();
+  }
+
+  iterator end();
+  const_iterator end() const {
+    return const_cast<MCSectionData *>(this)->end();
+  }
+
+  reverse_iterator rbegin();
+  const_reverse_iterator rbegin() const {
+    return const_cast<MCSectionData *>(this)->rbegin();
+  }
+
+  reverse_iterator rend();
+  const_reverse_iterator rend() const {
+    return const_cast<MCSectionData *>(this)->rend();
+  }
+
+  size_t size() const;
+
+  bool empty() const;
+
+  iterator getSubsectionInsertionPoint(unsigned Subsection);
+
+  void dump();
+
+  /// @}
+};
 
 /// Instances of this class represent a uniqued identifier for a section in the
 /// current translation unit.  The MCContext class uniques and creates these.
