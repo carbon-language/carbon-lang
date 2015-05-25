@@ -31,6 +31,13 @@ class MCSection {
 public:
   enum SectionVariant { SV_COFF = 0, SV_ELF, SV_MachO };
 
+  /// \brief Express the state of bundle locked groups while emitting code.
+  enum BundleLockStateType {
+    NotBundleLocked,
+    BundleLocked,
+    BundleLockedAlignToEnd
+  };
+
 private:
   MCSection(const MCSection &) = delete;
   void operator=(const MCSection &) = delete;
@@ -43,6 +50,16 @@ private:
   unsigned Ordinal = 0;
   /// The index of this section in the layout order.
   unsigned LayoutOrder;
+
+  /// \brief Keeping track of bundle-locked state.
+  BundleLockStateType BundleLockState = NotBundleLocked;
+
+  /// \brief Current nesting depth of bundle_lock directives.
+  unsigned BundleLockNestingDepth = 0;
+
+  /// \brief We've seen a bundle_lock directive but not its first instruction
+  /// yet.
+  bool BundleGroupBeforeFirstInst = false;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
@@ -76,6 +93,17 @@ public:
 
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
+
+  BundleLockStateType getBundleLockState() const { return BundleLockState; }
+  void setBundleLockState(BundleLockStateType NewState);
+  bool isBundleLocked() const { return BundleLockState != NotBundleLocked; }
+
+  bool isBundleGroupBeforeFirstInst() const {
+    return BundleGroupBeforeFirstInst;
+  }
+  void setBundleGroupBeforeFirstInst(bool IsFirst) {
+    BundleGroupBeforeFirstInst = IsFirst;
+  }
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

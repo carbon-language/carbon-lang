@@ -293,9 +293,7 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 MCSectionData::MCSectionData() : Section(nullptr) {}
 
 MCSectionData::MCSectionData(MCSection &Section, MCAssembler *A)
-    : Section(&Section), BundleLockState(NotBundleLocked),
-      BundleLockNestingDepth(0), BundleGroupBeforeFirstInst(false),
-      HasInstructions(false) {
+    : Section(&Section), HasInstructions(false) {
   if (A)
     A->getSectionList().push_back(this);
 }
@@ -329,25 +327,6 @@ MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
   }
 
   return IP;
-}
-
-void MCSectionData::setBundleLockState(BundleLockStateType NewState) {
-  if (NewState == NotBundleLocked) {
-    if (BundleLockNestingDepth == 0) {
-      report_fatal_error("Mismatched bundle_lock/unlock directives");
-    }
-    if (--BundleLockNestingDepth == 0) {
-      BundleLockState = NotBundleLocked;
-    }
-    return;
-  }
-
-  // If any of the directives is an align_to_end directive, the whole nested
-  // group is align_to_end. So don't downgrade from align_to_end to just locked.
-  if (BundleLockState != BundleLockedAlignToEnd) {
-    BundleLockState = NewState;
-  }
-  ++BundleLockNestingDepth;
 }
 
 /* *** */

@@ -548,26 +548,9 @@ public:
   typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
   typedef FragmentListType::reverse_iterator reverse_iterator;
 
-  /// \brief Express the state of bundle locked groups while emitting code.
-  enum BundleLockStateType {
-    NotBundleLocked,
-    BundleLocked,
-    BundleLockedAlignToEnd
-  };
-
 private:
   FragmentListType Fragments;
   MCSection *Section;
-
-  /// \brief Keeping track of bundle-locked state.
-  BundleLockStateType BundleLockState;
-
-  /// \brief Current nesting depth of bundle_lock directives.
-  unsigned BundleLockNestingDepth;
-
-  /// \brief We've seen a bundle_lock directive but not its first instruction
-  /// yet.
-  bool BundleGroupBeforeFirstInst;
 
   /// \name Assembler Backend Data
   /// @{
@@ -617,20 +600,6 @@ public:
   bool empty() const { return Fragments.empty(); }
 
   iterator getSubsectionInsertionPoint(unsigned Subsection);
-
-  bool isBundleLocked() const { return BundleLockState != NotBundleLocked; }
-
-  BundleLockStateType getBundleLockState() const { return BundleLockState; }
-
-  void setBundleLockState(BundleLockStateType NewState);
-
-  bool isBundleGroupBeforeFirstInst() const {
-    return BundleGroupBeforeFirstInst;
-  }
-
-  void setBundleGroupBeforeFirstInst(bool IsFirst) {
-    BundleGroupBeforeFirstInst = IsFirst;
-  }
 
   void dump();
 

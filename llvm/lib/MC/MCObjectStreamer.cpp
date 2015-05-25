@@ -254,7 +254,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
   //   group. We want to emit all such instructions into the same data
   //   fragment.
   if (Assembler.getRelaxAll() ||
-      (Assembler.isBundlingEnabled() && SD->isBundleLocked())) {
+      (Assembler.isBundlingEnabled() && SD->getSection().isBundleLocked())) {
     MCInst Relaxed;
     getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
     while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))

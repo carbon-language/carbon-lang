@@ -39,7 +39,7 @@
 using namespace llvm;
 
 bool MCELFStreamer::isBundleLocked() const {
-  return getCurrentSectionData()->isBundleLocked();
+  return getCurrentSectionData()->getSection().isBundleLocked();
 }
 
 MCELFStreamer::~MCELFStreamer() {
@@ -507,6 +507,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
 
   if (Assembler.isBundlingEnabled()) {
     MCSectionData *SD = getCurrentSectionData();
+    MCSection &Sec = SD->getSection();
     if (Assembler.getRelaxAll() && isBundleLocked())
       // If the -mc-relax-all flag is used and we are bundle-locked, we re-use
       // the current bundle group.
@@ -516,7 +517,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
       // we create a new temporary fragment which will be later merged into
       // the current fragment.
       DF = new MCDataFragment();
-    else if (isBundleLocked() && !SD->isBundleGroupBeforeFirstInst())
+    else if (isBundleLocked() && !Sec.isBundleGroupBeforeFirstInst())
       // If we are bundle-locked, we re-use the current fragment.
       // The bundle-locking directive ensures this is a new data fragment.
       DF = cast<MCDataFragment>(getCurrentFragment());
@@ -532,7 +533,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
       DF = new MCDataFragment();
       insert(DF);
     }
-    if (SD->getBundleLockState() == MCSectionData::BundleLockedAlignToEnd) {
+    if (Sec.getBundleLockState() == MCSection::BundleLockedAlignToEnd) {
       // If this fragment is for a group marked "align_to_end", set a flag
       // in the fragment. This can happen after the fragment has already been
       // created if there are nested bundle_align groups and an inner one
@@ -542,7 +543,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
 
     // We're now emitting an instruction in a bundle group, so this flag has
     // to be turned off.
-    SD->setBundleGroupBeforeFirstInst(false);
+    Sec.setBundleGroupBeforeFirstInst(false);
   } else {
     DF = getOrCreateDataFragment();
   }
@@ -575,6 +576,7 @@ void MCELFStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
 
 void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
   MCSectionData *SD = getCurrentSectionData();
+  MCSection &Sec = SD->getSection();
 
   // Sanity checks
   //
@@ -582,7 +584,7 @@ void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
     report_fatal_error(".bundle_lock forbidden when bundling is disabled");
 
   if (!isBundleLocked())
-    SD->setBundleGroupBeforeFirstInst(true);
+    Sec.setBundleGroupBeforeFirstInst(true);
 
   if (getAssembler().getRelaxAll() && !isBundleLocked()) {
     // TODO: drop the lock state and set directly in the fragment
@@ -590,19 +592,20 @@ void MCELFStreamer::EmitBundleLock(bool AlignToEnd) {
     BundleGroups.push_back(DF);
   }
 
-  SD->setBundleLockState(AlignToEnd ? MCSectionData::BundleLockedAlignToEnd :
-                                      MCSectionData::BundleLocked);
+  Sec.setBundleLockState(AlignToEnd ? MCSection::BundleLockedAlignToEnd
+                                    : MCSection::BundleLocked);
 }
 
 void MCELFStreamer::EmitBundleUnlock() {
   MCSectionData *SD = getCurrentSectionData();
+  MCSection &Sec = SD->getSection();
 
   // Sanity checks
   if (!getAssembler().isBundlingEnabled())
     report_fatal_error(".bundle_unlock forbidden when bundling is disabled");
   else if (!isBundleLocked())
     report_fatal_error(".bundle_unlock without matching lock");
-  else if (SD->isBundleGroupBeforeFirstInst())
+  else if (Sec.isBundleGroupBeforeFirstInst())
     report_fatal_error("Empty bundle-locked group is forbidden");
 
   // When the -mc-relax-all flag is used, we emit instructions to fragments
@@ -613,7 +616,7 @@ void MCELFStreamer::EmitBundleUnlock() {
     MCDataFragment *DF = BundleGroups.back();
 
     // FIXME: Use BundleGroups to track the lock state instead.
-    SD->setBundleLockState(MCSectionData::NotBundleLocked);
+    Sec.setBundleLockState(MCSection::NotBundleLocked);
 
     // FIXME: Use more separate fragments for nested groups.
     if (!isBundleLocked()) {
@@ -622,10 +625,10 @@ void MCELFStreamer::EmitBundleUnlock() {
       delete DF;
     }
 
-    if (SD->getBundleLockState() != MCSectionData::BundleLockedAlignToEnd)
+    if (Sec.getBundleLockState() != MCSection::BundleLockedAlignToEnd)
       getOrCreateDataFragment()->setAlignToBundleEnd(false);
   } else
-    SD->setBundleLockState(MCSectionData::NotBundleLocked);
+    Sec.setBundleLockState(MCSection::NotBundleLocked);
 }
 
 void MCELFStreamer::Flush() {
