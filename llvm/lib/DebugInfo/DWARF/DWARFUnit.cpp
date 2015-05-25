@@ -79,10 +79,7 @@ bool DWARFUnit::extractImpl(DataExtractor debug_info, uint32_t *offset_ptr) {
     return false;
 
   Abbrevs = Abbrev->getAbbreviationDeclarationSet(AbbrOffset);
-  if (Abbrevs == nullptr)
-    return false;
-
-  return true;
+  return Abbrevs != nullptr;
 }
 
 bool DWARFUnit::extract(DataExtractor debug_info, uint32_t *offset_ptr) {

@@ -127,10 +127,8 @@ bool DWARFFormValue::isFormClass(DWARFFormValue::FormClass FC) const {
   // In DWARF3 DW_FORM_data4 and DW_FORM_data8 served also as a section offset.
   // Don't check for DWARF version here, as some producers may still do this
   // by mistake.
-  if ((Form == DW_FORM_data4 || Form == DW_FORM_data8) &&
-      FC == FC_SectionOffset)
-    return true;
-  return false;
+  return (Form == DW_FORM_data4 || Form == DW_FORM_data8) &&
+         FC == FC_SectionOffset;
 }
 
 bool DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
