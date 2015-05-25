@@ -266,3 +266,94 @@ define <4 x i32> @srl_trunc_and_v4i64(<4 x i32> %x, <4 x i64> %y) nounwind {
   %sra = lshr <4 x i32> %x, %trunc
   ret <4 x i32> %sra
 }
+
+;
+; Vectorized byte shifts
+;
+
+define <8 x i16> @shl_8i16(<8 x i16> %r, <8 x i16> %a) nounwind {
+; CHECK-LABEL:  shl_8i16
+; CHECK:        vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; CHECK-NEXT:   vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-NEXT:   vpsllvd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:   vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; CHECK:        retq
+  %shl = shl <8 x i16> %r, %a
+  ret <8 x i16> %shl
+}
+
+define <16 x i16> @shl_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
+; CHECK-LABEL:  shl_16i16
+; CHECK:        vpxor %ymm2, %ymm2, %ymm2
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm3 = ymm1[4],ymm2[4],ymm1[5],ymm2[5],ymm1[6],ymm2[6],ymm1[7],ymm2[7],ymm1[12],ymm2[12],ymm1[13],ymm2[13],ymm1[14],ymm2[14],ymm1[15],ymm2[15]
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm4 = ymm0[4,4,5,5,6,6,7,7,12,12,13,13,14,14,15,15]
+; CHECK-NEXT:   vpsllvd %ymm3, %ymm4, %ymm3
+; CHECK-NEXT:   vpsrld $16, %ymm3, %ymm3
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm1 = ymm1[0],ymm2[0],ymm1[1],ymm2[1],ymm1[2],ymm2[2],ymm1[3],ymm2[3],ymm1[8],ymm2[8],ymm1[9],ymm2[9],ymm1[10],ymm2[10],ymm1[11],ymm2[11]
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,8,8,9,9,10,10,11,11]
+; CHECK-NEXT:   vpsllvd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpsrld $16, %ymm0, %ymm0
+; CHECK-NEXT:   vpackusdw %ymm3, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %shl = shl <16 x i16> %r, %a
+  ret <16 x i16> %shl
+}
+
+define <8 x i16> @ashr_8i16(<8 x i16> %r, <8 x i16> %a) nounwind {
+; CHECK-LABEL:  ashr_8i16
+; CHECK:        vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; CHECK-NEXT:   vpmovsxwd %xmm0, %ymm0
+; CHECK-NEXT:   vpsravd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:   vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; CHECK:        retq
+  %ashr = ashr <8 x i16> %r, %a
+  ret <8 x i16> %ashr
+}
+
+define <16 x i16> @ashr_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
+; CHECK-LABEL:  ashr_16i16
+; CHECK:        vpxor %ymm2, %ymm2, %ymm2
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm3 = ymm1[4],ymm2[4],ymm1[5],ymm2[5],ymm1[6],ymm2[6],ymm1[7],ymm2[7],ymm1[12],ymm2[12],ymm1[13],ymm2[13],ymm1[14],ymm2[14],ymm1[15],ymm2[15]
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm4 = ymm0[4,4,5,5,6,6,7,7,12,12,13,13,14,14,15,15]
+; CHECK-NEXT:   vpsravd %ymm3, %ymm4, %ymm3
+; CHECK-NEXT:   vpsrld $16, %ymm3, %ymm3
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm1 = ymm1[0],ymm2[0],ymm1[1],ymm2[1],ymm1[2],ymm2[2],ymm1[3],ymm2[3],ymm1[8],ymm2[8],ymm1[9],ymm2[9],ymm1[10],ymm2[10],ymm1[11],ymm2[11]
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,8,8,9,9,10,10,11,11]
+; CHECK-NEXT:   vpsravd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpsrld $16, %ymm0, %ymm0
+; CHECK-NEXT:   vpackusdw %ymm3, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %ashr = ashr <16 x i16> %r, %a
+  ret <16 x i16> %ashr
+}
+
+define <8 x i16> @lshr_8i16(<8 x i16> %r, <8 x i16> %a) nounwind {
+; CHECK-LABEL:  lshr_8i16
+; CHECK:        vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; CHECK-NEXT:   vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-NEXT:   vpsrlvd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
+; CHECK-NEXT:   vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
+; CHECK:        retq
+  %lshr = lshr <8 x i16> %r, %a
+  ret <8 x i16> %lshr
+}
+
+define <16 x i16> @lshr_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
+; CHECK-LABEL:  lshr_16i16
+; CHECK:        vpxor %ymm2, %ymm2, %ymm2
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm3 = ymm1[4],ymm2[4],ymm1[5],ymm2[5],ymm1[6],ymm2[6],ymm1[7],ymm2[7],ymm1[12],ymm2[12],ymm1[13],ymm2[13],ymm1[14],ymm2[14],ymm1[15],ymm2[15]
+; CHECK-NEXT:   vpunpckhwd {{.*#+}} ymm4 = ymm0[4,4,5,5,6,6,7,7,12,12,13,13,14,14,15,15]
+; CHECK-NEXT:   vpsrlvd %ymm3, %ymm4, %ymm3
+; CHECK-NEXT:   vpsrld $16, %ymm3, %ymm3
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm1 = ymm1[0],ymm2[0],ymm1[1],ymm2[1],ymm1[2],ymm2[2],ymm1[3],ymm2[3],ymm1[8],ymm2[8],ymm1[9],ymm2[9],ymm1[10],ymm2[10],ymm1[11],ymm2[11]
+; CHECK-NEXT:   vpunpcklwd {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,8,8,9,9,10,10,11,11]
+; CHECK-NEXT:   vpsrlvd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:   vpsrld $16, %ymm0, %ymm0
+; CHECK-NEXT:   vpackusdw %ymm3, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %lshr = lshr <16 x i16> %r, %a
+  ret <16 x i16> %lshr
+}
