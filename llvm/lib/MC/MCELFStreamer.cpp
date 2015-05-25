@@ -644,9 +644,10 @@ void MCELFStreamer::Flush() {
     MCSection &Section = Symbol.getSection();
 
     MCSectionData &SectData = getAssembler().getOrCreateSectionData(Section);
-    new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &SectData);
+    new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment,
+                        &SectData.getSection());
 
-    MCFragment *F = new MCFillFragment(0, 0, Size, &SectData);
+    MCFragment *F = new MCFillFragment(0, 0, Size, &SectData.getSection());
     Symbol.getData().setFragment(F);
 
     // Update the maximum alignment of the section if necessary.

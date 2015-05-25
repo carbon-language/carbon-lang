@@ -74,7 +74,7 @@ protected:
   void insert(MCFragment *F) {
     flushPendingLabels(F);
     CurSectionData->getFragmentList().insert(CurInsertionPoint, F);
-    F->setParent(CurSectionData);
+    F->setParent(&CurSectionData->getSection());
   }
 
   /// Get a data fragment to write into, creating a new one if the current

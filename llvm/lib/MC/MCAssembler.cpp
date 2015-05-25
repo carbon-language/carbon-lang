@@ -272,7 +272,7 @@ MCFragment::MCFragment() : Kind(FragmentType(~0)) {
 MCFragment::~MCFragment() {
 }
 
-MCFragment::MCFragment(FragmentType Kind, MCSectionData *Parent)
+MCFragment::MCFragment(FragmentType Kind, MCSection *Parent)
     : Kind(Kind), Parent(Parent), Atom(nullptr), Offset(~UINT64_C(0)) {
   if (Parent)
     Parent->getFragmentList().push_back(this);
@@ -317,7 +317,7 @@ MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
     MCFragment *F = new MCDataFragment();
     SubsectionFragmentMap.insert(MI, std::make_pair(Subsection, F));
     getFragmentList().insert(IP, F);
-    F->setParent(this);
+    F->setParent(&getSection());
   }
 
   return IP;
@@ -859,7 +859,7 @@ void MCAssembler::Finish() {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
     if (it->getFragmentList().empty())
-      new MCDataFragment(&it->getSectionData());
+      new MCDataFragment(&*it);
 
     it->setOrdinal(SectionIndex++);
   }

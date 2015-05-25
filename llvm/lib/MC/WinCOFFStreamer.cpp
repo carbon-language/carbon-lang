@@ -231,10 +231,10 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   if (ByteAlignment != 1)
     new MCAlignFragment(ByteAlignment, /*Value=*/0, /*ValueSize=*/0,
-                        ByteAlignment, &SectionData);
+                        ByteAlignment, &SectionData.getSection());
 
-  MCFillFragment *Fragment =
-      new MCFillFragment(/*Value=*/0, /*ValueSize=*/0, Size, &SectionData);
+  MCFillFragment *Fragment = new MCFillFragment(
+      /*Value=*/0, /*ValueSize=*/0, Size, &SectionData.getSection());
   SD.setFragment(Fragment);
 }
 
