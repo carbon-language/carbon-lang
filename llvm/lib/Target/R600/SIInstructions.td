@@ -1461,15 +1461,17 @@ defm V_INTERP_P1_F32_16bank : V_INTERP_P1_F32_m;
 
 } // End OtherPredicates = [has32BankLDS], Constraints = "@earlyclobber $dst"
 
+let DisableEncoding = "$src0", Constraints = "$src0 = $dst" in {
+
 defm V_INTERP_P2_F32 : VINTRP_m <
   0x00000001,
   (outs VGPR_32:$dst),
   (ins VGPR_32:$src0, VGPR_32:$j, i32imm:$attr_chan, i32imm:$attr),
   "v_interp_p2_f32 $dst, [$src0], $j, $attr_chan, $attr, [m0]",
   [(set f32:$dst, (AMDGPUinterp_p2 f32:$src0, i32:$j, (i32 imm:$attr_chan),
-                                                     (i32 imm:$attr)))],
-  "$src0",
-  "$src0 = $dst">;
+                                                     (i32 imm:$attr)))]>;
+
+} // End DisableEncoding = "$src0", Constraints = "$src0 = $dst"
 
 defm V_INTERP_MOV_F32 : VINTRP_m <
   0x00000002,
