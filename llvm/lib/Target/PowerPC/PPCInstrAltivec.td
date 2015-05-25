@@ -1025,11 +1025,28 @@ let isCommutable = 1 in {
 def VADDUDM : VXForm_1<192, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                        "vaddudm $vD, $vA, $vB", IIC_VecGeneral,
                        [(set v2i64:$vD, (add v2i64:$vA, v2i64:$vB))]>;
+def VADDUQM : VXForm_1<256, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vadduqm $vD, $vA, $vB", IIC_VecGeneral,
+                       [(set v1i128:$vD, (add v1i128:$vA, v1i128:$vB))]>;
 } // isCommutable
 
+// Vector Quadword Add
+def VADDEUQM : VA1a_Int_Ty<60, "vaddeuqm", int_ppc_altivec_vaddeuqm, v1i128>;
+def VADDCUQ  : VX1_Int_Ty<320, "vaddcuq", int_ppc_altivec_vaddcuq, v1i128>;
+def VADDECUQ : VA1a_Int_Ty<61, "vaddecuq", int_ppc_altivec_vaddecuq, v1i128>;
+
+// Vector Doubleword Subtract
 def VSUBUDM : VXForm_1<1216, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                        "vsubudm $vD, $vA, $vB", IIC_VecGeneral,
                        [(set v2i64:$vD, (sub v2i64:$vA, v2i64:$vB))]>;
+
+// Vector Quadword Subtract
+def VSUBUQM : VXForm_1<1280, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vsubuqm $vD, $vA, $vB", IIC_VecGeneral,
+                       [(set v1i128:$vD, (sub v1i128:$vA, v1i128:$vB))]>;
+def VSUBEUQM : VA1a_Int_Ty<62, "vsubeuqm", int_ppc_altivec_vsubeuqm, v1i128>;
+def VSUBCUQ  : VX1_Int_Ty<1344, "vsubcuq", int_ppc_altivec_vsubcuq, v1i128>;
+def VSUBECUQ : VA1a_Int_Ty<63, "vsubecuq", int_ppc_altivec_vsubecuq, v1i128>;
 
 // Count Leading Zeros
 def VCLZB : VXForm_2<1794, (outs vrrc:$vD), (ins vrrc:$vB),

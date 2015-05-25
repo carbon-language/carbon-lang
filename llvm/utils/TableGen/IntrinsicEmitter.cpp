@@ -260,7 +260,8 @@ enum IIT_Info {
   IIT_HALF_VEC_ARG = 29,
   IIT_SAME_VEC_WIDTH_ARG = 30,
   IIT_PTR_TO_ARG = 31,
-  IIT_VEC_OF_PTRS_TO_ELT = 32
+  IIT_VEC_OF_PTRS_TO_ELT = 32,
+  IIT_I128 = 33
 };
 
 
@@ -275,6 +276,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
     case 16: return Sig.push_back(IIT_I16);
     case 32: return Sig.push_back(IIT_I32);
     case 64: return Sig.push_back(IIT_I64);
+    case 128: return Sig.push_back(IIT_I128);
     }
   }
 

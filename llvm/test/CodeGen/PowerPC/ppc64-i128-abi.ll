@@ -12,46 +12,46 @@
 
 ; VSX:
 ;   %a is passed in register 34
-;   On LE, ensure %a is swapped before being used (using xxswapd)
-;   Similarly, on LE ensure the results are swapped before being returned in 
-;   register 34
+;   The value of 1 is stored in the TOC.
+;   On LE, ensure the value of 1 is swapped before being used (using xxswapd).
 ; VMX (no VSX): 
 ;   %a is passed in register 2
-;   No swaps are necessary on LE
+;   The value of 1 is stored in the TOC.
+;   No swaps are necessary when using P8 Vector instructions on LE
 define <1 x i128> @v1i128_increment_by_one(<1 x i128> %a) nounwind {
        %tmp = add <1 x i128> %a, <i128 1>
        ret <1 x i128> %tmp  
 
+; FIXME: Seems a 128-bit literal is materialized by loading from the TOC. There
+;        should be a better way of doing this.
+
 ; CHECK-LE-LABEL: @v1i128_increment_by_one
-; CHECK-LE: xxswapd [[PARAM1:[0-9]+]], 34
-; CHECK-LE: stxvd2x [[PARAM1]], {{[0-9]+}}, {{[0-9]+}}
-; CHECK-LE: lxvd2x [[RESULT:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
-; CHECK-LE: xxswapd 34, [[RESULT]]
+; CHECK-LE: lxvd2x [[VAL:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
+; CHECK-LE: xxswapd 35, [[VAL]]
+; CHECK-LE: vadduqm 2, 2, 3
 ; CHECK-LE: blr
 
 ; CHECK-BE-LABEL: @v1i128_increment_by_one
-; CHECK-BE-NOT: xxswapd {{[0-9]+}}, 34
-; CHECK-BE: stxvd2x 34, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-BE: lxvd2x 34, {{[0-9]+}}, {{[0-9]+}}
+; CHECK-BE: lxvd2x 35, {{[0-9]+}}, {{[0-9]+}}
+; CHECK-BE-NOT: xxswapd 
+; CHECK-BE: vadduqm 2, 2, 3 
 ; CHECK-BE-NOT: xxswapd 34, {{[0-9]+}}
 ; CHECK-BE: blr
 
 ; CHECK-NOVSX-LABEL: @v1i128_increment_by_one
 ; CHECK-NOVSX-NOT: xxswapd {{[0-9]+}}, {{[0-9]+}}
 ; CHECK-NOVSX-NOT: stxvd2x {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX: stvx 2, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX: lvx 2, {{[0-9]+}}, {{[0-9]+}}
+; CHECK-NOVSX: lvx [[VAL:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
 ; CHECK-NOVSX-NOT: lxvd2x {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 ; CHECK-NOVSX-NOT: xxswapd {{[0-9]+}}, {{[0-9]+}}
+; CHECK-NOVSX: vadduqm 2, 2, [[VAL]]
 ; CHECK-NOVSX: blr
 }
 
 ; VSX:
 ;   %a is passed in register 34
 ;   %b is passed in register 35
-;   On LE, ensure the contents of 34 and 35 are swapped before being used
-;   Similarly, on LE ensure the results are swapped before being returned in
-;   register 34
+;   No swaps are necessary when using P8 Vector instructions on LE
 ; VMX (no VSX):
 ;   %a is passewd in register 2
 ;   %b is passed in register 3
@@ -62,30 +62,20 @@ define <1 x i128> @v1i128_increment_by_val(<1 x i128> %a, <1 x i128> %b) nounwin
        ret <1 x i128> %tmp
 
 ; CHECK-LE-LABEL: @v1i128_increment_by_val
-; CHECK-LE-DAG: xxswapd [[PARAM1:[0-9]+]], 34
-; CHECK-LE-DAG: xxswapd [[PARAM2:[0-9]+]], 35
-; CHECK-LE-DAG: stxvd2x [[PARAM1]], {{[0-9]+}}, {{[0-9]+}}
-; CHECK-LE-DAG: stxvd2x [[PARAM2]], {{[0-9]+}}, {{[0-9]+}}
-; CHECK-LE: lxvd2x [[RESULT:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
-; CHECK-LE: xxswapd 34, [[RESULT]]
+; CHECK-LE-NOT: xxswapd
+; CHECK-LE: adduqm 2, 2, 3
 ; CHECK-LE: blr
 
 ; CHECK-BE-LABEL: @v1i128_increment_by_val
 ; CHECK-BE-NOT: xxswapd {{[0-9]+}}, 34
 ; CHECK-BE-NOT: xxswapd {{[0-9]+}}, 35
-; CHECK-BE-DAG: stxvd2x 34, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-BE-DAG: stxvd2x 35, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-BE: lxvd2x [[RESULT:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
 ; CHECK-BE-NOT: xxswapd 34, [[RESULT]]
+; CHECK-BE: adduqm 2, 2, 3
 ; CHECK-BE: blr
 
 ; CHECK-NOVSX-LABEL: @v1i128_increment_by_val
-; CHECK-NOVSX-NOT: xxswapd {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX-NOT: xxswapd {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX-DAG: stvx 2, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX-DAG: stvx 3, {{[0-9]+}}, {{[0-9]+}}
-; CHECK-NOVSX: lvx [[RESULT:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}
 ; CHECK-NOVSX-NOT: xxswapd 34, [[RESULT]]
+; CHECK-NOVSX: adduqm 2, 2, 3
 ; CHECK-NOVSX: blr
 }
 

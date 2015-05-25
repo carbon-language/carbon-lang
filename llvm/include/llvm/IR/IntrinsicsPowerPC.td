@@ -121,6 +121,13 @@ class PowerPC_Vec_DDD_Intrinsic<string GCCIntSuffix>
                           [llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
                           [IntrNoMem]>;
 
+/// PowerPC_Vec_QQQ_Intrinsic - A PowerPC intrinsic that takes two v1i128
+/// vectors and returns one. These intrinsics have no side effects.
+class PowerPC_Vec_QQQ_Intrinsic<string GCCIntSuffix>
+  : PowerPC_Vec_Intrinsic<GCCIntSuffix,
+                         [llvm_v1i128_ty], [llvm_v1i128_ty, llvm_v1i128_ty],
+                         [IntrNoMem]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC VSX Intrinsic Class Definitions.
 //
@@ -357,6 +364,7 @@ def int_ppc_altivec_vaddshs : PowerPC_Vec_HHH_Intrinsic<"vaddshs">;
 def int_ppc_altivec_vadduws : PowerPC_Vec_WWW_Intrinsic<"vadduws">;
 def int_ppc_altivec_vaddsws : PowerPC_Vec_WWW_Intrinsic<"vaddsws">;
 def int_ppc_altivec_vaddcuw : PowerPC_Vec_WWW_Intrinsic<"vaddcuw">;
+def int_ppc_altivec_vaddcuq : PowerPC_Vec_QQQ_Intrinsic<"vaddcuq">;
 
 // Saturating subs.
 def int_ppc_altivec_vsububs : PowerPC_Vec_BBB_Intrinsic<"vsububs">;
@@ -366,6 +374,7 @@ def int_ppc_altivec_vsubshs : PowerPC_Vec_HHH_Intrinsic<"vsubshs">;
 def int_ppc_altivec_vsubuws : PowerPC_Vec_WWW_Intrinsic<"vsubuws">;
 def int_ppc_altivec_vsubsws : PowerPC_Vec_WWW_Intrinsic<"vsubsws">;
 def int_ppc_altivec_vsubcuw : PowerPC_Vec_WWW_Intrinsic<"vsubcuw">;
+def int_ppc_altivec_vsubcuq : PowerPC_Vec_QQQ_Intrinsic<"vsubcuq">;
 
 let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
   // Saturating multiply-adds.
@@ -540,6 +549,26 @@ let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
   def int_ppc_altivec_vrfiz : GCCBuiltin<"__builtin_altivec_vrfiz">,
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+
+  // Add Extended Quadword
+  def int_ppc_altivec_vaddeuqm : GCCBuiltin<"__builtin_altivec_vaddeuqm">,
+              Intrinsic<[llvm_v1i128_ty], 
+                        [llvm_v1i128_ty, llvm_v1i128_ty, llvm_v1i128_ty],
+                        [IntrNoMem]>;
+  def int_ppc_altivec_vaddecuq : GCCBuiltin<"__builtin_altivec_vaddecuq">,
+              Intrinsic<[llvm_v1i128_ty], 
+                        [llvm_v1i128_ty, llvm_v1i128_ty, llvm_v1i128_ty],
+                        [IntrNoMem]>;
+
+  // Sub Extended Quadword
+  def int_ppc_altivec_vsubeuqm : GCCBuiltin<"__builtin_altivec_vsubeuqm">,
+              Intrinsic<[llvm_v1i128_ty], 
+                        [llvm_v1i128_ty, llvm_v1i128_ty, llvm_v1i128_ty],
+                        [IntrNoMem]>;
+  def int_ppc_altivec_vsubecuq : GCCBuiltin<"__builtin_altivec_vsubecuq">,
+              Intrinsic<[llvm_v1i128_ty], 
+                        [llvm_v1i128_ty, llvm_v1i128_ty, llvm_v1i128_ty],
+                        [IntrNoMem]>;
 }
 
 def int_ppc_altivec_vsl   : PowerPC_Vec_WWW_Intrinsic<"vsl">;
