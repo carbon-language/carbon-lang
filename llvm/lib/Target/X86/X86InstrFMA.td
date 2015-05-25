@@ -183,19 +183,24 @@ multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
   defm SD : fma3s_forms<opc132, opc213, opc231, OpStr, "sd", "PD", IntF64, OpNode,
                         FR64, f64, f64mem, sdmem, loadf64, sse_load_f64>, VEX_W;
 
+// These patterns use the 123 ordering, instead of 213, even though
+// they match the intrinsic to the 213 version of the instruction.
+// This is because src1 is tied to dest, and the scalar intrinsics
+// require the pass-through values to come from the first source
+// operand, not the second.
   def : Pat<(IntF32 VR128:$src1, VR128:$src2, VR128:$src3),
             (COPY_TO_REGCLASS
               (!cast<Instruction>(NAME#"SSr213r")
-                (COPY_TO_REGCLASS $src2, FR32),
                 (COPY_TO_REGCLASS $src1, FR32),
+                (COPY_TO_REGCLASS $src2, FR32),
                 (COPY_TO_REGCLASS $src3, FR32)),
               VR128)>;
 
   def : Pat<(IntF64 VR128:$src1, VR128:$src2, VR128:$src3),
             (COPY_TO_REGCLASS
               (!cast<Instruction>(NAME#"SDr213r")
-                (COPY_TO_REGCLASS $src2, FR64),
                 (COPY_TO_REGCLASS $src1, FR64),
+                (COPY_TO_REGCLASS $src2, FR64),
                 (COPY_TO_REGCLASS $src3, FR64)),
               VR128)>;
 }

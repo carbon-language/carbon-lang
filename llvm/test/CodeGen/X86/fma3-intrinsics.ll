@@ -3,7 +3,9 @@
 ; RUN: llc < %s -mcpu=bdver2 -mtriple=x86_64-pc-win32 -mattr=-fma4 | FileCheck %s
 
 define <4 x float> @test_x86_fmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fmadd213ss (%r8), %xmm
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fmadd213ss (%r8), [[XMM1]], [[XMM0]]
   %res = call <4 x float> @llvm.x86.fma.vfmadd.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
@@ -24,7 +26,9 @@ define <8 x float> @test_x86_fmadd_ps_y(<8 x float> %a0, <8 x float> %a1, <8 x f
 declare <8 x float> @llvm.x86.fma.vfmadd.ps.256(<8 x float>, <8 x float>, <8 x float>) nounwind readnone
 
 define <4 x float> @test_x86_fnmadd_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fnmadd213ss (%r8), %xmm
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fnmadd213ss (%r8), [[XMM1]], [[XMM0]]
   %res = call <4 x float> @llvm.x86.fma.vfnmadd.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
@@ -46,7 +50,9 @@ declare <8 x float> @llvm.x86.fma.vfnmadd.ps.256(<8 x float>, <8 x float>, <8 x 
 
 
 define <4 x float> @test_x86_fmsub_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fmsub213ss
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fmsub213ss (%r8), [[XMM1]], [[XMM0]]
   %res = call <4 x float> @llvm.x86.fma.vfmsub.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
@@ -60,7 +66,9 @@ define <4 x float> @test_x86_fmsub_ps(<4 x float> %a0, <4 x float> %a1, <4 x flo
 declare <4 x float> @llvm.x86.fma.vfmsub.ps(<4 x float>, <4 x float>, <4 x float>) nounwind readnone
 
 define <4 x float> @test_x86_fnmsub_ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-  ; CHECK: fnmsub213ss
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fnmsub213ss (%r8), [[XMM1]], [[XMM0]]
   %res = call <4 x float> @llvm.x86.fma.vfnmsub.ss(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) nounwind
   ret <4 x float> %res
 }
@@ -76,7 +84,9 @@ declare <4 x float> @llvm.x86.fma.vfnmsub.ps(<4 x float>, <4 x float>, <4 x floa
 ;;;;
 
 define <2 x double> @test_x86_fmadd_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
-  ; CHECK: fmadd213sd
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fmadd213sd (%r8), [[XMM1]], [[XMM0]]
   %res = call <2 x double> @llvm.x86.fma.vfmadd.sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) nounwind
   ret <2 x double> %res
 }
@@ -90,7 +100,9 @@ define <2 x double> @test_x86_fmadd_pd(<2 x double> %a0, <2 x double> %a1, <2 x 
 declare <2 x double> @llvm.x86.fma.vfmadd.pd(<2 x double>, <2 x double>, <2 x double>) nounwind readnone
 
 define <2 x double> @test_x86_fnmadd_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
-  ; CHECK: fnmadd213sd
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fnmadd213sd (%r8), [[XMM1]], [[XMM0]]
   %res = call <2 x double> @llvm.x86.fma.vfnmadd.sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) nounwind
   ret <2 x double> %res
 }
@@ -106,7 +118,9 @@ declare <2 x double> @llvm.x86.fma.vfnmadd.pd(<2 x double>, <2 x double>, <2 x d
 
 
 define <2 x double> @test_x86_fmsub_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
-  ; CHECK: fmsub213sd
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fmsub213sd (%r8), [[XMM1]], [[XMM0]]
   %res = call <2 x double> @llvm.x86.fma.vfmsub.sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) nounwind
   ret <2 x double> %res
 }
@@ -120,7 +134,9 @@ define <2 x double> @test_x86_fmsub_pd(<2 x double> %a0, <2 x double> %a1, <2 x 
 declare <2 x double> @llvm.x86.fma.vfmsub.pd(<2 x double>, <2 x double>, <2 x double>) nounwind readnone
 
 define <2 x double> @test_x86_fnmsub_sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
-  ; CHECK: fnmsub213sd
+  ; CHECK-DAG: vmovaps (%rcx), [[XMM1:%xmm[0-9]+]]
+  ; CHECK-DAG: vmovaps (%rdx), [[XMM0:%xmm[0-9]+]]
+  ; CHECK: fnmsub213sd (%r8), [[XMM1]], [[XMM0]]
   %res = call <2 x double> @llvm.x86.fma.vfnmsub.sd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) nounwind
   ret <2 x double> %res
 }
