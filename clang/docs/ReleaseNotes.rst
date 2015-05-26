@@ -47,7 +47,10 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
-- Feature ...
+- Use of the ``__declspec`` language extension for declaration attributes now
+requires passing the -fms-extensions or -fborland compiler flag. This language
+extension is also enabled when compiling CUDA code, but its use should be
+viewed as an implementation detail that is subject to change.
 
 
 Improvements to Clang's diagnostics

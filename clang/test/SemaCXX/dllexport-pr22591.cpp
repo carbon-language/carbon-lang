@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple i686-windows-gnu  -verify -std=c++03 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu  -verify -std=c++11 %s
-// RUN: %clang_cc1 -triple i686-windows-msvc -verify -std=c++03 -DERROR %s
-// RUN: %clang_cc1 -triple i686-windows-msvc -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu  -fms-extensions -verify -std=c++03 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu  -fms-extensions -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc -fms-extensions -verify -std=c++03 -DERROR %s
+// RUN: %clang_cc1 -triple i686-windows-msvc -fms-extensions -verify -std=c++11 %s
 
 #ifndef ERROR
 // expected-no-diagnostics

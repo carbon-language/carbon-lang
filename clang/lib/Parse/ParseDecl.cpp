@@ -531,6 +531,9 @@ bool Parser::ParseMicrosoftDeclSpecArgs(IdentifierInfo *AttrName,
 ///             extended-decl-modifier extended-decl-modifier-seq
 void Parser::ParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
                                      SourceLocation *End) {
+  assert((getLangOpts().MicrosoftExt || getLangOpts().Borland ||
+          getLangOpts().CUDA) &&
+         "Incorrect language options for parsing __declspec");
   assert(Tok.is(tok::kw___declspec) && "Not a declspec!");
 
   while (Tok.is(tok::kw___declspec)) {

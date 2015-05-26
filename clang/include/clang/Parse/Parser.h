@@ -2089,10 +2089,9 @@ private:
                                 SourceLocation *endLoc = nullptr);
   void MaybeParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,
                                     SourceLocation *End = nullptr) {
-    // TODO: the __declspec keyword is parsed as a keyword for all languages,
-    // but this is a Microsoft extension. Investigate whether this should be
-    // protected by MicrosoftExt or not.
-    if (Tok.is(tok::kw___declspec))
+    const auto &LO = getLangOpts();
+    if ((LO.MicrosoftExt || LO.Borland || LO.CUDA) &&
+        Tok.is(tok::kw___declspec))
       ParseMicrosoftDeclSpecs(Attrs, End);
   }
   void ParseMicrosoftDeclSpecs(ParsedAttributes &Attrs,

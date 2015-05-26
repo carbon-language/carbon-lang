@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Werror -triple thumbv7-windows-itanium -mfloat-abi hard -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -Werror -triple thumbv7-windows-itanium -mfloat-abi hard -fms-extensions -emit-llvm %s -o - | FileCheck %s
 
 __declspec(dllexport) int export_int;
 

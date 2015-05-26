@@ -160,7 +160,6 @@ namespace Operators {
 namespace ElaboratedTypeSpecifiers {
   struct S {
     int f(int x = T<a, struct S>());
-    int g(int x = T<a, class __declspec() C>());
     int h(int x = T<a, union __attribute__(()) U>());
     int i(int x = T<a, enum E>());
     int j(int x = T<a, struct S::template T<0, enum E>>());

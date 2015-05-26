@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-pc-win32 -emit-llvm -fms-volatile -o - < %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-pc-win32 -fms-extensions -emit-llvm -fms-volatile -o - < %s | FileCheck %s
 struct foo {
   volatile int x;
 };

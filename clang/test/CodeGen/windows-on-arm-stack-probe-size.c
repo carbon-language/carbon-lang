@@ -1,10 +1,10 @@
-// RUN: %clang_cc1 -triple thumbv7-windows-itanium -mstack-probe-size=8096 -O2 -emit-llvm %s -o - \
+// RUN: %clang_cc1 -triple thumbv7-windows-itanium -mstack-probe-size=8096 -fms-extensions -O2 -emit-llvm %s -o - \
 // RUN:     | FileCheck %s -check-prefix CHECK-8096
 
-// RUN: %clang_cc1 -triple thumbv7-windows-itanium -mstack-probe-size=4096 -O2 -emit-llvm %s -o - \
+// RUN: %clang_cc1 -triple thumbv7-windows-itanium -mstack-probe-size=4096 -fms-extensions -O2 -emit-llvm %s -o - \
 // RUN:     | FileCheck %s -check-prefix CHECK-4096
 
-// RUN: %clang_cc1 -triple thumbv7-windows-itanium -O2 -emit-llvm %s -o - \
+// RUN: %clang_cc1 -triple thumbv7-windows-itanium -fms-extensions -O2 -emit-llvm %s -o - \
 // RUN:     | FileCheck %s -check-prefix CHECK
 
 __declspec(dllimport) void initialise(signed char buffer[4096]);
