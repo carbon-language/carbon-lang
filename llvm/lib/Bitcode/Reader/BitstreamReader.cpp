@@ -282,6 +282,9 @@ void BitstreamCursor::ReadAbbrevRecord() {
     } else
       Abbv->Add(BitCodeAbbrevOp(E));
   }
+
+  if (Abbv->getNumOperandInfos() == 0)
+    report_fatal_error("Abbrev record with no operands");
   CurAbbrevs.push_back(Abbv);
 }
 
