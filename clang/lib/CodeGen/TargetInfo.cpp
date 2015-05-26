@@ -108,10 +108,6 @@ bool ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
   return false;
 }
 
-bool ABIInfo::shouldSignExtUnsignedType(QualType Ty) const {
-  return false;
-}
-
 void ABIArgInfo::dump() const {
   raw_ostream &OS = llvm::errs();
   OS << "(ABIArgInfo Kind=";
@@ -5551,7 +5547,6 @@ public:
   void computeInfo(CGFunctionInfo &FI) const override;
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                          CodeGenFunction &CGF) const override;
-  bool shouldSignExtUnsignedType(QualType Ty) const override;
 };
 
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -5852,16 +5847,6 @@ llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
   
   return AddrTyped;
-}
-
-bool MipsABIInfo::shouldSignExtUnsignedType(QualType Ty) const {
-  int TySize = getContext().getTypeSize(Ty);
-  
-  // MIPS64 ABI requires unsigned 32 bit integers to be sign extended.
-  if (Ty->isUnsignedIntegerOrEnumerationType() && TySize == 32)
-    return true;
-  
-  return false;
 }
 
 bool

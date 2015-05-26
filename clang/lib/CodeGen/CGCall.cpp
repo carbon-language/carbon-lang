@@ -1588,12 +1588,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     case ABIArgInfo::Extend:
       if (ParamType->isSignedIntegerOrEnumerationType())
         Attrs.addAttribute(llvm::Attribute::SExt);
-      else if (ParamType->isUnsignedIntegerOrEnumerationType()) {
-        if (getTypes().getABIInfo().shouldSignExtUnsignedType(ParamType))
-          Attrs.addAttribute(llvm::Attribute::SExt);
-        else
-          Attrs.addAttribute(llvm::Attribute::ZExt);
-      }
+      else if (ParamType->isUnsignedIntegerOrEnumerationType())
+        Attrs.addAttribute(llvm::Attribute::ZExt);
       // FALL THROUGH
     case ABIArgInfo::Direct:
       if (ArgNo == 0 && FI.isChainCall())
