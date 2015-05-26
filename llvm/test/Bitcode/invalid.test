@@ -162,3 +162,13 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-fixme-streaming-blob.bc 2>&1
 RUN:   FileCheck --check-prefix=STREAMING-BLOB %s
 
 STREAMING-BLOB: getPointer in streaming memory objects not allowed
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-function-comdat-id.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-FCOMDAT-ID %s
+
+INVALID-FCOMDAT-ID: Invalid function comdat ID
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-global-var-comdat-id.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-GVCOMDAT-ID %s
+
+INVALID-GVCOMDAT-ID: Invalid global variable comdat ID

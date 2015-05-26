@@ -2956,7 +2956,8 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
 
       if (Record.size() > 11) {
         if (unsigned ComdatID = Record[11]) {
-          assert(ComdatID <= ComdatList.size());
+          if (ComdatID > ComdatList.size())
+            return Error("Invalid global variable comdat ID");
           NewGV->setComdat(ComdatList[ComdatID - 1]);
         }
       } else if (hasImplicitComdat(RawLinkage)) {
@@ -3020,7 +3021,8 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
 
       if (Record.size() > 12) {
         if (unsigned ComdatID = Record[12]) {
-          assert(ComdatID <= ComdatList.size());
+          if (ComdatID > ComdatList.size())
+            return Error("Invalid function comdat ID");
           Func->setComdat(ComdatList[ComdatID - 1]);
         }
       } else if (hasImplicitComdat(RawLinkage)) {
