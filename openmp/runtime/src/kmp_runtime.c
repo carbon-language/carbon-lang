@@ -6626,7 +6626,7 @@ __kmp_do_middle_initialize( void )
 
     // If there were empty places in num_threads list (OMP_NUM_THREADS=,,2,3), correct them now
     j = 0;
-    while ( __kmp_nested_nth.used && ! __kmp_nested_nth.nth[ j ] ) {
+    while ( ( j < __kmp_nested_nth.used ) && ! __kmp_nested_nth.nth[ j ] ) {
         __kmp_nested_nth.nth[ j ] = __kmp_dflt_team_nth = __kmp_dflt_team_nth_ub = __kmp_avail_proc;
         j++;
     }
