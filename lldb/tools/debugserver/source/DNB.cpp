@@ -1482,6 +1482,12 @@ DNBProcessGetSharedLibraryInfo (nub_process_t pid, nub_bool_t only_changed, stru
     return 0;
 }
 
+uint32_t
+DNBGetRegisterCPUType()
+{
+    return DNBArchProtocol::GetRegisterCPUType ();
+
+}
 //----------------------------------------------------------------------
 // Get the register set information for a specific thread.
 //----------------------------------------------------------------------

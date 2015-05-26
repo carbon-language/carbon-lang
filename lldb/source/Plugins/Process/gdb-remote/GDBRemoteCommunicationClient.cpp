@@ -3929,9 +3929,12 @@ GDBRemoteCommunicationClient::ReadExtFeature (const lldb_private::ConstString ob
     std::stringstream output;
     StringExtractorGDBRemote chunk;
 
-    const int size   = 0xfff;
-    int       offset = 0;
-    bool      active = true;
+    uint64_t size = GetRemoteMaxPacketSize();
+    if (size == 0)
+        size = 0x1000;
+    size = size - 1; // Leave space for the 'm' or 'l' character in the response
+    int offset = 0;
+    bool active = true;
 
     // loop until all data has been read
     while ( active ) {

@@ -210,6 +210,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_process_event,             &RNBRemote::HandlePacket_QSetProcessEvent, NULL, "QSetProcessEvent:", "Set a process event, to be passed to the process, can be set before the process is started, or after."));
     t.push_back (Packet (set_detach_on_error,           &RNBRemote::HandlePacket_QSetDetachOnError, NULL, "QSetDetachOnError:", "Set whether debugserver will detach (1) or kill (0) from the process it is controlling if it loses connection to lldb."));
     t.push_back (Packet (speed_test,                    &RNBRemote::HandlePacket_qSpeedTest, NULL, "qSpeedTest:", "Test the maximum speed at which packet can be sent/received."));
+    t.push_back (Packet (query_transfer,                &RNBRemote::HandlePacket_qXfer, NULL, "qXfer:", "Support the qXfer packet."));
 }
 
 
@@ -3085,7 +3086,7 @@ RNBRemote::HandlePacket_qSupported (const char *p)
 {
     uint32_t max_packet_size = 128 * 1024;  // 128KBytes is a reasonable max packet size--debugger can always use less
     char buf[64];
-    snprintf (buf, sizeof(buf), "PacketSize=%x", max_packet_size);
+    snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x", max_packet_size);
     return SendPacket (buf);
 }
 
@@ -3979,38 +3980,94 @@ RNBRemote::HandlePacket_S (const char *p)
     return rnb_success;
 }
 
+static const char *
+GetArchName (const uint32_t cputype, const uint32_t cpusubtype)
+{
+    switch (cputype)
+    {
+    case CPU_TYPE_ARM:
+        switch (cpusubtype)
+        {
+        case 5:     return "armv4";
+        case 6:     return "armv6";
+        case 7:     return "armv5t";
+        case 8:     return "xscale";
+        case 9:     return "armv7";
+        case 10:    return "armv7f";
+        case 11:    return "armv7s";
+        case 12:    return "armv7k";
+        case 14:    return "armv6m";
+        case 15:    return "armv7m";
+        case 16:    return "armv7em";
+        default:    return "arm";
+        }
+        break;
+    case CPU_TYPE_ARM64:    return "arm64";
+    case CPU_TYPE_I386:     return "i386";
+    case CPU_TYPE_X86_64:
+        switch (cpusubtype)
+        {
+        default:    return "x86_64";
+        case 8:     return "x86_64h";
+        }
+        break;
+    }
+    return NULL;
+}
+
+static bool
+GetHostCPUType (uint32_t &cputype, uint32_t &cpusubtype, uint32_t &is_64_bit_capable, bool &promoted_to_64)
+{
+    static uint32_t g_host_cputype = 0;
+    static uint32_t g_host_cpusubtype = 0;
+    static uint32_t g_is_64_bit_capable = 0;
+    static bool g_promoted_to_64 = false;
+    
+    if (g_host_cputype == 0)
+    {
+        g_promoted_to_64 = false;
+        size_t len = sizeof(uint32_t);
+        if  (::sysctlbyname("hw.cputype", &g_host_cputype, &len, NULL, 0) == 0)
+        {
+            len = sizeof (uint32_t);
+            if  (::sysctlbyname("hw.cpu64bit_capable", &g_is_64_bit_capable, &len, NULL, 0) == 0)
+            {
+                if (g_is_64_bit_capable && ((g_host_cputype & CPU_ARCH_ABI64) == 0))
+                {
+                    g_promoted_to_64 = true;
+                    g_host_cputype |= CPU_ARCH_ABI64;
+                }
+            }
+        }
+        
+        len = sizeof(uint32_t);
+        if (::sysctlbyname("hw.cpusubtype", &g_host_cpusubtype, &len, NULL, 0) == 0)
+        {
+            if (g_promoted_to_64 &&
+                g_host_cputype == CPU_TYPE_X86_64 && g_host_cpusubtype == CPU_SUBTYPE_486)
+                g_host_cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+        }
+    }
+    
+    cputype = g_host_cputype;
+    cpusubtype = g_host_cpusubtype;
+    is_64_bit_capable = g_is_64_bit_capable;
+    promoted_to_64 = g_promoted_to_64;
+    return g_host_cputype != 0;
+}
+
 rnb_err_t
 RNBRemote::HandlePacket_qHostInfo (const char *p)
 {
     std::ostringstream strm;
 
-    uint32_t cputype, is_64_bit_capable;
-    size_t len = sizeof(cputype);
+    uint32_t cputype = 0;
+    uint32_t cpusubtype = 0;
+    uint32_t is_64_bit_capable = 0;
     bool promoted_to_64 = false;
-    if  (::sysctlbyname("hw.cputype", &cputype, &len, NULL, 0) == 0)
+    if (GetHostCPUType (cputype, cpusubtype, is_64_bit_capable, promoted_to_64))
     {
-        len = sizeof (is_64_bit_capable);
-        if  (::sysctlbyname("hw.cpu64bit_capable", &is_64_bit_capable, &len, NULL, 0) == 0)
-        {
-            if (is_64_bit_capable && ((cputype & CPU_ARCH_ABI64) == 0))
-            {
-                promoted_to_64 = true;
-                cputype |= CPU_ARCH_ABI64;
-            }
-        }
-        
         strm << "cputype:" << std::dec << cputype << ';';
-    }
-
-    uint32_t cpusubtype;
-    len = sizeof(cpusubtype);
-    if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
-    {
-        if (promoted_to_64 && 
-            cputype == CPU_TYPE_X86_64 && 
-            cpusubtype == CPU_SUBTYPE_486)
-            cpusubtype = CPU_SUBTYPE_X86_64_ALL;
-
         strm << "cpusubtype:" << std::dec << cpusubtype << ';';
     }
 
@@ -4053,6 +4110,340 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
         strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
     return SendPacket (strm.str());
 }
+
+void
+XMLElementStart (std::ostringstream &s, uint32_t indent, const char *name, bool has_attributes)
+{
+    if (indent)
+        s << INDENT_WITH_SPACES(indent);
+    s << '<' << name;
+    if (!has_attributes)
+        s << '>' << std::endl;
+}
+
+void
+XMLElementStartEndAttributes (std::ostringstream &s, bool empty)
+{
+    if (empty)
+        s << '/';
+    s << '>' << std::endl;
+}
+
+void
+XMLElementEnd (std::ostringstream &s, uint32_t indent, const char *name)
+{
+    if (indent)
+        s << INDENT_WITH_SPACES(indent);
+    s << '<' << '/' << name << '>' << std::endl;
+}
+
+void
+XMLElementWithStringValue (std::ostringstream &s, uint32_t indent, const char *name, const char *value, bool close = true)
+{
+    if (value)
+    {
+        if (indent)
+            s << INDENT_WITH_SPACES(indent);
+        s << '<' << name << '>' << value;
+        if (close)
+            XMLElementEnd(s, 0, name);
+    }
+}
+
+void
+XMLElementWithUnsignedValue (std::ostringstream &s, uint32_t indent, const char *name, uint64_t value, bool close = true)
+{
+    if (indent)
+        s << INDENT_WITH_SPACES(indent);
+
+    s << '<' << name << '>' << DECIMAL << value;
+    if (close)
+        XMLElementEnd(s, 0, name);
+}
+
+void
+XMLAttributeString (std::ostringstream &s, const char *name, const char *value, const char *default_value = NULL)
+{
+    if (value)
+    {
+        if (default_value && strcmp(value, default_value) == 0)
+            return; // No need to emit the attribute because it matches the default value
+        s <<' ' << name << "=\"" << value << "\"";
+    }
+}
+
+void
+XMLAttributeUnsignedDecimal (std::ostringstream &s, const char *name, uint64_t value)
+{
+    s <<' ' << name << "=\"" << DECIMAL << value << "\"";
+}
+
+void
+GenerateTargetXMLRegister (std::ostringstream &s,
+                           const uint32_t reg_num,
+                           nub_size_t num_reg_sets,
+                           const DNBRegisterSetInfo *reg_set_info,
+                           const register_map_entry_t &reg)
+{
+    const char *default_lldb_encoding = "uint";
+    const char *lldb_encoding = default_lldb_encoding;
+    const char *gdb_group = "general";
+    const char *default_gdb_type = "int";
+    const char *gdb_type = default_gdb_type;
+    const char *default_lldb_format = "hex";
+    const char *lldb_format = default_lldb_format;
+    const char *lldb_set = NULL;
+
+    switch (reg.nub_info.type)
+    {
+        case Uint:      lldb_encoding = "uint"; break;
+        case Sint:      lldb_encoding = "sint"; break;
+        case IEEE754:   lldb_encoding = "ieee754";  if (reg.nub_info.set > 0) gdb_group = "float"; break;
+        case Vector:    lldb_encoding = "vector"; if (reg.nub_info.set > 0) gdb_group = "vector"; break;
+    }
+
+    switch (reg.nub_info.format)
+    {
+        case Binary:            lldb_format = "binary"; break;
+        case Decimal:           lldb_format = "decimal"; break;
+        case Hex:               lldb_format = "hex"; break;
+        case Float:             gdb_type = "float"; lldb_format = "float"; break;
+        case VectorOfSInt8:     gdb_type = "float"; lldb_format = "vector-sint8"; break;
+        case VectorOfUInt8:     gdb_type = "float"; lldb_format = "vector-uint8"; break;
+        case VectorOfSInt16:    gdb_type = "float"; lldb_format = "vector-sint16"; break;
+        case VectorOfUInt16:    gdb_type = "float"; lldb_format = "vector-uint16"; break;
+        case VectorOfSInt32:    gdb_type = "float"; lldb_format = "vector-sint32"; break;
+        case VectorOfUInt32:    gdb_type = "float"; lldb_format = "vector-uint32"; break;
+        case VectorOfFloat32:   gdb_type = "float"; lldb_format = "vector-float32"; break;
+        case VectorOfUInt128:   gdb_type = "float"; lldb_format = "vector-uint128"; break;
+    };
+    if (reg_set_info && reg.nub_info.set < num_reg_sets)
+        lldb_set = reg_set_info[reg.nub_info.set].name;
+
+    uint32_t indent = 2;
+
+    XMLElementStart(s, indent, "reg", true);
+    XMLAttributeString(s, "name", reg.nub_info.name);
+    XMLAttributeUnsignedDecimal(s, "regnum", reg_num);
+    XMLAttributeUnsignedDecimal(s, "offset", reg.offset);
+    XMLAttributeUnsignedDecimal(s, "bitsize", reg.nub_info.size * 8);
+    XMLAttributeString(s, "group", gdb_group);
+    XMLAttributeString(s, "type", gdb_type, default_gdb_type);
+    XMLAttributeString (s, "altname", reg.nub_info.alt);
+    XMLAttributeString(s, "encoding", lldb_encoding, default_lldb_encoding);
+    XMLAttributeString(s, "format", lldb_format, default_lldb_format);
+    XMLAttributeUnsignedDecimal(s, "group_id", reg.nub_info.set);
+    if (reg.nub_info.reg_gcc != INVALID_NUB_REGNUM)
+        XMLAttributeUnsignedDecimal(s, "gcc_regnum", reg.nub_info.reg_gcc);
+    if (reg.nub_info.reg_dwarf != INVALID_NUB_REGNUM)
+        XMLAttributeUnsignedDecimal(s, "dwarf_regnum", reg.nub_info.reg_dwarf);
+
+    const char *lldb_generic = NULL;
+    switch (reg.nub_info.reg_generic)
+    {
+        case GENERIC_REGNUM_FP:     lldb_generic = "fp"; break;
+        case GENERIC_REGNUM_PC:     lldb_generic = "pc"; break;
+        case GENERIC_REGNUM_SP:     lldb_generic = "sp"; break;
+        case GENERIC_REGNUM_RA:     lldb_generic = "ra"; break;
+        case GENERIC_REGNUM_FLAGS:  lldb_generic = "flags"; break;
+        case GENERIC_REGNUM_ARG1:   lldb_generic = "arg1"; break;
+        case GENERIC_REGNUM_ARG2:   lldb_generic = "arg2"; break;
+        case GENERIC_REGNUM_ARG3:   lldb_generic = "arg3"; break;
+        case GENERIC_REGNUM_ARG4:   lldb_generic = "arg4"; break;
+        case GENERIC_REGNUM_ARG5:   lldb_generic = "arg5"; break;
+        case GENERIC_REGNUM_ARG6:   lldb_generic = "arg6"; break;
+        case GENERIC_REGNUM_ARG7:   lldb_generic = "arg7"; break;
+        case GENERIC_REGNUM_ARG8:   lldb_generic = "arg8"; break;
+        default: break;
+    }
+    XMLAttributeString(s, "generic", lldb_generic);
+
+
+    bool empty = reg.value_regnums.empty() && reg.invalidate_regnums.empty();
+    if (!empty)
+    {
+        if (!reg.value_regnums.empty())
+        {
+            std::ostringstream regnums;
+            bool first = true;
+            regnums << DECIMAL;
+            for (auto regnum : reg.value_regnums)
+            {
+                if (!first)
+                    regnums << ',';
+                regnums << regnum;
+                first = false;
+            }
+            XMLAttributeString(s, "value_regnums", regnums.str().c_str());
+        }
+
+        if (!reg.invalidate_regnums.empty())
+        {
+            std::ostringstream regnums;
+            bool first = true;
+            regnums << DECIMAL;
+            for (auto regnum : reg.invalidate_regnums)
+            {
+                if (!first)
+                    regnums << ',';
+                regnums << regnum;
+                first = false;
+            }
+            XMLAttributeString(s, "invalidate_regnums", regnums.str().c_str());
+        }
+    }
+    XMLElementStartEndAttributes(s, true);
+}
+
+void
+GenerateTargetXMLRegisters (std::ostringstream &s)
+{
+    nub_size_t num_reg_sets = 0;
+    const DNBRegisterSetInfo *reg_sets = DNBGetRegisterSetInfo (&num_reg_sets);
+
+
+    uint32_t cputype = DNBGetRegisterCPUType();
+    if (cputype)
+    {
+        XMLElementStart(s, 0, "feature", true);
+        std::ostringstream name_strm;
+        name_strm << "com.apple.debugserver." << GetArchName (cputype, 0);
+        XMLAttributeString(s, "name", name_strm.str().c_str());
+        XMLElementStartEndAttributes(s, false);
+        for (uint32_t reg_num = 0; reg_num < g_num_reg_entries; ++reg_num)
+//        for (const auto &reg: g_dynamic_register_map)
+        {
+            GenerateTargetXMLRegister(s, reg_num, num_reg_sets, reg_sets, g_reg_entries[reg_num]);
+        }
+        XMLElementEnd(s, 0, "feature");
+
+        if (num_reg_sets > 0)
+        {
+            XMLElementStart(s, 0, "groups", false);
+            for (uint32_t set=1; set<num_reg_sets; ++set)
+            {
+                XMLElementStart(s, 2, "group", true);
+                XMLAttributeUnsignedDecimal(s, "id", set);
+                XMLAttributeString(s, "name", reg_sets[set].name);
+                XMLElementStartEndAttributes(s, true);
+            }
+            XMLElementEnd(s, 0, "groups");
+        }
+    }
+}
+
+static const char *g_target_xml_header = R"(<?xml version="1.0"?>
+<target version="1.0">)";
+
+static const char *g_target_xml_footer = "</target>";
+
+static std::string g_target_xml;
+
+void
+UpdateTargetXML ()
+{
+    std::ostringstream s;
+    s << g_target_xml_header << std::endl;
+    
+    // Set the architecture
+    //s << "<architecture>" << arch "</architecture>" << std::endl;
+    
+    // Set the OSABI
+    //s << "<osabi>abi-name</osabi>"
+
+    GenerateTargetXMLRegisters(s);
+    
+    s << g_target_xml_footer << std::endl;
+
+    // Save the XML output in case it gets retrieved in chunks
+    g_target_xml = s.str();
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qXfer (const char *command)
+{
+    const char *p = command;
+    p += strlen ("qXfer:");
+    const char *sep = strchr(p, ':');
+    if (sep)
+    {
+        std::string object(p, sep - p);     // "auxv", "backtrace", "features", etc
+        p = sep + 1;
+        sep = strchr(p, ':');
+        if (sep)
+        {
+            std::string rw(p, sep - p);    // "read" or "write"
+            p = sep + 1;
+            sep = strchr(p, ':');
+            if (sep)
+            {
+                std::string annex(p, sep - p);    // "read" or "write"
+
+                p = sep + 1;
+                sep = strchr(p, ',');
+                if (sep)
+                {
+                    std::string offset_str(p, sep - p); // read the length as a string
+                    p = sep + 1;
+                    std::string length_str(p); // read the offset as a string
+                    char *end = nullptr;
+                    const uint64_t offset = strtoul(offset_str.c_str(), &end, 16); // convert offset_str to a offset
+                    if (*end == '\0')
+                    {
+                        const uint64_t length = strtoul(length_str.c_str(), &end, 16); // convert length_str to a length
+                        if (*end == '\0')
+                        {
+                            if (object == "features"  &&
+                                rw     == "read"      &&
+                                annex  == "target.xml")
+                            {
+                                std::ostringstream xml_out;
+
+                                if (offset == 0)
+                                {
+                                    InitializeRegisters (true);
+
+                                    UpdateTargetXML();
+                                    if (g_target_xml.empty())
+                                        return SendPacket("E83");
+
+                                    if (length > g_target_xml.size())
+                                    {
+                                        xml_out << 'l'; // No more data
+                                        xml_out << binary_encode_string(g_target_xml);
+                                    }
+                                    else
+                                    {
+                                        xml_out << 'm'; // More data needs to be read with a subsequent call
+                                        xml_out << binary_encode_string(std::string(g_target_xml, offset, length));
+                                    }
+                                }
+                                else
+                                {
+                                    // Retrieving target XML in chunks
+                                    if (offset < g_target_xml.size())
+                                    {
+                                        std::string chunk(g_target_xml, offset, length);
+                                        if (chunk.size() < length)
+                                            xml_out << 'l'; // No more data
+                                        else
+                                            xml_out << 'm'; // More data needs to be read with a subsequent call
+                                        xml_out << binary_encode_string(chunk.data());
+                                    }
+                                }
+                                return SendPacket(xml_out.str());
+                            }
+                            // Well formed, put not supported
+                            return HandlePacket_UNIMPLEMENTED (command);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return SendPacket ("E82");
+}
+
 
 rnb_err_t
 RNBRemote::HandlePacket_qGDBServerVersion (const char *p)

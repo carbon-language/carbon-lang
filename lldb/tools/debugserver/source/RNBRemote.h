@@ -127,6 +127,7 @@ public:
         restore_register_state,         // '_G'
         speed_test,                     // 'qSpeedTest:'
         set_detach_on_error,            // 'QSetDetachOnError:'
+        query_transfer,                 // 'qXfer:'
         unknown_type
     } PacketEnum;
 
@@ -234,6 +235,7 @@ public:
     rnb_err_t HandlePacket_SetEnableAsyncProfiling(const char *p);
     rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
     rnb_err_t HandlePacket_qSpeedTest (const char *p);
+    rnb_err_t HandlePacket_qXfer (const char *p);
     rnb_err_t HandlePacket_stop_process (const char *p);
     rnb_err_t HandlePacket_QSetDetachOnError (const char *p);
 

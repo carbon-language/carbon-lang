@@ -15,11 +15,12 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Host/StringConvert.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/DataFormatters/FormatManager.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -36,17 +37,18 @@ DynamicRegisterInfo::DynamicRegisterInfo () :
 {
 }
 
-DynamicRegisterInfo::DynamicRegisterInfo(const StructuredData::Dictionary &dict, ByteOrder byte_order)
-    : m_regs()
-    , m_sets()
-    , m_set_reg_nums()
-    , m_set_names()
-    , m_value_regs_map()
-    , m_invalidate_regs_map()
-    , m_reg_data_byte_size(0)
-    , m_finalized(false)
+DynamicRegisterInfo::DynamicRegisterInfo(const lldb_private::StructuredData::Dictionary &dict,
+                                         const lldb_private::ArchSpec &arch) :
+    m_regs (),
+    m_sets (),
+    m_set_reg_nums (),
+    m_set_names (),
+    m_value_regs_map (),
+    m_invalidate_regs_map (),
+    m_reg_data_byte_size (0),
+    m_finalized (false)
 {
-    SetRegisterInfo (dict, byte_order);
+    SetRegisterInfo (dict, arch);
 }
 
 DynamicRegisterInfo::~DynamicRegisterInfo ()
@@ -54,7 +56,7 @@ DynamicRegisterInfo::~DynamicRegisterInfo ()
 }
 
 size_t
-DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, ByteOrder byte_order)
+DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, const ArchSpec &arch)
 {
     assert(!m_finalized);
     StructuredData::Array *sets = nullptr;
@@ -121,6 +123,8 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, Byt
 
         reg_info_dict->GetValueForKeyAsInteger("offset", reg_info.byte_offset, UINT32_MAX);
 
+        const ByteOrder byte_order = arch.GetByteOrder();
+        
         if (reg_info.byte_offset == UINT32_MAX)
         {
             // No offset for this register, see if the register has a value expression
@@ -384,7 +388,7 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, Byt
         m_regs.push_back(reg_info);
         m_set_reg_nums[set].push_back(i);
     }
-    Finalize();
+    Finalize(arch);
     return m_regs.size();
 }
 
@@ -423,7 +427,7 @@ DynamicRegisterInfo::AddRegister (RegisterInfo &reg_info,
 }
 
 void
-DynamicRegisterInfo::Finalize ()
+DynamicRegisterInfo::Finalize (const ArchSpec &arch)
 {
     if (m_finalized)
         return;
@@ -517,6 +521,95 @@ DynamicRegisterInfo::Finalize ()
             m_regs[i].invalidate_regs = m_invalidate_regs_map[i].data();
         else
             m_regs[i].invalidate_regs = NULL;
+    }
+    
+    // Check if we need to automatically set the generic registers in case
+    // they weren't set
+    bool generic_regs_specified = false;
+    for (const auto &reg: m_regs)
+    {
+        if (reg.kinds[eRegisterKindGeneric] != LLDB_INVALID_REGNUM)
+        {
+            generic_regs_specified = true;
+            break;
+        }
+    }
+
+    if (!generic_regs_specified)
+    {
+        switch (arch.GetMachine())
+        {
+        case llvm::Triple::aarch64:
+        case llvm::Triple::aarch64_be:
+            for (auto &reg: m_regs)
+            {
+                if (strcmp(reg.name, "pc") == 0)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
+                else if ((strcmp(reg.name, "fp") == 0) || (strcmp(reg.name, "x29") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if ((strcmp(reg.name, "lr") == 0) || (strcmp(reg.name, "x30") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RA;
+                else if ((strcmp(reg.name, "sp") == 0) || (strcmp(reg.name, "x31") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
+                else if (strcmp(reg.name, "cpsr") == 0)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+            }
+            break;
+            
+        case llvm::Triple::arm:
+        case llvm::Triple::armeb:
+        case llvm::Triple::thumb:
+        case llvm::Triple::thumbeb:
+            for (auto &reg: m_regs)
+            {
+                if ((strcmp(reg.name, "pc") == 0) || (strcmp(reg.name, "r15") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
+                else if ((strcmp(reg.name, "sp") == 0) || (strcmp(reg.name, "r13") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
+                else if ((strcmp(reg.name, "lr") == 0) || (strcmp(reg.name, "r14") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RA;
+                else if ((strcmp(reg.name, "r7") == 0) && arch.GetTriple().getVendor() == llvm::Triple::Apple)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if ((strcmp(reg.name, "r11") == 0) && arch.GetTriple().getVendor() != llvm::Triple::Apple)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if (strcmp(reg.name, "fp") == 0)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if (strcmp(reg.name, "cpsr") == 0)
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+            }
+            break;
+            
+        case llvm::Triple::x86:
+            for (auto &reg: m_regs)
+            {
+                if ((strcmp(reg.name, "eip") == 0) || (strcmp(reg.name, "pc") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
+                else if ((strcmp(reg.name, "esp") == 0) || (strcmp(reg.name, "sp") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
+                else if ((strcmp(reg.name, "ebp") == 0) || (strcmp(reg.name, "fp") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if ((strcmp(reg.name, "eflags") == 0) || (strcmp(reg.name, "flags") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+            }
+            break;
+
+        case llvm::Triple::x86_64:
+            for (auto &reg: m_regs)
+            {
+                if ((strcmp(reg.name, "rip") == 0) || (strcmp(reg.name, "pc") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
+                else if ((strcmp(reg.name, "rsp") == 0) || (strcmp(reg.name, "sp") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
+                else if ((strcmp(reg.name, "rbp") == 0) || (strcmp(reg.name, "fp") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
+                else if ((strcmp(reg.name, "rflags") == 0) || (strcmp(reg.name, "flags") == 0))
+                    reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+            }
+            break;
+
+        default:
+            break;
+        }
     }
 }
 

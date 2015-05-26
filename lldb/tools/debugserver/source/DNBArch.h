@@ -43,6 +43,9 @@ public:
     static DNBArchProtocol *
     Create (MachThread *thread);
 
+    static uint32_t
+    GetRegisterCPUType ();
+
     static const DNBRegisterSetInfo * 
     GetRegisterSetInfo (nub_size_t *num_reg_sets);
 

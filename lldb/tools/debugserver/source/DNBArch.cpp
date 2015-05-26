@@ -57,6 +57,15 @@ DNBArchProtocol::RegisterArchPlugin (const DNBArchPluginInfo &arch_info)
         g_arch_plugins[arch_info.cpu_type] = arch_info;
 }
 
+uint32_t
+DNBArchProtocol::GetRegisterCPUType ()
+{
+    const DNBArchPluginInfo *arch_info = GetArchInfo ();
+    if (arch_info)
+        return arch_info->cpu_type;
+    return 0;
+}
+
 const DNBRegisterSetInfo *
 DNBArchProtocol::GetRegisterSetInfo (nub_size_t *num_reg_sets)
 {

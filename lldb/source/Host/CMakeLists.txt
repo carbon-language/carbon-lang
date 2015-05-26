@@ -37,6 +37,7 @@ add_host_subdirectory(common
   common/ThisThread.cpp
   common/ThreadLauncher.cpp
   common/TimeValue.cpp
+  common/XML.cpp
   )
 
 if (NOT LLDB_DISABLE_LIBEDIT)
