@@ -352,6 +352,8 @@ private:
   ///
   void InitEHFrameSection();
 
+  virtual unsigned SelectMipsTTypeEncoding() const;
+
 public:
   const Triple &getTargetTriple() const { return TT; }
 };

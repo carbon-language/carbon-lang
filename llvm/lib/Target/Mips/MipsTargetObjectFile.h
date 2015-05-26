@@ -41,6 +41,8 @@ class MipsTargetMachine;
 
     MCSection *getSectionForConstant(SectionKind Kind,
                                      const Constant *C) const override;
+
+    unsigned SelectMipsTTypeEncoding() const override;
   };
 } // end namespace llvm
 

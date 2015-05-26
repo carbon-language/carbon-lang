@@ -37,6 +37,7 @@ ExternSData("mextern-sdata", cl::Hidden,
             cl::init(true));
 
 void MipsTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
+  this->TM = &static_cast<const MipsTargetMachine &>(TM);
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
   InitializeELF(TM.Options.UseInitArray);
 
@@ -45,7 +46,6 @@ void MipsTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
 
   SmallBSSSection = getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
                                                ELF::SHF_WRITE | ELF::SHF_ALLOC);
-  this->TM = &static_cast<const MipsTargetMachine &>(TM);
 }
 
 // A address must be loaded from a small section if its size is less than the
@@ -145,4 +145,10 @@ MipsTargetObjectFile::getSectionForConstant(SectionKind Kind,
 
   // Otherwise, we work the same as ELF.
   return TargetLoweringObjectFileELF::getSectionForConstant(Kind, C);
+}
+
+unsigned MipsTargetObjectFile::SelectMipsTTypeEncoding() const {
+  return dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+         (TM->getABI().ArePtrs64bit() ? dwarf::DW_EH_PE_sdata8
+                                      : dwarf::DW_EH_PE_sdata4);
 }
