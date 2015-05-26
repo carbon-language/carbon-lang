@@ -21710,7 +21710,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
   if ((N->getOpcode() == ISD::VSELECT ||
        N->getOpcode() == X86ISD::SHRUNKBLEND) &&
-      !DCI.isBeforeLegalize()) {
+      !DCI.isBeforeLegalize() && !VT.is512BitVector()) {
     SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
