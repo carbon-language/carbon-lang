@@ -28,24 +28,22 @@
 #include <system_error>
 using namespace llvm;
 
-namespace {
-  cl::opt<std::string>
-  OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
-                 cl::init("-"));
+static cl::opt<std::string>
+OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"),
+               cl::init("-"));
 
-  cl::opt<std::string>
-  DependFilename("d",
-                 cl::desc("Dependency filename"),
-                 cl::value_desc("filename"),
-                 cl::init(""));
+static cl::opt<std::string>
+DependFilename("d",
+               cl::desc("Dependency filename"),
+               cl::value_desc("filename"),
+               cl::init(""));
 
-  cl::opt<std::string>
-  InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
+static cl::opt<std::string>
+InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 
-  cl::list<std::string>
-  IncludeDirs("I", cl::desc("Directory of include files"),
-              cl::value_desc("directory"), cl::Prefix);
-}
+static cl::list<std::string>
+IncludeDirs("I", cl::desc("Directory of include files"),
+            cl::value_desc("directory"), cl::Prefix);
 
 /// \brief Create a dependency file for `-d` option.
 ///
