@@ -445,6 +445,14 @@ struct coff_aux_clr_token {
   support::ulittle32_t SymbolTableIndex;
 };
 
+struct coff_import_directory_table_entry {
+  support::ulittle32_t ImportLookupTableRVA;
+  support::ulittle32_t TimeDateStamp;
+  support::ulittle32_t ForwarderChain;
+  support::ulittle32_t NameRVA;
+  support::ulittle32_t ImportAddressTableRVA;
+};
+
 struct coff_load_configuration32 {
   support::ulittle32_t Characteristics;
   support::ulittle32_t TimeDateStamp;
