@@ -73,6 +73,7 @@ public:
     ByVal,                 ///< Pass structure by value
     InAlloca,              ///< Pass structure in an alloca
     Cold,                  ///< Marks function as being in a cold path.
+    Convergent,            ///< Can only be moved to control-equivalent blocks
     InlineHint,            ///< Source said inlining was desirable
     InReg,                 ///< Force argument to be passed in register
     JumpTable,             ///< Build jump-instruction tables and replace refs.

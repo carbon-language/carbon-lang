@@ -444,6 +444,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   canThrow = false;
   isNoReturn = false;
   isNoDuplicate = false;
+  isConvergent = false;
 
   if (DefName.size() <= 4 ||
       std::string(DefName.begin(), DefName.begin() + 4) != "int_")
@@ -574,6 +575,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       canThrow = true;
     else if (Property->getName() == "IntrNoDuplicate")
       isNoDuplicate = true;
+    else if (Property->getName() == "IntrConvergent")
+      isConvergent = true;
     else if (Property->getName() == "IntrNoReturn")
       isNoReturn = true;
     else if (Property->isSubClassOf("NoCapture")) {

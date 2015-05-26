@@ -73,6 +73,11 @@ def IntrNoReturn : IntrinsicProperty;
 // Parallels the noduplicate attribute on LLVM IR functions.
 def IntrNoDuplicate : IntrinsicProperty;
 
+// IntrConvergent - Calls to this intrinsic are convergent and may only be
+// moved to control equivalent blocks.
+// Parallels the convergent attribute on LLVM IR functions.
+def IntrConvergent : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//

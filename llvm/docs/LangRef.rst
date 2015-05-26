@@ -1196,6 +1196,13 @@ example:
     computing edge weights, basic blocks post-dominated by a cold
     function call are also considered to be cold; and, thus, given low
     weight.
+``convergent``
+    This attribute indicates that the callee is dependent on a convergent
+    thread execution pattern under certain parallel execution models.
+    Transformations that are execution model agnostic may only move or
+    tranform this call if the final location is control equivalent to its
+    original position in the program, where control equivalence is defined as
+    A dominates B and B post-dominates A, or vice versa.
 ``inlinehint``
     This attribute indicates that the source code contained a hint that
     inlining this function is desirable (such as the "inline" keyword in

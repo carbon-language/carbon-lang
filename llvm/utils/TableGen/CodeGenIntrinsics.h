@@ -80,6 +80,9 @@ namespace llvm {
     /// isNoReturn - True if the intrinsic is no-return.
     bool isNoReturn;
 
+    /// isConvergent - True if the intrinsic is marked as convergent.
+    bool isConvergent;
+
     enum ArgAttribute {
       NoCapture,
       ReadOnly,

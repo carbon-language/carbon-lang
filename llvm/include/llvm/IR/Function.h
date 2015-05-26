@@ -308,6 +308,16 @@ public:
     addFnAttr(Attribute::NoDuplicate);
   }
 
+  /// @brief Determine if the call is convergent.
+  bool isConvergent() const {
+    return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::Convergent);
+  }
+  void setConvergent() {
+    addFnAttr(Attribute::Convergent);
+  }
+
+
   /// @brief True if the ABI mandates (or the user requested) that this
   /// function be in a unwind table.
   bool hasUWTable() const {
