@@ -18,7 +18,6 @@
 namespace llvm {
 class MCAssembler;
 class MCCodeEmitter;
-class MCSectionData;
 class MCSubtargetInfo;
 class MCExpr;
 class MCFragment;
