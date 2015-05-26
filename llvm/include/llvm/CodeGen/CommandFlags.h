@@ -229,8 +229,6 @@ JTableType("jump-table-type",
 static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   TargetOptions Options;
   Options.LessPreciseFPMADOption = EnableFPMAD;
-  Options.NoFramePointerElim = DisableFPElim;
-  Options.NoFramePointerElimOverride = DisableFPElim.getNumOccurrences() > 0;
   Options.AllowFPOpFusion = FuseFPOps;
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;
@@ -286,6 +284,33 @@ static inline std::string getFeaturesStr() {
     Features.AddFeature(MAttrs[i]);
 
   return Features.getString();
+}
+
+/// \brief Set function attributes of functions in Module M based on CPU,
+/// Features, and command line flags.
+static inline void setFunctionAttributes(StringRef CPU, StringRef Features,
+                                         Module &M) {
+  for (auto &F : M) {
+    auto &Ctx = F.getContext();
+    AttributeSet Attrs = F.getAttributes(), NewAttrs;
+
+    if (!CPU.empty())
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
+                                       "target-cpu", CPU);
+
+    if (!Features.empty())
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
+                                       "target-features", Features);
+
+    if (DisableFPElim.getNumOccurrences() > 0)
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
+                                       "no-frame-pointer-elim",
+                                       DisableFPElim ? "true" : "false");
+
+    // Let NewAttrs override Attrs.
+    NewAttrs = Attrs.addAttributes(Ctx, AttributeSet::FunctionIndex, NewAttrs);
+    F.setAttributes(NewAttrs);
+  }
 }
 
 #endif

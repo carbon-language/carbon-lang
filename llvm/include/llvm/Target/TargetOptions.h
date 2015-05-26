@@ -60,8 +60,7 @@ namespace llvm {
   class TargetOptions {
   public:
     TargetOptions()
-        : PrintMachineCode(false), NoFramePointerElim(false),
-          NoFramePointerElimOverride(false),
+        : PrintMachineCode(false),
           LessPreciseFPMADOption(false), UnsafeFPMath(false),
           NoInfsFPMath(false), NoNaNsFPMath(false),
           HonorSignDependentRoundingFPMathOption(false),
@@ -80,14 +79,6 @@ namespace llvm {
     /// option is specified on the command line, and should enable debugging
     /// output from the code generator.
     unsigned PrintMachineCode : 1;
-
-    /// NoFramePointerElim - This flag is enabled when the -disable-fp-elim is
-    /// specified on the command line.  If the target supports the frame pointer
-    /// elimination optimization, this option should disable it.
-    unsigned NoFramePointerElim : 1;
-
-    /// This flag is true when "disable-fp-elim" appeared on the command line.
-    unsigned NoFramePointerElimOverride : 1;
 
     /// DisableFramePointerElim - This returns true if frame pointer elimination
     /// optimization should be disabled for the given machine function.
@@ -226,15 +217,6 @@ namespace llvm {
     /// Machine level options.
     MCTargetOptions MCOptions;
   };
-
-/// \brief Set function attributes of functions in Module M based on CPU,
-/// Features, and Options.
-/// If AlwaysRecordAttrs is true, it will always record the function attributes
-/// in Options regardless of whether those attributes were specified on the
-/// tool's command line.
-void setFunctionAttributes(StringRef CPU, StringRef Features,
-                           const TargetOptions &Options, Module &M,
-                           bool AlwaysRecordAttrs);
 
 // Comparison operators:
 

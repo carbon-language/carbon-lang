@@ -396,11 +396,9 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<TargetMachine> TM(Machine);
 
-  // Override function attributes based on CPUStr, FeaturesStr, and Options.
-  // Pass AlwaysRecordAttrs=false as we want to override an attribute only when
-  // the corresponding cl::opt has been provided on opt's command line.
-  setFunctionAttributes(CPUStr, FeaturesStr, Options, *M,
-                        /* AlwaysRecordAttrs */ false);
+  // Override function attributes based on CPUStr, FeaturesStr, and command line
+  // flags.
+  setFunctionAttributes(CPUStr, FeaturesStr, *M);
 
   // If the output is set to be emitted to standard out, and standard out is a
   // console, print out a warning message and refuse to do it.  We don't

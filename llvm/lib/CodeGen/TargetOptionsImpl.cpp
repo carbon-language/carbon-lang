@@ -54,30 +54,3 @@ bool TargetOptions::HonorSignDependentRoundingFPMath() const {
 StringRef TargetOptions::getTrapFunctionName() const {
   return TrapFuncName;
 }
-
-
-void llvm::setFunctionAttributes(StringRef CPU, StringRef Features,
-                                 const TargetOptions &Options, Module &M,
-                                 bool AlwaysRecordAttrs) {
-  for (auto &F : M) {
-    auto &Ctx = F.getContext();
-    AttributeSet Attrs = F.getAttributes(), NewAttrs;
-
-    if (!CPU.empty())
-      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
-                                       "target-cpu", CPU);
-
-    if (!Features.empty())
-      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
-                                       "target-features", Features);
-
-    if (Options.NoFramePointerElimOverride || AlwaysRecordAttrs)
-      NewAttrs = NewAttrs.addAttribute(
-          Ctx, AttributeSet::FunctionIndex, "no-frame-pointer-elim",
-          Options.NoFramePointerElim ? "true" : "false");
-
-    // Let NewAttrs override Attrs.
-    NewAttrs = Attrs.addAttributes(Ctx, AttributeSet::FunctionIndex, NewAttrs);
-    F.setAttributes(NewAttrs);
-  }
-}

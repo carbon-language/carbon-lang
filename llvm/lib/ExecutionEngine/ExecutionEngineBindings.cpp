@@ -177,15 +177,19 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
   memcpy(&options, PassedOptions, SizeOfPassedOptions);
   
   TargetOptions targetOptions;
-  targetOptions.NoFramePointerElim = options.NoFramePointerElim;
   targetOptions.EnableFastISel = options.EnableFastISel;
   std::unique_ptr<Module> Mod(unwrap(M));
 
   if (Mod)
     // Set function attribute "no-frame-pointer-elim" based on
     // NoFramePointerElim.
-    setFunctionAttributes(/* CPU */ "", /* Features */ "", targetOptions, *Mod,
-                          /* AlwaysRecordAttrs */ true);
+    for (auto &F : *Mod) {
+      auto Attrs = F.getAttributes();
+      auto Value = options.NoFramePointerElim ? "true" : "false";
+      Attrs = Attrs.addAttribute(F.getContext(), AttributeSet::FunctionIndex,
+                                 "no-frame-pointer-elim", Value);
+      F.setAttributes(Attrs);
+    }
 
   std::string Error;
   EngineBuilder builder(std::move(Mod));
