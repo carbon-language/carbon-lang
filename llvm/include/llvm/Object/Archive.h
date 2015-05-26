@@ -207,6 +207,7 @@ public:
 
   bool hasSymbolTable() const;
   child_iterator getSymbolTableChild() const { return SymbolTable; }
+  uint32_t getNumberOfSymbols() const;
 
 private:
   child_iterator SymbolTable;
