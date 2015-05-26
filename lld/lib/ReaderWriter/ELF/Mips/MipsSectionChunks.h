@@ -27,9 +27,9 @@ public:
       : Section<ELFT>(ctx, ".reginfo", "MipsReginfo"),
         _targetLayout(targetLayout) {
     this->setOrder(MipsTargetLayout<ELFT>::ORDER_MIPS_REGINFO);
-    this->_entSize = sizeof(Elf_RegInfo);
-    this->_fsize = sizeof(Elf_RegInfo);
-    this->_msize = sizeof(Elf_RegInfo);
+    this->_entSize = sizeof(Elf_Mips_RegInfo);
+    this->_fsize = sizeof(Elf_Mips_RegInfo);
+    this->_msize = sizeof(Elf_Mips_RegInfo);
     this->_alignment = 4;
     this->_type = SHT_MIPS_REGINFO;
     this->_flags = SHF_ALLOC;
@@ -60,9 +60,9 @@ public:
   }
 
 private:
-  typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
 
-  Elf_RegInfo _reginfo;
+  Elf_Mips_RegInfo _reginfo;
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 
@@ -80,7 +80,7 @@ public:
     this->_entSize = 1;
     this->_alignment = 8;
     this->_fsize = llvm::RoundUpToAlignment(
-        sizeof(Elf_Mips_Options) + sizeof(Elf_RegInfo), this->_alignment);
+        sizeof(Elf_Mips_Options) + sizeof(Elf_Mips_RegInfo), this->_alignment);
     this->_msize = this->_fsize;
     this->_type = SHT_MIPS_OPTIONS;
     this->_flags = SHF_ALLOC | SHF_MIPS_NOSTRIP;
@@ -117,10 +117,10 @@ public:
 
 private:
   typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
-  typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
 
   Elf_Mips_Options _header;
-  Elf_RegInfo _reginfo;
+  Elf_Mips_RegInfo _reginfo;
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 

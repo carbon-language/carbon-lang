@@ -159,7 +159,7 @@ private:
       _dtpOff = sec->sh_addr + DTP_OFFSET;
     }
 
-    typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+    typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
     typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
 
     auto &ctx = static_cast<MipsLinkingContext &>(this->_ctx);
@@ -178,7 +178,7 @@ private:
         const auto *opt =
             reinterpret_cast<const Elf_Mips_Options *>(raw.data());
         if (opt->kind == ODK_REGINFO) {
-          const Elf_RegInfo &regInfo = opt->getRegInfoDesc();
+          const Elf_Mips_RegInfo &regInfo = opt->getRegInfo();
           ctx.mergeReginfoMask(regInfo);
           _gp0 = regInfo.ri_gp_value;
           break;
@@ -191,11 +191,12 @@ private:
         return ec;
 
       ArrayRef<uint8_t> raw = contents.get();
-      if (raw.size() != sizeof(Elf_RegInfo))
+      if (raw.size() != sizeof(Elf_Mips_RegInfo))
         return make_dynamic_error_code(
             StringRef("Invalid size of MIPS_REGINFO section"));
 
-      const auto *regInfo = reinterpret_cast<const Elf_RegInfo *>(raw.data());
+      const auto *regInfo =
+          reinterpret_cast<const Elf_Mips_RegInfo *>(raw.data());
       ctx.mergeReginfoMask(*regInfo);
       _gp0 = regInfo->ri_gp_value;
     }
