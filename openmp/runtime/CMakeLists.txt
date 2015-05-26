@@ -53,19 +53,21 @@ include(GetArchitecture) # get_architecture()
 # If you want to change the compiler, then empty the build directory and rerun cmake.
 
 # Build Configuration
-set(os_possible_values          lin mac win)
-set(arch_possible_values        32e 32 arm ppc64 ppc64le aarch64 mic)
-set(build_type_possible_values  release debug relwithdebinfo)
+set(os_possible_values lin mac win)
+set(arch_possible_values 32e 32 arm ppc64 ppc64le aarch64 mic)
+set(build_type_possible_values release debug relwithdebinfo)
 set(omp_version_possible_values 41 40 30)
-set(lib_type_possible_values    normal profile stubs)
-set(mic_arch_possible_values    knf knc)
+set(lib_type_possible_values normal profile stubs)
+set(mic_arch_possible_values knf knc)
 
 # Below, cmake will try and determine the operating system and architecture for you.
 # These values are set in CMakeCache.txt when cmake is first run (-Dvar_name=... will take precedence)
 #  parameter  | default value             
 # ----------------------------
 # Right now, this build system considers os=lin to mean "Unix-like that is not MAC"
-if(${APPLE}) # Apple goes first because CMake considers Mac to be a Unix based operating system, while libiomp5 considers it a special case
+# Apple goes first because CMake considers Mac to be a Unix based 
+# operating system, while libiomp5 considers it a special case
+if(${APPLE})
     set(temp_os mac)
 elseif(${UNIX})
     set(temp_os lin)
@@ -78,45 +80,72 @@ endif()
 # If adding a new architecture, take a look at cmake/GetArchitecture.cmake
 get_architecture(detected_arch)
 
-set(LIBOMP_OS            ${temp_os}     CACHE STRING "The operating system to build for (lin/mac/win)")
-set(LIBOMP_ARCH          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64/ppc64le/aarch64/mic).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
-set(LIBOMP_LIB_TYPE       normal        CACHE STRING "Performance,Profiling,Stubs library (normal/profile/stubs)")
-set(LIBOMP_VERSION        5             CACHE STRING "Produce libguide (version 4) or libiomp5 (version 5)")
-set(LIBOMP_OMP_VERSION    41            CACHE STRING "The OpenMP version (41/40/30)")
-set(LIBOMP_MIC_ARCH       knc           CACHE STRING "Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture) (knf/knc).   Ignored if not Intel(R) MIC Architecture build.")
-set(LIBOMP_FORTRAN_MODULES false CACHE BOOL   "Create Fortran module files? (requires fortran compiler)")
+set(LIBOMP_OS ${temp_os} CACHE STRING
+    "The operating system to build for (lin/mac/win)")
+set(LIBOMP_ARCH ${detected_arch} CACHE STRING
+    "The architecture to build for (32e/32/arm/ppc64/ppc64le/aarch64/mic).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+set(LIBOMP_LIB_TYPE normal CACHE STRING
+    "Performance,Profiling,Stubs library (normal/profile/stubs)")
+set(LIBOMP_VERSION 5 CACHE STRING 
+    "Produce libguide (version 4) or libiomp5 (version 5)")
+set(LIBOMP_OMP_VERSION 41 CACHE STRING 
+    "The OpenMP version (41/40/30)")
+set(LIBOMP_MIC_ARCH knc CACHE STRING 
+    "Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture) (knf/knc).  Ignored if not Intel(R) MIC Architecture build.")
+set(LIBOMP_FORTRAN_MODULES false CACHE BOOL
+    "Create Fortran module files? (requires fortran compiler)")
 
 # - These tests are little tests performed after the library is formed.
-# - The library won't be copied to the exports directory until it has passed/skipped all below tests
-# - To skip these tests, just pass -Dtests=OFF to cmake or change tests value in CMakeCache.txt to OFF after running cmake
-set(LIBOMP_TEST_TOUCH      true         CACHE BOOL   "Perform a small touch test?"                            )
-set(LIBOMP_TEST_RELO       true         CACHE BOOL   "Perform a relocation test for dynamic libraries?"       )
-set(LIBOMP_TEST_EXECSTACK  true         CACHE BOOL   "Perform a execstack test for linux dynamic libraries?"  )
-set(LIBOMP_TEST_INSTR      true         CACHE BOOL   "Perform an instruction test for Intel(R) MIC Architecture libraries?" )
-set(LIBOMP_TEST_DEPS       true         CACHE BOOL   "Perform a library dependency test?"                     )
-set(LIBOMP_MICRO_TESTS     false        CACHE BOOL   "Perform touch, relo, execstack, instr, and deps tests?" )
+# - The library won't be copied to the exports directory 
+#   until it has passed/skipped all below tests
+# - To skip these tests, just pass -DLIBOMP_MICRO_TESTS=OFF to cmake
+set(LIBOMP_TEST_TOUCH true CACHE BOOL
+    "Perform a small touch test?")
+set(LIBOMP_TEST_RELO true CACHE BOOL
+    "Perform a relocation test for dynamic libraries?")
+set(LIBOMP_TEST_EXECSTACK true CACHE BOOL
+    "Perform a execstack test for linux dynamic libraries?")
+set(LIBOMP_TEST_INSTR true CACHE BOOL
+    "Perform an instruction test for Intel(R) MIC Architecture libraries?")
+set(LIBOMP_TEST_DEPS true CACHE BOOL
+    "Perform a library dependency test?")
+set(LIBOMP_MICRO_TESTS false CACHE BOOL
+    "Perform touch, relo, execstack, instr, and deps tests?")
 
-# - stats-gathering enables OpenMP stats where things like the number of parallel regions, clock ticks spent in
-#   particular openmp regions are recorded.
-set(LIBOMP_STATS           false         CACHE BOOL   "Stats-Gathering functionality?"                         )
+# - stats-gathering enables OpenMP stats where things like the number of 
+# parallel regions, clock ticks spent in particular openmp regions are recorded.
+set(LIBOMP_STATS false CACHE BOOL
+    "Stats-Gathering functionality?")
 
 # OMPT-support
-set(LIBOMP_OMPT_SUPPORT    false         CACHE BOOL   "OMPT-support?"                                          )
-set(LIBOMP_OMPT_BLAME      true          CACHE BOOL   "OMPT-blame?"                                            )
-set(LIBOMP_OMPT_TRACE      true          CACHE BOOL   "OMPT-trace?"                                            )
+set(LIBOMP_OMPT_SUPPORT false CACHE BOOL
+    "OMPT-support?")
+set(LIBOMP_OMPT_BLAME true CACHE BOOL
+    "OMPT-blame?")
+set(LIBOMP_OMPT_TRACE true CACHE BOOL
+    "OMPT-trace?")
 
-# User specified flags.  These are appended to the predetermined flags found in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (e.g., GNU/CFlags.cmake)
-set(LIBOMP_CFLAGS      "" CACHE STRING "Appended user specified C compiler flags."             )
-set(LIBOMP_CXXFLAGS    "" CACHE STRING "Appended user specified C++ compiler flags."           )
-set(LIBOMP_CPPFLAGS    "" CACHE STRING "Appended user specified C preprocessor flags."         )
-set(LIBOMP_ASMFLAGS    "" CACHE STRING "Appended user specified assembler flags."              )
-set(LIBOMP_LDFLAGS     "" CACHE STRING "Appended user specified linker flags."                 )
-set(LIBOMP_LIBFLAGS    "" CACHE STRING "Appended user specified linked libs flags. (e.g., -lm)")
-set(LIBOMP_FFLAGS      "" CACHE STRING "Appended user specified Fortran compiler flags.  These are only used if LIBOMP_FORTRAN_MODULES==true."       )
+# User specified flags.  These are appended to the predetermined flags found 
+# in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (e.g., GNU/CFlags.cmake)
+set(LIBOMP_CFLAGS "" CACHE STRING
+    "Appended user specified C compiler flags.")
+set(LIBOMP_CXXFLAGS "" CACHE STRING
+    "Appended user specified C++ compiler flags.")
+set(LIBOMP_CPPFLAGS "" CACHE STRING
+    "Appended user specified C preprocessor flags.")
+set(LIBOMP_ASMFLAGS "" CACHE STRING
+    "Appended user specified assembler flags.")
+set(LIBOMP_LDFLAGS "" CACHE STRING
+    "Appended user specified linker flags.")
+set(LIBOMP_LIBFLAGS "" CACHE STRING
+    "Appended user specified linked libs flags. (e.g., -lm)")
+set(LIBOMP_FFLAGS "" CACHE STRING 
+    "Appended user specified Fortran compiler flags.  These are only used if LIBOMP_FORTRAN_MODULES==true.")
 
 # Should the libiomp5 library and generated headers be copied into the original source exports/ directory
 # Turning this to false aids parallel builds to not interfere with each other.
-set(LIBOMP_COPY_EXPORTS true CACHE STRING "Should exports be copied into source exports/ directory?")
+set(LIBOMP_COPY_EXPORTS true CACHE STRING
+    "Should exports be copied into source exports/ directory?")
 
 # - Allow three build types: Release, Debug, RelWithDebInfo (these relate to build.pl's release, debug, and diag settings respectively)
 # - default is Release (when CMAKE_BUILD_TYPE is not defined)
@@ -131,7 +160,8 @@ if(CMAKE_BUILD_TYPE)
 else()
     # CMAKE_BUILD_TYPE was not defined, set default to Release
     unset(CMAKE_BUILD_TYPE CACHE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Release/Debug/RelWithDebInfo")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
+        "Choose the type of build, options are: Release/Debug/RelWithDebInfo")
     string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_lowercase)
     check_variable(cmake_build_type_lowercase  "${build_type_possible_values}")
 endif()
@@ -139,18 +169,19 @@ endif()
 # Allow user to choose a suffix for the installation directory, or if part of
 # LLVM build then just use LLVM_LIBDIR_SUFFIX
 if(${LIBOMP_STANDALONE_BUILD})
-    set(LIBOMP_LIBDIR_SUFFIX "" CACHE STRING "suffix of lib installation directory e.g., 64 => lib64")
+    set(LIBOMP_LIBDIR_SUFFIX "" CACHE STRING
+        "suffix of lib installation directory e.g., 64 => lib64")
 else()
     set(LIBOMP_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
 endif()
 
 # Check valid values
-check_variable(LIBOMP_OS          "${os_possible_values}"         )
-check_variable(LIBOMP_ARCH        "${arch_possible_values}"       )
+check_variable(LIBOMP_OS "${os_possible_values}")
+check_variable(LIBOMP_ARCH "${arch_possible_values}")
 check_variable(LIBOMP_OMP_VERSION "${omp_version_possible_values}")
-check_variable(LIBOMP_LIB_TYPE    "${lib_type_possible_values}"   )
+check_variable(LIBOMP_LIB_TYPE "${lib_type_possible_values}")
 if("${LIBOMP_ARCH}" STREQUAL "mic")
-    check_variable(LIBOMP_MIC_ARCH "${mic_arch_possible_values}"  )
+    check_variable(LIBOMP_MIC_ARCH "${mic_arch_possible_values}")
 endif()
 # Get the build number from kmp_version.c
 get_build_number("${CMAKE_CURRENT_SOURCE_DIR}" build_number)
@@ -209,8 +240,8 @@ endif()
 
 # Set some flags based on build_type
 # cmake_build_type_lowercase is based off of CMAKE_BUILD_TYPE, just put in lowercase.
-set(RELEASE_BUILD        FALSE)
-set(DEBUG_BUILD          FALSE)
+set(RELEASE_BUILD FALSE)
+set(DEBUG_BUILD FALSE)
 set(RELWITHDEBINFO_BUILD FALSE)
 if("${cmake_build_type_lowercase}" STREQUAL "release")
     set(RELEASE_BUILD TRUE)
@@ -244,32 +275,39 @@ endif()
 # - If COMPILER_SUPPORTS_QUAD_PRECISION is true, then a corresponding COMPILER_QUAD_TYPE must be given
 #   This is the compiler's quad-precision data type.
 # ** TODO: This isn't complete yet. Finish it. Requires changing macros in kmp_os.h **
-set(LIBOMP_COMPILER_SUPPORTS_QUAD_PRECISION false CACHE BOOL   "*INCOMPLETE* Does the compiler support a 128-bit floating point type?")
-set(LIBOMP_COMPILER_QUAD_TYPE               ""    CACHE STRING "*INCOMPLETE* The quad precision data type (e.g., for gcc, __float128)")
+set(LIBOMP_COMPILER_SUPPORTS_QUAD_PRECISION false CACHE BOOL
+    "*INCOMPLETE* Does the compiler support a 128-bit floating point type?")
+set(LIBOMP_COMPILER_QUAD_TYPE "" CACHE STRING
+    "*INCOMPLETE* The quad precision data type (e.g., for gcc, __float128)")
 
 # - Should the orignal build rules for builds be used? (cmake/OriginalBuildRules.cmake).  This setting is off by default.
 # - This always compiles with -g.  And if it is a release build, the debug info is stripped out via objcopy and put into libiomp5.dbg.
-set(LIBOMP_USE_BUILDPL_RULES false CACHE BOOL "Should the build follow build.pl rules/recipes?")
+set(LIBOMP_USE_BUILDPL_RULES false CACHE BOOL
+    "Should the build follow build.pl rules/recipes?")
 
 # - Should the build use the predefined linker flags (OS-dependent) in CommonFlags.cmake?
 # - these predefined linker flags should work for Windows, Mac, and True Linux for the most popular compilers/linkers
-set(LIBOMP_USE_PREDEFINED_LINKER_FLAGS true CACHE BOOL "Should the build use the predefined linker flags in CommonFlags.cmake?")
+set(LIBOMP_USE_PREDEFINED_LINKER_FLAGS true CACHE BOOL
+    "Should the build use the predefined linker flags in CommonFlags.cmake?")
 
 # - On multinode systems, larger alignment is desired to avoid false sharing
-set(LIBOMP_USE_INTERNODE_ALIGNMENT false CACHE BOOL "Should larger alignment (4096 bytes) be used for some locks and data structures?")
+set(LIBOMP_USE_INTERNODE_ALIGNMENT false CACHE BOOL
+    "Should larger alignment (4096 bytes) be used for some locks and data structures?")
 
 # - libgomp drop-in compatibility
 if(${LINUX} AND NOT ${PPC64})
-    set(LIBOMP_USE_VERSION_SYMBOLS true CACHE BOOL "Should version symbols be used? These provide binary compatibility with libgomp.")
+    set(LIBOMP_USE_VERSION_SYMBOLS true CACHE BOOL
+        "Should version symbols be used? These provide binary compatibility with libgomp.")
 else()
-    set(LIBOMP_USE_VERSION_SYMBOLS false CACHE BOOL "Version symbols not supported." FORCE)
+    set(LIBOMP_USE_VERSION_SYMBOLS false)
 endif()
 
 # - TSX based locks have __asm code which can be troublesome for some compilers.  This feature is also x86 specific.
 if(${IA32} OR ${INTEL64})
-    set(LIBOMP_USE_ADAPTIVE_LOCKS true CACHE BOOL "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")
+    set(LIBOMP_USE_ADAPTIVE_LOCKS true CACHE BOOL
+        "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")
 else()
-    set(LIBOMP_USE_ADAPTIVE_LOCKS false CACHE BOOL "TSX-based locks not supported.  These are x86 specific." FORCE)
+    set(LIBOMP_USE_ADAPTIVE_LOCKS false)
 endif()
 
 ##################################
@@ -312,10 +350,10 @@ endif()
 
 ####################################
 # Setting file extensions / suffixes
-set(obj ${CMAKE_C_OUTPUT_EXTENSION}   )
+set(obj ${CMAKE_C_OUTPUT_EXTENSION})
 set(lib ${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(dll ${CMAKE_SHARED_LIBRARY_SUFFIX})
-set(exe ${CMAKE_EXECUTABLE_SUFFIX}    )
+set(exe ${CMAKE_EXECUTABLE_SUFFIX})
 
 ######################
 # Find perl executable
@@ -327,14 +365,15 @@ endif()
 #########################
 # Setting directory names
 if(${MIC})
-    set(platform       "${real_os}_${LIBOMP_MIC_ARCH}"        ) # e.g., lin_knf, lin_knc
+    set(platform "${real_os}_${LIBOMP_MIC_ARCH}") # e.g., lin_knf, lin_knc
 else()
-    set(platform       "${real_os}_${LIBOMP_ARCH}"            ) # e.g., lin_32e, mac_32
+    set(platform "${real_os}_${LIBOMP_ARCH}") # e.g., lin_32e, mac_32
 endif()
-set(build_dir      "${CMAKE_CURRENT_BINARY_DIR}"       ) # build directory (Where CMakeCache.txt is created, build files generated)
-set(src_dir        "${CMAKE_CURRENT_SOURCE_DIR}/src"   )
-set(tools_dir      "${CMAKE_CURRENT_SOURCE_DIR}/tools" ) 
-set(export_dir     "${CMAKE_CURRENT_SOURCE_DIR}/exports") 
+# build directory (Where CMakeCache.txt is created, build files generated)
+set(build_dir "${CMAKE_CURRENT_BINARY_DIR}")
+set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(tools_dir "${CMAKE_CURRENT_SOURCE_DIR}/tools") 
+set(export_dir "${CMAKE_CURRENT_SOURCE_DIR}/exports") 
 set(export_ptf_dir "${export_dir}/${platform}${suffix}")
 set(export_cmn_dir1 "${export_dir}/common${suffix}/include") 
 set(export_cmn_dir2 "${export_dir}/common${suffix}/include_compat") 
@@ -347,7 +386,7 @@ if(${MAC})
     # macs use lib/ subdirectory for fat libraries that contain both IA-32 architecture and Intel(R) 64 architecture code.
     _export_lib_fat_dir(${platform} export_lib_fat_dir)
 endif()
-set(inc_dir        "${src_dir}/include/${LIBOMP_OMP_VERSION}")
+set(inc_dir "${src_dir}/include/${LIBOMP_OMP_VERSION}")
 
 ############################
 # Setting final library name
@@ -362,7 +401,7 @@ set(lib_item "${lib_item}${LIBOMP_VERSION}")
 if(${WINDOWS})
     set(lib_item "${lib_item}md")
 endif()
-set(LIBOMP_LIB_NAME   "${lib_item}"   CACHE STRING "OMP library name")
+set(LIBOMP_LIB_NAME "${lib_item}" CACHE STRING "OMP library name")
 set(lib_ext "${dll}")
 # ${lib_file} is real library name:
 # libiomp5.so    for Linux
@@ -376,13 +415,15 @@ if(${WINDOWS})
     set(imp_file "${lib_item}${lib}") # this is exported (libiomp5md.lib)
     set(def_file "${lib_item}.def") # this is not exported
     set(rc_file  "${lib_item}.rc")  # this is not exported
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo" OR ${LIBOMP_USE_BUILDPL_RULES})
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
+        "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo" OR 
+        ${LIBOMP_USE_BUILDPL_RULES})
         set(pdb_file "${lib_file}.pdb") # this is exported if it exists (libiomp5md.dll.pdb)
     endif()
 endif()
-set(export_lib_files  "${lib_file}" "${imp_file}" "${pdb_file}") 
-set(export_inc_files  "iomp_lib.h")
-set(export_mod_files  "omp_lib.mod" "omp_lib_kinds.mod")
+set(export_lib_files "${lib_file}" "${imp_file}" "${pdb_file}") 
+set(export_inc_files "iomp_lib.h")
+set(export_mod_files "omp_lib.mod" "omp_lib_kinds.mod")
 set(export_cmn_files1 "omp.h" "omp_lib.h" "omp_lib.f" "omp_lib.f90")
 set(export_cmn_files2 "iomp.h")
 
@@ -465,19 +506,21 @@ append_cpp_flags(DEFINITIONS_FLAGS)
 # Setup the flags correctly for cmake (covert to string)
 # Pretty them up (STRIP any beginning and trailing whitespace)
 list_to_string("${DEFINITIONS_FLAGS}" DEFINITIONS_FLAGS)
-list_to_string("${C_FLAGS}"           C_FLAGS          )
-list_to_string("${CXX_FLAGS}"         CXX_FLAGS        )
-list_to_string("${ASM_FLAGS}"         ASM_FLAGS        )
-list_to_string("${LD_FLAGS}"          LD_FLAGS         )
-list_to_string("${LD_LIB_FLAGS}"      LD_LIB_FLAGS     )
-list_to_string("${AR_FLAGS}"          AR_FLAGS         ) # Windows specific for creating import library
-string(STRIP   "${DEFINITIONS_FLAGS}" DEFINITIONS_FLAGS)
-string(STRIP   "${C_FLAGS}"           C_FLAGS          )
-string(STRIP   "${CXX_FLAGS}"         CXX_FLAGS        )
-string(STRIP   "${ASM_FLAGS}"         ASM_FLAGS        )
-string(STRIP   "${LD_FLAGS}"          LD_FLAGS         )
-string(STRIP   "${LD_LIB_FLAGS}"      LD_LIB_FLAGS     )
-string(STRIP   "${AR_FLAGS}"          AR_FLAGS         ) # Windows specific for creating import library
+list_to_string("${C_FLAGS}" C_FLAGS)
+list_to_string("${CXX_FLAGS}" CXX_FLAGS)
+list_to_string("${ASM_FLAGS}" ASM_FLAGS)
+list_to_string("${LD_FLAGS}" LD_FLAGS)
+list_to_string("${LD_LIB_FLAGS}" LD_LIB_FLAGS)
+# Windows specific for creating import library
+list_to_string("${AR_FLAGS}" AR_FLAGS)
+string(STRIP "${DEFINITIONS_FLAGS}" DEFINITIONS_FLAGS)
+string(STRIP "${C_FLAGS}" C_FLAGS)
+string(STRIP "${CXX_FLAGS}" CXX_FLAGS)
+string(STRIP "${ASM_FLAGS}" ASM_FLAGS)
+string(STRIP "${LD_FLAGS}" LD_FLAGS)
+string(STRIP "${LD_LIB_FLAGS}" LD_LIB_FLAGS)
+# Windows specific for creating import library
+string(STRIP "${AR_FLAGS}" AR_FLAGS)
 
 # Grab the Perl flags
 set_ev_flags(ev_flags) # expand-vars.pl flags
@@ -497,10 +540,10 @@ set(lib_src_files "${lib_c_items}" "${lib_cxx_items}" "${lib_asm_items}")
 set(imp_src_files "${imp_c_items}")
 add_prefix("${src_dir}/" lib_src_files)
 add_prefix("${src_dir}/" imp_src_files) # Windows-specific
-add_prefix("${src_dir}/" lib_c_items  )
+add_prefix("${src_dir}/" lib_c_items)
 add_prefix("${src_dir}/" lib_cxx_items)
 add_prefix("${src_dir}/" lib_asm_items)
-add_prefix("${src_dir}/" imp_c_items  ) # Windows-specific
+add_prefix("${src_dir}/" imp_c_items) # Windows-specific
 
 #####################################################################
 # Debug print outs.  Will print "variable = ${variable}" if GLOBAL_DEBUG == 1
@@ -609,11 +652,11 @@ endif()
 # --- ${lib_file} rule ---
 add_library(iomp5 SHARED ${lib_src_files})
 set_target_properties(iomp5 PROPERTIES 
-    PREFIX "" SUFFIX ""          # Take control 
-    OUTPUT_NAME "${lib_file}"    # of output name
-    LINK_FLAGS  "${LD_FLAGS}"     
-    LINKER_LANGUAGE C            # use C Compiler for linking step
-    SKIP_BUILD_RPATH true        # have Mac linker -install_name just be "-install_name libiomp5.dylib"
+    PREFIX "" SUFFIX ""        # Take control 
+    OUTPUT_NAME "${lib_file}"  # of output name
+    LINK_FLAGS  "${LD_FLAGS}"
+    LINKER_LANGUAGE C          # use C Compiler for linking step
+    SKIP_BUILD_RPATH true      # have Mac linker -install_name just be "-install_name libiomp5.dylib"
 )
 
 # --- Copy libiomp into exports directory post build ---
@@ -645,7 +688,7 @@ endif()
 
 # Set the compiler flags for each type of source
 set_source_files_properties(${lib_c_items} 
-                            ${imp_c_items}   PROPERTIES COMPILE_FLAGS "${C_FLAGS}"  )
+                            ${imp_c_items}   PROPERTIES COMPILE_FLAGS "${C_FLAGS}")
 set_source_files_properties(${lib_cxx_items} PROPERTIES COMPILE_FLAGS "${CXX_FLAGS}")
 if(${WINDOWS})
     # Windows operating system has to use MASM assembler
@@ -689,9 +732,9 @@ endif()
 if(${MAC})
     # fat library rules
     if(${INTEL64})
-        _export_lib_fat_dir( "mac_32e" export_fat_mac_32e)
-        _export_lib_dir(     "mac_32"  export_mac_32     )
-        _export_lib_dir(     "mac_32e" export_mac_32e    )
+        _export_lib_fat_dir("mac_32e" export_fat_mac_32e)
+        _export_lib_dir("mac_32" export_mac_32)
+        _export_lib_dir("mac_32e" export_mac_32e)
         add_custom_target(fat
             COMMAND ${CMAKE_COMMAND} -E echo Building 32 and 32e fat libraries from ${export_mac_32}/${lib_file} and ${export_mac_32e}/${lib_file}
             COMMAND ${CMAKE_COMMAND} -E echo Will put fat library in ${export_fat_mac_32e} directory
