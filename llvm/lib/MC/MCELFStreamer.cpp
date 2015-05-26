@@ -138,18 +138,17 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 // If bundle aligment is used and there are any instructions in the section, it
 // needs to be aligned to at least the bundle size.
 static void setSectionAlignmentForBundling(const MCAssembler &Assembler,
-                                           MCSectionData *SD) {
-  if (!SD)
-    return;
-  MCSection &Section = SD->getSection();
-  if (Assembler.isBundlingEnabled() && Section.hasInstructions() &&
-      Section.getAlignment() < Assembler.getBundleAlignSize())
-    Section.setAlignment(Assembler.getBundleAlignSize());
+                                           MCSection *Section) {
+  if (Section && Assembler.isBundlingEnabled() && Section->hasInstructions() &&
+      Section->getAlignment() < Assembler.getBundleAlignSize())
+    Section->setAlignment(Assembler.getBundleAlignSize());
 }
 
 void MCELFStreamer::ChangeSection(MCSection *Section,
                                   const MCExpr *Subsection) {
-  MCSectionData *CurSection = getCurrentSectionData();
+  MCSectionData *CurSectionData = getCurrentSectionData();
+  MCSection *CurSection =
+      CurSectionData ? &CurSectionData->getSection() : nullptr;
   if (CurSection && isBundleLocked())
     report_fatal_error("Unterminated .bundle_lock when changing a section");
 
@@ -660,7 +659,10 @@ void MCELFStreamer::Flush() {
 
 void MCELFStreamer::FinishImpl() {
   // Ensure the last section gets aligned if necessary.
-  setSectionAlignmentForBundling(getAssembler(), getCurrentSectionData());
+  MCSectionData *CurSectionData = getCurrentSectionData();
+  MCSection *CurSection =
+      CurSectionData ? &CurSectionData->getSection() : nullptr;
+  setSectionAlignmentForBundling(getAssembler(), CurSection);
 
   EmitFrames(nullptr);
 
