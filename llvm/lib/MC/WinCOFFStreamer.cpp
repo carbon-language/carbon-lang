@@ -220,7 +220,7 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   assert(!Symbol->isInSection() && "Symbol must not already have a section!");
 
   MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
-  MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
+  getAssembler().registerSection(*Section);
   if (Section->getAlignment() < ByteAlignment)
     Section->setAlignment(ByteAlignment);
 
@@ -231,10 +231,10 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   if (ByteAlignment != 1)
     new MCAlignFragment(ByteAlignment, /*Value=*/0, /*ValueSize=*/0,
-                        ByteAlignment, &SectionData.getSection());
+                        ByteAlignment, Section);
 
   MCFillFragment *Fragment = new MCFillFragment(
-      /*Value=*/0, /*ValueSize=*/0, Size, &SectionData.getSection());
+      /*Value=*/0, /*ValueSize=*/0, Size, Section);
   SD.setFragment(Fragment);
 }
 

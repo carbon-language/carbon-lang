@@ -40,7 +40,6 @@ class MCExpr;
 class MCFragment;
 class MCObjectWriter;
 class MCSection;
-class MCSectionData;
 class MCSubtargetInfo;
 class MCValue;
 class MCAsmBackend;
@@ -884,13 +883,7 @@ public:
   /// \name Backend Data Access
   /// @{
 
-  MCSectionData &getOrCreateSectionData(MCSection &Section,
-                                        bool *Created = nullptr) {
-    bool C = Sections.insert(&Section);
-    if (Created)
-      *Created = C;
-    return Section.getSectionData();
-  }
+  bool registerSection(MCSection &Section) { return Sections.insert(&Section); }
 
   bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
 

@@ -211,8 +211,7 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   assert(Section && "Cannot switch to a null section!");
   flushPendingLabels(nullptr);
 
-  bool Created;
-  getAssembler().getOrCreateSectionData(*Section, &Created);
+  bool Created = getAssembler().registerSection(*Section);
   CurSectionData = Section;
 
   int64_t IntSubsection = 0;

@@ -460,11 +460,11 @@ void MipsTargetELFStreamer::finish() {
 
   // .bss, .text and .data are always at least 16-byte aligned.
   MCSection &TextSection = *OFI.getTextSection();
-  MCA.getOrCreateSectionData(TextSection);
+  MCA.registerSection(TextSection);
   MCSection &DataSection = *OFI.getDataSection();
-  MCA.getOrCreateSectionData(DataSection);
+  MCA.registerSection(DataSection);
   MCSection &BSSSection = *OFI.getBSSSection();
-  MCA.getOrCreateSectionData(BSSSection);
+  MCA.registerSection(BSSSection);
 
   TextSection.setAlignment(std::max(16u, TextSection.getAlignment()));
   DataSection.setAlignment(std::max(16u, DataSection.getAlignment()));
@@ -570,7 +570,7 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   const MCSymbolRefExpr *ExprRef =
       MCSymbolRefExpr::Create(Name, MCSymbolRefExpr::VK_None, Context);
 
-  MCA.getOrCreateSectionData(*Sec);
+  MCA.registerSection(*Sec);
   Sec->setAlignment(4);
 
   OS.PushSection();
@@ -788,7 +788,7 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   MCStreamer &OS = getStreamer();
   MCSectionELF *Sec = Context.getELFSection(
       ".MIPS.abiflags", ELF::SHT_MIPS_ABIFLAGS, ELF::SHF_ALLOC, 24, "");
-  MCA.getOrCreateSectionData(*Sec);
+  MCA.registerSection(*Sec);
   Sec->setAlignment(8);
   OS.SwitchSection(Sec);
 
