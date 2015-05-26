@@ -491,15 +491,6 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   if (CodeGenOpts.CompressDebugSections)
     Options.CompressDebugSections = true;
 
-  // Set frame pointer elimination mode.
-  if (!CodeGenOpts.DisableFPElim) {
-    Options.NoFramePointerElim = false;
-  } else if (CodeGenOpts.OmitLeafFramePointer) {
-    Options.NoFramePointerElim = false;
-  } else {
-    Options.NoFramePointerElim = true;
-  }
-
   if (CodeGenOpts.UseInitArray)
     Options.UseInitArray = true;
 
