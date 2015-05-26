@@ -202,7 +202,7 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                             
                                             plist.GetValueAsString("DBGBuildSourcePath", DBGBuildSourcePath);
                                             plist.GetValueAsString("DBGSourcePath", DBGSourcePath);
-                                            if (DBGBuildSourcePath[0] && DBGSourcePath[0])
+                                            if (!DBGBuildSourcePath.empty() && !DBGSourcePath.empty())
                                             {
                                                 module_sp->GetSourceMappingList().Append (ConstString(DBGBuildSourcePath), ConstString(DBGSourcePath), true);
                                             }
