@@ -227,8 +227,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
                    (IsPCRel               << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
-                          MRE);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   }
 
   MachO::any_relocation_info MRE;
@@ -239,7 +238,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
+  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
 }
 
 void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
@@ -294,8 +293,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                    (IsPCRel               << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
-                          MRE);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   }
 
   MachO::any_relocation_info MRE;
@@ -305,7 +303,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
+  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
 }
 
 bool ARMMachObjectWriter::requiresExternRelocation(MachObjectWriter *Writer,
@@ -466,12 +464,10 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
                        (Log2Size              << 25) |
                        (MachO::ARM_RELOC_PAIR << 28));
 
-    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
-                          MREPair);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MREPair);
   }
 
-  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
-                        MRE);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 MCObjectWriter *llvm::createARMMachObjectWriter(raw_pwrite_stream &OS,

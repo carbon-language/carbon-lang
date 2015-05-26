@@ -197,8 +197,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     MRE.r_word0 = FixupOffset;
     MRE.r_word1 =
         (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-    Writer->addRelocation(A_Base, &Fragment->getParent()->getSectionData(),
-                          MRE);
+    Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
 
     if (B_Base)
       RelSymbol = B_Base;
@@ -337,8 +336,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
   MRE.r_word0 = FixupOffset;
   MRE.r_word1 = (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) |
                 (IsExtern << 27) | (Type << 28);
-  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
-                        MRE);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
@@ -411,8 +409,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                    (IsPCRel                   << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
-                          MRE);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
     // relocation offset field, so we fall back to using a non-scattered
@@ -434,7 +431,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
+  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   return true;
 }
 
@@ -476,8 +473,8 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   MRE.r_word0 = Value;
   MRE.r_word1 =
       (IsPCRel << 24) | (Log2Size << 25) | (MachO::GENERIC_RELOC_TLV << 28);
-  Writer->addRelocation(&Target.getSymA()->getSymbol(),
-                        &Fragment->getParent()->getSectionData(), MRE);
+  Writer->addRelocation(&Target.getSymA()->getSymbol(), Fragment->getParent(),
+                        MRE);
 }
 
 void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
@@ -573,8 +570,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   MRE.r_word0 = FixupOffset;
   MRE.r_word1 =
       (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
-                        MRE);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 MCObjectWriter *llvm::createX86MachObjectWriter(raw_pwrite_stream &OS,

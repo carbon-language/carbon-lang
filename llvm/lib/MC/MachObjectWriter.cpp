@@ -105,11 +105,11 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
          Layout.getSymbolOffset(S);
 }
 
-uint64_t MachObjectWriter::getPaddingSize(const MCSectionData *SD,
+uint64_t MachObjectWriter::getPaddingSize(const MCSection *Sec,
                                           const MCAsmLayout &Layout) const {
-  uint64_t EndAddr =
-      getSectionAddress(&SD->getSection()) + Layout.getSectionAddressSize(SD);
-  unsigned Next = SD->getSection().getLayoutOrder() + 1;
+  uint64_t EndAddr = getSectionAddress(Sec) +
+                     Layout.getSectionAddressSize(&Sec->getSectionData());
+  unsigned Next = Sec->getLayoutOrder() + 1;
   if (Next >= Layout.getSectionOrder().size())
     return 0;
 
@@ -195,12 +195,12 @@ void MachObjectWriter::WriteSegmentLoadCommand(unsigned NumSections,
 
 void MachObjectWriter::WriteSection(const MCAssembler &Asm,
                                     const MCAsmLayout &Layout,
-                                    const MCSectionData &SD,
-                                    uint64_t FileOffset,
+                                    const MCSection &Sec, uint64_t FileOffset,
                                     uint64_t RelocationsStart,
                                     unsigned NumRelocations) {
+  const MCSectionData &SD = Sec.getSectionData();
   uint64_t SectionSize = Layout.getSectionAddressSize(&SD);
-  const MCSectionMachO &Section = cast<MCSectionMachO>(SD.getSection());
+  const MCSectionMachO &Section = cast<MCSectionMachO>(Sec);
 
   // The offset is unused for virtual sections.
   if (Section.isVirtualSection()) {
@@ -234,7 +234,7 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   Write32(NumRelocations ? RelocationsStart : 0);
   Write32(NumRelocations);
   Write32(Flags);
-  Write32(IndirectSymBase.lookup(&SD)); // reserved1
+  Write32(IndirectSymBase.lookup(&SD.getSection())); // reserved1
   Write32(Section.getStubSize()); // reserved2
   if (is64Bit())
     Write32(0); // reserved3
@@ -502,7 +502,8 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    IndirectSymBase.insert(std::make_pair(it->SectionData, IndirectIndex));
+    IndirectSymBase.insert(
+        std::make_pair(&it->SectionData->getSection(), IndirectIndex));
 
     Asm.getOrCreateSymbolData(*it->Symbol);
   }
@@ -519,7 +520,8 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    IndirectSymBase.insert(std::make_pair(it->SectionData, IndirectIndex));
+    IndirectSymBase.insert(
+        std::make_pair(&it->SectionData->getSection(), IndirectIndex));
 
     // Set the symbol type to undefined lazy, but only on construction.
     //
@@ -624,8 +626,7 @@ void MachObjectWriter::ComputeSymbolTable(
     UndefinedSymbolData[i].Symbol->setIndex(Index++);
 
   for (const MCSection &Section : Asm) {
-    const MCSectionData &SD = Section.getSectionData();
-    std::vector<RelAndSymbol> &Relocs = Relocations[&SD];
+    std::vector<RelAndSymbol> &Relocs = Relocations[&Section];
     for (RelAndSymbol &Rel : Relocs) {
       if (!Rel.Sym)
         continue;
@@ -655,7 +656,7 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
     // Explicitly pad the section to match the alignment requirements of the
     // following one. This is for 'gas' compatibility, it shouldn't
     /// strictly be necessary.
-    StartAddress += getPaddingSize(SD, Layout);
+    StartAddress += getPaddingSize(&SD->getSection(), Layout);
   }
 }
 
@@ -807,7 +808,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     uint64_t Address = getSectionAddress(&*it);
     uint64_t Size = Layout.getSectionAddressSize(&SD);
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
-    FileSize += getPaddingSize(&SD, Layout);
+    FileSize += getPaddingSize(&*it, Layout);
 
     VMSize = std::max(VMSize, Address + Size);
 
@@ -834,11 +835,10 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
-    const MCSectionData &SD = it->getSectionData();
-    std::vector<RelAndSymbol> &Relocs = Relocations[&SD];
+    std::vector<RelAndSymbol> &Relocs = Relocations[&*it];
     unsigned NumRelocs = Relocs.size();
     uint64_t SectionStart = SectionDataStart + getSectionAddress(&*it);
-    WriteSection(Asm, Layout, SD, SectionStart, RelocTableEnd, NumRelocs);
+    WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
   }
 
@@ -917,7 +917,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     const MCSectionData &SD = it->getSectionData();
     Asm.writeSectionData(&SD, Layout);
 
-    uint64_t Pad = getPaddingSize(&SD, Layout);
+    uint64_t Pad = getPaddingSize(&*it, Layout);
     WriteZeros(Pad);
   }
 
@@ -929,7 +929,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
          ie = Asm.end(); it != ie; ++it) {
     // Write the section relocation entries, in reverse order to match 'as'
     // (approximately, the exact algorithm is more complicated than this).
-    std::vector<RelAndSymbol> &Relocs = Relocations[&it->getSectionData()];
+    std::vector<RelAndSymbol> &Relocs = Relocations[&*it];
     for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
       Write32(Relocs[e - i - 1].MRE.r_word0);
       Write32(Relocs[e - i - 1].MRE.r_word1);

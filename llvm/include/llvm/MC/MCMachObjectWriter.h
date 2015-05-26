@@ -21,7 +21,6 @@
 
 namespace llvm {
 
-class MCSectionData;
 class MachObjectWriter;
 
 class MCMachObjectTargetWriter {
@@ -102,8 +101,8 @@ class MachObjectWriter : public MCObjectWriter {
         : Sym(Sym), MRE(MRE) {}
   };
 
-  llvm::DenseMap<const MCSectionData *, std::vector<RelAndSymbol>> Relocations;
-  llvm::DenseMap<const MCSectionData*, unsigned> IndirectSymBase;
+  llvm::DenseMap<const MCSection *, std::vector<RelAndSymbol>> Relocations;
+  llvm::DenseMap<const MCSection *, unsigned> IndirectSymBase;
 
   /// @}
   /// \name Symbol Table Data
@@ -149,8 +148,7 @@ public:
   uint64_t getFragmentAddress(const MCFragment *Fragment,
                               const MCAsmLayout &Layout) const;
 
-  uint64_t getPaddingSize(const MCSectionData *SD,
-                          const MCAsmLayout &Layout) const;
+  uint64_t getPaddingSize(const MCSection *SD, const MCAsmLayout &Layout) const;
 
   bool doesSymbolRequireExternRelocation(const MCSymbol &S);
 
@@ -180,7 +178,7 @@ public:
                                uint64_t SectionDataSize);
 
   void WriteSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                    const MCSectionData &SD, uint64_t FileOffset,
+                    const MCSection &Sec, uint64_t FileOffset,
                     uint64_t RelocationsStart, unsigned NumRelocations);
 
   void WriteSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
@@ -222,10 +220,10 @@ public:
   // to a symbol it should be passed as \p RelSymbol so that it can be updated
   // afterwards. If the relocation doesn't refer to a symbol, nullptr should be
   // used.
-  void addRelocation(const MCSymbol *RelSymbol, const MCSectionData *SD,
+  void addRelocation(const MCSymbol *RelSymbol, const MCSection *Sec,
                      MachO::any_relocation_info &MRE) {
     RelAndSymbol P(RelSymbol, MRE);
-    Relocations[SD].push_back(P);
+    Relocations[Sec].push_back(P);
   }
 
   void RecordScatteredRelocation(const MCAssembler &Asm,

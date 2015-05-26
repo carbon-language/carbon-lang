@@ -282,8 +282,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     MachO::any_relocation_info MRE;
     makeScatteredRelocationInfo(MRE, other_half, MachO::GENERIC_RELOC_PAIR,
                                 Log2Size, IsPCRel, Value2);
-    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
-                          MRE);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
     // relocation offset field, so we fall back to using a non-scattered
@@ -297,7 +296,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
   }
   MachO::any_relocation_info MRE;
   makeScatteredRelocationInfo(MRE, FixupOffset, Type, Log2Size, IsPCRel, Value);
-  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
+  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   return true;
 }
 
@@ -375,8 +374,7 @@ void PPCMachObjectWriter::RecordPPCRelocation(
   // struct relocation_info (8 bytes)
   MachO::any_relocation_info MRE;
   makeRelocationInfo(MRE, FixupOffset, Index, IsPCRel, Log2Size, false, Type);
-  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
-                        MRE);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 MCObjectWriter *llvm::createPPCMachObjectWriter(raw_pwrite_stream &OS,
