@@ -18,7 +18,8 @@ namespace tidy {
 
 void NoexceptMoveCtorsCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      methodDecl(anyOf(constructorDecl(), hasOverloadedOperatorName("=")))
+      methodDecl(anyOf(constructorDecl(), hasOverloadedOperatorName("=")),
+                 unless(isImplicit()), unless(isDeleted()))
           .bind("decl"),
       this);
 }

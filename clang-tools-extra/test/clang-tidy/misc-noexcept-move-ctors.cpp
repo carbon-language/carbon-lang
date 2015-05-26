@@ -14,6 +14,13 @@ struct B {
   // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: noexcept specifier on the move constructor evaluates to 'false' [misc-noexcept-move-ctors]
 };
 
+class OK {};
+
+void f() {
+  OK a;
+  a = OK();
+}
+
 class OK1 {
  public:
   OK1();
@@ -34,4 +41,5 @@ public:
 
 struct OK3 {
   OK3(OK3 &&) noexcept(false) {}
+  OK3 &operator=(OK3 &&) = delete;
 };

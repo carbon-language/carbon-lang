@@ -15,9 +15,9 @@
 namespace clang {
 namespace tidy {
 
-/// \brief The check flags move constructors and assignment operators not marked
-/// with \c noexcept or marked with \c noexcept(expr) where \c expr evaluates to
-/// \c false (but is not a \c false literal itself).
+/// \brief The check flags user-defined move constructors and assignment
+/// operators not marked with \c noexcept or marked with \c noexcept(expr) where
+/// \c expr evaluates to \c false (but is not a \c false literal itself).
 ///
 /// Move constructors of all the types used with STL containers, for example,
 /// need to be declared \c noexcept. Otherwise STL will choose copy constructors
