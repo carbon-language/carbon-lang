@@ -97,15 +97,19 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   // compiled as C++.
   if (getCurrentMainFile().endswith(".c"))
     return;
-
+  // Ignore code in .c files #included in other files (which shouldn't be done,
+  // but people still do this for test and other purposes).
+  SourceManager &SM = *Result.SourceManager;
+  if (SM.getFilename(SM.getSpellingLoc(CastExpr->getLocStart())).endswith(".c"))
+    return;
 
   // Leave type spelling exactly as it was (unlike
   // getTypeAsWritten().getAsString() which would spell enum types 'enum X').
-  StringRef DestTypeString = Lexer::getSourceText(
-      CharSourceRange::getTokenRange(
-          CastExpr->getLParenLoc().getLocWithOffset(1),
-          CastExpr->getRParenLoc().getLocWithOffset(-1)),
-      *Result.SourceManager, Result.Context->getLangOpts());
+  StringRef DestTypeString =
+      Lexer::getSourceText(CharSourceRange::getTokenRange(
+                               CastExpr->getLParenLoc().getLocWithOffset(1),
+                               CastExpr->getRParenLoc().getLocWithOffset(-1)),
+                           SM, Result.Context->getLangOpts());
 
   auto diag_builder =
       diag(CastExpr->getLocStart(), "C-style casts are discouraged. %0");
@@ -118,8 +122,7 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
     if (!isa<ParenExpr>(SubExpr)) {
       CastText.push_back('(');
       diag_builder << FixItHint::CreateInsertion(
-          Lexer::getLocForEndOfToken(SubExpr->getLocEnd(), 0,
-                                     *Result.SourceManager,
+          Lexer::getLocForEndOfToken(SubExpr->getLocEnd(), 0, SM,
                                      Result.Context->getLangOpts()),
           ")");
     }
