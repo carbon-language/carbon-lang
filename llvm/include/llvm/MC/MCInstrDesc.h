@@ -22,6 +22,7 @@ namespace llvm {
   class MCInst;
   class MCRegisterInfo;
   class MCSubtargetInfo;
+  class FeatureBitset;
 
 //===----------------------------------------------------------------------===//
 // Machine Operand Flags and Description
@@ -145,8 +146,11 @@ public:
   const uint16_t *ImplicitUses; // Registers implicitly read by this instr
   const uint16_t *ImplicitDefs; // Registers implicitly defined by this instr
   const MCOperandInfo *OpInfo;  // 'NumOperands' entries about operands
-  uint64_t
-      DeprecatedFeatureMask; // Feature bits that this is deprecated on, if any
+  // Subtarget feature that this is deprecated on, if any
+  // -1 implies this is not deprecated by any single feature. It may still be 
+  // deprecated due to a "complex" reason, below.
+  int64_t DeprecatedFeature;
+
   // A complex method to determine is a certain is deprecated or not, and return
   // the reason for deprecation.
   bool (*ComplexDeprecationInfo)(MCInst &, MCSubtargetInfo &, std::string &);

@@ -42,15 +42,15 @@ public:
   ~X86MCCodeEmitter() override {}
 
   bool is64BitMode(const MCSubtargetInfo &STI) const {
-    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode64Bit];
   }
 
   bool is32BitMode(const MCSubtargetInfo &STI) const {
-    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode32Bit];
   }
 
   bool is16BitMode(const MCSubtargetInfo &STI) const {
-    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
+    return STI.getFeatureBits()[X86::Mode16Bit];
   }
 
   /// Is16BitMemOperand - Return true if the specified instruction has

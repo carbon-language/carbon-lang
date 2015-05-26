@@ -154,7 +154,7 @@ void ARMAsmBackend::handleAssemblerFlag(MCAssemblerFlag Flag) {
 } // end anonymous namespace
 
 unsigned ARMAsmBackend::getRelaxedOpcode(unsigned Op) const {
-  bool HasThumb2 = STI->getFeatureBits() & ARM::FeatureThumb2;
+  bool HasThumb2 = STI->getFeatureBits()[ARM::FeatureThumb2];
 
   switch (Op) {
   default:
