@@ -97,6 +97,12 @@ public:
     OMAGIC,
   };
 
+  /// \brief ELF DT_FLAGS.
+  enum DTFlag : uint32_t {
+    DT_NOW = 1 << 1,
+    DT_ORIGIN = 1 << 2,
+  };
+
   llvm::Triple getTriple() const { return _triple; }
 
   uint64_t getPageSize() const { return _maxPageSize; }
@@ -329,6 +335,10 @@ public:
   // --wrap option.
   void addWrapForSymbol(StringRef sym) { _wrapCalls.insert(sym); }
 
+  // \brief Set DT_FLAGS flag.
+  void setDTFlag(DTFlag f) { _dtFlags |= f; };
+  bool getDTFlag(DTFlag f) { return (_dtFlags & f); };
+
   const llvm::StringSet<> &wrapCalls() const { return _wrapCalls; }
 
   void setUndefinesResolver(std::unique_ptr<File> resolver);
@@ -383,6 +393,7 @@ protected:
   bool _armTarget1Rel = false;
   bool _mipsPcRelEhRel = false;
   uint64_t _maxPageSize = 0x1000;
+  uint32_t _dtFlags = 0;
 
   OutputMagic _outputMagic = OutputMagic::DEFAULT;
   StringRefVector _inputSearchPaths;

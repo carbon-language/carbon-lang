@@ -140,6 +140,21 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   if (!soname.empty() && _ctx.getOutputELFType() == llvm::ELF::ET_DYN)
     _dynamicTable->addEntry(DT_SONAME, _dynamicStringTable->addString(soname));
 
+  // Add DT_FLAGS/DT_FLAGS_1 entries if necessary.
+  uint32_t dtflags = 0, dt1flags = 0;
+  if (_ctx.getDTFlag(ELFLinkingContext::DTFlag::DT_NOW)) {
+    dtflags |= DF_BIND_NOW;
+    dt1flags |= DF_1_NOW;
+  }
+  if (_ctx.getDTFlag(ELFLinkingContext::DTFlag::DT_ORIGIN)) {
+    dtflags |= DF_ORIGIN;
+    dt1flags |= DF_1_ORIGIN;
+  }
+  if (dtflags != 0)
+    _dynamicTable->addEntry(DT_FLAGS, dtflags);
+  if (dt1flags != 0)
+    _dynamicTable->addEntry(DT_FLAGS_1, dt1flags);
+
   // The dynamic symbol table need to be sorted earlier because the hash
   // table needs to be built using the dynamic symbol table. It would be
   // late to sort the symbols due to that in finalize. In the dynamic symbol

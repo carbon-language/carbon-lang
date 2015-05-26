@@ -584,9 +584,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   for (auto *arg : parsedArgs->filtered(OPT_z)) {
     StringRef opt = arg->getValue();
-    if (opt == "muldefs") {
+    if (opt == "muldefs")
       ctx->setAllowDuplicates(true);
-    } else if (opt.startswith("max-page-size")) {
+    else if (opt == "now")
+      ctx->setDTFlag(ELFLinkingContext::DTFlag::DT_NOW);
+    else if (opt == "origin")
+      ctx->setDTFlag(ELFLinkingContext::DTFlag::DT_ORIGIN);
+    else if (opt.startswith("max-page-size")) {
       // Parse -z max-page-size option.
       // The default page size is considered the minimum page size the user
       // can set, check the user input if its atleast the minimum page size
