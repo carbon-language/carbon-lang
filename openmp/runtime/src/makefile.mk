@@ -513,7 +513,7 @@ ifeq "$(os)" "win"
     cpp-flags += -D KMP_WIN_CDECL
 endif
 ifeq "$(LINK_TYPE)" "dyna"
-    cpp-flags += -D GUIDEDLL_EXPORTS
+    cpp-flags += -D KMP_DYNAMIC_LIB
 endif
 ifeq "$(LIB_TYPE)" "stub"
     cpp-flags += -D KMP_STUB

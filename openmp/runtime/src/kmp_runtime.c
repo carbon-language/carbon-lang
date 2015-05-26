@@ -557,7 +557,7 @@ static void __kmp_fini_allocator_thread() {}
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef GUIDEDLL_EXPORTS
+#ifdef KMP_DYNAMIC_LIB
 # if KMP_OS_WINDOWS
 
 
@@ -681,7 +681,7 @@ DllMain( HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved ) {
 }
 
 # endif /* KMP_OS_WINDOWS */
-#endif /* GUIDEDLL_EXPORTS */
+#endif /* KMP_DYNAMIC_LIB */
 
 
 /* ------------------------------------------------------------------------ */
@@ -3507,7 +3507,7 @@ __kmp_expand_threads(int nWish, int nNeed) {
 
     if(nNeed > nWish) /* normalize the arguments */
         nWish = nNeed;
-#if KMP_OS_WINDOWS && !defined GUIDEDLL_EXPORTS
+#if KMP_OS_WINDOWS && !defined KMP_DYNAMIC_LIB
 /* only for Windows static library */
     /* reclaim array entries for root threads that are already dead */
     added = __kmp_reclaim_dead_roots();
@@ -5611,7 +5611,7 @@ __kmp_internal_end_dest( void *specific_gtid )
     __kmp_internal_end_thread( gtid );
 }
 
-#if KMP_OS_UNIX && GUIDEDLL_EXPORTS
+#if KMP_OS_UNIX && KMP_DYNAMIC_LIB
 
 // 2009-09-08 (lev): It looks the destructor does not work. In simple test cases destructors work
 // perfectly, but in real libiomp5.so I have no evidence it is ever called. However, -fini linker
@@ -6072,7 +6072,7 @@ __kmp_internal_end_thread( int gtid_req )
             return;
         }
     }
-    #if defined GUIDEDLL_EXPORTS
+    #if defined KMP_DYNAMIC_LIB
     // AC: lets not shutdown the Linux* OS dynamic library at the exit of uber thread,
     //     because we will better shutdown later in the library destructor.
     //     The reason of this change is performance problem when non-openmp thread
@@ -6519,7 +6519,7 @@ __kmp_do_serial_initialize( void )
         __kmp_register_atfork();
     #endif
 
-    #if ! defined GUIDEDLL_EXPORTS
+    #if ! defined KMP_DYNAMIC_LIB
         {
             /* Invoke the exit handler when the program finishes, only for static library.
                For dynamic library, we already have _fini and DllMain.

@@ -69,7 +69,7 @@
 #endif // KMP_LIB_TYPE
 
 // Detect link type (static, dynamic).
-#ifdef GUIDEDLL_EXPORTS
+#ifdef KMP_DYNAMIC_LIB
     #define KMP_LINK_TYPE "dynamic"
 #else
     #define KMP_LINK_TYPE "static"
