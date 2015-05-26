@@ -55,14 +55,6 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
 }
 
 MCContext::~MCContext() {
-  // Call the destructors so the fragments are freed
-  for (auto &I : ELFUniquingMap)
-    I.second->~MCSectionELF();
-  for (auto &I : COFFUniquingMap)
-    I.second->~MCSectionCOFF();
-  for (auto &I : MachOUniquingMap)
-    I.second->~MCSectionMachO();
-
   if (AutoReset)
     reset();
 
@@ -78,6 +70,14 @@ MCContext::~MCContext() {
 //===----------------------------------------------------------------------===//
 
 void MCContext::reset() {
+  // Call the destructors so the fragments are freed
+  for (auto &I : ELFUniquingMap)
+    I.second->~MCSectionELF();
+  for (auto &I : COFFUniquingMap)
+    I.second->~MCSectionCOFF();
+  for (auto &I : MachOUniquingMap)
+    I.second->~MCSectionMachO();
+
   UsedNames.clear();
   Symbols.clear();
   Allocator.Reset();
