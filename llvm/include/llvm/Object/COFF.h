@@ -314,6 +314,10 @@ public:
     return (getType() & 0xF0) >> COFF::SCT_COMPLEX_TYPE_SHIFT;
   }
 
+  bool isAbsolute() const {
+    return getSectionNumber() == -1;
+  }
+
   bool isExternal() const {
     return getStorageClass() == COFF::IMAGE_SYM_CLASS_EXTERNAL;
   }
