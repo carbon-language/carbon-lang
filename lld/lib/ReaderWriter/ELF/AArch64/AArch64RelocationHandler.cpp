@@ -474,10 +474,15 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(loc, reloc, target, addend);
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
-    return relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target, addend);
-  case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
-    relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target, addend);
-    break;
+  case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: {
+    _tlsSize = _layout.getAlignedTLSSize();
+    if (ref.kindValue() == R_AARCH64_TLSLE_ADD_TPREL_HI12)
+      return relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target + _tlsSize,
+                                                 addend);
+    else 
+      relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target + _tlsSize,
+                                             addend);
+  }  break;
   default:
     return make_unhandled_reloc_error();
   }

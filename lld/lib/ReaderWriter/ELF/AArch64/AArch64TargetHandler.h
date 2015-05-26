@@ -19,6 +19,19 @@ namespace lld {
 namespace elf {
 class AArch64LinkingContext;
 
+class AArch64TargetLayout final : public TargetLayout<ELF64LE> {
+public:
+  AArch64TargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
+
+  uint64_t getAlignedTLSSize() const {
+    return llvm::RoundUpToAlignment(TCB_ALIGNMENT, this->getTLSSize());
+  }
+
+private:
+  // Alignment requirement for TCB.
+  enum { TCB_ALIGNMENT = 0x10 };
+};
+
 class AArch64TargetHandler final : public TargetHandler {
 public:
   AArch64TargetHandler(AArch64LinkingContext &ctx);
@@ -39,7 +52,7 @@ public:
 
 private:
   AArch64LinkingContext &_ctx;
-  std::unique_ptr<TargetLayout<ELF64LE>> _targetLayout;
+  std::unique_ptr<AArch64TargetLayout> _targetLayout;
   std::unique_ptr<AArch64TargetRelocationHandler> _relocationHandler;
 };
 

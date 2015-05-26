@@ -17,8 +17,8 @@ using namespace lld;
 using namespace elf;
 
 AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new TargetLayout<ELF64LE>(ctx)),
-      _relocationHandler(new AArch64TargetRelocationHandler()) {}
+    : _ctx(ctx), _targetLayout(new AArch64TargetLayout(ctx)),
+      _relocationHandler(new AArch64TargetRelocationHandler(*_targetLayout)) {}
 
 std::unique_ptr<Writer> AArch64TargetHandler::getWriter() {
   switch (this->_ctx.getOutputELFType()) {

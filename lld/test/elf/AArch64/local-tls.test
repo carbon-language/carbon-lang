@@ -1,0 +1,102 @@
+# Check for correct offsets when handling relocations for local TLS
+# access (R_AARCH64_TLSLE_ADD_TPREL_HI12, R_AARCH64_TLSLE_ADD_TPREL_LO12_NC)
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target arm64 --noinhibit-exec -o %t-exe %t-obj
+# RUN: llvm-objdump -s -t %t-exe | FileCheck %s
+
+# CHECK: Contents of section .text:
+# CHECK-NEXT: 4001dc 48d03bd5 08010091 08410091 090140b9  H.;......A....@.
+#                              \_      |        add  x8, x8, #0x0   (R_AARCH64_TLSLE_ADD_TPREL_HI12)
+#                                      \_       add  x8, x8, #0x10  (R_AARCH64_TLSLE_ADD_TPREL_LO12_NC)
+
+---
+FileHeader:      
+  Class:           ELFCLASS64
+  Data:            ELFDATA2LSB
+  OSABI:           ELFOSABI_GNU
+  Type:            ET_REL
+  Machine:         EM_AARCH64
+Sections:        
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x0000000000000004
+    Content:         48D03BD50801009108010091090140B9E003092AC0035FD6FD7BBFA9FD030091FF4300D1BFC31FB8F6FFFF97BF030091FD7BC1A8C0035FD6
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Link:            .symtab
+    AddressAlign:    0x0000000000000008
+    Info:            .text
+    Relocations:     
+      - Offset:          0x0000000000000004
+        Symbol:          a
+        Type:            R_AARCH64_TLSLE_ADD_TPREL_HI12
+      - Offset:          0x0000000000000008
+        Symbol:          a
+        Type:            R_AARCH64_TLSLE_ADD_TPREL_LO12_NC
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000004
+    Content:         ''
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x0000000000000004
+    Content:         ''
+  - Name:            .tdata
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC, SHF_TLS ]
+    AddressAlign:    0x0000000000000004
+    Content:         '04000000'
+  - Name:            .comment
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_MERGE, SHF_STRINGS ]
+    AddressAlign:    0x0000000000000001
+    Content:         00636C616E672076657273696F6E20332E372E302028687474703A2F2F6C6C766D2E6F72672F6769742F636C616E672E6769742039636664333732343263346635623866393362636462343536366163636565373962306563653666292028687474703A2F2F6C6C766D2E6F72672F6769742F6C6C766D2E67697420653262383764656531656531393835396561383334313565616365333533666130323362646462302900
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+Symbols:         
+  Local:           
+    - Name:            '$d.1'
+      Type:            STT_TLS
+      Section:         .tdata
+    - Name:            '$d.2'
+      Section:         .comment
+    - Name:            '$x.0'
+      Section:         .text
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .data
+      Type:            STT_SECTION
+      Section:         .data
+    - Name:            .bss
+      Type:            STT_SECTION
+      Section:         .bss
+    - Name:            .tdata
+      Type:            STT_SECTION
+      Section:         .tdata
+    - Name:            .comment
+      Type:            STT_SECTION
+      Section:         .comment
+    - Name:            .note.GNU-stack
+      Type:            STT_SECTION
+      Section:         .note.GNU-stack
+  Global:          
+    - Name:            a
+      Type:            STT_TLS
+      Section:         .tdata
+      Size:            0x0000000000000004
+    - Name:            foo
+      Type:            STT_FUNC
+      Section:         .text
+      Size:            0x0000000000000018
+    - Name:            main
+      Type:            STT_FUNC
+      Section:         .text
+      Value:           0x0000000000000018
+      Size:            0x0000000000000020
+...
