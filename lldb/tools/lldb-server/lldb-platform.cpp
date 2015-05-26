@@ -253,7 +253,6 @@ main_platform (int argc, char *argv[])
 
     std::unique_ptr<Socket> listening_socket_up;
     Socket *socket = nullptr;
-    printf ("Listening for a connection from %s...\n", listen_host_port.c_str());
     const bool children_inherit_listen_socket = false;
 
     // the test suite makes many connections in parallel, let's not miss any.
@@ -267,6 +266,7 @@ main_platform (int argc, char *argv[])
         exit(socket_error);
     }
     listening_socket_up.reset(socket);
+    printf ("Listening for a connection from %u...\n", listening_socket_up->GetLocalPortNumber());
 
     do {
         GDBRemoteCommunicationServerPlatform platform;
