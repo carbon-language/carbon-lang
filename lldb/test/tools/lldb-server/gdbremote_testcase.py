@@ -716,6 +716,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "qXfer:auxv:read",
         "qXfer:libraries:read",
         "qXfer:libraries-svr4:read",
+        "qXfer:features:read",
     ]
 
     def parse_qSupported_response(self, context):
