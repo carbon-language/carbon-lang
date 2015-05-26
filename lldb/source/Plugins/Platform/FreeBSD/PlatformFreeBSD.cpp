@@ -533,24 +533,56 @@ PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
 bool
 PlatformFreeBSD::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    // From macosx;s plugin code. For FreeBSD we may want to support more archs.
-    if (idx == 0)
+    if (IsHost())
     {
-        arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
-        return arch.IsValid();
-    }
-    else if (idx == 1)
-    {
-        ArchSpec platform_arch(HostInfo::GetArchitecture(HostInfo::eArchKindDefault));
-        ArchSpec platform_arch64(HostInfo::GetArchitecture(HostInfo::eArchKind64));
-        if (platform_arch.IsExactMatch(platform_arch64))
+        ArchSpec hostArch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
+        if (hostArch.GetTriple().isOSFreeBSD())
         {
-            // This freebsd platform supports both 32 and 64 bit. Since we already
-            // returned the 64 bit arch for idx == 0, return the 32 bit arch
-            // for idx == 1
-            arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
-            return arch.IsValid();
+            if (idx == 0)
+            {
+                arch = hostArch;
+                return arch.IsValid();
+            }
+            else if (idx == 1)
+            {
+                // If the default host architecture is 64-bit, look for a 32-bit variant
+                if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit())
+                {
+                    arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
+                    return arch.IsValid();
+                }
+            }
         }
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->GetSupportedArchitectureAtIndex(idx, arch);
+
+        llvm::Triple triple;
+        // Set the OS to FreeBSD
+        triple.setOS(llvm::Triple::FreeBSD);
+        // Set the architecture
+        switch (idx)
+        {
+            case 0: triple.setArchName("x86_64"); break;
+            case 1: triple.setArchName("i386"); break;
+            case 2: triple.setArchName("aarch64"); break;
+            case 3: triple.setArchName("arm"); break;
+            case 4: triple.setArchName("mips64"); break;
+            case 5: triple.setArchName("mips"); break;
+            case 6: triple.setArchName("ppc64"); break;
+            case 7: triple.setArchName("ppc"); break;
+            default: return false;
+        }
+        // Leave the vendor as "llvm::Triple:UnknownVendor" and don't specify the vendor by
+        // calling triple.SetVendorName("unknown") so that it is a "unspecified unknown".
+        // This means when someone calls triple.GetVendorName() it will return an empty string
+        // which indicates that the vendor can be set when two architectures are merged
+
+        // Now set the triple into "arch" and return true
+        arch.SetTriple(triple);
+        return true;
     }
     return false;
 }
