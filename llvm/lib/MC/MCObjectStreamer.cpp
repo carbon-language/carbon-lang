@@ -43,7 +43,7 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
     if (!F) {
       F = new MCDataFragment();
       CurSectionData->getFragmentList().insert(CurInsertionPoint, F);
-      F->setParent(&CurSectionData->getSection());
+      F->setParent(CurSectionData);
     }
     for (MCSymbolData *SD : PendingLabels) {
       SD->setFragment(F);
@@ -212,7 +212,8 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   flushPendingLabels(nullptr);
 
   bool Created;
-  CurSectionData = &getAssembler().getOrCreateSectionData(*Section, &Created);
+  getAssembler().getOrCreateSectionData(*Section, &Created);
+  CurSectionData = Section;
 
   int64_t IntSubsection = 0;
   if (Subsection &&
@@ -221,7 +222,8 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   if (IntSubsection < 0 || IntSubsection > 8192)
     report_fatal_error("Subsection number out of range");
   CurInsertionPoint =
-    CurSectionData->getSubsectionInsertionPoint(unsigned(IntSubsection));
+      CurSectionData->getSectionData().getSubsectionInsertionPoint(
+          unsigned(IntSubsection));
   return Created;
 }
 
@@ -238,8 +240,8 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) {
   MCStreamer::EmitInstruction(Inst, STI);
 
-  MCSectionData *SD = getCurrentSectionData();
-  SD->getSection().setHasInstructions(true);
+  MCSection *Sec = getCurrentSectionData();
+  Sec->setHasInstructions(true);
 
   // Now that a machine instruction has been assembled into this section, make
   // a line entry for any .loc directive that has been seen.
@@ -258,7 +260,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
   //   group. We want to emit all such instructions into the same data
   //   fragment.
   if (Assembler.getRelaxAll() ||
-      (Assembler.isBundlingEnabled() && SD->getSection().isBundleLocked())) {
+      (Assembler.isBundlingEnabled() && Sec->isBundleLocked())) {
     MCInst Relaxed;
     getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
     while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))
