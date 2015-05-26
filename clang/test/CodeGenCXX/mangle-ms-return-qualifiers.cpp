@@ -183,3 +183,7 @@ function_pointer* g3() { return 0; }
 
 const function_pointer* g4() { return 0; }
 // CHECK: "\01?g4@@YAPBQ6AHH@ZXZ"
+
+extern int &z;
+int & __restrict h1() { return z; }
+// CHECK: "\01?h1@@YAAIAHXZ"
