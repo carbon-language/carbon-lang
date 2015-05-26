@@ -101,7 +101,7 @@ Type::Type
     m_decl (decl),
     m_clang_type (clang_type)
 {
-    m_flags.SetResolveState(clang_type ? clang_type_resolve_state : eResolveStateUnresolved);
+    m_flags.clang_type_resolve_state = (clang_type ? clang_type_resolve_state : eResolveStateUnresolved);
     m_flags.is_complete_objc_class = false;
 }
 
@@ -118,7 +118,7 @@ Type::Type () :
     m_decl (),
     m_clang_type ()
 {
-    m_flags.SetResolveState(eResolveStateUnresolved);
+    m_flags.clang_type_resolve_state = eResolveStateUnresolved;
     m_flags.is_complete_objc_class = false;
 }
 
@@ -505,7 +505,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
                     if (encoding_clang_type.IsValid())
                     {
                         m_clang_type = encoding_clang_type;
-                        m_flags.SetResolveState(encoding_type->m_flags.clang_type_resolve_state);
+                        m_flags.clang_type_resolve_state = encoding_type->m_flags.clang_type_resolve_state;
                     }
                 }
                 break;
@@ -594,7 +594,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
     // Check if we have a forward reference to a class/struct/union/enum?
     if (m_clang_type.IsValid() && m_flags.clang_type_resolve_state < clang_type_resolve_state)
     {
-        m_flags.SetResolveState(eResolveStateFull);
+        m_flags.clang_type_resolve_state = eResolveStateFull;
         if (!m_clang_type.IsDefined ())
         {
             // We have a forward declaration, we need to resolve it to a complete definition.

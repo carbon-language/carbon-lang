@@ -305,9 +305,7 @@ protected:
     ClangASTType m_clang_type;
     
     struct Flags {
-        // clang_type_resolve_state is a ResolveState enum
-        // using unsigned type here to work around a very noisy gcc warning
-        unsigned        clang_type_resolve_state : 2;
+        ResolveState    clang_type_resolve_state : 2;
         bool            is_complete_objc_class   : 1;
     } m_flags;
 
