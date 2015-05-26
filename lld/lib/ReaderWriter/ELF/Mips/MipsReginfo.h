@@ -35,8 +35,7 @@ struct Elf_RegInfo<ELFType<TargetEndianness, MaxAlign, true>> {
 };
 
 template <class ELFT> struct Elf_Mips_Options {
-  LLVM_ELF_IMPORT_TYPES(ELFT::TargetEndianness, ELFT::MaxAlignment,
-                        ELFT::Is64Bits)
+  LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
   uint8_t kind;     // Determines interpretation of variable part of descriptor
   uint8_t size;     // Byte size of descriptor, including this header
   Elf_Half section; // Section header index of section affected,
