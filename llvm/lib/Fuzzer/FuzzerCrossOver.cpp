@@ -19,6 +19,7 @@ namespace fuzzer {
 size_t CrossOver(const uint8_t *Data1, size_t Size1,
                  const uint8_t *Data2, size_t Size2,
                  uint8_t *Out, size_t MaxOutSize) {
+  assert(Size1 || Size2);
   MaxOutSize = rand() % MaxOutSize + 1;
   size_t OutPos = 0;
   size_t Pos1 = 0;
