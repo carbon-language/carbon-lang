@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__arm64__) || defined (__aarch64__)
 
 #ifndef lldb_NativeRegisterContextLinux_arm64_h
 #define lldb_NativeRegisterContextLinux_arm64_h
 
-#include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
+#include "Plugins/Process/Linux/NativeRegisterContextLinux.h"
 #include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
 
 namespace lldb_private {
@@ -19,12 +20,12 @@ namespace process_linux {
 
     class NativeProcessLinux;
 
-    class NativeRegisterContextLinux_arm64 : public NativeRegisterContextRegisterInfo
+    class NativeRegisterContextLinux_arm64 : public NativeRegisterContextLinux
     {
     public:
-        NativeRegisterContextLinux_arm64 (NativeThreadProtocol &native_thread,
-                                          uint32_t concrete_frame_idx,
-                                          RegisterInfoInterface *reg_info_interface_p);
+        NativeRegisterContextLinux_arm64 (const ArchSpec& target_arch,
+                                          NativeThreadProtocol &native_thread,
+                                          uint32_t concrete_frame_idx);
 
         uint32_t
         GetRegisterSetCount () const override;
@@ -72,14 +73,44 @@ namespace process_linux {
         lldb::addr_t
         GetWatchpointAddress (uint32_t wp_index) override;
 
-        bool
-        HardwareSingleStep (bool enable) override;
-
         uint32_t
         GetWatchpointSize(uint32_t wp_index);
 
         bool
         WatchpointIsEnabled(uint32_t wp_index);
+
+    protected:
+        NativeProcessLinux::OperationUP
+        GetReadRegisterValueOperation(uint32_t offset,
+                                      const char* reg_name,
+                                      uint32_t size,
+                                      RegisterValue &value) override;
+
+        NativeProcessLinux::OperationUP
+        GetWriteRegisterValueOperation(uint32_t offset,
+                                       const char* reg_name,
+                                       const RegisterValue &value) override;
+
+        NativeProcessLinux::OperationUP
+        GetReadGPROperation(void *buf, size_t buf_size) override;
+
+        NativeProcessLinux::OperationUP
+        GetWriteGPROperation(void *buf, size_t buf_size) override;
+
+        NativeProcessLinux::OperationUP
+        GetReadFPROperation(void *buf, size_t buf_size) override;
+
+        NativeProcessLinux::OperationUP
+        GetWriteFPROperation(void *buf, size_t buf_size) override;
+
+        void*
+        GetGPRBuffer() override { return &m_gpr_arm64; }
+
+        void*
+        GetFPRBuffer() override { return &m_fpr; }
+
+        size_t
+        GetFPRSize() override { return sizeof(m_fpr); }
 
     private:
         struct RegInfo
@@ -135,31 +166,13 @@ namespace process_linux {
         IsGPR(unsigned reg) const;
 
         bool
-        ReadGPR ();
-
-        bool
-        WriteGPR ();
-
-        bool
         IsFPR(unsigned reg) const;
 
-        bool
-        ReadFPR ();
-
-        bool
-        WriteFPR ();
+        Error
+        ReadHardwareDebugInfo(unsigned int &watch_count , unsigned int &break_count);
 
         Error
-        ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value);
-
-        Error
-        WriteRegisterRaw (uint32_t reg_index, const RegisterValue &reg_value);
-
-        lldb::ByteOrder
-        GetByteOrder() const;
-
-        size_t
-        GetGPRSize() const;
+        WriteHardwareDebugRegs(lldb::addr_t *addr_buf, uint32_t *cntrl_buf, int type, int count);
     };
 
 } // namespace process_linux
@@ -167,3 +180,4 @@ namespace process_linux {
 
 #endif // #ifndef lldb_NativeRegisterContextLinux_arm64_h
 
+#endif // defined (__arm64__) || defined (__aarch64__)

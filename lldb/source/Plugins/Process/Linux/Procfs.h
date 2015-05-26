@@ -20,7 +20,14 @@ typedef struct user_fpsimd_state elf_fpregset_t;
 #ifndef NT_FPREGSET
     #define NT_FPREGSET NT_PRFPREG
 #endif // NT_FPREGSET
-#endif // defined (__arm64__) || defined (__aarch64__)
+#elif defined (__mips__)
+typedef unsigned long elf_greg_t;
+typedef elf_greg_t elf_gregset_t[(sizeof (struct user_regs_struct) / sizeof(elf_greg_t))];
+typedef struct user_fpsimd_state elf_fpregset_t;
+#ifndef NT_FPREGSET
+    #define NT_FPREGSET NT_PRFPREG
+#endif // NT_FPREGSET
+#endif
 #else  // __ANDROID__
 #include <sys/procfs.h>
 #endif // __ANDROID__

@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__arm__) // arm register context only needed on arm devices
 
 #ifndef lldb_NativeRegisterContextLinux_arm_h
 #define lldb_NativeRegisterContextLinux_arm_h
 
-#include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
+#include "Plugins/Process/Linux/NativeRegisterContextLinux.h"
 #include "Plugins/Process/Utility/lldb-arm-register-enums.h"
 
 namespace lldb_private {
@@ -19,10 +20,12 @@ namespace process_linux {
 
     class NativeProcessLinux;
 
-    class NativeRegisterContextLinux_arm : public NativeRegisterContextRegisterInfo
+    class NativeRegisterContextLinux_arm : public NativeRegisterContextLinux
     {
     public:
-        NativeRegisterContextLinux_arm (NativeThreadProtocol &native_thread, uint32_t concrete_frame_idx, RegisterInfoInterface *reg_info_interface_p);
+        NativeRegisterContextLinux_arm (const ArchSpec& target_arch,
+                                        NativeThreadProtocol &native_thread,
+                                        uint32_t concrete_frame_idx);
 
         uint32_t
         GetRegisterSetCount () const override;
@@ -44,6 +47,16 @@ namespace process_linux {
 
         Error
         WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
+
+    protected:
+        void*
+        GetGPRBuffer() override { return &m_gpr_arm; }
+
+        void*
+        GetFPRBuffer() override { return &m_fpr; }
+
+        size_t
+        GetFPRSize() override { return sizeof(m_fpr); }
 
     private:
         struct RegInfo
@@ -85,31 +98,7 @@ namespace process_linux {
         IsGPR(unsigned reg) const;
 
         bool
-        ReadGPR ();
-
-        bool
-        WriteGPR ();
-
-        bool
         IsFPR(unsigned reg) const;
-
-        bool
-        ReadFPR ();
-
-        bool
-        WriteFPR ();
-
-        Error
-        ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value);
-
-        Error
-        WriteRegisterRaw (uint32_t reg_index, const RegisterValue &reg_value);
-
-        lldb::ByteOrder
-        GetByteOrder() const;
-
-        size_t
-        GetGPRSize() const;
     };
 
 } // namespace process_linux
@@ -117,3 +106,4 @@ namespace process_linux {
 
 #endif // #ifndef lldb_NativeRegisterContextLinux_arm_h
 
+#endif // defined(__arm__)

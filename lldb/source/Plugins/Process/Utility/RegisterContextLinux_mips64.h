@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__mips__)
+
 #ifndef liblldb_RegisterContextLinux_mips64_H_
 #define liblldb_RegisterContextLinux_mips64_H_
 
@@ -32,5 +34,7 @@ private:
     const lldb_private::RegisterInfo *m_register_info_p;
     uint32_t m_register_info_count;
 };
+
+#endif
 
 #endif

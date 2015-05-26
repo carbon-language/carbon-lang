@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__mips__)
 
 #ifndef lldb_NativeRegisterContextLinux_mips64_h
 #define lldb_NativeRegisterContextLinux_mips64_h
 
-#include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
+#include "Plugins/Process/Linux/NativeRegisterContextLinux.h"
 #include "Plugins/Process/Utility/RegisterContext_mips64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
 
@@ -68,11 +69,12 @@ namespace process_linux {
         k_num_gp_reg_mips64,
     };
 
-    class NativeRegisterContextLinux_mips64 : public NativeRegisterContextRegisterInfo
+    class NativeRegisterContextLinux_mips64 : public NativeRegisterContextLinux
     {
     public:
-        NativeRegisterContextLinux_mips64 (NativeThreadProtocol &native_thread, 
-            uint32_t concrete_frame_idx, RegisterInfoInterface *reg_info_interface_p);
+        NativeRegisterContextLinux_mips64 (const ArchSpec& target_arch,
+                                           NativeThreadProtocol &native_thread, 
+                                           uint32_t concrete_frame_idx);
 
         uint32_t
         GetRegisterSetCount () const override;
@@ -118,13 +120,17 @@ namespace process_linux {
         uint32_t
         NumSupportedHardwareWatchpoints () override;
 
-    private:
+    protected:
+        NativeProcessLinux::OperationUP
+        GetReadRegisterValueOperation(uint32_t offset,
+                                      const char* reg_name,
+                                      uint32_t size,
+                                      RegisterValue &value) override;
 
-        lldb_private::Error
-        WriteRegister(const uint32_t reg, const RegisterValue &value);
-
-        lldb_private::Error
-        ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value);
+        NativeProcessLinux::OperationUP
+        GetWriteRegisterValueOperation(uint32_t offset,
+                                       const char* reg_name,
+                                       const RegisterValue &value) override;
     };
 
 } // namespace process_linux
@@ -132,3 +138,4 @@ namespace process_linux {
 
 #endif // #ifndef lldb_NativeRegisterContextLinux_mips64_h
 
+#endif // defined (__mips__)

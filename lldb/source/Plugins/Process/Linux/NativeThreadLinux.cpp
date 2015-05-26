@@ -20,8 +20,6 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
-#include "lldb/Host/Host.h"
-#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostNativeThread.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/lldb-enumerations.h"
@@ -29,13 +27,6 @@
 #include "llvm/ADT/SmallString.h"
 
 #include "Plugins/Process/POSIX/CrashReason.h"
-
-#include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
-#include "Plugins/Process/Utility/RegisterInfoInterface.h"
 
 #include <sys/syscall.h>
 // Try to define a macro to encapsulate the tgkill syscall
@@ -172,8 +163,6 @@ NativeThreadLinux::GetRegisterContext ()
     if (m_reg_context_sp)
         return m_reg_context_sp;
 
-    // First select the appropriate RegisterInfoInterface.
-    RegisterInfoInterface *reg_interface = nullptr;
     NativeProcessProtocolSP m_process_sp = m_process_wp.lock ();
     if (!m_process_sp)
         return NativeRegisterContextSP ();
@@ -182,93 +171,10 @@ NativeThreadLinux::GetRegisterContext ()
     if (!m_process_sp->GetArchitecture (target_arch))
         return NativeRegisterContextSP ();
 
-    switch (target_arch.GetTriple().getOS())
-    {
-        case llvm::Triple::Linux:
-            switch (target_arch.GetMachine())
-            {
-            case llvm::Triple::aarch64:
-                assert((HostInfo::GetArchitecture ().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
-                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
-                break;
-            case llvm::Triple::arm:
-                assert(HostInfo::GetArchitecture ().GetAddressByteSize() == 4);
-                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm(target_arch));
-                break;
-            case llvm::Triple::x86:
-            case llvm::Triple::x86_64:
-                if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
-                {
-                    // 32-bit hosts run with a RegisterContextLinux_i386 context.
-                    reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_i386(target_arch));
-                }
-                else
-                {
-                    assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
-                           "Register setting path assumes this is a 64-bit host");
-                    // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the x86_64 register context.
-                    reg_interface = static_cast<RegisterInfoInterface*> (new RegisterContextLinux_x86_64 (target_arch));
-                }
-                break;
-            case llvm::Triple::mips64:
-            case llvm::Triple::mips64el:
-                assert((HostInfo::GetArchitecture ().GetAddressByteSize() == 8)
-                    && "Register setting path assumes this is a 64-bit host");
-                reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_mips64 (target_arch));
-                break;
-            default:
-                break;
-            }
-            break;
-        default:
-            break;
-    }
-
-    assert(reg_interface && "OS or CPU not supported!");
-    if (!reg_interface)
-        return NativeRegisterContextSP ();
-
-    // Now create the register context.
-    switch (target_arch.GetMachine())
-    {
-#if 0
-        case llvm::Triple::mips64:
-        {
-            RegisterContextPOSIXProcessMonitor_mips64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_mips64(*this, 0, reg_interface);
-            m_posix_thread = reg_ctx;
-            m_reg_context_sp.reset(reg_ctx);
-            break;
-        }
-#endif
-        case llvm::Triple::mips64:
-        case llvm::Triple::mips64el:
-        {
-            const uint32_t concrete_frame_idx = 0;
-            m_reg_context_sp.reset (new NativeRegisterContextLinux_mips64 (*this, concrete_frame_idx, reg_interface));
-            break;
-        }
-        case llvm::Triple::aarch64:
-        {
-            const uint32_t concrete_frame_idx = 0;
-            m_reg_context_sp.reset (new NativeRegisterContextLinux_arm64(*this, concrete_frame_idx, reg_interface));
-            break;
-        }
-        case llvm::Triple::arm:
-        {
-            const uint32_t concrete_frame_idx = 0;
-            m_reg_context_sp.reset (new NativeRegisterContextLinux_arm(*this, concrete_frame_idx, reg_interface));
-            break;
-        }
-        case llvm::Triple::x86:
-        case llvm::Triple::x86_64:
-        {
-            const uint32_t concrete_frame_idx = 0;
-            m_reg_context_sp.reset (new NativeRegisterContextLinux_x86_64(*this, concrete_frame_idx, reg_interface));
-            break;
-        }
-        default:
-            break;
-    }
+    const uint32_t concrete_frame_idx = 0;
+    m_reg_context_sp.reset (NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(target_arch,
+                                                                                             *this,
+                                                                                             concrete_frame_idx));
 
     return m_reg_context_sp;
 }

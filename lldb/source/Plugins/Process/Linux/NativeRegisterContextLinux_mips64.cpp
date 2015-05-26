@@ -7,15 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined (__mips__)
+
 #include "NativeRegisterContextLinux_mips64.h"
 
-#include "lldb/lldb-private-forward.h"
-#include "lldb/Core/DataBufferHeap.h"
+// C Includes
+// C++ Includes
+
+// Other libraries and framework includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/RegisterValue.h"
-#include "lldb/Host/common/NativeProcessProtocol.h"
-#include "lldb/Host/common/NativeThreadProtocol.h"
+
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
+#include "Plugins/Process/Linux/Procfs.h"
+#include "Plugins/Process/Utility/RegisterContextLinux_mips64.h"
 
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
@@ -86,15 +91,90 @@ namespace
     {
         { "General Purpose Registers",  "gpr", k_num_gp_reg_mips64, g_gp_regnums_mips64 }
     };
+
+    class ReadRegOperation : public NativeProcessLinux::Operation
+    {
+    public:
+        ReadRegOperation(lldb::tid_t tid, uint32_t offset, RegisterValue &value) :
+            m_tid(tid),
+            m_offset(static_cast<uintptr_t>(offset)),
+            m_value(value)
+        { }
+
+        void
+        Execute(NativeProcessLinux *monitor) override;
+
+    private:
+        lldb::tid_t m_tid;
+        uintptr_t m_offset;
+        RegisterValue &m_value;
+    };
+
+    class WriteRegOperation : public NativeProcessLinux::Operation
+    {
+    public:
+        WriteRegOperation(lldb::tid_t tid, unsigned offset, const char *reg_name, const RegisterValue &value) :
+            m_tid(tid),
+            m_offset(offset),
+            m_reg_name(reg_name),
+            m_value(value)
+        { }
+
+        void
+        Execute(NativeProcessLinux *monitor) override;
+
+    private:
+        lldb::tid_t m_tid;
+        uintptr_t m_offset;
+        const char *m_reg_name;
+        const RegisterValue &m_value;
+    };
+
+} // end of anonymous namespace
+
+void
+ReadRegOperation::Execute(NativeProcessLinux *monitor)
+{
+    elf_gregset_t regs;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
+    if (m_error.Success())
+    {
+        lldb_private::ArchSpec arch;
+        if (monitor->GetArchitecture(arch))
+            m_value.SetBytes((void *)(((unsigned char *)(regs)) + m_offset), 8, arch.GetByteOrder());
+        else
+            m_error.SetErrorString("failed to get architecture");
+    }
+}
+
+void
+WriteRegOperation::Execute(NativeProcessLinux *monitor)
+{
+    elf_gregset_t regs;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
+    if (m_error.Success())
+    {
+        ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
+        NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
+    }
+}
+
+NativeRegisterContextLinux*
+NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(const ArchSpec& target_arch,
+                                                                 NativeThreadProtocol &native_thread,
+                                                                 uint32_t concrete_frame_idx)
+{
+    return new NativeRegisterContextLinux_mips64(target_arch, native_thread, concrete_frame_idx);
 }
 
 // ----------------------------------------------------------------------------
 // NativeRegisterContextLinux_mips64 members.
 // ----------------------------------------------------------------------------
 
-NativeRegisterContextLinux_mips64::NativeRegisterContextLinux_mips64 (NativeThreadProtocol &native_thread, 
-        uint32_t concrete_frame_idx, RegisterInfoInterface *reg_info_interface_p) :
-    NativeRegisterContextRegisterInfo (native_thread, concrete_frame_idx, reg_info_interface_p)
+NativeRegisterContextLinux_mips64::NativeRegisterContextLinux_mips64 (const ArchSpec& target_arch,
+                                                                      NativeThreadProtocol &native_thread, 
+                                                                      uint32_t concrete_frame_idx) :
+    NativeRegisterContextLinux (native_thread, concrete_frame_idx, new RegisterContextLinux_mips64 (target_arch))
 {
 }
 
@@ -121,33 +201,6 @@ NativeRegisterContextLinux_mips64::GetRegisterSet (uint32_t set_index) const
     }
 
     return nullptr;
-}
-
-lldb_private::Error
-NativeRegisterContextLinux_mips64::ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value)
-{
-    Error error;
-
-    const RegisterInfo *const reg_info = GetRegisterInfoAtIndex (reg_index);
-    if (!reg_info)
-    {
-        error.SetErrorStringWithFormat ("register %" PRIu32 " not found", reg_index);
-        return error;
-    }
-
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-    {
-        error.SetErrorString ("NativeProcessProtocol is NULL");
-        return error;
-    }
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->ReadRegisterValue(m_thread.GetID(),
-                                        reg_info->byte_offset,
-                                        reg_info->name,
-                                        reg_info->byte_size,
-                                        reg_value);
 }
 
 lldb_private::Error
@@ -183,39 +236,6 @@ NativeRegisterContextLinux_mips64::ReadRegister (const RegisterInfo *reg_info, R
 }
 
 lldb_private::Error
-NativeRegisterContextLinux_mips64::WriteRegister(const uint32_t reg,
-                                                 const RegisterValue &value)
-{
-    Error error;
-
-    uint32_t reg_to_write = reg;
-    RegisterValue value_to_write = value;
-
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-    {
-        error.SetErrorString ("NativeProcessProtocol is NULL");
-        return error;
-    }
-
-    const RegisterInfo *const register_to_write_info_p = GetRegisterInfoAtIndex (reg_to_write);
-    assert (register_to_write_info_p && "register to write does not have valid RegisterInfo");
-    if (!register_to_write_info_p)
-    {
-        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_mips64::%s failed to get RegisterInfo for write register index %" PRIu32, __FUNCTION__, reg_to_write);
-        return error;
-    }
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->WriteRegisterValue(m_thread.GetID(),
-                                         register_to_write_info_p->byte_offset,
-                                         register_to_write_info_p->name,
-                                         value_to_write);
-}
-
-
-
-lldb_private::Error
 NativeRegisterContextLinux_mips64::WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value)
 {
     assert (reg_info && "reg_info is null");
@@ -225,7 +245,7 @@ NativeRegisterContextLinux_mips64::WriteRegister (const RegisterInfo *reg_info, 
     if (reg_index == LLDB_INVALID_REGNUM)
         return Error ("no lldb regnum for %s", reg_info && reg_info->name ? reg_info->name : "<unknown register>");
 
-    return WriteRegister(reg_index, reg_value);
+    return WriteRegisterRaw(reg_index, reg_value);
 }
 
 Error
@@ -299,3 +319,22 @@ NativeRegisterContextLinux_mips64::NumSupportedHardwareWatchpoints ()
 {
     return 0;
 }
+
+NativeProcessLinux::OperationUP
+NativeRegisterContextLinux_mips64::GetReadRegisterValueOperation(uint32_t offset,
+                                                                 const char* reg_name,
+                                                                 uint32_t size,
+                                                                 RegisterValue &value)
+{
+    return NativeProcessLinux::OperationUP(new ReadRegOperation(m_thread.GetID(), offset, value));
+}
+
+NativeProcessLinux::OperationUP
+NativeRegisterContextLinux_mips64::GetWriteRegisterValueOperation(uint32_t offset,
+                                                                  const char* reg_name,
+                                                                  const RegisterValue &value)
+{
+    return NativeProcessLinux::OperationUP(new WriteRegOperation(m_thread.GetID(), offset, reg_name, value));
+}
+
+#endif // defined (__mips__)

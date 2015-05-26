@@ -7,6 +7,8 @@
 //
 //===---------------------------------------------------------------------===//
 
+#if defined (__mips__)
+
 #include <vector>
 #include <stddef.h>
 
@@ -150,3 +152,4 @@ RegisterContextLinux_mips64::GetRegisterCount () const
     return m_register_info_count;
 }
 
+#endif

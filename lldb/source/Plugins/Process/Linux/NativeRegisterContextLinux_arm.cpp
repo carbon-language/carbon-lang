@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__arm__)
+
 #include "NativeRegisterContextLinux_arm.h"
 
-#include "lldb/lldb-private-forward.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/RegisterValue.h"
-#include "lldb/Host/common/NativeProcessProtocol.h"
-#include "lldb/Host/common/NativeThreadProtocol.h"
-#include "Plugins/Process/Linux/NativeProcessLinux.h"
+
+#include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + sizeof (m_fpr))
 
@@ -105,13 +105,20 @@ g_reg_sets_arm[k_num_register_sets] =
     { "Floating Point Registers",   "fpu", k_num_fpr_registers_arm, g_fpu_regnums_arm }
 };
 
-NativeRegisterContextLinux_arm::NativeRegisterContextLinux_arm (
-        NativeThreadProtocol &native_thread,
-        uint32_t concrete_frame_idx,
-        RegisterInfoInterface *reg_info_interface_p) :
-    NativeRegisterContextRegisterInfo (native_thread, concrete_frame_idx, reg_info_interface_p)
+NativeRegisterContextLinux*
+NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(const ArchSpec& target_arch,
+                                                                 NativeThreadProtocol &native_thread,
+                                                                 uint32_t concrete_frame_idx)
 {
-    switch (reg_info_interface_p->m_target_arch.GetMachine())
+    return new NativeRegisterContextLinux_arm(target_arch, native_thread, concrete_frame_idx);
+}
+
+NativeRegisterContextLinux_arm::NativeRegisterContextLinux_arm (const ArchSpec& target_arch,
+                                                                NativeThreadProtocol &native_thread,
+                                                                uint32_t concrete_frame_idx) :
+    NativeRegisterContextLinux (native_thread, concrete_frame_idx, new RegisterContextLinux_arm(target_arch))
+{
+    switch (target_arch.GetMachine())
     {
         case llvm::Triple::arm:
             m_reg_info.num_registers     = k_num_registers_arm;
@@ -172,11 +179,9 @@ NativeRegisterContextLinux_arm::ReadRegister (const RegisterInfo *reg_info, Regi
 
     if (IsFPR(reg))
     {
-        if (!ReadFPR())
-        {
-            error.SetErrorString ("failed to read floating point register");
+        error = ReadFPR();
+        if (error.Fail())
             return error;
-        }
     }
     else
     {
@@ -262,10 +267,9 @@ NativeRegisterContextLinux_arm::WriteRegister (const RegisterInfo *reg_info, con
                 return Error ("unhandled register data size %" PRIu32, reg_info->byte_size);
         }
 
-        if (!WriteFPR())
-        {
-            return Error ("NativeRegisterContextLinux_arm::WriteRegister: WriteFPR failed");
-        }
+        Error error = WriteFPR();
+        if (error.Fail())
+            return error;
 
         return Error ();
     }
@@ -282,17 +286,13 @@ NativeRegisterContextLinux_arm::ReadAllRegisterValues (lldb::DataBufferSP &data_
     if (!data_sp)
         return Error ("failed to allocate DataBufferHeap instance of size %" PRIu64, (uint64_t)REG_CONTEXT_SIZE);
 
-    if (!ReadGPR ())
-    {
-        error.SetErrorString ("ReadGPR() failed");
+    error = ReadGPR();
+    if (error.Fail())
         return error;
-    }
 
-    if (!ReadFPR ())
-    {
-        error.SetErrorString ("ReadFPR() failed");
+    error = ReadFPR();
+    if (error.Fail())
         return error;
-    }
 
     uint8_t *dst = data_sp->GetBytes ();
     if (dst == nullptr)
@@ -334,118 +334,18 @@ NativeRegisterContextLinux_arm::WriteAllRegisterValues (const lldb::DataBufferSP
     }
     ::memcpy (&m_gpr_arm, src, GetRegisterInfoInterface ().GetGPRSize ());
 
-    if (!WriteGPR ())
-    {
-        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_x86_64::%s WriteGPR() failed", __FUNCTION__);
+    error = WriteGPR();
+    if (error.Fail())
         return error;
-    }
 
     src += GetRegisterInfoInterface ().GetGPRSize ();
     ::memcpy (&m_fpr, src, sizeof(m_fpr));
 
-    if (!WriteFPR ())
-    {
-        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_x86_64::%s WriteFPR() failed", __FUNCTION__);
+    error = WriteFPR();
+    if (error.Fail())
         return error;
-    }
 
     return error;
-}
-
-Error
-NativeRegisterContextLinux_arm::WriteRegisterRaw (uint32_t reg_index, const RegisterValue &reg_value)
-{
-    Error error;
-
-    uint32_t reg_to_write = reg_index;
-    RegisterValue value_to_write = reg_value;
-
-    // Check if this is a subregister of a full register.
-    const RegisterInfo *reg_info = GetRegisterInfoAtIndex(reg_index);
-    if (reg_info->invalidate_regs && (reg_info->invalidate_regs[0] != LLDB_INVALID_REGNUM))
-    {
-        RegisterValue full_value;
-        uint32_t full_reg = reg_info->invalidate_regs[0];
-        const RegisterInfo *full_reg_info = GetRegisterInfoAtIndex(full_reg);
-
-        // Read the full register.
-        error = ReadRegister(full_reg_info, full_value);
-        if (error.Fail ())
-            return error;
-
-        lldb::ByteOrder byte_order = GetByteOrder();
-        uint8_t dst[RegisterValue::kMaxRegisterByteSize];
-
-        // Get the bytes for the full register.
-        const uint32_t dest_size = full_value.GetAsMemoryData (full_reg_info,
-                                                               dst,
-                                                               sizeof(dst),
-                                                               byte_order,
-                                                               error);
-        if (error.Success() && dest_size)
-        {
-            uint8_t src[RegisterValue::kMaxRegisterByteSize];
-
-            // Get the bytes for the source data.
-            const uint32_t src_size = reg_value.GetAsMemoryData (reg_info, src, sizeof(src), byte_order, error);
-            if (error.Success() && src_size && (src_size < dest_size))
-            {
-                // Copy the src bytes to the destination.
-                memcpy (dst + (reg_info->byte_offset & 0x1), src, src_size);
-                // Set this full register as the value to write.
-                value_to_write.SetBytes(dst, full_value.GetByteSize(), byte_order);
-                value_to_write.SetType(full_reg_info);
-                reg_to_write = full_reg;
-            }
-        }
-    }
-
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-    {
-        error.SetErrorString ("NativeProcessProtocol is NULL");
-        return error;
-    }
-
-    const RegisterInfo *const register_to_write_info_p = GetRegisterInfoAtIndex (reg_to_write);
-    assert (register_to_write_info_p && "register to write does not have valid RegisterInfo");
-    if (!register_to_write_info_p)
-    {
-        error.SetErrorStringWithFormat ("NativeRegisterContextLinux_arm::%s failed to get RegisterInfo for write register index %" PRIu32, __FUNCTION__, reg_to_write);
-        return error;
-    }
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->WriteRegisterValue(m_thread.GetID(),
-                                         register_to_write_info_p->byte_offset,
-                                         register_to_write_info_p->name,
-                                         value_to_write);
-}
-
-Error
-NativeRegisterContextLinux_arm::ReadRegisterRaw (uint32_t reg_index, RegisterValue &reg_value)
-{
-    Error error;
-    const RegisterInfo *const reg_info = GetRegisterInfoAtIndex (reg_index);
-    if (!reg_info)
-    {
-        error.SetErrorStringWithFormat ("register %" PRIu32 " not found", reg_index);
-        return error;
-    }
-
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-    {
-        error.SetErrorString ("NativeProcessProtocol is NULL");
-        return error;
-    }
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->ReadRegisterValue(m_thread.GetID(),
-                                        reg_info->byte_offset,
-                                        reg_info->name,
-                                        reg_info->byte_size,
-                                        reg_value);
 }
 
 bool
@@ -455,75 +355,9 @@ NativeRegisterContextLinux_arm::IsGPR(unsigned reg) const
 }
 
 bool
-NativeRegisterContextLinux_arm::ReadGPR()
-{
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-        return false;
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-
-    return process_p->ReadGPR (m_thread.GetID (), &m_gpr_arm, GetRegisterInfoInterface ().GetGPRSize ()).Success();
-}
-
-bool
-NativeRegisterContextLinux_arm::WriteGPR()
-{
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-        return false;
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-
-    return process_p->WriteGPR (m_thread.GetID (), &m_gpr_arm, GetRegisterInfoInterface ().GetGPRSize ()).Success();
-}
-
-bool
 NativeRegisterContextLinux_arm::IsFPR(unsigned reg) const
 {
     return (m_reg_info.first_fpr <= reg && reg <= m_reg_info.last_fpr);
 }
 
-bool
-NativeRegisterContextLinux_arm::ReadFPR ()
-{
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-        return false;
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->ReadFPR (m_thread.GetID (), &m_fpr, sizeof (m_fpr)).Success();
-}
-
-bool
-NativeRegisterContextLinux_arm::WriteFPR ()
-{
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-        return false;
-
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->WriteFPR (m_thread.GetID (), &m_fpr, sizeof (m_fpr)).Success();
-}
-
-lldb::ByteOrder
-NativeRegisterContextLinux_arm::GetByteOrder() const
-{
-    // Get the target process whose privileged thread was used for the register read.
-    lldb::ByteOrder byte_order = lldb::eByteOrderInvalid;
-
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    if (!process_sp)
-        return byte_order;
-
-    if (!process_sp->GetByteOrder (byte_order))
-    {
-        // FIXME log here
-    }
-
-    return byte_order;
-}
-
-size_t
-NativeRegisterContextLinux_arm::GetGPRSize() const
-{
-    return GetRegisterInfoInterface().GetGPRSize();
-}
+#endif // defined(__arm__)

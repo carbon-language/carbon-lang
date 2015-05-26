@@ -60,6 +60,37 @@ namespace process_linux {
             NativeProcessProtocol::NativeDelegate &native_delegate,
             NativeProcessProtocolSP &native_process_sp);
 
+        //------------------------------------------------------------------------------
+        /// @class Operation
+        /// @brief Represents a NativeProcessLinux operation.
+        ///
+        /// Under Linux, it is not possible to ptrace() from any other thread but the
+        /// one that spawned or attached to the process from the start.  Therefore, when
+        /// a NativeProcessLinux is asked to deliver or change the state of an inferior
+        /// process the operation must be "funneled" to a specific thread to perform the
+        /// task.  The Operation class provides an abstract base for all services the
+        /// NativeProcessLinux must perform via the single virtual function Execute, thus
+        /// encapsulating the code that needs to run in the privileged context.
+        class Operation
+        {
+        public:
+            Operation () : m_error() { }
+
+            virtual
+            ~Operation() {}
+
+            virtual void
+            Execute (NativeProcessLinux *process) = 0;
+
+            const Error &
+            GetError () const { return m_error; }
+
+        protected:
+            Error m_error;
+        };
+
+        typedef std::unique_ptr<Operation> OperationUP;
+
         // ---------------------------------------------------------------------
         // NativeProcessProtocol Interface
         // ---------------------------------------------------------------------
@@ -123,64 +154,20 @@ namespace process_linux {
         void
         Terminate () override;
 
+        Error
+        GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) override;
+
         // ---------------------------------------------------------------------
         // Interface used by NativeRegisterContext-derived classes.
         // ---------------------------------------------------------------------
-
-        /// Reads the contents from the register identified by the given (architecture
-        /// dependent) offset.
-        ///
-        /// This method is provided for use by RegisterContextLinux derivatives.
         Error
-        ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
-                          unsigned size, RegisterValue &value);
-
-        /// Writes the given value to the register identified by the given
-        /// (architecture dependent) offset.
-        ///
-        /// This method is provided for use by RegisterContextLinux derivatives.
-        Error
-        WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
-                           const RegisterValue &value);
-
-        /// Reads all general purpose registers into the specified buffer.
-        Error
-        ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-        /// Reads generic floating point registers into the specified buffer.
-        Error
-        ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-        /// Reads hardware breakpoints and watchpoints capability information.
-        Error
-        ReadHardwareDebugInfo (lldb::tid_t tid, unsigned int &watch_count ,
-                               unsigned int &break_count);
-
-        /// Write hardware breakpoint/watchpoint control and address registers.
-        Error
-        WriteHardwareDebugRegs (lldb::tid_t tid, lldb::addr_t *addr_buf,
-                                uint32_t *cntrl_buf, int type, int count);
-
-        /// Reads the specified register set into the specified buffer.
-        /// For instance, the extended floating-point register set.
-        Error
-        ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
-
-        /// Writes all general purpose registers into the specified buffer.
-        Error
-        WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-        /// Writes generic floating point registers into the specified buffer.
-        Error
-        WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
-
-        /// Writes the specified register set into the specified buffer.
-        /// For instance, the extended floating-point register set.
-        Error
-        WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
+        DoOperation(Operation* op);
 
         Error
-        GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) override;
+        DoOperation(OperationUP op) { return DoOperation(op.get()); }
+
+        static long
+        PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size, Error& error);
 
     protected:
         // ---------------------------------------------------------------------
