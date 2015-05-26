@@ -210,6 +210,11 @@ public:
     return const_cast<MCSection *>(this)->end();
   }
 
+  MCSectionData::reverse_iterator rbegin();
+  MCSectionData::const_reverse_iterator rbegin() const {
+    return const_cast<MCSection *>(this)->rbegin();
+  }
+
   MCSectionData::reverse_iterator rend();
   MCSectionData::const_reverse_iterator rend() const {
     return const_cast<MCSection *>(this)->rend();

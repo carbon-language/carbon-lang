@@ -1314,12 +1314,10 @@ void ELFObjectWriter::writeSectionHeader(
     const std::pair<uint64_t, uint64_t> &Offsets =
         SectionOffsets.find(Section)->second;
     uint64_t Size;
-    if (Type == ELF::SHT_NOBITS) {
-      const MCSectionData &SD = Asm.getSectionData(*Section);
-      Size = Layout.getSectionAddressSize(&SD);
-    } else {
+    if (Type == ELF::SHT_NOBITS)
+      Size = Layout.getSectionAddressSize(Section);
+    else
       Size = Offsets.second - Offsets.first;
-    }
 
     writeSection(SectionIndexMap, GroupSymbolIndex, Offsets.first, Size,
                  *Section);

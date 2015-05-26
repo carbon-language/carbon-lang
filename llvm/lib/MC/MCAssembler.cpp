@@ -70,18 +70,18 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
   // Compute the section layout order. Virtual sections must go last.
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
     if (!it->isVirtualSection())
-      SectionOrder.push_back(&it->getSectionData());
+      SectionOrder.push_back(&*it);
   for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
     if (it->isVirtualSection())
-      SectionOrder.push_back(&it->getSectionData());
+      SectionOrder.push_back(&*it);
 }
 
 bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
-  const MCSectionData &SD = F->getParent()->getSectionData();
-  const MCFragment *LastValid = LastValidFragment.lookup(&SD);
+  const MCSection *Sec = F->getParent();
+  const MCFragment *LastValid = LastValidFragment.lookup(Sec);
   if (!LastValid)
     return false;
-  assert(LastValid->getParent() == F->getParent());
+  assert(LastValid->getParent() == Sec);
   return F->getLayoutOrder() <= LastValid->getLayoutOrder();
 }
 
@@ -92,16 +92,14 @@ void MCAsmLayout::invalidateFragmentsFrom(MCFragment *F) {
 
   // Otherwise, reset the last valid fragment to the previous fragment
   // (if this is the first fragment, it will be NULL).
-  const MCSectionData &SD = F->getParent()->getSectionData();
-  LastValidFragment[&SD] = F->getPrevNode();
+  LastValidFragment[F->getParent()] = F->getPrevNode();
 }
 
 void MCAsmLayout::ensureValid(const MCFragment *F) const {
-  MCSectionData &SD = F->getParent()->getSectionData();
-
-  MCFragment *Cur = LastValidFragment[&SD];
+  MCSection *Sec = F->getParent();
+  MCFragment *Cur = LastValidFragment[Sec];
   if (!Cur)
-    Cur = &*SD.begin();
+    Cur = Sec->begin();
   else
     Cur = Cur->getNextNode();
 
@@ -208,19 +206,19 @@ const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
   return &ASym;
 }
 
-uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
+uint64_t MCAsmLayout::getSectionAddressSize(const MCSection *Sec) const {
   // The size is the last fragment's end offset.
-  const MCFragment &F = SD->getFragmentList().back();
+  const MCFragment &F = Sec->getFragmentList().back();
   return getFragmentOffset(&F) + getAssembler().computeFragmentSize(*this, F);
 }
 
-uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
+uint64_t MCAsmLayout::getSectionFileSize(const MCSection *Sec) const {
   // Virtual sections have no file size.
-  if (SD->getSection().isVirtualSection())
+  if (Sec->isVirtualSection())
     return 0;
 
   // Otherwise, the file size is the same as the address space size.
-  return getSectionAddressSize(SD);
+  return getSectionAddressSize(Sec);
 }
 
 uint64_t llvm::computeBundlePadding(const MCAssembler &Assembler,
@@ -568,7 +566,7 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
     F->Offset = Prev->Offset + getAssembler().computeFragmentSize(*this, *Prev);
   else
     F->Offset = 0;
-  LastValidFragment[&F->getParent()->getSectionData()] = F;
+  LastValidFragment[F->getParent()] = F;
 
   // If bundling is enabled and this fragment has instructions in it, it has to
   // obey the bundling restrictions. With padding, we'll have:
@@ -773,8 +771,9 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 void MCAssembler::writeSectionData(const MCSectionData *SD,
                                    const MCAsmLayout &Layout) const {
   // Ignore virtual sections.
-  if (SD->getSection().isVirtualSection()) {
-    assert(Layout.getSectionFileSize(SD) == 0 && "Invalid size for section!");
+  const MCSection &Sec = SD->getSection();
+  if (Sec.isVirtualSection()) {
+    assert(Layout.getSectionFileSize(&Sec) == 0 && "Invalid size for section!");
 
     // Check that contents are only things legal inside a virtual section.
     for (MCSectionData::const_iterator it = SD->begin(),
@@ -824,7 +823,7 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
     writeFragment(*this, Layout, *it);
 
   assert(getWriter().getStream().tell() - Start ==
-         Layout.getSectionAddressSize(SD));
+         Layout.getSectionAddressSize(&SD->getSection()));
 }
 
 std::pair<uint64_t, bool> MCAssembler::handleFixup(const MCAsmLayout &Layout,
@@ -866,11 +865,11 @@ void MCAssembler::Finish() {
 
   // Assign layout order indices to sections and fragments.
   for (unsigned i = 0, e = Layout.getSectionOrder().size(); i != e; ++i) {
-    MCSectionData *SD = Layout.getSectionOrder()[i];
-    SD->getSection().setLayoutOrder(i);
+    MCSection *Sec = Layout.getSectionOrder()[i];
+    Sec->setLayoutOrder(i);
 
     unsigned FragmentIndex = 0;
-    for (MCSectionData::iterator iFrag = SD->begin(), iFragEnd = SD->end();
+    for (MCSectionData::iterator iFrag = Sec->begin(), iFragEnd = Sec->end();
          iFrag != iFragEnd; ++iFrag)
       iFrag->setLayoutOrder(FragmentIndex++);
   }

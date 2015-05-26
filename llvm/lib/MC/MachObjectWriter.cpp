@@ -107,16 +107,15 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
 
 uint64_t MachObjectWriter::getPaddingSize(const MCSection *Sec,
                                           const MCAsmLayout &Layout) const {
-  uint64_t EndAddr = getSectionAddress(Sec) +
-                     Layout.getSectionAddressSize(&Sec->getSectionData());
+  uint64_t EndAddr = getSectionAddress(Sec) + Layout.getSectionAddressSize(Sec);
   unsigned Next = Sec->getLayoutOrder() + 1;
   if (Next >= Layout.getSectionOrder().size())
     return 0;
 
-  const MCSectionData &NextSD = *Layout.getSectionOrder()[Next];
-  if (NextSD.getSection().isVirtualSection())
+  const MCSection &NextSec = *Layout.getSectionOrder()[Next];
+  if (NextSec.isVirtualSection())
     return 0;
-  return OffsetToAlignment(EndAddr, NextSD.getSection().getAlignment());
+  return OffsetToAlignment(EndAddr, NextSec.getAlignment());
 }
 
 void MachObjectWriter::WriteHeader(unsigned NumLoadCommands,
@@ -199,12 +198,12 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
                                     uint64_t RelocationsStart,
                                     unsigned NumRelocations) {
   const MCSectionData &SD = Sec.getSectionData();
-  uint64_t SectionSize = Layout.getSectionAddressSize(&SD);
+  uint64_t SectionSize = Layout.getSectionAddressSize(&Sec);
   const MCSectionMachO &Section = cast<MCSectionMachO>(Sec);
 
   // The offset is unused for virtual sections.
   if (Section.isVirtualSection()) {
-    assert(Layout.getSectionFileSize(&SD) == 0 && "Invalid file size!");
+    assert(Layout.getSectionFileSize(&Sec) == 0 && "Invalid file size!");
     FileOffset = 0;
   }
 
@@ -645,18 +644,17 @@ void MachObjectWriter::ComputeSymbolTable(
 void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
                                                const MCAsmLayout &Layout) {
   uint64_t StartAddress = 0;
-  const SmallVectorImpl<MCSectionData*> &Order = Layout.getSectionOrder();
+  const SmallVectorImpl<MCSection *> &Order = Layout.getSectionOrder();
   for (int i = 0, n = Order.size(); i != n ; ++i) {
-    const MCSectionData *SD = Order[i];
-    StartAddress =
-        RoundUpToAlignment(StartAddress, SD->getSection().getAlignment());
-    SectionAddress[&SD->getSection()] = StartAddress;
-    StartAddress += Layout.getSectionAddressSize(SD);
+    const MCSection *Sec = Order[i];
+    StartAddress = RoundUpToAlignment(StartAddress, Sec->getAlignment());
+    SectionAddress[Sec] = StartAddress;
+    StartAddress += Layout.getSectionAddressSize(Sec);
 
     // Explicitly pad the section to match the alignment requirements of the
     // following one. This is for 'gas' compatibility, it shouldn't
     /// strictly be necessary.
-    StartAddress += getPaddingSize(&SD->getSection(), Layout);
+    StartAddress += getPaddingSize(Sec, Layout);
   }
 }
 
@@ -804,11 +802,12 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   uint64_t VMSize = 0;
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
+    const MCSection &Sec = *it;
     const MCSectionData &SD = it->getSectionData();
-    uint64_t Address = getSectionAddress(&*it);
-    uint64_t Size = Layout.getSectionAddressSize(&SD);
-    uint64_t FileSize = Layout.getSectionFileSize(&SD);
-    FileSize += getPaddingSize(&*it, Layout);
+    uint64_t Address = getSectionAddress(&Sec);
+    uint64_t Size = Layout.getSectionAddressSize(&Sec);
+    uint64_t FileSize = Layout.getSectionFileSize(&Sec);
+    FileSize += getPaddingSize(&Sec, Layout);
 
     VMSize = std::max(VMSize, Address + Size);
 

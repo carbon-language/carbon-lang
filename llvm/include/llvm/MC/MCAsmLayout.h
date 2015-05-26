@@ -16,7 +16,7 @@
 namespace llvm {
 class MCAssembler;
 class MCFragment;
-class MCSectionData;
+class MCSection;
 class MCSymbol;
 class MCSymbolData;
 
@@ -31,12 +31,12 @@ class MCAsmLayout {
   MCAssembler &Assembler;
 
   /// List of sections in layout order.
-  llvm::SmallVector<MCSectionData *, 16> SectionOrder;
+  llvm::SmallVector<MCSection *, 16> SectionOrder;
 
   /// The last fragment which was laid out, or 0 if nothing has been laid
   /// out. Fragments are always laid out in order, so all fragments with a
   /// lower ordinal will be valid.
-  mutable DenseMap<const MCSectionData *, MCFragment *> LastValidFragment;
+  mutable DenseMap<const MCSection *, MCFragment *> LastValidFragment;
 
   /// \brief Make sure that the layout for the given fragment is valid, lazily
   /// computing it if necessary.
@@ -64,10 +64,8 @@ public:
   /// \name Section Access (in layout order)
   /// @{
 
-  llvm::SmallVectorImpl<MCSectionData *> &getSectionOrder() {
-    return SectionOrder;
-  }
-  const llvm::SmallVectorImpl<MCSectionData *> &getSectionOrder() const {
+  llvm::SmallVectorImpl<MCSection *> &getSectionOrder() { return SectionOrder; }
+  const llvm::SmallVectorImpl<MCSection *> &getSectionOrder() const {
     return SectionOrder;
   }
 
@@ -85,11 +83,11 @@ public:
   /// \brief Get the address space size of the given section, as it effects
   /// layout. This may differ from the size reported by \see getSectionSize() by
   /// not including section tail padding.
-  uint64_t getSectionAddressSize(const MCSectionData *SD) const;
+  uint64_t getSectionAddressSize(const MCSection *Sec) const;
 
   /// \brief Get the data size of the given section, as emitted to the object
   /// file. This may include additional padding, or be 0 for virtual sections.
-  uint64_t getSectionFileSize(const MCSectionData *SD) const;
+  uint64_t getSectionFileSize(const MCSection *Sec) const;
 
   /// \brief Get the offset of the given symbol, as computed in the current
   /// layout.

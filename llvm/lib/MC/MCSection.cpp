@@ -56,6 +56,8 @@ MCSectionData::iterator MCSection::begin() { return Data.begin(); }
 
 MCSectionData::iterator MCSection::end() { return Data.end(); }
 
+MCSectionData::reverse_iterator MCSection::rbegin() { return Data.rbegin(); }
+
 MCSectionData::FragmentListType &MCSection::getFragmentList() {
   return Data.getFragmentList();
 }

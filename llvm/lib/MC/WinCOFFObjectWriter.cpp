@@ -950,8 +950,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     if (Sec->Number == -1)
       continue;
 
-    Sec->Header.SizeOfRawData =
-        Layout.getSectionAddressSize(&Section.getSectionData());
+    Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(&Section);
 
     if (IsPhysicalSection(Sec)) {
       // Align the section data to a four byte boundary.
