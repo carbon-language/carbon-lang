@@ -3,7 +3,6 @@ Base class for lldb-mi test cases.
 """
 
 from lldbtest import *
-import pexpect
 import unittest2
 
 class MiTestCaseBase(Base):
@@ -32,6 +31,7 @@ class MiTestCaseBase(Base):
         Base.tearDown(self)
 
     def spawnLldbMi(self, args=None):
+        import pexpect
         self.child = pexpect.spawn("%s --interpreter %s" % (
             self.lldbMiExec, args if args else ""))
         self.child.setecho(True)
