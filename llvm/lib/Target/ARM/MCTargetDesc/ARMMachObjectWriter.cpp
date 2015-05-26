@@ -161,8 +161,8 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint32_t Value2 = 0;
-  uint64_t SecAddr =
-    Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(
+      &A_SD->getFragment()->getParent()->getSectionData());
   FixedValue += SecAddr;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
@@ -176,7 +176,8 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_HALF_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(
+        &B_SD->getFragment()->getParent()->getSectionData());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.
@@ -227,7 +228,8 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
                    (IsPCRel               << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
+                          MRE);
   }
 
   MachO::any_relocation_info MRE;
@@ -238,7 +240,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
 }
 
 void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
@@ -263,7 +265,8 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr = Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(
+      &A_SD->getFragment()->getParent()->getSectionData());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
@@ -279,7 +282,8 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(
+        &B_SD->getFragment()->getParent()->getSectionData());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.
@@ -292,7 +296,8 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                    (IsPCRel               << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
+                          MRE);
   }
 
   MachO::any_relocation_info MRE;
@@ -302,7 +307,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
 }
 
 bool ARMMachObjectWriter::requiresExternRelocation(MachObjectWriter *Writer,
@@ -336,7 +341,7 @@ bool ARMMachObjectWriter::requiresExternRelocation(MachObjectWriter *Writer,
   // enough information to generate a branch island.
   const MCSectionData &SymSD = Asm.getSectionData(S.getSection());
   Value += Writer->getSectionAddress(&SymSD);
-  Value -= Writer->getSectionAddress(Fragment.getParent());
+  Value -= Writer->getSectionAddress(&Fragment.getParent()->getSectionData());
   // If the resultant value would be out of range for an internal relocation,
   // use an external instead.
   if (Value > Range || Value < -(Range + 1))
@@ -430,7 +435,8 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
       FixedValue += Writer->getSectionAddress(&SymSD);
     }
     if (IsPCRel)
-      FixedValue -= Writer->getSectionAddress(Fragment->getParent());
+      FixedValue -=
+          Writer->getSectionAddress(&Fragment->getParent()->getSectionData());
 
     // The type is determined by the fixup kind.
     Type = RelocType;
@@ -465,10 +471,12 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
                        (Log2Size              << 25) |
                        (MachO::ARM_RELOC_PAIR << 28));
 
-    Writer->addRelocation(nullptr, Fragment->getParent(), MREPair);
+    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
+                          MREPair);
   }
 
-  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
+  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
+                        MRE);
 }
 
 MCObjectWriter *llvm::createARMMachObjectWriter(raw_pwrite_stream &OS,

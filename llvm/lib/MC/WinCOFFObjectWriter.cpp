@@ -420,8 +420,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
     } else {
       const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
       if (BaseData.getFragment()) {
-        COFFSection *Sec =
-            SectionMap[&BaseData.getFragment()->getParent()->getSection()];
+        COFFSection *Sec = SectionMap[BaseData.getFragment()->getParent()];
 
         if (coff_symbol->Section && coff_symbol->Section != Sec)
           report_fatal_error("conflicting sections for symbol");
@@ -689,15 +688,15 @@ void WinCOFFObjectWriter::RecordRelocation(
 
   const MCSymbolData &A_SD = Asm.getSymbolData(A);
 
-  MCSectionData const *SectionData = Fragment->getParent();
+  MCSection *Section = Fragment->getParent();
 
   // Mark this symbol as requiring an entry in the symbol table.
-  assert(SectionMap.find(&SectionData->getSection()) != SectionMap.end() &&
+  assert(SectionMap.find(Section) != SectionMap.end() &&
          "Section must already have been defined in ExecutePostLayoutBinding!");
   assert(SymbolMap.find(&A) != SymbolMap.end() &&
          "Symbol must already have been defined in ExecutePostLayoutBinding!");
 
-  COFFSection *coff_section = SectionMap[&SectionData->getSection()];
+  COFFSection *coff_section = SectionMap[Section];
   COFFSymbol *coff_symbol = SymbolMap[&A];
   const MCSymbolRefExpr *SymB = Target.getSymB();
   bool CrossSection = false;

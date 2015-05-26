@@ -98,9 +98,7 @@ public:
 
   FragmentType getKind() const { return Kind; }
 
-  MCSectionData *getParent() const {
-    return &Parent->getSectionData();
-  }
+  MCSection *getParent() const { return Parent; }
   void setParent(MCSection *Value) { Parent = Value; }
 
   const MCSymbol *getAtom() const { return Atom; }

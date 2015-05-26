@@ -213,8 +213,8 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr =
-      Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(
+      &A_SD->getFragment()->getParent()->getSectionData());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
@@ -227,7 +227,8 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
 
     // FIXME: is Type correct? see include/llvm/Support/MachO.h
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(
+        &B_SD->getFragment()->getParent()->getSectionData());
   }
   // FIXME: does FixedValue get used??
 
@@ -282,7 +283,8 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     MachO::any_relocation_info MRE;
     makeScatteredRelocationInfo(MRE, other_half, MachO::GENERIC_RELOC_PAIR,
                                 Log2Size, IsPCRel, Value2);
-    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+    Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(),
+                          MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
     // relocation offset field, so we fall back to using a non-scattered
@@ -296,7 +298,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
   }
   MachO::any_relocation_info MRE;
   makeScatteredRelocationInfo(MRE, FixupOffset, Type, Log2Size, IsPCRel, Value);
-  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
+  Writer->addRelocation(nullptr, &Fragment->getParent()->getSectionData(), MRE);
   return true;
 }
 
@@ -369,13 +371,15 @@ void PPCMachObjectWriter::RecordPPCRelocation(
       FixedValue += Writer->getSectionAddress(&SymSD);
     }
     if (IsPCRel)
-      FixedValue -= Writer->getSectionAddress(Fragment->getParent());
+      FixedValue -=
+          Writer->getSectionAddress(&Fragment->getParent()->getSectionData());
   }
 
   // struct relocation_info (8 bytes)
   MachO::any_relocation_info MRE;
   makeRelocationInfo(MRE, FixupOffset, Index, IsPCRel, Log2Size, false, Type);
-  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
+  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
+                        MRE);
 }
 
 MCObjectWriter *llvm::createPPCMachObjectWriter(raw_pwrite_stream &OS,

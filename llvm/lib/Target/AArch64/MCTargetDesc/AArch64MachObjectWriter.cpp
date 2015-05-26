@@ -229,7 +229,8 @@ void AArch64MachObjectWriter::RecordRelocation(
       MachO::any_relocation_info MRE;
       MRE.r_word0 = FixupOffset;
       MRE.r_word1 = (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-      Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
+      Writer->addRelocation(A_Base, &Fragment->getParent()->getSectionData(),
+                            MRE);
       return;
     } else if (Target.getSymA()->getKind() != MCSymbolRefExpr::VK_None ||
                Target.getSymB()->getKind() != MCSymbolRefExpr::VK_None)
@@ -278,14 +279,15 @@ void AArch64MachObjectWriter::RecordRelocation(
     MachO::any_relocation_info MRE;
     MRE.r_word0 = FixupOffset;
     MRE.r_word1 = (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-    Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
+    Writer->addRelocation(A_Base, &Fragment->getParent()->getSectionData(),
+                          MRE);
 
     RelSymbol = B_Base;
     Type = MachO::ARM64_RELOC_SUBTRACTOR;
   } else { // A + constant
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
-    const MCSectionMachO &Section = static_cast<const MCSectionMachO &>(
-        Fragment->getParent()->getSection());
+    const MCSectionMachO &Section =
+        static_cast<const MCSectionMachO &>(*Fragment->getParent());
 
     bool CanUseLocalRelocation =
         canUseLocalRelocation(Section, *Symbol, Log2Size);
@@ -385,7 +387,8 @@ void AArch64MachObjectWriter::RecordRelocation(
     MRE.r_word0 = FixupOffset;
     MRE.r_word1 =
         (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-    Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
+    Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
+                          MRE);
 
     // Now set up the Addend relocation.
     Type = MachO::ARM64_RELOC_ADDEND;
@@ -406,7 +409,8 @@ void AArch64MachObjectWriter::RecordRelocation(
   MRE.r_word0 = FixupOffset;
   MRE.r_word1 =
       (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
-  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
+  Writer->addRelocation(RelSymbol, &Fragment->getParent()->getSectionData(),
+                        MRE);
 }
 
 MCObjectWriter *llvm::createAArch64MachObjectWriter(raw_pwrite_stream &OS,

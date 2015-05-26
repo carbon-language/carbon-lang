@@ -67,8 +67,8 @@ bool MachObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
 
 uint64_t MachObjectWriter::getFragmentAddress(const MCFragment *Fragment,
                                               const MCAsmLayout &Layout) const {
-  return getSectionAddress(Fragment->getParent()) +
-    Layout.getFragmentOffset(Fragment);
+  return getSectionAddress(&Fragment->getParent()->getSectionData()) +
+         Layout.getFragmentOffset(Fragment);
 }
 
 uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
@@ -101,7 +101,8 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
     return Address;
   }
 
-  return getSectionAddress(S.getData().getFragment()->getParent()) +
+  return getSectionAddress(
+             &S.getData().getFragment()->getParent()->getSectionData()) +
          Layout.getSymbolOffset(S);
 }
 
@@ -679,7 +680,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   //  addr(atom(A)) - addr(atom(B)) == 0.
   const MCSymbol &SA = findAliasedSymbol(SymA);
   const MCSection &SecA = SA.getSection();
-  const MCSection &SecB = FB.getParent()->getSection();
+  const MCSection &SecB = *FB.getParent();
 
   if (IsPCRel) {
     // The simple (Darwin, except on x86_64) way of dealing with this was to

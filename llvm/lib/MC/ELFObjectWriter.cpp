@@ -491,8 +491,7 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = MSD.Symbol->getData();
   assert((!OrigData.getFragment() ||
-          (&OrigData.getFragment()->getParent()->getSection() ==
-           &MSD.Symbol->getSection())) &&
+          (OrigData.getFragment()->getParent() == &MSD.Symbol->getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
   const MCSymbol *Base = Layout.getBaseSymbol(*MSD.Symbol);
 
@@ -751,9 +750,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
                                        const MCFragment *Fragment,
                                        const MCFixup &Fixup, MCValue Target,
                                        bool &IsPCRel, uint64_t &FixedValue) {
-  const MCSectionData *FixupSectionD = Fragment->getParent();
-  const MCSectionELF &FixupSection =
-      cast<MCSectionELF>(FixupSectionD->getSection());
+  const MCSectionELF &FixupSection = cast<MCSectionELF>(*Fragment->getParent());
   uint64_t C = Target.getConstant();
   uint64_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 

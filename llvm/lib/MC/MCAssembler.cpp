@@ -77,7 +77,7 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
 }
 
 bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
-  const MCSectionData &SD = *F->getParent();
+  const MCSectionData &SD = F->getParent()->getSectionData();
   const MCFragment *LastValid = LastValidFragment.lookup(&SD);
   if (!LastValid)
     return false;
@@ -92,12 +92,12 @@ void MCAsmLayout::invalidateFragmentsFrom(MCFragment *F) {
 
   // Otherwise, reset the last valid fragment to the previous fragment
   // (if this is the first fragment, it will be NULL).
-  const MCSectionData &SD = *F->getParent();
+  const MCSectionData &SD = F->getParent()->getSectionData();
   LastValidFragment[&SD] = F->getPrevNode();
 }
 
 void MCAsmLayout::ensureValid(const MCFragment *F) const {
-  MCSectionData &SD = *F->getParent();
+  MCSectionData &SD = F->getParent()->getSectionData();
 
   MCFragment *Cur = LastValidFragment[&SD];
   if (!Cur)
@@ -421,7 +421,7 @@ const MCSymbol *MCAssembler::getAtom(const MCSymbol &S) const {
   // Non-linker visible symbols in sections which can't be atomized have no
   // defining atom.
   if (!getContext().getAsmInfo()->isSectionAtomizableBySymbols(
-          S.getData().getFragment()->getParent()->getSection()))
+          *S.getData().getFragment()->getParent()))
     return nullptr;
 
   // Otherwise, return the atom for the containing fragment.
@@ -568,7 +568,7 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
     F->Offset = Prev->Offset + getAssembler().computeFragmentSize(*this, *Prev);
   else
     F->Offset = 0;
-  LastValidFragment[F->getParent()] = F;
+  LastValidFragment[&F->getParent()->getSectionData()] = F;
 
   // If bundling is enabled and this fragment has instructions in it, it has to
   // obey the bundling restrictions. With padding, we'll have:
