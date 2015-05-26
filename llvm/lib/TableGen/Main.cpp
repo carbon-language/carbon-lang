@@ -15,13 +15,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/TableGen/Main.h"
 #include "TGParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/TableGen/Error.h"
-#include "llvm/TableGen/Main.h"
 #include "llvm/TableGen/Record.h"
 #include <algorithm>
 #include <cstdio>

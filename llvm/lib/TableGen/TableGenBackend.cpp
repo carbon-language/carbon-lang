@@ -11,10 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/TableGen/TableGenBackend.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/TableGen/TableGenBackend.h"
-#include <algorithm>
 
 using namespace llvm;
 
