@@ -151,7 +151,6 @@ public:
     typeNoAlloc,            // Identifies non allocatable sections [ELF]
     typeGroupComdat,        // Identifies a section group [ELF, COFF]
     typeGnuLinkOnce,        // Identifies a gnu.linkonce section [ELF]
-    typeARMExidx,           // Identifies a ARM_EXIDX section [ELF/ARM]
   };
 
   // Permission bits for atoms and segments. The order of these values are

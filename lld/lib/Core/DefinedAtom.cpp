@@ -43,7 +43,6 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   case typeProcessedUnwindInfo:
   case typeRONote:
   case typeNoAlloc:
-  case typeARMExidx:
     return permR__;
 
   case typeData:

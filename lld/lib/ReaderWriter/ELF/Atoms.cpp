@@ -84,8 +84,6 @@ DefinedAtom::ContentType ELFDefinedAtom<ELFT>::doContentType() const {
   if (_symbol->st_shndx == SHN_COMMON)
     return _contentType = typeZeroFill;
 
-  if (_section->sh_type == SHT_ARM_EXIDX)
-    return typeARMExidx;
   if (_section->sh_type == SHT_PROGBITS) {
     flags &= ~SHF_ALLOC;
     flags &= ~SHF_GROUP;
@@ -217,9 +215,6 @@ DefinedAtom::ContentPermissions ELFDefinedAtom<ELFT>::permissions() const {
   case llvm::ELF::SHT_INIT_ARRAY:
   case llvm::ELF::SHT_FINI_ARRAY:
     return _permissions = permRW_;
-
-  case llvm::ELF::SHT_ARM_EXIDX:
-    return _permissions = permR__;
 
   default:
     return _permissions = perm___;

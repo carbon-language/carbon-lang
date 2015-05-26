@@ -27,7 +27,8 @@ class ARMExidxSection : public AtomSection<ELF32LE> {
 public:
   ARMExidxSection(const ELFLinkingContext &ctx, StringRef sectionName,
                   int32_t permissions, int32_t order)
-      : Base(ctx, sectionName, DefinedAtom::typeARMExidx, permissions, order) {
+      : Base(ctx, sectionName, ARMELFDefinedAtom::typeARMExidx, permissions,
+             order) {
     this->_type = SHT_ARM_EXIDX;
     this->_isLoadedInMemory = true;
   }
@@ -36,7 +37,8 @@ public:
 
   const AtomLayout *appendAtom(const Atom *atom) override {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
-    assert(definedAtom->contentType() == DefinedAtom::typeARMExidx &&
+    assert((ARMELFDefinedAtom::ARMContentType)definedAtom->contentType() ==
+               ARMELFDefinedAtom::typeARMExidx &&
            "atom content type for .ARM.exidx section has to be typeARMExidx");
 
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
@@ -61,12 +63,16 @@ public:
 
 class ARMTargetLayout : public TargetLayout<ELF32LE> {
 public:
+  enum ARMSectionOrder {
+    ORDER_ARM_EXIDX = TargetLayout::ORDER_EH_FRAME + 1,
+  };
+
   ARMTargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
 
   SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                int32_t contentPermissions) override {
-    switch (contentType) {
-    case DefinedAtom::typeARMExidx:
+    switch ((ARMELFDefinedAtom::ARMContentType)contentType) {
+    case ARMELFDefinedAtom::typeARMExidx:
       return ORDER_ARM_EXIDX;
     default:
       return TargetLayout::getSectionOrder(name, contentType,
@@ -96,7 +102,8 @@ public:
   createSection(StringRef name, int32_t contentType,
                 DefinedAtom::ContentPermissions contentPermissions,
                 SectionOrder sectionOrder) override {
-    if (contentType == DefinedAtom::typeARMExidx)
+    if ((ARMELFDefinedAtom::ARMContentType)contentType ==
+        ARMELFDefinedAtom::typeARMExidx)
       return new ARMExidxSection(_ctx, name, contentPermissions, sectionOrder);
 
     return TargetLayout::createSection(name, contentType, contentPermissions,

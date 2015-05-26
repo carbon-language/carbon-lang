@@ -17,11 +17,46 @@ namespace elf {
 
 class ARMLinkingContext;
 
-class ARMELFMappingAtom : public ELFDefinedAtom<ELF32LE> {
+class ARMELFBaseDefinedAtom : public ELFDefinedAtom<ELF32LE> {
+public:
+  /// The values of custom content type enum must not interfere
+  /// with ones in base defined atom class' enum.
+  enum ARMContentType {
+    typeARMExidx = 0x1000,   // Identifies ARM_EXIDX section
+  };
+
+  template <typename... T>
+  ARMELFBaseDefinedAtom(T &&... args)
+      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
+
+  DefinedAtom::ContentPermissions permissions() const override {
+    if (_permissions != DefinedAtom::permUnknown)
+      return _permissions;
+
+    switch (_section->sh_type) {
+    case llvm::ELF::SHT_ARM_EXIDX:
+      return _permissions = permR__;
+    }
+    return ELFDefinedAtom::permissions();
+  }
+
+  DefinedAtom::ContentType contentType() const override {
+    if (_contentType != DefinedAtom::typeUnknown)
+      return _contentType;
+
+    switch (_section->sh_type) {
+    case llvm::ELF::SHT_ARM_EXIDX:
+      return _contentType = (DefinedAtom::ContentType)typeARMExidx;
+    }
+    return ELFDefinedAtom::contentType();
+  }
+};
+
+class ARMELFMappingAtom : public ARMELFBaseDefinedAtom {
 public:
   template <typename... T>
   ARMELFMappingAtom(DefinedAtom::CodeModel model, T &&... args)
-      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...), _model(model) {}
+      : ARMELFBaseDefinedAtom(std::forward<T>(args)...), _model(model) {}
 
   DefinedAtom::CodeModel codeModel() const override { return _model; }
 
@@ -29,11 +64,11 @@ private:
   DefinedAtom::CodeModel _model;
 };
 
-class ARMELFDefinedAtom : public ELFDefinedAtom<ELF32LE> {
+class ARMELFDefinedAtom : public ARMELFBaseDefinedAtom {
 public:
   template <typename... T>
   ARMELFDefinedAtom(T &&... args)
-      : ELFDefinedAtom<ELF32LE>(std::forward<T>(args)...) {}
+      : ARMELFBaseDefinedAtom(std::forward<T>(args)...) {}
 
   bool isThumbFunc() const {
     const auto *symbol = _symbol;
