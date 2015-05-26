@@ -934,10 +934,14 @@ UnwrappedLineFormatter::getColumnLimit(bool InPPDirective,
   // In preprocessor directives reserve two chars for trailing " \" if the
   // next line continues the preprocessor directive.
   bool ContinuesPPDirective =
-      InPPDirective && NextLine && NextLine->InPPDirective &&
-      // If there is an unescaped newline between this line and the next, the
-      // next line starts a new preprocessor directive.
-      !NextLine->First->HasUnescapedNewline;
+      InPPDirective &&
+      // If there is no next line, this is likely a child line and the parent
+      // continues the preprocessor directive.
+      (!NextLine ||
+       (NextLine->InPPDirective &&
+        // If there is an unescaped newline between this line and the next, the
+        // next line starts a new preprocessor directive.
+        !NextLine->First->HasUnescapedNewline));
   return Style.ColumnLimit - (ContinuesPPDirective ? 2 : 0);
 }
 

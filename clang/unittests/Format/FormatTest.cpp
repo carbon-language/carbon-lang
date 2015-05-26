@@ -3303,6 +3303,15 @@ TEST_F(FormatTest, FormatNestedBlocksInMacros) {
             format("#define   MACRO()   Debug(aaa,  /* force line break */ \\\n"
                    "          {  int   i;  int  j;   })",
                    getGoogleStyle()));
+
+  EXPECT_EQ("#define A                                       \\\n"
+            "  [] {                                          \\\n"
+            "    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(        \\\n"
+            "        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx); \\\n"
+            "  }",
+            format("#define A [] { xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx( \\\n"
+                   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx); }",
+                   getGoogleStyle()));
 }
 
 TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
