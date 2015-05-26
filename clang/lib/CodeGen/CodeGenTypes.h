@@ -308,7 +308,7 @@ public:  // These are internal details of CGT that shouldn't be used externally.
 
   /// IsZeroInitializable - Return whether a record type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
-  bool isZeroInitializable(const CXXRecordDecl *RD);
+  bool isZeroInitializable(const RecordDecl *RD);
   
   bool isRecordLayoutComplete(const Type *Ty) const;
   bool noRecordsBeingLaidOut() const {

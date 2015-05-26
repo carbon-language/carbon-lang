@@ -715,9 +715,16 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
   // No need to check for member pointers when not compiling C++.
   if (!Context.getLangOpts().CPlusPlus)
     return true;
-  
-  T = Context.getBaseElementType(T);
-  
+
+  if (const auto *AT = Context.getAsArrayType(T)) {
+    if (isa<IncompleteArrayType>(AT))
+      return true;
+    if (const auto *CAT = dyn_cast<ConstantArrayType>(AT))
+      if (Context.getConstantArrayElementCount(CAT) == 0)
+        return true;
+    T = Context.getBaseElementType(T);
+  }
+
   // Records are non-zero-initializable if they contain any
   // non-zero-initializable subobjects.
   if (const RecordType *RT = T->getAs<RecordType>()) {
@@ -733,6 +740,6 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
   return true;
 }
 
-bool CodeGenTypes::isZeroInitializable(const CXXRecordDecl *RD) {
+bool CodeGenTypes::isZeroInitializable(const RecordDecl *RD) {
   return getCGRecordLayout(RD).isZeroInitializable();
 }

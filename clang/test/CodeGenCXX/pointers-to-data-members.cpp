@@ -277,4 +277,12 @@ U u;
 // CHECK-GLOBAL: @_ZN7PR212821uE = global %"union.PR21282::U" { i64 -1, [8 x i8] zeroinitializer }, align 8
 }
 
+namespace FlexibleArrayMember {
+struct S {
+  int S::*x[];
+};
+S s;
+// CHECK-GLOBAL: @_ZN19FlexibleArrayMember1sE = global %"struct.FlexibleArrayMember::S" zeroinitializer, align 8
+}
+
 // CHECK-O3: attributes [[NUW]] = { nounwind readnone{{.*}} }
