@@ -502,7 +502,7 @@ private:
   mutable unsigned Counter;
 
   /// This method emits the header for the current function.
-  void EmitFunctionHeader();
+  virtual void EmitFunctionHeader();
 
   /// Emit a blob of inline asm to the output streamer.
   void
