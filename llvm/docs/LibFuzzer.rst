@@ -28,7 +28,7 @@ This library is intended primarily for in-process coverage-guided fuzz testing
   fuzzer (a directory with test inputs, one file per input).
   The better your inputs are the faster you will find something interesting.
   Also try to keep your inputs small, otherwise the Fuzzer will run too slow.
-  By default, the Fuzzer limits the size of every input by 64 bytes
+  By default, the Fuzzer limits the size of every input to 64 bytes
   (use ``-max_len=N`` to override).
 * Run the fuzzer with the test corpus. As new interesting test cases are
   discovered they will be added to the corpus. If a bug is discovered by
@@ -56,7 +56,7 @@ The most important flags are::
 
   seed                               	0	Random seed. If 0, seed is generated.
   runs                               	-1	Number of individual test runs (-1 for infinite runs).
-  max_len                            	64	Maximal length of the test input.
+  max_len                            	64	Maximum length of the test input.
   cross_over                         	1	If 1, cross over inputs.
   mutate_depth                       	5	Apply this number of consecutive mutations to each input.
   timeout                            	-1	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
@@ -67,7 +67,7 @@ The most important flags are::
   tokens                             	0	Use the file with tokens (one token per line) to fuzz a token based input language.
   apply_tokens                       	0	Read the given input file, substitute bytes  with tokens and write the result to stdout.
   sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
-  sync_timeout                       	600	Minimal timeout between syncs.
+  sync_timeout                       	600	Minimum timeout between syncs.
 
 For the full list of flags run the fuzzer binary with ``-help=1``.
 

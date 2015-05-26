@@ -17,7 +17,7 @@ FUZZER_FLAG_INT(iterations, -1,
             " (-1 for infinite iterations).")
 FUZZER_FLAG_INT(runs, -1,
             "Number of individual test runs (-1 for infinite runs).")
-FUZZER_FLAG_INT(max_len, 64, "Maximal length of the test input.")
+FUZZER_FLAG_INT(max_len, 64, "Maximum length of the test input.")
 FUZZER_FLAG_INT(cross_over, 1, "If 1, cross over inputs.")
 FUZZER_FLAG_INT(mutate_depth, 5,
             "Apply this number of consecutive mutations to each input.")
@@ -57,4 +57,4 @@ FUZZER_FLAG_STRING(apply_tokens, "Read the given input file, substitute bytes "
 FUZZER_FLAG_STRING(sync_command, "Execute an external command "
                                  "\"<sync_command> <test_corpus>\" "
                                  "to synchronize the test corpus.")
-FUZZER_FLAG_INT(sync_timeout, 600, "Minimal timeout between syncs.")
+FUZZER_FLAG_INT(sync_timeout, 600, "Minimum timeout between syncs.")
