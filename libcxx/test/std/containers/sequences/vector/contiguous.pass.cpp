@@ -43,10 +43,10 @@ int main()
 #if __cplusplus >= 201103L
     {
     typedef double T;
-    typedef min_allocator<TW> A;
+    typedef min_allocator<T> A;
     typedef std::vector<T, A> C;
-    test_contiguous(S(A{}));
-    test_contiguous(S(9, 11.0, A{}));
+    test_contiguous(C(A{}));
+    test_contiguous(C(9, 11.0, A{}));
     }
 #endif
 }
