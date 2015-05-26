@@ -1,4 +1,4 @@
-/* 
+/*
  * kmp_error.c -- KPTS functions for error checking at runtime
  */
 
@@ -121,7 +121,7 @@ __kmp_pragma(
     kmp_str_buf_t buffer;
     kmp_msg_t     prgm;
     __kmp_str_buf_init( & buffer );
-    if ( 0 < ct && ct <= cons_text_c_num ) {
+    if ( 0 < ct && ct < cons_text_c_num ) {
         cons = cons_text_c[ ct ];
     } else {
         KMP_DEBUG_ASSERT( 0 );
