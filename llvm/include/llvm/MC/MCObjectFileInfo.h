@@ -188,6 +188,8 @@ protected:
   MCSection *XDataSection;
 
 public:
+  virtual ~MCObjectFileInfo() { };
+
   void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
                             MCContext &ctx);
 
