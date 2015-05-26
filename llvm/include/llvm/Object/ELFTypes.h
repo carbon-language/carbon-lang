@@ -489,6 +489,43 @@ struct Elf_Phdr_Impl<ELFType<TargetEndianness, MaxAlign, true> > {
   Elf_Xword p_align;  // Segment alignment constraint
 };
 
+// MIPS .reginfo section
+template <class ELFT>
+struct Elf_Mips_RegInfo;
+
+template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
+struct Elf_Mips_RegInfo<ELFType<TargetEndianness, MaxAlign, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+  Elf_Word ri_gprmask;     // bit-mask of used general registers
+  Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers
+  Elf_Addr ri_gp_value;    // gp register value
+};
+
+template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
+struct Elf_Mips_RegInfo<ELFType<TargetEndianness, MaxAlign, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+  Elf_Word ri_gprmask;     // bit-mask of used general registers
+  Elf_Word ri_pad;         // unused padding field
+  Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers
+  Elf_Addr ri_gp_value;    // gp register value
+};
+
+// .MIPS.options section
+template <class ELFT> struct Elf_Mips_Options {
+  LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
+  uint8_t kind;     // Determines interpretation of variable part of descriptor
+  uint8_t size;     // Byte size of descriptor, including this header
+  Elf_Half section; // Section header index of section affected,
+                    // or 0 for global options
+  Elf_Word info;    // Kind-specific information
+
+  const Elf_Mips_RegInfo<ELFT> &getRegInfo() const {
+    assert(kind == llvm::ELF::ODK_REGINFO);
+    return *reinterpret_cast<const Elf_Mips_RegInfo<ELFT> *>(
+               (const uint8_t *)this + sizeof(Elf_Mips_Options));
+  }
+};
+
 // .MIPS.abiflags section content
 template <class ELFT> struct Elf_Mips_ABIFlags {
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
