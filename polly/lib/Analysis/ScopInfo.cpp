@@ -1753,7 +1753,7 @@ std::string Scop::getNameStr() const {
 
 __isl_give isl_set *Scop::getContext() const { return isl_set_copy(Context); }
 __isl_give isl_space *Scop::getParamSpace() const {
-  return isl_set_get_space(this->Context);
+  return isl_set_get_space(Context);
 }
 
 __isl_give isl_set *Scop::getAssumedContext() const {
@@ -1846,7 +1846,7 @@ __isl_give isl_union_set *Scop::getDomains() {
 }
 
 __isl_give isl_union_map *Scop::getMustWrites() {
-  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+  isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
   for (auto &Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {
@@ -1863,7 +1863,7 @@ __isl_give isl_union_map *Scop::getMustWrites() {
 }
 
 __isl_give isl_union_map *Scop::getMayWrites() {
-  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+  isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
   for (auto &Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {
@@ -1880,7 +1880,7 @@ __isl_give isl_union_map *Scop::getMayWrites() {
 }
 
 __isl_give isl_union_map *Scop::getWrites() {
-  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+  isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
   for (auto &Stmt : *this) {
     for (MemoryAccess *MA : *Stmt) {

@@ -231,8 +231,7 @@ void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,
   /// are considered local. This leaves only loops that are before the scop, but
   /// do not contain the scop itself.
   Loops.remove_if([this](const Loop *L) {
-    return this->S.getRegion().contains(L) ||
-           L->contains(S.getRegion().getEntry());
+    return S.getRegion().contains(L) || L->contains(S.getRegion().getEntry());
   });
 }
 
