@@ -2672,7 +2672,6 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
       return MatchAddr(AddrInst->getOperand(0), Depth);
     return false;
   case Instruction::BitCast:
-  case Instruction::AddrSpaceCast:
     // BitCast is always a noop, and we can handle it as long as it is
     // int->int or pointer->pointer (we don't want int<->fp or something).
     if ((AddrInst->getOperand(0)->getType()->isPointerTy() ||
@@ -2683,6 +2682,14 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
         AddrInst->getOperand(0)->getType() != AddrInst->getType())
       return MatchAddr(AddrInst->getOperand(0), Depth);
     return false;
+  case Instruction::AddrSpaceCast: {
+    unsigned SrcAS
+      = AddrInst->getOperand(0)->getType()->getPointerAddressSpace();
+    unsigned DestAS = AddrInst->getType()->getPointerAddressSpace();
+    if (TLI.isNoopAddrSpaceCast(SrcAS, DestAS))
+      return MatchAddr(AddrInst->getOperand(0), Depth);
+    return false;
+  }
   case Instruction::Add: {
     // Check to see if we can merge in the RHS then the LHS.  If so, we win.
     ExtAddrMode BackupAddrMode = AddrMode;
