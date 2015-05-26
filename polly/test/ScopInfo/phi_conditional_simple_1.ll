@@ -10,17 +10,24 @@
 ;    }
 ;
 ; CHECK:    Statements {
-; CHECK:      Stmt_if_else
+; CHECK-LABEL:      Stmt_if_else
+; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [c] -> { Stmt_if_else[i0] -> MemRef_phi[] };
-; CHECK:      Stmt_if_then
+; CHECK-NOT: Access
+; CHECK-LABEL:      Stmt_if_then
+; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [c] -> { Stmt_if_then[i0] -> MemRef_phi[] };
-; CHECK:      Stmt_if_end
+; CHECK-NOT: Access
+; CHECK-LABEL:      Stmt_if_end
+; CHECK-NOT: Access
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [c] -> { Stmt_if_end[i0] -> MemRef_phi[] };
+; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                [c] -> { Stmt_if_end[i0] -> MemRef_A[i0] };
+; CHECK-NOT: Access
 ; CHECK:    }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
