@@ -21,10 +21,8 @@ define void @load_i8(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
 
 ; FUNC-LABEL: {{^}}load_i8_sext:
 ; R600: VTX_READ_8 [[DST:T[0-9]\.[XYZW]]], [[DST]]
-; R600: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
-; R600: 24
-; R600: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
-; R600: 24
+; R600: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST]], 0.0, literal
+; R600: 8
 ; SI: buffer_load_sbyte
 define void @load_i8_sext(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
@@ -50,14 +48,11 @@ entry:
 ; FUNC-LABEL: {{^}}load_v2i8_sext:
 ; R600-DAG: VTX_READ_8 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
-; R600-DAG: 24
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
-; R600-DAG: 24
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_X]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Y]], 0.0, literal
+; R600-DAG: 8
+; R600-DAG: 8
+
 ; SI: buffer_load_sbyte
 ; SI: buffer_load_sbyte
 define void @load_v2i8_sext(<2 x i32> addrspace(1)* %out, <2 x i8> addrspace(1)* %in) {
@@ -90,22 +85,14 @@ entry:
 ; R600-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-DAG: VTX_READ_8 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
 ; R600-DAG: VTX_READ_8 [[DST_W:T[0-9]\.[XYZW]]], [[DST_W]]
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
-; R600-DAG: 24
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
-; R600-DAG: 24
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Z_CHAN:[XYZW]]], [[DST_Z]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Z_CHAN]]
-; R600-DAG: 24
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_W_CHAN:[XYZW]]], [[DST_W]]
-; R600-DAG: 24
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_W_CHAN]]
-; R600-DAG: 24
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_X]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Y]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Z]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_W]], 0.0, literal
+; R600-DAG: 8
+; R600-DAG: 8
+; R600-DAG: 8
+; R600-DAG: 8
 ; SI: buffer_load_sbyte
 ; SI: buffer_load_sbyte
 ; SI: buffer_load_sbyte
@@ -132,9 +119,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}load_i16_sext:
 ; R600: VTX_READ_16 [[DST:T[0-9]\.[XYZW]]], [[DST]]
-; R600: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
-; R600: 16
-; R600: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
+; R600: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST]], 0.0, literal
 ; R600: 16
 ; SI: buffer_load_sshort
 define void @load_i16_sext(i32 addrspace(1)* %out, i16 addrspace(1)* %in) {
@@ -161,13 +146,9 @@ entry:
 ; FUNC-LABEL: {{^}}load_v2i16_sext:
 ; R600-DAG: VTX_READ_16 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
 ; R600-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_X]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Y]], 0.0, literal
 ; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
-; R600-DAG: 16
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
-; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
 ; R600-DAG: 16
 ; SI: buffer_load_sshort
 ; SI: buffer_load_sshort
@@ -201,21 +182,13 @@ entry:
 ; R600-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
 ; R600-DAG: VTX_READ_16 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
 ; R600-DAG: VTX_READ_16 [[DST_W:T[0-9]\.[XYZW]]], [[DST_W]]
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_X]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Y]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_Z]], 0.0, literal
+; R600-DAG: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST_W]], 0.0, literal
 ; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
 ; R600-DAG: 16
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
 ; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
-; R600-DAG: 16
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Z_CHAN:[XYZW]]], [[DST_Z]]
-; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Z_CHAN]]
-; R600-DAG: 16
-; R600-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_W_CHAN:[XYZW]]], [[DST_W]]
-; R600-DAG: 16
-; R600-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_W_CHAN]]
 ; R600-DAG: 16
 ; SI: buffer_load_sshort
 ; SI: buffer_load_sshort
@@ -356,10 +329,8 @@ entry:
 ; Load a sign-extended i8 value
 ; FUNC-LABEL: {{^}}load_const_i8_sext:
 ; R600: VTX_READ_8 [[DST:T[0-9]\.[XYZW]]], [[DST]]
-; R600: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
-; R600: 24
-; R600: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
-; R600: 24
+; R600: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST]], 0.0, literal
+; R600: 8
 ; SI: buffer_load_sbyte v{{[0-9]+}},
 define void @load_const_i8_sext(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
 entry:
@@ -397,9 +368,7 @@ entry:
 ; Load a sign-extended i16 value
 ; FUNC-LABEL: {{^}}load_const_i16_sext:
 ; R600: VTX_READ_16 [[DST:T[0-9]\.[XYZW]]], [[DST]]
-; R600: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
-; R600: 16
-; R600: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
+; R600: BFE_INT {{[* ]*}}T{{[0-9].[XYZW]}}, [[DST]], 0.0, literal
 ; R600: 16
 ; SI: buffer_load_sshort
 define void @load_const_i16_sext(i32 addrspace(1)* %out, i16 addrspace(2)* %in) {
@@ -477,7 +446,7 @@ define void @load_i8_local(i32 addrspace(1)* %out, i8 addrspace(3)* %in) {
 
 ; FUNC-LABEL: {{^}}load_i8_sext_local:
 ; R600: LDS_UBYTE_READ_RET
-; R600: ASHR
+; R600: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i8
@@ -507,8 +476,8 @@ entry:
 ; FUNC-LABEL: {{^}}load_v2i8_sext_local:
 ; R600-DAG: LDS_UBYTE_READ_RET
 ; R600-DAG: LDS_UBYTE_READ_RET
-; R600-DAG: ASHR
-; R600-DAG: ASHR
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i8
@@ -545,10 +514,10 @@ entry:
 ; R600-DAG: LDS_UBYTE_READ_RET
 ; R600-DAG: LDS_UBYTE_READ_RET
 ; R600-DAG: LDS_UBYTE_READ_RET
-; R600-DAG: ASHR
-; R600-DAG: ASHR
-; R600-DAG: ASHR
-; R600-DAG: ASHR
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i8
@@ -579,7 +548,7 @@ entry:
 
 ; FUNC-LABEL: {{^}}load_i16_sext_local:
 ; R600: LDS_USHORT_READ_RET
-; R600: ASHR
+; R600: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i16
@@ -609,8 +578,8 @@ entry:
 ; FUNC-LABEL: {{^}}load_v2i16_sext_local:
 ; R600-DAG: LDS_USHORT_READ_RET
 ; R600-DAG: LDS_USHORT_READ_RET
-; R600-DAG: ASHR
-; R600-DAG: ASHR
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i16
@@ -647,10 +616,10 @@ entry:
 ; R600-DAG: LDS_USHORT_READ_RET
 ; R600-DAG: LDS_USHORT_READ_RET
 ; R600-DAG: LDS_USHORT_READ_RET
-; R600-DAG: ASHR
-; R600-DAG: ASHR
-; R600-DAG: ASHR
-; R600-DAG: ASHR
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
+; R600-DAG: BFE_INT
 ; SI-NOT: s_wqm_b64
 ; SI: s_mov_b32 m0
 ; SI: ds_read_i16

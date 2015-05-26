@@ -1593,19 +1593,16 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   if (LoadNode->getExtensionType() == ISD::SEXTLOAD) {
     EVT MemVT = LoadNode->getMemoryVT();
     assert(!MemVT.isVector() && (MemVT == MVT::i16 || MemVT == MVT::i8));
-    SDValue ShiftAmount =
-          DAG.getConstant(VT.getSizeInBits() - MemVT.getSizeInBits(), DL,
-                          MVT::i32);
     SDValue NewLoad = DAG.getExtLoad(ISD::EXTLOAD, DL, VT, Chain, Ptr,
                                   LoadNode->getPointerInfo(), MemVT,
                                   LoadNode->isVolatile(),
                                   LoadNode->isNonTemporal(),
                                   LoadNode->isInvariant(),
                                   LoadNode->getAlignment());
-    SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, NewLoad, ShiftAmount);
-    SDValue Sra = DAG.getNode(ISD::SRA, DL, VT, Shl, ShiftAmount);
+    SDValue Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, VT, NewLoad,
+                              DAG.getValueType(MemVT));
 
-    SDValue MergedValues[2] = { Sra, Chain };
+    SDValue MergedValues[2] = { Res, Chain };
     return DAG.getMergeValues(MergedValues, DL);
   }
 
