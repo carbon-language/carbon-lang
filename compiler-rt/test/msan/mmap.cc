@@ -28,7 +28,8 @@ int main() {
 #endif
   int success_count = 0;
   while (true) {
-    void *p = mmap(0, kMapSize, PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    void *p = mmap(0, kMapSize, PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
     printf("%p\n", p);
     if (p == MAP_FAILED) {
       assert(errno == ENOMEM);
