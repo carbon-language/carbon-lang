@@ -326,9 +326,9 @@ public:
     class Integer  : public Object
     {
     public:
-        Integer () :
+        Integer (uint64_t i = 0) :
             Object (Type::eTypeInteger),
-            m_value ()
+            m_value (i)
         {
         }
 
@@ -357,9 +357,9 @@ public:
     class Float  : public Object
     {
     public:
-        Float () :
+        Float (double d = 0.0) :
             Object (Type::eTypeFloat),
-            m_value ()
+            m_value (d)
         {
         }
 
@@ -388,9 +388,9 @@ public:
     class Boolean  : public Object
     {
     public:
-        Boolean () :
+        Boolean (bool b = false) :
             Object (Type::eTypeBoolean),
-            m_value ()
+            m_value (b)
         {
         }
 
@@ -421,9 +421,23 @@ public:
     class String  : public Object
     {
     public:
-        String () :
+        String (const char *cstr = NULL) :
             Object (Type::eTypeString),
             m_value ()
+        {
+            if (cstr)
+                m_value = cstr;
+        }
+
+        String (const std::string &s) :
+            Object (Type::eTypeString),
+            m_value (s)
+        {
+        }
+
+        String (const std::string &&s) :
+            Object (Type::eTypeString),
+            m_value (s)
         {
         }
 

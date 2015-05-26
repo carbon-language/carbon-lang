@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <stdlib.h>     /* atof */
+
 #include "lldb/Host/XML.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -372,6 +375,44 @@ XMLNode::GetElementText (std::string &text) const
 }
 
 
+bool
+XMLNode::GetElementTextAsUnsigned (uint64_t &value, uint64_t fail_value, int base) const
+{
+    bool success = false;
+#if defined( LIBXML2_DEFINED )
+    if (IsValid())
+    {
+        std::string text;
+        if (GetElementText(text))
+            value = StringConvert::ToUInt64(text.c_str(), fail_value, base, &success);
+    }
+#endif
+    if (!success)
+        value = fail_value;
+    return success;
+}
+
+bool
+XMLNode::GetElementTextAsFloat (double &value, double fail_value) const
+{
+    bool success = false;
+#if defined( LIBXML2_DEFINED )
+    if (IsValid())
+    {
+        std::string text;
+        if (GetElementText(text))
+        {
+            value = atof(text.c_str());
+            success = true;
+        }
+    }
+#endif
+    if (!success)
+        value = fail_value;
+    return success;
+}
+
+
 
 bool
 XMLNode::NameIs (const char *name) const
@@ -545,4 +586,89 @@ ApplePropertyList::ExtractStringFromValueNode (const XMLNode &node, std::string 
 #endif
     return false;
 }
+
+#if defined( LIBXML2_DEFINED )
+
+namespace {
+
+    StructuredData::ObjectSP
+    CreatePlistValue (XMLNode node)
+    {
+        llvm::StringRef element_name = node.GetName();
+        if (element_name == "array")
+        {
+            std::shared_ptr<StructuredData::Array> array_sp(new StructuredData::Array());
+            node.ForEachChildElement([&array_sp](const XMLNode &node) -> bool {
+                array_sp->AddItem(CreatePlistValue(node));
+                return true; // Keep iterating through all child elements of the array
+            });
+            return array_sp;
+        }
+        else if (element_name == "dict")
+        {
+            XMLNode key_node;
+            std::shared_ptr<StructuredData::Dictionary> dict_sp(new StructuredData::Dictionary());
+            node.ForEachChildElement([&key_node, &dict_sp](const XMLNode &node) -> bool {
+                if (node.NameIs("key"))
+                {
+                    // This is a "key" element node
+                    key_node = node;
+                }
+                else
+                {
+                    // This is a value node
+                    if (key_node)
+                    {
+                        dict_sp->AddItem(key_node.GetName(), CreatePlistValue(node));
+                        key_node.Clear();
+                    }
+                }
+                return true; // Keep iterating through all child elements of the dictionary
+            });
+            return dict_sp;
+        }
+        else if (element_name == "real")
+        {
+            double value = 0.0;
+            node.GetElementTextAsFloat(value);
+            return StructuredData::ObjectSP(new StructuredData::Float(value));
+        }
+        else if (element_name == "integer")
+        {
+            uint64_t value = 0;
+            node.GetElementTextAsUnsigned(value, 0, 0);
+            return StructuredData::ObjectSP(new StructuredData::Integer(value));
+        }
+        else if ((element_name == "string") || (element_name == "data"))
+        {
+            std::string text;
+            node.GetElementText(text);
+            return StructuredData::ObjectSP(new StructuredData::String(std::move(text)));
+        }
+        else if (element_name == "true")
+        {
+            return StructuredData::ObjectSP(new StructuredData::Boolean(true));
+        }
+        else if (element_name == "false")
+        {
+            return StructuredData::ObjectSP(new StructuredData::Boolean(false));
+        }
+        return StructuredData::ObjectSP(new StructuredData::Null());
+    }
+}
+#endif
+
+StructuredData::ObjectSP
+ApplePropertyList::GetStructuredData()
+{
+    StructuredData::ObjectSP root_sp;
+#if defined( LIBXML2_DEFINED )
+    if (IsValid())
+    {
+        return CreatePlistValue(m_dict_node);
+    }
+#endif
+    return root_sp;
+}
+
 

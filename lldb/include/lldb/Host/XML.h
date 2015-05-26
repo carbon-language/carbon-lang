@@ -27,6 +27,7 @@
 #include "lldb/lldb-private.h"
 #include "llvm/ADT/StringRef.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/StructuredData.h"
 
 
 namespace lldb_private {
@@ -73,7 +74,13 @@ namespace lldb_private {
         
         bool
         GetElementText (std::string &text) const;
-        
+
+        bool
+        GetElementTextAsUnsigned (uint64_t &value, uint64_t fail_value = 0, int base = 0) const;
+
+        bool
+        GetElementTextAsFloat (double &value, double fail_value = 0.0) const;
+
         bool
         NameIs (const char *name) const;
         
@@ -196,6 +203,9 @@ namespace lldb_private {
 
         bool
         GetValueAsString (const char *key, std::string &value) const;
+
+        StructuredData::ObjectSP
+        GetStructuredData();
 
     protected:
 
