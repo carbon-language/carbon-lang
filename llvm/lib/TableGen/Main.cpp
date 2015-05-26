@@ -70,9 +70,7 @@ static int createDependencyFile(const TGParser &Parser, const char *argv0) {
   return 0;
 }
 
-namespace llvm {
-
-int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
+int llvm::TableGenMain(char *argv0, TableGenMainFn *MainFn) {
   RecordKeeper Records;
 
   // Parse the input file.
@@ -119,6 +117,4 @@ int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
   // Declare success.
   Out.keep();
   return 0;
-}
-
 }
