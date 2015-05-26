@@ -178,9 +178,9 @@ private:
         const auto *opt =
             reinterpret_cast<const Elf_Mips_Options *>(raw.data());
         if (opt->kind == ODK_REGINFO) {
-          const auto *regInfo = reinterpret_cast<const Elf_RegInfo *>(opt + 1);
-          ctx.mergeReginfoMask(*regInfo);
-          _gp0 = regInfo->ri_gp_value;
+          const Elf_RegInfo &regInfo = opt->getRegInfoDesc();
+          ctx.mergeReginfoMask(regInfo);
+          _gp0 = regInfo.ri_gp_value;
           break;
         }
         raw = raw.slice(opt->size);

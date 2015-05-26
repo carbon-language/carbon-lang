@@ -41,6 +41,12 @@ template <class ELFT> struct Elf_Mips_Options {
   Elf_Half section; // Section header index of section affected,
                     // or 0 for global options
   Elf_Word info;    // Kind-specific information
+
+  const Elf_RegInfo<ELFT> &getRegInfoDesc() const {
+    assert(kind == llvm::ELF::ODK_REGINFO);
+    return *reinterpret_cast<const Elf_RegInfo<ELFT> *>(
+               (const uint8_t *)this + sizeof(Elf_Mips_Options));
+  }
 };
 
 } // end namespace object.
