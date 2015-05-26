@@ -67,7 +67,7 @@ public:
 void AMDGPUMCObjectWriter::WriteObject(MCAssembler &Asm,
                                        const MCAsmLayout &Layout) {
   for (MCAssembler::iterator I = Asm.begin(), E = Asm.end(); I != E; ++I) {
-    Asm.writeSectionData(&I->getSectionData(), Layout);
+    Asm.writeSectionData(&*I, Layout);
   }
 }
 

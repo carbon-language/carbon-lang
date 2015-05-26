@@ -1034,7 +1034,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
         WriteZeros(SectionDataPadding);
 
-        Asm.writeSectionData(&j->getSectionData(), Layout);
+        Asm.writeSectionData(&*j, Layout);
       }
 
       if ((*i)->Relocations.size() > 0) {

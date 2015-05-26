@@ -1150,7 +1150,7 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
   // for writing to arbitrary buffers) for little benefit.
   if (!Asm.getContext().getAsmInfo()->compressDebugSections() ||
       !SectionName.startswith(".debug_") || SectionName == ".debug_frame") {
-    Asm.writeSectionData(&SD, Layout);
+    Asm.writeSectionData(&Section, Layout);
     return;
   }
 
@@ -1164,12 +1164,12 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
       StringRef(UncompressedData.data(), UncompressedData.size()),
       CompressedContents);
   if (Success != zlib::StatusOK) {
-    Asm.writeSectionData(&SD, Layout);
+    Asm.writeSectionData(&Section, Layout);
     return;
   }
 
   if (!prependCompressionHeader(UncompressedData.size(), CompressedContents)) {
-    Asm.writeSectionData(&SD, Layout);
+    Asm.writeSectionData(&Section, Layout);
     return;
   }
   Asm.getContext().renameELFSection(&Section,

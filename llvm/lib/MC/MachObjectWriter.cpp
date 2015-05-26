@@ -478,8 +478,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
   // or stub section.
   for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
          ie = Asm.indirect_symbol_end(); it != ie; ++it) {
-    const MCSectionMachO &Section =
-      cast<MCSectionMachO>(it->SectionData->getSection());
+    const MCSectionMachO &Section = cast<MCSectionMachO>(*it->Section);
 
     if (Section.getType() != MachO::S_NON_LAZY_SYMBOL_POINTERS &&
         Section.getType() != MachO::S_LAZY_SYMBOL_POINTERS &&
@@ -494,15 +493,13 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
   unsigned IndirectIndex = 0;
   for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
          ie = Asm.indirect_symbol_end(); it != ie; ++it, ++IndirectIndex) {
-    const MCSectionMachO &Section =
-      cast<MCSectionMachO>(it->SectionData->getSection());
+    const MCSectionMachO &Section = cast<MCSectionMachO>(*it->Section);
 
     if (Section.getType() != MachO::S_NON_LAZY_SYMBOL_POINTERS)
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    IndirectSymBase.insert(
-        std::make_pair(&it->SectionData->getSection(), IndirectIndex));
+    IndirectSymBase.insert(std::make_pair(it->Section, IndirectIndex));
 
     Asm.getOrCreateSymbolData(*it->Symbol);
   }
@@ -511,16 +508,14 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
   IndirectIndex = 0;
   for (MCAssembler::indirect_symbol_iterator it = Asm.indirect_symbol_begin(),
          ie = Asm.indirect_symbol_end(); it != ie; ++it, ++IndirectIndex) {
-    const MCSectionMachO &Section =
-      cast<MCSectionMachO>(it->SectionData->getSection());
+    const MCSectionMachO &Section = cast<MCSectionMachO>(*it->Section);
 
     if (Section.getType() != MachO::S_LAZY_SYMBOL_POINTERS &&
         Section.getType() != MachO::S_SYMBOL_STUBS)
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
-    IndirectSymBase.insert(
-        std::make_pair(&it->SectionData->getSection(), IndirectIndex));
+    IndirectSymBase.insert(std::make_pair(it->Section, IndirectIndex));
 
     // Set the symbol type to undefined lazy, but only on construction.
     //
@@ -913,10 +908,10 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   // Write the actual section data.
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
-    const MCSectionData &SD = it->getSectionData();
-    Asm.writeSectionData(&SD, Layout);
+    MCSection &Sec = *it;
+    Asm.writeSectionData(&Sec, Layout);
 
-    uint64_t Pad = getPaddingSize(&*it, Layout);
+    uint64_t Pad = getPaddingSize(&Sec, Layout);
     WriteZeros(Pad);
   }
 
@@ -972,7 +967,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
       // Indirect symbols in the non-lazy symbol pointer section have some
       // special handling.
       const MCSectionMachO &Section =
-        static_cast<const MCSectionMachO&>(it->SectionData->getSection());
+          static_cast<const MCSectionMachO &>(*it->Section);
       if (Section.getType() == MachO::S_NON_LAZY_SYMBOL_POINTERS) {
         // If this symbol is defined and internal, mark it as such.
         if (it->Symbol->isDefined() &&

@@ -535,7 +535,7 @@ public:
 // FIXME: This really doesn't belong here. See comments below.
 struct IndirectSymbolData {
   MCSymbol *Symbol;
-  MCSectionData *SectionData;
+  MCSection *Section;
 };
 
 // FIXME: Ditto this. Purely so the Streamer and the ObjectWriter can talk
@@ -679,7 +679,7 @@ private:
 
   /// \brief Perform one layout iteration of the given section and return true
   /// if any offsets were adjusted.
-  bool layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD);
+  bool layoutSectionOnce(MCAsmLayout &Layout, MCSection &Sec);
 
   bool relaxInstruction(MCAsmLayout &Layout, MCRelaxableFragment &IF);
 
@@ -715,7 +715,7 @@ public:
   bool isSymbolLinkerVisible(const MCSymbol &SD) const;
 
   /// Emit the section contents using the given object writer.
-  void writeSectionData(const MCSectionData *Section,
+  void writeSectionData(const MCSection *Section,
                         const MCAsmLayout &Layout) const;
 
   /// Check whether a given symbol has been flagged with .thumb_func.
@@ -883,16 +883,6 @@ public:
   /// @}
   /// \name Backend Data Access
   /// @{
-
-  MCSectionData &getSectionData(MCSection &Section) {
-    assert(Sections.count(&Section) && "Unknown Seciton");
-    return Section.getSectionData();
-  }
-
-  const MCSectionData &getSectionData(const MCSection &Section) const {
-    return const_cast<MCAssembler *>(this)
-        ->getSectionData(const_cast<MCSection &>(Section));
-  }
 
   MCSectionData &getOrCreateSectionData(MCSection &Section,
                                         bool *Created = nullptr) {

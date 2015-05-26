@@ -768,16 +768,15 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
          "The stream should advance by fragment size");
 }
 
-void MCAssembler::writeSectionData(const MCSectionData *SD,
+void MCAssembler::writeSectionData(const MCSection *Sec,
                                    const MCAsmLayout &Layout) const {
   // Ignore virtual sections.
-  const MCSection &Sec = SD->getSection();
-  if (Sec.isVirtualSection()) {
-    assert(Layout.getSectionFileSize(&Sec) == 0 && "Invalid size for section!");
+  if (Sec->isVirtualSection()) {
+    assert(Layout.getSectionFileSize(Sec) == 0 && "Invalid size for section!");
 
     // Check that contents are only things legal inside a virtual section.
-    for (MCSectionData::const_iterator it = SD->begin(),
-           ie = SD->end(); it != ie; ++it) {
+    for (MCSectionData::const_iterator it = Sec->begin(), ie = Sec->end();
+         it != ie; ++it) {
       switch (it->getKind()) {
       default: llvm_unreachable("Invalid fragment in virtual section!");
       case MCFragment::FT_Data: {
@@ -789,7 +788,7 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
                "Cannot have fixups in virtual section!");
         for (unsigned i = 0, e = DF.getContents().size(); i != e; ++i)
           if (DF.getContents()[i]) {
-            if (auto *ELFSec = dyn_cast<const MCSectionELF>(&SD->getSection()))
+            if (auto *ELFSec = dyn_cast<const MCSectionELF>(Sec))
               report_fatal_error("non-zero initializer found in section '" +
                   ELFSec->getSectionName() + "'");
             else
@@ -818,12 +817,12 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
   uint64_t Start = getWriter().getStream().tell();
   (void)Start;
 
-  for (MCSectionData::const_iterator it = SD->begin(), ie = SD->end();
+  for (MCSectionData::const_iterator it = Sec->begin(), ie = Sec->end();
        it != ie; ++it)
     writeFragment(*this, Layout, *it);
 
   assert(getWriter().getStream().tell() - Start ==
-         Layout.getSectionAddressSize(&SD->getSection()));
+         Layout.getSectionAddressSize(Sec));
 }
 
 std::pair<uint64_t, bool> MCAssembler::handleFixup(const MCAsmLayout &Layout,
@@ -1033,7 +1032,7 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   return OldSize != Data.size();
 }
 
-bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
+bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSection &Sec) {
   // Holds the first fragment which needed relaxing during this layout. It will
   // remain NULL if none were relaxed.
   // When a fragment is relaxed, all the fragments following it should get
@@ -1041,7 +1040,7 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
   MCFragment *FirstRelaxedFragment = nullptr;
 
   // Attempt to relax all the fragments in the section.
-  for (MCSectionData::iterator I = SD.begin(), IE = SD.end(); I != IE; ++I) {
+  for (MCSectionData::iterator I = Sec.begin(), IE = Sec.end(); I != IE; ++I) {
     // Check if this is a fragment that needs relaxation.
     bool RelaxedFrag = false;
     switch(I->getKind()) {
@@ -1081,7 +1080,7 @@ bool MCAssembler::layoutOnce(MCAsmLayout &Layout) {
   bool WasRelaxed = false;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSection &Sec = *it;
-    while (layoutSectionOnce(Layout, Sec.getSectionData()))
+    while (layoutSectionOnce(Layout, Sec))
       WasRelaxed = true;
   }
 
