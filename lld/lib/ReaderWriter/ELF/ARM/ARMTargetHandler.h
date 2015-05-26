@@ -71,7 +71,7 @@ public:
 
   SectionOrder getSectionOrder(StringRef name, int32_t contentType,
                                int32_t contentPermissions) override {
-    switch ((ARMELFDefinedAtom::ARMContentType)contentType) {
+    switch (contentType) {
     case ARMELFDefinedAtom::typeARMExidx:
       return ORDER_ARM_EXIDX;
     default:
