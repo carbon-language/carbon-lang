@@ -66,6 +66,8 @@ void Fuzzer::AlarmCallback() {
     Printf("AlarmCallback %zd\n", Seconds);
   if (Seconds >= (size_t)Options.UnitTimeoutSec) {
     Printf("ALARM: working on the last Unit for %zd seconds\n", Seconds);
+    Printf("       and the timeout value is %d (use -timeout=N to change)\n",
+           Options.UnitTimeoutSec);
     Print(CurrentUnit, "\n");
     PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
     WriteToCrash(CurrentUnit, "timeout-");

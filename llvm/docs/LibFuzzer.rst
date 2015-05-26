@@ -59,7 +59,7 @@ The most important flags are::
   max_len                            	64	Maximum length of the test input.
   cross_over                         	1	If 1, cross over inputs.
   mutate_depth                       	5	Apply this number of consecutive mutations to each input.
-  timeout                            	-1	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
+  timeout                            	1200	Timeout in seconds (if positive). If one unit runs more than this number of seconds the process will abort.
   help                               	0	Print help.
   save_minimized_corpus              	0	If 1, the minimized corpus is saved into the first input directory
   jobs                               	0	Number of jobs to run. If jobs >= 1 we spawn this number of jobs in separate worker processes with stdout/stderr redirected to fuzz-JOB.log.

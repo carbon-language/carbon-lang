@@ -28,7 +28,7 @@ FUZZER_FLAG_INT(
 FUZZER_FLAG_INT(exit_on_first, 0,
             "If 1, exit after the first new interesting input is found.")
 FUZZER_FLAG_INT(
-    timeout, -1,
+    timeout, 1200,
     "Timeout in seconds (if positive). "
     "If one unit runs more than this number of seconds the process will abort.")
 FUZZER_FLAG_INT(help, 0, "Print help.")
