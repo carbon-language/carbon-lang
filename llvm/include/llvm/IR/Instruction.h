@@ -78,6 +78,7 @@ public:
   /// Note: this is undefined behavior if the instruction does not have a
   /// parent, or the parent basic block does not have a parent function.
   const Module *getModule() const;
+  Module *getModule();
 
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, but does not delete it.

@@ -187,7 +187,7 @@ struct PlaceSafepoints : public FunctionPass {
 // not handle the parsability of state at the runtime call, that's the
 // callers job.
 static void
-InsertSafepointPoll(Instruction *after,
+InsertSafepointPoll(Instruction *InsertBefore,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
 static bool isGCLeafFunction(const CallSite &CS);
@@ -801,42 +801,39 @@ static bool isGCLeafFunction(const CallSite &CS) {
 }
 
 static void
-InsertSafepointPoll(Instruction *term,
+InsertSafepointPoll(Instruction *InsertBefore,
                     std::vector<CallSite> &ParsePointsNeeded /*rval*/) {
-  Module *M = term->getParent()->getParent()->getParent();
-  assert(M);
+  BasicBlock *OrigBB = InsertBefore->getParent();
+  Module *M = InsertBefore->getModule();
+  assert(M && "must be part of a module");
 
   // Inline the safepoint poll implementation - this will get all the branch,
   // control flow, etc..  Most importantly, it will introduce the actual slow
   // path call - where we need to insert a safepoint (parsepoint).
-  FunctionType *ftype =
-      FunctionType::get(Type::getVoidTy(M->getContext()), false);
-  assert(ftype && "null?");
-  // Note: This cast can fail if there's a function of the same name with a
-  // different type inserted previously
-  Function *F =
-      dyn_cast<Function>(M->getOrInsertFunction("gc.safepoint_poll", ftype));
-  assert(F && "void @gc.safepoint_poll() must be defined");
+
+  auto *F = M->getFunction(GCSafepointPollName);
+  assert(F->getType()->getElementType() ==
+         FunctionType::get(Type::getVoidTy(M->getContext()), false) &&
+         "gc.safepoint_poll declared with wrong type");
   assert(!F->empty() && "gc.safepoint_poll must be a non-empty function");
-  CallInst *poll = CallInst::Create(F, "", term);
+  CallInst *PollCall = CallInst::Create(F, "", InsertBefore);
 
   // Record some information about the call site we're replacing
-  BasicBlock *OrigBB = term->getParent();
-  BasicBlock::iterator before(poll), after(poll);
+  BasicBlock::iterator before(PollCall), after(PollCall);
   bool isBegin(false);
-  if (before == term->getParent()->begin()) {
+  if (before == OrigBB->begin()) {
     isBegin = true;
   } else {
     before--;
   }
   after++;
-  assert(after != poll->getParent()->end() && "must have successor");
+  assert(after != OrigBB->end() && "must have successor");
 
   // do the actual inlining
   InlineFunctionInfo IFI;
-  bool inlineStatus = InlineFunction(poll, IFI);
-  assert(inlineStatus && "inline must succeed");
-  (void)inlineStatus; // suppress warning in release-asserts
+  bool InlineStatus = InlineFunction(PollCall, IFI);
+  assert(InlineStatus && "inline must succeed");
+  (void)InlineStatus; // suppress warning in release-asserts
 
   // Check post conditions
   assert(IFI.StaticAllocas.empty() && "can't have allocs");

@@ -117,6 +117,10 @@ const Module *BasicBlock::getModule() const {
   return getParent()->getParent();
 }
 
+Module *BasicBlock::getModule() {
+  return getParent()->getParent();
+}
+
 TerminatorInst *BasicBlock::getTerminator() {
   if (InstList.empty()) return nullptr;
   return dyn_cast<TerminatorInst>(&InstList.back());

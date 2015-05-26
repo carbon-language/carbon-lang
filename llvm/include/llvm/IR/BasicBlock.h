@@ -116,6 +116,7 @@ public:
   ///
   /// Note: this is undefined behavior if the block does not have a parent.
   const Module *getModule() const;
+  Module *getModule();
 
   /// \brief Returns the terminator instruction if the block is well formed or
   /// null if the block is not well formed.
