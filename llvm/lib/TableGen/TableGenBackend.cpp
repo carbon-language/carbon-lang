@@ -22,11 +22,11 @@ const size_t MAX_LINE_LEN = 80U;
 static void printLine(raw_ostream &OS, const Twine &Prefix, char Fill,
                       StringRef Suffix) {
   size_t Pos = (size_t)OS.tell();
-  assert((MAX_LINE_LEN - Prefix.str().size() - Suffix.size() > 0) &&
+  assert((Prefix.str().size() + Suffix.size() <= MAX_LINE_LEN) &&
          "header line exceeds max limit");
   OS << Prefix;
-  const size_t e = MAX_LINE_LEN - Suffix.size();
-  for (size_t i = (size_t)OS.tell() - Pos; i < e; ++i)
+  for (size_t i = (size_t)OS.tell() - Pos, e = MAX_LINE_LEN - Suffix.size();
+         i < e; ++i)
     OS << Fill;
   OS << Suffix << '\n';
 }
