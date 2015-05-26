@@ -501,8 +501,7 @@ static void AttemptToFoldSymbolOffsetDifference(
   Addend += Layout->getSymbolOffset(A->getSymbol()) -
             Layout->getSymbolOffset(B->getSymbol());
   if (Addrs && (&SecA != &SecB))
-    Addend += (Addrs->lookup(&SecA.getSectionData()) -
-               Addrs->lookup(&SecB.getSectionData()));
+    Addend += (Addrs->lookup(&SecA) - Addrs->lookup(&SecB));
 
   // Pointers to Thumb symbols need to have their low-bit set to allow
   // for interworking.

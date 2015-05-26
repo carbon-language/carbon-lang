@@ -141,8 +141,8 @@ public:
 
   SectionAddrMap &getSectionAddressMap() { return SectionAddress; }
 
-  uint64_t getSectionAddress(const MCSectionData* SD) const {
-    return SectionAddress.lookup(SD);
+  uint64_t getSectionAddress(const MCSection *Sec) const {
+    return SectionAddress.lookup(Sec);
   }
   uint64_t getSymbolAddress(const MCSymbol &S, const MCAsmLayout &Layout) const;
 

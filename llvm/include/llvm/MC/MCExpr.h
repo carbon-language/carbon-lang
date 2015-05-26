@@ -21,13 +21,12 @@ class MCAssembler;
 class MCContext;
 class MCFixup;
 class MCSection;
-class MCSectionData;
 class MCStreamer;
 class MCSymbol;
 class MCValue;
 class raw_ostream;
 class StringRef;
-typedef DenseMap<const MCSectionData*, uint64_t> SectionAddrMap;
+typedef DenseMap<const MCSection *, uint64_t> SectionAddrMap;
 
 /// \brief Base class for the full range of assembler expressions which are
 /// needed for parsing.

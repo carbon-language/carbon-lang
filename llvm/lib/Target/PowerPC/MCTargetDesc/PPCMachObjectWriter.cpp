@@ -213,8 +213,8 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr = Writer->getSectionAddress(
-      &A_SD->getFragment()->getParent()->getSectionData());
+  uint64_t SecAddr =
+      Writer->getSectionAddress(A_SD->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
@@ -227,8 +227,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
 
     // FIXME: is Type correct? see include/llvm/Support/MachO.h
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(
-        &B_SD->getFragment()->getParent()->getSectionData());
+    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
   // FIXME: does FixedValue get used??
 
@@ -366,13 +365,11 @@ void PPCMachObjectWriter::RecordPPCRelocation(
     } else {
       // The index is the section ordinal (1-based).
       const MCSection &Sec = A->getSection();
-      const MCSectionData &SymSD = Asm.getSectionData(Sec);
       Index = Sec.getOrdinal() + 1;
-      FixedValue += Writer->getSectionAddress(&SymSD);
+      FixedValue += Writer->getSectionAddress(&Sec);
     }
     if (IsPCRel)
-      FixedValue -=
-          Writer->getSectionAddress(&Fragment->getParent()->getSectionData());
+      FixedValue -= Writer->getSectionAddress(Fragment->getParent());
   }
 
   // struct relocation_info (8 bytes)

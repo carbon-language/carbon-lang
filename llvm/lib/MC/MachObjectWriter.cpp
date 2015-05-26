@@ -67,7 +67,7 @@ bool MachObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
 
 uint64_t MachObjectWriter::getFragmentAddress(const MCFragment *Fragment,
                                               const MCAsmLayout &Layout) const {
-  return getSectionAddress(&Fragment->getParent()->getSectionData()) +
+  return getSectionAddress(Fragment->getParent()) +
          Layout.getFragmentOffset(Fragment);
 }
 
@@ -101,14 +101,14 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
     return Address;
   }
 
-  return getSectionAddress(
-             &S.getData().getFragment()->getParent()->getSectionData()) +
+  return getSectionAddress(S.getData().getFragment()->getParent()) +
          Layout.getSymbolOffset(S);
 }
 
 uint64_t MachObjectWriter::getPaddingSize(const MCSectionData *SD,
                                           const MCAsmLayout &Layout) const {
-  uint64_t EndAddr = getSectionAddress(SD) + Layout.getSectionAddressSize(SD);
+  uint64_t EndAddr =
+      getSectionAddress(&SD->getSection()) + Layout.getSectionAddressSize(SD);
   unsigned Next = SD->getSection().getLayoutOrder() + 1;
   if (Next >= Layout.getSectionOrder().size())
     return 0;
@@ -217,10 +217,10 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   WriteBytes(Section.getSectionName(), 16);
   WriteBytes(Section.getSegmentName(), 16);
   if (is64Bit()) {
-    Write64(getSectionAddress(&SD)); // address
+    Write64(getSectionAddress(&SD.getSection())); // address
     Write64(SectionSize); // size
   } else {
-    Write32(getSectionAddress(&SD)); // address
+    Write32(getSectionAddress(&SD.getSection())); // address
     Write32(SectionSize); // size
   }
   Write32(FileOffset);
@@ -649,7 +649,7 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
     const MCSectionData *SD = Order[i];
     StartAddress =
         RoundUpToAlignment(StartAddress, SD->getSection().getAlignment());
-    SectionAddress[SD] = StartAddress;
+    SectionAddress[&SD->getSection()] = StartAddress;
     StartAddress += Layout.getSectionAddressSize(SD);
 
     // Explicitly pad the section to match the alignment requirements of the
@@ -804,7 +804,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSectionData &SD = it->getSectionData();
-    uint64_t Address = getSectionAddress(&SD);
+    uint64_t Address = getSectionAddress(&*it);
     uint64_t Size = Layout.getSectionAddressSize(&SD);
     uint64_t FileSize = Layout.getSectionFileSize(&SD);
     FileSize += getPaddingSize(&SD, Layout);
@@ -837,7 +837,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     const MCSectionData &SD = it->getSectionData();
     std::vector<RelAndSymbol> &Relocs = Relocations[&SD];
     unsigned NumRelocs = Relocs.size();
-    uint64_t SectionStart = SectionDataStart + getSectionAddress(&SD);
+    uint64_t SectionStart = SectionDataStart + getSectionAddress(&*it);
     WriteSection(Asm, Layout, SD, SectionStart, RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
   }

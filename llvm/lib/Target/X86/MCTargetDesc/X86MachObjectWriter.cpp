@@ -364,8 +364,8 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                        false);
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr = Writer->getSectionAddress(
-      &A_SD->getFragment()->getParent()->getSectionData());
+  uint64_t SecAddr =
+      Writer->getSectionAddress(A_SD->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
@@ -385,8 +385,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
     Type = A_SD->isExternal() ? (unsigned)MachO::GENERIC_RELOC_SECTDIFF :
       (unsigned)MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(
-        &B_SD->getFragment()->getParent()->getSectionData());
+    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.
@@ -560,13 +559,11 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
     } else {
       // The index is the section ordinal (1-based).
       const MCSection &Sec = A->getSection();
-      const MCSectionData &SymSD = Asm.getSectionData(Sec);
       Index = Sec.getOrdinal() + 1;
-      FixedValue += Writer->getSectionAddress(&SymSD);
+      FixedValue += Writer->getSectionAddress(&Sec);
     }
     if (IsPCRel)
-      FixedValue -=
-          Writer->getSectionAddress(&Fragment->getParent()->getSectionData());
+      FixedValue -= Writer->getSectionAddress(Fragment->getParent());
 
     Type = MachO::GENERIC_RELOC_VANILLA;
   }
