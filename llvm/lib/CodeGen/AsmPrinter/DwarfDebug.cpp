@@ -857,10 +857,6 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     // Attempt to coalesce the ranges of two otherwise identical
     // DebugLocEntries.
     auto CurEntry = DebugLoc.rbegin();
-    auto PrevEntry = std::next(CurEntry);
-    if (PrevEntry != DebugLoc.rend() && PrevEntry->MergeRanges(*CurEntry))
-      DebugLoc.pop_back();
-
     DEBUG({
       dbgs() << CurEntry->getValues().size() << " Values:\n";
       for (auto Value : CurEntry->getValues()) {
@@ -868,6 +864,10 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
       }
       dbgs() << "-----\n";
     });
+
+    auto PrevEntry = std::next(CurEntry);
+    if (PrevEntry != DebugLoc.rend() && PrevEntry->MergeRanges(*CurEntry))
+      DebugLoc.pop_back();
   }
 }
 
