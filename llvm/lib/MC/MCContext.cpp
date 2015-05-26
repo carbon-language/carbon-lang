@@ -10,6 +10,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCLabel.h"
@@ -54,6 +55,13 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
 }
 
 MCContext::~MCContext() {
+  // Call the destructors so the fragments are freed
+  for (auto &I : ELFUniquingMap)
+    I.second->~MCSectionELF();
+  for (auto &I : COFFUniquingMap)
+    I.second->~MCSectionCOFF();
+  for (auto &I : MachOUniquingMap)
+    I.second->~MCSectionMachO();
 
   if (AutoReset)
     reset();
