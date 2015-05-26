@@ -417,12 +417,6 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   // that can grow the stack.  This, combined with backedge polls,
   // give us all the progress guarantees we need.
 
-  // Due to the way the frontend generates IR, we may have a couple of initial
-  // basic blocks before the first bytecode.  These will be single-entry
-  // single-exit blocks which conceptually are just part of the first 'real
-  // basic block'.  Since we don't have deopt state until the first bytecode,
-  // walk forward until we've found the first unconditional branch or merge.
-
   // hasNextInstruction and nextInstruction are used to iterate
   // through a "straight line" execution sequence.
 
@@ -465,17 +459,7 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   assert((hasNextInstruction(cursor) || cursor->isTerminator()) &&
          "either we stopped because of a call, or because of terminator");
 
-  if (cursor->isTerminator()) {
-    return cursor;
-  }
-
-  BasicBlock *BB = cursor->getParent();
-  SplitBlock(BB, cursor, &DT);
-
-  // SplitBlock updates the DT
-  DEBUG(DT.verifyDomTree());
-
-  return BB->getTerminator();
+  return cursor;
 }
 
 /// Identify the list of call sites which need to be have parseable state
