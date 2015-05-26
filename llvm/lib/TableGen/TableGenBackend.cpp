@@ -36,14 +36,13 @@ void llvm::emitSourceFileHeader(StringRef Desc, raw_ostream &OS) {
   StringRef Prefix("|* ");
   StringRef Suffix(" *|");
   printLine(OS, Prefix, ' ', Suffix);
+  size_t PSLen = Prefix.size() + Suffix.size();
+  assert(PSLen < MAX_LINE_LEN);
   size_t Pos = 0U;
-  do{
-    size_t PSLen = Suffix.size() + Prefix.size();
-    size_t PosE = Pos + ((MAX_LINE_LEN > (Desc.size() - PSLen)) ?
-      Desc.size() :
-      MAX_LINE_LEN - PSLen);
-    printLine(OS, Prefix + Desc.slice(Pos, PosE), ' ', Suffix);
-    Pos = PosE;
+  do {
+    size_t Length = std::min(Desc.size() - Pos, MAX_LINE_LEN - PSLen);
+    printLine(OS, Prefix + Desc.substr(Pos, Length), ' ', Suffix);
+    Pos += Length;
   } while (Pos < Desc.size());
   printLine(OS, Prefix, ' ', Suffix);
   printLine(OS, Prefix + "Automatically generated file, do not edit!", ' ',
