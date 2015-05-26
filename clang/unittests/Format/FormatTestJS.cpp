@@ -82,6 +82,10 @@ TEST_F(FormatTestJS, UnderstandsJavaScriptOperators) {
 
   verifyFormat("var b = a.map((x) => x + 1);");
   verifyFormat("return ('aaa') in bbbb;");
+
+  // ES6 spread operator.
+  verifyFormat("someFunction(...a);");
+  verifyFormat("var x = [1, ...a, 2];");
 }
 
 TEST_F(FormatTestJS, UnderstandsAmpAmp) {
