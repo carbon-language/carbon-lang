@@ -1671,7 +1671,7 @@ parse_pointer_to_member_type(const char* first, const char* last, C& db)
                 auto func = std::move(db.names.back());
                 db.names.pop_back();
                 auto class_type = std::move(db.names.back());
-                if (func.second.front() == '(')
+                if (!func.second.empty() && func.second.front() == '(')
                 {
                     db.names.back().first = std::move(func.first) + "(" + class_type.move_full() + "::*";
                     db.names.back().second = ")" + std::move(func.second);
@@ -2018,7 +2018,8 @@ parse_type(const char* first, const char* last, C& db)
                                     db.names[k].first += " (";
                                     db.names[k].second.insert(0, ")");
                                 }
-                                else if (db.names[k].second.front() == '(')
+                                else if (!db.names[k].second.empty() &&
+                                          db.names[k].second.front() == '(')
                                 {
                                     db.names[k].first += "(";
                                     db.names[k].second.insert(0, ")");
@@ -2045,7 +2046,8 @@ parse_type(const char* first, const char* last, C& db)
                                     db.names[k].first += " (";
                                     db.names[k].second.insert(0, ")");
                                 }
-                                else if (db.names[k].second.front() == '(')
+                                else if (!db.names[k].second.empty() &&
+                                          db.names[k].second.front() == '(')
                                 {
                                     db.names[k].first += "(";
                                     db.names[k].second.insert(0, ")");
@@ -2079,7 +2081,8 @@ parse_type(const char* first, const char* last, C& db)
                                     db.names[k].first += " (";
                                     db.names[k].second.insert(0, ")");
                                 }
-                                else if (db.names[k].second.front() == '(')
+                                else if (!db.names[k].second.empty() &&
+                                          db.names[k].second.front() == '(')
                                 {
                                     db.names[k].first += "(";
                                     db.names[k].second.insert(0, ")");
