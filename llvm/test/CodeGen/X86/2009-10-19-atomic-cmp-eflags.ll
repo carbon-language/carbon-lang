@@ -37,8 +37,7 @@ lt_init.exit:                                     ; preds = %if.end.i, %if.then.
   %4 = call i64 @llvm.readcyclecounter() nounwind ; <i64> [#uses=1]
   %5 = sub i64 %4, %2                             ; <i64> [#uses=1]
   %6 = atomicrmw add i64* getelementptr inbounds ([1216 x i64], [1216 x i64]* @__profiling_callsite_timestamps_live, i32 0, i32 51), i64 %5 monotonic
-;CHECK: lock
-;CHECK-NEXT: {{xadd|addq}} %rdx, __profiling_callsite_timestamps_live
+;CHECK: lock {{xadd|addq}} %rdx, __profiling_callsite_timestamps_live
 ;CHECK-NEXT: cmpl $0,
 ;CHECK-NEXT: jne
   %cmp = icmp eq i32 %3, 0                        ; <i1> [#uses=1]

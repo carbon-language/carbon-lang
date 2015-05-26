@@ -48,7 +48,7 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
         EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
 
   if (TSFlags & X86II::LOCK)
-    OS << "\tlock\n";
+    OS << "\tlock\t";
 
   // Output CALLpcrel32 as "callq" in 64-bit mode.
   // In Intel annotation it's always emitted as "call".

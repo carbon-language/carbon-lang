@@ -9,8 +9,7 @@ entry:
   %tmp = load i64*, i64** %p.addr, align 8
 ; CHECK-LABEL: t1:
 ; CHECK: movl    $2147483648, %eax
-; CHECK: lock
-; CHECK-NEXT: orq %r{{.*}}, (%r{{.*}})
+; CHECK: lock orq %r{{.*}}, (%r{{.*}})
   %0 = atomicrmw or i64* %tmp, i64 2147483648 seq_cst
   ret void
 }
@@ -21,8 +20,7 @@ entry:
   store i64* %p, i64** %p.addr, align 8
   %tmp = load i64*, i64** %p.addr, align 8
 ; CHECK-LABEL: t2:
-; CHECK: lock
-; CHECK-NEXT: orq $2147483644, (%r{{.*}})
+; CHECK: lock orq $2147483644, (%r{{.*}})
   %0 = atomicrmw or i64* %tmp, i64 2147483644 seq_cst
   ret void
 }

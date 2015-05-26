@@ -14,8 +14,7 @@ entry:
 ; CHECK: addl $1, %ebx
 ; CHECK: movl %edx, %ecx
 ; CHECK: adcl $0, %ecx
-; CHECK: lock
-; CHECK-NEXT: cmpxchg8b ([[REG]])
+; CHECK: lock cmpxchg8b ([[REG]])
 ; CHECK-NEXT: jne
   %0 = atomicrmw add i64* %p, i64 1 seq_cst
   ret void

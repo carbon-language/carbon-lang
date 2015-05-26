@@ -7,8 +7,7 @@
 define void @gst_atomic_queue_push(i32* %addr) {
 ; CHECK-LABEL: gst_atomic_queue_push:
 ; CHECK: movl (%eax), [[LHS:%e[a-z]+]]
-; CHECK: lock
-; CHECK-NEXT: orl
+; CHECK: lock orl
 ; CHECK: movl (%eax), [[RHS:%e[a-z]+]]
 ; CHECK: cmpl [[LHS]], [[RHS]]
 

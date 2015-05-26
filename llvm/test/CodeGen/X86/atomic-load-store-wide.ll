@@ -5,8 +5,7 @@
 
 define void @test1(i64* %ptr, i64 %val1) {
 ; CHECK-LABEL: test1
-; CHECK: lock
-; CHECK-NEXT: cmpxchg8b
+; CHECK: lock cmpxchg8b
 ; CHECK-NEXT: jne
   store atomic i64 %val1, i64* %ptr seq_cst, align 8
   ret void
@@ -14,8 +13,7 @@ define void @test1(i64* %ptr, i64 %val1) {
 
 define i64 @test2(i64* %ptr) {
 ; CHECK-LABEL: test2
-; CHECK: lock
-; CHECK-NEXT: cmpxchg8b
+; CHECK: lock cmpxchg8b
   %val = load atomic i64, i64* %ptr seq_cst, align 8
   ret i64 %val
 }
