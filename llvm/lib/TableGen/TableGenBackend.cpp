@@ -33,21 +33,20 @@ static void printLine(raw_ostream &OS, const Twine &Prefix, char Fill,
 
 void llvm::emitSourceFileHeader(StringRef Desc, raw_ostream &OS) {
   printLine(OS, "/*===- TableGen'erated file ", '-', "*- C++ -*-===*\\");
-  printLine(OS, "|*", ' ', "*|");
-  size_t Pos = 0U;
-  size_t PosE;
-  StringRef Prefix("|*");
+  StringRef Prefix("|* ");
   StringRef Suffix(" *|");
+  printLine(OS, Prefix, ' ', Suffix);
+  size_t Pos = 0U;
   do{
     size_t PSLen = Suffix.size() + Prefix.size();
-    PosE = Pos + ((MAX_LINE_LEN > (Desc.size() - PSLen)) ?
+    size_t PosE = Pos + ((MAX_LINE_LEN > (Desc.size() - PSLen)) ?
       Desc.size() :
       MAX_LINE_LEN - PSLen);
     printLine(OS, Prefix + Desc.slice(Pos, PosE), ' ', Suffix);
     Pos = PosE;
-  } while(Pos < Desc.size());
+  } while (Pos < Desc.size());
   printLine(OS, Prefix, ' ', Suffix);
-  printLine(OS, Prefix + " Automatically generated file, do not edit!", ' ',
+  printLine(OS, Prefix + "Automatically generated file, do not edit!", ' ',
     Suffix);
   printLine(OS, Prefix, ' ', Suffix);
   printLine(OS, "\\*===", '-', "===*/");
