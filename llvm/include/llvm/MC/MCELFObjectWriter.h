@@ -20,7 +20,6 @@ class MCAssembler;
 class MCFixup;
 class MCFragment;
 class MCObjectWriter;
-class MCSectionData;
 class MCSymbol;
 class MCSymbolData;
 class MCValue;
