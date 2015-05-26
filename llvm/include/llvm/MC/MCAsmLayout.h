@@ -28,11 +28,6 @@ class MCSymbolData;
 /// efficiently compute the exact address of any symbol in the assembly file,
 /// even during the relaxation process.
 class MCAsmLayout {
-public:
-  typedef llvm::SmallVectorImpl<MCSectionData *>::const_iterator const_iterator;
-  typedef llvm::SmallVectorImpl<MCSectionData *>::iterator iterator;
-
-private:
   MCAssembler &Assembler;
 
   /// List of sections in layout order.
