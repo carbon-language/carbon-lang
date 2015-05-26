@@ -3424,4 +3424,12 @@ def : Pat <
 
 def : SHA256MaPattern <V_BFI_B32, V_XOR_B32_e64>;
 
+//============================================================================//
+// Assembler aliases
+//============================================================================//
+
+def : MnemonicAlias<"v_add_u32", "v_add_i32">;
+def : MnemonicAlias<"v_sub_u32", "v_sub_i32">;
+def : MnemonicAlias<"v_subrev_u32", "v_subrev_i32">;
+
 } // End isGCN predicate
