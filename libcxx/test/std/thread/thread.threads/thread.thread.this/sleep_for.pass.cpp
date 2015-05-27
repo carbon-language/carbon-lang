@@ -17,14 +17,17 @@
 #include <thread>
 #include <cstdlib>
 #include <cassert>
+#include <cstring>
 #include <signal.h>
 #include <sys/time.h>
+
+void sig_action(int) {}
 
 int main()
 {
     int ec;
     struct sigaction action;
-    action.sa_handler = [](int) {};
+    action.sa_handler = &sig_action;
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
 
@@ -32,7 +35,7 @@ int main()
     assert(!ec);
 
     struct itimerval it;
-    it.it_interval = { 0 };
+    std::memset(&it, 0, sizeof(itimerval));
     it.it_value.tv_sec = 0;
     it.it_value.tv_usec = 250000;
     // This will result in a SIGALRM getting fired resulting in the nanosleep
