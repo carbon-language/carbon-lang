@@ -19,10 +19,21 @@ Set to "0" to run without time limit.
 
 E.g., export LLDB_TEST_TIMEOUT=0
 or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
+
+To collect core files for timed out tests, do the following before running dosep.py
+
+OSX
+ulimit -c unlimited
+sudo sysctl -w kern.corefile=core.%P
+
+Linux:
+ulimit -c unlimited
+echo core.%p | sudo tee /proc/sys/kernel/core_pattern
 """
 
 import multiprocessing
 import os
+import fnmatch
 import platform
 import re
 import dotest_args
@@ -57,15 +68,16 @@ eTimedOut, ePassed, eFailed = 124, 0, 1
 
 def call_with_timeout(command, timeout):
     """Run command with a timeout if possible."""
+    """-s QUIT will create a coredump if they are enabled on your system"""
     if os.name != "nt":
         if timeout_command and timeout != "0":
-            return subprocess.call([timeout_command, timeout] + command,
+            return subprocess.call([timeout_command, '-s', 'QUIT', timeout] + command,
                                    stdin=subprocess.PIPE, close_fds=True)
         return (ePassed if subprocess.call(command, stdin=subprocess.PIPE, close_fds=True) == 0
                 else eFailed)
     else:
         if timeout_command and timeout != "0":
-            return subprocess.call([timeout_command, timeout] + command,
+            return subprocess.call([timeout_command, '-s', 'QUIT', timeout] + command,
                                    stdin=subprocess.PIPE)
         return (ePassed if subprocess.call(command, stdin=subprocess.PIPE) == 0
                 else eFailed)
@@ -194,6 +206,14 @@ def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
 
+def find(pattern, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name))
+    return result
+
 def main():
     # We can't use sys.path[0] to determine the script directory
     # because it doesn't work under a debugger
@@ -255,6 +275,11 @@ Run lldb test suite using a separate process for each test file.
     else:
         test_subdir = os.path.join(test_directory, args[0])
 
+    # clean core files in test tree from previous runs (Linux)
+    cores = find('core.*', test_subdir)
+    for core in cores:
+        os.unlink(core)
+
     if opts.num_threads:
         num_threads = opts.num_threads
     else:
@@ -271,6 +296,13 @@ Run lldb test suite using a separate process for each test file.
                                                   num_threads)
     timed_out = set(timed_out)
     num_tests = len(failed) + len(passed)
+
+    # move core files into session dir
+    cores = find('core.*', test_subdir)
+    for core in cores:
+        dst = core.replace(test_directory, "")[1:]
+        dst = dst.replace(os.path.sep, "-")
+        os.rename(core, os.path.join(session_dir, dst))
 
     # remove expected timeouts from failures
     expected_timeout = getExpectedTimeouts(dotest_options.lldb_platform_name)
