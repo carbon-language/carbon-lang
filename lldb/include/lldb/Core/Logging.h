@@ -47,6 +47,7 @@
 #define LIBLLDB_LOG_PLATFORM            (1u << 25)
 #define LIBLLDB_LOG_SYSTEM_RUNTIME      (1u << 26)
 #define LIBLLDB_LOG_JIT_LOADER          (1u << 27)
+#define LIBLLDB_LOG_LANGUAGE            (1u << 28)
 #define LIBLLDB_LOG_ALL                 (UINT32_MAX)
 #define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS              |\
                                          LIBLLDB_LOG_THREAD               |\
