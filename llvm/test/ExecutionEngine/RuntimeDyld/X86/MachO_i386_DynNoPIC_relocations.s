@@ -9,9 +9,9 @@ bar:
 tmp0$pb:
 	popl	%eax
 # Test section difference relocation to non-lazy ptr section.
-# rtdyld-check: decode_operand(inst1, 4) = x$non_lazy_ptr - tmp0$pb
+# rtdyld-check: decode_operand(inst1, 4) = x$non_lazy_ptr - tmp0$pb + 8
 inst1:
-	movl	x$non_lazy_ptr-tmp0$pb(%eax), %eax
+	movl	(x$non_lazy_ptr-tmp0$pb)+8(%eax), %eax
         movl    (%eax), %ebx
 
 # Test VANILLA relocation to jump table.
