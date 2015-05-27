@@ -1,4 +1,4 @@
-//===--- NoexceptMoveCtorsCheck.h - clang-tidy-------------------*- C++ -*-===//
+//===--- NoexceptMoveConstructorCheck.h - clang-tidy-------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPT_MOVE_CTORS_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPT_MOVE_CTORS_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPTMOVECONSTRUCTORCHECK_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPTMOVECONSTRUCTORCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -22,9 +22,9 @@ namespace tidy {
 /// Move constructors of all the types used with STL containers, for example,
 /// need to be declared \c noexcept. Otherwise STL will choose copy constructors
 /// instead. The same is valid for move assignment operations.
-class NoexceptMoveCtorsCheck : public ClangTidyCheck {
+class NoexceptMoveConstructorCheck : public ClangTidyCheck {
 public:
-  NoexceptMoveCtorsCheck(StringRef Name, ClangTidyContext *Context)
+  NoexceptMoveConstructorCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -33,5 +33,5 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPT_MOVE_CTORS_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_NOEXCEPTMOVECONSTRUCTORCHECK_H
 

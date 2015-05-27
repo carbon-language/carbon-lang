@@ -1,4 +1,4 @@
-//===--- NoexceptMoveCtorsCheck.cpp - clang-tidy---------------------------===//
+//===--- NoexceptMoveConstructorCheck.cpp - clang-tidy---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NoexceptMoveCtorsCheck.h"
+#include "NoexceptMoveConstructorCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
@@ -16,7 +16,7 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-void NoexceptMoveCtorsCheck::registerMatchers(MatchFinder *Finder) {
+void NoexceptMoveConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       methodDecl(anyOf(constructorDecl(), hasOverloadedOperatorName("=")),
                  unless(isImplicit()), unless(isDeleted()))
@@ -24,7 +24,8 @@ void NoexceptMoveCtorsCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void NoexceptMoveCtorsCheck::check(const MatchFinder::MatchResult &Result) {
+void NoexceptMoveConstructorCheck::check(
+    const MatchFinder::MatchResult &Result) {
   if (const auto *Decl = Result.Nodes.getNodeAs<CXXMethodDecl>("decl")) {
     StringRef MethodType = "assignment operator";
     if (const auto *Ctor = dyn_cast<CXXConstructorDecl>(Decl)) {

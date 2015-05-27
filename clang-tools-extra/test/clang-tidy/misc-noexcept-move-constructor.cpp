@@ -1,9 +1,9 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-noexcept-move-ctors %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-noexcept-move-constructor %t
 // REQUIRES: shell
 
 class A {
   A(A &&);
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: move constructors should be marked noexcept [misc-noexcept-move-ctors]
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: move constructors should be marked noexcept [misc-noexcept-move-constructor]
   A &operator=(A &&);
   // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: move assignment operators should
 };
@@ -11,7 +11,7 @@ class A {
 struct B {
   static constexpr bool kFalse = false;
   B(B &&) noexcept(kFalse);
-  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: noexcept specifier on the move constructor evaluates to 'false' [misc-noexcept-move-ctors]
+  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: noexcept specifier on the move constructor evaluates to 'false' [misc-noexcept-move-constructor]
 };
 
 class OK {};
