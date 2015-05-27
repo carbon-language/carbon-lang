@@ -470,6 +470,12 @@ public:
         dest.clear();
         return false;
     }
+    
+    virtual uint32_t
+    GetFlagsForCommandObject (StructuredData::GenericSP cmd_obj_sp)
+    {
+        return 0;
+    }
 
     virtual bool
     GetLongHelpForCommandObject (StructuredData::GenericSP cmd_obj_sp,

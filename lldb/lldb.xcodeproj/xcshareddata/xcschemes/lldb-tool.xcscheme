@@ -87,7 +87,7 @@
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       customWorkingDirectory = "/Volumes/work/gclayton/Documents/devb/attach"
-      buildConfiguration = "Debug"
+      buildConfiguration = "DebugClang"
       ignoresPersistentStateOnLaunch = "YES"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"

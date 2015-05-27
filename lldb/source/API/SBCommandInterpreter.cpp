@@ -704,3 +704,18 @@ SBCommand::AddCommand (const char* name, lldb::SBCommandPluginInterface *impl, c
         return lldb::SBCommand(new_command_sp);
     return lldb::SBCommand();
 }
+
+uint32_t
+SBCommand::GetFlags ()
+{
+    if (!IsValid())
+        return 0;
+    return m_opaque_sp->GetFlags().Get();
+}
+
+void
+SBCommand::SetFlags (uint32_t flags)
+{
+    if (IsValid())
+        m_opaque_sp->GetFlags().Set(flags);
+}

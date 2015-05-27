@@ -315,7 +315,7 @@ public:
                              "memory read",
                              "Read from the memory of the process being debugged.",
                              NULL,
-                             eFlagRequiresTarget | eFlagProcessMustBePaused),
+                             eCommandRequiresTarget | eCommandProcessMustBePaused),
         m_option_group (interpreter),
         m_format_options (eFormatBytesWithASCII, 1, 8),
         m_memory_options (),
@@ -388,7 +388,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        // No need to check "target" for validity as eFlagRequiresTarget ensures it is valid
+        // No need to check "target" for validity as eCommandRequiresTarget ensures it is valid
         Target *target = m_exe_ctx.GetTargetPtr();
 
         const size_t argc = command.GetArgumentCount();
@@ -1034,7 +1034,7 @@ public:
                        "memory find",
                        "Find a value in the memory of the process being debugged.",
                        NULL,
-                       eFlagRequiresProcess | eFlagProcessMustBeLaunched),
+                       eCommandRequiresProcess | eCommandProcessMustBeLaunched),
   m_option_group (interpreter),
   m_memory_options ()
   {
@@ -1080,7 +1080,7 @@ protected:
   virtual bool
   DoExecute (Args& command, CommandReturnObject &result)
   {
-      // No need to check "process" for validity as eFlagRequiresProcess ensures it is valid
+      // No need to check "process" for validity as eCommandRequiresProcess ensures it is valid
       Process *process = m_exe_ctx.GetProcessPtr();
 
       const size_t argc = command.GetArgumentCount();
@@ -1335,7 +1335,7 @@ public:
                              "memory write",
                              "Write to the memory of the process being debugged.",
                              NULL,
-                             eFlagRequiresProcess | eFlagProcessMustBeLaunched),
+                             eCommandRequiresProcess | eCommandProcessMustBeLaunched),
         m_option_group (interpreter),
         m_format_options (eFormatBytes, 1, UINT64_MAX),
         m_memory_options ()
@@ -1412,7 +1412,7 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        // No need to check "process" for validity as eFlagRequiresProcess ensures it is valid
+        // No need to check "process" for validity as eCommandRequiresProcess ensures it is valid
         Process *process = m_exe_ctx.GetProcessPtr();
 
         const size_t argc = command.GetArgumentCount();
@@ -1702,7 +1702,7 @@ public:
                          "memory history",
                          "Prints out the recorded stack traces for allocation/deallocation of a memory address.",
                          NULL,
-                         eFlagRequiresTarget | eFlagRequiresProcess | eFlagProcessMustBePaused | eFlagProcessMustBeLaunched)
+                         eCommandRequiresTarget | eCommandRequiresProcess | eCommandProcessMustBePaused | eCommandProcessMustBeLaunched)
     {
         CommandArgumentEntry arg1;
         CommandArgumentData addr_arg;

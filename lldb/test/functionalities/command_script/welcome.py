@@ -1,4 +1,4 @@
-import sys
+import lldb, sys
 
 class WelcomeCommand(object):
     def __init__(self, debugger, session_dict):
@@ -11,12 +11,19 @@ class WelcomeCommand(object):
         print >>result,  ('Hello ' + args + ', welcome to LLDB');
         return None;
 
-def target_name_impl(debugger, args, result, dict):
-    target = debugger.GetSelectedTarget()
-    file = target.GetExecutable()
-    print >>result,  ('Current target ' + file.GetFilename())
-    if args == 'fail':
-        result.SetError('a test for error in command')
+class TargetnameCommand(object):
+    def __init__(self, debugger, session_dict):
+        pass
+
+    def __call__(self, debugger, args, exe_ctx, result):
+        target = debugger.GetSelectedTarget()
+        file = target.GetExecutable()
+        print >>result,  ('Current target ' + file.GetFilename())
+        if args == 'fail':
+            result.SetError('a test for error in command')
+    
+    def get_flags(self):
+        return lldb.eCommandRequiresTarget
 
 def print_wait_impl(debugger, args, result, dict):
     result.SetImmediateOutputFile(sys.stdout)

@@ -271,6 +271,9 @@ public:
     bool
     GetShortHelpForCommandObject(StructuredData::GenericSP cmd_obj_sp, std::string& dest) override;
     
+    uint32_t
+    GetFlagsForCommandObject (StructuredData::GenericSP cmd_obj_sp) override;
+    
     bool
     GetLongHelpForCommandObject(StructuredData::GenericSP cmd_obj_sp, std::string& dest) override;
     

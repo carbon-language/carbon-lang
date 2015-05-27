@@ -4249,7 +4249,7 @@ public:
                      nullptr,
                      nullptr,
                      nullptr,
-                     eFlagRequiresFrame),
+                     eCommandRequiresFrame),
     m_formatter_name(formatter_name ? formatter_name : ""),
     m_discovery_function(discovery_func)
     {

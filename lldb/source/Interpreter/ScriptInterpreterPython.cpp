@@ -2878,6 +2878,78 @@ ScriptInterpreterPython::GetShortHelpForCommandObject (StructuredData::GenericSP
     return got_string;
 }
 
+uint32_t
+ScriptInterpreterPython::GetFlagsForCommandObject (StructuredData::GenericSP cmd_obj_sp)
+{
+    uint32_t result = 0;
+    
+    Locker py_lock (this,
+                    Locker::AcquireLock | Locker::NoSTDIN,
+                    Locker::FreeLock);
+    
+    static char callee_name[] = "get_flags";
+    
+    if (!cmd_obj_sp)
+        return result;
+    
+    PyObject* implementor = (PyObject*)cmd_obj_sp->GetValue();
+    
+    if (implementor == nullptr || implementor == Py_None)
+        return result;
+    
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    if (pmeth == nullptr || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return result;
+    }
+    
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+        
+        Py_XDECREF(pmeth);
+        return result;
+    }
+    
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+    
+    Py_XDECREF(pmeth);
+    
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, nullptr);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    if (py_return != nullptr && py_return != Py_None)
+    {
+        if (PyInt_Check(py_return))
+            result = (uint32_t)PyInt_AsLong(py_return);
+        else if (PyLong_Check(py_return))
+            result = (uint32_t)PyLong_AsLong(py_return);
+    }
+    Py_XDECREF(py_return);
+    
+    return result;
+}
+
 bool
 ScriptInterpreterPython::GetLongHelpForCommandObject (StructuredData::GenericSP cmd_obj_sp,
                                                       std::string& dest)

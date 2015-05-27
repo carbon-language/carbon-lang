@@ -950,6 +950,89 @@ namespace lldb {
         eTypeIsSigned           = (1u << 21)
     };
     
+    FLAGS_ENUM(CommandFlags)
+    {
+        //----------------------------------------------------------------------
+        // eCommandRequiresTarget
+        //
+        // Ensures a valid target is contained in m_exe_ctx prior to executing
+        // the command. If a target doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidTargetDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidTargetDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eCommandRequiresTarget         = (1u << 0),
+        //----------------------------------------------------------------------
+        // eCommandRequiresProcess
+        //
+        // Ensures a valid process is contained in m_exe_ctx prior to executing
+        // the command. If a process doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidProcessDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidProcessDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eCommandRequiresProcess        = (1u << 1),
+        //----------------------------------------------------------------------
+        // eCommandRequiresThread
+        //
+        // Ensures a valid thread is contained in m_exe_ctx prior to executing
+        // the command. If a thread doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidThreadDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidThreadDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eCommandRequiresThread         = (1u << 2),
+        //----------------------------------------------------------------------
+        // eCommandRequiresFrame
+        //
+        // Ensures a valid frame is contained in m_exe_ctx prior to executing
+        // the command. If a frame doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidFrameDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidFrameDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eCommandRequiresFrame          = (1u << 3),
+        //----------------------------------------------------------------------
+        // eCommandRequiresRegContext
+        //
+        // Ensures a valid register context (from the selected frame if there
+        // is a frame in m_exe_ctx, or from the selected thread from m_exe_ctx)
+        // is available from m_exe_ctx prior to executing the command. If a
+        // target doesn't exist or is invalid, the command will fail and
+        // CommandObject::GetInvalidRegContextDescription() will be returned as
+        // the error. CommandObject subclasses can override the virtual function
+        // for GetInvalidRegContextDescription() to provide custom strings when
+        // needed.
+        //----------------------------------------------------------------------
+        eCommandRequiresRegContext     = (1u << 4),
+        //----------------------------------------------------------------------
+        // eCommandTryTargetAPILock
+        //
+        // Attempts to acquire the target lock if a target is selected in the
+        // command interpreter. If the command object fails to acquire the API
+        // lock, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eCommandTryTargetAPILock       = (1u << 5),
+        //----------------------------------------------------------------------
+        // eCommandProcessMustBeLaunched
+        //
+        // Verifies that there is a launched process in m_exe_ctx, if there
+        // isn't, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eCommandProcessMustBeLaunched  = (1u << 6),
+        //----------------------------------------------------------------------
+        // eCommandProcessMustBePaused
+        //
+        // Verifies that there is a paused process in m_exe_ctx, if there
+        // isn't, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eCommandProcessMustBePaused    = (1u << 7)
+    };
+    
     //----------------------------------------------------------------------
     // Whether a summary should cap how much data it returns to users or not
     //----------------------------------------------------------------------

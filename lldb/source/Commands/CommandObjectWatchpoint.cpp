@@ -925,10 +925,10 @@ public:
                              "If watchpoint setting fails, consider disable/delete existing ones "
                              "to free up resources.",
                              NULL,
-                             eFlagRequiresFrame         |
-                             eFlagTryTargetAPILock      |
-                             eFlagProcessMustBeLaunched |
-                             eFlagProcessMustBePaused   ),
+                             eCommandRequiresFrame         |
+                             eCommandTryTargetAPILock      |
+                             eCommandProcessMustBeLaunched |
+                             eCommandProcessMustBePaused   ),
         m_option_group (interpreter),
         m_option_watchpoint ()
     {
@@ -1132,10 +1132,10 @@ public:
                           "If watchpoint setting fails, consider disable/delete existing ones "
                           "to free up resources.",
                           NULL,
-                          eFlagRequiresFrame         |
-                          eFlagTryTargetAPILock      |
-                          eFlagProcessMustBeLaunched |
-                          eFlagProcessMustBePaused   ),
+                          eCommandRequiresFrame         |
+                          eCommandTryTargetAPILock      |
+                          eCommandProcessMustBeLaunched |
+                          eCommandProcessMustBePaused   ),
         m_option_group (interpreter),
         m_option_watchpoint ()
     {

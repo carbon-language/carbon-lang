@@ -330,7 +330,7 @@ class CommandObjectRenderScriptRuntimeModuleProbe : public CommandObjectParsed
         : CommandObjectParsed(interpreter, "renderscript module probe",
                               "Initiates a Probe of all loaded modules for kernels and other renderscript objects.",
                               "renderscript module probe",
-                              eFlagRequiresTarget | eFlagRequiresProcess | eFlagProcessMustBeLaunched)
+                              eCommandRequiresTarget | eCommandRequiresProcess | eCommandProcessMustBeLaunched)
     {
     }
 
@@ -368,7 +368,7 @@ class CommandObjectRenderScriptRuntimeModuleDump : public CommandObjectParsed
     CommandObjectRenderScriptRuntimeModuleDump(CommandInterpreter &interpreter)
         : CommandObjectParsed(interpreter, "renderscript module dump",
                               "Dumps renderscript specific information for all modules.", "renderscript module dump",
-                              eFlagRequiresProcess | eFlagProcessMustBeLaunched)
+                              eCommandRequiresProcess | eCommandProcessMustBeLaunched)
     {
     }
 

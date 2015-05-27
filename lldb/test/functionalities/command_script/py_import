@@ -3,7 +3,7 @@ script sys.path.append(os.path.join(os.getcwd(), os.pardir))
 script import welcome
 script import bug11569
 command script add welcome --class welcome.WelcomeCommand
-command script add targetname --function welcome.target_name_impl
+command script add targetname --class welcome.TargetnameCommand
 command script add longwait --function welcome.print_wait_impl
 command script import mysto.py --allow-reload
 command script add tell_sync --function welcome.check_for_synchro --synchronicity sync

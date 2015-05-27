@@ -1274,7 +1274,7 @@ public:
                              "platform process launch",
                              "Launch a new process on a remote platform.",
                              "platform process launch program",
-                             eFlagRequiresTarget | eFlagTryTargetAPILock),
+                             eCommandRequiresTarget | eCommandTryTargetAPILock),
         m_options (interpreter)
     {
     }

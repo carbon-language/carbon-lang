@@ -740,7 +740,7 @@ public:
                              "target variable",
                              "Read global variable(s) prior to, or while running your binary.",
                              NULL,
-                             eFlagRequiresTarget),
+                             eCommandRequiresTarget),
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
         m_option_format (eFormatDefault),
@@ -2561,7 +2561,7 @@ public:
                                                       "target modules dump line-table",
                                                       "Dump the line table for one or more compilation units.",
                                                       NULL,
-                                                      eFlagRequiresTarget)
+                                                      eCommandRequiresTarget)
     {
     }
 
@@ -3651,10 +3651,10 @@ public:
                              "target modules show-unwind",
                              "Show synthesized unwind instructions for a function.",
                              NULL,
-                             eFlagRequiresTarget        |
-                             eFlagRequiresProcess       |
-                             eFlagProcessMustBeLaunched |
-                             eFlagProcessMustBePaused   ),
+                             eCommandRequiresTarget        |
+                             eCommandRequiresProcess       |
+                             eCommandProcessMustBeLaunched |
+                             eCommandProcessMustBePaused   ),
         m_options (interpreter)
     {
     }
@@ -4011,7 +4011,7 @@ public:
                              "target modules lookup",
                              "Look up information within executable and dependent shared library images.",
                              NULL,
-                             eFlagRequiresTarget),
+                             eCommandRequiresTarget),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -4391,7 +4391,7 @@ public:
         CommandObjectParsed (interpreter,
                              "target symbols add",
                              "Add a debug symbol file to one of the target's current modules by specifying a path to a debug symbols file, or using the options to specify a module to download symbols for.",
-                             "target symbols add [<symfile>]", eFlagRequiresTarget),
+                             "target symbols add [<symfile>]", eCommandRequiresTarget),
         m_option_group (interpreter),
         m_file_option (LLDB_OPT_SET_1, false, "shlib", 's', CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Fullpath or basename for module to find debug symbols for."),
         m_current_frame_option (LLDB_OPT_SET_2, false, "frame", 'F', "Locate the debug symbols the currently selected frame.", false, true)

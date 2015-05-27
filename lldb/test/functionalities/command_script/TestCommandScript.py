@@ -23,11 +23,17 @@ class CmdPythonTestCase(TestBase):
         self.pycmd_tests ()
 
     def pycmd_tests (self):
+        self.runCmd("command source py_import")
+
+        self.expect('targetname',
+            substrs = ['a.out'], matching=False, error=True)
+
         exe = os.path.join (os.getcwd(), "a.out")
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
 
-        self.runCmd("command source py_import")
+        self.expect('targetname',
+            substrs = ['a.out'], matching=True, error=False)
 
         # This is the function to remove the custom commands in order to have a
         # clean slate for the next test case.
@@ -75,9 +81,6 @@ class CmdPythonTestCase(TestBase):
         self.expect('welcome Enrico', matching=False, error=True,
                 substrs = ['Hello Enrico, welcome to LLDB']);
 
-        self.expect('targetname',
-            substrs = ['a.out'])
-
         self.expect('targetname fail', error=True,
                     substrs = ['a test for error in command'])
 
@@ -122,7 +125,7 @@ class CmdPythonTestCase(TestBase):
         self.runCmd('command script add my_command --class welcome.WelcomeCommand')
         self.expect('my_command Blah', substrs = ['Hello Blah, welcome to LLDB'])
 
-        self.runCmd('command script add my_command --function welcome.target_name_impl')
+        self.runCmd('command script add my_command --class welcome.TargetnameCommand')
         self.expect('my_command', substrs = ['a.out'])
 
         self.runCmd("command script clear")
