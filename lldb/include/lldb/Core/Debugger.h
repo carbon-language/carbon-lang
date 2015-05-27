@@ -210,6 +210,9 @@ public:
     bool
     IsTopIOHandler (const lldb::IOHandlerSP& reader_sp);
 
+    void
+    PrintAsync (const char *s, size_t len, bool is_stdout);
+
     ConstString
     GetTopIOHandlerControlSequence(char ch);
 
@@ -218,12 +221,6 @@ public:
 
     const char *
     GetIOHandlerHelpPrologue();
-
-    bool
-    HideTopIOHandler();
-
-    void
-    RefreshTopIOHandler();
 
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);

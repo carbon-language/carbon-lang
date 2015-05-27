@@ -20,7 +20,7 @@ class StreamAsynchronousIO :
     public Stream
 {
 public:
-    StreamAsynchronousIO (Broadcaster &broadcaster, uint32_t broadcast_event_type);
+    StreamAsynchronousIO (Debugger &debugger, bool for_stdout);
     
     virtual ~StreamAsynchronousIO ();
     
@@ -32,9 +32,9 @@ public:
     
     
 private:
-    Broadcaster &m_broadcaster;
-    uint32_t m_broadcast_event_type;
-    std::string m_accumulated_data;
+    Debugger &m_debugger;
+    std::string m_data;
+    bool m_for_stdout;
 };
 
 } // namespace lldb_private

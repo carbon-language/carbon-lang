@@ -67,18 +67,6 @@ namespace lldb_private {
         virtual void
         Run () = 0;
 
-        // Hide any characters that have been displayed so far so async
-        // output can be displayed. Refresh() will be called after the
-        // output has been displayed.
-        virtual void
-        Hide () = 0;
-        
-        // Called when the async output has been received in order to update
-        // the input reader (refresh the prompt and redisplay any current
-        // line(s) that are being edited
-        virtual void
-        Refresh () = 0;
-
         // Called when an input reader should relinquish its control so another
         // can be pushed onto the IO handler stack, or so the current IO
         // handler can pop itself off the stack
@@ -246,7 +234,14 @@ namespace lldb_private {
         
         void
         WaitForPop ();
-        
+
+        virtual void
+        PrintAsync (Stream *stream, const char *s, size_t len)
+        {
+            stream->Write (s, len);
+            stream->Flush();
+        }
+
     protected:
         Debugger &m_debugger;
         lldb::StreamFileSP m_input_sp;
@@ -448,17 +443,17 @@ namespace lldb_private {
         {
         }
         
-        virtual ConstString
-        IOHandlerGetControlSequence (char ch)
+        ConstString
+        IOHandlerGetControlSequence (char ch) override
         {
             if (ch == 'd')
                 return ConstString (m_end_line + "\n");
             return ConstString();
         }
 
-        virtual bool
+        bool
         IOHandlerIsInputComplete (IOHandler &io_handler,
-                                  StringList &lines)
+                                  StringList &lines) override
         {
             // Determine whether the end of input signal has been entered
             const size_t num_lines = lines.GetSize();
@@ -507,53 +502,47 @@ namespace lldb_private {
         virtual
         ~IOHandlerEditline ();
         
-        virtual void
-        Run ();
+        void
+        Run () override;
         
-        virtual void
-        Hide ();
+        void
+        Cancel () override;
 
-        virtual void
-        Refresh ();
-
-        virtual void
-        Cancel ();
-
-        virtual bool
-        Interrupt ();
+        bool
+        Interrupt () override;
         
-        virtual void
-        GotEOF();
+        void
+        GotEOF() override;
         
-        virtual void
-        Activate ();
+        void
+        Activate () override;
 
-        virtual void
-        Deactivate ();
+        void
+        Deactivate () override;
 
-        virtual ConstString
-        GetControlSequence (char ch)
+        ConstString
+        GetControlSequence (char ch) override
         {
             return m_delegate.IOHandlerGetControlSequence (ch);
         }
 
-        virtual const char *
-        GetCommandPrefix ()
+        const char *
+        GetCommandPrefix () override
         {
             return m_delegate.IOHandlerGetCommandPrefix ();
         }
 
-        virtual const char *
-        GetHelpPrologue ()
+        const char *
+        GetHelpPrologue () override
         {
             return m_delegate.IOHandlerGetHelpPrologue ();
         }
 
-        virtual const char *
-        GetPrompt ();
+        const char *
+        GetPrompt () override;
         
-        virtual bool
-        SetPrompt (const char *prompt);
+        bool
+        SetPrompt (const char *prompt) override;
         
         const char *
         GetContinuationPrompt ();
@@ -590,6 +579,9 @@ namespace lldb_private {
         
         uint32_t
         GetCurrentLineIndex () const;
+
+        void
+        PrintAsync (Stream *stream, const char *s, size_t len) override;
 
     private:
 #ifndef LLDB_DISABLE_LIBEDIT
@@ -649,17 +641,17 @@ namespace lldb_private {
             return m_user_response;
         }
         
-        virtual int
+        int
         IOHandlerComplete (IOHandler &io_handler,
                            const char *current_line,
                            const char *cursor,
                            const char *last_char,
                            int skip_first_n_matches,
                            int max_matches,
-                           StringList &matches);
+                           StringList &matches) override;
         
-        virtual void
-        IOHandlerInputComplete (IOHandler &io_handler, std::string &data);
+        void
+        IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override;
 
     protected:
         const bool m_default_response;
@@ -672,32 +664,25 @@ namespace lldb_private {
     public:
         IOHandlerCursesGUI (Debugger &debugger);
         
-        virtual
-        ~IOHandlerCursesGUI ();
+        ~IOHandlerCursesGUI () override;
         
-        virtual void
-        Run ();
+        void
+        Run () override;
         
-        virtual void
-        Hide ();
-        
-        virtual void
-        Refresh ();
+        void
+        Cancel () override;
 
-        virtual void
-        Cancel ();
-
-        virtual bool
-        Interrupt ();
+        bool
+        Interrupt () override;
         
-        virtual void
-        GotEOF();
+        void
+        GotEOF() override;
         
-        virtual void
-        Activate ();
+        void
+        Activate () override;
         
-        virtual void
-        Deactivate ();
+        void
+        Deactivate () override;
 
     protected:
         curses::ApplicationAP m_app_ap;
@@ -712,20 +697,11 @@ namespace lldb_private {
         virtual
         ~IOHandlerCursesValueObjectList ();
         
-        virtual void
-        Run ();
+        void
+        Run () override;
         
-        virtual void
-        Hide ();
-        
-        virtual void
-        Refresh ();
-        
-        virtual bool
-        HandleInterrupt ();
-        
-        virtual void
-        GotEOF();
+        void
+        GotEOF() override;
     protected:
         ValueObjectList m_valobj_list;
     };
@@ -850,7 +826,10 @@ namespace lldb_private {
             return NULL;
         }
 
-    protected:        
+        void
+        PrintAsync (Stream *stream, const char *s, size_t len);
+
+    protected:
         
         typedef std::vector<lldb::IOHandlerSP> collection;
         collection m_stack;

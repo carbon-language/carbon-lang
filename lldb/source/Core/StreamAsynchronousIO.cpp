@@ -7,22 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdio.h>
+#include "lldb/Core/StreamAsynchronousIO.h"
 
 #include "lldb/lldb-private.h"
-#include "lldb/Core/Broadcaster.h"
-#include "lldb/Core/Event.h"
-#include "lldb/Core/StreamAsynchronousIO.h"
+#include "lldb/Core/Debugger.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 
-StreamAsynchronousIO::StreamAsynchronousIO (Broadcaster &broadcaster, uint32_t broadcast_event_type) :
+StreamAsynchronousIO::StreamAsynchronousIO (Debugger &debugger, bool for_stdout) :
     Stream (0, 4, eByteOrderBig),
-    m_broadcaster (broadcaster),
-    m_broadcast_event_type (broadcast_event_type),
-    m_accumulated_data ()
+    m_debugger (debugger),
+    m_data (),
+    m_for_stdout (for_stdout)
 {
 }
 
@@ -35,19 +33,16 @@ StreamAsynchronousIO::~StreamAsynchronousIO ()
 void
 StreamAsynchronousIO::Flush ()
 {
-    if (!m_accumulated_data.empty())
+    if (!m_data.empty())
     {
-        std::unique_ptr<EventDataBytes> data_bytes_ap (new EventDataBytes);
-        // Let's swap the bytes to avoid LARGE string copies.
-        data_bytes_ap->SwapBytes (m_accumulated_data);
-        EventSP new_event_sp (new Event (m_broadcast_event_type, data_bytes_ap.release()));
-        m_broadcaster.BroadcastEvent (new_event_sp);
+        m_debugger.PrintAsync (m_data.data(), m_data.size(), m_for_stdout);
+        m_data = std::move(std::string());
     }
 }
 
 size_t
 StreamAsynchronousIO::Write (const void *s, size_t length)
 {
-    m_accumulated_data.append ((const char *)s, length);
+    m_data.append ((const char *)s, length);
     return length;
 }

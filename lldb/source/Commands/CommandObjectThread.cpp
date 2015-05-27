@@ -675,6 +675,8 @@ protected:
 
             process->GetThreadList().SetSelectedThreadByID (thread->GetID());
 
+            const uint32_t iohandler_id = process->GetIOHandlerID();
+
             StreamString stream;
             Error error;
             if (synchronous_execution)
@@ -685,7 +687,7 @@ protected:
             // There is a race condition where this thread will return up the call stack to the main command handler
             // and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
             // a chance to call PushProcessIOHandler().
-            process->SyncIOHandler(2000);
+            process->SyncIOHandler(iohandler_id, 2000);
 
             if (synchronous_execution)
             {

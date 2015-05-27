@@ -171,17 +171,13 @@ namespace lldb_private {
         uint32_t
         GetCurrentLine();
 
-        /// Hides the current input session in preparation for output
-        void
-        Hide();
-        
-        /// Prepare to return to editing after a call to Hide()
-        void
-        Refresh();
-
         /// Interrupt the current edit as if ^C was pressed
         bool
         Interrupt();
+
+        /// Cancel this edit and oblitarate all trace of it
+        bool
+        Cancel();
         
         /// Register a callback for the tab key
         void
@@ -207,6 +203,9 @@ namespace lldb_private {
         bool
         GetLines (int first_line_number, StringList &lines, bool &interrupted);
         
+        void
+        PrintAsync (Stream *stream, const char *s, size_t len);
+
     private:
         
         /// Sets the lowest line number for multi-line editing sessions.  A value of zero suppresses
@@ -335,7 +334,6 @@ namespace lldb_private {
         bool m_multiline_enabled = false;
         std::vector<EditLineStringType> m_input_lines;
         EditorStatus m_editor_status;
-        bool m_editor_getting_char = false;
         bool m_color_prompts = true;
         int m_terminal_width = 0;
         int m_base_line_number = 0;
@@ -359,6 +357,8 @@ namespace lldb_private {
         const char * m_fix_indentation_callback_chars = nullptr;
         CompleteCallbackType m_completion_callback = nullptr;
         void * m_completion_callback_baton = nullptr;
+
+        Mutex m_output_mutex;
     };
 }
 

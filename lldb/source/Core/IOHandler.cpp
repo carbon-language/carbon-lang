@@ -169,6 +169,17 @@ IOHandler::WaitForPop ()
     m_popped.WaitForValueEqualTo(true);
 }
 
+void
+IOHandlerStack::PrintAsync (Stream *stream, const char *s, size_t len)
+{
+    if (stream)
+    {
+        Mutex::Locker locker (m_mutex);
+        if (m_top)
+            m_top->PrintAsync (stream, s, len);
+    }
+}
+
 IOHandlerConfirm::IOHandlerConfirm (Debugger &debugger,
                                     const char *prompt,
                                     bool default_response) :
@@ -740,47 +751,11 @@ IOHandlerEditline::Run ()
 }
 
 void
-IOHandlerEditline::Hide ()
-{
-#ifndef LLDB_DISABLE_LIBEDIT
-    if (m_editline_ap)
-        m_editline_ap->Hide();
-#endif
-}
-
-
-void
-IOHandlerEditline::Refresh ()
-{
-#ifndef LLDB_DISABLE_LIBEDIT
-    if (m_editline_ap)
-    {
-        m_editline_ap->Refresh();
-    }
-    else if (m_editing)
-    {
-#endif
-        const char *prompt = GetPrompt();
-        if (prompt && prompt[0])
-        {
-            FILE *out = GetOutputFILE();
-            if (out)
-            {
-                ::fprintf(out, "%s", prompt);
-                ::fflush(out);
-            }
-        }
-#ifndef LLDB_DISABLE_LIBEDIT
-    }
-#endif
-}
-
-void
 IOHandlerEditline::Cancel ()
 {
 #ifndef LLDB_DISABLE_LIBEDIT
     if (m_editline_ap)
-        m_editline_ap->Interrupt ();
+        m_editline_ap->Cancel ();
 #endif
 }
 
@@ -805,6 +780,17 @@ IOHandlerEditline::GotEOF()
     if (m_editline_ap)
         m_editline_ap->Interrupt();
 #endif
+}
+
+void
+IOHandlerEditline::PrintAsync (Stream *stream, const char *s, size_t len)
+{
+#ifndef LLDB_DISABLE_LIBEDIT
+    if (m_editline_ap)
+        m_editline_ap->PrintAsync(stream, s, len);
+    else
+#endif
+        IOHandler::PrintAsync(stream, s, len);
 }
 
 // we may want curses to be disabled for some builds
@@ -5615,17 +5601,6 @@ IOHandlerCursesGUI::Run ()
 IOHandlerCursesGUI::~IOHandlerCursesGUI ()
 {
     
-}
-
-void
-IOHandlerCursesGUI::Hide ()
-{
-}
-
-
-void
-IOHandlerCursesGUI::Refresh ()
-{
 }
 
 void

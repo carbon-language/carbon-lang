@@ -270,7 +270,7 @@ protected:
                 // There is a race condition where this thread will return up the call stack to the main command
                 // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
                 // a chance to call PushProcessIOHandler().
-                process_sp->SyncIOHandler(2000);
+                process_sp->SyncIOHandler (0, 2000);
 
                 const char *data = stream.GetData();
                 if (data && strlen(data) > 0)
@@ -762,6 +762,8 @@ protected:
                 }
             }
 
+            const uint32_t iohandler_id = process->GetIOHandlerID();
+
             StreamString stream;
             Error error;
             if (synchronous_execution)
@@ -772,9 +774,9 @@ protected:
             if (error.Success())
             {
                 // There is a race condition where this thread will return up the call stack to the main command
-                // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
-                // a chance to call PushProcessIOHandler().
-                process->SyncIOHandler(2000);
+                 // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+                 // a chance to call PushProcessIOHandler().
+                process->SyncIOHandler(iohandler_id, 2000);
 
                 result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)

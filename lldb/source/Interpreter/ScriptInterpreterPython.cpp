@@ -734,22 +734,21 @@ public:
         
     }
     
-    virtual
-    ~IOHandlerPythonInterpreter()
+    ~IOHandlerPythonInterpreter() override
     {
         
     }
     
-    virtual ConstString
-    GetControlSequence (char ch)
+    ConstString
+    GetControlSequence (char ch) override
     {
         if (ch == 'd')
             return ConstString("quit()\n");
         return ConstString();
     }
 
-    virtual void
-    Run ()
+    void
+    Run () override
     {
         if (m_python)
         {
@@ -795,32 +794,20 @@ public:
         SetIsDone(true);
     }
 
-    virtual void
-    Hide ()
-    {
-        
-    }
-    
-    virtual void
-    Refresh ()
+    void
+    Cancel () override
     {
         
     }
 
-    virtual void
-    Cancel ()
-    {
-        
-    }
-
-    virtual bool
-    Interrupt ()
+    bool
+    Interrupt () override
     {
         return m_python->Interrupt();
     }
     
-    virtual void
-    GotEOF()
+    void
+    GotEOF() override
     {
         
     }

@@ -885,34 +885,27 @@ Debugger::ClearIOHandlers ()
     {
         IOHandlerSP reader_sp (m_input_reader_stack.Top());
         if (reader_sp)
-        {
-            m_input_reader_stack.Pop();
-            reader_sp->SetIsDone(true);
-            reader_sp->Cancel();
-        }
+            PopIOHandler (reader_sp);
     }
 }
 
 void
 Debugger::ExecuteIOHandlers()
 {
-    
     while (1)
     {
         IOHandlerSP reader_sp(m_input_reader_stack.Top());
         if (!reader_sp)
             break;
 
-        reader_sp->Activate();
         reader_sp->Run();
-        reader_sp->Deactivate();
 
         // Remove all input readers that are done from the top of the stack
         while (1)
         {
             IOHandlerSP top_reader_sp = m_input_reader_stack.Top();
             if (top_reader_sp && top_reader_sp->GetIsDone())
-                m_input_reader_stack.Pop();
+                PopIOHandler (top_reader_sp);
             else
                 break;
         }
@@ -926,6 +919,12 @@ Debugger::IsTopIOHandler (const lldb::IOHandlerSP& reader_sp)
     return m_input_reader_stack.IsTop (reader_sp);
 }
 
+void
+Debugger::PrintAsync (const char *s, size_t len, bool is_stdout)
+{
+    lldb::StreamFileSP stream = is_stdout ? GetOutputFile() : GetErrorFile();
+    m_input_reader_stack.PrintAsync(stream.get(), s, len);
+}
 
 ConstString
 Debugger::GetTopIOHandlerControlSequence(char ch)
@@ -949,25 +948,23 @@ void
 Debugger::RunIOHandler (const IOHandlerSP& reader_sp)
 {
     PushIOHandler (reader_sp);
-    
+
     IOHandlerSP top_reader_sp = reader_sp;
     while (top_reader_sp)
     {
-        top_reader_sp->Activate();
         top_reader_sp->Run();
-        top_reader_sp->Deactivate();
-        
+
         if (top_reader_sp.get() == reader_sp.get())
         {
             if (PopIOHandler (reader_sp))
                 break;
         }
-        
+
         while (1)
         {
             top_reader_sp = m_input_reader_stack.Top();
             if (top_reader_sp && top_reader_sp->GetIsDone())
-                m_input_reader_stack.Pop();
+                PopIOHandler (top_reader_sp);
             else
                 break;
         }
@@ -1030,87 +1027,67 @@ Debugger::PushIOHandler (const IOHandlerSP& reader_sp)
     if (!reader_sp)
         return;
  
-    // Got the current top input reader...
+    Mutex::Locker locker (m_input_reader_stack.GetMutex());
+
+    // Get the current top input reader...
     IOHandlerSP top_reader_sp (m_input_reader_stack.Top());
     
     // Don't push the same IO handler twice...
-    if (reader_sp.get() != top_reader_sp.get())
-    {
-        // Push our new input reader
-        m_input_reader_stack.Push (reader_sp);
+    if (reader_sp == top_reader_sp)
+        return;
 
-        // Interrupt the top input reader to it will exit its Run() function
-        // and let this new input reader take over
-        if (top_reader_sp)
-            top_reader_sp->Deactivate();
+    // Push our new input reader
+    m_input_reader_stack.Push (reader_sp);
+    reader_sp->Activate();
+
+    // Interrupt the top input reader to it will exit its Run() function
+    // and let this new input reader take over
+    if (top_reader_sp)
+    {
+        top_reader_sp->Deactivate();
+        top_reader_sp->Cancel();
     }
 }
 
 bool
 Debugger::PopIOHandler (const IOHandlerSP& pop_reader_sp)
 {
-    bool result = false;
-    
+    if (! pop_reader_sp)
+        return false;
+
     Mutex::Locker locker (m_input_reader_stack.GetMutex());
 
     // The reader on the stop of the stack is done, so let the next
     // read on the stack refresh its prompt and if there is one...
-    if (!m_input_reader_stack.IsEmpty())
-    {
-        IOHandlerSP reader_sp(m_input_reader_stack.Top());
-        
-        if (!pop_reader_sp || pop_reader_sp.get() == reader_sp.get())
-        {
-            reader_sp->Deactivate();
-            reader_sp->Cancel();
-            m_input_reader_stack.Pop ();
-            
-            reader_sp = m_input_reader_stack.Top();
-            if (reader_sp)
-                reader_sp->Activate();
+    if (m_input_reader_stack.IsEmpty())
+        return false;
 
-            result = true;
-        }
-    }
-    return result;
-}
-
-bool
-Debugger::HideTopIOHandler()
-{
-    Mutex::Locker locker;
-    
-    if (locker.TryLock(m_input_reader_stack.GetMutex()))
-    {
-        IOHandlerSP reader_sp(m_input_reader_stack.Top());
-        if (reader_sp)
-            reader_sp->Hide();
-        return true;
-    }
-    return false;
-}
-
-void
-Debugger::RefreshTopIOHandler()
-{
     IOHandlerSP reader_sp(m_input_reader_stack.Top());
-    if (reader_sp)
-        reader_sp->Refresh();
-}
 
+    if (pop_reader_sp != reader_sp)
+        return false;
+
+    reader_sp->Deactivate();
+    reader_sp->Cancel();
+    m_input_reader_stack.Pop ();
+
+    reader_sp = m_input_reader_stack.Top();
+    if (reader_sp)
+        reader_sp->Activate();
+
+    return true;
+}
 
 StreamSP
 Debugger::GetAsyncOutputStream ()
 {
-    return StreamSP (new StreamAsynchronousIO (GetCommandInterpreter(),
-                                               CommandInterpreter::eBroadcastBitAsynchronousOutputData));
+    return StreamSP (new StreamAsynchronousIO (*this, true));
 }
 
 StreamSP
 Debugger::GetAsyncErrorStream ()
 {
-    return StreamSP (new StreamAsynchronousIO (GetCommandInterpreter(),
-                                               CommandInterpreter::eBroadcastBitAsynchronousErrorData));
+    return StreamSP (new StreamAsynchronousIO (*this, false));
 }    
 
 size_t
@@ -1396,14 +1373,14 @@ Debugger::HandleBreakpointEvent (const EventSP &event_sp)
         if (num_new_locations > 0)
         {
             BreakpointSP breakpoint = Breakpoint::BreakpointEventData::GetBreakpointFromEvent(event_sp);
-            StreamFileSP output_sp (GetOutputFile());
+            StreamSP output_sp (GetAsyncOutputStream());
             if (output_sp)
             {
                 output_sp->Printf("%d location%s added to breakpoint %d\n",
                                   num_new_locations,
                                   num_new_locations == 1 ? "" : "s",
                                   breakpoint->GetID());
-                RefreshTopIOHandler();
+                output_sp->Flush();
             }
         }
     }
@@ -1490,8 +1467,8 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
     const uint32_t event_type = event_sp->GetType();
     ProcessSP process_sp = Process::ProcessEventData::GetProcessFromEvent(event_sp.get());
 
-    StreamString output_stream;
-    StreamString error_stream;
+    StreamSP output_stream_sp = GetAsyncOutputStream();
+    StreamSP error_stream_sp = GetAsyncErrorStream();
     const bool gui_enabled = IsForwardingEvents();
 
     if (!gui_enabled)
@@ -1499,46 +1476,42 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
         bool pop_process_io_handler = false;
         assert (process_sp);
 
-        if (event_type & Process::eBroadcastBitSTDOUT || event_type & Process::eBroadcastBitStateChanged)
+        bool state_is_stopped = false;
+        const bool got_state_changed = (event_type & Process::eBroadcastBitStateChanged) != 0;
+        const bool got_stdout = (event_type & Process::eBroadcastBitSTDOUT) != 0;
+        const bool got_stderr = (event_type & Process::eBroadcastBitSTDERR) != 0;
+        if (got_state_changed)
         {
-            GetProcessSTDOUT (process_sp.get(), &output_stream);
+            StateType event_state = Process::ProcessEventData::GetStateFromEvent (event_sp.get());
+            state_is_stopped = StateIsStoppedState(event_state, false);
         }
 
-        if (event_type & Process::eBroadcastBitSTDERR || event_type & Process::eBroadcastBitStateChanged)
+        // Display running state changes first before any STDIO
+        if (got_state_changed && !state_is_stopped)
         {
-            GetProcessSTDERR (process_sp.get(), &error_stream);
+            Process::HandleProcessStateChangedEvent (event_sp, output_stream_sp.get(), pop_process_io_handler);
         }
 
-        if (event_type & Process::eBroadcastBitStateChanged)
+        // Now display and STDOUT
+        if (got_stdout || got_state_changed)
         {
-            Process::HandleProcessStateChangedEvent (event_sp, &output_stream, pop_process_io_handler);
+            GetProcessSTDOUT (process_sp.get(), output_stream_sp.get());
         }
 
-        if (output_stream.GetSize() || error_stream.GetSize())
+        // Now display and STDERR
+        if (got_stderr || got_state_changed)
         {
-            StreamFileSP error_stream_sp (GetOutputFile());
-            bool top_io_handler_hid = false;
-
-            if (process_sp->ProcessIOHandlerExists() && process_sp->ProcessIOHandlerIsActive() == false)
-                top_io_handler_hid = HideTopIOHandler();
-
-            if (output_stream.GetSize())
-            {
-                StreamFileSP output_stream_sp (GetOutputFile());
-                if (output_stream_sp)
-                    output_stream_sp->Write (output_stream.GetData(), output_stream.GetSize());
-            }
-
-            if (error_stream.GetSize())
-            {
-                StreamFileSP error_stream_sp (GetErrorFile());
-                if (error_stream_sp)
-                    error_stream_sp->Write (error_stream.GetData(), error_stream.GetSize());
-            }
-
-            if (top_io_handler_hid)
-                RefreshTopIOHandler();
+            GetProcessSTDERR (process_sp.get(), error_stream_sp.get());
         }
+
+        // Now display any stopped state changes after any STDIO
+        if (got_state_changed && state_is_stopped)
+        {
+            Process::HandleProcessStateChangedEvent (event_sp, output_stream_sp.get(), pop_process_io_handler);
+        }
+
+        output_stream_sp->Flush();
+        error_stream_sp->Flush();
 
         if (pop_process_io_handler)
             process_sp->PopProcessIOHandler();
@@ -1558,10 +1531,7 @@ Debugger::HandleThreadEvent (const EventSP &event_sp)
         ThreadSP thread_sp (Thread::ThreadEventData::GetThreadFromEvent (event_sp.get()));
         if (thread_sp)
         {
-            HideTopIOHandler();
-            StreamFileSP stream_sp (GetOutputFile());
-            thread_sp->GetStatus(*stream_sp, 0, 1, 1);
-            RefreshTopIOHandler();
+            thread_sp->GetStatus(*GetAsyncOutputStream(), 0, 1, 1);
         }
     }
 }
@@ -1655,13 +1625,11 @@ Debugger::DefaultEventHandler()
                             const char *data = reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event_sp.get()));
                             if (data && data[0])
                             {
-                                StreamFileSP error_sp (GetErrorFile());
+                                StreamSP error_sp (GetAsyncErrorStream());
                                 if (error_sp)
                                 {
-                                    HideTopIOHandler();
                                     error_sp->PutCString(data);
                                     error_sp->Flush();
-                                    RefreshTopIOHandler();
                                 }
                             }
                         }
@@ -1670,13 +1638,11 @@ Debugger::DefaultEventHandler()
                             const char *data = reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event_sp.get()));
                             if (data && data[0])
                             {
-                                StreamFileSP output_sp (GetOutputFile());
+                                StreamSP output_sp (GetAsyncOutputStream());
                                 if (output_sp)
                                 {
-                                    HideTopIOHandler();
                                     output_sp->PutCString(data);
                                     output_sp->Flush();
-                                    RefreshTopIOHandler();
                                 }
                             }
                         }
