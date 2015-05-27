@@ -105,98 +105,6 @@ public:
 };
 
 //===--------------------------------------------------------------------===//
-/// DIE - A structured debug information entry.  Has an abbreviation which
-/// describes its organization.
-class DIEValue;
-
-class DIE {
-protected:
-  /// Offset - Offset in debug info section.
-  ///
-  unsigned Offset;
-
-  /// Size - Size of instance + children.
-  ///
-  unsigned Size;
-
-  /// Abbrev - Buffer for constructing abbreviation.
-  ///
-  DIEAbbrev Abbrev;
-
-  /// Children DIEs.
-  ///
-  // This can't be a vector<DIE> because pointer validity is requirent for the
-  // Parent pointer and DIEEntry.
-  // It can't be a list<DIE> because some clients need pointer validity before
-  // the object has been added to any child list
-  // (eg: DwarfUnit::constructVariableDIE). These aren't insurmountable, but may
-  // be more convoluted than beneficial.
-  std::vector<std::unique_ptr<DIE>> Children;
-
-  DIE *Parent;
-
-  /// Attribute values.
-  ///
-  SmallVector<DIEValue *, 12> Values;
-
-protected:
-  DIE()
-      : Offset(0), Size(0), Abbrev((dwarf::Tag)0, dwarf::DW_CHILDREN_no),
-        Parent(nullptr) {}
-
-public:
-  explicit DIE(dwarf::Tag Tag)
-      : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
-        Parent(nullptr) {}
-
-  // Accessors.
-  DIEAbbrev &getAbbrev() { return Abbrev; }
-  const DIEAbbrev &getAbbrev() const { return Abbrev; }
-  unsigned getAbbrevNumber() const { return Abbrev.getNumber(); }
-  dwarf::Tag getTag() const { return Abbrev.getTag(); }
-  unsigned getOffset() const { return Offset; }
-  unsigned getSize() const { return Size; }
-  const std::vector<std::unique_ptr<DIE>> &getChildren() const {
-    return Children;
-  }
-  const SmallVectorImpl<DIEValue *> &getValues() const { return Values; }
-  DIE *getParent() const { return Parent; }
-  /// Climb up the parent chain to get the compile or type unit DIE this DIE
-  /// belongs to.
-  const DIE *getUnit() const;
-  /// Similar to getUnit, returns null when DIE is not added to an
-  /// owner yet.
-  const DIE *getUnitOrNull() const;
-  void setOffset(unsigned O) { Offset = O; }
-  void setSize(unsigned S) { Size = S; }
-
-  /// addValue - Add a value and attributes to a DIE.
-  ///
-  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, DIEValue *Value) {
-    Abbrev.AddAttribute(Attribute, Form);
-    Values.push_back(Value);
-  }
-
-  /// addChild - Add a child to the DIE.
-  ///
-  void addChild(std::unique_ptr<DIE> Child) {
-    assert(!Child->getParent());
-    Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
-    Child->Parent = this;
-    Children.push_back(std::move(Child));
-  }
-
-  /// findAttribute - Find a value in the DIE with the attribute given,
-  /// returns NULL if no such attribute exists.
-  DIEValue *findAttribute(dwarf::Attribute Attribute) const;
-
-#ifndef NDEBUG
-  void print(raw_ostream &O, unsigned IndentCount = 0) const;
-  void dump();
-#endif
-};
-
-//===--------------------------------------------------------------------===//
 /// DIEValue - A debug information entry value. Some of these roughly correlate
 /// to DWARF attribute classes.
 ///
@@ -399,6 +307,7 @@ private:
 /// DIEEntry - A pointer to another debug information entry.  An instance of
 /// this class can also be used as a proxy for a debug information entry not
 /// yet defined (ie. types.)
+class DIE;
 class DIEEntry : public DIEValue {
   friend class DIEValue;
 
@@ -453,6 +362,124 @@ private:
 
 #ifndef NDEBUG
   void printImpl(raw_ostream &O) const;
+#endif
+};
+
+//===--------------------------------------------------------------------===//
+/// DIELocList - Represents a pointer to a location list in the debug_loc
+/// section.
+//
+class DIELocList : public DIEValue {
+  friend class DIEValue;
+
+  // Index into the .debug_loc vector.
+  size_t Index;
+
+public:
+  DIELocList(size_t I) : DIEValue(isLocList), Index(I) {}
+
+  /// getValue - Grab the current index out.
+  size_t getValue() const { return Index; }
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEValue *E) { return E->getType() == isLocList; }
+
+private:
+  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+
+#ifndef NDEBUG
+  void printImpl(raw_ostream &O) const;
+#endif
+};
+
+//===--------------------------------------------------------------------===//
+/// DIE - A structured debug information entry.  Has an abbreviation which
+/// describes its organization.
+class DIE {
+protected:
+  /// Offset - Offset in debug info section.
+  ///
+  unsigned Offset;
+
+  /// Size - Size of instance + children.
+  ///
+  unsigned Size;
+
+  /// Abbrev - Buffer for constructing abbreviation.
+  ///
+  DIEAbbrev Abbrev;
+
+  /// Children DIEs.
+  ///
+  // This can't be a vector<DIE> because pointer validity is requirent for the
+  // Parent pointer and DIEEntry.
+  // It can't be a list<DIE> because some clients need pointer validity before
+  // the object has been added to any child list
+  // (eg: DwarfUnit::constructVariableDIE). These aren't insurmountable, but may
+  // be more convoluted than beneficial.
+  std::vector<std::unique_ptr<DIE>> Children;
+
+  DIE *Parent;
+
+  /// Attribute values.
+  ///
+  SmallVector<DIEValue *, 12> Values;
+
+protected:
+  DIE()
+      : Offset(0), Size(0), Abbrev((dwarf::Tag)0, dwarf::DW_CHILDREN_no),
+        Parent(nullptr) {}
+
+public:
+  explicit DIE(dwarf::Tag Tag)
+      : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
+        Parent(nullptr) {}
+
+  // Accessors.
+  DIEAbbrev &getAbbrev() { return Abbrev; }
+  const DIEAbbrev &getAbbrev() const { return Abbrev; }
+  unsigned getAbbrevNumber() const { return Abbrev.getNumber(); }
+  dwarf::Tag getTag() const { return Abbrev.getTag(); }
+  unsigned getOffset() const { return Offset; }
+  unsigned getSize() const { return Size; }
+  const std::vector<std::unique_ptr<DIE>> &getChildren() const {
+    return Children;
+  }
+  const SmallVectorImpl<DIEValue *> &getValues() const { return Values; }
+  DIE *getParent() const { return Parent; }
+  /// Climb up the parent chain to get the compile or type unit DIE this DIE
+  /// belongs to.
+  const DIE *getUnit() const;
+  /// Similar to getUnit, returns null when DIE is not added to an
+  /// owner yet.
+  const DIE *getUnitOrNull() const;
+  void setOffset(unsigned O) { Offset = O; }
+  void setSize(unsigned S) { Size = S; }
+
+  /// addValue - Add a value and attributes to a DIE.
+  ///
+  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, DIEValue *Value) {
+    Abbrev.AddAttribute(Attribute, Form);
+    Values.push_back(Value);
+  }
+
+  /// addChild - Add a child to the DIE.
+  ///
+  void addChild(std::unique_ptr<DIE> Child) {
+    assert(!Child->getParent());
+    Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
+    Child->Parent = this;
+    Children.push_back(std::move(Child));
+  }
+
+  /// findAttribute - Find a value in the DIE with the attribute given,
+  /// returns NULL if no such attribute exists.
+  DIEValue *findAttribute(dwarf::Attribute Attribute) const;
+
+#ifndef NDEBUG
+  void print(raw_ostream &O, unsigned IndentCount = 0) const;
+  void dump();
 #endif
 };
 
@@ -525,34 +552,6 @@ public:
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-
-#ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
-#endif
-};
-
-//===--------------------------------------------------------------------===//
-/// DIELocList - Represents a pointer to a location list in the debug_loc
-/// section.
-//
-class DIELocList : public DIEValue {
-  friend class DIEValue;
-
-  // Index into the .debug_loc vector.
-  size_t Index;
-
-public:
-  DIELocList(size_t I) : DIEValue(isLocList), Index(I) {}
-
-  /// getValue - Grab the current index out.
-  size_t getValue() const { return Index; }
-
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isLocList; }
 
 private:
   void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
