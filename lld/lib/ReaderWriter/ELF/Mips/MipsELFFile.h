@@ -138,32 +138,25 @@ private:
         referenceStart, referenceEnd, referenceList);
   }
 
-  const Elf_Shdr *findSectionByType(uint64_t type) {
+  const Elf_Shdr *findSectionByType(uint64_t type) const {
     for (const Elf_Shdr &section : this->_objFile->sections())
       if (section.sh_type == type)
         return &section;
     return nullptr;
   }
 
-  const Elf_Shdr *findSectionByFlags(uint64_t flags) {
+  const Elf_Shdr *findSectionByFlags(uint64_t flags) const {
     for (const Elf_Shdr &section : this->_objFile->sections())
       if (section.sh_flags & flags)
         return &section;
     return nullptr;
   }
 
-  std::error_code readAuxData() {
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
+
+  ErrorOr<const Elf_Mips_RegInfo *> findRegInfoSec() const {
     using namespace llvm::ELF;
-    if (const Elf_Shdr *sec = findSectionByFlags(SHF_TLS)) {
-      _tpOff = sec->sh_addr + TP_OFFSET;
-      _dtpOff = sec->sh_addr + DTP_OFFSET;
-    }
-
-    typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-    typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
-
-    auto &ctx = static_cast<MipsLinkingContext &>(this->_ctx);
-
     if (const Elf_Shdr *sec = findSectionByType(SHT_MIPS_OPTIONS)) {
       auto contents = this->getSectionContents(sec);
       if (std::error_code ec = contents.getError())
@@ -177,12 +170,8 @@ private:
 
         const auto *opt =
             reinterpret_cast<const Elf_Mips_Options *>(raw.data());
-        if (opt->kind == ODK_REGINFO) {
-          const Elf_Mips_RegInfo &regInfo = opt->getRegInfo();
-          ctx.mergeReginfoMask(regInfo);
-          _gp0 = regInfo.ri_gp_value;
-          break;
-        }
+        if (opt->kind == ODK_REGINFO)
+          return &opt->getRegInfo();
         raw = raw.slice(opt->size);
       }
     } else if (const Elf_Shdr *sec = findSectionByType(SHT_MIPS_REGINFO)) {
@@ -195,8 +184,24 @@ private:
         return make_dynamic_error_code(
             StringRef("Invalid size of MIPS_REGINFO section"));
 
-      const auto *regInfo =
-          reinterpret_cast<const Elf_Mips_RegInfo *>(raw.data());
+      return reinterpret_cast<const Elf_Mips_RegInfo *>(raw.data());
+    }
+    return nullptr;
+  }
+
+  std::error_code readAuxData() {
+    using namespace llvm::ELF;
+    if (const Elf_Shdr *sec = findSectionByFlags(SHF_TLS)) {
+      _tpOff = sec->sh_addr + TP_OFFSET;
+      _dtpOff = sec->sh_addr + DTP_OFFSET;
+    }
+
+    auto &ctx = static_cast<MipsLinkingContext &>(this->_ctx);
+
+    ErrorOr<const Elf_Mips_RegInfo *> regInfoSec = findRegInfoSec();
+    if (auto ec = regInfoSec.getError())
+      return ec;
+    if (const Elf_Mips_RegInfo *regInfo = regInfoSec.get()) {
       ctx.mergeReginfoMask(*regInfo);
       _gp0 = regInfo->ri_gp_value;
     }
