@@ -203,6 +203,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   uint64_t NumCounters = Inc->getNumCounters()->getZExtValue();
   LLVMContext &Ctx = M->getContext();
   ArrayType *CounterTy = ArrayType::get(Type::getInt64Ty(Ctx), NumCounters);
+  Function *Fn = Inc->getParent()->getParent();
 
   // Create the counters variable.
   auto *Counters = new GlobalVariable(*M, CounterTy, false, Name->getLinkage(),
@@ -211,6 +212,10 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Counters->setVisibility(Name->getVisibility());
   Counters->setSection(getCountersSection());
   Counters->setAlignment(8);
+  // Place the counters in the same comdat section as its parent function.
+  // Otherwise, we may get multiple counters for the same function in certain
+  // cases.
+  Counters->setComdat(Fn->getComdat());
 
   RegionCounters[Inc->getName()] = Counters;
 
@@ -235,6 +240,7 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Data->setVisibility(Name->getVisibility());
   Data->setSection(getDataSection());
   Data->setAlignment(8);
+  Data->setComdat(Fn->getComdat());
 
   // Mark the data variable as used so that it isn't stripped out.
   UsedVars.push_back(Data);
