@@ -25,10 +25,7 @@ public:
     ORDER_MIPS_OPTIONS
   };
 
-  MipsTargetLayout(MipsLinkingContext &ctx)
-      : TargetLayout<ELFT>(ctx),
-        _gotSection(new (this->_allocator) MipsGOTSection<ELFT>(ctx)),
-        _pltSection(new (this->_allocator) MipsPLTSection<ELFT>(ctx)) {}
+  MipsTargetLayout(MipsLinkingContext &ctx);
 
   const MipsGOTSection<ELFT> &getGOTSection() const { return *_gotSection; }
   const MipsPLTSection<ELFT> &getPLTSection() const { return *_pltSection; }
@@ -36,60 +33,26 @@ public:
   AtomSection<ELFT> *
   createSection(StringRef name, int32_t type,
                 DefinedAtom::ContentPermissions permissions,
-                typename TargetLayout<ELFT>::SectionOrder order) override {
-    if (type == DefinedAtom::typeGOT && name == ".got")
-      return _gotSection;
-    if (type == DefinedAtom::typeStub && name == ".plt")
-      return _pltSection;
-    return TargetLayout<ELFT>::createSection(name, type, permissions, order);
-  }
+                typename TargetLayout<ELFT>::SectionOrder order) override;
 
   typename TargetLayout<ELFT>::SegmentType
-  getSegmentType(Section<ELFT> *section) const override {
-    switch (section->order()) {
-    case ORDER_MIPS_REGINFO:
-      return llvm::ELF::PT_MIPS_REGINFO;
-    case ORDER_MIPS_OPTIONS:
-      return llvm::ELF::PT_LOAD;
-    default:
-      return TargetLayout<ELFT>::getSegmentType(section);
-    }
-  }
+  getSegmentType(Section<ELFT> *section) const override;
 
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }
 
   /// \brief Get '_gp' symbol address.
-  uint64_t getGPAddr() {
-    std::call_once(_gpOnce, [this]() {
-      if (AtomLayout *a = this->findAbsoluteAtom("_gp"))
-        _gpAddr = a->_virtualAddr;
-    });
-    return _gpAddr;
-  }
+  uint64_t getGPAddr();
 
   /// \brief Return the section order for a input section
   typename TargetLayout<ELFT>::SectionOrder
   getSectionOrder(StringRef name, int32_t contentType,
-                  int32_t contentPermissions) override {
-    if ((contentType == DefinedAtom::typeStub) && (name.startswith(".text")))
-      return TargetLayout<ELFT>::ORDER_TEXT;
-
-    return TargetLayout<ELFT>::getSectionOrder(name, contentType,
-                                               contentPermissions);
-  }
+                  int32_t contentPermissions) override;
 
 protected:
   unique_bump_ptr<RelocationTable<ELFT>>
-  createRelocationTable(StringRef name, int32_t order) override {
-    return unique_bump_ptr<RelocationTable<ELFT>>(new (
-        this->_allocator) MipsRelocationTable<ELFT>(this->_ctx, name, order));
-  }
-
-  uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const override {
-    uint64_t flags = TargetLayout<ELFT>::getLookupSectionFlags(os);
-    return flags & ~llvm::ELF::SHF_MIPS_NOSTRIP;
-  }
+  createRelocationTable(StringRef name, int32_t order) override;
+  uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const override;
 
 private:
   MipsGOTSection<ELFT> *_gotSection;
