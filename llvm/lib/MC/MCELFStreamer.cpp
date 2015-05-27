@@ -159,11 +159,14 @@ void MCELFStreamer::ChangeSection(MCSection *Section,
     Asm.getOrCreateSymbolData(*Grp);
 
   this->MCObjectStreamer::ChangeSection(Section, Subsection);
-  MCSymbol *SectionSymbol = getContext().getOrCreateSectionSymbol(*SectionELF);
-  if (SectionSymbol->isUndefined()) {
-    EmitLabel(SectionSymbol);
-    MCELF::SetType(Asm.getSymbolData(*SectionSymbol), ELF::STT_SECTION);
+  MCContext &Ctx = getContext();
+  MCSymbol *Begin = Section->getBeginSymbol();
+  if (!Begin) {
+    Begin = Ctx.getOrCreateSectionSymbol(*SectionELF);
+    Section->setBeginSymbol(Begin);
   }
+  if (Begin->isUndefined())
+    MCELF::SetType(Asm.getOrCreateSymbolData(*Begin), ELF::STT_SECTION);
 }
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {

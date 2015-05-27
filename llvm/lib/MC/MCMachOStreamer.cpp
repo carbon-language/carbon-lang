@@ -162,9 +162,10 @@ void MCMachOStreamer::ChangeSection(MCSection *Section,
 
   // Output a linker-local symbol so we don't need section-relative local
   // relocations. The linker hates us when we do that.
-  if (LabelSections && !HasSectionLabel[Section]) {
+  if (LabelSections && !HasSectionLabel[Section] &&
+      !Section->getBeginSymbol()) {
     MCSymbol *Label = getContext().createLinkerPrivateTempSymbol();
-    EmitLabel(Label);
+    Section->setBeginSymbol(Label);
     HasSectionLabel[Section] = true;
   }
 }

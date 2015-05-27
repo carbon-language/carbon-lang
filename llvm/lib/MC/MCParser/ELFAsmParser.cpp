@@ -537,9 +537,11 @@ EndStmt:
       if (getContext().getDwarfVersion() <= 2)
         Warning(loc, "DWARF2 only supports one section per compilation unit");
 
-      MCSymbol *SectionStartSymbol = getContext().createTempSymbol();
-      getStreamer().EmitLabel(SectionStartSymbol);
-      ELFSection->setBeginSymbol(SectionStartSymbol);
+      if (!ELFSection->getBeginSymbol()) {
+        MCSymbol *SectionStartSymbol = getContext().createTempSymbol();
+        getStreamer().EmitLabel(SectionStartSymbol);
+        ELFSection->setBeginSymbol(SectionStartSymbol);
+      }
     }
   }
 

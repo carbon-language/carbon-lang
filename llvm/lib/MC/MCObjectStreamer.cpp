@@ -29,7 +29,7 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
     : MCStreamer(Context),
       Assembler(new MCAssembler(Context, TAB, *Emitter_,
                                 *TAB.createObjectWriter(OS), OS)),
-      CurSectionData(nullptr), EmitEHFrame(true), EmitDebugFrame(false) {}
+      EmitEHFrame(true), EmitDebugFrame(false) {}
 
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
@@ -42,8 +42,9 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
   if (PendingLabels.size()) {
     if (!F) {
       F = new MCDataFragment();
-      CurSectionData->getFragmentList().insert(CurInsertionPoint, F);
-      F->setParent(CurSectionData);
+      MCSection *CurSection = getCurrentSectionData();
+      CurSection->getFragmentList().insert(CurInsertionPoint, F);
+      F->setParent(CurSection);
     }
     for (MCSymbolData *SD : PendingLabels) {
       SD->setFragment(F);
@@ -79,7 +80,6 @@ bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
 void MCObjectStreamer::reset() {
   if (Assembler)
     Assembler->reset();
-  CurSectionData = nullptr;
   CurInsertionPoint = MCSection::iterator();
   EmitEHFrame = true;
   EmitDebugFrame = false;
@@ -212,7 +212,6 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   flushPendingLabels(nullptr);
 
   bool Created = getAssembler().registerSection(*Section);
-  CurSectionData = Section;
 
   int64_t IntSubsection = 0;
   if (Subsection &&
@@ -221,7 +220,7 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   if (IntSubsection < 0 || IntSubsection > 8192)
     report_fatal_error("Subsection number out of range");
   CurInsertionPoint =
-      CurSectionData->getSubsectionInsertionPoint(unsigned(IntSubsection));
+      Section->getSubsectionInsertionPoint(unsigned(IntSubsection));
   return Created;
 }
 
