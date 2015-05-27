@@ -27,6 +27,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetParser.h"
 #include <algorithm>
 #include <memory>
 using namespace clang;
@@ -4180,8 +4181,15 @@ public:
     return false;
   }
 
+  // FIXME: This should be based on Arch attributes, not CPU names.
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
     StringRef ArchName = getTriple().getArchName();
+    unsigned ArchKind =
+                llvm::ARMTargetParser::parseArch(
+                llvm::ARMTargetParser::getCanonicalArchName(ArchName));
+    bool IsV8 = (ArchKind == llvm::ARM::AK_ARMV8A ||
+                 ArchKind == llvm::ARM::AK_ARMV8_1A);
+
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9") {
@@ -4206,17 +4214,7 @@ public:
       Features["hwdiv-arm"] = true;
       Features["crc"] = true;
       Features["crypto"] = true;
-    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" ||
-               // Enable the hwdiv extension for all v8a AArch32 cores by
-               // default.
-               // FIXME: Use ARMTargetParser. This would require Triple::arm/thumb
-               // to be recogniseable universally.
-               ArchName == "armv8.1a"  || ArchName == "thumbv8.1a" || //v8.1a
-               ArchName == "armebv8.1a" || ArchName == "thumbebv8.1a" ||
-               ArchName == "armv8a" || ArchName == "armv8" ||           //v8a
-               ArchName == "armebv8a" || ArchName == "armebv8" ||
-               ArchName == "thumbv8a" || ArchName == "thumbv8" ||
-               ArchName == "thumbebv8a" || ArchName == "thumbebv8") {
+    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" || IsV8) {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
     } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7" ||
