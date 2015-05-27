@@ -177,3 +177,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-abbrev-no-operands.bc 2>&1 |
 RUN:   FileCheck --check-prefix=ABBREV-NO-OPS %s
 
 ABBREV-NO-OPS: Abbrev record with no operands
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-operand-encoding.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=ARRAY-OP-ENC %s
+
+ARRAY-OP-ENC: Array element type has to be an encoding of a type

@@ -203,6 +203,9 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
       if (i + 2 != e)
         report_fatal_error("Array op not second to last");
       const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+      if (!EltEnc.isEncoding())
+        report_fatal_error(
+            "Array element type has to be an encoding of a type");
       if (EltEnc.getEncoding() == BitCodeAbbrevOp::Array ||
           EltEnc.getEncoding() == BitCodeAbbrevOp::Blob)
         report_fatal_error("Array element type can't be an Array or a Blob");
