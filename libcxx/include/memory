@@ -4047,7 +4047,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __enable_weak_this(const void*) _NOEXCEPT {}
+    void __enable_weak_this(const volatile void*) _NOEXCEPT {}
 
     template <class _Up> friend class _LIBCPP_TYPE_VIS_ONLY shared_ptr;
     template <class _Up> friend class _LIBCPP_TYPE_VIS_ONLY weak_ptr;

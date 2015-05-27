@@ -55,7 +55,7 @@ void test(const T &t0)
 
 int main()
 {
-//     test<bool>(true);
-//     test<int>(3);
-//     test<double>(5.0);
+    test<bool>(true);
+    test<int>(3);
+    test<double>(5.0);
 }
