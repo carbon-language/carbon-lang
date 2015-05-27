@@ -99,6 +99,11 @@ RUN:   FileCheck --check-prefix=FWDREF-TYPE %s
 
 FWDREF-TYPE: Invalid record
 
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-fwdref-type-mismatch-2.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=FWDREF-TYPE-MISMATCH %s
+
+FWDREF-TYPE-MISMATCH: Type mismatch in constant table!
+
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-element-type.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=ELEMENT-TYPE %s
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-vector-element-type.bc 2>&1 | \
