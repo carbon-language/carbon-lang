@@ -65,8 +65,9 @@ public:
         AsmBackend(asmbackend), CommentStream(CommentToEmit),
         IsVerboseAsm(isVerboseAsm), ShowInst(showInst),
         UseDwarfDirectory(useDwarfDirectory) {
-    if (InstPrinter && IsVerboseAsm)
-      InstPrinter->setCommentStream(CommentStream);
+    assert(InstPrinter);
+    if (IsVerboseAsm)
+        InstPrinter->setCommentStream(CommentStream);
   }
 
   inline void EmitEOL() {
@@ -945,7 +946,7 @@ void MCAsmStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
 void MCAsmStreamer::EmitRegisterName(int64_t Register) {
-  if (InstPrinter && !MAI->useDwarfRegNumForCFI()) {
+  if (!MAI->useDwarfRegNumForCFI()) {
     const MCRegisterInfo *MRI = getContext().getRegisterInfo();
     unsigned LLVMRegister = MRI->getLLVMRegNum(Register, true);
     InstPrinter->printRegName(OS, LLVMRegister);
@@ -1259,11 +1260,8 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &S
     GetCommentOS() << "\n";
   }
 
-  // If we have an AsmPrinter, use that to print, otherwise print the MCInst.
-  if (InstPrinter)
-    InstPrinter->printInst(&Inst, OS, "", STI);
-  else
-    Inst.print(OS);
+  InstPrinter->printInst(&Inst, OS, "", STI);
+
   EmitEOL();
 }
 
