@@ -33,6 +33,7 @@ class raw_ostream;
 
 class MCSectionData {
   friend class MCAsmLayout;
+  friend class MCSection;
 
   MCSectionData(const MCSectionData &) = delete;
   void operator=(const MCSectionData &) = delete;
@@ -95,8 +96,6 @@ public:
   size_t size() const;
 
   bool empty() const;
-
-  iterator getSubsectionInsertionPoint(unsigned Subsection);
 
   void dump();
 
@@ -219,6 +218,8 @@ public:
   MCSectionData::const_reverse_iterator rend() const {
     return const_cast<MCSection *>(this)->rend();
   }
+
+  MCSectionData::iterator getSubsectionInsertionPoint(unsigned Subsection);
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

@@ -221,8 +221,7 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
   if (IntSubsection < 0 || IntSubsection > 8192)
     report_fatal_error("Subsection number out of range");
   CurInsertionPoint =
-      CurSectionData->getSectionData().getSubsectionInsertionPoint(
-          unsigned(IntSubsection));
+      CurSectionData->getSubsectionInsertionPoint(unsigned(IntSubsection));
   return Created;
 }
 
