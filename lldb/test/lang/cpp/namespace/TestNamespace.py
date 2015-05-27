@@ -41,7 +41,7 @@ class NamespaceTestCase(TestBase):
 
     def namespace_variable_commands(self):
         """Test that anonymous and named namespace variables display correctly."""
-        self.runCmd("run a.out", RUN_FAILED)
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line_break, num_expected_locations=1, loc_exact=True)
 
