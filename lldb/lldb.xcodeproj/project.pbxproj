@@ -2196,6 +2196,7 @@
 		26ED3D6F13C5638A0017D45E /* OptionGroupVariable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupVariable.h; path = include/lldb/Interpreter/OptionGroupVariable.h; sourceTree = "<group>"; };
 		26EFC4CA18CFAF0D00865D87 /* ObjectFileJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFileJIT.cpp; sourceTree = "<group>"; };
 		26EFC4CB18CFAF0D00865D87 /* ObjectFileJIT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFileJIT.h; sourceTree = "<group>"; };
+		26F2F8FD1B156678007857DE /* StructuredData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StructuredData.h; path = include/lldb/Core/StructuredData.h; sourceTree = "<group>"; };
 		26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadMemory.cpp; path = Utility/ThreadMemory.cpp; sourceTree = "<group>"; };
 		26F4A21B13FBA31A0064B613 /* ThreadMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadMemory.h; path = Utility/ThreadMemory.h; sourceTree = "<group>"; };
 		26F5C26A10F3D9A4009D5894 /* lldb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lldb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -4122,6 +4123,7 @@
 				4C626533130F1B0A00C889F6 /* StreamTee.h */,
 				9A35765E116E76A700E8ED2F /* StringList.h */,
 				9A35765F116E76B900E8ED2F /* StringList.cpp */,
+				26F2F8FD1B156678007857DE /* StructuredData.h */,
 				AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */,
 				26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */,
 				263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */,
