@@ -95,7 +95,7 @@ public:
 
   std::string Name;
   int Number;
-  MCSectionData const *MCData;
+  MCSectionCOFF const *MCSection;
   COFFSymbol *Symbol;
   relocations Relocations;
 
@@ -145,7 +145,7 @@ public:
   template <typename object_t, typename list_t>
   object_t *createCOFFEntity(StringRef Name, list_t &List);
 
-  void DefineSection(MCSectionData const &SectionData);
+  void defineSection(MCSectionCOFF const &Sec);
   void DefineSymbol(const MCSymbol &Symbol, MCAssembler &Assembler,
                     const MCAsmLayout &Layout);
 
@@ -239,7 +239,7 @@ bool COFFSymbol::should_keep() const {
 // Section class implementation
 
 COFFSection::COFFSection(StringRef name)
-    : Name(name), MCData(nullptr), Symbol(nullptr) {
+    : Name(name), MCSection(nullptr), Symbol(nullptr) {
   memset(&Header, 0, sizeof(Header));
 }
 
@@ -285,13 +285,7 @@ object_t *WinCOFFObjectWriter::createCOFFEntity(StringRef Name, list_t &List) {
 
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF section staging object.
-void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
-  assert(SectionData.getSection().getVariant() == MCSection::SV_COFF &&
-         "Got non-COFF section in the COFF backend!");
-  // FIXME: Not sure how to verify this (at least in a debug build).
-  MCSectionCOFF const &Sec =
-      static_cast<MCSectionCOFF const &>(SectionData.getSection());
-
+void WinCOFFObjectWriter::defineSection(MCSectionCOFF const &Sec) {
   COFFSection *coff_section = createSection(Sec.getSectionName());
   COFFSymbol *coff_symbol = createSymbol(Sec.getSectionName());
   if (Sec.getSelection() != COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
@@ -364,8 +358,8 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   }
 
   // Bind internal COFF section to MC section.
-  coff_section->MCData = &SectionData;
-  SectionMap[&SectionData.getSection()] = coff_section;
+  coff_section->MCSection = &Sec;
+  SectionMap[&Sec] = coff_section;
 }
 
 static uint64_t getSymbolValue(const MCSymbol &Symbol,
@@ -657,7 +651,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
   for (const auto &Section : Asm)
-    DefineSection(Section.getSectionData());
+    defineSection(static_cast<const MCSectionCOFF &>(Section));
 
   for (const MCSymbol &Symbol : Asm.symbols())
     if (ExportSymbol(Symbol, Asm))
@@ -934,8 +928,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
         COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
       continue;
 
-    const MCSectionCOFF &MCSec =
-        static_cast<const MCSectionCOFF &>(Section->MCData->getSection());
+    const MCSectionCOFF &MCSec = *Section->MCSection;
 
     const MCSymbol *COMDAT = MCSec.getCOMDATSymbol();
     assert(COMDAT);
