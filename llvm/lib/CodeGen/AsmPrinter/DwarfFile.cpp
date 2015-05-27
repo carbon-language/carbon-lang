@@ -107,6 +107,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
 
   // Size the DIE children if any.
   if (!Children.empty()) {
+    (void)Abbrev;
     assert(Abbrev.hasChildren() && "Children flag not set");
 
     for (auto &Child : Children)
