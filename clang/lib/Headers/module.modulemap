@@ -157,6 +157,8 @@ module _Builtin_intrinsics [system] [extern_c] {
     explicit module aes_pclmul {
       requires aes, pclmul
       header "wmmintrin.h"
+      export aes
+      export pclmul
     }
 
     explicit module aes {
