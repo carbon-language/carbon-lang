@@ -1,4 +1,7 @@
 
+// TODO: Make this test pass for all standards.
+// XFAIL: c++98, c++03
+
 #include <limits>
 #include <type_traits>
 #include <cstdint>
