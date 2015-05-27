@@ -2021,7 +2021,7 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
 }
 
 ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
-  const auto StmtMapIt = StmtMap.find(BB);
+  auto StmtMapIt = StmtMap.find(BB);
   if (StmtMapIt == StmtMap.end())
     return nullptr;
   return StmtMapIt->second;
