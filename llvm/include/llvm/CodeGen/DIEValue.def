@@ -1,0 +1,29 @@
+//===- llvm/CodeGen/DIEValue.def - DIEValue types ---------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Macros for running through all types of DIEValue.
+//
+//===----------------------------------------------------------------------===//
+
+#if !(defined HANDLE_DIEVALUE)
+#error "Missing macro definition of HANDLE_DIEVALUE"
+#endif
+
+HANDLE_DIEVALUE(Integer)
+HANDLE_DIEVALUE(String)
+HANDLE_DIEVALUE(Expr)
+HANDLE_DIEVALUE(Label)
+HANDLE_DIEVALUE(Delta)
+HANDLE_DIEVALUE(Entry)
+HANDLE_DIEVALUE(TypeSignature)
+HANDLE_DIEVALUE(Block)
+HANDLE_DIEVALUE(Loc)
+HANDLE_DIEVALUE(LocList)
+
+#undef HANDLE_DIEVALUE

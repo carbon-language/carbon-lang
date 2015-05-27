@@ -193,40 +193,20 @@ void DIE::dump() {
 
 void DIEValue::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
   switch (Ty) {
-#define EMIT_VALUE_IMPL(Kind)                                                  \
-  case is##Kind:                                                               \
-    cast<DIE##Kind>(this)->EmitValueImpl(AP, Form);                            \
+#define HANDLE_DIEVALUE(T)                                                     \
+  case is##T:                                                                  \
+    cast<DIE##T>(this)->EmitValueImpl(AP, Form);                               \
     break;
-    EMIT_VALUE_IMPL(Integer)
-    EMIT_VALUE_IMPL(String)
-    EMIT_VALUE_IMPL(Expr)
-    EMIT_VALUE_IMPL(Label)
-    EMIT_VALUE_IMPL(Delta)
-    EMIT_VALUE_IMPL(Entry)
-    EMIT_VALUE_IMPL(TypeSignature)
-    EMIT_VALUE_IMPL(Block)
-    EMIT_VALUE_IMPL(Loc)
-    EMIT_VALUE_IMPL(LocList)
-#undef EMIT_VALUE_IMPL
+#include "llvm/CodeGen/DIEValue.def"
   }
 }
 
 unsigned DIEValue::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   switch (Ty) {
-#define SIZE_OF_IMPL(Kind)                                                     \
-  case is##Kind:                                                               \
-    return cast<DIE##Kind>(this)->SizeOfImpl(AP, Form);
-    SIZE_OF_IMPL(Integer)
-    SIZE_OF_IMPL(String)
-    SIZE_OF_IMPL(Expr)
-    SIZE_OF_IMPL(Label)
-    SIZE_OF_IMPL(Delta)
-    SIZE_OF_IMPL(Entry)
-    SIZE_OF_IMPL(TypeSignature)
-    SIZE_OF_IMPL(Block)
-    SIZE_OF_IMPL(Loc)
-    SIZE_OF_IMPL(LocList)
-#undef SIZE_OF_IMPL
+#define HANDLE_DIEVALUE(T)                                                     \
+  case is##T:                                                                  \
+    return cast<DIE##T>(this)->SizeOfImpl(AP, Form);
+#include "llvm/CodeGen/DIEValue.def"
   }
   llvm_unreachable("Unknown DIE kind");
 }
@@ -234,21 +214,11 @@ unsigned DIEValue::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
 #ifndef NDEBUG
 void DIEValue::print(raw_ostream &O) const {
   switch (Ty) {
-#define PRINT_IMPL(Kind)                                                       \
-  case is##Kind:                                                               \
-    cast<DIE##Kind>(this)->printImpl(O);                                       \
+#define HANDLE_DIEVALUE(T)                                                     \
+  case is##T:                                                                  \
+    cast<DIE##T>(this)->printImpl(O);                                          \
     break;
-    PRINT_IMPL(Integer)
-    PRINT_IMPL(String)
-    PRINT_IMPL(Expr)
-    PRINT_IMPL(Label)
-    PRINT_IMPL(Delta)
-    PRINT_IMPL(Entry)
-    PRINT_IMPL(TypeSignature)
-    PRINT_IMPL(Block)
-    PRINT_IMPL(Loc)
-    PRINT_IMPL(LocList)
-#undef PRINT_IMPL
+#include "llvm/CodeGen/DIEValue.def"
   }
 }
 

@@ -111,16 +111,8 @@ public:
 class DIEValue {
 public:
   enum Type {
-    isInteger,
-    isString,
-    isExpr,
-    isLabel,
-    isDelta,
-    isEntry,
-    isTypeSignature,
-    isBlock,
-    isLoc,
-    isLocList,
+#define HANDLE_DIEVALUE(T) is##T,
+#include "llvm/CodeGen/DIEValue.def"
   };
 
 private:
