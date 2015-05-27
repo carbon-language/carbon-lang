@@ -458,6 +458,8 @@ struct coff_import_header {
   support::ulittle32_t SizeOfData;
   support::ulittle16_t OrdinalHint;
   support::ulittle16_t TypeInfo;
+  int getType() const { return TypeInfo & 0x3; }
+  int getNameType() const { return (TypeInfo & 0x7) >> 2; }
 };
 
 struct coff_import_directory_table_entry {
