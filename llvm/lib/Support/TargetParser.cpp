@@ -43,48 +43,51 @@ struct {
   { "crypto-neon-fp-armv8", ARM::FK_CRYPTO_NEON_FP_ARMV8 },
   { "softvfp",              ARM::FK_SOFTVFP }
 };
-// List of canonical arch names (use getArchSynonym)
+// List of canonical arch names (use getArchSynonym).
+// This table also provides the build attribute fields for CPU arch
+// and Arch ID, according to the Addenda to the ARM ABI, chapters
+// 2.4 and 2.3.5.2 respectively.
 // FIXME: TableGen this.
 struct {
   const char *Name;
   ARM::ArchKind ID;
-  const char *DefaultCPU;
-  ARMBuildAttrs::CPUArch DefaultArch;
+  const char *CPUAttr; // CPU class in build attributes.
+  ARMBuildAttrs::CPUArch ArchAttr; // Arch ID in build attributes.
 } ARCHNames[] = {
   { "invalid",   ARM::AK_INVALID,  nullptr,   ARMBuildAttrs::CPUArch::Pre_v4 },
-  { "armv2",     ARM::AK_ARMV2,    "2",       ARMBuildAttrs::CPUArch::v4 },
-  { "armv2a",    ARM::AK_ARMV2A,   "2A",      ARMBuildAttrs::CPUArch::v4 },
-  { "armv3",     ARM::AK_ARMV3,    "3",       ARMBuildAttrs::CPUArch::v4 },
-  { "armv3m",    ARM::AK_ARMV3M,   "3M",      ARMBuildAttrs::CPUArch::v4 },
+  { "armv2",     ARM::AK_ARMV2,    "2",       ARMBuildAttrs::CPUArch::Pre_v4 },
+  { "armv2a",    ARM::AK_ARMV2A,   "2A",      ARMBuildAttrs::CPUArch::Pre_v4 },
+  { "armv3",     ARM::AK_ARMV3,    "3",       ARMBuildAttrs::CPUArch::Pre_v4 },
+  { "armv3m",    ARM::AK_ARMV3M,   "3M",      ARMBuildAttrs::CPUArch::Pre_v4 },
   { "armv4",     ARM::AK_ARMV4,    "4",       ARMBuildAttrs::CPUArch::v4 },
   { "armv4t",    ARM::AK_ARMV4T,   "4T",      ARMBuildAttrs::CPUArch::v4T },
-  { "armv5",     ARM::AK_ARMV5,    "5",       ARMBuildAttrs::CPUArch::v5T },
+  { "armv5",     ARM::AK_ARMV5,    "5T",      ARMBuildAttrs::CPUArch::v5T },
   { "armv5t",    ARM::AK_ARMV5T,   "5T",      ARMBuildAttrs::CPUArch::v5T },
   { "armv5te",   ARM::AK_ARMV5TE,  "5TE",     ARMBuildAttrs::CPUArch::v5TE },
+  { "armv5tej",  ARM::AK_ARMV5TEJ, "5TEJ",    ARMBuildAttrs::CPUArch::v5TEJ },
   { "armv6",     ARM::AK_ARMV6,    "6",       ARMBuildAttrs::CPUArch::v6 },
-  { "armv6j",    ARM::AK_ARMV6J,   "6J",      ARMBuildAttrs::CPUArch::v6 },
   { "armv6k",    ARM::AK_ARMV6K,   "6K",      ARMBuildAttrs::CPUArch::v6K },
   { "armv6t2",   ARM::AK_ARMV6T2,  "6T2",     ARMBuildAttrs::CPUArch::v6T2 },
   { "armv6z",    ARM::AK_ARMV6Z,   "6Z",      ARMBuildAttrs::CPUArch::v6KZ },
   { "armv6zk",   ARM::AK_ARMV6ZK,  "6ZK",     ARMBuildAttrs::CPUArch::v6KZ },
   { "armv6-m",   ARM::AK_ARMV6M,   "6-M",     ARMBuildAttrs::CPUArch::v6_M },
+  { "armv6s-m",  ARM::AK_ARMV6SM,  "6S-M",    ARMBuildAttrs::CPUArch::v6S_M },
   { "armv7",     ARM::AK_ARMV7,    "7",       ARMBuildAttrs::CPUArch::v7 },
   { "armv7-a",   ARM::AK_ARMV7A,   "7-A",     ARMBuildAttrs::CPUArch::v7 },
   { "armv7-r",   ARM::AK_ARMV7R,   "7-R",     ARMBuildAttrs::CPUArch::v7 },
   { "armv7-m",   ARM::AK_ARMV7M,   "7-M",     ARMBuildAttrs::CPUArch::v7 },
+  { "armv7e-m",  ARM::AK_ARMV7EM,  "7E-M",    ARMBuildAttrs::CPUArch::v7E_M },
   { "armv8-a",   ARM::AK_ARMV8A,   "8-A",     ARMBuildAttrs::CPUArch::v8 },
   { "armv8.1-a", ARM::AK_ARMV8_1A, "8.1-A",   ARMBuildAttrs::CPUArch::v8 },
   // Non-standard Arch names.
   { "iwmmxt",    ARM::AK_IWMMXT,   "iwmmxt",  ARMBuildAttrs::CPUArch::v5TE },
   { "iwmmxt2",   ARM::AK_IWMMXT2,  "iwmmxt2", ARMBuildAttrs::CPUArch::v5TE },
   { "xscale",    ARM::AK_XSCALE,   "xscale",  ARMBuildAttrs::CPUArch::v5TE },
-  { "armv5e",    ARM::AK_ARMV5E,   "5E",      ARMBuildAttrs::CPUArch::v5TE },
-  { "armv5tej",  ARM::AK_ARMV5TEJ, "5TE",     ARMBuildAttrs::CPUArch::v5TE },
-  { "armv6sm",   ARM::AK_ARMV6SM,  "6-M",     ARMBuildAttrs::CPUArch::v6_M },
+  { "armv5e",    ARM::AK_ARMV5E,   "5TE",     ARMBuildAttrs::CPUArch::v5TE },
+  { "armv6j",    ARM::AK_ARMV6J,   "6J",      ARMBuildAttrs::CPUArch::v6 },
   { "armv6hl",   ARM::AK_ARMV6HL,  "6-M",     ARMBuildAttrs::CPUArch::v6_M },
-  { "armv7e-m",  ARM::AK_ARMV7EM,  "7E-M",    ARMBuildAttrs::CPUArch::v7E_M },
   { "armv7l",    ARM::AK_ARMV7L,   "7-L",     ARMBuildAttrs::CPUArch::v7 },
-  { "armv7hl",   ARM::AK_ARMV7HL,  "7H-L",    ARMBuildAttrs::CPUArch::v7 },
+  { "armv7hl",   ARM::AK_ARMV7HL,  "7-L",     ARMBuildAttrs::CPUArch::v7 },
   { "armv7s",    ARM::AK_ARMV7S,   "7-S",     ARMBuildAttrs::CPUArch::v7 }
 };
 // List of canonical ARCH names (use getARCHSynonym)
@@ -211,16 +214,16 @@ const char *ARMTargetParser::getArchName(unsigned ArchKind) {
   return ARCHNames[ArchKind].Name;
 }
 
-const char *ARMTargetParser::getArchDefaultCPUName(unsigned ArchKind) {
+const char *ARMTargetParser::getCPUAttr(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return nullptr;
-  return ARCHNames[ArchKind].DefaultCPU;
+  return ARCHNames[ArchKind].CPUAttr;
 }
 
-unsigned ARMTargetParser::getArchDefaultCPUArch(unsigned ArchKind) {
+unsigned ARMTargetParser::getArchAttr(unsigned ArchKind) {
   if (ArchKind >= ARM::AK_LAST)
     return ARMBuildAttrs::CPUArch::Pre_v4;
-  return ARCHNames[ArchKind].DefaultArch;
+  return ARCHNames[ArchKind].ArchAttr;
 }
 
 const char *ARMTargetParser::getArchExtName(unsigned ArchExtKind) {
@@ -266,6 +269,7 @@ StringRef ARMTargetParser::getFPUSynonym(StringRef FPU) {
 
 StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
   return StringSwitch<StringRef>(Arch)
+    .Cases("armv6sm",  "v6sm",  "armv6s-m")
     .Cases("armv6m",   "v6m",   "armv6-m")
     .Cases("armv7a",   "v7a",   "armv7-a")
     .Cases("armv7r",   "v7r",   "armv7-r")

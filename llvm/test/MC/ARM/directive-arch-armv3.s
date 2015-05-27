@@ -20,7 +20,7 @@
 @ CHECK-ATTR:   }
 @ CHECK-ATTR:   Attribute {
 @ CHECK-ATTR:     TagName: CPU_arch
-@ CHECK-ATTR:     Description: ARM v4
+@ CHECK-ATTR:     Description: Pre-v4
 @ CHECK-ATTR:   }
 @ CHECK-ATTR:   Attribute {
 @ CHECK-ATTR:     TagName: ARM_ISA_use

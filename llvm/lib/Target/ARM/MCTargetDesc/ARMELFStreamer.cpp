@@ -688,16 +688,16 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
   using namespace ARMBuildAttrs;
 
   setAttributeItem(CPU_name,
-                   ARMTargetParser::getArchDefaultCPUName(Arch),
+                   ARMTargetParser::getCPUAttr(Arch),
                    false);
 
   if (EmittedArch == ARM::AK_INVALID)
     setAttributeItem(CPU_arch,
-                     ARMTargetParser::getArchDefaultCPUArch(Arch),
+                     ARMTargetParser::getArchAttr(Arch),
                      false);
   else
     setAttributeItem(CPU_arch,
-                     ARMTargetParser::getArchDefaultCPUArch(EmittedArch),
+                     ARMTargetParser::getArchAttr(EmittedArch),
                      false);
 
   switch (Arch) {
