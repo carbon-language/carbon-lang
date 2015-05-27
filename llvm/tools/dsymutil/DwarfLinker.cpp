@@ -68,11 +68,13 @@ struct PatchLocation {
 
   PatchLocation() : Die(nullptr), Index(0) {}
   PatchLocation(DIE &Die, unsigned Index) : Die(&Die), Index(Index) {}
+  PatchLocation(DIE &Die)
+      : Die(&Die), Index(std::distance(Die.begin_values(), Die.end_values())) {}
 
   void set(uint64_t New) const {
     assert(Die);
-    assert(Index < Die->getValues().size());
-    const auto &Old = Die->getValues()[Index];
+    assert(Index < std::distance(Die->begin_values(), Die->end_values()));
+    const auto &Old = Die->begin_values()[Index];
     assert(Old.getType() == DIEValue::isInteger);
     Die->setValue(Index,
                   DIEValue(Old.getAttribute(), Old.getForm(), DIEInteger(New)));
@@ -80,9 +82,9 @@ struct PatchLocation {
 
   uint64_t get() const {
     assert(Die);
-    assert(Index < Die->getValues().size());
-    assert(Die->getValues()[Index].getType() == DIEValue::isInteger);
-    return Die->getValues()[Index].getDIEInteger().getValue();
+    assert(Index < std::distance(Die->begin_values(), Die->end_values()));
+    assert(Die->begin_values()[Index].getType() == DIEValue::isInteger);
+    return Die->begin_values()[Index].getDIEInteger().getValue();
   }
 };
 
@@ -1839,8 +1841,7 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
     } else {
       // A forward reference. Note and fixup later.
       Attr = 0xBADDEF;
-      Unit.noteForwardReference(NewRefDie, RefUnit,
-                                PatchLocation(Die, Die.getValues().size()));
+      Unit.noteForwardReference(NewRefDie, RefUnit, PatchLocation(Die));
     }
     Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_ref_addr,
                  DIEInteger(Attr));
@@ -1956,14 +1957,13 @@ unsigned DwarfLinker::cloneScalarAttribute(
   }
   DIEInteger Attr(Value);
   if (AttrSpec.Attr == dwarf::DW_AT_ranges)
-    Unit.noteRangeAttribute(Die, PatchLocation(Die, Die.getValues().size()));
+    Unit.noteRangeAttribute(Die, PatchLocation(Die));
   // A more generic way to check for location attributes would be
   // nice, but it's very unlikely that any other attribute needs a
   // location list.
   else if (AttrSpec.Attr == dwarf::DW_AT_location ||
            AttrSpec.Attr == dwarf::DW_AT_frame_base)
-    Unit.noteLocationAttribute(PatchLocation(Die, Die.getValues().size()),
-                               Info.PCOffset);
+    Unit.noteLocationAttribute(PatchLocation(Die), Info.PCOffset);
   else if (AttrSpec.Attr == dwarf::DW_AT_declaration && Value)
     Info.IsDeclaration = true;
 
@@ -2329,13 +2329,13 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
 
   // Update the cloned DW_AT_stmt_list with the correct debug_line offset.
   if (auto *OutputDIE = Unit.getOutputUnitDIE()) {
-    const auto &Values = OutputDIE->getValues();
-    auto Stmt =
-        std::find_if(Values.begin(), Values.end(), [](const DIEValue &Value) {
-          return Value.getAttribute() == dwarf::DW_AT_stmt_list;
-        });
-    assert(Stmt < Values.end() && "Didn't find DW_AT_stmt_list in cloned DIE!");
-    OutputDIE->setValue(Stmt - Values.begin(),
+    auto Stmt = std::find_if(OutputDIE->begin_values(), OutputDIE->end_values(),
+                             [](const DIEValue &Value) {
+      return Value.getAttribute() == dwarf::DW_AT_stmt_list;
+    });
+    assert(Stmt != OutputDIE->end_values() &&
+           "Didn't find DW_AT_stmt_list in cloned DIE!");
+    OutputDIE->setValue(Stmt - OutputDIE->begin_values(),
                         DIEValue(Stmt->getAttribute(), Stmt->getForm(),
                                  DIEInteger(Streamer->getLineSectionSize())));
   }

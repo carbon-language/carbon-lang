@@ -242,7 +242,7 @@ void DwarfCompileUnit::initStmtList() {
   MCSymbol *LineTableStartSym =
       Asm->OutStreamer->getDwarfLineTableSymbol(getUniqueID());
 
-  stmtListIndex = UnitDie.getValues().size();
+  stmtListIndex = std::distance(UnitDie.begin_values(), UnitDie.end_values());
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section. For split dwarf this is
@@ -255,7 +255,7 @@ void DwarfCompileUnit::initStmtList() {
 }
 
 void DwarfCompileUnit::applyStmtList(DIE &D) {
-  D.addValue(UnitDie.getValues()[stmtListIndex]);
+  D.addValue(UnitDie.begin_values()[stmtListIndex]);
 }
 
 void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,

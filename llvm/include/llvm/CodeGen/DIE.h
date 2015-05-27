@@ -499,7 +499,16 @@ public:
   const std::vector<std::unique_ptr<DIE>> &getChildren() const {
     return Children;
   }
-  const SmallVectorImpl<DIEValue> &getValues() const { return Values; }
+
+  typedef SmallVectorImpl<DIEValue>::const_iterator value_iterator;
+  typedef iterator_range<value_iterator> value_range;
+
+  value_iterator begin_values() const { return Values.begin(); }
+  value_iterator end_values() const { return Values.end(); }
+  value_range values() const {
+    return llvm::make_range(begin_values(), end_values());
+  }
+
   void setValue(unsigned I, DIEValue New) {
     assert(I < Values.size());
     Values[I] = New;

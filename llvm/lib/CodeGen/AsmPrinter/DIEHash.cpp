@@ -31,14 +31,12 @@ using namespace llvm;
 /// \brief Grabs the string in whichever attribute is passed in and returns
 /// a reference to it.
 static StringRef getDIEStringAttr(const DIE &Die, uint16_t Attr) {
-  const auto &Values = Die.getValues();
-
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return an empty string.
-  for (size_t i = 0; i < Values.size(); ++i) {
-    if (Values[i].getAttribute() == Attr)
-      return Values[i].getDIEString().getString();
-  }
+  for (const auto &V : Die.values())
+    if (V.getAttribute() == Attr)
+      return V.getDIEString().getString();
+
   return StringRef("");
 }
 
@@ -118,18 +116,16 @@ void DIEHash::addParentContext(const DIE &Parent) {
 
 // Collect all of the attributes for a particular DIE in single structure.
 void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
-  const SmallVectorImpl<DIEValue> &Values = Die.getValues();
-
 #define COLLECT_ATTR(NAME)                                                     \
   case dwarf::NAME:                                                            \
-    Attrs.NAME = Values[i];                                                    \
+    Attrs.NAME = V;                                                            \
     break
 
-  for (size_t i = 0, e = Values.size(); i != e; ++i) {
+  for (const auto &V : Die.values()) {
     DEBUG(dbgs() << "Attribute: "
-                 << dwarf::AttributeString(Values[i].getAttribute())
+                 << dwarf::AttributeString(V.getAttribute())
                  << " added.\n");
-    switch (Values[i].getAttribute()) {
+    switch (V.getAttribute()) {
       COLLECT_ATTR(DW_AT_name);
       COLLECT_ATTR(DW_AT_accessibility);
       COLLECT_ATTR(DW_AT_address_class);
@@ -267,9 +263,9 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
 
 // Hash all of the values in a block like set of values. This assumes that
 // all of the data is going to be added as integers.
-void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue> &Values) {
-  for (auto I = Values.begin(), E = Values.end(); I != E; ++I)
-    Hash.update((uint64_t)I->getDIEInteger().getValue());
+void DIEHash::hashBlockData(const DIE::value_range &Values) {
+  for (const auto &V : Values)
+    Hash.update((uint64_t)V.getDIEInteger().getValue());
 }
 
 // Hash the contents of a loclistptr class.
@@ -342,10 +338,10 @@ void DIEHash::hashAttribute(DIEValue Value, dwarf::Tag Tag) {
     addULEB128(dwarf::DW_FORM_block);
     if (Value.getType() == DIEValue::isBlock) {
       addULEB128(Value.getDIEBlock().ComputeSize(AP));
-      hashBlockData(Value.getDIEBlock().getValues());
+      hashBlockData(Value.getDIEBlock().values());
     } else if (Value.getType() == DIEValue::isLoc) {
       addULEB128(Value.getDIELoc().ComputeSize(AP));
-      hashBlockData(Value.getDIELoc().getValues());
+      hashBlockData(Value.getDIELoc().values());
     } else {
       // We could add the block length, but that would take
       // a bit of work and not add a lot of uniqueness

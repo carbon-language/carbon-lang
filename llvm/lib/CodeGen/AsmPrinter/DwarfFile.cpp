@@ -97,13 +97,10 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
   // Start the size with the size of abbreviation code.
   Offset += getULEB128Size(Die.getAbbrevNumber());
 
-  const SmallVectorImpl<DIEValue> &Values = Die.getValues();
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
-
   // Size the DIE attribute values.
-  for (unsigned i = 0, N = Values.size(); i < N; ++i)
+  for (const auto &V : Die.values())
     // Size attribute value.
-    Offset += Values[i].SizeOf(Asm, AbbrevData[i].getForm());
+    Offset += V.SizeOf(Asm, V.getForm());
 
   // Get the children.
   const auto &Children = Die.getChildren();

@@ -136,13 +136,11 @@ const DIE *DIE::getUnitOrNull() const {
 }
 
 DIEValue DIE::findAttribute(dwarf::Attribute Attribute) const {
-  const SmallVectorImpl<DIEValue> &Values = getValues();
-
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return NULL.
-  for (size_t i = 0; i < Values.size(); ++i)
-    if (Values[i].getAttribute() == Attribute)
-      return Values[i];
+  for (const auto &V : values())
+    if (V.getAttribute() == Attribute)
+      return V;
   return DIEValue();
 }
 
