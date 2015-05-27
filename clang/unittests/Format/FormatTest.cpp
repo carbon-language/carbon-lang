@@ -4064,6 +4064,8 @@ TEST_F(FormatTest, FunctionAnnotations) {
   // Not function annotations.
   verifyFormat("ASSERT(\"aaaaa\") << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "                << bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+  verifyFormat("TEST_F(ThisIsATestFixtureeeeeeeeeeeee,\n"
+               "       ThisIsATestWithAReallyReallyReallyReallyLongName) {}");
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
