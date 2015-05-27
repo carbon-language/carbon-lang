@@ -194,6 +194,7 @@ def getExpectedTimeouts(platform_name):
     elif target.startswith("freebsd"):
         expected_timeout |= {
             "TestBreakpointConditions.py",
+            "TestValueObjectRecursion.py",
             "TestWatchpointConditionAPI.py",
         }
     elif target.startswith("darwin"):
