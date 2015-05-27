@@ -447,8 +447,7 @@ ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
     if (InsertSub) {
       // An instruction above couldn't be updated, so insert a sub.
       AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII->get(ARM::tSUBi8), Base), true)
-        .addReg(Base, getKillRegState(false)).addImm(WordOffset * 4)
-        .addImm(Pred).addReg(PredReg);
+        .addReg(Base).addImm(WordOffset * 4).addImm(Pred).addReg(PredReg);
       return;
     }
 
@@ -466,8 +465,7 @@ ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
     if (MBBI != MBB.end()) --MBBI;
     AddDefaultT1CC(
       BuildMI(MBB, MBBI, dl, TII->get(ARM::tSUBi8), Base), true)
-      .addReg(Base, getKillRegState(false)).addImm(WordOffset * 4)
-      .addImm(Pred).addReg(PredReg);
+      .addReg(Base).addImm(WordOffset * 4).addImm(Pred).addReg(PredReg);
   }
 }
 
@@ -499,8 +497,8 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   // non-writeback.
   // It's also not possible to merge an STR of the base register in Thumb1.
   if (isThumb1)
-    for (unsigned I = 0; I < NumRegs; ++I)
-      if (Base == Regs[I].first) {
+    for (const std::pair<unsigned, bool> &R : Regs)
+      if (Base == R.first) {
         assert(Base != ARM::SP && "Thumb1 does not allow SP in register list");
         if (Opcode == ARM::tLDRi) {
           Writeback = false;
@@ -656,13 +654,13 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
   MIB.addImm(Pred).addReg(PredReg);
 
-  for (unsigned i = 0; i != NumRegs; ++i)
-    MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
-                     | getKillRegState(Regs[i].second));
+  for (const std::pair<unsigned, bool> &R : Regs)
+    MIB = MIB.addReg(R.first, getDefRegState(isDef)
+                     | getKillRegState(R.second));
 
   // Add implicit defs for super-registers.
-  for (unsigned i = 0, e = ImpDefs.size(); i != e; ++i)
-    MIB.addReg(ImpDefs[i], RegState::ImplicitDefine);
+  for (unsigned ImpDef : ImpDefs)
+    MIB.addReg(ImpDef, RegState::ImplicitDefine);
 
   return true;
 }
@@ -919,7 +917,7 @@ static bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
   case ARM::t2SUBri:
   case ARM::SUBri:
     CheckCPSRDef = true;
-  // fallthrough
+    break;
   case ARM::tSUBspi:
     break;
   }
@@ -954,7 +952,7 @@ static bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
   case ARM::t2ADDri:
   case ARM::ADDri:
     CheckCPSRDef = true;
-  // fallthrough
+    break;
   case ARM::tADDspi:
     break;
   }
@@ -1612,7 +1610,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
     bool Advance  = false;
     bool TryMerge = false;
-    bool Clobber  = false;
 
     bool isMemOp = isMemoryOp(MBBI);
     if (isMemOp) {
@@ -1634,7 +1631,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       // looks like the later ldr(s) use the same base register. Try to
       // merge the ldr's so far, including this one. But don't try to
       // combine the following ldr(s).
-      Clobber = (isi32Load(Opcode) && Base == MBBI->getOperand(0).getReg());
+      bool Clobber = isi32Load(Opcode) && Base == MBBI->getOperand(0).getReg();
 
       // Watch out for:
       // r4 := ldr [r0, #8]
