@@ -365,7 +365,7 @@ typedef double  kmp_real64;
 
 #define KMP_EXPORT	extern	/* export declaration in guide libraries */
 
-#if __GNUC__ == 4
+#if __GNUC__ >= 4
     #define __forceinline __inline
 #endif
 
