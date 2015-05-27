@@ -305,7 +305,12 @@ protected:
     ClangASTType m_clang_type;
     
     struct Flags {
+#ifdef __GNUC__
+        // using unsigned type here to work around a very noisy gcc warning
+        unsigned        clang_type_resolve_state : 2;
+#else
         ResolveState    clang_type_resolve_state : 2;
+#endif
         bool            is_complete_objc_class   : 1;
     } m_flags;
 
