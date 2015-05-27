@@ -105,6 +105,12 @@ XMLDocument::GetRootElement(const char *required_name)
     return XMLNode();
 }
 
+const std::string &
+XMLDocument::GetErrors() const
+{
+    return m_errors.GetString();
+}
+
 bool
 XMLDocument::XMLEnabled ()
 {
@@ -504,6 +510,17 @@ ApplePropertyList::ApplePropertyList (const char *path) :
     ParseFile(path);
 }
 
+ApplePropertyList::~ApplePropertyList()
+{
+}
+
+const std::string &
+ApplePropertyList::GetErrors() const
+{
+    return m_xml_doc.GetErrors();
+}
+
+
 bool
 ApplePropertyList::ParseFile (const char *path)
 {
@@ -619,7 +636,9 @@ namespace {
                     // This is a value node
                     if (key_node)
                     {
-                        dict_sp->AddItem(key_node.GetName(), CreatePlistValue(node));
+                        std::string key_name;
+                        key_node.GetElementText(key_name);
+                        dict_sp->AddItem(key_name, CreatePlistValue(node));
                         key_node.Clear();
                     }
                 }
@@ -639,7 +658,7 @@ namespace {
             node.GetElementTextAsUnsigned(value, 0, 0);
             return StructuredData::ObjectSP(new StructuredData::Integer(value));
         }
-        else if ((element_name == "string") || (element_name == "data"))
+        else if ((element_name == "string") || (element_name == "data") || (element_name == "date"))
         {
             std::string text;
             node.GetElementText(text);

@@ -168,6 +168,9 @@ namespace lldb_private {
         //----------------------------------------------------------------------
         XMLNode
         GetRootElement(const char *required_name = nullptr);
+
+        const std::string &
+        GetErrors() const;
         
         static void
         ErrorCallback (void *ctx, const char *format, ...);
@@ -187,9 +190,14 @@ namespace lldb_private {
 
         ApplePropertyList(const char *path);
 
+        ~ApplePropertyList();
+
         bool
         ParseFile (const char *path);
 
+        const std::string &
+        GetErrors() const;
+        
         explicit operator bool() const
         {
             return IsValid();
