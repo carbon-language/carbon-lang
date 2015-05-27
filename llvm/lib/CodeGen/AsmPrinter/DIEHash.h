@@ -29,7 +29,7 @@ class DIEHash {
 
   // The entry for a particular attribute.
   struct AttrEntry {
-    DIEValue Val;
+    const DIEValue *Val;
     const DIEAbbrevData *Desc;
   };
 
@@ -135,7 +135,7 @@ private:
 
   /// \brief Hashes the data in a block like DIEValue, e.g. DW_FORM_block or
   /// DW_FORM_exprloc.
-  void hashBlockData(const SmallVectorImpl<DIEValue> &Values);
+  void hashBlockData(const SmallVectorImpl<DIEValue *> &Values);
 
   /// \brief Hashes the contents pointed to in the .debug_loc section.
   void hashLocList(const DIELocList &LocList);

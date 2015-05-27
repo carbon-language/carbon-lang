@@ -70,6 +70,7 @@ DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag,
       DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr) {
   assert(UnitTag == dwarf::DW_TAG_compile_unit ||
          UnitTag == dwarf::DW_TAG_type_unit);
+  DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
 DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DwarfCompileUnit &CU, AsmPrinter *A,
@@ -86,6 +87,11 @@ DwarfUnit::~DwarfUnit() {
     DIEBlocks[j]->~DIEBlock();
   for (unsigned j = 0, M = DIELocs.size(); j < M; ++j)
     DIELocs[j]->~DIELoc();
+}
+
+DIEEntry *DwarfUnit::createDIEEntry(DIE &Entry) {
+  DIEEntry *Value = new (DIEValueAllocator) DIEEntry(Entry);
+  return Value;
 }
 
 int64_t DwarfUnit::getDefaultLowerBound() const {
@@ -184,16 +190,18 @@ void DwarfUnit::insertDIE(const DINode *Desc, DIE *D) {
 
 void DwarfUnit::addFlag(DIE &Die, dwarf::Attribute Attribute) {
   if (DD->getDwarfVersion() >= 4)
-    Die.addValue(Attribute, dwarf::DW_FORM_flag_present, DIEInteger(1));
+    Die.addValue(Attribute, dwarf::DW_FORM_flag_present, DIEIntegerOne);
   else
-    Die.addValue(Attribute, dwarf::DW_FORM_flag, DIEInteger(1));
+    Die.addValue(Attribute, dwarf::DW_FORM_flag, DIEIntegerOne);
 }
 
 void DwarfUnit::addUInt(DIE &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, uint64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(false, Integer);
-  Die.addValue(Attribute, *Form, DIEInteger(Integer));
+  DIEValue *Value = Integer == 1 ? DIEIntegerOne : new (DIEValueAllocator)
+                        DIEInteger(Integer);
+  Die.addValue(Attribute, *Form, Value);
 }
 
 void DwarfUnit::addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer) {
@@ -204,7 +212,8 @@ void DwarfUnit::addSInt(DIE &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, int64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(true, Integer);
-  Die.addValue(Attribute, *Form, DIEInteger(Integer));
+  DIEValue *Value = new (DIEValueAllocator) DIEInteger(Integer);
+  Die.addValue(Attribute, *Form, Value);
 }
 
 void DwarfUnit::addSInt(DIELoc &Die, Optional<dwarf::Form> Form,
@@ -216,12 +225,14 @@ void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
                           StringRef String) {
   Die.addValue(Attribute,
                isDwoUnit() ? dwarf::DW_FORM_GNU_str_index : dwarf::DW_FORM_strp,
+               new (DIEValueAllocator)
                DIEString(DU->getStringPool().getEntry(*Asm, String)));
 }
 
 void DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
                          const MCSymbol *Label) {
-  Die.addValue(Attribute, Form, DIELabel(Label));
+  DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+  Die.addValue(Attribute, Form, Value);
 }
 
 void DwarfUnit::addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label) {
@@ -254,12 +265,12 @@ void DwarfUnit::addOpAddress(DIELoc &Die, const MCSymbol *Sym) {
 
 void DwarfUnit::addLabelDelta(DIE &Die, dwarf::Attribute Attribute,
                               const MCSymbol *Hi, const MCSymbol *Lo) {
-  Die.addValue(Attribute, dwarf::DW_FORM_data4,
-               new (DIEValueAllocator) DIEDelta(Hi, Lo));
+  DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
+  Die.addValue(Attribute, dwarf::DW_FORM_data4, Value);
 }
 
 void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE &Entry) {
-  addDIEEntry(Die, Attribute, DIEEntry(Entry));
+  addDIEEntry(Die, Attribute, createDIEEntry(Entry));
 }
 
 void DwarfUnit::addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type) {
@@ -270,13 +281,13 @@ void DwarfUnit::addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type) {
   addFlag(Die, dwarf::DW_AT_declaration);
 
   Die.addValue(dwarf::DW_AT_signature, dwarf::DW_FORM_ref_sig8,
-               DIETypeSignature(Type));
+               new (DIEValueAllocator) DIETypeSignature(Type));
 }
 
 void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
-                            DIEEntry Entry) {
+                            DIEEntry *Entry) {
   const DIE *DieCU = Die.getUnitOrNull();
-  const DIE *EntryCU = Entry.getEntry().getUnitOrNull();
+  const DIE *EntryCU = Entry->getEntry().getUnitOrNull();
   if (!DieCU)
     // We assume that Die belongs to this CU, if it is not linked to any CU yet.
     DieCU = &getUnitDie();
@@ -460,7 +471,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
   // Decode the original location, and use that as the start of the byref
   // variable's location.
-  DIELoc *Loc = new (DIEValueAllocator) DIELoc;
+  DIELoc *Loc = new (DIEValueAllocator) DIELoc();
 
   bool validReg;
   if (Location.isReg())
@@ -577,7 +588,7 @@ static uint64_t getBaseTypeSize(DwarfDebug *DD, const DIDerivedType *Ty) {
 
 void DwarfUnit::addConstantFPValue(DIE &Die, const MachineOperand &MO) {
   assert(MO.isFPImm() && "Invalid machine operand!");
-  DIEBlock *Block = new (DIEValueAllocator) DIEBlock;
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   APFloat FPImm = MO.getFPImm()->getValueAPF();
 
   // Get the raw data form of the floating point.
@@ -633,7 +644,7 @@ void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, bool Unsigned) {
     return;
   }
 
-  DIEBlock *Block = new (DIEValueAllocator) DIEBlock;
+  DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
   // Get the raw data form of the large APInt.
   const uint64_t *Ptr64 = Val.getRawData();
@@ -766,7 +777,22 @@ void DwarfUnit::updateAcceleratorTables(const DIScope *Context,
 void DwarfUnit::addType(DIE &Entity, const DIType *Ty,
                         dwarf::Attribute Attribute) {
   assert(Ty && "Trying to add a type that doesn't exist?");
-  addDIEEntry(Entity, Attribute, DIEEntry(*getOrCreateTypeDIE(Ty)));
+
+  // Check for pre-existence.
+  DIEEntry *Entry = getDIEEntry(Ty);
+  // If it exists then use the existing value.
+  if (Entry) {
+    addDIEEntry(Entity, Attribute, Entry);
+    return;
+  }
+
+  // Construct type.
+  DIE *Buffer = getOrCreateTypeDIE(Ty);
+
+  // Set up proxy.
+  Entry = createDIEEntry(*Buffer);
+  insertDIEEntry(Ty, Entry);
+  addDIEEntry(Entity, Attribute, Entry);
 }
 
 std::string DwarfUnit::getParentContextString(const DIScope *Context) const {
@@ -943,6 +969,12 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const DICompositeType *CTy) {
         if (unsigned PropertyAttributes = Property->getAttributes())
           addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, None,
                   PropertyAttributes);
+
+        DIEEntry *Entry = getDIEEntry(Element);
+        if (!Entry) {
+          Entry = createDIEEntry(ElemDie);
+          insertDIEEntry(Element, Entry);
+        }
       }
     }
 
@@ -1029,7 +1061,7 @@ void DwarfUnit::constructTemplateValueParameterDIE(
     else if (GlobalValue *GV = mdconst::dyn_extract<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
-      DIELoc *Loc = new (DIEValueAllocator) DIELoc;
+      DIELoc *Loc = new (DIEValueAllocator) DIELoc();
       addOpAddress(*Loc, Asm->getSymbol(GV));
       // Emit DW_OP_stack_value to use the address as the immediate value of the
       // parameter, rather than a pointer to it.
@@ -1322,7 +1354,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
     // expression to extract appropriate offset from vtable.
     // BaseAddr = ObAddr + *((*ObAddr) - Offset)
 
-    DIELoc *VBaseLocationDie = new (DIEValueAllocator) DIELoc;
+    DIELoc *VBaseLocationDie = new (DIEValueAllocator) DIELoc();
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_dup);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
     addUInt(*VBaseLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
@@ -1361,7 +1393,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
       OffsetInBytes = DT->getOffsetInBits() >> 3;
 
     if (DD->getDwarfVersion() <= 2) {
-      DIELoc *MemLocationDie = new (DIEValueAllocator) DIELoc;
+      DIELoc *MemLocationDie = new (DIEValueAllocator) DIELoc();
       addUInt(*MemLocationDie, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
       addUInt(*MemLocationDie, dwarf::DW_FORM_udata, OffsetInBytes);
       addBlock(MemberDie, dwarf::DW_AT_data_member_location, MemLocationDie);
@@ -1385,10 +1417,10 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
             dwarf::DW_VIRTUALITY_virtual);
 
   // Objective-C properties.
-  if (DINode *PNode = DT->getObjCProperty())
-    if (DIE *PDie = getDIE(PNode))
+  if (MDNode *PNode = DT->getObjCProperty())
+    if (DIEEntry *PropertyDie = getDIEEntry(PNode))
       MemberDie.addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4,
-                         DIEEntry(*PDie));
+                         PropertyDie);
 
   if (DT->isArtificial())
     addFlag(MemberDie, dwarf::DW_AT_artificial);

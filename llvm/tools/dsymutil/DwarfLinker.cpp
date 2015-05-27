@@ -60,30 +60,6 @@ using HalfOpenIntervalMap =
 
 typedef HalfOpenIntervalMap<uint64_t, int64_t> FunctionIntervals;
 
-// FIXME: Delete this structure once DIE::Values has a stable iterator we can
-// use instead.
-struct PatchLocation {
-  DIE *Die;
-  unsigned Index;
-
-  PatchLocation() : Die(nullptr), Index(0) {}
-  PatchLocation(DIE &Die, unsigned Index) : Die(&Die), Index(Index) {}
-
-  void set(uint64_t New) const {
-    assert(Die);
-    assert(Index < Die->getValues().size());
-    assert(Die->getValues()[Index].getType() == DIEValue::isInteger);
-    Die->setValue(Index, DIEInteger(New));
-  }
-
-  uint64_t get() const {
-    assert(Die);
-    assert(Index < Die->getValues().size());
-    assert(Die->getValues()[Index].getType() == DIEValue::isInteger);
-    return Die->getValues()[Index].getDIEInteger().getValue();
-  }
-};
-
 /// \brief Stores all information relating to a compile unit, be it in
 /// its original instance in the object file to its brand new cloned
 /// and linked DIE tree.
@@ -100,7 +76,7 @@ public:
 
   CompileUnit(DWARFUnit &OrigUnit, unsigned ID)
       : OrigUnit(OrigUnit), ID(ID), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
-        Ranges(RangeAlloc) {
+        Ranges(RangeAlloc), UnitRangeAttribute(nullptr) {
     Info.resize(OrigUnit.getNumDIEs());
   }
 
@@ -130,15 +106,13 @@ public:
   uint64_t getLowPc() const { return LowPc; }
   uint64_t getHighPc() const { return HighPc; }
 
-  Optional<PatchLocation> getUnitRangesAttribute() const {
-    return UnitRangeAttribute;
-  }
+  DIEInteger *getUnitRangesAttribute() const { return UnitRangeAttribute; }
   const FunctionIntervals &getFunctionRanges() const { return Ranges; }
-  const std::vector<PatchLocation> &getRangesAttributes() const {
+  const std::vector<DIEInteger *> &getRangesAttributes() const {
     return RangeAttributes;
   }
 
-  const std::vector<std::pair<PatchLocation, int64_t>> &
+  const std::vector<std::pair<DIEInteger *, int64_t>> &
   getLocationAttributes() const {
     return LocationAttributes;
   }
@@ -153,7 +127,7 @@ public:
   /// RefUnit by \p Attr. The attribute should be fixed up later to
   /// point to the absolute offset of \p Die in the debug_info section.
   void noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
-                            PatchLocation Attr);
+                            DIEInteger *Attr);
 
   /// \brief Apply all fixups recored by noteForwardReference().
   void fixupForwardReferences();
@@ -164,11 +138,11 @@ public:
 
   /// \brief Keep track of a DW_AT_range attribute that we will need to
   /// patch up later.
-  void noteRangeAttribute(const DIE &Die, PatchLocation Attr);
+  void noteRangeAttribute(const DIE &Die, DIEInteger *Attr);
 
   /// \brief Keep track of a location attribute pointing to a location
   /// list in the debug_loc section.
-  void noteLocationAttribute(PatchLocation Attr, int64_t PcOffset);
+  void noteLocationAttribute(DIEInteger *Attr, int64_t PcOffset);
 
   /// \brief Add a name accelerator entry for \p Die with \p Name
   /// which is stored in the string table at \p Offset.
@@ -212,7 +186,7 @@ private:
   /// The offsets for the attributes in this array couldn't be set while
   /// cloning because for cross-cu forward refences the target DIE's
   /// offset isn't known you emit the reference attribute.
-  std::vector<std::tuple<DIE *, const CompileUnit *, PatchLocation>>
+  std::vector<std::tuple<DIE *, const CompileUnit *, DIEInteger *>>
       ForwardDIEReferences;
 
   FunctionIntervals::Allocator RangeAlloc;
@@ -224,15 +198,15 @@ private:
   /// \brief DW_AT_ranges attributes to patch after we have gathered
   /// all the unit's function addresses.
   /// @{
-  std::vector<PatchLocation> RangeAttributes;
-  Optional<PatchLocation> UnitRangeAttribute;
+  std::vector<DIEInteger *> RangeAttributes;
+  DIEInteger *UnitRangeAttribute;
   /// @}
 
   /// \brief Location attributes that need to be transfered from th
   /// original debug_loc section to the liked one. They are stored
   /// along with the PC offset that is to be applied to their
   /// function's address.
-  std::vector<std::pair<PatchLocation, int64_t>> LocationAttributes;
+  std::vector<std::pair<DIEInteger *, int64_t>> LocationAttributes;
 
   /// \brief Accelerator entries for the unit, both for the pub*
   /// sections and the apple* ones.
@@ -255,7 +229,7 @@ uint64_t CompileUnit::computeNextUnitOffset() {
 /// \brief Keep track of a forward cross-cu reference from this unit
 /// to \p Die that lives in \p RefUnit.
 void CompileUnit::noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
-                                       PatchLocation Attr) {
+                                       DIEInteger *Attr) {
   ForwardDIEReferences.emplace_back(Die, RefUnit, Attr);
 }
 
@@ -264,9 +238,9 @@ void CompileUnit::fixupForwardReferences() {
   for (const auto &Ref : ForwardDIEReferences) {
     DIE *RefDie;
     const CompileUnit *RefUnit;
-    PatchLocation Attr;
+    DIEInteger *Attr;
     std::tie(RefDie, RefUnit, Attr) = Ref;
-    Attr.set(RefDie->getOffset() + RefUnit->getStartOffset());
+    Attr->setValue(RefDie->getOffset() + RefUnit->getStartOffset());
   }
 }
 
@@ -277,14 +251,14 @@ void CompileUnit::addFunctionRange(uint64_t FuncLowPc, uint64_t FuncHighPc,
   this->HighPc = std::max(HighPc, FuncHighPc + PcOffset);
 }
 
-void CompileUnit::noteRangeAttribute(const DIE &Die, PatchLocation Attr) {
+void CompileUnit::noteRangeAttribute(const DIE &Die, DIEInteger *Attr) {
   if (Die.getTag() != dwarf::DW_TAG_compile_unit)
     RangeAttributes.push_back(Attr);
   else
     UnitRangeAttribute = Attr;
 }
 
-void CompileUnit::noteLocationAttribute(PatchLocation Attr, int64_t PcOffset) {
+void CompileUnit::noteLocationAttribute(DIEInteger *Attr, int64_t PcOffset) {
   LocationAttributes.emplace_back(Attr, PcOffset);
 }
 
@@ -743,7 +717,8 @@ void DwarfStreamer::emitUnitRangesEntries(CompileUnit &Unit,
 /// point to the new entries.
 void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
                                          DWARFContext &Dwarf) {
-  const auto &Attributes = Unit.getLocationAttributes();
+  const std::vector<std::pair<DIEInteger *, int64_t>> &Attributes =
+      Unit.getLocationAttributes();
 
   if (Attributes.empty())
     return;
@@ -762,8 +737,8 @@ void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
     UnitPcOffset = int64_t(OrigLowPc) - Unit.getLowPc();
 
   for (const auto &Attr : Attributes) {
-    uint32_t Offset = Attr.first.get();
-    Attr.first.set(LocSectionSize);
+    uint32_t Offset = Attr.first->getValue();
+    Attr.first->setValue(LocSectionSize);
     // This is the quantity to add to the old location address to get
     // the correct address for the new one.
     int64_t LocPcOffset = Attr.second + UnitPcOffset;
@@ -1785,7 +1760,7 @@ unsigned DwarfLinker::cloneStringAttribute(DIE &Die, AttributeSpec AttrSpec,
   const char *String = *Val.getAsCString(&U);
   unsigned Offset = StringPool.getStringOffset(String);
   Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_strp,
-               DIEInteger(Offset));
+               new (DIEAlloc) DIEInteger(Offset));
   return 4;
 }
 
@@ -1828,25 +1803,24 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
     // to find the unit offset. (We don't have a DwarfDebug)
     // FIXME: we should be able to design DIEEntry reliance on
     // DwarfDebug away.
-    uint64_t Attr;
+    DIEInteger *Attr;
     if (Ref < InputDIE.getOffset()) {
       // We must have already cloned that DIE.
       uint32_t NewRefOffset =
           RefUnit->getStartOffset() + NewRefDie->getOffset();
-      Attr = NewRefOffset;
+      Attr = new (DIEAlloc) DIEInteger(NewRefOffset);
     } else {
       // A forward reference. Note and fixup later.
-      Attr = 0xBADDEF;
-      Unit.noteForwardReference(NewRefDie, RefUnit,
-                                PatchLocation(Die, Die.getValues().size()));
+      Attr = new (DIEAlloc) DIEInteger(0xBADDEF);
+      Unit.noteForwardReference(NewRefDie, RefUnit, Attr);
     }
     Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::DW_FORM_ref_addr,
-                 DIEInteger(Attr));
+                 Attr);
     return AttrSize;
   }
 
   Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::Form(AttrSpec.Form),
-               DIEEntry(*NewRefDie));
+               new (DIEAlloc) DIEEntry(*NewRefDie));
   return AttrSize;
 }
 
@@ -1857,23 +1831,23 @@ unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
                                           const DWARFFormValue &Val,
                                           unsigned AttrSize) {
   DIE *Attr;
-  DIEValue Value;
+  DIEValue *Value;
   DIELoc *Loc = nullptr;
   DIEBlock *Block = nullptr;
   // Just copy the block data over.
   if (AttrSpec.Form == dwarf::DW_FORM_exprloc) {
-    Loc = new (DIEAlloc) DIELoc;
+    Loc = new (DIEAlloc) DIELoc();
     DIELocs.push_back(Loc);
   } else {
-    Block = new (DIEAlloc) DIEBlock;
+    Block = new (DIEAlloc) DIEBlock();
     DIEBlocks.push_back(Block);
   }
   Attr = Loc ? static_cast<DIE *>(Loc) : static_cast<DIE *>(Block);
-  Value = Loc ? DIEValue(Loc) : DIEValue(Block);
+  Value = Loc ? static_cast<DIEValue *>(Loc) : static_cast<DIEValue *>(Block);
   ArrayRef<uint8_t> Bytes = *Val.getAsBlock();
   for (auto Byte : Bytes)
     Attr->addValue(static_cast<dwarf::Attribute>(0), dwarf::DW_FORM_data1,
-                   DIEInteger(Byte));
+                   new (DIEAlloc) DIEInteger(Byte));
   // FIXME: If DIEBlock and DIELoc just reuses the Size field of
   // the DIE class, this if could be replaced by
   // Attr->setSize(Bytes.size()).
@@ -1919,7 +1893,8 @@ unsigned DwarfLinker::cloneAddressAttribute(DIE &Die, AttributeSpec AttrSpec,
   }
 
   Die.addValue(static_cast<dwarf::Attribute>(AttrSpec.Attr),
-               static_cast<dwarf::Form>(AttrSpec.Form), DIEInteger(Addr));
+               static_cast<dwarf::Form>(AttrSpec.Form),
+               new (DIEAlloc) DIEInteger(Addr));
   return Unit.getOrigUnit().getAddressByteSize();
 }
 
@@ -1947,16 +1922,15 @@ unsigned DwarfLinker::cloneScalarAttribute(
                   &Unit.getOrigUnit(), &InputDIE);
     return 0;
   }
-  DIEInteger Attr(Value);
+  DIEInteger *Attr = new (DIEAlloc) DIEInteger(Value);
   if (AttrSpec.Attr == dwarf::DW_AT_ranges)
-    Unit.noteRangeAttribute(Die, PatchLocation(Die, Die.getValues().size()));
+    Unit.noteRangeAttribute(Die, Attr);
   // A more generic way to check for location attributes would be
   // nice, but it's very unlikely that any other attribute needs a
   // location list.
   else if (AttrSpec.Attr == dwarf::DW_AT_location ||
            AttrSpec.Attr == dwarf::DW_AT_frame_base)
-    Unit.noteLocationAttribute(PatchLocation(Die, Die.getValues().size()),
-                               Info.PCOffset);
+    Unit.noteLocationAttribute(Attr, Info.PCOffset);
   else if (AttrSpec.Attr == dwarf::DW_AT_declaration && Value)
     Info.IsDeclaration = true;
 
@@ -2239,8 +2213,8 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
     UnitPcOffset = int64_t(OrigLowPc) - Unit.getLowPc();
 
   for (const auto &RangeAttribute : Unit.getRangesAttributes()) {
-    uint32_t Offset = RangeAttribute.get();
-    RangeAttribute.set(Streamer->getRangesSectionSize());
+    uint32_t Offset = RangeAttribute->getValue();
+    RangeAttribute->setValue(Streamer->getRangesSectionSize());
     RangeList.extract(RangeExtractor, &Offset);
     const auto &Entries = RangeList.getEntries();
     const DWARFDebugRangeList::RangeListEntry &First = Entries.front();
@@ -2267,10 +2241,10 @@ void DwarfLinker::patchRangesForUnit(const CompileUnit &Unit,
 /// but for the sake of initial bit-for-bit compatibility with legacy
 /// dsymutil, we have to do it in a delayed pass.
 void DwarfLinker::generateUnitRanges(CompileUnit &Unit) const {
-  auto Attr = Unit.getUnitRangesAttribute();
+  DIEInteger *Attr = Unit.getUnitRangesAttribute();
   if (Attr)
-    Attr->set(Streamer->getRangesSectionSize());
-  Streamer->emitUnitRangesEntries(Unit, static_cast<bool>(Attr));
+    Attr->setValue(Streamer->getRangesSectionSize());
+  Streamer->emitUnitRangesEntries(Unit, Attr != nullptr);
 }
 
 /// \brief Insert the new line info sequence \p Seq into the current
@@ -2327,8 +2301,9 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
           return AbbrevData.getAttribute() == dwarf::DW_AT_stmt_list;
         });
     assert(Stmt < Abbrev.end() && "Didn't find DW_AT_stmt_list in cloned DIE!");
-    OutputDIE->setValue(Stmt - Abbrev.begin(),
-                        DIEInteger(Streamer->getLineSectionSize()));
+    DIEInteger *StmtAttr =
+        cast<DIEInteger>(OutputDIE->getValues()[Stmt - Abbrev.begin()]);
+    StmtAttr->setValue(Streamer->getLineSectionSize());
   }
 
   // Parse the original line info for the unit.

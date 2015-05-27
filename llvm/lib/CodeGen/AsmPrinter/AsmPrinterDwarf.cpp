@@ -265,7 +265,7 @@ void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
                             dwarf::TagString(Abbrev.getTag()));
   EmitULEB128(Abbrev.getNumber());
 
-  const SmallVectorImpl<DIEValue> &Values = Die.getValues();
+  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
   const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   // Emit the DIE attribute values.
@@ -277,12 +277,12 @@ void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
     if (isVerbose()) {
       OutStreamer->AddComment(dwarf::AttributeString(Attr));
       if (Attr == dwarf::DW_AT_accessibility)
-        OutStreamer->AddComment(
-            dwarf::AccessibilityString(Values[i].getDIEInteger().getValue()));
+        OutStreamer->AddComment(dwarf::AccessibilityString(
+            cast<DIEInteger>(Values[i])->getValue()));
     }
 
     // Emit an attribute using the defined form.
-    Values[i].EmitValue(this, Form);
+    Values[i]->EmitValue(this, Form);
   }
 
   // Emit the DIE children if any.
