@@ -138,11 +138,17 @@ bool
 BreakpointLocationCollection::ShouldStop (StoppointCallbackContext *context)
 {
     bool shouldStop = false;
-    const size_t count = GetSize();
-    for (size_t i = 0; i < count; i++) 
+    size_t i = 0;
+    size_t prev_size = GetSize();
+    while (i < prev_size)
     {
+        // ShouldStop can remove the breakpoint from the list
         if (GetByIndex(i)->ShouldStop(context))
             shouldStop = true;
+
+        if (prev_size == GetSize())
+            i++;
+        prev_size = GetSize();
     }
     return shouldStop;
 }
