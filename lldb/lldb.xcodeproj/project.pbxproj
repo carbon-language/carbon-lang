@@ -768,6 +768,7 @@
 		6D55BAEE1A8CD0B200A70529 /* PlatformAndroidRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55BAEB1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.cpp */; };
 		6D55BAEF1A8CD0B700A70529 /* PlatformAndroid.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D55BAEA1A8CD08C00A70529 /* PlatformAndroid.h */; };
 		6D55BAF01A8CD0BD00A70529 /* PlatformAndroidRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D55BAEC1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.h */; };
+		6D762BEE1B1605D2006C929D /* LLDBServerUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
@@ -2447,6 +2448,8 @@
 		6D55BAEA1A8CD08C00A70529 /* PlatformAndroid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformAndroid.h; sourceTree = "<group>"; };
 		6D55BAEB1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformAndroidRemoteGDBServer.cpp; sourceTree = "<group>"; };
 		6D55BAEC1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformAndroidRemoteGDBServer.h; sourceTree = "<group>"; };
+		6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LLDBServerUtilities.cpp; path = "tools/lldb-server/LLDBServerUtilities.cpp"; sourceTree = "<group>"; };
+		6D762BED1B1605CD006C929D /* LLDBServerUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LLDBServerUtilities.h; path = "tools/lldb-server/LLDBServerUtilities.h"; sourceTree = "<group>"; };
 		8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryHistory.cpp; path = source/Target/MemoryHistory.cpp; sourceTree = "<group>"; };
 		8C2D6A54197A1EBE006989C9 /* MemoryHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MemoryHistory.h; path = include/lldb/Target/MemoryHistory.h; sourceTree = "<group>"; };
 		8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryHistoryASan.cpp; sourceTree = "<group>"; };
@@ -5318,6 +5321,8 @@
 		E769331B1A94D10E00C73337 /* lldb-server */ = {
 			isa = PBXGroup;
 			children = (
+				6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */,
+				6D762BED1B1605CD006C929D /* LLDBServerUtilities.h */,
 				E769331D1A94D18100C73337 /* lldb-server.cpp */,
 				26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */,
 				26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */,
@@ -6063,6 +6068,7 @@
 				449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */,
 				94CD705216F8F5BC00CF1E42 /* LibCxxMap.cpp in Sources */,
 				2689000513353DB600698AC0 /* BreakpointResolverName.cpp in Sources */,
+				6D762BEE1B1605D2006C929D /* LLDBServerUtilities.cpp in Sources */,
 				2689000713353DB600698AC0 /* BreakpointSite.cpp in Sources */,
 				2689000913353DB600698AC0 /* BreakpointSiteList.cpp in Sources */,
 				26474CC918D0CB5B0073DEBA /* RegisterContextMemory.cpp in Sources */,
