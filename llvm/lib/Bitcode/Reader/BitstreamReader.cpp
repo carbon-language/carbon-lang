@@ -200,8 +200,8 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
       unsigned NumElts = ReadVBR(6);
 
       // Get the element encoding.
-      if (i+2 != e)
-       report_fatal_error("Array op not second to last");
+      if (i + 2 != e)
+        report_fatal_error("Array op not second to last");
       const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
       if (EltEnc.getEncoding() == BitCodeAbbrevOp::Array ||
           EltEnc.getEncoding() == BitCodeAbbrevOp::Blob)
