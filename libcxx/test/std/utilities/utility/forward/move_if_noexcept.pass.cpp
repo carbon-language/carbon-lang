@@ -20,6 +20,8 @@
 
 #include <utility>
 
+#include "test_macros.h"
+
 class A
 {
     A(const A&);
@@ -27,7 +29,7 @@ class A
 public:
 
     A() {}
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
     A(A&&) {}
 #endif
 };
@@ -47,20 +49,23 @@ int main()
     A a;
     const A ca;
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), A&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&&>::value), "");
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
+#else  // C++ < 11
+    // libc++ defines decltype to be __typeof__ in C++03. __typeof__ does not
+    // deduce the reference qualifiers.
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A>::value), "");
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy>::value), "");
+#endif
 
-#if _LIBCPP_STD_VER > 11
+#if TEST_STD_VER > 11
     constexpr int i1 = 23;
     constexpr int i2 = std::move_if_noexcept(i1);
     static_assert(i2 == 23, "" );

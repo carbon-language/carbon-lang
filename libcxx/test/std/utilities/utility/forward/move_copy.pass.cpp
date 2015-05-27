@@ -9,6 +9,8 @@
 
 // test move
 
+// UNSUPPORTED: c++98, c++03
+
 #include <utility>
 #include <cassert>
 
@@ -17,25 +19,13 @@ int move_ctor = 0;
 
 class A
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-#else
-#endif
-
 public:
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     A(const A&) {++copy_ctor;}
     A& operator=(const A&);
 
     A(A&&) {++move_ctor;}
     A& operator=(A&&);
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    A(const A&) {++copy_ctor;}
-    A& operator=(A&);
-
-    operator std::__rv<A> () {return std::__rv<A>(*this);}
-    A(std::__rv<A>) {++move_ctor;}
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     A() {}
 };
