@@ -62,6 +62,8 @@
 // To know about callee-saved.
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/Support/Debug.h"
+// To query the target about frame lowering.
+#include "llvm/Target/TargetFrameLowering.h"
 // To know about frame setup operation.
 #include "llvm/Target/TargetInstrInfo.h"
 // To access TargetInstrInfo.
@@ -338,6 +340,7 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "\n ** Results **\nFrequency of the Entry: " << EntryFreq
                << '\n');
 
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   do {
     DEBUG(dbgs() << "Shrink wrap candidates (#, Name, Freq):\nSave: "
                  << Save->getNumber() << ' ' << Save->getName() << ' '
@@ -345,13 +348,15 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
                  << Restore->getNumber() << ' ' << Restore->getName() << ' '
                  << MBFI->getBlockFreq(Restore).getFrequency() << '\n');
 
-    bool IsSaveCheap;
-    if ((IsSaveCheap = EntryFreq >= MBFI->getBlockFreq(Save).getFrequency()) &&
-        EntryFreq >= MBFI->getBlockFreq(Restore).getFrequency())
+    bool IsSaveCheap, TargetCanUseSaveAsPrologue = false;
+    if (((IsSaveCheap = EntryFreq >= MBFI->getBlockFreq(Save).getFrequency()) &&
+         EntryFreq >= MBFI->getBlockFreq(Restore).getFrequency()) &&
+        ((TargetCanUseSaveAsPrologue = TFI->canUseAsPrologue(*Save)) &&
+         TFI->canUseAsEpilogue(*Restore)))
       break;
-    DEBUG(dbgs() << "New points are too expensive\n");
+    DEBUG(dbgs() << "New points are too expensive or invalid for the target\n");
     MachineBasicBlock *NewBB;
-    if (!IsSaveCheap) {
+    if (!IsSaveCheap || !TargetCanUseSaveAsPrologue) {
       Save = FindIDom<>(*Save, Save->predecessors(), *MDT);
       if (!Save)
         break;
