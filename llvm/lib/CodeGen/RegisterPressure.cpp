@@ -60,11 +60,11 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dumpRegSetPressure(MaxSetPressure, TRI);
   dbgs() << "Live In: ";
   for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
-    dbgs() << PrintReg(LiveInRegs[i], TRI) << " ";
+    dbgs() << PrintVRegOrUnit(LiveInRegs[i], TRI) << " ";
   dbgs() << '\n';
   dbgs() << "Live Out: ";
   for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
-    dbgs() << PrintReg(LiveOutRegs[i], TRI) << " ";
+    dbgs() << PrintVRegOrUnit(LiveOutRegs[i], TRI) << " ";
   dbgs() << '\n';
 }
 
