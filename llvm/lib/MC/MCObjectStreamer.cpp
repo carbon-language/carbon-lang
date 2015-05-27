@@ -42,7 +42,7 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
   if (PendingLabels.size()) {
     if (!F) {
       F = new MCDataFragment();
-      MCSection *CurSection = getCurrentSectionData();
+      MCSection *CurSection = getCurrentSectionOnly();
       CurSection->getFragmentList().insert(CurInsertionPoint, F);
       F->setParent(CurSection);
     }
@@ -99,9 +99,9 @@ void MCObjectStreamer::EmitFrames(MCAsmBackend *MAB) {
 }
 
 MCFragment *MCObjectStreamer::getCurrentFragment() const {
-  assert(getCurrentSectionData() && "No current section!");
+  assert(getCurrentSectionOnly() && "No current section!");
 
-  if (CurInsertionPoint != getCurrentSectionData()->getFragmentList().begin())
+  if (CurInsertionPoint != getCurrentSectionOnly()->getFragmentList().begin())
     return std::prev(CurInsertionPoint);
 
   return nullptr;
@@ -237,7 +237,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst,
                                        const MCSubtargetInfo &STI) {
   MCStreamer::EmitInstruction(Inst, STI);
 
-  MCSection *Sec = getCurrentSectionData();
+  MCSection *Sec = getCurrentSectionOnly();
   Sec->setHasInstructions(true);
 
   // Now that a machine instruction has been assembled into this section, make

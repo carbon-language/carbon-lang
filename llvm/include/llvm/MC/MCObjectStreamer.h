@@ -63,13 +63,11 @@ public:
   void EmitCFISections(bool EH, bool Debug) override;
 
 protected:
-  MCSection *getCurrentSectionData() const { return getCurrentSection().first; }
-
   MCFragment *getCurrentFragment() const;
 
   void insert(MCFragment *F) {
     flushPendingLabels(F);
-    MCSection *CurSection = getCurrentSectionData();
+    MCSection *CurSection = getCurrentSectionOnly();
     CurSection->getFragmentList().insert(CurInsertionPoint, F);
     F->setParent(CurSection);
   }

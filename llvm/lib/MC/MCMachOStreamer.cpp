@@ -288,7 +288,7 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     // important for matching the string table that 'as' generates.
     IndirectSymbolData ISD;
     ISD.Symbol = Symbol;
-    ISD.Section = getCurrentSectionData();
+    ISD.Section = getCurrentSectionOnly();
     getAssembler().getIndirectSymbols().push_back(ISD);
     return true;
   }

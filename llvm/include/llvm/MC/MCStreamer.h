@@ -272,6 +272,7 @@ public:
       return SectionStack.back().first;
     return MCSectionSubPair();
   }
+  MCSection *getCurrentSectionOnly() const { return getCurrentSection().first; }
 
   /// \brief Return the previous section that the streamer is emitting code to.
   MCSectionSubPair getPreviousSection() const {
