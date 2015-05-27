@@ -724,6 +724,18 @@ template struct __declspec(dllimport) ExplicitlyInstantiatedWithDifferentAttr<in
 USEMEMFUNC(ExplicitlyInstantiatedWithDifferentAttr<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitlyInstantiatedWithDifferentAttr@H@@QAEXXZ"
 
+template <typename T> struct ExplicitInstantiationDeclImportedDefTemplate { void f() {} };
+extern template struct ExplicitInstantiationDeclImportedDefTemplate<int>;
+template struct __declspec(dllimport) ExplicitInstantiationDeclImportedDefTemplate<int>;
+USEMEMFUNC(ExplicitInstantiationDeclImportedDefTemplate<int>, f);
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclImportedDefTemplate@H@@QAEXXZ"
+
+template <typename T> struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate { void f() {} };
+extern template struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate <int>;
+template struct __declspec(dllexport) ExplicitInstantiationDeclExportedDefImportedTemplate<int>;
+USEMEMFUNC(ExplicitInstantiationDeclExportedDefImportedTemplate<int>, f);
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedDefImportedTemplate@H@@QAEXXZ"
+
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes

@@ -4739,15 +4739,15 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
 }
 
 /// \brief Check class-level dllimport/dllexport attribute.
-static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
+void Sema::checkClassLevelDLLAttribute(CXXRecordDecl *Class) {
   Attr *ClassAttr = getDLLAttr(Class);
 
   // MSVC inherits DLL attributes to partial class template specializations.
-  if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() && !ClassAttr) {
+  if (Context.getTargetInfo().getCXXABI().isMicrosoft() && !ClassAttr) {
     if (auto *Spec = dyn_cast<ClassTemplatePartialSpecializationDecl>(Class)) {
       if (Attr *TemplateAttr =
               getDLLAttr(Spec->getSpecializedTemplate()->getTemplatedDecl())) {
-        auto *A = cast<InheritableAttr>(TemplateAttr->clone(S.getASTContext()));
+        auto *A = cast<InheritableAttr>(TemplateAttr->clone(getASTContext()));
         A->setInherited(true);
         ClassAttr = A;
       }
@@ -4758,12 +4758,12 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
     return;
 
   if (!Class->isExternallyVisible()) {
-    S.Diag(Class->getLocation(), diag::err_attribute_dll_not_extern)
+    Diag(Class->getLocation(), diag::err_attribute_dll_not_extern)
         << Class << ClassAttr;
     return;
   }
 
-  if (S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+  if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
       !ClassAttr->isInherited()) {
     // Diagnose dll attributes on members of class with dll attribute.
     for (Decl *Member : Class->decls()) {
@@ -4773,10 +4773,10 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
       if (!MemberAttr || MemberAttr->isInherited() || Member->isInvalidDecl())
         continue;
 
-      S.Diag(MemberAttr->getLocation(),
+      Diag(MemberAttr->getLocation(),
              diag::err_attribute_dll_member_of_dll_class)
           << MemberAttr << ClassAttr;
-      S.Diag(ClassAttr->getLocation(), diag::note_previous_attribute);
+      Diag(ClassAttr->getLocation(), diag::note_previous_attribute);
       Member->setInvalidDecl();
     }
   }
@@ -4798,7 +4798,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
   }
 
   // Force declaration of implicit members so they can inherit the attribute.
-  S.ForceDeclarationOfImplicitMembers(Class);
+  ForceDeclarationOfImplicitMembers(Class);
 
   // FIXME: MSVC's docs say all bases must be exportable, but this doesn't
   // seem to be true in practice?
@@ -4818,13 +4818,13 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
 
       if (MD->isInlined()) {
         // MinGW does not import or export inline methods.
-        if (!S.Context.getTargetInfo().getCXXABI().isMicrosoft())
+        if (!Context.getTargetInfo().getCXXABI().isMicrosoft())
           continue;
 
         // MSVC versions before 2015 don't export the move assignment operators,
         // so don't attempt to import them if we have a definition.
         if (ClassImported && MD->isMoveAssignmentOperator() &&
-            !S.getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015))
+            !getLangOpts().isCompatibleWithMSVC(LangOptions::MSVC2015))
           continue;
       }
     }
@@ -4834,7 +4834,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
 
     if (!getDLLAttr(Member)) {
       auto *NewAttr =
-          cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
+          cast<InheritableAttr>(ClassAttr->clone(getASTContext()));
       NewAttr->setInherited(true);
       Member->addAttr(NewAttr);
     }
@@ -4849,7 +4849,7 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         if (TSK == TSK_ImplicitInstantiation && !ClassAttr->isInherited())
           continue;
 
-        S.MarkFunctionReferenced(Class->getLocation(), MD);
+        MarkFunctionReferenced(Class->getLocation(), MD);
 
         // The function will be passed to the consumer when its definition is
         // encountered.
@@ -4860,17 +4860,17 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         // defaulted methods, and the copy and move assignment operators. The
         // latter are exported even if they are trivial, because the address of
         // an operator can be taken and should compare equal accross libraries.
-        DiagnosticErrorTrap Trap(S.Diags);
-        S.MarkFunctionReferenced(Class->getLocation(), MD);
+        DiagnosticErrorTrap Trap(Diags);
+        MarkFunctionReferenced(Class->getLocation(), MD);
         if (Trap.hasErrorOccurred()) {
-          S.Diag(ClassAttr->getLocation(), diag::note_due_to_dllexported_class)
-              << Class->getName() << !S.getLangOpts().CPlusPlus11;
+          Diag(ClassAttr->getLocation(), diag::note_due_to_dllexported_class)
+              << Class->getName() << !getLangOpts().CPlusPlus11;
           break;
         }
 
         // There is no later point when we will see the definition of this
         // function, so pass it to the consumer now.
-        S.Consumer.HandleTopLevelDecl(DeclGroupRef(MD));
+        Consumer.HandleTopLevelDecl(DeclGroupRef(MD));
       }
     }
   }
@@ -5014,7 +5014,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   have inheriting constructors.
   DeclareInheritingConstructors(Record);
 
-  checkDLLAttribute(*this, Record);
+  checkClassLevelDLLAttribute(Record);
 }
 
 /// Look up the special member function that would be called by a special
