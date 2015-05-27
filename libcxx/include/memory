@@ -4040,14 +4040,14 @@ private:
     template <class _Yp>
         _LIBCPP_INLINE_VISIBILITY
         void
-        __enable_weak_this(const enable_shared_from_this<_Yp>* __e) _NOEXCEPT
+        __enable_weak_this(const volatile enable_shared_from_this<_Yp>* __e) _NOEXCEPT
         {
             if (__e)
                 __e->__weak_this_ = *this;
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __enable_weak_this(const void*) _NOEXCEPT {}
+    void __enable_weak_this(const volatile void*) _NOEXCEPT {}
 
     template <class _Up> friend class _LIBCPP_TYPE_VIS_ONLY shared_ptr;
     template <class _Up> friend class _LIBCPP_TYPE_VIS_ONLY weak_ptr;
