@@ -105,7 +105,3 @@ MCSectionData::reverse_iterator MCSectionData::rbegin() {
 MCSectionData::reverse_iterator MCSectionData::rend() {
   return Fragments.rend();
 }
-
-size_t MCSectionData::size() const { return Fragments.size(); }
-
-bool MCSectionData::empty() const { return Fragments.empty(); }

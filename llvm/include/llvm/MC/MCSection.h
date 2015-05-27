@@ -93,10 +93,6 @@ public:
     return const_cast<MCSectionData *>(this)->rend();
   }
 
-  size_t size() const;
-
-  bool empty() const;
-
   void dump();
 
   /// @}
