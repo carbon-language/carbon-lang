@@ -122,7 +122,7 @@ void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
 
 #define COLLECT_ATTR(NAME)                                                     \
   case dwarf::NAME:                                                            \
-    Attrs.NAME.Val = Values[i];                                                \
+    Attrs.NAME = Values[i];                                                    \
     break
 
   for (size_t i = 0, e = Values.size(); i != e; ++i) {
@@ -283,8 +283,7 @@ void DIEHash::hashLocList(const DIELocList &LocList) {
 
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
-void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
-  const DIEValue &Value = Attr.Val;
+void DIEHash::hashAttribute(DIEValue Value, dwarf::Tag Tag) {
   dwarf::Attribute Attribute = Value.getAttribute();
 
   // Other attribute values use the letter 'A' as the marker, and the value
@@ -368,7 +367,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
 void DIEHash::hashAttributes(const DIEAttrs &Attrs, dwarf::Tag Tag) {
 #define ADD_ATTR(ATTR)                                                         \
   {                                                                            \
-    if (ATTR.Val)                                                              \
+    if (ATTR)                                                                  \
       hashAttribute(ATTR, Tag);                                                \
   }
 

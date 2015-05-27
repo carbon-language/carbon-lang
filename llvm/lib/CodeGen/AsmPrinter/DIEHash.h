@@ -26,65 +26,57 @@ class CompileUnit;
 /// \brief An object containing the capability of hashing and adding hash
 /// attributes onto a DIE.
 class DIEHash {
-
-  // The entry for a particular attribute.
-  //
-  // FIXME: Remove this struct, it's pretty boring now.
-  struct AttrEntry {
-    DIEValue Val;
-  };
-
   // Collection of all attributes used in hashing a particular DIE.
   struct DIEAttrs {
-    AttrEntry DW_AT_name;
-    AttrEntry DW_AT_accessibility;
-    AttrEntry DW_AT_address_class;
-    AttrEntry DW_AT_allocated;
-    AttrEntry DW_AT_artificial;
-    AttrEntry DW_AT_associated;
-    AttrEntry DW_AT_binary_scale;
-    AttrEntry DW_AT_bit_offset;
-    AttrEntry DW_AT_bit_size;
-    AttrEntry DW_AT_bit_stride;
-    AttrEntry DW_AT_byte_size;
-    AttrEntry DW_AT_byte_stride;
-    AttrEntry DW_AT_const_expr;
-    AttrEntry DW_AT_const_value;
-    AttrEntry DW_AT_containing_type;
-    AttrEntry DW_AT_count;
-    AttrEntry DW_AT_data_bit_offset;
-    AttrEntry DW_AT_data_location;
-    AttrEntry DW_AT_data_member_location;
-    AttrEntry DW_AT_decimal_scale;
-    AttrEntry DW_AT_decimal_sign;
-    AttrEntry DW_AT_default_value;
-    AttrEntry DW_AT_digit_count;
-    AttrEntry DW_AT_discr;
-    AttrEntry DW_AT_discr_list;
-    AttrEntry DW_AT_discr_value;
-    AttrEntry DW_AT_encoding;
-    AttrEntry DW_AT_enum_class;
-    AttrEntry DW_AT_endianity;
-    AttrEntry DW_AT_explicit;
-    AttrEntry DW_AT_is_optional;
-    AttrEntry DW_AT_location;
-    AttrEntry DW_AT_lower_bound;
-    AttrEntry DW_AT_mutable;
-    AttrEntry DW_AT_ordering;
-    AttrEntry DW_AT_picture_string;
-    AttrEntry DW_AT_prototyped;
-    AttrEntry DW_AT_small;
-    AttrEntry DW_AT_segment;
-    AttrEntry DW_AT_string_length;
-    AttrEntry DW_AT_threads_scaled;
-    AttrEntry DW_AT_upper_bound;
-    AttrEntry DW_AT_use_location;
-    AttrEntry DW_AT_use_UTF8;
-    AttrEntry DW_AT_variable_parameter;
-    AttrEntry DW_AT_virtuality;
-    AttrEntry DW_AT_visibility;
-    AttrEntry DW_AT_vtable_elem_location;
-    AttrEntry DW_AT_type;
+    DIEValue DW_AT_name;
+    DIEValue DW_AT_accessibility;
+    DIEValue DW_AT_address_class;
+    DIEValue DW_AT_allocated;
+    DIEValue DW_AT_artificial;
+    DIEValue DW_AT_associated;
+    DIEValue DW_AT_binary_scale;
+    DIEValue DW_AT_bit_offset;
+    DIEValue DW_AT_bit_size;
+    DIEValue DW_AT_bit_stride;
+    DIEValue DW_AT_byte_size;
+    DIEValue DW_AT_byte_stride;
+    DIEValue DW_AT_const_expr;
+    DIEValue DW_AT_const_value;
+    DIEValue DW_AT_containing_type;
+    DIEValue DW_AT_count;
+    DIEValue DW_AT_data_bit_offset;
+    DIEValue DW_AT_data_location;
+    DIEValue DW_AT_data_member_location;
+    DIEValue DW_AT_decimal_scale;
+    DIEValue DW_AT_decimal_sign;
+    DIEValue DW_AT_default_value;
+    DIEValue DW_AT_digit_count;
+    DIEValue DW_AT_discr;
+    DIEValue DW_AT_discr_list;
+    DIEValue DW_AT_discr_value;
+    DIEValue DW_AT_encoding;
+    DIEValue DW_AT_enum_class;
+    DIEValue DW_AT_endianity;
+    DIEValue DW_AT_explicit;
+    DIEValue DW_AT_is_optional;
+    DIEValue DW_AT_location;
+    DIEValue DW_AT_lower_bound;
+    DIEValue DW_AT_mutable;
+    DIEValue DW_AT_ordering;
+    DIEValue DW_AT_picture_string;
+    DIEValue DW_AT_prototyped;
+    DIEValue DW_AT_small;
+    DIEValue DW_AT_segment;
+    DIEValue DW_AT_string_length;
+    DIEValue DW_AT_threads_scaled;
+    DIEValue DW_AT_upper_bound;
+    DIEValue DW_AT_use_location;
+    DIEValue DW_AT_use_UTF8;
+    DIEValue DW_AT_variable_parameter;
+    DIEValue DW_AT_virtuality;
+    DIEValue DW_AT_visibility;
+    DIEValue DW_AT_vtable_elem_location;
+    DIEValue DW_AT_type;
 
     // Insert any additional ones here...
   };
@@ -142,7 +134,7 @@ private:
   void hashLocList(const DIELocList &LocList);
 
   /// \brief Hashes an individual attribute.
-  void hashAttribute(AttrEntry Attr, dwarf::Tag Tag);
+  void hashAttribute(DIEValue Value, dwarf::Tag Tag);
 
   /// \brief Hashes an attribute that refers to another DIE.
   void hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
