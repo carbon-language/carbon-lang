@@ -42,7 +42,7 @@ public:
   int getMachineType() const override { return llvm::ELF::EM_MIPS; }
   MipsLinkingContext(llvm::Triple triple);
 
-  std::error_code mergeHeaderFlags(uint8_t fileClass, uint64_t flags) override;
+  std::error_code mergeElfFlags(uint64_t flags);
   void mergeReginfoMask(const MipsReginfo &info);
 
   uint32_t getMergedELFFlags() const;

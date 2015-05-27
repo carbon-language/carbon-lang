@@ -36,9 +36,6 @@ std::error_code isCompatible(MemoryBufferRef mb, ELFLinkingContext &ctx) {
   std::tie(size, endian) = llvm::object::getElfArchType(mb.getBuffer());
   if (std::error_code ec = checkCompatibility<ELFT>(size, endian))
     return ec;
-
-  if (auto ec = ctx.mergeHeaderFlags(hdr->getFileClass(), hdr->e_flags))
-    return ec;
   return std::error_code();
 }
 

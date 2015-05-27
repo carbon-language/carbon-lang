@@ -152,6 +152,7 @@ private:
     return nullptr;
   }
 
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
   typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
 
@@ -205,6 +206,11 @@ private:
       ctx.mergeReginfoMask(*regInfo);
       _gp0 = regInfo->ri_gp_value;
     }
+
+    const Elf_Ehdr *hdr = this->_objFile->getHeader();
+    if (std::error_code ec = ctx.mergeElfFlags(hdr->e_flags))
+      return ec;
+
     return std::error_code();
   }
 

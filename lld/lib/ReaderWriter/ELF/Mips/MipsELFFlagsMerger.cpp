@@ -64,8 +64,7 @@ MipsELFFlagsMerger::MipsELFFlagsMerger(bool is64Bits)
 
 uint32_t MipsELFFlagsMerger::getMergedELFFlags() const { return _flags; }
 
-std::error_code MipsELFFlagsMerger::mergeHeaderFlags(uint8_t newClass,
-                                                     uint32_t newFlags) {
+std::error_code MipsELFFlagsMerger::mergeFlags(uint32_t newFlags) {
   // We support two ABI: O32 and N64. The last one does not have
   // the corresponding ELF flag.
   uint32_t inAbi = newFlags & EF_MIPS_ABI;
