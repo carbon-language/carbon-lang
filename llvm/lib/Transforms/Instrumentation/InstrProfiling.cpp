@@ -196,14 +196,17 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   if (It != RegionCounters.end())
     return It->second;
 
-  // Move the name variable to the right section.
+  // Move the name variable to the right section. Make sure it is placed in the
+  // same comdat as its associated function. Otherwise, we may get multiple
+  // counters for the same function in certain cases.
+  Function *Fn = Inc->getParent()->getParent();
   Name->setSection(getNameSection());
   Name->setAlignment(1);
+  Name->setComdat(Fn->getComdat());
 
   uint64_t NumCounters = Inc->getNumCounters()->getZExtValue();
   LLVMContext &Ctx = M->getContext();
   ArrayType *CounterTy = ArrayType::get(Type::getInt64Ty(Ctx), NumCounters);
-  Function *Fn = Inc->getParent()->getParent();
 
   // Create the counters variable.
   auto *Counters = new GlobalVariable(*M, CounterTy, false, Name->getLinkage(),
@@ -212,9 +215,6 @@ InstrProfiling::getOrCreateRegionCounters(InstrProfIncrementInst *Inc) {
   Counters->setVisibility(Name->getVisibility());
   Counters->setSection(getCountersSection());
   Counters->setAlignment(8);
-  // Place the counters in the same comdat section as its parent function.
-  // Otherwise, we may get multiple counters for the same function in certain
-  // cases.
   Counters->setComdat(Fn->getComdat());
 
   RegionCounters[Inc->getName()] = Counters;
