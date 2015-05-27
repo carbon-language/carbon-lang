@@ -1893,6 +1893,8 @@ let Predicates = [HasAVX512] in {
 
   def : Pat<(i32 (zext VK1:$src)),
             (AND32ri (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), (i32 1))>;
+  def : Pat<(i32 (anyext VK1:$src)),
+            (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16))>;
   def : Pat<(i8 (zext VK1:$src)),
             (EXTRACT_SUBREG
              (AND32ri (KMOVWrk
@@ -2222,6 +2224,12 @@ def : Pat<(v16i1 (insert_subvector undef, (v8i1 VK8:$src), (iPTR 0))),
 
 def : Pat<(v8i1 (extract_subvector (v16i1 VK16:$src), (iPTR 8))),
           (v8i1 (COPY_TO_REGCLASS (KSHIFTRWri VK16:$src, (i8 8)), VK8))>;
+
+def : Pat<(v32i1 (extract_subvector (v64i1 VK64:$src), (iPTR 0))),
+          (v32i1 (COPY_TO_REGCLASS VK64:$src, VK32))>;
+
+def : Pat<(v32i1 (extract_subvector (v64i1 VK64:$src), (iPTR 32))),
+          (v32i1 (COPY_TO_REGCLASS (KSHIFTRQri VK64:$src, (i8 32)), VK32))>;
 
 let Predicates = [HasVLX] in {
   def : Pat<(v8i1 (insert_subvector undef, (v4i1 VK4:$src), (iPTR 0))),

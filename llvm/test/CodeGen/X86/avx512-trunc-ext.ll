@@ -950,3 +950,12 @@ define void @extload_v8i64(<8 x i8>* %a, <8 x i64>* %res) {
   ret void
 }
 
+;SKX-LABEL: test21:
+;SKX:       vmovdqu16 %zmm0, %zmm3 {%k1}
+;SKX-NEXT:  kshiftrq  $32, %k1, %k1
+;SKX-NEXT:  vmovdqu16 %zmm1, %zmm2 {%k1}
+define <64 x i16> @test21(<64 x i16> %x , <64 x i1> %mask) nounwind readnone {
+  %ret = select <64 x i1> %mask, <64 x i16> %x, <64 x i16> zeroinitializer
+  ret <64 x i16> %ret
+}  
+
