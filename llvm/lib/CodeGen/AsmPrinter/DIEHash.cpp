@@ -31,18 +31,14 @@ using namespace llvm;
 /// \brief Grabs the string in whichever attribute is passed in and returns
 /// a reference to it.
 static StringRef getDIEStringAttr(const DIE &Die, uint16_t Attr) {
-  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
+  const auto &Values = Die.getValues();
   const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return an empty string.
   for (size_t i = 0; i < Values.size(); ++i) {
-    if (Abbrevs.getData()[i].getAttribute() == Attr) {
-      DIEValue *V = Values[i];
-      assert(isa<DIEString>(V) && "String requested. Not a string.");
-      DIEString *S = cast<DIEString>(V);
-      return S->getString();
-    }
+    if (Abbrevs.getData()[i].getAttribute() == Attr)
+      return Values[i].getDIEString().getString();
   }
   return StringRef("");
 }
@@ -123,7 +119,7 @@ void DIEHash::addParentContext(const DIE &Parent) {
 
 // Collect all of the attributes for a particular DIE in single structure.
 void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
-  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
+  const SmallVectorImpl<DIEValue> &Values = Die.getValues();
   const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
 #define COLLECT_ATTR(NAME)                                                     \
@@ -274,11 +270,9 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
 
 // Hash all of the values in a block like set of values. This assumes that
 // all of the data is going to be added as integers.
-void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue *> &Values) {
-  for (SmallVectorImpl<DIEValue *>::const_iterator I = Values.begin(),
-                                                   E = Values.end();
-       I != E; ++I)
-    Hash.update((uint64_t)cast<DIEInteger>(*I)->getValue());
+void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue> &Values) {
+  for (auto I = Values.begin(), E = Values.end(); I != E; ++I)
+    Hash.update((uint64_t)I->getDIEInteger().getValue());
 }
 
 // Hash the contents of a loclistptr class.
@@ -293,7 +287,7 @@ void DIEHash::hashLocList(const DIELocList &LocList) {
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
-  const DIEValue *Value = Attr.Val;
+  const DIEValue &Value = Attr.Val;
   const DIEAbbrevData *Desc = Attr.Desc;
   dwarf::Attribute Attribute = Desc->getAttribute();
 
@@ -304,12 +298,15 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   // computation is limited to the following: DW_FORM_sdata, DW_FORM_flag,
   // DW_FORM_string, and DW_FORM_block.
 
-  switch (Value->getType()) {
+  switch (Value.getType()) {
+  case DIEValue::isNone:
+    llvm_unreachable("Expected valid DIEValue");
+
     // 7.27 Step 3
     // ... An attribute that refers to another type entry T is processed as
     // follows:
   case DIEValue::isEntry:
-    hashDIEEntry(Attribute, Tag, cast<DIEEntry>(Value)->getEntry());
+    hashDIEEntry(Attribute, Tag, Value.getDIEEntry().getEntry());
     break;
   case DIEValue::isInteger: {
     addULEB128('A');
@@ -322,14 +319,14 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     case dwarf::DW_FORM_udata:
     case dwarf::DW_FORM_sdata:
       addULEB128(dwarf::DW_FORM_sdata);
-      addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
+      addSLEB128((int64_t)Value.getDIEInteger().getValue());
       break;
     // DW_FORM_flag_present is just flag with a value of one. We still give it a
     // value so just use the value.
     case dwarf::DW_FORM_flag_present:
     case dwarf::DW_FORM_flag:
       addULEB128(dwarf::DW_FORM_flag);
-      addULEB128((int64_t)cast<DIEInteger>(Value)->getValue());
+      addULEB128((int64_t)Value.getDIEInteger().getValue());
       break;
     default:
       llvm_unreachable("Unknown integer form!");
@@ -340,7 +337,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_string);
-    addString(cast<DIEString>(Value)->getString());
+    addString(Value.getDIEString().getString());
     break;
   case DIEValue::isBlock:
   case DIEValue::isLoc:
@@ -348,17 +345,17 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_block);
-    if (isa<DIEBlock>(Value)) {
-      addULEB128(cast<DIEBlock>(Value)->ComputeSize(AP));
-      hashBlockData(cast<DIEBlock>(Value)->getValues());
-    } else if (isa<DIELoc>(Value)) {
-      addULEB128(cast<DIELoc>(Value)->ComputeSize(AP));
-      hashBlockData(cast<DIELoc>(Value)->getValues());
+    if (Value.getType() == DIEValue::isBlock) {
+      addULEB128(Value.getDIEBlock().ComputeSize(AP));
+      hashBlockData(Value.getDIEBlock().getValues());
+    } else if (Value.getType() == DIEValue::isLoc) {
+      addULEB128(Value.getDIELoc().ComputeSize(AP));
+      hashBlockData(Value.getDIELoc().getValues());
     } else {
       // We could add the block length, but that would take
       // a bit of work and not add a lot of uniqueness
       // to the hash in some way we could test.
-      hashLocList(*cast<DIELocList>(Value));
+      hashLocList(Value.getDIELocList());
     }
     break;
     // FIXME: It's uncertain whether or not we should handle this at the moment.
@@ -375,7 +372,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
 void DIEHash::hashAttributes(const DIEAttrs &Attrs, dwarf::Tag Tag) {
 #define ADD_ATTR(ATTR)                                                         \
   {                                                                            \
-    if (ATTR.Val != 0)                                                         \
+    if (ATTR.Val)                                                              \
       hashAttribute(ATTR, Tag);                                                \
   }
 
