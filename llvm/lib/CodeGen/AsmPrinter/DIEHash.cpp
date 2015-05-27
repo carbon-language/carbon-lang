@@ -32,12 +32,11 @@ using namespace llvm;
 /// a reference to it.
 static StringRef getDIEStringAttr(const DIE &Die, uint16_t Attr) {
   const auto &Values = Die.getValues();
-  const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return an empty string.
   for (size_t i = 0; i < Values.size(); ++i) {
-    if (Abbrevs.getData()[i].getAttribute() == Attr)
+    if (Values[i].getAttribute() == Attr)
       return Values[i].getDIEString().getString();
   }
   return StringRef("");
@@ -120,19 +119,17 @@ void DIEHash::addParentContext(const DIE &Parent) {
 // Collect all of the attributes for a particular DIE in single structure.
 void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
   const SmallVectorImpl<DIEValue> &Values = Die.getValues();
-  const DIEAbbrev &Abbrevs = Die.getAbbrev();
 
 #define COLLECT_ATTR(NAME)                                                     \
   case dwarf::NAME:                                                            \
     Attrs.NAME.Val = Values[i];                                                \
-    Attrs.NAME.Desc = &Abbrevs.getData()[i];                                   \
     break
 
   for (size_t i = 0, e = Values.size(); i != e; ++i) {
     DEBUG(dbgs() << "Attribute: "
-                 << dwarf::AttributeString(Abbrevs.getData()[i].getAttribute())
+                 << dwarf::AttributeString(Values[i].getAttribute())
                  << " added.\n");
-    switch (Abbrevs.getData()[i].getAttribute()) {
+    switch (Values[i].getAttribute()) {
       COLLECT_ATTR(DW_AT_name);
       COLLECT_ATTR(DW_AT_accessibility);
       COLLECT_ATTR(DW_AT_address_class);
@@ -288,8 +285,7 @@ void DIEHash::hashLocList(const DIELocList &LocList) {
 // the form.
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   const DIEValue &Value = Attr.Val;
-  const DIEAbbrevData *Desc = Attr.Desc;
-  dwarf::Attribute Attribute = Desc->getAttribute();
+  dwarf::Attribute Attribute = Value.getAttribute();
 
   // Other attribute values use the letter 'A' as the marker, and the value
   // consists of the form code (encoded as an unsigned LEB128 value) followed by
@@ -311,7 +307,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   case DIEValue::isInteger: {
     addULEB128('A');
     addULEB128(Attribute);
-    switch (Desc->getForm()) {
+    switch (Value.getForm()) {
     case dwarf::DW_FORM_data1:
     case dwarf::DW_FORM_data2:
     case dwarf::DW_FORM_data4:

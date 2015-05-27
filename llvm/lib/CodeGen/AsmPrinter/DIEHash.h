@@ -28,9 +28,10 @@ class CompileUnit;
 class DIEHash {
 
   // The entry for a particular attribute.
+  //
+  // FIXME: Remove this struct, it's pretty boring now.
   struct AttrEntry {
     DIEValue Val;
-    const DIEAbbrevData *Desc;
   };
 
   // Collection of all attributes used in hashing a particular DIE.

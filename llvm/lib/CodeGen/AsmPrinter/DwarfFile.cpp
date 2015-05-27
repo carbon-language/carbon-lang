@@ -24,21 +24,27 @@ DwarfFile::~DwarfFile() {}
 
 // Define a unique number for the abbreviation.
 //
-void DwarfFile::assignAbbrevNumber(DIEAbbrev &Abbrev) {
-  // Check the set for priors.
-  DIEAbbrev *InSet = AbbreviationsSet.GetOrInsertNode(&Abbrev);
+DIEAbbrev &DwarfFile::assignAbbrevNumber(DIE &Die) {
+  FoldingSetNodeID ID;
+  DIEAbbrev Abbrev = Die.generateAbbrev();
+  Abbrev.Profile(ID);
 
-  // If it's newly added.
-  if (InSet == &Abbrev) {
-    // Add to abbreviation list.
-    Abbreviations.push_back(&Abbrev);
-
-    // Assign the vector position + 1 as its number.
-    Abbrev.setNumber(Abbreviations.size());
-  } else {
-    // Assign existing abbreviation number.
-    Abbrev.setNumber(InSet->getNumber());
+  void *InsertPos;
+  if (DIEAbbrev *Existing =
+          AbbreviationsSet.FindNodeOrInsertPos(ID, InsertPos)) {
+    Die.setAbbrevNumber(Existing->getNumber());
+    return *Existing;
   }
+
+  // Move the abbreviation to the heap and assign a number.
+  DIEAbbrev *New = new (AbbrevAllocator) DIEAbbrev(std::move(Abbrev));
+  Abbreviations.push_back(New);
+  New->setNumber(Abbreviations.size());
+  Die.setAbbrevNumber(Abbreviations.size());
+
+  // Store it for lookup.
+  AbbreviationsSet.InsertNode(New, InsertPos);
+  return *New;
 }
 
 void DwarfFile::addUnit(std::unique_ptr<DwarfUnit> U) {
@@ -83,10 +89,7 @@ void DwarfFile::computeSizeAndOffsets() {
 // CU. It returns the offset after laying out the DIE.
 unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
   // Record the abbreviation.
-  assignAbbrevNumber(Die.getAbbrev());
-
-  // Get the abbreviation for this DIE.
-  const DIEAbbrev &Abbrev = Die.getAbbrev();
+  const DIEAbbrev &Abbrev = assignAbbrevNumber(Die);
 
   // Set DIE offset
   Die.setOffset(Offset);

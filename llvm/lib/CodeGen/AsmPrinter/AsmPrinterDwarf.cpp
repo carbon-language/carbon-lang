@@ -254,24 +254,20 @@ void AsmPrinter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
 }
 
 void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
-  // Get the abbreviation for this DIE.
-  const DIEAbbrev &Abbrev = Die.getAbbrev();
-
   // Emit the code (index) for the abbreviation.
   if (isVerbose())
-    OutStreamer->AddComment("Abbrev [" + Twine(Abbrev.getNumber()) +
-                            "] 0x" + Twine::utohexstr(Die.getOffset()) +
-                            ":0x" + Twine::utohexstr(Die.getSize()) + " " +
-                            dwarf::TagString(Abbrev.getTag()));
-  EmitULEB128(Abbrev.getNumber());
+    OutStreamer->AddComment("Abbrev [" + Twine(Die.getAbbrevNumber()) + "] 0x" +
+                            Twine::utohexstr(Die.getOffset()) + ":0x" +
+                            Twine::utohexstr(Die.getSize()) + " " +
+                            dwarf::TagString(Die.getTag()));
+  EmitULEB128(Die.getAbbrevNumber());
 
   const SmallVectorImpl<DIEValue> &Values = Die.getValues();
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
 
   // Emit the DIE attribute values.
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    dwarf::Attribute Attr = AbbrevData[i].getAttribute();
-    dwarf::Form Form = AbbrevData[i].getForm();
+    dwarf::Attribute Attr = Values[i].getAttribute();
+    dwarf::Form Form = Values[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
 
     if (isVerbose()) {
@@ -286,7 +282,7 @@ void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
   }
 
   // Emit the DIE children if any.
-  if (Abbrev.hasChildren()) {
+  if (Die.hasChildren()) {
     for (auto &Child : Die.getChildren())
       emitDwarfDIE(*Child);
 

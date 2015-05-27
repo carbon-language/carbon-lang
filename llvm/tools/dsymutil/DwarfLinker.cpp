@@ -72,8 +72,10 @@ struct PatchLocation {
   void set(uint64_t New) const {
     assert(Die);
     assert(Index < Die->getValues().size());
-    assert(Die->getValues()[Index].getType() == DIEValue::isInteger);
-    Die->setValue(Index, DIEInteger(New));
+    const auto &Old = Die->getValues()[Index];
+    assert(Old.getType() == DIEValue::isInteger);
+    Die->setValue(Index,
+                  DIEValue(Old.getAttribute(), Old.getForm(), DIEInteger(New)));
   }
 
   uint64_t get() const {
@@ -1869,7 +1871,13 @@ unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
     DIEBlocks.push_back(Block);
   }
   Attr = Loc ? static_cast<DIE *>(Loc) : static_cast<DIE *>(Block);
-  Value = Loc ? DIEValue(Loc) : DIEValue(Block);
+
+  if (Loc)
+    Value = DIEValue(dwarf::Attribute(AttrSpec.Attr),
+                     dwarf::Form(AttrSpec.Form), Loc);
+  else
+    Value = DIEValue(dwarf::Attribute(AttrSpec.Attr),
+                     dwarf::Form(AttrSpec.Form), Block);
   ArrayRef<uint8_t> Bytes = *Val.getAsBlock();
   for (auto Byte : Bytes)
     Attr->addValue(static_cast<dwarf::Attribute>(0), dwarf::DW_FORM_data1,
@@ -1883,8 +1891,7 @@ unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
     else
       Block->ComputeSize(&Streamer->getAsmPrinter());
   }
-  Die.addValue(dwarf::Attribute(AttrSpec.Attr), dwarf::Form(AttrSpec.Form),
-               Value);
+  Die.addValue(Value);
   return AttrSize;
 }
 
@@ -2183,14 +2190,15 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
     Unit.addTypeAccelerator(Die, AttrInfo.Name, AttrInfo.NameOffset);
   }
 
-  DIEAbbrev &NewAbbrev = Die->getAbbrev();
+  DIEAbbrev NewAbbrev = Die->generateAbbrev();
   // If a scope DIE is kept, we must have kept at least one child. If
   // it's not the case, we'll just be emitting one wasteful end of
   // children marker, but things won't break.
   if (InputDIE.hasChildren())
     NewAbbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
   // Assign a permanent abbrev number
-  AssignAbbrev(Die->getAbbrev());
+  AssignAbbrev(NewAbbrev);
+  Die->setAbbrevNumber(NewAbbrev.getNumber());
 
   // Add the size of the abbreviation number to the output offset.
   OutOffset += getULEB128Size(Die->getAbbrevNumber());
@@ -2321,14 +2329,15 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
 
   // Update the cloned DW_AT_stmt_list with the correct debug_line offset.
   if (auto *OutputDIE = Unit.getOutputUnitDIE()) {
-    const auto &Abbrev = OutputDIE->getAbbrev().getData();
-    auto Stmt = std::find_if(
-        Abbrev.begin(), Abbrev.end(), [](const DIEAbbrevData &AbbrevData) {
-          return AbbrevData.getAttribute() == dwarf::DW_AT_stmt_list;
+    const auto &Values = OutputDIE->getValues();
+    auto Stmt =
+        std::find_if(Values.begin(), Values.end(), [](const DIEValue &Value) {
+          return Value.getAttribute() == dwarf::DW_AT_stmt_list;
         });
-    assert(Stmt < Abbrev.end() && "Didn't find DW_AT_stmt_list in cloned DIE!");
-    OutputDIE->setValue(Stmt - Abbrev.begin(),
-                        DIEInteger(Streamer->getLineSectionSize()));
+    assert(Stmt < Values.end() && "Didn't find DW_AT_stmt_list in cloned DIE!");
+    OutputDIE->setValue(Stmt - Values.begin(),
+                        DIEValue(Stmt->getAttribute(), Stmt->getForm(),
+                                 DIEInteger(Streamer->getLineSectionSize())));
   }
 
   // Parse the original line info for the unit.

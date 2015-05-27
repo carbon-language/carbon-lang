@@ -107,6 +107,13 @@ void DIEAbbrev::print(raw_ostream &O) {
 void DIEAbbrev::dump() { print(dbgs()); }
 #endif
 
+DIEAbbrev DIE::generateAbbrev() const {
+  DIEAbbrev Abbrev(Tag, hasChildren());
+  for (const DIEValue &V : Values)
+    Abbrev.AddAttribute(V.getAttribute(), V.getForm());
+  return Abbrev;
+}
+
 /// Climb up the parent chain to get the unit DIE to which this DIE
 /// belongs.
 const DIE *DIE::getUnit() const {
@@ -130,12 +137,11 @@ const DIE *DIE::getUnitOrNull() const {
 
 DIEValue DIE::findAttribute(dwarf::Attribute Attribute) const {
   const SmallVectorImpl<DIEValue> &Values = getValues();
-  const DIEAbbrev &Abbrevs = getAbbrev();
 
   // Iterate through all the attributes until we find the one we're
   // looking for, if we can't find it return NULL.
   for (size_t i = 0; i < Values.size(); ++i)
-    if (Abbrevs.getData()[i].getAttribute() == Attribute)
+    if (Values[i].getAttribute() == Attribute)
       return Values[i];
   return DIEValue();
 }
@@ -143,7 +149,7 @@ DIEValue DIE::findAttribute(dwarf::Attribute Attribute) const {
 #ifndef NDEBUG
 void DIE::print(raw_ostream &O, unsigned IndentCount) const {
   const std::string Indent(IndentCount, ' ');
-  bool isBlock = Abbrev.getTag() == 0;
+  bool isBlock = getTag() == 0;
 
   if (!isBlock) {
     O << Indent
@@ -153,26 +159,24 @@ void DIE::print(raw_ostream &O, unsigned IndentCount) const {
       << ", Size: " << Size << "\n";
 
     O << Indent
-      << dwarf::TagString(Abbrev.getTag())
+      << dwarf::TagString(getTag())
       << " "
-      << dwarf::ChildrenString(Abbrev.hasChildren()) << "\n";
+      << dwarf::ChildrenString(hasChildren()) << "\n";
   } else {
     O << "Size: " << Size << "\n";
   }
 
-  const SmallVectorImpl<DIEAbbrevData> &Data = Abbrev.getData();
-
   IndentCount += 2;
-  for (unsigned i = 0, N = Data.size(); i < N; ++i) {
+  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
     O << Indent;
 
     if (!isBlock)
-      O << dwarf::AttributeString(Data[i].getAttribute());
+      O << dwarf::AttributeString(Values[i].getAttribute());
     else
       O << "Blk[" << i << "]";
 
     O <<  "  "
-      << dwarf::FormEncodingString(Data[i].getForm())
+      << dwarf::FormEncodingString(Values[i].getForm())
       << " ";
     Values[i].print(O);
     O << "\n";
@@ -505,9 +509,8 @@ void DIETypeSignature::print(raw_ostream &O) const {
 ///
 unsigned DIELoc::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
     for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i].SizeOf(AP, AbbrevData[i].getForm());
+      Size += Values[i].SizeOf(AP, Values[i].getForm());
   }
 
   return Size;
@@ -526,9 +529,8 @@ void DIELoc::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
     Asm->EmitULEB128(Size); break;
   }
 
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
-    Values[i].EmitValue(Asm, AbbrevData[i].getForm());
+    Values[i].EmitValue(Asm, Values[i].getForm());
 }
 
 /// SizeOf - Determine size of location data in bytes.
@@ -560,9 +562,8 @@ void DIELoc::print(raw_ostream &O) const {
 ///
 unsigned DIEBlock::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
     for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i].SizeOf(AP, AbbrevData[i].getForm());
+      Size += Values[i].SizeOf(AP, Values[i].getForm());
   }
 
   return Size;
@@ -579,9 +580,8 @@ void DIEBlock::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_block:  Asm->EmitULEB128(Size); break;
   }
 
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
   for (unsigned i = 0, N = Values.size(); i < N; ++i)
-    Values[i].EmitValue(Asm, AbbrevData[i].getForm());
+    Values[i].EmitValue(Asm, Values[i].getForm());
 }
 
 /// SizeOf - Determine size of block data in bytes.

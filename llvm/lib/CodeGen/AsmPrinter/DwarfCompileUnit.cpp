@@ -51,8 +51,10 @@ void DwarfCompileUnit::addLocalLabelAddress(DIE &Die,
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
-  Die.addValue(Attribute, dwarf::DW_FORM_addr,
-               Label ? DIEValue(DIELabel(Label)) : DIEValue(DIEInteger(0)));
+  if (Label)
+    Die.addValue(Attribute, dwarf::DW_FORM_addr, DIELabel(Label));
+  else
+    Die.addValue(Attribute, dwarf::DW_FORM_addr, DIEInteger(0));
 }
 
 unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName,
@@ -253,9 +255,7 @@ void DwarfCompileUnit::initStmtList() {
 }
 
 void DwarfCompileUnit::applyStmtList(DIE &D) {
-  D.addValue(dwarf::DW_AT_stmt_list,
-             UnitDie.getAbbrev().getData()[stmtListIndex].getForm(),
-             UnitDie.getValues()[stmtListIndex]);
+  D.addValue(UnitDie.getValues()[stmtListIndex]);
 }
 
 void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,

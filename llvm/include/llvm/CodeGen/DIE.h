@@ -315,7 +315,9 @@ public:
 private:
   /// Ty - Type of data stored in the value.
   ///
-  Type Ty;
+  Type Ty = isNone;
+  dwarf::Attribute Attribute = (dwarf::Attribute)0;
+  dwarf::Form Form = (dwarf::Form)0;
 
   /// Storage for the value.
   ///
@@ -387,20 +389,28 @@ private:
   }
 
 public:
-  DIEValue() : Ty(isNone) {}
-  DIEValue(const DIEValue &X) : Ty(X.Ty) { copyVal(X); }
+  DIEValue() = default;
+  DIEValue(const DIEValue &X) : Ty(X.Ty), Attribute(X.Attribute), Form(X.Form) {
+    copyVal(X);
+  }
   DIEValue &operator=(const DIEValue &X) {
     destroyVal();
     Ty = X.Ty;
+    Attribute = X.Attribute;
+    Form = X.Form;
     copyVal(X);
     return *this;
   }
   ~DIEValue() { destroyVal(); }
 
 #define HANDLE_DIEVALUE_SMALL(T)                                               \
-  DIEValue(const DIE##T &V) : Ty(is##T) { construct<DIE##T>(V); }
+  DIEValue(dwarf::Attribute Attribute, dwarf::Form Form, const DIE##T &V)      \
+      : Ty(is##T), Attribute(Attribute), Form(Form) {                          \
+    construct<DIE##T>(V);                                                      \
+  }
 #define HANDLE_DIEVALUE_LARGE(T)                                               \
-  DIEValue(const DIE##T *V) : Ty(is##T) {                                      \
+  DIEValue(dwarf::Attribute Attribute, dwarf::Form Form, const DIE##T *V)      \
+      : Ty(is##T), Attribute(Attribute), Form(Form) {                          \
     assert(V && "Expected valid value");                                       \
     construct<const DIE##T *>(V);                                              \
   }
@@ -408,6 +418,8 @@ public:
 
   // Accessors
   Type getType() const { return Ty; }
+  dwarf::Attribute getAttribute() const { return Attribute; }
+  dwarf::Form getForm() const { return Form; }
   explicit operator bool() const { return Ty; }
 
 #define HANDLE_DIEVALUE_SMALL(T)                                               \
@@ -449,9 +461,11 @@ protected:
   ///
   unsigned Size;
 
-  /// Abbrev - Buffer for constructing abbreviation.
+  unsigned AbbrevNumber = ~0u;
+
+  /// Tag - Dwarf tag code.
   ///
-  DIEAbbrev Abbrev;
+  dwarf::Tag Tag = (dwarf::Tag)0;
 
   /// Children DIEs.
   ///
@@ -470,22 +484,18 @@ protected:
   SmallVector<DIEValue, 12> Values;
 
 protected:
-  DIE()
-      : Offset(0), Size(0), Abbrev((dwarf::Tag)0, dwarf::DW_CHILDREN_no),
-        Parent(nullptr) {}
+  DIE() : Offset(0), Size(0), Parent(nullptr) {}
 
 public:
   explicit DIE(dwarf::Tag Tag)
-      : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
-        Parent(nullptr) {}
+      : Offset(0), Size(0), Tag(Tag), Parent(nullptr) {}
 
   // Accessors.
-  DIEAbbrev &getAbbrev() { return Abbrev; }
-  const DIEAbbrev &getAbbrev() const { return Abbrev; }
-  unsigned getAbbrevNumber() const { return Abbrev.getNumber(); }
-  dwarf::Tag getTag() const { return Abbrev.getTag(); }
+  unsigned getAbbrevNumber() const { return AbbrevNumber; }
+  dwarf::Tag getTag() const { return Tag; }
   unsigned getOffset() const { return Offset; }
   unsigned getSize() const { return Size; }
+  bool hasChildren() const { return !Children.empty(); }
   const std::vector<std::unique_ptr<DIE>> &getChildren() const {
     return Children;
   }
@@ -495,6 +505,16 @@ public:
     Values[I] = New;
   }
   DIE *getParent() const { return Parent; }
+
+  /// Generate the abbreviation for this DIE.
+  ///
+  /// Calculate the abbreviation for this, which should be uniqued and
+  /// eventually used to call \a setAbbrevNumber().
+  DIEAbbrev generateAbbrev() const;
+
+  /// Set the abbreviation number for this DIE.
+  void setAbbrevNumber(unsigned I) { AbbrevNumber = I; }
+
   /// Climb up the parent chain to get the compile or type unit DIE this DIE
   /// belongs to.
   const DIE *getUnit() const;
@@ -506,16 +526,16 @@ public:
 
   /// addValue - Add a value and attributes to a DIE.
   ///
-  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, DIEValue Value) {
-    Abbrev.AddAttribute(Attribute, Form);
-    Values.push_back(Value);
+  void addValue(DIEValue Value) { Values.push_back(Value); }
+  template <class T>
+  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, T &&Value) {
+    Values.emplace_back(Attribute, Form, std::forward<T>(Value));
   }
 
   /// addChild - Add a child to the DIE.
   ///
   void addChild(std::unique_ptr<DIE> Child) {
     assert(!Child->getParent());
-    Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
     Child->Parent = this;
     Children.push_back(std::move(Child));
   }
