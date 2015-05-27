@@ -5850,10 +5850,10 @@ multiclass SS41I_pmovx_rm_all<bits<8> opc, string OpcodeStr,
                           OpndItins SSEItins, OpndItins AVXItins,
                           OpndItins AVX2Itins> {
   defm NAME : SS41I_pmovx_rrrm<opc, OpcodeStr, MemOp, VR128, VR128, SSEItins>;
-  let Predicates = [HasAVX] in
+  let Predicates = [HasAVX, NoVLX] in
     defm V#NAME   : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemOp,
                                      VR128, VR128, AVXItins>, VEX;
-  let Predicates = [HasAVX2] in
+  let Predicates = [HasAVX2, NoVLX] in
     defm V#NAME#Y : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemYOp,
                                      VR256, VR128, AVX2Itins>, VEX, VEX_L;
 }
@@ -5988,7 +5988,7 @@ multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, string ExtTy, SDNode ExtO
             (!cast<I>(OpcPrefix#DQYrm) addr:$src)>;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX] in {
   defm : SS41I_pmovx_avx2_patterns<"VPMOVSX", "s", X86vsext>;
   defm : SS41I_pmovx_avx2_patterns<"VPMOVZX", "z", X86vzext>;
 }
@@ -6087,7 +6087,7 @@ multiclass SS41I_pmovx_patterns<string OpcPrefix, string ExtTy,
             (!cast<I>(OpcPrefix#DQrm) addr:$src)>;
 }
 
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX, NoVLX] in {
   defm : SS41I_pmovx_patterns<"VPMOVSX", "s", X86vsext, extloadi32i16>;
   defm : SS41I_pmovx_patterns<"VPMOVZX", "z", X86vzext, loadi16_anyext>;
 }
