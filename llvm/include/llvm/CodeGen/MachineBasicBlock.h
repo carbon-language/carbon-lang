@@ -633,17 +633,18 @@ public:
                          ///< neighborhood.
   };
 
-  /// computeRegisterLiveness - Return whether (physical) register \c Reg
-  /// has been <def>ined and not <kill>ed as of just before \c MI.
+  /// Return whether (physical) register \p Reg has been <def>ined and not
+  /// <kill>ed as of just before \p Before.
   ///
-  /// Search is localised to a neighborhood of
-  /// \c Neighborhood instructions before (searching for defs or kills) and
-  /// Neighborhood instructions after (searching just for defs) MI.
+  /// Search is localised to a neighborhood of \p Neighborhood instructions
+  /// before (searching for defs or kills) and \p Neighborhood instructions
+  /// after (searching just for defs) \p Before.
   ///
-  /// \c Reg must be a physical register.
+  /// \p Reg must be a physical register.
   LivenessQueryResult computeRegisterLiveness(const TargetRegisterInfo *TRI,
-                                              unsigned Reg, MachineInstr *MI,
-                                              unsigned Neighborhood=10);
+                                              unsigned Reg,
+                                              const_iterator Before,
+                                              unsigned Neighborhood=10) const;
 
   // Debugging methods.
   void dump() const;
