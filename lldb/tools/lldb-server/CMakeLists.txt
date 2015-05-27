@@ -22,17 +22,19 @@ include(../../cmake/LLDBDependencies.cmake)
 
 if (BUILD_SHARED_LIBS )
   add_lldb_executable(lldb-server
-    lldb-server.cpp
     lldb-gdbserver.cpp
     lldb-platform.cpp
+    lldb-server.cpp
+    LLDBServerUtilities.cpp
     )
 
   target_link_libraries(lldb-server liblldb)
 else()
   add_lldb_executable(lldb-server
-    lldb-server.cpp
     lldb-gdbserver.cpp
     lldb-platform.cpp
+    lldb-server.cpp
+    LLDBServerUtilities.cpp
     ../../source/lldb.cpp
     )
 

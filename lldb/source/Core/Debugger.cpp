@@ -1275,8 +1275,6 @@ Debugger::SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton)
 bool
 Debugger::EnableLog (const char *channel, const char **categories, const char *log_file, uint32_t log_options, Stream &error_stream)
 {
-    Log::Callbacks log_callbacks;
-
     StreamSP log_stream_sp;
     if (m_log_callback_stream_sp)
     {
@@ -1309,33 +1307,7 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     if (log_options == 0)
         log_options = LLDB_LOG_OPTION_PREPEND_THREAD_NAME | LLDB_LOG_OPTION_THREADSAFE;
         
-    if (Log::GetLogChannelCallbacks (ConstString(channel), log_callbacks))
-    {
-        log_callbacks.enable (log_stream_sp, log_options, categories, &error_stream);
-        return true;
-    }
-    else
-    {
-        LogChannelSP log_channel_sp (LogChannel::FindPlugin (channel));
-        if (log_channel_sp)
-        {
-            if (log_channel_sp->Enable (log_stream_sp, log_options, &error_stream, categories))
-            {
-                return true;
-            }
-            else
-            {
-                error_stream.Printf ("Invalid log channel '%s'.\n", channel);
-                return false;
-            }
-        }
-        else
-        {
-            error_stream.Printf ("Invalid log channel '%s'.\n", channel);
-            return false;
-        }
-    }
-    return false;
+    return Log::EnableLogChannel(log_stream_sp, log_options, channel, categories, error_stream);
 }
 
 SourceManager &

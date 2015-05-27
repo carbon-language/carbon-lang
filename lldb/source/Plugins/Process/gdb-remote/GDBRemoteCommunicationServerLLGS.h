@@ -38,8 +38,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunicationServerLLGS(const lldb::PlatformSP& platform_sp,
-                      lldb::DebuggerSP& debugger_sp);
+    GDBRemoteCommunicationServerLLGS(const lldb::PlatformSP& platform_sp);
 
     virtual
     ~GDBRemoteCommunicationServerLLGS();
@@ -119,7 +118,6 @@ protected:
     lldb::tid_t m_continue_tid;
     Mutex m_debugged_process_mutex;
     NativeProcessProtocolSP m_debugged_process_sp;
-    lldb::DebuggerSP m_debugger_sp;
     Communication m_stdio_communication;
     lldb::StateType m_inferior_prev_state;
     lldb::DataBufferSP m_active_auxv_buffer_sp;

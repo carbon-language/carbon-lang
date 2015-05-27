@@ -74,6 +74,10 @@ public:
     static bool
     GetLogChannelCallbacks(const ConstString &channel, Log::Callbacks &log_callbacks);
 
+    static bool
+    EnableLogChannel(lldb::StreamSP &log_stream_sp, uint32_t log_options, const char *channel,
+                     const char **categories, Stream &error_stream);
+
     static void
     EnableAllLogChannels(lldb::StreamSP &log_stream_sp, uint32_t log_options, const char **categories,
                          Stream *feedback_strm);

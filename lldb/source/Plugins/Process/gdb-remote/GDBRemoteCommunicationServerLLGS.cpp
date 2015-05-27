@@ -24,8 +24,8 @@
 #include "llvm/ADT/Triple.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/DataBuffer.h"
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
@@ -40,7 +40,6 @@
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/Platform.h"
-#include "lldb/Target/Process.h"
 #include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
@@ -75,8 +74,7 @@ namespace
 // GDBRemoteCommunicationServerLLGS constructor
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
-        const lldb::PlatformSP& platform_sp,
-        lldb::DebuggerSP &debugger_sp) :
+        const lldb::PlatformSP& platform_sp) :
     GDBRemoteCommunicationServerCommon ("gdb-remote.server", "gdb-remote.server.rx_packet"),
     m_platform_sp (platform_sp),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
@@ -84,7 +82,6 @@ GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
     m_continue_tid (LLDB_INVALID_THREAD_ID),
     m_debugged_process_mutex (Mutex::eMutexTypeRecursive),
     m_debugged_process_sp (),
-    m_debugger_sp (debugger_sp),
     m_stdio_communication ("process.stdio"),
     m_inferior_prev_state (StateType::eStateInvalid),
     m_active_auxv_buffer_sp (),
@@ -93,7 +90,6 @@ GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
     m_next_saved_registers_id (1)
 {
     assert(platform_sp);
-    assert(debugger_sp && "must specify non-NULL debugger_sp for lldb-gdbserver");
     RegisterPacketHandlers();
 }
 

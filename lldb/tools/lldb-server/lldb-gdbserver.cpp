@@ -25,20 +25,18 @@
 // Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
 
-#include "lldb/Core/Error.h"
 #include "lldb/Core/ConnectionMachPort.h"
-#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/Core/StreamFile.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostThread.h"
-#include "lldb/Host/Pipe.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Host/Pipe.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Host/ThreadLauncher.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Target/Platform.h"
+#include "LLDBServerUtilities.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerLLGS.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 
@@ -53,6 +51,7 @@
 using namespace llvm;
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::lldb_server;
 using namespace lldb_private::process_gdb_remote;
 
 // lldb-gdbserver state
@@ -126,9 +125,8 @@ static void
 display_usage (const char *progname, const char* subcommand)
 {
     fprintf(stderr, "Usage:\n  %s %s "
-            "[--log-file log-file-path] "
-            "[--log-flags flags] "
-            "[--lldb-command command]* "
+            "[--log-file log-file-name] "
+            "[--log-channels log-channel-list] "
             "[--platform platform_name] "
             "[--setsid] "
             "[--named-pipe named-pipe-path] "
@@ -541,7 +539,6 @@ main_gdbserver (int argc, char *argv[])
     argc--;
     argv++;
     int long_option_index = 0;
-    Args log_args;
     Error error;
     int ch;
     std::string platform_name;
@@ -551,12 +548,6 @@ main_gdbserver (int argc, char *argv[])
     StringRef log_channels; // e.g. "lldb process threads:gdb-remote default:linux all"
     int unnamed_pipe_fd = -1;
     bool reverse_connect = false;
-
-    lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
-
-    debugger_sp->SetInputFileHandle(stdin, false);
-    debugger_sp->SetOutputFileHandle(stdout, false);
-    debugger_sp->SetErrorFileHandle(stderr, false);
 
     // ProcessLaunchInfo launch_info;
     ProcessAttachInfo attach_info;
@@ -571,8 +562,6 @@ main_gdbserver (int argc, char *argv[])
 #endif
 
     std::string short_options(OptionParser::GetShortOptionString(g_long_options));
-
-    std::vector<std::string> lldb_commands;
 
     while ((ch = getopt_long_only(argc, argv, short_options.c_str(), g_long_options, &long_option_index)) != -1)
     {
@@ -655,28 +644,8 @@ main_gdbserver (int argc, char *argv[])
         exit(option_error);
     }
 
-    SmallVector<StringRef, 32> channel_array;
-    log_channels.split(channel_array, ":");
-    uint32_t log_options = 0;
-    for (auto channel_with_categories : channel_array)
-    {
-        StreamString error_stream;
-        Args channel_then_categories(channel_with_categories);
-        std::string channel(channel_then_categories.GetArgumentAtIndex(0));
-        channel_then_categories.Shift ();  // Shift off the channel
-        bool success = debugger_sp->EnableLog (channel.c_str(),
-                                               channel_then_categories.GetConstArgumentVector(),
-                                               log_file.c_str(),
-                                               log_options,
-                                               error_stream);
-        if (!success)
-        {
-            fprintf(stderr, "Unable to open log file '%s' for channel \"%s\"",
-                    log_file.c_str(),
-                    channel_with_categories.str().c_str());
-            return -1;
-        }
-    }
+    if (!LLDBServerUtilities::SetupLogging(log_file, log_channels, 0))
+        return -1;
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_VERBOSE));
     if (log)
@@ -701,7 +670,7 @@ main_gdbserver (int argc, char *argv[])
     // Setup the platform that GDBRemoteCommunicationServerLLGS will use.
     lldb::PlatformSP platform_sp = setup_platform (platform_name);
 
-    GDBRemoteCommunicationServerLLGS gdb_server (platform_sp, debugger_sp);
+    GDBRemoteCommunicationServerLLGS gdb_server (platform_sp);
 
     const char *const host_and_port = argv[0];
     argc -= 1;

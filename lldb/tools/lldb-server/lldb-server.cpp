@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Core/Debugger.h"
 #include "lldb/Initialization/SystemLifetimeManager.h"
 #include "lldb/Initialization/SystemInitializerCommon.h"
 

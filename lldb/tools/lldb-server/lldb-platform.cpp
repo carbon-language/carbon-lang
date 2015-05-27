@@ -25,21 +25,19 @@
 
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
-#include "lldb/Core/ConnectionMachPort.h"
-#include "lldb/Core/Debugger.h"
-#include "lldb/Core/StreamFile.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Socket.h"
-#include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Interpreter/CommandReturnObject.h"
+#include "LLDBServerUtilities.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerPlatform.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::lldb_server;
 using namespace lldb_private::process_gdb_remote;
+using namespace llvm;
 
 //----------------------------------------------------------------------
 // option descriptors for getopt_long_only()
@@ -53,12 +51,13 @@ static struct option g_long_options[] =
 {
     { "debug",              no_argument,        &g_debug,           1   },
     { "verbose",            no_argument,        &g_verbose,         1   },
+    { "log-file",           required_argument,  NULL,               'l' },
+    { "log-channels",       required_argument,  NULL,               'c' },
     { "listen",             required_argument,  NULL,               'L' },
     { "port-offset",        required_argument,  NULL,               'p' },
     { "gdbserver-port",     required_argument,  NULL,               'P' },
     { "min-gdbserver-port", required_argument,  NULL,               'm' },
     { "max-gdbserver-port", required_argument,  NULL,               'M' },
-    { "lldb-command",       required_argument,  NULL,               'c' },
     { "server",             no_argument,        &g_server,          1   },
     { NULL,                 0,                  NULL,               0   }
 };
@@ -70,7 +69,6 @@ static struct option g_long_options[] =
 #define LOW_PORT    (1024u)
 #define HIGH_PORT   (49151u)
 #endif
-
 
 //----------------------------------------------------------------------
 // Watch for signals
@@ -93,8 +91,7 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname, const char *subcommand)
 {
-    fprintf(stderr, "Usage:\n  %s %s [--server] --listen port\n",
-            progname, subcommand);
+    fprintf(stderr, "Usage:\n  %s %s [--log-file log-file-name] [--log-channels log-channel-list] --server --listen port\n", progname, subcommand);
     exit(0);
 }
 
@@ -115,18 +112,14 @@ main_platform (int argc, char *argv[])
     std::string listen_host_port;
     int ch;
 
-    lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
-
-    debugger_sp->SetInputFileHandle(stdin, false);
-    debugger_sp->SetOutputFileHandle(stdout, false);
-    debugger_sp->SetErrorFileHandle(stderr, false);
-    
+    std::string log_file;
+    StringRef log_channels; // e.g. "lldb process threads:gdb-remote default:linux all"
+  
     GDBRemoteCommunicationServerPlatform::PortMap gdbserver_portmap;
     int min_gdbserver_port = 0;
     int max_gdbserver_port = 0;
     uint16_t port_offset = 0;
     
-    std::vector<std::string> lldb_commands;
     bool show_usage = false;
     int option_error = 0;
     int socket_error = -1;
@@ -149,6 +142,16 @@ main_platform (int argc, char *argv[])
 
         case 'L':
             listen_host_port.append (optarg);
+            break;
+
+        case 'l': // Set Log File
+            if (optarg && optarg[0])
+                log_file.assign(optarg);
+            break;
+
+        case 'c': // Log Channels
+            if (optarg && optarg[0])
+                log_channels = StringRef(optarg);
             break;
 
         case 'p':
@@ -205,10 +208,6 @@ main_platform (int argc, char *argv[])
                 }
             }
             break;
-            
-        case 'c':
-            lldb_commands.push_back(optarg);
-            break;
 
         case 'h':   /* fall-through is intentional */
         case '?':
@@ -216,6 +215,9 @@ main_platform (int argc, char *argv[])
             break;
         }
     }
+
+    if (!LLDBServerUtilities::SetupLogging(log_file, log_channels, 0))
+        return -1;
 
     // Make a port map for a port range that was specified.
     if (min_gdbserver_port < max_gdbserver_port)
@@ -227,7 +229,6 @@ main_platform (int argc, char *argv[])
     {
         fprintf (stderr, "error: --min-gdbserver-port (%u) is greater than --max-gdbserver-port (%u)\n", min_gdbserver_port, max_gdbserver_port);
         option_error = 3;
-        
     }
 
     // Print usage and exit if no listening port is specified.
@@ -240,17 +241,6 @@ main_platform (int argc, char *argv[])
         exit(option_error);
     }
     
-    // Execute any LLDB commands that we were asked to evaluate.
-    for (const auto &lldb_command : lldb_commands)
-    {
-        lldb_private::CommandReturnObject result;
-        printf("(lldb) %s\n", lldb_command.c_str());
-        debugger_sp->GetCommandInterpreter().HandleCommand(lldb_command.c_str(), eLazyBoolNo, result);
-        const char *output = result.GetOutputData();
-        if (output && output[0])
-            puts(output);
-    }
-
     std::unique_ptr<Socket> listening_socket_up;
     Socket *socket = nullptr;
     const bool children_inherit_listen_socket = false;
