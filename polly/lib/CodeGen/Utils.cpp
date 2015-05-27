@@ -37,9 +37,9 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
     std::string OldName = OldBlock->getName();
 
     // Update ScopInfo.
-    for (auto &Stmt : S)
-      if (Stmt->getBasicBlock() == OldBlock) {
-        Stmt->setBasicBlock(NewBlock);
+    for (ScopStmt &Stmt : S)
+      if (Stmt.getBasicBlock() == OldBlock) {
+        Stmt.setBasicBlock(NewBlock);
         break;
       }
 

@@ -26,6 +26,7 @@
 #include "isl/ctx.h"
 
 #include <forward_list>
+#include <deque>
 
 using namespace llvm;
 
@@ -416,10 +417,20 @@ public:
   /// @brief List to hold all (scalar) memory accesses mapped to an instruction.
   using MemoryAccessList = std::forward_list<MemoryAccess>;
 
-private:
   ScopStmt(const ScopStmt &) = delete;
   const ScopStmt &operator=(const ScopStmt &) = delete;
 
+  /// Create the ScopStmt from a BasicBlock.
+  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
+           BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
+           SmallVectorImpl<unsigned> &ScheduleVec);
+
+  /// Create an overapproximating ScopStmt for the region @p R.
+  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
+           SmallVectorImpl<Loop *> &NestLoops,
+           SmallVectorImpl<unsigned> &ScheduleVec);
+
+private:
   /// Polyhedral description
   //@{
 
@@ -572,18 +583,6 @@ private:
 
   /// @brief Scan @p Block and derive assumptions about parameter values.
   void deriveAssumptions(BasicBlock *Block);
-
-  /// Create the ScopStmt from a BasicBlock.
-  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-           BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &ScheduleVec);
-
-  /// Create an overapproximating ScopStmt for the region @p R.
-  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
-           SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &ScheduleVec);
-
-  friend class Scop;
 
 public:
   ~ScopStmt();
@@ -766,7 +765,7 @@ private:
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
-  typedef std::vector<std::unique_ptr<ScopStmt>> StmtSet;
+  typedef std::deque<ScopStmt> StmtSet;
   /// The statements in this Scop.
   StmtSet Stmts;
 
@@ -945,8 +944,8 @@ public:
   inline unsigned getScheduleDim() const {
     unsigned maxScheduleDim = 0;
 
-    for (const_iterator SI = begin(), SE = end(); SI != SE; ++SI)
-      maxScheduleDim = std::max(maxScheduleDim, (*SI)->getNumSchedule());
+    for (const ScopStmt &Stmt : *this)
+      maxScheduleDim = std::max(maxScheduleDim, Stmt.getNumSchedule());
 
     return maxScheduleDim;
   }

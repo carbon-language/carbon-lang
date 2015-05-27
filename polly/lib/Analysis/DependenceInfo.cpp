@@ -79,14 +79,14 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
   *StmtSchedule = isl_union_map_empty(Space);
 
   SmallPtrSet<const Value *, 8> ReductionBaseValues;
-  for (auto &Stmt : S)
-    for (MemoryAccess *MA : *Stmt)
+  for (ScopStmt &Stmt : S)
+    for (MemoryAccess *MA : Stmt)
       if (MA->isReductionLike())
         ReductionBaseValues.insert(MA->getBaseAddr());
 
-  for (auto &Stmt : S) {
-    for (MemoryAccess *MA : *Stmt) {
-      isl_set *domcp = Stmt->getDomain();
+  for (ScopStmt &Stmt : S) {
+    for (MemoryAccess *MA : Stmt) {
+      isl_set *domcp = Stmt.getDomain();
       isl_map *accdom = MA->getAccessRelation();
 
       accdom = isl_map_intersect_domain(accdom, domcp);
@@ -104,7 +104,7 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
         // but as we transformed the access domain we need the schedule
         // to match the new access domains, thus we need
         //   [Stmt[i0, i1] -> MemAcc_A[i0 + i1]] -> [0, i0, 2, i1, 0]
-        isl_map *Schedule = Stmt->getSchedule();
+        isl_map *Schedule = Stmt.getSchedule();
         Schedule = isl_map_apply_domain(
             Schedule,
             isl_map_reverse(isl_map_domain_map(isl_map_copy(accdom))));
@@ -117,7 +117,7 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
       else
         *Write = isl_union_map_add_map(*Write, accdom);
     }
-    *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt->getSchedule());
+    *StmtSchedule = isl_union_map_add_map(*StmtSchedule, Stmt.getSchedule());
   }
 
   *StmtSchedule =
@@ -361,8 +361,8 @@ void Dependences::calculateDependences(Scop &S) {
 
   // Step 1)
   RED = isl_union_map_empty(isl_union_map_get_space(RAW));
-  for (auto &Stmt : S) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : S) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isReductionLike())
         continue;
       isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation());
@@ -404,8 +404,8 @@ void Dependences::calculateDependences(Scop &S) {
   // We then move this portion of reduction dependences back to the statement ->
   // statement space and add a mapping from the memory access to these
   // dependences.
-  for (auto &Stmt : S) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : S) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isReductionLike())
         continue;
 
@@ -476,13 +476,13 @@ bool Dependences::isValidSchedule(Scop &S,
 
   isl_space *ScheduleSpace = nullptr;
 
-  for (auto &Stmt : S) {
+  for (ScopStmt &Stmt : S) {
     isl_map *StmtScat;
 
-    if (NewSchedule->find(&*Stmt) == NewSchedule->end())
-      StmtScat = Stmt->getSchedule();
+    if (NewSchedule->find(&Stmt) == NewSchedule->end())
+      StmtScat = Stmt.getSchedule();
     else
-      StmtScat = isl_map_copy((*NewSchedule)[&*Stmt]);
+      StmtScat = isl_map_copy((*NewSchedule)[&Stmt]);
 
     if (!ScheduleSpace)
       ScheduleSpace = isl_space_range(isl_map_get_space(StmtScat));

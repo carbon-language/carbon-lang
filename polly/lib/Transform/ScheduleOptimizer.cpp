@@ -467,21 +467,21 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   S.markAsOptimized();
 
-  for (auto &Stmt : S) {
+  for (ScopStmt &Stmt : S) {
     isl_map *StmtSchedule;
-    isl_set *Domain = Stmt->getDomain();
+    isl_set *Domain = Stmt.getDomain();
     isl_union_map *StmtBand;
     StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(NewSchedule),
                                               isl_union_set_from_set(Domain));
     if (isl_union_map_is_empty(StmtBand)) {
-      StmtSchedule = isl_map_from_domain(isl_set_empty(Stmt->getDomainSpace()));
+      StmtSchedule = isl_map_from_domain(isl_set_empty(Stmt.getDomainSpace()));
       isl_union_map_free(StmtBand);
     } else {
       assert(isl_union_map_n_map(StmtBand) == 1);
       StmtSchedule = isl_map_from_union_map(StmtBand);
     }
 
-    Stmt->setSchedule(StmtSchedule);
+    Stmt.setSchedule(StmtSchedule);
   }
 
   isl_schedule_free(Schedule);

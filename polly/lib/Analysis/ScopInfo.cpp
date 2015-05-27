@@ -1349,8 +1349,8 @@ void Scop::realignParams() {
   // Align the parameters of all data structures to the model.
   Context = isl_set_align_params(Context, Space);
 
-  for (auto &Stmt : *this)
-    Stmt->realignParams();
+  for (ScopStmt &Stmt : *this)
+    Stmt.realignParams();
 }
 
 void Scop::simplifyAssumedContext() {
@@ -1476,16 +1476,16 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
   DenseMap<Value *, MemoryAccess *> PtrToAcc;
   DenseSet<Value *> HasWriteAccess;
-  for (auto &Stmt : *this) {
+  for (ScopStmt &Stmt : *this) {
 
     // Skip statements with an empty domain as they will never be executed.
-    isl_set *StmtDomain = Stmt->getDomain();
+    isl_set *StmtDomain = Stmt.getDomain();
     bool StmtDomainEmpty = isl_set_is_empty(StmtDomain);
     isl_set_free(StmtDomain);
     if (StmtDomainEmpty)
       continue;
 
-    for (MemoryAccess *MA : *Stmt) {
+    for (MemoryAccess *MA : Stmt) {
       if (MA->isScalar())
         continue;
       if (!MA->isRead())
@@ -1666,10 +1666,10 @@ void Scop::dropConstantScheduleDims() {
     isl_val_free(FixedVal);
   }
 
-  for (auto &S : *this) {
-    isl_map *Schedule = S->getSchedule();
+  for (ScopStmt &Stmt : *this) {
+    isl_map *Schedule = Stmt.getSchedule();
     Schedule = isl_map_apply_range(Schedule, isl_map_copy(DropDimMap));
-    S->setSchedule(Schedule);
+    Stmt.setSchedule(Schedule);
   }
   isl_set_free(ScheduleSpace);
   isl_map_free(DropDimMap);
@@ -1806,8 +1806,8 @@ void Scop::printAliasAssumptions(raw_ostream &OS) const {
 void Scop::printStatements(raw_ostream &OS) const {
   OS << "Statements {\n";
 
-  for (auto &Stmt : *this)
-    OS.indent(4) << *Stmt;
+  for (const ScopStmt &Stmt : *this)
+    OS.indent(4) << Stmt;
 
   OS.indent(4) << "}\n";
 }
@@ -1839,8 +1839,8 @@ isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 __isl_give isl_union_set *Scop::getDomains() {
   isl_union_set *Domain = isl_union_set_empty(getParamSpace());
 
-  for (auto &Stmt : *this)
-    Domain = isl_union_set_add_set(Domain, Stmt->getDomain());
+  for (ScopStmt &Stmt : *this)
+    Domain = isl_union_set_add_set(Domain, Stmt.getDomain());
 
   return Domain;
 }
@@ -1848,12 +1848,12 @@ __isl_give isl_union_set *Scop::getDomains() {
 __isl_give isl_union_map *Scop::getMustWrites() {
   isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
-  for (auto &Stmt : *this) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : *this) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isMustWrite())
         continue;
 
-      isl_set *Domain = Stmt->getDomain();
+      isl_set *Domain = Stmt.getDomain();
       isl_map *AccessDomain = MA->getAccessRelation();
       AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
       Write = isl_union_map_add_map(Write, AccessDomain);
@@ -1865,12 +1865,12 @@ __isl_give isl_union_map *Scop::getMustWrites() {
 __isl_give isl_union_map *Scop::getMayWrites() {
   isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
-  for (auto &Stmt : *this) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : *this) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isMayWrite())
         continue;
 
-      isl_set *Domain = Stmt->getDomain();
+      isl_set *Domain = Stmt.getDomain();
       isl_map *AccessDomain = MA->getAccessRelation();
       AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
       Write = isl_union_map_add_map(Write, AccessDomain);
@@ -1882,12 +1882,12 @@ __isl_give isl_union_map *Scop::getMayWrites() {
 __isl_give isl_union_map *Scop::getWrites() {
   isl_union_map *Write = isl_union_map_empty(getParamSpace());
 
-  for (auto &Stmt : *this) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : *this) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isWrite())
         continue;
 
-      isl_set *Domain = Stmt->getDomain();
+      isl_set *Domain = Stmt.getDomain();
       isl_map *AccessDomain = MA->getAccessRelation();
       AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
       Write = isl_union_map_add_map(Write, AccessDomain);
@@ -1899,12 +1899,12 @@ __isl_give isl_union_map *Scop::getWrites() {
 __isl_give isl_union_map *Scop::getReads() {
   isl_union_map *Read = isl_union_map_empty(getParamSpace());
 
-  for (auto &Stmt : *this) {
-    for (MemoryAccess *MA : *Stmt) {
+  for (ScopStmt &Stmt : *this) {
+    for (MemoryAccess *MA : Stmt) {
       if (!MA->isRead())
         continue;
 
-      isl_set *Domain = Stmt->getDomain();
+      isl_set *Domain = Stmt.getDomain();
       isl_map *AccessDomain = MA->getAccessRelation();
 
       AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
@@ -1917,16 +1917,16 @@ __isl_give isl_union_map *Scop::getReads() {
 __isl_give isl_union_map *Scop::getSchedule() {
   isl_union_map *Schedule = isl_union_map_empty(getParamSpace());
 
-  for (auto &Stmt : *this)
-    Schedule = isl_union_map_add_map(Schedule, Stmt->getSchedule());
+  for (ScopStmt &Stmt : *this)
+    Schedule = isl_union_map_add_map(Schedule, Stmt.getSchedule());
 
   return isl_union_map_coalesce(Schedule);
 }
 
 bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
   bool Changed = false;
-  for (auto &Stmt : *this) {
-    isl_union_set *StmtDomain = isl_union_set_from_set(Stmt->getDomain());
+  for (ScopStmt &Stmt : *this) {
+    isl_union_set *StmtDomain = isl_union_set_from_set(Stmt.getDomain());
     isl_union_set *NewStmtDomain = isl_union_set_intersect(
         isl_union_set_copy(StmtDomain), isl_union_set_copy(Domain));
 
@@ -1942,10 +1942,10 @@ bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
     NewStmtDomain = isl_union_set_coalesce(NewStmtDomain);
 
     if (isl_union_set_is_empty(NewStmtDomain)) {
-      Stmt->restrictDomain(isl_set_empty(Stmt->getDomainSpace()));
+      Stmt.restrictDomain(isl_set_empty(Stmt.getDomainSpace()));
       isl_union_set_free(NewStmtDomain);
     } else
-      Stmt->restrictDomain(isl_set_from_union_set(NewStmtDomain));
+      Stmt.restrictDomain(isl_set_from_union_set(NewStmtDomain));
   }
   isl_union_set_free(Domain);
   return Changed;
@@ -1964,23 +1964,16 @@ void Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
                        const Region &CurRegion,
                        SmallVectorImpl<Loop *> &NestLoops,
                        SmallVectorImpl<unsigned> &ScheduleVec) {
-  std::unique_ptr<ScopStmt> Stmt;
-
   if (BB) {
-    Stmt = std::unique_ptr<ScopStmt>(
-        new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, ScheduleVec));
-    StmtMap[BB] = &*Stmt;
+    Stmts.emplace_back(*this, tempScop, CurRegion, *BB, NestLoops, ScheduleVec);
+    StmtMap[BB] = &Stmts.back();
   } else {
-    assert(R && "Either a basic block or a region is needed to "
-                "create a new SCoP stmt.");
-    Stmt = std::unique_ptr<ScopStmt>(
-        new ScopStmt(*this, tempScop, CurRegion, *R, NestLoops, ScheduleVec));
+    assert(R && "Either basic block or a region expected.");
+    Stmts.emplace_back(*this, tempScop, CurRegion, *R, NestLoops, ScheduleVec);
+    auto *Ptr = &Stmts.back();
     for (BasicBlock *BB : R->blocks())
-      StmtMap[BB] = &*Stmt;
+      StmtMap[BB] = Ptr;
   }
-
-  // Insert all statements into the statement map and the statement vector.
-  Stmts.push_back(std::move(Stmt));
 
   // Increasing the Schedule function is OK for the moment, because
   // we are using a depth first iterator and the program is well structured.
@@ -2028,7 +2021,7 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
 }
 
 ScopStmt *Scop::getStmtForBasicBlock(BasicBlock *BB) const {
-  const auto &StmtMapIt = StmtMap.find(BB);
+  const auto StmtMapIt = StmtMap.find(BB);
   if (StmtMapIt == StmtMap.end())
     return nullptr;
   return StmtMapIt->second;

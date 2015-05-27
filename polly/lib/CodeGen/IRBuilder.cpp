@@ -59,8 +59,8 @@ void ScopAnnotator::buildAliasScopes(Scop &S) {
   OtherAliasScopeListMap.clear();
 
   SetVector<Value *> BasePtrs;
-  for (auto &Stmt : S)
-    for (MemoryAccess *MA : *Stmt)
+  for (ScopStmt &Stmt : S)
+    for (MemoryAccess *MA : Stmt)
       BasePtrs.insert(MA->getBaseAddr());
 
   std::string AliasScopeStr = "polly.alias.scope.";
