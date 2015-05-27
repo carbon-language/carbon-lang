@@ -800,6 +800,14 @@ TEST(TripleTest, getARMCPUForArch) {
     EXPECT_STREQ("arm1176jzf-s", Triple.getARMCPUForArch());
   }
   {
+    llvm::Triple Triple("thumbv6-unknown-freebsd");
+    EXPECT_STREQ("arm1176jzf-s", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armebv6-unknown-freebsd");
+    EXPECT_STREQ("arm1176jzf-s", Triple.getARMCPUForArch());
+  }
+  {
     llvm::Triple Triple("arm--win32");
     EXPECT_STREQ("cortex-a9", Triple.getARMCPUForArch());
   }

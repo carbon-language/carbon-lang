@@ -1113,8 +1113,8 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
   switch (getOS()) {
   case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
-    // FIXME: This doesn't work on BE/thumb variants.
-    if (MArch == "armv6")
+    MArch = ARMTargetParser::getCanonicalArchName(MArch);
+    if (!MArch.empty() && MArch == "v6")
       return "arm1176jzf-s";
     break;
   case llvm::Triple::Win32:
