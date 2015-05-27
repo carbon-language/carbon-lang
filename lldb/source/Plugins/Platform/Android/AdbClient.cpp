@@ -12,6 +12,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataEncoder.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Host/FileSpec.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -36,6 +37,10 @@ const uint32_t kReadTimeout = 1000000; // 1 second
 const char * kOKAY = "OKAY";
 const char * kFAIL = "FAIL";
 const size_t kSyncPacketLen = 8;
+// Maximum size of a filesync DATA packet.
+const size_t kMaxPushData = 2*1024;
+// Default mode for pushed files.
+const uint32_t kDefaultMode = 0100770; // S_IFREG | S_IRWXU | S_IRWXG
 
 }  // namespace
 
@@ -281,6 +286,47 @@ AdbClient::PullFile (const char *remote_file, const char *local_file)
 }
 
 Error
+AdbClient::PushFile (const lldb_private::FileSpec& source, const lldb_private::FileSpec& destination)
+{
+    auto error = SwitchDeviceTransport ();
+    if (error.Fail ())
+        return Error ("Failed to switch to device transport: %s", error.AsCString ());
+
+    error = Sync ();
+    if (error.Fail ())
+        return Error ("Sync failed: %s", error.AsCString ());
+
+    std::ifstream src (source.GetPath().c_str(), std::ios::in | std::ios::binary);
+    if (!src.is_open ())
+        return Error ("Unable to open local file %s", source.GetPath().c_str());
+
+    std::stringstream file_description;
+    file_description << destination.GetPath(false).c_str() << "," << kDefaultMode;
+    std::string file_description_str = file_description.str();
+    error = SendSyncRequest ("SEND", file_description_str.length(), file_description_str.c_str());
+    if (error.Fail ())
+        return error;
+
+    char chunk[kMaxPushData];
+    while (!src.eof() && !src.read(chunk, kMaxPushData).bad())
+    {
+        size_t chunk_size = src.gcount();
+        error = SendSyncRequest("DATA", chunk_size, chunk);
+        if (error.Fail ())
+            return Error ("Failed to send file chunk: %s", error.AsCString ());
+    }
+    error = SendSyncRequest("DONE", source.GetModificationTime().seconds(), nullptr);
+    if (error.Fail ())
+        return error;
+    error = ReadResponseStatus();
+    // If there was an error reading the source file, finish the adb file
+    // transfer first so that adb isn't expecting any more data.
+    if (src.bad())
+        return Error ("Failed read on %s", source.GetPath().c_str());
+    return error;
+}
+
+Error
 AdbClient::Sync ()
 {
     auto error = SendMessage ("sync:", false);
@@ -330,7 +376,8 @@ AdbClient::SendSyncRequest (const char *request_id, const uint32_t data_len, con
     if (error.Fail ())
         return error;
 
-    m_conn.Write (data, data_len, status, &error);
+    if (data)
+        m_conn.Write (data, data_len, status, &error);
     return error;
 }
 

@@ -207,6 +207,21 @@ PlatformAndroid::ConnectRemote(Args& args)
     return error;
 }
 
+lldb_private::Error
+PlatformAndroid::PutFile (const lldb_private::FileSpec& source,
+                          const lldb_private::FileSpec& destination,
+                          uint32_t uid,
+                          uint32_t gid)
+{
+    if (!IsHost() && m_remote_platform_sp)
+    {
+        AdbClient adb (m_device_id);
+        // TODO: Set correct uid and gid on remote file.
+        return adb.PushFile(source, destination);
+    }
+    return PlatformLinux::PutFile(source, destination, uid, gid);
+}
+
 const char *
 PlatformAndroid::GetCacheHostname ()
 {

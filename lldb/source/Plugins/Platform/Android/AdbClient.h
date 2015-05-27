@@ -53,6 +53,9 @@ public:
     Error
     PullFile (const char *remote_file, const char *local_file);
 
+    Error
+    PushFile (const lldb_private::FileSpec& source, const lldb_private::FileSpec& destination);
+
 private:
     Error
     Connect ();

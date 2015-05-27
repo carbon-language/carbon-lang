@@ -64,7 +64,13 @@ namespace platform_android {
         Error
         ConnectRemote (Args& args) override;
 
-    protected:
+        lldb_private::Error
+        PutFile (const lldb_private::FileSpec& source,
+                 const lldb_private::FileSpec& destination,
+                 uint32_t uid = UINT32_MAX,
+                 uint32_t gid = UINT32_MAX) override;
+
+     protected:
         const char *
         GetCacheHostname () override;
 
