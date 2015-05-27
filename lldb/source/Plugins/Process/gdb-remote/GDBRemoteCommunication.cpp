@@ -329,7 +329,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS | GDBR_LOG_VERBOSE));
 
     // Check for a packet from our cache first without trying any reading...
-    if (CheckForPacket (NULL, 0, packet))
+    if (CheckForPacket(NULL, 0, packet) != PacketType::Invalid)
         return PacketResult::Success;
 
     bool timed_out = false;
@@ -349,7 +349,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
 
         if (bytes_read > 0)
         {
-            if (CheckForPacket (buffer, bytes_read, packet))
+            if (CheckForPacket(buffer, bytes_read, packet) != PacketType::Invalid)
                 return PacketResult::Success;
         }
         else
@@ -383,7 +383,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         return PacketResult::ErrorReplyFailed;
 }
 
-bool
+GDBRemoteCommunication::PacketType
 GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, StringExtractorGDBRemote &packet)
 {
     // Put the packet data into the buffer in a thread safe fashion
@@ -405,6 +405,8 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         m_bytes.append ((const char *)src, src_len);
     }
 
+    bool isNotifyPacket = false;
+
     // Parse up the packets into gdb remote packets
     if (!m_bytes.empty())
     {
@@ -425,6 +427,9 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 break;
 
             case '%': // Async notify packet
+                isNotifyPacket = true;
+                // Intentional fall through
+
             case '$':
                 // Look for a standard gdb packet?
                 {
@@ -487,7 +492,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         if (content_length == std::string::npos)
         {
             packet.Clear();
-            return false;
+            return GDBRemoteCommunication::PacketType::Invalid;
         }
         else if (total_length > 0)
         {
@@ -626,11 +631,15 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
             
             m_bytes.erase(0, total_length);
             packet.SetFilePos(0);
-            return success;
+
+            if (isNotifyPacket)
+                return GDBRemoteCommunication::PacketType::Notify;
+            else
+                return GDBRemoteCommunication::PacketType::Standard;
         }
     }
     packet.Clear();
-    return false;
+    return GDBRemoteCommunication::PacketType::Invalid;
 }
 
 Error

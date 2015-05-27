@@ -333,7 +333,7 @@ protected:
     Flags m_flags;            // Process specific flags (see eFlags enums)
     GDBRemoteCommunicationClient m_gdb_comm;
     std::atomic<lldb::pid_t> m_debugserver_pid;
-    StringExtractorGDBRemote m_last_stop_packet;
+    std::vector<StringExtractorGDBRemote> m_stop_packet_stack;  // The stop packet stack replaces the last stop packet variable
     Mutex m_last_stop_packet_mutex;
     GDBRemoteDynamicRegisterInfo m_register_info;
     Broadcaster m_async_broadcaster;

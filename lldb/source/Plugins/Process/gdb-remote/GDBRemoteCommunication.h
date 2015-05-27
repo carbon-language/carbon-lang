@@ -49,7 +49,14 @@ public:
     {
         eBroadcastBitRunPacketSent = kLoUserBroadcastBit
     };
-    
+
+    enum class PacketType
+    {
+        Invalid = 0,
+        Standard,
+        Notify
+    };
+
     enum class PacketResult
     {
         Success = 0,        // Success
@@ -101,7 +108,7 @@ public:
     bool
     GetSequenceMutex (Mutex::Locker& locker, const char *failure_message = NULL);
 
-    bool
+    PacketType
     CheckForPacket (const uint8_t *src, 
                     size_t src_len, 
                     StringExtractorGDBRemote &packet);

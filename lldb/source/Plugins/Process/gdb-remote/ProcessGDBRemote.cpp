@@ -374,7 +374,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_flags (0),
     m_gdb_comm (),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
-    m_last_stop_packet (),
     m_last_stop_packet_mutex (Mutex::eMutexTypeNormal),
     m_register_info (),
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
@@ -769,8 +768,10 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         // We have a valid process
         SetID (pid);
         GetThreadList();
-        if (m_gdb_comm.GetStopReply(m_last_stop_packet))
+        StringExtractorGDBRemote response;
+        if (m_gdb_comm.GetStopReply(response))
         {
+            SetLastStopPacket(response);
 
             // '?' Packets must be handled differently in non-stop mode
             if (GetTarget().GetNonStopModeEnabled())
@@ -788,7 +789,7 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
                 }
             }
 
-            const StateType state = SetThreadStopInfo (m_last_stop_packet);
+            const StateType state = SetThreadStopInfo (response);
             if (state == eStateStopped)
             {
                 SetPrivateState (state);
@@ -1057,9 +1058,10 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                 return error;
             }
 
-            if (m_gdb_comm.GetStopReply(m_last_stop_packet))
+            StringExtractorGDBRemote response;
+            if (m_gdb_comm.GetStopReply(response))
             {
-
+                SetLastStopPacket(response);
                 // '?' Packets must be handled differently in non-stop mode
                 if (GetTarget().GetNonStopModeEnabled())
                     HandleStopReplySequence();
@@ -1077,7 +1079,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                         m_target.MergeArchitecture(host_arch);
                 }
 
-                SetPrivateState (SetThreadStopInfo (m_last_stop_packet));
+                SetPrivateState (SetThreadStopInfo (response));
                 
                 if (!disable_stdio)
                 {
@@ -2123,7 +2125,25 @@ ProcessGDBRemote::RefreshStateAfterStop ()
     // Set the thread stop info. It might have a "threads" key whose value is
     // a list of all thread IDs in the current process, so m_thread_ids might
     // get set.
-    SetThreadStopInfo (m_last_stop_packet);
+
+    // Scope for the lock
+    {
+        // Lock the thread stack while we access it
+        Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
+        // Get the number of stop packets on the stack
+        int nItems = m_stop_packet_stack.size();
+        // Iterate over them
+        for (int i = 0; i < nItems; i++)
+        {
+            // Get the thread stop info
+            StringExtractorGDBRemote stop_info = m_stop_packet_stack[i];
+            // Process thread stop info
+            SetThreadStopInfo(stop_info);
+        }
+        // Clear the thread stop stack
+        m_stop_packet_stack.clear();
+    }
+
     // Check to see if SetThreadStopInfo() filled in m_thread_ids?
     if (m_thread_ids.empty())
     {
@@ -2395,7 +2415,6 @@ ProcessGDBRemote::DoDestroy ()
 void
 ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
 {
-    Mutex::Locker locker (m_last_stop_packet_mutex);
     const bool did_exec = response.GetStringRef().find(";reason:exec;") != std::string::npos;
     if (did_exec)
     {
@@ -2408,7 +2427,16 @@ ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
         BuildDynamicRegisterInfo (true);
         m_gdb_comm.ResetDiscoverableSettings();
     }
-    m_last_stop_packet = response;
+
+    // Scope the lock
+    {
+        // Lock the thread stack while we access it
+        Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
+        // Add this stop packet to the stop packet stack
+        // This stack will get popped and examined when we switch to the
+        // Stopped state
+        m_stop_packet_stack.push_back(response);
+    }
 }
 
 
