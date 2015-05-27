@@ -31,73 +31,6 @@ class MCSection;
 class MCSymbol;
 class raw_ostream;
 
-class MCSectionData {
-  friend class MCAsmLayout;
-  friend class MCSection;
-
-  MCSectionData(const MCSectionData &) = delete;
-  void operator=(const MCSectionData &) = delete;
-
-public:
-  typedef iplist<MCFragment> FragmentListType;
-
-  typedef FragmentListType::const_iterator const_iterator;
-  typedef FragmentListType::iterator iterator;
-
-  typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
-  typedef FragmentListType::reverse_iterator reverse_iterator;
-
-private:
-  FragmentListType Fragments;
-  MCSection *Section;
-
-  /// \name Assembler Backend Data
-  /// @{
-  //
-  // FIXME: This could all be kept private to the assembler implementation.
-
-  /// Mapping from subsection number to insertion point for subsection numbers
-  /// below that number.
-  SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
-
-  /// @}
-
-public:
-  explicit MCSectionData(MCSection &Section);
-
-  MCSection &getSection() const { return *Section; }
-
-  /// \name Fragment Access
-  /// @{
-
-  const FragmentListType &getFragmentList() const { return Fragments; }
-  FragmentListType &getFragmentList() { return Fragments; }
-
-  iterator begin();
-  const_iterator begin() const {
-    return const_cast<MCSectionData *>(this)->begin();
-  }
-
-  iterator end();
-  const_iterator end() const {
-    return const_cast<MCSectionData *>(this)->end();
-  }
-
-  reverse_iterator rbegin();
-  const_reverse_iterator rbegin() const {
-    return const_cast<MCSectionData *>(this)->rbegin();
-  }
-
-  reverse_iterator rend();
-  const_reverse_iterator rend() const {
-    return const_cast<MCSectionData *>(this)->rend();
-  }
-
-  void dump();
-
-  /// @}
-};
-
 /// Instances of this class represent a uniqued identifier for a section in the
 /// current translation unit.  The MCContext class uniques and creates these.
 class MCSection {
@@ -110,6 +43,14 @@ public:
     BundleLocked,
     BundleLockedAlignToEnd
   };
+
+  typedef iplist<MCFragment> FragmentListType;
+
+  typedef FragmentListType::const_iterator const_iterator;
+  typedef FragmentListType::iterator iterator;
+
+  typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
+  typedef FragmentListType::reverse_iterator reverse_iterator;
 
 private:
   MCSection(const MCSection &) = delete;
@@ -137,7 +78,11 @@ private:
   /// Whether this section has had instructions emitted into it.
   unsigned HasInstructions : 1;
 
-  MCSectionData Data;
+  FragmentListType Fragments;
+
+  /// Mapping from subsection number to insertion point for subsection numbers
+  /// below that number.
+  SmallVector<std::pair<unsigned, MCFragment *>, 1> SubsectionFragmentMap;
 
 protected:
   MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin);
@@ -185,37 +130,34 @@ public:
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
 
-  MCSectionData &getSectionData() { return Data; }
-  const MCSectionData &getSectionData() const {
-    return const_cast<MCSection *>(this)->getSectionData();
-  }
-
-  MCSectionData::FragmentListType &getFragmentList();
-  const MCSectionData::FragmentListType &getFragmentList() const {
+  MCSection::FragmentListType &getFragmentList() { return Fragments; }
+  const MCSection::FragmentListType &getFragmentList() const {
     return const_cast<MCSection *>(this)->getFragmentList();
   }
 
-  MCSectionData::iterator begin();
-  MCSectionData::const_iterator begin() const {
+  MCSection::iterator begin();
+  MCSection::const_iterator begin() const {
     return const_cast<MCSection *>(this)->begin();
   }
 
-  MCSectionData::iterator end();
-  MCSectionData::const_iterator end() const {
+  MCSection::iterator end();
+  MCSection::const_iterator end() const {
     return const_cast<MCSection *>(this)->end();
   }
 
-  MCSectionData::reverse_iterator rbegin();
-  MCSectionData::const_reverse_iterator rbegin() const {
+  MCSection::reverse_iterator rbegin();
+  MCSection::const_reverse_iterator rbegin() const {
     return const_cast<MCSection *>(this)->rbegin();
   }
 
-  MCSectionData::reverse_iterator rend();
-  MCSectionData::const_reverse_iterator rend() const {
+  MCSection::reverse_iterator rend();
+  MCSection::const_reverse_iterator rend() const {
     return const_cast<MCSection *>(this)->rend();
   }
 
-  MCSectionData::iterator getSubsectionInsertionPoint(unsigned Subsection);
+  MCSection::iterator getSubsectionInsertionPoint(unsigned Subsection);
+
+  void dump();
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                                     const MCExpr *Subsection) const = 0;

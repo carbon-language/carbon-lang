@@ -20,7 +20,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 MCSection::MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-    : Begin(Begin), HasInstructions(false), Data(*this), Variant(V), Kind(K) {}
+    : Begin(Begin), HasInstructions(false), Variant(V), Kind(K) {}
 
 MCSymbol *MCSection::getEndSymbol(MCContext &Ctx) {
   if (!End)
@@ -52,23 +52,23 @@ void MCSection::setBundleLockState(BundleLockStateType NewState) {
   ++BundleLockNestingDepth;
 }
 
-MCSectionData::iterator
+MCSection::iterator
 MCSection::getSubsectionInsertionPoint(unsigned Subsection) {
-  if (Subsection == 0 && Data.SubsectionFragmentMap.empty())
+  if (Subsection == 0 && SubsectionFragmentMap.empty())
     return end();
 
   SmallVectorImpl<std::pair<unsigned, MCFragment *>>::iterator MI =
-      std::lower_bound(Data.SubsectionFragmentMap.begin(),
-                       Data.SubsectionFragmentMap.end(),
+      std::lower_bound(SubsectionFragmentMap.begin(),
+                       SubsectionFragmentMap.end(),
                        std::make_pair(Subsection, (MCFragment *)nullptr));
   bool ExactMatch = false;
-  if (MI != Data.SubsectionFragmentMap.end()) {
+  if (MI != SubsectionFragmentMap.end()) {
     ExactMatch = MI->first == Subsection;
     if (ExactMatch)
       ++MI;
   }
-  MCSectionData::iterator IP;
-  if (MI == Data.SubsectionFragmentMap.end())
+  iterator IP;
+  if (MI == SubsectionFragmentMap.end())
     IP = end();
   else
     IP = MI->second;
@@ -76,7 +76,7 @@ MCSection::getSubsectionInsertionPoint(unsigned Subsection) {
     // The GNU as documentation claims that subsections have an alignment of 4,
     // although this appears not to be the case.
     MCFragment *F = new MCDataFragment();
-    Data.SubsectionFragmentMap.insert(MI, std::make_pair(Subsection, F));
+    SubsectionFragmentMap.insert(MI, std::make_pair(Subsection, F));
     getFragmentList().insert(IP, F);
     F->setParent(this);
   }
@@ -84,24 +84,23 @@ MCSection::getSubsectionInsertionPoint(unsigned Subsection) {
   return IP;
 }
 
-MCSectionData::iterator MCSection::begin() { return Data.begin(); }
+void MCSection::dump() {
+  raw_ostream &OS = llvm::errs();
 
-MCSectionData::iterator MCSection::end() { return Data.end(); }
-
-MCSectionData::reverse_iterator MCSection::rbegin() { return Data.rbegin(); }
-
-MCSectionData::FragmentListType &MCSection::getFragmentList() {
-  return Data.getFragmentList();
+  OS << "<MCSection";
+  OS << " Fragments:[\n      ";
+  for (auto it = begin(), ie = end(); it != ie; ++it) {
+    if (it != begin())
+      OS << ",\n      ";
+    it->dump();
+  }
+  OS << "]>";
 }
 
-MCSectionData::iterator MCSectionData::begin() { return Fragments.begin(); }
+MCSection::iterator MCSection::begin() { return Fragments.begin(); }
 
-MCSectionData::iterator MCSectionData::end() { return Fragments.end(); }
+MCSection::iterator MCSection::end() { return Fragments.end(); }
 
-MCSectionData::reverse_iterator MCSectionData::rbegin() {
-  return Fragments.rbegin();
-}
+MCSection::reverse_iterator MCSection::rbegin() { return Fragments.rbegin(); }
 
-MCSectionData::reverse_iterator MCSectionData::rend() {
-  return Fragments.rend();
-}
+MCSection::reverse_iterator MCSection::rend() { return Fragments.rend(); }

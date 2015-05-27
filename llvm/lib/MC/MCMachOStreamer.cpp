@@ -479,8 +479,8 @@ void MCMachOStreamer::FinishImpl() {
   for (MCAssembler::iterator it = getAssembler().begin(),
          ie = getAssembler().end(); it != ie; ++it) {
     const MCSymbol *CurrentAtom = nullptr;
-    for (MCSectionData::iterator it2 = it->begin(),
-           ie2 = it->end(); it2 != ie2; ++it2) {
+    for (MCSection::iterator it2 = it->begin(), ie2 = it->end(); it2 != ie2;
+         ++it2) {
       if (const MCSymbol *Symbol = DefiningSymbolMap.lookup(it2))
         CurrentAtom = Symbol;
       it2->setAtom(CurrentAtom);

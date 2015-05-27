@@ -80,7 +80,7 @@ void MCObjectStreamer::reset() {
   if (Assembler)
     Assembler->reset();
   CurSectionData = nullptr;
-  CurInsertionPoint = MCSectionData::iterator();
+  CurInsertionPoint = MCSection::iterator();
   EmitEHFrame = true;
   EmitDebugFrame = false;
   PendingLabels.clear();

@@ -1096,7 +1096,7 @@ ELFObjectWriter::createRelocationSection(MCContext &Ctx,
 
 static SmallVector<char, 128>
 getUncompressedData(const MCAsmLayout &Layout,
-                    const MCSectionData::FragmentListType &Fragments) {
+                    const MCSection::FragmentListType &Fragments) {
   SmallVector<char, 128> UncompressedData;
   for (const MCFragment &F : Fragments) {
     const SmallVectorImpl<char> *Contents;
@@ -1154,7 +1154,7 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
   }
 
   // Gather the uncompressed data from all the fragments.
-  const MCSectionData::FragmentListType &Fragments = Section.getFragmentList();
+  const MCSection::FragmentListType &Fragments = Section.getFragmentList();
   SmallVector<char, 128> UncompressedData =
       getUncompressedData(Layout, Fragments);
 

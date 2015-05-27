@@ -36,7 +36,7 @@ class raw_pwrite_stream;
 class MCObjectStreamer : public MCStreamer {
   MCAssembler *Assembler;
   MCSection *CurSectionData;
-  MCSectionData::iterator CurInsertionPoint;
+  MCSection::iterator CurInsertionPoint;
   bool EmitEHFrame;
   bool EmitDebugFrame;
   SmallVector<MCSymbolData *, 2> PendingLabels;
