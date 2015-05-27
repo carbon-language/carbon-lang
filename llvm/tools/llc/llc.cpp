@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
+#include "llvm/CodeGen/MIRParser/MIRParser.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
@@ -109,6 +110,8 @@ GetOutputStream(const char *TargetName, Triple::OSType OS,
       StringRef IFN = InputFilename;
       if (IFN.endswith(".bc") || IFN.endswith(".ll"))
         OutputFilename = IFN.drop_back(3);
+      else if (IFN.endswith(".mir"))
+        OutputFilename = IFN.drop_back(4);
       else
         OutputFilename = IFN;
 
@@ -214,7 +217,10 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // If user just wants to list available options, skip module loading
   if (!SkipModule) {
-    M = parseIRFile(InputFilename, Err, Context);
+    if (StringRef(InputFilename).endswith_lower(".mir"))
+      M = parseMIRFile(InputFilename, Err, Context);
+    else
+      M = parseIRFile(InputFilename, Err, Context);
     if (!M) {
       Err.print(argv[0], errs());
       return 1;

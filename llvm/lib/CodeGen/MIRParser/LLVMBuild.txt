@@ -1,4 +1,4 @@
-;===- ./lib/CodeGen/LLVMBuild.txt ------------------------------*- Conf -*--===;
+;===- ./lib/CodeGen/MIRParser/LLVMBuild.txt --------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,11 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmPrinter SelectionDAG MIRParser
-
 [component_0]
 type = Library
-name = CodeGen
-parent = Libraries
-required_libraries = Analysis Core MC Scalar Support Target TransformUtils
+name = MIRParser
+parent = CodeGen
+required_libraries = Core Support Target AsmParser CodeGen
