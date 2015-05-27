@@ -197,7 +197,6 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
                                     const MCSection &Sec, uint64_t FileOffset,
                                     uint64_t RelocationsStart,
                                     unsigned NumRelocations) {
-  const MCSectionData &SD = Sec.getSectionData();
   uint64_t SectionSize = Layout.getSectionAddressSize(&Sec);
   const MCSectionMachO &Section = cast<MCSectionMachO>(Sec);
 
@@ -216,10 +215,10 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   WriteBytes(Section.getSectionName(), 16);
   WriteBytes(Section.getSegmentName(), 16);
   if (is64Bit()) {
-    Write64(getSectionAddress(&SD.getSection())); // address
+    Write64(getSectionAddress(&Sec)); // address
     Write64(SectionSize); // size
   } else {
-    Write32(getSectionAddress(&SD.getSection())); // address
+    Write32(getSectionAddress(&Sec)); // address
     Write32(SectionSize); // size
   }
   Write32(FileOffset);
@@ -233,7 +232,7 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
   Write32(NumRelocations ? RelocationsStart : 0);
   Write32(NumRelocations);
   Write32(Flags);
-  Write32(IndirectSymBase.lookup(&SD.getSection())); // reserved1
+  Write32(IndirectSymBase.lookup(&Sec)); // reserved1
   Write32(Section.getStubSize()); // reserved2
   if (is64Bit())
     Write32(0); // reserved3
@@ -798,7 +797,6 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
     const MCSection &Sec = *it;
-    const MCSectionData &SD = it->getSectionData();
     uint64_t Address = getSectionAddress(&Sec);
     uint64_t Size = Layout.getSectionAddressSize(&Sec);
     uint64_t FileSize = Layout.getSectionFileSize(&Sec);
@@ -806,7 +804,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
 
     VMSize = std::max(VMSize, Address + Size);
 
-    if (SD.getSection().isVirtualSection())
+    if (it->isVirtualSection())
       continue;
 
     SectionDataSize = std::max(SectionDataSize, Address + Size);
