@@ -809,13 +809,13 @@ EmulateInstructionARM::EmulateMOVRdRm (const uint32_t opcode, const ARMEncoding 
         uint32_t result = ReadCoreReg(Rm, &success);
         if (!success)
             return false;
-        
+
         // The context specifies that Rm is to be moved into Rd.
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextRegisterLoad;
+        context.type = EmulateInstruction::eContextRegisterPlusOffset;
         RegisterInfo dwarf_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + Rm, dwarf_reg);
-        context.SetRegister (dwarf_reg);
+        context.SetRegisterPlusOffset (dwarf_reg, 0);
 
         if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags))
             return false;
