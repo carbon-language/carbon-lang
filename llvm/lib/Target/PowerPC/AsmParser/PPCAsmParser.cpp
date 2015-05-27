@@ -792,10 +792,10 @@ void PPCOperand::print(raw_ostream &OS) const {
     OS << getImm();
     break;
   case Expression:
-    getExpr()->print(OS);
+    OS << *getExpr();
     break;
   case TLSRegister:
-    getTLSReg()->print(OS);
+    OS << *getTLSReg();
     break;
   }
 }

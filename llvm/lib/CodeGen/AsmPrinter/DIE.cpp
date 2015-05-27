@@ -354,10 +354,7 @@ unsigned DIEExpr::SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const {
 }
 
 #ifndef NDEBUG
-void DIEExpr::printImpl(raw_ostream &O) const {
-  O << "Expr: ";
-  Expr->print(O);
-}
+void DIEExpr::printImpl(raw_ostream &O) const { O << "Expr: " << *Expr; }
 #endif
 
 //===----------------------------------------------------------------------===//
