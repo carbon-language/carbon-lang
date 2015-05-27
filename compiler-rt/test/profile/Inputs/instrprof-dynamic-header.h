@@ -1,5 +1,8 @@
+extern int X;
 template <class T> void bar() {
-  if (true) {}
+  if (X) {
+    X *= 4;
+  }
 }
 void a();
 void b();
