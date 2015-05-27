@@ -45,7 +45,7 @@ class Rdar12408181TestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         window = self.frame().FindVariable("window")
         window_dynamic = window.GetDynamicValue(lldb.eDynamicCanRunTarget)
         self.assertTrue(window.GetNumChildren() > 1, "NSWindow (static) only has 1 child!")

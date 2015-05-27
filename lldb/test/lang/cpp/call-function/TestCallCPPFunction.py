@@ -33,7 +33,7 @@ class CallCPPFunctionTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list",

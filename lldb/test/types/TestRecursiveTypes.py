@@ -56,10 +56,10 @@ class RecursiveTypesTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "recursive_type_main.cpp", self.line, num_expected_locations=-1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
-        self.expect("print tpi", RUN_SUCCEEDED)
-        self.expect("print *tpi", RUN_SUCCEEDED)
+        self.expect("print tpi", RUN_FAILED)
+        self.expect("print *tpi", RUN_FAILED)
 
 if __name__ == '__main__':
     import atexit

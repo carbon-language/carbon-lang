@@ -93,7 +93,7 @@ class ClassTypesTestCase(TestBase):
         # Break on the ctor function of class C.
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The test suite sometimes shows that the process has exited without stopping.
         #
@@ -189,7 +189,7 @@ class ClassTypesTestCase(TestBase):
         # Make the test case more robust by using line number to break, instead.
         lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=-1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

@@ -40,7 +40,7 @@ class PersistentPtrUpdateTestCase(TestBase):
         
         self.runCmd('break set -p here')
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         
         self.runCmd("expr void* $foo = nullptr")
         

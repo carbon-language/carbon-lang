@@ -37,7 +37,7 @@ class CPPStaticMembersTestCase(TestBase):
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 1'))
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 2'))
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
         self.expect("expression my_a.access()",
                     startstr = "(long) $0 = 10")
         

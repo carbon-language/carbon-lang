@@ -227,7 +227,7 @@ class SettingsCommandTestCase(TestBase):
         self.addTearDownHook(
             lambda: self.runCmd("settings clear target.env-vars"))
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Read the output file produced by running the program.
         if lldb.remote_platform:
@@ -263,7 +263,7 @@ class SettingsCommandTestCase(TestBase):
             os.environ.pop("MY_HOST_ENV_VAR2")
 
         self.addTearDownHook(unset_env_variables)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Read the output file produced by running the program.
         if lldb.remote_platform:
@@ -299,7 +299,7 @@ class SettingsCommandTestCase(TestBase):
                     SETTING_MSG("target.output-path"),
                     substrs = ['target.output-path (file) = "stdout.txt"'])
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         if lldb.remote_platform:
             self.runCmd('platform get-file "stderr.txt" "stderr.txt"')

@@ -45,7 +45,7 @@ class Rdar10967107TestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         # check that each type is correctly bound to its list of children
         self.expect("frame variable cf_greg_date --raw", substrs = ['year','month','day','hour','minute','second'])
         self.expect("frame variable cf_range --raw", substrs = ['location','length'])

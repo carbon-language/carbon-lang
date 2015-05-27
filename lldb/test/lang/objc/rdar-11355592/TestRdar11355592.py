@@ -45,7 +45,7 @@ class Rdar10967107TestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         # check that we correctly see the const char*, even with dynamic types on
         self.expect("frame variable my_string", substrs = ['const char *'])
         self.expect("frame variable my_string --dynamic-type run-target", substrs = ['const char *'])

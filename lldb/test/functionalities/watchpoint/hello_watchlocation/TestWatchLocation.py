@@ -51,7 +51,7 @@ class HelloWatchLocationTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, None, self.line, num_expected_locations=1, loc_exact=False)
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # We should be stopped again due to the breakpoint.
         # The stop reason of the thread should be breakpoint.

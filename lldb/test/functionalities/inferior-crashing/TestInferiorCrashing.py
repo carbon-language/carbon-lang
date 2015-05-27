@@ -115,7 +115,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         stop_reason = self.check_stop_reason()
 
         # And it should report the correct line number.
@@ -151,7 +151,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.check_stop_reason()
 
         # lldb should be able to read from registers from the inferior after crashing.
@@ -162,7 +162,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.check_stop_reason()
 
         # The lldb expression interpreter should be able to read from addresses of the inferior after a crash.
@@ -178,7 +178,7 @@ class CrashingInferiorTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         self.set_breakpoint(self.line)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['main.c:%d' % self.line,
@@ -206,7 +206,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.check_stop_reason()
 
         self.runCmd("next")
@@ -217,7 +217,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.check_stop_reason()
 
         # The lldb expression interpreter should be able to read from addresses of the inferior after a crash.

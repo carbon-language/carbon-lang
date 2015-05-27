@@ -111,7 +111,7 @@ class BreakpointCommandTestCase(TestBase):
         # Run the program.  Remove 'output.txt' if it exists.
         self.RemoveTempFile("output.txt")
         self.RemoveTempFile("output2.txt")
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Check that the file 'output.txt' exists and contains the string "lldb".
 
@@ -161,7 +161,7 @@ class BreakpointCommandTestCase(TestBase):
                         self.line])
 
         # Run the program again, with breakpoint 1 remaining.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # We should be stopped again due to breakpoint 1.
 
@@ -191,7 +191,7 @@ class BreakpointCommandTestCase(TestBase):
             os.remove ('output-2.txt')
 
         # Run program, hit breakpoint, and hopefully write out new version of 'output-2.txt'
-        self.runCmd ("run", RUN_SUCCEEDED)
+        self.runCmd ("run", RUN_FAILED)
 
         # Check that the file 'output.txt' exists and contains the string "lldb".
 

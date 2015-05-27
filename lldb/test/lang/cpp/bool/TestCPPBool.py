@@ -36,7 +36,7 @@ class CPPBoolTestCase(TestBase):
 
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 1'))
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
 
         self.expect("expression -- bool second_bool = my_bool; second_bool",
                     startstr = "(bool) $0 = false")

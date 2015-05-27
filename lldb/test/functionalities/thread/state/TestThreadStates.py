@@ -105,7 +105,7 @@ class ThreadStateTestCase(TestBase):
             substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -146,7 +146,7 @@ class ThreadStateTestCase(TestBase):
             substrs = ["1: file = 'main.c', line = %d, exact_match = 0, locations = 1" % self.break_1])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -195,7 +195,7 @@ class ThreadStateTestCase(TestBase):
             substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -239,7 +239,7 @@ class ThreadStateTestCase(TestBase):
             substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -294,7 +294,7 @@ class ThreadStateTestCase(TestBase):
                        "2: file = 'main.c', line = %d, locations = 1" % self.break_2])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

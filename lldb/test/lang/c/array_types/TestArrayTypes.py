@@ -51,7 +51,7 @@ class ArrayTypesTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=False)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The test suite sometimes shows that the process has exited without stopping.
         #

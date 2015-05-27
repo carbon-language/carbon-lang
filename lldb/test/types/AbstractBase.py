@@ -140,7 +140,7 @@ class GenericTester(TestBase):
             break_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables.")
         lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", break_line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
             substrs = [" at basic_type.cpp:%d" % break_line,
                        "stop reason = breakpoint"])
@@ -224,7 +224,7 @@ class GenericTester(TestBase):
             break_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables.")
         lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", break_line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
             substrs = [" at basic_type.cpp:%d" % break_line,
                        "stop reason = breakpoint"])

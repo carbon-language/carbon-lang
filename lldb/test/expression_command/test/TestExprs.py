@@ -41,7 +41,7 @@ class BasicExprCommandsTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=False)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
     @unittest2.expectedFailure("llvm.org/pr17135 <rdar://problem/14874559> APFloat::toString does not identify the correct (i.e. least) precision.")
     def test_floating_point_expr_commands(self):
@@ -201,7 +201,7 @@ class BasicExprCommandsTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line(self, "main.cpp", self.line, num_expected_locations=1,loc_exact=False)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # runCmd: expression 'a'
         # output: (char) $0 = 'a'

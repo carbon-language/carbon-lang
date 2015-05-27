@@ -75,7 +75,7 @@ class RegisterCommandsTestCase(TestBase):
         # Break in main().
         lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -102,7 +102,7 @@ class RegisterCommandsTestCase(TestBase):
 
         if self.platform != "":
             self.log_file = os.path.join(os.getcwd(), 'TestRegisters.log')
-            self.runCmd("log enable " + self.platform + " " + str(category) + " registers -v -f " + self.log_file, RUN_SUCCEEDED)
+            self.runCmd("log enable " + self.platform + " " + str(category) + " registers -v -f " + self.log_file, RUN_FAILED)
             if not self.has_teardown:
                 self.has_teardown = True
                 self.addTearDownHook(self.remove_log)

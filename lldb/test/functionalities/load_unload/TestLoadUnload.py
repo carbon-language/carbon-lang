@@ -157,7 +157,7 @@ class LoadUnloadTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Make sure that a_function does not exist at this point.
         self.expect("image lookup -n a_function", "a_function should not exist yet",
@@ -208,7 +208,7 @@ class LoadUnloadTestCase(TestBase):
         # Break by function name a_function (not yet loaded).
         lldbutil.run_break_set_by_symbol (self, "a_function", num_expected_locations=0)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint and at a_function.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -249,7 +249,7 @@ class LoadUnloadTestCase(TestBase):
         # Break by function name a_function (not yet loaded).
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint and at a_function.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

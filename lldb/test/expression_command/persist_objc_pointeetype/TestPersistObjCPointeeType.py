@@ -44,7 +44,7 @@ class PersistObjCPointeeType(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         
         self.expect("p *self", substrs=['_sc_name = nil',
         '_sc_name2 = nil',

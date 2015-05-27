@@ -105,7 +105,7 @@ class AssertingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         stop_reason = self.check_stop_reason()
 
         # And it should report a backtrace that includes the assert site.
@@ -145,7 +145,7 @@ class AssertingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.check_stop_reason()
 
         # lldb should be able to read from registers from the inferior after asserting.
@@ -173,7 +173,7 @@ class AssertingInferiorTestCase(TestBase):
         for frame in thread:
             self.assertTrue(frame.IsValid(), "current frame is valid")
 
-            self.runCmd("frame select " + str(frame.GetFrameID()), RUN_SUCCEEDED)
+            self.runCmd("frame select " + str(frame.GetFrameID()), RUN_FAILED)
 
             # Don't expect the function name to be in the disassembly as the assert
             # function might be a no-return function where the PC is past the end
@@ -196,7 +196,7 @@ class AssertingInferiorTestCase(TestBase):
 
             if 'main' == frame.GetFunctionName():
                 frame_id = frame.GetFrameID()
-                self.runCmd("frame select " + str(frame_id), RUN_SUCCEEDED)
+                self.runCmd("frame select " + str(frame_id), RUN_FAILED)
                 self.expect("p argc", substrs = ['(int)', ' = 1'])
                 self.expect("p hello_world", substrs = ['Hello'])
                 self.expect("p argv[0]", substrs = ['a.out'])

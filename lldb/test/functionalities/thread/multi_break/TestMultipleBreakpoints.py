@@ -48,7 +48,7 @@ class MultipleBreakpointTestCase(TestBase):
             substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.breakpoint])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         # The breakpoint may be hit in either thread 2 or thread 3.

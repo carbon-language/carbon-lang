@@ -58,7 +58,7 @@ class BreakpointInDummyTarget (TestBase):
                        "2: file = 'main.c', line = %d, exact_match = 0, locations = 1" % self.line2])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Stopped once.
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,

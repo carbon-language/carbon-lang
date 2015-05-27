@@ -19,7 +19,7 @@ class PersistentVariablesTestCase(TestBase):
 
         self.runCmd("breakpoint set --source-pattern-regexp break")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("expression int $i = i")
 

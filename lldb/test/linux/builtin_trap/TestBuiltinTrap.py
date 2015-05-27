@@ -43,7 +43,7 @@ class BuiltinTrapTestCase(TestBase):
                                                  num_expected_locations=1,
                                                  loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -54,7 +54,7 @@ class BuiltinTrapTestCase(TestBase):
         self.expect('bt', substrs = ['bar', 'main'])
 
         # go up one frame
-        self.runCmd("up", RUN_SUCCEEDED)
+        self.runCmd("up", RUN_FAILED)
 
         # evaluate a local
         self.expect('p foo', substrs = ['= 5'])

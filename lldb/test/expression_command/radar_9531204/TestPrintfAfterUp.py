@@ -21,7 +21,7 @@ class Radar9531204TestCase(TestBase):
 
         lldbutil.run_break_set_by_symbol (self, 'foo', sym_exact=True, num_expected_locations=1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("frame variable")
 

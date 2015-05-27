@@ -34,7 +34,7 @@ class CStringsTestCase(TestBase):
 
         self.set_breakpoint(line_number('main.c', '// breakpoint 1'))
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
 
         self.expect("expression -- a[2]",
                     patterns = ["\((const )?char\) \$0 = 'c'"])

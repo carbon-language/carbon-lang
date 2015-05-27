@@ -43,7 +43,7 @@ class CPPThisTestCase(TestBase):
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 3'))
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 4'))
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
 
         self.expect("expression -- m_a = 2",
                     startstr = "(int) $0 = 2")

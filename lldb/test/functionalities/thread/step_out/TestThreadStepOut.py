@@ -113,7 +113,7 @@ class ThreadStepOutTestCase(TestBase):
             substrs = ["1: file = 'main.cpp', line = %d, exact_match = 0, locations = 1" % self.breakpoint])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Get the target process
         self.inferior_target = self.dbg.GetSelectedTarget()

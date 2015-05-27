@@ -27,7 +27,7 @@ class ExprCommands2TestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line(self, "main.cpp", self.line, num_expected_locations=1,loc_exact=False)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Does static casting work?
         self.expect("expression (int*)argv",

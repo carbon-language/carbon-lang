@@ -40,7 +40,7 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
 
         lldbutil.run_break_set_by_source_regexp (self, "Set break point at this line.")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

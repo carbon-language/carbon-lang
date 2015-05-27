@@ -36,7 +36,7 @@ class ObjCSelfTestCase(TestBase):
         self.set_breakpoint(line_number('main.m', '// breakpoint 1'))
         self.set_breakpoint(line_number('main.m', '// breakpoint 2'))
 
-        self.runCmd("process launch", RUN_SUCCEEDED)
+        self.runCmd("process launch", RUN_FAILED)
 
         self.expect("expression -- m_a = 2",
                     startstr = "(int) $0 = 2")

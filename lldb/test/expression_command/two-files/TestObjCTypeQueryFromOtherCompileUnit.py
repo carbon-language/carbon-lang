@@ -40,7 +40,7 @@ class ObjCTypeQueryTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Now do a NSArry type query from the 'main.m' compile uint.
         self.expect("expression (NSArray*)array_token",

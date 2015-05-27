@@ -36,7 +36,7 @@ class RuntimeTypesTestCase(TestBase):
         # Stop at -[MyString description].
         lldbutil.run_break_set_by_symbol (self, '-[MyString description]', num_expected_locations=1, sym_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The backtrace should show we stop at -[MyString description].
         self.expect("thread backtrace", "Stop at -[MyString description]",

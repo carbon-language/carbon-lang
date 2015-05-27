@@ -77,7 +77,7 @@ class FoundationTestCase(TestBase):
         break_results = lldbutil.run_break_set_command(self, "_regexp-break -[NSAutoreleasePool release]")
         lldbutil.check_breakpoint_result (self, break_results, symbol_name='-[NSAutoreleasePool release]', num_locations=1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # First stop is +[NSString stringWithFormat:].
         self.expect("thread backtrace", "Stop at +[NSString stringWithFormat:]",
@@ -133,7 +133,7 @@ class FoundationTestCase(TestBase):
         # Stop at -[MyString initWithNSString:].
         lldbutil.run_break_set_by_symbol (self, '-[MyString initWithNSString:]', num_expected_locations=1, sym_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         global file_index
         # Log any DWARF lookups
@@ -179,7 +179,7 @@ class FoundationTestCase(TestBase):
 #        self.expect("breakpoint set -n '-[MyString description]", BREAKPOINT_CREATED,
 #            startstr = "Breakpoint created: 1: name = '-[MyString description]', locations = 1")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The backtrace should show we stop at -[MyString description].
         self.expect("thread backtrace", "Stop at -[MyString description]",

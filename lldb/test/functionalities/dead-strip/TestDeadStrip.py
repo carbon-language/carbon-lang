@@ -40,7 +40,7 @@ class DeadStripTestCase(TestBase):
         # Break by function name f3 (live code).
         lldbutil.run_break_set_by_symbol (self, "f3", num_expected_locations=1, module_name="a.out")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint (breakpoint #1).
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

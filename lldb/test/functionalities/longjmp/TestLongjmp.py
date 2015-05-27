@@ -47,7 +47,7 @@ class LongjmpTestCase(TestBase):
         # Break in main().
         lldbutil.run_break_set_by_symbol (self, symbol, num_expected_locations=-1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -61,21 +61,21 @@ class LongjmpTestCase(TestBase):
 
     def step_out(self):
         self.start_test("do_jump")
-        self.runCmd("thread step-out", RUN_SUCCEEDED)
+        self.runCmd("thread step-out", RUN_FAILED)
         self.check_status()
 
     def step_over(self):
         self.start_test("do_jump")
-        self.runCmd("thread step-over", RUN_SUCCEEDED)
-        self.runCmd("thread step-over", RUN_SUCCEEDED)
+        self.runCmd("thread step-over", RUN_FAILED)
+        self.runCmd("thread step-over", RUN_FAILED)
         self.check_status()
 
     def step_back_out(self):
         self.start_test("main")
         
-        self.runCmd("thread step-over", RUN_SUCCEEDED)
-        self.runCmd("thread step-in", RUN_SUCCEEDED)
-        self.runCmd("thread step-out", RUN_SUCCEEDED)
+        self.runCmd("thread step-over", RUN_FAILED)
+        self.runCmd("thread step-in", RUN_FAILED)
+        self.runCmd("thread step-out", RUN_FAILED)
         self.check_status()
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ class BreakpointOptionsTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, extra_options = "-m 0", num_expected_locations = 0)
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Stopped once.
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,

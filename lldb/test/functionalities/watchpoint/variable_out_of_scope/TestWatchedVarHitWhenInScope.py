@@ -53,7 +53,7 @@ class WatchedVariableHitWhenInScopeTestCase(TestBase):
         lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=-1)
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # We should be stopped again due to the breakpoint.
         # The stop reason of the thread should be breakpoint.

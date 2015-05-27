@@ -44,7 +44,7 @@ class NumberOfThreadsTestCase(TestBase):
             substrs = ["1: file = 'main.cpp', line = %d, exact_match = 0, locations = 1" % self.line])
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Stopped once.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

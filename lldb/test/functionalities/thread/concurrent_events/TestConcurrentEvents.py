@@ -425,7 +425,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.expect("breakpoint list -f", "Breakpoint locations shown correctly", substrs = expected_bps)
 
         # Run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Check we are at line self.setup_breakpoint
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,

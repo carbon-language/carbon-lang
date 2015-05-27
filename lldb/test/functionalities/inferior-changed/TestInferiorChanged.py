@@ -47,7 +47,7 @@ class ChangedInferiorTestCase(TestBase):
         self.exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         if self.platformIsDarwin():
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
@@ -70,7 +70,7 @@ class ChangedInferiorTestCase(TestBase):
         # Prod the lldb-platform that we have a newly built inferior ready.
         if lldb.lldbtest_remote_sandbox:
             self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.runCmd("process status")
 
         if self.platformIsDarwin():
@@ -84,7 +84,7 @@ class ChangedInferiorTestCase(TestBase):
         # Break inside the main.
         lldbutil.run_break_set_by_file_and_line (self, "main2.c", self.line2, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

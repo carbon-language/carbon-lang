@@ -46,7 +46,7 @@ class ThreadJumpTestCase(TestBase):
         self.mark5 = line_number('other.cpp', '// other marker')
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.mark3, num_expected_locations=1)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint 1.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT + " 1",

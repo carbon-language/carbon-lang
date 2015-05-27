@@ -79,7 +79,7 @@ class BreakpointConditionsTestCase(TestBase):
             self.runCmd("breakpoint modify -c 'val == 3' 1")
 
         # Now run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,
@@ -110,7 +110,7 @@ class BreakpointConditionsTestCase(TestBase):
             substrs = ["Condition:"])
 
         # Now run the program again.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,

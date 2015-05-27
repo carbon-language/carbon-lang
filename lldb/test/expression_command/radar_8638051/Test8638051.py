@@ -19,7 +19,7 @@ class Radar8638051TestCase(TestBase):
 
         self.runCmd("breakpoint set -n c")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.expect("expression val",
             startstr = "(int) $0 = 1")

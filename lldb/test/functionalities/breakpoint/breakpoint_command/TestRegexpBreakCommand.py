@@ -48,7 +48,7 @@ class RegexpBreakCommandTestCase(TestBase):
         break_results = lldbutil.run_break_set_command (self, "b %s:%d" % (full_path, self.line))
         lldbutil.check_breakpoint_result (self, break_results, file_name='main.c', line_number=self.line, num_locations=1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

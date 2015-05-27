@@ -19,7 +19,7 @@ class PersistenttypesTestCase(TestBase):
 
         self.runCmd("breakpoint set --name main")
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("expression struct $foo { int a; int b; };")
 

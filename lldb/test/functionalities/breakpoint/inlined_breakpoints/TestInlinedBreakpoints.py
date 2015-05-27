@@ -53,7 +53,7 @@ class InlinedBreakpointsTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "basic_type.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         # And it should break at basic_type.cpp:176.

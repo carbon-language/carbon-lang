@@ -49,7 +49,7 @@ class ExprFormattersTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.runCmd("script import formatters")
         self.runCmd("script import foosynth")
         

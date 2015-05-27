@@ -28,7 +28,7 @@ class Radar9673644TestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # rdar://problem/9673664 lldb expression evaluation problem
 

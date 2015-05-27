@@ -82,15 +82,15 @@ class targetCommandTestCase(TestBase):
                     break;
 
         self.runCmd("target create " + exe_a, CURRENT_EXECUTABLE_SET)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("target create " + exe_b, CURRENT_EXECUTABLE_SET)
         lldbutil.run_break_set_by_file_and_line (self, 'b.c', self.line_b, num_expected_locations=1, loc_exact=True)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("target create " + exe_c, CURRENT_EXECUTABLE_SET)
         lldbutil.run_break_set_by_file_and_line (self, 'c.c', self.line_c, num_expected_locations=1, loc_exact=True)
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd("target list")
 

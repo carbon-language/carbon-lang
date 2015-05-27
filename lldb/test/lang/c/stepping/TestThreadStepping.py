@@ -44,7 +44,7 @@ class ThreadSteppingTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line1, num_expected_locations=1, loc_exact=True)
 
         # Now run the program.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,

@@ -36,7 +36,7 @@ class ConstVariableTestCase(TestBase):
         # Break inside the main.
         lldbutil.run_break_set_by_symbol (self, "main", num_expected_locations=1)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

@@ -43,7 +43,7 @@ class ConstStringTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, self.main_source, self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         self.expect("process status", STOPPED_DUE_TO_BREAKPOINT,
             substrs = [" at %s:%d" % (self.main_source, self.line),
                        "stop reason = breakpoint"])

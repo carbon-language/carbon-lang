@@ -56,7 +56,7 @@ class UniversalTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # We should be able to launch the x86_64 executable.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Check whether we have a 64-bit process launched.
         target = self.dbg.GetSelectedTarget()
@@ -81,7 +81,7 @@ class UniversalTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # We should be able to launch the i386 executable as well.
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Check whether we have a 32-bit process launched.
         target = self.dbg.GetSelectedTarget()

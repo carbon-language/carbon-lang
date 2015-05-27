@@ -107,7 +107,7 @@ class FoundationTestCase2(TestBase):
         for line in self.lines:
             lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Test_Selector:
         self.runCmd("thread backtrace")
@@ -142,7 +142,7 @@ class FoundationTestCase2(TestBase):
         line = self.lines[1]
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Test_NSArray:
         self.runCmd("thread backtrace")
@@ -167,7 +167,7 @@ class FoundationTestCase2(TestBase):
         line = self.lines[2]
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # Test_NSString:
         self.runCmd("thread backtrace")
@@ -195,7 +195,7 @@ class FoundationTestCase2(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
         
         self.expect("expression --show-types -- *my",
             patterns = ["\(MyString\) \$.* = ", "\(MyBase\)", "\(NSObject\)", "\(Class\)"])
@@ -210,7 +210,7 @@ class FoundationTestCase2(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.expect("po [NSError errorWithDomain:@\"Hello\" code:35 userInfo:nil]",
             substrs = ["Error Domain=Hello", "Code=35", "be completed."])
@@ -225,7 +225,7 @@ class FoundationTestCase2(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.m", line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.expect("p [NSError thisMethodIsntImplemented:0]",
                     error = True, 

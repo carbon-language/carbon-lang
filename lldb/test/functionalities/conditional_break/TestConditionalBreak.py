@@ -123,7 +123,7 @@ class ConditionalBreakTestCase(TestBase):
 
         if self.TraceOn():
             print "About to run."
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         self.runCmd ("break list")
 

@@ -54,7 +54,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
@@ -210,7 +210,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line2, num_expected_locations=1, loc_exact=False)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line3, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_SUCCEEDED)
+        self.runCmd("run", RUN_FAILED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
