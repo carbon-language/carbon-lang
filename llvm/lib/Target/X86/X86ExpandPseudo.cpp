@@ -88,8 +88,9 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
       const bool Uses64BitFramePtr =
           STI->isTarget64BitLP64() || STI->isTargetNaCl64();
-      bool UseLEAForSP =
-          X86FL->useLEAForSPInProlog(*MBB.getParent());
+      // Check if we should use LEA for SP.
+      bool UseLEAForSP = STI->useLeaForSP() &&
+                         X86FL->canUseLEAForSPInEpilogue(*MBB.getParent());
       unsigned StackPtr = TRI->getStackRegister();
       // Check for possible merge with preceding ADD instruction.
       StackAdj += X86FrameLowering::mergeSPUpdates(MBB, MBBI, StackPtr, true);

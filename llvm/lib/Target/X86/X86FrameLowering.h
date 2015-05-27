@@ -96,8 +96,15 @@ public:
                            const TargetInstrInfo &TII,
                            const TargetRegisterInfo &TRI);
 
-  /// Check that LEA can be use on SP in a prologue sequence for \p MF.
-  bool useLEAForSPInProlog(const MachineFunction &MF) const;
+  /// Check that LEA can be used on SP in an epilogue sequence for \p MF.
+  bool canUseLEAForSPInEpilogue(const MachineFunction &MF) const;
+
+  /// Check whether or not the given \p MBB can be used as a epilogue
+  /// for the target.
+  /// The epilogue will be inserted before the first terminator of that block.
+  /// This method is used by the shrink-wrapping pass to decide if
+  /// \p MBB will be correctly handled by the target.
+  bool canUseAsEpilogue(const MachineBasicBlock &MBB) const override;
 
 private:
   /// convertArgMovsToPushes - This method tries to convert a call sequence

@@ -565,7 +565,6 @@ static uint64_t calculateMaxStackAlign(const MachineFunction &MF) {
 
 void X86FrameLowering::emitPrologue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
@@ -965,15 +964,38 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   }
 }
 
-bool X86FrameLowering::useLEAForSPInProlog(const MachineFunction &MF) const {
+bool X86FrameLowering::canUseLEAForSPInEpilogue(
+    const MachineFunction &MF) const {
   // We can't use LEA instructions for adjusting the stack pointer if this is a
   // leaf function in the Win64 ABI.  Only ADD instructions may be used to
   // deallocate the stack.
   // This means that we can use LEA for SP in two situations:
   // 1. We *aren't* using the Win64 ABI which means we are free to use LEA.
   // 2. We *have* a frame pointer which means we are permitted to use LEA.
-  return MF.getSubtarget<X86Subtarget>().useLeaForSP() &&
-         (!MF.getTarget().getMCAsmInfo()->usesWindowsCFI() || hasFP(MF));
+  return !MF.getTarget().getMCAsmInfo()->usesWindowsCFI() || hasFP(MF);
+}
+
+/// Check whether or not the terminators of \p MBB needs to read EFLAGS.
+static bool terminatorsNeedFlagsAsInput(const MachineBasicBlock &MBB) {
+  for (const MachineInstr &MI : MBB.terminators()) {
+    bool BreakNext = false;
+    for (const MachineOperand &MO : MI.operands()) {
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (Reg != X86::EFLAGS)
+        continue;
+
+      // This terminator needs an eflag that is not defined
+      // by a previous terminator.
+      if (!MO.isDef())
+        return true;
+      BreakNext = true;
+    }
+    if (BreakNext)
+      break;
+  }
+  return false;
 }
 
 void X86FrameLowering::emitEpilogue(MachineFunction &MF,
@@ -983,9 +1005,10 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   const X86RegisterInfo *RegInfo = STI.getRegisterInfo();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
-  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI != MBB.end() && "Returning block has no instructions");
-  DebugLoc DL = MBBI->getDebugLoc();
+  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
+  DebugLoc DL;
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
   bool Is64Bit = STI.is64Bit();
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
@@ -999,25 +1022,18 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinEH = IsWinEH && MF.getFunction()->needsUnwindTableEntry();
-  bool UseLEAForSP = useLEAForSPInProlog(MF);
-
-  switch (MBBI->getOpcode()) {
-  default:
-    llvm_unreachable("Can only insert epilogue into returning blocks");
-  case X86::RETQ:
-  case X86::RETL:
-  case X86::RETIL:
-  case X86::RETIQ:
-  case X86::TCRETURNdi:
-  case X86::TCRETURNri:
-  case X86::TCRETURNmi:
-  case X86::TCRETURNdi64:
-  case X86::TCRETURNri64:
-  case X86::TCRETURNmi64:
-  case X86::EH_RETURN:
-  case X86::EH_RETURN64:
-    break;  // These are ok
-  }
+  bool UseLEAForSP = canUseLEAForSPInEpilogue(MF);
+  // If we can use LEA for SP but we shouldn't, check that none
+  // of the terminators uses the eflags. Otherwise we will insert
+  // a ADD that will redefine the eflags and break the condition.
+  // Alternatively, we could move the ADD, but this may not be possible
+  // and is an optimization anyway.
+  if (UseLEAForSP && !MF.getSubtarget<X86Subtarget>().useLeaForSP())
+    UseLEAForSP = terminatorsNeedFlagsAsInput(MBB);
+  // If that assert breaks, that means we do not do the right thing
+  // in canUseAsEpilogue.
+  assert((UseLEAForSP || !terminatorsNeedFlagsAsInput(MBB)) &&
+         "We shouldn't have allowed this insertion point");
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
@@ -1056,7 +1072,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   }
   MachineBasicBlock::iterator FirstCSPop = MBBI;
 
-  DL = MBBI->getDebugLoc();
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
 
   // If there is an ADD32ri or SUB32ri of ESP immediately before this
   // instruction, merge the two instructions.
@@ -1514,8 +1531,6 @@ static const uint64_t kSplitStackAvailable = 256;
 
 void X86FrameLowering::adjustForSegmentedStacks(
     MachineFunction &MF, MachineBasicBlock &PrologueMBB) const {
-  assert(&PrologueMBB == &MF.front() &&
-         "Shrink-wrapping is not implemented yet");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   const TargetInstrInfo &TII = *STI.getInstrInfo();
@@ -1835,8 +1850,6 @@ void X86FrameLowering::adjustForHiPEPrologue(
   // If the stack frame needed is larger than the guaranteed then runtime checks
   // and calls to "inc_stack_0" BIF should be inserted in the assembly prologue.
   if (MaxStack > Guaranteed) {
-    assert(&PrologueMBB == &MF.front() &&
-           "Shrink-wrapping is not implemented yet");
     MachineBasicBlock *stackCheckMBB = MF.CreateMachineBasicBlock();
     MachineBasicBlock *incStackMBB = MF.CreateMachineBasicBlock();
 
@@ -1979,3 +1992,15 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   }
 }
 
+bool X86FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
+  assert(MBB.getParent() && "Block is not attached to a function!");
+
+  if (canUseLEAForSPInEpilogue(*MBB.getParent()))
+    return true;
+
+  // If we cannot use LEA to adjust SP, we may need to use ADD, which
+  // clobbers the EFLAGS. Check that none of the terminators reads the
+  // EFLAGS, and if one uses it, conservatively assume this is not
+  // safe to insert the epilogue here.
+  return !terminatorsNeedFlagsAsInput(MBB);
+}
