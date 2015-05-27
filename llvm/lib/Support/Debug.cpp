@@ -49,9 +49,9 @@ static ManagedStatic<std::vector<std::string>> CurrentDebugType;
 bool isCurrentDebugType(const char *DebugType) {
   if (CurrentDebugType->empty())
     return true;
-  // see if DebugType is in list. Note: do not use find() as that forces us to
+  // See if DebugType is in list. Note: do not use find() as that forces us to
   // unnecessarily create an std::string instance.
-  for (auto d : *CurrentDebugType) {
+  for (auto &d : *CurrentDebugType) {
     if (d == DebugType)
       return true;
   }
