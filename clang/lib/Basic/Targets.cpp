@@ -4346,16 +4346,21 @@ public:
       }
     }
 
-    // FIXME: Use ARMTargetParser
-    return llvm::StringSwitch<const char *>(Name)
-        .Cases("cortex-a5", "cortex-a7", "cortex-a8", "A")
-        .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
-               "A")
-        .Cases("cortex-a53", "cortex-a57", "cortex-a72", "A")
-        .Cases("cortex-m3", "cortex-m4", "cortex-m0", "cortex-m0plus", "M")
-        .Cases("cortex-m1", "cortex-m7", "sc000", "sc300", "M")
-        .Cases("cortex-r4",  "cortex-r4f", "cortex-r5", "cortex-r7", "R")
-        .Default("");
+    unsigned CPUArch = llvm::ARMTargetParser::parseCPUArch(Name);
+    if (CPUArch == llvm::ARM::AK_INVALID)
+      return "";
+
+    StringRef ArchName = llvm::ARMTargetParser::getArchName(CPUArch);
+    switch(llvm::ARMTargetParser::parseArchProfile(ArchName)) {
+      case llvm::ARM::PK_A:
+        return "A";
+      case llvm::ARM::PK_R:
+        return "R";
+      case llvm::ARM::PK_M:
+        return "M";
+      default:
+        return "";
+    }
   }
   bool setCPU(const std::string &Name) override {
     if (!getCPUDefineSuffix(Name))
