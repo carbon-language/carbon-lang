@@ -773,6 +773,8 @@ CodeGenPGO::applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
     // Turn on Cold attribute for cold functions.
     // FIXME: 1% is from preliminary tuning on SPEC, it may not be optimal.
     Fn->addFnAttr(llvm::Attribute::Cold);
+
+  Fn->setEntryCount(FunctionCount);
 }
 
 void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, const Stmt *S) {
