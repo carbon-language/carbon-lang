@@ -146,10 +146,20 @@ Submit button to finish closing the review.
 Status
 ------
 
-Please let us know whether you like it and what could be improved!
+Please let us know whether you like it and what could be improved! We're still
+working on setting up a bug tracker, but you can email klimek-at-google-dot-com
+and chandlerc-at-gmail-dot-com and CC the llvmdev mailing list with questions
+until then. We also could use help implementing improvements. This sadly is
+really painful and hard because the Phabricator codebase is in PHP and not as
+testable as you might like. However, we've put exactly what we're deploying up
+on an `llvm-reviews GitHub project`_ where folks can hack on it and post pull
+requests. We're looking into what the right long-term hosting for this is, but
+note that it is a derivative of an existing open source project, and so not
+trivially a good fit for an official LLVM project.
 
 .. _LLVM's Phabricator: http://reviews.llvm.org
 .. _`http://reviews.llvm.org`: http://reviews.llvm.org
 .. _Code Repository Browser: http://reviews.llvm.org/diffusion/
 .. _Arcanist Quick Start: http://www.phabricator.com/docs/phabricator/article/Arcanist_Quick_Start.html
 .. _Arcanist User Guide: http://www.phabricator.com/docs/phabricator/article/Arcanist_User_Guide.html
+.. _llvm-reviews GitHub project: https://github.com/r4nt/llvm-reviews/
