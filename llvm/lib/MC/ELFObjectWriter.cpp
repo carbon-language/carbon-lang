@@ -231,7 +231,7 @@ class ELFObjectWriter : public MCObjectWriter {
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetsTy &SectionOffsets);
 
-    void writeSectionData(const MCAssembler &Asm, const MCSectionData &SD,
+    void writeSectionData(const MCAssembler &Asm, MCSection &Sec,
                           const MCAsmLayout &Layout);
 
     void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
@@ -1139,10 +1139,9 @@ prependCompressionHeader(uint64_t Size,
   return true;
 }
 
-void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
-                                       const MCSectionData &SD,
+void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
                                        const MCAsmLayout &Layout) {
-  MCSectionELF &Section = static_cast<MCSectionELF &>(SD.getSection());
+  MCSectionELF &Section = static_cast<MCSectionELF &>(Sec);
   StringRef SectionName = Section.getSectionName();
 
   // Compressing debug_frame requires handling alignment fragments which is
@@ -1155,7 +1154,7 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm,
   }
 
   // Gather the uncompressed data from all the fragments.
-  const MCSectionData::FragmentListType &Fragments = SD.getFragmentList();
+  const MCSectionData::FragmentListType &Fragments = Section.getFragmentList();
   SmallVector<char, 128> UncompressedData =
       getUncompressedData(Layout, Fragments);
 
@@ -1343,9 +1342,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   SectionOffsetsTy SectionOffsets;
   std::vector<MCSectionELF *> Groups;
   std::vector<MCSectionELF *> Relocations;
-  for (const MCSection &Sec : Asm) {
-    const MCSectionELF &Section = static_cast<const MCSectionELF &>(Sec);
-    const MCSectionData &SD = Section.getSectionData();
+  for (MCSection &Sec : Asm) {
+    MCSectionELF &Section = static_cast<MCSectionELF &>(Sec);
 
     uint64_t Padding = OffsetToAlignment(OS.tell(), Section.getAlignment());
     WriteZeros(Padding);
@@ -1354,7 +1352,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     uint64_t SecStart = OS.tell();
 
     const MCSymbol *SignatureSymbol = Section.getGroup();
-    writeSectionData(Asm, SD, Layout);
+    writeSectionData(Asm, Section, Layout);
 
     uint64_t SecEnd = OS.tell();
     SectionOffsets[&Section] = std::make_pair(SecStart, SecEnd);
