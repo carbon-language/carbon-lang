@@ -290,8 +290,7 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N) {
   assert(Tag != dwarf::DW_TAG_auto_variable &&
          Tag != dwarf::DW_TAG_arg_variable);
-  Parent.addChild(make_unique<DIE>((dwarf::Tag)Tag));
-  DIE &Die = *Parent.getChildren().back();
+  DIE &Die = Parent.addChild(make_unique<DIE>((dwarf::Tag)Tag));
   if (N)
     insertDIE(N, &Die);
   return Die;

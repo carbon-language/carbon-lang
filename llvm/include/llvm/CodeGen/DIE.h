@@ -543,10 +543,11 @@ public:
 
   /// addChild - Add a child to the DIE.
   ///
-  void addChild(std::unique_ptr<DIE> Child) {
+  DIE &addChild(std::unique_ptr<DIE> Child) {
     assert(!Child->getParent());
     Child->Parent = this;
     Children.push_back(std::move(Child));
+    return *Children.back();
   }
 
   /// Find a value in the DIE with the attribute given.
