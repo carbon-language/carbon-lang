@@ -105,6 +105,12 @@ public:
     void
     SetSuppressPersistentResult (bool b = false);
 
+    const char *
+    GetPrefix () const;
+
+    void
+    SetPrefix (const char *prefix);
+
 protected:
 
     SBExpressionOptions (lldb_private::EvaluateExpressionOptions &expression_options);

@@ -1043,7 +1043,22 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     if (process == NULL || !process->CanJIT())
         execution_policy = eExecutionPolicyNever;
 
-    lldb::ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix, language, desired_type));
+    const char *full_prefix = NULL;
+    const char *option_prefix = options.GetPrefix();
+    std::string full_prefix_storage;
+    if (expr_prefix && option_prefix)
+    {
+        full_prefix_storage.assign(expr_prefix);
+        full_prefix_storage.append(option_prefix);
+        if (!full_prefix_storage.empty())
+            full_prefix = full_prefix_storage.c_str();
+    }
+    else if (expr_prefix)
+        full_prefix = expr_prefix;
+    else
+        full_prefix = option_prefix;
+
+    lldb::ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, full_prefix, language, desired_type));
 
     StreamString error_stream;
 

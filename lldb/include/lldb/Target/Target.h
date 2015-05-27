@@ -240,19 +240,20 @@ public:
     EvaluateExpressionOptions() :
         m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
         m_language (lldb::eLanguageTypeUnknown),
-        m_coerce_to_id(false),
-        m_unwind_on_error(true),
+        m_prefix (), // A prefix specific to this expression that is added after the prefix from the settings (if any)
+        m_coerce_to_id (false),
+        m_unwind_on_error (true),
         m_ignore_breakpoints (false),
-        m_keep_in_memory(false),
-        m_try_others(true),
-        m_stop_others(true),
-        m_debug(false),
-        m_trap_exceptions(true),
-        m_generate_debug_info(false),
-        m_result_is_internal(false),
-        m_use_dynamic(lldb::eNoDynamicValues),
-        m_timeout_usec(default_timeout),
-        m_one_thread_timeout_usec(0),
+        m_keep_in_memory (false),
+        m_try_others (true),
+        m_stop_others (true),
+        m_debug (false),
+        m_trap_exceptions (true),
+        m_generate_debug_info (false),
+        m_result_is_internal (false),
+        m_use_dynamic (lldb::eNoDynamicValues),
+        m_timeout_usec (default_timeout),
+        m_one_thread_timeout_usec (0),
         m_cancel_callback (nullptr),
         m_cancel_callback_baton (nullptr)
     {
@@ -287,7 +288,24 @@ public:
     {
         return m_coerce_to_id;
     }
-    
+
+    const char *
+    GetPrefix () const
+    {
+        if (m_prefix.empty())
+            return NULL;
+        return m_prefix.c_str();
+    }
+
+    void
+    SetPrefix (const char *prefix)
+    {
+        if (prefix && prefix[0])
+            m_prefix = prefix;
+        else
+            m_prefix.clear();
+    }
+
     void
     SetCoerceToId (bool coerce = true)
     {
@@ -459,6 +477,7 @@ public:
 private:
     ExecutionPolicy m_execution_policy;
     lldb::LanguageType m_language;
+    std::string m_prefix;
     bool m_coerce_to_id;
     bool m_unwind_on_error;
     bool m_ignore_breakpoints;

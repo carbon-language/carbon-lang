@@ -111,6 +111,13 @@ public:
     SetSuppressPersistentResult (bool b = false);
 
 
+    %feature("docstring", "Gets the prefix to use for this expression.") GetPrefix;
+    const char *
+    GetPrefix () const;
+
+    %feature("docstring", "Sets the prefix to use for this expression. This prefix gets inserted after the 'target.expr-prefix' prefix contents, but before the wrapped expression function body.") SetPrefix;
+    void
+    SetPrefix (const char *prefix);
 
 protected:
 

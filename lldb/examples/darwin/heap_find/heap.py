@@ -434,7 +434,7 @@ info''' % (options.max_frames, options.max_history, addr);
         result.AppendMessage('error: expression failed "%s" => %s' % (expr, expr_sbvalue.error))
 
 
-def display_match_results (result, options, arg_str_description, expr, print_no_matches = True):
+def display_match_results (result, options, arg_str_description, expr, print_no_matches, expr_prefix = None):
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
     if not frame:
         result.AppendMessage('error: invalid frame')
@@ -445,6 +445,8 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
     expr_options.SetTimeoutInMicroSeconds (30*1000*1000) # 30 second timeout
     expr_options.SetTryAllThreads (False)
     expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
+    if expr_prefix:
+        expr_options.SetPrefix (expr_prefix)
     expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
@@ -621,14 +623,16 @@ def ptr_refs(debugger, command, result, dict):
         # a member named "callback" whose type is "range_callback_t". This
         # will be used by our zone callbacks to call the range callback for
         # each malloc range.
-        user_init_code_format = '''
-#define MAX_MATCHES %u
+        expr_prefix = '''
 struct $malloc_match {
     void *addr;
     uintptr_t size;
     uintptr_t offset;
     uintptr_t type;
 };
+'''        
+        user_init_code_format = '''
+#define MAX_MATCHES %u
 typedef struct callback_baton_t {
     range_callback_t callback;
     unsigned num_matches;
@@ -667,7 +671,7 @@ baton.matches'''
             user_init_code = user_init_code_format % (options.max_matches, ptr_expr)
             expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing pointer %s' % ptr_expr
-            display_match_results (result, options, arg_str_description, expr)
+            display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
     else:
         result.AppendMessage('error: no pointer arguments were given')
 
@@ -713,14 +717,16 @@ def cstr_refs(debugger, command, result, dict):
         # a member named "callback" whose type is "range_callback_t". This
         # will be used by our zone callbacks to call the range callback for
         # each malloc range.
-        user_init_code_format = '''
-#define MAX_MATCHES %u
+        expr_prefix = '''
 struct $malloc_match {
     void *addr;
     uintptr_t size;
     uintptr_t offset;
     uintptr_t type;
 };
+'''        
+        user_init_code_format = '''
+#define MAX_MATCHES %u
 typedef struct callback_baton_t {
     range_callback_t callback;
     unsigned num_matches;
@@ -761,7 +767,7 @@ baton.matches'''
             user_init_code = user_init_code_format % (options.max_matches, cstr)
             expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing "%s"' % cstr            
-            display_match_results (result, options, arg_str_description, expr)
+            display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
     else:
         result.AppendMessage('error: command takes one or more C string arguments')
 
@@ -798,14 +804,16 @@ def malloc_info_impl (debugger, result, options, args):
     if not frame:
         result.AppendMessage('error: invalid frame')
         return
-    
-    user_init_code_format = '''
+    expr_prefix = '''
 struct $malloc_match {
     void *addr;
     uintptr_t size;
     uintptr_t offset;
     uintptr_t type;
 };
+'''        
+    
+    user_init_code_format = '''
 typedef struct callback_baton_t {
     range_callback_t callback;
     unsigned num_matches;
@@ -836,7 +844,7 @@ baton.matches[1].addr = 0;'''
             user_init_code = user_init_code_format % (ptr_expr)
             expr = get_iterate_memory_expr(options, process, user_init_code, 'baton.matches')          
             arg_str_description = 'malloc block that contains %s' % ptr_expr
-            total_matches += display_match_results (result, options, arg_str_description, expr)
+            total_matches += display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
         return total_matches
     else:
         result.AppendMessage('error: command takes one or more pointer expressions')
@@ -1012,14 +1020,17 @@ def objc_refs(debugger, command, result, dict):
         # a member named "callback" whose type is "range_callback_t". This
         # will be used by our zone callbacks to call the range callback for
         # each malloc range.
-        user_init_code_format = '''
-#define MAX_MATCHES %u
+        expr_prefix = '''
 struct $malloc_match {
     void *addr;
     uintptr_t size;
     uintptr_t offset;
     uintptr_t type;
 };
+'''        
+
+        user_init_code_format = '''
+#define MAX_MATCHES %u
 typedef int (*compare_callback_t)(const void *a, const void *b);
 typedef struct callback_baton_t {
     range_callback_t callback;
@@ -1106,7 +1117,7 @@ int nc = (int)objc_getClassList(baton.classes, sizeof(baton.classes)/sizeof(Clas
                     user_init_code = user_init_code_format % (options.max_matches, num_objc_classes, isa)
                     expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
                     arg_str_description = 'objective C classes with isa 0x%x' % isa
-                    display_match_results (result, options, arg_str_description, expr)
+                    display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
                 else:
                     result.AppendMessage('error: Can\'t find isa for an ObjC class named "%s"' % (class_name))
             else:

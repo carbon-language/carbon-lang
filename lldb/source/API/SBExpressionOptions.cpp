@@ -185,6 +185,17 @@ SBExpressionOptions::SetSuppressPersistentResult (bool b)
     return m_opaque_ap->SetResultIsInternal (b);
 }
 
+const char *
+SBExpressionOptions::GetPrefix () const
+{
+    return m_opaque_ap->GetPrefix();
+}
+
+void
+SBExpressionOptions::SetPrefix (const char *prefix)
+{
+    return m_opaque_ap->SetPrefix(prefix);
+}
 
 EvaluateExpressionOptions *
 SBExpressionOptions::get() const
