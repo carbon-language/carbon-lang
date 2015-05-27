@@ -105,61 +105,13 @@ public:
 };
 
 //===--------------------------------------------------------------------===//
-/// DIEValue - A debug information entry value. Some of these roughly correlate
-/// to DWARF attribute classes.
-///
-class DIEValue {
-public:
-  enum Type {
-    isInteger,
-    isString,
-    isExpr,
-    isLabel,
-    isDelta,
-    isEntry,
-    isTypeSignature,
-    isBlock,
-    isLoc,
-    isLocList,
-  };
-
-private:
-  /// Ty - Type of data stored in the value.
-  ///
-  Type Ty;
-
-protected:
-  explicit DIEValue(Type T) : Ty(T) {}
-  ~DIEValue() {}
-
-public:
-  // Accessors
-  Type getType() const { return Ty; }
-
-  /// EmitValue - Emit value via the Dwarf writer.
-  ///
-  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-
-  /// SizeOf - Return the size of a value in bytes.
-  ///
-  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
-
-#ifndef NDEBUG
-  void print(raw_ostream &O) const;
-  void dump() const;
-#endif
-};
-
-//===--------------------------------------------------------------------===//
 /// DIEInteger - An integer value DIE.
 ///
-class DIEInteger : public DIEValue {
-  friend DIEValue;
-
+class DIEInteger {
   uint64_t Integer;
 
 public:
-  explicit DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
+  explicit DIEInteger(uint64_t I) : Integer(I) {}
 
   /// BestForm - Choose the best form for integer.
   ///
@@ -186,120 +138,91 @@ public:
   uint64_t getValue() const { return Integer; }
   void setValue(uint64_t Val) { Integer = Val; }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *I) { return I->getType() == isInteger; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// DIEExpr - An expression DIE.
 //
-class DIEExpr : public DIEValue {
-  friend class DIEValue;
-
+class DIEExpr {
   const MCExpr *Expr;
 
 public:
-  explicit DIEExpr(const MCExpr *E) : DIEValue(isExpr), Expr(E) {}
+  explicit DIEExpr(const MCExpr *E) : Expr(E) {}
 
   /// getValue - Get MCExpr.
   ///
   const MCExpr *getValue() const { return Expr; }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isExpr; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// DIELabel - A label DIE.
 //
-class DIELabel : public DIEValue {
-  friend class DIEValue;
-
+class DIELabel {
   const MCSymbol *Label;
 
 public:
-  explicit DIELabel(const MCSymbol *L) : DIEValue(isLabel), Label(L) {}
+  explicit DIELabel(const MCSymbol *L) : Label(L) {}
 
   /// getValue - Get MCSymbol.
   ///
   const MCSymbol *getValue() const { return Label; }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// DIEDelta - A simple label difference DIE.
 ///
-class DIEDelta : public DIEValue {
-  friend class DIEValue;
-
+class DIEDelta {
   const MCSymbol *LabelHi;
   const MCSymbol *LabelLo;
 
 public:
-  DIEDelta(const MCSymbol *Hi, const MCSymbol *Lo)
-      : DIEValue(isDelta), LabelHi(Hi), LabelLo(Lo) {}
+  DIEDelta(const MCSymbol *Hi, const MCSymbol *Lo) : LabelHi(Hi), LabelLo(Lo) {}
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *D) { return D->getType() == isDelta; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// DIEString - A container for string values.
 ///
-class DIEString : public DIEValue {
-  friend class DIEValue;
-
+class DIEString {
   DwarfStringPoolEntryRef S;
 
 public:
-  DIEString(DwarfStringPoolEntryRef S) : DIEValue(isString), S(S) {}
+  DIEString(DwarfStringPoolEntryRef S) : S(S) {}
 
   /// getString - Grab the string out of the object.
   StringRef getString() const { return S.getString(); }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *D) { return D->getType() == isString; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
@@ -308,60 +231,48 @@ private:
 /// this class can also be used as a proxy for a debug information entry not
 /// yet defined (ie. types.)
 class DIE;
-class DIEEntry : public DIEValue {
-  friend class DIEValue;
+class DIEEntry {
+  DIE *Entry;
 
-  DIE &Entry;
+  DIEEntry() = delete;
 
 public:
-  explicit DIEEntry(DIE &E) : DIEValue(isEntry), Entry(E) {
-  }
+  explicit DIEEntry(DIE &E) : Entry(&E) {}
 
-  DIE &getEntry() const { return Entry; }
+  DIE &getEntry() const { return *Entry; }
 
   /// Returns size of a ref_addr entry.
   static unsigned getRefAddrSize(const AsmPrinter *AP);
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const {
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
     return Form == dwarf::DW_FORM_ref_addr ? getRefAddrSize(AP)
                                            : sizeof(int32_t);
   }
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// \brief A signature reference to a type unit.
-class DIETypeSignature : public DIEValue {
-  friend class DIEValue;
+class DIETypeSignature {
+  const DwarfTypeUnit *Unit;
 
-  const DwarfTypeUnit &Unit;
+  DIETypeSignature() = delete;
 
 public:
-  explicit DIETypeSignature(const DwarfTypeUnit &Unit)
-      : DIEValue(isTypeSignature), Unit(Unit) {}
+  explicit DIETypeSignature(const DwarfTypeUnit &Unit) : Unit(&Unit) {}
 
-  // \brief Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) {
-    return E->getType() == isTypeSignature;
-  }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const {
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
     assert(Form == dwarf::DW_FORM_ref_sig8);
     return 8;
   }
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
@@ -369,27 +280,125 @@ private:
 /// DIELocList - Represents a pointer to a location list in the debug_loc
 /// section.
 //
-class DIELocList : public DIEValue {
-  friend class DIEValue;
-
+class DIELocList {
   // Index into the .debug_loc vector.
   size_t Index;
 
 public:
-  DIELocList(size_t I) : DIEValue(isLocList), Index(I) {}
+  DIELocList(size_t I) : Index(I) {}
 
   /// getValue - Grab the current index out.
   size_t getValue() const { return Index; }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isLocList; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
+#endif
+};
+
+//===--------------------------------------------------------------------===//
+/// DIEValue - A debug information entry value. Some of these roughly correlate
+/// to DWARF attribute classes.
+///
+class DIEBlock;
+class DIELoc;
+class DIEValue {
+public:
+  enum Type {
+    isNone,
+    isInteger,
+    isString,
+    isExpr,
+    isLabel,
+    isDelta,
+    isEntry,
+    isTypeSignature,
+    isBlock,
+    isLoc,
+    isLocList,
+  };
+
+private:
+  /// Ty - Type of data stored in the value.
+  ///
+  Type Ty;
+
+  AlignedCharArrayUnion<DIEInteger, DIEString, DIEExpr, DIELabel, DIEDelta *,
+                        DIEEntry, DIETypeSignature, DIEBlock *, DIELoc *,
+                        DIELocList> Val;
+  static_assert(sizeof(Val) == sizeof(uint64_t),
+                "Only small values should be allocated locally");
+
+public:
+  DIEValue() : Ty(isNone) {}
+  DIEValue(const DIEValue &X) = default;
+  DIEValue &operator=(const DIEValue &X) = default;
+
+  explicit operator bool() const { return Ty; }
+
+#define CONSTRUCT_FROM_SMALL(Kind)                                             \
+  DIEValue(const DIE##Kind &V) : Ty(is##Kind) {                                \
+    static_assert(std::is_trivially_copyable<DIE##Kind>::value,                \
+                  "Expected trivial type");                                    \
+    new (reinterpret_cast<void *>(Val.buffer)) DIE##Kind(V);                   \
+  }
+#define CONSTRUCT_FROM_LARGE(Kind)                                             \
+  DIEValue(const DIE##Kind *V) : Ty(is##Kind) {                                \
+    assert(V && "Expected valid value");                                       \
+    *reinterpret_cast<const DIE##Kind **>(Val.buffer) = V;                     \
+  }
+  CONSTRUCT_FROM_SMALL(Integer)
+  CONSTRUCT_FROM_SMALL(Expr)
+  CONSTRUCT_FROM_SMALL(Label)
+  CONSTRUCT_FROM_SMALL(Entry)
+  CONSTRUCT_FROM_SMALL(TypeSignature)
+  CONSTRUCT_FROM_SMALL(LocList)
+  CONSTRUCT_FROM_SMALL(String)
+  CONSTRUCT_FROM_LARGE(Delta)
+  CONSTRUCT_FROM_LARGE(Block)
+  CONSTRUCT_FROM_LARGE(Loc)
+#undef CONSTRUCT_FROM_SMALL
+#undef CONSTRUCT_FROM_LARGE
+
+  // Accessors
+  Type getType() const { return Ty; }
+
+#define GET_VALUE_REF_SMALL(Kind)                                              \
+  const DIE##Kind &getDIE##Kind() const {                                      \
+    assert(getType() == is##Kind && "Expected " #Kind);                        \
+    return *reinterpret_cast<const DIE##Kind *>(Val.buffer);                   \
+  }
+#define GET_VALUE_REF_LARGE(Kind)                                              \
+  const DIE##Kind &getDIE##Kind() const {                                      \
+    assert(getType() == is##Kind && "Expected " #Kind);                        \
+    return **reinterpret_cast<const DIE##Kind *const *>(Val.buffer);           \
+  }
+  GET_VALUE_REF_SMALL(Integer)
+  GET_VALUE_REF_SMALL(Expr)
+  GET_VALUE_REF_SMALL(Label)
+  GET_VALUE_REF_SMALL(Entry)
+  GET_VALUE_REF_SMALL(TypeSignature)
+  GET_VALUE_REF_SMALL(LocList)
+  GET_VALUE_REF_SMALL(String)
+  GET_VALUE_REF_LARGE(Delta)
+  GET_VALUE_REF_LARGE(Block)
+  GET_VALUE_REF_LARGE(Loc)
+#undef GET_VALUE_REF_SMALL
+#undef GET_VALUE_REF_LARGE
+
+  /// EmitValue - Emit value via the Dwarf writer.
+  ///
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+
+  /// SizeOf - Return the size of a value in bytes.
+  ///
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
+
+#ifndef NDEBUG
+  void print(raw_ostream &O) const;
+  void dump() const;
 #endif
 };
 
@@ -424,7 +433,7 @@ protected:
 
   /// Attribute values.
   ///
-  SmallVector<DIEValue *, 12> Values;
+  SmallVector<DIEValue, 12> Values;
 
 protected:
   DIE()
@@ -446,7 +455,11 @@ public:
   const std::vector<std::unique_ptr<DIE>> &getChildren() const {
     return Children;
   }
-  const SmallVectorImpl<DIEValue *> &getValues() const { return Values; }
+  const SmallVectorImpl<DIEValue> &getValues() const { return Values; }
+  void setValue(unsigned I, DIEValue New) {
+    assert(I < Values.size());
+    Values[I] = New;
+  }
   DIE *getParent() const { return Parent; }
   /// Climb up the parent chain to get the compile or type unit DIE this DIE
   /// belongs to.
@@ -459,7 +472,7 @@ public:
 
   /// addValue - Add a value and attributes to a DIE.
   ///
-  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, DIEValue *Value) {
+  void addValue(dwarf::Attribute Attribute, dwarf::Form Form, DIEValue Value) {
     Abbrev.AddAttribute(Attribute, Form);
     Values.push_back(Value);
   }
@@ -473,9 +486,11 @@ public:
     Children.push_back(std::move(Child));
   }
 
-  /// findAttribute - Find a value in the DIE with the attribute given,
-  /// returns NULL if no such attribute exists.
-  DIEValue *findAttribute(dwarf::Attribute Attribute) const;
+  /// Find a value in the DIE with the attribute given.
+  ///
+  /// Returns a default-constructed DIEValue (where \a DIEValue::getType()
+  /// gives \a DIEValue::isNone) if no such attribute exists.
+  DIEValue findAttribute(dwarf::Attribute Attribute) const;
 
 #ifndef NDEBUG
   void print(raw_ostream &O, unsigned IndentCount = 0) const;
@@ -486,12 +501,11 @@ public:
 //===--------------------------------------------------------------------===//
 /// DIELoc - Represents an expression location.
 //
-class DIELoc : public DIEValue, public DIE {
-  friend class DIEValue;
-
+class DIELoc : public DIE {
   mutable unsigned Size; // Size in bytes excluding size header.
+
 public:
-  DIELoc() : DIEValue(isLoc), Size(0) {}
+  DIELoc() : Size(0) {}
 
   /// ComputeSize - Calculate the size of the location expression.
   ///
@@ -512,27 +526,22 @@ public:
     return dwarf::DW_FORM_block;
   }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isLoc; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
 //===--------------------------------------------------------------------===//
 /// DIEBlock - Represents a block of values.
 //
-class DIEBlock : public DIEValue, public DIE {
-  friend class DIEValue;
-
+class DIEBlock : public DIE {
   mutable unsigned Size; // Size in bytes excluding size header.
+
 public:
-  DIEBlock() : DIEValue(isBlock), Size(0) {}
+  DIEBlock() : Size(0) {}
 
   /// ComputeSize - Calculate the size of the location expression.
   ///
@@ -550,15 +559,11 @@ public:
     return dwarf::DW_FORM_block;
   }
 
-  // Implement isa/cast/dyncast.
-  static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
-
-private:
-  void EmitValueImpl(const AsmPrinter *AP, dwarf::Form Form) const;
-  unsigned SizeOfImpl(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
 
 #ifndef NDEBUG
-  void printImpl(raw_ostream &O) const;
+  void print(raw_ostream &O) const;
 #endif
 };
 
