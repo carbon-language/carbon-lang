@@ -171,13 +171,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM,
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
 
-  // These should be replaced by UDVIREM, but it does not happen automatically
-  // during Type Legalization
-  setOperationAction(ISD::UDIV, MVT::i64, Custom);
-  setOperationAction(ISD::UREM, MVT::i64, Custom);
-  setOperationAction(ISD::SDIV, MVT::i64, Custom);
-  setOperationAction(ISD::SREM, MVT::i64, Custom);
-
   // We don't have 64-bit shifts. Thus we need either SHX i64 or SHX_PARTS i32
   //  to be Legal/Custom in order to avoid library calls.
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
@@ -878,42 +871,6 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
     if (expandFP_TO_SINT(N, Result, DAG))
       Results.push_back(Result);
     return;
-  }
-  case ISD::UDIV: {
-    SDValue Op = SDValue(N, 0);
-    SDLoc DL(Op);
-    EVT VT = Op.getValueType();
-    SDValue UDIVREM = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(VT, VT),
-      N->getOperand(0), N->getOperand(1));
-    Results.push_back(UDIVREM);
-    break;
-  }
-  case ISD::UREM: {
-    SDValue Op = SDValue(N, 0);
-    SDLoc DL(Op);
-    EVT VT = Op.getValueType();
-    SDValue UDIVREM = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(VT, VT),
-      N->getOperand(0), N->getOperand(1));
-    Results.push_back(UDIVREM.getValue(1));
-    break;
-  }
-  case ISD::SDIV: {
-    SDValue Op = SDValue(N, 0);
-    SDLoc DL(Op);
-    EVT VT = Op.getValueType();
-    SDValue SDIVREM = DAG.getNode(ISD::SDIVREM, DL, DAG.getVTList(VT, VT),
-      N->getOperand(0), N->getOperand(1));
-    Results.push_back(SDIVREM);
-    break;
-  }
-  case ISD::SREM: {
-    SDValue Op = SDValue(N, 0);
-    SDLoc DL(Op);
-    EVT VT = Op.getValueType();
-    SDValue SDIVREM = DAG.getNode(ISD::SDIVREM, DL, DAG.getVTList(VT, VT),
-      N->getOperand(0), N->getOperand(1));
-    Results.push_back(SDIVREM.getValue(1));
-    break;
   }
   case ISD::SDIVREM: {
     SDValue Op = SDValue(N, 1);
