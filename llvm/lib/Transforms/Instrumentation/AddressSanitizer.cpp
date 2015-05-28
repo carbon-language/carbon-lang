@@ -587,9 +587,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   void unpoisonDynamicAllocasBeforeInst(Instruction *InstBefore,
                                         Value *SavedStack) {
     IRBuilder<> IRB(InstBefore);
-    IRB.CreateCall2(AsanAllocasUnpoisonFunc,
-                    IRB.CreateLoad(DynamicAllocaLayout),
-                    IRB.CreatePtrToInt(SavedStack, IntptrTy));
+    IRB.CreateCall(AsanAllocasUnpoisonFunc,
+                    {IRB.CreateLoad(DynamicAllocaLayout),
+                    IRB.CreatePtrToInt(SavedStack, IntptrTy)});
   }
 
   // Unpoison dynamic allocas redzones.
@@ -1991,7 +1991,7 @@ void FunctionStackPoisoner::handleDynamicAllocaCall(AllocaInst *AI) {
                                     ConstantInt::get(IntptrTy, Align));
 
   // Insert __asan_alloca_poison call for new created alloca.
-  IRB.CreateCall2(AsanAllocaPoisonFunc, NewAddress, OldSize);
+  IRB.CreateCall(AsanAllocaPoisonFunc, {NewAddress, OldSize});
 
   // Store the last alloca's address to DynamicAllocaLayout. We'll need this
   // for unpoisoning stuff.
