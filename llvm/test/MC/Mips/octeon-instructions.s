@@ -15,6 +15,8 @@
 # CHECK: cins32 $22, $22, 9, 22       # encoding: [0x72,0xd6,0xb2,0x73]
 # CHECK: cins32 $24, $ra, 0, 31       # encoding: [0x73,0xf8,0xf8,0x33]
 # CHECK: cins32 $15, $15, 5, 5        # encoding: [0x71,0xef,0x29,0x73]
+# CHECK: dmtc2 $2, 16455              # encoding: [0x48,0xa2,0x40,0x47]
+# CHECK: dmfc2 $2, 64                 # encoding: [0x48,0x22,0x00,0x40]
 # CHECK: dmul  $9, $6, $7             # encoding: [0x70,0xc7,0x48,0x03]
 # CHECK: dmul  $19, $24, $25          # encoding: [0x73,0x19,0x98,0x03]
 # CHECK: dmul  $9, $9, $6             # encoding: [0x71,0x26,0x48,0x03]
@@ -72,6 +74,8 @@ foo:
   cins32 $22, 9, 22
   cins  $24, $31, 32, 31
   cins  $15, 37, 5
+  dmtc2 $2, 0x4047
+  dmfc2 $2, 0x0040
   dmul  $9, $6, $7
   dmul  $19, $24, $25
   dmul  $9, $6

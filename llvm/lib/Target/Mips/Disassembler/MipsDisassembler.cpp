@@ -47,6 +47,8 @@ public:
 
   bool isGP64() const { return STI.getFeatureBits()[Mips::FeatureGP64Bit]; }
 
+  bool hasCnMips() const { return STI.getFeatureBits()[Mips::FeatureCnMips]; }
+
   bool hasCOP3() const {
     // Only present in MIPS-I and MIPS-II
     return !hasMips32() && !hasMips3();
@@ -882,6 +884,16 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
   if (hasMips32r6()) {
     DEBUG(dbgs() << "Trying Mips32r6_64r6 table (32-bit opcodes):\n");
     Result = decodeInstruction(DecoderTableMips32r6_64r632, Instr, Insn,
+                               Address, this, STI);
+    if (Result != MCDisassembler::Fail) {
+      Size = 4;
+      return Result;
+    }
+  }
+
+  if (hasCnMips()) {
+    DEBUG(dbgs() << "Trying CnMips table (32-bit opcodes):\n");
+    Result = decodeInstruction(DecoderTableCnMips32, Instr, Insn,
                                Address, this, STI);
     if (Result != MCDisassembler::Fail) {
       Size = 4;

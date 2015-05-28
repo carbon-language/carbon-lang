@@ -226,6 +226,18 @@ class MFC3OP_FM<bits<6> op, bits<5> mfmt>
   let Inst{2-0}   = sel;
 }
 
+class MFC2OP_FM<bits<6> op, bits<5> mfmt> : StdArch {
+  bits<5>  rt;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = mfmt;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = imm16;
+}
+
 class ADD_FM<bits<6> op, bits<6> funct> : StdArch {
   bits<5> rd;
   bits<5> rs;
