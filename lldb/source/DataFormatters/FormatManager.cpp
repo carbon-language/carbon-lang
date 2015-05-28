@@ -18,7 +18,6 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/DataFormatters/CXXFormatterFunctions.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
 #include "llvm/ADT/STLExtras.h"

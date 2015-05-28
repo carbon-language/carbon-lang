@@ -181,7 +181,6 @@ class   Scalar;
 class   ScriptInterpreter;
 class   ScriptInterpreterLocker;
 #ifndef LLDB_DISABLE_PYTHON
-class   ScriptInterpreterPython;
 struct  ScriptSummaryFormat;
 #endif
 class   SearchFilter;
