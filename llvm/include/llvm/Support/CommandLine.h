@@ -1284,61 +1284,16 @@ public:
   }
 };
 
-// Define how to hold a class type object, such as a string.
-// Originally this code inherited from std::vector. In transitioning to a new
-// API for command line options we should change this. The new implementation
-// of this list_storage specialization implements the minimum subset of the
-// std::vector API required for all the current clients.
+// Define how to hold a class type object, such as a string.  Since we can
+// inherit from a class, we do so.  This makes us exactly compatible with the
+// object in all cases that it is used.
 //
-// FIXME: Reduce this API to a more narrow subset of std::vector
-//
-template <class DataType> class list_storage<DataType, bool> {
-  std::vector<DataType> Storage;
-
+template <class DataType>
+class list_storage<DataType, bool> : public std::vector<DataType> {
 public:
-  typedef typename std::vector<DataType>::iterator iterator;
-
-  iterator begin() { return Storage.begin(); }
-  iterator end() { return Storage.end(); }
-
-  typedef typename std::vector<DataType>::const_iterator const_iterator;
-  const_iterator begin() const { return Storage.begin(); }
-  const_iterator end() const { return Storage.end(); }
-
-  typedef typename std::vector<DataType>::size_type size_type;
-  size_type size() const { return Storage.size(); }
-
-  bool empty() const { return Storage.empty(); }
-
-  void push_back(const DataType &value) { Storage.push_back(value); }
-  void push_back(DataType &&value) { Storage.push_back(value); }
-
-  typedef typename std::vector<DataType>::reference reference;
-  typedef typename std::vector<DataType>::const_reference const_reference;
-  reference operator[](size_type pos) { return Storage[pos]; }
-  const_reference operator[](size_type pos) const { return Storage[pos]; }
-
-  iterator erase(const_iterator pos) { return Storage.erase(pos); }
-  iterator erase(const_iterator first, const_iterator last) {
-    return Storage.erase(first, last);
+  template <class T> void addValue(const T &V) {
+    std::vector<DataType>::push_back(V);
   }
-
-  iterator insert(const_iterator pos, const DataType &value) {
-    return Storage.insert(pos, value);
-  }
-  iterator insert(const_iterator pos, DataType &&value) {
-    return Storage.insert(pos, value);
-  }
-
-  reference front() { return Storage.front(); }
-  const_reference front() const { return Storage.front(); }
-
-  operator std::vector<DataType>&() { return Storage; }
-  operator ArrayRef<DataType>() { return Storage; }
-  std::vector<DataType> *operator&() { return &Storage; }
-  const std::vector<DataType> *operator&() const { return &Storage; }
-
-  template <class T> void addValue(const T &V) { Storage.push_back(V); }
 };
 
 //===----------------------------------------------------------------------===//
