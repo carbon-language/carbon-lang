@@ -41,13 +41,6 @@ public:
         ePreferDemangledWithoutArguments
     };
 
-    enum ManglingScheme
-    {
-        eManglingSchemeNone = 0,
-        eManglingSchemeMSVC,
-        eManglingSchemeItanium
-    };
-
     //----------------------------------------------------------------------
     /// Default constructor.
     ///
