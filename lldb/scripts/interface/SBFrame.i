@@ -63,6 +63,12 @@ public:
     uint32_t
     GetFrameID () const;
 
+    %feature("docstring", "
+    Get the Canonical Frame Address for this stack frame.
+    This is the DWARF standard's definition of a CFA, a stack address
+    that remains constant throughout the lifetime of the function.
+    Returns an lldb::addr_t stack address, or LLDB_INVALID_ADDRESS if
+    the CFA cannot be determined.") GetCFA;
     lldb::addr_t
     GetCFA () const;
 
