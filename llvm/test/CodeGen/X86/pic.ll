@@ -196,9 +196,11 @@ bb12:
 ; LINUX-NEXT: .LJTI7_0:
 ; LINUX:   .long	 .LBB7_2@GOTOFF
 ; LINUX:   .long	 .LBB7_8@GOTOFF
-; LINUX:   .long	 .LBB7_14@GOTOFF
-; LINUX:   .long	 .LBB7_9@GOTOFF
-; LINUX:   .long	 .LBB7_10@GOTOFF
+; LINUX:   .long	 .LBB7_4@GOTOFF
+; LINUX:   .long	 .LBB7_6@GOTOFF
+; LINUX:   .long	 .LBB7_5@GOTOFF
+; LINUX:   .long	 .LBB7_8@GOTOFF
+; LINUX:   .long	 .LBB7_7@GOTOFF
 }
 
 declare void @foo1(...)
