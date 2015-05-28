@@ -722,7 +722,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         return LHSs;
 
       if (DefInit *LHSd = dyn_cast<DefInit>(LHS))
-        return StringInit::get(LHSd->getDef()->getName());
+        return StringInit::get(LHSd->getAsString());
 
       if (IntInit *LHSi = dyn_cast<IntInit>(LHS))
         return StringInit::get(LHSi->getAsString());
