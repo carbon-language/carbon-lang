@@ -201,6 +201,30 @@ bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
   return a_addr < b_addr;
 }
 
+namespace {
+class PrettyPrinter {
+public:
+  virtual void printInst(MCInstPrinter &IP, const MCInst *MI, bool ShowRawInsn,
+                         ArrayRef<uint8_t> Bytes, uint64_t Address,
+                         raw_ostream &OS, StringRef Annot,
+                         MCSubtargetInfo const &STI) {
+    outs() << format("%8" PRIx64 ":", Address);
+    if (!NoShowRawInsn) {
+      outs() << "\t";
+      dumpBytes(Bytes, outs());
+    }
+    IP.printInst(MI, outs(), "", STI);
+  }
+};
+PrettyPrinter PrettyPrinterInst;
+PrettyPrinter &selectPrettyPrinter(Triple const &Triple, MCInstPrinter &IP) {
+  switch(Triple.getArch()) {
+  default:
+    return PrettyPrinterInst;
+  }
+}
+}
+
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   const Target *TheTarget = getTarget(Obj);
   // getTarget() will have already issued a diagnostic if necessary, so
@@ -267,6 +291,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       << '\n';
     return;
   }
+  PrettyPrinter &PIP = selectPrettyPrinter(Triple(TripleName), *IP);
 
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "\t\t%016" PRIx64 ":  " :
                                                  "\t\t\t%08" PRIx64 ":  ";
@@ -383,12 +408,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         if (DisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
                                    SectionAddr + Index, DebugOut,
                                    CommentStream)) {
-          outs() << format("%8" PRIx64 ":", SectionAddr + Index);
-          if (!NoShowRawInsn) {
-            outs() << "\t";
-            dumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size), outs());
-          }
-          IP->printInst(&Inst, outs(), "", *STI);
+          PIP.printInst(*IP, &Inst, !NoShowRawInsn,
+                        Bytes.slice(Index, Size),
+                        SectionAddr + Index, outs(), "", *STI);
           outs() << CommentStream.str();
           Comments.clear();
           outs() << "\n";
