@@ -967,13 +967,10 @@ void ELFObjectWriter::computeSymbolTable(
   // Write the symbol table entries.
   LastLocalSymbolIndex = FileNames.size() + LocalSymbolData.size() + 1;
 
-  for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
-    ELFSymbolData &MSD = LocalSymbolData[i];
+  for (ELFSymbolData &MSD : LocalSymbolData)
     WriteSymbol(Writer, MSD, Layout);
-  }
 
-  for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i) {
-    ELFSymbolData &MSD = ExternalSymbolData[i];
+  for (ELFSymbolData &MSD : ExternalSymbolData) {
     MCSymbolData &Data = MSD.Symbol->getData();
     assert(((Data.getFlags() & ELF_STB_Global) ||
             (Data.getFlags() & ELF_STB_Weak)) &&
@@ -983,8 +980,7 @@ void ELFObjectWriter::computeSymbolTable(
       LastLocalSymbolIndex++;
   }
 
-  for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i) {
-    ELFSymbolData &MSD = UndefinedSymbolData[i];
+  for (ELFSymbolData &MSD : UndefinedSymbolData) {
     MCSymbolData &Data = MSD.Symbol->getData();
     WriteSymbol(Writer, MSD, Layout);
     if (MCELF::GetBinding(Data) == ELF::STB_LOCAL)
