@@ -201,13 +201,13 @@
 
 // ================== Check that a bogus architecture gives an error
 // RUN: %clang -target arm -march=armbogusv6 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS %s
-// CHECK-BOGUS: error: the clang compiler does not support '-march=armbogusv6' 
+// CHECK-BOGUS: error: {{.*}} does not support '-march=armbogusv6' 
 // RUN: %clang -target arm---eabihf -march=armbogusv7 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS-HF %s
-// CHECK-BOGUS-HF: error: the clang compiler does not support '-march=armbogusv7' 
+// CHECK-BOGUS-HF: error: {{.*}} does not support '-march=armbogusv7' 
 
 // ================== Check that a bogus CPU gives an error
 // RUN: %clang -target arm -mcpu=bogus -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS-CPU %s
-// CHECK-BOGUS-CPU: error: the clang compiler does not support '-mcpu=bogus'
+// CHECK-BOGUS-CPU: error: {{.*}} does not support '-mcpu=bogus'
 
 // ================== Check default Architecture on each ARM11 CPU
 // RUN: %clang -target arm-linux-gnueabi -mcpu=arm1136j-s -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-CPUV6 %s
