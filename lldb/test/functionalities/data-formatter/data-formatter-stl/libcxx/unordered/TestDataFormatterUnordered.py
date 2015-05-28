@@ -61,12 +61,28 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
 
         self.expect('image list', substrs = self.getLibcPlusPlusLibs())
 
-        self.look_for_content_and_continue("map", ['size=5 {', 'hello', 'world', 'this', 'is', 'me'])
-        self.look_for_content_and_continue("mmap", ['size=6 {', 'first = 3', 'second = "this"', 'first = 2', 'second = "hello"'])
-        self.look_for_content_and_continue("iset", ['size=5 {', '\[\d\] = 5', '\[\d\] = 3', '\[\d\] = 2'])
-        self.look_for_content_and_continue("sset", ['size=5 {', '\[\d\] = "is"', '\[\d\] = "world"', '\[\d\] = "hello"'])
-        self.look_for_content_and_continue("imset", ['size=6 {', '\[\d\] = 3(\\n|.)+\[\d\] = 3(\\n|.)+\[\d\] = 3', '\[\d\] = 2', '\[\d\] = 1'])
-        self.look_for_content_and_continue("smset", ['size=5 {', '\[\d\] = "is"(\\n|.)+\[\d\] = "is"', '\[\d\] = "world"(\\n|.)+\[\d\] = "world"'])
+        self.look_for_content_and_continue(
+            "map", ['size=5 {', 'hello', 'world', 'this', 'is', 'me'])
+
+        self.look_for_content_and_continue(
+            "mmap", ['size=6 {', 'first = 3', 'second = "this"',
+                                 'first = 2', 'second = "hello"'])
+
+        self.look_for_content_and_continue(
+            "iset", ['size=5 {', '\[\d\] = 5', '\[\d\] = 3', '\[\d\] = 2'])
+
+        self.look_for_content_and_continue(
+            "sset", ['size=5 {', '\[\d\] = "is"', '\[\d\] = "world"',
+                                 '\[\d\] = "hello"'])
+
+        self.look_for_content_and_continue(
+            "imset", ['size=6 {', '(\[\d\] = 3(\\n|.)+){3}',
+                                  '\[\d\] = 2', '\[\d\] = 1'])
+
+        self.look_for_content_and_continue(
+            "smset",
+            ['size=5 {', '(\[\d\] = "is"(\\n|.)+){2}',
+                         '(\[\d\] = "world"(\\n|.)+){2}'])
 
 if __name__ == '__main__':
     import atexit
