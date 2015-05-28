@@ -20,7 +20,10 @@ namespace llvm {
 DwarfFile::DwarfFile(AsmPrinter *AP, StringRef Pref, BumpPtrAllocator &DA)
     : Asm(AP), StrPool(DA, *Asm, Pref) {}
 
-DwarfFile::~DwarfFile() {}
+DwarfFile::~DwarfFile() {
+  for (DIEAbbrev *Abbrev : Abbreviations)
+    Abbrev->~DIEAbbrev();
+}
 
 // Define a unique number for the abbreviation.
 //
