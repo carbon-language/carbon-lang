@@ -47,7 +47,7 @@ std::string InputFile::getShortName() {
 
 std::error_code ArchiveFile::parse() {
   // Get a memory buffer.
-  auto MBOrErr = MemoryBuffer::getFile(Name);
+  auto MBOrErr = MemoryBuffer::getFile(Filename);
   if (auto EC = MBOrErr.getError())
     return EC;
   MB = std::move(MBOrErr.get());
@@ -91,7 +91,7 @@ ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
 std::error_code ObjectFile::parse() {
   // MBRef is not initialized if this is not an archive member.
   if (MBRef.getBuffer().empty()) {
-    auto MBOrErr = MemoryBuffer::getFile(Name);
+    auto MBOrErr = MemoryBuffer::getFile(Filename);
     if (auto EC = MBOrErr.getError())
       return EC;
     MB = std::move(MBOrErr.get());
@@ -108,7 +108,7 @@ std::error_code ObjectFile::parse() {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    return make_dynamic_error_code(Twine(Name) + " is not a COFF file.");
+    return make_dynamic_error_code(Twine(Filename) + " is not a COFF file.");
   }
 
   // Read section and symbol tables.
@@ -160,14 +160,14 @@ std::error_code ObjectFile::initializeSymbols() {
     // Get a COFFSymbolRef object.
     auto SymOrErr = COFFObj->getSymbol(I);
     if (auto EC = SymOrErr.getError())
-      return make_dynamic_error_code(Twine("broken object file: ") + Name +
+      return make_dynamic_error_code(Twine("broken object file: ") + Filename +
                                      ": " + EC.message());
     COFFSymbolRef Sym = SymOrErr.get();
 
     // Get a symbol name.
     StringRef SymbolName;
     if (auto EC = COFFObj->getSymbolName(Sym, SymbolName))
-      return make_dynamic_error_code(Twine("broken object file: ") + Name +
+      return make_dynamic_error_code(Twine("broken object file: ") + Filename +
                                      ": " + EC.message());
     // Skip special symbols.
     if (SymbolName == "@comp.id" || SymbolName == "@feat.00")

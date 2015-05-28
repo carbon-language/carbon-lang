@@ -63,10 +63,10 @@ private:
 // .lib or .a file.
 class ArchiveFile : public InputFile {
 public:
-  explicit ArchiveFile(StringRef S) : InputFile(ArchiveKind), Name(S) {}
+  explicit ArchiveFile(StringRef S) : InputFile(ArchiveKind), Filename(S) {}
   static bool classof(const InputFile *F) { return F->kind() == ArchiveKind; }
   std::error_code parse() override;
-  StringRef getName() override { return Name; }
+  StringRef getName() override { return Filename; }
 
   // Returns a memory buffer for a given symbol. An empty memory buffer
   // is returned if we have already returned the same memory buffer.
@@ -78,7 +78,7 @@ public:
 
 private:
   std::unique_ptr<Archive> File;
-  std::string Name;
+  std::string Filename;
   std::unique_ptr<MemoryBuffer> MB;
   std::vector<SymbolBody *> SymbolBodies;
   std::set<const char *> Seen;
@@ -88,13 +88,13 @@ private:
 // .obj or .o file. This may be a member of an archive file.
 class ObjectFile : public InputFile {
 public:
-  explicit ObjectFile(StringRef S) : InputFile(ObjectKind), Name(S) {}
+  explicit ObjectFile(StringRef S) : InputFile(ObjectKind), Filename(S) {}
   ObjectFile(StringRef S, MemoryBufferRef M)
-      : InputFile(ObjectKind), Name(S), MBRef(M) {}
+      : InputFile(ObjectKind), Filename(S), MBRef(M) {}
 
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
   std::error_code parse() override;
-  StringRef getName() override { return Name; }
+  StringRef getName() override { return Filename; }
   std::vector<Chunk *> &getChunks() { return Chunks; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
@@ -115,7 +115,7 @@ private:
   SymbolBody *createSymbolBody(StringRef Name, COFFSymbolRef Sym,
                                const void *Aux, bool IsFirst);
 
-  std::string Name;
+  std::string Filename;
   std::unique_ptr<COFFObjectFile> COFFObj;
   std::unique_ptr<MemoryBuffer> MB;
   MemoryBufferRef MBRef;
