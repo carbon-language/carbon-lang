@@ -182,6 +182,9 @@ set(GCC_INSTALL_PREFIX "" CACHE PATH "Directory where gcc is installed." )
 set(DEFAULT_SYSROOT "" CACHE PATH
   "Default <path> to all compiler invocations for --sysroot=<path>." )
 
+set(CLANG_DEFAULT_OPENMP_RUNTIME "libgomp" CACHE STRING
+  "Default OpenMP runtime used by -fopenmp.")
+
 set(CLANG_VENDOR "" CACHE STRING
   "Vendor-specific text for showing with version information.")
 
@@ -439,11 +442,6 @@ if(CLANG_ENABLE_ARCMT)
 endif()
 if(CLANG_ENABLE_STATIC_ANALYZER)
   add_definitions(-DCLANG_ENABLE_STATIC_ANALYZER)
-endif()
-
-set(OPENMP_DEFAULT_LIB "" CACHE STRING "OpenMP library used by default for -fopenmp.")
-if(OPENMP_DEFAULT_LIB)
-  add_definitions(-DOPENMP_DEFAULT_LIB=${OPENMP_DEFAULT_LIB})
 endif()
 
 # Clang version information
