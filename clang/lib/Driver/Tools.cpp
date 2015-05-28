@@ -5763,45 +5763,19 @@ StringRef arm::getARMTargetCPU(const ArgList &Args,
 
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
 /// CPU  (or Arch, if CPU is generic).
-//
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
-// FIXME: tblgen this, or kill it!
-// FIXME: Use ARMTargetParser.
 const char *arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
-  // FIXME: Use ARMTargetParser
   if (CPU == "generic") {
-    if (Arch == "armv8.1a" || Arch == "armv8.1-a" ||
-        Arch == "armebv8.1a" || Arch == "armebv8.1-a") {
+    unsigned ArchKind = llvm::ARMTargetParser::parseArch(
+                        llvm::ARMTargetParser::getCanonicalArchName(Arch));
+    if (ArchKind == llvm::ARM::AK_ARMV8_1A)
       return "v8.1a";
-    }
   }
 
-  // FIXME: Use ARMTargetParser
-  return llvm::StringSwitch<const char *>(CPU)
-    .Cases("arm8", "arm810", "v4")
-    .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110", "v4")
-    .Cases("arm7tdmi", "arm7tdmi-s", "arm710t", "v4t")
-    .Cases("arm720t", "arm9", "arm9tdmi", "v4t")
-    .Cases("arm920", "arm920t", "arm922t", "v4t")
-    .Cases("arm940t", "ep9312","v4t")
-    .Cases("arm10tdmi",  "arm1020t", "v5")
-    .Cases("arm9e",  "arm926ej-s",  "arm946e-s", "v5e")
-    .Cases("arm966e-s",  "arm968e-s",  "arm10e", "v5e")
-    .Cases("arm1020e",  "arm1022e",  "xscale", "iwmmxt", "v5e")
-    .Cases("arm1136j-s",  "arm1136jf-s", "v6")
-    .Cases("arm1176jz-s", "arm1176jzf-s", "v6k")
-    .Cases("mpcorenovfp",  "mpcore", "v6k")
-    .Cases("arm1156t2-s",  "arm1156t2f-s", "v6t2")
-    .Cases("cortex-a5", "cortex-a7", "cortex-a8", "v7")
-    .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait", "v7")
-    .Cases("cortex-r4", "cortex-r4f", "cortex-r5", "cortex-r7", "v7r")
-    .Cases("sc000", "cortex-m0", "cortex-m0plus", "cortex-m1", "v6m")
-    .Cases("sc300", "cortex-m3", "v7m")
-    .Cases("cortex-m4", "cortex-m7", "v7em")
-    .Case("swift", "v7s")
-    .Case("cyclone", "v8")
-    .Cases("cortex-a53", "cortex-a57", "cortex-a72", "v8")
-    .Default("");
+  unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(CPU);
+  if (ArchKind == llvm::ARM::AK_INVALID)
+    return "";
+  return llvm::ARMTargetParser::getSubArch(ArchKind);
 }
 
 void arm::appendEBLinkFlags(const ArgList &Args, ArgStringList &CmdArgs, 
