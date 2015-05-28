@@ -371,9 +371,7 @@ std::error_code Writer::write(StringRef OutputPath) {
   writeHeader();
   writeSections();
   applyRelocations();
-  if (auto EC = Buffer->commit())
-    return EC;
-  return std::error_code();
+  return Buffer->commit();
 }
 
 } // namespace coff
