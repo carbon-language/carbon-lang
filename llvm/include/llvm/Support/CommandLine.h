@@ -1323,6 +1323,11 @@ public:
     return Storage.erase(first, last);
   }
 
+  iterator erase(iterator pos) { return Storage.erase(pos); }
+  iterator erase(iterator first, iterator last) {
+    return Storage.erase(first, last);
+  }
+
   iterator insert(const_iterator pos, const DataType &value) {
     return Storage.insert(pos, value);
   }
