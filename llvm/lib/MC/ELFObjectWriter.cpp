@@ -79,7 +79,6 @@ class ELFObjectWriter : public MCObjectWriter {
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
       const MCSymbol *Symbol;
-      uint64_t StringIndex;
       uint32_t SectionIndex;
       StringRef Name;
 
@@ -171,8 +170,8 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void writeHeader(const MCAssembler &Asm);
 
-    void WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
-                     const MCAsmLayout &Layout);
+    void writeSymbol(SymbolTableWriter &Writer, uint32_t StringIndex,
+                     ELFSymbolData &MSD, const MCAsmLayout &Layout);
 
     // Start and end offset of each section
     typedef std::map<const MCSectionELF *, std::pair<uint64_t, uint64_t>>
@@ -451,7 +450,8 @@ static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
   return Type;
 }
 
-void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
+void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
+                                  uint32_t StringIndex, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = MSD.Symbol->getData();
   assert((!OrigData.getFragment() ||
@@ -494,8 +494,8 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
   }
 
   // Write out the symbol table entry
-  Writer.writeSymbol(MSD.StringIndex, Info, Value, Size, Other,
-                     MSD.SectionIndex, IsReserved);
+  Writer.writeSymbol(StringIndex, Info, Value, Size, Other, MSD.SectionIndex,
+                     IsReserved);
 }
 
 // It is always valid to create a relocation with a symbol. It is preferable
@@ -948,26 +948,27 @@ void ELFObjectWriter::computeSymbolTable(
   unsigned Index = FileNames.size() + 1;
 
   for (ELFSymbolData &MSD : LocalSymbolData) {
-    MSD.StringIndex = MCELF::GetType(MSD.Symbol->getData()) == ELF::STT_SECTION
-                          ? 0
-                          : StrTabBuilder.getOffset(MSD.Name);
+    unsigned StringIndex =
+        MCELF::GetType(MSD.Symbol->getData()) == ELF::STT_SECTION
+            ? 0
+            : StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
-    WriteSymbol(Writer, MSD, Layout);
+    writeSymbol(Writer, StringIndex, MSD, Layout);
   }
 
   // Write the symbol table entries.
   LastLocalSymbolIndex = Index;
 
   for (ELFSymbolData &MSD : ExternalSymbolData) {
-    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
+    unsigned StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
-    WriteSymbol(Writer, MSD, Layout);
+    writeSymbol(Writer, StringIndex, MSD, Layout);
     assert(MCELF::GetBinding(MSD.Symbol->getData()) != ELF::STB_LOCAL);
   }
   for (ELFSymbolData &MSD : UndefinedSymbolData) {
-    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
+    unsigned StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
-    WriteSymbol(Writer, MSD, Layout);
+    writeSymbol(Writer, StringIndex, MSD, Layout);
     assert(MCELF::GetBinding(MSD.Symbol->getData()) != ELF::STB_LOCAL);
   }
 
