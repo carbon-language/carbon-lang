@@ -49,18 +49,6 @@ define double @test3(double %x, double %y) {
   ret double %mul3
 }
 
-; Canonicalize (x - -1234 * y)
-define i64 @test4(i64 %x, i64 %y) {
-; CHECK-LABEL: @test4
-; CHECK-NEXT: mul i64 %y, 1234
-; CHECK-NEXT: add i64 %mul, %x
-; CHECK-NEXT: ret i64 %sub
-
-  %mul = mul i64 %y, -1234
-  %sub = sub i64 %x, %mul
-  ret i64 %sub
-}
-
 ; Canonicalize (x - -0.1234 * y)
 define double @test5(double %x, double %y) {
 ; CHECK-LABEL: @test5
@@ -155,4 +143,14 @@ define double @test12(double %x, double %y) {
   %div = fdiv double %y, -1.234000e-01
   %add = fadd double %div, %x
   ret double %add
+}
+
+; Don't create an NSW violation
+define i4 @test13(i4 %x) {
+; CHECK-LABEL: @test13
+; CHECK-NEXT: %[[mul:.*]] = mul nsw i4 %x, -2
+; CHECK-NEXT: %[[add:.*]] = add i4 %[[mul]], 3
+  %mul = mul nsw i4 %x, -2
+  %add = add i4 %mul, 3
+  ret i4 %add
 }

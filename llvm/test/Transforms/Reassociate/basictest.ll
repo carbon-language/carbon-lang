@@ -202,8 +202,8 @@ define i32 @test14(i32 %X1, i32 %X2) {
   ret i32 %D
 
 ; CHECK-LABEL: @test14
-; CHECK-NEXT: sub i32 %X1, %X2
-; CHECK-NEXT: mul i32 %B2, 47
+; CHECK-NEXT: %[[SUB:.*]] = sub i32 %X1, %X2
+; CHECK-NEXT: mul i32 %[[SUB]], 47
 ; CHECK-NEXT: ret i32
 }
 

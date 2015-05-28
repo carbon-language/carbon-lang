@@ -1966,38 +1966,35 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
   if (!I->hasOneUse() || I->getType()->isVectorTy())
     return nullptr;
 
-  // Must be a mul, fmul, or fdiv instruction.
+  // Must be a fmul or fdiv instruction.
   unsigned Opcode = I->getOpcode();
-  if (Opcode != Instruction::Mul && Opcode != Instruction::FMul &&
-      Opcode != Instruction::FDiv)
+  if (Opcode != Instruction::FMul && Opcode != Instruction::FDiv)
     return nullptr;
 
-  // Must have at least one constant operand.
-  Constant *C0 = dyn_cast<Constant>(I->getOperand(0));
-  Constant *C1 = dyn_cast<Constant>(I->getOperand(1));
-  if (!C0 && !C1)
+  auto *C0 = dyn_cast<ConstantFP>(I->getOperand(0));
+  auto *C1 = dyn_cast<ConstantFP>(I->getOperand(1));
+
+  // Both operands are constant, let it get constant folded away.
+  if (C0 && C1)
     return nullptr;
 
-  // Must be a negative ConstantInt or ConstantFP.
-  Constant *C = C0 ? C0 : C1;
-  unsigned ConstIdx = C0 ? 0 : 1;
-  if (auto *CI = dyn_cast<ConstantInt>(C)) {
-    if (!CI->isNegative() || CI->isMinValue(true))
-      return nullptr;
-  } else if (auto *CF = dyn_cast<ConstantFP>(C)) {
-    if (!CF->isNegative())
-      return nullptr;
-  } else
+  ConstantFP *CF = C0 ? C0 : C1;
+
+  // Must have one constant operand.
+  if (!CF)
+    return nullptr;
+
+  // Must be a negative ConstantFP.
+  if (!CF->isNegative())
     return nullptr;
 
   // User must be a binary operator with one or more uses.
   Instruction *User = I->user_back();
-  if (!isa<BinaryOperator>(User) || !User->getNumUses())
+  if (!isa<BinaryOperator>(User) || !User->hasNUsesOrMore(1))
     return nullptr;
 
   unsigned UserOpcode = User->getOpcode();
-  if (UserOpcode != Instruction::Add && UserOpcode != Instruction::FAdd &&
-      UserOpcode != Instruction::Sub && UserOpcode != Instruction::FSub)
+  if (UserOpcode != Instruction::FAdd && UserOpcode != Instruction::FSub)
     return nullptr;
 
   // Subtraction is not commutative. Explicitly, the following transform is
@@ -2006,14 +2003,9 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
     return nullptr;
 
   // Change the sign of the constant.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
-    I->setOperand(ConstIdx, ConstantInt::get(CI->getContext(), -CI->getValue()));
-  else {
-    ConstantFP *CF = cast<ConstantFP>(C);
-    APFloat Val = CF->getValueAPF();
-    Val.changeSign();
-    I->setOperand(ConstIdx, ConstantFP::get(CF->getContext(), Val));
-  }
+  APFloat Val = CF->getValueAPF();
+  Val.changeSign();
+  I->setOperand(C0 ? 0 : 1, ConstantFP::get(CF->getContext(), Val));
 
   // Canonicalize I to RHS to simplify the next bit of logic. E.g.,
   // ((-Const*y) + x) -> (x + (-Const*y)).
@@ -2023,15 +2015,9 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
   Value *Op0 = User->getOperand(0);
   Value *Op1 = User->getOperand(1);
   BinaryOperator *NI;
-  switch(UserOpcode) {
+  switch (UserOpcode) {
   default:
     llvm_unreachable("Unexpected Opcode!");
-  case Instruction::Add:
-    NI = BinaryOperator::CreateSub(Op0, Op1);
-    break;
-  case Instruction::Sub:
-    NI = BinaryOperator::CreateAdd(Op0, Op1);
-    break;
   case Instruction::FAdd:
     NI = BinaryOperator::CreateFSub(Op0, Op1);
     NI->setFastMathFlags(cast<FPMathOperator>(User)->getFastMathFlags());
