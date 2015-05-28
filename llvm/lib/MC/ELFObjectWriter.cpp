@@ -935,6 +935,11 @@ void ELFObjectWriter::computeSymbolTable(
 
   StrTabBuilder.finalize(StringTableBuilder::ELF);
 
+  for (const std::string &Name : FileNames)
+    Writer.writeSymbol(StrTabBuilder.getOffset(Name),
+                       ELF::STT_FILE | ELF::STB_LOCAL, 0, 0, ELF::STV_DEFAULT,
+                       ELF::SHN_ABS, true);
+
   // Symbols are required to be in lexicographic order.
   array_pod_sort(LocalSymbolData.begin(), LocalSymbolData.end());
   array_pod_sort(ExternalSymbolData.begin(), ExternalSymbolData.end());
@@ -949,28 +954,15 @@ void ELFObjectWriter::computeSymbolTable(
                           ? 0
                           : StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
+    WriteSymbol(Writer, MSD, Layout);
   }
-  for (ELFSymbolData &MSD : ExternalSymbolData) {
-    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
-    MSD.Symbol->setIndex(Index++);
-  }
-  for (ELFSymbolData &MSD : UndefinedSymbolData) {
-    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
-    MSD.Symbol->setIndex(Index++);
-  }
-
-  for (const std::string &Name : FileNames)
-    Writer.writeSymbol(StrTabBuilder.getOffset(Name),
-                       ELF::STT_FILE | ELF::STB_LOCAL, 0, 0, ELF::STV_DEFAULT,
-                       ELF::SHN_ABS, true);
 
   // Write the symbol table entries.
-  LastLocalSymbolIndex = FileNames.size() + LocalSymbolData.size() + 1;
-
-  for (ELFSymbolData &MSD : LocalSymbolData)
-    WriteSymbol(Writer, MSD, Layout);
+  LastLocalSymbolIndex = Index;
 
   for (ELFSymbolData &MSD : ExternalSymbolData) {
+    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
+    MSD.Symbol->setIndex(Index++);
     MCSymbolData &Data = MSD.Symbol->getData();
     assert(((Data.getFlags() & ELF_STB_Global) ||
             (Data.getFlags() & ELF_STB_Weak)) &&
@@ -978,8 +970,9 @@ void ELFObjectWriter::computeSymbolTable(
     WriteSymbol(Writer, MSD, Layout);
     assert(MCELF::GetBinding(Data) != ELF::STB_LOCAL);
   }
-
   for (ELFSymbolData &MSD : UndefinedSymbolData) {
+    MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
+    MSD.Symbol->setIndex(Index++);
     MCSymbolData &Data = MSD.Symbol->getData();
     WriteSymbol(Writer, MSD, Layout);
     assert(MCELF::GetBinding(Data) != ELF::STB_LOCAL);
