@@ -271,6 +271,97 @@ INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, SIZE_T n) {
 #define INIT_STRNCASECMP
 #endif
 
+#if SANITIZER_INTERCEPT_STRSTR || SANITIZER_INTERCEPT_STRCASESTR
+static inline void StrstrCheck(void *ctx, char *r, const char *s1,
+                               const char *s2) {
+    uptr len1 = REAL(strlen)(s1);
+    uptr len2 = REAL(strlen)(s2);
+    COMMON_INTERCEPTOR_READ_STRING_OF_LEN(ctx, s1, len1,
+                                          r ? r - s1 + len2 : len1 + 1);
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, len2 + 1);
+}
+#endif
+
+#if SANITIZER_INTERCEPT_STRSTR
+INTERCEPTOR(char*, strstr, const char *s1, const char *s2) {
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_strstr(s1, s2);
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strstr, s1, s2);
+  char *r = REAL(strstr)(s1, s2);
+  if (common_flags()->intercept_strstr)
+    StrstrCheck(ctx, r, s1, s2);
+  return r;
+}
+
+#define INIT_STRSTR COMMON_INTERCEPT_FUNCTION(strstr);
+#else
+#define INIT_STRSTR
+#endif
+
+#if SANITIZER_INTERCEPT_STRCASESTR
+INTERCEPTOR(char*, strcasestr, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strcasestr, s1, s2);
+  char *r = REAL(strcasestr)(s1, s2);
+  if (common_flags()->intercept_strstr)
+    StrstrCheck(ctx, r, s1, s2);
+  return r;
+}
+
+#define INIT_STRCASESTR COMMON_INTERCEPT_FUNCTION(strcasestr);
+#else
+#define INIT_STRCASESTR
+#endif
+
+#if SANITIZER_INTERCEPT_STRSPN
+INTERCEPTOR(SIZE_T, strspn, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strspn, s1, s2);
+  SIZE_T r = REAL(strspn)(s1, s2);
+  if (common_flags()->intercept_strspn) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, REAL(strlen)(s2) + 1);
+    COMMON_INTERCEPTOR_READ_STRING(ctx, s1, r + 1);
+  }
+  return r;
+}
+
+INTERCEPTOR(SIZE_T, strcspn, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strcspn, s1, s2);
+  SIZE_T r = REAL(strcspn)(s1, s2);
+  if (common_flags()->intercept_strspn) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, REAL(strlen)(s2) + 1);
+    COMMON_INTERCEPTOR_READ_STRING(ctx, s1, r + 1);
+  }
+  return r;
+}
+
+#define INIT_STRSPN \
+  COMMON_INTERCEPT_FUNCTION(strspn); \
+  COMMON_INTERCEPT_FUNCTION(strcspn);
+#else
+#define INIT_STRSPN
+#endif
+
+#if SANITIZER_INTERCEPT_STRPBRK
+INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strpbrk, s1, s2);
+  char *r = REAL(strpbrk)(s1, s2);
+  if (common_flags()->intercept_strpbrk) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, REAL(strlen)(s2) + 1);
+    COMMON_INTERCEPTOR_READ_STRING(ctx, s1,
+        r ? r - s1 + 1 : REAL(strlen)(s1) + 1);
+  }
+  return r;
+}
+
+#define INIT_STRPBRK COMMON_INTERCEPT_FUNCTION(strpbrk);
+#else
+#define INIT_STRPBRK
+#endif
+
 #if SANITIZER_INTERCEPT_MEMCHR
 INTERCEPTOR(void*, memchr, const void *s, int c, SIZE_T n) {
   void *ctx;
@@ -4874,6 +4965,10 @@ static void InitializeCommonInterceptors() {
   INIT_STRNCMP;
   INIT_STRCASECMP;
   INIT_STRNCASECMP;
+  INIT_STRSTR;
+  INIT_STRCASESTR;
+  INIT_STRSPN;
+  INIT_STRPBRK;
   INIT_MEMCHR;
   INIT_MEMRCHR;
   INIT_READ;

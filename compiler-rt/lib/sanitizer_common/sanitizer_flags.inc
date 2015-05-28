@@ -154,3 +154,12 @@ COMMON_FLAG(bool, no_huge_pages_for_shadow, true,
             "If true, the shadow is not allowed to use huge pages. ")
 COMMON_FLAG(bool, strict_string_checks, false,
             "If set check that string arguments are properly null-terminated")
+COMMON_FLAG(bool, intercept_strstr, true,
+            "If set, uses custom wrappers for strstr and strcasestr functions "
+            "to find more errors.")
+COMMON_FLAG(bool, intercept_strspn, true,
+            "If set, uses custom wrappers for strspn and strcspn function "
+            "to find more errors.")
+COMMON_FLAG(bool, intercept_strpbrk, true,
+            "If set, uses custom wrappers for strpbrk function "
+            "to find more errors.")
