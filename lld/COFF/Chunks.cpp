@@ -36,7 +36,8 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
 }
 
 void SectionChunk::writeTo(uint8_t *Buf) {
-  assert(hasData());
+  if (!hasData())
+    return;
   ArrayRef<uint8_t> Data;
   File->getCOFFObj()->getSectionContents(Header, Data);
   memcpy(Buf + FileOff, Data.data(), Data.size());
