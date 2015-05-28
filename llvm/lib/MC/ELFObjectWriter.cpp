@@ -71,7 +71,6 @@ public:
 
 class ELFObjectWriter : public MCObjectWriter {
     static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
-    static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant);
     static uint64_t SymbolValue(const MCSymbol &Sym, const MCAsmLayout &Layout);
     static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbol &Symbol,
                            bool Used, bool Renamed);
@@ -120,8 +119,6 @@ class ELFObjectWriter : public MCObjectWriter {
 
     /// @}
 
-    bool NeedsGOT;
-
     // This holds the symbol table index of the last local symbol.
     unsigned LastLocalSymbolIndex;
     // This holds the .strtab section index.
@@ -148,8 +145,7 @@ class ELFObjectWriter : public MCObjectWriter {
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_pwrite_stream &OS,
                     bool IsLittleEndian)
-        : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW),
-          NeedsGOT(false) {}
+        : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW) {}
 
     void reset() override {
       UsedInReloc.clear();
@@ -161,7 +157,6 @@ class ELFObjectWriter : public MCObjectWriter {
       LocalSymbolData.clear();
       ExternalSymbolData.clear();
       UndefinedSymbolData.clear();
-      NeedsGOT = false;
       SectionTable.clear();
       MCObjectWriter::reset();
     }
@@ -317,27 +312,6 @@ bool ELFObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
     Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
 
   return FKI.Flags & MCFixupKindInfo::FKF_IsPCRel;
-}
-
-bool ELFObjectWriter::RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
-  switch (Variant) {
-  default:
-    return false;
-  case MCSymbolRefExpr::VK_GOT:
-  case MCSymbolRefExpr::VK_PLT:
-  case MCSymbolRefExpr::VK_GOTPCREL:
-  case MCSymbolRefExpr::VK_GOTOFF:
-  case MCSymbolRefExpr::VK_TPOFF:
-  case MCSymbolRefExpr::VK_TLSGD:
-  case MCSymbolRefExpr::VK_GOTTPOFF:
-  case MCSymbolRefExpr::VK_INDNTPOFF:
-  case MCSymbolRefExpr::VK_NTPOFF:
-  case MCSymbolRefExpr::VK_GOTNTPOFF:
-  case MCSymbolRefExpr::VK_TLSLDM:
-  case MCSymbolRefExpr::VK_DTPOFF:
-  case MCSymbolRefExpr::VK_TLSLD:
-    return true;
-  }
 }
 
 ELFObjectWriter::~ELFObjectWriter()
@@ -811,12 +785,6 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
 
   FixedValue = C;
 
-  // FIXME: What is this!?!?
-  MCSymbolRefExpr::VariantKind Modifier =
-      RefA ? RefA->getKind() : MCSymbolRefExpr::VK_None;
-  if (RelocNeedsGOT(Modifier))
-    NeedsGOT = true;
-
   if (!RelocateWithSymbol) {
     const MCSection *SecA =
         (SymA && !SymA->isUndefined()) ? &SymA->getSection() : nullptr;
@@ -914,16 +882,6 @@ void ELFObjectWriter::computeSymbolTable(
       Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0, EntrySize, "");
   SymtabSection->setAlignment(is64Bit() ? 8 : 4);
   SymbolTableIndex = addToSectionTable(SymtabSection);
-
-  // FIXME: Is this the correct place to do this?
-  // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
-  if (NeedsGOT) {
-    StringRef Name = "_GLOBAL_OFFSET_TABLE_";
-    MCSymbol *Sym = Asm.getContext().getOrCreateSymbol(Name);
-    MCSymbolData &Data = Asm.getOrCreateSymbolData(*Sym);
-    Data.setExternal(true);
-    MCELF::SetBinding(Data, ELF::STB_GLOBAL);
-  }
 
   // Add the data for the symbols.
   bool HasLargeSectionIndex = false;
