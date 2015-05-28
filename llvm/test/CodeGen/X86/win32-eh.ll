@@ -46,7 +46,7 @@ catchall:
 ; CHECK-LABEL: _use_except_handler4:
 ; CHECK: subl ${{[0-9]+}}, %esp
 ; CHECK: movl %esp, (%esp)
-; CHECK: movl $-2, 20(%esp)
+; CHECK: movl $-1, 20(%esp)
 ; CHECK: movl $L__ehtable$use_except_handler4, 4(%esp)
 ; CHECK: leal 8(%esp), %[[node:[^ ,]*]]
 ; CHECK: movl $__except_handler4, 12(%esp)
@@ -81,6 +81,7 @@ catchall:
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], 4(%esp)
 ; CHECK: movl %[[node]], %fs:0
+; CHECK: movl $0, 12(%esp)
 ; CHECK: calll _may_throw_or_crash
 ; CHECK: movl 4(%esp), %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], %fs:0
