@@ -340,11 +340,11 @@ private:
     new (reinterpret_cast<void *>(Val.buffer)) T(V);
   }
 
-  template <class T> T &get() { return *reinterpret_cast<T *>(Val.buffer); }
-  template <class T> const T &get() const {
-    return *reinterpret_cast<const T *>(Val.buffer);
+  template <class T> T *get() { return reinterpret_cast<T *>(Val.buffer); }
+  template <class T> const T *get() const {
+    return reinterpret_cast<const T *>(Val.buffer);
   }
-  template <class T> void destruct() { get<T>().~T(); }
+  template <class T> void destruct() { get<T>()->~T(); }
 
   /// Destroy the underlying value.
   ///
@@ -378,11 +378,11 @@ private:
       return;
 #define HANDLE_DIEVALUE_SMALL(T)                                               \
   case is##T:                                                                  \
-    construct<DIE##T>(X.get<DIE##T>());                                        \
+    construct<DIE##T>(*X.get<DIE##T>());                                       \
     return;
 #define HANDLE_DIEVALUE_LARGE(T)                                               \
   case is##T:                                                                  \
-    construct<const DIE##T *>(X.get<const DIE##T *>());                        \
+    construct<const DIE##T *>(*X.get<const DIE##T *>());                       \
     return;
 #include "llvm/CodeGen/DIEValue.def"
     }
@@ -425,12 +425,12 @@ public:
 #define HANDLE_DIEVALUE_SMALL(T)                                               \
   const DIE##T &getDIE##T() const {                                            \
     assert(getType() == is##T && "Expected " #T);                              \
-    return get<DIE##T>();                                                      \
+    return *get<DIE##T>();                                                     \
   }
 #define HANDLE_DIEVALUE_LARGE(T)                                               \
   const DIE##T &getDIE##T() const {                                            \
     assert(getType() == is##T && "Expected " #T);                              \
-    return *get<const DIE##T *>();                                             \
+    return **get<const DIE##T *>();                                            \
   }
 #include "llvm/CodeGen/DIEValue.def"
 
