@@ -604,7 +604,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
   SDValue Res = GetPromotedInteger(N->getOperand(0));
   SDValue Amt = N->getOperand(1);
-  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  if (!TLI.isTypeLegal(Amt.getValueType()))
+    Amt = ZExtPromotedInteger(N->getOperand(1));
   return DAG.getNode(ISD::SHL, SDLoc(N), Res.getValueType(), Res, Amt);
 }
 
@@ -628,7 +629,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SRA(SDNode *N) {
   // The input value must be properly sign extended.
   SDValue Res = SExtPromotedInteger(N->getOperand(0));
   SDValue Amt = N->getOperand(1);
-  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  if (!TLI.isTypeLegal(Amt.getValueType()))
+    Amt = ZExtPromotedInteger(N->getOperand(1));
   return DAG.getNode(ISD::SRA, SDLoc(N), Res.getValueType(), Res, Amt);
 }
 
@@ -636,7 +638,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SRL(SDNode *N) {
   // The input value must be properly zero extended.
   SDValue Res = ZExtPromotedInteger(N->getOperand(0));
   SDValue Amt = N->getOperand(1);
-  Amt = Amt.getValueType().isVector() ? ZExtPromotedInteger(Amt) : Amt;
+  if (!TLI.isTypeLegal(Amt.getValueType()))
+    Amt = ZExtPromotedInteger(N->getOperand(1));
   return DAG.getNode(ISD::SRL, SDLoc(N), Res.getValueType(), Res, Amt);
 }
 
