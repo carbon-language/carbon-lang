@@ -596,29 +596,6 @@ ClangExpressionDeclMap::GetFunctionAddress
             sc_list_size = sc_list.GetSize();
         }
     }
-    
-    if (sc_list_size == 0)
-    {
-        // Sometimes we get a mangled name for a global function that actually should be "extern C."
-        // This is a hack to compensate.
-        
-        const bool is_mangled = true;
-        Mangled mangled(name, is_mangled);
-                
-        CPPLanguageRuntime::MethodName method_name(mangled.GetDemangledName());
-
-        // the C++ context must be empty before we can think of searching for symbol by a simple basename
-        if (method_name.GetContext().empty())
-        {
-            llvm::StringRef basename = method_name.GetBasename();
-            
-            if (!basename.empty())
-            {
-                FindCodeSymbolInContext(ConstString(basename), m_parser_vars->m_sym_ctx, sc_list);
-                sc_list_size = sc_list.GetSize();
-            }
-        }
-    }
 
     lldb::addr_t intern_callable_load_addr = LLDB_INVALID_ADDRESS;
 

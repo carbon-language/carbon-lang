@@ -476,8 +476,12 @@ struct NameSearchContext {
     ///
     /// @param[in] type
     ///     The opaque QualType for the FunDecl being registered.
+    ///
+    /// @param[in] extern_c
+    ///     If true, build an extern "C" linkage specification for this.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddFunDecl(const ClangASTType &type);
+    clang::NamedDecl *AddFunDecl(const ClangASTType &type,
+                                 bool extern_c = false);
     
     //------------------------------------------------------------------
     /// Create a FunDecl with the name being searched for and generic
