@@ -37,18 +37,24 @@ class ThreadStateTestCase(TestBase):
         self.thread_state_after_continue_test()
 
     @dwarf_test
+    @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
+    @expectedFailureDarwin('llvm.org/pr23669')
     def test_state_after_continue_with_dwarf(self):
         """Test thread state after continue."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
     @skipUnlessDarwin
+    @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
+    @expectedFailureDarwin('llvm.org/pr23669')
     @dsym_test
     def test_state_after_expression_with_dsym(self):
         """Test thread state after expression."""
         self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_continue_test()
 
+    @skipIfDarwin # 'llvm.org/pr23669', cause Python crash randomly
+    @expectedFailureDarwin('llvm.org/pr23669')
     @dwarf_test
     def test_state_after_expression_with_dwarf(self):
         """Test thread state after expression."""
