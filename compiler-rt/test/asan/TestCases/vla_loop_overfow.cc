@@ -1,8 +1,7 @@
 // RUN: %clangxx_asan -O0 -mllvm -asan-instrument-allocas %s -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
 //
-// XFAIL: arm-linux-gnueabi
-// XFAIL: armv7l-unknown-linux-gnueabihf
+// REQUIRES: stable-runtime
 
 #include <assert.h>
 #include <stdint.h>
