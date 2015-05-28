@@ -938,6 +938,15 @@ void OutputSectionDescription::dump(raw_ostream &os) const {
 
 void PHDR::dump(raw_ostream &os) const {
   os << _name << " " << _type;
+  if (_includeFileHdr)
+    os << " FILEHDR";
+  if (_includePHDRs)
+    os << " PHDRS";
+  if (_at) {
+    os << " AT (";
+    _at->dump(os);
+    os << ")";
+  }
   if (_flags)
     os << " FLAGS (" << _flags << ")";
   os << ";\n";
