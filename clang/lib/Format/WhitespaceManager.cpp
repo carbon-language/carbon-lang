@@ -402,7 +402,7 @@ void WhitespaceManager::appendNewlineText(std::string &Text, unsigned Newlines,
     unsigned Offset =
         std::min<int>(EscapedNewlineColumn - 1, PreviousEndOfTokenColumn);
     for (unsigned i = 0; i < Newlines; ++i) {
-      Text.append(std::string(EscapedNewlineColumn - Offset - 1, ' '));
+      Text.append(EscapedNewlineColumn - Offset - 1, ' ');
       Text.append(UseCRLF ? "\\\r\n" : "\\\n");
       Offset = 0;
     }
@@ -414,7 +414,7 @@ void WhitespaceManager::appendIndentText(std::string &Text,
                                          unsigned WhitespaceStartColumn) {
   switch (Style.UseTab) {
   case FormatStyle::UT_Never:
-    Text.append(std::string(Spaces, ' '));
+    Text.append(Spaces, ' ');
     break;
   case FormatStyle::UT_Always: {
     unsigned FirstTabWidth =
@@ -424,8 +424,8 @@ void WhitespaceManager::appendIndentText(std::string &Text,
       Spaces -= FirstTabWidth;
       Text.append("\t");
     }
-    Text.append(std::string(Spaces / Style.TabWidth, '\t'));
-    Text.append(std::string(Spaces % Style.TabWidth, ' '));
+    Text.append(Spaces / Style.TabWidth, '\t');
+    Text.append(Spaces % Style.TabWidth, ' ');
     break;
   }
   case FormatStyle::UT_ForIndentation:
@@ -436,10 +436,10 @@ void WhitespaceManager::appendIndentText(std::string &Text,
       if (Indentation > Spaces)
         Indentation = Spaces;
       unsigned Tabs = Indentation / Style.TabWidth;
-      Text.append(std::string(Tabs, '\t'));
+      Text.append(Tabs, '\t');
       Spaces -= Tabs * Style.TabWidth;
     }
-    Text.append(std::string(Spaces, ' '));
+    Text.append(Spaces, ' ');
     break;
   }
 }
