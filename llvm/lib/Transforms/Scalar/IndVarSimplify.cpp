@@ -68,6 +68,22 @@ static cl::opt<bool> VerifyIndvars(
 static cl::opt<bool> ReduceLiveIVs("liv-reduce", cl::Hidden,
   cl::desc("Reduce live induction variables."));
 
+enum ReplaceExitVal { NeverRepl, OnlyCheapRepl, AlwaysRepl };
+
+static cl::opt<ReplaceExitVal> ReplaceExitValue(
+    "replexitval", cl::Hidden, cl::init(OnlyCheapRepl),
+    cl::desc("Choose the strategy to replace exit value in IndVarSimplify"),
+    cl::values(clEnumValN(NeverRepl, "never", "never replace exit value"),
+               clEnumValN(OnlyCheapRepl, "cheap",
+                          "only replace exit value when the cost is cheap"),
+               clEnumValN(AlwaysRepl, "always",
+                          "always replace exit value whenever possible"),
+               clEnumValEnd));
+
+namespace {
+struct RewritePhi;
+}
+
 namespace {
   class IndVarSimplify : public LoopPass {
     LoopInfo                  *LI;
@@ -112,6 +128,7 @@ namespace {
 
     void SimplifyAndExtend(Loop *L, SCEVExpander &Rewriter, LPPassManager &LPM);
 
+    bool CanLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
     void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
     Value *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
@@ -464,6 +481,21 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
     SE->forgetLoop(L);
 }
 
+namespace {
+// Collect information about PHI nodes which can be transformed in
+// RewriteLoopExitValues.
+struct RewritePhi {
+  PHINode *PN;
+  unsigned Ith;  // Ith incoming value.
+  Value *Val;    // Exit value after expansion.
+  bool HighCost; // High Cost when expansion.
+  bool SafePhi;  // LCSSASafePhiForRAUW.
+
+  RewritePhi(PHINode *P, unsigned I, Value *V, bool H, bool S)
+      : PN(P), Ith(I), Val(V), HighCost(H), SafePhi(S) {}
+};
+}
+
 //===----------------------------------------------------------------------===//
 // RewriteLoopExitValues - Optimize IV users outside the loop.
 // As a side effect, reduces the amount of IV processing within the loop.
@@ -486,6 +518,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
 
+  SmallVector<RewritePhi, 8> RewritePhiSet;
   // Find all values that are computed inside the loop, but used outside of it.
   // Because of LCSSA, these values will only occur in LCSSA PHI Nodes.  Scan
   // the exit blocks of the loop to find them.
@@ -604,29 +637,109 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
           DeadInsts.push_back(ExitVal);
           continue;
         }
-        Changed = true;
-        ++NumReplaced;
+        bool HighCost = Rewriter.isHighCostExpansion(ExitValue, L);
 
-        PN->setIncomingValue(i, ExitVal);
-
-        // If this instruction is dead now, delete it. Don't do it now to avoid
-        // invalidating iterators.
-        if (isInstructionTriviallyDead(Inst, TLI))
-          DeadInsts.push_back(Inst);
-
-        // If we determined that this PHI is safe to replace even if an LCSSA
-        // PHI, do so.
-        if (LCSSASafePhiForRAUW) {
-          PN->replaceAllUsesWith(ExitVal);
-          PN->eraseFromParent();
-        }
+        // Collect all the candidate PHINodes to be rewritten.
+        RewritePhiSet.push_back(
+            RewritePhi(PN, i, ExitVal, HighCost, LCSSASafePhiForRAUW));
       }
+    }
+  }
+
+  bool LoopCanBeDel = CanLoopBeDeleted(L, RewritePhiSet);
+
+  // Transformation.
+  for (const RewritePhi &Phi : RewritePhiSet) {
+    PHINode *PN = Phi.PN;
+    Value *ExitVal = Phi.Val;
+
+    // Only do the rewrite when the ExitValue can be expanded cheaply.
+    // If LoopCanBeDel is true, rewrite exit value aggressively.
+    if (ReplaceExitValue == OnlyCheapRepl && !LoopCanBeDel && Phi.HighCost) {
+      DeadInsts.push_back(ExitVal);
+      continue;
+    }
+
+    Changed = true;
+    ++NumReplaced;
+    Instruction *Inst = cast<Instruction>(PN->getIncomingValue(Phi.Ith));
+    PN->setIncomingValue(Phi.Ith, ExitVal);
+
+    // If this instruction is dead now, delete it. Don't do it now to avoid
+    // invalidating iterators.
+    if (isInstructionTriviallyDead(Inst, TLI))
+      DeadInsts.push_back(Inst);
+
+    // If we determined that this PHI is safe to replace even if an LCSSA
+    // PHI, do so.
+    if (Phi.SafePhi) {
+      PN->replaceAllUsesWith(ExitVal);
+      PN->eraseFromParent();
     }
   }
 
   // The insertion point instruction may have been deleted; clear it out
   // so that the rewriter doesn't trip over it later.
   Rewriter.clearInsertPoint();
+}
+
+/// CanLoopBeDeleted - Check whether it is possible to delete the loop after
+/// rewriting exit value. If it is possible, ignore ReplaceExitValue and
+/// do rewriting aggressively.
+bool IndVarSimplify::CanLoopBeDeleted(
+    Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet) {
+
+  BasicBlock *Preheader = L->getLoopPreheader();
+  // If there is no preheader, the loop will not be deleted.
+  if (!Preheader)
+    return false;
+
+  // In LoopDeletion pass Loop can be deleted when ExitingBlocks.size() > 1.
+  // We obviate multiple ExitingBlocks case for simplicity.
+  // TODO: If we see testcase with multiple ExitingBlocks can be deleted
+  // after exit value rewriting, we can enhance the logic here.
+  SmallVector<BasicBlock *, 4> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
+  SmallVector<BasicBlock *, 8> ExitBlocks;
+  L->getUniqueExitBlocks(ExitBlocks);
+  if (ExitBlocks.size() > 1 || ExitingBlocks.size() > 1)
+    return false;
+
+  BasicBlock *ExitBlock = ExitBlocks[0];
+  BasicBlock::iterator BI = ExitBlock->begin();
+  while (PHINode *P = dyn_cast<PHINode>(BI)) {
+    Value *Incoming = P->getIncomingValueForBlock(ExitingBlocks[0]);
+
+    // If the Incoming value of P is found in RewritePhiSet, we know it
+    // could be rewritten to use a loop invariant value in transformation
+    // phase later. Skip it in the loop invariant check below.
+    bool found = false;
+    for (const RewritePhi &Phi : RewritePhiSet) {
+      unsigned i = Phi.Ith;
+      if (Phi.PN == P && (Phi.PN)->getIncomingValue(i) == Incoming) {
+        found = true;
+        break;
+      }
+    }
+
+    Instruction *I;
+    if (!found && (I = dyn_cast<Instruction>(Incoming)))
+      if (!L->hasLoopInvariantOperands(I))
+        return false;
+
+    ++BI;
+  }
+
+  for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
+       LI != LE; ++LI) {
+    for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end(); BI != BE;
+         ++BI) {
+      if (BI->mayHaveSideEffects())
+        return false;
+    }
+  }
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1867,7 +1980,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // loop into any instructions outside of the loop that use the final values of
   // the current expressions.
   //
-  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
+  if (ReplaceExitValue != NeverRepl &&
+      !isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     RewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV cycles.
