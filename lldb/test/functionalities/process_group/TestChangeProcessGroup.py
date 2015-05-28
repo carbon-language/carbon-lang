@@ -76,7 +76,7 @@ class ChangeProcessGroupTestCase(TestBase):
         self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
 
         # set a breakpoint just before the setpgid() call
-        lldbutil.run_break_set_by_file_and_line(self, 'main.c', self.line)
+        lldbutil.run_break_set_by_file_and_line(self, 'main.c', self.line, num_expected_locations=-1)
 
         thread = process.GetSelectedThread()
         # this gives a chance for the thread to exit the sleep syscall and sidesteps
