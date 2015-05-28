@@ -70,6 +70,7 @@ enum class Flavor {
   invalid,
   gnu_ld,    // -flavor gnu
   win_link,  // -flavor link
+  win_link2, // -flavor link2
   darwin_ld, // -flavor darwin
   core       // -flavor core OR -core
 };
@@ -86,6 +87,8 @@ static Flavor strToFlavor(StringRef str) {
       .Case("gnu", Flavor::gnu_ld)
       .Case("link", Flavor::win_link)
       .Case("lld-link", Flavor::win_link)
+      .Case("link2", Flavor::win_link2)
+      .Case("lld-link2", Flavor::win_link2)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
       .Case("ld", Flavor::gnu_ld)
@@ -205,6 +208,8 @@ bool UniversalDriver::link(int argc, const char *argv[],
     return DarwinLdDriver::linkMachO(args.size(), args.data(), diagnostics);
   case Flavor::win_link:
     return WinLinkDriver::linkPECOFF(args.size(), args.data(), diagnostics);
+  case Flavor::win_link2:
+    return coff::link(args.size(), args.data());
   case Flavor::core:
     return CoreDriver::link(args.size(), args.data(), diagnostics);
   case Flavor::invalid:
