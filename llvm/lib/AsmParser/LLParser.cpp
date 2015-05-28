@@ -189,7 +189,7 @@ bool LLParser::ParseTopLevelEntities() {
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
     // GlobalVar ::= OptionalLinkage OptionalVisibility OptionalDLLStorageClass
-    //               OptionalThreadLocal OptionalAddrSpace OptionalUnNammedAddr
+    //               OptionalThreadLocal OptionalAddrSpace OptionalUnnamedAddr
     //               ('constant'|'global') ...
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_internal:            // OptionalLinkage
@@ -615,12 +615,12 @@ static bool isValidVisibilityForLinkage(unsigned V, unsigned L) {
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalLinkage OptionalVisibility
 ///                     OptionalDLLStorageClass OptionalThreadLocal
-///                     OptionalUnNammedAddr 'alias' Aliasee
+///                     OptionalUnnamedAddr 'alias' Aliasee
 ///
 /// Aliasee
 ///   ::= TypeAndValue
 ///
-/// Everything through OptionalUnNammedAddr has already been parsed.
+/// Everything through OptionalUnnamedAddr has already been parsed.
 ///
 bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc, unsigned L,
                           unsigned Visibility, unsigned DLLStorageClass,
@@ -705,13 +705,13 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc, unsigned L,
 
 /// ParseGlobal
 ///   ::= GlobalVar '=' OptionalLinkage OptionalVisibility OptionalDLLStorageClass
-///       OptionalThreadLocal OptionalUnNammedAddr OptionalAddrSpace
+///       OptionalThreadLocal OptionalUnnamedAddr OptionalAddrSpace
 ///       OptionalExternallyInitialized GlobalType Type Const
 ///   ::= OptionalLinkage OptionalVisibility OptionalDLLStorageClass
-///       OptionalThreadLocal OptionalUnNammedAddr OptionalAddrSpace
+///       OptionalThreadLocal OptionalUnnamedAddr OptionalAddrSpace
 ///       OptionalExternallyInitialized GlobalType Type Const
 ///
-/// Everything up to and including OptionalUnNammedAddr has been parsed
+/// Everything up to and including OptionalUnnamedAddr has been parsed
 /// already.
 ///
 bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
