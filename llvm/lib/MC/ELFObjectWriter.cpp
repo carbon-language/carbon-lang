@@ -112,7 +112,6 @@ class ELFObjectWriter : public MCObjectWriter {
     /// @{
 
     StringTableBuilder StrTabBuilder;
-    std::vector<uint64_t> FileSymbolData;
     std::vector<ELFSymbolData> LocalSymbolData;
     std::vector<ELFSymbolData> ExternalSymbolData;
     std::vector<ELFSymbolData> UndefinedSymbolData;
@@ -153,7 +152,6 @@ class ELFObjectWriter : public MCObjectWriter {
       Renames.clear();
       Relocations.clear();
       StrTabBuilder.clear();
-      FileSymbolData.clear();
       LocalSymbolData.clear();
       ExternalSymbolData.clear();
       UndefinedSymbolData.clear();
@@ -931,13 +929,11 @@ void ELFObjectWriter::computeSymbolTable(
     SymtabShndxSection->setAlignment(4);
   }
 
-  for (const std::string &Name : Asm.getFileNames())
+  ArrayRef<std::string> FileNames = Asm.getFileNames();
+  for (const std::string &Name : FileNames)
     StrTabBuilder.add(Name);
 
   StrTabBuilder.finalize(StringTableBuilder::ELF);
-
-  for (const std::string &Name : Asm.getFileNames())
-    FileSymbolData.push_back(StrTabBuilder.getOffset(Name));
 
   // Symbols are required to be in lexicographic order.
   array_pod_sort(LocalSymbolData.begin(), LocalSymbolData.end());
@@ -946,7 +942,7 @@ void ELFObjectWriter::computeSymbolTable(
 
   // Set the symbol indices. Local symbols must come before all other
   // symbols with non-local bindings.
-  unsigned Index = FileSymbolData.size() + 1;
+  unsigned Index = FileNames.size() + 1;
 
   for (ELFSymbolData &MSD : LocalSymbolData) {
     MSD.StringIndex = MCELF::GetType(MSD.Symbol->getData()) == ELF::STT_SECTION
@@ -963,13 +959,13 @@ void ELFObjectWriter::computeSymbolTable(
     MSD.Symbol->setIndex(Index++);
   }
 
-  for (unsigned i = 0, e = FileSymbolData.size(); i != e; ++i) {
-    Writer.writeSymbol(FileSymbolData[i], ELF::STT_FILE | ELF::STB_LOCAL, 0, 0,
-                       ELF::STV_DEFAULT, ELF::SHN_ABS, true);
-  }
+  for (const std::string &Name : FileNames)
+    Writer.writeSymbol(StrTabBuilder.getOffset(Name),
+                       ELF::STT_FILE | ELF::STB_LOCAL, 0, 0, ELF::STV_DEFAULT,
+                       ELF::SHN_ABS, true);
 
   // Write the symbol table entries.
-  LastLocalSymbolIndex = FileSymbolData.size() + LocalSymbolData.size() + 1;
+  LastLocalSymbolIndex = FileNames.size() + LocalSymbolData.size() + 1;
 
   for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i) {
     ELFSymbolData &MSD = LocalSymbolData[i];
