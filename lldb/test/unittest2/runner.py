@@ -175,32 +175,29 @@ class TextTestRunner(unittest.TextTestRunner):
                             (run, run != 1 and "s" or "", timeTaken))
         self.stream.writeln()
         
-        expectedFails = unexpectedSuccesses = skipped = 0
+        expectedFails = unexpectedSuccesses = skipped = passed = failed = errored = 0
         try:
             results = map(len, (result.expectedFailures,
                                 result.unexpectedSuccesses,
-                                result.skipped))
-            expectedFails, unexpectedSuccesses, skipped = results
+                                result.skipped,
+                                result.passes,
+                                result.failures,
+                                result.errors))
+            expectedFails, unexpectedSuccesses, skipped, passed, failed, errored = results
         except AttributeError:
             pass
         infos = []
+        infos.append("%d passes" % passed)
+        infos.append("%d failures" % failed)
+        infos.append("%d errors" % errored)
+        infos.append("%d skipped" % skipped)
+        infos.append("%d expected failures" % expectedFails)
+        infos.append("%d unexpected successes" % unexpectedSuccesses)
+        self.stream.write("RESULT: ")
         if not result.wasSuccessful():
             self.stream.write("FAILED")
-            failed, errored = map(len, (result.failures, result.errors))
-            if failed:
-                infos.append("failures=%d" % failed)
-            if errored:
-                infos.append("errors=%d" % errored)
         else:
-            self.stream.write("OK")
-        if skipped:
-            infos.append("skipped=%d" % skipped)
-        if expectedFails:
-            infos.append("expected failures=%d" % expectedFails)
-        if unexpectedSuccesses:
-            infos.append("unexpected successes=%d" % unexpectedSuccesses)
-        if infos:
-            self.stream.writeln(" (%s)" % (", ".join(infos),))
-        else:
-            self.stream.write("\n")
+            self.stream.write("PASSED")
+
+        self.stream.writeln(" (%s)" % (", ".join(infos),))
         return result

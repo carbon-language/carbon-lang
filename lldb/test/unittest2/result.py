@@ -40,6 +40,7 @@ class TestResult(unittest.TestResult):
     def __init__(self):
         self.failfast = False
         self.failures = []
+        self.passes = []
         self.errors = []
         self.testsRun = 0
         self.skipped = []
@@ -117,6 +118,7 @@ class TestResult(unittest.TestResult):
 
     def addSuccess(self, test):
         "Called when a test has completed successfully"
+        self.passes.append(test)
         pass
 
     def addSkip(self, test, reason):
