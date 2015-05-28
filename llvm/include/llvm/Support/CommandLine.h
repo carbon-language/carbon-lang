@@ -1335,6 +1335,13 @@ public:
     return Storage.insert(pos, value);
   }
 
+  iterator insert(iterator pos, const DataType &value) {
+    return Storage.insert(pos, value);
+  }
+  iterator insert(iterator pos, DataType &&value) {
+    return Storage.insert(pos, value);
+  }
+
   reference front() { return Storage.front(); }
   const_reference front() const { return Storage.front(); }
 
