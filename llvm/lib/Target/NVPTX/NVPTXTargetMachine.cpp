@@ -181,6 +181,9 @@ void NVPTXPassConfig::addIRPasses() {
     addPass(createEarlyCSEPass());
   // Run NaryReassociate after EarlyCSE/GVN to be more effective.
   addPass(createNaryReassociatePass());
+  // NaryReassociate on GEPs creates redundant common expressions, so run
+  // EarlyCSE after it.
+  addPass(createEarlyCSEPass());
 }
 
 bool NVPTXPassConfig::addInstSelector() {

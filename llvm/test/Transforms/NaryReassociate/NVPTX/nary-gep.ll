@@ -1,4 +1,4 @@
-; RUN: opt < %s -nary-reassociate -S | FileCheck %s
+; RUN: opt < %s -nary-reassociate -early-cse -S | FileCheck %s
 
 target datalayout = "e-i64:64-v16:16-v32:32-n16:32:64"
 target triple = "nvptx64-unknown-unknown"
@@ -27,24 +27,37 @@ define void @reassociate_gep(float* %a, i64 %i, i64 %j) {
 
 ; foo(&a[sext(j)]);
 ; foo(&a[sext(i +nsw j)]);
+; foo(&a[sext((i +nsw j) +nsw i)]);
 ;   =>
-; t = &a[sext(j)];
-; foo(t);
-; foo(t + sext(i));
+; t1 = &a[sext(j)];
+; foo(t1);
+; t2 = t1 + sext(i);
+; foo(t2);
+; t3 = t2 + sext(i); // sext(i) should be GVN'ed.
+; foo(t3);
 define void @reassociate_gep_nsw(float* %a, i32 %i, i32 %j) {
 ; CHECK-LABEL: @reassociate_gep_nsw(
-  %1 = add nsw i32 %i, %j
-  %idxprom.1 = sext i32 %1 to i64
   %idxprom.j = sext i32 %j to i64
-  %2 = getelementptr float, float* %a, i64 %idxprom.j
+  %1 = getelementptr float, float* %a, i64 %idxprom.j
 ; CHECK: [[t1:[^ ]+]] = getelementptr float, float* %a, i64 %idxprom.j
-  call void @foo(float* %2)
+  call void @foo(float* %1)
 ; CHECK: call void @foo(float* [[t1]])
-  %3 = getelementptr float, float* %a, i64 %idxprom.1
+
+  %2 = add nsw i32 %i, %j
+  %idxprom.2 = sext i32 %2 to i64
+  %3 = getelementptr float, float* %a, i64 %idxprom.2
 ; CHECK: [[sexti:[^ ]+]] = sext i32 %i to i64
 ; CHECK: [[t2:[^ ]+]] = getelementptr float, float* [[t1]], i64 [[sexti]]
   call void @foo(float* %3)
 ; CHECK: call void @foo(float* [[t2]])
+
+  %4 = add nsw i32 %2, %i
+  %idxprom.4 = sext i32 %4 to i64
+  %5 = getelementptr float, float* %a, i64 %idxprom.4
+; CHECK: [[t3:[^ ]+]] = getelementptr float, float* [[t2]], i64 [[sexti]]
+  call void @foo(float* %5)
+; CHECK: call void @foo(float* [[t3]])
+
   ret void
 }
 

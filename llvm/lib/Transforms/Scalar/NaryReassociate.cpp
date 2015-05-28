@@ -234,6 +234,7 @@ bool NaryReassociate::doOneIteration(Function &F) {
     BasicBlock *BB = Node->getBlock();
     for (auto I = BB->begin(); I != BB->end(); ++I) {
       if (SE->isSCEVable(I->getType()) && isPotentiallyNaryReassociable(I)) {
+        const SCEV *OldSCEV = SE->getSCEV(I);
         if (Instruction *NewI = tryReassociate(I)) {
           Changed = true;
           SE->forgetValue(I);
@@ -243,7 +244,28 @@ bool NaryReassociate::doOneIteration(Function &F) {
         }
         // Add the rewritten instruction to SeenExprs; the original instruction
         // is deleted.
-        SeenExprs[SE->getSCEV(I)].push_back(I);
+        const SCEV *NewSCEV = SE->getSCEV(I);
+        SeenExprs[NewSCEV].push_back(I);
+        // Ideally, NewSCEV should equal OldSCEV because tryReassociate(I)
+        // is equivalent to I. However, ScalarEvolution::getSCEV may
+        // weaken nsw causing NewSCEV not to equal OldSCEV. For example, suppose
+        // we reassociate
+        //   I = &a[sext(i +nsw j)] // assuming sizeof(a[0]) = 4
+        // to
+        //   NewI = &a[sext(i)] + sext(j).
+        //
+        // ScalarEvolution computes
+        //   getSCEV(I)    = a + 4 * sext(i + j)
+        //   getSCEV(newI) = a + 4 * sext(i) + 4 * sext(j)
+        // which are different SCEVs.
+        //
+        // To alleviate this issue of ScalarEvolution not always capturing
+        // equivalence, we add I to SeenExprs[OldSCEV] as well so that we can
+        // map both SCEV before and after tryReassociate(I) to I.
+        //
+        // This improvement is exercised in @reassociate_gep_nsw in nary-gep.ll.
+        if (NewSCEV != OldSCEV)
+          SeenExprs[OldSCEV].push_back(I);
       }
     }
   }
