@@ -25,6 +25,8 @@ class CmdPythonTestCase(TestBase):
     def pycmd_tests (self):
         self.runCmd("command source py_import")
 
+        # Verify command that specifies eCommandRequiresTarget returns failure
+        # without a target.
         self.expect('targetname',
             substrs = ['a.out'], matching=False, error=True)
 
