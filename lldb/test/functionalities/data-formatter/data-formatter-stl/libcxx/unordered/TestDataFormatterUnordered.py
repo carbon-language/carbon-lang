@@ -30,8 +30,8 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
 
-    def look_for_content_and_continue(self,var_name,substrs):
-        self.expect( ("frame variable %s" % var_name), substrs=substrs)
+    def look_for_content_and_continue(self, var_name, patterns):
+        self.expect( ("frame variable %s" % var_name), patterns=patterns)
         self.runCmd("continue")
 
     def data_formatter_commands(self):
@@ -61,12 +61,12 @@ class LibcxxUnorderedDataFormatterTestCase(TestBase):
 
         self.expect('image list', substrs = self.getLibcPlusPlusLibs())
 
-        self.look_for_content_and_continue("map",['size=5 {', 'hello','world','this','is','me'])
-        self.look_for_content_and_continue("mmap",['size=6 {','first = 3','second = "this"','first = 2','second = "hello"'])
-        self.look_for_content_and_continue("iset",['size=5 {','[0] = 5','[2] = 3','[3] = 2'])
-        self.look_for_content_and_continue("sset",['size=5 {','[0] = "is"','[1] = "world"','[4] = "hello"'])
-        self.look_for_content_and_continue("imset",['size=6 {','[0] = 3','[1] = 3','[2] = 3','[4] = 2','[5] = 1'])
-        self.look_for_content_and_continue("smset",['size=5 {','[0] = "is"','[1] = "is"','[2] = "world"','[3] = "world"'])
+        self.look_for_content_and_continue("map", ['size=5 {', 'hello', 'world', 'this', 'is', 'me'])
+        self.look_for_content_and_continue("mmap", ['size=6 {', 'first = 3', 'second = "this"', 'first = 2', 'second = "hello"'])
+        self.look_for_content_and_continue("iset", ['size=5 {', '\[\d\] = 5', '\[\d\] = 3', '\[\d\] = 2'])
+        self.look_for_content_and_continue("sset", ['size=5 {', '\[\d\] = "is"', '\[\d\] = "world"', '\[\d\] = "hello"'])
+        self.look_for_content_and_continue("imset", ['size=6 {', '\[\d\] = 3(\\n|.)+\[\d\] = 3(\\n|.)+\[\d\] = 3', '\[\d\] = 2', '\[\d\] = 1'])
+        self.look_for_content_and_continue("smset", ['size=5 {', '\[\d\] = "is"(\\n|.)+\[\d\] = "is"', '\[\d\] = "world"(\\n|.)+\[\d\] = "world"'])
 
 if __name__ == '__main__':
     import atexit
