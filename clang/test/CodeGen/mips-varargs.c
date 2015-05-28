@@ -111,14 +111,14 @@ long long test_i64(char *fmt, ...) {
 // ALL:   [[VA1:%.+]] = bitcast i8** %va to i8*
 // ALL:   call void @llvm.va_start(i8* [[VA1]])
 //
-// O32:   [[AP_CUR:%.+]] = load i8*, i8** %va, align [[PTRALIGN]]
+// O32:   [[TMP0:%.+]] = bitcast i8** %va to i32*
+// O32:   [[AP_CUR:%.+]] = load [[INTPTR_T:i32]], i32* [[TMP0]], align [[PTRALIGN]]
 // NEW:   [[TMP0:%.+]] = bitcast i8** %va to i64**
 // NEW:   [[AP_CUR:%.+]] = load i64*, i64** [[TMP0]], align [[PTRALIGN]]
 //
 // i64 is 8-byte aligned, while this is within O32's stack alignment there's no
 // guarantee that the offset is still 8-byte aligned after earlier reads.
-// O32:   [[PTR0:%.+]] = ptrtoint i8* [[AP_CUR]] to [[INTPTR_T:i32]]
-// O32:   [[PTR1:%.+]] = add i32 [[PTR0]], 7
+// O32:   [[PTR1:%.+]] = add i32 [[AP_CUR]], 7
 // O32:   [[PTR2:%.+]] = and i32 [[PTR1]], -8
 // O32:   [[PTR3:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i64*
 // O32:   [[PTR4:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i8*
@@ -200,11 +200,14 @@ int test_v4i32(char *fmt, ...) {
 // ALL:   %va = alloca i8*, align [[PTRALIGN]]
 // ALL:   [[VA1:%.+]] = bitcast i8** %va to i8*
 // ALL:   call void @llvm.va_start(i8* [[VA1]])
-// ALL:   [[AP_CUR:%.+]] = load i8*, i8** %va, align [[PTRALIGN]]
 //
-// O32:   [[PTR0:%.+]] = ptrtoint i8* [[AP_CUR]] to [[INTPTR_T:i32]]
-// N32:   [[PTR0:%.+]] = ptrtoint i8* [[AP_CUR]] to [[INTPTR_T:i32]]
-// N64:   [[PTR0:%.+]] = ptrtoint i8* [[AP_CUR]] to [[INTPTR_T:i64]]
+// O32:   [[TMP0:%.+]] = bitcast i8** %va to i32*
+// N32:   [[TMP0:%.+]] = bitcast i8** %va to i32*
+// N64:   [[TMP0:%.+]] = bitcast i8** %va to i64*
+//
+// O32:   [[PTR0:%.+]] = load [[INTPTR_T:i32]], i32* [[TMP0]], align [[PTRALIGN]]
+// N32:   [[PTR0:%.+]] = load [[INTPTR_T:i32]], i32* [[TMP0]], align [[PTRALIGN]]
+// N64:   [[PTR0:%.+]] = load [[INTPTR_T:i64]], i64* [[TMP0]], align [[PTRALIGN]]
 //
 // Vectors are 16-byte aligned, however the O32 ABI has a maximum alignment of
 // 8-bytes since the base of the stack is 8-byte aligned.
