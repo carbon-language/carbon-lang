@@ -1,0 +1,4 @@
+; Verify that llvm-dwarfdump doesn't crash on broken input files.
+
+RUN: llvm-dwarfdump %p/Inputs/invalid.elf
+

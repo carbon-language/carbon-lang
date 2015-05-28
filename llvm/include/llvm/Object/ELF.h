@@ -318,7 +318,7 @@ public:
   std::pair<const Elf_Shdr *, const Elf_Sym *>
   getRelocationSymbol(const Elf_Shdr *RelSec, const RelT *Rel) const;
 
-  ELFFile(StringRef Object, std::error_code &ec);
+  ELFFile(StringRef Object, std::error_code &EC);
 
   bool isMipsELF64() const {
     return Header->e_machine == ELF::EM_MIPS &&
@@ -622,7 +622,7 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 }
 
 template <class ELFT>
-ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
+ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
     : Buf(Object), SectionHeaderTable(nullptr), dot_shstrtab_sec(nullptr),
       dot_strtab_sec(nullptr), dot_symtab_sec(nullptr),
       SymbolTableSectionHeaderIndex(nullptr), dot_gnu_version_sec(nullptr),
@@ -630,9 +630,11 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
       dt_soname(nullptr) {
   const uint64_t FileSize = Buf.size();
 
-  if (sizeof(Elf_Ehdr) > FileSize)
-    // FIXME: Proper error handling.
-    report_fatal_error("File too short!");
+  if (sizeof(Elf_Ehdr) > FileSize) {
+    // File too short!
+    EC = object_error::parse_failed;
+    return;
+  }
 
   Header = reinterpret_cast<const Elf_Ehdr *>(base());
 
@@ -641,40 +643,50 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
 
   const uint64_t SectionTableOffset = Header->e_shoff;
 
-  if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize)
-    // FIXME: Proper error handling.
-    report_fatal_error("Section header table goes past end of file!");
+  if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize) {
+    // Section header table goes past end of file!
+    EC = object_error::parse_failed;
+    return;
+  }
 
   // The getNumSections() call below depends on SectionHeaderTable being set.
   SectionHeaderTable =
     reinterpret_cast<const Elf_Shdr *>(base() + SectionTableOffset);
   const uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
 
-  if (SectionTableOffset + SectionTableSize > FileSize)
-    // FIXME: Proper error handling.
-    report_fatal_error("Section table goes past end of file!");
+  if (SectionTableOffset + SectionTableSize > FileSize) {
+    // Section table goes past end of file!
+    EC = object_error::parse_failed;
+    return;
+  }
 
   // Scan sections for special sections.
 
   for (const Elf_Shdr &Sec : sections()) {
     switch (Sec.sh_type) {
     case ELF::SHT_SYMTAB_SHNDX:
-      if (SymbolTableSectionHeaderIndex)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .symtab_shndx!");
+      if (SymbolTableSectionHeaderIndex) {
+        // More than one .symtab_shndx!
+        EC = object_error::parse_failed;
+        return;
+      }
       SymbolTableSectionHeaderIndex = &Sec;
       break;
     case ELF::SHT_SYMTAB:
-      if (dot_symtab_sec)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .symtab!");
+      if (dot_symtab_sec) {
+        // More than one .symtab!
+        EC = object_error::parse_failed;
+        return;
+      }
       dot_symtab_sec = &Sec;
       dot_strtab_sec = getSection(Sec.sh_link);
       break;
     case ELF::SHT_DYNSYM: {
-      if (DynSymRegion.Addr)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .dynsym!");
+      if (DynSymRegion.Addr) {
+        // More than one .dynsym!
+        EC = object_error::parse_failed;
+        return;
+      }
       DynSymRegion.Addr = base() + Sec.sh_offset;
       DynSymRegion.Size = Sec.sh_size;
       DynSymRegion.EntSize = Sec.sh_entsize;
@@ -685,29 +697,37 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
       break;
     }
     case ELF::SHT_DYNAMIC:
-      if (DynamicRegion.Addr)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .dynamic!");
+      if (DynamicRegion.Addr) {
+        // More than one .dynamic!
+        EC = object_error::parse_failed;
+        return;
+      }
       DynamicRegion.Addr = base() + Sec.sh_offset;
       DynamicRegion.Size = Sec.sh_size;
       DynamicRegion.EntSize = Sec.sh_entsize;
       break;
     case ELF::SHT_GNU_versym:
-      if (dot_gnu_version_sec != nullptr)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .gnu.version section!");
+      if (dot_gnu_version_sec != nullptr) {
+        // More than one .gnu.version section!
+        EC = object_error::parse_failed;
+        return;
+      }
       dot_gnu_version_sec = &Sec;
       break;
     case ELF::SHT_GNU_verdef:
-      if (dot_gnu_version_d_sec != nullptr)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .gnu.version_d section!");
+      if (dot_gnu_version_d_sec != nullptr) {
+        // More than one .gnu.version_d section!
+        EC = object_error::parse_failed;
+        return;
+      }
       dot_gnu_version_d_sec = &Sec;
       break;
     case ELF::SHT_GNU_verneed:
-      if (dot_gnu_version_r_sec != nullptr)
-        // FIXME: Proper error handling.
-        report_fatal_error("More than one .gnu.version_r section!");
+      if (dot_gnu_version_r_sec != nullptr) {
+        // More than one .gnu.version_r section!
+        EC = object_error::parse_failed;
+        return;
+      }
       dot_gnu_version_r_sec = &Sec;
       break;
     }
@@ -744,7 +764,7 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
     }
   }
 
-  ec = std::error_code();
+  EC = std::error_code();
 }
 
 // Get the symbol table index in the symtab section given a symbol
