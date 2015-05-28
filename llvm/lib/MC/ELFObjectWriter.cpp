@@ -187,9 +187,6 @@ class ELFObjectWriter : public MCObjectWriter {
                           MCValue Target, bool &IsPCRel,
                           uint64_t &FixedValue) override;
 
-    uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
-                                         const MCSymbol *S);
-
     // Map from a signature symbol to the group section index
     typedef DenseMap<const MCSymbol *, unsigned> RevGroupMapTy;
 
@@ -729,14 +726,6 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
   return;
 }
 
-
-uint64_t
-ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
-                                             const MCSymbol *S) {
-  assert(S->hasData());
-  return S->getIndex();
-}
-
 bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
                                  const MCSymbol &Symbol, bool Used,
                                  bool Renamed) {
@@ -1128,8 +1117,7 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
 
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     const ELFRelocationEntry &Entry = Relocs[e - i - 1];
-    unsigned Index =
-        Entry.Symbol ? getSymbolIndexInSymbolTable(Asm, Entry.Symbol) : 0;
+    unsigned Index = Entry.Symbol ? Entry.Symbol->getIndex() : 0;
 
     if (is64Bit()) {
       write(Entry.Offset);
@@ -1232,7 +1220,7 @@ void ELFObjectWriter::writeSectionHeader(
     if (Type != ELF::SHT_GROUP)
       GroupSymbolIndex = 0;
     else
-      GroupSymbolIndex = getSymbolIndexInSymbolTable(Asm, Section->getGroup());
+      GroupSymbolIndex = Section->getGroup()->getIndex();
 
     const std::pair<uint64_t, uint64_t> &Offsets =
         SectionOffsets.find(Section)->second;
