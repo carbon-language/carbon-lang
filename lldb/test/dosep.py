@@ -354,6 +354,7 @@ Run lldb test suite using a separate process for each test file.
     print "Ran %d test cases (%d failed) (%f%%)" % (num_tests, all_fails, 100.0*all_fails/num_tests)
     if len(failed) > 0:
         failed.sort()
+        print "Failing Tests (%d)" % len(failed)
         for f in failed:
             print "%s: LLDB (suite) :: %s (%s)" % (
                 "TIMEOUT" if f in timed_out else "FAIL", f, system_info
