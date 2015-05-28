@@ -25,6 +25,7 @@ void DWARFDebugLine::Prologue::clear() {
   TotalLength = Version = PrologueLength = 0;
   MinInstLength = MaxOpsPerInst = DefaultIsStmt = LineBase = LineRange = 0;
   OpcodeBase = 0;
+  IsDWARF64 = false;
   StandardOpcodeLengths.clear();
   IncludeDirectories.clear();
   FileNames.clear();
@@ -32,9 +33,9 @@ void DWARFDebugLine::Prologue::clear() {
 
 void DWARFDebugLine::Prologue::dump(raw_ostream &OS) const {
   OS << "Line table prologue:\n"
-     << format("    total_length: 0x%8.8x\n", TotalLength)
+     << format("    total_length: 0x%8.8" PRIx64 "\n", TotalLength)
      << format("         version: %u\n", Version)
-     << format(" prologue_length: 0x%8.8x\n", PrologueLength)
+     << format(" prologue_length: 0x%8.8" PRIx64 "\n", PrologueLength)
      << format(" min_inst_length: %u\n", MinInstLength)
      << format(Version >= 4 ? "max_ops_per_inst: %u\n" : "", MaxOpsPerInst)
      << format(" default_is_stmt: %u\n", DefaultIsStmt)
@@ -67,16 +68,23 @@ void DWARFDebugLine::Prologue::dump(raw_ostream &OS) const {
 
 bool DWARFDebugLine::Prologue::parse(DataExtractor debug_line_data,
                                      uint32_t *offset_ptr) {
-  const uint32_t prologue_offset = *offset_ptr;
+  const uint64_t prologue_offset = *offset_ptr;
 
   clear();
   TotalLength = debug_line_data.getU32(offset_ptr);
+  if (TotalLength == UINT32_MAX) {
+    IsDWARF64 = true;
+    TotalLength = debug_line_data.getU64(offset_ptr);
+  } else if (TotalLength > 0xffffff00) {
+    return false;
+  }
   Version = debug_line_data.getU16(offset_ptr);
   if (Version < 2)
     return false;
 
-  PrologueLength = debug_line_data.getU32(offset_ptr);
-  const uint32_t end_prologue_offset = PrologueLength + *offset_ptr;
+  PrologueLength = debug_line_data.getUnsigned(offset_ptr,
+                                               sizeofPrologueLength());
+  const uint64_t end_prologue_offset = PrologueLength + *offset_ptr;
   MinInstLength = debug_line_data.getU8(offset_ptr);
   if (Version >= 4)
     MaxOpsPerInst = debug_line_data.getU8(offset_ptr);
@@ -114,9 +122,10 @@ bool DWARFDebugLine::Prologue::parse(DataExtractor debug_line_data,
   }
 
   if (*offset_ptr != end_prologue_offset) {
-    fprintf(stderr, "warning: parsing line table prologue at 0x%8.8x should"
-                    " have ended at 0x%8.8x but it ended at 0x%8.8x\n",
-            prologue_offset, end_prologue_offset, *offset_ptr);
+    fprintf(stderr, "warning: parsing line table prologue at 0x%8.8" PRIx64
+                    " should have ended at 0x%8.8" PRIx64
+                    " but it ended at 0x%8.8" PRIx64 "\n",
+            prologue_offset, end_prologue_offset, (uint64_t)*offset_ptr);
     return false;
   }
   return true;
@@ -258,7 +267,7 @@ bool DWARFDebugLine::LineTable::parse(DataExtractor debug_line_data,
   }
 
   const uint32_t end_offset = debug_line_offset + Prologue.TotalLength +
-                              sizeof(Prologue.TotalLength);
+                              Prologue.sizeofTotalLength();
 
   ParsingState State(this);
 
