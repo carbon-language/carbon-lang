@@ -208,8 +208,6 @@ int main(int argc, char *argv[])
   return exit_status;
 }
 
-/* {{{ process_file(ifp, ofp) */
-
 int process_file(FILE *ifp, FILE *ofp)
 {
   int        res, line_num, test_num = 0, num_failed = 0, num_bogus = 0;
@@ -240,10 +238,6 @@ int process_file(FILE *ifp, FILE *ofp)
   return num_failed;
 }
 
-/* }}} */
-
-/* {{{ read_line(ifp, line, limit) */
-
 int  read_line(FILE *ifp, char *line, int limit)
 {
   static FILE *current_fp = NULL;
@@ -265,10 +259,6 @@ int  read_line(FILE *ifp, char *line, int limit)
   return current_line;
 }
 
-/* }}} */
-
-/* {{{ trim_line(line) */
-
 void trim_line(char *line)
 {
   int len;
@@ -287,10 +277,6 @@ void trim_line(char *line)
     *fnw-- = '\0';
 }
 
-/* }}} */
-
-/* {{{ is_blank(line) */
-
 int  is_blank(char *line)
 {
   while (*line && *line != '#' && isspace((unsigned char) *line))
@@ -298,10 +284,6 @@ int  is_blank(char *line)
 
   return *line == '\0' || *line == '#';
 }
-
-/* }}} */
-
-/* {{{ parse_line(line, t) */
 
 int  parse_line(char *line, testspec_t *t)
 {
@@ -334,10 +316,6 @@ int  parse_line(char *line, testspec_t *t)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ count_fields(line, delim) */
-
 int  count_fields(char *line, int delim)
 {
   int count = 1;
@@ -353,10 +331,6 @@ int  count_fields(char *line, int delim)
   return count;
 }
 
-/* }}} */
-
-/* {{{ parse_fields(line, delim, start) */
-
 void parse_fields(char *line, int delim, char **start)
 {
   int pos = 0;
@@ -367,10 +341,6 @@ void parse_fields(char *line, int delim, char **start)
     start[pos++] = line;
   }
 }
-
-/* }}} */
-
-/* {{{ run_test(test_num, t, ofp) */
 
 int  run_test(int test_num, testspec_t *t, FILE *ofp)
 {
@@ -422,10 +392,6 @@ int  run_test(int test_num, testspec_t *t, FILE *ofp)
   return 0;
 }
 
-/* }}} */
-
-/* {{{ find_test(code, info) */
-
 int  find_test(char *code, test_t *info)
 {
   int i = 0;
@@ -439,10 +405,6 @@ int  find_test(char *code, test_t *info)
   }
   return -1;
 }
-
-/* }}} */
-
-/* {{{ free_test(*t) */
 
 void free_test(testspec_t *t)
 {
@@ -458,17 +420,11 @@ void free_test(testspec_t *t)
   }
 }
 
-/* }}} */
-
-/* {{{ error_string(res) */
-
 char *error_string(mp_result res)
 {
   int v = abs(res);
 
   return (char *)g_imath_strerr[v];
 }
-
-/* }}} */
 
 /* Here there be dragons */

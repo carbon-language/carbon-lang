@@ -42,8 +42,6 @@
 #define STATIC static
 #endif
 
-/* {{{ Constants */
-
 const mp_result MP_OK     = 0;  /* no error, all is well  */
 const mp_result MP_FALSE  = 0;  /* boolean false          */
 const mp_result MP_TRUE   = -1; /* boolean true           */
@@ -69,14 +67,10 @@ STATIC const char *s_error_msg[] = {
   NULL
 };
 
-/* }}} */
-
 /* Argument checking macros
    Use CHECK() where a return value is required; NRCHECK() elsewhere */
 #define CHECK(TEST)   assert(TEST)
 #define NRCHECK(TEST) assert(TEST)
-
-/* {{{ Logarithm table for computing output sizes */
 
 /* The ith entry of this table gives the value of log_i(2).
 
@@ -102,8 +96,7 @@ STATIC const double s_log2[] = {
    0.193426404,                                         /* 36          */
 };
 
-/* }}} */
-/* {{{ Various macros */
+
 
 /* Return the number of digits needed to represent a static value */
 #define MP_VALUE_DIGITS(V) \
@@ -212,8 +205,7 @@ do{ \
 #define HIGH_BIT_SET(W)         ((W) >> (MP_WORD_BIT - 1))
 #define ADD_WILL_OVERFLOW(W, V) ((MP_WORD_MAX - (V)) < (W))
 
-/* }}} */
-/* {{{ Default configuration settings */
+
 
 /* Default number of digits allocated to a new mp_int */
 #if IMATH_TEST
@@ -228,8 +220,6 @@ mp_size multiply_threshold = MP_MULT_THRESH;
 #else
 STATIC const mp_size multiply_threshold = MP_MULT_THRESH;
 #endif
-
-/* }}} */
 
 /* Allocate a buffer of (at least) num digits, or return
    NULL if that couldn't be done.  */
@@ -366,8 +356,6 @@ void      s_print(char *tag, mp_int z);
 void      s_print_buf(char *tag, mp_digit *buf, mp_size num);
 #endif
 
-/* {{{ mp_int_init(z) */
-
 mp_result mp_int_init(mp_int z)
 {
   if (z == NULL)
@@ -382,10 +370,6 @@ mp_result mp_int_init(mp_int z)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_alloc() */
-
 mp_int    mp_int_alloc(void)
 {
   mp_int out = malloc(sizeof(mpz_t));
@@ -395,10 +379,6 @@ mp_int    mp_int_alloc(void)
 
   return out;
 }
-
-/* }}} */
-
-/* {{{ mp_int_init_size(z, prec) */
 
 mp_result mp_int_init_size(mp_int z, mp_size prec)
 {
@@ -421,10 +401,6 @@ mp_result mp_int_init_size(mp_int z, mp_size prec)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mp_int_init_copy(z, old) */
 
 mp_result mp_int_init_copy(mp_int z, mp_int old)
 {
@@ -451,10 +427,6 @@ mp_result mp_int_init_copy(mp_int z, mp_int old)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_init_value(z, value) */
-
 mp_result mp_int_init_value(mp_int z, mp_small value)
 {
   mpz_t    vtmp;
@@ -463,10 +435,6 @@ mp_result mp_int_init_value(mp_int z, mp_small value)
   s_fake(&vtmp, value, vbuf);
   return mp_int_init_copy(z, &vtmp);
 }
-
-/* }}} */
-
-/* {{{ mp_int_init_uvalue(z, uvalue) */
 
 mp_result mp_int_init_uvalue(mp_int z, mp_usmall uvalue)
 {
@@ -477,10 +445,6 @@ mp_result mp_int_init_uvalue(mp_int z, mp_usmall uvalue)
   return mp_int_init_copy(z, &vtmp);
 }
 
-/* }}} */
-
-/* {{{ mp_int_set_value(z, value) */
-
 mp_result  mp_int_set_value(mp_int z, mp_small value)
 {
   mpz_t    vtmp;
@@ -490,10 +454,6 @@ mp_result  mp_int_set_value(mp_int z, mp_small value)
   return mp_int_copy(&vtmp, z);
 }
 
-/* }}} */
-
-/* {{{ mp_int_set_uvalue(z, value) */
-
 mp_result  mp_int_set_uvalue(mp_int z, mp_usmall uvalue)
 {
   mpz_t    vtmp;
@@ -502,10 +462,6 @@ mp_result  mp_int_set_uvalue(mp_int z, mp_usmall uvalue)
   s_ufake(&vtmp, uvalue, vbuf);
   return mp_int_copy(&vtmp, z);
 }
-
-/* }}} */
-
-/* {{{ mp_int_clear(z) */
 
 void      mp_int_clear(mp_int z)
 {
@@ -520,10 +476,6 @@ void      mp_int_clear(mp_int z)
   }
 }
 
-/* }}} */
-
-/* {{{ mp_int_free(z) */
-
 void      mp_int_free(mp_int z)
 {
   NRCHECK(z != NULL);
@@ -531,10 +483,6 @@ void      mp_int_free(mp_int z)
   mp_int_clear(z);
   free(z); /* note: NOT s_free() */
 }
-
-/* }}} */
-
-/* {{{ mp_int_copy(a, c) */
 
 mp_result mp_int_copy(mp_int a, mp_int c)
 {
@@ -557,10 +505,6 @@ mp_result mp_int_copy(mp_int a, mp_int c)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_swap(a, c) */
-
 void      mp_int_swap(mp_int a, mp_int c)
 {
   if (a != c) {
@@ -576,10 +520,6 @@ void      mp_int_swap(mp_int a, mp_int c)
   }
 }
 
-/* }}} */
-
-/* {{{ mp_int_zero(z) */
-
 void      mp_int_zero(mp_int z)
 {
   NRCHECK(z != NULL);
@@ -588,10 +528,6 @@ void      mp_int_zero(mp_int z)
   MP_USED(z) = 1;
   MP_SIGN(z) = MP_ZPOS;
 }
-
-/* }}} */
-
-/* {{{ mp_int_abs(a, c) */
 
 mp_result mp_int_abs(mp_int a, mp_int c)
 {
@@ -605,10 +541,6 @@ mp_result mp_int_abs(mp_int a, mp_int c)
   MP_SIGN(c) = MP_ZPOS;
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mp_int_neg(a, c) */
 
 mp_result mp_int_neg(mp_int a, mp_int c)
 {
@@ -624,10 +556,6 @@ mp_result mp_int_neg(mp_int a, mp_int c)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mp_int_add(a, b, c) */
 
 mp_result mp_int_add(mp_int a, mp_int b, mp_int c)
 {
@@ -694,10 +622,6 @@ mp_result mp_int_add(mp_int a, mp_int b, mp_int c)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_add_value(a, value, c) */
-
 mp_result mp_int_add_value(mp_int a, mp_small value, mp_int c)
 {
   mpz_t    vtmp;
@@ -707,10 +631,6 @@ mp_result mp_int_add_value(mp_int a, mp_small value, mp_int c)
 
   return mp_int_add(a, &vtmp, c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_sub(a, b, c) */
 
 mp_result mp_int_sub(mp_int a, mp_int b, mp_int c)
 {
@@ -772,10 +692,6 @@ mp_result mp_int_sub(mp_int a, mp_int b, mp_int c)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_sub_value(a, value, c) */
-
 mp_result mp_int_sub_value(mp_int a, mp_small value, mp_int c)
 {
   mpz_t    vtmp;
@@ -785,10 +701,6 @@ mp_result mp_int_sub_value(mp_int a, mp_small value, mp_int c)
 
   return mp_int_sub(a, &vtmp, c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_mul(a, b, c) */
 
 mp_result mp_int_mul(mp_int a, mp_int b, mp_int c)
 {
@@ -848,10 +760,6 @@ mp_result mp_int_mul(mp_int a, mp_int b, mp_int c)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_mul_value(a, value, c) */
-
 mp_result mp_int_mul_value(mp_int a, mp_small value, mp_int c)
 {
   mpz_t    vtmp;
@@ -861,10 +769,6 @@ mp_result mp_int_mul_value(mp_int a, mp_small value, mp_int c)
 
   return mp_int_mul(a, &vtmp, c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_mul_pow2(a, p2, c) */
 
 mp_result mp_int_mul_pow2(mp_int a, mp_small p2, mp_int c)
 {
@@ -879,10 +783,6 @@ mp_result mp_int_mul_pow2(mp_int a, mp_small p2, mp_int c)
   else
     return MP_MEMORY;
 }
-
-/* }}} */
-
-/* {{{ mp_int_sqr(a, c) */
 
 mp_result mp_int_sqr(mp_int a, mp_int c)
 {
@@ -926,10 +826,6 @@ mp_result mp_int_sqr(mp_int a, mp_int c)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mp_int_div(a, b, q, r) */
 
 mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r)
 {
@@ -1029,10 +925,6 @@ mp_result mp_int_div(mp_int a, mp_int b, mp_int q, mp_int r)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_mod(a, m, c) */
-
 mp_result mp_int_mod(mp_int a, mp_int m, mp_int c)
 {
   mp_result res;
@@ -1062,10 +954,6 @@ mp_result mp_int_mod(mp_int a, mp_int m, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_div_value(a, value, q, r) */
-
 mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r)
 {
   mpz_t     vtmp, rtmp;
@@ -1086,10 +974,6 @@ mp_result mp_int_div_value(mp_int a, mp_small value, mp_int q, mp_small *r)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_div_pow2(a, p2, q, r) */
-
 mp_result mp_int_div_pow2(mp_int a, mp_small p2, mp_int q, mp_int r)
 {
   mp_result res = MP_OK;
@@ -1104,10 +988,6 @@ mp_result mp_int_div_pow2(mp_int a, mp_small p2, mp_int q, mp_int r)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_int_expt(a, b, c) */
 
 mp_result mp_int_expt(mp_int a, mp_small b, mp_int c)
 {
@@ -1141,10 +1021,6 @@ mp_result mp_int_expt(mp_int a, mp_small b, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_expt_value(a, b, c) */
-
 mp_result mp_int_expt_value(mp_small a, mp_small b, mp_int c)
 {
   mpz_t     t;
@@ -1176,10 +1052,6 @@ mp_result mp_int_expt_value(mp_small a, mp_small b, mp_int c)
   mp_int_clear(&t);
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_int_expt_full(a, b, c) */
 
 mp_result mp_int_expt_full(mp_int a, mp_int b, mp_int c)
 {
@@ -1217,10 +1089,6 @@ mp_result mp_int_expt_full(mp_int a, mp_int b, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_compare(a, b) */
-
 int       mp_int_compare(mp_int a, mp_int b)
 {
   mp_sign sa;
@@ -1247,20 +1115,12 @@ int       mp_int_compare(mp_int a, mp_int b)
   }
 }
 
-/* }}} */
-
-/* {{{ mp_int_compare_unsigned(a, b) */
-
 int       mp_int_compare_unsigned(mp_int a, mp_int b)
 {
   NRCHECK(a != NULL && b != NULL);
 
   return s_ucmp(a, b);
 }
-
-/* }}} */
-
-/* {{{ mp_int_compare_zero(z) */
 
 int       mp_int_compare_zero(mp_int z)
 {
@@ -1273,10 +1133,6 @@ int       mp_int_compare_zero(mp_int z)
   else
     return -1;
 }
-
-/* }}} */
-
-/* {{{ mp_int_compare_value(z, value) */
 
 int       mp_int_compare_value(mp_int z, mp_small value)
 {
@@ -1295,10 +1151,6 @@ int       mp_int_compare_value(mp_int z, mp_small value)
   }
 }
 
-/* }}} */
-
-/* {{{ mp_int_compare_uvalue(z, uv) */
-
 int       mp_int_compare_uvalue(mp_int z, mp_usmall uv)
 {
   CHECK(z != NULL);
@@ -1308,10 +1160,6 @@ int       mp_int_compare_uvalue(mp_int z, mp_usmall uv)
   else
     return s_uvcmp(z, uv);
 }
-
-/* }}} */
-
-/* {{{ mp_int_exptmod(a, b, m, c) */
 
 mp_result mp_int_exptmod(mp_int a, mp_int b, mp_int m, mp_int c)
 {
@@ -1353,10 +1201,6 @@ mp_result mp_int_exptmod(mp_int a, mp_int b, mp_int m, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_exptmod_evalue(a, value, m, c) */
-
 mp_result mp_int_exptmod_evalue(mp_int a, mp_small value, mp_int m, mp_int c)
 {
   mpz_t vtmp;
@@ -1366,10 +1210,6 @@ mp_result mp_int_exptmod_evalue(mp_int a, mp_small value, mp_int m, mp_int c)
 
   return mp_int_exptmod(a, &vtmp, m, c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_exptmod_bvalue(v, b, m, c) */
 
 mp_result mp_int_exptmod_bvalue(mp_small value, mp_int b,
 				mp_int m, mp_int c)
@@ -1381,10 +1221,6 @@ mp_result mp_int_exptmod_bvalue(mp_small value, mp_int b,
 
   return mp_int_exptmod(&vtmp, b, m, c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_exptmod_known(a, b, m, mu, c) */
 
 mp_result mp_int_exptmod_known(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c)
 {
@@ -1423,20 +1259,12 @@ mp_result mp_int_exptmod_known(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_redux_const(m, c) */
-
 mp_result mp_int_redux_const(mp_int m, mp_int c)
 {
   CHECK(m != NULL && c != NULL && m != c);
 
   return s_brmu(c, m);
 }
-
-/* }}} */
-
-/* {{{ mp_int_invmod(a, m, c) */
 
 mp_result mp_int_invmod(mp_int a, mp_int m, mp_int c)
 {
@@ -1479,10 +1307,6 @@ mp_result mp_int_invmod(mp_int a, mp_int m, mp_int c)
   CLEANUP_TEMP();
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_int_gcd(a, b, c) */
 
 /* Binary GCD algorithm due to Josef Stein, 1961 */
 mp_result mp_int_gcd(mp_int a, mp_int b, mp_int c)
@@ -1558,10 +1382,6 @@ mp_result mp_int_gcd(mp_int a, mp_int b, mp_int c)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_int_egcd(a, b, c, x, y) */
 
 /* This is the binary GCD algorithm again, but this time we keep track of the
    elementary matrix operations as we go, so we can get values x and y
@@ -1675,10 +1495,6 @@ mp_result mp_int_egcd(mp_int a, mp_int b, mp_int c,
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_lcm(a, b, c) */
-
 mp_result mp_int_lcm(mp_int a, mp_int b, mp_int c)
 {
   mpz_t lcm;
@@ -1709,10 +1525,6 @@ mp_result mp_int_lcm(mp_int a, mp_int b, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_divisible_value(a, v) */
-
 int       mp_int_divisible_value(mp_int a, mp_small v)
 {
   mp_small rem = 0;
@@ -1723,20 +1535,12 @@ int       mp_int_divisible_value(mp_int a, mp_small v)
   return rem == 0;
 }
 
-/* }}} */
-
-/* {{{ mp_int_is_pow2(z) */
-
 int       mp_int_is_pow2(mp_int z)
 {
   CHECK(z != NULL);
 
   return s_isp2(z);
 }
-
-/* }}} */
-
-/* {{{ mp_int_root(a, b, c) */
 
 /* Implementation of Newton's root finding method, based loosely on a patch
    contributed by Hal Finkel <half@halssoftware.com>
@@ -1806,10 +1610,6 @@ mp_result mp_int_root(mp_int a, mp_small b, mp_int c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_int_to_int(z, *out) */
-
 mp_result mp_int_to_int(mp_int z, mp_small *out)
 {
   mp_usmall uv = 0;
@@ -1840,10 +1640,6 @@ mp_result mp_int_to_int(mp_int z, mp_small *out)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_to_uint(z, *out) */
-
 mp_result mp_int_to_uint(mp_int z, mp_usmall *out)
 {
   mp_usmall uv = 0;
@@ -1872,10 +1668,6 @@ mp_result mp_int_to_uint(mp_int z, mp_usmall *out)
   
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mp_int_to_string(z, radix, str, limit) */
 
 mp_result mp_int_to_string(mp_int z, mp_size radix,
 			   char *str, int limit)
@@ -1933,10 +1725,6 @@ mp_result mp_int_to_string(mp_int z, mp_size radix,
     return MP_TRUNC;
 }
 
-/* }}} */
-
-/* {{{ mp_int_string_len(z, radix) */
-
 mp_result mp_int_string_len(mp_int z, mp_size radix)
 {
   int  len;
@@ -1955,19 +1743,11 @@ mp_result mp_int_string_len(mp_int z, mp_size radix)
   return len;
 }
 
-/* }}} */
-
-/* {{{ mp_int_read_string(z, radix, *str) */
-
 /* Read zero-terminated string into z */
 mp_result mp_int_read_string(mp_int z, mp_size radix, const char *str)
 {
   return mp_int_read_cstring(z, radix, str, NULL);
 }
-
-/* }}} */
-
-/* {{{ mp_int_read_cstring(z, radix, *str, **end) */
 
 mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str, char **end)
 {
@@ -2028,10 +1808,6 @@ mp_result mp_int_read_cstring(mp_int z, mp_size radix, const char *str, char **e
     return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_count_bits(z) */
-
 mp_result mp_int_count_bits(mp_int z)
 {
   mp_size  nbits = 0, uz;
@@ -2055,10 +1831,6 @@ mp_result mp_int_count_bits(mp_int z)
   return nbits;
 }
 
-/* }}} */
-
-/* {{{ mp_int_to_binary(z, buf, limit) */
-
 mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit)
 {
   static const int PAD_FOR_2C = 1;
@@ -2075,10 +1847,6 @@ mp_result mp_int_to_binary(mp_int z, unsigned char *buf, int limit)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_int_read_binary(z, buf, len) */
 
 mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len)
 {
@@ -2115,10 +1883,6 @@ mp_result mp_int_read_binary(mp_int z, unsigned char *buf, int len)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_binary_len(z) */
-
 mp_result mp_int_binary_len(mp_int z)
 {
   mp_result  res = mp_int_count_bits(z);
@@ -2138,10 +1902,6 @@ mp_result mp_int_binary_len(mp_int z)
   return bytes;
 }
 
-/* }}} */
-
-/* {{{ mp_int_to_unsigned(z, buf, limit) */
-
 mp_result mp_int_to_unsigned(mp_int z, unsigned char *buf, int limit)
 {
   static const int NO_PADDING = 0;
@@ -2150,10 +1910,6 @@ mp_result mp_int_to_unsigned(mp_int z, unsigned char *buf, int limit)
 
   return s_tobin(z, buf, &limit, NO_PADDING);
 }
-
-/* }}} */
-
-/* {{{ mp_int_read_unsigned(z, buf, len) */
 
 mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len)
 {
@@ -2177,10 +1933,6 @@ mp_result mp_int_read_unsigned(mp_int z, unsigned char *buf, int len)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_int_unsigned_len(z) */
-
 mp_result mp_int_unsigned_len(mp_int z)
 {
   mp_result  res = mp_int_count_bits(z);
@@ -2193,10 +1945,6 @@ mp_result mp_int_unsigned_len(mp_int z)
 
   return bytes;
 }
-
-/* }}} */
-
-/* {{{ mp_error_string(res) */
 
 const char *mp_error_string(mp_result res)
 {
@@ -2214,12 +1962,8 @@ const char *mp_error_string(mp_result res)
     return s_unknown_err;
 }
 
-/* }}} */
-
 /*------------------------------------------------------------------------*/
 /* Private functions for internal use.  These make assumptions.           */
-
-/* {{{ s_alloc(num) */
 
 STATIC mp_digit *s_alloc(mp_size num)
 {
@@ -2239,10 +1983,6 @@ STATIC mp_digit *s_alloc(mp_size num)
   return out;
 }
 
-/* }}} */
-
-/* {{{ s_realloc(old, osize, nsize) */
-
 STATIC mp_digit *s_realloc(mp_digit *old, mp_size osize, mp_size nsize)
 {
 #if DEBUG > 1
@@ -2261,18 +2001,10 @@ STATIC mp_digit *s_realloc(mp_digit *old, mp_size osize, mp_size nsize)
   return new;
 }
 
-/* }}} */
-
-/* {{{ s_free(ptr) */
-
 STATIC void s_free(void *ptr)
 {
   free(ptr);
 }
-
-/* }}} */
-
-/* {{{ s_pad(z, min) */
 
 STATIC int      s_pad(mp_int z, mp_size min)
 {
@@ -2296,10 +2028,6 @@ STATIC int      s_pad(mp_int z, mp_size min)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ s_fake(z, value, vbuf[]) */
-
 /* Note: This will not work correctly when value == MP_SMALL_MIN */
 STATIC void      s_fake(mp_int z, mp_small value, mp_digit vbuf[])
 {
@@ -2308,10 +2036,6 @@ STATIC void      s_fake(mp_int z, mp_small value, mp_digit vbuf[])
   if (value < 0)
     z->sign = MP_NEG;
 }
-
-/* }}} */
-
-/* {{{ s_ufake(z, value, vbuf[]) */
 
 STATIC void      s_ufake(mp_int z, mp_usmall value, mp_digit vbuf[])
 {
@@ -2322,10 +2046,6 @@ STATIC void      s_ufake(mp_int z, mp_usmall value, mp_digit vbuf[])
   z->sign = MP_ZPOS;
   z->digits = vbuf;
 }
-
-/* }}} */
-
-/* {{{ s_cdig(da, db, len) */
 
 STATIC int      s_cdig(mp_digit *da, mp_digit *db, mp_size len)
 {
@@ -2340,10 +2060,6 @@ STATIC int      s_cdig(mp_digit *da, mp_digit *db, mp_size len)
 
   return 0;
 }
-
-/* }}} */
-
-/* {{{ s_uvpack(uv, t[]) */
 
 STATIC int       s_uvpack(mp_usmall uv, mp_digit t[])
 {
@@ -2362,10 +2078,6 @@ STATIC int       s_uvpack(mp_usmall uv, mp_digit t[])
   return ndig;
 }
 
-/* }}} */
-
-/* {{{ s_ucmp(a, b) */
-
 STATIC int      s_ucmp(mp_int a, mp_int b)
 {
   mp_size  ua = MP_USED(a), ub = MP_USED(b);
@@ -2378,19 +2090,11 @@ STATIC int      s_ucmp(mp_int a, mp_int b)
     return s_cdig(MP_DIGITS(a), MP_DIGITS(b), ua);
 }
 
-/* }}} */
-
-/* {{{ s_vcmp(a, v) */
-
 STATIC int      s_vcmp(mp_int a, mp_small v)
 {
   mp_usmall uv = (mp_usmall) (v < 0) ? -v : v;
   return s_uvcmp(a, uv);
 }
-
-/* }}} */
-
-/* {{{ s_uvcmp(a, v) */
 
 STATIC int      s_uvcmp(mp_int a, mp_usmall uv)
 {
@@ -2400,10 +2104,6 @@ STATIC int      s_uvcmp(mp_int a, mp_usmall uv)
   s_ufake(&vtmp, uv, vdig);
   return s_ucmp(a, &vtmp);
 }
-
-/* }}} */
-
-/* {{{ s_uadd(da, db, dc, size_a, size_b) */
 
 STATIC mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc,
 		       mp_size size_a, mp_size size_b)
@@ -2436,10 +2136,6 @@ STATIC mp_digit s_uadd(mp_digit *da, mp_digit *db, mp_digit *dc,
   return (mp_digit)w;
 }
 
-/* }}} */
-
-/* {{{ s_usub(da, db, dc, size_a, size_b) */
-
 STATIC void     s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
 		       mp_size size_a, mp_size size_b)
 {
@@ -2470,10 +2166,6 @@ STATIC void     s_usub(mp_digit *da, mp_digit *db, mp_digit *dc,
   /* If there is a borrow out at the end, it violates the precondition */
   assert(w == 0);
 }
-
-/* }}} */
-
-/* {{{ s_kmul(da, db, dc, size_a, size_b) */
 
 STATIC int       s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
 			mp_size size_a, mp_size size_b)
@@ -2560,10 +2252,6 @@ STATIC int       s_kmul(mp_digit *da, mp_digit *db, mp_digit *dc,
   return 1;
 }
 
-/* }}} */
-
-/* {{{ s_umul(da, db, dc, size_a, size_b) */
-
 STATIC void     s_umul(mp_digit *da, mp_digit *db, mp_digit *dc,
 		       mp_size size_a, mp_size size_b)
 {
@@ -2588,10 +2276,6 @@ STATIC void     s_umul(mp_digit *da, mp_digit *db, mp_digit *dc,
     *dct = (mp_digit)w;
   }
 }
-
-/* }}} */
-
-/* {{{ s_ksqr(da, dc, size_a) */
 
 STATIC int       s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 {
@@ -2646,10 +2330,6 @@ STATIC int       s_ksqr(mp_digit *da, mp_digit *dc, mp_size size_a)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ s_usqr(da, dc, size_a) */
-
 STATIC void      s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a)
 {
   mp_size i, j;
@@ -2702,10 +2382,6 @@ STATIC void      s_usqr(mp_digit *da, mp_digit *dc, mp_size size_a)
   }
 }
 
-/* }}} */
-
-/* {{{ s_dadd(a, b) */
-
 STATIC void      s_dadd(mp_int a, mp_digit b)
 {
   mp_word w = 0;
@@ -2729,10 +2405,6 @@ STATIC void      s_dadd(mp_int a, mp_digit b)
   }
 }
 
-/* }}} */
-
-/* {{{ s_dmul(a, b) */
-
 STATIC void      s_dmul(mp_int a, mp_digit b)
 {
   mp_word w = 0;
@@ -2752,10 +2424,6 @@ STATIC void      s_dmul(mp_int a, mp_digit b)
   }
 }
 
-/* }}} */
-
-/* {{{ s_dbmul(da, b, dc, size_a) */
-
 STATIC void      s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a)
 {
   mp_word  w = 0;
@@ -2771,10 +2439,6 @@ STATIC void      s_dbmul(mp_digit *da, mp_digit b, mp_digit *dc, mp_size size_a)
   if (w)
     *dc = LOWER_HALF(w);
 }
-
-/* }}} */
-
-/* {{{ s_ddiv(da, d, dc, size_a) */
 
 STATIC mp_digit  s_ddiv(mp_int a, mp_digit b)
 {
@@ -2799,10 +2463,6 @@ STATIC mp_digit  s_ddiv(mp_int a, mp_digit b)
   CLAMP(a);
   return (mp_digit)w;
 }
-
-/* }}} */
-
-/* {{{ s_qdiv(z, p2) */
 
 STATIC void     s_qdiv(mp_int z, mp_size p2)
 {
@@ -2847,10 +2507,6 @@ STATIC void     s_qdiv(mp_int z, mp_size p2)
     MP_SIGN(z) = MP_ZPOS;
 }
 
-/* }}} */
-
-/* {{{ s_qmod(z, p2) */
-
 STATIC void     s_qmod(mp_int z, mp_size p2)
 {
   mp_size start = p2 / MP_DIGIT_BIT + 1, rest = p2 % MP_DIGIT_BIT;
@@ -2863,10 +2519,6 @@ STATIC void     s_qmod(mp_int z, mp_size p2)
     CLAMP(z);
   }
 }
-
-/* }}} */
-
-/* {{{ s_qmul(z, p2) */
 
 STATIC int      s_qmul(mp_int z, mp_size p2)
 {
@@ -2929,10 +2581,6 @@ STATIC int      s_qmul(mp_int z, mp_size p2)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ s_qsub(z, p2) */
-
 /* Compute z = 2^p2 - |z|; requires that 2^p2 >= |z|
    The sign of the result is always zero/positive.
  */
@@ -2963,10 +2611,6 @@ STATIC int       s_qsub(mp_int z, mp_size p2)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ s_dp2k(z) */
-
 STATIC int      s_dp2k(mp_int z)
 {
   int       k = 0;
@@ -2988,10 +2632,6 @@ STATIC int      s_dp2k(mp_int z)
 
   return k;
 }
-
-/* }}} */
-
-/* {{{ s_isp2(z) */
 
 STATIC int       s_isp2(mp_int z)
 {
@@ -3015,10 +2655,6 @@ STATIC int       s_isp2(mp_int z)
   return (int) k;
 }
 
-/* }}} */
-
-/* {{{ s_2expt(z, k) */
-
 STATIC int       s_2expt(mp_int z, mp_small k)
 {
   mp_size  ndig, rest;
@@ -3037,10 +2673,6 @@ STATIC int       s_2expt(mp_int z, mp_small k)
 
   return 1;
 }
-
-/* }}} */
-
-/* {{{ s_norm(a, b) */
 
 STATIC int      s_norm(mp_int a, mp_int b)
 {
@@ -3061,10 +2693,6 @@ STATIC int      s_norm(mp_int a, mp_int b)
   return k;
 }
 
-/* }}} */
-
-/* {{{ s_brmu(z, m) */
-
 STATIC mp_result s_brmu(mp_int z, mp_int m)
 {
   mp_size um = MP_USED(m) * 2;
@@ -3075,10 +2703,6 @@ STATIC mp_result s_brmu(mp_int z, mp_int m)
   s_2expt(z, MP_DIGIT_BIT * um);
   return mp_int_div(z, m, z, NULL);
 }
-
-/* }}} */
-
-/* {{{ s_reduce(x, m, mu, q1, q2) */
 
 STATIC int       s_reduce(mp_int x, mp_int m, mp_int mu, mp_int q1, mp_int q2)
 {
@@ -3122,10 +2746,6 @@ STATIC int       s_reduce(mp_int x, mp_int m, mp_int mu, mp_int q1, mp_int q2)
   /* At this point, x has been properly reduced. */
   return 1;
 }
-
-/* }}} */
-
-/* {{{ s_embar(a, b, m, mu, c) */
 
 /* Perform modular exponentiation using Barrett's method, where mu is the
    reduction constant for m.  Assumes a < m, b > 0. */
@@ -3196,16 +2816,13 @@ STATIC mp_result s_embar(mp_int a, mp_int b, mp_int m, mp_int mu, mp_int c)
   return res;
 }
 
-/* }}} */
-
 #if 0
-/* {{{ s_udiv(a, b) */
-/* The s_udiv function produces incorrect results. For example, with test
+/*
+  The s_udiv function produces incorrect results. For example, with test
      div:11141460315522012760862883825:48318382095:0,230584300062375935
    commenting out the function for now and using s_udiv_knuth instead.
    STATIC mp_result s_udiv(mp_int a, mp_int b);
 */
-
 /* Precondition:  a >= b and b > 0
    Postcondition: a' = a / b, b' = a % b
  */
@@ -3297,8 +2914,6 @@ STATIC mp_result s_udiv(mp_int a, mp_int b)
   mp_int_clear(&q);
   return res;
 }
-
-/* }}} */
 #endif
 
 /* Division of nonnegative integers
@@ -3466,8 +3081,9 @@ STATIC mp_result s_udiv_knuth(mp_int u, mp_int v) {
     /************************************************************/
     /* D5: Test remainder */
     /* note: Not needed because we always check that qhat is the correct value
-     *       before performing the subtract. */
-    q.digits[j] = qhat;
+     *       before performing the subtract.
+     *       Value cast to mp_digit to prevent warning, qhat has been clamped to MP_DIGIT_MAX */
+    q.digits[j] = (mp_digit)qhat;
 
     /************************************************************/
     /* D6: Add back */
@@ -3498,8 +3114,6 @@ STATIC mp_result s_udiv_knuth(mp_int u, mp_int v) {
   return res;
 }
 
-/* {{{ s_outlen(z, r) */
-
 STATIC int       s_outlen(mp_int z, mp_size r)
 {
   mp_result bits;
@@ -3513,10 +3127,6 @@ STATIC int       s_outlen(mp_int z, mp_size r)
   return (int)(raw + 0.999999);
 }
 
-/* }}} */
-
-/* {{{ s_inlen(len, r) */
-
 STATIC mp_size   s_inlen(int len, mp_size r)
 {
   double  raw = (double)len / s_log2[r];
@@ -3524,10 +3134,6 @@ STATIC mp_size   s_inlen(int len, mp_size r)
 
   return (mp_size)((bits + (MP_DIGIT_BIT - 1)) / MP_DIGIT_BIT) + 1;
 }
-
-/* }}} */
-
-/* {{{ s_ch2val(c, r) */
 
 STATIC int       s_ch2val(char c, int r)
 {
@@ -3542,10 +3148,6 @@ STATIC int       s_ch2val(char c, int r)
 
   return (out >= r) ? -1 : out;
 }
-
-/* }}} */
-
-/* {{{ s_val2ch(v, caps) */
 
 STATIC char      s_val2ch(int v, int caps)
 {
@@ -3562,10 +3164,6 @@ STATIC char      s_val2ch(int v, int caps)
       return out;
   }
 }
-
-/* }}} */
-
-/* {{{ s_2comp(buf, len) */
 
 STATIC void      s_2comp(unsigned char *buf, int len)
 {
@@ -3584,10 +3182,6 @@ STATIC void      s_2comp(unsigned char *buf, int len)
 
   /* last carry out is ignored */
 }
-
-/* }}} */
-
-/* {{{ s_tobin(z, buf, *limpos) */
 
 STATIC mp_result s_tobin(mp_int z, unsigned char *buf, int *limpos, int pad)
 {
@@ -3631,10 +3225,6 @@ STATIC mp_result s_tobin(mp_int z, unsigned char *buf, int *limpos, int pad)
   return (uz == 0) ? MP_OK : MP_TRUNC;
 }
 
-/* }}} */
-
-/* {{{ s_print(tag, z) */
-
 #if DEBUG
 void      s_print(char *tag, mp_int z)
 {
@@ -3662,7 +3252,5 @@ void      s_print_buf(char *tag, mp_digit *buf, mp_size num)
   fputc('\n', stderr);
 }
 #endif
-
-/* }}} */
 
 /* Here there be dragons */

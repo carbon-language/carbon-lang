@@ -469,59 +469,60 @@ error:
  *
  * If the denominator is zero, then "aff" is not equal to zero.
  */
-int isl_aff_plain_is_zero(__isl_keep isl_aff *aff)
+isl_bool isl_aff_plain_is_zero(__isl_keep isl_aff *aff)
 {
 	if (!aff)
-		return -1;
+		return isl_bool_error;
 
 	if (isl_int_is_zero(aff->v->el[0]))
-		return 0;
+		return isl_bool_false;
 	return isl_seq_first_non_zero(aff->v->el + 1, aff->v->size - 1) < 0;
 }
 
 /* Does "aff" represent NaN?
  */
-int isl_aff_is_nan(__isl_keep isl_aff *aff)
+isl_bool isl_aff_is_nan(__isl_keep isl_aff *aff)
 {
 	if (!aff)
-		return -1;
+		return isl_bool_error;
 
 	return isl_seq_first_non_zero(aff->v->el, 2) < 0;
 }
 
 /* Does "pa" involve any NaNs?
  */
-int isl_pw_aff_involves_nan(__isl_keep isl_pw_aff *pa)
+isl_bool isl_pw_aff_involves_nan(__isl_keep isl_pw_aff *pa)
 {
 	int i;
 
 	if (!pa)
-		return -1;
+		return isl_bool_error;
 	if (pa->n == 0)
-		return 0;
+		return isl_bool_false;
 
 	for (i = 0; i < pa->n; ++i) {
-		int is_nan = isl_aff_is_nan(pa->p[i].aff);
+		isl_bool is_nan = isl_aff_is_nan(pa->p[i].aff);
 		if (is_nan < 0 || is_nan)
 			return is_nan;
 	}
 
-	return 0;
+	return isl_bool_false;
 }
 
 /* Are "aff1" and "aff2" obviously equal?
  *
  * NaN is not equal to anything, not even to another NaN.
  */
-int isl_aff_plain_is_equal(__isl_keep isl_aff *aff1, __isl_keep isl_aff *aff2)
+isl_bool isl_aff_plain_is_equal(__isl_keep isl_aff *aff1,
+	__isl_keep isl_aff *aff2)
 {
-	int equal;
+	isl_bool equal;
 
 	if (!aff1 || !aff2)
-		return -1;
+		return isl_bool_error;
 
 	if (isl_aff_is_nan(aff1) || isl_aff_is_nan(aff2))
-		return 0;
+		return isl_bool_false;
 
 	equal = isl_local_space_is_equal(aff1->ls, aff2->ls);
 	if (equal < 0 || !equal)
@@ -2328,23 +2329,23 @@ int isl_aff_is_empty(__isl_keep isl_aff *aff)
  * appear with non-zero coefficients in any of the integer divisions
  * involved in the affine expression.
  */
-int isl_aff_involves_dims(__isl_keep isl_aff *aff,
+isl_bool isl_aff_involves_dims(__isl_keep isl_aff *aff,
 	enum isl_dim_type type, unsigned first, unsigned n)
 {
 	int i;
 	isl_ctx *ctx;
 	int *active = NULL;
-	int involves = 0;
+	isl_bool involves = isl_bool_false;
 
 	if (!aff)
-		return -1;
+		return isl_bool_error;
 	if (n == 0)
-		return 0;
+		return isl_bool_false;
 
 	ctx = isl_aff_get_ctx(aff);
 	if (first + n > isl_aff_dim(aff, type))
 		isl_die(ctx, isl_error_invalid,
-			"range out of bounds", return -1);
+			"range out of bounds", return isl_bool_error);
 
 	active = isl_local_space_get_active(aff->ls, aff->v->el + 2);
 	if (!active)
@@ -2353,7 +2354,7 @@ int isl_aff_involves_dims(__isl_keep isl_aff *aff,
 	first += isl_local_space_offset(aff->ls, type) - 1;
 	for (i = 0; i < n; ++i)
 		if (active[first + i]) {
-			involves = 1;
+			involves = isl_bool_true;
 			break;
 		}
 
@@ -2362,7 +2363,7 @@ int isl_aff_involves_dims(__isl_keep isl_aff *aff,
 	return involves;
 error:
 	free(active);
-	return -1;
+	return isl_bool_error;
 }
 
 __isl_give isl_aff *isl_aff_drop_dims(__isl_take isl_aff *aff,
@@ -3299,30 +3300,30 @@ error:
 	return NULL;
 }
 
-int isl_aff_is_cst(__isl_keep isl_aff *aff)
+isl_bool isl_aff_is_cst(__isl_keep isl_aff *aff)
 {
 	if (!aff)
-		return -1;
+		return isl_bool_error;
 
 	return isl_seq_first_non_zero(aff->v->el + 2, aff->v->size - 2) == -1;
 }
 
 /* Check whether pwaff is a piecewise constant.
  */
-int isl_pw_aff_is_cst(__isl_keep isl_pw_aff *pwaff)
+isl_bool isl_pw_aff_is_cst(__isl_keep isl_pw_aff *pwaff)
 {
 	int i;
 
 	if (!pwaff)
-		return -1;
+		return isl_bool_error;
 
 	for (i = 0; i < pwaff->n; ++i) {
-		int is_cst = isl_aff_is_cst(pwaff->p[i].aff);
+		isl_bool is_cst = isl_aff_is_cst(pwaff->p[i].aff);
 		if (is_cst < 0 || !is_cst)
 			return is_cst;
 	}
 
-	return 1;
+	return isl_bool_true;
 }
 
 /* Return the product of "aff1" and "aff2".
@@ -5018,7 +5019,7 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_from_set(__isl_take isl_set *set)
 /* Convert "map" into an isl_pw_multi_aff (if possible) and
  * add it to *user.
  */
-static int pw_multi_aff_from_map(__isl_take isl_map *map, void *user)
+static isl_stat pw_multi_aff_from_map(__isl_take isl_map *map, void *user)
 {
 	isl_union_pw_multi_aff **upma = user;
 	isl_pw_multi_aff *pma;
@@ -5026,7 +5027,7 @@ static int pw_multi_aff_from_map(__isl_take isl_map *map, void *user)
 	pma = isl_pw_multi_aff_from_map(map);
 	*upma = isl_union_pw_multi_aff_add_pw_multi_aff(*upma, pma);
 
-	return *upma ? 0 : -1;
+	return *upma ? isl_stat_ok : isl_stat_error;
 }
 
 /* Create an isl_union_pw_multi_aff with the given isl_aff on a universe
@@ -5654,7 +5655,8 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_from_domain(
 /* Add an isl_pw_multi_aff with the given "set" as domain and
  * an unnamed zero-dimensional range to *user.
  */
-static int add_pw_multi_aff_from_domain(__isl_take isl_set *set, void *user)
+static isl_stat add_pw_multi_aff_from_domain(__isl_take isl_set *set,
+	void *user)
 {
 	isl_union_pw_multi_aff **upma = user;
 	isl_pw_multi_aff *pma;
@@ -5662,7 +5664,7 @@ static int add_pw_multi_aff_from_domain(__isl_take isl_set *set, void *user)
 	pma = isl_pw_multi_aff_from_domain(set);
 	*upma = isl_union_pw_multi_aff_add_pw_multi_aff(*upma, pma);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Return an isl_union_pw_multi_aff with the given "uset" as domain and
@@ -5694,7 +5696,8 @@ error:
 
 /* Convert "pma" to an isl_map and add it to *umap.
  */
-static int map_from_pw_multi_aff(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat map_from_pw_multi_aff(__isl_take isl_pw_multi_aff *pma,
+	void *user)
 {
 	isl_union_map **umap = user;
 	isl_map *map;
@@ -5702,7 +5705,7 @@ static int map_from_pw_multi_aff(__isl_take isl_pw_multi_aff *pma, void *user)
 	map = isl_map_from_pw_multi_aff(pma);
 	*umap = isl_union_map_add_map(*umap, map);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Construct a union map mapping the domain of the union
@@ -5739,13 +5742,13 @@ struct isl_union_pw_multi_aff_bin_data {
 	isl_union_pw_multi_aff *upma2;
 	isl_union_pw_multi_aff *res;
 	isl_pw_multi_aff *pma;
-	int (*fn)(void **entry, void *user);
+	isl_stat (*fn)(void **entry, void *user);
 };
 
 /* Given an isl_pw_multi_aff from upma1, store it in data->pma
  * and call data->fn for each isl_pw_multi_aff in data->upma2.
  */
-static int bin_entry(void **entry, void *user)
+static isl_stat bin_entry(void **entry, void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
 	isl_pw_multi_aff *pma = *entry;
@@ -5753,9 +5756,9 @@ static int bin_entry(void **entry, void *user)
 	data->pma = pma;
 	if (isl_hash_table_foreach(data->upma2->space->ctx, &data->upma2->table,
 				   data->fn, data) < 0)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Call "fn" on each pair of isl_pw_multi_affs in "upma1" and "upma2".
@@ -5766,7 +5769,7 @@ static int bin_entry(void **entry, void *user)
 static __isl_give isl_union_pw_multi_aff *bin_op(
 	__isl_take isl_union_pw_multi_aff *upma1,
 	__isl_take isl_union_pw_multi_aff *upma2,
-	int (*fn)(void **entry, void *user))
+	isl_stat (*fn)(void **entry, void *user))
 {
 	isl_space *space;
 	struct isl_union_pw_multi_aff_bin_data data = { NULL, NULL, NULL, fn };
@@ -5848,14 +5851,14 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_flat_range_product(
 /* If data->pma and *entry have the same domain space, then compute
  * their flat range product and the result to data->res.
  */
-static int flat_range_product_entry(void **entry, void *user)
+static isl_stat flat_range_product_entry(void **entry, void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
 	isl_pw_multi_aff *pma2 = *entry;
 
 	if (!isl_space_tuple_is_equal(data->pma->dim, isl_dim_in,
 				 pma2->dim, isl_dim_in))
-		return 0;
+		return isl_stat_ok;
 
 	pma2 = isl_pw_multi_aff_flat_range_product(
 					isl_pw_multi_aff_copy(data->pma),
@@ -5863,7 +5866,7 @@ static int flat_range_product_entry(void **entry, void *user)
 
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma2);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Given two isl_union_pw_multi_affs A -> B and C -> D,
@@ -6078,25 +6081,26 @@ struct isl_union_pw_multi_aff_scale_multi_val_data {
  * then apply isl_pw_multi_aff_scale_multi_val and add the result
  * to data->res.
  */
-static int union_pw_multi_aff_scale_multi_val_entry(void **entry, void *user)
+static isl_stat union_pw_multi_aff_scale_multi_val_entry(void **entry,
+	void *user)
 {
 	struct isl_union_pw_multi_aff_scale_multi_val_data *data = user;
 	isl_pw_multi_aff *pma = *entry;
 
 	if (!pma)
-		return -1;
+		return isl_stat_error;
 	if (!isl_space_tuple_is_equal(pma->dim, isl_dim_out,
 				    data->mv->space, isl_dim_set))
-		return 0;
+		return isl_stat_ok;
 
 	pma = isl_pw_multi_aff_copy(pma);
 	pma = isl_pw_multi_aff_scale_multi_val(pma,
 						isl_multi_val_copy(data->mv));
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Scale the elements of "upma" by the corresponding elements of "mv",
@@ -6372,21 +6376,21 @@ int isl_pw_aff_is_equal(__isl_keep isl_pw_aff *pa1, __isl_keep isl_pw_aff *pa2)
  * to a map because the domains of the piecewise affine expressions
  * may not be the same.
  */
-int isl_multi_pw_aff_is_equal(__isl_keep isl_multi_pw_aff *mpa1,
+isl_bool isl_multi_pw_aff_is_equal(__isl_keep isl_multi_pw_aff *mpa1,
 	__isl_keep isl_multi_pw_aff *mpa2)
 {
 	int i;
-	int equal;
+	isl_bool equal;
 
 	if (!mpa1 || !mpa2)
-		return -1;
+		return isl_bool_error;
 
 	if (!isl_space_match(mpa1->space, isl_dim_param,
 			     mpa2->space, isl_dim_param)) {
 		if (!isl_space_has_named_params(mpa1->space))
-			return 0;
+			return isl_bool_false;
 		if (!isl_space_has_named_params(mpa2->space))
-			return 0;
+			return isl_bool_false;
 		mpa1 = isl_multi_pw_aff_copy(mpa1);
 		mpa2 = isl_multi_pw_aff_copy(mpa2);
 		mpa1 = isl_multi_pw_aff_align_params(mpa1,
@@ -6409,7 +6413,7 @@ int isl_multi_pw_aff_is_equal(__isl_keep isl_multi_pw_aff *mpa1,
 			return equal;
 	}
 
-	return 1;
+	return isl_bool_true;
 }
 
 /* Coalesce the elements of "mpa".
@@ -7119,7 +7123,7 @@ struct isl_union_pw_multi_aff_multi_val_on_domain_data {
 /* Create an isl_pw_multi_aff equal to data->mv on "domain"
  * and add it to data->res.
  */
-static int pw_multi_aff_multi_val_on_domain(__isl_take isl_set *domain,
+static isl_stat pw_multi_aff_multi_val_on_domain(__isl_take isl_set *domain,
 	void *user)
 {
 	struct isl_union_pw_multi_aff_multi_val_on_domain_data *data = user;
@@ -7130,7 +7134,7 @@ static int pw_multi_aff_multi_val_on_domain(__isl_take isl_set *domain,
 	pma = isl_pw_multi_aff_multi_val_on_domain(domain, mv);
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Return a union piecewise multi-affine expression
@@ -7156,14 +7160,14 @@ __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_multi_val_on_domain(
 /* Compute the pullback of data->pma by the function represented by "pma2",
  * provided the spaces match, and add the results to data->res.
  */
-static int pullback_entry(void **entry, void *user)
+static isl_stat pullback_entry(void **entry, void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
 	isl_pw_multi_aff *pma2 = *entry;
 
 	if (!isl_space_tuple_is_equal(data->pma->dim, isl_dim_in,
 				 pma2->dim, isl_dim_out))
-		return 0;
+		return isl_stat_ok;
 
 	pma2 = isl_pw_multi_aff_pullback_pw_multi_aff(
 					isl_pw_multi_aff_copy(data->pma),
@@ -7171,9 +7175,9 @@ static int pullback_entry(void **entry, void *user)
 
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma2);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Compute the pullback of "upma1" by the function represented by "upma2".
@@ -7260,7 +7264,7 @@ struct isl_union_pw_aff_reset_params_data {
 /* Replace the parameters of "pa" by data->space and
  * add the result to data->res.
  */
-static int reset_params(__isl_take isl_pw_aff *pa, void *user)
+static isl_stat reset_params(__isl_take isl_pw_aff *pa, void *user)
 {
 	struct isl_union_pw_aff_reset_params_data *data = user;
 	isl_space *space;
@@ -7270,7 +7274,7 @@ static int reset_params(__isl_take isl_pw_aff *pa, void *user)
 	pa = isl_pw_aff_reset_space(pa, space);
 	data->res = isl_union_pw_aff_add_pw_aff(data->res, pa);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Replace the domain space of "upa" by "space".
@@ -7306,15 +7310,15 @@ static __isl_give isl_union_pw_aff *isl_union_pw_aff_reset_domain_space(
 /* Replace the entry of isl_union_pw_aff to which "entry" points
  * by its floor.
  */
-static int floor_entry(void **entry, void *user)
+static isl_stat floor_entry(void **entry, void *user)
 {
 	isl_pw_aff **pa = (isl_pw_aff **) entry;
 
 	*pa = isl_pw_aff_floor(*pa);
 	if (!*pa)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Given f, return floor(f).
@@ -7382,7 +7386,7 @@ struct isl_union_pw_aff_aff_on_domain_data {
 /* Construct a piecewise affine expression that is equal to data->aff
  * on "domain" and add the result to data->res.
  */
-static int pw_aff_aff_on_domain(__isl_take isl_set *domain, void *user)
+static isl_stat pw_aff_aff_on_domain(__isl_take isl_set *domain, void *user)
 {
 	struct isl_union_pw_aff_aff_on_domain_data *data = user;
 	isl_pw_aff *pa;
@@ -7396,7 +7400,7 @@ static int pw_aff_aff_on_domain(__isl_take isl_set *domain, void *user)
 	pa = isl_pw_aff_alloc(domain, aff);
 	data->res = isl_union_pw_aff_add_pw_aff(data->res, pa);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Internal data structure for isl_union_pw_multi_aff_get_union_pw_aff.
@@ -7411,19 +7415,19 @@ struct isl_union_pw_multi_aff_get_union_pw_aff_data {
 /* Extract an isl_pw_aff corresponding to output dimension "pos" of "pma"
  * (assuming it has such a dimension) and add it to data->res.
  */
-static int get_union_pw_aff(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat get_union_pw_aff(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_union_pw_multi_aff_get_union_pw_aff_data *data = user;
 	int n_out;
 	isl_pw_aff *pa;
 
 	if (!pma)
-		return -1;
+		return isl_stat_error;
 
 	n_out = isl_pw_multi_aff_dim(pma, isl_dim_out);
 	if (data->pos >= n_out) {
 		isl_pw_multi_aff_free(pma);
-		return 0;
+		return isl_stat_ok;
 	}
 
 	pa = isl_pw_multi_aff_get_pw_aff(pma, data->pos);
@@ -7431,7 +7435,7 @@ static int get_union_pw_aff(__isl_take isl_pw_multi_aff *pma, void *user)
 
 	data->res = isl_union_pw_aff_add_pw_aff(data->res, pa);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Extract an isl_union_pw_aff corresponding to
@@ -7504,7 +7508,7 @@ struct isl_union_pw_aff_val_on_domain_data {
 /* Construct a piecewise affine expression that is equal to data->v
  * on "domain" and add the result to data->res.
  */
-static int pw_aff_val_on_domain(__isl_take isl_set *domain, void *user)
+static isl_stat pw_aff_val_on_domain(__isl_take isl_set *domain, void *user)
 {
 	struct isl_union_pw_aff_val_on_domain_data *data = user;
 	isl_pw_aff *pa;
@@ -7514,7 +7518,7 @@ static int pw_aff_val_on_domain(__isl_take isl_set *domain, void *user)
 	pa = isl_pw_aff_val_on_domain(domain, v);
 	data->res = isl_union_pw_aff_add_pw_aff(data->res, pa);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Return a union piecewise affine expression
@@ -7542,7 +7546,8 @@ __isl_give isl_union_pw_aff *isl_union_pw_aff_val_on_domain(
 /* Construct a piecewise multi affine expression
  * that is equal to "pa" and add it to upma.
  */
-static int pw_multi_aff_from_pw_aff_entry(__isl_take isl_pw_aff *pa, void *user)
+static isl_stat pw_multi_aff_from_pw_aff_entry(__isl_take isl_pw_aff *pa,
+	void *user)
 {
 	isl_union_pw_multi_aff **upma = user;
 	isl_pw_multi_aff *pma;
@@ -7550,7 +7555,7 @@ static int pw_multi_aff_from_pw_aff_entry(__isl_take isl_pw_aff *pa, void *user)
 	pma = isl_pw_multi_aff_from_pw_aff(pa);
 	*upma = isl_union_pw_multi_aff_add_pw_multi_aff(*upma, pma);
 
-	return *upma ? 0 : -1;
+	return *upma ? isl_stat_ok : isl_stat_error;
 }
 
 /* Construct and return a union piecewise multi affine expression
@@ -7579,13 +7584,13 @@ __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_from_union_pw_aff(
 /* Compute the set of elements in the domain of "pa" where it is zero and
  * add this set to "uset".
  */
-static int zero_union_set(__isl_take isl_pw_aff *pa, void *user)
+static isl_stat zero_union_set(__isl_take isl_pw_aff *pa, void *user)
 {
 	isl_union_set **uset = (isl_union_set **)user;
 
 	*uset = isl_union_set_add_set(*uset, isl_pw_aff_zero_set(pa));
 
-	return *uset ? 0 : -1;
+	return *uset ? isl_stat_ok : isl_stat_error;
 }
 
 /* Return a union set containing those elements in the domain
@@ -7606,7 +7611,7 @@ __isl_give isl_union_set *isl_union_pw_aff_zero_union_set(
 
 /* Convert "pa" to an isl_map and add it to *umap.
  */
-static int map_from_pw_aff_entry(__isl_take isl_pw_aff *pa, void *user)
+static isl_stat map_from_pw_aff_entry(__isl_take isl_pw_aff *pa, void *user)
 {
 	isl_union_map **umap = user;
 	isl_map *map;
@@ -7614,7 +7619,7 @@ static int map_from_pw_aff_entry(__isl_take isl_pw_aff *pa, void *user)
 	map = isl_map_from_pw_aff(pa);
 	*umap = isl_union_map_add_map(*umap, map);
 
-	return *umap ? 0 : -1;
+	return *umap ? isl_stat_ok : isl_stat_error;
 }
 
 /* Construct a union map mapping the domain of the union
@@ -7655,7 +7660,7 @@ struct isl_union_pw_aff_pullback_upma_data {
 /* Check if "pma" can be plugged into data->pa.
  * If so, perform the pullback and add the result to data->res.
  */
-static int pa_pb_pma(void **entry, void *user)
+static isl_stat pa_pb_pma(void **entry, void *user)
 {
 	struct isl_union_pw_aff_pullback_upma_data *data = user;
 	isl_pw_multi_aff *pma = *entry;
@@ -7663,7 +7668,7 @@ static int pa_pb_pma(void **entry, void *user)
 
 	if (!isl_space_tuple_is_equal(data->pa->dim, isl_dim_in,
 				 pma->dim, isl_dim_out))
-		return 0;
+		return isl_stat_ok;
 
 	pma = isl_pw_multi_aff_copy(pma);
 	pa = isl_pw_aff_copy(data->pa);
@@ -7671,13 +7676,13 @@ static int pa_pb_pma(void **entry, void *user)
 
 	data->res = isl_union_pw_aff_add_pw_aff(data->res, pa);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Check if any of the elements of data->upma can be plugged into pa,
  * add if so add the result to data->res.
  */
-static int upa_pb_upma(void **entry, void *user)
+static isl_stat upa_pb_upma(void **entry, void *user)
 {
 	struct isl_union_pw_aff_pullback_upma_data *data = user;
 	isl_ctx *ctx;
@@ -7687,9 +7692,9 @@ static int upa_pb_upma(void **entry, void *user)
 	ctx = isl_union_pw_multi_aff_get_ctx(data->upma);
 	if (isl_hash_table_foreach(ctx, &data->upma->table,
 				   &pa_pb_pma, data) < 0)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Compute the pullback of "upa" by the function represented by "upma".
@@ -7857,31 +7862,31 @@ __isl_give isl_multi_union_pw_aff *isl_multi_union_pw_aff_from_multi_pw_aff(
  * If *space has already been set (through a previous call to this function),
  * then check that the range space is the same.
  */
-static int extract_space(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat extract_space(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	isl_space **space = user;
 	isl_space *pma_space;
-	int equal;
+	isl_bool equal;
 
 	pma_space = isl_space_range(isl_pw_multi_aff_get_space(pma));
 	isl_pw_multi_aff_free(pma);
 
 	if (!pma_space)
-		return -1;
+		return isl_stat_error;
 	if (!*space) {
 		*space = pma_space;
-		return 0;
+		return isl_stat_ok;
 	}
 
 	equal = isl_space_is_equal(pma_space, *space);
 	isl_space_free(pma_space);
 
 	if (equal < 0)
-		return -1;
+		return isl_stat_error;
 	if (!equal)
 		isl_die(isl_space_get_ctx(*space), isl_error_invalid,
-			"range spaces not the same", return -1);
-	return 0;
+			"range spaces not the same", return isl_stat_error);
+	return isl_stat_ok;
 }
 
 /* Construct and return a multi union piecewise affine expression
@@ -8158,7 +8163,7 @@ struct isl_union_pw_multi_aff_reset_range_space_data {
 /* Replace the range space of "pma" by the range space of data->range and
  * add the result to data->res.
  */
-static int reset_range_space(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat reset_range_space(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_union_pw_multi_aff_reset_range_space_data *data = user;
 	isl_space *space;
@@ -8170,7 +8175,7 @@ static int reset_range_space(__isl_take isl_pw_multi_aff *pma, void *user)
 	pma = isl_pw_multi_aff_reset_space(pma, space);
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma);
 
-	return data->res ? 0 : -1;
+	return data->res ? isl_stat_ok : isl_stat_error;
 }
 
 /* Replace the range space of all the piecewise affine expressions in "upma" by

@@ -270,13 +270,13 @@ int isl_vec_cmp_element(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2,
 	return isl_int_cmp(vec1->el[pos], vec2->el[pos]);
 }
 
-int isl_vec_is_equal(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2)
+isl_bool isl_vec_is_equal(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2)
 {
 	if (!vec1 || !vec2)
-		return -1;
+		return isl_bool_error;
 
 	if (vec1->size != vec2->size)
-		return 0;
+		return isl_bool_false;
 
 	return isl_seq_eq(vec1->el, vec2->el, vec1->size);
 }

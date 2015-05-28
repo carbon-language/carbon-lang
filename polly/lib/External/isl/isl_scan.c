@@ -22,7 +22,7 @@ struct isl_counter {
 	isl_int max;
 };
 
-static int increment_counter(struct isl_scan_callback *cb,
+static isl_stat increment_counter(struct isl_scan_callback *cb,
 	__isl_take isl_vec *sample)
 {
 	struct isl_counter *cnt = (struct isl_counter *)cb;
@@ -32,8 +32,8 @@ static int increment_counter(struct isl_scan_callback *cb,
 	isl_vec_free(sample);
 
 	if (isl_int_is_zero(cnt->max) || isl_int_lt(cnt->count, cnt->max))
-		return 0;
-	return -1;
+		return isl_stat_ok;
+	return isl_stat_error;
 }
 
 static int increment_range(struct isl_scan_callback *cb, isl_int min, isl_int max)

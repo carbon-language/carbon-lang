@@ -129,16 +129,10 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-/* {{{ clocks_to_seconds(start, end) */
-
 double clocks_to_seconds(clock_t start, clock_t end)
 {
   return (double)(end - start) / CLOCKS_PER_SEC;
 }
-
-/* }}} */
-
-/* {{{ alloc_values(nt, prec) */
 
 mp_int alloc_values(int nt, int prec)
 {
@@ -159,10 +153,6 @@ mp_int alloc_values(int nt, int prec)
   return out;
 }
 
-/* }}} */
-
-/* {{{ randomize_values(values, nt, prec) */
-
 void   randomize_values(mp_int values, int nt, int prec)
 {
   int i;
@@ -170,10 +160,6 @@ void   randomize_values(mp_int values, int nt, int prec)
   for (i = 0; i < nt; ++i)
     mp_int_random(values + i, prec);
 }
-
-/* }}} */
-
-/* {{{ release_values(values, nt) */
 
 void   release_values(mp_int values, int nt)
 {
@@ -184,10 +170,6 @@ void   release_values(mp_int values, int nt)
 
   free(values);
 }
-
-/* }}} */
-
-/* {{{ get_multiply_time(nt, prec) */
 
 double get_multiply_time(int nt, int prec)
 {
@@ -209,10 +191,6 @@ double get_multiply_time(int nt, int prec)
   return clocks_to_seconds(start, end);
 }
 
-/* }}} */
-
-/* {{{ get_exptmod_time(nt, prec) */
-
 double get_exptmod_time(int nt, int prec)
 {
   clock_t start, end;
@@ -233,10 +211,6 @@ double get_exptmod_time(int nt, int prec)
   return clocks_to_seconds(start, end);
 }
 
-/* }}} */
-
-/* {{{ mp_int_random(z, prec) */
-
 void   mp_int_random(mp_int z, int prec)
 {
   int i;
@@ -255,5 +229,3 @@ void   mp_int_random(mp_int z, int prec)
   }
   MP_USED(z) = prec;
 }
-
-/* }}} */

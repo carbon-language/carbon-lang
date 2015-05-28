@@ -178,7 +178,7 @@ struct isl_ast_build {
 		__isl_keep isl_ast_build *context, void *user);
 	void *after_each_for_user;
 
-	int (*before_each_mark)(__isl_keep isl_id *mark,
+	isl_stat (*before_each_mark)(__isl_keep isl_id *mark,
 		__isl_keep isl_ast_build *build, void *user);
 	void *before_each_mark_user;
 	__isl_give isl_ast_node *(*after_each_mark)(

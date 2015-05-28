@@ -108,8 +108,6 @@ int main(int argc, char *argv[])
   return out;
 }
 
-/* {{{ arctan(radix, mul, x, prec, sum) */
-
 /*
   Compute mul * atan(1/x) to prec digits of precision, and store the
   result in sum.
@@ -171,7 +169,5 @@ mp_result arctan(mp_small radix, mp_small mul, mp_small x,
   
   return res;
 }
-
-/* }}} */
 
 /* Here there be dragons */

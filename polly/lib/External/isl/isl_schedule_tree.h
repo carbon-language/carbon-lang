@@ -83,7 +83,7 @@ enum isl_schedule_node_type isl_schedule_tree_get_type(
 __isl_give isl_schedule_tree *isl_schedule_tree_leaf(isl_ctx *ctx);
 int isl_schedule_tree_is_leaf(__isl_keep isl_schedule_tree *tree);
 
-int isl_schedule_tree_plain_is_equal(__isl_keep isl_schedule_tree *tree1,
+isl_bool isl_schedule_tree_plain_is_equal(__isl_keep isl_schedule_tree *tree1,
 	__isl_keep isl_schedule_tree *tree2);
 
 __isl_give isl_schedule_tree *isl_schedule_tree_copy(
@@ -116,7 +116,8 @@ __isl_give isl_schedule_tree *isl_schedule_tree_sequence_pair(
 	__isl_take isl_schedule_tree *tree1,
 	__isl_take isl_schedule_tree *tree2);
 
-int isl_schedule_tree_is_subtree_anchored(__isl_keep isl_schedule_tree *tree);
+isl_bool isl_schedule_tree_is_subtree_anchored(
+	__isl_keep isl_schedule_tree *tree);
 
 __isl_give isl_space *isl_schedule_tree_band_get_space(
 	__isl_keep isl_schedule_tree *tree);
@@ -178,11 +179,12 @@ __isl_give isl_union_map *isl_schedule_tree_get_subtree_schedule_union_map(
 
 unsigned isl_schedule_tree_band_n_member(__isl_keep isl_schedule_tree *tree);
 
-int isl_schedule_tree_band_member_get_coincident(
+isl_bool isl_schedule_tree_band_member_get_coincident(
 	__isl_keep isl_schedule_tree *tree, int pos);
 __isl_give isl_schedule_tree *isl_schedule_tree_band_member_set_coincident(
 	__isl_take isl_schedule_tree *tree, int pos, int coincident);
-int isl_schedule_tree_band_get_permutable(__isl_keep isl_schedule_tree *tree);
+isl_bool isl_schedule_tree_band_get_permutable(
+	__isl_keep isl_schedule_tree *tree);
 __isl_give isl_schedule_tree *isl_schedule_tree_band_set_permutable(
 	__isl_take isl_schedule_tree *tree, int permutable);
 

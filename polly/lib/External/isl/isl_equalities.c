@@ -758,13 +758,13 @@ error:
  * If i_dim does not belong to such a residue class, then *modulo
  * is set to 1 and *residue is set to 0.
  */
-int isl_set_dim_residue_class_val(__isl_keep isl_set *set,
+isl_stat isl_set_dim_residue_class_val(__isl_keep isl_set *set,
 	int pos, __isl_give isl_val **modulo, __isl_give isl_val **residue)
 {
 	*modulo = NULL;
 	*residue = NULL;
 	if (!set)
-		return -1;
+		return isl_stat_error;
 	*modulo = isl_val_alloc(isl_set_get_ctx(set));
 	*residue = isl_val_alloc(isl_set_get_ctx(set));
 	if (!*modulo || !*residue)
@@ -774,9 +774,9 @@ int isl_set_dim_residue_class_val(__isl_keep isl_set *set,
 		goto error;
 	isl_int_set_si((*modulo)->d, 1);
 	isl_int_set_si((*residue)->d, 1);
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_val_free(*modulo);
 	isl_val_free(*residue);
-	return -1;
+	return isl_stat_error;
 }

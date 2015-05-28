@@ -375,3 +375,8 @@
 
 1.19
 	Fix signedness error in compile.  Reported by Paweł Sikora.
+
+1.20
+	Fix broken comments, apparently from a previous bad merge.
+	Remove emacs folding-mode comments throughout.
+	Some minor Makefile cleanup to make clang happier.

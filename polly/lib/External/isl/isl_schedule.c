@@ -182,13 +182,13 @@ __isl_keep isl_schedule_tree *isl_schedule_peek_leaf(
 
 /* Are "schedule1" and "schedule2" obviously equal to each other?
  */
-int isl_schedule_plain_is_equal(__isl_keep isl_schedule *schedule1,
+isl_bool isl_schedule_plain_is_equal(__isl_keep isl_schedule *schedule1,
 	__isl_keep isl_schedule *schedule2)
 {
 	if (!schedule1 || !schedule2)
-		return -1;
+		return isl_bool_error;
 	if (schedule1 == schedule2)
-		return 1;
+		return isl_bool_true;
 	return isl_schedule_tree_plain_is_equal(schedule1->root,
 						schedule2->root);
 }
@@ -248,7 +248,7 @@ __isl_give isl_schedule_node *isl_schedule_get_root(
 /* Set max_out to the maximal number of output dimensions over
  * all maps.
  */
-static int update_max_out(__isl_take isl_map *map, void *user)
+static isl_stat update_max_out(__isl_take isl_map *map, void *user)
 {
 	int *max_out = user;
 	int n_out = isl_map_dim(map, isl_dim_out);
@@ -257,7 +257,7 @@ static int update_max_out(__isl_take isl_map *map, void *user)
 		*max_out = n_out;
 
 	isl_map_free(map);
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Internal data structure for map_pad_range.
@@ -273,7 +273,7 @@ struct isl_pad_schedule_map_data {
 /* Pad the range of the given map with zeros to data->max_out and
  * then add the result to data->res.
  */
-static int map_pad_range(__isl_take isl_map *map, void *user)
+static isl_stat map_pad_range(__isl_take isl_map *map, void *user)
 {
 	struct isl_pad_schedule_map_data *data = user;
 	int i;
@@ -285,9 +285,9 @@ static int map_pad_range(__isl_take isl_map *map, void *user)
 
 	data->res = isl_union_map_add_map(data->res, map);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Pad the ranges of the maps in the union map with zeros such they all have
@@ -337,17 +337,19 @@ __isl_give isl_union_set *isl_schedule_get_domain(
  *
  * Return 0 on success and -1 on failure.
  */
-int isl_schedule_foreach_schedule_node(__isl_keep isl_schedule *sched,
-	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user)
+isl_stat isl_schedule_foreach_schedule_node_top_down(
+	__isl_keep isl_schedule *sched,
+	isl_bool (*fn)(__isl_keep isl_schedule_node *node, void *user),
+	void *user)
 {
 	isl_schedule_node *node;
-	int r;
+	isl_stat r;
 
 	if (!sched)
-		return -1;
+		return isl_stat_error;
 
 	node = isl_schedule_get_root(sched);
-	r = isl_schedule_node_foreach_descendant(node, fn, user);
+	r = isl_schedule_node_foreach_descendant_top_down(node, fn, user);
 	isl_schedule_node_free(node);
 
 	return r;
@@ -360,7 +362,7 @@ int isl_schedule_foreach_schedule_node(__isl_keep isl_schedule *sched,
  * lead to an infinite loop.  It is safest to always return a pointer
  * to the same position (same ancestors and child positions) as the input node.
  */
-__isl_give isl_schedule *isl_schedule_map_schedule_node(
+__isl_give isl_schedule *isl_schedule_map_schedule_node_bottom_up(
 	__isl_take isl_schedule *schedule,
 	__isl_give isl_schedule_node *(*fn)(
 		__isl_take isl_schedule_node *node, void *user), void *user)
@@ -370,7 +372,7 @@ __isl_give isl_schedule *isl_schedule_map_schedule_node(
 	node = isl_schedule_get_root(schedule);
 	isl_schedule_free(schedule);
 
-	node = isl_schedule_node_map_descendant(node, fn, user);
+	node = isl_schedule_node_map_descendant_bottom_up(node, fn, user);
 	schedule = isl_schedule_node_get_schedule(node);
 	isl_schedule_node_free(node);
 
@@ -378,7 +380,7 @@ __isl_give isl_schedule *isl_schedule_map_schedule_node(
 }
 
 /* Wrapper around isl_schedule_node_reset_user for use as
- * an isl_schedule_map_schedule_node callback.
+ * an isl_schedule_map_schedule_node_bottom_up callback.
  */
 static __isl_give isl_schedule_node *reset_user(
 	__isl_take isl_schedule_node *node, void *user)
@@ -392,11 +394,12 @@ static __isl_give isl_schedule_node *reset_user(
 __isl_give isl_schedule *isl_schedule_reset_user(
 	__isl_take isl_schedule *schedule)
 {
-	return isl_schedule_map_schedule_node(schedule, &reset_user, NULL);
+	return isl_schedule_map_schedule_node_bottom_up(schedule, &reset_user,
+							NULL);
 }
 
 /* Wrapper around isl_schedule_node_align_params for use as
- * an isl_schedule_map_schedule_node callback.
+ * an isl_schedule_map_schedule_node_bottom_up callback.
  */
 static __isl_give isl_schedule_node *align_params(
 	__isl_take isl_schedule_node *node, void *user)
@@ -412,14 +415,14 @@ static __isl_give isl_schedule_node *align_params(
 __isl_give isl_schedule *isl_schedule_align_params(
 	__isl_take isl_schedule *schedule, __isl_take isl_space *space)
 {
-	schedule = isl_schedule_map_schedule_node(schedule,
+	schedule = isl_schedule_map_schedule_node_bottom_up(schedule,
 						    &align_params, space);
 	isl_space_free(space);
 	return schedule;
 }
 
 /* Wrapper around isl_schedule_node_pullback_union_pw_multi_aff for use as
- * an isl_schedule_map_schedule_node callback.
+ * an isl_schedule_map_schedule_node_bottom_up callback.
  */
 static __isl_give isl_schedule_node *pullback_upma(
 	__isl_take isl_schedule_node *node, void *user)
@@ -439,7 +442,7 @@ __isl_give isl_schedule *isl_schedule_pullback_union_pw_multi_aff(
 	__isl_take isl_schedule *schedule,
 	__isl_take isl_union_pw_multi_aff *upma)
 {
-	schedule = isl_schedule_map_schedule_node(schedule,
+	schedule = isl_schedule_map_schedule_node_bottom_up(schedule,
 						&pullback_upma, upma);
 	isl_union_pw_multi_aff_free(upma);
 	return schedule;

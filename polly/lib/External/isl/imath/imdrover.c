@@ -99,8 +99,6 @@ static void done_testing(void);
 /*------------------------------------------------------------------------*/
 /* Utility subroutines for writing tests (explained above)                */
 
-/* {{{ read_int_value(z, str) */
-
 static mp_result read_int_value(mp_int z, char *str)
 {
   int radix = 10;
@@ -128,10 +126,6 @@ static mp_result read_int_value(mp_int z, char *str)
 
   return mp_int_read_string(z, radix, str);
 }
-
-/* }}} */
-
-/* {{{ read_rat_value(q, str) */
 
 static mp_result read_rat_value(mp_rat q, char *str)
 {
@@ -164,10 +158,6 @@ static mp_result read_rat_value(mp_rat q, char *str)
     return mp_rat_read_string(q, radix, str);
 }
 
-/* }}} */
-
-/* {{{ read_long(z, str) */
-
 static int read_long(long *z, char *str)
 {
   char *end;
@@ -197,10 +187,6 @@ static int read_long(long *z, char *str)
   *z = strtol(str, &end, radix);
   return (end != str && *end == '\0');
 }
-
-/* }}} */
-
-/* {{{ parse_int_values(t, in, out) */
 
 static int parse_int_values(testspec_t* t, mp_int* in, mp_int* out,
 			    mp_result* rval)
@@ -283,10 +269,6 @@ static int parse_int_values(testspec_t* t, mp_int* in, mp_int* out,
   return 1;
 }
 
-/* }}} */
-
-/* {{{ parse_rat_values(t, in, out) */
-
 static int parse_rat_values(testspec_t* t, mp_rat *in, mp_rat *out,
 			    mp_result *rval)
 {
@@ -368,10 +350,6 @@ static int parse_rat_values(testspec_t* t, mp_rat *in, mp_rat *out,
   return 1;
 }
 
-/* }}} */
-
-/* {{{ parse_result_code(str, *code) */
-
 static int parse_result_code(char *str, mp_result *code)
 {
   if (str[0] == '$') {
@@ -411,10 +389,6 @@ static int parse_result_code(char *str, mp_result *code)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ parse_binary(str, buf, limit) */
-
 static int parse_binary(char *str, unsigned char *buf, int limit)
 {
   int pos = 0;
@@ -436,10 +410,6 @@ static int parse_binary(char *str, unsigned char *buf, int limit)
   return pos;
 }
 
-/* }}} */
-
-/* {{{ done_testing() */
-
 static void done_testing(void)
 {
   int i;
@@ -450,12 +420,8 @@ static void done_testing(void)
   }
 }
 
-/* }}} */
-
 /*------------------------------------------------------------------------*/
 /* Global functions visible to callers outside this file                  */
-
-/* {{{ init_testing() */
 
 void init_testing(void)
 {
@@ -476,10 +442,6 @@ void init_testing(void)
   is_done = 1;
 }
 
-/* }}} */
-
-/* {{{ reset_registers() */
-
 void reset_registers(void)
 {
   int i;
@@ -489,8 +451,6 @@ void reset_registers(void)
     mp_rat_zero(g_qreg + i);
   }
 }
-
-/* }}} */
 
 int test_init(testspec_t* t, FILE* ofp)
 {
@@ -545,8 +505,6 @@ int test_set(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* {{{ test_neg(t, ofp) */
-
 int test_neg(testspec_t* t, FILE* ofp)
 {
   mp_int in[2], out[1];
@@ -563,10 +521,6 @@ int test_neg(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_abs(t, ofp) */
-
 int test_abs(testspec_t* t, FILE* ofp)
 {
   mp_int in[2], out[1];
@@ -582,10 +536,6 @@ int test_abs(testspec_t* t, FILE* ofp)
 
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_add(t, ofp) */
 
 int test_add(testspec_t* t, FILE* ofp)
 {
@@ -611,10 +561,6 @@ int test_add(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_sub(t, ofp) */
-
 int test_sub(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -638,10 +584,6 @@ int test_sub(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_mul(t, ofp) */
-
 int test_mul(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -656,10 +598,6 @@ int test_mul(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_mulp2(t, ofp) */
 
 int test_mulp2(testspec_t* t, FILE* ofp)
 {
@@ -678,10 +616,6 @@ int test_mulp2(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_mulv(t, ofp) */
-
 int test_mulv(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -699,10 +633,6 @@ int test_mulv(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_sqr(t, ofp) */
-
 int test_sqr(testspec_t* t, FILE* ofp)
 {
   mp_int in[2], out[1];
@@ -717,10 +647,6 @@ int test_sqr(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_div(t, ofp) */
 
 int test_div(testspec_t* t, FILE* ofp)
 {
@@ -744,10 +670,6 @@ int test_div(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_divp2(t, ofp) */
 
 int test_divp2(testspec_t* t, FILE* ofp)
 {
@@ -774,10 +696,6 @@ int test_divp2(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_divv(t, ofp) */
-
 int test_divv(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[2];
@@ -802,10 +720,6 @@ int test_divv(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_expt(t, ofp) */
-
 int test_expt(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -822,10 +736,6 @@ int test_expt(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_exptv(t, ofp) */
 
 int test_exptv(testspec_t* t, FILE* ofp)
 {
@@ -845,10 +755,6 @@ int test_exptv(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_exptf(t, ofp) */
-
 int test_exptf(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -863,10 +769,6 @@ int test_exptf(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_mod(t, ofp) */
 
 int test_mod(testspec_t* t, FILE* ofp)
 {
@@ -883,10 +785,6 @@ int test_mod(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_gcd(t, ofp) */
-
 int test_gcd(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -901,10 +799,6 @@ int test_gcd(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_egcd(t, ofp) */
 
 int test_egcd(testspec_t* t, FILE* ofp)
 {
@@ -945,10 +839,6 @@ int test_egcd(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_lcm(t, ofp) */
-
 int test_lcm(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -964,10 +854,6 @@ int test_lcm(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_sqrt(t, ofp) */
-
 int test_sqrt(testspec_t* t, FILE* ofp)
 {
   mp_int in[2], out[1];
@@ -982,10 +868,6 @@ int test_sqrt(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_root(t, ofp) */
 
 int test_root(testspec_t* t, FILE* ofp)
 {
@@ -1004,10 +886,6 @@ int test_root(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_invmod(t, ofp) */
-
 int test_invmod(testspec_t* t, FILE* ofp)
 {
   mp_int in[3], out[1];
@@ -1023,10 +901,6 @@ int test_invmod(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_exptmod(t, ofp) */
-
 int test_exptmod(testspec_t* t, FILE* ofp)
 {
   mp_int in[4], out[1];
@@ -1041,10 +915,6 @@ int test_exptmod(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_exptmod_ev(t, ofp) */
 
 int test_exptmod_ev(testspec_t* t, FILE* ofp)
 {
@@ -1063,10 +933,6 @@ int test_exptmod_ev(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_exptmod_bv(t, ofp) */
-
 int test_exptmod_bv(testspec_t* t, FILE* ofp)
 {
   mp_int in[4], out[1];
@@ -1084,10 +950,6 @@ int test_exptmod_bv(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_comp(t, ofp) */
-
 int test_comp(testspec_t* t, FILE* ofp)
 {
   mp_int in[2];
@@ -1102,10 +964,6 @@ int test_comp(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_ucomp(t, ofp) */
 
 int test_ucomp(testspec_t* t, FILE* ofp)
 {
@@ -1122,10 +980,6 @@ int test_ucomp(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_zcomp(t, ofp) */
-
 int test_zcomp(testspec_t* t, FILE* ofp)
 {
   mp_int in[1];
@@ -1140,10 +994,6 @@ int test_zcomp(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_vcomp(t, ofp) */
 
 int test_vcomp(testspec_t* t, FILE* ofp)
 {
@@ -1162,10 +1012,6 @@ int test_vcomp(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_uvcomp(t, ofp) */
-
 int test_uvcomp(testspec_t* t, FILE* ofp)
 {
   mp_int in[2];
@@ -1182,10 +1028,6 @@ int test_uvcomp(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_tostr(t, ofp) */
 
 int test_tostr(testspec_t* t, FILE* ofp)
 {
@@ -1209,10 +1051,6 @@ int test_tostr(testspec_t* t, FILE* ofp)
 
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_tobin(t, ofp) */
 
 int test_tobin(testspec_t* t, FILE* ofp)
 {
@@ -1245,10 +1083,6 @@ int test_tobin(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_to_int(t, ofp) */
-
 int test_to_int(testspec_t* t, FILE* ofp)
 {
   mp_int in[1], out[1];
@@ -1265,10 +1099,6 @@ int test_to_int(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_to_uint(t, ofp) */
-
 int test_to_uint(testspec_t* t, FILE* ofp)
 {
   mp_int in[1], out[1];
@@ -1284,10 +1114,6 @@ int test_to_uint(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_read_binary(t, ofp) */
 
 int test_read_binary(testspec_t* t, FILE* ofp)
 {
@@ -1309,10 +1135,6 @@ int test_read_binary(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_to_uns(t, ofp) */
 
 int test_to_uns(testspec_t* t, FILE* ofp)
 {
@@ -1345,10 +1167,6 @@ int test_to_uns(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_read_uns(t, ofp) */
-
 int test_read_uns(testspec_t* t, FILE* ofp)
 {
   mp_int out[1], in = g_zreg + 1;
@@ -1369,10 +1187,6 @@ int test_read_uns(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_meta(t, ofp) */
 
 int test_meta(testspec_t* t, FILE* ofp)
 {
@@ -1413,10 +1227,6 @@ int test_meta(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qneg(t, ofp) */
-
 int test_qneg(testspec_t* t, FILE* ofp)
 {
   mp_rat in[2], out[1];
@@ -1431,10 +1241,6 @@ int test_qneg(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qrecip(t, ofp) */
 
 int test_qrecip(testspec_t* t, FILE* ofp)
 {
@@ -1451,10 +1257,6 @@ int test_qrecip(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qabs(t, ofp) */
-
 int test_qabs(testspec_t* t, FILE* ofp)
 {
   mp_rat in[2], out[1];
@@ -1469,10 +1271,6 @@ int test_qabs(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qadd(t, ofp) */
 
 int test_qadd(testspec_t* t, FILE* ofp)
 {
@@ -1489,10 +1287,6 @@ int test_qadd(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qsub(t, ofp) */
-
 int test_qsub(testspec_t* t, FILE* ofp)
 {
   mp_rat in[3], out[1];
@@ -1507,10 +1301,6 @@ int test_qsub(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qmul(t, ofp) */
 
 int test_qmul(testspec_t* t, FILE* ofp)
 {
@@ -1527,10 +1317,6 @@ int test_qmul(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qdiv(t, ofp) */
-
 int test_qdiv(testspec_t* t, FILE* ofp)
 {
   mp_rat in[3], out[1];
@@ -1545,10 +1331,6 @@ int test_qdiv(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qaddz(t, ofp) */
 
 int test_qaddz(testspec_t* t, FILE* ofp)
 {
@@ -1572,10 +1354,6 @@ int test_qaddz(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qsubz(t, ofp) */
-
 int test_qsubz(testspec_t* t, FILE* ofp)
 {
   mp_rat in[3], out[1];
@@ -1597,10 +1375,6 @@ int test_qsubz(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qmulz(t, ofp) */
 
 int test_qmulz(testspec_t* t, FILE* ofp)
 {
@@ -1624,10 +1398,6 @@ int test_qmulz(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qdivz(t, ofp) */
-
 int test_qdivz(testspec_t* t, FILE* ofp)
 {
   mp_rat in[3], out[1];
@@ -1649,10 +1419,6 @@ int test_qdivz(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qexpt(t, ofp) */
 
 int test_qexpt(testspec_t* t, FILE* ofp)
 {
@@ -1677,10 +1443,6 @@ int test_qexpt(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qtostr(t, ofp) */
 
 int test_qtostr(testspec_t* t, FILE* ofp)
 {
@@ -1708,10 +1470,6 @@ int test_qtostr(testspec_t* t, FILE* ofp)
 
   return 1;
 }
-
-/* }}} */
-
-/* {{{ test_qtodec(t, ofp) */
 
 int test_qtodec(testspec_t* t, FILE* ofp)
 {
@@ -1752,10 +1510,6 @@ int test_qtodec(testspec_t* t, FILE* ofp)
   return 1;
 }
 
-/* }}} */
-
-/* {{{ test_qrdec(t, ofp) */
-
 int test_qrdec(testspec_t* t, FILE* ofp)
 {
   mp_rat out[1], reg = g_qreg + 1;
@@ -1774,7 +1528,5 @@ int test_qrdec(testspec_t* t, FILE* ofp)
   }
   return 1;
 }
-
-/* }}} */
 
 /* Here there be dragons */

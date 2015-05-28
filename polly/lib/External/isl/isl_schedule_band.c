@@ -175,43 +175,43 @@ __isl_null isl_schedule_band *isl_schedule_band_free(
 
 /* Are "band1" and "band2" obviously equal?
  */
-int isl_schedule_band_plain_is_equal(__isl_keep isl_schedule_band *band1,
+isl_bool isl_schedule_band_plain_is_equal(__isl_keep isl_schedule_band *band1,
 	__isl_keep isl_schedule_band *band2)
 {
 	int i;
-	int equal;
+	isl_bool equal;
 
 	if (!band1 || !band2)
-		return -1;
+		return isl_bool_error;
 	if (band1 == band2)
-		return 1;
+		return isl_bool_true;
 
 	if (band1->n != band2->n)
-		return 0;
+		return isl_bool_false;
 	for (i = 0; i < band1->n; ++i)
 		if (band1->coincident[i] != band2->coincident[i])
-			return 0;
+			return isl_bool_false;
 	if (band1->permutable != band2->permutable)
-		return 0;
+		return isl_bool_false;
 
 	equal = isl_multi_union_pw_aff_plain_is_equal(band1->mupa, band2->mupa);
 	if (equal < 0 || !equal)
 		return equal;
 
 	if (!band1->loop_type != !band2->loop_type)
-		return 0;
+		return isl_bool_false;
 	if (band1->loop_type)
 		for (i = 0; i < band1->n; ++i)
 			if (band1->loop_type[i] != band2->loop_type[i])
-				return 0;
+				return isl_bool_false;
 
 	if (!band1->isolate_loop_type != !band2->isolate_loop_type)
-		return 0;
+		return isl_bool_false;
 	if (band1->isolate_loop_type)
 		for (i = 0; i < band1->n; ++i)
 			if (band1->isolate_loop_type[i] !=
 						band2->isolate_loop_type[i])
-				return 0;
+				return isl_bool_false;
 
 	return isl_union_set_is_equal(band1->ast_build_options,
 					band2->ast_build_options);
@@ -227,15 +227,15 @@ int isl_schedule_band_n_member(__isl_keep isl_schedule_band *band)
 /* Is the given scheduling dimension coincident within the band and
  * with respect to the coincidence constraints?
  */
-int isl_schedule_band_member_get_coincident(__isl_keep isl_schedule_band *band,
-	int pos)
+isl_bool isl_schedule_band_member_get_coincident(
+	__isl_keep isl_schedule_band *band, int pos)
 {
 	if (!band)
-		return -1;
+		return isl_bool_error;
 
 	if (pos < 0 || pos >= band->n)
 		isl_die(isl_schedule_band_get_ctx(band), isl_error_invalid,
-			"invalid member position", return -1);
+			"invalid member position", return isl_bool_error);
 
 	return band->coincident[pos];
 }
@@ -266,10 +266,10 @@ __isl_give isl_schedule_band *isl_schedule_band_member_set_coincident(
 
 /* Is the schedule band mark permutable?
  */
-int isl_schedule_band_get_permutable(__isl_keep isl_schedule_band *band)
+isl_bool isl_schedule_band_get_permutable(__isl_keep isl_schedule_band *band)
 {
 	if (!band)
-		return -1;
+		return isl_bool_error;
 	return band->permutable;
 }
 
@@ -575,7 +575,7 @@ __isl_give isl_union_set *isl_schedule_band_get_ast_build_options(
  * "is" is assumed to set its integer argument to 1 if it is satisfied.
  */
 static int has_any(__isl_keep isl_union_set *uset,
-	int (*is)(__isl_take isl_set *set, void *user))
+	isl_stat (*is)(__isl_take isl_set *set, void *user))
 {
 	int found = 0;
 
@@ -593,7 +593,7 @@ static int has_any(__isl_keep isl_union_set *uset,
  *
  * If so, set *found and abort the search.
  */
-static int is_isolate(__isl_take isl_set *set, void *user)
+static isl_stat is_isolate(__isl_take isl_set *set, void *user)
 {
 	int *found = user;
 
@@ -605,7 +605,7 @@ static int is_isolate(__isl_take isl_set *set, void *user)
 	}
 	isl_set_free(set);
 
-	return *found ? -1 : 0;
+	return *found ? isl_stat_error : isl_stat_ok;
 }
 
 /* Does "options" include an option of the ofrm
@@ -621,7 +621,7 @@ static int has_isolate_option(__isl_keep isl_union_set *options)
 
 /* Does "set" encode a loop AST generation option?
  */
-static int is_loop_type_option(__isl_take isl_set *set, void *user)
+static isl_stat is_loop_type_option(__isl_take isl_set *set, void *user)
 {
 	int *found = user;
 
@@ -640,7 +640,7 @@ static int is_loop_type_option(__isl_take isl_set *set, void *user)
 	}
 	isl_set_free(set);
 
-	return *found ? -1 : 0;
+	return *found ? isl_stat_error : isl_stat_ok;
 }
 
 /* Does "set" encode a loop AST generation option for the isolated part?
@@ -650,7 +650,7 @@ static int is_loop_type_option(__isl_take isl_set *set, void *user)
  *
  * with t equal to "atomic", "unroll" or "separate"?
  */
-static int is_isolate_loop_type_option(__isl_take isl_set *set, void *user)
+static isl_stat is_isolate_loop_type_option(__isl_take isl_set *set, void *user)
 {
 	int *found = user;
 	const char *name;
@@ -659,13 +659,13 @@ static int is_isolate_loop_type_option(__isl_take isl_set *set, void *user)
 
 	if (!isl_set_is_wrapping(set)) {
 		isl_set_free(set);
-		return 0;
+		return isl_stat_ok;
 	}
 	map = isl_set_unwrap(set);
 	if (!isl_map_has_tuple_name(map, isl_dim_in) ||
 	    !isl_map_has_tuple_name(map, isl_dim_out)) {
 		isl_map_free(map);
-		return 0;
+		return isl_stat_ok;
 	}
 	name = isl_map_get_tuple_name(map, isl_dim_in);
 	if (!strcmp(name, "isolate")) {
@@ -680,7 +680,7 @@ static int is_isolate_loop_type_option(__isl_take isl_set *set, void *user)
 	}
 	isl_map_free(map);
 
-	return *found ? -1 : 0;
+	return *found ? isl_stat_error : isl_stat_ok;
 }
 
 /* Does "options" encode any loop AST generation options

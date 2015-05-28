@@ -127,11 +127,11 @@ int FN(FN(UNION,n),PARTS)(__isl_keep UNION *u)
 
 S(UNION,foreach_data)
 {
-	int (*fn)(__isl_take PART *part, void *user);
+	isl_stat (*fn)(__isl_take PART *part, void *user);
 	void *user;
 };
 
-static int FN(UNION,call_on_copy)(void **entry, void *user)
+static isl_stat FN(UNION,call_on_copy)(void **entry, void *user)
 {
 	PART *part = *entry;
 	S(UNION,foreach_data) *data = (S(UNION,foreach_data) *)user;
@@ -139,13 +139,13 @@ static int FN(UNION,call_on_copy)(void **entry, void *user)
 	return data->fn(FN(PART,copy)(part), data->user);
 }
 
-int FN(FN(UNION,foreach),PARTS)(__isl_keep UNION *u,
-	int (*fn)(__isl_take PART *part, void *user), void *user)
+isl_stat FN(FN(UNION,foreach),PARTS)(__isl_keep UNION *u,
+	isl_stat (*fn)(__isl_take PART *part, void *user), void *user)
 {
 	S(UNION,foreach_data) data = { fn, user };
 
 	if (!u)
-		return -1;
+		return isl_stat_error;
 
 	return isl_hash_table_foreach(u->space->ctx, &u->table,
 				      &FN(UNION,call_on_copy), &data);
@@ -314,13 +314,13 @@ __isl_give UNION *FN(FN(UNION,add),PARTS)(__isl_take UNION *u,
 	return FN(UNION,add_part_generic)(u, part, 1);
 }
 
-static int FN(UNION,add_part)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,add_part)(__isl_take PART *part, void *user)
 {
 	UNION **u = (UNION **)user;
 
 	*u = FN(FN(UNION,add),PARTS)(*u, part);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give UNION *FN(UNION,dup)(__isl_keep UNION *u)
@@ -354,11 +354,11 @@ __isl_give UNION *FN(UNION,cow)(__isl_take UNION *u)
 	return FN(UNION,dup)(u);
 }
 
-static int FN(UNION,free_u_entry)(void **entry, void *user)
+static isl_stat FN(UNION,free_u_entry)(void **entry, void *user)
 {
 	PART *part = *entry;
 	FN(PART,free)(part);
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_null UNION *FN(UNION,free)(__isl_take UNION *u)
@@ -382,7 +382,7 @@ S(UNION,align) {
 	UNION *res;
 };
 
-static int FN(UNION,align_entry)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,align_entry)(__isl_take PART *part, void *user)
 {
 	isl_reordering *exp;
 	S(UNION,align) *data = user;
@@ -393,7 +393,7 @@ static int FN(UNION,align_entry)(__isl_take PART *part, void *user)
 	data->res = FN(FN(UNION,add),PARTS)(data->res,
 					    FN(PART,realign_domain)(part, exp));
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Reorder the parameters of "u" according to the given reordering.
@@ -453,13 +453,13 @@ error:
 /* Add "part" to *u, taking the union sum if "u" already has
  * a part defined on the same space as "part".
  */
-static int FN(UNION,union_add_part)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,union_add_part)(__isl_take PART *part, void *user)
 {
 	UNION **u = (UNION **)user;
 
 	*u = FN(UNION,add_part_generic)(*u, part, 0);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Compute the sum of "u1" and "u2" on the union of their domains,
@@ -526,7 +526,7 @@ S(UNION,match_bin_data) {
  * If so, call data->fn on the two elements and add the result to
  * data->res.
  */
-static int FN(UNION,match_bin_entry)(void **entry, void *user)
+static isl_stat FN(UNION,match_bin_entry)(void **entry, void *user)
 {
 	S(UNION,match_bin_data) *data = user;
 	uint32_t hash;
@@ -542,23 +542,23 @@ static int FN(UNION,match_bin_entry)(void **entry, void *user)
 				     space, 0);
 	isl_space_free(space);
 	if (!entry2)
-		return 0;
+		return isl_stat_ok;
 
 	part2 = entry2->data;
 	if (!isl_space_tuple_is_equal(part->dim, isl_dim_out,
 					part2->dim, isl_dim_out))
 		isl_die(FN(UNION,get_ctx)(data->u2), isl_error_invalid,
 			"entries should have the same range space",
-			return -1);
+			return isl_stat_error);
 
 	part = FN(PART, copy)(part);
 	part = data->fn(part, FN(PART, copy)(entry2->data));
 
 	data->res = FN(FN(UNION,add),PARTS)(data->res, part);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* This function is currently only used from isl_polynomial.c
@@ -634,7 +634,7 @@ S(UNION,any_set_data) {
 	__isl_give PW *(*fn)(__isl_take PW*, __isl_take isl_set*);
 };
 
-static int FN(UNION,any_set_entry)(void **entry, void *user)
+static isl_stat FN(UNION,any_set_entry)(void **entry, void *user)
 {
 	S(UNION,any_set_data) *data = user;
 	PW *pw = *entry;
@@ -644,9 +644,9 @@ static int FN(UNION,any_set_entry)(void **entry, void *user)
 
 	data->res = FN(FN(UNION,add),PARTS)(data->res, pw);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Update each element of "u" by calling "fn" on the element and "set".
@@ -719,7 +719,7 @@ static int FN(UNION,set_has_dim)(const void *entry, const void *val)
  * of *entry, apply data->fn to *entry and this set (if any), and add
  * the result to data->res.
  */
-static int FN(UNION,match_domain_entry)(void **entry, void *user)
+static isl_stat FN(UNION,match_domain_entry)(void **entry, void *user)
 {
 	S(UNION,match_domain_data) *data = user;
 	uint32_t hash;
@@ -733,16 +733,16 @@ static int FN(UNION,match_domain_entry)(void **entry, void *user)
 				     hash, &FN(UNION,set_has_dim), space, 0);
 	isl_space_free(space);
 	if (!entry2)
-		return 0;
+		return isl_stat_ok;
 
 	pw = FN(PW,copy)(pw);
 	pw = data->fn(pw, isl_set_copy(entry2->data));
 
 	data->res = FN(FN(UNION,add),PARTS)(data->res, pw);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Apply fn to each pair of PW in u and set in uset such that
@@ -808,7 +808,7 @@ S(UNION,subtract_domain_data) {
  * in the same space as the domain of "pw", subtract it from the domain
  * of "pw" and add the result to data->res.
  */
-static int FN(UNION,subtract_domain_entry)(__isl_take PW *pw, void *user)
+static isl_stat FN(UNION,subtract_domain_entry)(__isl_take PW *pw, void *user)
 {
 	S(UNION,subtract_domain_data) *data = user;
 	isl_space *space;
@@ -819,7 +819,7 @@ static int FN(UNION,subtract_domain_entry)(__isl_take PW *pw, void *user)
 	pw = FN(PW,subtract_domain)(pw, set);
 	data->res = FN(FN(UNION,add),PARTS)(data->res, pw);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Subtract "uset' from the domain of "u".
@@ -895,15 +895,15 @@ error:
 }
 #endif
 
-static int FN(UNION,coalesce_entry)(void **entry, void *user)
+static isl_stat FN(UNION,coalesce_entry)(void **entry, void *user)
 {
 	PW **pw = (PW **)entry;
 
 	*pw = FN(PW,coalesce)(*pw);
 	if (!*pw)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give UNION *FN(UNION,coalesce)(__isl_take UNION *u)
@@ -921,13 +921,13 @@ error:
 	return NULL;
 }
 
-static int FN(UNION,domain_entry)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,domain_entry)(__isl_take PART *part, void *user)
 {
 	isl_union_set **uset = (isl_union_set **)user;
 
 	*uset = isl_union_set_add_set(*uset, FN(PART,domain)(part));
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give isl_union_set *FN(UNION,domain)(__isl_take UNION *u)
@@ -947,16 +947,16 @@ error:
 	return NULL;
 }
 
-static int FN(UNION,mul_isl_int_entry)(void **entry, void *user)
+static isl_stat FN(UNION,mul_isl_int_entry)(void **entry, void *user)
 {
 	PW **pw = (PW **)entry;
 	isl_int *v = user;
 
 	*pw = FN(PW,mul_isl_int)(*pw, *v);
 	if (!*pw)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give UNION *FN(UNION,mul_isl_int)(__isl_take UNION *u, isl_int v)
@@ -985,7 +985,7 @@ __isl_give UNION *FN(UNION,mul_isl_int)(__isl_take UNION *u, isl_int v)
 		u->type = isl_fold_type_negate(u->type);
 #endif
 	if (isl_hash_table_foreach(u->space->ctx, &u->table,
-				    &FN(UNION,mul_isl_int_entry), v) < 0)
+				    &FN(UNION,mul_isl_int_entry), &v) < 0)
 		goto error;
 
 	return u;
@@ -998,16 +998,16 @@ error:
  *
  * Return 0 on success and -1 on error.
  */
-static int FN(UNION,scale_val_entry)(void **entry, void *user)
+static isl_stat FN(UNION,scale_val_entry)(void **entry, void *user)
 {
 	PW **pw = (PW **)entry;
 	isl_val *v = user;
 
 	*pw = FN(PW,scale_val)(*pw, isl_val_copy(v));
 	if (!*pw)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Multiply "u" by "v" and return the result.
@@ -1063,16 +1063,16 @@ error:
  *
  * Return 0 on success and -1 on error.
  */
-static int FN(UNION,scale_down_val_entry)(void **entry, void *user)
+static isl_stat FN(UNION,scale_down_val_entry)(void **entry, void *user)
 {
 	PW **pw = (PW **)entry;
 	isl_val *v = user;
 
 	*pw = FN(PW,scale_down_val)(*pw, isl_val_copy(v));
 	if (!*pw)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Divide "u" by "v" and return the result.
@@ -1117,10 +1117,10 @@ error:
 S(UNION,plain_is_equal_data)
 {
 	UNION *u2;
-	int is_equal;
+	isl_bool is_equal;
 };
 
-static int FN(UNION,plain_is_equal_entry)(void **entry, void *user)
+static isl_stat FN(UNION,plain_is_equal_entry)(void **entry, void *user)
 {
 	S(UNION,plain_is_equal_data) *data = user;
 	uint32_t hash;
@@ -1132,27 +1132,27 @@ static int FN(UNION,plain_is_equal_entry)(void **entry, void *user)
 				     hash, &FN(UNION,has_same_domain_space),
 				     pw->dim, 0);
 	if (!entry2) {
-		data->is_equal = 0;
-		return -1;
+		data->is_equal = isl_bool_false;
+		return isl_stat_error;
 	}
 
 	data->is_equal = FN(PW,plain_is_equal)(pw, entry2->data);
 	if (data->is_equal < 0 || !data->is_equal)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
-int FN(UNION,plain_is_equal)(__isl_keep UNION *u1, __isl_keep UNION *u2)
+isl_bool FN(UNION,plain_is_equal)(__isl_keep UNION *u1, __isl_keep UNION *u2)
 {
-	S(UNION,plain_is_equal_data) data = { NULL, 1 };
+	S(UNION,plain_is_equal_data) data = { NULL, isl_bool_true };
 
 	if (!u1 || !u2)
-		return -1;
+		return isl_bool_error;
 	if (u1 == u2)
-		return 1;
+		return isl_bool_true;
 	if (u1->table.n != u2->table.n)
-		return 0;
+		return isl_bool_false;
 
 	u1 = FN(UNION,copy)(u1);
 	u2 = FN(UNION,copy)(u2);
@@ -1174,7 +1174,7 @@ int FN(UNION,plain_is_equal)(__isl_keep UNION *u1, __isl_keep UNION *u2)
 error:
 	FN(UNION,free)(u1);
 	FN(UNION,free)(u2);
-	return -1;
+	return isl_bool_error;
 }
 
 #ifndef NO_NEG
@@ -1182,13 +1182,13 @@ error:
  *
  * Return 0 on success and -1 on error.
  */
-static int FN(UNION,neg_entry)(void **entry, void *user)
+static isl_stat FN(UNION,neg_entry)(void **entry, void *user)
 {
 	PW **pw = (PW **) entry;
 
 	*pw = FN(PW,neg)(*pw);
 
-	return *pw ? 0 : -1;
+	return *pw ? isl_stat_ok : isl_stat_error;
 }
 
 /* Return the opposite of "u".
@@ -1222,16 +1222,16 @@ S(UNION,drop_dims_data) {
 /* Drop the parameters specified by "data" from "part" and
  * add the results to data->res.
  */
-static int FN(UNION,drop_dims_entry)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,drop_dims_entry)(__isl_take PART *part, void *user)
 {
 	S(UNION,drop_dims_data) *data = user;
 
 	part = FN(PART,drop_dims)(part, data->type, data->first, data->n);
 	data->res = FN(FN(UNION,add),PARTS)(data->res, part);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Drop the specified parameters from "u".
@@ -1282,16 +1282,16 @@ S(UNION,set_dim_name_data) {
 /* Change the name of the parameter at position data->pos of "part" to data->s
  * and add the result to data->res.
  */
-static int FN(UNION,set_dim_name_entry)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,set_dim_name_entry)(__isl_take PART *part, void *user)
 {
 	S(UNION,set_dim_name_data) *data = user;
 
 	part = FN(PART,set_dim_name)(part, isl_dim_param, data->pos, data->s);
 	data->res = FN(FN(UNION,add),PARTS)(data->res, part);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Change the name of the parameter at position "pos" to "s".
@@ -1331,16 +1331,16 @@ __isl_give UNION *FN(UNION,set_dim_name)(__isl_take UNION *u,
 /* Reset the user pointer on all identifiers of parameters and tuples
  * of the space of "part" and add the result to *res.
  */
-static int FN(UNION,reset_user_entry)(__isl_take PART *part, void *user)
+static isl_stat FN(UNION,reset_user_entry)(__isl_take PART *part, void *user)
 {
 	UNION **res = user;
 
 	part = FN(PART,reset_user)(part);
 	*res = FN(FN(UNION,add),PARTS)(*res, part);
 	if (!*res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Reset the user pointer on all identifiers of parameters and tuples

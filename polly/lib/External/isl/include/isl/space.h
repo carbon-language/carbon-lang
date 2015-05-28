@@ -40,13 +40,13 @@ __isl_give isl_space *isl_space_params_alloc(isl_ctx *ctx, unsigned nparam);
 __isl_give isl_space *isl_space_copy(__isl_keep isl_space *dim);
 __isl_null isl_space *isl_space_free(__isl_take isl_space *space);
 
-int isl_space_is_params(__isl_keep isl_space *space);
-int isl_space_is_set(__isl_keep isl_space *space);
-int isl_space_is_map(__isl_keep isl_space *space);
+isl_bool isl_space_is_params(__isl_keep isl_space *space);
+isl_bool isl_space_is_set(__isl_keep isl_space *space);
+isl_bool isl_space_is_map(__isl_keep isl_space *space);
 
 __isl_give isl_space *isl_space_set_tuple_name(__isl_take isl_space *dim,
 	enum isl_dim_type type, const char *s);
-int isl_space_has_tuple_name(__isl_keep isl_space *space,
+isl_bool isl_space_has_tuple_name(__isl_keep isl_space *space,
 	enum isl_dim_type type);
 const char *isl_space_get_tuple_name(__isl_keep isl_space *dim,
 				 enum isl_dim_type type);
@@ -54,14 +54,15 @@ __isl_give isl_space *isl_space_set_tuple_id(__isl_take isl_space *dim,
 	enum isl_dim_type type, __isl_take isl_id *id);
 __isl_give isl_space *isl_space_reset_tuple_id(__isl_take isl_space *dim,
 	enum isl_dim_type type);
-int isl_space_has_tuple_id(__isl_keep isl_space *dim, enum isl_dim_type type);
+isl_bool isl_space_has_tuple_id(__isl_keep isl_space *dim,
+	enum isl_dim_type type);
 __isl_give isl_id *isl_space_get_tuple_id(__isl_keep isl_space *dim,
 	enum isl_dim_type type);
 __isl_give isl_space *isl_space_reset_user(__isl_take isl_space *space);
 
 __isl_give isl_space *isl_space_set_dim_id(__isl_take isl_space *dim,
 	enum isl_dim_type type, unsigned pos, __isl_take isl_id *id);
-int isl_space_has_dim_id(__isl_keep isl_space *dim,
+isl_bool isl_space_has_dim_id(__isl_keep isl_space *dim,
 	enum isl_dim_type type, unsigned pos);
 __isl_give isl_id *isl_space_get_dim_id(__isl_keep isl_space *dim,
 	enum isl_dim_type type, unsigned pos);
@@ -71,7 +72,7 @@ int isl_space_find_dim_by_id(__isl_keep isl_space *dim, enum isl_dim_type type,
 int isl_space_find_dim_by_name(__isl_keep isl_space *space,
 	enum isl_dim_type type, const char *name);
 
-int isl_space_has_dim_name(__isl_keep isl_space *space,
+isl_bool isl_space_has_dim_name(__isl_keep isl_space *space,
 	enum isl_dim_type type, unsigned pos);
 __isl_give isl_space *isl_space_set_dim_name(__isl_take isl_space *dim,
 				 enum isl_dim_type type, unsigned pos,
@@ -128,28 +129,28 @@ __isl_give isl_space *isl_space_set_from_params(__isl_take isl_space *space);
 __isl_give isl_space *isl_space_align_params(__isl_take isl_space *dim1,
 	__isl_take isl_space *dim2);
 
-int isl_space_is_wrapping(__isl_keep isl_space *dim);
-int isl_space_domain_is_wrapping(__isl_keep isl_space *space);
-int isl_space_range_is_wrapping(__isl_keep isl_space *space);
+isl_bool isl_space_is_wrapping(__isl_keep isl_space *dim);
+isl_bool isl_space_domain_is_wrapping(__isl_keep isl_space *space);
+isl_bool isl_space_range_is_wrapping(__isl_keep isl_space *space);
 __isl_give isl_space *isl_space_wrap(__isl_take isl_space *dim);
 __isl_give isl_space *isl_space_unwrap(__isl_take isl_space *dim);
 
-int isl_space_can_zip(__isl_keep isl_space *dim);
+isl_bool isl_space_can_zip(__isl_keep isl_space *dim);
 __isl_give isl_space *isl_space_zip(__isl_take isl_space *dim);
 
-int isl_space_can_curry(__isl_keep isl_space *space);
+isl_bool isl_space_can_curry(__isl_keep isl_space *space);
 __isl_give isl_space *isl_space_curry(__isl_take isl_space *space);
 
-int isl_space_can_uncurry(__isl_keep isl_space *space);
+isl_bool isl_space_can_uncurry(__isl_keep isl_space *space);
 __isl_give isl_space *isl_space_uncurry(__isl_take isl_space *space);
 
-int isl_space_is_domain(__isl_keep isl_space *space1,
+isl_bool isl_space_is_domain(__isl_keep isl_space *space1,
 	__isl_keep isl_space *space2);
-int isl_space_is_range(__isl_keep isl_space *space1,
+isl_bool isl_space_is_range(__isl_keep isl_space *space1,
 	__isl_keep isl_space *space2);
-int isl_space_is_equal(__isl_keep isl_space *space1,
+isl_bool isl_space_is_equal(__isl_keep isl_space *space1,
 	__isl_keep isl_space *space2);
-int isl_space_tuple_is_equal(__isl_keep isl_space *space1,
+isl_bool isl_space_tuple_is_equal(__isl_keep isl_space *space1,
 	enum isl_dim_type type1, __isl_keep isl_space *space2,
 	enum isl_dim_type type2);
 int isl_space_match(__isl_keep isl_space *dim1, enum isl_dim_type dim1_type,

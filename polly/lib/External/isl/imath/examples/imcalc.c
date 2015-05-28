@@ -62,8 +62,6 @@ typedef struct {
   int        buflen;  /* size of scratch buffer    */
 } cstate_t;
 
-/* {{{ State function prototypes */
-
 static mp_result state_init(cstate_t *sp, mp_size n_elts);
 static void      state_clear(cstate_t *sp);
 static void      stack_flush(cstate_t *sp);
@@ -72,10 +70,6 @@ static mp_result stack_pop(cstate_t *sp);
 static mp_result mem_insert(cstate_t *sp, const char *name, mp_int value);
 static mp_result mem_recall(cstate_t *sp, const char *name, mp_int value);
 static mp_result mem_clear(cstate_t *sp);
-
-/* }}} */
-
-/* {{{ Calculation function prototypes */
 
 typedef mp_result (*op_func)(cstate_t *);
 
@@ -122,10 +116,6 @@ static mp_result cf_recall(cstate_t *sp);
 static mp_result cf_cmem(cstate_t *sp);
 static mp_result cf_pmem(cstate_t *sp);
 static mp_result cf_qrecall(cstate_t *sp);
-
-/* }}} */
-
-/* {{{ Built-in operator records, g_ops[] */
 
 typedef struct {
   char    *name;         /* The name of the operator.           */
@@ -196,22 +186,16 @@ static calcop_t g_ops[] = {
   { NULL,    0, cf_qrecall, "-- x ; recall from named variable" }, 
 };
 
-/* }}} */
-
 #define BUFFER_SIZE  16384 /* max. length of input values, in chars */
 
 /* Token types from the primitive lexical analyzer */
 typedef enum { t_eof, t_symbol, t_number, t_error } token_t;
-
-/* {{{ Helper functions */
 
 static token_t   next_token(FILE *ifp, char *buf, int size);
 static mp_result read_number(char *buf, mp_int *out);
 static int       find_command(cstate_t *ops);
 static void      print_value(mp_int v);
 static mp_result run_file(FILE *ifp, cstate_t *op_state);
-
-/* }}} */
 
 /* Error code used internally to signal input problems. */
 static mp_result MP_INPUT;
@@ -295,8 +279,6 @@ int main(int argc, char *argv[])
   }
 }
 
-/* {{{ next_token(*ifp, *buf, size) */
-
 static token_t next_token(FILE *ifp, char *buf, int size)
 {
   int ch, pos = 0;
@@ -344,10 +326,6 @@ static token_t next_token(FILE *ifp, char *buf, int size)
   return res;
 }
 
-/* }}} */
-
-/* {{{ read_number(*buf, *out) */
-
 static mp_result read_number(char *buf, mp_int *out)
 {
   int radix = 10, pos = 0;
@@ -392,10 +370,6 @@ static mp_result read_number(char *buf, mp_int *out)
   return res;
 }
 
-/* }}} */
-
-/* {{{ find_command(*buf) */
-
 static int       find_command(cstate_t *op)
 {
   int ix, jx;
@@ -416,10 +390,6 @@ static int       find_command(cstate_t *op)
   /* If variable lookup fails, report command not found */
   return -1;
 }
-
-/* }}} */
-
-/* {{{ print_value(v) */
 
 static void      print_value(mp_int v)
 {
@@ -453,10 +423,6 @@ static void      print_value(mp_int v)
       fprintf(g_output_file, "<insufficient memory to print>\n");
   }
 }
-
-/* }}} */
-
-/* {{{ run_file(*ifp, *op_state) */
 
 static mp_result run_file(FILE *ifp, cstate_t *op_state)
 {
@@ -500,10 +466,6 @@ static mp_result run_file(FILE *ifp, cstate_t *op_state)
   return res;
 }
 
-/* }}} */
-
-/* {{{ state_init(*sp, n_elts) */
-
 static mp_result state_init(cstate_t *sp, mp_size n_elts)
 {
   int ix;
@@ -542,10 +504,6 @@ static mp_result state_init(cstate_t *sp, mp_size n_elts)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ state_clear(*sp) */
 
 static void      state_clear(cstate_t *sp)
 {
@@ -592,10 +550,6 @@ static void      state_clear(cstate_t *sp)
   }
 }
 
-/* }}} */
-
-/* {{{ stack_flush(*sp) */
-
 static void      stack_flush(cstate_t *sp)
 {
   int ix;
@@ -609,10 +563,6 @@ static void      stack_flush(cstate_t *sp)
 
   sp->used = 0;
 }
-
-/* }}} */
-
-/* {{{ stack_push(*sp, elt) */
 
 static mp_result stack_push(cstate_t *sp, mp_int elt)
 {
@@ -636,10 +586,6 @@ static mp_result stack_push(cstate_t *sp, mp_int elt)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ stack_pop(*sp) */
-
 static mp_result stack_pop(cstate_t *sp)
 {
   assert(sp != NULL && sp->elts != NULL);
@@ -653,10 +599,6 @@ static mp_result stack_pop(cstate_t *sp)
   
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ mem_insert(*sp, *name, value) */
 
 static mp_result mem_insert(cstate_t *sp, const char *name, mp_int value)
 {
@@ -710,10 +652,6 @@ static mp_result mem_insert(cstate_t *sp, const char *name, mp_int value)
   return mp_int_copy(value, sp->mem[ix]);
 }
 
-/* }}} */
-
-/* {{{ mem_recall(*sp, *name, value) */
-
 static mp_result mem_recall(cstate_t *sp, const char *name, mp_int value)
 {
   int ix;
@@ -726,10 +664,6 @@ static mp_result mem_recall(cstate_t *sp, const char *name, mp_int value)
 
   return MP_UNDEF; /* not found */
 }
-
-/* }}} */
-
-/* {{{ mem_clear(*sp) */
 
 static mp_result mem_clear(cstate_t *sp)
 {
@@ -744,10 +678,6 @@ static mp_result mem_clear(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_abs(sp) */
-
 static mp_result cf_abs(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
@@ -755,20 +685,12 @@ static mp_result cf_abs(cstate_t *sp)
   return mp_int_abs(a, a);
 }
 
-/* }}} */
-
-/* {{{ cf_neg(sp) */
-
 static mp_result cf_neg(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
 
   return mp_int_neg(a, a);
 }
-
-/* }}} */
-
-/* {{{ cf_add(sp) */
 
 static mp_result cf_add(cstate_t *sp)
 {
@@ -782,10 +704,6 @@ static mp_result cf_add(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_sub(sp) */
-
 static mp_result cf_sub(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -797,10 +715,6 @@ static mp_result cf_sub(cstate_t *sp)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_mul(sp) */
 
 static mp_result cf_mul(cstate_t *sp)
 {
@@ -814,10 +728,6 @@ static mp_result cf_mul(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_divmod(sp) */
-
 static mp_result cf_divmod(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -825,10 +735,6 @@ static mp_result cf_divmod(cstate_t *sp)
   
   return mp_int_div(a, b, a, b);
 }
-
-/* }}} */
-
-/* {{{ cf_div(sp) */
 
 static mp_result cf_div(cstate_t *sp)
 {
@@ -842,10 +748,6 @@ static mp_result cf_div(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_mod(sp) */
-
 static mp_result cf_mod(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -857,10 +759,6 @@ static mp_result cf_mod(cstate_t *sp)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_expt(sp) */
 
 static mp_result cf_expt(cstate_t *sp)
 {
@@ -875,10 +773,6 @@ static mp_result cf_expt(cstate_t *sp)
   stack_pop(sp);
   return mp_int_expt(a, bval, a);
 }
-
-/* }}} */
-
-/* {{{ cf_exptmod(sp) */
 
 static mp_result cf_exptmod(cstate_t *sp)
 {
@@ -895,20 +789,12 @@ static mp_result cf_exptmod(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_square(sp) */
-
 static mp_result cf_square(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
 
   return mp_int_sqr(a, a);
 }
-
-/* }}} */
-
-/* {{{ cf_invmod(sp) */
 
 static mp_result cf_invmod(cstate_t *sp)
 {
@@ -921,10 +807,6 @@ static mp_result cf_invmod(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_gcd(sp) */
-
 static mp_result cf_gcd(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -936,10 +818,6 @@ static mp_result cf_gcd(cstate_t *sp)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_xgcd(sp) */
 
 static mp_result cf_xgcd(cstate_t *sp)
 {
@@ -961,20 +839,12 @@ static mp_result cf_xgcd(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_sqrt(sp) */
-
 static mp_result cf_sqrt(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
 
   return mp_int_sqrt(a, a);
 }
-
-/* }}} */
-
-/* {{{ cf_root(sp) */
 
 static mp_result cf_root(cstate_t *sp)
 {
@@ -990,10 +860,6 @@ static mp_result cf_root(cstate_t *sp)
   return mp_int_root(a, b, a);
 }
 
-/* }}} */
-
-/* {{{ cf_cmplt(sp) */
-
 static mp_result cf_cmplt(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -1004,10 +870,6 @@ static mp_result cf_cmplt(cstate_t *sp)
   stack_pop(sp);
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_cmpgt(sp) */
 
 static mp_result cf_cmpgt(cstate_t *sp)
 {
@@ -1020,10 +882,6 @@ static mp_result cf_cmpgt(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_cmple(sp) */
-
 static mp_result cf_cmple(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -1034,10 +892,6 @@ static mp_result cf_cmple(cstate_t *sp)
   stack_pop(sp);
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_cmpge(sp) */
 
 static mp_result cf_cmpge(cstate_t *sp)
 {
@@ -1050,10 +904,6 @@ static mp_result cf_cmpge(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_cmpeq(sp) */
-
 static mp_result cf_cmpeq(cstate_t *sp)
 {
   mp_int b = sp->elts[sp->used - 1];
@@ -1064,10 +914,6 @@ static mp_result cf_cmpeq(cstate_t *sp)
   stack_pop(sp);
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_cmpne(sp) */
 
 static mp_result cf_cmpne(cstate_t *sp)
 {
@@ -1080,10 +926,6 @@ static mp_result cf_cmpne(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_inc(sp) */
-
 static mp_result cf_inc(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
@@ -1091,20 +933,12 @@ static mp_result cf_inc(cstate_t *sp)
   return mp_int_add_value(a, 1, a);
 }
 
-/* }}} */
-
-/* {{{ cf_dec(sp) */
-
 static mp_result cf_dec(cstate_t *sp)
 {
   mp_int a = sp->elts[sp->used - 1];
 
   return mp_int_sub_value(a, 1, a);
 }
-
-/* }}} */
-
-/* {{{ cf_fact(sp) */
 
 static mp_result cf_fact(cstate_t *sp)
 {
@@ -1131,10 +965,6 @@ static mp_result cf_fact(cstate_t *sp)
   return res;
 }
 
-/* }}} */
-
-/* {{{ cf_pprint(sp) */
-
 static mp_result cf_pprint(cstate_t *sp)
 {
   print_value(sp->elts[sp->used - 1]);
@@ -1142,19 +972,11 @@ static mp_result cf_pprint(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_print(sp) */
-
 static mp_result cf_print(cstate_t *sp)
 {
   print_value(sp->elts[sp->used - 1]);
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ cf_pstack(sp) */
 
 static mp_result cf_pstack(cstate_t *sp)
 {
@@ -1173,10 +995,6 @@ static mp_result cf_pstack(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_clstk(sp) */
-
 static mp_result cf_clstk(cstate_t *sp)
 {
   stack_flush(sp);
@@ -1184,18 +1002,10 @@ static mp_result cf_clstk(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_pop(sp) */
-
 static mp_result cf_pop(cstate_t *sp)
 {
   return stack_pop(sp);
 }
-
-/* }}} */
-
-/* {{{ cf_dup(sp) */
 
 static mp_result cf_dup(cstate_t *sp)
 {
@@ -1215,10 +1025,6 @@ static mp_result cf_dup(cstate_t *sp)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ cf_copy(sp) */
 
 static mp_result cf_copy(cstate_t *sp)
 {
@@ -1253,10 +1059,6 @@ static mp_result cf_copy(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_swap(sp) */
-
 static mp_result cf_swap(cstate_t *sp)
 {
   mp_int t = sp->elts[sp->used - 1];
@@ -1266,10 +1068,6 @@ static mp_result cf_swap(cstate_t *sp)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ cf_rot(sp) */
 
 static mp_result cf_rot(cstate_t *sp)
 {
@@ -1281,10 +1079,6 @@ static mp_result cf_rot(cstate_t *sp)
 
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ cf_pick(sp) */
 
 static mp_result cf_pick(cstate_t *sp)
 {
@@ -1300,10 +1094,6 @@ static mp_result cf_pick(cstate_t *sp)
 
   return mp_int_copy(sp->elts[sp->used - 2 - pos], n);
 }
-
-/* }}} */
-
-/* {{{ cf_setr(sp) */
 
 static mp_result cf_setr(cstate_t *sp)
 {
@@ -1322,19 +1112,11 @@ static mp_result cf_setr(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_setbin(sp) */
-
 static mp_result cf_setbin(cstate_t *sp)
 {
   g_output_radix = 0;
   return MP_OK;
 }
-
-/* }}} */
-
-/* {{{ cf_help(sp) */
 
 static mp_result cf_help(cstate_t *sp)
 {
@@ -1362,10 +1144,6 @@ static mp_result cf_help(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_store(*sp) */
-
 static mp_result cf_store(cstate_t *sp)
 {
   mp_result res;
@@ -1378,10 +1156,6 @@ static mp_result cf_store(cstate_t *sp)
 
   return stack_pop(sp);
 }
-
-/* }}} */
-
-/* {{{ cf_recall(*sp) */
 
 static mp_result cf_recall(cstate_t *sp)
 {
@@ -1401,18 +1175,10 @@ static mp_result cf_recall(cstate_t *sp)
   return stack_push(sp, val);
 }
 
-/* }}} */
-
-/* {{{ cf_cmem(*sp) */
-
 static mp_result cf_cmem(cstate_t *sp)
 {
   return mem_clear(sp);
 }
-
-/* }}} */
-
-/* {{{ cf_pmem(*sp) */
 
 static mp_result cf_pmem(cstate_t *sp)
 {
@@ -1446,10 +1212,6 @@ static mp_result cf_pmem(cstate_t *sp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ cf_qrecall(*sp) */
-
 static mp_result cf_qrecall(cstate_t *sp)
 {
   mp_result res;
@@ -1465,7 +1227,5 @@ static mp_result cf_qrecall(cstate_t *sp)
 
   return stack_push(sp, val);
 }
-
-/* }}} */
 
 /* Here there be dragons */

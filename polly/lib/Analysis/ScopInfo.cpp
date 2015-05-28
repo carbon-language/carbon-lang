@@ -1388,7 +1388,7 @@ void Scop::simplifyAssumedContext() {
 }
 
 /// @brief Add the minimal/maximal access in @p Set to @p User.
-static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
+static isl_stat buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   Scop::MinMaxVectorTy *MinMaxAccesses = (Scop::MinMaxVectorTy *)User;
   isl_pw_multi_aff *MinPMA, *MaxPMA;
   isl_pw_aff *LastDimAff;
@@ -1417,7 +1417,7 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
 
     if (InvolvedParams > RunTimeChecksMaxParameters) {
       isl_set_free(Set);
-      return -1;
+      return isl_stat_error;
     }
   }
 
@@ -1446,7 +1446,7 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
   MinMaxAccesses->push_back(std::make_pair(MinPMA, MaxPMA));
 
   isl_set_free(Set);
-  return 0;
+  return isl_stat_ok;
 }
 
 static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {

@@ -199,7 +199,7 @@ struct isl_scan_pip {
  * Otherwise, the optimal solution, should be equal to the result of
  * plugging in the value of the parameters in "sol".
  */
-static int scan_one(struct isl_scan_callback *callback,
+static isl_stat scan_one(struct isl_scan_callback *callback,
 	__isl_take isl_vec *sample)
 {
 	struct isl_scan_pip *sp = (struct isl_scan_pip *)callback;
@@ -231,7 +231,7 @@ static int scan_one(struct isl_scan_callback *callback,
 		fflush(stdout);
 	}
 
-	return sp->n >= 1 ? 0 : -1;
+	return sp->n >= 1 ? isl_stat_ok : isl_stat_error;
 }
 
 static void check_solution(isl_basic_set *bset, isl_basic_set *context,

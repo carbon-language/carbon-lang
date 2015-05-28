@@ -28,7 +28,7 @@ struct scan_samples {
 	struct isl_mat *samples;
 };
 
-static int scan_samples_add_sample(struct isl_scan_callback *cb,
+static isl_stat scan_samples_add_sample(struct isl_scan_callback *cb,
 	__isl_take isl_vec *sample)
 {
 	struct scan_samples *ss = (struct scan_samples *)cb;
@@ -42,10 +42,10 @@ static int scan_samples_add_sample(struct isl_scan_callback *cb,
 		    sample->el, sample->size);
 
 	isl_vec_free(sample);
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_vec_free(sample);
-	return -1;
+	return isl_stat_error;
 }
 
 static struct isl_mat *isl_basic_set_scan_samples(struct isl_basic_set *bset)

@@ -36,7 +36,7 @@ __isl_give isl_vec *isl_vec_set_element_si(__isl_take isl_vec *vec,
 __isl_give isl_vec *isl_vec_set_element_val(__isl_take isl_vec *vec,
 	int pos, __isl_take isl_val *v);
 
-int isl_vec_is_equal(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2);
+isl_bool isl_vec_is_equal(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2);
 int isl_vec_cmp_element(__isl_keep isl_vec *vec1, __isl_keep isl_vec *vec2,
 	int pos);
 

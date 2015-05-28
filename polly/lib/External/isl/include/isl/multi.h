@@ -29,7 +29,7 @@ __isl_give isl_multi_##BASE *isl_multi_##BASE##_copy(			\
 	__isl_keep isl_multi_##BASE *multi);				\
 __isl_null isl_multi_##BASE *isl_multi_##BASE##_free(			\
 	__isl_take isl_multi_##BASE *multi);				\
-int isl_multi_##BASE##_plain_is_equal(					\
+isl_bool isl_multi_##BASE##_plain_is_equal(				\
 	__isl_keep isl_multi_##BASE *multi1,				\
 	__isl_keep isl_multi_##BASE *multi2);				\
 int isl_multi_##BASE##_find_dim_by_id(					\
@@ -46,8 +46,8 @@ __isl_give isl_multi_##BASE *isl_multi_##BASE##_set_dim_id(		\
 	enum isl_dim_type type, unsigned pos, __isl_take isl_id *id);	\
 const char *isl_multi_##BASE##_get_tuple_name(				\
 	__isl_keep isl_multi_##BASE *multi, enum isl_dim_type type);	\
-int isl_multi_##BASE##_has_tuple_id(__isl_keep isl_multi_##BASE *multi,	\
-	enum isl_dim_type type);					\
+isl_bool isl_multi_##BASE##_has_tuple_id(				\
+	__isl_keep isl_multi_##BASE *multi, enum isl_dim_type type);	\
 __isl_give isl_id *isl_multi_##BASE##_get_tuple_id(			\
 	__isl_keep isl_multi_##BASE *multi, enum isl_dim_type type);	\
 __isl_give isl_multi_##BASE *isl_multi_##BASE##_set_tuple_name(		\
@@ -79,7 +79,7 @@ __isl_give isl_multi_##BASE *isl_multi_##BASE##_flat_range_product(	\
 __isl_give isl_multi_##BASE *isl_multi_##BASE##_range_product(		\
 	__isl_take isl_multi_##BASE *multi1,				\
 	__isl_take isl_multi_##BASE *multi2);				\
-int isl_multi_##BASE##_range_is_wrapping(				\
+isl_bool isl_multi_##BASE##_range_is_wrapping(				\
 	__isl_keep isl_multi_##BASE *multi);				\
 __isl_give isl_multi_##BASE *isl_multi_##BASE##_range_factor_domain(	\
 	__isl_take isl_multi_##BASE *multi);				\
@@ -112,7 +112,7 @@ __isl_give isl_multi_##BASE *isl_multi_##BASE##_neg(		 	\
 	__isl_take isl_multi_##BASE *multi);
 
 #define ISL_DECLARE_MULTI_DIMS(BASE)					\
-int isl_multi_##BASE##_involves_dims(					\
+isl_bool isl_multi_##BASE##_involves_dims(				\
 	__isl_keep isl_multi_##BASE *multi, enum isl_dim_type type,	\
 	unsigned first, unsigned n);					\
 __isl_give isl_multi_##BASE *isl_multi_##BASE##_insert_dims(		\

@@ -183,8 +183,6 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-/* {{{ randomize(buf, len) */
-
 int randomize(unsigned char *buf, size_t len)
 {
   FILE *rnd = fopen("/dev/random", "rb");
@@ -198,10 +196,6 @@ int randomize(unsigned char *buf, size_t len)
   
   return (int) nr;
 }
-
-/* }}} */
-
-/* {{{ mp_int_randomize(a, n_bits) */
 
 mp_result mp_int_randomize(mp_int a, mp_size n_bits)
 {
@@ -238,10 +232,6 @@ mp_result mp_int_randomize(mp_int a, mp_size n_bits)
   return res;
 }
 
-/* }}} */
-
-/* {{{ find_prime(seed, fb) */
-
 mp_result find_prime(mp_int seed, FILE *fb)
 {
   mp_result res;
@@ -267,10 +257,6 @@ mp_result find_prime(mp_int seed, FILE *fb)
   return res;
 }
 
-/* }}} */
-
-/* {{{ rsa_key_init(kp) */
-
 mp_result rsa_key_init(rsa_key *kp)
 {
   mp_int_init(&(kp->p));
@@ -282,10 +268,6 @@ mp_result rsa_key_init(rsa_key *kp)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ rsa_key_clear(kp) */
-
 void      rsa_key_clear(rsa_key *kp)
 {
   mp_int_clear(&(kp->p));
@@ -294,10 +276,6 @@ void      rsa_key_clear(rsa_key *kp)
   mp_int_clear(&(kp->e));
   mp_int_clear(&(kp->d));  
 }
-
-/* }}} */
-
-/* {{{ rsa_key_write(kp, ofp) */
 
 void      rsa_key_write(rsa_key *kp, FILE *ofp)
 {
@@ -319,7 +297,5 @@ void      rsa_key_write(rsa_key *kp, FILE *ofp)
 
   free(obuf);
 }
-
-/* }}} */
 
 /* Here there be dragons */

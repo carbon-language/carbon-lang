@@ -787,12 +787,12 @@ int isl_qpolynomial_fold_is_empty(__isl_keep isl_qpolynomial_fold *fold)
 
 /* Does "fold" represent max(NaN) or min(NaN)?
  */
-int isl_qpolynomial_fold_is_nan(__isl_keep isl_qpolynomial_fold *fold)
+isl_bool isl_qpolynomial_fold_is_nan(__isl_keep isl_qpolynomial_fold *fold)
 {
 	if (!fold)
-		return -1;
+		return isl_bool_error;
 	if (fold->n != 1)
-		return 0;
+		return isl_bool_false;
 	return isl_qpolynomial_is_nan(fold->qp[0]);
 }
 
@@ -963,14 +963,14 @@ error:
 	return NULL;
 }
 
-static int fold_part(__isl_take isl_pw_qpolynomial_fold *part, void *user)
+static isl_stat fold_part(__isl_take isl_pw_qpolynomial_fold *part, void *user)
 {
 	isl_union_pw_qpolynomial_fold **u;
 	u = (isl_union_pw_qpolynomial_fold **)user;
 
 	*u = isl_union_pw_qpolynomial_fold_fold_pw_qpolynomial_fold(*u, part);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give isl_union_pw_qpolynomial_fold *isl_union_pw_qpolynomial_fold_fold(
@@ -1316,20 +1316,20 @@ error:
 	return NULL;
 }
 
-int isl_qpolynomial_fold_foreach_qpolynomial(
+isl_stat isl_qpolynomial_fold_foreach_qpolynomial(
 	__isl_keep isl_qpolynomial_fold *fold,
-	int (*fn)(__isl_take isl_qpolynomial *qp, void *user), void *user)
+	isl_stat (*fn)(__isl_take isl_qpolynomial *qp, void *user), void *user)
 {
 	int i;
 
 	if (!fold)
-		return -1;
+		return isl_stat_error;
 
 	for (i = 0; i < fold->n; ++i)
 		if (fn(isl_qpolynomial_copy(fold->qp[i]), user) < 0)
-			return -1;
+			return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_move_dims(
@@ -1394,7 +1394,7 @@ error:
 	return NULL;
 }
 
-static int add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
+static isl_stat add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
 {
 	isl_ctx *ctx;
 	isl_pw_qpolynomial_fold *pwf;
@@ -1418,17 +1418,17 @@ static int add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
 	else {
 		entry->data = isl_pw_qpolynomial_fold_add(entry->data, pwf);
 		if (!entry->data)
-			return -1;
+			return isl_stat_error;
 		if (isl_pw_qpolynomial_fold_is_zero(entry->data)) {
 			isl_pw_qpolynomial_fold_free(entry->data);
 			isl_hash_table_remove(ctx, &(*upwf)->table, entry);
 		}
 	}
 
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_pw_qpolynomial_free(pwqp);
-	return -1;
+	return isl_stat_error;
 }
 
 __isl_give isl_union_pw_qpolynomial_fold *isl_union_pw_qpolynomial_fold_add_union_pw_qpolynomial(
@@ -1530,8 +1530,8 @@ struct isl_apply_fold_data {
 	int tight;
 };
 
-static int pw_qpolynomial_fold_apply(__isl_take isl_pw_qpolynomial_fold *pwf,
-	void *user)
+static isl_stat pw_qpolynomial_fold_apply(
+	__isl_take isl_pw_qpolynomial_fold *pwf, void *user)
 {
 	isl_space *map_dim;
 	isl_space *pwf_dim;
@@ -1552,13 +1552,13 @@ static int pw_qpolynomial_fold_apply(__isl_take isl_pw_qpolynomial_fold *pwf,
 	} else
 		isl_pw_qpolynomial_fold_free(pwf);
 
-	return 0;
+	return isl_stat_ok;
 }
 
-static int map_apply(__isl_take isl_map *map, void *user)
+static isl_stat map_apply(__isl_take isl_map *map, void *user)
 {
 	struct isl_apply_fold_data *data = user;
-	int r;
+	isl_stat r;
 
 	data->map = map;
 	r = isl_union_pw_qpolynomial_fold_foreach_pw_qpolynomial_fold(

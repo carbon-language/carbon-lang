@@ -125,12 +125,12 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
 }
 
 /// @brief Fix all dimension of @p Zero to 0 and add it to @p user
-static int fixSetToZero(__isl_take isl_set *Zero, void *user) {
+static isl_stat fixSetToZero(__isl_take isl_set *Zero, void *user) {
   isl_union_set **User = (isl_union_set **)user;
   for (unsigned i = 0; i < isl_set_dim(Zero, isl_dim_set); i++)
     Zero = isl_set_fix_si(Zero, isl_dim_set, i, 0);
   *User = isl_union_set_add_set(*User, Zero);
-  return 0;
+  return isl_stat_ok;
 }
 
 /// @brief Compute the privatization dependences for a given dependency @p Map

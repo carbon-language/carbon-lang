@@ -25,7 +25,8 @@ __isl_null ISL_HMAP *ISL_FN(ISL_HMAP,free)(__isl_take ISL_HMAP *hmap);
 
 isl_ctx *ISL_FN(ISL_HMAP,get_ctx)(__isl_keep ISL_HMAP *hmap);
 
-int ISL_FN(ISL_HMAP,has)(__isl_keep ISL_HMAP *hmap, __isl_keep ISL_KEY *key);
+isl_bool ISL_FN(ISL_HMAP,has)(__isl_keep ISL_HMAP *hmap,
+	__isl_keep ISL_KEY *key);
 __isl_give ISL_VAL *ISL_FN(ISL_HMAP,get)(__isl_keep ISL_HMAP *hmap,
 	__isl_take ISL_KEY *key);
 __isl_give ISL_HMAP *ISL_FN(ISL_HMAP,set)(__isl_take ISL_HMAP *hmap,
@@ -33,8 +34,9 @@ __isl_give ISL_HMAP *ISL_FN(ISL_HMAP,set)(__isl_take ISL_HMAP *hmap,
 __isl_give ISL_HMAP *ISL_FN(ISL_HMAP,drop)(__isl_take ISL_HMAP *hmap,
 	__isl_take ISL_KEY *key);
 
-int ISL_FN(ISL_HMAP,foreach)(__isl_keep ISL_HMAP *hmap,
-	int (*fn)(__isl_take ISL_KEY *key, __isl_take ISL_VAL *val, void *user),
+isl_stat ISL_FN(ISL_HMAP,foreach)(__isl_keep ISL_HMAP *hmap,
+	isl_stat (*fn)(__isl_take ISL_KEY *key, __isl_take ISL_VAL *val,
+		void *user),
 	void *user);
 
 __isl_give isl_printer *ISL_FN(isl_printer_print,ISL_HMAP_BASE)(

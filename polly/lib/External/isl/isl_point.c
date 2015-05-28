@@ -120,10 +120,10 @@ __isl_give isl_point *isl_point_void(__isl_take isl_space *dim)
 	return isl_point_alloc(dim, isl_vec_alloc(dim->ctx, 0));
 }
 
-int isl_point_is_void(__isl_keep isl_point *pnt)
+isl_bool isl_point_is_void(__isl_keep isl_point *pnt)
 {
 	if (!pnt)
-		return -1;
+		return isl_bool_error;
 
 	return pnt->vec->size == 0;
 }
@@ -298,12 +298,13 @@ error:
 
 struct isl_foreach_point {
 	struct isl_scan_callback callback;
-	int (*fn)(__isl_take isl_point *pnt, void *user);
+	isl_stat (*fn)(__isl_take isl_point *pnt, void *user);
 	void *user;
 	isl_space *dim;
 };
 
-static int foreach_point(struct isl_scan_callback *cb, __isl_take isl_vec *sample)
+static isl_stat foreach_point(struct isl_scan_callback *cb,
+	__isl_take isl_vec *sample)
 {
 	struct isl_foreach_point *fp = (struct isl_foreach_point *)cb;
 	isl_point *pnt;
@@ -313,18 +314,18 @@ static int foreach_point(struct isl_scan_callback *cb, __isl_take isl_vec *sampl
 	return fp->fn(pnt, fp->user);
 }
 
-int isl_set_foreach_point(__isl_keep isl_set *set,
-	int (*fn)(__isl_take isl_point *pnt, void *user), void *user)
+isl_stat isl_set_foreach_point(__isl_keep isl_set *set,
+	isl_stat (*fn)(__isl_take isl_point *pnt, void *user), void *user)
 {
 	struct isl_foreach_point fp = { { &foreach_point }, fn, user };
 	int i;
 
 	if (!set)
-		return -1;
+		return isl_stat_error;
 
 	fp.dim = isl_set_get_space(set);
 	if (!fp.dim)
-		return -1;
+		return isl_stat_error;
 
 	set = isl_set_copy(set);
 	set = isl_set_cow(set);
@@ -341,11 +342,11 @@ int isl_set_foreach_point(__isl_keep isl_set *set,
 	isl_set_free(set);
 	isl_space_free(fp.dim);
 
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_set_free(set);
 	isl_space_free(fp.dim);
-	return -1;
+	return isl_stat_error;
 }
 
 /* Return 1 if "bmap" contains the point "point".
@@ -353,24 +354,25 @@ error:
  * The point is first extended with the divs and then passed
  * to basic_map_contains.
  */
-int isl_basic_map_contains_point(__isl_keep isl_basic_map *bmap,
+isl_bool isl_basic_map_contains_point(__isl_keep isl_basic_map *bmap,
 	__isl_keep isl_point *point)
 {
 	int i;
 	struct isl_vec *vec;
 	unsigned dim;
-	int contains;
+	isl_bool contains;
 
 	if (!bmap || !point)
-		return -1;
-	isl_assert(bmap->ctx, isl_space_is_equal(bmap->dim, point->dim), return -1);
+		return isl_bool_error;
+	isl_assert(bmap->ctx, isl_space_is_equal(bmap->dim, point->dim),
+		return isl_bool_error);
 	if (bmap->n_div == 0)
 		return isl_basic_map_contains(bmap, point->vec);
 
 	dim = isl_basic_map_total_dim(bmap) - bmap->n_div;
 	vec = isl_vec_alloc(bmap->ctx, 1 + dim + bmap->n_div);
 	if (!vec)
-		return -1;
+		return isl_bool_error;
 
 	isl_seq_cpy(vec->el, point->vec->el, point->vec->size);
 	for (i = 0; i < bmap->n_div; ++i) {
@@ -414,7 +416,8 @@ error:
 	return -1;
 }
 
-int isl_set_contains_point(__isl_keep isl_set *set, __isl_keep isl_point *point)
+isl_bool isl_set_contains_point(__isl_keep isl_set *set,
+	__isl_keep isl_point *point)
 {
 	return isl_map_contains_point((isl_map *)set, point);
 }

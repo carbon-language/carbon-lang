@@ -55,8 +55,9 @@ __isl_null isl_access_info *isl_access_info_free(
 isl_ctx *isl_access_info_get_ctx(__isl_keep isl_access_info *acc);
 
 __isl_give isl_flow *isl_access_info_compute_flow(__isl_take isl_access_info *acc);
-int isl_flow_foreach(__isl_keep isl_flow *deps,
-	int (*fn)(__isl_take isl_map *dep, int must, void *dep_user, void *user),
+isl_stat isl_flow_foreach(__isl_keep isl_flow *deps,
+	isl_stat (*fn)(__isl_take isl_map *dep, int must, void *dep_user,
+		void *user),
 	void *user);
 __isl_give isl_map *isl_flow_get_no_source(__isl_keep isl_flow *deps, int must);
 void isl_flow_free(__isl_take isl_flow *deps);

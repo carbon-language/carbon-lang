@@ -31,9 +31,9 @@ __isl_give isl_union_map *isl_band_get_partial_schedule(
 __isl_give isl_union_map *isl_band_get_suffix_schedule(
 	__isl_keep isl_band *band);
 
-int isl_options_set_tile_scale_tile_loops(isl_ctx *ctx, int val);
+isl_stat isl_options_set_tile_scale_tile_loops(isl_ctx *ctx, int val);
 int isl_options_get_tile_scale_tile_loops(isl_ctx *ctx);
-int isl_options_set_tile_shift_point_loops(isl_ctx *ctx, int val);
+isl_stat isl_options_set_tile_shift_point_loops(isl_ctx *ctx, int val);
 int isl_options_get_tile_shift_point_loops(isl_ctx *ctx);
 
 int isl_band_tile(__isl_keep isl_band *band, __isl_take isl_vec *sizes);

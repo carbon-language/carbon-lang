@@ -361,7 +361,7 @@ struct isl_band_tile_data {
  *	floor(s_i(x) / m_i)
  *
  */
-static int multi_aff_tile(__isl_take isl_set *set,
+static isl_stat multi_aff_tile(__isl_take isl_set *set,
 	__isl_take isl_multi_aff *ma, void *user)
 {
 	struct isl_band_tile_data *data = user;
@@ -389,14 +389,14 @@ static int multi_aff_tile(__isl_take isl_set *set,
 	pma = isl_pw_multi_aff_alloc(set, ma);
 	data->tiled = isl_pw_multi_aff_union_add(data->tiled, pma);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Given part of the schedule of a band, construct the corresponding
  * schedule for the tile loops based on the tile sizes in data->sizes
  * and add the result to data->res.
  */
-static int pw_multi_aff_tile(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat pw_multi_aff_tile(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_band_tile_data *data = user;
 
@@ -409,11 +409,11 @@ static int pw_multi_aff_tile(__isl_take isl_pw_multi_aff *pma, void *user)
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res,
 								data->tiled);
 
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_pw_multi_aff_free(pma);
 	isl_pw_multi_aff_free(data->tiled);
-	return -1;
+	return isl_stat_error;
 }
 
 /* Given the schedule of a band, construct the corresponding
@@ -450,14 +450,15 @@ error:
  * All entries are expected to have the same range space, so we can
  * stop after extracting the range space from the first entry.
  */
-static int extract_range_space(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat extract_range_space(__isl_take isl_pw_multi_aff *pma,
+	void *user)
 {
 	isl_space **space = user;
 
 	*space = isl_space_range(isl_pw_multi_aff_get_space(pma));
 	isl_pw_multi_aff_free(pma);
 
-	return -1;
+	return isl_stat_error;
 }
 
 /* Extract the range space of "band".  All entries in band->pma should
@@ -603,7 +604,7 @@ struct isl_union_pw_multi_aff_drop_data {
 /* Drop the data->n output dimensions starting at data->pos from "pma"
  * and add the result to data->res.
  */
-static int pw_multi_aff_drop(__isl_take isl_pw_multi_aff *pma, void *user)
+static isl_stat pw_multi_aff_drop(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_union_pw_multi_aff_drop_data *data = user;
 
@@ -611,9 +612,9 @@ static int pw_multi_aff_drop(__isl_take isl_pw_multi_aff *pma, void *user)
 
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma);
 	if (!data->res)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Drop the "n" output dimensions starting at "pos" from "sched".

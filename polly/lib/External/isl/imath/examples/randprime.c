@@ -132,8 +132,6 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-/* {{{ randomize(buf, len) */
-
 int randomize(unsigned char *buf, size_t len)
 {
   FILE *rnd = fopen("/dev/random", "rb");
@@ -147,10 +145,6 @@ int randomize(unsigned char *buf, size_t len)
   
   return (int) nr;
 }
-
-/* }}} */
-
-/* {{{ mp_int_randomize(a, n_bits) */
 
 mp_result mp_int_randomize(mp_int a, mp_size n_bits)
 {
@@ -187,10 +181,6 @@ mp_result mp_int_randomize(mp_int a, mp_size n_bits)
   return res;
 }
 
-/* }}} */
-
-/* {{{ find_prime(seed, fb) */
-
 mp_result find_prime(mp_int seed, FILE *fb)
 {
   mp_result res;
@@ -215,10 +205,6 @@ mp_result find_prime(mp_int seed, FILE *fb)
   
   return res;
 }
-
-/* }}} */
-
-/* {{{ find_strong_prime(seed, fb) */
 
 mp_result find_strong_prime(mp_int seed, FILE *fb)
 {
@@ -255,7 +241,5 @@ mp_result find_strong_prime(mp_int seed, FILE *fb)
   mp_int_clear(&t);
   return res;
 }
-
-/* }}} */
 
 /* Here there be dragons */

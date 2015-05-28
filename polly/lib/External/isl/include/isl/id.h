@@ -4,6 +4,7 @@
 #include <isl/ctx.h>
 #include <isl/list.h>
 #include <isl/printer.h>
+#include <isl/stdint.h>
 
 #if defined(__cplusplus)
 extern "C" {

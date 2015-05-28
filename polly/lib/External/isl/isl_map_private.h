@@ -111,6 +111,49 @@ struct isl_map {
 
 #include <isl_list_templ.h>
 
+__isl_give isl_basic_set *isl_basic_set_alloc(isl_ctx *ctx,
+	unsigned nparam, unsigned dim, unsigned extra,
+	unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_set *isl_basic_set_extend(__isl_take isl_basic_set *base,
+	unsigned nparam, unsigned dim, unsigned extra,
+	unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_set *isl_basic_set_extend_constraints(
+	__isl_take isl_basic_set *base, unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_set *isl_basic_set_finalize(
+	__isl_take isl_basic_set *bset);
+__isl_give isl_basic_set *isl_basic_set_dup(__isl_keep isl_basic_set *bset);
+__isl_give isl_basic_set *isl_basic_set_simplify(
+	__isl_take isl_basic_set *bset);
+
+__isl_give isl_basic_map *isl_basic_map_alloc(isl_ctx *ctx,
+	unsigned nparam, unsigned in, unsigned out, unsigned extra,
+	unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_map *isl_basic_map_finalize(
+	__isl_take isl_basic_map *bmap);
+__isl_give isl_basic_map *isl_basic_map_extend(__isl_take isl_basic_map *base,
+	unsigned nparam, unsigned n_in, unsigned n_out, unsigned extra,
+	unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_map *isl_basic_map_extend_constraints(
+	__isl_take isl_basic_map *base, unsigned n_eq, unsigned n_ineq);
+__isl_give isl_basic_map *isl_basic_map_simplify(
+	__isl_take isl_basic_map *bmap);
+
+__isl_give isl_set *isl_set_alloc(isl_ctx *ctx,
+	unsigned nparam, unsigned dim, int n, unsigned flags);
+__isl_give isl_set *isl_set_finalize(__isl_take isl_set *set);
+__isl_give isl_set *isl_set_dup(__isl_keep isl_set *set);
+
+__isl_give isl_map *isl_map_alloc(isl_ctx *ctx,
+	unsigned nparam, unsigned in, unsigned out, int n, unsigned flags);
+__isl_give isl_map *isl_map_dup(__isl_keep isl_map *map);
+__isl_give isl_map *isl_map_finalize(__isl_take isl_map *map);
+
+__isl_give isl_basic_set *isl_basic_set_from_underlying_set(
+	__isl_take isl_basic_set *bset, __isl_take isl_basic_set *like);
+__isl_give isl_set *isl_set_from_underlying_set(
+	__isl_take isl_set *set, __isl_take isl_basic_set *like);
+__isl_give isl_set *isl_set_to_underlying_set(__isl_take isl_set *set);
+
 __isl_give isl_map *isl_map_realign(__isl_take isl_map *map,
 	__isl_take isl_reordering *r);
 __isl_give isl_set *isl_set_realign(__isl_take isl_set *set,
@@ -151,8 +194,10 @@ struct isl_basic_set *isl_basic_set_add_constraints(struct isl_basic_set *bset1,
 struct isl_map *isl_map_grow(struct isl_map *map, int n);
 struct isl_set *isl_set_grow(struct isl_set *set, int n);
 
-int isl_basic_set_contains(struct isl_basic_set *bset, struct isl_vec *vec);
-int isl_basic_map_contains(struct isl_basic_map *bmap, struct isl_vec *vec);
+isl_bool isl_basic_set_contains(__isl_keep isl_basic_set *bset,
+	__isl_keep isl_vec *vec);
+isl_bool isl_basic_map_contains(__isl_keep isl_basic_map *bmap,
+	__isl_keep isl_vec *vec);
 
 __isl_give isl_basic_set *isl_basic_set_alloc_space(__isl_take isl_space *dim,
 		unsigned extra, unsigned n_eq, unsigned n_ineq);
@@ -226,7 +271,7 @@ __isl_give isl_basic_set *isl_basic_set_sort_constraints(
 	__isl_take isl_basic_set *bset);
 int isl_basic_map_plain_cmp(const __isl_keep isl_basic_map *bmap1,
 	const __isl_keep isl_basic_map *bmap2);
-int isl_basic_map_plain_is_equal(__isl_keep isl_basic_map *bmap1,
+isl_bool isl_basic_map_plain_is_equal(__isl_keep isl_basic_map *bmap1,
 	__isl_keep isl_basic_map *bmap2);
 struct isl_basic_map *isl_basic_map_normalize_constraints(
 	struct isl_basic_map *bmap);
@@ -321,9 +366,10 @@ __isl_give isl_basic_set *isl_basic_set_transform_dims(
 isl_int *isl_set_wrap_facet(__isl_keep isl_set *set,
 	isl_int *facet, isl_int *ridge);
 
-int isl_basic_map_contains_point(__isl_keep isl_basic_map *bmap,
+isl_bool isl_basic_map_contains_point(__isl_keep isl_basic_map *bmap,
 	__isl_keep isl_point *point);
-int isl_set_contains_point(__isl_keep isl_set *set, __isl_keep isl_point *point);
+isl_bool isl_set_contains_point(__isl_keep isl_set *set,
+	__isl_keep isl_point *point);
 
 int isl_basic_set_vars_get_sign(__isl_keep isl_basic_set *bset,
 	unsigned first, unsigned n, int *signs);
@@ -358,9 +404,9 @@ __isl_give isl_map *isl_map_align_params_map_map_and(
 	__isl_take isl_map *map1, __isl_take isl_map *map2,
 	__isl_give isl_map *(*fn)(__isl_take isl_map *map1,
 				    __isl_take isl_map *map2));
-int isl_map_align_params_map_map_and_test(__isl_keep isl_map *map1,
+isl_bool isl_map_align_params_map_map_and_test(__isl_keep isl_map *map1,
 	__isl_keep isl_map *map2,
-	int (*fn)(__isl_keep isl_map *map1, __isl_keep isl_map *map2));
+	isl_bool (*fn)(__isl_keep isl_map *map1, __isl_keep isl_map *map2));
 
 int isl_basic_map_foreach_lexopt(__isl_keep isl_basic_map *bmap, int max,
 	int (*fn)(__isl_take isl_basic_set *dom, __isl_take isl_aff_list *list,
@@ -379,7 +425,7 @@ __isl_give isl_set *isl_set_gist_params_basic_set(__isl_take isl_set *set,
 
 int isl_map_compatible_range(__isl_keep isl_map *map, __isl_keep isl_set *set);
 
-int isl_basic_map_plain_is_single_valued(__isl_keep isl_basic_map *bmap);
+isl_bool isl_basic_map_plain_is_single_valued(__isl_keep isl_basic_map *bmap);
 
 int isl_map_is_set(__isl_keep isl_map *map);
 

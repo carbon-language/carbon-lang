@@ -14,30 +14,30 @@ struct isl_ast_build;
 typedef struct isl_ast_build isl_ast_build;
 
 
-int isl_options_set_ast_build_atomic_upper_bound(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_atomic_upper_bound(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_atomic_upper_bound(isl_ctx *ctx);
 
-int isl_options_set_ast_build_prefer_pdiv(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_prefer_pdiv(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_prefer_pdiv(isl_ctx *ctx);
 
-int isl_options_set_ast_build_exploit_nested_bounds(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_exploit_nested_bounds(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_exploit_nested_bounds(isl_ctx *ctx);
 
-int isl_options_set_ast_build_group_coscheduled(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_group_coscheduled(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_group_coscheduled(isl_ctx *ctx);
 
 #define ISL_AST_BUILD_SEPARATION_BOUNDS_EXPLICIT		0
 #define ISL_AST_BUILD_SEPARATION_BOUNDS_IMPLICIT		1
-int isl_options_set_ast_build_separation_bounds(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_separation_bounds(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_separation_bounds(isl_ctx *ctx);
 
-int isl_options_set_ast_build_scale_strides(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_scale_strides(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_scale_strides(isl_ctx *ctx);
 
-int isl_options_set_ast_build_allow_else(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_allow_else(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_allow_else(isl_ctx *ctx);
 
-int isl_options_set_ast_build_allow_or(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_build_allow_or(isl_ctx *ctx, int val);
 int isl_options_get_ast_build_allow_or(isl_ctx *ctx);
 
 isl_ctx *isl_ast_build_get_ctx(__isl_keep isl_ast_build *build);
@@ -78,7 +78,7 @@ __isl_give isl_ast_build *isl_ast_build_set_after_each_for(
 		__isl_keep isl_ast_build *build, void *user), void *user);
 __isl_give isl_ast_build *isl_ast_build_set_before_each_mark(
 	__isl_take isl_ast_build *build,
-	int (*fn)(__isl_keep isl_id *mark, __isl_keep isl_ast_build *build,
+	isl_stat (*fn)(__isl_keep isl_id *mark, __isl_keep isl_ast_build *build,
 		void *user), void *user);
 __isl_give isl_ast_build *isl_ast_build_set_after_each_mark(
 	__isl_take isl_ast_build *build,

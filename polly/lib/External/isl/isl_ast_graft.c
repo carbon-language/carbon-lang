@@ -258,7 +258,7 @@ struct isl_insert_if_data {
 	isl_ast_build *build;
 };
 
-static int insert_if(__isl_take isl_basic_set *bset, void *user);
+static isl_stat insert_if(__isl_take isl_basic_set *bset, void *user);
 
 /* Insert an if node around "node" testing the condition encoded
  * in guard "guard".
@@ -304,7 +304,7 @@ static __isl_give isl_ast_node *ast_node_insert_if(
 /* Insert an if node around a copy of "data->node" testing the condition
  * encoded in guard "bset" and add the result to data->list.
  */
-static int insert_if(__isl_take isl_basic_set *bset, void *user)
+static isl_stat insert_if(__isl_take isl_basic_set *bset, void *user)
 {
 	struct isl_insert_if_data *data = user;
 	isl_ast_node *node;
@@ -315,7 +315,7 @@ static int insert_if(__isl_take isl_basic_set *bset, void *user)
 	node = ast_node_insert_if(node, set, data->build);
 	data->list = isl_ast_node_list_add(data->list, node);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Insert an if node around graft->node testing the condition encoded

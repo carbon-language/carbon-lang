@@ -21,7 +21,7 @@ __isl_give isl_schedule_node *isl_schedule_node_copy(
 __isl_null isl_schedule_node *isl_schedule_node_free(
 	__isl_take isl_schedule_node *node);
 
-int isl_schedule_node_is_equal(__isl_keep isl_schedule_node *node1,
+isl_bool isl_schedule_node_is_equal(__isl_keep isl_schedule_node *node1,
 	__isl_keep isl_schedule_node *node2);
 
 isl_ctx *isl_schedule_node_get_ctx(__isl_keep isl_schedule_node *node);
@@ -32,21 +32,25 @@ enum isl_schedule_node_type isl_schedule_node_get_parent_type(
 __isl_give isl_schedule *isl_schedule_node_get_schedule(
 	__isl_keep isl_schedule_node *node);
 
-int isl_schedule_node_foreach_descendant(__isl_keep isl_schedule_node *node,
-	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user);
-int isl_schedule_node_foreach_ancestor_top_down(
+isl_stat isl_schedule_node_foreach_descendant_top_down(
 	__isl_keep isl_schedule_node *node,
-	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user);
-__isl_give isl_schedule_node *isl_schedule_node_map_descendant(
+	isl_bool (*fn)(__isl_keep isl_schedule_node *node, void *user),
+	void *user);
+isl_stat isl_schedule_node_foreach_ancestor_top_down(
+	__isl_keep isl_schedule_node *node,
+	isl_stat (*fn)(__isl_keep isl_schedule_node *node, void *user),
+	void *user);
+__isl_give isl_schedule_node *isl_schedule_node_map_descendant_bottom_up(
 	__isl_take isl_schedule_node *node,
 	__isl_give isl_schedule_node *(*fn)(__isl_take isl_schedule_node *node,
 		void *user), void *user);
 
 int isl_schedule_node_get_tree_depth(__isl_keep isl_schedule_node *node);
-int isl_schedule_node_has_parent(__isl_keep isl_schedule_node *node);
-int isl_schedule_node_has_children(__isl_keep isl_schedule_node *node);
-int isl_schedule_node_has_previous_sibling(__isl_keep isl_schedule_node *node);
-int isl_schedule_node_has_next_sibling(__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_has_parent(__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_has_children(__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_has_previous_sibling(
+	__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_has_next_sibling(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_n_children(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_get_child_position(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_get_ancestor_child_position(
@@ -73,7 +77,8 @@ __isl_give isl_schedule_node *isl_schedule_node_previous_sibling(
 __isl_give isl_schedule_node *isl_schedule_node_next_sibling(
 	__isl_take isl_schedule_node *node);
 
-int isl_schedule_node_is_subtree_anchored(__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_is_subtree_anchored(
+	__isl_keep isl_schedule_node *node);
 
 __isl_give isl_schedule_node *isl_schedule_node_group(
 	__isl_take isl_schedule_node *node, __isl_take isl_id *group_id);
@@ -100,17 +105,18 @@ __isl_give isl_union_set *isl_schedule_node_band_get_ast_build_options(
 __isl_give isl_schedule_node *isl_schedule_node_band_set_ast_build_options(
 	__isl_take isl_schedule_node *node, __isl_take isl_union_set *options);
 unsigned isl_schedule_node_band_n_member(__isl_keep isl_schedule_node *node);
-int isl_schedule_node_band_member_get_coincident(
+isl_bool isl_schedule_node_band_member_get_coincident(
 	__isl_keep isl_schedule_node *node, int pos);
 __isl_give isl_schedule_node *isl_schedule_node_band_member_set_coincident(
 	__isl_take isl_schedule_node *node, int pos, int coincident);
-int isl_schedule_node_band_get_permutable(__isl_keep isl_schedule_node *node);
+isl_bool isl_schedule_node_band_get_permutable(
+	__isl_keep isl_schedule_node *node);
 __isl_give isl_schedule_node *isl_schedule_node_band_set_permutable(
 	__isl_take isl_schedule_node *node, int permutable);
 
-int isl_options_set_tile_scale_tile_loops(isl_ctx *ctx, int val);
+isl_stat isl_options_set_tile_scale_tile_loops(isl_ctx *ctx, int val);
 int isl_options_get_tile_scale_tile_loops(isl_ctx *ctx);
-int isl_options_set_tile_shift_point_loops(isl_ctx *ctx, int val);
+isl_stat isl_options_set_tile_shift_point_loops(isl_ctx *ctx, int val);
 int isl_options_get_tile_shift_point_loops(isl_ctx *ctx);
 
 __isl_give isl_schedule_node *isl_schedule_node_band_scale(

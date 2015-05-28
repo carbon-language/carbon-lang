@@ -287,14 +287,14 @@ struct isl_diff_collector {
  * has been removed when we end up in a leaf, we simply pass along
  * the original basic map.
  */
-static int basic_map_collect_diff(__isl_take isl_basic_map *bmap,
+static isl_stat basic_map_collect_diff(__isl_take isl_basic_map *bmap,
 	__isl_take isl_map *map, struct isl_diff_collector *dc)
 {
 	int i;
 	int modified;
 	int level;
 	int init;
-	int empty;
+	isl_bool empty;
 	isl_ctx *ctx;
 	struct isl_tab *tab = NULL;
 	struct isl_tab_undo **snap = NULL;
@@ -307,7 +307,7 @@ static int basic_map_collect_diff(__isl_take isl_basic_map *bmap,
 	if (empty) {
 		isl_basic_map_free(bmap);
 		isl_map_free(map);
-		return empty < 0 ? -1 : 0;
+		return empty < 0 ? isl_stat_error : isl_stat_ok;
 	}
 
 	bmap = isl_basic_map_cow(bmap);
@@ -437,7 +437,7 @@ static int basic_map_collect_diff(__isl_take isl_basic_map *bmap,
 	isl_basic_map_free(bmap);
 	isl_map_free(map);
 
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_tab_free(tab);
 	free(snap);
@@ -451,7 +451,7 @@ error:
 	free(div_map);
 	isl_basic_map_free(bmap);
 	isl_map_free(map);
-	return -1;
+	return isl_stat_error;
 }
 
 /* A diff collector that actually collects all parts of the
@@ -637,7 +637,7 @@ __isl_give isl_map *isl_map_subtract_range(__isl_take isl_map *map,
  */
 struct isl_is_empty_diff_collector {
 	struct isl_diff_collector dc;
-	int empty;
+	isl_bool empty;
 };
 
 /* isl_is_empty_diff_collector callback.
@@ -657,36 +657,38 @@ static int basic_map_is_empty_add(struct isl_diff_collector *dc,
 /* Check if bmap \ map is empty by computing this set difference
  * and breaking off as soon as the difference is known to be non-empty.
  */
-static int basic_map_diff_is_empty(__isl_keep isl_basic_map *bmap,
+static isl_bool basic_map_diff_is_empty(__isl_keep isl_basic_map *bmap,
 	__isl_keep isl_map *map)
 {
-	int r;
+	isl_bool empty;
+	isl_stat r;
 	struct isl_is_empty_diff_collector edc;
 
-	r = isl_basic_map_plain_is_empty(bmap);
-	if (r)
-		return r;
+	empty = isl_basic_map_plain_is_empty(bmap);
+	if (empty)
+		return empty;
 
 	edc.dc.add = &basic_map_is_empty_add;
-	edc.empty = 1;
+	edc.empty = isl_bool_true;
 	r = basic_map_collect_diff(isl_basic_map_copy(bmap),
 				   isl_map_copy(map), &edc.dc);
 	if (!edc.empty)
-		return 0;
+		return isl_bool_false;
 
-	return r < 0 ? -1 : 1;
+	return r < 0 ? isl_bool_error : isl_bool_true;
 }
 
 /* Check if map1 \ map2 is empty by checking if the set difference is empty
  * for each of the basic maps in map1.
  */
-static int map_diff_is_empty(__isl_keep isl_map *map1, __isl_keep isl_map *map2)
+static isl_bool map_diff_is_empty(__isl_keep isl_map *map1,
+	__isl_keep isl_map *map2)
 {
 	int i;
-	int is_empty = 1;
+	isl_bool is_empty = isl_bool_true;
 
 	if (!map1 || !map2)
-		return -1;
+		return isl_bool_error;
 	
 	for (i = 0; i < map1->n; ++i) {
 		is_empty = basic_map_diff_is_empty(map1->p[i], map2);
@@ -775,26 +777,27 @@ error:
 	return NULL;
 }
 
-/* Return 1 if the singleton map "map1" is a subset of "map2",
+/* Return isl_bool_true if the singleton map "map1" is a subset of "map2",
  * i.e., if the single element of "map1" is also an element of "map2".
  * Assumes "map2" has known divs.
  */
-static int map_is_singleton_subset(__isl_keep isl_map *map1,
+static isl_bool map_is_singleton_subset(__isl_keep isl_map *map1,
 	__isl_keep isl_map *map2)
 {
 	int i;
-	int is_subset = 0;
+	isl_bool is_subset = isl_bool_false;
 	struct isl_point *point;
 
 	if (!map1 || !map2)
-		return -1;
+		return isl_bool_error;
 	if (map1->n != 1)
-		isl_die(isl_map_get_ctx(map1), isl_error_internal,
-			"expecting single-disjunct input", return -1);
+		isl_die(isl_map_get_ctx(map1), isl_error_invalid,
+			"expecting single-disjunct input",
+			return isl_bool_error);
 
 	point = singleton_extract_point(map1->p[0]);
 	if (!point)
-		return -1;
+		return isl_bool_error;
 
 	for (i = 0; i < map2->n; ++i) {
 		is_subset = isl_basic_map_contains_point(map2->p[i], point);
@@ -806,39 +809,40 @@ static int map_is_singleton_subset(__isl_keep isl_map *map1,
 	return is_subset;
 }
 
-static int map_is_subset(__isl_keep isl_map *map1, __isl_keep isl_map *map2)
+static isl_bool map_is_subset(__isl_keep isl_map *map1,
+	__isl_keep isl_map *map2)
 {
-	int is_subset = 0;
-	int empty;
+	isl_bool is_subset = isl_bool_false;
+	isl_bool empty;
 	int rat1, rat2;
 
 	if (!map1 || !map2)
-		return -1;
+		return isl_bool_error;
 
 	if (!isl_map_has_equal_space(map1, map2))
-		return 0;
+		return isl_bool_false;
 
 	empty = isl_map_is_empty(map1);
 	if (empty < 0)
-		return -1;
+		return isl_bool_error;
 	if (empty)
-		return 1;
+		return isl_bool_true;
 
 	empty = isl_map_is_empty(map2);
 	if (empty < 0)
-		return -1;
+		return isl_bool_error;
 	if (empty)
-		return 0;
+		return isl_bool_false;
 
 	rat1 = isl_map_has_rational(map1);
 	rat2 = isl_map_has_rational(map2);
 	if (rat1 < 0 || rat2 < 0)
-		return -1;
+		return isl_bool_error;
 	if (rat1 && !rat2)
-		return 0;
+		return isl_bool_false;
 
 	if (isl_map_plain_is_universe(map2))
-		return 1;
+		return isl_bool_true;
 
 	map2 = isl_map_compute_divs(isl_map_copy(map2));
 	if (isl_map_plain_is_singleton(map1)) {
@@ -852,13 +856,13 @@ static int map_is_subset(__isl_keep isl_map *map1, __isl_keep isl_map *map2)
 	return is_subset;
 }
 
-int isl_map_is_subset(__isl_keep isl_map *map1, __isl_keep isl_map *map2)
+isl_bool isl_map_is_subset(__isl_keep isl_map *map1, __isl_keep isl_map *map2)
 {
 	return isl_map_align_params_map_map_and_test(map1, map2,
 							&map_is_subset);
 }
 
-int isl_set_is_subset(struct isl_set *set1, struct isl_set *set2)
+isl_bool isl_set_is_subset(__isl_keep isl_set *set1, __isl_keep isl_set *set2)
 {
 	return isl_map_is_subset(
 			(struct isl_map *)set1, (struct isl_map *)set2);

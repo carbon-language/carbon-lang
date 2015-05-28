@@ -326,7 +326,7 @@ char* GMPZAPI(get_str)(char *str, int radix, mp_int op) {
   CHECK(mp_int_to_string(op, r, str, len));
 
   /* Change case to match gmp */
-  for (i = 0; i < len; i++)
+  for (i = 0; i < len - 1; i++)
     if (radix < 0)
       str[i] = toupper(str[i]);
     else
@@ -832,6 +832,7 @@ void GMPZAPI(import)(mp_int rop, size_t count, int order, size_t size, int endia
 
   /* Copy to destination */
   mp_int_copy(tmp, rop);
+  mp_int_clear(tmp);
 }
 
 /* gmp: mpz_sizeinbase */

@@ -17,27 +17,27 @@ extern "C" {
 struct isl_schedule_constraints;
 typedef struct isl_schedule_constraints isl_schedule_constraints;
 
-int isl_options_set_schedule_max_coefficient(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_max_coefficient(isl_ctx *ctx, int val);
 int isl_options_get_schedule_max_coefficient(isl_ctx *ctx);
 
-int isl_options_set_schedule_max_constant_term(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_max_constant_term(isl_ctx *ctx, int val);
 int isl_options_get_schedule_max_constant_term(isl_ctx *ctx);
 
-int isl_options_set_schedule_maximize_band_depth(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_maximize_band_depth(isl_ctx *ctx, int val);
 int isl_options_get_schedule_maximize_band_depth(isl_ctx *ctx);
 
-int isl_options_set_schedule_outer_coincidence(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_outer_coincidence(isl_ctx *ctx, int val);
 int isl_options_get_schedule_outer_coincidence(isl_ctx *ctx);
 
-int isl_options_set_schedule_split_scaled(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_split_scaled(isl_ctx *ctx, int val);
 int isl_options_get_schedule_split_scaled(isl_ctx *ctx);
 
-int isl_options_set_schedule_separate_components(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_separate_components(isl_ctx *ctx, int val);
 int isl_options_get_schedule_separate_components(isl_ctx *ctx);
 
 #define		ISL_SCHEDULE_FUSE_MAX			0
 #define		ISL_SCHEDULE_FUSE_MIN			1
-int isl_options_set_schedule_fuse(isl_ctx *ctx, int val);
+isl_stat isl_options_set_schedule_fuse(isl_ctx *ctx, int val);
 int isl_options_get_schedule_fuse(isl_ctx *ctx);
 
 __isl_give isl_schedule_constraints *isl_schedule_constraints_copy(
@@ -93,7 +93,7 @@ __isl_null isl_schedule *isl_schedule_free(__isl_take isl_schedule *sched);
 __isl_give isl_union_map *isl_schedule_get_map(__isl_keep isl_schedule *sched);
 
 isl_ctx *isl_schedule_get_ctx(__isl_keep isl_schedule *sched);
-int isl_schedule_plain_is_equal(__isl_keep isl_schedule *schedule1,
+isl_bool isl_schedule_plain_is_equal(__isl_keep isl_schedule *schedule1,
 	__isl_keep isl_schedule *schedule2);
 
 __isl_give isl_schedule_node *isl_schedule_get_root(
@@ -101,9 +101,11 @@ __isl_give isl_schedule_node *isl_schedule_get_root(
 __isl_give isl_union_set *isl_schedule_get_domain(
 	__isl_keep isl_schedule *schedule);
 
-int isl_schedule_foreach_schedule_node(__isl_keep isl_schedule *sched,
-	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user);
-__isl_give isl_schedule *isl_schedule_map_schedule_node(
+isl_stat isl_schedule_foreach_schedule_node_top_down(
+	__isl_keep isl_schedule *sched,
+	isl_bool (*fn)(__isl_keep isl_schedule_node *node, void *user),
+	void *user);
+__isl_give isl_schedule *isl_schedule_map_schedule_node_bottom_up(
 	__isl_take isl_schedule *schedule,
 	__isl_give isl_schedule_node *(*fn)(
 		__isl_take isl_schedule_node *node, void *user), void *user);

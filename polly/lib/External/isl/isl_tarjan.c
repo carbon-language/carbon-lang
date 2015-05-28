@@ -58,8 +58,8 @@ error:
 /* Perform Tarjan's algorithm for computing the strongly connected components
  * in the graph with g->len nodes and with edges defined by "follows".
  */
-static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
-	int (*follows)(int i, int j, void *user), void *user)
+static isl_stat isl_tarjan_components(struct isl_tarjan_graph *g, int i,
+	isl_bool (*follows)(int i, int j, void *user), void *user)
 {
 	int j;
 
@@ -70,7 +70,7 @@ static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
 	g->stack[g->sp++] = i;
 
 	for (j = g->len - 1; j >= 0; --j) {
-		int f;
+		isl_bool f;
 
 		if (j == i)
 			continue;
@@ -81,7 +81,7 @@ static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
 
 		f = follows(i, j, user);
 		if (f < 0)
-			return -1;
+			return isl_stat_error;
 		if (!f)
 			continue;
 
@@ -94,7 +94,7 @@ static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
 	}
 
 	if (g->node[i].index != g->node[i].min_index)
-		return 0;
+		return isl_stat_ok;
 
 	do {
 		j = g->stack[--g->sp];
@@ -103,7 +103,7 @@ static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
 	} while (j != i);
 	g->order[g->op++] = -1;
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Decompose the graph with "len" nodes and edges defined by "follows"
@@ -116,7 +116,7 @@ static int isl_tarjan_components(struct isl_tarjan_graph *g, int i,
  * in the result.
  */
 struct isl_tarjan_graph *isl_tarjan_graph_init(isl_ctx *ctx, int len,
-	int (*follows)(int i, int j, void *user), void *user)
+	isl_bool (*follows)(int i, int j, void *user), void *user)
 {
 	int i;
 	struct isl_tarjan_graph *g = NULL;

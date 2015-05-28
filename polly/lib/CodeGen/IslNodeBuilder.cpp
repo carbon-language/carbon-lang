@@ -183,7 +183,7 @@ static int findValuesInBlock(struct FindValuesUser &User, const ScopStmt *Stmt,
 /// This function extracts a ScopStmt from a given isl_set and computes the
 /// Values this statement depends on as well as a set of SCEV expressions that
 /// need to be synthesized when generating code for this statment.
-static int findValuesInStmt(isl_set *Set, void *UserPtr) {
+static isl_stat findValuesInStmt(isl_set *Set, void *UserPtr) {
   isl_id *Id = isl_set_get_tuple_id(Set);
   struct FindValuesUser &User = *static_cast<struct FindValuesUser *>(UserPtr);
   const ScopStmt *Stmt = static_cast<const ScopStmt *>(isl_id_get_user(Id));
@@ -199,7 +199,7 @@ static int findValuesInStmt(isl_set *Set, void *UserPtr) {
 
   isl_id_free(Id);
   isl_set_free(Set);
-  return 0;
+  return isl_stat_ok;
 }
 
 void IslNodeBuilder::getReferencesInSubtree(__isl_keep isl_ast_node *For,

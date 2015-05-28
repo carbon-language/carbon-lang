@@ -43,8 +43,6 @@ static int s_ptab[] = {
   907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997
 };
 
-/* {{{ mp_int_is_prime(z) */
-
 /* Test whether z is likely to be prime:
    MP_TRUE  means it is probably prime
    MP_FALSE means it is definitely composite
@@ -90,10 +88,6 @@ mp_result mp_int_is_prime(mp_int z)
   return MP_TRUE;
 }
 
-/* }}} */
-
-/* {{{ mp_int_find_prime(z) */
-
 /* Find the first apparent prime in ascending order from z */
 mp_result mp_int_find_prime(mp_int z)
 {
@@ -110,7 +104,5 @@ mp_result mp_int_find_prime(mp_int z)
 
   return res;
 }
-
-/* }}} */
 
 /* Here there be dragons */

@@ -32,8 +32,6 @@
 static mp_result s_rsa_transform(mp_int msg, mp_int exp, 
 				 mp_int mod, mp_int out);
 
-/* {{{ rsa_i2osp(z, out, len) */
-
 /* Convert integer to octet string, per PKCS#1 v.2.1 */
 mp_result rsa_i2osp(mp_int z, unsigned char *out, int len)
 {
@@ -50,19 +48,11 @@ mp_result rsa_i2osp(mp_int z, unsigned char *out, int len)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ rsa_os2ip(z, in, len) */
-
 /* Convert octet string to integer, per PKCS#1 v.2.1 */
 mp_result rsa_os2ip(mp_int z, unsigned char *in, int len)
 {
   return mp_int_read_binary(z, in, len);
 }
-
-/* }}} */
-
-/* {{{ rsa_rsaep(msg, exp, mod, cipher) */
 
 /* Primitive RSA encryption operation */
 mp_result rsa_rsaep(mp_int msg, mp_int exp, mp_int mod, mp_int cipher)
@@ -70,19 +60,11 @@ mp_result rsa_rsaep(mp_int msg, mp_int exp, mp_int mod, mp_int cipher)
   return s_rsa_transform(msg, exp, mod, cipher);
 }
 
-/* }}} */
-
-/* {{{ rsa_rsadp(cipher, exp, mod, msg) */
-
 /* Primitive RSA decryption operation */
 mp_result rsa_rsadp(mp_int cipher, mp_int exp, mp_int mod, mp_int msg)
 {
   return s_rsa_transform(cipher, exp, mod, msg);
 }
-
-/* }}} */
-
-/* {{{ rsa_rsasp(msg, exp, mod, signature) */
 
 /* Primitive RSA signing operation */
 mp_result rsa_rsasp(mp_int msg, mp_int exp, mp_int mod, mp_int signature)
@@ -90,19 +72,11 @@ mp_result rsa_rsasp(mp_int msg, mp_int exp, mp_int mod, mp_int signature)
   return s_rsa_transform(msg, exp, mod, signature);
 }
 
-/* }}} */
-
-/* {{{ rsa_rsavp(signature, exp, mod, msg) */
-
 /* Primitive RSA verification operation */
 mp_result rsa_rsavp(mp_int signature, mp_int exp, mp_int mod, mp_int msg)
 {
   return s_rsa_transform(signature, exp, mod, msg);
 }
-
-/* }}} */
-
-/* {{{ rsa_max_message_len(mod) */
 
 /* Compute the maximum length in bytes a message can have using PKCS#1
    v.1.5 encoding with the given modulus */
@@ -116,10 +90,6 @@ int       rsa_max_message_len(mp_int mod)
   else
     return num_bytes - 11;
 }
-
-/* }}} */
-
-/* {{{ rsa_pkcs1v15_encode(buf, msg_len, buf_len, tag, filler) */
 
 mp_result rsa_pkcs1v15_encode(unsigned char *buf, int msg_len, 
 			      int buf_len, int tag, random_f filler)
@@ -152,10 +122,6 @@ mp_result rsa_pkcs1v15_encode(unsigned char *buf, int msg_len,
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ rsa_pkcs1v15_decode(buf, buf_len, *msg_len) */
-
 mp_result rsa_pkcs1v15_decode(unsigned char *buf, int buf_len, 
 			      int tag, int *msg_len)
 {
@@ -184,10 +150,6 @@ mp_result rsa_pkcs1v15_decode(unsigned char *buf, int buf_len,
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ s_rsa_transform(msg, exp, mod, out) */
-
 static mp_result s_rsa_transform(mp_int msg, mp_int exp, 
 				 mp_int mod, mp_int out)
 {
@@ -197,7 +159,5 @@ static mp_result s_rsa_transform(mp_int msg, mp_int exp,
 
   return mp_int_exptmod(msg, exp, mod, out);
 }
-
-/* }}} */
 
 /* Here there be dragons */

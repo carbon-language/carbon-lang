@@ -14,7 +14,7 @@ extern "C" {
 
 unsigned isl_union_map_dim(__isl_keep isl_union_map *umap,
 	enum isl_dim_type type);
-int isl_union_map_involves_dims(__isl_keep isl_union_map *umap,
+isl_bool isl_union_map_involves_dims(__isl_keep isl_union_map *umap,
 	enum isl_dim_type type, unsigned first, unsigned n);
 __isl_give isl_id *isl_union_map_get_dim_id(__isl_keep isl_union_map *umap,
 	enum isl_dim_type type, unsigned pos);
@@ -178,31 +178,31 @@ __isl_give isl_union_map *isl_union_map_project_out(
 	enum isl_dim_type type, unsigned first, unsigned n);
 
 __isl_export
-int isl_union_map_is_empty(__isl_keep isl_union_map *umap);
+isl_bool isl_union_map_is_empty(__isl_keep isl_union_map *umap);
 __isl_export
-int isl_union_map_is_single_valued(__isl_keep isl_union_map *umap);
-int isl_union_map_plain_is_injective(__isl_keep isl_union_map *umap);
+isl_bool isl_union_map_is_single_valued(__isl_keep isl_union_map *umap);
+isl_bool isl_union_map_plain_is_injective(__isl_keep isl_union_map *umap);
 __isl_export
-int isl_union_map_is_injective(__isl_keep isl_union_map *umap);
+isl_bool isl_union_map_is_injective(__isl_keep isl_union_map *umap);
 __isl_export
-int isl_union_map_is_bijective(__isl_keep isl_union_map *umap);
+isl_bool isl_union_map_is_bijective(__isl_keep isl_union_map *umap);
 
 __isl_export
-int isl_union_map_is_subset(__isl_keep isl_union_map *umap1,
+isl_bool isl_union_map_is_subset(__isl_keep isl_union_map *umap1,
 	__isl_keep isl_union_map *umap2);
 __isl_export
-int isl_union_map_is_equal(__isl_keep isl_union_map *umap1,
+isl_bool isl_union_map_is_equal(__isl_keep isl_union_map *umap1,
 	__isl_keep isl_union_map *umap2);
-int isl_union_map_is_disjoint(__isl_keep isl_union_map *umap1,
+isl_bool isl_union_map_is_disjoint(__isl_keep isl_union_map *umap1,
 	__isl_keep isl_union_map *umap2);
 __isl_export
-int isl_union_map_is_strict_subset(__isl_keep isl_union_map *umap1,
+isl_bool isl_union_map_is_strict_subset(__isl_keep isl_union_map *umap1,
 	__isl_keep isl_union_map *umap2);
 
 int isl_union_map_n_map(__isl_keep isl_union_map *umap);
 __isl_export
-int isl_union_map_foreach_map(__isl_keep isl_union_map *umap,
-	int (*fn)(__isl_take isl_map *map, void *user), void *user);
+isl_stat isl_union_map_foreach_map(__isl_keep isl_union_map *umap,
+	isl_stat (*fn)(__isl_take isl_map *map, void *user), void *user);
 __isl_give int isl_union_map_contains(__isl_keep isl_union_map *umap,
 	__isl_keep isl_space *dim);
 __isl_give isl_map *isl_union_map_extract_map(__isl_keep isl_union_map *umap,

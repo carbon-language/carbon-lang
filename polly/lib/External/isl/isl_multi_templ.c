@@ -134,25 +134,25 @@ __isl_null MULTI(BASE) *FN(MULTI(BASE),free)(__isl_take MULTI(BASE) *multi)
  * in the given range or if any of these dimensions appear
  * with non-zero coefficients in any of the integer divisions involved.
  */
-int FN(MULTI(BASE),involves_dims)(__isl_keep MULTI(BASE) *multi,
+isl_bool FN(MULTI(BASE),involves_dims)(__isl_keep MULTI(BASE) *multi,
 	enum isl_dim_type type, unsigned first, unsigned n)
 {
 	int i;
 
 	if (!multi)
-		return -1;
+		return isl_bool_error;
 	if (multi->n == 0 || n == 0)
-		return 0;
+		return isl_bool_false;
 
 	for (i = 0; i < multi->n; ++i) {
-		int involves;
+		isl_bool involves;
 
 		involves = FN(EL,involves_dims)(multi->p[i], type, first, n);
 		if (involves < 0 || involves)
 			return involves;
 	}
 
-	return 0;
+	return isl_bool_false;
 }
 
 __isl_give MULTI(BASE) *FN(MULTI(BASE),insert_dims)(
@@ -256,10 +256,12 @@ const char *FN(MULTI(BASE),get_tuple_name)(__isl_keep MULTI(BASE) *multi,
 
 /* Does the specified tuple have an id?
  */
-int FN(MULTI(BASE),has_tuple_id)(__isl_keep MULTI(BASE) *multi,
+isl_bool FN(MULTI(BASE),has_tuple_id)(__isl_keep MULTI(BASE) *multi,
 	enum isl_dim_type type)
 {
-	return multi ? isl_space_has_tuple_id(multi->space, type) : -1;
+	if (!multi)
+		return isl_bool_error;
+	return isl_space_has_tuple_id(multi->space, type);
 }
 
 /* Return the id of the specified tuple.
@@ -809,10 +811,10 @@ __isl_give MULTI(BASE) *FN(MULTI(BASE),range_product)(
 
 /* Is the range of "multi" a wrapped relation?
  */
-int FN(MULTI(BASE),range_is_wrapping)(__isl_keep MULTI(BASE) *multi)
+isl_bool FN(MULTI(BASE),range_is_wrapping)(__isl_keep MULTI(BASE) *multi)
 {
 	if (!multi)
-		return -1;
+		return isl_bool_error;
 	return isl_space_range_is_wrapping(multi->space);
 }
 
@@ -1374,16 +1376,16 @@ __isl_give MULTI(BASE) *FN(MULTI(BASE),from_range)(
 
 /* Are "multi1" and "multi2" obviously equal?
  */
-int FN(MULTI(BASE),plain_is_equal)(__isl_keep MULTI(BASE) *multi1,
+isl_bool FN(MULTI(BASE),plain_is_equal)(__isl_keep MULTI(BASE) *multi1,
 	__isl_keep MULTI(BASE) *multi2)
 {
 	int i;
-	int equal;
+	isl_bool equal;
 
 	if (!multi1 || !multi2)
-		return -1;
+		return isl_bool_error;
 	if (multi1->n != multi2->n)
-		return 0;
+		return isl_bool_false;
 	equal = isl_space_is_equal(multi1->space, multi2->space);
 	if (equal < 0 || !equal)
 		return equal;
@@ -1394,7 +1396,7 @@ int FN(MULTI(BASE),plain_is_equal)(__isl_keep MULTI(BASE) *multi1,
 			return equal;
 	}
 
-	return 1;
+	return isl_bool_true;
 }
 
 #ifndef NO_DOMAIN

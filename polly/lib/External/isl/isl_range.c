@@ -17,7 +17,7 @@ struct range_data {
 	isl_pw_qpolynomial_fold *pwf_tight;
 };
 
-static int propagate_on_domain(__isl_take isl_basic_set *bset,
+static isl_stat propagate_on_domain(__isl_take isl_basic_set *bset,
 	__isl_take isl_qpolynomial *poly, struct range_data *data);
 
 /* Check whether the polynomial "poly" has sign "sign" over "bset",
@@ -177,7 +177,7 @@ struct isl_fixed_sign_data {
  * and variables in data->signs.  The integer divisions, if
  * any, are assumed to be non-negative.
  */
-static int collect_fixed_sign_terms(__isl_take isl_term *term, void *user)
+static isl_stat collect_fixed_sign_terms(__isl_take isl_term *term, void *user)
 {
 	struct isl_fixed_sign_data *data = (struct isl_fixed_sign_data *)user;
 	isl_int n;
@@ -187,7 +187,7 @@ static int collect_fixed_sign_terms(__isl_take isl_term *term, void *user)
 	unsigned nvar;
 
 	if (!term)
-		return -1;
+		return isl_stat_error;
 
 	nparam = isl_term_dim(term, isl_dim_param);
 	nvar = isl_term_dim(term, isl_dim_set);
@@ -219,7 +219,7 @@ static int collect_fixed_sign_terms(__isl_take isl_term *term, void *user)
 
 	isl_int_clear(n);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Construct and return a polynomial that consists of the terms
@@ -247,7 +247,7 @@ error:
 /* Helper function to add a guarded polynomial to either pwf_tight or pwf,
  * depending on whether the result has been determined to be tight.
  */
-static int add_guarded_poly(__isl_take isl_basic_set *bset,
+static isl_stat add_guarded_poly(__isl_take isl_basic_set *bset,
 	__isl_take isl_qpolynomial *poly, struct range_data *data)
 {
 	enum isl_fold type = data->sign < 0 ? isl_fold_min : isl_fold_max;
@@ -267,7 +267,7 @@ static int add_guarded_poly(__isl_take isl_basic_set *bset,
 	else
 		data->pwf = isl_pw_qpolynomial_fold_fold(data->pwf, pwf);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Given a lower and upper bound on the final variable and constraints
@@ -285,14 +285,14 @@ static int add_guarded_poly(__isl_take isl_basic_set *bset,
  * If all variables have been eliminated, then record the result.
  * Ohterwise, recurse on the next variable.
  */
-static int propagate_on_bound_pair(__isl_take isl_constraint *lower,
+static isl_stat propagate_on_bound_pair(__isl_take isl_constraint *lower,
 	__isl_take isl_constraint *upper, __isl_take isl_basic_set *bset,
 	void *user)
 {
 	struct range_data *data = (struct range_data *)user;
 	int save_tight = data->tight;
 	isl_qpolynomial *poly;
-	int r;
+	isl_stat r;
 	unsigned nvar;
 
 	nvar = isl_basic_set_dim(bset, isl_dim_set);
@@ -354,7 +354,7 @@ static int propagate_on_bound_pair(__isl_take isl_constraint *lower,
 /* Recursively perform range propagation on the polynomial "poly"
  * defined over the basic set "bset" and collect the results in "data".
  */
-static int propagate_on_domain(__isl_take isl_basic_set *bset,
+static isl_stat propagate_on_domain(__isl_take isl_basic_set *bset,
 	__isl_take isl_qpolynomial *poly, struct range_data *data)
 {
 	isl_ctx *ctx;
@@ -392,22 +392,23 @@ static int propagate_on_domain(__isl_take isl_basic_set *bset,
 	data->monotonicity = save_monotonicity;
 	data->poly = save_poly;
 
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_basic_set_free(bset);
 	isl_qpolynomial_free(poly);
 	data->monotonicity = save_monotonicity;
 	data->poly = save_poly;
-	return -1;
+	return isl_stat_error;
 }
 
-static int basic_guarded_poly_bound(__isl_take isl_basic_set *bset, void *user)
+static isl_stat basic_guarded_poly_bound(__isl_take isl_basic_set *bset,
+	void *user)
 {
 	struct range_data *data = (struct range_data *)user;
 	isl_ctx *ctx;
 	unsigned nparam = isl_basic_set_dim(bset, isl_dim_param);
 	unsigned dim = isl_basic_set_dim(bset, isl_dim_set);
-	int r;
+	isl_stat r;
 
 	data->signs = NULL;
 
@@ -430,7 +431,7 @@ static int basic_guarded_poly_bound(__isl_take isl_basic_set *bset, void *user)
 error:
 	free(data->signs);
 	isl_basic_set_free(bset);
-	return -1;
+	return isl_stat_error;
 }
 
 static int qpolynomial_bound_on_domain_range(__isl_take isl_basic_set *bset,

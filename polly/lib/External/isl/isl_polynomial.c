@@ -67,24 +67,24 @@ __isl_keep struct isl_upoly_rec *isl_upoly_as_rec(__isl_keep struct isl_upoly *u
 	return (struct isl_upoly_rec *)up;
 }
 
-int isl_upoly_is_equal(__isl_keep struct isl_upoly *up1,
+isl_bool isl_upoly_is_equal(__isl_keep struct isl_upoly *up1,
 	__isl_keep struct isl_upoly *up2)
 {
 	int i;
 	struct isl_upoly_rec *rec1, *rec2;
 
 	if (!up1 || !up2)
-		return -1;
+		return isl_bool_error;
 	if (up1 == up2)
-		return 1;
+		return isl_bool_true;
 	if (up1->var != up2->var)
-		return 0;
+		return isl_bool_false;
 	if (isl_upoly_is_cst(up1)) {
 		struct isl_upoly_cst *cst1, *cst2;
 		cst1 = isl_upoly_as_cst(up1);
 		cst2 = isl_upoly_as_cst(up2);
 		if (!cst1 || !cst2)
-			return -1;
+			return isl_bool_error;
 		return isl_int_eq(cst1->n, cst2->n) &&
 		       isl_int_eq(cst1->d, cst2->d);
 	}
@@ -92,18 +92,18 @@ int isl_upoly_is_equal(__isl_keep struct isl_upoly *up1,
 	rec1 = isl_upoly_as_rec(up1);
 	rec2 = isl_upoly_as_rec(up2);
 	if (!rec1 || !rec2)
-		return -1;
+		return isl_bool_error;
 
 	if (rec1->n != rec2->n)
-		return 0;
+		return isl_bool_false;
 
 	for (i = 0; i < rec1->n; ++i) {
-		int eq = isl_upoly_is_equal(rec1->p[i], rec2->p[i]);
+		isl_bool eq = isl_upoly_is_equal(rec1->p[i], rec2->p[i]);
 		if (eq < 0 || !eq)
 			return eq;
 	}
 
-	return 1;
+	return isl_bool_true;
 }
 
 int isl_upoly_is_zero(__isl_keep struct isl_upoly *up)
@@ -412,29 +412,29 @@ unsigned isl_qpolynomial_dim(__isl_keep isl_qpolynomial *qp,
 	return isl_space_dim(qp->dim, type);
 }
 
-int isl_qpolynomial_is_zero(__isl_keep isl_qpolynomial *qp)
+isl_bool isl_qpolynomial_is_zero(__isl_keep isl_qpolynomial *qp)
 {
-	return qp ? isl_upoly_is_zero(qp->upoly) : -1;
+	return qp ? isl_upoly_is_zero(qp->upoly) : isl_bool_error;
 }
 
-int isl_qpolynomial_is_one(__isl_keep isl_qpolynomial *qp)
+isl_bool isl_qpolynomial_is_one(__isl_keep isl_qpolynomial *qp)
 {
-	return qp ? isl_upoly_is_one(qp->upoly) : -1;
+	return qp ? isl_upoly_is_one(qp->upoly) : isl_bool_error;
 }
 
-int isl_qpolynomial_is_nan(__isl_keep isl_qpolynomial *qp)
+isl_bool isl_qpolynomial_is_nan(__isl_keep isl_qpolynomial *qp)
 {
-	return qp ? isl_upoly_is_nan(qp->upoly) : -1;
+	return qp ? isl_upoly_is_nan(qp->upoly) : isl_bool_error;
 }
 
-int isl_qpolynomial_is_infty(__isl_keep isl_qpolynomial *qp)
+isl_bool isl_qpolynomial_is_infty(__isl_keep isl_qpolynomial *qp)
 {
-	return qp ? isl_upoly_is_infty(qp->upoly) : -1;
+	return qp ? isl_upoly_is_infty(qp->upoly) : isl_bool_error;
 }
 
-int isl_qpolynomial_is_neginfty(__isl_keep isl_qpolynomial *qp)
+isl_bool isl_qpolynomial_is_neginfty(__isl_keep isl_qpolynomial *qp)
 {
-	return qp ? isl_upoly_is_neginfty(qp->upoly) : -1;
+	return qp ? isl_upoly_is_neginfty(qp->upoly) : isl_bool_error;
 }
 
 int isl_qpolynomial_sgn(__isl_keep isl_qpolynomial *qp)
@@ -1896,16 +1896,16 @@ error:
  *
  * NaN is not equal to anything, not even to another NaN.
  */
-int isl_qpolynomial_plain_is_equal(__isl_keep isl_qpolynomial *qp1,
+isl_bool isl_qpolynomial_plain_is_equal(__isl_keep isl_qpolynomial *qp1,
 	__isl_keep isl_qpolynomial *qp2)
 {
-	int equal;
+	isl_bool equal;
 
 	if (!qp1 || !qp2)
-		return -1;
+		return isl_bool_error;
 
 	if (isl_qpolynomial_is_nan(qp1) || isl_qpolynomial_is_nan(qp2))
-		return 0;
+		return isl_bool_false;
 
 	equal = isl_space_is_equal(qp1->dim, qp2->dim);
 	if (equal < 0 || !equal)
@@ -3740,7 +3740,7 @@ __isl_give isl_aff *isl_term_get_div(__isl_keep isl_term *term, unsigned pos)
 }
 
 __isl_give isl_term *isl_upoly_foreach_term(__isl_keep struct isl_upoly *up,
-	int (*fn)(__isl_take isl_term *term, void *user),
+	isl_stat (*fn)(__isl_take isl_term *term, void *user),
 	__isl_take isl_term *term, void *user)
 {
 	int i;
@@ -3792,23 +3792,23 @@ error:
 	return NULL;
 }
 
-int isl_qpolynomial_foreach_term(__isl_keep isl_qpolynomial *qp,
-	int (*fn)(__isl_take isl_term *term, void *user), void *user)
+isl_stat isl_qpolynomial_foreach_term(__isl_keep isl_qpolynomial *qp,
+	isl_stat (*fn)(__isl_take isl_term *term, void *user), void *user)
 {
 	isl_term *term;
 
 	if (!qp)
-		return -1;
+		return isl_stat_error;
 
 	term = isl_term_alloc(isl_space_copy(qp->dim), isl_mat_copy(qp->div));
 	if (!term)
-		return -1;
+		return isl_stat_error;
 
 	term = isl_upoly_foreach_term(qp->upoly, fn, term, user);
 
 	isl_term_free(term);
 
-	return term ? 0 : -1;
+	return term ? isl_stat_ok : isl_stat_error;
 }
 
 __isl_give isl_qpolynomial *isl_qpolynomial_from_term(__isl_take isl_term *term)
@@ -3957,7 +3957,7 @@ struct isl_opt_data {
 	int max;
 };
 
-static int opt_fn(__isl_take isl_point *pnt, void *user)
+static isl_stat opt_fn(__isl_take isl_point *pnt, void *user)
 {
 	struct isl_opt_data *data = (struct isl_opt_data *)user;
 	isl_val *val;
@@ -3972,7 +3972,7 @@ static int opt_fn(__isl_take isl_point *pnt, void *user)
 		data->opt = isl_val_min(data->opt, val);
 	}
 
-	return 0;
+	return isl_stat_ok;
 }
 
 __isl_give isl_val *isl_qpolynomial_opt_on_domain(
@@ -4217,14 +4217,14 @@ error:
 	return NULL;
 }
 
-static int split_periods(__isl_take isl_set *set,
+static isl_stat split_periods(__isl_take isl_set *set,
 	__isl_take isl_qpolynomial *qp, void *user);
 
 /* Create a slice of the domain "set" such that integer division "div"
  * has the fixed value "v" and add the results to data->res,
  * replacing the integer division by "v" in "qp".
  */
-static int set_div(__isl_take isl_set *set,
+static isl_stat set_div(__isl_take isl_set *set,
 	__isl_take isl_qpolynomial *qp, int div, isl_int v,
 	struct isl_split_periods_data *data)
 {
@@ -4263,7 +4263,7 @@ error:
  * has a fixed value (ranging from "min" to "max") on each slice
  * and add the results to data->res.
  */
-static int split_div(__isl_take isl_set *set,
+static isl_stat split_div(__isl_take isl_set *set,
 	__isl_take isl_qpolynomial *qp, int div, isl_int min, isl_int max,
 	struct isl_split_periods_data *data)
 {
@@ -4276,11 +4276,11 @@ static int split_div(__isl_take isl_set *set,
 	}
 	isl_set_free(set);
 	isl_qpolynomial_free(qp);
-	return 0;
+	return isl_stat_ok;
 error:
 	isl_set_free(set);
 	isl_qpolynomial_free(qp);
-	return -1;
+	return isl_stat_error;
 }
 
 /* If "qp" refers to any integer division
@@ -4289,7 +4289,7 @@ error:
  * Add the results (or the original if no splitting occurs)
  * to data->res.
  */
-static int split_periods(__isl_take isl_set *set,
+static isl_stat split_periods(__isl_take isl_set *set,
 	__isl_take isl_qpolynomial *qp, void *user)
 {
 	int i;
@@ -4297,7 +4297,7 @@ static int split_periods(__isl_take isl_set *set,
 	struct isl_split_periods_data *data;
 	isl_int min, max;
 	int total;
-	int r = 0;
+	isl_stat r = isl_stat_ok;
 
 	data = (struct isl_split_periods_data *)user;
 
@@ -4307,7 +4307,7 @@ static int split_periods(__isl_take isl_set *set,
 	if (qp->div->n_row == 0) {
 		pwqp = isl_pw_qpolynomial_alloc(set, qp);
 		data->res = isl_pw_qpolynomial_add_disjoint(data->res, pwqp);
-		return 0;
+		return isl_stat_ok;
 	}
 
 	isl_int_init(min);
@@ -4360,7 +4360,7 @@ error2:
 error:
 	isl_set_free(set);
 	isl_qpolynomial_free(qp);
-	return -1;
+	return isl_stat_error;
 }
 
 /* If any quasi-polynomial in pwqp refers to any integer division
@@ -4769,14 +4769,14 @@ error:
 	return NULL;
 }
 
-static int poly_entry(void **entry, void *user)
+static isl_stat poly_entry(void **entry, void *user)
 {
 	int *sign = user;
 	isl_pw_qpolynomial **pwqp = (isl_pw_qpolynomial **)entry;
 
 	*pwqp = isl_pw_qpolynomial_to_polynomial(*pwqp, *sign);
 
-	return *pwqp ? 0 : -1;
+	return *pwqp ? isl_stat_ok : isl_stat_error;
 }
 
 __isl_give isl_union_pw_qpolynomial *isl_union_pw_qpolynomial_to_polynomial(

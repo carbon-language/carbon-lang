@@ -315,7 +315,7 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
 __isl_give isl_union_map *
 IslScheduleOptimizer::getScheduleMap(__isl_keep isl_schedule *Schedule) {
   isl_schedule_node *Root = isl_schedule_get_root(Schedule);
-  Root = isl_schedule_node_map_descendant(
+  Root = isl_schedule_node_map_descendant_bottom_up(
       Root, IslScheduleOptimizer::optimizeBand, NULL);
   auto ScheduleMap = isl_schedule_node_get_subtree_schedule_union_map(Root);
   ScheduleMap = isl_union_map_detect_equalities(ScheduleMap);

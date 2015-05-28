@@ -436,7 +436,7 @@ __isl_give isl_ast_build *isl_ast_build_set_after_each_for(
  */
 __isl_give isl_ast_build *isl_ast_build_set_before_each_mark(
 	__isl_take isl_ast_build *build,
-	int (*fn)(__isl_keep isl_id *mark, __isl_keep isl_ast_build *build,
+	isl_stat (*fn)(__isl_keep isl_id *mark, __isl_keep isl_ast_build *build,
 		void *user), void *user)
 {
 	build = isl_ast_build_cow(build);
@@ -711,7 +711,7 @@ error:
  * the first (and presumably only) affine expression in the isl_pw_aff
  * on which this function is used.
  */
-static int extract_single_piece(__isl_take isl_set *set,
+static isl_stat extract_single_piece(__isl_take isl_set *set,
 	__isl_take isl_aff *aff, void *user)
 {
 	isl_aff **p = user;
@@ -719,7 +719,7 @@ static int extract_single_piece(__isl_take isl_set *set,
 	*p = aff;
 	isl_set_free(set);
 
-	return -1;
+	return isl_stat_error;
 }
 
 /* Intersect "set" with the stride constraint of "build", if any.
@@ -1460,7 +1460,7 @@ struct isl_detect_stride_data {
  *
  * The expression "-a h(p)/g" can therefore be used as offset.
  */
-static int detect_stride(__isl_take isl_constraint *c, void *user)
+static isl_stat detect_stride(__isl_take isl_constraint *c, void *user)
 {
 	struct isl_detect_stride_data *data = user;
 	int i, n_div;
@@ -1470,7 +1470,7 @@ static int detect_stride(__isl_take isl_constraint *c, void *user)
 	if (!isl_constraint_is_equality(c) ||
 	    !isl_constraint_involves_dims(c, isl_dim_set, data->pos, 1)) {
 		isl_constraint_free(c);
-		return 0;
+		return isl_stat_ok;
 	}
 
 	ctx = isl_constraint_get_ctx(c);
@@ -1510,7 +1510,7 @@ static int detect_stride(__isl_take isl_constraint *c, void *user)
 	}
 
 	isl_constraint_free(c);
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Check if the constraints in "set" imply any stride on the current
@@ -1555,7 +1555,7 @@ struct isl_ast_build_involves_data {
 
 /* Check if "map" involves the input dimension data->depth.
  */
-static int involves_depth(__isl_take isl_map *map, void *user)
+static isl_stat involves_depth(__isl_take isl_map *map, void *user)
 {
 	struct isl_ast_build_involves_data *data = user;
 
@@ -1563,8 +1563,8 @@ static int involves_depth(__isl_take isl_map *map, void *user)
 	isl_map_free(map);
 
 	if (data->involves < 0 || data->involves)
-		return -1;
-	return 0;
+		return isl_stat_error;
+	return isl_stat_ok;
 }
 
 /* Do any options depend on the value of the dimension at the current depth?
@@ -1603,7 +1603,7 @@ static __isl_give isl_map *construct_insertion_map(__isl_take isl_space *space,
 	space = isl_space_set_from_params(space);
 	space = isl_space_add_dims(space, isl_dim_set, 1);
 	space = isl_space_map_from_set(space);
-	c = isl_equality_alloc(isl_local_space_from_space(space));
+	c = isl_constraint_alloc_equality(isl_local_space_from_space(space));
 	c = isl_constraint_set_coefficient_si(c, isl_dim_in, 0, 1);
 	c = isl_constraint_set_coefficient_si(c, isl_dim_out, 0, -1);
 	bmap1 = isl_basic_map_from_constraint(isl_constraint_copy(c));

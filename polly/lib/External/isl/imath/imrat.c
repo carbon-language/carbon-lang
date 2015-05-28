@@ -30,8 +30,6 @@
 #include <ctype.h>
 #include <assert.h>
 
-/* {{{ Useful macros */
-
 #define TEMP(K) (temp + (K))
 #define SETUP(E, C) \
 do{if((res = (E)) != MP_OK) goto CLEANUP; ++(C);}while(0)
@@ -41,8 +39,6 @@ do{if((res = (E)) != MP_OK) goto CLEANUP; ++(C);}while(0)
 #define CHECK(TEST)   assert(TEST)
 #define NRCHECK(TEST) assert(TEST)
 
-/* }}} */
-
 /* Reduce the given rational, in place, to lowest terms and canonical form.
    Zero is represented as 0/1, one as 1/1.  Signs are adjusted so that the sign
    of the numerator is definitive. */
@@ -51,8 +47,6 @@ static mp_result s_rat_reduce(mp_rat r);
 /* Common code for addition and subtraction operations on rationals. */
 static mp_result s_rat_combine(mp_rat a, mp_rat b, mp_rat c,
 			       mp_result (*comb_f)(mp_int, mp_int, mp_int));
-
-/* {{{ mp_rat_init(r) */
 
 mp_result mp_rat_init(mp_rat r)
 {
@@ -68,10 +62,6 @@ mp_result mp_rat_init(mp_rat r)
   return mp_int_set_value(MP_DENOM_P(r), 1);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_alloc() */
-
 mp_rat mp_rat_alloc(void)
 {
   mp_rat out = malloc(sizeof(*out));
@@ -86,17 +76,9 @@ mp_rat mp_rat_alloc(void)
   return out;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_reduce(r) */
-
 mp_result mp_rat_reduce(mp_rat r) {
   return s_rat_reduce(r);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_init_size(r, n_prec, d_prec) */
 
 mp_result mp_rat_init_size(mp_rat r, mp_size n_prec, mp_size d_prec)
 {
@@ -112,10 +94,6 @@ mp_result mp_rat_init_size(mp_rat r, mp_size n_prec, mp_size d_prec)
   return mp_int_set_value(MP_DENOM_P(r), 1);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_init_copy(r, old) */
-
 mp_result mp_rat_init_copy(mp_rat r, mp_rat old)
 {
   mp_result res;
@@ -127,10 +105,6 @@ mp_result mp_rat_init_copy(mp_rat r, mp_rat old)
   
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_rat_set_value(r, numer, denom) */
 
 mp_result mp_rat_set_value(mp_rat r, mp_small numer, mp_small denom)
 {
@@ -147,10 +121,6 @@ mp_result mp_rat_set_value(mp_rat r, mp_small numer, mp_small denom)
   return s_rat_reduce(r);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_set_uvalue(r, numer, denom) */
-
 mp_result mp_rat_set_uvalue(mp_rat r, mp_usmall numer, mp_usmall denom)
 {
   mp_result res;
@@ -166,20 +136,12 @@ mp_result mp_rat_set_uvalue(mp_rat r, mp_usmall numer, mp_usmall denom)
   return s_rat_reduce(r);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_clear(r) */
-
 void      mp_rat_clear(mp_rat r)
 {
   mp_int_clear(MP_NUMER_P(r));
   mp_int_clear(MP_DENOM_P(r));
 
 }
-
-/* }}} */
-
-/* {{{ mp_rat_free(r) */
 
 void      mp_rat_free(mp_rat r)
 {
@@ -191,55 +153,31 @@ void      mp_rat_free(mp_rat r)
   free(r);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_numer(r, z) */
-
 mp_result mp_rat_numer(mp_rat r, mp_int z)
 {
   return mp_int_copy(MP_NUMER_P(r), z);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_numer_ref(r) */
 
 mp_int mp_rat_numer_ref(mp_rat r)
 {
   return MP_NUMER_P(r);
 }
 
-/* }}} */
-
-
-/* {{{ mp_rat_denom(r, z) */
 
 mp_result mp_rat_denom(mp_rat r, mp_int z)
 {
   return mp_int_copy(MP_DENOM_P(r), z);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_denom_ref(r) */
-
 mp_int    mp_rat_denom_ref(mp_rat r)
 {
   return MP_DENOM_P(r);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_sign(r) */
-
 mp_sign   mp_rat_sign(mp_rat r)
 {
   return MP_SIGN(MP_NUMER_P(r));
 }
-
-/* }}} */
-
-/* {{{ mp_rat_copy(a, c) */
 
 mp_result mp_rat_copy(mp_rat a, mp_rat c)
 {
@@ -252,20 +190,12 @@ mp_result mp_rat_copy(mp_rat a, mp_rat c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_zero(r) */
-
 void      mp_rat_zero(mp_rat r)
 {
   mp_int_zero(MP_NUMER_P(r));
   mp_int_set_value(MP_DENOM_P(r), 1);
   
 }
-
-/* }}} */
-
-/* {{{ mp_rat_abs(a, c) */
 
 mp_result mp_rat_abs(mp_rat a, mp_rat c)
 {
@@ -278,10 +208,6 @@ mp_result mp_rat_abs(mp_rat a, mp_rat c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_neg(a, c) */
-
 mp_result mp_rat_neg(mp_rat a, mp_rat c)
 {
   mp_result res;
@@ -292,10 +218,6 @@ mp_result mp_rat_neg(mp_rat a, mp_rat c)
   res = mp_int_copy(MP_DENOM_P(a), MP_DENOM_P(c));
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_rat_recip(a, c) */
 
 mp_result mp_rat_recip(mp_rat a, mp_rat c)
 {
@@ -320,29 +242,17 @@ mp_result mp_rat_recip(mp_rat a, mp_rat c)
   return MP_OK;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_add(a, b, c) */
-
 mp_result mp_rat_add(mp_rat a, mp_rat b, mp_rat c)
 {
   return s_rat_combine(a, b, c, mp_int_add);
 
 }
 
-/* }}} */
-
-/* {{{ mp_rat_sub(a, b, c) */
-
 mp_result mp_rat_sub(mp_rat a, mp_rat b, mp_rat c)
 {
   return s_rat_combine(a, b, c, mp_int_sub);
 
 }
-
-/* }}} */
-
-/* {{{ mp_rat_mul(a, b, c) */
 
 mp_result mp_rat_mul(mp_rat a, mp_rat b, mp_rat c)
 {
@@ -358,10 +268,6 @@ mp_result mp_rat_mul(mp_rat a, mp_rat b, mp_rat c)
 
   return s_rat_reduce(c);
 }
-
-/* }}} */
-
-/* {{{ mp_int_div(a, b, c) */
 
 mp_result mp_rat_div(mp_rat a, mp_rat b, mp_rat c)
 {
@@ -396,10 +302,6 @@ mp_result mp_rat_div(mp_rat a, mp_rat b, mp_rat c)
     return s_rat_reduce(c);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_add_int(a, b, c) */
-
 mp_result mp_rat_add_int(mp_rat a, mp_int b, mp_rat c)
 {
   mpz_t tmp;
@@ -423,10 +325,6 @@ mp_result mp_rat_add_int(mp_rat a, mp_int b, mp_rat c)
   mp_int_clear(&tmp);
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_rat_sub_int(a, b, c) */
 
 mp_result mp_rat_sub_int(mp_rat a, mp_int b, mp_rat c)
 {
@@ -452,10 +350,6 @@ mp_result mp_rat_sub_int(mp_rat a, mp_int b, mp_rat c)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_mul_int(a, b, c) */
-
 mp_result mp_rat_mul_int(mp_rat a, mp_int b, mp_rat c)
 {
   mp_result res;
@@ -468,10 +362,6 @@ mp_result mp_rat_mul_int(mp_rat a, mp_int b, mp_rat c)
 
   return s_rat_reduce(c);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_div_int(a, b, c) */
 
 mp_result mp_rat_div_int(mp_rat a, mp_int b, mp_rat c)
 {
@@ -488,10 +378,6 @@ mp_result mp_rat_div_int(mp_rat a, mp_int b, mp_rat c)
 
   return s_rat_reduce(c);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_expt(a, b, c) */
 
 mp_result mp_rat_expt(mp_rat a, mp_small b, mp_rat c)
 {
@@ -510,10 +396,6 @@ mp_result mp_rat_expt(mp_rat a, mp_small b, mp_rat c)
 
   return mp_int_expt(MP_DENOM_P(a), b, MP_DENOM_P(c));
 }
-
-/* }}} */
-
-/* {{{ mp_rat_compare(a, b) */
 
 int       mp_rat_compare(mp_rat a, mp_rat b)
 {
@@ -536,10 +418,6 @@ int       mp_rat_compare(mp_rat a, mp_rat b)
       return -cmp;
   }
 }
-
-/* }}} */
-
-/* {{{ mp_rat_compare_unsigned(a, b) */
 
 int       mp_rat_compare_unsigned(mp_rat a, mp_rat b)
 {
@@ -571,18 +449,10 @@ int       mp_rat_compare_unsigned(mp_rat a, mp_rat b)
   }
 }
 
-/* }}} */
-
-/* {{{ mp_rat_compare_zero(r) */
-
 int       mp_rat_compare_zero(mp_rat r)
 {
   return mp_int_compare_zero(MP_NUMER_P(r));
 }
-
-/* }}} */
-
-/* {{{ mp_rat_compare_value(r, n, d) */
 
 int       mp_rat_compare_value(mp_rat r, mp_small n, mp_small d)
 {
@@ -602,18 +472,10 @@ int       mp_rat_compare_value(mp_rat r, mp_small n, mp_small d)
   return out;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_is_integer(r) */
-
 int       mp_rat_is_integer(mp_rat r)
 {
   return (mp_int_compare_value(MP_DENOM_P(r), 1) == 0);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_to_ints(r, *num, *den) */
 
 mp_result mp_rat_to_ints(mp_rat r, mp_small *num, mp_small *den)
 {
@@ -625,10 +487,6 @@ mp_result mp_rat_to_ints(mp_rat r, mp_small *num, mp_small *den)
   res = mp_int_to_int(MP_DENOM_P(r), den);
   return res;
 }
-
-/* }}} */
-
-/* {{{ mp_rat_to_string(r, radix, *str, limit) */
 
 mp_result mp_rat_to_string(mp_rat r, mp_size radix, char *str, int limit)
 {
@@ -660,9 +518,6 @@ mp_result mp_rat_to_string(mp_rat r, mp_size radix, char *str, int limit)
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_to_decimal(r, radix, prec, *str, limit) */
 mp_result mp_rat_to_decimal(mp_rat r, mp_size radix, mp_size prec,
                             mp_round_mode round, char *str, int limit)
 {
@@ -786,10 +641,6 @@ mp_result mp_rat_to_decimal(mp_rat r, mp_size radix, mp_size prec,
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_string_len(r, radix) */
-
 mp_result mp_rat_string_len(mp_rat r, mp_size radix)
 {
   mp_result n_len, d_len = 0;
@@ -808,10 +659,6 @@ mp_result mp_rat_string_len(mp_rat r, mp_size radix)
 
 }
 
-/* }}} */
-
-/* {{{ mp_rat_decimal_len(r, radix, prec) */
-
 mp_result mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec)
 {
   int  z_len, f_len;
@@ -826,18 +673,10 @@ mp_result mp_rat_decimal_len(mp_rat r, mp_size radix, mp_size prec)
   return z_len + f_len;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_read_string(r, radix, *str) */
-
 mp_result mp_rat_read_string(mp_rat r, mp_size radix, const char *str)
 {
   return mp_rat_read_cstring(r, radix, str, NULL);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_read_cstring(r, radix, *str, **end) */
 
 mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str, 
 			      char **end)
@@ -873,10 +712,6 @@ mp_result mp_rat_read_cstring(mp_rat r, mp_size radix, const char *str,
   return s_rat_reduce(r);
 }
 
-/* }}} */
-
-/* {{{ mp_rat_read_ustring(r, radix, *str, **end) */
-
 /* Read a string and figure out what format it's in.  The radix may be supplied
    as zero to use "default" behaviour.
 
@@ -906,18 +741,10 @@ mp_result mp_rat_read_ustring(mp_rat r, mp_size radix, const char *str,
   return res;
 }
 
-/* }}} */
-
-/* {{{ mp_rat_read_decimal(r, radix, *str) */
-
 mp_result mp_rat_read_decimal(mp_rat r, mp_size radix, const char *str)
 {
   return mp_rat_read_cdecimal(r, radix, str, NULL);
 }
-
-/* }}} */
-
-/* {{{ mp_rat_read_cdecimal(r, radix, *str, **end) */
 
 mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char *str, 
 			       char **end)
@@ -1045,12 +872,8 @@ mp_result mp_rat_read_cdecimal(mp_rat r, mp_size radix, const char *str,
   }
 }
 
-/* }}} */
-
 /* Private functions for internal use.  Make unchecked assumptions about format
    and validity of inputs. */
-
-/* {{{ s_rat_reduce(r) */
 
 static mp_result s_rat_reduce(mp_rat r)
 {
@@ -1090,10 +913,6 @@ static mp_result s_rat_reduce(mp_rat r)
 
   return res;
 }
-
-/* }}} */
-
-/* {{{ s_rat_combine(a, b, c, comb_f) */
 
 static mp_result s_rat_combine(mp_rat a, mp_rat b, mp_rat c, 
 			       mp_result (*comb_f)(mp_int, mp_int, mp_int))
@@ -1135,7 +954,5 @@ static mp_result s_rat_combine(mp_rat a, mp_rat b, mp_rat c,
       return res;
   }
 }
-
-/* }}} */
 
 /* Here there be dragons */

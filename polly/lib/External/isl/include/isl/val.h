@@ -69,30 +69,31 @@ __isl_give isl_val *isl_val_gcdext(__isl_take isl_val *v1,
 	__isl_take isl_val *v2, __isl_give isl_val **x, __isl_give isl_val **y);
 
 int isl_val_sgn(__isl_keep isl_val *v);
-int isl_val_is_zero(__isl_keep isl_val *v);
-int isl_val_is_one(__isl_keep isl_val *v);
-int isl_val_is_negone(__isl_keep isl_val *v);
-int isl_val_is_nonneg(__isl_keep isl_val *v);
-int isl_val_is_nonpos(__isl_keep isl_val *v);
-int isl_val_is_pos(__isl_keep isl_val *v);
-int isl_val_is_neg(__isl_keep isl_val *v);
-int isl_val_is_int(__isl_keep isl_val *v);
-int isl_val_is_rat(__isl_keep isl_val *v);
-int isl_val_is_nan(__isl_keep isl_val *v);
-int isl_val_is_infty(__isl_keep isl_val *v);
-int isl_val_is_neginfty(__isl_keep isl_val *v);
+isl_bool isl_val_is_zero(__isl_keep isl_val *v);
+isl_bool isl_val_is_one(__isl_keep isl_val *v);
+isl_bool isl_val_is_negone(__isl_keep isl_val *v);
+isl_bool isl_val_is_nonneg(__isl_keep isl_val *v);
+isl_bool isl_val_is_nonpos(__isl_keep isl_val *v);
+isl_bool isl_val_is_pos(__isl_keep isl_val *v);
+isl_bool isl_val_is_neg(__isl_keep isl_val *v);
+isl_bool isl_val_is_int(__isl_keep isl_val *v);
+isl_bool isl_val_is_rat(__isl_keep isl_val *v);
+isl_bool isl_val_is_nan(__isl_keep isl_val *v);
+isl_bool isl_val_is_infty(__isl_keep isl_val *v);
+isl_bool isl_val_is_neginfty(__isl_keep isl_val *v);
 
 int isl_val_cmp_si(__isl_keep isl_val *v, long i);
 
-int isl_val_lt(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_le(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_gt(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_ge(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_eq(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_ne(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
-int isl_val_abs_eq(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_lt(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_le(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_gt(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_ge(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_eq(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_ne(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_abs_eq(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
 
-int isl_val_is_divisible_by(__isl_keep isl_val *v1, __isl_keep isl_val *v2);
+isl_bool isl_val_is_divisible_by(__isl_keep isl_val *v1,
+	__isl_keep isl_val *v2);
 
 __isl_give isl_val *isl_val_read_from_str(isl_ctx *ctx, const char *str);
 __isl_give isl_printer *isl_printer_print_val(__isl_take isl_printer *p,

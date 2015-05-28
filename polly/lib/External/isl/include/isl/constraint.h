@@ -29,6 +29,10 @@ ISL_DECLARE_LIST(constraint)
 
 isl_ctx *isl_constraint_get_ctx(__isl_keep isl_constraint *c);
 
+__isl_give isl_constraint *isl_constraint_alloc_equality(
+	__isl_take isl_local_space *ls);
+__isl_give isl_constraint *isl_constraint_alloc_inequality(
+	__isl_take isl_local_space *ls);
 __isl_give isl_constraint *isl_equality_alloc(__isl_take isl_local_space *ls);
 __isl_give isl_constraint *isl_inequality_alloc(__isl_take isl_local_space *ls);
 
@@ -38,10 +42,10 @@ __isl_null isl_constraint *isl_constraint_free(__isl_take isl_constraint *c);
 
 int isl_basic_map_n_constraint(__isl_keep isl_basic_map *bmap);
 int isl_basic_set_n_constraint(__isl_keep isl_basic_set *bset);
-int isl_basic_map_foreach_constraint(__isl_keep isl_basic_map *bmap,
-	int (*fn)(__isl_take isl_constraint *c, void *user), void *user);
-int isl_basic_set_foreach_constraint(__isl_keep isl_basic_set *bset,
-	int (*fn)(__isl_take isl_constraint *c, void *user), void *user);
+isl_stat isl_basic_map_foreach_constraint(__isl_keep isl_basic_map *bmap,
+	isl_stat (*fn)(__isl_take isl_constraint *c, void *user), void *user);
+isl_stat isl_basic_set_foreach_constraint(__isl_keep isl_basic_set *bset,
+	isl_stat (*fn)(__isl_take isl_constraint *c, void *user), void *user);
 __isl_give isl_constraint_list *isl_basic_map_get_constraint_list(
 	__isl_keep isl_basic_map *bmap);
 __isl_give isl_constraint_list *isl_basic_set_get_constraint_list(
@@ -49,9 +53,9 @@ __isl_give isl_constraint_list *isl_basic_set_get_constraint_list(
 int isl_constraint_is_equal(struct isl_constraint *constraint1,
 			    struct isl_constraint *constraint2);
 
-int isl_basic_set_foreach_bound_pair(__isl_keep isl_basic_set *bset,
+isl_stat isl_basic_set_foreach_bound_pair(__isl_keep isl_basic_set *bset,
 	enum isl_dim_type type, unsigned pos,
-	int (*fn)(__isl_take isl_constraint *lower,
+	isl_stat (*fn)(__isl_take isl_constraint *lower,
 		  __isl_take isl_constraint *upper,
 		  __isl_take isl_basic_set *bset, void *user), void *user);
 
@@ -82,7 +86,7 @@ __isl_give isl_local_space *isl_constraint_get_local_space(
 int isl_constraint_dim(struct isl_constraint *constraint,
 	enum isl_dim_type type);
 
-int isl_constraint_involves_dims(__isl_keep isl_constraint *constraint,
+isl_bool isl_constraint_involves_dims(__isl_keep isl_constraint *constraint,
 	enum isl_dim_type type, unsigned first, unsigned n);
 
 const char *isl_constraint_get_dim_name(__isl_keep isl_constraint *constraint,
@@ -107,12 +111,12 @@ __isl_give isl_aff *isl_constraint_get_div(__isl_keep isl_constraint *constraint
 
 struct isl_constraint *isl_constraint_negate(struct isl_constraint *constraint);
 
-int isl_constraint_is_equality(__isl_keep isl_constraint *constraint);
+isl_bool isl_constraint_is_equality(__isl_keep isl_constraint *constraint);
 int isl_constraint_is_div_constraint(__isl_keep isl_constraint *constraint);
 
-int isl_constraint_is_lower_bound(__isl_keep isl_constraint *constraint,
+isl_bool isl_constraint_is_lower_bound(__isl_keep isl_constraint *constraint,
 	enum isl_dim_type type, unsigned pos);
-int isl_constraint_is_upper_bound(__isl_keep isl_constraint *constraint,
+isl_bool isl_constraint_is_upper_bound(__isl_keep isl_constraint *constraint,
 	enum isl_dim_type type, unsigned pos);
 
 __isl_give isl_basic_map *isl_basic_map_from_constraint(

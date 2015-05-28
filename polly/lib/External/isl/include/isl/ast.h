@@ -13,10 +13,10 @@
 extern "C" {
 #endif
 
-int isl_options_set_ast_iterator_type(isl_ctx *ctx, const char *val);
+isl_stat isl_options_set_ast_iterator_type(isl_ctx *ctx, const char *val);
 const char *isl_options_get_ast_iterator_type(isl_ctx *ctx);
 
-int isl_options_set_ast_always_print_block(isl_ctx *ctx, int val);
+isl_stat isl_options_set_ast_always_print_block(isl_ctx *ctx, int val);
 int isl_options_get_ast_always_print_block(isl_ctx *ctx);
 
 __isl_give isl_ast_expr *isl_ast_expr_from_val(__isl_take isl_val *v);
@@ -73,7 +73,7 @@ __isl_give isl_ast_expr *isl_ast_expr_get_op_arg(__isl_keep isl_ast_expr *expr,
 __isl_give isl_ast_expr *isl_ast_expr_set_op_arg(__isl_take isl_ast_expr *expr,
 	int pos, __isl_take isl_ast_expr *arg);
 
-int isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
+isl_bool isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
 	__isl_keep isl_ast_expr *expr2);
 
 __isl_give isl_ast_expr *isl_ast_expr_substitute_ids(
@@ -105,13 +105,13 @@ __isl_give isl_ast_expr *isl_ast_node_for_get_inc(
 	__isl_keep isl_ast_node *node);
 __isl_give isl_ast_node *isl_ast_node_for_get_body(
 	__isl_keep isl_ast_node *node);
-int isl_ast_node_for_is_degenerate(__isl_keep isl_ast_node *node);
+isl_bool isl_ast_node_for_is_degenerate(__isl_keep isl_ast_node *node);
 
 __isl_give isl_ast_expr *isl_ast_node_if_get_cond(
 	__isl_keep isl_ast_node *node);
 __isl_give isl_ast_node *isl_ast_node_if_get_then(
 	__isl_keep isl_ast_node *node);
-int isl_ast_node_if_has_else(__isl_keep isl_ast_node *node);
+isl_bool isl_ast_node_if_has_else(__isl_keep isl_ast_node *node);
 __isl_give isl_ast_node *isl_ast_node_if_get_else(
 	__isl_keep isl_ast_node *node);
 
@@ -150,8 +150,8 @@ __isl_give isl_ast_print_options *isl_ast_print_options_set_print_for(
 		__isl_keep isl_ast_node *node, void *user),
 	void *user);
 
-int isl_ast_node_foreach_ast_op_type(__isl_keep isl_ast_node *node,
-	int (*fn)(enum isl_ast_op_type type, void *user), void *user);
+isl_stat isl_ast_node_foreach_ast_op_type(__isl_keep isl_ast_node *node,
+	isl_stat (*fn)(enum isl_ast_op_type type, void *user), void *user);
 __isl_give isl_printer *isl_ast_op_type_print_macro(
 	enum isl_ast_op_type type, __isl_take isl_printer *p);
 __isl_give isl_printer *isl_ast_node_print_macros(

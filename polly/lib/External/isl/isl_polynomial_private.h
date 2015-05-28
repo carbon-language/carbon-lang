@@ -129,7 +129,7 @@ __isl_give isl_qpolynomial *isl_qpolynomial_rat_cst_on_domain(
 	__isl_take isl_space *space, const isl_int n, const isl_int d);
 __isl_give isl_qpolynomial *isl_qpolynomial_var_pow_on_domain(__isl_take isl_space *dim,
 	int pos, int power);
-int isl_qpolynomial_is_one(__isl_keep isl_qpolynomial *qp);
+isl_bool isl_qpolynomial_is_one(__isl_keep isl_qpolynomial *qp);
 int isl_qpolynomial_is_affine(__isl_keep isl_qpolynomial *qp);
 int isl_qpolynomial_is_cst(__isl_keep isl_qpolynomial *qp,
 	isl_int *n, isl_int *d);

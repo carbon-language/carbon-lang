@@ -325,18 +325,18 @@ error:
 
 /* Is "expr1" equal to "expr2"?
  */
-int isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
+isl_bool isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
 	__isl_keep isl_ast_expr *expr2)
 {
 	int i;
 
 	if (!expr1 || !expr2)
-		return -1;
+		return isl_bool_error;
 
 	if (expr1 == expr2)
-		return 1;
+		return isl_bool_true;
 	if (expr1->type != expr2->type)
-		return 0;
+		return isl_bool_false;
 	switch (expr1->type) {
 	case isl_ast_expr_int:
 		return isl_val_eq(expr1->u.v, expr2->u.v);
@@ -344,11 +344,11 @@ int isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
 		return expr1->u.id == expr2->u.id;
 	case isl_ast_expr_op:
 		if (expr1->u.op.op != expr2->u.op.op)
-			return 0;
+			return isl_bool_false;
 		if (expr1->u.op.n_arg != expr2->u.op.n_arg)
-			return 0;
+			return isl_bool_false;
 		for (i = 0; i < expr1->u.op.n_arg; ++i) {
-			int equal;
+			isl_bool equal;
 			equal = isl_ast_expr_is_equal(expr1->u.op.args[i],
 							expr2->u.op.args[i]);
 			if (equal < 0 || !equal)
@@ -356,7 +356,7 @@ int isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
 		}
 		return 1;
 	case isl_ast_expr_error:
-		return -1;
+		return isl_bool_error;
 	}
 }
 
@@ -1104,13 +1104,13 @@ __isl_give isl_ast_node *isl_ast_node_for_mark_degenerate(
 	return node;
 }
 
-int isl_ast_node_for_is_degenerate(__isl_keep isl_ast_node *node)
+isl_bool isl_ast_node_for_is_degenerate(__isl_keep isl_ast_node *node)
 {
 	if (!node)
-		return -1;
+		return isl_bool_error;
 	if (node->type != isl_ast_node_for)
 		isl_die(isl_ast_node_get_ctx(node), isl_error_invalid,
-			"not a for node", return -1);
+			"not a for node", return isl_bool_error);
 	return node->u.f.degenerate;
 }
 
@@ -1210,14 +1210,14 @@ __isl_give isl_ast_node *isl_ast_node_if_get_then(
 	return isl_ast_node_copy(node->u.i.then);
 }
 
-int isl_ast_node_if_has_else(
+isl_bool isl_ast_node_if_has_else(
 	__isl_keep isl_ast_node *node)
 {
 	if (!node)
-		return -1;
+		return isl_bool_error;
 	if (node->type != isl_ast_node_if)
 		isl_die(isl_ast_node_get_ctx(node), isl_error_invalid,
-			"not an if node", return -1);
+			"not an if node", return isl_bool_error);
 	return node->u.i.else_node != NULL;
 }
 
@@ -2167,33 +2167,33 @@ __isl_give isl_printer *isl_ast_op_type_print_macro(
 /* Call "fn" for each type of operation that appears in "node"
  * and that requires a macro definition.
  */
-int isl_ast_node_foreach_ast_op_type(__isl_keep isl_ast_node *node,
-	int (*fn)(enum isl_ast_op_type type, void *user), void *user)
+isl_stat isl_ast_node_foreach_ast_op_type(__isl_keep isl_ast_node *node,
+	isl_stat (*fn)(enum isl_ast_op_type type, void *user), void *user)
 {
 	int macros;
 
 	if (!node)
-		return -1;
+		return isl_stat_error;
 
 	macros = ast_node_required_macros(node, 0);
 
 	if (macros & ISL_AST_MACRO_MIN && fn(isl_ast_op_min, user) < 0)
-		return -1;
+		return isl_stat_error;
 	if (macros & ISL_AST_MACRO_MAX && fn(isl_ast_op_max, user) < 0)
-		return -1;
+		return isl_stat_error;
 	if (macros & ISL_AST_MACRO_FLOORD && fn(isl_ast_op_fdiv_q, user) < 0)
-		return -1;
+		return isl_stat_error;
 
-	return 0;
+	return isl_stat_ok;
 }
 
-static int ast_op_type_print_macro(enum isl_ast_op_type type, void *user)
+static isl_stat ast_op_type_print_macro(enum isl_ast_op_type type, void *user)
 {
 	isl_printer **p = user;
 
 	*p = isl_ast_op_type_print_macro(type, *p);
 
-	return 0;
+	return isl_stat_ok;
 }
 
 /* Print macro definitions for all the macros used in the result

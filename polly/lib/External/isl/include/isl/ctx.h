@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 #include <isl/arg.h>
-#include <isl/hash.h>
 
 #ifndef __isl_give
 #define __isl_give
@@ -79,6 +78,15 @@ enum isl_error {
 	isl_error_quota,
 	isl_error_unsupported
 };
+typedef enum {
+	isl_stat_error = -1,
+	isl_stat_ok = 0,
+} isl_stat;
+typedef enum {
+	isl_bool_error = -1,
+	isl_bool_false = 0,
+	isl_bool_true = 1
+} isl_bool;
 struct isl_ctx;
 typedef struct isl_ctx isl_ctx;
 
@@ -181,16 +189,16 @@ int prefix ## _get_ ## field(isl_ctx *ctx)				\
 }
 
 #define ISL_CTX_SET_INT_DEF(prefix,st,args,field)			\
-int prefix ## _set_ ## field(isl_ctx *ctx, int val)			\
+isl_stat prefix ## _set_ ## field(isl_ctx *ctx, int val)		\
 {									\
 	st *options;							\
 	options = isl_ctx_peek_ ## prefix(ctx);				\
 	if (!options)							\
 		isl_die(ctx, isl_error_invalid,				\
 			"isl_ctx does not reference " #prefix,		\
-			return -1);					\
+			return isl_stat_error);				\
 	options->field = val;						\
-	return 0;							\
+	return isl_stat_ok;						\
 }
 
 #define ISL_CTX_GET_STR_DEF(prefix,st,args,field)			\
@@ -206,21 +214,21 @@ const char *prefix ## _get_ ## field(isl_ctx *ctx)			\
 }
 
 #define ISL_CTX_SET_STR_DEF(prefix,st,args,field)			\
-int prefix ## _set_ ## field(isl_ctx *ctx, const char *val)		\
+isl_stat prefix ## _set_ ## field(isl_ctx *ctx, const char *val)	\
 {									\
 	st *options;							\
 	options = isl_ctx_peek_ ## prefix(ctx);				\
 	if (!options)							\
 		isl_die(ctx, isl_error_invalid,				\
 			"isl_ctx does not reference " #prefix,		\
-			return -1);					\
+			return isl_stat_error);				\
 	if (!val)							\
-		return -1;						\
+		return isl_stat_error;					\
 	free(options->field);						\
 	options->field = strdup(val);					\
 	if (!options->field)						\
-		return -1;						\
-	return 0;							\
+		return isl_stat_error;					\
+	return isl_stat_ok;						\
 }
 
 #define ISL_CTX_GET_BOOL_DEF(prefix,st,args,field)			\

@@ -180,23 +180,22 @@ struct isl_hash_table_entry *isl_hash_table_find(struct isl_ctx *ctx,
 	return &table->entries[h];
 }
 
-int isl_hash_table_foreach(struct isl_ctx *ctx,
-				struct isl_hash_table *table,
-				int (*fn)(void **entry, void *user), void *user)
+isl_stat isl_hash_table_foreach(isl_ctx *ctx, struct isl_hash_table *table,
+	isl_stat (*fn)(void **entry, void *user), void *user)
 {
 	size_t size;
 	uint32_t h;
 
 	if (!table->entries)
-		return -1;
+		return isl_stat_error;
 
 	size = 1 << table->bits;
 	for (h = 0; h < size; ++ h)
 		if (table->entries[h].data &&
 		    fn(&table->entries[h].data, user) < 0)
-			return -1;
+			return isl_stat_error;
 	
-	return 0;
+	return isl_stat_ok;
 }
 
 void isl_hash_table_remove(struct isl_ctx *ctx,
