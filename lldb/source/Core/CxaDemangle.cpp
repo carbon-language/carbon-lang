@@ -8,9 +8,18 @@
 // - Stripped GCC attributes()
 // - Removed extern "C" from the cxa_demangle function
 // - Added "#undef _LIBCPP_EXTERN_TEMPLATE" to avoid warning
+// - Implemented missing rebind, construct, destroy in malloc_alloc
+// - Replaced noexcept, constexpr, alignas with their LLVM_* equivalents
+// - Included win32.h for snprintf implementation for MSVC
+// - Removed constexpr member initialization for MSVC
+// - Changed argument to alignas() to a literal for MSVC
 //----------------------------------------------------------------------
 
-#undef _LIBCPP_EXTERN_TEMPLATE // Avoid warning below
+#if defined(_MSC_VER)
+#include "lldb/Host/windows/win32.h" // snprintf
+#endif
+#include "llvm/Support/Compiler.h"   // LLVM_{NOEXCEPT, CONSTEXPR, ALIGNAS}
+#undef _LIBCPP_EXTERN_TEMPLATE       // Avoid warning below
 
 //===-------------------------- cxa_demangle.cpp --------------------------===//
 //
@@ -152,20 +161,20 @@ struct float_data<float>
 {
     static const size_t mangled_size = 8;
     static const size_t max_demangled_size = 24;
-    static constexpr const char* spec = "%af";
+    static const char* spec;
 };
 
-constexpr const char* float_data<float>::spec;
+const char* float_data<float>::spec = "%af";
 
 template <>
 struct float_data<double>
 {
     static const size_t mangled_size = 16;
     static const size_t max_demangled_size = 32;
-    static constexpr const char* spec = "%a";
+    static const char* spec;
 };
 
-constexpr const char* float_data<double>::spec;
+const char* float_data<double>::spec = "%a";
 
 template <>
 struct float_data<long double>
@@ -176,10 +185,10 @@ struct float_data<long double>
     static const size_t mangled_size = 20;  // May need to be adjusted to 16 or 24 on other platforms
 #endif
     static const size_t max_demangled_size = 40;
-    static constexpr const char* spec = "%LaL";
+    static const char* spec;
 };
 
-constexpr const char* float_data<long double>::spec;
+const char* float_data<long double>::spec = "%LaL";
 
 template <class Float, class C>
 const char*
@@ -4722,27 +4731,27 @@ template <std::size_t N>
 class arena
 {
     static const std::size_t alignment = 16;
-    alignas(alignment) char buf_[N];
+    LLVM_ALIGNAS(16) char buf_[N];
     char* ptr_;
 
     std::size_t 
-    align_up(std::size_t n) noexcept
+    align_up(std::size_t n) LLVM_NOEXCEPT
         {return (n + (alignment-1)) & ~(alignment-1);}
 
     bool
-    pointer_in_buffer(char* p) noexcept
+    pointer_in_buffer(char* p) LLVM_NOEXCEPT
         {return buf_ <= p && p <= buf_ + N;}
 
 public:
-    arena() noexcept : ptr_(buf_) {}
+    arena() LLVM_NOEXCEPT : ptr_(buf_) {}
     ~arena() {ptr_ = nullptr;}
     arena(const arena&) = delete;
     arena& operator=(const arena&) = delete;
 
     char* allocate(std::size_t n);
-    void deallocate(char* p, std::size_t n) noexcept;
+    void deallocate(char* p, std::size_t n) LLVM_NOEXCEPT;
 
-    static constexpr std::size_t size() {return N;}
+    static LLVM_CONSTEXPR std::size_t size() {return N;}
     std::size_t used() const {return static_cast<std::size_t>(ptr_ - buf_);}
     void reset() {ptr_ = buf_;}
 };
@@ -4763,7 +4772,7 @@ arena<N>::allocate(std::size_t n)
 
 template <std::size_t N>
 void
-arena<N>::deallocate(char* p, std::size_t n) noexcept
+arena<N>::deallocate(char* p, std::size_t n) LLVM_NOEXCEPT
 {
     if (pointer_in_buffer(p))
     {
@@ -4785,9 +4794,9 @@ public:
 public:
     template <class _Up> struct rebind {typedef short_alloc<_Up, N> other;};
 
-    short_alloc(arena<N>& a) noexcept : a_(a) {}
+    short_alloc(arena<N>& a) LLVM_NOEXCEPT : a_(a) {}
     template <class U>
-        short_alloc(const short_alloc<U, N>& a) noexcept
+        short_alloc(const short_alloc<U, N>& a) LLVM_NOEXCEPT
             : a_(a.a_) {}
     short_alloc(const short_alloc&) = default;
     short_alloc& operator=(const short_alloc&) = delete;
@@ -4796,7 +4805,7 @@ public:
     {
         return reinterpret_cast<T*>(a_.allocate(n*sizeof(T)));
     }
-    void deallocate(T* p, std::size_t n) noexcept
+    void deallocate(T* p, std::size_t n) LLVM_NOEXCEPT
     {
         a_.deallocate(reinterpret_cast<char*>(p), n*sizeof(T));
     }
@@ -4804,7 +4813,7 @@ public:
     template <class T1, std::size_t N1, class U, std::size_t M>
     friend
     bool
-    operator==(const short_alloc<T1, N1>& x, const short_alloc<U, M>& y) noexcept;
+    operator==(const short_alloc<T1, N1>& x, const short_alloc<U, M>& y) LLVM_NOEXCEPT;
 
     template <class U, std::size_t M> friend class short_alloc;
 };
@@ -4812,7 +4821,7 @@ public:
 template <class T, std::size_t N, class U, std::size_t M>
 inline
 bool
-operator==(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
+operator==(const short_alloc<T, N>& x, const short_alloc<U, M>& y) LLVM_NOEXCEPT
 {
     return N == M && &x.a_ == &y.a_;
 }
@@ -4820,7 +4829,7 @@ operator==(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
 template <class T, std::size_t N, class U, std::size_t M>
 inline
 bool
-operator!=(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
+operator!=(const short_alloc<T, N>& x, const short_alloc<U, M>& y) LLVM_NOEXCEPT
 {
     return !(x == y);
 }
@@ -4832,22 +4841,39 @@ public:
     typedef T value_type;
 
     malloc_alloc() = default;
-    template <class U> malloc_alloc(const malloc_alloc<U>&) noexcept {}
+    template <class U> malloc_alloc(const malloc_alloc<U>&) LLVM_NOEXCEPT {}
 
     T* allocate(std::size_t n)
     {
         return static_cast<T*>(std::malloc(n*sizeof(T)));
     }
-    void deallocate(T* p, std::size_t) noexcept
+    void deallocate(T* p, std::size_t) LLVM_NOEXCEPT
     {
         std::free(p);
+    }
+    template<class Other>
+    struct rebind
+    {
+        typedef malloc_alloc<Other> other;
+    };
+    void construct(T *p)
+    {
+        ::new (p) T();
+    }
+    void construct(T *p, const T& t)
+    {
+        ::new (p) T(t);
+    }
+    void destroy(T *p)
+    {
+        p->~T();
     }
 };
 
 template <class T, class U>
 inline
 bool
-operator==(const malloc_alloc<T>&, const malloc_alloc<U>&) noexcept
+operator==(const malloc_alloc<T>&, const malloc_alloc<U>&) LLVM_NOEXCEPT
 {
     return true;
 }
@@ -4855,7 +4881,7 @@ operator==(const malloc_alloc<T>&, const malloc_alloc<U>&) noexcept
 template <class T, class U>
 inline
 bool
-operator!=(const malloc_alloc<T>& x, const malloc_alloc<U>& y) noexcept
+operator!=(const malloc_alloc<T>& x, const malloc_alloc<U>& y) LLVM_NOEXCEPT
 {
     return !(x == y);
 }

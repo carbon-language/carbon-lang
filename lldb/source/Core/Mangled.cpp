@@ -13,6 +13,7 @@
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
 #include <Dbghelp.h>
+#define LLDB_USE_BUILTIN_DEMANGLER
 #elif defined (__FreeBSD__)
 #define LLDB_USE_BUILTIN_DEMANGLER
 #else
@@ -44,16 +45,23 @@
 
 using namespace lldb_private;
 
-static inline bool
-cstring_is_mangled (const char *s)
+static inline Mangled::ManglingScheme
+cstring_mangling_scheme(const char *s)
 {
     if (s)
-#if defined(_MSC_VER)
-        return (s[0] == '?');
-#else
-        return (s[0] == '_' && s[1] == 'Z');
-#endif
-    return false;
+    {
+        if (s[0] == '?')
+            return Mangled::eManglingSchemeMSVC;
+        if (s[0] == '_' && s[1] == 'Z')
+            return Mangled::eManglingSchemeItanium;
+    }
+    return Mangled::eManglingSchemeNone;
+}
+
+static inline bool
+cstring_is_mangled(const char *s)
+{
+    return cstring_mangling_scheme(s) != Mangled::eManglingSchemeNone;
 }
 
 static const ConstString &
@@ -264,45 +272,58 @@ Mangled::GetDemangledName () const
                             m_mangled.GetCString());
 
         // Don't bother running anything that isn't mangled
-        const char *mangled_cstr = m_mangled.GetCString();
-        if (cstring_is_mangled(mangled_cstr))
+        const char *mangled_name = m_mangled.GetCString();
+        ManglingScheme mangling_scheme{cstring_mangling_scheme(mangled_name)};
+        if (mangling_scheme != eManglingSchemeNone &&
+            !m_mangled.GetMangledCounterpart(m_demangled))
         {
-            if (!m_mangled.GetMangledCounterpart(m_demangled))
+            // We didn't already mangle this name, demangle it and if all goes well
+            // add it to our map.
+            char *demangled_name = nullptr;
+            switch (mangling_scheme)
             {
-                // We didn't already mangle this name, demangle it and if all goes well
-                // add it to our map.
-#ifdef LLDB_USE_BUILTIN_DEMANGLER
-                // Try to use the fast-path demangler first for the
-                // performance win, falling back to the full demangler only
-                // when necessary
-                char *demangled_name = FastDemangle (mangled_cstr,
-                                                     m_mangled.GetLength());
-                if (!demangled_name)
-                    demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
-#elif defined(_MSC_VER)
-                char *demangled_name = (char *)::malloc(1024);
-                ::ZeroMemory(demangled_name, 1024);
-                DWORD result = ::UnDecorateSymbolName(mangled_cstr, demangled_name, 1023,
-                                                      UNDNAME_NO_ACCESS_SPECIFIERS |       // Strip public, private, protected keywords
-                                                          UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc keywords
-                                                          UNDNAME_NO_THROW_SIGNATURES |    // Strip throw() specifications
-                                                          UNDNAME_NO_MEMBER_TYPE |         // Strip virtual, static, etc specifiers
-                                                          UNDNAME_NO_MS_KEYWORDS           // Strip all MS extension keywords
-                                                      );
-                if (result == 0)
+                case eManglingSchemeMSVC:
                 {
-                    free (demangled_name);
-                    demangled_name = nullptr;
-                }
-#else
-                char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+#if defined(_MSC_VER)
+                    const size_t demangled_length = 2048;
+                    demangled_name = static_cast<char *>(::malloc(demangled_length));
+                    ::ZeroMemory(demangled_name, demangled_length);
+                    DWORD result = ::UnDecorateSymbolName(mangled_name, demangled_name, demangled_length,
+                            UNDNAME_NO_ACCESS_SPECIFIERS   | // Strip public, private, protected keywords
+                            UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc keywords
+                            UNDNAME_NO_THROW_SIGNATURES    | // Strip throw() specifications
+                            UNDNAME_NO_MEMBER_TYPE         | // Strip virtual, static, etc specifiers
+                            UNDNAME_NO_MS_KEYWORDS           // Strip all MS extension keywords
+                        );
+                    if (result == 0)
+                    {
+                        free(demangled_name);
+                        demangled_name = nullptr;
+                    }
 #endif
-
-                if (demangled_name)
-                {
-                    m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
-                    free (demangled_name);
+                    break;
                 }
+                case eManglingSchemeItanium:
+                {
+#ifdef LLDB_USE_BUILTIN_DEMANGLER
+                    // Try to use the fast-path demangler first for the
+                    // performance win, falling back to the full demangler only
+                    // when necessary
+                    demangled_name = FastDemangle(mangled_name, m_mangled.GetLength());
+                    if (!demangled_name)
+                        demangled_name = __cxa_demangle(mangled_name, NULL, NULL, NULL);
+#else
+                    demangled_name = abi::__cxa_demangle(mangled_name, NULL, NULL, NULL);
+#endif
+                    break;
+                }
+                case eManglingSchemeNone:
+                    break;
+            }
+            if (demangled_name)
+            {
+                m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
+                free(demangled_name);
             }
         }
         if (!m_demangled)
