@@ -195,6 +195,10 @@ extern "C" {
   void __asan_poison_intra_object_redzone(uptr p, uptr size);
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_unpoison_intra_object_redzone(uptr p, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_alloca_poison(uptr addr, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_allocas_unpoison(uptr top, uptr bottom);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

@@ -22,6 +22,9 @@ static const u64 kMagic2 = (kMagic1 << 8) | kMagic1;
 static const u64 kMagic4 = (kMagic2 << 16) | kMagic2;
 static const u64 kMagic8 = (kMagic4 << 32) | kMagic4;
 
+static const u64 kAllocaRedzoneSize = 32UL;
+static const u64 kAllocaRedzoneMask = 31UL;
+
 // For small size classes inline PoisonShadow for better performance.
 ALWAYS_INLINE void SetShadow(uptr ptr, uptr size, uptr class_id, u64 magic) {
   CHECK_EQ(SHADOW_SCALE, 3);  // This code expects SHADOW_SCALE=3.
@@ -252,5 +255,25 @@ void *__asan_addr_is_in_fake_stack(void *fake_stack, void *addr, void **beg,
   if (beg) *beg = reinterpret_cast<void*>(frame_beg);
   if (end) *end = reinterpret_cast<void*>(frame_end);
   return reinterpret_cast<void*>(frame->real_stack);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_alloca_poison(uptr addr, uptr size) {
+  uptr LeftRedzoneAddr = addr - kAllocaRedzoneSize;
+  uptr PartialRzAddr = addr + size;
+  uptr RightRzAddr = (PartialRzAddr + kAllocaRedzoneMask) & ~kAllocaRedzoneMask;
+  uptr PartialRzAligned = PartialRzAddr & ~(SHADOW_GRANULARITY - 1);
+  FastPoisonShadow(LeftRedzoneAddr, kAllocaRedzoneSize, kAsanAllocaLeftMagic);
+  FastPoisonShadowPartialRightRedzone(
+      PartialRzAligned, PartialRzAddr % SHADOW_GRANULARITY,
+      RightRzAddr - PartialRzAligned, kAsanAllocaRightMagic);
+  FastPoisonShadow(RightRzAddr, kAllocaRedzoneSize, kAsanAllocaRightMagic);
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_allocas_unpoison(uptr top, uptr bottom) {
+  if ((!top) || (top > bottom)) return;
+  REAL(memset)(reinterpret_cast<void*>(MemToShadow(top)), 0,
+               (bottom - top) / SHADOW_GRANULARITY);
 }
 }  // extern "C"
