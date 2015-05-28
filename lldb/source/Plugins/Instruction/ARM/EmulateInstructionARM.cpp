@@ -660,9 +660,12 @@ EmulateInstructionARM::EmulateADDRdSPImm (const uint32_t opcode, const ARMEncodi
         }
         addr_t sp_offset = imm32;
         addr_t addr = sp + sp_offset; // a pointer to the stack area
-        
+
         EmulateInstruction::Context context;
-        context.type = eContextSetFramePointer;
+        if (Rd == GetFramePointerRegisterNumber())
+            context.type = eContextSetFramePointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
         context.SetRegisterPlusOffset (sp_reg, sp_offset);
