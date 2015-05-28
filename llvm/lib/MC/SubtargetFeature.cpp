@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -57,27 +58,6 @@ static void Split(std::vector<std::string> &V, StringRef S) {
   SmallVector<StringRef, 3> Tmp;
   S.split(Tmp, ",", -1, false /* KeepEmpty */);
   V.assign(Tmp.begin(), Tmp.end());
-}
-
-/// Join a vector of strings to a string with a comma separating each element.
-///
-static std::string Join(const std::vector<std::string> &V) {
-  // Start with empty string.
-  std::string Result;
-  // If the vector is not empty
-  if (!V.empty()) {
-    // Start with the first feature
-    Result = V[0];
-    // For each successive feature
-    for (size_t i = 1; i < V.size(); i++) {
-      // Add a comma
-      Result += ",";
-      // Add the feature
-      Result += V[i];
-    }
-  }
-  // Return the features string
-  return Result;
 }
 
 /// Adding features.
@@ -144,7 +124,7 @@ SubtargetFeatures::SubtargetFeatures(StringRef Initial) {
 
 
 std::string SubtargetFeatures::getString() const {
-  return Join(Features);
+  return join(Features.begin(), Features.end(), ",");
 }
 
 /// SetImpliedBits - For each feature that is (transitively) implied by this
