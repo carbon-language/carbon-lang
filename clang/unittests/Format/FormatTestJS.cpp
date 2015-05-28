@@ -239,6 +239,13 @@ TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
                "}");
 }
 
+TEST_F(FormatTestJS, ArrayLiterals) {
+  verifyFormat("var aaaaa: List<SomeThing> = [\n"
+               "  new SomeThingAAAAAAAAAAAA(),\n"
+               "  new SomeThingBBBBBBBBB()\n"
+               "];");
+}
+
 TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("doFoo(function() {});");
   verifyFormat("doFoo(function() { return 1; });");

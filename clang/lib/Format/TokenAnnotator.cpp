@@ -260,6 +260,7 @@ private:
     Left->ParentBracket = Contexts.back().ContextKind;
     FormatToken *Parent = Left->getPreviousNonComment();
     bool StartsObjCMethodExpr =
+        Style.Language == FormatStyle::LK_Cpp &&
         Contexts.back().CanBeExpression && Left->isNot(TT_LambdaLSquare) &&
         CurrentToken->isNot(tok::l_brace) &&
         (!Parent ||
@@ -268,18 +269,23 @@ private:
          Parent->isUnaryOperator() ||
          Parent->isOneOf(TT_ObjCForIn, TT_CastRParen) ||
          getBinOpPrecedence(Parent->Tok.getKind(), true, true) > prec::Unknown);
-    ScopedContextCreator ContextCreator(*this, tok::l_square, 10);
-    Contexts.back().IsExpression = true;
     bool ColonFound = false;
 
-    if (StartsObjCMethodExpr) {
-      Contexts.back().ColonIsObjCMethodExpr = true;
-      Left->Type = TT_ObjCMethodExpr;
-    } else if (Parent && Parent->is(tok::at)) {
-      Left->Type = TT_ArrayInitializerLSquare;
-    } else if (Left->is(TT_Unknown)) {
-      Left->Type = TT_ArraySubscriptLSquare;
+    unsigned BindingIncrease = 1;
+    if (Left->is(TT_Unknown)) {
+      if (StartsObjCMethodExpr) {
+        Left->Type = TT_ObjCMethodExpr;
+      } else if (Parent && Parent->isOneOf(tok::at, tok::equal, tok::comma)) {
+        Left->Type = TT_ArrayInitializerLSquare;
+      } else {
+        BindingIncrease = 10;
+        Left->Type = TT_ArraySubscriptLSquare;
+      }
     }
+
+    ScopedContextCreator ContextCreator(*this, tok::l_square, BindingIncrease);
+    Contexts.back().IsExpression = true;
+    Contexts.back().ColonIsObjCMethodExpr = StartsObjCMethodExpr;
 
     while (CurrentToken) {
       if (CurrentToken->is(tok::r_square)) {
@@ -321,10 +327,8 @@ private:
         }
         ColonFound = true;
       }
-      if (CurrentToken->is(tok::comma) &&
-          Style.Language != FormatStyle::LK_Proto &&
-          (Left->is(TT_ArraySubscriptLSquare) ||
-           (Left->is(TT_ObjCMethodExpr) && !ColonFound)))
+      if (CurrentToken->is(tok::comma) && Left->is(TT_ObjCMethodExpr) &&
+          !ColonFound)
         Left->Type = TT_ArrayInitializerLSquare;
       FormatToken *Tok = CurrentToken;
       if (!consumeToken())
