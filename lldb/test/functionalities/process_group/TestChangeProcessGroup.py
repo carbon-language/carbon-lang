@@ -65,6 +65,14 @@ class ChangeProcessGroupTestCase(TestBase):
         self.assertTrue(err.Success() and retcode == 0,
                 "Failed to read file %s: %s, retcode: %d" % (pid_file_path, err.GetCString(), retcode))
 
+        # make sure we cleanup the forked child also
+        def cleanupChild():
+            if lldb.remote_platform:
+                lldb.remote_platform.Kill(int(pid))
+            else:
+                if os.path.exists("/proc/" + pid):
+                    os.kill(int(pid), signal.SIGKILL)
+        self.addTearDownHook(cleanupChild)
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
