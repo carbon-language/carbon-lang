@@ -15378,7 +15378,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     // Compute the symbol for the LSDA. We know it'll get emitted later.
     MachineFunction &MF = DAG.getMachineFunction();
     SDValue Op1 = Op.getOperand(1);
-    Op1->dump();
     auto *Fn = cast<Function>(cast<GlobalAddressSDNode>(Op1)->getGlobal());
     MCSymbol *LSDASym = MF.getMMI().getContext().getOrCreateLSDASymbol(
         GlobalValue::getRealLinkageName(Fn->getName()));
