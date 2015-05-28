@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "DwarfDebug.h"
 #include "DwarfException.h"
-#include "Win64Exception.h"
+#include "WinException.h"
 #include "WinCodeViewLineTables.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
@@ -269,7 +269,7 @@ bool AsmPrinter::doInitialization(Module &M) {
     case WinEH::EncodingType::Invalid:
       break;
     case WinEH::EncodingType::Itanium:
-      ES = new Win64Exception(this);
+      ES = new WinException(this);
       break;
     }
     break;

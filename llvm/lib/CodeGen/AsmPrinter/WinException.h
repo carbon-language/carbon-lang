@@ -1,4 +1,4 @@
-//===-- Win64Exception.h - Windows Exception Handling ----------*- C++ -*--===//
+//===-- WinException.h - Windows Exception Handling ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -21,7 +21,7 @@ class GlobalValue;
 class MachineFunction;
 class MCExpr;
 
-class Win64Exception : public EHStreamer {
+class WinException : public EHStreamer {
   /// Per-function flag to indicate if personality info should be emitted.
   bool shouldEmitPersonality;
 
@@ -42,8 +42,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
   //
-  Win64Exception(AsmPrinter *A);
-  ~Win64Exception() override;
+  WinException(AsmPrinter *A);
+  ~WinException() override;
 
   /// Emit all exception information that should come after the content.
   void endModule() override;

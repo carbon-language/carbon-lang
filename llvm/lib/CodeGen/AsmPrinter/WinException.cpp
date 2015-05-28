@@ -1,4 +1,4 @@
-//===-- CodeGen/AsmPrinter/Win64Exception.cpp - Dwarf Exception Impl ------===//
+//===-- CodeGen/AsmPrinter/WinException.cpp - Dwarf Exception Impl ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Win64Exception.h"
+#include "WinException.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -38,18 +38,18 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-Win64Exception::Win64Exception(AsmPrinter *A)
+WinException::WinException(AsmPrinter *A)
   : EHStreamer(A), shouldEmitPersonality(false), shouldEmitLSDA(false),
     shouldEmitMoves(false) {}
 
-Win64Exception::~Win64Exception() {}
+WinException::~WinException() {}
 
 /// endModule - Emit all exception information that should come after the
 /// content.
-void Win64Exception::endModule() {
+void WinException::endModule() {
 }
 
-void Win64Exception::beginFunction(const MachineFunction *MF) {
+void WinException::beginFunction(const MachineFunction *MF) {
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
 
   // If any landing pads survive, we need an EH table.
@@ -104,7 +104,7 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void Win64Exception::endFunction(const MachineFunction *MF) {
+void WinException::endFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
@@ -136,14 +136,14 @@ void Win64Exception::endFunction(const MachineFunction *MF) {
   Asm->OutStreamer->EmitWinCFIEndProc();
 }
 
-const MCExpr *Win64Exception::createImageRel32(const MCSymbol *Value) {
+const MCExpr *WinException::createImageRel32(const MCSymbol *Value) {
   if (!Value)
     return MCConstantExpr::Create(0, Asm->OutContext);
   return MCSymbolRefExpr::Create(Value, MCSymbolRefExpr::VK_COFF_IMGREL32,
                                  Asm->OutContext);
 }
 
-const MCExpr *Win64Exception::createImageRel32(const GlobalValue *GV) {
+const MCExpr *WinException::createImageRel32(const GlobalValue *GV) {
   if (!GV)
     return MCConstantExpr::Create(0, Asm->OutContext);
   return createImageRel32(Asm->getSymbol(GV));
@@ -177,7 +177,7 @@ const MCExpr *Win64Exception::createImageRel32(const GlobalValue *GV) {
 ///       imagerel32 LabelLPad;        // Zero means __finally.
 ///     } Entries[NumEntries];
 ///   };
-void Win64Exception::emitCSpecificHandlerTable() {
+void WinException::emitCSpecificHandlerTable() {
   const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
 
   // Simplifying assumptions for first implementation:
@@ -264,7 +264,7 @@ void Win64Exception::emitCSpecificHandlerTable() {
   }
 }
 
-void Win64Exception::emitCXXFrameHandler3Table(const MachineFunction *MF) {
+void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
   const Function *ParentF = MMI->getWinEHParent(F);
   auto &OS = *Asm->OutStreamer;
