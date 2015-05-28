@@ -1,5 +1,5 @@
 ; RUN: %lli -jit-kind=orc-mcjit -extra-module=%p/Inputs/multi-module-b.ll -extra-module=%p/Inputs/multi-module-c.ll -relocation-model=pic -code-model=small %s > /dev/null
-; XFAIL: mips, i686, i386
+; XFAIL: mips-, mipsel-, i686, i386
 
 declare i32 @FB()
 

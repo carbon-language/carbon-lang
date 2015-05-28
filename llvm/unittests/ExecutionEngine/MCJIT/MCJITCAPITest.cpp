@@ -127,6 +127,8 @@ protected:
     SupportedArchs.push_back(Triple::aarch64);
     SupportedArchs.push_back(Triple::arm);
     SupportedArchs.push_back(Triple::mips);
+    SupportedArchs.push_back(Triple::mips64);
+    SupportedArchs.push_back(Triple::mips64el);
     SupportedArchs.push_back(Triple::x86);
     SupportedArchs.push_back(Triple::x86_64);
 

@@ -149,6 +149,7 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
   // Save information about our target
   Arch = (Triple::ArchType)Obj.getArch();
   IsTargetLittleEndian = Obj.isLittleEndian();
+  setMipsABI(Obj);
 
   // Compute the memory size required to load all sections to be loaded
   // and pass this information to the memory manager
@@ -689,7 +690,7 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr,
     // and stubs for branches Thumb - ARM and ARM - Thumb.
     writeBytesUnaligned(0xe51ff004, Addr, 4); // ldr pc,<label>
     return Addr + 4;
-  } else if (Arch == Triple::mipsel || Arch == Triple::mips) {
+  } else if (IsMipsO32ABI) {
     // 0:   3c190000        lui     t9,%hi(addr).
     // 4:   27390000        addiu   t9,t9,%lo(addr).
     // 8:   03200008        jr      t9.

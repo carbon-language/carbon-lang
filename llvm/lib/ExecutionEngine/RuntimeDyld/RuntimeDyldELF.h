@@ -25,7 +25,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 
   void resolveRelocation(const SectionEntry &Section, uint64_t Offset,
                          uint64_t Value, uint32_t Type, int64_t Addend,
-                         uint64_t SymOffset = 0);
+                         uint64_t SymOffset = 0, SID SectionID = 0);
 
   void resolveX86_64Relocation(const SectionEntry &Section, uint64_t Offset,
                                uint64_t Value, uint32_t Type, int64_t Addend,
@@ -49,12 +49,24 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   void resolveSystemZRelocation(const SectionEntry &Section, uint64_t Offset,
                                 uint64_t Value, uint32_t Type, int64_t Addend);
 
+  void resolveMIPS64Relocation(const SectionEntry &Section, uint64_t Offset,
+                               uint64_t Value, uint32_t Type, int64_t Addend,
+                               uint64_t SymOffset, SID SectionID);
+
+  int64_t evaluateMIPS64Relocation(const SectionEntry &Section,
+                                   uint64_t Offset, uint64_t Value,
+                                   uint32_t Type,  int64_t Addend,
+                                   uint64_t SymOffset, SID SectionID);
+
+  void applyMIPS64Relocation(uint8_t *TargetPtr, int64_t CalculatedValue,
+                             uint32_t Type);
+
   unsigned getMaxStubSize() override {
     if (Arch == Triple::aarch64 || Arch == Triple::aarch64_be)
       return 20; // movz; movk; movk; movk; br
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
-    else if (Arch == Triple::mipsel || Arch == Triple::mips)
+    else if (IsMipsO32ABI)
       return 16;
     else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le)
       return 44;
@@ -72,6 +84,8 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
     else
       return 1;
   }
+
+  void setMipsABI(const ObjectFile &Obj) override;
 
   void findPPC64TOCSection(const ObjectFile &Obj,
                            ObjSectionToIDMap &LocalSections,
@@ -113,6 +127,13 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   // (This would be equivalent to GOTEntries.size() were it not for relocations
   // that consume more than one slot)
   unsigned CurrentGOTIndex;
+
+  // A map from section to a GOT section that has entries for section's GOT
+  // relocations. (Mips64 specific)
+  DenseMap<SID, SID> SectionToGOTMap;
+
+  // A map to avoid duplicate got entries (Mips64 specific)
+  StringMap<uint64_t> GOTSymbolOffsets;
 
   // When a module is loaded we save the SectionID of the EH frame section
   // in a table until we receive a request to register all unregistered

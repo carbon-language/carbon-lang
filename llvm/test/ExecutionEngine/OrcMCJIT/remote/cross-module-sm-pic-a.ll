@@ -1,5 +1,5 @@
 ; RUN: %lli -jit-kind=orc-mcjit -extra-module=%p/Inputs/cross-module-b.ll -disable-lazy-compilation=true -remote-mcjit -mcjit-remote-process=lli-child-target%exeext -relocation-model=pic -code-model=small %s > /dev/null
-; XFAIL: mips, i686, i386, arm
+; XFAIL: mips-, mipsel-, i686, i386, arm
 
 declare i32 @FB()
 
