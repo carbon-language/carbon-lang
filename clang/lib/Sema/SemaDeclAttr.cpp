@@ -3302,11 +3302,10 @@ static void handleGNUInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
 
-  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   // Diagnostic is emitted elsewhere: here we store the (valid) Attr
   // in the Decl node for syntactic reasoning, e.g., pretty-printing.
   CallingConv CC;
-  if (S.CheckCallingConvAttr(Attr, CC, FD))
+  if (S.CheckCallingConvAttr(Attr, CC, /*FD*/nullptr))
     return;
 
   if (!isa<ObjCMethodDecl>(D)) {
