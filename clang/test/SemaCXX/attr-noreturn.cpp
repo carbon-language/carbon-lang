@@ -17,6 +17,154 @@ namespace test5 {
   }
 }
 
+namespace destructor_tests {
+  __attribute__((noreturn)) void fail();
+
+  struct A {
+    ~A() __attribute__((noreturn)) { fail(); }
+  };
+  struct B {
+    B() {}
+    ~B() __attribute__((noreturn)) { fail(); }
+  };
+  struct C : A {};
+  struct D : B {};
+  struct E : virtual A {};
+  struct F : A, virtual B {};
+  struct G : E {};
+  struct H : virtual D {};
+  struct I : A {};
+  struct J : I {};
+  struct K : virtual A {};
+  struct L : K {};
+  struct M : virtual C {};
+  struct N : M {};
+  struct O { N n; };
+
+  __attribute__((noreturn)) void test_1() { A a; }
+  __attribute__((noreturn)) void test_2() { B b; }
+  __attribute__((noreturn)) void test_3() { C c; }
+  __attribute__((noreturn)) void test_4() { D d; }
+  __attribute__((noreturn)) void test_5() { E e; }
+  __attribute__((noreturn)) void test_6() { F f; }
+  __attribute__((noreturn)) void test_7() { G g; }
+  __attribute__((noreturn)) void test_8() { H h; }
+  __attribute__((noreturn)) void test_9() { I i; }
+  __attribute__((noreturn)) void test_10() { J j; }
+  __attribute__((noreturn)) void test_11() { K k; }
+  __attribute__((noreturn)) void test_12() { L l; }
+  __attribute__((noreturn)) void test_13() { M m; }
+  __attribute__((noreturn)) void test_14() { N n; }
+  __attribute__((noreturn)) void test_15() { O o; }
+
+  __attribute__((noreturn)) void test_16() { const A& a = A(); }
+  __attribute__((noreturn)) void test_17() { const B& b = B(); }
+  __attribute__((noreturn)) void test_18() { const C& c = C(); }
+  __attribute__((noreturn)) void test_19() { const D& d = D(); }
+  __attribute__((noreturn)) void test_20() { const E& e = E(); }
+  __attribute__((noreturn)) void test_21() { const F& f = F(); }
+  __attribute__((noreturn)) void test_22() { const G& g = G(); }
+  __attribute__((noreturn)) void test_23() { const H& h = H(); }
+  __attribute__((noreturn)) void test_24() { const I& i = I(); }
+  __attribute__((noreturn)) void test_25() { const J& j = J(); }
+  __attribute__((noreturn)) void test_26() { const K& k = K(); }
+  __attribute__((noreturn)) void test_27() { const L& l = L(); }
+  __attribute__((noreturn)) void test_28() { const M& m = M(); }
+  __attribute__((noreturn)) void test_29() { const N& n = N(); }
+  __attribute__((noreturn)) void test_30() { const O& o = O(); }
+
+  struct AA {};
+  struct BB { BB() {} ~BB() {} };
+  struct CC : AA {};
+  struct DD : BB {};
+  struct EE : virtual AA {};
+  struct FF : AA, virtual BB {};
+  struct GG : EE {};
+  struct HH : virtual DD {};
+  struct II : AA {};
+  struct JJ : II {};
+  struct KK : virtual AA {};
+  struct LL : KK {};
+  struct MM : virtual CC {};
+  struct NN : MM {};
+  struct OO { NN n; };
+
+  __attribute__((noreturn)) void test_31() {
+    AA a;
+    BB b;
+    CC c;
+    DD d;
+    EE e;
+    FF f;
+    GG g;
+    HH h;
+    II i;
+    JJ j;
+    KK k;
+    LL l;
+    MM m;
+    NN n;
+    OO o;
+
+    const AA& aa = AA();
+    const BB& bb = BB();
+    const CC& cc = CC();
+    const DD& dd = DD();
+    const EE& ee = EE();
+    const FF& ff = FF();
+    const GG& gg = GG();
+    const HH& hh = HH();
+    const II& ii = II();
+    const JJ& jj = JJ();
+    const KK& kk = KK();
+    const LL& ll = LL();
+    const MM& mm = MM();
+    const NN& nn = NN();
+    const OO& oo = OO();
+  }  // expected-warning {{function declared 'noreturn' should not return}}
+
+  struct P {
+    ~P() __attribute__((noreturn)) { fail(); }
+    void foo() {}
+  };
+  struct Q : P { };
+  __attribute__((noreturn)) void test31() {
+    P().foo();
+  }
+  __attribute__((noreturn)) void test32() {
+    Q().foo();
+  }
+
+  struct R {
+    A a[5];
+  };
+  __attribute__((noreturn)) void test33() {
+    R r;
+  }
+
+  // FIXME: Code flow analysis does not preserve information about non-null
+  // pointers, so it can't determine that this function is noreturn.
+  __attribute__((noreturn)) void test34() {
+    A *a = new A;
+    delete a;
+  }  // expected-warning {{function declared 'noreturn' should not return}}
+
+  struct S {
+    virtual ~S();
+  };
+  struct T : S {
+    __attribute__((noreturn)) ~T();
+  };
+
+  // FIXME: Code flow analysis does not preserve information about non-null
+  // pointers or derived class pointers,  so it can't determine that this
+  // function is noreturn.
+  __attribute__((noreturn)) void test35() {
+    S *s = new T;
+    delete s;
+  }  // expected-warning {{function declared 'noreturn' should not return}}
+}
+
 // PR5620
 void f0() __attribute__((__noreturn__));
 void f1(void (*)()); 
