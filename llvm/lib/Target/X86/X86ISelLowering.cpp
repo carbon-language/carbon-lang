@@ -2789,13 +2789,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // GuaranteedTailCallOpt will override this.
     GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
     if (!G || (!G->getGlobal()->hasLocalLinkage() &&
-               G->getGlobal()->hasDefaultVisibility())) {
+               G->getGlobal()->hasDefaultVisibility()))
       isTailCall = false;
-      if (G) {
-        llvm::errs() << "disabling tail call for default visibility symbol\n";
-        G->getGlobal()->dump();
-      }
-    }
   }
 
   bool IsMustTail = CLI.CS && CLI.CS->isMustTailCall();
