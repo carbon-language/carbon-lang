@@ -259,13 +259,9 @@ public:
     ///
     /// @param[in] s
     ///     The stream to which to dump the object description.
-    ///
-    /// @param[in] trailing_slash
-    ///     If true and the file is a non root directory, then a trailing slash
-    ///     will be added.
     //------------------------------------------------------------------
     void
-    Dump(Stream *s, bool trailing_slash = true) const;
+    Dump(Stream *s) const;
 
     //------------------------------------------------------------------
     /// Existence test.
@@ -634,10 +630,6 @@ public:
     //------------------------------------------------------------------
     lldb::DataBufferSP
     ReadFileContentsAsCString(Error *error_ptr = NULL);
-
-    static void Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
-    static void DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
-
 
     //------------------------------------------------------------------
     /// Run through the input string, replaying the effect of any ".." and produce

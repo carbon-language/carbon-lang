@@ -47,13 +47,53 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static bool
+namespace {
+
+bool
+PathSyntaxIsPosix(FileSpec::PathSyntax syntax)
+{
+    return (syntax == FileSpec::ePathSyntaxPosix ||
+            (syntax == FileSpec::ePathSyntaxHostNative &&
+             FileSystem::GetNativePathSyntax() == FileSpec::ePathSyntaxPosix));
+}
+
+char
+GetPathSeparator(FileSpec::PathSyntax syntax)
+{
+    return PathSyntaxIsPosix(syntax) ? '/' : '\\';
+}
+
+void
+Normalize(llvm::SmallVectorImpl<char> &path, FileSpec::PathSyntax syntax)
+{
+    if (PathSyntaxIsPosix(syntax)) return;
+
+    std::replace(path.begin(), path.end(), '\\', '/');
+    // Windows path can have \\ slashes which can be changed by replace
+    // call above to //. Here we remove the duplicate.
+    auto iter = std::unique ( path.begin(), path.end(),
+                               []( char &c1, char &c2 ){
+                                  return (c1 == '/' && c2 == '/');});
+    path.erase(iter, path.end());
+}
+
+void
+Denormalize(llvm::SmallVectorImpl<char> &path, FileSpec::PathSyntax syntax)
+{
+    if (PathSyntaxIsPosix(syntax)) return;
+
+    std::replace(path.begin(), path.end(), '/', '\\');
+}
+
+bool
 GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
 {
     char resolved_path[PATH_MAX];
     if (file_spec->GetPath (resolved_path, sizeof(resolved_path)))
         return ::stat (resolved_path, stats_ptr) == 0;
     return false;
+}
+
 }
 
 // Resolves the username part of a path of the form ~user/other/directories, and
@@ -250,30 +290,6 @@ FileSpec::operator= (const FileSpec& rhs)
         m_syntax = rhs.m_syntax;
     }
     return *this;
-}
-
-void FileSpec::Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
-{
-    if (syntax == ePathSyntaxPosix ||
-        (syntax == ePathSyntaxHostNative && FileSystem::GetNativePathSyntax() == ePathSyntaxPosix))
-        return;
-
-    std::replace(path.begin(), path.end(), '\\', '/');
-    // Windows path can have \\ slashes which can be changed by replace
-    // call above to //. Here we remove the duplicate.
-    auto iter = std::unique ( path.begin(), path.end(),
-                               []( char &c1, char &c2 ){
-                                  return (c1 == '/' && c2 == '/');});
-    path.erase(iter, path.end());
-}
-
-void FileSpec::DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
-{
-    if (syntax == ePathSyntaxPosix ||
-        (syntax == ePathSyntaxHostNative && FileSystem::GetNativePathSyntax() == ePathSyntaxPosix))
-        return;
-
-    std::replace(path.begin(), path.end(), '/', '\\');
 }
 
 //------------------------------------------------------------------
@@ -609,15 +625,15 @@ FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &res
 // directory delimiter, and the filename.
 //------------------------------------------------------------------
 void
-FileSpec::Dump(Stream *s, bool trailing_slash) const
+FileSpec::Dump(Stream *s) const
 {
     if (s)
     {
-        m_directory.Dump(s);
-        if ((m_filename || trailing_slash) && m_directory &&
-                !m_directory.GetStringRef().endswith("/"))
-            s->PutChar('/');
-        m_filename.Dump(s);
+        std::string path{GetPath(true)};
+        s->PutCString(path.c_str());
+        char path_separator = GetPathSeparator(m_syntax);
+        if (!m_filename && !path.empty() && path.back() != path_separator)
+            s->PutChar(path_separator);
     }
 }
 
@@ -816,12 +832,14 @@ FileSpec::GetPath(bool denormalize) const
 void
 FileSpec::GetPath(llvm::SmallVectorImpl<char> &path, bool denormalize) const
 {
-    StreamString stream;
-    Dump(&stream, false);
-    path.append(stream.GetString().begin(), stream.GetString().end());
+    path.append(m_directory.GetStringRef().begin(), m_directory.GetStringRef().end());
+    if (m_directory)
+        path.insert(path.end(), '/');
+    path.append(m_filename.GetStringRef().begin(), m_filename.GetStringRef().end());
     Normalize(path, m_syntax);
+    if (path.size() > 1 && path.back() == '/') path.pop_back();
     if (denormalize && !path.empty())
-        DeNormalize(path, m_syntax);
+        Denormalize(path, m_syntax);
 }
 
 ConstString
@@ -1383,15 +1401,7 @@ FileSpec::IsRelativeToCurrentWorkingDirectory () const
 
     if (directory.size() > 0)
     {
-        if (m_syntax == ePathSyntaxWindows)
-        {
-            if (directory.size() >= 2 && directory[1] == ':')
-                return false;
-            if (directory[0] == '/')
-                return false;
-            return true;
-        }
-        else
+        if (PathSyntaxIsPosix(m_syntax))
         {
             // If the path doesn't start with '/' or '~', return true
             switch (directory[0])
@@ -1402,6 +1412,14 @@ FileSpec::IsRelativeToCurrentWorkingDirectory () const
                 default:
                     return true;
             }
+        }
+        else
+        {
+            if (directory.size() >= 2 && directory[1] == ':')
+                return false;
+            if (directory[0] == '/')
+                return false;
+            return true;
         }
     }
     else if (m_filename)
