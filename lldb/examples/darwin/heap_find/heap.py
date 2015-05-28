@@ -16,6 +16,7 @@ import os.path
 import re
 import shlex
 import string
+import sys
 import tempfile
 import lldb.utils.symbolication
 
@@ -260,7 +261,47 @@ def type_flags_to_string(type_flags):
         type_str = hex(type_flags)
     return type_str
 
-def type_flags_to_description(type_flags, ptr_addr, ptr_size, offset):
+def find_variable_containing_address(verbose, frame, match_addr):
+    variables = frame.GetVariables(True,True,True,True)
+    matching_var = None
+    for var in variables:
+        var_addr = var.GetLoadAddress()
+        if var_addr != lldb.LLDB_INVALID_ADDRESS:
+            byte_size = var.GetType().GetByteSize()
+            if verbose:
+                print 'frame #%u: [%#x - %#x) %s' % (frame.GetFrameID(), var.load_addr, var.load_addr + byte_size, var.name)
+            if var_addr == match_addr:
+                if verbose:
+                    print 'match'
+                return var
+            else:
+                if byte_size > 0 and var_addr <= match_addr and match_addr < (var_addr + byte_size):
+                    if verbose:
+                        print 'match'
+                    return var
+    return None
+    
+def find_frame_for_stack_address(process, addr):
+    closest_delta = sys.maxint
+    closest_frame = None
+    #print 'find_frame_for_stack_address(%#x)' % (addr)
+    for thread in process:
+        prev_sp = lldb.LLDB_INVALID_ADDRESS
+        for frame in thread:
+            cfa = frame.GetCFA()
+            #print 'frame #%u: cfa = %#x' % (frame.GetFrameID(), cfa)
+            if addr < cfa:
+                delta = cfa - addr
+                #print '%#x < %#x, delta = %i' % (addr, cfa, delta)
+                if delta < closest_delta:
+                    #print 'closest'
+                    closest_delta = delta
+                    closest_frame = frame
+                # else:
+                #     print 'delta >= closest_delta'
+    return closest_frame
+            
+def type_flags_to_description(process, type_flags, ptr_addr, ptr_size, offset, match_addr):
     show_offset = False
     if type_flags == 0 or type_flags & 4:
         type_str = 'free(%#x)' % (ptr_addr,)
@@ -269,13 +310,32 @@ def type_flags_to_description(type_flags, ptr_addr, ptr_size, offset):
         show_offset = True
     elif type_flags & 8:
         type_str = 'stack'
+        frame = find_frame_for_stack_address(process, match_addr)
+        if frame:
+            type_str += ' in frame #%u of thread #%u: tid %#x' % (frame.GetFrameID(), frame.GetThread().GetIndexID(), frame.GetThread().GetThreadID())
+        variables = frame.GetVariables(True,True,True,True)
+        matching_var = None
+        for var in variables:
+            var_addr = var.GetLoadAddress()
+            if var_addr != lldb.LLDB_INVALID_ADDRESS:
+                #print 'variable "%s" @ %#x (%#x)' % (var.name, var.load_addr, match_addr)
+                if var_addr == match_addr:
+                    matching_var = var
+                    break
+                else:
+                    byte_size = var.GetType().GetByteSize()
+                    if byte_size > 0 and var_addr <= match_addr and match_addr < (var_addr + byte_size):
+                        matching_var = var
+                        break
+        if matching_var:
+            type_str += ' in variable at %#x:\n    %s' % (matching_var.GetLoadAddress(), matching_var)
     elif type_flags & 16:
         type_str = 'stack (red zone)'
     elif type_flags & 32:
-        sb_addr = lldb.debugger.GetSelectedTarget().ResolveLoadAddress(ptr_addr + offset)
+        sb_addr = process.GetTarget().ResolveLoadAddress(ptr_addr + offset)
         type_str = 'segment [%#x - %#x), %s + %u, %s' % (ptr_addr, ptr_addr + ptr_size, sb_addr.section.name, sb_addr.offset, sb_addr)
     elif type_flags & 64:
-        sb_addr = lldb.debugger.GetSelectedTarget().ResolveLoadAddress(ptr_addr + offset)
+        sb_addr = process.GetTarget().ResolveLoadAddress(ptr_addr + offset)
         type_str = 'vm_region [%#x - %#x), %s + %u, %s' % (ptr_addr, ptr_addr + ptr_size, sb_addr.section.name, sb_addr.offset, sb_addr)
     else:
         type_str = '%#x' % (ptr_addr,)
@@ -316,9 +376,8 @@ def dump_stack_history_entry(options, result, stack_history_entry, idx):
             
 def dump_stack_history_entries(options, result, addr, history):
     # malloc_stack_entry *get_stack_history_for_address (const void * addr)
-    single_expr = '''
+    expr_prefix = '''
 typedef int kern_return_t;
-#define MAX_FRAMES %u
 typedef struct $malloc_stack_entry {
     uint64_t address;
     uint64_t argument;
@@ -327,6 +386,9 @@ typedef struct $malloc_stack_entry {
     uint64_t frames[512];
     kern_return_t err;
 } $malloc_stack_entry;
+'''
+    single_expr = '''
+#define MAX_FRAMES %u
 typedef unsigned task_t;
 $malloc_stack_entry stack;
 stack.address = 0x%x;
@@ -407,6 +469,7 @@ info''' % (options.max_frames, options.max_history, addr);
     expr_options.SetTimeoutInMicroSeconds (5*1000*1000) # 5 second timeout
     expr_options.SetTryAllThreads (True)
     expr_options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
+    expr_options.SetPrefix(expr_prefix)
     expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
@@ -434,7 +497,7 @@ info''' % (options.max_frames, options.max_history, addr);
         result.AppendMessage('error: expression failed "%s" => %s' % (expr, expr_sbvalue.error))
 
 
-def display_match_results (result, options, arg_str_description, expr, print_no_matches, expr_prefix = None):
+def display_match_results (process, result, options, arg_str_description, expr, print_no_matches, expr_prefix = None):
     frame = lldb.debugger.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
     if not frame:
         result.AppendMessage('error: invalid frame')
@@ -491,7 +554,7 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
                     options.search_heap = search_heap_old
                     options.search_vm_regions = search_vm_regions
                 if print_entry:
-                    description = '%#16.16x: %s' % (match_addr, type_flags_to_description(type_flags, malloc_addr, malloc_size, offset))
+                    description = '%#16.16x: %s' % (match_addr, type_flags_to_description(process, type_flags, malloc_addr, malloc_size, offset, match_addr))
                     if options.show_size:
                         description += ' <%5u>' % (malloc_size)
                     if options.show_range:
@@ -593,6 +656,36 @@ program.'''
     add_common_options(parser)
     return parser
     
+def find_variable(debugger, command, result, dict):
+    usage = "usage: %prog [options] <ADDR> [ADDR ...]"
+    description='''Searches for a local variable in all frames that contains a hex ADDR.'''
+    command_args = shlex.split(command)
+    parser = optparse.OptionParser(description=description, prog='find_variable',usage=usage)
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        return
+    
+    process = debugger.GetSelectedTarget().GetProcess()
+    if not process:
+        result.AppendMessage('error: invalid process')
+        return
+    
+    for arg in args:
+        var_addr = int(arg, 16)
+        print >>result, "Finding a variable with address %#x..." % (var_addr)
+        done = False
+        for thread in process:
+            for frame in thread:
+                var = find_variable_containing_address(options.verbose, frame, var_addr)
+                if var:
+                    print var
+                    done = True
+                    break
+            if done:
+                break
+                
 def ptr_refs(debugger, command, result, dict):
     command_args = shlex.split(command)
     parser = get_ptr_refs_options()
@@ -601,7 +694,7 @@ def ptr_refs(debugger, command, result, dict):
     except:
         return
 
-    process = lldb.debugger.GetSelectedTarget().GetProcess()
+    process = debugger.GetSelectedTarget().GetProcess()
     if not process:
         result.AppendMessage('error: invalid process')
         return
@@ -671,7 +764,7 @@ baton.matches'''
             user_init_code = user_init_code_format % (options.max_matches, ptr_expr)
             expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing pointer %s' % ptr_expr
-            display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
+            display_match_results (process, result, options, arg_str_description, expr, True, expr_prefix)
     else:
         result.AppendMessage('error: no pointer arguments were given')
 
@@ -694,7 +787,7 @@ def cstr_refs(debugger, command, result, dict):
     except:
         return
 
-    process = lldb.debugger.GetSelectedTarget().GetProcess()
+    process = debugger.GetSelectedTarget().GetProcess()
     if not process:
         result.AppendMessage('error: invalid process')
         return
@@ -767,7 +860,7 @@ baton.matches'''
             user_init_code = user_init_code_format % (options.max_matches, cstr)
             expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
             arg_str_description = 'malloc block containing "%s"' % cstr            
-            display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
+            display_match_results (process, result, options, arg_str_description, expr, True, expr_prefix)
     else:
         result.AppendMessage('error: command takes one or more C string arguments')
 
@@ -796,7 +889,7 @@ def malloc_info_impl (debugger, result, options, args):
     # We are specifically looking for something on the heap only
     options.type = 'malloc_info'
 
-    process = lldb.debugger.GetSelectedTarget().GetProcess()
+    process = debugger.GetSelectedTarget().GetProcess()
     if not process:
         result.AppendMessage('error: invalid process')
         return
@@ -844,7 +937,7 @@ baton.matches[1].addr = 0;'''
             user_init_code = user_init_code_format % (ptr_expr)
             expr = get_iterate_memory_expr(options, process, user_init_code, 'baton.matches')          
             arg_str_description = 'malloc block that contains %s' % ptr_expr
-            total_matches += display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
+            total_matches += display_match_results (process, result, options, arg_str_description, expr, True, expr_prefix)
         return total_matches
     else:
         result.AppendMessage('error: command takes one or more pointer expressions')
@@ -935,7 +1028,7 @@ def section_ptr_refs(debugger, command, result, dict):
         result.AppendMessage('error: at least one section must be specified with the --section option')
         return
 
-    target = lldb.debugger.GetSelectedTarget()
+    target = debugger.GetSelectedTarget()
     for module in target.modules:
         for section_name in options.section_names:
             section = module.section[section_name]
@@ -952,7 +1045,7 @@ def section_ptr_refs(debugger, command, result, dict):
             for (idx, section) in enumerate(sections):
                 expr = 'find_pointer_in_memory(0x%xllu, %ullu, (void *)%s)' % (section.addr.load_addr, section.size, expr_str)
                 arg_str_description = 'section %s.%s containing "%s"' % (section_modules[idx].file.fullpath, section.name, expr_str)
-                num_matches = display_match_results (result, options, arg_str_description, expr, False)
+                num_matches = display_match_results (target.GetProcess(), result, options, arg_str_description, expr, False)
                 if num_matches:
                     if num_matches < options.max_matches:
                         options.max_matches = options.max_matches - num_matches
@@ -983,7 +1076,7 @@ def objc_refs(debugger, command, result, dict):
     except:
         return
 
-    process = lldb.debugger.GetSelectedTarget().GetProcess()
+    process = debugger.GetSelectedTarget().GetProcess()
     if not process:
         result.AppendMessage('error: invalid process')
         return
@@ -1117,7 +1210,7 @@ int nc = (int)objc_getClassList(baton.classes, sizeof(baton.classes)/sizeof(Clas
                     user_init_code = user_init_code_format % (options.max_matches, num_objc_classes, isa)
                     expr = get_iterate_memory_expr(options, process, user_init_code, user_return_code)          
                     arg_str_description = 'objective C classes with isa 0x%x' % isa
-                    display_match_results (result, options, arg_str_description, expr, True, expr_prefix)
+                    display_match_results (process, result, options, arg_str_description, expr, True, expr_prefix)
                 else:
                     result.AppendMessage('error: Can\'t find isa for an ObjC class named "%s"' % (class_name))
             else:
@@ -1139,11 +1232,12 @@ objc_refs.__doc__ = get_objc_refs_options().format_help()
 lldb.debugger.HandleCommand('command script add -f %s.ptr_refs ptr_refs' % __name__)
 lldb.debugger.HandleCommand('command script add -f %s.cstr_refs cstr_refs' % __name__)
 lldb.debugger.HandleCommand('command script add -f %s.malloc_info malloc_info' % __name__)
+lldb.debugger.HandleCommand('command script add -f %s.find_variable find_variable' % __name__)
 # lldb.debugger.HandleCommand('command script add -f %s.heap heap' % package_name)
 # lldb.debugger.HandleCommand('command script add -f %s.section_ptr_refs section_ptr_refs' % package_name)
 # lldb.debugger.HandleCommand('command script add -f %s.stack_ptr_refs stack_ptr_refs' % package_name)
 lldb.debugger.HandleCommand('command script add -f %s.objc_refs objc_refs' % __name__)
-print '"malloc_info", "ptr_refs", "cstr_refs", and "objc_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
+print '"malloc_info", "ptr_refs", "cstr_refs", "find_variable", and "objc_refs" commands have been installed, use the "--help" options on these commands for detailed help.'
 
 
 

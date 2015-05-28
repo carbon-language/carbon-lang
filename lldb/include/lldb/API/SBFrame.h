@@ -37,6 +37,9 @@ public:
     GetFrameID () const;
 
     lldb::addr_t
+    GetCFA () const;
+
+    lldb::addr_t
     GetPC () const;
 
     bool

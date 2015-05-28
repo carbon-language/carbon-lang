@@ -454,6 +454,17 @@ SBFrame::GetFrameID () const
     return frame_idx;
 }
 
+lldb::addr_t
+SBFrame::GetCFA () const
+{
+    ExecutionContext exe_ctx(m_opaque_sp.get());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    if (frame)
+        return frame->GetStackID().GetCallFrameAddress();
+    return LLDB_INVALID_ADDRESS;
+}
+
+
 addr_t
 SBFrame::GetPC () const
 {
