@@ -4297,9 +4297,7 @@ public:
         .Case("hwdiv-arm", HWDiv & HWDivARM)
         .Default(false);
   }
-  // FIXME: Should we actually have some table instead of these switches?
   const char *getCPUDefineSuffix(StringRef Name) const {
-    // FIXME: Use ARMTargetParser
     if(Name == "generic") {
       auto subarch = getTriple().getSubArch();
       switch (subarch) {
@@ -4310,34 +4308,32 @@ public:
       }
     }
 
-    return llvm::StringSwitch<const char *>(Name)
-        .Cases("arm8", "arm810", "4")
-        .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110",
-               "4")
-        .Cases("arm7tdmi", "arm7tdmi-s", "arm710t", "arm720t", "arm9", "4T")
-        .Cases("arm9tdmi", "arm920", "arm920t", "arm922t", "arm940t", "4T")
-        .Case("ep9312", "4T")
-        .Cases("arm10tdmi", "arm1020t", "5T")
-        .Cases("arm9e", "arm946e-s", "arm966e-s", "arm968e-s", "5TE")
-        .Case("arm926ej-s", "5TEJ")
-        .Cases("arm10e", "arm1020e", "arm1022e", "5TE")
-        .Cases("xscale", "iwmmxt", "5TE")
-        .Case("arm1136j-s", "6J")
-        .Case("arm1136jf-s", "6")
-        .Cases("mpcorenovfp", "mpcore", "6K")
-        .Cases("arm1176jz-s", "arm1176jzf-s", "6K")
-        .Cases("arm1156t2-s", "arm1156t2f-s", "6T2")
-        .Cases("cortex-a5", "cortex-a7", "cortex-a8", "7A")
-        .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
-               "7A")
-        .Cases("cortex-r4", "cortex-r4f", "cortex-r5", "cortex-r7", "7R")
-        .Case("swift", "7S")
-        .Case("cyclone", "8A")
-        .Cases("sc300", "cortex-m3", "7M")
-        .Cases("cortex-m4", "cortex-m7", "7EM")
-        .Cases("sc000", "cortex-m0", "cortex-m0plus", "cortex-m1", "6M")
-        .Cases("cortex-a53", "cortex-a57", "cortex-a72", "8A")
-        .Default(nullptr);
+    unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(Name);
+    if (ArchKind == llvm::ARM::AK_INVALID)
+      return "";
+
+    // For most sub-arches, the build attribute CPU name is enough.
+    // For Cortex variants, it's slightly different.
+    switch(ArchKind) {
+    default:
+      return llvm::ARMTargetParser::getCPUAttr(ArchKind);
+    case llvm::ARM::AK_ARMV6M:
+    case llvm::ARM::AK_ARMV6SM:
+      return "6M";
+    case llvm::ARM::AK_ARMV7:
+    case llvm::ARM::AK_ARMV7A:
+      return "7A";
+    case llvm::ARM::AK_ARMV7R:
+      return "7R";
+    case llvm::ARM::AK_ARMV7M:
+      return "7M";
+    case llvm::ARM::AK_ARMV7EM:
+      return "7EM";
+    case llvm::ARM::AK_ARMV8A:
+      return "8A";
+    case llvm::ARM::AK_ARMV8_1A:
+      return "8_1A";
+    }
   }
   const char *getCPUProfile(StringRef Name) const {
     if(Name == "generic") {
