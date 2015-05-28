@@ -5096,6 +5096,7 @@ public:
         m_write_file (write_fd, false),
         m_pipe ()
     {
+        m_pipe.CreateNew(false);
         m_read_file.SetDescriptor(GetInputFD(), false);
     }
 
@@ -5105,101 +5106,81 @@ public:
         
     }
     
-    bool
-    OpenPipes ()
-    {
-        if (m_pipe.CanRead() && m_pipe.CanWrite())
-            return true;
-        Error result = m_pipe.CreateNew(false);
-        return result.Success();
-    }
-
-    void
-    ClosePipes()
-    {
-        m_pipe.Close();
-    }
-    
     // Each IOHandler gets to run until it is done. It should read data
     // from the "in" and place output into "out" and "err and return
     // when done.
     void
     Run () override
     {
-        if (m_read_file.IsValid() && m_write_file.IsValid())
+        if (!m_read_file.IsValid() || !m_write_file.IsValid() || !m_pipe.CanRead() || !m_pipe.CanWrite())
         {
-            SetIsDone(false);
-            if (OpenPipes())
-            {
-                const int read_fd = m_read_file.GetDescriptor();
-                TerminalState terminal_state;
-                terminal_state.Save (read_fd, false);
-                Terminal terminal(read_fd);
-                terminal.SetCanonical(false);
-                terminal.SetEcho(false);
+            SetIsDone(true);
+            return;
+        }
+
+        SetIsDone(false);
+        const int read_fd = m_read_file.GetDescriptor();
+        TerminalState terminal_state;
+        terminal_state.Save (read_fd, false);
+        Terminal terminal(read_fd);
+        terminal.SetCanonical(false);
+        terminal.SetEcho(false);
 // FD_ZERO, FD_SET are not supported on windows
 #ifndef _WIN32
-                const int pipe_read_fd = m_pipe.GetReadFileDescriptor();
-                while (!GetIsDone())
+        const int pipe_read_fd = m_pipe.GetReadFileDescriptor();
+        while (!GetIsDone())
+        {
+            fd_set read_fdset;
+            FD_ZERO (&read_fdset);
+            FD_SET (read_fd, &read_fdset);
+            FD_SET (pipe_read_fd, &read_fdset);
+            const int nfds = std::max<int>(read_fd, pipe_read_fd) + 1;
+            int num_set_fds = select (nfds, &read_fdset, NULL, NULL, NULL);
+            if (num_set_fds < 0)
+            {
+                const int select_errno = errno;
+
+                if (select_errno != EINTR)
+                    SetIsDone(true);
+            }
+            else if (num_set_fds > 0)
+            {
+                char ch = 0;
+                size_t n;
+                if (FD_ISSET (read_fd, &read_fdset))
                 {
-                    fd_set read_fdset;
-                    FD_ZERO (&read_fdset);
-                    FD_SET (read_fd, &read_fdset);
-                    FD_SET (pipe_read_fd, &read_fdset);
-                    const int nfds = std::max<int>(read_fd, pipe_read_fd) + 1;
-                    int num_set_fds = select (nfds, &read_fdset, NULL, NULL, NULL);
-                    if (num_set_fds < 0)
+                    n = 1;
+                    if (m_read_file.Read(&ch, n).Success() && n == 1)
                     {
-                        const int select_errno = errno;
-                        
-                        if (select_errno != EINTR)
+                        if (m_write_file.Write(&ch, n).Fail() || n != 1)
                             SetIsDone(true);
                     }
-                    else if (num_set_fds > 0)
+                    else
+                        SetIsDone(true);
+                }
+                if (FD_ISSET (pipe_read_fd, &read_fdset))
+                {
+                    size_t bytes_read;
+                    // Consume the interrupt byte
+                    Error error = m_pipe.Read(&ch, 1, bytes_read);
+                    if (error.Success())
                     {
-                        char ch = 0;
-                        size_t n;
-                        if (FD_ISSET (read_fd, &read_fdset))
+                        switch (ch)
                         {
-                            n = 1;
-                            if (m_read_file.Read(&ch, n).Success() && n == 1)
-                            {
-                                if (m_write_file.Write(&ch, n).Fail() || n != 1)
-                                    SetIsDone(true);
-                            }
-                            else
+                            case 'q':
                                 SetIsDone(true);
-                        }
-                        if (FD_ISSET (pipe_read_fd, &read_fdset))
-                        {
-                            size_t bytes_read;
-                            // Consume the interrupt byte
-                            Error error = m_pipe.Read(&ch, 1, bytes_read);
-                            if (error.Success())
-                            {
-                                switch (ch)
-                                {
-                                    case 'q':
-                                        SetIsDone(true);
-                                        break;
-                                    case 'i':
-                                        if (StateIsRunningState(m_process->GetState()))
-                                            m_process->Halt();
-                                        break;
-                                }
-                            }
+                                break;
+                            case 'i':
+                                if (StateIsRunningState(m_process->GetState()))
+                                    m_process->Halt();
+                                break;
                         }
                     }
                 }
-#endif
-                terminal_state.Restore();
-
             }
-            else
-                SetIsDone(true);
         }
-        else
-            SetIsDone(true);
+#endif
+        terminal_state.Restore();
     }
     
     void
