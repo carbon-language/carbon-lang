@@ -1122,6 +1122,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VORRIMM:       return "ARMISD::VORRIMM";
   case ARMISD::VBICIMM:       return "ARMISD::VBICIMM";
   case ARMISD::VBSL:          return "ARMISD::VBSL";
+  case ARMISD::MCOPY:         return "ARMISD::MCOPY";
   case ARMISD::VLD2DUP:       return "ARMISD::VLD2DUP";
   case ARMISD::VLD3DUP:       return "ARMISD::VLD3DUP";
   case ARMISD::VLD4DUP:       return "ARMISD::VLD4DUP";
@@ -7629,8 +7630,59 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
 }
 
+/// \brief Lowers MCOPY to either LDMIA/STMIA or LDMIA_UPD/STMID_UPD depending
+/// on whether the result is used. This is done as a post-isel lowering instead
+/// of as a custom inserter because we need the use list from the SDNode.
+static void LowerMCOPY(const ARMSubtarget *Subtarget, MachineInstr *MI,
+                       SDNode *Node) {
+  bool isThumb1 = Subtarget->isThumb1Only();
+  bool isThumb2 = Subtarget->isThumb2();
+  const ARMBaseInstrInfo *TII = Subtarget->getInstrInfo();
+
+  DebugLoc dl = MI->getDebugLoc();
+  MachineBasicBlock *BB = MI->getParent();
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  MachineInstrBuilder LD, ST;
+  if (isThumb1 || Node->hasAnyUseOfValue(1)) {
+    LD = BuildMI(*BB, MI, dl, TII->get(isThumb2 ? ARM::t2LDMIA_UPD
+                                                : isThumb1 ? ARM::tLDMIA_UPD
+                                                           : ARM::LDMIA_UPD))
+             .addOperand(MI->getOperand(1));
+  } else {
+    LD = BuildMI(*BB, MI, dl, TII->get(isThumb2 ? ARM::t2LDMIA : ARM::LDMIA));
+  }
+
+  if (isThumb1 || Node->hasAnyUseOfValue(0)) {
+    ST = BuildMI(*BB, MI, dl, TII->get(isThumb2 ? ARM::t2STMIA_UPD
+                                                : isThumb1 ? ARM::tSTMIA_UPD
+                                                           : ARM::STMIA_UPD))
+             .addOperand(MI->getOperand(0));
+  } else {
+    ST = BuildMI(*BB, MI, dl, TII->get(isThumb2 ? ARM::t2STMIA : ARM::STMIA));
+  }
+
+  LD.addOperand(MI->getOperand(3)).addImm(ARMCC::AL).addReg(0);
+  ST.addOperand(MI->getOperand(2)).addImm(ARMCC::AL).addReg(0);
+
+  for (unsigned I = 0; I != MI->getOperand(4).getImm(); ++I) {
+    unsigned TmpReg = MRI.createVirtualRegister(isThumb1 ? &ARM::tGPRRegClass
+                                                         : &ARM::GPRRegClass);
+    LD.addReg(TmpReg, RegState::Define);
+    ST.addReg(TmpReg, RegState::Kill);
+  }
+
+  MI->eraseFromParent();
+}
+
 void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                       SDNode *Node) const {
+  if (MI->getOpcode() == ARM::MCOPY) {
+    LowerMCOPY(Subtarget, MI, Node);
+    return;
+  }
+
   const MCInstrDesc *MCID = &MI->getDesc();
   // Adjust potentially 's' setting instructions after isel, i.e. ADC, SBC, RSB,
   // RSC. Coming out of isel, they have an implicit CPSR def, but the optional

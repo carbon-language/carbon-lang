@@ -73,6 +73,10 @@ def SDT_ARMBFI : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 def SDT_ARMVMAXNM : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisFP<1>, SDTCisFP<2>]>;
 def SDT_ARMVMINNM : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisFP<1>, SDTCisFP<2>]>;
 
+def SDT_ARMMCOPY  : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                         SDTCisVT<2, i32>, SDTCisVT<3, i32>,
+                                         SDTCisVT<4, i32>]>;
+
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
                                              SDTCisSameAs<0, 3>,
@@ -178,6 +182,10 @@ def ARMbfi           : SDNode<"ARMISD::BFI", SDT_ARMBFI>;
 
 def ARMvmaxnm        : SDNode<"ARMISD::VMAXNM", SDT_ARMVMAXNM, []>;
 def ARMvminnm        : SDNode<"ARMISD::VMINNM", SDT_ARMVMINNM, []>;
+
+def ARMmcopy : SDNode<"ARMISD::MCOPY", SDT_ARMMCOPY,
+                      [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
+                       SDNPMayStore, SDNPMayLoad]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -4550,6 +4558,13 @@ let usesCustomInserter = 1 in {
       (outs), (ins GPR:$dst, GPR:$src, i32imm:$size, i32imm:$alignment),
       NoItinerary,
       [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size, imm:$alignment)]>;
+}
+
+let hasPostISelHook = 1 in {
+    def MCOPY : PseudoInst<
+      (outs GPR:$newdst, GPR:$newsrc), (ins GPR:$dst, GPR:$src, i32imm:$nreg),
+      NoItinerary,
+      [(set GPR:$newdst, GPR:$newsrc, (ARMmcopy GPR:$dst, GPR:$src, imm:$nreg))]>;
 }
 
 def ldrex_1 : PatFrag<(ops node:$ptr), (int_arm_ldrex node:$ptr), [{

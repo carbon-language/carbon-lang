@@ -6,15 +6,17 @@ target triple = "thumbv6m-none--eabi"
 @b = external global i32*
 
 ; Function Attrs: nounwind
-define void @foo() #0 {
+define void @foo24() #0 {
 entry:
-; CHECK-LABEL: foo:
-; CHECK: ldr r[[SB:[0-9]]], .LCPI
+; CHECK-LABEL: foo24:
 ; CHECK: ldr r[[LB:[0-9]]], .LCPI
 ; CHECK: adds r[[NLB:[0-9]]], r[[LB]], #4
-; CHECK-NEXT: ldm r[[NLB]],
+; CHECK: ldr r[[SB:[0-9]]], .LCPI
 ; CHECK: adds r[[NSB:[0-9]]], r[[SB]], #4
-; CHECK-NEXT: stm r[[NSB]]
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
   %0 = load i32*, i32** @a, align 4
   %arrayidx = getelementptr inbounds i32, i32* %0, i32 1
   %1 = bitcast i32* %arrayidx to i8*
@@ -22,6 +24,71 @@ entry:
   %arrayidx1 = getelementptr inbounds i32, i32* %2, i32 1
   %3 = bitcast i32* %arrayidx1 to i8*
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* %3, i32 24, i32 4, i1 false)
+  ret void
+}
+
+define void @foo28() #0 {
+entry:
+; CHECK-LABEL: foo28:
+; CHECK: ldr r[[LB:[0-9]]], .LCPI
+; CHECK: adds r[[NLB:[0-9]]], r[[LB]], #4
+; CHECK: ldr r[[SB:[0-9]]], .LCPI
+; CHECK: adds r[[NSB:[0-9]]], r[[SB]], #4
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]], r[[R4:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]], r[[R4]]}
+  %0 = load i32*, i32** @a, align 4
+  %arrayidx = getelementptr inbounds i32, i32* %0, i32 1
+  %1 = bitcast i32* %arrayidx to i8*
+  %2 = load i32*, i32** @b, align 4
+  %arrayidx1 = getelementptr inbounds i32, i32* %2, i32 1
+  %3 = bitcast i32* %arrayidx1 to i8*
+  tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* %3, i32 28, i32 4, i1 false)
+  ret void
+}
+
+define void @foo32() #0 {
+entry:
+; CHECK-LABEL: foo32:
+; CHECK: ldr r[[LB:[0-9]]], .LCPI
+; CHECK: adds r[[NLB:[0-9]]], r[[LB]], #4
+; CHECK: ldr r[[SB:[0-9]]], .LCPI
+; CHECK: adds r[[NSB:[0-9]]], r[[SB]], #4
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]], r[[R4:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]], r[[R4]]}
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]], r[[R4:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]], r[[R4]]}
+  %0 = load i32*, i32** @a, align 4
+  %arrayidx = getelementptr inbounds i32, i32* %0, i32 1
+  %1 = bitcast i32* %arrayidx to i8*
+  %2 = load i32*, i32** @b, align 4
+  %arrayidx1 = getelementptr inbounds i32, i32* %2, i32 1
+  %3 = bitcast i32* %arrayidx1 to i8*
+  tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* %3, i32 32, i32 4, i1 false)
+  ret void
+}
+
+define void @foo36() #0 {
+entry:
+; CHECK-LABEL: foo36:
+; CHECK: ldr r[[LB:[0-9]]], .LCPI
+; CHECK: adds r[[NLB:[0-9]]], r[[LB]], #4
+; CHECK: ldr r[[SB:[0-9]]], .LCPI
+; CHECK: adds r[[NSB:[0-9]]], r[[SB]], #4
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
+; CHECK-NEXT: ldm r[[NLB]]!, {r[[R1:[0-9]]], r[[R2:[0-9]]], r[[R3:[0-9]]]}
+; CHECK-NEXT: stm r[[NSB]]!, {r[[R1]], r[[R2]], r[[R3]]}
+  %0 = load i32*, i32** @a, align 4
+  %arrayidx = getelementptr inbounds i32, i32* %0, i32 1
+  %1 = bitcast i32* %arrayidx to i8*
+  %2 = load i32*, i32** @b, align 4
+  %arrayidx1 = getelementptr inbounds i32, i32* %2, i32 1
+  %3 = bitcast i32* %arrayidx1 to i8*
+  tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* %3, i32 36, i32 4, i1 false)
   ret void
 }
 
