@@ -1915,18 +1915,25 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
 
             if (arch.GetMachine() == llvm::Triple::arm)
             {
-                // THUMB functions have the lower bit of their address set. Fixup
-                // the actual address and mark the symbol as THUMB.
-                if (symbol_type == eSymbolTypeCode && symbol.st_value & 1)
+                if (symbol_type == eSymbolTypeCode)
                 {
-                    // Substracting 1 from the address effectively unsets
-                    // the low order bit, which results in the address
-                    // actually pointing to the beginning of the symbol.
-                    // This delta will be used below in conjuction with
-                    // symbol.st_value to produce the final symbol_value
-                    // that we store in the symtab.
-                    symbol_value_offset = -1;
-                    additional_flags = ARM_ELF_SYM_IS_THUMB;
+                    if (symbol.st_value & 1)
+                    {
+                        // Subtracting 1 from the address effectively unsets
+                        // the low order bit, which results in the address
+                        // actually pointing to the beginning of the symbol.
+                        // This delta will be used below in conjunction with
+                        // symbol.st_value to produce the final symbol_value
+                        // that we store in the symtab.
+                        symbol_value_offset = -1;
+                        additional_flags = ARM_ELF_SYM_IS_THUMB;
+                        m_address_class_map[symbol.st_value^1] = eAddressClassCodeAlternateISA;
+                    }
+                    else
+                    {
+                        // This address is ARM
+                        m_address_class_map[symbol.st_value] = eAddressClassCode;
+                    }
                 }
             }
         }
