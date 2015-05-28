@@ -135,6 +135,7 @@ public:
   static const char * getArchName(unsigned ArchKind);
   static   unsigned   getArchAttr(unsigned ArchKind);
   static const char * getCPUAttr(unsigned ArchKind);
+  static const char * getSubArch(unsigned ArchKind);
   static const char * getArchExtName(unsigned ArchExtKind);
   static const char * getDefaultCPU(StringRef Arch);
 
