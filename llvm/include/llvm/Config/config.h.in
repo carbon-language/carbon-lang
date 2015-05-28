@@ -6,6 +6,9 @@
 /* Bug report URL. */
 #undef BUG_REPORT_URL
 
+/* Default OpenMP runtime used by -fopenmp. */
+#undef CLANG_DEFAULT_OPENMP_RUNTIME
+
 /* Define if we have libxml2 */
 #undef CLANG_HAVE_LIBXML
 

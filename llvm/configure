@@ -1495,6 +1495,8 @@ Optional Packages:
                           search for headers
   --with-gcc-toolchain    Directory where gcc is installed.
   --with-default-sysroot  Add --sysroot=<path> to all compiler invocations.
+  --with-clang-default-openmp-runtime
+                          The default OpenMP runtime for Clang.
   --with-binutils-include Specify path to binutils/include/ containing
                           plugin-api.h file for gold plugin.
   --with-bug-report-url   Specify the URL where bug reports should be
@@ -5944,6 +5946,20 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define DEFAULT_SYSROOT "$withval"
+_ACEOF
+
+
+
+# Check whether --with-clang-default-openmp-runtime was given.
+if test "${with_clang_default_openmp_runtime+set}" = set; then
+  withval=$with_clang_default_openmp_runtime;
+else
+  withval=""
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define CLANG_DEFAULT_OPENMP_RUNTIME "$withval"
 _ACEOF
 
 

@@ -1337,6 +1337,13 @@ AC_ARG_WITH(default-sysroot,
 AC_DEFINE_UNQUOTED(DEFAULT_SYSROOT,"$withval",
                    [Default <path> to all compiler invocations for --sysroot=<path>.])
 
+AC_ARG_WITH(clang-default-openmp-runtime,
+  AS_HELP_STRING([--with-clang-default-openmp-runtime],
+    [The default OpenMP runtime for Clang.]),,
+    withval="")
+AC_DEFINE_UNQUOTED(CLANG_DEFAULT_OPENMP_RUNTIME,"$withval",
+                   [Default OpenMP runtime used by -fopenmp.])
+
 dnl Allow linking of LLVM with GPLv3 binutils code.
 AC_ARG_WITH(binutils-include,
   AS_HELP_STRING([--with-binutils-include],
