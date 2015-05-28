@@ -717,7 +717,7 @@ UnOpInit *UnOpInit::get(UnaryOp opc, Init *lhs, RecTy *Type) {
 Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
   case CAST: {
-    if (getType()->getAsString() == "string") {
+    if (isa<StringRecTy>(getType())) {
       if (StringInit *LHSs = dyn_cast<StringInit>(LHS))
         return LHSs;
 
@@ -987,7 +987,7 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
                                MultiClass *CurMultiClass) {
   // If this is a dag, recurse
   if (auto *TArg = dyn_cast<TypedInit>(Arg))
-    if (TArg->getType()->getAsString() == "dag")
+    if (isa<DagRecTy>(TArg->getType()))
       return ForeachHelper(LHS, Arg, RHSo, Type, CurRec, CurMultiClass);
 
   std::vector<Init *> NewOperands;
