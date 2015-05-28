@@ -195,7 +195,7 @@ const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
 
   const MCSymbol &ASym = A->getSymbol();
   const MCAssembler &Asm = getAssembler();
-  const MCSymbolData &ASD = Asm.getSymbolData(ASym);
+  const MCSymbolData &ASD = ASym.getData();
   if (ASD.isCommon()) {
     // FIXME: we should probably add a SMLoc to MCExpr.
     Asm.getContext().reportFatalError(SMLoc(),

@@ -884,15 +884,6 @@ public:
 
   bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
 
-  MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
-    return const_cast<MCSymbolData &>(
-        static_cast<const MCAssembler &>(*this).getSymbolData(Symbol));
-  }
-
-  const MCSymbolData &getSymbolData(const MCSymbol &Symbol) const {
-    return Symbol.getData();
-  }
-
   MCSymbolData &getOrCreateSymbolData(const MCSymbol &Symbol,
                                       bool *Created = nullptr) {
     if (Created)

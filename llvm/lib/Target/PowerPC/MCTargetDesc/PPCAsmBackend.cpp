@@ -142,7 +142,7 @@ public:
       // to resolve the fixup directly.  Emit a relocation and leave
       // resolution of the final target address to the linker.
       if (const MCSymbolRefExpr *A = Target.getSymA()) {
-        const MCSymbolData &Data = Asm.getSymbolData(A->getSymbol());
+        const MCSymbolData &Data = A->getSymbol().getData();
         // The "other" values are stored in the last 6 bits of the second byte.
         // The traditional defines for STO values assume the full byte and thus
         // the shift to pack it.

@@ -194,7 +194,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 
   MCObjectStreamer::EmitLabel(Symbol);
 
-  MCSymbolData &SD = getAssembler().getSymbolData(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   // This causes the reference type flag to be cleared. Darwin 'as' was "trying"
   // to clear the weak reference and weak definition bits too, but the
   // implementation was buggy. For now we just try to match 'as', for

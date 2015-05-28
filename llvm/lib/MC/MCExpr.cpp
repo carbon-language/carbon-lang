@@ -471,8 +471,8 @@ static void AttemptToFoldSymbolOffsetDifference(
   if (!Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
     return;
 
-  const MCSymbolData &AD = Asm->getSymbolData(SA);
-  const MCSymbolData &BD = Asm->getSymbolData(SB);
+  const MCSymbolData &AD = SA.getData();
+  const MCSymbolData &BD = SB.getData();
 
   if (AD.getFragment() == BD.getFragment()) {
     Addend += (AD.getOffset() - BD.getOffset());

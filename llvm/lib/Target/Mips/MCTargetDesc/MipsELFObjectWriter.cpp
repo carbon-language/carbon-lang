@@ -271,7 +271,7 @@ static unsigned getMatchingLoType(const MCAssembler &Asm,
   if (Type == ELF::R_MIPS16_HI16)
     return ELF::R_MIPS16_LO16;
 
-  const MCSymbolData &SD = Asm.getSymbolData(*Reloc.Symbol);
+  const MCSymbolData &SD = Reloc.Symbol->getData();
 
   if (MCELF::GetBinding(SD) != ELF::STB_LOCAL)
     return ELF::R_MIPS_NONE;

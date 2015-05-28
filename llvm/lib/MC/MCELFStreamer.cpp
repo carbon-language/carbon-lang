@@ -113,7 +113,7 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
 
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol->getSection());
-  MCSymbolData &SD = getAssembler().getSymbolData(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   if (Section.getFlags() & ELF::SHF_TLS)
     MCELF::SetType(SD, ELF::STT_TLS);
 }

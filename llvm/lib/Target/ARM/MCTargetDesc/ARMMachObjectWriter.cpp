@@ -152,7 +152,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &A->getData();
 
   if (!A_SD->getFragment())
     Asm.getContext().reportFatalError(Fixup.getLoc(),
@@ -166,7 +166,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   FixedValue += SecAddr;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &B->getSymbol().getData();
 
     if (!B_SD->getFragment())
       Asm.getContext().reportFatalError(Fixup.getLoc(),
@@ -255,7 +255,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &A->getData();
 
   if (!A_SD->getFragment())
     Asm.getContext().reportFatalError(Fixup.getLoc(),
@@ -270,7 +270,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     assert(Type == MachO::ARM_RELOC_VANILLA && "invalid reloc for 2 symbols");
-    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &B->getSymbol().getData();
 
     if (!B_SD->getFragment())
       Asm.getContext().reportFatalError(Fixup.getLoc(),

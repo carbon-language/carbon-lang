@@ -387,7 +387,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     if (!Ref)
       continue;
     const MCSymbol &Symbol = Ref->getSymbol();
-    MCSymbolData &SD = Asm.getSymbolData(Symbol);
+    MCSymbolData &SD = Symbol.getData();
 
     StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
@@ -465,7 +465,7 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   uint8_t Type = MCELF::GetType(OrigData);
   MCSymbolData *BaseSD = nullptr;
   if (Base) {
-    BaseSD = &Layout.getAssembler().getSymbolData(*Base);
+    BaseSD = &Base->getData();
     Type = mergeTypeForSet(Type, MCELF::GetType(*BaseSD));
   }
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
@@ -829,7 +829,7 @@ void ELFObjectWriter::computeSymbolTable(
     bool Local = isLocal(Symbol, Used);
     if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL) {
       assert(BaseSymbol);
-      MCSymbolData &BaseData = Asm.getSymbolData(*BaseSymbol);
+      MCSymbolData &BaseData = BaseSymbol->getData();
       MCELF::SetBinding(SD, ELF::STB_GLOBAL);
       MCELF::SetBinding(BaseData, ELF::STB_GLOBAL);
     }

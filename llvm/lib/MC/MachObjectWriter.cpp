@@ -693,7 +693,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
     if (!hasReliableSymbolDifference) {
       if (!SA.isInSection() || &SecA != &SecB ||
           (!SA.isTemporary() &&
-           FB.getAtom() != Asm.getSymbolData(SA).getFragment()->getAtom() &&
+           FB.getAtom() != SA.getData().getFragment()->getAtom() &&
            Asm.getSubsectionsViaSymbols()))
         return false;
       return true;
@@ -717,7 +717,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   if (&SecA != &SecB)
     return false;
 
-  const MCFragment *FA = Asm.getSymbolData(SA).getFragment();
+  const MCFragment *FA = SA.getData().getFragment();
 
   // Bail if the symbol has no fragment.
   if (!FA)
@@ -968,8 +968,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
           static_cast<const MCSectionMachO &>(*it->Section);
       if (Section.getType() == MachO::S_NON_LAZY_SYMBOL_POINTERS) {
         // If this symbol is defined and internal, mark it as such.
-        if (it->Symbol->isDefined() &&
-            !Asm.getSymbolData(*it->Symbol).isExternal()) {
+        if (it->Symbol->isDefined() && !it->Symbol->getData().isExternal()) {
           uint32_t Flags = MachO::INDIRECT_SYMBOL_LOCAL;
           if (it->Symbol->isAbsolute())
             Flags |= MachO::INDIRECT_SYMBOL_ABS;

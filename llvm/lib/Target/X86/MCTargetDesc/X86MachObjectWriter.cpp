@@ -142,13 +142,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     const MCSymbol *A = &Target.getSymA()->getSymbol();
     if (A->isTemporary())
       A = &Writer->findAliasedSymbol(*A);
-    const MCSymbolData &A_SD = Asm.getSymbolData(*A);
+    const MCSymbolData &A_SD = A->getData();
     const MCSymbol *A_Base = Asm.getAtom(*A);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     if (B->isTemporary())
       B = &Writer->findAliasedSymbol(*B);
-    const MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    const MCSymbolData &B_SD = B->getData();
     const MCSymbol *B_Base = Asm.getAtom(*B);
 
     // Neither symbol can be modified.
@@ -211,7 +211,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
       if (!Asm.getContext().getAsmInfo()->isSectionAtomizableBySymbols(Sec))
         Asm.addLocalUsedInReloc(*Symbol);
     }
-    const MCSymbolData &SD = Asm.getSymbolData(*Symbol);
+    const MCSymbolData &SD = Symbol->getData();
     RelSymbol = Asm.getAtom(*Symbol);
 
     // Relocations inside debug sections always use local relocations when
@@ -354,7 +354,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &A->getData();
 
   if (!A_SD->getFragment())
     report_fatal_error("symbol '" + A->getName() +
@@ -368,7 +368,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &B->getSymbol().getData();
 
     if (!B_SD->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +

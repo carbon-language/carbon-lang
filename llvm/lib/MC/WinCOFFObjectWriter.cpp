@@ -414,7 +414,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
 
     coff_symbol->MC = &Symbol;
   } else {
-    const MCSymbolData &ResSymData = Assembler.getSymbolData(Symbol);
+    const MCSymbolData &ResSymData = Symbol.getData();
     const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(Symbol, Layout);
 
@@ -434,7 +434,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
     if (!Base) {
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     } else {
-      const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
+      const MCSymbolData &BaseData = Base->getData();
       if (BaseData.getFragment()) {
         COFFSection *Sec = SectionMap[BaseData.getFragment()->getParent()];
 
@@ -702,7 +702,7 @@ void WinCOFFObjectWriter::RecordRelocation(
                                       Twine("symbol '") + A.getName() +
                                           "' can not be undefined");
 
-  const MCSymbolData &A_SD = Asm.getSymbolData(A);
+  const MCSymbolData &A_SD = A.getData();
 
   MCSection *Section = Fragment->getParent();
 
@@ -719,7 +719,7 @@ void WinCOFFObjectWriter::RecordRelocation(
 
   if (SymB) {
     const MCSymbol *B = &SymB->getSymbol();
-    const MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    const MCSymbolData &B_SD = B->getData();
     if (!B_SD.getFragment())
       Asm.getContext().reportFatalError(
           Fixup.getLoc(),

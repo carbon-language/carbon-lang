@@ -60,8 +60,8 @@ bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
   // Must have symbol data.
   if (!Assembler->hasSymbolData(*Hi) || !Assembler->hasSymbolData(*Lo))
     return false;
-  auto &HiD = Assembler->getSymbolData(*Hi);
-  auto &LoD = Assembler->getSymbolData(*Lo);
+  auto &HiD = Hi->getData();
+  auto &LoD = Lo->getData();
 
   // Must both be assigned to the same (valid) fragment.
   if (!HiD.getFragment() || HiD.getFragment() != LoD.getFragment())
