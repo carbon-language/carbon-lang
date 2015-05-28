@@ -106,14 +106,15 @@ static const char *const kAsanUnpoisonStackMemoryName =
 static const char *const kAsanOptionDetectUAR =
     "__asan_option_detect_stack_use_after_return";
 
+static const char *const kAsanAllocaPoison =
+    "__asan_alloca_poison";
+static const char *const kAsanAllocasUnpoison =
+    "__asan_allocas_unpoison";
+
 // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
 static const size_t kNumberOfAccessSizes = 5;
 
 static const unsigned kAllocaRzSize = 32;
-static const unsigned kAsanAllocaLeftMagic = 0xcacacacaU;
-static const unsigned kAsanAllocaRightMagic = 0xcbcbcbcbU;
-static const unsigned kAsanAllocaPartialVal1 = 0xcbcbcb00U;
-static const unsigned kAsanAllocaPartialVal2 = 0x000000cbU;
 
 // Command-line flags.
 
@@ -230,8 +231,6 @@ static cl::opt<int> ClDebugMax("asan-debug-max", cl::desc("Debug man inst"),
 
 STATISTIC(NumInstrumentedReads, "Number of instrumented reads");
 STATISTIC(NumInstrumentedWrites, "Number of instrumented writes");
-STATISTIC(NumInstrumentedDynamicAllocas,
-          "Number of instrumented dynamic allocas");
 STATISTIC(NumOptimizedAccessesToGlobalVar,
           "Number of optimized accesses to global vars");
 STATISTIC(NumOptimizedAccessesToStackVar,
@@ -402,6 +401,12 @@ struct AddressSanitizer : public FunctionPass {
   }
   /// Check if we want (and can) handle this alloca.
   bool isInterestingAlloca(AllocaInst &AI);
+
+  // Check if we have dynamic alloca.
+  bool isDynamicAlloca(AllocaInst &AI) const {
+    return AI.isArrayAllocation() || !AI.isStaticAlloca();
+  }
+
   /// If it is an interesting memory access, return the PointerOperand
   /// and set IsWrite/Alignment. Otherwise return nullptr.
   Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
@@ -517,6 +522,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   Function *AsanStackMallocFunc[kMaxAsanStackMallocSizeClass + 1],
       *AsanStackFreeFunc[kMaxAsanStackMallocSizeClass + 1];
   Function *AsanPoisonStackMemoryFunc, *AsanUnpoisonStackMemoryFunc;
+  Function *AsanAllocaPoisonFunc, *AsanAllocasUnpoisonFunc;
 
   // Stores a place and arguments of poisoning/unpoisoning call for alloca.
   struct AllocaPoisonCall {
@@ -527,23 +533,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   };
   SmallVector<AllocaPoisonCall, 8> AllocaPoisonCallVec;
 
-  // Stores left and right redzone shadow addresses for dynamic alloca
-  // and pointer to alloca instruction itself.
-  // LeftRzAddr is a shadow address for alloca left redzone.
-  // RightRzAddr is a shadow address for alloca right redzone.
-  struct DynamicAllocaCall {
-    AllocaInst *AI;
-    Value *LeftRzAddr;
-    Value *RightRzAddr;
-    bool Poison;
-    explicit DynamicAllocaCall(AllocaInst *AI, Value *LeftRzAddr = nullptr,
-                               Value *RightRzAddr = nullptr)
-        : AI(AI),
-          LeftRzAddr(LeftRzAddr),
-          RightRzAddr(RightRzAddr),
-          Poison(true) {}
-  };
-  SmallVector<DynamicAllocaCall, 1> DynamicAllocaVec;
+  SmallVector<AllocaInst *, 1> DynamicAllocaVec;
+  SmallVector<IntrinsicInst *, 1> StackRestoreVec;
+  AllocaInst *DynamicAllocaLayout = nullptr;
 
   // Maps Value to an AllocaInst from which the Value is originated.
   typedef DenseMap<Value *, AllocaInst *> AllocaForValueMapTy;
@@ -586,41 +578,29 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   // Then unpoison everything back before the function returns.
   void poisonStack();
 
+  void createDynamicAllocasInitStorage();
+
   // ----------------------- Visitors.
   /// \brief Collect all Ret instructions.
   void visitReturnInst(ReturnInst &RI) { RetVec.push_back(&RI); }
 
+  void unpoisonDynamicAllocasBeforeInst(Instruction *InstBefore,
+                                        Value *SavedStack) {
+    IRBuilder<> IRB(InstBefore);
+    IRB.CreateCall2(AsanAllocasUnpoisonFunc,
+                    IRB.CreateLoad(DynamicAllocaLayout),
+                    IRB.CreatePtrToInt(SavedStack, IntptrTy));
+  }
+
   // Unpoison dynamic allocas redzones.
-  void unpoisonDynamicAlloca(DynamicAllocaCall &AllocaCall) {
-    if (!AllocaCall.Poison) return;
-    for (auto Ret : RetVec) {
-      IRBuilder<> IRBRet(Ret);
-      PointerType *Int32PtrTy = PointerType::getUnqual(IRBRet.getInt32Ty());
-      Value *Zero = Constant::getNullValue(IRBRet.getInt32Ty());
-      Value *PartialRzAddr = IRBRet.CreateSub(AllocaCall.RightRzAddr,
-                                              ConstantInt::get(IntptrTy, 4));
-      IRBRet.CreateStore(
-          Zero, IRBRet.CreateIntToPtr(AllocaCall.LeftRzAddr, Int32PtrTy));
-      IRBRet.CreateStore(Zero,
-                         IRBRet.CreateIntToPtr(PartialRzAddr, Int32PtrTy));
-      IRBRet.CreateStore(
-          Zero, IRBRet.CreateIntToPtr(AllocaCall.RightRzAddr, Int32PtrTy));
-    }
-  }
+  void unpoisonDynamicAllocas() {
+    for (auto &Ret : RetVec)
+      unpoisonDynamicAllocasBeforeInst(Ret, DynamicAllocaLayout);
 
-  // Right shift for BigEndian and left shift for LittleEndian.
-  Value *shiftAllocaMagic(Value *Val, IRBuilder<> &IRB, Value *Shift) {
-    auto &DL = F.getParent()->getDataLayout();
-    return DL.isLittleEndian() ? IRB.CreateShl(Val, Shift)
-                               : IRB.CreateLShr(Val, Shift);
+    for (auto &StackRestoreInst : StackRestoreVec)
+      unpoisonDynamicAllocasBeforeInst(StackRestoreInst,
+                                       StackRestoreInst->getOperand(0));
   }
-
-  // Compute PartialRzMagic for dynamic alloca call. Since we don't know the
-  // size of requested memory until runtime, we should compute it dynamically.
-  // If PartialSize is 0, PartialRzMagic would contain kAsanAllocaRightMagic,
-  // otherwise it would contain the value that we will use to poison the
-  // partial redzone for alloca call.
-  Value *computePartialRzMagic(Value *PartialSize, IRBuilder<> &IRB);
 
   // Deploy and poison redzones around dynamic alloca call. To do this, we
   // should replace this call with another one with changed parameters and
@@ -632,20 +612,15 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   //   addr = tmp + 32 (first 32 bytes are for the left redzone).
   // Additional_size is added to make new memory allocation contain not only
   // requested memory, but also left, partial and right redzones.
-  // After that, we should poison redzones:
-  // (1) Left redzone with kAsanAllocaLeftMagic.
-  // (2) Partial redzone with the value, computed in runtime by
-  //     computePartialRzMagic function.
-  // (3) Right redzone with kAsanAllocaRightMagic.
-  void handleDynamicAllocaCall(DynamicAllocaCall &AllocaCall);
+  void handleDynamicAllocaCall(AllocaInst *AI);
 
   /// \brief Collect Alloca instructions we want (and can) handle.
   void visitAllocaInst(AllocaInst &AI) {
     if (!ASan.isInterestingAlloca(AI)) return;
 
     StackAlignment = std::max(StackAlignment, AI.getAlignment());
-    if (isDynamicAlloca(AI))
-      DynamicAllocaVec.push_back(DynamicAllocaCall(&AI));
+    if (ASan.isDynamicAlloca(AI))
+      DynamicAllocaVec.push_back(&AI);
     else
       AllocaVec.push_back(&AI);
   }
@@ -653,8 +628,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   /// \brief Collect lifetime intrinsic calls to check for use-after-scope
   /// errors.
   void visitIntrinsicInst(IntrinsicInst &II) {
-    if (!ClCheckLifetime) return;
     Intrinsic::ID ID = II.getIntrinsicID();
+    if (ID == Intrinsic::stackrestore) StackRestoreVec.push_back(&II);
+    if (!ClCheckLifetime) return;
     if (ID != Intrinsic::lifetime_start && ID != Intrinsic::lifetime_end)
       return;
     // Found lifetime intrinsic, add ASan instrumentation if necessary.
@@ -690,9 +666,6 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
     return true;
   }
 
-  bool isDynamicAlloca(AllocaInst &AI) const {
-    return AI.isArrayAllocation() || !AI.isStaticAlloca();
-  }
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
   void poisonRedZones(ArrayRef<uint8_t> ShadowBytes, IRBuilder<> &IRB,
@@ -811,12 +784,14 @@ bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) {
   if (PreviouslySeenAllocaInfo != ProcessedAllocas.end())
     return PreviouslySeenAllocaInfo->getSecond();
 
-  bool IsInteresting = (AI.getAllocatedType()->isSized() &&
-    // alloca() may be called with 0 size, ignore it.
-    getAllocaSizeInBytes(&AI) > 0 &&
-    // We are only interested in allocas not promotable to registers.
-    // Promotable allocas are common under -O0.
-    (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI)));
+  bool IsInteresting =
+      (AI.getAllocatedType()->isSized() &&
+       // alloca() may be called with 0 size, ignore it.
+       getAllocaSizeInBytes(&AI) > 0 &&
+       // We are only interested in allocas not promotable to registers.
+       // Promotable allocas are common under -O0.
+       (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI) ||
+        isDynamicAlloca(AI)));
 
   ProcessedAllocas[&AI] = IsInteresting;
   return IsInteresting;
@@ -1617,6 +1592,11 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
   AsanUnpoisonStackMemoryFunc = checkSanitizerInterfaceFunction(
       M.getOrInsertFunction(kAsanUnpoisonStackMemoryName, IRB.getVoidTy(),
                             IntptrTy, IntptrTy, nullptr));
+  AsanAllocaPoisonFunc = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+      kAsanAllocaPoison, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
+  AsanAllocasUnpoisonFunc =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          kAsanAllocasUnpoison, IRB.getVoidTy(), IntptrTy, IntptrTy, nullptr));
 }
 
 void FunctionStackPoisoner::poisonRedZones(ArrayRef<uint8_t> ShadowBytes,
@@ -1712,15 +1692,24 @@ Value *FunctionStackPoisoner::createAllocaForLayout(
   return IRB.CreatePointerCast(Alloca, IntptrTy);
 }
 
+void FunctionStackPoisoner::createDynamicAllocasInitStorage() {
+  BasicBlock &FirstBB = *F.begin();
+  IRBuilder<> IRB(dyn_cast<Instruction>(FirstBB.begin()));
+  DynamicAllocaLayout = IRB.CreateAlloca(IntptrTy, nullptr);
+  IRB.CreateStore(Constant::getNullValue(IntptrTy), DynamicAllocaLayout);
+  DynamicAllocaLayout->setAlignment(32);
+}
+
 void FunctionStackPoisoner::poisonStack() {
   assert(AllocaVec.size() > 0 || DynamicAllocaVec.size() > 0);
 
-  if (ClInstrumentAllocas) {
+  if (ClInstrumentAllocas && DynamicAllocaVec.size() > 0) {
     // Handle dynamic allocas.
-    for (auto &AllocaCall : DynamicAllocaVec) {
-      handleDynamicAllocaCall(AllocaCall);
-      unpoisonDynamicAlloca(AllocaCall);
-    }
+    createDynamicAllocasInitStorage();
+    for (auto &AI : DynamicAllocaVec)
+      handleDynamicAllocaCall(AI);
+
+    unpoisonDynamicAllocas();
   }
 
   if (AllocaVec.size() == 0) return;
@@ -1955,78 +1944,25 @@ AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
   return Res;
 }
 
-// Compute PartialRzMagic for dynamic alloca call. PartialRzMagic is
-// constructed from two separate 32-bit numbers: PartialRzMagic = Val1 | Val2.
-// (1) Val1 is resposible for forming base value for PartialRzMagic, containing
-//     only 00 for fully addressable and 0xcb for fully poisoned bytes for each
-//     8-byte chunk of user memory respectively.
-// (2) Val2 forms the value for marking first poisoned byte in shadow memory
-//     with appropriate value (0x01 - 0x07 or 0xcb if Padding % 8 == 0).
-
-// Shift = Padding & ~7; // the number of bits we need to shift to access first
-//                          chunk in shadow memory, containing nonzero bytes.
-// Example:
-// Padding = 21                       Padding = 16
-// Shadow:  |00|00|05|cb|          Shadow:  |00|00|cb|cb|
-//                ^                               ^
-//                |                               |
-// Shift = 21 & ~7 = 16            Shift = 16 & ~7 = 16
-//
-// Val1 = 0xcbcbcbcb << Shift;
-// PartialBits = Padding ? Padding & 7 : 0xcb;
-// Val2 = PartialBits << Shift;
-// Result = Val1 | Val2;
-Value *FunctionStackPoisoner::computePartialRzMagic(Value *PartialSize,
-                                                    IRBuilder<> &IRB) {
-  PartialSize = IRB.CreateIntCast(PartialSize, IRB.getInt32Ty(), false);
-  Value *Shift = IRB.CreateAnd(PartialSize, IRB.getInt32(~7));
-  unsigned Val1Int = kAsanAllocaPartialVal1;
-  unsigned Val2Int = kAsanAllocaPartialVal2;
-  if (!F.getParent()->getDataLayout().isLittleEndian()) {
-    Val1Int = sys::getSwappedBytes(Val1Int);
-    Val2Int = sys::getSwappedBytes(Val2Int);
-  }
-  Value *Val1 = shiftAllocaMagic(IRB.getInt32(Val1Int), IRB, Shift);
-  Value *PartialBits = IRB.CreateAnd(PartialSize, IRB.getInt32(7));
-  // For BigEndian get 0x000000YZ -> 0xYZ000000.
-  if (F.getParent()->getDataLayout().isBigEndian())
-    PartialBits = IRB.CreateShl(PartialBits, IRB.getInt32(24));
-  Value *Val2 = IRB.getInt32(Val2Int);
-  Value *Cond =
-      IRB.CreateICmpNE(PartialBits, Constant::getNullValue(IRB.getInt32Ty()));
-  Val2 = IRB.CreateSelect(Cond, shiftAllocaMagic(PartialBits, IRB, Shift),
-                          shiftAllocaMagic(Val2, IRB, Shift));
-  return IRB.CreateOr(Val1, Val2);
-}
-
-void FunctionStackPoisoner::handleDynamicAllocaCall(
-    DynamicAllocaCall &AllocaCall) {
-  AllocaInst *AI = AllocaCall.AI;
-  if (!doesDominateAllExits(AI)) {
-    // We do not yet handle complex allocas
-    AllocaCall.Poison = false;
-    return;
-  }
-
+void FunctionStackPoisoner::handleDynamicAllocaCall(AllocaInst *AI) {
   IRBuilder<> IRB(AI);
 
-  PointerType *Int32PtrTy = PointerType::getUnqual(IRB.getInt32Ty());
   const unsigned Align = std::max(kAllocaRzSize, AI->getAlignment());
   const uint64_t AllocaRedzoneMask = kAllocaRzSize - 1;
 
   Value *Zero = Constant::getNullValue(IntptrTy);
   Value *AllocaRzSize = ConstantInt::get(IntptrTy, kAllocaRzSize);
   Value *AllocaRzMask = ConstantInt::get(IntptrTy, AllocaRedzoneMask);
-  Value *NotAllocaRzMask = ConstantInt::get(IntptrTy, ~AllocaRedzoneMask);
 
   // Since we need to extend alloca with additional memory to locate
   // redzones, and OldSize is number of allocated blocks with
   // ElementSize size, get allocated memory size in bytes by
   // OldSize * ElementSize.
-  unsigned ElementSize =
+  const unsigned ElementSize =
       F.getParent()->getDataLayout().getTypeAllocSize(AI->getAllocatedType());
-  Value *OldSize = IRB.CreateMul(AI->getArraySize(),
-                                 ConstantInt::get(IntptrTy, ElementSize));
+  Value *OldSize =
+      IRB.CreateMul(IRB.CreateIntCast(AI->getArraySize(), IntptrTy, false),
+                    ConstantInt::get(IntptrTy, ElementSize));
 
   // PartialSize = OldSize % 32
   Value *PartialSize = IRB.CreateAnd(OldSize, AllocaRzMask);
@@ -2054,43 +1990,20 @@ void FunctionStackPoisoner::handleDynamicAllocaCall(
   Value *NewAddress = IRB.CreateAdd(IRB.CreatePtrToInt(NewAlloca, IntptrTy),
                                     ConstantInt::get(IntptrTy, Align));
 
+  // Insert __asan_alloca_poison call for new created alloca.
+  IRB.CreateCall2(AsanAllocaPoisonFunc, NewAddress, OldSize);
+
+  // Store the last alloca's address to DynamicAllocaLayout. We'll need this
+  // for unpoisoning stuff.
+  IRB.CreateStore(IRB.CreatePtrToInt(NewAlloca, IntptrTy), DynamicAllocaLayout);
+
   Value *NewAddressPtr = IRB.CreateIntToPtr(NewAddress, AI->getType());
 
-  // LeftRzAddress = NewAddress - kAllocaRzSize
-  Value *LeftRzAddress = IRB.CreateSub(NewAddress, AllocaRzSize);
-
-  // Poisoning left redzone.
-  AllocaCall.LeftRzAddr = ASan.memToShadow(LeftRzAddress, IRB);
-  IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), kAsanAllocaLeftMagic),
-                  IRB.CreateIntToPtr(AllocaCall.LeftRzAddr, Int32PtrTy));
-
-  // PartialRzAligned = PartialRzAddr & ~AllocaRzMask
-  Value *PartialRzAddr = IRB.CreateAdd(NewAddress, OldSize);
-  Value *PartialRzAligned = IRB.CreateAnd(PartialRzAddr, NotAllocaRzMask);
-
-  // Poisoning partial redzone.
-  Value *PartialRzMagic = computePartialRzMagic(PartialSize, IRB);
-  Value *PartialRzShadowAddr = ASan.memToShadow(PartialRzAligned, IRB);
-  IRB.CreateStore(PartialRzMagic,
-                  IRB.CreateIntToPtr(PartialRzShadowAddr, Int32PtrTy));
-
-  // RightRzAddress
-  //   =  (PartialRzAddr + AllocaRzMask) & ~AllocaRzMask
-  Value *RightRzAddress = IRB.CreateAnd(
-      IRB.CreateAdd(PartialRzAddr, AllocaRzMask), NotAllocaRzMask);
-
-  // Poisoning right redzone.
-  AllocaCall.RightRzAddr = ASan.memToShadow(RightRzAddress, IRB);
-  IRB.CreateStore(ConstantInt::get(IRB.getInt32Ty(), kAsanAllocaRightMagic),
-                  IRB.CreateIntToPtr(AllocaCall.RightRzAddr, Int32PtrTy));
-
-  // Replace all uses of AddessReturnedByAlloca with NewAddress.
+  // Replace all uses of AddessReturnedByAlloca with NewAddressPtr.
   AI->replaceAllUsesWith(NewAddressPtr);
 
-  // We are done. Erase old alloca and store left, partial and right redzones
-  // shadow addresses for future unpoisoning.
+  // We are done. Erase old alloca from parent.
   AI->eraseFromParent();
-  NumInstrumentedDynamicAllocas++;
 }
 
 // isSafeAccess returns true if Addr is always inbounds with respect to its
