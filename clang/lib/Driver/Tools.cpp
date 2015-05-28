@@ -2293,7 +2293,7 @@ enum OpenMPRuntimeKind {
   /// runtime library itself.
   OMPRT_GOMP,
 
-  /// The legacy name for the LLVM OpenMP runtim from when it was the Intel
+  /// The legacy name for the LLVM OpenMP runtime from when it was the Intel
   /// OpenMP runtime. We support this mode for users with existing dependencies
   /// on this runtime library name.
   OMPRT_IOMP5
@@ -2301,7 +2301,8 @@ enum OpenMPRuntimeKind {
 }
 
 /// Compute the desired OpenMP runtime from the flag provided.
-static OpenMPRuntimeKind getOpenMPRuntime(const ToolChain &TC, const ArgList &Args) {
+static OpenMPRuntimeKind getOpenMPRuntime(const ToolChain &TC,
+                                          const ArgList &Args) {
   StringRef RuntimeName(CLANG_DEFAULT_OPENMP_RUNTIME);
 
   const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ);
