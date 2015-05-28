@@ -4021,7 +4021,7 @@ bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".ltorg" || IDVal == ".pool")
     return parseDirectiveLtorg(Loc);
   if (IDVal == ".unreq")
-    return parseDirectiveUnreq(DirectiveID.getLoc());
+    return parseDirectiveUnreq(Loc);
 
   if (!IsMachO && !IsCOFF) {
     if (IDVal == ".inst")
