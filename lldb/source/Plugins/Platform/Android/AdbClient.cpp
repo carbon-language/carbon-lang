@@ -250,23 +250,21 @@ AdbClient::SwitchDeviceTransport ()
 }
 
 Error
-AdbClient::PullFile (const char *remote_file, const char *local_file)
+AdbClient::PullFile (const FileSpec &remote_file, const FileSpec &local_file)
 {
-    auto error = SwitchDeviceTransport ();
+    auto error = StartSync ();
     if (error.Fail ())
-        return Error ("Failed to switch to device transport: %s", error.AsCString ());
+        return error;
 
-    error = Sync ();
-    if (error.Fail ())
-        return Error ("Sync failed: %s", error.AsCString ());
+    const auto local_file_path = local_file.GetPath ();
+    llvm::FileRemover local_file_remover (local_file_path.c_str ());
 
-    llvm::FileRemover local_file_remover (local_file);
-
-    std::ofstream dst (local_file, std::ios::out | std::ios::binary);
+    std::ofstream dst (local_file_path, std::ios::out | std::ios::binary);
     if (!dst.is_open ())
-        return Error ("Unable to open local file %s", local_file);
+        return Error ("Unable to open local file %s", local_file_path.c_str());
 
-    error = SendSyncRequest ("RECV", strlen(remote_file), remote_file);
+    const auto remote_file_path = remote_file.GetPath (false);
+    error = SendSyncRequest ("RECV", remote_file_path.length (), remote_file_path.c_str ());
     if (error.Fail ())
         return error;
 
@@ -286,22 +284,19 @@ AdbClient::PullFile (const char *remote_file, const char *local_file)
 }
 
 Error
-AdbClient::PushFile (const lldb_private::FileSpec& source, const lldb_private::FileSpec& destination)
+AdbClient::PushFile (const FileSpec &local_file, const FileSpec &remote_file)
 {
-    auto error = SwitchDeviceTransport ();
+    auto error = StartSync ();
     if (error.Fail ())
-        return Error ("Failed to switch to device transport: %s", error.AsCString ());
+        return error;
 
-    error = Sync ();
-    if (error.Fail ())
-        return Error ("Sync failed: %s", error.AsCString ());
-
-    std::ifstream src (source.GetPath().c_str(), std::ios::in | std::ios::binary);
+    const auto local_file_path (local_file.GetPath ());
+    std::ifstream src (local_file_path.c_str(), std::ios::in | std::ios::binary);
     if (!src.is_open ())
-        return Error ("Unable to open local file %s", source.GetPath().c_str());
+        return Error ("Unable to open local file %s", local_file_path.c_str());
 
     std::stringstream file_description;
-    file_description << destination.GetPath(false).c_str() << "," << kDefaultMode;
+    file_description << remote_file.GetPath(false).c_str() << "," << kDefaultMode;
     std::string file_description_str = file_description.str();
     error = SendSyncRequest ("SEND", file_description_str.length(), file_description_str.c_str());
     if (error.Fail ())
@@ -315,14 +310,28 @@ AdbClient::PushFile (const lldb_private::FileSpec& source, const lldb_private::F
         if (error.Fail ())
             return Error ("Failed to send file chunk: %s", error.AsCString ());
     }
-    error = SendSyncRequest("DONE", source.GetModificationTime().seconds(), nullptr);
+    error = SendSyncRequest("DONE", local_file.GetModificationTime().seconds(), nullptr);
     if (error.Fail ())
         return error;
     error = ReadResponseStatus();
     // If there was an error reading the source file, finish the adb file
     // transfer first so that adb isn't expecting any more data.
     if (src.bad())
-        return Error ("Failed read on %s", source.GetPath().c_str());
+        return Error ("Failed read on %s", local_file_path.c_str());
+    return error;
+}
+
+Error
+AdbClient::StartSync ()
+{
+    auto error = SwitchDeviceTransport ();
+    if (error.Fail ())
+        return Error ("Failed to switch to device transport: %s", error.AsCString ());
+
+    error = Sync ();
+    if (error.Fail ())
+        return Error ("Sync failed: %s", error.AsCString ());
+
     return error;
 }
 

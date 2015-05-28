@@ -207,9 +207,21 @@ PlatformAndroid::ConnectRemote(Args& args)
     return error;
 }
 
-lldb_private::Error
-PlatformAndroid::PutFile (const lldb_private::FileSpec& source,
-                          const lldb_private::FileSpec& destination,
+Error
+PlatformAndroid::GetFile (const FileSpec& source,
+                          const FileSpec& destination)
+{
+    if (!IsHost() && m_remote_platform_sp)
+    {
+        AdbClient adb (m_device_id);
+        return adb.PullFile(source, destination);
+    }
+    return PlatformLinux::GetFile(source, destination);
+}
+
+Error
+PlatformAndroid::PutFile (const FileSpec& source,
+                          const FileSpec& destination,
                           uint32_t uid,
                           uint32_t gid)
 {
@@ -237,6 +249,5 @@ PlatformAndroid::DownloadModuleSlice (const FileSpec &src_file_spec,
     if (src_offset != 0)
         return Error ("Invalid offset - %" PRIu64, src_offset);
 
-    AdbClient adb (m_device_id);
-    return adb.PullFile (src_file_spec.GetPath (false).c_str (), dst_file_spec.GetPath ().c_str ());
+    return GetFile (src_file_spec, dst_file_spec);
 }
