@@ -35,11 +35,11 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
   Align = uint32_t(1) << Shift;
 }
 
-const uint8_t *SectionChunk::getData() const {
+void SectionChunk::writeTo(uint8_t *Buf) {
   assert(hasData());
   ArrayRef<uint8_t> Data;
   File->getCOFFObj()->getSectionContents(Header, Data);
-  return Data.data();
+  memcpy(Buf + FileOff, Data.data(), Data.size());
 }
 
 // Returns true if this chunk should be considered as a GC root.
@@ -157,9 +157,12 @@ uint32_t CommonChunk::getPermissions() const {
          IMAGE_SCN_MEM_WRITE;
 }
 
-StringChunk::StringChunk(StringRef S) : Data(S.size() + 1) {
-  memcpy(Data.data(), S.data(), S.size());
-  Data[S.size()] = 0;
+void StringChunk::writeTo(uint8_t *Buf) {
+  memcpy(Buf + FileOff, Str.data(), Str.size());
+}
+
+void ImportThunkChunk::writeTo(uint8_t *Buf) {
+  memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
 }
 
 void ImportThunkChunk::applyRelocations(uint8_t *Buf) {
@@ -168,9 +171,12 @@ void ImportThunkChunk::applyRelocations(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, Operand);
 }
 
-HintNameChunk::HintNameChunk(StringRef Name)
-    : Data(RoundUpToAlignment(Name.size() + 4, 2)) {
-  memcpy(&Data[2], Name.data(), Name.size());
+HintNameChunk::HintNameChunk(StringRef N)
+    : Name(N), Size(RoundUpToAlignment(Name.size() + 4, 2)) {}
+
+void HintNameChunk::writeTo(uint8_t *Buf) {
+  // The first two bytes is Hint/Name field.
+  memcpy(Buf + FileOff + 2, Name.data(), Name.size());
 }
 
 void LookupChunk::applyRelocations(uint8_t *Buf) {

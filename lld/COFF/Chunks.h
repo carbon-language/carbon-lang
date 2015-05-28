@@ -39,14 +39,11 @@ class Chunk {
 public:
   virtual ~Chunk() = default;
 
-  // Returns the pointer to data. It is illegal to call this function if
-  // this is a common or BSS chunk.
-  virtual const uint8_t *getData() const {
-    llvm_unreachable("unimplemented getData");
-  }
-
   // Returns the size of this chunk (even if this is a common or BSS.)
   virtual size_t getSize() const = 0;
+
+  // Write this chunk to a mmap'ed file. Buf is pointing to beginning of file.
+  virtual void writeTo(uint8_t *Buf) {}
 
   // The writer sets and uses the addresses.
   uint64_t getRVA() { return RVA; }
@@ -61,9 +58,9 @@ public:
   // calling this function.
   virtual void applyRelocations(uint8_t *Buf) {}
 
-  // Returns true if getData() returns a valid pointer to data.
-  // BSS chunks return false. If false is returned, the space occupied
-  // by this chunk is filled with zeros.
+  // Returns true if this has non-zero data. BSS chunks return
+  // false. If false is returned, the space occupied by this chunk
+  // will be filled with zeros.
   virtual bool hasData() const { return true; }
 
   // Returns readable/writable/executable bits.
@@ -117,8 +114,8 @@ class SectionChunk : public Chunk {
 public:
   SectionChunk(ObjectFile *File, const coff_section *Header,
                uint32_t SectionIndex);
-  const uint8_t *getData() const override;
   size_t getSize() const override { return Header->SizeOfRawData; }
+  void writeTo(uint8_t *Buf) override;
   void applyRelocations(uint8_t *Buf) override;
   bool hasData() const override;
   uint32_t getPermissions() const override;
@@ -165,12 +162,12 @@ private:
 // A chunk for linker-created strings.
 class StringChunk : public Chunk {
 public:
-  explicit StringChunk(StringRef S);
-  const uint8_t *getData() const override { return &Data[0]; }
-  size_t getSize() const override { return Data.size(); }
+  explicit StringChunk(StringRef S) : Str(S) {}
+  size_t getSize() const override { return Str.size() + 1; }
+  void writeTo(uint8_t *Buf) override;
 
 private:
-  std::vector<uint8_t> Data;
+  StringRef Str;
 };
 
 // All chunks below are for the DLL import descriptor table and
@@ -186,8 +183,8 @@ static const uint8_t ImportThunkData[] = {
 class ImportThunkChunk : public Chunk {
 public:
   explicit ImportThunkChunk(Defined *S) : ImpSymbol(S) {}
-  const uint8_t *getData() const override { return ImportThunkData; }
   size_t getSize() const override { return sizeof(ImportThunkData); }
+  void writeTo(uint8_t *Buf) override;
   void applyRelocations(uint8_t *Buf) override;
 
 private:
@@ -198,11 +195,12 @@ private:
 class HintNameChunk : public Chunk {
 public:
   explicit HintNameChunk(StringRef Name);
-  const uint8_t *getData() const override { return Data.data(); }
-  size_t getSize() const override { return Data.size(); }
+  size_t getSize() const override { return Size; }
+  void writeTo(uint8_t *Buf) override;
 
 private:
-  std::vector<uint8_t> Data;
+  StringRef Name;
+  size_t Size;
 };
 
 // A chunk for the import descriptor table.

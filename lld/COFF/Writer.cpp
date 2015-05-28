@@ -312,8 +312,7 @@ void Writer::writeSections() {
     if (Sec->getPermissions() & IMAGE_SCN_CNT_CODE)
       memset(Buf + Sec->getFileOff(), 0xCC, Sec->getRawSize());
     for (Chunk *C : Sec->getChunks())
-      if (C->hasData())
-        memcpy(Buf + C->getFileOff(), C->getData(), C->getSize());
+      C->writeTo(Buf);
   }
 }
 
