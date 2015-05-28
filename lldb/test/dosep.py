@@ -48,12 +48,12 @@ def get_timeout_command():
     if sys.platform.startswith("win32"):
         return None
     try:
-        subprocess.call("timeout")
+        subprocess.call("timeout", stderr=subprocess.PIPE)
         return "timeout"
     except OSError:
         pass
     try:
-        subprocess.call("gtimeout")
+        subprocess.call("gtimeout", stderr=subprocess.PIPE)
         return "gtimeout"
     except OSError:
         pass
