@@ -138,10 +138,10 @@ class MCInstrDesc {
 public:
   unsigned short Opcode;        // The opcode number
   unsigned short NumOperands;   // Num of args (may be more if variable_ops)
-  unsigned short NumDefs;       // Num of args that are definitions
+  unsigned char NumDefs;        // Num of args that are definitions
+  unsigned char Size;           // Number of bytes in encoding.
   unsigned short SchedClass;    // enum identifying instr sched class
-  unsigned short Size;          // Number of bytes in encoding.
-  unsigned Flags;               // Flags identifying machine instr class
+  uint64_t Flags;               // Flags identifying machine instr class
   uint64_t TSFlags;             // Target Specific Flag values
   const uint16_t *ImplicitUses; // Registers implicitly read by this instr
   const uint16_t *ImplicitDefs; // Registers implicitly defined by this instr

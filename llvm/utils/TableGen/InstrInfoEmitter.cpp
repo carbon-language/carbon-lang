@@ -475,8 +475,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
      << Inst.Operands.NumDefs << ",\t"
-     << SchedModels.getSchedClassIdx(Inst) << ",\t"
-     << Inst.TheDef->getValueAsInt("Size") << ",\t0";
+     << Inst.TheDef->getValueAsInt("Size") << ",\t"
+     << SchedModels.getSchedClassIdx(Inst) << ",\t0";
 
   // Emit all of the target independent flags...
   if (Inst.isPseudo)           OS << "|(1<<MCID::Pseudo)";
