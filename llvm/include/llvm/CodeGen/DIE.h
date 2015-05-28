@@ -496,8 +496,12 @@ public:
   unsigned getOffset() const { return Offset; }
   unsigned getSize() const { return Size; }
   bool hasChildren() const { return !Children.empty(); }
-  const std::vector<std::unique_ptr<DIE>> &getChildren() const {
-    return Children;
+
+  typedef std::vector<std::unique_ptr<DIE>>::const_iterator child_iterator;
+  typedef iterator_range<child_iterator> child_range;
+
+  child_range children() const {
+    return llvm::make_range(Children.begin(), Children.end());
   }
 
   typedef SmallVectorImpl<DIEValue>::const_iterator value_iterator;

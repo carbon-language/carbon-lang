@@ -143,7 +143,7 @@ public:
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
   /// \brief Return true if this compile unit has something to write out.
-  bool hasContent() const { return !UnitDie.getChildren().empty(); }
+  bool hasContent() const { return UnitDie.hasChildren(); }
 
   /// \brief Get string containing language specific context for a global name.
   ///

@@ -105,15 +105,12 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
     // Size attribute value.
     Offset += V.SizeOf(Asm, V.getForm());
 
-  // Get the children.
-  const auto &Children = Die.getChildren();
-
   // Size the DIE children if any.
-  if (!Children.empty()) {
+  if (Die.hasChildren()) {
     (void)Abbrev;
     assert(Abbrev.hasChildren() && "Children flag not set");
 
-    for (auto &Child : Children)
+    for (auto &Child : Die.children())
       Offset = computeSizeAndOffset(*Child, Offset);
 
     // End of children marker.
