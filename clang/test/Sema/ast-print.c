@@ -45,3 +45,11 @@ typedef struct {
 
 // CHECK: struct __attribute__((visibility("default"))) S;
 struct __attribute__((visibility("default"))) S;
+
+struct pair_t {
+  int a;
+  int b;
+};
+
+// CHECK: struct pair_t p = {a: 3, .b = 4};
+struct pair_t p = {a: 3, .b = 4};
