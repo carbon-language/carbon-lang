@@ -805,7 +805,6 @@ void ELFObjectWriter::computeSymbolTable(
 
   std::vector<ELFSymbolData> LocalSymbolData;
   std::vector<ELFSymbolData> ExternalSymbolData;
-  std::vector<ELFSymbolData> UndefinedSymbolData;
 
   // Add the data for the symbols.
   bool HasLargeSectionIndex = false;
@@ -902,7 +901,7 @@ void ELFObjectWriter::computeSymbolTable(
       MSD.Name = StrTabBuilder.add(Name);
 
     if (MSD.SectionIndex == ELF::SHN_UNDEF)
-      UndefinedSymbolData.push_back(MSD);
+      ExternalSymbolData.push_back(MSD);
     else if (Local)
       LocalSymbolData.push_back(MSD);
     else
@@ -930,7 +929,6 @@ void ELFObjectWriter::computeSymbolTable(
   // Symbols are required to be in lexicographic order.
   array_pod_sort(LocalSymbolData.begin(), LocalSymbolData.end());
   array_pod_sort(ExternalSymbolData.begin(), ExternalSymbolData.end());
-  array_pod_sort(UndefinedSymbolData.begin(), UndefinedSymbolData.end());
 
   // Set the symbol indices. Local symbols must come before all other
   // symbols with non-local bindings.
@@ -949,12 +947,6 @@ void ELFObjectWriter::computeSymbolTable(
   LastLocalSymbolIndex = Index;
 
   for (ELFSymbolData &MSD : ExternalSymbolData) {
-    unsigned StringIndex = StrTabBuilder.getOffset(MSD.Name);
-    MSD.Symbol->setIndex(Index++);
-    writeSymbol(Writer, StringIndex, MSD, Layout);
-    assert(MCELF::GetBinding(MSD.Symbol->getData()) != ELF::STB_LOCAL);
-  }
-  for (ELFSymbolData &MSD : UndefinedSymbolData) {
     unsigned StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
     writeSymbol(Writer, StringIndex, MSD, Layout);

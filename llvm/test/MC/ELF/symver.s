@@ -104,24 +104,6 @@ global1:
 // CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: g1@@zed
-// CHECK-NEXT:     Value: 0x14
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: global1
-// CHECK-NEXT:     Value: 0x14
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar2@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
@@ -138,5 +120,23 @@ global1:
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: g1@@zed
+// CHECK-NEXT:     Value: 0x14
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: global1
+// CHECK-NEXT:     Value: 0x14
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

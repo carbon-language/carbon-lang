@@ -53,6 +53,6 @@ barf:                                   @ @barf
 @ OBJ-NEXT:       0x4 R_ARM_MOVT_PREL
 @ OBJ-NEXT:   ]
 @ OBJ-NEXT:     SectionData (
-@ OBJ-NEXT:       0000: 00000000 2D060000 04000000 2E060000  |....-...........|
+@ OBJ-NEXT:       0000: 00000000 2D050000 04000000 2E050000  |....-...........|
 @ OBJ-NEXT:     )
 @ OBJ-NEXT:   }

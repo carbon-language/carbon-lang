@@ -119,15 +119,6 @@ leaq .Llocal1(%rip), %rdi
 // CHECK-NOT: Symbol {
 // CHECK:        }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar3
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Global
-// CHECK-NEXT:     Type: None
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar2
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
@@ -135,5 +126,14 @@ leaq .Llocal1(%rip), %rdi
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar3
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
