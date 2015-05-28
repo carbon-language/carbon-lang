@@ -503,10 +503,10 @@ public:
   typedef SmallVectorImpl<DIEValue>::const_iterator value_iterator;
   typedef iterator_range<value_iterator> value_range;
 
-  value_iterator begin_values() const { return Values.begin(); }
-  value_iterator end_values() const { return Values.end(); }
+  value_iterator values_begin() const { return Values.begin(); }
+  value_iterator values_end() const { return Values.end(); }
   value_range values() const {
-    return llvm::make_range(begin_values(), end_values());
+    return llvm::make_range(values_begin(), values_end());
   }
 
   void setValue(unsigned I, DIEValue New) {
