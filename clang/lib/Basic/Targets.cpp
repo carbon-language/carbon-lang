@@ -3596,11 +3596,8 @@ public:
 };
 } // end anonymous namespace
 
-static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
-  Builder.defineMacro("__MSVCRT__");
-  Builder.defineMacro("__MINGW32__");
-
-  // Mingw defines __declspec(a) to __attribute__((a)).  Clang supports
+static void addCygMingDefines(const LangOptions &Opts, MacroBuilder &Builder) {
+  // Mingw and cygwin define __declspec(a) to __attribute__((a)).  Clang supports
   // __declspec natively under -fms-extensions, but we define a no-op __declspec
   // macro anyway for pre-processor compatibility.
   if (Opts.MicrosoftExt)
@@ -3621,6 +3618,12 @@ static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
       Builder.defineMacro(Twine("__") + CC, GCCSpelling);
     }
   }
+}
+
+static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
+  Builder.defineMacro("__MSVCRT__");
+  Builder.defineMacro("__MINGW32__");
+  addCygMingDefines(Opts, Builder);
 }
 
 namespace {
@@ -3655,6 +3658,7 @@ public:
     Builder.defineMacro("_X86_");
     Builder.defineMacro("__CYGWIN__");
     Builder.defineMacro("__CYGWIN32__");
+    addCygMingDefines(Opts, Builder);
     DefineStd(Builder, "unix", Opts);
     if (Opts.CPlusPlus)
       Builder.defineMacro("_GNU_SOURCE");

@@ -2793,6 +2793,12 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd6 -target-feature +sse2 < /dev/null | FileCheck -check-prefix I386-NETBSD6-SSE %s
 // I386-NETBSD6-SSE:#define __FLT_EVAL_METHOD__ 1
 
+// RUN: %clang_cc1 -E -dM -triple=i686-pc-mingw32 < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=i686-pc-mingw32 < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -triple=i686-unknown-cygwin < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=i686-unknown-cygwin < /dev/null | FileCheck -check-prefix I386-DECLSPEC %s
+// I386-DECLSPEC: #define __declspec
+
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none < /dev/null | FileCheck -check-prefix MIPS32BE %s
 //
@@ -8345,6 +8351,10 @@
 // PS4:#define __unix__ 1
 // PS4:#define __x86_64 1
 // PS4:#define __x86_64__ 1
+//
+// RUN: %clang_cc1 -E -dM -triple=x86_64-pc-mingw32 < /dev/null | FileCheck -check-prefix X86-64-DECLSPEC %s
+// RUN: %clang_cc1 -E -dM -fms-extensions -triple=x86_64-unknown-mingw32 < /dev/null | FileCheck -check-prefix X86-64-DECLSPEC %s
+// X86-64-DECLSPEC: #define __declspec
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
 // SPARCV9:#define __INT64_TYPE__ long int
