@@ -26,6 +26,7 @@ SECTIONS
     }
   .init           :
   {
+    FILL (0x90909090)
     KEEP (*(SORT_NONE(.init)))
   } =0x909090909090909090909090
   PROVIDE (__etext = .);
@@ -181,6 +182,10 @@ CHECK: r_brace: }
 CHECK: identifier: .init
 CHECK: colon: :
 CHECK: l_brace: {
+CHECK: kw_fill: FILL
+CHECK: l_paren: (
+CHECK: number: 0x90909090
+CHECK: r_paren: )
 CHECK: kw_keep: KEEP
 CHECK: l_paren: (
 CHECK: star: *
@@ -556,6 +561,7 @@ CHECK:     PROVIDE_HIDDEN(__rela_iplt_end = .)
 CHECK:   }
 CHECK: .init :
 CHECK:   {
+CHECK:     FILL(0x90909090)
 CHECK:     KEEP(*(SORT_NONE(.init)))
 CHECK:   } =0x909090909090909090909090
 CHECK: PROVIDE(__etext = .)
