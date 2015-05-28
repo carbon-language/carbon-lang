@@ -874,6 +874,9 @@ Process::Finalize()
     m_instrumentation_runtimes.clear();
     m_next_event_action_ap.reset();
     m_stop_info_override_callback = NULL;
+    // Clear the last natural stop ID since it has a strong
+    // reference to this process
+    m_mod_id.SetStopEventForLastNaturalStopID(EventSP());
 //#ifdef LLDB_CONFIGURATION_DEBUG
 //    StreamFile s(stdout, false);
 //    EventSP event_sp;
@@ -1466,6 +1469,10 @@ Process::SetExitStatus (int status, const char *cstr)
         m_process_input_reader->Cancel();
         m_process_input_reader.reset();
     }
+
+    // Clear the last natural stop ID since it has a strong
+    // reference to this process
+    m_mod_id.SetStopEventForLastNaturalStopID(EventSP());
 
     SetPrivateState (eStateExited);
 
