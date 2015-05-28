@@ -125,7 +125,8 @@ enum Flag {
   ExtraDefRegAllocReq,
   RegSequence,
   ExtractSubreg,
-  InsertSubreg
+  InsertSubreg,
+  Convergent
 };
 }
 
@@ -330,6 +331,13 @@ public:
   /// this property, TargetInstrInfo::getInsertSubregLikeInputs has to be
   /// override accordingly.
   bool isInsertSubregLike() const { return Flags & (1 << MCID::InsertSubreg); }
+
+
+  /// \brief Return true if this instruction is convergent.
+  ///
+  /// Convergent instructions may only be moved to locations that are
+  /// control-equivalent to their original positions.
+  bool isConvergent() const { return Flags & (1 << MCID::Convergent); }
 
   //===--------------------------------------------------------------------===//
   // Side Effect Analysis

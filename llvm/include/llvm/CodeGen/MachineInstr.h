@@ -483,6 +483,13 @@ public:
     return hasProperty(MCID::NotDuplicable, Type);
   }
 
+  /// Return true if this instruction is convergent.
+  /// Convergent instructions can only be moved to locations that are
+  /// control-equivalent to their initial position.
+  bool isConvergent(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Convergent, Type);
+  }
+
   /// Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot(QueryType Type = AnyInBundle) const {
