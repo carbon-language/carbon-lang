@@ -1189,11 +1189,9 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
         // The frontend adds zero-initializer to variables that don't have an
         // initial value, so skip warning for this case.
         if (!GVar->getInitializer()->isNullValue()) {
-          std::string warnMsg =
-              ("initial value of '" + GVar->getName() +
-               "' is not allowed in addrspace(" +
-               Twine(llvm::utostr_32(PTy->getAddressSpace())) + ")").str();
-          report_fatal_error(warnMsg.c_str());
+          report_fatal_error("initial value of '" + GVar->getName() +
+                             "' is not allowed in addrspace(" +
+                             Twine(PTy->getAddressSpace()) + ")");
         }
       }
     }
@@ -1368,7 +1366,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
     ElementSize = TD->getTypeStoreSize(ETy);
     O << " .b8 " << *getSymbol(GVar) << "[";
     if (ElementSize) {
-      O << itostr(ElementSize);
+      O << ElementSize;
     }
     O << "]";
     break;

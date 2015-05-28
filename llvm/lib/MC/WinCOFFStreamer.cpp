@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
@@ -134,7 +133,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
     FatalError("storage class specified outside of symbol definition");
 
   if (StorageClass & ~COFF::SSC_Invalid)
-    FatalError(Twine("storage class value '") + itostr(StorageClass) +
+    FatalError("storage class value '" + Twine(StorageClass) +
                "' out of range");
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*CurSymbol);
@@ -146,7 +145,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
     FatalError("symbol type specified outside of a symbol definition");
 
   if (Type & ~0xffff)
-    FatalError(Twine("type value '") + itostr(Type) + "' out of range");
+    FatalError("type value '" + Twine(Type) + "' out of range");
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*CurSymbol);
   SD.modifyFlags(Type << COFF::SF_TypeShift, COFF::SF_TypeMask);

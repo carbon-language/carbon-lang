@@ -645,8 +645,7 @@ void CppWriter::printType(Type* Ty) {
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
       Out << "ArrayType* " << typeName << " = ArrayType::get("
-          << elemName
-          << ", " << utostr(AT->getNumElements()) << ");";
+          << elemName << ", " << AT->getNumElements() << ");";
       nl(Out);
     }
     break;
@@ -658,8 +657,7 @@ void CppWriter::printType(Type* Ty) {
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
       Out << "PointerType* " << typeName << " = PointerType::get("
-          << elemName
-          << ", " << utostr(PT->getAddressSpace()) << ");";
+          << elemName << ", " << PT->getAddressSpace() << ");";
       nl(Out);
     }
     break;
@@ -671,8 +669,7 @@ void CppWriter::printType(Type* Ty) {
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
       Out << "VectorType* " << typeName << " = VectorType::get("
-          << elemName
-          << ", " << utostr(PT->getNumElements()) << ");";
+          << elemName << ", " << PT->getNumElements() << ");";
       nl(Out);
     }
     break;
@@ -1029,7 +1026,7 @@ void CppWriter::printVariableHead(const GlobalVariable *GV) {
   }
   if (GV->getAlignment()) {
     printCppName(GV);
-    Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");";
+    Out << "->setAlignment(" << GV->getAlignment() << ");";
     nl(Out);
   }
   if (GV->getVisibility() != GlobalValue::DefaultVisibility) {

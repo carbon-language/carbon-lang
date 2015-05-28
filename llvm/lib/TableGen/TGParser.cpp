@@ -118,7 +118,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
     for (unsigned i = 0, e = BitList.size(); i != e; ++i) {
       unsigned Bit = BitList[i];
       if (NewBits[Bit])
-        return Error(Loc, "Cannot set bit #" + utostr(Bit) + " of value '" +
+        return Error(Loc, "Cannot set bit #" + Twine(Bit) + " of value '" +
                      ValName->getAsUnquotedString() + "' more than once");
       NewBits[Bit] = BInit->getBit(i);
     }
@@ -178,7 +178,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClass.RefRange.Start,
                    "Value not specified for template argument #" +
-                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString() +
+                   Twine(i) + " (" + TArgs[i]->getAsUnquotedString() +
                    ") of subclass '" + SC->getNameInitAsString() + "'!");
     }
   }
@@ -272,7 +272,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
       return Error(SubMultiClass.RefRange.Start,
                    "Value not specified for template argument #" +
-                   utostr(i) + " (" + SMCTArgs[i]->getAsUnquotedString() +
+                   Twine(i) + " (" + SMCTArgs[i]->getAsUnquotedString() +
                    ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
     }
   }
@@ -1296,7 +1296,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       // All other values must be convertible to just a single bit.
       Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
       if (!Bit) {
-        Error(BraceLoc, "Element #" + utostr(i) + " (" + Vals[i]->getAsString()+
+        Error(BraceLoc, "Element #" + Twine(i) + " (" + Vals[i]->getAsString() +
               ") is not convertable to a bit");
         return nullptr;
       }
@@ -1315,11 +1315,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     if (ItemType) {
       ListRecTy *ListType = dyn_cast<ListRecTy>(ItemType);
       if (!ListType) {
-        std::string s;
-        raw_string_ostream ss(s);
-        ss << "Type mismatch for list, expected list type, got "
-           << ItemType->getAsString();
-        TokError(ss.str());
+        TokError(Twine("Type mismatch for list, expected list type, got ") +
+                 ItemType->getAsString());
         return nullptr;
       }
       GivenListTy = ListType;
@@ -2468,7 +2465,7 @@ bool TGParser::ResolveMulticlassDefArgs(MultiClass &MC,
 
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
       return Error(SubClassLoc, "value not specified for template argument #" +
-                   utostr(i) + " (" + TArgs[i]->getAsUnquotedString() +
+                   Twine(i) + " (" + TArgs[i]->getAsUnquotedString() +
                    ") of multiclassclass '" + MC.Rec.getNameInitAsString() +
                    "'");
     }
