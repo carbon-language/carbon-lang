@@ -324,17 +324,10 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   case Triple::mipsel:
   case Triple::mips64:
   case Triple::mips64el:
-    // MIPS uses indirect pointer to refer personality functions and types, so
-    // that the eh_frame section can be read-only. DW.ref.personality will be
-    // generated for relocation.
+    // MIPS uses indirect pointer to refer personality functions, so that the
+    // eh_frame section can be read-only.  DW.ref.personality will be generated
+    // for relocation.
     PersonalityEncoding = dwarf::DW_EH_PE_indirect;
-    // FIXME: The N64 ABI probably ought to use DW_EH_PE_sdata8 but we can't
-    //        identify N64 from just a triple and this isn't supported by the
-    //        assemblers.
-    TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
-                    dwarf::DW_EH_PE_sdata4;
-    // We don't support PC-relative LSDA references in GAS so we use the default
-    // DW_EH_PE_absptr for those.
     break;
   case Triple::ppc64:
   case Triple::ppc64le:
