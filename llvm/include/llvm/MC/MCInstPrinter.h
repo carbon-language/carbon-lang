@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCINSTPRINTER_H
 #define LLVM_MC_MCINSTPRINTER_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
 
@@ -21,6 +22,9 @@ class MCInstrInfo;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class StringRef;
+
+/// Convert `Bytes' to a hex string and output to `OS'
+void dumpBytes(ArrayRef<uint8_t> Bytes, raw_ostream &OS);
 
 namespace HexStyle {
     enum Style {

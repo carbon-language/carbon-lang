@@ -194,19 +194,6 @@ static const Target *getTarget(const ObjectFile *Obj = nullptr) {
   return TheTarget;
 }
 
-void llvm::DumpBytes(ArrayRef<uint8_t> bytes) {
-  static const char hex_rep[] = "0123456789abcdef";
-  SmallString<64> output;
-
-  for (char i: bytes) {
-    output.push_back(hex_rep[(i & 0xF0) >> 4]);
-    output.push_back(hex_rep[i & 0xF]);
-    output.push_back(' ');
-  }
-
-  outs() << output.c_str();
-}
-
 bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
   uint64_t a_addr, b_addr;
   if (error(a.getOffset(a_addr))) return false;
@@ -399,7 +386,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           outs() << format("%8" PRIx64 ":", SectionAddr + Index);
           if (!NoShowRawInsn) {
             outs() << "\t";
-            DumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size));
+            dumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size), outs());
           }
           IP->printInst(&Inst, outs(), "", *STI);
           outs() << CommentStream.str();
