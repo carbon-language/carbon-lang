@@ -20,11 +20,18 @@ import re
 import subprocess
 import sys
 
-new_delete = set(['_ZdaPv', '_ZdaPvRKSt9nothrow_t',
-                  '_ZdlPv', '_ZdlPvRKSt9nothrow_t',
-                  '_Znam', '_ZnamRKSt9nothrow_t',
-                  '_Znwm', '_ZnwmRKSt9nothrow_t',
-                  '_ZdlPvm', '_ZdaPvm'])
+new_delete = set([
+                  '_Znam', '_ZnamRKSt9nothrow_t',    # operator new[](unsigned long)
+                  '_Znwm', '_ZnwmRKSt9nothrow_t',    # operator new(unsigned long)
+                  '_Znaj', '_ZnajRKSt9nothrow_t',    # operator new[](unsigned int)
+                  '_Znwj', '_ZnwjRKSt9nothrow_t',    # operator new(unsigned int)
+                  '_ZdaPv', '_ZdaPvRKSt9nothrow_t',  # operator delete[](void *)
+                  '_ZdlPv', '_ZdlPvRKSt9nothrow_t',  # operator delete(void *)
+                  '_ZdaPvm',                         # operator delete[](void*, unsigned long)
+                  '_ZdlPvm',                         # operator delete(void*, unsigned long)
+                  '_ZdaPvj',                         # operator delete[](void*, unsigned int)
+                  '_ZdlPvj',                         # operator delete(void*, unsigned int)
+                  ])
 
 versioned_functions = set(['memcpy', 'pthread_attr_getaffinity_np',
                            'pthread_cond_broadcast',
