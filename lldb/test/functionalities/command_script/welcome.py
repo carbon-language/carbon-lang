@@ -16,11 +16,15 @@ class TargetnameCommand(object):
         pass
 
     def __call__(self, debugger, args, exe_ctx, result):
-        target = debugger.GetSelectedTarget()
-        file = target.GetExecutable()
-        print >>result,  ('Current target ' + file.GetFilename())
         if args == 'fail':
             result.SetError('a test for error in command')
+            return
+        target = debugger.GetSelectedTarget()
+        file = target.GetExecutable()
+        if file:
+            print >>result,  ('Current target ' + file.GetFilename())
+        else:
+            result.SetError('target.GetExecutable() failed')
     
     def get_flags(self):
         return lldb.eCommandRequiresTarget
