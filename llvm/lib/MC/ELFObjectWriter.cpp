@@ -112,9 +112,6 @@ class ELFObjectWriter : public MCObjectWriter {
     /// @{
 
     StringTableBuilder StrTabBuilder;
-    std::vector<ELFSymbolData> LocalSymbolData;
-    std::vector<ELFSymbolData> ExternalSymbolData;
-    std::vector<ELFSymbolData> UndefinedSymbolData;
 
     /// @}
 
@@ -152,9 +149,6 @@ class ELFObjectWriter : public MCObjectWriter {
       Renames.clear();
       Relocations.clear();
       StrTabBuilder.clear();
-      LocalSymbolData.clear();
-      ExternalSymbolData.clear();
-      UndefinedSymbolData.clear();
       SectionTable.clear();
       MCObjectWriter::reset();
     }
@@ -819,6 +813,10 @@ void ELFObjectWriter::computeSymbolTable(
 
   // The first entry is the undefined symbol entry.
   Writer.writeSymbol(0, 0, 0, 0, 0, 0, false);
+
+  std::vector<ELFSymbolData> LocalSymbolData;
+  std::vector<ELFSymbolData> ExternalSymbolData;
+  std::vector<ELFSymbolData> UndefinedSymbolData;
 
   // Add the data for the symbols.
   bool HasLargeSectionIndex = false;
