@@ -5,10 +5,10 @@
 
 void foo(void);
 
-// CHECK: define void @foo() #0 !prof [[FOO:![0-9]+]]
+// CHECK: @foo() #0 !prof [[FOO:![0-9]+]]
 void foo() { return; }
 
-// CHECK: define i32 @main() #1 !prof [[MAIN:![0-9]+]]
+// CHECK: @main() #1 !prof [[MAIN:![0-9]+]]
 int main() {
   int i;
   for (i = 0; i < 10000; i++) foo();
