@@ -2,6 +2,14 @@ set(LLVM_NO_RTTI 1)
 
 file(GLOB SWIG_INTERFACES interface/*.i)
 file(GLOB_RECURSE SWIG_SOURCES *.swig)
+set(SWIG_HEADERS
+  ${LLDB_SOURCE_DIR}/include/lldb/API/SBDefines.h
+  ${LLDB_SOURCE_DIR}/include/lldb/lldb-defines.h
+  ${LLDB_SOURCE_DIR}/include/lldb/lldb-enumerations.h
+  ${LLDB_SOURCE_DIR}/include/lldb/lldb-forward.h
+  ${LLDB_SOURCE_DIR}/include/lldb/lldb-types.h
+  ${LLDB_SOURCE_DIR}/include/lldb/lldb-versioning.h
+)
 
 if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
   find_package(SWIG REQUIRED)
@@ -9,6 +17,7 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
     DEPENDS ${SWIG_SOURCES}
     DEPENDS ${SWIG_INTERFACES}
+    DEPENDS ${SWIG_HEADERS}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}" "--prefix=${CMAKE_BINARY_DIR}" "--swigExecutable=${SWIG_EXECUTABLE}" -m
     COMMENT "Python script building LLDB Python wrapper")  
