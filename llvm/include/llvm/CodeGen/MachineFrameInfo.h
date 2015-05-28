@@ -256,11 +256,6 @@ class MachineFrameInfo {
   /// Not null, if shrink-wrapping found a better place for the epilogue.
   MachineBasicBlock *Restore;
 
-  /// Check if it exists a path from \p MBB leading to the basic
-  /// block with a SavePoint (a.k.a. prologue).
-  bool isBeforeSavePoint(const MachineFunction &MF,
-                         const MachineBasicBlock &MBB) const;
-
 public:
   explicit MachineFrameInfo(unsigned StackAlign, bool isStackRealign,
                             bool RealignOpt)
@@ -627,16 +622,15 @@ public:
   MachineBasicBlock *getRestorePoint() const { return Restore; }
   void setRestorePoint(MachineBasicBlock *NewRestore) { Restore = NewRestore; }
 
-  /// getPristineRegs - Return a set of physical registers that are pristine on
-  /// entry to the MBB.
+  /// Return a set of physical registers that are pristine.
   ///
   /// Pristine registers hold a value that is useless to the current function,
-  /// but that must be preserved - they are callee saved registers that have not
-  /// been saved yet.
+  /// but that must be preserved - they are callee saved registers that are not
+  /// saved.
   ///
   /// Before the PrologueEpilogueInserter has placed the CSR spill code, this
   /// method always returns an empty set.
-  BitVector getPristineRegs(const MachineBasicBlock *MBB) const;
+  BitVector getPristineRegs(const MachineFunction &MF) const;
 
   /// print - Used by the MachineFunction printer to print information about
   /// stack objects. Implemented in MachineFunction.cpp

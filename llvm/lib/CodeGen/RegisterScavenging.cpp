@@ -55,7 +55,8 @@ void RegScavenger::initRegState() {
     setRegUsed(*I);
 
   // Pristine CSRs are also unavailable.
-  BitVector PR = MBB->getParent()->getFrameInfo()->getPristineRegs(MBB);
+  const MachineFunction &MF = *MBB->getParent();
+  BitVector PR = MF.getFrameInfo()->getPristineRegs(MF);
   for (int I = PR.find_first(); I>0; I = PR.find_next(I))
     setRegUsed(I);
 }
