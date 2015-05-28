@@ -961,19 +961,14 @@ void ELFObjectWriter::computeSymbolTable(
   for (ELFSymbolData &MSD : ExternalSymbolData) {
     MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
-    MCSymbolData &Data = MSD.Symbol->getData();
-    assert(((Data.getFlags() & ELF_STB_Global) ||
-            (Data.getFlags() & ELF_STB_Weak)) &&
-           "External symbol requires STB_GLOBAL or STB_WEAK flag");
     WriteSymbol(Writer, MSD, Layout);
-    assert(MCELF::GetBinding(Data) != ELF::STB_LOCAL);
+    assert(MCELF::GetBinding(MSD.Symbol->getData()) != ELF::STB_LOCAL);
   }
   for (ELFSymbolData &MSD : UndefinedSymbolData) {
     MSD.StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
-    MCSymbolData &Data = MSD.Symbol->getData();
     WriteSymbol(Writer, MSD, Layout);
-    assert(MCELF::GetBinding(Data) != ELF::STB_LOCAL);
+    assert(MCELF::GetBinding(MSD.Symbol->getData()) != ELF::STB_LOCAL);
   }
 
   uint64_t SecEnd = OS.tell();
