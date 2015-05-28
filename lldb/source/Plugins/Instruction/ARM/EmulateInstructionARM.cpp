@@ -815,7 +815,10 @@ EmulateInstructionARM::EmulateMOVRdRm (const uint32_t opcode, const ARMEncoding 
 
         // The context specifies that Rm is to be moved into Rd.
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        if (Rd == 13)
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
         RegisterInfo dwarf_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + Rm, dwarf_reg);
         context.SetRegisterPlusOffset (dwarf_reg, 0);
