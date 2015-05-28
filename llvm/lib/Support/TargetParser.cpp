@@ -22,7 +22,7 @@ using namespace llvm;
 
 namespace {
 
-// List of canonical FPU names (use getFPUSynonym)
+// List of canonical FPU names (use getFPUSynonym).
 // FIXME: TableGen this.
 struct {
   const char * Name;
@@ -90,7 +90,7 @@ struct {
   { "armv7hl",   ARM::AK_ARMV7HL,  "7-L",     ARMBuildAttrs::CPUArch::v7 },
   { "armv7s",    ARM::AK_ARMV7S,   "7-S",     ARMBuildAttrs::CPUArch::v7 }
 };
-// List of canonical ARCH names (use getARCHSynonym)
+// List of Arch Extension names.
 // FIXME: TableGen this.
 struct {
   const char *Name;
