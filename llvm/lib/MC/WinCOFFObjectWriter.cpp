@@ -853,11 +853,10 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   Header.NumberOfSections = NumberOfSections;
   Header.NumberOfSymbols = 0;
 
-  for (auto FI = Asm.file_names_begin(), FE = Asm.file_names_end(); FI != FE;
-       ++FI) {
+  for (const std::string &Name : Asm.getFileNames()) {
     // round up to calculate the number of auxiliary symbols required
     unsigned SymbolSize = UseBigObj ? COFF::Symbol32Size : COFF::Symbol16Size;
-    unsigned Count = (FI->size() + SymbolSize - 1) / SymbolSize;
+    unsigned Count = (Name.size() + SymbolSize - 1) / SymbolSize;
 
     COFFSymbol *file = createSymbol(".file");
     file->Data.SectionNumber = COFF::IMAGE_SYM_DEBUG;
@@ -865,15 +864,15 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     file->Aux.resize(Count);
 
     unsigned Offset = 0;
-    unsigned Length = FI->size();
+    unsigned Length = Name.size();
     for (auto &Aux : file->Aux) {
       Aux.AuxType = ATFile;
 
       if (Length > SymbolSize) {
-        memcpy(&Aux.Aux, FI->c_str() + Offset, SymbolSize);
+        memcpy(&Aux.Aux, Name.c_str() + Offset, SymbolSize);
         Length = Length - SymbolSize;
       } else {
-        memcpy(&Aux.Aux, FI->c_str() + Offset, Length);
+        memcpy(&Aux.Aux, Name.c_str() + Offset, Length);
         memset((char *)&Aux.Aux + Length, 0, SymbolSize - Length);
         break;
       }

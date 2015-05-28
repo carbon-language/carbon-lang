@@ -564,9 +564,6 @@ public:
   typedef iterator_range<symbol_iterator> symbol_range;
   typedef iterator_range<const_symbol_iterator> const_symbol_range;
 
-  typedef std::vector<std::string> FileNameVectorType;
-  typedef FileNameVectorType::const_iterator const_file_name_iterator;
-
   typedef std::vector<IndirectSymbolData>::const_iterator
       const_indirect_symbol_iterator;
   typedef std::vector<IndirectSymbolData>::iterator indirect_symbol_iterator;
@@ -613,7 +610,7 @@ private:
   std::vector<std::vector<std::string>> LinkerOptions;
 
   /// List of declared file names
-  FileNameVectorType FileNames;
+  std::vector<std::string> FileNames;
 
   /// The set of function symbols for which a .thumb_func directive has
   /// been seen.
@@ -907,15 +904,11 @@ public:
     return Symbol.getData();
   }
 
-  const_file_name_iterator file_names_begin() const {
-    return FileNames.begin();
-  }
-
-  const_file_name_iterator file_names_end() const { return FileNames.end(); }
+  ArrayRef<std::string> getFileNames() { return FileNames; }
 
   void addFileName(StringRef FileName) {
-    if (std::find(file_names_begin(), file_names_end(), FileName) ==
-        file_names_end())
+    if (std::find(FileNames.begin(), FileNames.end(), FileName) ==
+        FileNames.end())
       FileNames.push_back(FileName);
   }
 

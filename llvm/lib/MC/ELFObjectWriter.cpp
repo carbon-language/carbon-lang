@@ -931,13 +931,13 @@ void ELFObjectWriter::computeSymbolTable(
     SymtabShndxSection->setAlignment(4);
   }
 
-  for (auto i = Asm.file_names_begin(), e = Asm.file_names_end(); i != e; ++i)
-    StrTabBuilder.add(*i);
+  for (const std::string &Name : Asm.getFileNames())
+    StrTabBuilder.add(Name);
 
   StrTabBuilder.finalize(StringTableBuilder::ELF);
 
-  for (auto i = Asm.file_names_begin(), e = Asm.file_names_end(); i != e; ++i)
-    FileSymbolData.push_back(StrTabBuilder.getOffset(*i));
+  for (const std::string &Name : Asm.getFileNames())
+    FileSymbolData.push_back(StrTabBuilder.getOffset(Name));
 
   // Symbols are required to be in lexicographic order.
   array_pod_sort(LocalSymbolData.begin(), LocalSymbolData.end());
