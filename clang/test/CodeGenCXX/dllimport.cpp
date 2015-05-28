@@ -724,17 +724,21 @@ template struct __declspec(dllimport) ExplicitlyInstantiatedWithDifferentAttr<in
 USEMEMFUNC(ExplicitlyInstantiatedWithDifferentAttr<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitlyInstantiatedWithDifferentAttr@H@@QAEXXZ"
 
-template <typename T> struct ExplicitInstantiationDeclImportedDefTemplate { void f() {} };
+template <typename T> struct ExplicitInstantiationDeclImportedDefTemplate { void f() {} ExplicitInstantiationDeclImportedDefTemplate() {}};
 extern template struct ExplicitInstantiationDeclImportedDefTemplate<int>;
 template struct __declspec(dllimport) ExplicitInstantiationDeclImportedDefTemplate<int>;
+USECLASS(ExplicitInstantiationDeclImportedDefTemplate<int>);
 USEMEMFUNC(ExplicitInstantiationDeclImportedDefTemplate<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclImportedDefTemplate@H@@QAEXXZ"
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc %struct.ExplicitInstantiationDeclImportedDefTemplate* @"\01??0?$ExplicitInstantiationDeclImportedDefTemplate@H@@QAE@XZ"
 
-template <typename T> struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate { void f() {} };
+template <typename T> struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate { void f() {} ExplicitInstantiationDeclExportedDefImportedTemplate() {} };
 extern template struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate <int>;
 template struct __declspec(dllexport) ExplicitInstantiationDeclExportedDefImportedTemplate<int>;
+USECLASS(ExplicitInstantiationDeclExportedDefImportedTemplate<int>);
 USEMEMFUNC(ExplicitInstantiationDeclExportedDefImportedTemplate<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedDefImportedTemplate@H@@QAEXXZ"
+// M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc %struct.ExplicitInstantiationDeclExportedDefImportedTemplate* @"\01??0?$ExplicitInstantiationDeclExportedDefImportedTemplate@H@@QAE@XZ"
 
 
 //===----------------------------------------------------------------------===//

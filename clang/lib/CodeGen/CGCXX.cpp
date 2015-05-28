@@ -218,6 +218,8 @@ llvm::Function *CodeGenModule::codegenCXXStructor(const CXXMethodDecl *MD,
   }
 
   setFunctionLinkage(GD, Fn);
+  setFunctionDLLStorageClass(GD, Fn);
+
   CodeGenFunction(*this).GenerateCode(GD, Fn, FnInfo);
   setFunctionDefinitionAttributes(MD, Fn);
   SetLLVMFunctionAttributesForDefinition(MD, Fn);
