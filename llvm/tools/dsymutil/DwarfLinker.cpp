@@ -73,7 +73,8 @@ struct PatchLocation {
 
   void set(uint64_t New) const {
     assert(Die);
-    assert(Index < std::distance(Die->begin_values(), Die->end_values()));
+    assert((signed)Index <
+           std::distance(Die->begin_values(), Die->end_values()));
     const auto &Old = Die->begin_values()[Index];
     assert(Old.getType() == DIEValue::isInteger);
     Die->setValue(Index,
@@ -82,7 +83,8 @@ struct PatchLocation {
 
   uint64_t get() const {
     assert(Die);
-    assert(Index < std::distance(Die->begin_values(), Die->end_values()));
+    assert((signed)Index <
+           std::distance(Die->begin_values(), Die->end_values()));
     assert(Die->begin_values()[Index].getType() == DIEValue::isInteger);
     return Die->begin_values()[Index].getDIEInteger().getValue();
   }
