@@ -204,6 +204,7 @@ bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
 namespace {
 class PrettyPrinter {
 public:
+  virtual ~PrettyPrinter(){}
   virtual void printInst(MCInstPrinter &IP, const MCInst *MI, bool ShowRawInsn,
                          ArrayRef<uint8_t> Bytes, uint64_t Address,
                          raw_ostream &OS, StringRef Annot,
