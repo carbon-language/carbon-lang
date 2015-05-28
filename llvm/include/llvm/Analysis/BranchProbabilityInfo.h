@@ -47,6 +47,9 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnFunction(Function &F) override;
+
+  void releaseMemory() override;
+
   void print(raw_ostream &OS, const Module *M = nullptr) const override;
 
   /// \brief Get an edge's probability, relative to other out-edges of the Src.

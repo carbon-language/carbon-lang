@@ -543,6 +543,10 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
   return false;
 }
 
+void BranchProbabilityInfo::releaseMemory() {
+  Weights.clear();
+}
+
 void BranchProbabilityInfo::print(raw_ostream &OS, const Module *) const {
   OS << "---- Branch Probabilities ----\n";
   // We print the probabilities from the last function the analysis ran over,
