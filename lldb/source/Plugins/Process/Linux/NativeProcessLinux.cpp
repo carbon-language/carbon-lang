@@ -786,7 +786,7 @@ NativeProcessLinux::Monitor::HandleWait()
     while (true)
     {
         int status = -1;
-        ::pid_t wait_pid = waitpid(m_child_pid, &status, __WALL | WNOHANG);
+        ::pid_t wait_pid = waitpid(-1, &status, __WALL | __WNOTHREAD | WNOHANG);
 
         if (wait_pid == 0)
             break; // We are done.
@@ -797,8 +797,8 @@ NativeProcessLinux::Monitor::HandleWait()
                 continue;
 
             if (log)
-              log->Printf("NativeProcessLinux::Monitor::%s waitpid (pid = %" PRIi32 ", &status, __WALL | WNOHANG) failed: %s",
-                      __FUNCTION__, m_child_pid, strerror(errno));
+              log->Printf("NativeProcessLinux::Monitor::%s waitpid (-1, &status, __WALL | __WNOTHREAD | WNOHANG) failed: %s",
+                      __FUNCTION__, strerror(errno));
             break;
         }
 
@@ -821,7 +821,7 @@ NativeProcessLinux::Monitor::HandleWait()
         {
             signal = WTERMSIG(status);
             status_cstr = "SIGNALED";
-            if (wait_pid == abs(m_child_pid)) {
+            if (wait_pid == m_child_pid) {
                 exited = true;
                 exit_status = -1;
             }
@@ -830,9 +830,9 @@ NativeProcessLinux::Monitor::HandleWait()
             status_cstr = "(\?\?\?)";
 
         if (log)
-            log->Printf("NativeProcessLinux::Monitor::%s: waitpid (pid = %" PRIi32 ", &status, __WALL | WNOHANG)"
+            log->Printf("NativeProcessLinux::Monitor::%s: waitpid (-1, &status, __WALL | __WNOTHREAD | WNOHANG)"
                 "=> pid = %" PRIi32 ", status = 0x%8.8x (%s), signal = %i, exit_state = %i",
-                __FUNCTION__, m_child_pid, wait_pid, status, status_cstr, signal, exit_status);
+                __FUNCTION__, wait_pid, status, status_cstr, signal, exit_status);
 
         m_native_process->MonitorCallback (wait_pid, exited, signal, exit_status);
     }
@@ -893,7 +893,7 @@ NativeProcessLinux::Monitor::MainLoop()
 {
     ::pid_t child_pid = (*m_initial_operation_up)(m_operation_error);
     m_initial_operation_up.reset();
-    m_child_pid = -getpgid(child_pid),
+    m_child_pid = child_pid;
     sem_post(&m_operation_sem);
 
     while (true)
