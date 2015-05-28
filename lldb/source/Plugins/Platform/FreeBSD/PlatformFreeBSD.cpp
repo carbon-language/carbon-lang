@@ -21,6 +21,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointSite.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Debugger.h"
@@ -630,11 +631,31 @@ PlatformFreeBSD::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
             trap_opcode_size = sizeof(g_aarch64_opcode);
         }
         break;
+    // TODO: support big-endian arm and thumb trap codes.
     case llvm::Triple::arm:
         {
-            static const uint8_t g_arm_opcode[] = { 0xfe, 0xde, 0xff, 0xe7 };
-            trap_opcode = g_arm_opcode;
-            trap_opcode_size = sizeof(g_arm_opcode);
+            static const uint8_t g_arm_breakpoint_opcode[] = { 0xfe, 0xde, 0xff, 0xe7 };
+            static const uint8_t g_thumb_breakpoint_opcode[] = { 0x01, 0xde };
+
+            lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
+            AddressClass addr_class = eAddressClassUnknown;
+
+            if (bp_loc_sp)
+                addr_class = bp_loc_sp->GetAddress ().GetAddressClass ();
+
+            if (addr_class == eAddressClassCodeAlternateISA
+                || (addr_class == eAddressClassUnknown && (bp_site->GetLoadAddress() & 1)))
+            {
+                // TODO: Enable when FreeBSD supports thumb breakpoints.
+                // FreeBSD kernel as of 10.x, does not support thumb breakpoints
+                trap_opcode = g_thumb_breakpoint_opcode;
+                trap_opcode_size = 0;
+            }
+            else
+            {
+                trap_opcode = g_arm_breakpoint_opcode;
+                trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
+            }
         }
         break;
     case llvm::Triple::mips64:
