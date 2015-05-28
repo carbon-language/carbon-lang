@@ -1,6 +1,8 @@
 // RUN: %clangxx_asan -O0 -mllvm -asan-instrument-allocas %s -o %t
 // RUN: %run %t 2>&1
 //
+// XFAIL: arm-linux-gnueabi
+// XFAIL: armv7l-unknown-linux-gnueabihf
 
 // This testcase checks that allocas and VLAs inside loop are correctly unpoisoned.
 
